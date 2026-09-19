@@ -52,8 +52,18 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 		return fmt.Errorf("failed to get tracer: %w", err)
 	}
 
+	// nil unless keys_only_relist is on, which keeps the full-object re-list.
+	var connKeys informer.KeysLister
+	if controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("keys_only_relist").MustBool(false) {
+		restClient, err := controllerCfg.ProvisioningRESTClient()
+		if err != nil {
+			return fmt.Errorf("failed to create provisioning REST client: %w", err)
+		}
+		connKeys = informer.NewHTTPConnectionKeysLister(restClient)
+	}
+
 	// The connection delta source and the getter it backs.
-	connSource, connGetter := informer.NewConnectionDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval())
+	connSource, connGetter := informer.NewConnectionDeltaSource(controllerCfg.natsSubscriber, provisioningClient, connKeys, controllerCfg.ResyncInterval(), controllerCfg.Registry())
 	connController := controller.NewConnectionController(
 		connGetter,
 		statusPatcher,
