@@ -3,7 +3,7 @@ import {
   useCreateRepositoryJobsMutation,
   type RepositoryView,
   type Job,
-  type ProvisioningResourceRef as GeneratedResourceRef,
+  type ResourceRef as GeneratedResourceRef,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
