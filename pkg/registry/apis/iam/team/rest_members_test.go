@@ -77,6 +77,23 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 		require.Equal(t, int32(http.StatusForbidden), se.ErrStatus.Code)
 	})
 
+	t.Run("configured feature does not consult OpenFeature", func(t *testing.T) {
+		setTeamsApiFlag(t, false)
+		t.Cleanup(func() { setTeamsApiFlag(t, true) })
+
+		g := &mockGetter{team: teamWithMembers("team1")}
+		handler := NewTeamMembersRESTWithFeature(g, tracing.NewNoopTracerService(), true)
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "default"})
+		responder := &mockResponder{}
+
+		h, err := handler.Connect(ctx, "team1", nil, responder)
+		require.NoError(t, err)
+		h.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/members", nil).WithContext(ctx))
+
+		require.True(t, responder.called)
+		require.NoError(t, responder.err)
+	})
+
 	t.Run("propagates getter error", func(t *testing.T) {
 		g := &mockGetter{err: errors.New("boom")}
 		handler := NewTeamMembersREST(g, tracing.NewNoopTracerService())
