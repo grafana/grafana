@@ -1383,6 +1383,7 @@ export interface ContentAwareColWidthsOptions {
    * filter icon that marks it — unlike the sort arrow, that icon only exists while the state holds.
    */
   filter?: FilterType;
+  isFiltered?: (field: Field) => boolean;
   hasColumnSidebar?: boolean;
   /** The first column carries extra inline-start padding to line up with the panel title. */
   noPanelPadding?: boolean;
@@ -1843,6 +1844,7 @@ export function computeContentAwareColWidths(
     tableRefreshEnabled = false,
     theme,
     filter,
+    isFiltered,
     sampleSize,
     hasColumnSidebar = false,
     noPanelPadding = false,
@@ -1892,7 +1894,7 @@ export function computeContentAwareColWidths(
       ? measureHeaderWidth(field, headerTypographyCtx, {
           showTypeIcons,
           tableRefreshEnabled,
-          isFiltered: filteredKeys.has(getDisplayName(field)),
+          isFiltered: isFiltered?.(field) ?? filteredKeys.has(getDisplayName(field)),
           hasColumnSidebar,
         })
       : 0;

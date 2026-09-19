@@ -45,6 +45,7 @@ type Props = {
   useTableNG?: boolean;
   // Feature-toggle values for TableNG, passed in by the host. See FlameGraphContainer's props.
   tableRefreshEnabled?: boolean;
+  rowTransformationsEnabled?: boolean;
   contentAwareWidthsEnabled?: boolean;
 };
 
@@ -61,6 +62,7 @@ const FlameGraphTopTableContainer = memo(
     colorScheme,
     useTableNG,
     tableRefreshEnabled,
+    rowTransformationsEnabled,
     contentAwareWidthsEnabled,
   }: Props) => {
     const table = useMemo(() => buildFilteredTable(data, matchedLabels), [data, matchedLabels]);
@@ -112,6 +114,7 @@ const FlameGraphTopTableContainer = memo(
                     width={width}
                     height={height}
                     tableRefreshEnabled={tableRefreshEnabled}
+                    rowTransformationsEnabled={rowTransformationsEnabled}
                     contentAwareWidthsEnabled={contentAwareWidthsEnabled}
                     // The pane's width is already divided up between the three fixed columns and
                     // Symbol, so a horizontal scrollbar would hide columns rather than reveal them.

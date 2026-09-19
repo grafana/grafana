@@ -19,6 +19,7 @@ import { type MatcherScope, type TableCellHeight } from '@grafana/schema';
 import { type TableCellInspectorMode } from '../TableCellInspector';
 import { type TableCellOptions } from '../types';
 
+import { type TableRowTransformations } from './TableViewContext';
 import { type TextAlign } from './styles';
 import { type ApplyFilterResult } from './utils';
 
@@ -109,6 +110,10 @@ export interface TableSortByFieldState {
 export type SortByBehavior = 'initial' | 'managed';
 
 interface BaseTableProps {
+  /** Experimental transformation-backed table view, explicitly owned by its host. */
+  rowTransformationsEnabled?: boolean;
+  rowTransformations?: TableRowTransformations;
+  timeZone?: string;
   ariaLabel?: string;
   data: DataFrame;
   width: number;

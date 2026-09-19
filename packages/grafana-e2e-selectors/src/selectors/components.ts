@@ -727,6 +727,7 @@ export const versionedComponents = {
           },
         },
         Filters: {
+          clearAll: { '13.3.0': 'data-testid tableng clear filters' },
           HeaderButton: {
             '12.1.0': 'data-testid tableng header filter',
           },

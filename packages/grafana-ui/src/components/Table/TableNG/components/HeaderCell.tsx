@@ -89,14 +89,12 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   const hideHeader = field.config.custom?.hideHeader ?? false;
   const headerTooltip = field.config.custom?.headerTooltip;
 
-  const filterKey = typeof parentIndex === 'number' ? `${column.key}-${parentIndex}` : column.key;
-  const hasActiveFilter = filterable && filter[filterKey]?.filtered != null;
   const canOpenColumnPanel = Boolean(onOpenColumnPanel) && Boolean(hasColumnSidebar);
 
   // The menu item and active-filter icon share this popup.
   const filterIconRef = useRef<HTMLButtonElement>(null);
   const [filterAnchor, setFilterAnchor] = useState<HTMLButtonElement | null>(null);
-  const { isPopoverVisible, setPopoverVisible, popupProps } = useFilterPopupState({
+  const { isPopoverVisible, setPopoverVisible, popupProps, filterEnabled } = useFilterPopupState({
     name: column.key,
     filter,
     setFilter,
@@ -105,6 +103,8 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
     crossFilterRows,
     crossFilterTailRows,
   });
+
+  const hasActiveFilter = filterable && filterEnabled;
 
   const openFilter = useCallback(
     (anchor: HTMLButtonElement | null) => {
