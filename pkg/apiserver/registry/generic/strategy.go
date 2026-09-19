@@ -127,11 +127,33 @@ type genericStatusStrategy struct {
 	names.NameGenerator
 
 	gv schema.GroupVersion
+
+	// allowBundlingSpec, when true, skips resetting spec back to its old value
+	// on a status-subresource update. Only for kinds whose callers are already
+	// trusted to validate their own spec changes: admission never sees or
+	// validates a spec change smuggled in through /status, guard or not.
+	allowBundlingSpec bool
+	// allowBundlingSecure is the same, for secure values.
+	allowBundlingSecure bool
 }
 
 // NewStatusStrategy creates a new genericStatusStrategy.
 func NewStatusStrategy(typer runtime.ObjectTyper, gv schema.GroupVersion) *genericStatusStrategy {
-	return &genericStatusStrategy{typer, names.SimpleNameGenerator, gv}
+	return &genericStatusStrategy{ObjectTyper: typer, NameGenerator: names.SimpleNameGenerator, gv: gv}
+}
+
+// WithAllowBundlingSpec allows a status-subresource update to also change
+// spec, skipping the reset-to-old-value guard in PrepareForUpdate.
+func (g *genericStatusStrategy) WithAllowBundlingSpec() *genericStatusStrategy {
+	g.allowBundlingSpec = true
+	return g
+}
+
+// WithAllowBundlingSecure allows a status-subresource update to also change
+// secure values, skipping the reset-to-old-value guard in PrepareForUpdate.
+func (g *genericStatusStrategy) WithAllowBundlingSecure() *genericStatusStrategy {
+	g.allowBundlingSecure = true
+	return g
 }
 
 func (g *genericStatusStrategy) NamespaceScoped() bool {
@@ -163,6 +185,22 @@ func (g *genericStatusStrategy) PrepareForUpdate(ctx context.Context, obj, old r
 	newMeta.SetLabels(oldMeta.GetLabels())
 	newMeta.SetFinalizers(oldMeta.GetFinalizers())
 	newMeta.SetOwnerReferences(oldMeta.GetOwnerReferences())
+
+	// A status-subresource update must never change spec or secure values,
+	// unless the strategy explicitly opted in to bundling. Without this, a
+	// PATCH against /status whose ops also touch /spec or /secure would
+	// persist that change: admission skips validation entirely for a
+	// subresource request, so nothing else catches it.
+	if !g.allowBundlingSpec {
+		if spec, err := oldMeta.GetSpec(); err == nil {
+			_ = newMeta.SetSpec(spec)
+		}
+	}
+	if !g.allowBundlingSecure {
+		if secure, err := oldMeta.GetSecureValues(); err == nil {
+			_ = newMeta.SetSecureValues(secure)
+		}
+	}
 }
 
 func (g *genericStatusStrategy) AllowCreateOnUpdate(ctx context.Context) bool {
