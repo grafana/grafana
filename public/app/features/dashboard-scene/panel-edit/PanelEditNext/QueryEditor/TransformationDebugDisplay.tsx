@@ -11,7 +11,7 @@ import { useTransformationDebugData } from './hooks/useTransformationDebugData';
 export function TransformationDebugDisplay() {
   const { selectedTransformation, transformToggles } = useQueryEditorUIContext();
   const { data } = useQueryRunnerContext();
-  const { transformations } = usePanelContext();
+  const { transformations, systemTransformations } = usePanelContext();
 
   const styles = useStyles2(getStyles);
 
@@ -20,6 +20,7 @@ export function TransformationDebugDisplay() {
   const { input, output } = useTransformationDebugData({
     selectedTransformation,
     transformations,
+    systemTransformations: systemTransformations.prepend,
     data: seriesData,
     isActive: transformToggles.showDebug,
   });

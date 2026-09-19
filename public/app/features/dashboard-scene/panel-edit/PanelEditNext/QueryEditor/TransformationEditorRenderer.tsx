@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { type DataTransformerConfig, type PanelData } from '@grafana/data';
+import { type CustomTransformOperator, type DataTransformerConfig, type PanelData } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Alert, ErrorBoundaryAlert } from '@grafana/ui';
 
@@ -20,6 +20,7 @@ import { type Transformation } from './types';
 interface TransformationEditorPanelProps {
   transformation: Transformation | null;
   transformations: Transformation[];
+  systemTransformations: Array<DataTransformerConfig | CustomTransformOperator>;
   data?: PanelData;
   updateTransformation: (oldConfig: DataTransformerConfig, newConfig: DataTransformerConfig) => void;
   showSupplementalDisplays?: boolean;
@@ -28,6 +29,7 @@ interface TransformationEditorPanelProps {
 export function TransformationEditorPanel({
   transformation,
   transformations,
+  systemTransformations,
   data,
   updateTransformation,
   showSupplementalDisplays = false,
@@ -37,6 +39,7 @@ export function TransformationEditorPanel({
   const inputData = useTransformationInputData({
     selectedTransformation: transformation,
     allTransformations: transformations,
+    systemTransformations,
     rawData,
   });
 
@@ -80,6 +83,7 @@ export function TransformationEditorPanel({
         <TransformationFilterEditor
           transformation={transformation}
           transformations={transformations}
+          systemTransformations={systemTransformations}
           queryData={data}
           onUpdate={updateTransformation}
         />
@@ -113,13 +117,14 @@ export function TransformationEditorPanel({
 export function TransformationEditorRenderer() {
   const { data } = useQueryRunnerContext();
   const { selectedTransformation } = useQueryEditorUIContext();
-  const { transformations } = usePanelContext();
+  const { transformations, systemTransformations } = usePanelContext();
   const { updateTransformation } = useActionsContext();
 
   return (
     <TransformationEditorPanel
       transformation={selectedTransformation}
       transformations={transformations}
+      systemTransformations={systemTransformations.prepend}
       data={data}
       updateTransformation={updateTransformation}
       showSupplementalDisplays

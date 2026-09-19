@@ -2,6 +2,7 @@ import { renderHook } from '@testing-library/react';
 
 import { VizPanel } from '@grafana/scenes';
 
+import { NO_SYSTEM_TRANSFORMATIONS } from '../../../../scene/systemTransformations';
 import { usePanelContext } from '../QueryEditorContext';
 
 import { usePanelScopedVars } from './usePanelScopedVars';
@@ -15,7 +16,11 @@ const mockUsePanelContext = jest.mocked(usePanelContext);
 describe('usePanelScopedVars', () => {
   it('returns scoped vars whose __sceneObject resolves to the panel from context', () => {
     const panel = new VizPanel({ key: 'panel-1' });
-    mockUsePanelContext.mockReturnValue({ panel, transformations: [] });
+    mockUsePanelContext.mockReturnValue({
+      panel,
+      transformations: [],
+      systemTransformations: NO_SYSTEM_TRANSFORMATIONS,
+    });
 
     const { result } = renderHook(() => usePanelScopedVars());
 

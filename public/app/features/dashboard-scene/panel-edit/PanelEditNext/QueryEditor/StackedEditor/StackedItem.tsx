@@ -125,7 +125,7 @@ interface StackedTransformationItemProps {
 export function StackedTransformationItem({ transformation, headingId }: StackedTransformationItemProps) {
   const styles = useStyles2(getStyles);
   const typeConfig = useQueryEditorTypeConfig();
-  const { transformations } = usePanelContext();
+  const { transformations, systemTransformations } = usePanelContext();
   const { data } = useQueryRunnerContext();
   const { updateTransformation } = useActionsContext();
   const transformationName = transformation.registryItem?.name || transformation.transformConfig.id;
@@ -150,6 +150,7 @@ export function StackedTransformationItem({ transformation, headingId }: Stacked
         <TransformationEditorPanel
           transformation={transformation}
           transformations={transformations}
+          systemTransformations={systemTransformations.prepend}
           data={data}
           updateTransformation={updateTransformation}
         />

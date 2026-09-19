@@ -240,16 +240,20 @@ function logTransformationFailure(err: unknown) {
 }
 
 /**
- * What the pipeline runs ahead of `selected`: the user's transformations up to it.
+ * What the pipeline runs ahead of `selected`: all transformations up to it.
  *
- * Annotation-topic entries are left out, because the pipeline routes those to `data.annotations` in
- * a separate pass — replaying them over the series would apply a transformation to frames it never
- * receives.
+ * Annotation-topic entries are left out of the user's transformations, because the pipeline routes those to
+ * `data.annotations` in a separate pass — replaying them over the series would apply a transformation to frames it
+ * never receives.
  *
  * A `selected` the list does not contain is treated as first rather than sliced by its `-1` index,
  * which would silently drop the list's last entry.
  */
-export function precedingTransformations(selected: Transformation, all: Transformation[]): TransformationConfigs {
+export function precedingTransformations(
+  selected: Transformation,
+  all: Transformation[],
+  system: TransformationConfigs
+): TransformationConfigs {
   const selectedIndex = all.findIndex(({ transformId }) => transformId === selected.transformId);
 
   const preceding = all
@@ -257,5 +261,5 @@ export function precedingTransformations(selected: Transformation, all: Transfor
     .map(({ transformConfig }) => transformConfig)
     .filter((config) => config.topic == null || config.topic === DataTopic.Series);
 
-  return preceding.length === 0 ? NO_CONFIGS : preceding;
+  return system.length === 0 && preceding.length === 0 ? NO_CONFIGS : [...system, ...preceding];
 }
