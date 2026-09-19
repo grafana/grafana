@@ -1,3 +1,4 @@
+import { type AzureHealthModelsOptions } from '../azure_health_models/types';
 import { type AzureMonitorQuery as AzureMonitorQueryBase, type AzureQueryType } from '../dataquery.gen';
 
 /**
@@ -7,4 +8,5 @@ import { type AzureMonitorQuery as AzureMonitorQueryBase, type AzureQueryType } 
 // TODO: This is a workaround until the type extensions issue is resolved in CUE
 export interface AzureMonitorQuery extends AzureMonitorQueryBase {
   queryType?: AzureQueryType;
+  azureHealthModels?: AzureHealthModelsOptions;
 }

@@ -72,6 +72,25 @@ describe('Azure Monitor Datasource', () => {
     expect(ds.filterQuery(query)).toBe(false);
   });
 
+  it('should not filter a selected Azure Health Model', () => {
+    const ds = new Datasource(createMockInstanceSetttings());
+    const query = createMockQuery({
+      queryType: AzureQueryType.AzureHealthModels,
+    });
+
+    expect(ds.filterQuery(query)).toBe(true);
+  });
+
+  it('should filter an Azure Health Models selection with no model', () => {
+    const ds = new Datasource(createMockInstanceSetttings());
+    const query = createMockQuery({
+      queryType: AzureQueryType.AzureHealthModels,
+      azureHealthModels: { healthModelId: undefined },
+    });
+
+    expect(ds.filterQuery(query)).toBe(false);
+  });
+
   describe('When performing targetContainsTemplate', () => {
     it('should return false when no variable is being used', () => {
       const query = {
@@ -110,6 +129,19 @@ describe('Azure Monitor Datasource', () => {
       };
       const ds = new Datasource(createMockInstanceSetttings());
       expect(ds.targetContainsTemplate(query)).toEqual(false);
+    });
+
+    it('should detect a variable in the Health Model resource ID', () => {
+      const query = createMockQuery({
+        queryType: AzureQueryType.AzureHealthModels,
+        azureHealthModels: {
+          healthModelId:
+            '/subscriptions/$subscription/resourceGroups/rg/providers/Microsoft.CloudHealth/healthmodels/model',
+        },
+      });
+      const ds = new Datasource(createMockInstanceSetttings());
+
+      expect(ds.targetContainsTemplate(query)).toEqual(true);
     });
   });
 });
