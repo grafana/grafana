@@ -43,6 +43,7 @@ export type MultiComboboxProps<T extends string | number> = MultiComboboxBasePro
  */
 export const MultiCombobox = <T extends string | number>(props: MultiComboboxProps<T>) => {
   const {
+    renderOption,
     placeholder,
     onChange,
     value,
@@ -76,6 +77,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   // Handle async options and the 'All' option
   const {
     options: baseOptions,
+    customValueOption,
     updateOptions,
     asyncLoading,
     asyncError,
@@ -188,6 +190,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     selectedItem: null,
     defaultHighlightedIndex: 0,
     isItemDisabled: (item) => !!item?.infoOption,
+    scrollIntoView: () => {},
     stateReducer: (state, actionAndChanges) => {
       const { type } = actionAndChanges;
       let { changes } = actionAndChanges;
@@ -397,6 +400,9 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             <ComboboxList
               loading={loading}
               options={options}
+              renderOption={renderOption}
+              customValueOption={customValueOption}
+              allOption={allOptionItem}
               highlightedIndex={highlightedIndex}
               showFocusRing={showFocusRing}
               selectedItems={selectedItems}
