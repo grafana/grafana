@@ -44,4 +44,33 @@ export enum DataFrameType {
    *  xMin, xMax, count
    */
   Histogram = 'histogram',
+
+  /**
+   * Legacy graph frame edges
+   */
+  GraphEdgesLong = 'graph-edges-long',
+  /**
+   * Legacy graph frame nodes
+   */
+  GraphNodesLong = 'graph-nodes-long',
+  /**
+   * @alpha - experimental
+   * Proposed graph frame edges
+   */
+  GraphEdgesWide = 'graph-edges-wide',
+  /**
+   * @alpha - experimental
+   * Proposed graph frame nodes
+   */
+  GraphNodesWide = 'graph-nodes-wide',
+  /**
+   * @alpha - experimental
+   * Proposed mulit-frame graph nodes
+   */
+  GraphNodesMulti = 'graph-nodes-multi',
+  /**
+   * @alpha - experimental
+   * Proposed multi-frame graph edges
+   */
+  GraphEdgesMulti = 'graph-edges-multi',
 }
