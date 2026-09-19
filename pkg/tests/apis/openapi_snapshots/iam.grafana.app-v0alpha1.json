@@ -3530,6 +3530,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "skipCache",
+            "in": "query",
+            "description": "recompute the permissions instead of serving the cached snapshot",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
