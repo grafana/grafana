@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
 import { type Dispatch, memo, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { type Field, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { FieldType, type Field, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 
@@ -16,13 +16,18 @@ import { type FilterOperator, type FilterType, type TableRow } from '../types';
 import { getDisplayName } from '../utils';
 
 import { FilterList } from './FilterList';
+import { RangeFilter } from './RangeFilter';
 import { calculateUniqueFieldValues, getFilteredOptions, operatorSelectableValues, valuesToOptions } from './utils';
 
 export interface FilterPopupProps {
+  typed?: boolean;
   stateKey?: string;
   unsupported?: boolean;
   onApplyValues?: (values: SelectableValue[]) => void;
+  onApplyRange?: (range: { min?: number; max?: number; includeMissing: boolean }) => void;
   onClear?: () => void;
+  timeZone?: string;
+  range?: { min?: number; max?: number; includeMissing: boolean };
   name: string;
   rows: TableRow[];
   filterValue?: Array<SelectableValue<unknown>>;
@@ -41,9 +46,13 @@ export const FilterPopup = memo((props: FilterPopupProps) => <FilterPopupEditor 
 
 const FilterPopupEditor = memo(
   ({
+    typed,
     unsupported,
     onApplyValues,
+    onApplyRange,
     onClear,
+    range,
+    timeZone,
     name,
     rows,
     filterValue,
@@ -165,6 +174,36 @@ const FilterPopupEditor = memo(
           </div>
           <Button onClick={onClearFilter}>{t('grafana-ui.table.filter.clear', 'Clear filter')}</Button>
           <Button onClick={onClose}>{t('grafana-ui.table.filter.cancel', 'Cancel')}</Button>
+        </div>
+      );
+    }
+
+    if (typed && !filterValue && field && (field.type === FieldType.number || field.type === FieldType.time)) {
+      return (
+        <div
+          className={styles.filterContainer}
+          ref={containerRef}
+          data-testid={selectors.components.Panels.Visualization.TableNG.Filters.Container}
+        >
+          <RangeFilter
+            field={field}
+            rows={rows}
+            range={range}
+            timeZone={timeZone}
+            onCancel={() => {
+              onClose();
+              buttonElement?.focus();
+            }}
+            onClear={() => {
+              onClearFilter();
+              buttonElement?.focus();
+            }}
+            onApply={(next) => {
+              onApplyRange?.(next);
+              onClose();
+              buttonElement?.focus();
+            }}
+          />
         </div>
       );
     }

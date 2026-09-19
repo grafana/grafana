@@ -132,4 +132,7 @@ export {
   transformTableFrame,
 } from '../transformations/transformers/tableView';
 export { filterByValueTransformer, type FilterByValueConfig } from '../transformations/transformers/filterByValue';
-export { type ValueSetOptions } from '../transformations/matchers/valueMatchers/setAndRangeMatchers';
+export {
+  type ValueSetOptions,
+  type NumericRangeOptions,
+} from '../transformations/matchers/valueMatchers/setAndRangeMatchers';

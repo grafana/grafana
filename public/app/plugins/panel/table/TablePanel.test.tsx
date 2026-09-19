@@ -184,9 +184,8 @@ it.each(['hide-first', 'filter-first'])(
       }
       await user.click(screen.getByLabelText('Column options for Value'));
       await user.click(await screen.findByText('Filter values'));
-      await user.click(screen.getByRole('checkbox', { name: '3' }));
-      await user.click(screen.getByRole('checkbox', { name: '2' }));
-      await user.click(screen.getByRole('button', { name: 'Ok' }));
+      await user.type(screen.getByRole('textbox', { name: 'Minimum' }), '2');
+      await user.click(screen.getByRole('button', { name: 'Apply' }));
       if (order === 'filter-first') {
         await hide('Extra');
       }

@@ -79,8 +79,8 @@ export function editableTableFilter(config: FilterByValueConfig) {
   return (
     config.options.type === FilterByValueType.include &&
     config.options.filters.length === 1 &&
-    predicate.config.id === 'inSet' &&
-    predicate.config.options.mode === 'display'
+    (predicate.config.id === 'numericRange' ||
+      (predicate.config.id === 'inSet' && predicate.config.options.mode === 'display'))
   );
 }
 

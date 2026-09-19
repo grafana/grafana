@@ -32,3 +32,18 @@ The flag-off adapter retains legacy filtering. Source-index projection and
 cross-filter distributions execute the reusable filtering implementation; they
 remain necessary for table callbacks and option lists. Carrying provenance from
 the host stage could eliminate the additional projection pass in a later change.
+
+## Numeric and date ranges
+
+`numericRange` supports inclusive optional bounds and explicit missing/non-finite
+handling. Numeric filters provide a histogram, slider, raw bounds, and a match
+preview. Date filters use the shared dashboard time-range inputs and adjacent
+calendar, interpreted in the host timezone with millisecond precision. Both use
+Apply/Cancel and store only their applied predicate in the transform.
+
+The development dashboard **Panel Tests - Table - Ad-hoc filters and sorting**
+(`table-adhoc-filter-sort`) exercises these controls. Duration bounds 50–200 match
+60 of 126 rows. Observed-at bounds `2026-09-17 12:00`–`2026-09-17 12:30` in
+America/New_York match 31 rows. Development servers remain stopped.
+
+Relative dates, nonlinear histogram bins, and URL persistence remain future work.

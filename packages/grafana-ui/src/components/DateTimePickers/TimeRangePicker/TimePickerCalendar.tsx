@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { autoUpdate, flip, shift, useFloating } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
@@ -69,6 +70,7 @@ export interface TimePickerCalendarProps {
   isFullscreen: boolean;
   timeZone?: TimeZone;
   isReversed?: boolean;
+  anchorElement?: HTMLElement | null;
 }
 
 function TimePickerCalendar(props: TimePickerCalendarProps) {
@@ -77,6 +79,13 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
   const styles = getStyles(theme, props.isReversed);
   const { isOpen, isFullscreen: isFullscreenProp, onClose } = props;
   const ref = createRef<HTMLElement>();
+  const { refs, floatingStyles } = useFloating({
+    elements: { reference: props.anchorElement },
+    placement: 'left-start',
+    strategy: 'fixed',
+    middleware: [flip(), shift({ padding: 8 })],
+    whileElementsMounted: autoUpdate,
+  });
   const { dialogProps } = useDialog(
     {
       'aria-label': selectors.components.TimePicker.calendar.label,
@@ -116,7 +125,13 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
   if (!showInModal) {
     return (
       <FocusScope contain restoreFocus autoFocus>
-        <div className={styles.container}>{calendar}</div>
+        <div
+          ref={props.anchorElement ? refs.setFloating : undefined}
+          className={props.anchorElement ? undefined : styles.container}
+          style={props.anchorElement ? floatingStyles : undefined}
+        >
+          {calendar}
+        </div>
       </FocusScope>
     );
   }

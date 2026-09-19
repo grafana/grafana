@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { type Field, type SelectableValue } from '@grafana/data';
-import { type ValueSetOptions } from '@grafana/data/internal';
+import { type ValueSetOptions, type NumericRangeOptions } from '@grafana/data/internal';
 
 import { editableTableFilter, tableFilterKey, useTableView } from '../TableViewContext';
 import { FilterOperator, type FilterType, type TableRow } from '../types';
@@ -55,6 +55,7 @@ export function useFilterPopupState({
   const predicate = selected[0]?.options.filters[0]?.config;
   const unsupported = selected.length > 1 || selected.some((config) => !editableTableFilter(config));
   const selection: ValueSetOptions | undefined = predicate?.id === 'inSet' ? predicate.options : undefined;
+  const range: NumericRangeOptions | undefined = predicate?.id === 'numericRange' ? predicate.options : undefined;
   const filterKey = view && field ? tableFilterKey(field, parentIndex) : legacyKey;
   const filterValue = view
     ? selection?.values.map((value) => ({ value, label: String(value) }))
@@ -84,6 +85,7 @@ export function useFilterPopupState({
     setPopoverVisible,
     filterEnabled: view ? selected.length > 0 : Boolean(filterValue),
     popupProps: {
+      typed: Boolean(view),
       stateKey: view ? snapshot : undefined,
       unsupported,
       onApplyValues:
@@ -116,7 +118,13 @@ export function useFilterPopupState({
               }
             }
           : undefined,
+      onApplyRange:
+        view && field
+          ? (range) => view.applyFilter(field, { id: 'numericRange', options: range }, parentIndex)
+          : undefined,
       onClear: view && field ? () => view.clearFilter(field, parentIndex) : undefined,
+      timeZone: view?.timeZone,
+      range,
       name,
       rows: rowsForPopup,
       filterValue,
