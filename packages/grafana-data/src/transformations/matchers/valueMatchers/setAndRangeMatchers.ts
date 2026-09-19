@@ -45,3 +45,27 @@ export const valueSetMatcher: ValueMatcherInfo<ValueSetOptions> = {
   },
   getOptionsDisplayText: (options) => `Is in set: ${options.values.join(', ')}`,
 };
+
+export interface NumericRangeOptions {
+  min?: number;
+  max?: number;
+  includeMissing: boolean;
+}
+
+export const numericRangeMatcher: ValueMatcherInfo<NumericRangeOptions> = {
+  id: ValueMatcherID.numericRange,
+  name: 'Is in numeric range',
+  description: 'Matches inclusive, optionally open numeric or timestamp bounds.',
+  // The transformation editor does not yet provide controls for this matcher.
+  isApplicable: () => false,
+  getDefaultOptions: () => ({ includeMissing: false }),
+  get:
+    ({ min, max, includeMissing }) =>
+    (index, field) => {
+      const value = field.values[index];
+      return typeof value !== 'number' || !Number.isFinite(value)
+        ? includeMissing
+        : (min == null || value >= min) && (max == null || value <= max);
+    },
+  getOptionsDisplayText: ({ min, max }) => `From ${min ?? '-∞'} to ${max ?? '∞'} (inclusive)`,
+};

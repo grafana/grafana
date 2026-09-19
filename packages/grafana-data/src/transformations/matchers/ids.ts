@@ -57,4 +57,5 @@ export enum ValueMatcherID {
   notSubstring = 'notSubstring',
   between = 'between',
   inSet = 'inSet',
+  numericRange = 'numericRange',
 }
