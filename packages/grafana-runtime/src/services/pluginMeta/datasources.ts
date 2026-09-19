@@ -8,8 +8,11 @@ import { getBackendSrv } from '../backendSrv';
 import { FALLBACK_TO_BOOTDATA_ERROR_WARNING, FALLBACK_TO_BOOTDATA_WARNING } from './constants';
 import { logPluginMetaDebug, logPluginMetaWarning } from './logging';
 import { getDatasourcePluginMapper } from './mappers/mappers';
+import { logMetasDisagreementsWithBootData, logUnloadableModules, PluginMetaSource } from './moduleChecks';
 import { getPluginMetasUrl, initPluginMetas, refetchPluginMetas } from './plugins';
 import type { DatasourcePluginMetas, FrontendSettings, PluginMetasResponse } from './types';
+
+const getDatasourceModule = (ds: DataSourcePluginMeta | undefined): string | undefined => ds?.module;
 
 let datasources: DatasourcePluginMetas = {};
 let datasourcesByAliasIDs: DatasourcePluginMetas = {};
@@ -40,9 +43,21 @@ function resolveAliasIDs(input: DatasourcePluginMetas): DatasourcePluginMetas {
   return byAliasIDs;
 }
 
-function setDatasourcesAndAliases(input: DatasourcePluginMetas) {
+function setDatasourcesAndAliases(input: DatasourcePluginMetas, source: PluginMetaSource) {
   datasources = input;
   datasourcesByAliasIDs = resolveAliasIDs(input);
+  logUnloadableModules(datasources, source, PluginType.datasource, getDatasourceModule);
+  if (source === PluginMetaSource.metas) {
+    // eslint-disable-next-line @grafana/no-config-datasources
+    const bootDataDatasources = extractFromConfig(config.datasources);
+    logMetasDisagreementsWithBootData(
+      datasources,
+      bootDataDatasources,
+      PluginType.datasource,
+      getDatasourceModule,
+      getDatasourceModule
+    );
+  }
 }
 
 export function getPluginIdFromDatasourceInstanceType(type: string, name: string) {
@@ -83,20 +98,20 @@ function setMetas(metas: PluginMetasResponse | null) {
     // null means plugin meta failed to load, empty items means the API had nothing
     const message = metas ? FALLBACK_TO_BOOTDATA_WARNING : FALLBACK_TO_BOOTDATA_ERROR_WARNING;
     // eslint-disable-next-line @grafana/no-config-datasources
-    setDatasourcesAndAliases(extractFromConfig(config.datasources));
+    setDatasourcesAndAliases(extractFromConfig(config.datasources), PluginMetaSource.bootdata);
     logPluginMetaWarning(message, { pluginType: PluginType.datasource, requestUrl: getPluginMetasUrl() });
     return;
   }
 
   const mapper = getDatasourcePluginMapper();
-  setDatasourcesAndAliases(mapper(metas));
+  setDatasourcesAndAliases(mapper(metas), PluginMetaSource.metas);
   logPluginMetaDebug('PluginMeta: initializing datasource plugins cache with meta values', {});
 }
 
 async function initDatasourcePluginMetas(): Promise<void> {
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
     // eslint-disable-next-line @grafana/no-config-datasources
-    setDatasourcesAndAliases(extractFromConfig(config.datasources));
+    setDatasourcesAndAliases(extractFromConfig(config.datasources), PluginMetaSource.bootdata);
     logPluginMetaDebug('PluginMeta: initializing datasource plugins cache with bootdata values', {});
     return;
   }
@@ -137,13 +152,13 @@ export function setDatasourcePluginMetas(override: DatasourcePluginMetas): void 
     throw new Error('setDatasourcePluginMetas() function can only be called from tests.');
   }
 
-  setDatasourcesAndAliases(structuredClone(override));
+  setDatasourcesAndAliases(structuredClone(override), PluginMetaSource.bootdata);
 }
 
 export async function refetchDatasourcePluginMetas(settings?: FrontendSettings): Promise<void> {
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
     const resolved = settings ?? (await getBackendSrv().get<FrontendSettings>('/api/frontend/settings'));
-    setDatasourcesAndAliases(extractFromConfig(resolved.datasources));
+    setDatasourcesAndAliases(extractFromConfig(resolved.datasources), PluginMetaSource.bootdata);
     return;
   }
 
