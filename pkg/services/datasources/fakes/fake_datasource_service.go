@@ -40,14 +40,22 @@ func (s *FakeDataSourceService) GetDataSource(ctx context.Context, query *dataso
 	return nil, datasources.ErrDataSourceNotFound
 }
 
-func (s *FakeDataSourceService) GetDataSourceInNamespace(ctx context.Context, namespace, name, group string) (*datasources.DataSource, error) {
-	ns, err := types.ParseNamespace(namespace)
+func (s *FakeDataSourceService) GetDataSourceInNamespace(ctx context.Context, query *datasources.GetDataSourceInNamespaceQuery) (*datasources.DataSource, error) {
+	ns, err := types.ParseNamespace(query.Namespace)
 	if err != nil {
 		return nil, err
 	}
 	for _, dataSource := range s.DataSources {
-		if name == dataSource.UID && ns.OrgID == dataSource.OrgID && group == dataSource.Type {
+		if query.Name != dataSource.UID || ns.OrgID != dataSource.OrgID {
+			continue
+		}
+		if dataSource.Type == query.Type {
 			return dataSource, nil
+		}
+		for _, alias := range query.AliasIDs {
+			if dataSource.Type == alias {
+				return dataSource, nil
+			}
 		}
 	}
 	return nil, datasources.ErrDataSourceNotFound

@@ -611,7 +611,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	}
 	requestConfigProvider := pluginconfig.NewRequestConfigProvider(pluginInstanceCfg, defaultSettingsProvider)
 	baseProvider := plugincontext.ProvideBaseService(cfg, requestConfigProvider)
-	dataSourceRetriever := service6.ProvideDataSourceRetriever(sqlStore, featureToggles)
+	dataSourceRetriever := service6.ProvideDataSourceRetriever(sqlStore, featureToggles, inMemory)
 	service13, err := service6.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, middlewareHandler, baseProvider, dataSourceRetriever)
 	if err != nil {
 		return nil, err
@@ -1374,7 +1374,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	requestConfigProvider := pluginconfig.NewRequestConfigProvider(pluginInstanceCfg, defaultSettingsProvider)
 	baseProvider := plugincontext.ProvideBaseService(cfg, requestConfigProvider)
-	dataSourceRetriever := service6.ProvideDataSourceRetriever(sqlStore, featureToggles)
+	dataSourceRetriever := service6.ProvideDataSourceRetriever(sqlStore, featureToggles, inMemory)
 	service13, err := service6.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, middlewareHandler, baseProvider, dataSourceRetriever)
 	if err != nil {
 		return nil, err
@@ -2151,7 +2151,7 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	datasourcePermissionsService := ossaccesscontrol.ProvideDatasourcePermissionsService(cfg, featureToggles, sqlStore)
 	requestConfigProvider := pluginconfig.NewRequestConfigProvider(pluginInstanceCfg, defaultSettingsProvider)
 	baseProvider := plugincontext.ProvideBaseService(cfg, requestConfigProvider)
-	dataSourceRetriever := service6.ProvideDataSourceRetriever(sqlStore, featureToggles)
+	dataSourceRetriever := service6.ProvideDataSourceRetriever(sqlStore, featureToggles, inMemory)
 	service13, err := service6.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, middlewareHandler, baseProvider, dataSourceRetriever)
 	if err != nil {
 		return nil, err
