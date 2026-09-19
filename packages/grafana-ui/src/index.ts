@@ -545,3 +545,5 @@ export {
   type VizTooltipOptions,
   type OptionsWithTooltip,
 } from '@grafana/schema';
+
+export { useCopyToClipboard } from './hooks/useCopyToClipboard';
