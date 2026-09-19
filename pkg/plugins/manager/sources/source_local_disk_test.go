@@ -177,6 +177,76 @@ func TestDirAsLocalSourcesSkipsUnreadableDirectory(t *testing.T) {
 	}
 }
 
+// lastCtx unwraps the key/value pairs of the most recent call recorded by log.TestLogger, which
+// stores the variadic context as a single nested element.
+func lastCtx(t *testing.T, l *log.Logs) []any {
+	t.Helper()
+
+	require.Len(t, l.Ctx, 1)
+	inner, ok := l.Ctx[0].([]any)
+	require.True(t, ok)
+	return inner
+}
+
+func TestDirAsLocalSourcesLogsScanOutcome(t *testing.T) {
+	pluginRoot := filepath.Join("..", "testdata", "pluginRootWithDist")
+
+	t.Run("Logs how many plugin directories a path yielded", func(t *testing.T) {
+		logger := log.NewTestLogger()
+
+		got := DirAsLocalSources(&config.PluginManagementCfg{}, []string{pluginRoot}, plugins.ClassExternal, logger)
+
+		require.Len(t, got, 3)
+		require.Equal(t, 1, logger.InfoLogs.Calls)
+		require.Equal(t, "Scanned plugins directory", logger.InfoLogs.Message)
+		require.Equal(t, []any{"path", pluginRoot, "found", 3}, lastCtx(t, &logger.InfoLogs))
+		require.Equal(t, 0, logger.WarnLogs.Calls)
+	})
+
+	t.Run("Logs a missing directory instead of skipping it silently", func(t *testing.T) {
+		missing := filepath.Join(t.TempDir(), "nope")
+		logger := log.NewTestLogger()
+
+		got := DirAsLocalSources(&config.PluginManagementCfg{}, []string{missing}, plugins.ClassExternal, logger)
+
+		require.Empty(t, got)
+		require.Equal(t, 1, logger.InfoLogs.Calls)
+		require.Equal(t, "Skipping plugins directory as it does not exist", logger.InfoLogs.Message)
+		require.Equal(t, []any{"path", missing}, lastCtx(t, &logger.InfoLogs))
+	})
+
+	t.Run("Warns when no configured path yields a plugin", func(t *testing.T) {
+		missing := filepath.Join(t.TempDir(), "nope")
+		empty := t.TempDir()
+		logger := log.NewTestLogger()
+
+		got := DirAsLocalSources(&config.PluginManagementCfg{}, []string{missing, empty}, plugins.ClassExternal, logger)
+
+		require.Empty(t, got)
+		require.Equal(t, 1, logger.WarnLogs.Calls)
+		require.Equal(t, "No external or bundled plugins found in any configured plugins directory", logger.WarnLogs.Message)
+		require.Equal(t, []any{"paths", []string{missing, empty}}, lastCtx(t, &logger.WarnLogs))
+	})
+
+	t.Run("Does not warn when another path yields a plugin", func(t *testing.T) {
+		logger := log.NewTestLogger()
+		paths := []string{filepath.Join(t.TempDir(), "nope"), pluginRoot}
+
+		got := DirAsLocalSources(&config.PluginManagementCfg{}, paths, plugins.ClassExternal, logger)
+
+		require.Len(t, got, 3)
+		require.Equal(t, 0, logger.WarnLogs.Calls)
+	})
+
+	t.Run("Stays silent when no paths are configured", func(t *testing.T) {
+		logger := log.NewTestLogger()
+
+		require.Empty(t, DirAsLocalSources(&config.PluginManagementCfg{}, nil, plugins.ClassExternal, logger))
+		require.Equal(t, 0, logger.InfoLogs.Calls)
+		require.Equal(t, 0, logger.WarnLogs.Calls)
+	})
+}
+
 func TestLocalSource(t *testing.T) {
 	t.Run("NewLocalSource should always return plugins with StaticFS", func(t *testing.T) {
 		tmpDir := t.TempDir()
