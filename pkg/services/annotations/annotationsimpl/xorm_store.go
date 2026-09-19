@@ -727,6 +727,15 @@ func (r *xormRepositoryImpl) CleanOrphanedAnnotationTags(ctx context.Context) (i
 	})
 }
 
+func (r *xormRepositoryImpl) AnyAnnotationsExist(ctx context.Context) (bool, error) {
+	var exists bool
+	err := r.db.WithDbSession(ctx, func(session *db.Session) error {
+		_, err := session.SQL(`SELECT EXISTS(SELECT 1 FROM annotation)`).Get(&exists)
+		return err
+	})
+	return exists, err
+}
+
 func (r *xormRepositoryImpl) fetchIDs(ctx context.Context, table, condition string) ([]int64, error) {
 	sql := fmt.Sprintf(`SELECT id FROM %s`, table)
 	if condition == "" {
