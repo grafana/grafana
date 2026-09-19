@@ -70,16 +70,43 @@ func (f *fakeConfigClient) updateCallCount(orgID int64) int {
 // setSpec seeds a Config for orgID carrying the given externalRulerSync spec
 // fields. An empty datasourceUID seeds a config with no externalRulerSync set.
 func (f *fakeConfigClient) setSpec(orgID int64, datasourceUID string) {
+	f.setSpecWithPromote(orgID, datasourceUID, false)
+}
+
+// setSpecWithPromote is setSpec plus the promote flag.
+func (f *fakeConfigClient) setSpecWithPromote(orgID int64, datasourceUID string, promote bool) {
 	obj := &alertingrulesv0alpha1.Config{}
 	obj.SetNamespace(f.nsMapper(orgID))
 	obj.SetName(alertingrulesv0alpha1.ConfigSingletonName)
 	obj.SetResourceVersion("1")
 	if datasourceUID != "" {
-		obj.Spec.ExternalRulerSync = &alertingrulesv0alpha1.ConfigV0alpha1SpecExternalRulerSync{DatasourceUid: &datasourceUID}
+		spec := &alertingrulesv0alpha1.ConfigV0alpha1SpecExternalRulerSync{DatasourceUid: &datasourceUID}
+		spec.Promote = &promote
+		obj.Spec.ExternalRulerSync = spec
 	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.objects[obj.GetNamespace()] = obj
+}
+
+// setDatasourceUIDPreservingStatus changes only spec.externalRulerSync's
+// datasourceUid, keeping promote and status as they were — unlike
+// setSpec/setSpecWithPromote, which reset the whole object (status included).
+// Simulates a real spec-only PATCH, e.g. an admin re-pointing sync at a
+// different datasource after a previous promotion committed.
+func (f *fakeConfigClient) setDatasourceUIDPreservingStatus(orgID int64, datasourceUID string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	ns := f.nsMapper(orgID)
+	existing, ok := f.objects[ns]
+	if !ok || existing.Spec.ExternalRulerSync == nil {
+		return
+	}
+	updated := *existing
+	spec := *existing.Spec.ExternalRulerSync
+	spec.DatasourceUid = &datasourceUID
+	updated.Spec.ExternalRulerSync = &spec
+	f.objects[ns] = &updated
 }
 
 // statusFor returns the last-written status for orgID, or nil if none exists.
