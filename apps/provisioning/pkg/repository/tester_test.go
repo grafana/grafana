@@ -168,6 +168,50 @@ func TestTester_Test(t *testing.T) {
 	require.True(t, results.Success)
 }
 
+func TestTester_BranchProtection(t *testing.T) {
+	tests := []struct {
+		name       string
+		workflows  []provisioning.Workflow
+		protected  bool
+		checkError error
+		success    bool
+	}{
+		{name: "unprotected", workflows: []provisioning.Workflow{provisioning.WriteWorkflow}, success: true},
+		{name: "protected", workflows: []provisioning.Workflow{provisioning.WriteWorkflow}, protected: true},
+		{name: "check error", workflows: []provisioning.Workflow{provisioning.WriteWorkflow}, checkError: fmt.Errorf("failed")},
+		{name: "no write workflow", workflows: []provisioning.Workflow{provisioning.BranchWorkflow}, protected: true, success: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := &provisioning.Repository{Spec: provisioning.RepositorySpec{
+				Type:      provisioning.GitHubRepositoryType,
+				Workflows: tt.workflows,
+				GitHub:    &provisioning.GitHubRepositoryConfig{Branch: "main"},
+			}}
+			base := NewMockRepository(t)
+			base.On("Config").Return(config)
+			base.On("Test", mock.Anything).Return(&provisioning.TestResults{Code: http.StatusOK, Success: true}, nil)
+			checker := NewMockBranchProtectionChecker(t)
+			if len(tt.workflows) == 1 && tt.workflows[0] == provisioning.WriteWorkflow {
+				checker.EXPECT().CheckBranchProtection(mock.Anything, "main").Return(tt.protected, tt.checkError)
+			}
+			repository := struct {
+				*MockRepository
+				*MockBranchProtectionChecker
+			}{base, checker}
+
+			tester := NewTester()
+			result, err := tester.Test(t.Context(), repository)
+			require.NoError(t, err)
+			require.Equal(t, tt.success, result.Success)
+			if !tt.success {
+				require.Len(t, result.Errors, 1)
+			}
+		})
+	}
+}
+
 func TestFromFieldError(t *testing.T) {
 	tests := []struct {
 		name           string
