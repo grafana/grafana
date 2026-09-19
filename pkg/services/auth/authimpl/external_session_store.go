@@ -272,6 +272,26 @@ func (s *store) BatchDeleteExternalSessionsByUserIDs(ctx context.Context, userID
 }
 
 func (s *store) decryptSecrets(extSession *auth.ExternalSession) error {
+	if err := s.decryptOAuthSecrets(extSession); err != nil {
+		return err
+	}
+
+	var err error
+	extSession.NameID, err = s.decodeAndDecrypt(extSession.NameID)
+	if err != nil {
+		return err
+	}
+
+	extSession.SessionID, err = s.decodeAndDecrypt(extSession.SessionID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// decryptOAuthSecrets only decrypts the fields needed for OAuth passthrough.
+// Session authentication deliberately avoids decrypting SAML-only fields.
+func (s *store) decryptOAuthSecrets(extSession *auth.ExternalSession) error {
 	var err error
 	extSession.AccessToken, err = s.decodeAndDecrypt(extSession.AccessToken)
 	if err != nil {
@@ -284,16 +304,6 @@ func (s *store) decryptSecrets(extSession *auth.ExternalSession) error {
 	}
 
 	extSession.IDToken, err = s.decodeAndDecrypt(extSession.IDToken)
-	if err != nil {
-		return err
-	}
-
-	extSession.NameID, err = s.decodeAndDecrypt(extSession.NameID)
-	if err != nil {
-		return err
-	}
-
-	extSession.SessionID, err = s.decodeAndDecrypt(extSession.SessionID)
 	if err != nil {
 		return err
 	}

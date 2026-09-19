@@ -59,9 +59,20 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 		return nil, err
 	}
 
-	token, err := s.sessionService.LookupToken(ctx, rawSessionToken)
-	if err != nil {
-		return nil, err
+	var oauthInfo *auth.SessionTokenOAuthInfo
+	var token *auth.UserToken
+	// Only load the linked provider and decrypted credentials when requested.
+	if r.IncludeOAuthTokens {
+		oauthInfo, err = s.sessionService.LookupTokenForOAuth(ctx, rawSessionToken)
+		if err != nil {
+			return nil, err
+		}
+		token = oauthInfo.Token
+	} else {
+		token, err = s.sessionService.LookupToken(ctx, rawSessionToken)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if token.NeedsRotation(time.Duration(cfg.TokenRotationIntervalMinutes) * time.Minute) {
@@ -76,6 +87,13 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 			FetchSyncedUser: true,
 			SyncPermissions: true,
 		},
+	}
+	// Only reuse credentials together with their linked provider metadata.
+	if oauthInfo != nil && oauthInfo.HasAuthInfo {
+		ident.OAuthToken = oauthInfo.OAuthToken
+		ident.AuthID = oauthInfo.AuthID
+		ident.AuthenticatedBy = oauthInfo.AuthModule
+		return ident, nil
 	}
 
 	info, err := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: token.UserId})
