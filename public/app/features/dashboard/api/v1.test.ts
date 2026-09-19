@@ -550,6 +550,63 @@ describe('v1 dashboard API', () => {
     });
   });
 
+  describe('getDashboardHistoryVersions', () => {
+    it('should not request a large page size that would drain the fill-to-limit loop', async () => {
+      // Regression test for #131820 (bug 2). Previously this method called
+      // listDashboardHistory(uid, { limit: 1000 }) to "attempt finding the versions
+      // in one request". K8sDashboardAPI.listDashboardHistory runs a fill-to-limit
+      // loop that drains toward the requested limit by following k8s continue
+      // tokens, so a 1000-limit call defeated the early-exit and over-fetched the
+      // entire history. The fix uses VERSIONS_FETCH_LIMIT (10) per page so the
+      // outer do-while stops as soon as the requested versions are found.
+      const v1Item = { ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 7 } };
+      const v1Item2 = { ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 5 } };
+      const historyPage = {
+        metadata: { resourceVersion: '1' },
+        items: [v1Item, v1Item2],
+      };
+      mockGet.mockResolvedValueOnce(historyPage);
+
+      const api = new K8sDashboardAPI();
+      const result = await api.getDashboardHistoryVersions('dash-uid', [7, 5]);
+
+      expect(result).toHaveLength(2);
+      expect(result.map((r) => r.metadata.generation)).toEqual([7, 5]);
+      // The requested limit must be the small per-page limit (VERSIONS_FETCH_LIMIT = 10),
+      // not 1000, so a 1000-version dashboard does not drain to 1000 items just to
+      // find one specific version. The list call receives the limit via the second
+      // argument (the k8s ListOptions), not in the URL path.
+      expect(mockGet).toHaveBeenCalledTimes(1);
+      const listOpts = mockGet.mock.calls[0][1] as { limit: number; labelSelector: string; fieldSelector: string };
+      expect(listOpts.limit).toBe(10);
+    });
+
+    it('should paginate and stop early once the requested version is found', async () => {
+      const v1Item = { ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 1 } };
+      const page1 = {
+        metadata: { resourceVersion: '1', continue: 'token-page2' },
+        items: [
+          { ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 5 } },
+          { ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 4 } },
+        ],
+      };
+      const page2 = {
+        metadata: { resourceVersion: '1' },
+        items: [{ ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 3 } }, v1Item],
+      };
+      mockGet.mockResolvedValueOnce(page1).mockResolvedValueOnce(page2);
+
+      const api = new K8sDashboardAPI();
+      const result = await api.getDashboardHistoryVersions('dash-uid', [1]);
+
+      expect(result).toEqual([v1Item]);
+      expect(mockGet).toHaveBeenCalledTimes(2);
+      // First call uses no continue (initial fetch), second uses the page1 continue.
+      const secondCallOpts = mockGet.mock.calls[1][1] as { continue: string };
+      expect(secondCallOpts.continue).toBe('token-page2');
+    });
+  });
+
   describe('listDeletedDashboards', () => {
     it('should return table of deleted dashboards', async () => {
       const mockDeletedDashboards = {
