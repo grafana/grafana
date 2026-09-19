@@ -98,7 +98,7 @@ function isSameConfig(a: TransformationConfigs[number], b: TransformationConfigs
  * objects in Scene state still hold the literal `$var`. The resolved options are the only thing that
  * moves, so they are the only thing an effect can key on.
  */
-function useInterpolatedConfigs(configs: TransformationConfigs): TransformationConfigs {
+export function useInterpolatedConfigs(configs: TransformationConfigs): TransformationConfigs {
   return useStableArray(interpolateConfigs(configs), isSameConfig);
 }
 
