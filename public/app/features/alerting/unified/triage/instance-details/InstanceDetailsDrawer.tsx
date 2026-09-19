@@ -27,6 +27,7 @@ import { alertRuleApi } from '../../api/alertRuleApi';
 import { stateHistoryApi } from '../../api/stateHistoryApi';
 import { getThresholdsForQueries } from '../../components/rule-editor/util';
 import { EventState } from '../../components/rules/central-state-history/EventListSceneObject';
+import { EvaluationMatches } from '../../components/rules/state-history/EvaluationMatches';
 import { type LogRecord, historyDataFrameToLogRecords } from '../../components/rules/state-history/common';
 import { isAlertQueryOfAlertData } from '../../rule-editor/formProcessing';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -433,6 +434,7 @@ function InstanceStateTransitions({
           <EventState state={record.line.previous} showLabel addFilter={noop} type="from" />
           <Icon name="arrow-right" size="sm" />
           <EventState state={record.line.current} showLabel addFilter={noop} type="to" />
+          {record.line.evalMatches && <EvaluationMatches matches={record.line.evalMatches} />}
         </Fragment>
       ))}
     </div>
