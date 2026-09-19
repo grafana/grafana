@@ -316,7 +316,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       roles: () =>
         contextSrv.evaluatePermission([AccessControlAction.PluginsInstall, AccessControlAction.PluginsWrite]),
       component:
-        isDevEnv || config.featureToggles.enableExtensionsAdminPage
+        isDevEnv || getFeatureFlagClient().getBooleanValue(FlagKeys.EnableExtensionsAdminPage, false)
           ? SafeDynamicImport(
               () =>
                 import(/* webpackChunkName: "PluginExtensionsLog" */ 'app/features/plugins/extensions/logs/LogViewer')
