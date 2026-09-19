@@ -153,6 +153,9 @@ func (st DBstore) getLatestVersionOfRulesByUID(ctx context.Context, orgID int64,
 			}
 			result = append(result, *rule)
 		}
+		if err := rows.Err(); err != nil {
+			return err
+		}
 		return nil
 	})
 	if err != nil {
@@ -302,6 +305,9 @@ func (st DBstore) GetAlertRuleVersions(ctx context.Context, orgID int64, guid st
 			previousVersion = rule
 			alertRules = append(alertRules, &converted)
 		}
+		if err := rows.Err(); err != nil {
+			return err
+		}
 		return nil
 	})
 	if err != nil {
@@ -366,6 +372,9 @@ func (st DBstore) ListDeletedRules(ctx context.Context, orgID int64) ([]*ngmodel
 				continue
 			}
 			alertRules = append(alertRules, &converted)
+		}
+		if err := rows.Err(); err != nil {
+			return err
 		}
 		return nil
 	})
