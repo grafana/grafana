@@ -78,8 +78,12 @@ Inspect query request and response data when you want to troubleshoot a query th
 
 Panels with errors or notices display an icon in the top-left corner, before the panel title.
 The icon is dynamic, reflecting the highest severity notice on a panel.
-When you hover your cursor over the icon, the tooltip shows all the panel errors, sorted by severity:
 
-![Errors and notices tooltip displayed on a panel](./screenshot-errors-notices-tooltip-v13.3.png)
+To inspect errors and notices, follow these steps:
 
-Click the icon to open the drawer where you can see the full text of errors and notices.
+1. Navigate to the panel you want to view.
+1. Hover your cursor over the icon to display a tooltip that shows all the panel errors and notices, sorted by severity:
+
+   ![Errors and notices tooltip displayed on a panel](./screenshot-errors-notices-tooltip-v13.3.png)
+
+1. Click the icon to open the drawer where you can see the full text of errors and notices.
