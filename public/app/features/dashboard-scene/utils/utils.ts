@@ -38,6 +38,7 @@ import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutM
 import { type DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
+import { pluginTransformationsEnabled } from '../scene/systemTransformations';
 import { type DashboardDropTarget } from '../scene/types/DashboardDropTarget';
 import { type DashboardSceneState } from '../scene/types/dashboard';
 
@@ -273,6 +274,8 @@ export async function getDefaultVizPanel(): Promise<VizPanel> {
   const datasourceSettings = await getDataSourceInstanceSettings(null);
 
   return new VizPanel({
+    // Runtime only, from the rollout flag - it is deliberately not part of the save model.
+    applyPluginTransformations: pluginTransformationsEnabled(),
     title: newPanelTitle,
     pluginId: defaultPluginId,
     seriesLimit: config.panelSeriesLimit,

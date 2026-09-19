@@ -1040,6 +1040,74 @@ describe('DashboardDatasourceBehaviour', () => {
     expect(spy).toHaveBeenCalled();
   });
 
+  describe('source panel without user transformations', () => {
+    let sourcePanel: VizPanel;
+    let spy: jest.SpyInstance;
+    let deactivate: (() => void) | undefined;
+
+    beforeEach(() => {
+      deactivate = undefined;
+      sourcePanel = new VizPanel({
+        title: 'Panel A',
+        pluginId: 'table',
+        key: 'panel-1',
+        $data: new SceneDataTransformer({
+          transformations: [],
+          $data: new SceneQueryRunner({
+            datasource: { uid: 'grafana' },
+            queries: [{ refId: 'A', queryType: 'randomWalk' }],
+          }),
+        }),
+      });
+
+      const dashboardDSPanel = new VizPanel({
+        title: 'Panel B',
+        pluginId: 'table',
+        key: 'panel-2',
+        $data: new SceneDataTransformer({
+          transformations: [],
+          $data: new SceneQueryRunner({
+            datasource: { uid: MIXED_DATASOURCE_NAME },
+            queries: [{ datasource: { uid: SHARED_DASHBOARD_QUERY }, refId: 'B', panelId: 1 }],
+            $behaviors: [new DashboardDatasourceBehaviour({})],
+          }),
+        }),
+      });
+
+      new DashboardScene({
+        title: 'hello',
+        uid: 'dash-1',
+        meta: { canEdit: true },
+        body: DefaultGridLayoutManager.fromVizPanels([sourcePanel, dashboardDSPanel]),
+      });
+
+      const queryRunner = dashboardDSPanel.state.$data!.state.$data as SceneQueryRunner;
+      spy = jest.spyOn(queryRunner, 'runQueries').mockImplementation();
+      const behavior = queryRunner.state.$behaviors![0] as DashboardDatasourceBehaviour;
+      deactivate = behavior.activate();
+    });
+
+    afterEach(() => {
+      deactivate?.();
+      spy?.mockRestore();
+    });
+
+    it('reruns the consumer when the source transformer updates', () => {
+      expect(spy).not.toHaveBeenCalled();
+
+      (sourcePanel.state.$data as SceneDataTransformer).setState({
+        data: {
+          state: LoadingState.Done,
+          series: [],
+          timeRange: getDefaultTimeRange(),
+          request: { requestId: 'new-request-id' } as DataQueryRequest,
+        },
+      });
+
+      expect(spy).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('Cancel and streaming scenarios', () => {
     it('Should NOT re-run query when source panel is cancelled (same requestId)', async () => {
       jest.spyOn(console, 'error').mockImplementation();
