@@ -39,7 +39,8 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			require.Len(t, cdt.QueryDataReq.GetHTTPHeaders(), 0)
+			require.Len(t, cdt.QueryDataReq.GetHTTPHeaders(), 1)
+			require.Equal(t, `api`, cdt.QueryDataReq.GetHTTPHeader(`X-Grafana-Source`))
 		})
 
 		t.Run("tracing headers are not set for health check", func(t *testing.T) {
@@ -57,7 +58,8 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			require.Len(t, cdt.CheckHealthReq.GetHTTPHeaders(), 0)
+			require.Len(t, cdt.CheckHealthReq.GetHTTPHeaders(), 1)
+			require.Equal(t, `api`, cdt.CheckHealthReq.GetHTTPHeader(`X-Grafana-Source`))
 		})
 
 		t.Run("tracing headers are not set for call resource", func(t *testing.T) {
@@ -74,7 +76,8 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 			}, nopCallResourceSender)
 			require.NoError(t, err)
 
-			require.Len(t, cdt.CallResourceReq.GetHTTPHeaders(), 0)
+			require.Len(t, cdt.CallResourceReq.GetHTTPHeaders(), 1)
+			require.Equal(t, `api`, cdt.CallResourceReq.GetHTTPHeader(`X-Grafana-Source`))
 		})
 	})
 	t.Run("When a request comes in with tracing headers empty", func(t *testing.T) {
@@ -100,7 +103,8 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			require.Len(t, cdt.QueryDataReq.GetHTTPHeaders(), 0)
+			require.Len(t, cdt.QueryDataReq.GetHTTPHeaders(), 1)
+
 		})
 
 		t.Run("tracing headers are not set for health check", func(t *testing.T) {
@@ -118,7 +122,8 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			require.Len(t, cdt.CheckHealthReq.GetHTTPHeaders(), 0)
+			require.Len(t, cdt.CheckHealthReq.GetHTTPHeaders(), 1)
+			require.Equal(t, `api`, cdt.CheckHealthReq.GetHTTPHeader(`X-Grafana-Source`))
 		})
 	})
 	t.Run("When a request comes in with tracing headers set", func(t *testing.T) {
@@ -152,7 +157,7 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			require.Len(t, cdt.QueryDataReq.GetHTTPHeaders(), 7)
+			require.Len(t, cdt.QueryDataReq.GetHTTPHeaders(), 8)
 			require.Equal(t, `lN53lOcVk`, cdt.QueryDataReq.GetHTTPHeader(`X-Dashboard-Uid`))
 			require.Equal(t, `aIyC_OcVz`, cdt.QueryDataReq.GetHTTPHeader(`X-Datasource-Uid`))
 			require.Equal(t, `1`, cdt.QueryDataReq.GetHTTPHeader(`X-Grafana-Org-Id`))
@@ -160,6 +165,7 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 			require.Equal(t, `d26e337d-cb53-481a-9212-0112537b3c1a`, cdt.QueryDataReq.GetHTTPHeader(`X-Query-Group-Id`))
 			require.Equal(t, `true`, cdt.QueryDataReq.GetHTTPHeader(`X-Grafana-From-Expr`))
 			require.Equal(t, `grafana-assistant-app`, cdt.QueryDataReq.GetHTTPHeader(`X-Grafana-Caller-Id`))
+			require.Equal(t, `api`, cdt.QueryDataReq.GetHTTPHeader(`X-Grafana-Source`))
 		})
 
 		t.Run("tracing headers are set for query chunked data", func(t *testing.T) {
@@ -177,7 +183,7 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 			}, nopChunkedWriter{})
 			require.NoError(t, err)
 
-			require.Len(t, cdt.QueryChunkedDataReq.GetHTTPHeaders(), 7)
+			require.Len(t, cdt.QueryChunkedDataReq.GetHTTPHeaders(), 8)
 			require.Equal(t, `lN53lOcVk`, cdt.QueryChunkedDataReq.GetHTTPHeader(`X-Dashboard-Uid`))
 			require.Equal(t, `aIyC_OcVz`, cdt.QueryChunkedDataReq.GetHTTPHeader(`X-Datasource-Uid`))
 			require.Equal(t, `1`, cdt.QueryChunkedDataReq.GetHTTPHeader(`X-Grafana-Org-Id`))
@@ -202,7 +208,7 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			require.Len(t, cdt.CheckHealthReq.GetHTTPHeaders(), 7)
+			require.Len(t, cdt.CheckHealthReq.GetHTTPHeaders(), 8)
 			require.Equal(t, `lN53lOcVk`, cdt.CheckHealthReq.GetHTTPHeader(`X-Dashboard-Uid`))
 			require.Equal(t, `aIyC_OcVz`, cdt.CheckHealthReq.GetHTTPHeader(`X-Datasource-Uid`))
 			require.Equal(t, `1`, cdt.CheckHealthReq.GetHTTPHeader(`X-Grafana-Org-Id`))
@@ -226,7 +232,7 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 			}, nopCallResourceSender)
 			require.NoError(t, err)
 
-			require.Len(t, cdt.CallResourceReq.GetHTTPHeaders(), 7)
+			require.Len(t, cdt.CallResourceReq.GetHTTPHeaders(), 8)
 			require.Equal(t, `lN53lOcVk`, cdt.CallResourceReq.GetHTTPHeader(`X-Dashboard-Uid`))
 			require.Equal(t, `aIyC_OcVz`, cdt.CallResourceReq.GetHTTPHeader(`X-Datasource-Uid`))
 			require.Equal(t, `1`, cdt.CallResourceReq.GetHTTPHeader(`X-Grafana-Org-Id`))
@@ -251,7 +257,7 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			require.Len(t, cdt.SubscribeStreamReq.GetHTTPHeaders(), 7)
+			require.Len(t, cdt.SubscribeStreamReq.GetHTTPHeaders(), 8)
 			require.Equal(t, `lN53lOcVk`, cdt.SubscribeStreamReq.GetHTTPHeader(`X-Dashboard-Uid`))
 			require.Equal(t, `aIyC_OcVz`, cdt.SubscribeStreamReq.GetHTTPHeader(`X-Datasource-Uid`))
 			require.Equal(t, `1`, cdt.SubscribeStreamReq.GetHTTPHeader(`X-Grafana-Org-Id`))
@@ -276,7 +282,7 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			require.Len(t, cdt.PublishStreamReq.GetHTTPHeaders(), 7)
+			require.Len(t, cdt.PublishStreamReq.GetHTTPHeaders(), 8)
 			require.Equal(t, `lN53lOcVk`, cdt.PublishStreamReq.GetHTTPHeader(`X-Dashboard-Uid`))
 			require.Equal(t, `aIyC_OcVz`, cdt.PublishStreamReq.GetHTTPHeader(`X-Datasource-Uid`))
 			require.Equal(t, `1`, cdt.PublishStreamReq.GetHTTPHeader(`X-Grafana-Org-Id`))
@@ -301,7 +307,7 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 			}, &backend.StreamSender{})
 			require.NoError(t, err)
 
-			require.Len(t, cdt.RunStreamReq.GetHTTPHeaders(), 7)
+			require.Len(t, cdt.RunStreamReq.GetHTTPHeaders(), 8)
 			require.Equal(t, `lN53lOcVk`, cdt.RunStreamReq.GetHTTPHeader(`X-Dashboard-Uid`))
 			require.Equal(t, `aIyC_OcVz`, cdt.RunStreamReq.GetHTTPHeader(`X-Datasource-Uid`))
 			require.Equal(t, `1`, cdt.RunStreamReq.GetHTTPHeader(`X-Grafana-Org-Id`))
@@ -309,6 +315,50 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 			require.Equal(t, `d26e337d-cb53-481a-9212-0112537b3c1a`, cdt.RunStreamReq.GetHTTPHeader(`X-Query-Group-Id`))
 			require.Equal(t, `true`, cdt.RunStreamReq.GetHTTPHeader(`X-Grafana-From-Expr`))
 			require.Equal(t, `grafana-assistant-app`, cdt.RunStreamReq.GetHTTPHeader(`X-Grafana-Caller-Id`))
+		})
+
+		t.Run("sets source attribution", func(t *testing.T) {
+			cases := []struct {
+				name           string
+				incomingSource string
+				fromAlert      string
+				wantSource     string
+			}{
+				{name: "defaults to api", wantSource: "api"},
+				{name: "dashboard", incomingSource: "dashboard", wantSource: "dashboard"},
+				{name: "explore", incomingSource: "explore", wantSource: "explore"},
+				{name: "alerting overrides client source", incomingSource: "dashboard", fromAlert: "true", wantSource: "alerting"},
+				{name: "unknown source defaults to api", incomingSource: "unknown", wantSource: "api"},
+			}
+
+			for _, tc := range cases {
+				t.Run(tc.name, func(t *testing.T) {
+					req, err := http.NewRequest(http.MethodGet, "/some/thing", nil)
+					require.NoError(t, err)
+
+					if tc.incomingSource != "" {
+						req.Header.Set(`X-Grafana-Source`, tc.incomingSource)
+					}
+					if tc.fromAlert != "" {
+						req.Header.Set(`FromAlert`, tc.fromAlert)
+					}
+
+					cdt := handlertest.NewHandlerMiddlewareTest(t,
+						WithReqContext(req, &user.SignedInUser{
+							IsAnonymous: true,
+							Login:       "anonymous",
+						}),
+						handlertest.WithMiddlewares(NewTracingHeaderMiddleware()),
+					)
+
+					_, err = cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
+						PluginContext: pluginCtx,
+						Headers:       map[string]string{},
+					})
+					require.NoError(t, err)
+					require.Equal(t, tc.wantSource, cdt.QueryDataReq.GetHTTPHeader(`X-Grafana-Source`))
+				})
+			}
 		})
 
 		t.Run("sanitizes header values to printable ASCII for gRPC", func(t *testing.T) {
