@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { type NavModelItem, type GrafanaTheme2 } from '@grafana/data';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Heading, Icon, useStyles2 } from '@grafana/ui';
 
 import { AccentBoxBadge } from '../AccentBoxBadge/AccentBoxBadge';
 import { PageInfo } from '../PageInfo/PageInfo';
@@ -41,7 +41,7 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEd
             ) : renderTitle ? (
               renderTitle(navItem.text)
             ) : (
-              <h1>{navItem.text}</h1>
+              <Heading variant="h1">{navItem.text}</Heading>
             )}
           </div>
           {info && <PageInfo info={info} />}

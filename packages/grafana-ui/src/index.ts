@@ -281,6 +281,17 @@ export {
 export { Link } from './components/Link/Link';
 export { TextLink } from './components/Link/TextLink';
 export { Text } from './components/Text/Text';
+export {
+  Heading,
+  HeadingElement,
+  HeadingRoot,
+  HeadingSection,
+  type HeadingLevel,
+  type HeadingElementProps,
+  type HeadingProps,
+  type HeadingRootProps,
+  type HeadingSectionProps,
+} from './components/Heading/Heading';
 export { Box } from './components/Layout/Box/Box';
 export { Stack } from './components/Layout/Stack/Stack';
 export { Grid } from './components/Layout/Grid/Grid';
