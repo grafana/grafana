@@ -898,6 +898,64 @@ func (_c *MockRepositoryResources_Stats_Call) RunAndReturn(run func(context.Cont
 	return _c
 }
 
+// ResourceFilePath provides a mock function with given fields: ctx, obj, options
+func (_m *MockRepositoryResources) ResourceFilePath(ctx context.Context, obj *unstructured.Unstructured, options WriteOptions) (string, error) {
+	ret := _m.Called(ctx, obj, options)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ResourceFilePath")
+	}
+
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *unstructured.Unstructured, WriteOptions) (string, error)); ok {
+		return rf(ctx, obj, options)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *unstructured.Unstructured, WriteOptions) string); ok {
+		r0 = rf(ctx, obj, options)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *unstructured.Unstructured, WriteOptions) error); ok {
+		r1 = rf(ctx, obj, options)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockRepositoryResources_ResourceFilePath_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResourceFilePath'
+type MockRepositoryResources_ResourceFilePath_Call struct {
+	*mock.Call
+}
+
+// ResourceFilePath is a helper method to define mock.On call
+//   - ctx context.Context
+//   - obj *unstructured.Unstructured
+//   - options WriteOptions
+func (_e *MockRepositoryResources_Expecter) ResourceFilePath(ctx interface{}, obj interface{}, options interface{}) *MockRepositoryResources_ResourceFilePath_Call {
+	return &MockRepositoryResources_ResourceFilePath_Call{Call: _e.mock.On("ResourceFilePath", ctx, obj, options)}
+}
+
+func (_c *MockRepositoryResources_ResourceFilePath_Call) Run(run func(ctx context.Context, obj *unstructured.Unstructured, options WriteOptions)) *MockRepositoryResources_ResourceFilePath_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*unstructured.Unstructured), args[2].(WriteOptions))
+	})
+	return _c
+}
+
+func (_c *MockRepositoryResources_ResourceFilePath_Call) Return(_a0 string, _a1 error) *MockRepositoryResources_ResourceFilePath_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockRepositoryResources_ResourceFilePath_Call) RunAndReturn(run func(context.Context, *unstructured.Unstructured, WriteOptions) (string, error)) *MockRepositoryResources_ResourceFilePath_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // WriteResourceFileFromObject provides a mock function with given fields: ctx, obj, options
 func (_m *MockRepositoryResources) WriteResourceFileFromObject(ctx context.Context, obj *unstructured.Unstructured, options WriteOptions) (string, int, error) {
 	ret := _m.Called(ctx, obj, options)
