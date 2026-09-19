@@ -129,10 +129,6 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 			Backend: backend,
 		})
 		require.NoError(t, err)
-
-		// Issue a health check to ensure the server is initialized
-		_, err = server.IsHealthy(ctx, &resourcepb.HealthCheckRequest{}) //nolint:staticcheck
-		require.NoError(t, err)
 	case StorageTypeUnified:
 		testutil.SkipIntegrationTestInShortMode(t)
 		dbstore := infraDB.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
@@ -163,6 +159,9 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		t.Fatalf("unsupported storage type: %s", setupOpts.storageType)
 	}
 	client := resource.NewLocalResourceClient(server)
+	if setupOpts.storageType == StorageTypeFile {
+		waitForWatchReady(t, ctx, client, setupOpts.groupResource)
+	}
 
 	config := storagebackend.NewDefaultConfig(setupOpts.prefix, setupOpts.codec)
 	store, destroyFunc, err := apistore.NewStorage(
@@ -189,6 +188,26 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 	return ctx, store, destroyFunc, nil
 }
 
+// Unlike a health check, an initial bookmark waits for asynchronous watch-cache
+// initialization without inserting objects into the otherwise empty test store.
+func waitForWatchReady(t testing.TB, ctx context.Context, client resourcepb.ResourceStoreClient, gr schema.GroupResource) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	stream, err := client.Watch(ctx, &resourcepb.WatchRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Group: gr.Group, Resource: gr.Resource,
+		}},
+		SendInitialEvents:   true,
+		AllowWatchBookmarks: true,
+	})
+	require.NoError(t, err)
+	event, err := stream.Recv()
+	require.NoError(t, err, "waiting for watch-cache initialization")
+	require.Equal(t, resourcepb.WatchEvent_BOOKMARK, event.Type)
+}
+
 func TestIntegrationWatch(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -197,10 +216,6 @@ func TestIntegrationWatch(t *testing.T) {
 			ctx, store, destroyFunc, err := testSetup(t, withStorageType(s))
 			defer destroyFunc()
 			require.NoError(t, err)
-			// Anchor the first LIST RV in durable history so asynchronous watch startup
-			// cannot expire an empty-store cursor before the delivery assertions run.
-			baseline := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "baseline", Namespace: "watch-baseline"}}
-			require.NoError(t, store.Create(ctx, storagetesting.KeyFunc(baseline.Namespace, baseline.Name), baseline, &example.Pod{}, 0))
 			storagetesting.RunTestWatch(ctx, t, store)
 		})
 	}
