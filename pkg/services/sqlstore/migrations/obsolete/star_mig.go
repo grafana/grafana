@@ -1,4 +1,4 @@
-package migrations
+package obsolete
 
 import (
 	"fmt"
@@ -7,8 +7,18 @@ import (
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
+func StarsMigrations() *ObsoleteMigrations {
+	mg := &ObsoleteMigrations{
+		Table:      "star",
+		Migrations: make([]Migration, 0),
+	}
+	addStarMigrations(mg)
+	addDashboardUIDStarMigrations(mg)
+	return mg
+}
+
 // does not rely on dashboard table existing, can be run before dashboard migrations
-func addStarMigrations(mg *Migrator) {
+func addStarMigrations(mg Migrations) {
 	starV1 := Table{
 		Name: "star",
 		Columns: []*Column{
@@ -43,7 +53,7 @@ func addStarMigrations(mg *Migrator) {
 }
 
 // relies on the dashboard table existing & must be run after the dashboard migrations are run
-func addDashboardUIDStarMigrations(mg *Migrator) {
+func addDashboardUIDStarMigrations(mg Migrations) {
 	mg.AddMigration("Add missing dashboard_uid and org_id to star", &FillDashbordUIDMigration{})
 }
 
