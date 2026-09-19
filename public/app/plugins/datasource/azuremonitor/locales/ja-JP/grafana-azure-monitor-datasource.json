@@ -53,6 +53,11 @@
       "placeholder-symbol-client-secret": "設定済み",
       "reset-symbol-client-secret": "リセット"
     },
+    "auxiliary-logs-toggle": {
+      "aria-label-enable-auxiliary-logs": "",
+      "description-auxiliary-logs": "",
+      "label-enable-auxiliary-logs": ""
+    },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "{{queryDisplayName}}の生クエリ",
       "aria-label-use-query": "このクエリボタンを使用",
@@ -105,11 +110,11 @@
       "load-subscriptions": "サブスクリプションを読み込む"
     },
     "dimension-fields": {
-      "aria-label-field": "",
-      "aria-label-operator": "",
-      "aria-label-remove": "",
-      "aria-label-value": "",
-      "aria-label-values": "",
+      "aria-label-field": "ディメンション{{position}}フィールド",
+      "aria-label-operator": "ディメンション{{position}}演算子",
+      "aria-label-remove": "ディメンション{{position}}を削除",
+      "aria-label-value": "ディメンション{{position}}値",
+      "aria-label-values": "ディメンション{{position}}値",
       "label-dimensions": "ディメンション",
       "placeholder-field": "フィールド",
       "placeholder-operation": "操作",
@@ -182,19 +187,47 @@
       "tooltip-limit": "返される行数を制限します（デフォルトは1000）。"
     },
     "logs-management": {
+      "body-auxiliary-logs-queries": "",
       "body-basic-logs-queries": "基本ログに切り替えてもよろしいですか？",
       "confirmText-confirm": "確認",
+      "description-auxiliary-logs-queries": "",
       "description-basic-logs-queries": "基本ログクエリを使用すると、スキャンされたデータ量に基づいてコストが発生します。",
+      "label-analytics": "",
+      "label-auxiliary": "",
+      "label-basic": "",
       "label-logs": "ログ",
+      "title-auxiliary-logs-queries": "",
       "title-basic-logs-queries": "基本ログクエリ",
-      "tooltip-logs": "基本ログクエリまたは分析ログクエリのどちらを実行するかを指定します。"
+      "tooltip-logs": "基本ログクエリまたは分析ログクエリのどちらを実行するかを指定します。",
+      "tooltip-logs-all": "",
+      "tooltip-logs-aux": ""
     },
     "logs-query-builder": {
       "title-no-tables": "リソースは正常に読み込まれましたが、テーブルがありません"
     },
     "logs-query-editor": {
       "learn-more": "詳細を見る",
-      "view-query": "Azure Portalでクエリを表示"
+      "notice-auxiliary-single-resource": "",
+      "notice-basic-single-resource": "",
+      "notice-same-resource-type": "",
+      "tier-switch-body-analytics": "",
+      "tier-switch-body-auxiliary": "",
+      "tier-switch-body-basic": "",
+      "tier-switch-revert": "",
+      "tier-switch-title": "",
+      "view-query": "Azure Portalでクエリを表示",
+      "warning-auxiliary-data-ingested": "",
+      "warning-auxiliary-raw": "",
+      "warning-basic-raw": "",
+      "warning-data-ingested": ""
+    },
+    "logs-table-section": {
+      "description-auxiliary-disabled": "",
+      "description-auxiliary-enabled": "",
+      "description-basic-disabled": "",
+      "description-basic-enabled": "",
+      "description-plan-unavailable": "",
+      "label-all-columns": ""
     },
     "metric-name-field": {
       "label-metric": "メトリック"

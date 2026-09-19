@@ -53,6 +53,11 @@
       "placeholder-symbol-client-secret": "установлен",
       "reset-symbol-client-secret": "Сброс"
     },
+    "auxiliary-logs-toggle": {
+      "aria-label-enable-auxiliary-logs": "",
+      "description-auxiliary-logs": "",
+      "label-enable-auxiliary-logs": ""
+    },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "Необработанный запрос {{queryDisplayName}}",
       "aria-label-use-query": "Использовать кнопку запроса",
@@ -105,11 +110,11 @@
       "load-subscriptions": "Загрузить подписки"
     },
     "dimension-fields": {
-      "aria-label-field": "",
-      "aria-label-operator": "",
-      "aria-label-remove": "",
-      "aria-label-value": "",
-      "aria-label-values": "",
+      "aria-label-field": "Поле измерения {{position}}",
+      "aria-label-operator": "Оператор измерения {{position}}",
+      "aria-label-remove": "Удалить измерение {{position}}",
+      "aria-label-value": "Значение измерения {{position}}",
+      "aria-label-values": "Значения измерения {{position}}",
       "label-dimensions": "Размеры",
       "placeholder-field": "Поле",
       "placeholder-operation": "Операция",
@@ -182,19 +187,47 @@
       "tooltip-limit": "Установите ограничение по количеству возвращаемых строк (по умолчанию — 1000)."
     },
     "logs-management": {
+      "body-auxiliary-logs-queries": "",
       "body-basic-logs-queries": "Действительно перейти на базовые журналы?",
       "confirmText-confirm": "Подтвердить",
+      "description-auxiliary-logs-queries": "",
       "description-basic-logs-queries": "Запросы базовых журналов являются платными. Затраты зависят от объема сканируемых данных.",
+      "label-analytics": "",
+      "label-auxiliary": "",
+      "label-basic": "",
       "label-logs": "Журналы",
+      "title-auxiliary-logs-queries": "",
       "title-basic-logs-queries": "Запросы базовых журналов",
-      "tooltip-logs": "Указывает, следует ли выполнять запросы базовых или аналитических журналов."
+      "tooltip-logs": "Указывает, следует ли выполнять запросы базовых или аналитических журналов.",
+      "tooltip-logs-all": "",
+      "tooltip-logs-aux": ""
     },
     "logs-query-builder": {
       "title-no-tables": "Ресурс загружен, но без таблиц"
     },
     "logs-query-editor": {
       "learn-more": "Подробнее",
-      "view-query": "Просмотр запроса на портале Azure"
+      "notice-auxiliary-single-resource": "",
+      "notice-basic-single-resource": "",
+      "notice-same-resource-type": "",
+      "tier-switch-body-analytics": "",
+      "tier-switch-body-auxiliary": "",
+      "tier-switch-body-basic": "",
+      "tier-switch-revert": "",
+      "tier-switch-title": "",
+      "view-query": "Просмотр запроса на портале Azure",
+      "warning-auxiliary-data-ingested": "",
+      "warning-auxiliary-raw": "",
+      "warning-basic-raw": "",
+      "warning-data-ingested": ""
+    },
+    "logs-table-section": {
+      "description-auxiliary-disabled": "",
+      "description-auxiliary-enabled": "",
+      "description-basic-disabled": "",
+      "description-basic-enabled": "",
+      "description-plan-unavailable": "",
+      "label-all-columns": ""
     },
     "metric-name-field": {
       "label-metric": "Метрика"

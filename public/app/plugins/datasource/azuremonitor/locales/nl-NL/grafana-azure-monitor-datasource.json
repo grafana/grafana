@@ -53,6 +53,11 @@
       "placeholder-symbol-client-secret": "geconfigureerd",
       "reset-symbol-client-secret": "Resetten"
     },
+    "auxiliary-logs-toggle": {
+      "aria-label-enable-auxiliary-logs": "",
+      "description-auxiliary-logs": "",
+      "label-enable-auxiliary-logs": ""
+    },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "{{queryDisplayName}} onbewerkte query",
       "aria-label-use-query": "Knop Gebruik deze query",
@@ -105,11 +110,11 @@
       "load-subscriptions": "Abonnementen laden"
     },
     "dimension-fields": {
-      "aria-label-field": "",
-      "aria-label-operator": "",
-      "aria-label-remove": "",
-      "aria-label-value": "",
-      "aria-label-values": "",
+      "aria-label-field": "Dimensieveld {{position}}",
+      "aria-label-operator": "Dimensieoperator {{position}}",
+      "aria-label-remove": "Verwijder dimensie {{position}}",
+      "aria-label-value": "Dimensiewaarde {{position}}",
+      "aria-label-values": "Dimensiewaarden {{position}}",
       "label-dimensions": "Dimensies",
       "placeholder-field": "Veld",
       "placeholder-operation": "Werking",
@@ -182,19 +187,47 @@
       "tooltip-limit": "Beperk het aantal geretourneerde rijen (standaard is 1000)."
     },
     "logs-management": {
+      "body-auxiliary-logs-queries": "",
       "body-basic-logs-queries": "Weet je zeker dat je wilt overschakelen naar Basislogs?",
       "confirmText-confirm": "Bevestigen",
+      "description-auxiliary-logs-queries": "",
       "description-basic-logs-queries": "Basislogquery's brengen kosten met zich mee op basis van de hoeveelheid gescande gegevens.",
+      "label-analytics": "",
+      "label-auxiliary": "",
+      "label-basic": "",
       "label-logs": "Logs",
+      "title-auxiliary-logs-queries": "",
       "title-basic-logs-queries": "Basislogquery's",
-      "tooltip-logs": "Geeft aan of een basis- of analytische logquery moet worden uitgevoerd."
+      "tooltip-logs": "Geeft aan of een basis- of analytische logquery moet worden uitgevoerd.",
+      "tooltip-logs-all": "",
+      "tooltip-logs-aux": ""
     },
     "logs-query-builder": {
       "title-no-tables": "Bron is geladen, maar zonder tabellen"
     },
     "logs-query-editor": {
       "learn-more": "Meer informatie ",
-      "view-query": "Query bekijken in Azure Portal"
+      "notice-auxiliary-single-resource": "",
+      "notice-basic-single-resource": "",
+      "notice-same-resource-type": "",
+      "tier-switch-body-analytics": "",
+      "tier-switch-body-auxiliary": "",
+      "tier-switch-body-basic": "",
+      "tier-switch-revert": "",
+      "tier-switch-title": "",
+      "view-query": "Query bekijken in Azure Portal",
+      "warning-auxiliary-data-ingested": "",
+      "warning-auxiliary-raw": "",
+      "warning-basic-raw": "",
+      "warning-data-ingested": ""
+    },
+    "logs-table-section": {
+      "description-auxiliary-disabled": "",
+      "description-auxiliary-enabled": "",
+      "description-basic-disabled": "",
+      "description-basic-enabled": "",
+      "description-plan-unavailable": "",
+      "label-all-columns": ""
     },
     "metric-name-field": {
       "label-metric": "Metrisch"
