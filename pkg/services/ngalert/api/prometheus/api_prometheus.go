@@ -174,7 +174,23 @@ func PrepareAlertStatuses(ctx context.Context, manager state.AlertInstanceManage
 	return alertResponse
 }
 
+func formatEvaluationMatches(matches []state.EvaluationMatch) string {
+	formatted := make([]string, 0, len(matches))
+	for _, match := range matches {
+		value := "null"
+		if match.Value != nil {
+			value = strconv.FormatFloat(*match.Value, 'g', -1, 64)
+		}
+		formatted = append(formatted, fmt.Sprintf("[ var='%s' metric='%s' labels={%s} type='classic_conditions' value=%s ]", match.RefID, match.Metric, match.Labels, value))
+	}
+	return strings.Join(formatted, ", ")
+}
+
 func FormatValues(alertState *state.State) string {
+	if len(alertState.EvalMatches) > 0 {
+		return formatEvaluationMatches(alertState.EvalMatches)
+	}
+
 	var fv string
 	values := alertState.GetLastEvaluationValuesForCondition()
 

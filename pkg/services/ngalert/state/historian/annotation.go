@@ -272,6 +272,9 @@ func buildAnnotationTextAndData(rule history_model.RuleMeta, currentState *state
 			values = append(values, fmt.Sprintf("%s=%f", k, currentState.Values[k]))
 		}
 		jsonData.Set("values", jsonifyValues(currentState.Values))
+		if len(currentState.EvalMatches) > 0 {
+			jsonData.Set("evalMatches", currentState.EvalMatches)
+		}
 		value = strings.Join(values, ", ")
 	}
 

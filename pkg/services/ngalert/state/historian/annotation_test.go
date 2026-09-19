@@ -296,18 +296,42 @@ func TestBuildAnnotations(t *testing.T) {
 		require.InDelta(t, 2.0, vals["b"], 0.1)
 	})
 
+	t.Run("data includes classic condition matches", func(t *testing.T) {
+		backend := createTestAnnotationBackendSut(t)
+		logger := log.NewNopLogger()
+		rule := history_model.RuleMeta{}
+		states := []state.StateTransition{makeStateTransition()}
+		states[0].EvalMatches = []state.EvaluationMatch{{
+			RefID:  "B0",
+			Metric: "http_requests_total",
+			Labels: data.Labels{"instance": "server-1"},
+			Value:  func() *float64 { value := 42.0; return &value }(),
+		}}
+
+		items := backend.buildAnnotations(rule, states, logger)
+
+		require.Len(t, items, 1)
+		assert.JSONEq(t, `{"values": null, "evalMatches": [{"refId": "B0", "value": "42", "metric": "http_requests_total", "labels": {"instance": "server-1"}}]}`, assertValidJSON(t, items[0].Data))
+	})
+
 	t.Run("data handles special float values", func(t *testing.T) {
 		backend := createTestAnnotationBackendSut(t)
 		logger := log.NewNopLogger()
 		rule := history_model.RuleMeta{}
 		states := []state.StateTransition{makeStateTransition()}
-		states[0].Values = map[string]float64{"nan": math.NaN(), "inf": math.Inf(1), "ninf": math.Inf(-1)}
+		nan, inf, ninf := math.NaN(), math.Inf(1), math.Inf(-1)
+		states[0].Values = map[string]float64{"nan": nan, "inf": inf, "ninf": ninf}
+		states[0].EvalMatches = []state.EvaluationMatch{
+			{RefID: "B0", Metric: "nan", Value: &nan},
+			{RefID: "B1", Metric: "inf", Value: &inf},
+			{RefID: "B2", Metric: "ninf", Value: &ninf},
+		}
 
 		items := backend.buildAnnotations(rule, states, logger)
 
 		require.Len(t, items, 1)
 		j := assertValidJSON(t, items[0].Data)
-		require.JSONEq(t, `{"values": {"nan": "NaN", "inf": "+Inf", "ninf": "-Inf"}}`, j)
+		require.JSONEq(t, `{"values":{"nan":"NaN","inf":"+Inf","ninf":"-Inf"},"evalMatches":[{"refId":"B0","metric":"nan","labels":{},"value":"NaN"},{"refId":"B1","metric":"inf","labels":{},"value":"+Inf"},{"refId":"B2","metric":"ninf","labels":{},"value":"-Inf"}]}`, j)
 	})
 
 	t.Run("tags are populated from alert labels", func(t *testing.T) {
