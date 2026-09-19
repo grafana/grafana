@@ -6,12 +6,9 @@ import server from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
-import { type FolderDTO } from 'app/types/folders';
 
-import {
-  type ProvisionedFolderFormDataResult,
-  useProvisionedFolderFormData,
-} from '../../hooks/useProvisionedFolderFormData';
+import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
+import { type ProvisionedFolderFormDataResult } from '../../hooks/useProvisionedFolderFormData';
 import { setupProvisioningMswServer } from '../../mocks/server';
 
 import { NewProvisionedFolderForm } from './NewProvisionedFolderForm';
@@ -48,10 +45,6 @@ jest.mock('../../hooks/useGetRepositoryFolders', () => ({
   useGetRepositoryFolders: jest.fn().mockReturnValue({ options: [], loading: false, error: null }),
 }));
 
-jest.mock('../../hooks/useProvisionedFolderFormData', () => ({
-  useProvisionedFolderFormData: jest.fn(),
-}));
-
 jest.mock('app/features/provisioning/hooks/usePullRequestParam', () => ({
   usePullRequestParam: jest.fn(),
 }));
@@ -65,34 +58,16 @@ jest.mock('react-router-dom-v5-compat', () => {
 
 interface Props {
   onDismiss?: () => void;
-  parentFolder?: FolderDTO;
 }
 
-function setup(props: Partial<Props> = {}, hookData = mockHookData) {
+function setup(props: Partial<Props> = {}, data: ProvisionedFolderFormDataResult = mockHookData) {
   const defaultProps: Props = {
     onDismiss: jest.fn(),
-    parentFolder: {
-      id: 1,
-      uid: 'folder-uid',
-      title: 'Parent Folder',
-      url: '/dashboards/f/folder-uid',
-      hasAcl: false,
-      canSave: true,
-      canEdit: true,
-      canAdmin: true,
-      canDelete: true,
-      repository: {
-        name: 'test-repo',
-        type: 'github',
-      },
-    } as unknown as FolderDTO,
     ...props,
   };
 
-  (useProvisionedFolderFormData as jest.Mock).mockReturnValue(hookData);
-
   return {
-    ...render(<NewProvisionedFolderForm {...defaultProps} />),
+    ...render(<NewProvisionedFolderForm {...defaultProps} data={data} />),
     props: defaultProps,
   };
 }
@@ -127,6 +102,7 @@ const mockHookData: ProvisionedFolderFormDataResult = {
   },
   isLoading: false,
   isMissingRepo: false,
+  status: RepoViewStatus.Ready,
 };
 
 function requireCapturedRequest(capturedRequest: { url: URL; body: unknown } | null): { url: URL; body: unknown } {
@@ -441,6 +417,135 @@ describe('NewProvisionedFolderForm', () => {
     await user.click(cancelButton);
 
     expect(props.onDismiss).toHaveBeenCalled();
+  });
+
+  describe('at the root of a folderless repository', () => {
+    const folderlessHookData: ProvisionedFolderFormDataResult = {
+      ...mockHookData,
+      repository: { ...mockHookData.repository!, name: 'folderless-repo', target: 'folderless' },
+      // No parent folder, so no source path to nest under
+      folder: undefined,
+      initialValues: { ...mockHookData.initialValues!, repo: 'folderless-repo', path: '' },
+    };
+
+    beforeEach(() => {
+      server.use(
+        http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+          capturedRequest = { url: new URL(request.url), body: await request.json() };
+          return HttpResponse.json({ resource: { upsert: { metadata: { name: 'new-folder' } } } });
+        })
+      );
+    });
+
+    it('names the repository it will commit to, and that it is the root', async () => {
+      setup({}, folderlessHookData);
+
+      expect(await screen.findByText('Will be created at the root of Test Repository')).toBeInTheDocument();
+    });
+
+    it('commits the folder at the repository root, with no directory prefix', async () => {
+      const { user } = setup({}, folderlessHookData);
+
+      const folderNameInput = await screen.findByRole('textbox', { name: /folder name/i });
+      await user.type(folderNameInput, 'My Team');
+      await user.click(screen.getByRole('button', { name: /^create$/i }));
+
+      await waitFor(() => expect(capturedRequest).not.toBeNull());
+      const request = requireCapturedRequest(capturedRequest);
+      expect(request.url.pathname).toBe(
+        '/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/folderless-repo/files/My%20Team/'
+      );
+      expect(request.url.searchParams.get('message')).toBe('Create folder: My Team');
+      expect(request.body).toEqual({ title: 'My Team', type: 'folder' });
+    });
+  });
+
+  describe('when the parent folder has no usable repository', () => {
+    it('names the deleted repository as the reason, rather than reporting none was found', async () => {
+      setup(
+        {},
+        {
+          ...mockHookData,
+          repository: undefined,
+          initialValues: undefined,
+          isMissingRepo: true,
+          status: RepoViewStatus.Orphaned,
+        }
+      );
+
+      expect(await screen.findByText('Provisioning repository no longer exists')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Repository not found')).not.toBeInTheDocument();
+      expect(screen.queryByRole('textbox', { name: /folder name/i })).not.toBeInTheDocument();
+    });
+
+    it('reports a failed lookup as a failure, rather than as an unprovisioned location', async () => {
+      setup(
+        {},
+        {
+          ...mockHookData,
+          repository: undefined,
+          initialValues: undefined,
+          isMissingRepo: true,
+          status: RepoViewStatus.Error,
+          error: { data: { message: 'settings unavailable' } },
+        }
+      );
+
+      expect(await screen.findByText('Error loading form')).toBeInTheDocument();
+      expect(screen.getByText('settings unavailable')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Repository not found')).not.toBeInTheDocument();
+    });
+
+    it('still reports a settled absence of a repository as one', async () => {
+      setup({}, { ...mockHookData, repository: undefined, initialValues: undefined, isMissingRepo: true });
+
+      expect(await screen.findByLabelText('Repository not found')).toBeInTheDocument();
+    });
+  });
+
+  it('names the parent source path it will nest under', async () => {
+    setup();
+
+    // mockHookData's folder carries sourcePath 'dashboards', the same value doSave joins under
+    expect(await screen.findByText('Will be created in Test Repository under dashboards')).toBeInTheDocument();
+  });
+
+  // Repository titles and source paths routinely contain "/", which must not reach the page HTML-escaped
+  it.each([
+    { sourcePath: 'dashboards/team', text: 'Will be created in owner/repo under dashboards/team' },
+    { sourcePath: undefined, text: 'Will be created at the root of owner/repo' },
+  ])('shows "$text" verbatim', async ({ sourcePath, text }) => {
+    setup(
+      {},
+      {
+        ...mockHookData,
+        repository: { ...mockHookData.repository!, title: 'owner/repo' },
+        folder: {
+          ...mockHookData.folder!,
+          metadata: { annotations: sourcePath ? { 'grafana.app/sourcePath': sourcePath } : {} },
+        },
+      }
+    );
+
+    expect(await screen.findByText(text)).toBeInTheDocument();
+  });
+
+  it('nests under the parent source path when a parent folder is given', async () => {
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        capturedRequest = { url: new URL(request.url), body: await request.json() };
+        return HttpResponse.json({ resource: { upsert: { metadata: { name: 'new-folder' } } } });
+      })
+    );
+
+    const { user } = setup();
+
+    const folderNameInput = await screen.findByRole('textbox', { name: /folder name/i });
+    await user.type(folderNameInput, 'My Team');
+    await user.click(screen.getByRole('button', { name: /^create$/i }));
+
+    await waitFor(() => expect(capturedRequest).not.toBeNull());
+    expect(requireCapturedRequest(capturedRequest).url.pathname).toContain('/files/dashboards/My%20Team/');
   });
 
   it('should show read-only alert when repository has no workflows', async () => {

@@ -199,7 +199,11 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
           {isNewSave && <FolderDeadEndAlert {...view.lookup} />}
           {renderForm()}
           {canChooseTarget && (
-            <SaveTargetSwitch target={target} onChange={(saveTarget) => model.setState({ saveTarget })} />
+            <SaveTargetSwitch
+              resource="dashboard"
+              target={target}
+              onChange={(saveTarget) => model.setState({ saveTarget })}
+            />
           )}
         </Stack>
       </div>
