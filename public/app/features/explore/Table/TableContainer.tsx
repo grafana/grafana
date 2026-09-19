@@ -13,6 +13,7 @@ import {
   type EventBus,
   EventBusSrv,
 } from '@grafana/data';
+import { tableFrameKey } from '@grafana/data/internal';
 import { Trans, t } from '@grafana/i18n';
 import { getTemplateSrv, PanelRenderer } from '@grafana/runtime';
 import { type TimeZone } from '@grafana/schema';
@@ -182,7 +183,7 @@ export const TableContainer = memo(function TableContainer({
         <div className={css({ display: 'flex', flexDirection: 'column', gap: theme.spacing(1) })}>
           {frames.map((data, i) => (
             <PanelChrome
-              key={`${data.refId || `table-${i}`}-${panelPadding}`}
+              key={`${tableFrameKey(frames, i)}-${panelPadding}`}
               title={getTableTitle(dataFrames, data, i)}
               titleItems={[
                 !showAll && dataLimited && (

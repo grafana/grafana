@@ -314,6 +314,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
                 return (
                   <div style={{ width, height }}>
                     <CommonTableNG
+                      timeZone={this.props.timeZone}
                       width={width}
                       height={height}
                       data={dataFrame}
