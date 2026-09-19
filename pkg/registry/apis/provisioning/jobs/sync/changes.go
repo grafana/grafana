@@ -139,6 +139,7 @@ func Changes(
 
 	keep := safepath.NewTrie()
 	changes := make([]ResourceFileChange, 0, len(source))
+	var unsupported []resources.UnsupportedPath
 
 	for _, file := range source {
 		// TODO: why do we have to do this here?
@@ -196,6 +197,18 @@ func Changes(
 			}
 
 			continue
+		}
+
+		// A non-resource file (wrong extension) was never going to be synced,
+		// regardless of which error IsPathSupported returns first -- checking
+		// the extension directly avoids depending on validatePathBasics running
+		// after the extension check. README.md, .keep and .gitignore fall out
+		// here; a hidden resource file (e.g. .dashboard.yaml) is still normal,
+		// not unsupported -- checked the same independent way as the extension,
+		// since IsPathSupported can mask ErrHiddenPath behind an earlier error.
+		if pathErr := resources.IsPathSupported(file.Path); pathErr != nil &&
+			!safepath.IsHidden(file.Path) && resources.HasResourceExtension(file.Path) {
+			unsupported = append(unsupported, resources.UnsupportedPath{Path: file.Path, Err: pathErr})
 		}
 
 		if resources.IsPathSupported(file.Path) == nil {
@@ -314,6 +327,10 @@ func Changes(
 				Existing: v,
 			})
 		}
+	}
+
+	if len(unsupported) > 0 {
+		return nil, &resources.UnsupportedPathError{Paths: unsupported}
 	}
 
 	// Deepest first (stable sort order)
