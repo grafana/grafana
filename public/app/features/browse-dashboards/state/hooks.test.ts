@@ -26,6 +26,8 @@ function createInitialState(partial: Partial<BrowseDashboardsState>): BrowseDash
       folder: {},
       panel: {},
     },
+    cascadeDeletingUIDs: {},
+    cascadeDeleteErrors: {},
 
     ...partial,
   };

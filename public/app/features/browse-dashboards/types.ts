@@ -31,6 +31,21 @@ export interface BrowseDashboardsState {
 
   // Only folders can ever be open or closed, so no need to seperate this by kind
   openFolders: Record<string, boolean>;
+
+  // UIDs (folders or dashboards) currently undergoing an async, finalizer-driven cascade delete
+  // (i.e. a delete was requested and `metadata.deletionTimestamp` is set, but the item isn't
+  // actually gone yet). Populated by the delete call sites (folder delete facades in
+  // app/api/clients/folder/v1beta1/hooks.ts, and the dashboard delete mutation in
+  // api/browseDashboardsAPI.ts); cleared once the item is confirmed gone. PoC for
+  // kubernetesFolderCascadeDeleteAsync.
+  cascadeDeletingUIDs: Record<string, boolean>;
+
+  // Errors from an ancestor's cascade delete that specifically named this UID (see
+  // usePropagateCascadeDeleteToChildren) -- a child folder or dashboard has no status of its own
+  // to poll for this (the error lives on whichever ancestor's reconcile pass tried and failed to
+  // delete it), so this is how its row finds out it's the one actually stuck, rather than showing
+  // a plain "Deleting" spinner forever. Cleared alongside cascadeDeletingUIDs.
+  cascadeDeleteErrors: Record<string, string[]>;
 }
 
 export interface UIDashboardViewItem {

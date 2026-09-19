@@ -5,7 +5,12 @@ import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1'
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getAppEvents } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient, useFlagFoldersAppPlatformAPI } from '@grafana/runtime/internal';
+import {
+  FlagKeys,
+  getFeatureFlagClient,
+  useFlagFoldersAppPlatformAPI,
+  useFlagKubernetesFolderCascadeDeleteAsync,
+} from '@grafana/runtime/internal';
 import {
   API_GROUP as IAM_API_GROUP,
   API_VERSION as IAM_API_VERSION,
@@ -48,6 +53,7 @@ import {
 } from '../../../../features/apiserver/types';
 import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/constants';
 import { refetchChildren, refreshParents } from '../../../../features/browse-dashboards/state/actions';
+import { itemCascadeDeleteStarted } from '../../../../features/browse-dashboards/state/slice';
 import { isRootFolderUID } from '../../../../features/search/constants';
 import { deletedDashboardsCache } from '../../../../features/search/service/deletedDashboardsCache';
 import { useDispatch } from '../../../../types/store';
@@ -296,8 +302,12 @@ export function useDeleteFolderMutationFacade() {
   const notify = useAppNotification();
   const shouldUseAppPlatformAPI = useFlagFoldersAppPlatformAPI();
 
-  // TODO right now the app platform backend does not support cascading delete of children so we cannot use it.
-  const isBackendSupport = false;
+  // PoC: the app platform backend now supports async cascading delete
+  // (pkg/registry/apis/folders/cascade_delete_controller.go), so the previous "no cascade delete
+  // support" blocker no longer applies -- but only when kubernetesFolderCascadeDeleteAsync is on.
+  // Gating on this flag specifically, rather than folding it into foldersAppPlatformAPI, keeps
+  // ordinary (non-PoC) folder deletes on the legacy path unaffected.
+  const isBackendSupport = useFlagKubernetesFolderCascadeDeleteAsync();
   if (!(shouldUseAppPlatformAPI && isBackendSupport)) {
     return deleteFolderLegacy;
   }
@@ -305,6 +315,12 @@ export function useDeleteFolderMutationFacade() {
   return async function deleteFolder(folder: FolderDTO) {
     const result = await deleteFolderMutation({ name: folder.uid });
     if (!result.error) {
+      // trackCascadeDeleteIfStarted does its own network round-trip (a GET to check
+      // deletionTimestamp), so it must be awaited *before* refresh() below -- otherwise refresh's
+      // own refetch can resolve first and strip the row out of the list before cascadeDeletingUIDs
+      // is set, with nothing left for the ghost-row preservation in refetchChildrenFulfilled to key
+      // off of.
+      await trackCascadeDeleteIfStarted(folder.uid);
       // we could do this in the enhanceEndpoint method, but we would also need to change the args as we need parentUID
       // here and so it seemed easier to do it here.
       refresh({ childrenOf: folder.parentUid });
@@ -324,8 +340,9 @@ export function useDeleteMultipleFoldersMutationFacade() {
   const refresh = useRefreshFolders();
   const shouldUseAppPlatformAPI = useFlagFoldersAppPlatformAPI();
 
-  // TODO right now the app platform backend does not support cascading delete of children so we cannot use it.
-  const isBackendSupport = false;
+  // PoC: see useDeleteFolderMutationFacade above for why this is gated on
+  // kubernetesFolderCascadeDeleteAsync specifically, not just foldersAppPlatformAPI.
+  const isBackendSupport = useFlagKubernetesFolderCascadeDeleteAsync();
   if (!(shouldUseAppPlatformAPI && isBackendSupport)) {
     return deleteFoldersLegacy;
   }
@@ -348,6 +365,7 @@ export function useDeleteMultipleFoldersMutationFacade() {
             type: AppEvents.alertSuccess.name,
             payload: [successMessage],
           });
+          await trackCascadeDeleteIfStarted(folderUID);
         }
       }
     }
@@ -541,6 +559,39 @@ export function useMoveFolderMutationFacade() {
   }
 
   return [moveFolder, updateFolderData] as const;
+}
+
+/**
+ * PoC: after a folder delete call succeeds, check whether it actually removed the folder or just
+ * started an async cascade delete (kubernetesFolderCascadeDeleteAsync) -- the folder still exists
+ * with `metadata.deletionTimestamp` set until its children are cleared. The delete response itself
+ * isn't a reliable signal for this (it's typed as a k8s Status, though a finalizer-blocked delete
+ * actually returns the object), so re-fetch instead. If cascade delete is in progress, track the
+ * UID so folder rows in the browse tree can show a "Deleting" indicator (see
+ * DeletingFolderBadge.tsx) until it's confirmed gone.
+ *
+ * The backend doesn't necessarily have deletionTimestamp persisted and visible to a read by the
+ * moment the delete call itself resolves, so a single immediate check can race and wrongly
+ * conclude no cascade ever started -- retry a few times, with a short delay in between, before
+ * giving up. Callers await this, so the delete flow (e.g. DeleteModal's confirm button) stays in
+ * its "Deleting..." state for the (short, bounded) duration of these retries too.
+ */
+const TRACK_CASCADE_DELETE_MAX_ATTEMPTS = 5;
+const TRACK_CASCADE_DELETE_RETRY_DELAY_MS = 400;
+
+async function trackCascadeDeleteIfStarted(folderUID: string) {
+  for (let attempt = 0; attempt < TRACK_CASCADE_DELETE_MAX_ATTEMPTS; attempt++) {
+    const check = await dispatch(
+      folderAPIv1beta1.endpoints.getFolder.initiate({ name: folderUID }, { forceRefetch: true })
+    );
+    if (check?.data?.metadata?.deletionTimestamp) {
+      dispatch(itemCascadeDeleteStarted(folderUID));
+      return;
+    }
+    if (attempt < TRACK_CASCADE_DELETE_MAX_ATTEMPTS - 1) {
+      await new Promise((resolve) => setTimeout(resolve, TRACK_CASCADE_DELETE_RETRY_DELAY_MS));
+    }
+  }
 }
 
 /**

@@ -35,6 +35,7 @@ import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/D
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
 import { invalidateVariablesAfterFolderDelete } from '../../variables-management/cache';
 import { refetchChildren, refreshParents } from '../state/actions';
+import { itemCascadeDeleteStarted } from '../state/slice';
 import { findItem } from '../state/utils';
 import { getFolderURL } from '../utils/dashboards';
 
@@ -430,6 +431,26 @@ export const browseDashboardsAPI = createApi({
 
             deletedCount++;
             deletedDashboardUIDs.push(dashboardUID);
+
+            // PoC: a dashboard deleted as part of an async folder cascade delete
+            // (kubernetesFolderCascadeDeleteAsync) also lingers with metadata.deletionTimestamp
+            // set for a moment instead of disappearing immediately (cascade_delete_controller.go
+            // stamps a finalizer on it right before deleting). Track it so its browse tree row can
+            // show a "Deleting" indicator until it's confirmed gone -- mirrors folder tracking in
+            // app/api/clients/folder/v1beta1/hooks.ts's trackCascadeDeleteIfStarted.
+            try {
+              // Use the v1 API explicitly (rather than the unified `api` above, whose
+              // getDashboardDTO return type is a v1/v2 union without a common `.meta`) -- the v1
+              // `dto` subresource reads through regardless of the dashboard's stored version, so
+              // this still works for v2-stored dashboards.
+              const dashboardApiV1 = await getDashboardAPI('v1');
+              const dto = await dashboardApiV1.getDashboardDTO(dashboardUID);
+              if (dto.meta.k8s?.deletionTimestamp) {
+                dispatch(itemCascadeDeleteStarted(dashboardUID));
+              }
+            } catch {
+              // Already gone, or a transient error checking status -- nothing to track either way.
+            }
           }
         } finally {
           if (deletedCount > 0) {

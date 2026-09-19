@@ -597,6 +597,7 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			setKubernetesFolderCascadeDeleteAsyncToggle(t, false)
 			us := grafanarest.NewMockStorage(t)
 			sm := resource.NewMockResourceClient(t)
 			b := &FolderAPIBuilder{
@@ -630,6 +631,45 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 			require.Equal(t, tt.input, tt.expected)
 		})
 	}
+}
+
+func TestFolderAPIBuilder_Mutate_Create_StampsCascadeDeleteFinalizerWhenAsyncEnabled(t *testing.T) {
+	setKubernetesFolderCascadeDeleteAsyncToggle(t, true)
+
+	input := &folders.Folder{
+		Spec: folders.FolderSpec{Title: "foo"},
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Folder",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "valid-name",
+		},
+	}
+	us := grafanarest.NewMockStorage(t)
+	sm := resource.NewMockResourceClient(t)
+	b := &FolderAPIBuilder{
+		storage:  us,
+		searcher: sm,
+		parents:  newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
+	}
+	admAttr := admission.NewAttributesRecord(
+		input,
+		nil,
+		folders.SchemeGroupVersion.WithKind("folder"),
+		"stacks-123",
+		input.Name,
+		folders.SchemeGroupVersion.WithResource("folders"),
+		"",
+		"CREATE",
+		nil,
+		true,
+		&user.SignedInUser{},
+	)
+
+	require.NoError(t, b.Validate(context.Background(), admAttr, nil))
+	require.NoError(t, b.Mutate(context.Background(), admAttr, nil))
+
+	require.Equal(t, []string{folders.CascadeDeleteFinalizer}, input.Finalizers)
 }
 
 func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {

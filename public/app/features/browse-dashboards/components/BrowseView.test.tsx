@@ -161,6 +161,8 @@ describe('browse-dashboards BrowseView', () => {
           childrenByParentUID: { 'same-uid': fullyLoadedViewItemCollection([dashboard]) },
           openFolders: { 'same-uid': true },
           selectedItems: { $all: false, dashboard: {}, folder: {}, panel: {} },
+          cascadeDeletingUIDs: {},
+          cascadeDeleteErrors: {},
         },
       },
     });
