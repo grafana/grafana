@@ -37,7 +37,7 @@ interface Props {
   items: SceneObject[];
 }
 
-export function GroupSelectedActions({ items }: Props) {
+export function useGroupSelection(items: SceneObject[]) {
   const manager = resolveGroupableManager(items);
   const rowGrouping = manager?.canGroupSelectionInto(items, 'row') ?? DISABLED;
   const tabGrouping = manager?.canGroupSelectionInto(items, 'tab') ?? DISABLED;
@@ -55,6 +55,12 @@ export function GroupSelectedActions({ items }: Props) {
       DashboardInteractions.trackGroupTabClick();
     }
   };
+
+  return { rowGrouping, tabGrouping, group };
+}
+
+export function GroupSelectedActions({ items }: Props) {
+  const { rowGrouping, tabGrouping, group } = useGroupSelection(items);
 
   return (
     <Stack direction="column" gap={1}>
