@@ -1,4 +1,4 @@
-import { isStep1Valid, validatePolicyTreeName } from './utils';
+import { canRunDryRun, isStep1Valid, validatePolicyTreeName } from './utils';
 
 describe('validatePolicyTreeName', () => {
   it.each(['prometheus-prod', 'my-alertmanager', 'a', 'abc123', 'my.config.name', 'a-b.c-d', '0', '1abc2'])(
@@ -166,5 +166,77 @@ describe('isStep1Valid', () => {
         })
       ).toBe(false);
     });
+  });
+});
+
+describe('canRunDryRun', () => {
+  const yamlFile = new File(['config'], 'am.yaml', { type: 'text/yaml' });
+
+  it('returns true for a complete, valid YAML form', () => {
+    expect(
+      canRunDryRun({
+        policyTreeName: 'prometheus-prod',
+        notificationsSource: 'yaml',
+        notificationsYamlFile: yamlFile,
+        notificationsDatasourceUID: undefined,
+        notificationsTemplateFiles: [],
+        autoSyncNotificationsEnabled: false,
+      })
+    ).toBe(true);
+  });
+
+  it('returns false when Auto-sync is active, even with an otherwise-complete form', () => {
+    expect(
+      canRunDryRun({
+        policyTreeName: 'prometheus-prod',
+        notificationsSource: 'datasource',
+        notificationsYamlFile: null,
+        notificationsDatasourceUID: 'am-uid',
+        notificationsTemplateFiles: [],
+        autoSyncNotificationsEnabled: true,
+      })
+    ).toBe(false);
+  });
+
+  it('returns false when the policy tree name fails validation', () => {
+    expect(
+      canRunDryRun({
+        policyTreeName: 'Invalid Name!',
+        notificationsSource: 'yaml',
+        notificationsYamlFile: yamlFile,
+        notificationsDatasourceUID: undefined,
+        notificationsTemplateFiles: [],
+        autoSyncNotificationsEnabled: false,
+      })
+    ).toBe(false);
+  });
+
+  it('returns false when template files have a duplicate name', () => {
+    expect(
+      canRunDryRun({
+        policyTreeName: 'prometheus-prod',
+        notificationsSource: 'yaml',
+        notificationsYamlFile: yamlFile,
+        notificationsDatasourceUID: undefined,
+        notificationsTemplateFiles: [
+          new File(['a'], 'dupe.tmpl', { type: 'text/plain' }),
+          new File(['b'], 'dupe.tmpl', { type: 'text/plain' }),
+        ],
+        autoSyncNotificationsEnabled: false,
+      })
+    ).toBe(false);
+  });
+
+  it('returns false when the YAML source is selected but no file is present', () => {
+    expect(
+      canRunDryRun({
+        policyTreeName: 'prometheus-prod',
+        notificationsSource: 'yaml',
+        notificationsYamlFile: null,
+        notificationsDatasourceUID: undefined,
+        notificationsTemplateFiles: [],
+        autoSyncNotificationsEnabled: false,
+      })
+    ).toBe(false);
   });
 });

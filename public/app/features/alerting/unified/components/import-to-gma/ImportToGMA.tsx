@@ -1,7 +1,9 @@
 import { css } from '@emotion/css';
+import { skipToken } from '@reduxjs/toolkit/query/react';
 import { isEmpty } from 'lodash';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
+import { useDebounce } from 'react-use';
 
 import { type GrafanaTheme2, OrgRole } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -36,6 +38,7 @@ import {
   trackImportToGMAWizardStepSkipped,
 } from '../../Analytics';
 import { fetchAlertManagerConfig } from '../../api/alertmanager';
+import { type ValidateAlertmanagerConfigImportArgs, convertToGMAApi } from '../../api/convertToGMAApi';
 import { useIsAutoSyncActive } from '../../hooks/useIsAutoSyncActive';
 import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
 import { ALERTING_IMPORT_SETTINGS_URL } from '../../settings/navigation';
@@ -59,12 +62,15 @@ import { getPauseRulesLabel, isAutoSyncCommitted, isAutoSyncSelected } from './W
 import { StepKey } from './Wizard/types';
 import { Step1Content, useStep1Validation } from './steps/Step1AlertmanagerResources';
 import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
-import { type DryRunValidationResult } from './types';
+import { canRunDryRun } from './steps/utils';
+import { type DryRunState, type DryRunValidationResult } from './types';
 import { useCanImportToGMA } from './useCanImportToGMA';
 import {
   buildRoutingParams,
+  deriveDryRunResult,
+  deriveDryRunState,
   filterRulerRulesConfig,
-  useDryRunNotifications,
+  parseDryRunResponse,
   useImportNotifications,
   useImportRules,
 } from './useImport';
@@ -203,28 +209,6 @@ function ImportWizardContent() {
   const [importStatus, setImportStatus] = useState<'idle' | 'importing' | 'success' | 'error' | 'partial-error'>(
     'idle'
   );
-  const {
-    runDryRun,
-    reset: resetDryRun,
-    isLoading: isDryRunLoading,
-    result: dryRunResult,
-    error: dryRunError,
-  } = useDryRunNotifications();
-
-  // Derive dry-run UI state from RTK Query state
-  const dryRunState = useMemo((): 'idle' | 'loading' | 'success' | 'warning' | 'error' => {
-    if (isDryRunLoading) {
-      return 'loading';
-    }
-    if (dryRunError || (dryRunResult && !dryRunResult.valid)) {
-      return 'error';
-    }
-    if (dryRunResult?.valid) {
-      const hasRenames = dryRunResult.renamedReceivers.length > 0 || dryRunResult.renamedTimeIntervals.length > 0;
-      return hasRenames ? 'warning' : 'success';
-    }
-    return 'idle';
-  }, [isDryRunLoading, dryRunError, dryRunResult]);
 
   const importNotifications = useImportNotifications();
   const importRules = useImportRules();
@@ -266,49 +250,118 @@ function ImportWizardContent() {
   // Permission checks aligned with backend authorization.go
   const { canImportNotifications, canImportRules } = useCanImportToGMA();
 
-  // Trigger dry-run validation (called automatically by Step1 when source changes)
-  const handleTriggerDryRun = useCallback(() => {
-    const formValues = getValues();
+  // Dry-run validation wiring
+  const [
+    notificationsSource,
+    policyTreeName,
+    notificationsDatasourceUID,
+    notificationsDatasourceName,
+    notificationsYamlFile,
+    notificationsTemplateFiles,
+    autoSyncNotificationsEnabled,
+  ] = watch([
+    'notificationsSource',
+    'policyTreeName',
+    'notificationsDatasourceUID',
+    'notificationsDatasourceName',
+    'notificationsYamlFile',
+    'notificationsTemplateFiles',
+    'autoSyncNotificationsEnabled',
+  ]);
 
-    if (!formValues.policyTreeName) {
-      // policy tree name is required to trigger dry-run
-      return;
-    }
-    if (formValues.notificationsSource === 'yaml' && !formValues.notificationsYamlFile) {
-      // YAML file is required to trigger dry-run
-      return;
-    }
-    if (formValues.notificationsSource === 'datasource' && !formValues.notificationsDatasourceName) {
-      // Datasource is required to trigger dry-run
-      return;
-    }
+  const canRunDryRunNow = canRunDryRun({
+    policyTreeName,
+    notificationsSource,
+    notificationsYamlFile,
+    notificationsDatasourceUID,
+    notificationsTemplateFiles,
+    autoSyncNotificationsEnabled: autoSyncNotificationsEnabled ?? false,
+  });
 
-    runDryRun({
-      source: formValues.notificationsSource,
-      datasourceName: formValues.notificationsDatasourceName ?? undefined,
-      yamlFile: formValues.notificationsYamlFile,
-      templateFiles: formValues.notificationsTemplateFiles,
-      configIdentifier: formValues.policyTreeName,
-      promote: false,
-    });
-  }, [getValues, runDryRun]);
+  const liveDryRunArgs: ValidateAlertmanagerConfigImportArgs | typeof skipToken = canRunDryRunNow
+    ? {
+        source: notificationsSource,
+        yamlFile: notificationsYamlFile,
+        templateFiles: notificationsTemplateFiles,
+        datasourceName: notificationsDatasourceName ?? undefined,
+        configIdentifier: policyTreeName,
+      }
+    : skipToken;
 
-  // Sync step errors with dry-run state and track dry-run outcomes
+  // Debounces which args reach the query hook — RTK Query's own cache-key isolation (not this
+  // debounce) is what prevents stale/superseded results and reset-on-remount issues.
+  const [dryRunArgs, setDryRunArgs] = useState<ValidateAlertmanagerConfigImportArgs | typeof skipToken>(skipToken);
+  useDebounce(() => setDryRunArgs(liveDryRunArgs), 500, [
+    canRunDryRunNow,
+    notificationsSource,
+    notificationsYamlFile,
+    notificationsTemplateFiles,
+    notificationsDatasourceName,
+    policyTreeName,
+  ]);
+
+  // True while the query's args haven't caught up to the live inputs yet (debounce in flight) —
+  // its result belongs to the previous input and must not be trusted.
+  const isDryRunArgsStale =
+    dryRunArgs === skipToken
+      ? liveDryRunArgs !== skipToken
+      : liveDryRunArgs === skipToken ||
+        dryRunArgs.source !== liveDryRunArgs.source ||
+        dryRunArgs.yamlFile !== liveDryRunArgs.yamlFile ||
+        dryRunArgs.templateFiles !== liveDryRunArgs.templateFiles ||
+        dryRunArgs.datasourceName !== liveDryRunArgs.datasourceName ||
+        dryRunArgs.configIdentifier !== liveDryRunArgs.configIdentifier;
+
+  const {
+    currentData: dryRunRawData,
+    isFetching: isDryRunFetching,
+    error: dryRunRawError,
+  } = convertToGMAApi.useValidateAlertmanagerConfigImportQuery(dryRunArgs);
+
+  const dryRunParsedResult = useMemo(
+    () => (dryRunRawData ? parseDryRunResponse(dryRunRawData) : undefined),
+    [dryRunRawData]
+  );
+  const dryRunErrorMessage = dryRunRawError ? stringifyErrorLike(dryRunRawError) : undefined;
+  const dryRunResultRaw = useMemo(
+    () => deriveDryRunResult(dryRunParsedResult, dryRunErrorMessage),
+    [dryRunParsedResult, dryRunErrorMessage]
+  );
+  const dryRunStateRaw = useMemo(
+    () => deriveDryRunState(isDryRunFetching, dryRunResultRaw, dryRunErrorMessage),
+    [isDryRunFetching, dryRunResultRaw, dryRunErrorMessage]
+  );
+  const dryRunResult = isDryRunArgsStale ? undefined : dryRunResultRaw;
+  const dryRunState = isDryRunArgsStale ? 'idle' : dryRunStateRaw;
+
+  // Sync step errors with dry-run state
   useEffect(() => {
     if (dryRunState === 'error') {
       setStepErrors(StepKey.Notifications, true);
+    } else if (dryRunState === 'success' || dryRunState === 'warning') {
+      setStepErrors(StepKey.Notifications, false);
+    }
+  }, [dryRunState, setStepErrors]);
+
+  // Track dry-run outcomes only when a real fetch just completed
+  const wasDryRunFetchingRef = useRef(false);
+  useEffect(() => {
+    const justFinishedFetching = wasDryRunFetchingRef.current && !isDryRunFetching;
+    wasDryRunFetchingRef.current = isDryRunFetching;
+    if (!justFinishedFetching) {
+      return;
+    }
+    if (dryRunState === 'error') {
       trackImportToGMADryrunError();
     } else if (dryRunState === 'success') {
-      setStepErrors(StepKey.Notifications, false);
       trackImportToGMADryrunSuccess();
     } else if (dryRunState === 'warning') {
-      setStepErrors(StepKey.Notifications, false);
       trackImportToGMADryrunWarning({
         renamedReceiversCount: dryRunResult?.renamedReceivers.length ?? 0,
         renamedTimeIntervalsCount: dryRunResult?.renamedTimeIntervals.length ?? 0,
       });
     }
-  }, [dryRunState, dryRunResult, setStepErrors]);
+  }, [isDryRunFetching, dryRunState, dryRunResult]);
 
   // Step 1 handlers
   // Note: WizardStep and NextButton handle stepper state (completed, skipped, visited, navigation)
@@ -538,8 +591,6 @@ function ImportWizardContent() {
               onCancel={handleWizardCancel}
               dryRunState={dryRunState}
               dryRunResult={dryRunResult}
-              onTriggerDryRun={handleTriggerDryRun}
-              onResetDryRun={resetDryRun}
             />
           )}
 
@@ -589,22 +640,11 @@ interface Step1WrapperProps {
   onNext: () => boolean;
   onSkip: () => void;
   onCancel: () => void;
-  dryRunState: 'idle' | 'loading' | 'success' | 'warning' | 'error';
+  dryRunState: DryRunState;
   dryRunResult?: DryRunValidationResult;
-  onTriggerDryRun: () => void;
-  onResetDryRun: () => void;
 }
 
-function Step1Wrapper({
-  canImport,
-  onNext,
-  onSkip,
-  onCancel,
-  dryRunState,
-  dryRunResult,
-  onTriggerDryRun,
-  onResetDryRun,
-}: Step1WrapperProps) {
+function Step1Wrapper({ canImport, onNext, onSkip, onCancel, dryRunState, dryRunResult }: Step1WrapperProps) {
   const isStep1Valid = useStep1Validation(canImport);
   const { watch } = useFormContext<ImportFormValues>();
   const [autoSyncNotificationsEnabled, notificationsSource] = watch([
@@ -636,13 +676,7 @@ function Step1Wrapper({
         'Complete the required fields and wait for validation to pass before continuing.'
       )}
     >
-      <Step1Content
-        canImport={canImport}
-        dryRunState={dryRunState}
-        dryRunResult={dryRunResult}
-        onTriggerDryRun={onTriggerDryRun}
-        onResetDryRun={onResetDryRun}
-      />
+      <Step1Content canImport={canImport} dryRunState={dryRunState} dryRunResult={dryRunResult} />
     </WizardStep>
   );
 }

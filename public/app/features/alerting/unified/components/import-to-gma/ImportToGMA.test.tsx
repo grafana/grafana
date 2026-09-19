@@ -28,23 +28,25 @@ jest.mock('@grafana/runtime', () => ({
 // variables referenced from inside a jest.mock factory. Each describe block resets it in its own setup.
 let mockScenario: 'yaml' | 'auto-sync' = 'yaml';
 
-// Seeds either a valid YAML notifications source (config + policy tree name + template files, dry-run
-// triggered) or an Auto-sync-checked data source (dry-run never runs for that path). Next is gated on a
-// passing dry-run for the YAML fixture, so the policy tree name and the onTriggerDryRun call are both
-// required for the wizard to advance there. The real step body pulls in network-backed pickers we don't
-// need — the assertion target is handleConfirmImport's behavior, not the step UI.
+// Seeds form values directly instead of rendering the real step body (network-backed pickers we
+// don't need). policyTreeName also gets a real input, since tests below need to edit it.
 jest.mock('./steps/Step1AlertmanagerResources', () => {
   const { useEffect } = require('react');
   const { useFormContext } = require('react-hook-form');
   return {
-    Step1Content: function Step1Content({ onTriggerDryRun }: { onTriggerDryRun?: () => void }) {
-      const { setValue } = useFormContext();
+    Step1Content: function Step1Content() {
+      const { setValue, register, getValues } = useFormContext();
       useEffect(() => {
         if (mockScenario === 'auto-sync') {
           setValue('notificationsSource', 'datasource');
           setValue('notificationsDatasourceUID', 'mimir-uid');
           setValue('notificationsDatasourceName', 'Mimir Alertmanager');
           setValue('autoSyncNotificationsEnabled', true);
+          return;
+        }
+        // Don't reseed on remount (e.g. navigating back to Step 1) — a fresh File would get a new
+        // lastModified and look like an edit.
+        if (getValues('notificationsYamlFile')) {
           return;
         }
         setValue('notificationsSource', 'yaml');
@@ -59,12 +61,11 @@ jest.mock('./steps/Step1AlertmanagerResources', () => {
           new File(['{{ define "email" }}{{ end }}'], 'email.tmpl', { type: 'text/plain' }),
           new File(['{{ define "slack" }}{{ end }}'], 'slack.tmpl', { type: 'text/plain' }),
         ]);
-        // Mounting on the wizard's very first render (Notifications is now step one), these setValue
-        // calls aren't guaranteed to be visible via getValues() yet within the same tick — defer so
-        // handleTriggerDryRun reads the values above rather than the stale defaults.
-        queueMicrotask(() => onTriggerDryRun?.());
-      }, [setValue, onTriggerDryRun]);
-      return null;
+      }, [setValue, getValues]);
+      if (mockScenario === 'auto-sync') {
+        return null;
+      }
+      return <input placeholder="prometheus-prod" {...register('policyTreeName')} />;
     },
     useStep1Validation: () => true,
   };
@@ -475,5 +476,109 @@ describe('ImportToGMA wizard — auto-sync confirm flow', () => {
     );
     expect(mockReportInteraction).not.toHaveBeenCalledWith('grafana_alerting_import_to_gma_success', expect.anything());
     expect(within(dialog).getByText(/failed to enable auto-sync/i)).toBeInTheDocument();
+  });
+});
+
+describe('dry-run wiring (wizard-level)', () => {
+  beforeEach(() => {
+    mockScenario = 'yaml';
+  });
+
+  it('keeps Next disabled while re-validating an edited but still-valid name, then re-enables it', async () => {
+    server.use(http.post(CONVERT_URL, () => HttpResponse.json({ status: 'success' })));
+    const { user } = render(<ImportWizardGate />);
+
+    await screen.findByRole('group', { name: /import notification resources/i });
+    await waitFor(
+      () =>
+        expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
+          'aria-disabled',
+          'false'
+        ),
+      { timeout: 3000 }
+    );
+
+    const input = screen.getByPlaceholderText(/prometheus-prod/i);
+    await user.type(input, '2');
+
+    const nextButton = screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton);
+    expect(nextButton).toHaveAttribute('aria-disabled', 'true');
+    await waitFor(
+      () =>
+        expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
+          'aria-disabled',
+          'false'
+        ),
+      { timeout: 3000 }
+    );
+  });
+
+  it('does not disable Next when navigating back to a Step 1 that is already valid', async () => {
+    server.use(http.post(CONVERT_URL, () => HttpResponse.json({ status: 'success' })));
+    const { user } = render(<ImportWizardGate />);
+
+    await screen.findByRole('group', { name: /import notification resources/i });
+    await waitFor(
+      () =>
+        expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
+          'aria-disabled',
+          'false'
+        ),
+      { timeout: 3000 }
+    );
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+
+    await screen.findByRole('group', { name: /import alert rules/i });
+    // PreviousButton has no e2e-selector entry; it renders a plain data-testid.
+    await user.click(screen.getByTestId('wizard-prev-button'));
+
+    // No waitFor: this must already be enabled on the very next render, with no re-validation flash.
+    await screen.findByRole('group', { name: /import notification resources/i });
+    expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
+      'aria-disabled',
+      'false'
+    );
+  });
+
+  it('never re-enables Next from a slow response to an input that has since changed', async () => {
+    let resolveFirstAttempt: (() => void) | undefined;
+    let requestCount = 0;
+    server.use(
+      http.post(CONVERT_URL, async ({ request }) => {
+        requestCount += 1;
+        const body = await request.clone().json();
+        if (body.alertmanager_config.includes('receiver: default') && requestCount === 1) {
+          await new Promise<void>((resolve) => {
+            resolveFirstAttempt = resolve;
+          });
+          return HttpResponse.json({ status: 'success' });
+        }
+        return HttpResponse.json({ status: 'error', error: 'still invalid' }, { status: 400 });
+      })
+    );
+
+    const { user } = render(<ImportWizardGate />);
+
+    await screen.findByRole('group', { name: /import notification resources/i });
+    // Wait for the first (slow) attempt to actually start before editing away from it.
+    await waitFor(() => expect(requestCount).toBe(1));
+
+    const input = screen.getByPlaceholderText(/prometheus-prod/i);
+    await user.type(input, '-changed');
+    expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
+      'aria-disabled',
+      'true'
+    );
+
+    // Let the slow first attempt's response land now that the input has moved on.
+    resolveFirstAttempt?.();
+
+    // The second attempt (for the edited value) will resolve as an error per the handler above —
+    // Next must reflect that, never the first attempt's stale success.
+    await waitFor(() => expect(requestCount).toBeGreaterThanOrEqual(2));
+    expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
+      'aria-disabled',
+      'true'
+    );
   });
 });
