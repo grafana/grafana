@@ -124,3 +124,15 @@ export { sanitize, sanitizeUrl } from '../text/sanitize';
 
 export { NewThemeOptionsSchema } from '../themes/createTheme';
 export { createFieldsOrdererAuto } from '../transformations/transformers/order';
+
+export {
+  tableFrameKey,
+  tableParentKey,
+  tableViewIndices,
+  transformTableFrame,
+} from '../transformations/transformers/tableView';
+export { filterByValueTransformer, type FilterByValueConfig } from '../transformations/transformers/filterByValue';
+export {
+  type ValueSetOptions,
+  type NumericRangeOptions,
+} from '../transformations/matchers/valueMatchers/setAndRangeMatchers';

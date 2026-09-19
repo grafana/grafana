@@ -17,9 +17,16 @@ import { Popover } from '../../../Tooltip/Popover';
 import { Filter } from '../Filter/Filter';
 import { FilterPopup } from '../Filter/FilterPopup';
 import { useFilterPopupState } from '../Filter/useFilterPopupState';
-import { TABLE } from '../constants';
+import { HEADER_DRAG_HANDLE_WIDTH, TABLE } from '../constants';
 import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
-import { getDisplayName, isSortableField } from '../utils';
+import {
+  getDisplayName,
+  isColumnMenuVisible,
+  isFieldFilterable,
+  isFieldHideable,
+  isFieldReorderable,
+  isSortableField,
+} from '../utils';
 
 import { HeaderCellMenu } from './HeaderCellMenu';
 
@@ -36,17 +43,17 @@ interface HeaderCellProps {
   parentIndex?: number;
   crossFilterRows: Record<string, TableRow[]>;
   crossFilterTailRows: TableRow[];
-  /** `table.refresh`: left-align the label and move the filter into a hover-revealed column menu. */
   tableRefreshEnabled?: boolean;
+  hasColumnSidebar?: boolean;
+  onHideColumn?: () => void;
+  canHideColumn?: boolean;
+  isPinned?: boolean;
+  onTogglePin?: () => void;
+  onOpenColumnPanel?: () => void;
 }
 
-// Everything the header cell can put in the tab order: buttons, plus anything opting in with a
-// tabindex. The filter popup and column menu portal out of the cell, so their contents never match.
 const TABBABLE_SELECTOR = 'button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-// The header label's line box. Every control beside the label sits in a box this tall so that its
-// optical centre lands on the centre of a line of the title: the controls are all shorter than the
-// line box, by different amounts, so aligning their edges instead staggers them against the text.
 const HEADER_LINE_BOX = `${TABLE.HEADER_LINE_HEIGHT}px`;
 
 export const HeaderCell: React.FC<HeaderCellProps> = ({
@@ -63,29 +70,31 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   crossFilterRows,
   crossFilterTailRows,
   tableRefreshEnabled,
+  hasColumnSidebar,
+  onHideColumn,
+  canHideColumn,
+  isPinned,
+  onTogglePin,
+  onOpenColumnPanel,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
   const sortable = isSortableField(field);
   const styles = useStyles2(getStyles, headerCellWrap, sortable, tableRefreshEnabled);
-  // A wrapped title grows downward, so the controls beside it belong with its last line rather than
-  // floating against the middle of the block.
   const controlAlignment = headerCellWrap ? 'flex-end' : 'center';
   const displayName = getDisplayName(field);
-  const filterable = field.config.custom?.filterable ?? false;
+  const filterable = isFieldFilterable(field);
+  const hideable = isFieldHideable(field);
+  const reorderable = isFieldReorderable(field);
   const hideHeader = field.config.custom?.hideHeader ?? false;
   const headerTooltip = field.config.custom?.headerTooltip;
 
-  const filterKey = typeof parentIndex === 'number' ? `${column.key}-${parentIndex}` : column.key;
-  const hasActiveFilter = filterable && filter[filterKey]?.filtered != null;
+  const canOpenColumnPanel = Boolean(onOpenColumnPanel) && Boolean(hasColumnSidebar);
 
-  // The filter popup is shared by the two controls that open it — the column menu's "Filter values"
-  // item and the filter icon that marks an already-filtered column — so it lives here rather than in
-  // either one. `filterAnchor` is whichever control opened it, so the popup lands under that control
-  // and returns focus to it on close.
+  // The menu item and active-filter icon share this popup.
   const filterIconRef = useRef<HTMLButtonElement>(null);
   const [filterAnchor, setFilterAnchor] = useState<HTMLButtonElement | null>(null);
-  const { isPopoverVisible, setPopoverVisible, popupProps } = useFilterPopupState({
+  const { isPopoverVisible, setPopoverVisible, popupProps, filterEnabled } = useFilterPopupState({
     name: column.key,
     filter,
     setFilter,
@@ -94,6 +103,8 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
     crossFilterRows,
     crossFilterTailRows,
   });
+
+  const hasActiveFilter = filterable && filterEnabled;
 
   const openFilter = useCallback(
     (anchor: HTMLButtonElement | null) => {
@@ -142,10 +153,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
         return;
       }
 
-      // Compare against the last tabbable element itself rather than assuming the header's last child
-      // element holds it: under `table.refresh` the title, tooltip and active-filter icon share one
-      // wrapper, so tabbing from the title would otherwise look like tabbing out of the header and
-      // skip the controls after it.
+      // The last tabbable control may be nested inside the label wrapper.
       const tabbables = headerContent.querySelectorAll<HTMLElement>(TABBABLE_SELECTOR);
       if (tabbables[tabbables.length - 1] === tableTabbedElement) {
         selectFirstCell();
@@ -153,8 +161,6 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
     };
   }
 
-  // Whether anything renders beside the label, so the box holding those controls is only there when
-  // it has something in it — an empty one would still take a gap beside the title.
   const hasTrailingControls = Boolean(
     (tableRefreshEnabled && direction) || headerTooltip || (tableRefreshEnabled && hasActiveFilter)
   );
@@ -180,8 +186,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
       </button>
       {hasTrailingControls && (
         <Stack direction="row" gap={0.5} alignItems="center" height={HEADER_LINE_BOX} shrink={0}>
-          {/* The refreshed label can shrink to ellipsize a long title, and it clips its own overflow,
-              so the arrow has to sit outside it to survive — same for the active-filter icon. */}
+          {/* Keep state icons outside the label's clipped overflow. */}
           {tableRefreshEnabled && sortArrow}
           {headerTooltip && (
             <IconButton
@@ -194,11 +199,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
               onPointerDown={(event) => event.stopPropagation()}
             />
           )}
-          {/* The column menu is only revealed on hover, so an active filter needs a persistent marker of
-          its own; it sits with the sort arrow because both report the column's state. It doubles as a
-          shortcut back into the filter popup, so the filter can be adjusted or cleared without going
-          through the menu. Sized "sm" like the type icon rather than "lg" like the arrow: the funnel
-          fills its box where the arrow is a thin glyph, so the arrow's nominal size reads far bigger. */}
+          {/* The hover-only menu needs a persistent marker for active filters. */}
           {tableRefreshEnabled && hasActiveFilter && (
             <button
               ref={filterIconRef}
@@ -206,13 +207,9 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
               className={styles.headerCellFilterButton}
               aria-label={t('grafana-ui.table.edit-column-filter', 'Edit filter on {{name}}', { name: displayName })}
               aria-haspopup="dialog"
-              // The popup is shared with the column menu's "Filter values" item, so `isPopoverVisible`
-              // alone would have this button claim a popup that the menu opened. `filterAnchor` is
-              // whichever control opened it, which is what makes the distinction.
               aria-expanded={isPopoverVisible && filterAnchor === filterIconRef.current}
               data-testid={selectors.components.Panels.Visualization.TableNG.headerColumnMenu.activeFilterButton}
               onClick={(ev) => {
-                // the header cell itself sorts on click, so this must not bubble
                 ev.stopPropagation();
                 openFilter(filterIconRef.current);
               }}
@@ -228,40 +225,41 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
 
   /* eslint-disable jsx-a11y/no-static-element-interactions */
   if (tableRefreshEnabled) {
-    // Same DOM depth as the default branch below — the Tab handler above walks up from `ref` to the
-    // react-data-grid header cell, so this root has to stay its direct child.
     return (
-      // A nested table's own header cells sit inside the outer grid's nested-frame cell, so
-      // `:hover`/`:focus-within` on that outer `.rdg-cell` would otherwise reveal every column's
-      // menu at once. `table-ng-header-cell` gives HeaderCellMenu something to scope to that's
-      // unique per column, regardless of how deep it sits in a nested table.
+      // Scope hover styles to this header instead of an ancestor nested-table cell.
       <div ref={ref} className={clsx(styles.headerCellRoot, 'table-ng-header-cell')} onKeyDown={onKeyDown}>
-        {/* grows so the column menu keeps to the trailing edge, without a `justify-content` on the
-            root that the (portalling, zero-width) popover wrapper below would also be spread by */}
+        {reorderable && (
+          // Chrome requires an interactive drag target inside the draggable header.
+          <button type="button" tabIndex={-1} aria-hidden="true" className={styles.headerCellDragHandle}>
+            <Icon name="draggabledots" aria-hidden="true" />
+          </button>
+        )}
         <Stack direction="row" gap={0.5} alignItems={controlAlignment} grow={1} minWidth={0}>
           {label}
         </Stack>
 
-        {filterable && (
+        {isColumnMenuVisible(field, Boolean(hasColumnSidebar)) && (
           <Stack direction="row" gap={0.5} alignItems="center" height={HEADER_LINE_BOX} shrink={0}>
             <HeaderCellMenu
               displayName={displayName}
               filterable={filterable}
               hasActiveFilter={hasActiveFilter}
               onOpenFilter={openFilter}
+              onHideColumn={hideable ? onHideColumn : undefined}
+              canHideColumn={canHideColumn}
+              isPinned={isPinned}
+              onTogglePin={onTogglePin}
+              onOpenColumnPanel={canOpenColumnPanel ? onOpenColumnPanel : undefined}
             />
           </Stack>
         )}
 
         {isPopoverVisible && filterAnchor && (
-          // `Popover` portals out of the header cell, but React events still bubble along the React
-          // tree, so a click inside the popup would otherwise reach react-data-grid's sort handler
-          // and re-sort the column while the user is picking values.
+          // Portalled React events still bubble to react-data-grid's sort handler.
           // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
           <div onClick={(ev) => ev.stopPropagation()} onMouseDown={(ev) => ev.stopPropagation()}>
             <Popover
               content={<FilterPopup {...popupProps} buttonElement={filterAnchor} />}
-              // opens rightward from whichever control was used, rather than back across the column
               placement="bottom-start"
               referenceElement={filterAnchor}
               show
@@ -303,9 +301,37 @@ const getStyles = memoize(
       display: 'flex',
       alignItems: headerTextWrap ? 'flex-end' : 'center',
       gap: theme.spacing(0.5),
-      // fill the header cell so the column menu can sit against its trailing edge
       flex: 1,
       minWidth: 0,
+      // Prevent text selection from stealing the column drag gesture.
+      userSelect: 'none',
+    }),
+    // Keep the handle mounted so its width can animate without shifting the label abruptly.
+    headerCellDragHandle: css({
+      label: 'headerCellDragHandle',
+      display: 'flex',
+      alignItems: 'center',
+      flexShrink: 0,
+      background: 'transparent',
+      border: 'none',
+      padding: 0,
+      color: theme.colors.text.secondary,
+      cursor: 'grab',
+      width: 0,
+      opacity: 0,
+      overflow: 'hidden',
+      marginInlineEnd: theme.spacing(-0.5),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['width', 'opacity', 'margin-inline-end'], {
+          duration: theme.transitions.duration.shorter,
+        }),
+      },
+      // The custom class avoids matching the outer cell of a nested table.
+      '.table-ng-header-cell:hover &': {
+        width: HEADER_DRAG_HANDLE_WIDTH,
+        opacity: 1,
+        marginInlineEnd: 0,
+      },
     }),
     // The `table.refresh` differences live in this one rule rather than in a second class composed
     // over it: two rules of equal specificity are resolved by their order in the stylesheet, and this

@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { createRef } from 'react';
 
 import { colorManipulator, createTheme, getThemeById, ThemeContext } from '@grafana/data';
-import { type DataGridHandle, Row, Cell } from '@grafana/react-data-grid';
+import { DataGrid, type DataGridHandle, Row, Cell } from '@grafana/react-data-grid';
 
 import { TableDataGrid, type TableDataGridProps } from './TableDataGrid';
 import { FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS } from './constants';
@@ -633,4 +633,68 @@ describe('TableDataGrid', () => {
       expect(screen.getByRole('grid', { name: 'accessible grid' })).toBeInTheDocument();
     });
   });
+});
+
+it('defers grid resize rendering, uses the latest size and cancels pending work on unmount', () => {
+  const original = global.ResizeObserver;
+  let notify: ResizeObserverCallback;
+  const disconnect = jest.fn();
+  global.ResizeObserver = class {
+    constructor(callback: ResizeObserverCallback) {
+      notify = callback;
+    }
+    observe() {}
+    unobserve() {}
+    disconnect = disconnect;
+  };
+  jest.useFakeTimers();
+  const requestFrame = jest.spyOn(window, 'requestAnimationFrame');
+  const cancelFrame = jest.spyOn(window, 'cancelAnimationFrame');
+  const { unmount } = render(
+    <DataGrid
+      columns={[{ key: 'name', name: 'Name', width: 100 }]}
+      rows={Array.from({ length: 100 }, (_, index) => ({ name: `Row ${index}` }))}
+      rowHeight={20}
+      headerRowHeight={20}
+    />
+  );
+  const grid = screen.getByRole('grid');
+  const resize = (height: number) => {
+    const size = [{ inlineSize: 400, blockSize: height }];
+    notify(
+      [
+        {
+          target: grid,
+          contentBoxSize: size,
+          borderBoxSize: size,
+          devicePixelContentBoxSize: size,
+          contentRect: grid.getBoundingClientRect(),
+        },
+      ],
+      {} as ResizeObserver
+    );
+  };
+  try {
+    expect(screen.queryByText('Row 30')).not.toBeInTheDocument();
+    requestFrame.mockClear();
+    act(() => {
+      resize(200);
+      resize(800);
+    });
+    expect(screen.queryByText('Row 30')).not.toBeInTheDocument();
+    expect(requestFrame).toHaveBeenCalledTimes(1);
+    act(() => jest.advanceTimersByTime(20));
+    expect(screen.getByText('Row 30')).toBeInTheDocument();
+    act(() => resize(100));
+    const pending = requestFrame.mock.results.at(-1)!.value;
+    unmount();
+    expect(cancelFrame).toHaveBeenCalledWith(pending);
+    expect(disconnect).toHaveBeenCalledTimes(1);
+  } finally {
+    unmount();
+    requestFrame.mockRestore();
+    cancelFrame.mockRestore();
+    jest.useRealTimers();
+    global.ResizeObserver = original;
+  }
 });

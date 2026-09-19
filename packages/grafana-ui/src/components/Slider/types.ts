@@ -27,6 +27,9 @@ export interface SliderProps extends CommonSliderProps {
 }
 
 export interface RangeSliderProps extends CommonSliderProps {
+  /** Opt in to updating handle positions when value changes. */
+  controlled?: boolean;
+  ariaLabelForHandle?: string[];
   value?: number[];
   onChange?: (value: number[]) => void;
   onAfterChange?: (value?: number[]) => void;
