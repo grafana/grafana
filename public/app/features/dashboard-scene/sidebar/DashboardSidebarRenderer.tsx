@@ -6,6 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
+  useFlagDashboardUndoRedo,
   useFlagGrafanaDashboardGlobalVariables,
   useFlagGrafanaViewPanelPane,
   useFlagFeedbackButton,
@@ -52,6 +53,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
   const viewPanelPane = useFlagGrafanaViewPanelPane();
   const globalDashboardVariablesEnabled = useFlagGrafanaDashboardGlobalVariables();
   const feedbackButton = useFlagFeedbackButton();
+  const dashboardUndoRedo = useFlagDashboardUndoRedo();
 
   const onClickHideSidebar: React.MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
@@ -130,7 +132,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
                 active={openPane instanceof DashboardCrossDashboardVariablesPane}
               />
             )}
-            {config.featureToggles.dashboardUndoRedo && (
+            {dashboardUndoRedo && (
               <>
                 <Sidebar.Divider />
                 <UndoButton dashboard={dashboard} />
