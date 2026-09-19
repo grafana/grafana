@@ -167,8 +167,8 @@ function TabTitleInput({ tab, isNewElement, id }: { tab: TabItem; isNewElement: 
   );
 }
 
-function TabRepeatSelect({ tab, id }: { tab: TabItem; id?: string }) {
-  const { layout } = tab.useState();
+export function TabRepeatSelect({ tab, id }: { tab: TabItem; id?: string }) {
+  const { layout, repeatByVariable } = tab.useState();
 
   const isAnyPanelUsingDashboardDS = layout.getVizPanels().some((vizPanel) => {
     const runner = getQueryRunnerFor(vizPanel);
@@ -184,8 +184,22 @@ function TabRepeatSelect({ tab, id }: { tab: TabItem; id?: string }) {
       <RepeatRowSelect2
         id={id}
         sceneContext={tab}
-        repeat={tab.state.repeatByVariable}
-        onChange={(repeat) => tab.onChangeRepeat(repeat)}
+        repeat={repeatByVariable}
+        onChange={(repeat) => {
+          // The select reports "Disable repeating" as an empty string
+          const nextRepeat = repeat || undefined;
+
+          if (nextRepeat === repeatByVariable) {
+            return;
+          }
+
+          edit({
+            description: t('dashboard.edit-actions.tab-repeat-variable', 'Tab repeat by'),
+            source: tab,
+            perform: () => tab.onChangeRepeat(nextRepeat),
+            undo: () => tab.onChangeRepeat(repeatByVariable),
+          });
+        }}
       />
       {isAnyPanelUsingDashboardDS ? (
         <Alert
