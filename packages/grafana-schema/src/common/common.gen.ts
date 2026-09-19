@@ -164,8 +164,11 @@ export interface MapLayerOptions {
 export enum FrameGeometrySourceMode {
   Auto = 'auto',
   Coords = 'coords',
+  GeoJson = 'geojson',
   Geohash = 'geohash',
   Lookup = 'lookup',
+  Wkb = 'wkb',
+  Wkt = 'wkt',
 }
 
 export enum HeatmapCalculationMode {
@@ -946,11 +949,14 @@ export interface FrameGeometrySource {
    * Field mappings
    */
   geohash?: string;
+  /**
+   * Field name holding the geometry text, used by the Wkt, Wkb, and GeoJson modes
+   */
+  geometry?: string;
   latitude?: string;
   longitude?: string;
   lookup?: string;
   mode: FrameGeometrySourceMode;
-  wkt?: string;
 }
 
 export interface HeatmapCalculationOptions {

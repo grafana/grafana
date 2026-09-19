@@ -50,7 +50,9 @@ export const getActions = (panel: GeomapPanel) => {
           type: item.id,
           name: getNextLayerName(panel),
           config: cloneDeep(item.defaultOptions),
-          location: item.showLocation ? { mode: FrameGeometrySourceMode.Auto } : undefined,
+          location: item.showLocation
+            ? { mode: item.locationModes?.[0] ?? FrameGeometrySourceMode.Auto }
+            : undefined,
           tooltip: true,
           ...(!item.hideOpacity && { opacity: defaultStyleConfig.opacity }),
         },
