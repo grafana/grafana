@@ -35,6 +35,7 @@ import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { DashboardInteractions } from '../utils/interactions';
 
 import { DashboardScene } from './DashboardScene';
+import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { NewAlertRuleDrawer } from './NewAlertRuleDrawer';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { panelMenuBehavior } from './PanelMenuBehavior';
@@ -65,6 +66,13 @@ setGetObservablePluginLinks(getObservablePluginLinksMock);
 describe('panelMenuBehavior', () => {
   beforeAll(() => {
     locationService.push('/d/dash-1?from=now-5m&to=now');
+  });
+
+  // config is a shared singleton; several tests flip unifiedAlertingEnabled without resetting it,
+  // which used to only affect an unchecked corner of the "More..." submenu but now changes whether
+  // a brand new top-level "Send to" item appears, so unrelated tests' item counts would drift.
+  afterEach(() => {
+    config.unifiedAlertingEnabled = false;
   });
 
   it('Given standard panel', async () => {
@@ -116,16 +124,19 @@ describe('panelMenuBehavior', () => {
 
     await new Promise((r) => setTimeout(r, 1));
 
-    expect(menu.state.items?.length).toBe(4);
+    expect(menu.state.items?.length).toBe(5);
     expect(menu.state.items?.[0].text).toBe('Share');
     expect(menu.state.items?.[1].text).toBe('Explore');
     expect(menu.state.items?.[2].text).toBe('Inspect');
-    expect(menu.state.items?.[3].text).toBe('More...');
+    expect(menu.state.items?.[3].text).toBe('Send to');
     expect(menu.state.items?.[3].subMenu).toBeDefined();
-
-    expect(menu.state.items?.[3].subMenu?.length).toBe(2);
+    expect(menu.state.items?.[3].subMenu?.length).toBe(1);
     expect(menu.state.items?.[3].subMenu?.[0].text).toBe('New alert rule');
-    expect(menu.state.items?.[3].subMenu?.[1].text).toBe('Get help');
+
+    expect(menu.state.items?.[4].text).toBe('More...');
+    expect(menu.state.items?.[4].subMenu).toBeDefined();
+    expect(menu.state.items?.[4].subMenu?.length).toBe(1);
+    expect(menu.state.items?.[4].subMenu?.[0].text).toBe('Get help');
   });
 
   describe('when extending panel menu from plugins', () => {
@@ -622,7 +633,51 @@ describe('panelMenuBehavior', () => {
       expect(menu.state.items?.find((i) => i.text === 'Remove')).toBeDefined();
       const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
       expect(moreMenu?.find((i) => i.text === 'Duplicate')).toBeDefined();
-      expect(moreMenu?.find((i) => i.text === 'New library panel')).toBeDefined();
+      const sendToMenu = menu.state.items?.find((i) => i.text === 'Send to')?.subMenu;
+      expect(sendToMenu?.find((i) => i.text === 'New library panel')).toBeDefined();
+    });
+
+    it('should offer Unlink/Replace library panel in Send to, instead of New library panel, when editing a library panel', async () => {
+      const { scene, menu, panel } = await buildTestScene({});
+      scene.setState({ isEditing: true });
+      panel.setState({
+        $behaviors: [
+          new LibraryPanelBehavior({
+            isLoaded: true,
+            uid: 'lib-uid',
+            name: 'My library panel',
+            _loadedPanel: {
+              uid: 'lib-uid',
+              name: 'My library panel',
+              model: { type: 'table' },
+              type: 'panel',
+              version: 1,
+            },
+          }),
+        ],
+      });
+
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
+      mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
+
+      menu.activate();
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      const sendToMenu = menu.state.items?.find((i) => i.text === 'Send to')?.subMenu;
+      expect(sendToMenu?.find((i) => i.text === 'Unlink library panel')).toEqual(
+        expect.objectContaining({ iconClassName: 'link-broken' })
+      );
+      expect(sendToMenu?.find((i) => i.text === 'Replace library panel')).toEqual(
+        expect.objectContaining({ iconClassName: 'library-panel' })
+      );
+      expect(sendToMenu?.find((i) => i.text === 'New library panel')).toBeUndefined();
+
+      const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
+      expect(moreMenu?.find((i) => i.text === 'Unlink library panel')).toBeUndefined();
+      expect(moreMenu?.find((i) => i.text === 'Replace library panel')).toBeUndefined();
     });
 
     it('should only contain explore when embedded', async () => {
@@ -807,8 +862,8 @@ describe('panelMenuBehavior', () => {
         menu.activate();
         await new Promise((r) => setTimeout(r, 1));
 
-        const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
-        const alertMenuItem = moreMenu?.find((i) => i.text === 'New alert rule')?.onClick;
+        const sendToMenu = menu.state.items?.find((i) => i.text === 'Send to')?.subMenu;
+        const alertMenuItem = sendToMenu?.find((i) => i.text === 'New alert rule')?.onClick;
         expect(alertMenuItem).toBeDefined();
 
         await alertMenuItem?.({} as React.MouseEvent);
@@ -836,8 +891,8 @@ describe('panelMenuBehavior', () => {
         menu.activate();
         await new Promise((r) => setTimeout(r, 1));
 
-        const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
-        const alertMenuItem = moreMenu?.find((i) => i.text === 'New alert rule')?.onClick;
+        const sendToMenu = menu.state.items?.find((i) => i.text === 'Send to')?.subMenu;
+        const alertMenuItem = sendToMenu?.find((i) => i.text === 'New alert rule')?.onClick;
 
         await alertMenuItem?.({} as React.MouseEvent);
         await new Promise((r) => setTimeout(r, 0));
@@ -849,6 +904,10 @@ describe('panelMenuBehavior', () => {
       it('should show error notification and not open the drawer on failure', async () => {
         const { menu, panel, scene } = await buildTestScene({});
         const mockError = new Error('Test error');
+
+        config.unifiedAlertingEnabled = true;
+        grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
+
         jest
           .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
           .mockRejectedValue(mockError);
@@ -857,8 +916,8 @@ describe('panelMenuBehavior', () => {
         menu.activate();
         await new Promise((r) => setTimeout(r, 1));
 
-        const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
-        const alertMenuItem = moreMenu?.find((i) => i.text === 'New alert rule')?.onClick;
+        const sendToMenu = menu.state.items?.find((i) => i.text === 'Send to')?.subMenu;
+        const alertMenuItem = sendToMenu?.find((i) => i.text === 'New alert rule')?.onClick;
         expect(alertMenuItem).toBeDefined();
 
         await alertMenuItem?.({} as React.MouseEvent);
@@ -888,8 +947,8 @@ describe('panelMenuBehavior', () => {
         menu.activate();
         await new Promise((r) => setTimeout(r, 1));
 
-        const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
-        const alertMenuItem = moreMenu?.find((i) => i.text === 'New alert rule')?.onClick;
+        const sendToMenu = menu.state.items?.find((i) => i.text === 'Send to')?.subMenu;
+        const alertMenuItem = sendToMenu?.find((i) => i.text === 'New alert rule')?.onClick;
 
         await alertMenuItem?.({} as React.MouseEvent);
         await new Promise((r) => setTimeout(r, 0));
@@ -908,8 +967,8 @@ describe('panelMenuBehavior', () => {
       menu.activate();
       await new Promise((r) => setTimeout(r, 1));
 
-      const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
-      expect(moreMenu?.find((i) => i.text === 'New alert rule')).toBeDefined();
+      const sendToMenu = menu.state.items?.find((i) => i.text === 'Send to')?.subMenu;
+      expect(sendToMenu?.find((i) => i.text === 'New alert rule')).toBeDefined();
     });
 
     it('should not contain "New alert rule" menu item when user does not have permissions to read and update alerts', async () => {
@@ -920,8 +979,8 @@ describe('panelMenuBehavior', () => {
       menu.activate();
       await new Promise((r) => setTimeout(r, 1));
 
-      const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
-      expect(moreMenu?.find((i) => i.text === 'New alert rule')).toBeUndefined();
+      const sendToMenu = menu.state.items?.find((i) => i.text === 'Send to')?.subMenu;
+      expect(sendToMenu?.find((i) => i.text === 'New alert rule')).toBeUndefined();
     });
 
     it('should not contain "New alert rule" menu item when unifiedAlertingEnabled is false', async () => {
@@ -931,8 +990,8 @@ describe('panelMenuBehavior', () => {
       menu.activate();
       await new Promise((r) => setTimeout(r, 1));
 
-      const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
-      expect(moreMenu?.find((i) => i.text === 'New alert rule')).toBeUndefined();
+      const sendToMenu = menu.state.items?.find((i) => i.text === 'Send to')?.subMenu;
+      expect(sendToMenu?.find((i) => i.text === 'New alert rule')).toBeUndefined();
     });
 
     it('should not contain "New alert rule" menu item when user does not have permissions to read and update alerts', async () => {
@@ -943,8 +1002,8 @@ describe('panelMenuBehavior', () => {
       menu.activate();
       await new Promise((r) => setTimeout(r, 1));
 
-      const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
-      const alertMenuItem = moreMenu?.find((i) => i.text === 'New alert rule')?.onClick;
+      const sendToMenu = menu.state.items?.find((i) => i.text === 'Send to')?.subMenu;
+      const alertMenuItem = sendToMenu?.find((i) => i.text === 'New alert rule')?.onClick;
       expect(alertMenuItem).toBeUndefined();
     });
 
@@ -1133,7 +1192,7 @@ describe('panelMenuBehavior', () => {
       mocks.contextSrv.hasPermission.mockReset();
     });
 
-    async function itemsWith({ notebooks, permission }: { notebooks: boolean; permission: boolean }) {
+    async function sendToChildrenWith({ notebooks, permission }: { notebooks: boolean; permission: boolean }) {
       setTestFlags({ [FlagKeys.DashboardNotebooks]: notebooks });
       mocks.contextSrv.hasPermission.mockReturnValue(permission);
 
@@ -1143,33 +1202,36 @@ describe('panelMenuBehavior', () => {
       menu.activate();
       await new Promise((r) => setTimeout(r, 1));
 
-      return menu.state.items ?? [];
+      return {
+        items: menu.state.items ?? [],
+        sendToMenu: menu.state.items?.find((i) => i.text === 'Send to')?.subMenu,
+      };
     }
 
     it('is hidden when notebooks are disabled', async () => {
-      const items = await itemsWith({ notebooks: false, permission: true });
+      const { sendToMenu } = await sendToChildrenWith({ notebooks: false, permission: true });
 
-      expect(items.find((item) => item.text === 'Add to notebook')).toBeUndefined();
+      expect(sendToMenu?.find((item) => item.text === 'Notebook')).toBeUndefined();
     });
 
     it('is hidden without permission to write or create', async () => {
-      const items = await itemsWith({ notebooks: true, permission: false });
+      const { sendToMenu } = await sendToChildrenWith({ notebooks: true, permission: false });
 
-      expect(items.find((item) => item.text === 'Add to notebook')).toBeUndefined();
+      expect(sendToMenu?.find((item) => item.text === 'Notebook')).toBeUndefined();
     });
 
     // Adding a panel to a notebook writes to the notebook, so it must not be gated on dashboard
     // edit mode the way Remove is.
     it('is offered while reading the dashboard, not only while editing it', async () => {
-      const items = await itemsWith({ notebooks: true, permission: true });
+      const { items, sendToMenu } = await sendToChildrenWith({ notebooks: true, permission: true });
 
-      expect(items.find((item) => item.text === 'Add to notebook')).toEqual(
-        expect.objectContaining({ iconClassName: 'search' })
+      expect(sendToMenu?.find((item) => item.text === 'Notebook')).toEqual(
+        expect.objectContaining({ iconClassName: 'book' })
       );
       expect(items.find((item) => item.text === 'Remove')).toBeUndefined();
     });
 
-    it('sits in its own section immediately above Remove while editing', async () => {
+    it('is grouped under "Send to" alongside other send-elsewhere actions, not on its own', async () => {
       setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
       mocks.contextSrv.hasPermission.mockReturnValue(true);
 
@@ -1180,8 +1242,18 @@ describe('panelMenuBehavior', () => {
       menu.activate();
       await new Promise((r) => setTimeout(r, 1));
 
-      const texts = (menu.state.items ?? []).map((item) => (item.type === 'divider' ? '---' : item.text));
-      expect(texts.slice(-4)).toEqual(['---', 'Add to notebook', '---', 'Remove']);
+      const items = menu.state.items ?? [];
+      // No more standalone top-level item for this action.
+      expect(items.find((item) => item.text === 'Notebook' || item.text === 'Add to notebook')).toBeUndefined();
+
+      const sendToIndex = items.findIndex((item) => item.text === 'Send to');
+      const moreIndex = items.findIndex((item) => item.text === 'More...');
+      expect(sendToIndex).toBeGreaterThan(-1);
+      expect(moreIndex).toBeGreaterThan(-1);
+      // "Send to" sits right after Time settings, ahead of the More... catch-all.
+      expect(sendToIndex).toBeLessThan(moreIndex);
+
+      expect(items[sendToIndex].subMenu?.find((item) => item.text === 'Notebook')).toBeDefined();
     });
   });
 });
