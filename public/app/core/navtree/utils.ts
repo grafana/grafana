@@ -60,7 +60,7 @@ export function findNavById(nodes: NavModelItem[], id: string): NavModelItem | u
 }
 
 /** Returns a new tree with the matching node (at any depth) replaced by update(node) */
-function updateNavById(
+export function updateNavById(
   nodes: NavModelItem[],
   id: string,
   update: (node: NavModelItem) => NavModelItem
@@ -71,6 +71,13 @@ function updateNavById(
     }
     return node.children ? { ...node, children: updateNavById(node.children, id, update) } : node;
   });
+}
+
+/** Returns a new tree without the matching node (at any depth) */
+export function removeNavById(nodes: NavModelItem[], id: string): NavModelItem[] {
+  return nodes
+    .filter((node) => node.id !== id)
+    .map((node) => (node.children ? { ...node, children: removeNavById(node.children, id) } : node));
 }
 
 /**
@@ -157,3 +164,19 @@ export function pruneEmptyNavSections(tree: NavModelItem[]): NavModelItem[] {
     })
     .filter((node) => !isPrunable(PRUNABLE_SECTIONS, node));
 }
+
+/** Nav id of an app plugin's own entry/section (matches the Go builder's ids) */
+export const pluginPageId = (pluginId: string) => `plugin-page-${pluginId}`;
+
+/** Nav id of a plugin page rendered standalone inside a core section */
+export const standalonePluginPageId = (key: string) => `standalone-plugin-page-${key}`;
+
+/**
+ * Standalone nav id derived from a page title, e.g. 'Service Overview' →
+ * 'standalone-plugin-page-service-overview'. Text-derived ids deliberately
+ * lack the leading slash of path-derived ones, so the page keeps the regular
+ * /a/<pluginId> routing (see isStandalonePluginPage in
+ * app/features/plugins/routes.tsx).
+ */
+export const standalonePluginPageIdFromText = (text: string) =>
+  standalonePluginPageId(text.toLowerCase().replaceAll(' ', '-'));
