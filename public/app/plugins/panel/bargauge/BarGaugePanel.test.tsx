@@ -199,18 +199,46 @@ describe('BarGaugePanel', () => {
   });
 
   describe('single series', () => {
+    function dataWithOneSeries() {
+      return {
+        series: [toDataFrame({ target: 'onlySeries', datapoints: [[100, 1000]] })],
+        timeRange: createTimeRange(),
+        state: LoadingState.Done,
+      };
+    }
+
     it('hides the series name when there is a single unnamed series', () => {
-      const panelData = buildPanelData({
-        data: {
-          series: [toDataFrame({ target: 'onlySeries', datapoints: [[100, 1000]] })],
-          timeRange: createTimeRange(),
-          state: LoadingState.Done,
-        },
-      });
+      const panelData = buildPanelData({ data: dataWithOneSeries() });
 
       render(<BarGaugePanel {...panelData} />);
 
       expect(screen.queryByText(/onlyseries/i)).not.toBeInTheDocument();
+      expect(screen.getByTestId(valueSelector)).toBeInTheDocument();
+    });
+
+    it.each([VizOrientation.Horizontal, VizOrientation.Vertical])(
+      'shows the series name for a single unnamed series when showNameForSingleSeries is enabled (%s)',
+      (orientation) => {
+        const panelData = buildPanelData({ data: dataWithOneSeries() });
+        panelData.options.showNameForSingleSeries = true;
+        panelData.options.orientation = orientation;
+
+        render(<BarGaugePanel {...panelData} />);
+
+        expect(screen.getByText(/onlyseries/i)).toBeInTheDocument();
+        expect(screen.getByTestId(valueSelector)).toBeInTheDocument();
+      }
+    );
+
+    it('still hides the series name when showNameForSingleSeries is enabled but namePlacement is Hidden', () => {
+      const panelData = buildPanelData({ data: dataWithOneSeries() });
+      panelData.options.showNameForSingleSeries = true;
+      panelData.options.namePlacement = BarGaugeNamePlacement.Hidden;
+
+      render(<BarGaugePanel {...panelData} />);
+
+      // The name stays in the DOM, hidden by the styles getTitleStyles applies.
+      expect(screen.getByText(/onlyseries/i)).not.toBeVisible();
       expect(screen.getByTestId(valueSelector)).toBeInTheDocument();
     });
   });
@@ -238,6 +266,7 @@ function buildPanelData(overrideValues?: Partial<BarGaugePanelProps>): BarGaugeP
       minVizWidth: 0,
       valueMode: BarGaugeValueMode.Color,
       namePlacement: BarGaugeNamePlacement.Auto,
+      showNameForSingleSeries: false,
       sizing: BarGaugeSizing.Auto,
       legend: {
         showLegend: false,
