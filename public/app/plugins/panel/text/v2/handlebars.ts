@@ -92,10 +92,8 @@ const helperArgs = (args: unknown[]): unknown[] => args.slice(0, -1);
 const isTruthy = (value: unknown): boolean => Boolean(value) && !Handlebars.Utils.isEmpty(value);
 
 // Fresh per call: the variable helpers close over this panel's replaceVariables.
-function createEnvironment(replaceVariables: InterpolateFunction) {
-  const env = Handlebars.create();
-
-  env.registerHelper({
+function createHelpers(replaceVariables: InterpolateFunction) {
+  return {
     and: (...args: unknown[]) => helperArgs(args).every(isTruthy),
     or: (...args: unknown[]) => helperArgs(args).some(isTruthy),
     not: (left: unknown) => !isTruthy(left),
@@ -137,7 +135,15 @@ function createEnvironment(replaceVariables: InterpolateFunction) {
       return values;
     },
     variableValue: (name: unknown) => replaceVariables(`$${toText(name)}`),
-  });
+  };
+}
+
+function createEnvironment(replaceVariables: InterpolateFunction) {
+  const env = Handlebars.create();
+  env.registerHelper(createHelpers(replaceVariables));
 
   return env;
 }
+
+/** Taken from the registration above so the editor's list cannot fall out of date. */
+export const HELPER_NAMES: readonly string[] = [...Object.keys(createHelpers(() => '')), 'log', 'lookup'];
