@@ -156,7 +156,9 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(1),
-      backgroundColor: theme.colors.background.primary,
+      backgroundColor: theme.flags.visualDesignRefresh
+        ? theme.colors.background.secondary
+        : theme.colors.background.primary,
       borderTop: `1px solid ${theme.colors.border.weak}`,
       borderBottomLeftRadius: theme.shape.radius.default,
       borderBottomRightRadius: theme.shape.radius.default,

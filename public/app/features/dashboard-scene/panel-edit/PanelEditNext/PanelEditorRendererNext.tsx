@@ -106,7 +106,7 @@ function getWrapperStyles(theme: GrafanaTheme2) {
       position: 'relative',
       flexDirection: 'column',
       borderLeft: `1px solid ${theme.colors.border.weak}`,
-      background: theme.colors.background.primary,
+      background: theme.flags.visualDesignRefresh ? theme.colors.background.secondary : theme.colors.background.primary,
       borderTop: `1px solid ${theme.colors.border.weak}`,
       borderTopLeftRadius: theme.shape.radius.default,
     }),

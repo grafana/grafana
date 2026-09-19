@@ -320,6 +320,7 @@ const getStyles = (
       gap: theme.spacing(1),
       minHeight: theme.spacing(5),
       borderBottom: `1px solid ${theme.colors.border.weak}`,
+      background: theme.flags.visualDesignRefresh ? theme.colors.background.secondary : theme.colors.background.primary,
 
       // psuedo-element to show the border color on the left of the header
       '&::before': {

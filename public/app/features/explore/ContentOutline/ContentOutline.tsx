@@ -333,7 +333,9 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean, signalExplorerVisibl
       marginRight: theme.spacing(1),
       height: '100%',
       overflow: 'hidden',
-      backgroundColor: theme.colors.background.primary,
+      backgroundColor: theme.flags.visualDesignRefresh
+        ? theme.colors.background.secondary
+        : theme.colors.background.primary,
       width: expanded ? expandedWidth : undefined,
       minWidth: expanded ? expandedWidth : undefined,
     }),

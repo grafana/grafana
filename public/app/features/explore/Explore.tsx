@@ -86,6 +86,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     queryContainer: css({
       label: 'queryContainer',
+      background: theme.colors.background.primary,
+      borderRadius: theme.shape.radius.default,
       padding: theme.spacing(1),
     }),
     exploreContainer: css({
@@ -718,7 +720,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
                       icon="arrow"
                       mergeSingleChild={true}
                     >
-                      <PanelContainer className={styles.queryContainer}>
+                      <div className={styles.queryContainer}>
                         {correlationsBox}
                         <QueryRows
                           exploreId={exploreId}
@@ -750,7 +752,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
                           onReplaceQueriesFromLibrary={replaceQueriesFromLibrary}
                         />
                         <ResponseErrorContainer exploreId={exploreId} />
-                      </PanelContainer>
+                      </div>
                     </ContentOutlineItem>
                     <AutoSizer onResize={this.onResize} disableHeight>
                       {({ width }) => {
