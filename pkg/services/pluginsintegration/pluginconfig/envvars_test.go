@@ -782,7 +782,8 @@ func TestPluginEnvVarsProvider_authEnvVars(t *testing.T) {
 		assert.Equal(t, "GF_APP_URL=https://myorg.com/", envVars[1])
 		assert.Equal(t, "GF_PLUGIN_APP_CLIENT_ID=clientID", envVars[2])
 		assert.Equal(t, "GF_PLUGIN_APP_CLIENT_SECRET=clientSecret", envVars[3])
-		assert.Equal(t, "GF_PLUGIN_APP_PRIVATE_KEY=privatePem", envVars[4])
+		assert.Equal(t, "GF_PLUGIN_APP_NAMESPACE=default", envVars[4])
+		assert.Equal(t, "GF_PLUGIN_APP_PRIVATE_KEY=privatePem", envVars[5])
 	})
 }
 

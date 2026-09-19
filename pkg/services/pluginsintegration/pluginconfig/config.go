@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -81,6 +82,10 @@ type PluginInstanceCfg struct {
 	SigV4VerboseLogging bool
 
 	LiveClientQueueMaxSize int
+
+	// Namespace is the namespace of the org that plugins' external service accounts are
+	// provisioned into.
+	Namespace string
 }
 
 // ProvidePluginInstanceConfig returns a new PluginInstanceCfg.
@@ -131,6 +136,7 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 		SigV4AuthEnabled:                    cfg.SigV4AuthEnabled,
 		SigV4VerboseLogging:                 cfg.SigV4VerboseLogging,
 		LiveClientQueueMaxSize:              cfg.LiveClientQueueMaxSize,
+		Namespace:                           request.GetNamespaceMapper(cfg)(cfg.DefaultOrgID()),
 	}, nil
 }
 
