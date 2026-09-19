@@ -18,6 +18,13 @@ export interface DashboardSidebarState extends SceneObjectState {
   /** True when a new element is being added and selected */
   isNewElement: boolean;
   isDocked?: boolean;
+  /** When false, selecting an element on the canvas does not open the element options pane */
+  autoOpenPane: boolean;
+}
+
+export interface SelectObjectOptions extends ElementSelectionOnSelectOptions {
+  /** Open the element options pane even when auto-open is disabled */
+  openPane?: boolean;
 }
 
 /**
@@ -29,7 +36,11 @@ export interface DashboardSidebarLike extends SceneObject<DashboardSidebarState>
   enableSelection(): void;
   disableSelection(): void;
   clearSelection(noEvent?: boolean): void;
-  selectObject(obj: SceneObject, options?: ElementSelectionOnSelectOptions): void;
+  selectObject(obj: SceneObject, options?: SelectObjectOptions): void;
+  selectObjectFromCanvas(obj: SceneObject, options?: SelectObjectOptions): void;
+  editElement(key: string): void;
+  editSelection(): void;
+  setAutoOpenPane(autoOpenPane: boolean): void;
   openPane(openPane: DashboardSidebarPane): void;
   closePane(): void;
   getSelectedObject(key?: string): SceneObject | undefined;
