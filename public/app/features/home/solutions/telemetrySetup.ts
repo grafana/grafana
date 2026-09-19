@@ -25,6 +25,11 @@ export const TELEMETRY_SETUP_DOCS = {
 
 const GRAFANA_CLOUD_DOCS_BASE_URL = 'https://grafana.com/docs/grafana-cloud';
 
+const PATHFINDER_PLUGIN_ID = 'grafana-pathfinder-app';
+/** "Send traces to Grafana Cloud using Alloy" learning path, opened in Grafana by Pathfinder. */
+const TRACES_GUIDE_DOC = encodeURIComponent('/docs/learning-paths/send-traces-alloy/');
+const TRACES_GUIDE_HREF = `/a/${PATHFINDER_PLUGIN_ID}?doc=${TRACES_GUIDE_DOC}&source=homepage-recommendations`;
+
 const setup: Record<
   TelemetryType,
   { action: () => string; guidePath?: string; cloudDocsHref: string; docsHref: string }
@@ -43,7 +48,7 @@ const setup: Record<
   },
   traces: {
     action: () => t('home.overview.available.traces.action', 'Instrument traces'),
-    cloudDocsHref: `${GRAFANA_CLOUD_DOCS_BASE_URL}/send-data/traces/set-up/instrument-apps/`,
+    cloudDocsHref: TRACES_GUIDE_HREF,
     docsHref: TELEMETRY_SETUP_DOCS.traces,
   },
 };
@@ -86,5 +91,7 @@ export function getTelemetrySetupLearnMore(
   capabilities: TelemetrySetupCapabilities
 ): SolutionLearnMore {
   const definition = setup[type];
-  return { href: capabilities.setupGuideEnabled ? definition.cloudDocsHref : definition.docsHref };
+  const href = capabilities.setupGuideEnabled ? definition.cloudDocsHref : definition.docsHref;
+  // cloudDocsHref may be an in-app path, so respect a non-root base URL. Absolute URLs pass through unchanged.
+  return { href: locationUtil.assureBaseUrl(href) };
 }
