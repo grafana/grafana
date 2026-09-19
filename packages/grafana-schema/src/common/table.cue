@@ -61,8 +61,9 @@ TableBarGaugeCellOptions: {
 // Sparkline cell options
 TableSparklineCellOptions: {
 	GraphFieldConfig
-	type:       TableCellDisplayMode & "sparkline"
-	hideValue?: bool
+	type:         TableCellDisplayMode & "sparkline"
+	hideValue?:   bool
+	showTooltip?: bool
 } @cuetsy(kind="interface")
 
 // Colored background cell options

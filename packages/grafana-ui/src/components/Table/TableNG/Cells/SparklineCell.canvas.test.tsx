@@ -149,4 +149,22 @@ describe('TableNG SparklineCell threshold wiring (canvas)', () => {
 
     await assertCanvasOutput();
   });
+
+  // The 5th positional prepareConfig arg is `enableHover`; the cell must forward
+  // cellOptions.showTooltip so the sparkline only enables the cursor when opted in.
+  it('leaves hover disabled when showTooltip is unset', async () => {
+    renderSparklineCell(sparklineField({ custom: { cellOptions: { type: TableCellDisplayMode.Sparkline } } }));
+
+    await waitFor(() => expect(uPlotInstance?.status).toBe(1));
+    expect(prepareConfigSpy.mock.calls.at(-1)?.[4]).toBe(false);
+  });
+
+  it('enables hover when showTooltip is on', async () => {
+    renderSparklineCell(
+      sparklineField({ custom: { cellOptions: { type: TableCellDisplayMode.Sparkline, showTooltip: true } } })
+    );
+
+    await waitFor(() => expect(uPlotInstance?.status).toBe(1));
+    expect(prepareConfigSpy.mock.calls.at(-1)?.[4]).toBe(true);
+  });
 });
