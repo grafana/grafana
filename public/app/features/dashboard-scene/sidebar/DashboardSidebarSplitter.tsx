@@ -93,6 +93,15 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
   const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
   const sidebarContext = useSidebar({
     hasOpenPane: Boolean(openPane),
+    enableFloating: true,
+    getFloatingParkAnchor: () =>
+      containerRef.current?.querySelector<HTMLElement>(
+        `[data-testid="${selectors.components.TimePicker.moveBackwardButton}"]`
+      ) ??
+      containerRef.current?.querySelector<HTMLElement>(
+        `[data-testid="${selectors.components.TimePicker.openButton}"]`
+      ) ??
+      null,
     contentMargin: 1,
     position: 'right',
     persistenceKey: isEditing ? 'dashboard' : 'dashboard-view',

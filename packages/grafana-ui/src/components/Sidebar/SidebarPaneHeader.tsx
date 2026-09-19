@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -24,10 +24,21 @@ export function SidebarPaneHeader({ children, title }: Props) {
     throw new Error('SidebarPaneHeader must be used within a Sidebar');
   }
 
+  const floating = sidebarContext.floating;
+  const isFloating = floating?.isFloating;
+
   return (
-    <div className={styles.wrapper}>
+    <div className={cx(styles.wrapper, isFloating && styles.floatingWrapper)}>
       <div className={styles.header}>
-        {sidebarContext.onGoBack && (
+        {isFloating && (
+          <IconButton
+            name="draggabledots"
+            className={styles.drag}
+            aria-label={t('grafana-ui.sidebar.move', 'Move toolbox')}
+            {...floating.dragProps}
+          />
+        )}
+        {sidebarContext.onGoBack && (!isFloating || sidebarContext.canGoBack) && (
           <IconButton
             variant="secondary"
             size="lg"
@@ -39,11 +50,56 @@ export function SidebarPaneHeader({ children, title }: Props) {
             data-testid={selectors.components.Sidebar.goBack}
           />
         )}
-        <Text weight="medium" variant="h6" truncate data-testid={selectors.components.Sidebar.headerTitle}>
-          {title}
-        </Text>
+        {isFloating ? (
+          <button
+            type="button"
+            className={styles.dragTitle}
+            aria-label={t('grafana-ui.sidebar.move-title', 'Move {{title}} toolbox', { title })}
+            {...floating.dragProps}
+          >
+            <Text weight="medium" variant="h6" truncate data-testid={selectors.components.Sidebar.headerTitle}>
+              {title}
+            </Text>
+          </button>
+        ) : (
+          <Text weight="medium" variant="h6" truncate data-testid={selectors.components.Sidebar.headerTitle}>
+            {title}
+          </Text>
+        )}
         <div className={styles.flexGrow} />
-        {sidebarContext.onToggleDock && (
+        {isFloating && children && <div className={styles.quickActions}>{children}</div>}
+        {isFloating && (
+          <>
+            {sidebarContext.hasOpenPane && (
+              <IconButton
+                name={floating.isMinimized ? 'angle-down' : 'angle-up'}
+                onClick={floating.toggleMinimized}
+                tooltip={
+                  floating.isMinimized
+                    ? t('grafana-ui.sidebar.expand', 'Expand toolbox')
+                    : t('grafana-ui.sidebar.minimize', 'Minimize toolbox')
+                }
+              />
+            )}
+            <IconButton
+              name="angle-double-up"
+              onClick={floating.park}
+              tooltip={t('grafana-ui.sidebar.park', 'Move away from panels')}
+            />
+          </>
+        )}
+        {floating && (
+          <IconButton
+            name="expand-arrows"
+            onClick={floating.toggle}
+            tooltip={
+              isFloating
+                ? t('grafana-ui.sidebar.return', 'Return to sidebar')
+                : t('grafana-ui.sidebar.float', 'Float toolbox')
+            }
+          />
+        )}
+        {!isFloating && sidebarContext.onToggleDock && (
           <IconButton
             name={'web-section-alt'}
             onClick={sidebarContext.onToggleDock}
@@ -54,7 +110,7 @@ export function SidebarPaneHeader({ children, title }: Props) {
             data-testid={selectors.components.Sidebar.dockToggle}
           />
         )}
-        {sidebarContext.onClosePane && (
+        {sidebarContext.onClosePane && (!isFloating || sidebarContext.hasOpenPane) && (
           <IconButton
             variant="secondary"
             size="lg"
@@ -66,13 +122,49 @@ export function SidebarPaneHeader({ children, title }: Props) {
           />
         )}
       </div>
-      {children && <div className={styles.actions}>{children}</div>}
+      {!isFloating && children && <div className={styles.actions}>{children}</div>}
     </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    dragTitle: css({
+      cursor: 'move',
+      touchAction: 'none',
+      background: 'transparent',
+      border: 0,
+      color: 'inherit',
+      textAlign: 'left',
+      minWidth: 0,
+      flex: '1 1 auto',
+      padding: 0,
+    }),
+    drag: css({ cursor: 'move', touchAction: 'none', flexShrink: 0 }),
+    floatingWrapper: css({
+      flexShrink: 0,
+      position: 'sticky',
+      top: 0,
+      background: theme.colors.background.primary,
+      zIndex: 1,
+      '> div': { height: 46, padding: theme.spacing(0.5), gap: theme.spacing(0.5) },
+      '[data-testid]': { minWidth: 0 },
+      [`[data-testid="${selectors.components.Sidebar.headerTitle}"]`]: { flex: '1 1 auto' },
+      '@container sidebar-toolbox (max-height: 48px)': {
+        '& ~ *': { display: 'none' },
+      },
+    }),
+    quickActions: css({
+      display: 'flex',
+      gap: theme.spacing(0.5),
+      flexShrink: 0,
+      button: { padding: theme.spacing(0.5), gap: 0, minWidth: 24 },
+      'button:has(svg)': { fontSize: 0 },
+      'button svg': { margin: 0 },
+      '@container sidebar-toolbox (min-width: 640px)': {
+        'button:has(svg)': { fontSize: theme.typography.bodySmall.fontSize, gap: theme.spacing(0.5) },
+      },
+    }),
     wrapper: css({
       display: 'flex',
       flexDirection: 'column',

@@ -1,7 +1,7 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { FlexItem } from '@grafana/plugin-ui';
-import { Button, Sidebar } from '@grafana/ui';
+import { Button, Sidebar, useSidebarContext } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
 import { RowItem } from '../scene/layout-rows/RowItem';
@@ -18,6 +18,7 @@ interface EditPaneHeaderProps {
 }
 
 export function ElementEditPaneHeader({ element, sidebar }: EditPaneHeaderProps) {
+  const sidebarContext = useSidebarContext();
   const elementInfo = element.getEditableElementInfo();
   const { hasCopiedPanel } = useClipboardState();
 
@@ -38,7 +39,11 @@ export function ElementEditPaneHeader({ element, sidebar }: EditPaneHeaderProps)
   };
 
   return (
-    <Sidebar.PaneHeader title={elementInfo.typeName}>
+    <Sidebar.PaneHeader
+      title={
+        sidebarContext?.floating?.isFloating ? elementInfo.instanceName || elementInfo.typeName : elementInfo.typeName
+      }
+    >
       {element.renderActions && element.renderActions()}
       {onDuplicate && (
         <Button

@@ -64,6 +64,56 @@ describe('DashboardSidebarSplitter', () => {
     });
   });
 
+  it('parks beside the time picker without shifting the canvas and keeps an empty pill after clearing selection', async () => {
+    const user = userEvent.setup();
+    const scene = buildTestScene();
+    render(
+      <DashboardSidebarSplitter
+        dashboard={scene}
+        isEditing
+        controls={
+          <>
+            <button data-testid={selectors.components.TimePicker.moveBackwardButton}>Previous time range</button>
+            <button data-testid={selectors.components.TimePicker.openButton}>Time range</button>
+          </>
+        }
+      />
+    );
+    const timePicker = screen.getByTestId(selectors.components.TimePicker.moveBackwardButton);
+    jest.spyOn(timePicker, 'getBoundingClientRect').mockReturnValue({
+      x: 800,
+      y: 80,
+      left: 800,
+      top: 80,
+      right: 832,
+      bottom: 112,
+      width: 32,
+      height: 32,
+      toJSON: () => ({}),
+    });
+
+    await user.click(screen.getByTestId(selectors.pages.Dashboard.Sidebar.optionsButton));
+    await user.click(screen.getByLabelText('Float toolbox'));
+    await user.click(screen.getByLabelText('Move away from panels'));
+    expect(screen.getByRole('region', { name: 'Floating sidebar' })).toHaveStyle(
+      'left: 352px; top: 72px; height: 48px'
+    );
+    expect(screen.getByTestId(selectors.components.DashboardSidebarSplitter.primaryBody)).toHaveStyle(
+      'padding-top: 0px'
+    );
+
+    await user.click(screen.getByTestId(selectors.components.DashboardSidebarSplitter.bodyContainer));
+    expect(screen.getByRole('region', { name: 'Floating sidebar' })).toHaveTextContent('Nothing is selected');
+    expect(screen.getByRole('region', { name: 'Floating sidebar' })).toHaveStyle(
+      'width: 320px; height: 48px; left: 472px; top: 72px'
+    );
+    expect(scene.state.sidebar.getSelectedObject()).toBeUndefined();
+    expect(scene.state.sidebar.state.undoStack).toEqual([]);
+    expect(screen.getByTestId(selectors.components.DashboardSidebarSplitter.primaryBody)).toHaveStyle(
+      'padding-top: 0px'
+    );
+  });
+
   it('makes the scroll container keyboard-focusable so arrow/page keys can scroll the dashboard', () => {
     const scene = buildTestScene();
 
