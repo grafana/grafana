@@ -37,11 +37,12 @@ Example:
 
 ```sql
 CREATE USER grafanareader WITH PASSWORD 'password';
-GRANT USAGE ON SCHEMA schema TO grafanareader;
-GRANT SELECT ON schema.table TO grafanareader;
+GRANT USAGE ON SCHEMA public TO grafanareader;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO grafanareader;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO grafanareader;
 ```
 
-Replace `schema` and `table` with your schema and table names.
+Replace `public` with your schema name if different, and replace `'password'` with a secure password.
 
 ## Add the PostgreSQL data source
 
