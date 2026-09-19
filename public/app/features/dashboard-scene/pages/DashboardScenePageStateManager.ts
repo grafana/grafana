@@ -527,7 +527,11 @@ abstract class DashboardScenePageStateManagerBase<T>
     this.setState({ dashboard: undefined, isLoading: true });
 
     // Resolve API versions before synchronous getV1()/getV2() calls downstream.
-    await dashboardAPIVersionResolver.resolve();
+    // Public dashboards are loaded anonymously through the legacy public dashboard API, which never
+    // consults the resolver - skipping it avoids an API discovery request that always returns 401.
+    if (options.route !== DashboardRoutes.Public) {
+      await dashboardAPIVersionResolver.resolve();
+    }
 
     // Home dashboard is not handled through legacy API and is not versioned.
     // Handling home dashboard flow separately from regular dashboard flow.
