@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-arm64
     permissions:
       contents: read
+      id-token: write # required to mint the alerting-team app token below
 
     steps:
       - name: Checkout repository
@@ -23,10 +24,17 @@ jobs:
       - name: Build swagger
         run: |
           make -C pkg/services/ngalert/api/tooling post.json api.json
+      # GITHUB_TOKEN cannot push a branch here, so the PR step needs an app
+      # token, the same way alerting-update-module.yml gets one.
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+        with:
+          github_app: alerting-team
       - name: Open Pull Request
         uses: peter-evans/create-pull-request@4e1beaa7521e8b457b572c090b25bd3db56bf1c5
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ steps.get-github-app-token.outputs.token }}
           commit-message: "chore: update alerting swagger spec"
           title: "Alerting: Update Swagger spec"
           body: |
