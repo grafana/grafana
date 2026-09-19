@@ -29,7 +29,6 @@ export interface Props extends DOMAttributes {
 export const MegaMenu = memo(
   forwardRef<HTMLDivElement, Props>(({ onClose, ...restProps }, ref) => {
     const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
-    const styles = useStyles2(getStyles, visualRefreshEnabled);
     const { chrome } = useGrafana();
     const state = chrome.useState();
     const { isLoading: starredItemsLoading, isError: starredItemsError } = useSyncStarredItemsInNav();
@@ -56,6 +55,8 @@ export const MegaMenu = memo(
       isSaving,
     } = useNavCustomization();
     const { DragDropContext, Draggable, Droppable } = useDragAndDrop(editMode);
+
+    const styles = useStyles2(getStyles, visualRefreshEnabled);
 
     const handleDockedMenu = () => {
       chrome.setMegaMenuDocked(!state.megaMenuDocked);
@@ -356,7 +357,7 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
       background: `linear-gradient(90deg, transparent 0%, ${theme.colors.border.weak} 20%, ${theme.colors.border.weak} 80%, transparent 100%)`,
       margin: theme.spacing(1),
     }),
-    // Edit-mode footer: the Reset/Cancel/Done controls
+    // Menu footer: the Customise entry point (or, while editing, the Reset/Cancel/Done controls).
     footer: css({
       alignItems: 'center',
       display: 'flex',
