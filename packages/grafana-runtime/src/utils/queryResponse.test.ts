@@ -1,4 +1,4 @@
-import { type DataQuery, toDataFrameDTO, type DataFrame } from '@grafana/data';
+import { type DataQuery, toDataFrameDTO, type DataFrame, LoadingState } from '@grafana/data';
 
 import { type FetchError, type FetchResponse } from '../services';
 
@@ -335,6 +335,15 @@ describe('Query Response parser', () => {
     expect(res.errors).toHaveLength(2);
     expect(res.errors?.[0].traceId).toBeUndefined();
     expect(res.errors?.[1].traceId).toBeUndefined();
+  });
+
+  test('should return an error response for a thrown Error', () => {
+    // e.g. response.json() rejecting because the body exceeds the browser's maximum string length
+    const err = new SyntaxError('Unexpected end of JSON input');
+    const res = toDataQueryResponse(err);
+    expect(res.state).toBe(LoadingState.Error);
+    expect(res.data).toEqual([]);
+    expect(res.error?.message).toBe('Unexpected end of JSON input');
   });
 
   test('should handle an error-response with traceIds', () => {
