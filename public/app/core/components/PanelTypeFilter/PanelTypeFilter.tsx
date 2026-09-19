@@ -8,12 +8,11 @@ import { Icon, Button, MultiSelect, useStyles2 } from '@grafana/ui';
 
 export interface Props {
   onChange: (plugins: PanelPluginMeta[]) => void;
-  maxMenuHeight?: number;
 }
 
 const collator = new Intl.Collator();
 
-export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight }: Props): JSX.Element => {
+export const PanelTypeFilter = ({ onChange: propsOnChange}: Props): JSX.Element => {
   const { value: plugins = [] } = useListedPanelPluginMetas();
   const options = useMemo(
     () =>
@@ -39,7 +38,6 @@ export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight }: Prop
     getOptionValue: (i: SelectableValue<PanelPluginMeta>) => i.value,
     noOptionsMessage: t('panel-type-filter.select-no-options', 'No panel types found'),
     placeholder: t('panel-type-filter.select-placeholder', 'Filter by type'),
-    maxMenuHeight,
     options,
     value,
     onChange,
