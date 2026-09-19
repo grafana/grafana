@@ -84,6 +84,6 @@ To inspect errors and notices, follow these steps:
 1. Navigate to the panel you want to view.
 1. Hover your cursor over the icon to display a tooltip that shows all the panel errors and notices, sorted by severity:
 
-   ![Errors and notices tooltip displayed on a panel](./screenshot-errors-notices-tooltip-v13.3.png)
+   ![Errors and notices tooltip displayed on a panel](/media/docs/grafana/dashboards/screenshot-errors-notices-tooltip-v13.3.png)
 
 1. Click the icon to open the drawer where you can see the full text of errors and notices.
