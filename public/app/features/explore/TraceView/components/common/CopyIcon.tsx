@@ -18,6 +18,7 @@ import { useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { Button, type IconName, Tooltip, useStyles2 } from '@grafana/ui';
+import { copyStringToClipboard } from 'app/core/utils/explore';
 
 const getStyles = () => ({
   CopyIcon: css({
@@ -44,29 +45,9 @@ export default function CopyIcon({ className, copyText, icon = 'copy', tooltipTi
 
   const [hasCopied, setHasCopied] = useState(false);
 
-  const handleClick = async () => {
-    if (navigator.clipboard && window.isSecureContext) {
-      try {
-        await navigator.clipboard.writeText(copyText);
-        setHasCopied(true);
-      } catch {
-        setHasCopied(false);
-      }
-    } else {
-      // Fallback for insecure contexts (no HTTPS/localhost) where the Clipboard API is unavailable.
-      const previousActiveElement = document.activeElement;
-      const textarea = document.createElement('textarea');
-      document.body.appendChild(textarea);
-      textarea.value = copyText;
-      textarea.focus();
-      textarea.select();
-      const didCopy = document.execCommand('copy');
-      textarea.remove();
-      if (previousActiveElement instanceof HTMLElement) {
-        previousActiveElement.focus();
-      }
-      setHasCopied(didCopy);
-    }
+  const handleClick = () => {
+    copyStringToClipboard(copyText);
+    setHasCopied(true);
   };
 
   return (

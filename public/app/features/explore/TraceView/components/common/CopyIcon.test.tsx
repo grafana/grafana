@@ -23,6 +23,12 @@ Object.assign(navigator, {
   },
 });
 
+const copyStringToClipboard = jest.fn();
+jest.mock('app/core/utils/explore', () => ({
+  ...jest.requireActual('app/core/utils/explore'),
+  copyStringToClipboard: (str: string) => copyStringToClipboard(str),
+}));
+
 describe('<CopyIcon />', () => {
   const props = {
     className: 'classNameValue',
@@ -43,56 +49,9 @@ describe('<CopyIcon />', () => {
     expect(() => render(<CopyIcon {...props} />)).not.toThrow();
   });
 
-  describe('in a secure context', () => {
-    beforeEach(() => {
-      Object.defineProperty(window, 'isSecureContext', { value: true, configurable: true });
-    });
-
-    it('copies via the Clipboard API when clicked', async () => {
-      render(<CopyIcon {...props} />);
-
-      const button = screen.getByRole('button');
-      await userEvent.click(button);
-
-      expect(copySpy).toHaveBeenCalledWith(props.copyText);
-    });
-  });
-
-  describe('in an insecure context', () => {
-    beforeEach(() => {
-      Object.defineProperty(window, 'isSecureContext', { value: false, configurable: true });
-      document.execCommand = jest.fn();
-    });
-
-    it('falls back to execCommand and does not throw', async () => {
-      render(<CopyIcon {...props} />);
-
-      const button = screen.getByRole('button');
-      await userEvent.click(button);
-
-      expect(document.execCommand).toHaveBeenCalledWith('copy');
-      expect(copySpy).not.toHaveBeenCalled();
-    });
-
-    it('restores focus to the previously active element after the fallback copy', async () => {
-      render(<CopyIcon {...props} />);
-
-      const button = screen.getByRole('button');
-      const focusOrder: string[] = [];
-      const recordFocus = (event: Event) => {
-        focusOrder.push((event.target as HTMLElement).tagName);
-      };
-      document.addEventListener('focusin', recordFocus);
-
-      await userEvent.click(button);
-
-      document.removeEventListener('focusin', recordFocus);
-
-      // The fallback textarea steals focus, so the last thing focused must be the button again,
-      // otherwise the Tooltip closes on blur and the "Copied" state is never visible.
-      expect(focusOrder).toContain('TEXTAREA');
-      expect(focusOrder.at(-1)).toBe('BUTTON');
-      expect(document.activeElement).toBe(button);
-    });
+  it('copies when clicked', async () => {
+    render(<CopyIcon {...props} />);
+    await userEvent.click(screen.getByRole('button'));
+    expect(copyStringToClipboard).toHaveBeenCalledWith(props.copyText);
   });
 });
