@@ -1370,6 +1370,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-commands.yml @tolzhabayev
 /.github/workflows/pr-external-labelling.yml @Proximyst
 /.github/workflows/pr-patch-check.yml @grafana/grafana-backend-services-squad
+/.github/workflows/pr-resource-search-result-format.yml @grafana/grafana-search-and-storage
 /.github/workflows/pr-test-integration-pgvector.yml @grafana/grafana-search-and-storage
 /.github/workflows/pr-test-integration.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/reject-gh-secrets.yml @grafana/grafana-backend-services-squad
