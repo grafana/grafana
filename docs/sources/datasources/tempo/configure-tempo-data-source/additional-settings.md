@@ -14,6 +14,7 @@ labels:
 menuTitle: Additional settings
 title: Additional settings
 weight: 700
+review_date: 2026-09-10
 aliases:
   - /docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/#additional-settings
 ---
