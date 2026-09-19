@@ -14,6 +14,7 @@ import { type QueryGroupOptions } from 'app/types/query';
 
 import { type QueryEditorType, type QueryEditorTypeConfig } from '../constants';
 
+import { type QueryPreview } from './coauthoring/queryPreview';
 import { type AlertRule, type QueryOptionField, type Transformation } from './types';
 
 export interface PendingExpression {
@@ -137,6 +138,7 @@ export interface QueryEditorActions {
   duplicateQuery: (refId: string) => void;
   toggleQueryHide: (refId: string) => void;
   runQueries: () => void;
+  startQueryPreview: (originalRefId: string, proposedQuery: DataQuery) => QueryPreview | undefined;
   changeDataSource: (settings: DataSourceInstanceSettings, queryRefId: string) => void;
   onQueryOptionsChange: (options: QueryGroupOptions) => void;
   addTransformation: (transformationId: string, afterTransformId?: string) => string | undefined;

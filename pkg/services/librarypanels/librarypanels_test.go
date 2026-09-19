@@ -533,7 +533,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, quotaService)
 		require.NoError(t, err)
 		usrSvc, err := userimpl.ProvideService(
-			sqlStore, orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
+			legacysql.NewDatabaseProvider(sqlStore), orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
 			quotaService, supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)

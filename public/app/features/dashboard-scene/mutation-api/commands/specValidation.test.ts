@@ -59,7 +59,7 @@ const stubContext = { scene: {} as DashboardScene } satisfies MutationContext;
 // (edit-mode entry, metadata envelope, state swap), so the rebuild is reached.
 function makeSceneContext(): MutationContext {
   const scene = {
-    state: { isEditing: true, key: 'scene-key', meta: {} },
+    state: { isEditing: true, key: 'scene-key', meta: {}, body: { editModeChanged: jest.fn() } },
     onEnterEditMode: jest.fn(),
     activateSidebar: jest.fn(),
     serializer: {

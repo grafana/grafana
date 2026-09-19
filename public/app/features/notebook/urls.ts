@@ -13,6 +13,20 @@ export const NOTEBOOK_EDIT_PARAM = 'edit';
 export const NOTEBOOK_EDIT_PARAM_ON = 'true';
 
 /**
+ * The blank-notebook route. Nothing exists behind it: the page renders an empty notebook and the
+ * resource is only created once there is something to save.
+ */
+export const NOTEBOOK_NEW_URL = `${NOTEBOOKS_BASE_URL}/new`;
+
+/**
+ * Where the list's create button goes. A blank notebook exists only to be written into, so it opens
+ * in edit mode, for the same reason `notebookEditUrl` below does.
+ */
+export function notebookNewEditUrl(): string {
+  return `${NOTEBOOK_NEW_URL}?${NOTEBOOK_EDIT_PARAM}=${NOTEBOOK_EDIT_PARAM_ON}`;
+}
+
+/**
  * The single-notebook destination, nested under the list so the two stay consistent. The list's
  * title link points here; its Edit action points at the same page with the edit param.
  *
@@ -21,6 +35,16 @@ export const NOTEBOOK_EDIT_PARAM_ON = 'true';
  */
 export function notebookViewUrl(uid: string): string {
   return `${NOTEBOOKS_BASE_URL}/${uid}`;
+}
+
+/**
+ * The same destination in edit mode, for router-based navigation (`useNavigate`) — a freshly created
+ * notebook is empty and exists only to be written into, so creation lands here rather than on the
+ * view route a reader would otherwise see first. `notebookEditHref` below is the equivalent for
+ * consumers that render a plain `<a>` instead of navigating through the router.
+ */
+export function notebookEditUrl(uid: string): string {
+  return `${notebookViewUrl(uid)}?${NOTEBOOK_EDIT_PARAM}=${NOTEBOOK_EDIT_PARAM_ON}`;
 }
 
 /**
@@ -42,4 +66,17 @@ export function notebookEditHref(uid: string): string {
 /** Absolute URL, for copying a link to share outside the current tab. */
 export function notebookShareUrl(uid: string): string {
   return new URL(notebookViewHref(uid), config.appUrl).href;
+}
+
+/**
+ * Whether the url asks for edit mode, for callers that run before the scene syncs with it.
+ * `NotebookSceneUrlSync` answers the same question from the values the sync manager hands it.
+ *
+ * `getSearchObject` turns 'true' into a boolean, so it cannot tell `?edit=true` from `?edit=1`.
+ * This reads the raw string instead.
+ */
+export function isNotebookEditUrl(): boolean {
+  const search = new URLSearchParams(locationService.getLocation().search);
+
+  return search.get(NOTEBOOK_EDIT_PARAM) === NOTEBOOK_EDIT_PARAM_ON;
 }

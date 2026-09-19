@@ -75,7 +75,7 @@ export function StackedQueryItem({ query, headingId }: StackedQueryItemProps) {
   const { dsSettings } = useDatasourceContext();
   const { panel } = usePanelContext();
   const { queries, data } = useQueryRunnerContext();
-  const { updateSelectedQuery, addQuery, runQueries } = useActionsContext();
+  const { updateSelectedQuery, addQuery, runQueries, startQueryPreview } = useActionsContext();
   const { queryDsData, queryDsLoading } = useQueryDatasource(query, dsSettings, panel);
 
   const editorType = getStackedQueryEditorType(query);
@@ -110,6 +110,7 @@ export function StackedQueryItem({ query, headingId }: StackedQueryItemProps) {
           updateQuery={updateSelectedQuery}
           addQuery={addQuery}
           runQueries={runQueries}
+          startQueryPreview={startQueryPreview}
         />
       </div>
     </>
@@ -183,7 +184,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     whiteSpace: 'nowrap',
   }),
   headerRefId: css({
-    ...theme.typography.code,
+    ...theme.typography.body,
   }),
   headerHiddenIcon: css({
     marginLeft: 'auto',

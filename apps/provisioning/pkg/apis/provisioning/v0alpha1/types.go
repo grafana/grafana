@@ -163,6 +163,12 @@ type GitLabRepositoryConfig struct {
 	//
 	// When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.
 	Path string `json:"path,omitempty"`
+
+	// RepoID is the GitLab project's immutable numeric ID. Resolved and set
+	// automatically whenever URL is set or changed; it survives a project
+	// transfer/move even if the project's path changes. Read-only: it is
+	// always system-derived and never taken from client-supplied input.
+	RepoID string `json:"repoID,omitempty"`
 }
 
 func (GitLabRepositoryConfig) OpenAPIModelName() string {
@@ -695,7 +701,6 @@ func (TokenStatus) OpenAPIModelName() string {
 }
 
 // QuotaStatus represents the quota limits configured for this repository.
-// These values come from static configuration and are read-only.
 type QuotaStatus struct {
 	// MaxRepositories is the maximum number of repositories allowed.
 	// 0 means unlimited.
@@ -704,6 +709,10 @@ type QuotaStatus struct {
 	// MaxResourcesPerRepository is the maximum number of resources allowed per repository.
 	// 0 means unlimited.
 	MaxResourcesPerRepository int64 `json:"maxResourcesPerRepository,omitempty"`
+
+	// UpdatedAt is when the controller last successfully refreshed these quota limits.
+	// It is expressed as Unix milliseconds. 0 means the quota limits have not been refreshed yet.
+	UpdatedAt int64 `json:"updatedAt,omitempty"`
 }
 
 func (QuotaStatus) OpenAPIModelName() string {

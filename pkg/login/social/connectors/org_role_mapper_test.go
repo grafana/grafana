@@ -204,7 +204,7 @@ func TestOrgRoleMapper_MapOrgRoles(t *testing.T) {
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgId = 2
 	cfg.AutoAssignOrgRole = string(org.RoleViewer)
-	mapper := ProvideOrgRoleMapper(cfg, orgService)
+	mapper := mustProvideOrgRoleMapper(t, cfg, orgService)
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -231,7 +231,7 @@ func TestOrgRoleMapper_MapOrgRoles_ReturnsDefaultOnNilMapping(t *testing.T) {
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgId = 2
 	cfg.AutoAssignOrgRole = string(org.RoleViewer)
-	mapper := ProvideOrgRoleMapper(cfg, orgService)
+	mapper := mustProvideOrgRoleMapper(t, cfg, orgService)
 
 	actual := mapper.MapOrgRoles(context.Background(), NewMappingConfiguration(map[string]map[int64]org.RoleType{}, false), []string{"First"}, org.RoleNone)
 
@@ -364,7 +364,7 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 			if tc.setupMock != nil {
 				tc.setupMock(orgService)
 			}
-			mapper := ProvideOrgRoleMapper(cfg, orgService)
+			mapper := mustProvideOrgRoleMapper(t, cfg, orgService)
 
 			actual := mapper.ParseOrgMappingSettings(context.Background(), tc.rawMapping, tc.roleStrict)
 

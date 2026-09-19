@@ -9,21 +9,21 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"testing"
 	"time"
 
+	alertingInstrument "github.com/grafana/alerting/http/instrument"
+	"github.com/grafana/alerting/http/instrument/instrumenttest"
 	"github.com/grafana/alerting/notify/historian/lokiclient"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	alertingInstrument "github.com/grafana/alerting/http/instrument"
-	"github.com/grafana/alerting/http/instrument/instrumenttest"
-
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -1058,10 +1058,8 @@ func TestGetFolderUIDsForFilterWithHistoricalFolders(t *testing.T) {
 	// Helper to create simple folder access override functions.
 	canReadRulesInFolders := func(folderUids ...string) func(folderUID string) (bool, error) {
 		return func(folderUID string) (bool, error) {
-			for _, f := range folderUids {
-				if folderUID == f {
-					return true, nil
-				}
+			if slices.Contains(folderUids, folderUID) {
+				return true, nil
 			}
 			return false, nil
 		}

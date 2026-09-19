@@ -212,3 +212,80 @@ func subjectMatches(pattern, subject string) bool {
 	}
 	return len(patternTokens) == len(subjectTokens)
 }
+
+func TestParseSubject(t *testing.T) {
+	tests := []struct {
+		name          string
+		subject       string
+		wantGroup     string
+		wantNamespace string
+		wantResource  string
+		wantOK        bool
+	}{
+		{
+			name:          "multi-token group",
+			subject:       "us.watch.v1.provisioning.grafana.app.stacks-1.repositories",
+			wantGroup:     "provisioning.grafana.app",
+			wantNamespace: "stacks-1",
+			wantResource:  "repositories",
+			wantOK:        true,
+		},
+		{
+			name:          "core group token maps back to the empty group",
+			subject:       "us.watch.v1._core.default.configmaps",
+			wantGroup:     "",
+			wantNamespace: "default",
+			wantResource:  "configmaps",
+			wantOK:        true,
+		},
+		{
+			name:          "single-token group",
+			subject:       "us.watch.v1.dashboard.default.dashboards",
+			wantGroup:     "dashboard",
+			wantNamespace: "default",
+			wantResource:  "dashboards",
+			wantOK:        true,
+		},
+		{
+			name:          "wildcard positions are returned verbatim",
+			subject:       "us.watch.v1.provisioning.grafana.app.*.*",
+			wantGroup:     "provisioning.grafana.app",
+			wantNamespace: anyToken,
+			wantResource:  anyToken,
+			wantOK:        true,
+		},
+		{name: "another root is not a subject", subject: "other.root.v1.g.ns.r"},
+		{name: "the root alone", subject: subjectRoot},
+		{name: "too few tokens for all three positions", subject: "us.watch.v1.group.namespace"},
+		{name: "the firehose cannot be decomposed", subject: SubjectAllResources},
+		{name: "a tail wildcard in the resource position", subject: "us.watch.v1.group.namespace.>"},
+		{name: "an empty token", subject: "us.watch.v1.group..resource"},
+		{name: "empty", subject: ""},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			group, namespace, resource, ok := ParseSubject(tc.subject)
+			assert.Equal(t, tc.wantOK, ok)
+			assert.Equal(t, tc.wantGroup, group)
+			assert.Equal(t, tc.wantNamespace, namespace)
+			assert.Equal(t, tc.wantResource, resource)
+		})
+	}
+}
+
+func TestParseSubjectRoundTrip(t *testing.T) {
+	for _, gvr := range []schema.GroupVersionResource{
+		{Group: "provisioning.grafana.app", Resource: "jobs"},
+		{Group: "dashboard", Resource: "dashboards"},
+		{Group: "", Resource: "configmaps"},
+		{Group: "provisioning.grafana.app", Resource: ""},
+	} {
+		for _, namespace := range []string{"stacks-42", ""} {
+			subject := Subject(gvr, namespace)
+			group, gotNamespace, resource, ok := ParseSubject(subject)
+			require.True(t, ok, "subject %q must parse", subject)
+			require.Equal(t, subject, Subject(schema.GroupVersionResource{Group: group, Resource: resource}, gotNamespace))
+		}
+	}
+}

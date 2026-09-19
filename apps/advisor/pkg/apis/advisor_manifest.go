@@ -43,6 +43,9 @@ var appManifestData = app.ManifestData{
 					Plural:     "Checks",
 					Scope:      "Namespaced",
 					Conversion: false,
+					Search: &app.ManifestVersionKindSearch{
+						Endpoint: func(b bool) *bool { return &b }(false),
+					},
 					Admission: &app.AdmissionCapabilities{
 						Validation: &app.ValidationCapability{
 							Operations: []app.AdmissionOperation{
@@ -59,7 +62,10 @@ var appManifestData = app.ManifestData{
 					Plural:     "CheckTypes",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaCheckTypev0alpha1,
+					Search: &app.ManifestVersionKindSearch{
+						Endpoint: func(b bool) *bool { return &b }(false),
+					},
+					Schema: &versionSchemaCheckTypev0alpha1,
 				},
 			},
 			Routes: app.ManifestVersionRoutes{

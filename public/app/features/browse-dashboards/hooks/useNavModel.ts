@@ -31,7 +31,7 @@ export function useNavModel(folderDTO: FolderDTO | undefined, activeTab: FolderA
   if (folderCountsResult.isSuccess) {
     const counts = getParsedCounts(folderCountsResult.data.counts);
     panelsCount = counts.librarypanels ?? 0;
-    rulesCount = counts.alertrules ?? 0;
+    rulesCount = (counts.alertrules ?? 0) + (counts.recordingrules ?? 0);
   }
 
   return useMemo(() => {

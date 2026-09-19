@@ -1,6 +1,16 @@
 import { AnnotationChangeEvent, type AnnotationEventUIModel, CoreApp, type DataFrame } from '@grafana/data';
-import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { AdHocFiltersVariable, dataLayers, sceneGraph, sceneUtils, type VizPanel } from '@grafana/scenes';
+import { reportInteraction } from '@grafana/runtime';
+import { getDatasourcePluginMeta } from '@grafana/runtime/internal';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import {
+  AdHocFiltersVariable,
+  dataLayers,
+  sceneGraph,
+  sceneUtils,
+  type SceneObject,
+  type SceneVariables,
+  type VizPanel,
+} from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
 import { FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
@@ -10,25 +20,22 @@ import { InspectTab } from 'app/features/inspector/types';
 import { openPanelInspector } from '../inspect/panelInspectorOpener';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDatasourceFromQueryRunner } from '../utils/getDatasourceFromQueryRunner';
-import {
-  getDashboardSceneFor,
-  getPanelIdForVizPanel,
-  getQueryRunnerFor,
-  isNewPanelQueryErrorsUIEnabled,
-} from '../utils/utils';
+import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
+import { getDashboardSceneFor, isNewPanelQueryErrorsUIEnabled } from '../utils/utils';
+import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { type DashboardScene } from './DashboardScene';
+import { refuseWhilePlanning } from './refuseWhilePlanning';
 
 export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelContext) {
   const dashboard = getDashboardSceneFor(vizPanel);
-  context.app = dashboard.state.editPanel ? CoreApp.PanelEditor : CoreApp.Dashboard;
 
-  dashboard.subscribeToState((state) => {
-    if (state.editPanel) {
-      context.app = CoreApp.PanelEditor;
-    } else {
-      context.app = CoreApp.Dashboard;
-    }
+  // Read on access. The panel context is built once and cached on the VizPanel, but deactivating the
+  // dashboard clears its event bus, so a subscription here would be dropped and never re-established.
+  Object.defineProperty(context, 'app', {
+    enumerable: true,
+    configurable: true,
+    get: () => (dashboard.state.editPanel ? CoreApp.PanelEditor : CoreApp.Dashboard),
   });
 
   context.canAddAnnotations = () => {
@@ -67,6 +74,13 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   context.onAnnotationCreate = async (event: AnnotationEventUIModel) => {
     const dashboard = getDashboardSceneFor(vizPanel);
 
+    // An immediate backend write, reachable by the ordinary drag-to-annotate gesture regardless
+    // of edit mode — canAddAnnotations() below has no isEditing check either, so this is the real
+    // chokepoint.
+    if (refuseWhilePlanning(dashboard)) {
+      return;
+    }
+
     const isRegion = event.from !== event.to;
     const anno = {
       dashboardUID: dashboard.state.uid,
@@ -88,6 +102,10 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   context.onAnnotationUpdate = async (event: AnnotationEventUIModel) => {
     const dashboard = getDashboardSceneFor(vizPanel);
 
+    if (refuseWhilePlanning(dashboard)) {
+      return;
+    }
+
     const isRegion = event.from !== event.to;
     const anno = {
       id: event.id,
@@ -108,6 +126,10 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   };
 
   context.onAnnotationDelete = async (id: string) => {
+    if (refuseWhilePlanning(getDashboardSceneFor(vizPanel))) {
+      return;
+    }
+
     await annotationServer().delete({ id });
 
     reRunBuiltInAnnotationsLayer(getDashboardSceneFor(vizPanel));
@@ -116,8 +138,6 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   };
 
   context.onAddAdHocFilter = async (newFilter: AdHocFilterItem) => {
-    const dashboard = getDashboardSceneFor(vizPanel);
-
     const queryRunner = getQueryRunnerFor(vizPanel);
     if (!queryRunner) {
       return;
@@ -128,27 +148,25 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     // If the datasource is type-only (e.g. it's possible that only group is set in V2 schema queries)
     // we need to resolve it to a full datasource
     if (datasource && !datasource.uid) {
-      const datasourceToLoad = await getDataSourceSrv().get(datasource);
+      const datasourceToLoad = await getDataSourceInstance(datasource);
       datasource = {
         uid: datasourceToLoad.uid,
         type: datasourceToLoad.type,
       };
     }
 
-    const filterVar = getAdHocFilterVariableFor(dashboard, datasource);
+    const filterVar = await getAdHocFilterVariableFor(vizPanel, datasource);
     updateAdHocFilterVariable(filterVar, newFilter);
   };
 
   context.getFiltersBasedOnGrouping = (items: AdHocFilterItem[]) => {
-    const dashboard = getDashboardSceneFor(vizPanel);
-
     const queryRunner = getQueryRunnerFor(vizPanel);
     if (!queryRunner) {
       return [];
     }
 
     const datasource = getDatasourceFromQueryRunner(queryRunner);
-    const groupByVar = getGroupByVariableFor(dashboard, datasource);
+    const groupByVar = getGroupByVariableFor(vizPanel, datasource);
 
     let currentValues: string[] = [];
 
@@ -156,7 +174,7 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
       const val = groupByVar.state.value;
       currentValues = Array.isArray(val) ? val.map(String) : val ? [String(val)] : [];
     } else {
-      const adhocVar = getAdHocGroupByVariableFor(dashboard, datasource);
+      const adhocVar = getAdHocGroupByVariableFor(vizPanel, datasource);
       if (adhocVar) {
         currentValues = adhocVar.state.filters.filter((f) => f.operator === 'groupBy').map((f) => f.key);
       }
@@ -172,8 +190,6 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   };
 
   context.onAddAdHocFilters = async (items: AdHocFilterItem[]) => {
-    const dashboard = getDashboardSceneFor(vizPanel);
-
     const queryRunner = getQueryRunnerFor(vizPanel);
     if (!queryRunner) {
       return;
@@ -184,13 +200,13 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     // If the datasource is type-only (e.g. it's possible that only group is set in V2 schema queries)
     // we need to resolve it to a full datasource
     if (datasource && !datasource.uid) {
-      const datasourceToLoad = await getDataSourceSrv().get(datasource);
+      const datasourceToLoad = await getDataSourceInstance(datasource);
       datasource = {
         uid: datasourceToLoad.uid,
         type: datasourceToLoad.type,
       };
     }
-    const filterVar = getAdHocFilterVariableFor(dashboard, datasource);
+    const filterVar = await getAdHocFilterVariableFor(vizPanel, datasource);
     bulkUpdateAdHocFiltersVariable(filterVar, items);
 
     if (items.length > 0) {
@@ -216,8 +232,18 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   // Only wire up the status-popover inspector opener when the new panel errors UI is enabled.
   // Its presence is also the signal the panel renderer uses to show the new errors/notices popover.
   // Opening goes through a registered opener to avoid importing PanelInspectDrawer here (circular dep).
+  //
+  // A third route to inspect-panel, independent of the 'i' keyboard shortcut (guarded in
+  // keyboardShortcuts.ts) and the menu item (unreachable -- preview panels have no menu at all).
+  // Unreachable while the sample generator never reports an error for this popover to attach to;
+  // would need this guard the moment that changes, so it stays guarded directly.
   if (isNewPanelQueryErrorsUIEnabled()) {
-    context.onOpenInspector = () => openPanelInspector(vizPanel, InspectTab.ErrorsAndNotices);
+    context.onOpenInspector = () => {
+      if (refuseWhilePlanning(getDashboardSceneFor(vizPanel))) {
+        return;
+      }
+      openPanelInspector(vizPanel, InspectTab.ErrorsAndNotices);
+    };
   }
 }
 
@@ -252,14 +278,29 @@ function reRunBuiltInAnnotationsLayer(scene: DashboardScene) {
   }
 }
 
-function getGroupByVariableFor(scene: DashboardScene, ds: DataSourceRef | null | undefined) {
-  const variables = sceneGraph.getVariables(scene);
+// Ordered closest-to-farthest so callers can prefer a row-local variable over the dashboard-global one.
+function getVariableSetsInHierarchy(sceneObject: SceneObject): SceneVariables[] {
+  const sets: SceneVariables[] = [];
+  let current: SceneObject | undefined = sceneObject;
 
-  for (const variable of variables.state.variables) {
-    if (sceneUtils.isGroupByVariable(variable)) {
-      const filtersDs = variable.state.datasource;
-      if (filtersDs === ds || filtersDs?.uid === ds?.uid) {
-        return variable;
+  while (current) {
+    if (current.state.$variables) {
+      sets.push(current.state.$variables);
+    }
+    current = current.parent;
+  }
+
+  return sets;
+}
+
+function getGroupByVariableFor(sceneObject: SceneObject, ds: DataSourceRef | null | undefined) {
+  for (const variables of getVariableSetsInHierarchy(sceneObject)) {
+    for (const variable of variables.state.variables) {
+      if (sceneUtils.isGroupByVariable(variable)) {
+        const filtersDs = variable.state.datasource;
+        if (filtersDs === ds || filtersDs?.uid === ds?.uid) {
+          return variable;
+        }
       }
     }
   }
@@ -267,14 +308,14 @@ function getGroupByVariableFor(scene: DashboardScene, ds: DataSourceRef | null |
   return null;
 }
 
-function getAdHocGroupByVariableFor(scene: DashboardScene, ds: DataSourceRef | null | undefined) {
-  const variables = sceneGraph.getVariables(scene);
-
-  for (const variable of variables.state.variables) {
-    if (sceneUtils.isAdHocVariable(variable) && variable.state.enableGroupBy) {
-      const filtersDs = variable.state.datasource;
-      if (filtersDs === ds || filtersDs?.uid === ds?.uid) {
-        return variable;
+function getAdHocGroupByVariableFor(sceneObject: SceneObject, ds: DataSourceRef | null | undefined) {
+  for (const variables of getVariableSetsInHierarchy(sceneObject)) {
+    for (const variable of variables.state.variables) {
+      if (sceneUtils.isAdHocVariable(variable) && variable.state.enableGroupBy) {
+        const filtersDs = variable.state.datasource;
+        if (filtersDs === ds || filtersDs?.uid === ds?.uid) {
+          return variable;
+        }
       }
     }
   }
@@ -282,22 +323,33 @@ function getAdHocGroupByVariableFor(scene: DashboardScene, ds: DataSourceRef | n
   return null;
 }
 
-export function getAdHocFilterVariableFor(scene: DashboardScene, ds: DataSourceRef | null | undefined) {
-  const variables = sceneGraph.getVariables(scene);
+export async function getAdHocFilterVariableFor(sceneObject: SceneObject, ds: DataSourceRef | null | undefined) {
+  // Resolve plugin meta before scanning so no await sits between the read and the
+  // setState write. Overlapping "Filter for value" actions would otherwise both
+  // miss the existing-variable scan and append a second Filters variable.
+  const pluginId = ds?.type ?? (await getDataSourceInstanceSettings(ds))?.type ?? '';
+  const supportsMultiValueOperators = Boolean((await getDatasourcePluginMeta(pluginId))?.multiValueFilterOperators);
 
-  for (const variable of variables.state.variables) {
-    if (sceneUtils.isAdHocVariable(variable)) {
-      const filtersDs = variable.state.datasource;
-      if (filtersDs === ds || filtersDs?.uid === ds?.uid) {
-        return variable;
+  for (const variables of getVariableSetsInHierarchy(sceneObject)) {
+    for (const variable of variables.state.variables) {
+      if (sceneUtils.isAdHocVariable(variable)) {
+        const filtersDs = variable.state.datasource;
+        if (filtersDs === ds || filtersDs?.uid === ds?.uid) {
+          return variable;
+        }
       }
     }
   }
+
+  // No matching filter variable exists anywhere in the hierarchy - create one at the dashboard
+  // level, same as if the dashboard had no section-local filters at all.
+  const dashboard = getDashboardSceneFor(sceneObject);
+  const variables = sceneGraph.getVariables(dashboard);
 
   const newVariable = new AdHocFiltersVariable({
     name: 'Filters',
     datasource: ds,
-    supportsMultiValueOperators: Boolean(getDataSourceSrv().getInstanceSettings(ds)?.meta.multiValueFilterOperators),
+    supportsMultiValueOperators,
     useQueriesAsFilterForOptions: true,
   });
 

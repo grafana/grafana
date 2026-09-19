@@ -11,7 +11,6 @@ import FeatureFlaggedSRIPlugin from './plugins/FeatureFlaggedSriPlugin.ts';
 import { manifestPluginOptions } from './plugins/assetsManifest.ts';
 import { esbuildOptions } from './rules.ts';
 import common, { type Env } from './webpack.common.ts';
-import swaggerConfig from './webpack.swagger.ts';
 
 // SRI plugin has broken esm builds so we use require.
 // https://github.com/waysact/webpack-subresource-integrity/issues/236
@@ -97,7 +96,5 @@ export default (env: Env = {}) => {
       },
     ],
   };
-  const mergedProdConfig = merge(common(env), prodConfig);
-  const multipleConfigs = Object.assign([mergedProdConfig, swaggerConfig(env)], { parallelism: 2 });
-  return multipleConfigs;
+  return merge(common(env), prodConfig);
 };

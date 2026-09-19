@@ -53,7 +53,7 @@ export class VariableAddPane extends SceneObjectBase<VariableAddPaneState> imple
 
 function VariableAddPaneRenderer({ model }: SceneComponentProps<VariableAddPane>) {
   const onAddVariable = useCallback(
-    (type: EditableVariableType) => {
+    async (type: EditableVariableType) => {
       const dashboard = getDashboardSceneLike(model);
       const sectionOwner = model.state.sectionOwner.resolve();
       const existing = sectionOwner.state.$variables;
@@ -64,7 +64,9 @@ function VariableAddPaneRenderer({ model }: SceneComponentProps<VariableAddPane>
       }
 
       const sectionVars = variablesSet.state.variables ?? [];
-      const newVar = getVariableScene(type, { name: getNextAvailableId(getVariableNamePrefix(type), sectionVars) });
+      const newVar = await getVariableScene(type, {
+        name: getNextAvailableId(getVariableNamePrefix(type), sectionVars),
+      });
 
       addVariable({ source: variablesSet, addedObject: newVar });
 
@@ -113,7 +115,7 @@ function VariableTypeChangePaneRenderer({ model }: SceneComponentProps<VariableT
   const variable = model.state.variableRef.resolve();
 
   const onChangeVariableType = useCallback(
-    (type: EditableVariableType) => {
+    async (type: EditableVariableType) => {
       const variableSet = variable.parent;
       const dashboard = getDashboardSceneLike(variable);
 
@@ -126,7 +128,7 @@ function VariableTypeChangePaneRenderer({ model }: SceneComponentProps<VariableT
         return;
       }
 
-      const newVariable = getVariableScene(type, {
+      const newVariable = await getVariableScene(type, {
         name: variable.state.name,
         label: variable.state.label,
         key: variable.state.key,

@@ -39,11 +39,15 @@ composableKinds: PanelCfg: {
 					mode:        TextMode & (*"markdown" | _)
 					renderMode?: RenderMode & (*"once" | _)
 					code?:       CodeOptions
+					// Rows per page once a per-row render pages its content. Unset fits the page to the panel height.
+					pageSize?: number
 					content: string | *"""
 						# Title
 
 						For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)
 						"""
+					// Index of the selected frame, when the query returns more than one
+					frameIndex?: number & (*0 | _)
 				} @cuetsy(kind="interface")
 			}
 		}]

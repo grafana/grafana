@@ -1,8 +1,8 @@
 import { acceptCompletion, autocompletion, startCompletion } from '@codemirror/autocomplete';
 import { EditorState, Prec } from '@codemirror/state';
 import { EditorView, keymap } from '@codemirror/view';
-import CodeMirror from '@uiw/react-codemirror';
-import { memo, useMemo } from 'react';
+import CodeMirror, { type ReactCodeMirrorRef } from '@uiw/react-codemirror';
+import { memo, useMemo, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
 
@@ -21,21 +21,24 @@ import { useShallowStable, useStableCallback } from './useStableProps';
 
 const getCompletionExtensions = (
   sources: readonly CodeMirrorCompletionSource[] | undefined,
-  mode: CodeMirrorCompletionMode
+  mode: CodeMirrorCompletionMode,
+  completeOnSpace: boolean
 ): CodeMirrorExtension[] => {
   if (!sources || sources.length === 0) {
     return [];
   }
 
+  const spaceKeymap = completeOnSpace ? [autocompleteSpaceKeymap] : [];
+
   if (mode === 'override') {
-    return [autocompletion({ override: [...sources] }), autocompleteSpaceKeymap];
+    return [autocompletion({ override: [...sources] }), ...spaceKeymap];
   }
 
   // Merge: enable autocompletion and contribute the sources via language data
   // so they're combined with whatever the active language registers.
   return [
     autocompletion(),
-    autocompleteSpaceKeymap,
+    ...spaceKeymap,
     ...sources.map((source) => EditorState.languageData.of(() => [{ autocomplete: source }])),
   ];
 };
@@ -89,10 +92,13 @@ export const CodeEditor = memo(function CodeEditor({
   sqlDialect,
   height = '200px',
   onChange,
+  onBlur,
+  onSave,
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledby,
   completionSources,
   completionMode = 'merge',
+  completeOnSpace = false,
   extensions: additionalExtensionsProp,
   theme: themeOverride,
   basicSetup: basicSetupProp,
@@ -108,18 +114,42 @@ export const CodeEditor = memo(function CodeEditor({
   const additionalExtensions = useShallowStable(additionalExtensionsProp);
   const sources = useShallowStable(completionSources);
   const basicSetup = useShallowStable(basicSetupProp);
+  const editorRef = useRef<ReactCodeMirrorRef>(null);
   const handleChange = useStableCallback(onChange);
+  const handleBlur = useStableCallback(() => {
+    const editorView = editorRef.current?.view;
+    if (editorView) {
+      onBlur?.(editorView.state.doc.toString());
+    }
+  });
+  const hasSaveHandler = Boolean(onSave);
+  const handleSave = useStableCallback((view: EditorView) => {
+    onSave?.(view.state.doc.toString());
+    return true;
+  });
 
   const extensions = useMemo(
     () => [
       autocompleteTabKeymap,
+      ...(hasSaveHandler ? [keymap.of([{ key: 'Mod-s', run: handleSave, preventDefault: true }])] : []),
       ...getAccessibilityExtensions(ariaLabel, ariaLabelledby),
       ...(languageExtension ? [languageExtension] : []),
-      ...getCompletionExtensions(sources, completionMode),
+      ...getCompletionExtensions(sources, completionMode, completeOnSpace),
       ...(lineWrapping ? [EditorView.lineWrapping] : []),
       ...(additionalExtensions ?? []),
     ],
-    [ariaLabel, ariaLabelledby, languageExtension, sources, completionMode, lineWrapping, additionalExtensions]
+    [
+      hasSaveHandler,
+      handleSave,
+      ariaLabel,
+      ariaLabelledby,
+      languageExtension,
+      sources,
+      completionMode,
+      completeOnSpace,
+      lineWrapping,
+      additionalExtensions,
+    ]
   );
   return (
     <>
@@ -132,11 +162,13 @@ export const CodeEditor = memo(function CodeEditor({
         </Alert>
       )}
       <CodeMirror
+        ref={editorRef}
         theme={themeOverride ?? editorTheme}
         value={value}
         height={height}
         extensions={extensions}
         onChange={handleChange}
+        onBlur={onBlur ? handleBlur : undefined}
         basicSetup={basicSetup}
         indentWithTab={indentWithTab}
         readOnly={readOnly}

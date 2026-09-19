@@ -345,12 +345,16 @@ export const LogLineContext = memo(
       () =>
         log instanceof LogListModel
           ? log
-          : new LogListModel(log, {
-              escape: false,
-              otelLogsFormattingEnabled,
-              timeZone,
-              wrapLogMessage,
-            }),
+          : new LogListModel(
+              log,
+              {
+                escape: false,
+                otelLogsFormattingEnabled,
+                timeZone,
+                wrapLogMessage,
+              },
+              0
+            ),
       [log, otelLogsFormattingEnabled, timeZone, wrapLogMessage]
     );
 

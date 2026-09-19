@@ -1,7 +1,7 @@
 name: Frontend preview check
 description: >-
   Determines whether a pull request is eligible for a frontend preview deploy:
-  not from a fork, and only changing frontend code. Used by the
+  not from a fork, and not changing backend code. Used by the
   deploy-frontend-preview workflow.
 
 inputs:
@@ -16,7 +16,7 @@ outputs:
   should-deploy:
     description: >-
       'true' when the PR is eligible for a frontend preview deploy: not from a
-      fork, and every changed file is frontend code
+      fork, and no changed file is backend code
     value: ${{ steps.check.outputs.should-deploy }}
   head-sha:
     description: Head commit SHA of the pull request
@@ -47,9 +47,8 @@ runs:
 
         files=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}/files" --paginate --jq '.[].filename')
 
-        # A PR is frontend-only when every changed file matches this allowlist.
-        # Keep it conservative: anything not listed (backend code, config,
-        # schemas, CI, docs tooling, ...) makes the PR ineligible.
+        # A preview only swaps out the frontend assets served by an existing
+        # instance, so backend changes in the PR would not be reflected.
         frontend_only=true
         if [ -z "$files" ]; then
           frontend_only=false
@@ -57,9 +56,7 @@ runs:
 
         while IFS= read -r file; do
           case "$file" in
-            public/* | packages/* | e2e-playwright/* | scripts/webpack/*) ;;
-            package.json | yarn.lock | .yarnrc.yml | nx.json | tsconfig.json) ;;
-            *)
+            pkg/*)
               echo "Not frontend-only, found: ${file}"
               frontend_only=false
               break

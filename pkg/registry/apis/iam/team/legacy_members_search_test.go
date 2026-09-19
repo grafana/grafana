@@ -21,7 +21,7 @@ import (
 func TestLegacyUserTeamsSearchClient_Search(t *testing.T) {
 	memberFilter := func(userUID string) []*resourcepb.Requirement {
 		return []*resourcepb.Requirement{{
-			Key:    res.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_MEMBERS,
+			Key:    builders.TEAM_SEARCH_MEMBERS,
 			Values: []string{userUID},
 		}}
 	}
@@ -65,6 +65,28 @@ func TestLegacyUserTeamsSearchClient_Search(t *testing.T) {
 		require.Equal(t, "member", string(resp.Results.Rows[1].Cells[0]))
 		require.Equal(t, "true", string(resp.Results.Rows[1].Cells[1]))
 		require.Equal(t, []string{"team-b"}, resp.Results.Rows[1].SortFields)
+	})
+
+	t.Run("accepts the fields.-prefixed members filter", func(t *testing.T) {
+		store := &fakeUserTeamsStore{
+			pages: []*legacy.ListUserTeamsResult{{
+				Items: []legacy.UserTeam{{UID: "team-a", Permission: team.PermissionTypeAdmin}},
+			}},
+		}
+		client := NewLegacyUserTeamsSearchClient(store, tracing.InitializeTracerForTest())
+
+		req := &resourcepb.ResourceSearchRequest{
+			Limit: 10,
+			Options: &resourcepb.ListOptions{Key: keyWithNamespace, Fields: []*resourcepb.Requirement{{
+				Key:    res.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_MEMBERS,
+				Values: []string{"alice"},
+			}}},
+		}
+
+		resp, err := client.Search(context.Background(), req)
+		require.NoError(t, err)
+		require.Equal(t, "alice", store.lastQuery.UserUID)
+		require.Len(t, resp.Results.Rows, 1)
 	})
 
 	t.Run("SortFields[0] equals Key.Name for every row (continue-token contract)", func(t *testing.T) {
