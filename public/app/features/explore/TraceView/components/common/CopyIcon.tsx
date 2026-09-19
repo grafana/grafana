@@ -18,6 +18,7 @@ import { useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { Button, type IconName, Tooltip, useStyles2 } from '@grafana/ui';
+import { copyStringToClipboard } from 'app/core/utils/explore';
 
 const getStyles = () => ({
   CopyIcon: css({
@@ -45,7 +46,7 @@ export default function CopyIcon({ className, copyText, icon = 'copy', tooltipTi
   const [hasCopied, setHasCopied] = useState(false);
 
   const handleClick = () => {
-    navigator.clipboard.writeText(copyText);
+    copyStringToClipboard(copyText);
     setHasCopied(true);
   };
 

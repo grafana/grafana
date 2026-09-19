@@ -23,6 +23,12 @@ Object.assign(navigator, {
   },
 });
 
+const copyStringToClipboard = jest.fn();
+jest.mock('app/core/utils/explore', () => ({
+  ...jest.requireActual('app/core/utils/explore'),
+  copyStringToClipboard: (str: string) => copyStringToClipboard(str),
+}));
+
 describe('<CopyIcon />', () => {
   const props = {
     className: 'classNameValue',
@@ -45,10 +51,7 @@ describe('<CopyIcon />', () => {
 
   it('copies when clicked', async () => {
     render(<CopyIcon {...props} />);
-
-    const button = screen.getByRole('button');
-    await userEvent.click(button);
-
-    expect(copySpy).toHaveBeenCalledWith(props.copyText);
+    await userEvent.click(screen.getByRole('button'));
+    expect(copyStringToClipboard).toHaveBeenCalledWith(props.copyText);
   });
 });
