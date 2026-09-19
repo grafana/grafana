@@ -64,6 +64,8 @@ type PluginInstanceCfg struct {
 
 	ProxySettings setting.SecureSocksDSProxySettings
 
+	OpenFeature setting.OpenFeatureSettings
+
 	GrafanaVersion string
 
 	ConcurrentQueryCount int
@@ -120,6 +122,7 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 		Azure:                               cfg.Azure,
 		AzureAuthEnabled:                    cfg.Azure.AzureAuthEnabled,
 		ProxySettings:                       cfg.SecureSocksDSProxy,
+		OpenFeature:                         cfg.OpenFeature,
 		GrafanaVersion:                      cfg.BuildVersion,
 		ConcurrentQueryCount:                cfg.ConcurrentQueryCount,
 		UserFacingDefaultError:              cfg.UserFacingDefaultError,
