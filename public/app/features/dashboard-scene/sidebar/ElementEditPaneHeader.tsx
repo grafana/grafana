@@ -34,7 +34,7 @@ export function ElementEditPaneHeader({ element, sidebar }: EditPaneHeaderProps)
     } else if (onDelete) {
       onDelete();
     }
-    DashboardInteractions.trackDeleteDashboardElement(elementInfo.typeName);
+    DashboardInteractions.trackDeleteDashboardElement(elementInfo.typeName, 'edit_pane');
   };
 
   return (
