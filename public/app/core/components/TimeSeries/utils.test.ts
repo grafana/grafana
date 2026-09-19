@@ -7,6 +7,7 @@ import {
   type EventBus,
   FieldColorModeId,
   FieldType,
+  getDisplayProcessor,
   type TimeRange,
 } from '@grafana/data';
 import { getTheme } from '@grafana/ui';
@@ -649,5 +650,63 @@ describe('x-axis time range', () => {
 
     expect(getXTimeRange(builder)()).toEqual([2000, 4000]);
     expect(builder.getState().isPanning).toBe(false);
+  });
+});
+
+describe('show values', () => {
+  // The draw hook only reads data, series state, the plot box and the canvas context.
+  type MockUPlot = {
+    data: number[][];
+    series: Array<{ show: boolean; points: { show: () => boolean }; scale: string }>;
+    bbox: { width: number };
+    ctx: Partial<CanvasRenderingContext2D>;
+    valToPos: () => number;
+  };
+
+  function makeValuesFrame(): DataFrame {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [1000, 2000] },
+        { name: 'A', type: FieldType.number, config: { custom: { showValues: true } }, values: [10, 20] },
+        { name: 'B', type: FieldType.number, config: { custom: { showValues: true } }, values: [30, 40] },
+      ],
+    });
+
+    frame.fields.forEach((field) => {
+      field.display = getDisplayProcessor({ field, theme: createTheme() });
+    });
+
+    return frame;
+  }
+
+  function drawValues(visible: boolean[]) {
+    const fillText = jest.fn();
+    const builder = buildBuilder(makeValuesFrame());
+    const draw = builder.getConfig().hooks.draw![0] as unknown as (u: MockUPlot) => void;
+
+    draw({
+      data: [
+        [1000, 2000],
+        [10, 20],
+        [30, 40],
+      ],
+      series: [
+        { show: true, points: { show: () => false }, scale: 'x' },
+        ...visible.map((show) => ({ show, points: { show: () => true }, scale: 'y' })),
+      ],
+      bbox: { width: 200 },
+      ctx: { save: jest.fn(), restore: jest.fn(), fillText },
+      valToPos: () => 0,
+    });
+
+    return fillText.mock.calls.map((call) => call[0]);
+  }
+
+  it('draws a value for every point of both series', () => {
+    expect(drawValues([true, true])).toEqual(['10', '20', '30', '40']);
+  });
+
+  it('draws no values for a series hidden through the legend', () => {
+    expect(drawValues([true, false])).toEqual(['10', '20']);
   });
 });
