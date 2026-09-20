@@ -1,0 +1,12 @@
+{
+  "name": "@grafana/embed",
+  "version": "0.0.0",
+  "private": true,
+  "description": "PROTOTYPE: <grafana-panel> custom element. A Grafana panel as a portable web component.",
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "typecheck": "node scripts/typecheck.mjs"
+  }
+}

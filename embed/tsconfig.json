@@ -1,0 +1,10 @@
+{
+  "//": "Extends the repo root config so embed/ typechecks under the same options as the rest of Grafana (its `paths` already maps app/* into public/). Only the file set and output differ.",
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "..",
+    "tsBuildInfoFile": "./tsconfig.tsbuildinfo"
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "../packages/grafana-data/typings", "../packages/grafana-ui/src/types"]
+}
