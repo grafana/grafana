@@ -33,6 +33,7 @@ import {
 
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
+import { invalidateVariablesAfterFolderDelete } from '../../variables-management/cache';
 import { refetchChildren, refreshParents } from '../state/actions';
 import { findItem } from '../state/utils';
 import { getFolderURL } from '../utils/dashboards';
@@ -79,6 +80,7 @@ const normalizeDescendantCounts = (folderCounts: DescendantCountDTO): Descendant
   librarypanels: folderCounts.librarypanels || folderCounts.library_elements || folderCounts.librarypanel || 0,
   alertrules: folderCounts.alertrules || folderCounts.alertrule || 0,
   recordingrules: folderCounts.recordingrules || 0,
+  variables: folderCounts.variables || 0,
 });
 
 export interface ListFolderQueryArgs {
@@ -195,7 +197,7 @@ export const browseDashboardsAPI = createApi({
       }),
       onQueryStarted: ({ folderUID, destinationUID }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(() => {
-          dispatch(refreshParents([folderUID]));
+          dispatch(refreshParents({ kind: 'folder', uids: [folderUID] }));
           dispatch(
             refetchChildren({
               parentUID: destinationUID,
@@ -224,6 +226,9 @@ export const browseDashboardsAPI = createApi({
           dispatch(setStarred({ id: uid, title: '', url: '', isStarred: false }));
         } catch {
           // Error handled by mutation caller
+        } finally {
+          // Variables are cascade-deleted before the folder write; a failed DELETE can still drop them.
+          invalidateVariablesAfterFolderDelete();
         }
       },
     }),
@@ -245,6 +250,7 @@ export const browseDashboardsAPI = createApi({
             librarypanels: 0,
             alertrules: 0,
             recordingrules: 0,
+            variables: 0,
           };
 
           for (const folderCounts of results) {
@@ -254,6 +260,7 @@ export const browseDashboardsAPI = createApi({
             totalCounts.alertrules += normalizedCounts.alertrules;
             totalCounts.librarypanels += normalizedCounts.librarypanels;
             totalCounts.recordingrules += normalizedCounts.recordingrules;
+            totalCounts.variables += normalizedCounts.variables;
           }
 
           return { data: totalCounts };
@@ -302,7 +309,7 @@ export const browseDashboardsAPI = createApi({
               pageSize: PAGE_SIZE,
             })
           );
-          dispatch(refreshParents(dashboardUIDs));
+          dispatch(refreshParents({ kind: 'dashboard', uids: dashboardUIDs }));
         });
       },
     }),
@@ -342,7 +349,7 @@ export const browseDashboardsAPI = createApi({
               pageSize: PAGE_SIZE,
             })
           );
-          dispatch(refreshParents(folderUIDs));
+          dispatch(refreshParents({ kind: 'folder', uids: folderUIDs }));
           refreshTeamFolders();
         });
       },
@@ -354,19 +361,29 @@ export const browseDashboardsAPI = createApi({
       queryFn: async ({ folderUIDs }, api, _extraOptions, baseQuery) => {
         // Delete all the folders sequentially
         // TODO error handling here
-        for (const folderUID of folderUIDs) {
-          if (await isProvisionedFolderCheck(api.dispatch, folderUID)) {
-            continue;
-          }
+        let attempted = 0;
+        try {
+          for (const folderUID of folderUIDs) {
+            if (await isProvisionedFolderCheck(api.dispatch, folderUID)) {
+              continue;
+            }
 
-          const response = await baseQuery({
-            url: `/folders/${folderUID}`,
-            method: 'DELETE',
-            params: deleteFolderParams,
-          });
-          if (!response.error) {
-            // Only clear the nav starred entry for folders that were actually deleted
-            api.dispatch(setStarred({ id: folderUID, title: '', url: '', isStarred: false }));
+            attempted++;
+            const response = await baseQuery({
+              url: `/folders/${folderUID}`,
+              method: 'DELETE',
+              params: deleteFolderParams,
+            });
+            if (!response.error) {
+              // Only clear the nav starred entry for folders that were actually deleted
+              api.dispatch(setStarred({ id: folderUID, title: '', url: '', isStarred: false }));
+            }
+          }
+        } finally {
+          // Variables are cascade-deleted before the folder write, so any attempted DELETE
+          // can leave the Variables list stale even when the folder DELETE itself fails.
+          if (attempted > 0) {
+            invalidateVariablesAfterFolderDelete();
           }
         }
 
@@ -374,7 +391,7 @@ export const browseDashboardsAPI = createApi({
       },
       onQueryStarted: ({ folderUIDs }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(() => {
-          dispatch(refreshParents(folderUIDs));
+          dispatch(refreshParents({ kind: 'folder', uids: folderUIDs }));
           refreshTeamFolders();
           // Clear the deleted dashboards cache since deleting a folder also deletes its dashboards
           deletedDashboardsCache.clear();
@@ -441,7 +458,7 @@ export const browseDashboardsAPI = createApi({
       },
       onQueryStarted: ({ dashboardUIDs }, { queryFulfilled, getState }) => {
         queryFulfilled.then(() => {
-          dispatch(refreshParents(dashboardUIDs));
+          dispatch(refreshParents({ kind: 'dashboard', uids: dashboardUIDs }));
           invalidateQuotaUsage(dispatch);
           for (const uid of dashboardUIDs) {
             dispatch(
@@ -576,7 +593,12 @@ export const browseDashboardsAPI = createApi({
 function getDashboardFolder(dashboardUid?: string) {
   if (dashboardUid) {
     const { browseDashboards } = getState();
-    const item = findItem(browseDashboards.rootItems?.items ?? [], browseDashboards.childrenByParentUID, dashboardUid);
+    const item = findItem(
+      browseDashboards.rootItems?.items ?? [],
+      browseDashboards.childrenByParentUID,
+      'dashboard',
+      dashboardUid
+    );
     return item?.parentUID;
   }
   return undefined;

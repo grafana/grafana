@@ -16,6 +16,12 @@ export const COLUMN = {
 export const TABLE = {
   CELL_PADDING: 6,
   LINE_HEIGHT: 22,
+  /**
+   * The header label's own line box, which is shorter than a body row's `LINE_HEIGHT`. Kept here
+   * because two places have to agree on it: the label's `line-height` in `HeaderCell`, and
+   * `useHeaderHeight`, which multiplies it by the wrapped line count to size the header row.
+   */
+  HEADER_LINE_HEIGHT: 20,
   MAX_CELL_HEIGHT: 48,
   PAGINATION_LIMIT: 750,
   SCROLL_BAR_WIDTH: 8,
@@ -46,6 +52,11 @@ export const CELL_HORIZONTAL_CHROME = TABLE.CELL_PADDING * 2 + TABLE.BORDER_RIGH
  */
 export const FIRST_COLUMN_CLASS = 'table-ng-first-col';
 export const LAST_COLUMN_CLASS = 'table-ng-last-col';
+
+// Marks a row that carries a zebra stripe, and one that is a nested table's container rather than
+// a row of data. Both are applied through `rowClass` - see `makeStripedRowClass`.
+export const STRIPED_ROW_CLASS = 'table-ng-row-striped';
+export const NESTED_ROW_CLASS = 'table-ng-row-nested';
 
 // Distance from a panel's content edge to the start of its title text: PanelChrome's header
 // container padding (theme.spacing(1)) plus the title's own inline-start padding (x0_5).
@@ -105,3 +116,8 @@ export const HEADER_MENU_SPACE = HEADER_ICON_BUTTON_SPACE;
 // The info button a column with `headerTooltip` set renders next to its label. Always in flow, and
 // in both the classic and refreshed headers.
 export const HEADER_TOOLTIP_SPACE = HEADER_ICON_BUTTON_SPACE;
+
+// How far the grid has to be scrollable in a direction before that edge's scroll shadow appears
+// (see useScrollShadows). Sub-pixel scroll heights are common — fractional row heights, zoom levels
+// — and at 0 they left a shadow permanently half-lit on a table that doesn't actually scroll.
+export const SCROLL_SHADOW_THRESHOLD = 1;

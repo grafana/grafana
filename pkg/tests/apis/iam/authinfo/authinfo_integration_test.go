@@ -10,9 +10,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/authinfo"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -52,6 +53,7 @@ func TestIntegrationAuthInfo(t *testing.T) {
 			doAuthInfoAuthzTests(t, helper)
 			doAuthInfoListRequiresFieldSelectorTest(t, helper)
 			doAuthInfoDeleteUnsupportedTests(t, helper)
+			doAuthInfoUserDeleteCascadeTest(t, helper)
 		})
 	}
 }
@@ -69,7 +71,7 @@ func doAuthInfoCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper
 		require.NotNil(t, created)
 
 		// The object name is deterministic: "<userUID>.<authModule>".
-		expectedName := authinfo.EncodeName(userUID, "ldap")
+		expectedName := iamv0alpha1.EncodeName(userUID, "ldap")
 		require.Equal(t, expectedName, created.GetName())
 
 		createdSpec := created.Object["spec"].(map[string]interface{})
@@ -230,6 +232,43 @@ func doAuthInfoDeleteUnsupportedTests(t *testing.T, helper *apis.K8sTestHelper) 
 	})
 }
 
+// doAuthInfoUserDeleteCascadeTest checks whether deleting a user through the
+// new User API also removes its user_auth row.
+func doAuthInfoUserDeleteCascadeTest(t *testing.T, helper *apis.K8sTestHelper) {
+	t.Run("deleting the user via the new API removes its user_auth row", func(t *testing.T) {
+		ctx := context.Background()
+		userUID := createTestUser(t, helper, "authinfo-cascade-user", "authinfo-cascade-user@example.com")
+
+		authInfoClient := authInfoResourceClient(helper, helper.Org1.Admin)
+		authID := "cascade-test-" + userUID
+		_, err := authInfoClient.Resource.Create(ctx, createAuthInfoObject(helper, userUID, "ldap", authID), metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, int64(1), countUserAuthRowsByAuthID(t, helper, authID), "sanity check: the row should exist right after creation")
+
+		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrUsers,
+		})
+		err = userClient.Resource.Delete(ctx, userUID, metav1.DeleteOptions{})
+		require.NoError(t, err)
+
+		require.Equal(t, int64(0), countUserAuthRowsByAuthID(t, helper, authID), "user_auth row should be gone once its user is deleted")
+	})
+}
+
+func countUserAuthRowsByAuthID(t *testing.T, helper *apis.K8sTestHelper, authID string) int64 {
+	t.Helper()
+	var count int64
+	err := helper.GetEnv().SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		n, err := sess.Table("user_auth").Where("auth_id = ?", authID).Count()
+		count = n
+		return err
+	})
+	require.NoError(t, err)
+	return count
+}
+
 func authInfoResourceClient(helper *apis.K8sTestHelper, user apis.User) *apis.K8sResourceClient {
 	return helper.GetResourceClient(apis.ResourceClientArgs{
 		User:      user,
@@ -270,7 +309,7 @@ func createTestUser(t *testing.T, helper *apis.K8sTestHelper, login string, emai
 // createAuthInfoObject builds an AuthInfo object with its deterministic name pre-populated.
 func createAuthInfoObject(helper *apis.K8sTestHelper, userUID, authModule, authID string) *unstructured.Unstructured {
 	obj := helper.LoadYAMLOrJSONFile("../testdata/authinfo-test-create-v0.yaml")
-	obj.SetName(authinfo.EncodeName(userUID, authModule))
+	obj.SetName(iamv0alpha1.EncodeName(userUID, authModule))
 	obj.Object["spec"].(map[string]interface{})["userRef"].(map[string]interface{})["name"] = userUID
 	obj.Object["spec"].(map[string]interface{})["authModule"] = authModule
 	obj.Object["spec"].(map[string]interface{})["authID"] = authID

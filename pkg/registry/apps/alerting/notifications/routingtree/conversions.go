@@ -15,11 +15,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
 
-func ConvertToK8sResources(orgID int64, routes legacy_storage.ManagedRoutes, namespacer request.NamespaceMapper, accesses map[string]ngmodels.RoutePermissionSet) (*model.RoutingTreeList, error) {
+func ConvertToK8sResources(orgID int64, routes v1.ManagedRoutes, namespacer request.NamespaceMapper, accesses map[string]ngmodels.RoutePermissionSet) (*model.RoutingTreeList, error) {
 	result := &model.RoutingTreeList{
 		Items: make([]model.RoutingTree, 0, len(routes)),
 	}
@@ -39,7 +38,7 @@ func ConvertToK8sResources(orgID int64, routes legacy_storage.ManagedRoutes, nam
 	return result, nil
 }
 
-func ConvertToK8sResource(orgID int64, r *legacy_storage.ManagedRoute, namespacer request.NamespaceMapper, access *ngmodels.RoutePermissionSet) (*model.RoutingTree, error) {
+func ConvertToK8sResource(orgID int64, r *v1.ManagedRoute, namespacer request.NamespaceMapper, access *ngmodels.RoutePermissionSet) (*model.RoutingTree, error) {
 	spec := model.RoutingTreeSpec{
 		Defaults: model.RoutingTreeRouteDefaults{
 			GroupBy:        r.GroupBy,
