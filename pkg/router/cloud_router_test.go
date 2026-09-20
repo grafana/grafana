@@ -15,15 +15,16 @@ import (
 	"path/filepath"
 	"reflect"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/dskit/services"
-	"github.com/grafana/grafana-app-sdk/app"
-	"github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -80,7 +81,7 @@ func TestAPIGroupFromManifestSpecUsesDefaults(t *testing.T) {
 func TestProvideCloudRoutesLoaderFactoryNotConfigured(t *testing.T) {
 	cfg := setting.NewCfg()
 
-	loader, err := ProvideCloudRoutesLoaderFactory(cfg)
+	loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 	require.NoError(t, err)
 	require.Nil(t, loader)
 }
@@ -92,7 +93,7 @@ func TestProvideCloudRoutesLoaderFactoryRequiresCapTokenAndExchangeURL(t *testin
 	_, err = section.NewKey("appmanifest_apiserver_url", "https://apiserver.example.com")
 	require.NoError(t, err)
 
-	_, err = ProvideCloudRoutesLoaderFactory(cfg)
+	_, err = ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 	require.ErrorContains(t, err, "cap_token and token_exchange_url are required")
 }
 
@@ -107,7 +108,7 @@ func TestProvideCloudRoutesLoaderFactoryBuildsLoader(t *testing.T) {
 	_, err = section.NewKey("token_exchange_url", "https://token-exchange.example.com")
 	require.NoError(t, err)
 
-	loader, err := ProvideCloudRoutesLoaderFactory(cfg)
+	loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 	require.NoError(t, err)
 	require.NotNil(t, loader)
 	require.IsType(t, &cloudLoader{}, loader)
@@ -133,7 +134,7 @@ func TestProvideCloudRoutesLoaderFactory_RenamedKey(t *testing.T) {
 		"token_exchange_url":        "https://exchange.invalid",
 	})
 
-	loader, err := ProvideCloudRoutesLoaderFactory(cfg)
+	loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 	require.NoError(t, err)
 	require.NotNil(t, loader)
 }
@@ -149,7 +150,7 @@ func TestProvideCloudRoutesLoaderFactory_LegacyKeyFailsLoudly(t *testing.T) {
 		"token_exchange_url": "https://exchange.invalid",
 	})
 
-	_, err := ProvideCloudRoutesLoaderFactory(cfg)
+	_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 	require.ErrorContains(t, err, "apiserver_url was renamed to appmanifest_apiserver_url")
 }
 
@@ -163,7 +164,7 @@ func TestProvideCloudRoutesLoaderFactory_LegacyKeyIgnoredWhenNewKeySet(t *testin
 		"token_exchange_url":        "https://exchange.invalid",
 	})
 
-	loader, err := ProvideCloudRoutesLoaderFactory(cfg)
+	loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 	require.NoError(t, err)
 	require.NotNil(t, loader)
 }
@@ -171,7 +172,7 @@ func TestProvideCloudRoutesLoaderFactory_LegacyKeyIgnoredWhenNewKeySet(t *testin
 func TestProvideCloudRoutesLoaderFactory_NoTargetsConfigured(t *testing.T) {
 	cfg := cfgWithCloudRouterSection(t, map[string]string{})
 
-	loader, err := ProvideCloudRoutesLoaderFactory(cfg)
+	loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 	require.NoError(t, err)
 	require.Nil(t, loader) // falls back to dummyRoutesLoader upstream
 }
@@ -182,7 +183,7 @@ func TestProvideCloudRoutesLoaderFactory_AggregateOnlyRequiresCapToken(t *testin
 		"baas_apiserver.audience": "baas",
 	})
 
-	_, err := ProvideCloudRoutesLoaderFactory(cfg)
+	_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 	require.ErrorContains(t, err, "cap_token and token_exchange_url are required")
 }
 
@@ -193,7 +194,7 @@ func TestProvideCloudRoutesLoaderFactory_AggregateTargetRequiresAudience(t *test
 		"baas_apiserver.url": "https://baas.invalid",
 	})
 
-	_, err := ProvideCloudRoutesLoaderFactory(cfg)
+	_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 	require.ErrorContains(t, err, "baas_apiserver.audience is required")
 }
 
@@ -337,7 +338,7 @@ func TestProvideCloudRoutesLoaderFactory_TargetsGetOwnHTTPClients(t *testing.T) 
 		"cloud_app_platform_apiserver.audience": "cap",
 	})
 
-	loaderIface, err := ProvideCloudRoutesLoaderFactory(cfg)
+	loaderIface, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 	require.NoError(t, err)
 	loader, ok := loaderIface.(*cloudLoader)
 	require.True(t, ok)
@@ -364,7 +365,7 @@ func TestProvideCloudRoutesLoaderFactory_PluginsURLAloneActivatesWithoutCapToken
 		"plugins_url": "https://plugins.invalid/plugins",
 	})
 
-	loaderIface, err := ProvideCloudRoutesLoaderFactory(cfg)
+	loaderIface, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 	require.NoError(t, err)
 	require.NotNil(t, loaderIface)
 
@@ -380,7 +381,7 @@ func TestProvideCloudRoutesLoaderFactory_PluginsURLRejectsNonAbsoluteURL(t *test
 		"plugins_url": "/just/a/path",
 	})
 
-	_, err := ProvideCloudRoutesLoaderFactory(cfg)
+	_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 	require.ErrorContains(t, err, "must be absolute")
 }
 
@@ -415,7 +416,7 @@ func TestCloudLoader_AllThreeSourcesCombineInLoad(t *testing.T) {
 		"plugins_url":             pluginsUpstream.URL,
 	})
 
-	loaderIface, err := ProvideCloudRoutesLoaderFactory(cfg)
+	loaderIface, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 	require.NoError(t, err)
 	loader, ok := loaderIface.(*cloudLoader)
 	require.True(t, ok)
@@ -468,7 +469,7 @@ func TestCloudLoader_AggregateOnlyNoAppManifest(t *testing.T) {
 		"baas_apiserver.audience": "baas",
 	})
 
-	loaderIface, err := ProvideCloudRoutesLoaderFactory(cfg)
+	loaderIface, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 	require.NoError(t, err)
 	require.NotNil(t, loaderIface) // must activate without appmanifest_apiserver_url set
 
@@ -495,4 +496,45 @@ func TestCloudLoader_AggregateOnlyNoAppManifest(t *testing.T) {
 		}
 		return false
 	}, 5*time.Second, 10*time.Millisecond)
+}
+
+func TestCloudLoaderSingleTenantFallback(t *testing.T) {
+	t.Run("disabled returns a nil interface", func(t *testing.T) {
+		loader := &cloudLoader{}
+		require.True(t, loader.SingleTenantFallback() == nil)
+	})
+	t.Run("discovery alone enables fallback", func(t *testing.T) {
+		cfg := cfgWithCloudRouterSection(t, map[string]string{"st_discovery_url": "https://play.grafana.org/"})
+		loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+		require.NoError(t, err)
+		cloud, ok := loader.(*cloudLoader)
+		require.True(t, ok)
+		require.Same(t, cloud.singleTenantFallback, cloud.SingleTenantFallback())
+		host, err := cloud.singleTenantFallback.hostForNamespace(t.Context(), "stacks-35611")
+		require.NoError(t, err)
+		require.Equal(t, "https://play.grafana.org/", host.String())
+		host, err = cloud.singleTenantFallback.hostForNamespace(t.Context(), "stacks-123")
+		require.NoError(t, err)
+		require.Nil(t, host)
+	})
+	for _, raw := range []string{"/relative", "http:///missing-host", "ftp://example.com", "http://%"} {
+		t.Run(raw, func(t *testing.T) {
+			cfg := cfgWithCloudRouterSection(t, map[string]string{"st_discovery_url": raw})
+			_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+			require.Error(t, err)
+		})
+	}
+}
+
+func TestCloudLoaderFallbackOnlyLifecycle(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		cfg := cfgWithCloudRouterSection(t, map[string]string{"st_discovery_url": "https://play.grafana.org/"})
+		loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+		require.NoError(t, err)
+		cloud := loader.(*cloudLoader)
+		require.NoError(t, services.StartAndAwaitRunning(t.Context(), cloud))
+		synctest.Wait()
+		require.Equal(t, services.Running, cloud.State())
+		require.NoError(t, services.StopAndAwaitTerminated(t.Context(), cloud))
+	})
 }

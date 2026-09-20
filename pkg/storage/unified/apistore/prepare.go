@@ -236,6 +236,9 @@ func (s *Storage) ensureSingleDeprecatedInternalID(ctx context.Context, id int64
 	}
 	rsp, err := s.opts.Index.Search(ctx, &resourcepb.ResourceSearchRequest{
 		Limit: 1, // we only need to know if any match exists
+		// An empty projection returns every field; name keeps this key-only.
+		Fields:       []string{resource.SEARCH_FIELD_NAME},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		Options: &resourcepb.ListOptions{
 			Key: &resourcepb.ResourceKey{
 				Group:     s.gr.Group,
@@ -253,11 +256,29 @@ func (s *Storage) ensureSingleDeprecatedInternalID(ctx context.Context, id int64
 	if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
 		return err
 	}
-	if rsp.Results != nil && len(rsp.Results.Rows) > 0 {
+	hasResults, err := searchResponseHasRows(rsp)
+	if err != nil {
+		return err
+	}
+	if hasResults {
 		return apierrors.NewConflict(s.gr, obj.GetName(),
 			fmt.Errorf("deprecatedInternalID=%d is already in use", id))
 	}
 	return nil
+}
+
+func searchResponseHasRows(rsp *resourcepb.ResourceSearchResponse) (bool, error) {
+	if rsp == nil {
+		return false, errors.New("nil search response")
+	}
+	switch rsp.GetResultFormat() {
+	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
+		return len(rsp.GetResults().GetRows()) > 0, nil
+	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
+		return len(rsp.GetRows()) > 0, nil
+	default:
+		return false, fmt.Errorf("unsupported search result format %d", rsp.GetResultFormat())
+	}
 }
 
 // Called on update

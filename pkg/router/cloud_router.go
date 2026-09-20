@@ -1,13 +1,18 @@
 package router
 
 import (
+	"cmp"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
 	"log/slog"
+	"maps"
 	"net/http"
+	"net/url"
 	"os"
+	"slices"
+	"sync/atomic"
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/dskit/services"
@@ -21,7 +26,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
-
 	"github.com/grafana/grafana/pkg/clientauth"
 	"github.com/grafana/grafana/pkg/setting"
 	unifiedresource "github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -36,18 +40,18 @@ const cloudRouterSection = "cloud_router"
 // ProvideCloudRoutesLoaderFactory builds the cloud-router RoutesLoader from
 // grafana.ini settings when [cloud_router].appmanifest_apiserver_url is set,
 // any aggregate target (baas_apiserver, cloud_app_platform_apiserver) has
-// its .url configured, or plugins_url is set, so the router module (not a
+// its .url configured, or plugins_url or st_discovery_url is set, so the router module (not a
 // separate process) owns its lifecycle. Returns (nil, nil) when none of
 // those are set -- an ini section is never truly absent
 // (SectionWithEnvOverrides always returns a valid, empty section), so it's
-// the presence of at least one of these three sources that actually gates
+// the presence of at least one configured source that actually gates
 // whether this loader activates; callers fall back to the dummy loader when
 // it doesn't.
 //
 // Auth is a CAP token exchanged for a signed access token on every request
 // to the remote apiserver, carried on X-Access-Token rather than a static
 // Authorization bearer -- see clientauth.NewStaticTokenExchangeTransportWrapper.
-func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg) (RoutesLoader, error) {
+func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) (RoutesLoader, error) {
 	section := cfg.SectionWithEnvOverrides(cloudRouterSection)
 
 	appManifestApiserverURL := section.Key("appmanifest_apiserver_url").MustString("")
@@ -77,13 +81,15 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg) (RoutesLoader, error) {
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
 		}
-		pluginsTarget, err = newPluginManifestsTarget(pluginsURL, patterns, &http.Client{Timeout: defaultAggregateDiscoveryTimeout})
+		pluginsTarget, err = newPluginManifestsTarget(pluginsURL,
+			patterns, &http.Client{Timeout: defaultAggregateDiscoveryTimeout}, deps)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
 		}
 	}
 
-	if appManifestApiserverURL == "" && len(aggregateTargetConfigs) == 0 && pluginsTarget == nil {
+	singleTenantDiscoveryURL := section.Key("st_discovery_url").MustString("")
+	if appManifestApiserverURL == "" && len(aggregateTargetConfigs) == 0 && pluginsTarget == nil && singleTenantDiscoveryURL == "" {
 		return nil, nil
 	}
 
@@ -165,7 +171,29 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg) (RoutesLoader, error) {
 		clients = k8s.NewClientRegistry(restCfg, k8s.ClientConfig{})
 	}
 
-	return newCloudLoader(clients, aggregateTargets, pluginsTarget)
+	var singleTenantFallback *singleTenantFallback
+	if singleTenantDiscoveryURL != "" {
+		discoURL, err := url.Parse(singleTenantDiscoveryURL)
+		if err != nil {
+			return nil, fmt.Errorf("%s: st_discovery_url: %w", cloudRouterSection, err)
+		}
+		singleTenantFallback, err = newSingleTenantFallback(singleTenantFallbackOptions{
+			cacheSize: 100,
+			// TODO: replace the Play-only stub with a stack host lookup.
+			resolveHost: func(_ context.Context, stackID int64) (string, error) {
+				if stackID != 35611 {
+					return "", nil
+				}
+				return "https://play.grafana.org/", nil
+			},
+			discoveryHost: discoURL,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("%s: st_discovery_url: %w", cloudRouterSection, err)
+		}
+	}
+
+	return newCloudLoader(clients, aggregateTargets, pluginsTarget, singleTenantFallback)
 }
 
 // embeddedManifestKey is the key component used for API groups sourced from
@@ -205,6 +233,10 @@ type cloudLoader struct {
 	// configured, independent of both the CRD/appmanifest side and the
 	// aggregate targets.
 	pluginsTarget *pluginManifestsTarget
+
+	// Until all requests are moved to MT, we can fallback to ST instances
+	singleTenantFallback     *singleTenantFallback
+	lastSingleTenantBackends atomic.Pointer[[]Backend]
 }
 
 type tlsCacheKey struct {
@@ -217,7 +249,7 @@ type apiGroupWithKey struct {
 	key   string
 }
 
-func newCloudLoader(clients *k8s.ClientRegistry, aggregateTargets []*aggregateTarget, pluginsTarget *pluginManifestsTarget) (*cloudLoader, error) {
+func newCloudLoader(clients *k8s.ClientRegistry, aggregateTargets []*aggregateTarget, pluginsTarget *pluginManifestsTarget, singleTenantFallback *singleTenantFallback) (*cloudLoader, error) {
 	l := &cloudLoader{
 		dirty:                      make(chan struct{}, 1),
 		transports:                 map[tlsCacheKey]*http.Transport{},
@@ -225,6 +257,7 @@ func newCloudLoader(clients *k8s.ClientRegistry, aggregateTargets []*aggregateTa
 		clients:                    clients,
 		aggregateTargets:           aggregateTargets,
 		pluginsTarget:              pluginsTarget,
+		singleTenantFallback:       singleTenantFallback,
 	}
 
 	if clients != nil {
@@ -296,7 +329,18 @@ func (l *cloudLoader) running(ctx context.Context) error {
 			return nil
 		})
 	}
-	return g.Wait()
+	if l.singleTenantFallback != nil {
+		g.Go(func() error {
+			l.singleTenantFallback.notifyDiscoveryChanges(gctx, l.dirty)
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		return err
+	}
+	// An empty loader still remains available until shutdown.
+	<-ctx.Done()
+	return nil
 }
 
 // newInformer builds a kind's informer against clients and attaches watcher
@@ -406,7 +450,34 @@ func (l *cloudLoader) Notify(ctx context.Context) (<-chan struct{}, error) {
 }
 
 func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
-	var combined []Backend
+	lookup := make(map[string]Backend)
+	var discoveryErr error
+
+	// Lowest priority first -- the MT backends will replace the ST flavors
+	if l.singleTenantFallback != nil {
+		backends, err := l.singleTenantFallback.Load(ctx)
+		if err != nil {
+			discoveryErr = fmt.Errorf("single-tenant discovery: %w", err)
+			slog.Warn("router: single-tenant discovery failed, keeping last-known-good routes", "err", err)
+			if previous := l.lastSingleTenantBackends.Load(); previous != nil {
+				backends = *previous
+			}
+		} else {
+			l.lastSingleTenantBackends.Store(&backends)
+		}
+		for _, b := range backends {
+			lookup[b.Group().Name] = b
+		}
+	}
+
+	// Aggregate targets override ST; later targets override earlier targets.
+	for _, target := range l.aggregateTargets {
+		for _, b := range target.Backends() {
+			lookup[b.Group().Name] = b
+		}
+	}
+
+	// Explicitly configured routes from manifest API server
 	if l.routeBackendClient != nil {
 		backends, err := l.routeBackendClient.ListAll(ctx, "", resource.ListOptions{})
 		if err != nil {
@@ -417,16 +488,35 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 		if err != nil {
 			return nil, err
 		}
-		combined = l.combineByName(manifests.Items, backends.Items)
+		for _, b := range l.combineByName(manifests.Items, backends.Items) {
+			lookup[b.Group().Name] = b
+		}
 	}
 
-	for _, target := range l.aggregateTargets {
-		combined = append(combined, target.Backends()...)
-	}
+	// Managed plugins
 	if l.pluginsTarget != nil {
-		combined = append(combined, l.pluginsTarget.Backends()...)
+		for _, b := range l.pluginsTarget.Backends() {
+			lookup[b.Group().Name] = b
+		}
 	}
-	return combined, nil
+
+	if len(lookup) == 0 && discoveryErr != nil {
+		return nil, discoveryErr
+	}
+
+	backends := slices.Collect(maps.Values(lookup))
+	slices.SortFunc(backends, func(a Backend, b Backend) int {
+		return cmp.Compare(a.Group().Name, b.Group().Name)
+	})
+
+	return backends, nil
+}
+
+func (l *cloudLoader) SingleTenantFallback() http.Handler {
+	if l.singleTenantFallback == nil {
+		return nil
+	}
+	return l.singleTenantFallback
 }
 
 // transportFor returns a transport for the given TLS settings, building and
