@@ -1,16 +1,22 @@
 package proxyutil
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
 	"sort"
 	"strings"
 
+	authnlib "github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/util"
 )
+
+var proxyutilLog = log.New("proxyutil")
 
 const (
 	// UserHeaderName name of the header used when forwarding the Grafana user login.
@@ -115,12 +121,47 @@ func ApplyUserHeader(sendUserHeader bool, req *http.Request, user identity.Reque
 	}
 }
 
-func ApplyForwardIDHeader(req *http.Request, user identity.Requester) {
+// ApplyForwardIDHeader sets the X-Grafana-Id header if needed (and does nothing otherwise).
+// idTokenDeriver mints an id token from user's OBO access token when user carries no id token of
+// its own (the MT case, where the edge no longer mints one); nil disables that fallback.
+func ApplyForwardIDHeader(ctx context.Context, req *http.Request, user identity.Requester, idTokenDeriver authnlib.IDTokenDeriver) {
 	if user == nil || user.IsNil() {
 		return
 	}
 
-	if token := user.GetIDToken(); token != "" {
+	token := user.GetIDToken()
+	if token == "" {
+		token = deriveForwardIDToken(ctx, user, idTokenDeriver)
+	}
+	if token != "" {
 		req.Header.Set(IDHeaderName, token)
 	}
+}
+
+// deriveForwardIDToken mints an id token from user's OBO access token, for the case where user
+// carries no id token of its own. It only does so for a user or service account actor: a
+// requester with neither (e.g. a machine/service identity with no user in its actor chain) has no
+// identity for a plugin backend to key off of, so leaving the header unset is correct here, not
+// an error condition.
+func deriveForwardIDToken(ctx context.Context, user identity.Requester, idTokenDeriver authnlib.IDTokenDeriver) string {
+	if util.IsInterfaceNil(idTokenDeriver) {
+		return ""
+	}
+
+	if !user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
+		return ""
+	}
+
+	accessToken := user.GetAccessToken()
+	if accessToken == "" {
+		return ""
+	}
+
+	resp, err := idTokenDeriver.DeriveIDToken(ctx, accessToken, user.GetNamespace())
+	if err != nil {
+		proxyutilLog.Warn("Failed to derive id token from access token", "error", err)
+		return ""
+	}
+
+	return resp.Token
 }
