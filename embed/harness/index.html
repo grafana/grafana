@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>grafana-panel harness</title>
+    <style>
+      /* ---------------------------------------------------------------------------
+     DELIBERATELY HOSTILE HOST CSS.
+     The panel must be unaffected by all of it. The inheriting properties
+     (font-family, line-height, color) are the interesting ones: they cross the
+     shadow boundary unless :host sets them, which is what shadowStyles.ts does.
+     box-sizing is the one that fails silently, because GlobalStyles sets
+     `box-sizing: inherit` on * and border-box on html, and a shadow root has no html.
+     --------------------------------------------------------------------------- */
+      *,
+      *::before,
+      *::after {
+        box-sizing: content-box !important;
+      }
+      body {
+        font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+        line-height: 3;
+        color: magenta;
+        margin: 0;
+        padding: 24px;
+      }
+      div {
+        border: 0;
+      }
+      /* A host rule that would wreck the chart if it reached inside. */
+      canvas {
+        opacity: 1;
+      }
+
+      /* --- host chrome, intentionally plain --- */
+      .host {
+        max-width: 1100px;
+        margin: 0 auto;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        line-height: 1.5;
+        color: inherit;
+      }
+      h1 {
+        font-size: 18px;
+        margin: 0 0 4px;
+      }
+      p.sub {
+        margin: 0 0 18px;
+        font-size: 13px;
+        opacity: 0.75;
+      }
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+      button {
+        font: inherit;
+        font-size: 12px;
+        padding: 4px 10px;
+        cursor: pointer;
+        border-radius: 4px;
+      }
+      button[aria-pressed='true'] {
+        outline: 2px solid currentColor;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      @media (max-width: 760px) {
+        .row {
+          grid-template-columns: 1fr;
+        }
+      }
+      section {
+        margin-bottom: 28px;
+      }
+      h2 {
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin: 0 0 8px;
+        opacity: 0.7;
+      }
+      pre#assert {
+        font-size: 12px;
+        line-height: 1.6;
+        padding: 12px;
+        border-radius: 4px;
+        overflow-x: auto;
+      }
+
+      /* ---------------------------------------------------------------------------
+     Host theming. These are the MCP Apps host style variable names, so the same
+     element themes itself from Claude's tokens with no code change.
+     --------------------------------------------------------------------------- */
+      body[data-palette='light'] {
+        --color-background-primary: #ffffff;
+        --color-background-secondary: #f4f5f5;
+        --color-text-primary: #16191d;
+        --color-text-secondary: #5a636d;
+        --color-text-tertiary: #8b949e;
+        --color-border-primary: #e1e4e8;
+        --color-border-secondary: #cfd4d9;
+        --font-sans: ui-sans-serif, system-ui, sans-serif;
+        --font-text-md-size: 13px;
+        --border-radius-md: 4px;
+        --grafana-embed-theme: light;
+        background: #ffffff;
+      }
+      body[data-palette='dark'] {
+        --color-background-primary: #111217;
+        --color-background-secondary: #1a1c22;
+        --color-text-primary: #d8d9de;
+        --color-text-secondary: #9096a1;
+        --color-text-tertiary: #6e7480;
+        --color-border-primary: #2b2f38;
+        --color-border-secondary: #3b414c;
+        --font-sans: ui-sans-serif, system-ui, sans-serif;
+        --font-text-md-size: 13px;
+        --border-radius-md: 4px;
+        --grafana-embed-theme: dark;
+        background: #111217;
+      }
+      /* Deliberately off-brand: proves the panel takes the host's palette, not Grafana's. */
+      body[data-palette='sepia'] {
+        --color-background-primary: #2b2119;
+        --color-background-secondary: #3a2d22;
+        --color-text-primary: #f0e2cf;
+        --color-text-secondary: #c2a886;
+        --color-text-tertiary: #9a8a72;
+        --color-border-primary: #4d3b2c;
+        --color-border-secondary: #654e3a;
+        --font-sans: Georgia, 'Times New Roman', serif;
+        --font-text-md-size: 14px;
+        --border-radius-md: 10px;
+        --grafana-embed-theme: dark;
+        background: #2b2119;
+      }
+    </style>
+  </head>
+  <body data-palette="dark">
+    <div class="host">
+      <h1>&lt;grafana-panel&gt; harness</h1>
+      <p class="sub">
+        This page's CSS is hostile on purpose: <code>box-sizing: content-box !important</code> on everything, Comic
+        Sans, <code>line-height: 3</code> and magenta text. The panels below should be unaffected. Host controls drive
+        both panels at once, and the palette comes from CSS custom properties using MCP Apps host token names.
+      </p>
+
+      <div class="controls">
+        <strong style="font-size: 12px">Time range:</strong>
+        <button data-range="15m">Last 15m</button>
+        <button data-range="1h" aria-pressed="true">Last 1h</button>
+        <button data-range="6h">Last 6h</button>
+        <span style="width: 16px"></span>
+        <strong style="font-size: 12px">Host palette:</strong>
+        <button data-palette="light">Light</button>
+        <button data-palette="dark" aria-pressed="true">Dark</button>
+        <button data-palette="sepia">Sepia</button>
+      </div>
+
+      <section>
+        <h2>Two panels, one host control</h2>
+        <div class="row">
+          <grafana-panel id="p1" height="260" from="now-1h" to="now"></grafana-panel>
+          <grafana-panel id="p2" height="260" from="now-1h" to="now"></grafana-panel>
+        </div>
+      </section>
+
+      <section>
+        <h2>Field config overrides (right axis, per-series colour, per-field unit)</h2>
+        <grafana-panel id="p3" height="300" from="now-1h" to="now"></grafana-panel>
+      </section>
+
+      <section>
+        <h2>Assertions</h2>
+        <pre id="assert">running…</pre>
+      </section>
+    </div>
+    <script type="module">
+      // Cache-bust the harness and, transitively, the bundle it imports. Without this
+      // a reload can assert against a previous build while showing the current one.
+      import(`./harness.js?v=${Date.now()}`);
+    </script>
+  </body>
+</html>

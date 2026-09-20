@@ -1,0 +1,1 @@
+/* uPlot's layout CSS is adopted into the shadow root via ?inline in styles/shadowStyles.ts instead of being extracted into a stylesheet the host would have to link. */
