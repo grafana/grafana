@@ -19,7 +19,6 @@ import (
 	"context"
 	"net/http"
 	"strings"
-	_ "unsafe"
 )
 
 const _VERSION = "1.3.4.0805"
@@ -43,14 +42,6 @@ func Version() string {
 // Macaron attempts to inject services into the handler's argument list,
 // and panics if an argument could not be fulfilled via dependency injection.
 type Handler any
-
-//go:linkname hack_wrap github.com/grafana/grafana/pkg/api/response.wrap_handler
-func hack_wrap(Handler) http.HandlerFunc
-
-// wrapHandler turns any supported handler type into a http.Handler by wrapping it accordingly
-func wrapHandler(h Handler) http.Handler {
-	return hack_wrap(h)
-}
 
 // Macaron represents the top level web application.
 // Injector methods can be invoked to map services on a global level.

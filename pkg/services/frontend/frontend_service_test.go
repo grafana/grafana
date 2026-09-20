@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
+	_ "github.com/grafana/grafana/internal/web"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"

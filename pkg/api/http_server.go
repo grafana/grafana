@@ -30,6 +30,7 @@ import (
 	"github.com/youmark/pkcs8"
 	"golang.org/x/sync/errgroup"
 
+	_ "github.com/grafana/grafana/internal/web"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/routing"

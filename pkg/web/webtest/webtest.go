@@ -16,6 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/httpclient"
 	"github.com/grafana/grafana/pkg/web"
+
+	_ "github.com/grafana/grafana/internal/web"
 )
 
 var requests = map[string]*contextmodel.ReqContext{}

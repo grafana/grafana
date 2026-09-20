@@ -1,27 +1,30 @@
-//nolint:unused,deadcode
-package response
-
-//NOTE: This file belongs into pkg/web, but due to cyclic imports that are hard to resolve at the current time, it temporarily lives here.
+package web
 
 import (
 	"fmt"
 	"net/http"
 
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/web"
+	grafanaweb "github.com/grafana/grafana/pkg/web"
 )
+
+func init() {
+	grafanaweb.SetHandlerWrapper(WrapHandler)
+}
 
 type (
 	handlerStd       = func(http.ResponseWriter, *http.Request)
-	handlerStdCtx    = func(http.ResponseWriter, *http.Request, *web.Context)
+	handlerStdCtx    = func(http.ResponseWriter, *http.Request, *grafanaweb.Context)
 	handlerStdReqCtx = func(http.ResponseWriter, *http.Request, *contextmodel.ReqContext)
 	handlerReqCtx    = func(*contextmodel.ReqContext)
-	handlerReqCtxRes = func(*contextmodel.ReqContext) Response
-	handlerCtx       = func(*web.Context)
+	handlerReqCtxRes = func(*contextmodel.ReqContext) response.Response
+	handlerCtx       = func(*grafanaweb.Context)
 )
 
-func wrap_handler(h web.Handler) http.HandlerFunc {
+// WrapHandler turns any supported Grafana handler type into an http.HandlerFunc.
+func WrapHandler(h grafanaweb.Handler) http.HandlerFunc {
 	switch handle := h.(type) {
 	case http.HandlerFunc:
 		return handle
@@ -56,22 +59,22 @@ func wrap_handler(h web.Handler) http.HandlerFunc {
 	panic(fmt.Sprintf("unexpected handler type: %T", h))
 }
 
-func webCtx(w http.ResponseWriter, r *http.Request) *web.Context {
-	ctx := web.FromContext(r.Context())
+func webCtx(w http.ResponseWriter, r *http.Request) *grafanaweb.Context {
+	ctx := grafanaweb.FromContext(r.Context())
 	if ctx == nil {
 		panic("no *web.Context found")
 	}
 
 	ctx.Req = r
-	ctx.Resp = web.Rw(w, r)
+	ctx.Resp = grafanaweb.Rw(w, r)
 	return ctx
 }
 
 func reqCtx(w http.ResponseWriter, r *http.Request) *contextmodel.ReqContext {
 	wCtx := webCtx(w, r)
-	reqCtx, ok := wCtx.Req.Context().Value(ctxkey.Key{}).(*contextmodel.ReqContext)
+	req, ok := wCtx.Req.Context().Value(ctxkey.Key{}).(*contextmodel.ReqContext)
 	if !ok {
 		panic("no *contextmodel.ReqContext found")
 	}
-	return reqCtx
+	return req
 }

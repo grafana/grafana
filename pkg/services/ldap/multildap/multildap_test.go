@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 
 	//TODO(sh0rez): remove once import cycle resolved
-	_ "github.com/grafana/grafana/pkg/api/response"
+	_ "github.com/grafana/grafana/internal/web"
 )
 
 func TestMultiLDAP(t *testing.T) {

@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	claims "github.com/grafana/authlib/types"
+	_ "github.com/grafana/grafana/internal/web"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"

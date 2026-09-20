@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	_ "github.com/grafana/grafana/internal/web"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"

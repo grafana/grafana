@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	// this import is needed for github.com/grafana/grafana/pkg/web hack_wrap to work
-	_ "github.com/grafana/grafana/pkg/api/response"
+	// this import registers github.com/grafana/grafana/internal/web WrapHandler
+	_ "github.com/grafana/grafana/internal/web"
 )
 
 func TestReduce(t *testing.T) {

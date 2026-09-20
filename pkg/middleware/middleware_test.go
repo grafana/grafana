@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
+	_ "github.com/grafana/grafana/internal/web"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
