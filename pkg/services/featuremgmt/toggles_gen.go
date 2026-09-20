@@ -447,6 +447,10 @@ const (
 	// Enables SRI checks for plugin assets
 	FlagPluginsSriChecks = "pluginsSriChecks"
 
+	// FlagPluginsStripAcceptEncoding
+	// Strip Accept-Encoding from CallResource request headers
+	FlagPluginsStripAcceptEncoding = "pluginsStripAcceptEncoding"
+
 	// FlagTimeRangeProvider
 	// Enables time pickers sync
 	FlagTimeRangeProvider = "timeRangeProvider"
