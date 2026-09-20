@@ -172,6 +172,19 @@ describe('prepData', () => {
     expect(diams1[0]).toEqual(2);
     expect(diams2[1]).toEqual(10);
   });
+
+  it('uses the fixed size when all mapped size values are equal', () => {
+    const sizeField = makeField({ name: 'sz', values: [5, 5, 5] });
+    const series = makeSeries({
+      size: { field: sizeField, min: 2, max: 10, fixed: 5 },
+    });
+    const { prepData } = prepConfig([series], theme);
+    const data = prepData!([series]);
+    const diams = data[1]![2] as number[];
+
+    expect(diams).toEqual([5, 5, 5]);
+    expect(diams.every((d) => Number.isFinite(d))).toBe(true);
+  });
 });
 
 describe('color field compilation', () => {
