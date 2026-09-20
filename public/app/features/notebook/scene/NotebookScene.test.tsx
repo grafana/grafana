@@ -698,6 +698,66 @@ describe('NotebookScene', () => {
 
       expect(scene.state.body.state.tags).toEqual(['rebuilt']);
     });
+
+    it('records a tag change so it can be undone', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTagsChange(['latency']));
+
+      expect(scene.editHistory.state.canUndo).toBe(true);
+      expect(scene.editHistory.state.undoLabel).toBe('Add tag');
+
+      act(() => scene.editHistory.undo());
+
+      expect(scene.state.tags).toEqual([]);
+      expect(scene.state.body.state.tags).toEqual([]);
+    });
+
+    it('labels removing a tag distinctly, and supports redo', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+      act(() => scene.onTagsChange(['latency', 'slo']));
+
+      act(() => scene.onTagsChange(['latency']));
+
+      expect(scene.editHistory.state.undoLabel).toBe('Remove tag');
+
+      act(() => scene.editHistory.undo());
+      expect(scene.state.tags).toEqual(['latency', 'slo']);
+
+      act(() => scene.editHistory.redo());
+      expect(scene.state.tags).toEqual(['latency']);
+    });
+
+    it('does not record a no-op tag change', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+      act(() => scene.onTagsChange(['latency']));
+
+      act(() => scene.onTagsChange(['latency']));
+
+      expect(scene.editHistory.state.canUndo).toBe(true);
+      // A single undo should clear the one real change, not a second no-op entry.
+      act(() => scene.editHistory.undo());
+      expect(scene.state.tags).toEqual([]);
+      expect(scene.editHistory.state.canUndo).toBe(false);
+    });
+
+    it('commits an active content edit first, so it lands as its own undo step under the tag change', () => {
+      const scene = buildScene(false);
+      const cell = scene.state.body.state.cells[0];
+      act(() => scene.activate());
+      act(() => scene.state.body.setCellContent(cell, { kind: 'Markdown', spec: { text: 'Updated' } }));
+
+      act(() => scene.onTagsChange(['latency']));
+
+      act(() => scene.editHistory.undo());
+      expect(scene.state.tags).toEqual([]);
+
+      act(() => scene.editHistory.undo());
+      expect(cell.state.content).toEqual({ kind: 'Markdown', spec: { text: 'Hello' } });
+    });
   });
 
   describe('title', () => {
