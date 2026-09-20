@@ -45,8 +45,8 @@ require (
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/authlib v0.0.0-20260814184937-0d62418c2815 // indirect
-	github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815 // indirect
+	github.com/grafana/authlib v0.0.0-20260919230918-6a05fe7c040d // indirect
+	github.com/grafana/authlib/types v0.0.0-20260919230918-6a05fe7c040d // indirect
 	github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.4 // indirect

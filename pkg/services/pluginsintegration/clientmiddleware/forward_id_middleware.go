@@ -3,28 +3,37 @@ package clientmiddleware
 import (
 	"context"
 
+	authnlib "github.com/grafana/authlib/authn"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const forwardIDHeaderName = "X-Grafana-Id"
 
 // NewForwardIDMiddleware creates a new backend.HandlerMiddleware that will
-// set grafana id header on outgoing backend.Handler requests
-func NewForwardIDMiddleware() backend.HandlerMiddleware {
+// set grafana id header on outgoing backend.Handler requests. idTokenDeriver mints an id token
+// from a requester's OBO access token when the requester carries no id token of its own (the MT
+// case, where the edge no longer mints one); nil disables that fallback, leaving the header unset
+// in that case, which is correct for callers (e.g. single-tenant Grafana) that always populate
+// GetIDToken() themselves.
+func NewForwardIDMiddleware(idTokenDeriver authnlib.IDTokenDeriver) backend.HandlerMiddleware {
 	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
 		return &ForwardIDMiddleware{
-			log:         log.New("forward_id_middleware"),
-			BaseHandler: backend.NewBaseHandler(next),
+			log:            log.New("forward_id_middleware"),
+			idTokenDeriver: idTokenDeriver,
+			BaseHandler:    backend.NewBaseHandler(next),
 		}
 	})
 }
 
 type ForwardIDMiddleware struct {
-	log log.Logger
+	log            log.Logger
+	idTokenDeriver authnlib.IDTokenDeriver
 
 	backend.BaseHandler
 }
@@ -34,27 +43,56 @@ func (m *ForwardIDMiddleware) applyToken(ctx context.Context, _ backend.PluginCo
 		return nil
 	}
 
+	var requester identity.Requester
 	reqCtx := contexthandler.FromContext(ctx)
-	// no HTTP request context => check requester
-	if reqCtx == nil || reqCtx.SignedInUser == nil {
-		requester, err := identity.GetRequester(ctx)
+	if reqCtx != nil && reqCtx.SignedInUser != nil {
+		requester = reqCtx.SignedInUser
+	} else {
+		r, err := identity.GetRequester(ctx)
 		if err != nil {
 			m.log.Debug("Failed to get requester from context", "error", err)
 			return nil
 		}
-
-		if requester.GetIDToken() != "" {
-			req.SetHTTPHeader(forwardIDHeaderName, requester.GetIDToken())
-			return nil
-		}
-		return nil
+		requester = r
 	}
 
-	if token := reqCtx.GetIDToken(); token != "" {
+	token := requester.GetIDToken()
+	if token == "" {
+		token = m.deriveIDToken(ctx, requester)
+	}
+	if token != "" {
 		req.SetHTTPHeader(forwardIDHeaderName, token)
 	}
 
 	return nil
+}
+
+// deriveIDToken mints an id token from requester's OBO access token, for the case where
+// requester carries no id token of its own. It only does so for a user or service account actor:
+// a requester with neither (e.g. a machine/service identity with no user in its actor chain) has
+// no identity for a plugin backend to key off of, so leaving the header unset is correct, not an
+// error condition.
+func (m *ForwardIDMiddleware) deriveIDToken(ctx context.Context, requester identity.Requester) string {
+	if util.IsInterfaceNil(m.idTokenDeriver) {
+		return ""
+	}
+
+	if !requester.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
+		return ""
+	}
+
+	accessToken := requester.GetAccessToken()
+	if accessToken == "" {
+		return ""
+	}
+
+	resp, err := m.idTokenDeriver.DeriveIDToken(ctx, accessToken, requester.GetNamespace())
+	if err != nil {
+		m.log.Warn("Failed to derive id token from access token", "error", err)
+		return ""
+	}
+
+	return resp.Token
 }
 
 func (m *ForwardIDMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {

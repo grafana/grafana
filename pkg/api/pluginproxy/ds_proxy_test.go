@@ -1254,7 +1254,7 @@ func getDatasourceProxiedRequest(t *testing.T, ctx *contextmodel.ReqContext, pro
 	loader, err := NewDataSourceLoader(ds, dsService)
 	require.NoError(t, err)
 
-	proxy, err := NewDataSourceProxy(loader, routes, toHTTPContext(t, ctx), "", proxyCfg, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features)
+	proxy, err := NewDataSourceProxy(loader, routes, toHTTPContext(t, ctx), "", proxyCfg, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features, nil)
 	require.NoError(t, err)
 	req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
 	require.NoError(t, err)
@@ -1385,7 +1385,7 @@ func runDatasourceAuthTest(t *testing.T,
 	loader, err := NewDataSourceLoader(test.datasource, dsService)
 	require.NoError(t, err)
 
-	proxy, err := NewDataSourceProxy(loader, routes, toHTTPContext(t, ctx), "", &DataSourceProxySettings{}, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features)
+	proxy, err := NewDataSourceProxy(loader, routes, toHTTPContext(t, ctx), "", &DataSourceProxySettings{}, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features, nil)
 	require.NoError(t, err)
 
 	req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
@@ -1449,7 +1449,7 @@ func setupDSProxyTest(t *testing.T, ctx *contextmodel.ReqContext, ds *datasource
 	loader, err := NewDataSourceLoader(ds, dsService)
 	require.NoError(t, err)
 
-	proxy, err := NewDataSourceProxy(loader, routes, toHTTPContext(t, ctx), path, &DataSourceProxySettings{}, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features)
+	proxy, err := NewDataSourceProxy(loader, routes, toHTTPContext(t, ctx), path, &DataSourceProxySettings{}, httpclient.NewProvider(), &oauthtoken.Service{}, tracer, features, nil)
 	if err != nil {
 		return nil, err
 	}
