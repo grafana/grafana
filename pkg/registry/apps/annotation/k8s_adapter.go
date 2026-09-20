@@ -267,6 +267,10 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 		return nil, err
 	}
 
+	if annotation.Spec.TimeEnd == nil {
+		annotation.Spec.TimeEnd = new(annotation.Spec.Time)
+	}
+
 	if annotation.Name == "" && annotation.GenerateName != "" {
 		annotation.Name = annotation.GenerateName + util.GenerateShortUID()
 	}

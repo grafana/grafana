@@ -18,9 +18,9 @@ func TestNewNotificationSettingsValidator_Routes(t *testing.T) {
 					Route: &v1.Route{Receiver: "default"},
 				},
 			},
-			Receivers: []*v1.PostableApiReceiver{
+			Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 				{Name: "default"},
-			},
+			}),
 		}
 	}
 
@@ -39,7 +39,7 @@ func TestNewNotificationSettingsValidator_Routes(t *testing.T) {
 		{
 			name: "managed route is available",
 			mutate: func(cfg *v1.AMConfigV1) {
-				cfg.ManagedRoutes = v1.ManagedRoutes{"custom-route": nil}
+				cfg.ManagedRoutes = map[string]*v1.Route{"custom-route": nil}
 			},
 			policy:      "custom-route",
 			expectError: false,
@@ -47,7 +47,7 @@ func TestNewNotificationSettingsValidator_Routes(t *testing.T) {
 		{
 			name: "second managed route is available",
 			mutate: func(cfg *v1.AMConfigV1) {
-				cfg.ManagedRoutes = v1.ManagedRoutes{
+				cfg.ManagedRoutes = map[string]*v1.Route{
 					"route-a": nil,
 					"route-b": nil,
 				}
@@ -92,7 +92,7 @@ func TestNewNotificationSettingsValidator_Routes(t *testing.T) {
 		{
 			name: "managed route available alongside extra config",
 			mutate: func(cfg *v1.AMConfigV1) {
-				cfg.ManagedRoutes = v1.ManagedRoutes{"managed-1": nil}
+				cfg.ManagedRoutes = map[string]*v1.Route{"managed-1": nil}
 				cfg.ExtraConfigs = []v1.ExtraConfiguration{
 					{Identifier: "extra-1"},
 				}
@@ -103,7 +103,7 @@ func TestNewNotificationSettingsValidator_Routes(t *testing.T) {
 		{
 			name: "extra config route available alongside managed routes",
 			mutate: func(cfg *v1.AMConfigV1) {
-				cfg.ManagedRoutes = v1.ManagedRoutes{"managed-1": nil}
+				cfg.ManagedRoutes = map[string]*v1.Route{"managed-1": nil}
 				cfg.ExtraConfigs = []v1.ExtraConfiguration{
 					{Identifier: "extra-1"},
 				}
@@ -114,7 +114,7 @@ func TestNewNotificationSettingsValidator_Routes(t *testing.T) {
 		{
 			name: "unknown route fails even when other sources exist",
 			mutate: func(cfg *v1.AMConfigV1) {
-				cfg.ManagedRoutes = v1.ManagedRoutes{"managed-1": nil}
+				cfg.ManagedRoutes = map[string]*v1.Route{"managed-1": nil}
 				cfg.ExtraConfigs = []v1.ExtraConfiguration{
 					{Identifier: "extra-1"},
 				}
