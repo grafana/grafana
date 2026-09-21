@@ -5,6 +5,7 @@ package controller
 import (
 	context "context"
 
+	v0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	repository "github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -22,17 +23,17 @@ func (_m *MockFinalizerProcessor) EXPECT() *MockFinalizerProcessor_Expecter {
 	return &MockFinalizerProcessor_Expecter{mock: &_m.Mock}
 }
 
-// process provides a mock function with given fields: ctx, repo, finalizers
-func (_m *MockFinalizerProcessor) process(ctx context.Context, repo repository.Repository, finalizers []string) error {
-	ret := _m.Called(ctx, repo, finalizers)
+// process provides a mock function with given fields: ctx, cfg, repo, finalizers
+func (_m *MockFinalizerProcessor) process(ctx context.Context, cfg *v0alpha1.Repository, repo repository.Repository, finalizers []string) error {
+	ret := _m.Called(ctx, cfg, repo, finalizers)
 
 	if len(ret) == 0 {
 		panic("no return value specified for process")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, repository.Repository, []string) error); ok {
-		r0 = rf(ctx, repo, finalizers)
+	if rf, ok := ret.Get(0).(func(context.Context, *v0alpha1.Repository, repository.Repository, []string) error); ok {
+		r0 = rf(ctx, cfg, repo, finalizers)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -47,15 +48,16 @@ type MockFinalizerProcessor_process_Call struct {
 
 // process is a helper method to define mock.On call
 //   - ctx context.Context
+//   - cfg *v0alpha1.Repository
 //   - repo repository.Repository
 //   - finalizers []string
-func (_e *MockFinalizerProcessor_Expecter) process(ctx interface{}, repo interface{}, finalizers interface{}) *MockFinalizerProcessor_process_Call {
-	return &MockFinalizerProcessor_process_Call{Call: _e.mock.On("process", ctx, repo, finalizers)}
+func (_e *MockFinalizerProcessor_Expecter) process(ctx interface{}, cfg interface{}, repo interface{}, finalizers interface{}) *MockFinalizerProcessor_process_Call {
+	return &MockFinalizerProcessor_process_Call{Call: _e.mock.On("process", ctx, cfg, repo, finalizers)}
 }
 
-func (_c *MockFinalizerProcessor_process_Call) Run(run func(ctx context.Context, repo repository.Repository, finalizers []string)) *MockFinalizerProcessor_process_Call {
+func (_c *MockFinalizerProcessor_process_Call) Run(run func(ctx context.Context, cfg *v0alpha1.Repository, repo repository.Repository, finalizers []string)) *MockFinalizerProcessor_process_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(repository.Repository), args[2].([]string))
+		run(args[0].(context.Context), args[1].(*v0alpha1.Repository), args[2].(repository.Repository), args[3].([]string))
 	})
 	return _c
 }
@@ -65,7 +67,7 @@ func (_c *MockFinalizerProcessor_process_Call) Return(_a0 error) *MockFinalizerP
 	return _c
 }
 
-func (_c *MockFinalizerProcessor_process_Call) RunAndReturn(run func(context.Context, repository.Repository, []string) error) *MockFinalizerProcessor_process_Call {
+func (_c *MockFinalizerProcessor_process_Call) RunAndReturn(run func(context.Context, *v0alpha1.Repository, repository.Repository, []string) error) *MockFinalizerProcessor_process_Call {
 	_c.Call.Return(run)
 	return _c
 }

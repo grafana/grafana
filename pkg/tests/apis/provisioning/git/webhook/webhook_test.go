@@ -204,6 +204,71 @@ func TestIntegrationProvisioning_GithubRepoWebhookCreated(t *testing.T) {
 	waitForWebhook(t, helper, repoName, 456)
 }
 
+// TestIntegrationProvisioning_GithubRepoDeletesWhenWebhookDeleteForbidden proves
+// that a GitHub 403 on the webhook DELETE endpoint does not wedge repository
+// deletion. The cleanup finalizer's OnDelete hook calls DeleteWebhook, which
+// treats a permission-denied error as best-effort so the finalizer still
+// completes and the object is garbage-collected. Without that handling the
+// finalizer would never be removed and the repository would be stuck deleting
+// forever.
+func TestIntegrationProvisioning_GithubRepoDeletesWhenWebhookDeleteForbidden(t *testing.T) {
+	helper := sharedGitHelper(t)
+
+	const repoName = "github-webhook-delete-forbidden"
+	const hookID = int64(403)
+	webhookURL := expectedWebhookURL(webhookBaseURL, helper.Namespace, repoName)
+
+	// Same immutable hook the other tests serve for create/list/get, but the
+	// DELETE endpoint returns 403 to simulate a token that can no longer delete
+	// the webhook (also how GitHub answers for a private repo the token lost
+	// access to).
+	hook := &github.Hook{
+		ID:     new(hookID),
+		Active: new(true),
+		Events: []string{"pull_request", "push"},
+		Config: &github.HookConfig{URL: new(webhookURL)},
+	}
+	encode := func(v any) http.HandlerFunc {
+		return func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(v)
+		}
+	}
+
+	var deleteCalls atomic.Int32
+	mockOpts := append(githubHealthCheckMocks(),
+		ghmock.WithRequestMatchHandler(ghmock.GetReposHooksByOwnerByRepo, encode([]*github.Hook{hook})),
+		ghmock.WithRequestMatchHandler(ghmock.PostReposHooksByOwnerByRepo, encode(hook)),
+		ghmock.WithRequestMatchHandler(ghmock.GetReposHooksByOwnerByRepoByHookId, encode(hook)),
+		ghmock.WithRequestMatchHandler(
+			ghmock.DeleteReposHooksByOwnerByRepoByHookId,
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				deleteCalls.Add(1)
+				w.WriteHeader(http.StatusForbidden)
+				_, _ = w.Write(ghmock.MustMarshal(&github.ErrorResponse{Message: "permission denied"}))
+			}),
+		),
+	)
+	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient(mockOpts...)
+
+	helper.CreateGithubRepo(t, repoName, map[string][]byte{
+		"dashboard.json": common.DashboardJSON("gh-webhook-del-dash", "GitHub Webhook Delete Dashboard", 1),
+	}, webhookBaseURL, "write")
+
+	// The cleanup finalizer only calls DeleteWebhook once Status.Webhook is set,
+	// so wait for it before deleting — otherwise the hook short-circuits and the
+	// forbidden path is never exercised.
+	waitForWebhook(t, helper, repoName, hookID)
+
+	require.NoError(t, helper.Repositories.Resource.Delete(t.Context(), repoName, metav1.DeleteOptions{}), "repository delete request should be accepted")
+
+	// The object must still be garbage-collected despite the forbidden webhook
+	// delete — this is the assertion that the cleanup finalizer was removed.
+	helper.WaitForRepositoryDeleted(t, repoName)
+
+	require.GreaterOrEqual(t, deleteCalls.Load(), int32(1), "the forbidden webhook delete path should have been exercised")
+}
+
 // TestIntegrationProvisioning_WebhookFailureDoesNotRetryImmediately verifies
 // that when webhook creation fails, the repository records a HealthFailureHook
 // (not a controller error) and the hook-failure cooldown suppresses an

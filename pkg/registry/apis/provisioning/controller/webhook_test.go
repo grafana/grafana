@@ -724,6 +724,24 @@ func TestWebhookOnDelete(t *testing.T) {
 			expectedError: nil,
 		},
 		{
+			name: "permission denied to delete the webhook",
+			setupMock: func(m *repository.MockWebhookClient) {
+				m.EXPECT().DeleteWebhook(mock.Anything, repository.WebhookID{ID: 123}).
+					Return(repository.ErrPermissionDenied)
+			},
+			config: &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						ID:  123,
+						URL: "https://example.com/webhook",
+					},
+				},
+			},
+			// Deletion is best-effort: a 403 must not block finalizer removal,
+			// otherwise the repository can never be deleted.
+			expectedError: nil,
+		},
+		{
 			name:      "webhook not found in status",
 			setupMock: func(_ *repository.MockWebhookClient) {},
 			config: &provisioning.Repository{

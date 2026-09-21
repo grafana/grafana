@@ -37,7 +37,15 @@ type finalizer struct {
 	maxWorkers    int
 }
 
+// process runs the repository's finalizers in a fixed order. cfg is the
+// repository configuration and is always required. repo is the built repository
+// used by provider-dependent finalizers (currently only the webhook cleanup in
+// CleanFinalizer); it may be nil when the repository could not be built — e.g. a
+// force-delete of a repository whose credentials have expired — in which case
+// the provider-dependent step is skipped and the remaining config-only
+// finalizers still run.
 func (f *finalizer) process(ctx context.Context,
+	cfg *provisioning.Repository,
 	repo repository.Repository,
 	finalizers []string,
 ) error {
@@ -65,7 +73,6 @@ func (f *finalizer) process(ctx context.Context,
 		switch finalizer {
 		case repository.RemovePendingJobsFinalizer:
 			logger.Info("clearing repository job queue")
-			cfg := repo.Config()
 			count, err = f.jobs.CleanupQueue(ctx, cfg.Namespace, cfg.Name)
 			if err != nil {
 				err = fmt.Errorf("clear job queue: %w", err)
@@ -75,6 +82,15 @@ func (f *finalizer) process(ctx context.Context,
 		case repository.CleanFinalizer:
 			// NOTE: the controller loop will never get run unless a finalizer is set
 			logger.Info("running cleanup finalizer")
+			// repo is nil when the repository could not be built (e.g. a
+			// force-delete with expired credentials). Provider-side cleanup such
+			// as webhook removal is not possible without a working client, so
+			// skip it and leave the remote resource in place rather than block
+			// deletion.
+			if repo == nil {
+				logger.Warn("skipping provider deletion hooks: repository could not be built; provider-side resources such as webhooks will not be cleaned up")
+				break
+			}
 			if webhookRepo, ok := repo.(repository.WebhookRepository); ok {
 				if err = webhookOnDelete(ctx, webhookRepo); err != nil {
 					err = fmt.Errorf("execute deletion hooks: %w", err)
@@ -84,7 +100,7 @@ func (f *finalizer) process(ctx context.Context,
 
 		case repository.ReleaseOrphanResourcesFinalizer:
 			logger.Info("releasing orphan resources")
-			count, err = f.releaseExistingItems(ctx, repo.Config())
+			count, err = f.releaseExistingItems(ctx, cfg)
 			if err != nil {
 				err = fmt.Errorf("release resources: %w", err)
 				outcome = metricutils.ErrorOutcome
@@ -92,7 +108,7 @@ func (f *finalizer) process(ctx context.Context,
 
 		case repository.RemoveOrphanResourcesFinalizer:
 			logger.Info("removing orphan resources")
-			count, err = f.deleteExistingItems(ctx, repo.Config())
+			count, err = f.deleteExistingItems(ctx, cfg)
 			if err != nil {
 				err = fmt.Errorf("remove resources: %w", err)
 				outcome = metricutils.ErrorOutcome

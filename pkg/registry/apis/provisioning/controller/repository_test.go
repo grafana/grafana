@@ -219,7 +219,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				f := NewMockFinalizerProcessor(t)
 
 				f.
-					On("process", mock.Anything, nil, []string{
+					On("process", mock.Anything, mock.Anything, nil, []string{
 						repository.RemoveOrphanResourcesFinalizer,
 					}).
 					Once().
@@ -299,7 +299,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				f := NewMockFinalizerProcessor(t)
 
 				f.
-					On("process", mock.Anything, nil, []string{
+					On("process", mock.Anything, mock.Anything, nil, []string{
 						repository.RemoveOrphanResourcesFinalizer,
 					}).
 					Once().
@@ -343,7 +343,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				f := NewMockFinalizerProcessor(t)
 
 				f.
-					On("process", mock.Anything, nil, []string{
+					On("process", mock.Anything, mock.Anything, nil, []string{
 						repository.RemoveOrphanResourcesFinalizer,
 					}).
 					Once().
@@ -384,6 +384,64 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 			},
 			expectedErr: "remove finalizers: " + assert.AnError.Error(),
 		},
+		{
+			// With the force-delete annotation, a build failure (e.g. expired
+			// credentials) must not abort deletion: the finalizers run with a nil
+			// repo (provider-side webhook cleanup skipped) and the object is
+			// deleted.
+			name: "Force delete proceeds when building repository fails",
+			repoFactory: func() repository.Factory {
+				f := repository.NewMockFactory(t)
+
+				f.
+					On("Build", mock.Anything, mock.Anything).
+					Once().
+					Return(nil, assert.AnError)
+
+				return f
+			}(),
+			finalizer: func() finalizerProcessor {
+				f := NewMockFinalizerProcessor(t)
+
+				// repo is nil because Build failed; the config-only finalizers
+				// still run.
+				f.
+					On("process", mock.Anything, mock.Anything, nil, []string{
+						repository.RemoveOrphanResourcesFinalizer,
+					}).
+					Once().
+					Return(nil)
+
+				return f
+			}(),
+			client: func() client.ProvisioningV0alpha1Interface {
+				repo := &mockRepoInterface{
+					patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *provisioning.Repository, err error) {
+						return &provisioning.Repository{}, nil
+					},
+				}
+				c := &mockProvisioningV0alpha1Interface{
+					repositoriesFunc: func(namespace string) client.RepositoryInterface {
+						return repo
+					},
+				}
+
+				return c
+			}(),
+			// No statusPatcher: the force path skips updateDeleteStatus on build
+			// failure and completes deletion cleanly.
+			statusPatcher: nil,
+			repo: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						repository.ForceDeleteAnnotation: "true",
+					},
+					Finalizers: []string{
+						repository.RemoveOrphanResourcesFinalizer,
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -415,7 +473,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 func TestRepositoryController_handleDelete_RetriesOnConflict(t *testing.T) {
 	finalizer := NewMockFinalizerProcessor(t)
 	finalizer.
-		On("process", mock.Anything, nil, []string{repository.RemoveOrphanResourcesFinalizer}).
+		On("process", mock.Anything, mock.Anything, nil, []string{repository.RemoveOrphanResourcesFinalizer}).
 		Once().
 		Return(nil)
 
@@ -459,7 +517,7 @@ func TestRepositoryController_handleDelete_RetriesOnConflict(t *testing.T) {
 func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *testing.T) {
 	finalizer := NewMockFinalizerProcessor(t)
 	finalizer.
-		On("process", mock.Anything, nil, []string{repository.RemoveOrphanResourcesFinalizer}).
+		On("process", mock.Anything, mock.Anything, nil, []string{repository.RemoveOrphanResourcesFinalizer}).
 		Once().
 		Return(nil)
 
@@ -553,7 +611,7 @@ func TestRepositoryController_handleDelete_ObservesPendingAge(t *testing.T) {
 
 	finalizer := NewMockFinalizerProcessor(t)
 	finalizer.
-		On("process", mock.Anything, nil, []string{repository.RemoveOrphanResourcesFinalizer}).
+		On("process", mock.Anything, mock.Anything, nil, []string{repository.RemoveOrphanResourcesFinalizer}).
 		Once().
 		Return(nil)
 

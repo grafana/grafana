@@ -531,7 +531,11 @@ func TestFinalizer_process(t *testing.T) {
 				clientFactory: tc.clientFactory,
 				metrics:       &metrics,
 			}
-			err := f.process(context.Background(), tc.repo, tc.finalizers)
+			var cfg *provisioning.Repository
+			if tc.repo != nil {
+				cfg = tc.repo.Config()
+			}
+			err := f.process(context.Background(), cfg, tc.repo, tc.finalizers)
 			if tc.expectedErr == "" {
 				assert.NoError(t, err)
 			} else {
@@ -1234,7 +1238,7 @@ func TestProcess_RemovePendingJobsFinalizer(t *testing.T) {
 	}
 
 	repo := mockRepo{name: "my-repo", namespace: "default"}
-	err := f.process(context.Background(), repo, []string{repository.RemovePendingJobsFinalizer})
+	err := f.process(context.Background(), repo.Config(), repo, []string{repository.RemovePendingJobsFinalizer})
 	assert.NoError(t, err)
 }
 
@@ -1251,7 +1255,7 @@ func TestProcess_RemovePendingJobsFinalizer_Error(t *testing.T) {
 	}
 
 	repo := mockRepo{name: "my-repo", namespace: "default"}
-	err := f.process(context.Background(), repo, []string{repository.RemovePendingJobsFinalizer})
+	err := f.process(context.Background(), repo.Config(), repo, []string{repository.RemovePendingJobsFinalizer})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "clear job queue")
 }
@@ -1277,7 +1281,7 @@ func TestProcess_CleanFinalizer_SkipsWhenNotWebhookCapable(t *testing.T) {
 		Status:     provisioning.RepositoryStatus{Webhook: &provisioning.WebhookStatus{ID: 1}},
 	}}
 
-	err := f.process(t.Context(), repo, []string{repository.CleanFinalizer})
+	err := f.process(t.Context(), repo.Config(), repo, []string{repository.CleanFinalizer})
 	assert.NoError(t, err)
 }
 
@@ -1291,6 +1295,33 @@ func TestProcess_CleanFinalizer_NoOpWhenNoWebhookInStatus(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"},
 	}}
 
-	err := f.process(t.Context(), repo, []string{repository.CleanFinalizer})
+	err := f.process(t.Context(), repo.Config(), repo, []string{repository.CleanFinalizer})
+	assert.NoError(t, err)
+}
+
+// TestProcess_NilRepo_SkipsWebhookAndRunsConfigOnlyFinalizers covers the
+// force-delete path: when the repository could not be built (repo == nil), the
+// provider-dependent webhook cleanup is skipped without error, and the
+// config-only finalizers (here, the job-queue cleanup) still run using the
+// configuration alone.
+func TestProcess_NilRepo_SkipsWebhookAndRunsConfigOnlyFinalizers(t *testing.T) {
+	jobs := NewMockJobQueueCleaner(t)
+	jobs.On("CleanupQueue", mock.Anything, "default", "my-repo").Once().Return(2, nil)
+
+	metrics := registerFinalizerMetrics(prometheus.NewRegistry())
+	f := &finalizer{
+		jobs:    jobs,
+		metrics: &metrics,
+	}
+
+	cfg := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"},
+		Status:     provisioning.RepositoryStatus{Webhook: &provisioning.WebhookStatus{ID: 1}},
+	}
+
+	err := f.process(t.Context(), cfg, nil, []string{
+		repository.RemovePendingJobsFinalizer,
+		repository.CleanFinalizer,
+	})
 	assert.NoError(t, err)
 }
