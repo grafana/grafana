@@ -9236,6 +9236,7 @@
       "target": "Target",
       "tooltip-url": "{{route}} or {{url}} or {{target}} or {{path}}",
       "trace-banner-error": "Trace error banner",
+      "trace-banner-go-to-span": "Go to span",
       "trace-banner-metrics": "{{duration}} · {{percent}}% of trace",
       "trace-banner-warning": "Trace warning banner",
       "trace-id": "Trace ID",
@@ -16237,6 +16238,8 @@
       "new-snapshot-button": "New snapshot",
       "success-creation": "Your snapshot has been created",
       "success-delete": "Your snapshot has been deleted",
+      "too-large-body": "This snapshot is {{size}}, over the {{limit}} limit. Snapshot a single panel, shorten the time range, or select fewer template variable values, then try again.",
+      "too-large-title": "Snapshot is too large to publish",
       "view-all-button": "View all snapshots"
     },
     "share-panel": {
