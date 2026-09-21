@@ -18,6 +18,9 @@ export function setupDataSources(...configs: DataSourceInstanceSettings[]) {
   config.datasources = datasourceSettings;
   dataSourceSrv.init(config.datasources, defaultDatasource?.name || config.defaultDatasource);
   setDataSourceSrv(dataSourceSrv);
+  // Also seed the newer instance-settings cache that getDataSourceInstanceSettings and friends read
+  // from, so code using those APIs doesn't quietly fall back to the legacy service.
+  setDataSourceInstanceSettings(datasourceSettings, defaultDatasource?.name || config.defaultDatasource);
 
   // Also seeds the newer async data source cache (@grafana/runtime's getDataSourceInstanceList
   // etc.), which is separate from the legacy DatasourceSrv seeded above.
