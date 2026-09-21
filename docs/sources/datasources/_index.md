@@ -183,6 +183,15 @@ Grafana includes three special data sources:
 
 This built-in data source generates random walk data and can poll the [TestData](testdata/) data source. It can also list files and retrieve other data from a Grafana installation, making it useful for testing visualizations and running experiments.
 
+The Grafana data source supports several query types, which you select in the query editor:
+
+- **Random walk:** Generate a random time series signal within the selected time range, which is useful for testing panels and visualizations.
+- **Live measurements:** Stream real-time measurements from Grafana Live channels.
+- **List public files:** Show directory listings for public resources served by the Grafana installation.
+- **Annotations and alerts:** Return annotations or alerts managed by Grafana, filtered either by the current dashboard or by tags.
+- **Time regions:** Highlight a repeating time region, such as business hours or weekends.
+- **Snapshot:** Display the data captured in a dashboard snapshot.
+
 ### Mixed
 
 This data source lets you query multiple data sources in the same panel. When you select **Mixed**, you can select a different data source for each new query that you add.
