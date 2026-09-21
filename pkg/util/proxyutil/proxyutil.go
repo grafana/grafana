@@ -125,16 +125,20 @@ func ApplyUserHeader(sendUserHeader bool, req *http.Request, user identity.Reque
 // idTokenDeriver mints an id token from user's OBO access token when user carries no id token of
 // its own (the MT case, where the edge no longer mints one); nil disables that fallback.
 func ApplyForwardIDHeader(ctx context.Context, req *http.Request, user identity.Requester, idTokenDeriver authnlib.IDTokenDeriver) {
-	if user == nil || user.IsNil() {
-		return
+	var token string
+	if user != nil && !user.IsNil() {
+		token = user.GetIDToken()
+		if token == "" {
+			token = deriveForwardIDToken(ctx, user, idTokenDeriver)
+		}
 	}
 
-	token := user.GetIDToken()
-	if token == "" {
-		token = deriveForwardIDToken(ctx, user, idTokenDeriver)
-	}
+	// Set-or-delete rather than "set only on success": a header already on req (from a reused
+	// request, or a caller-supplied value) must not survive an empty result unverified.
 	if token != "" {
 		req.Header.Set(IDHeaderName, token)
+	} else {
+		req.Header.Del(IDHeaderName)
 	}
 }
 

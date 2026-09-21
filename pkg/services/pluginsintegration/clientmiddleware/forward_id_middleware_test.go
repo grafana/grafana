@@ -446,6 +446,24 @@ func TestForwardIDMiddleware(t *testing.T) {
 			require.Equal(t, 1, deriver.calls)
 		})
 
+		t.Run("Should remove a pre-existing header when derivation fails, rather than leave it unverified", func(t *testing.T) {
+			deriver := &fakeIDTokenDeriver{err: errors.New("auth-api unreachable")}
+			cdt := handlertest.NewHandlerMiddlewareTest(t, handlertest.WithMiddlewares(NewForwardIDMiddleware(deriver)))
+
+			ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+				Type:        claims.TypeUser,
+				AccessToken: "obo-access-token",
+				Namespace:   "stacks-1",
+			})
+
+			req := &backend.QueryDataRequest{PluginContext: pluginContext}
+			req.SetHTTPHeader(forwardIDHeaderName, "attacker-supplied-or-stale")
+
+			_, err := cdt.MiddlewareHandler.QueryData(ctx, req)
+			require.NoError(t, err)
+			require.Empty(t, cdt.QueryDataReq.GetHTTPHeaders())
+		})
+
 		t.Run("Should not derive when a nil deriver is configured", func(t *testing.T) {
 			cdt := handlertest.NewHandlerMiddlewareTest(t, handlertest.WithMiddlewares(NewForwardIDMiddleware(nil)))
 
