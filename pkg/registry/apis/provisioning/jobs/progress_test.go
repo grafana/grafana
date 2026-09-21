@@ -3,6 +3,7 @@ package jobs
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"testing"
 
@@ -123,7 +124,7 @@ func TestJobProgressRecorderSetRefURLs(t *testing.T) {
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
 		return nil
 	}
-	recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+	recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 
 	// Test setting RefURLs
 	expectedRefURLs := &provisioning.RepositoryURLs{
@@ -151,7 +152,7 @@ func TestJobProgressRecorderSetRefURLsNil(t *testing.T) {
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
 		return nil
 	}
-	recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+	recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 
 	// Test setting nil RefURLs
 	recorder.SetRefURLs(ctx, nil)
@@ -173,7 +174,7 @@ func TestJobProgressRecorderCompleteIncludesRefURLs(t *testing.T) {
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
 		return nil
 	}
-	recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+	recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 
 	// Set some RefURLs
 	refURLs := &provisioning.RepositoryURLs{
@@ -198,7 +199,7 @@ func TestJobProgressRecorderWarningStatus(t *testing.T) {
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
 		return nil
 	}
-	recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+	recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 
 	// Record a result with a warning
 	warningErr := errors.New("deprecated API used")
@@ -287,7 +288,7 @@ func TestJobProgressRecorderWarningWithErrors(t *testing.T) {
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
 		return nil
 	}
-	recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+	recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 
 	// Record a result with an error (errors take precedence)
 	errorErr := errors.New("failed to process")
@@ -336,7 +337,7 @@ func TestJobProgressRecorderWarningOnlyNoErrors(t *testing.T) {
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
 		return nil
 	}
-	recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+	recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 
 	// Record only warnings, no errors
 	warningErr := errors.New("deprecated API used")
@@ -368,7 +369,7 @@ func TestJobProgressRecorderFolderFailureTracking(t *testing.T) {
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
 		return nil
 	}
-	recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+	recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 
 	// Record a folder creation failure with PathCreationError
 	pathErr := &resources.PathCreationError{
@@ -459,7 +460,7 @@ func TestUpdateSummary_TotalChanges(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			recorder := newJobProgressRecorder(noop, nil, tt.action).(*jobProgressRecorder)
+			recorder := NewJobProgressRecorder(noop, nil, tt.action).(*jobProgressRecorder)
 			for _, a := range tt.actions {
 				recorder.Record(ctx, NewPathOnlyResult("file.json").
 					WithAction(a).
@@ -479,7 +480,7 @@ func TestJobProgressRecorderFolderFailureTrackingFromWarning(t *testing.T) {
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
 		return nil
 	}
-	recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+	recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 
 	// Folder depth violations are surfaced as warnings instead of errors so
 	// the job is not retried in a loop. They must still populate
@@ -512,7 +513,7 @@ func TestJobProgressRecorderFolderUIDTooLongFailureTrackingFromWarning(t *testin
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
 		return nil
 	}
-	recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+	recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 
 	// Folder UID-length violations are surfaced as warnings instead of
 	// errors so the job is not retried in a loop. They must still populate
@@ -546,7 +547,7 @@ func TestJobProgressRecorderFolderValidationFailureTrackingFromWarning(t *testin
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
 		return nil
 	}
-	recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+	recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 
 	// Generic folder-API validation rejections (illegal-uid-chars,
 	// reserved-uid, future folder validations) must follow the same
@@ -580,7 +581,7 @@ func TestJobProgressRecorderHasDirPathFailedCreation(t *testing.T) {
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
 		return nil
 	}
-	recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+	recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 
 	// Add failed creations via Record
 	pathErr1 := &resources.PathCreationError{
@@ -621,7 +622,7 @@ func TestJobProgressRecorderHasDirPathFailedDeletion(t *testing.T) {
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
 		return nil
 	}
-	recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+	recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 
 	// Add failed deletions via Record
 	recorder.Record(ctx, NewPathOnlyResult("folder1/file1.json").
@@ -662,7 +663,7 @@ func TestJobProgressRecorderHasChildPathFailedCreation(t *testing.T) {
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
 		return nil
 	}
-	recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+	recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 
 	pathErr1 := &resources.PathCreationError{
 		Path: "alpha/beta/",
@@ -697,7 +698,7 @@ func TestJobProgressRecorderHasChildPathFailedCreation(t *testing.T) {
 	assert.False(t, recorder.HasChildPathFailedCreation("x/y/z/deeper/"), "nothing nested deeper than x/y/z/")
 
 	// Empty recorder should always return false
-	emptyRecorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+	emptyRecorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 	assert.False(t, emptyRecorder.HasChildPathFailedCreation("alpha/"))
 }
 
@@ -707,7 +708,7 @@ func TestJobProgressRecorderHasChildPathFailedUpdate(t *testing.T) {
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
 		return nil
 	}
-	recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+	recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 
 	recorder.Record(ctx, NewResourceResult().
 		WithPath("alpha/beta/dash.json").
@@ -803,7 +804,7 @@ func TestJobProgressRecorderHasChildPathFailedUpdate(t *testing.T) {
 	assert.True(t, recorder.HasChildPathFailedUpdate("new-warn/"), "warning-level rename failures must protect the destination folder")
 
 	// Empty recorder should always return false
-	emptyRecorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+	emptyRecorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 	assert.False(t, emptyRecorder.HasChildPathFailedUpdate("alpha/"))
 }
 
@@ -813,7 +814,7 @@ func TestJobProgressRecorderFailedUpdatesTracking(t *testing.T) {
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
 		return nil
 	}
-	recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+	recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 
 	// Record update failures
 	recorder.Record(ctx, NewResourceResult().
@@ -849,7 +850,7 @@ func TestJobProgressRecorderResetResults(t *testing.T) {
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
 		return nil
 	}
-	recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+	recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 
 	// Add some data via Record
 	pathErr := &resources.PathCreationError{
@@ -890,7 +891,7 @@ func TestJobProgressRecorderLogsWarningsAtWarnLevel(t *testing.T) {
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
 		return nil
 	}
-	recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+	recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 
 	// Record a result with a warning (validation error)
 	validationErr := resources.NewResourceValidationError(errors.New("missing name in resource"))
@@ -926,7 +927,7 @@ func TestJobProgressRecorderLogsErrorsAtErrorLevel(t *testing.T) {
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
 		return nil
 	}
-	recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+	recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 
 	// Record a result with an actual error (not a validation error)
 	actualError := errors.New("network failure")
@@ -962,7 +963,7 @@ func TestJobProgressRecorderLogsSuccessAtInfoLevel(t *testing.T) {
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
 		return nil
 	}
-	recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+	recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 
 	// Record a successful result
 	result := NewResourceResult().
@@ -995,7 +996,7 @@ func TestJobProgressRecorderIgnoredActionsDontCountAsErrors(t *testing.T) {
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
 		return nil
 	}
-	recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+	recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 
 	// Record an ignored action with error
 	recorder.Record(ctx, NewPathOnlyResult("folder1/file1.json").
@@ -1021,7 +1022,7 @@ func TestJobProgressRecorderResultReasons(t *testing.T) {
 
 	t.Run("Record accumulates warning reasons from results", func(t *testing.T) {
 		mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error { return nil }
-		recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+		recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 
 		quotaErr := quotas.NewQuotaExceededError(errors.New("over quota"))
 		recorder.Record(ctx, NewResourceResult().WithError(quotaErr).Build())
@@ -1031,7 +1032,7 @@ func TestJobProgressRecorderResultReasons(t *testing.T) {
 
 	t.Run("duplicate warning reasons are deduplicated", func(t *testing.T) {
 		mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error { return nil }
-		recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+		recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 
 		quotaErr1 := quotas.NewQuotaExceededError(errors.New("over quota 1"))
 		quotaErr2 := quotas.NewQuotaExceededError(errors.New("over quota 2"))
@@ -1045,7 +1046,7 @@ func TestJobProgressRecorderResultReasons(t *testing.T) {
 
 	t.Run("Complete with warning error does not set Error state", func(t *testing.T) {
 		mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error { return nil }
-		recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+		recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 
 		quotaErr := quotas.NewQuotaExceededError(errors.New("over quota"))
 		recorder.Record(ctx, NewResourceResult().WithError(quotaErr).Build())
@@ -1057,7 +1058,7 @@ func TestJobProgressRecorderResultReasons(t *testing.T) {
 
 	t.Run("Complete with real error still sets Error state", func(t *testing.T) {
 		mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error { return nil }
-		recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+		recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 
 		finalStatus := recorder.Complete(ctx, errors.New("network failure"))
 		assert.Equal(t, provisioning.JobStateError, finalStatus.State)
@@ -1066,7 +1067,7 @@ func TestJobProgressRecorderResultReasons(t *testing.T) {
 
 	t.Run("ResetResults with keepWarnings=true preserves warning reasons", func(t *testing.T) {
 		mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error { return nil }
-		recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+		recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 
 		quotaErr := quotas.NewQuotaExceededError(errors.New("over quota"))
 		recorder.Record(ctx, NewResourceResult().WithError(quotaErr).Build())
@@ -1080,7 +1081,7 @@ func TestJobProgressRecorderResultReasons(t *testing.T) {
 
 	t.Run("ResetResults with keepWarnings=false clears warning reasons", func(t *testing.T) {
 		mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error { return nil }
-		recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+		recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 
 		quotaErr := quotas.NewQuotaExceededError(errors.New("over quota"))
 		recorder.Record(ctx, NewResourceResult().WithError(quotaErr).Build())
@@ -1093,11 +1094,46 @@ func TestJobProgressRecorderResultReasons(t *testing.T) {
 	})
 }
 
+func TestJobProgressRecorderCompleteWithWarningError(t *testing.T) {
+	ctx := context.Background()
+	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error { return nil }
+
+	t.Run("warning-wrapped error completes in warning state and keeps its message", func(t *testing.T) {
+		recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+
+		finalStatus := recorder.Complete(ctx, AsWarning(errors.New("migrate functionality is disabled by configuration")))
+
+		assert.Equal(t, provisioning.JobStateWarning, finalStatus.State)
+		assert.Equal(t, "migrate functionality is disabled by configuration", finalStatus.Message)
+	})
+
+	t.Run("plain error still completes in error state", func(t *testing.T) {
+		recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+
+		finalStatus := recorder.Complete(ctx, errors.New("boom"))
+
+		assert.Equal(t, provisioning.JobStateError, finalStatus.State)
+		assert.Equal(t, "boom", finalStatus.Message)
+	})
+}
+
+func TestAsWarning(t *testing.T) {
+	assert.Nil(t, AsWarning(nil))
+	assert.False(t, IsWarning(nil))
+	assert.False(t, IsWarning(errors.New("plain")))
+
+	err := AsWarning(errors.New("disabled by configuration"))
+	assert.True(t, IsWarning(err))
+	assert.Equal(t, "disabled by configuration", err.Error())
+	// Preserves the wrapped error for errors.Is/As chains.
+	assert.True(t, IsWarning(fmt.Errorf("wrapped: %w", err)))
+}
+
 func TestJobProgressRecorderTooManyErrorsConcurrency(t *testing.T) {
 	ctx := context.Background()
 
 	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error { return nil }
-	recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+	recorder := NewJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 
 	const maxErrors = 5
 	const goroutines = 20

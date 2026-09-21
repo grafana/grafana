@@ -244,7 +244,7 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
       width: '100%',
       height: '100%',
       overflow: 'hidden',
-      gap: theme.spacing(2),
+      gap: theme.spacing(1),
       paddingBottom: theme.spacing(1),
     }),
     banner: css({
@@ -275,12 +275,12 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
       flexDirection: 'column',
       minWidth: 0,
       minHeight: 0,
-      gap: theme.spacing(2),
+      gap: theme.spacing(1),
     }),
     bottom: css({
       display: 'flex',
       flexDirection: 'column',
-      gap: theme.spacing(2),
+      gap: theme.spacing(1),
       position: 'relative',
       minHeight: 0,
     }),
@@ -306,7 +306,7 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
     dataPane: css({
       display: 'flex',
       flexDirection: 'column',
-      gap: theme.spacing(2),
+      gap: theme.spacing(1),
       minWidth: 0,
       minHeight: 0,
       overflow: 'hidden',

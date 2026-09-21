@@ -5,6 +5,9 @@ import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/const
 
 import { useSnappingSplitter } from './useSnappingSplitter';
 
+// Bypasses the mock below, so one block can assert the overrides against the real `useSplitter` styles.
+const realUseSplitter: typeof useSplitter = jest.requireActual('@grafana/ui').useSplitter;
+
 jest.mock('@grafana/ui', () => ({
   useSplitter: jest.fn((options) => ({
     containerProps: { className: '', ref: { current: document.createElement('div') } },
@@ -487,6 +490,30 @@ describe('useSnappingSplitter', () => {
 
       expect(RESET_SIZE).toBeGreaterThanOrEqual(THRESHOLD);
       expect(result.current.splitterState.collapsed).toBe(false);
+    });
+  });
+
+  // `useSplitter` floors both panes at `min-content`; the overrides have to actually beat that floor,
+  // which a stubbed splitter cannot show. These run against the real hook instead.
+  describe('against the real useSplitter styles', () => {
+    beforeEach(() => {
+      jest.mocked(useSplitter).mockImplementation(realUseSplitter);
+    });
+
+    it('lets the primary pane shrink in pixel mode so the other pane can be dragged wider', () => {
+      const { result } = renderHook(() =>
+        useSnappingSplitter({ direction: 'row', usePixels: true, initialSize: 330, collapseBelowPixels: 150 })
+      );
+
+      expect(result.current.primaryProps.style.minWidth).toBe(0);
+    });
+
+    it('leaves the primary pane floored at its content width in flex mode', () => {
+      const { result } = renderHook(() =>
+        useSnappingSplitter({ direction: 'row', initialSize: 0.5, collapseBelowPixels: 150 })
+      );
+
+      expect(result.current.primaryProps.style.minWidth).toBe('min-content');
     });
   });
 });

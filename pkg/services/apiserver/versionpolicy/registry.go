@@ -4,15 +4,25 @@
 package versionpolicy
 
 import (
+	"fmt"
 	"maps"
 	"sync"
+
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
+
+// ResourceEnabledChecker reports whether a GroupVersionResource is enabled, and whether any
+// resource in a group is enabled at all. *serverstorage.ResourceConfig satisfies this directly.
+type ResourceEnabledChecker interface {
+	ResourceEnabled(gvr schema.GroupVersionResource) bool
+	AnyResourceForGroupEnabled(group string) bool
+}
 
 type VersionPolicy struct {
 	// advisory: affects discovery only, never storage
-	PreferredVersion string
+	PreferredVersion string `json:"preferredVersion,omitempty"`
 	// persist ceiling: writes whose version outranks it are rejected
-	MaxAllowedVersion string
+	MaxAllowedVersion string `json:"maxAllowedVersion,omitempty"`
 }
 
 // VersionPolicyRegistry serves the resolved global policy. base holds the static layers
@@ -63,8 +73,92 @@ func (r *VersionPolicyRegistry) IsVersionAllowed(group, version string) (allowed
 	if max == "" {
 		return true, ""
 	}
+	// A cap is configured: a write at an empty, unregistered, or unrankable version cannot be compared
+	// against it, so fail closed rather than let it slip past the ceiling.
+	if !r.resolver.isRegistered(group, version) {
+		return false, max
+	}
+	if _, ok := capRank(version); !ok {
+		return false, max
+	}
 	if r.resolver.Outranks(group, version, max) {
 		return false, max
 	}
 	return true, max
+}
+
+// HasMaxAllowed reports whether a maxAllowedVersion ceiling is configured for the group. Used to skip
+// buffering on the enforce path when a group has no cap.
+func (r *VersionPolicyRegistry) HasMaxAllowed(group string) bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.global[group].MaxAllowedVersion != ""
+}
+
+// Validate checks the static boot configuration (defaults, ini) and fails fast on a misconfiguration.
+// The live runtime layer is deliberately not checked here (Resolve drops a bad value with a warn).
+// resourceChecker may be nil (no enablement info available to the caller), in which case every
+// registered preferredVersion/maxAllowedVersion is assumed enabled.
+func (r *VersionPolicyRegistry) Validate(resourceChecker ResourceEnabledChecker) error {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	// A typo'd version in boot config would otherwise be dropped silently, leaving the operator believing
+	// a cap is in force when it is not, so an unregistered version in a known group is a hard error. A
+	// whole unknown group, though, is expected on a shared/fleet config (feature toggle off, edition
+	// difference) — warn and skip it, matching applyPreferredAPIVersions, rather than fail this instance.
+	for _, layer := range r.base {
+		for group, p := range layer {
+			if !r.resolver.hasGroup(group) {
+				logger.Warn("ignoring version policy for group not registered on this instance", "group", group)
+				continue
+			}
+			if p.PreferredVersion != "" && !r.resolver.isRegistered(group, p.PreferredVersion) {
+				return fmt.Errorf("version policy: preferredVersion %q for group %q is not a registered version",
+					p.PreferredVersion, group)
+			}
+			if p.MaxAllowedVersion != "" && !r.resolver.isRegistered(group, p.MaxAllowedVersion) {
+				return fmt.Errorf("version policy: maxAllowedVersion %q for group %q is not a registered version",
+					p.MaxAllowedVersion, group)
+			}
+		}
+	}
+
+	// Discovery advertises the configured preferredVersion, or — when none is set — the group's natural
+	// first version. If that advertised version outranks the cap, discovery-following clients would write
+	// a version apistore.encode rejects (400). Capping below the natural preferred therefore requires
+	// also setting preferredVersion; reject the config at boot rather than serve a self-contradicting API.
+	for group, p := range r.global {
+		if p.MaxAllowedVersion == "" {
+			continue
+		}
+		// InstallAPIs skips installing the group entirely once every version is filtered out as
+		// disabled, so discovery advertises nothing for it - nothing to compare against the cap.
+		if resourceChecker != nil && !resourceChecker.AnyResourceForGroupEnabled(group) {
+			continue
+		}
+		if resourceChecker != nil && !resourceChecker.ResourceEnabled(schema.GroupVersion{Group: group, Version: p.MaxAllowedVersion}.WithResource("")) {
+			logger.Warn("maxAllowedVersion is registered but disabled; the cap version itself is unreachable via the API",
+				"group", group, "version", p.MaxAllowedVersion)
+		}
+		advertised := p.PreferredVersion
+		if advertised != "" && resourceChecker != nil && !resourceChecker.ResourceEnabled(schema.GroupVersion{Group: group, Version: advertised}.WithResource("")) {
+			logger.Warn("ApplyPreferredForGroup skips the preferred resource version because it is disabled",
+				"group", group, "version", advertised)
+			advertised = ""
+		}
+		preferredApplies := advertised != ""
+		if advertised == "" {
+			advertised = r.resolver.naturalPreferred(group)
+		}
+		if advertised != "" && r.resolver.Outranks(group, advertised, p.MaxAllowedVersion) {
+			if !preferredApplies {
+				return fmt.Errorf("version policy for group %q: maxAllowedVersion %q is below the version %q that discovery advertises; set preferredVersion to %q or lower",
+					group, p.MaxAllowedVersion, advertised, p.MaxAllowedVersion)
+			}
+			return fmt.Errorf("version policy for group %q: preferredVersion %q outranks maxAllowedVersion %q",
+				group, p.PreferredVersion, p.MaxAllowedVersion)
+		}
+	}
+	return nil
 }

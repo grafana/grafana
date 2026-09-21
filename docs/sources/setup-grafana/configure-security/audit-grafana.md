@@ -61,8 +61,10 @@ Audit logs contain the following fields. The fields followed by **\*** are alway
 | `result.failureMessage` | string  | HTTP error message.                                                                                                                                                                                                      |
 | `result.body`           | string  | Response body. Filled with `<non-marshalable format>` when it isn't a valid JSON.                                                                                                                                        |
 | `resources`             | array   | Information about the resources that the request action affected. This field can be null for non-resource actions such as `login` or `logout`.                                                                           |
-| `resources[x].id`\*     | number  | ID of the resource.                                                                                                                                                                                                      |
+| `resources[x].id`       | number  | ID of the resource, when available.                                                                                                                                                                                      |
 | `resources[x].type`\*   | string  | The type of the resource that was logged: `alert`, `alert-notification`, `annotation`, `api-key`, `auth-token`, `dashboard`, `datasource`, `folder`, `org`, `panel`, `playlist`, `report`, `team`, `user`, or `version`. |
+| `resources[x].uid`      | string  | UID of the resource, when available.                                                                                                                                                                                     |
+| `resources[x].name`     | string  | Name of the resource, when available. Grafana currently populates this field for `user` resources.                                                                                                                       |
 | `requestUri`\*          | string  | Request URI.                                                                                                                                                                                                             |
 | `ipAddress`\*           | string  | IP address that the request was made from.                                                                                                                                                                               |
 | `userAgent`\*           | string  | Agent through which the request was made.                                                                                                                                                                                |
@@ -70,13 +72,14 @@ Audit logs contain the following fields. The fields followed by **\*** are alway
 | `additionalData`        | object  | Additional information that can be provided about the request.                                                                                                                                                           |
 
 The `additionalData` field can contain the following information:
-| Field name | Action | Description |
-| ---------- | ------ | ----------- |
-| `loginUsername` | `login` | Login used in the Grafana authentication form. |
-| `extUserInfo` | `login` | User information provided by the external system that was used to log in. |
-| `authTokenCount` | `login` | Number of active authentication tokens for the user that logged in. |
-| `terminationReason` | `logout` | The reason why the user logged out, such as a manual logout or a token expiring. |
-| `billing_role` | `billing-information` | The billing role associated with the billing information being sent. |
+
+| Field name          | Action                | Description                                                                      |
+| ------------------- | --------------------- | -------------------------------------------------------------------------------- |
+| `loginUsername`     | `login`               | Login used in the Grafana authentication form.                                   |
+| `extUserInfo`       | `login`               | User information provided by the external system that was used to log in.        |
+| `authTokenCount`    | `login`               | Number of active authentication tokens for the user that logged in.              |
+| `terminationReason` | `logout`              | The reason why the user logged out, such as a manual logout or a token expiring. |
+| `billing_role`      | `billing-information` | The billing role associated with the billing information being sent.             |
 
 ### Identify recorded actions
 
@@ -369,6 +372,8 @@ By default, dashboard content doesn't appear in audit logs because it can signif
 
 Data source query request and response bodies are also excluded by default. Enabling `log_datasource_query_request_body` or `log_datasource_query_response_body` significantly increases log volume and may expose sensitive data such as query parameters, credentials, or personally identifiable information.
 
+Before Grafana serves `DELETE /api/admin/users/{id}`, it tries to capture the user's display name, or login when the display name is empty, so the audit log can retain it after a successful deletion. The `snapshot_timeout` option sets a cooperative context deadline for this lookup. The user store must honor context cancellation, so the setting isn't a strict upper bound on request latency. If the lookup fails or observes an expired deadline, Grafana continues to process the request. If the deletion succeeds, the audit log omits `resources[x].name`.
+
 ```ini
 [auditing]
 # Enable the auditing feature
@@ -389,6 +394,10 @@ log_all_status_codes = false
 # Maximum response body (in bytes) to be audited; 500KiB by default.
 # May help reducing the memory footprint caused by auditing.
 max_response_size_bytes = 512000
+# Timeout for resolving resource names before Grafana serves a request that
+# may delete resources. Uses duration format, for example, 500ms or 2s.
+# The default is 500ms.
+snapshot_timeout = 500ms
 ```
 
 Each exporter has its own configuration fields.

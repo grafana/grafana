@@ -4,7 +4,6 @@ import { type Middleware } from 'redux';
 
 import { generatedAPI as migrateToCloudAPI } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
 import { generatedAPI as preferencesUserAPI } from '@grafana/api-clients/internal/rtkq/legacy/preferences/user';
-import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/internal/rtkq/legacy/user';
 import { allMiddleware as allApiClientMiddleware } from '@grafana/api-clients/rtkq';
 import { generatedAPI as preferencesAPI, type Preferences } from '@grafana/api-clients/rtkq/preferences/v1';
 import { legacyAPI } from 'app/api/clients/legacy';
@@ -60,7 +59,6 @@ export function configureStore(initialState?: Partial<StoreState>, options?: Con
         legacyAPI.middleware,
         migrateToCloudAPI.middleware,
         preferencesUserAPI.middleware,
-        legacyUserAPI.middleware,
 
         // Enterprise API clients from the api-clients package
         scopeAPIv0alpha1.middleware,

@@ -1,8 +1,16 @@
-import { getFrameDisplayName, type PanelProps, type SelectableValue } from '@grafana/data';
+import { css } from '@emotion/css';
+
+import {
+  type DataFrame,
+  getFrameDisplayName,
+  type GrafanaTheme2,
+  type PanelProps,
+  type SelectableValue,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { type TableOptions } from '@grafana/schema';
-import { Combobox, Field, Stack, usePanelContext, useTheme2 } from '@grafana/ui';
+import { TableCellHeight, type TableOptions } from '@grafana/schema';
+import { Combobox, Field, Stack, usePanelContext, useStyles2, useTheme2 } from '@grafana/ui';
 import { TableNG } from '@grafana/ui/unstable';
 import {
   useCacheFieldDisplayNames,
@@ -32,14 +40,17 @@ export function TablePanel(props: Props) {
     transparent,
     initialRowIndex,
     sortByBehavior = 'initial',
+    fitContent,
   } = props;
 
   useCacheFieldDisplayNames(data.series);
 
   const theme = useTheme2();
+  const styles = useStyles2(getStyles);
   const panelContext = usePanelContext();
   const getActions = useCellActions(replaceVariables);
   const commonTableProps = useCommonTableProps(options, fieldConfig);
+  const noPanelPadding = commonTableProps.tableRefreshEnabled;
   const enableSharedCrosshair = useTableSharedCrosshair();
   const frames = hasDeprecatedParentRowIndex(data.series)
     ? migrateFromParentRowIndexToNestedFrames(data.series)
@@ -49,17 +60,22 @@ export function TablePanel(props: Props) {
   const currentIndex = getCurrentFrameIndex(frames, options);
   const main = frames[currentIndex];
 
-  let tableHeight = height;
+  // Fit-content: the panel has no fixed height, so self-size from the row count.
+  // The cell's CSS min/max bounds (and scrolls) the result.
+  let tableHeight = fitContent ? getNaturalTableHeight(main, options) : height;
 
   if (!count || !hasFields) {
     return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
   }
 
-  if (count > 1) {
+  // Under `table.refresh` the panel drops its own padding so the table can run edge to edge, so the
+  // frame picker below it has to bring its own.
+  if (count > 1 && !fitContent) {
     const inputHeight = theme.spacing.gridSize * theme.components.height.md;
-    const padding = theme.spacing.gridSize;
+    const padding = theme.spacing.gridSize * (noPanelPadding ? 2 : 1);
+    const borderWidth = noPanelPadding ? FRAME_PICKER_BORDER_WIDTH : 0;
 
-    tableHeight = height - inputHeight - padding;
+    tableHeight = height - inputHeight - padding - borderWidth;
   }
 
   const tableElement = (
@@ -81,6 +97,7 @@ export function TablePanel(props: Props) {
       getActions={getActions}
       structureRev={data.structureRev}
       transparent={transparent}
+      noPanelPadding={noPanelPadding}
     />
   );
 
@@ -96,20 +113,57 @@ export function TablePanel(props: Props) {
   });
 
   return (
-    <Stack direction="column" gap={1.5} justifyContent="space-between" height="100%">
+    <Stack direction="column" gap={noPanelPadding ? 0 : 1.5} justifyContent="space-between" height="100%">
       {tableElement}
-      <Field noMargin>
-        <Combobox
-          aria-label={t('table.frame-picker.label', 'Query')}
-          options={names}
-          value={names[currentIndex]}
-          onChange={(val) => onChangeTableSelection(val, props)}
-        />
-      </Field>
+      <div className={noPanelPadding ? styles.framePicker : undefined}>
+        <Field noMargin>
+          <Combobox
+            aria-label={t('table.frame-picker.label', 'Query')}
+            options={names}
+            value={names[currentIndex]}
+            onChange={(val) => onChangeTableSelection(val, props)}
+          />
+        </Field>
+      </div>
     </Stack>
   );
 }
 
+const FRAME_PICKER_BORDER_WIDTH = 1;
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  framePicker: css({
+    borderTop: `${FRAME_PICKER_BORDER_WIDTH}px solid ${theme.components.table.border}`,
+    paddingInline: theme.spacing(1),
+    paddingBlock: theme.spacing(1),
+  }),
+});
+
+// Approximate row/header pixel sizes used to self-size in fit-content mode.
+// Mirrors getDefaultRowHeight in TableNG; exact pixels are not critical because
+// the cell's CSS max-height ultimately bounds the panel.
+const TABLE_ROW_HEIGHT_SM = 36;
+const TABLE_ROW_HEIGHT_MD = 42;
+const TABLE_ROW_HEIGHT_LG = 60;
+const TABLE_HEADER_HEIGHT = 36;
+
+function getRowPixelHeight(cellHeight: TableCellHeight | undefined): number {
+  switch (cellHeight) {
+    case TableCellHeight.Sm:
+      return TABLE_ROW_HEIGHT_SM;
+    case TableCellHeight.Lg:
+      return TABLE_ROW_HEIGHT_LG;
+    case TableCellHeight.Md:
+    default:
+      return TABLE_ROW_HEIGHT_MD;
+  }
+}
+
+function getNaturalTableHeight(frame: DataFrame | undefined, options: TableOptions): number {
+  const rowCount = frame?.length ?? 0;
+  const headerHeight = options.showHeader === false ? 0 : TABLE_HEADER_HEIGHT;
+  return headerHeight + rowCount * getRowPixelHeight(options.cellHeight);
+}
 function onChangeTableSelection(val: SelectableValue<number>, props: Props) {
   props.onOptionsChange({
     ...props.options,

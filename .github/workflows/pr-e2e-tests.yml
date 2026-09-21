@@ -8,7 +8,7 @@ on:
       - release-*.*.*
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ startsWith(github.ref, 'refs/pull/') && github.ref || github.sha }}
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 
 permissions: {}
@@ -84,30 +84,12 @@ jobs:
         uses: actions/checkout@v6
         with:
           persist-credentials: false
-
-      - name: Cache frontend build
-        uses: actions/cache@v5  # zizmor: ignore[cache-poisoning] key derived only from hashFiles of tracked source
-        id: cache
-        with:
-          key: "e2e-build-frontend-v2-${{ runner.os }}-${{ hashFiles('yarn.lock', 'package.json', 'packages/**', 'public/**', 'scripts/webpack/**', '!**/*.test.ts', '!**/*.test.tsx', 'tsconfig.json', '.browserslistrc', 'nx.json', 'project.json', '.nvmrc') }}"
-          path: |
-            public/build
-            public/build-swagger
-            public/app/plugins/*/*/dist
-
-      - name: Setup Node.js
-        if: steps.cache.outputs.cache-hit != 'true'
+      - name: Set up Node.js
         uses: ./.github/actions/setup-node
 
-      - name: Install yarn dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
-        uses: ./.github/actions/yarn-install
 
-      - name: Build frontend
-        if: steps.cache.outputs.cache-hit != 'true'
-        env:
-          NO_SOURCEMAP: '1' # Don't generate sourcemaps for CI builds to speed up webpack + packaging
-        run: make build-js
+      - name: Restore or build frontend
+        uses: ./.github/actions/build-frontend
 
       - name: Upload frontend build artifacts
         uses: actions/upload-artifact@v7
@@ -149,7 +131,7 @@ jobs:
         uses: ./.github/actions/yarn-install
 
       - name: Install Playwright browsers
-        run: yarn playwright install chromium --with-deps
+        uses: ./.github/actions/setup-playwright
 
       - name: Run Storybook and E2E tests
         run: yarn e2e:playwright:storybook
@@ -229,7 +211,7 @@ jobs:
           echo "To view the server logs, wait for this job to complete and downloaded the 'grafana-server-log-${{ matrix.shard }}' artifact."
 
       - name: Install Playwright browsers
-        run: yarn playwright install chromium --with-deps
+        uses: ./.github/actions/setup-playwright
 
       - name: Wait for Grafana server to start
         run: |
@@ -264,7 +246,7 @@ jobs:
         run: |
           echo "Tests in this shard failed."
           echo ""
-          echo "View combined logs and HTML report in the 'All Playwright tests complete' job once all tests finish."
+          echo "View combined logs and HTML report in the 'Playwright test report' job once all tests finish."
           exit 1
 
       - uses: actions/upload-artifact@v7
@@ -281,12 +263,22 @@ jobs:
           path: blob-report
           retention-days: 1
 
-  required-playwright-tests:
+  run-diagnostics-e2e:
     needs:
-      - run-playwright-tests
-      - run-storybook-test
+      - build-backend
+      - build-frontend
+    name: Diagnostics e2e (on-prem)
+    permissions:
+      contents: read
+    uses: ./.github/workflows/pr-diagnostics-e2e.yml
+    with:
+      backend-artifact-name: grafana-backend
+      frontend-artifact-name: grafana-frontend
+
+  playwright-report:
+    needs: run-playwright-tests
     if: ${{ !cancelled() }}
-    name: All Playwright tests complete
+    name: Playwright test report
     runs-on: ubuntu-x64-small
     permissions:
       contents: read
@@ -324,23 +316,13 @@ jobs:
           path: playwright-report
           retention-days: 7
 
-      - name: Check test suites
-        id: check-jobs
-        uses: grafana/grafana/.github/actions/check-jobs@main
-        continue-on-error: true # Failure will be reported on Check test results step
-        with:
-          needs: ${{ toJson(needs) }}
-          failure-message: "One or more E2E test suites have failed"
-          success-message: "All E2E test suites completed successfully"
-
-      - name: Check test results
+      - name: Show test results
         env:
-          FAILED: ${{ steps.check-jobs.outputs.any-failed }}
           REPORT_URL: ${{ steps.upload-html.outputs.artifact-url }}
           RUN_ID: ${{ github.run_id }}
           TESTS_RAN: ${{ needs.run-playwright-tests.result != 'skipped' }}
         # sed removes the leading `../../src/` from the paths
-        # Only show the report if the tests actually ran, but fail if the `check-jobs` step failed
+        # Only show the report if the tests actually ran.
         run: |
           if [ "$TESTS_RAN" = "true" ]; then
             npx playwright merge-reports --reporter list ./blobs | sed 's|\(\.\./\)\{1,\}src/|/|g'
@@ -351,10 +333,6 @@ jobs:
             echo "Alternatively, download the test report from $REPORT_URL"
             echo "and view it locally with:"
             echo "  yarn playwright show-report <path-to-unzipped-report>"
-          fi
-
-          if [ "$FAILED" = "true" ]; then
-            exit 1
           fi
 
   report-playwright-bench:
@@ -431,16 +409,3 @@ jobs:
         run: ./scripts/ci-frontend-metrics.sh | node .github/workflows/scripts/publish-frontend-metrics.mts
         env:
           GRAFANA_MISC_STATS_API_KEY: ${{ fromJSON(steps.vault-secrets.outputs.secrets).GRAFANA_MISC_STATS_API_KEY }}
-
-  # 'All E2E tests complete' is still a required check. To help with this transition, we keep
-  # a placeholder job to avoid needing to remove the required check from github yet.
-  required-e2e-tests:
-    needs:
-      - run-playwright-tests
-    if: always()
-
-    name: All E2E tests complete
-    runs-on: ubuntu-arm64-small
-    steps:
-    - name: Placeholder step
-      run: echo "This step is intentionally left blank. Check playwright-required-tests job for the actual test results."

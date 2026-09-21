@@ -8,7 +8,7 @@ import {
   type DataQueryRequest,
   type Field,
 } from '@grafana/data';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { InlineField, Select, Alert, Input, InlineFieldRow, Stack, InlineLabel } from '@grafana/ui';
 import { getManagedChannelInfo } from 'app/features/live/info';
 
@@ -45,7 +45,7 @@ interface ChannelInfo {
 }
 
 export const QueryEditor = memo(function QueryEditor(props: Props) {
-  const { onChange, onRunQuery } = props;
+  const { datasource, onChange, onRunQuery } = props;
   const [channelInfo, setChannelInfo] = useState<ChannelInfo>({ channels: [], channelFields: {} });
   const [folders, setFolders] = useState<Array<SelectableValue<string>>>();
 
@@ -66,25 +66,20 @@ export const QueryEditor = memo(function QueryEditor(props: Props) {
       targets: [{ queryType: GrafanaQueryType.List, refId: 'A' }],
     } as DataQueryRequest<GrafanaQuery>;
 
-    getDataSourceSrv()
-      .get('-- Grafana --')
-      .then((ds) => {
-        const gds = ds as GrafanaDatasource;
-        gds.query(listQuery).subscribe({
-          next: (rsp) => {
-            if (rsp.data.length) {
-              const names: Field = rsp.data[0].fields[0];
-              setFolders(
-                names.values.map((v) => ({
-                  value: v,
-                  label: v,
-                }))
-              );
-            }
-          },
-        });
-      });
-  }, []);
+    datasource.query(listQuery).subscribe({
+      next: (rsp) => {
+        if (rsp.data.length) {
+          const names: Field = rsp.data[0].fields[0];
+          setFolders(
+            names.values.map((v) => ({
+              value: v,
+              label: v,
+            }))
+          );
+        }
+      },
+    });
+  }, [datasource]);
 
   useEffect(() => {
     loadChannelInfo();

@@ -6,7 +6,9 @@ import { RowItem } from '../scene/layout-rows/RowItem';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { type DashboardSceneLike } from '../scene/types/dashboard';
 
-import { getDashboardSceneFor, getLayoutManagerFor, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from './utils';
+import { getLayoutManagerFor } from './getLayoutManagerFor';
+import { getDashboardSceneFor } from './utils';
+import { getPanelIdForVizPanel, getVizPanelKeyForPanelId } from './utils-panels';
 
 function getTimePicker(scene: DashboardSceneLike) {
   return scene.state.controls?.state.timePicker;

@@ -41,7 +41,7 @@ func isBinary(buf []byte) bool {
 	if len(buf) < 24 {
 		return false
 	}
-	for i := 0; i < 24; i++ {
+	for i := range 24 {
 		charCode, _ := utf8.DecodeRuneInString(string(buf[i]))
 		if charCode == 65533 || charCode <= 8 {
 			return true

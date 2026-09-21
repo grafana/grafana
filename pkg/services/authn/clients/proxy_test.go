@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
@@ -219,6 +220,15 @@ func TestProxy_Authenticate_CacheHitExternalGroups(t *testing.T) {
 	}
 }
 
+func TestGetProxyCacheKey_NoCollision(t *testing.T) {
+	key1, ok1 := getProxyCacheKey("admin", map[string]string{proxyFieldEmail: "admin@corp.com"})
+	key2, ok2 := getProxyCacheKey("admina", map[string]string{proxyFieldEmail: "dmin@corp.com"})
+
+	require.True(t, ok1)
+	require.True(t, ok2)
+	assert.NotEqual(t, key1, key2)
+}
+
 func TestProxy_Test(t *testing.T) {
 	type testCase struct {
 		desc       string
@@ -324,7 +334,7 @@ func TestProxy_Hook(t *testing.T) {
 			assert.NoError(t, err)
 			expectedCache := map[string][]byte{
 				cacheKey: []byte("1"),
-				fmt.Sprintf("%s:%s", proxyCachePrefix, "johndoe"): []byte(fmt.Sprintf("users:johndoe-%s", role)),
+				fmt.Sprintf("%s:%s", proxyCachePrefix, "johndoe"): fmt.Appendf(nil, "users:johndoe-%s", role),
 			}
 			assert.Equal(t, expectedCache, cache.data)
 		}

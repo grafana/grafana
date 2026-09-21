@@ -31,18 +31,19 @@ func TestAddAutogenConfig(t *testing.T) {
 					Route: rootRoute(),
 				},
 			},
+			TimeIntervals: map[v1.ResourceUID]v1.TimeInterval{},
 		}
-		for _, receiver := range receivers {
-			cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers, &v1.PostableApiReceiver{
-				Receiver: definitions.Receiver{
-					Name: receiver,
-				},
-			})
+
+		if len(receivers) > 0 {
+			cfg.Receivers = make(map[v1.ResourceUID]v1.PostableApiReceiver, len(receivers))
+			for _, receiver := range receivers {
+				r := v1.NewReceiver(receiver, nil, models.ProvenanceNone)
+				cfg.Receivers[r.UID] = r
+			}
 		}
 		for _, muteInterval := range muteIntervals {
-			cfg.AlertmanagerConfig.TimeIntervals = append(cfg.AlertmanagerConfig.TimeIntervals, v1.TimeInterval{
-				Name: muteInterval,
-			})
+			ti := v1.NewTimeInterval(muteInterval, nil, models.ProvenanceNone)
+			cfg.TimeIntervals[ti.UID] = ti
 		}
 		return cfg
 	}

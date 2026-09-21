@@ -1,12 +1,12 @@
-import { http, HttpResponse } from 'msw';
 import { useEffect, type ReactNode } from 'react';
-import { render, screen } from 'test/test-utils';
+import { act, render, screen } from 'test/test-utils';
 
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints } from '@grafana/data';
 import { config, reportInteraction, setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
+import { setMockStarredDashboards, setTestFlags } from '@grafana/test-utils/unstable';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -64,15 +64,19 @@ function seedRecent(uids: string[]) {
   window.localStorage.setItem(impressionKey, JSON.stringify(uids));
 }
 
-function seedStars(uids: string[]) {
-  server.use(http.get('/api/user/stars', () => HttpResponse.json(uids)));
-}
-
 beforeEach(() => {
   jest.clearAllMocks();
   window.localStorage.removeItem(impressionKey);
-  seedStars([]);
+  setMockStarredDashboards([]);
   config.licenseInfo.enabledFeatures = {};
+});
+
+afterEach(async () => {
+  // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state updates.
+  await act(async () => {
+    setTestFlags({});
+  });
+  jest.restoreAllMocks();
 });
 
 const createDashboardTabsExtensionComponent = (
@@ -124,7 +128,7 @@ describe('DashboardTabs', () => {
 
   it('lands directly on Starred when Recent is empty, without flashing the Recent tab', async () => {
     // no recent seeded; starred has items (analytics off by default → no most-used tab)
-    seedStars(['starred-1', 'starred-2', 'starred-3']);
+    setMockStarredDashboards(['starred-1', 'starred-2', 'starred-3']);
     server.use(getCustomSearchHandler([...starredHits]));
 
     render(<DashboardTabs extensionComponents={[]} />);
@@ -135,7 +139,7 @@ describe('DashboardTabs', () => {
   });
 
   it('switches to Starred tab and shows starred dashboards', async () => {
-    seedStars(['starred-1', 'starred-2', 'starred-3']);
+    setMockStarredDashboards(['starred-1', 'starred-2', 'starred-3']);
     server.use(getCustomSearchHandler([...recentHits, ...starredHits]));
 
     const { user } = render(<DashboardTabs extensionComponents={[]} />);
@@ -155,8 +159,24 @@ describe('DashboardTabs', () => {
     expect(await screen.findByText("Dashboards you've recently viewed will appear here.")).toBeInTheDocument();
   });
 
+  it('renders the compact empty Recent tab with its create CTA on the redesigned homepage', async () => {
+    await act(async () => {
+      setTestFlags({ 'grafana.growthHomepage': true });
+    });
+    jest
+      .spyOn(contextSrv, 'hasPermission')
+      .mockImplementation((action: string) => action === AccessControlAction.DashboardsCreate);
+
+    render(<DashboardTabs extensionComponents={[]} />);
+
+    expect(await screen.findByText("Dashboards you've recently viewed will appear here.")).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /create your first dashboard/i })).toBeInTheDocument();
+    // The description paragraph is what makes the full EmptyState overflow the shorter card.
+    expect(screen.queryByText(/After you've connected data/)).not.toBeInTheDocument();
+  });
+
   it('shows empty state when no starred dashboards', async () => {
-    seedStars([]);
+    setMockStarredDashboards([]);
     const { user } = render(<DashboardTabs extensionComponents={[]} />);
 
     await user.click(await screen.findByRole('tab', { name: /starred/i }));
@@ -166,7 +186,7 @@ describe('DashboardTabs', () => {
 
   it('stays on a manually selected empty tab instead of bouncing back', async () => {
     seedRecent(['recent-1', 'recent-2']);
-    seedStars([]);
+    setMockStarredDashboards([]);
     server.use(getCustomSearchHandler([...recentHits]));
 
     const { user } = render(<DashboardTabs extensionComponents={[]} />);
@@ -181,7 +201,7 @@ describe('DashboardTabs', () => {
 
   it('shows counter badges with correct counts', async () => {
     seedRecent(['recent-1', 'recent-2']);
-    seedStars(['starred-1', 'starred-2', 'starred-3']);
+    setMockStarredDashboards(['starred-1', 'starred-2', 'starred-3']);
     server.use(getCustomSearchHandler([...recentHits, ...starredHits]));
 
     render(<DashboardTabs extensionComponents={[]} />);
@@ -191,7 +211,7 @@ describe('DashboardTabs', () => {
   });
 
   it('refetches starred dashboards when star is toggled', async () => {
-    seedStars(['starred-1', 'starred-2', 'starred-3']);
+    setMockStarredDashboards(['starred-1', 'starred-2', 'starred-3']);
     server.use(getCustomSearchHandler(starredHits));
 
     const { user } = render(<DashboardTabs extensionComponents={[]} />);

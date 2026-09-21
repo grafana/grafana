@@ -30,6 +30,7 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
@@ -64,6 +65,7 @@ const (
 
 func ProvideService(
 	ac accesscontrol.AccessControl,
+	ruleMutationValidator provisioning.RuleMutationValidator,
 	cfg *setting.Cfg,
 	sqlStore db.DB,
 	pluginStore pluginstore.Store,
@@ -88,6 +90,7 @@ func ProvideService(
 	routesPermissions accesscontrol.RoutePermissionsService,
 ) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
+		ruleMutationValidator:        ruleMutationValidator,
 		Cfg:                          cfg,
 		SQLStore:                     sqlStore,
 		ac:                           ac,
@@ -276,6 +279,7 @@ func newProvisioningServiceImpl(
 	migratePrometheusType func(context.Context) error,
 ) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
+		ruleMutationValidator:   provisioning.NoopRuleMutationValidator{},
 		log:                     log.New("provisioning"),
 		newDashboardProvisioner: newDashboardProvisioner,
 		provisionDatasources:    provisionDatasources,
@@ -303,6 +307,7 @@ type ProvisioningServiceImpl struct {
 	orgService                   org.Service
 	userService                  user.Service
 	ac                           accesscontrol.AccessControl
+	ruleMutationValidator        provisioning.RuleMutationValidator
 	pluginStore                  pluginstore.Store
 	alertingStore                *alertstore.DBstore
 	EncryptionService            encryption.Internal
@@ -409,6 +414,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		ps.log,
 		notifier.NewCachedNotificationSettingsValidationService(ps.alertingStore),
 		alertingauthz.NewRuleService(ps.ac),
+		ps.ruleMutationValidator,
 	)
 	var features featuremgmt.FeatureToggles
 	if ps.alertingStore != nil {
@@ -424,7 +430,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		ps.log,
 		validation.ValidateProvenanceRelaxed,
 		ps.tracer,
-		alertingauthz.NewRouteAccess[*legacy_storage.ManagedRoute](ps.ac, ps.routesPermissions, true),
+		alertingauthz.NewRouteAccess[*v1.ManagedRoute](ps.ac, ps.routesPermissions, true),
 	)
 	receiverAuthz := alertingauthz.NewReceiverAccess[*ngmodels.Receiver](ps.ac, true)
 	emailValidator := notifier.NewEmailValidator(ps.orgService, ps.Cfg.UnifiedAlerting.LimitEmailToOrgMembers)

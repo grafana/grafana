@@ -7,6 +7,14 @@ function buildMockOpenApiSchema() {
   return {
     components: {
       schemas: {
+        [`${PREFIX}.Dashboard`]: {
+          type: 'object',
+          required: ['kind', 'spec'],
+          properties: {
+            kind: { type: 'string' },
+            spec: { $ref: `#/components/schemas/${PREFIX}.DashboardSpec` },
+          },
+        },
         [`${PREFIX}.DashboardSpec`]: {
           type: 'object',
           properties: {

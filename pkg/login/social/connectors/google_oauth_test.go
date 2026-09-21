@@ -195,7 +195,7 @@ func TestSocialGoogle_retrieveGroups(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := NewGoogleProvider(
+			s := mustNewGoogleProvider(t,
 				&social.OAuthInfo{
 					ApiUrl:                  "",
 					Scopes:                  tt.fields.Scopes,
@@ -713,7 +713,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
 
-			s := NewGoogleProvider(
+			s := mustNewGoogleProvider(t,
 				&social.OAuthInfo{
 					ApiUrl:                  tt.fields.apiURL,
 					Scopes:                  tt.fields.Scopes,
@@ -725,7 +725,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 					OrgMapping:              tt.fields.orgMapping,
 				},
 				cfg,
-				ProvideOrgRoleMapper(cfg, &orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
+				mustProvideOrgRoleMapper(t, cfg, &orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
 				ssosettingstests.NewFakeService(),
 				featuremgmt.WithFeatures(),
 				nil)
@@ -957,7 +957,7 @@ func TestSocialGoogle_Validate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGoogleProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
+			s := mustNewGoogleProvider(t, &social.OAuthInfo{}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			if tc.requester == nil {
 				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
@@ -1046,7 +1046,7 @@ func TestSocialGoogle_Reload(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGoogleProvider(tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
+			s := mustNewGoogleProvider(t, tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {
@@ -1099,7 +1099,7 @@ func TestIsHDAllowed(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			info := &social.OAuthInfo{}
 			info.AllowedDomains = tc.allowedDomains
-			s := NewGoogleProvider(info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
+			s := mustNewGoogleProvider(t, info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 			s.validateHD = tc.validateHD
 			err := s.isHDAllowed(tc.email)
 
@@ -1203,7 +1203,7 @@ func TestSocialGoogle_AuthCodeURL(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGoogleProvider(tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
+			s := mustNewGoogleProvider(t, tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 			gotURL := s.AuthCodeURL(tc.state, tc.opts...)
 			parsedURL, err := url.Parse(gotURL)
 			require.NoError(t, err)
@@ -1280,7 +1280,7 @@ func TestSocialGoogle_extractFromToken_WithIDTokenValidation(t *testing.T) {
 				info.JwkSetURL = tc.jwkSetURL
 			}
 
-			s := NewGoogleProvider(info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
+			s := mustNewGoogleProvider(t, info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			// Sign the token
 			idToken := signJWT(t, tc.tokenKey, tc.tokenKeyID, claims)

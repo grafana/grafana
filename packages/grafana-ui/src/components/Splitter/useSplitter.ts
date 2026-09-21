@@ -119,7 +119,9 @@ export function useSplitter(options: UseSplitterOptions) {
       const firstPane = firstPaneRef.current;
       const secondPane = secondPaneRef.current;
       const splitter = splitterRef.current;
-      if (!containerSize.current || !primarySizeRef.current || !firstPane || !secondPane || !splitter) {
+      // A fully collapsed primary pane measures 0, which is a valid size to resize from, so only
+      // an absent measurement may bail out here — otherwise the pane could never be dragged open again.
+      if (!containerSize.current || primarySizeRef.current === null || !firstPane || !secondPane || !splitter) {
         return;
       }
 

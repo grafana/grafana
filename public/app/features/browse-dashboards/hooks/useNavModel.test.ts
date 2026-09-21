@@ -14,7 +14,7 @@ import { type FolderDTO } from 'app/types/folders';
 
 import { type FolderActiveTab, useNavModel } from './useNavModel';
 
-const GLOBAL_DASHBOARD_VARIABLES_FLAG = 'globalDashboardVariables';
+const GLOBAL_DASHBOARD_VARIABLES_FLAG = 'grafana.dashboardGlobalVariables';
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -103,6 +103,19 @@ describe('useNavModel', () => {
 
     const alertingTab = result.current?.children?.find((c) => c.id === getAlertingTabID(folder.uid));
     expect(alertingTab?.tabCounter).toBe(3);
+  });
+
+  it('sums alert rules and recording rules into the alerting tab counter', async () => {
+    server.use(folderHandlers.mockFolderCountsHandler(1, 2, 5));
+    const { result } = renderUseNavModel(folder, 'dashboards');
+
+    await waitFor(() => {
+      const alertingTab = result.current?.children?.find((c) => c.id === getAlertingTabID(folder.uid));
+      expect(alertingTab?.tabCounter).toBe(7);
+    });
+
+    const panelsTab = result.current?.children?.find((c) => c.id === getLibraryPanelsTabID(folder.uid));
+    expect(panelsTab?.tabCounter).toBe(1);
   });
 
   it('leaves tab counters undefined when the counts query fails', async () => {

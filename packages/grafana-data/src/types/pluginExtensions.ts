@@ -226,9 +226,11 @@ export enum PluginExtensionPoints {
   DataSourceConfigStatus = 'grafana/datasources/config/status',
   ExploreToolbarAction = 'grafana/explore/toolbar/action',
   UserProfileTab = 'grafana/user/profile/tab',
+  UserProfileMenu = 'grafana/user/profile/menu/v1',
   TraceViewDetails = 'grafana/traceview/details',
   TraceViewHeaderActions = 'grafana/traceview/header/actions',
   QueryEditorRowAdaptiveTelemetryV1 = 'grafana/query-editor-row/adaptivetelemetry/v1',
+  QueryEditorRowActions = 'grafana/query-editor-row/actions/v1',
   TraceViewResourceAttributes = 'grafana/traceview/resource-attributes',
   LogsViewResourceAttributes = 'grafana/logsview/resource-attributes',
   AppChrome = 'grafana/app/chrome/v1',
@@ -264,6 +266,7 @@ export enum PluginExtensionExposedComponents {
   PrometheusQueryResultsV1 = 'grafana/prometheus-query-results/v1',
   CreateAlertFromPanelV1 = 'grafana/alerting/create-alert-from-panel/v1',
   OpenQueryLibraryV1 = 'grafana/query-library-context/v1',
+  NotebookViewV1 = 'grafana/notebook-view/v1',
 }
 
 export type PluginExtensionPanelContext = {
@@ -298,6 +301,27 @@ export type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context = {
   /** An ordered list of lower-case [a-z]+ string identifiers to provide context clues of where this component is being embedded and how we might want to consider displaying it */
   contextHints?: string[];
   query?: DataQuery & { expr?: string };
+};
+
+/**
+ * The extension is rendered as an icon button next to the built-in query row actions, so it
+ * should stay visually compact. A component that has nothing to contribute for the given query
+ * (e.g. an unsupported datasource type) is expected to render `null`.
+ */
+export type PluginExtensionQueryEditorRowActionsV1Context = {
+  query: DataQuery;
+  /** All queries in the same query editor, including `query`. */
+  queries?: DataQuery[];
+  /** The datasource the query runs against. Undefined while the row is still resolving it. */
+  dataSource?: {
+    uid: string;
+    type: string;
+    name: string;
+  };
+  /** Which part of Grafana the query editor is rendered in, e.g. `dashboard`, `explore`. */
+  app?: string;
+  /** The time range the query is evaluated with, if the editor has one. */
+  timeRange?: RawTimeRange;
 };
 
 export type PluginExtensionDataSourceConfigContext<

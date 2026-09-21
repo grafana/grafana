@@ -161,6 +161,9 @@ export type TableCellOptions = schema.TableCellOptions | TableCustomCellOptions;
 export type TableFieldOptions = Omit<schema.TableFieldOptions, 'cellOptions'> & {
   cellOptions: TableCellOptions;
   headerComponent?: React.ComponentType<CustomHeaderRendererProps>;
+  headerTooltip?: string;
+  /** Controls whether this column can be resized. */
+  resizable?: boolean;
 };
 
 // Cell background and text colors

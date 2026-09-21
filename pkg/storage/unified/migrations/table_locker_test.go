@@ -35,7 +35,7 @@ func TestIntegrationMigrationRunnerLocksTables(t *testing.T) {
 		t.Skip("SQLite uses no-op locker")
 	}
 
-	dbstore := db.InitTestDB(t)
+	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	t.Cleanup(db.CleanupTestDB)
 
 	gr := schema.GroupResource{Group: "group", Resource: "resource"}
@@ -78,7 +78,7 @@ func createTestTable(t *testing.T, dbstore db.DB) string {
 func TestIntegrationTableLocker(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	dbstore := db.InitTestDB(t)
+	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	t.Cleanup(db.CleanupTestDB)
 	engine := dbstore.GetEngine()
 	ctx := context.Background()
@@ -182,7 +182,7 @@ func TestIntegrationTableLockerDisabled(t *testing.T) {
 		t.Skip("SQLite already uses the no-op locker")
 	}
 
-	dbstore := db.InitTestDB(t)
+	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	t.Cleanup(db.CleanupTestDB)
 	engine := dbstore.GetEngine()
 	ctx := context.Background()

@@ -1,6 +1,20 @@
 name: Create Release Tag
 
 on:
+  workflow_call:
+    inputs:
+      tag:
+        description: 'Tag name (e.g. v10.0.0)'
+        required: true
+        type: string
+      message:
+        description: 'Tag message (defaults to tag name if not provided)'
+        required: false
+        type: string
+      commit:
+        description: 'Commit SHA to tag'
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
       tag:
@@ -36,7 +50,7 @@ jobs:
       # no bot lacking it can create refs (branches or tags) in this repo.
       - name: Get GitHub App token
         id: get-github-app-token
-        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
         with:
           github_app: grafana-writer
       - name: Create annotated tag

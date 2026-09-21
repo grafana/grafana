@@ -6,6 +6,8 @@ import (
 	"sync"
 
 	authlib "github.com/grafana/authlib/types"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -21,8 +23,8 @@ import (
 // NewDashboardFolderResolver returns a DashboardFolderResolver that fetches the dashboard's
 // parent folder via dashboard.grafana.app. restConfig is called once (lazily on first request)
 // to build the underlying client: loopback in ST, remote URL with token exchange in MT.
-func NewDashboardFolderResolver(restConfig func(context.Context) (*rest.Config, error)) DashboardFolderResolver {
-	return &dashboardFolderResolver{client: newDashboardClient(restConfig)}
+func NewDashboardFolderResolver(restConfig func(context.Context) (*rest.Config, error), tracer trace.Tracer) DashboardFolderResolver {
+	return &dashboardFolderResolver{client: newDashboardClient(restConfig), tracer: tracer}
 }
 
 // NoopDashboardFolderResolver returns an empty folder for every dashboard. Use when authz is
@@ -35,9 +37,15 @@ func (NoopDashboardFolderResolver) ResolveFolder(_ context.Context, _, _ string)
 
 type dashboardFolderResolver struct {
 	client *dashboardClient
+	tracer trace.Tracer
 }
 
 func (r *dashboardFolderResolver) ResolveFolder(ctx context.Context, namespace, dashboardUID string) (string, error) {
+	ctx, span := r.tracer.Start(ctx, "annotation.authz.dashboardFolderResolver.ResolveFolder", trace.WithAttributes(
+		attribute.String("dashboard_uid", dashboardUID),
+	))
+	defer span.End()
+
 	nsInfo, err := authlib.ParseNamespace(namespace)
 	if err != nil {
 		return "", fmt.Errorf("parse namespace %q: %w", namespace, err)

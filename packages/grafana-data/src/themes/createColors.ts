@@ -130,9 +130,9 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   whiteBase = '204, 204, 220';
 
   border = {
-    weak: `rgb(54, 57, 64)`,
-    medium: `rgb(68, 70, 78)`,
-    strong: `rgb(85, 87, 96)`,
+    weak: `rgba(${this.whiteBase}, 0.12)`,
+    medium: `rgba(${this.whiteBase}, 0.2)`,
+    strong: `rgba(${this.whiteBase}, 0.30)`,
   };
 
   text = {
@@ -155,7 +155,8 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     transparent: `rgba(${this.whiteBase}, 0.08)`,
     text: this.text.primary,
     contrastText: `rgb(${this.whiteBase})`,
-    border: `rgba(${this.whiteBase}, 0.08)`,
+    border: this.border.strong,
+    subtleBorder: this.border.weak,
   };
 
   tertiary = {
@@ -233,9 +234,9 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   border = {
-    weak: `rgb(229, 229, 230)`,
-    medium: `rgb(189, 191, 192)`,
-    strong: `rgb(167, 169, 171)`,
+    weak: `rgba(${this.blackBase}, 0.12)`,
+    medium: `rgba(${this.blackBase}, 0.3)`,
+    strong: `rgba(${this.blackBase}, 0.4)`,
   };
 
   secondary = {
@@ -244,7 +245,8 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     transparent: `rgba(${this.blackBase}, 0.08)`,
     contrastText: `rgba(${this.blackBase},  1)`,
     text: this.text.primary,
-    border: this.border.weak,
+    border: this.border.strong,
+    subtleBorder: this.border.weak,
   };
 
   tertiary = {
@@ -366,6 +368,15 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
     }
     if (!color.borderEmphasis) {
       color.borderEmphasis = emphasize(color.border, tonalOffset);
+    }
+
+    // Falls back to matching background/border so themes that don't define these render identically
+    // to before subtleBackground/subtleBorder existed.
+    if (!color.subtleBackground) {
+      color.subtleBackground = color.background;
+    }
+    if (!color.subtleBorder) {
+      color.subtleBorder = color.border;
     }
 
     // deprecated properties, we should remove these in the future

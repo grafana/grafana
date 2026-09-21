@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/audit"
+	discoveryendpoint "k8s.io/apiserver/pkg/endpoints/discovery/aggregated"
 	genericapifilters "k8s.io/apiserver/pkg/endpoints/filters"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -27,6 +28,7 @@ import (
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -35,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
+	keysapi "github.com/grafana/grafana/pkg/registry/apis/keys"
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver/aggregatorrunner"
@@ -42,9 +45,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/keysroutes"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/apiserver/searchroutes"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -67,6 +72,11 @@ type Service interface {
 	services.NamedService
 	registry.BackgroundService
 	registry.CanBeDisabled
+}
+
+// RequestRouter routes API groups before the embedded API server.
+type RequestRouter interface {
+	HandleFunc(http.ResponseWriter, *http.Request, http.Handler)
 }
 
 type service struct {
@@ -107,6 +117,16 @@ type service struct {
 
 	auditBackend            audit.Backend
 	auditPolicyRuleProvider auditing.PolicyRuleProvider
+	requestRouter           RequestRouter
+
+	// vpRegistry serves the resolved policy consulted by apistore.encode.
+	vpRegistry *versionpolicy.VersionPolicyRegistry
+	// groupPriority reads the live scheme; reprioritizeDiscovery uses it without mutating the scheme.
+	groupPriority func(string) []schema.GroupVersion
+	// groupDiscoveryPriority is each builder group's discovery priority-minimum, preserved across re-prioritize.
+	groupDiscoveryPriority map[string]int
+	// discoveryManager is nil until the server is built; nil skips re-prioritize (startup sets order at install).
+	discoveryManager discoveryendpoint.ResourceManager
 }
 
 func ProvideService(
@@ -130,6 +150,7 @@ func ProvideService(
 	builderMetrics *builder.BuilderMetrics,
 	auditBackend audit.Backend,
 	auditPolicyRuleProvider auditing.PolicyRuleProvider,
+	requestRouter RequestRouter,
 ) (*service, error) {
 	scheme := builder.ProvideScheme()
 	codecs := builder.ProvideCodecFactory(scheme)
@@ -157,6 +178,7 @@ func ProvideService(
 		builderMetrics:                    builderMetrics,
 		auditBackend:                      auditBackend,
 		auditPolicyRuleProvider:           auditPolicyRuleProvider,
+		requestRouter:                     requestRouter,
 	}
 	// This will be used when running as a dskit service
 	s.NamedService = services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
@@ -194,15 +216,19 @@ func ProvideService(
 			}
 
 			resp := responsewriter.WrapForHTTP1Or2(c.Resp)
-			s.handler.ServeHTTP(resp, req)
+			s.requestRouter.HandleFunc(resp, req, s.handler)
 		}
-		k8sRoute.Any("/features.grafana.app/v0alpha1/*", handler)
 		// Allow unauthenticated GET access to snapshots and the dashboard subresource.
 		// Snapshots are shared via URL with the key, so they are always publicly accessible.
 		// Authorization is enforced by the snapshot authorizer.
 		snapshotPath := "/" + dashv0.GROUP + "/" + dashv0.VERSION + "/namespaces/:namespace/snapshots/:name"
 		k8sRoute.Get(snapshotPath, handler)
 		k8sRoute.Get(snapshotPath+"/dashboard", handler)
+
+		// Allow unauthenticated GET of the SSO login-config singleton: the login
+		// page needs it before the user authenticates. The response is secret-free.
+		ssoLoginConfigPath := "/" + iamv0.GROUP + "/" + iamv0.VERSION + "/namespaces/:namespace/ssosettings/~"
+		k8sRoute.Get(ssoLoginConfigPath, handler)
 
 		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
 		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
@@ -247,13 +273,19 @@ func (s *service) Run(ctx context.Context) error {
 
 func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 	s.builders = append(s.builders, b)
-	if registrar, ok := b.(builder.HTTPRouteRegistrar); ok {
-		registrar.RegisterHTTPRoutes(s.rr)
-	}
 }
 
 func (s *service) RegisterAppInstaller(i appsdkapiserver.AppInstaller) {
 	s.appInstallers = append(s.appInstallers, i)
+}
+
+// applyOpenAPIV2Setting drops the v2 OpenAPI config when a deployment has turned
+// /openapi/v2 off. OpenAPIV3Config is left alone.
+func applyOpenAPIV2Setting(serverConfig *genericapiserver.RecommendedConfig, apiserverSection *setting.DynamicSection) {
+	if apiserverSection.Key("openapi_v2_enabled").MustBool(true) {
+		return
+	}
+	serverConfig.OpenAPIConfig = nil
 }
 
 // nolint:gocyclo
@@ -305,7 +337,7 @@ func (s *service) start(ctx context.Context) error {
 	// Register authorizers from app installers
 	appinstaller.RegisterAuthorizers(ctx, s.appInstallers, s.authorizer)
 
-	err = applyGrafanaConfig(s.cfg, s.features, o)
+	err = applyGrafanaConfig(s.cfg, o)
 	if err != nil {
 		return err
 	}
@@ -337,9 +369,14 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
+	// Snapshot natural priority before applyPreferredAPIVersions reorders the scheme, so the cap ranks against natural order and preferred can't weaken it.
+	naturalOrder := NaturalOrderSnapshot(s.scheme, groupVersions)
+
 	if err := applyPreferredAPIVersions(s.log, s.cfg, s.scheme, apiResourceConfig); err != nil {
 		return err
 	}
+	// groupPriority reads the live scheme (discovery follows preferred); the cap ranks against the natural snapshot instead.
+	s.groupPriority = s.scheme.PrioritizedVersionsForGroup
 
 	serverConfig.Authorization.Authorizer = s.authorizer
 	serverConfig.Authentication.Authenticator = authenticator.NewAuthenticator(serverConfig.Authentication.Authenticator)
@@ -361,7 +398,22 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 	} else {
-		getter := apistore.NewRESTOptionsGetterForClient(s.unified, s.secrets, o.RecommendedOptions.Etcd.StorageConfig, s.restConfigProvider)
+		if s.cfg.EnableVersionPolicy {
+			versionPolicyIni, err := buildVersionPolicyIniLayer(s.cfg)
+			if err != nil {
+				return err
+			}
+			s.vpRegistry = versionpolicy.NewVersionPolicyRegistry(
+				versionpolicy.NewResolver(naturalOrder),
+				versionPolicyIni,
+			)
+			if err := s.vpRegistry.Validate(apiResourceConfig); err != nil {
+				return err
+			}
+		}
+
+		getter := apistore.NewRESTOptionsGetterForClient(s.unified, s.secrets, o.RecommendedOptions.Etcd.StorageConfig, s.restConfigProvider, s.vpRegistry)
+
 		optsregister = getter.RegisterOptions
 		serverConfig.RESTOptionsGetter = getter
 	}
@@ -376,8 +428,19 @@ func (s *service) start(ctx context.Context) error {
 
 	// Built once and used twice: the routes have to reach both the OpenAPI spec
 	// and the served WebServices, or the endpoint works but is undiscoverable.
-	searchAPIEnabled := s.cfg.SectionWithEnvOverrides(searchapi.ConfigSection).Key(searchapi.ConfigKey).MustBool(false)
-	searchRoutes := searchroutes.Build(searchAPIEnabled, s.tracing, s.unified, builders, s.appInstallers)
+	apiserverSection := s.cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
+	searchAPIEnabled := apiserverSection.Key(searchapi.ConfigKey).MustBool(true)
+	trashAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyTrash).MustBool(true)
+	searchAndStorageRoutes := searchroutes.BuildWithOptions(
+		searchAPIEnabled, trashAPIEnabled, s.tracing, s.unified, builders, s.appInstallers,
+		searchroutes.BuildOptions{FieldValueResultsEnabled: func(ctx context.Context) bool {
+			return s.features != nil && s.features.IsEnabled(ctx, featuremgmt.FlagSearchApiFieldValueResults) // nolint:staticcheck
+		}},
+	)
+
+	keysAPIEnabled := apiserverSection.Key(keysapi.ConfigKey).MustBool(false)
+	searchAndStorageRoutes = append(searchAndStorageRoutes,
+		keysroutes.Build(keysAPIEnabled, s.tracing, s.unified, builders, s.appInstallers)...)
 
 	// Add OpenAPI specs for each group+version (existing builders)
 	err = builder.SetupConfig(
@@ -390,11 +453,13 @@ func (s *service) start(ctx context.Context) error {
 		defGetters,
 		s.metrics,
 		apiResourceConfig,
-		searchRoutes...,
+		searchAndStorageRoutes...,
 	)
 	if err != nil {
 		return err
 	}
+
+	applyOpenAPIV2Setting(serverConfig, apiserverSection)
 
 	serverConfig.AdmissionControl, err = appinstaller.RegisterAdmission(
 		serverConfig.AdmissionControl,
@@ -424,7 +489,7 @@ func (s *service) start(ctx context.Context) error {
 			StorageClient:         s.unified,
 			AccessClient:          s.accessClient,
 			AuthorizerRegistry:    s.authorizer,
-			BuildHandlerChainFunc: s.buildHandlerChainFuncFromBuilders(s.builders, s.metrics),
+			BuildHandlerChainFunc: s.buildHandlerChainFuncFromBuilders(s.builders, builder.ServerRegisterer(s.metrics, builder.ServerAPIExtensions)),
 			SecureValues:          s.secrets,
 			ConfigProvider:        s.restConfigProvider,
 			Metrics:               s.metrics,
@@ -442,6 +507,10 @@ func (s *service) start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	// Capture the discovery seam so preferred can re-prioritize without a scheme mutation; group priorities mirror startup.
+	s.groupDiscoveryPriority = builder.BuilderGroupPriorities(builders)
+	s.discoveryManager = server.AggregatedDiscoveryGroupManager
 
 	// Install the API group+version for existing builders
 	err = builder.InstallAPIs(s.scheme,
@@ -482,7 +551,7 @@ func (s *service) start(ctx context.Context) error {
 			builders,
 			s.metrics,
 			serverConfig.MergedResourceConfig,
-			searchRoutes...,
+			searchAndStorageRoutes...,
 		); err != nil {
 			return fmt.Errorf("failed to augment web services with custom routes: %w", err)
 		}
@@ -618,6 +687,8 @@ func (s *service) IsReady() bool {
 }
 
 func (s *service) running(ctx context.Context) error {
+	// Apply the global preferred order to aggregated discovery now the manager exists (startup one-shot).
+	s.reprioritizeDiscovery()
 	select {
 	case err := <-s.stoppedCh:
 		if err != nil {
@@ -626,6 +697,24 @@ func (s *service) running(ctx context.Context) error {
 	case <-ctx.Done():
 	}
 	return nil
+}
+
+// reprioritizeDiscovery reports each group's global preferred version first in aggregated discovery; advisory only (no scheme/storage/cap effect), reverting to natural order when preferred is unset.
+func (s *service) reprioritizeDiscovery() {
+	if s.discoveryManager == nil || s.vpRegistry == nil {
+		return
+	}
+	for group, groupPriority := range s.groupDiscoveryPriority {
+		pvs := s.groupPriority(group)
+		if len(pvs) == 0 {
+			continue
+		}
+		ordered := pvs
+		if preferred := s.vpRegistry.Preferred(group); preferred != "" {
+			ordered = preferredFirst(pvs, schema.GroupVersion{Group: group, Version: preferred})
+		}
+		builder.SetGroupVersionPriorities(s.discoveryManager, groupPriority, ordered)
+	}
 }
 
 func ensureKubeConfig(restConfig *clientrest.Config, dir string) error {

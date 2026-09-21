@@ -108,7 +108,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 	if c.secrets.Token.IsZero() || !c.obj.Secure.PrivateKey.Create.IsZero() {
 		// In case the token is not generated, we create one on the fly
 		// to testing that the other fields are valid.
-		token, err := GenerateJWTToken(c.cfg.AppID(), c.secrets.PrivateKey)
+		token, _, err := GenerateJWTToken(c.cfg.AppID(), c.secrets.PrivateKey)
 		if err != nil {
 			// Error generating JWT token means the privateKey is not valid.
 			logger.Info("JWT token generation failed during connection test", "appID", c.cfg.AppID())
@@ -398,22 +398,24 @@ func (c *Connection) ListRepositories(ctx context.Context) ([]provisioning.Exter
 
 // GenerateConnectionToken generates a JWT token for GitHub App authentication.
 // Implements the connection.TokenConnection interface.
-func (c *Connection) GenerateConnectionToken(_ context.Context) (common.RawSecureValue, error) {
+func (c *Connection) GenerateConnectionToken(_ context.Context) (*connection.ExpirableSecureValue, error) {
 	if !c.obj.Spec.IsGitHub() {
-		return "", errors.New("connection is not a GitHub connection")
+		return nil, errors.New("connection is not a GitHub connection")
 	}
 
-	token, err := GenerateJWTToken(c.cfg.AppID(), c.secrets.PrivateKey)
+	token, expiresAt, err := GenerateJWTToken(c.cfg.AppID(), c.secrets.PrivateKey)
 	if err != nil {
-		return "", err
+		// A malformed or unparseable configured private key is a configuration
+		// problem the user must fix (re-upload the key), not a transient failure.
+		return nil, fmt.Errorf("%w: %w", connection.ErrAuthentication, err)
 	}
 
-	return token, nil
+	return &connection.ExpirableSecureValue{Token: token, ExpiresAt: expiresAt}, nil
 }
 
 // ValidateToken checks the stored JWT. A token that does not parse with the
 // private key or was issued for another appID is invalid.
-func (c *Connection) ValidateToken() (time.Time, error) {
+func (c *Connection) ValidateToken() (expiresAt time.Time, err error) {
 	claims, err := parseJWTToken(c.secrets.Token, c.secrets.PrivateKey)
 	if err != nil {
 		return time.Time{}, err

@@ -186,7 +186,10 @@ export function useSnappingSplitter({
     // measured at a 1150px window, a 330px options pane laid out at full width with 340px of it cut
     // off, and once collapsed, its 53px expand affordance pushed off screen with no way to get the
     // pane back. Letting the pane beside it shrink keeps the line inside the container, so that pane
-    // is the one that clips.
+    // is the one that clips. It is also what lets this pane be dragged wider than that pane's
+    // content: without it, this one stops growing the moment that one hits its floor. A literal 0 is
+    // required — `unset` resolves to `auto`, still the content minimum for a flex item whose own
+    // overflow is visible.
     fillingProps.style[direction === 'row' ? 'minWidth' : 'minHeight'] = 0;
 
     if (!state.collapsed) {

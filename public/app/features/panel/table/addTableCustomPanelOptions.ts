@@ -1,5 +1,6 @@
 import { type PanelOptionsEditorBuilder } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { TableCellHeight, type TableOptions } from '@grafana/schema';
 import { defaultOptions as defaultTableOptions } from '@grafana/schema/dist/esm/raw/composable/table/panelcfg/x/TablePanelCfg_types.gen';
 
@@ -36,6 +37,16 @@ export const addTableCustomPanelOptions = <O extends TableOptions>(builder: Pane
         ],
       },
     })
+    .addBooleanSwitch({
+      path: 'zebraStriping',
+      name: t('table.name-zebra-striping', 'Zebra striping'),
+      description: t('table.description-zebra-striping', 'Alternate the background color of every other row'),
+      category,
+      defaultValue: defaultTableOptions.zebraStriping,
+      // The alternating row background only exists behind `table.refreshNewFeatures`, so the option
+      // that controls it is only offered there.
+      showIf: () => getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefreshNewFeatures, false),
+    })
     .addNumberInput({
       path: 'maxRowHeight',
       name: t('table.name-max-height', 'Max row height'),
@@ -52,5 +63,22 @@ export const addTableCustomPanelOptions = <O extends TableOptions>(builder: Pane
       category,
       editor: PaginationEditor,
       defaultValue: defaultTableOptions?.enablePagination,
+    })
+    .addNumberInput({
+      path: 'pageSize',
+      name: t('table.name-page-size', 'Page size'),
+      description: t(
+        'table.description-page-size',
+        'Number of rows per page. When empty, the page size is based on the panel height.'
+      ),
+      category,
+      settings: {
+        placeholder: t('table.placeholder-page-size', 'auto'),
+        min: 1,
+        integer: true,
+      },
+      showIf: (opts) =>
+        Boolean(opts.enablePagination) &&
+        getFeatureFlagClient().getBooleanValue(FlagKeys.TablePaginationPageSize, false),
     });
 };

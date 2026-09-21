@@ -2,6 +2,7 @@ package frontend
 
 import (
 	"context"
+	"encoding/json"
 	"net/http/httptest"
 	"testing"
 
@@ -79,11 +80,31 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 		analyticsSection, _ := iniFile.NewSection("analytics")
 		_, _ = analyticsSection.NewKey("rudderstack_write_key", "tenant-write-key")
 		_, _ = analyticsSection.NewKey("rudderstack_data_plane_url", "https://tenant-dataplane.example.com")
+		_, _ = analyticsSection.NewKey("rudderstack_batch_interval", "5000")
+		_, _ = analyticsSection.NewKey("plugin_import_telemetry_packages", "tenant-router,tenant-history")
 
 		config.ApplyOverrides(iniFile, log.New("test"), false)
 
 		assert.Equal(t, "tenant-write-key", config.RudderstackWriteKey)
 		assert.Equal(t, "https://tenant-dataplane.example.com", config.RudderstackDataPlaneUrl)
+		require.NotNil(t, config.RudderstackBatchInterval)
+		assert.Equal(t, 5000, *config.RudderstackBatchInterval)
+	})
+
+	t.Run("should include a zero Rudderstack batch interval override in frontend settings", func(t *testing.T) {
+		config := FSRequestConfig{}
+		iniFile := ini.Empty()
+		analyticsSection, _ := iniFile.NewSection("analytics")
+		_, _ = analyticsSection.NewKey("rudderstack_batch_interval", "0")
+
+		config.ApplyOverrides(iniFile, log.New("test"), false)
+
+		payload, err := json.Marshal(config.FSFrontendSettings)
+		require.NoError(t, err)
+
+		var settings map[string]any
+		require.NoError(t, json.Unmarshal(payload, &settings))
+		assert.Equal(t, float64(0), settings["rudderstackBatchInterval"])
 	})
 
 	t.Run("should override allow_embedding_hosts from settings service", func(t *testing.T) {
@@ -203,6 +224,7 @@ func TestNewFSRequestConfig(t *testing.T) {
 	newCfg := func() *setting.Cfg {
 		cfg := setting.NewCfg()
 		cfg.AppURL = "https://grafana.example.com"
+		cfg.PluginImportTelemetryPackages = []string{"react-router-dom", "react-router"}
 		return cfg
 	}
 
@@ -222,6 +244,7 @@ func TestNewFSRequestConfig(t *testing.T) {
 		assert.Nil(t, config.FullFrontendSettings)
 		// The legacy per-request settings are still populated.
 		assert.Equal(t, "https://grafana.example.com", config.AppURL)
+		assert.Equal(t, []string{"react-router-dom", "react-router"}, config.PluginImportTelemetryPackages)
 	})
 
 	t.Run("builds full frontend settings when flag enabled", func(t *testing.T) {
@@ -242,5 +265,6 @@ func TestNewFSRequestConfig(t *testing.T) {
 		assert.Equal(t, "https://grafana.example.com", config.FullFrontendSettings.AppUrl)
 		// The plugins CDN base URL is sourced from the plugins CDN service.
 		assert.Equal(t, "https://cdn.example.com", config.FullFrontendSettings.PluginsCDNBaseURL)
+		assert.Equal(t, []string{"react-router-dom", "react-router"}, config.FullFrontendSettings.PluginImportTelemetryPackages)
 	})
 }

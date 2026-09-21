@@ -19,6 +19,20 @@ All responses share this shape:
 
 On failure, `success` is `false` and `error` contains a message. `changes` is always `[]` on failure.
 
+## Which commands exist depends on the open document
+
+The API is mounted on whichever document is rendering, and each document type registers its own
+commands. A dashboard exposes the dashboard commands; a notebook exposes the notebook commands. Asking
+for one that is not registered fails with `Unknown command type: X. Available commands: ...`, so
+`getAvailableCommands()` (or that error) is how a caller finds out where it is.
+
+This is why no command has to be described as "dashboards only": the dashboard commands are simply not
+reachable from a notebook, and a notebook spec is a different schema that would silently lose every
+narrative cell if a dashboard serializer answered for it.
+
+`CREATE_NOTEBOOK_SPEC` is the one exception, registered on both, because there is no blank notebook to
+open before creating one.
+
 ---
 
 ## Layout
@@ -1007,6 +1021,108 @@ Get dashboard identity/folder metadata plus every dashboard-level setting that `
 }
 ```
 
+### `GET_METADATA_ANNOTATIONS`
+
+Read allowlisted keys on `metadata.annotations`. This is **not** the dashboard spec and is **not** a query annotation layer (`LIST_ANNOTATIONS`). `GET_SPEC` / `APPLY_SPEC` do not include these annotations.
+
+Today the only readable key is `grafana.app/useCrossDashboardVariables` (cross-dashboard / global and folder variables). Unknown keys are rejected. Requires the `grafana.dashboardGlobalVariables` feature toggle. Write the same key with `UPDATE_METADATA_ANNOTATIONS`.
+
+**Request:**
+
+```json
+{
+  "type": "GET_METADATA_ANNOTATIONS",
+  "payload": {
+    "annotations": ["grafana.app/useCrossDashboardVariables"]
+  }
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "annotations": {
+      "grafana.app/useCrossDashboardVariables": { "global": "all", "folder": ["env"] }
+    }
+  },
+  "changes": []
+}
+```
+
+The value is `null` when the annotation is missing or invalid (the dashboard is not opted in). Each scope is `"all"`, `"none"`, or a name array.
+
+### `UPDATE_METADATA_ANNOTATIONS`
+
+Write allowlisted keys on `metadata.annotations`. This is **not** the dashboard spec and is **not** a query annotation layer (`ADD_ANNOTATION` / `UPDATE_ANNOTATION` / `LIST_ANNOTATIONS`). `GET_SPEC` / `APPLY_SPEC` do not include these annotations.
+
+Today the only writable key is `grafana.app/useCrossDashboardVariables` (cross-dashboard / global and folder variables). Unknown keys are rejected. Use `GET_METADATA_ANNOTATIONS` to read the current value.
+
+Requires edit permissions, the `grafana.dashboardGlobalVariables` toggle, and a dashboard that is not a locked managed resource. Enters edit mode and re-injects predefined variables.
+
+**Request:**
+
+```json
+{
+  "type": "UPDATE_METADATA_ANNOTATIONS",
+  "payload": {
+    "annotations": {
+      "grafana.app/useCrossDashboardVariables": { "global": "all", "folder": ["cluster"] }
+    }
+  }
+}
+```
+
+**Clear (delete the annotation):**
+
+```json
+{
+  "type": "UPDATE_METADATA_ANNOTATIONS",
+  "payload": {
+    "annotations": {
+      "grafana.app/useCrossDashboardVariables": { "global": "none", "folder": "none" }
+    }
+  }
+}
+```
+
+`null` is the same as both scopes `"none"`:
+
+```json
+{
+  "type": "UPDATE_METADATA_ANNOTATIONS",
+  "payload": {
+    "annotations": {
+      "grafana.app/useCrossDashboardVariables": null
+    }
+  }
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "annotations": {
+      "grafana.app/useCrossDashboardVariables": { "global": "all", "folder": ["cluster"] }
+    }
+  },
+  "changes": [
+    {
+      "path": "/metadata/annotations/grafana.app/useCrossDashboardVariables",
+      "previousValue": null,
+      "newValue": "{\"global\":\"all\",\"folder\":[\"cluster\"]}"
+    }
+  ]
+}
+```
+
+Each scope is `"all"`, `"none"`, or a name array. `"all"` auto-includes new variables in that scope; a name array does not. After a clear, the response value is `null`.
+
 ---
 
 ## Utility
@@ -1032,6 +1148,81 @@ Enter dashboard edit mode. Write commands call this automatically; this is rarel
 ```
 
 If already in edit mode, `wasAlreadyEditing` is `true` and `changes` is `[]`.
+
+---
+
+## Notebooks
+
+Available on a notebook page only (except `CREATE_NOTEBOOK_SPEC`), behind the `dashboard.notebooks`
+feature flag. A notebook is a flat, ordered list of cells — markdown, code, panel, library panel —
+described by a `NotebookSpec`. Its panel elements use the same shape as a dashboard v2 spec; what it
+adds is `Cell` (narrative content) and `NotebookLayout`.
+
+These are whole-spec commands: there are no granular notebook commands, so an edit is read, change the
+JSON, write back.
+
+### `GET_NOTEBOOK_SPEC`
+
+Return the whole notebook.
+
+```json
+{ "type": "GET_NOTEBOOK_SPEC", "payload": { "validate": false } }
+```
+
+`validate` checks the serialized spec against the notebook schema and fails the read if it is invalid.
+Worth requesting: a read that comes back with dangling cell references means the scene lost elements on
+the way out.
+
+**Response:** `{ "success": true, "data": { "spec": { ... } } }`
+
+### `APPLY_NOTEBOOK_SPEC`
+
+Replace the notebook from a whole spec. **In memory** — nothing is saved.
+
+```json
+{ "type": "APPLY_NOTEBOOK_SPEC", "payload": { "spec": { ... }, "validate": false } }
+```
+
+**Response:** `{ "success": true, "data": { "applied": true, "spec": { ... } }, "warnings": [...] }`
+
+`data.spec` is the notebook re-serialized after the write, so there is no need for a follow-up read. It
+is absent if that re-serialization failed — the write still landed, and `warnings` says the surviving
+cells could not be checked.
+
+`warnings` names any cell that was requested and is not in the result. A layout entry pointing at an
+element that is not in `elements` is skipped rather than rejected, so without this a write could lose a
+cell and still report success. Pass `validate: true` to have that rejected up front instead.
+
+The payload is strict: an unknown key is rejected rather than ignored, so a mistyped `validate` cannot
+silently apply the spec unchecked.
+
+### `CREATE_NOTEBOOK_SPEC`
+
+Create a **new** notebook and open it. Registered on dashboards too, because there is no blank notebook
+to apply a spec into the way `/dashboard/new` is one for a dashboard.
+
+```json
+{ "type": "CREATE_NOTEBOOK_SPEC", "payload": { "spec": { ... }, "validate": true, "open": true } }
+```
+
+**Response:**
+`{ "success": true, "data": { "created": true, "opened": true, "uid": "n-abc123", "url": "/notebooks/n-abc123" } }`
+
+Unlike every other command here this one **persists immediately**, and the server assigns the uid — so
+`validate` defaults to `true`. Set `open: false` to create without navigating. Use
+`APPLY_NOTEBOOK_SPEC` to change a notebook that already exists.
+
+`opened` is whether the navigation was accepted, which is not the same as `open`: a dirty dashboard's
+unsaved-changes prompt blocks it. The notebook exists either way, but `GET_NOTEBOOK_SPEC` and
+`APPLY_NOTEBOOK_SPEC` only reach it once its page is mounted.
+
+`opened: false` is conclusive. `opened: true` is not the same as "the notebook client is mounted": it
+reads the history entry, and the route behind it is a lazy chunk plus a fetch, so a command sent
+immediately afterwards can still land on the previous document. `getAvailableCommands()` is the
+authoritative answer to which document is mounted.
+
+The command is registered on a dashboard only when the `dashboard.notebooks` flag is on, so
+`getAvailableCommands()` names it exactly where it can run.
 
 ---
 
