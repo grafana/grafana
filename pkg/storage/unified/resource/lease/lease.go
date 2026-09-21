@@ -116,12 +116,12 @@ func (k leaseKey) String() string {
 }
 
 func parseLeaseKey(key string) (leaseKey, error) {
-	idx := strings.Index(key, generationSeparator)
-	if idx < 0 {
+	before, after, ok := strings.Cut(key, generationSeparator)
+	if !ok {
 		return leaseKey{}, fmt.Errorf("invalid lease key %q: missing %q", key, generationSeparator)
 	}
-	name := key[:idx]
-	gen, err := strconv.ParseInt(key[idx+len(generationSeparator):], 10, 64)
+	name := before
+	gen, err := strconv.ParseInt(after, 10, 64)
 	if err != nil {
 		return leaseKey{}, fmt.Errorf("parsing lease key %q: %w", key, err)
 	}
@@ -142,7 +142,7 @@ type Manager struct {
 
 // NewManager returns a Manager that uses store for persistence and identifies
 // itself as holder.
-func NewManager(store kv.KV, holder string, reg prometheus.Registerer, opts ...ManagerOption) *Manager {
+func NewManager(store kv.KV, holder string, component string, reg prometheus.Registerer, opts ...ManagerOption) *Manager {
 	m := &Manager{
 		store:        store,
 		holder:       holder,
@@ -150,7 +150,7 @@ func NewManager(store kv.KV, holder string, reg prometheus.Registerer, opts ...M
 		maxClockSkew: defaultMaxClockSkew,
 		log:          logging.DefaultLogger.With("logger", "lease-manager"),
 		now:          time.Now,
-		metrics:      NewMetrics(reg),
+		metrics:      NewMetrics(reg, component),
 	}
 	m.garbageCollector = newGarbageCollector(store, m.log, m.now, m.metrics)
 	for _, opt := range opts {

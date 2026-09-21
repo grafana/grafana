@@ -100,4 +100,8 @@ func addApiKeyMigrations(mg *Migrator) {
 	mg.AddMigration("Add is_revoked column to api_key table", NewAddColumnMigration(apiKeyV2, &Column{
 		Name: "is_revoked", Type: DB_Bool, Nullable: true, Default: "0",
 	}))
+
+	mg.AddMigration("Add index api_key.org_id_service_account_id", NewAddIndexMigration(apiKeyV2, &Index{
+		Cols: []string{"org_id", "service_account_id"},
+	}))
 }

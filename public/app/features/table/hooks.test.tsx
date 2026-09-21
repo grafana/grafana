@@ -181,6 +181,7 @@ describe('useCommonTableProps', () => {
     cellHeight: undefined,
     maxRowHeight: 100,
     disableKeyboardEvents: true,
+    hoverOverflow: false,
     frameIndex: 0,
   };
 
@@ -198,9 +199,46 @@ describe('useCommonTableProps', () => {
       cellHeight: undefined,
       maxRowHeight: 100,
       disableKeyboardEvents: true,
+      hoverOverflow: false,
       disableSanitizeHtml: false,
       contentAwareWidthsEnabled: false,
+      tableRefreshEnabled: false,
+      zebraStriping: false,
     });
+  });
+
+  it('passes the table-refresh flag through', () => {
+    setTestFlags({ [FlagKeys.TableRefresh]: true });
+    const { result } = renderHook(() => useCommonTableProps(options, fieldConfig), { wrapper: FeatureFlagsProvider });
+
+    expect(result.current.tableRefreshEnabled).toBe(true);
+  });
+
+  it('enables hover overflow when the option is undefined', () => {
+    const { result } = renderHook(() => useCommonTableProps({ ...options, hoverOverflow: undefined }, fieldConfig), {
+      wrapper: FeatureFlagsProvider,
+    });
+
+    expect(result.current.hoverOverflow).toBe(true);
+  });
+
+  // A dashboard can carry the zebra striping option in from an instance that has the toggle on, so
+  // the option alone must not be enough to stripe.
+  it('ignores the zebra striping option with the refresh-new-features flag off', () => {
+    const { result } = renderHook(() => useCommonTableProps({ ...options, zebraStriping: true }, fieldConfig), {
+      wrapper: FeatureFlagsProvider,
+    });
+
+    expect(result.current.zebraStriping).toBe(false);
+  });
+
+  it('honours the zebra striping option with the refresh-new-features flag on', () => {
+    setTestFlags({ [FlagKeys.TableRefreshNewFeatures]: true });
+    const { result } = renderHook(() => useCommonTableProps({ ...options, zebraStriping: true }, fieldConfig), {
+      wrapper: FeatureFlagsProvider,
+    });
+
+    expect(result.current.zebraStriping).toBe(true);
   });
 
   it('passes pageSize through when the pagination-page-size flag is on', () => {

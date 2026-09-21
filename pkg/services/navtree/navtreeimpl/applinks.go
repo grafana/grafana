@@ -160,35 +160,6 @@ func (s *ServiceImpl) nestMaintenanceWindowsUnderSLO(treeRoot *navtree.NavTreeRo
 	}
 }
 
-// shouldIncludeInvestigations checks if the investigations feature should be included for the assistant app
-// see https://github.com/grafana/grafana-assistant-app/issues/2007 for more details
-func (s *ServiceImpl) shouldIncludeInvestigations(plugin pluginstore.Plugin, include *plugins.Includes, c *contextmodel.ReqContext) bool {
-	if plugin.ID != "grafana-assistant-app" || include.Name != "Investigations" {
-		return true
-	}
-
-	ps, err := s.pluginSettings.GetPluginSettingByPluginID(c.Req.Context(), &pluginsettings.GetByPluginIDArgs{
-		PluginID: plugin.ID,
-		OrgID:    c.GetOrgID(),
-	})
-	if err != nil {
-		return false
-	}
-
-	loopData, exists := ps.JSONData["loop"]
-	if !exists {
-		return false
-	}
-
-	loopConfig, ok := loopData.(map[string]any)
-	if !ok {
-		return false
-	}
-
-	enabled, ok := loopConfig["enabled"].(bool)
-	return ok && enabled
-}
-
 type pendingInclude struct {
 	link   *navtree.NavLink
 	isPage bool
@@ -225,10 +196,6 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 		}
 
 		if !s.shouldIncludeAssistantNavigation(plugin, include, assistantTrialMode, assistantOSSMode, assistantOSSModeSet) {
-			continue
-		}
-
-		if !s.shouldIncludeInvestigations(plugin, include, c) {
 			continue
 		}
 
@@ -330,7 +297,7 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 		// Add Service Center as a standalone nav item under Alerts & IRM
 		if alertsSection := treeRoot.FindById(navtree.NavIDAlertsAndIncidents); alertsSection != nil {
 			serviceLink := &navtree.NavLink{
-				Text:       "Service center",
+				Text:       "Service Center",
 				Id:         "standalone-plugin-page-slo-services",
 				SubTitle:   "Centralizes service-level operational data including SLOs, alerts, and incidents by grouping resources through shared labels or tags",
 				Url:        s.cfg.AppSubURL + "/a/grafana-slo-app/services",
@@ -607,7 +574,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-agentictesting-app":       {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 1, Text: "Agentic testing", IsNew: true},
 		"k6-app":                           {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 2, Text: "Performance"},
 		"grafana-synthetic-monitoring-app": {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 3, Text: "Synthetics"},
-		"grafana-servicecenter-app":        {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 1, Text: "Service center"},
+		"grafana-servicecenter-app":        {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 1, Text: "Service Center"},
 		"grafana-irm-app":                  {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 3, Text: "IRM"},
 		"grafana-slo-app":                  {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 4},
 		"grafana-labelmanagement-app":      {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 5, Text: "Label management"},

@@ -48,7 +48,9 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
 
   const groupByOriginFilters = useMemo(() => originalFilters.filter(isGroupByOriginFilter), [originalFilters]);
 
-  const groupByEnabled = config.featureToggles.dashboardUnifiedDrilldownControls && enableGroupBy;
+  const groupByEnabled = Boolean(
+    config.featureToggles.dashboardUnifiedDrilldownControls && enableGroupBy && datasourceRef
+  );
 
   const updateOriginalFilters = useCallback(
     (filters: AdHocFilterWithLabels[]) => {
@@ -155,7 +157,7 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
       datasource={datasourceRef ?? undefined}
       infoText={message}
       allowCustomValue={allowCustomValue}
-      enableGroupBy={enableGroupBy}
+      enableGroupBy={enableGroupBy ?? !datasourceRef}
       onDataSourceChange={onDataSourceChange}
       defaultKeys={defaultKeys}
       onDefaultKeysChange={onDefaultKeysChange}

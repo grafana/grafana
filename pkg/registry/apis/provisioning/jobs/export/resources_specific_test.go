@@ -125,10 +125,10 @@ func TestExportSpecificResources_Success(t *testing.T) {
 	writeOpts := resources.WriteOptions{Path: "grafana", Ref: "feature/branch"}
 	repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
 		return obj.GetName() == "dash-1"
-	}), writeOpts).Return("dash-1.json", nil)
+	}), writeOpts).Return("dash-1.json", 0, nil)
 	repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
 		return obj.GetName() == "dash-2"
-	}), writeOpts).Return("dash-2.json", nil)
+	}), writeOpts).Return("dash-2.json", 0, nil)
 
 	progress := jobs.NewMockJobProgressRecorder(t)
 	progress.On("SetMessage", mock.Anything, "start selective resource export").Return()
@@ -258,7 +258,7 @@ func TestExportSpecificResources_NewUIDsSetsRandomName(t *testing.T) {
 	repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
 		writtenName = obj.GetName()
 		return true
-	}), mock.Anything).Return("generated.json", nil)
+	}), mock.Anything).Return("generated.json", 0, nil)
 
 	progress := jobs.NewMockJobProgressRecorder(t)
 	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
@@ -354,7 +354,7 @@ func TestExportSpecificResources_GeneratesFolderForDashboard(t *testing.T) {
 	})).Return(nil)
 	repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
 		return obj.GetName() == "dash-1"
-	}), mock.Anything).Return("parent/child/dash-1.json", nil)
+	}), mock.Anything).Return("parent/child/dash-1.json", 0, nil)
 
 	progress := jobs.NewMockJobProgressRecorder(t)
 	progress.On("SetMessage", mock.Anything, "start selective resource export").Return()
@@ -404,7 +404,7 @@ func TestExportSpecificResources_ManagedFolderAncestryIsSkipped(t *testing.T) {
 	})).Return(nil)
 	repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
 		return obj.GetName() == "dash-1"
-	}), mock.Anything).Return("dash-1.json", nil)
+	}), mock.Anything).Return("dash-1.json", 0, nil)
 
 	progress := jobs.NewMockJobProgressRecorder(t)
 	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
@@ -443,7 +443,7 @@ func TestExportSpecificResources_NonDashboardKindIsExported(t *testing.T) {
 	repoResources := resources.NewMockRepositoryResources(t)
 	repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
 		return obj.GetName() == "playlist-1" && obj.GetKind() == "Playlist"
-	}), mock.Anything).Return("playlist-1.json", nil)
+	}), mock.Anything).Return("playlist-1.json", 0, nil)
 
 	progress := jobs.NewMockJobProgressRecorder(t)
 	progress.On("SetMessage", mock.Anything, "start selective resource export").Return()

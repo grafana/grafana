@@ -661,6 +661,53 @@ func TestRequirementQuery_TextFilterDispatch(t *testing.T) {
 	assert.Equal(t, note, mq.Field())
 }
 
+func TestRequirementQuery_RegexFieldDispatch(t *testing.T) {
+	b := regexRequirementTestIndex(t)
+	tag := resource.SEARCH_FIELD_PREFIX + "tag"
+	for _, tc := range []struct {
+		name   string
+		regex  string
+		prefix string
+	}{
+		{name: "literal prefix", regex: "X.*", prefix: "X"},
+		{name: "case insensitive expression", regex: "(?i)X.*"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			q, errRes := b.requirementQuery(&resourcepb.Requirement{Key: tag, Operator: string(resource.OperatorRegex), Values: []string{tc.regex}})
+			require.Nil(t, errRes)
+			regex, ok := q.(*boundedRegexQuery)
+			require.True(t, ok)
+			assert.Equal(t, tag, regex.field)
+			assert.Equal(t, tc.prefix, regex.literalPrefix)
+		})
+	}
+
+	for _, tc := range []struct {
+		name   string
+		field  string
+		values []string
+	}{
+		{name: "lowercased keyword field", field: resource.SEARCH_FIELD_PREFIX + "note", values: []string{"N.*"}},
+		{name: "text-only field", field: resource.SEARCH_FIELD_PREFIX + "summary", values: []string{"S.*"}},
+		{name: "lowercased title", field: resource.SEARCH_FIELD_TITLE, values: []string{"T.*"}},
+		{name: "missing value", field: tag},
+		{name: "multiple values", field: tag, values: []string{"X.*", "Y.*"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			assertBadRequest(t, b, tc.field, string(resource.OperatorRegex), tc.values...)
+		})
+	}
+}
+
+func regexRequirementTestIndex(t *testing.T) *bleveIndex {
+	t.Helper()
+	return customFieldsIndex(t,
+		resource.SearchFieldDefinition{Name: "tag", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter}},
+		resource.SearchFieldDefinition{Name: "note", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityText, resource.SearchCapabilityFilter}},
+		resource.SearchFieldDefinition{Name: "summary", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityText}},
+	)
+}
+
 func TestRequirementQuery_ExactPathFromCapabilities(t *testing.T) {
 	b := customFieldsIndex(t,
 		resource.SearchFieldDefinition{Name: "category", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter}},
@@ -1090,27 +1137,25 @@ func TestBleveIndex_resolveQueryFields(t *testing.T) {
 	// An explicit title field fans out the same way.
 	assert.Equal(t, titleVariants, names(b.resolveQueryFields([]*resourcepb.ResourceSearchRequest_QueryField{{Name: resource.SEARCH_FIELD_TITLE}})))
 
-	// A per-kind field resolves to fields.* and keeps its requested boost. The
-	// requested type is dropped: the backend derives it from the mapping.
-	got := b.resolveQueryFields([]*resourcepb.ResourceSearchRequest_QueryField{{Name: "panel_title", Type: resourcepb.QueryFieldType_KEYWORD, Boost: 3}})
+	// A per-kind field resolves to fields.* and keeps its requested boost.
+	got := b.resolveQueryFields([]*resourcepb.ResourceSearchRequest_QueryField{{Name: "panel_title", Boost: 3}})
 	require.Len(t, got, 1)
 	assert.Equal(t, resource.SEARCH_FIELD_PREFIX+"panel_title", got[0].Name)
-	assert.Equal(t, resourcepb.QueryFieldType_DEFAULT, got[0].Type)
 	assert.Equal(t, float32(3), got[0].Boost)
 
 	// title + per-kind field: title variants first, then the resolved field.
 	assert.Equal(t, append(append([]string{}, titleVariants...), resource.SEARCH_FIELD_PREFIX+"panel_title"),
 		names(b.resolveQueryFields([]*resourcepb.ResourceSearchRequest_QueryField{
 			{Name: resource.SEARCH_FIELD_TITLE},
-			{Name: "panel_title", Type: resourcepb.QueryFieldType_TEXT},
+			{Name: "panel_title"},
 		})))
 
 	// When the caller already names the physical title variants (legacy dashboard
 	// search), the logical title is not re-expanded, so nothing is duplicated.
 	legacy := []*resourcepb.ResourceSearchRequest_QueryField{
-		{Name: resource.SEARCH_FIELD_TITLE_PHRASE, Type: resourcepb.QueryFieldType_KEYWORD, Boost: 10},
-		{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.QueryFieldType_TEXT, Boost: 2},
-		{Name: resource.SEARCH_FIELD_TITLE_NGRAM, Type: resourcepb.QueryFieldType_TEXT, Boost: 1},
+		{Name: resource.SEARCH_FIELD_TITLE_PHRASE, Boost: 10},
+		{Name: resource.SEARCH_FIELD_TITLE, Boost: 2},
+		{Name: resource.SEARCH_FIELD_TITLE_NGRAM, Boost: 1},
 	}
 	assert.Equal(t, titleVariants, names(b.resolveQueryFields(legacy)))
 }

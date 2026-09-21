@@ -143,6 +143,15 @@ type versionedBuilder struct {
 
 func (v versionedBuilder) Version() int { return v.version }
 
+type skippingBuilder struct{ embed.Builder }
+
+func (b skippingBuilder) Extract(ctx context.Context, key *resourcepb.ResourceKey, value []byte, folderTitle string) ([]embed.Item, error) {
+	if key.Name == "skip" {
+		return nil, fmt.Errorf("unsupported stored API version: %w", embed.ErrSkip)
+	}
+	return b.Builder.Extract(ctx, key, value, folderTitle)
+}
+
 func TestRunBackfill_NoIncompleteJobs_NoOp(t *testing.T) {
 	vec := newFakeVector()
 	o := newBackfiller(t, newFakeStorage(), vec)
@@ -532,6 +541,44 @@ func TestRunBackfillJob_VersionStale_EmptyExtract_DeletesOldRows(t *testing.T) {
 	require.Len(t, vec.deletes, 1, "stale rows must be deleted when the new extract is empty")
 	assert.Equal(t, "dash-a", vec.deletes[0].UID)
 	assert.Empty(t, vec.upserts)
+}
+
+func TestRunBackfillJob_SkipExtract_PreservesVectorsAndCompletes(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItem("ns", "skip", 50), makeListItem("ns", "good", 60)}
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+	vec.jobContentVersion = map[int64]int{1: dashboard.New().Version()}
+	vec.seedEmbeddedRows("ns", "test-model", "dashboards", "skip", 1, "panel/1")
+	key := rowsKey("ns", "test-model", "dashboards", "skip")
+	before := vec.rows[key]["panel/1"]
+	metrics := resource.ProvideVectorMetrics(prometheus.NewPedanticRegistry())
+	text := &fakeText{dim: 4}
+	b, err := NewVectorBackfiller(Options{
+		Storage:       storage,
+		VectorBackend: vec,
+		BatchEmbedder: embedder.NewBatchEmbedder(*newFakeEmbedder(text)),
+		Builders:      []embed.Builder{skippingBuilder{dashboard.New()}},
+		Metrics:       metrics,
+	})
+	require.NoError(t, err)
+
+	b.runBackfill(t.Context())
+
+	assert.Equal(t, map[string]vector.Vector{"panel/1": before}, vec.rows[key])
+	assert.Empty(t, vec.deletes)
+	assert.Empty(t, vec.subresourceDeletes)
+	assert.Empty(t, vec.updateCalls)
+	require.Len(t, vec.upserts, 1)
+	require.NotEmpty(t, vec.upserts[0])
+	assert.Equal(t, "good", vec.upserts[0][0].UID)
+	assert.Equal(t, 1, text.calls, "only the supported resource reaches the provider")
+	assert.Empty(t, vec.errorMarks)
+	assert.Equal(t, []int64{1}, vec.completedJobIDs)
+	var observed dto.Metric
+	metric := metrics.BackfillItemDuration.WithLabelValues("dashboard.grafana.app", "dashboards", "skipped_extract")
+	require.NoError(t, metric.(prometheus.Metric).Write(&observed))
+	assert.Equal(t, uint64(1), observed.GetHistogram().GetSampleCount())
 }
 
 // A never-embedded uid with an empty extract keeps the plain skip (nothing to delete).

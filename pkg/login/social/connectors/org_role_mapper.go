@@ -3,6 +3,7 @@ package connectors
 import (
 	"context"
 	"fmt"
+	"maps"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/configprovider"
@@ -288,9 +289,7 @@ func getMappedOrgRoles(externalOrgs []string, orgMapping map[string]map[int64]or
 	}
 
 	if orgRoles, ok := orgMapping["*"]; ok {
-		for orgID, role := range orgRoles {
-			userOrgRoles[orgID] = role
-		}
+		maps.Copy(userOrgRoles, orgRoles)
 	}
 
 	for _, org := range externalOrgs {

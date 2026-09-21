@@ -1014,6 +1014,48 @@ var appManifestData = app.ManifestData{
 						},
 					},
 				},
+
+				{
+					Kind:       "AuthInfo",
+					Plural:     "AuthInfos",
+					Scope:      "Namespaced",
+					Conversion: false,
+					SelectableFields: []string{
+						"spec.userRef.name",
+						"spec.authModule",
+						"spec.authID",
+					},
+					SearchFields: []app.ManifestVersionKindSearchField{
+						{
+							Name:         "user",
+							Path:         "spec.userRef.name",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The UID of the user this auth link belongs to",
+						},
+						{
+							Name:         "authModule",
+							Path:         "spec.authModule",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The external auth provider the user is linked through",
+						},
+						{
+							Name:         "authID",
+							Path:         "spec.authID",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The identifier the auth provider returns at login",
+						},
+						{
+							Name:         "externalUID",
+							Path:         "spec.externalUID",
+							Type:         "string",
+							Capabilities: []string{"retrieve"},
+							Description:  "The external unique identifier of the user",
+						},
+					},
+				},
 			},
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{
@@ -1574,6 +1616,7 @@ var kindVersionToGoType = map[string]resource.Kind{
 	"TeamLBACRule/v0alpha1":         v0alpha1.TeamLBACRuleKind(),
 	"ServiceAccount/v0alpha1":       v0alpha1.ServiceAccountKind(),
 	"ExternalGroupMapping/v0alpha1": v0alpha1.ExternalGroupMappingKind(),
+	"AuthInfo/v0alpha1":             v0alpha1.AuthInfoKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
