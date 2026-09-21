@@ -153,6 +153,16 @@ describe('FeatureControlFlag', () => {
     expect(screen.getByRole('option', { name: 'feature-gamma' })).toBeInTheDocument();
   });
 
+  it('shows the OFREP evaluation when selecting a new flag key', async () => {
+    renderComponent();
+    await expandFlag('new-flag-override');
+
+    await userEvent.type(screen.getByRole('combobox', { name: 'Flag key' }), 'feature-alpha[Enter]');
+
+    expect(screen.getByText('OFREP evaluation')).toBeInTheDocument();
+    expect(screen.getAllByText('true')).toHaveLength(2);
+  });
+
   it('shows the OFREP evaluation value and reason for an existing flag', async () => {
     renderComponent({ key: 'feature-alpha', value: 'false' });
     await expandFlag('feature-alpha');

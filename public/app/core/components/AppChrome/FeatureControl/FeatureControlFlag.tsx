@@ -283,7 +283,7 @@ export const FeatureControlFlag = ({ flag }: FeatureControlFlagProps) => {
 
       <div className={styles.fields}>
         {!flag && <FeatureControlKey value={key} onChange={setKey} />}
-        {flag && <FeatureControlOFREP value={key} />}
+        {key && <FeatureControlOFREP value={key} />}
 
         <Stack direction="row" gap={1} alignItems="center">
           <Field
