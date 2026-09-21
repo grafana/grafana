@@ -8,7 +8,7 @@ import { type LocalPlugin } from 'app/features/plugins/admin/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { ctaClicked, recommendationsShown } from '../analytics/main';
-import { APP_OBSERVABILITY_APP_ID, HOSTED_TRACES_APP_ID } from '../solutions/appPluginIds';
+import { APP_OBSERVABILITY_APP_ID, HOSTED_TRACES_APP_ID, IRM_APP_ID } from '../solutions/appPluginIds';
 import { KUBERNETES_APP_ID } from '../solutions/kubernetesData';
 import { type SignalStatus, type SolutionState } from '../solutions/solutionState';
 import { deferred, stubDatasource, stubSolution } from '../solutions/test-utils';
@@ -33,7 +33,11 @@ const DEFAULT_STATE: SolutionState = {
   kubernetes: 'inactive',
   spanMetrics: 'inactive',
   synthetics: 'inactive',
+  irm: 'inactive',
 };
+
+// Kubernetes gives IRM its use case; the Synthetic Monitoring card it also selects stays out of the inventory.
+const KUBERNETES_STATE: SolutionState = { ...DEFAULT_STATE, kubernetes: 'active' };
 
 function plugin(id: string, enabled = false, canWrite = true, canAccess = true): LocalPlugin {
   return {
@@ -64,6 +68,13 @@ function homepageSolutions(
 }
 
 const carouselRegion = () => screen.findByRole('region', { name: 'Recommended apps' });
+
+// Every card title in the carousel, hidden slides included.
+function carouselTitles(region: HTMLElement): string[] {
+  return within(region)
+    .getAllByRole('heading', { level: 3, hidden: true })
+    .map((heading) => heading.textContent?.trim() ?? '');
+}
 
 function visibleRecommendationTitle(region: HTMLElement): string {
   return (
@@ -340,6 +351,37 @@ describe('Recommendations', () => {
       recommendation_id: 'kubernetes-monitoring',
       starting_state: 'ml_no_traces',
     });
+  });
+
+  it('offers to enable a disabled IRM plugin on a Kubernetes stack', async () => {
+    mockGet.mockResolvedValue([plugin(IRM_APP_ID)]);
+    render(<Recommendations solutions={homepageSolutions(KUBERNETES_STATE)} />);
+
+    const link = await screen.findByRole('link', { name: /Enable IRM/ });
+    expect(link).toHaveAttribute('href', '/plugins/grafana-irm-app/');
+    expect(screen.getByRole('heading', { name: 'Get paged when it matters' })).toBeInTheDocument();
+  });
+
+  it('sends an enabled but unconnected IRM to its home page', async () => {
+    mockGet.mockResolvedValue([plugin(IRM_APP_ID, true)]);
+    render(<Recommendations solutions={homepageSolutions(KUBERNETES_STATE)} />);
+
+    const link = await screen.findByRole('link', { name: 'Set up IRM' });
+    expect(link).toHaveAttribute('href', '/a/grafana-irm-app');
+  });
+
+  it('hides the IRM card when the plugin is not installed', async () => {
+    mockGet.mockResolvedValue([plugin(HOSTED_TRACES_APP_ID)]);
+    render(<Recommendations solutions={homepageSolutions(KUBERNETES_STATE)} />);
+
+    expect(carouselTitles(await carouselRegion())).toEqual(['Trace requests across services']);
+  });
+
+  it('hides the IRM card when Grafana Alerting already routes into IRM', async () => {
+    mockGet.mockResolvedValue([plugin(HOSTED_TRACES_APP_ID), plugin(IRM_APP_ID)]);
+    render(<Recommendations solutions={homepageSolutions({ ...KUBERNETES_STATE, irm: 'active' })} />);
+
+    expect(carouselTitles(await carouselRegion())).toEqual(['Trace requests across services']);
   });
 
   it('does not invent install actions for plugins missing from the inventory', async () => {

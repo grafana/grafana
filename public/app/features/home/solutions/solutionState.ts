@@ -16,6 +16,8 @@ export interface SolutionState {
   spanMetrics: SignalStatus;
   /** Gates only the Synthetics card; like spanMetrics, 'unknown' never blanks recommendations. */
   synthetics: SignalStatus;
+  /** Grafana Alerting routing into IRM. Gates only the IRM card; 'unknown' never blanks recommendations. */
+  irm: SignalStatus;
 }
 
 /** A settled signal: whether data is flowing, and the datasource that proved it. */

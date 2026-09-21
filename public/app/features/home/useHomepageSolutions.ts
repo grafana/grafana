@@ -2,6 +2,7 @@ import memoize from 'micro-memoize';
 import { useMemo } from 'react';
 
 import { SOLUTION_IDS } from './solutions/constants';
+import { detectIrmSignal } from './solutions/irmSignal';
 import { kubernetesSolution } from './solutions/kubernetesSolution';
 import { logsSolution } from './solutions/logsSolution';
 import { metricsSolution } from './solutions/metricsSolution';
@@ -32,12 +33,12 @@ export function useHomepageSolutions(): HomepageSolutions {
       synthetics: syntheticsSolution(),
     };
 
-    // App Observability is not a homepage solution; only the recommendation matrix reads this signal.
+    // App Observability and IRM are not homepage solutions; only the recommendation matrix reads these signals.
     const spanMetricsSignal = memoize(() => detectSignal(probeSpanMetrics));
 
     // Read core signals from their solutions so detection stays owned and memoized there.
     const signals = async (): Promise<SolutionState> => {
-      const [metrics, logs, traces, kubernetes, spanMetrics, synthetics] = await Promise.all([
+      const [metrics, logs, traces, kubernetes, spanMetrics, synthetics, irm] = await Promise.all([
         byId.metrics.signal().catch(() => 'unknown' as const),
         byId.logs.signal().catch(() => 'unknown' as const),
         byId.traces.signal().catch(() => 'unknown' as const),
@@ -46,8 +47,9 @@ export function useHomepageSolutions(): HomepageSolutions {
           .then(({ status }) => status)
           .catch(() => 'unknown' as const),
         byId.synthetics.signal().catch(() => 'unknown' as const),
+        detectIrmSignal().catch(() => 'unknown' as const),
       ]);
-      return { metrics, logs, traces, kubernetes, spanMetrics, synthetics };
+      return { metrics, logs, traces, kubernetes, spanMetrics, synthetics, irm };
     };
 
     return {

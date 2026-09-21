@@ -2,6 +2,7 @@ import { renderHook } from '@testing-library/react';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
 
+import { detectIrmSignal } from './solutions/irmSignal';
 import { kubernetesSolution } from './solutions/kubernetesSolution';
 import { logsSolution } from './solutions/logsSolution';
 import { metricsSolution } from './solutions/metricsSolution';
@@ -17,6 +18,7 @@ jest.mock('./solutions/metricsSolution', () => ({ metricsSolution: jest.fn() }))
 jest.mock('./solutions/tracesSolution', () => ({ tracesSolution: jest.fn() }));
 jest.mock('./solutions/syntheticsSolution', () => ({ syntheticsSolution: jest.fn() }));
 jest.mock('./solutions/spanMetricsSignal', () => ({ probeSpanMetrics: jest.fn() }));
+jest.mock('./solutions/irmSignal', () => ({ detectIrmSignal: jest.fn() }));
 
 const mockFactories: Record<SolutionId, jest.MockedFunction<() => Solution>> = {
   kubernetes: jest.mocked(kubernetesSolution),
@@ -26,6 +28,7 @@ const mockFactories: Record<SolutionId, jest.MockedFunction<() => Solution>> = {
   synthetics: jest.mocked(syntheticsSolution),
 };
 const mockProbeSpanMetrics = jest.mocked(probeSpanMetrics);
+const mockDetectIrmSignal = jest.mocked(detectIrmSignal);
 
 const datasource: DataSourceInstanceListItem = {
   uid: 'prometheus',
@@ -66,6 +69,7 @@ beforeEach(() => {
     mockFactories[id].mockReset().mockImplementation(() => fixtures[id]);
   }
   mockProbeSpanMetrics.mockReset().mockResolvedValue(datasource);
+  mockDetectIrmSignal.mockReset().mockResolvedValue('inactive');
 });
 
 describe('useHomepageSolutions', () => {
@@ -89,6 +93,7 @@ describe('useHomepageSolutions', () => {
       }
     }
     expect(mockProbeSpanMetrics).not.toHaveBeenCalled();
+    expect(mockDetectIrmSignal).not.toHaveBeenCalled();
   });
 
   it('returns solutions in display order', () => {
@@ -125,6 +130,7 @@ describe('useHomepageSolutions', () => {
       kubernetes: 'active',
       spanMetrics: 'active',
       synthetics: 'inactive',
+      irm: 'inactive',
     });
     expect(fixtures.metrics.signal).toHaveBeenCalledTimes(1);
     expect(fixtures.logs.signal).toHaveBeenCalledTimes(1);
@@ -132,6 +138,7 @@ describe('useHomepageSolutions', () => {
     expect(fixtures.kubernetes.signal).toHaveBeenCalledTimes(1);
     expect(fixtures.synthetics.signal).toHaveBeenCalledTimes(1);
     expect(mockProbeSpanMetrics).toHaveBeenCalledTimes(1);
+    expect(mockDetectIrmSignal).toHaveBeenCalledTimes(1);
   });
 
   it('shares the memoized span-metrics probe between repeated snapshot reads', async () => {
@@ -149,5 +156,12 @@ describe('useHomepageSolutions', () => {
     const { result } = renderHook(() => useHomepageSolutions());
 
     await expect(result.current.signals()).resolves.toEqual(expect.objectContaining({ logs: 'unknown' }));
+  });
+
+  it('maps a rejecting IRM signal to unknown without rejecting the snapshot', async () => {
+    mockDetectIrmSignal.mockRejectedValue(new Error('IRM unavailable'));
+    const { result } = renderHook(() => useHomepageSolutions());
+
+    await expect(result.current.signals()).resolves.toEqual(expect.objectContaining({ irm: 'unknown' }));
   });
 });

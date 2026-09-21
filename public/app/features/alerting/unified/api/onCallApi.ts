@@ -19,7 +19,7 @@ export interface OnCallPaginatedResult<T> {
 export const ONCALL_INTEGRATION_V2_FEATURE = 'grafana_alerting_v2';
 type OnCallFeature = typeof ONCALL_INTEGRATION_V2_FEATURE | string;
 
-type AlertReceiveChannelsResult = OnCallPaginatedResult<OnCallIntegrationDTO> | OnCallIntegrationDTO[];
+export type AlertReceiveChannelsResult = OnCallPaginatedResult<OnCallIntegrationDTO> | OnCallIntegrationDTO[];
 
 export interface OnCallIntegrationDTO {
   value: string;
@@ -55,12 +55,7 @@ export const onCallApi = alertingApi.injectEndpoints({
         },
         showErrorAlert: false,
       }),
-      transformResponse: (response: AlertReceiveChannelsResult) => {
-        if (isPaginatedResponse(response)) {
-          return response.results;
-        }
-        return response;
-      },
+      transformResponse: readOnCallIntegrations,
       providesTags: ['OnCallIntegrations'],
     }),
     validateIntegrationName: build.query<boolean, { name: string; pluginId: string }>({
@@ -98,6 +93,11 @@ function isPaginatedResponse(
   response: AlertReceiveChannelsResult
 ): response is OnCallPaginatedResult<OnCallIntegrationDTO> {
   return 'results' in response && Array.isArray(response.results);
+}
+
+/** OnCall returns the integration list bare or paginated depending on version; read both shapes. */
+export function readOnCallIntegrations(response: AlertReceiveChannelsResult): OnCallIntegrationDTO[] {
+  return isPaginatedResponse(response) ? response.results : response;
 }
 
 export const {} = onCallApi;
