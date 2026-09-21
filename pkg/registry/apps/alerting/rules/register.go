@@ -332,7 +332,7 @@ type resourceOnlyAdmissionHook struct{ admission.Interface }
 
 func (s resourceOnlyAdmissionHook) Admit(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
 	m, ok := s.Interface.(admission.MutationInterface)
-	if !ok || a.GetSubresource() == "status" {
+	if !ok || a.GetSubresource() != "" {
 		return nil
 	}
 
@@ -341,7 +341,7 @@ func (s resourceOnlyAdmissionHook) Admit(ctx context.Context, a admission.Attrib
 
 func (s resourceOnlyAdmissionHook) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
 	m, ok := s.Interface.(admission.ValidationInterface)
-	if !ok || a.GetSubresource() == "status" {
+	if !ok || a.GetSubresource() != "" {
 		return nil
 	}
 
