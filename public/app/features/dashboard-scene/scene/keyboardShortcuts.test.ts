@@ -1,9 +1,11 @@
 import { LegacyGraphHoverClearEvent, SetPanelAttentionEvent } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { behaviors, sceneGraph, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
+import { contextSrv } from 'app/core/services/context_srv';
 import { mockLocalStorage } from 'app/features/alerting/unified/mocks';
 
 import { buildShareUrl } from '../sharing/ShareButton/utils';
@@ -257,6 +259,49 @@ describe('setupKeyboardShortcuts', () => {
       await puBinding![0].onTrigger();
 
       expect(buildShareUrl).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('while planning', () => {
+    // None of 'p u'/'p e'/'p s'/'i' check isEditing anywhere in their own chain -- each is
+    // reachable during a plan preview by construction, so refuseWhilePlanning covers them here.
+    let focusedPanel: VizPanel;
+
+    beforeEach(() => {
+      focusedPanel = new VizPanel({ pluginId: 'timeseries' });
+      jest.mocked(findVizPanelByPathId).mockReturnValue(focusedPanel);
+      jest.spyOn(mockScene, 'showModal');
+      config.snapshotEnabled = true;
+      contextSrv.isSignedIn = true;
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+
+      mockScene.setState({
+        planning: { planId: 'plan-1', planTitle: 'Plan', panelCount: 1, onBuild: () => {}, onDismiss: () => {} },
+      });
+      setupKeyboardShortcuts(mockScene);
+
+      const attentionHandler = jest.mocked(appEvents.subscribe).mock.calls[0][1];
+      attentionHandler(new SetPanelAttentionEvent({ panelId: 'panel-1' }));
+    });
+
+    function getBinding(key: string) {
+      return mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === key)![0].onTrigger;
+    }
+
+    it('refuses the panel share link (p u)', async () => {
+      await getBinding('p u')();
+      expect(buildShareUrl).not.toHaveBeenCalled();
+    });
+
+    it('refuses share embed (p e) and share snapshot (p s)', async () => {
+      await getBinding('p e')();
+      await getBinding('p s')();
+      expect(mockScene.showModal).not.toHaveBeenCalled();
+    });
+
+    it('refuses panel inspect (i)', async () => {
+      await getBinding('i')();
+      expect(mockScene.showModal).not.toHaveBeenCalled();
     });
   });
 

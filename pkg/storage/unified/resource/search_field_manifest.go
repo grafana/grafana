@@ -12,6 +12,18 @@ import (
 
 var manifestMergeLogger = log.New("search-manifest-merge")
 
+// ReloadManifests trusts the SDK's embedding declarations. Search fields still
+// require the existing index-specific validation before replacing their view.
+func (o SearchOptions) ReloadManifests(builtin, live []*app.ManifestData) error {
+	if o.EmbeddingConfig != nil {
+		o.EmbeddingConfig.Reload(builtin, live)
+	}
+	if o.SearchFields != nil {
+		return ApplyManifests(o.SearchFields, builtin, live)
+	}
+	return nil
+}
+
 // NewManifestBackedProvider is ManifestBackedProvider for compiled-in
 // manifests, where an invalid declaration is a bug rather than bad input, so it
 // panics instead of returning an error.
@@ -201,9 +213,9 @@ func MergeManifestsByKind(sources ...[]*app.ManifestData) []*app.ManifestData {
 	// higher one already claimed.
 	claimedBy := map[LowerGroupResource]kindClaim{}
 	var merged []*app.ManifestData
-	for i := len(sources) - 1; i >= 0; i-- {
-		warnDuplicateKindsWithinSource(sources[i])
-		for _, m := range sources[i] {
+	for _, source := range slices.Backward(sources) {
+		warnDuplicateKindsWithinSource(source)
+		for _, m := range source {
 			if m == nil {
 				merged = append(merged, m)
 				continue

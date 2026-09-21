@@ -96,10 +96,10 @@ export class DashboardModelCompatibilityWrapper {
   }
 
   public get panels() {
-    const panels = findAllObjects(this._scene, (o) => {
+    const panels = findAllObjects(this._scene, (o): o is VizPanel => {
       return Boolean(o instanceof VizPanel);
     });
-    return panels.map((p) => new PanelModelCompatibilityWrapper(p as VizPanel));
+    return panels.map((p) => new PanelModelCompatibilityWrapper(p));
   }
 
   /**
@@ -179,7 +179,9 @@ export class DashboardModelCompatibilityWrapper {
   }
 }
 
-function findAllObjects(root: SceneObject, check: (o: SceneObject) => boolean) {
+function findAllObjects<T extends SceneObject>(root: SceneObject, check: (o: SceneObject) => o is T): T[];
+function findAllObjects(root: SceneObject, check: (o: SceneObject) => boolean): SceneObject[];
+function findAllObjects(root: SceneObject, check: (o: SceneObject) => boolean): SceneObject[] {
   let result: SceneObject[] = [];
   root.forEachChild((child) => {
     if (check(child)) {

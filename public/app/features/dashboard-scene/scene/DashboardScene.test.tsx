@@ -1,3 +1,5 @@
+import { waitFor } from '@testing-library/react';
+
 import {
   CoreApp,
   type GrafanaConfig,
@@ -58,6 +60,7 @@ import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowActions } from './layout-default/row-actions/RowActions';
 import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
+import { DashboardPlanningEvent } from './planningEvents';
 import { type DashboardSceneState } from './types/dashboard';
 
 const mockRestoreDashboardVersion = jest.fn();
@@ -225,6 +228,22 @@ describe('DashboardScene', () => {
         expect(spy).toHaveBeenCalledWith(expect.objectContaining({ source: 'user' }));
         expect(scene.getEditSessionSource()).toBe('user');
       });
+
+      it('skips the auto-edit entirely when editSource marks a plan preview', () => {
+        // A plan preview opens /dashboard/new only so RENDER_PLAN can populate it and never
+        // intends to edit -- it must not flash into edit mode and back out again. Every other
+        // /dashboard/new caller (no param, editSource=user, editSource=assistant) is unaffected.
+        const scene = buildTestScene();
+        locationService.push('/dashboard/new?editSource=plan-preview');
+        const spy = jest.spyOn(DashboardInteractions, 'editSessionStarted');
+
+        scene.activate();
+
+        expect(spy).not.toHaveBeenCalled();
+        expect(scene.state.isEditing).toBeFalsy();
+        expect(scene.state.isDirty).toBeFalsy();
+        expect(scene.getEditSessionSource()).toBeUndefined();
+      });
     });
 
     describe('Given scene in edit mode', () => {
@@ -339,7 +358,7 @@ describe('DashboardScene', () => {
         expect(scene.state.meta.version).toEqual(2);
       });
 
-      it('Should exit edit mode after saving from unsaved changes modal when dashboardNewLayouts is enabled', () => {
+      it('Should exit edit mode after saving from unsaved changes modal when dashboardNewLayouts is enabled', async () => {
         const originalFeatureToggle = config.featureToggles.dashboardNewLayouts;
         config.featureToggles.dashboardNewLayouts = true;
 
@@ -348,29 +367,31 @@ describe('DashboardScene', () => {
         const publishSpy = jest.spyOn(appEvents, 'publish');
         const hasActualSaveChangesSpy = jest.spyOn(utils, 'hasActualSaveChanges').mockReturnValue(true);
 
-        scene.setState({ title: 'Updated title' });
-        expect(scene.state.isDirty).toBe(true);
-        scene.exitEditMode({ skipConfirm: false });
+        try {
+          scene.setState({ title: 'Updated title' });
+          expect(scene.state.isDirty).toBe(true);
+          scene.exitEditMode({ skipConfirm: false });
 
-        const modalCall = publishSpy.mock.calls.find((call) => call[0] instanceof ShowConfirmModalEvent);
-        expect(modalCall).toBeDefined();
+          const modalCall = publishSpy.mock.calls.find((call) => call[0] instanceof ShowConfirmModalEvent);
+          expect(modalCall).toBeDefined();
 
-        const modalEvent = modalCall![0] as ShowConfirmModalEvent;
-        expect(modalEvent.payload.altActionText).toBeDefined();
+          const modalEvent = modalCall![0] as ShowConfirmModalEvent;
+          expect(modalEvent.payload.altActionText).toBeDefined();
 
-        modalEvent.payload.onAltAction?.();
+          modalEvent.payload.onAltAction?.();
 
-        expect(scene.state.overlay).toBeDefined();
+          await waitFor(() => expect(scene.state.overlay).toBeInstanceOf(SaveDashboardDrawer));
 
-        const overlay = scene.state.overlay as SaveDashboardDrawer;
-        expect(overlay.state.onSaveSuccess).toBeDefined();
+          const overlay = scene.state.overlay as SaveDashboardDrawer;
+          expect(overlay.state.onSaveSuccess).toBeDefined();
 
-        overlay.state.onSaveSuccess!();
-        expect(scene.state.isEditing).toBe(false);
-
-        publishSpy.mockRestore();
-        hasActualSaveChangesSpy.mockRestore();
-        config.featureToggles.dashboardNewLayouts = originalFeatureToggle;
+          overlay.state.onSaveSuccess!();
+          expect(scene.state.isEditing).toBe(false);
+        } finally {
+          publishSpy.mockRestore();
+          hasActualSaveChangesSpy.mockRestore();
+          config.featureToggles.dashboardNewLayouts = originalFeatureToggle;
+        }
       });
 
       it('Should not show Save option in unsaved changes modal when user cannot save', () => {
@@ -1981,11 +2002,11 @@ describe('DashboardScene', () => {
   });
 
   describe('openSaveDrawer with template flags', () => {
-    it('opens the drawer in saveAsDashboardTemplate mode', () => {
+    it('opens the drawer in saveAsDashboardTemplate mode', async () => {
       const scene = buildTestScene();
       scene.onEnterEditMode();
 
-      scene.openSaveDrawer({ saveAsDashboardTemplate: true });
+      await scene.openSaveDrawer({ saveAsDashboardTemplate: true });
 
       const overlay = scene.state.overlay;
       expect(overlay).toBeInstanceOf(SaveDashboardDrawer);
@@ -1993,11 +2014,11 @@ describe('DashboardScene', () => {
       expect((overlay as SaveDashboardDrawer).state.saveDashboardTemplate).toBeUndefined();
     });
 
-    it('opens the drawer in saveDashboardTemplate mode', () => {
+    it('opens the drawer in saveDashboardTemplate mode', async () => {
       const scene = buildTestScene();
       scene.onEnterEditMode();
 
-      scene.openSaveDrawer({ saveDashboardTemplate: true });
+      await scene.openSaveDrawer({ saveDashboardTemplate: true });
 
       const overlay = scene.state.overlay;
       expect(overlay).toBeInstanceOf(SaveDashboardDrawer);
@@ -2005,10 +2026,10 @@ describe('DashboardScene', () => {
       expect((overlay as SaveDashboardDrawer).state.saveAsDashboardTemplate).toBeUndefined();
     });
 
-    it('does nothing when the scene is not in edit mode', () => {
+    it('does nothing when the scene is not in edit mode', async () => {
       const scene = buildTestScene();
       // Not entering edit mode
-      scene.openSaveDrawer({ saveAsDashboardTemplate: true });
+      await scene.openSaveDrawer({ saveAsDashboardTemplate: true });
       expect(scene.state.overlay).toBeUndefined();
     });
   });
@@ -3293,6 +3314,40 @@ describe('DashboardScene', () => {
 
       expect(scene.getDefaultLayout()).toBeInstanceOf(DefaultGridLayoutManager);
       expect(scene.getDefaultLayoutType()).toBe(DefaultGridLayoutManager.descriptor.id);
+    });
+  });
+
+  describe('deactivating a scene that is still previewing a plan', () => {
+    it('reports the plan as closed and clears planning state, without a Build/Dismiss decision', () => {
+      const scene = buildTestScene();
+      const deactivate = scene.activate();
+      const onBuild = jest.fn();
+      const onDismiss = jest.fn();
+      scene.setState({
+        planning: { planId: 'plan-1', planTitle: 'Kafka overview', panelCount: 2, onBuild, onDismiss },
+      });
+      const events: unknown[] = [];
+      const sub = appEvents.subscribe(DashboardPlanningEvent, (event) => events.push(event.payload));
+
+      deactivate();
+
+      expect(events).toEqual([{ planId: 'plan-1', action: 'closed' }]);
+      expect(scene.state.planning).toBeUndefined();
+      expect(onBuild).not.toHaveBeenCalled();
+      expect(onDismiss).not.toHaveBeenCalled();
+      sub.unsubscribe();
+    });
+
+    it('does nothing when no plan is being previewed', () => {
+      const scene = buildTestScene();
+      const deactivate = scene.activate();
+      const events: unknown[] = [];
+      const sub = appEvents.subscribe(DashboardPlanningEvent, (event) => events.push(event.payload));
+
+      deactivate();
+
+      expect(events).toEqual([]);
+      sub.unsubscribe();
     });
   });
 });
