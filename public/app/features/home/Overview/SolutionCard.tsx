@@ -213,17 +213,6 @@ const getStyles = (theme: GrafanaTheme2, needsAttention: boolean) => ({
     gridTemplateColumns: 'auto minmax(0, 1fr) auto',
     ...(needsAttention && {
       borderColor: `color-mix(in srgb, ${theme.colors.warning.main} 32%, ${theme.colors.border.weak})`,
-      overflow: 'hidden',
-
-      '&::before': {
-        content: '""',
-        position: 'absolute',
-        top: 0,
-        bottom: 0,
-        left: 0,
-        width: theme.spacing(0.375),
-        background: theme.colors.warning.main,
-      },
     }),
   }),
   heading: css({
@@ -308,7 +297,7 @@ const getStyles = (theme: GrafanaTheme2, needsAttention: boolean) => ({
     color: theme.colors.warning.text,
 
     '&:hover, &:focus': {
-      background: theme.colors.warning.background,
+      background: theme.colors.warning.subtleBackground,
       color: theme.colors.warning.textEmphasis,
     },
   }),

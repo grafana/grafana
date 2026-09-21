@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"errors"
+	"net/http"
 	"sync"
 	"testing"
 	"time"
@@ -208,20 +209,46 @@ func TestVectorSearch_RateLimitErrorFailsClosedUnavailable(t *testing.T) {
 	assert.Equal(t, codes.Unavailable, status.Code(err), "limiter errors must fail closed")
 }
 
-func TestVectorSearch_RateLimitedRunsBeforeEmbedAndCache(t *testing.T) {
+func TestVectorSearch_RateLimitedRunsBeforeCatalogCacheAndEmbed(t *testing.T) {
 	fake := &fakeTextEmbedder{dim: 4}
 	emb := newTestEmbedder(fake)
 	cache := newFakeQueryCache()
 	rl := &fakeRateLimiter{allow: false, count: 99}
-	s := newTestSearchServerWithCache(emb, &fakeVectorBackend{}, cache, rl)
+	backend := &fakeVectorBackend{}
+	s := newTestSearchServerWithCache(emb, backend, cache, rl)
 
 	_, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
 		Key: validKey(), Query: "q",
 	})
 	require.Error(t, err)
 	assert.Equal(t, codes.ResourceExhausted, status.Code(err))
+	assert.Zero(t, backend.resolveCalls, "rejected request must not touch the catalog")
 	assert.Equal(t, 0, cache.getCalls, "rejected request must not touch the cache")
 	assert.Empty(t, fake.gotIn.Texts, "rejected request must not call the embedder")
+}
+
+func TestVectorSearch_UnavailableCollectionsConsumeRateLimit(t *testing.T) {
+	for _, missing := range []bool{true, false} {
+		name := "disallowed"
+		if missing {
+			name = "unknown"
+		}
+		t.Run(name, func(t *testing.T) {
+			fake := &fakeTextEmbedder{dim: 4}
+			backend := &fakeVectorBackend{resolveNotFound: missing}
+			rl := &fakeRateLimiter{allow: true}
+			s := newTestSearchServerWithCache(newTestEmbedder(fake), backend, nil, rl)
+			s.collectionAllowlist = vector.NewCollectionAllowlist(nil, nil)
+
+			resp, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{Key: validKey(), Query: "q"})
+			require.NoError(t, err)
+			require.NotNil(t, resp.Error)
+			assert.EqualValues(t, http.StatusNotFound, resp.Error.Code)
+			assert.Equal(t, 1, rl.calls)
+			assert.Equal(t, 1, backend.resolveCalls)
+			assert.Empty(t, fake.gotIn.Texts)
+		})
+	}
 }
 
 func TestSha256HexStable(t *testing.T) {

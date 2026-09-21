@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { isEqual } from 'lodash';
 import { Global } from '@emotion/react';
 
 import { CoreApp, type DataQueryRequest, type GrafanaTheme2 } from '@grafana/data';
@@ -41,7 +42,7 @@ import { canEditNotebooks } from '../permissions';
 import { NOTEBOOK_EDIT_PARAM, isNotebookPdfLayoutUrl } from '../urls';
 
 import { changesTimeSettings, NotebookAutosave } from './NotebookAutosave';
-import { NotebookEditHistory } from './NotebookEditHistory';
+import { NOTEBOOK_EDIT_KIND, NotebookEditHistory } from './NotebookEditHistory';
 import { NotebookEditHistoryControls } from './NotebookEditHistoryControls';
 import { NotebookEditToggle } from './NotebookEditToggle';
 import { useIsNotebookEmbedded } from './NotebookEmbeddedContext';
@@ -270,7 +271,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
 
   /**
    * Permission is checked here rather than only where the toggle renders, so no caller — including
-   * a hand-typed `?edit=true` — can force edit mode for a user without `dashboards:write`.
+   * a hand-typed `?edit=true` — can force edit mode for a user without `notebooks:write`.
    */
   public onEnterEditMode = (source: NotebookEditSessionSource = NOTEBOOK_EDIT_SESSION_SOURCE.TOGGLE) => {
     if (!canEditNotebooks()) {
@@ -366,9 +367,30 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
   /**
    * The scene stays the single writer for tags — it is what transformNotebookSceneToSaveModel reads.
    * The layout manager's copy is refreshed by the subscription above, so the two cannot drift.
+   *
+   * Recorded on editHistory like a cell edit, so an accidental tag add/remove is undoable. TagFilter
+   * is used with isClearable={false} and no bulk-clear control, so every call here already represents
+   * exactly one add or one remove — unlike cell content, there is nothing to coalesce.
    */
   public onTagsChange = (tags: string[]) => {
-    this.setState({ tags });
+    const previous = this.state.tags ?? [];
+    if (isEqual(previous, tags)) {
+      return;
+    }
+
+    // Closes out any cell edit still coalescing, so it lands as its own undo step under this one
+    // instead of being interrupted by it.
+    this.state.body.commitPendingEdits();
+
+    this.editHistory.execute({
+      label:
+        tags.length > previous.length
+          ? t('notebooks.history.add-tag', 'Add tag')
+          : t('notebooks.history.remove-tag', 'Remove tag'),
+      kind: NOTEBOOK_EDIT_KIND.TAGS,
+      perform: () => this.setState({ tags }),
+      undo: () => this.setState({ tags: previous }),
+    });
   };
 
   /**
@@ -576,7 +598,9 @@ const getStyles = (theme: GrafanaTheme2, headerHeight: number, visualRefreshEnab
   controls: css({
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    // `safe`, because a plain flex-end row overflows to the left, over the docked nav.
+    justifyContent: 'safe flex-end',
+    flexWrap: 'wrap',
     gap: theme.spacing(1),
     padding: theme.spacing(1, 2),
     // A sticky row is transparent by default, so the notebook would scroll visibly through it. These two

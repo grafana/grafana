@@ -11,6 +11,7 @@ type ListRecordingRuleSearchRulesV0alpha1RequestSearchWhereNode struct {
 	Text   *ListRecordingRuleSearchRulesV0alpha1RequestSearchTextLeaf   `json:"text,omitempty"`
 	Filter *ListRecordingRuleSearchRulesV0alpha1RequestSearchFilterLeaf `json:"filter,omitempty"`
 	Range  *ListRecordingRuleSearchRulesV0alpha1RequestSearchRangeLeaf  `json:"range,omitempty"`
+	Regex  *ListRecordingRuleSearchRulesV0alpha1RequestSearchRegexLeaf  `json:"regex,omitempty"`
 	Exists *ListRecordingRuleSearchRulesV0alpha1RequestSearchExistsLeaf `json:"exists,omitempty"`
 }
 
@@ -78,6 +79,23 @@ func NewListRecordingRuleSearchRulesV0alpha1RequestSearchRangeLeaf() *ListRecord
 // OpenAPIModelName returns the OpenAPI model name for ListRecordingRuleSearchRulesV0alpha1RequestSearchRangeLeaf.
 func (ListRecordingRuleSearchRulesV0alpha1RequestSearchRangeLeaf) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1RequestSearchRangeLeaf"
+}
+
+// Retained for generic schema compatibility; rejected by the compatibility handler.
+type ListRecordingRuleSearchRulesV0alpha1RequestSearchRegexLeaf struct {
+	Field   string `json:"field"`
+	Pattern string `json:"pattern"`
+	Negate  *bool  `json:"negate,omitempty"`
+}
+
+// NewListRecordingRuleSearchRulesV0alpha1RequestSearchRegexLeaf creates a new ListRecordingRuleSearchRulesV0alpha1RequestSearchRegexLeaf object.
+func NewListRecordingRuleSearchRulesV0alpha1RequestSearchRegexLeaf() *ListRecordingRuleSearchRulesV0alpha1RequestSearchRegexLeaf {
+	return &ListRecordingRuleSearchRulesV0alpha1RequestSearchRegexLeaf{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for ListRecordingRuleSearchRulesV0alpha1RequestSearchRegexLeaf.
+func (ListRecordingRuleSearchRulesV0alpha1RequestSearchRegexLeaf) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1RequestSearchRegexLeaf"
 }
 
 // Retained for generic schema compatibility; rejected by the compatibility handler.
