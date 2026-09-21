@@ -82,12 +82,18 @@ provider), rather than hardcoding the current hex/RGB value. Assert the specific
 or named theme color the element should use. Palette changes should not break these tests;
 using the wrong token should.
 
-```ts
-// ❌ pins today's palette instead of the component's semantic color choice
-expect(screen.getByText('42')).toHaveStyle({ color: '#FBAD37' });
+For example, the JSON highlighting assertions in
+`packages/grafana-ui/src/components/Table/TableNG/TableNG.test.tsx` should express the
+string and number token choices:
 
-// ✅ checks that numeric JSON tokens use the theme's number color
-expect(screen.getByText('42')).toHaveStyle({ color: theme.components.codeEditor.number });
+```ts
+// Before: pins today's palette
+expect(await screen.findByText('"us-east-1"')).toHaveStyle({ color: '#6CCF8E' });
+expect(screen.getByText('3')).toHaveStyle({ color: '#FBAD37' });
+
+// After: checks the intended theme tokens
+expect(await screen.findByText('"us-east-1"')).toHaveStyle({ color: theme.components.codeEditor.string });
+expect(screen.getByText('3')).toHaveStyle({ color: theme.components.codeEditor.number });
 ```
 
 For theme-switching tests, assert against each supplied theme after rerendering. This exception
