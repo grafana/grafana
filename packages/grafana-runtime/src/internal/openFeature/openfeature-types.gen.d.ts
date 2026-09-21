@@ -40,11 +40,13 @@ declare module "@openfeature/core" {
     | "grafana.customDashboardTemplates"
     | "dashboardTemplatesAssistantButton"
     | "suggestedDashboardsAssistantButton"
+    | "alerting.dataSourceManagedRouteProxy"
     | "alerting.manualAssistantInvestigation"
     | "alerting.ruleQuality"
     | "datasources.azureMonitorBatchAPI"
     | "recentlyViewedDashboards"
     | "experimentRecentlyViewedDashboards"
+    | "foldersAppPlatformAPI"
     | "otelLogsFormatting"
     | "grafana.starredFolders"
     | "grafana.newTextPanel"
@@ -107,8 +109,11 @@ declare module "@openfeature/core" {
     | "grafana.dashboardsAutoHeightPanels"
     | "grafana.dashboardAutoGridDefault"
     | "grafana.multiTenantUserPermissions"
-    | "datasources.gatewayGuardrails";
+    | "datasources.gatewayGuardrails"
+    | "grafana.pluginExtensionReactElementProps"
+    | "grafana.logDetailsDisplayedFieldControls";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
-  export type ObjectFlagKey = never;
+  export type ObjectFlagKey =
+    | "grafana.mtFallback";
 }

@@ -50,6 +50,16 @@ func (r ResourceAuthorizer) Authorize(ctx context.Context, attr authorizer.Attri
 	return authorizer.DecisionAllow, "", nil
 }
 
+// ConditionsAwareAuthorize implements authorizer.Authorizer.
+func (r ResourceAuthorizer) ConditionsAwareAuthorize(ctx context.Context, attr authorizer.Attributes) authorizer.ConditionsAwareDecision {
+	return authorizer.ConditionsAwareDecisionFromParts(r.Authorize(ctx, attr))
+}
+
+// EvaluateConditions implements authorizer.Authorizer.
+func (r ResourceAuthorizer) EvaluateConditions(_ context.Context, _ authorizer.ConditionsAwareDecision, _ authorizer.ConditionsData) (authorizer.Decision, string, error) {
+	return authorizer.DecisionDeny, "", authorizer.ErrorConditionEvaluationNotSupported
+}
+
 // SubresourceCheck performs an authorization check for a specific subresource.
 type SubresourceCheck func(ctx context.Context, ident claims.AuthInfo, attr authorizer.Attributes) (authorizer.Decision, string, error)
 

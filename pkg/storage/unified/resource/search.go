@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"math/rand"
+	"net/http"
 	"slices"
 	"strconv"
 	"strings"
@@ -143,6 +144,13 @@ const IndexFeatureDeletedMarker IndexFeature = "deleted-marker"
 // that path reports facet-capable but unstored fields as missing values.
 const IndexFeatureStoredFacets IndexFeature = "facets-are-stored"
 
+// IndexFeatureStoredResourceVersion means the index stores each document's resource
+// version; without it a search returns 0, which callers read as "unknown".
+//
+// Recorded but not required, because requiring it rebuilds every existing index at
+// once. Recording it now is what lets a later release require it.
+const IndexFeatureStoredResourceVersion IndexFeature = "resource-version-stored"
+
 // IndexFeatureHoldsDeletedDocuments means the index keeps deleted documents, so a
 // reader that does not exclude them returns deleted resources as live. Describes
 // what the index holds, not what it maps.
@@ -164,6 +172,7 @@ func TrashIndexFeatures() []IndexFeature {
 var currentIndexFeatures = []IndexFeature{
 	IndexFeatureDeletedMarker,
 	IndexFeatureStoredFacets,
+	IndexFeatureStoredResourceVersion,
 	IndexFeatureTrashFields,
 }
 
@@ -173,6 +182,7 @@ var currentIndexFeatures = []IndexFeature{
 var knownIndexFeatures = []IndexFeature{
 	IndexFeatureDeletedMarker,
 	IndexFeatureStoredFacets,
+	IndexFeatureStoredResourceVersion,
 	IndexFeatureTrashFields,
 	IndexFeatureHoldsDeletedDocuments,
 }
@@ -616,6 +626,7 @@ func (s *searchServer) ListManagedObjects(ctx context.Context, req *resourcepb.L
 		}
 		if kind.NextPageToken != "" {
 			rsp.Error = &resourcepb.ErrorResult{
+				Code:    http.StatusNotImplemented,
 				Message: "Multiple pages are not yet supported",
 			}
 			return rsp, nil
@@ -824,8 +835,8 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		code := codes.OK
 		if retErr != nil {
 			code = status.Code(retErr)
-		} else if resp != nil && resp.Error != nil {
-			code = grpcCodeFromHTTPStatus(resp.Error.Code)
+		} else if resp != nil {
+			code = grpcCodeFromErrorResult(resp.Error)
 		}
 		if s.vectorMetrics != nil {
 			metricutil.ObserveWithExemplar(ctx,
