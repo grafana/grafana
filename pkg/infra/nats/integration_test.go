@@ -117,17 +117,24 @@ func testPublisherBufferOverflowRecovers(t *testing.T) {
 		return promtestutil.ToFloat64(pub.metrics.pendingBytes) == 0 && promtestutil.ToFloat64(pub.metrics.lastSuccessfulFlush) > 0
 	}, 10*time.Second, 50*time.Millisecond)
 
+	// received can also carry stray deliveries (e.g. extra buffered "warmup"
+	// publishes flushed after reconnect), so match only against the accepted set
+	// and never assert on the multi-KB payloads directly (a failed require.Contains
+	// would try to render them and overflow bufio.Scanner).
+	acceptedSet := make(map[string]struct{}, len(accepted))
+	for _, message := range accepted {
+		acceptedSet[message] = struct{}{}
+	}
 	seen := make(map[string]struct{}, len(accepted))
 	for len(seen) < len(accepted) {
 		select {
 		case message := <-received:
-			seen[message] = struct{}{}
+			if _, ok := acceptedSet[message]; ok {
+				seen[message] = struct{}{}
+			}
 		case <-time.After(15 * time.Second):
 			t.Fatalf("received %d/%d buffered messages", len(seen), len(accepted))
 		}
-	}
-	for _, message := range accepted {
-		require.Contains(t, seen, message)
 	}
 }
 
