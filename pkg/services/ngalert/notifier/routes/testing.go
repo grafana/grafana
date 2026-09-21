@@ -35,7 +35,7 @@ func (f *FakeService) GetManagedRoute(_ context.Context, _ int64, name string, _
 func (f *FakeService) GetManagedRoutes(_ context.Context, _ int64, _ identity.Requester) (v1.ManagedRoutes, error) {
 	routes := f.Config.GetManagedRoutes()
 	for _, r := range routes {
-		if p, ok := f.Provenances[r.Name]; ok {
+		if p, ok := f.Provenances[r.GetUID()]; ok {
 			r.Provenance = p
 		}
 	}
