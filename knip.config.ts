@@ -134,12 +134,7 @@ const config: KnipConfig = {
     // TODO `grafana-alerting` should probably have its own storybook (like `grafana-flamegraph`)
     'packages/grafana-alerting': {
       entry: defaultEntries,
-      ignoreDependencies: [
-        ...packageIgnoreDeps,
-        '@storybook/addon-docs',
-        '@storybook/react-webpack5',
-        '@storybook/react',
-      ],
+      ignoreDependencies: [...packageIgnoreDeps, '@storybook/addon-docs', '@storybook/react'],
       storybook: true,
     },
     'packages/grafana-api-clients': {
@@ -149,6 +144,9 @@ const config: KnipConfig = {
       // this package contains shared code that isn't immediately used by the package
       webpack: false,
       ignoreDependencies: ['.*'],
+    },
+    'packages/grafana-plugin-compat': {
+      ignoreDependencies: packageIgnoreDeps,
     },
   },
 };

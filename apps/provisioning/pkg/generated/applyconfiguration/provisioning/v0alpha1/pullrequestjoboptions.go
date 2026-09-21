@@ -15,6 +15,11 @@ type PullRequestJobOptionsApplyConfiguration struct {
 	Hash *string `json:"hash,omitempty"`
 	// URL to the originator (eg, PR URL)
 	URL *string `json:"url,omitempty"`
+	// Whether the pull request's head repository differs from its base repository.
+	// Omitted when repository identities were unavailable, including older jobs.
+	IsFork *bool `json:"isFork,omitempty"`
+	// URL of the head repository for a pull request from a fork, when available.
+	ForkURL *string `json:"forkURL,omitempty"`
 }
 
 // PullRequestJobOptionsApplyConfiguration constructs a declarative configuration of the PullRequestJobOptions type for use with
@@ -52,5 +57,21 @@ func (b *PullRequestJobOptionsApplyConfiguration) WithHash(value string) *PullRe
 // If called multiple times, the URL field is set to the value of the last call.
 func (b *PullRequestJobOptionsApplyConfiguration) WithURL(value string) *PullRequestJobOptionsApplyConfiguration {
 	b.URL = &value
+	return b
+}
+
+// WithIsFork sets the IsFork field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the IsFork field is set to the value of the last call.
+func (b *PullRequestJobOptionsApplyConfiguration) WithIsFork(value bool) *PullRequestJobOptionsApplyConfiguration {
+	b.IsFork = &value
+	return b
+}
+
+// WithForkURL sets the ForkURL field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the ForkURL field is set to the value of the last call.
+func (b *PullRequestJobOptionsApplyConfiguration) WithForkURL(value string) *PullRequestJobOptionsApplyConfiguration {
+	b.ForkURL = &value
 	return b
 }

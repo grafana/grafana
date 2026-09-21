@@ -6,10 +6,15 @@ import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button, ClipboardButton, Dropdown, Icon, IconButton, Menu, useStyles2 } from '@grafana/ui';
 
-import { NOTEBOOK_DELETE_SOURCE } from '../analytics/types';
+import { NotebookAnalytics } from '../analytics/main';
+import { NOTEBOOK_DELETE_SOURCE, NOTEBOOK_EXPORT_SOURCE, NOTEBOOK_LINK_COPY_SOURCE } from '../analytics/types';
 import { DeleteNotebookModal } from '../delete/DeleteNotebookModal';
 import { useDeleteNotebook } from '../delete/useDeleteNotebook';
 import { NotebookExportMenu } from '../export/NotebookExportMenu';
+import { AttachToIncidentModal } from '../incidents/AttachToIncidentModal';
+import { DeclareIncidentModal } from '../incidents/DeclareIncidentModal';
+import { IrmMenuItem } from '../incidents/IrmMenuItem';
+import { useNotebookIncidents } from '../incidents/useNotebookIncidents';
 import { getNotebookPageStateManager } from '../pages/NotebookPageStateManager';
 import { canDeleteNotebooks } from '../permissions';
 import { type NotebookScene } from '../scene/NotebookScene';
@@ -35,6 +40,13 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const { remove, isDeleting } = useDeleteNotebook(NOTEBOOK_DELETE_SOURCE.NOTEBOOK_TOOLBAR);
+  // Both incident actions live in this menu, so either is reason enough to open it.
+  const { available: hasIncidents } = useNotebookIncidents();
+  const hasMoreActions = hasIncidents || canDeleteNotebooks();
+  // Owned here, not by the menu items: those are inside the Dropdown overlay, which unmounts as the
+  // menu closes.
+  const [isDeclaring, setIsDeclaring] = useState(false);
+  const [isAttaching, setIsAttaching] = useState(false);
 
   const onConfirmDelete = async () => {
     if (!(await remove(uid, scene.state.title))) {
@@ -61,24 +73,37 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
   // way an export reflects what is on screen.
   const exportMenu = () => (
     <Menu>
-      <NotebookExportMenu uid={uid} getSpec={async () => transformNotebookSceneToSaveModel(scene)} />
+      <NotebookExportMenu
+        uid={uid}
+        getSpec={async () => transformNotebookSceneToSaveModel(scene)}
+        source={NOTEBOOK_EXPORT_SOURCE.NOTEBOOK_TOOLBAR}
+      />
     </Menu>
   );
 
-  const deleteMenu = () => (
+  const moreMenu = () => (
     <Menu>
-      <Menu.Item
-        destructive
-        label={t('notebooks.delete.confirm', 'Delete')}
-        icon="trash-alt"
-        onClick={() => setIsConfirmingDelete(true)}
-      />
+      <IrmMenuItem onDeclare={() => setIsDeclaring(true)} onAttach={() => setIsAttaching(true)} />
+      {canDeleteNotebooks() && (
+        <Menu.Item
+          destructive
+          label={t('notebooks.delete.confirm', 'Delete')}
+          icon="trash-alt"
+          onClick={() => setIsConfirmingDelete(true)}
+        />
+      )}
     </Menu>
   );
 
   return (
     <>
-      <ClipboardButton variant="secondary" size="sm" icon="link" getText={() => notebookShareUrl(uid)}>
+      <ClipboardButton
+        variant="secondary"
+        size="sm"
+        icon="link"
+        getText={() => notebookShareUrl(uid)}
+        onClipboardCopy={() => NotebookAnalytics.linkCopied(uid, NOTEBOOK_LINK_COPY_SOURCE.NOTEBOOK_TOOLBAR)}
+      >
         {t('notebooks.view.copy-link', 'Copy link')}
       </ClipboardButton>
       <Dropdown overlay={exportMenu} placement="bottom-end" onVisibleChange={setIsExportOpen}>
@@ -88,11 +113,12 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
           <Icon name={isExportOpen ? 'angle-up' : 'angle-down'} size="sm" aria-hidden="true" />
         </Button>
       </Dropdown>
-      {canDeleteNotebooks() && (
-        <Dropdown overlay={deleteMenu} placement="bottom-end">
+      {hasMoreActions && (
+        <Dropdown overlay={moreMenu} placement="bottom-end">
           <IconButton
             name="ellipsis-v"
             variant="secondary"
+            size="sm"
             // Dropdown injects aria-expanded but not aria-haspopup, so without this the trigger
             // announces as a plain button and gives no hint that it opens a menu.
             aria-haspopup="menu"
@@ -100,6 +126,12 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
             tooltip={t('notebooks.view.more-actions', 'More actions')}
           />
         </Dropdown>
+      )}
+      {isDeclaring && (
+        <DeclareIncidentModal uid={uid} title={scene.state.title} onDismiss={() => setIsDeclaring(false)} />
+      )}
+      {isAttaching && (
+        <AttachToIncidentModal uid={uid} title={scene.state.title} onDismiss={() => setIsAttaching(false)} />
       )}
       {isConfirmingDelete && (
         <DeleteNotebookModal
@@ -141,7 +173,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   toolbar: css({
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    // `safe`, because a plain flex-end row overflows to the left, over the docked nav.
+    justifyContent: 'safe flex-end',
+    flexWrap: 'wrap',
     gap: theme.spacing(1),
     padding: theme.spacing(1, 2),
     borderBottom: `1px solid ${theme.colors.border.weak}`,

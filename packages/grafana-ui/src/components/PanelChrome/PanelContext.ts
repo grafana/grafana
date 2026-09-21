@@ -69,6 +69,12 @@ export interface PanelContext {
    */
   onOpenInspector?: () => void;
 
+  /**
+   * Used by the panel header status popover to trigger an AI-assisted investigation of the
+   * panel's query errors and notices.
+   */
+  onInvestigateErrors?: () => void;
+
   /** For instance state that can be shared between panel & options UI  */
   instanceState?: any;
 
