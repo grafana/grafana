@@ -62,6 +62,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
+	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl"
 	teamservice "github.com/grafana/grafana/pkg/services/team"
 	legacyuser "github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -267,6 +268,8 @@ func NewAPIService(
 		apiConfig:                  Config{SingleOrganization: true},
 		teamLBACApiInstaller:       teamLBACApiInstaller,
 		settingService:             settingService,
+		// Serve the SSOSetting kind read-only in standalone, gated by kubernetesSsoSettingsApi.
+		ssoLegacyStore: sso.NewLegacyStore(ssosettingsimpl.ProvideReadOnlyDBService(dbProvider), tracingService),
 		authorizer: authorizer.AuthorizerFunc(
 			func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 				user, ok := types.AuthInfoFrom(ctx)
