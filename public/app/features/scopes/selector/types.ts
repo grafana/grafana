@@ -25,3 +25,14 @@ export interface RecentScopeSet {
   scopeNodeId?: string;
   parentNodeTitle?: string;
 }
+
+/**
+ * A container node that sits at least two levels below root (i.e. reaching it today requires expanding more than
+ * one menu) and has at least one selectable scope as a direct child. Shown at the top level of the selector as a
+ * shortcut so users can jump straight to it instead of expanding every intermediate level.
+ */
+export interface QuickJumpGroup {
+  scopeNodeId: string;
+  // Ancestor scopeNodeIds from the top-level category down to and including this group (root excluded).
+  path: string[];
+}

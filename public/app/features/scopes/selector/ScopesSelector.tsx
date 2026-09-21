@@ -58,6 +58,7 @@ export const ScopesSelector = () => {
     appliedScopes,
     tree,
     scopes: scopesMap,
+    quickJumpGroups,
   } = selectorServiceState;
   const { scopesService, scopesSelectorService } = services;
   const { readOnly, loading } = scopes.state;
@@ -103,6 +104,7 @@ export const ScopesSelector = () => {
                           tree={tree}
                           loadingNodeName={loadingNodeName}
                           recentScopes={recentScopes}
+                          quickJumpGroups={quickJumpGroups}
                           selectedScopes={selectedScopes}
                           scopeNodes={nodes}
                           onRecentScopesSelect={(scopeIds: string[], scopeNodeId?: string) => {

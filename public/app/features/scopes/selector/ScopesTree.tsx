@@ -6,10 +6,13 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { RecentScopes } from './RecentScopes';
+import { ScopesQuickJumpGroups } from './ScopesQuickJumpGroups';
+import { ScopesTreeBreadcrumb } from './ScopesTreeBreadcrumb';
 import { ScopesTreeHeadline } from './ScopesTreeHeadline';
 import { ScopesTreeItemList } from './ScopesTreeItemList';
 import { ScopesTreeSearch } from './ScopesTreeSearch';
-import { type NodesMap, type RecentScopeSet, type SelectedScope, type TreeNode } from './types';
+import { getExpandedPath } from './scopesTreeUtils';
+import { type NodesMap, type QuickJumpGroup, type RecentScopeSet, type SelectedScope, type TreeNode } from './types';
 import { useScopeActions } from './useScopeActions';
 import { useScopesHighlighting } from './useScopesHighlighting';
 
@@ -19,9 +22,10 @@ export interface ScopesTreeProps {
   selectedScopes: SelectedScope[];
   scopeNodes: NodesMap;
 
-  // Recent scopes are only shown at the root node
+  // Recent scopes, quick jump groups and the breadcrumb are only shown at the root node
   recentScopes?: RecentScopeSet[];
   onRecentScopesSelect?: (scopeIds: string[], scopeNodeId?: string) => void;
+  quickJumpGroups?: QuickJumpGroup[];
 }
 
 export function ScopesTree({
@@ -30,9 +34,10 @@ export function ScopesTree({
   selectedScopes,
   recentScopes,
   onRecentScopesSelect,
+  quickJumpGroups,
   scopeNodes,
 }: ScopesTreeProps) {
-  const { selectScope, deselectScope, toggleExpandedNode } = useScopeActions();
+  const { selectScope, deselectScope, toggleExpandedNode, expandToGroup } = useScopeActions();
   const styles = useStyles2(getStyles);
 
   // Used for a11y reference
@@ -92,12 +97,20 @@ export function ScopesTree({
         onFocus={enableHighlighting}
         onBlur={disableHighlighting}
       />
+      {tree.scopeNodeId === '' && anyChildExpanded && (
+        <ScopesTreeBreadcrumb path={getExpandedPath(tree)} scopeNodes={scopeNodes} />
+      )}
+
       {tree.scopeNodeId === '' &&
         !anyChildExpanded &&
         recentScopes &&
         recentScopes.length > 0 &&
         onRecentScopesSelect &&
         !tree.query && <RecentScopes recentScopes={recentScopes} onSelect={onRecentScopesSelect} />}
+
+      {tree.scopeNodeId === '' && !anyChildExpanded && !tree.query && quickJumpGroups && (
+        <ScopesQuickJumpGroups groups={quickJumpGroups} scopeNodes={scopeNodes} onSelect={expandToGroup} />
+      )}
 
       {nodeLoading ? (
         <Skeleton count={5} className={styles.loader} />
@@ -115,12 +128,7 @@ export function ScopesTree({
             id={selectedNodesToShowId}
           />
 
-          <ScopesTreeHeadline
-            anyChildExpanded={anyChildExpanded}
-            query={tree.query}
-            resultsNodes={childrenArray}
-            scopeNodes={scopeNodes}
-          />
+          <ScopesTreeHeadline anyChildExpanded={anyChildExpanded} query={tree.query} resultsNodes={childrenArray} />
 
           <ScopesTreeItemList
             items={childrenArray}
