@@ -22,13 +22,15 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   useReplaceRepositoryMutation: jest.fn(),
 }));
 
-const FORCE_DELETE_ANNOTATION = 'provisioning.grafana.app/force-delete';
-
 const mockDelete = jest.fn();
 const mockReplace = jest.fn();
 
 const createMockRepository = (healthy: boolean): Repository => ({
-  metadata: { name: 'test-repo' },
+  metadata: {
+    name: 'test-repo',
+    // The default finalizer set the backend seeds on a repository.
+    finalizers: ['remove-orphan-resources', 'remove-pending-jobs', 'cleanup'],
+  },
   spec: {
     title: 'Test Repository',
     type: 'github',
@@ -72,7 +74,7 @@ beforeEach(() => {
 });
 
 describe('DeleteRepositoryButton', () => {
-  it('deletes a healthy repository without setting the force-delete annotation', async () => {
+  it('deletes a healthy repository without editing its finalizers', async () => {
     const event = await openMenuAndConfirm(createMockRepository(true), /remove resources/i);
 
     expect(event.payload.text).not.toMatch(/unhealthy/i);
@@ -88,7 +90,7 @@ describe('DeleteRepositoryButton', () => {
     );
   });
 
-  it('warns and sets the force-delete annotation when deleting an unhealthy repository', async () => {
+  it('warns and drops the cleanup finalizer when deleting an unhealthy repository', async () => {
     const event = await openMenuAndConfirm(createMockRepository(false), /remove resources/i);
 
     expect(event.payload.text).toMatch(/unhealthy/i);
@@ -100,7 +102,7 @@ describe('DeleteRepositoryButton', () => {
         name: 'test-repo',
         repository: expect.objectContaining({
           metadata: expect.objectContaining({
-            annotations: { [FORCE_DELETE_ANNOTATION]: 'true' },
+            finalizers: ['remove-orphan-resources', 'remove-pending-jobs'],
           }),
         }),
       })
@@ -112,7 +114,7 @@ describe('DeleteRepositoryButton', () => {
     );
   });
 
-  it('sets both the keep-resources finalizers and the force-delete annotation for an unhealthy keep-resources delete', async () => {
+  it('drops the cleanup finalizer from the keep-resources set for an unhealthy keep-resources delete', async () => {
     const event = await openMenuAndConfirm(createMockRepository(false), /keep resources/i);
 
     event.payload.onConfirm?.();
@@ -122,8 +124,7 @@ describe('DeleteRepositoryButton', () => {
         name: 'test-repo',
         repository: expect.objectContaining({
           metadata: expect.objectContaining({
-            finalizers: ['cleanup', 'release-orphan-resources'],
-            annotations: { [FORCE_DELETE_ANNOTATION]: 'true' },
+            finalizers: ['release-orphan-resources'],
           }),
         }),
       })
@@ -131,7 +132,7 @@ describe('DeleteRepositoryButton', () => {
     expect(mockDelete).toHaveBeenCalledWith({ name: 'test-repo' });
   });
 
-  it('sets only the keep-resources finalizers for a healthy keep-resources delete', async () => {
+  it('keeps the cleanup finalizer for a healthy keep-resources delete', async () => {
     const event = await openMenuAndConfirm(createMockRepository(true), /keep resources/i);
 
     event.payload.onConfirm?.();
@@ -139,6 +140,5 @@ describe('DeleteRepositoryButton', () => {
     await waitFor(() => expect(mockReplace).toHaveBeenCalledTimes(1));
     const replaceArg = mockReplace.mock.calls[0][0];
     expect(replaceArg.repository.metadata.finalizers).toEqual(['cleanup', 'release-orphan-resources']);
-    expect(replaceArg.repository.metadata.annotations?.[FORCE_DELETE_ANNOTATION]).toBeUndefined();
   });
 });

@@ -2,16 +2,6 @@ import { type IconName } from '@grafana/ui';
 import { type Repository, type SyncStatus } from 'app/api/clients/provisioning/v0alpha1';
 
 /**
- * Annotation that tells the backend to complete a repository deletion even when
- * the repository cannot be built from its configuration (e.g. its credentials
- * have expired). Provider-side cleanup that needs a working client — notably
- * webhook removal — is then skipped, leaving those remote resources in place
- * rather than blocking deletion forever. Mirrors the backend constant in
- * apps/provisioning/pkg/repository/finalizers.go.
- */
-export const FORCE_DELETE_REPOSITORY_ANNOTATION = 'provisioning.grafana.app/force-delete';
-
-/**
  * Generic type for Kubernetes resources with generation tracking
  */
 type ReconciledResource = {

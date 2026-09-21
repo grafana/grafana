@@ -12,7 +12,12 @@ import {
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { FORCE_DELETE_REPOSITORY_ANNOTATION, isRepositoryUnhealthy } from '../utils/repositoryStatus';
+import { isRepositoryUnhealthy } from '../utils/repositoryStatus';
+
+// CLEANUP_FINALIZER removes the provider-side webhook on delete; it's the only
+// finalizer that needs the repository to be reachable. Dropping it lets an
+// unhealthy repository (e.g. expired credentials) finish deleting.
+const CLEANUP_FINALIZER = 'cleanup';
 
 type DeleteAction = 'remove-resources' | 'keep-resources';
 
@@ -29,31 +34,33 @@ export function DeleteRepositoryButton({ name, repository, redirectTo }: Props) 
 
   // When the repository is unhealthy (e.g. its credentials have expired) the
   // backend can't remove provider-side resources such as webhooks, which would
-  // otherwise block deletion forever. In that case we force the deletion and
-  // warn the user that those remote resources will be left behind.
+  // otherwise block deletion forever. In that case we force the deletion by
+  // dropping the cleanup finalizer and warn the user those remote resources
+  // will be left behind.
   const unhealthy = isRepositoryUnhealthy(repository);
 
   const performDelete = useCallback(
     async (deleteAction: DeleteAction) => {
       const keepResources = deleteAction === 'keep-resources';
 
-      if ((keepResources || unhealthy) && repository) {
-        const updatedRepository = {
-          ...repository,
-          metadata: {
-            ...repository.metadata,
-            ...(keepResources ? { finalizers: ['cleanup', 'release-orphan-resources'] } : {}),
-            ...(unhealthy
-              ? {
-                  annotations: {
-                    ...repository.metadata?.annotations,
-                    [FORCE_DELETE_REPOSITORY_ANNOTATION]: 'true',
-                  },
-                }
-              : {}),
-          },
-        };
-        await replaceRepository({ name, repository: updatedRepository });
+      // Work out the finalizer set we want before deleting. keep-resources
+      // swaps remove-orphan for release-orphan; remove-resources leaves the
+      // repository's finalizers as they are. An unhealthy repository then drops
+      // the cleanup finalizer so the provider-side webhook step is skipped.
+      let finalizers: string[] | undefined;
+      if (keepResources) {
+        finalizers = [CLEANUP_FINALIZER, 'release-orphan-resources'];
+      }
+      if (unhealthy) {
+        const base = finalizers ?? repository?.metadata?.finalizers ?? [];
+        finalizers = base.filter((finalizer) => finalizer !== CLEANUP_FINALIZER);
+      }
+
+      if (finalizers && repository) {
+        await replaceRepository({
+          name,
+          repository: { ...repository, metadata: { ...repository.metadata, finalizers } },
+        });
       }
 
       reportInteraction('grafana_provisioning_repository_deleted', {
