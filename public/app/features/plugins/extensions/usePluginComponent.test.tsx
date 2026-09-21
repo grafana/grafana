@@ -2,9 +2,9 @@ import { act, render, renderHook, screen, waitFor } from '@testing-library/react
 import type { JSX } from 'react';
 
 import { type AppPluginConfig, PluginContextProvider, type PluginMeta, PluginType } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
+import { isGrafanaDevMode } from './isGrafanaDevMode';
 import { log } from './logs/log';
 import { resetLogMock } from './logs/testUtils';
 import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
@@ -15,14 +15,9 @@ import { type PluginExtensionRegistries } from './registry/types';
 import { basicApp } from './test-fixtures/config.apps';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
 import { usePluginComponent } from './usePluginComponent';
-import { isGrafanaDevMode } from './utils';
 
 jest.mock('./useLoadAppPlugins');
-jest.mock('./utils', () => ({
-  ...jest.requireActual('./utils'),
-
-  // Manually set the dev mode to false
-  // (to make sure that by default we are testing a production scneario)
+jest.mock('./isGrafanaDevMode', () => ({
   isGrafanaDevMode: jest.fn().mockReturnValue(false),
 }));
 
@@ -311,7 +306,7 @@ describe('usePluginComponent()', () => {
   });
 
   it('should pass a writable copy of the props (in dev mode)', async () => {
-    config.buildInfo.env = 'development';
+    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
 
     type Props = {
       a: {
@@ -367,7 +362,7 @@ describe('usePluginComponent()', () => {
   });
 
   it('should pass a writable copy of the props (in production mode)', async () => {
-    config.buildInfo.env = 'production';
+    jest.mocked(isGrafanaDevMode).mockReturnValue(false);
 
     type Props = {
       a: {
