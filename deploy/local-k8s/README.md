@@ -33,3 +33,22 @@ docker build --platform linux/arm64 -t error-tracking-auth-signer:local \
 ```
 
 The native proof also reads the existing `mt-db.yaml` and `authz-service.yaml` development manifests from `ENTERPRISE_SOURCE`; it does not copy or maintain another version of them here. With Docker limited to 8 GiB, stop Compose before running the kind proof. `docker compose down` preserves its volumes.
+
+## Compose development
+
+```sh
+deploy/local-compose/setup.sh
+docker compose --env-file .local-compose/generated/.env \
+  -f deploy/local-compose/compose.yaml up -d
+```
+
+Open `http://localhost:3301/error-tracking` and sign in with the disposable `admin/admin` account. The API listens on `https://localhost:6443`. All published ports bind to loopback.
+
+If mise is installed, use `mise run error-tracking-compose-up` and `mise run error-tracking-compose-down`. Otherwise stop the stack without deleting data:
+
+```sh
+docker compose --env-file .local-compose/generated/.env \
+  -f deploy/local-compose/compose.yaml down
+```
+
+Setup writes ignored configuration under `.local-compose/generated` and preserves passwords and certificates on repeated runs. Named volumes retain PostgreSQL, Grafana metadata, and signer keys. Certificates last 30 days; stop Compose, remove only `.local-compose/generated/certs`, and rerun setup to renew them. Keep the signer-key volume because Grafana may cache signed identity tokens.

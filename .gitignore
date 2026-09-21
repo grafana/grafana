@@ -291,6 +291,8 @@ devenv/docker/blocks/auth/signer/keys/ec_private_key.pem
 # Spec-kit files shouldn't be committed without a major design process
 .specs
 .playwright-mcp/
+/.local-compose/
+/.local-kubeconfig
 overrides.yaml
 .profiles
 

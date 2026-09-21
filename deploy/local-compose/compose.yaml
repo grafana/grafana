@@ -1,0 +1,118 @@
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: stacks_info
+      MYSQL_USER: superuser
+      MYSQL_PASSWORD: password
+    healthcheck:
+      test: [CMD-SHELL, mysqladmin ping -h 127.0.0.1 -uroot -proot_password]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+    volumes:
+      - ${ERROR_TRACKING_FIXTURE_DIR:?run deploy/local-compose/setup.sh}/mysql-init.sql:/docker-entrypoint-initdb.d/001-error-tracking.sql:ro
+      - error-tracking-mysql:/var/lib/mysql
+
+  auth-signer:
+    image: ${ERROR_TRACKING_SIGNER_IMAGE:-error-tracking-auth-signer:local}
+    command: [/app/main, -config, /etc/error-tracking/signer/config.yaml]
+    ports: ["127.0.0.1:${ERROR_TRACKING_SIGNER_PORT:-16481}:8080"]
+    volumes:
+      - ${ERROR_TRACKING_FIXTURE_DIR:?run deploy/local-compose/setup.sh}:/etc/error-tracking:ro
+      - error-tracking-signer-keys:/app/data/keys
+
+  authz:
+    image: ${ERROR_TRACKING_PLATFORM_IMAGE:-error-tracking-platform:local}
+    depends_on:
+      mysql: {condition: service_healthy}
+      auth-signer: {condition: service_started}
+    entrypoint: [/usr/share/grafana/bin/grafana]
+    command: [server, target, --config=/etc/error-tracking/authz.ini]
+    ports: ["127.0.0.1:${ERROR_TRACKING_AUTHZ_PORT:-11000}:10000"]
+    volumes:
+      - ${ERROR_TRACKING_FIXTURE_DIR:?run deploy/local-compose/setup.sh}:/etc/error-tracking:ro
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: error_tracking
+      POSTGRES_USER: error_tracking
+      POSTGRES_PASSWORD: local-only-password
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U error_tracking -d error_tracking]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+    volumes:
+      - error-tracking-postgres:/var/lib/postgresql/data
+
+  bootstrap-runtime-role:
+    image: postgres:17-alpine
+    depends_on:
+      postgres: {condition: service_healthy}
+    environment:
+      PGHOST: postgres
+      PGDATABASE: error_tracking
+      PGSSLMODE: disable
+      PGUSER: error_tracking
+      PGPASSWORD: local-only-password
+      RUNTIME_PASSWORD: ${ERROR_TRACKING_RUNTIME_PASSWORD:?set ERROR_TRACKING_RUNTIME_PASSWORD}
+    entrypoint: [/bin/sh, -ec]
+    command:
+      - |
+        psql -v ON_ERROR_STOP=1 <<'SQL'
+        \getenv runtime_password RUNTIME_PASSWORD
+        SELECT format('CREATE ROLE error_tracking_runtime LOGIN PASSWORD %L', :'runtime_password')
+        WHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'error_tracking_runtime') \gexec
+        ALTER ROLE error_tracking_runtime PASSWORD :'runtime_password';
+        GRANT CONNECT ON DATABASE error_tracking TO error_tracking_runtime;
+        SQL
+
+  migrate:
+    image: ${ERROR_TRACKING_IMAGE:-error-tracking-api:local}
+    depends_on:
+      bootstrap-runtime-role: {condition: service_completed_successfully}
+    environment:
+      PGHOST: postgres
+      PGPORT: "5432"
+      PGDATABASE: error_tracking
+      PGSSLMODE: disable
+      PGUSER: error_tracking
+      PGPASSWORD: local-only-password
+      ERROR_TRACKING_RUNTIME_ROLE: error_tracking_runtime
+    command: [migrate]
+
+  api:
+    image: ${ERROR_TRACKING_IMAGE:-error-tracking-api:local}
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      authz: {condition: service_started}
+    ports: ["127.0.0.1:6443:6443"]
+    environment:
+      PGHOST: postgres
+      PGPORT: "5432"
+      PGDATABASE: error_tracking
+      PGSSLMODE: disable
+      PGUSER: error_tracking_runtime
+      PGPASSWORD: ${ERROR_TRACKING_RUNTIME_PASSWORD:?set ERROR_TRACKING_RUNTIME_PASSWORD}
+      ERROR_TRACKING_RUNTIME_ROLE: error_tracking_runtime
+    command: [serve, --config=/etc/error-tracking/config.json]
+    volumes:
+      - ${ERROR_TRACKING_FIXTURE_DIR:?run deploy/local-compose/setup.sh}:/etc/error-tracking:ro
+
+  grafana:
+    image: ${ERROR_TRACKING_PLATFORM_IMAGE:-error-tracking-platform:local}
+    depends_on:
+      api: {condition: service_started}
+    ports: ["127.0.0.1:3301:3000"]
+    environment:
+      GF_PATHS_CONFIG: /etc/grafana/grafana.ini
+    volumes:
+      - ${ERROR_TRACKING_FIXTURE_DIR:?run deploy/local-compose/setup.sh}:/etc/grafana:ro
+
+volumes:
+  error-tracking-mysql:
+  error-tracking-postgres:
+  error-tracking-signer-keys:

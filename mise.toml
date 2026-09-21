@@ -4,3 +4,11 @@ go = '''{{ exec(command="awk '/^go [0-9]/{print $2}' go.mod") }}'''
 [settings]
 node.corepack = true
 idiomatic_version_file_enable_tools = ["node"]
+
+[tasks.error-tracking-compose-up]
+description = "Start the app-owned standalone Error Tracking API and PostgreSQL"
+run = "deploy/local-compose/setup.sh && docker compose --env-file .local-compose/generated/.env -f deploy/local-compose/compose.yaml up"
+
+[tasks.error-tracking-compose-down]
+description = "Stop the app-owned standalone Error Tracking services"
+run = "docker compose --env-file .local-compose/generated/.env -f deploy/local-compose/compose.yaml down"
