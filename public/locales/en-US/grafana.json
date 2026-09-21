@@ -15550,6 +15550,10 @@
       "label": "Apply transformation to",
       "series": "Query and Transformation results"
     },
+    "transformation-name": {
+      "auto-placeholder": "(Auto)",
+      "edit": "Edit transformation name"
+    },
     "validation": {
       "duplicate-name": "Query name already exists",
       "empty-name": "An empty query name is not allowed"
