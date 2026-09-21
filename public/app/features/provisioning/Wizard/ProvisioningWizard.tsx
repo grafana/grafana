@@ -77,7 +77,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
   ]);
 
   const steps = useMemo(() => getSteps(repoType), [repoType]);
-  const [submitData] = useCreateOrUpdateRepository(repoName);
+  const [submitData, , , testOnly] = useCreateOrUpdateRepository(repoName);
   const { isHealthy, healthStatusNotReady } = useRepositoryStatus(repoName);
   const { shouldSkipSync, isLoading: isResourceStatsLoading } = useResourceStats(repoName, syncTarget, undefined, {
     isHealthy,
@@ -142,6 +142,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     currentStepConfig,
     methods,
     submitData,
+    testOnly,
     setStepStatusInfo,
     onSuccess: goToNextStep,
   });

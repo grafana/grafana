@@ -30,6 +30,7 @@ jest.mock('../../utils/getFormErrors', () => ({
 
 describe('useWizardSubmission', () => {
   const mockSubmitData = jest.fn();
+  const mockTestOnly = jest.fn();
   const mockSetStepStatusInfo = jest.fn();
   const mockOnSuccess = jest.fn();
   const mockSetValue = jest.fn();
@@ -75,6 +76,7 @@ describe('useWizardSubmission', () => {
       currentStepConfig: connectionStep,
       methods: createMockMethods(),
       submitData: mockSubmitData,
+      testOnly: mockTestOnly,
       setStepStatusInfo: mockSetStepStatusInfo,
       onSuccess: mockOnSuccess,
       ...overrides,
@@ -198,10 +200,8 @@ describe('useWizardSubmission', () => {
           });
           mockTrigger.mockResolvedValue(true);
 
-          // AuthType submit should succeed so onSuccess is called
-          mockSubmitData.mockResolvedValue({
-            data: { metadata: { name: 'test-repo' } },
-          });
+          // AuthType only validates (testOnly) - nothing is persisted yet
+          mockTestOnly.mockResolvedValue(undefined);
 
           const { result } = renderHook(() =>
             useWizardSubmission(
@@ -217,7 +217,8 @@ describe('useWizardSubmission', () => {
           });
 
           expect(mockTrigger).toHaveBeenCalledWith(['repository']);
-          expect(mockSubmitData).toHaveBeenCalled();
+          expect(mockTestOnly).toHaveBeenCalled();
+          expect(mockSubmitData).not.toHaveBeenCalled();
           expect(mockOnSuccess).toHaveBeenCalled();
         });
       });
@@ -252,7 +253,7 @@ describe('useWizardSubmission', () => {
       });
 
       it('should set inline error for fields visible on the authType step', async () => {
-        mockSubmitData.mockRejectedValue({
+        mockTestOnly.mockRejectedValue({
           data: {
             message: 'Validation failed',
             errors: { 'repository.url': 'Invalid URL' },
