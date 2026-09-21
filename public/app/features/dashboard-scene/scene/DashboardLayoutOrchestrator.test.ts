@@ -2,6 +2,7 @@ import { VizPanel } from '@grafana/scenes';
 
 import { moveGridItem } from '../actions/layout/moveGridItem';
 import { reorderAutoGridItems } from '../actions/layout/reorderAutoGridItems';
+import { activateFullSceneTree } from '../utils/test-utils';
 
 import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
 import { DashboardScene } from './DashboardScene';
@@ -9,6 +10,8 @@ import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from './layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
+import { RowItem } from './layout-rows/RowItem';
+import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabItem } from './layout-tabs/TabItem';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
 
@@ -395,3 +398,54 @@ function setupWithTwoTabs() {
     dashboard,
   };
 }
+
+describe('cross-tab row dragging', () => {
+  it.each(['drop', 'return to source'] as const)(
+    'keeps the row in its source until %s and records only a completed move',
+    (finish) => {
+      const row = new RowItem({ title: 'Dragged row', layout: AutoGridLayoutManager.createEmpty() });
+      const source = new RowsLayoutManager({ rows: [row] });
+      const sourceTab = new TabItem({ key: 'source-tab', title: 'Source', layout: source });
+      const destination = new TabItem({
+        key: 'destination-tab',
+        title: 'Destination',
+        layout: AutoGridLayoutManager.createEmpty(),
+      });
+      const tabs = new TabsLayoutManager({ tabs: [sourceTab, destination] });
+      const dashboard = new DashboardScene({ isEditing: true, body: tabs });
+      const deactivate = activateFullSceneTree(dashboard);
+      const orchestrator = dashboard.state.layoutOrchestrator!;
+      try {
+        orchestrator.startRowDrag(row);
+        // Exercise the hover timer's callback without relying on DOM hit testing.
+        orchestrator['_activateTab'](destination.state.key!);
+        expect(tabs.getCurrentTab()).toBe(destination);
+        expect(source.state.rows).toEqual([row]);
+        expect(row.parent).toBe(source);
+        expect(dashboard.state.sidebar.state.undoStack).toHaveLength(0);
+
+        // Unmounting the source drag context must leave pointerup in charge of the move.
+        orchestrator.stopRowDrag();
+        if (finish === 'return to source') {
+          orchestrator['_activateTab'](sourceTab.state.key!);
+        }
+        document.body.dispatchEvent(new Event('pointerup', { bubbles: true }));
+
+        if (finish === 'drop') {
+          expect((destination.getLayout() as RowsLayoutManager).state.rows).toEqual([row]);
+          expect(dashboard.state.sidebar.state.undoStack).toHaveLength(1);
+          dashboard.state.sidebar.undoAction();
+          expect(sourceTab.getLayout()).toBe(source);
+          expect(source.state.rows).toEqual([row]);
+        } else {
+          expect(sourceTab.getLayout()).toBe(source);
+          expect(source.state.rows).toEqual([row]);
+          expect(dashboard.state.sidebar.state.undoStack).toHaveLength(0);
+        }
+        expect(orchestrator.state.draggingRow).toBeUndefined();
+      } finally {
+        deactivate();
+      }
+    }
+  );
+});
