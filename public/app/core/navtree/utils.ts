@@ -157,3 +157,6 @@ export function pruneEmptyNavSections(tree: NavModelItem[]): NavModelItem[] {
     })
     .filter((node) => !isPrunable(PRUNABLE_SECTIONS, node));
 }
+
+/** Nav id of an app plugin's own entry/section (matches the Go builder's ids) */
+export const pluginPageId = (pluginId: string) => `plugin-page-${pluginId}`;
