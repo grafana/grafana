@@ -109,6 +109,7 @@ const createJsonDataFrame = (wrapText: boolean): DataFrame =>
   );
 
 it.each([false, true])('highlights Auto JSON independently of table.refresh=%s', async (tableRefreshEnabled) => {
+  const theme = createTheme();
   const { rerender } = render(
     <TableNG
       data={createJsonDataFrame(true)}
@@ -118,8 +119,8 @@ it.each([false, true])('highlights Auto JSON independently of table.refresh=%s',
       jsonSyntaxHighlightingEnabled
     />
   );
-  expect(await screen.findByText('"us-east-1"')).toHaveStyle({ color: '#6CCF8E' });
-  expect(screen.getByText('3')).toHaveStyle({ color: '#FBAD37' });
+  expect(await screen.findByText('"us-east-1"')).toHaveStyle({ color: theme.components.codeEditor.string });
+  expect(screen.getByText('3')).toHaveStyle({ color: theme.components.codeEditor.number });
   expect(screen.getByRole('gridcell', { name: /us-east-1/ })).toHaveTextContent(
     '{\n "region": "us-east-1",\n "replicas": 3\n}',
     { normalizeWhitespace: false }

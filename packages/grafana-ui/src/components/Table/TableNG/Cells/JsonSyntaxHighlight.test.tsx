@@ -28,9 +28,11 @@ it('preserves complete text if tokenization fails', () => {
 });
 
 it('updates theme colors without changing text', () => {
-  const { container, rerender } = render(<JsonSyntaxHighlight text={'{"key":true}'} theme={createTheme()} />);
-  expect(screen.getByText('true')).toHaveStyle({ color: '#FBAD37' });
-  rerender(<JsonSyntaxHighlight text={'{"key":true}'} theme={createTheme({ colors: { mode: 'light' } })} />);
-  expect(screen.getByText('true')).toHaveStyle({ color: '#B04E0C' });
+  const darkTheme = createTheme();
+  const lightTheme = createTheme({ colors: { mode: 'light' } });
+  const { container, rerender } = render(<JsonSyntaxHighlight text={'{"key":true}'} theme={darkTheme} />);
+  expect(screen.getByText('true')).toHaveStyle({ color: darkTheme.components.codeEditor.number });
+  rerender(<JsonSyntaxHighlight text={'{"key":true}'} theme={lightTheme} />);
+  expect(screen.getByText('true')).toHaveStyle({ color: lightTheme.components.codeEditor.number });
   expect(container.textContent).toBe('{"key":true}');
 });

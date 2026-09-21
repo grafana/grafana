@@ -74,7 +74,7 @@ describe('TableCellTooltip', () => {
       jsonSyntaxHighlightingEnabled: true,
     });
     await userEvent.click(screen.getByRole('button', { name: CARET_LABEL }));
-    expect(await screen.findByText('true')).toHaveStyle({ color: '#FBAD37' });
+    expect(await screen.findByText('true')).toHaveStyle({ color: theme.components.codeEditor.number });
     expect(screen.getByTestId(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)).toHaveTextContent(
       '{"active":true}'
     );

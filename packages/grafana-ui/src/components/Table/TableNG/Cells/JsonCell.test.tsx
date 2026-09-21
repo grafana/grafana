@@ -8,6 +8,8 @@ import { type TableCellRendererProps } from '../types';
 
 import { JsonCell } from './JsonCell';
 
+const theme = createTheme();
+
 const mockLoadHighlight = jest.fn();
 jest.mock('./JsonSyntaxHighlight', () => {
   mockLoadHighlight();
@@ -29,7 +31,7 @@ function props(text: string, overrides: Partial<TableCellRendererProps> = {}): T
     rowIdx: 0,
     height: 30,
     width: 300,
-    theme: createTheme(),
+    theme,
     cellOptions: { type: TableCellDisplayMode.JSONView },
     cellInspect: false,
     showFilters: false,
@@ -63,7 +65,7 @@ it('loads highlighting only for eligible JSON and preserves text while loading',
 
   rerender(<JsonCell {...props('{"a":true}')} />);
   expect(container.textContent).toBe('{"a":true}');
-  expect(await screen.findByText('true')).toHaveStyle({ color: '#FBAD37' });
+  expect(await screen.findByText('true')).toHaveStyle({ color: theme.components.codeEditor.number });
   expect(mockLoadHighlight).toHaveBeenCalledTimes(1);
   expect(container.textContent).toBe('{"a":true}');
 });
@@ -99,7 +101,7 @@ it.each(['plain text', '{"a":}', '{"a":true,}', '// comment\n{"a":1}', ''])('kee
 
 it('uses displayed text rather than the raw value and updates when display text changes', async () => {
   const { container, rerender } = render(<JsonCell {...props('["mapped"]', { value: '{"raw":true}' })} />);
-  expect(await screen.findByText('"mapped"')).toHaveStyle({ color: '#6CCF8E' });
+  expect(await screen.findByText('"mapped"')).toHaveStyle({ color: theme.components.codeEditor.string });
   expect(container.textContent).toBe('["mapped"]');
   rerender(<JsonCell {...props('"mapped"', { value: '{"raw":true}' })} />);
   expect(container.textContent).toBe('"mapped"');
@@ -111,7 +113,7 @@ it('keeps a highlighted value inside its data link', async () => {
   cellProps.field.config.links = [{ title: 'Details', url: '/details' }];
   cellProps.field.getLinks = () => [{ title: 'Details', href: '/details', target: '_self', origin: cellProps.field }];
   render(<JsonCell {...cellProps} />);
-  expect(await screen.findByText('true')).toHaveStyle({ color: '#FBAD37' });
+  expect(await screen.findByText('true')).toHaveStyle({ color: theme.components.codeEditor.number });
   expect(screen.getByRole('link', { name: 'Details' })).toHaveAttribute('href', '/details');
   expect(screen.getByRole('link', { name: 'Details' })).toHaveTextContent('{"a":true}');
 });
@@ -120,6 +122,6 @@ it.each<TableCellOptions>([{ type: TableCellDisplayMode.Auto }, { type: TableCel
   'highlights mode %o',
   async (cellOptions) => {
     render(<JsonCell {...props('{"value":42}', { cellOptions })} />);
-    expect(await screen.findByText('42')).toHaveStyle({ color: '#FBAD37' });
+    expect(await screen.findByText('42')).toHaveStyle({ color: theme.components.codeEditor.number });
   }
 );
