@@ -308,17 +308,19 @@ func newGComURLResolver(gcomBaseURL string, gcomToken string) func(context.Conte
 	}
 
 	return func(ctx context.Context, stackID int64) (string, error) {
+		// #nosec G704 -- the base URL is operator-controlled Grafana configuration and stackID is an integer.
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet,
 			fmt.Sprintf("%s/instances/%d", gcomBaseURL, stackID), nil)
 		if err != nil {
 			return "", fmt.Errorf("creating gcom instance request: %w", err)
 		}
 		req.Header.Set("Authorization", "Bearer "+gcomToken)
+		// #nosec G704 -- req targets the operator-controlled Grafana.com API URL constructed above.
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			return "", fmt.Errorf("fetching gcom instance: %w", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode == http.StatusNotFound {
 			return "", nil
