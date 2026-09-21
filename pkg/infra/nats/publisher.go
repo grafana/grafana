@@ -3,6 +3,8 @@ package nats
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
+	"time"
 
 	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
@@ -22,7 +24,9 @@ type Publisher interface {
 type PublisherService struct {
 	services.NamedService
 	*connection
-	metrics *publisherMetrics
+	metrics       *publisherMetrics
+	pendingBytes  atomic.Int64
+	oldestPending atomic.Int64
 }
 
 func newPublisher(logger log.Logger, m *publisherMetrics, config *Config) *PublisherService {
@@ -56,11 +60,35 @@ func (p *PublisherService) Run(ctx context.Context) error {
 }
 
 func (p *PublisherService) running(ctx context.Context) error {
-	<-ctx.Done()
-	return nil
+	if !p.Enabled() {
+		<-ctx.Done()
+		return nil
+	}
+	// Make connection/auth failures visible during service startup, while the
+	// reconnecting client still lets storage continue without the broker.
+	if _, err := p.get(ctx); err != nil {
+		return err
+	}
+
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-ticker.C:
+			flushCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+			p.flush(flushCtx)
+			cancel()
+		}
+	}
 }
 
 func (p *PublisherService) stopping(_ error) error {
+	if pending := p.pendingBytes.Load(); pending > 0 {
+		p.metrics.forcedDrainLoss.Inc()
+		p.log.Warn("nats publisher closed with locally accepted messages pending", "bytes", pending)
+	}
 	p.close()
 	return nil
 }
@@ -81,7 +109,38 @@ func (p *PublisherService) Publish(ctx context.Context, subject string, data []b
 		}
 		return fmt.Errorf("publish to %q: %w", subject, err)
 	}
-	p.metrics.messagesPublished.Inc()
-	p.log.Debug("published message", "subject", subject, "bytes", len(data))
+	p.metrics.messagesAccepted.Inc()
+	// nats.go owns the bounded reconnect queue. Track only messages accepted
+	// while disconnected; a successful FlushWithContext clears that estimate.
+	if !nc.IsConnected() {
+		bytes := int64(len(subject) + len(data))
+		p.pendingBytes.Add(bytes)
+		if p.oldestPending.CompareAndSwap(0, time.Now().UnixNano()) {
+			p.metrics.oldestPending.Set(float64(time.Now().Unix()))
+		}
+		p.metrics.pendingBytes.Set(float64(p.pendingBytes.Load()))
+	}
+	p.log.Debug("accepted message for publish", "subject", subject, "bytes", len(data), "connected", nc.IsConnected())
 	return nil
+}
+
+func (p *PublisherService) flush(ctx context.Context) {
+	p.connection.mu.Lock()
+	nc := p.connection.conn
+	p.connection.mu.Unlock()
+	if nc == nil || !nc.IsConnected() {
+		return
+	}
+	if err := nc.FlushWithContext(ctx); err != nil {
+		// A timeout is an observation, not a reason to replay messages: the
+		// server may already have accepted them.
+		p.log.Warn("nats publisher flush failed", "err", err)
+		return
+	}
+	if p.pendingBytes.Swap(0) > 0 {
+		p.metrics.pendingBytes.Set(0)
+		p.oldestPending.Store(0)
+		p.metrics.oldestPending.Set(0)
+	}
+	p.metrics.lastSuccessfulFlush.Set(float64(time.Now().Unix()))
 }

@@ -82,30 +82,58 @@ func (m connectionMetrics) collectors() []prometheus.Collector {
 // publisherMetrics covers the publisher connection plus its publish counters.
 type publisherMetrics struct {
 	connectionMetrics
-	messagesPublished prometheus.Counter
-	publishErrors     prometheus.Counter
+	messagesAccepted    prometheus.Counter
+	publishErrors       prometheus.Counter
+	pendingBytes        prometheus.Gauge
+	oldestPending       prometheus.Gauge
+	lastSuccessfulFlush prometheus.Gauge
+	forcedDrainLoss     prometheus.Counter
 }
 
 func newPublisherMetrics() *publisherMetrics {
 	return &publisherMetrics{
 		connectionMetrics: newConnectionMetrics(rolePublisher),
-		messagesPublished: prometheus.NewCounter(prometheus.CounterOpts{
+		messagesAccepted: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,
-			Name:      "publisher_messages_published_total",
-			Help:      "Total number of messages published to NATS.",
+			Name:      "publisher_messages_accepted_total",
+			Help:      "Total number of messages accepted by the local NATS client; this is not subscriber delivery.",
 		}),
 		publishErrors: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,
 			Name:      "publisher_publish_errors_total",
-			Help:      "Total number of NATS publish errors.",
+			Help:      "Total number of local NATS publish failures, before subscriber delivery.",
+		}),
+		pendingBytes: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      "publisher_pending_bytes",
+			Help:      "Approximate bytes accepted locally and awaiting a successful server flush.",
+		}),
+		oldestPending: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      "publisher_oldest_pending_timestamp_seconds",
+			Help:      "Unix timestamp when the oldest locally accepted pending publish was observed.",
+		}),
+		lastSuccessfulFlush: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      "publisher_last_successful_flush_timestamp_seconds",
+			Help:      "Unix timestamp of the last successful NATS server flush; this is not subscriber acknowledgement.",
+		}),
+		forcedDrainLoss: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      "publisher_forced_drain_loss_total",
+			Help:      "Shutdowns that forced the connection closed while locally accepted messages were pending.",
 		}),
 	}
 }
 
 func (m *publisherMetrics) collectors() []prometheus.Collector {
-	return append(m.connectionMetrics.collectors(), m.messagesPublished, m.publishErrors)
+	return append(m.connectionMetrics.collectors(), m.messagesAccepted, m.publishErrors, m.pendingBytes, m.oldestPending, m.lastSuccessfulFlush, m.forcedDrainLoss)
 }
 
 // subscriberMetrics covers the subscriber connection plus its delivery counters.

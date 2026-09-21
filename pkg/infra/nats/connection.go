@@ -174,6 +174,15 @@ func (c *connection) connect(ctx context.Context) (*natsclient.Conn, error) {
 	}
 }
 
+const publisherReconnectBufferSize = 8 * 1024 * 1024
+
+func reconnectBufferSize(role connRole) int {
+	if role != rolePublisher {
+		return -1
+	}
+	return publisherReconnectBufferSize
+}
+
 func (c *connection) connectOptions() ([]natsclient.Option, error) {
 	roleStr := string(c.role)
 	options := []natsclient.Option{
@@ -186,9 +195,9 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 		natsclient.PingInterval(20 * time.Second),
 		natsclient.MaxPingsOutstanding(3),
 		natsclient.DrainTimeout(drainTimeout),
-		// Disable the reconnect buffer: rather than silently buffering up to the
-		// 8MB default during an outage fail publishes fast.
-		natsclient.ReconnectBufSize(-1),
+		// Publishers use a bounded 8 MiB client-side buffer; subscribers remain
+		// fail-fast. The buffer is not durable and cannot recover a process crash.
+		natsclient.ReconnectBufSize(reconnectBufferSize(c.role)),
 		natsclient.ConnectHandler(func(nc *natsclient.Conn) {
 			c.metrics.connectionStatus.Set(1)
 			c.log.Info("nats connected", "role", roleStr, "url", redactURL(nc.ConnectedUrl()))

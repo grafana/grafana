@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	natsclient "github.com/nats-io/nats.go"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -44,8 +43,9 @@ func TestPublisher(t *testing.T) {
 		t.Cleanup(p.close)
 
 		err := p.Publish(context.Background(), "grafana.test.a", []byte("hello"))
-		require.ErrorIs(t, err, natsclient.ErrReconnectBufExceeded)
-		require.ErrorContains(t, err, "connection not established")
+		// The bounded publisher reconnect buffer accepts the message locally even
+		// though the initial connection is still retrying.
+		require.NoError(t, err)
 	})
 
 	t.Run("publish honours a cancelled context", func(t *testing.T) {
