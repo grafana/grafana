@@ -80,7 +80,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
 
           const query = interpolatedParams?.query ?? interpolatedQuery;
           onClickFn({
-            datasourceUid: query?.datasource?.uid ?? internalLink.datasourceUid,
+            datasourceUid: internalLink.datasourceUid,
             queries: query ? [query] : [],
             panelsState: interpolatedPanelsState,
             correlationHelperData: interpolatedCorrelationData,
