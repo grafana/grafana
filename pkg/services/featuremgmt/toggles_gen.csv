@@ -400,5 +400,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,unifiedStorageClient.requireCallerIdentity,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,grafana.pluginExtensionReactElementProps,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-09-16,grafana.logDetailsDisplayedFieldControls,deprecated,@grafana/observability-logs,false,false,true
-2026-09-21,grafana.sidebarLogDetailsNewTab,deprecated,@grafana/observability-logs,false,false,true
 2026-09-16,grafana.mtFallback,experimental,@grafana/grafana-frontend-platform,false,false,true
