@@ -185,7 +185,7 @@ For more flexible, rule-based correlations that can target any data source or ex
 
 To link _from_ logs or metrics _to_ traces (the reverse direction), refer to:
 
-- [Derived fields](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/loki/configure-loki-data-source/#derived-fields) in the Loki data source (for logs to traces). The [trace to logs](configure-trace-to-logs/) page also covers this setup.
+- [Derived fields](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/loki/configure/#derived-fields) in the Loki data source (for logs to traces). The [trace to logs](configure-trace-to-logs/) page also covers this setup.
 - [Exemplars](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/exemplars/) in the Prometheus data source (for metrics to traces).
 
 ## Other settings
