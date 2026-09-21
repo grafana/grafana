@@ -212,17 +212,7 @@ export const FeatureControlFlag = ({ flag }: FeatureControlFlagProps) => {
       </summary>
 
       <div className={styles.fields}>
-        {flag ? (
-          <Field noMargin disabled>
-            <Input
-              value={key}
-              aria-label={t('feature-control.flag-key', 'Flag key')}
-              placeholder={t('feature-control.flag-key-placeholder', 'my-component.my-flag')}
-            />
-          </Field>
-        ) : (
-          <FeatureControlKey value={key} onChange={setKey} />
-        )}
+        {!flag && <FeatureControlKey value={key} onChange={setKey} />}
 
         <Stack direction="row" gap={1} alignItems="center">
           <Field

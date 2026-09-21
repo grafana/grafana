@@ -105,7 +105,6 @@ describe('FeatureControlFlag', () => {
         renderComponent({ key: 'alpha', value: before.storage });
         await expandFlag('alpha');
 
-        expect(screen.getByRole('textbox', { name: 'Flag key' })).toHaveValue('alpha');
         expect(screen.getByRole('combobox', { name: 'Flag type' })).toHaveValue(type);
 
         if (type === 'boolean') {
