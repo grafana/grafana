@@ -299,6 +299,42 @@ spec:
       scope: Namespaced
       searchFields:
       - capabilities:
+        - retrieve
+        description: The health of the rule
+        name: health
+        path: status.health
+        type: string
+      - capabilities:
+        - retrieve
+        description: The time of the last rule evaluation
+        name: lastEvaluationTime
+        path: status.lastEvaluationTime
+        type: string
+      - capabilities:
+        - retrieve
+        description: The duration of the last rule evaluation in seconds
+        name: evaluationDuration
+        path: status.evaluationDuration
+        type: double
+      - capabilities:
+        - retrieve
+        description: The error from the last rule evaluation
+        name: lastError
+        path: status.lastError
+        type: string
+      - capabilities:
+        - retrieve
+        description: The state of the alert rule
+        name: state
+        path: status.state
+        type: string
+      - capabilities:
+        - retrieve
+        description: The reason for the alert rule state
+        name: stateReason
+        path: status.stateReason
+        type: string
+      - capabilities:
         - filter
         - retrieve
         description: The rule type discriminator (always "alertrule")
@@ -569,6 +605,30 @@ spec:
           type: object
       scope: Namespaced
       searchFields:
+      - capabilities:
+        - retrieve
+        description: The health of the rule
+        name: health
+        path: status.health
+        type: string
+      - capabilities:
+        - retrieve
+        description: The time of the last rule evaluation
+        name: lastEvaluationTime
+        path: status.lastEvaluationTime
+        type: string
+      - capabilities:
+        - retrieve
+        description: The duration of the last rule evaluation in seconds
+        name: evaluationDuration
+        path: status.evaluationDuration
+        type: double
+      - capabilities:
+        - retrieve
+        description: The error from the last rule evaluation
+        name: lastError
+        path: status.lastError
+        type: string
       - capabilities:
         - filter
         - retrieve
