@@ -3060,6 +3060,43 @@
         }
       ]
     },
+    "/repositories/{name}/filetree": {
+      "post": {
+        "tags": ["Repository"],
+        "description": "connect POST requests to filetree of Repository",
+        "operationId": "createRepositoryFiletree",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileList"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v0alpha1",
+          "kind": "FileList"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the FileList",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
     "/repositories/{name}/history": {
       "get": {
         "tags": ["Repository"],
@@ -3360,6 +3397,43 @@
                       "default": {}
                     }
                   }
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v0alpha1",
+          "kind": "RefList"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the RefList",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/repositories/{name}/reftree": {
+      "post": {
+        "tags": ["Repository"],
+        "description": "connect POST requests to reftree of Repository",
+        "operationId": "createRepositoryReftree",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefList"
                 }
               }
             }
@@ -4513,7 +4587,9 @@
           },
           "items": {
             "type": "array",
-            "items": {},
+            "items": {
+              "$ref": "#/components/schemas/FileItem"
+            },
             "x-kubernetes-list-type": "atomic"
           },
           "kind": {
@@ -4521,9 +4597,21 @@
             "type": "string"
           },
           "metadata": {
-            "default": {}
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ListMeta"
+              }
+            ]
           }
-        }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "FileList",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "FixFolderMetadataJobOptions": {
         "type": "object",

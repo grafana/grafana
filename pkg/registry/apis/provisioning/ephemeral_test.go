@@ -71,6 +71,75 @@ func TestFiletreeConnector_RejectsRepositoryWithoutReadSupport(t *testing.T) {
 	assert.Contains(t, responder.err.Error(), "does not support reading files")
 }
 
+func TestReftreeConnector_ListsRefsForEphemeralRepository(t *testing.T) {
+	tmpRepo := &fakeVersionedRepository{
+		cfg:  testGitHubRepository("new", "default", "https://github.com/grafana/new"),
+		refs: []provisioningv0alpha1.RefItem{{Name: "main"}, {Name: "develop"}},
+	}
+
+	repoFactory := repository.NewMockFactory(t)
+	repoFactory.EXPECT().Build(mock.Anything, mock.MatchedBy(func(cfg *provisioningv0alpha1.Repository) bool {
+		return cfg.URL() == "https://github.com/grafana/new" && cfg.GetName() == "hack-on-hack-for-new"
+	})).Return(tmpRepo, nil).Once()
+
+	connector := NewReftreeConnector(&testConnectorDeps{repoFactory: repoFactory})
+	responder := &testResponder{}
+	ctx := request.WithNamespace(context.Background(), "default")
+	handler, err := connector.Connect(ctx, "new", nil, responder)
+	require.NoError(t, err)
+
+	body := `{"spec":{"title":"New Repo","type":"github","github":{"url":"https://github.com/grafana/new","branch":"main"}}}`
+	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodPost, "/reftree", strings.NewReader(body)).WithContext(ctx))
+
+	require.NoError(t, responder.err)
+	refList, ok := responder.object.(*provisioningv0alpha1.RefList)
+	require.True(t, ok)
+	assert.Equal(t, []provisioningv0alpha1.RefItem{{Name: "main"}, {Name: "develop"}}, refList.Items)
+}
+
+func TestReftreeConnector_RejectsRepositoryWithoutVersionedSupport(t *testing.T) {
+	tmpRepo := &fakeReaderRepository{
+		cfg: testGitHubRepository("new", "default", "https://github.com/grafana/new"),
+	}
+
+	repoFactory := repository.NewMockFactory(t)
+	repoFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(tmpRepo, nil).Once()
+
+	connector := NewReftreeConnector(&testConnectorDeps{repoFactory: repoFactory})
+	responder := &testResponder{}
+	ctx := request.WithNamespace(context.Background(), "default")
+	handler, err := connector.Connect(ctx, "new", nil, responder)
+	require.NoError(t, err)
+
+	body := `{"spec":{"title":"New Repo","type":"github","github":{"url":"https://github.com/grafana/new","branch":"main"}}}`
+	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodPost, "/reftree", strings.NewReader(body)).WithContext(ctx))
+
+	require.Error(t, responder.err)
+	assert.Contains(t, responder.err.Error(), "does not support versioned operations")
+}
+
+func TestBuildEphemeralRepository_UsesLiteralNameWhenNotThePlaceholder(t *testing.T) {
+	tmpRepo := &fakeVersionedRepository{
+		cfg: testGitHubRepository("draft-repo", "default", "https://github.com/grafana/new"),
+	}
+
+	repoFactory := repository.NewMockFactory(t)
+	repoFactory.EXPECT().Build(mock.Anything, mock.MatchedBy(func(cfg *provisioningv0alpha1.Repository) bool {
+		return cfg.GetName() == "draft-repo"
+	})).Return(tmpRepo, nil).Once()
+
+	connector := NewReftreeConnector(&testConnectorDeps{repoFactory: repoFactory})
+	responder := &testResponder{}
+	ctx := request.WithNamespace(context.Background(), "default")
+	handler, err := connector.Connect(ctx, "draft-repo", nil, responder)
+	require.NoError(t, err)
+
+	body := `{"spec":{"title":"Draft","type":"github","github":{"url":"https://github.com/grafana/new","branch":"main"}}}`
+	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodPost, "/reftree", strings.NewReader(body)).WithContext(ctx))
+
+	require.NoError(t, responder.err)
+}
+
 // fakeReaderRepository is a minimal repository.Repository + repository.Reader fake.
 type fakeReaderRepository struct {
 	cfg     *provisioningv0alpha1.Repository
