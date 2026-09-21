@@ -219,6 +219,7 @@ func NewAPIService(
 	tracingService tracing.Tracer,
 	mappers *resourcepermission.MappersRegistry,
 	settingService settingsvc.Service,
+	opts ...APIServiceOption,
 ) *IdentityAccessManagementAPIBuilder {
 	store := legacy.NewLegacySQLStores(dbProvider)
 	resourcePermissionsStorage := resourcepermission.ProvideStorageBackend(dbProvider, mappers)
@@ -237,7 +238,7 @@ func NewAPIService(
 		iamauthorizer.Versions,
 	)
 
-	return &IdentityAccessManagementAPIBuilder{
+	builder := &IdentityAccessManagementAPIBuilder{
 		ofClient:                openfeature.NewDefaultClient(),
 		store:                   store,
 		userLegacyStore:         user.NewLegacyStore(store, accessClient, tracingService),
@@ -332,6 +333,10 @@ func NewAPIService(
 				return authorizer.DecisionDeny, "access denied", nil
 			}),
 	}
+	for _, opt := range opts {
+		opt(builder)
+	}
+	return builder
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetGroupVersion() schema.GroupVersion {
@@ -339,16 +344,15 @@ func (b *IdentityAccessManagementAPIBuilder) GetGroupVersion() schema.GroupVersi
 }
 
 func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	client := b.ofClient
 	ctx, cancelFn := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancelFn()
 
 	// Check if any of the AuthZ APIs are enabled
-	enableRolesApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzRolesApi, false, openfeature.TransactionContext(ctx))
-	enableRoleBindingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzRoleBindingsApi, false, openfeature.TransactionContext(ctx))
-	enableGlobalRolesApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzGlobalRolesApi, false, openfeature.TransactionContext(ctx))
-	enableTeamLBACRuleApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzTeamLBACRuleApi, false, openfeature.TransactionContext(ctx))
-	enableResourcePermissionsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzResourcePermissionApis, false, openfeature.TransactionContext(ctx))
+	enableRolesApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesAuthzRolesApi, func(f Features) bool { return f.RolesAPI })
+	enableRoleBindingsApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesAuthzRoleBindingsApi, func(f Features) bool { return f.RoleBindingsAPI })
+	enableGlobalRolesApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesAuthzGlobalRolesApi, func(f Features) bool { return f.GlobalRolesAPI })
+	enableTeamLBACRuleApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesAuthzTeamLBACRuleApi, func(f Features) bool { return f.TeamLBACRulesAPI })
+	enableResourcePermissionsApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesAuthzResourcePermissionApis, func(f Features) bool { return f.ResourcePermissionsAPI })
 
 	if enableRolesApi || enableRoleBindingsApi {
 		if err := iamv0.AddAuthZKnownTypes(scheme); err != nil {
@@ -396,24 +400,23 @@ func (b *IdentityAccessManagementAPIBuilder) AllowedV0Alpha1Resources() []string
 func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
 
-	client := b.ofClient
 	ctx, cancelFn := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancelFn()
 
-	enableZanzanaSync := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzZanzanaSync, false, openfeature.TransactionContext(ctx))
+	enableZanzanaSync := b.featureEnabled(ctx, featuremgmt.FlagKubernetesAuthzZanzanaSync, func(f Features) bool { return f.ZanzanaSync })
 
-	enableRolesApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzRolesApi, false, openfeature.TransactionContext(ctx))
-	enableRoleBindingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzRoleBindingsApi, false, openfeature.TransactionContext(ctx))
-	enableGlobalRolesApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzGlobalRolesApi, false, openfeature.TransactionContext(ctx))
-	enableTeamLBACRuleApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzTeamLBACRuleApi, false, openfeature.TransactionContext(ctx))
-	enableTeamsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesTeamsApi, false, openfeature.TransactionContext(ctx))
-	enableUserApi := b.isSingleOrgSetup() && client.Boolean(ctx, featuremgmt.FlagKubernetesUsersApi, false, openfeature.TransactionContext(ctx))
-	enableServiceAccountsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesServiceAccountsApi, false, openfeature.TransactionContext(ctx))
-	enableServiceAccountTokensApi := client.Boolean(ctx, featuremgmt.FlagKubernetesServiceAccountTokensApi, false, openfeature.TransactionContext(ctx))
-	enableSsoSettingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesSsoSettingsApi, false, openfeature.TransactionContext(ctx))
-	enableSaResourcePermissions := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzServiceAccountResourcePermissions, false, openfeature.TransactionContext(ctx))
-	enableResourcePermissionsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzResourcePermissionApis, false, openfeature.TransactionContext(ctx))
-	enableAuthInfoApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthInfoApi, false, openfeature.TransactionContext(ctx))
+	enableRolesApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesAuthzRolesApi, func(f Features) bool { return f.RolesAPI })
+	enableRoleBindingsApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesAuthzRoleBindingsApi, func(f Features) bool { return f.RoleBindingsAPI })
+	enableGlobalRolesApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesAuthzGlobalRolesApi, func(f Features) bool { return f.GlobalRolesAPI })
+	enableTeamLBACRuleApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesAuthzTeamLBACRuleApi, func(f Features) bool { return f.TeamLBACRulesAPI })
+	enableTeamsApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesTeamsApi, func(f Features) bool { return f.TeamsAPI })
+	enableUserApi := b.isSingleOrgSetup() && b.featureEnabled(ctx, featuremgmt.FlagKubernetesUsersApi, func(f Features) bool { return f.UsersAPI })
+	enableServiceAccountsApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesServiceAccountsApi, func(f Features) bool { return f.ServiceAccountsAPI })
+	enableServiceAccountTokensApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesServiceAccountTokensApi, func(f Features) bool { return f.ServiceAccountTokensAPI })
+	enableSsoSettingsApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesSsoSettingsApi, func(f Features) bool { return f.SSOSettingsAPI })
+	enableSaResourcePermissions := b.featureEnabled(ctx, featuremgmt.FlagKubernetesAuthzServiceAccountResourcePermissions, func(f Features) bool { return f.ServiceAccountResourcePermissions })
+	enableResourcePermissionsApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesAuthzResourcePermissionApis, func(f Features) bool { return f.ResourcePermissionsAPI })
+	enableAuthInfoApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesAuthInfoApi, func(f Features) bool { return f.AuthInfoAPI })
 
 	// teams + users must have shorter names because they are often used as part of another name
 	opts.StorageOptsRegister(iamv0.TeamResourceInfo.GroupResource(), apistore.StorageOptions{
@@ -450,7 +453,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	}
 
 	if enableUserApi {
-		if err := b.UpdateUsersAPIGroup(opts, storage, enableZanzanaSync); err != nil {
+		if err := b.UpdateUsersAPIGroup(opts, storage, enableZanzanaSync, enableTeamsApi); err != nil {
 			return err
 		}
 	}
@@ -710,7 +713,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAuthInfoAPIGroup(opts builder
 	return nil
 }
 
-func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableZanzanaSync bool) error {
+func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableZanzanaSync, enableTeamsAPI bool) error {
 	userResource := iamv0.UserResourceInfo
 
 	userSelectableFieldsOpts := grafanaregistry.SelectableFieldsOptions{
@@ -772,7 +775,9 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 				b.store,
 			)
 		}
-		storage[userResource.StoragePath("teams")] = user.NewUserTeamREST(teamSearchClient, b.teamGetter, b.tracing)
+		if enableTeamsAPI {
+			storage[userResource.StoragePath("teams")] = user.NewUserTeamREST(teamSearchClient, b.teamGetter, b.tracing)
+		}
 	}
 
 	return nil
@@ -1057,15 +1062,14 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 
-	client := b.ofClient
 	ctx, cancelFn := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancelFn()
 
-	enableTeamsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesTeamsApi, false, openfeature.TransactionContext(ctx))
-	enableUserApi := b.isSingleOrgSetup() && client.Boolean(ctx, featuremgmt.FlagKubernetesUsersApi, false, openfeature.TransactionContext(ctx))
-	enableResourcePermissionsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzResourcePermissionApis, false, openfeature.TransactionContext(ctx))
-	enableUserPermissionsApi := client.Boolean(ctx, featuremgmt.FlagAuthzUserPermissions, false, openfeature.TransactionContext(ctx))
-	enableSsoSettingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesSsoSettingsApi, false, openfeature.TransactionContext(ctx))
+	enableTeamsApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesTeamsApi, func(f Features) bool { return f.TeamsAPI })
+	enableUserApi := b.isSingleOrgSetup() && b.featureEnabled(ctx, featuremgmt.FlagKubernetesUsersApi, func(f Features) bool { return f.UsersAPI })
+	enableResourcePermissionsApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesAuthzResourcePermissionApis, func(f Features) bool { return f.ResourcePermissionsAPI })
+	enableUserPermissionsApi := b.featureEnabled(ctx, featuremgmt.FlagAuthzUserPermissions, func(f Features) bool { return f.UserPermissionsAPI })
+	enableSsoSettingsApi := b.featureEnabled(ctx, featuremgmt.FlagKubernetesSsoSettingsApi, func(f Features) bool { return f.SSOSettingsAPI })
 
 	searchRoutes := make([]*builder.APIRoutes, 0, 4)
 	if enableUserApi && b.userSearchHandler != nil {
@@ -1094,6 +1098,13 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 	}
 	routes = append(routes, searchRoutes...)
 	return mergeAPIRoutes(routes...)
+}
+
+func (b *IdentityAccessManagementAPIBuilder) featureEnabled(ctx context.Context, key string, configured func(Features) bool) bool {
+	if b.features != nil {
+		return configured(*b.features)
+	}
+	return b.ofClient.Boolean(ctx, key, false, openfeature.TransactionContext(ctx))
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetAuthorizer() authorizer.Authorizer {
