@@ -1,3 +1,5 @@
+import { isUndefined, omitBy } from 'lodash';
+
 import {
   type AppPluginConfig,
   isIconName,
@@ -9,8 +11,9 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { getNavTitle } from 'app/core/utils/navBarItem-translations';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { MORE_APPS_SHELL, NavID, NavWeight } from './constants';
-import { appendIntoSection, pluginPageId } from './utils';
+import { appNavConfigFor, appNavPathConfigFor } from './appNavConfig';
+import { NavID, NavWeight, PLUGIN_SECTION_SHELLS } from './constants';
+import { appendIntoSection, pluginPageId, standalonePluginPageId, withAppSubUrl } from './utils';
 
 // Whether the user may see one of an app's pages. An include declaring an RBAC
 // action is gated on that action; otherwise the user's org role must rank at or
@@ -19,10 +22,10 @@ import { appendIntoSection, pluginPageId } from './utils';
 // applies (plugins:id:*) cannot be checked here.
 const ORG_ROLE_RANK: Record<string, number> = { None: 0, Viewer: 1, Editor: 2, Admin: 3 };
 
-// Apps all carry the same sort weight, so sortNavTree leaves them in whatever
-// order they were placed. Order them here, by the title getNavTitle resolves —
-// which is also the text the nav slices go on to display, so the order the user
-// reads and the order built here cannot drift apart.
+// Apps with no nav config all carry the same sort weight, so sortNavTree leaves
+// them in whatever order they were placed. Order them here, by the title
+// getNavTitle resolves — which is also the text the nav slices go on to display,
+// so the order the user reads and the order built here cannot drift apart.
 const collator = new Intl.Collator();
 
 /**
@@ -30,17 +33,12 @@ const collator = new Intl.Collator();
  * The Go equivalent is addAppLinks in
  * pkg/services/navtree/navtreeimpl/applinks.go.
  *
- * Every app lands in "More apps" under its own plugin.json name. The section is
- * created from its shell by the first app to need it.
- *
  * Call it with a tree whose sections are already built, and sort the result:
  * apps carry weights that only take effect downstream. Urls stay app-sub-url
  * relative, because getInitialNavTree applies that prefix once at the end.
  *
- * Permanent divergences from the Go builder: per-org plugin enablement and the
- * assistant's jsonData gating are not readable client-side; includes are
- * appended flat rather than nested under their path ancestor; and page includes
- * with no path have no URL to link to.
+ * The client cannot read per-org plugin enablement or a plugin's jsonData, so
+ * anything the Go builder gates on those is out of reach here.
  */
 export function applyPluginNav(tree: NavModelItem[], apps: AppPluginConfig[]): NavModelItem[] {
   if (!contextSrv.hasPermission(AccessControlAction.PluginsAppAccess)) {
@@ -51,7 +49,10 @@ export function applyPluginNav(tree: NavModelItem[], apps: AppPluginConfig[]): N
 
   for (const app of byTitle(apps)) {
     try {
-      const { appLink, navChildren } = buildAppLink(app);
+      const { appLink, navChildren, standalonePages } = buildAppLink(app);
+      for (const page of standalonePages) {
+        next = placeStandalonePage(next, page);
+      }
       // An app with no accessible nav children is not part of the tree. That is
       // decided on navChildren, before the default nav is folded out: an app
       // whose only page IS its default nav still belongs in the tree, as a link
@@ -59,7 +60,7 @@ export function applyPluginNav(tree: NavModelItem[], apps: AppPluginConfig[]): N
       if (navChildren.length === 0) {
         continue;
       }
-      next = placeInMoreApps(next, appLink);
+      next = placeAppInSection(next, app, withAppNavConfig(app, appLink));
     } catch (error) {
       // One malformed plugin meta costs its own app and nothing else: this runs
       // while the redux store is being created, so a throw would take the tree
@@ -81,25 +82,22 @@ function byTitle(apps: AppPluginConfig[]): AppPluginConfig[] {
 }
 
 /**
- * Appends the app link to the "More apps" section, creating that section from
- * its shell if this is the first app to need it. Returns a new tree.
- */
-function placeInMoreApps(tree: NavModelItem[], appLink: NavModelItem): NavModelItem[] {
-  const placed = appendIntoSection(tree, NavID.apps, [appLink]);
-  return placed ?? [...tree, { ...MORE_APPS_SHELL, children: [appLink] }];
-}
-
-/**
  * Builds the app's nav link from its page and dashboard includes. Returns the
  * accessible includes as navChildren too, unfiltered, so the caller can tell an
  * app with no nav items from one whose only item folded into the app link.
  */
-function buildAppLink(app: AppPluginConfig): { appLink: NavModelItem; navChildren: NavModelItem[] } {
+function buildAppLink(app: AppPluginConfig): {
+  appLink: NavModelItem;
+  navChildren: NavModelItem[];
+  standalonePages: StandalonePage[];
+} {
   let appUrl = `/a/${app.id}`;
   const children: NavModelItem[] = [];
+  const standalonePages: StandalonePage[] = [];
+  const filterInclude = appNavConfigFor(app.id)?.filterInclude;
 
   for (const include of app.includes ?? []) {
-    if (!hasAccessToInclude(include)) {
+    if (!hasAccessToInclude(include) || (filterInclude && !filterInclude(include))) {
       continue;
     }
 
@@ -123,14 +121,39 @@ function buildAppLink(app: AppPluginConfig): { appLink: NavModelItem; navChildre
       appUrl = include.path;
     }
 
-    if (include.addToNav) {
-      children.push({
-        text: include.name,
-        icon: toIconName(include.icon),
-        pluginId: app.id,
-        url: include.path,
+    const link: NavModelItem = {
+      text: include.name,
+      icon: toIconName(include.icon),
+      pluginId: app.id,
+      url: include.path,
+    };
+
+    // A page with its own placement leaves the app entirely, so it is not one of
+    // the app's nav children: an app whose only page is relocated drops out.
+    // The placement comes from our config rather than the plugin, so it applies
+    // whatever addToNav says — plugins should not lean on that, a page meant for
+    // the nav sets addToNav.
+    const pathConfig = appNavPathConfigFor(include.path);
+    if (pathConfig) {
+      standalonePages.push({
+        sectionId: pathConfig.sectionId,
+        link: {
+          ...link,
+          id: standalonePluginPageId(include.path),
+          sortWeight: pathConfig.sortWeight,
+          ...(pathConfig.subTitle && { subTitle: pathConfig.subTitle }),
+          ...(pathConfig.icon && { icon: toIconName(pathConfig.icon) }),
+          ...(pathConfig.isNew && { isNew: pathConfig.isNew }),
+        },
       });
+      continue;
     }
+
+    if (!include.addToNav) {
+      continue;
+    }
+
+    children.push(link);
   }
 
   return {
@@ -139,8 +162,8 @@ function buildAppLink(app: AppPluginConfig): { appLink: NavModelItem; navChildre
       id: pluginPageId(app.id),
       img: app.info?.logos?.small,
       subTitle: app.info?.description,
-      // Every app link carries the same weight, so sortNavTree sees a tie at
-      // every comparison and its stable sort keeps the order byTitle set.
+      // Apps with no nav config all share this weight, so sortNavTree sees a tie
+      // at every comparison and its stable sort keeps the order byTitle set.
       sortWeight: NavWeight.plugin,
       isSection: true,
       pluginId: app.id,
@@ -149,7 +172,79 @@ function buildAppLink(app: AppPluginConfig): { appLink: NavModelItem; navChildre
       children: children.filter((child) => child.url !== appUrl),
     },
     navChildren: children,
+    standalonePages,
   };
+}
+
+/** A page lifted out of its app, with the section it belongs in */
+interface StandalonePage {
+  sectionId: string;
+  link: NavModelItem;
+}
+
+/** Places a lifted page at the top level, or into the section it names */
+function placeStandalonePage(tree: NavModelItem[], { sectionId, link }: StandalonePage): NavModelItem[] {
+  return appendIntoSection(tree, sectionId, [link]) ?? tree;
+}
+
+/** Applies the app's built-in nav config: placement, weight and display overrides */
+function withAppNavConfig(app: AppPluginConfig, appLink: NavModelItem): NavModelItem {
+  const navConfig = appNavConfigFor(app.id);
+  if (!navConfig) {
+    return appLink;
+  }
+  const { sortWeight, text, subTitle, isNew, icon } = navConfig;
+  return {
+    ...appLink,
+    sortWeight,
+    // Absent overrides must not clobber the plugin's own values with undefined
+    ...omitBy({ text, subTitle, isNew }, isUndefined),
+    ...(icon && { icon: toIconName(icon) }),
+  };
+}
+
+/**
+ * Places the app link into its configured section (default "More apps"),
+ * creating the section from its shell if this is the first app targeting it.
+ * Returns a new tree.
+ */
+function placeAppInSection(tree: NavModelItem[], app: AppPluginConfig, appLink: NavModelItem): NavModelItem[] {
+  const navConfig = appNavConfigFor(app.id);
+  const sectionId = navConfig?.sectionId ?? NavID.apps;
+
+  const sectionChildren = [appLink];
+
+  const placed = appendIntoSection(tree, sectionId, sectionChildren);
+  if (placed) {
+    return placed;
+  }
+
+  const shellConfig = PLUGIN_SECTION_SHELLS[sectionId];
+  if (!shellConfig) {
+    console.warn('[navtree] plugin app nav id not found', app.id, sectionId);
+    return tree;
+  }
+  const { shell, absorbs = [], imgFromAppLogo } = shellConfig;
+
+  // Core sections the shell absorbs (e.g. Alerting into Alerts & IRM) move
+  // from the top level into the new section, at their configured weight
+  const absorbed = absorbs
+    .map(({ id, sortWeight }) => {
+      const node = tree.find((candidate) => candidate.id === id);
+      return node && { ...node, sortWeight };
+    })
+    .filter((node) => node !== undefined);
+  const absorbedIds = new Set(absorbed.map((node) => node.id));
+
+  return [
+    ...tree.filter((node) => !absorbedIds.has(node.id)),
+    {
+      ...shell,
+      children: [...absorbed, ...sectionChildren],
+      // applyAppSubUrl only rewrites url, not img, so this one is prefixed by hand
+      ...(imgFromAppLogo && app.info?.logos && { img: withAppSubUrl(app.info.logos.large) }),
+    },
+  ];
 }
 
 function hasAccessToInclude(include: PluginInclude): boolean {
