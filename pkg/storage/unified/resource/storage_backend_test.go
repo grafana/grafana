@@ -1460,6 +1460,34 @@ func TestKvStorageBackend_BatchReadResource_MissingBodyKeepsPosition(t *testing.
 	require.Nil(t, got[2].Error)
 }
 
+func TestKvStorageBackend_BatchReadResource_ClosesPrefetchedBodyWhenConsumerStopsAfterNotFound(t *testing.T) {
+	kvWrapper := &batchBodyMissingKV{nameMatch: "missing"}
+	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+		kvWrapper.KV = opts.KvStore
+		opts.KvStore = kvWrapper
+	})
+	requests := make([]*resourcepb.ReadRequest, 0, 2)
+	for _, name := range []string{"missing", "after"} {
+		obj, err := createTestObjectWithName(name, appsNamespace, "value")
+		require.NoError(t, err)
+		rv, err := writeObject(t, backend, obj, resourcepb.WatchEvent_ADDED, 0)
+		require.NoError(t, err)
+		requests = append(requests, &resourcepb.ReadRequest{
+			Key:             &resourcepb.ResourceKey{Namespace: "default", Group: "apps", Resource: "resources", Name: name},
+			ResourceVersion: rv,
+		})
+	}
+
+	responses, err := backend.BatchReadResource(t.Context(), requests)
+	require.NoError(t, err)
+	for response, readErr := range responses {
+		require.NoError(t, readErr)
+		require.Equal(t, int32(http.StatusNotFound), response.Error.Code)
+		break
+	}
+	require.Equal(t, int64(1), kvWrapper.bodyCloses.Load())
+}
+
 func TestKvStorageBackend_BatchReadResource_RuntimeFailuresKeepOrderedMetadata(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -1572,7 +1600,8 @@ func (r *countingReadCloser) Read(p []byte) (int, error) {
 
 type batchBodyMissingKV struct {
 	KV
-	nameMatch string
+	nameMatch  string
+	bodyCloses atomic.Int64
 }
 
 func (k *batchBodyMissingKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[kv.KeyValue, error] {
@@ -1586,11 +1615,24 @@ func (k *batchBodyMissingKV) BatchGet(ctx context.Context, section string, keys 
 				_ = value.Value.Close()
 				continue
 			}
+			if err == nil {
+				value.Value = &closeCountingReadCloser{ReadCloser: value.Value, count: &k.bodyCloses}
+			}
 			if !yield(value, err) {
 				return
 			}
 		}
 	}
+}
+
+type closeCountingReadCloser struct {
+	io.ReadCloser
+	count *atomic.Int64
+}
+
+func (r *closeCountingReadCloser) Close() error {
+	r.count.Add(1)
+	return r.ReadCloser.Close()
 }
 
 func TestKvStorageBackend_ReadResource_ResolvedButBodyMissing(t *testing.T) {
