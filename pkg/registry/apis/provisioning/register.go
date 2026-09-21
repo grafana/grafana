@@ -1349,6 +1349,29 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 		}
 	}
 
+	// filetree/reftree take the same ephemeral Repository body as /test (see
+	// buildEphemeralRepository) - a connect-style subresource's request body isn't
+	// otherwise inferred from the Go handler, so it must be declared here explicitly,
+	// same as /test above.
+	for _, path := range []string{"/filetree", "/reftree"} {
+		sub = oas.Paths.Paths[repoprefix+path]
+		if sub != nil {
+			repoSchema := defs[compBase+"Repository"].Schema
+			sub.Post.RequestBody = &spec3.RequestBody{
+				RequestBodyProps: spec3.RequestBodyProps{
+					Required: false,
+					Content: map[string]*spec3.MediaType{
+						"application/json": {
+							MediaTypeProps: spec3.MediaTypeProps{
+								Schema: &repoSchema,
+							},
+						},
+					},
+				},
+			}
+		}
+	}
+
 	ref := &spec3.Parameter{
 		ParameterProps: spec3.ParameterProps{
 			Name:    "ref",
