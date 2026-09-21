@@ -37,6 +37,7 @@ import (
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/usagestats"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
@@ -336,6 +337,10 @@ type SearchOptions struct {
 	// it after the initial poll and retain the registry to observe later reloads.
 	EmbeddingConfig *EmbeddingConfigRegistry
 
+	// EmbeddingBuilders is evaluated after the initial manifest load and again
+	// for queries, so a catalog row alone cannot enroll an internal collection.
+	EmbeddingBuilders embed.BuilderProvider
+
 	// Index snapshot settings — enable downloading pre-built search indexes from object storage on startup.
 	// IndexSnapshotEnabled gates the entire snapshot feature.
 	IndexSnapshotEnabled bool
@@ -613,6 +618,7 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 		bookmarkFrequency:              opts.BookmarkFrequency,
 		vectorWriteReconciler:          opts.VectorReconciler,
+		embeddingBuilders:              opts.Search.EmbeddingBuilders,
 	}
 
 	if opts.Search.Resources != nil {
@@ -741,6 +747,7 @@ type server struct {
 	// Vector reconciler (which owns the backfiller). Started in Init,
 	// joined in Stop via indexersWG.
 	vectorWriteReconciler BroadcasterConsumer
+	embeddingBuilders     embed.BuilderProvider
 	indexersWG            sync.WaitGroup
 
 	// statsIngester buffers and flushes usage stats events. nil when the
@@ -759,6 +766,11 @@ func (s *server) Init(ctx context.Context) error {
 		// initialize the search index
 		if s.initErr == nil && s.search != nil {
 			s.initErr = s.search.init(ctx)
+		} else if s.initErr == nil && s.embeddingBuilders != nil {
+			// Storage-only servers also validate after the initial manifest poll.
+			if err := s.embeddingBuilders.Validate(); err != nil {
+				s.initErr = fmt.Errorf("embedding enrollment: %w", err)
+			}
 		}
 
 		// Start watching for changes
@@ -1667,11 +1679,17 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	if s.shouldUseSearchForList(req) {
 		// If we get here, we're doing list with selectable fields or labels. Let's do
 		// search instead, since we index both, and fetch resulting documents one by one.
-		gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
-		if s.storageMetrics != nil {
-			s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "search").Inc()
+		rsp, err := s.listWithSelectors(ctx, req)
+		if !errors.Is(err, errSearchCannotAnswerList) {
+			if s.storageMetrics != nil {
+				gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
+				s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "search").Inc()
+			}
+			return rsp, err
 		}
-		return s.listWithSelectors(ctx, req)
+		// The store scan reads the objects themselves, so it answers what the index
+		// cannot. Slower, but right.
+		s.log.Warn("Search cannot answer List with selectors, falling back to the store", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", err)
 	}
 
 	if req.NextPageToken != "" {
