@@ -177,13 +177,6 @@ export default function HomePage() {
                     ),
                   })}
 
-                  {showSolutions && (
-                    <>
-                      <Recommendations solutions={solutions} />
-                      <Overview solutions={solutions.solutions} />
-                    </>
-                  )}
-
                   <HomeGrid columns={2} gap={2}>
                     {/* Skip the HomepageTabs extension point for the redesign UI */}
                     <DashboardTabs extensionComponents={[]} />
@@ -197,6 +190,13 @@ export default function HomePage() {
                       switchRef={alertIncidentRef}
                     />
                   </HomeGrid>
+
+                  {showSolutions && (
+                    <>
+                      <Recommendations solutions={solutions} />
+                      <Overview solutions={solutions.solutions} />
+                    </>
+                  )}
                 </>
               ) : (
                 <>

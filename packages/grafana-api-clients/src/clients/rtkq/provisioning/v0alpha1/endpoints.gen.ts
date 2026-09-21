@@ -1680,7 +1680,7 @@ export type ConnectionAuthorizeRequest = {
   spec: ConnectionAuthorizeRequestSpec;
   status?: ConnectionAuthorizeRequestStatus;
 };
-export type ResourceRef = {
+export type ProvisioningResourceRef = {
   /** Group is the group of the resource, such as "dashboard.grafana.app". */
   group?: string;
   /** Kind is the type of resource, for example, "Dashboard". */
@@ -1694,7 +1694,7 @@ export type DeleteJobOptions = {
   /** Ref to the branch or commit hash to delete from */
   ref?: string;
   /** Resources to delete This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths. */
-  resources?: ResourceRef[];
+  resources?: ProvisioningResourceRef[];
 };
 export type FixFolderMetadataJobOptions = {
   /** Ref to the branch to create the commit on (uses repository's default branch if not specified) */
@@ -1708,7 +1708,7 @@ export type MigrateJobOptions = {
   /** Message to use when committing the changes in a single commit. Deprecated: set JobSpec.Message instead. This field is kept for backwards compatibility and is only used when JobSpec.Message is empty. */
   message?: string;
   /** Resources to migrate. When empty, every unmanaged resource in the namespace is migrated (legacy behavior). When non-empty, only the listed resources are exported to the repository — the folder hierarchy is still emitted so parent paths resolve, and the subsequent pull phase only takes ownership of those resources. Currently only unmanaged Dashboards are supported. */
-  resources?: ResourceRef[];
+  resources?: ProvisioningResourceRef[];
   /** SkipResourceDeletion keeps the migrated resources on the instance instead of removing them. By default a migration deletes the resources it moved (the whole namespace for an instance target, or the exported resources for a branch migration); when true, no deletion happens and the resources are left in place. */
   skipResourceDeletion?: boolean;
 };
@@ -1718,7 +1718,7 @@ export type MoveJobOptions = {
   /** Ref to the branch or commit hash that should move */
   ref?: string;
   /** Resources to move This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths. */
-  resources?: ResourceRef[];
+  resources?: ProvisioningResourceRef[];
   /** Destination path for the move (e.g. "new-location/") */
   targetPath?: string;
 };
@@ -1752,7 +1752,7 @@ export type ExportJobOptions = {
   /** FIXME: we should validate this in admission hooks Prefix in target file system */
   path?: string;
   /** Resources to export. When empty, every unmanaged resource in the namespace is exported (legacy behavior). When non-empty, only the listed resources are exported — the folder hierarchy is still emitted so parent paths resolve. Currently only unmanaged Dashboards are supported. */
-  resources?: ResourceRef[];
+  resources?: ProvisioningResourceRef[];
 };
 export type Duration = string;
 export type TestJobOptions = {

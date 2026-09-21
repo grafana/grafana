@@ -5,7 +5,8 @@ import { type GrafanaTheme2, PluginExtensionPoints } from '@grafana/data';
 import { usePluginComponents } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
 
-import { getComponentMetaFromComponentId, useExtensionSidebarContext } from './ExtensionSidebarProvider';
+import { useExtensionSidebarContext } from './ExtensionSidebarProvider';
+import { getComponentMetaFromComponentId } from './extensionSidebarUtils';
 
 type ExtensionSidebarComponentProps = {
   props?: Record<string, unknown>;
