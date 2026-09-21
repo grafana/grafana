@@ -1,13 +1,21 @@
 import { screen } from '@testing-library/react';
 import { lazy, type ComponentType } from 'react';
-import { render } from 'test/test-utils';
+import { getWrapper, render } from 'test/test-utils';
 
 import { setEchoSrv } from '@grafana/runtime';
 
+import { AppChromeService } from '../components/AppChrome/AppChromeService';
 import { Echo } from '../services/echo/Echo';
 
 import { GrafanaRoute, type Props } from './GrafanaRoute';
+import { useMTFallback } from './mtFallback';
 import { type GrafanaRouteComponentProps } from './types';
+
+jest.mock('./mtFallback', () => ({
+  useMTFallback: jest.fn(),
+}));
+
+const mockUseMTFallback = jest.mocked(useMTFallback);
 
 const mockLocation = {
   search: '?query=hello&test=asd',
@@ -15,7 +23,7 @@ const mockLocation = {
   state: undefined,
   hash: '',
 };
-function setup(overrides: Partial<Props>) {
+function setup(overrides: Partial<Props>, chrome = new AppChromeService()) {
   const props: Props = {
     location: mockLocation,
     route: {
@@ -25,12 +33,16 @@ function setup(overrides: Partial<Props>) {
     ...overrides,
   };
 
-  render(<GrafanaRoute {...props} />);
+  const wrapper = getWrapper({ renderWithRouter: true, grafanaContext: { chrome } });
+  render(<GrafanaRoute {...props} />, { wrapper });
+
+  return { chrome };
 }
 
 describe('GrafanaRoute', () => {
   beforeEach(() => {
     setEchoSrv(new Echo());
+    mockUseMTFallback.mockReturnValue(false);
   });
 
   it('Parses search', () => {
@@ -66,5 +78,24 @@ describe('GrafanaRoute', () => {
 
     expect(await screen.findByRole('heading', { name: 'An unexpected error happened' })).toBeInTheDocument();
     expect(consoleError).toHaveBeenCalled();
+  });
+
+  it('shows the fallback loader instead of the route component when useMTFallback returns true', () => {
+    mockUseMTFallback.mockReturnValue(true);
+
+    setup({ route: { component: () => <div data-testid="real-page" />, path: '/' } });
+
+    expect(screen.getByTestId('page-fallback-loader')).toBeInTheDocument();
+    expect(screen.queryByTestId('real-page')).not.toBeInTheDocument();
+  });
+
+  it('clears the chrome default chromeless state while showing the fallback loader', () => {
+    mockUseMTFallback.mockReturnValue(true);
+    const chrome = new AppChromeService();
+    expect(chrome.state.getValue().chromeless).toBe(true);
+
+    setup({ route: { component: () => <div />, path: '/' } }, chrome);
+
+    expect(chrome.state.getValue().chromeless).toBeFalsy();
   });
 });
