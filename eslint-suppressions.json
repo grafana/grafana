@@ -1242,7 +1242,7 @@
       "count": 3
     }
   },
-  "public/app/features/alerting/unified/components/rule-editor/notificaton-preview/PolicyTreeSelector.tsx": {
+  "public/app/features/alerting/unified/components/rule-editor/notificaton-preview/RoutingTreePolicyField.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
     }

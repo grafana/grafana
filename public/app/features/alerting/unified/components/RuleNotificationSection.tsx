@@ -28,7 +28,7 @@ import { Annotation } from '../utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 import { NeedHelpInfoForNotificationPolicy } from './rule-editor/NotificationsStep';
-import { PolicyTreeSelector } from './rule-editor/notificaton-preview/PolicyTreeSelector';
+import { RoutingTreePolicyField } from './rule-editor/notificaton-preview/RoutingTreePolicyField';
 
 // Form path for selected contact point, using the Grafana alert manager name
 const CONTACT_POINT_PATH = `contactPoints.${GRAFANA_RULES_SOURCE_NAME}.selectedContactPoint` as const;
@@ -194,7 +194,7 @@ export function RuleNotificationSection() {
             {useNotificationPolicy ? (
               <div className={styles.contentTopSpacer}>
                 <Stack direction="column" gap={2}>
-                  <PolicyTreeSelector />
+                  <RoutingTreePolicyField />
                   <NeedHelpInfoForNotificationPolicy />
                 </Stack>
               </div>
