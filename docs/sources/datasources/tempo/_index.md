@@ -54,7 +54,7 @@ The Tempo data source supports the following features:
 | Alerting           | Experimental | Enable the `tempoAlerting` feature toggle to alert on TraceQL metrics queries, or use Prometheus metrics from the metrics generator |
 
 {{< admonition type="tip" >}}
-**New to tracing?** Learn what telemetry signals are and how they work together in [Understand your data](https://grafana.com/docs/grafana-cloud/telemetry-signals/) (Grafana Cloud), or read the [Introduction to tracing](https://grafana.com/docs/tempo/<TEMPO_VERSION>/introduction/) for core concepts like spans, traces, and instrumentation.
+**New to tracing?** Learn what telemetry signals are and how they work together in [Correlate telemetry signals](https://grafana.com/docs/grafana-cloud/telemetry-signals/) (Grafana Cloud).
 
 **Prefer a queryless experience?** [Grafana Traces Drilldown](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/traces/) lets you explore tracing data using RED metrics without writing TraceQL queries.
 {{< /admonition >}}
