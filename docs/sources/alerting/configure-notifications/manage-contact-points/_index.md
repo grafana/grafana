@@ -195,15 +195,7 @@ Some of the integrations above are not supported by Prometheus Alertmanager. For
 
 ## Allowlist notification source IP addresses
 
-Grafana Cloud notifications sent by the Grafana Alertmanager use the `grafana` service egress IP addresses for your stack's region. They don't use the Hosted Alerts (`alerts`) list or `src-ips.alertmanager-*.grafana.net` DNS records.
-
-Replace `<REGION>` with your Grafana instance region (for example, `prod-us-west-0`):
-
-```sh
-curl -s https://allowlists.<REGION>.grafana.net/v1/grafana
-```
-
-These addresses can change. For details, refer to [List of Grafana Cloud IP addresses to add to your allowlist](https://grafana.com/docs/grafana-cloud/security-and-account-management/allow-list/).
+To allowlist the IP addresses Grafana Cloud uses to send alert notifications, refer to [List of Grafana Cloud IP addresses to add to your allowlist](https://grafana.com/docs/grafana-cloud/security-and-account-management/allow-list/).
 
 ## Add a contact point
 
