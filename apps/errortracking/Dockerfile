@@ -1,9 +1,7 @@
 FROM golang:1.26.6-alpine AS build
 
 WORKDIR /src
-COPY pkg/apimachinery ./pkg/apimachinery
-COPY apps/errortracking ./apps/errortracking
-WORKDIR /src/apps/errortracking
+COPY . .
 RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/error-tracking ./cmd/error-tracking
 
 FROM alpine:3.22

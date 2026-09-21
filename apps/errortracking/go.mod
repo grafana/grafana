@@ -2,15 +2,12 @@ module github.com/grafana/grafana/apps/errortracking
 
 go 1.26.6
 
-replace github.com/grafana/grafana/pkg/apimachinery => ../../pkg/apimachinery
-
 require (
 	github.com/emicklei/go-restful/v3 v3.13.0
 	github.com/go-jose/go-jose/v4 v4.1.5
 	github.com/grafana/authlib v0.0.0-20260814184937-0d62418c2815
 	github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815
 	github.com/grafana/grafana-app-sdk v0.60.2
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6
 	github.com/jackc/pgx/v5 v5.11.0
 	github.com/stretchr/testify v1.12.1
 	go.opentelemetry.io/otel/trace v1.46.0

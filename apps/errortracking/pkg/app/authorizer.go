@@ -9,9 +9,8 @@ import (
 )
 
 // GetAuthorizer allows authenticated Grafana users to their own tenant namespace.
-// It must be wired into the installer's GetAuthorizer method (see
-// pkg/registry/apps/errortracking/register.go) — the apiserver panics on a nil authorizer
-// for a registered API group.
+// It must be wired into the app installer's GetAuthorizer method — the apiserver
+// panics on a nil authorizer for a registered API group.
 func GetAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -27,11 +26,7 @@ func GetAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer {
 				return authorizer.DecisionDeny, "requested namespace does not match tenant identity", nil
 			}
 
-			authInfo, ok := authlib.AuthInfoFrom(ctx)
-			if !ok {
-				return authorizer.DecisionDeny, "authenticated identity is required", nil
-			}
-			servicePermission := authz.CheckServicePermissions(authInfo, attr.GetAPIGroup(), attr.GetResource(), attr.GetVerb())
+			servicePermission := authz.CheckServicePermissions(user, attr.GetAPIGroup(), attr.GetResource(), attr.GetVerb())
 			if !servicePermission.Allowed {
 				return authorizer.DecisionDeny, "calling service lacks required permissions", nil
 			}
@@ -41,7 +36,7 @@ func GetAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer {
 			if accessClient == nil {
 				return authorizer.DecisionDeny, "user permission checker is not configured", nil
 			}
-			check, err := accessClient.Check(ctx, authInfo, authlib.CheckRequest{
+			check, err := accessClient.Check(ctx, user, authlib.CheckRequest{
 				Verb:        attr.GetVerb(),
 				Group:       attr.GetAPIGroup(),
 				Resource:    attr.GetResource(),

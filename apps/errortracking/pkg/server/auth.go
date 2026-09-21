@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"slices"
 	"strings"
 	"time"
 
@@ -18,8 +17,6 @@ import (
 	"google.golang.org/grpc/credentials"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/user"
-
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 type requestAuthenticator struct {
@@ -56,11 +53,10 @@ func (a *requestAuthenticator) AuthenticateRequest(request *http.Request) (*auth
 			return nil, false, err
 		}
 	}
-	requester, err := newRequester(info)
-	if err != nil {
-		return nil, false, err
+	if _, err := authlib.ParseNamespace(info.GetNamespace()); err != nil {
+		return nil, false, fmt.Errorf("parse authenticated namespace: %w", err)
 	}
-	return &authenticator.Response{User: requester}, true, nil
+	return &authenticator.Response{User: info}, true, nil
 }
 
 func validateRegisteredClaims(token, issuer, audience string) error {
@@ -83,43 +79,6 @@ func validateRegisteredClaims(token, issuer, audience string) error {
 		return fmt.Errorf("validate signed token claims: %w", err)
 	}
 	return nil
-}
-
-type requester struct {
-	authlib.AuthInfo
-	orgID int64
-}
-
-func newRequester(info authlib.AuthInfo) (*requester, error) {
-	namespace, err := authlib.ParseNamespace(info.GetNamespace())
-	if err != nil {
-		return nil, fmt.Errorf("parse authenticated namespace: %w", err)
-	}
-	return &requester{AuthInfo: info, orgID: namespace.OrgID}, nil
-}
-
-func (r *requester) IsIdentityType(expected ...authlib.IdentityType) bool {
-	return authlib.IsIdentityType(r.GetIdentityType(), expected...)
-}
-func (r *requester) GetRawIdentifier() string                  { return r.GetIdentifier() }
-func (r *requester) GetID() string                             { return r.GetSubject() }
-func (r *requester) GetInternalID() (int64, error)             { return identity.IntIdentifier(r.GetSubject()) }
-func (r *requester) GetIsGrafanaAdmin() bool                   { return false }
-func (r *requester) GetLogin() string                          { return r.GetUsername() }
-func (r *requester) GetOrgID() int64                           { return r.orgID }
-func (r *requester) GetOrgRole() identity.RoleType             { return identity.RoleNone }
-func (r *requester) GetPermissions() map[string][]string       { return map[string][]string{} }
-func (r *requester) GetGlobalPermissions() map[string][]string { return map[string][]string{} }
-func (r *requester) GetTeams() []int64                         { return nil }
-func (r *requester) GetExternalGroups() []string               { return nil }
-func (r *requester) GetOrgName() string                        { return "" }
-func (r *requester) GetAuthID() string                         { return "" }
-func (r *requester) HasRole(identity.RoleType) bool            { return false }
-func (r *requester) GetCacheKey() string                       { return r.GetNamespace() + ":" + r.GetUID() }
-func (r *requester) HasUniqueId() bool                         { return r.GetIdentifier() != "" }
-func (r *requester) IsNil() bool                               { return r == nil }
-func (r *requester) IsAuthenticatedBy(providers ...string) bool {
-	return slices.Contains(providers, r.GetAuthenticatedBy())
 }
 
 func newAuthzClient(config Config) (authlib.AccessClient, *grpc.ClientConn, error) {
@@ -175,5 +134,3 @@ func isPublicPath(path string) bool {
 	}
 	return strings.HasPrefix(path, "/openapi/v3/")
 }
-
-var _ identity.Requester = (*requester)(nil)

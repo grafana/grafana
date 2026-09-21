@@ -8,8 +8,6 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
-
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 type roleAccessClient struct {
@@ -22,16 +20,26 @@ func (c *roleAccessClient) Check(_ context.Context, _ authlib.AuthInfo, request 
 	return authlib.CheckResponse{Allowed: request.Verb == "list"}, nil
 }
 
+func testAuthInfo(namespace string, identityType authlib.IdentityType, identifier string, permissions, delegatedPermissions []string) authlib.AuthInfo {
+	access := authn.Claims[authn.AccessTokenClaims]{Rest: authn.AccessTokenClaims{
+		Namespace:            namespace,
+		Permissions:          permissions,
+		DelegatedPermissions: delegatedPermissions,
+	}}
+	if identityType == authlib.TypeUser {
+		return authn.NewIDTokenAuthInfo(access, &authn.Claims[authn.IDTokenClaims]{Rest: authn.IDTokenClaims{
+			Namespace:  namespace,
+			Type:       identityType,
+			Identifier: identifier,
+		}})
+	}
+	return authn.NewAccessTokenAuthInfo(access)
+}
+
 func TestGetAuthorizerNamespace(t *testing.T) {
 	auth := GetAuthorizer(authlib.FixedAccessClient(true))
 	ctx := func(namespace string) context.Context {
-		return identity.WithRequester(context.Background(), &identity.StaticRequester{
-			Type:      authlib.TypeAccessPolicy,
-			Namespace: namespace,
-			AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
-				Rest: authn.AccessTokenClaims{Permissions: []string{"error-tracking.grafana.app/events:*"}},
-			},
-		})
+		return authlib.WithAuthInfo(context.Background(), testAuthInfo(namespace, authlib.TypeAccessPolicy, "policy", []string{"error-tracking.grafana.app/events:*"}, nil))
 	}
 	for _, tc := range []struct {
 		name, identityNamespace, requestNamespace string
@@ -57,7 +65,7 @@ func TestGetAuthorizerNamespace(t *testing.T) {
 
 func TestGetAuthorizerDeniesSameTenantWithoutServicePermission(t *testing.T) {
 	auth := GetAuthorizer(authlib.FixedAccessClient(true))
-	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "stacks-123"})
+	ctx := authlib.WithAuthInfo(context.Background(), testAuthInfo("stacks-123", authlib.TypeUser, "user", nil, nil))
 	decision, _, err := auth.Authorize(ctx, authorizer.AttributesRecord{
 		ResourceRequest: true,
 		APIGroup:        "error-tracking.grafana.app",
@@ -72,13 +80,7 @@ func TestGetAuthorizerDeniesSameTenantWithoutServicePermission(t *testing.T) {
 func TestGetAuthorizerDeniesSameTenantWithoutUserPermission(t *testing.T) {
 	accessClient := &roleAccessClient{}
 	auth := GetAuthorizer(accessClient)
-	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
-		Type:      authlib.TypeUser,
-		Namespace: "stacks-123",
-		AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
-			Rest: authn.AccessTokenClaims{DelegatedPermissions: []string{"error-tracking.grafana.app/events:create"}},
-		},
-	})
+	ctx := authlib.WithAuthInfo(context.Background(), testAuthInfo("stacks-123", authlib.TypeUser, "user", nil, []string{"error-tracking.grafana.app/events:create"}))
 	decision, _, err := auth.Authorize(ctx, authorizer.AttributesRecord{
 		ResourceRequest: true,
 		APIGroup:        "error-tracking.grafana.app",

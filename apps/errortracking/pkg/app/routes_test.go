@@ -13,7 +13,6 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	sdkapp "github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/stretchr/testify/require"
 )
 
@@ -58,6 +57,14 @@ func TestTimeRangeBounds(t *testing.T) {
 	require.Zero(t, limit)
 }
 
+func TestTenantKeyPreservesDefaultOrganization(t *testing.T) {
+	defaultUser := testAuthInfo("default", authlib.TypeUser, "user-1", nil, nil)
+	stackUser := testAuthInfo("stacks-123", authlib.TypeUser, "user-1", nil, nil)
+
+	require.Equal(t, "org-1", tenantKey(defaultUser))
+	require.Equal(t, "stacks-123", tenantKey(stackUser))
+}
+
 func TestEventRouteBoundaries(t *testing.T) {
 	application, err := New(sdkapp.Config{SpecificConfig: &Config{Store: testStore{}}})
 	require.NoError(t, err)
@@ -77,11 +84,7 @@ func TestEventRouteBoundaries(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
 			if tc.withIdentity {
-				ctx = identity.WithRequester(ctx, &identity.StaticRequester{
-					Type:      authlib.TypeUser,
-					UserUID:   "user-1",
-					Namespace: "stacks-123",
-				})
+				ctx = authlib.WithAuthInfo(ctx, testAuthInfo("stacks-123", authlib.TypeUser, "user-1", nil, nil))
 			}
 			writer := httptest.NewRecorder()
 			req := &sdkapp.CustomRouteRequest{

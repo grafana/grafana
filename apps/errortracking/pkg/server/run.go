@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 
+	authlib "github.com/grafana/authlib/types"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	requestcontext "k8s.io/apiserver/pkg/endpoints/request"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -16,7 +17,6 @@ import (
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 
 	"github.com/grafana/grafana/apps/errortracking/pkg/storage"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 func Run(ctx context.Context, config Config) error {
@@ -105,11 +105,11 @@ func withRequesterAuthorization(delegate authorizer.Authorizer) authorizer.Autho
 		if (attributes.GetVerb() == "get" || attributes.GetVerb() == "head") && isPublicPath(attributes.GetPath()) {
 			return authorizer.DecisionAllow, "", nil
 		}
-		requester, ok := attributes.GetUser().(identity.Requester)
+		requester, ok := attributes.GetUser().(authlib.AuthInfo)
 		if !ok {
 			return authorizer.DecisionDeny, "authenticated Grafana identity is required", nil
 		}
-		return delegate.Authorize(identity.WithRequester(ctx, requester), attributes)
+		return delegate.Authorize(authlib.WithAuthInfo(ctx, requester), attributes)
 	})
 }
 
@@ -117,8 +117,8 @@ type requesterHandler struct{ next http.Handler }
 
 func (h requesterHandler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
 	user, ok := requestcontext.UserFrom(request.Context())
-	if requester, isRequester := user.(identity.Requester); ok && isRequester {
-		request = request.WithContext(identity.WithRequester(request.Context(), requester))
+	if requester, isRequester := user.(authlib.AuthInfo); ok && isRequester {
+		request = request.WithContext(authlib.WithAuthInfo(request.Context(), requester))
 	}
 	h.next.ServeHTTP(response, request)
 }

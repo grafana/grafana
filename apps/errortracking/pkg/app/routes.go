@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/simple"
 
 	"github.com/grafana/grafana/apps/errortracking/pkg/apis/errortracking/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 const (
@@ -171,16 +170,16 @@ func listEventsHandler(store Store) simple.AppCustomRouteHandler {
 	}
 }
 
-func tenantKey(user identity.Requester) string {
+func tenantKey(user authlib.AuthInfo) string {
 	if user.GetNamespace() == "default" {
-		return fmt.Sprintf("org-%d", user.GetOrgID())
+		return "org-1"
 	}
 	return user.GetNamespace()
 }
 
-func trustedTenant(ctx context.Context) (identity.Requester, error) {
-	user, err := identity.GetRequester(ctx)
-	if err != nil || user.IsIdentityType(authlib.TypeAnonymous) || user.GetNamespace() == "" || user.GetNamespace() == "*" {
+func trustedTenant(ctx context.Context) (authlib.AuthInfo, error) {
+	user, ok := authlib.AuthInfoFrom(ctx)
+	if !ok || user == nil || user.GetIdentityType() == authlib.TypeAnonymous || user.GetNamespace() == "" || user.GetNamespace() == "*" {
 		return nil, fmt.Errorf("authenticated tenant identity required")
 	}
 	if _, err := authlib.ParseNamespace(user.GetNamespace()); err != nil {

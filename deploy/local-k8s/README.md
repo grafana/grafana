@@ -7,8 +7,8 @@ Use Compose for development and kind for Kubernetes acceptance. Both workflows r
 From the repository root:
 
 ```sh
-docker build --platform=linux/arm64 -f apps/errortracking/Dockerfile \
-  -t error-tracking-api:local .
+docker build -f apps/errortracking/Dockerfile \
+  -t error-tracking-api:local apps/errortracking
 ```
 
 Use `linux/amd64` for an AMD64 kind node. The local workflows require Docker, kubectl, kind, Python 3, OpenSSL, a Grafana Enterprise source checkout in `ENTERPRISE_SOURCE`, and these development images:
