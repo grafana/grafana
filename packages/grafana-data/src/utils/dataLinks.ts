@@ -78,8 +78,6 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
             event.preventDefault();
           }
 
-          // Read query/datasource from interpolatedParams at click time so consumers
-          // can rewrite that object in place (e.g. trace-to-logs after a matching probe).
           const query = interpolatedParams?.query ?? interpolatedQuery;
           onClickFn({
             datasourceUid: query?.datasource?.uid ?? internalLink.datasourceUid,
