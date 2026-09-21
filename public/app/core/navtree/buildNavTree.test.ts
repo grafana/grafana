@@ -672,6 +672,18 @@ describe('getInitialNavTree', () => {
       error.mockRestore();
     });
 
+    // Drilldown is prunable and is filled only by drilldown apps, so an app
+    // attaching to it is what keeps the section alive
+    it('keeps the drilldown shell once a drilldown app attaches to it', () => {
+      setup({
+        permissions: [AccessControlAction.PluginsAppAccess, AccessControlAction.DataSourcesExplore],
+        openFeatureFlags: bothFlags,
+      });
+      setupApps([appWithPage('grafana-metricsdrilldown-app', 'Metrics')]);
+
+      expect(findById(getInitialNavTree(), NavID.drilldown)?.children?.length).toBe(1);
+    });
+
     // sortNavTree recurses into the section, and only leaves its order alone
     // because every app link carries the same weight
     it('keeps the apps in title order through the whole pipeline', () => {
