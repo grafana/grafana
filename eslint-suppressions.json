@@ -1803,11 +1803,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/scene/VizPanelSubHeader.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 2
-    }
-  },
   "public/app/features/dashboard-scene/scene/dashboard-controls-menu/DashboardControlsMenu.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
