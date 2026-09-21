@@ -1172,13 +1172,19 @@ func TestRemoveOrgUserForCurrentOrg_KubernetesUsersRedirect(t *testing.T) {
 		deleteError     error
 		searchUsers     user.SearchUserQueryResult
 		singleOrg       bool
+		targetUser      *user.User
 	}
 
 	setup := func(t *testing.T, d *deps) *webtest.Server {
+		targetUser := d.targetUser
+		if targetUser == nil {
+			targetUser = &user.User{ID: 1, IsAdmin: false}
+		}
 		return SetupAPITestServer(t, func(hs *HTTPServer) {
 			hs.Cfg = setting.NewCfg()
 			hs.Cfg.RBAC.SingleOrganization = d.singleOrg
 			hs.userService = &usertest.FakeUserService{
+				ExpectedUser:        targetUser,
 				ExpectedSearchUsers: d.searchUsers,
 				DeleteFn: func(_ context.Context, cmd *user.DeleteUserCommand) error {
 					d.deleteCmd = cmd
@@ -1234,6 +1240,16 @@ func TestRemoveOrgUserForCurrentOrg_KubernetesUsersRedirect(t *testing.T) {
 
 		assert.Equal(t, http.StatusBadRequest, statusCode)
 		assert.Nil(t, d.deleteCmd, "user service delete should not be called when the removal is blocked")
+	})
+
+	t.Run("blocks removing a Grafana server admin from their only org", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
+
+		d := &deps{singleOrg: true, searchUsers: orgUsersWithTwoAdmins, targetUser: &user.User{ID: 1, IsAdmin: true}}
+		statusCode := sendDelete(t, setup(t, d))
+
+		assert.Equal(t, http.StatusBadRequest, statusCode)
+		assert.Nil(t, d.deleteCmd, "user service delete should not be called for a Grafana server admin")
 	})
 
 	t.Run("keeps using the legacy org service when not single-org", func(t *testing.T) {

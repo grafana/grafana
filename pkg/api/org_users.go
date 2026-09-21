@@ -713,6 +713,14 @@ func (hs *HTTPServer) removeOrgUserHelper(c *contextmodel.ReqContext, cmd *org.R
 func (hs *HTTPServer) removeOrgUserUsingK8s(c *contextmodel.ReqContext, cmd *org.RemoveOrgUserCommand) response.Response {
 	ctx := c.Req.Context()
 
+	targetUser, err := hs.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: cmd.UserID})
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to remove user from organization", err)
+	}
+	if targetUser.IsAdmin {
+		return response.Error(http.StatusBadRequest, "Cannot remove a Grafana server admin from their only organization", nil)
+	}
+
 	hasOtherAdmin, err := hs.orgHasOtherAdmin(c, cmd.OrgID, cmd.UserID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to remove user from organization", err)
