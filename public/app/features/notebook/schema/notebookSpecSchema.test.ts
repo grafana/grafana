@@ -78,6 +78,46 @@ describe('validateNotebookSpec', () => {
     expect(result).toMatchObject({ success: true, errors: [] });
   });
 
+  it('keeps a user-set transformation refId on a panel element', () => {
+    const result = validateNotebookSpec({
+      ...spec(),
+      elements: {
+        panel: {
+          ...PANEL,
+          spec: {
+            ...PANEL.spec,
+            data: {
+              kind: 'QueryGroup',
+              spec: {
+                queries: [],
+                transformations: [{ kind: 'Transformation', group: 'limit', spec: { refId: 'T1', options: {} } }],
+                queryOptions: {},
+              },
+            },
+          },
+        },
+      },
+      layout: {
+        kind: 'NotebookLayout',
+        spec: {
+          cells: [
+            {
+              kind: 'NotebookLayoutItem',
+              spec: { element: { kind: 'ElementReference', name: 'panel' }, source: 'user' },
+            },
+          ],
+        },
+      },
+    });
+
+    expect(result.success).toBe(true);
+    const parsed = result.data?.elements.panel;
+    if (parsed?.kind !== 'Panel') {
+      throw new Error('expected a Panel element');
+    }
+    expect(parsed.spec.data.spec.transformations[0].spec.refId).toBe('T1');
+  });
+
   it('rejects the retired v2beta1 transformation shape', () => {
     // `{ kind: <id>, spec: { id: <id> } }` is what a notebook carried before its panel chain was
     // reparented onto the dashboard v2 shape. Written as a plain object because it is deliberately not a

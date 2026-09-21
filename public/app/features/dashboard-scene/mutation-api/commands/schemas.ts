@@ -418,6 +418,10 @@ const transformationKindSchema = z
     kind: z.literal('Transformation').describe('Fixed literal "Transformation"'),
     group: z.string().describe('Transformation ID (e.g., "organize", "sortBy", "filterByValue")'),
     spec: z.object({
+      refId: z
+        .string()
+        .optional()
+        .describe('Unique identifier of this transformation instance (e.g., "T1"), used to name its output frame'),
       disabled: z.boolean().optional().describe('Disabled transformations are skipped'),
       filter: z
         .object({
