@@ -253,7 +253,6 @@ require (
 	github.com/grafana/grafana/apps/correlations v0.0.0 // @grafana/datapro
 	github.com/grafana/grafana/apps/dashboard v0.0.0 // @grafana/grafana-app-platform-squad @grafana/dashboards-squad
 	github.com/grafana/grafana/apps/dashvalidator v0.0.0 // @grafana/sharing-squad
-	github.com/grafana/grafana/apps/errortracking v0.0.0 // error-tracking app
 	github.com/grafana/grafana/apps/example v0.0.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/apps/folder v0.0.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/apps/iam v0.0.0 // @grafana/access-squad
@@ -289,7 +288,6 @@ replace (
 	github.com/grafana/grafana/apps/correlations => ./apps/correlations
 	github.com/grafana/grafana/apps/dashboard => ./apps/dashboard
 	github.com/grafana/grafana/apps/dashvalidator => ./apps/dashvalidator
-	github.com/grafana/grafana/apps/errortracking => ./apps/errortracking
 	github.com/grafana/grafana/apps/example => ./apps/example
 	github.com/grafana/grafana/apps/folder => ./apps/folder
 	github.com/grafana/grafana/apps/iam => ./apps/iam

@@ -64,7 +64,6 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 				quotasAppInstaller,
 				dashvalidatorAppInstaller,
 				nil, // colorshapes
-				nil, // error tracking
 			)
 			if tt.expectRulesApp {
 				require.Contains(t, got, tt.rulesInst)

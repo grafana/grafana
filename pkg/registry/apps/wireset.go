@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/colorshapes"
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
 	"github.com/grafana/grafana/pkg/registry/apps/dashvalidator"
-	"github.com/grafana/grafana/pkg/registry/apps/errortracking"
 	"github.com/grafana/grafana/pkg/registry/apps/example"
 	"github.com/grafana/grafana/pkg/registry/apps/live"
 	"github.com/grafana/grafana/pkg/registry/apps/logsdrilldown"
@@ -19,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/quotas"
 	"github.com/grafana/grafana/pkg/registry/apps/shorturl"
 	colorshapesstorage "github.com/grafana/grafana/pkg/storage/colorshapes"
-	errortrackingstorage "github.com/grafana/grafana/pkg/storage/errortracking"
 )
 
 var WireSet = wire.NewSet(
@@ -40,6 +38,4 @@ var WireSet = wire.NewSet(
 	dashvalidator.RegisterAppInstaller,
 	colorshapesstorage.ProvideStore,
 	colorshapes.RegisterAppInstaller,
-	errortrackingstorage.ProvideStore,
-	errortracking.RegisterAppInstaller,
 )

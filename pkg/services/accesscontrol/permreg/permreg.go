@@ -95,7 +95,6 @@ func newPermissionRegistry() *permissionRegistry {
 		"advisor.checktypes":             "advisor.checktypes:uid:",
 		"advisor.register":               "advisor.register:uid:",
 		"advisor.translations":           "advisor.translations:uid:",
-		"errortracking.events":           "errortracking.events:",
 		"provisioners":                   "provisioners:",
 		"reports":                        "reports:id:",
 		"permissions":                    "permissions:type:",
