@@ -3,15 +3,13 @@ import { useEffect, useState } from 'react';
 import { store } from 'app/store/store';
 
 /**
- * Re-renders the caller once the plugin nav merge lands.
+ * Plugin pages have no routes until the app metas have merged, because the
+ * router builds them from navIndex. Re-renders the caller once that happens so
+ * it recomputes them.
  *
- * App plugin routes are derived from navIndex, which getAppPluginRoutes reads
- * imperatively, so it only yields plugin routes after the async metas merge.
- * The router therefore has to recompute once at that point.
- *
- * Subscribes to the store directly because the only caller sits above the
- * redux Provider, where useSelector is unavailable. Unsubscribes as soon as
- * the merge lands: the tree is built once per session.
+ * Reads the store directly rather than with useSelector: its only caller sits
+ * above the redux Provider. The merge happens once per session, so it
+ * unsubscribes straight after.
  */
 export function usePluginNavRerender(): void {
   const [, setMerged] = useState(false);

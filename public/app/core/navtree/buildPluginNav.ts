@@ -17,29 +17,14 @@ import { appendIntoSection, applyAppSubUrl, pluginPageId, pruneEmptyNavSections,
 /**
  * Merges app-plugin nav items into the client-built tree and returns a new
  * tree. The Go equivalent is addAppLinks in
- * pkg/services/navtree/navtreeimpl/applinks.go, kept behaviourally in sync.
+ * pkg/services/navtree/navtreeimpl/applinks.go.
  *
- * Every app lands in "More apps" under its own plugin.json name for now. The
- * rest of what the server does lands separately, each on its own:
- * - per-app placement: the section an app belongs to and the name, icon and
- *   weight it renders with there
- * - the cross-plugin adjustments the server applies once every app is known
- *   (the Assistant stub, maintenance windows nesting under SLO, Service Center
- *   from SLO, the Adaptive Telemetry umbrella link, Help opening interactive
- *   learning)
- * - hoisting an app's pages into its section as standalone entries
- * - operator nav overrides from the INI: [navigation.app_sections] needs a
- *   backend half to deliver it through frontend settings;
- *   [navigation.app_standalone_pages] has no client equivalent
+ * Every app lands in "More apps" under its own plugin.json name.
  *
- * Deliberately not reproduced:
- * - per-org plugin enablement: presence in the namespace counts as enabled
- * - the per-plugin scope on plugins.app:access (see the TODO below)
- * - assistant pages gated on per-org plugin jsonData, which the client cannot
- *   read
- * - nesting includes under their path ancestor (grafana.pluginPathNesting);
- *   includes are appended flat for now
- * - page includes with no path, which have no URL to link to
+ * Permanent divergences from the Go builder: per-org plugin enablement and the
+ * assistant's jsonData gating are not readable client-side; includes are
+ * appended flat rather than nested under their path ancestor; and page includes
+ * with no path have no URL to link to.
  */
 export function mergePluginNavIntoTree(apps: AppPluginConfig[]): NavModelItem[] {
   // Build a fresh static tree rather than merging into the current slice
@@ -47,9 +32,6 @@ export function mergePluginNavIntoTree(apps: AppPluginConfig[]): NavModelItem[] 
   // containers are carried over separately by carryOverRuntimeChildren.
   let tree = buildStaticNavTree();
 
-  // TODO: evaluate this per plugin (plugins:id:<id>) as the server does, which
-  // needs the scoped permissions the bootdata map flattens away. Until then one
-  // coarse check grants every app at once.
   if (contextSrv.hasPermission(AccessControlAction.PluginsAppAccess)) {
     for (const app of apps) {
       try {

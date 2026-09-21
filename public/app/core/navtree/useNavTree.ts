@@ -6,8 +6,8 @@ import { getAppPluginMetas } from '@grafana/runtime/internal';
 import { useDispatch, useSelector, type StoreState } from 'app/types/store';
 
 import { carryOverRuntimeChildren, mergePluginNavIntoTree } from './buildPluginNav';
-import { arePluginNavItemsEnabled } from './buildStaticNavTree';
 import { pluginNavLoaded } from './state';
+import { arePluginNavItemsEnabled } from './utils';
 
 export interface UseNavTreeResult {
   /** The nav tree: static items plus, once loaded, the merged plugin nav items */

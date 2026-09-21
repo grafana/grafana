@@ -2,7 +2,7 @@ import { createAction, createReducer } from '@reduxjs/toolkit';
 
 import { type NavModelItem } from '@grafana/data';
 
-import { arePluginNavItemsEnabled } from './buildStaticNavTree';
+import { arePluginNavItemsEnabled } from './utils';
 
 /**
  * Dispatched once the plugin nav has been merged into the client-built static
