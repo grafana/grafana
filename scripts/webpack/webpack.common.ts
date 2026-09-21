@@ -8,6 +8,7 @@ import webpack, { type Configuration } from 'webpack';
 import { getEnvConfig } from '../cli/env-util.ts';
 
 import CorsWorkerPlugin from './plugins/CorsWorkerPlugin.ts';
+import E2ESelectorsPlugin from './plugins/E2ESelectorsPlugin.ts';
 import { esbuildRule, sassRule } from './rules.ts';
 
 const require = createRequire(import.meta.url);
@@ -19,7 +20,8 @@ export type Env = Record<string, string | true | undefined>;
 export default (env: Env = {}): Configuration => ({
   target: 'web',
   entry: {
-    app: './public/app/index.ts',
+    // Polyfills — webpack build only. See public/app/polyfills.ts.
+    app: ['./public/app/polyfills.ts', './public/app/index.ts'],
     boot: {
       import: './public/boot/index.ts',
       runtime: false,
@@ -91,6 +93,7 @@ export default (env: Env = {}): Configuration => ({
   ],
   plugins: [
     new CorsWorkerPlugin(),
+    new E2ESelectorsPlugin(),
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
     }),

@@ -60,7 +60,7 @@ type NotificationPolicyService interface {
 	GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error)
 	UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p alerting_models.Provenance, version string) (definitions.Route, string, error)
 	ResetPolicyTree(ctx context.Context, orgID int64, provenance alerting_models.Provenance) (definitions.Route, error)
-	GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (legacy_storage.ManagedRoute, error)
+	GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (v1.ManagedRoute, error)
 }
 
 type MuteTimingService interface {
@@ -216,6 +216,9 @@ func (srv *ProvisioningSrv) RoutePutContactPoint(c *contextmodel.ReqContext, cp 
 
 func (srv *ProvisioningSrv) RouteDeleteContactPoint(c *contextmodel.ReqContext, UID string) response.Response {
 	err := srv.contactPointService.DeleteContactPoint(c.Req.Context(), c.GetOrgID(), c.SignedInUser, UID)
+	if errors.Is(err, provisioning.ErrNotFound) {
+		return ErrResp(http.StatusNotFound, err, "")
+	}
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to delete contact point", err)
 	}

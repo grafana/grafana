@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-app-sdk/app"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // stubLoader satisfies RoutesLoader; the routing tests seed the snapshot
@@ -24,12 +24,11 @@ func (stubLoader) Notify(context.Context) (<-chan struct{}, error) { return make
 func withGroups(groups ...string) *GrafanaRouter {
 	s := NewGrafanaRouter(stubLoader{})
 	for _, g := range groups {
-		g := g
 		s.served[g] = &handlerEntry{
 			handler: http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				_, _ = w.Write([]byte(g))
 			}),
-			lastRV:  "1",
+			lastKey: "1",
 			breaker: newGroupBreaker(g),
 		}
 	}
@@ -135,6 +134,53 @@ func TestServeRootDocsWithETag(t *testing.T) {
 	}
 }
 
+func TestGroupFromPath(t *testing.T) {
+	cases := []struct {
+		path      string
+		wantGroup string
+	}{
+		{"/apis/dashboard.grafana.app", "dashboard.grafana.app"},
+		{"/apis/dashboard.grafana.app/v1alpha1/dashboards", "dashboard.grafana.app"},
+		{"/apis/dashboard.grafana.app/", "dashboard.grafana.app"},
+		// no single group to attribute the bare /apis root to
+		{"/apis", ""},
+		{"/apis/", ""},
+		// not under /apis at all
+		{"/openapi/v3", ""},
+		{"/healthz", ""},
+		{"", ""},
+		// prefix collision, not a real /apis boundary
+		{"/apisfoo", ""},
+		// arbitrary, client-controlled -- GroupFromPath doesn't validate
+		// against known backends, callers must check KnownGroup themselves
+		{"/apis/whatever-a-client-sends", "whatever-a-client-sends"},
+	}
+	for _, tc := range cases {
+		if got := GroupFromPath(tc.path); got != tc.wantGroup {
+			t.Errorf("GroupFromPath(%q) = %q, want %q", tc.path, got, tc.wantGroup)
+		}
+	}
+}
+
+func TestKnownGroup(t *testing.T) {
+	s := withGroups("dashboard.grafana.app", "folder.grafana.app")
+
+	cases := []struct {
+		group string
+		want  bool
+	}{
+		{"dashboard.grafana.app", true},
+		{"folder.grafana.app", true},
+		{"unknown.grafana.app", false},
+		{"", false},
+	}
+	for _, tc := range cases {
+		if got := s.KnownGroup(tc.group); got != tc.want {
+			t.Errorf("KnownGroup(%q) = %v, want %v", tc.group, got, tc.want)
+		}
+	}
+}
+
 func TestParseOpenAPIGroupVersionPath(t *testing.T) {
 	cases := []struct {
 		path        string
@@ -217,8 +263,7 @@ func TestRunDoesNotBusyLoopOnClosedNotifyChannel(t *testing.T) {
 	loader := &countingLoader{notifyCh: notifyCh}
 	r := NewGrafanaRouter(loader)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	if err := r.Run(ctx); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
@@ -255,11 +300,10 @@ func TestReadyFailsAfterTotallyFailedInitialReconcile(t *testing.T) {
 
 // failingBackend always fails Load, for testing partial-failure reconcile
 // scenarios (one group loads, another doesn't).
-type failingBackend struct{ group, rv string }
+type failingBackend struct{ group, key string }
 
-func (b failingBackend) RV() string                 { return b.rv }
-func (b failingBackend) Group() string              { return b.group }
-func (b failingBackend) Manifest() app.ManifestData { return app.ManifestData{} }
+func (b failingBackend) Key() string            { return b.key }
+func (b failingBackend) Group() metav1.APIGroup { return metav1.APIGroup{Name: b.group} }
 func (b failingBackend) Load(context.Context) (http.Handler, error) {
 	return nil, errors.New("load failed")
 }
@@ -271,13 +315,56 @@ func (b failingBackend) Load(context.Context) (http.Handler, error) {
 // unrelated group's failure.
 func TestReadyOKWithPartialLoadFailureGivenAtLeastOneServedGroup(t *testing.T) {
 	loader := staticLoader{backends: []Backend{
-		&fakeBackend{group: "good.grafana.app", rv: "1"},
-		failingBackend{group: "bad.grafana.app", rv: "1"},
+		&fakeBackend{group: metav1.APIGroup{Name: "good.grafana.app"}, key: "1"},
+		failingBackend{group: "bad.grafana.app", key: "1"},
 	}}
 	r := NewGrafanaRouter(loader)
 	r.storeServing(r.reconcile(context.Background()))
 
 	if err := r.Ready(context.Background()); err != nil {
 		t.Errorf("Ready() = %v, want nil (one group succeeded, so last-known-good exists)", err)
+	}
+}
+
+func TestRouterFallbackOnlyForUnregisteredGroups(t *testing.T) {
+	for _, tc := range []struct {
+		path     string
+		fallback bool
+		status   int
+	}{
+		{"/apis/unknown", true, http.StatusAccepted},
+		{"/apis/unknown/v1/namespaces/stacks-123/widgets", true, http.StatusAccepted},
+		{"/openapi/v3/apis/unknown/v1", true, http.StatusAccepted},
+		{"/apis/known/v1/namespaces/stacks-123/missing", false, http.StatusNotFound},
+		{"/apis/known/unsupported-version/widgets", false, http.StatusNotFound},
+		{"/openapi/v3/apis/known/v1", false, http.StatusNotFound},
+		{"/apis", false, http.StatusOK},
+		{"/apis/", false, http.StatusOK},
+		{"/openapi/v3", false, http.StatusOK},
+		{"/openapi/v3/", false, http.StatusOK},
+		{"/openapi/v3/apis/unknown", false, http.StatusNotFound},
+		{"/openapi/v3/apis/unknown/v1/extra", false, http.StatusNotFound},
+		{"/apis//v1/namespaces/stacks-123/widgets", false, http.StatusNotFound},
+		{"/apisfoo/unknown", false, http.StatusNotFound},
+		{"/healthz", false, http.StatusNotFound},
+	} {
+		t.Run(tc.path, func(t *testing.T) {
+			router := withGroups("known")
+			router.served["known"].handler = http.NotFoundHandler()
+			router.publish()
+			called := false
+			router.unregisteredGroupHandler = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				called = true
+				w.WriteHeader(http.StatusAccepted)
+			})
+			recorder := httptest.NewRecorder()
+			router.HandleFunc(recorder, httptest.NewRequest(http.MethodGet, tc.path, nil), http.NotFoundHandler())
+			if recorder.Code != tc.status {
+				t.Errorf("status = %d, want %d", recorder.Code, tc.status)
+			}
+			if called != tc.fallback {
+				t.Errorf("fallback called = %v, want %v", called, tc.fallback)
+			}
+		})
 	}
 }

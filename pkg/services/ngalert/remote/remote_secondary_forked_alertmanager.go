@@ -131,10 +131,8 @@ func newRemoteSecondaryForkedAlertmanager(cfg RemoteSecondaryConfig, internal no
 // We don't care about errors in the remote Alertmanager in remote secondary mode.
 func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, config alertingNotify.NotificationsConfiguration) (bool, error) {
 	var wg sync.WaitGroup
-	wg.Add(1)
 	// Figure out if we need to sync the external Alertmanager in another goroutine.
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		// If the Alertmanager has not been marked as "ready" yet, delegate the call to the remote Alertmanager.
 		// This will perform a readiness check and sync the Alertmanagers.
 		if !fam.remote.Ready() {
@@ -156,7 +154,7 @@ func (fam *RemoteSecondaryForkedAlertmanager) ApplyConfig(ctx context.Context, c
 			}
 			fam.log.Debug("Finished syncing configuration with the remote Alertmanager")
 		}
-	}()
+	})
 
 	if fam.shouldFetchRemoteState {
 		wg.Wait()

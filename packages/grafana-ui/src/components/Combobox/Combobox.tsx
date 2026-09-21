@@ -132,8 +132,8 @@ export type AutoSizeConditionals =
     }
   | {
       width?: number;
-      minWidth?: never;
-      maxWidth?: never;
+      minWidth?: number;
+      maxWidth?: number;
     };
 
 export type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> & AutoSizeConditionals;
@@ -433,6 +433,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     : { Wrapper: React.Fragment };
 
   const icon = selectedItem?.icon ?? prefixIcon;
+
   return (
     <Wrapper {...wrapperProps}>
       <InputComponent

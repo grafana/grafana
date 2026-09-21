@@ -1,6 +1,7 @@
 import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type LocalPlugin } from 'app/features/plugins/admin/types';
@@ -10,6 +11,7 @@ import { ctaClicked, recommendationsShown } from '../analytics/main';
 import { APP_OBSERVABILITY_APP_ID, HOSTED_TRACES_APP_ID } from '../solutions/appPluginIds';
 import { KUBERNETES_APP_ID } from '../solutions/kubernetesData';
 import { type SignalStatus, type SolutionState } from '../solutions/solutionState';
+import { deferred, stubDatasource, stubSolution } from '../solutions/test-utils';
 import { type Solution, type SolutionId } from '../solutions/types';
 import { type HomepageSolutions } from '../useHomepageSolutions';
 
@@ -17,20 +19,12 @@ import { Recommendations } from './Recommendations';
 import { resetInstalledPlugins } from './pluginRecommendations';
 
 const mockGet = jest.fn();
+const originalNamespace = config.namespace;
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({ get: mockGet }),
 }));
 jest.mock('../analytics/main', () => ({ ctaClicked: jest.fn(), recommendationsShown: jest.fn() }));
-
-const datasource: DataSourceInstanceListItem = {
-  uid: 'prometheus',
-  name: 'Prometheus',
-  type: 'prometheus',
-  meta: { id: 'prometheus' } as DataSourceInstanceListItem['meta'],
-  readOnly: false,
-  isDefault: true,
-};
 
 const DEFAULT_STATE: SolutionState = {
   metrics: 'active',
@@ -38,6 +32,7 @@ const DEFAULT_STATE: SolutionState = {
   traces: 'inactive',
   kubernetes: 'inactive',
   spanMetrics: 'inactive',
+  synthetics: 'inactive',
 };
 
 function plugin(id: string, enabled = false, canWrite = true, canAccess = true): LocalPlugin {
@@ -57,21 +52,7 @@ function solution(
   data: DataSourceInstanceListItem | null,
   overrides: Partial<Solution> = {}
 ): Solution {
-  return {
-    id,
-    title: id,
-    icon: 'chart-line',
-    signal: async () => status,
-    datasource: async () => data,
-    needsAttention: async () => false,
-    stats: async () => null,
-    refinedStats: async () => null,
-    sparkline: async () => null,
-    cta: async () => null,
-    alert: async () => null,
-    offer: async () => null,
-    ...overrides,
-  };
+  return stubSolution(id, { signal: async () => status, datasource: async () => data, ...overrides });
 }
 
 function homepageSolutions(
@@ -80,14 +61,6 @@ function homepageSolutions(
   signals: HomepageSolutions['signals'] = jest.fn(async () => state)
 ): HomepageSolutions {
   return { solutions, signals };
-}
-
-function deferred<T>() {
-  let resolve!: (value: T) => void;
-  const promise = new Promise<T>((res) => {
-    resolve = res;
-  });
-  return { promise, resolve };
 }
 
 const carouselRegion = () => screen.findByRole('region', { name: 'Recommended apps' });
@@ -105,6 +78,7 @@ beforeEach(() => {
   resetInstalledPlugins();
   window.localStorage.clear();
   mockGet.mockReset().mockResolvedValue([plugin(HOSTED_TRACES_APP_ID), plugin(KUBERNETES_APP_ID)]);
+  config.namespace = 'stacks-123';
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   jest.spyOn(contextSrv, 'hasPermissionInMetadata').mockImplementation((action, metadata) => {
     return Boolean(metadata.accessControl?.[action]);
@@ -116,6 +90,7 @@ beforeEach(() => {
 
 afterEach(() => {
   document.removeEventListener('click', interceptLinkClicks);
+  config.namespace = originalNamespace;
   jest.restoreAllMocks();
 });
 
@@ -132,6 +107,16 @@ describe('Recommendations', () => {
 
   it('renders nothing and starts no recommendation work without management permissions', () => {
     jest.mocked(contextSrv.hasPermission).mockReturnValue(false);
+    const signals = jest.fn(async () => DEFAULT_STATE);
+    const { container } = render(<Recommendations solutions={homepageSolutions(DEFAULT_STATE, [], signals)} />);
+
+    expect(container).toBeEmptyDOMElement();
+    expect(signals).not.toHaveBeenCalled();
+    expect(mockGet).not.toHaveBeenCalled();
+  });
+
+  it('renders nothing and starts no recommendation work on self-managed instances', () => {
+    config.namespace = 'default';
     const signals = jest.fn(async () => DEFAULT_STATE);
     const { container } = render(<Recommendations solutions={homepageSolutions(DEFAULT_STATE, [], signals)} />);
 
@@ -179,11 +164,11 @@ describe('Recommendations', () => {
   });
 
   it('follows the selected solution order and resets the carousel when the solution changes', async () => {
-    const metrics = solution('metrics', 'active', datasource, { title: 'Metrics & infrastructure' });
+    const metrics = solution('metrics', 'active', stubDatasource, { title: 'Metrics & infrastructure' });
     const logs = solution(
       'logs',
       'active',
-      { ...datasource, uid: 'loki', name: 'Loki', type: 'loki' },
+      { ...stubDatasource, uid: 'loki', name: 'Loki', type: 'loki' },
       { title: 'Logs' }
     );
     const { user } = render(<Recommendations solutions={homepageSolutions(DEFAULT_STATE, [metrics, logs])} />);
@@ -204,7 +189,7 @@ describe('Recommendations', () => {
 
   it('does not let inactive datasource details delay the recommendation order', async () => {
     const logsDatasource = jest.fn(() => new Promise<DataSourceInstanceListItem | null>(() => {}));
-    const metrics = solution('metrics', 'active', datasource, { title: 'Metrics & infrastructure' });
+    const metrics = solution('metrics', 'active', stubDatasource, { title: 'Metrics & infrastructure' });
     const logs = solution('logs', 'inactive', null, {
       title: 'Logs',
       datasource: logsDatasource,
@@ -234,8 +219,8 @@ describe('Recommendations', () => {
   });
 
   it('keeps the mounted solution facts when collapsed and expanded again', async () => {
-    const getDatasource = jest.fn(async () => datasource);
-    const metrics = solution('metrics', 'active', datasource, {
+    const getDatasource = jest.fn(async () => stubDatasource);
+    const metrics = solution('metrics', 'active', stubDatasource, {
       title: 'Metrics & infrastructure',
       datasource: getDatasource,
     });

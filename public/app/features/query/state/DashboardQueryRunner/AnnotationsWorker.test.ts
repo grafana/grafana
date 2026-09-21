@@ -3,6 +3,7 @@ import { delay } from 'rxjs/operators';
 
 import { type AnnotationQuery } from '@grafana/data';
 import { type DataSourceSrv, setDataSourceSrv, config } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
@@ -18,6 +19,11 @@ import { PublicAnnotationsDataSource } from './PublicAnnotationsDataSource';
 import { getDefaultOptions, LEGACY_DS_NAME, NEXT_GEN_DS_NAME, toAsyncOfResult } from './testHelpers';
 import { type DashboardQueryRunnerOptions, type DashboardQueryRunnerWorkerResult } from './types';
 import { emptyResult } from './utils';
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn(),
+}));
 
 function getTestContext(dataSourceSrvRejects = false) {
   jest.clearAllMocks();
@@ -55,6 +61,7 @@ function getTestContext(dataSourceSrvRejects = false) {
     },
   } as DataSourceSrv;
   setDataSourceSrv(dataSourceSrvMock);
+  jest.mocked(getDataSourceInstance).mockImplementation((name) => dataSourceSrvMock.get(name));
   const options = getDefaultOptions();
 
   return { options, annotationQueryMock, executeAnnotationQueryMock, cancellations };

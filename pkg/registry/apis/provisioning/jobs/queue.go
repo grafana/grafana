@@ -22,10 +22,22 @@ type RepoGetter interface {
 type JobProgressRecorder interface {
 	Started() time.Time
 	Record(ctx context.Context, result JobResourceResult)
+	// RecordDryRun tallies a result into the job summary (the same bookkeeping
+	// as Record) without the side effects that assume a real write happened:
+	// no resource-operation counter/duration observation, no per-file success
+	// log, and no contribution to the job's own error/warning state. Use it for
+	// previews (e.g. pull request evaluation) that never actually change
+	// anything.
+	RecordDryRun(ctx context.Context, result JobResourceResult)
 	ResetResults(keepWarnings bool)
 	SetFinalMessage(ctx context.Context, msg string)
 	SetMessage(ctx context.Context, msg string)
 	SetTotal(ctx context.Context, total int)
+	// SetVariance tags the job with a sub-type of its action (e.g. full vs
+	// incremental for a pull job) for the driver's throughput metric.
+	SetVariance(variance string)
+	// Variance returns the sub-type set via SetVariance, or "" if none was set.
+	Variance() string
 	TooManyErrors() error
 	StrictMaxErrors(maxErrors int)
 	SetRefURLs(ctx context.Context, refURLs *provisioning.RepositoryURLs)

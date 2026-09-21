@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useId, useMemo } from 'react';
 
-import { createFieldConfigRegistry, type SetFieldConfigOptionsArgs } from '@grafana/data';
+import { createFieldConfigRegistry, type SetFieldConfigOptionsArgs, type StandardEditorContext } from '@grafana/data';
 import { type GraphFieldConfig, type TableSparklineCellOptions } from '@grafana/schema';
 import { Field, useStyles2 } from '@grafana/ui';
 import { defaultSparklineCellConfig } from '@grafana/ui/internal';
@@ -49,6 +49,10 @@ export const SparklineCellOptionsEditor = (props: TableCellEditorProps<TableSpar
 
   const style = useStyles2(getStyles);
 
+  // This registry is built outside the options pane, so there are no panel options or field config to
+  // put on the context - a showIf that reads one sees undefined and keeps the option hidden.
+  const context = useMemo<StandardEditorContext<unknown>>(() => ({ data: [] }), []);
+
   const values = { ...defaultSparklineCellConfig, ...cellOptions };
 
   const htmlIdBase = useId();
@@ -56,7 +60,7 @@ export const SparklineCellOptionsEditor = (props: TableCellEditorProps<TableSpar
   return (
     <>
       {registry.list(optionIds.map((id) => `custom.${id}`)).map((item) => {
-        if (item.showIf && !item.showIf(values)) {
+        if (item.showIf && !item.showIf(values, context.data, context.annotations, context)) {
           return null;
         }
         const Editor = item.editor;
@@ -68,7 +72,7 @@ export const SparklineCellOptionsEditor = (props: TableCellEditorProps<TableSpar
               onChange={(val) => onChange({ ...cellOptions, [path]: val })}
               value={(isOptionKey(path, values) ? values[path] : undefined) ?? item.defaultValue}
               item={item}
-              context={{ data: [] }}
+              context={context}
               id={`${htmlIdBase}${item.id}`}
             />
           </Field>
