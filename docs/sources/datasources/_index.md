@@ -194,7 +194,11 @@ The Grafana data source supports several query types, which you select in the qu
 
 ### Mixed
 
-This data source lets you query multiple data sources in the same panel. When you select **Mixed**, you can select a different data source for each new query that you add.
+This data source lets you query multiple data sources in the same panel. When you select **Mixed**, you can select a different data source for each new query that you add. This is useful when you want to compare or combine data from different backends in a single visualization, such as metrics from Prometheus alongside logs from Loki.
+
+Each query runs against its own data source using that data source's query editor, and Grafana runs the queries in parallel. If one query fails, the others still return results, and the failed query reports an error labeled with its data source name.
+
+Note the following behavior:
 
 - The first query uses the data source that was selected before you selected **Mixed**.
 - You can't change an existing query to use the **Mixed** data source.
