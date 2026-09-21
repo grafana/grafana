@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import type { EvaluationResponse } from '@openfeature/ofrep-core';
 import { ClientProviderEvents } from '@openfeature/web-sdk';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 
@@ -22,6 +21,8 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
+
+type OFREPEvaluationResult = ReturnType<typeof getOFREPWebProvider>['flagCache'][string];
 
 const compare = new Intl.Collator('en', { sensitivity: 'base', numeric: true }).compare;
 
@@ -136,7 +137,7 @@ const FeatureControlKey = ({ value, onChange }: { value: string; onChange: (valu
 
 const FeatureControlOFREP = ({ value }: { value: string }) => {
   const styles = useStyles2(getStyles);
-  const [result, setResult] = useState<EvaluationResponse>();
+  const [result, setResult] = useState<OFREPEvaluationResult>();
 
   useEffect(() => {
     const loadResult = () => {
