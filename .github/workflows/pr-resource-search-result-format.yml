@@ -1,0 +1,64 @@
+name: Direct Go Resource Search Result Format
+
+on:
+  pull_request:
+    paths:
+      - '**/*.go'
+      - 'pkg/storage/unified/semgrep/**'
+      - '.github/workflows/pr-resource-search-result-format.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Require FIELD_VALUES for new direct Go search clients
+    runs-on: ubuntu-x64-small
+    timeout-minutes: 5
+    container:
+      image: semgrep/semgrep:1.171.0@sha256:bdf7013b2c3634a487671158da77c554f531742326b543a9464d2adf6c433ac8
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Test rule
+        run: semgrep test --strict --config pkg/storage/unified/semgrep/resource-search-field-values.yaml pkg/storage/unified/semgrep/resource-search-field-values.go
+
+      - name: Check new direct Go search clients
+        env:
+          SEMGREP_SEND_METRICS: 'off'
+        shell: bash
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+          targets_file=$(mktemp)
+          # Find files with composite literals, new allocations, or standalone/grouped zero-value declarations.
+          git grep -lz -E 'ResourceSearchRequest[[:space:]]*\{|new\([^)]*ResourceSearchRequest\)|var[[:space:]]+[[:alnum:]_]+[[:space:]]+[^[:space:]]*ResourceSearchRequest|^[[:space:]]*[[:alnum:]_]+[[:space:]]+[^[:space:]]*ResourceSearchRequest([[:space:]]*//.*)?[[:space:]]*$' -- '*.go' \
+            ':(exclude)**/*_test.go' \
+            ':(exclude)pkg/storage/unified/resourcepb/**' \
+            ':(exclude)pkg/storage/unified/testing/**' \
+            ':(exclude)pkg/storage/unified/semgrep/**' > "$targets_file"
+
+          files=()
+          while IFS= read -r -d '' file; do
+            files+=("$file")
+          done < "$targets_file"
+
+          if (( ${#files[@]} == 0 )); then
+            echo "::error::No direct Go ResourceSearchRequest constructions found"
+            exit 1
+          fi
+          echo "Scanning ${#files[@]} files containing direct Go ResourceSearchRequest constructions"
+
+          base_sha=$(git rev-parse HEAD^1)
+          echo "Comparing against base commit $base_sha"
+          semgrep scan --strict --error \
+            --config pkg/storage/unified/semgrep/resource-search-field-values.yaml \
+            --baseline-commit "$base_sha" \
+            "${files[@]}"

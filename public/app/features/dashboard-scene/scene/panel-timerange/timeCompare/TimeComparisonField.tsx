@@ -1,4 +1,5 @@
 import { FeatureState } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { Combobox, FeatureBadge, Field, Label, Stack } from '@grafana/ui';
 
@@ -32,6 +33,7 @@ export function TimeComparisonField({ value, onChange }: TimeComparisonFieldProp
         createCustomValue={true}
         value={value ?? ''}
         onChange={(x) => onChange(x.value)}
+        data-testid={selectors.components.Drawer.PanelTimeRangeDrawer.timeComparisonSelect}
       />
     </Field>
   );

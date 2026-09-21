@@ -8,8 +8,6 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/open-feature/go-sdk/openfeature"
-	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -20,28 +18,12 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
-func setTeamsApiFlag(t *testing.T, enabled bool) {
-	t.Helper()
-	provider := memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
-		featuremgmt.FlagKubernetesTeamsApi: {
-			Key:            featuremgmt.FlagKubernetesTeamsApi,
-			DefaultVariant: "default",
-			Variants:       map[string]any{"default": enabled},
-		},
-	})
-	require.NoError(t, openfeature.SetProviderAndWait(provider))
-}
-
 func TestUserTeamREST_Connect(t *testing.T) {
-	teamsApiEnabled := true
-	setTeamsApiFlag(t, teamsApiEnabled)
-
 	t.Run("should create handler with default pagination and stable sort", func(t *testing.T) {
 		mockClient := &mockSearchClient{}
 		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService())
@@ -466,36 +448,6 @@ func TestUserTeamREST_Connect(t *testing.T) {
 		require.Len(t, mockClient.LastSearchRequest.Options.Fields, 1)
 		require.Equal(t, builders.TEAM_SEARCH_MEMBERS, mockClient.LastSearchRequest.Options.Fields[0].Key)
 		require.Equal(t, []string{"alice"}, mockClient.LastSearchRequest.Options.Fields[0].Values)
-	})
-
-	t.Run("should return 403 when feature flag is disabled", func(t *testing.T) {
-		teamsApiEnabled := false
-		setTeamsApiFlag(t, teamsApiEnabled)
-		t.Cleanup(func() {
-			teamsApiEnabled = true
-			setTeamsApiFlag(t, teamsApiEnabled)
-		})
-
-		mockClient := &mockSearchClient{}
-		handler := NewUserTeamREST(mockClient, &mockGetter{}, tracing.NewNoopTracerService())
-
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
-			Namespace: "test-namespace",
-		})
-		responder := &mockResponder{}
-
-		httpHandler, err := handler.Connect(ctx, "alice", nil, responder)
-		require.NoError(t, err)
-
-		req := httptest.NewRequest(http.MethodGet, "/teams", nil)
-		req = req.WithContext(ctx)
-		w := httptest.NewRecorder()
-
-		httpHandler.ServeHTTP(w, req)
-
-		require.True(t, responder.called)
-		require.NotNil(t, responder.err)
-		require.Contains(t, responder.err.Error(), "functionality not available")
 	})
 }
 

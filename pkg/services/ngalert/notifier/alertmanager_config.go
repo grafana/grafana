@@ -606,13 +606,13 @@ func (moa *MultiOrgAlertmanager) cleanPermissions(ctx context.Context, orgID int
 
 	var errs []error
 	for receiverName := range previousReceiverNames.Difference(newReceiverNames) { // Deleted receivers.
-		if err := moa.receiverResourcePermissions.DeleteResourcePermissions(ctx, orgID, legacy_storage.NameToUid(receiverName)); err != nil {
+		if err := moa.receiverResourcePermissions.DeleteResourcePermissions(ctx, orgID, string(v1.ReceiverUID(receiverName))); err != nil { // TODO: This won't work with static UIDs.
 			errs = append(errs, fmt.Errorf("failed to delete permissions for receiver %s: %w", receiverName, err))
 		}
 	}
 
 	for receiverName := range newReceiverNames.Difference(previousReceiverNames) { // Added receivers.
-		moa.receiverResourcePermissions.SetDefaultPermissions(ctx, orgID, nil, legacy_storage.NameToUid(receiverName))
+		moa.receiverResourcePermissions.SetDefaultPermissions(ctx, orgID, nil, string(v1.ReceiverUID(receiverName))) // TODO: This won't work with static UIDs.
 	}
 
 	return errors.Join(errs...)

@@ -1153,7 +1153,7 @@ func TestStitchReceivers(t *testing.T) {
 		initial            *v1.AMConfigV1
 		new                *v1.PostableGrafanaReceiver
 		expCfg             v1.AMConfigV1
-		expOldReceiver     *string
+		expOldReceiver     string
 		expCreatedReceiver bool
 		expFullRemoval     bool
 	}
@@ -1164,7 +1164,7 @@ func TestStitchReceivers(t *testing.T) {
 			new: &v1.PostableGrafanaReceiver{
 				UID: "does not exist",
 			},
-			expOldReceiver: nil,
+			expOldReceiver: "",
 			expCfg:         *createTestConfigWithReceivers(),
 		},
 		{
@@ -1174,7 +1174,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-2",
 				Type: "teams",
 			},
-			expOldReceiver: new("receiver-2"),
+			expOldReceiver: "receiver-2",
 			expCfg: v1.AMConfigV1{
 				AlertmanagerConfig: v1.PostableApiAlertingConfig{
 					Config: v1.Config{
@@ -1229,7 +1229,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "new-receiver",
 				Type: "slack",
 			},
-			expOldReceiver:     new("receiver-1"),
+			expOldReceiver:     "receiver-1",
 			expCreatedReceiver: true,
 			expFullRemoval:     true,
 			expCfg: v1.AMConfigV1{
@@ -1286,7 +1286,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-1",
 				Type: "slack",
 			},
-			expOldReceiver:     new("receiver-2"),
+			expOldReceiver:     "receiver-2",
 			expCreatedReceiver: false,
 			expCfg: v1.AMConfigV1{
 				AlertmanagerConfig: v1.PostableApiAlertingConfig{
@@ -1393,7 +1393,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-2",
 				Type: "slack",
 			},
-			expOldReceiver:     new("receiver-1"),
+			expOldReceiver:     "receiver-1",
 			expCreatedReceiver: false,
 			expCfg: v1.AMConfigV1{
 				AlertmanagerConfig: v1.PostableApiAlertingConfig{
@@ -1515,7 +1515,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-4",
 				Type: "slack",
 			},
-			expOldReceiver:     new("receiver-1"),
+			expOldReceiver:     "receiver-1",
 			expCreatedReceiver: false,
 			expCfg: v1.AMConfigV1{
 				AlertmanagerConfig: v1.PostableApiAlertingConfig{
@@ -1586,7 +1586,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "brand-new-group",
 				Type: "opsgenie",
 			},
-			expOldReceiver:     new("receiver-2"),
+			expOldReceiver:     "receiver-2",
 			expCreatedReceiver: true,
 			expCfg: v1.AMConfigV1{
 				AlertmanagerConfig: v1.PostableApiAlertingConfig{
@@ -1648,7 +1648,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "brand-new-group",
 				Type: "opsgenie",
 			},
-			expOldReceiver:     new("receiver-2"), // Not the inconsistent receiver-3?
+			expOldReceiver:     "receiver-2", // Not the inconsistent receiver-3?
 			expCreatedReceiver: true,
 			expCfg: v1.AMConfigV1{
 				AlertmanagerConfig: v1.PostableApiAlertingConfig{
@@ -1710,7 +1710,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-2",
 				Type: "opsgenie",
 			},
-			expOldReceiver:     new("receiver-2"), // Not the inconsistent receiver-3?
+			expOldReceiver:     "receiver-2",
 			expCreatedReceiver: false,
 			expCfg: v1.AMConfigV1{
 				AlertmanagerConfig: v1.PostableApiAlertingConfig{
@@ -1810,7 +1810,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-1",
 				Type: "slack",
 			},
-			expOldReceiver:     new("receiver-2"),
+			expOldReceiver:     "receiver-2",
 			expCreatedReceiver: false,
 			expFullRemoval:     true,
 			expCfg: v1.AMConfigV1{
@@ -1862,7 +1862,12 @@ func TestStitchReceivers(t *testing.T) {
 				cfg = c.initial
 			}
 
-			renamedReceiver, fullRemoval, createdReceiver := stitchReceiver(cfg, c.new)
+			oldReceiver, _, fullRemoval, createdReceiver := stitchReceiver(cfg, c.new)
+			var renamedReceiver string
+			if oldReceiver != nil {
+				renamedReceiver = oldReceiver.Name
+			}
+
 			assert.EqualValuesf(t, c.expOldReceiver, renamedReceiver, "expected old receiver to be %v, got %v", c.expOldReceiver, renamedReceiver)
 			assert.Equalf(t, c.expFullRemoval, fullRemoval, "expected full removal to be %t, got %t", c.expFullRemoval, fullRemoval)
 			assert.Equalf(t, c.expCreatedReceiver, createdReceiver, "expected created receiver to be %t, got %t", c.expCreatedReceiver, createdReceiver)
