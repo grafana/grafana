@@ -745,13 +745,20 @@
     },
     "bulk-actions": {
       "delete": {
+        "affected-count": "Deleted {{num}} rules",
+        "no-rules-affected": "No rules were deleted from folder",
         "success": "Rules successfully deleted from folder"
       },
       "pause": {
+        "affected-count": "Paused {{num}} rules",
+        "no-rules-affected": "No rules were paused for folder",
         "success": "Rules evaluation successfully paused for folder"
       },
+      "skipped-provisioned": "Skipped {{num}} provisioned rules",
       "unpause": {
-        "success": "Rules successfully unpaused for this folder"
+        "affected-count": "Resumed {{num}} rules",
+        "no-rules-affected": "No rules were resumed for folder",
+        "success": "Rules successfully resumed for folder"
       }
     },
     "central-alert-history": {
