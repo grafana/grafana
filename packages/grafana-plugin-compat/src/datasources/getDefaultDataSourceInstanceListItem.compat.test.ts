@@ -1,4 +1,4 @@
-import { type DataSourceInstanceListItem } from '@grafana/data';
+import { type DataSourceInstanceListItem, type DataSourcePluginMeta } from '@grafana/data';
 
 import { getDefaultDataSourceInstanceListItem } from './getDefaultDataSourceInstanceListItem';
 
@@ -7,14 +7,20 @@ jest.mock('@grafana/runtime/unstable', () => ({
   getDefaultDataSourceInstanceListItem: undefined,
 }));
 
-function listItem(overrides: Partial<DataSourceInstanceListItem>): DataSourceInstanceListItem {
+// `meta` is partial so a case can set just the one flag it cares about.
+function listItem({
+  meta,
+  ...rest
+}: Partial<Omit<DataSourceInstanceListItem, 'meta'>> & {
+  meta?: Partial<DataSourcePluginMeta>;
+}): DataSourceInstanceListItem {
   return {
     uid: 'uid',
     type: 'loki',
     name: 'name',
-    meta: {},
     isDefault: false,
-    ...overrides,
+    ...rest,
+    meta: { ...meta },
   } as DataSourceInstanceListItem;
 }
 
