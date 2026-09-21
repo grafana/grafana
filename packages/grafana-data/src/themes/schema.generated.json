@@ -1103,6 +1103,15 @@
           },
           "additionalProperties": false
         },
+        "page": {
+          "type": "object",
+          "properties": {
+            "background": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
         "panel": {
           "type": "object",
           "properties": {

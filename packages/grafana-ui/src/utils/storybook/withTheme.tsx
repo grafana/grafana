@@ -24,7 +24,7 @@ const ThemeableStory = ({ children, handleSassThemeChange, themeId }: React.Prop
   }
 
   body {
-    background: ${theme.colors.background.page};
+    background: ${theme.components.page.background};
   }
   `;
 

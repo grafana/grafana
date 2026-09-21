@@ -38,10 +38,10 @@ const createThemeColorsBaseSchema = <TColor>(color: TColor) =>
         canvas: z.string().optional(),
         /**
          * Page container background
-         * @deprecated
+         * @deprecated use theme.components.page.background instead
          */
         page: z.string().optional(),
-        /** Primary content pane background (panels etc) */
+        /** Primary page content background */
         primary: z.string().optional(),
         /** Cards, panels, toolbar panes and box headers that need to stand out on the primary background */
         secondary: z.string().optional(),

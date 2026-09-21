@@ -24,14 +24,7 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
-import {
-  type AdHocFilterItem,
-  ErrorBoundaryAlert,
-  PanelContainer,
-  ScrollContainer,
-  type Themeable2,
-  withTheme2,
-} from '@grafana/ui';
+import { type AdHocFilterItem, ErrorBoundaryAlert, ScrollContainer, type Themeable2, withTheme2 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { type StoreState } from 'app/types/store';
