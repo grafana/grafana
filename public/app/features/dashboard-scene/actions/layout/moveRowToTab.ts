@@ -17,7 +17,7 @@ export function moveRowToTab({
   source: RowsLayoutManager;
   destination: TabItem;
 }) {
-  const destinationLayout = destination.getLayout(); //// 1
+  const destinationLayout = destination.getLayout();
   // The row is still in its source when a drag returns to the original tab.
   if (destinationLayout === source) {
     return;
