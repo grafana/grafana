@@ -2,7 +2,8 @@ import { of } from 'rxjs';
 
 import { type DataQueryRequest, type DataSourceApi, LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { config, setPluginImportUtils } from '@grafana/runtime';
+import { setPluginImportUtils } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   AdHocFiltersVariable,
   GroupByVariable,
@@ -42,6 +43,17 @@ jest.mock('@grafana/runtime', () => ({
     getPanelPluginFromCache: jest.fn(() => undefined),
   }),
 }));
+
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  getFeatureFlagClient: jest.fn(),
+}));
+
+const mockGetFeatureFlagClient = jest.mocked(getFeatureFlagClient);
+mockGetFeatureFlagClient.mockReturnValue({
+  getBooleanValue: (key: string, defaultValue: boolean) =>
+    key === FlagKeys.PerPanelNonApplicableDrilldowns ? true : defaultValue,
+} as unknown as ReturnType<typeof getFeatureFlagClient>);
 
 setPluginImportUtils({
   importPanelPlugin: () => Promise.resolve(getPanelPlugin({})),
@@ -127,8 +139,6 @@ interface BuildSceneOptions {
 }
 
 async function buildScene(options?: BuildSceneOptions) {
-  config.featureToggles.perPanelNonApplicableDrilldowns = true;
-
   const subHeader = new VizPanelSubHeader({});
 
   const queryRunner = new SceneQueryRunner({
