@@ -194,7 +194,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			maxRepositories: 10,
 		},
 		{
-			name: "allows duplicate git path when sync is disabled",
+			name: "forbids duplicate git path even when sync is disabled",
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
@@ -220,7 +220,8 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					},
 				},
 			},
-			wantErr:         false,
+			wantErr:         true,
+			wantErrContains: ErrRepositoryDuplicatePath.Error(),
 			maxRepositories: 10,
 		},
 		{
@@ -282,7 +283,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			maxRepositories: 10,
 		},
 		{
-			name: "allows duplicate empty paths when sync is disabled",
+			name: "forbids duplicate empty paths even when sync is disabled",
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
@@ -308,7 +309,8 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					},
 				},
 			},
-			wantErr:         false,
+			wantErr:         true,
+			wantErrContains: ErrRepositoryDuplicatePath.Error(),
 			maxRepositories: 10,
 		},
 		{
@@ -608,7 +610,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			maxRepositories: 10,
 		},
 		{
-			name: "allows parent folder path when sync is disabled",
+			name: "forbids parent folder conflict even when sync is disabled",
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
@@ -632,11 +634,12 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					},
 				},
 			},
-			wantErr:         false,
+			wantErr:         true,
+			wantErrContains: ErrRepositoryParentFolderConflict.Error(),
 			maxRepositories: 10,
 		},
 		{
-			name: "allows empty path when sync is disabled (wizard onboarding flow)",
+			name: "forbids empty path overlapping an existing sibling even when sync is disabled",
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
@@ -660,7 +663,8 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 					},
 				},
 			},
-			wantErr:         false,
+			wantErr:         true,
+			wantErrContains: ErrRepositoryParentFolderConflict.Error(),
 			maxRepositories: 10,
 		},
 		{
