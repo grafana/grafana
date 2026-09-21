@@ -232,6 +232,8 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 	}
 
 	t.Run("paginates the full authorized set with a stable resource version", func(t *testing.T) {
+		const pageSize = 50
+
 		counting.batchReads.Store(0)
 		counting.reads.Store(0)
 
@@ -240,7 +242,7 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		var listRV int64
 		pages := 0
 		for {
-			resp, err := server.List(ctx, newReq(10, token))
+			resp, err := server.List(ctx, newReq(pageSize, token))
 			require.NoError(t, err)
 			require.Nil(t, resp.Error)
 			require.Greater(t, resp.ResourceVersion, int64(0))
@@ -267,11 +269,10 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 			}
 		}
 
-		require.Greater(t, pages, 1, "expected multiple pages")
+		require.Equal(t, 2, pages, "expected two pages")
 		require.Equal(t, wantByName, got, "exact names, bodies, and updated resource versions")
 		if opts.ExpectBatchReads {
-			require.Equal(t, int64(pages), counting.batchReads.Load(), "each page should use one lazy batched read")
-			require.GreaterOrEqual(t, counting.batchReads.Load(), int64(2), "pagination should exercise multiple batched reads")
+			require.Equal(t, int64(2), counting.batchReads.Load(), "each page should use one lazy batched read")
 			require.Equal(t, int64(0), counting.reads.Load())
 		}
 	})
