@@ -1,4 +1,4 @@
-import { HttpResponse, http } from 'msw';
+import { HttpResponse, delay, http } from 'msw';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 import { render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
 
@@ -132,6 +132,34 @@ describe('RoutingTreePolicyField - legacy label routing (alertingPolicyRoutingSe
     await waitFor(() => {
       expect(screen.getByTestId('named-root-label')).toHaveTextContent('');
     });
+  });
+});
+
+describe('RoutingTreePolicyField - routing tree list still loading', () => {
+  it('does not flash "Default policy" for a rule with a real custom policy while the list is loading', async () => {
+    server.use(
+      http.get(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/routingtrees`, async () => {
+        await delay('infinite');
+      })
+    );
+
+    render(<FormWrapper formValues={{ labels: [{ key: NAMED_ROOT_LABEL_NAME, value: CUSTOM_POLICY_NAME }] }} />);
+
+    expect(screen.queryByText('Default policy')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /notification policy/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+  });
+
+  it('still shows the collapsed default view while loading when there is no policy to resolve', async () => {
+    server.use(
+      http.get(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/routingtrees`, async () => {
+        await delay('infinite');
+      })
+    );
+
+    render(<FormWrapper />);
+
+    expect(await screen.findByText('Default policy')).toBeInTheDocument();
   });
 });
 

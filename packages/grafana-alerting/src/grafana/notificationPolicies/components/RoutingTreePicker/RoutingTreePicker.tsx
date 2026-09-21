@@ -153,7 +153,7 @@ function RoutingTreePickerPreview({ routingTree, instances }: RoutingTreePickerP
   // We still need the actual default tree object to preview against, so resolve it from the list
   // RoutingTreeSelector already fetches - RTKQ dedupes this against that same cached query.
   const { currentData: routingTrees } = useListRoutingTrees();
-  const defaultTree = routingTrees?.items.find(isDefaultRoutingTree) ?? null;
+  const defaultTree = routingTrees?.items?.find(isDefaultRoutingTree) ?? null;
   const resolvedTree = routingTree ?? defaultTree;
 
   const match = useMatchInstancesToSpecificRouteTree(resolvedTree, instances);

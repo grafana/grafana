@@ -37,13 +37,18 @@ export function RoutingTreePolicyField() {
     return labels.find((label) => label.key === NAMED_ROOT_LABEL_NAME)?.value || '';
   }, [isPolicyFieldRule, selectedPolicyField.value, labels]);
 
-  const { currentData: routingTrees, isLoading, isError } = useListRoutingTrees();
+  const { currentData: routingTrees, isError } = useListRoutingTrees();
+
+  // True while we have a real policy name to resolve but haven't got the tree list back yet.
+  // Until then we can't tell "using default" apart from "custom policy, not confirmed yet" -
+  // treating it as the former would flash the wrong badge for an existing custom-policy rule.
+  const isResolvingPolicyName = Boolean(currentPolicyName) && !routingTrees?.items;
 
   const selectedTree = useMemo(() => {
     if (!currentPolicyName) {
       return null;
     }
-    return routingTrees?.items.find((tree) => tree.metadata.name === currentPolicyName) ?? null;
+    return routingTrees?.items?.find((tree) => tree.metadata.name === currentPolicyName) ?? null;
   }, [currentPolicyName, routingTrees]);
 
   const updatePolicyValue = useCallback(
@@ -75,7 +80,7 @@ export function RoutingTreePolicyField() {
   // Legacy label path only: once the tree list has loaded, drop a stale label pointing at a
   // policy tree that no longer exists rather than keep the form pinned to a dead reference.
   useEffect(() => {
-    if (isPolicyFieldRule || isLoading || !routingTrees || !currentPolicyName) {
+    if (isPolicyFieldRule || !routingTrees?.items || !currentPolicyName) {
       return;
     }
     const stillExists =
@@ -84,15 +89,16 @@ export function RoutingTreePolicyField() {
     if (!stillExists) {
       updatePolicyValue('');
     }
-  }, [isPolicyFieldRule, isLoading, routingTrees, currentPolicyName, updatePolicyValue]);
+  }, [isPolicyFieldRule, routingTrees, currentPolicyName, updatePolicyValue]);
 
   const handleChange = (tree: RoutingTree | null) => {
     updatePolicyValue(tree?.metadata.name ?? '');
   };
 
   // A failed fetch would otherwise resolve selectedTree to null, silently showing "Default policy"
-  // for a rule that's actually routed through a custom tree we just couldn't confirm.
-  if (isError) {
+  // for a rule that's actually routed through a custom tree we just couldn't confirm. Same for a
+  // policy name we haven't been able to check against the tree list yet.
+  if (isError || isResolvingPolicyName) {
     return null;
   }
 
