@@ -5290,33 +5290,23 @@
         ]
       },
       "ReceiverIntegration": {
-        "type": "object",
-        "required": ["type", "version", "settings"],
-        "properties": {
-          "disableResolveMessage": {
-            "type": "boolean"
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ReceiverEmailV1"
           },
-          "secureFields": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "boolean"
-            }
+          {
+            "$ref": "#/components/schemas/ReceiverEmailMimir1"
           },
-          "settings": {
-            "type": "object",
-            "additionalProperties": true
+          {
+            "$ref": "#/components/schemas/ReceiverSlackV1"
           },
-          "type": {
-            "type": "string"
+          {
+            "$ref": "#/components/schemas/ReceiverSlackMimir1"
           },
-          "uid": {
-            "type": "string"
-          },
-          "version": {
-            "type": "string"
+          {
+            "$ref": "#/components/schemas/ReceiverWebhookV1"
           }
-        },
-        "additionalProperties": false
+        ]
       },
       "ReceiverList": {
         "type": "object",
@@ -5359,20 +5349,20 @@
         ]
       },
       "ReceiverSpec": {
-        "type": "object",
-        "required": ["title", "integrations"],
+        "additionalProperties": false,
         "properties": {
           "integrations": {
-            "type": "array",
             "items": {
               "$ref": "#/components/schemas/ReceiverIntegration"
-            }
+            },
+            "type": "array"
           },
           "title": {
             "type": "string"
           }
         },
-        "additionalProperties": false
+        "required": ["title", "integrations"],
+        "type": "object"
       },
       "RoutingTree": {
         "type": "object",
@@ -6674,6 +6664,290 @@
       },
       "io.k8s.apimachinery.pkg.runtime.RawExtension": {
         "description": "RawExtension is used to hold extensions in external versions.\n\nTo use this, make a field which has RawExtension as its type in your external, versioned struct, and Object in your internal struct. You also need to register your various plugin types.\n\n// Internal package:\n\n\ttype MyAPIObject struct {\n\t\truntime.TypeMeta `json:\",inline\"`\n\t\tMyPlugin runtime.Object `json:\"myPlugin\"`\n\t}\n\n\ttype PluginA struct {\n\t\tAOption string `json:\"aOption\"`\n\t}\n\n// External package:\n\n\ttype MyAPIObject struct {\n\t\truntime.TypeMeta `json:\",inline\"`\n\t\tMyPlugin runtime.RawExtension `json:\"myPlugin\"`\n\t}\n\n\ttype PluginA struct {\n\t\tAOption string `json:\"aOption\"`\n\t}\n\n// On the wire, the JSON will look something like this:\n\n\t{\n\t\t\"kind\":\"MyAPIObject\",\n\t\t\"apiVersion\":\"v1\",\n\t\t\"myPlugin\": {\n\t\t\t\"kind\":\"PluginA\",\n\t\t\t\"aOption\":\"foo\",\n\t\t},\n\t}\n\nSo what happens? Decode first uses json or yaml to unmarshal the serialized data into your external MyAPIObject. That causes the raw JSON to be stored, but not unpacked. The next step is to copy (using pkg/conversion) into the internal struct. The runtime package's DefaultScheme has conversion functions installed which will unpack the JSON stored in RawExtension, turning it into the correct object type, and storing it in the Object. (TODO: In the case where the object is of an unknown type, a runtime.Unknown object will be created and stored.)",
+        "type": "object"
+      },
+      "ReceiverCreateReceiverIntegrationTestAlert": {
+        "additionalProperties": false,
+        "properties": {
+          "annotations": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          }
+        },
+        "required": ["labels", "annotations"],
+        "type": "object"
+      },
+      "ReceiverCreateReceiverIntegrationTestIntegrationInput": {
+        "additionalProperties": false,
+        "description": "The test route takes one integration in its request body, and codegen does not allow\na union there, so the route keeps the flat shape.",
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "type": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "required": ["type", "version", "settings"],
+        "type": "object"
+      },
+      "ReceiverEmailMimir1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "from": {
+                "type": "string"
+              },
+              "html": {
+                "type": "string"
+              },
+              "smarthost": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": {
+            "enum": ["email"],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": ["email/v0mimir1"],
+            "type": "string"
+          },
+          "version": {
+            "enum": ["v0mimir1"],
+            "type": "string"
+          }
+        },
+        "required": ["type", "version", "settings"],
+        "type": "object"
+      },
+      "ReceiverEmailV1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "addresses": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "singleEmail": {
+                "type": "boolean"
+              },
+              "subject": {
+                "type": "string"
+              }
+            },
+            "required": ["addresses"],
+            "type": "object"
+          },
+          "type": {
+            "enum": ["email"],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": ["email/v1"],
+            "type": "string"
+          },
+          "version": {
+            "enum": ["v1"],
+            "type": "string"
+          }
+        },
+        "required": ["type", "version", "settings"],
+        "type": "object"
+      },
+      "ReceiverSlackMimir1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "channel": {
+                "type": "string"
+              },
+              "color": {
+                "type": "string"
+              },
+              "fallback": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": {
+            "enum": ["slack"],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": ["slack/v0mimir1"],
+            "type": "string"
+          },
+          "version": {
+            "enum": ["v0mimir1"],
+            "type": "string"
+          }
+        },
+        "required": ["type", "version", "settings"],
+        "type": "object"
+      },
+      "ReceiverSlackV1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "token": {
+                "type": "boolean"
+              },
+              "url": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "endpointUrl": {
+                "type": "string"
+              },
+              "mentionChannel": {
+                "type": "string"
+              },
+              "recipient": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "username": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": {
+            "enum": ["slack"],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": ["slack/v1"],
+            "type": "string"
+          },
+          "version": {
+            "enum": ["v1"],
+            "type": "string"
+          }
+        },
+        "required": ["type", "version", "settings"],
+        "type": "object"
+      },
+      "ReceiverWebhookV1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "httpMethod": {
+                "type": "string"
+              },
+              "maxAlerts": {
+                "type": "integer"
+              },
+              "url": {
+                "type": "string"
+              }
+            },
+            "required": ["url"],
+            "type": "object"
+          },
+          "type": {
+            "enum": ["webhook"],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": ["webhook/v1"],
+            "type": "string"
+          },
+          "version": {
+            "enum": ["v1"],
+            "type": "string"
+          }
+        },
+        "required": ["type", "version", "settings"],
         "type": "object"
       }
     }

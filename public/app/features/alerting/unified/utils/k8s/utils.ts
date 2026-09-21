@@ -113,13 +113,28 @@ export function validateRbacEntityName(name?: string): Error | undefined {
   return undefined;
 }
 
+/**
+ * Builds the integration the API expects from what the contact point form produced.
+ *
+ * The form is driven by the integration type schemas the server returns, so the type,
+ * version and settings are only known at runtime. ReceiverIntegration is a union of
+ * fixed shapes, which a runtime string cannot satisfy, so this is the one place that
+ * asserts the pair lines up. The server validates it against the same union and
+ * rejects the request if it does not.
+ */
 export function receiverConfigToK8sIntegration(config: GrafanaManagedReceiverConfig): ReceiverIntegration {
-  return {
+  const version = config.version ?? 'v1';
+
+  const integration = {
     uid: config.uid,
     disableResolveMessage: config.disableResolveMessage,
     secureFields: config.secureFields,
     settings: config.settings,
     type: config.type,
-    version: config.version ?? 'v1',
+    version,
+    variant: `${config.type}/${version}`,
   };
+
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  return integration as ReceiverIntegration;
 }

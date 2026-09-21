@@ -1,14 +1,20 @@
 import { faker } from '@faker-js/faker';
 import { Factory } from 'fishery';
 
-import { API_GROUP, API_VERSION } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
+import {
+  API_GROUP,
+  API_VERSION,
+  type ReceiverEmailV1,
+  type ReceiverIntegration,
+  type ReceiverSlackV1,
+  type ReceiverWebhookV1,
+} from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 
 import { DEFAULT_NAMESPACE, generateResourceVersion, generateTitle, generateUID } from '../../../../../mocks/util';
 import {
   type ContactPoint,
   type ContactPointMetadataAnnotations,
   type EnhancedListReceiverApiResponse,
-  type Integration,
 } from '../../types';
 
 import { AlertingEntityMetadataAnnotationsFactory } from './common';
@@ -46,34 +52,41 @@ export const ContactPointSpecFactory = Factory.define<ContactPoint['spec']>(() =
   integrations: faker.helpers.uniqueArray(IntegrationUnion, 2).map((integration) => integration.build()),
 }));
 
-export const GenericIntegrationFactory = Factory.define<Integration>(() => ({
-  type: 'generic',
-  version: '1',
+export const WebhookIntegrationFactory = Factory.define<ReceiverWebhookV1>(() => ({
+  type: 'webhook',
+  version: 'v1',
+  variant: 'webhook/v1',
   disableResolveMessage: false,
   settings: {
-    foo: 'bar',
+    url: faker.internet.url(),
   },
 }));
 
-export const EmailIntegrationFactory = Factory.define<Integration>(() => ({
+export const EmailIntegrationFactory = Factory.define<ReceiverEmailV1>(() => ({
   type: 'email',
-  version: '1',
-  secureFields: {},
+  version: 'v1',
+  variant: 'email/v1',
   settings: {
     addresses: faker.internet.email(),
   },
 }));
 
-export const SlackIntegrationFactory = Factory.define<Integration>(() => ({
+export const SlackIntegrationFactory = Factory.define<ReceiverSlackV1>(() => ({
   type: 'slack',
-  version: '1',
+  version: 'v1',
+  variant: 'slack/v1',
   secureFields: { token: true },
   settings: {
     mentionChannel: '#alerts',
   },
 }));
 
-const IntegrationUnion = [EmailIntegrationFactory, SlackIntegrationFactory];
+// fishery's Factory is invariant in its type parameter, so this is typed by what the
+// array is used for: building integrations.
+const IntegrationUnion: Array<{ build: () => ReceiverIntegration }> = [
+  EmailIntegrationFactory,
+  SlackIntegrationFactory,
+];
 
 // by default the contact points will be in use by a route and a rule
 export const ContactPointMetadataAnnotationsFactory = Factory.define<ContactPointMetadataAnnotations>(() => ({

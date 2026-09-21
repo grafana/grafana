@@ -2089,18 +2089,84 @@ export type GetIntegrationtypeschemasIntegrationTypeSchemaResource = {
 export type GetIntegrationtypeschemasResponse = {
   items: GetIntegrationtypeschemasIntegrationTypeSchemaResource[];
 };
-export type ReceiverIntegration = {
+export type ReceiverEmailV1 = {
+  disableResolveMessage?: boolean;
+  settings: {
+    addresses: string;
+    message?: string;
+    singleEmail?: boolean;
+    subject?: string;
+  };
+  type: 'email';
+  uid?: string;
+  variant?: 'email/v1';
+  version: 'v1';
+};
+export type ReceiverEmailMimir1 = {
+  disableResolveMessage?: boolean;
+  settings: {
+    from?: string;
+    html?: string;
+    smarthost?: string;
+    to?: string;
+  };
+  type: 'email';
+  uid?: string;
+  variant?: 'email/v0mimir1';
+  version: 'v0mimir1';
+};
+export type ReceiverSlackV1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    token?: boolean;
+    url?: boolean;
+  };
+  settings: {
+    endpointUrl?: string;
+    mentionChannel?: string;
+    recipient?: string;
+    text?: string;
+    title?: string;
+    username?: string;
+  };
+  type: 'slack';
+  uid?: string;
+  variant?: 'slack/v1';
+  version: 'v1';
+};
+export type ReceiverSlackMimir1 = {
+  disableResolveMessage?: boolean;
+  settings: {
+    channel?: string;
+    color?: string;
+    fallback?: string;
+  };
+  type: 'slack';
+  uid?: string;
+  variant?: 'slack/v0mimir1';
+  version: 'v0mimir1';
+};
+export type ReceiverWebhookV1 = {
   disableResolveMessage?: boolean;
   secureFields?: {
     [key: string]: boolean;
   };
   settings: {
-    [key: string]: any;
+    httpMethod?: string;
+    maxAlerts?: number;
+    url: string;
   };
-  type: string;
+  type: 'webhook';
   uid?: string;
-  version: string;
+  variant?: 'webhook/v1';
+  version: 'v1';
 };
+export type ReceiverIntegration =
+  | ReceiverEmailV1
+  | ReceiverEmailMimir1
+  | ReceiverSlackV1
+  | ReceiverSlackMimir1
+  | ReceiverWebhookV1;
 export type ReceiverSpec = {
   integrations: ReceiverIntegration[];
   title: string;
