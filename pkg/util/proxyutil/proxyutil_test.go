@@ -196,11 +196,13 @@ func TestApplyUserHeader(t *testing.T) {
 		require.NotContains(t, req.Header, "X-Grafana-User")
 	})
 
-	t.Run("Should apply user header for non-anonomous user", func(t *testing.T) {
-		req, err := http.NewRequest(http.MethodGet, "/", nil)
-		require.NoError(t, err)
+	for _, identityType := range []claims.IdentityType{claims.TypeUser, claims.TypeServiceAccount} {
+		t.Run("Should apply user header for "+string(identityType), func(t *testing.T) {
+			req, err := http.NewRequest(http.MethodGet, "/", nil)
+			require.NoError(t, err)
 
-		ApplyUserHeader(true, req, &user.SignedInUser{Login: "admin", UserID: 1, FallbackType: claims.TypeUser})
-		require.Equal(t, "admin", req.Header.Get("X-Grafana-User"))
-	})
+			ApplyUserHeader(true, req, &user.SignedInUser{Login: "admin", UserID: 1, FallbackType: identityType})
+			require.Equal(t, "admin", req.Header.Get("X-Grafana-User"))
+		})
+	}
 }
