@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"slices"
 	"strconv"
 	"testing"
@@ -1599,8 +1600,13 @@ func TestIndexAndSearchSelectableFields(t *testing.T) {
 	checkSearchQuery(t, index, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.some.field", "doc3-field#value!"), []string{"doc3"})
 	checkSearchQuery(t, index, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.some.other.field", "some other.field>value"), []string{"doc3"})
 
-	// Only known selectable fields are indexed.
-	checkSearchQuery(t, index, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"unknown.field", "another_value"), nil)
+	// A field the index was not built with is refused, rather than answered with an
+	// empty result that reads as "nothing matches".
+	res, err := index.Search(context.Background(), nil, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"unknown.field", "another_value"), nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, res.Error)
+	require.True(t, resource.IsSelectableFieldNotIndexed(res.Error))
+	require.Equal(t, int32(http.StatusBadRequest), res.Error.Code)
 }
 
 func selectableFieldQuery(key *resourcepb.ResourceKey, field, value string) *resourcepb.ResourceSearchRequest {
@@ -4236,4 +4242,89 @@ func newResourceVersionIndex(t testing.TB, key resource.NamespacedResource, post
 	}, nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 	return index
+}
+
+// Internal index fields must be refused wherever a request can name a field.
+// Before this check a filter on one matched nothing and a sort on one ordered by
+// nothing, with no sign the field was never usable.
+func TestSearchRejectsInternalFields(t *testing.T) {
+	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	index := newResourceVersionIndex(t, key, false)
+	newRequest := func() *resourcepb.ResourceSearchRequest {
+		return &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+				Namespace: key.Namespace, Group: key.Group, Resource: key.Resource,
+			}},
+			Limit: 10,
+		}
+	}
+	search := func(t *testing.T, req *resourcepb.ResourceSearchRequest) *resourcepb.ResourceSearchResponse {
+		t.Helper()
+		res, err := index.Search(context.Background(), nil, req, nil, nil)
+		require.NoError(t, err)
+		return res
+	}
+
+	internal := []string{
+		resource.SEARCH_FIELD_RV_STRING,
+		resource.SEARCH_FIELD_IS_DELETED,
+		resource.SEARCH_FIELD_IS_PROVISIONED,
+	}
+	for _, field := range internal {
+		t.Run(field, func(t *testing.T) {
+			for name, mutate := range map[string]func(*resourcepb.ResourceSearchRequest){
+				"response field": func(r *resourcepb.ResourceSearchRequest) {
+					r.Fields = []string{field}
+				},
+				"sort": func(r *resourcepb.ResourceSearchRequest) {
+					r.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: field}}
+				},
+				"filter": func(r *resourcepb.ResourceSearchRequest) {
+					r.Options.Fields = []*resourcepb.Requirement{
+						{Key: field, Operator: string(selection.Equals), Values: []string{"1"}},
+					}
+				},
+				"facet": func(r *resourcepb.ResourceSearchRequest) {
+					r.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{"f": {Field: field, Limit: 10}}
+				},
+				"query field": func(r *resourcepb.ResourceSearchRequest) {
+					r.Query = "x"
+					r.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{{Name: field}}
+				},
+			} {
+				t.Run(name, func(t *testing.T) {
+					req := newRequest()
+					mutate(req)
+					res := search(t, req)
+					require.NotNil(t, res.Error, "request naming %q must be refused", field)
+					require.Equal(t, int32(http.StatusBadRequest), res.Error.Code)
+				})
+			}
+		})
+	}
+
+	// The request API owns these underscore-prefixed names, so the check must not
+	// catch them.
+	t.Run("request API fields stay usable", func(t *testing.T) {
+		for _, field := range []string{
+			resource.SEARCH_FIELD_ID,
+			resource.SEARCH_FIELD_SCORE,
+			resource.SEARCH_FIELD_EXPLAIN,
+			resource.SEARCH_FIELD_ALL_FIELDS,
+		} {
+			req := newRequest()
+			req.Fields = []string{field}
+			require.Nil(t, search(t, req).Error, "field %q must stay usable", field)
+		}
+	})
+
+	// A label may be named like an internal field: label keys are user data and
+	// live under their own prefix in the index.
+	t.Run("a label named like an internal field is allowed", func(t *testing.T) {
+		req := newRequest()
+		req.Options.Labels = []*resourcepb.Requirement{
+			{Key: resource.SEARCH_FIELD_RV_STRING, Operator: string(selection.Equals), Values: []string{"1"}},
+		}
+		require.Nil(t, search(t, req).Error)
+	})
 }

@@ -106,7 +106,8 @@ export function TraceView(props: Props) {
 
   const { removeHoverIndentGuideId, addHoverIndentGuideId, hoverIndentGuideIds } = useHoverIndentGuide();
   const { viewRange, updateViewRangeTime, updateNextViewRangeTime } = useViewRange();
-  const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
+  const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll, revealSpan } =
+    useChildrenState();
   const { app = CoreApp.Unknown } = usePanelContext();
 
   const criticalPath = useMemo(() => memoizedTraceCriticalPath(traceProp), [traceProp]);
@@ -288,6 +289,7 @@ export function TraceView(props: Props) {
             showSpanFilters={showSpanFilters}
             setShowSpanFilters={setShowSpanFilters}
             setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
+            revealSpan={revealSpan}
             spanFilterMatches={spanFilterMatches}
             datasourceType={datasourceType}
             datasourceName={datasourceName}

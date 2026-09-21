@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"iter"
+	"math"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -308,6 +310,31 @@ func (n *eventStore) readEventPage(ctx context.Context, keys []string) ([]Event,
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
+	return events, nil
+}
+
+// latest reads metadata at or below throughRV newest-first
+func (n *eventStore) latest(ctx context.Context, limit int, throughRV int64) ([]Event, error) {
+	keys := make([]string, 0, limit)
+	opts := ListOptions{Sort: SortOrderDesc, Limit: int64(limit)}
+	if throughRV < math.MaxInt64 {
+		opts.EndKey = fmt.Sprintf("%d", throughRV+1)
+	}
+	for key, err := range n.kv.Keys(ctx, eventsSection, opts) {
+		if err != nil {
+			return nil, err
+		}
+		keys = append(keys, key)
+	}
+	events := make([]Event, 0, len(keys))
+	for page := range slices.Chunk(keys, readEventBatchSize) {
+		batch, err := n.readEventPage(ctx, page)
+		if err != nil {
+			return nil, err
+		}
+		events = append(events, batch...)
+	}
+	slices.Reverse(events)
 	return events, nil
 }
 
