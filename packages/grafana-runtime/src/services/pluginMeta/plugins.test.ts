@@ -109,6 +109,7 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
           ok: false,
           statusText: 'Internal Server Error',
           status: 500,
+          headers: new Headers({ 'grafana-trace-id': 'abc123' }),
         })
         .mockResolvedValue({
           ok: true,
@@ -138,6 +139,7 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
         requestUrl: 'apis/plugins.grafana.app/v0alpha1/namespaces/default/metas',
         status: '500',
         statusText: 'Internal Server Error',
+        traceId: 'abc123',
       });
     });
 
@@ -174,6 +176,7 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
         ok: false,
         statusText: 'Internal Server Error',
         status: 500,
+        headers: new Headers(),
       });
 
       const response = await refetchPluginMetas();
@@ -199,6 +202,7 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
         ok: false,
         statusText: 'Internal Server Error',
         status: 500,
+        headers: new Headers(),
       });
 
       const response = await getPluginMetaFromCache(v0alpha1Meta.spec.pluginJson.id);
@@ -212,6 +216,7 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
         ok: false,
         statusText: 'Internal Server Error',
         status: 500,
+        headers: new Headers(),
       });
 
       const response = await refetchPluginMeta(v0alpha1Meta.spec.pluginJson.id);
@@ -255,6 +260,7 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
         ok: false,
         statusText: 'Internal Server Error',
         status: 500,
+        headers: new Headers(),
       });
 
       await expect(installPluginMeta('myorg-test-panel', '1.5.0')).rejects.toThrow(
@@ -290,6 +296,7 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
         ok: false,
         statusText: 'Internal Server Error',
         status: 500,
+        headers: new Headers(),
       });
 
       await expect(uninstallPluginMeta('myorg-test-panel')).rejects.toThrow(
