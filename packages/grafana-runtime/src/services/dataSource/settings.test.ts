@@ -677,7 +677,7 @@ describe('instanceSettings', () => {
       return { uid: 'uid', type: 'test-db', name: 'name', meta: ds({}).meta, isDefault: false, ...overrides };
     }
 
-    it('returns the flagged item rather than the first one', () => {
+    it('returns the flagged item', () => {
       const items = [
         listItem({ uid: 'uid-alpha', name: 'Alpha' }),
         listItem({ uid: 'uid-bravo', name: 'Bravo', isDefault: true }),
@@ -686,7 +686,7 @@ describe('instanceSettings', () => {
       expect(getDefaultDataSourceInstanceListItem(items)?.name).toBe('Bravo');
     });
 
-    it('returns undefined when no item is flagged, rather than falling back to the first', () => {
+    it('returns undefined when no item is flagged', () => {
       const items = [listItem({ uid: 'uid-alpha', name: 'Alpha' }), listItem({ uid: 'uid-charlie', name: 'Charlie' })];
 
       expect(getDefaultDataSourceInstanceListItem(items)).toBeUndefined();
@@ -724,7 +724,7 @@ describe('instanceSettings', () => {
       expect(getDefaultDataSourceInstanceListItem(items)).toBeUndefined();
     });
 
-    it('never returns an appended built-in, which is what a list-order fallback would pick', async () => {
+    it('never returns an appended built-in', async () => {
       initDataSourceInstanceSettings(fixtures, 'Bravo');
 
       const items = await getDataSourceInstanceList({ type: 'nonexistent', all: true, mixed: true, dashboard: true });

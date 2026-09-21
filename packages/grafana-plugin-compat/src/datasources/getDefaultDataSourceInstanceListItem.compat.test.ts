@@ -25,13 +25,13 @@ function listItem({
 }
 
 describe('getDefaultDataSourceInstanceListItem', () => {
-  it('should return the flagged item rather than the first one', () => {
+  it('should return the flagged item', () => {
     const items = [listItem({ uid: 'ds-a', name: 'A' }), listItem({ uid: 'ds-b', name: 'B', isDefault: true })];
 
     expect(getDefaultDataSourceInstanceListItem(items)?.uid).toBe('ds-b');
   });
 
-  it('should return undefined when no item is flagged, rather than falling back to the first', () => {
+  it('should return undefined when no item is flagged', () => {
     const items = [listItem({ uid: 'ds-a', name: 'A' }), listItem({ uid: 'ds-b', name: 'B' })];
 
     expect(getDefaultDataSourceInstanceListItem(items)).toBeUndefined();
@@ -51,7 +51,7 @@ describe('getDefaultDataSourceInstanceListItem', () => {
     expect(getDefaultDataSourceInstanceListItem([])).toBeUndefined();
   });
 
-  it('should never return a built-in, which is what a list-order fallback would pick', () => {
+  it('should never return a built-in', () => {
     const items = [
       listItem({ uid: 'ds-mixed', type: 'mixed', name: '-- Mixed --', meta: { builtIn: true } }),
       listItem({ uid: 'ds-grafana', type: 'grafana', name: '-- Grafana --', meta: { builtIn: true } }),
