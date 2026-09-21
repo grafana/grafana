@@ -13453,6 +13453,9 @@
       "inspect-json": "Panel JSON",
       "more": "More...",
       "new-alert-rule": "New alert rule",
+      "open-in": "Open in",
+      "open-in-agent-setup": "Set up…",
+      "opening-in-agent": "Opening {{agent}}",
       "panel-copy-success": "Panel \"{{panelName}}\" copied to clipboard",
       "paste-styles": "Paste styles",
       "query": "Query",
@@ -16033,6 +16036,8 @@
   "share-panel": {
     "drawer": {
       "new-library-panel-title": "New library panel",
+      "open-in-agent-subtitle": "Hand this panel to an agent running on your machine. It queries Grafana itself and renders the panel in its own window.",
+      "open-in-agent-title": "Open in a coding agent",
       "share-embed-title": "Share embed",
       "share-link-title": "Link settings"
     },
@@ -16045,6 +16050,27 @@
     "new-library-panel": {
       "cancel-button": "Cancel",
       "create-button": "Create library panel"
+    },
+    "open-in-agent": {
+      "claude-description": "Claude has no install link, so this is a command to run once. It registers the server for every session, not just the directory you run it in.",
+      "claude-label": "Claude Code",
+      "copy-command": "Copy",
+      "copy-install": "Copy",
+      "cursor-description": "Opens Cursor and adds the server to its configuration.",
+      "cursor-install": "Add the Grafana MCP server to Cursor",
+      "cursor-label": "Cursor",
+      "install-description": "The agent talks to Grafana through this server, which runs on your machine. Neither agent checks that the command exists, so an agent registered without it fails on every call.",
+      "install-label": "Install command",
+      "open-description": "The agent opens with a prompt naming this panel and the time range. Nothing is sent until you submit it there.",
+      "prompt-label": "Prompt sent to the agent",
+      "show-prompt": "Show the prompt",
+      "step-one": "1. Install the Grafana MCP server, once",
+      "step-three": "3. Open this panel",
+      "step-two": "2. Register it with your agent, once",
+      "token-description": "They point the server at {{url}} and read your service account token from {{envVar}} in the agent's environment. Create a token on the service accounts page and set it there; Grafana never puts it in a link.",
+      "token-title": "Both of these reference a token rather than carrying one",
+      "undetectable": "If the agent is not installed, your browser ignores the link without an error. Grafana cannot tell the difference, so nothing here will claim it worked.",
+      "where-it-draws": "Cursor and the Claude Code desktop app draw the panel itself. Other surfaces, the Claude Code terminal among them, get a text summary instead."
     }
   },
   "share-panel-image": {

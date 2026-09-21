@@ -15,6 +15,7 @@ import { DownloadDashboardDiagnostics } from '../DownloadDashboardDiagnostics';
 import { DownloadDiagnostics } from '../DownloadDiagnostics';
 import { ExportAsCode } from '../ExportButton/ExportAsCode';
 import { ExportAsImage } from '../ExportButton/ExportAsImage';
+import { OpenPanelInAgentTab } from '../OpenPanelInAgentTab';
 import { ShareExternally } from '../ShareButton/share-externally/ShareExternally';
 import { ShareInternally } from '../ShareButton/share-internally/ShareInternally';
 import { ShareSnapshot } from '../ShareButton/share-snapshot/ShareSnapshot';
@@ -133,6 +134,8 @@ function getPanelShareView(
       return new ShareLibraryPanelTab({ panelRef, onDismiss });
     case shareDashboardType.downloadDiagnostics:
       return new DownloadDiagnostics({ panelRef, dashboardRef, onDismiss });
+    case shareDashboardType.openInAgent:
+      return new OpenPanelInAgentTab({ panelRef, onDismiss });
     default:
       return new SharePanelInternally({ panelRef, onDismiss });
   }

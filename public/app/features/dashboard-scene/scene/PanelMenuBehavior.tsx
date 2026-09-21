@@ -17,11 +17,15 @@ import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { LocalValueVariable, sceneGraph, VizPanel, type VizPanelMenu } from '@grafana/scenes';
 import { type DataQuery, type OptionsWithLegend } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
-import { createErrorNotification } from 'app/core/copy/appNotification';
+import { createErrorNotification, createInfoNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
+import { canOpenPanelInAgent, HANDOFF_AGENTS, hasSeenAgentSetup } from 'app/features/agent-handoff/agents';
+import { openAgentPromptDeeplink } from 'app/features/agent-handoff/deeplinks';
+import { buildPanelHandoffPrompt } from 'app/features/agent-handoff/handoffPrompt';
+import { panelHandoffFor } from 'app/features/agent-handoff/panelHandoff';
 import { type RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { appendExtensionsToPanelMenu } from 'app/features/dashboard/utils/appendExtensionsToPanelMenu';
@@ -174,6 +178,19 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         e.preventDefault();
       },
     });
+
+    // Next to Share rather than in More…, which holds edit-mode and destructive
+    // actions.
+    //
+    // Three things have to hold, and all three are about the agent being able to
+    // fetch this panel rather than about the menu: the viewer must be able to draw
+    // the panel type, the dashboard must be saved (the handoff names it by uid, which
+    // an unsaved dashboard does not have yet), and the panel must not be a repeat
+    // clone - the prompt carries no variable values, so a clone would hand over the
+    // base panel and quietly show data from a different series.
+    if (canOpenPanelInAgent(panel.state.pluginId) && dashboard.state.uid && !isReadOnlyRepeat) {
+      items.push(buildOpenInAgentMenuItem(panel, dashboard, dashboard.state.uid));
+    }
 
     if (dashboard.state.isEditing && !isReadOnlyRepeat && !isEditingPanel) {
       moreSubMenu.push({
@@ -427,6 +444,64 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
   };
 
   asyncFunc();
+}
+
+/**
+ * "Open in ›": hands this panel to a coding agent running on the user's machine.
+ *
+ * Each agent is a leaf that fires its own protocol handler, but only once this
+ * browser has been through the setup drawer. Until then the leaf opens that drawer
+ * instead, because both ways of failing are silent: a deep link into an agent that is
+ * not installed is ignored by the browser with no error, and one into an agent with
+ * no Grafana MCP server connected opens a session that can do nothing with the
+ * prompt. Neither is detectable from here, so the first click explains itself rather
+ * than gambling.
+ */
+function buildOpenInAgentMenuItem(panel: VizPanel, dashboard: DashboardScene, dashboardUid: string): PanelMenuItem {
+  const openSetup = () =>
+    dashboard.showModal(new ShareDrawer({ shareView: shareDashboardType.openInAgent, panelRef: panel.getRef() }));
+
+  const subMenu: PanelMenuItem[] = HANDOFF_AGENTS.map(({ id, name }) => ({
+    text: name,
+    iconClassName: 'external-link-alt',
+    onClick: () => {
+      DashboardInteractions.sharingCategoryClicked({
+        item: shareDashboardType.openInAgent,
+        agent: id,
+        shareResource: getTrackingSource(panel.getRef()),
+      });
+
+      if (!hasSeenAgentSetup(id)) {
+        openSetup();
+        return;
+      }
+
+      openAgentPromptDeeplink(id, buildPanelHandoffPrompt(panelHandoffFor(panel, dashboardUid)));
+
+      // Unconditional, and deliberately not a success message: the handoff was
+      // attempted, which is the most that can honestly be claimed.
+      dispatch(
+        notifyApp(createInfoNotification(t('panel.header-menu.opening-in-agent', 'Opening {{agent}}', { agent: name })))
+      );
+    },
+  }));
+
+  subMenu.push({ text: '', type: 'divider' });
+  subMenu.push({
+    text: t('panel.header-menu.open-in-agent-setup', 'Set up\u2026'),
+    iconClassName: 'cog',
+    onClick: openSetup,
+  });
+
+  return {
+    type: 'submenu',
+    text: t('panel.header-menu.open-in', 'Open in'),
+    iconClassName: 'code-branch',
+    subMenu,
+    onClick: (e) => {
+      e.preventDefault();
+    },
+  };
 }
 
 async function getExploreMenuItem(panel: VizPanel): Promise<PanelMenuItem | undefined> {
