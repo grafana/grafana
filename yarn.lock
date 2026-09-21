@@ -2542,43 +2542,43 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/faro-core@npm:^2.11.0, @grafana/faro-core@npm:^2.8.2":
-  version: 2.11.0
-  resolution: "@grafana/faro-core@npm:2.11.0"
+"@grafana/faro-core@npm:^2.12.0":
+  version: 2.12.0
+  resolution: "@grafana/faro-core@npm:2.12.0"
   dependencies:
     "@opentelemetry/api": "npm:^1.9.0"
     "@opentelemetry/otlp-transformer": "npm:^0.221.0"
-  checksum: 10/79b037b64c27ad5cd2d5aa64c9057c21f81db37e7287e2ddf59c1e872e6b059ab9dec072f033a4527c9995663e6275ce0a1b28d4d5c42f6a91c341d1284a4d77
+  checksum: 10/e1efafaf1c4c3c2654451239d430655c10bfad91b208420292689e78372777d901dcc938869bdd58b5f6eee25be16494af8db8128ed1e910f594a0a20c99c473
   languageName: node
   linkType: hard
 
-"@grafana/faro-instrumentation-replay@npm:^2.8.2":
-  version: 2.11.0
-  resolution: "@grafana/faro-instrumentation-replay@npm:2.11.0"
+"@grafana/faro-instrumentation-replay@npm:^2.12.0":
+  version: 2.12.0
+  resolution: "@grafana/faro-instrumentation-replay@npm:2.12.0"
   dependencies:
-    "@grafana/faro-core": "npm:^2.11.0"
+    "@grafana/faro-core": "npm:^2.12.0"
     "@grafana/rrweb": "npm:2.0.0-grafana.2"
     "@grafana/rrweb-types": "npm:2.0.0-grafana.2"
-  checksum: 10/ed628f6914afd82e1d97a6917259a326b137943f51fcee6487bae839c489743a86a3204ed4bd3c6fa28fec46d2821a5fdb9002b8c3b6faf84dbb16e81f007f7c
+  checksum: 10/6e35adae5da6fc1d5b0cece31e6e0a0698fb57a48ca9ccd0df731700c994f09bf85b39bc3e7641ca9b88d564bbc562eca3c2dca719d50422336226ed3a8ee234
   languageName: node
   linkType: hard
 
-"@grafana/faro-web-sdk@npm:^2.11.0, @grafana/faro-web-sdk@npm:^2.8.2":
-  version: 2.11.0
-  resolution: "@grafana/faro-web-sdk@npm:2.11.0"
+"@grafana/faro-web-sdk@npm:^2.12.0":
+  version: 2.12.0
+  resolution: "@grafana/faro-web-sdk@npm:2.12.0"
   dependencies:
-    "@grafana/faro-core": "npm:^2.11.0"
+    "@grafana/faro-core": "npm:^2.12.0"
     ua-parser-js: "npm:1.0.41"
     web-vitals: "npm:^6.0.0"
-  checksum: 10/6b5ce1fd797e0014db012f3d405d4ffa6ce2d549d57797c627fcfb63b79f5dc7a6dfd1ea3e6532962e98b8fe5b93595e1213af9015e9f4785b244f1902c2fe9c
+  checksum: 10/401edc77885e34f753e265f6c4faf2adabe7970032504d5a8c9f31276a4374b62f33cf99b5af3d36ba496ca2199e0a1892162765c6e0df2138c127911b0d22e0
   languageName: node
   linkType: hard
 
-"@grafana/faro-web-tracing@npm:^2.8.2":
-  version: 2.11.0
-  resolution: "@grafana/faro-web-tracing@npm:2.11.0"
+"@grafana/faro-web-tracing@npm:^2.12.0":
+  version: 2.12.0
+  resolution: "@grafana/faro-web-tracing@npm:2.12.0"
   dependencies:
-    "@grafana/faro-web-sdk": "npm:^2.11.0"
+    "@grafana/faro-web-sdk": "npm:^2.12.0"
     "@opentelemetry/api": "npm:^1.9.0"
     "@opentelemetry/core": "npm:^2.0.0"
     "@opentelemetry/exporter-trace-otlp-http": "npm:^0.221.0"
@@ -2589,7 +2589,7 @@ __metadata:
     "@opentelemetry/resources": "npm:^2.0.0"
     "@opentelemetry/sdk-trace-web": "npm:^2.0.0"
     "@opentelemetry/semantic-conventions": "npm:^1.32.0"
-  checksum: 10/0c7a1f26c140511eda9044c86daeaf1a36db1f0bf00b5048d46cbbef16b42814475983680156f51018c0cfc7e4c8bb732c592d4f45728246a2588e1884f018e7
+  checksum: 10/c9c51e0e63c2ac2c2f78770ecc34ded57b7e18528dfcc79893782b32ec18f17628cc2aab301a3046f0c4643bd2f6d21c030b1bec0a07e665d87a74f09d51b38c
   languageName: node
   linkType: hard
 
@@ -2998,7 +2998,7 @@ __metadata:
   dependencies:
     "@grafana/data": "npm:13.3.0-pre"
     "@grafana/e2e-selectors": "npm:13.3.0-pre"
-    "@grafana/faro-web-sdk": "npm:^2.8.2"
+    "@grafana/faro-web-sdk": "npm:^2.12.0"
     "@grafana/schema": "npm:13.3.0-pre"
     "@grafana/ui": "npm:13.3.0-pre"
     "@openfeature/core": "npm:^1.12.0"
@@ -3241,7 +3241,7 @@ __metadata:
     "@floating-ui/react": "npm:^0.27.19"
     "@grafana/data": "npm:13.3.0-pre"
     "@grafana/e2e-selectors": "npm:13.3.0-pre"
-    "@grafana/faro-web-sdk": "npm:^2.8.2"
+    "@grafana/faro-web-sdk": "npm:^2.12.0"
     "@grafana/i18n": "npm:13.3.0-pre"
     "@grafana/react-data-grid": "npm:7.0.0-beta.57"
     "@grafana/schema": "npm:13.3.0-pre"
@@ -20139,10 +20139,10 @@ __metadata:
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": "npm:8.2.0"
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules"
-    "@grafana/faro-core": "npm:^2.8.2"
-    "@grafana/faro-instrumentation-replay": "npm:^2.8.2"
-    "@grafana/faro-web-sdk": "npm:^2.8.2"
-    "@grafana/faro-web-tracing": "npm:^2.8.2"
+    "@grafana/faro-core": "npm:^2.12.0"
+    "@grafana/faro-instrumentation-replay": "npm:^2.12.0"
+    "@grafana/faro-web-sdk": "npm:^2.12.0"
+    "@grafana/faro-web-tracing": "npm:^2.12.0"
     "@grafana/flamegraph": "workspace:*"
     "@grafana/i18n": "workspace:*"
     "@grafana/levitate": "npm:0.17.2"
