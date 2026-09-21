@@ -342,7 +342,7 @@ function buildColumnsFromFields(
 
     // helps us avoid string cx and emotion per-cell
     const cellActionClassName = showActions
-      ? clsx('table-cell-actions', getCellActionStyles(theme, textAlign))
+      ? clsx('table-cell-actions', getCellActionStyles(theme, textAlign, tableRefreshEnabled))
       : undefined;
 
     const shouldOverflow =
@@ -449,6 +449,7 @@ function buildColumnsFromFields(
           />
           {showActions && (
             <TableCellActions
+              tableRefreshEnabled={tableRefreshEnabled}
               field={field}
               value={value}
               displayName={displayName}
