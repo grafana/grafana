@@ -315,11 +315,6 @@ func (b *bleveIndex) runPostFilterAuthz(
 	page := make(search.DocumentMatchCollection, 0, limit)
 
 	var candidates int64
-	defer func() {
-		if observation := searchAuthObservationFromContext(ctx); observation != nil {
-			observation.candidates.Add(candidates)
-		}
-	}()
 	var authorized int64
 	var exhausted bool
 	var firstRes *bleve.SearchResult
@@ -511,11 +506,6 @@ func (b *bleveIndex) aggregateFacetsFromTop(
 	cfg := b.postRankAuthz
 	maxCandidates := int64(cfg.FacetSampleSize)
 	var candidates int64
-	defer func() {
-		if observation := searchAuthObservationFromContext(ctx); observation != nil {
-			observation.candidates.Add(candidates)
-		}
-	}()
 	var authorized int64
 
 	initial := *firstReq
