@@ -209,6 +209,14 @@ describe('buildDecorations', () => {
     expect(decorations.some((d) => d.class?.includes(STYLES.heading1) && d.from === 0)).toBe(true);
   });
 
+  it('styles h5 and h6 headings with their own classes', () => {
+    const h5 = decorationsIn(createState('##### Heading 5'), STYLES);
+    expect(h5.some((d) => d.class?.includes(STYLES.heading5) && d.from === 0)).toBe(true);
+
+    const h6 = decorationsIn(createState('###### Heading 6'), STYLES);
+    expect(h6.some((d) => d.class?.includes(STYLES.heading6) && d.from === 0)).toBe(true);
+  });
+
   it('keeps the blockquote marker hidden even when the cursor is inside it', () => {
     const state = createState('> quoted', { anchor: 4 });
     const decorations = decorationsIn(state, STYLES);

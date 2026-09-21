@@ -224,6 +224,25 @@ describe('NotebookToolbar', () => {
     hasPermission.mockRestore();
   });
 
+  // A draft embed (NotebookView.tsx's DraftNotebookView) never gets a uid, so it renders this
+  // branch for its whole session — same embedded contract as the real actions above.
+  it('hides the disabled copy link and kebab placeholders when embedded with no uid yet', () => {
+    const hasPermission = jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+
+    render(
+      <NotebookEmbeddedHost>
+        <NotebookToolbar scene={buildScene()} />
+      </NotebookEmbeddedHost>
+    );
+
+    expect(screen.queryByRole('button', { name: 'Copy link' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'More actions' })).not.toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'View' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Edit' })).toBeInTheDocument();
+
+    hasPermission.mockRestore();
+  });
+
   describe('Delete', () => {
     beforeEach(() => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);

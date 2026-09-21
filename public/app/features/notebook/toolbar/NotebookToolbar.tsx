@@ -160,26 +160,33 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
  */
 function UnavailableActions({ scene }: { scene: NotebookScene }) {
   const reason = t('notebooks.view.available-once-created', 'Available once you write something');
+  // A draft embed (NotebookView.tsx's DraftNotebookView) never gets a uid, so this branch renders
+  // for the whole session there — same embedded-only-shows-the-edit-toggle rule as NotebookActions.
+  const isEmbedded = useIsNotebookEmbedded();
 
   return (
     <>
-      <Button
-        variant="secondary"
-        size="md"
-        icon="link"
-        disabled
-        tooltip={reason}
-        aria-label={t('notebooks.view.copy-link', 'Copy link')}
-      />
+      {!isEmbedded && (
+        <Button
+          variant="secondary"
+          size="md"
+          icon="link"
+          disabled
+          tooltip={reason}
+          aria-label={t('notebooks.view.copy-link', 'Copy link')}
+        />
+      )}
       <NotebookEditToggle notebook={scene} />
-      <Button
-        variant="secondary"
-        size="sm"
-        icon="ellipsis-v"
-        disabled
-        tooltip={reason}
-        aria-label={t('notebooks.view.more-actions', 'More actions')}
-      />
+      {!isEmbedded && (
+        <Button
+          variant="secondary"
+          size="sm"
+          icon="ellipsis-v"
+          disabled
+          tooltip={reason}
+          aria-label={t('notebooks.view.more-actions', 'More actions')}
+        />
+      )}
     </>
   );
 }
