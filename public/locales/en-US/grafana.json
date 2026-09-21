@@ -11483,7 +11483,6 @@
           "cluster": "Cluster",
           "edit": "Edit filters ({{summary}})",
           "ignored-tooltip": "Saved for {{saved}}. This card reads {{current}}, so it shows the whole fleet.",
-          "intro": "Values come from {{name}}. Type to add one that is not listed.",
           "namespaces": "Namespaces",
           "no-match": "No matching data",
           "no-match-hint": "Adjust the filters",

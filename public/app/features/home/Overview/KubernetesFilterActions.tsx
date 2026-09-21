@@ -131,13 +131,6 @@ function KubernetesFilterModal({ datasource, filter, onClose }: KubernetesFilter
       onDismiss={onClose}
     >
       <Stack direction="column" gap={2}>
-        <Text color="secondary">
-          {t(
-            'home.solutions.kubernetes.filter.intro',
-            'Values come from {{name}}. Type to add one that is not listed.',
-            { name: datasource.name, interpolation: { escapeValue: false } }
-          )}
-        </Text>
         {/* Each select is locked until its own values arrive; the namespace and node lists reload per cluster. */}
         <Field label={t('home.solutions.kubernetes.filter.cluster', 'Cluster')} noMargin>
           <Combobox<string>
