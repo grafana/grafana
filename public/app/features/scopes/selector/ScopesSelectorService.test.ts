@@ -489,9 +489,7 @@ describe('ScopesSelectorService', () => {
 
   describe('discoverQuickJumpGroups (private, exercised via open())', () => {
     const writeRecent = (entries: Array<{ scopeIds: string[]; scopeNodeId?: string }>) => {
-      storeValue[RECENT_SCOPES_KEY] = JSON.stringify(
-        entries.map((e) => ({ ...e, version: 'test-version' }))
-      );
+      storeValue[RECENT_SCOPES_KEY] = JSON.stringify(entries.map((e) => ({ ...e, version: 'test-version' })));
     };
 
     // discoverQuickJumpGroups is private; cast through unknown rather than any to invoke it directly in tests.
