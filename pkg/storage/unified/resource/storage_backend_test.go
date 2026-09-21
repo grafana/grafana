@@ -848,6 +848,25 @@ func (k *failingBatchGetKV) BatchGet(ctx context.Context, section string, keys [
 	}
 }
 
+type failFirstBatchGetKV struct {
+	KV
+	err       error
+	dataCalls int
+}
+
+func (k *failFirstBatchGetKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[kv.KeyValue, error] {
+	if section != kv.DataSection {
+		return k.KV.BatchGet(ctx, section, keys)
+	}
+	k.dataCalls++
+	if k.dataCalls > 1 {
+		return k.KV.BatchGet(ctx, section, keys)
+	}
+	return func(yield func(kv.KeyValue, error) bool) {
+		yield(kv.KeyValue{}, k.err)
+	}
+}
+
 // unreadableValueKV wraps a KV and hands back a value whose Read fails for every
 // data key holding nameMatch, standing in for a truncated or corrupt blob.
 type unreadableValueKV struct {

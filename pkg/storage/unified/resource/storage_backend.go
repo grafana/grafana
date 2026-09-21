@@ -1349,6 +1349,7 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*re
 			key      kv.DataKey
 			response *BackendReadResponse
 		}
+		var runtimeErr error
 		for requestBatch := range slices.Chunk(requests, batchReadResolveSize) {
 			entries := make([]batchReadEntry, 0, len(requestBatch))
 			keys := make([]kv.DataKey, 0, len(requestBatch))
@@ -1397,10 +1398,14 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*re
 				keys = append(keys, entry.key)
 			}
 
-			next, stop := iter.Pull2(k.dataStore.BatchGet(ctx, keys))
+			batchErr := runtimeErr
+			var next func() (DataObj, error, bool)
+			stop := func() {}
+			if batchErr == nil {
+				next, stop = iter.Pull2(k.dataStore.BatchGet(ctx, keys))
+			}
 			var peek DataObj
 			var hasPeek bool
-			var batchErr error
 			for _, entry := range entries {
 				if entry.response != nil {
 					if !yield(entry.response, nil) {
@@ -1414,6 +1419,7 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*re
 					peek, peekErr, hasPeek = next()
 					if peekErr != nil {
 						batchErr = peekErr
+						runtimeErr = peekErr
 					}
 				}
 
@@ -1428,6 +1434,7 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*re
 					value, err := readAndClose(peek.Value)
 					if err != nil {
 						batchErr = err
+						runtimeErr = err
 						response.Error = &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
 					} else {
 						response.Value = value

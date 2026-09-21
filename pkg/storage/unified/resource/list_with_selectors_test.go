@@ -1185,6 +1185,50 @@ func TestListWithSelectorsAuthorizesKVRuntimeFailures(t *testing.T) {
 	}
 }
 
+func TestListWithSelectorsCarriesRuntimeFailureAcrossBatches(t *testing.T) {
+	var kvWrapper *failFirstBatchGetKV
+	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+		kvWrapper = &failFirstBatchGetKV{KV: opts.KvStore, err: errors.New("transient storage failure")}
+		opts.KvStore = kvWrapper
+	})
+
+	rows := make([]*resourcepb.ResourceTableRow, 0, batchReadResolveSize+1)
+	denied := make(map[string]struct{}, batchReadResolveSize)
+	var listRV int64
+	for i := range batchReadResolveSize + 1 {
+		name := fmt.Sprintf("cross-batch-%02d", i)
+		listRV = seedResource(t, backend, t.Context(), name, fmt.Sprintf("folder-%02d", i))
+		rows = append(rows, &resourcepb.ResourceTableRow{
+			Key:             appsKey(name),
+			ResourceVersion: listRV,
+			SortFields:      []string{name},
+		})
+		if i < batchReadResolveSize {
+			denied[name] = struct{}{}
+		}
+	}
+
+	s := createTestServer(&stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
+		ResourceVersion: listRV,
+		Results:         &resourcepb.ResourceTable{Rows: rows},
+	}}, 1024)
+	s.backend = backend
+	s.access = denyByNameAccess{deny: denied}
+	resp, err := s.listWithSelectors(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.ListRequest{
+		Limit: 1,
+		Options: &resourcepb.ListOptions{
+			Key:    appsKey(""),
+			Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+		},
+	})
+
+	require.NoError(t, err)
+	require.Empty(t, resp.Items)
+	require.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
+	require.Equal(t, "transient storage failure", resp.Error.Message)
+	require.Equal(t, 1, kvWrapper.dataCalls)
+}
+
 func createTestServer(searchClient resourcepb.ResourceIndexClient, maxPageSizeBytes int) *server {
 	return &server{
 		searchClient:     searchClient,
