@@ -11,8 +11,6 @@ import (
 
 	alertingmodels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
-	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
-
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -21,23 +19,25 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-type receiversAuthz interface {
-	FilterRead(ctx context.Context, user identity.Requester, receivers ...ReceiverStatus) ([]ReceiverStatus, error)
+// receiverUIDGetter resolves receiver names to their UID, filtering out those without read permissions.
+type receiverUIDGetter interface {
+	GetReceiverNameToUIDMap(ctx context.Context, orgID int64, names []string, user identity.Requester) (map[string]v1.ResourceUID, error)
 }
 
 type AlertmanagerSrv struct {
-	log            log.Logger
-	ac             accesscontrol.AccessControl
-	mam            *notifier.MultiOrgAlertmanager
-	crypto         notifier.Crypto
-	silenceSvc     SilenceService
-	featureManager featuremgmt.FeatureToggles
-	receiverAuthz  receiversAuthz
+	log             log.Logger
+	ac              accesscontrol.AccessControl
+	mam             *notifier.MultiOrgAlertmanager
+	crypto          notifier.Crypto
+	silenceSvc      SilenceService
+	featureManager  featuremgmt.FeatureToggles
+	receiverService receiverUIDGetter
 }
 
 type UnknownReceiverError struct {
@@ -176,18 +176,40 @@ func (srv AlertmanagerSrv) RouteGetReceivers(c *contextmodel.ReqContext) respons
 		return errResp
 	}
 
-	rcvs, err := am.GetReceivers(c.Req.Context())
+	ctx := c.Req.Context()
+	rcvs, err := am.GetReceivers(ctx)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to retrieve receivers")
 	}
+
+	if len(rcvs) == 0 {
+		return response.JSON(http.StatusOK, []ReceiverStatus{})
+	}
+
+	names := make([]string, 0, len(rcvs))
+	for _, rcv := range rcvs {
+		names = append(names, rcv.Name)
+	}
+
+	uidsByName, err := srv.receiverService.GetReceiverNameToUIDMap(ctx, c.GetOrgID(), names, c.SignedInUser)
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to resolve receiver UIDs", err)
+	}
+
 	statuses := make([]ReceiverStatus, 0, len(rcvs))
-	for _, rcv := range rcvs { // TODO this is temporary so we can use authz filter logic.
+	for _, rcv := range rcvs {
+		_, ok := uidsByName[rcv.Name]
+		if !ok {
+			// No canonical UID available. This is likely caused by the caller not having permission on said receiver,
+			// but could also be caused by a transient race between the running Alertmanager and the config store.
+			// Exclude from the results.
+			srv.log.FromContext(ctx).Debug("Skipping receiver with no unknown UID", "receiver", rcv.Name)
+			continue
+		}
 		statuses = append(statuses, ReceiverStatus(rcv))
 	}
-	statuses, err = srv.receiverAuthz.FilterRead(c.Req.Context(), c.SignedInUser, statuses...)
-	if err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "failed to apply permissions to the receivers", err)
-	}
+
+	// No need to filter by auth as this is already done by receiverService.GetReceiverNameToUIDMap.
 	return response.JSON(http.StatusOK, statuses)
 }
 
@@ -273,7 +295,3 @@ func (srv AlertmanagerSrv) AlertmanagerFor(orgID int64) (notifier.Alertmanager, 
 }
 
 type ReceiverStatus alertingmodels.ReceiverStatus
-
-func (rs ReceiverStatus) GetUID() string {
-	return string(v1.ReceiverUID(rs.Name)) // TODO: This won't work with static UIDs.
-}

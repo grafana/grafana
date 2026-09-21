@@ -272,6 +272,59 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 	return limitOffset(filtered, q.Offset, q.Limit), nil
 }
 
+// GetReceiverNameToUIDMap returns a map of receiver names to UIDs. Filters out receivers without read permission.
+// This is essentially a slimmed-down version of GetReceivers that skips the provenance DB call and encryption, if these
+// efficiency-differences are removed, consider replacing calls with GetReceivers.
+func (rs *ReceiverService) GetReceiverNameToUIDMap(ctx context.Context, orgID int64, names []string, user identity.Requester) (map[string]v1.ResourceUID, error) {
+	ctx, span := rs.tracer.Start(ctx, "alerting.receivers.getNameToUIDMap", trace.WithAttributes(
+		attribute.Int64("query_org_id", orgID),
+		attribute.StringSlice("query_names", names),
+	))
+	defer span.End()
+
+	uids := make([]string, 0, len(names))
+	for _, name := range names {
+		uids = append(uids, string(v1.ReceiverUID(name))) // TODO: This won't work with static UIDs.
+	}
+
+	revision, err := rs.cfgStore.Get(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+	// No need for provenance here, so we skip the DB call.
+
+	receivers, err := revision.GetReceivers(uids)
+	if err != nil {
+		return nil, err
+	}
+
+	span.AddEvent("Loaded receivers", trace.WithAttributes(
+		attribute.String("concurrency_token", revision.ConcurrencyToken),
+		attribute.Int("count", len(receivers)),
+	))
+
+	if rs.includeImported {
+		imported := rs.getImportedReceivers(ctx, span, uids, revision)
+		receivers = append(receivers, imported...)
+	}
+
+	filtered, err := rs.authz.FilterRead(ctx, user, receivers...)
+	if err != nil {
+		return nil, err
+	}
+
+	span.AddEvent("Applied access control filter", trace.WithAttributes(
+		attribute.Int("count", len(receivers)),
+	))
+	// No need to encrypt/decrypt since we just need the Name/UID.
+
+	result := make(map[string]v1.ResourceUID, len(filtered))
+	for _, rcv := range filtered {
+		result[rcv.Name] = v1.ResourceUID(rcv.UID)
+	}
+	return result, nil
+}
+
 // DeleteReceiver deletes a receiver by uid.
 // UID field currently does not exist, we assume the uid is a particular hashed value of the receiver name.
 func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, callerProvenance models.Provenance, version string, orgID int64, user identity.Requester) error {

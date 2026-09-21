@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	alertingmodels "github.com/grafana/alerting/models"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/require"
 
@@ -17,15 +18,21 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/org"
+	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -419,6 +426,120 @@ func TestRoutePostTestTemplates(t *testing.T) {
 		response := sut.RoutePostTestTemplates(rc, apimodels.TestTemplatesConfigBodyParams{})
 		require.Equal(tt, 200, response.Status())
 	})
+}
+
+func TestRouteGetReceivers_FiltersByReceiverReadPermission(t *testing.T) {
+	const orgID int64 = 1
+
+	const twoReceiverAMConfig = `{
+	"alertmanager_config": {
+		"route": {
+			"receiver": "grafana-default-email"
+		},
+		"receivers": [{"name": "grafana-default-email"},{"name": "second-receiver"}]
+	}
+}`
+
+	sut := createSut(t)
+	sut.mam = notifier.NewTestMultiOrgAlertmanager(t,
+		notifier.WithOrgs([]int64{orgID}),
+		notifier.WithConfigs(map[int64]*ngmodels.AlertConfiguration{
+			orgID: {AlertmanagerConfiguration: twoReceiverAMConfig, OrgID: orgID},
+		}),
+	)
+	sut.receiverService = createTestReceiverService(t, twoReceiverAMConfig)
+
+	t.Run("user with access to all receivers sees both", func(tt *testing.T) {
+		rc := createRequestCtxInOrg(orgID)
+		rc.Permissions = map[int64]map[string][]string{
+			orgID: {ac.ActionAlertingReceiversRead: {ngmodels.ScopeReceiversAll}},
+		}
+
+		resp := sut.RouteGetReceivers(rc)
+		require.Equal(tt, 200, resp.Status())
+
+		var statuses []ReceiverStatus
+		require.NoError(tt, json.Unmarshal(resp.Body(), &statuses))
+		require.Len(tt, statuses, 2)
+		require.ElementsMatch(tt, statuses, []ReceiverStatus{
+			{
+				Name:         "grafana-default-email",
+				Active:       true,
+				Integrations: make([]alertingmodels.IntegrationStatus, 0),
+			},
+			{
+				Name:         "second-receiver",
+				Active:       true,
+				Integrations: make([]alertingmodels.IntegrationStatus, 0),
+			},
+		})
+	})
+
+	t.Run("user with access to only one receiver has the other filtered out", func(tt *testing.T) {
+		rc := createRequestCtxInOrg(orgID)
+		rc.Permissions = map[int64]map[string][]string{
+			orgID: {
+				ac.ActionAlertingReceiversRead: {
+					ngmodels.ScopeReceiversProvider.GetResourceScopeUID(string(v1.ReceiverUID("grafana-default-email"))),
+				},
+			},
+		}
+
+		resp := sut.RouteGetReceivers(rc)
+		require.Equal(tt, 200, resp.Status())
+
+		var statuses []ReceiverStatus
+		require.NoError(tt, json.Unmarshal(resp.Body(), &statuses))
+		require.Len(tt, statuses, 1)
+		require.ElementsMatch(tt, statuses, []ReceiverStatus{
+			{
+				Name:         "grafana-default-email",
+				Active:       true,
+				Integrations: make([]alertingmodels.IntegrationStatus, 0),
+			},
+		})
+	})
+}
+
+// noopAlertRuleNotificationStore is a minimal stand-in for ReceiverService's
+// notification-settings store dependency; GetReceiverNameToUIDMap never touches it.
+type noopAlertRuleNotificationStore struct{}
+
+func (noopAlertRuleNotificationStore) RenameReceiverInNotificationSettings(_ context.Context, _ int64, _, _ string, _ func(ngmodels.Provenance) bool, _ bool) ([]ngmodels.AlertRuleKey, []ngmodels.AlertRuleKey, error) {
+	return nil, nil, nil
+}
+
+func (noopAlertRuleNotificationStore) ListContactPointRoutings(_ context.Context, _ ngmodels.ListContactPointRoutingsQuery) (map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting, error) {
+	return nil, nil
+}
+
+// createTestReceiverService builds a real *notifier.ReceiverService backed by an in-memory
+// Alertmanager config and fake storage/provisioning dependencies, wired to the real
+// accesscontrol evaluator, so RouteGetReceivers's own permission filtering can be
+// exercised end-to-end without a full Grafana server.
+func createTestReceiverService(t *testing.T, amConfig string) *notifier.ReceiverService {
+	t.Helper()
+
+	secretsService := fake_secrets.NewFakeSecretsService()
+	store := ngfakes.NewFakeAlertmanagerConfigStore(amConfig)
+	cfgStore := legacy_storage.NewAlertmanagerConfigStore(store, notifier.NewExtraConfigsCrypto(secretsService), featuremgmt.WithFeatures())
+
+	return notifier.NewReceiverService(
+		accesscontrol.NewReceiverAccess[*ngmodels.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), false),
+		cfgStore,
+		ngfakes.NewFakeProvisioningStore(),
+		noopAlertRuleNotificationStore{},
+		routes.NewFakeService(legacy_storage.ConfigRevision{}),
+		secretsService,
+		&provisioning.NopTransactionManager{},
+		log.NewNopLogger(),
+		ngfakes.NewFakeReceiverPermissionsService(),
+		tracing.InitializeTracerForTest(),
+		validation.ValidateProvenanceRelaxed,
+		false,
+		nil,
+		&notifier.NoopOrgEmailValidator{},
+	)
 }
 
 func createSut(t *testing.T) AlertmanagerSrv {

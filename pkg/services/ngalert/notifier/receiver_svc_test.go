@@ -142,6 +142,57 @@ func TestIntegrationReceiverService_GetReceivers(t *testing.T) {
 	})
 }
 
+func TestReceiverService_GetReceiverNameToUIDMap(t *testing.T) {
+	var orgId int64 = 1
+	secretsService := fake_secrets.NewFakeSecretsService()
+
+	redactedUser := &user.SignedInUser{OrgID: orgId, Permissions: map[int64]map[string][]string{
+		orgId: {
+			accesscontrol.ActionAlertingNotificationsRead: nil,
+		},
+	}}
+
+	t.Run("returns UIDs for readable receivers, omitting names that don't exist", func(t *testing.T) {
+		sut := createReceiverServiceSut(t, &secretsService)
+
+		result, err := sut.GetReceiverNameToUIDMap(context.Background(), orgId, []string{"grafana-default-email", "slack receiver", "does not exist"}, redactedUser)
+		require.NoError(t, err)
+		require.Equal(t, map[string]v1.ResourceUID{
+			"grafana-default-email": v1.ReceiverUID("grafana-default-email"),
+			"slack receiver":        v1.ReceiverUID("slack receiver"),
+		}, result)
+	})
+
+	t.Run("omits names the user does not have permission to read", func(t *testing.T) {
+		sut := createReceiverServiceSut(t, &secretsService)
+
+		limitedUser := &user.SignedInUser{OrgID: orgId, Permissions: map[int64]map[string][]string{
+			orgId: {
+				accesscontrol.ActionAlertingReceiversRead: {
+					models.ScopeReceiversProvider.GetResourceScopeUID(string(v1.ReceiverUID("grafana-default-email"))),
+				},
+			},
+		}}
+
+		result, err := sut.GetReceiverNameToUIDMap(context.Background(), orgId, []string{"grafana-default-email", "slack receiver"}, limitedUser)
+		require.NoError(t, err)
+		require.Equal(t, map[string]v1.ResourceUID{
+			"grafana-default-email": v1.ReceiverUID("grafana-default-email"),
+		}, result)
+	})
+
+	t.Run("returns all readable receivers when no names are given", func(t *testing.T) {
+		sut := createReceiverServiceSut(t, &secretsService)
+
+		result, err := sut.GetReceiverNameToUIDMap(context.Background(), orgId, nil, redactedUser)
+		require.NoError(t, err)
+		require.Equal(t, map[string]v1.ResourceUID{
+			"grafana-default-email": v1.ReceiverUID("grafana-default-email"),
+			"slack receiver":        v1.ReceiverUID("slack receiver"),
+		}, result)
+	})
+}
+
 func TestIntegrationReceiverService_DecryptRedact(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
