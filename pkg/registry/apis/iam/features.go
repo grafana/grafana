@@ -3,6 +3,10 @@ package iam
 import (
 	"fmt"
 	"slices"
+	"strconv"
+	"strings"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type API string
@@ -53,6 +57,78 @@ type Features struct {
 	UserPermissionsAPI                bool
 	ServiceAccountResourcePermissions bool
 	ZanzanaSync                       bool
+}
+
+// StartupFeatures is the IAM feature snapshot resolved from Grafana's static
+// configuration. An unconfigured snapshot preserves the legacy OpenFeature
+// fallback during migration.
+type StartupFeatures struct {
+	features   Features
+	configured bool
+}
+
+// ProvideStartupFeatures resolves the optional [iam] startup configuration.
+func ProvideStartupFeatures(cfg *setting.Cfg) (StartupFeatures, error) {
+	if cfg == nil || cfg.Raw == nil {
+		return StartupFeatures{}, nil
+	}
+
+	section := cfg.Raw.Section("iam")
+	apiValue := strings.TrimSpace(section.Key("api").String())
+	zanzanaSync, err := parseOptionalBool(section.Key("zanzana_sync_enabled").String())
+	if err != nil {
+		return StartupFeatures{}, fmt.Errorf("invalid iam.zanzana_sync_enabled: %w", err)
+	}
+	serviceAccountResourcePermissions, err := parseOptionalBool(section.Key("service_account_resource_permissions_enabled").String())
+	if err != nil {
+		return StartupFeatures{}, fmt.Errorf("invalid iam.service_account_resource_permissions_enabled: %w", err)
+	}
+
+	if apiValue == "" {
+		if zanzanaSync || serviceAccountResourcePermissions {
+			return StartupFeatures{}, fmt.Errorf("iam.api must be configured when IAM behavior settings are enabled")
+		}
+		return StartupFeatures{}, nil
+	}
+
+	values := strings.Split(apiValue, ",")
+	for i := range values {
+		values[i] = strings.TrimSpace(values[i])
+	}
+
+	apis, err := ParseAPIs(values)
+	if err != nil {
+		return StartupFeatures{}, err
+	}
+
+	features := Features{
+		ZanzanaSync:                       zanzanaSync,
+		ServiceAccountResourcePermissions: serviceAccountResourcePermissions,
+	}
+	features.SetAPIs(apis)
+	if err := features.Validate(); err != nil {
+		return StartupFeatures{}, err
+	}
+
+	return StartupFeatures{features: features, configured: true}, nil
+}
+
+// Snapshot returns a copy of the configured features, or nil when callers
+// should use the legacy OpenFeature fallback.
+func (f StartupFeatures) Snapshot() *Features {
+	if !f.configured {
+		return nil
+	}
+	features := f.features
+	return &features
+}
+
+func parseOptionalBool(value string) (bool, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return false, nil
+	}
+	return strconv.ParseBool(value)
 }
 
 func ParseAPIs(values []string) ([]API, error) {

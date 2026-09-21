@@ -4,6 +4,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestParseAPIs(t *testing.T) {
@@ -84,4 +87,84 @@ func TestFeaturesValidate(t *testing.T) {
 		}).Validate()
 		require.NoError(t, err)
 	})
+}
+
+func TestProvideStartupFeatures(t *testing.T) {
+	tests := []struct {
+		name       string
+		values     map[string]string
+		configured bool
+		want       Features
+		wantErr    string
+	}{
+		{
+			name: "uses legacy fallback when api is empty",
+		},
+		{
+			name: "resolves API and behavior settings",
+			values: map[string]string{
+				"api":                  "roles, rolebindings, resourcepermissions",
+				"zanzana_sync_enabled": "true",
+				"service_account_resource_permissions_enabled": "true",
+			},
+			configured: true,
+			want: Features{
+				RolesAPI:                          true,
+				RoleBindingsAPI:                   true,
+				ResourcePermissionsAPI:            true,
+				ZanzanaSync:                       true,
+				ServiceAccountResourcePermissions: true,
+			},
+		},
+		{
+			name:       "none configures an empty API surface",
+			values:     map[string]string{"api": "none"},
+			configured: true,
+		},
+		{
+			name:    "rejects behavior settings without APIs",
+			values:  map[string]string{"zanzana_sync_enabled": "true"},
+			wantErr: "iam.api must be configured",
+		},
+		{
+			name:    "rejects unknown APIs",
+			values:  map[string]string{"api": "teams,unknown"},
+			wantErr: "unknown iam api",
+		},
+		{
+			name:    "rejects invalid behavior settings",
+			values:  map[string]string{"zanzana_sync_enabled": "sometimes"},
+			wantErr: "invalid iam.zanzana_sync_enabled",
+		},
+		{
+			name: "validates dependencies",
+			values: map[string]string{
+				"api": "teams",
+				"service_account_resource_permissions_enabled": "true",
+			},
+			wantErr: "resource permissions",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			raw := ini.Empty()
+			for key, value := range tt.values {
+				raw.Section("iam").Key(key).SetValue(value)
+			}
+
+			got, err := ProvideStartupFeatures(&setting.Cfg{Raw: raw})
+			if tt.wantErr != "" {
+				require.ErrorContains(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			features := got.Snapshot()
+			if !tt.configured {
+				require.Nil(t, features)
+				return
+			}
+			require.Equal(t, tt.want, *features)
+		})
+	}
 }

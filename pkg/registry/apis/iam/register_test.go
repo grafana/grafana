@@ -264,7 +264,6 @@ func TestInstallSchema_ConfiguredFeaturesOverrideOpenFeature(t *testing.T) {
 	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
 
 	b := &IdentityAccessManagementAPIBuilder{
-		ofClient: openfeature.NewDefaultClient(),
 		features: &Features{ResourcePermissionsAPI: true},
 	}
 	scheme := runtime.NewScheme()
