@@ -19,8 +19,8 @@ import (
 
 func TestManagedRoute_GeneratedSubRoute_DefaultsAndMatcher(t *testing.T) {
 	mr := &v1.ManagedRoute{
-		Name:     "managed",
-		Receiver: "receiver",
+		ResourceMetadata: v1.ResourceMetadata{UID: "managed"},
+		Receiver:         "receiver",
 	}
 
 	route := GeneratedSubRoute(mr)
@@ -36,8 +36,8 @@ func TestManagedRoute_GeneratedSubRoute_DefaultsAndMatcher(t *testing.T) {
 
 func TestManagedRoute_GeneratedSubRoute_UserDefinedHasNoMatcher(t *testing.T) {
 	mr := &v1.ManagedRoute{
-		Name:     models.DefaultRoutingTreeName,
-		Receiver: "receiver",
+		ResourceMetadata: v1.ResourceMetadata{UID: models.DefaultRoutingTreeName},
+		Receiver:         "receiver",
 	}
 
 	route := GeneratedSubRoute(mr)
@@ -54,14 +54,16 @@ func TestManagedRoute_GeneratedSubRoute_PreservesFields(t *testing.T) {
 	}
 
 	mr := &v1.ManagedRoute{
-		Name:           "managed",
+		ResourceMetadata: v1.ResourceMetadata{
+			UID:        "managed",
+			Provenance: models.Provenance("test"),
+		},
 		Receiver:       "receiver",
 		GroupBy:        []string{"alertname", "cluster"},
 		GroupWait:      &gw,
 		GroupInterval:  &gi,
 		RepeatInterval: &ri,
 		Routes:         []*v1.Route{child},
-		Provenance:     models.Provenance("test"),
 	}
 
 	route := GeneratedSubRoute(mr)
@@ -186,7 +188,7 @@ func TestConfigRevision_GetManagedRoute(t *testing.T) {
 	t.Run("returns user-defined route", func(t *testing.T) {
 		got := rev.GetManagedRoute(models.DefaultRoutingTreeName)
 		require.NotNil(t, got)
-		assert.Equal(t, models.DefaultRoutingTreeName, got.Name)
+		assert.EqualValues(t, models.DefaultRoutingTreeName, got.UID)
 		assert.Equal(t, v1.NewManagedRoute(models.DefaultRoutingTreeName, rev.Config.AlertmanagerConfig.Route), got)
 	})
 
@@ -198,14 +200,12 @@ func TestConfigRevision_GetManagedRoute(t *testing.T) {
 func TestConfigRevision_DefaultRoutingTreeAliases(t *testing.T) {
 	// The default (root) tree must be addressable by both its canonical name and the legacy alias
 	// so existing clients (e.g. Terraform) that reference "user-defined" keep working.
-	t.Run("both names resolve to the root route and echo the requested name", func(t *testing.T) {
+	t.Run("both names resolve to the root route", func(t *testing.T) {
 		for _, name := range []string{models.DefaultRoutingTreeName, models.DefaultRoutingTreeNameAlias} {
 			t.Run(name, func(t *testing.T) {
 				rev := testConfig()
 				got := rev.GetManagedRoute(name)
 				require.NotNil(t, got)
-				// Name echoes the requested alias so the API response preserves the client's name.
-				assert.Equal(t, name, got.Name)
 				// The underlying route is the root route regardless of which alias was used.
 				assert.Equal(t, v1.NewManagedRoute(name, rev.Config.AlertmanagerConfig.Route), got)
 				// Identity is canonical so RBAC scopes and provenance keys are stable across aliases.
@@ -318,7 +318,7 @@ func TestConfigRevision_CreateManagedRoute(t *testing.T) {
 		mr, err := rev.CreateManagedRoute(name, subtree)
 		assert.NoError(t, err)
 		assert.NotNil(t, mr)
-		assert.Equal(t, name, mr.Name)
+		assert.Equal(t, name, mr.GetUID())
 
 		assert.Contains(t, rev.Config.ManagedRoutes, name)
 		assert.Equal(t, &subtree, rev.Config.ManagedRoutes[name])
@@ -356,7 +356,7 @@ func TestConfigRevision_UpdateNamedRoute(t *testing.T) {
 		mr, err := rev.UpdateNamedRoute(name, subtree)
 		assert.NoError(t, err)
 		assert.NotNil(t, mr)
-		assert.Equal(t, name, mr.Name)
+		assert.Equal(t, name, mr.GetUID())
 
 		assert.Contains(t, rev.Config.ManagedRoutes, name)
 		assert.Equal(t, &subtree, rev.Config.ManagedRoutes[name])
@@ -389,7 +389,7 @@ func TestConfigRevision_ResetUserDefinedRoute(t *testing.T) {
 	mr, err := rev.ResetUserDefinedRoute(&defaultCfg)
 	assert.NoError(t, err)
 	assert.NotNil(t, mr)
-	assert.Equal(t, models.DefaultRoutingTreeName, mr.Name)
+	assert.Equal(t, models.DefaultRoutingTreeName, mr.GetUID())
 
 	assert.Equal(t, &newRoute, rev.Config.AlertmanagerConfig.Route)
 	assert.NotEqual(t, original, rev.Config.AlertmanagerConfig.Route)
@@ -418,7 +418,7 @@ func TestConfigRevision_ResetUserDefinedRoute(t *testing.T) {
 	mr, err = rev.ResetUserDefinedRoute(&defaultCfg)
 	assert.NoError(t, err)
 	assert.NotNil(t, mr)
-	assert.Equal(t, models.DefaultRoutingTreeName, mr.Name)
+	assert.Equal(t, models.DefaultRoutingTreeName, mr.GetUID())
 
 	assert.Equal(t, &newRoute, rev.Config.AlertmanagerConfig.Route)
 	assert.NotEqual(t, original, rev.Config.AlertmanagerConfig.Route)
