@@ -71,6 +71,10 @@ Traces use attributes, not labels, for access control, and rely on TraceQL-style
 
 This flexibility allows teams to use the same data source for multiple use cases while maintaining secure access boundaries.
 
+## Before you begin
+
+LBAC for data sources metrics requires the backend to be Grafana Cloud Metrics (Mimir) or Grafana Enterprise Metrics (GEM). No feature toggle is required.
+
 ## Limitations
 
 - There is a set number of rules to be configured within a data source, depending on the size of the rules.
