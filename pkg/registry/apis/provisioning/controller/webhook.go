@@ -183,26 +183,18 @@ func deleteWebhook(ctx context.Context, repo repository.WebhookRepository) error
 	id := repository.GetID(status)
 
 	err := repo.WebhookClient().DeleteWebhook(ctx, id)
-	if err != nil &&
-		!errors.Is(err, repository.ErrFileNotFound) &&
-		!errors.Is(err, repository.ErrUnauthorized) &&
-		!errors.Is(err, repository.ErrPermissionDenied) {
+	if err != nil && !errors.Is(err, repository.ErrFileNotFound) && !errors.Is(err, repository.ErrUnauthorized) {
 		return fmt.Errorf("delete webhook: %w", err)
 	}
-	// Webhook deletion is best-effort: if the credentials can no longer see or
-	// delete the webhook (not found, unauthorized, or forbidden), we skip it
-	// rather than block finalizer removal, otherwise the repository object can
-	// never be deleted. We assume repo access was checked before this is called.
+	// Technically if the token is no longer authorized to access the repo
+	// we won't be able to see the webhooks later. We assume that
+	// we have checked repo access before deleteWebhook() is called
 	if errors.Is(err, repository.ErrFileNotFound) {
 		logger.Warn("webhook no longer exists", "url", status.URL, "id", id)
 		return nil
 	}
 	if errors.Is(err, repository.ErrUnauthorized) {
 		logger.Warn("webhook deletion failed. no longer authorized to delete this webhook", "url", status.URL, "id", id)
-		return nil
-	}
-	if errors.Is(err, repository.ErrPermissionDenied) {
-		logger.Warn("webhook deletion failed. no longer permitted to delete this webhook", "url", status.URL, "id", id)
 		return nil
 	}
 

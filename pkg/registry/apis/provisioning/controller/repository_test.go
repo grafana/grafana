@@ -221,7 +221,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				f := NewMockFinalizerProcessor(t)
 
 				f.
-					On("process", mock.Anything, mock.Anything, nil, []string{
+					On("process", mock.Anything, mock.Anything, mock.Anything, []string{
 						repository.CleanFinalizer,
 					}).
 					Once().
@@ -303,7 +303,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				f := NewMockFinalizerProcessor(t)
 
 				f.
-					On("process", mock.Anything, mock.Anything, nil, []string{
+					On("process", mock.Anything, mock.Anything, mock.Anything, []string{
 						repository.CleanFinalizer,
 					}).
 					Once().
@@ -347,7 +347,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				f := NewMockFinalizerProcessor(t)
 
 				f.
-					On("process", mock.Anything, mock.Anything, nil, []string{
+					On("process", mock.Anything, mock.Anything, mock.Anything, []string{
 						repository.CleanFinalizer,
 					}).
 					Once().
@@ -403,7 +403,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 
 				// repo is nil because the repository was never built.
 				f.
-					On("process", mock.Anything, mock.Anything, nil, []string{
+					On("process", mock.Anything, mock.Anything, mock.Anything, []string{
 						repository.RemoveOrphanResourcesFinalizer,
 					}).
 					Once().
@@ -465,7 +465,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 func TestRepositoryController_handleDelete_RetriesOnConflict(t *testing.T) {
 	finalizer := NewMockFinalizerProcessor(t)
 	finalizer.
-		On("process", mock.Anything, mock.Anything, nil, []string{repository.CleanFinalizer}).
+		On("process", mock.Anything, mock.Anything, mock.Anything, []string{repository.CleanFinalizer}).
 		Once().
 		Return(nil)
 
@@ -509,7 +509,7 @@ func TestRepositoryController_handleDelete_RetriesOnConflict(t *testing.T) {
 func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *testing.T) {
 	finalizer := NewMockFinalizerProcessor(t)
 	finalizer.
-		On("process", mock.Anything, mock.Anything, nil, []string{repository.CleanFinalizer}).
+		On("process", mock.Anything, mock.Anything, mock.Anything, []string{repository.CleanFinalizer}).
 		Once().
 		Return(nil)
 
@@ -603,7 +603,7 @@ func TestRepositoryController_handleDelete_ObservesPendingAge(t *testing.T) {
 
 	finalizer := NewMockFinalizerProcessor(t)
 	finalizer.
-		On("process", mock.Anything, mock.Anything, nil, []string{repository.CleanFinalizer}).
+		On("process", mock.Anything, mock.Anything, mock.Anything, []string{repository.CleanFinalizer}).
 		Once().
 		Return(nil)
 

@@ -532,10 +532,14 @@ func TestFinalizer_process(t *testing.T) {
 				metrics:       &metrics,
 			}
 			var cfg *provisioning.Repository
+			var deleteWebhook func(context.Context) error
 			if tc.repo != nil {
 				cfg = tc.repo.Config()
+				if webhookRepo, ok := tc.repo.(repository.WebhookRepository); ok {
+					deleteWebhook = func(ctx context.Context) error { return webhookOnDelete(ctx, webhookRepo) }
+				}
 			}
-			err := f.process(context.Background(), cfg, tc.repo, tc.finalizers)
+			err := f.process(context.Background(), cfg, deleteWebhook, tc.finalizers)
 			if tc.expectedErr == "" {
 				assert.NoError(t, err)
 			} else {
@@ -1238,7 +1242,7 @@ func TestProcess_RemovePendingJobsFinalizer(t *testing.T) {
 	}
 
 	repo := mockRepo{name: "my-repo", namespace: "default"}
-	err := f.process(context.Background(), repo.Config(), repo, []string{repository.RemovePendingJobsFinalizer})
+	err := f.process(context.Background(), repo.Config(), nil, []string{repository.RemovePendingJobsFinalizer})
 	assert.NoError(t, err)
 }
 
@@ -1255,56 +1259,65 @@ func TestProcess_RemovePendingJobsFinalizer_Error(t *testing.T) {
 	}
 
 	repo := mockRepo{name: "my-repo", namespace: "default"}
-	err := f.process(context.Background(), repo.Config(), repo, []string{repository.RemovePendingJobsFinalizer})
+	err := f.process(context.Background(), repo.Config(), nil, []string{repository.RemovePendingJobsFinalizer})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "clear job queue")
 }
 
-// nonWebhookRepo implements only repository.Repository (not WebhookRepository),
-// standing in for a repo build that couldn't produce a webhook-capable result.
-type nonWebhookRepo struct {
-	cfg *provisioning.Repository
-}
-
-func (r nonWebhookRepo) Config() *provisioning.Repository { return r.cfg }
-func (r nonWebhookRepo) Test(context.Context) (*provisioning.TestResults, error) {
-	panic("not needed for testing")
-}
-
-// TestProcess_CleanFinalizer_SkipsWhenNotWebhookCapable
-func TestProcess_CleanFinalizer_SkipsWhenNotWebhookCapable(t *testing.T) {
+// TestProcess_CleanFinalizer_SkipsWhenNoWebhookHook verifies that the cleanup
+// finalizer is a no-op when there is no webhook deletion hook (nil callback) —
+// the case a client relies on when it drops the cleanup finalizer to force
+// deletion, and the case of a repository with no webhook client.
+func TestProcess_CleanFinalizer_SkipsWhenNoWebhookHook(t *testing.T) {
 	metrics := registerFinalizerMetrics(prometheus.NewRegistry())
 	f := &finalizer{metrics: &metrics}
 
-	repo := nonWebhookRepo{cfg: &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"},
-		Status:     provisioning.RepositoryStatus{Webhook: &provisioning.WebhookStatus{ID: 1}},
-	}}
+	cfg := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
 
-	err := f.process(t.Context(), repo.Config(), repo, []string{repository.CleanFinalizer})
+	err := f.process(t.Context(), cfg, nil, []string{repository.CleanFinalizer})
 	assert.NoError(t, err)
 }
 
-// TestProcess_CleanFinalizer_NoOpWhenNoWebhookInStatus with no webhook recorded in status there's nothing to delete, so a
-// repo that isn't webhook-capable is the normal case and must not error.
-func TestProcess_CleanFinalizer_NoOpWhenNoWebhookInStatus(t *testing.T) {
+// TestProcess_CleanFinalizer_RunsWebhookHook verifies the cleanup finalizer runs
+// the webhook deletion hook and succeeds when the hook does.
+func TestProcess_CleanFinalizer_RunsWebhookHook(t *testing.T) {
 	metrics := registerFinalizerMetrics(prometheus.NewRegistry())
 	f := &finalizer{metrics: &metrics}
 
-	repo := nonWebhookRepo{cfg: &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"},
-	}}
+	cfg := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
 
-	err := f.process(t.Context(), repo.Config(), repo, []string{repository.CleanFinalizer})
+	var called bool
+	deleteWebhook := func(context.Context) error {
+		called = true
+		return nil
+	}
+
+	err := f.process(t.Context(), cfg, deleteWebhook, []string{repository.CleanFinalizer})
 	assert.NoError(t, err)
+	assert.True(t, called, "the webhook deletion hook should have been called")
 }
 
-// TestProcess_NilRepo_SkipsWebhookAndRunsConfigOnlyFinalizers covers the
-// force-delete path: when the repository could not be built (repo == nil), the
-// provider-dependent webhook cleanup is skipped without error, and the
-// config-only finalizers (here, the job-queue cleanup) still run using the
+// TestProcess_CleanFinalizer_WrapsWebhookHookError verifies a webhook deletion
+// hook failure fails the cleanup finalizer (wrapped as a deletion-hook error),
+// so deletion is blocked rather than silently orphaning the webhook.
+func TestProcess_CleanFinalizer_WrapsWebhookHookError(t *testing.T) {
+	metrics := registerFinalizerMetrics(prometheus.NewRegistry())
+	f := &finalizer{metrics: &metrics}
+
+	cfg := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
+
+	deleteWebhook := func(context.Context) error { return assert.AnError }
+
+	err := f.process(t.Context(), cfg, deleteWebhook, []string{repository.CleanFinalizer})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "execute deletion hooks: "+assert.AnError.Error())
+}
+
+// TestProcess_NilWebhookHook_RunsConfigOnlyFinalizers covers the force-delete
+// path: with a nil webhook hook the cleanup step is skipped without error, and
+// the config-only finalizers (here, the job-queue cleanup) still run using the
 // configuration alone.
-func TestProcess_NilRepo_SkipsWebhookAndRunsConfigOnlyFinalizers(t *testing.T) {
+func TestProcess_NilWebhookHook_RunsConfigOnlyFinalizers(t *testing.T) {
 	jobs := NewMockJobQueueCleaner(t)
 	jobs.On("CleanupQueue", mock.Anything, "default", "my-repo").Once().Return(2, nil)
 
@@ -1314,10 +1327,7 @@ func TestProcess_NilRepo_SkipsWebhookAndRunsConfigOnlyFinalizers(t *testing.T) {
 		metrics: &metrics,
 	}
 
-	cfg := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"},
-		Status:     provisioning.RepositoryStatus{Webhook: &provisioning.WebhookStatus{ID: 1}},
-	}
+	cfg := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
 
 	err := f.process(t.Context(), cfg, nil, []string{
 		repository.RemovePendingJobsFinalizer,

@@ -737,9 +737,11 @@ func TestWebhookOnDelete(t *testing.T) {
 					},
 				},
 			},
-			// Deletion is best-effort: a 403 must not block finalizer removal,
-			// otherwise the repository can never be deleted.
-			expectedError: nil,
+			// A 403 is fatal: while the cleanup finalizer is present, a webhook
+			// that cannot be deleted must fail the finalizer rather than orphan
+			// the webhook silently. Forcing deletion is done by removing the
+			// cleanup finalizer, not by swallowing this error.
+			expectedError: fmt.Errorf("delete webhook: %w", repository.ErrPermissionDenied),
 		},
 		{
 			name:      "webhook not found in status",

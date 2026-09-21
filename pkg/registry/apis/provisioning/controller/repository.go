@@ -49,7 +49,7 @@ const (
 
 //go:generate mockery --name finalizerProcessor --structname MockFinalizerProcessor --inpackage --filename finalizer_mock.go --with-expecter
 type finalizerProcessor interface {
-	process(ctx context.Context, cfg *provisioning.Repository, repo repository.Repository, finalizers []string) error
+	process(ctx context.Context, cfg *provisioning.Repository, deleteWebhook func(context.Context) error, finalizers []string) error
 }
 
 // RepositoryController controls how and when CRD is established.
@@ -424,9 +424,9 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 		// forcing deletion of an unhealthy repository removes the cleanup
 		// finalizer, which skips this build and lets the remaining finalizers
 		// complete the deletion.
-		var repo repository.Repository
+		var deleteWebhook func(context.Context) error
 		if slices.Contains(obj.Finalizers, repository.CleanFinalizer) {
-			built, err := rc.repoFactory.Build(ctx, obj)
+			repo, err := rc.repoFactory.Build(ctx, obj)
 			if err != nil {
 				rc.deletionMetrics.recordError(deletionStageBuild)
 				if statusErr := rc.updateDeleteStatus(ctx, obj, fmt.Errorf("create repository from configuration: %w", err)); statusErr != nil {
@@ -434,10 +434,12 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 				}
 				return fmt.Errorf("create repository from configuration: %w", err)
 			}
-			repo = built
+			if webhookRepo, ok := repo.(repository.WebhookRepository); ok {
+				deleteWebhook = func(ctx context.Context) error { return webhookOnDelete(ctx, webhookRepo) }
+			}
 		}
 
-		err := rc.finalizer.process(ctx, obj, repo, obj.Finalizers)
+		err := rc.finalizer.process(ctx, obj, deleteWebhook, obj.Finalizers)
 		if err != nil {
 			rc.deletionMetrics.recordError(deletionStageFinalizers)
 			if statusErr := rc.updateDeleteStatus(ctx, obj, fmt.Errorf("remove finalizers: %w", err)); statusErr != nil {
