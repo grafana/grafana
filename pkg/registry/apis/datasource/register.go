@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
@@ -75,6 +76,11 @@ type DataSourceAPIBuilder struct {
 	// dataSourceRequestValidator gates outbound datasource requests (proxy and
 	// health), matching the legacy HTTP API behavior.
 	dataSourceRequestValidator validations.DataSourceRequestValidator
+
+	// dbProvider resolves the legacy SQL database for the current request. In
+	// multi-tenant deployments it is per-tenant, so it must be called per
+	// request rather than resolved once at construction.
+	dbProvider legacysql.LegacyDatabaseProvider
 
 	// Legacy or Unified -- depending on config
 	store grafanarest.Storage
@@ -153,6 +159,7 @@ func RegisterAPIService(
 			flags,
 			dataSourceRequestValidator,
 			proxyDeps,
+			nil, // dbProvider! single tenant reads datasources through the plugin datasource provider
 		)
 		if err != nil {
 			return nil, err
@@ -192,6 +199,7 @@ func NewDataSourceAPIBuilder(
 	cfg DataSourceAPIBuilderConfig,
 	dataSourceRequestValidator validations.DataSourceRequestValidator,
 	proxyDeps *ProxyDependencies,
+	dbProvider legacysql.LegacyDatabaseProvider,
 ) (*DataSourceAPIBuilder, error) {
 	registerSubresourceMetrics(prometheus.DefaultRegisterer)
 
@@ -206,6 +214,7 @@ func NewDataSourceAPIBuilder(
 		cfg:                        cfg,
 		dataSourceRequestValidator: dataSourceRequestValidator,
 		proxyDeps:                  proxyDeps,
+		dbProvider:                 dbProvider,
 	}
 	return builder, nil
 }

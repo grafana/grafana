@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsService "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -233,7 +234,7 @@ func TestIntegrationFilter_Datasources(t *testing.T) {
 			err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
 				// seed 10 data sources
 				for i := 1; i <= 10; i++ {
-					dsStore := dsService.CreateStore(store, log.New("accesscontrol.test"))
+					dsStore := dsService.CreateStore(store, log.New("accesscontrol.test"), legacysql.NewDatabaseProvider(store))
 					_, err := dsStore.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{Name: fmt.Sprintf("ds:%d", i), UID: fmt.Sprintf("uid%d", i)})
 					require.NoError(t, err)
 				}
