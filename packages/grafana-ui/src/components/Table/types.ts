@@ -87,7 +87,7 @@ export type CellComponent = FC<TableCellProps>;
 
 export type FooterItem = Array<KeyValue<string>> | string | undefined;
 
-export interface GrafanaColumnMeta {
+interface GrafanaColumnMeta {
   field: Field;
   justifyContent: Property.JustifyContent;
   /** Renderer for the cells of this column. It is rendered by `TableCell`, which adds the Grafana specific props. */
@@ -127,13 +127,6 @@ export interface GrafanaTableState extends TableState {
 
 export type GrafanaTableRow = Row<unknown>;
 
-export interface TableStateReducerProps {
-  onColumnResize?: TableColumnResizeActionCallback;
-  onSortByChange?: TableSortByActionCallback;
-  data: DataFrame;
-}
-
-// export interface Props {
 export interface TableRTProps {
   ariaLabel?: string;
   data: DataFrame;
