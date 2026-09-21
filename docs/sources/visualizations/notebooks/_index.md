@@ -5,7 +5,7 @@ labels:
     - enterprise
     - oss
 title: Notebooks
-weight: 200
+weight: 85
 description: Create and manage notebooks, a linear, narrative artifact for investigations that include text and panel blocks.
 ---
 
@@ -40,10 +40,10 @@ Notebooks offer the following advantages over other tools for recording investig
 
 <!-- prettier-ignore-start -->
 
-| Feature | Pro                                                                                                                               | Con                          |
-| ------- | --------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
-| Dashboard | Reusable | <ul><li>You have to design the dashboard while you're still in the investigation stage.</li><li>Dashboard is no longer a curated surface.</li></ul> |
-| Workspace canvas | No design concerns | <ul><li>Ephemeral</li><li>Agent-authored</li><li>Not editable</li></ul>                                                            |
+| Feature | Pro                                                                                                                               | Con                                                     |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Dashboard | Reusable | <ul><li>You have to design the dashboard while you're still in the investigation stage.</li><li>Dashboard is no longer a curated surface.</li></ul>                            |
+| Workspace canvas | No design concerns | <ul><li>Ephemeral</li><li>Agent-authored</li><li>Not editable</li></ul>                                                                                       |
 | Notebook | <ul><li>Scratch pad while you work that you can clean up later</li><li>Picks up where the Workspace canvas leaves off</li><li>Human-authored and editable.</li><li>Reusable</li></ul> |    |
 
 <!-- prettier-ignore-end -->
@@ -124,7 +124,7 @@ When the canvas is worth keeping, you can direct Assistant to create a notebook 
 
 ![Canvas with the option to create a notebook](./screenshot-create-notebook-v13.3.png)
 
-## Create notebooks from IRM
+## Add notebooks to incidents
 
 TBD
 
