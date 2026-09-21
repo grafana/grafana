@@ -1,0 +1,33 @@
+{
+  "name": "@grafana-plugins/grafana-errortracking-app",
+  "private": true,
+  "version": "13.3.0-pre",
+  "description": "Error tracking app plugin UI",
+  "scripts": {
+    "build": "webpack -c ./webpack.config.ts --env production",
+    "dev": "webpack -w -c ./webpack.config.ts --env development",
+    "typecheck": "node ../../node_modules/typescript/bin/tsc6 --noEmit"
+  },
+  "dependencies": {
+    "@grafana/data": "13.3.0-pre",
+    "@grafana/i18n": "13.3.0-pre",
+    "@grafana/runtime": "13.3.0-pre",
+    "@grafana/ui": "13.3.0-pre",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@grafana/plugin-configs": "13.3.0-pre",
+    "@types/node": "24.10.1",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "copy-webpack-plugin": "^14.0.0",
+    "typescript": "6.0.2",
+    "webpack": "^5.105.0",
+    "webpack-merge": "5.10.0"
+  },
+  "engines": {
+    "node": ">=22 <25"
+  },
+  "packageManager": "yarn@4.17.1"
+}

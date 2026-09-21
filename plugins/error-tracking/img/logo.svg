@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Error tracking">
+  <circle cx="32" cy="32" r="28" fill="#F2495C"/>
+  <path d="M32 15v20M32 45h.01" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+</svg>

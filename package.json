@@ -492,6 +492,7 @@
     "packages": [
       "packages/*",
       "public/app/plugins/*/*",
+      "plugins/*",
       "e2e-playwright/test-plugins/*"
     ]
   },

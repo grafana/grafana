@@ -1,0 +1,35 @@
+{
+  "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
+  "type": "app",
+  "name": "Error tracking",
+  "id": "grafana-errortracking-app",
+  "info": {
+    "keywords": ["error tracking", "events"],
+    "description": "Record and inspect tenant-scoped error tracking events.",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "screenshots": [],
+    "version": "%VERSION%",
+    "updated": "%TODAY%"
+  },
+  "includes": [
+    {
+      "type": "page",
+      "name": "Error tracking",
+      "path": "/a/grafana-errortracking-app",
+      "addToNav": true,
+      "defaultNav": true,
+      "role": "Viewer"
+    }
+  ],
+  "dependencies": {
+    "grafanaDependency": ">=13.0.0",
+    "plugins": []
+  }
+}

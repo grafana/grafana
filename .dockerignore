@@ -19,6 +19,7 @@ node_modules
 *.yml
 !.yarnrc.yml
 *.md
+!plugins/error-tracking/README.md
 .yarn/*
 !.yarn/patches
 !.yarn/releases

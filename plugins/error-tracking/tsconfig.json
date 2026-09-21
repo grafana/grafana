@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "types": ["node"]
+  },
+  "extends": "@grafana/plugin-configs/tsconfig.json",
+  "include": ["."]
+}
