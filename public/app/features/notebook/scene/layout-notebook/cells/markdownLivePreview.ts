@@ -16,6 +16,8 @@ import { Strikethrough } from '@lezer/markdown';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { toggleSurround } from 'app/plugins/panel/text/v2/editor/editorCommands';
 
+import { headingStyles } from './markdownHeadingStyles';
+
 // Inline marks the toolbar (and, later, other callers) can ask "is the selection already X" about.
 // Kept here, next to the decoration logic that walks the same tree, so there is one implementation of
 // "what formatting applies at this position," not two.
@@ -170,8 +172,8 @@ function wrappedMarkDecorations(
   }
 }
 
-// h5/h6 get only the shared `heading` class (margin/weight), matching the static renderer, which
-// never gave them their own font-size rule either.
+// h5/h6 get only the shared `heading` line class, which carries no styling of its own — plain text
+// while editing, same as h5/h6's lack of any override in MarkdownCell.tsx's static render.
 function headingLevelClass(styles: MarkdownEditorStyles, level: number): string | undefined {
   switch (level) {
     case 1:
@@ -417,6 +419,12 @@ function buildEditorStyles(theme: GrafanaTheme2): { theme: Extension; classes: M
       fontFamily: theme.typography.fontFamily,
       fontSize: theme.typography.body.fontSize,
     },
+    // @codemirror/view's own base theme hardcodes `.cm-scroller { fontFamily: 'monospace' }` for
+    // every editor unconditionally — this is a document, not code, so it needs its own override to
+    // read in the same proportional font MarkdownCell.tsx's static (non-editing) render uses.
+    '.cm-scroller': {
+      fontFamily: theme.typography.fontFamily,
+    },
     '.cm-content': {
       caretColor: theme.colors.text.primary,
       padding: 0,
@@ -452,24 +460,10 @@ function buildEditorStyles(theme: GrafanaTheme2): { theme: Extension; classes: M
     '&.cm-focused .cm-placeholder': {
       visibility: 'visible',
     },
-    [`.${classes.heading}`]: {
-      fontWeight: theme.typography.fontWeightMedium,
-    },
-    [`.${classes.heading1}`]: {
-      fontSize: theme.typography.h1.fontSize,
-      lineHeight: `${theme.typography.h1.lineHeight}`,
-    },
-    [`.${classes.heading2}`]: {
-      fontSize: theme.typography.h2.fontSize,
-      lineHeight: `${theme.typography.h2.lineHeight}`,
-    },
-    [`.${classes.heading3}`]: {
-      fontSize: theme.typography.h3.fontSize,
-      lineHeight: `${theme.typography.h3.lineHeight}`,
-    },
-    [`.${classes.heading4}`]: {
-      fontSize: theme.typography.h4.fontSize,
-    },
+    [`.${classes.heading1}`]: headingStyles(theme.typography.h1),
+    [`.${classes.heading2}`]: headingStyles(theme.typography.h2),
+    [`.${classes.heading3}`]: headingStyles(theme.typography.h3),
+    [`.${classes.heading4}`]: headingStyles(theme.typography.h4),
     [`.${classes.bold}`]: {
       fontWeight: theme.typography.fontWeightBold,
     },
