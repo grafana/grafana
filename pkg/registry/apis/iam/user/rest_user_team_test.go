@@ -497,6 +497,22 @@ func TestUserTeamREST_Connect(t *testing.T) {
 		require.NotNil(t, responder.err)
 		require.Contains(t, responder.err.Error(), "functionality not available")
 	})
+
+	t.Run("configured feature does not consult OpenFeature", func(t *testing.T) {
+		setTeamsApiFlag(t, false)
+		t.Cleanup(func() { setTeamsApiFlag(t, true) })
+
+		mockClient := &mockSearchClient{}
+		handler := NewUserTeamRESTWithFeature(mockClient, &mockGetter{}, tracing.NewNoopTracerService(), true)
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "test-namespace"})
+		responder := &mockResponder{}
+
+		h, err := handler.Connect(ctx, "alice", nil, responder)
+		require.NoError(t, err)
+		h.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/teams", nil).WithContext(ctx))
+
+		require.NotNil(t, mockClient.LastSearchRequest)
+	})
 }
 
 func team(uid string, members ...iamv0alpha1.TeamTeamMember) *iamv0alpha1.Team {
