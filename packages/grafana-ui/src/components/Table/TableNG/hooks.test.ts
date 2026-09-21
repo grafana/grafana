@@ -1,9 +1,10 @@
 import { act, renderHook } from '@testing-library/react';
 
 import { createDataFrame, type Field, FieldType, ReducerID } from '@grafana/data';
+import { type DataGridHandle } from '@grafana/react-data-grid';
 import { TableCellDisplayMode } from '@grafana/schema';
 
-import { TABLE } from './constants';
+import { NESTED_TABLE_VERTICAL_PADDING, REFRESHED_NESTED_TABLE_VERTICAL_PADDING, TABLE } from './constants';
 import {
   useFilteredRows,
   useNestedColWidths,
@@ -17,6 +18,7 @@ import {
   useNestedRows,
   useColWidths,
   useRowCompiler,
+  useScrollShadows,
 } from './hooks';
 import { type FilterType, type TableRow, type TypographyCtx } from './types';
 import { applyFilter, createTypographyContext, compileFrameToRecords, computeContentAwareColWidths } from './utils';
@@ -473,6 +475,28 @@ describe('TableNG hooks', () => {
   });
 
   describe('usePaginatedRows', () => {
+    it.each([
+      { tableRefreshEnabled: true, noPanelPadding: false, height: 58, pageSize: undefined, expected: 1 },
+      { tableRefreshEnabled: false, noPanelPadding: false, height: 58, pageSize: undefined, expected: 2 },
+      { tableRefreshEnabled: true, noPanelPadding: true, height: 66, pageSize: undefined, expected: 2 },
+      { tableRefreshEnabled: true, noPanelPadding: false, height: 58, pageSize: 2, expected: 2 },
+    ])(
+      'fits $expected rows with refresh=$tableRefreshEnabled, noPanelPadding=$noPanelPadding, pageSize=$pageSize',
+      ({ expected, ...options }) => {
+        const { rows } = setupData();
+        const { result } = renderHook(() =>
+          usePaginatedRows(rows, {
+            ...options,
+            enabled: true,
+            width: 800,
+            rowHeight: 10,
+            headerHeight: 0,
+            footerHeight: 0,
+          })
+        );
+        expect(result.current.rowsPerPage).toBe(expected);
+      }
+    );
     it('should return defaults for pagination values when pagination is disabled', () => {
       const { rows } = setupData();
       const { result } = renderHook(() =>
@@ -1101,7 +1125,39 @@ describe('TableNG hooks', () => {
   });
 
   describe('useRowHeight', () => {
+    it.each([0, 6])('measures the last column with %ipx extra padding', (lastColumnExtraPadding) => {
+      const frame = createDataFrame({
+        fields: [{ name: 'text', type: FieldType.string, values: ['wrapped'], config: { custom: { wrapText: true } } }],
+      });
+      const measureHeight = jest.fn<number, Parameters<TypographyCtx['measureHeight']>>(() => 40);
+      const { result } = renderHook(() =>
+        useRowHeight({
+          fields: frame.fields,
+          columnWidths: [100],
+          defaultHeight: 30,
+          defaultNestedHeight: 30,
+          typographyCtx: {
+            ...createTypographyContext(14, 'Arial'),
+            measureHeight,
+            estimateHeight: () => 40,
+          },
+          hasNestedFrames: true,
+          visibleNestedRowCounts: [],
+          nestedRows: [],
+          nestedFields: [],
+          nestedColWidths: [],
+          lastColumnExtraPadding,
+        })
+      );
+      if (typeof result.current !== 'function') {
+        throw new Error('Expected a row height function');
+      }
+      expect(result.current({ __index: 0, __depth: 0, text: 'wrapped' })).toBeGreaterThan(30);
+      expect(measureHeight.mock.calls[0][1]).toBe(lastColumnExtraPadding === 6 ? 81 : 87);
+    });
     const typographyCtx = createTypographyContext(14, 'sans-serif');
+    const expectHeightWithoutNestedTablePadding = (height: number, tableRefreshEnabled = false) =>
+      expect(height - (tableRefreshEnabled ? REFRESHED_NESTED_TABLE_VERTICAL_PADDING : NESTED_TABLE_VERTICAL_PADDING));
 
     it('returns the default height if there are no wrapped columns or nested frames', () => {
       const { fields } = setupData();
@@ -1210,7 +1266,7 @@ describe('TableNG hooks', () => {
         const defaultHeight = 40;
         const nestedFooterHeight = 34; // equivalent to 1 reducer: LINE_HEIGHT + CELL_PADDING * 2
 
-        expect(
+        expectHeightWithoutNestedTablePadding(
           renderHook(() => {
             const rowHeight = useRowHeight({
               nestedData: [frame],
@@ -1234,8 +1290,8 @@ describe('TableNG hooks', () => {
             }
             return rowHeight({ __index: 0, __depth: 1, data: frame });
           }).result.current
-          // 3 nested rows + header + footer + padding + scrollbar
-        ).toBe(defaultHeight * 4 + TABLE.CELL_PADDING * 2 + TABLE.SCROLLBAR_AFFORDANCE + nestedFooterHeight);
+          // 3 nested rows + header + footer + scrollbar
+        ).toBe(defaultHeight * 4 + TABLE.SCROLLBAR_AFFORDANCE + nestedFooterHeight);
       });
 
       it('includes nestedFooterHeight in the no-data expanded row height', () => {
@@ -1273,7 +1329,7 @@ describe('TableNG hooks', () => {
         ).toBe(TABLE.NESTED_NO_DATA_HEIGHT + TABLE.CELL_PADDING * 2 + nestedFooterHeight);
       });
 
-      it('calculates the height to return using default height', () => {
+      it.each([false, true])('calculates the height with table.refresh=%s', (tableRefreshEnabled) => {
         const { fields } = setupData();
         const frame = createDataFrame({ fields });
         const fieldNames = frame.fields.map((f) => f.name);
@@ -1281,7 +1337,7 @@ describe('TableNG hooks', () => {
         const nestedRows = frameToRecords(frame);
         const defaultHeight = 40;
 
-        expect(
+        expectHeightWithoutNestedTablePadding(
           renderHook(() => {
             const rowHeight = useRowHeight({
               nestedData: [frame],
@@ -1298,6 +1354,7 @@ describe('TableNG hooks', () => {
               nestedFields: fields,
               nestedColWidths: [100, 100, 100],
               visibleNestedRowCounts: [3],
+              tableRefreshEnabled,
             });
             if (typeof rowHeight !== 'function') {
               throw new Error('Expected rowHeight to be a function');
@@ -1307,8 +1364,9 @@ describe('TableNG hooks', () => {
               __depth: 1,
               data: frame,
             });
-          }).result.current
-        ).toBe(defaultHeight * 4 + TABLE.CELL_PADDING * 2 + TABLE.SCROLLBAR_AFFORDANCE); // 3 rows + header + padding + scrollbar
+          }).result.current,
+          tableRefreshEnabled
+        ).toBe(defaultHeight * 4 + TABLE.SCROLLBAR_AFFORDANCE); // 3 rows + header + scrollbar
       });
 
       it('uses defaultNestedHeight (not defaultHeight) for the nested sub-table header', () => {
@@ -1320,7 +1378,7 @@ describe('TableNG hooks', () => {
         const defaultNonNestedHeight = 60;
         const defaultNestedHeight = 40;
 
-        expect(
+        expectHeightWithoutNestedTablePadding(
           renderHook(() => {
             const rowHeight = useRowHeight({
               fields: [
@@ -1346,8 +1404,8 @@ describe('TableNG hooks', () => {
               data: frame,
             });
           }).result.current
-          // 3 nested rows + nested header (uses defaultNestedHeight, not parent defaultHeight) + padding + scrollbar
-        ).toBe(defaultNestedHeight * 4 + TABLE.CELL_PADDING * 2 + TABLE.SCROLLBAR_AFFORDANCE);
+          // 3 nested rows + nested header (uses defaultNestedHeight, not parent defaultHeight) + scrollbar
+        ).toBe(defaultNestedHeight * 4 + TABLE.SCROLLBAR_AFFORDANCE);
       });
 
       it('uses a string-based default height for the nested rows', () => {
@@ -1387,7 +1445,7 @@ describe('TableNG hooks', () => {
         const nestedRecords = frameToRecords(frame);
         const defaultHeight = 40;
 
-        expect(
+        expectHeightWithoutNestedTablePadding(
           renderHook(() => {
             const rowHeight = useRowHeight({
               nestedData: [frame],
@@ -1417,7 +1475,7 @@ describe('TableNG hooks', () => {
               data: frame,
             });
           }).result.current
-        ).toBe(defaultHeight * 3 + TABLE.CELL_PADDING * 2); // 3 rows + padding (no header)
+        ).toBe(defaultHeight * 3); // 3 rows (no header)
       });
     });
 
@@ -2098,5 +2156,61 @@ describe('TableNG hooks', () => {
 
       expect(result.current).not.toBe(first);
     });
+  });
+});
+
+describe('useScrollShadows', () => {
+  it('tracks scroll edges without rerendering between visibility transitions', () => {
+    const wrapper = document.createElement('div');
+    const element = document.createElement('div');
+    wrapper.appendChild(element);
+    Object.defineProperties(element, {
+      scrollHeight: { value: 1000 },
+      clientHeight: { value: 200 },
+      offsetHeight: { value: 210, configurable: true },
+    });
+    const ref = { current: { element } as DataGridHandle };
+    let count = 0;
+    const { result, rerender } = renderHook(
+      ({ enabled }) => {
+        count++;
+        return useScrollShadows(ref, enabled, { topOffset: 30, bottomOffset: 20 });
+      },
+      { initialProps: { enabled: true } }
+    );
+
+    expect(result.current).toMatchObject({ top: false, bottom: true });
+    expect(result.current.scrollbarHeight).toBe(10);
+
+    act(() => {
+      element.scrollTop = 100;
+      result.current.onScroll();
+    });
+    expect(result.current).toMatchObject({ top: true, bottom: true });
+    const countAfterTransition = count;
+    act(() => {
+      element.scrollTop = 200;
+      result.current.onScroll();
+    });
+    expect(count).toBe(countAfterTransition);
+
+    rerender({ enabled: true });
+    expect(result.current).toMatchObject({ top: true, bottom: true });
+
+    act(() => {
+      element.scrollTop = 800;
+      result.current.onScroll();
+    });
+    expect(result.current).toMatchObject({ top: true, bottom: false });
+
+    Object.defineProperty(element, 'offsetHeight', { value: 200 });
+    rerender({ enabled: true });
+    expect(result.current.scrollbarHeight).toBe(0);
+
+    rerender({ enabled: false });
+    expect(result.current).toMatchObject({ top: false, bottom: false, className: '' });
+    element.scrollTop = 0;
+    rerender({ enabled: true });
+    expect(result.current).toMatchObject({ top: false, bottom: true });
   });
 });

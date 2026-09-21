@@ -83,8 +83,8 @@ describe('createSpanLinkFactory', () => {
     const spanId = '6605c7b08e715d6c';
     const defaultRange = { from: '1602637200000', to: '1602637201000' };
     const fieldVariants = [
-      { trace: 'traceID', span: 'spanID' },
       { trace: 'trace_id', span: 'span_id' },
+      { trace: 'traceID', span: 'spanID' },
       { trace: 'traceId', span: 'spanId' },
       { trace: 'TraceID', span: 'SpanID' },
       { trace: 'TraceId', span: 'SpanId' },

@@ -8,6 +8,8 @@ import { AppNotificationList } from 'app/core/components/AppNotifications/AppNot
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { NotebookAnalytics } from '../analytics/main';
+import { notebookIncidents, stubAttachForm, stubDeclareForm } from '../incidents/testHelpers';
+import { useNotebookIncidents } from '../incidents/useNotebookIncidents';
 import { getNotebookPageStateManager } from '../pages/NotebookPageStateManager';
 import { NotebookScene } from '../scene/NotebookScene';
 import { NotebookCellItem } from '../scene/layout-notebook/NotebookCellItem';
@@ -33,9 +35,30 @@ jest.mock('../analytics/main', () => ({
   },
 }));
 
+// Stubbed so each test states whether IRM is there. The rules themselves are covered in
+// useNotebookIncidents.test.
+jest.mock('../incidents/useNotebookIncidents', () => ({
+  ...jest.requireActual('../incidents/useNotebookIncidents'),
+  useNotebookIncidents: jest.fn(),
+}));
+
 const mockUseDeleteNotebookMutation = jest.mocked(useDeleteNotebookMutation);
+const mockUseNotebookIncidents = jest.mocked(useNotebookIncidents);
 const mockLinkCopied = jest.mocked(NotebookAnalytics.linkCopied);
 const mockExported = jest.mocked(NotebookAnalytics.exported);
+
+/** Whether IRM's exposed incident components are there for the toolbar to render. */
+function setIrmAvailable(available: boolean) {
+  const stubs = available
+    ? { AttachToIncidentForm: stubAttachForm().Stub, DeclareIncidentForm: stubDeclareForm().Stub }
+    : {};
+  mockUseNotebookIncidents.mockReturnValue(notebookIncidents(stubs));
+}
+
+/** A stack exposing only the attach component, which is a button rather than a menu item. */
+function setAttachOnly() {
+  mockUseNotebookIncidents.mockReturnValue(notebookIncidents({ AttachToIncidentForm: stubAttachForm().Stub }));
+}
 
 /** Stands in for the delete mutation hook, whose result is awaited through `.unwrap()`. */
 function setupDelete(unwrap: () => Promise<unknown> = async () => ({})) {
@@ -84,6 +107,7 @@ describe('NotebookToolbar', () => {
     config.appUrl = 'https://host/';
     // Every render mounts the delete hook, including the tests that never delete anything.
     setupDelete();
+    setIrmAvailable(false);
   });
 
   afterEach(() => {
@@ -282,6 +306,7 @@ describe('NotebookToolbar', () => {
       expect(history.getLocation().pathname).toBe('/notebooks/nb1');
     });
 
+    // With no IRM either, the menu would hold nothing.
     it('offers no delete at all to a user who cannot delete dashboards', () => {
       setupDelete();
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
@@ -290,6 +315,56 @@ describe('NotebookToolbar', () => {
 
       expect(screen.queryByRole('button', { name: 'More actions' })).not.toBeInTheDocument();
       // Export is unaffected, so this is the delete permission being read and not a blanket denial.
+      expect(screen.getByRole('button', { name: /Export/ })).toBeInTheDocument();
+    });
+  });
+
+  describe('incident actions', () => {
+    // Grouped rather than sitting in the toolbar: most notebooks are not incident-related.
+    it('groups them behind an IRM submenu rather than a toolbar button', async () => {
+      setIrmAvailable(true);
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+
+      const { user } = setup();
+
+      expect(screen.queryByRole('button', { name: /Attach to incident/ })).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'More actions' }));
+
+      expect(await screen.findByRole('menuitem', { name: /^IRM/ })).toBeInTheDocument();
+    });
+
+    it('offers nothing incident-related on a stack without IRM', async () => {
+      setIrmAvailable(false);
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+
+      const { user } = setup();
+      await user.click(screen.getByRole('button', { name: 'More actions' }));
+
+      expect(screen.queryByRole('menuitem', { name: /^IRM/ })).not.toBeInTheDocument();
+      expect(await screen.findByRole('menuitem', { name: 'Delete' })).toBeInTheDocument();
+    });
+
+    // This case had no way in when the menu was gated on declare alone.
+    it('opens the overflow menu for a stack exposing only attach, without delete permission', async () => {
+      setAttachOnly();
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+
+      const { user } = setup();
+      await user.click(screen.getByRole('button', { name: 'More actions' }));
+
+      expect(await screen.findByRole('menuitem', { name: /^IRM/ })).toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: 'Delete' })).not.toBeInTheDocument();
+    });
+
+    // The case the old attach-only test was really protecting: nothing to show, so no trigger.
+    it('offers no overflow menu at all without IRM and without delete permission', () => {
+      setIrmAvailable(false);
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+
+      setup();
+
+      expect(screen.queryByRole('button', { name: 'More actions' })).not.toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Export/ })).toBeInTheDocument();
     });
   });

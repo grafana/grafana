@@ -5,6 +5,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { buildStaticNavTree } from './buildStaticNavTree';
 import { NavID } from './constants';
+import { addNavEntries, clearRegisteredNavEntries } from './registry';
 import { navIds as ids, setupNavTestState as setup } from './test-utils';
 import { applyAppSubUrl, findNavById as findById, pruneEmptyNavSections, sortNavTree } from './utils';
 
@@ -41,17 +42,17 @@ describe('buildStaticNavTree', () => {
       ]);
     });
 
-    it('places notebooks after drilldown when the flag is on and the user can read dashboards', () => {
-      const dashboardReader = [AccessControlAction.DashboardsRead, AccessControlAction.DataSourcesExplore];
-      setup({ permissions: dashboardReader, openFeatureFlags: { 'dashboard.notebooks': true } });
+    it('places notebooks after drilldown when the flag is on and the user can read notebooks', () => {
+      const notebookReader = [AccessControlAction.NotebooksRead, AccessControlAction.DataSourcesExplore];
+      setup({ permissions: notebookReader, openFeatureFlags: { 'dashboard.notebooks': true } });
 
       const treeIds = ids(buildStaticNavTree());
       expect(treeIds.indexOf(NavID.notebooks)).toBe(treeIds.indexOf(NavID.drilldown) + 1);
 
-      setup({ permissions: dashboardReader });
+      setup({ permissions: notebookReader });
       expect(findById(buildStaticNavTree(), NavID.notebooks)).toBeUndefined();
 
-      // Notebooks reuse dashboard RBAC; without dashboards:read there is no entry
+      // Without notebooks:read there is no entry
       setup({ permissions: [], openFeatureFlags: { 'dashboard.notebooks': true } });
       expect(findById(buildStaticNavTree(), NavID.notebooks)).toBeUndefined();
     });
@@ -452,5 +453,79 @@ describe('sortNavTree', () => {
 
     expect(ids(sorted)).toEqual(['a', 'b', 'c', 'd']);
     expect(ids(nodes)).toEqual(['c', 'a', 'd', 'b']);
+  });
+});
+
+describe('registered nav entries', () => {
+  afterEach(() => {
+    clearRegisteredNavEntries();
+  });
+
+  it('appends registered items into their parent section', () => {
+    setup({ orgRole: 'Admin', permissions: [AccessControlAction.OrgUsersRead] });
+    addNavEntries({
+      parentId: NavID.cfgGeneral,
+      entry: { build: () => ({ text: 'Announcement banner', id: 'banner-settings' }) },
+    });
+
+    const general = findById(buildStaticNavTree(), NavID.cfgGeneral);
+    expect(ids(general?.children ?? [])).toContain('banner-settings');
+  });
+
+  it('appends root-level entries to the top of the tree', () => {
+    setup();
+    addNavEntries({
+      parentId: NavID.root,
+      entry: { build: () => ({ text: 'Enterprise thing', id: 'enterprise-thing', sortWeight: 1 }) },
+    });
+
+    expect(ids(buildStaticNavTree())).toContain('enterprise-thing');
+  });
+
+  it('respects the entry gate', () => {
+    setup({ orgRole: 'Admin' });
+    addNavEntries({
+      parentId: NavID.cfgGeneral,
+      entry: { when: () => false, build: () => ({ text: 'Hidden', id: 'hidden-entry' }) },
+    });
+
+    expect(findById(buildStaticNavTree(), 'hidden-entry')).toBeUndefined();
+  });
+
+  it('warns and skips entries whose parent does not exist', () => {
+    setup();
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    addNavEntries({
+      parentId: 'no-such-section',
+      entry: { build: () => ({ text: 'Orphan', id: 'orphan-entry' }) },
+    });
+
+    expect(findById(buildStaticNavTree(), 'orphan-entry')).toBeUndefined();
+    expect(warn).toHaveBeenCalledWith('[navtree] registered nav entry parent not found', 'no-such-section');
+    warn.mockRestore();
+  });
+
+  // The gates run inside configureStore, so an entry that throws must not take
+  // the rest of the tree — and navIndex — down with it
+  it('drops an entry whose gate throws and keeps the rest of the tree', () => {
+    setup({ permissions: DASHBOARD_READER });
+    const error = jest.spyOn(console, 'error').mockImplementation(() => {});
+    addNavEntries({
+      parentId: NavID.dashboards,
+      entry: {
+        when: () => {
+          throw new Error('missing config');
+        },
+        build: () => ({ text: 'Exploding', id: 'exploding-entry' }),
+      },
+    });
+
+    const tree = buildStaticNavTree();
+
+    expect(findById(tree, 'exploding-entry')).toBeUndefined();
+    expect(findById(tree, NavID.dashboards)).toBeDefined();
+    expect(findById(tree, NavID.home)).toBeDefined();
+    expect(error).toHaveBeenCalledWith('[navtree] nav entry failed to build', expect.any(Error));
+    error.mockRestore();
   });
 });

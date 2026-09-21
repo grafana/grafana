@@ -8,21 +8,20 @@ import { Alert, Box, Button, Checkbox, EmptyState, FilterInput, Stack, Text } fr
 import { extractErrorMessage } from 'app/api/utils';
 import { Page } from 'app/core/components/Page/Page';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
 
 import { NotebookTagsField } from '../NotebookTagsField';
 import { NotebookAnalytics } from '../analytics/main';
 import { NOTEBOOK_LIST_FILTER_TYPE } from '../analytics/types';
 import { NotebooksTable, NotebooksTableSkeleton } from '../list/NotebooksTable';
 import { useNotebooksList } from '../list/useNotebooksList';
+import { canCreateNotebooks } from '../permissions';
 import { notebookNewEditUrl } from '../urls';
 
 export function NotebooksListPage() {
   // The route is registered unconditionally (getAppRoutes is not a React component), so the
   // feature flag is enforced here. When it is off this is not a real route, so render not-found.
   const notebooksEnabled = useFlagDashboardNotebooks();
-  const canCreate = contextSrv.hasPermission(AccessControlAction.DashboardsCreate);
+  const canCreate = canCreateNotebooks();
   const navigate = useNavigate();
 
   const {
