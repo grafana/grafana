@@ -469,7 +469,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
     if (defaultPath.length > 1) {
       // Extract from defaultPath (most reliable source)
-      // defaultPath format: ['', 'parent-id', 'scope-node-id', ...]
+      // defaultPath is root-exclusive and leaf-inclusive, e.g. ['parent-id', 'scope-node-id']
       scopeNodeId = defaultPath[defaultPath.length - 1];
     } else {
       // Fallback to the scopeNodeId passed in
