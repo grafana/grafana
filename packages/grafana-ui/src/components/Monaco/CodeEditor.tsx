@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
+import type * as monacoType from 'monaco-editor';
 import { PureComponent } from 'react';
 
 import { type GrafanaTheme2, monacoLanguageRegistry } from '@grafana/data';
