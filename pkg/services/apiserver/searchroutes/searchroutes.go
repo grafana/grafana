@@ -1,4 +1,5 @@
-// Package searchroutes mounts the search API on the kinds that support it.
+// Package searchroutes mounts the search API on every namespaced kind a manifest
+// declares, unless the kind opts out.
 //
 // It exists as glue because the routes are the same for every kind and so belong
 // to no single builder, and because both the single-tenant and multi-tenant
@@ -6,6 +7,8 @@
 package searchroutes
 
 import (
+	"slices"
+
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -22,29 +25,12 @@ import (
 // namespace. Cluster-scoped kinds have no namespace to search within.
 const namespacedScope = "Namespaced"
 
-// enrolledWithoutSearchFields keeps kinds that were already served but declare
-// no search fields, which enrolled would otherwise drop.
-//
-// Temporary: we plan to stop asking for fields at all.
-var enrolledWithoutSearchFields = map[string]bool{
-	"folder.grafana.app/folders":      true,
-	"dashboard.grafana.app/notebooks": true,
-}
-
 // trashAllowlist holds the kinds allowed to serve the trash endpoint.
 //
 // Trash grants access to whoever deleted the object, or to folder admins, which
 // only makes sense for kinds that live in folders.
 var trashAllowlist = map[string]bool{
 	"dashboard.grafana.app/dashboards": true,
-}
-
-// enrolled reports whether a kind gets the search endpoints at all.
-//
-// Declared fields stand in for "someone reviewed this kind". Search works
-// without them, so this gate is about review, not capability.
-func enrolled(group, resourceName string, kind app.ManifestVersionKind) bool {
-	return len(kind.SearchFields) > 0 || enrolledWithoutSearchFields[group+"/"+resourceName]
 }
 
 type BuildOptions struct {
@@ -84,8 +70,9 @@ func BuildWithOptions(
 ) []builder.GroupVersionRoutes {
 	// Search fields come from the compiled-in app manifests, the same
 	// declarations the index mapping is built from.
+	manifests := slices.Concat(resource.AppManifests(), builder.ManifestsFromBuilders(builders))
 	routes, err := BuildForServedGroupVersionsWithOptions(
-		resource.AppManifests(), servedGroupVersions(builders, installers),
+		manifests, builder.ServedGroupVersions(builders, installers),
 		searchEnabled, trashEnabled, tracer, index, options,
 	)
 	if err != nil {
@@ -113,9 +100,10 @@ func BuildFromManifests(
 	builders []builder.APIGroupBuilder,
 	installers []appsdkapiserver.AppInstaller,
 ) []builder.GroupVersionRoutes {
+	manifests = slices.Concat(manifests, builder.ManifestsFromBuilders(builders))
 	routes, err := BuildForServedGroupVersions(
 		manifests,
-		servedGroupVersions(builders, installers),
+		builder.ServedGroupVersions(builders, installers),
 		searchEnabled,
 		trashEnabled,
 		tracer,
@@ -169,6 +157,7 @@ func BuildForServedGroupVersionsWithOptions(
 	})
 
 	byGroupVersion := map[schema.GroupVersion][]searchapi.Route{}
+	mounted := map[schema.GroupVersionResource]bool{}
 
 	for _, m := range manifests {
 		if m == nil {
@@ -187,9 +176,11 @@ func BuildForServedGroupVersionsWithOptions(
 					continue
 				}
 				resourceName := resource.ManifestResourceName(kind)
-				if !enrolled(gv.Group, resourceName, kind) {
+				gvr := gv.WithResource(resourceName)
+				if mounted[gvr] {
 					continue
 				}
+				mounted[gvr] = true
 				// Answered separately so a kind can opt out of one endpoint
 				// without the other.
 				if searchEnabled && kind.HasSearchEndpoint() {
@@ -205,26 +196,6 @@ func BuildForServedGroupVersionsWithOptions(
 	}
 
 	return toGroupVersionRoutes(byGroupVersion), nil
-}
-
-// servedGroupVersions reports which group versions this process actually serves.
-// A manifest describes kinds that a given deployment may not serve at all.
-func servedGroupVersions(
-	builders []builder.APIGroupBuilder,
-	installers []appsdkapiserver.AppInstaller,
-) map[schema.GroupVersion]bool {
-	served := map[schema.GroupVersion]bool{}
-	for _, b := range builders {
-		for _, gv := range builder.GetGroupVersions(b) {
-			served[gv] = true
-		}
-	}
-	for _, i := range installers {
-		for _, gv := range i.GroupVersions() {
-			served[gv] = true
-		}
-	}
-	return served
 }
 
 func toGroupVersionRoutes(byGroupVersion map[schema.GroupVersion][]searchapi.Route) []builder.GroupVersionRoutes {

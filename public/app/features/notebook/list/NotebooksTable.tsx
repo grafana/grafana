@@ -18,7 +18,8 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
-import { NOTEBOOK_DELETE_SOURCE } from '../analytics/types';
+import { NotebookAnalytics } from '../analytics/main';
+import { NOTEBOOK_DELETE_SOURCE, NOTEBOOK_LINK_COPY_SOURCE } from '../analytics/types';
 import { DeleteNotebookModal } from '../delete/DeleteNotebookModal';
 import { useDeleteNotebook } from '../delete/useDeleteNotebook';
 import { canEditNotebooks } from '../permissions';
@@ -279,7 +280,13 @@ const NotebookRowActions = memo(function NotebookRowActions({
           {t('notebooks.list.table.edit', 'Edit')}
         </LinkButton>
       )}
-      <ClipboardButton variant="secondary" size="sm" icon="link" getText={() => notebookShareUrl(uid)}>
+      <ClipboardButton
+        variant="secondary"
+        size="sm"
+        icon="link"
+        getText={() => notebookShareUrl(uid)}
+        onClipboardCopy={() => NotebookAnalytics.linkCopied(uid, NOTEBOOK_LINK_COPY_SOURCE.NOTEBOOK_LIST)}
+      >
         {t('notebooks.list.table.copy-link', 'Copy link')}
       </ClipboardButton>
       <Dropdown overlay={<NotebookRowMenu uid={uid} onDelete={() => onDelete(uid, title)} />} placement="bottom-end">

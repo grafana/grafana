@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import {
   useState,
@@ -29,17 +30,17 @@ import {
 } from '@grafana/react-data-grid';
 import { type MatcherScope } from '@grafana/schema';
 
-import { useTheme2 } from '../../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { type TableColumnResizeActionCallback } from '../types';
 
 import {
   CELL_HORIZONTAL_CHROME,
   FIRST_COLUMN_EXTRA_PADDING,
-  HEADER_ICON_SPACE,
   getPaginationChromeHeight,
+  SCROLL_SHADOW_THRESHOLD,
   TABLE,
 } from './constants';
-import { IS_SAFARI_26 } from './styles';
+import { getScrollShadowOffsetStyles, getScrollShadowStyles, IS_SAFARI_26 } from './styles';
 import {
   type FilterType,
   type FooterFieldState,
@@ -53,6 +54,7 @@ import {
 } from './types';
 import {
   getDisplayName,
+  getHeaderAffordanceWidth,
   applySort,
   getColumnTypes,
   getRowHeight,
@@ -63,7 +65,6 @@ import {
   buildCellHeightMeasurers,
   applyFilter,
   compileFrameToRecords,
-  isSortableField,
   createTypographyContext,
   extractPixelValue,
 } from './utils';
@@ -404,9 +405,17 @@ interface UseHeaderHeightOptions {
   enabled: boolean;
   fields: Field[];
   columnWidths: number[];
+  /**
+   * Measures the header label. Must be the medium-weight context (see `useHeaderTypographyCtx`) —
+   * the label renders at `fontWeightMedium`, so measuring it with the body context wraps it later
+   * than the browser does and the header comes out a line short.
+   */
   typographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
   noPanelPadding?: boolean;
+  tableRefreshEnabled?: boolean;
+  /** Active filters, so a column marked with the refreshed header's filter icon reserves its space. */
+  filter?: FilterType;
 }
 
 export function useHeaderHeight({
@@ -416,8 +425,11 @@ export function useHeaderHeight({
   typographyCtx,
   showTypeIcons = false,
   noPanelPadding = false,
+  tableRefreshEnabled = false,
+  filter,
 }: UseHeaderHeightOptions): number {
   const measurers = useMemo(() => buildHeaderHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
+  const filteredKeys = useMemo(() => new Set(Object.values(filter ?? {}).map((f) => f.displayName)), [filter]);
 
   const columnAvailableWidths = useMemo(
     () =>
@@ -426,29 +438,19 @@ export function useHeaderHeight({
           return 0; // no width available for this column yet
         }
 
+        const field = fields[idx];
         let width = c - CELL_HORIZONTAL_CHROME;
         if (noPanelPadding && idx === 0) {
           width -= FIRST_COLUMN_EXTRA_PADDING;
         }
-        const field = fields[idx];
-
-        // filtering icon
-        if (field.config?.custom?.filterable) {
-          width -= HEADER_ICON_SPACE;
-        }
-        // sorting icon. reserved on every sortable column, not just the currently-sorted one, so a
-        // wrapped header doesn't gain a line (shifting the whole grid down) the moment it's sorted.
-        if (isSortableField(field)) {
-          width -= HEADER_ICON_SPACE;
-        }
-        // type icon
-        if (showTypeIcons) {
-          width -= HEADER_ICON_SPACE;
-        }
-        // sadly, the math for this is off by exactly 1 pixel. shrug.
-        return Math.floor(width) - 1;
+        width -= getHeaderAffordanceWidth(field, {
+          showTypeIcons,
+          tableRefreshEnabled,
+          isFiltered: filteredKeys.has(getDisplayName(field)),
+        });
+        return Math.floor(width);
       }),
-    [fields, columnWidths, showTypeIcons, noPanelPadding]
+    [fields, columnWidths, showTypeIcons, noPanelPadding, tableRefreshEnabled, filteredKeys]
   );
 
   const headerHeight = useMemo(() => {
@@ -461,8 +463,9 @@ export function useHeaderHeight({
       columnAvailableWidths,
       TABLE.HEADER_HEIGHT,
       measurers,
-      TABLE.LINE_HEIGHT,
-      TABLE.CELL_PADDING
+      // the header label's own line box, and the cell's padding on *both* block edges
+      TABLE.HEADER_LINE_HEIGHT,
+      TABLE.CELL_PADDING * 2
     );
   }, [fields, enabled, columnAvailableWidths, measurers]);
 
@@ -504,9 +507,10 @@ export function useRowHeight({
   visibleNestedRowCounts,
   nestedFooterHeight = 0,
 }: UseRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
+  const theme = useTheme2();
   const nestedMeasurers = useMemo(
-    () => buildCellHeightMeasurers(nestedFields, typographyCtx, maxHeight),
-    [nestedFields, typographyCtx, maxHeight]
+    () => buildCellHeightMeasurers(nestedFields, typographyCtx, theme, maxHeight),
+    [nestedFields, typographyCtx, maxHeight, theme]
   );
 
   const totalParentWidth = useMemo(() => columnWidths.reduce((acc, width) => acc + width, 0), [columnWidths]);
@@ -552,8 +556,8 @@ export function useRowHeight({
   }, [nestedFields, nestedColWidths, defaultNestedHeight, nestedMeasurers, visibleNestedRowCounts]);
 
   const measurers = useMemo(
-    () => buildCellHeightMeasurers(fields, typographyCtx, maxHeight),
-    [fields, typographyCtx, maxHeight]
+    () => buildCellHeightMeasurers(fields, typographyCtx, theme, maxHeight),
+    [fields, typographyCtx, maxHeight, theme]
   );
   const hasWrappedCols = (measurers?.length ?? 0) > 0;
 
@@ -650,9 +654,10 @@ export function useFlatRowHeight({
   maxHeight,
   noPanelPadding = false,
 }: UseFlatRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
+  const theme = useTheme2();
   const measurers = useMemo(
-    () => buildCellHeightMeasurers(fields, typographyCtx, maxHeight),
-    [fields, typographyCtx, maxHeight]
+    () => buildCellHeightMeasurers(fields, typographyCtx, theme, maxHeight),
+    [fields, typographyCtx, maxHeight, theme]
   );
   const hasWrappedCols = (measurers?.length ?? 0) > 0;
 
@@ -784,6 +789,82 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height:
 }
 
 /**
+ * Fades a shadow in at the top or bottom edge of the grid's scroll viewport while rows are scrolled
+ * out of view in that direction, the same cue `ScrollContainer`'s `showScrollIndicators` gives:
+ * the table's scrollbar is thin and, on platforms that overlay it, invisible until the user
+ * scrolls, so nothing otherwise tells them more rows exist.
+ *
+ * React state updates only when shadow visibility or horizontal scrollbar height changes.
+ */
+export function useScrollShadows(
+  ref: RefObject<DataGridHandle | null>,
+  enabled: boolean,
+  { topOffset, bottomOffset }: { topOffset: number; bottomOffset: number }
+) {
+  const [visibility, setVisibility] = useState({ top: false, bottom: false, scrollbarHeight: 0 });
+  const visibilityRef = useRef(visibility);
+  const styles = useStyles2(getScrollShadowStyles);
+  const offsetStyles = useStyles2(getScrollShadowOffsetStyles, topOffset, bottomOffset + visibility.scrollbarHeight);
+
+  const sync = useCallback(() => {
+    const el = ref.current?.element;
+    if (!enabled || !el) {
+      return;
+    }
+    const { scrollTop, scrollHeight, clientHeight, offsetHeight } = el;
+    // A horizontal scrollbar takes its space out of the bottom of the grid's padding box, below
+    // both the rows and the sticky footer, so the bottom shadow has to clear it or it sits on the
+    // scrollbar instead of on the last visible row. The grid draws no border (see `getGridStyles`),
+    // so the difference between the two heights is the scrollbar alone.
+    const scrollbarHeight = offsetHeight - clientHeight;
+    const scrollBottom = scrollHeight - clientHeight - scrollTop;
+    const top = scrollTop > SCROLL_SHADOW_THRESHOLD;
+    const bottom = scrollBottom > SCROLL_SHADOW_THRESHOLD;
+    if (
+      visibilityRef.current.top !== top ||
+      visibilityRef.current.bottom !== bottom ||
+      visibilityRef.current.scrollbarHeight !== scrollbarHeight
+    ) {
+      const nextVisibility = { top, bottom, scrollbarHeight };
+      visibilityRef.current = nextVisibility;
+      setVisibility(nextVisibility);
+    }
+  }, [ref, enabled]);
+
+  // Content height changes arrive through a render: rows change, nested rows expand, or resized
+  // columns re-wrap their cells. Measure after every commit so those changes do not need their own
+  // invalidation signal. A passive effect keeps the geometry reads out of React's commit phase.
+  useEffect(sync);
+
+  useEffect(() => {
+    const el = ref.current?.element;
+    if (!enabled || !el) {
+      return;
+    }
+
+    // Panel resizing changes what fits without moving the scroll position.
+    const resizeObserver = new ResizeObserver(sync);
+    resizeObserver.observe(el);
+    return () => resizeObserver.disconnect();
+  }, [ref, enabled, sync]);
+
+  return {
+    className: enabled
+      ? css(
+          styles.scrollShadows,
+          offsetStyles,
+          visibility.top && styles.scrollShadowTop,
+          visibility.bottom && styles.scrollShadowBottom
+        )
+      : '',
+    top: enabled && visibility.top,
+    bottom: enabled && visibility.bottom,
+    scrollbarHeight: enabled ? visibility.scrollbarHeight : 0,
+    onScroll: sync,
+  };
+}
+
+/**
  * When present, columns without a configured width are sized to fit their content
  * ({@link computeContentAwareColWidths}) rather than sharing the leftover space evenly. Gated by
  * the `table.autoColumnWidths` feature toggle and threaded down as a prop.
@@ -791,11 +872,15 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height:
 export interface ContentAwareWidths {
   typographyCtx: TypographyCtx;
   headerTypographyCtx: TypographyCtx;
+  theme: GrafanaTheme2;
   showTypeIcons?: boolean;
+  /** Whether the table renders a header row; when it doesn't, header labels don't bound the columns. */
+  hasHeader?: boolean;
   getActions?: GetActionsFunctionLocal;
   tableRefreshEnabled?: boolean;
   filter?: FilterType;
   noPanelPadding?: boolean;
+  preventHorizontalOverflow?: boolean;
 }
 
 const pickColWidths = (fields: Field[], availWidth: number, contentAware?: ContentAwareWidths): number[] =>
@@ -817,14 +902,34 @@ export function useTypographyCtx(theme: GrafanaTheme2): TypographyCtx {
   );
 }
 
+/**
+ * Builds the typography context header labels are measured with. They render at `fontWeightMedium`,
+ * wider than the body text `useTypographyCtx` measures, so both the width path (how wide an auto
+ * column must be) and the height path (how many lines a wrapped label takes) measure with this one.
+ */
+export function useHeaderTypographyCtx(theme: GrafanaTheme2): TypographyCtx {
+  return useMemo(
+    () =>
+      createTypographyContext(
+        theme.typography.fontSize,
+        theme.typography.fontFamily,
+        extractPixelValue(theme.typography.body.letterSpacing!) * theme.typography.fontSize,
+        theme.typography.fontWeightMedium
+      ),
+    [theme]
+  );
+}
+
 interface UseContentAwareWidthsOptions {
   enabled: boolean;
   typographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
+  hasHeader?: boolean;
   getActions?: GetActionsFunctionLocal;
   tableRefreshEnabled?: boolean;
   filter?: FilterType;
   noPanelPadding?: boolean;
+  preventHorizontalOverflow?: boolean;
 }
 
 /**
@@ -836,33 +941,29 @@ export function useContentAwareWidths({
   enabled,
   typographyCtx,
   showTypeIcons = false,
+  hasHeader = true,
   getActions,
   tableRefreshEnabled = false,
   filter,
   noPanelPadding = false,
+  preventHorizontalOverflow = false,
 }: UseContentAwareWidthsOptions): ContentAwareWidths | undefined {
   const theme = useTheme2();
-  const headerTypographyCtx = useMemo(
-    () =>
-      createTypographyContext(
-        theme.typography.fontSize,
-        theme.typography.fontFamily,
-        extractPixelValue(theme.typography.body.letterSpacing!) * theme.typography.fontSize,
-        theme.typography.fontWeightMedium
-      ),
-    [theme]
-  );
+  const headerTypographyCtx = useHeaderTypographyCtx(theme);
   return useMemo(
     () =>
       enabled
         ? {
             typographyCtx,
             headerTypographyCtx,
+            theme,
             showTypeIcons,
+            hasHeader,
             getActions,
             tableRefreshEnabled,
             filter,
             noPanelPadding,
+            preventHorizontalOverflow,
           }
         : undefined,
     [
@@ -870,10 +971,13 @@ export function useContentAwareWidths({
       typographyCtx,
       headerTypographyCtx,
       showTypeIcons,
+      hasHeader,
       getActions,
       filter,
       tableRefreshEnabled,
+      theme,
       noPanelPadding,
+      preventHorizontalOverflow,
     ]
   );
 }
