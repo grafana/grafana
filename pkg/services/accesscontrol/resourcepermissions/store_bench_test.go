@@ -93,7 +93,7 @@ func GenerateDatasourcePermissions(b *testing.B, db db.DB, cfg *setting.Cfg, ac 
 			Access: datasources.DS_ACCESS_DIRECT,
 			URL:    "http://test",
 		}
-		dsStore := datasourcesService.CreateStore(db, log.New("publicdashboards.test"))
+		dsStore := datasourcesService.CreateStore(db, log.New("publicdashboards.test"), legacysql.NewDatabaseProvider(db))
 		dataSource, _ := dsStore.AddDataSource(context.Background(), addDSCommand)
 		dataSources = append(dataSources, dataSource.ID)
 	}
