@@ -69,7 +69,7 @@ describe('notebooks route guards', () => {
     return route.roles;
   }
 
-  const notebookRoutes = ['/notebooks', '/notebooks/:uid/:slug?'];
+  const notebookRoutes = ['/notebooks', '/notebooks/:uid/:slug?', '/notebooks/:uid/render'];
 
   it.each(notebookRoutes)('rejects %s without notebooks:read', (path) => {
     contextSrv.user.permissions = {};
@@ -102,6 +102,26 @@ describe('notebooks route guards', () => {
     contextSrv.user.permissions = { [AccessControlAction.NotebooksWrite]: true };
 
     expect(getRouteRolesGuard('/notebooks/new')()).toEqual(['Reject']);
+  });
+
+  /**
+   * The route the PDF export points the headless renderer at. `chromeless` is the whole reason it
+   * exists as its own route: it is what keeps Grafana's app shell off a page that is going to be a
+   * document, so the page never has to reach out and undo the shell's styling.
+   */
+  it('renders the notebook render route without app chrome, on its own page', () => {
+    const routes = getAppRoutes();
+    const renderRoute = routes.find((r) => r.path === '/notebooks/:uid/render');
+    const viewRoute = routes.find((r) => r.path === '/notebooks/:uid/:slug?');
+
+    expect(renderRoute?.chromeless).toBe(true);
+    // A different page, not the notebook page in a mode: it leaves out the toolbar and controls row
+    // rather than hiding them.
+    expect(renderRoute?.component).toBeDefined();
+    expect(renderRoute?.component).not.toBe(viewRoute?.component);
+    // The view route is emphatically NOT chromeless — a regression there would strip the app shell
+    // from everybody reading a notebook.
+    expect(viewRoute?.chromeless).toBeFalsy();
   });
 
   /**
