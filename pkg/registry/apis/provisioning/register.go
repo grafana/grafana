@@ -626,7 +626,10 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 			Namespace: a.GetNamespace(),
 		}, ""))
 
-	// Read-only subresources: resources, history, status (admin only).
+	// Read-only subresources: resources, history, status, filetree (admin only). filetree
+	// lists a not-yet-created repository's file tree from a POST body (see
+	// buildEphemeralRepository) - same admin-only rationale as the others, scoped by name
+	// even though the name is a placeholder ("new") until the repository actually exists.
 	//
 	// These expose repository management/inspection views and must be admin-only. We gate
 	// on repositories:write (VerbUpdate) - an admin-only action - rather than
@@ -636,7 +639,7 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 	// can manage it"). We keep the repositories resource with the repository Name rather
 	// than proxying through an unrelated resource (e.g. stats), so this remains correct if
 	// access is later scoped to individual repositories.
-	case "resources", "history", "status":
+	case "resources", "history", "status", "filetree":
 		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
 			Verb:      apiutils.VerbUpdate,
 			Group:     provisioning.GROUP,
@@ -942,6 +945,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	filesAccess := auth.NewVerbAwareAccessChecker(b.accessWithViewer, b.accessWithEditor)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = WithTimeout(NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.folderMetadataEnabled, b.maxFileSize), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = WithTimeout(NewRefsConnector(b), 30*time.Second)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("filetree")] = WithTimeout(NewFiletreeConnector(b), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = WithTimeout(NewListConnector(b, b.resourceLister), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = WithTimeout(NewHistorySubresource(b), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = WithTimeout(NewJobsConnector(b, b, b, jobHistory, b.access, b.clients, b.folderMetadataEnabled, performanceEnabled), 30*time.Second)
