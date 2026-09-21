@@ -3454,6 +3454,14 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:        "grafana.sidebarLogDetailsNewTab",
+			Description: "Deprecated: Open a new sidebar tab when clicking on a log line",
+			Stage:       FeatureStageDeprecated,
+			Owner:       grafanaObservabilityLogsSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:         "grafana.mtFallback",
 			Description:  "Enables multi-tenant fallback behavior",
 			Stage:        FeatureStageExperimental,

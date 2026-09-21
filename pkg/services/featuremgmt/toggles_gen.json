@@ -2854,6 +2854,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.sidebarLogDetailsNewTab",
+        "resourceVersion": "1789998623594",
+        "creationTimestamp": "2026-09-21T13:50:23Z"
+      },
+      "spec": {
+        "description": "Deprecated: Open a new sidebar tab when clicking on a log line",
+        "stage": "deprecated",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.ssoSettingsToMTSettings",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"

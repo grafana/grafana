@@ -126,6 +126,8 @@ export const FlagKeys = {
   GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
   /** Enable referencing an existing secret in an active keeper when creating a secure value */
   GrafanaSecretsReferenceValueUI: "grafana.secretsReferenceValueUI",
+  /** Deprecated: Open a new sidebar tab when clicking on a log line */
+  GrafanaSidebarLogDetailsNewTab: "grafana.sidebarLogDetailsNewTab",
   /** Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker */
   GrafanaStarredFolders: "grafana.starredFolders",
   /** Enables using dashboard variables in panel threshold values */
@@ -836,6 +838,17 @@ export const useFlagGrafanaScenesFlickeringFix = (options?: ReactFlagEvaluationO
  */
 export const useFlagGrafanaSecretsReferenceValueUI = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.secretsReferenceValueUI", false, options).value;
+};
+
+/**
+ * Deprecated: Open a new sidebar tab when clicking on a log line
+ *
+ * **Details:**
+ * - flag key: `grafana.sidebarLogDetailsNewTab`
+ * - default value: `false`
+ */
+export const useFlagGrafanaSidebarLogDetailsNewTab = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.sidebarLogDetailsNewTab", false, options).value;
 };
 
 /**
