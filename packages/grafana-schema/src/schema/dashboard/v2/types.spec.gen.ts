@@ -958,6 +958,12 @@ export interface AutoGridLayoutSpec {
 	rowHeightMode: "short" | "standard" | "tall" | "custom";
 	rowHeight?: number;
 	fillScreen?: boolean;
+	fitContent?: boolean;
+	minHeightMode?: "none" | "short" | "standard" | "tall" | "custom";
+	minHeight?: number;
+	maxHeightMode?: "unlimited" | "short" | "standard" | "tall" | "custom";
+	maxHeight?: number;
+	matchRowHeights?: boolean;
 	items: AutoGridLayoutItemKind[];
 }
 
@@ -966,6 +972,8 @@ export const defaultAutoGridLayoutSpec = (): AutoGridLayoutSpec => ({
 	columnWidthMode: "standard",
 	rowHeightMode: "standard",
 	fillScreen: false,
+	fitContent: false,
+	matchRowHeights: true,
 	items: [],
 });
 
@@ -983,6 +991,7 @@ export interface AutoGridLayoutItemSpec {
 	element: ElementReference;
 	repeat?: AutoGridRepeatOptions;
 	conditionalRendering?: ConditionalRenderingGroupKind;
+	fitContent?: boolean;
 }
 
 export const defaultAutoGridLayoutItemSpec = (): AutoGridLayoutItemSpec => ({

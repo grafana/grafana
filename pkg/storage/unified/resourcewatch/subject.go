@@ -59,3 +59,41 @@ func Subject(gvr schema.GroupVersionResource, namespace string) string {
 	}
 	return strings.Join([]string{subjectRoot, group, namespace, resource}, ".")
 }
+
+// ParseSubject decomposes a subject produced by Subject back into its
+// components. It is the inverse of Subject: the core group's "_core" token maps
+// back to the empty group, and a "*" in the namespace or resource position is
+// returned verbatim, so Subject(ParseSubject(s)) == s.
+//
+// The group's own dots make its token count variable, but namespace and resource
+// are always exactly one token and always last, so the split is taken from the
+// tail rather than a fixed offset. ok is false for anything that is not a
+// Subject: a different root, a ">" tail (SubjectAllResources cannot be
+// decomposed — it names no single group), or too few tokens to fill all three
+// positions.
+//
+// It exists for the reverse direction of the publish path: NATS reports a
+// publish permissions violation asynchronously, carrying only the subject text,
+// so the group and resource behind a rejected publish have to be recovered from
+// the subject itself.
+func ParseSubject(subject string) (group, namespace, resource string, ok bool) {
+	rest, found := strings.CutPrefix(subject, subjectRoot+".")
+	if !found {
+		return "", "", "", false
+	}
+	tokens := strings.Split(rest, ".")
+	// One token each for namespace and resource, at least one for the group.
+	if len(tokens) < 3 {
+		return "", "", "", false
+	}
+	for _, token := range tokens {
+		if token == "" || token == ">" {
+			return "", "", "", false
+		}
+	}
+	group = strings.Join(tokens[:len(tokens)-2], ".")
+	if group == coreGroup {
+		group = ""
+	}
+	return group, tokens[len(tokens)-2], tokens[len(tokens)-1], true
+}

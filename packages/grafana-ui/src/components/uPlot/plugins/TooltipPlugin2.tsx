@@ -789,6 +789,6 @@ const getStyles = (theme: GrafanaTheme2, maxWidth?: number) => ({
     maxWidth: maxWidth ?? 'none',
   }),
   pinned: css({
-    boxShadow: theme.shadows.z3,
+    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
   }),
 });

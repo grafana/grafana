@@ -8,7 +8,6 @@ import (
 	"slices"
 	"sort"
 
-	"github.com/grafana/grafana-app-sdk/app"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	dashboardapp "github.com/grafana/grafana/apps/dashboard/pkg/apis"
@@ -48,7 +47,7 @@ const DASHBOARD_ERRORS_TODAY = "errors_today"
 // fields (no resource path); DashboardDocumentBuilder fills them in from the
 // parsed spec and the usage-insights stats.
 var DashboardSearchFields = resource.NewManifestBackedProvider(
-	[]app.Manifest{dashboardapp.LocalManifest()},
+	dashboardapp.LocalManifest().ManifestData,
 ).Fields(dashV1.DashboardResourceInfo.GroupVersionResource())
 
 func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.DocumentBuilderInfo, error) {
@@ -114,11 +113,8 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 	blob := obj.GetBlob()
 	if blob != nil {
 		rsp, err := s.Blob.GetResourceBlob(ctx, key, blob, true)
-		if err != nil {
-			return nil, err
-		}
-		if rsp.Error != nil {
-			return nil, fmt.Errorf("error reading blob: %+v", rsp.Error)
+		if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
+			return nil, fmt.Errorf("error reading blob: %w", err)
 		}
 		value = rsp.Value
 	}

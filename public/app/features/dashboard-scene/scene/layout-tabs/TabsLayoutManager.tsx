@@ -27,7 +27,7 @@ import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { convertRowToTab } from '../layouts-shared/convertRowToTab';
 import { convertTabToRow } from '../layouts-shared/convertTabToRow';
-import { buildGroupEdit, canGroupSelection } from '../layouts-shared/groupLayout';
+import { canGroupSelection } from '../layouts-shared/groupLayout';
 import { moveSectionVariablesUp } from '../layouts-shared/moveSectionVariablesUp';
 import { getTabFromClipboard } from '../layouts-shared/paste';
 import {
@@ -208,16 +208,6 @@ export class TabsLayoutManager
 
   public canGroupSelectionInto(items: SceneObject[], target: GroupTarget): GroupingResult {
     return canGroupSelection(items, target);
-  }
-
-  public groupSelectionInto(items: SceneObject[], target: GroupTarget): void {
-    const groupEdit = buildGroupEdit(items, target);
-
-    if (!groupEdit) {
-      return;
-    }
-
-    edit({ ...groupEdit, source: getDashboardSceneFor(this) });
   }
 
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {

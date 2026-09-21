@@ -114,9 +114,16 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
 
     const showFolderFilename = (isNew || allowPathEdit) && resourceType === 'dashboard';
 
+    // A new branch only exists after the save creates it; until the selected branch
+    // is a known remote ref, list folders from the configured branch instead of
+    // requesting an unborn ref (which 404s).
+    const selectedBranchExists = Boolean(
+      selectedBranch && branchData?.items?.some((branch) => branch.name === selectedBranch)
+    );
+
     const { options: folderOptions, loading: isFoldersLoading } = useGetRepositoryFolders({
       repositoryName: showFolderFilename ? repository?.name : undefined,
-      ref: selectedBranch || undefined,
+      ref: selectedBranchExists ? selectedBranch : undefined,
     });
 
     const pathText =

@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
@@ -17,6 +18,7 @@ type Client interface {
 
 	// Repositories
 	GetRepository(ctx context.Context) (Repository, error)
+	ListRepositories(ctx context.Context) ([]provisioning.ExternalRepository, error)
 
 	// Branch protection
 	GetBranchProtection(ctx context.Context, branch string) (*BranchProtection, error)

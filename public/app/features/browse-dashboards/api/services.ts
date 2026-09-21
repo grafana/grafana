@@ -1,5 +1,6 @@
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
 import { legacyAPI } from 'app/api/clients/legacy';
@@ -7,7 +8,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { STARRED_FOLDERS_UID, TEAM_FOLDERS_UID, isRootFolderUID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult, type NestedFolderDTO } from 'app/features/search/service/types';
-import { extractManagerKind, queryResultToViewItem } from 'app/features/search/service/utils';
+import { extractManagerId, extractManagerKind, queryResultToViewItem } from 'app/features/search/service/utils';
 import { type DashboardViewItem } from 'app/features/search/types';
 import { resolveStarredFolders } from 'app/features/stars/folders';
 import { findStarredNames, userStarsFieldSelector } from 'app/features/stars/utils';
@@ -110,7 +111,7 @@ export async function listFolders(
 ): Promise<DashboardViewItem[]> {
   let folders: NestedFolderDTO[] = [];
   if (contextSrv.hasPermission(AccessControlAction.FoldersRead)) {
-    if (config.featureToggles.foldersAppPlatformAPI) {
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.FoldersAppPlatformAPI, true)) {
       folders = await searchNewAPI(parentUID, page, pageSize);
     } else {
       folders = await searchOldAPI(parentUID, page, pageSize);
@@ -126,6 +127,7 @@ export async function listFolders(
       parentTitle,
       parentUID,
       managedBy: extractManagerKind(managedBy),
+      managerId: extractManagerId(managedBy),
       url: noUrl
         ? undefined
         : // URLs from the backend come with subUrlPrefix already included, so match that behaviour here

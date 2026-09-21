@@ -160,35 +160,6 @@ func (s *ServiceImpl) nestMaintenanceWindowsUnderSLO(treeRoot *navtree.NavTreeRo
 	}
 }
 
-// shouldIncludeInvestigations checks if the investigations feature should be included for the assistant app
-// see https://github.com/grafana/grafana-assistant-app/issues/2007 for more details
-func (s *ServiceImpl) shouldIncludeInvestigations(plugin pluginstore.Plugin, include *plugins.Includes, c *contextmodel.ReqContext) bool {
-	if plugin.ID != "grafana-assistant-app" || include.Name != "Investigations" {
-		return true
-	}
-
-	ps, err := s.pluginSettings.GetPluginSettingByPluginID(c.Req.Context(), &pluginsettings.GetByPluginIDArgs{
-		PluginID: plugin.ID,
-		OrgID:    c.GetOrgID(),
-	})
-	if err != nil {
-		return false
-	}
-
-	loopData, exists := ps.JSONData["loop"]
-	if !exists {
-		return false
-	}
-
-	loopConfig, ok := loopData.(map[string]any)
-	if !ok {
-		return false
-	}
-
-	enabled, ok := loopConfig["enabled"].(bool)
-	return ok && enabled
-}
-
 type pendingInclude struct {
 	link   *navtree.NavLink
 	isPage bool
@@ -197,6 +168,7 @@ type pendingInclude struct {
 func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmodel.ReqContext, treeRoot *navtree.NavTreeRoot) *navtree.NavLink {
 	hasAccessToInclude := s.hasAccessToInclude(c, plugin.ID)
 	assistantTrialMode := s.isAssistantTrialMode(plugin, c)
+	assistantOSSMode, assistantOSSModeSet := s.assistantOSSMode(plugin, c)
 	appLink := &navtree.NavLink{
 		Text:       plugin.Name,
 		Id:         "plugin-page-" + plugin.ID,
@@ -223,11 +195,7 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 			continue
 		}
 
-		if !s.shouldIncludeAssistantNavigation(plugin, include, assistantTrialMode) {
-			continue
-		}
-
-		if !s.shouldIncludeInvestigations(plugin, include, c) {
+		if !s.shouldIncludeAssistantNavigation(plugin, include, assistantTrialMode, assistantOSSMode, assistantOSSModeSet) {
 			continue
 		}
 
@@ -329,7 +297,7 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 		// Add Service Center as a standalone nav item under Alerts & IRM
 		if alertsSection := treeRoot.FindById(navtree.NavIDAlertsAndIncidents); alertsSection != nil {
 			serviceLink := &navtree.NavLink{
-				Text:       "Service center",
+				Text:       "Service Center",
 				Id:         "standalone-plugin-page-slo-services",
 				SubTitle:   "Centralizes service-level operational data including SLOs, alerts, and incidents by grouping resources through shared labels or tags",
 				Url:        s.cfg.AppSubURL + "/a/grafana-slo-app/services",
@@ -344,23 +312,35 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 }
 
 func (s *ServiceImpl) isAssistantTrialMode(plugin pluginstore.Plugin, c *contextmodel.ReqContext) bool {
+	value, ok := s.assistantPluginJSONDataBool(plugin, c, "trialMode")
+	return ok && value
+}
+
+func (s *ServiceImpl) assistantOSSMode(plugin pluginstore.Plugin, c *contextmodel.ReqContext) (ossMode bool, set bool) {
 	if plugin.ID != assistantAppID {
-		return false
+		return false, false
+	}
+	return s.assistantPluginJSONDataBool(plugin, c, "ossMode")
+}
+
+func (s *ServiceImpl) assistantPluginJSONDataBool(plugin pluginstore.Plugin, c *contextmodel.ReqContext, key string) (bool, bool) {
+	if plugin.ID != assistantAppID {
+		return false, false
 	}
 
 	ps, err := s.pluginSettings.GetPluginSettingByPluginID(c.Req.Context(), &pluginsettings.GetByPluginIDArgs{
 		PluginID: plugin.ID,
 		OrgID:    c.GetOrgID(),
 	})
-	if err != nil {
-		return false
+	if err != nil || ps.JSONData == nil {
+		return false, false
 	}
 
-	trialMode, ok := ps.JSONData["trialMode"].(bool)
-	return ok && trialMode
+	value, ok := ps.JSONData[key].(bool)
+	return value, ok
 }
 
-func (s *ServiceImpl) shouldIncludeAssistantNavigation(plugin pluginstore.Plugin, include *plugins.Includes, trialMode bool) bool {
+func (s *ServiceImpl) shouldIncludeAssistantNavigation(plugin pluginstore.Plugin, include *plugins.Includes, trialMode, ossMode, ossModeSet bool) bool {
 	if plugin.ID != assistantAppID {
 		return true
 	}
@@ -368,10 +348,19 @@ func (s *ServiceImpl) shouldIncludeAssistantNavigation(plugin pluginstore.Plugin
 		_, allowed := assistantTrialNavigationPaths[include.Path]
 		return allowed
 	}
+	if ossModeSet {
+		if ossMode {
+			_, allowed := assistantOSSNavigationPaths[include.Path]
+			return allowed
+		}
+		return true
+	}
+	// ossMode was not persisted or plugin settings could not be read. Keep the
+	// previous Cloud/Enterprise default so unprovisioned stacks still show
+	// Cloud-only pages.
 	if s.cfg.IsEnterprise || s.cfg.StackID != "" {
 		return true
 	}
-
 	_, allowed := assistantOSSNavigationPaths[include.Path]
 	return allowed
 }
@@ -585,7 +574,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-agentictesting-app":       {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 1, Text: "Agentic testing", IsNew: true},
 		"k6-app":                           {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 2, Text: "Performance"},
 		"grafana-synthetic-monitoring-app": {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 3, Text: "Synthetics"},
-		"grafana-servicecenter-app":        {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 1, Text: "Service center"},
+		"grafana-servicecenter-app":        {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 1, Text: "Service Center"},
 		"grafana-irm-app":                  {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 3, Text: "IRM"},
 		"grafana-slo-app":                  {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 4},
 		"grafana-labelmanagement-app":      {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 5, Text: "Label management"},

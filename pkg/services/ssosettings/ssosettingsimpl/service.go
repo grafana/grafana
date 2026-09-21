@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 	"sync"
@@ -20,7 +21,6 @@ import (
 	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/configprovider"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/strategies"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 var _ ssosettings.Service = (*Service)(nil)
@@ -54,6 +55,7 @@ type Service struct {
 	providersList         []string
 	configurableProviders map[string]bool
 	reloadables           map[string]ssosettings.Reloadable
+	defaultsProviders     map[string]ssosettings.DefaultsProvider
 	cachedSSOSettings     []*models.SSOSettings
 	cacheMutex            sync.RWMutex
 
@@ -62,7 +64,7 @@ type Service struct {
 	mtReadAuthoritative bool
 }
 
-func ProvideService(cfg *setting.Cfg, cfgProvider configprovider.ConfigProvider, sqlStore db.DB, ac ac.AccessControl,
+func ProvideService(cfg *setting.Cfg, cfgProvider configprovider.ConfigProvider, sql legacysql.LegacyDatabaseProvider, ac ac.AccessControl,
 	routeRegister routing.RouteRegister, features featuremgmt.FeatureToggles,
 	secrets secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	usageStats usagestats.Service, registerer prometheus.Registerer,
@@ -105,9 +107,7 @@ func ProvideService(cfg *setting.Cfg, cfgProvider configprovider.ConfigProvider,
 	}
 
 	configurableProviders := make(map[string]bool)
-	for provider, enabled := range cfg.SSOSettingsConfigurableProviders {
-		configurableProviders[provider] = enabled
-	}
+	maps.Copy(configurableProviders, cfg.SSOSettingsConfigurableProviders)
 
 	providersList := ssosettings.AllOAuthProviders
 	providersList = append(providersList, social.LDAPProviderName)
@@ -119,7 +119,7 @@ func ProvideService(cfg *setting.Cfg, cfgProvider configprovider.ConfigProvider,
 		configurableProviders[social.SAMLProviderName] = true
 	}
 
-	store := database.ProvideStore(sqlStore)
+	store := database.ProvideStore(sql)
 
 	svc := &Service{
 		logger:                logger,
@@ -151,7 +151,7 @@ func ProvideService(cfg *setting.Cfg, cfgProvider configprovider.ConfigProvider,
 // database with the tenant configuration as fallback.
 //
 //nolint:staticcheck // SA1019: legacy tenant databases still use the deprecated secrets service
-func ProvideReadOnlyService(cfgProvider configprovider.ConfigProvider, sqlStore db.DB, secretsSvc secrets.Service) *Service {
+func ProvideReadOnlyService(cfgProvider configprovider.ConfigProvider, sql legacysql.LegacyDatabaseProvider, secretsSvc secrets.Service) *Service {
 	configurableProviders := make(map[string]bool, len(ssosettings.AllOAuthProviders))
 	for _, provider := range ssosettings.AllOAuthProviders {
 		configurableProviders[provider] = true
@@ -159,7 +159,7 @@ func ProvideReadOnlyService(cfgProvider configprovider.ConfigProvider, sqlStore 
 
 	return &Service{
 		logger:                log.New("ssosettings.service"),
-		store:                 database.ProvideStore(sqlStore),
+		store:                 database.ProvideStore(sql),
 		secrets:               secretsSvc,
 		fbStrategies:          []ssosettings.FallbackStrategy{strategies.NewOAuthStrategy(cfgProvider)},
 		providersList:         slices.Clone(ssosettings.AllOAuthProviders),
@@ -283,6 +283,24 @@ func (s *Service) List(ctx context.Context) ([]*models.SSOSettings, error) {
 	return result, nil
 }
 
+// ListStored returns the stored overrides with secrets decrypted, without
+// merging system defaults (List does merge them).
+func (s *Service) ListStored(ctx context.Context) ([]*models.SSOSettings, error) {
+	stored, err := s.store.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, setting := range stored {
+		setting.Settings, err = s.decryptSecrets(ctx, setting.Settings)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return stored, nil
+}
+
 func (s *Service) ListWithRedactedSecrets(ctx context.Context) ([]*models.SSOSettings, error) {
 	storeSettings, err := s.List(ctx)
 	if err != nil {
@@ -364,12 +382,8 @@ func (s *Service) Patch(ctx context.Context, provider string, data map[string]an
 	}
 
 	newSettingsMap := make(map[string]any)
-	for k, v := range storedSettings.Settings {
-		newSettingsMap[k] = v
-	}
-	for k, v := range data {
-		newSettingsMap[k] = v
-	}
+	maps.Copy(newSettingsMap, storedSettings.Settings)
+	maps.Copy(newSettingsMap, data)
 
 	newSettings := &models.SSOSettings{
 		Provider: provider,
@@ -463,6 +477,23 @@ func (s *Service) RegisterReloadable(provider string, reloadable ssosettings.Rel
 		s.reloadables = make(map[string]ssosettings.Reloadable)
 	}
 	s.reloadables[provider] = reloadable
+
+	if dp, ok := reloadable.(ssosettings.DefaultsProvider); ok {
+		if s.defaultsProviders == nil {
+			s.defaultsProviders = make(map[string]ssosettings.DefaultsProvider)
+		}
+		s.defaultsProviders[provider] = dp
+	}
+}
+
+// GetDefaults returns the default setting values of the provider or nil if
+// the provider doesn't have default values registered.
+func (s *Service) GetDefaults(provider string) map[string]any {
+	dp, ok := s.defaultsProviders[provider]
+	if !ok {
+		return nil
+	}
+	return dp.Defaults()
 }
 
 func (s *Service) RegisterFallbackStrategy(providerRegex string, strategy ssosettings.FallbackStrategy) {
@@ -624,9 +655,7 @@ func (s *Service) mergeSSOSettingsMTAuthoritative(dbSettings, systemSettings *mo
 	s.logger.Debug("Merging SSO Settings, MT-Settings authoritative", "systemSettings", removeSecrets(systemSettings.Settings), "dbSettings", removeSecrets(dbSettings.Settings))
 
 	settings := make(map[string]any, len(systemSettings.Settings))
-	for k, v := range systemSettings.Settings {
-		settings[k] = v
-	}
+	maps.Copy(settings, systemSettings.Settings)
 	for k, v := range dbSettings.Settings {
 		if existing, ok := settings[k]; !ok || isEmptyString(existing) {
 			settings[k] = v
@@ -721,9 +750,7 @@ func getConfigMaps(settings map[string]any) []map[string]any {
 func mergeSettings(storedSettings, systemSettings map[string]any) map[string]any {
 	settings := make(map[string]any)
 
-	for k, v := range storedSettings {
-		settings[k] = v
-	}
+	maps.Copy(settings, storedSettings)
 
 	for k, v := range systemSettings {
 		if _, ok := settings[k]; !ok {
@@ -780,12 +807,10 @@ func mergeSecrets(settings map[string]any, storedSettings map[string]any) (map[s
 	return settingsWithSecrets, nil
 }
 
-func overrideMaps(maps ...map[string]any) map[string]any {
+func overrideMaps(input ...map[string]any) map[string]any {
 	result := make(map[string]any)
-	for _, m := range maps {
-		for k, v := range m {
-			result[k] = v
-		}
+	for _, m := range input {
+		maps.Copy(result, m)
 	}
 	return result
 }
