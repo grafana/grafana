@@ -1,4 +1,4 @@
-import { type FetchError, isFetchError } from '@grafana/runtime';
+import { type BackendSrvRequest, type FetchError, getBackendSrv, isFetchError } from '@grafana/runtime';
 
 import { GRAFANA_ONCALL_INTEGRATION_TYPE } from '../components/receivers/grafanaAppReceivers/onCall/onCall';
 
@@ -19,7 +19,7 @@ interface OnCallPaginatedResult<T> {
 export const ONCALL_INTEGRATION_V2_FEATURE = 'grafana_alerting_v2';
 type OnCallFeature = typeof ONCALL_INTEGRATION_V2_FEATURE | string;
 
-export type AlertReceiveChannelsResult = OnCallPaginatedResult<OnCallIntegrationDTO> | OnCallIntegrationDTO[];
+type AlertReceiveChannelsResult = OnCallPaginatedResult<OnCallIntegrationDTO> | OnCallIntegrationDTO[];
 
 export interface OnCallIntegrationDTO {
   value: string;
@@ -41,8 +41,7 @@ export function getProxyApiUrl(path: string, pluginId: string) {
   return `/api/plugins/${pluginId}/resources${path}`;
 }
 
-/** Request for the Grafana Alerting integrations configured in OnCall/IRM; shared with the homepage probe. */
-export function grafanaOnCallIntegrationsRequest(pluginId: string) {
+function grafanaOnCallIntegrationsRequest(pluginId: string) {
   return {
     url: getProxyApiUrl('/alert_receive_channels/', pluginId),
     // legacy_grafana_alerting is necessary for OnCall.
@@ -102,9 +101,19 @@ function isPaginatedResponse(
   return 'results' in response && Array.isArray(response.results);
 }
 
-/** OnCall returns the integration list bare or paginated depending on version; read both shapes. */
-export function readOnCallIntegrations(response: AlertReceiveChannelsResult): OnCallIntegrationDTO[] {
+// OnCall returns the integration list bare or paginated depending on version; read both shapes.
+function readOnCallIntegrations(response: AlertReceiveChannelsResult): OnCallIntegrationDTO[] {
   return isPaginatedResponse(response) ? response.results : response;
+}
+
+/** The Grafana Alerting integrations configured in OnCall/IRM, for callers outside RTK Query. */
+export async function fetchGrafanaOnCallIntegrations(
+  pluginId: string,
+  requestOptions?: Partial<BackendSrvRequest>
+): Promise<OnCallIntegrationDTO[]> {
+  const { url, params } = grafanaOnCallIntegrationsRequest(pluginId);
+  const response = await getBackendSrv().get<AlertReceiveChannelsResult>(url, params, undefined, requestOptions);
+  return readOnCallIntegrations(response);
 }
 
 export const {} = onCallApi;

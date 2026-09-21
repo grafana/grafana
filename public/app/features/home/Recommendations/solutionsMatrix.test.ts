@@ -1,5 +1,5 @@
 import { SOLUTION_IDS } from '../solutions/constants';
-import { type SignalStatus, type SolutionState } from '../solutions/solutionState';
+import { CORE_SIGNALS, type SignalStatus, type SolutionState } from '../solutions/solutionState';
 
 import {
   type BaseRow,
@@ -45,12 +45,7 @@ describe('selectRecommendations', () => {
   });
 
   // A single unknown core signal blanks the selection even when the settled signals would produce cards.
-  it.each<Exclude<keyof SolutionState, 'spanMetrics' | 'synthetics' | 'irm'>>([
-    'metrics',
-    'logs',
-    'traces',
-    'kubernetes',
-  ])('short-circuits to no cards when %s is unknown', (signal) => {
+  it.each(CORE_SIGNALS)('short-circuits to no cards when %s is unknown', (signal) => {
     const cardProducing = state(on, on, off, off);
     expect(selectRecommendations({ ...cardProducing, [signal]: 'unknown' })).toEqual({
       cards: [],

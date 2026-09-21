@@ -4,7 +4,7 @@
  * No I/O: signal detection lives in solutionState.ts.
  */
 
-import { type SolutionState } from '../solutions/solutionState';
+import { CORE_SIGNALS, type SolutionState } from '../solutions/solutionState';
 import { type SolutionId } from '../solutions/types';
 
 export type RecommendedCardId =
@@ -119,8 +119,8 @@ export interface RecommendationSelection {
  */
 export function selectRecommendations(state: SolutionState): RecommendationSelection {
   const { metrics, logs, traces, kubernetes, spanMetrics, synthetics, irm } = state;
-  // The core-signal short-circuit deliberately excludes spanMetrics, synthetics and irm: they each gate one card.
-  if (metrics === 'unknown' || logs === 'unknown' || traces === 'unknown' || kubernetes === 'unknown') {
+  // Only core signals short-circuit; spanMetrics, synthetics and irm each gate a single card.
+  if (CORE_SIGNALS.some((signal) => state[signal] === 'unknown')) {
     return { cards: [], baseRow: 'unknown' };
   }
 
@@ -164,7 +164,9 @@ export function selectRecommendations(state: SolutionState): RecommendationSelec
   // M+L+T (OTel starters): App Observability unless span metrics show it is already in use.
   const appO11y: RecommendedCardId[] = spanMetrics === 'inactive' ? ['application-observability'] : [];
   const k8sMonitoring: RecommendedCardId[] = kubernetes === 'active' ? [] : ['kubernetes-monitoring'];
-  // IRM leads only once App Observability is proven in use; an unknown probe hides App O11y but does not promote IRM.
+  // The matrix ranks these rows differently: "M+L+T, no App O11y" has App O11y PRIMARY and IRM SECONDARY;
+  // "App O11y active" has IRM PRIMARY over K8s Monitoring SECONDARY. So IRM leads only once App
+  // Observability is proven in use; an unknown probe hides App O11y but does not promote IRM.
   const cards: RecommendedCardId[] =
     spanMetrics === 'active' ? [...irmCard, ...k8sMonitoring] : [...appO11y, ...k8sMonitoring, ...irmCard];
   return { cards, baseRow: kubernetes === 'active' ? 'fully_active' : 'mlt' };

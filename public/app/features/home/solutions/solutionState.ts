@@ -20,6 +20,11 @@ export interface SolutionState {
   irm: SignalStatus;
 }
 
+/** The signals that pick a matrix row; any of them `unknown` blanks the recommendations. */
+export const CORE_SIGNALS = ['metrics', 'logs', 'traces', 'kubernetes'] as const satisfies ReadonlyArray<
+  keyof SolutionState
+>;
+
 /** A settled signal: whether data is flowing, and the datasource that proved it. */
 export interface SignalDetection {
   status: SignalStatus;
