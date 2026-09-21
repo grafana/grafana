@@ -23,9 +23,10 @@ import {
   type PluginExtensionLink,
   PluginExtensionPoints,
   PluginExtensionTypes,
+  type TraceSearchProps,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { usePluginLinks, usePluginComponents, config } from '@grafana/runtime';
+import { usePluginLinks, usePluginComponents, config, reportInteraction } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { DEFAULT_SPAN_FILTERS } from 'app/features/explore/state/constants';
 
@@ -95,7 +96,8 @@ const setup = (
   pluginLinks: { links: PluginExtensionLink[]; isLoading: boolean } = { links: [], isLoading: false },
   hideHeaderDetails = false,
   logsLinkModel?: LinkModel,
-  traceOverride = trace
+  traceOverride = trace,
+  overrides: { search?: TraceSearchProps; spanFilterMatches?: Set<string> } = {}
 ) => {
   const mockUsePluginLinks = usePluginLinks as jest.MockedFunction<typeof usePluginLinks>;
   mockUsePluginLinks.mockReturnValue(pluginLinks);
@@ -108,12 +110,13 @@ const setup = (
     app: CoreApp.Unknown,
     trace: traceOverride,
     timeZone: '',
-    search: DEFAULT_SPAN_FILTERS,
+    search: overrides.search ?? DEFAULT_SPAN_FILTERS,
     setSearch: jest.fn(),
     showSpanFilters: true,
     setShowSpanFilters: jest.fn(),
-    spanFilterMatches: undefined,
+    spanFilterMatches: overrides.spanFilterMatches,
     setFocusedSpanIdForSearch: jest.fn(),
+    revealSpan: jest.fn(),
     datasourceType: 'tempo',
     setHeaderHeight: jest.fn(),
     data: new MutableDataFrame(),
@@ -130,6 +133,9 @@ const setup = (
     ...render(<TracePageHeader {...defaultProps} />),
     mockUsePluginLinks,
     mockUsePluginComponents,
+    setFocusedSpanIdForSearch: defaultProps.setFocusedSpanIdForSearch,
+    revealSpan: defaultProps.revealSpan,
+    setSearch: defaultProps.setSearch,
   };
 };
 
@@ -359,7 +365,150 @@ describe('TracePageHeader test', () => {
     expect(within(banner).getByText('payment-service')).toBeInTheDocument();
     expect(within(banner).getByText('POST /payments/authorize')).toBeInTheDocument();
     expect(within(banner).getByText('1.42s · 58.9% of trace')).toBeInTheDocument();
+    expect(within(banner).getByRole('button', { name: 'Go to span' })).toBeInTheDocument();
     expect(within(banner).queryByText('checkout-service')).not.toBeInTheDocument();
+  });
+
+  it('focuses the highlighted span on each Go to span click, including repeats', async () => {
+    const errorTraceId = 'go-to-span-trace-id';
+    const errorTrace = {
+      ...trace,
+      traceID: errorTraceId,
+      duration: 2_410_000,
+      spans: [
+        {
+          ...trace.spans[0],
+          traceID: errorTraceId,
+          spanID: 'root-error',
+          depth: 0,
+          duration: 2_410_000,
+          tags: [{ key: 'http.status_code', type: 'String', value: '500' }],
+        },
+        {
+          ...trace.spans[1],
+          traceID: errorTraceId,
+          spanID: 'payment-error',
+          depth: 2,
+          duration: 1_420_000,
+          operationName: 'authorize',
+          process: { ...trace.spans[1].process, serviceName: 'payment-service' },
+          tags: [
+            { key: 'http.method', type: 'String', value: 'POST' },
+            { key: 'http.route', type: 'String', value: '/payments/authorize' },
+            { key: 'error', type: 'String', value: 'true' },
+          ],
+        },
+      ],
+    };
+
+    const { setFocusedSpanIdForSearch, revealSpan } = setup(
+      { links: [], isLoading: false },
+      false,
+      undefined,
+      errorTrace
+    );
+    const goToSpan = screen.getByRole('button', { name: 'Go to span' });
+
+    await userEvent.click(goToSpan);
+    await userEvent.click(goToSpan);
+
+    expect(revealSpan).toHaveBeenCalledWith(errorTrace.spans[1]);
+    expect(setFocusedSpanIdForSearch).toHaveBeenCalledWith('payment-error');
+    expect(jest.mocked(reportInteraction)).toHaveBeenCalledTimes(2);
+    expect(jest.mocked(reportInteraction)).toHaveBeenCalledWith('grafana_traces_trace_view_go_to_span_clicked', {
+      app: CoreApp.Unknown,
+      datasourceType: 'tempo',
+      grafana_version: config.buildInfo.version,
+      location: 'trace-banner',
+    });
+  });
+
+  it('turns off matches-only when Go to span targets a hidden filtered span', async () => {
+    const errorTraceId = 'go-to-span-filtered-trace-id';
+    const errorTrace = {
+      ...trace,
+      traceID: errorTraceId,
+      duration: 2_410_000,
+      spans: [
+        {
+          ...trace.spans[0],
+          traceID: errorTraceId,
+          spanID: 'root-error',
+          depth: 0,
+          duration: 2_410_000,
+          tags: [{ key: 'http.status_code', type: 'String', value: '500' }],
+        },
+        {
+          ...trace.spans[1],
+          traceID: errorTraceId,
+          spanID: 'payment-error',
+          depth: 2,
+          duration: 1_420_000,
+          operationName: 'authorize',
+          process: { ...trace.spans[1].process, serviceName: 'payment-service' },
+          tags: [
+            { key: 'http.method', type: 'String', value: 'POST' },
+            { key: 'http.route', type: 'String', value: '/payments/authorize' },
+            { key: 'error', type: 'String', value: 'true' },
+          ],
+        },
+      ],
+    };
+
+    const { setSearch } = setup({ links: [], isLoading: false }, false, undefined, errorTrace, {
+      search: { ...DEFAULT_SPAN_FILTERS, matchesOnly: true, criticalPathOnly: true },
+      spanFilterMatches: new Set(['root-error']),
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Go to span' }));
+
+    expect(setSearch).toHaveBeenCalledWith({
+      ...DEFAULT_SPAN_FILTERS,
+      matchesOnly: false,
+      criticalPathOnly: true,
+    });
+  });
+
+  it('does not change search when Go to span target is already visible', async () => {
+    const errorTraceId = 'go-to-span-visible-trace-id';
+    const errorTrace = {
+      ...trace,
+      traceID: errorTraceId,
+      duration: 2_410_000,
+      spans: [
+        {
+          ...trace.spans[0],
+          traceID: errorTraceId,
+          spanID: 'root-error',
+          depth: 0,
+          duration: 2_410_000,
+          tags: [{ key: 'http.status_code', type: 'String', value: '500' }],
+        },
+        {
+          ...trace.spans[1],
+          traceID: errorTraceId,
+          spanID: 'payment-error',
+          depth: 2,
+          duration: 1_420_000,
+          operationName: 'authorize',
+          process: { ...trace.spans[1].process, serviceName: 'payment-service' },
+          tags: [
+            { key: 'http.method', type: 'String', value: 'POST' },
+            { key: 'http.route', type: 'String', value: '/payments/authorize' },
+            { key: 'error', type: 'String', value: 'true' },
+          ],
+        },
+      ],
+    };
+
+    const { setSearch } = setup({ links: [], isLoading: false }, false, undefined, errorTrace, {
+      search: { ...DEFAULT_SPAN_FILTERS, criticalPathOnly: true },
+      spanFilterMatches: new Set(['root-error']),
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Go to span' }));
+
+    expect(setSearch).not.toHaveBeenCalled();
   });
 
   it('should render the trace-level logs link when provided', () => {
