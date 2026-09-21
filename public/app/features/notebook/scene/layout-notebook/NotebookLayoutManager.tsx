@@ -43,6 +43,7 @@ import {
   getCellDropIndicator,
   NotebookCellFrame,
   NOTEBOOK_CELL_CONTROLS_CLASS,
+  NOTEBOOK_CELL_CONTROLS_PINNED_CLASS,
   NOTEBOOK_CELL_FRAME_CLASS,
   type NotebookDragState,
 } from './edit/NotebookCellFrame';
@@ -1069,8 +1070,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: 0,
     // Without this, the cell you type in and the cell under the pointer both show their controls. So
     // the pointer wins: this hides the controls on every cell the pointer is not over. Whatever holds
-    // focus stays visible, because a tab stop at opacity 0 is a focus trap.
-    [`&:has(.${NOTEBOOK_CELL_FRAME_CLASS}:hover) .${NOTEBOOK_CELL_FRAME_CLASS}:not(:hover) > .${NOTEBOOK_CELL_CONTROLS_CLASS}:not(:focus-within)`]:
+    // focus stays visible, because a tab stop at opacity 0 is a focus trap. A control that pinned
+    // itself stays too, which is how a control with an open menu keeps the menu anchored.
+    [`&:has(.${NOTEBOOK_CELL_FRAME_CLASS}:hover) .${NOTEBOOK_CELL_FRAME_CLASS}:not(:hover) > .${NOTEBOOK_CELL_CONTROLS_CLASS}:not(:focus-within):not(.${NOTEBOOK_CELL_CONTROLS_PINNED_CLASS})`]:
       {
         opacity: 0,
         pointerEvents: 'none',

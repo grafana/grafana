@@ -25,6 +25,12 @@ export const NOTEBOOK_CELL_CONTROLS_CLASS = 'notebook-cell-controls';
 /** Stable class name on the frame itself, so the cell list can see which cell the pointer is over. */
 export const NOTEBOOK_CELL_FRAME_CLASS = 'notebook-cell-frame';
 
+/**
+ * A control that must stay visible while the pointer is on another cell. A control with an open menu
+ * needs this, because the menu renders in a portal and the control is then not `:focus-within`.
+ */
+export const NOTEBOOK_CELL_CONTROLS_PINNED_CLASS = 'notebook-cell-controls-pinned';
+
 const NOTEBOOK_CELL_CONTENT_CLASS = 'notebook-cell-content';
 
 /** Which edge of a cell the drop line is drawn on while a drag is in flight. */
