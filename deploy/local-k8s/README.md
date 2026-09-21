@@ -76,3 +76,19 @@ kubectl --kubeconfig /tmp/error-tracking-native.kubeconfig \
 ```
 
 Open `http://localhost:3000/error-tracking`.
+
+Run the same image through disposable cell and BYOC-like environments after the base proof:
+
+```sh
+ENTERPRISE_SOURCE=/path/to/grafana-enterprise \
+PLATFORM_IMAGE=error-tracking-platform:local \
+API_IMAGE=error-tracking-api:local \
+BASE_KUBECONFIG=/tmp/error-tracking-native.kubeconfig \
+  deploy/local-k8s/prove-native-multienv.sh
+```
+
+The multi-environment proof runs one isolated cluster and Docker network at a time, compares image and binary identities, verifies distinct credentials and PostgreSQL networks, proves data and failure isolation while the base cluster stays available, and checks restart persistence and runtime privileges.
+
+`run-migration.sh`, `prepare-runtime-secret.sh`, `rotate-runtime-secret.sh`, and `prove-privileges.sh` are the focused building blocks used by the native proofs. They accept only `kind-error-tracking-native` contexts and require the `error-tracking` namespace.
+
+These workflows prove local behavior and configuration parity. They do not deploy cloud infrastructure, validate cloud IAM, or exercise a hosted multi-tenant aggregator. The local Grafana aggregation path skips upstream certificate verification, while the proof separately validates the API certificate with its generated CA. After API credential rotation, the proof records whether the local aggregator recovered automatically or needed a Grafana restart to clear a stale backend transport.
