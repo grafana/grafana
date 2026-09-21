@@ -1,6 +1,9 @@
 import { type DataSourceInstanceSettings, type DataSourceJsonData } from '@grafana/data';
 
-import { SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES, isValidRecordingRulesTarget } from './recordingRulesTarget';
+import {
+  SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES,
+  isValidRecordingRulesTarget,
+} from './recordingRulesTarget';
 
 function mockDataSource(
   partial: Partial<DataSourceInstanceSettings<DataSourceJsonData>> = {}
