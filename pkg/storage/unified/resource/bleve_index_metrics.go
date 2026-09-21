@@ -8,6 +8,7 @@ import (
 )
 
 type BleveIndexMetrics struct {
+	SearchAuth           *SearchAuthMetrics
 	IndexSize            prometheus.Gauge
 	IndexedKinds         *prometheus.GaugeVec
 	IndexCreationTime    *prometheus.HistogramVec
@@ -81,6 +82,7 @@ var IndexCreationBuckets = []float64{1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 5
 // unregistered, so callers without a registry never have to check for nil.
 func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 	m := &BleveIndexMetrics{
+		SearchAuth: newSearchAuthMetrics(reg),
 		IndexSize: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
 			Name: "grafana_index_server_index_size_bytes",
 			Help: "Size of the index in bytes - only for file-based indices",

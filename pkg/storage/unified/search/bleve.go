@@ -2342,7 +2342,7 @@ func (b *bleveIndex) Search(
 	req *resourcepb.ResourceSearchRequest,
 	federate []resource.ResourceIndex, // For federated queries, these will match the values in req.federate
 	stats *resource.SearchStats,
-) (response *resourcepb.ResourceSearchResponse, _ error) {
+) (response *resourcepb.ResourceSearchResponse, resultErr error) {
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.Search")
 	defer span.End()
 
@@ -2369,6 +2369,14 @@ func (b *bleveIndex) Search(
 	// the match set, otherwise Bleve's unfiltered count with
 	// TotalHitsExact=false.
 	postRank := b.postRankAuthzEnabled && access != nil
+	authMetrics := newSearchAuthObservation(b.indexMetrics)
+	if authMetrics != nil {
+		ctx = context.WithValue(ctx, searchAuthObservationKey{}, authMetrics)
+		if access != nil {
+			access = &observedSearchAccessClient{AccessClient: access, observation: authMetrics}
+		}
+	}
+	cursorFallback := false
 
 	// A trash search replaces the read check with the trash rule on whichever authz
 	// path runs. Built once per request, because it caches folder-admin results.
@@ -2426,6 +2434,7 @@ func (b *bleveIndex) Search(
 	}
 	if postRank && cursorLen > 0 && cursorLen != len(searchrequest.Sort) {
 		postRank = false
+		cursorFallback = true
 		searchrequest, e = b.toBleveSearchRequest(ctx, req, access, postRank, trashAuthz)
 		if e != nil {
 			response.Error = e
@@ -2448,6 +2457,19 @@ func (b *bleveIndex) Search(
 				Error: resource.NewBadRequestError(err.Error()),
 			}, nil
 		}
+	}
+	if authMetrics != nil {
+		mode := "pre_rank"
+		if access == nil {
+			mode = "none"
+		} else if postRank {
+			mode = "post_rank"
+		}
+		if cursorFallback {
+			authMetrics.event("cursor_fallback")
+		}
+		started := time.Now()
+		defer func() { authMetrics.observe(mode, searchAuthQueryType(req), started, response, resultErr) }()
 	}
 	if postRank {
 		b.ensureAuthzFields(searchrequest, trashAuthz != nil)
@@ -4842,6 +4864,9 @@ func (s *batchAuthzSearcher) Close() error {
 			attribute.Int64("search.authorized", s.authorized.Load()),
 		)
 		s.span.End()
+	}
+	if observation := searchAuthObservationFromContext(s.ctx); observation != nil {
+		observation.candidates.Add(s.candidates.Load())
 	}
 	return s.searcher.Close()
 }
