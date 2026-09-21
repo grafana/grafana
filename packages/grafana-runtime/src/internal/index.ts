@@ -89,6 +89,8 @@ export { setDataSourcePluginImporter } from '../services/dataSource/dataSource';
 // Exported so test helpers can assert a suite never resolved through the legacy fallback.
 // Delete along with the fallbacks themselves once `DataSourceSrv` is gone.
 export {
+  FALLBACK_TO_BOOTDATA_LIST_WARNING,
+  FALLBACK_TO_BOOTDATA_SETTINGS_WARNING,
   FALLBACK_TO_LEGACY_INSTANCE_WARNING,
   FALLBACK_TO_LEGACY_LIST_WARNING,
   FALLBACK_TO_LEGACY_SETTINGS_WARNING,

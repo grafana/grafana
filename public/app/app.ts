@@ -319,9 +319,8 @@ export class GrafanaApp {
       // intercept anchor clicks and forward it to custom history instead of relying on browser's history
       document.addEventListener('click', interceptLinkClicks);
 
-      // Init async data source services (populates cache from boot data so
-      // new `getInstanceSettings` / `getInstanceSettingsList` callers don't
-      // need to wait on a network round trip).
+      // Initialize the data source instance APIs. The implementation selects the
+      // synchronous boot-data path or starts async initialization behind its feature flag.
       setExpressionDataSourceInstance(expressionDatasource);
       // eslint-disable-next-line @grafana/no-config-datasources -- boot data is the seed for the instance settings cache
       initDataSourceInstanceSettings(config.datasources, config.defaultDatasource);
