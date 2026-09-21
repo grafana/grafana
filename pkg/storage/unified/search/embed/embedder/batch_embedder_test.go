@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
 
 // fakeTextEmbedder returns a deterministic dense vector per input text so
@@ -19,9 +21,11 @@ type fakeTextEmbedder struct {
 	dim     int
 	gotIn   EmbedTextInput
 	wantErr error
+	calls   int
 }
 
 func (f *fakeTextEmbedder) EmbedText(_ context.Context, in EmbedTextInput) (EmbedTextOutput, error) {
+	f.calls++
 	f.gotIn = in
 	if f.wantErr != nil {
 		return EmbedTextOutput{}, f.wantErr
@@ -188,4 +192,127 @@ func TestBatchEmbedder_Embed_PreservesRetryableError(t *testing.T) {
 			assert.Same(t, retryErr, got)
 		})
 	}
+}
+
+func TestBatchEmbedder_EmbedResources_PreservesObjectBoundaries(t *testing.T) {
+	fake := &fakeTextEmbedder{dim: 3}
+	be := NewBatchEmbedder(newTestEmbedder(fake))
+	inputs := []ResourceInput{
+		{Namespace: "org-a", ResourceVersion: 42, Items: []embed.Item{
+			{UID: "same-uid", Subresource: "empty"},
+			{UID: "same-uid", Title: "First panel", Subresource: "panel/1", Content: "first", Folder: "folder-a", Metadata: []byte(`{"panel":1}`)},
+			{UID: "same-uid", Subresource: "panel/2", Content: "second"},
+		}},
+		{Namespace: "org-a", ResourceVersion: 43, Items: []embed.Item{{UID: "empty-object"}}},
+		{Namespace: "org-b", ResourceVersion: 99, Items: []embed.Item{
+			{UID: "same-uid", Title: "Other tenant", Subresource: "panel/1", Content: "third", Folder: "folder-b"},
+			{UID: "same-uid", Subresource: "empty"},
+		}},
+		{Namespace: "org-c", ResourceVersion: 100},
+	}
+
+	got, err := be.EmbedResources(t.Context(), "dashboard_partition", 7, inputs)
+	require.NoError(t, err)
+	assert.Equal(t, [][]vector.Vector{
+		{
+			{Namespace: "org-a", Resource: "dashboard_partition", UID: "same-uid", Title: "First panel", Subresource: "panel/1", ResourceVersion: 42, Folder: "folder-a", Content: "first", Metadata: []byte(`{"panel":1}`), Embedding: []float32{1, 0, 0}, Model: "test/model-1", ContentVersion: 7},
+			{Namespace: "org-a", Resource: "dashboard_partition", UID: "same-uid", Subresource: "panel/2", ResourceVersion: 42, Content: "second", Embedding: []float32{2, 0, 0}, Model: "test/model-1", ContentVersion: 7},
+		},
+		nil,
+		{
+			{Namespace: "org-b", Resource: "dashboard_partition", UID: "same-uid", Title: "Other tenant", Subresource: "panel/1", ResourceVersion: 99, Folder: "folder-b", Content: "third", Embedding: []float32{3, 0, 0}, Model: "test/model-1", ContentVersion: 7},
+		},
+		nil,
+	}, got)
+	assert.Equal(t, 1, fake.calls)
+	assert.Equal(t, []string{"first", "second", "third"}, fake.gotIn.Texts)
+}
+
+func TestBatchEmbedder_EmbedResources_AllEmpty(t *testing.T) {
+	for _, inputs := range [][]ResourceInput{
+		nil,
+		{{Namespace: "org-a", Items: []embed.Item{{UID: "empty"}}}, {Namespace: "org-b"}},
+	} {
+		fake := &fakeTextEmbedder{dim: 3}
+		be := NewBatchEmbedder(newTestEmbedder(fake))
+		got, err := be.EmbedResources(t.Context(), "dashboards", 1, inputs)
+		require.NoError(t, err)
+		require.Len(t, got, len(inputs))
+		for _, vectors := range got {
+			assert.Nil(t, vectors)
+		}
+		assert.Zero(t, fake.calls)
+	}
+}
+
+func TestBatchEmbedder_EmbedResources_ProviderBatches(t *testing.T) {
+	inputs := []ResourceInput{
+		{Namespace: "org-a", ResourceVersion: 1, Items: []embed.Item{
+			{UID: "a", Subresource: "panel/1", Content: "a1"},
+			{UID: "a", Subresource: "panel/2", Content: "a2"},
+			{UID: "a", Subresource: "panel/3", Content: "a3"},
+		}},
+		{Namespace: "org-b", ResourceVersion: 2, Items: []embed.Item{
+			{UID: "b", Subresource: "panel/1", Content: "b1"},
+			{UID: "b", Subresource: "panel/2", Content: "b2"},
+		}},
+	}
+	t.Run("splits an object's chunks and fills batches across objects", func(t *testing.T) {
+		provider := &batchingTextEmbedder{batchSize: 2}
+		be := NewBatchEmbedder(newTestEmbedder(provider))
+		got, err := be.EmbedResources(t.Context(), "dashboards", 3, inputs)
+		require.NoError(t, err)
+		require.Len(t, got, 2)
+		require.Len(t, got[0], 3)
+		require.Len(t, got[1], 2)
+		for i, input := range inputs {
+			for j, it := range input.Items {
+				assert.Equal(t, input.Namespace, got[i][j].Namespace)
+				assert.Equal(t, input.ResourceVersion, got[i][j].ResourceVersion)
+				assert.Equal(t, it.UID, got[i][j].UID)
+				assert.Equal(t, it.Subresource, got[i][j].Subresource)
+				assert.Equal(t, []float32{float32(it.Content[0]), float32(it.Content[1]), 0}, got[i][j].Embedding)
+			}
+		}
+		assert.ElementsMatch(t, [][]string{{"a1", "a2"}, {"a3", "b1"}, {"b2"}}, provider.batches)
+	})
+	t.Run("one failed provider batch returns no partial objects", func(t *testing.T) {
+		wantErr := &RetryableError{Err: errors.New("rate limit"), RetryAfter: time.Second}
+		provider := &batchingTextEmbedder{batchSize: 2, failText: "b2", wantErr: wantErr}
+		be := NewBatchEmbedder(newTestEmbedder(provider))
+		got, err := be.EmbedResources(t.Context(), "dashboards", 3, inputs)
+		require.ErrorIs(t, err, wantErr)
+		assert.Nil(t, got)
+	})
+	t.Run("mismatched result count returns no partial objects", func(t *testing.T) {
+		be := NewBatchEmbedder(newTestEmbedder(&lengthMismatchingEmbedder{returnCount: 4}))
+		got, err := be.EmbedResources(t.Context(), "dashboards", 3, inputs)
+		require.ErrorContains(t, err, "4 embeddings for 5 texts")
+		assert.Nil(t, got)
+	})
+}
+
+type batchingTextEmbedder struct {
+	batchSize int
+	failText  string
+	wantErr   error
+	mu        sync.Mutex
+	batches   [][]string
+}
+
+func (f *batchingTextEmbedder) EmbedText(ctx context.Context, in EmbedTextInput) (EmbedTextOutput, error) {
+	out, err := BatchProcess(ctx, in.Texts, f.batchSize, func(_ context.Context, texts []string) ([]Embedding, error) {
+		f.mu.Lock()
+		f.batches = append(f.batches, texts)
+		f.mu.Unlock()
+		embeddings := make([]Embedding, len(texts))
+		for i, text := range texts {
+			if text == f.failText {
+				return nil, f.wantErr
+			}
+			embeddings[i] = Embedding{Dense: []float32{float32(text[0]), float32(text[1]), 0}}
+		}
+		return embeddings, nil
+	})
+	return EmbedTextOutput{Embeddings: out}, err
 }
