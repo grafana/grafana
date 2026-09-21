@@ -43,25 +43,33 @@ func (m *ForwardIDMiddleware) applyToken(ctx context.Context, _ backend.PluginCo
 		return nil
 	}
 
+	// Resolved below only if a requester is present; a missing requester (or a derive failure)
+	// must still clear any stale header rather than silently forward whatever was already set,
+	// so this stays empty rather than early-returning on the "no requester" path.
 	var requester identity.Requester
 	reqCtx := contexthandler.FromContext(ctx)
 	if reqCtx != nil && reqCtx.SignedInUser != nil {
 		requester = reqCtx.SignedInUser
-	} else {
-		r, err := identity.GetRequester(ctx)
-		if err != nil {
-			m.log.Debug("Failed to get requester from context", "error", err)
-			return nil
-		}
+	} else if r, err := identity.GetRequester(ctx); err == nil {
 		requester = r
+	} else {
+		m.log.Debug("Failed to get requester from context", "error", err)
 	}
 
-	token := requester.GetIDToken()
-	if token == "" {
-		token = m.deriveIDToken(ctx, requester)
+	var token string
+	if requester != nil {
+		token = requester.GetIDToken()
+		if token == "" {
+			token = m.deriveIDToken(ctx, requester)
+		}
 	}
+
+	// Set-or-delete rather than "set only on success": a header a previous hop or a reused
+	// context left behind must not survive an empty result unverified.
 	if token != "" {
 		req.SetHTTPHeader(forwardIDHeaderName, token)
+	} else {
+		req.DeleteHTTPHeader(forwardIDHeaderName)
 	}
 
 	return nil

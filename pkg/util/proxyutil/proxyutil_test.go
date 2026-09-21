@@ -1,16 +1,33 @@
 package proxyutil
 
 import (
+	"context"
+	"errors"
 	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
+	authnlib "github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/user"
 )
+
+// fakeIDTokenDeriver is a stub authnlib.IDTokenDeriver for tests.
+type fakeIDTokenDeriver struct {
+	calls int
+	err   error
+}
+
+func (f *fakeIDTokenDeriver) DeriveIDToken(ctx context.Context, subjectToken, namespace string) (*authnlib.DeriveIDTokenResponse, error) {
+	f.calls++
+	if f.err != nil {
+		return nil, f.err
+	}
+	return &authnlib.DeriveIDTokenResponse{Token: "derived-" + subjectToken}, nil
+}
 
 func TestPrepareProxyRequest(t *testing.T) {
 	t.Run("Prepare proxy request should clear Origin and Referer headers", func(t *testing.T) {
@@ -216,4 +233,56 @@ func TestApplyUserHeader(t *testing.T) {
 			require.Equal(t, login, req.Header.Get("X-Grafana-User"))
 		})
 	}
+}
+
+func TestApplyForwardIDHeader(t *testing.T) {
+	t.Run("Should set the header from GetIDToken when present", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+
+		ApplyForwardIDHeader(context.Background(), req, &identity.StaticRequester{IDToken: "signed-id-token"}, nil)
+		require.Equal(t, "signed-id-token", req.Header.Get(IDHeaderName))
+	})
+
+	t.Run("Should derive and set the header when there is no id token but an access token", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+		deriver := &fakeIDTokenDeriver{}
+
+		ApplyForwardIDHeader(context.Background(), req, &identity.StaticRequester{
+			Type: claims.TypeUser, AccessToken: "obo-access-token",
+		}, deriver)
+		require.Equal(t, "derived-obo-access-token", req.Header.Get(IDHeaderName))
+		require.Equal(t, 1, deriver.calls)
+	})
+
+	t.Run("Should remove a pre-existing header when derivation fails, rather than leave it unverified", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+		req.Header.Set(IDHeaderName, "attacker-supplied-or-stale")
+		deriver := &fakeIDTokenDeriver{err: errors.New("auth-api unreachable")}
+
+		ApplyForwardIDHeader(context.Background(), req, &identity.StaticRequester{
+			Type: claims.TypeUser, AccessToken: "obo-access-token",
+		}, deriver)
+		require.NotContains(t, req.Header, IDHeaderName)
+	})
+
+	t.Run("Should remove a pre-existing header when there is no requester", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+		req.Header.Set(IDHeaderName, "attacker-supplied-or-stale")
+
+		ApplyForwardIDHeader(context.Background(), req, nil, &fakeIDTokenDeriver{})
+		require.NotContains(t, req.Header, IDHeaderName)
+	})
+
+	t.Run("Should remove a pre-existing header when there is nothing to derive from", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+		req.Header.Set(IDHeaderName, "attacker-supplied-or-stale")
+
+		ApplyForwardIDHeader(context.Background(), req, &identity.StaticRequester{Type: claims.TypeUser}, &fakeIDTokenDeriver{})
+		require.NotContains(t, req.Header, IDHeaderName)
+	})
 }
