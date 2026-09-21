@@ -30,10 +30,10 @@ spec:
               until pg_isready; do sleep 1; done
               psql -v ON_ERROR_STOP=1 <<'SQL'
               \getenv runtime_password RUNTIME_PASSWORD
-              SELECT format('CREATE ROLE error_tracking_app LOGIN PASSWORD %L', :'runtime_password')
-              WHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'error_tracking_app') \gexec
-              ALTER ROLE error_tracking_app PASSWORD :'runtime_password';
-              GRANT CONNECT ON DATABASE error_tracking TO error_tracking_app;
+              SELECT format('CREATE ROLE error_tracking_runtime LOGIN PASSWORD %L', :'runtime_password')
+              WHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'error_tracking_runtime') \gexec
+              ALTER ROLE error_tracking_runtime PASSWORD :'runtime_password';
+              GRANT CONNECT ON DATABASE error_tracking TO error_tracking_runtime;
               SQL
       containers:
         - name: migrate
@@ -74,4 +74,4 @@ spec:
                   name: error-tracking-postgres
                   key: POSTGRES_PASSWORD
             - name: ERROR_TRACKING_RUNTIME_ROLE
-              value: error_tracking_app
+              value: error_tracking_runtime

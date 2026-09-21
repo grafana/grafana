@@ -1,22 +1,15 @@
 #!/bin/sh
 set -eu
 
-ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
+ROOT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")/../.." && pwd)
 KUBECONFIG=${KUBECONFIG:-"$ROOT_DIR/.local-kubeconfig"}
 KUBE_CONTEXT=${KUBE_CONTEXT:?set KUBE_CONTEXT to an isolated local kind context}
 NAMESPACE=${NAMESPACE:-error-tracking}
 POD=${POD:-error-tracking-postgres-0}
+KUBECTL_BIN=${KUBECTL_BIN:-kubectl}
 
 kubectl_local() {
-  kubectl --kubeconfig "$KUBECONFIG" --context "$KUBE_CONTEXT" -n "$NAMESPACE" "$@"
-}
-
-decode_base64() {
-  if base64 --help 2>&1 | grep -Fq -- '--decode'; then
-    base64 --decode
-  else
-    base64 -D
-  fi
+  "$KUBECTL_BIN" --kubeconfig "$KUBECONFIG" --context "$KUBE_CONTEXT" -n "$NAMESPACE" "$@"
 }
 
 case "$KUBE_CONTEXT" in
@@ -28,15 +21,15 @@ if [ "$NAMESPACE" != error-tracking ]; then
   exit 1
 fi
 
-password=$(kubectl_local get secret error-tracking-runtime -o jsonpath='{.data.password}' | decode_base64)
+password=$(kubectl_local get secret error-tracking-runtime -o jsonpath='{.data.password}' | docker run --rm -i alpine:3.22 base64 -d)
 psql() {
   printf '%s\n' "$password" |
-    kubectl_local exec -i "$POD" -- sh -c 'IFS= read -r PGPASSWORD; export PGPASSWORD; exec psql -h error-tracking-postgres -U error_tracking_app -d error_tracking "$@"' -- "$@"
+    kubectl_local exec -i "$POD" -- sh -c 'IFS= read -r PGPASSWORD; export PGPASSWORD; exec psql -h error-tracking-postgres -U error_tracking_runtime -d error_tracking "$@"' -- "$@"
 }
 
 marker="privilege-proof-$(date +%s)"
 result=$(psql -v ON_ERROR_STOP=1 -At -c "BEGIN; SELECT current_user; INSERT INTO error_tracking_event (created_at, occurred_at, tenant_namespace, project, message, created_by, source_ip) VALUES ((extract(epoch FROM clock_timestamp()) * 1000)::bigint, (extract(epoch FROM clock_timestamp()) * 1000)::bigint, 'privilege-proof', '$marker', 'runtime DML works', 'proof', '127.0.0.1'); SELECT project FROM error_tracking_event WHERE project='$marker'; ROLLBACK;")
-printf '%s\n' "$result" | grep -Fxq error_tracking_app
+printf '%s\n' "$result" | grep -Fxq error_tracking_runtime
 printf '%s\n' "$result" | grep -Fxq "$marker"
 
 expect_denied() {

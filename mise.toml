@@ -14,3 +14,7 @@ run = "docker compose -f deploy/local-compose/compose.yaml up --build"
 alias = "error-tracking-stop"
 description = "Stop the app-owned standalone Error Tracking services"
 run = "docker compose -f deploy/local-compose/compose.yaml down"
+
+[tasks.error-tracking-k8s-verify]
+description = "Run the portable Error Tracking kind acceptance proof"
+run = "deploy/local-k8s/prove-native.sh"

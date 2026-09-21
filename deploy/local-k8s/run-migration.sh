@@ -1,10 +1,11 @@
 #!/bin/sh
 set -eu
 
-ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
+ROOT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")/../.." && pwd)
 KUBECONFIG=${KUBECONFIG:-"$ROOT_DIR/.local-kubeconfig"}
 KUBE_CONTEXT=${KUBE_CONTEXT:-kind-error-tracking-native}
 NAMESPACE=${NAMESPACE:-error-tracking}
+KUBECTL_BIN=${KUBECTL_BIN:-kubectl}
 export KUBECONFIG KUBE_CONTEXT NAMESPACE
 
 case "$KUBE_CONTEXT" in
@@ -15,11 +16,13 @@ if [ "$NAMESPACE" != error-tracking ]; then
   echo "this local manifest set requires namespace error-tracking" >&2
   exit 1
 fi
-kubectl --kubeconfig "$KUBECONFIG" --context "$KUBE_CONTEXT" create namespace "$NAMESPACE" --dry-run=client -o yaml |
-  kubectl --kubeconfig "$KUBECONFIG" --context "$KUBE_CONTEXT" apply -f - >/dev/null
+"$KUBECTL_BIN" --kubeconfig "$KUBECONFIG" --context "$KUBE_CONTEXT" create namespace "$NAMESPACE" --dry-run=client -o yaml |
+  "$KUBECTL_BIN" --kubeconfig "$KUBECONFIG" --context "$KUBE_CONTEXT" apply -f - >/dev/null
 "$ROOT_DIR/deploy/local-k8s/prepare-runtime-secret.sh"
-kubectl --kubeconfig "$KUBECONFIG" --context "$KUBE_CONTEXT" -n "$NAMESPACE" delete job error-tracking-migrate --ignore-not-found >/dev/null
+"$KUBECTL_BIN" --kubeconfig "$KUBECONFIG" --context "$KUBE_CONTEXT" -n "$NAMESPACE" delete job error-tracking-migrate --ignore-not-found >/dev/null
 API_IMAGE=${API_IMAGE:-error-tracking-api:local}
-sed "s|image: error-tracking-api:local|image: $API_IMAGE|" "$ROOT_DIR/deploy/local-k8s/migrations.yaml" |
-  kubectl --kubeconfig "$KUBECONFIG" --context "$KUBE_CONTEXT" apply -f - >/dev/null
-kubectl --kubeconfig "$KUBECONFIG" --context "$KUBE_CONTEXT" -n "$NAMESPACE" wait --for=condition=complete job/error-tracking-migrate --timeout=180s
+docker run --rm -i -e "API_IMAGE=$API_IMAGE" alpine:3.22 sh -ec \
+  'sed "s|image: error-tracking-api:local|image: $API_IMAGE|"' \
+  <"$ROOT_DIR/deploy/local-k8s/migrations.yaml" |
+  "$KUBECTL_BIN" --kubeconfig "$KUBECONFIG" --context "$KUBE_CONTEXT" apply -f - >/dev/null
+"$KUBECTL_BIN" --kubeconfig "$KUBECONFIG" --context "$KUBE_CONTEXT" -n "$NAMESPACE" wait --for=condition=complete job/error-tracking-migrate --timeout=180s

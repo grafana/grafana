@@ -1,0 +1,16 @@
+FROM alpine:3.22 AS download
+
+ARG KIND_VERSION=v0.29.0
+ARG KIND_GOOS
+ARG KIND_GOARCH
+
+RUN apk add --no-cache ca-certificates curl \
+    && curl -fsSLo /kind "https://kind.sigs.k8s.io/dl/${KIND_VERSION}/kind-${KIND_GOOS}-${KIND_GOARCH}" \
+    && curl -fsSLo /tmp/kind.sha256sum "https://kind.sigs.k8s.io/dl/${KIND_VERSION}/kind-${KIND_GOOS}-${KIND_GOARCH}.sha256sum" \
+    && expected=$(cut -d ' ' -f 1 </tmp/kind.sha256sum) \
+    && test -n "$expected" \
+    && printf '%s  /kind\n' "$expected" | sha256sum -c - \
+    && chmod 755 /kind
+
+FROM scratch
+COPY --from=download /kind /kind

@@ -1,0 +1,149 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: error-tracking-signer-keys
+  namespace: error-tracking
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests: {storage: 32Mi}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-signer
+  namespace: error-tracking
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: auth-signer}}
+  template:
+    metadata: {labels: {app: auth-signer}}
+    spec:
+      containers:
+        - name: auth-signer
+          image: error-tracking-local-issuer:local
+          imagePullPolicy: Never
+          ports: [{name: http, containerPort: 8080}]
+          readinessProbe: {httpGet: {path: /jwks, port: http}, periodSeconds: 3}
+          volumeMounts:
+            - {name: keys, mountPath: /app/data/keys}
+      volumes:
+        - name: keys
+          persistentVolumeClaim: {claimName: error-tracking-signer-keys}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-signer
+  namespace: error-tracking
+spec:
+  selector: {app: auth-signer}
+  ports: [{name: http, port: 8080, targetPort: http}]
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: error-tracking-grafana-11
+  namespace: error-tracking
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests: {storage: 512Mi}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: error-tracking-grafana-22
+  namespace: error-tracking
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests: {storage: 512Mi}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana-11
+  namespace: error-tracking
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector: {matchLabels: {app: grafana, stack: "11"}}
+  template:
+    metadata: {labels: {app: grafana, stack: "11"}}
+    spec:
+      securityContext: {fsGroup: 472}
+      containers:
+        - name: grafana
+          image: error-tracking-grafana:local
+          imagePullPolicy: Never
+          ports: [{name: http, containerPort: 3000}]
+          env:
+            - {name: GF_PATHS_CONFIG, value: /etc/grafana/grafana.ini}
+            - {name: GF_PATHS_PROVISIONING, value: /etc/grafana/provisioning}
+            - {name: GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS, value: grafana-errortracking-app}
+            - {name: GF_PLUGINS_PREINSTALL_DISABLED, value: "true"}
+          readinessProbe: {httpGet: {path: /api/health, port: http}, periodSeconds: 3}
+          volumeMounts:
+            - {name: config, mountPath: /etc/grafana/grafana.ini, subPath: grafana-11.ini, readOnly: true}
+            - {name: config, mountPath: /etc/grafana/apiservices.yaml, subPath: apiservices.yaml, readOnly: true}
+            - {name: config, mountPath: /etc/grafana/provisioning/plugins/error-tracking.yaml, subPath: plugin-provisioning.yaml, readOnly: true}
+            - {name: data, mountPath: /var/lib/grafana}
+      volumes:
+        - name: config
+          configMap: {name: error-tracking-fixtures}
+        - name: data
+          persistentVolumeClaim: {claimName: error-tracking-grafana-11}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-11
+  namespace: error-tracking
+spec:
+  selector: {app: grafana, stack: "11"}
+  ports: [{name: http, port: 3000, targetPort: http}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana-22
+  namespace: error-tracking
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector: {matchLabels: {app: grafana, stack: "22"}}
+  template:
+    metadata: {labels: {app: grafana, stack: "22"}}
+    spec:
+      securityContext: {fsGroup: 472}
+      containers:
+        - name: grafana
+          image: error-tracking-grafana:local
+          imagePullPolicy: Never
+          ports: [{name: http, containerPort: 3000}]
+          env:
+            - {name: GF_PATHS_CONFIG, value: /etc/grafana/grafana.ini}
+            - {name: GF_PATHS_PROVISIONING, value: /etc/grafana/provisioning}
+            - {name: GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS, value: grafana-errortracking-app}
+            - {name: GF_PLUGINS_PREINSTALL_DISABLED, value: "true"}
+          readinessProbe: {httpGet: {path: /api/health, port: http}, periodSeconds: 3}
+          volumeMounts:
+            - {name: config, mountPath: /etc/grafana/grafana.ini, subPath: grafana-22.ini, readOnly: true}
+            - {name: config, mountPath: /etc/grafana/apiservices.yaml, subPath: apiservices.yaml, readOnly: true}
+            - {name: config, mountPath: /etc/grafana/provisioning/plugins/error-tracking.yaml, subPath: plugin-provisioning.yaml, readOnly: true}
+            - {name: data, mountPath: /var/lib/grafana}
+      volumes:
+        - name: config
+          configMap: {name: error-tracking-fixtures}
+        - name: data
+          persistentVolumeClaim: {claimName: error-tracking-grafana-22}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-22
+  namespace: error-tracking
+spec:
+  selector: {app: grafana, stack: "22"}
+  ports: [{name: http, port: 3000, targetPort: http}]

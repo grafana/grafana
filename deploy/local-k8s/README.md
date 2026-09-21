@@ -1,94 +1,59 @@
 # Run Error Tracking locally
 
-Use Compose for development and kind for Kubernetes acceptance. Both workflows run `error-tracking-api:local`, the app-owned `migrate` command, PostgreSQL, the native signer, AuthZ, and Grafana aggregation.
+The local workflows run the independently built Error Tracking app plugin and API with PostgreSQL, signed tenant identity, and TLS. Compose is the developer loop. The kind workflow exercises the same images in Kubernetes.
 
-## Build the API
+Neither workflow needs a Grafana Enterprise source checkout or host Go, Node, Python, OpenSSL, or kind installation. Compose requires Docker. The Kubernetes proof also requires `kubectl`; it builds and checksum-verifies its kind executable through Docker. Grafana itself comes from the pinned public base image used by the plugin image build.
+
+## Compose development
 
 From the repository root:
 
 ```sh
-docker build -f apps/errortracking/Dockerfile \
-  -t error-tracking-api:local apps/errortracking
+docker compose -f deploy/local-compose/compose.yaml up --build -d
 ```
 
-Use `linux/amd64` for an AMD64 kind node. The local workflows require Docker, kubectl, kind, Python 3, OpenSSL, a Grafana Enterprise source checkout in `ENTERPRISE_SOURCE`, and these development images:
+Open `http://localhost:3301/a/grafana-errortracking-app` and sign in with the disposable `admin/admin` account. The API listens on `https://localhost:6443`. Published ports bind to loopback.
 
-- `error-tracking-platform:local` for Grafana and AuthZ, built from this branch with the matching Enterprise source so it contains the current Error Tracking roles and AuthZ mapping
-- `error-tracking-auth-signer:local` for signed App Platform identity
-
-Build the platform image from the Grafana root after following the Enterprise checkout's build prerequisites:
+If mise is installed, `mise run --skip-tools error-tracking-dev` starts the same workflow. Stop it without deleting data:
 
 ```sh
-make build-docker-full WIRE_TAGS=enterprise GO_BUILD_TAGS=enterprise
-docker tag grafana/grafana:dev error-tracking-platform:local
+docker compose -f deploy/local-compose/compose.yaml down
 ```
 
-The Grafana target produces `grafana/grafana:dev`; the second command gives the local workflows their expected tag.
+The fixture initializer preserves its runtime password, 30-day certificates, PostgreSQL data, Grafana metadata, and signing keys in named volumes. Repeated `up --build` runs keep those values. Removing volumes is an explicit reset and deletes local data.
 
-Build the signer from that source checkout:
+## Kubernetes acceptance
+
+With Docker limited to 8 GiB, stop Compose before running the Kubernetes proof. The proof creates or reuses only `kind-error-tracking-native`, writes its kubeconfig to the ignored `.local-kubeconfig`, and leaves the base cluster and its data running:
 
 ```sh
-docker build --platform linux/arm64 -t error-tracking-auth-signer:local \
-  "$ENTERPRISE_SOURCE/src/devenv/blocks/auth/signer"
+deploy/local-k8s/prove-native.sh
 ```
 
-The native proof also reads the existing `mt-db.yaml` and `authz-service.yaml` development manifests from `ENTERPRISE_SOURCE`; it does not copy or maintain another version of them here. With Docker limited to 8 GiB, stop Compose before running the kind proof. `docker compose down` preserves its volumes.
+With mise, the equivalent command is `mise run --skip-tools error-tracking-k8s-verify`.
 
-## Compose development
+The proof builds `error-tracking-api:local`, `error-tracking-local-issuer:local`, and `error-tracking-grafana:local` from this checkout through Compose. It imports them directly into the kind node. The API runs with two replicas. The plugin calls the namespaced API group through Grafana's signed App Platform route; Grafana receives no event-database credentials.
 
-```sh
-deploy/local-compose/setup.sh
-docker compose --env-file .local-compose/generated/.env \
-  -f deploy/local-compose/compose.yaml up -d
-```
+The proof covers authenticated reads and writes in stacks 11 and 22, tenant isolation, ignored tenant overrides, required calling-service permissions, unsupported actions, direct anonymous/wrong-audience/cross-tenant denial, direct API certificate validation and untrusted-certificate rejection, discovery, OpenAPI, metrics, metadata-only auditing, both API replicas, complete API outage and recovery, API and PostgreSQL restarts, readiness versus liveness, signer-key persistence, runtime credential rotation, data persistence, and the restricted PostgreSQL runtime role. Redacted evidence is written to `/tmp/error-tracking-native-evidence.txt`.
 
-Open `http://localhost:3301/error-tracking` and sign in with the disposable `admin/admin` account. The API listens on `https://localhost:6443`. All published ports bind to loopback.
-
-If mise is installed, use `mise run error-tracking-compose-up` and `mise run error-tracking-compose-down`. Otherwise stop the stack without deleting data:
+Inspect the retained UI with an explicit local context:
 
 ```sh
-docker compose --env-file .local-compose/generated/.env \
-  -f deploy/local-compose/compose.yaml down
-```
-
-Setup writes ignored configuration under `.local-compose/generated` and preserves passwords and certificates on repeated runs. Named volumes retain PostgreSQL, Grafana metadata, and signer keys. Certificates last 30 days; stop Compose, remove only `.local-compose/generated/certs`, and rerun setup to renew them. Keep the signer-key volume because Grafana may cache signed identity tokens.
-
-## Native Kubernetes acceptance
-
-The proof creates or reuses only its named local kind cluster. Every Kubernetes command uses the supplied kubeconfig and explicit local context.
-
-```sh
-ENTERPRISE_SOURCE=/path/to/grafana-enterprise \
-PLATFORM_IMAGE=error-tracking-platform:local \
-API_IMAGE=error-tracking-api:local \
-KUBECONFIG=/tmp/error-tracking-native.kubeconfig \
-  deploy/local-k8s/prove-native.sh
-```
-
-The proof runs two Grafana stacks, two API replicas, PostgreSQL with persistent storage, a migration Job, the signer, AuthZ, and its metadata database. It verifies authenticated reads and writes, tenant isolation, Viewer read-only access, discovery and OpenAPI, rejection of anonymous, wrong-audience, and cross-stack requests, metadata-only audit output, replica and complete API outage recovery, database readiness, persistence, credential rotation, and restricted runtime SQL privileges. Grafana pods do not receive event-database credentials.
-
-To inspect the UI:
-
-```sh
-kubectl --kubeconfig /tmp/error-tracking-native.kubeconfig \
+kubectl --kubeconfig .local-kubeconfig \
   --context kind-error-tracking-native -n error-tracking \
-  port-forward service/st-grafana-11 3000:3000
+  port-forward service/grafana-11 3000:3000
 ```
 
-Open `http://localhost:3000/error-tracking`.
+Then open `http://localhost:3000/a/grafana-errortracking-app`.
 
-Run the same image through disposable cell and BYOC-like environments after the base proof:
+Run the same images through sequential disposable cell and BYOC-like clusters after the base proof:
 
 ```sh
-ENTERPRISE_SOURCE=/path/to/grafana-enterprise \
-PLATFORM_IMAGE=error-tracking-platform:local \
-API_IMAGE=error-tracking-api:local \
-BASE_KUBECONFIG=/tmp/error-tracking-native.kubeconfig \
-  deploy/local-k8s/prove-native-multienv.sh
+deploy/local-k8s/prove-native-multienv.sh
 ```
 
-The multi-environment proof runs one isolated cluster and Docker network at a time, compares image and binary identities, verifies distinct credentials and PostgreSQL networks, proves data and failure isolation while the base cluster stays available, and checks restart persistence and runtime privileges.
+That proof compares image and binary identities, requires unique runtime credentials and generated trust material, verifies PostgreSQL network and data isolation, keeps the base cluster readable and writable while the secondary API is down, and checks secondary persistence after a PostgreSQL restart. It deletes only the disposable clusters, networks, and fixture volumes it creates. Evidence is written beneath `/tmp/error-tracking-native-multienv`.
 
-`run-migration.sh`, `prepare-runtime-secret.sh`, `rotate-runtime-secret.sh`, and `prove-privileges.sh` are the focused building blocks used by the native proofs. They accept only `kind-error-tracking-native` contexts and require the `error-tracking` namespace.
+`run-migration.sh`, `prepare-runtime-secret.sh`, `rotate-runtime-secret.sh`, and `prove-privileges.sh` are the focused building blocks. Every Kubernetes command uses an explicit kubeconfig, an explicit `kind-error-tracking-native*` context, and the `error-tracking` namespace.
 
-These workflows prove local behavior and configuration parity. They do not deploy cloud infrastructure, validate cloud IAM, or exercise a hosted multi-tenant aggregator. The local Grafana aggregation path skips upstream certificate verification, while the proof separately validates the API certificate with its generated CA. After API credential rotation, the proof records whether the local aggregator recovered automatically or needed a Grafana restart to clear a stale backend transport.
+These workflows validate local behavior and configuration. The checked-in issuer is a development fixture for the public signed-identity protocol. The direct TLS assertion does not prove Grafana's current aggregation transport verifies the remote certificate; that platform transport still skips verification. The workflows do not deploy remote infrastructure or prove cloud IAM, placement, or networking.
