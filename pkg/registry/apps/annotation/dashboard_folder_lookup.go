@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	authlib "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/attribute"
@@ -18,13 +19,19 @@ import (
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 )
 
 // NewDashboardFolderResolver returns a DashboardFolderResolver that fetches the dashboard's
 // parent folder via dashboard.grafana.app. restConfig is called once (lazily on first request)
 // to build the underlying client: loopback in ST, remote URL with token exchange in MT.
-func NewDashboardFolderResolver(restConfig func(context.Context) (*rest.Config, error), tracer trace.Tracer) DashboardFolderResolver {
-	return &dashboardFolderResolver{client: newDashboardClient(restConfig), tracer: tracer}
+func NewDashboardFolderResolver(restConfig func(context.Context) (*rest.Config, error), tracer trace.Tracer, cacheEnabled bool, cacheTTL time.Duration) DashboardFolderResolver {
+	r := &dashboardFolderResolver{client: newDashboardClient(restConfig), tracer: tracer}
+	if cacheEnabled {
+		r.cache = localcache.New(cacheTTL, 5*time.Minute)
+		r.cacheTTL = cacheTTL
+	}
+	return r
 }
 
 // NoopDashboardFolderResolver returns an empty folder for every dashboard. Use when authz is
@@ -36,8 +43,10 @@ func (NoopDashboardFolderResolver) ResolveFolder(_ context.Context, _, _ string)
 }
 
 type dashboardFolderResolver struct {
-	client *dashboardClient
-	tracer trace.Tracer
+	client   *dashboardClient
+	tracer   trace.Tracer
+	cache    *localcache.CacheService
+	cacheTTL time.Duration
 }
 
 func (r *dashboardFolderResolver) ResolveFolder(ctx context.Context, namespace, dashboardUID string) (string, error) {
@@ -45,6 +54,14 @@ func (r *dashboardFolderResolver) ResolveFolder(ctx context.Context, namespace, 
 		attribute.String("dashboard_uid", dashboardUID),
 	))
 	defer span.End()
+
+	key := namespace + "/" + dashboardUID
+	if r.cache != nil {
+		if v, ok := r.cache.Get(key); ok {
+			span.SetAttributes(attribute.Bool("cache_hit", true))
+			return v.(string), nil
+		}
+	}
 
 	nsInfo, err := authlib.ParseNamespace(namespace)
 	if err != nil {
@@ -68,7 +85,11 @@ func (r *dashboardFolderResolver) ResolveFolder(ctx context.Context, namespace, 
 	if err != nil {
 		return "", fmt.Errorf("meta accessor for dashboard %q: %w", dashboardUID, err)
 	}
-	return meta.GetFolder(), nil
+	folder := meta.GetFolder()
+	if r.cache != nil {
+		r.cache.Set(key, folder, r.cacheTTL)
+	}
+	return folder, nil
 }
 
 type dashboardClient struct {

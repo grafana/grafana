@@ -61,7 +61,9 @@ func RegisterAppInstaller(
 	reg prometheus.Registerer,
 	tracer tracing.Tracer,
 ) (*AppInstaller, error) {
-	return NewAppInstaller(newConfigFromSettings(cfg), service, cleaner, accessClient, NewDashboardFolderResolver(restConfigProvider.GetRestConfig, tracer), tracer, reg)
+	config := newConfigFromSettings(cfg)
+	folderResolver := NewDashboardFolderResolver(restConfigProvider.GetRestConfig, tracer, config.FolderCacheEnabled, config.FolderCacheTTL)
+	return NewAppInstaller(config, service, cleaner, accessClient, folderResolver, tracer, reg)
 }
 
 // NewAppInstaller Layers (from bottom to top):
