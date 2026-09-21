@@ -23,11 +23,7 @@ import { NOTEBOOKS_BASE_URL, notebookShareUrl } from '../urls';
 
 /**
  * The notebook view's action cluster: copy link, the edit toggle, and the "more actions" kebab
- * (export, IRM, delete). Embedded inline in the scene's own controls row (`NotebookScene.tsx`)
- * rather than owning a row of its own, so it shares that row's sticky/background chrome — which
- * also means this renders inside `NotebookView.tsx`'s embed component. Copy link and the kebab are
- * hidden there (see `isEmbedded` below): that component's contract never included them, and Delete
- * navigates to `/notebooks` on success, which would take an embedding host down with it.
+ * (export, IRM, delete). Embedded inline in the scene's own controls row (`NotebookScene.tsx`).
  *
  * Rendered for a notebook that does not exist yet as well, so that creating one by typing does not
  * push the document down once a uid shows up. Copy link and the kebab need a notebook that exists,
@@ -45,9 +41,8 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
   const [isDeclaring, setIsDeclaring] = useState(false);
   const [isAttaching, setIsAttaching] = useState(false);
   const notifyApp = useAppNotification();
-  // Embedded hosts (e.g. Assistant's canvas) get only the edit toggle. Delete navigates the whole
-  // page to /notebooks on success, which would take an embedding host down with it; Export and Copy
-  // link aren't part of the embed component's documented contract either.
+  // Embedded hosts (e.g. Assistant's canvas) get only the edit toggle — Delete would navigate the
+  // whole host away.
   const isEmbedded = useIsNotebookEmbedded();
 
   const onCopyLink = async () => {
@@ -160,8 +155,7 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
  */
 function UnavailableActions({ scene }: { scene: NotebookScene }) {
   const reason = t('notebooks.view.available-once-created', 'Available once you write something');
-  // A draft embed (NotebookView.tsx's DraftNotebookView) never gets a uid, so this branch renders
-  // for the whole session there — same embedded-only-shows-the-edit-toggle rule as NotebookActions.
+  // A draft embed never gets a uid, so this branch renders for its whole session — same rule.
   const isEmbedded = useIsNotebookEmbedded();
 
   return (
