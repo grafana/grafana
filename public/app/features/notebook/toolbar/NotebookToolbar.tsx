@@ -16,6 +16,7 @@ import { IrmMenuItem } from '../incidents/IrmMenuItem';
 import { getNotebookPageStateManager } from '../pages/NotebookPageStateManager';
 import { canDeleteNotebooks } from '../permissions';
 import { NotebookEditToggle } from '../scene/NotebookEditToggle';
+import { useIsNotebookEmbedded } from '../scene/NotebookEmbeddedContext';
 import { type NotebookScene } from '../scene/NotebookScene';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 import { NOTEBOOKS_BASE_URL, notebookShareUrl } from '../urls';
@@ -23,7 +24,10 @@ import { NOTEBOOKS_BASE_URL, notebookShareUrl } from '../urls';
 /**
  * The notebook view's action cluster: copy link, the edit toggle, and the "more actions" kebab
  * (export, IRM, delete). Embedded inline in the scene's own controls row (`NotebookScene.tsx`)
- * rather than owning a row of its own, so it shares that row's sticky/background chrome.
+ * rather than owning a row of its own, so it shares that row's sticky/background chrome — which
+ * also means this renders inside `NotebookView.tsx`'s embed component. Copy link and the kebab are
+ * hidden there (see `isEmbedded` below): that component's contract never included them, and Delete
+ * navigates to `/notebooks` on success, which would take an embedding host down with it.
  *
  * Rendered for a notebook that does not exist yet as well, so that creating one by typing does not
  * push the document down once a uid shows up. Copy link and the kebab need a notebook that exists,
@@ -41,6 +45,10 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
   const [isDeclaring, setIsDeclaring] = useState(false);
   const [isAttaching, setIsAttaching] = useState(false);
   const notifyApp = useAppNotification();
+  // Embedded hosts (e.g. Assistant's canvas) get only the edit toggle. Delete navigates the whole
+  // page to /notebooks on success, which would take an embedding host down with it; Export and Copy
+  // link aren't part of the embed component's documented contract either.
+  const isEmbedded = useIsNotebookEmbedded();
 
   const onCopyLink = async () => {
     try {
@@ -100,25 +108,29 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
 
   return (
     <>
-      <ToolbarButton
-        variant="canvas"
-        icon="link"
-        tooltip={t('notebooks.view.copy-link', 'Copy link')}
-        onClick={onCopyLink}
-      />
-      <NotebookEditToggle notebook={scene} />
-      <Dropdown overlay={moreMenu} placement="bottom-end">
-        <IconButton
-          name="ellipsis-v"
-          variant="secondary"
-          size="sm"
-          // Dropdown injects aria-expanded but not aria-haspopup, so without this the trigger
-          // announces as a plain button and gives no hint that it opens a menu.
-          aria-haspopup="menu"
-          // No aria-label alongside: IconButton uses a string tooltip as the accessible name.
-          tooltip={t('notebooks.view.more-actions', 'More actions')}
+      {!isEmbedded && (
+        <ToolbarButton
+          variant="canvas"
+          icon="link"
+          tooltip={t('notebooks.view.copy-link', 'Copy link')}
+          onClick={onCopyLink}
         />
-      </Dropdown>
+      )}
+      <NotebookEditToggle notebook={scene} />
+      {!isEmbedded && (
+        <Dropdown overlay={moreMenu} placement="bottom-end">
+          <IconButton
+            name="ellipsis-v"
+            variant="secondary"
+            size="sm"
+            // Dropdown injects aria-expanded but not aria-haspopup, so without this the trigger
+            // announces as a plain button and gives no hint that it opens a menu.
+            aria-haspopup="menu"
+            // No aria-label alongside: IconButton uses a string tooltip as the accessible name.
+            tooltip={t('notebooks.view.more-actions', 'More actions')}
+          />
+        </Dropdown>
+      )}
       {isDeclaring && (
         <DeclareIncidentModal uid={uid} title={scene.state.title} onDismiss={() => setIsDeclaring(false)} />
       )}

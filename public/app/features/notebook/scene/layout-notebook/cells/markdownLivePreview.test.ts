@@ -39,6 +39,8 @@ const STYLES: MarkdownEditorStyles = {
   heading2: 'h2',
   heading3: 'h3',
   heading4: 'h4',
+  heading5: 'h5',
+  heading6: 'h6',
   bold: 'bold',
   italic: 'italic',
   inlineCode: 'inline-code',

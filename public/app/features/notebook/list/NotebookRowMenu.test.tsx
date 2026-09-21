@@ -102,8 +102,30 @@ describe('NotebookRowMenu', () => {
 
       await user.click(screen.getByRole('menuitem', { name: 'Copy link' }));
 
+      // Not just the toast: assert the exact URL that landed on the clipboard, so a handler that
+      // copies the wrong notebook or an in-app path still fails this test.
+      expect(await navigator.clipboard.readText()).toBe('https://host/notebooks/nb1');
       expect(await screen.findByText('Link copied to clipboard')).toBeInTheDocument();
       expect(mockLinkCopied).toHaveBeenCalledWith('nb1', 'notebook_list');
+    });
+
+    it('reports a failed copy rather than claiming success', async () => {
+      const { user } = render(
+        <>
+          <AppNotificationList />
+          <NotebookRowMenu uid="nb1" onDelete={jest.fn()} />
+        </>
+      );
+
+      // After render: userEvent installs its own clipboard stub during setup, which would replace this.
+      const writeText = jest.fn().mockRejectedValue(new Error('NotAllowedError'));
+      Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true, writable: true });
+
+      await user.click(screen.getByRole('menuitem', { name: 'Copy link' }));
+
+      expect(await screen.findByText('Failed to copy link')).toBeInTheDocument();
+      expect(screen.queryByText('Link copied to clipboard')).not.toBeInTheDocument();
+      expect(mockLinkCopied).not.toHaveBeenCalled();
     });
   });
 

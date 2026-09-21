@@ -172,8 +172,6 @@ function wrappedMarkDecorations(
   }
 }
 
-// h5/h6 get only the shared `heading` line class, which carries no styling of its own — plain text
-// while editing, same as h5/h6's lack of any override in MarkdownCell.tsx's static render.
 function headingLevelClass(styles: MarkdownEditorStyles, level: number): string | undefined {
   switch (level) {
     case 1:
@@ -184,6 +182,10 @@ function headingLevelClass(styles: MarkdownEditorStyles, level: number): string 
       return styles.heading3;
     case 4:
       return styles.heading4;
+    case 5:
+      return styles.heading5;
+    case 6:
+      return styles.heading6;
     default:
       return undefined;
   }
@@ -382,6 +384,8 @@ export interface MarkdownEditorStyles {
   heading2: string;
   heading3: string;
   heading4: string;
+  heading5: string;
+  heading6: string;
   bold: string;
   italic: string;
   inlineCode: string;
@@ -403,6 +407,8 @@ function buildEditorStyles(theme: GrafanaTheme2): { theme: Extension; classes: M
     heading2: 'cm-md-h2',
     heading3: 'cm-md-h3',
     heading4: 'cm-md-h4',
+    heading5: 'cm-md-h5',
+    heading6: 'cm-md-h6',
     bold: 'cm-md-bold',
     italic: 'cm-md-italic',
     inlineCode: 'cm-md-inline-code',
@@ -464,6 +470,8 @@ function buildEditorStyles(theme: GrafanaTheme2): { theme: Extension; classes: M
     [`.${classes.heading2}`]: headingStyles(theme.typography.h2),
     [`.${classes.heading3}`]: headingStyles(theme.typography.h3),
     [`.${classes.heading4}`]: headingStyles(theme.typography.h4),
+    [`.${classes.heading5}`]: headingStyles(theme.typography.h5),
+    [`.${classes.heading6}`]: headingStyles(theme.typography.h6),
     [`.${classes.bold}`]: {
       fontWeight: theme.typography.fontWeightBold,
     },

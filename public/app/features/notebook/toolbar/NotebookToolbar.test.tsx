@@ -11,6 +11,7 @@ import { NotebookAnalytics } from '../analytics/main';
 import { notebookIncidents, stubAttachForm, stubDeclareForm } from '../incidents/testHelpers';
 import { useNotebookIncidents } from '../incidents/useNotebookIncidents';
 import { getNotebookPageStateManager } from '../pages/NotebookPageStateManager';
+import { NotebookEmbeddedHost } from '../scene/NotebookEmbeddedContext';
 import { NotebookScene } from '../scene/NotebookScene';
 import { NotebookCellItem } from '../scene/layout-notebook/NotebookCellItem';
 import { NotebookLayoutManager } from '../scene/layout-notebook/NotebookLayoutManager';
@@ -160,6 +161,23 @@ describe('NotebookToolbar', () => {
     expect(await screen.findByText('Link copied to clipboard')).toBeInTheDocument();
   });
 
+  it('reports a failed copy rather than claiming success', async () => {
+    const { user } = setup();
+
+    // After render: userEvent installs its own clipboard stub during setup, which would replace this.
+    const writeText = jest.fn().mockRejectedValue(new Error('NotAllowedError'));
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true, writable: true });
+    // This mock isn't cleared between tests in this file, so an earlier successful copy would
+    // otherwise still be sitting in its call history.
+    mockLinkCopied.mockClear();
+
+    await user.click(screen.getByRole('button', { name: 'Copy link' }));
+
+    expect(await screen.findByText('Failed to copy link')).toBeInTheDocument();
+    expect(screen.queryByText('Link copied to clipboard')).not.toBeInTheDocument();
+    expect(mockLinkCopied).not.toHaveBeenCalled();
+  });
+
   // Drives the whole path the PR made live: scene -> transformNotebookSceneToSaveModel ->
   // vizPanelToSchemaV2 -> markdown. Asserting on the menu alone would pass with the serializer broken.
   it('copies markdown built from the scene, panel and all', async () => {
@@ -184,6 +202,26 @@ describe('NotebookToolbar', () => {
 
     expect(await screen.findByRole('menuitem', { name: 'Copy as Markdown' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Download as .md' })).toBeInTheDocument();
+  });
+
+  // NotebookView.tsx's embed component (grafana/notebook-view/v1) renders this same toolbar for a
+  // notebook that exists, but its contract only promises the edit toggle — not copy/export/delete,
+  // whose Delete would navigate the whole embedding host to /notebooks on success.
+  it('hides copy link and the kebab when embedded, keeping only the edit toggle', () => {
+    const hasPermission = jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+
+    render(
+      <NotebookEmbeddedHost>
+        <NotebookToolbar uid="nb1" scene={buildScene()} />
+      </NotebookEmbeddedHost>
+    );
+
+    expect(screen.queryByRole('button', { name: 'Copy link' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'More actions' })).not.toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'View' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Edit' })).toBeInTheDocument();
+
+    hasPermission.mockRestore();
   });
 
   describe('Delete', () => {
