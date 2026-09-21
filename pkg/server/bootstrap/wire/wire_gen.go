@@ -923,7 +923,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	fixedRolesLoader := accesscontrol.ProvideFixedRolesLoader(acimplService, featureToggles)
 	noopIAMRolesSyncer := accesscontrol.ProvideNoopIAMRolesSyncer()
 	noopGlobalRoleSeeder := accesscontrol.ProvideNoopGlobalRoleSeeder()
-	syncer, err := installsync.ProvideSyncer(featureToggles, clientGenerator, orgService, configProvider, serverLockService, eventualRestConfigProvider, pluginstoreService)
+	installsyncClientGenerator := installsync.ProvideClientGenerator(eventualRestConfigProvider)
+	syncer, err := installsync.ProvideSyncer(featureToggles, installsyncClientGenerator, orgService, configProvider, serverLockService, eventualRestConfigProvider, pluginstoreService)
 	if err != nil {
 		return nil, err
 	}
@@ -1703,7 +1704,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	fixedRolesLoader := accesscontrol.ProvideFixedRolesLoader(acimplService, featureToggles)
 	noopIAMRolesSyncer := accesscontrol.ProvideNoopIAMRolesSyncer()
 	noopGlobalRoleSeeder := accesscontrol.ProvideNoopGlobalRoleSeeder()
-	syncer, err := installsync.ProvideSyncer(featureToggles, clientGenerator, orgService, configProvider, serverLockService, eventualRestConfigProvider, pluginstoreService)
+	installsyncClientGenerator := installsync.ProvideClientGenerator(eventualRestConfigProvider)
+	syncer, err := installsync.ProvideSyncer(featureToggles, installsyncClientGenerator, orgService, configProvider, serverLockService, eventualRestConfigProvider, pluginstoreService)
 	if err != nil {
 		return nil, err
 	}
