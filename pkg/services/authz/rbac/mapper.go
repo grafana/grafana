@@ -741,6 +741,9 @@ func NewMapperRegistry() MapperRegistry {
 			"register":     newResourceTranslation("advisor.register", "uid", false, nil),
 			"translations": newResourceTranslation("advisor.translations", "uid", false, nil),
 		},
+		"error-tracking.grafana.app": {
+			"events": newResourceTranslation("errortracking.events", "", false, nil),
+		},
 		"annotation.grafana.app": {
 			// Uses "type" as scope attribute for org-level annotations (e.g. annotations:type:organization).
 			// No actionSetMapping — dashboard action sets don't apply to org-level annotations.

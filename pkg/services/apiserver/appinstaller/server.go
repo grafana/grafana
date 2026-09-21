@@ -11,6 +11,7 @@ import (
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	genericrest "k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/server/healthz"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
@@ -25,6 +26,10 @@ import (
 
 var _ appsdkapiserver.GenericAPIServer = (*serverWrapper)(nil)
 
+type readyzServer interface {
+	AddReadyzChecks(...healthz.HealthChecker) error
+}
+
 type serverWrapper struct {
 	ctx               context.Context
 	GenericAPIServer  appsdkapiserver.GenericAPIServer
@@ -34,6 +39,16 @@ type serverWrapper struct {
 	dualWriteService  dualwrite.Service
 	builderMetrics    *builder.BuilderMetrics
 	apiResourceConfig *serverstorage.ResourceConfig
+}
+
+// AddReadyzChecks forwards the native API-server readiness extension through
+// the SDK-facing wrapper used by app installers.
+func (s *serverWrapper) AddReadyzChecks(checks ...healthz.HealthChecker) error {
+	server, ok := s.GenericAPIServer.(readyzServer)
+	if !ok {
+		return fmt.Errorf("underlying API server does not support readiness checks")
+	}
+	return server.AddReadyzChecks(checks...)
 }
 
 func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupInfo) error {

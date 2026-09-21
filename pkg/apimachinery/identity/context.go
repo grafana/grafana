@@ -230,6 +230,7 @@ var serviceIdentityTokenPermissions = []string{
 	"rules.alerting.grafana.app:*",
 	"advisor.grafana.app:*",
 	"annotation.grafana.app:*",
+	"error-tracking.grafana.app:*",
 	"setting.grafana.app:*",
 
 	// allow access to all datasource types
