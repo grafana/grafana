@@ -1123,6 +1123,68 @@ func TestListWithSelectorsAuthorizesErroredRows(t *testing.T) {
 	})
 }
 
+func TestListWithSelectorsAuthorizesKVRuntimeFailures(t *testing.T) {
+	tests := []struct {
+		name string
+		wrap func(KV) KV
+	}{
+		{
+			name: "batch get",
+			wrap: func(store KV) KV {
+				return &failingBatchGetKV{KV: store, err: errors.New("storage is down")}
+			},
+		},
+		{
+			name: "body read",
+			wrap: func(store KV) KV {
+				return &unreadableValueKV{KV: store, nameMatch: "failed", err: errors.New("value is corrupt")}
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+				opts.KvStore = tc.wrap(opts.KvStore)
+			})
+			rv := seedResource(t, backend, t.Context(), "failed", "folder-a")
+			newServer := func() *server {
+				search := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
+					ResourceVersion: rv,
+					Results: &resourcepb.ResourceTable{Rows: []*resourcepb.ResourceTableRow{{
+						Key:             appsKey("failed"),
+						ResourceVersion: rv,
+						SortFields:      []string{"failed"},
+					}}},
+				}}
+				s := createTestServer(search, 1024)
+				s.backend = backend
+				return s
+			}
+			req := &resourcepb.ListRequest{
+				Limit: 1,
+				Options: &resourcepb.ListOptions{
+					Key:    appsKey(""),
+					Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+				},
+			}
+			ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+
+			unauthorized := newServer()
+			unauthorized.access = denyByNameAccess{deny: map[string]struct{}{"failed": {}}}
+			resp, err := unauthorized.listWithSelectors(ctx, req)
+			require.NoError(t, err)
+			require.Nil(t, resp.Error)
+			require.Empty(t, resp.Items)
+
+			authorized := newServer()
+			resp, err = authorized.listWithSelectors(ctx, req)
+			require.NoError(t, err)
+			require.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
+		})
+	}
+}
+
 func createTestServer(searchClient resourcepb.ResourceIndexClient, maxPageSizeBytes int) *server {
 	return &server{
 		searchClient:     searchClient,

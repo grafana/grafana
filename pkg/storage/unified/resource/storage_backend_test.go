@@ -1441,6 +1441,65 @@ func TestKvStorageBackend_BatchReadResource_MissingBodyKeepsPosition(t *testing.
 	require.Nil(t, got[2].Error)
 }
 
+func TestKvStorageBackend_BatchReadResource_RuntimeFailuresKeepOrderedMetadata(t *testing.T) {
+	tests := []struct {
+		name       string
+		firstError int
+		message    string
+		wrap       func(KV) KV
+	}{
+		{
+			name:       "batch get",
+			firstError: 0,
+			message:    "storage is down",
+			wrap: func(store KV) KV {
+				return &failingBatchGetKV{KV: store, err: errors.New("storage is down")}
+			},
+		},
+		{
+			name:       "body read",
+			firstError: 1,
+			message:    "value is corrupt",
+			wrap: func(store KV) KV {
+				return &unreadableValueKV{KV: store, nameMatch: "failure-1", err: errors.New("value is corrupt")}
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+				opts.KvStore = tc.wrap(opts.KvStore)
+			})
+			requests := make([]*resourcepb.ReadRequest, 0, 3)
+			folders := make([]string, 0, 3)
+			for i := range 3 {
+				name := fmt.Sprintf("failure-%d", i)
+				folder := fmt.Sprintf("folder-%d", i)
+				rv := seedResource(t, backend, t.Context(), name, folder)
+				requests = append(requests, &resourcepb.ReadRequest{Key: appsKey(name), ResourceVersion: rv})
+				folders = append(folders, folder)
+			}
+
+			responses, err := backend.BatchReadResource(t.Context(), requests)
+			require.NoError(t, err)
+			got := collectBatchReadResponses(t, responses)
+			require.Len(t, got, len(requests))
+			for i, response := range got {
+				require.Equal(t, requests[i].Key, response.Key)
+				require.Equal(t, requests[i].ResourceVersion, response.ResourceVersion)
+				require.Equal(t, folders[i], response.Folder)
+				if i < tc.firstError {
+					require.Nil(t, response.Error)
+					continue
+				}
+				require.Equal(t, int32(http.StatusInternalServerError), response.Error.Code)
+				require.Equal(t, tc.message, response.Error.Message)
+			}
+		})
+	}
+}
+
 func TestUnimplementedStorageBackend_BatchReadResourceReturnsUnsupportedUpFront(t *testing.T) {
 	responses, err := (UnimplementedStorageBackend{}).BatchReadResource(t.Context(), nil)
 	require.ErrorIs(t, err, ErrBatchReadUnsupported)

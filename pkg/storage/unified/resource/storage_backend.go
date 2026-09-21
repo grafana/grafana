@@ -1399,8 +1399,8 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*re
 
 			next, stop := iter.Pull2(k.dataStore.BatchGet(ctx, keys))
 			var peek DataObj
-			var peekErr error
 			var hasPeek bool
+			var batchErr error
 			for _, entry := range entries {
 				if entry.response != nil {
 					if !yield(entry.response, nil) {
@@ -1409,12 +1409,11 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*re
 					}
 					continue
 				}
-				if !hasPeek {
+				if !hasPeek && batchErr == nil {
+					var peekErr error
 					peek, peekErr, hasPeek = next()
 					if peekErr != nil {
-						stop()
-						yield(nil, peekErr)
-						return
+						batchErr = peekErr
 					}
 				}
 
@@ -1423,14 +1422,16 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*re
 					ResourceVersion: entry.key.ResourceVersion,
 					Folder:          entry.key.Folder,
 				}
-				if hasPeek && peek.Key.String() == entry.key.String() {
+				if batchErr != nil {
+					response.Error = &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: batchErr.Error()}
+				} else if hasPeek && peek.Key.String() == entry.key.String() {
 					value, err := readAndClose(peek.Value)
 					if err != nil {
-						stop()
-						yield(nil, err)
-						return
+						batchErr = err
+						response.Error = &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
+					} else {
+						response.Value = value
 					}
-					response.Value = value
 					hasPeek = false
 				} else {
 					response.Error = NewNotFoundError(entry.request.Key)
