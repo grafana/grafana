@@ -3,6 +3,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { type IconName, type NavModelItem } from '@grafana/data';
 
 import { getInitialNavTree } from '../navtree/buildStaticNavTree';
+import { pluginNavLoaded } from '../navtree/state';
 import { getNavSubTitle, getNavTitle } from '../utils/navBarItem-translations';
 
 function translateNav(navTree: NavModelItem[]): NavModelItem[] {
@@ -142,6 +143,11 @@ const navTreeSlice = createSlice({
       }
       starred.children = children.sort(compareStarredChildren);
     },
+  },
+  extraReducers: (builder) => {
+    // Replace rather than merge: the payload is already a complete tree built
+    // from scratch, so anything kept from the old state would be a duplicate.
+    builder.addCase(pluginNavLoaded, (_, action) => translateNav(action.payload.tree));
   },
 });
 

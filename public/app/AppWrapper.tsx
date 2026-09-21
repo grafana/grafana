@@ -19,6 +19,7 @@ import { Branding } from './core/components/Branding/Branding';
 import { GrafanaContext, type GrafanaContextType } from './core/context/GrafanaContext';
 import { GrafanaRouteWrapper } from './core/navigation/GrafanaRoute';
 import { type RouteDescriptor } from './core/navigation/types';
+import { usePluginNavRerender } from './core/navtree/usePluginNavRerender';
 import { contextSrv } from './core/services/context_srv';
 import { ThemeProvider } from './core/utils/ConfigProvider';
 import { getCommandPaletteInputMode } from './features/commandPalette/inputMode';
@@ -63,6 +64,10 @@ const iconCacheID = `grafana-icon-cache-${config.buildInfo.commit}`;
 export function AppWrapper({ context }: AppWrapperProps) {
   const [ready, setReady] = useState(false);
   const [registries, setRegistries] = useState<PluginExtensionRegistries | undefined>(initRegistries([]));
+
+  // Recomputes the routes below once the client-built nav tree has its plugin
+  // items
+  usePluginNavRerender();
 
   useEffect(() => {
     async function init() {
