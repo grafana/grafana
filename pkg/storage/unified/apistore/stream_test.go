@@ -19,7 +19,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/storage"
 
@@ -52,12 +51,6 @@ func (m *mockWatchClient) CloseSend() error             { return nil }
 func (m *mockWatchClient) SendMsg(any) error            { return nil }
 func (m *mockWatchClient) RecvMsg(any) error            { return nil }
 
-func unstructuredCodec() runtime.Codec {
-	scheme := runtime.NewScheme()
-	codecs := serializer.NewCodecFactory(scheme)
-	return codecs.LegacyCodec()
-}
-
 func TestStreamDecoderBookmarkAnnotation(t *testing.T) {
 	newFunc := func() runtime.Object { return &unstructured.Unstructured{} }
 	predicate := storage.Everything
@@ -81,7 +74,7 @@ func TestStreamDecoderBookmarkAnnotation(t *testing.T) {
 			},
 		}
 
-		decoder := newStreamDecoder(client, newFunc, predicate, unstructuredCodec(), func() {}, true)
+		decoder := newStreamDecoder(client, newFunc, predicate, &jsonSerializer{}, func() {}, true)
 
 		// First bookmark should have the initial-events-end annotation.
 		action, obj, err := decoder.Decode()
@@ -119,7 +112,7 @@ func TestStreamDecoderBookmarkAnnotation(t *testing.T) {
 			},
 		}
 
-		decoder := newStreamDecoder(client, newFunc, predicate, unstructuredCodec(), func() {}, false)
+		decoder := newStreamDecoder(client, newFunc, predicate, &jsonSerializer{}, func() {}, false)
 
 		for range 2 {
 			action, obj, err := decoder.Decode()
@@ -162,7 +155,7 @@ func TestStreamDecoderExpiredResourceVersion(t *testing.T) {
 				cancel()
 			}
 			client := &errWatchClient{ctx: ctx, err: resource.NewResourceVersionExpiredError(1234)}
-			decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, unstructuredCodec(), cancel, false)
+			decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, &jsonSerializer{}, cancel, false)
 			t.Cleanup(decoder.Close)
 
 			action, obj, err := decoder.Decode()
@@ -244,7 +237,7 @@ func TestStreamDecoderGRPCTermination(t *testing.T) {
 				}
 				return tc.err
 			})
-			decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, unstructuredCodec(), cancel, false)
+			decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, &jsonSerializer{}, cancel, false)
 			t.Cleanup(decoder.Close)
 
 			action, obj, err := decoder.Decode()
@@ -277,7 +270,7 @@ func TestStreamDecoderCallerCancellation(t *testing.T) {
 		<-stream.Context().Done()
 		return status.FromContextError(stream.Context().Err()).Err()
 	})
-	decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, unstructuredCodec(), cancel, false)
+	decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, &jsonSerializer{}, cancel, false)
 	t.Cleanup(decoder.Close)
 
 	cancel()
