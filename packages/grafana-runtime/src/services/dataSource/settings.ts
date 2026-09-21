@@ -216,32 +216,26 @@ export function toListItem(settings: DataSourceInstanceSettings): DataSourceInst
   };
 }
 
-// getDataSourceInstanceList appends the built-in -- Grafana -- data source to most results.
-// It is suppressed when pluginId or alerting filters are set, when tracing is set, or when
-// a custom filter callback returns false for it. Callers that want only true instances of a
-// given type must re-check the type to guard against a false positive from that appended
-// built-in. Mirrors the type predicate used inside applyFilters (exact type or aliasID match).
+// Mirrors the type predicate inside applyFilters, aliasID arm included.
 function matchesType(item: DataSourceInstanceListItem, type: string): boolean {
   return item.type === type || (item.meta.aliasIDs?.includes(type) ?? false);
 }
 
 /**
- * Resolve the list item for the default data source of a given type. Returns the instance
- * flagged as default, otherwise the first instance of that type, or `undefined` when none exist.
+ * Resolve which item of a data source list should be treated as the default: the one flagged
+ * `isDefault`, otherwise the first item, or `undefined` when nothing is eligible.
  *
- * Covers the common "get my data source" pattern (`list.find(ds => ds.isDefault) ?? list[0]`)
- * without exposing the full list. The heavy per-instance settings are not included — fetch
- * them on demand via {@link getDataSourceInstanceSettings}.
+ * Built-ins (`-- Grafana --`, `-- Mixed --`, `-- Dashboard --`) are never eligible: they are
+ * never flagged, and {@link getDataSourceInstanceList} appends them regardless of a `type`
+ * filter, so a list whose real instances all dropped out resolves to `undefined`.
  *
  * @public
  */
-export async function getDefaultDataSourceInstanceListItem(
-  type: string
-): Promise<DataSourceInstanceListItem | undefined> {
-  const allOfType = await getDataSourceInstanceList({ type, all: true });
-  const list = allOfType.filter((item) => matchesType(item, type));
-  const defaultInstance = list.find((item) => item.isDefault);
-  return defaultInstance ?? list[0];
+export function getDefaultDataSourceInstanceListItem(
+  items: DataSourceInstanceListItem[]
+): DataSourceInstanceListItem | undefined {
+  const candidates = items.filter((item) => !item.meta.builtIn);
+  return candidates.find((item) => item.isDefault) ?? candidates[0];
 }
 
 /**

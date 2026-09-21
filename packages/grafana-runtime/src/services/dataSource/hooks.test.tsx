@@ -12,7 +12,6 @@ import {
   useDataSourceInstanceList,
   useDataSourceInstanceListItem,
   useDataSourceInstanceSettings,
-  useDefaultDataSourceInstanceListItem,
   useHasDataSourceInstance,
 } from './hooks';
 import { setDataSourceInstanceSettings } from './settings';
@@ -190,24 +189,6 @@ describe('useDataSourceInstance', () => {
     const { result } = renderHook(() => useDataSourceInstance('missing'));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.error).toBeInstanceOf(Error);
-  });
-});
-
-describe('useDefaultDataSourceInstanceListItem', () => {
-  it('starts loading then resolves to the default instance of the type', async () => {
-    const { result } = renderHook(() => useDefaultDataSourceInstanceListItem('test-db'));
-
-    expect(result.current.isLoading).toBe(true);
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.item?.name).toBe('Bravo');
-    expect(result.current.error).toBeUndefined();
-  });
-
-  it('resolves to undefined for an unknown type', async () => {
-    const { result } = renderHook(() => useDefaultDataSourceInstanceListItem('nonexistent'));
-
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect(result.current.item).toBeUndefined();
   });
 });
 

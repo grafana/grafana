@@ -14,8 +14,9 @@ Grafana versions.
 ## Domains
 
 - `@grafana/plugin-compat/datasources` — `getDataSourceInstance`,
-  `getDataSourceInstanceList`, `getDataSourceInstanceSettings`. Replacements
-  for `getDataSourceSrv()` methods.
+  `getDataSourceInstanceList`, `getDataSourceInstanceSettings`,
+  `getDefaultDataSourceInstanceListItem`. Replacements for
+  `getDataSourceSrv()` methods.
 - `@grafana/plugin-compat/apps` — `getPluginSettings`,
   `updateAppPluginSettings`. Replacements for the `getBackendSrv()`
   plugin-settings endpoints.
@@ -23,9 +24,17 @@ Grafana versions.
 ## Usage
 
 ```ts
-import { getDataSourceInstance } from '@grafana/plugin-compat/datasources';
+import {
+  getDataSourceInstance,
+  getDataSourceInstanceList,
+  getDefaultDataSourceInstanceListItem,
+} from '@grafana/plugin-compat/datasources';
 import { getPluginSettings } from '@grafana/plugin-compat/apps';
 
 const ds = await getDataSourceInstance({ uid: 'my-uid' });
 const settings = await getPluginSettings('my-plugin-id');
+
+// Unfiltered for the org default, filtered to pick one out of a subset.
+const items = await getDataSourceInstanceList({ type: 'prometheus' });
+const defaultProm = getDefaultDataSourceInstanceListItem(items);
 ```

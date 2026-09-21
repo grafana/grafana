@@ -1,4 +1,4 @@
-import { type DataSourceApi, type DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceApi, type DataSourceInstanceListItem, type DataSourceInstanceSettings } from '@grafana/data';
 
 import { setBackendSrv } from '../backendSrv';
 import { type DataSourceSrv, setDataSourceSrv } from '../dataSourceSrv';
@@ -77,21 +77,21 @@ const fixtures: Record<string, DataSourceInstanceSettings> = {
     uid: '-- Grafana --',
     name: '-- Grafana --',
     type: 'grafana',
-    meta: { ...ds({}).meta, id: 'grafana', metrics: true },
+    meta: { ...ds({}).meta, id: 'grafana', metrics: true, builtIn: true },
   }),
   '-- Mixed --': ds({
     id: 5,
     uid: '-- Mixed --',
     name: '-- Mixed --',
     type: 'mixed',
-    meta: { ...ds({}).meta, id: 'mixed', metrics: true },
+    meta: { ...ds({}).meta, id: 'mixed', metrics: true, builtIn: true },
   }),
   '-- Dashboard --': ds({
     id: 6,
     uid: '-- Dashboard --',
     name: '-- Dashboard --',
     type: 'dashboard',
-    meta: { ...ds({}).meta, id: 'dashboard', metrics: true },
+    meta: { ...ds({}).meta, id: 'dashboard', metrics: true, builtIn: true },
   }),
   Expression: ds({
     id: 0,
@@ -673,67 +673,88 @@ describe('instanceSettings', () => {
   });
 
   describe('getDefaultDataSourceInstanceListItem', () => {
-    it('returns the default instance of the type', async () => {
+    function listItem(overrides: Partial<DataSourceInstanceListItem>): DataSourceInstanceListItem {
+      return { uid: 'uid', type: 'test-db', name: 'name', meta: ds({}).meta, isDefault: false, ...overrides };
+    }
+
+    it('returns the item flagged as default rather than the first one', () => {
+      const items = [
+        listItem({ uid: 'uid-alpha', name: 'Alpha' }),
+        listItem({ uid: 'uid-bravo', name: 'Bravo', isDefault: true }),
+      ];
+
+      expect(getDefaultDataSourceInstanceListItem(items)?.name).toBe('Bravo');
+    });
+
+    it('returns the first item when none is flagged as default', () => {
+      const items = [listItem({ uid: 'uid-alpha', name: 'Alpha' }), listItem({ uid: 'uid-charlie', name: 'Charlie' })];
+
+      expect(getDefaultDataSourceInstanceListItem(items)?.name).toBe('Alpha');
+    });
+
+    it('returns the first flagged item when more than one is flagged as default', () => {
+      const items = [
+        listItem({ uid: 'uid-alpha', name: 'Alpha' }),
+        listItem({ uid: 'uid-bravo', name: 'Bravo', isDefault: true }),
+        listItem({ uid: 'uid-charlie', name: 'Charlie', isDefault: true }),
+      ];
+
+      expect(getDefaultDataSourceInstanceListItem(items)?.name).toBe('Bravo');
+    });
+
+    it('returns undefined for an empty list', () => {
+      expect(getDefaultDataSourceInstanceListItem([])).toBeUndefined();
+    });
+
+    it('resolves the org default from an unfiltered list', async () => {
       initDataSourceInstanceSettings(fixtures, 'Bravo');
-      const item = await getDefaultDataSourceInstanceListItem('test-db');
-      expect(item?.name).toBe('Bravo');
-      expect(item?.isDefault).toBe(true);
+
+      const items = await getDataSourceInstanceList();
+
+      expect(getDefaultDataSourceInstanceListItem(items)?.name).toBe('Bravo');
     });
 
-    it('falls back to the first instance when none of the type is default', async () => {
-      const noDefault: Record<string, DataSourceInstanceSettings> = {
-        Alpha: ds({ id: 1, uid: 'uid-alpha', name: 'Alpha', type: 'test-db' }),
-        Charlie: ds({ id: 3, uid: 'uid-charlie', name: 'Charlie', type: 'test-db' }),
-      };
-      initDataSourceInstanceSettings(noDefault, 'Alpha');
-      const item = await getDefaultDataSourceInstanceListItem('test-db');
-      // Sorted alphabetically, so Alpha comes first.
-      expect(item?.name).toBe('Alpha');
-    });
-
-    it('returns undefined when no instance of the type exists (does not return -- Grafana --)', async () => {
+    it('resolves the first match when the instance carrying the org default is filtered out', async () => {
       initDataSourceInstanceSettings(fixtures, 'Bravo');
-      const item = await getDefaultDataSourceInstanceListItem('nonexistent');
-      expect(item).toBeUndefined();
+
+      // Only Charlie is a tracing source, so the flagged Bravo is not part of the list.
+      const items = await getDataSourceInstanceList({ tracing: true });
+
+      expect(items.some((x) => x.isDefault)).toBe(false);
+      expect(getDefaultDataSourceInstanceListItem(items)?.name).toBe('Charlie');
     });
 
-    it('counts capability-less instances (all: true)', async () => {
-      const noCapability: Record<string, DataSourceInstanceSettings> = {
-        NoOp: ds({
-          id: 10,
-          uid: 'uid-noop',
-          name: 'NoOp',
-          type: 'noop',
-          isDefault: true,
-          meta: {
-            ...ds({}).meta,
-            id: 'noop',
-            metrics: false,
-            annotations: false,
-            tracing: false,
-            logs: false,
-            alerting: false,
-          },
-        }),
-      };
-      initDataSourceInstanceSettings(noCapability, 'NoOp');
-      const item = await getDefaultDataSourceInstanceListItem('noop');
-      expect(item?.name).toBe('NoOp');
+    it('returns undefined rather than a built-in when a type-filtered list matches nothing else', async () => {
+      initDataSourceInstanceSettings(fixtures, 'Bravo');
+
+      const items = await getDataSourceInstanceList({ type: 'nonexistent', all: true, mixed: true, dashboard: true });
+
+      // A type filter does not suppress the built-ins, and -- Mixed -- leads them.
+      expect(items.map((x) => x.name)).toEqual(['-- Mixed --', '-- Dashboard --', '-- Grafana --']);
+      expect(getDefaultDataSourceInstanceListItem(items)).toBeUndefined();
     });
 
-    it('resolves the type via meta.aliasIDs', async () => {
-      const withAlias: Record<string, DataSourceInstanceSettings> = {
-        Real: ds({
-          id: 21,
-          uid: 'uid-real',
-          name: 'Real',
-          type: 'real-type',
-          meta: { ...ds({}).meta, id: 'real', aliasIDs: ['legacy-type'], metrics: true },
+    it('keeps the flagged instance in a list that also carries built-ins', async () => {
+      initDataSourceInstanceSettings(fixtures, 'Bravo');
+
+      const items = await getDataSourceInstanceList({ type: 'test-db', all: true, mixed: true });
+
+      expect(getDefaultDataSourceInstanceListItem(items)?.name).toBe('Bravo');
+    });
+
+    it('ignores a built-in that leads the list even when no real instance is flagged', () => {
+      // getDataSourceInstanceList appends built-ins last, but a caller may reorder the list.
+      const items = [
+        listItem({
+          uid: 'grafana',
+          name: '-- Grafana --',
+          type: 'grafana',
+          meta: { ...ds({}).meta, id: 'grafana', builtIn: true },
         }),
-      };
-      initDataSourceInstanceSettings(withAlias, 'Real');
-      const item = await getDefaultDataSourceInstanceListItem('legacy-type');
-      expect(item?.name).toBe('Real');
+        listItem({ uid: 'uid-alpha', name: 'Alpha' }),
+      ];
+
+      expect(getDefaultDataSourceInstanceListItem(items)?.name).toBe('Alpha');
     });
   });
 
