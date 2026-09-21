@@ -39,6 +39,15 @@ func declared() resourcepb.ResourceSearchRequest {
 	return request
 }
 
+func groupedDeclaration() resourcepb.ResourceSearchRequest {
+	var (
+		// ruleid: direct-go-resource-search-requires-field-values
+		request resourcepb.ResourceSearchRequest
+	)
+	request.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
+	return request
+}
+
 func fieldValues() *resourcepb.ResourceSearchRequest {
 	// ok: direct-go-resource-search-requires-field-values
 	return &resourcepb.ResourceSearchRequest{
