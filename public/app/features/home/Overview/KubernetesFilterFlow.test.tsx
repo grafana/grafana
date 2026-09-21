@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from 'test/test-utils';
+import { act, render, screen, waitFor, within } from 'test/test-utils';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
 import { mockComboboxRect } from '@grafana/test-utils';
@@ -17,7 +17,7 @@ import { metricsSolution } from '../solutions/metricsSolution';
 import { pluginAvailability, setupGuideEnabled } from '../solutions/pluginAvailability';
 import { accessibleAppPage } from '../solutions/pluginPages';
 import { syntheticsSolution } from '../solutions/syntheticsSolution';
-import { stubSolution } from '../solutions/test-utils';
+import { deferred, stubSolution } from '../solutions/test-utils';
 import { tracesSolution } from '../solutions/tracesSolution';
 import { useHomepageSolutions } from '../useHomepageSolutions';
 
@@ -95,6 +95,11 @@ function Homepage() {
 }
 
 it('reloads both homepage cards with scoped facts after saving a filter', async () => {
+  // Scoped inventory settles on demand so the reload window is observable.
+  const scopedInventory = deferred<{ clusters: number; pods: number }>();
+  mockFetchInventory.mockImplementation(async (_ds, scope: KubernetesScope | null) =>
+    scope === null ? { clusters: 2, pods: 24 } : scopedInventory.promise
+  );
   const { user } = render(<Homepage />);
 
   expect(await screen.findAllByText('2 clusters')).toHaveLength(2);
@@ -107,9 +112,16 @@ it('reloads both homepage cards with scoped facts after saving a filter', async 
   await user.click(await screen.findByRole('option', { name: 'prod' }));
   await user.click(within(dialog).getByRole('button', { name: 'Save' }));
 
+  // Neither card keeps the fleet-wide figures while the scoped ones load.
+  await waitFor(() => expect(screen.queryByText('2 clusters')).not.toBeInTheDocument());
+  expect(screen.queryByText('1 cluster')).not.toBeInTheDocument();
+  expect(screen.getAllByTestId('solution-stats-skeleton').length).toBeGreaterThan(0);
+
+  await act(async () => scopedInventory.resolve({ clusters: 1, pods: 3 }));
+
   // Both cards return with the scoped counts; the Overview gear is highlighted.
   await waitFor(() => expect(screen.getAllByText('1 cluster')).toHaveLength(2));
-  expect(screen.queryByText('2 clusters')).not.toBeInTheDocument();
+  expect(screen.queryByTestId('solution-stats-skeleton')).not.toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Edit filters (Cluster: prod)' })).toBeInTheDocument();
   // Each solution's facts are shared by both cards, and recreating the solution kept its detection.
   expect(mockFetchInventory.mock.calls).toEqual([
