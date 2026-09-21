@@ -2,6 +2,7 @@ package nats
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -311,6 +312,7 @@ func (c *connection) closeWithResult() bool {
 	if nc.IsClosed() {
 		return false
 	}
+	initialErr := nc.LastError()
 
 	// Drain closes the connection on a background goroutine; wait for it below.
 	if err := nc.Drain(); err != nil {
@@ -328,6 +330,11 @@ func (c *connection) closeWithResult() bool {
 			return false
 		}
 		time.Sleep(10 * time.Millisecond)
+	}
+	// Drain reports completion asynchronously. NATS records an internal drain
+	// timeout as the connection closes, so IsClosed alone is not success.
+	if err := nc.LastError(); err != nil && !errors.Is(err, initialErr) {
+		return false
 	}
 	return true
 }

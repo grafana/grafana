@@ -3,7 +3,7 @@ package nats
 import (
 	"context"
 	"fmt"
-	"sync/atomic"
+	"sync"
 	"time"
 
 	"github.com/grafana/dskit/services"
@@ -25,14 +25,15 @@ type PublisherService struct {
 	services.NamedService
 	*connection
 	metrics       *publisherMetrics
-	pendingBytes  atomic.Int64
-	oldestPending atomic.Int64
+	pendingMu     sync.Mutex
+	pendingBytes  int64
+	oldestPending int64
 }
 
 func newPublisher(logger log.Logger, m *publisherMetrics, config *Config) *PublisherService {
 	conn := newConnection(rolePublisher, logger, m.connectionMetrics, config, config.PublisherCredentials)
 	p := &PublisherService{connection: conn, metrics: m}
-	p.NamedService = services.NewBasicService(nil, p.running, p.stopping).WithName(publisherName)
+	p.NamedService = services.NewBasicService(p.starting, p.running, p.stopping).WithName(publisherName)
 	return p
 }
 
@@ -59,9 +60,8 @@ func (p *PublisherService) Run(ctx context.Context) error {
 	return p.AwaitTerminated(ctx)
 }
 
-func (p *PublisherService) running(ctx context.Context) error {
+func (p *PublisherService) starting(ctx context.Context) error {
 	if !p.Enabled() {
-		<-ctx.Done()
 		return nil
 	}
 	// Embedded server and publisher services start concurrently. Wait until the
@@ -69,10 +69,10 @@ func (p *PublisherService) running(ctx context.Context) error {
 	if p.config.server != nil && !p.config.server.IsDisabled() {
 		ticker := time.NewTicker(10 * time.Millisecond)
 		defer ticker.Stop()
-		for len(p.config.URLs()) == 0 {
+		for p.config.server.clientURL() == "" {
 			select {
 			case <-ctx.Done():
-				return ctx.Err()
+				return nil
 			case <-ticker.C:
 			}
 		}
@@ -80,10 +80,21 @@ func (p *PublisherService) running(ctx context.Context) error {
 
 	// Make connection/auth failures visible during service startup, while the
 	// reconnecting client still lets storage continue without the broker.
-	if _, err := p.get(ctx); err != nil {
+	nc, err := p.get(ctx)
+	if err != nil {
+		if ctx.Err() != nil {
+			return nil
+		}
 		return err
 	}
+	if !nc.IsConnected() {
+		return fmt.Errorf("nats publisher initial connection failed (status=%s, last_err=%v)", nc.Status(), nc.LastError())
+	}
 
+	return nil
+}
+
+func (p *PublisherService) running(ctx context.Context) error {
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 	for {
@@ -99,11 +110,23 @@ func (p *PublisherService) running(ctx context.Context) error {
 }
 
 func (p *PublisherService) stopping(_ error) error {
-	if pending := p.pendingBytes.Load(); pending > 0 {
+	drained := p.closeWithResult()
+	if drained {
+		p.pendingMu.Lock()
+		p.pendingBytes = 0
+		p.oldestPending = 0
+		p.metrics.pendingBytes.Set(0)
+		p.metrics.oldestPending.Set(0)
+		p.pendingMu.Unlock()
+		return nil
+	}
+	p.pendingMu.Lock()
+	pending := p.pendingBytes
+	p.pendingMu.Unlock()
+	if pending > 0 {
 		p.metrics.forcedDrainLoss.Inc()
 		p.log.Warn("nats publisher closed with locally accepted messages pending", "bytes", pending)
 	}
-	p.close()
 	return nil
 }
 
@@ -128,20 +151,23 @@ func (p *PublisherService) Publish(ctx context.Context, subject string, data []b
 	// while disconnected; a successful FlushWithContext clears that estimate.
 	if !nc.IsConnected() {
 		bytes := int64(len(subject) + len(data))
-		p.pendingBytes.Add(bytes)
-		if p.oldestPending.CompareAndSwap(0, time.Now().UnixNano()) {
+		p.pendingMu.Lock()
+		p.pendingBytes += bytes
+		if p.oldestPending == 0 {
+			p.oldestPending = time.Now().UnixNano()
 			p.metrics.oldestPending.Set(float64(time.Now().Unix()))
 		}
-		p.metrics.pendingBytes.Set(float64(p.pendingBytes.Load()))
+		p.metrics.pendingBytes.Set(float64(p.pendingBytes))
+		p.pendingMu.Unlock()
 	}
 	p.log.Debug("accepted message for publish", "subject", subject, "bytes", len(data), "connected", nc.IsConnected())
 	return nil
 }
 
 func (p *PublisherService) flush(ctx context.Context) {
-	p.connection.mu.Lock()
-	nc := p.connection.conn
-	p.connection.mu.Unlock()
+	p.mu.Lock()
+	nc := p.conn
+	p.mu.Unlock()
 	if nc == nil || !nc.IsConnected() {
 		return
 	}
@@ -151,10 +177,13 @@ func (p *PublisherService) flush(ctx context.Context) {
 		p.log.Warn("nats publisher flush failed", "err", err)
 		return
 	}
-	if p.pendingBytes.Swap(0) > 0 {
+	p.pendingMu.Lock()
+	if p.pendingBytes > 0 {
+		p.pendingBytes = 0
+		p.oldestPending = 0
 		p.metrics.pendingBytes.Set(0)
-		p.oldestPending.Store(0)
 		p.metrics.oldestPending.Set(0)
 	}
+	p.pendingMu.Unlock()
 	p.metrics.lastSuccessfulFlush.Set(float64(time.Now().Unix()))
 }

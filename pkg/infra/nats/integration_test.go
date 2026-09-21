@@ -2,15 +2,21 @@ package nats
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"net"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	natsserver "github.com/nats-io/nats-server/v2/server"
+	natsclient "github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus"
+	promtestutil "github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -20,6 +26,101 @@ import (
 // in-process client hop that production embedded mode uses.
 func TestIntegrationEmbeddedServer(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("publisher buffer overflows and recovers after reconnect", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		start := func(port int) *natsserver.Server {
+			s, err := natsserver.NewServer(&natsserver.Options{
+				Host: "127.0.0.1", Port: port, NoLog: true, NoSigs: true,
+				JetStream: false, NoSystemAccount: true,
+			})
+			require.NoError(t, err)
+			go s.Start()
+			require.True(t, s.ReadyForConnections(5*time.Second))
+			return s
+		}
+
+		srv := start(natsserver.RANDOM_PORT)
+		port := srv.Addr().(*net.TCPAddr).Port
+		defer func() { srv.Shutdown() }()
+		cfg := setting.NATSSettings{Enabled: true, Mode: setting.NATSModeExternal, ClientURLs: []string{fmt.Sprintf("nats://127.0.0.1:%d", port)}}
+		natsCfg := newConfig(cfg, nil)
+		pub := newPublisher(log.NewNopLogger(), newPublisherMetrics(), natsCfg)
+		sub := newSubscriber(log.NewNopLogger(), newSubscriberMetrics(), natsCfg)
+		startService(t, ctx, sub)
+
+		const subject = "grafana.integration.reconnect"
+		received := make(chan string, 256)
+		_, err := sub.Subscribe(ctx, subject, func(_ string, data []byte) {
+			received <- string(data)
+		})
+		require.NoError(t, err)
+		require.Eventually(t, func() bool {
+			err := pub.Publish(ctx, subject, []byte("warmup"))
+			select {
+			case <-received:
+				return err == nil
+			default:
+				return false
+			}
+		}, 5*time.Second, 10*time.Millisecond)
+
+		sub.close()
+		srv.Shutdown()
+		require.Eventually(t, func() bool {
+			pub.mu.Lock()
+			defer pub.mu.Unlock()
+			return pub.conn != nil && !pub.conn.IsConnected()
+		}, 5*time.Second, 10*time.Millisecond)
+
+		payload := make([]byte, 64*1024)
+		accepted := make([]string, 0, 256)
+		for i := 0; ; i++ {
+			message := fmt.Sprintf("%08d:%s", i, payload)
+			err := pub.Publish(ctx, subject, []byte(message))
+			if errors.Is(err, natsclient.ErrReconnectBufExceeded) {
+				break
+			}
+			require.NoError(t, err)
+			accepted = append(accepted, message)
+		}
+		require.NotEmpty(t, accepted)
+		require.Greater(t, promtestutil.ToFloat64(pub.metrics.pendingBytes), float64(0))
+
+		srv = start(port)
+		recoverySub := newTestSubscriber(t, srv)
+		startService(t, ctx, recoverySub)
+		_, err = recoverySub.Subscribe(ctx, subject, func(_ string, data []byte) {
+			received <- string(data)
+		})
+		require.NoError(t, err)
+		require.Eventually(t, func() bool {
+			recoverySub.mu.Lock()
+			defer recoverySub.mu.Unlock()
+			return recoverySub.conn != nil && recoverySub.conn.IsConnected()
+		}, 5*time.Second, 50*time.Millisecond)
+		require.Eventually(t, func() bool {
+			flushCtx, flushCancel := context.WithTimeout(ctx, time.Second)
+			pub.flush(flushCtx)
+			flushCancel()
+			return promtestutil.ToFloat64(pub.metrics.pendingBytes) == 0 && promtestutil.ToFloat64(pub.metrics.lastSuccessfulFlush) > 0
+		}, 10*time.Second, 50*time.Millisecond)
+
+		seen := make(map[string]struct{}, len(accepted))
+		for len(seen) < len(accepted) {
+			select {
+			case message := <-received:
+				seen[message] = struct{}{}
+			case <-time.After(15 * time.Second):
+				t.Fatalf("received %d/%d buffered messages", len(seen), len(accepted))
+			}
+		}
+		for _, message := range accepted {
+			require.Contains(t, seen, message)
+		}
+	})
 
 	t.Run("single subscriber receives a published message", func(t *testing.T) {
 		ctx, _, pub, sub := startEmbeddedStack(t)
