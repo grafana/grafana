@@ -199,3 +199,87 @@ var (
 	_ rest.Connecter       = (*filetreeConnector)(nil)
 	_ rest.StorageMetadata = (*filetreeConnector)(nil)
 )
+
+// ReftreeConnectorDependencies is satisfied by APIBuilder.
+type ReftreeConnectorDependencies interface {
+	ConnectionGetter
+	GetRepoFactory() repository.Factory
+}
+
+// reftreeConnector handles the /reftree subresource for repositories: it builds a
+// non-persisted repository from the POST body and lists its refs, so the onboarding
+// wizard can populate the branch dropdown before a Repository object exists.
+//
+// This is a separate connector from refs (rather than a POST branch on it, as originally
+// tried) because the apiserver's OpenAPI generation only produces one operation per
+// subresource path - adding POST to refsConnector's existing GET path silently dropped
+// the POST operation from the generated spec and TS client.
+type reftreeConnector struct {
+	connectionGetter ConnectionGetter
+	repoFactory      repository.Factory
+}
+
+func NewReftreeConnector(deps ReftreeConnectorDependencies) *reftreeConnector {
+	return &reftreeConnector{
+		connectionGetter: deps,
+		repoFactory:      deps.GetRepoFactory(),
+	}
+}
+
+func (*reftreeConnector) New() runtime.Object {
+	return &provisioning.RefList{}
+}
+
+func (*reftreeConnector) Destroy() {}
+
+func (*reftreeConnector) ProducesMIMETypes(verb string) []string {
+	return []string{"application/json"}
+}
+
+func (*reftreeConnector) ProducesObject(verb string) any {
+	return &provisioning.RefList{}
+}
+
+func (*reftreeConnector) ConnectMethods() []string {
+	return []string{http.MethodPost}
+}
+
+func (*reftreeConnector) NewConnectOptions() (runtime.Object, bool, string) {
+	return nil, false, ""
+}
+
+func (c *reftreeConnector) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ns, ok := request.NamespaceFrom(ctx)
+		if !ok {
+			responder.Error(k8serrors.NewBadRequest("missing namespace"))
+			return
+		}
+
+		repo, err := buildEphemeralRepository(ctx, r, name, ns, c.connectionGetter, c.repoFactory)
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+
+		versionedRepo, ok := repo.(repository.Versioned)
+		if !ok {
+			responder.Error(k8serrors.NewBadRequest("repository does not support versioned operations"))
+			return
+		}
+
+		refs, err := versionedRepo.ListRefs(ctx)
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+
+		responder.Object(http.StatusOK, &provisioning.RefList{Items: refs})
+	}), nil
+}
+
+var (
+	_ rest.Storage         = (*reftreeConnector)(nil)
+	_ rest.Connecter       = (*reftreeConnector)(nil)
+	_ rest.StorageMetadata = (*reftreeConnector)(nil)
+)
