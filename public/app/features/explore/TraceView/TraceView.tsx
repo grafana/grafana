@@ -123,9 +123,14 @@ export function TraceView(props: Props) {
   }, [isAdaptiveTracesAppInstalled, traceProp]);
   const { search, setSearch, spanFilterMatches } = useSearch(exploreId, traceProp?.spans, spanFilters, criticalPath);
 
-  // A new object each time so focusing the already-focused span still scrolls the timeline.
+  // Search next/prev re-applies the current match whenever the matches Set is rebuilt
+  // (every filter keystroke). Reuse the object when the id is unchanged so the timeline
+  // does not jump. Go to span always allocates a new object so a repeat click still scrolls.
   const [focusedSpanForSearch, setFocusedSpanForSearch] = useState<{ spanID: string } | undefined>();
   const focusSpanForSearch = useCallback((spanID: string) => {
+    setFocusedSpanForSearch((current) => (current?.spanID === spanID ? current : { spanID }));
+  }, []);
+  const refocusSpanForSearch = useCallback((spanID: string) => {
     setFocusedSpanForSearch({ spanID });
   }, []);
   const [showSpanFilters, setShowSpanFilters] = useToggle(false);
@@ -278,9 +283,9 @@ export function TraceView(props: Props) {
       if (search.matchesOnly && spanFilterMatches && !spanFilterMatches.has(spanID)) {
         setSearch({ ...search, matchesOnly: false });
       }
-      focusSpanForSearch(spanID);
+      refocusSpanForSearch(spanID);
     },
-    [focusSpanForSearch, openDetail, revealSpan, search, setSearch, spanFilterMatches, traceProp]
+    [openDetail, refocusSpanForSearch, revealSpan, search, setSearch, spanFilterMatches, traceProp]
   );
 
   // The Summary attributes accordion renders only on summary spans and is otherwise untracked;
