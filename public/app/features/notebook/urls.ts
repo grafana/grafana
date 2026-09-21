@@ -12,7 +12,6 @@ export const NOTEBOOKS_BASE_URL = '/notebooks';
 export const NOTEBOOK_EDIT_PARAM = 'edit';
 export const NOTEBOOK_EDIT_PARAM_ON = 'true';
 
-
 /**
  * The blank-notebook route. Nothing exists behind it: the page renders an empty notebook and the
  * resource is only created once there is something to save.
