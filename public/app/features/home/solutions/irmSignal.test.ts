@@ -59,20 +59,21 @@ it('reads a missing plugin route (404) as inactive', async () => {
   await expect(detectIrmSignal()).resolves.toBe('inactive');
 });
 
-it('reads a failing IRM backend as unknown', async () => {
+// Other failures reject; the signals snapshot maps rejections to unknown.
+it('rejects on a failing IRM backend', async () => {
   get.mockRejectedValue({ status: 502, data: {} });
 
-  await expect(detectIrmSignal()).resolves.toBe('unknown');
+  await expect(detectIrmSignal()).rejects.toEqual({ status: 502, data: {} });
 });
 
-it('reads a hung request as unknown once the probe deadline passes', async () => {
+it('rejects a hung request once the probe deadline passes', async () => {
   jest.useFakeTimers();
   get.mockImplementation(() => new Promise(() => {}));
 
-  const detected = detectIrmSignal();
+  const detected = expect(detectIrmSignal()).rejects.toThrow(`Probe timed out after ${PROBE_TIMEOUT_MS}ms`);
   await jest.advanceTimersByTimeAsync(PROBE_TIMEOUT_MS);
 
-  await expect(detected).resolves.toBe('unknown');
+  await detected;
 });
 
 it('shares one request between concurrent readers until reset', async () => {
@@ -86,10 +87,10 @@ it('shares one request between concurrent readers until reset', async () => {
   expect(get).toHaveBeenCalledTimes(2);
 });
 
-it('retries after a failure instead of caching unknown', async () => {
+it('retries after a failure instead of caching the rejection', async () => {
   get.mockRejectedValueOnce({ status: 500, data: {} }).mockResolvedValueOnce({ results: [] });
 
-  await expect(detectIrmSignal()).resolves.toBe('unknown');
+  await expect(detectIrmSignal()).rejects.toEqual({ status: 500, data: {} });
   await expect(detectIrmSignal()).resolves.toBe('inactive');
   expect(get).toHaveBeenCalledTimes(2);
 });

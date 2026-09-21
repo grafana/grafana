@@ -4,11 +4,12 @@ import { type DataSourceInstanceListItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 import { contextSrv } from 'app/core/services/context_srv';
+import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { type LocalPlugin } from 'app/features/plugins/admin/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { ctaClicked, recommendationsShown } from '../analytics/main';
-import { APP_OBSERVABILITY_APP_ID, HOSTED_TRACES_APP_ID, IRM_APP_ID } from '../solutions/appPluginIds';
+import { APP_OBSERVABILITY_APP_ID, HOSTED_TRACES_APP_ID } from '../solutions/appPluginIds';
 import { KUBERNETES_APP_ID } from '../solutions/kubernetesData';
 import { type SignalStatus, type SolutionState } from '../solutions/solutionState';
 import { deferred, stubDatasource, stubSolution } from '../solutions/test-utils';
@@ -354,7 +355,7 @@ describe('Recommendations', () => {
   });
 
   it('offers to enable a disabled IRM plugin on a Kubernetes stack', async () => {
-    mockGet.mockResolvedValue([plugin(IRM_APP_ID)]);
+    mockGet.mockResolvedValue([plugin(SupportedPlugin.Irm)]);
     render(<Recommendations solutions={homepageSolutions(KUBERNETES_STATE)} />);
 
     const link = await screen.findByRole('link', { name: /Enable IRM/ });
@@ -363,7 +364,7 @@ describe('Recommendations', () => {
   });
 
   it('sends an enabled but unconnected IRM to its home page', async () => {
-    mockGet.mockResolvedValue([plugin(IRM_APP_ID, true)]);
+    mockGet.mockResolvedValue([plugin(SupportedPlugin.Irm, true)]);
     render(<Recommendations solutions={homepageSolutions(KUBERNETES_STATE)} />);
 
     const link = await screen.findByRole('link', { name: 'Set up IRM' });
@@ -378,7 +379,7 @@ describe('Recommendations', () => {
   });
 
   it('hides the IRM card when Grafana Alerting already routes into IRM', async () => {
-    mockGet.mockResolvedValue([plugin(HOSTED_TRACES_APP_ID), plugin(IRM_APP_ID)]);
+    mockGet.mockResolvedValue([plugin(HOSTED_TRACES_APP_ID), plugin(SupportedPlugin.Irm)]);
     render(<Recommendations solutions={homepageSolutions({ ...KUBERNETES_STATE, irm: 'active' })} />);
 
     expect(carouselTitles(await carouselRegion())).toEqual(['Trace requests across services']);

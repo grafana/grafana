@@ -3,12 +3,12 @@ import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
+import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { type LocalPlugin } from 'app/features/plugins/admin/types';
 
 import {
   APP_OBSERVABILITY_APP_ID,
   HOSTED_TRACES_APP_ID,
-  IRM_APP_ID,
   SYNTHETIC_MONITORING_APP_ID,
   SYNTHETIC_MONITORING_CHECKS_WRITE,
 } from '../solutions/appPluginIds';
@@ -182,7 +182,7 @@ export function getRecommendationCards(): Record<RecommendedCardId, Recommendati
     // Setup lands on IRM Home: for an unconfigured org it opens on Get started (integrations, schedules, incidents).
     irm: pluginCard({
       id: 'irm',
-      pluginId: IRM_APP_ID,
+      pluginId: SupportedPlugin.Irm,
       appPath: '',
       icon: 'bell',
       color: (theme) => theme.visualization.getColorByName('red'),

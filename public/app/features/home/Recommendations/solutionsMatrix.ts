@@ -2,10 +2,6 @@
  * Pure recommendation matrix ("Homepage Led Growth" analytics matrix), scoped to Logs, Traces
  * (Hosted Traces), Kubernetes Monitoring, Application Observability, Synthetic Monitoring and IRM.
  * No I/O: signal detection lives in solutionState.ts.
- *
- * IRM is not a telemetry-depth card. It rides two matrix logics: the use-case loop
- * (Kubernetes or Synthetics active -> alert-to-resolution) and platform completion
- * (M+L+T -> observe, alert, page, respond), leading once App Observability is in use.
  */
 
 import { type SolutionState } from '../solutions/solutionState';
@@ -167,15 +163,9 @@ export function selectRecommendations(state: SolutionState): RecommendationSelec
 
   // M+L+T (OTel starters): App Observability unless span metrics show it is already in use.
   const appO11y: RecommendedCardId[] = spanMetrics === 'inactive' ? ['application-observability'] : [];
-  if (kubernetes === 'active') {
-    // With App Observability in use this row used to be empty; IRM is its PRIMARY.
-    return { cards: [...appO11y, ...irmCard], baseRow: 'fully_active' };
-  }
-  // IRM is PRIMARY only once App Observability is proven active (observe -> alert -> page -> respond).
-  // An unknown span-metrics probe hides App O11y but does not promote IRM, so it trails K8s Monitoring.
+  const k8sMonitoring: RecommendedCardId[] = kubernetes === 'active' ? [] : ['kubernetes-monitoring'];
+  // IRM leads only once App Observability is proven in use; an unknown probe hides App O11y but does not promote IRM.
   const cards: RecommendedCardId[] =
-    spanMetrics === 'active'
-      ? [...irmCard, 'kubernetes-monitoring']
-      : [...appO11y, 'kubernetes-monitoring', ...irmCard];
-  return { cards, baseRow: 'mlt' };
+    spanMetrics === 'active' ? [...irmCard, ...k8sMonitoring] : [...appO11y, ...k8sMonitoring, ...irmCard];
+  return { cards, baseRow: kubernetes === 'active' ? 'fully_active' : 'mlt' };
 }

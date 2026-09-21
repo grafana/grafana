@@ -1,31 +1,24 @@
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import {
   type AlertReceiveChannelsResult,
-  getProxyApiUrl,
+  grafanaOnCallIntegrationsRequest,
   readOnCallIntegrations,
 } from 'app/features/alerting/unified/api/onCallApi';
-import { GRAFANA_ONCALL_INTEGRATION_TYPE } from 'app/features/alerting/unified/components/receivers/grafanaAppReceivers/onCall/onCall';
+import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
-import { IRM_APP_ID } from './appPluginIds';
 import { createTtlCachedPromise, PROBE_TIMEOUT_MS, PROBE_TTL_MS, withDeadline } from './probeUtils';
 import { type SignalStatus } from './solutionState';
 
 // IRM counts as in use once Grafana Alerting routes into it: the plugin ships preinstalled and
 // enabled in Cloud, so plugin status alone would recommend IRM to everyone.
 async function fetchIrmSignal(): Promise<SignalStatus> {
+  const { url, params } = grafanaOnCallIntegrationsRequest(SupportedPlugin.Irm);
   try {
     const response = await withDeadline(PROBE_TIMEOUT_MS, undefined, (signal) =>
-      getBackendSrv().get<AlertReceiveChannelsResult>(
-        getProxyApiUrl('/alert_receive_channels/', IRM_APP_ID),
-        // Same request the alerting contact-point editor makes; legacy_grafana_alerting still counts.
-        {
-          filters: true,
-          integration: [GRAFANA_ONCALL_INTEGRATION_TYPE, 'legacy_grafana_alerting'],
-          skip_pagination: true,
-        },
-        undefined,
-        { showErrorAlert: false, abortSignal: signal }
-      )
+      getBackendSrv().get<AlertReceiveChannelsResult>(url, params, undefined, {
+        showErrorAlert: false,
+        abortSignal: signal,
+      })
     );
     return readOnCallIntegrations(response).length > 0 ? 'active' : 'inactive';
   } catch (err) {
@@ -40,9 +33,9 @@ async function fetchIrmSignal(): Promise<SignalStatus> {
 // Definitive answers are shared for the TTL window; rejections are evicted so the next read retries.
 const irmSignal = createTtlCachedPromise(fetchIrmSignal, PROBE_TTL_MS);
 
-/** Whether Grafana Alerting already routes into IRM. Failures and timeouts read as unknown and never reject. */
+/** Whether Grafana Alerting already routes into IRM. Failures and timeouts reject; the caller maps them to unknown. */
 export function detectIrmSignal(): Promise<SignalStatus> {
-  return irmSignal.get().catch((): SignalStatus => 'unknown');
+  return irmSignal.get();
 }
 
 export function resetIrmSignal(): void {

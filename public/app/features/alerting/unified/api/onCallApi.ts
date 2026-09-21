@@ -12,7 +12,7 @@ export interface NewOnCallIntegrationDTO {
   verbal_name: string;
 }
 
-export interface OnCallPaginatedResult<T> {
+interface OnCallPaginatedResult<T> {
   results: T[];
 }
 
@@ -41,18 +41,25 @@ export function getProxyApiUrl(path: string, pluginId: string) {
   return `/api/plugins/${pluginId}/resources${path}`;
 }
 
+/** Request for the Grafana Alerting integrations configured in OnCall/IRM; shared with the homepage probe. */
+export function grafanaOnCallIntegrationsRequest(pluginId: string) {
+  return {
+    url: getProxyApiUrl('/alert_receive_channels/', pluginId),
+    // legacy_grafana_alerting is necessary for OnCall.
+    // We do NOT need to differentiate between these two on our side
+    params: {
+      filters: true,
+      integration: [GRAFANA_ONCALL_INTEGRATION_TYPE, 'legacy_grafana_alerting'],
+      skip_pagination: true,
+    },
+  };
+}
+
 export const onCallApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     grafanaOnCallIntegrations: build.query<OnCallIntegrationDTO[], { pluginId: string }>({
       query: ({ pluginId }) => ({
-        url: getProxyApiUrl('/alert_receive_channels/', pluginId),
-        // legacy_grafana_alerting is necessary for OnCall.
-        // We do NOT need to differentiate between these two on our side
-        params: {
-          filters: true,
-          integration: [GRAFANA_ONCALL_INTEGRATION_TYPE, 'legacy_grafana_alerting'],
-          skip_pagination: true,
-        },
+        ...grafanaOnCallIntegrationsRequest(pluginId),
         showErrorAlert: false,
       }),
       transformResponse: readOnCallIntegrations,
