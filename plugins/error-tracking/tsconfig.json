@@ -1,8 +1,14 @@
 {
   "compilerOptions": {
     "jsx": "react-jsx",
-    "types": ["node"]
+    "noUncheckedSideEffectImports": false,
+    "types": ["node", "systemjs", "jquery"]
   },
   "extends": "@grafana/plugin-configs/tsconfig.json",
-  "include": ["."]
+  "include": [
+    ".",
+    "../../public/app/types/**/*.d.ts",
+    "../../packages/grafana-ui/src/types/**/*.d.ts",
+    "../../packages/grafana-plugin-configs/types/**/*.d.ts"
+  ]
 }

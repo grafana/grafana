@@ -9,11 +9,13 @@ COPY package.json project.json nx.json yarn.lock .yarnrc.yml tsconfig.json .brow
 COPY .yarn .yarn
 COPY packages packages
 COPY public/app/plugins public/app/plugins
+COPY public/app/types public/app/types
 COPY e2e-playwright e2e-playwright
 COPY plugins/error-tracking/package.json plugins/error-tracking/package.json
 
 RUN yarn install --immutable
 COPY plugins/error-tracking plugins/error-tracking
+RUN yarn workspace @grafana-plugins/grafana-errortracking-app typecheck
 RUN yarn workspace @grafana-plugins/grafana-errortracking-app build
 
 FROM ${GRAFANA_IMAGE}
