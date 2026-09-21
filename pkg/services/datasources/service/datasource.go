@@ -13,6 +13,7 @@ import (
 	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	authlib "github.com/grafana/authlib/types"
 
@@ -39,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 const (
@@ -59,7 +61,7 @@ type Service struct {
 	permissionsService        accesscontrol.DatasourcePermissionsService
 	ac                        accesscontrol.AccessControl
 	logger                    log.Logger
-	db                        db.DB
+	dbProvider                legacysql.LegacyDatabaseProvider
 	pluginStore               pluginstore.Store
 	pluginClient              plugins.Client
 	basePluginContextProvider plugincontext.BasePluginContextProvider
@@ -68,7 +70,7 @@ type Service struct {
 	ptc proxyTransportCache
 }
 type proxyTransportCache struct {
-	cache map[int64]cachedRoundTripper
+	cache map[string]cachedRoundTripper
 	sync.Mutex
 }
 
@@ -78,7 +80,8 @@ type cachedRoundTripper struct {
 }
 
 func ProvideService(
-	db db.DB,
+	_ db.DB,
+	dbProvider legacysql.LegacyDatabaseProvider,
 	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	secretsStore kvstore.SecretsKVStore, cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, datasourcePermissionsService accesscontrol.DatasourcePermissionsService,
@@ -87,20 +90,20 @@ func ProvideService(
 	retriever DataSourceRetriever,
 ) (*Service, error) {
 	dslogger := log.New("datasources")
-	store := &SqlStore{db: db, logger: dslogger, features: features}
+	store := &SqlStore{logger: dslogger, dbProvider: dbProvider}
 	s := &Service{
 		SQLStore:       store,
 		SecretsStore:   secretsStore,
 		SecretsService: secretsService,
 		ptc: proxyTransportCache{
-			cache: make(map[int64]cachedRoundTripper),
+			cache: make(map[string]cachedRoundTripper),
 		},
 		cfg:                       cfg,
 		features:                  features,
 		permissionsService:        datasourcePermissionsService,
 		ac:                        ac,
 		logger:                    dslogger,
-		db:                        db,
+		dbProvider:                dbProvider,
 		pluginStore:               pluginStore,
 		pluginClient:              pluginClient,
 		basePluginContextProvider: basePluginContextProvider,
@@ -123,6 +126,18 @@ func ProvideService(
 		return nil, err
 	}
 	return s, nil
+}
+
+// inTransaction runs fn in a transaction on the database resolved by the provider for ctx.
+// The transaction must be opened on that database: the store reuses the session placed on the
+// context without checking which engine created it, so a transaction on any other database
+// would run the (possibly tenant-prefixed) queries against the wrong server.
+func (s *Service) inTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
+	dbHelper, err := s.dbProvider(ctx)
+	if err != nil {
+		return err
+	}
+	return dbHelper.DB.InTransaction(ctx, fn)
 }
 
 func (s *Service) Usage(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
@@ -389,7 +404,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 	}
 
 	var dataSource *datasources.DataSource
-	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
+	err = s.inTransaction(ctx, func(ctx context.Context) error {
 		var err error
 
 		cmd.EncryptedSecureJsonData = make(map[string][]byte)
@@ -588,7 +603,7 @@ func getAvailableName(dsType string, dataSources []*datasources.DataSource) stri
 }
 
 func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
-	return s.db.InTransaction(ctx, func(ctx context.Context) error {
+	return s.inTransaction(ctx, func(ctx context.Context) error {
 		cmd.UpdateSecretFn = func() error {
 			return s.SecretsStore.Del(ctx, cmd.OrgID, cmd.Name, kvstore.DataSourceSecretType)
 		}
@@ -610,7 +625,7 @@ func (s *Service) decryptSecureJsonDataFn(ctx context.Context) func(ds *datasour
 func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
 	var dataSource *datasources.DataSource
 
-	return dataSource, s.db.InTransaction(ctx, func(ctx context.Context) error {
+	return dataSource, s.inTransaction(ctx, func(ctx context.Context) error {
 		var err error
 
 		query := &datasources.GetDataSourceQuery{
@@ -730,12 +745,17 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 	})
 }
 
+func proxyTransportCacheId(ds *datasources.DataSource, ctx context.Context) string {
+	return fmt.Sprintf("ptc-%s-%d", request.NamespaceValue(ctx), ds.ID)
+}
+
 func (s *Service) GetHTTPTransport(ctx context.Context, ds *datasources.DataSource, provider httpclient.Provider,
 	customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error) {
 	s.ptc.Lock()
 	defer s.ptc.Unlock()
 
-	if t, present := s.ptc.cache[ds.ID]; present && ds.Updated.Equal(t.updated) {
+	ptcCacheId := proxyTransportCacheId(ds, ctx)
+	if t, present := s.ptc.cache[ptcCacheId]; present && ds.Updated.Equal(t.updated) {
 		return t.roundTripper, nil
 	}
 
@@ -751,7 +771,7 @@ func (s *Service) GetHTTPTransport(ctx context.Context, ds *datasources.DataSour
 		return nil, err
 	}
 
-	s.ptc.cache[ds.ID] = cachedRoundTripper{
+	s.ptc.cache[ptcCacheId] = cachedRoundTripper{
 		roundTripper: rt,
 		updated:      ds.Updated,
 	}
