@@ -324,13 +324,13 @@ func (a *AppInstaller) AdmissionPlugin() admission.Factory {
 			return nil, err
 		}
 
-		return specOnlyAdmission{plugin}, nil
+		return resourceOnlyAdmissionHook{plugin}, nil
 	}
 }
 
-type specOnlyAdmission struct{ admission.Interface }
+type resourceOnlyAdmissionHook struct{ admission.Interface }
 
-func (s specOnlyAdmission) Admit(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+func (s resourceOnlyAdmissionHook) Admit(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
 	m, ok := s.Interface.(admission.MutationInterface)
 	if !ok || a.GetSubresource() == "status" {
 		return nil
@@ -339,7 +339,7 @@ func (s specOnlyAdmission) Admit(ctx context.Context, a admission.Attributes, o 
 	return m.Admit(ctx, a, o)
 }
 
-func (s specOnlyAdmission) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+func (s resourceOnlyAdmissionHook) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
 	m, ok := s.Interface.(admission.ValidationInterface)
 	if !ok || a.GetSubresource() == "status" {
 		return nil
