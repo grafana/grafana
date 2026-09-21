@@ -14274,7 +14274,8 @@
       "error-repository-delete": "Failed to delete repository",
       "success-repository-deleted": "Repository settings queued for deletion",
       "title-delete-repository-and-resources": "Delete repository configuration and resources",
-      "title-delete-repository-only": "Delete repository configuration only"
+      "title-delete-repository-only": "Delete repository configuration only",
+      "unhealthy-warning": " This repository is currently unhealthy (for example, its credentials may have expired), so provider-side resources such as webhooks cannot be removed and will be left in place. To remove them, fix the credentials before deleting."
     },
     "edit-repository-page": {
       "back-to-repositories": "Back to repositories",
