@@ -308,9 +308,13 @@ func newGComURLResolver(gcomBaseURL string, gcomToken string) func(context.Conte
 	}
 
 	return func(ctx context.Context, stackID int64) (string, error) {
+		url, err := url.JoinPath(gcomBaseURL, "instances", strconv.FormatInt(stackID, 10))
+		if err != nil {
+			return "", err
+		}
+
 		// #nosec G704 -- the base URL is operator-controlled Grafana configuration and stackID is an integer.
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet,
-			fmt.Sprintf("%s/instances/%d", gcomBaseURL, stackID), nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 		if err != nil {
 			return "", fmt.Errorf("creating gcom instance request: %w", err)
 		}
