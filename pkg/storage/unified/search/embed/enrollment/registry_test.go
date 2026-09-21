@@ -98,9 +98,11 @@ func TestRegistryDefersUnsupportedUntilValidation(t *testing.T) {
 	require.NoError(t, err)
 	require.ErrorContains(t, registry.Validate(), "widgets.example.test/widgets has no custom builder or manifest embedding declaration")
 	assert.Empty(t, registry.Snapshot().Builders(), "root revision alone has no versioned declaration")
+	assert.False(t, registry.Has("widgets.example.test", "widgets"))
 
 	configs.Reload([]*app.ManifestData{testManifest("widgets.example.test", "widgets", 3, map[string][]app.ManifestVersionKindEmbedField{"v1": {}})})
 	require.NoError(t, registry.Validate())
+	assert.True(t, registry.Has("widgets.example.test", "widgets"), "an explicitly empty version declaration is enrolled")
 	builders := registry.Snapshot().Builders()
 	require.Len(t, builders, 1)
 	items, err := extract(t, builders[0], "v1", nil)
@@ -116,6 +118,7 @@ func TestRegistryCustomNeedsNoDeclaration(t *testing.T) {
 	builders := registry.Snapshot().Builders()
 	require.Len(t, builders, 1)
 	assert.Same(t, custom, builders[0])
+	assert.True(t, registry.Has(custom.Group(), custom.Resource()))
 }
 
 func TestRegistrySnapshotsIsolateRemovedDeclarations(t *testing.T) {
@@ -137,10 +140,18 @@ func TestRegistrySnapshotsIsolateRemovedDeclarations(t *testing.T) {
 	assert.False(t, initial.Has("widgets.example.test", "excluded"), "declarations must also be allowlisted")
 	assert.False(t, initial.Has("widgets.example.test", "custom"), "custom builders must also be allowlisted")
 	assert.False(t, initial.Has("other.example.test", "widgets"))
+	assert.True(t, registry.Has("dashboard.grafana.app", "dashboards"))
+	assert.True(t, registry.Has("widgets.example.test", "widgets"))
+	assert.False(t, registry.Has("widgets.example.test", "excluded"))
+	assert.False(t, registry.Has("widgets.example.test", "custom"))
+	assert.False(t, registry.Has("other.example.test", "widgets"))
 
 	configs.Reload(manifests[1:])
 	removed := registry.Snapshot()
 	assert.False(t, removed.Has("widgets.example.test", "widgets"))
+	assert.False(t, registry.Has("widgets.example.test", "widgets"))
+	assert.True(t, registry.Has("dashboard.grafana.app", "dashboards"))
+	assert.True(t, registry.Has("widgets.example.test", "gadgets"))
 	builders := removed.Builders()
 	require.Len(t, builders, 2)
 	assert.Equal(t, "dashboards", builders[0].Resource())
@@ -155,6 +166,7 @@ func TestRegistrySnapshotsIsolateRemovedDeclarations(t *testing.T) {
 	configs.Reload(manifests)
 	restored := registry.Snapshot()
 	assert.True(t, restored.Has("widgets.example.test", "widgets"))
+	assert.True(t, registry.Has("widgets.example.test", "widgets"))
 	assert.Len(t, restored.Builders(), 3)
 	assert.False(t, removed.Has("widgets.example.test", "widgets"))
 	assert.Len(t, removed.Builders(), 2)

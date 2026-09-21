@@ -83,6 +83,19 @@ func parseEntry(entry string) (schema.GroupResource, error) {
 	return schema.GroupResource{Group: group, Resource: name}, nil
 }
 
+// Has checks current enrollment without constructing builders. Consumers using
+// a retained snapshot must use that snapshot's Has to keep a consistent view.
+func (r *Registry) Has(group, resource string) bool {
+	gr := schema.GroupResource{Group: group, Resource: resource}
+	if !slices.Contains(r.allowed, gr) {
+		return false
+	}
+	if _, ok := r.custom[gr]; ok {
+		return true
+	}
+	return r.configs.HasResource(gr)
+}
+
 func (r *Registry) Validate() error {
 	declared := make(map[schema.GroupResource]bool)
 	for gvr := range r.configs.Snapshot() {

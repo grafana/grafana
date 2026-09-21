@@ -18,10 +18,12 @@ import (
 type embeddingBuilderProvider struct {
 	validate func() error
 	snapshot func() embed.BuilderSnapshot
+	has      func(group, resource string) bool
 }
 
 func (p embeddingBuilderProvider) Validate() error                 { return p.validate() }
 func (p embeddingBuilderProvider) Snapshot() embed.BuilderSnapshot { return p.snapshot() }
+func (p embeddingBuilderProvider) Has(group, resource string) bool { return p.has(group, resource) }
 
 type enrolledBuilder struct {
 	embed.Builder
@@ -59,8 +61,17 @@ func TestEmbeddingEnrollmentGatesQueries(t *testing.T) {
 				s.embeddingBuilders = embeddingBuilderProvider{
 					validate: func() error { return tc.validationErr },
 					snapshot: func() embed.BuilderSnapshot {
+						t.Fatal("queries must not construct builder snapshots")
+						return embed.BuilderSnapshot{}
+					},
+					has: func(group, resource string) bool {
 						calls++
-						return embed.NewBuilderSnapshot(tc.builders)
+						for _, builder := range tc.builders {
+							if builder.Group() == group && builder.Resource() == resource {
+								return true
+							}
+						}
+						return false
 					},
 				}
 				if tc.external {
@@ -100,16 +111,18 @@ func TestEmbeddingEnrollmentGatesQueries(t *testing.T) {
 
 func TestEmbeddingEnrollmentRefreshesForQueries(t *testing.T) {
 	s := newTestSearchServer(nil, &fakeVectorBackend{})
-	builders := []embed.Builder{enrolledBuilder{group: "g", resource: "r"}}
-	s.embeddingBuilders = embeddingBuilderProvider{snapshot: func() embed.BuilderSnapshot { return embed.NewBuilderSnapshot(builders) }}
+	available := true
+	s.embeddingBuilders = embeddingBuilderProvider{has: func(group, resource string) bool {
+		return available && group == "g" && resource == "r"
+	}}
 	_, allowed, err := s.resolveAllowedCollection(t.Context(), "g", "r")
 	require.NoError(t, err)
 	require.True(t, allowed)
-	builders = nil
+	available = false
 	_, allowed, err = s.resolveAllowedCollection(t.Context(), "g", "r")
 	require.NoError(t, err)
 	require.False(t, allowed)
-	builders = []embed.Builder{enrolledBuilder{group: "g", resource: "r"}}
+	available = true
 	_, allowed, err = s.resolveAllowedCollection(t.Context(), "g", "r")
 	require.NoError(t, err)
 	require.True(t, allowed)

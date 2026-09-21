@@ -15,11 +15,12 @@ import (
 // Consumers preserve existing vectors and continue processing other resources.
 var ErrSkip = errors.New("skip embedding extraction")
 
-// BuilderProvider validates configuration at startup. Runtime consumers retain
-// one snapshot per operation and request a new one to observe manifest reloads.
+// BuilderProvider validates configuration at startup. Generation consumers
+// retain one snapshot per operation; queries check current membership with Has.
 type BuilderProvider interface {
 	Validate() error
 	Snapshot() BuilderSnapshot
+	Has(group, resource string) bool
 }
 
 // BuilderSnapshot keeps builder selection and membership on the same manifest
