@@ -7,6 +7,7 @@ import {
   type KubernetesHealth,
   resolveKubernetesDatasource,
 } from './kubernetesData';
+import { kubernetesFilterStorageKey } from './kubernetesFilter';
 import { kubernetesSolution } from './kubernetesSolution';
 import { pluginAvailability, setupGuideEnabled } from './pluginAvailability';
 import { accessibleAppPage } from './pluginPages';
@@ -40,7 +41,16 @@ const mockAccessibleAppPage = jest.mocked(accessibleAppPage);
 const datasource = { uid: 'k8s-uid', name: 'k8s-prom', type: 'prometheus' } as DataSourceInstanceListItem;
 const healthy: KubernetesHealth = { alertsFiring: null, unhealthyPods: 0, restarts1h: 0, notReadyNodes: 0 };
 
+const storedFilter = {
+  datasourceUid: 'k8s-uid',
+  datasourceName: 'k8s-prom',
+  cluster: 'prod',
+  namespaces: [],
+  nodes: [],
+};
+
 beforeEach(() => {
+  window.localStorage.clear();
   mockFetchCpu.mockReset();
   mockFetchCpu.mockResolvedValue(null);
   mockFetchHealth.mockReset();
@@ -120,11 +130,11 @@ describe('kubernetesSolution', () => {
 
     expect(mockResolveDatasource).toHaveBeenCalledTimes(1);
     expect(mockFetchInventory).toHaveBeenCalledTimes(1);
-    expect(mockFetchInventory).toHaveBeenCalledWith(datasource);
+    expect(mockFetchInventory).toHaveBeenCalledWith(datasource, null);
     expect(mockFetchHealth).toHaveBeenCalledTimes(1);
-    expect(mockFetchHealth).toHaveBeenCalledWith(datasource);
+    expect(mockFetchHealth).toHaveBeenCalledWith(datasource, null);
     expect(mockFetchCpu).toHaveBeenCalledTimes(1);
-    expect(mockFetchCpu).toHaveBeenCalledWith(datasource);
+    expect(mockFetchCpu).toHaveBeenCalledWith(datasource, null);
   });
 });
 
@@ -149,7 +159,7 @@ describe('kubernetesSolution alert', () => {
     });
     expect(mockAccessibleAppPage).not.toHaveBeenCalled();
     expect(mockFetchHealth).toHaveBeenCalledTimes(1);
-    expect(mockFetchHealth).toHaveBeenCalledWith(datasource);
+    expect(mockFetchHealth).toHaveBeenCalledWith(datasource, null);
   });
 
   it('leads with the first health row when nothing is firing', async () => {
@@ -168,13 +178,42 @@ describe('kubernetesSolution stats and sparkline', () => {
       primary: '2 clusters',
       secondary: '24 pods',
     });
-    expect(mockFetchInventory).toHaveBeenCalledWith(datasource);
+    expect(mockFetchInventory).toHaveBeenCalledWith(datasource, null);
   });
 
   it('omits empty inventory', async () => {
     mockFetchInventory.mockResolvedValue({ clusters: 0, pods: 0 });
 
     await expect(kubernetesSolution().stats()).resolves.toBeNull();
+  });
+
+  it('scopes facts to the stored filter for its datasource and restarts them when it changes', async () => {
+    window.localStorage.setItem(kubernetesFilterStorageKey(), JSON.stringify(storedFilter));
+    const solution = kubernetesSolution();
+
+    await solution.stats();
+    // A filter saved for another datasource leaves this card fleet-wide.
+    window.localStorage.setItem(
+      kubernetesFilterStorageKey(),
+      JSON.stringify({ ...storedFilter, datasourceUid: 'other-uid' })
+    );
+    await solution.stats();
+
+    expect(mockFetchInventory.mock.calls).toEqual([
+      [datasource, expect.objectContaining({ cluster: 'prod' })],
+      [datasource, null],
+    ]);
+    expect(mockResolveDatasource).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports no matching data instead of hiding empty scoped inventory', async () => {
+    mockFetchInventory.mockResolvedValue({ clusters: 0, pods: 0 });
+    window.localStorage.setItem(kubernetesFilterStorageKey(), JSON.stringify(storedFilter));
+
+    await expect(kubernetesSolution().stats()).resolves.toEqual({
+      primary: 'No matching data',
+      secondary: 'Adjust the filters',
+    });
   });
 
   it('returns the CPU trend with its 24-hour caption', async () => {
@@ -185,7 +224,7 @@ describe('kubernetesSolution stats and sparkline', () => {
       series,
       caption: 'Cluster CPU · last 24h',
     });
-    expect(mockFetchCpu).toHaveBeenCalledWith(datasource);
+    expect(mockFetchCpu).toHaveBeenCalledWith(datasource, null);
   });
 
   it('omits the sparkline when the CPU metric is unavailable', async () => {

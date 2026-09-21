@@ -59,6 +59,8 @@ export type Solution = SolutionIdentity & {
   datasource: () => Promise<DataSourceInstanceListItem | null>;
   /** Whether the solution belongs in the Overview's attention group. */
   needsAttention: () => Promise<boolean>;
+  /** localStorage key of the user's scope for this solution; a change re-places its card with fresh facts. */
+  scopeStorageKey?: string;
   stats: () => Promise<SolutionStats | null>;
   /** Slower, richer stats for the same card; readers prefer these once they resolve. */
   refinedStats: () => Promise<SolutionStats | null>;

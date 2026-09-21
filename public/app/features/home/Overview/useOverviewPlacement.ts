@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import { store } from '@grafana/data';
 
 import { type Solution } from '../solutions/types';
 
@@ -19,21 +21,42 @@ export interface OverviewPlacement {
  */
 export function useOverviewPlacement(solutions: Solution[]): OverviewPlacement {
   const [placed, setPlaced] = useState(() => new Map<Solution, OverviewCard | null>());
+  // Newest placement per solution: an older one that settles later must not overwrite it.
+  const latest = useRef(new Map<Solution, Promise<OverviewCard | null>>());
 
-  useEffect(() => {
-    let cancelled = false;
-    for (const solution of solutions) {
-      // resolveOverviewCard never rejects.
-      resolveOverviewCard(solution).then((card) => {
-        if (!cancelled) {
-          setPlaced((prev) => new Map(prev).set(solution, card));
-        }
+  // `refreshing` keeps an already-placed live card in its slot as a skeleton while facts reload; the
+  // initial placement never marks it, so a recreated solutions array does not flash placed cards.
+  const place = useCallback((solution: Solution, refreshing: boolean) => {
+    if (refreshing) {
+      setPlaced((prev) => {
+        const card = prev.get(solution);
+        return card?.kind === 'live' ? new Map(prev).set(solution, { ...card, refreshing: true }) : prev;
       });
     }
+    // resolveOverviewCard never rejects.
+    const placement = resolveOverviewCard(solution);
+    latest.current.set(solution, placement);
+    placement.then((card) => {
+      if (latest.current.get(solution) === placement) {
+        setPlaced((prev) => new Map(prev).set(solution, card));
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    // Subscribe before placing so a scope change during the initial placement supersedes it. A saved
+    // or cleared scope re-places its solution in place: the card holds its slot instead of rejoining
+    // the pending skeletons, then re-enters whichever group its fresh facts decide.
+    const unsubscribes = solutions.flatMap((solution) =>
+      solution.scopeStorageKey ? [store.subscribe(solution.scopeStorageKey, () => place(solution, true))] : []
+    );
+    for (const solution of solutions) {
+      place(solution, false);
+    }
     return () => {
-      cancelled = true;
+      unsubscribes.forEach((unsubscribe) => unsubscribe());
     };
-  }, [solutions]);
+  }, [solutions, place]);
 
   return useMemo(() => {
     const cards: OverviewCard[] = [];

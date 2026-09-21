@@ -11,6 +11,8 @@ import { LearnMoreLink } from '../solutions/LearnMoreLink';
 import { SolutionStatsRow } from '../solutions/SolutionStatsRow';
 import { type Solution, type SolutionOffer } from '../solutions/types';
 
+import { KubernetesFilterActions } from './KubernetesFilterActions';
+
 interface SolutionCardProps {
   solution: Solution;
   needsAttention: boolean;
@@ -100,6 +102,11 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
           </LinkButton>
         ) : null}
       </Card.Actions>
+      {solution.id === 'kubernetes' && datasource && (
+        <Card.SecondaryActions>
+          <KubernetesFilterActions datasource={datasource} />
+        </Card.SecondaryActions>
+      )}
     </Card>
   );
 }
