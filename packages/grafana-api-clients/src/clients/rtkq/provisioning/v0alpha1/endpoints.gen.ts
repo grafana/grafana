@@ -452,7 +452,14 @@ const injectedRtkApi = api
         invalidatesTags: ['Repository'],
       }),
       createRepositoryFiletree: build.mutation<CreateRepositoryFiletreeApiResponse, CreateRepositoryFiletreeApiArg>({
-        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/filetree`, method: 'POST', body: queryArg.body }),
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/filetree`,
+          method: 'POST',
+          body: queryArg.body,
+          params: {
+            ref: queryArg.ref,
+          },
+        }),
         invalidatesTags: ['Repository'],
       }),
       getRepositoryHistory: build.query<GetRepositoryHistoryApiResponse, GetRepositoryHistoryApiArg>({
@@ -1212,6 +1219,8 @@ export type CreateRepositoryFiletreeApiResponse = /** status 200 OK */ FileList;
 export type CreateRepositoryFiletreeApiArg = {
   /** name of the FileList */
   name: string;
+  /** branch or commit hash */
+  ref?: string;
   body: {
     /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
     apiVersion?: string;

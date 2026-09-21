@@ -3286,6 +3286,29 @@
         ],
         "description": "connect POST requests to filetree of Repository",
         "operationId": "createRepositoryFiletree",
+        "parameters": [
+          {
+            "name": "ref",
+            "in": "query",
+            "description": "branch or commit hash",
+            "schema": {
+              "type": "string"
+            },
+            "examples": {
+              "": {
+                "summary": "The default"
+              },
+              "branch": {
+                "summary": "Select branch",
+                "value": "my-branch"
+              },
+              "commit": {
+                "summary": "Commit hash (or prefix)",
+                "value": "7f7cc2153"
+              }
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
