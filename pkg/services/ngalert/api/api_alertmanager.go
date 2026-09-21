@@ -11,6 +11,7 @@ import (
 
 	alertingmodels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -20,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
@@ -275,5 +275,5 @@ func (srv AlertmanagerSrv) AlertmanagerFor(orgID int64) (notifier.Alertmanager, 
 type ReceiverStatus alertingmodels.ReceiverStatus
 
 func (rs ReceiverStatus) GetUID() string {
-	return legacy_storage.NameToUid(rs.Name)
+	return string(v1.ReceiverUID(rs.Name)) // TODO: This won't work with static UIDs.
 }

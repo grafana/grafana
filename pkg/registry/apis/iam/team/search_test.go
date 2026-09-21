@@ -80,7 +80,7 @@ func TestTeamSearchFallback(t *testing.T) {
 }
 
 func TestSearchHandler(t *testing.T) {
-	t.Run("search using default team search fields", func(t *testing.T) {
+	t.Run("search using default team search fields without explain", func(t *testing.T) {
 		mockClient := &MockClient{}
 
 		searchHandler := SearchHandler{
@@ -90,7 +90,7 @@ func TestSearchHandler(t *testing.T) {
 		}
 
 		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/teams/search", nil)
+		req := httptest.NewRequest("GET", "/teams/search?explain=true", nil)
 		req.Header.Add("content-type", "application/json")
 		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
 
@@ -99,6 +99,7 @@ func TestSearchHandler(t *testing.T) {
 		if mockClient.LastSearchRequest == nil {
 			t.Fatalf("expected Search to be called, but it was not")
 		}
+		require.False(t, mockClient.LastSearchRequest.Explain)
 		expectedFields := []string{
 			resource.SEARCH_FIELD_TITLE,
 			builders.TEAM_SEARCH_EMAIL,

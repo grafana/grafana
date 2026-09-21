@@ -1,3 +1,5 @@
+import { getPanelPlugin } from '@grafana/data/test';
+import { setPluginImportUtils } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
@@ -6,6 +8,11 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 
 import { DashboardMutationClient } from './DashboardMutationClient';
 import { DASHBOARD_COMMANDS } from './commands/registry';
+
+setPluginImportUtils({
+  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({ id })),
+  getPanelPluginFromCache: (id: string) => getPanelPlugin({ id }),
+});
 
 function dashboardScene(): DashboardScene {
   return new DashboardScene({
@@ -63,5 +70,67 @@ describe('DashboardMutationClient', () => {
     expect(result.success).toBe(false);
     expect(result.error).toContain('Unknown command type: GET_NOTEBOOK_SPEC');
     expect(result.error).toContain('GET_SPEC');
+  });
+
+  describe('while a plan preview is active', () => {
+    const plan = {
+      planId: 'plan-1',
+      title: 'Plan',
+      layout: 'rows' as const,
+      sections: [{ title: 'Section', panels: [{ title: 'Panel', vizType: 'timeseries' }] }],
+    };
+
+    let cleanup = () => {};
+
+    afterEach(() => {
+      cleanup();
+      cleanup = () => {};
+    });
+
+    function activeScene() {
+      // Unlike dashboardScene() above, no uid: RENDER_PLAN refuses a saved dashboard.
+      const scene = new DashboardScene({ title: 'Dash', meta: { canEdit: true } });
+      cleanup = scene.activate();
+      return scene;
+    }
+
+    it('refuses a mutating command', async () => {
+      const scene = activeScene();
+      const client = new DashboardMutationClient(scene);
+      await client.execute({ type: 'RENDER_PLAN', payload: plan });
+
+      const result = await client.execute({ type: 'ENTER_EDIT_MODE', payload: {} });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('read-only');
+      expect(scene.state.isEditing).toBeFalsy();
+    });
+
+    it('still allows a read-only command', async () => {
+      const scene = activeScene();
+      const client = new DashboardMutationClient(scene);
+      await client.execute({ type: 'RENDER_PLAN', payload: plan });
+
+      const result = await client.execute({ type: 'GET_DASHBOARD_INFO', payload: {} });
+
+      expect(result.success).toBe(true);
+    });
+
+    it('still allows RENDER_PLAN to re-render and END_PLANNING to close the preview', async () => {
+      const scene = activeScene();
+      const client = new DashboardMutationClient(scene);
+      await client.execute({ type: 'RENDER_PLAN', payload: plan });
+
+      const rerender = await client.execute({
+        type: 'RENDER_PLAN',
+        payload: { ...plan, planId: 'plan-2', title: 'Replacement' },
+      });
+      expect(rerender.success).toBe(true);
+      expect(scene.state.title).toBe('Replacement');
+
+      const close = await client.execute({ type: 'END_PLANNING', payload: { planId: 'plan-2' } });
+      expect(close.success).toBe(true);
+      expect(scene.state.planning).toBeUndefined();
+    });
   });
 });

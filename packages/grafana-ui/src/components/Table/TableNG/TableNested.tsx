@@ -64,6 +64,7 @@ import {
   getDisplayName,
   getStableRowKey,
   getVisibleFields,
+  makeStripedRowClass,
   markEdgeColumns,
 } from './utils';
 
@@ -102,6 +103,8 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     sortByBehavior = 'initial',
     contentAwareWidthsEnabled = false,
     tableRefreshEnabled = false,
+    preventHorizontalOverflow = false,
+    zebraStriping = false,
   } = props;
 
   const uniqueId = useId();
@@ -254,6 +257,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     getActions: getCellActions,
     tableRefreshEnabled,
     filter,
+    preventHorizontalOverflow,
   });
 
   const [widths] = useColWidths(preparedFields, availableWidth, frozenColumns, widthConfigResetKey, contentAwareWidths);
@@ -346,7 +350,14 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   });
 
   const showPagination = enablePagination && numRows > 0;
-  const styles = useStyles2(getGridStyles, showPagination, transparent, tableRefreshEnabled, noPanelPadding);
+  const styles = useStyles2(
+    getGridStyles,
+    showPagination,
+    transparent,
+    tableRefreshEnabled,
+    noPanelPadding,
+    zebraStriping
+  );
 
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {
     if (typeof defaultNestedRowHeight === 'string') {
@@ -524,6 +535,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
         }
 
         const nestedColumns = nestedColumnsMatrix[row.__index].columns;
+        const nestedStripedRowClass = zebraStriping ? makeStripedRowClass(expandedRecords) : undefined;
 
         return (
           <div id={rowId}>
@@ -537,6 +549,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
               onColumnResize={nestedResizeHandler}
               columns={nestedColumns}
               rows={expandedRecords}
+              rowClass={nestedStripedRowClass}
               renderers={{ ...renderers, noRowsFallback: <EmptyTablePlaceholder noValue={noValue} /> }}
               onCellClick={onCellClick}
               columnWidths={nestedColWidths}
@@ -566,6 +579,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       noValue,
       onCellClick,
       uniqueId,
+      zebraStriping,
       nestedColWidths,
       nestedResizeHandler,
       handleNestedColumnWidthsChange,
@@ -646,12 +660,20 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     [cellRootRenderers]
   );
 
+  // Striping is applied through `rowClass` rather than react-data-grid's own row parity - see
+  // `makeStripedRowClass`.
+  const rowClass = useMemo(
+    () => (zebraStriping ? makeStripedRowClass(paginatedRows) : undefined),
+    [zebraStriping, paginatedRows]
+  );
+
   return (
     <TableDataGrid
       role="treegrid"
       gridRef={gridRef}
       columns={structureRevColumns}
       rows={paginatedRows}
+      rowClass={rowClass}
       noValue={noValue}
       renderers={{ renderRow, renderCell: renderCellRoot }}
       columnWidths={resetColumnWidths}
@@ -679,6 +701,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       headerHeight={headerHeight}
       transparent={transparent}
       tableRefreshEnabled={tableRefreshEnabled}
+      zebraStriping={zebraStriping}
       noPanelPadding={noPanelPadding}
       initialRowIndex={initialRowIndex}
       sortedRows={sortedRows}
