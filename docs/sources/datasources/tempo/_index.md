@@ -29,7 +29,7 @@ Use the Tempo data source to search and visualize traces, correlate traces with 
 As of Grafana 13.2, Tempo is packaged as a standalone plugin so it can receive updates independently of Grafana releases. For details, refer to [Plugin updates](#plugin-updates).
 
 Want to learn more about traces and the other telemetry signals?
-Refer to [Understand your data](https://grafana.com/docs/grafana-cloud/telemetry-signals/).
+Refer to [Correlate telemetry signals](https://grafana.com/docs/grafana-cloud/telemetry-signals/).
 
 {{< admonition type="note" >}}
 **Grafana Cloud users:** Grafana Cloud includes [Grafana Cloud Traces](https://grafana.com/docs/grafana-cloud/send-data/traces/), a pre-configured tracing data source backed by Tempo. You can use Grafana Cloud Traces to query traces without additional setup. Use the Tempo data source when you need to connect to a self-managed Tempo instance or require custom configuration such as trace correlations.
