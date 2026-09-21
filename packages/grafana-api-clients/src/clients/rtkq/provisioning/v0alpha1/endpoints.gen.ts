@@ -452,7 +452,7 @@ const injectedRtkApi = api
         invalidatesTags: ['Repository'],
       }),
       createRepositoryFiletree: build.mutation<CreateRepositoryFiletreeApiResponse, CreateRepositoryFiletreeApiArg>({
-        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/filetree`, method: 'POST' }),
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/filetree`, method: 'POST', body: queryArg.body }),
         invalidatesTags: ['Repository'],
       }),
       getRepositoryHistory: build.query<GetRepositoryHistoryApiResponse, GetRepositoryHistoryApiArg>({
@@ -493,7 +493,7 @@ const injectedRtkApi = api
         providesTags: ['Repository'],
       }),
       createRepositoryReftree: build.mutation<CreateRepositoryReftreeApiResponse, CreateRepositoryReftreeApiArg>({
-        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/reftree`, method: 'POST' }),
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/reftree`, method: 'POST', body: queryArg.body }),
         invalidatesTags: ['Repository'],
       }),
       getRepositoryRenderWithPath: build.query<
@@ -1212,6 +1212,16 @@ export type CreateRepositoryFiletreeApiResponse = /** status 200 OK */ FileList;
 export type CreateRepositoryFiletreeApiArg = {
   /** name of the FileList */
   name: string;
+  body: {
+    /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+    apiVersion?: string;
+    /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+    kind?: string;
+    metadata?: any;
+    secure?: any;
+    spec?: any;
+    status?: any;
+  };
 };
 export type GetRepositoryHistoryApiResponse = /** status 200 OK */ string;
 export type GetRepositoryHistoryApiArg = {
@@ -1263,6 +1273,16 @@ export type CreateRepositoryReftreeApiResponse = /** status 200 OK */ RefList;
 export type CreateRepositoryReftreeApiArg = {
   /** name of the RefList */
   name: string;
+  body: {
+    /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+    apiVersion?: string;
+    /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+    kind?: string;
+    metadata?: any;
+    secure?: any;
+    spec?: any;
+    status?: any;
+  };
 };
 export type GetRepositoryRenderWithPathApiResponse = unknown;
 export type GetRepositoryRenderWithPathApiArg = {
