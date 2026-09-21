@@ -379,19 +379,17 @@ interface SyncDataSourceSettings {
  *
  * @internal
  */
-export async function syncDataSourceInstanceSettings(settings: SyncDataSourceSettings): Promise<void> {
+export function syncDataSourceInstanceSettings(settings: SyncDataSourceSettings): void {
   clearPluginCache();
   if (asyncInitializationEnabled) {
-    try {
-      await refreshAsyncDataSourceCaches();
-    } catch (error) {
+    void refreshAsyncDataSourceCaches().catch((error) => {
       logDataSourceWarning(FALLBACK_TO_BOOTDATA_LIST_WARNING, {
         operation: 'reload',
         reason: getOriginMessage(error) || 'refresh-failed',
         requestUrl: getDataSourceConnectionsUrl(),
         ...getFetchErrorContext(error),
       });
-    }
+    });
     return;
   }
   populateMaps(settings.datasources);

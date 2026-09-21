@@ -1360,6 +1360,28 @@ describe('async instance settings initialization', () => {
     expect(backendGet).toHaveBeenCalledTimes(4);
   });
 
+  it('starts cache synchronization internally without returning a promise', async () => {
+    backendGet.mockResolvedValueOnce(connections);
+    initDataSourceInstanceSettings(asyncFixtures, 'Bravo');
+    await getDataSourceInstanceList({ all: true });
+
+    let resolveConnections!: (value: typeof connections) => void;
+    backendGet.mockReturnValueOnce(
+      new Promise<typeof connections>((resolve) => {
+        resolveConnections = resolve;
+      })
+    );
+
+    const result = syncDataSourceInstanceSettings({ datasources: asyncFixtures, defaultDatasource: 'Bravo' });
+
+    expect(result).toBeUndefined();
+    expect(backendGet).toHaveBeenCalledTimes(2);
+
+    const list = getDataSourceInstanceList({ all: true });
+    resolveConnections(connections);
+    expect((await list).map((item) => item.uid)).toEqual(['uid-alpha', 'uid-bravo', '-- Grafana --']);
+  });
+
   it('accepts connection list changes on reload without comparing them to the startup snapshot', async () => {
     const updatedConnections = {
       items: connections.items.filter((connection) => connection.name !== 'uid-alpha'),
