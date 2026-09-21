@@ -15,6 +15,10 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 )
 
+// errSearchCannotAnswerList asks the caller for the store scan instead. It never
+// reaches a client.
+var errSearchCannotAnswerList = errors.New("search cannot answer this list")
+
 func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.server.ListWithFieldSelectors")
 	defer span.End()
@@ -71,6 +75,11 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 	// Logged as well as returned, because in environments where only logs are
 	// available an empty page and a failed search look the same.
 	if err := ErrorFromResponse(searchResp.GetError(), nil); err != nil {
+		// Only on the first page: a later page carries a position in the search results
+		// that the store scan cannot resume from.
+		if IsSelectableFieldNotIndexed(searchResp.GetError()) && req.NextPageToken == "" {
+			return nil, fmt.Errorf("%w: %w", errSearchCannotAnswerList, err)
+		}
 		s.log.Error("Search failed for List with selectors", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", err)
 		return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
 	}
