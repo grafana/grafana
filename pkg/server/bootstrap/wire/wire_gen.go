@@ -305,7 +305,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	secretsStoreImpl := database.ProvideSecretsStore(sqlStore)
+	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
+	secretsStoreImpl := database.ProvideSecretsStore(legacyDatabaseProvider)
 	providerProvider := provider.ProvideEncryptionProvider()
 	serviceService, err := service2.ProvideEncryptionService(tracingService, providerProvider, usageStats, cfg)
 	if err != nil {
@@ -370,7 +371,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, graphiteService, testdatasourceService, grafanadsService)
 	backendFactoryProvider := coreplugin.ProvideCoreProvider(corepluginRegistry)
 	processService := process.ProvideService()
-	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
 	quotaService := quotaimpl.ProvideService(ctx, legacyDatabaseProvider, configProvider)
 	registerer := metrics.ProvideRegisterer()
 	natsServer, err := nats.ProvideServer(cfg, sqlStore, registerer)
@@ -632,8 +632,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	}
 	requestConfigProvider := pluginconfig.NewRequestConfigProvider(pluginInstanceCfg, defaultSettingsProvider)
 	baseProvider := plugincontext.ProvideBaseService(cfg, requestConfigProvider)
-	dataSourceRetriever := service6.ProvideDataSourceRetriever(sqlStore, featureToggles)
-	service13, err := service6.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, middlewareHandler, baseProvider, dataSourceRetriever)
+	dataSourceRetriever := service6.ProvideDataSourceRetriever(legacyDatabaseProvider)
+	service13, err := service6.ProvideService(sqlStore, legacyDatabaseProvider, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, middlewareHandler, baseProvider, dataSourceRetriever)
 	if err != nil {
 		return nil, err
 	}
@@ -666,7 +666,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	}
 	pluginInstaller := manager4.ProvideInstaller(pluginManagementCfg, inMemory, loaderLoader, repoManager, serviceregistrationService, acimplService)
 	ossProvider := guardian.ProvideGuardian()
-	cacheServiceImpl := service6.ProvideCacheService(cacheService, sqlStore, ossProvider)
+	cacheServiceImpl := service6.ProvideCacheService(cacheService, legacyDatabaseProvider, ossProvider)
 	queryHistoryService := queryhistory.ProvideService(cfg, sqlStore, routeRegisterImpl, accessControl, featureToggles, eventualRestConfigProvider)
 	dashboardService := service7.ProvideDashboardService(featureToggles, dashboardServiceImpl)
 	dashverService := dashverimpl.ProvideService(cfg, sqlStore, dashboardService, featureToggles, k8sHandlerWithFallback)
@@ -1103,7 +1103,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	secretsStoreImpl := database.ProvideSecretsStore(sqlStore)
+	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
+	secretsStoreImpl := database.ProvideSecretsStore(legacyDatabaseProvider)
 	providerProvider := provider.ProvideEncryptionProvider()
 	serviceService, err := service2.ProvideEncryptionService(tracingService, providerProvider, usageStats, cfg)
 	if err != nil {
@@ -1168,7 +1169,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, graphiteService, testdatasourceService, grafanadsService)
 	backendFactoryProvider := coreplugin.ProvideCoreProvider(corepluginRegistry)
 	processService := process.ProvideService()
-	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
 	quotaService := quotaimpl.ProvideService(ctx, legacyDatabaseProvider, configProvider)
 	registerer := metrics.ProvideRegistererForTest()
 	natsServer, err := nats.ProvideServer(cfg, sqlStore, registerer)
@@ -1415,8 +1415,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	requestConfigProvider := pluginconfig.NewRequestConfigProvider(pluginInstanceCfg, defaultSettingsProvider)
 	baseProvider := plugincontext.ProvideBaseService(cfg, requestConfigProvider)
-	dataSourceRetriever := service6.ProvideDataSourceRetriever(sqlStore, featureToggles)
-	service13, err := service6.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, middlewareHandler, baseProvider, dataSourceRetriever)
+	dataSourceRetriever := service6.ProvideDataSourceRetriever(legacyDatabaseProvider)
+	service13, err := service6.ProvideService(sqlStore, legacyDatabaseProvider, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, middlewareHandler, baseProvider, dataSourceRetriever)
 	if err != nil {
 		return nil, err
 	}
@@ -1449,7 +1449,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	pluginInstaller := manager4.ProvideInstaller(pluginManagementCfg, inMemory, loaderLoader, repoManager, serviceregistrationService, acimplService)
 	ossProvider := guardian.ProvideGuardian()
-	cacheServiceImpl := service6.ProvideCacheService(cacheService, sqlStore, ossProvider)
+	cacheServiceImpl := service6.ProvideCacheService(cacheService, legacyDatabaseProvider, ossProvider)
 	userAuthTokenService, err := authimpl.ProvideUserAuthTokenService(ctx, legacyDatabaseProvider, serverLockService, quotaService, secretsService, configProvider, tracingService, featureToggles)
 	if err != nil {
 		return nil, err
@@ -1902,14 +1902,14 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (server.Runner, err
 	if err != nil {
 		return server.Runner{}, err
 	}
-	secretsStoreImpl := database.ProvideSecretsStore(sqlStore)
+	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
+	secretsStoreImpl := database.ProvideSecretsStore(legacyDatabaseProvider)
 	osskmsprovidersService := osskmsproviders.ProvideService(serviceService, cfg, featureToggles)
 	secretsService, err := manager.ProvideSecretsService(tracingService, secretsStoreImpl, osskmsprovidersService, serviceService, cfg, featureToggles, usageStats)
 	if err != nil {
 		return server.Runner{}, err
 	}
 	secretsMigrator := migrator7.ProvideSecretsMigrator(serviceService, secretsService, sqlStore, ossImpl, featureToggles)
-	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
 	quotaService := quotaimpl.ProvideService(ctx, legacyDatabaseProvider, configProvider)
 	publisher := legacywatch.ProvideDisabledPublisher()
 	orgService, err := orgimpl.ProvideServiceWithWatch(legacyDatabaseProvider, cfg, quotaService, publisher)
@@ -2050,7 +2050,8 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	if err != nil {
 		return nil, err
 	}
-	secretsStoreImpl := database.ProvideSecretsStore(sqlStore)
+	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
+	secretsStoreImpl := database.ProvideSecretsStore(legacyDatabaseProvider)
 	providerProvider := provider.ProvideEncryptionProvider()
 	serviceService, err := service2.ProvideEncryptionService(tracingService, providerProvider, usageStats, cfg)
 	if err != nil {
@@ -2065,7 +2066,6 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	if err != nil {
 		return nil, err
 	}
-	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
 	quotaService := quotaimpl.ProvideService(contextContext, legacyDatabaseProvider, configProvider)
 	publisher := legacywatch.ProvideDisabledPublisher()
 	orgService, err := orgimpl.ProvideServiceWithWatch(legacyDatabaseProvider, cfg, quotaService, publisher)
@@ -2213,7 +2213,7 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 		return nil, err
 	}
 	ossProvider := guardian.ProvideGuardian()
-	cacheServiceImpl := service6.ProvideCacheService(cacheService, sqlStore, ossProvider)
+	cacheServiceImpl := service6.ProvideCacheService(cacheService, legacyDatabaseProvider, ossProvider)
 	secretsKVStore, err := kvstore2.ProvideService(sqlStore, secretsService)
 	if err != nil {
 		return nil, err
@@ -2221,8 +2221,8 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	datasourcePermissionsService := ossaccesscontrol.ProvideDatasourcePermissionsService(cfg, featureToggles, sqlStore)
 	requestConfigProvider := pluginconfig.NewRequestConfigProvider(pluginInstanceCfg, defaultSettingsProvider)
 	baseProvider := plugincontext.ProvideBaseService(cfg, requestConfigProvider)
-	dataSourceRetriever := service6.ProvideDataSourceRetriever(sqlStore, featureToggles)
-	service13, err := service6.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, middlewareHandler, baseProvider, dataSourceRetriever)
+	dataSourceRetriever := service6.ProvideDataSourceRetriever(legacyDatabaseProvider)
+	service13, err := service6.ProvideService(sqlStore, legacyDatabaseProvider, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, middlewareHandler, baseProvider, dataSourceRetriever)
 	if err != nil {
 		return nil, err
 	}
