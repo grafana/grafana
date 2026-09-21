@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import { isEqual } from 'lodash';
 import { Global } from '@emotion/react';
+import { isEqual } from 'lodash';
 
 import { CoreApp, type DataQueryRequest, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
