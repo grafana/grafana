@@ -30,6 +30,117 @@ var appManifestData = app.ManifestData{
 			Kinds:  []app.ManifestVersionKind{},
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{
+					"/events": {
+						Get: &spec3.Operation{
+							OperationProps: spec3.OperationProps{
+
+								OperationId: "listEvents",
+
+								Parameters: []*spec3.Parameter{
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "from",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name: "to",
+											In:   "query",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+								},
+
+								Responses: &spec3.Responses{
+									ResponsesProps: spec3.ResponsesProps{
+										Default: &spec3.Response{
+											ResponseProps: spec3.ResponseProps{
+												Description: "Default OK response",
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &spec.Schema{
+																SchemaProps: spec.SchemaProps{
+																	Type: []string{"object"},
+																	Properties: map[string]spec.Schema{
+																		"apiVersion": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"string"},
+																				Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+																			},
+																		},
+																		"items": {
+																			SchemaProps: spec.SchemaProps{
+																				Type: []string{"array"},
+																				Items: &spec.SchemaOrArray{
+																					Schema: &spec.Schema{
+																						SchemaProps: spec.SchemaProps{
+																							Type: []string{"object"},
+																							Properties: map[string]spec.Schema{
+																								"eventId": {
+																									SchemaProps: spec.SchemaProps{
+																										Type: []string{"string"},
+																									},
+																								},
+																								"message": {
+																									SchemaProps: spec.SchemaProps{
+																										Type: []string{"string"},
+																									},
+																								},
+																								"occurredAt": {
+																									SchemaProps: spec.SchemaProps{
+																										Type: []string{"integer"},
+																									},
+																								},
+																								"projectId": {
+																									SchemaProps: spec.SchemaProps{
+																										Type: []string{"string"},
+																									},
+																								},
+																							},
+																							Required: []string{
+																								"eventId",
+																								"projectId",
+																								"message",
+																								"occurredAt",
+																							},
+																						}},
+																				},
+																			},
+																		},
+																		"kind": {
+																			SchemaProps: spec.SchemaProps{
+																				Type:        []string{"string"},
+																				Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+																			},
+																		},
+																	},
+																	Required: []string{
+																		"items",
+																		"apiVersion",
+																		"kind",
+																	},
+																}},
+														}},
+												},
+											},
+										},
+									}},
+							},
+						},
+					},
 					"/hits": {
 						Get: &spec3.Operation{
 							OperationProps: spec3.OperationProps{
@@ -251,8 +362,9 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 }
 
 var customRouteToGoResponseType = map[string]any{
-	"v0alpha1||<namespace>/hits|GET":  v0alpha1.ListHitsResponse{},
-	"v0alpha1||<namespace>/hits|POST": v0alpha1.CreateHitResponse{},
+	"v0alpha1||<namespace>/events|GET": v0alpha1.ListEventsResponse{},
+	"v0alpha1||<namespace>/hits|GET":   v0alpha1.ListHitsResponse{},
+	"v0alpha1||<namespace>/hits|POST":  v0alpha1.CreateHitResponse{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.

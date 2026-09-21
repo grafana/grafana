@@ -32,6 +32,30 @@ func NewCustomRouteClientFromGenerator(generator resource.ClientGenerator, defau
 	return NewCustomRouteClient(client), nil
 }
 
+type ListEventsRequest struct {
+	Params  ListEventsRequestParams
+	Headers http.Header
+}
+
+func (c *CustomRouteClient) ListEvents(ctx context.Context, namespace string, request ListEventsRequest) (*ListEventsResponse, error) {
+	params := url.Values{}
+	resp, err := c.NamespacedRequest(ctx, namespace, resource.CustomRouteRequestOptions{
+		Path:    "/events",
+		Verb:    "GET",
+		Query:   params,
+		Headers: request.Headers,
+	})
+	if err != nil {
+		return nil, err
+	}
+	cast := ListEventsResponse{}
+	err = json.Unmarshal(resp, &cast)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshal response bytes into ListEventsResponse: %w", err)
+	}
+	return &cast, nil
+}
+
 type ListHitsRequest struct {
 	Params  ListHitsRequestParams
 	Headers http.Header

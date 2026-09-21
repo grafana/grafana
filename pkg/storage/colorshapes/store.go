@@ -33,6 +33,17 @@ type hitRow struct {
 	CreatedBy string `xorm:"created_by"`
 }
 
+type eventRow struct {
+	ID         int64  `xorm:"pk autoincr 'id'"`
+	EventID    string `xorm:"event_id"`
+	ProjectID  string `xorm:"project_id"`
+	Message    string `xorm:"message"`
+	OccurredAt int64  `xorm:"occurred_at"`
+	RawEvent   string `xorm:"raw_event"`
+}
+
+func (eventRow) TableName() string { return "error_tracking_event" }
+
 func (hitRow) TableName() string {
 	return "colorshape_hit"
 }
@@ -74,4 +85,35 @@ func (s *Store) List(ctx context.Context, from, to time.Time) ([]colorshapesapp.
 		})
 	}
 	return hits, nil
+}
+
+func (s *Store) InsertEvent(ctx context.Context, eventID, projectID, message, rawEvent string, occurredAt int64) (bool, error) {
+	row := &eventRow{EventID: eventID, ProjectID: projectID, Message: message, OccurredAt: occurredAt, RawEvent: rawEvent}
+	var inserted bool
+	err := s.db.WithDbSession(ctx, func(session *db.Session) error {
+		_, err := session.Insert(row)
+		if err != nil && s.db.GetDialect().IsUniqueConstraintViolation(err) {
+			return nil
+		}
+		if err == nil {
+			inserted = true
+		}
+		return err
+	})
+	return inserted, err
+}
+
+func (s *Store) ListEvents(ctx context.Context, from, to time.Time) ([]colorshapesapp.Event, error) {
+	var rows []*eventRow
+	err := s.db.WithDbSession(ctx, func(session *db.Session) error {
+		return session.Where("occurred_at >= ? AND occurred_at <= ?", from.UnixMilli(), to.UnixMilli()).OrderBy("occurred_at DESC").Find(&rows)
+	})
+	if err != nil {
+		return nil, err
+	}
+	events := make([]colorshapesapp.Event, 0, len(rows))
+	for _, row := range rows {
+		events = append(events, colorshapesapp.Event{EventID: row.EventID, ProjectID: row.ProjectID, Message: row.Message, OccurredAt: row.OccurredAt})
+	}
+	return events, nil
 }

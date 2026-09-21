@@ -20,8 +20,9 @@ func New(cfg sdkapp.Config) (sdkapp.App, error) {
 		KubeConfig: cfg.KubeConfig,
 		VersionedCustomRoutes: map[string]simple.AppVersionRouteHandlers{
 			"v0alpha1": {
-				{Namespaced: true, Path: "hits", Method: simple.AppCustomRouteMethodPost}: createHitHandler(specificConfig.Store),
-				{Namespaced: true, Path: "hits", Method: simple.AppCustomRouteMethodGet}:  listHitsHandler(specificConfig.Store),
+				{Namespaced: true, Path: "hits", Method: simple.AppCustomRouteMethodPost}:  createHitHandler(specificConfig.Store),
+				{Namespaced: true, Path: "hits", Method: simple.AppCustomRouteMethodGet}:   listHitsHandler(specificConfig.Store),
+				{Namespaced: true, Path: "events", Method: simple.AppCustomRouteMethodGet}: listEventsHandler(specificConfig.Store),
 			},
 		},
 	})

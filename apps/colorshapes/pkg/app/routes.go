@@ -100,3 +100,32 @@ func listHitsHandler(store Store) simple.AppCustomRouteHandler {
 		})
 	}
 }
+
+func listEventsHandler(store Store) simple.AppCustomRouteHandler {
+	return func(ctx context.Context, w sdkapp.CustomRouteResponseWriter, r *sdkapp.CustomRouteRequest) error {
+		if _, err := identity.GetRequester(ctx); err != nil {
+			return writeError(w, http.StatusUnauthorized, "auth_error", "authentication required")
+		}
+		to := time.Now()
+		from := to.Add(-time.Hour)
+		if v := r.URL.Query().Get("from"); v != "" {
+			if ms, err := strconv.ParseInt(v, 10, 64); err == nil {
+				from = time.UnixMilli(ms)
+			}
+		}
+		if v := r.URL.Query().Get("to"); v != "" {
+			if ms, err := strconv.ParseInt(v, 10, 64); err == nil {
+				to = time.UnixMilli(ms)
+			}
+		}
+		events, err := store.ListEvents(ctx, from, to)
+		if err != nil {
+			return writeError(w, http.StatusInternalServerError, "internal_error", "failed to list events")
+		}
+		items := make([]v0alpha1.ListEventsV0alpha1BodyItems, 0, len(events))
+		for _, event := range events {
+			items = append(items, v0alpha1.ListEventsV0alpha1BodyItems{EventId: event.EventID, ProjectId: event.ProjectID, Message: event.Message, OccurredAt: event.OccurredAt})
+		}
+		return json.NewEncoder(w).Encode(v0alpha1.ListEventsResponse{ListEventsBody: v0alpha1.ListEventsBody{Items: items}})
+	}
+}
