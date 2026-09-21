@@ -8,8 +8,8 @@ import { Button, Icon, IconButton, Tooltip, useStyles2, useTheme2 } from '@grafa
 
 import { type GetExtraContextMenuButtonsFunction } from '../FlameGraph/FlameGraphContextMenu';
 import { type FlameGraphDataContainer, type LevelItem } from '../FlameGraph/dataTransform';
-import { TRUNCATED_NODE_NAME } from '../constants';
 import { type ReportVisibleTruncatedPaths, useReportVisibleTruncatedPaths } from '../hooks';
+import { isTruncatedRow } from '../profileSource';
 import { ColorScheme, ColorSchemeDiff, type PaneView, type ViewMode } from '../types';
 
 import { ActionsCell } from './ActionsCell';
@@ -661,11 +661,11 @@ const FlameGraphCallTreeContainer = memo(
       }
 
       return rows
-        .filter((row) => row.original.label === TRUNCATED_NODE_NAME)
+        .filter((row) => isTruncatedRow(data.data, row.original.levelItem.itemIndexes[0]))
         .map((row) => data.getItemPath(row.original.levelItem));
     }, [reportVisibleTruncatedPaths, callersNodeLabel, rows, data]);
 
-    useReportVisibleTruncatedPaths(visibleTruncatedPaths, reportVisibleTruncatedPaths);
+    useReportVisibleTruncatedPaths(visibleTruncatedPaths, reportVisibleTruncatedPaths, data);
 
     return (
       <div className={styles.container} data-testid="callTree">

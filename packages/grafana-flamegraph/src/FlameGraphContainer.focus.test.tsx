@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { createDataFrame, createTheme, FieldType } from '@grafana/data';
 
@@ -42,13 +42,36 @@ const sameCallPathShare = '25% of total';
 const sameLabelShare = '40% of total';
 const sameRowIndexesShare = '35% of total';
 
-const Harness = ({ which, keepFocus = true }: { which: 'before' | 'after'; keepFocus?: boolean }) => {
+const Harness = ({
+  which,
+  keepFocus = true,
+  sourceId,
+}: {
+  which: 'before' | 'after' | 'missing';
+  keepFocus?: boolean;
+  sourceId?: string;
+}) => {
   const getTheme = useCallback(() => createTheme({ colors: { mode: 'dark' } }), []);
+  const data = useMemo(() => {
+    const result = frame(which === 'before' ? profileBefore : profileAfter);
+    if (which === 'missing') {
+      result.fields.find((field) => field.name === 'label')!.values = [
+        'total',
+        'a',
+        'nc',
+        'target',
+        'b',
+        'replacement',
+      ];
+    }
+    return result;
+  }, [which]);
   return (
     <FlameGraphContainer
-      data={frame(which === 'before' ? profileBefore : profileAfter)}
+      data={data}
       getTheme={getTheme}
       keepFocusOnDataChange={keepFocus}
+      source={sourceId ? { id: sourceId, truncated: true } : undefined}
       disableCollapsing={true}
     />
   );
@@ -72,6 +95,29 @@ it('keeps the focus on the same call path when the data changes', async () => {
 
   await waitFor(() => expect(screen.getByText(sameCallPathShare)).toBeInTheDocument());
   expect(screen.queryByText(sameRowIndexesShare)).not.toBeInTheDocument();
+});
+
+it('resets focus for a different source even when paths match and preservation is enabled', async () => {
+  const { rerender } = render(<Harness which="before" sourceId="first" />);
+  await focusTargetUnderB();
+  rerender(<Harness which="before" sourceId="second" />);
+  await waitFor(() => expect(screen.getByTestId('flameGraph')).toBeInTheDocument());
+  await waitFor(() => expect(screen.queryByText(/% of total/)).not.toBeInTheDocument());
+});
+
+it('preserves focus across refinements of the same source', async () => {
+  const { rerender } = render(<Harness which="before" sourceId="same" />);
+  await focusTargetUnderB();
+  rerender(<Harness which="after" sourceId="same" />);
+  await waitFor(() => expect(screen.getByText(sameCallPathShare)).toBeInTheDocument());
+});
+
+it('clears a missing focused path instead of jumping to the same function under another parent', async () => {
+  const { rerender } = render(<Harness which="before" sourceId="same" />);
+  await focusTargetUnderB();
+  rerender(<Harness which="missing" sourceId="same" />);
+  await waitFor(() => expect(screen.getByTestId('flameGraph')).toBeInTheDocument());
+  await waitFor(() => expect(screen.queryByText(/% of total/)).not.toBeInTheDocument());
 });
 
 it('drops the focus when the data changes and keepFocusOnDataChange is off', async () => {

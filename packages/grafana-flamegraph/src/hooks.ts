@@ -25,7 +25,11 @@ export type ReportVisibleTruncatedPaths = (viewId: string, paths: string[][]) =>
  * into the single set the host is told about. The registration is dropped when the view unmounts, so switching a pane
  * away from a view does not leave its paths behind.
  */
-export function useReportVisibleTruncatedPaths(paths: string[][], report?: ReportVisibleTruncatedPaths) {
+export function useReportVisibleTruncatedPaths(
+  paths: string[][],
+  report?: ReportVisibleTruncatedPaths,
+  revision?: FlameGraphDataContainer
+) {
   const viewId = useId();
   const pathsRef = useRef(paths);
   pathsRef.current = paths;
@@ -35,7 +39,7 @@ export function useReportVisibleTruncatedPaths(paths: string[][], report?: Repor
 
   useEffect(() => {
     report?.(viewId, pathsRef.current);
-  }, [report, viewId, key]);
+  }, [report, viewId, key, revision]);
 
   useEffect(() => () => report?.(viewId, []), [report, viewId]);
 }

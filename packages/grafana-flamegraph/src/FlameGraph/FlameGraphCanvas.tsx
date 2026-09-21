@@ -6,9 +6,10 @@ import { useMeasure } from 'react-use';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { MUTE_THRESHOLD, PIXELS_PER_LEVEL, TRUNCATED_NODE_NAME } from '../constants';
+import { MUTE_THRESHOLD, PIXELS_PER_LEVEL } from '../constants';
 import { type ReportVisibleTruncatedPaths, useReportVisibleTruncatedPaths } from '../hooks';
 import { loadingShimmer } from '../loadingShimmer';
+import { isTruncatedRow } from '../profileSource';
 import {
   type ClickedItemData,
   type ColorScheme,
@@ -198,7 +199,7 @@ const FlameGraphCanvas = ({
       wrapperWidth,
       collapsedMap,
       (item, x, y, width, height, label, muted) => {
-        if (!muted && label === TRUNCATED_NODE_NAME && x < wrapperWidth && x + width > 0) {
+        if (!muted && isTruncatedRow(data.data, item.itemIndexes[0]) && x < wrapperWidth && x + width > 0) {
           paths.push(data.getItemPath(item));
         }
       },
@@ -221,7 +222,7 @@ const FlameGraphCanvas = ({
     collapsedMap,
   ]);
 
-  useReportVisibleTruncatedPaths(visibleTruncatedPaths, reportVisibleTruncatedPaths);
+  useReportVisibleTruncatedPaths(visibleTruncatedPaths, reportVisibleTruncatedPaths, data);
 
   const levelHeight = PIXELS_PER_LEVEL;
   const loadingMarkers = useMemo(() => {

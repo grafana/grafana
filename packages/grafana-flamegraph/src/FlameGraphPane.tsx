@@ -116,9 +116,9 @@ const FlameGraphPane = ({
     }
 
     if (dataContainer && focusedItemData) {
-      const item =
-        (focusedItemPathRef.current && dataContainer.getItemByPath(focusedItemPathRef.current)) ||
-        dataContainer.getNodesWithLabel(focusedItemData.label)?.[0];
+      const item = focusedItemPathRef.current
+        ? dataContainer.getItemByPath(focusedItemPathRef.current)
+        : dataContainer.getNodesWithLabel(focusedItemData.label)?.[0];
 
       if (item) {
         setFocusedItemData({ ...focusedItemData, item });
@@ -128,16 +128,7 @@ const FlameGraphPane = ({
         setRangeMin(item.start / totalViewTicks);
         setRangeMax((item.start + item.value) / totalViewTicks);
       } else {
-        setFocusedItemData({
-          ...focusedItemData,
-          item: {
-            start: 0,
-            value: 0,
-            itemIndexes: [],
-            children: [],
-            level: 0,
-          },
-        });
+        setFocusedItemData(undefined);
 
         setRangeMin(0);
         setRangeMax(1);

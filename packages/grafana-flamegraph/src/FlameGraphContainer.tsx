@@ -13,6 +13,7 @@ import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphPane from './FlameGraphPane';
 import { MIN_WIDTH_FOR_SPLIT_VIEW, FLAMEGRAPH_CONTAINER_HEIGHT, VISIBLE_TRUNCATED_DEBOUNCE_MS } from './constants';
 import { type ReportVisibleTruncatedPaths } from './hooks';
+import { type ProfileSource } from './profileSource';
 import { PaneView, ViewMode } from './types';
 import { getAssistantContextFromDataFrame } from './utils';
 
@@ -30,6 +31,9 @@ export type Props = {
    * selfRight: number - the self value of the node in the right profile
    */
   data?: DataFrame;
+
+  /** Initial source identity/completeness. Keep unchanged when merging refinements into data. */
+  source?: ProfileSource;
 
   /**
    * Whether the header should be sticky and be always visible on the top when scrolling.
@@ -139,6 +143,7 @@ export type Props = {
 
 const FlameGraphContainer = ({
   data,
+  source,
   onTableSymbolClick,
   onViewSelected,
   onTextAlignSelected,
@@ -161,6 +166,8 @@ const FlameGraphContainer = ({
   contentAwareWidthsEnabled,
 }: Props) => {
   const theme = useMemo(() => getTheme(), [getTheme]);
+  const previousSourceId = usePrevious(source?.id);
+  const preserveFocus = keepFocusOnDataChange && previousSourceId === source?.id;
 
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Split);
@@ -241,12 +248,17 @@ const FlameGraphContainer = ({
   const emitTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const dataContainerRef = useRef(dataContainer);
   dataContainerRef.current = dataContainer;
+  const sourceRef = useRef(source);
+  sourceRef.current = source;
 
   const stableReportVisibleTruncatedPaths = useCallback<ReportVisibleTruncatedPaths>((viewId, paths) => {
     pathsByViewRef.current.set(viewId, paths);
 
     clearTimeout(emitTimerRef.current);
     emitTimerRef.current = setTimeout(() => {
+      if (sourceRef.current?.truncated === false) {
+        return;
+      }
       const byKey = new Map<string, string[]>();
 
       for (const viewPaths of pathsByViewRef.current.values()) {
@@ -269,8 +281,13 @@ const FlameGraphContainer = ({
   }, []);
 
   useEffect(() => () => clearTimeout(emitTimerRef.current), []);
+  useEffect(() => {
+    emittedRef.current = {};
+    stableReportVisibleTruncatedPaths('source', []);
+  }, [source?.id, source?.truncated, stableReportVisibleTruncatedPaths]);
 
   const previousDataContainerRef = useRef(dataContainer);
+  const previousSourceIdRef = useRef(source?.id);
   const focusedItemPathRef = useRef<string[] | undefined>(undefined);
 
   useEffect(() => {
@@ -279,13 +296,18 @@ const FlameGraphContainer = ({
     }
 
     const dataChanged = previousDataContainerRef.current !== dataContainer;
+    const sourceChanged = previousSourceIdRef.current !== source?.id;
     previousDataContainerRef.current = dataContainer;
+    previousSourceIdRef.current = source?.id;
+    if (sourceChanged) {
+      setSharedSandwichItem(undefined);
+    }
 
     let item = focusedItemIndexes?.length ? dataContainer.getItemByIndexes(focusedItemIndexes) : undefined;
 
-    if (dataChanged) {
+    if (dataChanged || sourceChanged) {
       item =
-        keepFocusOnDataChange && focusedItemPathRef.current
+        preserveFocus && focusedItemPathRef.current
           ? dataContainer.getItemByPath(focusedItemPathRef.current)
           : undefined;
       setFocusedItemIndexes(item ? item.itemIndexes : undefined);
@@ -302,7 +324,7 @@ const FlameGraphContainer = ({
     if (!unchanged) {
       onFocusChangeRef.current?.(path);
     }
-  }, [focusedItemIndexes, dataContainer, keepFocusOnDataChange]);
+  }, [focusedItemIndexes, dataContainer, preserveFocus, source?.id]);
 
   const styles = getStyles(theme, Boolean(fillHeight));
   const matchedLabels = useLabelSearch(search, dataContainer);
@@ -337,7 +359,7 @@ const FlameGraphContainer = ({
     getExtraContextMenuButtons: getExtraContextMenuButtons ? stableGetExtraContextMenuButtons : undefined,
     setSearch,
     resetKey,
-    keepFocusOnDataChange,
+    keepFocusOnDataChange: preserveFocus,
     focusedItemIndexes,
     setFocusedItemIndexes,
     useTableNG,
@@ -346,7 +368,8 @@ const FlameGraphContainer = ({
     fillHeight,
     loadingItems,
     // Without a listener the views skip the collection entirely, so no consumer pays for a feature it does not use.
-    reportVisibleTruncatedPaths: onVisibleTruncatedPathsChange ? stableReportVisibleTruncatedPaths : undefined,
+    reportVisibleTruncatedPaths:
+      onVisibleTruncatedPathsChange && source?.truncated !== false ? stableReportVisibleTruncatedPaths : undefined,
   };
 
   let body;

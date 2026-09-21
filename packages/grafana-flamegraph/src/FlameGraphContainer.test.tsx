@@ -147,12 +147,14 @@ describe('FlameGraphContainer', () => {
     loadingPaths,
     getExtraContextMenuButtons,
     data: frameData = data,
+    source,
   }: {
     onFocusChange?: (path: string[] | undefined) => void;
     onVisibleTruncatedPathsChange?: (paths: string[][]) => void;
     loadingPaths?: string[][];
     getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
     data?: Parameters<typeof createDataFrame>[0];
+    source?: { id: string; truncated: boolean };
   } = {}) => {
     const flameGraphData = createDataFrame(frameData);
     flameGraphData.meta = {
@@ -165,6 +167,7 @@ describe('FlameGraphContainer', () => {
     return (
       <FlameGraphContainer
         data={flameGraphData}
+        source={source}
         getTheme={getTheme}
         onFocusChange={onFocusChange}
         onVisibleTruncatedPathsChange={onVisibleTruncatedPathsChange}
@@ -256,6 +259,51 @@ describe('FlameGraphContainer', () => {
 
     // The truncated node under 'narrow' is a sub-pixel sliver, so it is not something the user can see.
     await waitFor(() => expect(onVisibleTruncatedPathsChange).toHaveBeenCalledWith([['total', 'wide', 'other']]));
+  });
+
+  it('reports a visible truncation contributed only by the right diff profile', async () => {
+    const report = jest.fn();
+    const fields = truncatedData.fields.map((field) =>
+      field.name === 'value' || field.name === 'self' ? { ...field, values: field.values.map(() => 0) } : field
+    );
+    render(
+      <FlameGraphContainerWithProps
+        data={{
+          fields: [
+            ...fields,
+            { name: 'valueRight', values: [1000, 600, 200, 200, 2, 1, 1] },
+            { name: 'selfRight', values: [398, 200, 200, 200, 0, 1, 1] },
+          ],
+        }}
+        onVisibleTruncatedPathsChange={report}
+      />
+    );
+    await waitFor(() => expect(report).toHaveBeenCalledWith([['total', 'wide', 'other']]));
+  });
+
+  it('re-emits unchanged truncated paths when a refinement replaces the frame', async () => {
+    const report = jest.fn();
+    const { rerender } = render(
+      <FlameGraphContainerWithProps data={truncatedData} onVisibleTruncatedPathsChange={report} />
+    );
+    await waitFor(() => expect(report).toHaveBeenCalledWith([['total', 'wide', 'other']]));
+    report.mockClear();
+    rerender(<FlameGraphContainerWithProps data={truncatedData} onVisibleTruncatedPathsChange={report} />);
+    await waitFor(() => expect(report).toHaveBeenCalledWith([['total', 'wide', 'other']]));
+  });
+
+  it('does not request refinement when the original source is complete', async () => {
+    const report = jest.fn();
+    render(
+      <FlameGraphContainerWithProps
+        data={truncatedData}
+        source={{ id: 'complete', truncated: false }}
+        onVisibleTruncatedPathsChange={report}
+      />
+    );
+    await userEvent.type(screen.getByPlaceholderText('Search...'), 'wide');
+    expect(screen.getByDisplayValue('wide')).toBeInTheDocument();
+    expect(report).not.toHaveBeenCalled();
   });
 
   it('reports nothing while a search is greying the flame graph out', async () => {
