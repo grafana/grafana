@@ -2,11 +2,9 @@ import { type DataSourceInstanceListItem } from '@grafana/data';
 import { getDefaultDataSourceInstanceListItem as rtGetDefaultDataSourceInstanceListItem } from '@grafana/runtime/unstable';
 
 /**
- * Resolve which item of a data source list should be treated as the default: the one flagged
- * `isDefault`, otherwise the first item, or `undefined` when nothing is eligible.
+ * Resolve the item flagged as the default data source, or `undefined` when the list holds none.
  *
- * Built-ins (`-- Grafana --`, `-- Mixed --`, `-- Dashboard --`) are never eligible: they are
- * never flagged, and `getDataSourceInstanceList` appends them regardless of a `type` filter.
+ * At most one instance per org carries the flag, so a filtered list need not contain it.
  */
 export function getDefaultDataSourceInstanceListItem(
   items: DataSourceInstanceListItem[]
@@ -21,7 +19,5 @@ export function getDefaultDataSourceInstanceListItem(
 function backwardsCompatibleGetDefaultDataSourceInstanceListItem(
   items: DataSourceInstanceListItem[]
 ): DataSourceInstanceListItem | undefined {
-  // Drop nullish entries up front so the first-item fallback cannot return one.
-  const candidates = items.filter((item) => item != null && !item.meta?.builtIn);
-  return candidates.find((item) => item.isDefault) ?? candidates[0];
+  return items.find((item) => item?.isDefault);
 }

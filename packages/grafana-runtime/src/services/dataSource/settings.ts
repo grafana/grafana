@@ -222,20 +222,16 @@ function matchesType(item: DataSourceInstanceListItem, type: string): boolean {
 }
 
 /**
- * Resolve which item of a data source list should be treated as the default: the one flagged
- * `isDefault`, otherwise the first item, or `undefined` when nothing is eligible.
+ * Resolve the item flagged as the default data source, or `undefined` when the list holds none.
  *
- * Built-ins (`-- Grafana --`, `-- Mixed --`, `-- Dashboard --`) are never eligible: they are
- * never flagged, and {@link getDataSourceInstanceList} appends them regardless of a `type`
- * filter, so a list whose real instances all dropped out resolves to `undefined`.
+ * At most one instance per org carries the flag, so a filtered list need not contain it.
  *
  * @public
  */
 export function getDefaultDataSourceInstanceListItem(
   items: DataSourceInstanceListItem[]
 ): DataSourceInstanceListItem | undefined {
-  const candidates = items.filter((item) => !item.meta.builtIn);
-  return candidates.find((item) => item.isDefault) ?? candidates[0];
+  return items.find((item) => item.isDefault);
 }
 
 /**

@@ -77,21 +77,21 @@ const fixtures: Record<string, DataSourceInstanceSettings> = {
     uid: '-- Grafana --',
     name: '-- Grafana --',
     type: 'grafana',
-    meta: { ...ds({}).meta, id: 'grafana', metrics: true, builtIn: true },
+    meta: { ...ds({}).meta, id: 'grafana', metrics: true },
   }),
   '-- Mixed --': ds({
     id: 5,
     uid: '-- Mixed --',
     name: '-- Mixed --',
     type: 'mixed',
-    meta: { ...ds({}).meta, id: 'mixed', metrics: true, builtIn: true },
+    meta: { ...ds({}).meta, id: 'mixed', metrics: true },
   }),
   '-- Dashboard --': ds({
     id: 6,
     uid: '-- Dashboard --',
     name: '-- Dashboard --',
     type: 'dashboard',
-    meta: { ...ds({}).meta, id: 'dashboard', metrics: true, builtIn: true },
+    meta: { ...ds({}).meta, id: 'dashboard', metrics: true },
   }),
   Expression: ds({
     id: 0,
@@ -677,7 +677,7 @@ describe('instanceSettings', () => {
       return { uid: 'uid', type: 'test-db', name: 'name', meta: ds({}).meta, isDefault: false, ...overrides };
     }
 
-    it('returns the item flagged as default rather than the first one', () => {
+    it('returns the flagged item rather than the first one', () => {
       const items = [
         listItem({ uid: 'uid-alpha', name: 'Alpha' }),
         listItem({ uid: 'uid-bravo', name: 'Bravo', isDefault: true }),
@@ -686,13 +686,13 @@ describe('instanceSettings', () => {
       expect(getDefaultDataSourceInstanceListItem(items)?.name).toBe('Bravo');
     });
 
-    it('returns the first item when none is flagged as default', () => {
+    it('returns undefined when no item is flagged, rather than falling back to the first', () => {
       const items = [listItem({ uid: 'uid-alpha', name: 'Alpha' }), listItem({ uid: 'uid-charlie', name: 'Charlie' })];
 
-      expect(getDefaultDataSourceInstanceListItem(items)?.name).toBe('Alpha');
+      expect(getDefaultDataSourceInstanceListItem(items)).toBeUndefined();
     });
 
-    it('returns the first flagged item when more than one is flagged as default', () => {
+    it('returns the first flagged item when more than one is flagged', () => {
       const items = [
         listItem({ uid: 'uid-alpha', name: 'Alpha' }),
         listItem({ uid: 'uid-bravo', name: 'Bravo', isDefault: true }),
@@ -714,47 +714,31 @@ describe('instanceSettings', () => {
       expect(getDefaultDataSourceInstanceListItem(items)?.name).toBe('Bravo');
     });
 
-    it('resolves the first match when the instance carrying the org default is filtered out', async () => {
+    it('returns undefined when the instance carrying the org default is filtered out', async () => {
       initDataSourceInstanceSettings(fixtures, 'Bravo');
 
       // Only Charlie is a tracing source, so the flagged Bravo is not part of the list.
       const items = await getDataSourceInstanceList({ tracing: true });
 
-      expect(items.some((x) => x.isDefault)).toBe(false);
-      expect(getDefaultDataSourceInstanceListItem(items)?.name).toBe('Charlie');
+      expect(items.map((x) => x.name)).toEqual(['Charlie']);
+      expect(getDefaultDataSourceInstanceListItem(items)).toBeUndefined();
     });
 
-    it('returns undefined rather than a built-in when a type-filtered list matches nothing else', async () => {
+    it('never returns an appended built-in, which is what a list-order fallback would pick', async () => {
       initDataSourceInstanceSettings(fixtures, 'Bravo');
 
       const items = await getDataSourceInstanceList({ type: 'nonexistent', all: true, mixed: true, dashboard: true });
 
-      // A type filter does not suppress the built-ins, and -- Mixed -- leads them.
       expect(items.map((x) => x.name)).toEqual(['-- Mixed --', '-- Dashboard --', '-- Grafana --']);
       expect(getDefaultDataSourceInstanceListItem(items)).toBeUndefined();
     });
 
-    it('keeps the flagged instance in a list that also carries built-ins', async () => {
+    it('finds the flagged instance in a list that also carries built-ins', async () => {
       initDataSourceInstanceSettings(fixtures, 'Bravo');
 
       const items = await getDataSourceInstanceList({ type: 'test-db', all: true, mixed: true });
 
       expect(getDefaultDataSourceInstanceListItem(items)?.name).toBe('Bravo');
-    });
-
-    it('ignores a built-in that leads the list even when no real instance is flagged', () => {
-      // getDataSourceInstanceList appends built-ins last, but a caller may reorder the list.
-      const items = [
-        listItem({
-          uid: 'grafana',
-          name: '-- Grafana --',
-          type: 'grafana',
-          meta: { ...ds({}).meta, id: 'grafana', builtIn: true },
-        }),
-        listItem({ uid: 'uid-alpha', name: 'Alpha' }),
-      ];
-
-      expect(getDefaultDataSourceInstanceListItem(items)?.name).toBe('Alpha');
     });
   });
 

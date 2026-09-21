@@ -34,7 +34,8 @@ import { getPluginSettings } from '@grafana/plugin-compat/apps';
 const ds = await getDataSourceInstance({ uid: 'my-uid' });
 const settings = await getPluginSettings('my-plugin-id');
 
-// Unfiltered for the org default, filtered to pick one out of a subset.
+// `undefined` unless the org default is one of the items, so a filtered list
+// often has no default at all.
 const items = await getDataSourceInstanceList({ type: 'prometheus' });
 const defaultProm = getDefaultDataSourceInstanceListItem(items);
 ```

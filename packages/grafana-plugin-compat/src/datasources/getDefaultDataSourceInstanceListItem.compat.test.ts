@@ -25,19 +25,19 @@ function listItem({
 }
 
 describe('getDefaultDataSourceInstanceListItem', () => {
-  it('should return the item flagged as default rather than the first one', () => {
+  it('should return the flagged item rather than the first one', () => {
     const items = [listItem({ uid: 'ds-a', name: 'A' }), listItem({ uid: 'ds-b', name: 'B', isDefault: true })];
 
     expect(getDefaultDataSourceInstanceListItem(items)?.uid).toBe('ds-b');
   });
 
-  it('should return the first item when none is flagged as default', () => {
+  it('should return undefined when no item is flagged, rather than falling back to the first', () => {
     const items = [listItem({ uid: 'ds-a', name: 'A' }), listItem({ uid: 'ds-b', name: 'B' })];
 
-    expect(getDefaultDataSourceInstanceListItem(items)?.uid).toBe('ds-a');
+    expect(getDefaultDataSourceInstanceListItem(items)).toBeUndefined();
   });
 
-  it('should return the first flagged item when more than one is flagged as default', () => {
+  it('should return the first flagged item when more than one is flagged', () => {
     const items = [
       listItem({ uid: 'ds-a', name: 'A' }),
       listItem({ uid: 'ds-b', name: 'B', isDefault: true }),
@@ -51,17 +51,7 @@ describe('getDefaultDataSourceInstanceListItem', () => {
     expect(getDefaultDataSourceInstanceListItem([])).toBeUndefined();
   });
 
-  it('should ignore a built-in that leads the list', () => {
-    // Nothing is flagged, so without the built-in filter the leading item would win on order.
-    const items = [
-      listItem({ uid: 'ds-grafana', type: 'grafana', name: '-- Grafana --', meta: { builtIn: true } }),
-      listItem({ uid: 'ds-b', name: 'B' }),
-    ];
-
-    expect(getDefaultDataSourceInstanceListItem(items)?.uid).toBe('ds-b');
-  });
-
-  it('should return undefined when every item is a built-in', () => {
+  it('should never return a built-in, which is what a list-order fallback would pick', () => {
     const items = [
       listItem({ uid: 'ds-mixed', type: 'mixed', name: '-- Mixed --', meta: { builtIn: true } }),
       listItem({ uid: 'ds-grafana', type: 'grafana', name: '-- Grafana --', meta: { builtIn: true } }),
@@ -72,12 +62,6 @@ describe('getDefaultDataSourceInstanceListItem', () => {
 
   it('should skip a nullish entry rather than throwing on it', () => {
     const items = [null, listItem({ uid: 'ds-b', name: 'B', isDefault: true })] as DataSourceInstanceListItem[];
-
-    expect(getDefaultDataSourceInstanceListItem(items)?.uid).toBe('ds-b');
-  });
-
-  it('should not return a nullish entry as the first-item fallback', () => {
-    const items = [null, listItem({ uid: 'ds-b', name: 'B' })] as DataSourceInstanceListItem[];
 
     expect(getDefaultDataSourceInstanceListItem(items)?.uid).toBe('ds-b');
   });
