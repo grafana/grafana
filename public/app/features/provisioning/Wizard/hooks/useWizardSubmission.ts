@@ -19,6 +19,9 @@ export interface UseWizardSubmissionParams {
     spec: RepositorySpec,
     secureChanges?: RepositorySecureChanges
   ) => Promise<{ data?: { metadata?: { name?: string } }; error?: unknown }>;
+  // Validates without persisting anything - used on authType, before the wizard has
+  // decided a repository is worth creating (see useCreateOrUpdateRepository).
+  testOnly: (spec: RepositorySpec, secureChanges?: RepositorySecureChanges) => Promise<void>;
   setStepStatusInfo: (info: StepStatusInfo) => void;
   onSuccess: () => void;
 }
@@ -33,6 +36,7 @@ export function useWizardSubmission({
   currentStepConfig,
   methods,
   submitData,
+  testOnly,
   setStepStatusInfo,
   onSuccess,
 }: UseWizardSubmissionParams): UseWizardSubmissionReturn {
@@ -72,11 +76,19 @@ export function useWizardSubmission({
         const token = formData.githubAuthType === 'pat' ? formData.repository.token : undefined;
         // Wizard only creates repositories, so there is never an existing key to remove.
         const signingKeySecret = deriveSigningKeySecret(formData.repository, false);
-
-        const rsp = await submitData(spec, {
+        const secureChanges = {
           token: token ? { create: token } : undefined,
           commitSigningKey: signingKeySecret,
-        });
+        };
+
+        if (activeStep === 'authType') {
+          await testOnly(spec, secureChanges);
+          setStepStatusInfo({ status: 'success' });
+          onSuccess();
+          return;
+        }
+
+        const rsp = await submitData(spec, secureChanges);
         if (rsp.error) {
           if (isFetchError(rsp.error)) {
             setStepStatusInfo({
@@ -180,6 +192,7 @@ export function useWizardSubmission({
     currentStepConfig,
     methods,
     submitData,
+    testOnly,
     setStepStatusInfo,
     onSuccess,
     repositoryRequestFailed,

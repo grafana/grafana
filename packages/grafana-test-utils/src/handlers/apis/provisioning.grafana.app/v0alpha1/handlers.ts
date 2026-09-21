@@ -92,6 +92,15 @@ const getRepositoryFilesHandler = (response = defaultRepositoryFiles) =>
 const getRepositoryFileWithPathHandler = () =>
   http.get(`${BASE}/repositories/:name/files/*`, () => new HttpResponse(null, { status: 404 }));
 
+// reftree/filetree list refs/files for a repository that hasn't been created yet (see
+// buildEphemeralRepository on the backend) - used by the wizard's ConnectStep, which no
+// longer has a real repository name to query the GET refs/files endpoints above.
+const createRepositoryReftreeHandler = (response = defaultRefs) =>
+  http.post(`${BASE}/repositories/:name/reftree`, () => HttpResponse.json(response));
+
+const createRepositoryFiletreeHandler = (response = defaultRepositoryFiles) =>
+  http.post(`${BASE}/repositories/:name/filetree`, () => HttpResponse.json(response));
+
 const createRepositoryHandler = (response = defaultRepository) =>
   http.post(`${BASE}/repositories`, () => HttpResponse.json(response));
 
@@ -138,6 +147,8 @@ const handlers = [
   getRepositoryRefsHandler(),
   getRepositoryFilesHandler(),
   getRepositoryFileWithPathHandler(),
+  createRepositoryReftreeHandler(),
+  createRepositoryFiletreeHandler(),
   createRepositoryHandler(),
   replaceRepositoryHandler(),
   testRepositoryHandler(),
