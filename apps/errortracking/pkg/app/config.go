@@ -3,8 +3,6 @@ package app
 import (
 	"context"
 	"time"
-
-	authlib "github.com/grafana/authlib/types"
 )
 
 type Event struct {
@@ -23,6 +21,5 @@ type Store interface {
 // Config is the errortracking app-specific config injected by either the
 // standalone server or Grafana's embedded registry adapter.
 type Config struct {
-	Store        Store
-	AccessClient authlib.AccessClient
+	Store Store
 }

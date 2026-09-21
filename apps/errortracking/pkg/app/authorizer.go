@@ -4,14 +4,14 @@ import (
 	"context"
 
 	"github.com/grafana/authlib/authz"
-	authlib "github.com/grafana/authlib/types"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
 
-// GetAuthorizer allows authenticated Grafana users to their own tenant namespace.
+// GetAuthorizer allows authenticated callers with the required service permission
+// to access their own tenant namespace.
 // It must be wired into the app installer's GetAuthorizer method — the apiserver
 // panics on a nil authorizer for a registered API group.
-func GetAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer {
+func GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 			if !attr.IsResourceRequest() {
@@ -30,28 +30,6 @@ func GetAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer {
 			if !servicePermission.Allowed {
 				return authorizer.DecisionDeny, "calling service lacks required permissions", nil
 			}
-			if servicePermission.ServiceCall {
-				return authorizer.DecisionAllow, "", nil
-			}
-			if accessClient == nil {
-				return authorizer.DecisionDeny, "user permission checker is not configured", nil
-			}
-			check, err := accessClient.Check(ctx, user, authlib.CheckRequest{
-				Verb:        attr.GetVerb(),
-				Group:       attr.GetAPIGroup(),
-				Resource:    attr.GetResource(),
-				Namespace:   attr.GetNamespace(),
-				Name:        attr.GetName(),
-				Subresource: attr.GetSubresource(),
-				Path:        attr.GetPath(),
-			}, "")
-			if err != nil {
-				return authorizer.DecisionDeny, "user permission check failed", err
-			}
-			if !check.Allowed {
-				return authorizer.DecisionDeny, "user lacks required permissions", nil
-			}
-
 			return authorizer.DecisionAllow, "", nil
 		},
 	)

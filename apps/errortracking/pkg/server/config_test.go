@@ -10,7 +10,7 @@ func TestLoadConfig(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "config.json")
 	data := `{
 		"server":{"certFile":"/tls/tls.crt","keyFile":"/tls/tls.key"},
-		"auth":{"signingKeysURL":"https://signer/keys","issuer":"auth","audience":"error-tracking.grafana.app","authzAddress":"authz:10000","authzCAFile":"/tls/ca.crt","tokenExchangeURL":"https://signer/token","tokenExchangeTokenFile":"/token/token"},
+		"auth":{"signingKeysURL":"https://signer/keys","issuer":"auth","audience":"error-tracking.grafana.app"},
 		"audit":{"policyFile":"/audit/policy.yaml","logPath":"-"}
 	}`
 	if err := os.WriteFile(path, []byte(data), 0o600); err != nil {

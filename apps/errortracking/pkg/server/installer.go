@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/emicklei/go-restful/v3"
-	authlib "github.com/grafana/authlib/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
@@ -25,12 +24,11 @@ var _ appsdkapiserver.AppInstaller = (*AppInstaller)(nil)
 
 type AppInstaller struct {
 	appsdkapiserver.AppInstaller
-	accessClient authlib.AccessClient
-	store        *storage.Store
+	store *storage.Store
 }
 
 func (a AppInstaller) GetAuthorizer() authorizer.Authorizer {
-	return errortrackingapp.GetAuthorizer(a.accessClient)
+	return errortrackingapp.GetAuthorizer()
 }
 
 // InstallAPIs adds storage readiness and discovery for this route-only API.
@@ -76,8 +74,8 @@ func (a AppInstaller) InstallAPIs(apiServer appsdkapiserver.GenericAPIServer, op
 	return fmt.Errorf("route-only API web service %q was not installed", root)
 }
 
-func NewAppInstaller(store *storage.Store, accessClient authlib.AccessClient) (*AppInstaller, error) {
-	specificConfig := &errortrackingapp.Config{Store: store, AccessClient: accessClient}
+func NewAppInstaller(store *storage.Store) (*AppInstaller, error) {
+	specificConfig := &errortrackingapp.Config{Store: store}
 	manifest := manifestdata.LocalManifest()
 	provider := simple.NewAppProvider(manifest, specificConfig, errortrackingapp.New)
 	appConfig := app.Config{
@@ -89,5 +87,5 @@ func NewAppInstaller(store *storage.Store, accessClient authlib.AccessClient) (*
 	if err != nil {
 		return nil, err
 	}
-	return &AppInstaller{AppInstaller: installer, accessClient: accessClient, store: store}, nil
+	return &AppInstaller{AppInstaller: installer, store: store}, nil
 }

@@ -1,7 +1,6 @@
 package app
 
 import (
-	"context"
 	"testing"
 
 	authn "github.com/grafana/authlib/authn"
@@ -10,90 +9,93 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
 
-type roleAccessClient struct {
-	authlib.AccessClient
-	request authlib.CheckRequest
-}
-
-func (c *roleAccessClient) Check(_ context.Context, _ authlib.AuthInfo, request authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
-	c.request = request
-	return authlib.CheckResponse{Allowed: request.Verb == "list"}, nil
-}
-
 func testAuthInfo(namespace string, identityType authlib.IdentityType, identifier string, permissions, delegatedPermissions []string) authlib.AuthInfo {
 	access := authn.Claims[authn.AccessTokenClaims]{Rest: authn.AccessTokenClaims{
 		Namespace:            namespace,
 		Permissions:          permissions,
 		DelegatedPermissions: delegatedPermissions,
 	}}
-	if identityType == authlib.TypeUser {
-		return authn.NewIDTokenAuthInfo(access, &authn.Claims[authn.IDTokenClaims]{Rest: authn.IDTokenClaims{
-			Namespace:  namespace,
-			Type:       identityType,
-			Identifier: identifier,
-		}})
+	if identityType == authlib.TypeAccessPolicy {
+		return authn.NewAccessTokenAuthInfo(access)
 	}
-	return authn.NewAccessTokenAuthInfo(access)
+	return authn.NewIDTokenAuthInfo(access, &authn.Claims[authn.IDTokenClaims]{Rest: authn.IDTokenClaims{
+		Namespace: namespace, Type: identityType, Identifier: identifier,
+	}})
 }
 
-func TestGetAuthorizerNamespace(t *testing.T) {
-	auth := GetAuthorizer(authlib.FixedAccessClient(true))
-	ctx := func(namespace string) context.Context {
-		return authlib.WithAuthInfo(context.Background(), testAuthInfo(namespace, authlib.TypeAccessPolicy, "policy", []string{"error-tracking.grafana.app/events:*"}, nil))
-	}
-	for _, tc := range []struct {
-		name, identityNamespace, requestNamespace string
-		want                                      authorizer.Decision
+func TestGetAuthorizerRejectsUntrustedTenantIdentity(t *testing.T) {
+	for _, test := range []struct {
+		name      string
+		authInfo  authlib.AuthInfo
+		namespace string
 	}{
-		{name: "own tenant", identityNamespace: "stacks-123", requestNamespace: "stacks-123", want: authorizer.DecisionAllow},
-		{name: "other tenant", identityNamespace: "stacks-123", requestNamespace: "stacks-456", want: authorizer.DecisionDeny},
-		{name: "default tenant", identityNamespace: "default", requestNamespace: "default", want: authorizer.DecisionAllow},
+		{name: "missing", namespace: "stacks-123"},
+		{name: "anonymous", authInfo: testAuthInfo("stacks-123", authlib.TypeAnonymous, "anonymous", nil, nil), namespace: "stacks-123"},
+		{name: "wildcard", authInfo: testAuthInfo("*", authlib.TypeUser, "user", nil, []string{"error-tracking.grafana.app/events:list"}), namespace: "stacks-123"},
+		{name: "malformed", authInfo: testAuthInfo("stacks-invalid", authlib.TypeUser, "user", nil, []string{"error-tracking.grafana.app/events:list"}), namespace: "stacks-invalid"},
 	} {
-		t.Run(tc.name, func(t *testing.T) {
-			decision, _, err := auth.Authorize(ctx(tc.identityNamespace), authorizer.AttributesRecord{
+		t.Run(test.name, func(t *testing.T) {
+			ctx := t.Context()
+			if test.authInfo != nil {
+				ctx = authlib.WithAuthInfo(ctx, test.authInfo)
+			}
+			decision, _, err := GetAuthorizer().Authorize(ctx, authorizer.AttributesRecord{
 				ResourceRequest: true,
 				APIGroup:        "error-tracking.grafana.app",
 				Resource:        "events",
-				Verb:            "create",
-				Namespace:       tc.requestNamespace,
+				Verb:            "list",
+				Namespace:       test.namespace,
 			})
-			require.NoError(t, err)
-			require.Equal(t, tc.want, decision)
+			require.Error(t, err)
+			require.Equal(t, authorizer.DecisionDeny, decision)
 		})
 	}
 }
 
-func TestGetAuthorizerDeniesSameTenantWithoutServicePermission(t *testing.T) {
-	auth := GetAuthorizer(authlib.FixedAccessClient(true))
-	ctx := authlib.WithAuthInfo(context.Background(), testAuthInfo("stacks-123", authlib.TypeUser, "user", nil, nil))
-	decision, _, err := auth.Authorize(ctx, authorizer.AttributesRecord{
+func authorize(t *testing.T, identityNamespace, requestNamespace, verb string, identityType authlib.IdentityType, permissions, delegatedPermissions []string) authorizer.Decision {
+	t.Helper()
+	ctx := authlib.WithAuthInfo(t.Context(), testAuthInfo(identityNamespace, identityType, "user", permissions, delegatedPermissions))
+	decision, _, err := GetAuthorizer().Authorize(ctx, authorizer.AttributesRecord{
 		ResourceRequest: true,
 		APIGroup:        "error-tracking.grafana.app",
 		Resource:        "events",
-		Verb:            "create",
-		Namespace:       "stacks-123",
+		Verb:            verb,
+		Namespace:       requestNamespace,
 	})
 	require.NoError(t, err)
-	require.Equal(t, authorizer.DecisionDeny, decision)
+	return decision
 }
 
-func TestGetAuthorizerDeniesSameTenantWithoutUserPermission(t *testing.T) {
-	accessClient := &roleAccessClient{}
-	auth := GetAuthorizer(accessClient)
-	ctx := authlib.WithAuthInfo(context.Background(), testAuthInfo("stacks-123", authlib.TypeUser, "user", nil, []string{"error-tracking.grafana.app/events:create"}))
-	decision, _, err := auth.Authorize(ctx, authorizer.AttributesRecord{
-		ResourceRequest: true,
-		APIGroup:        "error-tracking.grafana.app",
-		Resource:        "events",
-		Verb:            "create",
-		Namespace:       "stacks-123",
-	})
-	require.NoError(t, err)
-	require.Equal(t, authorizer.DecisionDeny, decision)
-	require.Equal(t, authlib.CheckRequest{
-		Verb:      "create",
-		Group:     "error-tracking.grafana.app",
-		Resource:  "events",
-		Namespace: "stacks-123",
-	}, accessClient.request)
+func TestGetAuthorizerRequiresTenantAndServicePermission(t *testing.T) {
+	for _, test := range []struct {
+		name, identityNamespace, requestNamespace, verb string
+		identityType                                    authlib.IdentityType
+		permissions, delegatedPermissions               []string
+		want                                            authorizer.Decision
+	}{
+		{
+			name: "service can create in own tenant", identityNamespace: "stacks-123", requestNamespace: "stacks-123", verb: "create",
+			identityType: authlib.TypeAccessPolicy,
+			permissions:  []string{"error-tracking.grafana.app/events:create"}, want: authorizer.DecisionAllow,
+		},
+		{
+			name: "delegated user can list in own tenant", identityNamespace: "stacks-123", requestNamespace: "stacks-123", verb: "list",
+			identityType:         authlib.TypeUser,
+			delegatedPermissions: []string{"error-tracking.grafana.app/events:list"}, want: authorizer.DecisionAllow,
+		},
+		{
+			name: "other tenant is denied", identityNamespace: "stacks-123", requestNamespace: "stacks-456", verb: "create",
+			identityType: authlib.TypeUser,
+			permissions:  []string{"error-tracking.grafana.app/events:create"}, want: authorizer.DecisionDeny,
+		},
+		{
+			name: "missing permission is denied", identityNamespace: "stacks-123", requestNamespace: "stacks-123", verb: "create",
+			identityType:         authlib.TypeUser,
+			delegatedPermissions: []string{"error-tracking.grafana.app/events:list"}, want: authorizer.DecisionDeny,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			require.Equal(t, test.want, authorize(t, test.identityNamespace, test.requestNamespace, test.verb, test.identityType, test.permissions, test.delegatedPermissions))
+		})
+	}
 }

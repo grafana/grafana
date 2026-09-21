@@ -22,13 +22,9 @@ type Config struct {
 		KeyFile     string `json:"keyFile"`
 	} `json:"server"`
 	Auth struct {
-		SigningKeysURL         string `json:"signingKeysURL"`
-		Issuer                 string `json:"issuer"`
-		Audience               string `json:"audience"`
-		AuthzAddress           string `json:"authzAddress"`
-		AuthzCAFile            string `json:"authzCAFile"`
-		TokenExchangeURL       string `json:"tokenExchangeURL"`
-		TokenExchangeTokenFile string `json:"tokenExchangeTokenFile"`
+		SigningKeysURL string `json:"signingKeysURL"`
+		Issuer         string `json:"issuer"`
+		Audience       string `json:"audience"`
 	} `json:"auth"`
 	Database struct {
 		MaxConnections int32 `json:"maxConnections"`
@@ -86,10 +82,6 @@ func (c Config) Validate() error {
 		return fmt.Errorf("auth.issuer is required")
 	case c.Auth.Audience != Audience:
 		return fmt.Errorf("auth.audience must be %q", Audience)
-	case c.Auth.AuthzAddress == "" || c.Auth.AuthzCAFile == "":
-		return fmt.Errorf("auth.authzAddress and auth.authzCAFile are required")
-	case c.Auth.TokenExchangeURL == "" || c.Auth.TokenExchangeTokenFile == "":
-		return fmt.Errorf("auth.tokenExchangeURL and auth.tokenExchangeTokenFile are required")
 	case c.Database.MaxConnections < 1:
 		return fmt.Errorf("database.maxConnections must be positive")
 	case c.Audit.PolicyFile == "" || c.Audit.LogPath == "":

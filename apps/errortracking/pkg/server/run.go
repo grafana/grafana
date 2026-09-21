@@ -26,13 +26,7 @@ func Run(ctx context.Context, config Config) error {
 	}
 	defer store.Close()
 
-	accessClient, authzConnection, err := newAuthzClient(config)
-	if err != nil {
-		return err
-	}
-	defer func() { _ = authzConnection.Close() }()
-
-	installer, err := NewAppInstaller(store, accessClient)
+	installer, err := NewAppInstaller(store)
 	if err != nil {
 		return fmt.Errorf("create error tracking app: %w", err)
 	}
