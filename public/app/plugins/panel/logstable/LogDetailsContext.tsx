@@ -1,6 +1,7 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 
 import { store } from '@grafana/data';
+import { useFlagGrafanaSidebarLogDetailsNewTab } from '@grafana/runtime/internal';
 import { type LogListModel } from 'app/features/logs/components/panel/processing';
 
 export interface LogDetailsContextData {
@@ -16,7 +17,7 @@ export interface LogDetailsContextData {
   setDisplayedRowIndices: (rowIndices: number[]) => void;
   setPrettifyDetailsJSON: (prettifyDetailsJSON: boolean) => void;
   showDetails: LogListModel[];
-  toggleDetails: (log: number | LogListModel) => void;
+  toggleDetails: (log: number | LogListModel, withModifierKey?: boolean) => void;
 }
 
 export const emptyContextData: LogDetailsContextData = {
@@ -104,8 +105,10 @@ export const LogDetailsContextProvider = ({
     [logs, showDetails]
   );
 
+  const openInNewTabFlag = useFlagGrafanaSidebarLogDetailsNewTab();
+
   const toggleDetails = useCallback(
-    (logRef: number | LogListModel) => {
+    (logRef: number | LogListModel, withModifierKey?: boolean) => {
       if (!enableLogDetails) {
         return;
       }
@@ -115,6 +118,13 @@ export const LogDetailsContextProvider = ({
         return;
       }
       const found = showDetails.find((stateLog) => stateLog.uid === log.uid);
+
+      if (!withModifierKey && !found && !openInNewTabFlag) {
+        setCurrentLog(log);
+        setShowDetails([log]);
+        return;
+      }
+
       if (found) {
         const newShowDetails = showDetails.filter((stateLog) => stateLog.uid !== log.uid);
         setShowDetails(newShowDetails);
@@ -126,7 +136,7 @@ export const LogDetailsContextProvider = ({
         setCurrentLog(log);
       }
     },
-    [currentLog, enableLogDetails, logs, showDetails]
+    [currentLog, enableLogDetails, logs, openInNewTabFlag, showDetails]
   );
 
   const replaceDetails = useCallback(
