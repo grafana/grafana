@@ -1397,6 +1397,12 @@ export const versionedComponents = {
       pastePanelButton: {
         '11.1.0': 'data-testid Paste panel button',
       },
+      planningBuildButton: {
+        '13.3.0': 'data-testid Build dashboard plan button',
+      },
+      planningDismissButton: {
+        '13.3.0': 'data-testid Dismiss dashboard plan button',
+      },
       discardChangesButton: {
         '11.1.0': 'data-testid Discard changes button',
       },
@@ -1643,6 +1649,9 @@ export const versionedComponents = {
     traceBanner: {
       container: {
         '13.3.0': 'data-testid TraceViewer trace-banner',
+      },
+      goToSpanButton: {
+        '13.3.0': 'data-testid TraceViewer trace-banner go-to-span-button',
       },
       row: {
         '13.3.0': (spanId: string) => `data-testid TraceViewer trace-banner row ${spanId}`,

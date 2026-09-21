@@ -628,7 +628,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 						c.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(c.AlertmanagerConfig.Route, c.ManagedRoutes)
 						return definition.PostableApiAlertingConfig{
 							Config:    notifier.PostableApiAlertingConfigToAPI(c.AlertmanagerConfig, c.SortedTimeIntervals()),
-							Receivers: v1.ReceiversToDB(c.Receivers),
+							Receivers: v1.ReceiversToDB(c.GetReceivers()),
 						}
 					}(),
 				},
@@ -1082,7 +1082,7 @@ func TestCompareAndSendConfigurationWithExtraConfigs(t *testing.T) {
 				},
 			},
 		},
-		Receivers: []*v1.PostableApiReceiver{
+		Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 			{
 				Name: "grafana-default-email",
 				GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1093,7 +1093,7 @@ func TestCompareAndSendConfigurationWithExtraConfigs(t *testing.T) {
 					},
 				},
 			},
-		},
+		}),
 		ExtraConfigs: []v1.ExtraConfiguration{
 			{
 				Identifier: "test-external",

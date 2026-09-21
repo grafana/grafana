@@ -28,13 +28,6 @@ export function HomePageSkeleton({
       <Stack direction="column" gap={2}>
         {redesignEnabled ? (
           <>
-            {/* Recommendations block: heading + carousel card */}
-            {showSolutions && (
-              <HomeSection direction="column" display="flex" gap={2} data-testid="home-page-skeleton-solutions">
-                <Skeleton width={280} height={24} />
-                <Skeleton height={120} containerClassName={styles.block} />
-              </HomeSection>
-            )}
             {/* DashboardTabs and Alerts card*/}
             <HomeGrid columns={2} gap={2} data-testid="home-page-skeleton-cards">
               <HomeSection direction="column" display="flex" gap={2}>
@@ -42,6 +35,13 @@ export function HomePageSkeleton({
               </HomeSection>
               {showAlertsCard && <CardSkeleton />}
             </HomeGrid>
+            {/* Recommendations / overview block below the grid: heading + card */}
+            {showSolutions && (
+              <HomeSection direction="column" display="flex" gap={2} data-testid="home-page-skeleton-solutions">
+                <Skeleton width={280} height={24} />
+                <Skeleton height={120} containerClassName={styles.block} />
+              </HomeSection>
+            )}
           </>
         ) : (
           <>
