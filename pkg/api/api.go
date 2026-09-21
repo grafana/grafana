@@ -285,7 +285,7 @@ func (hs *HTTPServer) registerRoutes() {
 	// ShortURL API
 	hs.registerShortURLAPI(r)
 
-	r.Post("/api/:project_id/envelope/", routing.Wrap(hs.PostErrorEnvelope))
+	r.Post("/api/:projectID/envelope/", routing.Wrap(hs.PostErrorEnvelope))
 
 	// authed api
 	r.Group("/api", func(apiRoute routing.RouteRegister) {

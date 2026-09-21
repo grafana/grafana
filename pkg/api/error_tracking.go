@@ -149,7 +149,7 @@ func sentryAuthKey(header string) string {
 }
 
 func (hs *HTTPServer) PostErrorEnvelope(c *contextmodel.ReqContext) response.Response {
-	projectID := web.Params(c.Req)[":project_id"]
+	projectID := web.Params(c.Req)[":projectID"]
 	configuredProject := strings.TrimSpace(hs.Cfg.SectionWithEnvOverrides("error_tracking").Key("project_id").MustString("1"))
 	if projectID == "" || projectID != configuredProject || !authorizedEnvelope(c, configuredIngestionKey(hs.Cfg)) {
 		return response.Error(http.StatusUnauthorized, "Unauthorized", fmt.Errorf("invalid project credentials"))
