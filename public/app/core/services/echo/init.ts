@@ -169,6 +169,7 @@ async function initRudderstackBackend() {
       sdkUrl,
       configUrl: config.rudderstackConfigUrl,
       integrationsUrl: config.rudderstackIntegrationsUrl,
+      batchInterval: config.rudderstackBatchInterval,
       buildInfo: config.buildInfo,
     })
   );

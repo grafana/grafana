@@ -43,8 +43,10 @@ jobs:
       version: ${{ steps.output.outputs.version }}
       grafana-commit: ${{ steps.output.outputs.grafana_commit }}
       public-commit: ${{ steps.output.outputs.public_commit }}
+      run-meticulous: ${{ steps.meticulous-eligibility.outputs.run }}
     permissions:
       contents: read
+      pull-requests: read
     steps:
       - uses: actions/checkout@v6
         with:
@@ -87,6 +89,25 @@ jobs:
             public_commit=$(git rev-parse HEAD)
           fi
           echo "public_commit=${public_commit}" | tee -a "$GITHUB_OUTPUT"
+
+      - name: Check whether Meticulous should run
+        id: meticulous-eligibility
+        uses: actions/github-script@v8
+        with:
+          script: |
+            let run = true;
+            const author = context.payload.head_commit?.author?.name;
+            if (context.eventName === 'push' && author === 'renovate-sh-app[bot]') {
+              // Preserve the Renovate classification after its PR has been merged.
+              const { data: pullRequests } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                ...context.repo,
+                commit_sha: context.sha,
+              });
+              run = pullRequests.some((pullRequest) =>
+                pullRequest.labels.some((label) => label.name === 'ci/meticulous')
+              );
+            }
+            core.setOutput('run', run);
 
   # Triggers the same workflow in `grafana-enterprise` on the same ref
   downstream:
@@ -906,12 +927,13 @@ jobs:
       environment: prod
       runs-on: ubuntu-x64-small
   run-meticulous-tests:
-    if: github.repository == 'grafana/grafana'
+    if: github.repository == 'grafana/grafana' && needs.setup.outputs.run-meticulous == 'true'
     name: Run Meticulous tests
-    runs-on: ubuntu-x64-small
+    runs-on: ubuntu-x64-large
     continue-on-error: true
     needs:
-      - build-docker-linux-amd64
+      - setup
+      - build-targz
     permissions:
       actions: write
       contents: read
@@ -927,12 +949,36 @@ jobs:
 
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: artifacts-docker-distroless-slim-linux-amd64
+          name: artifacts-packages-linux-amd64
           path: dist
+
+      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.4
+
+      - name: Set up Docker Buildx
+        run: docker buildx create --use
+
+      # Upload the baseline without waiting for the other release Docker variants.
+      - name: Build Docker image for Meticulous
+        env:
+          GOOS: linux
+          GOARCH: amd64
+          BUILD_NUMBER: ${{ github.run_id }}
+          BUILD_VERSION: ${{ needs.setup.outputs.version }}
+        run: |
+          set -euo pipefail
+          for TARGZ in dist/*.tar.gz; do break; done
+          TAG_VERSION="${BUILD_VERSION//+/-}"
+          make build-docker-distroless \
+            -o "$TARGZ" \
+            BUILD_VERSION="$BUILD_VERSION" \
+            BUILD_NUMBER="$BUILD_NUMBER" \
+            SLIM=true \
+            DOCKER_TAG="grafana/grafana-image-tags:${TAG_VERSION}-distroless-slim-amd64"
 
       - name: Load Docker image under test
         id: load-image
         run: |
+          set -euo pipefail
           PACKAGE_PATH="$(find dist -type f -name '*_linux_amd64.distroless-slim.docker.tar.gz' | sort | sed -n '1p')"
           if [ -z "$PACKAGE_PATH" ]; then
             echo "No distroless-slim docker package found in dist/"

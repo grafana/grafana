@@ -2456,8 +2456,10 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 // TestRepositoryController_process_TokenGenerationAuthFailureIsUserCaused verifies that when
 // token generation fails because access was lost (e.g. the GitHub App was uninstalled or its
 // permissions revoked, surfaced as connection.ErrAuthentication), the failure is classified as
-// cause="user" on both the token-generation-error metric and the reconcile-error metric, so an
-// SLO/alert filtering cause!="user" does not page on-call for a condition only the customer can fix.
+// cause="user" on both the token-generation-error metric and the reconcile-error metric, is
+// surfaced on /status/health and the Ready condition, and -- unlike a system-caused failure --
+// is not returned to the workqueue, so an SLO/alert filtering cause!="user" does not page
+// on-call for a condition only the customer can fix.
 func TestRepositoryController_process_TokenGenerationAuthFailureIsUserCaused(t *testing.T) {
 	namespace := "default"
 	repoName := "test-repo"
@@ -2504,12 +2506,13 @@ func TestRepositoryController_process_TokenGenerationAuthFailureIsUserCaused(t *
 	}
 
 	reg := prometheus.NewPedanticRegistry()
+	patcher := &capturePatcher{}
 	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
 	rc := &RepositoryController{
 		repos:             repoGetter,
 		quotaGetter:       quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{MaxRepositories: 100}),
 		quotaChecker:      NewRepositoryQuotaChecker(repoGetter),
-		statusPatcher:     &capturePatcher{},
+		statusPatcher:     patcher,
 		connectionFactory: mockConnFactory,
 		client:            provClient,
 		tokenMetrics:      registerRepositoryTokenMetrics(reg),
@@ -2520,7 +2523,7 @@ func TestRepositoryController_process_TokenGenerationAuthFailureIsUserCaused(t *
 	}
 
 	_, err := rc.process(namespace + "/" + repoName)
-	require.Error(t, err, "a lost-access token failure must be returned to the workqueue")
+	require.NoError(t, err, "a lost-access token failure must not be returned to the workqueue")
 
 	assert.Equal(t, 1.0,
 		counterValueWithLabel(t, reg, "grafana_provisioning_repository_token_generation_errors_total", "cause", reconcileCauseUser),
@@ -2528,6 +2531,29 @@ func TestRepositoryController_process_TokenGenerationAuthFailureIsUserCaused(t *
 	assert.Equal(t, 1.0,
 		reconcileErrorCount(t, reg, reconcilePhaseToken, reconcileCauseUser),
 		"reconcile error must be counted under phase=token, cause=user")
+
+	healthPatch, ok := patcher.findPatchOp("/status/health")
+	require.True(t, ok, "the failure must still be surfaced on /status/health")
+	health, ok := healthPatch["value"].(provisioning.HealthStatus)
+	require.True(t, ok)
+	assert.False(t, health.Healthy)
+	require.Len(t, health.Message, 1)
+	assert.Contains(t, health.Message[0], "authentication failed")
+
+	condOp, ok := patcher.findPatchOp("/status/conditions")
+	require.True(t, ok, "Ready must be patched too, or a previously-ready repo would keep reporting Ready=True alongside the new unhealthy status")
+	conditions, ok := condOp["value"].([]metav1.Condition)
+	require.True(t, ok, "conditions value should be []metav1.Condition")
+	var readyCond *metav1.Condition
+	for i := range conditions {
+		if conditions[i].Type == provisioning.ConditionTypeReady {
+			readyCond = &conditions[i]
+			break
+		}
+	}
+	require.NotNil(t, readyCond, "expected Ready condition to be present")
+	assert.Equal(t, metav1.ConditionFalse, readyCond.Status)
+	assert.Equal(t, provisioning.ReasonAuthenticationFailed, readyCond.Reason)
 }
 
 // TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound verifies that when the

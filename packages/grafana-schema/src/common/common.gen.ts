@@ -1052,6 +1052,10 @@ export interface TableOptions {
     left?: number;
   };
   /**
+   * Controls whether cells overflow when hovered. Selected cells always overflow.
+   */
+  hoverOverflow?: boolean;
+  /**
    * limits the maximum height of a row, if text wrapping or dynamic height is enabled
    */
   maxRowHeight?: number;
@@ -1071,14 +1075,21 @@ export interface TableOptions {
    * Used to control row sorting
    */
   sortBy?: Array<TableSortByFieldState>;
+  /**
+   * Alternates the background color of every other row. Only applies when the
+   * `table.refreshNewFeatures` feature toggle is enabled.
+   */
+  zebraStriping?: boolean;
 }
 
 export const defaultTableOptions: Partial<TableOptions> = {
   cellHeight: TableCellHeight.Sm,
   frameIndex: 0,
+  hoverOverflow: true,
   showHeader: true,
   showTypeIcons: false,
   sortBy: [],
+  zebraStriping: false,
 };
 
 /**
