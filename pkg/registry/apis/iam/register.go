@@ -630,11 +630,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 		}
 	}
 
-	if b.features != nil {
-		storage[teamResource.StoragePath("members")] = team.NewTeamMembersRESTWithFeature(b.teamGetter, b.tracing, b.features.TeamsAPI)
-	} else {
-		storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(b.teamGetter, b.tracing)
-	}
+	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(b.teamGetter, b.tracing)
 
 	if b.teamSearchHandler != nil {
 		b.teamSearchHandler.SetTeamGetter(b.teamGetter)
@@ -779,11 +775,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 				b.store,
 			)
 		}
-		if b.features != nil {
-			storage[userResource.StoragePath("teams")] = user.NewUserTeamRESTWithFeature(teamSearchClient, b.teamGetter, b.tracing, b.features.TeamsAPI)
-		} else {
-			storage[userResource.StoragePath("teams")] = user.NewUserTeamREST(teamSearchClient, b.teamGetter, b.tracing)
-		}
+		storage[userResource.StoragePath("teams")] = user.NewUserTeamREST(teamSearchClient, b.teamGetter, b.tracing)
 	}
 
 	return nil
