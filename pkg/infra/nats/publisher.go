@@ -78,8 +78,11 @@ func (p *PublisherService) starting(ctx context.Context) error {
 		}
 	}
 
-	// Make connection/auth failures visible during service startup, while the
-	// reconnecting client still lets storage continue without the broker.
+	// Establish the connection so config/auth failures surface at startup. A
+	// broker outage at boot is not fatal: RetryOnFailedConnect(true) returns a
+	// reconnecting client that keeps retrying in the background while Publish
+	// buffers into the bounded reconnect queue, so storage can continue. Failing
+	// here would take down Grafana (or the NATS module) for a transient outage.
 	nc, err := p.get(ctx)
 	if err != nil {
 		if ctx.Err() != nil {
@@ -88,7 +91,8 @@ func (p *PublisherService) starting(ctx context.Context) error {
 		return err
 	}
 	if !nc.IsConnected() {
-		return fmt.Errorf("nats publisher initial connection failed (status=%s, last_err=%v)", nc.Status(), nc.LastError())
+		p.log.Warn("nats publisher not yet connected at startup; retrying in the background",
+			"status", nc.Status(), "last_err", nc.LastError())
 	}
 
 	return nil
