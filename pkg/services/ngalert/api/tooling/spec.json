@@ -2299,9 +2299,9 @@
         ],
         "responses": {
           "202": {
-            "description": "Ack",
+            "description": "DeleteRuleGroupResponse",
             "schema": {
-              "$ref": "#/definitions/Ack"
+              "$ref": "#/definitions/DeleteRuleGroupResponse"
             }
           },
           "403": {
@@ -2499,9 +2499,9 @@
         ],
         "responses": {
           "202": {
-            "description": "Ack",
+            "description": "DeleteRuleGroupResponse",
             "schema": {
-              "$ref": "#/definitions/Ack"
+              "$ref": "#/definitions/DeleteRuleGroupResponse"
             }
           },
           "403": {
@@ -5539,6 +5539,22 @@
       "description": "nolint:revive",
       "type": "string",
       "title": "DataTopic is used to identify which topic the frame should be assigned to."
+    },
+    "DeleteRuleGroupResponse": {
+      "type": "object",
+      "properties": {
+        "deleted": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "message": {
+          "type": "string"
+        },
+        "skipped": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
     },
     "DiscordConfig": {
       "type": "object",

@@ -15,7 +15,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -136,7 +135,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
 				assertRulesDeleted(t, authorizedRulesInFolder, ruleStore)
 			})
-			t.Run("return 400 if all rules user can access are provisioned", func(t *testing.T) {
+			t.Run("return 202 with deleted=0 and skipped=<n> if all rules user can access are provisioned (bulk delete)", func(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
 				provisioningStore := fakes.NewFakeProvisioningStore()
 
@@ -151,10 +150,45 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				permissions := createPermissionsForRules(provisionedRulesInFolder, orgID)
 				requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
 
+				// bulk delete (group == "") no longer errors when every candidate group is provisioned;
+				// it succeeds and reports deleted=0, skipped=<n> instead.
 				response := createServiceWithProvenanceStore(ruleStore, provisioningStore).RouteDeleteAlertRules(requestCtx, folder.UID, "")
 
-				require.Equalf(t, 400, response.Status(), "Expected 400 but got %d: %v", response.Status(), string(response.Body()))
+				require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
 				require.Empty(t, getRecordedCommand(ruleStore))
+
+				result := &apimodels.DeleteRuleGroupResponse{}
+				require.NoError(t, json.Unmarshal(response.Body(), result))
+				require.Equal(t, 0, result.Deleted)
+				require.Equal(t, len(provisionedRulesInFolder), result.Skipped)
+			})
+			t.Run("return deleted and skipped counts for a mixed bulk delete", func(t *testing.T) {
+				ruleStore := initFakeRuleStore(t)
+				provisioningStore := fakes.NewFakeProvisioningStore()
+
+				folderGen := gen.With(gen.WithNamespace(folder.ToFolderReference()))
+
+				authorizedRulesInFolder := folderGen.With(gen.WithSameGroup()).GenerateManyRef(1, 5)
+
+				provisionedRulesInFolder := folderGen.With(gen.WithSameGroup()).GenerateManyRef(1, 5)
+				err := provisioningStore.SetProvenance(context.Background(), provisionedRulesInFolder[0], orgID, models.ProvenanceAPI)
+				require.NoError(t, err)
+
+				ruleStore.PutRule(context.Background(), authorizedRulesInFolder...)
+				ruleStore.PutRule(context.Background(), provisionedRulesInFolder...)
+
+				permissions := createPermissionsForRules(append(authorizedRulesInFolder, provisionedRulesInFolder...), orgID)
+				requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
+
+				response := createServiceWithProvenanceStore(ruleStore, provisioningStore).RouteDeleteAlertRules(requestCtx, folder.UID, "")
+
+				require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
+				assertRulesDeleted(t, authorizedRulesInFolder, ruleStore)
+
+				result := &apimodels.DeleteRuleGroupResponse{}
+				require.NoError(t, json.Unmarshal(response.Body(), result))
+				require.Equal(t, len(authorizedRulesInFolder), result.Deleted)
+				require.Equal(t, len(provisionedRulesInFolder), result.Skipped)
 			})
 			t.Run("should return 202 if folder is empty", func(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
@@ -978,10 +1012,7 @@ func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
 		storeResult[allRules[0].UID] = models.ProvenanceAPI
 		storeResult[allRules[1].UID] = models.ProvenanceFile
 
-		provenanceStore := &provisioning.MockProvisioningStore{}
-		provenanceStore.EXPECT().GetProvenances(mock.Anything, orgID, "alertRule").Return(storeResult, nil)
-
-		result := verifyProvisionedRulesNotAffected(context.Background(), provenanceStore, orgID, ch)
+		result := verifyProvisionedRulesNotAffected(storeResult, ch)
 		require.Error(t, result)
 		require.ErrorIs(t, result, errProvisionedResource)
 		assert.Contains(t, result.Error(), allRules[0].GetGroupKey().String())
@@ -994,18 +1025,12 @@ func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
 			storeResult[rule.UID] = models.ProvenanceNone
 		}
 
-		provenanceStore := &provisioning.MockProvisioningStore{}
-		provenanceStore.EXPECT().GetProvenances(mock.Anything, orgID, "alertRule").Return(storeResult, nil)
-
-		result := verifyProvisionedRulesNotAffected(context.Background(), provenanceStore, orgID, ch)
+		result := verifyProvisionedRulesNotAffected(storeResult, ch)
 		require.NoError(t, result)
 	})
 
 	t.Run("should return nil if no alerts have provisioning status", func(t *testing.T) {
-		provenanceStore := &provisioning.MockProvisioningStore{}
-		provenanceStore.EXPECT().GetProvenances(mock.Anything, orgID, "alertRule").Return(make(map[string]models.Provenance, len(allRules)), nil)
-
-		result := verifyProvisionedRulesNotAffected(context.Background(), provenanceStore, orgID, ch)
+		result := verifyProvisionedRulesNotAffected(make(map[string]models.Provenance, len(allRules)), ch)
 		require.NoError(t, result)
 	})
 }
@@ -1296,6 +1321,125 @@ func TestRouteUpdateNamespaceRules(t *testing.T) {
 		for _, update := range updatedRules {
 			require.False(t, update.New.IsPaused)
 		}
+	})
+
+	t.Run("should report updated count when all groups are non-provisioned", func(t *testing.T) {
+		ruleStore := initFakeRuleStore(t)
+		provisioningStore := fakes.NewFakeProvisioningStore()
+
+		groupA := gen.With(gen.WithSameGroup()).GenerateManyRef(3)
+		groupB := gen.With(gen.WithSameGroup()).GenerateManyRef(2)
+
+		ruleStore.PutRule(context.Background(), groupA...)
+		ruleStore.PutRule(context.Background(), groupB...)
+
+		allRules := append(append([]*models.AlertRule{}, groupA...), groupB...)
+		permissions := createPermissionsForRules(allRules, orgID)
+		requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
+
+		svc := createServiceWithProvenanceStore(ruleStore, provisioningStore)
+		response := svc.RouteUpdateNamespaceRules(requestCtx, apimodels.UpdateNamespaceRulesRequest{
+			IsPaused: new(true),
+		}, folder.UID)
+
+		require.Equal(t, http.StatusAccepted, response.Status())
+		result := &apimodels.UpdateNamespaceRulesResponse{}
+		require.NoError(t, json.Unmarshal(response.Body(), result))
+		require.Equal(t, len(allRules), result.Updated)
+		require.Equal(t, 0, result.Skipped)
+	})
+
+	t.Run("should report updated and skipped counts for a mixed folder", func(t *testing.T) {
+		ruleStore := initFakeRuleStore(t)
+		provisioningStore := fakes.NewFakeProvisioningStore()
+
+		nonProvisionedGroup := gen.With(gen.WithSameGroup()).GenerateManyRef(3)
+		provisionedGroup := gen.With(gen.WithSameGroup()).GenerateManyRef(2)
+		for _, r := range provisionedGroup {
+			err := provisioningStore.SetProvenance(context.Background(), r, orgID, models.ProvenanceAPI)
+			require.NoError(t, err)
+		}
+
+		ruleStore.PutRule(context.Background(), nonProvisionedGroup...)
+		ruleStore.PutRule(context.Background(), provisionedGroup...)
+
+		allRules := append(append([]*models.AlertRule{}, nonProvisionedGroup...), provisionedGroup...)
+		permissions := createPermissionsForRules(allRules, orgID)
+		requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
+
+		svc := createServiceWithProvenanceStore(ruleStore, provisioningStore)
+		response := svc.RouteUpdateNamespaceRules(requestCtx, apimodels.UpdateNamespaceRulesRequest{
+			IsPaused: new(true),
+		}, folder.UID)
+
+		require.Equal(t, http.StatusAccepted, response.Status())
+		result := &apimodels.UpdateNamespaceRulesResponse{}
+		require.NoError(t, json.Unmarshal(response.Body(), result))
+		require.Equal(t, len(nonProvisionedGroup), result.Updated)
+		require.Equal(t, len(provisionedGroup), result.Skipped)
+	})
+
+	t.Run("should report skipped count when all groups are provisioned", func(t *testing.T) {
+		ruleStore := initFakeRuleStore(t)
+		provisioningStore := fakes.NewFakeProvisioningStore()
+
+		provisionedGroup := gen.With(gen.WithSameGroup()).GenerateManyRef(4)
+		for _, r := range provisionedGroup {
+			err := provisioningStore.SetProvenance(context.Background(), r, orgID, models.ProvenanceAPI)
+			require.NoError(t, err)
+		}
+
+		ruleStore.PutRule(context.Background(), provisionedGroup...)
+
+		permissions := createPermissionsForRules(provisionedGroup, orgID)
+		requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
+
+		svc := createServiceWithProvenanceStore(ruleStore, provisioningStore)
+		response := svc.RouteUpdateNamespaceRules(requestCtx, apimodels.UpdateNamespaceRulesRequest{
+			IsPaused: new(true),
+		}, folder.UID)
+
+		require.Equal(t, http.StatusAccepted, response.Status())
+		result := &apimodels.UpdateNamespaceRulesResponse{}
+		require.NoError(t, json.Unmarshal(response.Body(), result))
+		require.Equal(t, 0, result.Updated)
+		require.Equal(t, len(provisionedGroup), result.Skipped)
+	})
+
+	t.Run("should still report a provisioned group as skipped when the request is a no-op for it", func(t *testing.T) {
+		// Regression test: resuming a folder where the provisioned rule was never actually paused
+		// (because pausing it was previously skipped) must still count it as skipped, not updated -
+		// CalculateChanges reports an empty diff for it, which used to let it bypass the provisioning
+		// guard inside performUpdateAlertRules entirely and get miscounted as "updated".
+		ruleStore := initFakeRuleStore(t)
+		provisioningStore := fakes.NewFakeProvisioningStore()
+
+		nonProvisionedGroup := gen.With(gen.WithSameGroup(), gen.WithIsPaused(true)).GenerateManyRef(3)
+		provisionedGroup := gen.With(gen.WithSameGroup(), gen.WithIsPaused(false)).GenerateManyRef(2)
+		for _, r := range provisionedGroup {
+			err := provisioningStore.SetProvenance(context.Background(), r, orgID, models.ProvenanceAPI)
+			require.NoError(t, err)
+		}
+
+		ruleStore.PutRule(context.Background(), nonProvisionedGroup...)
+		ruleStore.PutRule(context.Background(), provisionedGroup...)
+
+		allRules := append(append([]*models.AlertRule{}, nonProvisionedGroup...), provisionedGroup...)
+		permissions := createPermissionsForRules(allRules, orgID)
+		requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
+
+		svc := createServiceWithProvenanceStore(ruleStore, provisioningStore)
+		// Unpause: the non-provisioned group actually changes state, the provisioned group is
+		// already unpaused, so this is a no-op for it - it must still be reported as skipped.
+		response := svc.RouteUpdateNamespaceRules(requestCtx, apimodels.UpdateNamespaceRulesRequest{
+			IsPaused: new(false),
+		}, folder.UID)
+
+		require.Equal(t, http.StatusAccepted, response.Status())
+		result := &apimodels.UpdateNamespaceRulesResponse{}
+		require.NoError(t, json.Unmarshal(response.Body(), result))
+		require.Equal(t, len(nonProvisionedGroup), result.Updated)
+		require.Equal(t, len(provisionedGroup), result.Skipped)
 	})
 
 	t.Run("returns 202 when no rules need updating", func(t *testing.T) {
