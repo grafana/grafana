@@ -3,7 +3,7 @@
 package v1beta1
 
 // The test route takes one integration in its request body, and codegen does not allow
-// a union there, so the route keeps the flat shape.
+// a union there, so that route keeps the flat shape.
 type CreateReceiverIntegrationTestRequestIntegrationInput struct {
 	Uid                   *string         `json:"uid,omitempty"`
 	Type                  string          `json:"type"`

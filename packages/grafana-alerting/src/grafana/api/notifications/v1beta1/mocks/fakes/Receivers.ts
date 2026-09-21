@@ -5,7 +5,6 @@ import {
   API_GROUP,
   API_VERSION,
   type ReceiverEmailV1,
-  type ReceiverIntegration,
   type ReceiverSlackV1,
   type ReceiverWebhookV1,
 } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
@@ -48,8 +47,8 @@ export const ContactPointFactory = Factory.define<ContactPoint>(() => {
 
 export const ContactPointSpecFactory = Factory.define<ContactPoint['spec']>(() => ({
   title: generateTitle(),
-  // use two unique random integrations by default
-  integrations: faker.helpers.uniqueArray(IntegrationUnion, 2).map((integration) => integration.build()),
+  // two different integrations by default
+  integrations: [EmailIntegrationFactory.build(), SlackIntegrationFactory.build()],
 }));
 
 export const WebhookIntegrationFactory = Factory.define<ReceiverWebhookV1>(() => ({
@@ -77,16 +76,10 @@ export const SlackIntegrationFactory = Factory.define<ReceiverSlackV1>(() => ({
   variant: 'slack/v1',
   secureFields: { token: true },
   settings: {
-    mentionChannel: '#alerts',
+    recipient: '#alerts',
+    mentionChannel: 'channel',
   },
 }));
-
-// fishery's Factory is invariant in its type parameter, so this is typed by what the
-// array is used for: building integrations.
-const IntegrationUnion: Array<{ build: () => ReceiverIntegration }> = [
-  EmailIntegrationFactory,
-  SlackIntegrationFactory,
-];
 
 // by default the contact points will be in use by a route and a rule
 export const ContactPointMetadataAnnotationsFactory = Factory.define<ContactPointMetadataAnnotations>(() => ({

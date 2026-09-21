@@ -2089,6 +2089,128 @@ export type GetIntegrationtypeschemasIntegrationTypeSchemaResource = {
 export type GetIntegrationtypeschemasResponse = {
   items: GetIntegrationtypeschemasIntegrationTypeSchemaResource[];
 };
+export type ReceiverDingdingV1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    url?: boolean;
+  };
+  settings: {
+    message?: string;
+    msgType?: 'link' | 'actionCard';
+    title?: string;
+  };
+  type: 'dingding';
+  uid?: string;
+  variant?: 'dingding/v1';
+  version: 'v1';
+};
+export type ReceiverDiscordV0Mimir1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    webhook_url?: boolean;
+  };
+  settings: {
+    http_config?: {
+      authorization?: {
+        type?: string;
+      };
+      basic_auth?: {
+        username?: string;
+      };
+      enable_http2?: boolean;
+      follow_redirects?: boolean;
+      http_headers?: {
+        [key: string]: string;
+      };
+      no_proxy?: string;
+      oauth2?: {
+        client_id: string;
+        endpoint_params?: {
+          [key: string]: string;
+        };
+        no_proxy?: string;
+        proxy_connect_header?: {
+          [key: string]: string;
+        };
+        proxy_from_environment?: boolean;
+        proxy_url?: string;
+        scopes?: string;
+        tls_config?: {
+          insecure_skip_verify?: boolean;
+          max_version?: string;
+          min_version?: string;
+          server_name?: string;
+        };
+        token_url: string;
+      };
+      proxy_connect_header?: {
+        [key: string]: string;
+      };
+      proxy_from_environment?: boolean;
+      proxy_url?: string;
+      tls_config?: {
+        insecure_skip_verify?: boolean;
+        max_version?: string;
+        min_version?: string;
+        server_name?: string;
+      };
+    };
+    message?: string;
+    title?: string;
+  };
+  type: 'discord';
+  uid?: string;
+  variant?: 'discord/v0mimir1';
+  version: 'v0mimir1';
+};
+export type ReceiverDiscordV1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    url?: boolean;
+  };
+  settings: {
+    avatar_url?: string;
+    message?: string;
+    title?: string;
+    use_discord_username?: boolean;
+    use_embed_description?: boolean;
+  };
+  type: 'discord';
+  uid?: string;
+  variant?: 'discord/v1';
+  version: 'v1';
+};
+export type ReceiverEmailV0Mimir1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    auth_password?: boolean;
+    auth_secret?: boolean;
+  };
+  settings: {
+    auth_identity?: string;
+    auth_username?: string;
+    from?: string;
+    headers?: {
+      [key: string]: string;
+    };
+    hello?: string;
+    html?: string;
+    require_tls?: boolean;
+    smarthost?: string;
+    text?: string;
+    tls_config?: {
+      insecure_skip_verify?: boolean;
+      max_version?: string;
+      min_version?: string;
+      server_name?: string;
+    };
+    to: string;
+  };
+  type: 'email';
+  uid?: string;
+  variant?: 'email/v0mimir1';
+  version: 'v0mimir1';
+};
 export type ReceiverEmailV1 = {
   disableResolveMessage?: boolean;
   settings: {
@@ -2102,17 +2224,627 @@ export type ReceiverEmailV1 = {
   variant?: 'email/v1';
   version: 'v1';
 };
-export type ReceiverEmailMimir1 = {
+export type ReceiverGooglechatV1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    url?: boolean;
+  };
+  settings: {
+    hide_open_button?: boolean;
+    hide_version_info?: boolean;
+    message?: string;
+    title?: string;
+  };
+  type: 'googlechat';
+  uid?: string;
+  variant?: 'googlechat/v1';
+  version: 'v1';
+};
+export type ReceiverJiraV0Mimir1 = {
   disableResolveMessage?: boolean;
   settings: {
-    from?: string;
-    html?: string;
-    smarthost?: string;
-    to?: string;
+    api_url: string;
+    description?: string;
+    fields?: {
+      [key: string]: string;
+    };
+    http_config?: {
+      authorization?: {
+        type?: string;
+      };
+      basic_auth?: {
+        username?: string;
+      };
+      enable_http2?: boolean;
+      follow_redirects?: boolean;
+      http_headers?: {
+        [key: string]: string;
+      };
+      no_proxy?: string;
+      oauth2?: {
+        client_id: string;
+        endpoint_params?: {
+          [key: string]: string;
+        };
+        no_proxy?: string;
+        proxy_connect_header?: {
+          [key: string]: string;
+        };
+        proxy_from_environment?: boolean;
+        proxy_url?: string;
+        scopes?: string;
+        tls_config?: {
+          insecure_skip_verify?: boolean;
+          max_version?: string;
+          min_version?: string;
+          server_name?: string;
+        };
+        token_url: string;
+      };
+      proxy_connect_header?: {
+        [key: string]: string;
+      };
+      proxy_from_environment?: boolean;
+      proxy_url?: string;
+      tls_config?: {
+        insecure_skip_verify?: boolean;
+        max_version?: string;
+        min_version?: string;
+        server_name?: string;
+      };
+    };
+    issue_type: string;
+    labels?: string;
+    priority?: string;
+    project: string;
+    reopen_duration?: string;
+    reopen_transition?: string;
+    resolve_transition?: string;
+    summary?: string;
+    wont_fix_resolution?: string;
   };
-  type: 'email';
+  type: 'jira';
   uid?: string;
-  variant?: 'email/v0mimir1';
+  variant?: 'jira/v0mimir1';
+  version: 'v0mimir1';
+};
+export type ReceiverJiraV1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    api_token?: boolean;
+    password?: boolean;
+    user?: boolean;
+  };
+  settings: {
+    api_url: string;
+    dedup_key_field?: string;
+    description?: string;
+    fields?: {
+      [key: string]: string;
+    };
+    issue_type: string;
+    labels?: string;
+    priority?: string;
+    project: string;
+    reopen_duration?: string;
+    reopen_transition?: string;
+    resolve_transition?: string;
+    summary?: string;
+    wont_fix_resolution?: string;
+  };
+  type: 'jira';
+  uid?: string;
+  variant?: 'jira/v1';
+  version: 'v1';
+};
+export type ReceiverKafkaV1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    password?: boolean;
+  };
+  settings: {
+    apiVersion?: 'v2' | 'v3';
+    description?: string;
+    details?: string;
+    kafkaClusterId: string;
+    kafkaRestProxy: string;
+    kafkaTopic: string;
+    username?: string;
+  };
+  type: 'kafka';
+  uid?: string;
+  variant?: 'kafka/v1';
+  version: 'v1';
+};
+export type ReceiverLinev1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    token?: boolean;
+  };
+  settings: {
+    description?: string;
+    title?: string;
+  };
+  type: 'LINE';
+  uid?: string;
+  variant?: 'LINE/v1';
+  version: 'v1';
+};
+export type ReceiverMqttV1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    password?: boolean;
+    'tlsConfig.caCertificate'?: boolean;
+    'tlsConfig.clientCertificate'?: boolean;
+    'tlsConfig.clientKey'?: boolean;
+  };
+  settings: {
+    brokerUrl: string;
+    clientId?: string;
+    message?: string;
+    messageFormat?: 'json' | 'text';
+    qos?: '0' | '1' | '2';
+    retain?: boolean;
+    tlsConfig?: {
+      insecureSkipVerify?: boolean;
+    };
+    topic: string;
+    username?: string;
+  };
+  type: 'mqtt';
+  uid?: string;
+  variant?: 'mqtt/v1';
+  version: 'v1';
+};
+export type ReceiverOncallV1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    authorization_credentials?: boolean;
+    password?: boolean;
+  };
+  settings: {
+    authorization_scheme?: string;
+    httpMethod?: 'POST' | 'PUT';
+    maxAlerts?: string;
+    message?: string;
+    title?: string;
+    url: string;
+    username?: string;
+  };
+  type: 'oncall';
+  uid?: string;
+  variant?: 'oncall/v1';
+  version: 'v1';
+};
+export type ReceiverOpsgenieV0Mimir1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    api_key?: boolean;
+  };
+  settings: {
+    actions?: string;
+    api_url: string;
+    description?: string;
+    details?: {
+      [key: string]: string;
+    };
+    entity?: string;
+    http_config?: {
+      authorization?: {
+        type?: string;
+      };
+      basic_auth?: {
+        username?: string;
+      };
+      enable_http2?: boolean;
+      follow_redirects?: boolean;
+      http_headers?: {
+        [key: string]: string;
+      };
+      no_proxy?: string;
+      oauth2?: {
+        client_id: string;
+        endpoint_params?: {
+          [key: string]: string;
+        };
+        no_proxy?: string;
+        proxy_connect_header?: {
+          [key: string]: string;
+        };
+        proxy_from_environment?: boolean;
+        proxy_url?: string;
+        scopes?: string;
+        tls_config?: {
+          insecure_skip_verify?: boolean;
+          max_version?: string;
+          min_version?: string;
+          server_name?: string;
+        };
+        token_url: string;
+      };
+      proxy_connect_header?: {
+        [key: string]: string;
+      };
+      proxy_from_environment?: boolean;
+      proxy_url?: string;
+      tls_config?: {
+        insecure_skip_verify?: boolean;
+        max_version?: string;
+        min_version?: string;
+        server_name?: string;
+      };
+    };
+    message?: string;
+    note?: string;
+    priority?: string;
+    responders?: string;
+    source?: string;
+    tags?: string;
+    update_alerts?: boolean;
+  };
+  type: 'opsgenie';
+  uid?: string;
+  variant?: 'opsgenie/v0mimir1';
+  version: 'v0mimir1';
+};
+export type ReceiverOpsgenieV1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    apiKey?: boolean;
+  };
+  settings: {
+    apiUrl: string;
+    autoClose?: boolean;
+    description?: string;
+    message?: string;
+    overridePriority?: boolean;
+    responders?: string;
+    sendTagsAs?: 'tags' | 'details' | 'both';
+  };
+  type: 'opsgenie';
+  uid?: string;
+  variant?: 'opsgenie/v1';
+  version: 'v1';
+};
+export type ReceiverPagerdutyV0Mimir1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    routing_key?: boolean;
+    service_key?: boolean;
+  };
+  settings: {
+    class?: string;
+    client?: string;
+    client_url?: string;
+    component?: string;
+    description?: string;
+    details?: {
+      [key: string]: string;
+    };
+    group?: string;
+    http_config?: {
+      authorization?: {
+        type?: string;
+      };
+      basic_auth?: {
+        username?: string;
+      };
+      enable_http2?: boolean;
+      follow_redirects?: boolean;
+      http_headers?: {
+        [key: string]: string;
+      };
+      no_proxy?: string;
+      oauth2?: {
+        client_id: string;
+        endpoint_params?: {
+          [key: string]: string;
+        };
+        no_proxy?: string;
+        proxy_connect_header?: {
+          [key: string]: string;
+        };
+        proxy_from_environment?: boolean;
+        proxy_url?: string;
+        scopes?: string;
+        tls_config?: {
+          insecure_skip_verify?: boolean;
+          max_version?: string;
+          min_version?: string;
+          server_name?: string;
+        };
+        token_url: string;
+      };
+      proxy_connect_header?: {
+        [key: string]: string;
+      };
+      proxy_from_environment?: boolean;
+      proxy_url?: string;
+      tls_config?: {
+        insecure_skip_verify?: boolean;
+        max_version?: string;
+        min_version?: string;
+        server_name?: string;
+      };
+    };
+    images?: string;
+    links?: string;
+    severity?: string;
+    source?: string;
+    url: string;
+  };
+  type: 'pagerduty';
+  uid?: string;
+  variant?: 'pagerduty/v0mimir1';
+  version: 'v0mimir1';
+};
+export type ReceiverPagerdutyV1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    integrationKey?: boolean;
+  };
+  settings: {
+    class?: string;
+    client?: string;
+    client_url?: string;
+    component?: string;
+    details?: {
+      [key: string]: string;
+    };
+    group?: string;
+    severity?: string;
+    source?: string;
+    summary?: string;
+    url?: string;
+  };
+  type: 'pagerduty';
+  uid?: string;
+  variant?: 'pagerduty/v1';
+  version: 'v1';
+};
+export type ReceiverPrometheusAlertmanagerV1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    basicAuthPassword?: boolean;
+  };
+  settings: {
+    basicAuthUser?: string;
+    url: string;
+  };
+  type: 'prometheus-alertmanager';
+  uid?: string;
+  variant?: 'prometheus-alertmanager/v1';
+  version: 'v1';
+};
+export type ReceiverPushoverV0Mimir1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    token?: boolean;
+    user_key?: boolean;
+  };
+  settings: {
+    device?: string;
+    expire?: string;
+    html?: boolean;
+    http_config?: {
+      authorization?: {
+        type?: string;
+      };
+      basic_auth?: {
+        username?: string;
+      };
+      enable_http2?: boolean;
+      follow_redirects?: boolean;
+      http_headers?: {
+        [key: string]: string;
+      };
+      no_proxy?: string;
+      oauth2?: {
+        client_id: string;
+        endpoint_params?: {
+          [key: string]: string;
+        };
+        no_proxy?: string;
+        proxy_connect_header?: {
+          [key: string]: string;
+        };
+        proxy_from_environment?: boolean;
+        proxy_url?: string;
+        scopes?: string;
+        tls_config?: {
+          insecure_skip_verify?: boolean;
+          max_version?: string;
+          min_version?: string;
+          server_name?: string;
+        };
+        token_url: string;
+      };
+      proxy_connect_header?: {
+        [key: string]: string;
+      };
+      proxy_from_environment?: boolean;
+      proxy_url?: string;
+      tls_config?: {
+        insecure_skip_verify?: boolean;
+        max_version?: string;
+        min_version?: string;
+        server_name?: string;
+      };
+    };
+    message?: string;
+    priority?: string;
+    retry?: string;
+    sound?: string;
+    title?: string;
+    ttl?: string;
+    url?: string;
+    url_title?: string;
+  };
+  type: 'pushover';
+  uid?: string;
+  variant?: 'pushover/v0mimir1';
+  version: 'v0mimir1';
+};
+export type ReceiverPushoverV1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    apiToken?: boolean;
+    userKey?: boolean;
+  };
+  settings: {
+    device?: string;
+    expire?: string;
+    message?: string;
+    okPriority?: string;
+    okSound?:
+      | 'default'
+      | 'pushover'
+      | 'bike'
+      | 'bugle'
+      | 'cashregister'
+      | 'classical'
+      | 'cosmic'
+      | 'falling'
+      | 'gamelan'
+      | 'incoming'
+      | 'intermission'
+      | 'magic'
+      | 'mechanical'
+      | 'pianobar'
+      | 'siren'
+      | 'spacealarm'
+      | 'tugboat'
+      | 'alien'
+      | 'climb'
+      | 'persistent'
+      | 'echo'
+      | 'updown'
+      | 'none';
+    priority?: string;
+    retry?: string;
+    sound?:
+      | 'default'
+      | 'pushover'
+      | 'bike'
+      | 'bugle'
+      | 'cashregister'
+      | 'classical'
+      | 'cosmic'
+      | 'falling'
+      | 'gamelan'
+      | 'incoming'
+      | 'intermission'
+      | 'magic'
+      | 'mechanical'
+      | 'pianobar'
+      | 'siren'
+      | 'spacealarm'
+      | 'tugboat'
+      | 'alien'
+      | 'climb'
+      | 'persistent'
+      | 'echo'
+      | 'updown'
+      | 'none';
+    title?: string;
+  };
+  type: 'pushover';
+  uid?: string;
+  variant?: 'pushover/v1';
+  version: 'v1';
+};
+export type ReceiverSensugoV1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    apikey?: boolean;
+  };
+  settings: {
+    check?: string;
+    entity?: string;
+    handler?: string;
+    message?: string;
+    namespace?: string;
+    url: string;
+  };
+  type: 'sensugo';
+  uid?: string;
+  variant?: 'sensugo/v1';
+  version: 'v1';
+};
+export type ReceiverSlackV0Mimir1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    api_url?: boolean;
+  };
+  settings: {
+    actions?: string;
+    callback_id?: string;
+    channel?: string;
+    color?: string;
+    fallback?: string;
+    fields?: string;
+    footer?: string;
+    http_config?: {
+      authorization?: {
+        type?: string;
+      };
+      basic_auth?: {
+        username?: string;
+      };
+      enable_http2?: boolean;
+      follow_redirects?: boolean;
+      http_headers?: {
+        [key: string]: string;
+      };
+      no_proxy?: string;
+      oauth2?: {
+        client_id: string;
+        endpoint_params?: {
+          [key: string]: string;
+        };
+        no_proxy?: string;
+        proxy_connect_header?: {
+          [key: string]: string;
+        };
+        proxy_from_environment?: boolean;
+        proxy_url?: string;
+        scopes?: string;
+        tls_config?: {
+          insecure_skip_verify?: boolean;
+          max_version?: string;
+          min_version?: string;
+          server_name?: string;
+        };
+        token_url: string;
+      };
+      proxy_connect_header?: {
+        [key: string]: string;
+      };
+      proxy_from_environment?: boolean;
+      proxy_url?: string;
+      tls_config?: {
+        insecure_skip_verify?: boolean;
+        max_version?: string;
+        min_version?: string;
+        server_name?: string;
+      };
+    };
+    icon_emoji?: string;
+    icon_url?: string;
+    image_url?: string;
+    link_names?: boolean;
+    mrkdwn_in?: string;
+    pretext?: string;
+    short_fields?: boolean;
+    text?: string;
+    thumb_url?: string;
+    title?: string;
+    title_link?: string;
+    username?: string;
+  };
+  type: 'slack';
+  uid?: string;
+  variant?: 'slack/v0mimir1';
   version: 'v0mimir1';
 };
 export type ReceiverSlackV1 = {
@@ -2122,9 +2854,15 @@ export type ReceiverSlackV1 = {
     url?: boolean;
   };
   settings: {
+    color?: string;
     endpointUrl?: string;
-    mentionChannel?: string;
-    recipient?: string;
+    footer?: string;
+    icon_emoji?: string;
+    icon_url?: string;
+    mentionChannel?: 'here' | 'channel';
+    mentionGroups?: string;
+    mentionUsers?: string;
+    recipient: string;
     text?: string;
     title?: string;
     username?: string;
@@ -2134,39 +2872,730 @@ export type ReceiverSlackV1 = {
   variant?: 'slack/v1';
   version: 'v1';
 };
-export type ReceiverSlackMimir1 = {
+export type ReceiverSnsV0Mimir1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    'sigv4.secret_key'?: boolean;
+  };
+  settings: {
+    api_url?: string;
+    attributes?: {
+      [key: string]: string;
+    };
+    http_config?: {
+      authorization?: {
+        type?: string;
+      };
+      basic_auth?: {
+        username?: string;
+      };
+      enable_http2?: boolean;
+      follow_redirects?: boolean;
+      http_headers?: {
+        [key: string]: string;
+      };
+      no_proxy?: string;
+      oauth2?: {
+        client_id: string;
+        endpoint_params?: {
+          [key: string]: string;
+        };
+        no_proxy?: string;
+        proxy_connect_header?: {
+          [key: string]: string;
+        };
+        proxy_from_environment?: boolean;
+        proxy_url?: string;
+        scopes?: string;
+        tls_config?: {
+          insecure_skip_verify?: boolean;
+          max_version?: string;
+          min_version?: string;
+          server_name?: string;
+        };
+        token_url: string;
+      };
+      proxy_connect_header?: {
+        [key: string]: string;
+      };
+      proxy_from_environment?: boolean;
+      proxy_url?: string;
+      tls_config?: {
+        insecure_skip_verify?: boolean;
+        max_version?: string;
+        min_version?: string;
+        server_name?: string;
+      };
+    };
+    message?: string;
+    phone_number?: string;
+    sigv4?: {
+      access_key?: string;
+      profile?: string;
+      region?: string;
+      role_arn?: string;
+    };
+    subject?: string;
+    target_arn?: string;
+    topic_arn?: string;
+  };
+  type: 'sns';
+  uid?: string;
+  variant?: 'sns/v0mimir1';
+  version: 'v0mimir1';
+};
+export type ReceiverSnsV1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    'sigv4.access_key'?: boolean;
+    'sigv4.secret_key'?: boolean;
+  };
+  settings: {
+    api_url?: string;
+    attributes?: {
+      [key: string]: string;
+    };
+    message?: string;
+    phone_number?: string;
+    sigv4?: {
+      profile?: string;
+      region?: string;
+      role_arn?: string;
+    };
+    subject?: string;
+    target_arn?: string;
+    topic_arn?: string;
+  };
+  type: 'sns';
+  uid?: string;
+  variant?: 'sns/v1';
+  version: 'v1';
+};
+export type ReceiverTeamsV0Mimir1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    webhook_url?: boolean;
+  };
+  settings: {
+    http_config?: {
+      authorization?: {
+        type?: string;
+      };
+      basic_auth?: {
+        username?: string;
+      };
+      enable_http2?: boolean;
+      follow_redirects?: boolean;
+      http_headers?: {
+        [key: string]: string;
+      };
+      no_proxy?: string;
+      oauth2?: {
+        client_id: string;
+        endpoint_params?: {
+          [key: string]: string;
+        };
+        no_proxy?: string;
+        proxy_connect_header?: {
+          [key: string]: string;
+        };
+        proxy_from_environment?: boolean;
+        proxy_url?: string;
+        scopes?: string;
+        tls_config?: {
+          insecure_skip_verify?: boolean;
+          max_version?: string;
+          min_version?: string;
+          server_name?: string;
+        };
+        token_url: string;
+      };
+      proxy_connect_header?: {
+        [key: string]: string;
+      };
+      proxy_from_environment?: boolean;
+      proxy_url?: string;
+      tls_config?: {
+        insecure_skip_verify?: boolean;
+        max_version?: string;
+        min_version?: string;
+        server_name?: string;
+      };
+    };
+    summary?: string;
+    text?: string;
+    title?: string;
+  };
+  type: 'teams';
+  uid?: string;
+  variant?: 'teams/v0mimir1';
+  version: 'v0mimir1';
+};
+export type ReceiverTeamsV0Mimir2 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    webhook_url?: boolean;
+  };
+  settings: {
+    http_config?: {
+      authorization?: {
+        type?: string;
+      };
+      basic_auth?: {
+        username?: string;
+      };
+      enable_http2?: boolean;
+      follow_redirects?: boolean;
+      http_headers?: {
+        [key: string]: string;
+      };
+      no_proxy?: string;
+      oauth2?: {
+        client_id: string;
+        endpoint_params?: {
+          [key: string]: string;
+        };
+        no_proxy?: string;
+        proxy_connect_header?: {
+          [key: string]: string;
+        };
+        proxy_from_environment?: boolean;
+        proxy_url?: string;
+        scopes?: string;
+        tls_config?: {
+          insecure_skip_verify?: boolean;
+          max_version?: string;
+          min_version?: string;
+          server_name?: string;
+        };
+        token_url: string;
+      };
+      proxy_connect_header?: {
+        [key: string]: string;
+      };
+      proxy_from_environment?: boolean;
+      proxy_url?: string;
+      tls_config?: {
+        insecure_skip_verify?: boolean;
+        max_version?: string;
+        min_version?: string;
+        server_name?: string;
+      };
+    };
+    text?: string;
+    title?: string;
+  };
+  type: 'teams';
+  uid?: string;
+  variant?: 'teams/v0mimir2';
+  version: 'v0mimir2';
+};
+export type ReceiverTeamsV1 = {
   disableResolveMessage?: boolean;
   settings: {
-    channel?: string;
-    color?: string;
-    fallback?: string;
+    message?: string;
+    sectiontitle?: string;
+    title?: string;
+    url: string;
   };
-  type: 'slack';
+  type: 'teams';
   uid?: string;
-  variant?: 'slack/v0mimir1';
+  variant?: 'teams/v1';
+  version: 'v1';
+};
+export type ReceiverTelegramV0Mimir1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    token?: boolean;
+  };
+  settings: {
+    api_url?: string;
+    chat_id: string;
+    disable_notifications?: boolean;
+    http_config?: {
+      authorization?: {
+        type?: string;
+      };
+      basic_auth?: {
+        username?: string;
+      };
+      enable_http2?: boolean;
+      follow_redirects?: boolean;
+      http_headers?: {
+        [key: string]: string;
+      };
+      no_proxy?: string;
+      oauth2?: {
+        client_id: string;
+        endpoint_params?: {
+          [key: string]: string;
+        };
+        no_proxy?: string;
+        proxy_connect_header?: {
+          [key: string]: string;
+        };
+        proxy_from_environment?: boolean;
+        proxy_url?: string;
+        scopes?: string;
+        tls_config?: {
+          insecure_skip_verify?: boolean;
+          max_version?: string;
+          min_version?: string;
+          server_name?: string;
+        };
+        token_url: string;
+      };
+      proxy_connect_header?: {
+        [key: string]: string;
+      };
+      proxy_from_environment?: boolean;
+      proxy_url?: string;
+      tls_config?: {
+        insecure_skip_verify?: boolean;
+        max_version?: string;
+        min_version?: string;
+        server_name?: string;
+      };
+    };
+    message?: string;
+    parse_mode?: 'MarkdownV2' | 'Markdown' | 'HTML';
+  };
+  type: 'telegram';
+  uid?: string;
+  variant?: 'telegram/v0mimir1';
+  version: 'v0mimir1';
+};
+export type ReceiverTelegramV1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    bottoken?: boolean;
+  };
+  settings: {
+    chatid: string;
+    disable_notifications?: boolean;
+    disable_web_page_preview?: boolean;
+    message?: string;
+    message_thread_id?: string;
+    parse_mode?: 'None' | 'HTML' | 'Markdown' | 'MarkdownV2';
+    protect_content?: boolean;
+  };
+  type: 'telegram';
+  uid?: string;
+  variant?: 'telegram/v1';
+  version: 'v1';
+};
+export type ReceiverThreemaV1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    api_secret?: boolean;
+  };
+  settings: {
+    description?: string;
+    gateway_id: string;
+    recipient_id: string;
+    title?: string;
+  };
+  type: 'threema';
+  uid?: string;
+  variant?: 'threema/v1';
+  version: 'v1';
+};
+export type ReceiverVictoropsV0Mimir1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    api_key?: boolean;
+  };
+  settings: {
+    api_url?: string;
+    custom_fields?: {
+      [key: string]: string;
+    };
+    entity_display_name?: string;
+    http_config?: {
+      authorization?: {
+        type?: string;
+      };
+      basic_auth?: {
+        username?: string;
+      };
+      enable_http2?: boolean;
+      follow_redirects?: boolean;
+      http_headers?: {
+        [key: string]: string;
+      };
+      no_proxy?: string;
+      oauth2?: {
+        client_id: string;
+        endpoint_params?: {
+          [key: string]: string;
+        };
+        no_proxy?: string;
+        proxy_connect_header?: {
+          [key: string]: string;
+        };
+        proxy_from_environment?: boolean;
+        proxy_url?: string;
+        scopes?: string;
+        tls_config?: {
+          insecure_skip_verify?: boolean;
+          max_version?: string;
+          min_version?: string;
+          server_name?: string;
+        };
+        token_url: string;
+      };
+      proxy_connect_header?: {
+        [key: string]: string;
+      };
+      proxy_from_environment?: boolean;
+      proxy_url?: string;
+      tls_config?: {
+        insecure_skip_verify?: boolean;
+        max_version?: string;
+        min_version?: string;
+        server_name?: string;
+      };
+    };
+    message_type?: string;
+    monitoring_tool?: string;
+    routing_key: string;
+    state_message?: string;
+  };
+  type: 'victorops';
+  uid?: string;
+  variant?: 'victorops/v0mimir1';
+  version: 'v0mimir1';
+};
+export type ReceiverVictoropsV1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    url?: boolean;
+  };
+  settings: {
+    description?: string;
+    messageType?: 'CRITICAL' | 'WARNING';
+    title?: string;
+  };
+  type: 'victorops';
+  uid?: string;
+  variant?: 'victorops/v1';
+  version: 'v1';
+};
+export type ReceiverWebexV0Mimir1 = {
+  disableResolveMessage?: boolean;
+  settings: {
+    api_url?: string;
+    http_config?: {
+      authorization?: {
+        type?: string;
+      };
+      basic_auth?: {
+        username?: string;
+      };
+      enable_http2?: boolean;
+      follow_redirects?: boolean;
+      http_headers?: {
+        [key: string]: string;
+      };
+      no_proxy?: string;
+      oauth2?: {
+        client_id: string;
+        endpoint_params?: {
+          [key: string]: string;
+        };
+        no_proxy?: string;
+        proxy_connect_header?: {
+          [key: string]: string;
+        };
+        proxy_from_environment?: boolean;
+        proxy_url?: string;
+        scopes?: string;
+        tls_config?: {
+          insecure_skip_verify?: boolean;
+          max_version?: string;
+          min_version?: string;
+          server_name?: string;
+        };
+        token_url: string;
+      };
+      proxy_connect_header?: {
+        [key: string]: string;
+      };
+      proxy_from_environment?: boolean;
+      proxy_url?: string;
+      tls_config?: {
+        insecure_skip_verify?: boolean;
+        max_version?: string;
+        min_version?: string;
+        server_name?: string;
+      };
+    };
+    message?: string;
+    room_id: string;
+  };
+  type: 'webex';
+  uid?: string;
+  variant?: 'webex/v0mimir1';
+  version: 'v0mimir1';
+};
+export type ReceiverWebexV1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    bot_token?: boolean;
+  };
+  settings: {
+    api_url?: string;
+    message?: string;
+    room_id: string;
+  };
+  type: 'webex';
+  uid?: string;
+  variant?: 'webex/v1';
+  version: 'v1';
+};
+export type ReceiverWebhookV0Mimir1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    url?: boolean;
+  };
+  settings: {
+    http_config?: {
+      authorization?: {
+        type?: string;
+      };
+      basic_auth?: {
+        username?: string;
+      };
+      enable_http2?: boolean;
+      follow_redirects?: boolean;
+      http_headers?: {
+        [key: string]: string;
+      };
+      no_proxy?: string;
+      oauth2?: {
+        client_id: string;
+        endpoint_params?: {
+          [key: string]: string;
+        };
+        no_proxy?: string;
+        proxy_connect_header?: {
+          [key: string]: string;
+        };
+        proxy_from_environment?: boolean;
+        proxy_url?: string;
+        scopes?: string;
+        tls_config?: {
+          insecure_skip_verify?: boolean;
+          max_version?: string;
+          min_version?: string;
+          server_name?: string;
+        };
+        token_url: string;
+      };
+      proxy_connect_header?: {
+        [key: string]: string;
+      };
+      proxy_from_environment?: boolean;
+      proxy_url?: string;
+      tls_config?: {
+        insecure_skip_verify?: boolean;
+        max_version?: string;
+        min_version?: string;
+        server_name?: string;
+      };
+    };
+    max_alerts?: string;
+    timeout?: string;
+  };
+  type: 'webhook';
+  uid?: string;
+  variant?: 'webhook/v0mimir1';
   version: 'v0mimir1';
 };
 export type ReceiverWebhookV1 = {
   disableResolveMessage?: boolean;
   secureFields?: {
-    [key: string]: boolean;
+    authorization_credentials?: boolean;
+    'hmacConfig.secret'?: boolean;
+    password?: boolean;
+    'tlsConfig.caCertificate'?: boolean;
+    'tlsConfig.clientCertificate'?: boolean;
+    'tlsConfig.clientKey'?: boolean;
   };
   settings: {
-    httpMethod?: string;
-    maxAlerts?: number;
+    authorization_scheme?: string;
+    headers?: {
+      [key: string]: string;
+    };
+    hmacConfig?: {
+      header?: string;
+      timestampHeader?: string;
+    };
+    httpMethod?: 'POST' | 'PUT';
+    http_config?: {
+      oauth2?: {
+        client_id: string;
+        endpoint_params?: {
+          [key: string]: string;
+        };
+        proxy_config?: {
+          no_proxy?: string;
+          proxy_connect_header?: {
+            [key: string]: string;
+          };
+          proxy_from_environment?: boolean;
+          proxy_url?: string;
+        };
+        scopes?: string;
+        tls_config?: {
+          insecureSkipVerify?: boolean;
+        };
+        token_url: string;
+      };
+    };
+    maxAlerts?: string;
+    message?: string;
+    payload?: {
+      template: string;
+      vars?: {
+        [key: string]: string;
+      };
+    };
+    title?: string;
+    tlsConfig?: {
+      insecureSkipVerify?: boolean;
+    };
     url: string;
+    username?: string;
   };
   type: 'webhook';
   uid?: string;
   variant?: 'webhook/v1';
   version: 'v1';
 };
+export type ReceiverWechatV0Mimir1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    api_secret?: boolean;
+  };
+  settings: {
+    agent_id?: string;
+    api_url?: string;
+    corp_id?: string;
+    http_config?: {
+      authorization?: {
+        type?: string;
+      };
+      basic_auth?: {
+        username?: string;
+      };
+      enable_http2?: boolean;
+      follow_redirects?: boolean;
+      http_headers?: {
+        [key: string]: string;
+      };
+      no_proxy?: string;
+      oauth2?: {
+        client_id: string;
+        endpoint_params?: {
+          [key: string]: string;
+        };
+        no_proxy?: string;
+        proxy_connect_header?: {
+          [key: string]: string;
+        };
+        proxy_from_environment?: boolean;
+        proxy_url?: string;
+        scopes?: string;
+        tls_config?: {
+          insecure_skip_verify?: boolean;
+          max_version?: string;
+          min_version?: string;
+          server_name?: string;
+        };
+        token_url: string;
+      };
+      proxy_connect_header?: {
+        [key: string]: string;
+      };
+      proxy_from_environment?: boolean;
+      proxy_url?: string;
+      tls_config?: {
+        insecure_skip_verify?: boolean;
+        max_version?: string;
+        min_version?: string;
+        server_name?: string;
+      };
+    };
+    message?: string;
+    message_type?: 'text' | 'markdown';
+    to_party?: string;
+    to_tag?: string;
+    to_user?: string;
+  };
+  type: 'wechat';
+  uid?: string;
+  variant?: 'wechat/v0mimir1';
+  version: 'v0mimir1';
+};
+export type ReceiverWecomV1 = {
+  disableResolveMessage?: boolean;
+  secureFields?: {
+    secret?: boolean;
+    url?: boolean;
+  };
+  settings: {
+    agent_id: string;
+    corp_id: string;
+    message?: string;
+    msgtype?: 'text' | 'markdown';
+    title?: string;
+    touser?: string;
+  };
+  type: 'wecom';
+  uid?: string;
+  variant?: 'wecom/v1';
+  version: 'v1';
+};
 export type ReceiverIntegration =
+  | ReceiverDingdingV1
+  | ReceiverDiscordV0Mimir1
+  | ReceiverDiscordV1
+  | ReceiverEmailV0Mimir1
   | ReceiverEmailV1
-  | ReceiverEmailMimir1
+  | ReceiverGooglechatV1
+  | ReceiverJiraV0Mimir1
+  | ReceiverJiraV1
+  | ReceiverKafkaV1
+  | ReceiverLinev1
+  | ReceiverMqttV1
+  | ReceiverOncallV1
+  | ReceiverOpsgenieV0Mimir1
+  | ReceiverOpsgenieV1
+  | ReceiverPagerdutyV0Mimir1
+  | ReceiverPagerdutyV1
+  | ReceiverPrometheusAlertmanagerV1
+  | ReceiverPushoverV0Mimir1
+  | ReceiverPushoverV1
+  | ReceiverSensugoV1
+  | ReceiverSlackV0Mimir1
   | ReceiverSlackV1
-  | ReceiverSlackMimir1
-  | ReceiverWebhookV1;
+  | ReceiverSnsV0Mimir1
+  | ReceiverSnsV1
+  | ReceiverTeamsV0Mimir1
+  | ReceiverTeamsV0Mimir2
+  | ReceiverTeamsV1
+  | ReceiverTelegramV0Mimir1
+  | ReceiverTelegramV1
+  | ReceiverThreemaV1
+  | ReceiverVictoropsV0Mimir1
+  | ReceiverVictoropsV1
+  | ReceiverWebexV0Mimir1
+  | ReceiverWebexV1
+  | ReceiverWebhookV0Mimir1
+  | ReceiverWebhookV1
+  | ReceiverWechatV0Mimir1
+  | ReceiverWecomV1;
 export type ReceiverSpec = {
   integrations: ReceiverIntegration[];
   title: string;

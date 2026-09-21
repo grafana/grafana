@@ -146,23 +146,23 @@ func convertToDomainModel(receiver *model.Receiver) (*ngmodels.Receiver, map[str
 }
 
 func convertReceiverIntegrationToIntegration(receiverTitle string, integration model.ReceiverIntegration) (ngmodels.Integration, []string, error) {
-	uid, disableResolveMessage, integrationType, integrationVersion, integrationSettings, integrationSecureFields, err := flattenK8sIntegration(integration)
+	flat, err := flattenK8sIntegration(integration)
 	if err != nil {
 		return ngmodels.Integration{}, nil, err
 	}
 
-	t, err := alertingNotify.IntegrationTypeFromString(integrationType)
+	t, err := alertingNotify.IntegrationTypeFromString(flat.Type)
 	if err != nil {
 		return ngmodels.Integration{}, nil, ngmodels.ErrReceiverInvalid(err)
 	}
 	var config schema.IntegrationSchemaVersion
 	typeSchema, _ := alertingNotify.GetSchemaForIntegration(t)
 	// TODO:yuri make version required when UI is updated
-	if integrationVersion != "" {
+	if flat.Version != "" {
 		var ok bool
-		config, ok = typeSchema.GetVersion(schema.Version(integrationVersion))
+		config, ok = typeSchema.GetVersion(schema.Version(flat.Version))
 		if !ok {
-			return ngmodels.Integration{}, nil, ngmodels.ErrReceiverInvalid(fmt.Errorf("invalid version %s for integration type %s", integrationVersion, integrationType))
+			return ngmodels.Integration{}, nil, ngmodels.ErrReceiverInvalid(fmt.Errorf("invalid version %s for integration type %s", flat.Version, flat.Type))
 		}
 	} else {
 		config = typeSchema.GetCurrentVersion()
@@ -170,21 +170,21 @@ func convertReceiverIntegrationToIntegration(receiverTitle string, integration m
 	grafanaIntegration := ngmodels.Integration{
 		Name:           receiverTitle,
 		Config:         config,
-		Settings:       integrationSettings,
+		Settings:       flat.Settings,
 		SecureSettings: make(map[string]string),
 	}
-	if uid != nil {
-		grafanaIntegration.UID = *uid
+	if flat.Uid != nil {
+		grafanaIntegration.UID = *flat.Uid
 	}
-	if disableResolveMessage != nil {
-		grafanaIntegration.DisableResolveMessage = *disableResolveMessage
+	if flat.DisableResolveMessage != nil {
+		grafanaIntegration.DisableResolveMessage = *flat.DisableResolveMessage
 	}
 
 	var secureFields []string
 	if grafanaIntegration.UID != "" {
 		// This is an existing integration, so we track the secure fields being requested to copy over from existing values.
-		secureFields = make([]string, 0, len(integrationSecureFields))
-		for k, isSecure := range integrationSecureFields {
+		secureFields = make([]string, 0, len(flat.SecureFields))
+		for k, isSecure := range flat.SecureFields {
 			if isSecure {
 				secureFields = append(secureFields, k)
 			}
@@ -193,138 +193,69 @@ func convertReceiverIntegrationToIntegration(receiverTitle string, integration m
 	return grafanaIntegration, secureFields, nil
 }
 
-// variantOf builds the value of the discriminator field: the type and version pair
-// that says which shape an integration's settings have.
-func variantOf(integrationType, version string) string {
-	return integrationType + "/" + version
+// flatIntegration is the shape shared by every branch of the generated integration
+// union. Converting through JSON lets the generated codec pick the branch, so this
+// package does not need a case per integration type and version.
+type flatIntegration struct {
+	Uid                   *string         `json:"uid,omitempty"`
+	DisableResolveMessage *bool           `json:"disableResolveMessage,omitempty"`
+	Type                  string          `json:"type"`
+	Version               string          `json:"version"`
+	Variant               string          `json:"variant"`
+	Settings              map[string]any  `json:"settings"`
+	SecureFields          map[string]bool `json:"secureFields,omitempty"`
 }
 
-// integrationToK8sIntegration picks the union branch matching the integration's type
-// and version, and fills in its settings.
-//
-// Settings go through JSON rather than being copied field by field: the domain model
-// holds them as a map, and each branch has a struct with the fields that version
-// actually accepts.
+// integrationToK8sIntegration converts a domain integration into the union the API
+// serves. It builds the flat form and lets the generated UnmarshalJSON select the
+// branch from the `variant` discriminator.
 func integrationToK8sIntegration(integration *ngmodels.Integration) (model.ReceiverIntegration, error) {
-	var (
-		integrationType = string(integration.Config.Type())
-		version         = string(integration.Config.Version)
-		variant         = variantOf(integrationType, version)
-		uid             = &integration.UID
-		disable         = &integration.DisableResolveMessage
-		secureFields    = integration.SecureFields()
-		result          model.ReceiverIntegration
-	)
+	var result model.ReceiverIntegration
 
-	rawSettings, err := json.Marshal(integration.Settings)
+	integrationType := string(integration.Config.Type())
+	version := string(integration.Config.Version)
+
+	raw, err := json.Marshal(flatIntegration{
+		Uid:                   &integration.UID,
+		DisableResolveMessage: &integration.DisableResolveMessage,
+		Type:                  integrationType,
+		Version:               version,
+		Variant:               integrationType + "/" + version,
+		Settings:              integration.Settings,
+		SecureFields:          integration.SecureFields(),
+	})
 	if err != nil {
 		return result, err
 	}
-
-	switch variant {
-	case "email/v1":
-		branch := model.ReceiverEmailV1{Type: integrationType, Version: version, Variant: &variant, Uid: uid, DisableResolveMessage: disable}
-		if err := json.Unmarshal(rawSettings, &branch.Settings); err != nil {
-			return result, err
-		}
-		result.EmailV1 = &branch
-	case "email/v0mimir1":
-		branch := model.ReceiverEmailMimir1{Type: integrationType, Version: version, Variant: &variant, Uid: uid, DisableResolveMessage: disable}
-		if err := json.Unmarshal(rawSettings, &branch.Settings); err != nil {
-			return result, err
-		}
-		result.EmailMimir1 = &branch
-	case "slack/v1":
-		branch := model.ReceiverSlackV1{Type: integrationType, Version: version, Variant: &variant, Uid: uid, DisableResolveMessage: disable}
-		if err := json.Unmarshal(rawSettings, &branch.Settings); err != nil {
-			return result, err
-		}
-		branch.SecureFields = slackV1SecureFields(secureFields)
-		result.SlackV1 = &branch
-	case "slack/v0mimir1":
-		branch := model.ReceiverSlackMimir1{Type: integrationType, Version: version, Variant: &variant, Uid: uid, DisableResolveMessage: disable}
-		if err := json.Unmarshal(rawSettings, &branch.Settings); err != nil {
-			return result, err
-		}
-		result.SlackMimir1 = &branch
-	case "webhook/v1":
-		branch := model.ReceiverWebhookV1{Type: integrationType, Version: version, Variant: &variant, Uid: uid, DisableResolveMessage: disable}
-		if err := json.Unmarshal(rawSettings, &branch.Settings); err != nil {
-			return result, err
-		}
-		branch.SecureFields = secureFields
-		result.WebhookV1 = &branch
-	default:
-		return result, ngmodels.ErrReceiverInvalid(fmt.Errorf("unsupported integration type and version %s", variant))
+	if err := json.Unmarshal(raw, &result); err != nil {
+		return result, err
+	}
+	// An unrecognised type and version pair leaves every branch unset, which marshals
+	// back to null. Report that rather than serving an empty integration.
+	if matched, err := json.Marshal(result); err == nil && string(matched) == "null" {
+		return result, ngmodels.ErrReceiverInvalid(fmt.Errorf("unsupported integration type and version %s/%s", integrationType, version))
 	}
 
 	return result, nil
 }
 
-func slackV1SecureFields(secureFields map[string]bool) *model.ReceiverV1beta1SlackV1SecureFields {
-	if len(secureFields) == 0 {
-		return nil
-	}
-	out := model.ReceiverV1beta1SlackV1SecureFields{}
-	if secureFields["token"] {
-		v := true
-		out.Token = &v
-	}
-	if secureFields["url"] {
-		v := true
-		out.Url = &v
-	}
-	return &out
-}
+// flattenK8sIntegration recovers the flat form from whichever branch of the union is
+// set, using the generated MarshalJSON.
+func flattenK8sIntegration(integration model.ReceiverIntegration) (flatIntegration, error) {
+	var flat flatIntegration
 
-// flattenK8sIntegration recovers the type, version, settings and secure fields from
-// whichever union branch is set.
-func flattenK8sIntegration(integration model.ReceiverIntegration) (uid *string, disableResolveMessage *bool, integrationType string, version string, settings map[string]any, secureFields map[string]bool, err error) {
-	var rawSettings []byte
-
-	switch {
-	case integration.EmailV1 != nil:
-		b := integration.EmailV1
-		uid, disableResolveMessage, integrationType, version = b.Uid, b.DisableResolveMessage, b.Type, b.Version
-		rawSettings, err = json.Marshal(b.Settings)
-	case integration.EmailMimir1 != nil:
-		b := integration.EmailMimir1
-		uid, disableResolveMessage, integrationType, version = b.Uid, b.DisableResolveMessage, b.Type, b.Version
-		rawSettings, err = json.Marshal(b.Settings)
-	case integration.SlackV1 != nil:
-		b := integration.SlackV1
-		uid, disableResolveMessage, integrationType, version = b.Uid, b.DisableResolveMessage, b.Type, b.Version
-		rawSettings, err = json.Marshal(b.Settings)
-		if b.SecureFields != nil {
-			secureFields = map[string]bool{}
-			if b.SecureFields.Token != nil {
-				secureFields["token"] = *b.SecureFields.Token
-			}
-			if b.SecureFields.Url != nil {
-				secureFields["url"] = *b.SecureFields.Url
-			}
-		}
-	case integration.SlackMimir1 != nil:
-		b := integration.SlackMimir1
-		uid, disableResolveMessage, integrationType, version = b.Uid, b.DisableResolveMessage, b.Type, b.Version
-		rawSettings, err = json.Marshal(b.Settings)
-	case integration.WebhookV1 != nil:
-		b := integration.WebhookV1
-		uid, disableResolveMessage, integrationType, version = b.Uid, b.DisableResolveMessage, b.Type, b.Version
-		rawSettings, err = json.Marshal(b.Settings)
-		secureFields = b.SecureFields
-	default:
-		return nil, nil, "", "", nil, nil, ngmodels.ErrReceiverInvalid(fmt.Errorf("integration matched no known type and version"))
-	}
-
+	raw, err := json.Marshal(integration)
 	if err != nil {
-		return nil, nil, "", "", nil, nil, err
+		return flat, err
 	}
-	if err = json.Unmarshal(rawSettings, &settings); err != nil {
-		return nil, nil, "", "", nil, nil, err
+	if string(raw) == "null" {
+		return flat, ngmodels.ErrReceiverInvalid(fmt.Errorf("integration matched no known type and version"))
+	}
+	if err := json.Unmarshal(raw, &flat); err != nil {
+		return flat, err
 	}
 
-	return uid, disableResolveMessage, integrationType, version, settings, secureFields, nil
+	return flat, nil
 }
 
 // convertTestIntegrationToIntegration converts the flat integration the test route
