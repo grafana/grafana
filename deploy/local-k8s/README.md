@@ -52,3 +52,27 @@ docker compose --env-file .local-compose/generated/.env \
 ```
 
 Setup writes ignored configuration under `.local-compose/generated` and preserves passwords and certificates on repeated runs. Named volumes retain PostgreSQL, Grafana metadata, and signer keys. Certificates last 30 days; stop Compose, remove only `.local-compose/generated/certs`, and rerun setup to renew them. Keep the signer-key volume because Grafana may cache signed identity tokens.
+
+## Native Kubernetes acceptance
+
+The proof creates or reuses only its named local kind cluster. Every Kubernetes command uses the supplied kubeconfig and explicit local context.
+
+```sh
+ENTERPRISE_SOURCE=/path/to/grafana-enterprise \
+PLATFORM_IMAGE=error-tracking-platform:local \
+API_IMAGE=error-tracking-api:local \
+KUBECONFIG=/tmp/error-tracking-native.kubeconfig \
+  deploy/local-k8s/prove-native.sh
+```
+
+The proof runs two Grafana stacks, two API replicas, PostgreSQL with persistent storage, a migration Job, the signer, AuthZ, and its metadata database. It verifies authenticated reads and writes, tenant isolation, Viewer read-only access, discovery and OpenAPI, rejection of anonymous, wrong-audience, and cross-stack requests, metadata-only audit output, replica and complete API outage recovery, database readiness, persistence, credential rotation, and restricted runtime SQL privileges. Grafana pods do not receive event-database credentials.
+
+To inspect the UI:
+
+```sh
+kubectl --kubeconfig /tmp/error-tracking-native.kubeconfig \
+  --context kind-error-tracking-native -n error-tracking \
+  port-forward service/st-grafana-11 3000:3000
+```
+
+Open `http://localhost:3000/error-tracking`.
