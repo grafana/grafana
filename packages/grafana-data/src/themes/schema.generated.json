@@ -61,6 +61,12 @@
             "contrastText": {
               "type": "string"
             },
+            "subtleBackground": {
+              "type": "string"
+            },
+            "subtleBorder": {
+              "type": "string"
+            },
             "shade": {
               "type": "string"
             },
@@ -114,6 +120,12 @@
               "type": "string"
             },
             "contrastText": {
+              "type": "string"
+            },
+            "subtleBackground": {
+              "type": "string"
+            },
+            "subtleBorder": {
               "type": "string"
             },
             "shade": {
@@ -171,6 +183,12 @@
             "contrastText": {
               "type": "string"
             },
+            "subtleBackground": {
+              "type": "string"
+            },
+            "subtleBorder": {
+              "type": "string"
+            },
             "shade": {
               "type": "string"
             },
@@ -224,6 +242,12 @@
               "type": "string"
             },
             "contrastText": {
+              "type": "string"
+            },
+            "subtleBackground": {
+              "type": "string"
+            },
+            "subtleBorder": {
               "type": "string"
             },
             "shade": {
@@ -281,6 +305,12 @@
             "contrastText": {
               "type": "string"
             },
+            "subtleBackground": {
+              "type": "string"
+            },
+            "subtleBorder": {
+              "type": "string"
+            },
             "shade": {
               "type": "string"
             },
@@ -334,6 +364,12 @@
               "type": "string"
             },
             "contrastText": {
+              "type": "string"
+            },
+            "subtleBackground": {
+              "type": "string"
+            },
+            "subtleBorder": {
               "type": "string"
             },
             "shade": {
@@ -391,6 +427,12 @@
             "contrastText": {
               "type": "string"
             },
+            "subtleBackground": {
+              "type": "string"
+            },
+            "subtleBorder": {
+              "type": "string"
+            },
             "shade": {
               "type": "string"
             },
@@ -444,6 +486,12 @@
               "type": "string"
             },
             "contrastText": {
+              "type": "string"
+            },
+            "subtleBackground": {
+              "type": "string"
+            },
+            "subtleBorder": {
               "type": "string"
             },
             "shade": {
@@ -1215,10 +1263,28 @@
           "type": "object",
           "properties": {
             "rowHoverBackground": {
-              "type": "string"
+              "type": "string",
+              "description": "Opaque background for a hovered, unselected row."
             },
             "rowSelected": {
-              "type": "string"
+              "type": "string",
+              "description": "Deprecated: use components.table.rowSelectedBackground. This property will be removed in Grafana 14."
+            },
+            "headerBackground": {
+              "type": "string",
+              "description": "Opaque header surface, distinct from body rows."
+            },
+            "border": {
+              "type": "string",
+              "description": "Opaque body and footer dividers."
+            },
+            "rowStripedBackground": {
+              "type": "string",
+              "description": "Opaque background for alternating body rows; excludes headers, footers and expansion containers."
+            },
+            "rowSelectedBackground": {
+              "type": "string",
+              "description": "Opaque background for a selected row."
             }
           },
           "additionalProperties": false

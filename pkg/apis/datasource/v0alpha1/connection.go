@@ -23,9 +23,6 @@ type DataSourceConnectionQuery struct {
 
 	// The datasource identifier inside the group/version (or UID within legacy grafana apis)
 	Name string `json:"name,omitempty"`
-
-	// The plugin ID
-	Plugin string `json:"plugin,omitempty"`
 }
 
 func (DataSourceConnectionQuery) OpenAPIModelName() string {

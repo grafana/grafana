@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -52,6 +53,23 @@ func (s *redactingStore) Create(ctx context.Context, obj runtime.Object, createV
 	}
 	if setting, ok := out.(*iamv0.SSOSetting); ok {
 		return redactSecrets(setting), nil
+	}
+	return out, nil
+}
+
+// List redacts secret-classified values on every item, matching Create and Get,
+// so the response never carries them.
+func (s *redactingStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	out, err := s.ssoStorage.List(ctx, options)
+	if err != nil {
+		return nil, err
+	}
+	if list, ok := out.(*iamv0.SSOSettingList); ok {
+		// Redact in place: the list is freshly built for this response, and a
+		// DeepCopy panics on legacy non-JSON values (e.g. int64).
+		for i := range list.Items {
+			redactSecretsInPlace(list.Items[i].Spec.Settings.Object)
+		}
 	}
 	return out, nil
 }

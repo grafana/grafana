@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw';
 import { type ComponentType, lazy, useEffect } from 'react';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
-import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints } from '@grafana/data';
+import { type ComponentTypeWithExtensionMeta, OrgRole, PluginExtensionPoints } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { config, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
@@ -10,10 +10,14 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { pluginMeta } from 'app/features/alerting/unified/testSetup/plugins';
+import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 import { useNewsFeed } from 'app/plugins/panel/news/useNewsFeed';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { ACTIVE_INCIDENTS_QUERY, mockIncidents } from './AlertsIncidents/mockIncidentsApi';
+import { ALERTS_TEAM_FILTER_STORAGE_KEY, INCIDENTS_TEAM_FILTER_STORAGE_KEY } from './AlertsIncidents/teamFilter';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import HomePage from './HomePage';
 import { homepageViewed } from './analytics/main';
@@ -58,6 +62,9 @@ beforeEach(() => {
     getNews: jest.fn(),
   });
 
+  // A signed-in org member is the default; the anonymous / no-org tests override this.
+  jest.replaceProperty(contextSrv, 'isSignedIn', true);
+  jest.replaceProperty(contextSrv.user, 'orgRole', OrgRole.Viewer);
   // Deny alerting permission so the FiringAlertsCard renders null
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
   // Stub endpoints the alerts/incidents cards probe so unhandled requests don't fail the test
@@ -83,6 +90,20 @@ const createHomepageExtensionComponent = (
     extensionPointId
   );
 
+/** Active metrics solution served to the page; returns the fact mocks the tests observe. */
+const stubMetricsSolution = () => {
+  const datasource = jest.fn(async () => stubDatasource);
+  const needsAttention = jest.fn(async () => false);
+  const stub = stubSolution('metrics', {
+    title: 'Metrics & infrastructure',
+    signal: async () => 'active',
+    datasource,
+    needsAttention,
+  });
+  jest.mocked(useHomepageSolutions).mockReturnValue({ solutions: [stub], signals: jest.fn() });
+  return { datasource, needsAttention };
+};
+
 describe('HomePage', () => {
   const originalBuildInfo = { ...config.buildInfo };
   const originalNamespace = config.namespace;
@@ -107,7 +128,7 @@ describe('HomePage', () => {
     jest
       .spyOn(contextSrv, 'hasPermission')
       .mockImplementation((action) => action === AccessControlAction.AlertingInstanceRead);
-    window.localStorage.setItem('grafana.home.alerts.teamFilter', 'platform');
+    window.localStorage.setItem(ALERTS_TEAM_FILTER_STORAGE_KEY, 'platform');
     const filters: string[][] = [];
     server.use(
       http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ request }) => {
@@ -121,6 +142,22 @@ describe('HomePage', () => {
     await waitFor(() => expect(filters.length).toBeGreaterThan(0));
     expect(filters[0]).toEqual([expect.stringContaining('team=~')]);
     expect(filters[0][0]).toContain('platform');
+  });
+
+  it('scopes active incidents to their own stored team, not the alerts one', async () => {
+    mockUsePluginBridge.mockReturnValue({
+      installed: true,
+      loading: false,
+      settings: { ...pluginMeta[SupportedPlugin.Irm], includes: [] },
+    });
+    window.localStorage.setItem(ALERTS_TEAM_FILTER_STORAGE_KEY, 'backend');
+    window.localStorage.setItem(INCIDENTS_TEAM_FILTER_STORAGE_KEY, 'platform');
+    const queries = mockIncidents([]);
+
+    render(<HomePage />);
+
+    await waitFor(() => expect(queries).toHaveLength(1));
+    expect(queries[0]).toBe(`${ACTIVE_INCIDENTS_QUERY} field:team:"platform"`);
   });
 
   it('renders the OSS welcome message', async () => {
@@ -311,20 +348,12 @@ describe('HomePage', () => {
   it('starts card placement while extensions are still loading and hands it to the overview', async () => {
     setTestFlags({ 'grafana.growthHomepage': true });
     setPluginComponentsHook(() => ({ components: [], isLoading: true }));
-    const datasource = jest.fn(async () => stubDatasource);
-    // Only placement reads this fact, so a call while the skeleton is up proves detection started at mount.
-    const needsAttention = jest.fn(async () => false);
-    const stub = stubSolution('metrics', {
-      title: 'Metrics & infrastructure',
-      signal: async () => 'active',
-      datasource,
-      needsAttention,
-    });
-    jest.mocked(useHomepageSolutions).mockReturnValue({ solutions: [stub], signals: jest.fn() });
+    const { datasource, needsAttention } = stubMetricsSolution();
 
     const { rerender } = render(<HomePage />);
 
-    // The whole-page skeleton is up, yet detection is already running.
+    // The whole-page skeleton is up, yet detection is already running. Only placement reads
+    // needsAttention, so a call at this point proves detection started at mount.
     await waitFor(() => expect(needsAttention).toHaveBeenCalledTimes(1));
     expect(datasource).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId('home-page-skeleton')).toBeInTheDocument();
@@ -334,6 +363,59 @@ describe('HomePage', () => {
 
     // The card renders once the extensions settle.
     expect(await screen.findByRole('heading', { name: 'Metrics & infrastructure' })).toBeInTheDocument();
+  });
+
+  it('renders the dashboards grid above the stack overview on the redesigned homepage', async () => {
+    setTestFlags({ 'grafana.growthHomepage': true });
+    jest.mocked(useHomepageSolutions).mockReturnValue({ solutions: [stubSolution('metrics')], signals: jest.fn() });
+
+    render(<HomePage />);
+
+    const dashboards = await screen.findByRole('heading', { name: 'Dashboards' });
+    const overview = await screen.findByRole('heading', { name: 'Your observability stack overview' });
+    expect(dashboards.compareDocumentPosition(overview)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  describe('solutions gating', () => {
+    const renderWithStubSolution = () => {
+      setTestFlags({ 'grafana.growthHomepage': true });
+      const { datasource } = stubMetricsSolution();
+
+      render(<HomePage />);
+      return { datasource };
+    };
+
+    it('hides recommendations and the overview and skips placement for anonymous users', async () => {
+      jest.replaceProperty(contextSrv, 'isSignedIn', false);
+
+      const { datasource } = renderWithStubSolution();
+
+      // The rest of the page still renders...
+      expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+      // ...without the solutions sections or their placement probes.
+      expect(screen.queryByRole('heading', { name: /your observability stack overview/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: 'Metrics & infrastructure' })).not.toBeInTheDocument();
+      expect(datasource).not.toHaveBeenCalled();
+    });
+
+    it('hides recommendations and the overview and skips placement for users with no org role', async () => {
+      jest.replaceProperty(contextSrv.user, 'orgRole', OrgRole.None);
+
+      const { datasource } = renderWithStubSolution();
+
+      expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: /your observability stack overview/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: 'Metrics & infrastructure' })).not.toBeInTheDocument();
+      expect(datasource).not.toHaveBeenCalled();
+    });
+
+    it('renders the overview for a signed-in org member', async () => {
+      const { datasource } = renderWithStubSolution();
+
+      expect(await screen.findByRole('heading', { name: /your observability stack overview/i })).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name: 'Metrics & infrastructure' })).toBeInTheDocument();
+      expect(datasource).toHaveBeenCalled();
+    });
   });
 
   it('keeps the skeleton up while a lazy extension component loads instead of unmounting the page', async () => {
