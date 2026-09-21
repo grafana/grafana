@@ -1466,16 +1466,9 @@ func TestKvStorageBackend_BatchReadResource_ClosesPrefetchedBodyWhenConsumerStop
 		kvWrapper.KV = opts.KvStore
 		opts.KvStore = kvWrapper
 	})
-	requests := make([]*resourcepb.ReadRequest, 0, 2)
-	for _, name := range []string{"missing", "after"} {
-		obj, err := createTestObjectWithName(name, appsNamespace, "value")
-		require.NoError(t, err)
-		rv, err := writeObject(t, backend, obj, resourcepb.WatchEvent_ADDED, 0)
-		require.NoError(t, err)
-		requests = append(requests, &resourcepb.ReadRequest{
-			Key:             &resourcepb.ResourceKey{Namespace: "default", Group: "apps", Resource: "resources", Name: name},
-			ResourceVersion: rv,
-		})
+	requests := []*resourcepb.ReadRequest{
+		{Key: appsKey("missing"), ResourceVersion: seedResource(t, backend, t.Context(), "missing", "")},
+		{Key: appsKey("after"), ResourceVersion: seedResource(t, backend, t.Context(), "after", "")},
 	}
 
 	responses, err := backend.BatchReadResource(t.Context(), requests)
