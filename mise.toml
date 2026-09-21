@@ -6,9 +6,11 @@ node.corepack = true
 idiomatic_version_file_enable_tools = ["node"]
 
 [tasks.error-tracking-compose-up]
+alias = "error-tracking-dev"
 description = "Start the app-owned standalone Error Tracking API and PostgreSQL"
-run = "deploy/local-compose/setup.sh && docker compose --env-file .local-compose/generated/.env -f deploy/local-compose/compose.yaml up"
+run = "docker compose -f deploy/local-compose/compose.yaml up --build"
 
 [tasks.error-tracking-compose-down]
+alias = "error-tracking-stop"
 description = "Stop the app-owned standalone Error Tracking services"
-run = "docker compose --env-file .local-compose/generated/.env -f deploy/local-compose/compose.yaml down"
+run = "docker compose -f deploy/local-compose/compose.yaml down"
