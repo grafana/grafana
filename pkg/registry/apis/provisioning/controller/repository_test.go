@@ -204,6 +204,8 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 			},
 		},
 		{
+			// The cleanup finalizer needs the built repository, so Build runs and
+			// the object is deleted on success.
 			name: "Finalizers deleted successfully",
 			repoFactory: func() repository.Factory {
 				f := repository.NewMockFactory(t)
@@ -220,7 +222,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 
 				f.
 					On("process", mock.Anything, mock.Anything, nil, []string{
-						repository.RemoveOrphanResourcesFinalizer,
+						repository.CleanFinalizer,
 					}).
 					Once().
 					Return(nil)
@@ -245,12 +247,14 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Finalizers: []string{
-						repository.RemoveOrphanResourcesFinalizer,
+						repository.CleanFinalizer,
 					},
 				},
 			},
 		},
 		{
+			// A build failure only aborts deletion while the cleanup finalizer is
+			// present (that is the only finalizer needing the repository).
 			name: "Error when building repository",
 			repoFactory: func() repository.Factory {
 				f := repository.NewMockFactory(t)
@@ -277,7 +281,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Finalizers: []string{
-						repository.RemoveOrphanResourcesFinalizer,
+						repository.CleanFinalizer,
 					},
 				},
 			},
@@ -300,7 +304,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 
 				f.
 					On("process", mock.Anything, mock.Anything, nil, []string{
-						repository.RemoveOrphanResourcesFinalizer,
+						repository.CleanFinalizer,
 					}).
 					Once().
 					Return(assert.AnError)
@@ -321,7 +325,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Finalizers: []string{
-						repository.RemoveOrphanResourcesFinalizer,
+						repository.CleanFinalizer,
 					},
 				},
 			},
@@ -344,7 +348,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 
 				f.
 					On("process", mock.Anything, mock.Anything, nil, []string{
-						repository.RemoveOrphanResourcesFinalizer,
+						repository.CleanFinalizer,
 					}).
 					Once().
 					Return(nil)
@@ -378,33 +382,26 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Finalizers: []string{
-						repository.RemoveOrphanResourcesFinalizer,
+						repository.CleanFinalizer,
 					},
 				},
 			},
 			expectedErr: "remove finalizers: " + assert.AnError.Error(),
 		},
 		{
-			// With the force-delete annotation, a build failure (e.g. expired
-			// credentials) must not abort deletion: the finalizers run with a nil
-			// repo (provider-side webhook cleanup skipped) and the object is
-			// deleted.
-			name: "Force delete proceeds when building repository fails",
+			// Without the cleanup finalizer, no provider-dependent step remains,
+			// so the repository is never built (Build is not mocked and must not
+			// be called) and deletion still completes. This is the force-delete
+			// path: a client removes the cleanup finalizer so an unbuildable
+			// repository (e.g. expired credentials) can still be deleted.
+			name: "Skips build and deletes when cleanup finalizer absent",
 			repoFactory: func() repository.Factory {
-				f := repository.NewMockFactory(t)
-
-				f.
-					On("Build", mock.Anything, mock.Anything).
-					Once().
-					Return(nil, assert.AnError)
-
-				return f
+				return repository.NewMockFactory(t)
 			}(),
 			finalizer: func() finalizerProcessor {
 				f := NewMockFinalizerProcessor(t)
 
-				// repo is nil because Build failed; the config-only finalizers
-				// still run.
+				// repo is nil because the repository was never built.
 				f.
 					On("process", mock.Anything, mock.Anything, nil, []string{
 						repository.RemoveOrphanResourcesFinalizer,
@@ -428,14 +425,9 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 
 				return c
 			}(),
-			// No statusPatcher: the force path skips updateDeleteStatus on build
-			// failure and completes deletion cleanly.
 			statusPatcher: nil,
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
-					Annotations: map[string]string{
-						repository.ForceDeleteAnnotation: "true",
-					},
 					Finalizers: []string{
 						repository.RemoveOrphanResourcesFinalizer,
 					},
@@ -473,7 +465,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 func TestRepositoryController_handleDelete_RetriesOnConflict(t *testing.T) {
 	finalizer := NewMockFinalizerProcessor(t)
 	finalizer.
-		On("process", mock.Anything, mock.Anything, nil, []string{repository.RemoveOrphanResourcesFinalizer}).
+		On("process", mock.Anything, mock.Anything, nil, []string{repository.CleanFinalizer}).
 		Once().
 		Return(nil)
 
@@ -506,7 +498,7 @@ func TestRepositoryController_handleDelete_RetriesOnConflict(t *testing.T) {
 
 	repo := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
-			Finalizers: []string{repository.RemoveOrphanResourcesFinalizer},
+			Finalizers: []string{repository.CleanFinalizer},
 		},
 	}
 	err := c.handleDelete(context.Background(), repo)
@@ -517,7 +509,7 @@ func TestRepositoryController_handleDelete_RetriesOnConflict(t *testing.T) {
 func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *testing.T) {
 	finalizer := NewMockFinalizerProcessor(t)
 	finalizer.
-		On("process", mock.Anything, mock.Anything, nil, []string{repository.RemoveOrphanResourcesFinalizer}).
+		On("process", mock.Anything, mock.Anything, nil, []string{repository.CleanFinalizer}).
 		Once().
 		Return(nil)
 
@@ -558,7 +550,7 @@ func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *t
 
 	repo := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
-			Finalizers: []string{repository.RemoveOrphanResourcesFinalizer},
+			Finalizers: []string{repository.CleanFinalizer},
 		},
 	}
 	err := c.handleDelete(context.Background(), repo)
@@ -592,7 +584,7 @@ func TestRepositoryController_handleDelete_BuildFailureIsMetered(t *testing.T) {
 
 	repo := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
-			Finalizers: []string{repository.RemoveOrphanResourcesFinalizer},
+			Finalizers: []string{repository.CleanFinalizer},
 		},
 	}
 	err := c.handleDelete(context.Background(), repo)
@@ -611,7 +603,7 @@ func TestRepositoryController_handleDelete_ObservesPendingAge(t *testing.T) {
 
 	finalizer := NewMockFinalizerProcessor(t)
 	finalizer.
-		On("process", mock.Anything, mock.Anything, nil, []string{repository.RemoveOrphanResourcesFinalizer}).
+		On("process", mock.Anything, mock.Anything, nil, []string{repository.CleanFinalizer}).
 		Once().
 		Return(nil)
 
@@ -636,7 +628,7 @@ func TestRepositoryController_handleDelete_ObservesPendingAge(t *testing.T) {
 	repo := &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			DeletionTimestamp: &deletion,
-			Finalizers:        []string{repository.RemoveOrphanResourcesFinalizer},
+			Finalizers:        []string{repository.CleanFinalizer},
 		},
 	}
 	err := c.handleDelete(context.Background(), repo)
@@ -1658,7 +1650,7 @@ func TestRepositoryController_process_UserCausedDeleteFailure(t *testing.T) {
 			Name:              "test-repo",
 			Namespace:         "default",
 			DeletionTimestamp: &now,
-			Finalizers:        []string{repository.RemoveOrphanResourcesFinalizer},
+			Finalizers:        []string{repository.CleanFinalizer},
 		},
 		Spec: provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
 	}
@@ -1726,7 +1718,7 @@ func TestRepositoryController_process_NonUserCausedDeleteFailureSurfacedOnStatus
 			Name:              "test-repo",
 			Namespace:         "default",
 			DeletionTimestamp: &now,
-			Finalizers:        []string{repository.RemoveOrphanResourcesFinalizer},
+			Finalizers:        []string{repository.CleanFinalizer},
 		},
 		Spec: provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
 	}
@@ -1819,7 +1811,7 @@ func TestRepositoryController_process_DeleteStatusPatchFailure(t *testing.T) {
 					Name:              "test-repo",
 					Namespace:         "default",
 					DeletionTimestamp: &now,
-					Finalizers:        []string{repository.RemoveOrphanResourcesFinalizer},
+					Finalizers:        []string{repository.CleanFinalizer},
 				},
 				Spec: provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
 			}

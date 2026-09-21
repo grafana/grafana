@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -415,31 +416,28 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 
 	// Process any finalizers
 	if len(obj.Finalizers) > 0 {
-		forceDelete := repository.IsForceDelete(obj.GetAnnotations())
-
-		repo, err := rc.repoFactory.Build(ctx, obj)
-		if err != nil {
-			rc.deletionMetrics.recordError(deletionStageBuild)
-			// Without force-delete, an unbuildable repository (e.g. expired
-			// credentials) blocks deletion forever: no finalizer can run, so the
-			// object stays Terminating. Keep that retrying behaviour so a
-			// transient build failure can recover and clean up properly.
-			if !forceDelete {
+		// Only the cleanup finalizer needs a built repository (it removes the
+		// provider-side webhook). The others operate on Grafana-side state from
+		// the configuration alone, so don't build the repository — which
+		// decrypts its secrets and constructs the provider client, and fails
+		// when credentials have expired — unless cleanup is present. A client
+		// forcing deletion of an unhealthy repository removes the cleanup
+		// finalizer, which skips this build and lets the remaining finalizers
+		// complete the deletion.
+		var repo repository.Repository
+		if slices.Contains(obj.Finalizers, repository.CleanFinalizer) {
+			built, err := rc.repoFactory.Build(ctx, obj)
+			if err != nil {
+				rc.deletionMetrics.recordError(deletionStageBuild)
 				if statusErr := rc.updateDeleteStatus(ctx, obj, fmt.Errorf("create repository from configuration: %w", err)); statusErr != nil {
 					logger.Error("failed to update repository status after repository build error", "error", statusErr)
 				}
 				return fmt.Errorf("create repository from configuration: %w", err)
 			}
-			// Force-delete: proceed without a built repository. The finalizers
-			// that only need the configuration still run; provider-dependent
-			// cleanup (webhook removal) is skipped and those remote resources are
-			// left in place. This is the escape hatch for a repository that can
-			// never be built again.
-			logger.Warn("force deleting repository despite build failure; provider-side resources such as webhooks will not be cleaned up", "error", err)
-			repo = nil
+			repo = built
 		}
 
-		err = rc.finalizer.process(ctx, obj, repo, obj.Finalizers)
+		err := rc.finalizer.process(ctx, obj, repo, obj.Finalizers)
 		if err != nil {
 			rc.deletionMetrics.recordError(deletionStageFinalizers)
 			if statusErr := rc.updateDeleteStatus(ctx, obj, fmt.Errorf("remove finalizers: %w", err)); statusErr != nil {
