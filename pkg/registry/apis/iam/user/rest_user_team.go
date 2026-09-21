@@ -43,10 +43,20 @@ var (
 const userTeamsGetParallelism = 8
 
 type UserTeamREST struct {
-	client     resourcepb.ResourceIndexClient
-	teamGetter rest.Getter
-	tracer     trace.Tracer
-	ofClient   openfeature.IClient
+	client          resourcepb.ResourceIndexClient
+	teamGetter      rest.Getter
+	tracer          trace.Tracer
+	ofClient        openfeature.IClient
+	teamsAPIEnabled *bool
+}
+
+func NewUserTeamRESTWithFeature(client resourcepb.ResourceIndexClient, teamGetter rest.Getter, tracer trace.Tracer, enabled bool) *UserTeamREST {
+	return &UserTeamREST{
+		client:          client,
+		teamGetter:      teamGetter,
+		tracer:          tracer,
+		teamsAPIEnabled: &enabled,
+	}
 }
 
 func NewUserTeamREST(client resourcepb.ResourceIndexClient, teamGetter rest.Getter, tracer trace.Tracer) *UserTeamREST {
@@ -79,7 +89,11 @@ func (s *UserTeamREST) ProducesObject(verb string) interface{} {
 // Connect implements rest.Connecter.
 func (s *UserTeamREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !s.ofClient.Boolean(r.Context(), featuremgmt.FlagKubernetesTeamsApi, false, openfeature.TransactionContext(r.Context())) {
+		enabled := s.teamsAPIEnabled != nil && *s.teamsAPIEnabled
+		if s.teamsAPIEnabled == nil {
+			enabled = s.ofClient.Boolean(r.Context(), featuremgmt.FlagKubernetesTeamsApi, false, openfeature.TransactionContext(r.Context()))
+		}
+		if !enabled {
 			responder.Error(apierrors.NewForbidden(iamv0alpha1.UserResourceInfo.GroupResource(),
 				name, errors.New("functionality not available")))
 			return
