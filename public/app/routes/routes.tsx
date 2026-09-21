@@ -555,6 +555,12 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/error-tracking',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "ErrorTrackingPage" */ 'app/features/errortracking/ErrorTrackingPage')
+      ),
+    },
+    {
       path: '/playlists',
       roles: getFeatureFlagClient().getBooleanValue(FlagKeys.PlaylistsRBAC, false)
         ? () => contextSrv.evaluatePermission([AccessControlAction.PlaylistsRead])

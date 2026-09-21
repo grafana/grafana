@@ -154,6 +154,11 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 					Id:   "drilldown-colorshapes",
 					Url:  s.cfg.AppSubURL + "/colorshapes",
 				},
+				{
+					Text: "Error tracking",
+					Id:   "drilldown-error-tracking",
+					Url:  s.cfg.AppSubURL + "/error-tracking",
+				},
 			},
 		})
 	}
