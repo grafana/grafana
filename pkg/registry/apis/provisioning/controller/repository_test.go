@@ -221,7 +221,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				f := NewMockFinalizerProcessor(t)
 
 				f.
-					On("process", mock.Anything, mock.Anything, mock.Anything, []string{
+					On("process", mock.Anything, mock.Anything, []string{
 						repository.CleanFinalizer,
 					}).
 					Once().
@@ -303,7 +303,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				f := NewMockFinalizerProcessor(t)
 
 				f.
-					On("process", mock.Anything, mock.Anything, mock.Anything, []string{
+					On("process", mock.Anything, mock.Anything, []string{
 						repository.CleanFinalizer,
 					}).
 					Once().
@@ -347,7 +347,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				f := NewMockFinalizerProcessor(t)
 
 				f.
-					On("process", mock.Anything, mock.Anything, mock.Anything, []string{
+					On("process", mock.Anything, mock.Anything, []string{
 						repository.CleanFinalizer,
 					}).
 					Once().
@@ -403,7 +403,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 
 				// repo is nil because the repository was never built.
 				f.
-					On("process", mock.Anything, mock.Anything, mock.Anything, []string{
+					On("process", mock.Anything, mock.Anything, []string{
 						repository.RemoveOrphanResourcesFinalizer,
 					}).
 					Once().
@@ -465,7 +465,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 func TestRepositoryController_handleDelete_RetriesOnConflict(t *testing.T) {
 	finalizer := NewMockFinalizerProcessor(t)
 	finalizer.
-		On("process", mock.Anything, mock.Anything, mock.Anything, []string{repository.CleanFinalizer}).
+		On("process", mock.Anything, mock.Anything, []string{repository.CleanFinalizer}).
 		Once().
 		Return(nil)
 
@@ -509,7 +509,7 @@ func TestRepositoryController_handleDelete_RetriesOnConflict(t *testing.T) {
 func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *testing.T) {
 	finalizer := NewMockFinalizerProcessor(t)
 	finalizer.
-		On("process", mock.Anything, mock.Anything, mock.Anything, []string{repository.CleanFinalizer}).
+		On("process", mock.Anything, mock.Anything, []string{repository.CleanFinalizer}).
 		Once().
 		Return(nil)
 
@@ -593,6 +593,51 @@ func TestRepositoryController_handleDelete_BuildFailureIsMetered(t *testing.T) {
 	assert.Equal(t, 1.0, deletionErrorsByStage(t, reg, deletionStageBuild))
 }
 
+// TestRepositoryController_handleDelete_WebhookDeleteFailureBlocksDeletion
+// verifies that while the cleanup finalizer is present, a webhook that cannot be
+// deleted fails the deletion (metered under the finalizers stage and recorded on
+// status) rather than being silently skipped. Forcing deletion is done by
+// removing the cleanup finalizer, not by tolerating this error.
+func TestRepositoryController_handleDelete_WebhookDeleteFailureBlocksDeletion(t *testing.T) {
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Finalizers: []string{repository.CleanFinalizer},
+		},
+		Status: provisioning.RepositoryStatus{
+			Webhook: &provisioning.WebhookStatus{ID: 1, URL: "https://example.com/hook"},
+		},
+	}
+
+	webhookClient := repository.NewMockWebhookClient(t)
+	webhookClient.EXPECT().DeleteWebhook(mock.Anything, mock.Anything).Return(repository.ErrPermissionDenied)
+	webhookRepo := repository.NewMockWebhookRepository(t)
+	webhookRepo.EXPECT().Config().Return(repo).Maybe()
+	webhookRepo.EXPECT().WebhookClient().Return(webhookClient).Maybe()
+
+	factory := repository.NewMockFactory(t)
+	factory.On("Build", mock.Anything, mock.Anything).Once().Return(webhookRepo, nil)
+
+	statusPatcher := mocks.NewStatusPatcher(t)
+	statusPatcher.
+		On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.AnythingOfType("map[string]interface {}")).
+		Once().
+		Return(nil)
+
+	reg := prometheus.NewPedanticRegistry()
+	c := &RepositoryController{
+		repoFactory:     factory,
+		statusPatcher:   statusPatcher,
+		tracer:          tracing.InitializeTracerForTest(),
+		deletionMetrics: registerRepositoryDeletionMetrics(reg),
+	}
+
+	err := c.handleDelete(context.Background(), repo)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "process finalizers: execute deletion hooks: delete webhook")
+	require.ErrorIs(t, err, repository.ErrPermissionDenied)
+	assert.Equal(t, 1.0, deletionErrorsByStage(t, reg, deletionStageFinalizers))
+}
+
 // TestRepositoryController_handleDelete_ObservesPendingAge verifies the wiring
 // from handleDelete to the pending-age histogram and the completion counter: a
 // terminating repository observes its age, and the deletion is counted once when
@@ -603,7 +648,7 @@ func TestRepositoryController_handleDelete_ObservesPendingAge(t *testing.T) {
 
 	finalizer := NewMockFinalizerProcessor(t)
 	finalizer.
-		On("process", mock.Anything, mock.Anything, mock.Anything, []string{repository.CleanFinalizer}).
+		On("process", mock.Anything, mock.Anything, []string{repository.CleanFinalizer}).
 		Once().
 		Return(nil)
 

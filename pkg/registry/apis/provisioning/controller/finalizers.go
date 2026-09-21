@@ -37,15 +37,14 @@ type finalizer struct {
 	maxWorkers    int
 }
 
-// process runs the repository's finalizers in a fixed order. cfg is the
-// repository configuration. deleteWebhook runs the provider-side webhook
-// deletion for the cleanup finalizer; it is nil when there is no webhook to
-// remove (the repository has no webhook client, or was not built because the
-// cleanup finalizer is absent), in which case that step is skipped and the
-// remaining config-only finalizers still run.
+// process runs the repository's config-only finalizers in a fixed order. These
+// operate on Grafana-side state (the job queue and managed resources) using the
+// configuration alone, so process needs no built repository. The cleanup
+// finalizer's webhook deletion — the only provider-dependent step — is handled
+// by the caller before process runs; the cleanup finalizer is intentionally not
+// handled here.
 func (f *finalizer) process(ctx context.Context,
 	cfg *provisioning.Repository,
-	deleteWebhook func(context.Context) error,
 	finalizers []string,
 ) error {
 	logger := logging.FromContext(ctx)
@@ -53,9 +52,8 @@ func (f *finalizer) process(ctx context.Context,
 
 	// Clear the job queue first so no pending job gets picked up and starts
 	// running against the repository while the rest of the teardown proceeds.
-	orderedFinalizers := [4]string{
+	orderedFinalizers := [3]string{
 		repository.RemovePendingJobsFinalizer,
-		repository.CleanFinalizer,
 		repository.ReleaseOrphanResourcesFinalizer,
 		repository.RemoveOrphanResourcesFinalizer}
 
@@ -76,20 +74,6 @@ func (f *finalizer) process(ctx context.Context,
 			if err != nil {
 				err = fmt.Errorf("clear job queue: %w", err)
 				outcome = metricutils.ErrorOutcome
-			}
-
-		case repository.CleanFinalizer:
-			// NOTE: the controller loop will never get run unless a finalizer is set
-			logger.Info("running cleanup finalizer")
-			// deleteWebhook is nil when there is nothing to remove on the
-			// provider side (no webhook client). Skipping it here is a no-op, not
-			// a force: a client forces deletion by removing the cleanup finalizer
-			// so this case never runs.
-			if deleteWebhook != nil {
-				if err = deleteWebhook(ctx); err != nil {
-					err = fmt.Errorf("execute deletion hooks: %w", err)
-					outcome = metricutils.ErrorOutcome
-				}
 			}
 
 		case repository.ReleaseOrphanResourcesFinalizer:
