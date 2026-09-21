@@ -1400,22 +1400,22 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*re
 
 			batchErr := runtimeErr
 			var next func() (DataObj, error, bool)
-			stop := func() {}
+			stopPull := func() {}
 			if batchErr == nil {
-				next, stop = iter.Pull2(k.dataStore.BatchGet(ctx, keys))
+				next, stopPull = iter.Pull2(k.dataStore.BatchGet(ctx, keys))
 			}
 			var peek DataObj
 			var hasPeek bool
-			closePeek := func() {
+			stop := func() {
 				if hasPeek && peek.Value != nil {
 					_ = peek.Value.Close()
 				}
 				hasPeek = false
+				stopPull()
 			}
 			for _, entry := range entries {
 				if entry.response != nil {
 					if !yield(entry.response, nil) {
-						closePeek()
 						stop()
 						return
 					}
@@ -1451,12 +1451,10 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*re
 					response.Error = NewNotFoundError(entry.request.Key)
 				}
 				if !yield(response, nil) {
-					closePeek()
 					stop()
 					return
 				}
 			}
-			closePeek()
 			stop()
 		}
 	}, nil
