@@ -16238,6 +16238,8 @@
       "new-snapshot-button": "New snapshot",
       "success-creation": "Your snapshot has been created",
       "success-delete": "Your snapshot has been deleted",
+      "too-large-body": "This snapshot is {{size}}, over the {{limit}} limit. Snapshot a single panel, shorten the time range, or select fewer template variable values, then try again.",
+      "too-large-title": "Snapshot is too large to publish",
       "view-all-button": "View all snapshots"
     },
     "share-panel": {
