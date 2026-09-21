@@ -263,7 +263,7 @@ func (r *xormRepositoryImpl) ensureTags(ctx context.Context, annotationID int64,
 		}
 
 		if len(tagsDelete) != 0 {
-			if _, err := sess.MustCols("annotation_id", "tag_id").In("tag_id", tagsDelete).Delete(annotationTag{AnnotationID: annotationID}); err != nil {
+			if _, err := sess.MustCols("annotation_id").In("tag_id", tagsDelete).Delete(annotationTag{AnnotationID: annotationID}); err != nil {
 				return err
 			}
 		}
