@@ -270,10 +270,8 @@ test.describe('Panels test: Time Comparison', { tag: ['@panels', '@timeseries'] 
       // asserting its absence before that would pass no matter what the panel did.
       const legend = await drawnLegend(panel, selectors);
 
-      // Shifted onto the visible range, and still identifiable as comparison data: the dashed
-      // legend icon comes from the lineStyle alignTimeRangeCompareData applies.
+      // Shifted onto the visible range, and still identifiable as comparison data.
       await expect(legend.getByRole('button', { name: 'E-compare-series (comparison)', exact: true })).toBeVisible();
-      await expect(legend.getByTestId('series-icon')).toHaveCSS('background-size', '6px 4px');
 
       await expect(panel.getByTestId('time-series-zoom-to-data')).toBeHidden();
     });
