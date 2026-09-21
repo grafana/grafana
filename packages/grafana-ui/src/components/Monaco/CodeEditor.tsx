@@ -132,6 +132,7 @@ class UnthemedCodeEditor extends PureComponent<Props> {
     const { theme, language, width, height, showMiniMap, showLineNumbers, readOnly, wordWrap, monacoOptions } =
       this.props;
     const { alwaysConsumeMouseWheel, ...restMonacoOptions } = monacoOptions ?? {};
+    const languageOptions = monacoLanguageRegistry.getIfExists(language)?.editorOptions;
 
     const value = this.props.value ?? '';
     const longText = value.length > 100;
@@ -185,6 +186,7 @@ class UnthemedCodeEditor extends PureComponent<Props> {
           value={value}
           options={{
             ...options,
+            ...languageOptions,
             ...(restMonacoOptions ?? {}),
           }}
           beforeMount={this.handleBeforeMount}
