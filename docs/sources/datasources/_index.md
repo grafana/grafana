@@ -181,11 +181,11 @@ Grafana includes three special data sources:
 
 ### Grafana
 
-A built-in data source that generates random walk data and can poll the [TestData](testdata/) data source. Additionally, it can list files and get other data from a Grafana installation. This can be helpful for testing visualizations and running experiments.
+This built-in data source generates random walk data and can poll the [TestData](testdata/) data source. It can also list files and retrieve other data from a Grafana installation, making it useful for testing visualizations and running experiments.
 
 ### Mixed
 
-An abstraction that lets you query multiple data sources in the same panel. When you select Mixed, you can then select a different data source for each new query that you add.
+This data source lets you query multiple data sources in the same panel. When you select **Mixed**, you can select a different data source for each new query that you add.
 
 - The first query uses the data source that was selected before you selected **Mixed**.
 - You can't change an existing query to use the **Mixed** data source.
@@ -194,7 +194,7 @@ An abstraction that lets you query multiple data sources in the same panel. When
 
 ### Dashboard
 
-A data source that reuses the result set from another panel in the same dashboard. Instead of running its own query against a backend, a panel using the **Dashboard** data source points to a _source panel_ and works with the data that panel already returned.
+This data source reuses the result set from another panel in the same dashboard. Instead of running its own query against a backend, a panel using the **Dashboard** data source points to a _source panel_ and works with the data that panel already returned.
 
 The Dashboard data source references the complete output of another panel. It doesn't chain one query into another within a single panel, so you can't feed the results of one query into a second query as an input. To reshape or narrow the referenced data, apply [transformations](ref:query-transform-data) in the panel that uses the Dashboard data source.
 
