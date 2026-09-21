@@ -70,12 +70,14 @@ func newBuilder(plugin definition.PluginDefinition, opts Options) (*appplugin.Ap
 		nil, // no decrypter: reading secrets is a request time concern
 		appplugin.NewPluginAccessChecker(nil),
 		offlineSearchClient{},
+		offlineStoreClient{},
 		appplugin.AppPluginRunnerOptions{
 			RegisterProxy: opts.RegisterProxy,
 			// Generated specs always enable search and trash route registration.
 			// searchroutes still applies its per-kind eligibility rules.
 			SearchAPIEnabled: true,
 			TrashAPIEnabled:  true,
+			KeysAPIEnabled:   true,
 		},
 		tracing.NewNoopTracerService(),
 		featuremgmt.WithFeatures(),
