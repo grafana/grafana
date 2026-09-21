@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
-	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -152,6 +151,7 @@ func NewRepositoryController(
 		finalizer: &finalizer{
 			lister:        resourceLister,
 			clientFactory: clients,
+			repoFactory:   repoFactory,
 			jobs:          jobs,
 			metrics:       &finalizerMetrics,
 			maxWorkers:    parallelOperations,
@@ -416,34 +416,6 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 
 	// Process any finalizers
 	if len(obj.Finalizers) > 0 {
-		// The cleanup finalizer removes the provider-side webhook, the only
-		// deletion step that needs a built repository (and therefore a working
-		// provider client). Build and run it here; the remaining finalizers
-		// operate on Grafana-side state from the configuration alone. Building
-		// decrypts secrets and constructs the provider client and so fails when
-		// credentials have expired — a client forcing deletion of an unhealthy
-		// repository removes the cleanup finalizer, skipping this entirely.
-		if slices.Contains(obj.Finalizers, repository.CleanFinalizer) {
-			repo, err := rc.repoFactory.Build(ctx, obj)
-			if err != nil {
-				rc.deletionMetrics.recordError(deletionStageBuild)
-				if statusErr := rc.updateDeleteStatus(ctx, obj, fmt.Errorf("create repository from configuration: %w", err)); statusErr != nil {
-					logger.Error("failed to update repository status after repository build error", "error", statusErr)
-				}
-				return fmt.Errorf("create repository from configuration: %w", err)
-			}
-			if webhookRepo, ok := repo.(repository.WebhookRepository); ok {
-				if err := webhookOnDelete(ctx, webhookRepo); err != nil {
-					err = fmt.Errorf("execute deletion hooks: %w", err)
-					rc.deletionMetrics.recordError(deletionStageFinalizers)
-					if statusErr := rc.updateDeleteStatus(ctx, obj, fmt.Errorf("remove finalizers: %w", err)); statusErr != nil {
-						logger.Error("failed to update repository status after finalizer removal error", "error", statusErr)
-					}
-					return fmt.Errorf("process finalizers: %w", err)
-				}
-			}
-		}
-
 		err := rc.finalizer.process(ctx, obj, obj.Finalizers)
 		if err != nil {
 			rc.deletionMetrics.recordError(deletionStageFinalizers)

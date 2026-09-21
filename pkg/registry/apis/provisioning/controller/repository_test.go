@@ -184,7 +184,6 @@ var (
 func TestRepositoryController_handleDelete(t *testing.T) {
 	testCases := []struct {
 		name          string
-		repoFactory   repository.Factory
 		finalizer     finalizerProcessor
 		client        client.ProvisioningV0alpha1Interface
 		statusPatcher StatusPatcher
@@ -193,7 +192,6 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 	}{
 		{
 			name:          "No finalizers",
-			repoFactory:   nil,
 			finalizer:     nil,
 			client:        nil,
 			statusPatcher: nil,
@@ -204,19 +202,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 			},
 		},
 		{
-			// The cleanup finalizer needs the built repository, so Build runs and
-			// the object is deleted on success.
-			name: "Finalizers deleted successfully",
-			repoFactory: func() repository.Factory {
-				f := repository.NewMockFactory(t)
-
-				f.
-					On("Build", mock.Anything, mock.Anything).
-					Once().
-					Return(nil, nil)
-
-				return f
-			}(),
+			name: "Finalizers processed successfully",
 			finalizer: func() finalizerProcessor {
 				f := NewMockFinalizerProcessor(t)
 
@@ -253,52 +239,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 			},
 		},
 		{
-			// A build failure only aborts deletion while the cleanup finalizer is
-			// present (that is the only finalizer needing the repository).
-			name: "Error when building repository",
-			repoFactory: func() repository.Factory {
-				f := repository.NewMockFactory(t)
-
-				f.
-					On("Build", mock.Anything, mock.Anything).
-					Once().
-					Return(nil, assert.AnError)
-
-				return f
-			}(),
-			finalizer: nil,
-			client:    nil,
-			statusPatcher: func() StatusPatcher {
-				// A build failure records status.deleteError too, so a patcher
-				// must be present.
-				s := mocks.NewStatusPatcher(t)
-				s.
-					On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.AnythingOfType("map[string]interface {}")).
-					Once().
-					Return(nil)
-				return s
-			}(),
-			repo: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Finalizers: []string{
-						repository.CleanFinalizer,
-					},
-				},
-			},
-			expectedErr: "create repository from configuration: " + assert.AnError.Error(),
-		},
-		{
 			name: "Error when processing finalizer",
-			repoFactory: func() repository.Factory {
-				f := repository.NewMockFactory(t)
-
-				f.
-					On("Build", mock.Anything, mock.Anything).
-					Once().
-					Return(nil, nil)
-
-				return f
-			}(),
 			finalizer: func() finalizerProcessor {
 				f := NewMockFinalizerProcessor(t)
 
@@ -333,16 +274,6 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 		},
 		{
 			name: "Error when patching finalizers",
-			repoFactory: func() repository.Factory {
-				f := repository.NewMockFactory(t)
-
-				f.
-					On("Build", mock.Anything, mock.Anything).
-					Once().
-					Return(nil, nil)
-
-				return f
-			}(),
 			finalizer: func() finalizerProcessor {
 				f := NewMockFinalizerProcessor(t)
 
@@ -388,58 +319,11 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 			},
 			expectedErr: "remove finalizers: " + assert.AnError.Error(),
 		},
-		{
-			// Without the cleanup finalizer, no provider-dependent step remains,
-			// so the repository is never built (Build is not mocked and must not
-			// be called) and deletion still completes. This is the force-delete
-			// path: a client removes the cleanup finalizer so an unbuildable
-			// repository (e.g. expired credentials) can still be deleted.
-			name: "Skips build and deletes when cleanup finalizer absent",
-			repoFactory: func() repository.Factory {
-				return repository.NewMockFactory(t)
-			}(),
-			finalizer: func() finalizerProcessor {
-				f := NewMockFinalizerProcessor(t)
-
-				// repo is nil because the repository was never built.
-				f.
-					On("process", mock.Anything, mock.Anything, []string{
-						repository.RemoveOrphanResourcesFinalizer,
-					}).
-					Once().
-					Return(nil)
-
-				return f
-			}(),
-			client: func() client.ProvisioningV0alpha1Interface {
-				repo := &mockRepoInterface{
-					patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *provisioning.Repository, err error) {
-						return &provisioning.Repository{}, nil
-					},
-				}
-				c := &mockProvisioningV0alpha1Interface{
-					repositoriesFunc: func(namespace string) client.RepositoryInterface {
-						return repo
-					},
-				}
-
-				return c
-			}(),
-			statusPatcher: nil,
-			repo: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Finalizers: []string{
-						repository.RemoveOrphanResourcesFinalizer,
-					},
-				},
-			},
-		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			c := &RepositoryController{
-				repoFactory:   tc.repoFactory,
 				finalizer:     tc.finalizer,
 				client:        tc.client,
 				statusPatcher: tc.statusPatcher,
@@ -469,9 +353,6 @@ func TestRepositoryController_handleDelete_RetriesOnConflict(t *testing.T) {
 		Once().
 		Return(nil)
 
-	factory := repository.NewMockFactory(t)
-	factory.On("Build", mock.Anything, mock.Anything).Once().Return(nil, nil)
-
 	var calls atomic.Int32
 	repoClient := &mockRepoInterface{
 		patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (*provisioning.Repository, error) {
@@ -488,9 +369,8 @@ func TestRepositoryController_handleDelete_RetriesOnConflict(t *testing.T) {
 	}
 
 	c := &RepositoryController{
-		repoFactory: factory,
-		finalizer:   finalizer,
-		tracer:      tracing.InitializeTracerForTest(),
+		finalizer: finalizer,
+		tracer:    tracing.InitializeTracerForTest(),
 		client: &mockProvisioningV0alpha1Interface{
 			repositoriesFunc: func(string) client.RepositoryInterface { return repoClient },
 		},
@@ -512,9 +392,6 @@ func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *t
 		On("process", mock.Anything, mock.Anything, []string{repository.CleanFinalizer}).
 		Once().
 		Return(nil)
-
-	factory := repository.NewMockFactory(t)
-	factory.On("Build", mock.Anything, mock.Anything).Once().Return(nil, nil)
 
 	var calls atomic.Int32
 	repoClient := &mockRepoInterface{
@@ -538,7 +415,6 @@ func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *t
 
 	reg := prometheus.NewPedanticRegistry()
 	c := &RepositoryController{
-		repoFactory:     factory,
 		finalizer:       finalizer,
 		tracer:          tracing.InitializeTracerForTest(),
 		statusPatcher:   statusPatcher,
@@ -560,92 +436,11 @@ func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *t
 	assert.Equal(t, 1.0, deletionErrorsByStage(t, reg, deletionStageRemoveFinalizers))
 }
 
-// TestRepositoryController_handleDelete_BuildFailureIsMetered verifies that a
-// repoFactory.Build failure during deletion — which leaves the repository
-// terminating without ever running finalizers — is counted under the build stage
-// rather than going unmetered.
-func TestRepositoryController_handleDelete_BuildFailureIsMetered(t *testing.T) {
-	factory := repository.NewMockFactory(t)
-	factory.On("Build", mock.Anything, mock.Anything).Once().Return(nil, assert.AnError)
-
-	statusPatcher := mocks.NewStatusPatcher(t)
-	statusPatcher.
-		On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.AnythingOfType("map[string]interface {}")).
-		Once().
-		Return(nil)
-
-	reg := prometheus.NewPedanticRegistry()
-	c := &RepositoryController{
-		repoFactory:     factory,
-		statusPatcher:   statusPatcher,
-		tracer:          tracing.InitializeTracerForTest(),
-		deletionMetrics: registerRepositoryDeletionMetrics(reg),
-	}
-
-	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Finalizers: []string{repository.CleanFinalizer},
-		},
-	}
-	err := c.handleDelete(context.Background(), repo)
-	require.Error(t, err)
-	require.ErrorContains(t, err, "create repository from configuration")
-	assert.Equal(t, 1.0, deletionErrorsByStage(t, reg, deletionStageBuild))
-}
-
-// TestRepositoryController_handleDelete_WebhookDeleteFailureBlocksDeletion
-// verifies that while the cleanup finalizer is present, a webhook that cannot be
-// deleted fails the deletion (metered under the finalizers stage and recorded on
-// status) rather than being silently skipped. Forcing deletion is done by
-// removing the cleanup finalizer, not by tolerating this error.
-func TestRepositoryController_handleDelete_WebhookDeleteFailureBlocksDeletion(t *testing.T) {
-	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Finalizers: []string{repository.CleanFinalizer},
-		},
-		Status: provisioning.RepositoryStatus{
-			Webhook: &provisioning.WebhookStatus{ID: 1, URL: "https://example.com/hook"},
-		},
-	}
-
-	webhookClient := repository.NewMockWebhookClient(t)
-	webhookClient.EXPECT().DeleteWebhook(mock.Anything, mock.Anything).Return(repository.ErrPermissionDenied)
-	webhookRepo := repository.NewMockWebhookRepository(t)
-	webhookRepo.EXPECT().Config().Return(repo).Maybe()
-	webhookRepo.EXPECT().WebhookClient().Return(webhookClient).Maybe()
-
-	factory := repository.NewMockFactory(t)
-	factory.On("Build", mock.Anything, mock.Anything).Once().Return(webhookRepo, nil)
-
-	statusPatcher := mocks.NewStatusPatcher(t)
-	statusPatcher.
-		On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.AnythingOfType("map[string]interface {}")).
-		Once().
-		Return(nil)
-
-	reg := prometheus.NewPedanticRegistry()
-	c := &RepositoryController{
-		repoFactory:     factory,
-		statusPatcher:   statusPatcher,
-		tracer:          tracing.InitializeTracerForTest(),
-		deletionMetrics: registerRepositoryDeletionMetrics(reg),
-	}
-
-	err := c.handleDelete(context.Background(), repo)
-	require.Error(t, err)
-	require.ErrorContains(t, err, "process finalizers: execute deletion hooks: delete webhook")
-	require.ErrorIs(t, err, repository.ErrPermissionDenied)
-	assert.Equal(t, 1.0, deletionErrorsByStage(t, reg, deletionStageFinalizers))
-}
-
 // TestRepositoryController_handleDelete_ObservesPendingAge verifies the wiring
 // from handleDelete to the pending-age histogram and the completion counter: a
 // terminating repository observes its age, and the deletion is counted once when
 // its finalizers are removed.
 func TestRepositoryController_handleDelete_ObservesPendingAge(t *testing.T) {
-	factory := repository.NewMockFactory(t)
-	factory.On("Build", mock.Anything, mock.Anything).Once().Return(nil, nil)
-
 	finalizer := NewMockFinalizerProcessor(t)
 	finalizer.
 		On("process", mock.Anything, mock.Anything, []string{repository.CleanFinalizer}).
@@ -660,7 +455,6 @@ func TestRepositoryController_handleDelete_ObservesPendingAge(t *testing.T) {
 
 	reg := prometheus.NewPedanticRegistry()
 	c := &RepositoryController{
-		repoFactory:     factory,
 		finalizer:       finalizer,
 		tracer:          tracing.InitializeTracerForTest(),
 		deletionMetrics: registerRepositoryDeletionMetrics(reg),
@@ -1708,6 +1502,7 @@ func TestRepositoryController_process_UserCausedDeleteFailure(t *testing.T) {
 	buildErr := fmt.Errorf("create gitlab client: %w", repository.ErrPermissionDenied)
 	mockFactory := repository.NewMockFactory(t)
 	mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(nil, buildErr)
+	finalizerMetrics := registerFinalizerMetrics(prometheus.NewRegistry())
 
 	patcher := &capturePatcher{}
 	repoGetter := informer.NewCachedRepositoryGetter(mockLister)
@@ -1716,7 +1511,7 @@ func TestRepositoryController_process_UserCausedDeleteFailure(t *testing.T) {
 		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
 		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
 		healthChecker: NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
-		repoFactory:   mockFactory,
+		finalizer:     &finalizer{repoFactory: mockFactory, metrics: &finalizerMetrics},
 		statusPatcher: patcher,
 		logger:        logging.DefaultLogger,
 		tracer:        tracing.InitializeTracerForTest(),
@@ -1779,6 +1574,7 @@ func TestRepositoryController_process_NonUserCausedDeleteFailureSurfacedOnStatus
 	buildErr := errors.New("create repository from configuration: boom")
 	mockFactory := repository.NewMockFactory(t)
 	mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(nil, buildErr)
+	finalizerMetrics := registerFinalizerMetrics(prometheus.NewRegistry())
 
 	patcher := &capturePatcher{}
 	repoGetter := informer.NewCachedRepositoryGetter(mockLister)
@@ -1787,7 +1583,7 @@ func TestRepositoryController_process_NonUserCausedDeleteFailureSurfacedOnStatus
 		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
 		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
 		healthChecker: NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
-		repoFactory:   mockFactory,
+		finalizer:     &finalizer{repoFactory: mockFactory, metrics: &finalizerMetrics},
 		statusPatcher: patcher,
 		logger:        logging.DefaultLogger,
 		tracer:        tracing.InitializeTracerForTest(),
@@ -1868,6 +1664,7 @@ func TestRepositoryController_process_DeleteStatusPatchFailure(t *testing.T) {
 
 			mockFactory := repository.NewMockFactory(t)
 			mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(nil, tt.buildErr)
+			finalizerMetrics := registerFinalizerMetrics(prometheus.NewRegistry())
 
 			patcher := &capturePatcher{err: patchErr}
 			repoGetter := informer.NewCachedRepositoryGetter(mockLister)
@@ -1876,7 +1673,7 @@ func TestRepositoryController_process_DeleteStatusPatchFailure(t *testing.T) {
 				quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
 				quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
 				healthChecker: NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
-				repoFactory:   mockFactory,
+				finalizer:     &finalizer{repoFactory: mockFactory, metrics: &finalizerMetrics},
 				statusPatcher: patcher,
 				logger:        logging.DefaultLogger,
 				tracer:        tracing.InitializeTracerForTest(),
