@@ -8,6 +8,7 @@ import { Alert, type Column, InteractiveTable, LoadingPlaceholder, Stack } from 
 import { Page } from 'app/core/components/Page/Page';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
 import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
+import { getAPINamespace } from 'app/api/utils';
 
 // Matches ListHitsV0alpha1BodyItems in
 // apps/colorshapes/pkg/apis/colorshapes/v0alpha1/listhits_response_body_types_gen.go
@@ -26,8 +27,7 @@ interface Event {
   occurredAt: number;
 }
 
-const HITS_URL = '/apis/colorshapes.grafana.app/v0alpha1/namespaces/default/hits';
-const EVENTS_URL = '/apis/colorshapes.grafana.app/v0alpha1/namespaces/default/events';
+const API_BASE = '/apis/colorshapes.grafana.app/v0alpha1/namespaces';
 
 function defaultRange(): TimeRange {
   const now = dateTime();
@@ -61,7 +61,7 @@ export default function ColorshapesPage() {
       const response = await lastValueFrom(
         getBackendSrv().fetch<{ items: Hit[] }>({
           method: 'GET',
-          url: HITS_URL,
+          url: `${API_BASE}/${getAPINamespace()}/hits`,
           params: { from: r.from.valueOf(), to: r.to.valueOf() },
         })
       );
@@ -87,7 +87,7 @@ export default function ColorshapesPage() {
       const response = await lastValueFrom(
         getBackendSrv().fetch<{ items: Event[] }>({
           method: 'GET',
-          url: EVENTS_URL,
+          url: `${API_BASE}/${getAPINamespace()}/events`,
           params: { from: r.from.valueOf(), to: r.to.valueOf() },
         })
       );
