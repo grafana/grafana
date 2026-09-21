@@ -23,6 +23,10 @@ weight: 100
 
 The news visualization displays an RSS feed. By default, it displays articles from the Grafana Labs blog, but you can change this by entering a different RSS feed URL.
 
+{{< admonition type="note" >}}
+The News visualization is currently in beta.
+{{< /admonition >}}
+
 {{< figure src="/static/img/docs/news/news-visualization.png" max-width="1025px" alt="A news visualization showing the latest Grafana news feed" >}}
 
 {{< admonition type="note" >}}
