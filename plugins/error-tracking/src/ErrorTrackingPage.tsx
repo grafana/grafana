@@ -3,7 +3,17 @@ import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react
 import { dateTime } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv, isFetchError, PluginPage } from '@grafana/runtime';
-import { Alert, Button, Field, Input, InteractiveTable, LoadingPlaceholder, Stack, type Column } from '@grafana/ui';
+import {
+  Alert,
+  Box,
+  Button,
+  Field,
+  Input,
+  InteractiveTable,
+  LoadingPlaceholder,
+  Stack,
+  type Column,
+} from '@grafana/ui';
 
 interface Event {
   occurredAt: number;
@@ -88,41 +98,43 @@ export default function ErrorTrackingPage() {
 
   return (
     <PluginPage>
-      <Stack direction="column" gap={2}>
-        <p>
-          {t(
-            'errortracking.page.description',
-            'Write and read a sample event through the Error tracking API and PostgreSQL.'
+      <Box padding={{ xs: 2, md: 4 }}>
+        <Stack direction="column" gap={2}>
+          <p>
+            {t(
+              'errortracking.page.description',
+              'Write and read a sample event through the Error tracking API and PostgreSQL.'
+            )}
+          </p>
+          <form onSubmit={submit}>
+            <Stack alignItems="end" gap={2}>
+              <Field label={t('errortracking.page.project', 'Project')} noMargin>
+                <Input value={project} onChange={(event) => setProject(event.currentTarget.value)} />
+              </Field>
+              <Field label={t('errortracking.page.message', 'Message')} noMargin>
+                <Input value={message} onChange={(event) => setMessage(event.currentTarget.value)} />
+              </Field>
+              <Button type="submit" disabled={saving}>
+                {saving ? t('errortracking.page.saving', 'Saving...') : t('errortracking.page.record', 'Record event')}
+              </Button>
+            </Stack>
+          </form>
+          {error && (
+            <Alert title={t('errortracking.page.request-failed', 'Request failed')} severity="error">
+              {error}
+            </Alert>
           )}
-        </p>
-        <form onSubmit={submit}>
-          <Stack alignItems="end" gap={2}>
-            <Field label={t('errortracking.page.project', 'Project')} noMargin>
-              <Input value={project} onChange={(event) => setProject(event.currentTarget.value)} />
-            </Field>
-            <Field label={t('errortracking.page.message', 'Message')} noMargin>
-              <Input value={message} onChange={(event) => setMessage(event.currentTarget.value)} />
-            </Field>
-            <Button type="submit" disabled={saving}>
-              {saving ? t('errortracking.page.saving', 'Saving...') : t('errortracking.page.record', 'Record event')}
-            </Button>
-          </Stack>
-        </form>
-        {error && (
-          <Alert title={t('errortracking.page.request-failed', 'Request failed')} severity="error">
-            {error}
-          </Alert>
-        )}
-        {loading ? (
-          <LoadingPlaceholder text={t('errortracking.page.loading', 'Loading events...')} />
-        ) : (
-          <InteractiveTable
-            columns={columns}
-            data={events}
-            getRowId={(event) => `${event.occurredAt}-${event.project}-${event.message}`}
-          />
-        )}
-      </Stack>
+          {loading ? (
+            <LoadingPlaceholder text={t('errortracking.page.loading', 'Loading events...')} />
+          ) : (
+            <InteractiveTable
+              columns={columns}
+              data={events}
+              getRowId={(event) => `${event.occurredAt}-${event.project}-${event.message}`}
+            />
+          )}
+        </Stack>
+      </Box>
     </PluginPage>
   );
 }
