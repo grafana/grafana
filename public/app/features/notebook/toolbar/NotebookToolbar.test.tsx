@@ -101,7 +101,7 @@ describe('NotebookToolbar', () => {
   const originalIsSecureContext = window.isSecureContext;
 
   beforeEach(() => {
-    // Outside a secure context ClipboardButton falls back to document.execCommand, which jsdom
+    // Outside a secure context copyTextToClipboard falls back to document.execCommand, which jsdom
     // does not implement — the copy would fail silently and never reach the clipboard stub.
     Object.assign(window, { isSecureContext: true });
     config.appUrl = 'https://host/';
@@ -125,7 +125,12 @@ describe('NotebookToolbar', () => {
    * service when the button is clicked, not at render, so setting it afterwards is enough.
    */
   function setup() {
-    const rendered = render(<NotebookToolbar uid="nb1" scene={buildScene()} />);
+    const rendered = render(
+      <>
+        <AppNotificationList />
+        <NotebookToolbar uid="nb1" scene={buildScene()} />
+      </>
+    );
 
     const history = new HistoryWrapper(createMemoryHistory({ initialEntries: ['/'] }));
     history.setOrgIdGetter(() => 3);
@@ -145,12 +150,14 @@ describe('NotebookToolbar', () => {
     expect(mockLinkCopied).toHaveBeenCalledWith('nb1', 'notebook_toolbar');
   });
 
+  // An app notification, not ClipboardButton's inline toast: this button calls copyTextToClipboard
+  // directly rather than going through ClipboardButton.
   it('confirms the copy, so the single click does not look like it did nothing', async () => {
     const { user } = setup();
 
     await user.click(screen.getByRole('button', { name: 'Copy link' }));
 
-    expect(await screen.findByText('Copied')).toBeInTheDocument();
+    expect(await screen.findByText('Link copied to clipboard')).toBeInTheDocument();
   });
 
   // Drives the whole path the PR made live: scene -> transformNotebookSceneToSaveModel ->

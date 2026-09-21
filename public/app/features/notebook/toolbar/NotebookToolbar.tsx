@@ -2,7 +2,8 @@ import { useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Button, ClipboardButton, Dropdown, IconButton, Menu } from '@grafana/ui';
+import { Button, copyTextToClipboard, Dropdown, IconButton, Menu, ToolbarButton } from '@grafana/ui';
+import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { NotebookAnalytics } from '../analytics/main';
 import { NOTEBOOK_DELETE_SOURCE, NOTEBOOK_EXPORT_SOURCE, NOTEBOOK_LINK_COPY_SOURCE } from '../analytics/types';
@@ -39,6 +40,17 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
   // menu closes.
   const [isDeclaring, setIsDeclaring] = useState(false);
   const [isAttaching, setIsAttaching] = useState(false);
+  const notifyApp = useAppNotification();
+
+  const onCopyLink = async () => {
+    try {
+      await copyTextToClipboard(notebookShareUrl(uid));
+      NotebookAnalytics.linkCopied(uid, NOTEBOOK_LINK_COPY_SOURCE.NOTEBOOK_TOOLBAR);
+      notifyApp.success(t('notebooks.list.table.link-copied', 'Link copied to clipboard'));
+    } catch {
+      notifyApp.error(t('notebooks.list.table.copy-link-error', 'Failed to copy link'));
+    }
+  };
 
   const onConfirmDelete = async () => {
     if (!(await remove(uid, scene.state.title))) {
@@ -88,15 +100,11 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
 
   return (
     <>
-      <ClipboardButton
-        variant="secondary"
-        fill="text"
-        size="sm"
+      <ToolbarButton
+        variant="canvas"
         icon="link"
-        aria-label={t('notebooks.view.copy-link', 'Copy link')}
         tooltip={t('notebooks.view.copy-link', 'Copy link')}
-        getText={() => notebookShareUrl(uid)}
-        onClipboardCopy={() => NotebookAnalytics.linkCopied(uid, NOTEBOOK_LINK_COPY_SOURCE.NOTEBOOK_TOOLBAR)}
+        onClick={onCopyLink}
       />
       <NotebookEditToggle notebook={scene} />
       <Dropdown overlay={moreMenu} placement="bottom-end">
@@ -145,8 +153,7 @@ function UnavailableActions({ scene }: { scene: NotebookScene }) {
     <>
       <Button
         variant="secondary"
-        fill="text"
-        size="sm"
+        size="md"
         icon="link"
         disabled
         tooltip={reason}
