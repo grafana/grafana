@@ -76,6 +76,21 @@
     },
     {
       "metadata": {
+        "name": "alerting.dataSourceManagedRouteProxy",
+        "resourceVersion": "1789551536572",
+        "creationTimestamp": "2026-09-16T09:38:56Z"
+      },
+      "spec": {
+        "description": "Hand data source managed alerting URLs over to the grafana-prometheusalerting-app plugin",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.folderHasRulesLabel",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"

@@ -705,7 +705,7 @@ var (
 			Name:        "perPanelNonApplicableDrilldowns",
 			Description: "Enables viewing non-applicable drilldowns on a panel level",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
 		},
@@ -1437,6 +1437,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:         "alerting.dataSourceManagedRouteProxy",
+			Description:  "Hand data source managed alerting URLs over to the grafana-prometheusalerting-app plugin",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
 		},
 		{
 			Name:         "alerting.manualAssistantInvestigation",
