@@ -1,4 +1,4 @@
-import { render, screen, within } from 'test/test-utils';
+import { render, screen, waitFor, within } from 'test/test-utils';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
 import { mockComboboxRect } from '@grafana/test-utils';
@@ -73,13 +73,15 @@ it('reloads the Kubernetes card with scoped facts after saving a filter', async 
 
   await user.click(screen.getByRole('button', { name: 'Filter by cluster, namespace, or node' }));
   const dialog = await screen.findByRole('dialog', { name: 'Filter Kubernetes Monitoring' });
-  await user.click(within(dialog).getByRole('combobox', { name: 'Cluster' }));
+  const cluster = within(dialog).getByRole('combobox', { name: 'Cluster' });
+  await waitFor(() => expect(cluster).toBeEnabled());
+  await user.click(cluster);
   await user.click(await screen.findByRole('option', { name: 'prod' }));
   await user.click(within(dialog).getByRole('button', { name: 'Save' }));
 
-  // The card reloads in place and returns with the scoped counts.
+  // The card reloads in place and returns with the scoped counts and the highlighted gear.
   expect(await screen.findByText('1 cluster')).toBeInTheDocument();
-  expect(screen.getByText('Filtered')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Edit filters (Cluster: prod)' })).toBeInTheDocument();
   expect(mockFetchInventory.mock.calls).toEqual([
     [datasource, null],
     [datasource, expect.objectContaining({ cluster: 'prod' })],

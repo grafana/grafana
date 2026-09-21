@@ -32,10 +32,12 @@ import {
 interface KubernetesFilterActionsProps {
   /** Datasource the card reads; a filter saved for another one is shown as not applied. */
   datasource: DataSourceInstanceListItem;
+  /** Whether the card's action is the attention one, so the applied gear takes the same text color. */
+  attention: boolean;
 }
 
-export function KubernetesFilterActions({ datasource }: KubernetesFilterActionsProps) {
-  const styles = useStyles2(getStyles);
+export function KubernetesFilterActions({ datasource, attention }: KubernetesFilterActionsProps) {
+  const styles = useStyles2(getStyles, attention);
   const [raw] = useStoredString(kubernetesFilterStorageKey(), '');
   const filter = useMemo(() => parseKubernetesFilter(raw), [raw]);
   const applied = filter !== null && filter.datasourceUid === datasource.uid;
@@ -43,14 +45,6 @@ export function KubernetesFilterActions({ datasource }: KubernetesFilterActionsP
 
   return (
     <>
-      {applied && (
-        <Badge
-          color="orange"
-          icon="filter"
-          text={t('home.solutions.kubernetes.filter.badge', 'Filtered')}
-          tooltip={summarizeKubernetesFilter(filter)}
-        />
-      )}
       {filter && !applied && (
         <Badge
           color="darkgrey"
@@ -59,15 +53,19 @@ export function KubernetesFilterActions({ datasource }: KubernetesFilterActionsP
           tooltip={t(
             'home.solutions.kubernetes.filter.ignored-tooltip',
             'Saved for {{saved}}. This card reads {{current}}, so it shows the whole fleet.',
-            { saved: filter.datasourceName, current: datasource.name }
+            { saved: filter.datasourceName, current: datasource.name, interpolation: { escapeValue: false } }
           )}
         />
       )}
+      {/* The highlighted gear is the only sign a filter is applied, so its tooltip carries the selection. */}
       <IconButton
         name="cog"
         tooltip={
           applied
-            ? t('home.solutions.kubernetes.filter.edit', 'Filters applied. Edit filters')
+            ? t('home.solutions.kubernetes.filter.edit', 'Edit filters ({{summary}})', {
+                summary: summarizeKubernetesFilter(filter),
+                interpolation: { escapeValue: false },
+              })
             : t('home.solutions.kubernetes.filter.open', 'Filter by cluster, namespace, or node')
         }
         className={applied ? styles.applied : undefined}
@@ -137,9 +135,10 @@ function KubernetesFilterModal({ datasource, filter, onClose }: KubernetesFilter
           {t(
             'home.solutions.kubernetes.filter.intro',
             'Values come from {{name}}. Type to add one that is not listed.',
-            { name: datasource.name }
+            { name: datasource.name, interpolation: { escapeValue: false } }
           )}
         </Text>
+        {/* Each select is locked until its own values arrive; the namespace and node lists reload per cluster. */}
         <Field label={t('home.solutions.kubernetes.filter.cluster', 'Cluster')} noMargin>
           <Combobox<string>
             id="kubernetes-filter-cluster"
@@ -148,6 +147,7 @@ function KubernetesFilterModal({ datasource, filter, onClose }: KubernetesFilter
             isClearable
             createCustomValue
             loading={clusters.loading}
+            disabled={clusters.loading}
             placeholder={t('home.solutions.kubernetes.filter.all-clusters', 'All clusters')}
             onChange={(option) => setDraft({ ...draft, cluster: option?.value ?? '' })}
           />
@@ -160,6 +160,7 @@ function KubernetesFilterModal({ datasource, filter, onClose }: KubernetesFilter
             isClearable
             createCustomValue
             loading={namespaces.loading}
+            disabled={namespaces.loading}
             placeholder={t('home.solutions.kubernetes.filter.all-namespaces', 'All namespaces')}
             onChange={(options) => setDraft({ ...draft, namespaces: options.map((o) => o.value) })}
           />
@@ -172,6 +173,7 @@ function KubernetesFilterModal({ datasource, filter, onClose }: KubernetesFilter
             isClearable
             createCustomValue
             loading={nodes.loading}
+            disabled={nodes.loading}
             placeholder={t('home.solutions.kubernetes.filter.all-nodes', 'All nodes')}
             onChange={(options) => setDraft({ ...draft, nodes: options.map((o) => o.value) })}
           />
@@ -202,11 +204,12 @@ function toOptions(values: string[] | undefined): Array<ComboboxOption<string>> 
   return (values ?? []).map((value) => ({ label: value, value }));
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, attention: boolean) => ({
   applied: css({
-    // Same highlight the overview uses for its Get started option; `&&` outranks IconButton's own color.
+    // The card's text-fill action is accent-colored, or warning-colored when it points at alerts;
+    // `&&` outranks IconButton's own color.
     '&&': {
-      color: theme.flags.visualDesignRefresh ? theme.colors.accent.main : theme.visualization.getColorByName('orange'),
+      color: attention ? theme.colors.warning.text : theme.colors.accent.text,
     },
   }),
 });

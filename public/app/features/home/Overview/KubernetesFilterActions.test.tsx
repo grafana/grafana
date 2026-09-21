@@ -1,11 +1,11 @@
 import { type UserEvent } from '@testing-library/user-event';
-import { render, screen, waitFor, within } from 'test/test-utils';
+import { act, render, screen, waitFor, within } from 'test/test-utils';
 
 import { store } from '@grafana/data';
 import { mockComboboxRect } from '@grafana/test-utils';
 
 import { fetchKubernetesLabelValues, kubernetesFilterStorageKey } from '../solutions/kubernetesFilter';
-import { stubDatasource } from '../solutions/test-utils';
+import { deferred, stubDatasource } from '../solutions/test-utils';
 
 import { KubernetesFilterActions } from './KubernetesFilterActions';
 
@@ -31,27 +31,36 @@ beforeEach(() => {
 afterEach(() => jest.restoreAllMocks());
 
 async function pickCluster(dialog: HTMLElement, user: UserEvent, cluster: string) {
-  await user.click(within(dialog).getByRole('combobox', { name: 'Cluster' }));
+  const combobox = within(dialog).getByRole('combobox', { name: 'Cluster' });
+  await waitFor(() => expect(combobox).toBeEnabled());
+  await user.click(combobox);
   await user.click(await screen.findByRole('option', { name: cluster }));
 }
 
 describe('KubernetesFilterActions', () => {
-  it('saves a cluster and a custom namespace picked in the dialog and marks the card filtered', async () => {
-    const { user } = render(<KubernetesFilterActions datasource={stubDatasource} />);
+  it('saves a cluster and a custom namespace picked in the dialog and highlights the gear', async () => {
+    const clusters = deferred<string[]>();
+    mockFetchLabelValues.mockImplementation((_uid, key) =>
+      key === 'cluster' ? clusters.promise : Promise.resolve([])
+    );
+    const { user } = render(<KubernetesFilterActions datasource={stubDatasource} attention={false} />);
 
     await user.click(screen.getByRole('button', OPEN_GEAR));
     const dialog = await screen.findByRole('dialog', { name: 'Filter Kubernetes Monitoring' });
-    // Nothing selected and nothing stored: neither Save nor Clear applies.
+    // Values still loading, nothing selected, nothing stored: the select waits, Save and Clear do not apply.
+    expect(within(dialog).getByRole('combobox', { name: 'Cluster' })).toBeDisabled();
     expect(within(dialog).getByRole('button', { name: 'Save' })).toBeDisabled();
     expect(within(dialog).queryByRole('button', { name: 'Clear filters' })).not.toBeInTheDocument();
 
+    await act(async () => clusters.resolve(['prod']));
     await pickCluster(dialog, user, 'prod');
     // The namespace and node lists follow the drafted cluster.
     await waitFor(() => expect(mockFetchLabelValues).toHaveBeenCalledWith('prometheus', 'namespace', 'prod'));
 
     const namespaces = within(dialog).getByRole('combobox', { name: 'Namespaces' });
-    await user.type(namespaces, 'custom-ns');
-    await user.click(await screen.findByRole('option', { name: /custom-ns/ }));
+    await waitFor(() => expect(namespaces).toBeEnabled());
+    await user.type(namespaces, 'team/a');
+    await user.click(await screen.findByRole('option', { name: /team\/a/ }));
     await user.click(within(dialog).getByRole('button', { name: 'Save' }));
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
@@ -59,11 +68,12 @@ describe('KubernetesFilterActions', () => {
       datasourceUid: 'prometheus',
       datasourceName: 'Prometheus',
       cluster: 'prod',
-      namespaces: ['custom-ns'],
+      namespaces: ['team/a'],
       nodes: [],
     });
-    expect(screen.getByText('Filtered')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Filters applied. Edit filters' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Edit filters (Cluster: prod · Namespaces: team/a)' })
+    ).toBeInTheDocument();
   });
 
   it('shows a filter saved for another datasource as not applied and lets the user clear it', async () => {
@@ -71,10 +81,9 @@ describe('KubernetesFilterActions', () => {
       kubernetesFilterStorageKey(),
       JSON.stringify({ datasourceUid: 'other', datasourceName: 'Other', cluster: 'prod', namespaces: [], nodes: [] })
     );
-    const { user } = render(<KubernetesFilterActions datasource={stubDatasource} />);
+    const { user } = render(<KubernetesFilterActions datasource={stubDatasource} attention={false} />);
 
     expect(screen.getByText('Filters not applied')).toBeInTheDocument();
-    expect(screen.queryByText('Filtered')).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', OPEN_GEAR));
     const dialog = await screen.findByRole('dialog');
@@ -93,7 +102,7 @@ describe('KubernetesFilterActions', () => {
     jest.spyOn(store, 'setObject').mockImplementation(() => {
       throw new Error('quota');
     });
-    const { user } = render(<KubernetesFilterActions datasource={stubDatasource} />);
+    const { user } = render(<KubernetesFilterActions datasource={stubDatasource} attention={false} />);
 
     await user.click(screen.getByRole('button', OPEN_GEAR));
     const dialog = await screen.findByRole('dialog');

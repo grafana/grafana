@@ -22,7 +22,12 @@ export function ExistingSolutionCard({ existing, selected, onSelect }: ExistingS
   const { value: alert = null } = useAsync(() => selected.alert(), [selected]);
   const { value: cta = null, loading: ctaLoading } = useAsync(() => selected.cta(), [selected]);
   const { value: datasource = null } = useAsync(() => selected.datasource(), [selected]);
-  const subtitle = datasource && t('home.solutions.via-datasource', 'via {{name}}', { name: datasource.name });
+  const subtitle =
+    datasource &&
+    t('home.solutions.via-datasource', 'via {{name}}', {
+      name: datasource.name,
+      interpolation: { escapeValue: false },
+    });
   const isAttentionCta = cta?.action === 'view_alerts';
 
   return (

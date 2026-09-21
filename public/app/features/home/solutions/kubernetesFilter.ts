@@ -54,19 +54,26 @@ export function summarizeKubernetesFilter(filter: KubernetesFilter): string {
   const parts: string[] = [];
   if (filter.cluster) {
     parts.push(
-      t('home.solutions.kubernetes.filter.summary-cluster', 'Cluster: {{cluster}}', { cluster: filter.cluster })
+      t('home.solutions.kubernetes.filter.summary-cluster', 'Cluster: {{cluster}}', {
+        cluster: filter.cluster,
+        interpolation: { escapeValue: false },
+      })
     );
   }
   if (filter.namespaces.length > 0) {
     parts.push(
       t('home.solutions.kubernetes.filter.summary-namespaces', 'Namespaces: {{namespaces}}', {
         namespaces: filter.namespaces.join(', '),
+        interpolation: { escapeValue: false },
       })
     );
   }
   if (filter.nodes.length > 0) {
     parts.push(
-      t('home.solutions.kubernetes.filter.summary-nodes', 'Nodes: {{nodes}}', { nodes: filter.nodes.join(', ') })
+      t('home.solutions.kubernetes.filter.summary-nodes', 'Nodes: {{nodes}}', {
+        nodes: filter.nodes.join(', '),
+        interpolation: { escapeValue: false },
+      })
     );
   }
   return parts.join(' · ');
