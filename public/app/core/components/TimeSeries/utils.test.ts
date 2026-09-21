@@ -666,9 +666,10 @@ describe('show values', () => {
   function makeValuesFrame(): DataFrame {
     const frame = createDataFrame({
       fields: [
-        { name: 'Time', type: FieldType.time, config: {}, values: [1000, 2000] },
-        { name: 'A', type: FieldType.number, config: { custom: { showValues: true } }, values: [10, 20] },
-        { name: 'B', type: FieldType.number, config: { custom: { showValues: true } }, values: [30, 40] },
+        { name: 'Time', type: FieldType.time, config: {}, values: [1000, 2000, 3000, 4000] },
+        { name: 'A', type: FieldType.number, config: { custom: { showValues: true } }, values: [1, 2, 3, 2] },
+        // B lands on or next to A at the second and fourth points, so its labels collide with A's
+        { name: 'B', type: FieldType.number, config: { custom: { showValues: true } }, values: [3, 2.01, 1, 2] },
       ],
     });
 
@@ -681,15 +682,12 @@ describe('show values', () => {
 
   function drawValues(visible: boolean[]) {
     const fillText = jest.fn();
-    const builder = buildBuilder(makeValuesFrame());
+    const frame = makeValuesFrame();
+    const builder = buildBuilder(frame);
     const draw = builder.getConfig().hooks.draw![0] as unknown as (u: MockUPlot) => void;
 
     draw({
-      data: [
-        [1000, 2000],
-        [10, 20],
-        [30, 40],
-      ],
+      data: frame.fields.map((field) => field.values),
       series: [
         { show: true, points: { show: () => false }, scale: 'x' },
         ...visible.map((show) => ({ show, points: { show: () => true }, scale: 'y' })),
@@ -703,10 +701,10 @@ describe('show values', () => {
   }
 
   it('draws a value for every point of both series', () => {
-    expect(drawValues([true, true])).toEqual(['10', '20', '30', '40']);
+    expect(drawValues([true, true])).toEqual(['1', '2', '3', '2', '3', '2.01', '1', '2']);
   });
 
   it('draws no values for a series hidden through the legend', () => {
-    expect(drawValues([true, false])).toEqual(['10', '20']);
+    expect(drawValues([true, false])).toEqual(['1', '2', '3', '2']);
   });
 });
