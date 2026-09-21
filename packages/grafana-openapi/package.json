@@ -25,6 +25,9 @@
     "./apis/*": {
       "import": "./dist/apis/*.json",
       "require": "./dist/apis/*.json"
+    },
+    "./internal/process-spec": {
+      "@grafana-app/source": "./src/scripts/process-spec.ts"
     }
   },
   "publishConfig": {
@@ -54,6 +57,7 @@
   },
   "packageManager": "yarn@4.17.1",
   "devDependencies": {
+    "openapi-types": "^12.1.3",
     "prettier": "3.6.2"
   }
 }

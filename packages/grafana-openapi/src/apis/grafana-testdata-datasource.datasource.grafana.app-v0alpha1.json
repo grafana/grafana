@@ -8,7 +8,7 @@
     }
   },
   "paths": {
-    "/": {
+    "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/": {
       "get": {
         "tags": ["API Discovery"],
         "description": "Describe the available kubernetes resources",

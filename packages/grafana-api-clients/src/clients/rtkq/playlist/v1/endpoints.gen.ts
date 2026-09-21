@@ -7,7 +7,7 @@ const injectedRtkApi = api
   .injectEndpoints({
     endpoints: (build) => ({
       getApiResources: build.query<GetApiResourcesApiResponse, GetApiResourcesApiArg>({
-        query: () => ({ url: `/` }),
+        query: () => ({ url: `/apis/playlist.grafana.app/v1/` }),
         providesTags: ['API Discovery'],
       }),
       listPlaylist: build.query<ListPlaylistApiResponse, ListPlaylistApiArg>({

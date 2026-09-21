@@ -2389,7 +2389,11 @@ __metadata:
   peerDependencies:
     "@grafana/runtime": ">=11.6"
     "@reduxjs/toolkit": ^2.10.0
+    "@rtk-query/codegen-openapi": ^2.0.0
     rxjs: ^7.8.2
+  peerDependenciesMeta:
+    "@rtk-query/codegen-openapi":
+      optional: true
   bin:
     grafana-api-clients: ./dist/cli/generate.mjs
   languageName: unknown
@@ -2759,6 +2763,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/openapi@workspace:packages/grafana-openapi"
   dependencies:
+    openapi-types: "npm:^12.1.3"
     prettier: "npm:3.6.2"
   languageName: unknown
   linkType: soft

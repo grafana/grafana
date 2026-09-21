@@ -15,7 +15,7 @@ const goldenDir = path.join(__dirname, 'testdata/generated');
 function generate(outDir: string) {
   execFileSync(
     process.execPath,
-    [path.join(__dirname, 'generate.ts'), 'generate', '--spec', specDir, '--out', outDir],
+    ['--conditions=@grafana-app/source', path.join(__dirname, 'generate.ts'), 'generate', '--spec', specDir, '--out', outDir],
     {
       stdio: 'pipe',
     }
@@ -42,7 +42,7 @@ describe('generateClients', () => {
   afterAll(() => rmSync(outDir, { recursive: true, force: true }));
 
   it('writes one client per served version', () => {
-    expect(readdirSync(outDir).sort()).toEqual(['createBaseQuery.ts', 'v0alpha1', 'v1alpha1']);
+    expect(readdirSync(outDir).sort()).toEqual(['v0alpha1', 'v1alpha1']);
     expect(readdirSync(path.join(outDir, 'v1alpha1')).sort()).toEqual(['baseAPI.ts', 'endpoints.gen.ts', 'index.ts']);
   });
 

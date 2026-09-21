@@ -5,7 +5,6 @@
  * `grafana cli write-openapi`) into RTK Query clients, one per group version, using the
  * same simplification and codegen that produce the clients in this package.
  *
- *   <out>/createBaseQuery.ts         shared base query over getBackendSrv()
  *   <out>/<version>/baseAPI.ts       createApi() the endpoints are injected into
  *   <out>/<version>/endpoints.gen.ts generated endpoints, types and hooks
  *   <out>/<version>/index.ts         re-exports, generatedAPI

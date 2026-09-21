@@ -1,17 +1,14 @@
-import { api } from "./baseAPI";
-export const addTagTypes = ["API Discovery", "Settings"] as const;
+import { api } from './baseAPI';
+export const addTagTypes = ['API Discovery', 'Settings'] as const;
 const injectedRtkApi = api
   .enhanceEndpoints({
     addTagTypes,
   })
   .injectEndpoints({
     endpoints: (build) => ({
-      getApiResources: build.query<
-        GetApiResourcesApiResponse,
-        GetApiResourcesApiArg
-      >({
+      getApiResources: build.query<GetApiResourcesApiResponse, GetApiResourcesApiArg>({
         query: () => ({ url: `/apis/appsdktest.ext.grafana.app/v0alpha1/` }),
-        providesTags: ["API Discovery"],
+        providesTags: ['API Discovery'],
       }),
       getSettings: build.query<GetSettingsApiResponse, GetSettingsApiArg>({
         query: (queryArg) => ({
@@ -20,15 +17,12 @@ const injectedRtkApi = api
             pretty: queryArg.pretty,
           },
         }),
-        providesTags: ["Settings"],
+        providesTags: ['Settings'],
       }),
-      replaceSettings: build.mutation<
-        ReplaceSettingsApiResponse,
-        ReplaceSettingsApiArg
-      >({
+      replaceSettings: build.mutation<ReplaceSettingsApiResponse, ReplaceSettingsApiArg>({
         query: (queryArg) => ({
           url: `/app/instance`,
-          method: "PUT",
+          method: 'PUT',
           body: queryArg.settings,
           params: {
             pretty: queryArg.pretty,
@@ -37,34 +31,27 @@ const injectedRtkApi = api
             fieldValidation: queryArg.fieldValidation,
           },
         }),
-        invalidatesTags: ["Settings"],
+        invalidatesTags: ['Settings'],
       }),
-      deleteSettings: build.mutation<
-        DeleteSettingsApiResponse,
-        DeleteSettingsApiArg
-      >({
+      deleteSettings: build.mutation<DeleteSettingsApiResponse, DeleteSettingsApiArg>({
         query: (queryArg) => ({
           url: `/app/instance`,
-          method: "DELETE",
+          method: 'DELETE',
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
             gracePeriodSeconds: queryArg.gracePeriodSeconds,
-            ignoreStoreReadErrorWithClusterBreakingPotential:
-              queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
             orphanDependents: queryArg.orphanDependents,
             propagationPolicy: queryArg.propagationPolicy,
           },
         }),
-        invalidatesTags: ["Settings"],
+        invalidatesTags: ['Settings'],
       }),
-      updateSettings: build.mutation<
-        UpdateSettingsApiResponse,
-        UpdateSettingsApiArg
-      >({
+      updateSettings: build.mutation<UpdateSettingsApiResponse, UpdateSettingsApiArg>({
         query: (queryArg) => ({
           url: `/app/instance`,
-          method: "PATCH",
+          method: 'PATCH',
           body: queryArg.patch,
           params: {
             pretty: queryArg.pretty,
@@ -74,21 +61,15 @@ const injectedRtkApi = api
             force: queryArg.force,
           },
         }),
-        invalidatesTags: ["Settings"],
+        invalidatesTags: ['Settings'],
       }),
-      getSettingsHealth: build.query<
-        GetSettingsHealthApiResponse,
-        GetSettingsHealthApiArg
-      >({
+      getSettingsHealth: build.query<GetSettingsHealthApiResponse, GetSettingsHealthApiArg>({
         query: () => ({ url: `/app/instance/health` }),
-        providesTags: ["Settings"],
+        providesTags: ['Settings'],
       }),
-      getSettingsResources: build.query<
-        GetSettingsResourcesApiResponse,
-        GetSettingsResourcesApiArg
-      >({
+      getSettingsResources: build.query<GetSettingsResourcesApiResponse, GetSettingsResourcesApiArg>({
         query: () => ({ url: `/app/instance/resources` }),
-        providesTags: ["Settings"],
+        providesTags: ['Settings'],
       }),
     }),
     overrideExisting: false,
@@ -101,9 +82,7 @@ export type GetSettingsApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
 };
-export type ReplaceSettingsApiResponse = /** status 200 OK */
-  | Settings
-  | /** status 201 Created */ Settings;
+export type ReplaceSettingsApiResponse = /** status 200 OK */ Settings | /** status 201 Created */ Settings;
 export type ReplaceSettingsApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -115,9 +94,7 @@ export type ReplaceSettingsApiArg = {
   fieldValidation?: string;
   settings: Settings;
 };
-export type DeleteSettingsApiResponse = /** status 200 OK */
-  | Status
-  | /** status 202 Accepted */ Status;
+export type DeleteSettingsApiResponse = /** status 200 OK */ Status | /** status 202 Accepted */ Status;
 export type DeleteSettingsApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -132,9 +109,7 @@ export type DeleteSettingsApiArg = {
   /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
   propagationPolicy?: string;
 };
-export type UpdateSettingsApiResponse = /** status 200 OK */
-  | Settings
-  | /** status 201 Created */ Settings;
+export type UpdateSettingsApiResponse = /** status 200 OK */ Settings | /** status 201 Created */ Settings;
 export type UpdateSettingsApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -148,8 +123,7 @@ export type UpdateSettingsApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type GetSettingsHealthApiResponse =
-  /** status 200 OK */ HealthCheckResult;
+export type GetSettingsHealthApiResponse = /** status 200 OK */ HealthCheckResult;
 export type GetSettingsHealthApiArg = void;
 export type GetSettingsResourcesApiResponse = /** status 200 OK */ string;
 export type GetSettingsResourcesApiArg = void;
@@ -308,8 +282,8 @@ export type AppsdktestSettingsSpec = {
   pinned?: boolean;
 };
 export type Settings = {
-  apiVersion?: "appsdktest.ext.grafana.app/v0alpha1";
-  kind?: "Settings";
+  apiVersion?: 'appsdktest.ext.grafana.app/v0alpha1';
+  kind?: 'Settings';
   metadata?: ObjectMeta;
   /** Secure values allows setting values that are never shown to users. The returned properties are only the names of the configured values. */
   secure?: {

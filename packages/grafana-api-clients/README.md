@@ -79,9 +79,10 @@ npx grafana-api-clients generate --spec openapi --out src/api/generated
 ```
 
 This writes, per served version, `<version>/baseAPI.ts`, `<version>/index.ts` (created once, safe to
-edit) and `<version>/endpoints.gen.ts` (regenerated every run), plus a shared `createBaseQuery.ts`.
-Every served version gets a client, including the settings API in `v0alpha1`. The generated files import `@grafana/api-clients`, `@grafana/runtime`, `@reduxjs/toolkit` and `rxjs`, and the
-hooks need `react-redux`; add any of these the plugin does not already depend on. Register `generatedAPI.reducer`
+edit) and `<version>/endpoints.gen.ts` (regenerated every run). Every served version gets a client,
+including the settings API in `v0alpha1`. The CLI needs `@rtk-query/codegen-openapi` as a dev dependency.
+The generated files import `@grafana/api-clients` and `@reduxjs/toolkit`, and the hooks need `react-redux`;
+add any of these the plugin does not already depend on. Register `generatedAPI.reducer`
 and `generatedAPI.middleware` (from `<version>/index.ts`) in the plugin's redux store.
 
 # Development (within `grafana/grafana`)

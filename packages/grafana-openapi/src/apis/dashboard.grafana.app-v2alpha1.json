@@ -5,7 +5,7 @@
     "title": "dashboard.grafana.app/v2alpha1"
   },
   "paths": {
-    "/": {
+    "/apis/dashboard.grafana.app/v2alpha1/": {
       "get": {
         "tags": ["API Discovery"],
         "description": "Describe the available kubernetes resources",

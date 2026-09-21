@@ -1,21 +1,14 @@
-import { api } from "./baseAPI";
-export const addTagTypes = [
-  "API Discovery",
-  "Settings",
-  "TestResource",
-] as const;
+import { api } from './baseAPI';
+export const addTagTypes = ['API Discovery', 'Settings', 'TestResource'] as const;
 const injectedRtkApi = api
   .enhanceEndpoints({
     addTagTypes,
   })
   .injectEndpoints({
     endpoints: (build) => ({
-      getApiResources: build.query<
-        GetApiResourcesApiResponse,
-        GetApiResourcesApiArg
-      >({
+      getApiResources: build.query<GetApiResourcesApiResponse, GetApiResourcesApiArg>({
         query: () => ({ url: `/apis/appsdktest.ext.grafana.app/v1alpha1/` }),
-        providesTags: ["API Discovery"],
+        providesTags: ['API Discovery'],
       }),
       getFoo: build.query<GetFooApiResponse, GetFooApiArg>({
         query: () => ({ url: `/apis/appsdktest.ext.grafana.app/v1alpha1/foo` }),
@@ -27,15 +20,12 @@ const injectedRtkApi = api
             pretty: queryArg.pretty,
           },
         }),
-        providesTags: ["Settings"],
+        providesTags: ['Settings'],
       }),
-      replaceSettings: build.mutation<
-        ReplaceSettingsApiResponse,
-        ReplaceSettingsApiArg
-      >({
+      replaceSettings: build.mutation<ReplaceSettingsApiResponse, ReplaceSettingsApiArg>({
         query: (queryArg) => ({
           url: `/app/instance`,
-          method: "PUT",
+          method: 'PUT',
           body: queryArg.settings,
           params: {
             pretty: queryArg.pretty,
@@ -44,34 +34,27 @@ const injectedRtkApi = api
             fieldValidation: queryArg.fieldValidation,
           },
         }),
-        invalidatesTags: ["Settings"],
+        invalidatesTags: ['Settings'],
       }),
-      deleteSettings: build.mutation<
-        DeleteSettingsApiResponse,
-        DeleteSettingsApiArg
-      >({
+      deleteSettings: build.mutation<DeleteSettingsApiResponse, DeleteSettingsApiArg>({
         query: (queryArg) => ({
           url: `/app/instance`,
-          method: "DELETE",
+          method: 'DELETE',
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
             gracePeriodSeconds: queryArg.gracePeriodSeconds,
-            ignoreStoreReadErrorWithClusterBreakingPotential:
-              queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
             orphanDependents: queryArg.orphanDependents,
             propagationPolicy: queryArg.propagationPolicy,
           },
         }),
-        invalidatesTags: ["Settings"],
+        invalidatesTags: ['Settings'],
       }),
-      updateSettings: build.mutation<
-        UpdateSettingsApiResponse,
-        UpdateSettingsApiArg
-      >({
+      updateSettings: build.mutation<UpdateSettingsApiResponse, UpdateSettingsApiArg>({
         query: (queryArg) => ({
           url: `/app/instance`,
-          method: "PATCH",
+          method: 'PATCH',
           body: queryArg.patch,
           params: {
             pretty: queryArg.pretty,
@@ -81,34 +64,25 @@ const injectedRtkApi = api
             force: queryArg.force,
           },
         }),
-        invalidatesTags: ["Settings"],
+        invalidatesTags: ['Settings'],
       }),
-      getSettingsHealth: build.query<
-        GetSettingsHealthApiResponse,
-        GetSettingsHealthApiArg
-      >({
+      getSettingsHealth: build.query<GetSettingsHealthApiResponse, GetSettingsHealthApiArg>({
         query: () => ({ url: `/app/instance/health` }),
-        providesTags: ["Settings"],
+        providesTags: ['Settings'],
       }),
-      getSettingsResources: build.query<
-        GetSettingsResourcesApiResponse,
-        GetSettingsResourcesApiArg
-      >({
+      getSettingsResources: build.query<GetSettingsResourcesApiResponse, GetSettingsResourcesApiArg>({
         query: () => ({ url: `/app/instance/resources` }),
-        providesTags: ["Settings"],
+        providesTags: ['Settings'],
       }),
       getBar: build.query<GetBarApiResponse, GetBarApiArg>({
         query: () => ({ url: `/bar` }),
       }),
-      listTestResource: build.query<
-        ListTestResourceApiResponse,
-        ListTestResourceApiArg
-      >({
+      listTestResource: build.query<ListTestResourceApiResponse, ListTestResourceApiArg>({
         query: (queryArg) => ({
           url: `/testresources`,
           params: {
             pretty: queryArg.pretty,
-            continue: queryArg["continue"],
+            continue: queryArg['continue'],
             fieldSelector: queryArg.fieldSelector,
             labelSelector: queryArg.labelSelector,
             limit: queryArg.limit,
@@ -117,15 +91,12 @@ const injectedRtkApi = api
             watch: queryArg.watch,
           },
         }),
-        providesTags: ["TestResource"],
+        providesTags: ['TestResource'],
       }),
-      createTestResource: build.mutation<
-        CreateTestResourceApiResponse,
-        CreateTestResourceApiArg
-      >({
+      createTestResource: build.mutation<CreateTestResourceApiResponse, CreateTestResourceApiArg>({
         query: (queryArg) => ({
           url: `/testresources`,
-          method: "POST",
+          method: 'POST',
           body: queryArg.testResource,
           params: {
             pretty: queryArg.pretty,
@@ -134,7 +105,7 @@ const injectedRtkApi = api
             fieldValidation: queryArg.fieldValidation,
           },
         }),
-        invalidatesTags: ["TestResource"],
+        invalidatesTags: ['TestResource'],
       }),
       deletecollectionTestResource: build.mutation<
         DeletecollectionTestResourceApiResponse,
@@ -142,15 +113,14 @@ const injectedRtkApi = api
       >({
         query: (queryArg) => ({
           url: `/testresources`,
-          method: "DELETE",
+          method: 'DELETE',
           params: {
             pretty: queryArg.pretty,
-            continue: queryArg["continue"],
+            continue: queryArg['continue'],
             dryRun: queryArg.dryRun,
             fieldSelector: queryArg.fieldSelector,
             gracePeriodSeconds: queryArg.gracePeriodSeconds,
-            ignoreStoreReadErrorWithClusterBreakingPotential:
-              queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
             labelSelector: queryArg.labelSelector,
             limit: queryArg.limit,
             orphanDependents: queryArg.orphanDependents,
@@ -162,27 +132,21 @@ const injectedRtkApi = api
             timeoutSeconds: queryArg.timeoutSeconds,
           },
         }),
-        invalidatesTags: ["TestResource"],
+        invalidatesTags: ['TestResource'],
       }),
-      getTestResource: build.query<
-        GetTestResourceApiResponse,
-        GetTestResourceApiArg
-      >({
+      getTestResource: build.query<GetTestResourceApiResponse, GetTestResourceApiArg>({
         query: (queryArg) => ({
           url: `/testresources/${queryArg.name}`,
           params: {
             pretty: queryArg.pretty,
           },
         }),
-        providesTags: ["TestResource"],
+        providesTags: ['TestResource'],
       }),
-      replaceTestResource: build.mutation<
-        ReplaceTestResourceApiResponse,
-        ReplaceTestResourceApiArg
-      >({
+      replaceTestResource: build.mutation<ReplaceTestResourceApiResponse, ReplaceTestResourceApiArg>({
         query: (queryArg) => ({
           url: `/testresources/${queryArg.name}`,
-          method: "PUT",
+          method: 'PUT',
           body: queryArg.testResource,
           params: {
             pretty: queryArg.pretty,
@@ -191,34 +155,27 @@ const injectedRtkApi = api
             fieldValidation: queryArg.fieldValidation,
           },
         }),
-        invalidatesTags: ["TestResource"],
+        invalidatesTags: ['TestResource'],
       }),
-      deleteTestResource: build.mutation<
-        DeleteTestResourceApiResponse,
-        DeleteTestResourceApiArg
-      >({
+      deleteTestResource: build.mutation<DeleteTestResourceApiResponse, DeleteTestResourceApiArg>({
         query: (queryArg) => ({
           url: `/testresources/${queryArg.name}`,
-          method: "DELETE",
+          method: 'DELETE',
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
             gracePeriodSeconds: queryArg.gracePeriodSeconds,
-            ignoreStoreReadErrorWithClusterBreakingPotential:
-              queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
             orphanDependents: queryArg.orphanDependents,
             propagationPolicy: queryArg.propagationPolicy,
           },
         }),
-        invalidatesTags: ["TestResource"],
+        invalidatesTags: ['TestResource'],
       }),
-      updateTestResource: build.mutation<
-        UpdateTestResourceApiResponse,
-        UpdateTestResourceApiArg
-      >({
+      updateTestResource: build.mutation<UpdateTestResourceApiResponse, UpdateTestResourceApiArg>({
         query: (queryArg) => ({
           url: `/testresources/${queryArg.name}`,
-          method: "PATCH",
+          method: 'PATCH',
           body: queryArg.patch,
           params: {
             pretty: queryArg.pretty,
@@ -228,31 +185,25 @@ const injectedRtkApi = api
             force: queryArg.force,
           },
         }),
-        invalidatesTags: ["TestResource"],
+        invalidatesTags: ['TestResource'],
       }),
       getBaz: build.query<GetBazApiResponse, GetBazApiArg>({
         query: (queryArg) => ({ url: `/testresources/${queryArg.name}/baz` }),
-        providesTags: ["TestResource"],
+        providesTags: ['TestResource'],
       }),
-      getTestResourceStatus: build.query<
-        GetTestResourceStatusApiResponse,
-        GetTestResourceStatusApiArg
-      >({
+      getTestResourceStatus: build.query<GetTestResourceStatusApiResponse, GetTestResourceStatusApiArg>({
         query: (queryArg) => ({
           url: `/testresources/${queryArg.name}/status`,
           params: {
             pretty: queryArg.pretty,
           },
         }),
-        providesTags: ["TestResource"],
+        providesTags: ['TestResource'],
       }),
-      replaceTestResourceStatus: build.mutation<
-        ReplaceTestResourceStatusApiResponse,
-        ReplaceTestResourceStatusApiArg
-      >({
+      replaceTestResourceStatus: build.mutation<ReplaceTestResourceStatusApiResponse, ReplaceTestResourceStatusApiArg>({
         query: (queryArg) => ({
           url: `/testresources/${queryArg.name}/status`,
-          method: "PUT",
+          method: 'PUT',
           body: queryArg.testResource,
           params: {
             pretty: queryArg.pretty,
@@ -261,15 +212,12 @@ const injectedRtkApi = api
             fieldValidation: queryArg.fieldValidation,
           },
         }),
-        invalidatesTags: ["TestResource"],
+        invalidatesTags: ['TestResource'],
       }),
-      updateTestResourceStatus: build.mutation<
-        UpdateTestResourceStatusApiResponse,
-        UpdateTestResourceStatusApiArg
-      >({
+      updateTestResourceStatus: build.mutation<UpdateTestResourceStatusApiResponse, UpdateTestResourceStatusApiArg>({
         query: (queryArg) => ({
           url: `/testresources/${queryArg.name}/status`,
-          method: "PATCH",
+          method: 'PATCH',
           body: queryArg.patch,
           params: {
             pretty: queryArg.pretty,
@@ -279,7 +227,7 @@ const injectedRtkApi = api
             force: queryArg.force,
           },
         }),
-        invalidatesTags: ["TestResource"],
+        invalidatesTags: ['TestResource'],
       }),
     }),
     overrideExisting: false,
@@ -294,9 +242,7 @@ export type GetSettingsApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
 };
-export type ReplaceSettingsApiResponse = /** status 200 OK */
-  | Settings
-  | /** status 201 Created */ Settings;
+export type ReplaceSettingsApiResponse = /** status 200 OK */ Settings | /** status 201 Created */ Settings;
 export type ReplaceSettingsApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -308,9 +254,7 @@ export type ReplaceSettingsApiArg = {
   fieldValidation?: string;
   settings: Settings;
 };
-export type DeleteSettingsApiResponse = /** status 200 OK */
-  | Status
-  | /** status 202 Accepted */ Status;
+export type DeleteSettingsApiResponse = /** status 200 OK */ Status | /** status 202 Accepted */ Status;
 export type DeleteSettingsApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -325,9 +269,7 @@ export type DeleteSettingsApiArg = {
   /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
   propagationPolicy?: string;
 };
-export type UpdateSettingsApiResponse = /** status 200 OK */
-  | Settings
-  | /** status 201 Created */ Settings;
+export type UpdateSettingsApiResponse = /** status 200 OK */ Settings | /** status 201 Created */ Settings;
 export type UpdateSettingsApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -341,8 +283,7 @@ export type UpdateSettingsApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type GetSettingsHealthApiResponse =
-  /** status 200 OK */ HealthCheckResult;
+export type GetSettingsHealthApiResponse = /** status 200 OK */ HealthCheckResult;
 export type GetSettingsHealthApiArg = void;
 export type GetSettingsResourcesApiResponse = /** status 200 OK */ string;
 export type GetSettingsResourcesApiArg = void;
@@ -388,8 +329,7 @@ export type CreateTestResourceApiArg = {
   fieldValidation?: string;
   testResource: TestResource;
 };
-export type DeletecollectionTestResourceApiResponse =
-  /** status 200 OK */ Status;
+export type DeletecollectionTestResourceApiResponse = /** status 200 OK */ Status;
 export type DeletecollectionTestResourceApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -470,9 +410,7 @@ export type GetTestResourceApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
 };
-export type ReplaceTestResourceApiResponse = /** status 200 OK */
-  | TestResource
-  | /** status 201 Created */ TestResource;
+export type ReplaceTestResourceApiResponse = /** status 200 OK */ TestResource | /** status 201 Created */ TestResource;
 export type ReplaceTestResourceApiArg = {
   /** name of the TestResource */
   name: string;
@@ -486,9 +424,7 @@ export type ReplaceTestResourceApiArg = {
   fieldValidation?: string;
   testResource: TestResource;
 };
-export type DeleteTestResourceApiResponse = /** status 200 OK */
-  | Status
-  | /** status 202 Accepted */ Status;
+export type DeleteTestResourceApiResponse = /** status 200 OK */ Status | /** status 202 Accepted */ Status;
 export type DeleteTestResourceApiArg = {
   /** name of the TestResource */
   name: string;
@@ -505,9 +441,7 @@ export type DeleteTestResourceApiArg = {
   /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
   propagationPolicy?: string;
 };
-export type UpdateTestResourceApiResponse = /** status 200 OK */
-  | TestResource
-  | /** status 201 Created */ TestResource;
+export type UpdateTestResourceApiResponse = /** status 200 OK */ TestResource | /** status 201 Created */ TestResource;
 export type UpdateTestResourceApiArg = {
   /** name of the TestResource */
   name: string;
@@ -528,8 +462,7 @@ export type GetBazApiArg = {
   /** name of the parent resource */
   name: string;
 };
-export type GetTestResourceStatusApiResponse =
-  /** status 200 OK */ TestResource;
+export type GetTestResourceStatusApiResponse = /** status 200 OK */ TestResource;
 export type GetTestResourceStatusApiArg = {
   /** name of the TestResource */
   name: string;
@@ -725,8 +658,8 @@ export type AppsdktestSettingsSpec = {
   pinned?: boolean;
 };
 export type Settings = {
-  apiVersion?: "appsdktest.ext.grafana.app/v1alpha1";
-  kind?: "Settings";
+  apiVersion?: 'appsdktest.ext.grafana.app/v1alpha1';
+  kind?: 'Settings';
   metadata?: ObjectMeta;
   /** Secure values allows setting values that are never shown to users. The returned properties are only the names of the configured values. */
   secure?: {
@@ -823,7 +756,7 @@ export type TestResourceOperatorState = {
   lastEvaluation: string;
   /** state describes the state of the lastEvaluation.
     It is limited to three possible states for machine evaluation. */
-  state: "success" | "in_progress" | "failed";
+  state: 'success' | 'in_progress' | 'failed';
 };
 export type TestResourceStatus = {
   /** additionalFields is reserved for future use */

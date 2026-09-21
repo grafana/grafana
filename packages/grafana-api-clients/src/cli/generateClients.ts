@@ -1,36 +1,32 @@
-import { generateEndpoints } from '@rtk-query/codegen-openapi';
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { type OpenAPIV3 } from 'openapi-types';
 
-import { groupVersion, includeEndpoint, restoreClusterPaths } from './lib.ts';
-import { processOpenAPISpec } from './process-spec.ts';
-import { CREATE_BASE_QUERY_SOURCE, renderPluginBaseAPI, renderPluginIndexTs } from './templates.ts';
+import { processOpenAPISpec, specGroupVersion } from '@grafana/openapi/internal/process-spec';
+
+import { writeNewFileIfMissing } from '../generator/files.ts';
+import { deriveReducerPath, renderBaseAPI, renderIndexTs } from '../generator/templates.ts';
+
+import { includeEndpoint } from './lib.ts';
+
+const BASE_API_IMPORTS = `import { createBaseQuery, getAPIBaseURL } from '@grafana/api-clients';`;
 
 export interface GenerateOptions {
   /** Directory of <group>-<version>.json OpenAPI documents, as written by `grafana cli write-openapi`. */
   specDir: string;
   /** Directory to write the clients to. */
   outDir: string;
-  log?: (message: string) => void;
 }
 
 /**
  * Turns every OpenAPI document in specDir into an RTK Query client under outDir/<version>/.
- * baseAPI.ts, index.ts and the shared createBaseQuery.ts are written once and left alone afterwards;
- * endpoints.gen.ts is regenerated every run.
+ * baseAPI.ts and index.ts are written once and left alone afterwards; endpoints.gen.ts is
+ * regenerated every run.
  */
-export async function generateClients({ specDir, outDir, log = console.log }: GenerateOptions): Promise<void> {
+export async function generateClients({ specDir, outDir }: GenerateOptions): Promise<void> {
   specDir = path.resolve(specDir);
   outDir = path.resolve(outDir);
-
-  const writeIfMissing = (file: string, content: string) => {
-    if (!existsSync(file)) {
-      writeFileSync(file, content);
-      log(`Wrote ${path.relative(process.cwd(), file)}`);
-    }
-  };
 
   const files = readdirSync(specDir)
     .filter((f) => f.endsWith('.json'))
@@ -39,61 +35,53 @@ export async function generateClients({ specDir, outDir, log = console.log }: Ge
     throw new Error(`No OpenAPI documents in ${specDir}`);
   }
 
-  mkdirSync(outDir, { recursive: true });
-  writeIfMissing(path.join(outDir, 'createBaseQuery.ts'), CREATE_BASE_QUERY_SOURCE);
+  const { generateEndpoints } = await importCodegen();
 
   // The simplified spec is only read by the codegen. Core keeps its own under packages/grafana-openapi
   // because its pipeline hands the file between two workspaces; here both steps run in one process.
   const tmp = mkdtempSync(path.join(tmpdir(), 'grafana-api-clients-'));
   try {
-    await generateAll(files, { specDir, outDir, tmp, writeIfMissing, log });
+    for (const file of files) {
+      const raw: OpenAPIV3.Document = JSON.parse(readFileSync(path.join(specDir, file), 'utf8'));
+      const gv = specGroupVersion(raw);
+      if (!gv) {
+        throw new Error(`${file}: unable to determine group and version`);
+      }
+      const { group, version } = gv;
+
+      const processedFile = path.join(tmp, `${version}.json`);
+      writeFileSync(processedFile, JSON.stringify(processOpenAPISpec(raw)));
+
+      const dir = path.join(outDir, version);
+      const apiFile = path.join(dir, 'baseAPI.ts');
+      const reducerPath = deriveReducerPath(group.replace(/\.grafana\.app$/, ''), version);
+      writeNewFileIfMissing(apiFile, renderBaseAPI({ group, version, reducerPath }, BASE_API_IMPORTS));
+      writeNewFileIfMissing(path.join(dir, 'index.ts'), renderIndexTs());
+
+      // A relative apiFile (resolved against cwd) makes the codegen emit a relative import of baseAPI;
+      // an absolute one would be emitted verbatim.
+      const outputFile = path.join(dir, 'endpoints.gen.ts');
+      await generateEndpoints({
+        schemaFile: processedFile,
+        apiFile: './' + path.relative(process.cwd(), apiFile),
+        outputFile,
+        exportName: 'generatedAPI',
+        tag: true,
+        hooks: { queries: true, lazyQueries: true, mutations: true },
+        filterEndpoints: (_name, operation) => includeEndpoint(operation.path),
+      });
+      console.log(`Wrote ${path.relative(process.cwd(), outputFile)} for ${group}/${version}`);
+    }
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
 }
 
-async function generateAll(
-  files: string[],
-  {
-    specDir,
-    outDir,
-    tmp,
-    writeIfMissing,
-    log,
-  }: {
-    specDir: string;
-    outDir: string;
-    tmp: string;
-    writeIfMissing: (file: string, content: string) => void;
-    log: (message: string) => void;
-  }
-) {
-  for (const file of files) {
-    const raw: OpenAPIV3.Document = JSON.parse(readFileSync(path.join(specDir, file), 'utf8'));
-    const { group, version } = groupVersion(raw, file);
-    const spec = restoreClusterPaths(processOpenAPISpec(raw), raw, group, version);
-
-    const dir = path.join(outDir, version);
-    mkdirSync(dir, { recursive: true });
-    const processedFile = path.join(tmp, `${version}.json`);
-    writeFileSync(processedFile, JSON.stringify(spec));
-
-    const apiFile = path.join(dir, 'baseAPI.ts');
-    writeIfMissing(apiFile, renderPluginBaseAPI(group, version));
-    writeIfMissing(path.join(dir, 'index.ts'), renderPluginIndexTs());
-
-    // A relative apiFile (resolved against cwd) makes the codegen emit a relative import of baseAPI;
-    // an absolute one would be emitted verbatim.
-    const outputFile = path.join(dir, 'endpoints.gen.ts');
-    await generateEndpoints({
-      schemaFile: processedFile,
-      apiFile: './' + path.relative(process.cwd(), apiFile),
-      outputFile,
-      exportName: 'generatedAPI',
-      tag: true,
-      hooks: { queries: true, lazyQueries: true, mutations: true },
-      filterEndpoints: (_name, operation) => includeEndpoint(operation.path),
-    });
-    log(`Wrote ${path.relative(process.cwd(), outputFile)} for ${group}/${version}`);
+/** The codegen is an optional peer dependency so plugins that only use the hooks do not install it. */
+async function importCodegen() {
+  try {
+    return await import('@rtk-query/codegen-openapi');
+  } catch {
+    throw new Error('grafana-api-clients generate needs @rtk-query/codegen-openapi: yarn add -D @rtk-query/codegen-openapi');
   }
 }

@@ -3,6 +3,8 @@ import type { ConfigFile } from '@rtk-query/codegen-openapi';
 import { type OpenAPIV3 } from 'openapi-types';
 import path from 'path';
 
+import { includeEndpoint } from '../cli/lib.ts';
+
 // Grafana root path - navigate up from this script's directory
 const basePath = path.resolve(__dirname, '../../../..');
 
@@ -23,17 +25,12 @@ const defaultHooksOptions = {
   mutations: true,
 };
 
-// Every namespaced kind can serve /search and /trash, and no frontend calls them yet, so
-// generating a hook per kind would add clients nobody imports. The dashboard search at
-// `/search` is a different, older endpoint and stays.
-const perResourceSearch = /^\/[^/]+\/(search|trash)$/;
-
 export const withoutPerResourceSearch = (filterEndpoints?: EndpointMatcher): EndpointMatcher => {
   if (Array.isArray(filterEndpoints)) {
     return filterEndpoints;
   }
   return (name, operation) =>
-    !perResourceSearch.test(operation.path) && (filterEndpoints ? filterEndpoints(name, operation) : true);
+    includeEndpoint(operation.path) && (filterEndpoints ? filterEndpoints(name, operation) : true);
 };
 
 /**

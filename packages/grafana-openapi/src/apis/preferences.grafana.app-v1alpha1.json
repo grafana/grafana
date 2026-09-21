@@ -5,7 +5,7 @@
     "title": "preferences.grafana.app/v1alpha1"
   },
   "paths": {
-    "/": {
+    "/apis/preferences.grafana.app/v1alpha1/": {
       "get": {
         "tags": ["API Discovery"],
         "description": "Describe the available kubernetes resources",

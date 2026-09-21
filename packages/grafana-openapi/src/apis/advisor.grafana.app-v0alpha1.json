@@ -4,7 +4,7 @@
     "title": "advisor.grafana.app/v0alpha1"
   },
   "paths": {
-    "/": {
+    "/apis/advisor.grafana.app/v0alpha1/": {
       "get": {
         "tags": ["API Discovery"],
         "description": "Describe the available kubernetes resources",
