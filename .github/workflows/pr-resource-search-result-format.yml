@@ -39,7 +39,7 @@ jobs:
 
           targets_file=$(mktemp)
           # Find files with composite literals, new allocations, or standalone/grouped zero-value declarations.
-          git grep -lz -E 'ResourceSearchRequest[[:space:]]*\{|new\([^)]*ResourceSearchRequest\)|var[[:space:]]+[[:alnum:]_]+[[:space:]]+[^[:space:]]*ResourceSearchRequest|^[[:space:]]*[[:alnum:]_]+[[:space:]]+[^[:space:]]*ResourceSearchRequest[[:space:]]*$' -- '*.go' \
+          git grep -lz -E 'ResourceSearchRequest[[:space:]]*\{|new\([^)]*ResourceSearchRequest\)|var[[:space:]]+[[:alnum:]_]+[[:space:]]+[^[:space:]]*ResourceSearchRequest|^[[:space:]]*[[:alnum:]_]+[[:space:]]+[^[:space:]]*ResourceSearchRequest([[:space:]]*//.*)?[[:space:]]*$' -- '*.go' \
             ':(exclude)**/*_test.go' \
             ':(exclude)pkg/storage/unified/resourcepb/**' \
             ':(exclude)pkg/storage/unified/testing/**' \
