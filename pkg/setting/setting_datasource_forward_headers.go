@@ -47,6 +47,12 @@ var DefaultDataSourceForwardHeadersDenyList = []string{
 	"Transfer-Encoding",
 	"Upgrade",
 	"Content-Length",
+	// Headers the SDK HTTP client (and Go's transport) manage themselves.
+	// Forwarding these can break decompression or content negotiation on
+	// the outbound request the plugin makes to the actual datasource.
+	"Accept-Encoding",
+	"Accept",
+	"Content-Type",
 }
 
 func readDataSourceForwardHeadersSettings(iniFile *ini.File, cfg *Cfg) error {

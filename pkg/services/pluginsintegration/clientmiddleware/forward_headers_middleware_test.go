@@ -351,6 +351,56 @@ func TestForwardHeadersMiddleware_NoReqContext(t *testing.T) {
 	require.Empty(t, cdt.QueryDataReq.Headers)
 }
 
+func TestForwardHeadersMiddleware_SanitizesNonPrintableValue(t *testing.T) {
+	enableForwardHeadersFlag(t)
+
+	req := newForwardHeadersReq(t)
+	raw := "tenant-\x01bad"
+	req.Header.Set("X-Scope-OrgID", raw)
+
+	cdt := handlertest.NewHandlerMiddlewareTest(t,
+		WithReqContext(req, &user.SignedInUser{}),
+		handlertest.WithMiddlewares(NewForwardHeadersMiddleware(defaultDenyList)),
+	)
+	pluginCtx := newForwardHeadersPluginCtx(t, []string{"X-Scope-OrgID"})
+
+	_, err := cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
+		PluginContext: pluginCtx,
+		Headers:       map[string]string{},
+	})
+	require.NoError(t, err)
+	// Non-printable-ASCII values must go through the same gRPC sanitization
+	// TracingHeaderMiddleware applies, since the plugin protocol rejects them.
+	got := cdt.QueryDataReq.GetHTTPHeader("X-Scope-OrgID")
+	require.False(t, isGRPCSafeHeaderValue(raw))
+	require.Equal(t, sanitizeHTTPHeaderValueForGRPC(raw), got)
+	require.True(t, isGRPCSafeHeaderValue(got))
+}
+
+func TestForwardHeadersMiddleware_CallResourceSanitizesEachValue(t *testing.T) {
+	enableForwardHeadersFlag(t)
+
+	req := newForwardHeadersReq(t)
+	raw := "bad\x02value"
+	req.Header.Add("X-Multi", "good")
+	req.Header.Add("X-Multi", raw)
+
+	cdt := handlertest.NewHandlerMiddlewareTest(t,
+		WithReqContext(req, &user.SignedInUser{}),
+		handlertest.WithMiddlewares(NewForwardHeadersMiddleware(defaultDenyList)),
+	)
+	pluginCtx := newForwardHeadersPluginCtx(t, []string{"X-Multi"})
+
+	err := cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
+		PluginContext: pluginCtx,
+		Headers:       map[string][]string{},
+	}, nopCallResourceSender)
+	require.NoError(t, err)
+	// CallResource keeps values separate, so each one must be sanitized
+	// independently rather than only the joined form.
+	require.Equal(t, []string{"good", sanitizeHTTPHeaderValueForGRPC(raw)}, cdt.CallResourceReq.Headers["X-Multi"])
+}
+
 func TestForwardHeadersMiddleware_AppInstance_NoOp(t *testing.T) {
 	enableForwardHeadersFlag(t)
 

@@ -69,6 +69,16 @@ func TestDataSourceForwardHeadersSettings_UnknownModeCoercesToMerge(t *testing.T
 	require.Equal(t, DefaultDataSourceForwardHeadersDenyList, cfg.DataSourceForwardHeadersDenyList)
 }
 
+func TestDefaultDataSourceForwardHeadersDenyList_CoversTransportHeaders(t *testing.T) {
+	// Accept-Encoding, Accept and Content-Type are managed by the SDK HTTP
+	// client / Go's transport; forwarding the incoming request's values for
+	// these onto the outbound plugin request can break decompression and
+	// content negotiation, so match-all allow-lists must not leak them.
+	for _, h := range []string{"Accept-Encoding", "Accept", "Content-Type"} {
+		require.Contains(t, DefaultDataSourceForwardHeadersDenyList, h)
+	}
+}
+
 func TestDataSourceForwardHeadersSettings_NoSection(t *testing.T) {
 	f, err := ini.Load([]byte(""))
 	require.NoError(t, err)

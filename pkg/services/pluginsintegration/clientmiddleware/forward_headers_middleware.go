@@ -84,6 +84,9 @@ func (m *ForwardHeadersMiddleware) applyHeaders(ctx context.Context, pCtx backen
 			continue
 		}
 		joined := joinHeaderValues(values)
+		if !isGRPCSafeHeaderValue(joined) {
+			joined = sanitizeHTTPHeaderValueForGRPC(joined)
+		}
 		// QueryData/QueryChunkedData/CheckHealth carry a plain string-keyed
 		// Headers map: the SDK's outbound HTTP client middleware only reads
 		// headers back out through GetHTTPHeaders, which recognizes the
@@ -106,7 +109,15 @@ func (m *ForwardHeadersMiddleware) applyHeaders(ctx context.Context, pCtx backen
 			}
 		case *backend.CallResourceRequest:
 			if _, exists := t.Headers[canon]; !exists {
-				t.Headers[canon] = append([]string(nil), values...)
+				sanitized := make([]string, len(values))
+				for i, v := range values {
+					if isGRPCSafeHeaderValue(v) {
+						sanitized[i] = v
+					} else {
+						sanitized[i] = sanitizeHTTPHeaderValueForGRPC(v)
+					}
+				}
+				t.Headers[canon] = sanitized
 			}
 		}
 	}
