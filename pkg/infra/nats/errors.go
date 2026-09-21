@@ -26,6 +26,14 @@ var connStateErrs = []error{
 	natsclient.ErrConnectionDraining,
 }
 
+// authErrs are permanent credential/authorization rejections that cannot heal on retry.
+var authErrs = []error{
+	natsclient.ErrAuthorization,
+	natsclient.ErrAuthExpired,
+	natsclient.ErrAuthRevoked,
+	natsclient.ErrAccountAuthExpired,
+}
+
 // permissionsSubjectRes extract the rejected subject from a permissions
 // violation. nats.go reports these through processTransientError, which always
 // passes a nil *Subscription — for subscribe rejections as much as publish ones
@@ -37,6 +45,18 @@ var permissionsSubjectRes = []*regexp.Regexp{
 
 func isConnStateErr(err error) bool {
 	for _, target := range connStateErrs {
+		if errors.Is(err, target) {
+			return true
+		}
+	}
+	return false
+}
+
+func isAuthErr(err error) bool {
+	if err == nil {
+		return false
+	}
+	for _, target := range authErrs {
 		if errors.Is(err, target) {
 			return true
 		}

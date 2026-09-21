@@ -220,6 +220,17 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 			c.log.Info("nats reconnected", "role", roleStr, "url", redactURL(nc.ConnectedUrl()))
 			c.fireReconnect()
 		}),
+		natsclient.ReconnectErrHandler(func(_ *natsclient.Conn, err error) {
+			if err == nil {
+				return
+			}
+			c.metrics.connectionErrors.Inc()
+			if isAuthErr(err) {
+				c.log.Error("nats (re)connect rejected by server", "role", roleStr, "reason", asyncErrorReason(err), "err", err)
+				return
+			}
+			c.log.Warn("nats (re)connect attempt failed", "role", roleStr, "err", err)
+		}),
 		natsclient.ClosedHandler(func(nc *natsclient.Conn) {
 			c.metrics.connectionStatus.Set(0)
 			c.log.Info("nats connection closed", "role", roleStr, "last_err", nc.LastError())

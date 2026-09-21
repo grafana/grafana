@@ -175,19 +175,34 @@ func (p *PublisherService) flush(ctx context.Context) {
 	if nc == nil || !nc.IsConnected() {
 		return
 	}
+	// Snapshot the pending estimate before flushing, since FlushWithContext only covers
+	// data buffered before the call and a concurrent Publish may add more.
+	p.pendingMu.Lock()
+	watermark := p.pendingBytes
+	p.pendingMu.Unlock()
+
 	if err := nc.FlushWithContext(ctx); err != nil {
 		// A timeout is an observation, not a reason to replay messages: the
 		// server may already have accepted them.
 		p.log.Warn("nats publisher flush failed", "err", err)
 		return
 	}
+	p.reconcilePending(watermark)
+	p.metrics.lastSuccessfulFlush.Set(float64(time.Now().Unix()))
+}
+
+// reconcilePending clears at most watermark bytes from the pending estimate,
+// preserving accounting for messages buffered after the watermark was snapshotted.
+func (p *PublisherService) reconcilePending(watermark int64) {
 	p.pendingMu.Lock()
-	if p.pendingBytes > 0 {
+	defer p.pendingMu.Unlock()
+	p.pendingBytes -= watermark
+	if p.pendingBytes < 0 {
 		p.pendingBytes = 0
+	}
+	if p.pendingBytes == 0 {
 		p.oldestPending = 0
-		p.metrics.pendingBytes.Set(0)
 		p.metrics.oldestPending.Set(0)
 	}
-	p.pendingMu.Unlock()
-	p.metrics.lastSuccessfulFlush.Set(float64(time.Now().Unix()))
+	p.metrics.pendingBytes.Set(float64(p.pendingBytes))
 }

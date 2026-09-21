@@ -57,24 +57,26 @@ func testPublisherBufferOverflowRecovers(t *testing.T) {
 	cfg := setting.NATSSettings{Enabled: true, Mode: setting.NATSModeExternal, ClientURLs: []string{fmt.Sprintf("nats://127.0.0.1:%d", port)}}
 	natsCfg := newConfig(cfg, nil)
 	pub := newPublisher(log.NewNopLogger(), newPublisherMetrics(), natsCfg)
+	// pub is used directly (not started as a service), so close it to stop the reconnect loop.
+	t.Cleanup(pub.close)
 	sub := newSubscriber(log.NewNopLogger(), newSubscriberMetrics(), natsCfg)
 	startService(t, ctx, sub)
 
 	const subject = "grafana.integration.reconnect"
 	received := make(chan string, 256)
-	_, err := sub.Subscribe(ctx, subject, func(_ string, data []byte) {
+	warmupSub, err := sub.Subscribe(ctx, subject, func(_ string, data []byte) {
 		received <- string(data)
 	})
 	require.NoError(t, err)
-	require.Eventually(t, func() bool {
-		err := pub.Publish(ctx, subject, []byte("warmup"))
-		select {
-		case <-received:
-			return err == nil
-		default:
-			return false
-		}
-	}, 5*time.Second, 10*time.Millisecond)
+	// Wait for interest to register before publishing; core NATS drops messages with no matching interest.
+	waitSubscriberReady(t, ctx, warmupSub)
+	require.NoError(t, pub.Publish(ctx, subject, []byte("warmup")))
+	select {
+	case msg := <-received:
+		require.Equal(t, "warmup", msg)
+	case <-time.After(5 * time.Second):
+		t.Fatal("warm-up message was not delivered")
+	}
 
 	sub.close()
 	srv.Shutdown()
@@ -101,15 +103,12 @@ func testPublisherBufferOverflowRecovers(t *testing.T) {
 	srv = start(port)
 	recoverySub := newTestSubscriber(t, srv)
 	startService(t, ctx, recoverySub)
-	_, err = recoverySub.Subscribe(ctx, subject, func(_ string, data []byte) {
+	recovery, err := recoverySub.Subscribe(ctx, subject, func(_ string, data []byte) {
 		received <- string(data)
 	})
 	require.NoError(t, err)
-	require.Eventually(t, func() bool {
-		recoverySub.mu.Lock()
-		defer recoverySub.mu.Unlock()
-		return recoverySub.conn != nil && recoverySub.conn.IsConnected()
-	}, 5*time.Second, 50*time.Millisecond)
+	// Register recovery interest before the publisher reconnects and replays its buffer.
+	waitSubscriberReady(t, ctx, recovery)
 	require.Eventually(t, func() bool {
 		flushCtx, flushCancel := context.WithTimeout(ctx, time.Second)
 		pub.flush(flushCtx)
@@ -117,10 +116,8 @@ func testPublisherBufferOverflowRecovers(t *testing.T) {
 		return promtestutil.ToFloat64(pub.metrics.pendingBytes) == 0 && promtestutil.ToFloat64(pub.metrics.lastSuccessfulFlush) > 0
 	}, 10*time.Second, 50*time.Millisecond)
 
-	// received can also carry stray deliveries (e.g. extra buffered "warmup"
-	// publishes flushed after reconnect), so match only against the accepted set
-	// and never assert on the multi-KB payloads directly (a failed require.Contains
-	// would try to render them and overflow bufio.Scanner).
+	// Match only against the accepted set; never assert on the multi-KB payloads directly
+	// (a failed require.Contains would render them and overflow bufio.Scanner).
 	acceptedSet := make(map[string]struct{}, len(accepted))
 	for _, message := range accepted {
 		acceptedSet[message] = struct{}{}
@@ -136,6 +133,14 @@ func testPublisherBufferOverflowRecovers(t *testing.T) {
 			t.Fatalf("received %d/%d buffered messages", len(seen), len(accepted))
 		}
 	}
+}
+
+// waitSubscriberReady blocks until the subscription's interest is registered on the server.
+func waitSubscriberReady(t *testing.T, ctx context.Context, sub Subscription) {
+	t.Helper()
+	readyCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	require.NoError(t, sub.WaitReady(readyCtx))
 }
 
 func testSingleSubscriberReceives(t *testing.T) {
