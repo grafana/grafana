@@ -133,6 +133,14 @@ describe('PanelStatus', () => {
       expect(screen.queryByRole('button', { name: /with Assistant$/ })).not.toBeInTheDocument();
     });
 
+    it('does not render an Inspect button when no onClick is provided', async () => {
+      render(<PanelStatus items={items} />);
+
+      await userEvent.click(screen.getByTestId(selectors.components.Panels.Panel.status('warning')));
+      expect(await screen.findByTestId('toggletip-content')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Inspect' })).not.toBeInTheDocument();
+    });
+
     it('renders a single Fix with Assistant button and calls onInvestigateErrors when clicked', async () => {
       const onInvestigateErrors = jest.fn();
       render(

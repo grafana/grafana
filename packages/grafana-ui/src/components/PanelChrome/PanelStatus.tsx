@@ -96,8 +96,8 @@ function PanelStatusPopover({ items, onInspect, ariaLabel, onInvestigateErrors }
     </Stack>
   );
 
-  // Assistant stays on the left, Inspect on the right, regardless of whether the assistant action
-  // is shown — an empty placeholder keeps Inspect pinned to the end.
+  // Assistant stays on the left, Inspect on the right, regardless of whether either action is
+  // shown — an empty placeholder keeps whichever one is present pinned to its side.
   const footer = (
     <Stack direction="row" justifyContent="space-between" alignItems="center" width="100%">
       {onInvestigateErrors ? (
@@ -111,9 +111,13 @@ function PanelStatusPopover({ items, onInspect, ariaLabel, onInvestigateErrors }
       ) : (
         <span />
       )}
-      <Button size="sm" variant="secondary" fill="text" icon="arrow-right" onClick={onInspect}>
-        {t('grafana-ui.panel-chrome.inspect', 'Inspect')}
-      </Button>
+      {onInspect ? (
+        <Button size="sm" variant="secondary" fill="text" icon="arrow-right" onClick={onInspect}>
+          {t('grafana-ui.panel-chrome.inspect', 'Inspect')}
+        </Button>
+      ) : (
+        <span />
+      )}
     </Stack>
   );
 
