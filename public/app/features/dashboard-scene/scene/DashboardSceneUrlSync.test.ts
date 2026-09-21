@@ -289,6 +289,66 @@ describe('DashboardSceneUrlSync', () => {
       expect(scene.state.viewPanel).toBeUndefined();
     });
   });
+
+  describe('while planning', () => {
+    const planning = {
+      planId: 'plan-1',
+      planTitle: 'Kafka overview',
+      panelCount: 4,
+      onBuild: jest.fn(),
+      onDismiss: jest.fn(),
+    };
+
+    it('does not open dashboard settings from an editview url param, and does not enter edit mode', () => {
+      const scene = buildTestScene();
+      scene.setState({ isEditing: false, planning });
+      jest.spyOn(scene, 'canEditDashboard').mockReturnValue(true);
+      const onEnterEditMode = jest.spyOn(scene, 'onEnterEditMode');
+
+      scene.urlSync?.updateFromUrl({ editview: 'settings' });
+
+      expect(scene.state.editview).toBeUndefined();
+      expect(scene.state.isEditing).toBe(false);
+      expect(onEnterEditMode).not.toHaveBeenCalled();
+    });
+
+    it('does not open the panel editor from an editPanel url param, and does not enter edit mode', () => {
+      // Without this guard, the branch below calls onEnterEditMode() directly when not already
+      // editing, undoing the invariant the static preview depends on.
+      const scene = buildTestScene();
+      scene.setState({ isEditing: false, planning });
+      const onEnterEditMode = jest.spyOn(scene, 'onEnterEditMode');
+
+      scene.urlSync?.updateFromUrl({ editPanel: 'panel-1' });
+
+      expect(scene.state.editPanel).toBeUndefined();
+      expect(scene.state.isEditing).toBe(false);
+      expect(onEnterEditMode).not.toHaveBeenCalled();
+    });
+
+    it('does not open the share drawer from a shareView url param', () => {
+      // Share is guarded elsewhere too (keyboard shortcuts; no menu at all on a preview panel)
+      // -- this is a third route to the same action.
+      const scene = buildTestScene();
+      scene.setState({ planning });
+
+      scene.urlSync?.updateFromUrl({ shareView: 'snapshot' });
+
+      expect(scene.state.overlay).toBeUndefined();
+      expect(scene.state.shareView).toBeUndefined();
+    });
+
+    it('does not open the view-panel pane from a viewPanel url param', () => {
+      // Preview panels have no menu, so View isn't reachable that way -- but ?viewPanel= reaches
+      // the same pane directly, whose Quick toggles section is plugin-gated, not isPlanning()-gated.
+      const scene = buildTestScene();
+      scene.setState({ planning });
+
+      scene.urlSync?.updateFromUrl({ viewPanel: 'panel-1' });
+
+      expect(scene.state.viewPanel).toBeUndefined();
+    });
+  });
 });
 
 function buildTestSceneWithRow(title: string, { collapse }: { collapse?: boolean } = {}) {

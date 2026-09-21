@@ -160,6 +160,10 @@ type BackendReadResponse struct {
 	Error *resourcepb.ErrorResult
 }
 
+// ErrBatchReadUnsupported signals the caller to fall back to per-resource reads.
+// On the base interface, not a type assertion, so a wrapped backend keeps advertising it.
+var ErrBatchReadUnsupported = errors.New("batch read not supported by this backend")
+
 type ResourceLastImportTime struct {
 	NamespacedResource
 	LastImportTime time.Time
@@ -176,6 +180,10 @@ type StorageBackend interface {
 
 	// Read a resource from storage optionally at an explicit version
 	ReadResource(context.Context, *resourcepb.ReadRequest) *BackendReadResponse
+
+	// BatchReadResource reads several resources at once, one response per request
+	// in order, or returns ErrBatchReadUnsupported.
+	BatchReadResource(context.Context, []*resourcepb.ReadRequest) ([]*BackendReadResponse, error)
 
 	// When the ResourceServer executes a List request, this iterator will
 	// query the backend for potential results.  All results will be
@@ -1458,31 +1466,39 @@ func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb
 	}()
 
 	rsp := s.backend.ReadResource(ctx, req)
-	if rsp.Error != nil && rsp.Error.Code == http.StatusNotFound {
-		return &resourcepb.ReadResponse{Error: rsp.Error}, nil
-	}
-
-	a, err := s.access.Check(ctx, user, claims.CheckRequest{
-		Verb:      "get",
-		Group:     req.Key.Group,
-		Resource:  req.Key.Resource,
-		Namespace: req.Key.Namespace,
-		Name:      req.Key.Name,
-	}, rsp.Folder)
-	if err != nil {
-		return &resourcepb.ReadResponse{Error: AsErrorResult(err)}, nil
-	}
-	if !a.Allowed {
-		return &resourcepb.ReadResponse{
-			Error: &resourcepb.ErrorResult{
-				Code: http.StatusForbidden,
-			}}, nil
+	if errRes := s.authorizeRead(ctx, user, req.Key, rsp); errRes != nil {
+		return &resourcepb.ReadResponse{Error: errRes}, nil
 	}
 	return &resourcepb.ReadResponse{
 		ResourceVersion: rsp.ResourceVersion,
 		Value:           rsp.Value,
 		Error:           rsp.Error,
 	}, nil
+}
+
+// authorizeRead applies the "get" access check for an already-read resource,
+// using the folder resolved by the read. It returns nil when access is allowed,
+// or the error result to surface otherwise (403, or the check failure). A
+// NotFound is surfaced without authorizing: a 404 reveals nothing and the read
+// resolved no folder to check.
+func (s *server) authorizeRead(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey, rsp *BackendReadResponse) *resourcepb.ErrorResult {
+	if rsp.Error != nil && rsp.Error.Code == http.StatusNotFound {
+		return rsp.Error
+	}
+	a, err := s.access.Check(ctx, user, claims.CheckRequest{
+		Verb:      "get",
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Namespace: key.Namespace,
+		Name:      key.Name,
+	}, rsp.Folder)
+	if err != nil {
+		return AsErrorResult(err)
+	}
+	if !a.Allowed {
+		return &resourcepb.ErrorResult{Code: http.StatusForbidden}
+	}
+	return nil
 }
 
 func (s *server) checkStatsReadAccess(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey) error {
@@ -1651,11 +1667,17 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	if s.shouldUseSearchForList(req) {
 		// If we get here, we're doing list with selectable fields or labels. Let's do
 		// search instead, since we index both, and fetch resulting documents one by one.
-		gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
-		if s.storageMetrics != nil {
-			s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "search").Inc()
+		rsp, err := s.listWithSelectors(ctx, req)
+		if !errors.Is(err, errSearchCannotAnswerList) {
+			if s.storageMetrics != nil {
+				gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
+				s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "search").Inc()
+			}
+			return rsp, err
 		}
-		return s.listWithSelectors(ctx, req)
+		// The store scan reads the objects themselves, so it answers what the index
+		// cannot. Slower, but right.
+		s.log.Warn("Search cannot answer List with selectors, falling back to the store", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", err)
 	}
 
 	if req.NextPageToken != "" {
@@ -2161,7 +2183,6 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 				s.log.Debug("watch events closed")
 				return nil
 			}
-			s.log.Debug("Server Broadcasting", "type", event.Type, "rv", event.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "resource", event.Key.Resource, "name", event.Key.Name)
 			if event.ResourceVersion <= since {
 				continue
 			}
@@ -2201,6 +2222,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 						}
 					}
 				}
+				s.log.Debug("Server Broadcasting", "type", event.Type, "rv", event.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "resource", event.Key.Resource, "name", event.Key.Name)
 				if err := srv.Send(resp); err != nil {
 					return watchSendError(err)
 				}
