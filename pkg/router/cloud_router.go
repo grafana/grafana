@@ -178,12 +178,9 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 			return nil, fmt.Errorf("%s: st_discovery_url: %w", cloudRouterSection, err)
 		}
 
-		gcomURL := cfg.GrafanaComAPIURL
-		gcomToken := "" // ???
-
 		singleTenantFallback, err = newSingleTenantFallback(singleTenantFallbackOptions{
 			cacheSize:     100,
-			resolveHost:   newGComURLResolver(gcomURL, gcomToken),
+			resolveHost:   newGComURLResolver(cfg.GrafanaComAPIURL, cfg.GrafanaComSSOAPIToken),
 			discoveryHost: discoURL,
 		})
 		if err != nil {
