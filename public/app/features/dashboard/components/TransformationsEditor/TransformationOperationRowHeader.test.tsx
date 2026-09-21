@@ -24,16 +24,18 @@ interface RenderOptions {
   transformation?: DataTransformerConfig;
   transformations?: DataTransformerConfig[];
   onChange?: (index: number, config: DataTransformerConfig) => void;
+  canSetRefId?: boolean;
   dynamicRefId?: string;
   reservedRefIds?: string[];
 }
 
-// dynamicRefId defaults to being set, since the refId editor only renders when it is.
+// canSetRefId defaults to true, since the refId editor only renders when it is.
 function renderHeader({
   transformation = mergeTransform,
   transformations = [mergeTransform, labelsToFieldsTransform],
   onChange = () => {},
-  dynamicRefId = 'merge-A-B',
+  canSetRefId = true,
+  dynamicRefId,
   reservedRefIds,
 }: RenderOptions = {}) {
   return render(
@@ -43,6 +45,7 @@ function renderHeader({
       transformations={transformations}
       transformationTypeName="1 - Labels to fields"
       onChange={onChange}
+      canSetRefId={canSetRefId}
       dynamicRefId={dynamicRefId}
       reservedRefIds={reservedRefIds}
     />
@@ -61,13 +64,23 @@ describe('TransformationOperationRowHeader', () => {
     expect(screen.getByText('1 - Labels to fields')).toBeInTheDocument();
   });
 
-  it('renders the auto placeholder when no static refId is set', () => {
-    renderHeader({ dynamicRefId: '' });
+  it('renders the auto placeholder when there is no single output frame to name', () => {
+    renderHeader();
 
     expect(screen.getByText('(Auto)')).toBeInTheDocument();
   });
 
-  it('hides the refId editor for transformations that do not derive their refId from the input', () => {
+  it('keeps the refId editable even when there is no name to display yet', async () => {
+    const onChange = jest.fn();
+    renderHeader({ onChange });
+
+    await typeRefId('T-A');
+    await userEvent.click(document.body);
+
+    expect(onChange).toHaveBeenCalledWith(0, { id: 'merge', options: {}, refId: 'T-A' });
+  });
+
+  it('hides the refId editor for transformations that produce no frame of their own', () => {
     render(
       <TransformationOperationRowHeader
         index={0}

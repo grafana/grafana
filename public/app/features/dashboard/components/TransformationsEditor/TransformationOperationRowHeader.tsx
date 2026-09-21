@@ -6,7 +6,8 @@ import { useToggle } from 'react-use';
 import { type GrafanaTheme2, type DataTransformerConfig } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { FieldValidationMessage, Icon, Input, useStyles2 } from '@grafana/ui';
-import { variableRegexExec } from 'app/features/variables/utils';
+
+import { validateTransformationRefId } from './transformationRefId';
 
 export interface Props {
   index: number;
@@ -15,7 +16,9 @@ export interface Props {
   transformationTypeName: string;
   disabled?: boolean;
   onChange: (index: number, config: DataTransformerConfig) => void;
-  /** Set only for transformations that derive their refId from the input; also gates the refId editor. */
+  /** Whether this transformation produces a frame of its own whose name can be pinned. */
+  canSetRefId?: boolean;
+  /** The name the output frame gets when none is pinned. Undefined when there is no single output. */
   dynamicRefId?: string;
   /** refIds already in the input. Reusing one would make a downstream byRefId filter select both frames. */
   reservedRefIds?: string[];
@@ -29,6 +32,7 @@ export const TransformationOperationRowHeader = (props: Props) => {
     onChange,
     disabled,
     transformationTypeName,
+    canSetRefId = false,
     dynamicRefId,
     reservedRefIds = [],
   } = props;
@@ -38,37 +42,10 @@ export const TransformationOperationRowHeader = (props: Props) => {
   const [isStaticRefId, setIsStaticRefId] = useState(transformation.refId !== undefined);
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  const isRefIdEditable = dynamicRefId !== undefined;
+  const isRefIdEditable = canSetRefId;
 
-  const validateRefId = (refId: string): string | null => {
-    if (refId === '') {
-      return null;
-    }
-
-    // A variable would make the refId move with its value, the instability this field prevents.
-    if (variableRegexExec(refId) !== null) {
-      return t(
-        'dashboard.transformation-operation-row.transformation-editor-row-header.refId-variable-error',
-        'Transformation name cannot contain a variable'
-      );
-    }
-
-    if (transformations.some((other) => other !== transformation && other.refId === refId)) {
-      return t(
-        'dashboard.transformation-operation-row.transformation-editor-row-header.refId-exists-error',
-        'Transformation name already exists'
-      );
-    }
-
-    if (reservedRefIds.includes(refId)) {
-      return t(
-        'dashboard.transformation-operation-row.transformation-editor-row-header.refId-reserved-error',
-        'Transformation name is already used by a query or an earlier transformation'
-      );
-    }
-
-    return null;
-  };
+  const validateRefId = (refId: string): string | null =>
+    validateTransformationRefId(refId, { transformation, transformations, reservedRefIds });
 
   const onEndEditRefId = (newRefId: string) => {
     const trimmedNewRefId = newRefId.trim();

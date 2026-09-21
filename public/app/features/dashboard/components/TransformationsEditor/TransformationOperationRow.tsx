@@ -10,7 +10,7 @@ import {
   getFrameMatchers,
   transformDataFrame,
   type DataFrame,
-  getTransformationDynamicRefId,
+  transformerUsesDynamicRefId,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
@@ -60,8 +60,11 @@ export const TransformationOperationRow = ({
   const [output, setOutput] = useState<DataFrame[]>([]);
   // output of previous transformation
   const [prevOutput, setPrevOutput] = useState<DataFrame[]>([]);
+  const [generatedRefId, setGeneratedRefId] = useState<string | undefined>(undefined);
 
-  const dynamicRefId = getTransformationDynamicRefId(uiConfig.id, input);
+  // Whether the name can be pinned follows the configuration, not the data, so the editor does not
+  // appear and disappear as queries come and go.
+  const canSetRefId = transformerUsesDynamicRefId(uiConfig, configs[index].transformation.options);
   // prevOutput is this transformation's unfiltered input, so its refIds are the reserved ones.
   const reservedRefIds = prevOutput.map((frame) => frame.refId).filter((refId): refId is string => !!refId);
 
@@ -129,12 +132,28 @@ export const TransformationOperationRow = ({
       interpolate: (v: string) => getTemplateSrv().replace(v),
     };
 
+    const applyFilter = (frames: DataFrame[]) => (matcher ? frames.filter((frame) => matcher(frame)) : frames);
+
     const inputSubscription = transformDataFrame(inputTransforms, data.series, ctx).subscribe((data) => {
-      if (matcher) {
-        data = data.filter((frame) => matcher(frame));
-      }
-      setInput(data);
+      setInput(applyFilter(data));
     });
+
+    // The generated name has to come from what this transformation actually emits. Guessing it from
+    // the input is wrong wherever the two diverge: Reduce in fields mode keeps the incoming refIds,
+    // transformers that drop empty frames build the name from fewer of them, and the no-op paths
+    // return their input untouched. Run without the filter (already applied) or the static refId, so
+    // what comes back is the name the user would get by leaving the field blank; without `disabled`
+    // too, so a disabled row still shows one.
+    const previewConfig: DataTransformerConfig = {
+      ...config,
+      refId: undefined,
+      filter: undefined,
+      disabled: undefined,
+    };
+    const generatedRefIdSubscription = transformDataFrame(inputTransforms, data.series, ctx)
+      .pipe(mergeMap((before) => transformDataFrame([previewConfig], applyFilter(before), ctx)))
+      // More than one frame means there is no single output to name, so the row shows "(Auto)".
+      .subscribe((frames) => setGeneratedRefId(frames.length === 1 ? frames[0].refId : undefined));
     const outputSubscription = transformDataFrame(inputTransforms, data.series, ctx)
       .pipe(mergeMap((before) => transformDataFrame(outputTransforms, before, ctx)))
       .subscribe(setOutput);
@@ -156,6 +175,7 @@ export const TransformationOperationRow = ({
       inputSubscription.unsubscribe();
       outputSubscription.unsubscribe();
       prevOutputSubscription.unsubscribe();
+      generatedRefIdSubscription.unsubscribe();
     };
   }, [index, data, configs]);
 
@@ -168,7 +188,8 @@ export const TransformationOperationRow = ({
         transformationTypeName={`${index + 1} - ${uiConfig.name}`}
         disabled={disabled}
         onChange={onChange}
-        dynamicRefId={uiConfig.usesDynamicRefId ? dynamicRefId : undefined}
+        canSetRefId={canSetRefId}
+        dynamicRefId={generatedRefId}
         reservedRefIds={reservedRefIds}
       />
     );
