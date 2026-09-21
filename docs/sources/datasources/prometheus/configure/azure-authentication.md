@@ -130,27 +130,29 @@ The following sections cover common issues you may encounter during or after the
 **Symptoms:**
 
 - The migrated data source returns `401 Unauthorized` errors on **Save & test** or when running queries.
-- The data source uses **Managed Identity** or **Workload Identity**, and the identity has the correct Azure role assignments.
+- The data source authenticates with **Managed Identity**, **Workload Identity**, or **Current User**.
 
 **Cause:** The Azure Monitor Managed Service for Prometheus plugin doesn't receive the Azure authentication settings from the Grafana server. Either the `[azure]` section of your `.ini` configuration file is missing the options required by your authentication method, or `forward_settings_to_plugins` doesn't include the `grafana-azureprometheus-datasource` plugin.
 
 **Solution for self-managed Grafana:**
 
-Set the options required by your authentication method in the `[azure]` section of your `.ini` configuration file. For a full description of each option, refer to the [`[azure]` configuration reference](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#azure).
+1. Set the options required by your authentication method in the `[azure]` section of your `.ini` configuration file. For a full description of each option, refer to the [`[azure]` configuration reference](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#azure).
 
-- **Managed Identity:** Set `managed_identity_enabled = true`. For a user-assigned identity, also set `managed_identity_client_id` to the identity's client ID. Leave it empty for a system-assigned identity.
-- **Workload Identity:** Set `workload_identity_enabled = true`.
-- **Current User:** Set `user_identity_enabled = true`.
+   - **Managed Identity:** Set `managed_identity_enabled = true`. For a user-assigned identity, also set `managed_identity_client_id` to the identity's client ID. Leave it empty for a system-assigned identity.
+   - **Workload Identity:** Set `workload_identity_enabled = true`.
+   - **Current User:** Set `user_identity_enabled = true`.
 
-By default, `forward_settings_to_plugins` includes all Grafana Labs Azure plugins, so the Prometheus plugin already receives these settings. If you've customized `forward_settings_to_plugins`, make sure `grafana-azureprometheus-datasource` is listed. For example:
+1. If you've customized `forward_settings_to_plugins`, make sure `grafana-azureprometheus-datasource` is listed. By default, `forward_settings_to_plugins` includes all Grafana Labs Azure plugins, so the Prometheus plugin already receives these settings. For example:
 
-```ini
-[azure]
-managed_identity_enabled = true
-forward_settings_to_plugins = grafana-azureprometheus-datasource
-```
+   ```ini
+   [azure]
+   managed_identity_enabled = true
+   forward_settings_to_plugins = grafana-azureprometheus-datasource
+   ```
 
-Verify that the identity has the required Azure role, such as **Monitoring Data Reader**, on the target Azure Monitor workspace. Restart Grafana after you change the server configuration.
+1. Verify that the identity has the required Azure role, such as **Monitoring Data Reader**, on the target Azure Monitor workspace.
+
+1. Restart Grafana after you change the server configuration.
 
 **Solution for Grafana Cloud:** Contact [Grafana Support](https://grafana.com/profile/org#support).
 
