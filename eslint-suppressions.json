@@ -1589,11 +1589,6 @@
       "count": 2
     }
   },
-  "public/app/features/annotations/utils/savedQueryUtils.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
   "public/app/features/auth-config/FieldRenderer.tsx": {
     "@grafana/require-no-margin": {
       "count": 5
@@ -1775,6 +1770,11 @@
       "count": 3
     },
     "@grafana/no-get-data-source-srv": {
+      "count": 1
+    }
+  },
+  "public/app/features/dashboard-scene/scene/DashboardSceneRenderer.tsx": {
+    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },
@@ -2813,9 +2813,6 @@
     }
   },
   "public/app/features/query/components/QueryEditorRow.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    },
     "@grafana/no-gf-form": {
       "count": 1
     },
@@ -2829,26 +2826,13 @@
       "count": 1
     }
   },
-  "public/app/features/query/components/QueryEditorRows.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
   "public/app/features/query/components/QueryGroup.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    },
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
   "public/app/features/query/state/DashboardQueryRunner/AnnotationsQueryRunner.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/query/state/DashboardQueryRunner/AnnotationsWorker.ts": {
-    "@grafana/no-get-data-source-srv": {
       "count": 1
     }
   },
@@ -3446,9 +3430,6 @@
   "public/app/plugins/datasource/grafana/datasource.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 6
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
     }
   },
   "public/app/plugins/datasource/graphite/configuration/ConfigEditor.tsx": {

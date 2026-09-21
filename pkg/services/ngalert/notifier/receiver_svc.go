@@ -140,10 +140,6 @@ func (rs *ReceiverService) checkAllowedIntegrations(r *models.Receiver) error {
 	return nil
 }
 
-func (rs *ReceiverService) loadProvenances(ctx context.Context, orgID int64) (map[string]models.Provenance, error) {
-	return rs.provisioningStore.GetProvenances(ctx, orgID, (&models.Integration{}).ResourceType())
-}
-
 // GetReceiver returns a receiver by its UID.
 // The receiver's secure settings are decrypted if requested and the user has access to do so.
 func (rs *ReceiverService) GetReceiver(ctx context.Context, uid string, decrypt bool, user identity.Requester) (*models.Receiver, error) {
@@ -162,12 +158,11 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, uid string, decrypt 
 		return nil, err
 	}
 
-	prov, err := rs.loadProvenances(ctx, user.GetOrgID())
-	if err != nil {
+	if err := rs.assignProvenance(ctx, user.GetOrgID(), revision); err != nil {
 		return nil, err
 	}
 
-	rcv, err := revision.GetReceiver(uid, prov)
+	rcv, err := revision.GetReceiver(uid)
 	if err != nil {
 		if errors.Is(err, models.ErrReceiverNotFound) && rs.includeImported {
 			imported := rs.getImportedReceivers(ctx, span, []string{uid}, revision)
@@ -221,20 +216,18 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 
 	uids := make([]string, 0, len(q.Names))
 	for _, name := range q.Names {
-		uids = append(uids, legacy_storage.NameToUid(name))
+		uids = append(uids, string(v1.ReceiverUID(name))) // TODO: This won't work with static UIDs.
 	}
 
 	revision, err := rs.cfgStore.Get(ctx, q.OrgID)
 	if err != nil {
 		return nil, err
 	}
-
-	prov, err := rs.loadProvenances(ctx, q.OrgID)
-	if err != nil {
+	if err := rs.assignProvenance(ctx, q.OrgID, revision); err != nil {
 		return nil, err
 	}
 
-	receivers, err := revision.GetReceivers(uids, prov)
+	receivers, err := revision.GetReceivers(uids)
 	if err != nil {
 		return nil, err
 	}
@@ -296,12 +289,11 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 		return err
 	}
 
-	prov, err := rs.loadProvenances(ctx, orgID)
-	if err != nil {
+	if err := rs.assignProvenance(ctx, orgID, revision); err != nil {
 		return err
 	}
 
-	existing, err := revision.GetReceiver(uid, prov)
+	existing, err := revision.GetReceiver(uid)
 	if err != nil {
 		if !errors.Is(err, models.ErrReceiverNotFound) {
 			return err
@@ -410,7 +402,7 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	}
 
 	// Generate UID from name.
-	createdReceiver.UID = legacy_storage.NameToUid(createdReceiver.Name)
+	createdReceiver.UID = string(v1.ReceiverUID(createdReceiver.Name))
 
 	result, err = revision.CreateReceiver(&createdReceiver)
 	if err != nil {
@@ -465,12 +457,11 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
-	prov, err := rs.loadProvenances(ctx, orgID)
-	if err != nil {
+	if err := rs.assignProvenance(ctx, orgID, revision); err != nil {
 		return nil, err
 	}
 
-	existing, err := revision.GetReceiver(r.GetUID(), prov)
+	existing, err := revision.GetReceiver(r.GetUID())
 	if err != nil {
 		if errors.Is(err, models.ErrReceiverNotFound) && rs.includeImported {
 			// try to get the imported receiver and return a specific error if it exists
@@ -556,14 +547,14 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 				return err
 			}
 			// Update receiver permissions
-			permissionsUpdated, err := rs.resourcePermissions.CopyPermissions(ctx, orgID, user, legacy_storage.NameToUid(existing.Name), legacy_storage.NameToUid(r.Name))
+			permissionsUpdated, err := rs.resourcePermissions.CopyPermissions(ctx, orgID, user, existing.UID, result.UID)
 			if err != nil {
 				return err
 			}
 			if permissionsUpdated > 0 {
 				logger.Info("Moved custom receiver permissions", "oldName", existing.Name, "count", permissionsUpdated)
 			}
-			if err := rs.resourcePermissions.DeleteResourcePermissions(ctx, orgID, legacy_storage.NameToUid(existing.Name)); err != nil {
+			if err := rs.resourcePermissions.DeleteResourcePermissions(ctx, orgID, existing.UID); err != nil {
 				return err
 			}
 		}
@@ -715,6 +706,20 @@ func (rs *ReceiverService) deleteProvenances(ctx context.Context, orgID int64, i
 			return err
 		}
 	}
+	return nil
+}
+
+func (rs *ReceiverService) assignProvenance(ctx context.Context, orgID int64, rev *legacy_storage.ConfigRevision) error {
+	if len(rev.Config.Receivers) == 0 {
+		return nil
+	}
+
+	provenances, err := rs.provisioningStore.GetProvenances(ctx, orgID, (&models.Integration{}).ResourceType())
+	if err != nil {
+		return err
+	}
+
+	rev.AssignReceiverProvenances(provenances)
 	return nil
 }
 

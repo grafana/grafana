@@ -25,6 +25,7 @@ import { getDashboardSceneFor, isNewPanelQueryErrorsUIEnabled } from '../utils/u
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { type DashboardScene } from './DashboardScene';
+import { refuseWhilePlanning } from './refuseWhilePlanning';
 
 export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelContext) {
   const dashboard = getDashboardSceneFor(vizPanel);
@@ -73,6 +74,13 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   context.onAnnotationCreate = async (event: AnnotationEventUIModel) => {
     const dashboard = getDashboardSceneFor(vizPanel);
 
+    // An immediate backend write, reachable by the ordinary drag-to-annotate gesture regardless
+    // of edit mode — canAddAnnotations() below has no isEditing check either, so this is the real
+    // chokepoint.
+    if (refuseWhilePlanning(dashboard)) {
+      return;
+    }
+
     const isRegion = event.from !== event.to;
     const anno = {
       dashboardUID: dashboard.state.uid,
@@ -94,6 +102,10 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   context.onAnnotationUpdate = async (event: AnnotationEventUIModel) => {
     const dashboard = getDashboardSceneFor(vizPanel);
 
+    if (refuseWhilePlanning(dashboard)) {
+      return;
+    }
+
     const isRegion = event.from !== event.to;
     const anno = {
       id: event.id,
@@ -114,6 +126,10 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   };
 
   context.onAnnotationDelete = async (id: string) => {
+    if (refuseWhilePlanning(getDashboardSceneFor(vizPanel))) {
+      return;
+    }
+
     await annotationServer().delete({ id });
 
     reRunBuiltInAnnotationsLayer(getDashboardSceneFor(vizPanel));
@@ -216,8 +232,18 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   // Only wire up the status-popover inspector opener when the new panel errors UI is enabled.
   // Its presence is also the signal the panel renderer uses to show the new errors/notices popover.
   // Opening goes through a registered opener to avoid importing PanelInspectDrawer here (circular dep).
+  //
+  // A third route to inspect-panel, independent of the 'i' keyboard shortcut (guarded in
+  // keyboardShortcuts.ts) and the menu item (unreachable -- preview panels have no menu at all).
+  // Unreachable while the sample generator never reports an error for this popover to attach to;
+  // would need this guard the moment that changes, so it stays guarded directly.
   if (isNewPanelQueryErrorsUIEnabled()) {
-    context.onOpenInspector = () => openPanelInspector(vizPanel, InspectTab.ErrorsAndNotices);
+    context.onOpenInspector = () => {
+      if (refuseWhilePlanning(getDashboardSceneFor(vizPanel))) {
+        return;
+      }
+      openPanelInspector(vizPanel, InspectTab.ErrorsAndNotices);
+    };
   }
 }
 
