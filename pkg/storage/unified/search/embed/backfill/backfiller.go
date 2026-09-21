@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 
@@ -45,6 +45,9 @@ type Options struct {
 	VectorBackend vector.VectorBackend
 	BatchEmbedder *embedder.BatchEmbedder
 	Builders      []embed.Builder
+	// BuilderProvider takes precedence over Builders and is read only at runtime,
+	// after the initial manifests have loaded.
+	BuilderProvider embed.BuilderProvider
 	// DashboardStats is optional; nil disables the views filter.
 	DashboardStats builders.DashboardStats
 	// Metrics is optional; when nil the backfiller runs without
@@ -56,18 +59,15 @@ type Options struct {
 }
 
 type VectorBackfiller struct {
-	storage       resource.StorageBackend
-	vectorBackend vector.VectorBackend
-	batchEmbedder *embedder.BatchEmbedder
-	builders      map[string]embed.Builder
-	// sortedBuilders is builders sorted by Resource() so iteration order
-	// is stable across pod restarts. Precomputed because the set is
-	// immutable after construction.
-	sortedBuilders []embed.Builder
-	dashboardStats builders.DashboardStats
-	log            log.Logger
-	metrics        *resource.VectorMetrics
-	interval       time.Duration
+	storage         resource.StorageBackend
+	vectorBackend   vector.VectorBackend
+	batchEmbedder   *embedder.BatchEmbedder
+	builders        embed.BuilderSnapshot
+	builderProvider embed.BuilderProvider
+	dashboardStats  builders.DashboardStats
+	log             log.Logger
+	metrics         *resource.VectorMetrics
+	interval        time.Duration
 
 	folderTitleResolver *foldertitle.Resolver
 	folderTitleCache    map[string]string
@@ -85,26 +85,17 @@ func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
 	if opts.BatchEmbedder == nil {
 		return nil, fmt.Errorf("backfill: BatchEmbedder is required")
 	}
-	if len(opts.Builders) == 0 {
+	if opts.BuilderProvider == nil && len(opts.Builders) == 0 {
 		return nil, fmt.Errorf("backfill: at least one Builder is required")
 	}
 
-	builders := make(map[string]embed.Builder, len(opts.Builders))
-	for _, b := range opts.Builders {
-		r := b.Resource()
-		if _, dup := builders[r]; dup {
-			return nil, fmt.Errorf("backfill: duplicate builder for resource %q", r)
+	seen := make(map[string]struct{}, len(opts.Builders))
+	for _, builder := range opts.Builders {
+		key := builder.Group() + "/" + builder.Resource()
+		if _, duplicate := seen[key]; duplicate {
+			return nil, fmt.Errorf("backfill: duplicate builder for resource %q", key)
 		}
-		builders[r] = b
-	}
-	keys := make([]string, 0, len(builders))
-	for k := range builders {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	sorted := make([]embed.Builder, 0, len(builders))
-	for _, k := range keys {
-		sorted = append(sorted, builders[k])
+		seen[key] = struct{}{}
 	}
 
 	interval := opts.Interval
@@ -116,8 +107,8 @@ func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
 		storage:             opts.Storage,
 		vectorBackend:       opts.VectorBackend,
 		batchEmbedder:       opts.BatchEmbedder,
-		builders:            builders,
-		sortedBuilders:      sorted,
+		builders:            embed.NewBuilderSnapshot(opts.Builders),
+		builderProvider:     opts.BuilderProvider,
 		dashboardStats:      opts.DashboardStats,
 		log:                 log.New("backfill"),
 		metrics:             opts.Metrics,
@@ -127,7 +118,7 @@ func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
 }
 
 // Run acquires a Postgres advisory lock so only one process backfills, then
-// drains incomplete jobs immediately and on every interval tick. The periodic
+// drains incomplete jobs immediately and at the configured interval. The periodic
 // re-scan picks up new jobs from the reconciler.
 func (b *VectorBackfiller) Run(ctx context.Context) error {
 	release, acquired, err := b.vectorBackend.TryAcquireBackfillLock(ctx)
@@ -157,7 +148,15 @@ func (b *VectorBackfiller) Run(ctx context.Context) error {
 func (b *VectorBackfiller) runBackfill(ctx context.Context) {
 	log := b.log.FromContext(ctx)
 
-	b.reopenStaleJobs(ctx, log)
+	builders, err := b.resolveBuilders(ctx)
+	if err != nil {
+		log.Error("backfill: resolve collections", "err", err)
+		return
+	}
+	if len(builders) == 0 {
+		return
+	}
+	b.reopenStaleJobs(ctx, log, builders)
 
 	jobs, err := b.vectorBackend.ListIncompleteBackfillJobs(ctx, b.batchEmbedder.Model())
 	if err != nil {
@@ -173,13 +172,22 @@ func (b *VectorBackfiller) runBackfill(ctx context.Context) {
 		if ctx.Err() != nil {
 			return
 		}
-		// we dont have the builder yet - skip it and dont mark complete
-		if job.Resource != "" && !b.hasBuilderForResource(job.Resource) {
-			log.Info("backfill: skipping job for unregistered resource",
-				"job_id", job.ID, "job_resource", job.Resource)
-			continue
+		if job.Resource != "" {
+			index := slices.IndexFunc(builders, func(builder collectionBuilder) bool {
+				return builder.partitionKey == job.Resource
+			})
+			if index < 0 {
+				log.Info("backfill: skipping job for unregistered resource",
+					"job_id", job.ID, "job_resource", job.Resource)
+				continue
+			}
+			// The reconciler can create a job from a newer manifest revision after
+			// this backfill run captures its builders. Leave that job for the next run.
+			if job.ContentVersion > builders[index].Version() {
+				continue
+			}
 		}
-		if err := b.runBackfillJob(ctx, job); err != nil {
+		if err := b.runBackfillJob(ctx, job, builders); err != nil {
 			log.Error("backfill: job failed",
 				"job_id", job.ID, "model", job.Model, "err", err)
 			_ = b.vectorBackend.MarkBackfillJobError(ctx, job.ID, err.Error())
@@ -193,8 +201,9 @@ func (b *VectorBackfiller) runBackfill(ctx context.Context) {
 	}
 }
 
-// reopenStaleJobs runs before the incomplete-jobs list so a version-bump reopen is drained on the same tick; per-builder failures don't block the tick.
-func (b *VectorBackfiller) reopenStaleJobs(ctx context.Context, log log.Logger) {
+// reopenStaleJobs runs before listing incomplete jobs so reopened work is
+// processed in the same backfill run. A failure for one builder does not block the others.
+func (b *VectorBackfiller) reopenStaleJobs(ctx context.Context, log log.Logger, builders []collectionBuilder) {
 	// The reconciler checkpoint is a real observed RV, so every row processed
 	// before the reopen sorts below it — a wall-clock snowflake would not
 	// (node/sequence bits, clock skew). Zero means the reconciler has never
@@ -207,8 +216,8 @@ func (b *VectorBackfiller) reopenStaleJobs(ctx context.Context, log log.Logger) 
 	if stoppingRV == 0 {
 		return
 	}
-	for _, builder := range b.sortedBuilders {
-		reopened, err := b.vectorBackend.ReopenStaleBackfillJobs(ctx, b.batchEmbedder.Model(), builder.Resource(), builder.Version(), stoppingRV)
+	for _, builder := range builders {
+		reopened, err := b.vectorBackend.ReopenStaleBackfillJobs(ctx, b.batchEmbedder.Model(), builder.partitionKey, builder.Version(), stoppingRV)
 		if err != nil {
 			log.Error("backfill: reopen stale jobs", "resource", builder.Resource(), "err", err)
 			continue
@@ -220,10 +229,9 @@ func (b *VectorBackfiller) reopenStaleJobs(ctx context.Context, log log.Logger) 
 	}
 }
 
-// runBackfillJob iterates registered Builders for the job. When job.Resource is empty is means all builders.
-// Builders are processed in deterministic resource-name order; each one gets its own paginated cross-namespace scan.
-// last_seen_key contains the continue token and the resource name so we know which builder to resume from.
-func (b *VectorBackfiller) runBackfillJob(ctx context.Context, job vector.BackfillJob) error {
+// Jobs and cursors use catalog partition keys; storage scans retain the builder's
+// logical group/resource. An empty job resource retains the legacy all-builders behavior.
+func (b *VectorBackfiller) runBackfillJob(ctx context.Context, job vector.BackfillJob, builders []collectionBuilder) error {
 	// Fresh title cache per job run; titles aren't carried across runs.
 	b.folderTitleCache = make(map[string]string)
 
@@ -234,21 +242,21 @@ func (b *VectorBackfiller) runBackfillJob(ctx context.Context, job vector.Backfi
 			"job_id", job.ID, "err", err)
 		cursor = jobCursor{}
 	}
-	if cursor.Resource != "" && !b.hasBuilderForResource(cursor.Resource) {
+	if cursor.Resource != "" && !hasBuilderForPartition(builders, cursor.Resource) {
 		b.log.Warn("backfill: cursor refers to unknown resource; starting from scratch",
 			"job_id", job.ID, "cursor_resource", cursor.Resource)
 		cursor = jobCursor{}
 	}
 
-	for _, builder := range b.sortedBuilders {
+	for _, builder := range builders {
 		// Job-level resource filter: empty means "all Builders," non-empty
 		// targets exactly that Builder.
-		if job.Resource != "" && builder.Resource() != job.Resource {
+		if job.Resource != "" && builder.partitionKey != job.Resource {
 			continue
 		}
 		// Cursor-level resume: skip Builders sorted before the cursor's
 		// Resource since they completed in the prior run.
-		if cursor.Resource != "" && builder.Resource() != cursor.Resource {
+		if cursor.Resource != "" && builder.partitionKey != cursor.Resource {
 			continue
 		}
 		pageToken := cursor.Token
@@ -272,14 +280,49 @@ func (b *VectorBackfiller) runBackfillJob(ctx context.Context, job vector.Backfi
 	return nil
 }
 
-func (b *VectorBackfiller) hasBuilderForResource(resource string) bool {
-	_, ok := b.builders[resource]
-	return ok
+type collectionBuilder struct {
+	embed.Builder
+	partitionKey string
+}
+
+// Collections are provisioned by the reconciler's first write, not by the
+// backfiller. Resolve one immutable selection per backfill run so a manifest reload
+// cannot mix content versions halfway through a job.
+func (b *VectorBackfiller) resolveBuilders(ctx context.Context) ([]collectionBuilder, error) {
+	snapshot := b.builders
+	if b.builderProvider != nil {
+		snapshot = b.builderProvider.Snapshot()
+	}
+	selected := snapshot.Builders()
+	builders := make([]collectionBuilder, 0, len(selected))
+	for _, builder := range selected {
+		collection, found, err := b.vectorBackend.ResolveCollection(ctx, builder.Group(), builder.Resource())
+		if err != nil {
+			return nil, fmt.Errorf("%s/%s: %w", builder.Group(), builder.Resource(), err)
+		}
+		if !found {
+			continue
+		}
+		if collection.IsExternal {
+			return nil, fmt.Errorf("%s/%s is an external collection", builder.Group(), builder.Resource())
+		}
+		builders = append(builders, collectionBuilder{Builder: builder, partitionKey: collection.PartitionKey})
+	}
+	slices.SortFunc(builders, func(a, b collectionBuilder) int {
+		return strings.Compare(a.partitionKey, b.partitionKey)
+	})
+	return builders, nil
+}
+
+func hasBuilderForPartition(builders []collectionBuilder, partitionKey string) bool {
+	return slices.ContainsFunc(builders, func(builder collectionBuilder) bool {
+		return builder.partitionKey == partitionKey
+	})
 }
 
 // runBackfillPage processes up to backfillPageSize items. Returns the
 // next-page token; empty when the iterator exhausted (no more pages).
-func (b *VectorBackfiller) runBackfillPage(ctx context.Context, job vector.BackfillJob, builder embed.Builder, pageToken string) (string, error) {
+func (b *VectorBackfiller) runBackfillPage(ctx context.Context, job vector.BackfillJob, builder collectionBuilder, pageToken string) (string, error) {
 	req := &resourcepb.ListRequest{
 		Limit:           backfillPageSize,
 		NextPageToken:   pageToken,
@@ -310,7 +353,7 @@ func (b *VectorBackfiller) runBackfillPage(ctx context.Context, job vector.Backf
 			// Another Next()==true confirms the prior item's peek
 			// pointed at a real row. Promote pendingTok and persist it.
 			if pendingTok != "" {
-				encoded := encodeCursor(builder.Resource(), pendingTok)
+				encoded := encodeCursor(builder.partitionKey, pendingTok)
 				if cerr := b.vectorBackend.UpdateBackfillJobCheckpoint(ctx, job.ID, encoded, ""); cerr != nil {
 					return fmt.Errorf("checkpoint: %w", cerr)
 				}
@@ -368,7 +411,7 @@ func (b *VectorBackfiller) skipPermanentItem(stage, namespace, group, res, name 
 // or already embedded, else extract → embed → upsert.
 //
 //nolint:gocyclo
-func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.BackfillJob, builder embed.Builder, iter resource.ListIterator) (retErr error) {
+func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.BackfillJob, builder collectionBuilder, iter resource.ListIterator) (retErr error) {
 	ctx, span := tracer.Start(ctx, "unified.backfill.processBackfillItem")
 	defer span.End()
 
@@ -409,7 +452,7 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 	}
 
 	// Same-or-newer stored version: nothing to do.
-	version, exists, err := b.vectorBackend.ContentVersion(ctx, namespace, job.Model, res, name)
+	version, exists, err := b.vectorBackend.ContentVersion(ctx, namespace, job.Model, builder.partitionKey, name)
 	if err != nil {
 		return fmt.Errorf("content version check: %w", err)
 	}
@@ -438,7 +481,7 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		Name:      name,
 	}
 
-	// Storage errors fail the job so the next tick retries this item, unlike permanent Extract errors.
+	// Storage errors fail the job so the next backfill run retries this item, unlike permanent Extract errors.
 	folderTitle, err := b.resolveFolderTitle(ctx, namespace, iter.Value())
 	if err != nil {
 		return fmt.Errorf("resolve folder title %s/%s: %w", namespace, name, err)
@@ -446,6 +489,18 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 
 	items, err := builder.Extract(ctx, key, iter.Value(), folderTitle)
 	if errors.Is(err, embed.ErrSkip) {
+		if exists {
+			// Preserve content without letting a stale scan restore an old authorization folder.
+			if outcome, err := b.checkLiveRV(ctx, key, rv); err != nil {
+				return err
+			} else if outcome.skip {
+				statusLabel = outcome.status
+				return nil
+			}
+			if err := b.vectorBackend.UpdateFolder(ctx, namespace, job.Model, builder.partitionKey, name, embed.FolderUIDFromValue(iter.Value())); err != nil {
+				return fmt.Errorf("update skipped resource folder %s/%s: %w", namespace, name, err)
+			}
+		}
 		statusLabel = "skipped_extract"
 		return nil
 	}
@@ -467,7 +522,7 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 				statusLabel = outcome.status
 				return nil
 			}
-			if _, _, err := b.vectorBackend.DeleteRows(ctx, namespace, job.Model, res, vector.DeleteSelector{UIDs: []string{name}}); err != nil {
+			if _, _, err := b.vectorBackend.DeleteRows(ctx, namespace, job.Model, builder.partitionKey, vector.DeleteSelector{UIDs: []string{name}}); err != nil {
 				return fmt.Errorf("delete empty extract %s/%s: %w", namespace, name, err)
 			}
 			statusLabel = "deleted_empty_extract"
@@ -480,12 +535,12 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 	}
 
 	if isVersionStale {
-		stored, _, err := b.vectorBackend.GetSubresourceContent(ctx, namespace, job.Model, res, name)
+		stored, storedFolder, err := b.vectorBackend.GetSubresourceContent(ctx, namespace, job.Model, builder.partitionKey, name)
 		if err != nil {
 			return fmt.Errorf("get stored content %s/%s: %w", namespace, name, err)
 		}
-		if identicalContent(stored, items) {
-			if err := b.vectorBackend.UpdateContentVersion(ctx, namespace, job.Model, res, name, builder.Version()); err != nil {
+		if identicalContent(stored, items) && storedFolder == items[0].Folder {
+			if err := b.vectorBackend.UpdateContentVersion(ctx, namespace, job.Model, builder.partitionKey, name, builder.Version()); err != nil {
 				return fmt.Errorf("update content version %s/%s: %w", namespace, name, err)
 			}
 			statusLabel = "skipped_identical_content"
@@ -494,7 +549,7 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		// Not identical: re-embed everything. Per-panel diffing would strand unchanged rows at the old version and rescan them forever.
 	}
 
-	vectors, err := b.batchEmbedder.Embed(ctx, namespace, res, rv, builder.Version(), items)
+	vectors, err := b.batchEmbedder.Embed(ctx, namespace, builder.partitionKey, rv, builder.Version(), items)
 	if err != nil {
 		return fmt.Errorf("embed %s/%s: %w", namespace, name, err)
 	}
@@ -517,7 +572,7 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		desired = append(desired, it.Subresource)
 	}
 
-	if err := b.vectorBackend.UpsertReplaceSubresources(ctx, namespace, job.Model, res, name, vectors, nil, desired); err != nil {
+	if err := b.vectorBackend.UpsertReplaceSubresources(ctx, namespace, job.Model, builder.partitionKey, name, vectors, nil, desired); err != nil {
 		if isPermanentItemError(err) {
 			b.skipPermanentItem("upsert", namespace, group, res, name, err)
 			statusLabel = "skipped_permanent_error"

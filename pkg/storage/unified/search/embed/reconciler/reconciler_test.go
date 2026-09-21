@@ -285,12 +285,13 @@ func TestReconciler_DeleteEvent_CallsVectorDelete(t *testing.T) {
 
 func TestReconciler_SkipExtract_PreservesVectorsAndAdvancesCursor(t *testing.T) {
 	st := &fakeStorage{changes: []*resource.ModifiedResource{
-		dashChange(resourcepb.WatchEvent_MODIFIED, "ns", "skip", snowflakeRV(100), minimalDashboard("skip", "Skip")),
+		dashChange(resourcepb.WatchEvent_MODIFIED, "ns", "skip", snowflakeRV(100), dashboardInFolder("skip", "Skip", "folder-b")),
 		dashChange(resourcepb.WatchEvent_ADDED, "ns", "good", snowflakeRV(200), minimalDashboard("good", "Good")),
 	}}
 	vec := newFakeVector()
 	vec.latestRV = snowflakeRV(50)
 	vec.storedSubs[subsKey("ns", testModel, dashRes, "skip")] = map[string]string{"panel/1": "existing content"}
+	vec.storedFolder[subsKey("ns", testModel, dashRes, "skip")] = "folder-a"
 	text := &fakeText{dim: 4}
 	s, err := New(Options{
 		Storage:       st,
@@ -304,6 +305,7 @@ func TestReconciler_SkipExtract_PreservesVectorsAndAdvancesCursor(t *testing.T) 
 	s.sweep(t.Context())
 
 	assert.Equal(t, map[string]string{"panel/1": "existing content"}, vec.storedContentFor("ns", dashRes, "skip"))
+	assert.Equal(t, "folder-b", vec.storedFolder[subsKey("ns", testModel, dashRes, "skip")])
 	assert.Empty(t, vec.deletes)
 	assert.Empty(t, vec.delsubs)
 	require.Len(t, vec.upserts, 1)
@@ -312,6 +314,41 @@ func TestReconciler_SkipExtract_PreservesVectorsAndAdvancesCursor(t *testing.T) 
 	assert.Equal(t, 1, text.calls, "only the supported resource reaches the provider")
 	assert.Equal(t, snowflakeRV(200), vec.latestRV)
 	assert.Zero(t, s.pendingLen(), "skipped resources are not retried")
+}
+
+func TestReconciler_SkipExtract_FolderUpdateErrorRetries(t *testing.T) {
+	st := &fakeStorage{changes: []*resource.ModifiedResource{
+		dashChange(resourcepb.WatchEvent_MODIFIED, "ns", "skip", snowflakeRV(100), minimalDashboard("skip", "Skip")),
+	}}
+	vec := newFakeVector()
+	vec.latestRV = snowflakeRV(50)
+	key := subsKey("ns", testModel, dashRes, "skip")
+	vec.storedSubs[key] = map[string]string{"panel/1": "existing content"}
+	vec.storedFolder[key] = "folder-a"
+	vec.updateFolderErr = errors.New("folder update failed")
+	text := &fakeText{dim: 4}
+	s, err := New(Options{
+		Storage: st, VectorBackend: vec,
+		BatchEmbedder: embedder.NewBatchEmbedder(*newFakeEmbedder(text)),
+		Builders:      []embed.Builder{skippingBuilder{dashboard.New()}},
+		Interval:      time.Hour,
+	})
+	require.NoError(t, err)
+
+	s.sweep(t.Context())
+
+	assert.Less(t, vec.latestRV, snowflakeRV(100), "the checkpoint cannot pass the failed folder update")
+	assert.Equal(t, "folder-a", vec.storedFolder[key])
+	assert.Equal(t, 1, s.pendingLen())
+	assert.Zero(t, text.calls)
+
+	vec.updateFolderErr = nil
+	s.sweep(t.Context())
+
+	assert.Equal(t, snowflakeRV(100), vec.latestRV)
+	assert.Empty(t, vec.storedFolder[key], "moving to the root also refreshes authorization")
+	assert.Equal(t, map[string]string{"panel/1": "existing content"}, vec.storedContentFor("ns", dashRes, "skip"))
+	assert.Zero(t, s.pendingLen())
 }
 
 func TestReconciler_EmptyExtract_DeletesOldVectors(t *testing.T) {
@@ -998,7 +1035,7 @@ func TestReconciler_EmbeddedValueReleasedAndReplaysAsNoOp(t *testing.T) {
 	s, text := newReconciler(t, &fakeStorage{}, vec)
 	ev := dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-0", snowflakeRV(100), minimalDashboard("dash-0", "Dash 0"))
 
-	_, failed, successes, abort := s.processEvents(t.Context(), []*pendingEvent{ev})
+	_, failed, successes, abort := s.processEvents(t.Context(), []*pendingEvent{ev}, s.builderSnapshot())
 	require.False(t, abort)
 	require.Empty(t, failed)
 	require.Len(t, successes, 1)
@@ -1474,7 +1511,9 @@ func TestReconciler_EnsureResourceInitialized_UsesEventRV(t *testing.T) {
 	s, _ := newReconciler(t, &fakeStorage{}, vec)
 	b := dashboard.New()
 
-	require.NoError(t, s.ensureResourceInitialized(context.Background(), b, snowflakeRV(777)))
+	partition, err := s.ensureResourceInitialized(context.Background(), b, snowflakeRV(777))
+	require.NoError(t, err)
+	assert.Equal(t, dashRes, partition)
 
 	assert.Equal(t, []string{dashRes}, vec.ensuredPartitions)
 	require.Len(t, vec.backfillJobs, 1)
@@ -1484,7 +1523,9 @@ func TestReconciler_EnsureResourceInitialized_UsesEventRV(t *testing.T) {
 	assert.Equal(t, b.Version(), vec.backfillJobs[0].ContentVersion, "job is stamped with the builder's content version")
 
 	// Second event for the same resource: no-op (no new partition or job).
-	require.NoError(t, s.ensureResourceInitialized(context.Background(), b, snowflakeRV(999)))
+	partition, err = s.ensureResourceInitialized(context.Background(), b, snowflakeRV(999))
+	require.NoError(t, err)
+	assert.Equal(t, dashRes, partition)
 	assert.Len(t, vec.ensuredPartitions, 1)
 	assert.Len(t, vec.backfillJobs, 1)
 	assert.Equal(t, snowflakeRV(777), vec.backfillJobs[0].StoppingRV)
@@ -1497,7 +1538,7 @@ func TestReconciler_EnsureResourceInitialized_CreateError(t *testing.T) {
 	vec.createBackfillErr = errors.New("db unavailable")
 	s, _ := newReconciler(t, &fakeStorage{}, vec)
 
-	err := s.ensureResourceInitialized(context.Background(), dashboard.New(), snowflakeRV(1))
+	_, err := s.ensureResourceInitialized(context.Background(), dashboard.New(), snowflakeRV(1))
 	require.Error(t, err)
 	assert.Empty(t, vec.backfillJobs)
 }
@@ -2065,7 +2106,7 @@ func TestReconciler_EmbeddingRetryCap_PreservesUnfinishedEvents(t *testing.T) {
 	broken.attempts = maxEventAttempts - 1
 	next := dashEvent(resourcepb.WatchEvent_ADDED, "ns", "next", snowflakeRV(110), minimalDashboard("next", "Next"))
 	text.failNext = &embedder.RetryableError{Err: errBoom}
-	_, failed, successes, abort := s.processEvents(t.Context(), []*pendingEvent{broken, next})
+	_, failed, successes, abort := s.processEvents(t.Context(), []*pendingEvent{broken, next}, s.builderSnapshot())
 	require.True(t, abort)
 	require.Empty(t, successes)
 	require.Equal(t, []*pendingEvent{next}, failed)

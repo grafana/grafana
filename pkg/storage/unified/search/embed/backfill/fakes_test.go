@@ -68,6 +68,7 @@ type fakeStorage struct {
 	// tests can assert the backfiller actually paginated rather than
 	// pulling everything in a single call.
 	listCalls []string
+	listKeys  []resource.NamespacedResource
 }
 
 type listItem struct {
@@ -141,6 +142,11 @@ func (f *fakeStorage) WriteEvent(context.Context, resource.WriteEvent) (int64, e
 func (f *fakeStorage) ListIterator(_ context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	f.mu.Lock()
 	f.listCalls = append(f.listCalls, req.NextPageToken)
+	f.listKeys = append(f.listKeys, resource.NamespacedResource{
+		Namespace: req.Options.Key.Namespace,
+		Group:     req.Options.Key.Group,
+		Resource:  req.Options.Key.Resource,
+	})
 	f.mu.Unlock()
 	if f.listErr != nil {
 		return 0, f.listErr
@@ -190,9 +196,12 @@ type fakeVector struct {
 	subresourceDeletes []deleteSubsCall
 	rows               map[string]map[string]vector.Vector // ns|model|resource|uid -> subresource -> row
 	upsertErr          error
+	collections        map[string]vector.Collection
+	resolveErr         error
 
 	// Backfill bookkeeping:
 	jobs              []vector.BackfillJob
+	onListJobs        func()
 	jobContentVersion map[int64]int // job ID -> content_version; absent = DB DEFAULT 1
 	reopenCalls       []reopenCall
 	checkpoints       []checkpointCall
@@ -200,6 +209,7 @@ type fakeVector struct {
 	completedJobIDs   []int64
 	updateCalls       []updateCall
 	updateErr         error
+	updateFolderErr   error
 	latestRV          int64
 	getContentErr     error
 	markErrErr        error
@@ -296,6 +306,13 @@ func (f *fakeVector) seedStoredContent(ns, model, res, uid, subresource, content
 }
 
 func (f *fakeVector) ResolveCollection(_ context.Context, group, resource string) (vector.Collection, bool, error) {
+	if f.resolveErr != nil {
+		return vector.Collection{}, false, f.resolveErr
+	}
+	if f.collections != nil {
+		collection, found := f.collections[group+"/"+resource]
+		return collection, found, nil
+	}
 	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource}, true, nil
 }
 
@@ -431,6 +448,19 @@ func (f *fakeVector) GetLatestRV(context.Context) (int64, error) {
 	defer f.mu.Unlock()
 	return f.latestRV, nil
 }
+
+func (f *fakeVector) UpdateFolder(_ context.Context, ns, model, res, uid, folder string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.updateFolderErr != nil {
+		return f.updateFolderErr
+	}
+	for sub, v := range f.rows[rowsKey(ns, model, res, uid)] {
+		v.Folder = folder
+		f.rows[rowsKey(ns, model, res, uid)][sub] = v
+	}
+	return nil
+}
 func (f *fakeVector) CountStoredEmbeddings(context.Context) ([]vector.EmbeddingCount, error) {
 	return nil, nil
 }
@@ -458,7 +488,10 @@ func (f *fakeVector) ReopenStaleBackfillJobs(_ context.Context, model, res strin
 		if j.Model != model || (j.Resource != res && j.Resource != "") {
 			continue
 		}
-		cv := 1
+		cv := j.ContentVersion
+		if cv == 0 {
+			cv = 1
+		}
 		if v, ok := f.jobContentVersion[j.ID]; ok {
 			cv = v
 		}
@@ -473,6 +506,7 @@ func (f *fakeVector) ReopenStaleBackfillJobs(_ context.Context, model, res strin
 			f.jobContentVersion = map[int64]int{}
 		}
 		f.jobContentVersion[j.ID] = version
+		j.ContentVersion = version
 		reopened = true
 	}
 	return reopened, nil
@@ -481,11 +515,17 @@ func (f *fakeVector) ReopenStaleBackfillJobs(_ context.Context, model, res strin
 // ListIncompleteBackfillJobs mirrors the real SQL's `is_complete = FALSE`
 // filter so tests can prove a completed job is invisible until reopened.
 func (f *fakeVector) ListIncompleteBackfillJobs(_ context.Context, model string) ([]vector.BackfillJob, error) {
+	if f.onListJobs != nil {
+		f.onListJobs()
+	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	out := make([]vector.BackfillJob, 0, len(f.jobs))
 	for _, j := range f.jobs {
 		if j.Model == model && !j.IsComplete {
+			if version, ok := f.jobContentVersion[j.ID]; ok {
+				j.ContentVersion = version
+			}
 			out = append(out, j)
 		}
 	}
@@ -516,6 +556,11 @@ func (f *fakeVector) CompleteBackfillJob(_ context.Context, id int64) error {
 		return f.completeErr
 	}
 	f.completedJobIDs = append(f.completedJobIDs, id)
+	for i := range f.jobs {
+		if f.jobs[i].ID == id {
+			f.jobs[i].IsComplete = true
+		}
+	}
 	return nil
 }
 func (f *fakeVector) TryAcquireBackfillLock(context.Context) (func(), bool, error) {

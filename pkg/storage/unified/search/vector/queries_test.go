@@ -266,6 +266,19 @@ func TestVectorQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlVectorCollectionUpdateFolder: {
+				{
+					Name: "simple",
+					Data: &sqlVectorCollectionUpdateFolderRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Resource:    "dashboards",
+						Namespace:   "stacks-123",
+						Model:       "text-embedding-005",
+						UID:         "abc-uid",
+						Folder:      "folder-b",
+					},
+				},
+			},
 			sqlVectorCollectionUpdateVersion: {
 				{
 					Name: "simple",
