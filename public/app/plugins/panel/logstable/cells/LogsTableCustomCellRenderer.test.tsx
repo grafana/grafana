@@ -1,6 +1,8 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { render, screen, waitFor } from '@testing-library/react';
 
 import { DataFrameType, FieldType, toDataFrame } from '@grafana/data';
+import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 import { createLogLine } from 'app/features/logs/components/mocks/logRow';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME, parseLogsFrame } from 'app/features/logs/logsFrame';
 
@@ -64,22 +66,24 @@ describe('LogsTableCustomCellRenderer', () => {
     it('should render', () => {
       const logs = [createLogLine()];
       render(
-        <LogDetailsContextProvider enableLogDetails logs={logs}>
-          <LogsTableCustomCellRenderer
-            supportsPermalink={true}
-            logsFrame={testLogsFrame}
-            options={{
-              enableLogDetails: true,
-              showCopyLogLink: false,
-            }}
-            cellProps={{
-              field: testLogsDataFrame[0].fields[1],
-              rowIndex: 0,
-              frame: testLogsDataFrame[0],
-              value: CellValueText,
-            }}
-          />
-        </LogDetailsContextProvider>
+        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+          <LogDetailsContextProvider enableLogDetails logs={logs}>
+            <LogsTableCustomCellRenderer
+              supportsPermalink={true}
+              logsFrame={testLogsFrame}
+              options={{
+                enableLogDetails: true,
+                showCopyLogLink: false,
+              }}
+              cellProps={{
+                field: testLogsDataFrame[0].fields[1],
+                rowIndex: 0,
+                frame: testLogsDataFrame[0],
+                value: CellValueText,
+              }}
+            />
+          </LogDetailsContextProvider>
+        </OpenFeatureProvider>
       );
 
       expect(screen.getByLabelText(ShowDetailsLabelText)).toBeInTheDocument();
