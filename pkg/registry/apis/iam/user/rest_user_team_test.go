@@ -449,7 +449,6 @@ func TestUserTeamREST_Connect(t *testing.T) {
 		require.Equal(t, builders.TEAM_SEARCH_MEMBERS, mockClient.LastSearchRequest.Options.Fields[0].Key)
 		require.Equal(t, []string{"alice"}, mockClient.LastSearchRequest.Options.Fields[0].Values)
 	})
-
 }
 
 func team(uid string, members ...iamv0alpha1.TeamTeamMember) *iamv0alpha1.Team {
