@@ -19,7 +19,15 @@ interface Hit {
   createdBy: string;
 }
 
+interface Event {
+  eventId: string;
+  projectId: string;
+  message: string;
+  occurredAt: number;
+}
+
 const HITS_URL = '/apis/colorshapes.grafana.app/v0alpha1/namespaces/default/hits';
+const EVENTS_URL = '/apis/colorshapes.grafana.app/v0alpha1/namespaces/default/events';
 
 function defaultRange(): TimeRange {
   const now = dateTime();
@@ -43,6 +51,8 @@ export default function ColorshapesPage() {
   const [hits, setHits] = useState<Hit[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
+  const [events, setEvents] = useState<Event[]>([]);
+  const [eventsError, setEventsError] = useState<string>();
 
   const load = useCallback(async (r: TimeRange) => {
     setLoading(true);
@@ -57,7 +67,11 @@ export default function ColorshapesPage() {
       );
       setHits(response.data.items ?? []);
     } catch (err) {
-      setError(isFetchError(err) ? err.data?.error ?? err.statusText : t('colorshapes.page.load-error', 'Failed to load hits'));
+      setError(
+        isFetchError(err)
+          ? (err.data?.error ?? err.statusText)
+          : t('colorshapes.page.load-error', 'Failed to load hits')
+      );
     } finally {
       setLoading(false);
     }
@@ -67,6 +81,26 @@ export default function ColorshapesPage() {
     load(range);
   }, [load, range]);
 
+  const loadEvents = useCallback(async (r: TimeRange) => {
+    setEventsError(undefined);
+    try {
+      const response = await lastValueFrom(
+        getBackendSrv().fetch<{ items: Event[] }>({
+          method: 'GET',
+          url: EVENTS_URL,
+          params: { from: r.from.valueOf(), to: r.to.valueOf() },
+        })
+      );
+      setEvents(response.data.items ?? []);
+    } catch (err) {
+      setEventsError(isFetchError(err) ? (err.data?.error ?? err.statusText) : 'Failed to load errors');
+    }
+  }, []);
+
+  useEffect(() => {
+    loadEvents(range);
+  }, [loadEvents, range]);
+
   const onMoveTimePicker = useCallback(
     (direction: number) => setRange((r) => toTimeRange(getShiftedTimeRange(direction, r))),
     []
@@ -74,6 +108,7 @@ export default function ColorshapesPage() {
   const onZoom = useCallback(() => setRange((r) => toTimeRange(getZoomedTimeRange(r, 2))), []);
 
   const getRowId = useMemo(() => (row: Hit) => `${row.createdAt}-${row.createdBy}-${row.color}-${row.shape}`, []);
+  const getEventRowId = useMemo(() => (row: Event) => row.eventId, []);
 
   const columns: Array<Column<Hit>> = useMemo(
     () => [
@@ -87,6 +122,21 @@ export default function ColorshapesPage() {
       { id: 'sourceIp', header: t('colorshapes.page.column-source-ip', 'Source IP') },
       { id: 'color', header: t('colorshapes.page.column-color', 'Color') },
       { id: 'shape', header: t('colorshapes.page.column-shape', 'Shape') },
+    ],
+    []
+  );
+
+  const eventColumns: Array<Column<Event>> = useMemo(
+    () => [
+      {
+        id: 'occurredAt',
+        header: 'Occurred at',
+        sortType: 'number',
+        cell: ({ row: { original } }) => dateTime(original.occurredAt).format('YYYY-MM-DD HH:mm:ss'),
+      },
+      { id: 'projectId', header: 'Project' },
+      { id: 'eventId', header: 'Event ID' },
+      { id: 'message', header: 'Error' },
     ],
     []
   );
@@ -108,10 +158,20 @@ export default function ColorshapesPage() {
               {error}
             </Alert>
           )}
+          {eventsError && (
+            <Alert title="Failed to load errors" severity="error">
+              {eventsError}
+            </Alert>
+          )}
           {loading ? (
             <LoadingPlaceholder text={t('colorshapes.page.loading', 'Loading hits...')} />
           ) : (
-            <InteractiveTable columns={columns} data={hits} getRowId={getRowId} />
+            <>
+              <h3>Error events</h3>
+              <InteractiveTable columns={eventColumns} data={events} getRowId={getEventRowId} />
+              <h3>Color hits</h3>
+              <InteractiveTable columns={columns} data={hits} getRowId={getRowId} />
+            </>
           )}
         </Stack>
       </Page.Contents>
