@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: error-tracking-apiserver
+  namespace: error-tracking
+spec:
+  replicas: 2
+  selector:
+    matchLabels: {app: error-tracking-apiserver}
+  template:
+    metadata:
+      labels: {app: error-tracking-apiserver}
+    spec:
+      containers:
+        - name: error-tracking-apiserver
+          image: error-tracking-api:local
+          imagePullPolicy: Never
+          command: [/usr/local/bin/error-tracking, serve, --config=/etc/error-tracking/config.json]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 3000
+            allowPrivilegeEscalation: false
+          resources:
+            requests: {cpu: "1", memory: 512Mi}
+            limits: {cpu: "2", memory: 1Gi}
+          ports: [{name: https, containerPort: 6443}]
+          env:
+            - {name: PGHOST, valueFrom: {secretKeyRef: {name: error-tracking-runtime, key: endpoint}}}
+            - {name: PGPORT, valueFrom: {secretKeyRef: {name: error-tracking-runtime, key: port}}}
+            - {name: PGUSER, valueFrom: {secretKeyRef: {name: error-tracking-runtime, key: username}}}
+            - {name: PGPASSWORD, valueFrom: {secretKeyRef: {name: error-tracking-runtime, key: password}}}
+            - {name: PGDATABASE, value: error_tracking}
+            - {name: PGSSLMODE, value: disable}
+            - {name: ERROR_TRACKING_RUNTIME_ROLE, value: error_tracking_app}
+          volumeMounts:
+            - {name: config, mountPath: /etc/error-tracking/config.json, subPath: config.json, readOnly: true}
+            - {name: tls, mountPath: /etc/error-tracking/tls, readOnly: true}
+            - {name: token, mountPath: /etc/error-tracking/token, readOnly: true}
+            - {name: audit, mountPath: /etc/error-tracking/audit, readOnly: true}
+          readinessProbe: {httpGet: {path: /readyz, port: https, scheme: HTTPS}, periodSeconds: 5}
+          livenessProbe: {httpGet: {path: /livez, port: https, scheme: HTTPS}, periodSeconds: 10}
+      volumes:
+        - {name: config, configMap: {name: error-tracking-api-config}}
+        - {name: tls, secret: {secretName: error-tracking-apiserver-tls}}
+        - {name: token, secret: {secretName: error-tracking-token-exchange}}
+        - {name: audit, configMap: {name: error-tracking-audit-policy}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: error-tracking-apiserver
+  namespace: error-tracking
+spec:
+  selector: {app: error-tracking-apiserver}
+  ports: [{name: https, port: 6461, targetPort: https}]
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: error-tracking-token-exchange
+  namespace: error-tracking
+type: Opaque
+stringData:
+  token: ThisIsMySecretToken
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: error-tracking-audit-policy
+  namespace: error-tracking
+data:
+  policy.yaml: |
+    apiVersion: audit.k8s.io/v1
+    kind: Policy
+    rules:
+      - level: Metadata
+        omitStages: [RequestReceived, ResponseStarted, Panic]

@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: error-tracking
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: error-tracking-postgres
+  namespace: error-tracking
+type: Opaque
+stringData:
+  POSTGRES_USER: error_tracking
+  POSTGRES_PASSWORD: local-only-password
+  POSTGRES_DB: error_tracking
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: error-tracking-postgres
+  namespace: error-tracking
+spec:
+  selector:
+    app: error-tracking-postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: error-tracking-postgres
+  namespace: error-tracking
+spec:
+  serviceName: error-tracking-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: error-tracking-postgres
+  template:
+    metadata:
+      labels:
+        app: error-tracking-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:17-alpine
+          ports:
+            - name: postgres
+              containerPort: 5432
+          envFrom:
+            - secretRef:
+                name: error-tracking-postgres
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""]
+            initialDelaySeconds: 5
+            periodSeconds: 3
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi

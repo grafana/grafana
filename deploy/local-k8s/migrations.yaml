@@ -1,0 +1,77 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: error-tracking-migrate
+  namespace: error-tracking
+spec:
+  backoffLimit: 2
+  activeDeadlineSeconds: 180
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app: error-tracking-migrate
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+        - name: bootstrap-runtime-role
+          image: postgres:17-alpine
+          imagePullPolicy: IfNotPresent
+          env:
+            - {name: PGHOST, value: error-tracking-postgres}
+            - {name: PGPORT, value: "5432"}
+            - {name: PGDATABASE, valueFrom: {secretKeyRef: {name: error-tracking-postgres, key: POSTGRES_DB}}}
+            - {name: PGUSER, valueFrom: {secretKeyRef: {name: error-tracking-postgres, key: POSTGRES_USER}}}
+            - {name: PGPASSWORD, valueFrom: {secretKeyRef: {name: error-tracking-postgres, key: POSTGRES_PASSWORD}}}
+            - {name: RUNTIME_PASSWORD, valueFrom: {secretKeyRef: {name: error-tracking-runtime, key: password}}}
+          command: [/bin/sh, -ec]
+          args:
+            - |
+              until pg_isready; do sleep 1; done
+              psql -v ON_ERROR_STOP=1 <<'SQL'
+              \getenv runtime_password RUNTIME_PASSWORD
+              SELECT format('CREATE ROLE error_tracking_app LOGIN PASSWORD %L', :'runtime_password')
+              WHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'error_tracking_app') \gexec
+              ALTER ROLE error_tracking_app PASSWORD :'runtime_password';
+              GRANT CONNECT ON DATABASE error_tracking TO error_tracking_app;
+              SQL
+      containers:
+        - name: migrate
+          image: error-tracking-api:local
+          imagePullPolicy: Never
+          command: [/usr/local/bin/error-tracking, migrate]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 3000
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+            seccompProfile: {type: RuntimeDefault}
+          resources:
+            requests: {cpu: 100m, memory: 64Mi}
+            limits: {cpu: 500m, memory: 256Mi}
+          env:
+            - name: PGHOST
+              value: error-tracking-postgres
+            - name: PGPORT
+              value: "5432"
+            - name: PGDATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: error-tracking-postgres
+                  key: POSTGRES_DB
+            - name: PGSSLMODE
+              value: disable
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: error-tracking-postgres
+                  key: POSTGRES_USER
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: error-tracking-postgres
+                  key: POSTGRES_PASSWORD
+            - name: ERROR_TRACKING_RUNTIME_ROLE
+              value: error_tracking_app

@@ -1,0 +1,24 @@
+{
+  "server": {
+    "bindAddress": "0.0.0.0",
+    "securePort": 6443,
+    "certFile": "/etc/error-tracking/tls/tls.crt",
+    "keyFile": "/etc/error-tracking/tls/tls.key"
+  },
+  "auth": {
+    "signingKeysURL": "http://auth-signer.default.svc.cluster.local:6481/jwks",
+    "issuer": "auth",
+    "audience": "error-tracking.grafana.app",
+    "authzAddress": "authz-service.default.svc.cluster.local:10000",
+    "authzCAFile": "/etc/error-tracking/tls/ca.crt",
+    "tokenExchangeURL": "http://auth-signer.default.svc.cluster.local:6481/sign/access-token",
+    "tokenExchangeTokenFile": "/etc/error-tracking/token/token"
+  },
+  "database": {
+    "maxConnections": 4
+  },
+  "audit": {
+    "policyFile": "/etc/error-tracking/audit/policy.yaml",
+    "logPath": "-"
+  }
+}
