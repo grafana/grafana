@@ -1,10 +1,7 @@
-import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { type ReactNode } from 'react';
 
 import { store } from '@grafana/data';
-import { FlagKeys } from '@grafana/runtime/internal';
-import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { createLogLine } from 'app/features/logs/components/mocks/logRow';
 import { type LogListModel } from 'app/features/logs/components/panel/processing';
 
@@ -49,18 +46,12 @@ test('Allows to access context attributes', () => {
   expect(result.current).toEqual(contextValue.enableLogDetails);
 });
 
-function FeatureFlagsProvider({ children }: { children: ReactNode }) {
-  return <OpenFeatureProvider client={getTestFeatureFlagClient()}>{children}</OpenFeatureProvider>;
-}
-
 function renderLogDetailsProviderHook(logs: LogListModel[], enableLogDetails = true) {
   const props = { logs, enableLogDetails };
   const Wrapper = ({ children }: { children: ReactNode }) => (
-    <FeatureFlagsProvider>
-      <LogDetailsContextProvider enableLogDetails={props.enableLogDetails} logs={props.logs}>
-        {children}
-      </LogDetailsContextProvider>
-    </FeatureFlagsProvider>
+    <LogDetailsContextProvider enableLogDetails={props.enableLogDetails} logs={props.logs}>
+      {children}
+    </LogDetailsContextProvider>
   );
   const hook = renderHook(() => useLogDetailsContext(), { wrapper: Wrapper });
   return {
@@ -73,14 +64,6 @@ function renderLogDetailsProviderHook(logs: LogListModel[], enableLogDetails = t
 }
 
 describe('LogDetailsContextProvider', () => {
-  afterEach(async () => {
-    // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state
-    // updates while the component is still mounted (RTL cleanup runs in a separate afterEach).
-    await act(async () => {
-      setTestFlags({});
-    });
-  });
-
   test('starts with no details', () => {
     const { result } = renderLogDetailsProviderHook([log1, log2]);
 
@@ -142,26 +125,14 @@ describe('LogDetailsContextProvider', () => {
     expect(result.current.currentLog?.uid).toBe(log2.uid);
   });
 
-  test.each([
-    {
-      desc: 'a modifier key is pressed',
-      setup: () => {},
-      withModifierKey: true,
-    },
-    {
-      desc: 'grafana.sidebarLogDetailsNewTab is enabled',
-      setup: () => setTestFlags({ [FlagKeys.GrafanaSidebarLogDetailsNewTab]: true }),
-      withModifierKey: false,
-    },
-  ])('opens an additional tab when $desc', ({ setup, withModifierKey }) => {
-    setup();
+  test('opens an additional tab when a modifier key is pressed', () => {
     const { result } = renderLogDetailsProviderHook([log1, log2]);
 
     act(() => {
       result.current.toggleDetails(0);
     });
     act(() => {
-      result.current.toggleDetails(1, withModifierKey);
+      result.current.toggleDetails(1, true);
     });
 
     expect(result.current.showDetails.map((l) => l.uid)).toEqual([log1.uid, log2.uid]);
@@ -305,11 +276,9 @@ describe('prettifyDetailsJSON', () => {
   function prettifyWrapper() {
     return function Wrapper({ children }: { children: ReactNode }) {
       return (
-        <FeatureFlagsProvider>
-          <LogDetailsContextProvider enableLogDetails logOptionsStorageKey={storageKey} logs={[log1, log2]}>
-            {children}
-          </LogDetailsContextProvider>
-        </FeatureFlagsProvider>
+        <LogDetailsContextProvider enableLogDetails logOptionsStorageKey={storageKey} logs={[log1, log2]}>
+          {children}
+        </LogDetailsContextProvider>
       );
     };
   }

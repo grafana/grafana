@@ -1,7 +1,6 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 
 import { store } from '@grafana/data';
-import { useFlagGrafanaSidebarLogDetailsNewTab } from '@grafana/runtime/internal';
 import { type LogListModel } from 'app/features/logs/components/panel/processing';
 
 export interface LogDetailsContextData {
@@ -105,8 +104,6 @@ export const LogDetailsContextProvider = ({
     [logs, showDetails]
   );
 
-  const openInNewTabFlag = useFlagGrafanaSidebarLogDetailsNewTab();
-
   const toggleDetails = useCallback(
     (logRef: number | LogListModel, withModifierKey?: boolean) => {
       if (!enableLogDetails) {
@@ -119,7 +116,7 @@ export const LogDetailsContextProvider = ({
       }
       const found = showDetails.find((stateLog) => stateLog.uid === log.uid);
 
-      if (!withModifierKey && !found && !openInNewTabFlag) {
+      if (!withModifierKey && !found) {
         setCurrentLog(log);
         setShowDetails([log]);
         return;
@@ -136,7 +133,7 @@ export const LogDetailsContextProvider = ({
         setCurrentLog(log);
       }
     },
-    [currentLog, enableLogDetails, logs, openInNewTabFlag, showDetails]
+    [currentLog, enableLogDetails, logs, showDetails]
   );
 
   const replaceDetails = useCallback(

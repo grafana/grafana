@@ -2,7 +2,6 @@ import { debounce } from 'lodash';
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 
 import { type LogRowModel, store } from '@grafana/data';
-import { useFlagGrafanaSidebarLogDetailsNewTab } from '@grafana/runtime/internal';
 
 import { getFieldSelectorWidth } from '../fieldSelector/fieldSelectorUtils';
 
@@ -161,15 +160,13 @@ export const LogDetailsContextProvider = ({
     [showDetails]
   );
 
-  const openInNewTabFlag = useFlagGrafanaSidebarLogDetailsNewTab();
-
   const toggleDetails = useCallback(
     (log: LogListModel, withModifierKey?: boolean) => {
       if (!enableLogDetails) {
         return;
       }
       const found = showDetails.find((stateLog) => stateLog.uid === log.uid);
-      if (detailsMode === 'sidebar' && !withModifierKey && !found && !openInNewTabFlag) {
+      if (detailsMode === 'sidebar' && !withModifierKey && !found) {
         setCurrentLog(log);
         setShowDetails([log]);
         return;
@@ -188,7 +185,7 @@ export const LogDetailsContextProvider = ({
         setCurrentLog(log);
       }
     },
-    [currentLog, detailsMode, enableLogDetails, openInNewTabFlag, showDetails]
+    [currentLog, detailsMode, enableLogDetails, showDetails]
   );
 
   const replaceDetails = useCallback(

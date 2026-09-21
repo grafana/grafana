@@ -1,11 +1,9 @@
-import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { type DataSourceApi, CoreApp, createTheme, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 import { type DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
-import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 
 import * as logsUtils from '../../utils';
 import { createLogLine } from '../mocks/logRow';
@@ -200,13 +198,11 @@ describe('LogLineMenu', () => {
 
     test('Allows to open log details', async () => {
       render(
-        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
-          <LogListContextProvider {...contextProps}>
-            <LogDetailsContextProvider enableLogDetails logs={contextProps.logs} showControls>
-              <LogLineMenu log={log} styles={styles} />
-            </LogDetailsContextProvider>
-          </LogListContextProvider>
-        </OpenFeatureProvider>
+        <LogListContextProvider {...contextProps}>
+          <LogDetailsContextProvider enableLogDetails logs={contextProps.logs} showControls>
+            <LogLineMenu log={log} styles={styles} />
+          </LogDetailsContextProvider>
+        </LogListContextProvider>
       );
       await userEvent.click(screen.getByLabelText('Log menu'));
       await screen.findByText('Show log details');
@@ -214,13 +210,11 @@ describe('LogLineMenu', () => {
 
     test('Does not show log details option when disabled', async () => {
       render(
-        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
-          <LogListContextProvider {...contextProps}>
-            <LogDetailsContextProvider logs={contextProps.logs} showControls enableLogDetails={false}>
-              <LogLineMenu log={log} styles={styles} />
-            </LogDetailsContextProvider>
-          </LogListContextProvider>
-        </OpenFeatureProvider>
+        <LogListContextProvider {...contextProps}>
+          <LogDetailsContextProvider logs={contextProps.logs} showControls enableLogDetails={false}>
+            <LogLineMenu log={log} styles={styles} />
+          </LogDetailsContextProvider>
+        </LogListContextProvider>
       );
       await userEvent.click(screen.getByLabelText('Log menu'));
       expect(screen.queryByText('Show log details')).not.toBeInTheDocument();
