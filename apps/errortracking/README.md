@@ -19,4 +19,10 @@ The module builds independently of Grafana's root Go workspace:
 cd apps/errortracking
 GOWORK=off CGO_ENABLED=0 go test ./...
 GOWORK=off CGO_ENABLED=0 go build ./cmd/error-tracking
+
+cd ../..
+docker build --platform=linux/arm64 -f apps/errortracking/Dockerfile \
+  -t error-tracking-api:local .
 ```
+
+See the [local run guide](../../deploy/local-k8s/README.md) for Compose development and native Kubernetes acceptance. Both workflows run this image with the same signer, AuthZ, and Grafana aggregation path.
