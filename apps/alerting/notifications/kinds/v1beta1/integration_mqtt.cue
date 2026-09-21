@@ -16,9 +16,7 @@ package v1beta1
 		username?:      string
 		qos?:           "0" | "1" | "2"
 		retain?:        bool
-		tlsConfig?: {
-			insecureSkipVerify?: bool
-		}
+		tlsConfig?:     #GrafanaTLSConfig
 	}
 	secureFields?: {
 		password?:                      bool

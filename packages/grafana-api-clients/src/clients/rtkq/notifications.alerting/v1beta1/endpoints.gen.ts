@@ -2104,57 +2104,60 @@ export type ReceiverDingdingV1 = {
   variant?: 'dingding/v1';
   version: 'v1';
 };
+export type ReceiverAuthorization = {
+  type?: string;
+};
+export type ReceiverBasicAuth = {
+  username?: string;
+};
+export type ReceiverTlsConfig = {
+  insecure_skip_verify?: boolean;
+  max_version?: string;
+  min_version?: string;
+  server_name?: string;
+};
+export type ReceiverOAuth2 = {
+  client_id: string;
+  endpoint_params?: {
+    [key: string]: string;
+  };
+  no_proxy?: string;
+  proxy_connect_header?: {
+    [key: string]: string;
+  };
+  proxy_from_environment?: boolean;
+  proxy_url?: string;
+  scopes?: string;
+  tls_config?: ReceiverTlsConfig;
+  token_url: string;
+};
+export type ReceiverHttpClientConfig = {
+  authorization?: ReceiverAuthorization;
+  basic_auth?: ReceiverBasicAuth;
+  enable_http2?: boolean;
+  follow_redirects?: boolean;
+  http_headers?: {
+    [key: string]: string;
+  };
+  no_proxy?: string;
+  oauth2?: ReceiverOAuth2;
+  proxy_connect_header?: {
+    [key: string]: string;
+  };
+  proxy_from_environment?: boolean;
+  proxy_url?: string;
+  tls_config?: ReceiverTlsConfig;
+};
 export type ReceiverDiscordV0Mimir1 = {
   disableResolveMessage?: boolean;
   secureFields?: {
+    'http_config.authorization.credentials'?: boolean;
+    'http_config.basic_auth.password'?: boolean;
+    'http_config.oauth2.client_secret'?: boolean;
     webhook_url?: boolean;
   };
   settings: {
-    http_config?: {
-      authorization?: {
-        type?: string;
-      };
-      basic_auth?: {
-        username?: string;
-      };
-      enable_http2?: boolean;
-      follow_redirects?: boolean;
-      http_headers?: {
-        [key: string]: string;
-      };
-      no_proxy?: string;
-      oauth2?: {
-        client_id: string;
-        endpoint_params?: {
-          [key: string]: string;
-        };
-        no_proxy?: string;
-        proxy_connect_header?: {
-          [key: string]: string;
-        };
-        proxy_from_environment?: boolean;
-        proxy_url?: string;
-        scopes?: string;
-        tls_config?: {
-          insecure_skip_verify?: boolean;
-          max_version?: string;
-          min_version?: string;
-          server_name?: string;
-        };
-        token_url: string;
-      };
-      proxy_connect_header?: {
-        [key: string]: string;
-      };
-      proxy_from_environment?: boolean;
-      proxy_url?: string;
-      tls_config?: {
-        insecure_skip_verify?: boolean;
-        max_version?: string;
-        min_version?: string;
-        server_name?: string;
-      };
-    };
+    http_config?: ReceiverHttpClientConfig;
     message?: string;
     title?: string;
   };
@@ -2198,12 +2201,7 @@ export type ReceiverEmailV0Mimir1 = {
     require_tls?: boolean;
     smarthost?: string;
     text?: string;
-    tls_config?: {
-      insecure_skip_verify?: boolean;
-      max_version?: string;
-      min_version?: string;
-      server_name?: string;
-    };
+    tls_config?: ReceiverTlsConfig;
     to: string;
   };
   type: 'email';
@@ -2242,57 +2240,18 @@ export type ReceiverGooglechatV1 = {
 };
 export type ReceiverJiraV0Mimir1 = {
   disableResolveMessage?: boolean;
+  secureFields?: {
+    'http_config.authorization.credentials'?: boolean;
+    'http_config.basic_auth.password'?: boolean;
+    'http_config.oauth2.client_secret'?: boolean;
+  };
   settings: {
     api_url: string;
     description?: string;
     fields?: {
       [key: string]: string;
     };
-    http_config?: {
-      authorization?: {
-        type?: string;
-      };
-      basic_auth?: {
-        username?: string;
-      };
-      enable_http2?: boolean;
-      follow_redirects?: boolean;
-      http_headers?: {
-        [key: string]: string;
-      };
-      no_proxy?: string;
-      oauth2?: {
-        client_id: string;
-        endpoint_params?: {
-          [key: string]: string;
-        };
-        no_proxy?: string;
-        proxy_connect_header?: {
-          [key: string]: string;
-        };
-        proxy_from_environment?: boolean;
-        proxy_url?: string;
-        scopes?: string;
-        tls_config?: {
-          insecure_skip_verify?: boolean;
-          max_version?: string;
-          min_version?: string;
-          server_name?: string;
-        };
-        token_url: string;
-      };
-      proxy_connect_header?: {
-        [key: string]: string;
-      };
-      proxy_from_environment?: boolean;
-      proxy_url?: string;
-      tls_config?: {
-        insecure_skip_verify?: boolean;
-        max_version?: string;
-        min_version?: string;
-        server_name?: string;
-      };
-    };
+    http_config?: ReceiverHttpClientConfig;
     issue_type: string;
     labels?: string;
     priority?: string;
@@ -2370,6 +2329,9 @@ export type ReceiverLinev1 = {
   variant?: 'LINE/v1';
   version: 'v1';
 };
+export type ReceiverGrafanaTlsConfig = {
+  insecureSkipVerify?: boolean;
+};
 export type ReceiverMqttV1 = {
   disableResolveMessage?: boolean;
   secureFields?: {
@@ -2385,9 +2347,7 @@ export type ReceiverMqttV1 = {
     messageFormat?: 'json' | 'text';
     qos?: '0' | '1' | '2';
     retain?: boolean;
-    tlsConfig?: {
-      insecureSkipVerify?: boolean;
-    };
+    tlsConfig?: ReceiverGrafanaTlsConfig;
     topic: string;
     username?: string;
   };
@@ -2420,6 +2380,9 @@ export type ReceiverOpsgenieV0Mimir1 = {
   disableResolveMessage?: boolean;
   secureFields?: {
     api_key?: boolean;
+    'http_config.authorization.credentials'?: boolean;
+    'http_config.basic_auth.password'?: boolean;
+    'http_config.oauth2.client_secret'?: boolean;
   };
   settings: {
     actions?: string;
@@ -2429,51 +2392,7 @@ export type ReceiverOpsgenieV0Mimir1 = {
       [key: string]: string;
     };
     entity?: string;
-    http_config?: {
-      authorization?: {
-        type?: string;
-      };
-      basic_auth?: {
-        username?: string;
-      };
-      enable_http2?: boolean;
-      follow_redirects?: boolean;
-      http_headers?: {
-        [key: string]: string;
-      };
-      no_proxy?: string;
-      oauth2?: {
-        client_id: string;
-        endpoint_params?: {
-          [key: string]: string;
-        };
-        no_proxy?: string;
-        proxy_connect_header?: {
-          [key: string]: string;
-        };
-        proxy_from_environment?: boolean;
-        proxy_url?: string;
-        scopes?: string;
-        tls_config?: {
-          insecure_skip_verify?: boolean;
-          max_version?: string;
-          min_version?: string;
-          server_name?: string;
-        };
-        token_url: string;
-      };
-      proxy_connect_header?: {
-        [key: string]: string;
-      };
-      proxy_from_environment?: boolean;
-      proxy_url?: string;
-      tls_config?: {
-        insecure_skip_verify?: boolean;
-        max_version?: string;
-        min_version?: string;
-        server_name?: string;
-      };
-    };
+    http_config?: ReceiverHttpClientConfig;
     message?: string;
     note?: string;
     priority?: string;
@@ -2509,6 +2428,9 @@ export type ReceiverOpsgenieV1 = {
 export type ReceiverPagerdutyV0Mimir1 = {
   disableResolveMessage?: boolean;
   secureFields?: {
+    'http_config.authorization.credentials'?: boolean;
+    'http_config.basic_auth.password'?: boolean;
+    'http_config.oauth2.client_secret'?: boolean;
     routing_key?: boolean;
     service_key?: boolean;
   };
@@ -2522,51 +2444,7 @@ export type ReceiverPagerdutyV0Mimir1 = {
       [key: string]: string;
     };
     group?: string;
-    http_config?: {
-      authorization?: {
-        type?: string;
-      };
-      basic_auth?: {
-        username?: string;
-      };
-      enable_http2?: boolean;
-      follow_redirects?: boolean;
-      http_headers?: {
-        [key: string]: string;
-      };
-      no_proxy?: string;
-      oauth2?: {
-        client_id: string;
-        endpoint_params?: {
-          [key: string]: string;
-        };
-        no_proxy?: string;
-        proxy_connect_header?: {
-          [key: string]: string;
-        };
-        proxy_from_environment?: boolean;
-        proxy_url?: string;
-        scopes?: string;
-        tls_config?: {
-          insecure_skip_verify?: boolean;
-          max_version?: string;
-          min_version?: string;
-          server_name?: string;
-        };
-        token_url: string;
-      };
-      proxy_connect_header?: {
-        [key: string]: string;
-      };
-      proxy_from_environment?: boolean;
-      proxy_url?: string;
-      tls_config?: {
-        insecure_skip_verify?: boolean;
-        max_version?: string;
-        min_version?: string;
-        server_name?: string;
-      };
-    };
+    http_config?: ReceiverHttpClientConfig;
     images?: string;
     links?: string;
     severity?: string;
@@ -2619,6 +2497,9 @@ export type ReceiverPrometheusAlertmanagerV1 = {
 export type ReceiverPushoverV0Mimir1 = {
   disableResolveMessage?: boolean;
   secureFields?: {
+    'http_config.authorization.credentials'?: boolean;
+    'http_config.basic_auth.password'?: boolean;
+    'http_config.oauth2.client_secret'?: boolean;
     token?: boolean;
     user_key?: boolean;
   };
@@ -2626,51 +2507,7 @@ export type ReceiverPushoverV0Mimir1 = {
     device?: string;
     expire?: string;
     html?: boolean;
-    http_config?: {
-      authorization?: {
-        type?: string;
-      };
-      basic_auth?: {
-        username?: string;
-      };
-      enable_http2?: boolean;
-      follow_redirects?: boolean;
-      http_headers?: {
-        [key: string]: string;
-      };
-      no_proxy?: string;
-      oauth2?: {
-        client_id: string;
-        endpoint_params?: {
-          [key: string]: string;
-        };
-        no_proxy?: string;
-        proxy_connect_header?: {
-          [key: string]: string;
-        };
-        proxy_from_environment?: boolean;
-        proxy_url?: string;
-        scopes?: string;
-        tls_config?: {
-          insecure_skip_verify?: boolean;
-          max_version?: string;
-          min_version?: string;
-          server_name?: string;
-        };
-        token_url: string;
-      };
-      proxy_connect_header?: {
-        [key: string]: string;
-      };
-      proxy_from_environment?: boolean;
-      proxy_url?: string;
-      tls_config?: {
-        insecure_skip_verify?: boolean;
-        max_version?: string;
-        min_version?: string;
-        server_name?: string;
-      };
-    };
+    http_config?: ReceiverHttpClientConfig;
     message?: string;
     priority?: string;
     retry?: string;
@@ -2775,6 +2612,9 @@ export type ReceiverSlackV0Mimir1 = {
   disableResolveMessage?: boolean;
   secureFields?: {
     api_url?: boolean;
+    'http_config.authorization.credentials'?: boolean;
+    'http_config.basic_auth.password'?: boolean;
+    'http_config.oauth2.client_secret'?: boolean;
   };
   settings: {
     actions?: string;
@@ -2784,51 +2624,7 @@ export type ReceiverSlackV0Mimir1 = {
     fallback?: string;
     fields?: string;
     footer?: string;
-    http_config?: {
-      authorization?: {
-        type?: string;
-      };
-      basic_auth?: {
-        username?: string;
-      };
-      enable_http2?: boolean;
-      follow_redirects?: boolean;
-      http_headers?: {
-        [key: string]: string;
-      };
-      no_proxy?: string;
-      oauth2?: {
-        client_id: string;
-        endpoint_params?: {
-          [key: string]: string;
-        };
-        no_proxy?: string;
-        proxy_connect_header?: {
-          [key: string]: string;
-        };
-        proxy_from_environment?: boolean;
-        proxy_url?: string;
-        scopes?: string;
-        tls_config?: {
-          insecure_skip_verify?: boolean;
-          max_version?: string;
-          min_version?: string;
-          server_name?: string;
-        };
-        token_url: string;
-      };
-      proxy_connect_header?: {
-        [key: string]: string;
-      };
-      proxy_from_environment?: boolean;
-      proxy_url?: string;
-      tls_config?: {
-        insecure_skip_verify?: boolean;
-        max_version?: string;
-        min_version?: string;
-        server_name?: string;
-      };
-    };
+    http_config?: ReceiverHttpClientConfig;
     icon_emoji?: string;
     icon_url?: string;
     image_url?: string;
@@ -2872,9 +2668,17 @@ export type ReceiverSlackV1 = {
   variant?: 'slack/v1';
   version: 'v1';
 };
+export type ReceiverSigv4 = {
+  profile?: string;
+  region?: string;
+  role_arn?: string;
+};
 export type ReceiverSnsV0Mimir1 = {
   disableResolveMessage?: boolean;
   secureFields?: {
+    'http_config.authorization.credentials'?: boolean;
+    'http_config.basic_auth.password'?: boolean;
+    'http_config.oauth2.client_secret'?: boolean;
     'sigv4.secret_key'?: boolean;
   };
   settings: {
@@ -2882,59 +2686,10 @@ export type ReceiverSnsV0Mimir1 = {
     attributes?: {
       [key: string]: string;
     };
-    http_config?: {
-      authorization?: {
-        type?: string;
-      };
-      basic_auth?: {
-        username?: string;
-      };
-      enable_http2?: boolean;
-      follow_redirects?: boolean;
-      http_headers?: {
-        [key: string]: string;
-      };
-      no_proxy?: string;
-      oauth2?: {
-        client_id: string;
-        endpoint_params?: {
-          [key: string]: string;
-        };
-        no_proxy?: string;
-        proxy_connect_header?: {
-          [key: string]: string;
-        };
-        proxy_from_environment?: boolean;
-        proxy_url?: string;
-        scopes?: string;
-        tls_config?: {
-          insecure_skip_verify?: boolean;
-          max_version?: string;
-          min_version?: string;
-          server_name?: string;
-        };
-        token_url: string;
-      };
-      proxy_connect_header?: {
-        [key: string]: string;
-      };
-      proxy_from_environment?: boolean;
-      proxy_url?: string;
-      tls_config?: {
-        insecure_skip_verify?: boolean;
-        max_version?: string;
-        min_version?: string;
-        server_name?: string;
-      };
-    };
+    http_config?: ReceiverHttpClientConfig;
     message?: string;
     phone_number?: string;
-    sigv4?: {
-      access_key?: string;
-      profile?: string;
-      region?: string;
-      role_arn?: string;
-    };
+    sigv4?: ReceiverSigv4;
     subject?: string;
     target_arn?: string;
     topic_arn?: string;
@@ -2957,11 +2712,7 @@ export type ReceiverSnsV1 = {
     };
     message?: string;
     phone_number?: string;
-    sigv4?: {
-      profile?: string;
-      region?: string;
-      role_arn?: string;
-    };
+    sigv4?: ReceiverSigv4;
     subject?: string;
     target_arn?: string;
     topic_arn?: string;
@@ -2974,54 +2725,13 @@ export type ReceiverSnsV1 = {
 export type ReceiverTeamsV0Mimir1 = {
   disableResolveMessage?: boolean;
   secureFields?: {
+    'http_config.authorization.credentials'?: boolean;
+    'http_config.basic_auth.password'?: boolean;
+    'http_config.oauth2.client_secret'?: boolean;
     webhook_url?: boolean;
   };
   settings: {
-    http_config?: {
-      authorization?: {
-        type?: string;
-      };
-      basic_auth?: {
-        username?: string;
-      };
-      enable_http2?: boolean;
-      follow_redirects?: boolean;
-      http_headers?: {
-        [key: string]: string;
-      };
-      no_proxy?: string;
-      oauth2?: {
-        client_id: string;
-        endpoint_params?: {
-          [key: string]: string;
-        };
-        no_proxy?: string;
-        proxy_connect_header?: {
-          [key: string]: string;
-        };
-        proxy_from_environment?: boolean;
-        proxy_url?: string;
-        scopes?: string;
-        tls_config?: {
-          insecure_skip_verify?: boolean;
-          max_version?: string;
-          min_version?: string;
-          server_name?: string;
-        };
-        token_url: string;
-      };
-      proxy_connect_header?: {
-        [key: string]: string;
-      };
-      proxy_from_environment?: boolean;
-      proxy_url?: string;
-      tls_config?: {
-        insecure_skip_verify?: boolean;
-        max_version?: string;
-        min_version?: string;
-        server_name?: string;
-      };
-    };
+    http_config?: ReceiverHttpClientConfig;
     summary?: string;
     text?: string;
     title?: string;
@@ -3034,54 +2744,13 @@ export type ReceiverTeamsV0Mimir1 = {
 export type ReceiverTeamsV0Mimir2 = {
   disableResolveMessage?: boolean;
   secureFields?: {
+    'http_config.authorization.credentials'?: boolean;
+    'http_config.basic_auth.password'?: boolean;
+    'http_config.oauth2.client_secret'?: boolean;
     webhook_url?: boolean;
   };
   settings: {
-    http_config?: {
-      authorization?: {
-        type?: string;
-      };
-      basic_auth?: {
-        username?: string;
-      };
-      enable_http2?: boolean;
-      follow_redirects?: boolean;
-      http_headers?: {
-        [key: string]: string;
-      };
-      no_proxy?: string;
-      oauth2?: {
-        client_id: string;
-        endpoint_params?: {
-          [key: string]: string;
-        };
-        no_proxy?: string;
-        proxy_connect_header?: {
-          [key: string]: string;
-        };
-        proxy_from_environment?: boolean;
-        proxy_url?: string;
-        scopes?: string;
-        tls_config?: {
-          insecure_skip_verify?: boolean;
-          max_version?: string;
-          min_version?: string;
-          server_name?: string;
-        };
-        token_url: string;
-      };
-      proxy_connect_header?: {
-        [key: string]: string;
-      };
-      proxy_from_environment?: boolean;
-      proxy_url?: string;
-      tls_config?: {
-        insecure_skip_verify?: boolean;
-        max_version?: string;
-        min_version?: string;
-        server_name?: string;
-      };
-    };
+    http_config?: ReceiverHttpClientConfig;
     text?: string;
     title?: string;
   };
@@ -3106,57 +2775,16 @@ export type ReceiverTeamsV1 = {
 export type ReceiverTelegramV0Mimir1 = {
   disableResolveMessage?: boolean;
   secureFields?: {
+    'http_config.authorization.credentials'?: boolean;
+    'http_config.basic_auth.password'?: boolean;
+    'http_config.oauth2.client_secret'?: boolean;
     token?: boolean;
   };
   settings: {
     api_url?: string;
     chat_id: string;
     disable_notifications?: boolean;
-    http_config?: {
-      authorization?: {
-        type?: string;
-      };
-      basic_auth?: {
-        username?: string;
-      };
-      enable_http2?: boolean;
-      follow_redirects?: boolean;
-      http_headers?: {
-        [key: string]: string;
-      };
-      no_proxy?: string;
-      oauth2?: {
-        client_id: string;
-        endpoint_params?: {
-          [key: string]: string;
-        };
-        no_proxy?: string;
-        proxy_connect_header?: {
-          [key: string]: string;
-        };
-        proxy_from_environment?: boolean;
-        proxy_url?: string;
-        scopes?: string;
-        tls_config?: {
-          insecure_skip_verify?: boolean;
-          max_version?: string;
-          min_version?: string;
-          server_name?: string;
-        };
-        token_url: string;
-      };
-      proxy_connect_header?: {
-        [key: string]: string;
-      };
-      proxy_from_environment?: boolean;
-      proxy_url?: string;
-      tls_config?: {
-        insecure_skip_verify?: boolean;
-        max_version?: string;
-        min_version?: string;
-        server_name?: string;
-      };
-    };
+    http_config?: ReceiverHttpClientConfig;
     message?: string;
     parse_mode?: 'MarkdownV2' | 'Markdown' | 'HTML';
   };
@@ -3204,6 +2832,9 @@ export type ReceiverVictoropsV0Mimir1 = {
   disableResolveMessage?: boolean;
   secureFields?: {
     api_key?: boolean;
+    'http_config.authorization.credentials'?: boolean;
+    'http_config.basic_auth.password'?: boolean;
+    'http_config.oauth2.client_secret'?: boolean;
   };
   settings: {
     api_url?: string;
@@ -3211,51 +2842,7 @@ export type ReceiverVictoropsV0Mimir1 = {
       [key: string]: string;
     };
     entity_display_name?: string;
-    http_config?: {
-      authorization?: {
-        type?: string;
-      };
-      basic_auth?: {
-        username?: string;
-      };
-      enable_http2?: boolean;
-      follow_redirects?: boolean;
-      http_headers?: {
-        [key: string]: string;
-      };
-      no_proxy?: string;
-      oauth2?: {
-        client_id: string;
-        endpoint_params?: {
-          [key: string]: string;
-        };
-        no_proxy?: string;
-        proxy_connect_header?: {
-          [key: string]: string;
-        };
-        proxy_from_environment?: boolean;
-        proxy_url?: string;
-        scopes?: string;
-        tls_config?: {
-          insecure_skip_verify?: boolean;
-          max_version?: string;
-          min_version?: string;
-          server_name?: string;
-        };
-        token_url: string;
-      };
-      proxy_connect_header?: {
-        [key: string]: string;
-      };
-      proxy_from_environment?: boolean;
-      proxy_url?: string;
-      tls_config?: {
-        insecure_skip_verify?: boolean;
-        max_version?: string;
-        min_version?: string;
-        server_name?: string;
-      };
-    };
+    http_config?: ReceiverHttpClientConfig;
     message_type?: string;
     monitoring_tool?: string;
     routing_key: string;
@@ -3283,53 +2870,14 @@ export type ReceiverVictoropsV1 = {
 };
 export type ReceiverWebexV0Mimir1 = {
   disableResolveMessage?: boolean;
+  secureFields?: {
+    'http_config.authorization.credentials'?: boolean;
+    'http_config.basic_auth.password'?: boolean;
+    'http_config.oauth2.client_secret'?: boolean;
+  };
   settings: {
     api_url?: string;
-    http_config?: {
-      authorization?: {
-        type?: string;
-      };
-      basic_auth?: {
-        username?: string;
-      };
-      enable_http2?: boolean;
-      follow_redirects?: boolean;
-      http_headers?: {
-        [key: string]: string;
-      };
-      no_proxy?: string;
-      oauth2?: {
-        client_id: string;
-        endpoint_params?: {
-          [key: string]: string;
-        };
-        no_proxy?: string;
-        proxy_connect_header?: {
-          [key: string]: string;
-        };
-        proxy_from_environment?: boolean;
-        proxy_url?: string;
-        scopes?: string;
-        tls_config?: {
-          insecure_skip_verify?: boolean;
-          max_version?: string;
-          min_version?: string;
-          server_name?: string;
-        };
-        token_url: string;
-      };
-      proxy_connect_header?: {
-        [key: string]: string;
-      };
-      proxy_from_environment?: boolean;
-      proxy_url?: string;
-      tls_config?: {
-        insecure_skip_verify?: boolean;
-        max_version?: string;
-        min_version?: string;
-        server_name?: string;
-      };
-    };
+    http_config?: ReceiverHttpClientConfig;
     message?: string;
     room_id: string;
   };
@@ -3356,54 +2904,13 @@ export type ReceiverWebexV1 = {
 export type ReceiverWebhookV0Mimir1 = {
   disableResolveMessage?: boolean;
   secureFields?: {
+    'http_config.authorization.credentials'?: boolean;
+    'http_config.basic_auth.password'?: boolean;
+    'http_config.oauth2.client_secret'?: boolean;
     url?: boolean;
   };
   settings: {
-    http_config?: {
-      authorization?: {
-        type?: string;
-      };
-      basic_auth?: {
-        username?: string;
-      };
-      enable_http2?: boolean;
-      follow_redirects?: boolean;
-      http_headers?: {
-        [key: string]: string;
-      };
-      no_proxy?: string;
-      oauth2?: {
-        client_id: string;
-        endpoint_params?: {
-          [key: string]: string;
-        };
-        no_proxy?: string;
-        proxy_connect_header?: {
-          [key: string]: string;
-        };
-        proxy_from_environment?: boolean;
-        proxy_url?: string;
-        scopes?: string;
-        tls_config?: {
-          insecure_skip_verify?: boolean;
-          max_version?: string;
-          min_version?: string;
-          server_name?: string;
-        };
-        token_url: string;
-      };
-      proxy_connect_header?: {
-        [key: string]: string;
-      };
-      proxy_from_environment?: boolean;
-      proxy_url?: string;
-      tls_config?: {
-        insecure_skip_verify?: boolean;
-        max_version?: string;
-        min_version?: string;
-        server_name?: string;
-      };
-    };
+    http_config?: ReceiverHttpClientConfig;
     max_alerts?: string;
     timeout?: string;
   };
@@ -3417,6 +2924,10 @@ export type ReceiverWebhookV1 = {
   secureFields?: {
     authorization_credentials?: boolean;
     'hmacConfig.secret'?: boolean;
+    'http_config.oauth2.client_secret'?: boolean;
+    'http_config.oauth2.tls_config.caCertificate'?: boolean;
+    'http_config.oauth2.tls_config.clientCertificate'?: boolean;
+    'http_config.oauth2.tls_config.clientKey'?: boolean;
     password?: boolean;
     'tlsConfig.caCertificate'?: boolean;
     'tlsConfig.clientCertificate'?: boolean;
@@ -3447,9 +2958,7 @@ export type ReceiverWebhookV1 = {
           proxy_url?: string;
         };
         scopes?: string;
-        tls_config?: {
-          insecureSkipVerify?: boolean;
-        };
+        tls_config?: ReceiverGrafanaTlsConfig;
         token_url: string;
       };
     };
@@ -3462,9 +2971,7 @@ export type ReceiverWebhookV1 = {
       };
     };
     title?: string;
-    tlsConfig?: {
-      insecureSkipVerify?: boolean;
-    };
+    tlsConfig?: ReceiverGrafanaTlsConfig;
     url: string;
     username?: string;
   };
@@ -3477,56 +2984,15 @@ export type ReceiverWechatV0Mimir1 = {
   disableResolveMessage?: boolean;
   secureFields?: {
     api_secret?: boolean;
+    'http_config.authorization.credentials'?: boolean;
+    'http_config.basic_auth.password'?: boolean;
+    'http_config.oauth2.client_secret'?: boolean;
   };
   settings: {
     agent_id?: string;
     api_url?: string;
     corp_id?: string;
-    http_config?: {
-      authorization?: {
-        type?: string;
-      };
-      basic_auth?: {
-        username?: string;
-      };
-      enable_http2?: boolean;
-      follow_redirects?: boolean;
-      http_headers?: {
-        [key: string]: string;
-      };
-      no_proxy?: string;
-      oauth2?: {
-        client_id: string;
-        endpoint_params?: {
-          [key: string]: string;
-        };
-        no_proxy?: string;
-        proxy_connect_header?: {
-          [key: string]: string;
-        };
-        proxy_from_environment?: boolean;
-        proxy_url?: string;
-        scopes?: string;
-        tls_config?: {
-          insecure_skip_verify?: boolean;
-          max_version?: string;
-          min_version?: string;
-          server_name?: string;
-        };
-        token_url: string;
-      };
-      proxy_connect_header?: {
-        [key: string]: string;
-      };
-      proxy_from_environment?: boolean;
-      proxy_url?: string;
-      tls_config?: {
-        insecure_skip_verify?: boolean;
-        max_version?: string;
-        min_version?: string;
-        server_name?: string;
-      };
-    };
+    http_config?: ReceiverHttpClientConfig;
     message?: string;
     message_type?: 'text' | 'markdown';
     to_party?: string;

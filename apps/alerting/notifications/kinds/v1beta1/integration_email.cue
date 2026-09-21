@@ -20,12 +20,7 @@ package v1beta1
 		headers?: {
 			[string]: string
 		}
-		tls_config?: {
-			server_name?:          string
-			insecure_skip_verify?: bool
-			min_version?:          string
-			max_version?:          string
-		}
+		tls_config?: #TLSConfig
 	}
 	secureFields?: {
 		auth_password?: bool

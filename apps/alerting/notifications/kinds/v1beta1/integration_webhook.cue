@@ -8,56 +8,15 @@ package v1beta1
 	type:    "webhook"
 	version: "v0mimir1"
 	settings: {
-		max_alerts?: string
-		timeout?:    string
-		http_config?: {
-			basic_auth?: {
-				username?: string
-			}
-			authorization?: {
-				type?: string
-			}
-			follow_redirects?: bool
-			enable_http2?:     bool
-			http_headers?: {
-				[string]: string
-			}
-			proxy_url?:              string
-			no_proxy?:               string
-			proxy_from_environment?: bool
-			proxy_connect_header?: {
-				[string]: string
-			}
-			tls_config?: {
-				server_name?:          string
-				insecure_skip_verify?: bool
-				min_version?:          string
-				max_version?:          string
-			}
-			oauth2?: {
-				client_id: string
-				token_url: string
-				scopes?:   string
-				endpoint_params?: {
-					[string]: string
-				}
-				tls_config?: {
-					server_name?:          string
-					insecure_skip_verify?: bool
-					min_version?:          string
-					max_version?:          string
-				}
-				proxy_url?:              string
-				no_proxy?:               string
-				proxy_from_environment?: bool
-				proxy_connect_header?: {
-					[string]: string
-				}
-			}
-		}
+		max_alerts?:  string
+		timeout?:     string
+		http_config?: #HTTPClientConfig
 	}
 	secureFields?: {
-		url?: bool
+		"http_config.authorization.credentials"?: bool
+		"http_config.basic_auth.password"?:       bool
+		"http_config.oauth2.client_secret"?:      bool
+		url?:                                     bool
 	}
 }
 
@@ -82,9 +41,7 @@ package v1beta1
 				[string]: string
 			}
 		}
-		tlsConfig?: {
-			insecureSkipVerify?: bool
-		}
+		tlsConfig?: #GrafanaTLSConfig
 		hmacConfig?: {
 			header?:          string
 			timestampHeader?: string
@@ -97,9 +54,7 @@ package v1beta1
 				endpoint_params?: {
 					[string]: string
 				}
-				tls_config?: {
-					insecureSkipVerify?: bool
-				}
+				tls_config?: #GrafanaTLSConfig
 				proxy_config?: {
 					proxy_url?:              string
 					proxy_from_environment?: bool
@@ -112,11 +67,15 @@ package v1beta1
 		}
 	}
 	secureFields?: {
-		authorization_credentials?:     bool
-		"hmacConfig.secret"?:           bool
-		password?:                      bool
-		"tlsConfig.caCertificate"?:     bool
-		"tlsConfig.clientCertificate"?: bool
-		"tlsConfig.clientKey"?:         bool
+		authorization_credentials?:                         bool
+		"hmacConfig.secret"?:                               bool
+		"http_config.oauth2.client_secret"?:                bool
+		"http_config.oauth2.tls_config.caCertificate"?:     bool
+		"http_config.oauth2.tls_config.clientCertificate"?: bool
+		"http_config.oauth2.tls_config.clientKey"?:         bool
+		password?:                                          bool
+		"tlsConfig.caCertificate"?:                         bool
+		"tlsConfig.clientCertificate"?:                     bool
+		"tlsConfig.clientKey"?:                             bool
 	}
 }

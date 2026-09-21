@@ -7038,6 +7038,18 @@
               "hmacConfig.secret": {
                 "type": "boolean"
               },
+              "http_config.oauth2.client_secret": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.tls_config.caCertificate": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.tls_config.clientCertificate": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.tls_config.clientKey": {
+                "type": "boolean"
+              },
               "password": {
                 "type": "boolean"
               },
@@ -7121,13 +7133,7 @@
                         "type": "string"
                       },
                       "tls_config": {
-                        "additionalProperties": false,
-                        "properties": {
-                          "insecureSkipVerify": {
-                            "type": "boolean"
-                          }
-                        },
-                        "type": "object"
+                        "$ref": "#/components/schemas/ReceiverGrafanaTLSConfig"
                       },
                       "token_url": {
                         "type": "string"
@@ -7165,13 +7171,7 @@
                 "type": "string"
               },
               "tlsConfig": {
-                "additionalProperties": false,
-                "properties": {
-                  "insecureSkipVerify": {
-                    "type": "boolean"
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/ReceiverGrafanaTLSConfig"
               },
               "url": {
                 "type": "string"
@@ -7261,6 +7261,15 @@
           "secureFields": {
             "additionalProperties": false,
             "properties": {
+              "http_config.authorization.credentials": {
+                "type": "boolean"
+              },
+              "http_config.basic_auth.password": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.client_secret": {
+                "type": "boolean"
+              },
               "webhook_url": {
                 "type": "boolean"
               }
@@ -7271,128 +7280,7 @@
             "additionalProperties": false,
             "properties": {
               "http_config": {
-                "additionalProperties": false,
-                "properties": {
-                  "authorization": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "type": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "basic_auth": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "username": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "enable_http2": {
-                    "type": "boolean"
-                  },
-                  "follow_redirects": {
-                    "type": "boolean"
-                  },
-                  "http_headers": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "no_proxy": {
-                    "type": "string"
-                  },
-                  "oauth2": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "client_id": {
-                        "type": "string"
-                      },
-                      "endpoint_params": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      "no_proxy": {
-                        "type": "string"
-                      },
-                      "proxy_connect_header": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      "proxy_from_environment": {
-                        "type": "boolean"
-                      },
-                      "proxy_url": {
-                        "type": "string"
-                      },
-                      "scopes": {
-                        "type": "string"
-                      },
-                      "tls_config": {
-                        "additionalProperties": false,
-                        "properties": {
-                          "insecure_skip_verify": {
-                            "type": "boolean"
-                          },
-                          "max_version": {
-                            "type": "string"
-                          },
-                          "min_version": {
-                            "type": "string"
-                          },
-                          "server_name": {
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "token_url": {
-                        "type": "string"
-                      }
-                    },
-                    "required": ["client_id", "token_url"],
-                    "type": "object"
-                  },
-                  "proxy_connect_header": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "proxy_from_environment": {
-                    "type": "boolean"
-                  },
-                  "proxy_url": {
-                    "type": "string"
-                  },
-                  "tls_config": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "insecure_skip_verify": {
-                        "type": "boolean"
-                      },
-                      "max_version": {
-                        "type": "string"
-                      },
-                      "min_version": {
-                        "type": "string"
-                      },
-                      "server_name": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/ReceiverHTTPClientConfig"
               },
               "message": {
                 "type": "string"
@@ -7529,22 +7417,7 @@
                 "type": "string"
               },
               "tls_config": {
-                "additionalProperties": false,
-                "properties": {
-                  "insecure_skip_verify": {
-                    "type": "boolean"
-                  },
-                  "max_version": {
-                    "type": "string"
-                  },
-                  "min_version": {
-                    "type": "string"
-                  },
-                  "server_name": {
-                    "type": "string"
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/ReceiverTLSConfig"
               },
               "to": {
                 "type": "string"
@@ -7630,6 +7503,21 @@
           "disableResolveMessage": {
             "type": "boolean"
           },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "http_config.authorization.credentials": {
+                "type": "boolean"
+              },
+              "http_config.basic_auth.password": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.client_secret": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
           "settings": {
             "additionalProperties": false,
             "properties": {
@@ -7646,128 +7534,7 @@
                 "type": "object"
               },
               "http_config": {
-                "additionalProperties": false,
-                "properties": {
-                  "authorization": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "type": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "basic_auth": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "username": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "enable_http2": {
-                    "type": "boolean"
-                  },
-                  "follow_redirects": {
-                    "type": "boolean"
-                  },
-                  "http_headers": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "no_proxy": {
-                    "type": "string"
-                  },
-                  "oauth2": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "client_id": {
-                        "type": "string"
-                      },
-                      "endpoint_params": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      "no_proxy": {
-                        "type": "string"
-                      },
-                      "proxy_connect_header": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      "proxy_from_environment": {
-                        "type": "boolean"
-                      },
-                      "proxy_url": {
-                        "type": "string"
-                      },
-                      "scopes": {
-                        "type": "string"
-                      },
-                      "tls_config": {
-                        "additionalProperties": false,
-                        "properties": {
-                          "insecure_skip_verify": {
-                            "type": "boolean"
-                          },
-                          "max_version": {
-                            "type": "string"
-                          },
-                          "min_version": {
-                            "type": "string"
-                          },
-                          "server_name": {
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "token_url": {
-                        "type": "string"
-                      }
-                    },
-                    "required": ["client_id", "token_url"],
-                    "type": "object"
-                  },
-                  "proxy_connect_header": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "proxy_from_environment": {
-                    "type": "boolean"
-                  },
-                  "proxy_url": {
-                    "type": "string"
-                  },
-                  "tls_config": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "insecure_skip_verify": {
-                        "type": "boolean"
-                      },
-                      "max_version": {
-                        "type": "string"
-                      },
-                      "min_version": {
-                        "type": "string"
-                      },
-                      "server_name": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/ReceiverHTTPClientConfig"
               },
               "issue_type": {
                 "type": "string"
@@ -8065,13 +7832,7 @@
                 "type": "boolean"
               },
               "tlsConfig": {
-                "additionalProperties": false,
-                "properties": {
-                  "insecureSkipVerify": {
-                    "type": "boolean"
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/ReceiverGrafanaTLSConfig"
               },
               "topic": {
                 "type": "string"
@@ -8179,6 +7940,15 @@
             "properties": {
               "api_key": {
                 "type": "boolean"
+              },
+              "http_config.authorization.credentials": {
+                "type": "boolean"
+              },
+              "http_config.basic_auth.password": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.client_secret": {
+                "type": "boolean"
               }
             },
             "type": "object"
@@ -8205,128 +7975,7 @@
                 "type": "string"
               },
               "http_config": {
-                "additionalProperties": false,
-                "properties": {
-                  "authorization": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "type": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "basic_auth": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "username": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "enable_http2": {
-                    "type": "boolean"
-                  },
-                  "follow_redirects": {
-                    "type": "boolean"
-                  },
-                  "http_headers": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "no_proxy": {
-                    "type": "string"
-                  },
-                  "oauth2": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "client_id": {
-                        "type": "string"
-                      },
-                      "endpoint_params": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      "no_proxy": {
-                        "type": "string"
-                      },
-                      "proxy_connect_header": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      "proxy_from_environment": {
-                        "type": "boolean"
-                      },
-                      "proxy_url": {
-                        "type": "string"
-                      },
-                      "scopes": {
-                        "type": "string"
-                      },
-                      "tls_config": {
-                        "additionalProperties": false,
-                        "properties": {
-                          "insecure_skip_verify": {
-                            "type": "boolean"
-                          },
-                          "max_version": {
-                            "type": "string"
-                          },
-                          "min_version": {
-                            "type": "string"
-                          },
-                          "server_name": {
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "token_url": {
-                        "type": "string"
-                      }
-                    },
-                    "required": ["client_id", "token_url"],
-                    "type": "object"
-                  },
-                  "proxy_connect_header": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "proxy_from_environment": {
-                    "type": "boolean"
-                  },
-                  "proxy_url": {
-                    "type": "string"
-                  },
-                  "tls_config": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "insecure_skip_verify": {
-                        "type": "boolean"
-                      },
-                      "max_version": {
-                        "type": "string"
-                      },
-                      "min_version": {
-                        "type": "string"
-                      },
-                      "server_name": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/ReceiverHTTPClientConfig"
               },
               "message": {
                 "type": "string"
@@ -8444,6 +8093,15 @@
           "secureFields": {
             "additionalProperties": false,
             "properties": {
+              "http_config.authorization.credentials": {
+                "type": "boolean"
+              },
+              "http_config.basic_auth.password": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.client_secret": {
+                "type": "boolean"
+              },
               "routing_key": {
                 "type": "boolean"
               },
@@ -8481,128 +8139,7 @@
                 "type": "string"
               },
               "http_config": {
-                "additionalProperties": false,
-                "properties": {
-                  "authorization": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "type": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "basic_auth": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "username": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "enable_http2": {
-                    "type": "boolean"
-                  },
-                  "follow_redirects": {
-                    "type": "boolean"
-                  },
-                  "http_headers": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "no_proxy": {
-                    "type": "string"
-                  },
-                  "oauth2": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "client_id": {
-                        "type": "string"
-                      },
-                      "endpoint_params": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      "no_proxy": {
-                        "type": "string"
-                      },
-                      "proxy_connect_header": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      "proxy_from_environment": {
-                        "type": "boolean"
-                      },
-                      "proxy_url": {
-                        "type": "string"
-                      },
-                      "scopes": {
-                        "type": "string"
-                      },
-                      "tls_config": {
-                        "additionalProperties": false,
-                        "properties": {
-                          "insecure_skip_verify": {
-                            "type": "boolean"
-                          },
-                          "max_version": {
-                            "type": "string"
-                          },
-                          "min_version": {
-                            "type": "string"
-                          },
-                          "server_name": {
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "token_url": {
-                        "type": "string"
-                      }
-                    },
-                    "required": ["client_id", "token_url"],
-                    "type": "object"
-                  },
-                  "proxy_connect_header": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "proxy_from_environment": {
-                    "type": "boolean"
-                  },
-                  "proxy_url": {
-                    "type": "string"
-                  },
-                  "tls_config": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "insecure_skip_verify": {
-                        "type": "boolean"
-                      },
-                      "max_version": {
-                        "type": "string"
-                      },
-                      "min_version": {
-                        "type": "string"
-                      },
-                      "server_name": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/ReceiverHTTPClientConfig"
               },
               "images": {
                 "type": "string"
@@ -8771,6 +8308,15 @@
           "secureFields": {
             "additionalProperties": false,
             "properties": {
+              "http_config.authorization.credentials": {
+                "type": "boolean"
+              },
+              "http_config.basic_auth.password": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.client_secret": {
+                "type": "boolean"
+              },
               "token": {
                 "type": "boolean"
               },
@@ -8793,128 +8339,7 @@
                 "type": "boolean"
               },
               "http_config": {
-                "additionalProperties": false,
-                "properties": {
-                  "authorization": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "type": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "basic_auth": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "username": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "enable_http2": {
-                    "type": "boolean"
-                  },
-                  "follow_redirects": {
-                    "type": "boolean"
-                  },
-                  "http_headers": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "no_proxy": {
-                    "type": "string"
-                  },
-                  "oauth2": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "client_id": {
-                        "type": "string"
-                      },
-                      "endpoint_params": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      "no_proxy": {
-                        "type": "string"
-                      },
-                      "proxy_connect_header": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      "proxy_from_environment": {
-                        "type": "boolean"
-                      },
-                      "proxy_url": {
-                        "type": "string"
-                      },
-                      "scopes": {
-                        "type": "string"
-                      },
-                      "tls_config": {
-                        "additionalProperties": false,
-                        "properties": {
-                          "insecure_skip_verify": {
-                            "type": "boolean"
-                          },
-                          "max_version": {
-                            "type": "string"
-                          },
-                          "min_version": {
-                            "type": "string"
-                          },
-                          "server_name": {
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "token_url": {
-                        "type": "string"
-                      }
-                    },
-                    "required": ["client_id", "token_url"],
-                    "type": "object"
-                  },
-                  "proxy_connect_header": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "proxy_from_environment": {
-                    "type": "boolean"
-                  },
-                  "proxy_url": {
-                    "type": "string"
-                  },
-                  "tls_config": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "insecure_skip_verify": {
-                        "type": "boolean"
-                      },
-                      "max_version": {
-                        "type": "string"
-                      },
-                      "min_version": {
-                        "type": "string"
-                      },
-                      "server_name": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/ReceiverHTTPClientConfig"
               },
               "message": {
                 "type": "string"
@@ -9152,6 +8577,15 @@
             "properties": {
               "api_url": {
                 "type": "boolean"
+              },
+              "http_config.authorization.credentials": {
+                "type": "boolean"
+              },
+              "http_config.basic_auth.password": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.client_secret": {
+                "type": "boolean"
               }
             },
             "type": "object"
@@ -9181,128 +8615,7 @@
                 "type": "string"
               },
               "http_config": {
-                "additionalProperties": false,
-                "properties": {
-                  "authorization": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "type": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "basic_auth": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "username": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "enable_http2": {
-                    "type": "boolean"
-                  },
-                  "follow_redirects": {
-                    "type": "boolean"
-                  },
-                  "http_headers": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "no_proxy": {
-                    "type": "string"
-                  },
-                  "oauth2": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "client_id": {
-                        "type": "string"
-                      },
-                      "endpoint_params": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      "no_proxy": {
-                        "type": "string"
-                      },
-                      "proxy_connect_header": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      "proxy_from_environment": {
-                        "type": "boolean"
-                      },
-                      "proxy_url": {
-                        "type": "string"
-                      },
-                      "scopes": {
-                        "type": "string"
-                      },
-                      "tls_config": {
-                        "additionalProperties": false,
-                        "properties": {
-                          "insecure_skip_verify": {
-                            "type": "boolean"
-                          },
-                          "max_version": {
-                            "type": "string"
-                          },
-                          "min_version": {
-                            "type": "string"
-                          },
-                          "server_name": {
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "token_url": {
-                        "type": "string"
-                      }
-                    },
-                    "required": ["client_id", "token_url"],
-                    "type": "object"
-                  },
-                  "proxy_connect_header": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "proxy_from_environment": {
-                    "type": "boolean"
-                  },
-                  "proxy_url": {
-                    "type": "string"
-                  },
-                  "tls_config": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "insecure_skip_verify": {
-                        "type": "boolean"
-                      },
-                      "max_version": {
-                        "type": "string"
-                      },
-                      "min_version": {
-                        "type": "string"
-                      },
-                      "server_name": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/ReceiverHTTPClientConfig"
               },
               "icon_emoji": {
                 "type": "string"
@@ -9371,6 +8684,15 @@
           "secureFields": {
             "additionalProperties": false,
             "properties": {
+              "http_config.authorization.credentials": {
+                "type": "boolean"
+              },
+              "http_config.basic_auth.password": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.client_secret": {
+                "type": "boolean"
+              },
               "sigv4.secret_key": {
                 "type": "boolean"
               }
@@ -9390,128 +8712,7 @@
                 "type": "object"
               },
               "http_config": {
-                "additionalProperties": false,
-                "properties": {
-                  "authorization": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "type": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "basic_auth": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "username": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "enable_http2": {
-                    "type": "boolean"
-                  },
-                  "follow_redirects": {
-                    "type": "boolean"
-                  },
-                  "http_headers": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "no_proxy": {
-                    "type": "string"
-                  },
-                  "oauth2": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "client_id": {
-                        "type": "string"
-                      },
-                      "endpoint_params": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      "no_proxy": {
-                        "type": "string"
-                      },
-                      "proxy_connect_header": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      "proxy_from_environment": {
-                        "type": "boolean"
-                      },
-                      "proxy_url": {
-                        "type": "string"
-                      },
-                      "scopes": {
-                        "type": "string"
-                      },
-                      "tls_config": {
-                        "additionalProperties": false,
-                        "properties": {
-                          "insecure_skip_verify": {
-                            "type": "boolean"
-                          },
-                          "max_version": {
-                            "type": "string"
-                          },
-                          "min_version": {
-                            "type": "string"
-                          },
-                          "server_name": {
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "token_url": {
-                        "type": "string"
-                      }
-                    },
-                    "required": ["client_id", "token_url"],
-                    "type": "object"
-                  },
-                  "proxy_connect_header": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "proxy_from_environment": {
-                    "type": "boolean"
-                  },
-                  "proxy_url": {
-                    "type": "string"
-                  },
-                  "tls_config": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "insecure_skip_verify": {
-                        "type": "boolean"
-                      },
-                      "max_version": {
-                        "type": "string"
-                      },
-                      "min_version": {
-                        "type": "string"
-                      },
-                      "server_name": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/ReceiverHTTPClientConfig"
               },
               "message": {
                 "type": "string"
@@ -9520,22 +8721,7 @@
                 "type": "string"
               },
               "sigv4": {
-                "additionalProperties": false,
-                "properties": {
-                  "access_key": {
-                    "type": "string"
-                  },
-                  "profile": {
-                    "type": "string"
-                  },
-                  "region": {
-                    "type": "string"
-                  },
-                  "role_arn": {
-                    "type": "string"
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/ReceiverSigv4"
               },
               "subject": {
                 "type": "string"
@@ -9605,19 +8791,7 @@
                 "type": "string"
               },
               "sigv4": {
-                "additionalProperties": false,
-                "properties": {
-                  "profile": {
-                    "type": "string"
-                  },
-                  "region": {
-                    "type": "string"
-                  },
-                  "role_arn": {
-                    "type": "string"
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/ReceiverSigv4"
               },
               "subject": {
                 "type": "string"
@@ -9659,6 +8833,15 @@
           "secureFields": {
             "additionalProperties": false,
             "properties": {
+              "http_config.authorization.credentials": {
+                "type": "boolean"
+              },
+              "http_config.basic_auth.password": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.client_secret": {
+                "type": "boolean"
+              },
               "webhook_url": {
                 "type": "boolean"
               }
@@ -9669,128 +8852,7 @@
             "additionalProperties": false,
             "properties": {
               "http_config": {
-                "additionalProperties": false,
-                "properties": {
-                  "authorization": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "type": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "basic_auth": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "username": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "enable_http2": {
-                    "type": "boolean"
-                  },
-                  "follow_redirects": {
-                    "type": "boolean"
-                  },
-                  "http_headers": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "no_proxy": {
-                    "type": "string"
-                  },
-                  "oauth2": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "client_id": {
-                        "type": "string"
-                      },
-                      "endpoint_params": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      "no_proxy": {
-                        "type": "string"
-                      },
-                      "proxy_connect_header": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      "proxy_from_environment": {
-                        "type": "boolean"
-                      },
-                      "proxy_url": {
-                        "type": "string"
-                      },
-                      "scopes": {
-                        "type": "string"
-                      },
-                      "tls_config": {
-                        "additionalProperties": false,
-                        "properties": {
-                          "insecure_skip_verify": {
-                            "type": "boolean"
-                          },
-                          "max_version": {
-                            "type": "string"
-                          },
-                          "min_version": {
-                            "type": "string"
-                          },
-                          "server_name": {
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "token_url": {
-                        "type": "string"
-                      }
-                    },
-                    "required": ["client_id", "token_url"],
-                    "type": "object"
-                  },
-                  "proxy_connect_header": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "proxy_from_environment": {
-                    "type": "boolean"
-                  },
-                  "proxy_url": {
-                    "type": "string"
-                  },
-                  "tls_config": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "insecure_skip_verify": {
-                        "type": "boolean"
-                      },
-                      "max_version": {
-                        "type": "string"
-                      },
-                      "min_version": {
-                        "type": "string"
-                      },
-                      "server_name": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/ReceiverHTTPClientConfig"
               },
               "summary": {
                 "type": "string"
@@ -9832,6 +8894,15 @@
           "secureFields": {
             "additionalProperties": false,
             "properties": {
+              "http_config.authorization.credentials": {
+                "type": "boolean"
+              },
+              "http_config.basic_auth.password": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.client_secret": {
+                "type": "boolean"
+              },
               "webhook_url": {
                 "type": "boolean"
               }
@@ -9842,128 +8913,7 @@
             "additionalProperties": false,
             "properties": {
               "http_config": {
-                "additionalProperties": false,
-                "properties": {
-                  "authorization": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "type": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "basic_auth": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "username": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "enable_http2": {
-                    "type": "boolean"
-                  },
-                  "follow_redirects": {
-                    "type": "boolean"
-                  },
-                  "http_headers": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "no_proxy": {
-                    "type": "string"
-                  },
-                  "oauth2": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "client_id": {
-                        "type": "string"
-                      },
-                      "endpoint_params": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      "no_proxy": {
-                        "type": "string"
-                      },
-                      "proxy_connect_header": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      "proxy_from_environment": {
-                        "type": "boolean"
-                      },
-                      "proxy_url": {
-                        "type": "string"
-                      },
-                      "scopes": {
-                        "type": "string"
-                      },
-                      "tls_config": {
-                        "additionalProperties": false,
-                        "properties": {
-                          "insecure_skip_verify": {
-                            "type": "boolean"
-                          },
-                          "max_version": {
-                            "type": "string"
-                          },
-                          "min_version": {
-                            "type": "string"
-                          },
-                          "server_name": {
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "token_url": {
-                        "type": "string"
-                      }
-                    },
-                    "required": ["client_id", "token_url"],
-                    "type": "object"
-                  },
-                  "proxy_connect_header": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "proxy_from_environment": {
-                    "type": "boolean"
-                  },
-                  "proxy_url": {
-                    "type": "string"
-                  },
-                  "tls_config": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "insecure_skip_verify": {
-                        "type": "boolean"
-                      },
-                      "max_version": {
-                        "type": "string"
-                      },
-                      "min_version": {
-                        "type": "string"
-                      },
-                      "server_name": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/ReceiverHTTPClientConfig"
               },
               "text": {
                 "type": "string"
@@ -10046,6 +8996,15 @@
           "secureFields": {
             "additionalProperties": false,
             "properties": {
+              "http_config.authorization.credentials": {
+                "type": "boolean"
+              },
+              "http_config.basic_auth.password": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.client_secret": {
+                "type": "boolean"
+              },
               "token": {
                 "type": "boolean"
               }
@@ -10065,128 +9024,7 @@
                 "type": "boolean"
               },
               "http_config": {
-                "additionalProperties": false,
-                "properties": {
-                  "authorization": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "type": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "basic_auth": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "username": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "enable_http2": {
-                    "type": "boolean"
-                  },
-                  "follow_redirects": {
-                    "type": "boolean"
-                  },
-                  "http_headers": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "no_proxy": {
-                    "type": "string"
-                  },
-                  "oauth2": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "client_id": {
-                        "type": "string"
-                      },
-                      "endpoint_params": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      "no_proxy": {
-                        "type": "string"
-                      },
-                      "proxy_connect_header": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      "proxy_from_environment": {
-                        "type": "boolean"
-                      },
-                      "proxy_url": {
-                        "type": "string"
-                      },
-                      "scopes": {
-                        "type": "string"
-                      },
-                      "tls_config": {
-                        "additionalProperties": false,
-                        "properties": {
-                          "insecure_skip_verify": {
-                            "type": "boolean"
-                          },
-                          "max_version": {
-                            "type": "string"
-                          },
-                          "min_version": {
-                            "type": "string"
-                          },
-                          "server_name": {
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "token_url": {
-                        "type": "string"
-                      }
-                    },
-                    "required": ["client_id", "token_url"],
-                    "type": "object"
-                  },
-                  "proxy_connect_header": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "proxy_from_environment": {
-                    "type": "boolean"
-                  },
-                  "proxy_url": {
-                    "type": "string"
-                  },
-                  "tls_config": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "insecure_skip_verify": {
-                        "type": "boolean"
-                      },
-                      "max_version": {
-                        "type": "string"
-                      },
-                      "min_version": {
-                        "type": "string"
-                      },
-                      "server_name": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/ReceiverHTTPClientConfig"
               },
               "message": {
                 "type": "string"
@@ -10345,6 +9183,15 @@
             "properties": {
               "api_key": {
                 "type": "boolean"
+              },
+              "http_config.authorization.credentials": {
+                "type": "boolean"
+              },
+              "http_config.basic_auth.password": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.client_secret": {
+                "type": "boolean"
               }
             },
             "type": "object"
@@ -10365,128 +9212,7 @@
                 "type": "string"
               },
               "http_config": {
-                "additionalProperties": false,
-                "properties": {
-                  "authorization": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "type": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "basic_auth": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "username": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "enable_http2": {
-                    "type": "boolean"
-                  },
-                  "follow_redirects": {
-                    "type": "boolean"
-                  },
-                  "http_headers": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "no_proxy": {
-                    "type": "string"
-                  },
-                  "oauth2": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "client_id": {
-                        "type": "string"
-                      },
-                      "endpoint_params": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      "no_proxy": {
-                        "type": "string"
-                      },
-                      "proxy_connect_header": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      "proxy_from_environment": {
-                        "type": "boolean"
-                      },
-                      "proxy_url": {
-                        "type": "string"
-                      },
-                      "scopes": {
-                        "type": "string"
-                      },
-                      "tls_config": {
-                        "additionalProperties": false,
-                        "properties": {
-                          "insecure_skip_verify": {
-                            "type": "boolean"
-                          },
-                          "max_version": {
-                            "type": "string"
-                          },
-                          "min_version": {
-                            "type": "string"
-                          },
-                          "server_name": {
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "token_url": {
-                        "type": "string"
-                      }
-                    },
-                    "required": ["client_id", "token_url"],
-                    "type": "object"
-                  },
-                  "proxy_connect_header": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "proxy_from_environment": {
-                    "type": "boolean"
-                  },
-                  "proxy_url": {
-                    "type": "string"
-                  },
-                  "tls_config": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "insecure_skip_verify": {
-                        "type": "boolean"
-                      },
-                      "max_version": {
-                        "type": "string"
-                      },
-                      "min_version": {
-                        "type": "string"
-                      },
-                      "server_name": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/ReceiverHTTPClientConfig"
               },
               "message_type": {
                 "type": "string"
@@ -10579,6 +9305,21 @@
           "disableResolveMessage": {
             "type": "boolean"
           },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "http_config.authorization.credentials": {
+                "type": "boolean"
+              },
+              "http_config.basic_auth.password": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.client_secret": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
           "settings": {
             "additionalProperties": false,
             "properties": {
@@ -10586,128 +9327,7 @@
                 "type": "string"
               },
               "http_config": {
-                "additionalProperties": false,
-                "properties": {
-                  "authorization": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "type": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "basic_auth": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "username": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "enable_http2": {
-                    "type": "boolean"
-                  },
-                  "follow_redirects": {
-                    "type": "boolean"
-                  },
-                  "http_headers": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "no_proxy": {
-                    "type": "string"
-                  },
-                  "oauth2": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "client_id": {
-                        "type": "string"
-                      },
-                      "endpoint_params": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      "no_proxy": {
-                        "type": "string"
-                      },
-                      "proxy_connect_header": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      "proxy_from_environment": {
-                        "type": "boolean"
-                      },
-                      "proxy_url": {
-                        "type": "string"
-                      },
-                      "scopes": {
-                        "type": "string"
-                      },
-                      "tls_config": {
-                        "additionalProperties": false,
-                        "properties": {
-                          "insecure_skip_verify": {
-                            "type": "boolean"
-                          },
-                          "max_version": {
-                            "type": "string"
-                          },
-                          "min_version": {
-                            "type": "string"
-                          },
-                          "server_name": {
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "token_url": {
-                        "type": "string"
-                      }
-                    },
-                    "required": ["client_id", "token_url"],
-                    "type": "object"
-                  },
-                  "proxy_connect_header": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "proxy_from_environment": {
-                    "type": "boolean"
-                  },
-                  "proxy_url": {
-                    "type": "string"
-                  },
-                  "tls_config": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "insecure_skip_verify": {
-                        "type": "boolean"
-                      },
-                      "max_version": {
-                        "type": "string"
-                      },
-                      "min_version": {
-                        "type": "string"
-                      },
-                      "server_name": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/ReceiverHTTPClientConfig"
               },
               "message": {
                 "type": "string"
@@ -10797,6 +9417,15 @@
           "secureFields": {
             "additionalProperties": false,
             "properties": {
+              "http_config.authorization.credentials": {
+                "type": "boolean"
+              },
+              "http_config.basic_auth.password": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.client_secret": {
+                "type": "boolean"
+              },
               "url": {
                 "type": "boolean"
               }
@@ -10807,128 +9436,7 @@
             "additionalProperties": false,
             "properties": {
               "http_config": {
-                "additionalProperties": false,
-                "properties": {
-                  "authorization": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "type": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "basic_auth": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "username": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "enable_http2": {
-                    "type": "boolean"
-                  },
-                  "follow_redirects": {
-                    "type": "boolean"
-                  },
-                  "http_headers": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "no_proxy": {
-                    "type": "string"
-                  },
-                  "oauth2": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "client_id": {
-                        "type": "string"
-                      },
-                      "endpoint_params": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      "no_proxy": {
-                        "type": "string"
-                      },
-                      "proxy_connect_header": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      "proxy_from_environment": {
-                        "type": "boolean"
-                      },
-                      "proxy_url": {
-                        "type": "string"
-                      },
-                      "scopes": {
-                        "type": "string"
-                      },
-                      "tls_config": {
-                        "additionalProperties": false,
-                        "properties": {
-                          "insecure_skip_verify": {
-                            "type": "boolean"
-                          },
-                          "max_version": {
-                            "type": "string"
-                          },
-                          "min_version": {
-                            "type": "string"
-                          },
-                          "server_name": {
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "token_url": {
-                        "type": "string"
-                      }
-                    },
-                    "required": ["client_id", "token_url"],
-                    "type": "object"
-                  },
-                  "proxy_connect_header": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "proxy_from_environment": {
-                    "type": "boolean"
-                  },
-                  "proxy_url": {
-                    "type": "string"
-                  },
-                  "tls_config": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "insecure_skip_verify": {
-                        "type": "boolean"
-                      },
-                      "max_version": {
-                        "type": "string"
-                      },
-                      "min_version": {
-                        "type": "string"
-                      },
-                      "server_name": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/ReceiverHTTPClientConfig"
               },
               "max_alerts": {
                 "type": "string"
@@ -10969,6 +9477,15 @@
             "properties": {
               "api_secret": {
                 "type": "boolean"
+              },
+              "http_config.authorization.credentials": {
+                "type": "boolean"
+              },
+              "http_config.basic_auth.password": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.client_secret": {
+                "type": "boolean"
               }
             },
             "type": "object"
@@ -10986,128 +9503,7 @@
                 "type": "string"
               },
               "http_config": {
-                "additionalProperties": false,
-                "properties": {
-                  "authorization": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "type": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "basic_auth": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "username": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "enable_http2": {
-                    "type": "boolean"
-                  },
-                  "follow_redirects": {
-                    "type": "boolean"
-                  },
-                  "http_headers": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "no_proxy": {
-                    "type": "string"
-                  },
-                  "oauth2": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "client_id": {
-                        "type": "string"
-                      },
-                      "endpoint_params": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      "no_proxy": {
-                        "type": "string"
-                      },
-                      "proxy_connect_header": {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      "proxy_from_environment": {
-                        "type": "boolean"
-                      },
-                      "proxy_url": {
-                        "type": "string"
-                      },
-                      "scopes": {
-                        "type": "string"
-                      },
-                      "tls_config": {
-                        "additionalProperties": false,
-                        "properties": {
-                          "insecure_skip_verify": {
-                            "type": "boolean"
-                          },
-                          "max_version": {
-                            "type": "string"
-                          },
-                          "min_version": {
-                            "type": "string"
-                          },
-                          "server_name": {
-                            "type": "string"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "token_url": {
-                        "type": "string"
-                      }
-                    },
-                    "required": ["client_id", "token_url"],
-                    "type": "object"
-                  },
-                  "proxy_connect_header": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  "proxy_from_environment": {
-                    "type": "boolean"
-                  },
-                  "proxy_url": {
-                    "type": "string"
-                  },
-                  "tls_config": {
-                    "additionalProperties": false,
-                    "properties": {
-                      "insecure_skip_verify": {
-                        "type": "boolean"
-                      },
-                      "max_version": {
-                        "type": "string"
-                      },
-                      "min_version": {
-                        "type": "string"
-                      },
-                      "server_name": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
+                "$ref": "#/components/schemas/ReceiverHTTPClientConfig"
               },
               "message": {
                 "type": "string"
@@ -11208,6 +9604,151 @@
           }
         },
         "required": ["type", "version", "settings"],
+        "type": "object"
+      },
+      "ReceiverAuthorization": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ReceiverBasicAuth": {
+        "additionalProperties": false,
+        "properties": {
+          "username": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ReceiverGrafanaTLSConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "insecureSkipVerify": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "ReceiverHTTPClientConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "authorization": {
+            "$ref": "#/components/schemas/ReceiverAuthorization"
+          },
+          "basic_auth": {
+            "$ref": "#/components/schemas/ReceiverBasicAuth"
+          },
+          "enable_http2": {
+            "type": "boolean"
+          },
+          "follow_redirects": {
+            "type": "boolean"
+          },
+          "http_headers": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "no_proxy": {
+            "type": "string"
+          },
+          "oauth2": {
+            "$ref": "#/components/schemas/ReceiverOAuth2"
+          },
+          "proxy_connect_header": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "proxy_from_environment": {
+            "type": "boolean"
+          },
+          "proxy_url": {
+            "type": "string"
+          },
+          "tls_config": {
+            "$ref": "#/components/schemas/ReceiverTLSConfig"
+          }
+        },
+        "type": "object"
+      },
+      "ReceiverOAuth2": {
+        "additionalProperties": false,
+        "properties": {
+          "client_id": {
+            "type": "string"
+          },
+          "endpoint_params": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "no_proxy": {
+            "type": "string"
+          },
+          "proxy_connect_header": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "proxy_from_environment": {
+            "type": "boolean"
+          },
+          "proxy_url": {
+            "type": "string"
+          },
+          "scopes": {
+            "type": "string"
+          },
+          "tls_config": {
+            "$ref": "#/components/schemas/ReceiverTLSConfig"
+          },
+          "token_url": {
+            "type": "string"
+          }
+        },
+        "required": ["client_id", "token_url"],
+        "type": "object"
+      },
+      "ReceiverSigv4": {
+        "additionalProperties": false,
+        "properties": {
+          "profile": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "role_arn": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ReceiverTLSConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "insecure_skip_verify": {
+            "type": "boolean"
+          },
+          "max_version": {
+            "type": "string"
+          },
+          "min_version": {
+            "type": "string"
+          },
+          "server_name": {
+            "type": "string"
+          }
+        },
         "type": "object"
       }
     }

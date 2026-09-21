@@ -68,6 +68,102 @@ func (ReceiverDiscordV0mimir1) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
+type ReceiverHTTPClientConfig struct {
+	BasicAuth            *ReceiverBasicAuth     `json:"basic_auth,omitempty"`
+	Authorization        *ReceiverAuthorization `json:"authorization,omitempty"`
+	FollowRedirects      *bool                  `json:"follow_redirects,omitempty"`
+	EnableHttp2          *bool                  `json:"enable_http2,omitempty"`
+	HttpHeaders          map[string]string      `json:"http_headers,omitempty"`
+	ProxyUrl             *string                `json:"proxy_url,omitempty"`
+	NoProxy              *string                `json:"no_proxy,omitempty"`
+	ProxyFromEnvironment *bool                  `json:"proxy_from_environment,omitempty"`
+	ProxyConnectHeader   map[string]string      `json:"proxy_connect_header,omitempty"`
+	TlsConfig            *ReceiverTLSConfig     `json:"tls_config,omitempty"`
+	Oauth2               *ReceiverOAuth2        `json:"oauth2,omitempty"`
+}
+
+// NewReceiverHTTPClientConfig creates a new ReceiverHTTPClientConfig object.
+func NewReceiverHTTPClientConfig() *ReceiverHTTPClientConfig {
+	return &ReceiverHTTPClientConfig{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for ReceiverHTTPClientConfig.
+func (ReceiverHTTPClientConfig) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverHTTPClientConfig"
+}
+
+// +k8s:openapi-gen=true
+type ReceiverBasicAuth struct {
+	Username *string `json:"username,omitempty"`
+}
+
+// NewReceiverBasicAuth creates a new ReceiverBasicAuth object.
+func NewReceiverBasicAuth() *ReceiverBasicAuth {
+	return &ReceiverBasicAuth{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for ReceiverBasicAuth.
+func (ReceiverBasicAuth) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverBasicAuth"
+}
+
+// +k8s:openapi-gen=true
+type ReceiverAuthorization struct {
+	Type *string `json:"type,omitempty"`
+}
+
+// NewReceiverAuthorization creates a new ReceiverAuthorization object.
+func NewReceiverAuthorization() *ReceiverAuthorization {
+	return &ReceiverAuthorization{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for ReceiverAuthorization.
+func (ReceiverAuthorization) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverAuthorization"
+}
+
+// +k8s:openapi-gen=true
+type ReceiverTLSConfig struct {
+	ServerName         *string `json:"server_name,omitempty"`
+	InsecureSkipVerify *bool   `json:"insecure_skip_verify,omitempty"`
+	MinVersion         *string `json:"min_version,omitempty"`
+	MaxVersion         *string `json:"max_version,omitempty"`
+}
+
+// NewReceiverTLSConfig creates a new ReceiverTLSConfig object.
+func NewReceiverTLSConfig() *ReceiverTLSConfig {
+	return &ReceiverTLSConfig{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for ReceiverTLSConfig.
+func (ReceiverTLSConfig) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverTLSConfig"
+}
+
+// +k8s:openapi-gen=true
+type ReceiverOAuth2 struct {
+	ClientId             string             `json:"client_id"`
+	TokenUrl             string             `json:"token_url"`
+	Scopes               *string            `json:"scopes,omitempty"`
+	EndpointParams       map[string]string  `json:"endpoint_params,omitempty"`
+	TlsConfig            *ReceiverTLSConfig `json:"tls_config,omitempty"`
+	ProxyUrl             *string            `json:"proxy_url,omitempty"`
+	NoProxy              *string            `json:"no_proxy,omitempty"`
+	ProxyFromEnvironment *bool              `json:"proxy_from_environment,omitempty"`
+	ProxyConnectHeader   map[string]string  `json:"proxy_connect_header,omitempty"`
+}
+
+// NewReceiverOAuth2 creates a new ReceiverOAuth2 object.
+func NewReceiverOAuth2() *ReceiverOAuth2 {
+	return &ReceiverOAuth2{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for ReceiverOAuth2.
+func (ReceiverOAuth2) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverOAuth2"
+}
+
+// +k8s:openapi-gen=true
 type ReceiverDiscordV1 struct {
 	Uid                   *string                               `json:"uid,omitempty"`
 	DisableResolveMessage *bool                                 `json:"disableResolveMessage,omitempty"`
@@ -172,12 +268,13 @@ func (ReceiverGooglechatV1) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type ReceiverJiraV0mimir1 struct {
-	Uid                   *string                             `json:"uid,omitempty"`
-	DisableResolveMessage *bool                               `json:"disableResolveMessage,omitempty"`
-	Type                  string                              `json:"type"`
-	Version               string                              `json:"version"`
-	Settings              ReceiverV1beta1JiraV0mimir1Settings `json:"settings"`
-	Variant               *string                             `json:"variant,omitempty"`
+	Uid                   *string                                  `json:"uid,omitempty"`
+	DisableResolveMessage *bool                                    `json:"disableResolveMessage,omitempty"`
+	Type                  string                                   `json:"type"`
+	Version               string                                   `json:"version"`
+	Settings              ReceiverV1beta1JiraV0mimir1Settings      `json:"settings"`
+	SecureFields          *ReceiverV1beta1JiraV0mimir1SecureFields `json:"secureFields,omitempty"`
+	Variant               *string                                  `json:"variant,omitempty"`
 }
 
 // NewReceiverJiraV0mimir1 creates a new ReceiverJiraV0mimir1 object.
@@ -297,6 +394,21 @@ func NewReceiverMqttV1() *ReceiverMqttV1 {
 // OpenAPIModelName returns the OpenAPI model name for ReceiverMqttV1.
 func (ReceiverMqttV1) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverMqttV1"
+}
+
+// +k8s:openapi-gen=true
+type ReceiverGrafanaTLSConfig struct {
+	InsecureSkipVerify *bool `json:"insecureSkipVerify,omitempty"`
+}
+
+// NewReceiverGrafanaTLSConfig creates a new ReceiverGrafanaTLSConfig object.
+func NewReceiverGrafanaTLSConfig() *ReceiverGrafanaTLSConfig {
+	return &ReceiverGrafanaTLSConfig{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for ReceiverGrafanaTLSConfig.
+func (ReceiverGrafanaTLSConfig) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverGrafanaTLSConfig"
 }
 
 // +k8s:openapi-gen=true
@@ -612,6 +724,23 @@ func (ReceiverSnsV0mimir1) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
+type ReceiverSigv4 struct {
+	Region  *string `json:"region,omitempty"`
+	Profile *string `json:"profile,omitempty"`
+	RoleArn *string `json:"role_arn,omitempty"`
+}
+
+// NewReceiverSigv4 creates a new ReceiverSigv4 object.
+func NewReceiverSigv4() *ReceiverSigv4 {
+	return &ReceiverSigv4{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for ReceiverSigv4.
+func (ReceiverSigv4) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverSigv4"
+}
+
+// +k8s:openapi-gen=true
 type ReceiverSnsV1 struct {
 	Uid                   *string                           `json:"uid,omitempty"`
 	DisableResolveMessage *bool                             `json:"disableResolveMessage,omitempty"`
@@ -846,12 +975,13 @@ func (ReceiverVictoropsV1) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type ReceiverWebexV0mimir1 struct {
-	Uid                   *string                              `json:"uid,omitempty"`
-	DisableResolveMessage *bool                                `json:"disableResolveMessage,omitempty"`
-	Type                  string                               `json:"type"`
-	Version               string                               `json:"version"`
-	Settings              ReceiverV1beta1WebexV0mimir1Settings `json:"settings"`
-	Variant               *string                              `json:"variant,omitempty"`
+	Uid                   *string                                   `json:"uid,omitempty"`
+	DisableResolveMessage *bool                                     `json:"disableResolveMessage,omitempty"`
+	Type                  string                                    `json:"type"`
+	Version               string                                    `json:"version"`
+	Settings              ReceiverV1beta1WebexV0mimir1Settings      `json:"settings"`
+	SecureFields          *ReceiverV1beta1WebexV0mimir1SecureFields `json:"secureFields,omitempty"`
+	Variant               *string                                   `json:"variant,omitempty"`
 }
 
 // NewReceiverWebexV0mimir1 creates a new ReceiverWebexV0mimir1 object.
@@ -1050,124 +1180,10 @@ func (ReceiverV1beta1DingdingV1SecureFields) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
-type ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigBasicAuth struct {
-	Username *string `json:"username,omitempty"`
-}
-
-// NewReceiverV1beta1DiscordV0mimir1SettingsHttpConfigBasicAuth creates a new ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigBasicAuth object.
-func NewReceiverV1beta1DiscordV0mimir1SettingsHttpConfigBasicAuth() *ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigBasicAuth {
-	return &ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigBasicAuth{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigBasicAuth.
-func (ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigBasicAuth) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigBasicAuth"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigAuthorization struct {
-	Type *string `json:"type,omitempty"`
-}
-
-// NewReceiverV1beta1DiscordV0mimir1SettingsHttpConfigAuthorization creates a new ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigAuthorization object.
-func NewReceiverV1beta1DiscordV0mimir1SettingsHttpConfigAuthorization() *ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigAuthorization {
-	return &ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigAuthorization{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigAuthorization.
-func (ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigAuthorization) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigAuthorization"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigTlsConfig struct {
-	ServerName         *string `json:"server_name,omitempty"`
-	InsecureSkipVerify *bool   `json:"insecure_skip_verify,omitempty"`
-	MinVersion         *string `json:"min_version,omitempty"`
-	MaxVersion         *string `json:"max_version,omitempty"`
-}
-
-// NewReceiverV1beta1DiscordV0mimir1SettingsHttpConfigTlsConfig creates a new ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigTlsConfig object.
-func NewReceiverV1beta1DiscordV0mimir1SettingsHttpConfigTlsConfig() *ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigTlsConfig {
-	return &ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigTlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigTlsConfig.
-func (ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigTlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigTlsConfig"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigOauth2TlsConfig struct {
-	ServerName         *string `json:"server_name,omitempty"`
-	InsecureSkipVerify *bool   `json:"insecure_skip_verify,omitempty"`
-	MinVersion         *string `json:"min_version,omitempty"`
-	MaxVersion         *string `json:"max_version,omitempty"`
-}
-
-// NewReceiverV1beta1DiscordV0mimir1SettingsHttpConfigOauth2TlsConfig creates a new ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigOauth2TlsConfig object.
-func NewReceiverV1beta1DiscordV0mimir1SettingsHttpConfigOauth2TlsConfig() *ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigOauth2TlsConfig {
-	return &ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigOauth2TlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigOauth2TlsConfig.
-func (ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigOauth2TlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigOauth2TlsConfig"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigOauth2 struct {
-	ClientId             string                                                           `json:"client_id"`
-	TokenUrl             string                                                           `json:"token_url"`
-	Scopes               *string                                                          `json:"scopes,omitempty"`
-	EndpointParams       map[string]string                                                `json:"endpoint_params,omitempty"`
-	TlsConfig            *ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigOauth2TlsConfig `json:"tls_config,omitempty"`
-	ProxyUrl             *string                                                          `json:"proxy_url,omitempty"`
-	NoProxy              *string                                                          `json:"no_proxy,omitempty"`
-	ProxyFromEnvironment *bool                                                            `json:"proxy_from_environment,omitempty"`
-	ProxyConnectHeader   map[string]string                                                `json:"proxy_connect_header,omitempty"`
-}
-
-// NewReceiverV1beta1DiscordV0mimir1SettingsHttpConfigOauth2 creates a new ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigOauth2 object.
-func NewReceiverV1beta1DiscordV0mimir1SettingsHttpConfigOauth2() *ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigOauth2 {
-	return &ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigOauth2{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigOauth2.
-func (ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigOauth2) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigOauth2"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1DiscordV0mimir1SettingsHttpConfig struct {
-	BasicAuth            *ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigBasicAuth     `json:"basic_auth,omitempty"`
-	Authorization        *ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigAuthorization `json:"authorization,omitempty"`
-	FollowRedirects      *bool                                                          `json:"follow_redirects,omitempty"`
-	EnableHttp2          *bool                                                          `json:"enable_http2,omitempty"`
-	HttpHeaders          map[string]string                                              `json:"http_headers,omitempty"`
-	ProxyUrl             *string                                                        `json:"proxy_url,omitempty"`
-	NoProxy              *string                                                        `json:"no_proxy,omitempty"`
-	ProxyFromEnvironment *bool                                                          `json:"proxy_from_environment,omitempty"`
-	ProxyConnectHeader   map[string]string                                              `json:"proxy_connect_header,omitempty"`
-	TlsConfig            *ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigTlsConfig     `json:"tls_config,omitempty"`
-	Oauth2               *ReceiverV1beta1DiscordV0mimir1SettingsHttpConfigOauth2        `json:"oauth2,omitempty"`
-}
-
-// NewReceiverV1beta1DiscordV0mimir1SettingsHttpConfig creates a new ReceiverV1beta1DiscordV0mimir1SettingsHttpConfig object.
-func NewReceiverV1beta1DiscordV0mimir1SettingsHttpConfig() *ReceiverV1beta1DiscordV0mimir1SettingsHttpConfig {
-	return &ReceiverV1beta1DiscordV0mimir1SettingsHttpConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1DiscordV0mimir1SettingsHttpConfig.
-func (ReceiverV1beta1DiscordV0mimir1SettingsHttpConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1DiscordV0mimir1SettingsHttpConfig"
-}
-
-// +k8s:openapi-gen=true
 type ReceiverV1beta1DiscordV0mimir1Settings struct {
-	Title      *string                                           `json:"title,omitempty"`
-	Message    *string                                           `json:"message,omitempty"`
-	HttpConfig *ReceiverV1beta1DiscordV0mimir1SettingsHttpConfig `json:"http_config,omitempty"`
+	Title      *string                   `json:"title,omitempty"`
+	Message    *string                   `json:"message,omitempty"`
+	HttpConfig *ReceiverHTTPClientConfig `json:"http_config,omitempty"`
 }
 
 // NewReceiverV1beta1DiscordV0mimir1Settings creates a new ReceiverV1beta1DiscordV0mimir1Settings object.
@@ -1182,7 +1198,10 @@ func (ReceiverV1beta1DiscordV0mimir1Settings) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type ReceiverV1beta1DiscordV0mimir1SecureFields struct {
-	WebhookUrl *bool `json:"webhook_url,omitempty"`
+	HttpConfigAuthorizationCredentials *bool `json:"http_config.authorization.credentials,omitempty"`
+	HttpConfigBasicAuthPassword        *bool `json:"http_config.basic_auth.password,omitempty"`
+	HttpConfigOauth2ClientSecret       *bool `json:"http_config.oauth2.client_secret,omitempty"`
+	WebhookUrl                         *bool `json:"webhook_url,omitempty"`
 }
 
 // NewReceiverV1beta1DiscordV0mimir1SecureFields creates a new ReceiverV1beta1DiscordV0mimir1SecureFields object.
@@ -1230,36 +1249,18 @@ func (ReceiverV1beta1DiscordV1SecureFields) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
-type ReceiverV1beta1EmailV0mimir1SettingsTlsConfig struct {
-	ServerName         *string `json:"server_name,omitempty"`
-	InsecureSkipVerify *bool   `json:"insecure_skip_verify,omitempty"`
-	MinVersion         *string `json:"min_version,omitempty"`
-	MaxVersion         *string `json:"max_version,omitempty"`
-}
-
-// NewReceiverV1beta1EmailV0mimir1SettingsTlsConfig creates a new ReceiverV1beta1EmailV0mimir1SettingsTlsConfig object.
-func NewReceiverV1beta1EmailV0mimir1SettingsTlsConfig() *ReceiverV1beta1EmailV0mimir1SettingsTlsConfig {
-	return &ReceiverV1beta1EmailV0mimir1SettingsTlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1EmailV0mimir1SettingsTlsConfig.
-func (ReceiverV1beta1EmailV0mimir1SettingsTlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1EmailV0mimir1SettingsTlsConfig"
-}
-
-// +k8s:openapi-gen=true
 type ReceiverV1beta1EmailV0mimir1Settings struct {
-	To           string                                         `json:"to"`
-	From         *string                                        `json:"from,omitempty"`
-	Smarthost    *string                                        `json:"smarthost,omitempty"`
-	Hello        *string                                        `json:"hello,omitempty"`
-	AuthUsername *string                                        `json:"auth_username,omitempty"`
-	AuthIdentity *string                                        `json:"auth_identity,omitempty"`
-	RequireTls   *bool                                          `json:"require_tls,omitempty"`
-	Html         *string                                        `json:"html,omitempty"`
-	Text         *string                                        `json:"text,omitempty"`
-	Headers      map[string]string                              `json:"headers,omitempty"`
-	TlsConfig    *ReceiverV1beta1EmailV0mimir1SettingsTlsConfig `json:"tls_config,omitempty"`
+	To           string             `json:"to"`
+	From         *string            `json:"from,omitempty"`
+	Smarthost    *string            `json:"smarthost,omitempty"`
+	Hello        *string            `json:"hello,omitempty"`
+	AuthUsername *string            `json:"auth_username,omitempty"`
+	AuthIdentity *string            `json:"auth_identity,omitempty"`
+	RequireTls   *bool              `json:"require_tls,omitempty"`
+	Html         *string            `json:"html,omitempty"`
+	Text         *string            `json:"text,omitempty"`
+	Headers      map[string]string  `json:"headers,omitempty"`
+	TlsConfig    *ReceiverTLSConfig `json:"tls_config,omitempty"`
 }
 
 // NewReceiverV1beta1EmailV0mimir1Settings creates a new ReceiverV1beta1EmailV0mimir1Settings object.
@@ -1340,134 +1341,20 @@ func (ReceiverV1beta1GooglechatV1SecureFields) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
-type ReceiverV1beta1JiraV0mimir1SettingsHttpConfigBasicAuth struct {
-	Username *string `json:"username,omitempty"`
-}
-
-// NewReceiverV1beta1JiraV0mimir1SettingsHttpConfigBasicAuth creates a new ReceiverV1beta1JiraV0mimir1SettingsHttpConfigBasicAuth object.
-func NewReceiverV1beta1JiraV0mimir1SettingsHttpConfigBasicAuth() *ReceiverV1beta1JiraV0mimir1SettingsHttpConfigBasicAuth {
-	return &ReceiverV1beta1JiraV0mimir1SettingsHttpConfigBasicAuth{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1JiraV0mimir1SettingsHttpConfigBasicAuth.
-func (ReceiverV1beta1JiraV0mimir1SettingsHttpConfigBasicAuth) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1JiraV0mimir1SettingsHttpConfigBasicAuth"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1JiraV0mimir1SettingsHttpConfigAuthorization struct {
-	Type *string `json:"type,omitempty"`
-}
-
-// NewReceiverV1beta1JiraV0mimir1SettingsHttpConfigAuthorization creates a new ReceiverV1beta1JiraV0mimir1SettingsHttpConfigAuthorization object.
-func NewReceiverV1beta1JiraV0mimir1SettingsHttpConfigAuthorization() *ReceiverV1beta1JiraV0mimir1SettingsHttpConfigAuthorization {
-	return &ReceiverV1beta1JiraV0mimir1SettingsHttpConfigAuthorization{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1JiraV0mimir1SettingsHttpConfigAuthorization.
-func (ReceiverV1beta1JiraV0mimir1SettingsHttpConfigAuthorization) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1JiraV0mimir1SettingsHttpConfigAuthorization"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1JiraV0mimir1SettingsHttpConfigTlsConfig struct {
-	ServerName         *string `json:"server_name,omitempty"`
-	InsecureSkipVerify *bool   `json:"insecure_skip_verify,omitempty"`
-	MinVersion         *string `json:"min_version,omitempty"`
-	MaxVersion         *string `json:"max_version,omitempty"`
-}
-
-// NewReceiverV1beta1JiraV0mimir1SettingsHttpConfigTlsConfig creates a new ReceiverV1beta1JiraV0mimir1SettingsHttpConfigTlsConfig object.
-func NewReceiverV1beta1JiraV0mimir1SettingsHttpConfigTlsConfig() *ReceiverV1beta1JiraV0mimir1SettingsHttpConfigTlsConfig {
-	return &ReceiverV1beta1JiraV0mimir1SettingsHttpConfigTlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1JiraV0mimir1SettingsHttpConfigTlsConfig.
-func (ReceiverV1beta1JiraV0mimir1SettingsHttpConfigTlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1JiraV0mimir1SettingsHttpConfigTlsConfig"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1JiraV0mimir1SettingsHttpConfigOauth2TlsConfig struct {
-	ServerName         *string `json:"server_name,omitempty"`
-	InsecureSkipVerify *bool   `json:"insecure_skip_verify,omitempty"`
-	MinVersion         *string `json:"min_version,omitempty"`
-	MaxVersion         *string `json:"max_version,omitempty"`
-}
-
-// NewReceiverV1beta1JiraV0mimir1SettingsHttpConfigOauth2TlsConfig creates a new ReceiverV1beta1JiraV0mimir1SettingsHttpConfigOauth2TlsConfig object.
-func NewReceiverV1beta1JiraV0mimir1SettingsHttpConfigOauth2TlsConfig() *ReceiverV1beta1JiraV0mimir1SettingsHttpConfigOauth2TlsConfig {
-	return &ReceiverV1beta1JiraV0mimir1SettingsHttpConfigOauth2TlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1JiraV0mimir1SettingsHttpConfigOauth2TlsConfig.
-func (ReceiverV1beta1JiraV0mimir1SettingsHttpConfigOauth2TlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1JiraV0mimir1SettingsHttpConfigOauth2TlsConfig"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1JiraV0mimir1SettingsHttpConfigOauth2 struct {
-	ClientId             string                                                        `json:"client_id"`
-	TokenUrl             string                                                        `json:"token_url"`
-	Scopes               *string                                                       `json:"scopes,omitempty"`
-	EndpointParams       map[string]string                                             `json:"endpoint_params,omitempty"`
-	TlsConfig            *ReceiverV1beta1JiraV0mimir1SettingsHttpConfigOauth2TlsConfig `json:"tls_config,omitempty"`
-	ProxyUrl             *string                                                       `json:"proxy_url,omitempty"`
-	NoProxy              *string                                                       `json:"no_proxy,omitempty"`
-	ProxyFromEnvironment *bool                                                         `json:"proxy_from_environment,omitempty"`
-	ProxyConnectHeader   map[string]string                                             `json:"proxy_connect_header,omitempty"`
-}
-
-// NewReceiverV1beta1JiraV0mimir1SettingsHttpConfigOauth2 creates a new ReceiverV1beta1JiraV0mimir1SettingsHttpConfigOauth2 object.
-func NewReceiverV1beta1JiraV0mimir1SettingsHttpConfigOauth2() *ReceiverV1beta1JiraV0mimir1SettingsHttpConfigOauth2 {
-	return &ReceiverV1beta1JiraV0mimir1SettingsHttpConfigOauth2{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1JiraV0mimir1SettingsHttpConfigOauth2.
-func (ReceiverV1beta1JiraV0mimir1SettingsHttpConfigOauth2) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1JiraV0mimir1SettingsHttpConfigOauth2"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1JiraV0mimir1SettingsHttpConfig struct {
-	BasicAuth            *ReceiverV1beta1JiraV0mimir1SettingsHttpConfigBasicAuth     `json:"basic_auth,omitempty"`
-	Authorization        *ReceiverV1beta1JiraV0mimir1SettingsHttpConfigAuthorization `json:"authorization,omitempty"`
-	FollowRedirects      *bool                                                       `json:"follow_redirects,omitempty"`
-	EnableHttp2          *bool                                                       `json:"enable_http2,omitempty"`
-	HttpHeaders          map[string]string                                           `json:"http_headers,omitempty"`
-	ProxyUrl             *string                                                     `json:"proxy_url,omitempty"`
-	NoProxy              *string                                                     `json:"no_proxy,omitempty"`
-	ProxyFromEnvironment *bool                                                       `json:"proxy_from_environment,omitempty"`
-	ProxyConnectHeader   map[string]string                                           `json:"proxy_connect_header,omitempty"`
-	TlsConfig            *ReceiverV1beta1JiraV0mimir1SettingsHttpConfigTlsConfig     `json:"tls_config,omitempty"`
-	Oauth2               *ReceiverV1beta1JiraV0mimir1SettingsHttpConfigOauth2        `json:"oauth2,omitempty"`
-}
-
-// NewReceiverV1beta1JiraV0mimir1SettingsHttpConfig creates a new ReceiverV1beta1JiraV0mimir1SettingsHttpConfig object.
-func NewReceiverV1beta1JiraV0mimir1SettingsHttpConfig() *ReceiverV1beta1JiraV0mimir1SettingsHttpConfig {
-	return &ReceiverV1beta1JiraV0mimir1SettingsHttpConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1JiraV0mimir1SettingsHttpConfig.
-func (ReceiverV1beta1JiraV0mimir1SettingsHttpConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1JiraV0mimir1SettingsHttpConfig"
-}
-
-// +k8s:openapi-gen=true
 type ReceiverV1beta1JiraV0mimir1Settings struct {
-	ApiUrl            string                                         `json:"api_url"`
-	Project           string                                         `json:"project"`
-	IssueType         string                                         `json:"issue_type"`
-	Summary           *string                                        `json:"summary,omitempty"`
-	Description       *string                                        `json:"description,omitempty"`
-	Labels            *string                                        `json:"labels,omitempty"`
-	Priority          *string                                        `json:"priority,omitempty"`
-	ReopenTransition  *string                                        `json:"reopen_transition,omitempty"`
-	ResolveTransition *string                                        `json:"resolve_transition,omitempty"`
-	WontFixResolution *string                                        `json:"wont_fix_resolution,omitempty"`
-	ReopenDuration    *string                                        `json:"reopen_duration,omitempty"`
-	Fields            map[string]string                              `json:"fields,omitempty"`
-	HttpConfig        *ReceiverV1beta1JiraV0mimir1SettingsHttpConfig `json:"http_config,omitempty"`
+	ApiUrl            string                    `json:"api_url"`
+	Project           string                    `json:"project"`
+	IssueType         string                    `json:"issue_type"`
+	Summary           *string                   `json:"summary,omitempty"`
+	Description       *string                   `json:"description,omitempty"`
+	Labels            *string                   `json:"labels,omitempty"`
+	Priority          *string                   `json:"priority,omitempty"`
+	ReopenTransition  *string                   `json:"reopen_transition,omitempty"`
+	ResolveTransition *string                   `json:"resolve_transition,omitempty"`
+	WontFixResolution *string                   `json:"wont_fix_resolution,omitempty"`
+	ReopenDuration    *string                   `json:"reopen_duration,omitempty"`
+	Fields            map[string]string         `json:"fields,omitempty"`
+	HttpConfig        *ReceiverHTTPClientConfig `json:"http_config,omitempty"`
 }
 
 // NewReceiverV1beta1JiraV0mimir1Settings creates a new ReceiverV1beta1JiraV0mimir1Settings object.
@@ -1478,6 +1365,23 @@ func NewReceiverV1beta1JiraV0mimir1Settings() *ReceiverV1beta1JiraV0mimir1Settin
 // OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1JiraV0mimir1Settings.
 func (ReceiverV1beta1JiraV0mimir1Settings) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1JiraV0mimir1Settings"
+}
+
+// +k8s:openapi-gen=true
+type ReceiverV1beta1JiraV0mimir1SecureFields struct {
+	HttpConfigAuthorizationCredentials *bool `json:"http_config.authorization.credentials,omitempty"`
+	HttpConfigBasicAuthPassword        *bool `json:"http_config.basic_auth.password,omitempty"`
+	HttpConfigOauth2ClientSecret       *bool `json:"http_config.oauth2.client_secret,omitempty"`
+}
+
+// NewReceiverV1beta1JiraV0mimir1SecureFields creates a new ReceiverV1beta1JiraV0mimir1SecureFields object.
+func NewReceiverV1beta1JiraV0mimir1SecureFields() *ReceiverV1beta1JiraV0mimir1SecureFields {
+	return &ReceiverV1beta1JiraV0mimir1SecureFields{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1JiraV0mimir1SecureFields.
+func (ReceiverV1beta1JiraV0mimir1SecureFields) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1JiraV0mimir1SecureFields"
 }
 
 // +k8s:openapi-gen=true
@@ -1592,21 +1496,6 @@ func (ReceiverV1beta1LINEV1SecureFields) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
-type ReceiverV1beta1MqttV1SettingsTlsConfig struct {
-	InsecureSkipVerify *bool `json:"insecureSkipVerify,omitempty"`
-}
-
-// NewReceiverV1beta1MqttV1SettingsTlsConfig creates a new ReceiverV1beta1MqttV1SettingsTlsConfig object.
-func NewReceiverV1beta1MqttV1SettingsTlsConfig() *ReceiverV1beta1MqttV1SettingsTlsConfig {
-	return &ReceiverV1beta1MqttV1SettingsTlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1MqttV1SettingsTlsConfig.
-func (ReceiverV1beta1MqttV1SettingsTlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1MqttV1SettingsTlsConfig"
-}
-
-// +k8s:openapi-gen=true
 type ReceiverV1beta1MqttV1Settings struct {
 	BrokerUrl     string                                      `json:"brokerUrl"`
 	Topic         string                                      `json:"topic"`
@@ -1616,7 +1505,7 @@ type ReceiverV1beta1MqttV1Settings struct {
 	Username      *string                                     `json:"username,omitempty"`
 	Qos           *ReceiverV1beta1MqttV1SettingsQos           `json:"qos,omitempty"`
 	Retain        *bool                                       `json:"retain,omitempty"`
-	TlsConfig     *ReceiverV1beta1MqttV1SettingsTlsConfig     `json:"tlsConfig,omitempty"`
+	TlsConfig     *ReceiverGrafanaTLSConfig                   `json:"tlsConfig,omitempty"`
 }
 
 // NewReceiverV1beta1MqttV1Settings creates a new ReceiverV1beta1MqttV1Settings object.
@@ -1685,134 +1574,20 @@ func (ReceiverV1beta1OncallV1SecureFields) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
-type ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigBasicAuth struct {
-	Username *string `json:"username,omitempty"`
-}
-
-// NewReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigBasicAuth creates a new ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigBasicAuth object.
-func NewReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigBasicAuth() *ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigBasicAuth {
-	return &ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigBasicAuth{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigBasicAuth.
-func (ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigBasicAuth) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigBasicAuth"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigAuthorization struct {
-	Type *string `json:"type,omitempty"`
-}
-
-// NewReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigAuthorization creates a new ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigAuthorization object.
-func NewReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigAuthorization() *ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigAuthorization {
-	return &ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigAuthorization{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigAuthorization.
-func (ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigAuthorization) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigAuthorization"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigTlsConfig struct {
-	ServerName         *string `json:"server_name,omitempty"`
-	InsecureSkipVerify *bool   `json:"insecure_skip_verify,omitempty"`
-	MinVersion         *string `json:"min_version,omitempty"`
-	MaxVersion         *string `json:"max_version,omitempty"`
-}
-
-// NewReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigTlsConfig creates a new ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigTlsConfig object.
-func NewReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigTlsConfig() *ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigTlsConfig {
-	return &ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigTlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigTlsConfig.
-func (ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigTlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigTlsConfig"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigOauth2TlsConfig struct {
-	ServerName         *string `json:"server_name,omitempty"`
-	InsecureSkipVerify *bool   `json:"insecure_skip_verify,omitempty"`
-	MinVersion         *string `json:"min_version,omitempty"`
-	MaxVersion         *string `json:"max_version,omitempty"`
-}
-
-// NewReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigOauth2TlsConfig creates a new ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigOauth2TlsConfig object.
-func NewReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigOauth2TlsConfig() *ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigOauth2TlsConfig {
-	return &ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigOauth2TlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigOauth2TlsConfig.
-func (ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigOauth2TlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigOauth2TlsConfig"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigOauth2 struct {
-	ClientId             string                                                            `json:"client_id"`
-	TokenUrl             string                                                            `json:"token_url"`
-	Scopes               *string                                                           `json:"scopes,omitempty"`
-	EndpointParams       map[string]string                                                 `json:"endpoint_params,omitempty"`
-	TlsConfig            *ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigOauth2TlsConfig `json:"tls_config,omitempty"`
-	ProxyUrl             *string                                                           `json:"proxy_url,omitempty"`
-	NoProxy              *string                                                           `json:"no_proxy,omitempty"`
-	ProxyFromEnvironment *bool                                                             `json:"proxy_from_environment,omitempty"`
-	ProxyConnectHeader   map[string]string                                                 `json:"proxy_connect_header,omitempty"`
-}
-
-// NewReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigOauth2 creates a new ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigOauth2 object.
-func NewReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigOauth2() *ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigOauth2 {
-	return &ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigOauth2{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigOauth2.
-func (ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigOauth2) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigOauth2"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfig struct {
-	BasicAuth            *ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigBasicAuth     `json:"basic_auth,omitempty"`
-	Authorization        *ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigAuthorization `json:"authorization,omitempty"`
-	FollowRedirects      *bool                                                           `json:"follow_redirects,omitempty"`
-	EnableHttp2          *bool                                                           `json:"enable_http2,omitempty"`
-	HttpHeaders          map[string]string                                               `json:"http_headers,omitempty"`
-	ProxyUrl             *string                                                         `json:"proxy_url,omitempty"`
-	NoProxy              *string                                                         `json:"no_proxy,omitempty"`
-	ProxyFromEnvironment *bool                                                           `json:"proxy_from_environment,omitempty"`
-	ProxyConnectHeader   map[string]string                                               `json:"proxy_connect_header,omitempty"`
-	TlsConfig            *ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigTlsConfig     `json:"tls_config,omitempty"`
-	Oauth2               *ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfigOauth2        `json:"oauth2,omitempty"`
-}
-
-// NewReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfig creates a new ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfig object.
-func NewReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfig() *ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfig {
-	return &ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfig.
-func (ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfig"
-}
-
-// +k8s:openapi-gen=true
 type ReceiverV1beta1OpsgenieV0mimir1Settings struct {
-	ApiUrl       string                                             `json:"api_url"`
-	Message      *string                                            `json:"message,omitempty"`
-	Description  *string                                            `json:"description,omitempty"`
-	Source       *string                                            `json:"source,omitempty"`
-	Details      map[string]string                                  `json:"details,omitempty"`
-	Entity       *string                                            `json:"entity,omitempty"`
-	Actions      *string                                            `json:"actions,omitempty"`
-	Tags         *string                                            `json:"tags,omitempty"`
-	Note         *string                                            `json:"note,omitempty"`
-	Priority     *string                                            `json:"priority,omitempty"`
-	UpdateAlerts *bool                                              `json:"update_alerts,omitempty"`
-	Responders   *string                                            `json:"responders,omitempty"`
-	HttpConfig   *ReceiverV1beta1OpsgenieV0mimir1SettingsHttpConfig `json:"http_config,omitempty"`
+	ApiUrl       string                    `json:"api_url"`
+	Message      *string                   `json:"message,omitempty"`
+	Description  *string                   `json:"description,omitempty"`
+	Source       *string                   `json:"source,omitempty"`
+	Details      map[string]string         `json:"details,omitempty"`
+	Entity       *string                   `json:"entity,omitempty"`
+	Actions      *string                   `json:"actions,omitempty"`
+	Tags         *string                   `json:"tags,omitempty"`
+	Note         *string                   `json:"note,omitempty"`
+	Priority     *string                   `json:"priority,omitempty"`
+	UpdateAlerts *bool                     `json:"update_alerts,omitempty"`
+	Responders   *string                   `json:"responders,omitempty"`
+	HttpConfig   *ReceiverHTTPClientConfig `json:"http_config,omitempty"`
 }
 
 // NewReceiverV1beta1OpsgenieV0mimir1Settings creates a new ReceiverV1beta1OpsgenieV0mimir1Settings object.
@@ -1827,7 +1602,10 @@ func (ReceiverV1beta1OpsgenieV0mimir1Settings) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type ReceiverV1beta1OpsgenieV0mimir1SecureFields struct {
-	ApiKey *bool `json:"api_key,omitempty"`
+	ApiKey                             *bool `json:"api_key,omitempty"`
+	HttpConfigAuthorizationCredentials *bool `json:"http_config.authorization.credentials,omitempty"`
+	HttpConfigBasicAuthPassword        *bool `json:"http_config.basic_auth.password,omitempty"`
+	HttpConfigOauth2ClientSecret       *bool `json:"http_config.oauth2.client_secret,omitempty"`
 }
 
 // NewReceiverV1beta1OpsgenieV0mimir1SecureFields creates a new ReceiverV1beta1OpsgenieV0mimir1SecureFields object.
@@ -1877,134 +1655,20 @@ func (ReceiverV1beta1OpsgenieV1SecureFields) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
-type ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigBasicAuth struct {
-	Username *string `json:"username,omitempty"`
-}
-
-// NewReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigBasicAuth creates a new ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigBasicAuth object.
-func NewReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigBasicAuth() *ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigBasicAuth {
-	return &ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigBasicAuth{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigBasicAuth.
-func (ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigBasicAuth) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigBasicAuth"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigAuthorization struct {
-	Type *string `json:"type,omitempty"`
-}
-
-// NewReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigAuthorization creates a new ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigAuthorization object.
-func NewReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigAuthorization() *ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigAuthorization {
-	return &ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigAuthorization{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigAuthorization.
-func (ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigAuthorization) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigAuthorization"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigTlsConfig struct {
-	ServerName         *string `json:"server_name,omitempty"`
-	InsecureSkipVerify *bool   `json:"insecure_skip_verify,omitempty"`
-	MinVersion         *string `json:"min_version,omitempty"`
-	MaxVersion         *string `json:"max_version,omitempty"`
-}
-
-// NewReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigTlsConfig creates a new ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigTlsConfig object.
-func NewReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigTlsConfig() *ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigTlsConfig {
-	return &ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigTlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigTlsConfig.
-func (ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigTlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigTlsConfig"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigOauth2TlsConfig struct {
-	ServerName         *string `json:"server_name,omitempty"`
-	InsecureSkipVerify *bool   `json:"insecure_skip_verify,omitempty"`
-	MinVersion         *string `json:"min_version,omitempty"`
-	MaxVersion         *string `json:"max_version,omitempty"`
-}
-
-// NewReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigOauth2TlsConfig creates a new ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigOauth2TlsConfig object.
-func NewReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigOauth2TlsConfig() *ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigOauth2TlsConfig {
-	return &ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigOauth2TlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigOauth2TlsConfig.
-func (ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigOauth2TlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigOauth2TlsConfig"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigOauth2 struct {
-	ClientId             string                                                             `json:"client_id"`
-	TokenUrl             string                                                             `json:"token_url"`
-	Scopes               *string                                                            `json:"scopes,omitempty"`
-	EndpointParams       map[string]string                                                  `json:"endpoint_params,omitempty"`
-	TlsConfig            *ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigOauth2TlsConfig `json:"tls_config,omitempty"`
-	ProxyUrl             *string                                                            `json:"proxy_url,omitempty"`
-	NoProxy              *string                                                            `json:"no_proxy,omitempty"`
-	ProxyFromEnvironment *bool                                                              `json:"proxy_from_environment,omitempty"`
-	ProxyConnectHeader   map[string]string                                                  `json:"proxy_connect_header,omitempty"`
-}
-
-// NewReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigOauth2 creates a new ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigOauth2 object.
-func NewReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigOauth2() *ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigOauth2 {
-	return &ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigOauth2{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigOauth2.
-func (ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigOauth2) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigOauth2"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfig struct {
-	BasicAuth            *ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigBasicAuth     `json:"basic_auth,omitempty"`
-	Authorization        *ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigAuthorization `json:"authorization,omitempty"`
-	FollowRedirects      *bool                                                            `json:"follow_redirects,omitempty"`
-	EnableHttp2          *bool                                                            `json:"enable_http2,omitempty"`
-	HttpHeaders          map[string]string                                                `json:"http_headers,omitempty"`
-	ProxyUrl             *string                                                          `json:"proxy_url,omitempty"`
-	NoProxy              *string                                                          `json:"no_proxy,omitempty"`
-	ProxyFromEnvironment *bool                                                            `json:"proxy_from_environment,omitempty"`
-	ProxyConnectHeader   map[string]string                                                `json:"proxy_connect_header,omitempty"`
-	TlsConfig            *ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigTlsConfig     `json:"tls_config,omitempty"`
-	Oauth2               *ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfigOauth2        `json:"oauth2,omitempty"`
-}
-
-// NewReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfig creates a new ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfig object.
-func NewReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfig() *ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfig {
-	return &ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfig.
-func (ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfig"
-}
-
-// +k8s:openapi-gen=true
 type ReceiverV1beta1PagerdutyV0mimir1Settings struct {
-	Url         string                                              `json:"url"`
-	Client      *string                                             `json:"client,omitempty"`
-	ClientUrl   *string                                             `json:"client_url,omitempty"`
-	Description *string                                             `json:"description,omitempty"`
-	Details     map[string]string                                   `json:"details,omitempty"`
-	Images      *string                                             `json:"images,omitempty"`
-	Links       *string                                             `json:"links,omitempty"`
-	Source      *string                                             `json:"source,omitempty"`
-	Severity    *string                                             `json:"severity,omitempty"`
-	Class       *string                                             `json:"class,omitempty"`
-	Component   *string                                             `json:"component,omitempty"`
-	Group       *string                                             `json:"group,omitempty"`
-	HttpConfig  *ReceiverV1beta1PagerdutyV0mimir1SettingsHttpConfig `json:"http_config,omitempty"`
+	Url         string                    `json:"url"`
+	Client      *string                   `json:"client,omitempty"`
+	ClientUrl   *string                   `json:"client_url,omitempty"`
+	Description *string                   `json:"description,omitempty"`
+	Details     map[string]string         `json:"details,omitempty"`
+	Images      *string                   `json:"images,omitempty"`
+	Links       *string                   `json:"links,omitempty"`
+	Source      *string                   `json:"source,omitempty"`
+	Severity    *string                   `json:"severity,omitempty"`
+	Class       *string                   `json:"class,omitempty"`
+	Component   *string                   `json:"component,omitempty"`
+	Group       *string                   `json:"group,omitempty"`
+	HttpConfig  *ReceiverHTTPClientConfig `json:"http_config,omitempty"`
 }
 
 // NewReceiverV1beta1PagerdutyV0mimir1Settings creates a new ReceiverV1beta1PagerdutyV0mimir1Settings object.
@@ -2019,8 +1683,11 @@ func (ReceiverV1beta1PagerdutyV0mimir1Settings) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type ReceiverV1beta1PagerdutyV0mimir1SecureFields struct {
-	RoutingKey *bool `json:"routing_key,omitempty"`
-	ServiceKey *bool `json:"service_key,omitempty"`
+	HttpConfigAuthorizationCredentials *bool `json:"http_config.authorization.credentials,omitempty"`
+	HttpConfigBasicAuthPassword        *bool `json:"http_config.basic_auth.password,omitempty"`
+	HttpConfigOauth2ClientSecret       *bool `json:"http_config.oauth2.client_secret,omitempty"`
+	RoutingKey                         *bool `json:"routing_key,omitempty"`
+	ServiceKey                         *bool `json:"service_key,omitempty"`
 }
 
 // NewReceiverV1beta1PagerdutyV0mimir1SecureFields creates a new ReceiverV1beta1PagerdutyV0mimir1SecureFields object.
@@ -2104,133 +1771,19 @@ func (ReceiverV1beta1PrometheusAlertmanagerV1SecureFields) OpenAPIModelName() st
 }
 
 // +k8s:openapi-gen=true
-type ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigBasicAuth struct {
-	Username *string `json:"username,omitempty"`
-}
-
-// NewReceiverV1beta1PushoverV0mimir1SettingsHttpConfigBasicAuth creates a new ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigBasicAuth object.
-func NewReceiverV1beta1PushoverV0mimir1SettingsHttpConfigBasicAuth() *ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigBasicAuth {
-	return &ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigBasicAuth{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigBasicAuth.
-func (ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigBasicAuth) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigBasicAuth"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigAuthorization struct {
-	Type *string `json:"type,omitempty"`
-}
-
-// NewReceiverV1beta1PushoverV0mimir1SettingsHttpConfigAuthorization creates a new ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigAuthorization object.
-func NewReceiverV1beta1PushoverV0mimir1SettingsHttpConfigAuthorization() *ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigAuthorization {
-	return &ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigAuthorization{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigAuthorization.
-func (ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigAuthorization) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigAuthorization"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigTlsConfig struct {
-	ServerName         *string `json:"server_name,omitempty"`
-	InsecureSkipVerify *bool   `json:"insecure_skip_verify,omitempty"`
-	MinVersion         *string `json:"min_version,omitempty"`
-	MaxVersion         *string `json:"max_version,omitempty"`
-}
-
-// NewReceiverV1beta1PushoverV0mimir1SettingsHttpConfigTlsConfig creates a new ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigTlsConfig object.
-func NewReceiverV1beta1PushoverV0mimir1SettingsHttpConfigTlsConfig() *ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigTlsConfig {
-	return &ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigTlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigTlsConfig.
-func (ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigTlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigTlsConfig"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigOauth2TlsConfig struct {
-	ServerName         *string `json:"server_name,omitempty"`
-	InsecureSkipVerify *bool   `json:"insecure_skip_verify,omitempty"`
-	MinVersion         *string `json:"min_version,omitempty"`
-	MaxVersion         *string `json:"max_version,omitempty"`
-}
-
-// NewReceiverV1beta1PushoverV0mimir1SettingsHttpConfigOauth2TlsConfig creates a new ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigOauth2TlsConfig object.
-func NewReceiverV1beta1PushoverV0mimir1SettingsHttpConfigOauth2TlsConfig() *ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigOauth2TlsConfig {
-	return &ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigOauth2TlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigOauth2TlsConfig.
-func (ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigOauth2TlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigOauth2TlsConfig"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigOauth2 struct {
-	ClientId             string                                                            `json:"client_id"`
-	TokenUrl             string                                                            `json:"token_url"`
-	Scopes               *string                                                           `json:"scopes,omitempty"`
-	EndpointParams       map[string]string                                                 `json:"endpoint_params,omitempty"`
-	TlsConfig            *ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigOauth2TlsConfig `json:"tls_config,omitempty"`
-	ProxyUrl             *string                                                           `json:"proxy_url,omitempty"`
-	NoProxy              *string                                                           `json:"no_proxy,omitempty"`
-	ProxyFromEnvironment *bool                                                             `json:"proxy_from_environment,omitempty"`
-	ProxyConnectHeader   map[string]string                                                 `json:"proxy_connect_header,omitempty"`
-}
-
-// NewReceiverV1beta1PushoverV0mimir1SettingsHttpConfigOauth2 creates a new ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigOauth2 object.
-func NewReceiverV1beta1PushoverV0mimir1SettingsHttpConfigOauth2() *ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigOauth2 {
-	return &ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigOauth2{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigOauth2.
-func (ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigOauth2) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigOauth2"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1PushoverV0mimir1SettingsHttpConfig struct {
-	BasicAuth            *ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigBasicAuth     `json:"basic_auth,omitempty"`
-	Authorization        *ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigAuthorization `json:"authorization,omitempty"`
-	FollowRedirects      *bool                                                           `json:"follow_redirects,omitempty"`
-	EnableHttp2          *bool                                                           `json:"enable_http2,omitempty"`
-	HttpHeaders          map[string]string                                               `json:"http_headers,omitempty"`
-	ProxyUrl             *string                                                         `json:"proxy_url,omitempty"`
-	NoProxy              *string                                                         `json:"no_proxy,omitempty"`
-	ProxyFromEnvironment *bool                                                           `json:"proxy_from_environment,omitempty"`
-	ProxyConnectHeader   map[string]string                                               `json:"proxy_connect_header,omitempty"`
-	TlsConfig            *ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigTlsConfig     `json:"tls_config,omitempty"`
-	Oauth2               *ReceiverV1beta1PushoverV0mimir1SettingsHttpConfigOauth2        `json:"oauth2,omitempty"`
-}
-
-// NewReceiverV1beta1PushoverV0mimir1SettingsHttpConfig creates a new ReceiverV1beta1PushoverV0mimir1SettingsHttpConfig object.
-func NewReceiverV1beta1PushoverV0mimir1SettingsHttpConfig() *ReceiverV1beta1PushoverV0mimir1SettingsHttpConfig {
-	return &ReceiverV1beta1PushoverV0mimir1SettingsHttpConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1PushoverV0mimir1SettingsHttpConfig.
-func (ReceiverV1beta1PushoverV0mimir1SettingsHttpConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1PushoverV0mimir1SettingsHttpConfig"
-}
-
-// +k8s:openapi-gen=true
 type ReceiverV1beta1PushoverV0mimir1Settings struct {
-	Title      *string                                            `json:"title,omitempty"`
-	Message    *string                                            `json:"message,omitempty"`
-	Url        *string                                            `json:"url,omitempty"`
-	UrlTitle   *string                                            `json:"url_title,omitempty"`
-	Device     *string                                            `json:"device,omitempty"`
-	Sound      *string                                            `json:"sound,omitempty"`
-	Priority   *string                                            `json:"priority,omitempty"`
-	Retry      *string                                            `json:"retry,omitempty"`
-	Expire     *string                                            `json:"expire,omitempty"`
-	Ttl        *string                                            `json:"ttl,omitempty"`
-	Html       *bool                                              `json:"html,omitempty"`
-	HttpConfig *ReceiverV1beta1PushoverV0mimir1SettingsHttpConfig `json:"http_config,omitempty"`
+	Title      *string                   `json:"title,omitempty"`
+	Message    *string                   `json:"message,omitempty"`
+	Url        *string                   `json:"url,omitempty"`
+	UrlTitle   *string                   `json:"url_title,omitempty"`
+	Device     *string                   `json:"device,omitempty"`
+	Sound      *string                   `json:"sound,omitempty"`
+	Priority   *string                   `json:"priority,omitempty"`
+	Retry      *string                   `json:"retry,omitempty"`
+	Expire     *string                   `json:"expire,omitempty"`
+	Ttl        *string                   `json:"ttl,omitempty"`
+	Html       *bool                     `json:"html,omitempty"`
+	HttpConfig *ReceiverHTTPClientConfig `json:"http_config,omitempty"`
 }
 
 // NewReceiverV1beta1PushoverV0mimir1Settings creates a new ReceiverV1beta1PushoverV0mimir1Settings object.
@@ -2245,8 +1798,11 @@ func (ReceiverV1beta1PushoverV0mimir1Settings) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type ReceiverV1beta1PushoverV0mimir1SecureFields struct {
-	Token   *bool `json:"token,omitempty"`
-	UserKey *bool `json:"user_key,omitempty"`
+	HttpConfigAuthorizationCredentials *bool `json:"http_config.authorization.credentials,omitempty"`
+	HttpConfigBasicAuthPassword        *bool `json:"http_config.basic_auth.password,omitempty"`
+	HttpConfigOauth2ClientSecret       *bool `json:"http_config.oauth2.client_secret,omitempty"`
+	Token                              *bool `json:"token,omitempty"`
+	UserKey                            *bool `json:"user_key,omitempty"`
 }
 
 // NewReceiverV1beta1PushoverV0mimir1SecureFields creates a new ReceiverV1beta1PushoverV0mimir1SecureFields object.
@@ -2334,141 +1890,27 @@ func (ReceiverV1beta1SensugoV1SecureFields) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
-type ReceiverV1beta1SlackV0mimir1SettingsHttpConfigBasicAuth struct {
-	Username *string `json:"username,omitempty"`
-}
-
-// NewReceiverV1beta1SlackV0mimir1SettingsHttpConfigBasicAuth creates a new ReceiverV1beta1SlackV0mimir1SettingsHttpConfigBasicAuth object.
-func NewReceiverV1beta1SlackV0mimir1SettingsHttpConfigBasicAuth() *ReceiverV1beta1SlackV0mimir1SettingsHttpConfigBasicAuth {
-	return &ReceiverV1beta1SlackV0mimir1SettingsHttpConfigBasicAuth{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1SlackV0mimir1SettingsHttpConfigBasicAuth.
-func (ReceiverV1beta1SlackV0mimir1SettingsHttpConfigBasicAuth) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1SlackV0mimir1SettingsHttpConfigBasicAuth"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1SlackV0mimir1SettingsHttpConfigAuthorization struct {
-	Type *string `json:"type,omitempty"`
-}
-
-// NewReceiverV1beta1SlackV0mimir1SettingsHttpConfigAuthorization creates a new ReceiverV1beta1SlackV0mimir1SettingsHttpConfigAuthorization object.
-func NewReceiverV1beta1SlackV0mimir1SettingsHttpConfigAuthorization() *ReceiverV1beta1SlackV0mimir1SettingsHttpConfigAuthorization {
-	return &ReceiverV1beta1SlackV0mimir1SettingsHttpConfigAuthorization{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1SlackV0mimir1SettingsHttpConfigAuthorization.
-func (ReceiverV1beta1SlackV0mimir1SettingsHttpConfigAuthorization) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1SlackV0mimir1SettingsHttpConfigAuthorization"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1SlackV0mimir1SettingsHttpConfigTlsConfig struct {
-	ServerName         *string `json:"server_name,omitempty"`
-	InsecureSkipVerify *bool   `json:"insecure_skip_verify,omitempty"`
-	MinVersion         *string `json:"min_version,omitempty"`
-	MaxVersion         *string `json:"max_version,omitempty"`
-}
-
-// NewReceiverV1beta1SlackV0mimir1SettingsHttpConfigTlsConfig creates a new ReceiverV1beta1SlackV0mimir1SettingsHttpConfigTlsConfig object.
-func NewReceiverV1beta1SlackV0mimir1SettingsHttpConfigTlsConfig() *ReceiverV1beta1SlackV0mimir1SettingsHttpConfigTlsConfig {
-	return &ReceiverV1beta1SlackV0mimir1SettingsHttpConfigTlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1SlackV0mimir1SettingsHttpConfigTlsConfig.
-func (ReceiverV1beta1SlackV0mimir1SettingsHttpConfigTlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1SlackV0mimir1SettingsHttpConfigTlsConfig"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1SlackV0mimir1SettingsHttpConfigOauth2TlsConfig struct {
-	ServerName         *string `json:"server_name,omitempty"`
-	InsecureSkipVerify *bool   `json:"insecure_skip_verify,omitempty"`
-	MinVersion         *string `json:"min_version,omitempty"`
-	MaxVersion         *string `json:"max_version,omitempty"`
-}
-
-// NewReceiverV1beta1SlackV0mimir1SettingsHttpConfigOauth2TlsConfig creates a new ReceiverV1beta1SlackV0mimir1SettingsHttpConfigOauth2TlsConfig object.
-func NewReceiverV1beta1SlackV0mimir1SettingsHttpConfigOauth2TlsConfig() *ReceiverV1beta1SlackV0mimir1SettingsHttpConfigOauth2TlsConfig {
-	return &ReceiverV1beta1SlackV0mimir1SettingsHttpConfigOauth2TlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1SlackV0mimir1SettingsHttpConfigOauth2TlsConfig.
-func (ReceiverV1beta1SlackV0mimir1SettingsHttpConfigOauth2TlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1SlackV0mimir1SettingsHttpConfigOauth2TlsConfig"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1SlackV0mimir1SettingsHttpConfigOauth2 struct {
-	ClientId             string                                                         `json:"client_id"`
-	TokenUrl             string                                                         `json:"token_url"`
-	Scopes               *string                                                        `json:"scopes,omitempty"`
-	EndpointParams       map[string]string                                              `json:"endpoint_params,omitempty"`
-	TlsConfig            *ReceiverV1beta1SlackV0mimir1SettingsHttpConfigOauth2TlsConfig `json:"tls_config,omitempty"`
-	ProxyUrl             *string                                                        `json:"proxy_url,omitempty"`
-	NoProxy              *string                                                        `json:"no_proxy,omitempty"`
-	ProxyFromEnvironment *bool                                                          `json:"proxy_from_environment,omitempty"`
-	ProxyConnectHeader   map[string]string                                              `json:"proxy_connect_header,omitempty"`
-}
-
-// NewReceiverV1beta1SlackV0mimir1SettingsHttpConfigOauth2 creates a new ReceiverV1beta1SlackV0mimir1SettingsHttpConfigOauth2 object.
-func NewReceiverV1beta1SlackV0mimir1SettingsHttpConfigOauth2() *ReceiverV1beta1SlackV0mimir1SettingsHttpConfigOauth2 {
-	return &ReceiverV1beta1SlackV0mimir1SettingsHttpConfigOauth2{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1SlackV0mimir1SettingsHttpConfigOauth2.
-func (ReceiverV1beta1SlackV0mimir1SettingsHttpConfigOauth2) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1SlackV0mimir1SettingsHttpConfigOauth2"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1SlackV0mimir1SettingsHttpConfig struct {
-	BasicAuth            *ReceiverV1beta1SlackV0mimir1SettingsHttpConfigBasicAuth     `json:"basic_auth,omitempty"`
-	Authorization        *ReceiverV1beta1SlackV0mimir1SettingsHttpConfigAuthorization `json:"authorization,omitempty"`
-	FollowRedirects      *bool                                                        `json:"follow_redirects,omitempty"`
-	EnableHttp2          *bool                                                        `json:"enable_http2,omitempty"`
-	HttpHeaders          map[string]string                                            `json:"http_headers,omitempty"`
-	ProxyUrl             *string                                                      `json:"proxy_url,omitempty"`
-	NoProxy              *string                                                      `json:"no_proxy,omitempty"`
-	ProxyFromEnvironment *bool                                                        `json:"proxy_from_environment,omitempty"`
-	ProxyConnectHeader   map[string]string                                            `json:"proxy_connect_header,omitempty"`
-	TlsConfig            *ReceiverV1beta1SlackV0mimir1SettingsHttpConfigTlsConfig     `json:"tls_config,omitempty"`
-	Oauth2               *ReceiverV1beta1SlackV0mimir1SettingsHttpConfigOauth2        `json:"oauth2,omitempty"`
-}
-
-// NewReceiverV1beta1SlackV0mimir1SettingsHttpConfig creates a new ReceiverV1beta1SlackV0mimir1SettingsHttpConfig object.
-func NewReceiverV1beta1SlackV0mimir1SettingsHttpConfig() *ReceiverV1beta1SlackV0mimir1SettingsHttpConfig {
-	return &ReceiverV1beta1SlackV0mimir1SettingsHttpConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1SlackV0mimir1SettingsHttpConfig.
-func (ReceiverV1beta1SlackV0mimir1SettingsHttpConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1SlackV0mimir1SettingsHttpConfig"
-}
-
-// +k8s:openapi-gen=true
 type ReceiverV1beta1SlackV0mimir1Settings struct {
-	Channel     *string                                         `json:"channel,omitempty"`
-	Username    *string                                         `json:"username,omitempty"`
-	IconEmoji   *string                                         `json:"icon_emoji,omitempty"`
-	IconUrl     *string                                         `json:"icon_url,omitempty"`
-	LinkNames   *bool                                           `json:"link_names,omitempty"`
-	CallbackId  *string                                         `json:"callback_id,omitempty"`
-	Color       *string                                         `json:"color,omitempty"`
-	Fallback    *string                                         `json:"fallback,omitempty"`
-	Footer      *string                                         `json:"footer,omitempty"`
-	MrkdwnIn    *string                                         `json:"mrkdwn_in,omitempty"`
-	Pretext     *string                                         `json:"pretext,omitempty"`
-	ShortFields *bool                                           `json:"short_fields,omitempty"`
-	Text        *string                                         `json:"text,omitempty"`
-	Title       *string                                         `json:"title,omitempty"`
-	TitleLink   *string                                         `json:"title_link,omitempty"`
-	ImageUrl    *string                                         `json:"image_url,omitempty"`
-	ThumbUrl    *string                                         `json:"thumb_url,omitempty"`
-	Actions     *string                                         `json:"actions,omitempty"`
-	Fields      *string                                         `json:"fields,omitempty"`
-	HttpConfig  *ReceiverV1beta1SlackV0mimir1SettingsHttpConfig `json:"http_config,omitempty"`
+	Channel     *string                   `json:"channel,omitempty"`
+	Username    *string                   `json:"username,omitempty"`
+	IconEmoji   *string                   `json:"icon_emoji,omitempty"`
+	IconUrl     *string                   `json:"icon_url,omitempty"`
+	LinkNames   *bool                     `json:"link_names,omitempty"`
+	CallbackId  *string                   `json:"callback_id,omitempty"`
+	Color       *string                   `json:"color,omitempty"`
+	Fallback    *string                   `json:"fallback,omitempty"`
+	Footer      *string                   `json:"footer,omitempty"`
+	MrkdwnIn    *string                   `json:"mrkdwn_in,omitempty"`
+	Pretext     *string                   `json:"pretext,omitempty"`
+	ShortFields *bool                     `json:"short_fields,omitempty"`
+	Text        *string                   `json:"text,omitempty"`
+	Title       *string                   `json:"title,omitempty"`
+	TitleLink   *string                   `json:"title_link,omitempty"`
+	ImageUrl    *string                   `json:"image_url,omitempty"`
+	ThumbUrl    *string                   `json:"thumb_url,omitempty"`
+	Actions     *string                   `json:"actions,omitempty"`
+	Fields      *string                   `json:"fields,omitempty"`
+	HttpConfig  *ReceiverHTTPClientConfig `json:"http_config,omitempty"`
 }
 
 // NewReceiverV1beta1SlackV0mimir1Settings creates a new ReceiverV1beta1SlackV0mimir1Settings object.
@@ -2483,7 +1925,10 @@ func (ReceiverV1beta1SlackV0mimir1Settings) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type ReceiverV1beta1SlackV0mimir1SecureFields struct {
-	ApiUrl *bool `json:"api_url,omitempty"`
+	ApiUrl                             *bool `json:"api_url,omitempty"`
+	HttpConfigAuthorizationCredentials *bool `json:"http_config.authorization.credentials,omitempty"`
+	HttpConfigBasicAuthPassword        *bool `json:"http_config.basic_auth.password,omitempty"`
+	HttpConfigOauth2ClientSecret       *bool `json:"http_config.oauth2.client_secret,omitempty"`
 }
 
 // NewReceiverV1beta1SlackV0mimir1SecureFields creates a new ReceiverV1beta1SlackV0mimir1SecureFields object.
@@ -2539,148 +1984,16 @@ func (ReceiverV1beta1SlackV1SecureFields) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
-type ReceiverV1beta1SnsV0mimir1SettingsSigv4 struct {
-	Region    *string `json:"region,omitempty"`
-	AccessKey *string `json:"access_key,omitempty"`
-	Profile   *string `json:"profile,omitempty"`
-	RoleArn   *string `json:"role_arn,omitempty"`
-}
-
-// NewReceiverV1beta1SnsV0mimir1SettingsSigv4 creates a new ReceiverV1beta1SnsV0mimir1SettingsSigv4 object.
-func NewReceiverV1beta1SnsV0mimir1SettingsSigv4() *ReceiverV1beta1SnsV0mimir1SettingsSigv4 {
-	return &ReceiverV1beta1SnsV0mimir1SettingsSigv4{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1SnsV0mimir1SettingsSigv4.
-func (ReceiverV1beta1SnsV0mimir1SettingsSigv4) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1SnsV0mimir1SettingsSigv4"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1SnsV0mimir1SettingsHttpConfigBasicAuth struct {
-	Username *string `json:"username,omitempty"`
-}
-
-// NewReceiverV1beta1SnsV0mimir1SettingsHttpConfigBasicAuth creates a new ReceiverV1beta1SnsV0mimir1SettingsHttpConfigBasicAuth object.
-func NewReceiverV1beta1SnsV0mimir1SettingsHttpConfigBasicAuth() *ReceiverV1beta1SnsV0mimir1SettingsHttpConfigBasicAuth {
-	return &ReceiverV1beta1SnsV0mimir1SettingsHttpConfigBasicAuth{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1SnsV0mimir1SettingsHttpConfigBasicAuth.
-func (ReceiverV1beta1SnsV0mimir1SettingsHttpConfigBasicAuth) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1SnsV0mimir1SettingsHttpConfigBasicAuth"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1SnsV0mimir1SettingsHttpConfigAuthorization struct {
-	Type *string `json:"type,omitempty"`
-}
-
-// NewReceiverV1beta1SnsV0mimir1SettingsHttpConfigAuthorization creates a new ReceiverV1beta1SnsV0mimir1SettingsHttpConfigAuthorization object.
-func NewReceiverV1beta1SnsV0mimir1SettingsHttpConfigAuthorization() *ReceiverV1beta1SnsV0mimir1SettingsHttpConfigAuthorization {
-	return &ReceiverV1beta1SnsV0mimir1SettingsHttpConfigAuthorization{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1SnsV0mimir1SettingsHttpConfigAuthorization.
-func (ReceiverV1beta1SnsV0mimir1SettingsHttpConfigAuthorization) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1SnsV0mimir1SettingsHttpConfigAuthorization"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1SnsV0mimir1SettingsHttpConfigTlsConfig struct {
-	ServerName         *string `json:"server_name,omitempty"`
-	InsecureSkipVerify *bool   `json:"insecure_skip_verify,omitempty"`
-	MinVersion         *string `json:"min_version,omitempty"`
-	MaxVersion         *string `json:"max_version,omitempty"`
-}
-
-// NewReceiverV1beta1SnsV0mimir1SettingsHttpConfigTlsConfig creates a new ReceiverV1beta1SnsV0mimir1SettingsHttpConfigTlsConfig object.
-func NewReceiverV1beta1SnsV0mimir1SettingsHttpConfigTlsConfig() *ReceiverV1beta1SnsV0mimir1SettingsHttpConfigTlsConfig {
-	return &ReceiverV1beta1SnsV0mimir1SettingsHttpConfigTlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1SnsV0mimir1SettingsHttpConfigTlsConfig.
-func (ReceiverV1beta1SnsV0mimir1SettingsHttpConfigTlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1SnsV0mimir1SettingsHttpConfigTlsConfig"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1SnsV0mimir1SettingsHttpConfigOauth2TlsConfig struct {
-	ServerName         *string `json:"server_name,omitempty"`
-	InsecureSkipVerify *bool   `json:"insecure_skip_verify,omitempty"`
-	MinVersion         *string `json:"min_version,omitempty"`
-	MaxVersion         *string `json:"max_version,omitempty"`
-}
-
-// NewReceiverV1beta1SnsV0mimir1SettingsHttpConfigOauth2TlsConfig creates a new ReceiverV1beta1SnsV0mimir1SettingsHttpConfigOauth2TlsConfig object.
-func NewReceiverV1beta1SnsV0mimir1SettingsHttpConfigOauth2TlsConfig() *ReceiverV1beta1SnsV0mimir1SettingsHttpConfigOauth2TlsConfig {
-	return &ReceiverV1beta1SnsV0mimir1SettingsHttpConfigOauth2TlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1SnsV0mimir1SettingsHttpConfigOauth2TlsConfig.
-func (ReceiverV1beta1SnsV0mimir1SettingsHttpConfigOauth2TlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1SnsV0mimir1SettingsHttpConfigOauth2TlsConfig"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1SnsV0mimir1SettingsHttpConfigOauth2 struct {
-	ClientId             string                                                       `json:"client_id"`
-	TokenUrl             string                                                       `json:"token_url"`
-	Scopes               *string                                                      `json:"scopes,omitempty"`
-	EndpointParams       map[string]string                                            `json:"endpoint_params,omitempty"`
-	TlsConfig            *ReceiverV1beta1SnsV0mimir1SettingsHttpConfigOauth2TlsConfig `json:"tls_config,omitempty"`
-	ProxyUrl             *string                                                      `json:"proxy_url,omitempty"`
-	NoProxy              *string                                                      `json:"no_proxy,omitempty"`
-	ProxyFromEnvironment *bool                                                        `json:"proxy_from_environment,omitempty"`
-	ProxyConnectHeader   map[string]string                                            `json:"proxy_connect_header,omitempty"`
-}
-
-// NewReceiverV1beta1SnsV0mimir1SettingsHttpConfigOauth2 creates a new ReceiverV1beta1SnsV0mimir1SettingsHttpConfigOauth2 object.
-func NewReceiverV1beta1SnsV0mimir1SettingsHttpConfigOauth2() *ReceiverV1beta1SnsV0mimir1SettingsHttpConfigOauth2 {
-	return &ReceiverV1beta1SnsV0mimir1SettingsHttpConfigOauth2{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1SnsV0mimir1SettingsHttpConfigOauth2.
-func (ReceiverV1beta1SnsV0mimir1SettingsHttpConfigOauth2) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1SnsV0mimir1SettingsHttpConfigOauth2"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1SnsV0mimir1SettingsHttpConfig struct {
-	BasicAuth            *ReceiverV1beta1SnsV0mimir1SettingsHttpConfigBasicAuth     `json:"basic_auth,omitempty"`
-	Authorization        *ReceiverV1beta1SnsV0mimir1SettingsHttpConfigAuthorization `json:"authorization,omitempty"`
-	FollowRedirects      *bool                                                      `json:"follow_redirects,omitempty"`
-	EnableHttp2          *bool                                                      `json:"enable_http2,omitempty"`
-	HttpHeaders          map[string]string                                          `json:"http_headers,omitempty"`
-	ProxyUrl             *string                                                    `json:"proxy_url,omitempty"`
-	NoProxy              *string                                                    `json:"no_proxy,omitempty"`
-	ProxyFromEnvironment *bool                                                      `json:"proxy_from_environment,omitempty"`
-	ProxyConnectHeader   map[string]string                                          `json:"proxy_connect_header,omitempty"`
-	TlsConfig            *ReceiverV1beta1SnsV0mimir1SettingsHttpConfigTlsConfig     `json:"tls_config,omitempty"`
-	Oauth2               *ReceiverV1beta1SnsV0mimir1SettingsHttpConfigOauth2        `json:"oauth2,omitempty"`
-}
-
-// NewReceiverV1beta1SnsV0mimir1SettingsHttpConfig creates a new ReceiverV1beta1SnsV0mimir1SettingsHttpConfig object.
-func NewReceiverV1beta1SnsV0mimir1SettingsHttpConfig() *ReceiverV1beta1SnsV0mimir1SettingsHttpConfig {
-	return &ReceiverV1beta1SnsV0mimir1SettingsHttpConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1SnsV0mimir1SettingsHttpConfig.
-func (ReceiverV1beta1SnsV0mimir1SettingsHttpConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1SnsV0mimir1SettingsHttpConfig"
-}
-
-// +k8s:openapi-gen=true
 type ReceiverV1beta1SnsV0mimir1Settings struct {
-	ApiUrl      *string                                       `json:"api_url,omitempty"`
-	Sigv4       *ReceiverV1beta1SnsV0mimir1SettingsSigv4      `json:"sigv4,omitempty"`
-	TopicArn    *string                                       `json:"topic_arn,omitempty"`
-	PhoneNumber *string                                       `json:"phone_number,omitempty"`
-	TargetArn   *string                                       `json:"target_arn,omitempty"`
-	Subject     *string                                       `json:"subject,omitempty"`
-	Message     *string                                       `json:"message,omitempty"`
-	Attributes  map[string]string                             `json:"attributes,omitempty"`
-	HttpConfig  *ReceiverV1beta1SnsV0mimir1SettingsHttpConfig `json:"http_config,omitempty"`
+	ApiUrl      *string                   `json:"api_url,omitempty"`
+	Sigv4       *ReceiverSigv4            `json:"sigv4,omitempty"`
+	TopicArn    *string                   `json:"topic_arn,omitempty"`
+	PhoneNumber *string                   `json:"phone_number,omitempty"`
+	TargetArn   *string                   `json:"target_arn,omitempty"`
+	Subject     *string                   `json:"subject,omitempty"`
+	Message     *string                   `json:"message,omitempty"`
+	Attributes  map[string]string         `json:"attributes,omitempty"`
+	HttpConfig  *ReceiverHTTPClientConfig `json:"http_config,omitempty"`
 }
 
 // NewReceiverV1beta1SnsV0mimir1Settings creates a new ReceiverV1beta1SnsV0mimir1Settings object.
@@ -2695,7 +2008,10 @@ func (ReceiverV1beta1SnsV0mimir1Settings) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type ReceiverV1beta1SnsV0mimir1SecureFields struct {
-	Sigv4SecretKey *bool `json:"sigv4.secret_key,omitempty"`
+	HttpConfigAuthorizationCredentials *bool `json:"http_config.authorization.credentials,omitempty"`
+	HttpConfigBasicAuthPassword        *bool `json:"http_config.basic_auth.password,omitempty"`
+	HttpConfigOauth2ClientSecret       *bool `json:"http_config.oauth2.client_secret,omitempty"`
+	Sigv4SecretKey                     *bool `json:"sigv4.secret_key,omitempty"`
 }
 
 // NewReceiverV1beta1SnsV0mimir1SecureFields creates a new ReceiverV1beta1SnsV0mimir1SecureFields object.
@@ -2709,32 +2025,15 @@ func (ReceiverV1beta1SnsV0mimir1SecureFields) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
-type ReceiverV1beta1SnsV1SettingsSigv4 struct {
-	Region  *string `json:"region,omitempty"`
-	Profile *string `json:"profile,omitempty"`
-	RoleArn *string `json:"role_arn,omitempty"`
-}
-
-// NewReceiverV1beta1SnsV1SettingsSigv4 creates a new ReceiverV1beta1SnsV1SettingsSigv4 object.
-func NewReceiverV1beta1SnsV1SettingsSigv4() *ReceiverV1beta1SnsV1SettingsSigv4 {
-	return &ReceiverV1beta1SnsV1SettingsSigv4{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1SnsV1SettingsSigv4.
-func (ReceiverV1beta1SnsV1SettingsSigv4) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1SnsV1SettingsSigv4"
-}
-
-// +k8s:openapi-gen=true
 type ReceiverV1beta1SnsV1Settings struct {
-	ApiUrl      *string                            `json:"api_url,omitempty"`
-	Sigv4       *ReceiverV1beta1SnsV1SettingsSigv4 `json:"sigv4,omitempty"`
-	TopicArn    *string                            `json:"topic_arn,omitempty"`
-	PhoneNumber *string                            `json:"phone_number,omitempty"`
-	TargetArn   *string                            `json:"target_arn,omitempty"`
-	Subject     *string                            `json:"subject,omitempty"`
-	Message     *string                            `json:"message,omitempty"`
-	Attributes  map[string]string                  `json:"attributes,omitempty"`
+	ApiUrl      *string           `json:"api_url,omitempty"`
+	Sigv4       *ReceiverSigv4    `json:"sigv4,omitempty"`
+	TopicArn    *string           `json:"topic_arn,omitempty"`
+	PhoneNumber *string           `json:"phone_number,omitempty"`
+	TargetArn   *string           `json:"target_arn,omitempty"`
+	Subject     *string           `json:"subject,omitempty"`
+	Message     *string           `json:"message,omitempty"`
+	Attributes  map[string]string `json:"attributes,omitempty"`
 }
 
 // NewReceiverV1beta1SnsV1Settings creates a new ReceiverV1beta1SnsV1Settings object.
@@ -2764,125 +2063,11 @@ func (ReceiverV1beta1SnsV1SecureFields) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
-type ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigBasicAuth struct {
-	Username *string `json:"username,omitempty"`
-}
-
-// NewReceiverV1beta1TeamsV0mimir1SettingsHttpConfigBasicAuth creates a new ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigBasicAuth object.
-func NewReceiverV1beta1TeamsV0mimir1SettingsHttpConfigBasicAuth() *ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigBasicAuth {
-	return &ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigBasicAuth{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigBasicAuth.
-func (ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigBasicAuth) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigBasicAuth"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigAuthorization struct {
-	Type *string `json:"type,omitempty"`
-}
-
-// NewReceiverV1beta1TeamsV0mimir1SettingsHttpConfigAuthorization creates a new ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigAuthorization object.
-func NewReceiverV1beta1TeamsV0mimir1SettingsHttpConfigAuthorization() *ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigAuthorization {
-	return &ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigAuthorization{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigAuthorization.
-func (ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigAuthorization) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigAuthorization"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigTlsConfig struct {
-	ServerName         *string `json:"server_name,omitempty"`
-	InsecureSkipVerify *bool   `json:"insecure_skip_verify,omitempty"`
-	MinVersion         *string `json:"min_version,omitempty"`
-	MaxVersion         *string `json:"max_version,omitempty"`
-}
-
-// NewReceiverV1beta1TeamsV0mimir1SettingsHttpConfigTlsConfig creates a new ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigTlsConfig object.
-func NewReceiverV1beta1TeamsV0mimir1SettingsHttpConfigTlsConfig() *ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigTlsConfig {
-	return &ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigTlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigTlsConfig.
-func (ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigTlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigTlsConfig"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigOauth2TlsConfig struct {
-	ServerName         *string `json:"server_name,omitempty"`
-	InsecureSkipVerify *bool   `json:"insecure_skip_verify,omitempty"`
-	MinVersion         *string `json:"min_version,omitempty"`
-	MaxVersion         *string `json:"max_version,omitempty"`
-}
-
-// NewReceiverV1beta1TeamsV0mimir1SettingsHttpConfigOauth2TlsConfig creates a new ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigOauth2TlsConfig object.
-func NewReceiverV1beta1TeamsV0mimir1SettingsHttpConfigOauth2TlsConfig() *ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigOauth2TlsConfig {
-	return &ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigOauth2TlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigOauth2TlsConfig.
-func (ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigOauth2TlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigOauth2TlsConfig"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigOauth2 struct {
-	ClientId             string                                                         `json:"client_id"`
-	TokenUrl             string                                                         `json:"token_url"`
-	Scopes               *string                                                        `json:"scopes,omitempty"`
-	EndpointParams       map[string]string                                              `json:"endpoint_params,omitempty"`
-	TlsConfig            *ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigOauth2TlsConfig `json:"tls_config,omitempty"`
-	ProxyUrl             *string                                                        `json:"proxy_url,omitempty"`
-	NoProxy              *string                                                        `json:"no_proxy,omitempty"`
-	ProxyFromEnvironment *bool                                                          `json:"proxy_from_environment,omitempty"`
-	ProxyConnectHeader   map[string]string                                              `json:"proxy_connect_header,omitempty"`
-}
-
-// NewReceiverV1beta1TeamsV0mimir1SettingsHttpConfigOauth2 creates a new ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigOauth2 object.
-func NewReceiverV1beta1TeamsV0mimir1SettingsHttpConfigOauth2() *ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigOauth2 {
-	return &ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigOauth2{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigOauth2.
-func (ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigOauth2) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigOauth2"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1TeamsV0mimir1SettingsHttpConfig struct {
-	BasicAuth            *ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigBasicAuth     `json:"basic_auth,omitempty"`
-	Authorization        *ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigAuthorization `json:"authorization,omitempty"`
-	FollowRedirects      *bool                                                        `json:"follow_redirects,omitempty"`
-	EnableHttp2          *bool                                                        `json:"enable_http2,omitempty"`
-	HttpHeaders          map[string]string                                            `json:"http_headers,omitempty"`
-	ProxyUrl             *string                                                      `json:"proxy_url,omitempty"`
-	NoProxy              *string                                                      `json:"no_proxy,omitempty"`
-	ProxyFromEnvironment *bool                                                        `json:"proxy_from_environment,omitempty"`
-	ProxyConnectHeader   map[string]string                                            `json:"proxy_connect_header,omitempty"`
-	TlsConfig            *ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigTlsConfig     `json:"tls_config,omitempty"`
-	Oauth2               *ReceiverV1beta1TeamsV0mimir1SettingsHttpConfigOauth2        `json:"oauth2,omitempty"`
-}
-
-// NewReceiverV1beta1TeamsV0mimir1SettingsHttpConfig creates a new ReceiverV1beta1TeamsV0mimir1SettingsHttpConfig object.
-func NewReceiverV1beta1TeamsV0mimir1SettingsHttpConfig() *ReceiverV1beta1TeamsV0mimir1SettingsHttpConfig {
-	return &ReceiverV1beta1TeamsV0mimir1SettingsHttpConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1TeamsV0mimir1SettingsHttpConfig.
-func (ReceiverV1beta1TeamsV0mimir1SettingsHttpConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1TeamsV0mimir1SettingsHttpConfig"
-}
-
-// +k8s:openapi-gen=true
 type ReceiverV1beta1TeamsV0mimir1Settings struct {
-	Title      *string                                         `json:"title,omitempty"`
-	Summary    *string                                         `json:"summary,omitempty"`
-	Text       *string                                         `json:"text,omitempty"`
-	HttpConfig *ReceiverV1beta1TeamsV0mimir1SettingsHttpConfig `json:"http_config,omitempty"`
+	Title      *string                   `json:"title,omitempty"`
+	Summary    *string                   `json:"summary,omitempty"`
+	Text       *string                   `json:"text,omitempty"`
+	HttpConfig *ReceiverHTTPClientConfig `json:"http_config,omitempty"`
 }
 
 // NewReceiverV1beta1TeamsV0mimir1Settings creates a new ReceiverV1beta1TeamsV0mimir1Settings object.
@@ -2897,7 +2082,10 @@ func (ReceiverV1beta1TeamsV0mimir1Settings) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type ReceiverV1beta1TeamsV0mimir1SecureFields struct {
-	WebhookUrl *bool `json:"webhook_url,omitempty"`
+	HttpConfigAuthorizationCredentials *bool `json:"http_config.authorization.credentials,omitempty"`
+	HttpConfigBasicAuthPassword        *bool `json:"http_config.basic_auth.password,omitempty"`
+	HttpConfigOauth2ClientSecret       *bool `json:"http_config.oauth2.client_secret,omitempty"`
+	WebhookUrl                         *bool `json:"webhook_url,omitempty"`
 }
 
 // NewReceiverV1beta1TeamsV0mimir1SecureFields creates a new ReceiverV1beta1TeamsV0mimir1SecureFields object.
@@ -2911,124 +2099,10 @@ func (ReceiverV1beta1TeamsV0mimir1SecureFields) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
-type ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigBasicAuth struct {
-	Username *string `json:"username,omitempty"`
-}
-
-// NewReceiverV1beta1TeamsV0mimir2SettingsHttpConfigBasicAuth creates a new ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigBasicAuth object.
-func NewReceiverV1beta1TeamsV0mimir2SettingsHttpConfigBasicAuth() *ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigBasicAuth {
-	return &ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigBasicAuth{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigBasicAuth.
-func (ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigBasicAuth) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigBasicAuth"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigAuthorization struct {
-	Type *string `json:"type,omitempty"`
-}
-
-// NewReceiverV1beta1TeamsV0mimir2SettingsHttpConfigAuthorization creates a new ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigAuthorization object.
-func NewReceiverV1beta1TeamsV0mimir2SettingsHttpConfigAuthorization() *ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigAuthorization {
-	return &ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigAuthorization{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigAuthorization.
-func (ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigAuthorization) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigAuthorization"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigTlsConfig struct {
-	ServerName         *string `json:"server_name,omitempty"`
-	InsecureSkipVerify *bool   `json:"insecure_skip_verify,omitempty"`
-	MinVersion         *string `json:"min_version,omitempty"`
-	MaxVersion         *string `json:"max_version,omitempty"`
-}
-
-// NewReceiverV1beta1TeamsV0mimir2SettingsHttpConfigTlsConfig creates a new ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigTlsConfig object.
-func NewReceiverV1beta1TeamsV0mimir2SettingsHttpConfigTlsConfig() *ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigTlsConfig {
-	return &ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigTlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigTlsConfig.
-func (ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigTlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigTlsConfig"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigOauth2TlsConfig struct {
-	ServerName         *string `json:"server_name,omitempty"`
-	InsecureSkipVerify *bool   `json:"insecure_skip_verify,omitempty"`
-	MinVersion         *string `json:"min_version,omitempty"`
-	MaxVersion         *string `json:"max_version,omitempty"`
-}
-
-// NewReceiverV1beta1TeamsV0mimir2SettingsHttpConfigOauth2TlsConfig creates a new ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigOauth2TlsConfig object.
-func NewReceiverV1beta1TeamsV0mimir2SettingsHttpConfigOauth2TlsConfig() *ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigOauth2TlsConfig {
-	return &ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigOauth2TlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigOauth2TlsConfig.
-func (ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigOauth2TlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigOauth2TlsConfig"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigOauth2 struct {
-	ClientId             string                                                         `json:"client_id"`
-	TokenUrl             string                                                         `json:"token_url"`
-	Scopes               *string                                                        `json:"scopes,omitempty"`
-	EndpointParams       map[string]string                                              `json:"endpoint_params,omitempty"`
-	TlsConfig            *ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigOauth2TlsConfig `json:"tls_config,omitempty"`
-	ProxyUrl             *string                                                        `json:"proxy_url,omitempty"`
-	NoProxy              *string                                                        `json:"no_proxy,omitempty"`
-	ProxyFromEnvironment *bool                                                          `json:"proxy_from_environment,omitempty"`
-	ProxyConnectHeader   map[string]string                                              `json:"proxy_connect_header,omitempty"`
-}
-
-// NewReceiverV1beta1TeamsV0mimir2SettingsHttpConfigOauth2 creates a new ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigOauth2 object.
-func NewReceiverV1beta1TeamsV0mimir2SettingsHttpConfigOauth2() *ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigOauth2 {
-	return &ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigOauth2{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigOauth2.
-func (ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigOauth2) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigOauth2"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1TeamsV0mimir2SettingsHttpConfig struct {
-	BasicAuth            *ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigBasicAuth     `json:"basic_auth,omitempty"`
-	Authorization        *ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigAuthorization `json:"authorization,omitempty"`
-	FollowRedirects      *bool                                                        `json:"follow_redirects,omitempty"`
-	EnableHttp2          *bool                                                        `json:"enable_http2,omitempty"`
-	HttpHeaders          map[string]string                                            `json:"http_headers,omitempty"`
-	ProxyUrl             *string                                                      `json:"proxy_url,omitempty"`
-	NoProxy              *string                                                      `json:"no_proxy,omitempty"`
-	ProxyFromEnvironment *bool                                                        `json:"proxy_from_environment,omitempty"`
-	ProxyConnectHeader   map[string]string                                            `json:"proxy_connect_header,omitempty"`
-	TlsConfig            *ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigTlsConfig     `json:"tls_config,omitempty"`
-	Oauth2               *ReceiverV1beta1TeamsV0mimir2SettingsHttpConfigOauth2        `json:"oauth2,omitempty"`
-}
-
-// NewReceiverV1beta1TeamsV0mimir2SettingsHttpConfig creates a new ReceiverV1beta1TeamsV0mimir2SettingsHttpConfig object.
-func NewReceiverV1beta1TeamsV0mimir2SettingsHttpConfig() *ReceiverV1beta1TeamsV0mimir2SettingsHttpConfig {
-	return &ReceiverV1beta1TeamsV0mimir2SettingsHttpConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1TeamsV0mimir2SettingsHttpConfig.
-func (ReceiverV1beta1TeamsV0mimir2SettingsHttpConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1TeamsV0mimir2SettingsHttpConfig"
-}
-
-// +k8s:openapi-gen=true
 type ReceiverV1beta1TeamsV0mimir2Settings struct {
-	Title      *string                                         `json:"title,omitempty"`
-	Text       *string                                         `json:"text,omitempty"`
-	HttpConfig *ReceiverV1beta1TeamsV0mimir2SettingsHttpConfig `json:"http_config,omitempty"`
+	Title      *string                   `json:"title,omitempty"`
+	Text       *string                   `json:"text,omitempty"`
+	HttpConfig *ReceiverHTTPClientConfig `json:"http_config,omitempty"`
 }
 
 // NewReceiverV1beta1TeamsV0mimir2Settings creates a new ReceiverV1beta1TeamsV0mimir2Settings object.
@@ -3043,7 +2117,10 @@ func (ReceiverV1beta1TeamsV0mimir2Settings) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type ReceiverV1beta1TeamsV0mimir2SecureFields struct {
-	WebhookUrl *bool `json:"webhook_url,omitempty"`
+	HttpConfigAuthorizationCredentials *bool `json:"http_config.authorization.credentials,omitempty"`
+	HttpConfigBasicAuthPassword        *bool `json:"http_config.basic_auth.password,omitempty"`
+	HttpConfigOauth2ClientSecret       *bool `json:"http_config.oauth2.client_secret,omitempty"`
+	WebhookUrl                         *bool `json:"webhook_url,omitempty"`
 }
 
 // NewReceiverV1beta1TeamsV0mimir2SecureFields creates a new ReceiverV1beta1TeamsV0mimir2SecureFields object.
@@ -3075,127 +2152,13 @@ func (ReceiverV1beta1TeamsV1Settings) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
-type ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigBasicAuth struct {
-	Username *string `json:"username,omitempty"`
-}
-
-// NewReceiverV1beta1TelegramV0mimir1SettingsHttpConfigBasicAuth creates a new ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigBasicAuth object.
-func NewReceiverV1beta1TelegramV0mimir1SettingsHttpConfigBasicAuth() *ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigBasicAuth {
-	return &ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigBasicAuth{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigBasicAuth.
-func (ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigBasicAuth) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigBasicAuth"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigAuthorization struct {
-	Type *string `json:"type,omitempty"`
-}
-
-// NewReceiverV1beta1TelegramV0mimir1SettingsHttpConfigAuthorization creates a new ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigAuthorization object.
-func NewReceiverV1beta1TelegramV0mimir1SettingsHttpConfigAuthorization() *ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigAuthorization {
-	return &ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigAuthorization{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigAuthorization.
-func (ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigAuthorization) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigAuthorization"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigTlsConfig struct {
-	ServerName         *string `json:"server_name,omitempty"`
-	InsecureSkipVerify *bool   `json:"insecure_skip_verify,omitempty"`
-	MinVersion         *string `json:"min_version,omitempty"`
-	MaxVersion         *string `json:"max_version,omitempty"`
-}
-
-// NewReceiverV1beta1TelegramV0mimir1SettingsHttpConfigTlsConfig creates a new ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigTlsConfig object.
-func NewReceiverV1beta1TelegramV0mimir1SettingsHttpConfigTlsConfig() *ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigTlsConfig {
-	return &ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigTlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigTlsConfig.
-func (ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigTlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigTlsConfig"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigOauth2TlsConfig struct {
-	ServerName         *string `json:"server_name,omitempty"`
-	InsecureSkipVerify *bool   `json:"insecure_skip_verify,omitempty"`
-	MinVersion         *string `json:"min_version,omitempty"`
-	MaxVersion         *string `json:"max_version,omitempty"`
-}
-
-// NewReceiverV1beta1TelegramV0mimir1SettingsHttpConfigOauth2TlsConfig creates a new ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigOauth2TlsConfig object.
-func NewReceiverV1beta1TelegramV0mimir1SettingsHttpConfigOauth2TlsConfig() *ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigOauth2TlsConfig {
-	return &ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigOauth2TlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigOauth2TlsConfig.
-func (ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigOauth2TlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigOauth2TlsConfig"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigOauth2 struct {
-	ClientId             string                                                            `json:"client_id"`
-	TokenUrl             string                                                            `json:"token_url"`
-	Scopes               *string                                                           `json:"scopes,omitempty"`
-	EndpointParams       map[string]string                                                 `json:"endpoint_params,omitempty"`
-	TlsConfig            *ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigOauth2TlsConfig `json:"tls_config,omitempty"`
-	ProxyUrl             *string                                                           `json:"proxy_url,omitempty"`
-	NoProxy              *string                                                           `json:"no_proxy,omitempty"`
-	ProxyFromEnvironment *bool                                                             `json:"proxy_from_environment,omitempty"`
-	ProxyConnectHeader   map[string]string                                                 `json:"proxy_connect_header,omitempty"`
-}
-
-// NewReceiverV1beta1TelegramV0mimir1SettingsHttpConfigOauth2 creates a new ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigOauth2 object.
-func NewReceiverV1beta1TelegramV0mimir1SettingsHttpConfigOauth2() *ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigOauth2 {
-	return &ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigOauth2{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigOauth2.
-func (ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigOauth2) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigOauth2"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1TelegramV0mimir1SettingsHttpConfig struct {
-	BasicAuth            *ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigBasicAuth     `json:"basic_auth,omitempty"`
-	Authorization        *ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigAuthorization `json:"authorization,omitempty"`
-	FollowRedirects      *bool                                                           `json:"follow_redirects,omitempty"`
-	EnableHttp2          *bool                                                           `json:"enable_http2,omitempty"`
-	HttpHeaders          map[string]string                                               `json:"http_headers,omitempty"`
-	ProxyUrl             *string                                                         `json:"proxy_url,omitempty"`
-	NoProxy              *string                                                         `json:"no_proxy,omitempty"`
-	ProxyFromEnvironment *bool                                                           `json:"proxy_from_environment,omitempty"`
-	ProxyConnectHeader   map[string]string                                               `json:"proxy_connect_header,omitempty"`
-	TlsConfig            *ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigTlsConfig     `json:"tls_config,omitempty"`
-	Oauth2               *ReceiverV1beta1TelegramV0mimir1SettingsHttpConfigOauth2        `json:"oauth2,omitempty"`
-}
-
-// NewReceiverV1beta1TelegramV0mimir1SettingsHttpConfig creates a new ReceiverV1beta1TelegramV0mimir1SettingsHttpConfig object.
-func NewReceiverV1beta1TelegramV0mimir1SettingsHttpConfig() *ReceiverV1beta1TelegramV0mimir1SettingsHttpConfig {
-	return &ReceiverV1beta1TelegramV0mimir1SettingsHttpConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1TelegramV0mimir1SettingsHttpConfig.
-func (ReceiverV1beta1TelegramV0mimir1SettingsHttpConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1TelegramV0mimir1SettingsHttpConfig"
-}
-
-// +k8s:openapi-gen=true
 type ReceiverV1beta1TelegramV0mimir1Settings struct {
-	ApiUrl               *string                                            `json:"api_url,omitempty"`
-	ChatId               string                                             `json:"chat_id"`
-	Message              *string                                            `json:"message,omitempty"`
-	DisableNotifications *bool                                              `json:"disable_notifications,omitempty"`
-	ParseMode            *ReceiverV1beta1TelegramV0mimir1SettingsParseMode  `json:"parse_mode,omitempty"`
-	HttpConfig           *ReceiverV1beta1TelegramV0mimir1SettingsHttpConfig `json:"http_config,omitempty"`
+	ApiUrl               *string                                           `json:"api_url,omitempty"`
+	ChatId               string                                            `json:"chat_id"`
+	Message              *string                                           `json:"message,omitempty"`
+	DisableNotifications *bool                                             `json:"disable_notifications,omitempty"`
+	ParseMode            *ReceiverV1beta1TelegramV0mimir1SettingsParseMode `json:"parse_mode,omitempty"`
+	HttpConfig           *ReceiverHTTPClientConfig                         `json:"http_config,omitempty"`
 }
 
 // NewReceiverV1beta1TelegramV0mimir1Settings creates a new ReceiverV1beta1TelegramV0mimir1Settings object.
@@ -3210,7 +2173,10 @@ func (ReceiverV1beta1TelegramV0mimir1Settings) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type ReceiverV1beta1TelegramV0mimir1SecureFields struct {
-	Token *bool `json:"token,omitempty"`
+	HttpConfigAuthorizationCredentials *bool `json:"http_config.authorization.credentials,omitempty"`
+	HttpConfigBasicAuthPassword        *bool `json:"http_config.basic_auth.password,omitempty"`
+	HttpConfigOauth2ClientSecret       *bool `json:"http_config.oauth2.client_secret,omitempty"`
+	Token                              *bool `json:"token,omitempty"`
 }
 
 // NewReceiverV1beta1TelegramV0mimir1SecureFields creates a new ReceiverV1beta1TelegramV0mimir1SecureFields object.
@@ -3293,129 +2259,15 @@ func (ReceiverV1beta1ThreemaV1SecureFields) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
-type ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigBasicAuth struct {
-	Username *string `json:"username,omitempty"`
-}
-
-// NewReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigBasicAuth creates a new ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigBasicAuth object.
-func NewReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigBasicAuth() *ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigBasicAuth {
-	return &ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigBasicAuth{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigBasicAuth.
-func (ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigBasicAuth) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigBasicAuth"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigAuthorization struct {
-	Type *string `json:"type,omitempty"`
-}
-
-// NewReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigAuthorization creates a new ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigAuthorization object.
-func NewReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigAuthorization() *ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigAuthorization {
-	return &ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigAuthorization{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigAuthorization.
-func (ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigAuthorization) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigAuthorization"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigTlsConfig struct {
-	ServerName         *string `json:"server_name,omitempty"`
-	InsecureSkipVerify *bool   `json:"insecure_skip_verify,omitempty"`
-	MinVersion         *string `json:"min_version,omitempty"`
-	MaxVersion         *string `json:"max_version,omitempty"`
-}
-
-// NewReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigTlsConfig creates a new ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigTlsConfig object.
-func NewReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigTlsConfig() *ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigTlsConfig {
-	return &ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigTlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigTlsConfig.
-func (ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigTlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigTlsConfig"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigOauth2TlsConfig struct {
-	ServerName         *string `json:"server_name,omitempty"`
-	InsecureSkipVerify *bool   `json:"insecure_skip_verify,omitempty"`
-	MinVersion         *string `json:"min_version,omitempty"`
-	MaxVersion         *string `json:"max_version,omitempty"`
-}
-
-// NewReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigOauth2TlsConfig creates a new ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigOauth2TlsConfig object.
-func NewReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigOauth2TlsConfig() *ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigOauth2TlsConfig {
-	return &ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigOauth2TlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigOauth2TlsConfig.
-func (ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigOauth2TlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigOauth2TlsConfig"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigOauth2 struct {
-	ClientId             string                                                             `json:"client_id"`
-	TokenUrl             string                                                             `json:"token_url"`
-	Scopes               *string                                                            `json:"scopes,omitempty"`
-	EndpointParams       map[string]string                                                  `json:"endpoint_params,omitempty"`
-	TlsConfig            *ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigOauth2TlsConfig `json:"tls_config,omitempty"`
-	ProxyUrl             *string                                                            `json:"proxy_url,omitempty"`
-	NoProxy              *string                                                            `json:"no_proxy,omitempty"`
-	ProxyFromEnvironment *bool                                                              `json:"proxy_from_environment,omitempty"`
-	ProxyConnectHeader   map[string]string                                                  `json:"proxy_connect_header,omitempty"`
-}
-
-// NewReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigOauth2 creates a new ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigOauth2 object.
-func NewReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigOauth2() *ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigOauth2 {
-	return &ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigOauth2{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigOauth2.
-func (ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigOauth2) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigOauth2"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfig struct {
-	BasicAuth            *ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigBasicAuth     `json:"basic_auth,omitempty"`
-	Authorization        *ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigAuthorization `json:"authorization,omitempty"`
-	FollowRedirects      *bool                                                            `json:"follow_redirects,omitempty"`
-	EnableHttp2          *bool                                                            `json:"enable_http2,omitempty"`
-	HttpHeaders          map[string]string                                                `json:"http_headers,omitempty"`
-	ProxyUrl             *string                                                          `json:"proxy_url,omitempty"`
-	NoProxy              *string                                                          `json:"no_proxy,omitempty"`
-	ProxyFromEnvironment *bool                                                            `json:"proxy_from_environment,omitempty"`
-	ProxyConnectHeader   map[string]string                                                `json:"proxy_connect_header,omitempty"`
-	TlsConfig            *ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigTlsConfig     `json:"tls_config,omitempty"`
-	Oauth2               *ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfigOauth2        `json:"oauth2,omitempty"`
-}
-
-// NewReceiverV1beta1VictoropsV0mimir1SettingsHttpConfig creates a new ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfig object.
-func NewReceiverV1beta1VictoropsV0mimir1SettingsHttpConfig() *ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfig {
-	return &ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfig.
-func (ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfig"
-}
-
-// +k8s:openapi-gen=true
 type ReceiverV1beta1VictoropsV0mimir1Settings struct {
-	ApiUrl            *string                                             `json:"api_url,omitempty"`
-	RoutingKey        string                                              `json:"routing_key"`
-	MessageType       *string                                             `json:"message_type,omitempty"`
-	EntityDisplayName *string                                             `json:"entity_display_name,omitempty"`
-	StateMessage      *string                                             `json:"state_message,omitempty"`
-	MonitoringTool    *string                                             `json:"monitoring_tool,omitempty"`
-	CustomFields      map[string]string                                   `json:"custom_fields,omitempty"`
-	HttpConfig        *ReceiverV1beta1VictoropsV0mimir1SettingsHttpConfig `json:"http_config,omitempty"`
+	ApiUrl            *string                   `json:"api_url,omitempty"`
+	RoutingKey        string                    `json:"routing_key"`
+	MessageType       *string                   `json:"message_type,omitempty"`
+	EntityDisplayName *string                   `json:"entity_display_name,omitempty"`
+	StateMessage      *string                   `json:"state_message,omitempty"`
+	MonitoringTool    *string                   `json:"monitoring_tool,omitempty"`
+	CustomFields      map[string]string         `json:"custom_fields,omitempty"`
+	HttpConfig        *ReceiverHTTPClientConfig `json:"http_config,omitempty"`
 }
 
 // NewReceiverV1beta1VictoropsV0mimir1Settings creates a new ReceiverV1beta1VictoropsV0mimir1Settings object.
@@ -3430,7 +2282,10 @@ func (ReceiverV1beta1VictoropsV0mimir1Settings) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type ReceiverV1beta1VictoropsV0mimir1SecureFields struct {
-	ApiKey *bool `json:"api_key,omitempty"`
+	ApiKey                             *bool `json:"api_key,omitempty"`
+	HttpConfigAuthorizationCredentials *bool `json:"http_config.authorization.credentials,omitempty"`
+	HttpConfigBasicAuthPassword        *bool `json:"http_config.basic_auth.password,omitempty"`
+	HttpConfigOauth2ClientSecret       *bool `json:"http_config.oauth2.client_secret,omitempty"`
 }
 
 // NewReceiverV1beta1VictoropsV0mimir1SecureFields creates a new ReceiverV1beta1VictoropsV0mimir1SecureFields object.
@@ -3476,125 +2331,11 @@ func (ReceiverV1beta1VictoropsV1SecureFields) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
-type ReceiverV1beta1WebexV0mimir1SettingsHttpConfigBasicAuth struct {
-	Username *string `json:"username,omitempty"`
-}
-
-// NewReceiverV1beta1WebexV0mimir1SettingsHttpConfigBasicAuth creates a new ReceiverV1beta1WebexV0mimir1SettingsHttpConfigBasicAuth object.
-func NewReceiverV1beta1WebexV0mimir1SettingsHttpConfigBasicAuth() *ReceiverV1beta1WebexV0mimir1SettingsHttpConfigBasicAuth {
-	return &ReceiverV1beta1WebexV0mimir1SettingsHttpConfigBasicAuth{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1WebexV0mimir1SettingsHttpConfigBasicAuth.
-func (ReceiverV1beta1WebexV0mimir1SettingsHttpConfigBasicAuth) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1WebexV0mimir1SettingsHttpConfigBasicAuth"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1WebexV0mimir1SettingsHttpConfigAuthorization struct {
-	Type *string `json:"type,omitempty"`
-}
-
-// NewReceiverV1beta1WebexV0mimir1SettingsHttpConfigAuthorization creates a new ReceiverV1beta1WebexV0mimir1SettingsHttpConfigAuthorization object.
-func NewReceiverV1beta1WebexV0mimir1SettingsHttpConfigAuthorization() *ReceiverV1beta1WebexV0mimir1SettingsHttpConfigAuthorization {
-	return &ReceiverV1beta1WebexV0mimir1SettingsHttpConfigAuthorization{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1WebexV0mimir1SettingsHttpConfigAuthorization.
-func (ReceiverV1beta1WebexV0mimir1SettingsHttpConfigAuthorization) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1WebexV0mimir1SettingsHttpConfigAuthorization"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1WebexV0mimir1SettingsHttpConfigTlsConfig struct {
-	ServerName         *string `json:"server_name,omitempty"`
-	InsecureSkipVerify *bool   `json:"insecure_skip_verify,omitempty"`
-	MinVersion         *string `json:"min_version,omitempty"`
-	MaxVersion         *string `json:"max_version,omitempty"`
-}
-
-// NewReceiverV1beta1WebexV0mimir1SettingsHttpConfigTlsConfig creates a new ReceiverV1beta1WebexV0mimir1SettingsHttpConfigTlsConfig object.
-func NewReceiverV1beta1WebexV0mimir1SettingsHttpConfigTlsConfig() *ReceiverV1beta1WebexV0mimir1SettingsHttpConfigTlsConfig {
-	return &ReceiverV1beta1WebexV0mimir1SettingsHttpConfigTlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1WebexV0mimir1SettingsHttpConfigTlsConfig.
-func (ReceiverV1beta1WebexV0mimir1SettingsHttpConfigTlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1WebexV0mimir1SettingsHttpConfigTlsConfig"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1WebexV0mimir1SettingsHttpConfigOauth2TlsConfig struct {
-	ServerName         *string `json:"server_name,omitempty"`
-	InsecureSkipVerify *bool   `json:"insecure_skip_verify,omitempty"`
-	MinVersion         *string `json:"min_version,omitempty"`
-	MaxVersion         *string `json:"max_version,omitempty"`
-}
-
-// NewReceiverV1beta1WebexV0mimir1SettingsHttpConfigOauth2TlsConfig creates a new ReceiverV1beta1WebexV0mimir1SettingsHttpConfigOauth2TlsConfig object.
-func NewReceiverV1beta1WebexV0mimir1SettingsHttpConfigOauth2TlsConfig() *ReceiverV1beta1WebexV0mimir1SettingsHttpConfigOauth2TlsConfig {
-	return &ReceiverV1beta1WebexV0mimir1SettingsHttpConfigOauth2TlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1WebexV0mimir1SettingsHttpConfigOauth2TlsConfig.
-func (ReceiverV1beta1WebexV0mimir1SettingsHttpConfigOauth2TlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1WebexV0mimir1SettingsHttpConfigOauth2TlsConfig"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1WebexV0mimir1SettingsHttpConfigOauth2 struct {
-	ClientId             string                                                         `json:"client_id"`
-	TokenUrl             string                                                         `json:"token_url"`
-	Scopes               *string                                                        `json:"scopes,omitempty"`
-	EndpointParams       map[string]string                                              `json:"endpoint_params,omitempty"`
-	TlsConfig            *ReceiverV1beta1WebexV0mimir1SettingsHttpConfigOauth2TlsConfig `json:"tls_config,omitempty"`
-	ProxyUrl             *string                                                        `json:"proxy_url,omitempty"`
-	NoProxy              *string                                                        `json:"no_proxy,omitempty"`
-	ProxyFromEnvironment *bool                                                          `json:"proxy_from_environment,omitempty"`
-	ProxyConnectHeader   map[string]string                                              `json:"proxy_connect_header,omitempty"`
-}
-
-// NewReceiverV1beta1WebexV0mimir1SettingsHttpConfigOauth2 creates a new ReceiverV1beta1WebexV0mimir1SettingsHttpConfigOauth2 object.
-func NewReceiverV1beta1WebexV0mimir1SettingsHttpConfigOauth2() *ReceiverV1beta1WebexV0mimir1SettingsHttpConfigOauth2 {
-	return &ReceiverV1beta1WebexV0mimir1SettingsHttpConfigOauth2{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1WebexV0mimir1SettingsHttpConfigOauth2.
-func (ReceiverV1beta1WebexV0mimir1SettingsHttpConfigOauth2) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1WebexV0mimir1SettingsHttpConfigOauth2"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1WebexV0mimir1SettingsHttpConfig struct {
-	BasicAuth            *ReceiverV1beta1WebexV0mimir1SettingsHttpConfigBasicAuth     `json:"basic_auth,omitempty"`
-	Authorization        *ReceiverV1beta1WebexV0mimir1SettingsHttpConfigAuthorization `json:"authorization,omitempty"`
-	FollowRedirects      *bool                                                        `json:"follow_redirects,omitempty"`
-	EnableHttp2          *bool                                                        `json:"enable_http2,omitempty"`
-	HttpHeaders          map[string]string                                            `json:"http_headers,omitempty"`
-	ProxyUrl             *string                                                      `json:"proxy_url,omitempty"`
-	NoProxy              *string                                                      `json:"no_proxy,omitempty"`
-	ProxyFromEnvironment *bool                                                        `json:"proxy_from_environment,omitempty"`
-	ProxyConnectHeader   map[string]string                                            `json:"proxy_connect_header,omitempty"`
-	TlsConfig            *ReceiverV1beta1WebexV0mimir1SettingsHttpConfigTlsConfig     `json:"tls_config,omitempty"`
-	Oauth2               *ReceiverV1beta1WebexV0mimir1SettingsHttpConfigOauth2        `json:"oauth2,omitempty"`
-}
-
-// NewReceiverV1beta1WebexV0mimir1SettingsHttpConfig creates a new ReceiverV1beta1WebexV0mimir1SettingsHttpConfig object.
-func NewReceiverV1beta1WebexV0mimir1SettingsHttpConfig() *ReceiverV1beta1WebexV0mimir1SettingsHttpConfig {
-	return &ReceiverV1beta1WebexV0mimir1SettingsHttpConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1WebexV0mimir1SettingsHttpConfig.
-func (ReceiverV1beta1WebexV0mimir1SettingsHttpConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1WebexV0mimir1SettingsHttpConfig"
-}
-
-// +k8s:openapi-gen=true
 type ReceiverV1beta1WebexV0mimir1Settings struct {
-	ApiUrl     *string                                         `json:"api_url,omitempty"`
-	RoomId     string                                          `json:"room_id"`
-	Message    *string                                         `json:"message,omitempty"`
-	HttpConfig *ReceiverV1beta1WebexV0mimir1SettingsHttpConfig `json:"http_config,omitempty"`
+	ApiUrl     *string                   `json:"api_url,omitempty"`
+	RoomId     string                    `json:"room_id"`
+	Message    *string                   `json:"message,omitempty"`
+	HttpConfig *ReceiverHTTPClientConfig `json:"http_config,omitempty"`
 }
 
 // NewReceiverV1beta1WebexV0mimir1Settings creates a new ReceiverV1beta1WebexV0mimir1Settings object.
@@ -3605,6 +2346,23 @@ func NewReceiverV1beta1WebexV0mimir1Settings() *ReceiverV1beta1WebexV0mimir1Sett
 // OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1WebexV0mimir1Settings.
 func (ReceiverV1beta1WebexV0mimir1Settings) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1WebexV0mimir1Settings"
+}
+
+// +k8s:openapi-gen=true
+type ReceiverV1beta1WebexV0mimir1SecureFields struct {
+	HttpConfigAuthorizationCredentials *bool `json:"http_config.authorization.credentials,omitempty"`
+	HttpConfigBasicAuthPassword        *bool `json:"http_config.basic_auth.password,omitempty"`
+	HttpConfigOauth2ClientSecret       *bool `json:"http_config.oauth2.client_secret,omitempty"`
+}
+
+// NewReceiverV1beta1WebexV0mimir1SecureFields creates a new ReceiverV1beta1WebexV0mimir1SecureFields object.
+func NewReceiverV1beta1WebexV0mimir1SecureFields() *ReceiverV1beta1WebexV0mimir1SecureFields {
+	return &ReceiverV1beta1WebexV0mimir1SecureFields{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1WebexV0mimir1SecureFields.
+func (ReceiverV1beta1WebexV0mimir1SecureFields) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1WebexV0mimir1SecureFields"
 }
 
 // +k8s:openapi-gen=true
@@ -3640,124 +2398,10 @@ func (ReceiverV1beta1WebexV1SecureFields) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
-type ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigBasicAuth struct {
-	Username *string `json:"username,omitempty"`
-}
-
-// NewReceiverV1beta1WebhookV0mimir1SettingsHttpConfigBasicAuth creates a new ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigBasicAuth object.
-func NewReceiverV1beta1WebhookV0mimir1SettingsHttpConfigBasicAuth() *ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigBasicAuth {
-	return &ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigBasicAuth{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigBasicAuth.
-func (ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigBasicAuth) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigBasicAuth"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigAuthorization struct {
-	Type *string `json:"type,omitempty"`
-}
-
-// NewReceiverV1beta1WebhookV0mimir1SettingsHttpConfigAuthorization creates a new ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigAuthorization object.
-func NewReceiverV1beta1WebhookV0mimir1SettingsHttpConfigAuthorization() *ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigAuthorization {
-	return &ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigAuthorization{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigAuthorization.
-func (ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigAuthorization) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigAuthorization"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigTlsConfig struct {
-	ServerName         *string `json:"server_name,omitempty"`
-	InsecureSkipVerify *bool   `json:"insecure_skip_verify,omitempty"`
-	MinVersion         *string `json:"min_version,omitempty"`
-	MaxVersion         *string `json:"max_version,omitempty"`
-}
-
-// NewReceiverV1beta1WebhookV0mimir1SettingsHttpConfigTlsConfig creates a new ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigTlsConfig object.
-func NewReceiverV1beta1WebhookV0mimir1SettingsHttpConfigTlsConfig() *ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigTlsConfig {
-	return &ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigTlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigTlsConfig.
-func (ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigTlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigTlsConfig"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigOauth2TlsConfig struct {
-	ServerName         *string `json:"server_name,omitempty"`
-	InsecureSkipVerify *bool   `json:"insecure_skip_verify,omitempty"`
-	MinVersion         *string `json:"min_version,omitempty"`
-	MaxVersion         *string `json:"max_version,omitempty"`
-}
-
-// NewReceiverV1beta1WebhookV0mimir1SettingsHttpConfigOauth2TlsConfig creates a new ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigOauth2TlsConfig object.
-func NewReceiverV1beta1WebhookV0mimir1SettingsHttpConfigOauth2TlsConfig() *ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigOauth2TlsConfig {
-	return &ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigOauth2TlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigOauth2TlsConfig.
-func (ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigOauth2TlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigOauth2TlsConfig"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigOauth2 struct {
-	ClientId             string                                                           `json:"client_id"`
-	TokenUrl             string                                                           `json:"token_url"`
-	Scopes               *string                                                          `json:"scopes,omitempty"`
-	EndpointParams       map[string]string                                                `json:"endpoint_params,omitempty"`
-	TlsConfig            *ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigOauth2TlsConfig `json:"tls_config,omitempty"`
-	ProxyUrl             *string                                                          `json:"proxy_url,omitempty"`
-	NoProxy              *string                                                          `json:"no_proxy,omitempty"`
-	ProxyFromEnvironment *bool                                                            `json:"proxy_from_environment,omitempty"`
-	ProxyConnectHeader   map[string]string                                                `json:"proxy_connect_header,omitempty"`
-}
-
-// NewReceiverV1beta1WebhookV0mimir1SettingsHttpConfigOauth2 creates a new ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigOauth2 object.
-func NewReceiverV1beta1WebhookV0mimir1SettingsHttpConfigOauth2() *ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigOauth2 {
-	return &ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigOauth2{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigOauth2.
-func (ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigOauth2) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigOauth2"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1WebhookV0mimir1SettingsHttpConfig struct {
-	BasicAuth            *ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigBasicAuth     `json:"basic_auth,omitempty"`
-	Authorization        *ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigAuthorization `json:"authorization,omitempty"`
-	FollowRedirects      *bool                                                          `json:"follow_redirects,omitempty"`
-	EnableHttp2          *bool                                                          `json:"enable_http2,omitempty"`
-	HttpHeaders          map[string]string                                              `json:"http_headers,omitempty"`
-	ProxyUrl             *string                                                        `json:"proxy_url,omitempty"`
-	NoProxy              *string                                                        `json:"no_proxy,omitempty"`
-	ProxyFromEnvironment *bool                                                          `json:"proxy_from_environment,omitempty"`
-	ProxyConnectHeader   map[string]string                                              `json:"proxy_connect_header,omitempty"`
-	TlsConfig            *ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigTlsConfig     `json:"tls_config,omitempty"`
-	Oauth2               *ReceiverV1beta1WebhookV0mimir1SettingsHttpConfigOauth2        `json:"oauth2,omitempty"`
-}
-
-// NewReceiverV1beta1WebhookV0mimir1SettingsHttpConfig creates a new ReceiverV1beta1WebhookV0mimir1SettingsHttpConfig object.
-func NewReceiverV1beta1WebhookV0mimir1SettingsHttpConfig() *ReceiverV1beta1WebhookV0mimir1SettingsHttpConfig {
-	return &ReceiverV1beta1WebhookV0mimir1SettingsHttpConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1WebhookV0mimir1SettingsHttpConfig.
-func (ReceiverV1beta1WebhookV0mimir1SettingsHttpConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1WebhookV0mimir1SettingsHttpConfig"
-}
-
-// +k8s:openapi-gen=true
 type ReceiverV1beta1WebhookV0mimir1Settings struct {
-	MaxAlerts  *string                                           `json:"max_alerts,omitempty"`
-	Timeout    *string                                           `json:"timeout,omitempty"`
-	HttpConfig *ReceiverV1beta1WebhookV0mimir1SettingsHttpConfig `json:"http_config,omitempty"`
+	MaxAlerts  *string                   `json:"max_alerts,omitempty"`
+	Timeout    *string                   `json:"timeout,omitempty"`
+	HttpConfig *ReceiverHTTPClientConfig `json:"http_config,omitempty"`
 }
 
 // NewReceiverV1beta1WebhookV0mimir1Settings creates a new ReceiverV1beta1WebhookV0mimir1Settings object.
@@ -3772,7 +2416,10 @@ func (ReceiverV1beta1WebhookV0mimir1Settings) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type ReceiverV1beta1WebhookV0mimir1SecureFields struct {
-	Url *bool `json:"url,omitempty"`
+	HttpConfigAuthorizationCredentials *bool `json:"http_config.authorization.credentials,omitempty"`
+	HttpConfigBasicAuthPassword        *bool `json:"http_config.basic_auth.password,omitempty"`
+	HttpConfigOauth2ClientSecret       *bool `json:"http_config.oauth2.client_secret,omitempty"`
+	Url                                *bool `json:"url,omitempty"`
 }
 
 // NewReceiverV1beta1WebhookV0mimir1SecureFields creates a new ReceiverV1beta1WebhookV0mimir1SecureFields object.
@@ -3802,21 +2449,6 @@ func (ReceiverV1beta1WebhookV1SettingsPayload) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
-type ReceiverV1beta1WebhookV1SettingsTlsConfig struct {
-	InsecureSkipVerify *bool `json:"insecureSkipVerify,omitempty"`
-}
-
-// NewReceiverV1beta1WebhookV1SettingsTlsConfig creates a new ReceiverV1beta1WebhookV1SettingsTlsConfig object.
-func NewReceiverV1beta1WebhookV1SettingsTlsConfig() *ReceiverV1beta1WebhookV1SettingsTlsConfig {
-	return &ReceiverV1beta1WebhookV1SettingsTlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1WebhookV1SettingsTlsConfig.
-func (ReceiverV1beta1WebhookV1SettingsTlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1WebhookV1SettingsTlsConfig"
-}
-
-// +k8s:openapi-gen=true
 type ReceiverV1beta1WebhookV1SettingsHmacConfig struct {
 	Header          *string `json:"header,omitempty"`
 	TimestampHeader *string `json:"timestampHeader,omitempty"`
@@ -3830,21 +2462,6 @@ func NewReceiverV1beta1WebhookV1SettingsHmacConfig() *ReceiverV1beta1WebhookV1Se
 // OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1WebhookV1SettingsHmacConfig.
 func (ReceiverV1beta1WebhookV1SettingsHmacConfig) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1WebhookV1SettingsHmacConfig"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1WebhookV1SettingsHttpConfigOauth2TlsConfig struct {
-	InsecureSkipVerify *bool `json:"insecureSkipVerify,omitempty"`
-}
-
-// NewReceiverV1beta1WebhookV1SettingsHttpConfigOauth2TlsConfig creates a new ReceiverV1beta1WebhookV1SettingsHttpConfigOauth2TlsConfig object.
-func NewReceiverV1beta1WebhookV1SettingsHttpConfigOauth2TlsConfig() *ReceiverV1beta1WebhookV1SettingsHttpConfigOauth2TlsConfig {
-	return &ReceiverV1beta1WebhookV1SettingsHttpConfigOauth2TlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1WebhookV1SettingsHttpConfigOauth2TlsConfig.
-func (ReceiverV1beta1WebhookV1SettingsHttpConfigOauth2TlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1WebhookV1SettingsHttpConfigOauth2TlsConfig"
 }
 
 // +k8s:openapi-gen=true
@@ -3871,7 +2488,7 @@ type ReceiverV1beta1WebhookV1SettingsHttpConfigOauth2 struct {
 	ClientId       string                                                       `json:"client_id"`
 	Scopes         *string                                                      `json:"scopes,omitempty"`
 	EndpointParams map[string]string                                            `json:"endpoint_params,omitempty"`
-	TlsConfig      *ReceiverV1beta1WebhookV1SettingsHttpConfigOauth2TlsConfig   `json:"tls_config,omitempty"`
+	TlsConfig      *ReceiverGrafanaTLSConfig                                    `json:"tls_config,omitempty"`
 	ProxyConfig    *ReceiverV1beta1WebhookV1SettingsHttpConfigOauth2ProxyConfig `json:"proxy_config,omitempty"`
 }
 
@@ -3911,7 +2528,7 @@ type ReceiverV1beta1WebhookV1Settings struct {
 	Title               *string                                     `json:"title,omitempty"`
 	Message             *string                                     `json:"message,omitempty"`
 	Payload             *ReceiverV1beta1WebhookV1SettingsPayload    `json:"payload,omitempty"`
-	TlsConfig           *ReceiverV1beta1WebhookV1SettingsTlsConfig  `json:"tlsConfig,omitempty"`
+	TlsConfig           *ReceiverGrafanaTLSConfig                   `json:"tlsConfig,omitempty"`
 	HmacConfig          *ReceiverV1beta1WebhookV1SettingsHmacConfig `json:"hmacConfig,omitempty"`
 	HttpConfig          *ReceiverV1beta1WebhookV1SettingsHttpConfig `json:"http_config,omitempty"`
 }
@@ -3928,12 +2545,16 @@ func (ReceiverV1beta1WebhookV1Settings) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type ReceiverV1beta1WebhookV1SecureFields struct {
-	AuthorizationCredentials   *bool `json:"authorization_credentials,omitempty"`
-	HmacConfigSecret           *bool `json:"hmacConfig.secret,omitempty"`
-	Password                   *bool `json:"password,omitempty"`
-	TlsConfigCaCertificate     *bool `json:"tlsConfig.caCertificate,omitempty"`
-	TlsConfigClientCertificate *bool `json:"tlsConfig.clientCertificate,omitempty"`
-	TlsConfigClientKey         *bool `json:"tlsConfig.clientKey,omitempty"`
+	AuthorizationCredentials                   *bool `json:"authorization_credentials,omitempty"`
+	HmacConfigSecret                           *bool `json:"hmacConfig.secret,omitempty"`
+	HttpConfigOauth2ClientSecret               *bool `json:"http_config.oauth2.client_secret,omitempty"`
+	HttpConfigOauth2TlsConfigCaCertificate     *bool `json:"http_config.oauth2.tls_config.caCertificate,omitempty"`
+	HttpConfigOauth2TlsConfigClientCertificate *bool `json:"http_config.oauth2.tls_config.clientCertificate,omitempty"`
+	HttpConfigOauth2TlsConfigClientKey         *bool `json:"http_config.oauth2.tls_config.clientKey,omitempty"`
+	Password                                   *bool `json:"password,omitempty"`
+	TlsConfigCaCertificate                     *bool `json:"tlsConfig.caCertificate,omitempty"`
+	TlsConfigClientCertificate                 *bool `json:"tlsConfig.clientCertificate,omitempty"`
+	TlsConfigClientKey                         *bool `json:"tlsConfig.clientKey,omitempty"`
 }
 
 // NewReceiverV1beta1WebhookV1SecureFields creates a new ReceiverV1beta1WebhookV1SecureFields object.
@@ -3947,120 +2568,6 @@ func (ReceiverV1beta1WebhookV1SecureFields) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
-type ReceiverV1beta1WechatV0mimir1SettingsHttpConfigBasicAuth struct {
-	Username *string `json:"username,omitempty"`
-}
-
-// NewReceiverV1beta1WechatV0mimir1SettingsHttpConfigBasicAuth creates a new ReceiverV1beta1WechatV0mimir1SettingsHttpConfigBasicAuth object.
-func NewReceiverV1beta1WechatV0mimir1SettingsHttpConfigBasicAuth() *ReceiverV1beta1WechatV0mimir1SettingsHttpConfigBasicAuth {
-	return &ReceiverV1beta1WechatV0mimir1SettingsHttpConfigBasicAuth{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1WechatV0mimir1SettingsHttpConfigBasicAuth.
-func (ReceiverV1beta1WechatV0mimir1SettingsHttpConfigBasicAuth) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1WechatV0mimir1SettingsHttpConfigBasicAuth"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1WechatV0mimir1SettingsHttpConfigAuthorization struct {
-	Type *string `json:"type,omitempty"`
-}
-
-// NewReceiverV1beta1WechatV0mimir1SettingsHttpConfigAuthorization creates a new ReceiverV1beta1WechatV0mimir1SettingsHttpConfigAuthorization object.
-func NewReceiverV1beta1WechatV0mimir1SettingsHttpConfigAuthorization() *ReceiverV1beta1WechatV0mimir1SettingsHttpConfigAuthorization {
-	return &ReceiverV1beta1WechatV0mimir1SettingsHttpConfigAuthorization{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1WechatV0mimir1SettingsHttpConfigAuthorization.
-func (ReceiverV1beta1WechatV0mimir1SettingsHttpConfigAuthorization) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1WechatV0mimir1SettingsHttpConfigAuthorization"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1WechatV0mimir1SettingsHttpConfigTlsConfig struct {
-	ServerName         *string `json:"server_name,omitempty"`
-	InsecureSkipVerify *bool   `json:"insecure_skip_verify,omitempty"`
-	MinVersion         *string `json:"min_version,omitempty"`
-	MaxVersion         *string `json:"max_version,omitempty"`
-}
-
-// NewReceiverV1beta1WechatV0mimir1SettingsHttpConfigTlsConfig creates a new ReceiverV1beta1WechatV0mimir1SettingsHttpConfigTlsConfig object.
-func NewReceiverV1beta1WechatV0mimir1SettingsHttpConfigTlsConfig() *ReceiverV1beta1WechatV0mimir1SettingsHttpConfigTlsConfig {
-	return &ReceiverV1beta1WechatV0mimir1SettingsHttpConfigTlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1WechatV0mimir1SettingsHttpConfigTlsConfig.
-func (ReceiverV1beta1WechatV0mimir1SettingsHttpConfigTlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1WechatV0mimir1SettingsHttpConfigTlsConfig"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1WechatV0mimir1SettingsHttpConfigOauth2TlsConfig struct {
-	ServerName         *string `json:"server_name,omitempty"`
-	InsecureSkipVerify *bool   `json:"insecure_skip_verify,omitempty"`
-	MinVersion         *string `json:"min_version,omitempty"`
-	MaxVersion         *string `json:"max_version,omitempty"`
-}
-
-// NewReceiverV1beta1WechatV0mimir1SettingsHttpConfigOauth2TlsConfig creates a new ReceiverV1beta1WechatV0mimir1SettingsHttpConfigOauth2TlsConfig object.
-func NewReceiverV1beta1WechatV0mimir1SettingsHttpConfigOauth2TlsConfig() *ReceiverV1beta1WechatV0mimir1SettingsHttpConfigOauth2TlsConfig {
-	return &ReceiverV1beta1WechatV0mimir1SettingsHttpConfigOauth2TlsConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1WechatV0mimir1SettingsHttpConfigOauth2TlsConfig.
-func (ReceiverV1beta1WechatV0mimir1SettingsHttpConfigOauth2TlsConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1WechatV0mimir1SettingsHttpConfigOauth2TlsConfig"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1WechatV0mimir1SettingsHttpConfigOauth2 struct {
-	ClientId             string                                                          `json:"client_id"`
-	TokenUrl             string                                                          `json:"token_url"`
-	Scopes               *string                                                         `json:"scopes,omitempty"`
-	EndpointParams       map[string]string                                               `json:"endpoint_params,omitempty"`
-	TlsConfig            *ReceiverV1beta1WechatV0mimir1SettingsHttpConfigOauth2TlsConfig `json:"tls_config,omitempty"`
-	ProxyUrl             *string                                                         `json:"proxy_url,omitempty"`
-	NoProxy              *string                                                         `json:"no_proxy,omitempty"`
-	ProxyFromEnvironment *bool                                                           `json:"proxy_from_environment,omitempty"`
-	ProxyConnectHeader   map[string]string                                               `json:"proxy_connect_header,omitempty"`
-}
-
-// NewReceiverV1beta1WechatV0mimir1SettingsHttpConfigOauth2 creates a new ReceiverV1beta1WechatV0mimir1SettingsHttpConfigOauth2 object.
-func NewReceiverV1beta1WechatV0mimir1SettingsHttpConfigOauth2() *ReceiverV1beta1WechatV0mimir1SettingsHttpConfigOauth2 {
-	return &ReceiverV1beta1WechatV0mimir1SettingsHttpConfigOauth2{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1WechatV0mimir1SettingsHttpConfigOauth2.
-func (ReceiverV1beta1WechatV0mimir1SettingsHttpConfigOauth2) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1WechatV0mimir1SettingsHttpConfigOauth2"
-}
-
-// +k8s:openapi-gen=true
-type ReceiverV1beta1WechatV0mimir1SettingsHttpConfig struct {
-	BasicAuth            *ReceiverV1beta1WechatV0mimir1SettingsHttpConfigBasicAuth     `json:"basic_auth,omitempty"`
-	Authorization        *ReceiverV1beta1WechatV0mimir1SettingsHttpConfigAuthorization `json:"authorization,omitempty"`
-	FollowRedirects      *bool                                                         `json:"follow_redirects,omitempty"`
-	EnableHttp2          *bool                                                         `json:"enable_http2,omitempty"`
-	HttpHeaders          map[string]string                                             `json:"http_headers,omitempty"`
-	ProxyUrl             *string                                                       `json:"proxy_url,omitempty"`
-	NoProxy              *string                                                       `json:"no_proxy,omitempty"`
-	ProxyFromEnvironment *bool                                                         `json:"proxy_from_environment,omitempty"`
-	ProxyConnectHeader   map[string]string                                             `json:"proxy_connect_header,omitempty"`
-	TlsConfig            *ReceiverV1beta1WechatV0mimir1SettingsHttpConfigTlsConfig     `json:"tls_config,omitempty"`
-	Oauth2               *ReceiverV1beta1WechatV0mimir1SettingsHttpConfigOauth2        `json:"oauth2,omitempty"`
-}
-
-// NewReceiverV1beta1WechatV0mimir1SettingsHttpConfig creates a new ReceiverV1beta1WechatV0mimir1SettingsHttpConfig object.
-func NewReceiverV1beta1WechatV0mimir1SettingsHttpConfig() *ReceiverV1beta1WechatV0mimir1SettingsHttpConfig {
-	return &ReceiverV1beta1WechatV0mimir1SettingsHttpConfig{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for ReceiverV1beta1WechatV0mimir1SettingsHttpConfig.
-func (ReceiverV1beta1WechatV0mimir1SettingsHttpConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverV1beta1WechatV0mimir1SettingsHttpConfig"
-}
-
-// +k8s:openapi-gen=true
 type ReceiverV1beta1WechatV0mimir1Settings struct {
 	ApiUrl      *string                                           `json:"api_url,omitempty"`
 	CorpId      *string                                           `json:"corp_id,omitempty"`
@@ -4070,7 +2577,7 @@ type ReceiverV1beta1WechatV0mimir1Settings struct {
 	ToUser      *string                                           `json:"to_user,omitempty"`
 	ToParty     *string                                           `json:"to_party,omitempty"`
 	ToTag       *string                                           `json:"to_tag,omitempty"`
-	HttpConfig  *ReceiverV1beta1WechatV0mimir1SettingsHttpConfig  `json:"http_config,omitempty"`
+	HttpConfig  *ReceiverHTTPClientConfig                         `json:"http_config,omitempty"`
 }
 
 // NewReceiverV1beta1WechatV0mimir1Settings creates a new ReceiverV1beta1WechatV0mimir1Settings object.
@@ -4085,7 +2592,10 @@ func (ReceiverV1beta1WechatV0mimir1Settings) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type ReceiverV1beta1WechatV0mimir1SecureFields struct {
-	ApiSecret *bool `json:"api_secret,omitempty"`
+	ApiSecret                          *bool `json:"api_secret,omitempty"`
+	HttpConfigAuthorizationCredentials *bool `json:"http_config.authorization.credentials,omitempty"`
+	HttpConfigBasicAuthPassword        *bool `json:"http_config.basic_auth.password,omitempty"`
+	HttpConfigOauth2ClientSecret       *bool `json:"http_config.oauth2.client_secret,omitempty"`
 }
 
 // NewReceiverV1beta1WechatV0mimir1SecureFields creates a new ReceiverV1beta1WechatV0mimir1SecureFields object.

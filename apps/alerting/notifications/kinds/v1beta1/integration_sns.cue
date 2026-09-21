@@ -8,13 +8,8 @@ package v1beta1
 	type:    "sns"
 	version: "v0mimir1"
 	settings: {
-		api_url?: string
-		sigv4?: {
-			region?:     string
-			access_key?: string
-			profile?:    string
-			role_arn?:   string
-		}
+		api_url?:      string
+		sigv4?:        #Sigv4
 		topic_arn?:    string
 		phone_number?: string
 		target_arn?:   string
@@ -23,54 +18,13 @@ package v1beta1
 		attributes?: {
 			[string]: string
 		}
-		http_config?: {
-			basic_auth?: {
-				username?: string
-			}
-			authorization?: {
-				type?: string
-			}
-			follow_redirects?: bool
-			enable_http2?:     bool
-			http_headers?: {
-				[string]: string
-			}
-			proxy_url?:              string
-			no_proxy?:               string
-			proxy_from_environment?: bool
-			proxy_connect_header?: {
-				[string]: string
-			}
-			tls_config?: {
-				server_name?:          string
-				insecure_skip_verify?: bool
-				min_version?:          string
-				max_version?:          string
-			}
-			oauth2?: {
-				client_id: string
-				token_url: string
-				scopes?:   string
-				endpoint_params?: {
-					[string]: string
-				}
-				tls_config?: {
-					server_name?:          string
-					insecure_skip_verify?: bool
-					min_version?:          string
-					max_version?:          string
-				}
-				proxy_url?:              string
-				no_proxy?:               string
-				proxy_from_environment?: bool
-				proxy_connect_header?: {
-					[string]: string
-				}
-			}
-		}
+		http_config?: #HTTPClientConfig
 	}
 	secureFields?: {
-		"sigv4.secret_key"?: bool
+		"http_config.authorization.credentials"?: bool
+		"http_config.basic_auth.password"?:       bool
+		"http_config.oauth2.client_secret"?:      bool
+		"sigv4.secret_key"?:                      bool
 	}
 }
 
@@ -79,12 +33,8 @@ package v1beta1
 	type:    "sns"
 	version: "v1"
 	settings: {
-		api_url?: string
-		sigv4?: {
-			region?:   string
-			profile?:  string
-			role_arn?: string
-		}
+		api_url?:      string
+		sigv4?:        #Sigv4
 		topic_arn?:    string
 		phone_number?: string
 		target_arn?:   string
