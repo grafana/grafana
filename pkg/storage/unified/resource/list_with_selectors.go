@@ -155,7 +155,28 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 		}
 	}
 
+	if searchListNeedsContinue(req.Limit, len(rows), searchResp.GetTotalHitsExact()) {
+		sortFields := rows[len(rows)-1].sortFields
+		if len(sortFields) == 0 {
+			s.log.Warn("Cannot continue search-backed List: last row has no sort fields", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource)
+			return rsp, nil
+		}
+		token, err := NewSearchContinueToken(sortFields, listRv)
+		if err != nil {
+			return &resourcepb.ListResponse{
+				Error: NewBadRequestError("invalid continue token"),
+			}, nil
+		}
+		rsp.NextPageToken = token
+	}
+
 	return rsp, nil
+}
+
+func searchListNeedsContinue(limit int64, rowCount int, totalHitsExact bool) bool {
+	// Authorization can shrink a full page, and post-rank authorization can stop
+	// before filling one. An inexact total cannot rule out more matching rows.
+	return limit > 0 && rowCount > 0 && (rowCount >= int(limit) || !totalHitsExact)
 }
 
 type listSearchRow struct {

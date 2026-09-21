@@ -71,25 +71,19 @@ func TimeIntervalsToModel(muteIntervals []config.MuteTimeInterval, timeIntervals
 	return out
 }
 
-func ReceiversToModel(in []*definition.PostableApiReceiver) []*PostableApiReceiver {
+func ReceiversToModel(in []*definition.PostableApiReceiver) map[ResourceUID]PostableApiReceiver {
 	if in == nil {
 		return nil
 	}
-	out := make([]*PostableApiReceiver, 0, len(in))
+	out := make(map[ResourceUID]PostableApiReceiver, len(in))
 	for _, receiver := range in {
-		out = append(out, PostableApiReceiverToModel(receiver))
+		if receiver == nil {
+			continue
+		}
+		m := NewReceiver(receiver.Name, PostableGrafanaReceiversToModel(receiver.GrafanaManagedReceivers), models.ProvenanceNone)
+		out[m.UID] = m
 	}
 	return out
-}
-
-func PostableApiReceiverToModel(in *definition.PostableApiReceiver) *PostableApiReceiver {
-	if in == nil {
-		return nil
-	}
-	return &PostableApiReceiver{
-		Name:                    in.Name,
-		GrafanaManagedReceivers: PostableGrafanaReceiversToModel(in.GrafanaManagedReceivers),
-	}
 }
 
 func PostableGrafanaReceiversToModel(in []*definition.PostableGrafanaReceiver) []*PostableGrafanaReceiver {
@@ -103,7 +97,7 @@ func PostableGrafanaReceiversToModel(in []*definition.PostableGrafanaReceiver) [
 	return out
 }
 
-func ManagedRoutesToModel(in map[string]*definition.Route) ManagedRoutes {
+func ManagedRoutesToModel(in map[string]*definition.Route) map[string]*Route {
 	if in == nil {
 		return nil
 	}
@@ -212,7 +206,7 @@ func ToDBModel(in *AMConfigV1) (*AMConfigDB, error) {
 		ManagedTemplates: TemplatesToManagedTemplates(in.Templates),
 		AlertmanagerConfig: definition.PostableApiAlertingConfig{
 			Config:    PostableApiAlertingConfigToDB(in.AlertmanagerConfig, in.SortedTimeIntervals()),
-			Receivers: ReceiversToDB(in.Receivers),
+			Receivers: ReceiversToDB(in.GetReceivers()),
 		},
 		ExtraConfigs:  ExtraConfigsToDB(in.ExtraConfigs),
 		ManagedRoutes: ManagedRoutesToDB(in.ManagedRoutes),
@@ -445,10 +439,7 @@ func PostableMimirReceiverToPostableGrafanaReceiver(r compat.Receiver) (*Postabl
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert v0 receiver to integrations: %w", err)
 	}
-	result := &PostableApiReceiver{
-		Name:                    r.Name,
-		GrafanaManagedReceivers: make([]*PostableGrafanaReceiver, 0, len(v0)),
-	}
+	integrations := make([]*PostableGrafanaReceiver, 0, len(v0))
 	typeCount := make(map[string]int)
 	for _, cfg := range v0 {
 		integrationType := string(cfg.Schema.Type())
@@ -458,9 +449,9 @@ func PostableMimirReceiverToPostableGrafanaReceiver(r compat.Receiver) (*Postabl
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert Mimir integration config to PostableGrafanaReceiver: %w", err)
 		}
-		result.GrafanaManagedReceivers = append(result.GrafanaManagedReceivers, integration)
+		integrations = append(integrations, integration)
 	}
-	return result, nil
+	return new(NewReceiver(r.Name, integrations, models.ProvenanceNone)), nil
 }
 
 // MimirIntegrationConfigToPostableGrafanaReceiver converts a Mimir integration configuration to a PostableGrafanaReceiver. All settings are unencrypted. Needs to be encrypted later.
