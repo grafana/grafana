@@ -182,6 +182,7 @@ func (t *pluginManifestsTarget) pluginClients(host string) (plugins.Client, v3.C
 		}
 		t.connections[host] = conn
 	}
+	// NOTE: ClientV2 is missing ALL the middleware...
 	return &backendgrpcplugin.ClientV2{
 			DiagnosticsClient: pluginv2.NewDiagnosticsClient(conn),
 			ResourceClient:    pluginv2.NewResourceClient(conn),
