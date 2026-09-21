@@ -181,7 +181,7 @@ The Tempo data source settings page includes three sections for linking from spa
 - [Trace to metrics](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/configure-trace-to-metrics/): Link spans to metrics queries in Prometheus or other metrics data sources.
 - [Trace to profiles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/configure-trace-to-profiles/): Link spans to profiling data in Grafana Pyroscope with embedded flame graphs.
 
-For more flexible, rule-based correlations that can target any data source or external URL, use Grafana [Trace correlations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/trace-correlations/). Trace correlations are configured under **Configuration > Correlations**, not in the Tempo data source settings.
+For more flexible, rule-based correlations that can target any data source or external URL, use [Trace correlations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/trace-correlations/). Trace correlations are configured under **Configuration > Correlations**, not in the Tempo data source settings.
 
 To link _from_ logs or metrics _to_ traces (the reverse direction), refer to:
 
