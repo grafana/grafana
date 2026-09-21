@@ -273,6 +273,28 @@ describe('Series to rows', () => {
       expect(fields).toEqual(expected);
     });
   });
+
+  it('keeps the static refId when the input is not time series and is passed through', async () => {
+    const cfg: DataTransformerConfig<SeriesToRowsTransformerOptions> = {
+      id: DataTransformerID.seriesToRows,
+      options: {},
+      refId: 'T-A',
+    };
+
+    const notTimeSeries = toDataFrame({
+      refId: 'A',
+      name: 'A',
+      fields: [
+        { name: 'Name', type: FieldType.string, values: ['a', 'b'] },
+        { name: 'Value', type: FieldType.number, values: [1, 2] },
+      ],
+    });
+
+    await expect(transformDataFrame([cfg], [notTimeSeries])).toEmitValuesWith((received) => {
+      expect(received[0]).toHaveLength(1);
+      expect(received[0][0].refId).toBe('T-A');
+    });
+  });
 });
 
 const createField = (name: string, type: FieldType, values: unknown[], config = {}): Field => {

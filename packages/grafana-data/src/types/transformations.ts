@@ -57,8 +57,11 @@ export interface DataTransformerInfo<TOptions = any> extends RegistryItemWithOpt
   isApplicableDescription?: string | ((data: DataFrame[]) => string);
   /**
    * Does the transformation generate a dataframe and thus generates a refID automatically based on incoming data
+   *
+   * A function when it depends on configuration: Reduce only combines frames in series-to-rows mode,
+   * so only that mode has a generated refId to replace.
    */
-  usesDynamicRefId?: boolean;
+  usesDynamicRefId?: boolean | ((options: TOptions) => boolean);
 }
 
 /**

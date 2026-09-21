@@ -1,6 +1,8 @@
-import { toDataFrame, FieldType, type DataFrame } from '@grafana/data';
+import { toDataFrame, FieldType, type DataFrame, type DataTransformContext } from '@grafana/data';
 
-import { joinByLabels } from './joinByLabels';
+import { getJoinByLabelsTransformer, joinByLabels } from './joinByLabels';
+
+const ctx: DataTransformContext = { interpolate: (v: string) => v };
 
 describe('Join by labels', () => {
   const input = [
@@ -152,6 +154,24 @@ describe('Join by labels', () => {
         },
       }
     `);
+  });
+
+  it('names the error frame with the static refId so a downstream filter still finds it', () => {
+    const unlabelled = [
+      toDataFrame({
+        refId: 'A',
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [1, 2] },
+          { name: 'Value', type: FieldType.number, values: [10, 200] },
+        ],
+      }),
+    ];
+
+    const result = getJoinByLabelsTransformer().transformer({ value: 'what', refId: 'T-A' }, ctx)(unlabelled);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].refId).toBe('T-A');
+    expect(result[0].meta?.notices?.[0].text).toBe('No labels in result');
   });
 });
 

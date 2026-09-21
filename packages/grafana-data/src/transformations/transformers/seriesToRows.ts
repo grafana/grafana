@@ -15,7 +15,7 @@ import {
 import { type DataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
-import { getTransformationDynamicRefId } from './utils';
+import { applyStaticRefId, getTransformationDynamicRefId } from './utils';
 
 export interface SeriesToRowsTransformerOptions {
   refId?: string;
@@ -35,7 +35,7 @@ export const seriesToRowsTransformer: DataTransformerInfo<SeriesToRowsTransforme
 
         data = data.filter((frame) => frame.length > 0);
         if (!isTimeSeriesFrames(data)) {
-          return data;
+          return applyStaticRefId(data, options.refId);
         }
 
         const timeFieldByIndex: Record<number, number> = {};

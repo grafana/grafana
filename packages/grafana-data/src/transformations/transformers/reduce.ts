@@ -10,7 +10,7 @@ import { getFieldMatcher } from '../matchers';
 import { alwaysFieldMatcher, notTimeFieldMatcher } from '../matchers/predicates';
 
 import { DataTransformerID } from './ids';
-import { getTransformationDynamicRefId } from './utils';
+import { applyStaticRefId, getTransformationDynamicRefId } from './utils';
 
 export enum ReduceTransformerMode {
   SeriesToRows = 'seriesToRows', // default
@@ -42,7 +42,7 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
     source.pipe(
       map((data) => {
         if (!options?.reducers?.length) {
-          return data; // nothing selected
+          return applyStaticRefId(data, options?.refId); // nothing selected
         }
 
         const matcher = options.fields
@@ -51,13 +51,10 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
             ? alwaysFieldMatcher
             : notTimeFieldMatcher;
 
-        // Collapse all matching fields into a single row
+        // Collapse all matching fields into a single row. One frame in, one frame out, each keeping
+        // its own refId — there is no combined frame to name, so a static refId does not apply.
         if (options.mode === ReduceTransformerMode.ReduceFields) {
-          const result = reduceFields(data, matcher, options.reducers);
-          if (options.refId) {
-            return result.map((frame) => ({ ...frame, refId: options.refId }));
-          }
-          return result;
+          return reduceFields(data, matcher, options.reducers);
         }
 
         // Add a row for each series
@@ -72,7 +69,7 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
           : [];
       })
     ),
-  usesDynamicRefId: true,
+  usesDynamicRefId: (options) => options?.mode !== ReduceTransformerMode.ReduceFields,
 };
 
 /**

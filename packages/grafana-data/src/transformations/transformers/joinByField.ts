@@ -12,7 +12,7 @@ import { FieldMatcherID } from '../matchers/ids';
 import { DataTransformerID } from './ids';
 import { joinDataFrames } from './joinDataFrames';
 import { JoinMode } from './joinShared';
-import { getTransformationDynamicRefId } from './utils';
+import { applyStaticRefId, getTransformationDynamicRefId } from './utils';
 
 export interface JoinByFieldOptions {
   byField?: string; // empty will pick the field automatically
@@ -47,7 +47,7 @@ export const joinByFieldTransformer: SynchronousDataTransformerInfo<JoinByFieldO
           return [joined];
         }
       }
-      return data;
+      return applyStaticRefId(data, options.refId);
     };
   },
 

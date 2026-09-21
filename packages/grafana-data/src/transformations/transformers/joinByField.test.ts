@@ -616,6 +616,54 @@ describe('JOIN Transformer', () => {
     });
   });
 
+  describe('static refId', () => {
+    const seriesA = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 2000] },
+        { name: 'temperature', type: FieldType.number, values: [10.3, 10.4] },
+      ],
+    });
+
+    const seriesB = toDataFrame({
+      refId: 'B',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 3000] },
+        { name: 'temperature', type: FieldType.number, values: [11.1, 11.3] },
+      ],
+    });
+
+    const staticCfg: DataTransformerConfig<JoinByFieldOptions> = {
+      id: DataTransformerID.seriesToColumns,
+      options: { byField: 'time', mode: JoinMode.outer },
+      refId: 'T-A',
+    };
+
+    it('keeps the static refId when the input shrinks from two frames to one', async () => {
+      await expect(transformDataFrame([staticCfg], [seriesA, seriesB])).toEmitValuesWith((received) => {
+        expect(received[0][0].refId).toBe('T-A');
+      });
+
+      // With one frame there is nothing to join, but a downstream byRefId filter is still
+      // pointed at the static name and has to keep matching.
+      await expect(transformDataFrame([staticCfg], [seriesA])).toEmitValuesWith((received) => {
+        expect(received[0]).toHaveLength(1);
+        expect(received[0][0].refId).toBe('T-A');
+      });
+    });
+
+    it('leaves the passthrough frame alone when no static refId is set', async () => {
+      const cfg: DataTransformerConfig<JoinByFieldOptions> = {
+        id: DataTransformerID.seriesToColumns,
+        options: { byField: 'time', mode: JoinMode.outer },
+      };
+
+      await expect(transformDataFrame([cfg], [seriesA])).toEmitValuesWith((received) => {
+        expect(received[0][0]).toBe(seriesA);
+      });
+    });
+  });
+
   describe('inner join', () => {
     const seriesA = toDataFrame({
       name: 'A',

@@ -649,4 +649,48 @@ describe('Reducer Transformer', () => {
       `);
     });
   });
+
+  describe('static refId', () => {
+    it('ignores a static refId in reduce fields mode, where each frame keeps its own', async () => {
+      // One frame in, one frame out. Renaming them all would make a single byRefId filter
+      // downstream match every one of them.
+      const cfg: DataTransformerConfig<ReduceTransformerOptions> = {
+        id: DataTransformerID.reduce,
+        options: { mode: ReduceTransformerMode.ReduceFields, reducers: [ReducerID.max] },
+        refId: 'T-A',
+      };
+
+      await expect(transformDataFrame([cfg], [seriesAWithSingleField, seriesBWithSingleField])).toEmitValuesWith(
+        (received) => {
+          expect(received[0].map((frame) => frame.refId)).toEqual(['A', 'D']);
+        }
+      );
+    });
+
+    it('does not offer a refId editor in reduce fields mode', () => {
+      expect(reduceTransformer.usesDynamicRefId).toBeInstanceOf(Function);
+
+      const usesDynamicRefId = reduceTransformer.usesDynamicRefId;
+      if (typeof usesDynamicRefId !== 'function') {
+        throw new Error('expected usesDynamicRefId to be configuration-dependent');
+      }
+
+      expect(usesDynamicRefId({ reducers: [], mode: ReduceTransformerMode.ReduceFields })).toBe(false);
+      expect(usesDynamicRefId({ reducers: [], mode: ReduceTransformerMode.SeriesToRows })).toBe(true);
+      expect(usesDynamicRefId({ reducers: [] })).toBe(true);
+    });
+
+    it('keeps the static refId when no reducer is selected', async () => {
+      const cfg: DataTransformerConfig<ReduceTransformerOptions> = {
+        id: DataTransformerID.reduce,
+        options: { reducers: [] },
+        refId: 'T-A',
+      };
+
+      await expect(transformDataFrame([cfg], [seriesAWithSingleField])).toEmitValuesWith((received) => {
+        expect(received[0]).toHaveLength(1);
+        expect(received[0][0].refId).toBe('T-A');
+      });
+    });
+  });
 });

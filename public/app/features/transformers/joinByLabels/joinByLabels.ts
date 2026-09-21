@@ -6,6 +6,7 @@ import {
   type Field,
   FieldType,
   getTransformationDynamicRefId,
+  applyStaticRefId,
   type SynchronousDataTransformerInfo,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -35,7 +36,9 @@ export const getJoinByLabelsTransformer: () => SynchronousDataTransformerInfo<Jo
       if (!data || !data.length) {
         return data;
       }
-      return [joinByLabels(options, data)];
+      // Covers the error frames too: without the static refId a downstream byRefId filter drops
+      // them, so a misconfiguration here surfaces as "no data" further down instead of the error.
+      return applyStaticRefId([joinByLabels(options, data)], options.refId);
     };
   },
   usesDynamicRefId: true,

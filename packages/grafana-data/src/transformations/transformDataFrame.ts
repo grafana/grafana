@@ -75,8 +75,11 @@ const getOperator =
                 });
 
             // Applied after interpolation so the static refId stays the literal the user typed.
-            if (config.refId !== undefined) {
-              interpolated.refId = config.refId;
+            // Blank is normalised to unset here rather than per transformer: the UI already clears
+            // to undefined, but dashboard JSON and API callers can still supply "" or whitespace.
+            const staticRefId = config.refId?.trim();
+            if (staticRefId) {
+              interpolated.refId = staticRefId;
             }
 
             return of(filterInput(before, matcher)).pipe(
