@@ -9,8 +9,8 @@ import {
   type PanelProps,
   reduceField,
   ReducerID,
-  type TimeRange,
 } from '@grafana/data';
+import { type AssistantPanelContext, buildAssistantPanelContext } from 'app/core/assistant/buildAssistantPanelContext';
 import { getXAnnotationFrames } from 'app/plugins/panel/timeseries/plugins/utils';
 
 // Bound the context payload size.
@@ -29,10 +29,7 @@ const SERIES_REDUCERS = [
 ];
 
 /** Panel-level context for the tooltip's assistant button. */
-export interface AssistantTooltipContext {
-  panelId: number;
-  panelTitle: string;
-  timeRange: TimeRange;
+export interface AssistantTooltipContext extends AssistantPanelContext {
   dataSeries: DataFrame[];
   annotations?: DataFrame[];
 }
@@ -65,12 +62,6 @@ function findField(frame: DataFrame, name: string): Field | undefined {
 
 function toIso(value: number): string {
   return new Date(value).toISOString();
-}
-
-/** Returns undefined when the macro wasn't interpolated (e.g. in Explore). */
-function resolveMacro(replaceVariables: InterpolateFunction, macro: string): string | undefined {
-  const out = replaceVariables(macro);
-  return out && !out.includes('${') ? out : undefined;
 }
 
 /** Match window: the sampling interval around the hovered index. */
@@ -165,9 +156,6 @@ export function buildDatapointAssistantContext({
 
   const stats = reduceField({ field, reducers: SERIES_REDUCERS });
 
-  const dashboardUid = resolveMacro(replaceVariables, '${__dashboard.uid}');
-  const dashboardTitle = resolveMacro(replaceVariables, '${__dashboard.title}');
-
   const datapointItem = createAssistantContextItem('structured', {
     title: `${displayValue} @ ${xDisp} › ${seriesName} › ${panelTitle}`,
     icon: 'crosshair',
@@ -188,13 +176,7 @@ export function buildDatapointAssistantContext({
         query,
         stats,
       },
-      panel: {
-        panelId,
-        panelTitle,
-        dashboardUid,
-        dashboardTitle,
-        timeRange: { from: timeRange.from.toISOString(), to: timeRange.to.toISOString() },
-      },
+      panel: buildAssistantPanelContext({ panelId, panelTitle, timeRange, replaceVariables }),
     },
   });
 
