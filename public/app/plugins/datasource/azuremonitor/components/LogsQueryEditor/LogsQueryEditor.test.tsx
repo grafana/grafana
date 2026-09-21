@@ -42,6 +42,10 @@ jest.mock('@grafana/ui', () => ({
     return <pre>{value}</pre>;
   },
 }));
+
+jest.mock('@kusto/monaco-kusto', () => ({
+  getKustoWorker: jest.fn().mockResolvedValue(async () => ({ setSchema: jest.fn() })),
+}));
 const variableOptionGroup = {
   label: 'Template variables',
   options: [],
