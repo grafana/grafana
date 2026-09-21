@@ -108,6 +108,29 @@ func TestNewAPIService_WiresLegacyTeamStore(t *testing.T) {
 	require.NotNil(t, b.legacyTeamStore)
 }
 
+func TestNewAPIService_WiresSSOStore(t *testing.T) {
+	b := NewAPIService(
+		nil,
+		nil,
+		legacysql.NewDatabaseProvider(nil),
+		&NoopApiInstaller[*iamv0.RoleBinding]{ResourceInfo: iamv0.RoleBindingInfo},
+		&NoopApiInstaller[*iamv0.Role]{ResourceInfo: iamv0.RoleInfo},
+		&NoopApiInstaller[*iamv0.GlobalRole]{ResourceInfo: iamv0.GlobalRoleInfo},
+		&NoopApiInstaller[*iamv0.TeamLBACRule]{ResourceInfo: iamv0.TeamLBACRuleInfo},
+		nil,
+		prometheus.NewRegistry(),
+		nil,
+		nil,
+		tracing.InitializeTracerForTest(),
+		resourcepermission.NewMappersRegistry(),
+		nil,
+	)
+
+	// Standalone must wire the read-only SSO store so the SSOSetting kind is served
+	// once kubernetesSsoSettingsApi is enabled.
+	require.NotNil(t, b.ssoLegacyStore)
+}
+
 func TestUpdateTeamLBACRulesAPIGroupWithNoopInstaller(t *testing.T) {
 	b := &IdentityAccessManagementAPIBuilder{
 		teamLBACApiInstaller: ProvideNoopTeamLBACApiInstaller(),
