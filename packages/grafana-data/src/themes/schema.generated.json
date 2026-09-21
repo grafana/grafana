@@ -61,6 +61,12 @@
             "contrastText": {
               "type": "string"
             },
+            "subtleBackground": {
+              "type": "string"
+            },
+            "subtleBorder": {
+              "type": "string"
+            },
             "shade": {
               "type": "string"
             },
@@ -114,6 +120,12 @@
               "type": "string"
             },
             "contrastText": {
+              "type": "string"
+            },
+            "subtleBackground": {
+              "type": "string"
+            },
+            "subtleBorder": {
               "type": "string"
             },
             "shade": {
@@ -171,6 +183,12 @@
             "contrastText": {
               "type": "string"
             },
+            "subtleBackground": {
+              "type": "string"
+            },
+            "subtleBorder": {
+              "type": "string"
+            },
             "shade": {
               "type": "string"
             },
@@ -224,6 +242,12 @@
               "type": "string"
             },
             "contrastText": {
+              "type": "string"
+            },
+            "subtleBackground": {
+              "type": "string"
+            },
+            "subtleBorder": {
               "type": "string"
             },
             "shade": {
@@ -281,6 +305,12 @@
             "contrastText": {
               "type": "string"
             },
+            "subtleBackground": {
+              "type": "string"
+            },
+            "subtleBorder": {
+              "type": "string"
+            },
             "shade": {
               "type": "string"
             },
@@ -334,6 +364,12 @@
               "type": "string"
             },
             "contrastText": {
+              "type": "string"
+            },
+            "subtleBackground": {
+              "type": "string"
+            },
+            "subtleBorder": {
               "type": "string"
             },
             "shade": {
@@ -391,6 +427,12 @@
             "contrastText": {
               "type": "string"
             },
+            "subtleBackground": {
+              "type": "string"
+            },
+            "subtleBorder": {
+              "type": "string"
+            },
             "shade": {
               "type": "string"
             },
@@ -444,6 +486,12 @@
               "type": "string"
             },
             "contrastText": {
+              "type": "string"
+            },
+            "subtleBackground": {
+              "type": "string"
+            },
+            "subtleBorder": {
               "type": "string"
             },
             "shade": {

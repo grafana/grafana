@@ -319,11 +319,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
       visualRefreshEnabled && {
         '&:hover, &:focus, &:focus-visible': {
-          background: theme.colors.error.backgroundEmphasis,
-          color: theme.colors.error.textEmphasis,
+          background: theme.colors.error.background,
+          color: theme.colors.error.contrastText,
 
           svg: {
-            color: theme.colors.error.textEmphasis,
+            color: theme.colors.error.contrastText,
           },
         },
       }
