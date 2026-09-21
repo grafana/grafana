@@ -81,7 +81,7 @@ func TestIntegrationService_SetUserPermission(t *testing.T) {
 
 			var hookCalled bool
 			if tt.callHook {
-				service.options.OnSetUser = func(session *db.Session, orgID int64, user accesscontrol.User, resourceID, permission string) error {
+				service.options.OnSetUser = func(ctx context.Context, session *db.Session, orgID int64, user accesscontrol.User, resourceID, permission string) error {
 					hookCalled = true
 					return nil
 				}
@@ -132,7 +132,7 @@ func TestIntegrationService_SetTeamPermission(t *testing.T) {
 
 			var hookCalled bool
 			if tt.callHook {
-				service.options.OnSetTeam = func(session *db.Session, orgID, teamID int64, resourceID, permission string) error {
+				service.options.OnSetTeam = func(ctx context.Context, session *db.Session, orgID, teamID int64, resourceID, permission string) error {
 					hookCalled = true
 					return nil
 				}
@@ -174,7 +174,7 @@ func TestIntegrationService_SetBuiltInRolePermission(t *testing.T) {
 
 			var hookCalled bool
 			if tt.callHook {
-				service.options.OnSetBuiltInRole = func(session *db.Session, orgID int64, builtInRole, resourceID, permission string) error {
+				service.options.OnSetBuiltInRole = func(ctx context.Context, session *db.Session, orgID int64, builtInRole, resourceID, permission string) error {
 					hookCalled = true
 					return nil
 				}
@@ -321,7 +321,7 @@ func TestIntegrationService_RegisterActionSets(t *testing.T) {
 			acService := &actest.FakeService{}
 			_, err := New(
 				setting.NewCfg(), tt.options, features, routing.NewRouteRegister(), licensingtest.NewFakeLicensing(),
-				ac, acService, sql, nil, nil, nil, actionSets, iam.Features{},
+				ac, acService, sql, legacysql.NewDatabaseProvider(sql), nil, nil, nil, actionSets, iam.Features{},
 			)
 			require.NoError(t, err)
 
@@ -585,7 +585,7 @@ func TestService_K8sActionFormat(t *testing.T) {
 
 			service, err := New(
 				cfg, tt.opts, features, routing.NewRouteRegister(), license,
-				ac, acService, sql, nil, nil, nil, NewActionSetService(), iam.Features{},
+				ac, acService, sql, legacysql.NewDatabaseProvider(sql), nil, nil, nil, NewActionSetService(), iam.Features{},
 			)
 
 			if tt.expectErr {
@@ -730,7 +730,7 @@ func TestService_APIGroupRequiredWhenResourcePermissionsAPIEnabled(t *testing.T)
 
 			_, err := New(
 				cfg, Options{Resource: tt.resource, APIGroup: tt.apiGroup}, features,
-				routing.NewRouteRegister(), license, ac, &actest.FakeService{}, sql, nil, nil, nil, NewActionSetService(),
+				routing.NewRouteRegister(), license, ac, &actest.FakeService{}, sql, legacysql.NewDatabaseProvider(sql), nil, nil, nil, NewActionSetService(),
 				iam.Features{ResourcePermissionsAPI: tt.apiEnabled},
 			)
 
@@ -894,7 +894,7 @@ func setupTestEnvironmentWithCfg(t *testing.T, ops Options, features featuremgmt
 	ac := acimpl.ProvideAccessControl(features)
 	service, err := New(
 		cfg, ops, features, routing.NewRouteRegister(), license,
-		ac, acService, sql, teamSvc, userSvc, serviceAccountRetriever, NewActionSetService(),
+		ac, acService, sql, legacysql.NewDatabaseProvider(sql), teamSvc, userSvc, serviceAccountRetriever, NewActionSetService(),
 		iam.Features{ResourcePermissionsAPI: resourcePermissionsAPIEnabled},
 	)
 	require.NoError(t, err)
@@ -989,7 +989,7 @@ func TestIntegrationService_SetUserPermissionForTeams_Redirect(t *testing.T) {
 			}
 
 			var hookCalled bool
-			service.options.OnSetUser = func(_ *db.Session, _ int64, _ accesscontrol.User, _, _ string) error {
+			service.options.OnSetUser = func(_ context.Context, _ *db.Session, _ int64, _ accesscontrol.User, _, _ string) error {
 				hookCalled = true
 				return nil
 			}
@@ -1042,7 +1042,7 @@ func TestIntegrationService_SetPermissionsForTeams_Redirect(t *testing.T) {
 			}
 
 			var hookCalled bool
-			service.options.OnSetUser = func(_ *db.Session, _ int64, _ accesscontrol.User, _, _ string) error {
+			service.options.OnSetUser = func(_ context.Context, _ *db.Session, _ int64, _ accesscontrol.User, _, _ string) error {
 				hookCalled = true
 				return nil
 			}
@@ -1168,7 +1168,7 @@ func TestIntegrationService_SetUserPermissionForTeams_RedirectWrites(t *testing.
 			}
 
 			var hookCalled bool
-			service.options.OnSetUser = func(_ *db.Session, _ int64, _ accesscontrol.User, _, _ string) error {
+			service.options.OnSetUser = func(_ context.Context, _ *db.Session, _ int64, _ accesscontrol.User, _, _ string) error {
 				hookCalled = true
 				return tt.hookErr
 			}
@@ -1404,7 +1404,7 @@ func TestIntegrationService_SetPermissionsForTeams_RedirectWrites(t *testing.T) 
 			}
 
 			hookedUsers := map[int64]bool{}
-			service.options.OnSetUser = func(_ *db.Session, _ int64, u accesscontrol.User, _, _ string) error {
+			service.options.OnSetUser = func(_ context.Context, _ *db.Session, _ int64, u accesscontrol.User, _, _ string) error {
 				hookedUsers[u.ID] = true
 				return tt.hookErr
 			}

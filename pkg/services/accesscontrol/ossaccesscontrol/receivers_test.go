@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -93,7 +94,7 @@ func TestIntegrationCopyReceiverPermissionsRefreshAfterCommit(t *testing.T) {
 						require.True(t, ok)
 						require.WithinDuration(t, time.Now().Add(5*time.Second), deadline, time.Second)
 					}}
-					receivers, err := ProvideReceiverPermissionsService(cfg, features, routing.NewRouteRegister(), sql,
+					receivers, err := ProvideReceiverPermissionsService(cfg, features, routing.NewRouteRegister(), sql, legacysql.NewDatabaseProvider(sql),
 						actest.FakeAccessControl{ExpectedEvaluate: true}, iam.Features{}, license, recorder, nil, nil, nil, actions)
 					require.NoError(t, err)
 					requester := &user.SignedInUser{UserID: 7, UserUID: "seven", OrgID: 1, OrgRole: org.RoleViewer}

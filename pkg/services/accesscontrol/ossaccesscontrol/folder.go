@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 type FolderPermissionsService struct {
@@ -119,7 +120,7 @@ func FolderPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
 }
 
 func ProvideFolderPermissions(
-	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql *sqlstore.SQLStore, accesscontrol accesscontrol.AccessControl,
+	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql *sqlstore.SQLStore, dbProvider legacysql.LegacyDatabaseProvider, accesscontrol accesscontrol.AccessControl,
 	iamFeatures iamapi.Features,
 	license licensing.Licensing, folderService folder.Service, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,
@@ -180,7 +181,7 @@ func ProvideFolderPermissions(
 		RoleGroup:          folderPermissionsRoleGroup,
 		RestConfigProvider: restConfigProvider,
 	}
-	srv, err := resourcepermissions.New(cfg, options, features, router, license, accesscontrol, service, sql, teamService, userService, serviceAccountRetriever, actionSetService, iamFeatures)
+	srv, err := resourcepermissions.New(cfg, options, features, router, license, accesscontrol, service, sql, dbProvider, teamService, userService, serviceAccountRetriever, actionSetService, iamFeatures)
 	if err != nil {
 		return nil, err
 	}

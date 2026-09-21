@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -36,7 +37,7 @@ func TestIntegrationSecretsKVStoreSQL(t *testing.T) {
 
 	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	secretsService := manager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	kv := NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+	kv := NewSQLSecretsKVStore(legacysql.NewDatabaseProvider(sqlStore), secretsService, log.New("test.logger"))
 
 	ctx := context.Background()
 
@@ -169,7 +170,7 @@ func TestIntegrationSecretsKVStoreSQL(t *testing.T) {
 	t.Run("listing existing keys", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := manager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		kv := NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+		kv := NewSQLSecretsKVStore(legacysql.NewDatabaseProvider(sqlStore), secretsService, log.New("test.logger"))
 
 		ctx := context.Background()
 
@@ -244,7 +245,7 @@ func TestIntegrationSecretsKVStoreSQL(t *testing.T) {
 	t.Run("getting all secrets", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := manager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		kv := NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+		kv := NewSQLSecretsKVStore(legacysql.NewDatabaseProvider(sqlStore), secretsService, log.New("test.logger"))
 
 		ctx := context.Background()
 

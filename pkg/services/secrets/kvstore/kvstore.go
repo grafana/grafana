@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 const (
@@ -15,10 +15,10 @@ const (
 )
 
 func ProvideService(
-	sqlStore db.DB,
+	dbProvider legacysql.LegacyDatabaseProvider,
 	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 ) (SecretsKVStore, error) {
-	store := NewSQLSecretsKVStore(sqlStore, secretsService, log.New("secrets.kvstore"))
+	store := NewSQLSecretsKVStore(dbProvider, secretsService, log.New("secrets.kvstore"))
 	return WithCache(store, 5*time.Second, 5*time.Minute), nil
 }
 

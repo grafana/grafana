@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -303,7 +304,7 @@ func TestIntegrationSilenceAuth(t *testing.T) {
 			apiClient := newAlertingApiClient(grafanaListedAddr, randomLogin, randomLogin)
 
 			// Set permissions.
-			permissionsStore := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
+			permissionsStore := resourcepermissions.NewStore(env.Cfg, legacysql.NewDatabaseProvider(env.SQLStore), featuremgmt.WithFeatures())
 			for _, cmd := range tt.permissions {
 				_, err := permissionsStore.SetUserResourcePermission(
 					context.Background(),

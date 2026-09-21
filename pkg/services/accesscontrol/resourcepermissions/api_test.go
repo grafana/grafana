@@ -920,14 +920,18 @@ func TestIntegrationApi_setUserPermissionForTeams_removeMemberDualWrite(t *testi
 			setOpenFeatureFlag(t, featuremgmt.FlagKubernetesTeamsRedirect, true)
 
 			// Wire the production OnSetUser hook so a removal actually runs RemoveTeamMemberHook.
-			// dbHelper is assigned below, once setupTestEnvironmentWithCfg has produced the
+			// dbProvider is assigned below, once setupTestEnvironmentWithCfg has produced the
 			// store the hook needs. The hook only runs during the request later in this test,
 			// so the late assignment is safe - but it must stay in this same block, otherwise
-			// the closure captures a nil helper.
-			var dbHelper *legacysql.LegacyDatabaseHelper
+			// the closure captures a nil provider.
+			var dbProvider legacysql.LegacyDatabaseProvider
 			opts := testOptionsForTeams
-			opts.OnSetUser = func(session *db.Session, orgID int64, usr accesscontrol.User, resourceID, permission string) error {
+			opts.OnSetUser = func(ctx context.Context, session *db.Session, orgID int64, usr accesscontrol.User, resourceID, permission string) error {
 				teamID, err := strconv.ParseInt(resourceID, 10, 64)
+				if err != nil {
+					return err
+				}
+				dbHelper, err := dbProvider(ctx)
 				if err != nil {
 					return err
 				}
@@ -959,8 +963,7 @@ func TestIntegrationApi_setUserPermissionForTeams_removeMemberDualWrite(t *testi
 			}
 
 			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, opts, featuremgmt.WithFeatures(), false)
-			dbHelper, err := legacysql.NewDatabaseProvider(service.sqlStore)(context.Background())
-			require.NoError(t, err)
+			dbProvider = service.dbProvider
 			// Mode1 is non-authoritative, so the request dual-writes and falls through to legacy.
 			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
 				iamv0.TeamResourceInfo.GroupResource().String(): {DualWriterMode: grafanarest.Mode1},

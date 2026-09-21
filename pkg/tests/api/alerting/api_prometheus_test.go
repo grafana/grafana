@@ -24,6 +24,7 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -968,7 +969,7 @@ func TestIntegrationPrometheusRulesPermissions(t *testing.T) {
 	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
 
 	// access control permissions store
-	permissionsStore := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
+	permissionsStore := resourcepermissions.NewStore(env.Cfg, legacysql.NewDatabaseProvider(env.SQLStore), featuremgmt.WithFeatures())
 
 	const folderUID1 = "prom-perm-f1"
 	const folderUID2 = "prom-perm-f2"

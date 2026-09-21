@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 var ReceiversViewActions = []string{accesscontrol.ActionAlertingReceiversRead}
@@ -56,7 +57,7 @@ func ReceiverPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
 }
 
 func ProvideReceiverPermissionsService(
-	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl,
+	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql *sqlstore.SQLStore, dbProvider legacysql.LegacyDatabaseProvider, ac accesscontrol.AccessControl,
 	iamFeatures iamapi.Features,
 	license licensing.Licensing, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,
@@ -85,7 +86,7 @@ func ProvideReceiverPermissionsService(
 		RoleGroup:      models.AlertRolesGroup,
 	}
 
-	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, serviceAccountRetriever, actionSetService, iamFeatures)
+	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, dbProvider, teamService, userService, serviceAccountRetriever, actionSetService, iamFeatures)
 	if err != nil {
 		return nil, err
 	}
