@@ -63,14 +63,16 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockDelete.mockResolvedValue({});
   mockReplace.mockResolvedValue({});
-  jest.mocked(useDeleteRepositoryMutation).mockReturnValue([
-    mockDelete,
-    { isLoading: false, reset: jest.fn() },
-  ] as unknown as ReturnType<typeof useDeleteRepositoryMutation>);
-  jest.mocked(useReplaceRepositoryMutation).mockReturnValue([
-    mockReplace,
-    { isLoading: false, reset: jest.fn() },
-  ] as unknown as ReturnType<typeof useReplaceRepositoryMutation>);
+  jest
+    .mocked(useDeleteRepositoryMutation)
+    .mockReturnValue([mockDelete, { isLoading: false, reset: jest.fn() }] as unknown as ReturnType<
+      typeof useDeleteRepositoryMutation
+    >);
+  jest
+    .mocked(useReplaceRepositoryMutation)
+    .mockReturnValue([mockReplace, { isLoading: false, reset: jest.fn() }] as unknown as ReturnType<
+      typeof useReplaceRepositoryMutation
+    >);
 });
 
 describe('DeleteRepositoryButton', () => {
