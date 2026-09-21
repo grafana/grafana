@@ -16,6 +16,7 @@ use (
 	./apps/correlations
 	./apps/dashboard
 	./apps/dashvalidator
+	./apps/errortracking
 	./apps/example
 	./apps/folder
 	./apps/iam
