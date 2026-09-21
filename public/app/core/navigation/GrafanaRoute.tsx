@@ -22,6 +22,16 @@ export function GrafanaRoute(props: Props) {
 
   chrome.setMatchedRoute(props.route);
 
+  // Page.tsx clears chromeless on mount - PageFallbackLoader doesn't,
+  // so nudge it here or the nav stays hidden on a cold load.
+  // Side effect: breadcrumb flashes to "Home"
+  // until the real page mounts and sets its own nav.
+  useLayoutEffect(() => {
+    if (displayFallback) {
+      chrome.update({});
+    }
+  }, [displayFallback, chrome]);
+
   useLayoutEffect(() => {
     keybindings.clearAndInitGlobalBindings(props.route);
   }, [keybindings, props.route]);
