@@ -709,7 +709,6 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 }
 
 func TestVerifyFolder(t *testing.T) {
-
 	makeDash := func(t *testing.T, parent string) utils.GrafanaMetaAccessor {
 		t.Helper()
 		dash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "d1", Namespace: "default"}}
