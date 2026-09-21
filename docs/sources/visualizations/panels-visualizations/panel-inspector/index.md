@@ -26,7 +26,7 @@ The panel inspector includes the following tabs:
 - **Data**: Shows the raw data returned by the query with transformations applied. Field options such as overrides and value mappings are not applied by default.
 - **Stats**: Shows how long your query takes and how much it returns.
 - **Query**: Shows you the requests to the server sent when Grafana queries the data source.
-- **Error and notices**: Shows the error. Only visible when query returns error.
+- **Error and notices**: Shows errors and notices. Only visible when query returns an error or notice.
 - **JSON**: Allows you to view and copy the panel JSON, panel data JSON, and data frame structure JSON. This is useful if you are provisioning or administering Grafana.
 
 Not all panel types include all tabs.
@@ -82,7 +82,7 @@ The icon is dynamic, reflecting the highest severity notice on a panel.
 To inspect errors and notices, follow these steps:
 
 1. Navigate to the panel you want to view.
-1. Hover your cursor over the icon to display a tooltip that shows all the panel errors and notices, sorted by severity:
+1. Click the icon to display a tooltip that shows all the panel errors and notices, sorted by severity:
 
    ![Errors and notices tooltip displayed on a panel](/media/docs/grafana/dashboards/screenshot-errors-notices-tooltip-v13.3.png)
 
