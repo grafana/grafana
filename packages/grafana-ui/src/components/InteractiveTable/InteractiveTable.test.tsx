@@ -36,7 +36,7 @@ describe('InteractiveTable', () => {
     ];
     render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} />);
 
-    expect(screen.getByRole('columnheader', { name: 'ID' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'ID' })).toHaveAttribute('role', 'columnheader');
     expect(screen.queryByRole('columnheader', { name: 'Country' })).not.toBeInTheDocument();
   });
 
