@@ -1414,6 +1414,13 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 		sub.Get.Parameters = []*spec3.Parameter{ref}
 	}
 
+	// filetree reads the tree at a specific ref (see filetreeConnector.Connect), same
+	// query parameter reftree does not need since it always lists every ref.
+	sub = oas.Paths.Paths[repoprefix+"/filetree"]
+	if sub != nil {
+		sub.Post.Parameters = []*spec3.Parameter{ref}
+	}
+
 	// Show refs endpoint documentation
 	sub = oas.Paths.Paths[repoprefix+"/refs"]
 	if sub != nil {
