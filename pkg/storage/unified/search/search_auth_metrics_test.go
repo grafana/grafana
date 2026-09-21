@@ -60,8 +60,6 @@ func TestSearchAuthMetricsModes(t *testing.T) {
 			require.EqualValues(t, 1, authHistogram(t, metrics.Duration, mode, "page", "success").GetSampleCount())
 			require.EqualValues(t, 10, authHistogram(t, metrics.Returned, mode, "page").GetSampleSum())
 			require.EqualValues(t, client.checked, authHistogram(t, metrics.Checks, mode, "page").GetSampleSum())
-			require.EqualValues(t, client.batchChecks, authHistogram(t, metrics.Calls, mode, "page", "batch_check").GetSampleSum())
-			require.EqualValues(t, client.checked, authHistogram(t, metrics.Candidates, mode, "page").GetSampleSum())
 			switch mode {
 			case "pre_rank":
 				require.Equal(t, 100, client.checked)
@@ -90,7 +88,7 @@ func TestSearchAuthMetricsBudgets(t *testing.T) {
 			_, response := searchNames(t, index, client, query)
 			require.False(t, response.TotalHitsExact)
 			require.EqualValues(t, 1, testutil.ToFloat64(metrics.Events.WithLabelValues(reason)))
-			require.EqualValues(t, client.checked, authHistogram(t, metrics.Candidates, "post_rank", kind).GetSampleSum(), "include both facet and page authorization passes")
+			require.EqualValues(t, client.checked, authHistogram(t, metrics.Checks, "post_rank", kind).GetSampleSum(), "include both facet and page authorization passes")
 			require.EqualValues(t, 1, authHistogram(t, metrics.Duration, "post_rank", kind, "success").GetSampleCount())
 		})
 	}
@@ -112,7 +110,6 @@ func TestSearchAuthMetricsFailure(t *testing.T) {
 			require.Error(t, err)
 			require.EqualValues(t, 1, authHistogram(t, metrics.Duration, mode, "page", "error").GetSampleCount())
 			require.Positive(t, authHistogram(t, metrics.Checks, mode, "page").GetSampleSum())
-			require.Positive(t, authHistogram(t, metrics.Candidates, mode, "page").GetSampleSum())
 			require.Zero(t, authHistogram(t, metrics.Returned, mode, "page").GetSampleCount())
 		})
 	}

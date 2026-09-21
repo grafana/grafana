@@ -4337,9 +4337,6 @@ func (s *batchAuthzSearcher) Close() error {
 		)
 		s.span.End()
 	}
-	if observation := searchAuthObservationFromContext(s.ctx); observation != nil {
-		observation.candidates.Add(s.candidates.Load())
-	}
 	return s.searcher.Close()
 }
 

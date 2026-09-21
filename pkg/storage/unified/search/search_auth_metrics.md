@@ -12,18 +12,17 @@ facets and count. No tenant, user, resource name, or search term is a metric lab
 
 | Suffix | Meaning |
 | --- | --- |
-| `duration_seconds` | Native histogram of execution time, including ranking, authorization, and response conversion. `outcome` is `success` or `error`. Histogram count measures executed searches. |
-| `candidates` | Native histogram of candidate visits entering authorization per search, including partial work on failures. Facet and page passes can visit the same document twice. |
+| `execution_duration_seconds` | Native histogram of execution time, including ranking, authorization, and response conversion. `outcome` is `success` or `error`. Histogram count measures executed searches. |
 | `returned_documents` | Native histogram of rows returned by successful searches. Count-only searches observe zero rows. |
-| `calls` | Native histogram of AccessClient invocations per search, labeled by `method`: `check`, `batch_check`, or `compile`. Includes zero calls and failed calls. |
 | `checks` | Native histogram of items submitted through Check and BatchCheck per search, including failed calls. Compile is excluded. |
 | `events_total` | Counter labeled by `reason`: `cursor_fallback`, `candidate_budget`, or `facet_budget`. Budget events mean the limit stopped a scan with unseen matches; merely filling a page or exhausting all matches is not a budget event. |
 
-Candidate visits and checks are work counts, not unique documents. AccessClient
-calls can be cached, batched, or satisfied without a network request; use
+Checks count items submitted to Check and BatchCheck, including failed calls;
+they are not unique documents or backend evaluations. Calls can be cached,
+batched, or satisfied without a network request; use
 `grafana_authz_server_client_request_duration_seconds` to measure outbound RPCs.
-Federated searches aggregate candidate visits and helper calls into the parent
-search observation. Per-search accumulation is safe across concurrent index scans.
+Federated searches aggregate checks into the parent search observation.
+Per-search accumulation is safe across concurrent index scans.
 
 Example queries below use the `grafana_` prefix and should be scoped with cluster
 and namespace selectors for rollout analysis.
@@ -31,27 +30,20 @@ and namespace selectors for rollout analysis.
 ```promql
 # Executed searches per second by actual auth mode.
 sum by (mode) (
-  histogram_count(rate(grafana_index_server_search_auth_duration_seconds[5m]))
+  histogram_count(rate(grafana_index_server_search_auth_execution_duration_seconds[5m]))
 )
 
 # p95 execution time at a comparable query type and outcome.
 histogram_quantile(0.95,
   sum by (mode, query_type) (
-    rate(grafana_index_server_search_auth_duration_seconds{outcome="success"}[5m])
+    rate(grafana_index_server_search_auth_execution_duration_seconds{outcome="success"}[5m])
   )
 )
 
-# Mean candidates visited per search, including both passes for facets.
+# Mean authorization check items per search.
 histogram_avg(
   sum by (mode, query_type) (
-    rate(grafana_index_server_search_auth_candidates[5m])
-  )
-)
-
-# Mean helper calls per search, broken down by method.
-histogram_avg(
-  sum by (mode, query_type, method) (
-    rate(grafana_index_server_search_auth_calls[5m])
+    rate(grafana_index_server_search_auth_checks[5m])
   )
 )
 ```
