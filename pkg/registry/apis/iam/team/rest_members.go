@@ -33,10 +33,15 @@ func NewTeamMembersREST(getter rest.Getter, tracer trace.Tracer) *TeamMembersRES
 	return &TeamMembersREST{getter: getter, tracer: tracer, ofClient: openfeature.NewDefaultClient()}
 }
 
+func NewTeamMembersRESTWithFeature(getter rest.Getter, tracer trace.Tracer, enabled bool) *TeamMembersREST {
+	return &TeamMembersREST{getter: getter, tracer: tracer, teamsAPIEnabled: &enabled}
+}
+
 type TeamMembersREST struct {
-	getter   rest.Getter
-	tracer   trace.Tracer
-	ofClient openfeature.IClient
+	getter          rest.Getter
+	tracer          trace.Tracer
+	ofClient        openfeature.IClient
+	teamsAPIEnabled *bool
 }
 
 // New implements rest.Storage.
@@ -65,7 +70,11 @@ func (s *TeamMembersREST) ProducesObject(verb string) interface{} {
 // Connect implements rest.Connecter.
 func (s *TeamMembersREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !s.ofClient.Boolean(r.Context(), featuremgmt.FlagKubernetesTeamsApi, false, openfeature.TransactionContext(r.Context())) {
+		enabled := s.teamsAPIEnabled != nil && *s.teamsAPIEnabled
+		if s.teamsAPIEnabled == nil {
+			enabled = s.ofClient.Boolean(r.Context(), featuremgmt.FlagKubernetesTeamsApi, false, openfeature.TransactionContext(r.Context()))
+		}
+		if !enabled {
 			responder.Error(apierrors.NewForbidden(iamv0alpha1.TeamResourceInfo.GroupResource(),
 				name, errors.New("functionality not available")))
 			return
