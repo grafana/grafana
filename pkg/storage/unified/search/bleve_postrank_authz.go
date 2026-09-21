@@ -305,6 +305,11 @@ func (b *bleveIndex) runPostFilterAuthz(
 	page := make(search.DocumentMatchCollection, 0, limit)
 
 	var candidates int64
+	defer func() {
+		if observation := searchAuthObservationFromContext(ctx); observation != nil {
+			observation.candidates.Add(candidates)
+		}
+	}()
 	var authorized int64
 	var exhausted bool
 	var firstRes *bleve.SearchResult
@@ -377,6 +382,9 @@ func (b *bleveIndex) runPostFilterAuthz(
 			// authorized count is still exact. candidates never exceeds the
 			// number of hits walked, so this can only under-claim.
 			exhausted = candidates >= int64(firstRes.Total)
+			if !exhausted {
+				searchAuthObservationFromContext(ctx).event("candidate_budget")
+			}
 			break
 		}
 		// Window returned fewer hits than requested -> no more matches: every
@@ -493,6 +501,11 @@ func (b *bleveIndex) aggregateFacetsFromTop(
 	cfg := b.postRankAuthz
 	maxCandidates := int64(cfg.FacetSampleSize)
 	var candidates int64
+	defer func() {
+		if observation := searchAuthObservationFromContext(ctx); observation != nil {
+			observation.candidates.Add(candidates)
+		}
+	}()
 	var authorized int64
 
 	initial := *firstReq
@@ -540,6 +553,9 @@ func (b *bleveIndex) aggregateFacetsFromTop(
 		if candidates >= maxCandidates {
 			// Like the page scan: a budget that covered every match leaves
 			// nothing unsampled, so the facets are the complete authorized set.
+			if candidates < int64(firstRes.Total) {
+				searchAuthObservationFromContext(ctx).event("facet_budget")
+			}
 			return agg, authorized, candidates >= int64(firstRes.Total), nil
 		}
 		if len(res.Hits) < windowReq.Size || len(res.Hits) == 0 {
