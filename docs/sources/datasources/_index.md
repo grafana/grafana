@@ -96,6 +96,16 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-template-dashboards/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-template-dashboards/
+  share-query-results:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/share-query/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/share-query/
+  filter-with-dashboard-datasource:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/filter-group-by/#filter-any-data-using-the-dashboard-data-source
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/filter-group-by/#filter-any-data-using-the-dashboard-data-source
 ---
 
 # Data sources
@@ -184,7 +194,19 @@ An abstraction that lets you query multiple data sources in the same panel. When
 
 ### Dashboard
 
-A data source that uses the result set from another panel in the same dashboard. The dashboard data source can use data either directly from the selected panel or from annotations attached to the selected panel.
+A data source that reuses the result set from another panel in the same dashboard. Instead of running its own query against a backend, a panel using the **Dashboard** data source points to a _source panel_ and works with the data that panel already returned.
+
+The Dashboard data source references the complete output of another panel. It doesn't chain one query into another within a single panel, so you can't feed the results of one query into a second query as an input. To reshape or narrow the referenced data, apply [transformations](ref:query-transform-data) in the panel that uses the Dashboard data source.
+
+Use the Dashboard data source when you want to:
+
+- **Share query results:** Point several panels at one source panel so Grafana runs a single query and reuses the results, which reduces the number of queries sent to your backend. For details, refer to [Share query results with another panel](ref:share-query-results).
+- **Filter unsupported data:** Reference a panel whose data source doesn't support ad hoc filters, then filter the referenced data in the new panel. For details, refer to [Filter any data using the Dashboard data source](ref:filter-with-dashboard-datasource).
+
+When you configure the Dashboard data source, you set the following options:
+
+- **Source panel:** The panel whose results you want to reuse.
+- **Data:** Select **All data** to use the source panel's query results, or select annotations to use only the annotations attached to that panel.
 
 {{< docs/play title="Panel as a Data Source" url="https://play.grafana.org/d/ede8zps8ndb0gc/" >}}
 
