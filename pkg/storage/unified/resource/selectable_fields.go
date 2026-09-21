@@ -37,7 +37,7 @@ func AppManifestsWithKinds(manifiests ...*app.ManifestData) []*app.ManifestData 
 
 // SelectableFieldsForManifests returns a map keyed by (group, kind) to the list
 // of selectable fields (across all versions). Each kind is also keyed by
-// (group, plural), pointing to the same fields.
+// (group, resource), pointing to the same fields.
 func SelectableFieldsForManifests(manifests ...*app.ManifestData) map[LowerGroupResource][]string {
 	fields := map[LowerGroupResource][]string{}
 	for _, m := range manifests {
@@ -77,7 +77,7 @@ func selectableFieldsForManifest(m *app.ManifestData) map[LowerGroupResource][]s
 		slices.Sort(fs)
 
 		fields[NewLowerGroupResource(m.Group, v.Kind)] = fs
-		fields[NewLowerGroupResource(m.Group, v.Plural)] = fs
+		fields[NewLowerGroupResource(m.Group, v.Resource())] = fs
 	}
 
 	return fields

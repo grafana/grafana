@@ -100,16 +100,17 @@ func New(
 	opts Options,
 	defs map[string]common.OpenAPIDefinition,
 ) (*Store, error) {
-	// The manifest loader defaults plural to kind+"s", but a manifest built in
-	// code can omit it, and an empty resource name registers an unreachable path.
-	if kind.Plural == "" {
-		return nil, fmt.Errorf("kind %s is missing a plural name", gvk.Kind)
+	// Resource() defaults an omitted plural to the kind name plus "s", so only a
+	// missing kind name leaves nothing to build a REST path from: it would
+	// register the resource as a bare "s" and shadow whatever else lands there.
+	if kind.Kind == "" {
+		return nil, fmt.Errorf("manifest kind in %s is missing a kind name", gvk.GroupVersion())
 	}
 	if opts.StorageOptsGetter == nil {
 		return nil, fmt.Errorf("kind %s has no storage options getter", gvk.Kind)
 	}
 
-	gr := schema.GroupResource{Group: gvk.Group, Resource: strings.ToLower(kind.Plural)}
+	gr := schema.GroupResource{Group: gvk.Group, Resource: kind.Resource()}
 	listGVK := gvk.GroupVersion().WithKind(gvk.Kind + "List")
 	clusterScoped := kind.Scope == ClusterScope
 

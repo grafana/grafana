@@ -170,7 +170,7 @@ func BuildForServedGroupVersionsWithOptions(
 				if kind.Scope != namespacedScope {
 					continue
 				}
-				resourceName := resource.ManifestResourceName(kind)
+				resourceName := kind.Resource()
 				// Answered separately so a kind can opt out of one endpoint
 				// without the other.
 				if searchEnabled && kind.HasSearchEndpoint() {

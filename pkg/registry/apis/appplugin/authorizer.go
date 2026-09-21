@@ -66,10 +66,7 @@ func kindPolicies(manifest *app.ManifestData) map[string]kindPolicy {
 			continue
 		}
 		for _, kind := range version.Kinds {
-			if kind.Plural == "" {
-				continue // kindstore.New refuses these, so they have no resource
-			}
-			resource := strings.ToLower(kind.Plural)
+			resource := kind.Resource()
 			policy, seen := policies[resource]
 			if !seen {
 				policy = kindPolicy{

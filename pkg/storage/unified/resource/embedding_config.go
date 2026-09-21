@@ -60,7 +60,7 @@ func (r *EmbeddingConfigRegistry) Reload(sources ...[]*app.ManifestData) {
 				}
 				for _, version := range m.Versions {
 					for _, kind := range version.Kinds {
-						if ManifestResourceName(kind) == resource && kind.Embed != nil {
+						if kind.Resource() == resource && kind.Embed != nil {
 							configs[gr.WithVersion(version.Name)] = EmbeddingConfig{
 								ReembedVersion: embed.ReembedVersion,
 								Fields:         slices.Clone(kind.Embed.Fields),
