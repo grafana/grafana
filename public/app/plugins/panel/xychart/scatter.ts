@@ -486,8 +486,9 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
           let valRange = maxVal - minVal;
 
           // Equal size values make valRange 0, which would produce NaN diameters.
+          // Point size is the configured fixed size. It is hidden when show is lines.
           if (valRange === 0) {
-            diams = Array(len).fill(s.size.fixed ?? 5);
+            diams = Array(len).fill(s.y.field.config.custom.pointSize.fixed);
           } else {
             diams = Array(len);
 

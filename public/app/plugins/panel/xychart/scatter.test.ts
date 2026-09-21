@@ -173,16 +173,22 @@ describe('prepData', () => {
     expect(diams2[1]).toEqual(10);
   });
 
-  it('uses the fixed size when all mapped size values are equal', () => {
+  it('uses the configured point size when all mapped size values are equal', () => {
     const sizeField = makeField({ name: 'sz', values: [5, 5, 5] });
+    const yField = makeField({
+      name: 'y',
+      values: [10, 20, 30],
+      config: { unit: 'y', custom: { pointSize: { fixed: 12, min: 1, max: 10 } } },
+    });
     const series = makeSeries({
+      y: { field: yField },
       size: { field: sizeField, min: 2, max: 10, fixed: 5 },
     });
     const { prepData } = prepConfig([series], theme);
     const data = prepData!([series]);
     const diams = data[1]![2] as number[];
 
-    expect(diams).toEqual([5, 5, 5]);
+    expect(diams).toEqual([12, 12, 12]);
     expect(diams.every((d) => Number.isFinite(d))).toBe(true);
   });
 });
