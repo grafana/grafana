@@ -15,7 +15,6 @@ import {
   Modal,
   MultiCombobox,
   Stack,
-  Text,
   useStyles2,
 } from '@grafana/ui';
 import { useStoredString } from 'app/core/hooks/useStored';

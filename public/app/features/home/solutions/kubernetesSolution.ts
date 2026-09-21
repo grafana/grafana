@@ -1,12 +1,6 @@
 import memoize from 'micro-memoize';
 
-import {
-  formattedValueToString,
-  getValueFormat,
-  locationUtil,
-  store,
-  type DataSourceInstanceListItem,
-} from '@grafana/data';
+import { formattedValueToString, getValueFormat, locationUtil, type DataSourceInstanceListItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { constructDataSourceExploreUrl } from 'app/features/datasources/utils';
 
@@ -20,11 +14,11 @@ import {
   type KubernetesHealth,
   type KubernetesScope,
 } from './kubernetesData';
-import { kubernetesFilterStorageKey, parseKubernetesFilter } from './kubernetesFilter';
+import { type KubernetesFilter } from './kubernetesFilter';
 import { accessibleAppPage, openAppLabel, openExploreLabel } from './pluginPages';
 import { datasourceFact } from './probeUtils';
 import { solutionOffer } from './solutionOffer';
-import { detectSignal } from './solutionState';
+import { detectSignal, type SignalDetection } from './solutionState';
 import { type Solution } from './types';
 
 const formatUsageNumber = getValueFormat('short');
@@ -66,57 +60,48 @@ function buildHealthRows(health: KubernetesHealth): string[] {
   return rows;
 }
 
-export function kubernetesSolution(): Solution {
-  const detect = memoize(() => detectSignal(resolveKubernetesDatasource));
+/** Shared Kubernetes detection; solutions recreated for a new filter reuse it so the datasource is never re-resolved. */
+export function kubernetesDetection(): () => Promise<SignalDetection> {
+  return memoize(() => detectSignal(resolveKubernetesDatasource));
+}
+
+export function kubernetesSolution(
+  filter: KubernetesFilter | null,
+  detect: () => Promise<SignalDetection> = kubernetesDetection()
+): Solution {
   const datasource = async () => (await detect()).datasource;
-  const storageKey = kubernetesFilterStorageKey();
+  // The filter scopes only the datasource it was saved for; any other datasource runs fleet-wide.
+  const scopeFor = (ds: DataSourceInstanceListItem): KubernetesScope | null =>
+    filter && filter.datasourceUid === ds.uid ? filter : null;
 
-  // Facts are memoized per stored filter (raw JSON, '' when none): saving or clearing it starts fresh
-  // queries while the datasource resolution stays shared. A filter scopes only the datasource it was
-  // saved for. micro-memoize keeps one entry, so every reader shares the current filter's bundle.
-  const scopedFacts = memoize((raw: string) => {
-    const filter = parseKubernetesFilter(raw);
-    const scopeFor = (ds: DataSourceInstanceListItem): KubernetesScope | null =>
-      filter && filter.datasourceUid === ds.uid ? filter : null;
-    const inventory = datasourceFact(datasource, (ds) => fetchKubernetesInventory(ds, scopeFor(ds)));
-    const health = datasourceFact(datasource, (ds) => fetchKubernetesHealth(ds, scopeFor(ds)));
-    const clusterCpu = datasourceFact(datasource, (ds) => fetchClusterCpuSeries(ds, scopeFor(ds)));
-    const alert = memoize(async () => {
-      const status = await health();
-      if (!status || hasHealthProblems(status) !== true) {
-        return null;
-      }
-
-      const healthRows = buildHealthRows(status);
-      const alertsFiring = status.alertsFiring ?? 0;
-      return {
-        primary:
-          alertsFiring > 0
-            ? t('home.solutions.kubernetes.alerts-firing', '', {
-                count: Math.ceil(alertsFiring),
-                value: formattedValueToString(formatUsageNumber(Math.ceil(alertsFiring))),
-                defaultValue_one: '{{value}} alert firing',
-                defaultValue_other: '{{value}} alerts firing',
-              })
-            : healthRows[0],
-        details: alertsFiring > 0 ? healthRows : healthRows.slice(1),
-      };
-    });
-    return { scopeFor, inventory, health, clusterCpu, alert };
-  });
-  const facts = () => {
-    let raw: string | undefined;
-    try {
-      raw = store.get(storageKey);
-    } catch {
-      // Storage access denied: run fleet-wide, as the datasource resolution's stored-choice read does.
+  const inventory = datasourceFact(datasource, (ds) => fetchKubernetesInventory(ds, scopeFor(ds)));
+  const health = datasourceFact(datasource, (ds) => fetchKubernetesHealth(ds, scopeFor(ds)));
+  const clusterCpu = datasourceFact(datasource, (ds) => fetchClusterCpuSeries(ds, scopeFor(ds)));
+  const alert = memoize(async () => {
+    const status = await health();
+    if (!status || hasHealthProblems(status) !== true) {
+      return null;
     }
-    return scopedFacts(raw ?? '');
-  };
+
+    const healthRows = buildHealthRows(status);
+    const alertsFiring = status.alertsFiring ?? 0;
+    return {
+      primary:
+        alertsFiring > 0
+          ? t('home.solutions.kubernetes.alerts-firing', '', {
+              count: Math.ceil(alertsFiring),
+              value: formattedValueToString(formatUsageNumber(Math.ceil(alertsFiring))),
+              defaultValue_one: '{{value}} alert firing',
+              defaultValue_other: '{{value}} alerts firing',
+            })
+          : healthRows[0],
+      details: alertsFiring > 0 ? healthRows : healthRows.slice(1),
+    };
+  });
 
   const signal = async () => (await detect()).status;
   const needsAttention = async () => {
-    const status = await facts().health();
+    const status = await health();
     return status !== null && hasHealthProblems(status) === true;
   };
 
@@ -127,7 +112,6 @@ export function kubernetesSolution(): Solution {
     signal,
     datasource,
     needsAttention,
-    scopeStorageKey: storageKey,
     offer: solutionOffer(signal, {
       appId: KUBERNETES_APP_ID,
       description: t(
@@ -148,9 +132,9 @@ export function kubernetesSolution(): Solution {
       },
     }),
     refinedStats: async () => null,
-    alert: () => facts().alert(),
+    alert,
     stats: async () => {
-      const counts = await facts().inventory();
+      const counts = await inventory();
       if (!counts) {
         return null;
       }
@@ -159,7 +143,7 @@ export function kubernetesSolution(): Solution {
       if (clusterCount <= 0 && podCount <= 0) {
         // A scoped empty result must not leave a blank card under a Filtered badge.
         const ds = await datasource();
-        return ds && facts().scopeFor(ds)
+        return ds && scopeFor(ds)
           ? {
               primary: t('home.solutions.kubernetes.filter.no-match', 'No matching data'),
               secondary: t('home.solutions.kubernetes.filter.no-match-hint', 'Adjust the filters'),
@@ -182,7 +166,7 @@ export function kubernetesSolution(): Solution {
       };
     },
     sparkline: async () => {
-      const series = await facts().clusterCpu();
+      const series = await clusterCpu();
       return series ? { series, caption: t('home.solutions.kubernetes.cluster-cpu', 'Cluster CPU · last 24h') } : null;
     },
     cta: async () => {

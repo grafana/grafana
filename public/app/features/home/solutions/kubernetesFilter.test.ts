@@ -41,14 +41,12 @@ describe('parseKubernetesFilter', () => {
 });
 
 describe('fetchKubernetesLabelValues', () => {
-  it('asks the datasource once per label and cluster and shares the answer', async () => {
+  it('asks the datasource for the label values of the source metric within the cluster', async () => {
     getTagValues.mockResolvedValue([{ text: 'team-a', value: 'team-a' }]);
 
     await expect(fetchKubernetesLabelValues('uid-a', 'namespace', 'prod')).resolves.toEqual(['team-a']);
-    await expect(fetchKubernetesLabelValues('uid-a', 'namespace', 'prod')).resolves.toEqual(['team-a']);
 
     expect(mockGetDataSourceInstance).toHaveBeenCalledWith({ uid: 'uid-a' });
-    expect(getTagValues).toHaveBeenCalledTimes(1);
     expect(getTagValues).toHaveBeenCalledWith(
       expect.objectContaining({
         key: 'namespace',
@@ -56,21 +54,11 @@ describe('fetchKubernetesLabelValues', () => {
         queries: [{ refId: 'values', expr: 'kube_namespace_status_phase' }],
       })
     );
-  });
 
-  it('retries after an empty answer (how the language provider reports a failed lookup) or a rejection', async () => {
-    getTagValues
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([{ text: 'team-a' }])
-      .mockRejectedValueOnce(new Error('unreachable'))
-      .mockResolvedValueOnce([{ text: 'node-1' }]);
+    // No local cache: the datasource owns reuse, so every call reaches it.
+    await fetchKubernetesLabelValues('uid-a', 'namespace', '');
 
-    await expect(fetchKubernetesLabelValues('uid-b', 'namespace', '')).resolves.toEqual([]);
-    await expect(fetchKubernetesLabelValues('uid-b', 'namespace', '')).resolves.toEqual(['team-a']);
-    await expect(fetchKubernetesLabelValues('uid-b', 'node', '')).rejects.toThrow('unreachable');
-    await expect(fetchKubernetesLabelValues('uid-b', 'node', '')).resolves.toEqual(['node-1']);
-
-    expect(getTagValues).toHaveBeenCalledTimes(4);
+    expect(getTagValues).toHaveBeenCalledTimes(2);
     expect(getTagValues).toHaveBeenLastCalledWith(expect.objectContaining({ filters: [] }));
   });
 

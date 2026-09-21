@@ -91,7 +91,16 @@ const VALUE_SOURCE_METRIC: Record<KubernetesScopeLabel, string> = {
 // Matches the inventory lookback (KUBE_STATE_LOOKBACK).
 const VALUES_RANGE = { from: 'now-24h', to: 'now' };
 
-async function queryLabelValues(uid: string, key: KubernetesScopeLabel, cluster: string): Promise<string[]> {
+/**
+ * Distinct `key` values in `uid` over the last 24h, optionally narrowed to `cluster` ('' = all). The
+ * Prometheus datasource caches label values per snapped time range itself (1–60 min by cacheLevel),
+ * so reopening the dialog inside that window issues no request and a moved window refreshes the list.
+ */
+export async function fetchKubernetesLabelValues(
+  uid: string,
+  key: KubernetesScopeLabel,
+  cluster: string
+): Promise<string[]> {
   const ds = await getDataSourceInstance({ uid });
   if (!ds.getTagValues) {
     return [];
@@ -105,28 +114,4 @@ async function queryLabelValues(uid: string, key: KubernetesScopeLabel, cluster:
   });
   const values: MetricFindValue[] = Array.isArray(result) ? result : (result.data ?? []);
   return values.map((v) => String(v.value ?? v.text));
-}
-
-const labelValuesCache = new Map<string, Promise<string[]>>();
-
-/**
- * Distinct `key` values in `uid` over the last 24h, optionally narrowed to `cluster` ('' = all). A
- * non-empty answer is kept for the page's lifetime so reopening the modal starts no request. The
- * Prometheus language provider swallows lookup errors into an empty list, so an empty answer (like a
- * rejection) is evicted and the next open retries.
- */
-export function fetchKubernetesLabelValues(uid: string, key: KubernetesScopeLabel, cluster: string): Promise<string[]> {
-  const cacheKey = JSON.stringify([uid, key, cluster]);
-  let pending = labelValuesCache.get(cacheKey);
-  if (!pending) {
-    pending = queryLabelValues(uid, key, cluster);
-    labelValuesCache.set(cacheKey, pending);
-    const evict = () => labelValuesCache.delete(cacheKey);
-    pending.then((values) => {
-      if (values.length === 0) {
-        evict();
-      }
-    }, evict);
-  }
-  return pending;
 }

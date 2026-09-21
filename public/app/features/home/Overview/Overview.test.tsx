@@ -1,6 +1,6 @@
 import { act, render, screen, waitFor, within } from 'test/test-utils';
 
-import { type DataSourceInstanceListItem, store } from '@grafana/data';
+import { type DataSourceInstanceListItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
 import { ctaClicked } from '../analytics/main';
@@ -26,6 +26,14 @@ const guide = {
   cta: 'Start setup',
   href: '#',
 };
+
+/** A live Kubernetes solution; each call is a distinct object, as recreating it for a new filter yields. */
+const liveKubernetes = (needsAttention: () => Promise<boolean>) =>
+  stubSolution('kubernetes', {
+    title: 'Kubernetes Monitoring',
+    datasource: async () => stubDatasource,
+    needsAttention,
+  });
 
 describe('Overview', () => {
   beforeEach(() => {
@@ -507,30 +515,22 @@ describe('Overview', () => {
   });
 
   it('holds a re-placed card in its slot as a skeleton and regroups it once its facts settle', async () => {
-    let attention: Promise<boolean> = Promise.resolve(false);
-    const kubernetes = stubSolution('kubernetes', {
-      title: 'Kubernetes Monitoring',
-      datasource: async () => stubDatasource,
-      needsAttention: () => attention,
-      scopeStorageKey: 'test.scope',
-    });
     // A sibling that never settles keeps one skeleton in the pending grid below the groups.
     const logs = stubSolution('logs', { datasource: () => new Promise<null>(() => {}) });
 
-    render(<Overview solutions={[kubernetes, logs]} />);
+    const { rerender } = render(<Overview solutions={[liveKubernetes(async () => false), logs]} />);
 
     expect(await screen.findByRole('heading', { name: 'Enabled' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: kubernetes.title })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
     expect(screen.getAllByTestId('solution-card-skeleton')).toHaveLength(1);
 
     const pending = deferred<boolean>();
-    attention = pending.promise;
-    act(() => store.set('test.scope', '1'));
+    rerender(<Overview solutions={[liveKubernetes(() => pending.promise), logs]} />);
 
-    // The card keeps its slot under its previous group as a skeleton; the pending grid does not grow.
+    // The recreated solution keeps its slot under its previous group as a skeleton; the pending grid does not grow.
     expect(screen.getAllByTestId('solution-card-skeleton')).toHaveLength(2);
     expect(screen.getByRole('heading', { name: 'Enabled' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: kubernetes.title })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Kubernetes Monitoring' })).not.toBeInTheDocument();
 
     await act(async () => pending.resolve(true));
 
@@ -543,18 +543,9 @@ describe('Overview', () => {
   it('lets the newest placement win when an older one settles later', async () => {
     const first = deferred<boolean>();
     const second = deferred<boolean>();
-    const needsAttention = jest.fn().mockReturnValueOnce(first.promise).mockReturnValue(second.promise);
-    const kubernetes = stubSolution('kubernetes', {
-      datasource: async () => stubDatasource,
-      needsAttention,
-      scopeStorageKey: 'test.scope',
-    });
 
-    render(<Overview solutions={[kubernetes]} />);
-
-    await waitFor(() => expect(needsAttention).toHaveBeenCalledTimes(1));
-    act(() => store.set('test.scope', '1'));
-    await waitFor(() => expect(needsAttention).toHaveBeenCalledTimes(2));
+    const { rerender } = render(<Overview solutions={[liveKubernetes(() => first.promise)]} />);
+    rerender(<Overview solutions={[liveKubernetes(() => second.promise)]} />);
 
     await act(async () => second.resolve(false));
 

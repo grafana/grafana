@@ -3,6 +3,7 @@ import { render, screen, waitFor, within } from 'test/test-utils';
 import { type DataSourceInstanceListItem } from '@grafana/data';
 import { mockComboboxRect } from '@grafana/test-utils';
 
+import { RecommendationExisting } from '../Recommendations/RecommendationExisting';
 import {
   fetchClusterCpuSeries,
   fetchKubernetesHealth,
@@ -11,9 +12,14 @@ import {
   resolveKubernetesDatasource,
 } from '../solutions/kubernetesData';
 import { fetchKubernetesLabelValues, kubernetesFilterStorageKey } from '../solutions/kubernetesFilter';
-import { kubernetesSolution } from '../solutions/kubernetesSolution';
+import { logsSolution } from '../solutions/logsSolution';
+import { metricsSolution } from '../solutions/metricsSolution';
 import { pluginAvailability, setupGuideEnabled } from '../solutions/pluginAvailability';
 import { accessibleAppPage } from '../solutions/pluginPages';
+import { syntheticsSolution } from '../solutions/syntheticsSolution';
+import { stubSolution } from '../solutions/test-utils';
+import { tracesSolution } from '../solutions/tracesSolution';
+import { useHomepageSolutions } from '../useHomepageSolutions';
 
 import { Overview } from './Overview';
 import { useGuides } from './useGuides';
@@ -41,6 +47,12 @@ jest.mock('../solutions/pluginPages', () => ({
   accessibleAppPage: jest.fn(),
 }));
 
+// The other solutions stay inert so the Kubernetes one is the only live card in both sections.
+jest.mock('../solutions/logsSolution', () => ({ logsSolution: jest.fn() }));
+jest.mock('../solutions/metricsSolution', () => ({ metricsSolution: jest.fn() }));
+jest.mock('../solutions/tracesSolution', () => ({ tracesSolution: jest.fn() }));
+jest.mock('../solutions/syntheticsSolution', () => ({ syntheticsSolution: jest.fn() }));
+
 jest.mock('./useGuides', () => ({ useGuides: jest.fn() }));
 
 mockComboboxRect();
@@ -49,8 +61,13 @@ const mockFetchInventory = jest.mocked(fetchKubernetesInventory);
 const datasource = { uid: 'k8s-uid', name: 'k8s-prom', type: 'prometheus' } as DataSourceInstanceListItem;
 
 beforeEach(() => {
+  jest.mocked(logsSolution).mockImplementation(() => stubSolution('logs'));
+  jest.mocked(metricsSolution).mockImplementation(() => stubSolution('metrics'));
+  jest.mocked(tracesSolution).mockImplementation(() => stubSolution('traces'));
+  jest.mocked(syntheticsSolution).mockImplementation(() => stubSolution('synthetics'));
   window.localStorage.clear();
   jest.mocked(useGuides).mockReturnValue([]);
+  jest.mocked(resolveKubernetesDatasource).mockReset();
   jest.mocked(resolveKubernetesDatasource).mockResolvedValue(datasource);
   jest
     .mocked(fetchKubernetesHealth)
@@ -66,10 +83,21 @@ beforeEach(() => {
   jest.mocked(accessibleAppPage).mockImplementation(async (appId, path) => `/a/${appId}${path}`);
 });
 
-it('reloads the Kubernetes card with scoped facts after saving a filter', async () => {
-  const { user } = render(<Overview solutions={[kubernetesSolution()]} />);
+/** Both homepage sections read the one solution set the real owner builds. */
+function Homepage() {
+  const { solutions } = useHomepageSolutions();
+  return (
+    <>
+      <RecommendationExisting solutions={solutions} />
+      <Overview solutions={solutions} />
+    </>
+  );
+}
 
-  expect(await screen.findByText('2 clusters')).toBeInTheDocument();
+it('reloads both homepage cards with scoped facts after saving a filter', async () => {
+  const { user } = render(<Homepage />);
+
+  expect(await screen.findAllByText('2 clusters')).toHaveLength(2);
 
   await user.click(screen.getByRole('button', { name: 'Filter by cluster, namespace, or node' }));
   const dialog = await screen.findByRole('dialog', { name: 'Filter Kubernetes Monitoring' });
@@ -79,13 +107,16 @@ it('reloads the Kubernetes card with scoped facts after saving a filter', async 
   await user.click(await screen.findByRole('option', { name: 'prod' }));
   await user.click(within(dialog).getByRole('button', { name: 'Save' }));
 
-  // The card reloads in place and returns with the scoped counts and the highlighted gear.
-  expect(await screen.findByText('1 cluster')).toBeInTheDocument();
+  // Both cards return with the scoped counts; the Overview gear is highlighted.
+  await waitFor(() => expect(screen.getAllByText('1 cluster')).toHaveLength(2));
+  expect(screen.queryByText('2 clusters')).not.toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Edit filters (Cluster: prod)' })).toBeInTheDocument();
+  // Each solution's facts are shared by both cards, and recreating the solution kept its detection.
   expect(mockFetchInventory.mock.calls).toEqual([
     [datasource, null],
     [datasource, expect.objectContaining({ cluster: 'prod' })],
   ]);
+  expect(jest.mocked(resolveKubernetesDatasource)).toHaveBeenCalledTimes(1);
   // Bound to the datasource the card resolved.
   expect(JSON.parse(window.localStorage.getItem(kubernetesFilterStorageKey()) ?? '')).toMatchObject({
     datasourceUid: 'k8s-uid',
