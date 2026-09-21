@@ -514,13 +514,12 @@ export class BackendSrv implements BackendService {
                   return throwError(() => error);
                 }
 
-                let authChecker = this.loginPing();
-                if (hasRotatableSession(this.dependencies.contextSrv.user.authenticatedBy)) {
-                  const expired = getSessionExpiry() * 1000 < Date.now();
-                  if (expired) {
-                    authChecker = this.rotateToken();
-                  }
-                }
+                // The server can require rotation before the browser's expiry deadline.
+                const needsRotation =
+                  error.data?.messageId === 'session.token.rotate' ||
+                  (hasRotatableSession(this.dependencies.contextSrv.user.authenticatedBy) &&
+                    getSessionExpiry() * 1000 < Date.now());
+                const authChecker = needsRotation ? this.rotateToken() : this.loginPing();
 
                 return from(authChecker).pipe(
                   catchError((err) => {
