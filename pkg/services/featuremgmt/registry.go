@@ -992,6 +992,14 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
+			Name:        "grafana.savedQueriesSearch",
+			Description: "Enables unified search for saved queries",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSharingSquad,
+			Generate:    Generate{Go: true},
+			Expression:  "false",
+		},
+		{
 			Name:        "grafana.savedQueriesPage",
 			Description: "Enables the dedicated Saved queries page and its navigation entry",
 			Stage:       FeatureStageExperimental,

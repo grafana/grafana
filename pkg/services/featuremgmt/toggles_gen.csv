@@ -113,6 +113,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-04-16,disableNumericMetricsSortingInExpressions,experimental,@grafana/data-sources-plugins,false,true,false
 2024-04-22,grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,false
 2022-10-07,queryLibrary,GA,@grafana/sharing-squad,false,false,false
+2026-09-18,grafana.savedQueriesSearch,experimental,@grafana/sharing-squad,false,false,false
 2026-09-16,grafana.savedQueriesPage,experimental,@grafana/sharing-squad,false,false,false
 2026-09-16,playlistsRBAC,GA,@grafana/sharing-squad,false,false,false
 2026-09-16,savedQueriesRBAC,GA,@grafana/sharing-squad,false,false,false
