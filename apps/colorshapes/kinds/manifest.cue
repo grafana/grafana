@@ -63,8 +63,8 @@ v0alpha1: {
 			"/events": {
 				"GET": {
 					name: "listEvents"
-					request: { query: { from?: string, to?: string } }
-					response: { items: [...{ eventId: string, projectId: string, message: string, occurredAt: int64 }] }
+					request: {query: {from?: string, to?: string}}
+					response: {items: [...{eventId: string, projectId: string, message: string, occurredAt: int64}]}
 				}
 			}
 		}

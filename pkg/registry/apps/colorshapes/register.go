@@ -8,8 +8,8 @@ import (
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
 
-	colorshapesapp "github.com/grafana/grafana/apps/colorshapes/pkg/app"
 	"github.com/grafana/grafana/apps/colorshapes/pkg/apis/manifestdata"
+	colorshapesapp "github.com/grafana/grafana/apps/colorshapes/pkg/app"
 	colorshapesstorage "github.com/grafana/grafana/pkg/storage/colorshapes"
 )
 
