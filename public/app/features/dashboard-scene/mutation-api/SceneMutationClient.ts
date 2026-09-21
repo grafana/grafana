@@ -34,7 +34,7 @@ export class SceneMutationClient<TScene extends MutationTargetScene> implements 
   private commands: Map<string, CommandRegistration<TScene>> = new Map();
 
   constructor(
-    private scene: TScene,
+    protected scene: TScene,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- payload types vary per command; each is validated against its own schema before dispatch
     commands: Array<MutationCommand<any, TScene>>
   ) {
@@ -99,6 +99,11 @@ export class SceneMutationClient<TScene extends MutationTargetScene> implements 
 
   getAvailableCommands(): string[] {
     return Array.from(this.commands.keys());
+  }
+
+  /** Whether a registered command is read-only. False (not true) for a name not found here. */
+  protected isReadOnly(type: string): boolean {
+    return this.commands.get(type.toUpperCase())?.readOnly ?? false;
   }
 }
 

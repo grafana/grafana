@@ -230,7 +230,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.warning.text,
 
     '&:hover, &:focus': {
-      background: theme.colors.warning.background,
+      background: theme.colors.warning.subtleBackground,
       color: theme.colors.warning.textEmphasis,
     },
   }),

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"math/rand"
+	"net/http"
 	"slices"
 	"strconv"
 	"strings"
@@ -625,6 +626,7 @@ func (s *searchServer) ListManagedObjects(ctx context.Context, req *resourcepb.L
 		}
 		if kind.NextPageToken != "" {
 			rsp.Error = &resourcepb.ErrorResult{
+				Code:    http.StatusNotImplemented,
 				Message: "Multiple pages are not yet supported",
 			}
 			return rsp, nil
@@ -833,8 +835,8 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		code := codes.OK
 		if retErr != nil {
 			code = status.Code(retErr)
-		} else if resp != nil && resp.Error != nil {
-			code = grpcCodeFromHTTPStatus(resp.Error.Code)
+		} else if resp != nil {
+			code = grpcCodeFromErrorResult(resp.Error)
 		}
 		if s.vectorMetrics != nil {
 			metricutil.ObserveWithExemplar(ctx,

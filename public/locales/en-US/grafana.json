@@ -6124,6 +6124,17 @@
     "panel-not-supported": {
       "go-back-to-queries": "Go back to Queries"
     },
+    "plan-placeholder-badge": {
+      "text": "Sample data",
+      "tooltip": "The numbers shown are sample data for illustration and do not come from real queries."
+    },
+    "planning-banner": {
+      "build": "Build",
+      "dismiss": "Dismiss",
+      "panel-count_one": "{{count}} panel",
+      "panel-count_other": "{{count}} panels",
+      "plan-label": "Plan"
+    },
     "public-dashboard-not-available": {
       "does-not-exist": "The dashboard you are trying to access does not exist",
       "paused": "This dashboard has been paused by the administrator",
@@ -13230,6 +13241,7 @@
     "history": {
       "add-block": "Add block",
       "add-query": "Add query",
+      "add-tag": "Add tag",
       "delete-block": "Delete block",
       "duplicate-block": "Duplicate block",
       "duplicate-query": "Duplicate query",
@@ -13239,11 +13251,21 @@
       "redo": "Redo",
       "redo-action": "Redo: {{action}}",
       "remove-query": "Remove query",
+      "remove-tag": "Remove tag",
       "select-query": "Select query",
       "split-block": "Split block",
       "switch-datasource": "Switch datasource",
       "undo": "Undo",
       "undo-action": "Undo: {{action}}"
+    },
+    "incidents": {
+      "attach-title": "Attach to incident",
+      "attached": "Notebook attached to \"{{incident}}\"",
+      "attached-untitled": "Notebook attached to the incident",
+      "caption": "Notebook: {{title}}",
+      "declare": "Declare incident",
+      "menu": "IRM",
+      "view-incident": "View incident"
     },
     "list": {
       "count_one": "{{count}} notebook",
@@ -16523,6 +16545,7 @@
     "description-page-size": "Number of rows per page. When empty, the page size is based on the panel height.",
     "description-styling-from-field": "A field containing JSON objects with CSS properties",
     "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
+    "description-zebra-striping": "Alternate the background color of every other row",
     "frame-picker": {
       "label": "Query"
     },
@@ -16561,6 +16584,7 @@
     "name-tooltip-placement": "Tooltip placement",
     "name-wrap-header-text": "Wrap header text",
     "name-wrap-text": "Wrap text",
+    "name-zebra-striping": "Zebra striping",
     "no-value-placeholder": "No rows",
     "placeholder-column-width": "auto",
     "placeholder-frozen-columns": "none",

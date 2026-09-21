@@ -46,7 +46,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.41.4 // @grafana/grafana-operator-experience-squad
 	github.com/aws/aws-sdk-go-v2/service/sts v1.44.0 // @grafana/grafana-operator-experience-squad
 	github.com/aws/smithy-go v1.27.3 // @grafana/data-sources-plugins
-	github.com/beevik/etree v1.7.0 // @grafana/grafana-backend-group
+	github.com/beevik/etree v1.8.0 // @grafana/grafana-backend-group
 	github.com/benbjohnson/clock v1.3.5 // @grafana/alerting-backend
 	github.com/blevesearch/bleve/v2 v2.5.7 // @grafana/grafana-search-and-storage
 	github.com/blevesearch/bleve_index_api v1.3.11 // @grafana/grafana-search-and-storage
@@ -711,6 +711,8 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 	software.sslmate.com/src/go-pkcs12 v0.7.2 // indirect
 )
+
+require github.com/mostynb/go-grpc-compression v1.2.3 // @grafana/grafana-search-and-storage
 
 replace (
 	// Use our fork of dolthub/go-mysql-server which adds TableHintedTable for FOR (...) hints

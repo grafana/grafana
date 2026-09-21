@@ -197,7 +197,7 @@ receivers:
 		require.NoError(t, err)
 		assert.NotEmpty(t, route.Version) // Test separately so we don't couple this test to version consistency.
 		route.Version = ""
-		require.Equal(t, &ManagedRoute{
+		require.Equal(t, &v1.ManagedRoute{
 			Name:     extra.Identifier,
 			Version:  "",
 			Receiver: "r1",
@@ -240,7 +240,7 @@ mute_time_intervals:
 		require.NoError(t, err)
 		assert.NotEmpty(t, route.Version) // Test separately so we don't couple this test to version consistency.
 		route.Version = ""
-		require.Equal(t, &ManagedRoute{
+		require.Equal(t, &v1.ManagedRoute{
 			Name:     extra.Identifier,
 			Version:  "",
 			Receiver: "receiver1" + expectedDedupSuffix,
