@@ -1320,127 +1320,129 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	}
 }
 
-func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*resourcepb.ReadRequest) ([]*BackendReadResponse, error) {
-	responses := make([]*BackendReadResponse, len(requests))
-	type batchReadEntry struct {
-		index int
-		key   kv.DataKey
-	}
-	entries := make([]batchReadEntry, 0, len(requests))
-	keys := make([]kv.DataKey, 0, len(requests))
+const batchReadResolveSize = 50
 
-	// Reject a too-large RV the same way ReadResource does. GetResourceKeyAtRevision
-	// would otherwise resolve the highest retained revision below it, so the batch
-	// and single-read paths would disagree when search and storage briefly diverge.
-	// The latest RV is fetched once and shared across the batch.
-	var maxReqRV int64
-	for _, req := range requests {
-		if req != nil && req.Key != nil {
-			if rv := ToSnowflakeRV(req.ResourceVersion); rv > maxReqRV {
-				maxReqRV = rv
+func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*resourcepb.ReadRequest) (iter.Seq2[*BackendReadResponse, error], error) {
+	return func(yield func(*BackendReadResponse, error) bool) {
+		// Reject a too-large RV the same way ReadResource does. GetResourceKeyAtRevision
+		// would otherwise resolve the highest retained revision below it, so the batch
+		// and single-read paths would disagree when search and storage briefly diverge.
+		var maxReqRV int64
+		for _, req := range requests {
+			if req != nil && req.Key != nil {
+				maxReqRV = max(maxReqRV, ToSnowflakeRV(req.ResourceVersion))
 			}
 		}
-	}
-	var latestRV int64
-	if maxReqRV > 0 {
-		latestRV = k.snowflake.Generate().Int64()
-		if lastEventKey, err := k.eventStore.LastEventKey(ctx); err == nil {
-			latestRV = lastEventKey.ResourceVersion
-		} else if !errors.Is(err, ErrNotFound) {
-			return nil, fmt.Errorf("failed to fetch latest resource version: %w", err)
-		}
-	}
-
-	for i, req := range requests {
-		if req == nil || req.Key == nil {
-			responses[i] = &BackendReadResponse{Error: NewBadRequestError("missing key")}
-			continue
-		}
-
-		rv := ToSnowflakeRV(req.ResourceVersion)
-		if rv > latestRV {
-			responses[i] = &BackendReadResponse{Error: NewBadRequestError(fmt.Sprintf("too large resource version: %d (current %d)", rv, latestRV))}
-			continue
-		}
-		name := req.Key.Name
-		getKey := GetRequestKey{
-			Group:     req.Key.Group,
-			Resource:  req.Key.Resource,
-			Namespace: req.Key.Namespace,
-			Name:      name,
-		}
-		meta, err := k.dataStore.GetResourceKeyAtRevision(ctx, getKey, rv)
-		if errors.Is(err, ErrNotFound) {
-			responses[i] = &BackendReadResponse{Error: NewNotFoundError(req.Key)}
-			continue
-		}
-		if err != nil {
-			responses[i] = &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
-			continue
-		}
-
-		dataKey := kv.DataKey{
-			Group:           req.Key.Group,
-			Resource:        req.Key.Resource,
-			Namespace:       req.Key.Namespace,
-			Name:            name,
-			ResourceVersion: meta.ResourceVersion,
-			Action:          meta.Action,
-			Folder:          meta.Folder,
-			GUID:            meta.GUID,
-		}
-		entries = append(entries, batchReadEntry{index: i, key: dataKey})
-		keys = append(keys, dataKey)
-	}
-
-	if len(keys) == 0 {
-		return responses, nil
-	}
-
-	values := make(map[string][]byte, len(keys))
-	var batchErr error
-	for obj, err := range k.dataStore.BatchGet(ctx, keys) {
-		if err != nil {
-			batchErr = err
-			break
-		}
-		value, err := readAndClose(obj.Value)
-		if err != nil {
-			batchErr = err
-			break
-		}
-		values[obj.Key.String()] = value
-	}
-
-	for _, entry := range entries {
-		// A late batch failure must not discard values already read.
-		if value, ok := values[entry.key.String()]; ok {
-			responses[entry.index] = &BackendReadResponse{
-				Key:             requests[entry.index].Key,
-				ResourceVersion: entry.key.ResourceVersion,
-				Value:           value,
-				Folder:          entry.key.Folder,
+		var latestRV int64
+		if maxReqRV > 0 {
+			latestRV = k.snowflake.Generate().Int64()
+			if lastEventKey, err := k.eventStore.LastEventKey(ctx); err == nil {
+				latestRV = lastEventKey.ResourceVersion
+			} else if !errors.Is(err, ErrNotFound) {
+				yield(nil, fmt.Errorf("failed to fetch latest resource version: %w", err))
+				return
 			}
-			continue
 		}
-		// A batch-level failure is a 500; an individually missing key means the
-		// resource vanished between resolve and read (e.g. GC), which is a not-found
-		// like the single-read path returns.
-		errRes := NewNotFoundError(requests[entry.index].Key)
-		if batchErr != nil {
-			errRes = &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: batchErr.Error()}
-		}
-		// Folder/RV are set so authorization (which runs before the error surfaces)
-		// checks the real folder instead of denying on an empty one.
-		responses[entry.index] = &BackendReadResponse{
-			Key:             requests[entry.index].Key,
-			ResourceVersion: entry.key.ResourceVersion,
-			Folder:          entry.key.Folder,
-			Error:           errRes,
-		}
-	}
 
-	return responses, nil
+		type batchReadEntry struct {
+			request  *resourcepb.ReadRequest
+			key      kv.DataKey
+			response *BackendReadResponse
+		}
+		for requestBatch := range slices.Chunk(requests, batchReadResolveSize) {
+			entries := make([]batchReadEntry, 0, len(requestBatch))
+			keys := make([]kv.DataKey, 0, len(requestBatch))
+			for _, req := range requestBatch {
+				entry := batchReadEntry{request: req}
+				if req == nil || req.Key == nil {
+					entry.response = &BackendReadResponse{Error: NewBadRequestError("missing key")}
+					entries = append(entries, entry)
+					continue
+				}
+
+				rv := ToSnowflakeRV(req.ResourceVersion)
+				if rv > latestRV {
+					entry.response = &BackendReadResponse{Error: NewBadRequestError(fmt.Sprintf("too large resource version: %d (current %d)", rv, latestRV))}
+					entries = append(entries, entry)
+					continue
+				}
+				meta, err := k.dataStore.GetResourceKeyAtRevision(ctx, GetRequestKey{
+					Group:     req.Key.Group,
+					Resource:  req.Key.Resource,
+					Namespace: req.Key.Namespace,
+					Name:      req.Key.Name,
+				}, rv)
+				if errors.Is(err, ErrNotFound) {
+					entry.response = &BackendReadResponse{Error: NewNotFoundError(req.Key)}
+					entries = append(entries, entry)
+					continue
+				}
+				if err != nil {
+					entry.response = &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
+					entries = append(entries, entry)
+					continue
+				}
+
+				entry.key = kv.DataKey{
+					Group:           req.Key.Group,
+					Resource:        req.Key.Resource,
+					Namespace:       req.Key.Namespace,
+					Name:            req.Key.Name,
+					ResourceVersion: meta.ResourceVersion,
+					Action:          meta.Action,
+					Folder:          meta.Folder,
+					GUID:            meta.GUID,
+				}
+				entries = append(entries, entry)
+				keys = append(keys, entry.key)
+			}
+
+			next, stop := iter.Pull2(k.dataStore.BatchGet(ctx, keys))
+			var peek DataObj
+			var peekErr error
+			var hasPeek bool
+			for _, entry := range entries {
+				if entry.response != nil {
+					if !yield(entry.response, nil) {
+						stop()
+						return
+					}
+					continue
+				}
+				if !hasPeek {
+					peek, peekErr, hasPeek = next()
+					if peekErr != nil {
+						stop()
+						yield(nil, peekErr)
+						return
+					}
+				}
+
+				response := &BackendReadResponse{
+					Key:             entry.request.Key,
+					ResourceVersion: entry.key.ResourceVersion,
+					Folder:          entry.key.Folder,
+				}
+				if hasPeek && peek.Key.String() == entry.key.String() {
+					value, err := readAndClose(peek.Value)
+					if err != nil {
+						stop()
+						yield(nil, err)
+						return
+					}
+					response.Value = value
+					hasPeek = false
+				} else {
+					response.Error = NewNotFoundError(entry.request.Key)
+				}
+				if !yield(response, nil) {
+					stop()
+					return
+				}
+			}
+			stop()
+		}
+	}, nil
 }
 
 // ListIterator returns an iterator for listing resources.

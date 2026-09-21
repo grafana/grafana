@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"iter"
 	"net/http"
 	"slices"
 
@@ -64,7 +65,6 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 		listRv = searchResp.GetResourceVersion()
 	}
 
-	pageBytes := 0
 	rsp := &resourcepb.ListResponse{
 		ResourceVersion: listRv,
 	}
@@ -79,58 +79,13 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 		}}, nil
 	}
 
-	// Chunked so a large page neither buffers every body nor lets a later hit's
-	// error fail a page the client never reaches.
-	for chunk := range slices.Chunk(rows, searchReadChunkSize) {
-		values, batched, err := s.readSearchRows(ctx, chunk)
-		if err != nil {
-			return nil, err
-		}
+	values, batched, err := s.readSearchRows(ctx, rows)
+	if err != nil {
+		return nil, err
+	}
 
-		for i, row := range chunk {
-			val := values[i]
-			if val == nil {
-				return &resourcepb.ListResponse{Error: &resourcepb.ErrorResult{
-					Code:    http.StatusInternalServerError,
-					Message: "empty resource read response",
-				}}, nil
-			}
-			// The batched read did no authorization, so authorize each row here (the
-			// fallback path already authorized inside Read). Do it before surfacing a
-			// read error, so an unauthorized row is skipped, not revealed as errored.
-			// authorizeRead surfaces a stale NotFound (pruned/GC'd between search and
-			// read) without authorizing, like server.read.
-			if batched && row.key != nil {
-				if errRes := s.authorizeRead(ctx, user, row.key, val); errRes != nil {
-					if errRes.Code == http.StatusForbidden {
-						continue
-					}
-					return &resourcepb.ListResponse{Error: errRes}, nil
-				}
-			}
-			if err := ErrorFromResponse(val.Error, nil); err != nil {
-				resErr := AsErrorResult(err)
-				if resErr.Code == http.StatusForbidden {
-					continue
-				}
-				return &resourcepb.ListResponse{Error: resErr}, nil
-			}
-			pageBytes += len(val.Value)
-			rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
-				Value:           val.Value,
-				ResourceVersion: val.ResourceVersion,
-			})
-			if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= s.maxPageSizeBytes {
-				token, err := NewSearchContinueToken(row.sortFields, listRv)
-				if err != nil {
-					return &resourcepb.ListResponse{
-						Error: NewBadRequestError("invalid continue token"),
-					}, nil
-				}
-				rsp.NextPageToken = token
-				return rsp, nil
-			}
-		}
+	if result := s.consumeSearchRows(ctx, user, req, rows, values, batched, listRv, rsp); result != nil {
+		return result, nil
 	}
 
 	if searchListNeedsContinue(req.Limit, len(rows), searchResp.GetTotalHitsExact()) {
@@ -252,11 +207,83 @@ func decodeListSearchRows(response *resourcepb.ResourceSearchResponse) ([]listSe
 	return rows, nil
 }
 
-// searchReadChunkSize caps the over-read to one chunk while keeping reads
-// batched. Kept small because BatchReadResource has no byte budget.
-const searchReadChunkSize = 10
+func (s *server) consumeSearchRows(
+	ctx context.Context,
+	user claims.AuthInfo,
+	req *resourcepb.ListRequest,
+	rows []listSearchRow,
+	values iter.Seq2[*BackendReadResponse, error],
+	batched bool,
+	listRV int64,
+	rsp *resourcepb.ListResponse,
+) *resourcepb.ListResponse {
+	i := 0
+	pageBytes := 0
+	for val, readErr := range values {
+		if readErr != nil {
+			return &resourcepb.ListResponse{Error: &resourcepb.ErrorResult{
+				Code:    http.StatusInternalServerError,
+				Message: readErr.Error(),
+			}}
+		}
+		if i >= len(rows) {
+			return &resourcepb.ListResponse{Error: &resourcepb.ErrorResult{
+				Code:    http.StatusInternalServerError,
+				Message: "batch resource reader returned too many responses",
+			}}
+		}
+		row := rows[i]
+		i++
+		if val == nil {
+			return &resourcepb.ListResponse{Error: &resourcepb.ErrorResult{
+				Code:    http.StatusInternalServerError,
+				Message: "empty resource read response",
+			}}
+		}
+		// The batched read did no authorization, so authorize each row here (the
+		// fallback path already authorized inside Read). Do it before surfacing a
+		// read error, so an unauthorized row is skipped, not revealed as errored.
+		// authorizeRead surfaces a stale NotFound (pruned/GC'd between search and
+		// read) without authorizing, like server.read.
+		if batched && row.key != nil {
+			if errRes := s.authorizeRead(ctx, user, row.key, val); errRes != nil {
+				if errRes.Code == http.StatusForbidden {
+					continue
+				}
+				return &resourcepb.ListResponse{Error: errRes}
+			}
+		}
+		if err := ErrorFromResponse(val.Error, nil); err != nil {
+			resErr := AsErrorResult(err)
+			if resErr.Code == http.StatusForbidden {
+				continue
+			}
+			return &resourcepb.ListResponse{Error: resErr}
+		}
+		pageBytes += len(val.Value)
+		rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
+			Value:           val.Value,
+			ResourceVersion: val.ResourceVersion,
+		})
+		if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= s.maxPageSizeBytes {
+			token, err := NewSearchContinueToken(row.sortFields, listRV)
+			if err != nil {
+				return &resourcepb.ListResponse{Error: NewBadRequestError("invalid continue token")}
+			}
+			rsp.NextPageToken = token
+			return rsp
+		}
+	}
+	if i != len(rows) {
+		return &resourcepb.ListResponse{Error: &resourcepb.ErrorResult{
+			Code:    http.StatusInternalServerError,
+			Message: fmt.Sprintf("batch resource reader returned %d responses for %d requests", i, len(rows)),
+		}}
+	}
+	return nil
+}
 
-func (s *server) readSearchRows(ctx context.Context, rows []listSearchRow) ([]*BackendReadResponse, bool, error) {
+func (s *server) readSearchRows(ctx context.Context, rows []listSearchRow) (iter.Seq2[*BackendReadResponse, error], bool, error) {
 	requests := make([]*resourcepb.ReadRequest, len(rows))
 	for i, row := range rows {
 		requests[i] = &resourcepb.ReadRequest{
@@ -265,11 +292,10 @@ func (s *server) readSearchRows(ctx context.Context, rows []listSearchRow) ([]*B
 		}
 	}
 
-	// The caller applies the byte/count page cutoff: BatchReadResource has no byte budget.
 	values, err := s.backend.BatchReadResource(ctx, requests)
 	if err == nil {
-		if len(values) != len(rows) {
-			return nil, true, fmt.Errorf("batch resource reader returned %d responses for %d requests", len(values), len(rows))
+		if values == nil {
+			return nil, true, fmt.Errorf("batch resource reader returned a nil iterator")
 		}
 		return values, true, nil
 	}
@@ -278,24 +304,28 @@ func (s *server) readSearchRows(ctx context.Context, rows []listSearchRow) ([]*B
 	}
 
 	// Read authorizes internally, so the caller does not re-check the fallback path.
-	values = make([]*BackendReadResponse, len(rows))
-	for i, row := range rows {
-		val, err := s.Read(ctx, &resourcepb.ReadRequest{
-			Key:             row.key,
-			ResourceVersion: row.resourceVersion,
-		})
-		if val == nil {
-			values[i] = &BackendReadResponse{Error: AsErrorResult(err)}
-			continue
+	return func(yield func(*BackendReadResponse, error) bool) {
+		for _, row := range rows {
+			val, err := s.Read(ctx, &resourcepb.ReadRequest{
+				Key:             row.key,
+				ResourceVersion: row.resourceVersion,
+			})
+			if val == nil {
+				if !yield(&BackendReadResponse{Error: AsErrorResult(err)}, nil) {
+					return
+				}
+				continue
+			}
+			if !yield(&BackendReadResponse{
+				Key:             row.key,
+				ResourceVersion: val.ResourceVersion,
+				Value:           val.Value,
+				Error:           val.Error,
+			}, nil) {
+				return
+			}
 		}
-		values[i] = &BackendReadResponse{
-			Key:             row.key,
-			ResourceVersion: val.ResourceVersion,
-			Value:           val.Value,
-			Error:           val.Error,
-		}
-	}
-	return values, false, nil
+	}, false, nil
 }
 
 // tokenFromOtherListPath reports whether a continue token was issued by the other

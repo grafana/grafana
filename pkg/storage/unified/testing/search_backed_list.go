@@ -3,6 +3,7 @@ package test
 import (
 	"context"
 	"fmt"
+	"iter"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -76,7 +77,7 @@ type countingBackend struct {
 	reads      atomic.Int64
 }
 
-func (c *countingBackend) BatchReadResource(ctx context.Context, reqs []*resourcepb.ReadRequest) ([]*resource.BackendReadResponse, error) {
+func (c *countingBackend) BatchReadResource(ctx context.Context, reqs []*resourcepb.ReadRequest) (iter.Seq2[*resource.BackendReadResponse, error], error) {
 	c.batchReads.Add(1)
 	return c.StorageBackend.BatchReadResource(ctx, reqs)
 }
@@ -129,7 +130,7 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		deniedFolder = "folder-denied"
 		matchTeam    = "a"
 		otherTeam    = "b"
-		authorized   = 55 // > searchReadChunkSize (10) so the read crosses several chunk boundaries
+		authorized   = 55 // > batchReadResolveSize (50) so the read crosses an internal batch boundary
 		unauthorized = 5
 		otherLabel   = 3
 	)
@@ -231,6 +232,9 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 	}
 
 	t.Run("paginates the full authorized set with a stable resource version", func(t *testing.T) {
+		counting.batchReads.Store(0)
+		counting.reads.Store(0)
+
 		got := map[string]want{}
 		var token string
 		var listRV int64
@@ -265,6 +269,11 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 
 		require.Greater(t, pages, 1, "expected multiple pages")
 		require.Equal(t, wantByName, got, "exact names, bodies, and updated resource versions")
+		if opts.ExpectBatchReads {
+			require.Equal(t, int64(pages), counting.batchReads.Load(), "each page should use one lazy batched read")
+			require.GreaterOrEqual(t, counting.batchReads.Load(), int64(2), "pagination should exercise multiple batched reads")
+			require.Equal(t, int64(0), counting.reads.Load())
+		}
 	})
 
 	t.Run("returns the whole authorized set on a single large page", func(t *testing.T) {
@@ -278,9 +287,9 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		require.Len(t, resp.Items, authorized)
 
 		if opts.ExpectBatchReads {
-			// Compile filters the denied folder during search, so 55 hits reach the
-			// body reads: six batched reads over a 10-item chunk, no single reads.
-			require.Equal(t, int64(6), counting.batchReads.Load())
+			// Compile filters the denied folder during search, so all 55 hits reach
+			// one lazy batched read call and no single reads.
+			require.Equal(t, int64(1), counting.batchReads.Load())
 			require.Equal(t, int64(0), counting.reads.Load())
 		}
 	})

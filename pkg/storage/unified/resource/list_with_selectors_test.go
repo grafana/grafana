@@ -987,8 +987,7 @@ func TestListUsesSearchForAnAllowlistedResourceWithoutSelectors(t *testing.T) {
 func TestListWithSelectorsStopsReadingAtPageCutoff(t *testing.T) {
 	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
 
-	// A full search page of hits, far more than one read chunk.
-	rows := make([]*resourcepb.ResourceTableRow, 0, searchReadChunkSize*3)
+	rows := make([]*resourcepb.ResourceTableRow, 0, 30)
 	for i := 0; i < cap(rows); i++ {
 		rows = append(rows, &resourcepb.ResourceTableRow{
 			Key:        &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: fmt.Sprintf("item-%d", i)},
@@ -1001,9 +1000,8 @@ func TestListWithSelectorsStopsReadingAtPageCutoff(t *testing.T) {
 	}}
 	backend := &batchFakeBackend{fakeBackend: &fakeBackend{}}
 
-	// maxPageSizeBytes = 1 forces the byte cutoff after the first item, well
-	// before the item-count limit.
-	s := createTestServer(searchClient, 1)
+	// Each response is five bytes, so the byte cutoff is crossed by the third item.
+	s := createTestServer(searchClient, 11)
 	s.backend = backend
 
 	resp, err := s.listWithSelectors(ctx, &resourcepb.ListRequest{
@@ -1015,11 +1013,11 @@ func TestListWithSelectorsStopsReadingAtPageCutoff(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.Len(t, resp.Items, 1)
+	require.Len(t, resp.Items, 3)
 	require.NotEmpty(t, resp.NextPageToken, "a cut-off page must still page forward")
-	// Only the first chunk is read; the rest of the page is never fetched.
 	require.Equal(t, 1, backend.batchCalls)
-	require.Equal(t, searchReadChunkSize, backend.batchReqs)
+	require.Equal(t, len(rows), backend.batchReqs)
+	require.Equal(t, []string{"item-0", "item-1", "item-2"}, backend.pulledNames)
 }
 
 // denyByNameAccess allows everything except names in deny.
@@ -1209,11 +1207,12 @@ func (*fakeBackend) GetResourceLastImportTime(context.Context, NamespacedResourc
 
 type batchFakeBackend struct {
 	*fakeBackend
-	errored    map[string]struct{}
-	notFound   map[string]struct{}
-	batchCalls int
-	batchReqs  int
-	readCalls  int
+	errored     map[string]struct{}
+	notFound    map[string]struct{}
+	batchCalls  int
+	batchReqs   int
+	readCalls   int
+	pulledNames []string
 }
 
 func (b *batchFakeBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *BackendReadResponse {
@@ -1221,34 +1220,35 @@ func (b *batchFakeBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	return b.fakeBackend.ReadResource(ctx, req)
 }
 
-func (b *batchFakeBackend) BatchReadResource(_ context.Context, requests []*resourcepb.ReadRequest) ([]*BackendReadResponse, error) {
+func (b *batchFakeBackend) BatchReadResource(_ context.Context, requests []*resourcepb.ReadRequest) (iter.Seq2[*BackendReadResponse, error], error) {
 	b.batchCalls++
 	b.batchReqs += len(requests)
-	responses := make([]*BackendReadResponse, len(requests))
-	for i, req := range requests {
-		if _, forbidden := b.forbidden[req.Key.Name]; forbidden {
-			responses[i] = &BackendReadResponse{
-				Key:   req.Key,
-				Error: &resourcepb.ErrorResult{Code: http.StatusForbidden},
+	return func(yield func(*BackendReadResponse, error) bool) {
+		for _, req := range requests {
+			b.pulledNames = append(b.pulledNames, req.Key.Name)
+			var response *BackendReadResponse
+			if _, forbidden := b.forbidden[req.Key.Name]; forbidden {
+				response = &BackendReadResponse{
+					Key:   req.Key,
+					Error: &resourcepb.ErrorResult{Code: http.StatusForbidden},
+				}
+			} else if _, errored := b.errored[req.Key.Name]; errored {
+				response = &BackendReadResponse{
+					Key:   req.Key,
+					Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "boom"},
+				}
+			} else if _, nf := b.notFound[req.Key.Name]; nf {
+				response = &BackendReadResponse{Key: req.Key, Error: NewNotFoundError(req.Key)}
+			} else {
+				response = &BackendReadResponse{
+					Key:             req.Key,
+					ResourceVersion: req.ResourceVersion,
+					Value:           []byte("value"),
+				}
 			}
-			continue
-		}
-		if _, errored := b.errored[req.Key.Name]; errored {
-			responses[i] = &BackendReadResponse{
-				Key:   req.Key,
-				Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "boom"},
+			if !yield(response, nil) {
+				return
 			}
-			continue
 		}
-		if _, nf := b.notFound[req.Key.Name]; nf {
-			responses[i] = &BackendReadResponse{Key: req.Key, Error: NewNotFoundError(req.Key)}
-			continue
-		}
-		responses[i] = &BackendReadResponse{
-			Key:             req.Key,
-			ResourceVersion: req.ResourceVersion,
-			Value:           []byte("value"),
-		}
-	}
-	return responses, nil
+	}, nil
 }
