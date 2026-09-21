@@ -12,13 +12,6 @@ export const NOTEBOOKS_BASE_URL = '/notebooks';
 export const NOTEBOOK_EDIT_PARAM = 'edit';
 export const NOTEBOOK_EDIT_PARAM_ON = 'true';
 
-/**
- * `?pdfLayout=true` asks the page to lay itself out as a portrait document rather than a screen —
- * see `isNotebookPdfLayoutUrl` below for why this is the notebook's own param and not the render
- * pipeline's `encoding=pdf`.
- */
-export const NOTEBOOK_PDF_LAYOUT_PARAM = 'pdfLayout';
-export const NOTEBOOK_PDF_LAYOUT_PARAM_ON = 'true';
 
 /**
  * The blank-notebook route. Nothing exists behind it: the page renders an empty notebook and the
@@ -90,21 +83,17 @@ export function isNotebookEditUrl(): boolean {
 }
 
 /**
- * Whether the url asks this page to lay itself out as a portrait document rather than a screen —
- * set by the PDF export (see openNotebookPdf), and reaching the page because Grafana builds the
- * headless browser's target url from the whole `/render/...` request's raw query string, the same
- * way `kiosk`/`hideNav` arrive.
+ * The chromeless route a notebook is drawn on when it is being captured rather than read, which the
+ * PDF export points the headless browser at (see export/openNotebookPdf). Its own route rather than
+ * a mode of the view route, so that nothing a document does not want — app chrome, the page shell,
+ * the toolbar, the controls row — is rendered in the first place.
  *
- * Deliberately a param this feature owns, rather than reading the render pipeline's own
- * `encoding=pdf`: that one belongs to the transport (`pkg/api/render.go` reads it to pick a render
- * type), and a page that keys its layout off it would break the moment that signalling changes.
- * Grafana's own reporting does the same thing, sending its `pdf.*` layout params alongside
- * `encoding` rather than inferring one from the other.
+ * Nested under the notebook rather than a top-level path: `render` is a static segment, which a v6
+ * `<Routes>` ranks above the `:slug?` of the view route, so it cannot be swallowed as a slug. That
+ * is the same ranking `/notebooks/new` already relies on to avoid being read as a uid.
  *
- * Matched exactly against 'true', for the same reason `isNotebookEditUrl` is.
+ * Raw, with no sub-path applied, like `notebookViewUrl`.
  */
-export function isNotebookPdfLayoutUrl(): boolean {
-  const search = new URLSearchParams(locationService.getLocation().search);
-
-  return search.get(NOTEBOOK_PDF_LAYOUT_PARAM) === NOTEBOOK_PDF_LAYOUT_PARAM_ON;
+export function notebookRenderUrl(uid: string): string {
+  return `${notebookViewUrl(uid)}/render`;
 }

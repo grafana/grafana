@@ -4,7 +4,7 @@ import { HistoryWrapper, config, locationService, setLocationService } from '@gr
 
 import {
   isNotebookEditUrl,
-  isNotebookPdfLayoutUrl,
+  notebookRenderUrl,
   notebookEditHref,
   notebookEditUrl,
   notebookShareUrl,
@@ -84,20 +84,14 @@ describe('notebook urls', () => {
   // `encoding=pdf` is the render pipeline's own param, not one this route defines — it reaches the
   // page verbatim because Grafana builds the headless browser's target url from the whole
   // `/render/...` request's raw query string, the same way `kiosk`/`hideNav` do.
-  // Exactly 'true', on the same terms as the edit param. `encoding=pdf` deliberately does not count:
-  // that one belongs to the render transport, and the page owning its own layout signal is the whole
-  // point of this param existing.
-  it.each([
-    ['?pdfLayout=true', true],
-    ['?pdfLayout=false', false],
-    ['?pdfLayout=1', false],
-    ['?encoding=pdf', false],
-    ['', false],
-  ])('reads "%s" as a PDF layout %s', (search, expected) => {
+  // Nested under the notebook, with `render` as a static segment: a v6 `<Routes>` ranks that above
+  // the view route's `:slug?`, so it resolves to the render route rather than being read as a slug —
+  // the same ranking `/notebooks/new` relies on. Nothing generates a notebook slug today anyway.
+  it('nests the render route under the notebook it renders', () => {
     setHistory(1);
-    locationService.push(`/notebooks/nb1${search}`);
 
-    expect(isNotebookPdfLayoutUrl()).toBe(expected);
+    expect(notebookRenderUrl('nb1')).toBe('/notebooks/nb1/render');
+    expect(notebookRenderUrl('nb1').startsWith(`${notebookViewUrl('nb1')}/`)).toBe(true);
   });
 
   it('builds an absolute share url', () => {

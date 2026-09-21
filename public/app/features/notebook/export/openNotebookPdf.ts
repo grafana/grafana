@@ -1,7 +1,7 @@
 import { dateTime, urlUtil } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { NOTEBOOK_PDF_LAYOUT_PARAM, NOTEBOOK_PDF_LAYOUT_PARAM_ON, notebookViewUrl } from '../urls';
+import { notebookRenderUrl } from '../urls';
 
 /** Whatever a caller has on hand for the notebook's current time range — see NotebookExportMenu. */
 export interface NotebookPdfTimeRange {
@@ -47,20 +47,16 @@ function buildRenderUrl(uid: string, timeRange: NotebookPdfTimeRange): string {
 
   // No leading slash: this has to resolve the same way `backendSrv.fetch` resolves a relative url —
   // against Grafana's own `<base href>` tag — or a `window.open` navigation loses the sub-path
-  // Grafana might be served under. `notebookViewUrl` returns a leading slash for react-router's
+  // Grafana might be served under. `notebookRenderUrl` returns a leading slash for react-router's
   // sake, so this only ever strips the one between "render" and it, not the notebook path itself.
-  return urlUtil.renderUrl(`render${notebookViewUrl(uid)}`, {
-    // Two separate concerns that happen to travel together: `encoding` tells the render pipeline to
-    // produce a PDF rather than a PNG (read server-side, see pkg/api/render.go), while the notebook's
-    // own param below tells the *page* to lay itself out as a portrait document. Keeping them
-    // distinct means the page never depends on how the transport signals its output format.
+  //
+  // The path is the notebook's chromeless render route, which is what makes this a document: no app
+  // chrome, no toolbar, no controls row, and page geometry of its own. Nothing here has to ask for
+  // that — `kiosk`/`hideNav` used to, back when this pointed at the ordinary notebook page.
+  return urlUtil.renderUrl(`render${notebookRenderUrl(uid)}`, {
+    // For the render pipeline, not the page: read server-side to pick a PDF over a PNG (see
+    // pkg/api/render.go).
     encoding: 'pdf',
-    [NOTEBOOK_PDF_LAYOUT_PARAM]: NOTEBOOK_PDF_LAYOUT_PARAM_ON,
-    // Suppresses both the app-shell nav (read generically off this param) and, once the notebook's
-    // own toolbar and editing controls check it too, the notebook's chrome — so the capture is just
-    // the document.
-    kiosk: true,
-    hideNav: true,
     orgId: String(contextSrv.user.orgId),
     // The notebook's own $timeRange scene object has the usual from/to/timezone url sync any Scenes
     // time range gets for free — without these, a fresh page load falls back to the notebook's saved

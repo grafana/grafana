@@ -59,11 +59,16 @@ describe('navigateToNotebookPdf', () => {
 
     navigateToNotebookPdf(tab, 'nb1', TIME_RANGE);
 
-    expect(tab.location.href).toMatch(/^render\/notebooks\/nb1\?/);
+    // The notebook's own chromeless render route, not the page a reader opens.
+    expect(tab.location.href).toMatch(/^render\/notebooks\/nb1\/render\?/);
+    // For the transport, to pick a PDF over a PNG.
     expect(tab.location.href).toContain('encoding=pdf');
-    expect(tab.location.href).toContain('pdfLayout=true');
-    expect(tab.location.href).toContain('kiosk=true');
     expect(tab.location.href).toContain('orgId=7');
+    // The route is chromeless and the page leaves out its own chrome, so nothing has to ask for
+    // either — these were needed only while this pointed at the ordinary notebook page.
+    expect(tab.location.href).not.toContain('kiosk');
+    expect(tab.location.href).not.toContain('hideNav');
+    expect(tab.location.href).not.toContain('pdfLayout');
   });
 
   // No leading slash: a leading slash would resolve against the domain root regardless of

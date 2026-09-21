@@ -1,0 +1,79 @@
+import { render } from 'test/test-utils';
+
+import { NotebookPdfLayout } from './NotebookPdfLayout';
+
+/**
+ * Reads the live CSSOM rather than each `<style>` tag's textContent: emotion's "speedy" insertion
+ * mode writes rules straight to the sheet via insertRule, leaving textContent empty.
+ */
+function injectedRules(): string[] {
+  return Array.from(document.styleSheets).flatMap((sheet) => {
+    try {
+      return Array.from(sheet.cssRules).map((rule) => rule.cssText);
+    } catch {
+      return [];
+    }
+  });
+}
+
+function ruleFor(selector: string): string | undefined {
+  // stylis drops the space after a comma, hence `html,body` rather than `html, body`.
+  return injectedRules().find((rule) => rule.includes(selector));
+}
+
+describe('NotebookPdfLayout', () => {
+  it('sizes the document to a portrait sheet, with the inset as padding and a canvas of its own', () => {
+    render(<NotebookPdfLayout />);
+
+    const rule = ruleFor('html,body');
+    // The width has to land on html/body because that is what the renderer measures; constraining
+    // something further in leaves the document as wide as it ever was.
+    expect(rule).toContain('210mm');
+    // Padding rather than an `@page` margin: Chromium paints nothing into a page's margin area, so a
+    // margin would leave a bare-paper band around a canvas that is deliberately not white.
+    expect(rule).toContain('12mm');
+    expect(rule).toMatch(/background:\s*#/);
+  });
+
+  // The only lever a headless-Chrome PDF engine consults for physical page shape.
+  it('declares the page size, with no page margin', () => {
+    render(<NotebookPdfLayout />);
+
+    const rule = injectedRules().find((r) => r.startsWith('@page'));
+    expect(rule).toContain('210mm 297mm');
+    expect(rule).toMatch(/margin:\s*0/);
+  });
+
+  // Fragmentation drops margins at a break but draws padding, so this is what keeps the cell after a
+  // page break off the paper's edge — the body's own padding is spent at the start and end of the
+  // whole flow, not per page.
+  it('gives each cell a leading inset, so a cell that begins a page is not flush', () => {
+    render(<NotebookPdfLayout />);
+
+    expect(ruleFor('notebook-cell-content')).toMatch(/padding-top:\s*4mm/);
+  });
+
+  // Left in place it stacks with the page padding, costing ~110px of a 794px sheet across.
+  it('drops the document column reading-width inset', () => {
+    render(<NotebookPdfLayout />);
+
+    const rule = ruleFor('notebook-document');
+    expect(rule).toContain('max-width: none');
+    expect(rule).toMatch(/padding:\s*0/);
+  });
+
+  // It used to need them, back when this ran on the ordinary notebook route and had to outrank the
+  // page shell's own styling. The render route mounts no shell, so anything still shouting here
+  // would be a sign the route had stopped owning its own page.
+  it('needs no !important, because the render route owns the page', () => {
+    render(<NotebookPdfLayout />);
+
+    const own = injectedRules().filter(
+      (rule) =>
+        rule.includes('html,body') || rule.includes('notebook-cell-content') || rule.includes('notebook-document')
+    );
+
+    expect(own.length).toBeGreaterThan(0);
+    expect(own.join('\n')).not.toContain('!important');
+  });
+});
