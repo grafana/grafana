@@ -15,8 +15,7 @@ export interface DataSourceConnection {
   group: string;
   version: string;
   // Raw datasource plugin type used to join the connection with its plugin metadata.
-  // The backend omits this field when the connection has no plugin.
-  plugin?: string;
+  plugin: string;
 }
 
 export interface DataSourceConnectionList {

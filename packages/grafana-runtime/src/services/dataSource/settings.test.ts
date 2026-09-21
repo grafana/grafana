@@ -10,6 +10,7 @@ import { setDatasourcePluginMetas } from '../pluginMeta/datasources';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
 import {
+  DATASOURCE_CONNECTION_MISSING_PLUGIN_WARNING,
   FALLBACK_TO_BOOTDATA_LIST_WARNING,
   FALLBACK_TO_BOOTDATA_SETTINGS_WARNING,
   FALLBACK_TO_LEGACY_LIST_WARNING,
@@ -1208,6 +1209,24 @@ describe('async instance settings initialization', () => {
       FALLBACK_TO_BOOTDATA_LIST_WARNING,
       expect.objectContaining({ reason: 'datasource-list-parity-mismatch' })
     );
+  });
+
+  it('logs and skips a connection without a plugin type', async () => {
+    backendGet.mockResolvedValueOnce({
+      items: connections.items.map((connection) =>
+        connection.name === 'uid-alpha' ? { ...connection, plugin: undefined } : connection
+      ),
+    });
+
+    initDataSourceInstanceSettings(asyncFixtures, 'Bravo');
+    await getDataSourceInstanceList({ all: true });
+
+    expect(logWarning).toHaveBeenCalledWith(DATASOURCE_CONNECTION_MISSING_PLUGIN_WARNING, {
+      dataSourceUid: 'uid-alpha',
+      dataSourceName: 'Alpha',
+      operation: 'startup',
+      requestUrl: '/apis/query.grafana.app/v0alpha1/namespaces/default/connections',
+    });
   });
 
   it('loads matching settings once per uid', async () => {

@@ -32,6 +32,7 @@ import {
   getDataSourceSettingsUrl,
 } from './api';
 import {
+  DATASOURCE_CONNECTION_MISSING_PLUGIN_WARNING,
   FALLBACK_TO_BOOTDATA_LIST_WARNING,
   FALLBACK_TO_BOOTDATA_SETTINGS_WARNING,
   FALLBACK_TO_LEGACY_LIST_WARNING,
@@ -195,7 +196,17 @@ async function loadAndCommitConnections(operation: 'startup' | 'reload'): Promis
     const connections: Record<string, DataSourceConnectionDescriptor> = {};
 
     for (const connection of response.items ?? []) {
-      const meta = metaById.get(connection.plugin ?? '') ?? metaByAlias.get(connection.plugin ?? '');
+      if (!connection.plugin) {
+        logDataSourceWarning(DATASOURCE_CONNECTION_MISSING_PLUGIN_WARNING, {
+          dataSourceUid: connection.name,
+          dataSourceName: connection.title,
+          operation,
+          requestUrl: getDataSourceConnectionsUrl(),
+        });
+        continue;
+      }
+
+      const meta = metaById.get(connection.plugin) ?? metaByAlias.get(connection.plugin);
       if (!meta) {
         continue;
       }
