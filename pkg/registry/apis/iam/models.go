@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/authinfo"
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/display"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
@@ -55,6 +56,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	legacyTeamStore            *team.LegacyStore
 	externalGroupReconciler    legacy.ExternalGroupReconciler
 	teamBindingLegacyStore     *teambinding.LegacyBindingStore
+	authInfoLegacyStore        *authinfo.LegacyStore
 	ssoLegacyStore             *sso.LegacyStore
 	roleApiInstaller           RoleApiInstaller
 	globalRoleApiInstaller     GlobalRoleApiInstaller
@@ -98,6 +100,10 @@ type IdentityAccessManagementAPIBuilder struct {
 	// non-k8s api route
 	display         *display.DisplayHandler
 	userPermissions *userpermissions.Handler
+	// ssoLoginConfig serves the pre-auth login-config singleton. Constructed in
+	// RegisterAPIService; its route is gated by the resolved IAM features in
+	// GetAPIRoutes. Nil in the standalone NewAPIService path.
+	ssoLoginConfig *sso.LoginConfigHandler
 
 	// ac is used for legacy permission checks in role bindings.
 	// nil where only k8s-mapped permissions are supported.
@@ -119,9 +125,10 @@ type IdentityAccessManagementAPIBuilder struct {
 	// kind's storage mode engages MT-Settings.
 	ssoSettingsClient settingsvc.Service
 
-	// ofClient evaluates the feature flags gating the IAM APIs. The default
-	// client resolves the globally-registered provider at evaluation time.
+	// ofClient preserves the legacy feature-flag path when no explicit startup
+	// feature snapshot is supplied.
 	ofClient openfeature.IClient
+	features *Features
 
 	apiConfig Config
 }
@@ -129,4 +136,12 @@ type IdentityAccessManagementAPIBuilder struct {
 // Config holds IAM-specific configuration
 type Config struct {
 	SingleOrganization bool
+}
+
+type APIServiceOption func(*IdentityAccessManagementAPIBuilder)
+
+func WithFeatures(features Features) APIServiceOption {
+	return func(builder *IdentityAccessManagementAPIBuilder) {
+		builder.features = &features
+	}
 }

@@ -7,11 +7,12 @@ import { act, render, screen, testWithFeatureToggles, waitFor, within } from 'te
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions, grantUserRole, mockDataSource } from 'app/features/alerting/unified/mocks';
-import {
-  setupAdminConfigGet,
-  setupAlertmanagersStatus,
-} from 'app/features/alerting/unified/mocks/server/configure/admin_config';
+import { setupAlertmanagersStatus } from 'app/features/alerting/unified/mocks/server/configure/alertmanagers';
 import { setupDatasourcesEndpoint } from 'app/features/alerting/unified/mocks/server/configure/datasources';
+import {
+  setupAutoSyncConfig,
+  setupAutoSyncConfigAbsent,
+} from 'app/features/alerting/unified/mocks/server/handlers/k8s/config.k8s';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { type SupportedRulesSourceType } from 'app/features/alerting/unified/utils/datasource';
 import {
@@ -120,12 +121,15 @@ describe('Step1AlertmanagerResources', () => {
   });
 
   describe('Step1Content rendering', () => {
-    it('should render permission warning when canImport=false', () => {
+    it('should render permission warning when canImport=false', async () => {
       render(
         <TestWrapper>
           <Step1Content {...defaultStep1Props} canImport={false} />
         </TestWrapper>
       );
+
+      // The YAML source mounts a lazy template dropzone even without import permission.
+      expect(await screen.findByText(/drop template files here or click to upload/i)).toBeInTheDocument();
 
       expect(screen.getByText(/you do not have permission to import notification resources/i)).toBeInTheDocument();
       expect(screen.getByText(/insufficient permissions/i)).toBeInTheDocument();
@@ -160,7 +164,7 @@ describe('Step1AlertmanagerResources', () => {
       expect(datasourceRadio).not.toBeChecked();
     });
 
-    it('should render YAML file upload field when YAML source selected', () => {
+    it('should render YAML file upload field when YAML source selected', async () => {
       render(
         <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
           <Step1Content {...defaultStep1Props} />
@@ -168,7 +172,81 @@ describe('Step1AlertmanagerResources', () => {
       );
 
       expect(screen.getByText(/alertmanager config yaml/i)).toBeInTheDocument();
-      expect(screen.getByText(/upload yaml file/i)).toBeInTheDocument();
+      // FileDropzone's own hidden <small> caption carries the same text, so target the visible one.
+      expect(screen.getByText(/accepted file types: \.yaml, \.yml/i, { selector: ':not(small)' })).toBeInTheDocument();
+      // FileDropzone is lazy-loaded (React.lazy/Suspense) — wait for it to mount.
+      expect(await screen.findByText(/drop yaml file here or click to upload/i)).toBeInTheDocument();
+    });
+
+    it('accepts a YAML file upload and displays it as a removable row', async () => {
+      const { user } = render(
+        <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      const input = await screen.findByLabelText(/alertmanager config yaml/i);
+      await user.upload(input, new File(['route:\n  receiver: default\n'], 'am.yaml', { type: 'application/yaml' }));
+
+      expect(await screen.findByText('am.yaml')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /remove am\.yaml/i })).toBeInTheDocument();
+      // The dropzone itself stays put, so a new drop can still replace the file.
+      expect(screen.getByText(/drop yaml file here or click to upload/i)).toBeInTheDocument();
+    });
+
+    it('rejects a file with a non-YAML extension', async () => {
+      // Real drag-and-drop bypasses the OS dialog's accept filter that userEvent.upload mimics by default.
+      const user = userEvent.setup({ applyAccept: false });
+      render(
+        <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      const input = await screen.findByLabelText(/alertmanager config yaml/i);
+      await user.upload(input, new File(['{}'], 'config.json', { type: 'application/json' }));
+
+      expect(await screen.findByText(/upload failed/i)).toBeInTheDocument();
+      expect(screen.queryByText('config.json')).not.toBeInTheDocument();
+      expect(screen.getByText(/drop yaml file here or click to upload/i)).toBeInTheDocument();
+    });
+
+    it('rejects a .txt file even though its MIME type collides with the accepted .yml bucket', async () => {
+      // Real drag-and-drop bypasses the OS dialog's accept filter that userEvent.upload mimics by default.
+      const user = userEvent.setup({ applyAccept: false });
+      render(
+        <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      const input = await screen.findByLabelText(/alertmanager config yaml/i);
+      await user.upload(input, new File(['hello'], 'notes.txt', { type: 'text/plain' }));
+
+      expect(await screen.findByText(/upload failed/i)).toBeInTheDocument();
+      expect(screen.queryByText('notes.txt')).not.toBeInTheDocument();
+      expect(screen.getByText(/drop yaml file here or click to upload/i)).toBeInTheDocument();
+    });
+
+    it('removes the YAML file when its remove button is clicked', async () => {
+      const { user } = render(
+        <TestWrapper
+          defaultValues={{
+            notificationsSource: 'yaml',
+            notificationsYamlFile: new File(['route:\n  receiver: default\n'], 'am.yaml', {
+              type: 'application/yaml',
+            }),
+          }}
+        >
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      expect(screen.getByText('am.yaml')).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /remove am\.yaml/i }));
+
+      expect(screen.queryByText('am.yaml')).not.toBeInTheDocument();
     });
 
     it('should render datasource picker when datasource source selected', () => {
@@ -184,7 +262,7 @@ describe('Step1AlertmanagerResources', () => {
       expect(screen.getByText(/select data source/i)).toBeInTheDocument();
     });
 
-    it('should render the notification templates uploader for the YAML source', () => {
+    it('should render the notification templates uploader for the YAML source', async () => {
       render(
         <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
           <Step1Content {...defaultStep1Props} />
@@ -192,7 +270,7 @@ describe('Step1AlertmanagerResources', () => {
       );
 
       expect(screen.getByText(/notification templates/i)).toBeInTheDocument();
-      expect(screen.getByText(/drop template files here or click to upload/i)).toBeInTheDocument();
+      expect(await screen.findByText(/drop template files here or click to upload/i)).toBeInTheDocument();
     });
 
     it('should NOT render the templates uploader for the datasource source', () => {
@@ -214,7 +292,7 @@ describe('Step1AlertmanagerResources', () => {
       );
 
       // The dropzone's file input inherits the Field id, so its label resolves to it
-      const input = screen.getByLabelText(/notification templates/i);
+      const input = await screen.findByLabelText(/notification templates/i);
 
       await user.upload(input, [
         new File(['a'], 'dupe.tmpl', { type: 'text/plain' }),
@@ -534,10 +612,18 @@ describe('Step1AlertmanagerResources', () => {
 
       beforeEach(() => {
         setupDataSources(alertmanagerDataSource, mimirDataSource);
+        // useAutoSyncConfiguration gates its Config and datasources queries on
+        // ActionAlertingNotificationsConfigRead, which grantUserRole('Admin') alone doesn't imply
+        // here since roles and permissions are mocked independently. Also repeats the outer
+        // beforeEach's Write grant, since grantUserPermissions replaces rather than extends it.
+        grantUserPermissions([
+          AccessControlAction.AlertingNotificationsWrite,
+          AccessControlAction.ActionAlertingNotificationsConfigRead,
+        ]);
         // Step1Content calls useAutoSyncConfiguration() unconditionally, so every admin+toggle-on
         // render below fires these two queries regardless of what the test exercises — mock them
         // by default for the whole block rather than per test.
-        setupAdminConfigGet(server, null);
+        setupAutoSyncConfig(server);
         setupDatasourcesEndpoint(server, [MIMIR_DS]);
       });
 
@@ -698,6 +784,26 @@ describe('Step1AlertmanagerResources', () => {
         );
 
         await waitFor(() => expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeDisabled());
+      });
+
+      it('disables the auto-sync switch when the Config singleton has not been seeded yet', async () => {
+        grantUserRole('Admin');
+        setupAutoSyncConfigAbsent(server);
+        const user = userEvent.setup();
+
+        render(
+          <TestWrapper defaultValues={{ notificationsSource: 'datasource', notificationsDatasourceUID: MIMIR_DS.uid }}>
+            <Step1Content {...defaultStep1Props} />
+          </TestWrapper>
+        );
+
+        // Wait for the (Config-independent) datasource-capability query to settle and recognize
+        // MIMIR_DS as eligible, so a still-loading disable isn't mistaken for the readiness gate.
+        await user.click(screen.getByRole('combobox'));
+        const mimirOption = await screen.findByRole('option', { name: /^Mimir Alertmanager/ });
+        expect(within(mimirOption).getByText('Auto-sync')).toBeInTheDocument();
+
+        expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeDisabled();
       });
 
       it('enables the auto-sync switch when a Mimir/Cortex datasource is selected', async () => {

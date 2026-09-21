@@ -161,6 +161,20 @@ func TestInstallSchema_ResourcePermissionsGate(t *testing.T) {
 	}
 }
 
+func TestInstallSchema_ConfiguredFeaturesOverrideOpenFeature(t *testing.T) {
+	require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{}))
+	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
+
+	b := &IdentityAccessManagementAPIBuilder{
+		ofClient: openfeature.NewDefaultClient(),
+		features: &Features{ResourcePermissionsAPI: true},
+	}
+	scheme := runtime.NewScheme()
+
+	require.NoError(t, b.InstallSchema(scheme))
+	require.True(t, scheme.Recognizes(iamv0.ResourcePermissionInfo.GroupVersionKind()))
+}
+
 // TestCodecPathResourcesRegisterOneVersionPerType guards apimachinery's LegacyCodec version-order
 // fallback: it only lets preferred_api_version reorder the persisted version when a type has no
 // exact-match GVK. It runs InstallSchema for real (all gates on) and walks every type it registers,
@@ -223,7 +237,7 @@ func assertNoTypeSpansMultipleGVKs(t *testing.T, scheme *runtime.Scheme) {
 		if commonMultiVersionTypes[typ] {
 			continue
 		}
-		obj, ok := reflect.New(typ).Interface().(runtime.Object)
+		obj, ok := reflect.TypeAssert[runtime.Object](reflect.New(typ))
 		if !ok {
 			continue
 		}

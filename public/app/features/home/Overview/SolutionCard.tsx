@@ -31,12 +31,12 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
 
   return (
     <Card noMargin className={styles.card}>
-      <Card.Heading>
+      <Card.Heading className={styles.heading}>
         <Stack direction="row" gap={1.5} alignItems="center">
           <div className={cx(styles.icon, styles.activeIcon)}>
             <Icon name={solution.icon} size="lg" />
           </div>
-          <Stack direction="column" gap={0}>
+          <Stack direction="column" gap={0} minWidth={0}>
             <Text element="h3" variant="h6">
               {solution.title}
             </Text>
@@ -76,7 +76,7 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
         )}
       </Card.Description>
 
-      <Card.Actions>
+      <Card.Actions className={styles.actions}>
         {ctaLoading ? (
           <Skeleton width={120} height={24} />
         ) : cta ? (
@@ -96,7 +96,7 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
               })
             }
           >
-            {cta.label}
+            <Text truncate>{cta.label}</Text>
           </LinkButton>
         ) : null}
       </Card.Actions>
@@ -181,7 +181,7 @@ export function SolutionCardSkeleton() {
   const styles = useStyles2(getStyles, false);
 
   return (
-    <Card noMargin className={styles.card}>
+    <Card noMargin className={styles.card} data-testid="solution-card-skeleton">
       <Card.Heading>
         <Stack direction="row" gap={1.5} alignItems="center">
           <Skeleton width={32} height={32} />
@@ -208,20 +208,22 @@ const getStyles = (theme: GrafanaTheme2, needsAttention: boolean) => ({
     minHeight: theme.spacing(22),
     background: theme.colors.background.canvas,
     border: `1px solid ${theme.colors.border.weak}`,
+    // Card's own template is 'auto 1fr auto'; the 1fr track grows to unbreakable content (nowrap
+    // CTA label) and gets clipped. Cap the content column at the card width.
+    gridTemplateColumns: 'auto minmax(0, 1fr) auto',
     ...(needsAttention && {
       borderColor: `color-mix(in srgb, ${theme.colors.warning.main} 32%, ${theme.colors.border.weak})`,
-      overflow: 'hidden',
-
-      '&::before': {
-        content: '""',
-        position: 'absolute',
-        top: 0,
-        bottom: 0,
-        left: 0,
-        width: theme.spacing(0.375),
-        background: theme.colors.warning.main,
-      },
     }),
+  }),
+  heading: css({
+    // Card.Heading wraps its children in a span flex item whose automatic minimum size is the
+    // min-content of the nowrap `via …` text; let it shrink so that text can truncate.
+    '> span': {
+      minWidth: 0,
+    },
+  }),
+  actions: css({
+    minWidth: 0,
   }),
   icon: css({
     display: 'flex',
@@ -231,6 +233,7 @@ const getStyles = (theme: GrafanaTheme2, needsAttention: boolean) => ({
     borderRadius: theme.shape.radius.default,
     width: theme.spacing(4),
     height: theme.spacing(4),
+    flexShrink: 0,
   }),
   activeIcon: css({
     background: theme.colors.background.secondary,
@@ -250,6 +253,7 @@ const getStyles = (theme: GrafanaTheme2, needsAttention: boolean) => ({
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1),
+    flex: '1 1 0%',
     minWidth: 0,
 
     '&::before': {
@@ -287,12 +291,13 @@ const getStyles = (theme: GrafanaTheme2, needsAttention: boolean) => ({
   textAction: css({
     paddingLeft: theme.spacing(0.5),
     paddingRight: theme.spacing(0.5),
+    maxWidth: '100%',
   }),
   attentionAction: css({
     color: theme.colors.warning.text,
 
     '&:hover, &:focus': {
-      background: theme.colors.warning.background,
+      background: theme.colors.warning.subtleBackground,
       color: theme.colors.warning.textEmphasis,
     },
   }),

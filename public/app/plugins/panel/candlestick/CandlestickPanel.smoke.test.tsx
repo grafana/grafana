@@ -93,6 +93,34 @@ describe('CandlestickPanel', () => {
 
       expect(screen.getByText(/Unable to render data/i)).toBeVisible();
     });
+
+    it('null values in the time field (#130379)', () => {
+      // A null time cell must route to the error view instead of reaching the
+      // chart, where zoom-to-data would propagate it into range parsing and crash.
+      const frame = toDataFrame({
+        refId: 'A',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, null] },
+          { name: 'open', values: [10, 11] },
+          { name: 'high', values: [12, 13] },
+          { name: 'low', values: [9, 10] },
+          { name: 'close', values: [11, 12] },
+        ],
+      });
+
+      const props = getPanelProps<Options>(defaultPanelOptions, {
+        data: {
+          state: LoadingState.Done,
+          series: [frame],
+          timeRange: getDefaultTimeRange(),
+        },
+      });
+
+      render(<CandlestickPanel {...props} />);
+
+      expect(screen.getByText(/Unable to render data/i)).toBeVisible();
+      expect(screen.queryByTestId('candlestick-timeseries-stub')).not.toBeInTheDocument();
+    });
   });
 
   describe('stubbed TimeSeries', () => {

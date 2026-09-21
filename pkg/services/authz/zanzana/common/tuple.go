@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
@@ -245,12 +246,7 @@ func IsSubresourceRelation(relation string) bool {
 }
 
 func isValidRelation(relation string, valid []string) bool {
-	for _, r := range valid {
-		if r == relation {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(valid, relation)
 }
 
 func IsFolderResourceTuple(t *openfgav1.TupleKey) bool {

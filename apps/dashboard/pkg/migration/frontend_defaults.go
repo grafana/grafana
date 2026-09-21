@@ -840,11 +840,9 @@ func cleanupPanels(dashboard map[string]interface{}) {
 		filteredPanels := []interface{}{}
 		for _, panelInterface := range panels {
 			if panel, ok := panelInterface.(map[string]interface{}); ok {
-				// Skip panels with repeatPanelId or repeatedByRow
-				if _, hasRepeatPanelId := panel["repeatPanelId"]; hasRepeatPanelId {
-					continue
-				}
-				if _, hasRepeatedByRow := panel["repeatedByRow"]; hasRepeatedByRow {
+				// Truthy check, not key existence: a present-but-falsy value
+				// (repeatPanelId:0, repeatedByRow:false) must not drop the panel.
+				if schemaversion.IsTruthy(panel["repeatPanelId"]) || schemaversion.IsTruthy(panel["repeatedByRow"]) {
 					continue
 				}
 				filteredPanels = append(filteredPanels, panel)

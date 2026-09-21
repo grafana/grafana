@@ -32,20 +32,40 @@ import (
 )
 
 func TestSearch(t *testing.T) {
+	doSearch := func(t *testing.T, handler *SearchHandler, path string) *MockClient {
+		t.Helper()
+		client := handler.client.(*MockClient)
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", path, nil)
+		req.Header.Add("content-type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+		handler.DoSearch(rr, req)
+		return client
+	}
+
 	t.Run("should hit unified storage search handler", func(t *testing.T) {
 		mockClient := &MockClient{}
 		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), mockClient, nil)
 
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search", nil)
-		req.Header.Add("content-type", "application/json")
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+		doSearch(t, searchHandler, "/search")
 
-		searchHandler.DoSearch(rr, req)
+		require.NotNil(t, mockClient.LastSearchRequest)
+	})
 
-		if mockClient.LastSearchRequest == nil {
-			t.Fatalf("expected Search to be called, but it was not")
-		}
+	t.Run("requests field-value results when enabled", func(t *testing.T) {
+		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), &MockClient{}, featuremgmt.WithFeatures(featuremgmt.FlagDashboardSearchFieldValueResults))
+
+		client := doSearch(t, searchHandler, "/search")
+
+		assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, client.LastSearchRequest.ResultFormat)
+	})
+
+	t.Run("ignores explanations when field-value results are enabled", func(t *testing.T) {
+		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), &MockClient{}, featuremgmt.WithFeatures(featuremgmt.FlagDashboardSearchFieldValueResults))
+
+		client := doSearch(t, searchHandler, "/search?explain=true")
+
+		assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, client.LastSearchRequest.ResultFormat)
 	})
 }
 
@@ -411,6 +431,56 @@ func TestSearchHandler(t *testing.T) {
 }
 
 func TestSearchHandlerSharedDashboards(t *testing.T) {
+	t.Run("uses field value results for permission lookups", func(t *testing.T) {
+		folderField := []*resourcepb.ResourceSearchField{{
+			Name: resource.SEARCH_FIELD_FOLDER,
+			Type: resourcepb.ResourceSearchField_STRING,
+		}}
+		mockClient := &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{
+			{
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Fields:       folderField,
+				Rows: []*resourcepb.ResourceSearchRow{
+					{
+						Key:    &resourcepb.ResourceKey{Name: "dashboard-private", Resource: "dashboard"},
+						Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{"private-folder"}}},
+					},
+					{
+						Key:    &resourcepb.ResourceKey{Name: "dashboard-public", Resource: "dashboard"},
+						Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{"public-folder"}}},
+					},
+				},
+			},
+			{
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Fields:       folderField,
+				Rows: []*resourcepb.ResourceSearchRow{{
+					Key:    &resourcepb.ResourceKey{Name: "public-folder", Resource: "folder"},
+					Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{""}}},
+				}},
+			},
+		}}
+		searchHandler := SearchHandler{client: mockClient}
+		requester := &user.SignedInUser{
+			Namespace: "test",
+			OrgID:     1,
+			Permissions: map[int64]map[string][]string{1: {
+				dashboards.ActionDashboardsRead: {
+					"dashboards:uid:dashboard-private",
+					"dashboards:uid:dashboard-public",
+				},
+			}},
+		}
+
+		shared, err := searchHandler.getDashboardsUIDsSharedWithUser(t.Context(), requester, dashboardaccess.PERMISSION_VIEW)
+		require.NoError(t, err)
+		require.Equal(t, []string{"dashboard-private"}, shared)
+		require.Len(t, mockClient.MockCalls, 2)
+		for _, request := range mockClient.MockCalls {
+			require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, request.ResultFormat)
+		}
+	})
+
 	t.Run("should return empty result without searching if user does not have shared dashboards", func(t *testing.T) {
 		mockClient := &MockClient{}
 
@@ -903,6 +973,41 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 	})
 }
 
+func TestParseSortParam(t *testing.T) {
+	tests := []struct {
+		name       string
+		sort       string
+		wantField  string
+		wantIsDesc bool
+	}{
+		{name: "index field name ascending", sort: "title", wantField: "title"},
+		{name: "index field name descending", sort: "-title", wantField: "title", wantIsDesc: true},
+		{name: "dashboard index field name", sort: "-views_last_30_days", wantField: "views_last_30_days", wantIsDesc: true},
+		{name: "UI name for the title field", sort: "name_sort", wantField: "title"},
+		{name: "UI name for the title field, descending", sort: "-name_sort", wantField: "title", wantIsDesc: true},
+		{name: "legacy views 30 days descending", sort: "viewed-recently-desc", wantField: "views_last_30_days", wantIsDesc: true},
+		{name: "legacy views 30 days ascending", sort: "viewed-recently-asc", wantField: "views_last_30_days"},
+		{name: "legacy views total descending", sort: "viewed-desc", wantField: "views_total", wantIsDesc: true},
+		{name: "legacy errors 30 days descending", sort: "errors-recently-desc", wantField: "errors_last_30_days", wantIsDesc: true},
+		{name: "legacy errors 30 days ascending", sort: "errors-recently-asc", wantField: "errors_last_30_days"},
+		{name: "legacy errors total ascending", sort: "errors-asc", wantField: "errors_total"},
+		{name: "legacy alphabetical ascending", sort: "alpha-asc", wantField: "title"},
+		{name: "legacy alphabetical descending", sort: "alpha-desc", wantField: "title", wantIsDesc: true},
+		{name: "legacy name without a direction suffix defaults to descending", sort: "viewed", wantField: "views_total", wantIsDesc: true},
+		{name: "unknown field is left to the backend to reject", sort: "-nonsense", wantField: "nonsense", wantIsDesc: true},
+		{name: "empty sort", sort: ""},
+		{name: "direction marker without a field", sort: "-"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			field, isDesc := parseSortParam(tt.sort)
+			assert.Equal(t, tt.wantField, field)
+			assert.Equal(t, tt.wantIsDesc, isDesc)
+		})
+	}
+}
+
 func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 	testUser := &user.SignedInUser{
 		Namespace:        "test-namespace",
@@ -1126,6 +1231,47 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Explain:   false,
 				Fields:    defaultFields,
 				SortBy:    []*resourcepb.ResourceSearchRequest_Sort{{Field: "views_total", Desc: true}},
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"sort using the UI name for the title field": {
+			queryString: "sort=-name_sort",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:   &resourcepb.ListOptions{Key: dashboardKey},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				SortBy:    []*resourcepb.ResourceSearchRequest_Sort{{Field: "title", Desc: true}},
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"sort using a legacy /api/search sort name": {
+			queryString: "sort=viewed-recently-desc",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:   &resourcepb.ListOptions{Key: dashboardKey},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				SortBy:    []*resourcepb.ResourceSearchRequest_Sort{{Field: "views_last_30_days", Desc: true}},
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"empty sort is dropped": {
+			queryString: "sort=",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:   &resourcepb.ListOptions{Key: dashboardKey},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},
 		},

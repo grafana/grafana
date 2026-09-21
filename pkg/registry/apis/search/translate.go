@@ -224,8 +224,8 @@ func validateWhere(where *searchv0.WhereNode, fs *fieldSet, p *field.Path) ([]se
 				errs = append(errs, cerr)
 				continue
 			}
-			if ck != "text" && ck != "filter" && ck != "range" {
-				errs = append(errs, field.Invalid(cp, ck, "only text, filter and range leaves are allowed inside and in v1"))
+			if ck != "text" && ck != "filter" && ck != "range" && ck != "regex" {
+				errs = append(errs, field.Invalid(cp, ck, "only text, filter, range and regex leaves are allowed inside and in v1"))
 				continue
 			}
 			// A second text leaf would overwrite the backend Query, so v1 rejects it.
@@ -240,7 +240,7 @@ func validateWhere(where *searchv0.WhereNode, fs *fieldSet, p *field.Path) ([]se
 			leaves = append(leaves, child)
 		}
 		return leaves, errs
-	case "text", "filter", "range":
+	case "text", "filter", "range", "regex":
 		return []searchv0.WhereNode{*where}, validateLeaf(where, key, fs, p)
 	default:
 		// or, not, exists: modelled for the future, rejected in v1.
@@ -270,6 +270,9 @@ func singleKey(n *searchv0.WhereNode, p *field.Path) (string, *field.Error) {
 	if n.Range != nil {
 		set = append(set, "range")
 	}
+	if n.Regex != nil {
+		set = append(set, "regex")
+	}
 	if n.Exists != nil {
 		set = append(set, "exists")
 	}
@@ -277,7 +280,7 @@ func singleKey(n *searchv0.WhereNode, p *field.Path) (string, *field.Error) {
 	case 1:
 		return set[0], nil
 	case 0:
-		return "", field.Invalid(p, "{}", "node must set exactly one of: and, or, not, text, filter, range")
+		return "", field.Invalid(p, "{}", "node must set exactly one of: and, or, not, text, filter, range, regex")
 	default:
 		return "", field.Invalid(p, strings.Join(set, ", "), "node must set exactly one key")
 	}
@@ -352,6 +355,37 @@ func validateLeaf(n *searchv0.WhereNode, key string, fs *fieldSet, p *field.Path
 		}
 	case "range":
 		errs = append(errs, validateRangeLeaf(n.Range, fs, p.Child("range"))...)
+	case "regex":
+		errs = append(errs, validateRegexLeaf(n.Regex, fs, p.Child("regex"))...)
+	}
+	return errs
+}
+
+// validateRegexLeaf checks only what this layer can decide locally: the field
+// exists, is filterable, and holds a string, and the pattern is present. The
+// backend owns the regex subset, case-preservation, and the caps on how many
+// terms a pattern may expand to, and answers a violation with a 400, so nothing
+// here re-implements that parser.
+func validateRegexLeaf(r *searchv0.RegexPredicate, fs *fieldSet, p *field.Path) field.ErrorList {
+	errs := field.ErrorList{}
+	if r.Field == "" {
+		errs = append(errs, field.Required(p.Child("field"), "regex field is required"))
+	} else {
+		capErrs := checkCapability(fs, r.Field, resource.SearchCapabilityFilter, p.Child("field"))
+		errs = append(errs, capErrs...)
+		if len(capErrs) == 0 {
+			// Regex matches whole string terms; numbers and booleans are indexed in
+			// their native form, so a pattern would never reach them.
+			if def := fs.byName[r.Field]; def.Type != resource.SearchFieldTypeString {
+				errs = append(errs, field.Invalid(p.Child("field"), r.Field, "regex supports string fields only"))
+			}
+		}
+	}
+	// An empty pattern matches only the empty string, which on a whole-term match
+	// almost never means anything and silently returns nothing. Requiring a
+	// pattern turns that into a clear error.
+	if r.Pattern == "" {
+		errs = append(errs, field.Required(p.Child("pattern"), "regex pattern is required"))
 	}
 	return errs
 }
@@ -594,8 +628,18 @@ func applyLeaves(req *resourcepb.ResourceSearchRequest, leaves []searchv0.WhereN
 			req.Options.Fields = append(req.Options.Fields, filterRequirement(n.Filter))
 		case n.Range != nil:
 			req.Options.Fields = append(req.Options.Fields, rangeRequirements(n.Range)...)
+		case n.Regex != nil:
+			req.Options.Fields = append(req.Options.Fields, regexRequirement(n.Regex))
 		}
 	}
+}
+
+func regexRequirement(r *searchv0.RegexPredicate) *resourcepb.Requirement {
+	op := resource.OperatorRegex
+	if r.Negate {
+		op = resource.OperatorNotRegex
+	}
+	return &resourcepb.Requirement{Key: r.Field, Operator: string(op), Values: []string{r.Pattern}}
 }
 
 func applyText(req *resourcepb.ResourceSearchRequest, t *searchv0.TextPredicate) {

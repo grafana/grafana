@@ -4,7 +4,7 @@ import { render, screen, waitFor } from 'test/test-utils';
 import { type DataQuery, type DataSourceInstanceSettings, type DataSourceRef } from '@grafana/data';
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
-import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/utils';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { defaultVisualizationPanelKind } from 'app/features/notebook/types';
 
 import { NotebookScene } from '../NotebookScene';

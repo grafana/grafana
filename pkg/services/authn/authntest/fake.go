@@ -2,6 +2,7 @@ package authntest
 
 import (
 	"context"
+	"slices"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/models/usertoken"
@@ -81,12 +82,7 @@ func (f *FakeService) IsClientEnabled(_ context.Context, name string) bool {
 		return true
 	}
 	// Check if client is in the list of enabled clients
-	for _, s := range f.EnabledClients {
-		if s == name {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(f.EnabledClients, name)
 }
 
 func (f *FakeService) GetClientConfig(_ context.Context, name string) (authn.SSOClientConfig, bool) {

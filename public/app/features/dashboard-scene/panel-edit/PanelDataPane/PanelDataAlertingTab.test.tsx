@@ -30,7 +30,8 @@ import { type AlertQuery, type PromRulesResponse } from 'app/types/unified-alert
 
 import { createDashboardSceneFromDashboardModel } from '../../serialization/transformSaveModelToScene';
 import * as utils from '../../utils/utils';
-import { findVizPanelByKey, getVizPanelKeyForPanelId } from '../../utils/utils';
+import { findVizPanelByKey } from '../../utils/utils';
+import { getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 
 import { PanelDataAlertingTab, PanelDataAlertingTabRendered } from './PanelDataAlertingTab';
 

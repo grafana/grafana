@@ -114,7 +114,9 @@ There are many possible types of metrics that can be tracked. One popular method
 
 ### Naming conventions
 
-Use the namespace `grafana` to prefix any defined metric names with `grafana_`. This prefix makes it clear for operators that any metric named `grafana_*` belongs to Grafana.
+Metric names are exposed with a `grafana_` prefix, so operators can tell that any `grafana_*` metric belongs to Grafana. You do not have to add the prefix yourself: the gatherer adds it when metrics are scraped, to every name that does not already start with `grafana_` or `go_` (see `addPrefixWrapper` in [pkg/infra/metrics/service.go](/pkg/infra/metrics/service.go)). A metric declared as `index_build_duration_seconds` is therefore scraped as `grafana_index_build_duration_seconds`.
+
+Even so, write the whole name out in the `Name` field, prefix included, rather than relying on the gatherer or splitting the name across `Namespace` and `Subsystem`. The prefix is not added twice, and a name written in one piece is one you can search the code base for after reading it on a dashboard. Metrics that do it the other way still work and do not need renaming.
 
 Use snake_case style when naming metrics; for example, `http_request_duration_seconds` instead of `httpRequestDurationSeconds`.
 
@@ -137,6 +139,26 @@ If label values originate from user input they should be validated. Use `metricu
 ### Guarantee the existence of metrics
 
 To guarantee the existence of metrics before any observations have happened, you can use the helper methods available in the `pkg/infra/metrics/metricutil` package.
+
+### Registering metrics
+
+Register collectors on the `prometheus.Registerer` your service is given, using `promauto.With(reg)`. A nil registerer leaves the collectors unregistered, which is what tests usually want.
+
+These helpers handle nil registerers directly. `promauto.With(nil)` returns a factory whose `New*` methods create unregistered collectors. `prometheus.WrapRegistererWith` and `prometheus.WrapRegistererWithPrefix` also accept nil and return a no-op registerer, so callers do not need nil checks before using them.
+
+Do not declare collectors as package-level variables with `promauto.NewCounter` and friends. Those register on the global default registry at init, so they ignore the registry your service was wired with and they leak between tests.
+
+### Duplicate registration
+
+Registering two collectors with the same name on one registry fails. With `promauto` or `MustRegister` that means a panic, usually at startup; plain `Register` returns an `AlreadyRegisteredError` instead. Note that the registry compares label _names_, not label values: two collectors named `foo_total` with a `resource` label conflict even when one is only ever used with `resource="a"` and the other with `resource="b"`.
+
+Duplicate registration usually means either that the same component was wired twice or that multiple legitimate components register identical collectors on the same registry without distinguishing themselves.
+
+Do not resolve a production collision by catching and ignoring the error, reusing another component's collector, passing a nil registerer, or otherwise skipping registration. Every production component must report its metrics. Consider these options:
+
+- **Build the collectors once and pass them down.** If several callers intentionally contribute to the same measurements, construct the collectors in one place and hand them to each caller.
+- **Use a const label per component.** If separate components expose the same measurements, apply the same stable, bounded label name, such as `component`, to every collector in the metric family and give each component a different value. This keeps a shared metric name for dashboards while allowing each component to report separately. Registering the same component twice still fails, which is what you want.
+- **Use distinct metric names for different measurements.** If components expose different concepts that should not be queried together, give their metrics distinct names. `prometheus.WrapRegistererWithPrefix("mycomponent_", reg)` can apply a prefix to everything registered by a component.
 
 ### How to collect and visualize metrics locally
 
