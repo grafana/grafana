@@ -2,15 +2,17 @@ import { css } from '@emotion/css';
 import { type Property } from 'csstype';
 import memoize, { type Key, type RawKey } from 'micro-memoize';
 
-import { type GrafanaTheme2, colorManipulator } from '@grafana/data';
+import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 
 import {
   COLUMN,
   FIRST_COLUMN_CLASS,
   FIRST_COLUMN_EXTRA_PADDING,
   LAST_COLUMN_CLASS,
+  NESTED_ROW_CLASS,
   getPaginationChromeHeight,
   PAGINATION_MARGIN,
+  STRIPED_ROW_CLASS,
   TABLE,
 } from './constants';
 import { type TableCellStyles } from './types';
@@ -46,18 +48,10 @@ export const IS_SAFARI_26 = (() => {
 export const isTableCellStylesKeyEqual = (cacheKey: Key, key: RawKey): boolean =>
   cacheKey[0] === key[0] &&
   cacheKey[1].shouldOverflow === key[1].shouldOverflow &&
+  cacheKey[1].hoverOverflow === key[1].hoverOverflow &&
   cacheKey[1].maxHeight === key[1].maxHeight &&
   cacheKey[1].textAlign === key[1].textAlign &&
   cacheKey[1].textWrap === key[1].textWrap;
-
-// How far the `table.refresh` header background steps away from the background the rows sit on.
-// `emphasize` moves in whichever direction contrasts — lighter in dark themes, darker in light ones
-// — so one coefficient covers both, as well as a transparent panel sitting on the canvas.
-// `background.elevated` can't do this job: in light themes it *is* `background.primary` (both are
-// white), so the header was indistinguishable from its rows. 0.04 was picked to land dark themes on
-// the same colour `background.elevated` gave them (#212428 vs #22252b) and light themes within a
-// hair of `background.secondary`, the established "one step off white" surface.
-const HEADER_BACKGROUND_EMPHASIS = 0.04;
 
 export const getGridStyles = memoize(
   (
@@ -65,25 +59,19 @@ export const getGridStyles = memoize(
     enablePagination?: boolean,
     transparent?: boolean,
     tableRefreshEnabled?: boolean,
-    noPanelPadding?: boolean
+    noPanelPadding?: boolean,
+    zebraStriping?: boolean
   ) => {
-    const visualRefreshEnabled = theme.flags.visualDesignRefresh;
-    let bgColor = transparent ? theme.colors.background.canvas : theme.colors.background.primary;
-    if (visualRefreshEnabled) {
-      bgColor = transparent ? theme.components.page.background : theme.components.panel.background;
-    }
-    // this needs to be pre-calc'd since the theme colors have alpha and the border color becomes
-    // unpredictable for background color cells
-    const borderColor = colorManipulator.onBackground(theme.colors.border.weak, bgColor).toHexString();
-    const selectedRowColor = theme.isDark
-      ? colorManipulator.onBackground(theme.colors.warning.main, bgColor).darken(37).toHexString()
-      : colorManipulator.onBackground(theme.colors.warning.main, bgColor).lighten(25).toHexString();
-
-    const selectedRowHoverColor = theme.colors.emphasize(selectedRowColor, 0.05);
-
-    const headerBackgroundColor = tableRefreshEnabled
-      ? theme.colors.emphasize(bgColor, HEADER_BACKGROUND_EMPHASIS)
-      : bgColor;
+    const table = theme.components.table;
+    const bgColor = transparent
+      ? theme.flags.visualDesignRefresh
+        ? theme.components.page.background
+        : theme.colors.background.canvas
+      : theme.components.panel.background;
+    const headerBackgroundColor = tableRefreshEnabled ? table.headerBackground : bgColor;
+    const headerBorderColor = colorManipulator
+      .onBackground(theme.colors.secondary.shade, headerBackgroundColor)
+      .toHexString();
 
     // The expander column is the outer table's first column (see markEdgeColumns), so under
     // `noPanelPadding` it picks up the same `FIRST_COLUMN_EXTRA_PADDING` inline-start bump as any
@@ -95,31 +83,21 @@ export const getGridStyles = memoize(
         '--rdg-background-color': bgColor,
         // `table.refresh` gives the header its own surface distinct from the body rows.
         '--rdg-header-background-color': headerBackgroundColor,
-        '--rdg-border-color': borderColor,
+        '--rdg-border-color': table.border,
         '--rdg-color': theme.colors.text.primary,
-        '--rdg-summary-border-color': borderColor,
+        '--rdg-summary-border-color': table.border,
         '--rdg-summary-border-width': '1px',
 
-        '--rdg-selection-color': theme.colors.info.transparent,
+        '--rdg-selection-color': theme.colors.action.selectedBorder,
 
         // note: this cannot have any transparency since default cells that
         // overlay/overflow on hover inherit this background and need to occlude cells below
         '--rdg-row-background-color': bgColor,
-        // Under `table.refresh` a hovered row takes the header's surface, so "one step off the row
-        // background" means one thing across the table. The old pair had the same blind spot the
-        // header did: on a transparent panel it hovered *lighter* (`background.primary`), which in a
-        // light theme is white on near-white.
-        '--rdg-row-hover-background-color': tableRefreshEnabled
-          ? headerBackgroundColor
-          : transparent
-            ? theme.colors.background.primary
-            : theme.colors.background.secondary,
-        '--rdg-row-selected-background-color': selectedRowColor,
-        '--rdg-row-selected-hover-background-color': selectedRowHoverColor,
+        '--rdg-row-hover-background-color': table.rowHoverBackground,
+        '--rdg-row-selected-background-color': table.rowSelectedBackground,
+        '--rdg-row-selected-hover-background-color': theme.colors.emphasize(table.rowSelectedBackground, 0.05),
 
-        // give the pagination controls their room back, so the grid and the pager together still fit
-        // the panel (see getPaginationChromeHeight)
-        blockSize: enablePagination ? `calc(100% - ${getPaginationChromeHeight(noPanelPadding)}px)` : '100%',
+        blockSize: '100%',
         scrollbarWidth: 'thin',
         scrollbarColor: theme.isDark ? '#fff5 #fff1' : '#0005 #0001',
 
@@ -168,6 +146,33 @@ export const getGridStyles = memoize(
             backgroundColor: 'var(--rdg-row-selected-background-color)',
           },
         },
+
+        // Which rows carry a stripe is decided in `makeStripedRowClass`, not by react-data-grid's
+        // own `rdg-row-odd` — see that function for why. Selection still wins over the stripe, and
+        // has to be excluded by hand rather than left to win on specificity: react-data-grid paints
+        // it inside its own `@layer rdg.Row`, and an unlayered rule — which everything in here is —
+        // beats a layered one whatever its specificity.
+        ...(zebraStriping && {
+          [`.${STRIPED_ROW_CLASS}:not([aria-selected='true'])`]: {
+            backgroundColor: table.rowStripedBackground,
+            // A `.rdg-cell` inherits its background from the row, which is how the row rule reaches
+            // the cells at all (rows are `display: contents`, so they paint no box of their own).
+            // Frozen cells are the exception: they set an opaque background so they can occlude the
+            // cells scrolling behind them, so the stripe has to be repeated here or a striped row's
+            // frozen column falls back to the plain row background.
+            '.rdg-cell.rdg-cell-frozen': {
+              backgroundColor: table.rowStripedBackground,
+            },
+          },
+        }),
+
+        // Repeat the hover surface on striped cells, including frozen cells. Nested containers must
+        // be excluded because hovering their children also hovers the expansion container.
+        ...(zebraStriping && {
+          [`.rdg-row:not(.rdg-summary-row, .${NESTED_ROW_CLASS}, [aria-selected='true']):hover > .rdg-cell`]: {
+            backgroundColor: table.rowHoverBackground,
+          },
+        }),
 
         '.rdg-header-row, .rdg-summary-row': {
           '.rdg-cell': {
@@ -232,6 +237,20 @@ export const getGridStyles = memoize(
           },
         }),
       }),
+      // Wraps the grid so the scroll shadows have something to position against. It carries the
+      // grid's own sizing, and the grid fills it, so the shadows span exactly the scroll viewport.
+      gridWrapper: css({
+        position: 'relative',
+        // give the pagination controls their room back, so the grid and the pager together still fit
+        // the panel (see getPaginationChromeHeight)
+        blockSize: enablePagination ? `calc(100% - ${getPaginationChromeHeight(noPanelPadding)}px)` : '100%',
+        // Panels that stack something under the table — the multi-frame frame picker — lay it out in
+        // a flex column, where this wrapper is the flex item the grid used to be. The grid could
+        // always shrink below its content because it scrolls (`overflow: auto` zeroes a flex item's
+        // automatic minimum size); this wrapper doesn't scroll, so without this its minimum size is
+        // the grid's whole content height and it pushes everything below it out of the panel.
+        minBlockSize: 0,
+      }),
       // The panel around the table drops its own padding so the header surface can bleed to the
       // panel edges, which leaves the first column's content further left than the panel title.
       // A class of its own rather than part of `grid`: a nested table's inner grid also carries
@@ -277,6 +296,11 @@ export const getGridStyles = memoize(
         paddingBlockStart: 0,
         fontWeight: 'normal',
         '& .rdg-cell': { height: '100%', alignItems: 'flex-end' },
+        ...(tableRefreshEnabled && {
+          '--rdg-border-color': headerBorderColor,
+          '& .rdg-cell-dragging': { backgroundColor: theme.colors.emphasize(headerBackgroundColor, 0.1) },
+          '& .rdg-cell-drag-over': { backgroundColor: theme.colors.emphasize(headerBackgroundColor, 0.05) },
+        }),
       }),
       displayNone: css({ display: 'none' }),
       paginationContainer: css({
@@ -315,7 +339,7 @@ export const getHeaderCellStyles = memoize((theme: GrafanaTheme2, justifyContent
 );
 
 export const getDefaultCellStyles: TableCellStyles = memoize(
-  (theme, { textAlign, shouldOverflow, maxHeight }) =>
+  (theme, { textAlign, shouldOverflow, hoverOverflow, maxHeight }) =>
     css({
       display: 'flex',
       alignItems: 'center',
@@ -324,7 +348,7 @@ export const getDefaultCellStyles: TableCellStyles = memoize(
       ...(maxHeight && { overflowY: 'hidden' }),
       ...(shouldOverflow && { minHeight: '100%' }),
 
-      [getActiveCellSelector()]: {
+      [getActiveCellSelector(false, hoverOverflow)]: {
         ...(shouldOverflow && {
           zIndex: theme.zIndex.tooltip - 2,
           height: 'fit-content',
@@ -340,7 +364,7 @@ export const getDefaultCellStyles: TableCellStyles = memoize(
 );
 
 export const getMaxHeightCellStyles: TableCellStyles = memoize(
-  (_theme, { textAlign, maxHeight }) =>
+  (_theme, { textAlign, hoverOverflow, maxHeight }) =>
     css({
       display: 'flex',
       alignItems: 'center',
@@ -349,7 +373,7 @@ export const getMaxHeightCellStyles: TableCellStyles = memoize(
       maxHeight,
       width: '100%',
       overflowY: 'hidden',
-      [getActiveCellSelector(true)]: {
+      [getActiveCellSelector(true, hoverOverflow)]: {
         maxHeight: 'none',
         minHeight: '100%',
       },
@@ -441,10 +465,10 @@ const ACTIVE_CELL_SELECTORS = {
   },
 } as const;
 
-export const getActiveCellSelector = memoize((isNested?: boolean) => {
+export const getActiveCellSelector = memoize((isNested?: boolean, hoverOverflow = true) => {
   const selectors = [];
   selectors.push(ACTIVE_CELL_SELECTORS.selected[isNested ? 'nested' : 'normal']);
-  if (!IS_SAFARI_26) {
+  if (!IS_SAFARI_26 && hoverOverflow) {
     selectors.push(ACTIVE_CELL_SELECTORS.hover[isNested ? 'nested' : 'normal']);
   }
   return selectors.join(', ');
@@ -456,3 +480,42 @@ const getHoverOnlyCellSelector = memoize((isNested?: boolean) => {
   }
   return ACTIVE_CELL_SELECTORS.hover[isNested ? 'nested' : 'normal'];
 });
+
+export const getScrollShadowOffsetStyles = (_theme: GrafanaTheme2, top: number, bottom: number) =>
+  css({
+    '&::before': { top },
+    '&::after': { bottom },
+  });
+
+export const getScrollShadowStyles = (theme: GrafanaTheme2) => {
+  const scrollShadowColor = theme.isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)';
+  return {
+    scrollShadows: css({
+      // The grid creates a stacking context; both pseudo-elements must paint above it.
+      '&::before, &::after': {
+        content: '""',
+        blockSize: `max(5%, ${theme.spacing(3)})`,
+        insetInline: 0,
+        opacity: 0,
+        pointerEvents: 'none',
+        position: 'absolute',
+        zIndex: 1,
+        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+          transition: theme.transitions.create('opacity'),
+        },
+      },
+      '&::before': {
+        background: `linear-gradient(0deg, transparent, ${scrollShadowColor})`,
+      },
+      '&::after': {
+        background: `linear-gradient(180deg, transparent, ${scrollShadowColor})`,
+      },
+    }),
+    scrollShadowTop: css({
+      '&::before': { opacity: 1 },
+    }),
+    scrollShadowBottom: css({
+      '&::after': { opacity: 1 },
+    }),
+  };
+};

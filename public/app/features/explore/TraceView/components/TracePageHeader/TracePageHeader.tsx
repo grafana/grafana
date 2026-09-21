@@ -34,6 +34,7 @@ import {
   usePluginComponents,
   usePluginLinks,
   config,
+  logError,
 } from '@grafana/runtime';
 import { AdHocFiltersComboboxRenderer } from '@grafana/scenes';
 import { type TimeZone } from '@grafana/schema';
@@ -42,6 +43,7 @@ import {
   type BadgeColor,
   Button,
   CollapsableSection,
+  copyTextToClipboard,
   Dropdown,
   Icon,
   Label,
@@ -51,7 +53,6 @@ import {
   useTheme2,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { copyStringToClipboard } from 'app/core/utils/explore';
 
 import { downloadTraceAsJson } from '../../../../inspector/utils/download';
 import { LogsLinkButton } from '../TraceTimelineViewer/SpanDetail/LogsLink';
@@ -220,9 +221,14 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
           label={t('explore.trace-page-header.share-copy-link', 'Copy link')}
           icon="link"
           testId={selectors.components.TraceViewer.shareMenu.copyLinkButton}
-          onClick={() => {
-            copyStringToClipboard(window.location.href);
-            notifyApp.success(t('explore.trace-page-header.link-copied', 'Link copied to clipboard'));
+          onClick={async () => {
+            try {
+              await copyTextToClipboard(window.location.href);
+              notifyApp.success(t('explore.trace-page-header.link-copied', 'Link copied to clipboard'));
+            } catch (e) {
+              logError(e instanceof Error ? e : new Error(String(e)));
+              notifyApp.error(t('explore.trace-page-header.link-copy-failed', 'Could not copy link to clipboard'));
+            }
           }}
         />
         <Menu.Item
@@ -330,8 +336,8 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
             <Dropdown overlay={shareDropdownMenu} placement="bottom-end">
               <Button
                 size="sm"
-                variant="primary"
-                fill="outline"
+                variant="secondary"
+                fill="text"
                 icon="ellipsis-v"
                 tooltip={t('explore.trace-page-header.share-tooltip', 'Share and feedback')}
                 aria-label={t('explore.trace-page-header.aria-label-share-dropdown', 'Open share and feedback menu')}

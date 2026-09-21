@@ -15,7 +15,7 @@ func TestManagedRouteToRoute(t *testing.T) {
 	gi := model.Duration(20)
 	ri := model.Duration(30)
 
-	mr := &ManagedRoute{
+	mr := &v1.ManagedRoute{
 		Name:           "test",
 		Receiver:       "receiver",
 		GroupBy:        []string{"alertname"},
