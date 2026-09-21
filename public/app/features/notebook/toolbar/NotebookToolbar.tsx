@@ -13,11 +13,11 @@ import { NotebookExportMenu } from '../export/NotebookExportMenu';
 import { AttachToIncidentModal } from '../incidents/AttachToIncidentModal';
 import { DeclareIncidentModal } from '../incidents/DeclareIncidentModal';
 import { IrmMenuItem } from '../incidents/IrmMenuItem';
-import { getNotebookPageStateManager } from '../pages/NotebookPageStateManager';
 import { canDeleteNotebooks } from '../permissions';
 import { NotebookEditToggle } from '../scene/NotebookEditToggle';
 import { useIsNotebookEmbedded } from '../scene/NotebookEmbeddedContext';
 import { type NotebookScene } from '../scene/NotebookScene';
+import { NotebookDeletedEvent } from '../scene/events';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 import { NOTEBOOKS_BASE_URL, notebookShareUrl } from '../urls';
 
@@ -74,9 +74,9 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
     // A save can still fire during the request itself, which is harmless: it writes to a notebook
     // that is about to be deleted, and if it lands afterwards it 404s and we are already leaving.
     scene.autosave.abandon();
-    // The state manager caches scenes by uid, so without this, going back here would rebuild the
-    // deleted notebook from cache rather than reporting it gone.
-    getNotebookPageStateManager().removeSceneCache(uid);
+    // Tells the page state manager to evict this uid from its scene cache. Published rather than
+    // called directly to avoid an import cycle back to this file.
+    scene.publishEvent(new NotebookDeletedEvent(), true);
     // replace, not push: Back must not return to a page whose notebook no longer exists.
     locationService.replace(NOTEBOOKS_BASE_URL);
   };

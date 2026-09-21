@@ -334,8 +334,12 @@ describe('NotebookToolbar', () => {
     // from cache the next time this uid was opened rather than reporting it gone.
     it('drops the deleted notebook from the scene cache', async () => {
       setupDelete();
-      const removeSceneCache = jest.spyOn(getNotebookPageStateManager(), 'removeSceneCache');
-      const { user } = setupWithScene();
+      const stateManager = getNotebookPageStateManager();
+      const removeSceneCache = jest.spyOn(stateManager, 'removeSceneCache');
+      const { user, scene } = setupWithScene();
+      // The eviction subscription is wired when a scene enters the cache, which setupWithScene's
+      // plain buildScene() never does on its own.
+      stateManager.setSceneCacheForTests('nb1', scene);
 
       await confirmDelete(user);
 
