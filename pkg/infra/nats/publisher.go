@@ -64,6 +64,20 @@ func (p *PublisherService) running(ctx context.Context) error {
 		<-ctx.Done()
 		return nil
 	}
+	// Embedded server and publisher services start concurrently. Wait until the
+	// server has published its in-process URL before making the initial dial.
+	if p.config.server != nil && !p.config.server.IsDisabled() {
+		ticker := time.NewTicker(10 * time.Millisecond)
+		defer ticker.Stop()
+		for len(p.config.URLs()) == 0 {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-ticker.C:
+			}
+		}
+	}
+
 	// Make connection/auth failures visible during service startup, while the
 	// reconnecting client still lets storage continue without the broker.
 	if _, err := p.get(ctx); err != nil {

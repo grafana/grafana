@@ -293,6 +293,10 @@ func (c *connection) healthy() error {
 // close drains the connection and waits for the drain to complete so it does not
 // outlive the caller. Terminal: once closed, get() refuses to reopen.
 func (c *connection) close() {
+	c.closeWithResult()
+}
+
+func (c *connection) closeWithResult() bool {
 	// Drain outside the lock: waiting for it can take up to drainTimeout, and
 	// holding c.mu that long would stall a concurrent Health().
 	c.mu.Lock()
@@ -301,15 +305,18 @@ func (c *connection) close() {
 	c.closed = true
 	c.mu.Unlock()
 
-	if nc == nil || nc.IsClosed() {
-		return
+	if nc == nil {
+		return true
+	}
+	if nc.IsClosed() {
+		return false
 	}
 
 	// Drain closes the connection on a background goroutine; wait for it below.
 	if err := nc.Drain(); err != nil {
 		c.log.Warn("failed to drain nats connection", "role", c.role, "err", err)
 		nc.Close()
-		return
+		return false
 	}
 
 	// A broker that has gone away never closes, so force it at the deadline.
@@ -318,10 +325,11 @@ func (c *connection) close() {
 		if time.Now().After(deadline) {
 			c.log.Warn("nats connection did not close within drain timeout; forcing close", "role", c.role)
 			nc.Close()
-			return
+			return false
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
+	return true
 }
 
 func redactURL(raw string) string {
