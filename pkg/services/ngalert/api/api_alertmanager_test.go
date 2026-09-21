@@ -447,7 +447,7 @@ func TestRouteGetReceivers_FiltersByReceiverReadPermission(t *testing.T) {
 			orgID: {AlertmanagerConfiguration: twoReceiverAMConfig, OrgID: orgID},
 		}),
 	)
-	sut.receiverService = createTestReceiverService(t, twoReceiverAMConfig)
+	sut.receiverService = createTestReceiverService(t, twoReceiverAMConfig, sut.mam)
 
 	t.Run("user with access to all receivers sees both", func(tt *testing.T) {
 		rc := createRequestCtxInOrg(orgID)
@@ -458,10 +458,10 @@ func TestRouteGetReceivers_FiltersByReceiverReadPermission(t *testing.T) {
 		resp := sut.RouteGetReceivers(rc)
 		require.Equal(tt, 200, resp.Status())
 
-		var statuses []ReceiverStatus
+		var statuses []alertingmodels.ReceiverStatus
 		require.NoError(tt, json.Unmarshal(resp.Body(), &statuses))
 		require.Len(tt, statuses, 2)
-		require.ElementsMatch(tt, statuses, []ReceiverStatus{
+		require.ElementsMatch(tt, statuses, []alertingmodels.ReceiverStatus{
 			{
 				Name:         "grafana-default-email",
 				Active:       true,
@@ -488,10 +488,10 @@ func TestRouteGetReceivers_FiltersByReceiverReadPermission(t *testing.T) {
 		resp := sut.RouteGetReceivers(rc)
 		require.Equal(tt, 200, resp.Status())
 
-		var statuses []ReceiverStatus
+		var statuses []alertingmodels.ReceiverStatus
 		require.NoError(tt, json.Unmarshal(resp.Body(), &statuses))
 		require.Len(tt, statuses, 1)
-		require.ElementsMatch(tt, statuses, []ReceiverStatus{
+		require.ElementsMatch(tt, statuses, []alertingmodels.ReceiverStatus{
 			{
 				Name:         "grafana-default-email",
 				Active:       true,
@@ -502,7 +502,7 @@ func TestRouteGetReceivers_FiltersByReceiverReadPermission(t *testing.T) {
 }
 
 // noopAlertRuleNotificationStore is a minimal stand-in for ReceiverService's
-// notification-settings store dependency; GetReceiverNameToUIDMap never touches it.
+// notification-settings store dependency; StatusMetadata never touches it.
 type noopAlertRuleNotificationStore struct{}
 
 func (noopAlertRuleNotificationStore) RenameReceiverInNotificationSettings(_ context.Context, _ int64, _, _ string, _ func(ngmodels.Provenance) bool, _ bool) ([]ngmodels.AlertRuleKey, []ngmodels.AlertRuleKey, error) {
@@ -516,8 +516,11 @@ func (noopAlertRuleNotificationStore) ListContactPointRoutings(_ context.Context
 // createTestReceiverService builds a real *notifier.ReceiverService backed by an in-memory
 // Alertmanager config and fake storage/provisioning dependencies, wired to the real
 // accesscontrol evaluator, so RouteGetReceivers's own permission filtering can be
-// exercised end-to-end without a full Grafana server.
-func createTestReceiverService(t *testing.T, amConfig string) *notifier.ReceiverService {
+// exercised end-to-end without a full Grafana server. amStatusFetcher should be the same
+// *notifier.MultiOrgAlertmanager instance backing the test's AlertmanagerSrv.mam, built from
+// the same amConfig, so StatusMetadata's AM-reported names line up with the canonical
+// receivers this service resolves against.
+func createTestReceiverService(t *testing.T, amConfig string, amStatusFetcher *notifier.MultiOrgAlertmanager) *notifier.ReceiverService {
 	t.Helper()
 
 	secretsService := fake_secrets.NewFakeSecretsService()
@@ -539,6 +542,7 @@ func createTestReceiverService(t *testing.T, amConfig string) *notifier.Receiver
 		false,
 		nil,
 		&notifier.NoopOrgEmailValidator{},
+		amStatusFetcher,
 	)
 }
 

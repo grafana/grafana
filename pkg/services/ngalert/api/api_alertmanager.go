@@ -19,15 +19,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// receiverUIDGetter resolves receiver names to their UID, filtering out those without read permissions.
-type receiverUIDGetter interface {
-	GetReceiverNameToUIDMap(ctx context.Context, orgID int64, names []string, user identity.Requester) (map[string]v1.ResourceUID, error)
+// receiverStatusMetadataGetter retrieves the AM-reported receiver statuses for an org, filtered to
+// receivers the requesting user has permission to read.
+type receiverStatusMetadataGetter interface {
+	GetReceiverStatuses(ctx context.Context, orgID int64, user identity.Requester) ([]alertingmodels.ReceiverStatus, error)
 }
 
 type AlertmanagerSrv struct {
@@ -37,7 +37,7 @@ type AlertmanagerSrv struct {
 	crypto          notifier.Crypto
 	silenceSvc      SilenceService
 	featureManager  featuremgmt.FeatureToggles
-	receiverService receiverUIDGetter
+	receiverService receiverStatusMetadataGetter
 }
 
 type UnknownReceiverError struct {
@@ -171,45 +171,11 @@ func (srv AlertmanagerSrv) RoutePostGrafanaAlertingConfigHistoryActivate(c *cont
 }
 
 func (srv AlertmanagerSrv) RouteGetReceivers(c *contextmodel.ReqContext) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.GetOrgID())
-	if errResp != nil {
-		return errResp
-	}
-
-	ctx := c.Req.Context()
-	rcvs, err := am.GetReceivers(ctx)
+	statuses, err := srv.receiverService.GetReceiverStatuses(c.Req.Context(), c.GetOrgID(), c.SignedInUser)
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "failed to retrieve receivers")
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to retrieve receivers", err)
 	}
 
-	if len(rcvs) == 0 {
-		return response.JSON(http.StatusOK, []ReceiverStatus{})
-	}
-
-	names := make([]string, 0, len(rcvs))
-	for _, rcv := range rcvs {
-		names = append(names, rcv.Name)
-	}
-
-	uidsByName, err := srv.receiverService.GetReceiverNameToUIDMap(ctx, c.GetOrgID(), names, c.SignedInUser)
-	if err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "failed to resolve receiver UIDs", err)
-	}
-
-	statuses := make([]ReceiverStatus, 0, len(rcvs))
-	for _, rcv := range rcvs {
-		_, ok := uidsByName[rcv.Name]
-		if !ok {
-			// No canonical UID available. This is likely caused by the caller not having permission on said receiver,
-			// but could also be caused by a transient race between the running Alertmanager and the config store.
-			// Exclude from the results.
-			srv.log.FromContext(ctx).Debug("Skipping receiver with no unknown UID", "receiver", rcv.Name)
-			continue
-		}
-		statuses = append(statuses, ReceiverStatus(rcv))
-	}
-
-	// No need to filter by auth as this is already done by receiverService.GetReceiverNameToUIDMap.
 	return response.JSON(http.StatusOK, statuses)
 }
 
@@ -293,5 +259,3 @@ func (srv AlertmanagerSrv) AlertmanagerFor(orgID int64) (notifier.Alertmanager, 
 	srv.log.Error("Unable to obtain the org's Alertmanager", "error", err)
 	return nil, response.Error(http.StatusInternalServerError, "unable to obtain org's Alertmanager", err)
 }
-
-type ReceiverStatus alertingmodels.ReceiverStatus

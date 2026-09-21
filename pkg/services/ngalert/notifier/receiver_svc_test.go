@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -9,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/alerting/receivers/line"
 	"github.com/grafana/alerting/receivers/schema"
 
@@ -142,7 +144,7 @@ func TestIntegrationReceiverService_GetReceivers(t *testing.T) {
 	})
 }
 
-func TestReceiverService_GetReceiverNameToUIDMap(t *testing.T) {
+func TestReceiverService_GetReceiverStatuses(t *testing.T) {
 	var orgId int64 = 1
 	secretsService := fake_secrets.NewFakeSecretsService()
 
@@ -152,19 +154,28 @@ func TestReceiverService_GetReceiverNameToUIDMap(t *testing.T) {
 		},
 	}}
 
-	t.Run("returns UIDs for readable receivers, omitting names that don't exist", func(t *testing.T) {
-		sut := createReceiverServiceSut(t, &secretsService)
+	allAMStatuses := []alertingModels.ReceiverStatus{
+		{Name: "grafana-default-email", Active: true},
+		{Name: "slack receiver", Active: true},
+		{Name: "does not exist", Active: true},
+	}
 
-		result, err := sut.GetReceiverNameToUIDMap(context.Background(), orgId, []string{"grafana-default-email", "slack receiver", "does not exist"}, redactedUser)
+	t.Run("returns statuses for readable receivers, omitting names that don't exist", func(t *testing.T) {
+		sut := createReceiverServiceSut(t, &secretsService, withAMReceiverStatuses(allAMStatuses...))
+
+		result, err := sut.GetReceiverStatuses(context.Background(), orgId, redactedUser)
 		require.NoError(t, err)
-		require.Equal(t, map[string]v1.ResourceUID{
-			"grafana-default-email": v1.ReceiverUID("grafana-default-email"),
-			"slack receiver":        v1.ReceiverUID("slack receiver"),
+		require.ElementsMatch(t, []alertingModels.ReceiverStatus{
+			{Name: "grafana-default-email", Active: true},
+			{Name: "slack receiver", Active: true},
 		}, result)
 	})
 
-	t.Run("omits names the user does not have permission to read", func(t *testing.T) {
-		sut := createReceiverServiceSut(t, &secretsService)
+	t.Run("omits statuses for names the user does not have permission to read", func(t *testing.T) {
+		sut := createReceiverServiceSut(t, &secretsService, withAMReceiverStatuses(
+			alertingModels.ReceiverStatus{Name: "grafana-default-email", Active: true},
+			alertingModels.ReceiverStatus{Name: "slack receiver", Active: true},
+		))
 
 		limitedUser := &user.SignedInUser{OrgID: orgId, Permissions: map[int64]map[string][]string{
 			orgId: {
@@ -174,22 +185,27 @@ func TestReceiverService_GetReceiverNameToUIDMap(t *testing.T) {
 			},
 		}}
 
-		result, err := sut.GetReceiverNameToUIDMap(context.Background(), orgId, []string{"grafana-default-email", "slack receiver"}, limitedUser)
+		result, err := sut.GetReceiverStatuses(context.Background(), orgId, limitedUser)
 		require.NoError(t, err)
-		require.Equal(t, map[string]v1.ResourceUID{
-			"grafana-default-email": v1.ReceiverUID("grafana-default-email"),
+		require.ElementsMatch(t, []alertingModels.ReceiverStatus{
+			{Name: "grafana-default-email", Active: true},
 		}, result)
 	})
 
-	t.Run("returns all readable receivers when no names are given", func(t *testing.T) {
-		sut := createReceiverServiceSut(t, &secretsService)
+	t.Run("returns an empty slice when the Alertmanager reports no receivers", func(t *testing.T) {
+		sut := createReceiverServiceSut(t, &secretsService, withAMReceiverStatuses())
 
-		result, err := sut.GetReceiverNameToUIDMap(context.Background(), orgId, nil, redactedUser)
+		result, err := sut.GetReceiverStatuses(context.Background(), orgId, redactedUser)
 		require.NoError(t, err)
-		require.Equal(t, map[string]v1.ResourceUID{
-			"grafana-default-email": v1.ReceiverUID("grafana-default-email"),
-			"slack receiver":        v1.ReceiverUID("slack receiver"),
-		}, result)
+		require.Empty(t, result)
+	})
+
+	t.Run("propagates errors from the Alertmanager status fetch", func(t *testing.T) {
+		sut := createReceiverServiceSut(t, &secretsService)
+		sut.amStatusFetcher = &fakeAMStatusFetcher{err: errors.New("boom")}
+
+		_, err := sut.GetReceiverStatuses(context.Background(), orgId, redactedUser)
+		require.ErrorContains(t, err, "boom")
 	})
 }
 
@@ -2033,6 +2049,22 @@ func withEmailValidator(emailValidator EmailIntegrationValidator) createReceiver
 	}
 }
 
+// fakeAMStatusFetcher is a test double for amReceiverStatusFetcher.
+type fakeAMStatusFetcher struct {
+	statuses []alertingModels.ReceiverStatus
+	err      error
+}
+
+func (f *fakeAMStatusFetcher) GetReceiverStatuses(_ context.Context, _ int64) ([]alertingModels.ReceiverStatus, error) {
+	return f.statuses, f.err
+}
+
+func withAMReceiverStatuses(statuses ...alertingModels.ReceiverStatus) createReceiverServiceSutOpt {
+	return func(_ *testing.T, sut *ReceiverService) {
+		sut.amStatusFetcher = &fakeAMStatusFetcher{statuses: statuses}
+	}
+}
+
 func createReceiverServiceSut(t *testing.T, encryptSvc secretService, opts ...createReceiverServiceSutOpt) *ReceiverService {
 	cfg := createEncryptedConfig(t, encryptSvc, getExtraConfig())
 	store := fakes.NewFakeAlertmanagerConfigStore(cfg)
@@ -2054,6 +2086,7 @@ func createReceiverServiceSut(t *testing.T, encryptSvc secretService, opts ...cr
 		false,
 		nil,
 		&NoopOrgEmailValidator{},
+		&fakeAMStatusFetcher{},
 	)
 	for _, opt := range opts {
 		opt(t, sut)
