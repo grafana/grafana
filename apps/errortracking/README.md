@@ -9,7 +9,7 @@ The API group is `error-tracking.grafana.app/v0alpha1`. Its namespaced `/events`
 
 The JSON config contains non-secret HTTPS, signing-key, AuthZ, token-exchange, connection-pool, and audit settings. Database credentials use `ERROR_TRACKING_DATABASE_URL` or standard PostgreSQL `PG*` variables. `ERROR_TRACKING_DATABASE_MAX_CONNS` overrides the JSON pool limit. Tokens and credentials remain in mounted secrets.
 
-`migrate` requires a dedicated application database and an existing role named by `ERROR_TRACKING_RUNTIME_ROLE`. It owns the event schema and migration ledger and grants only the runtime privileges. It does not create users or rotate passwords. Startup and readiness require the current migration; liveness checks the process.
+`migrate` requires a dedicated application database and an existing role named by `ERROR_TRACKING_RUNTIME_ROLE`. It owns the schema in `pkg/storage/schema.sql` (projects, environments, errors, events and error status changes, plus the migration ledger and the initial event table) and grants the runtime role only what the API needs: read and append on every table, and update on `errors` alone, where counters and the status machine are kept. It does not create users or rotate passwords. Startup and readiness require the current migration; liveness checks the process.
 
 ## Build and test
 
