@@ -296,3 +296,41 @@ func (f *fallbackBackend) Key() string {
 func (f *fallbackBackend) Load(context.Context) (http.Handler, error) {
 	return f.st, nil
 }
+
+// The results of this call are cached
+func newGComURLResolver(gcomBaseURL string, gcomToken string) func(context.Context, int64) (string, error) {
+	// mirroring grafana's pkg/services/gcom
+	type instance struct {
+		ID   int    `json:"id"`
+		Slug string `json:"slug"`
+		Name string `json:"name"`
+		URL  string `json:"url"`
+	}
+
+	return func(ctx context.Context, stackID int64) (string, error) {
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet,
+			fmt.Sprintf("%s/instances/%d", gcomBaseURL, stackID), nil)
+		if err != nil {
+			return "", fmt.Errorf("creating gcom instance request: %w", err)
+		}
+		req.Header.Set("Authorization", "Bearer "+gcomToken)
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return "", fmt.Errorf("fetching gcom instance: %w", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode == http.StatusNotFound {
+			return "", nil
+		}
+		if resp.StatusCode != http.StatusOK {
+			return "", fmt.Errorf("fetching gcom instance: unexpected status code %d", resp.StatusCode)
+		}
+
+		var result instance
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return "", fmt.Errorf("decoding gcom instance: %w", err)
+		}
+		return result.URL, nil
+	}
+}

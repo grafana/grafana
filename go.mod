@@ -712,7 +712,10 @@ require (
 	software.sslmate.com/src/go-pkcs12 v0.7.2 // indirect
 )
 
-require github.com/mostynb/go-grpc-compression v1.2.3 // @grafana/grafana-search-and-storage
+require (
+	github.com/grafana/grafana-enterprise v0.0.0
+	github.com/mostynb/go-grpc-compression v1.2.3 // @grafana/grafana-search-and-storage
+)
 
 replace (
 	// Use our fork of dolthub/go-mysql-server which adds TableHintedTable for FOR (...) hints
@@ -730,3 +733,5 @@ replace (
 // This was retracted, but seems to be known by the Go module proxy,
 // and is otherwise pulled in as a transitive dependency.
 exclude k8s.io/client-go v12.0.0+incompatible
+
+replace github.com/grafana/grafana-enterprise => ../grafana-enterprise

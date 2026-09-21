@@ -177,15 +177,13 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 		if err != nil {
 			return nil, fmt.Errorf("%s: st_discovery_url: %w", cloudRouterSection, err)
 		}
+
+		gcomURL := cfg.GrafanaComAPIURL
+		gcomToken := "" // ???
+
 		singleTenantFallback, err = newSingleTenantFallback(singleTenantFallbackOptions{
-			cacheSize: 100,
-			// TODO: replace the Play-only stub with a stack host lookup.
-			resolveHost: func(_ context.Context, stackID int64) (string, error) {
-				if stackID != 35611 {
-					return "", nil
-				}
-				return "https://play.grafana.org/", nil
-			},
+			cacheSize:     100,
+			resolveHost:   newGComURLResolver(gcomURL, gcomToken),
 			discoveryHost: discoURL,
 		})
 		if err != nil {
