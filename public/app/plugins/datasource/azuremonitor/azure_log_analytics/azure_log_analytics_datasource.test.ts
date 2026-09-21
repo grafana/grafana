@@ -87,6 +87,7 @@ describe('AzureLogAnalyticsDatasource', () => {
       expect(database?.tables[0].timespanColumn).toBe('TimeGenerated');
       expect(database?.tables[1].name).toBe('AzureActivity');
       expect(database?.tables[0].columns).toHaveLength(69);
+      expect(database?.graphs).toEqual([]);
 
       expect(database?.functions[1].inputParameters).toEqual([
         {

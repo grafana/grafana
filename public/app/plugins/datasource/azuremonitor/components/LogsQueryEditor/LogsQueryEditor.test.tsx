@@ -808,6 +808,7 @@ describe('LogsQueryEditor', () => {
         majorVersion: 0,
         minorVersion: 0,
         entityGroups: [],
+        graphs: [],
       };
       const mockSchema: EngineSchema = {
         clusterType: 'Engine',
@@ -944,6 +945,7 @@ describe('LogsQueryEditor', () => {
               majorVersion: 0,
               minorVersion: 0,
               entityGroups: [],
+              graphs: [],
             },
           ],
         },
@@ -981,6 +983,7 @@ describe('LogsQueryEditor', () => {
           majorVersion: 0,
           minorVersion: 0,
           entityGroups: [],
+          graphs: [],
         },
       };
       const mockDatasource = createMockDatasource();
@@ -1058,6 +1061,7 @@ describe('LogsQueryEditor', () => {
         majorVersion: 0,
         minorVersion: 0,
         entityGroups: [],
+        graphs: [],
       };
       const mockSchema: EngineSchema = {
         clusterType: 'Engine',
@@ -1168,6 +1172,7 @@ describe('LogsQueryEditor', () => {
         majorVersion: 0,
         minorVersion: 0,
         entityGroups: [],
+        graphs: [],
       },
     });
 
