@@ -110,7 +110,7 @@ refs:
 
 # Data sources
 
-A _data source_ in Grafana is a connection to a storage backend that holds your data, such as a Prometheus server, a Loki instance, a SQL database, or a cloud monitoring service. Grafana queries data sources to retrieve the stored data (e.g. metrics, logs, traces, and profiles) that it then visualizes in dashboards and Explore.
+A _data source_ in Grafana is a connection to a storage backend that holds your data, such as a Prometheus server, a Loki instance, a SQL database, or a cloud monitoring service. Grafana queries data sources to retrieve the stored data (for example, metrics, logs, traces, and profiles) that it then visualizes in dashboards and Explore.
 
 Grafana comes with built-in support for many data sources.
 If you need other data sources, you can also install one of the many data source plugins.
@@ -214,7 +214,7 @@ The Dashboard data source references the complete output of another panel. It do
 Use the Dashboard data source when you want to:
 
 - **Share query results:** Point several panels at one source panel so Grafana runs a single query and reuses the results, which reduces the number of queries sent to your backend. For details, refer to [Share query results with another panel](ref:share-query-results).
-- **Filter unsupported data:** Reference a panel whose data source doesn't support ad hoc filters, then filter the referenced data in the new panel. For details, refer to [Filter any data using the Dashboard data source](ref:filter-with-dashboard-datasource).
+- **Filter unsupported data:** Reference a panel whose data source doesn't support the use of filters, then filter the referenced data in the new panel. For details, refer to [Filter any data using the Dashboard data source](ref:filter-with-dashboard-datasource).
 
 When you configure the Dashboard data source, you set the following options:
 
