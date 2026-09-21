@@ -87,7 +87,9 @@ type StorageOptions struct {
 	// Left empty, the serializer receives the object's existing GVK.
 	GVK schema.GroupVersionKind
 
-	// Custom serialization
+	// Serializer overrides encoding and decoding for writes, reads, lists, and watches.
+	// When nil, storage decodes through the configured Kubernetes codec and encodes
+	// through it unless GVK is declared, in which case writes preserve the object's GVK.
 	Serializer Serializer
 
 	// Required to force unique constraints
@@ -190,9 +192,8 @@ func NewStorage(
 		opts: opts,
 	}
 
-	// Default to the codec serializer
 	if s.serializer == nil {
-		s.serializer = &codecSerializer{codec: config.Codec}
+		s.serializer = &codecSerializer{codec: config.Codec, preserveGVK: !opts.GVK.Empty()}
 	}
 
 	// Validate the GVK
@@ -294,7 +295,7 @@ func (s *Storage) Versioner() storage.Versioner {
 }
 
 func (s *Storage) convertToObject(ctx context.Context, data []byte, obj runtime.Object) (runtime.Object, error) {
-	_, span := tracer.Start(ctx, "apistore.Storage.convertToObject")
+	ctx, span := tracer.Start(ctx, "apistore.Storage.convertToObject")
 	defer span.End()
 	return s.serializer.Decode(ctx, data, obj)
 }

@@ -279,3 +279,43 @@ func TestStreamDecoderCallerCancellation(t *testing.T) {
 	require.Nil(t, obj)
 	require.ErrorIs(t, err, io.EOF)
 }
+
+func TestStreamDecoderSerializerContext(t *testing.T) {
+	type contextKey struct{}
+	ctx, cancel := context.WithCancel(context.WithValue(t.Context(), contextKey{}, "request"))
+	t.Cleanup(cancel)
+	current := []byte(`{"apiVersion":"example.com/v1","kind":"Widget","metadata":{"name":"current"}}`)
+	previous := []byte(`{"apiVersion":"example.com/v1","kind":"Widget","metadata":{"name":"previous"}}`)
+	client := &mockWatchClient{
+		ctx: ctx,
+		events: []*resourcepb.WatchEvent{{
+			Type:     resourcepb.WatchEvent_MODIFIED,
+			Resource: &resourcepb.WatchEvent_Resource{Value: current, Version: 12},
+			Previous: &resourcepb.WatchEvent_Resource{Value: previous, Version: 11},
+		}},
+	}
+	var decoded [][]byte
+	serializer := &testSerializer{
+		decode: func(gotCtx context.Context, data []byte, into runtime.Object) (runtime.Object, error) {
+			require.Equal(t, "request", gotCtx.Value(contextKey{}))
+			require.Equal(t, ctx.Done(), gotCtx.Done())
+			if err := gotCtx.Err(); err != nil {
+				return nil, err
+			}
+			decoded = append(decoded, data)
+			return JSONSerializer().Decode(gotCtx, data, into)
+		},
+	}
+	decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, serializer, cancel, false)
+	t.Cleanup(decoder.Close)
+	action, obj, err := decoder.Decode()
+	require.NoError(t, err)
+	require.Equal(t, watch.Modified, action)
+	require.Equal(t, [][]byte{current, previous}, decoded)
+	require.Equal(t, "current", obj.(*unstructured.Unstructured).GetName())
+	require.Equal(t, "12", obj.(*unstructured.Unstructured).GetResourceVersion())
+
+	cancel()
+	_, err = decoder.toObject(client.events[0].Resource)
+	require.ErrorIs(t, err, context.Canceled)
+}

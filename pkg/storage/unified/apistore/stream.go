@@ -44,9 +44,7 @@ func newStreamDecoder(client resourcepb.ResourceStore_WatchClient, newFunc func(
 	}
 }
 func (d *streamDecoder) toObject(w *resourcepb.WatchEvent_Resource) (runtime.Object, error) {
-	var obj runtime.Object
-	var err error
-	obj, err = d.serializer.Decode(context.Background(), w.Value, d.newFunc())
+	obj, err := d.serializer.Decode(d.client.Context(), w.Value, d.newFunc())
 	if err == nil {
 		accessor, err := utils.MetaAccessor(obj)
 		if err != nil {

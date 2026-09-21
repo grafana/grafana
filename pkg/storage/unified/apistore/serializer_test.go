@@ -145,3 +145,46 @@ func TestStorageSerializer(t *testing.T) {
 		})
 	}
 }
+
+func TestDefaultSerializerPreservesDeclaredGVK(t *testing.T) {
+	gv := schema.GroupVersion{Group: "example.com", Version: "v1"}
+	higherGV := schema.GroupVersion{Group: gv.Group, Version: "v2"}
+	codec := newCapCodec(t, higherGV, gv)
+	config := storagebackend.NewDefaultConfig("", codec)
+	for _, tc := range []struct {
+		name        string
+		gvk         schema.GroupVersionKind
+		serializer  Serializer
+		wantVersion string
+		wantErr     bool
+	}{
+		{name: "fills missing GVK", wantVersion: gv.String()},
+		{name: "preserves object version", gvk: gv.WithKind("Widget"), wantVersion: gv.String()},
+		{name: "rejects over-cap version", gvk: higherGV.WithKind("Widget"), wantErr: true},
+		{name: "custom serializer overrides declared GVK", serializer: versionedSerializer{apiVersion: higherGV.String()}, wantErr: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			store, destroy, err := NewStorage(config.ForResource(gv.WithResource("widgets").GroupResource()), nil, nil, nil, nil, nil, nil, nil, nil, nil, StorageOptions{
+				GVK:           gv.WithKind("Widget"),
+				VersionPolicy: newGlobalCapRegistry(gv.Group, []string{"v2", "v1"}, "v1"),
+				Serializer:    tc.serializer,
+			})
+			require.NoError(t, err)
+			t.Cleanup(destroy)
+			obj := &capWidget{Value: "hello"}
+			obj.SetGroupVersionKind(tc.gvk)
+			raw, err := store.(*Storage).encode(t.Context(), obj, true)
+			if tc.wantErr {
+				require.ErrorContains(t, err, "exceeds the configured maximum version")
+				require.Nil(t, raw)
+				return
+			}
+			require.NoError(t, err)
+			var stored capWidget
+			require.NoError(t, json.Unmarshal(raw, &stored))
+			require.Equal(t, tc.wantVersion, stored.APIVersion)
+			require.Equal(t, "Widget", stored.Kind)
+			require.Equal(t, obj.Value, stored.Value)
+		})
+	}
+}

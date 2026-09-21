@@ -429,9 +429,8 @@ func (s *Storage) getParentFolder(ctx context.Context, obj utils.GrafanaMetaAcce
 }
 
 // checkGVK completes obj's group+version+kind from [StorageOptions.GVK] when the
-// object does not carry a full one of its own. [Storage.encode] writes whatever
-// GVK the object holds, so an incomplete one would otherwise persist without an
-// apiVersion.
+// object does not carry a full one of its own. Serializers that do not infer the
+// GVK from a scheme need it populated to persist an apiVersion and kind.
 //
 // A resource that declares no GVK is left alone here for the serializer.
 func (s *Storage) checkGVK(obj runtime.Object) {
@@ -452,7 +451,7 @@ func (s *Storage) checkGVK(obj runtime.Object) {
 	info.SetGroupVersionKind(gvk)
 }
 
-// encode serializes obj into buf. enforceCap applies the group's maxAllowedVersion ceiling. Callers pass
+// encode returns the JSON representation of obj. enforceCap applies the group's maxAllowedVersion ceiling. Callers pass
 // true on create and on non-deletion updates; deletion-related updates pass false so an object already
 // stored above the cap stays removable (its deletion, finalizer and status writes all go through here).
 func (s *Storage) encode(ctx context.Context, obj runtime.Object, enforceCap bool) (json.RawMessage, error) {
