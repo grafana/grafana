@@ -6,6 +6,7 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -13,12 +14,27 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
-type refsConnector struct {
-	getter RepoGetter
+// RefsConnectorDependencies is satisfied by APIBuilder; it is split out from RepoGetter
+// so the POST/ephemeral path (see buildEphemeralRepository) can build a non-persisted
+// repository the same way the /test subresource does.
+type RefsConnectorDependencies interface {
+	RepoGetter
+	ConnectionGetter
+	GetRepoFactory() repository.Factory
 }
 
-func NewRefsConnector(getter RepoGetter) *refsConnector {
-	return &refsConnector{getter: getter}
+type refsConnector struct {
+	getter           RepoGetter
+	connectionGetter ConnectionGetter
+	repoFactory      repository.Factory
+}
+
+func NewRefsConnector(deps RefsConnectorDependencies) *refsConnector {
+	return &refsConnector{
+		getter:           deps,
+		connectionGetter: deps,
+		repoFactory:      deps.GetRepoFactory(),
+	}
 }
 
 func (*refsConnector) New() runtime.Object {
@@ -36,7 +52,7 @@ func (*refsConnector) ProducesObject(verb string) any {
 }
 
 func (*refsConnector) ConnectMethods() []string {
-	return []string{http.MethodGet}
+	return []string{http.MethodGet, http.MethodPost}
 }
 
 func (*refsConnector) NewConnectOptions() (runtime.Object, bool, string) {
@@ -48,12 +64,27 @@ func (c *refsConnector) Connect(ctx context.Context, name string, opts runtime.O
 		logger := logging.FromContext(ctx).With("logger", "refs-connector", "repository_name", name)
 		ctx = logging.Context(ctx, logger)
 
-		if r.Method != http.MethodGet {
+		var repo repository.Repository
+		var err error
+		switch r.Method {
+		case http.MethodGet:
+			repo, err = c.getter.GetRepository(ctx, name)
+		case http.MethodPost:
+			// A POST body lists refs for a repository that hasn't been created yet,
+			// the same "temporary repository" the /test subresource builds - used by
+			// the onboarding wizard before it commits to creating anything.
+			var ns string
+			var ok bool
+			ns, ok = request.NamespaceFrom(ctx)
+			if !ok {
+				responder.Error(apierrors.NewBadRequest("missing namespace"))
+				return
+			}
+			repo, err = buildEphemeralRepository(ctx, r, name, ns, c.connectionGetter, c.repoFactory)
+		default:
 			responder.Error(apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), r.Method))
 			return
 		}
-
-		repo, err := c.getter.GetRepository(ctx, name)
 		if err != nil {
 			logger.Debug("failed to find repository", "error", err)
 			responder.Error(err)
