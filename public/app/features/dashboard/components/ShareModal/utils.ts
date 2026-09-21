@@ -202,4 +202,5 @@ export const shareDashboardType: {
   inviteUser: 'invite_user',
   image: 'image',
   downloadDiagnostics: 'download_diagnostics',
+  openInAgent: 'open_in_agent',
 };

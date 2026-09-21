@@ -26,12 +26,15 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type GetExploreUrlArguments } from 'app/core/utils/explore';
+import { markAgentSetupSeen } from 'app/features/agent-handoff/agents';
+import { openAgentPromptDeeplink } from 'app/features/agent-handoff/deeplinks';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import * as storeModule from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { DashboardInteractions } from '../utils/interactions';
 
 import { DashboardScene } from './DashboardScene';
@@ -57,6 +60,11 @@ jest.mock('app/core/services/context_srv');
 
 jest.mock('app/store/store', () => ({
   dispatch: jest.fn(),
+}));
+
+jest.mock('app/features/agent-handoff/deeplinks', () => ({
+  ...jest.requireActual('app/features/agent-handoff/deeplinks'),
+  openAgentPromptDeeplink: jest.fn(),
 }));
 
 const getObservablePluginLinksMock = jest.fn().mockReturnValue(of([]));
@@ -1184,10 +1192,95 @@ describe('panelMenuBehavior', () => {
       expect(texts.slice(-4)).toEqual(['---', 'Add to notebook', '---', 'Remove']);
     });
   });
+
+  describe('open in a coding agent', () => {
+    beforeEach(() => {
+      window.localStorage.clear();
+      jest.mocked(openAgentPromptDeeplink).mockClear();
+    });
+
+    async function openInItemFor(pluginId: string) {
+      const { scene, menu, panel } = await buildTestScene({ pluginId });
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      return { scene, items: menu.state.items ?? [], item: (menu.state.items ?? []).find((i) => i.text === 'Open in') };
+    }
+
+    it('is offered on a panel the agent-side viewer can draw, immediately after Share', async () => {
+      const { items, item } = await openInItemFor('timeseries');
+
+      expect(item).toEqual(expect.objectContaining({ type: 'submenu', iconClassName: 'code-branch' }));
+      expect(items.findIndex((i) => i.text === 'Open in')).toBe(items.findIndex((i) => i.text === 'Share') + 1);
+    });
+
+    it('is absent on a panel type that would arrive unrenderable', async () => {
+      const { item } = await openInItemFor('table');
+
+      expect(item).toBeUndefined();
+    });
+
+    it('is absent on a dashboard with no uid, which the agent could not fetch', async () => {
+      const { menu, panel, scene } = await buildTestScene({ pluginId: 'timeseries' });
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+      scene.setState({ uid: undefined });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect((menu.state.items ?? []).find((i) => i.text === 'Open in')).toBeUndefined();
+    });
+
+    it('lists each agent and a way back to the setup step', async () => {
+      const { item } = await openInItemFor('timeseries');
+
+      expect((item?.subMenu ?? []).map((entry) => (entry.type === 'divider' ? '---' : entry.text))).toEqual([
+        'Claude Code',
+        'Cursor',
+        '---',
+        'Set up\u2026',
+      ]);
+    });
+
+    it('opens the setup drawer instead of a deep link until the agent has been set up', async () => {
+      const { scene, item } = await openInItemFor('timeseries');
+
+      item?.subMenu?.find((entry) => entry.text === 'Cursor')?.onClick?.(new MouseEvent('click') as never);
+
+      const overlay = scene.state.overlay;
+      expect(overlay).toBeInstanceOf(ShareDrawer);
+      expect((overlay as ShareDrawer).state.shareView).toBe('open_in_agent');
+      // A deep link fired here would be swallowed with no error, so it must not fire.
+      expect(openAgentPromptDeeplink).not.toHaveBeenCalled();
+    });
+
+    it('hands the agent a prompt naming the panel and the dashboard once set up', async () => {
+      markAgentSetupSeen('cursor');
+      const { scene, item } = await openInItemFor('timeseries');
+
+      item?.subMenu?.find((entry) => entry.text === 'Cursor')?.onClick?.(new MouseEvent('click') as never);
+
+      expect(openAgentPromptDeeplink).toHaveBeenCalledWith(
+        'cursor',
+        [
+          'Show me the "Panel A" panel (panel 12) from Grafana dashboard dash-1, over now-5m to now.',
+          '',
+          'Call run_panel_query once with dashboardUid "dash-1" and panelIds [12], start "now-5m", end "now". ' +
+            'It returns every query the panel has, and rendering it draws the whole timeseries panel. ' +
+            'Stop there: no summary of the values, no second chart, nothing rebuilt by hand.',
+        ].join('\n')
+      );
+      expect(scene.state.overlay).toBeUndefined();
+    });
+  });
 });
 
 interface SceneOptions {
   isEmbedded?: boolean;
+  /** The agent handoff is offered per panel type, so tests need to choose one. */
+  pluginId?: string;
 }
 
 async function buildTestScene(options: SceneOptions) {
@@ -1197,7 +1290,7 @@ async function buildTestScene(options: SceneOptions) {
 
   const panel = new VizPanel({
     title: 'Panel A',
-    pluginId: 'table',
+    pluginId: options.pluginId ?? 'table',
     key: 'panel-12',
     menu,
     titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
