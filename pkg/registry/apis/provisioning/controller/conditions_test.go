@@ -76,6 +76,53 @@ func TestBuildReadyConditionFromHealth(t *testing.T) {
 	}
 }
 
+func TestBuildAuthenticationCondition(t *testing.T) {
+	tests := []struct {
+		name           string
+		failed         bool
+		message        string
+		expectedStatus metav1.ConditionStatus
+		expectedReason string
+		expectedMsg    string
+	}{
+		{
+			name:           "not failed is True/Authenticated",
+			failed:         false,
+			message:        "ignored when not failed",
+			expectedStatus: metav1.ConditionTrue,
+			expectedReason: provisioning.ReasonAuthenticated,
+			expectedMsg:    "Credentials are valid",
+		},
+		{
+			name:           "failed with message is False/AuthenticationFailed",
+			failed:         true,
+			message:        "bad credentials",
+			expectedStatus: metav1.ConditionFalse,
+			expectedReason: provisioning.ReasonAuthenticationFailed,
+			expectedMsg:    "bad credentials",
+		},
+		{
+			name:           "failed without message falls back to a default",
+			failed:         true,
+			message:        "",
+			expectedStatus: metav1.ConditionFalse,
+			expectedReason: provisioning.ReasonAuthenticationFailed,
+			expectedMsg:    "Authentication failed",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			condition := buildAuthenticationCondition(tt.failed, tt.message)
+
+			assert.Equal(t, provisioning.ConditionTypeAuthentication, condition.Type)
+			assert.Equal(t, tt.expectedStatus, condition.Status)
+			assert.Equal(t, tt.expectedReason, condition.Reason)
+			assert.Equal(t, tt.expectedMsg, condition.Message)
+		})
+	}
+}
+
 func TestBuildConditionPatchOpsFromExisting(t *testing.T) {
 	fixedTime := metav1.NewTime(time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC))
 

@@ -1155,9 +1155,17 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			patchOperations = append(patchOperations, rc.healthPatchIfChanged(obj, buildHealthStatus)...)
 
 			// Patch status so user can see errors
-			readyCondition := buildReadyConditionWithReason(buildHealthStatus, classifyBuildFailureReason(err))
+			buildReason := classifyBuildFailureReason(err)
+			conditions := []v1.Condition{buildReadyConditionWithReason(buildHealthStatus, buildReason)}
+			// Only assert the Authentication condition when the build itself failed
+			// for an auth reason. A non-auth build failure (e.g. transient decrypt
+			// error) says nothing about credential validity, so leave any existing
+			// Authentication condition untouched rather than falsely clearing it.
+			if buildReason == provisioning.ReasonAuthenticationFailed {
+				conditions = append(conditions, buildAuthenticationCondition(true, err.Error()))
+			}
 			if conditionPatchOps := BuildConditionPatchOpsFromExisting(
-				obj.Status.Conditions, obj.GetGeneration(), readyCondition,
+				obj.Status.Conditions, obj.GetGeneration(), conditions...,
 			); conditionPatchOps != nil {
 				patchOperations = append(patchOperations, conditionPatchOps...)
 			}
@@ -1289,8 +1297,28 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	}
 
 	// Build ALL condition patches together to avoid one overwriting another.
+	conditions := []v1.Condition{quotaCondition, healthResult.ReadyCondition}
+	// Derive the authentication verdict from the two override-proof signals evaluated
+	// this pass: the health-check test result (401 / bare-403) and a hook auth
+	// failure. Both are read from values captured before the quota/hook overrides
+	// mutate Ready, so the dedicated Authentication condition keeps reflecting real
+	// credential state even when a co-occurring quota or hook failure wins Ready.
+	//
+	// testResults is nil only when the health refresh was skipped (hook-failure
+	// cooldown); with no fresh probe there is nothing new to judge, so leave any
+	// existing Authentication condition untouched rather than asserting a stale
+	// verdict.
+	if testResults != nil {
+		authFailed := classifyTestResultReason(testResults) == provisioning.ReasonAuthenticationFailed ||
+			(hookErr != nil && classifyHookFailureReason(hookErr) == provisioning.ReasonAuthenticationFailed)
+		var authMessage string
+		if authFailed {
+			authMessage = authFailureMessage(testResults, hookErr)
+		}
+		conditions = append(conditions, buildAuthenticationCondition(authFailed, authMessage))
+	}
 	if conditionPatchOps := BuildConditionPatchOpsFromExisting(
-		obj.Status.Conditions, obj.GetGeneration(), quotaCondition, healthResult.ReadyCondition,
+		obj.Status.Conditions, obj.GetGeneration(), conditions...,
 	); conditionPatchOps != nil {
 		patchOperations = append(patchOperations, conditionPatchOps...)
 	}
@@ -1493,9 +1521,13 @@ func (rc *RepositoryController) tokenFailurePatchOps(obj *provisioning.Repositor
 	}
 	ops := rc.healthPatchIfChanged(obj, healthStatus)
 
+	// isUserCaused only matches credential-loss sentinels, so this path is always
+	// an authentication failure: stamp both Ready and the dedicated Authentication
+	// condition so the latter survives any later override on Ready.
 	readyCondition := buildReadyConditionWithReason(healthStatus, provisioning.ReasonAuthenticationFailed)
+	authCondition := buildAuthenticationCondition(true, err.Error())
 	if conditionPatchOps := BuildConditionPatchOpsFromExisting(
-		obj.Status.Conditions, obj.GetGeneration(), readyCondition,
+		obj.Status.Conditions, obj.GetGeneration(), readyCondition, authCondition,
 	); conditionPatchOps != nil {
 		ops = append(ops, conditionPatchOps...)
 	}
@@ -1546,6 +1578,25 @@ func classifyOverdueCause(reason string) string {
 	default:
 		return reconcileCauseUser
 	}
+}
+
+// authFailureMessage builds the message for a False Authentication condition.
+// It prefers the health-check test result's own detail when the probe is the
+// auth failure (the quota override may have already replaced healthStatus.Message,
+// so that field can't be trusted here), and otherwise falls back to the hook
+// error text.
+func authFailureMessage(testResults *provisioning.TestResults, hookErr error) string {
+	if testResults != nil && classifyTestResultReason(testResults) == provisioning.ReasonAuthenticationFailed {
+		for _, e := range testResults.Errors {
+			if e.Detail != "" {
+				return e.Detail
+			}
+		}
+	}
+	if hookErr != nil {
+		return hookErr.Error()
+	}
+	return ""
 }
 
 // classifyHookFailureReason maps a hook failure to a Ready condition reason,

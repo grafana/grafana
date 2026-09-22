@@ -2214,7 +2214,313 @@ func TestRepositoryController_process_ConditionsNotOverwritten(t *testing.T) {
 
 	assert.True(t, hasQuotaCondition, "expected quota condition in final /status/conditions patch")
 	assert.True(t, hasReadyCondition, "expected ready condition in final /status/conditions patch")
-	assert.Len(t, conditions, 2, "expected exactly 2 conditions (quota + ready)")
+	assert.Len(t, conditions, 3, "expected exactly 3 conditions (quota + ready + authentication)")
+}
+
+// TestRepositoryController_process_AuthConditionSurvivesQuotaOverride is the
+// regression this change fixes: when the health check detects an authentication
+// failure (401) AND the namespace is over quota in the same pass, the quota
+// override wins the single Ready reason (QuotaExceeded), but the dedicated
+// Authentication condition must still report the auth failure so consumers
+// (e.g. force-delete) can see it.
+func TestRepositoryController_process_AuthConditionSurvivesQuotaOverride(t *testing.T) {
+	namespace := "default"
+	repoName := "test-repo"
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: repoName, Namespace: namespace, Generation: 1},
+		Spec: provisioning.RepositorySpec{
+			Type: provisioning.LocalRepositoryType,
+			Sync: provisioning.SyncOptions{Enabled: false},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 1,
+			Health:             provisioning.HealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
+		},
+	}
+	// A second repo keeps the namespace over quota (maxRepositories=1 with 2 repos).
+	repo2 := repo.DeepCopy()
+	repo2.Name = "other-repo"
+
+	indexer := cache.NewIndexer(
+		cache.MetaNamespaceKeyFunc,
+		cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc},
+	)
+	require.NoError(t, indexer.Add(repo))
+	require.NoError(t, indexer.Add(repo2))
+	repoLister := listers.NewRepositoryLister(indexer)
+
+	// The health check reports a 401 (authentication failure).
+	mockRepo := repository.NewMockRepository(t)
+	mockRepo.On("Config").Return(repo).Maybe()
+	mockRepo.On("Test", mock.Anything).Return(&provisioning.TestResults{
+		Success: false,
+		Code:    http.StatusUnauthorized,
+		Errors:  []provisioning.ErrorDetails{{Detail: "bad credentials"}},
+	}, nil).Maybe()
+
+	repoFactory := repository.NewMockFactory(t)
+	repoFactory.On("Build", mock.Anything, mock.Anything).Return(mockRepo, nil).Maybe()
+
+	healthMetrics := NewMockHealthMetricsRecorder(t)
+	healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).Maybe()
+
+	patcher := &capturePatcher{}
+	tester := repository.NewTester()
+	healthChecker := NewRepositoryHealthChecker(patcher, tester, healthMetrics)
+
+	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
+	rc := &RepositoryController{
+		repos:         repoGetter,
+		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{MaxRepositories: 1}),
+		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
+		healthChecker: healthChecker,
+		repoFactory:   repoFactory,
+		statusPatcher: patcher,
+		logger:        logging.DefaultLogger.With("logger", loggerName),
+		tracer:        tracing.InitializeTracerForTest(),
+	}
+
+	_, err := rc.process(namespace + "/" + repoName)
+	require.NoError(t, err)
+
+	condOp, ok := patcher.findPatchOp("/status/conditions")
+	require.True(t, ok, "expected a /status/conditions patch")
+	conditions, ok := condOp["value"].([]metav1.Condition)
+	require.True(t, ok, "expected conditions value to be []metav1.Condition")
+
+	ready := findCondition(conditions, provisioning.ConditionTypeReady)
+	require.NotNil(t, ready, "expected Ready condition")
+	assert.Equal(t, metav1.ConditionFalse, ready.Status)
+	assert.Equal(t, provisioning.ReasonQuotaExceeded, ready.Reason,
+		"the quota override should win the single Ready reason")
+
+	auth := findCondition(conditions, provisioning.ConditionTypeAuthentication)
+	require.NotNil(t, auth, "expected Authentication condition to survive the quota override")
+	assert.Equal(t, metav1.ConditionFalse, auth.Status)
+	assert.Equal(t, provisioning.ReasonAuthenticationFailed, auth.Reason)
+	assert.Equal(t, "bad credentials", auth.Message)
+}
+
+// TestRepositoryController_process_AuthConditionHealthyIsAuthenticated verifies a
+// healthy repository reports Authentication=True/Authenticated, so a prior auth
+// failure clears on recovery.
+func TestRepositoryController_process_AuthConditionHealthyIsAuthenticated(t *testing.T) {
+	namespace := "default"
+	repoName := "test-repo"
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: repoName, Namespace: namespace, Generation: 2},
+		Spec: provisioning.RepositorySpec{
+			Type: provisioning.LocalRepositoryType,
+			Sync: provisioning.SyncOptions{Enabled: false},
+		},
+		Status: provisioning.RepositoryStatus{ObservedGeneration: 1},
+	}
+
+	indexer := cache.NewIndexer(
+		cache.MetaNamespaceKeyFunc,
+		cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc},
+	)
+	require.NoError(t, indexer.Add(repo))
+	repoLister := listers.NewRepositoryLister(indexer)
+
+	mockRepo := repository.NewMockRepository(t)
+	mockRepo.On("Config").Return(repo).Maybe()
+	mockRepo.On("Test", mock.Anything).Return(&provisioning.TestResults{Success: true, Code: http.StatusOK}, nil).Maybe()
+
+	repoFactory := repository.NewMockFactory(t)
+	repoFactory.On("Build", mock.Anything, mock.Anything).Return(mockRepo, nil).Maybe()
+
+	healthMetrics := NewMockHealthMetricsRecorder(t)
+	healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).Maybe()
+
+	patcher := &capturePatcher{}
+	tester := repository.NewTester()
+	healthChecker := NewRepositoryHealthChecker(patcher, tester, healthMetrics)
+
+	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
+	rc := &RepositoryController{
+		repos:         repoGetter,
+		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
+		healthChecker: healthChecker,
+		repoFactory:   repoFactory,
+		statusPatcher: patcher,
+		logger:        logging.DefaultLogger.With("logger", loggerName),
+		tracer:        tracing.InitializeTracerForTest(),
+	}
+
+	_, err := rc.process(namespace + "/" + repoName)
+	require.NoError(t, err)
+
+	condOp, ok := patcher.findPatchOp("/status/conditions")
+	require.True(t, ok, "expected a /status/conditions patch")
+	conditions, ok := condOp["value"].([]metav1.Condition)
+	require.True(t, ok, "expected conditions value to be []metav1.Condition")
+
+	auth := findCondition(conditions, provisioning.ConditionTypeAuthentication)
+	require.NotNil(t, auth, "expected Authentication condition on a healthy repository")
+	assert.Equal(t, metav1.ConditionTrue, auth.Status)
+	assert.Equal(t, provisioning.ReasonAuthenticated, auth.Reason)
+}
+
+// TestRepositoryController_process_AuthConditionOnHookAuthFailure verifies the
+// hook signal feeds the Authentication verdict: when the health check passes but
+// a webhook operation fails with an authorization error, Authentication is
+// False/AuthenticationFailed.
+func TestRepositoryController_process_AuthConditionOnHookAuthFailure(t *testing.T) {
+	namespace := "default"
+	repoName := "test-repo"
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: repoName, Namespace: namespace, Generation: 1},
+		Spec: provisioning.RepositorySpec{
+			Type:      provisioning.GitHubRepositoryType,
+			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			Sync:      provisioning.SyncOptions{Enabled: false},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 0, // first sync -> webhookOnCreate runs
+		},
+	}
+
+	// Health check succeeds (repo reachable) but the webhook create is unauthorized.
+	stub := &hookRepoStub{
+		cfg:         repo,
+		testResults: &provisioning.TestResults{Success: true, Code: http.StatusOK},
+		hookErr:     repository.ErrUnauthorized,
+		hookErrSet:  true,
+	}
+	rc, patcher := newRecoveryController(t, repo, stub)
+
+	_, err := rc.process(namespace + "/" + repoName)
+	require.NoError(t, err, "an unauthorized hook failure must not surface as a controller error")
+
+	condOp, ok := patcher.findPatchOp("/status/conditions")
+	require.True(t, ok, "expected a /status/conditions patch")
+	conditions, ok := condOp["value"].([]metav1.Condition)
+	require.True(t, ok, "expected conditions value to be []metav1.Condition")
+
+	auth := findCondition(conditions, provisioning.ConditionTypeAuthentication)
+	require.NotNil(t, auth, "expected Authentication condition from the hook auth failure")
+	assert.Equal(t, metav1.ConditionFalse, auth.Status)
+	assert.Equal(t, provisioning.ReasonAuthenticationFailed, auth.Reason)
+}
+
+// TestRepositoryController_process_AuthConditionOnTokenGenerationFailure verifies
+// the early-return token-generation path also stamps Authentication=False.
+func TestRepositoryController_process_AuthConditionOnTokenGenerationFailure(t *testing.T) {
+	namespace := "default"
+	repoName := "test-repo"
+	connName := "my-connection"
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: repoName, Namespace: namespace, Generation: 1},
+		Spec: provisioning.RepositorySpec{
+			Type:       provisioning.LocalRepositoryType,
+			Sync:       provisioning.SyncOptions{Enabled: false},
+			Connection: &provisioning.ConnectionInfo{Name: connName},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 1,
+			Health:             provisioning.HealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
+		},
+	}
+
+	indexer := cache.NewIndexer(
+		cache.MetaNamespaceKeyFunc,
+		cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc},
+	)
+	require.NoError(t, indexer.Add(repo))
+	repoLister := listers.NewRepositoryLister(indexer)
+
+	authErr := fmt.Errorf("unable to create token for repository: %w", connection.ErrAuthentication)
+	mockConn := connection.NewMockConnection(t)
+	mockConn.EXPECT().GenerateRepositoryToken(mock.Anything, mock.Anything).Return(nil, authErr).Once()
+
+	mockConnFactory := connection.NewMockFactory(t)
+	mockConnFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConn, nil).Once()
+
+	connObj := &provisioning.Connection{ObjectMeta: metav1.ObjectMeta{Name: connName, Namespace: namespace}}
+	provClient := &mockProvisioningV0alpha1Interface{
+		connectionsFunc: func(_ string) client.ConnectionInterface {
+			return mockConnectionInterface{
+				getFunc: func(_ context.Context, _ string, _ metav1.GetOptions) (*provisioning.Connection, error) {
+					return connObj, nil
+				},
+			}
+		},
+	}
+
+	reg := prometheus.NewPedanticRegistry()
+	patcher := &capturePatcher{}
+	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
+	rc := &RepositoryController{
+		repos:             repoGetter,
+		quotaGetter:       quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{MaxRepositories: 100}),
+		quotaChecker:      NewRepositoryQuotaChecker(repoGetter),
+		statusPatcher:     patcher,
+		connectionFactory: mockConnFactory,
+		client:            provClient,
+		tokenMetrics:      registerRepositoryTokenMetrics(reg),
+		reconcileMetrics:  registerReconcileErrorMetrics(reg),
+		resyncInterval:    5 * time.Minute,
+		logger:            logging.DefaultLogger.With("logger", loggerName),
+		tracer:            tracing.InitializeTracerForTest(),
+	}
+
+	_, err := rc.process(namespace + "/" + repoName)
+	require.NoError(t, err)
+
+	condOp, ok := patcher.findPatchOp("/status/conditions")
+	require.True(t, ok, "expected a /status/conditions patch")
+	conditions, ok := condOp["value"].([]metav1.Condition)
+	require.True(t, ok, "expected conditions value to be []metav1.Condition")
+
+	auth := findCondition(conditions, provisioning.ConditionTypeAuthentication)
+	require.NotNil(t, auth, "expected Authentication condition on the token-generation failure path")
+	assert.Equal(t, metav1.ConditionFalse, auth.Status)
+	assert.Equal(t, provisioning.ReasonAuthenticationFailed, auth.Reason)
+}
+
+func TestAuthFailureMessage(t *testing.T) {
+	authResults := &provisioning.TestResults{
+		Success: false,
+		Code:    http.StatusUnauthorized,
+		Errors:  []provisioning.ErrorDetails{{Detail: "bad credentials"}},
+	}
+	nonAuthResults := &provisioning.TestResults{Success: true, Code: http.StatusOK}
+
+	tests := []struct {
+		name        string
+		testResults *provisioning.TestResults
+		hookErr     error
+		want        string
+	}{
+		{
+			name:        "health auth failure uses the test result detail",
+			testResults: authResults,
+			want:        "bad credentials",
+		},
+		{
+			name:        "hook auth failure uses the hook error when health is not the auth failure",
+			testResults: nonAuthResults,
+			hookErr:     repository.ErrUnauthorized,
+			want:        repository.ErrUnauthorized.Error(),
+		},
+		{
+			name:        "no signal yields an empty message",
+			testResults: nonAuthResults,
+			want:        "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, authFailureMessage(tt.testResults, tt.hookErr))
+		})
+	}
 }
 
 // TestRepositoryController_shouldGenerateTokenFromConnection_ExpiredCounter verifies
@@ -3953,14 +4259,16 @@ func TestRepositoryController_process_FailedFlushDoesNotDuplicatePatches(t *test
 	require.NoError(t, indexer.Add(repo))
 	repoLister := listers.NewRepositoryLister(indexer)
 
-	// This repo fixture deterministically produces 5 patch ops (quota, health,
-	// observedGeneration, two condition adds) on the one and only expected
-	// call; fieldErrors is not patched since both sides are already empty.
+	// This repo fixture deterministically produces 6 patch ops (quota, health,
+	// observedGeneration, three condition adds -- quota, ready, authentication) on
+	// the one and only expected call; fieldErrors is not patched since both sides
+	// are already empty.
 	statusPatcher := mocks.NewStatusPatcher(t)
 	statusPatcher.
 		On(
 			"Patch",
 			mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"),
+			mock.AnythingOfType("map[string]interface {}"),
 			mock.AnythingOfType("map[string]interface {}"),
 			mock.AnythingOfType("map[string]interface {}"),
 			mock.AnythingOfType("map[string]interface {}"),

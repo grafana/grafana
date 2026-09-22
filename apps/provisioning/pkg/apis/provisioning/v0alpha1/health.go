@@ -32,6 +32,17 @@ const (
 	// ConditionTypePullStatus indicates the outcome of the last completed pull operation.
 	// True = last pull succeeded, False = last pull failed (quota exceeded, general error, etc.).
 	ConditionTypePullStatus = "PullStatus"
+
+	// ConditionTypeAuthentication indicates whether the resource's credentials are
+	// valid and the remote is reachable and authorized.
+	// True = credentials valid / repo reachable & authorized (reason Authenticated),
+	// False = authentication or authorization failed (reason AuthenticationFailed).
+	//
+	// It is a dedicated condition, separate from Ready, so an authentication failure
+	// survives even when a co-occurring quota or hook failure wins the single Ready
+	// reason. Consumers that must know whether credentials are the problem (e.g. the
+	// force-delete flow) read this instead of Ready.reason.
+	ConditionTypeAuthentication = "Authentication"
 )
 
 // Condition reasons for the Ready condition
@@ -48,6 +59,11 @@ const (
 	// (invalid credentials, wrong app ID, expired token, insufficient permissions).
 	// Automation should NOT automatically retry - wait for user to fix credentials.
 	ReasonAuthenticationFailed = "AuthenticationFailed"
+
+	// ReasonAuthenticated indicates the resource's credentials are valid and the
+	// remote is reachable and authorized. It is the positive counterpart of
+	// ReasonAuthenticationFailed for the Authentication condition.
+	ReasonAuthenticated = "Authenticated"
 
 	// ReasonServiceUnavailable indicates an external service issue (API down, network timeout).
 	// Automation CAN retry with standard backoff - the issue is transient and outside user control.

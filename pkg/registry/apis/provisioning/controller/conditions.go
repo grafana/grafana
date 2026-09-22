@@ -133,3 +133,29 @@ func buildReadyConditionWithReason(healthStatus provisioning.HealthStatus, reaso
 		Message: message,
 	}
 }
+
+// buildAuthenticationCondition creates the dedicated Authentication condition.
+// When failed, it is False/AuthenticationFailed with the supplied message;
+// otherwise True/Authenticated. Being a distinct condition type, it is written in
+// the same combined patch as Ready and cannot be clobbered by the quota/hook
+// overrides that overwrite the single Ready reason.
+func buildAuthenticationCondition(failed bool, message string) metav1.Condition {
+	if !failed {
+		return metav1.Condition{
+			Type:    provisioning.ConditionTypeAuthentication,
+			Status:  metav1.ConditionTrue,
+			Reason:  provisioning.ReasonAuthenticated,
+			Message: "Credentials are valid",
+		}
+	}
+
+	if message == "" {
+		message = "Authentication failed"
+	}
+	return metav1.Condition{
+		Type:    provisioning.ConditionTypeAuthentication,
+		Status:  metav1.ConditionFalse,
+		Reason:  provisioning.ReasonAuthenticationFailed,
+		Message: message,
+	}
+}
