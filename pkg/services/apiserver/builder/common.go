@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -84,6 +85,12 @@ type APIGroupValidation interface {
 type APIGroupRouteProvider interface {
 	// Support direct HTTP routes from an APIGroup
 	GetAPIRoutes(gv schema.GroupVersion) *APIRoutes
+}
+
+// APIGroupResourceProvider lets a builder advertise the resources it serves to
+// hosts that discover per-kind routes from manifests.
+type APIGroupResourceProvider interface {
+	GetResourceInfos(gv schema.GroupVersion) []utils.ResourceInfo
 }
 
 type APIGroupPostStartHookProvider interface {
@@ -199,6 +206,42 @@ func ServedGroupVersions(
 		}
 	}
 	return served
+}
+
+// ManifestsFromBuilders synthesizes manifests for resources that builders
+// advertise directly, so manifest-driven per-kind routes can discover them.
+func ManifestsFromBuilders(builders []APIGroupBuilder) []*app.ManifestData {
+	var manifests []*app.ManifestData
+	for _, b := range builders {
+		provider, ok := b.(APIGroupResourceProvider)
+		if !ok {
+			continue
+		}
+		for _, gv := range GetGroupVersions(b) {
+			kinds := make([]app.ManifestVersionKind, 0)
+			for _, info := range provider.GetResourceInfos(gv) {
+				scope := "Namespaced"
+				if info.IsClusterScoped() {
+					scope = "Cluster"
+				}
+				kinds = append(kinds, app.ManifestVersionKind{
+					Kind:   info.GroupVersionKind().Kind,
+					Plural: info.GetName(),
+					Scope:  scope,
+				})
+			}
+			manifests = append(manifests, &app.ManifestData{
+				Group:            gv.Group,
+				PreferredVersion: gv.Version,
+				Versions: []app.ManifestVersion{{
+					Name:   gv.Version,
+					Served: true,
+					Kinds:  kinds,
+				}},
+			})
+		}
+	}
+	return manifests
 }
 
 func GetGroupVersions(builder APIGroupBuilder) []schema.GroupVersion {

@@ -165,6 +165,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-16,alertingAIGenTemplates,experimental,@grafana/alerting-squad,false,false,false
 2025-07-31,alertingEnrichmentPerRule,experimental,@grafana/alerting-squad,false,false,false
 2025-08-29,alertingEnrichmentAssistantInvestigations,experimental,@grafana/alerting-squad,false,false,false
+2026-09-16,alerting.dataSourceManagedRouteProxy,experimental,@grafana/alerting-squad,false,false,true
 2026-09-16,alerting.manualAssistantInvestigation,experimental,@grafana/alerting-squad,false,false,true
 2025-07-16,alertingAIAnalyzeCentralStateHistory,experimental,@grafana/alerting-squad,false,false,false
 2026-09-16,alerting.ruleQuality,experimental,@grafana/alerting-squad,false,false,false
@@ -315,7 +316,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,splashScreen,preview,@grafana/grafana-frontend-platform,false,false,true
 2026-09-16,streamingForwardTeamHeadersTempo,privatePreview,@grafana/data-sources-plugins,false,false,false
 2026-09-16,lokiAlignedQuerySplitting,experimental,@grafana/observability-logs,false,false,false
-2026-09-16,queryFetchConfigFromSettingsService,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-09-16,profilesHeatmap,experimental,@grafana/observability-traces-and-profiling,false,false,false
 2026-09-16,tracesDrilldownTimeSeeker,experimental,@grafana/observability-traces-and-profiling,false,false,true
 2026-09-16,enableColorblindSafePanelOptions,experimental,@grafana/dataviz-squad,false,false,true
