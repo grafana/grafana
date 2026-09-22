@@ -158,6 +158,8 @@ export const FlagKeys = {
   OtelLogsFormatting: "otelLogsFormatting",
   /** Shows text labels on the add and stacked view buttons in PanelEditNext */
   PaneleditButtonLabels: "paneledit.buttonLabels",
+  /** Enables viewing non-applicable drilldowns on a panel level */
+  PerPanelNonApplicableDrilldowns: "perPanelNonApplicableDrilldowns",
   /** Enables RBAC for playlists */
   PlaylistsRBAC: "playlistsRBAC",
   /** Initializes data source instance settings asynchronously from the API instead of synchronously from boot data */
@@ -1012,6 +1014,17 @@ export const useFlagOtelLogsFormatting = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagPaneleditButtonLabels = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("paneledit.buttonLabels", false, options).value;
+};
+
+/**
+ * Enables viewing non-applicable drilldowns on a panel level
+ *
+ * **Details:**
+ * - flag key: `perPanelNonApplicableDrilldowns`
+ * - default value: `false`
+ */
+export const useFlagPerPanelNonApplicableDrilldowns = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("perPanelNonApplicableDrilldowns", false, options).value;
 };
 
 /**
