@@ -40,9 +40,12 @@ Multiple conditions in the same rule use **AND** (`,`), while multiple rules acr
 
 ## Before you begin
 
-- Be sure that you have the permission setup to create a Tempo or Cloud Traces tenant in Grafana Cloud.
-- Be sure that you have administrator permissions for Grafana.
-- Be sure that you have a team setup in Grafana.
+To use team LBAC for Tempo or Cloud Traces, you need to have the following:
+- The permission setup to create a Tempo or Cloud Traces tenant in Grafana Cloud
+- Administrator permissions for Grafana
+- A team setup in Grafana
+
+Team LBAC for works with Grafana Cloud, Grafana v12.3 and later, and Grafana Enterprise v12.3 and later.
 
 ### Known limitations
 
