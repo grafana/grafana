@@ -449,6 +449,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		false,
 		ps.Cfg.UnifiedAlerting.AllowedIntegrations,
 		emailValidator,
+		notifier.NoopReceiverStatusFetcher{},
 	)
 	contactPointService := provisioning.NewContactPointService(receiverAuthz, configStore, ps.secretService,
 		ps.alertingStore, ps.SQLStore, receiverSvc, ps.log, ps.alertingStore, ps.resourcePermissions, ps.Cfg.UnifiedAlerting.AllowedIntegrations, emailValidator)
