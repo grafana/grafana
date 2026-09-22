@@ -1346,115 +1346,109 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*re
 			key      kv.DataKey
 			response *BackendReadResponse
 		}
-		// Keep resolving metadata after a body read failure so the caller can
-		// authorize each row before deciding whether to expose the failure.
-		var runtimeErr error
-		for requestBatch := range slices.Chunk(requests, dataBatchSize) {
-			entries := make([]batchReadEntry, 0, len(requestBatch))
-			keys := make([]kv.DataKey, 0, len(requestBatch))
-			for _, req := range requestBatch {
-				entry := batchReadEntry{request: req}
-				if req == nil || req.Key == nil {
-					entry.response = &BackendReadResponse{Error: NewBadRequestError("missing key")}
-					entries = append(entries, entry)
-					continue
-				}
-
-				rv := ToSnowflakeRV(req.ResourceVersion)
-				if rv > latestRV {
-					entry.response = &BackendReadResponse{Error: NewBadRequestError(fmt.Sprintf("too large resource version: %d (current %d)", rv, latestRV))}
-					entries = append(entries, entry)
-					continue
-				}
-				meta, err := k.dataStore.GetResourceKeyAtRevision(ctx, GetRequestKey{
-					Group:     req.Key.Group,
-					Resource:  req.Key.Resource,
-					Namespace: req.Key.Namespace,
-					Name:      req.Key.Name,
-				}, rv)
-				if errors.Is(err, ErrNotFound) {
-					entry.response = &BackendReadResponse{Error: NewNotFoundError(req.Key)}
-					entries = append(entries, entry)
-					continue
-				}
-				if err != nil {
-					entry.response = &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
-					entries = append(entries, entry)
-					continue
-				}
-
-				entry.key = kv.DataKey{
-					Group:           req.Key.Group,
-					Resource:        req.Key.Resource,
-					Namespace:       req.Key.Namespace,
-					Name:            req.Key.Name,
-					ResourceVersion: meta.ResourceVersion,
-					Action:          meta.Action,
-					Folder:          meta.Folder,
-				}
+		entries := make([]batchReadEntry, 0, len(requests))
+		keys := make([]kv.DataKey, 0, len(requests))
+		for _, req := range requests {
+			entry := batchReadEntry{request: req}
+			if req == nil || req.Key == nil {
+				entry.response = &BackendReadResponse{Error: NewBadRequestError("missing key")}
 				entries = append(entries, entry)
-				keys = append(keys, entry.key)
+				continue
 			}
 
-			batchErr := runtimeErr
-			var next func() (DataObj, error, bool)
-			stopPull := func() {}
-			if batchErr == nil {
-				next, stopPull = iter.Pull2(k.dataStore.BatchGet(ctx, keys))
+			rv := ToSnowflakeRV(req.ResourceVersion)
+			if rv > latestRV {
+				entry.response = &BackendReadResponse{Error: NewBadRequestError(fmt.Sprintf("too large resource version: %d (current %d)", rv, latestRV))}
+				entries = append(entries, entry)
+				continue
 			}
-			var peek DataObj
-			var hasPeek bool
-			stop := func() {
-				if hasPeek && peek.Value != nil {
-					_ = peek.Value.Close()
-				}
-				hasPeek = false
-				stopPull()
+			meta, err := k.dataStore.GetResourceKeyAtRevision(ctx, GetRequestKey{
+				Group:     req.Key.Group,
+				Resource:  req.Key.Resource,
+				Namespace: req.Key.Namespace,
+				Name:      req.Key.Name,
+			}, rv)
+			if errors.Is(err, ErrNotFound) {
+				entry.response = &BackendReadResponse{Error: NewNotFoundError(req.Key)}
+				entries = append(entries, entry)
+				continue
 			}
-			for _, entry := range entries {
-				if entry.response != nil {
-					if !yield(entry.response) {
-						stop()
-						return
-					}
-					continue
-				}
-				if !hasPeek && batchErr == nil {
-					var peekErr error
-					peek, peekErr, hasPeek = next()
-					if peekErr != nil {
-						batchErr = peekErr
-						runtimeErr = peekErr
-					}
-				}
+			if err != nil {
+				entry.response = &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
+				entries = append(entries, entry)
+				continue
+			}
 
-				response := &BackendReadResponse{
-					Key:             entry.request.Key,
-					ResourceVersion: entry.key.ResourceVersion,
-					Folder:          entry.key.Folder,
+			entry.key = kv.DataKey{
+				Group:           req.Key.Group,
+				Resource:        req.Key.Resource,
+				Namespace:       req.Key.Namespace,
+				Name:            req.Key.Name,
+				ResourceVersion: meta.ResourceVersion,
+				Action:          meta.Action,
+				Folder:          meta.Folder,
+			}
+			entries = append(entries, entry)
+			keys = append(keys, entry.key)
+		}
+
+		next, stopPull := iter.Pull2(k.dataStore.BatchGet(ctx, keys))
+		var peek DataObj
+		var hasPeek bool
+		stop := func() {
+			if hasPeek && peek.Value != nil {
+				_ = peek.Value.Close()
+			}
+			hasPeek = false
+			stopPull()
+		}
+		for _, entry := range entries {
+			if entry.response != nil {
+				if !yield(entry.response) {
+					stop()
+					return
 				}
-				if batchErr != nil {
-					response.Error = &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: batchErr.Error()}
-				} else if hasPeek && peek.Key.String() == entry.key.String() {
-					value, err := readAndClose(peek.Value)
-					if err != nil {
-						batchErr = err
-						runtimeErr = err
-						response.Error = &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
-					} else {
-						response.Value = value
-					}
-					hasPeek = false
-				} else {
-					response.Error = NewNotFoundError(entry.request.Key)
-				}
-				if !yield(response) {
+				continue
+			}
+			if !hasPeek {
+				var peekErr error
+				peek, peekErr, hasPeek = next()
+				if peekErr != nil {
+					yield(&BackendReadResponse{
+						Key:             entry.request.Key,
+						ResourceVersion: entry.key.ResourceVersion,
+						Folder:          entry.key.Folder,
+						Error:           &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: peekErr.Error()},
+					})
 					stop()
 					return
 				}
 			}
-			stop()
+
+			response := &BackendReadResponse{
+				Key:             entry.request.Key,
+				ResourceVersion: entry.key.ResourceVersion,
+				Folder:          entry.key.Folder,
+			}
+			if hasPeek && peek.Key.String() == entry.key.String() {
+				value, err := readAndClose(peek.Value)
+				hasPeek = false
+				if err != nil {
+					response.Error = &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
+					yield(response)
+					stop()
+					return
+				}
+				response.Value = value
+			} else {
+				response.Error = NewNotFoundError(entry.request.Key)
+			}
+			if !yield(response) {
+				stop()
+				return
+			}
 		}
+		stop()
 	}, nil
 }
 

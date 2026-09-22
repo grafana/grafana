@@ -130,7 +130,7 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		deniedFolder = "folder-denied"
 		matchTeam    = "a"
 		otherTeam    = "b"
-		authorized   = 55 // > dataBatchSize (50) so the read crosses an internal batch boundary
+		authorized   = 55 // > the 10-item caller chunk, so the read crosses batch boundaries
 		unauthorized = 5
 		otherLabel   = 3
 	)
@@ -272,7 +272,7 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		require.Equal(t, 2, pages, "expected two pages")
 		require.Equal(t, wantByName, got, "exact names, bodies, and updated resource versions")
 		if opts.ExpectBatchReads {
-			require.Equal(t, int64(2), counting.batchReads.Load(), "each page should use one lazy batched read")
+			require.Equal(t, int64(6), counting.batchReads.Load(), "the two pages should use 10-row lazy batched reads")
 			require.Equal(t, int64(0), counting.reads.Load())
 		}
 	})
@@ -289,8 +289,8 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 
 		if opts.ExpectBatchReads {
 			// Compile filters the denied folder during search, so all 55 hits reach
-			// one lazy batched read call and no single reads.
-			require.Equal(t, int64(1), counting.batchReads.Load())
+			// six 10-row lazy batched reads and no single reads.
+			require.Equal(t, int64(6), counting.batchReads.Load())
 			require.Equal(t, int64(0), counting.reads.Load())
 		}
 	})

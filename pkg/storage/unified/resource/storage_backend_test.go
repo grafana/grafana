@@ -848,18 +848,18 @@ func (k *failingBatchGetKV) BatchGet(ctx context.Context, section string, keys [
 	}
 }
 
-type failFirstBatchGetKV struct {
+type failSecondBatchGetKV struct {
 	KV
 	err       error
 	dataCalls int
 }
 
-func (k *failFirstBatchGetKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[kv.KeyValue, error] {
+func (k *failSecondBatchGetKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[kv.KeyValue, error] {
 	if section != kv.DataSection {
 		return k.KV.BatchGet(ctx, section, keys)
 	}
 	k.dataCalls++
-	if k.dataCalls > 1 {
+	if k.dataCalls != 2 {
 		return k.KV.BatchGet(ctx, section, keys)
 	}
 	return func(yield func(kv.KeyValue, error) bool) {
@@ -1416,7 +1416,7 @@ func TestKvStorageBackend_BatchReadResource_StopsReadingBodiesWhenConsumerStops(
 		kvWrapper.KV = opts.KvStore
 		opts.KvStore = kvWrapper
 	})
-	requests := make([]*resourcepb.ReadRequest, 0, dataBatchSize+1)
+	requests := make([]*resourcepb.ReadRequest, 0, 11)
 	for i := range cap(requests) {
 		name := fmt.Sprintf("lazy-%02d", i)
 		obj, err := createTestObjectWithName(name, appsNamespace, "value")
@@ -1494,7 +1494,7 @@ func TestKvStorageBackend_BatchReadResource_ClosesPrefetchedBodyWhenConsumerStop
 	require.Equal(t, int64(1), kvWrapper.bodyCloses.Load())
 }
 
-func TestKvStorageBackend_BatchReadResource_RuntimeFailuresKeepOrderedMetadata(t *testing.T) {
+func TestKvStorageBackend_BatchReadResource_StopsAtRuntimeFailure(t *testing.T) {
 	tests := []struct {
 		name       string
 		firstError int
@@ -1537,7 +1537,7 @@ func TestKvStorageBackend_BatchReadResource_RuntimeFailuresKeepOrderedMetadata(t
 			responses, err := backend.BatchReadResource(t.Context(), requests)
 			require.NoError(t, err)
 			got := collectBatchReadResponses(t, responses)
-			require.Len(t, got, len(requests))
+			require.Len(t, got, tc.firstError+1)
 			for i, response := range got {
 				require.Equal(t, requests[i].Key, response.Key)
 				require.Equal(t, requests[i].ResourceVersion, response.ResourceVersion)
