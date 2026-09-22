@@ -69,6 +69,7 @@ export { DateTimePicker } from './components/DateTimePickers/DateTimePicker/Date
 export { List } from './components/List/List';
 export {
   InteractiveTable,
+  type ColumnSort,
   type FetchDataArgs,
   type FetchDataFunc,
 } from './components/InteractiveTable/InteractiveTable';

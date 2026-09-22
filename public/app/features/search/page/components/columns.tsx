@@ -1,5 +1,7 @@
 import { cx } from '@emotion/css';
+import { type ColumnDef } from '@tanstack/react-table';
 import { intervalToDuration } from 'date-fns/intervalToDuration';
+import type * as React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import {
@@ -15,6 +17,7 @@ import { config } from '@grafana/runtime';
 import { type PanelPluginMetas } from '@grafana/runtime/internal';
 import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { Checkbox, Icon, type IconName, TagList, Text, Tooltip } from '@grafana/ui';
+import { type CellComponent } from '@grafana/ui/internal';
 import { appEvents } from 'app/core/app_events';
 import { formatDate, formatDuration } from 'app/core/internationalization/dates';
 import { PluginIconName } from 'app/features/plugins/admin/types';
@@ -26,7 +29,32 @@ import { DELETED_BY_UNKNOWN, formatDeletedByDisplayValue, getIconForKind } from 
 import { type SelectionChecker, type SelectionToggle } from '../selection';
 
 import { ExplainScorePopup } from './ExplainScorePopup';
-import { type TableColumn } from './SearchResultsTable';
+
+const TYPE_COLUMN_WIDTH = 175;
+const DURATION_COLUMN_WIDTH = 200;
+const DATASOURCE_COLUMN_WIDTH = 200;
+const DELETED_BY_COLUMN_WIDTH = 200;
+
+function toSearchColumn({
+  id,
+  Header,
+  Cell,
+  width,
+  field,
+}: {
+  id: string;
+  Header?: React.ReactNode | (() => React.ReactNode);
+  Cell?: CellComponent;
+  width?: number;
+  field?: Field;
+}): ColumnDef<number> {
+  return {
+    id,
+    header: typeof Header === 'function' ? Header : () => Header,
+    size: width,
+    meta: { field, cellComponent: Cell },
+  };
+}
 
 const TYPE_COLUMN_WIDTH = 175;
 const DURATION_COLUMN_WIDTH = 200;
@@ -44,8 +72,8 @@ export const generateColumns = (
   onDatasourceChange?: (datasource?: string) => void,
   showingEverything?: boolean,
   panelPluginMetas: PanelPluginMetas = {}
-): TableColumn[] => {
-  const columns: TableColumn[] = [];
+): Array<ColumnDef<number>> => {
+  const columns: Array<ColumnDef<number>> = [];
   const access = response.view.fields;
   const uidField = access.uid;
   const kindField = access.kind;
@@ -66,91 +94,95 @@ export const generateColumns = (
   let width = 50;
   if (selection && selectionToggle) {
     width = 0;
-    columns.push({
-      id: `column-checkbox`,
-      width,
-      Header: () => {
-        const { view } = response;
-        const hasSelection = selection('*', '*');
-        const allSelected = view.every((item) => selection(item.kind, item.uid));
-        return (
-          <Checkbox
-            indeterminate={!allSelected && hasSelection}
-            checked={allSelected}
-            disabled={!response}
-            onChange={(e) => {
-              if (hasSelection) {
-                clearSelection();
-              } else {
-                for (let i = 0; i < view.length; i++) {
-                  const item = view.get(i);
-                  selectionToggle(item.kind, item.uid);
-                }
-              }
-            }}
-          />
-        );
-      },
-      Cell: (p) => {
-        const uid = uidField.values[p.row.index];
-        const kind = kindField ? kindField.values[p.row.index] : 'dashboard'; // HACK for now
-        const selected = selection(kind, uid);
-        const hasUID = uid != null; // Panels don't have UID! Likely should not be shown on pages with manage options
-        const { key, ...cellProps } = p.cellProps;
-        return (
-          <div key={key} {...cellProps} className={styles.cell}>
+    columns.push(
+      toSearchColumn({
+        id: `column-checkbox`,
+        width,
+        Header: () => {
+          const { view } = response;
+          const hasSelection = selection('*', '*');
+          const allSelected = view.every((item) => selection(item.kind, item.uid));
+          return (
             <Checkbox
-              disabled={!hasUID}
-              value={selected && hasUID}
+              indeterminate={!allSelected && hasSelection}
+              checked={allSelected}
+              disabled={!response}
               onChange={(e) => {
-                selectionToggle(kind, uid);
+                if (hasSelection) {
+                  clearSelection();
+                } else {
+                  for (let i = 0; i < view.length; i++) {
+                    const item = view.get(i);
+                    selectionToggle(item.kind, item.uid);
+                  }
+                }
               }}
             />
-          </div>
-        );
-      },
-      field: uidField,
-    });
+          );
+        },
+        Cell: (p) => {
+          const uid = uidField.values[p.row.index];
+          const kind = kindField ? kindField.values[p.row.index] : 'dashboard'; // HACK for now
+          const selected = selection(kind, uid);
+          const hasUID = uid != null; // Panels don't have UID! Likely should not be shown on pages with manage options
+          const { key, ...cellProps } = p.cellProps;
+          return (
+            <div key={key} {...cellProps} className={styles.cell}>
+              <Checkbox
+                disabled={!hasUID}
+                value={selected && hasUID}
+                onChange={(e) => {
+                  selectionToggle(kind, uid);
+                }}
+              />
+            </div>
+          );
+        },
+        field: uidField,
+      })
+    );
     availableWidth -= width;
   }
 
   // Name column
   width = Math.max(availableWidth * 0.2, 300);
-  columns.push({
-    Cell: (p) => {
-      let classNames = cx(styles.nameCellStyle);
-      let name = access.name.values[p.row.index];
-      const isDeleted = access.isDeleted?.values[p.row.index];
-      const description = access.description?.values[p.row.index];
+  columns.push(
+    toSearchColumn({
+      Cell: (p) => {
+        let classNames = cx(styles.nameCellStyle);
+        let name = access.name.values[p.row.index];
+        const isDeleted = access.isDeleted?.values[p.row.index];
+        const description = access.description?.values[p.row.index];
 
-      if (!name?.length) {
-        const loading = p.row.index >= response.view.dataFrame.length;
-        name = loading ? 'Loading...' : 'Missing title'; // normal for panels
-        classNames += ' ' + styles.missingTitleText;
-      }
-      const { key, ...cellProps } = p.cellProps;
-      const isLoaded = response.isItemLoaded(p.row.index);
+        if (!name?.length) {
+          const loading = p.row.index >= response.view.dataFrame.length;
+          name = loading ? 'Loading...' : 'Missing title'; // normal for panels
+          classNames += ' ' + styles.missingTitleText;
+        }
+        const { key, ...cellProps } = p.cellProps;
+        const isLoaded = response.isItemLoaded(p.row.index);
 
-      return (
-        <div key={key} className={cx(styles.cell, isLoaded && description && styles.nameCell)} {...cellProps}>
-          {!isLoaded ? (
-            <Skeleton width={200} />
-          ) : isDeleted || !p.userProps?.href ? (
-            <span className={classNames}>{name}</span>
-          ) : (
-            <a href={p.userProps?.href} onClick={p.userProps?.onClick} className={classNames} title={name}>
-              {name}
-            </a>
-          )}
-          {isLoaded ? <DescriptionTooltip description={description} /> : null}
-        </div>
-      );
-    },
-    id: `column-name`,
-    field: access.name!,
-    Header: () => <div>{t('search.results-table.name-header', 'Name')}</div>,
-    width,
-  });
+        return (
+          <div key={key} className={cx(styles.cell, isLoaded && description && styles.nameCell)} {...cellProps}>
+            {!isLoaded ? (
+              <Skeleton width={200} />
+            ) : isDeleted || !p.userProps?.href ? (
+              <span className={classNames}>{name}</span>
+            ) : (
+              <a href={p.userProps?.href} onClick={p.userProps?.onClick} className={classNames} title={name}>
+                {name}
+              </a>
+            )}
+            {isLoaded ? <DescriptionTooltip description={description} /> : null}
+          </div>
+        );
+      },
+      id: `column-name`,
+      field: access.name!,
+      Header: () => <div>{t('search.results-table.name-header', 'Name')}</div>,
+      width,
+    })
+  );
   availableWidth -= width;
 
   const showDeletedRemaining =
@@ -169,40 +201,42 @@ export const generateColumns = (
   const deletedByField = access.deletedBy;
   if (deletedByField && hasValue(deletedByField)) {
     width = DELETED_BY_COLUMN_WIDTH;
-    columns.push({
-      id: `column-deleted-by`,
-      field: deletedByField,
-      Header: t('search.results-table.deleted-by-header', 'Deleted by'),
-      width,
-      Cell: (p) => {
-        const rawValue = deletedByField.values[p.row.index];
-        const { key, ...cellProps } = p.cellProps;
-        return (
-          <div key={key} {...cellProps} className={styles.cell}>
-            {!response.isItemLoaded(p.row.index) ? (
-              <Skeleton width={150} />
-            ) : rawValue === DELETED_BY_UNKNOWN ? (
-              <Tooltip
-                content={t(
-                  'search.results-table.deleted-by-unknown-tooltip',
-                  'Failed to look up the account that deleted this dashboard'
-                )}
-              >
+    columns.push(
+      toSearchColumn({
+        id: `column-deleted-by`,
+        field: deletedByField,
+        Header: t('search.results-table.deleted-by-header', 'Deleted by'),
+        width,
+        Cell: (p) => {
+          const rawValue = deletedByField.values[p.row.index];
+          const { key, ...cellProps } = p.cellProps;
+          return (
+            <div key={key} {...cellProps} className={styles.cell}>
+              {!response.isItemLoaded(p.row.index) ? (
+                <Skeleton width={150} />
+              ) : rawValue === DELETED_BY_UNKNOWN ? (
+                <Tooltip
+                  content={t(
+                    'search.results-table.deleted-by-unknown-tooltip',
+                    'Failed to look up the account that deleted this dashboard'
+                  )}
+                >
+                  <Text variant="body" truncate>
+                    <Trans i18nKey="search.results-table.deleted-by-unknown-short">
+                      <Icon name="exclamation-triangle" /> Unknown
+                    </Trans>
+                  </Text>
+                </Tooltip>
+              ) : (
                 <Text variant="body" truncate>
-                  <Trans i18nKey="search.results-table.deleted-by-unknown-short">
-                    <Icon name="exclamation-triangle" /> Unknown
-                  </Trans>
+                  {formatDeletedByDisplayValue(rawValue, t)}
                 </Text>
-              </Tooltip>
-            ) : (
-              <Text variant="body" truncate>
-                {formatDeletedByDisplayValue(rawValue, t)}
-              </Text>
-            )}
-          </div>
-        );
-      },
-    });
+              )}
+            </div>
+          );
+        },
+      })
+    );
     availableWidth -= width;
   }
 
@@ -227,60 +261,62 @@ export const generateColumns = (
   if (meta?.locationInfo && availableWidth > 0) {
     width = showTags ? Math.max(availableWidth / 1.75, 300) : availableWidth;
     availableWidth -= width;
-    columns.push({
-      Cell: (p) => {
-        const parts = (access.location?.values[p.row.index] ?? '').split('/');
-        const { key, ...cellProps } = p.cellProps;
-        return (
-          <div key={key} {...cellProps} className={styles.cell}>
-            {!response.isItemLoaded(p.row.index) ? (
-              <Skeleton width={150} />
-            ) : (
-              <div className={styles.locationContainer}>
-                {parts.map((p) => {
-                  let info = meta.locationInfo[p];
-                  if (!info && p === 'general') {
-                    info = { kind: 'folder', url: '/dashboards', name: 'Dashboards' };
-                  }
+    columns.push(
+      toSearchColumn({
+        Cell: (p) => {
+          const parts = (access.location?.values[p.row.index] ?? '').split('/');
+          const { key, ...cellProps } = p.cellProps;
+          return (
+            <div key={key} {...cellProps} className={styles.cell}>
+              {!response.isItemLoaded(p.row.index) ? (
+                <Skeleton width={150} />
+              ) : (
+                <div className={styles.locationContainer}>
+                  {parts.map((p) => {
+                    let info = meta.locationInfo[p];
+                    if (!info && p === 'general') {
+                      info = { kind: 'folder', url: '/dashboards', name: 'Dashboards' };
+                    }
 
-                  if (info) {
-                    const content = (
-                      <>
-                        <Icon name={getIconForKind(info.kind)} />
+                    if (info) {
+                      const content = (
+                        <>
+                          <Icon name={getIconForKind(info.kind)} />
 
-                        <Text variant="body" truncate>
-                          {info.name}
-                        </Text>
-                      </>
-                    );
+                          <Text variant="body" truncate>
+                            {info.name}
+                          </Text>
+                        </>
+                      );
 
-                    if (info.url) {
+                      if (info.url) {
+                        return (
+                          <a key={p} href={info.url} className={styles.locationItem}>
+                            {content}
+                          </a>
+                        );
+                      }
+
                       return (
-                        <a key={p} href={info.url} className={styles.locationItem}>
+                        <div key={p} className={styles.locationItem}>
                           {content}
-                        </a>
+                        </div>
                       );
                     }
 
-                    return (
-                      <div key={p} className={styles.locationItem}>
-                        {content}
-                      </div>
-                    );
-                  }
-
-                  return <span key={p}>{p}</span>;
-                })}
-              </div>
-            )}
-          </div>
-        );
-      },
-      id: `column-location`,
-      field: access.location ?? access.url,
-      Header: t('search.results-table.location-header', 'Location'),
-      width,
-    });
+                    return <span key={p}>{p}</span>;
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        },
+        id: `column-location`,
+        field: access.location ?? access.url,
+        Header: t('search.results-table.location-header', 'Location'),
+        width,
+      })
+    );
   }
 
   if (availableWidth > 0 && showTags) {
@@ -290,25 +326,27 @@ export const generateColumns = (
   if (sortField && sortFieldWith) {
     const disp = sortField.display ?? getDisplayProcessor({ field: sortField, theme: config.theme2 });
 
-    columns.push({
-      Header: getFieldDisplayName(sortField),
-      Cell: (p) => {
-        const { key, ...cellProps } = p.cellProps;
-        return (
-          <div key={key} {...cellProps} className={styles.cell}>
-            {getDisplayValue({
-              sortField,
-              getDisplay: disp,
-              index: p.row.index,
-              kind: access.kind,
-            })}
-          </div>
-        );
-      },
-      id: `column-sort-field`,
-      field: sortField,
-      width: sortFieldWith,
-    });
+    columns.push(
+      toSearchColumn({
+        Header: getFieldDisplayName(sortField),
+        Cell: (p) => {
+          const { key, ...cellProps } = p.cellProps;
+          return (
+            <div key={key} {...cellProps} className={styles.cell}>
+              {getDisplayValue({
+                sortField,
+                getDisplay: disp,
+                index: p.row.index,
+                kind: access.kind,
+              })}
+            </div>
+          );
+        },
+        id: `column-sort-field`,
+        field: sortField,
+        width: sortFieldWith,
+      })
+    );
   }
 
   if (access.explain && access.score) {
@@ -327,31 +365,33 @@ export const generateColumns = (
       );
     };
 
-    columns.push({
-      Header: () => (
-        <div className={styles.sortedHeader}>
-          <Trans i18nKey="search.generate-columns.score">Score</Trans>
-        </div>
-      ),
-      Cell: (p) => {
-        const { key, ...cellProps } = p.cellProps;
-        return (
-          // TODO: fix keyboard a11y
-          // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-          <div
-            key={key}
-            {...cellProps}
-            className={cx(styles.cell, styles.explainItem)}
-            onClick={() => showExplainPopup(p.row.index)}
-          >
-            {vals[p.row.index]}
+    columns.push(
+      toSearchColumn({
+        Header: () => (
+          <div className={styles.sortedHeader}>
+            <Trans i18nKey="search.generate-columns.score">Score</Trans>
           </div>
-        );
-      },
-      id: `column-score-field`,
-      field: access.score,
-      width: 100,
-    });
+        ),
+        Cell: (p) => {
+          const { key, ...cellProps } = p.cellProps;
+          return (
+            // TODO: fix keyboard a11y
+            // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+            <div
+              key={key}
+              {...cellProps}
+              className={cx(styles.cell, styles.explainItem)}
+              onClick={() => showExplainPopup(p.row.index)}
+            >
+              {vals[p.row.index]}
+            </div>
+          );
+        },
+        id: `column-score-field`,
+        field: access.score,
+        width: 100,
+      })
+    );
   }
 
   return columns;
@@ -410,8 +450,8 @@ function makeDataSourceColumn(
   datasourceItemClass: string,
   invalidDatasourceItemClass: string,
   onDatasourceChange: (datasource?: string) => void
-): TableColumn {
-  return {
+): ColumnDef<number> {
+  return toSearchColumn({
     id: `column-datasource`,
     field,
     Header: t('search.results-table.datasource-header', 'Data source'),
@@ -436,7 +476,7 @@ function makeDataSourceColumn(
       );
     },
     width,
-  };
+  });
 }
 
 function makeDeletedRemainingColumn(
@@ -444,8 +484,8 @@ function makeDeletedRemainingColumn(
   deletedField: Field<Date | undefined>,
   width: number,
   styles: Record<string, string>
-): TableColumn {
-  return {
+): ColumnDef<number> {
+  return toSearchColumn({
     id: 'column-delete-age',
     field: deletedField,
     width,
@@ -477,7 +517,7 @@ function makeDeletedRemainingColumn(
         </div>
       );
     },
-  };
+  });
 }
 
 function makeTypeColumn(
@@ -487,8 +527,8 @@ function makeTypeColumn(
   width: number,
   styles: Record<string, string>,
   panelPluginMetas: PanelPluginMetas
-): TableColumn {
-  return {
+): ColumnDef<number> {
+  return toSearchColumn({
     id: `column-type`,
     field: kindField ?? typeField,
     Header: t('search.results-table.type-header', 'Type'),
@@ -549,7 +589,7 @@ function makeTypeColumn(
       );
     },
     width,
-  };
+  });
 }
 
 function makeTagsColumn(
@@ -558,8 +598,8 @@ function makeTagsColumn(
   width: number,
   styles: Record<string, string>,
   onTagSelected: (tag: string) => void
-): TableColumn {
-  return {
+): ColumnDef<number> {
+  return toSearchColumn({
     Cell: (p) => {
       const tags = field.values[p.row.index];
       const { key, ...cellProps } = p.cellProps;
@@ -577,7 +617,7 @@ function makeTagsColumn(
     field: field,
     Header: t('search.results-table.tags-header', 'Tags'),
     width,
-  };
+  });
 }
 
 function getDisplayValue({

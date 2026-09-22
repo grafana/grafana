@@ -1,19 +1,19 @@
 import { css } from '@emotion/css';
-import { flexRender, getCoreRowModel, type ColumnDef, useReactTable } from '@tanstack/react-table';
+import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { useEffect, useMemo, useRef, useCallback, useState, type CSSProperties } from 'react';
 import * as React from 'react';
 import { FixedSizeList } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 import { type Observable } from 'rxjs';
 
-import { type Field, type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
 import { TableCellHeight } from '@grafana/schema';
 import { useStyles2, useTheme2 } from '@grafana/ui';
-import { useTableStyles, TableCell, type CellComponent } from '@grafana/ui/internal';
+import { useTableStyles, TableCell } from '@grafana/ui/internal';
 import { getColumnFlexStyle, getFlexRowStyle } from 'app/features/browse-dashboards/components/customFlexTableLayout';
 
 import { useSearchKeyboardNavigation } from '../../hooks/useSearchKeyboardSelection';
@@ -34,14 +34,6 @@ export type SearchResultsProps = {
   onClickItem?: (event: React.MouseEvent<HTMLElement>) => void;
   keyboardEvents: Observable<React.KeyboardEvent>;
   trackingSource?: string;
-};
-
-export type TableColumn = {
-  id: string;
-  field?: Field;
-  Header?: React.ReactNode | (() => React.ReactNode);
-  Cell?: CellComponent;
-  width?: number;
 };
 
 const ROW_HEIGHT = 36; // pixels
@@ -113,19 +105,8 @@ export const SearchResultsTable = React.memo(
       panelPluginMetas,
     ]);
 
-    const tanStackColumns = useMemo<Array<ColumnDef<number>>>(
-      () =>
-        memoizedColumns.map(({ id, Header, Cell, width, field }) => ({
-          id,
-          // TanStack Table only renders strings and render functions, so non-string nodes are wrapped in a function
-          header: typeof Header === 'function' ? Header : () => Header,
-          size: width,
-          meta: { field, cellComponent: Cell },
-        })),
-      [memoizedColumns]
-    );
     const table = useReactTable({
-      columns: tanStackColumns,
+      columns: memoizedColumns,
       data: memoizedData,
       getCoreRowModel: getCoreRowModel(),
       // the table isn't paginated, so skip the state update TanStack Table queues whenever the data changes
@@ -334,7 +315,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-// CSS for columns from react table
+// Column layout used by search result cells
 const getColumnStyles = (theme: GrafanaTheme2) => {
   return {
     cell: css({

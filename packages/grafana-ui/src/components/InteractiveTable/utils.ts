@@ -17,8 +17,6 @@ export const EXPANDER_CELL_ID = '__expander' as const;
 
 export type InternalColumn<T extends object> = ColumnDef<T> & {
   id: string;
-  visible?: (data: T[]) => boolean;
-  widthClass?: string;
 };
 
 // react-table v7 sort types mapped onto the TanStack Table sorting functions
@@ -37,14 +35,13 @@ function sortNumber<T extends object>(rowA: Row<T>, rowB: Row<T>, columnId: stri
   return a === b ? 0 : a > b ? 1 : -1;
 }
 
-function toCellProps<T extends object, Value>(
-  context: CellContext<T, Value> & { __rowID?: string }
-): CellProps<T, Value> {
+function toCellProps<T extends object, Value>(context: CellContext<T, Value>): CellProps<T, Value> {
   const value = context.getValue();
   return {
-    ...context,
-    cell: { ...context.cell, value },
+    row: context.row,
+    cell: { value },
     value,
+    table: context.table,
   };
 }
 
@@ -87,17 +84,18 @@ export function getColumns<K extends object>(
       size: column.width ?? (column.disableGrow ? 0 : undefined),
       minSize: column.minWidth,
       maxSize: column.maxWidth,
-      widthClass: css({
-        width: typeof column.width === 'number' && column.width > 0 ? column.width : undefined,
-        minWidth: typeof column.minWidth === 'number' && column.minWidth > 0 ? column.minWidth : undefined,
-        maxWidth: typeof column.maxWidth === 'number' && column.maxWidth > 0 ? column.maxWidth : undefined,
-      }),
-      visible: column.visible,
+      meta: {
+        visible: column.visible,
+        widthClass: css({
+          width: typeof column.width === 'number' && column.width > 0 ? column.width : undefined,
+          minWidth: typeof column.minWidth === 'number' && column.minWidth > 0 ? column.minWidth : undefined,
+          maxWidth: typeof column.maxWidth === 'number' && column.maxWidth > 0 ? column.maxWidth : undefined,
+        }),
+      },
       ...(column.sortDescFirst !== undefined && { sortDescFirst: column.sortDescFirst }),
       ...(column.cell && {
         // flexRender is used because cell renderers can be components (e.g. wrapped in `memo`) and not plain functions
-        cell: (context: CellContext<K, unknown> & { __rowID?: string }) =>
-          flexRender(column.cell, toCellProps(context)),
+        cell: (context: CellContext<K, unknown>) => flexRender(column.cell, toCellProps(context)),
       }),
     })),
   ];
