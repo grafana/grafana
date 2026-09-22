@@ -81,12 +81,12 @@ The following table highlights the key differences between mute timings and sile
 
 ## Assign a time interval to a notification policy
 
-After you create a time interval, assign it as a mute timing or an active time interval on a [child notification policy](ref:create-child-policy). You can't assign these settings to the default notification policy, which is the fallback (root) of the tree for alerts that don't match a child. Mute timings and active time intervals aren't inherited from a parent policy.
+After you create a time interval, assign it as a mute timing or an active time interval on a [child notification policy](ref:create-child-policy). You can't assign these settings to the root policy. They aren't inherited from a parent policy.
 
 1. In the left-side menu, click **Alerts & IRM**, and then **Alerting**.
 1. Click **Notification configuration**, then select the **Notification policies** tab.
 1. Find a child notification policy and click **...** -> **Edit**.
-1. From the **Mute timings** or **Active timings** dropdown, choose the time intervals to add to the policy.
+1. From **Mute timings** or **Active timings**, choose the time intervals to add to the policy.
 1. Save your changes.
 
 ## Time intervals
