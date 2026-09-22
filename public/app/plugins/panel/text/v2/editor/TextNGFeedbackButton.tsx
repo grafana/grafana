@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
 import { TextPanelFeedbackEvent } from 'app/types/events';
@@ -32,7 +32,7 @@ export function TextNGFeedbackButton() {
       // Picked up by grafana-setupguide-app, which answers with an in-house survey in Cloud.
       onClick={() => getAppEvents().publish(new TextPanelFeedbackEvent())}
     >
-      <Trans i18nKey="textng.editor.feedback">Give feedback</Trans>
+      {label}
     </Button>
   );
 }
