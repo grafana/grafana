@@ -311,9 +311,9 @@ describe('prepConfig', () => {
     const rect = jest.fn();
     const mockU = createMockU(points);
     Object.assign(mockU, { series: [{}, {}, {}] });
-    const orientSpy = jest.spyOn(uPlot, 'orient').mockImplementation(
-      createOrientMock(points, { rect, valToPosY: (v) => v * 1000 })
-    );
+    const orientSpy = jest
+      .spyOn(uPlot, 'orient')
+      .mockImplementation(createOrientMock(points, { rect, valToPosY: (v) => v * 1000 }));
     try {
       drawClear(mockU);
       exemplarPaths(mockU, 2, 0, 0);
