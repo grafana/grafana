@@ -119,6 +119,24 @@ describe('pre-selection', () => {
     // Should display the friendly name "Default policy" in the input
     expect(await screen.findByDisplayValue(/default policy/i)).toBeInTheDocument();
   });
+
+  it('should show "Default policy" when value is an empty string', async () => {
+    const onChangeHandler = jest.fn();
+
+    // Callers that use "" as their own "no name means default" convention (rather than the
+    // tree's raw backend name) should still get the default tree selected.
+    render(<RoutingTreeSelector value="" onChange={onChangeHandler} />);
+
+    expect(await screen.findByDisplayValue(/default policy/i)).toBeInTheDocument();
+  });
+
+  it('should still show a value that is not in the list', async () => {
+    // The tree may have been deleted, or the list may only contain the trees this user can read.
+    // Either way the input must not go blank, or the caller's current value becomes invisible.
+    render(<RoutingTreeSelector value="tree-not-in-the-list" onChange={jest.fn()} />);
+
+    expect(await screen.findByDisplayValue('tree-not-in-the-list')).toBeInTheDocument();
+  });
 });
 
 describe('clearable behavior', () => {

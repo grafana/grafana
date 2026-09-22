@@ -3,6 +3,7 @@ import { useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useAsync, useToggle } from 'react-use';
 
+import { useRoutingTreeOptions } from '@grafana/alerting/unstable';
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -38,7 +39,6 @@ import { type ImportFormValues } from '../ImportToGMA';
 import { getRulesSourceOptions } from '../Wizard/steps';
 import { useGetRulesThatMightBeOverwritten } from '../hooks';
 import { filterRulerRulesConfig } from '../useImport';
-import { useRoutingTrees } from '../useRoutingTrees';
 import { parseYamlFileToRulerRulesConfigDTO } from '../yamlToRulerConverter';
 
 import { isStep2Valid } from './utils';
@@ -150,33 +150,22 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
   const rulesSourceOptions = getRulesSourceOptions(true);
 
   // Fetch available routing trees from the k8s API
-  const { routingTrees, isLoading: isLoadingRoutingTrees } = useRoutingTrees();
+  const { options: existingTreeOptions, isLoading: isLoadingRoutingTrees } = useRoutingTreeOptions();
 
   // Build routing tree dropdown options
   // Only includes: routing trees from API + policyTreeName from Step 1 (if filled)
   const routingTreeOptions: Array<ComboboxOption<string>> = useMemo(() => {
-    const options: Array<ComboboxOption<string>> = [];
+    // Step 1 can create a tree that the API doesn't know about yet. Offer it first, since it's
+    // the most relevant option.
+    const isUncreatedTree =
+      step1Completed && policyTreeName && !existingTreeOptions.some((option) => option.value === policyTreeName);
 
-    // Add the policy tree name from Step 1 if it was filled and Step 1 was completed
-    // Put it first since it's the most relevant option
-    const existingNames = routingTrees.map((rt) => rt.name);
-    if (step1Completed && policyTreeName && !existingNames.includes(policyTreeName)) {
-      options.push({
-        label: policyTreeName,
-        value: policyTreeName,
-      });
+    if (!isUncreatedTree) {
+      return existingTreeOptions;
     }
 
-    // Add existing routing trees from the API
-    routingTrees.forEach((rt) => {
-      options.push({
-        label: rt.label,
-        value: rt.name,
-      });
-    });
-
-    return options;
-  }, [step1Completed, policyTreeName, routingTrees]);
+    return [{ label: policyTreeName, value: policyTreeName }, ...existingTreeOptions];
+  }, [step1Completed, policyTreeName, existingTreeOptions]);
 
   return (
     <Stack direction="column" gap={3}>
