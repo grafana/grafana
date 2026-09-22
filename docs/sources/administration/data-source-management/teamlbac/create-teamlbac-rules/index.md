@@ -28,7 +28,7 @@ LBAC for data sources works with supported data sources that use basic authentic
 
 Before you start, ensure you have:
 
-- **Tenant permissions:** Permission to create the tenant for your data source, such as a Loki tenant, in Grafana Cloud.
+- **Tenant permissions:** Permission to create the tenant for your data source, such as a Loki tenant, in Grafana Cloud or in Grafana Enterprise Metrics or Grafana Enterprise Logs.
 - **Data source permissions:** `Admin` permission on the data source in Grafana.
 - **A team:** At least one team set up in Grafana.
 
@@ -39,11 +39,11 @@ To add an LBAC rule to a team:
 1. Navigate to your data source.
 1. Select the **Permissions** tab. The LBAC for data sources rules section appears on this tab.
 1. In the LBAC for data sources rules section, add a new rule for the team.
-1. Define a label selector for the rule. For the label or attribute selectors you can use, refer to the configuration guide for your data source in [Next steps](#next-steps).
+1. Define a label selector for the rule. For the selector syntax, refer to [LBAC rules](#lbac-rules). For data source-specific guidance, refer to the configuration guides in [Next steps](#next-steps).
 
 ## LBAC rules
 
-An LBAC rule is a `LogQL` query that filters logs or metrics based on labels. Each rule operates independently as its own filter, separate from other rules within a team.
+An LBAC rule is a LogQL query that filters logs or metrics based on labels. Each rule operates independently as its own filter, separate from other rules within a team.
 
 For example:
 
@@ -125,7 +125,7 @@ A user in only Team B can access logs or metrics that match `cluster="us-west-0"
 
 A user in both Team A and Team B can access logs or metrics that match `cluster="us-west-0"` **AND** (`namespace="dev"`, `namespace="prod"`, or `namespace="staging"`), because rules across teams combine with **OR**.
 
-A user with an `Editor` or `Viewer` role who isn't a member of any team can't query logs or metrics.
+A user with an `Editor` or `Viewer` role who isn't a member of any team can't query logs or metrics, because in this setup only teams have `Query` permission on the data source.
 
 ### Rules that overlap
 
