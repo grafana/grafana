@@ -96,7 +96,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
           </Box>
 
           <Stack alignItems="center" flex={1} wrap="wrap" columnGap={1} rowGap={0}>
-            <Box paddingY={1} flex={1} minWidth="50%">
+            <Box paddingBottom={0} flex={1} minWidth="50%">
               <Text weight="medium">
                 <span className={styles.title}>{title}</span>
               </Text>
@@ -205,7 +205,6 @@ const getStyles = (
     }),
     content: css({
       color: textColor,
-      paddingTop: hasTitle ? theme.spacing(0.5) : 0,
       maxHeight: '50vh',
       overflowY: 'auto',
     }),
