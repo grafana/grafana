@@ -539,7 +539,19 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		if err != nil {
 			return fmt.Errorf("get stored content %s/%s: %w", namespace, name, err)
 		}
-		if identicalContent(stored, items) && storedFolder == items[0].Folder {
+		if identicalContent(stored, items) {
+			if storedFolder != items[0].Folder {
+				if outcome, err := b.checkLiveRV(ctx, key, rv); err != nil {
+					return err
+				} else if outcome.skip {
+					statusLabel = outcome.status
+					return nil
+				}
+				// Save the folder before advancing the version so a failed move stays retryable.
+				if err := b.vectorBackend.UpdateFolder(ctx, namespace, job.Model, builder.partitionKey, name, items[0].Folder); err != nil {
+					return fmt.Errorf("update folder %s/%s: %w", namespace, name, err)
+				}
+			}
 			if err := b.vectorBackend.UpdateContentVersion(ctx, namespace, job.Model, builder.partitionKey, name, builder.Version()); err != nil {
 				return fmt.Errorf("update content version %s/%s: %w", namespace, name, err)
 			}

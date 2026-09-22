@@ -171,16 +171,20 @@ func TestBackfillIdenticalContentUpdatesChangedFolder(t *testing.T) {
 	vec.seedStoredContent("ns", "test-model", "folders", "folder", "", "title: Operations", 1)
 	old := vec.rows[rowsKey("ns", "test-model", "folders", "folder")][""]
 	old.Folder = "old-parent"
+	old.Embedding = []float32{0.1, 0.2}
 	vec.rows[rowsKey("ns", "test-model", "folders", "folder")][""] = old
+	text := &fakeText{dim: 4}
 	b, err := NewVectorBackfiller(Options{
-		Storage: storage, VectorBackend: vec, BatchEmbedder: embedder.NewBatchEmbedder(*newFakeEmbedder(&fakeText{dim: 4})), BuilderProvider: registry,
+		Storage: storage, VectorBackend: vec, BatchEmbedder: embedder.NewBatchEmbedder(*newFakeEmbedder(text)), BuilderProvider: registry,
 	})
 	require.NoError(t, err)
 	b.runBackfill(context.Background())
-	require.Len(t, vec.upserts, 1)
-	assert.Equal(t, "new-parent", vec.upserts[0][0].Folder)
-	assert.Equal(t, 2, vec.upserts[0][0].ContentVersion)
-	assert.Empty(t, vec.updateCalls, "a version-only update would preserve the old authorization folder")
+	assert.Zero(t, text.calls)
+	assert.Empty(t, vec.upserts)
+	old.Folder = "new-parent"
+	old.ContentVersion = 2
+	assert.Equal(t, old, vec.rows[rowsKey("ns", "test-model", "folders", "folder")][""])
+	require.Len(t, vec.updateCalls, 1)
 	assert.Equal(t, []int64{1}, vec.completedJobIDs)
 }
 
