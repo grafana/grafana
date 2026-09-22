@@ -5,10 +5,7 @@ import {
   getExpandedRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  type ColumnSort,
   type Header,
-  type Row,
-  type TableOptions,
   useReactTable,
 } from '@tanstack/react-table';
 import { Fragment, type ReactNode, useCallback, useEffect, useId, useMemo, useRef } from 'react';
@@ -116,6 +113,7 @@ export type InteractiveTableHeaderTooltip = {
   iconName?: IconName;
 };
 
+export type ColumnSort = { id: string; desc?: boolean };
 export type FetchDataArgs<Data> = { sortBy: ColumnSort[] };
 export type FetchDataFunc<Data> = ({ sortBy }: FetchDataArgs<Data>) => void;
 
@@ -132,7 +130,7 @@ interface BaseProps<TableData extends object> {
   /**
    * Must return a unique id for each row
    */
-  getRowId: TableOptions<TableData>['getRowId'];
+  getRowId: (originalRow: TableData, index: number) => string;
   /**
    * Optional tooltips for the table headers. The key must match the column id.
    */
@@ -204,18 +202,8 @@ export function InteractiveTable<TableData extends object>({
   const tableColumns = useMemo(() => {
     return getColumns<TableData>(columns, showExpandAll);
   }, [columns, showExpandAll]);
-  // TanStack Table doesn't keep custom properties on the column definitions it exposes while rendering
-  const widthClasses = useMemo(
-    () => Object.fromEntries(tableColumns.map((column) => [column.id, column.widthClass])),
-    [tableColumns]
-  );
   const id = useId();
-  const getRowHTMLID = useCallback(
-    (row: Row<TableData>) => {
-      return `${id}-${row.id}`.replace(/\s/g, '');
-    },
-    [id]
-  );
+  const getRowHTMLID = useCallback((rowId: string) => `${id}-${rowId}`.replace(/\s/g, ''), [id]);
 
   const multiplePages = data.length > pageSize;
   const paginationEnabled = pageSize > 0;
@@ -238,17 +226,18 @@ export function InteractiveTable<TableData extends object>({
     manualSorting: Boolean(fetchData),
     enableSortingRemoval: !disableSortRemove,
     getRowId,
+    meta: { getRowHTMLID },
     initialState: {
       columnVisibility: Object.fromEntries(
         [
           !renderExpandedRow && EXPANDER_CELL_ID,
           ...tableColumns
-            .filter((col) => !(col.visible ? col.visible(data) : true))
+            .filter((col) => !(col.meta?.visible ? col.meta.visible(data) : true))
             .map((c) => c.id)
             .filter(isTruthy),
         ]
           .filter(isTruthy)
-          .map((id) => [id, false])
+          .map((columnId) => [columnId, false])
       ),
       sorting: initialSortBy,
       pagination: { pageIndex: 0, pageSize: paginationEnabled ? pageSize : 10 },
@@ -292,7 +281,7 @@ export function InteractiveTable<TableData extends object>({
                     key={header.id}
                     role="columnheader"
                     colSpan={header.colSpan}
-                    className={cx(styles.header, widthClasses[header.column.id], {
+                    className={cx(styles.header, header.column.columnDef.meta?.widthClass, {
                       [styles.disableGrow]: header.column.columnDef.size === 0,
                       [styles.sortableHeader]: header.column.getCanSort(),
                     })}
@@ -310,7 +299,7 @@ export function InteractiveTable<TableData extends object>({
 
         <tbody>
           {tableInstance.getRowModel().rows.map((row) => {
-            const rowId = getRowHTMLID(row);
+            const rowId = getRowHTMLID(row.id);
             const isExpanded = row.getIsExpanded();
 
             return (
@@ -318,8 +307,8 @@ export function InteractiveTable<TableData extends object>({
                 <tr className={cx(styles.row, isExpanded && styles.expandedRow)}>
                   {row.getVisibleCells().map((cell) => {
                     return (
-                      <td key={cell.id} className={cx(styles.cell, widthClasses[cell.column.id])}>
-                        {flexRender(cell.column.columnDef.cell, { ...cell.getContext(), __rowID: rowId })}
+                      <td key={cell.id} className={cx(styles.cell, cell.column.columnDef.meta?.widthClass)}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
                     );
                   })}

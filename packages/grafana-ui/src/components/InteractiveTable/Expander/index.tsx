@@ -11,12 +11,13 @@ const expanderContainerStyles = css({
   height: '100%',
 });
 
-export function ExpanderCell<K extends object>({ row, __rowID }: CellProps<K>) {
+export function ExpanderCell<K extends object>({ row, table }: CellProps<K>) {
+  const rowHTMLID = table.options.meta?.getRowHTMLID?.(row.id);
   return (
     <div className={expanderContainerStyles}>
       <IconButton
         tooltip={t('grafana-ui.interactive-table.expand-row-tooltip', 'Toggle row expanded')}
-        aria-controls={row.getIsExpanded() ? __rowID : undefined}
+        aria-controls={row.getIsExpanded() ? rowHTMLID : undefined}
         name={row.getIsExpanded() ? 'angle-down' : 'angle-right'}
         aria-expanded={row.getIsExpanded()}
         onClick={row.getToggleExpandedHandler()}

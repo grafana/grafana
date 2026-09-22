@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { type ColumnSort } from '@tanstack/react-table';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
@@ -10,6 +9,7 @@ import {
   Avatar,
   type CellProps,
   type Column,
+  type ColumnSort,
   EmptyState,
   FilterInput,
   Button,
