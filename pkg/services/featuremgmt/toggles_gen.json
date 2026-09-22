@@ -190,12 +190,15 @@
     {
       "metadata": {
         "name": "alerting.syncExternalAlertmanager",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T10:24:28Z"
+        "resourceVersion": "1790015011312",
+        "creationTimestamp": "2026-09-16T10:24:28Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-09-21 18:23:31.312246505 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana",
-        "stage": "experimental",
+        "stage": "privatePreview",
         "codeowner": "@grafana/alerting-squad",
         "requiresRestart": true,
         "hideFromDocs": true,

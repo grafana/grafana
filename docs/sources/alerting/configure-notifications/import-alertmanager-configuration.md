@@ -83,7 +83,7 @@ The import happens in two stages:
 Holding a staged configuration apart is what lets you revert or re-import all of it at once, instead of resource by resource. Its resources are read-only, and no Grafana resource can reference them. The imported policy tree is the exception: an alert rule can route to it by name. Until a rule does, your existing notifications are unchanged.
 
 {{< admonition type="note" >}}
-Importing Alertmanager configuration is in [public preview](https://grafana.com/docs/release-life-cycle/#public-preview). The API is behind the `alertingImportAlertmanagerAPI` [feature toggle](ref:feature-toggles) and the user interface is behind `alertingMigrationWizardUI`. Both are disabled by default. In Grafana Cloud, contact Support to enable them.
+Importing Alertmanager configuration is in [public preview](https://grafana.com/docs/release-life-cycle/#public-preview). The API is behind the `alertingImportAlertmanagerAPI` [feature toggle](ref:feature-toggles) and the user interface is behind `alertingMigrationWizardUI`. Both are disabled by default. [Auto-sync](#auto-sync-an-alertmanager-configuration) is separately available in [private preview](https://grafana.com/docs/release-life-cycle/#private-preview), behind the `alerting.syncExternalAlertmanager` feature toggle, which is also disabled by default and requires a Grafana restart when enabled. In Grafana Cloud, contact Support to request access.
 {{< /admonition >}}
 
 ## Before you begin
@@ -157,6 +157,35 @@ The Grafana Alerting user interface imports notification resources and alert rul
 
 1. Click **Next**, and either configure the [alert rules import](ref:import-rules) or skip the step.
 1. Review the summary, then click **Start import**.
+
+## Auto-sync an Alertmanager configuration
+
+Auto-sync keeps a staged notification configuration up to date with a Mimir or Cortex Alertmanager data source. Grafana periodically reads the source configuration and applies changes to the staged resources without writing back to the source. Auto-sync doesn't import or synchronize alert rules.
+
+Auto-sync is in [private preview](https://grafana.com/docs/release-life-cycle/#private-preview). Enable the `alerting.syncExternalAlertmanager` feature toggle and restart Grafana. To configure it through the user interface, also enable `alertingMigrationWizardUI`. In Grafana Cloud, contact Support to request access.
+
+### Enable auto-sync
+
+Before you begin, configure a Mimir or Cortex Alertmanager data source and sign in as an organization administrator. Auto-sync doesn't support uploaded YAML files or Prometheus Alertmanager data sources. If a staged configuration with a different identifier already exists, promote or revert it first.
+
+1. Go to **Alerting** > **Settings**.
+1. Click the **Import** tab.
+1. In **Auto-sync configuration**, select the Alertmanager data source.
+1. Click **Save**.
+
+Grafana uses the data source UID as the import identifier and notification policy tree name. The imported resources remain read-only while staged. To send notifications through the imported policy tree, route your Grafana-managed alert rules to that tree.
+
+The **Auto-sync configuration** section shows the sync status and any errors from the last sync attempt. If Grafana can't fetch or validate an update, it keeps the previously imported configuration.
+
+### Stop auto-sync or promote the configuration
+
+While auto-sync is configured, you can't manually import another notification configuration or revert the sync-managed configuration. You can still import alert rules separately.
+
+To stop synchronization, click **Disable sync** in **Auto-sync configuration** and confirm. Disabling sync doesn't delete the staged configuration. You can then review, promote, or revert it.
+
+Promoting the sync-managed configuration merges its resources into Grafana and stops synchronization from that data source. The resources become editable and no longer track changes in the source Alertmanager.
+
+If **Auto-sync configuration** shows **Managed by operator**, the data source UID is set by `external_alertmanager_uid` in the `[unified_alerting]` section of `grafana.ini`. This setting takes precedence over the user interface. To disable auto-sync or manage it through the user interface, remove that setting and restart Grafana.
 
 ## Import with the API
 
@@ -260,7 +289,7 @@ Staged configurations are managed in Grafana Alerting settings.
 
 The **Staged configuration** section lists the contact points, notification policies, templates, time intervals, and inhibition rules the import contains, and links to each resource so you can inspect it before promoting.
 
-To discard the import and everything it added, click **Revert**. Your Grafana configuration is unaffected.
+To discard the import and everything it added, click **Revert**. Your Grafana configuration is unaffected. For a configuration managed by [auto-sync](#auto-sync-an-alertmanager-configuration), disable auto-sync before reverting.
 
 {{< admonition type="warning" >}}
 Reverting deletes the imported notification policy tree. Alert rules that route to that tree lose their target, and their alerts fall back to the root of your default notification policy. Update those rules to point elsewhere before you revert.
