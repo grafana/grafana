@@ -4588,7 +4588,6 @@
     },
     "folder-variables": {
       "empty": "No folder-scoped variables in this folder yet.",
-      "list-heading": "Folder variables",
       "new": "New folder variable"
     },
     "manage-folder-nav": {
@@ -12767,7 +12766,7 @@
     },
     "global-variables": {
       "subtitle": "Template variables shared across dashboards, globally or per folder",
-      "title": "Variables"
+      "title": "Cross-dashboard variables"
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
