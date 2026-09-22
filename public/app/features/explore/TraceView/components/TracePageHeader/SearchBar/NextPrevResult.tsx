@@ -28,7 +28,7 @@ import { getServiceDisplayName } from '../../utils/service-name';
 type NextPrevResultProps = {
   trace: Trace;
   spanFilterMatches: Set<string> | undefined;
-  setFocusedSpanIdForSearch: Dispatch<SetStateAction<string>>;
+  setFocusedSpanIdForSearch: (spanID: string) => void;
   focusedSpanIndexForSearch: number;
   setFocusedSpanIndexForSearch: Dispatch<SetStateAction<number>>;
   datasourceType: string;

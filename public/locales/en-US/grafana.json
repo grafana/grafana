@@ -745,13 +745,20 @@
     },
     "bulk-actions": {
       "delete": {
+        "affected-count": "Deleted {{num}} rules",
+        "no-rules-affected": "No rules were deleted from folder",
         "success": "Rules successfully deleted from folder"
       },
       "pause": {
+        "affected-count": "Paused {{num}} rules",
+        "no-rules-affected": "No rules were paused for folder",
         "success": "Rules evaluation successfully paused for folder"
       },
+      "skipped-provisioned": "Skipped {{num}} provisioned rules",
       "unpause": {
-        "success": "Rules successfully unpaused for this folder"
+        "affected-count": "Resumed {{num}} rules",
+        "no-rules-affected": "No rules were resumed for folder",
+        "success": "Rules successfully resumed for folder"
       }
     },
     "central-alert-history": {
@@ -1780,6 +1787,8 @@
         },
         "source-title": "Import Source",
         "subtitle": "Import contact points, notification policies, templates, and mute timings from an external Alertmanager.",
+        "templates-added-title_one": "Template file added",
+        "templates-added-title_other": "Template files added",
         "templates-desc": "Optional. Upload the template files referenced by your Alertmanager config. Each file is imported as a template named after the file.",
         "templates-dropzone": "Drop template files here or click to upload",
         "templates-duplicate": "Duplicate template file name: \"{{name}}\". Template file names must be unique.",
@@ -1792,6 +1801,7 @@
         "validation-success": "Validation successful",
         "validation-success-desc": "No conflicts found. The configuration is ready to import.",
         "validation-warning": "Some resources will be renamed to avoid conflicts with existing ones",
+        "yaml-added-title": "Configuration file uploaded",
         "yaml-desc": "Accepted file types: {{extensions}}",
         "yaml-file": "Alertmanager config YAML",
         "yaml-invalid-type": "File must be a YAML file ({{extensions}})",
@@ -4504,9 +4514,6 @@
     "create-new": {
       "dashboard-group": "Dashboard"
     },
-    "create-new-button": {
-      "generate-dashboard": "Generate dashboard"
-    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "This item is not in the same repository as the selected items."
@@ -6937,21 +6944,6 @@
     "placeholder": "Select dashboard",
     "unknown-dashboard": "Unknown dashboard ({{uid}})"
   },
-  "dashboard-prompt": {
-    "datasource-entry": {
-      "generate-dashboard": "Generate dashboard"
-    },
-    "modal": {
-      "title": "What do you want to monitor?"
-    },
-    "prompt": {
-      "cancel": "Cancel",
-      "description": "Describe it in your own words — mention the services, data, or questions you care about.",
-      "input-label": "Describe the dashboard you want",
-      "placeholder": "e.g. Error rates and latency for my checkout service, broken down by environment",
-      "submit": "Build it"
-    }
-  },
   "dashboard-scene": {
     "ad-hoc-filters-variable-editor": {
       "message-not-supported": "This data source does not support filters.",
@@ -9103,6 +9095,10 @@
       "attribute-category": {
         "other": "Other"
       },
+      "exception-message": "Message:",
+      "exception-stacktrace": "Stacktrace",
+      "exception-title": "Exception",
+      "exception-type": "Type:",
       "label": {
         "kind": "Kind:",
         "library-name": "Library Name:",
@@ -9236,6 +9232,7 @@
       "target": "Target",
       "tooltip-url": "{{route}} or {{url}} or {{target}} or {{path}}",
       "trace-banner-error": "Trace error banner",
+      "trace-banner-go-to-span": "Go to span",
       "trace-banner-metrics": "{{duration}} · {{percent}}% of trace",
       "trace-banner-warning": "Trace warning banner",
       "trace-id": "Trace ID",
@@ -10752,7 +10749,9 @@
       "aria-label-toggle-collapse": "toggle collapse panel",
       "ariaLabel-panel-loading": "Panel loading bar",
       "ariaLabel-panel-status": "Panel status",
-      "errors-and-notices": "Errors and notices",
+      "explain-with-assistant": "Explain with Assistant",
+      "fix-with-assistant": "Fix with Assistant",
+      "inspect": "Inspect",
       "tooltip-cancel": "Cancel query",
       "tooltip-cancel-loading": "Cancel query",
       "tooltip-stop-streaming": "Stop streaming",
@@ -11473,6 +11472,28 @@
         "clusters_one": "{{value}} cluster",
         "clusters_other": "{{value}} clusters",
         "description": "See cluster health, cost, and right-sizing savings in one view.",
+        "filter": {
+          "all-clusters": "All clusters",
+          "all-namespaces": "All namespaces",
+          "all-nodes": "All nodes",
+          "badge-ignored": "Filters not applied",
+          "cancel": "Cancel",
+          "clear": "Clear filters",
+          "cluster": "Cluster",
+          "edit": "Edit filters ({{summary}})",
+          "ignored-tooltip": "Saved for {{saved}}. This card reads {{current}}, so it shows the whole fleet.",
+          "namespaces": "Namespaces",
+          "no-match": "No matching data",
+          "no-match-hint": "Adjust the filters",
+          "nodes": "Nodes",
+          "open": "Filter by cluster, namespace, or node",
+          "save": "Save",
+          "save-failed": "Could not save to browser storage. Try again.",
+          "summary-cluster": "Cluster: {{cluster}}",
+          "summary-namespaces": "Namespaces: {{namespaces}}",
+          "summary-nodes": "Nodes: {{nodes}}",
+          "title": "Filter Kubernetes Monitoring"
+        },
         "health-nodes_one": "{{count}} node not ready",
         "health-nodes_other": "{{count}} nodes not ready",
         "health-pods_one": "{{count}} pod pending or failed",
@@ -13016,7 +13037,6 @@
     },
     "quick-add": {
       "aria-label": "New",
-      "generate-dashboard-button": "Generate dashboard",
       "new-template-dashboard-button": "Use template"
     },
     "rss-button": "Latest from the blog"
@@ -13266,8 +13286,10 @@
       "table": {
         "author": "Author",
         "copy-link": "Copy link",
+        "copy-link-error": "Failed to copy link",
         "created": "Created",
         "edit": "Edit",
+        "link-copied": "Link copied to clipboard",
         "more-actions": "More actions",
         "tags": "Tags",
         "title": "Title",
@@ -16237,6 +16259,8 @@
       "new-snapshot-button": "New snapshot",
       "success-creation": "Your snapshot has been created",
       "success-delete": "Your snapshot has been deleted",
+      "too-large-body": "This snapshot is {{size}}, over the {{limit}} limit. Snapshot a single panel, shorten the time range, or select fewer template variable values, then try again.",
+      "too-large-title": "Snapshot is too large to publish",
       "view-all-button": "View all snapshots"
     },
     "share-panel": {
