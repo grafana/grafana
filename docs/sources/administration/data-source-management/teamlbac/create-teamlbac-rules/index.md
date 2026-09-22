@@ -22,7 +22,7 @@ review_date: 2026-09-22
 
 # Create LBAC for data sources rules
 
-LBAC for data sources works with supported data sources that are created with basic authentication. You must create the data source manually, because you can't add LBAC rules to a data source that Grafana provisions or manages. You can, however, provision the LBAC rules themselves with the Grafana Terraform provider.
+LBAC for data sources works with supported data sources that use basic authentication. You can't add LBAC rules to a file-provisioned data source, and provisioned data sources are read-only in the UI. Create the data source first, then add its LBAC rules on the **Permissions** tab or provision them with the Grafana Terraform provider.
 
 ## Before you begin
 
