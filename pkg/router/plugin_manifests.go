@@ -17,9 +17,12 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/grafana/authlib/types"
+
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana-app-sdk/plugin/grpcplugin"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
 	backendgrpcplugin "github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
@@ -240,12 +243,51 @@ func pluginDeploymentKey(entry definition.PluginDeployment) (string, error) {
 		return "", fmt.Errorf("router: fingerprinting plugin manifest entry %q: %w", entry.Definition.JSONData.ID, err)
 	}
 	sum := sha256.Sum256(body)
-	return "plugins_url:" + entry.Definition.JSONData.ID + ":" + hex.EncodeToString(sum[:])[:16], nil
+	return "managed:" + entry.Definition.JSONData.ID + ":" + hex.EncodeToString(sum[:])[:16], nil
 }
 
+// Standard plugin, but with OBO authentication and custom key
 type pluginDeploymentBackend struct {
 	Backend
 	key string
 }
 
 func (b *pluginDeploymentBackend) Key() string { return b.key }
+
+func (b *pluginDeploymentBackend) Load(ctx context.Context) (http.Handler, error) {
+	handler, err := b.Backend.Load(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &authenticatingWrapper{
+		Handler: handler,
+	}, nil
+}
+
+type authenticatingWrapper struct {
+	http.Handler
+}
+
+func (a *authenticatingWrapper) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+
+	// TODO... read user from header
+	token := req.Header.Get("X-xxxxx")
+	if token == "" {
+		http.Error(w, "missing token", http.StatusUnauthorized)
+		return
+	}
+
+	fmt.Printf("TODO... validate token and put user in context: %s\n", token)
+
+	requester := &identity.StaticRequester{
+		Type:        types.TypeUser,
+		UserUID:     "a123456",
+		Name:        "test",
+		AccessToken: token,
+	}
+
+	ctx = identity.WithRequester(ctx, requester)
+	a.ServeHTTP(w, req.WithContext(ctx))
+}
