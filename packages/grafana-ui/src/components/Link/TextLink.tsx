@@ -33,6 +33,15 @@ interface TextLinkProps extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 't
 const svgSizes: {
   [key in TextLinkVariants]: IconSize;
 } = {
+  '2xl': 'xl',
+  xl: 'xl',
+  // TODO fix icon alignment
+  lg: 'lg',
+  md: 'md',
+  base: 'sm',
+  sm: 'xs',
+
+  // deprecated
   h1: 'xl',
   h2: 'xl',
   h3: 'lg',

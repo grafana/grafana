@@ -112,7 +112,7 @@ export function createTypography(colors: ThemeColors, typographyInput: ThemeTypo
 
   // All our fonts/line heights should be integer multiples of 2 to prevent issues with alignment
   const variants = {
-    ['2xl']: buildVariant(fontFamily, fontWeightBold, 24, 34),
+    '2xl': buildVariant(fontFamily, fontWeightBold, 24, 34),
     xl: buildVariant(fontFamily, fontWeightBold, 22, 30),
     lg: buildVariant(fontFamily, fontWeightMedium, 20, 26),
     md: buildVariant(fontFamily, fontWeightMedium, 16, 22),
@@ -167,20 +167,20 @@ export interface ThemeTypographyVariantTypes {
   sm: ThemeTypographyVariant;
   code: ThemeTypographyVariant;
 
-  /** @deprecated use 2xl instead */
+  /** @deprecated use `2xl` instead */
   h1: ThemeTypographyVariant;
-  /** @deprecated use xl instead */
+  /** @deprecated use `xl` instead */
   h2: ThemeTypographyVariant;
-  /** @deprecated use lg instead */
+  /** @deprecated use `lg` instead */
   h3: ThemeTypographyVariant;
-  /** @deprecated use md instead */
+  /** @deprecated use `md` instead */
   h4: ThemeTypographyVariant;
-  /** @deprecated use base instead */
+  /** @deprecated use `base` instead */
   h5: ThemeTypographyVariant;
-  /** @deprecated use sm instead */
+  /** @deprecated use `sm` instead */
   h6: ThemeTypographyVariant;
-  /** @deprecated use base instead */
+  /** @deprecated use `base` instead */
   body: ThemeTypographyVariant;
-  /** @deprecated use sm instead */
+  /** @deprecated use `sm` instead */
   bodySmall: ThemeTypographyVariant;
 }
