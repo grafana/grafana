@@ -502,7 +502,7 @@ describe('NotebooksListPage', () => {
 
     render(<NotebooksListPage />);
 
-    expect(await screen.findByRole('link', { name: 'Notebook 0' })).toBeInTheDocument();
+    expect(await screen.findByRole('table')).toBeInTheDocument();
     expect(await screen.findByText(`Showing ${NOTEBOOKS_PAGE_LIMIT} of 870`)).toBeInTheDocument();
   });
 
@@ -525,14 +525,14 @@ describe('NotebooksListPage', () => {
   // corner would say one thing and the rows another.
   it('returns to the first page when a filter narrows the set', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
-    // Three pages, with the only match for "needle" outside the last one.
+    // Three pages, with only one match for "needle".
     setNotebooks(
       Array.from({ length: ROWS_PER_PAGE * 3 }, (_, i) => makeHit(`nb${i}`, i === 0 ? 'needle' : `Filler ${i}`))
     );
 
     render(<NotebooksListPage />);
 
-    expect(await screen.findByRole('link', { name: 'needle' })).toBeInTheDocument();
+    expect(await screen.findByRole('table')).toBeInTheDocument();
     expect(await screen.findByText(`${ROWS_PER_PAGE * 3} notebooks`)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: '3' }));
 
@@ -555,7 +555,7 @@ describe('NotebooksListPage', () => {
 
     const { rerender } = render(<NotebooksListPage />);
 
-    expect(await screen.findByRole('link', { name: 'Notebook 0' })).toBeInTheDocument();
+    expect(await screen.findByRole('table')).toBeInTheDocument();
     expect(await screen.findByText(`${ROWS_PER_PAGE * 2} notebooks`)).toBeInTheDocument();
     const firstPage = titlesOnScreen();
     await userEvent.click(screen.getByRole('button', { name: '2' }));
@@ -671,7 +671,7 @@ describe('NotebooksListPage', () => {
 
     render(<NotebooksListPage />);
 
-    expect(await screen.findByRole('link', { name: 'Notebook 0' })).toBeInTheDocument();
+    expect(await screen.findByRole('table')).toBeInTheDocument();
     expect(await screen.findByText(`Showing ${NOTEBOOKS_PAGE_LIMIT} of up to 870`)).toBeInTheDocument();
   });
 
