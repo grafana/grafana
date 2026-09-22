@@ -1,10 +1,9 @@
 import { screen } from '@testing-library/react';
 import { lazy, type ComponentType } from 'react';
-import { getWrapper, render } from 'test/test-utils';
+import { render } from 'test/test-utils';
 
 import { setEchoSrv } from '@grafana/runtime';
 
-import { AppChromeService } from '../components/AppChrome/AppChromeService';
 import { Echo } from '../services/echo/Echo';
 
 import { GrafanaRoute, type Props } from './GrafanaRoute';
@@ -23,7 +22,7 @@ const mockLocation = {
   state: undefined,
   hash: '',
 };
-function setup(overrides: Partial<Props>, chrome = new AppChromeService()) {
+function setup(overrides: Partial<Props>) {
   const props: Props = {
     location: mockLocation,
     route: {
@@ -33,10 +32,7 @@ function setup(overrides: Partial<Props>, chrome = new AppChromeService()) {
     ...overrides,
   };
 
-  const wrapper = getWrapper({ renderWithRouter: true, grafanaContext: { chrome } });
-  render(<GrafanaRoute {...props} />, { wrapper });
-
-  return { chrome };
+  render(<GrafanaRoute {...props} />);
 }
 
 describe('GrafanaRoute', () => {
