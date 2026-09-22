@@ -6,7 +6,6 @@ import { UrlSyncContextProvider } from '@grafana/scenes';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 
 import { NotebookPdfLayout } from '../scene/NotebookPdfLayout';
-import { NotebookRenderTarget } from '../scene/NotebookRenderTargetContext';
 import { type NotebookScene } from '../scene/NotebookScene';
 
 import { getNotebookPageStateManager } from './NotebookPageStateManager';
@@ -61,10 +60,8 @@ export function NotebookRenderPage() {
   // notebook's saved range instead of the one being exported.
   return (
     <UrlSyncContextProvider scene={scene} updateUrlOnInit={true} createBrowserHistorySteps={false}>
-      <NotebookRenderTarget>
-        <NotebookPdfLayout />
-        <NotebookRenderDocument scene={scene} />
-      </NotebookRenderTarget>
+      <NotebookPdfLayout />
+      <NotebookRenderDocument scene={scene} />
     </UrlSyncContextProvider>
   );
 }
@@ -76,6 +73,10 @@ function NotebookRenderDocument({ scene }: { scene: NotebookScene }) {
     // watching — harmless in practice, since a capture makes no edits, but a render that can write
     // to the document it is rendering is not a property worth relying on.
     scene.autosave.abandon();
+    // Same statement, about refreshing: a capture is a still photograph, so nothing should be
+    // re-querying underneath it while the renderer works. Stated outright rather than left to fall
+    // out of nobody rendering the refresh picker, which is what used to suppress it by accident.
+    scene.state.refreshPicker.setState({ refresh: '' });
 
     return deactivate;
   }, [scene]);

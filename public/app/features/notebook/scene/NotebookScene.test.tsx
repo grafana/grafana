@@ -1,7 +1,6 @@
 import { createMemoryHistory } from 'history';
 import { BehaviorSubject } from 'rxjs';
-import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
-import { act, getWrapper, render, screen } from 'test/test-utils';
+import { act, render, screen } from 'test/test-utils';
 
 import { CoreApp, type Scope, dateTime } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
@@ -30,12 +29,10 @@ import { Echo } from 'app/core/services/echo/Echo';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { defaultVisualizationPanelKind } from 'app/features/notebook/types';
-import { KioskMode } from 'app/types/dashboard';
 
 import { NOTEBOOK_EDIT_SESSION_SOURCE } from '../analytics/types';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 
-import { NotebookRenderTarget } from './NotebookRenderTargetContext';
 import { NotebookScene } from './NotebookScene';
 import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
 import { NotebookCellItem } from './layout-notebook/NotebookCellItem';
@@ -113,12 +110,12 @@ describe('NotebookScene', () => {
     deactivators.splice(0).forEach((deactivate) => deactivate());
   });
 
-  // activate() only propagates to $timeRange/$variables/$data/$behaviors; the pickers are plain
-  // state and are otherwise activated by their renderers. With the controls row hidden nothing
-  // renders the refresh picker, so without an explicit activation its interval never starts and the
-  // spec's autoRefresh silently does nothing.
-  it('activates the refresh picker when the time controls are hidden', () => {
-    const scene = buildScene(true);
+  // The pickers are plain scene state, so they are otherwise activated by their renderers — and
+  // whether anything renders the controls row is now the surface's choice. Activating here
+  // unconditionally is what stops the spec's autoRefresh being silently dead on a surface that
+  // leaves the row out.
+  it.each([true, false])('activates the refresh picker regardless of hideTimeControls (%s)', (hideTimeControls) => {
+    const scene = buildScene(hideTimeControls);
 
     const deactivate = scene.activate();
 
@@ -128,41 +125,19 @@ describe('NotebookScene', () => {
     expect(scene.state.refreshPicker.isActive).toBe(false);
   });
 
-  it('leaves the refresh picker to its renderer when the time controls are shown', () => {
+  // `scene.Component` is the document and nothing else: the controls row is composed by whichever
+  // surface wants it (see NotebookSceneControls), so a surface that does not — the PDF capture
+  // route — simply leaves it out rather than the scene having to ask who is drawing it.
+  it('renders the document only, with no controls row', () => {
     const scene = buildScene(false);
-
     activate(scene);
 
-    expect(scene.state.refreshPicker.isActive).toBe(false);
-  });
+    render(<scene.Component model={scene} />);
 
-  // The stylesheet itself is NotebookPdfLayout's, and is tested there. What belongs to the scene is
-  // that it leaves the controls row out when the tree says it is being captured.
-  describe('rendered as a capture target', () => {
-    it('leaves out the controls row entirely, time range and refresh included', () => {
-      const scene = buildScene(false);
-      activate(scene);
-
-      render(
-        <NotebookRenderTarget>
-          <scene.Component model={scene} />
-        </NotebookRenderTarget>
-      );
-
-      expect(screen.queryByRole('button', { name: /Time range selected/ })).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: /refresh time interval/i })).not.toBeInTheDocument();
-    });
-
-    // The default, so the ordinary notebook route needs no provider — a regression here would strip
-    // the controls from everybody.
-    it('keeps the controls row without the provider', () => {
-      const scene = buildScene(false);
-      activate(scene);
-
-      render(<scene.Component model={scene} />);
-
-      expect(screen.getByRole('button', { name: /Time range selected/ })).toBeInTheDocument();
-    });
+    expect(screen.getByText('Hello')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Time range selected/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /refresh time interval/i })).not.toBeInTheDocument();
+    expect(screen.queryByText('Edit')).not.toBeInTheDocument();
   });
 
   describe('edit mode', () => {
@@ -502,59 +477,6 @@ describe('NotebookScene', () => {
       expect(scene.editHistory.state.canUndo).toBe(false);
       replacement.addCell('code', 0);
       expect(scene.editHistory.state.canUndo).toBe(true);
-    });
-
-    // Awaited because entering edit mode also mounts the header's tag picker, whose dropdown measures
-    // itself once mounted. That lands after the act above, so a synchronous assertion here leaves an
-    // unwrapped update behind and the console guard fails the test.
-    it('offers the history controls only in edit mode', async () => {
-      const scene = buildScene(false);
-      activate(scene);
-      render(<scene.Component model={scene} />);
-
-      expect(screen.queryByRole('button', { name: /Undo/ })).not.toBeInTheDocument();
-
-      act(() => scene.onEnterEditMode());
-
-      expect(await screen.findByRole('button', { name: 'Undo' })).toBeInTheDocument();
-    });
-
-    // The assistant writes without entering edit mode, so gating the status on `isEditing` would hide a
-    // failed save from the only person who could retry it.
-    it('reports a save outside edit mode, where the assistant writes', () => {
-      const scene = buildScene(false);
-      activate(scene);
-      render(<scene.Component model={scene} />);
-
-      expect(screen.queryByText('Save failed')).not.toBeInTheDocument();
-
-      act(() =>
-        scene.autosave.setState({ status: 'error', errorMessage: 'The notebook was changed by someone else.' })
-      );
-
-      expect(scene.state.isEditing).toBeUndefined();
-      expect(screen.getByText('Save failed')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
-    });
-
-    // A PDF export renders the notebook headlessly with kiosk mode on, so editing affordances that
-    // mean nothing in an exported document must not show up in the capture.
-    it('hides save status, the edit toggle and history controls when kiosk mode is full', () => {
-      const scene = buildScene(false, 'nb1');
-      activate(scene);
-      act(() => scene.onEnterEditMode());
-      act(() =>
-        scene.autosave.setState({ status: 'error', errorMessage: 'The notebook was changed by someone else.' })
-      );
-
-      const context = getGrafanaContextMock();
-      context.chrome.update({ kioskMode: KioskMode.Full });
-      const wrapper = getWrapper({ renderWithRouter: true, grafanaContext: context });
-      render(<scene.Component model={scene} />, { wrapper });
-
-      expect(screen.queryByText('Save failed')).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Undo' })).not.toBeInTheDocument();
-      expect(screen.queryByText('Edit')).not.toBeInTheDocument();
     });
 
     it('records history for a body replaced before activation', () => {

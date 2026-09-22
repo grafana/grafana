@@ -1,16 +1,17 @@
+import { css } from '@emotion/css';
 import { type ReactNode, useEffect, useMemo, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
 import { SceneObjectStateChangedEvent } from '@grafana/scenes';
-import { Alert, Box } from '@grafana/ui';
+import { Alert, Box, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 
 import { notebookResourceFor } from '../api/notebookResource';
 import { NotebookPageStateManager, type NotebookLoadError } from '../pages/NotebookPageStateManager';
-import { NotebookEmbeddedHost } from '../scene/NotebookEmbeddedContext';
 import { type NotebookScene } from '../scene/NotebookScene';
+import { NotebookSceneControls } from '../scene/NotebookSceneControls';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 import { transformNotebookToScene } from '../serialization/transformNotebookToScene';
 import { type Spec as NotebookSpec } from '../types';
@@ -252,6 +253,7 @@ function useNotebookDraftChanges(
 }
 
 function NotebookDocument({ scene, onTitleChange }: { scene: NotebookScene; onTitleChange?: (title: string) => void }) {
+  const styles = useStyles2(getStyles);
   const { title } = scene.useState();
 
   useEffect(() => scene.activate(), [scene]);
@@ -261,14 +263,19 @@ function NotebookDocument({ scene, onTitleChange }: { scene: NotebookScene; onTi
   }, [onTitleChange, title]);
 
   /**
-   * Wrapped rather than flagged on the scene: this tree has no app header, but the same scene may
-   * also be mounted on /notebooks, which does, and the two share one object so they share one
-   * autosave. Only the tree can answer per mount.
+   * `stickyOffset={0}` rather than a flag on the scene: this tree has no app header, but the same
+   * scene may also be mounted on /notebooks, which does, and the two share one object so they share
+   * one autosave. A prop answers per mount; scene state could not.
+   *
+   * The column is explicit because this component renders into a host we do not control (the
+   * assistant's canvas), and the controls row and the document are two siblings that need a flex
+   * column above them for the sticky row to behave.
    */
   return (
-    <NotebookEmbeddedHost>
+    <div className={styles.host}>
+      <NotebookSceneControls model={scene} stickyOffset={0} />
       <scene.Component model={scene} />
-    </NotebookEmbeddedHost>
+    </div>
   );
 }
 
@@ -302,3 +309,13 @@ function Centered({ children }: { children: ReactNode }) {
     </Box>
   );
 }
+
+const getStyles = () => ({
+  // Matches what the scene's own container does on the /notebooks route, where Page supplies the
+  // column. Nothing here can assume the host does.
+  host: css({
+    display: 'flex',
+    flexDirection: 'column',
+    flexGrow: 1,
+  }),
+});

@@ -1,6 +1,10 @@
-import { render } from 'test/test-utils';
+import { act, render } from 'test/test-utils';
+
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { NotebookPdfLayout } from './NotebookPdfLayout';
+
+const VISUAL_REFRESH_FLAG = 'grafana.visualDesignRefresh';
 
 /**
  * Reads the live CSSOM rather than each `<style>` tag's textContent: emotion's "speedy" insertion
@@ -22,6 +26,12 @@ function ruleFor(selector: string): string | undefined {
 }
 
 describe('NotebookPdfLayout', () => {
+  afterEach(async () => {
+    await act(async () => {
+      setTestFlags({});
+    });
+  });
+
   it('sizes the document to a portrait sheet, with the inset as padding and a canvas of its own', () => {
     render(<NotebookPdfLayout />);
 
@@ -60,6 +70,19 @@ describe('NotebookPdfLayout', () => {
     const rule = ruleFor('notebook-document');
     expect(rule).toContain('max-width: none');
     expect(rule).toMatch(/padding:\s*0/);
+  });
+
+  // Whichever token the theme currently calls the page's own surface — the point is that the sheet
+  // carries the notebook's canvas rather than bare paper, so the white panels have something to sit
+  // on, exactly as they do on screen.
+  it.each([true, false])('paints the canvas with the page background (visual refresh: %s)', async (refresh) => {
+    await act(async () => {
+      setTestFlags({ [VISUAL_REFRESH_FLAG]: refresh });
+    });
+
+    render(<NotebookPdfLayout />);
+
+    expect(ruleFor('html,body')).toMatch(/background:\s*#/);
   });
 
   // It used to need them, back when this ran on the ordinary notebook route and had to outrank the
