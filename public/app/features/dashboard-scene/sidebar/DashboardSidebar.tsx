@@ -507,6 +507,11 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     }
   }
 
+  /**
+   * This should be called when state of the DashboardScene got swapped
+   * and selected element or code pane need to refreshed. In case the change
+   * in DashboardScene means the element no longer exists - the sidebar is closed
+   */
   public refreshAfterRebuild() {
     const { openPane, selectionContext, selectedDisconnectedObject } = this.state;
     if (openPane?.getId() === 'code') {
@@ -523,7 +528,6 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       selectionContext.selected.length > 0 &&
       selectionContext.selected.every(({ id }) => this.getSelectedObject(id))
     ) {
-      // A fresh pane and selection discard memoized editable elements from the old tree.
       this.setState({
         openPane: new ElementEditPane({}),
         selectionContext: { ...selectionContext, selected: [...selectionContext.selected] },
@@ -531,7 +535,6 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
         previousState: undefined,
       });
     } else {
-      // Pane history and disconnected editors can still reference the discarded tree.
       this.setState({ previousState: undefined });
       this.closePane();
     }
