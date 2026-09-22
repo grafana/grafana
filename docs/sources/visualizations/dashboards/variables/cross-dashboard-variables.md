@@ -23,7 +23,7 @@ You can scope cross-dashboard variables in two ways:
 - **Globally**: Available to all dashboards in the organization.
 - **By folder**: Available only to the dashboards in the same folder as the variable.
 
-The **Dashboards > Variables** page lists cross-dashboard variables, showing which ones are available globally or by folder.
+The **Dashboards > Cross-dashboard variables** page lists cross-dashboard variables, showing which ones are available globally or by folder.
 In the following image, there are variables in "Core metrics" and "Grafana Cloud" folders and then a number of variables that aren't in any folders; these ones are global:
 
 ![Cross-dashboard variables page](/media/docs/grafana/dashboards/screenshot-xdash-variables-v13.3.png)
@@ -42,7 +42,7 @@ Variables in other folders aren't available to that dashboard.
 
 To create cross-dashboard variables, follow the these steps:
 
-1. Navigate to **Dashboards > Variables**.
+1. Navigate to **Dashboards > Cross-dashboard variables**.
 1. Click **+ New variable**.
 1. Set the following general variable properties:
 
