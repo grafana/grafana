@@ -172,6 +172,124 @@ func TestDualReadWriter_ReadNewDashboardPreviewWithTokenAuth(t *testing.T) {
 	}
 }
 
+// A successful check against PR metadata must not bypass the configured folder's
+// permissions, even when the PR UID names an existing folder the caller can read.
+func TestDualReadWriter_ReadNewDashboardPreviewValidatesConfiguredFolder(t *testing.T) {
+	for _, tt := range []struct {
+		name              string
+		configuredFolder  string
+		canReadConfigured bool
+	}{
+		{name: "allowed PR folder cannot bypass denied configured folder", configuredFolder: "restricted-folder"},
+		{name: "different allowed configured folder permits preview", configuredFolder: "other-allowed-folder", canReadConfigured: true},
+		{name: "matching allowed folder permits preview", configuredFolder: "preview-folder", canReadConfigured: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			const dashboardPath = "team/dashboard.json"
+			const metadataPath = "team/_folder.json"
+			const destination = "preview-folder"
+			cfg := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "synced-dashboards", Namespace: "default"},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitRepositoryType,
+					Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
+					Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+				},
+			}
+			repo := repository.NewMockReaderWriter(t)
+			repo.EXPECT().Config().Return(cfg)
+			repo.EXPECT().Read(mock.Anything, dashboardPath, "feature").Return(&repository.FileInfo{
+				Path: dashboardPath, Ref: "feature",
+				Data: []byte(fmt.Sprintf(`{"apiVersion":%q,"kind":"Dashboard","metadata":{"name":"preview-dashboard"},"spec":{"title":"Preview dashboard"}}`, DashboardKind.GroupVersion().String())),
+			}, nil).Once()
+			repo.EXPECT().Read(mock.Anything, metadataPath, "feature").Return(&repository.FileInfo{
+				Path: metadataPath, Data: []byte(fmt.Sprintf(`{"metadata":{"name":%q}}`, destination)),
+			}, nil).Once()
+			repo.EXPECT().Read(mock.Anything, metadataPath, "").Return(&repository.FileInfo{
+				Path: metadataPath, Data: []byte(fmt.Sprintf(`{"metadata":{"name":%q}}`, tt.configuredFolder)),
+			}, nil).Once()
+
+			caller := &identity.StaticRequester{Type: authlib.TypeUser, Namespace: cfg.Namespace, OrgRole: identity.RoleEditor}
+			ctx := authlib.WithAuthInfo(context.Background(), caller)
+			_, provisioningID, err := identity.WithProvisioningIdentity(ctx, cfg.Namespace)
+			require.NoError(t, err)
+			provisioningContext := mock.MatchedBy(func(ctx context.Context) bool {
+				id, ok := authlib.AuthInfoFrom(ctx)
+				return ok && id.GetUID() == provisioningID.GetUID() && id.GetNamespace() == cfg.Namespace
+			})
+			folders := &MockDynamicResourceInterface{}
+			t.Cleanup(func() { folders.AssertExpectations(t) })
+			folderIDs := []string{destination}
+			if tt.configuredFolder != destination {
+				folderIDs = append(folderIDs, tt.configuredFolder)
+			}
+			for _, folderID := range folderIDs {
+				folders.On("Get", provisioningContext, folderID, metav1.GetOptions{}, mock.Anything).
+					Return(&unstructured.Unstructured{Object: map[string]interface{}{
+						"metadata": map[string]interface{}{"name": folderID, "namespace": cfg.Namespace},
+					}}, nil).Once()
+			}
+
+			dashboards := &MockDynamicResourceInterface{}
+			t.Cleanup(func() { dashboards.AssertExpectations(t) })
+			dashboards.On("Get", provisioningContext, "preview-dashboard", metav1.GetOptions{}, mock.Anything).
+				Return(nil, apierrors.NewNotFound(DashboardResource.GroupResource(), "preview-dashboard")).Once()
+			var dryRunObject *unstructured.Unstructured
+			dashboards.On("Create", provisioningContext, mock.Anything, mock.Anything, mock.Anything).
+				Run(func(args mock.Arguments) {
+					dryRunObject = args.Get(1).(*unstructured.Unstructured)
+					require.Equal(t, []string{metav1.DryRunAll}, args.Get(2).(metav1.CreateOptions).DryRun)
+				}).Return(&unstructured.Unstructured{}, nil).Once()
+			clients := NewMockResourceClients(t)
+			clients.EXPECT().ForKind(ctx, DashboardKind).Return(dashboards, DashboardResource, nil).Once()
+			clients.EXPECT().SupportedResources().Return(SupportedProvisioningResources).Once()
+			clients.EXPECT().Folder(provisioningContext).Return(folders, FolderKind, nil).Once()
+			parser := &parser{
+				repo:   provisioning.ResourceRepositoryInfo{Name: cfg.Name, Namespace: cfg.Namespace, Type: cfg.Spec.Type},
+				reader: repo, config: cfg, clients: clients, folderMetadataEnabled: true,
+			}
+			var checkedFolders []string
+			access := auth.NewTokenAccessChecker(previewTokenAccessChecker(func(checkCtx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+				require.Same(t, ctx, checkCtx)
+				require.Same(t, caller, id)
+				require.Equal(t, authlib.CheckRequest{
+					Namespace: cfg.Namespace, Group: DashboardResource.Group, Resource: DashboardResource.Resource,
+					Verb: utils.VerbGet, Name: "preview-dashboard",
+				}, req)
+				checkedFolders = append(checkedFolders, folder)
+				return authlib.CheckResponse{Allowed: folder == destination || (tt.canReadConfigured && folder == tt.configuredFolder)}, nil
+			})).WithFallbackRole(identity.RoleViewer)
+			authorizer := NewAuthorizer(cfg, repo, access, clients, true)
+			readWriter := NewDualReadWriter(repo, parser, nil, authorizer, true)
+
+			parsed, err := readWriter.Read(ctx, dashboardPath, "feature")
+			if tt.canReadConfigured {
+				require.NoError(t, err)
+				require.NotNil(t, parsed)
+				assert.Nil(t, parsed.Existing)
+				assert.Nil(t, parsed.Upsert)
+				assert.Equal(t, destination, parsed.Meta.GetFolder())
+			} else {
+				require.Error(t, err)
+				assert.True(t, apierrors.IsForbidden(err), "expected forbidden, got %v", err)
+				assert.Nil(t, parsed)
+			}
+			assert.Equal(t, folderIDs, checkedFolders)
+			require.NotNil(t, dryRunObject)
+			meta, err := utils.MetaAccessor(dryRunObject)
+			require.NoError(t, err)
+			assert.Equal(t, destination, meta.GetFolder())
+			assert.Len(t, dashboards.Calls, 2, "preview only gets the dashboard and dry-runs its creation")
+			for _, call := range folders.Calls {
+				assert.Equal(t, "Get", call.Method, "preview must not create folders")
+			}
+			for _, call := range repo.Calls {
+				assert.Contains(t, []string{"Read", "Config"}, call.Method, "preview must not mutate the repository")
+			}
+		})
+	}
+}
+
 type previewTokenAccessChecker func(context.Context, authlib.AuthInfo, authlib.CheckRequest, string) (authlib.CheckResponse, error)
 
 func (f previewTokenAccessChecker) Check(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {

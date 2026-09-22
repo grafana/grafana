@@ -197,8 +197,8 @@ func (a *ProvisioningAuthorizer) AuthorizeResource(ctx context.Context, parsed *
 		name = parsed.Obj.GetName()
 	}
 
-	// metaFolder is the destination folder derived from the file path (not from
-	// user-controlled JSON content — see parser.go:222-236). It is always checked.
+	// metaFolder comes from the file path and may include PR-controlled folder
+	// metadata. New dashboard previews must also validate the configured location.
 	metaFolder := parsed.Meta.GetFolder()
 
 	// For existing resources, also check the current DB location when it differs
@@ -227,12 +227,11 @@ func (a *ProvisioningAuthorizer) AuthorizeResource(ctx context.Context, parsed *
 		Name:     name,
 		Verb:     verb,
 	}
-	// Check the destination first. A new dashboard's folder may exist only in Git,
-	// leaving no stored hierarchy for permission inheritance. Only denied preview
-	// reads can try ancestor authorization; writes and existing dashboards retain
-	// their original permission checks.
+	// Check the destination first, but validate the configured location even after
+	// success: PR metadata may name a different folder that the caller can read.
+	// Writes and existing dashboards retain their original permission checks.
 	err := a.access.Check(ctx, req, metaFolder)
-	if !apierrors.IsForbidden(err) || !isNewDashboardPreview(parsed, verb) {
+	if (err != nil && !apierrors.IsForbidden(err)) || !isNewDashboardPreview(parsed, verb) {
 		return err
 	}
 	return a.authorizeNewDashboardPreview(ctx, parsed, req, err)
@@ -251,12 +250,12 @@ func isNewDashboardPreview(parsed *ParsedResource, verb string) bool {
 	return IsPathSupported(parsed.Info.Path) == nil && !safepath.IsDir(parsed.Info.Path)
 }
 
-// authorizeNewDashboardPreview checks the nearest existing folder when a new
-// dashboard's destination has not been synced. Ancestors are resolved from the
-// configured branch so PR metadata cannot bypass an existing folder's permissions.
-// The search stops at the first existing folder or the repository root, preserving
-// the original denial if no real ancestor exists.
-func (a *ProvisioningAuthorizer) authorizeNewDashboardPreview(ctx context.Context, parsed *ParsedResource, req authlib.CheckRequest, denied error) error {
+// authorizeNewDashboardPreview validates a new dashboard's configured location,
+// using its nearest existing ancestor when folders have not been synced. This is
+// required even after a successful destination check because PR metadata may name
+// a different folder. An existing destination's denial remains authoritative, and
+// access is denied if no real configured ancestor exists.
+func (a *ProvisioningAuthorizer) authorizeNewDashboardPreview(ctx context.Context, parsed *ParsedResource, req authlib.CheckRequest, destinationErr error) error {
 	// Existence must be independent of the caller's folder access. Authorization
 	// below still uses the original caller, never the provisioning identity.
 	folderCtx, _, err := identity.WithProvisioningIdentity(ctx, a.repo.Namespace)
@@ -268,12 +267,20 @@ func (a *ProvisioningAuthorizer) authorizeNewDashboardPreview(ctx context.Contex
 		return fmt.Errorf("get folder client for preview: %w", err)
 	}
 	destination := parsed.Meta.GetFolder()
-	if _, err := folders.Get(folderCtx, destination, metav1.GetOptions{}); err == nil {
+	_, err = folders.Get(folderCtx, destination, metav1.GetOptions{})
+	destinationExists := err == nil
+	if destinationExists && destinationErr != nil {
 		// The privileged lookup only proves the folder exists, not that the caller
 		// can read it. Preserve the original denial; fallback is only for missing folders.
-		return denied
-	} else if !apierrors.IsNotFound(err) {
+		return destinationErr
+	}
+	if err != nil && !apierrors.IsNotFound(err) {
 		return fmt.Errorf("get preview destination folder %q: %w", destination, err)
+	}
+	denied := destinationErr
+	if denied == nil {
+		// A grant on a PR-supplied UID cannot authorize a path with no trusted ancestor.
+		denied = apierrors.NewForbidden(parsed.GVR.GroupResource(), req.Name, fmt.Errorf("no existing folder for preview authorization"))
 	}
 
 	// Walk from the dashboard's directory toward the repository root, skipping only
@@ -293,7 +300,12 @@ func (a *ProvisioningAuthorizer) authorizeNewDashboardPreview(ctx context.Contex
 		if folderID == "" {
 			return denied
 		}
-		if folderID != destination {
+		if folderID == destination {
+			if destinationExists {
+				// Reuse the successful check only after the configured branch confirms its UID.
+				return nil
+			}
+		} else {
 			if _, err := folders.Get(folderCtx, folderID, metav1.GetOptions{}); err == nil {
 				return a.access.Check(ctx, req, folderID)
 			} else if !apierrors.IsNotFound(err) {

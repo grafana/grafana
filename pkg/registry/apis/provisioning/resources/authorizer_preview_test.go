@@ -47,6 +47,7 @@ func TestAuthorizeResource_NewDashboardPreview(t *testing.T) {
 		wantProbes      []string
 		wantChecks      []string
 		wantErr         error
+		wantForbidden   bool
 	}{
 		{
 			name: "inherits from the nearest existing parent", existing: []string{teamID}, allowed: teamID,
@@ -76,9 +77,24 @@ func TestAuthorizeResource_NewDashboardPreview(t *testing.T) {
 			wantChecks: []string{"pr-controlled-uid", "configured-folder"}, wantErr: denied,
 		},
 		{
+			name: "allowed PR UID cannot bypass the configured directory", destination: "pr-controlled-uid",
+			metadataEnabled: true, metadata: metadata, existing: []string{"pr-controlled-uid", "configured-folder"}, allowed: "pr-controlled-uid",
+			wantProbes: []string{"pr-controlled-uid", "configured-folder"},
+			wantChecks: []string{"pr-controlled-uid", "configured-folder"}, wantErr: denied,
+		},
+		{
 			name: "configured folder UID authorizes the immediate directory", destination: "pr-controlled-uid",
 			metadataEnabled: true, metadata: metadata, existing: []string{"configured-folder"}, allowed: "configured-folder",
 			wantProbes: []string{"pr-controlled-uid", "configured-folder"}, wantChecks: []string{"pr-controlled-uid", "configured-folder"},
+		},
+		{
+			name: "matching configured UID preserves allowed check", destination: "configured-folder",
+			metadataEnabled: true, metadata: metadata, existing: []string{"configured-folder"}, allowed: "configured-folder",
+			wantProbes: []string{"configured-folder"}, wantChecks: []string{"configured-folder"},
+		},
+		{
+			name: "matching hash UID preserves allowed check", existing: []string{newID}, allowed: newID,
+			wantProbes: []string{newID}, wantChecks: []string{newID},
 		},
 		{
 			name: "metadata enabled falls back to hash IDs for missing manifests", metadataEnabled: true,
@@ -97,6 +113,18 @@ func TestAuthorizeResource_NewDashboardPreview(t *testing.T) {
 			wantProbes: []string{newID, teamID}, wantChecks: []string{newID}, wantErr: denied,
 		},
 		{
+			name: "allowed missing destination still requires ancestor permission", existing: []string{teamID}, allowed: newID,
+			wantProbes: []string{newID, teamID}, wantChecks: []string{newID, teamID}, wantErr: denied,
+		},
+		{
+			name: "allowed destination cannot authorize a missing repository root", allowed: newID,
+			wantProbes: []string{newID, teamID, repoName}, wantChecks: []string{newID}, wantForbidden: true,
+		},
+		{
+			name: "allowed destination cannot substitute General", target: provisioning.SyncTargetTypeInstance, allowed: newID,
+			wantProbes: []string{newID, teamID}, wantChecks: []string{newID}, wantForbidden: true,
+		},
+		{
 			name: "folder client errors propagate", clientErr: lookupErr, wantChecks: []string{newID}, wantErr: lookupErr,
 		},
 		{
@@ -108,8 +136,22 @@ func TestAuthorizeResource_NewDashboardPreview(t *testing.T) {
 			wantProbes: []string{newID, teamID}, wantChecks: []string{newID}, wantErr: lookupErr,
 		},
 		{
+			name: "allowed destination lookup errors propagate", allowed: newID, lookupErrorID: newID,
+			wantProbes: []string{newID}, wantChecks: []string{newID}, wantErr: lookupErr,
+		},
+		{
 			name: "metadata lookup errors propagate", metadataEnabled: true, metadataErr: readErr,
 			wantProbes: []string{newID}, wantChecks: []string{newID}, wantErr: readErr,
+		},
+		{
+			name: "allowed destination still propagates metadata lookup errors", existing: []string{newID}, allowed: newID,
+			metadataEnabled: true, metadataErr: readErr,
+			wantProbes: []string{newID}, wantChecks: []string{newID}, wantErr: readErr,
+		},
+		{
+			name: "allowed destination cannot bypass malformed configured metadata", existing: []string{newID}, allowed: newID,
+			metadataEnabled: true, metadata: []byte("{invalid"),
+			wantProbes: []string{newID}, wantChecks: []string{newID}, wantErr: ErrInvalidFolderMetadata,
 		},
 		{
 			name: "malformed configured metadata prevents fallback", metadataEnabled: true, metadata: []byte("{invalid"),
@@ -199,7 +241,9 @@ func TestAuthorizeResource_NewDashboardPreview(t *testing.T) {
 			}
 
 			err := NewAuthorizer(cfg, reader, access, clients, tt.metadataEnabled).AuthorizeResource(ctx, parsed, utils.VerbGet)
-			if tt.wantErr != nil {
+			if tt.wantForbidden {
+				require.True(t, apierrors.IsForbidden(err), "expected forbidden, got %v", err)
+			} else if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 			} else {
 				require.NoError(t, err)
@@ -220,7 +264,7 @@ func TestAuthorizeResource_PreviewFallbackEligibility(t *testing.T) {
 		result error
 		modify func(*ParsedResource)
 	}{
-		{name: "successful check", verb: utils.VerbGet},
+		{name: "successful existing dashboard check", verb: utils.VerbGet, modify: func(p *ParsedResource) { p.Existing = p.Obj.DeepCopy() }},
 		{name: "non-forbidden failure", verb: utils.VerbGet, result: assert.AnError},
 		{name: "existing dashboard", verb: utils.VerbGet, result: denied, modify: func(p *ParsedResource) { p.Existing = p.Obj.DeepCopy() }},
 		{name: "create", verb: utils.VerbCreate, result: denied},
