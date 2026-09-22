@@ -431,8 +431,8 @@ github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 h1:JeSE6pjso5T
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674/go.mod h1:r4w70xmWCQKmi1ONH4KIaBptdivuRPyosB9RmPlGEwA=
 github.com/grafana/alerting v0.0.0-20260805100035-e1a167a201a8 h1:NXXgt9UPQE3N32QX53XGDauqHupXjXxzxosQeiqB0ZE=
 github.com/grafana/alerting v0.0.0-20260805100035-e1a167a201a8/go.mod h1:xlvTghiB2qaV65HDCv7v5PTQ+NK47SKayDpTSndJK5E=
-github.com/grafana/authlib v0.0.0-20260922194145-4ca9ed2dbaac h1:8Yc4JC3pFtQnWP43gYevc1OUY/MAE1SvsS3/oAM0hEQ=
-github.com/grafana/authlib v0.0.0-20260922194145-4ca9ed2dbaac/go.mod h1:1y/QFuWzHw/S70DfBTA9odWcmqd/r/YuCUylNXohIrI=
+github.com/grafana/authlib v0.0.0-20260922202713-e3b571f7135d h1:VF/154czWlmXKj1mKQVtjMp2+ySAZgRVEOQgH67ejT8=
+github.com/grafana/authlib v0.0.0-20260922202713-e3b571f7135d/go.mod h1:1y/QFuWzHw/S70DfBTA9odWcmqd/r/YuCUylNXohIrI=
 github.com/grafana/authlib/types v0.0.0-20260919230918-6a05fe7c040d h1:TcQUDlToRQaTd5+agCh5bQ5ru8MdX/QeU/Zl/wfzws8=
 github.com/grafana/authlib/types v0.0.0-20260919230918-6a05fe7c040d/go.mod h1:L+zFm3lz5Y61gLgMMfKgHZ+863BwVfkLpJLqB/BZvlk=
 github.com/grafana/dataplane/sdata v0.0.9 h1:AGL1LZnCUG4MnQtnWpBPbQ8ZpptaZs14w6kE/MWfg7s=

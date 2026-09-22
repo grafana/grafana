@@ -1579,8 +1579,8 @@ github.com/grafana/alerting v0.0.0-20260805100035-e1a167a201a8 h1:NXXgt9UPQE3N32
 github.com/grafana/alerting v0.0.0-20260805100035-e1a167a201a8/go.mod h1:xlvTghiB2qaV65HDCv7v5PTQ+NK47SKayDpTSndJK5E=
 github.com/grafana/alerting/apps/historian v0.0.0-20260729133334-340f1168af6c h1:Pky+hqnm0GSA9NGMDN+E1GDBc4SaJDGNCrMjtctAavg=
 github.com/grafana/alerting/apps/historian v0.0.0-20260729133334-340f1168af6c/go.mod h1:VeTh5j/IeWxbj5v1itvbbH6wt+nYH7qF0/BwH7GpK+U=
-github.com/grafana/authlib v0.0.0-20260922194145-4ca9ed2dbaac h1:8Yc4JC3pFtQnWP43gYevc1OUY/MAE1SvsS3/oAM0hEQ=
-github.com/grafana/authlib v0.0.0-20260922194145-4ca9ed2dbaac/go.mod h1:1y/QFuWzHw/S70DfBTA9odWcmqd/r/YuCUylNXohIrI=
+github.com/grafana/authlib v0.0.0-20260922202713-e3b571f7135d h1:VF/154czWlmXKj1mKQVtjMp2+ySAZgRVEOQgH67ejT8=
+github.com/grafana/authlib v0.0.0-20260922202713-e3b571f7135d/go.mod h1:1y/QFuWzHw/S70DfBTA9odWcmqd/r/YuCUylNXohIrI=
 github.com/grafana/authlib/types v0.0.0-20260919230918-6a05fe7c040d h1:TcQUDlToRQaTd5+agCh5bQ5ru8MdX/QeU/Zl/wfzws8=
 github.com/grafana/authlib/types v0.0.0-20260919230918-6a05fe7c040d/go.mod h1:L+zFm3lz5Y61gLgMMfKgHZ+863BwVfkLpJLqB/BZvlk=
 github.com/grafana/dataplane/examples v0.0.1 h1:K9M5glueWyLoL4//H+EtTQq16lXuHLmOhb6DjSCahzA=
