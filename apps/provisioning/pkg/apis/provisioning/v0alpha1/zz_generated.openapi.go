@@ -79,6 +79,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		ResourceRef{}.OpenAPIModelName():                           schema_pkg_apis_provisioning_v0alpha1_ResourceRef(ref),
 		ResourceRepositoryInfo{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_ResourceRepositoryInfo(ref),
 		ResourceStats{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v0alpha1_ResourceStats(ref),
+		ResourceSyncIssue{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_ResourceSyncIssue(ref),
 		ResourceType{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_ResourceType(ref),
 		ResourceWrapper{}.OpenAPIModelName():                       schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref),
 		SecureValues{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_SecureValues(ref),
@@ -1804,7 +1805,7 @@ func schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref common.Referen
 					},
 					"errors": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Report errors/warnings for this resource type This may not be an exhaustive list and recommend looking at the logs for more info",
+							Description: "Report errors/warnings for this resource type This may not be an exhaustive list and recommend looking at the logs for more info\n\nDeprecated: use ResourceErrors, which carries the same messages plus a machine-readable Reason and the affected Path. Kept for backwards compatibility with existing consumers.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -1818,7 +1819,8 @@ func schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref common.Referen
 					},
 					"warnings": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
+							Description: "Deprecated: use ResourceWarnings, which carries the same messages plus a machine-readable Reason and the affected Path. Kept for backwards compatibility with existing consumers.",
+							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -1829,9 +1831,48 @@ func schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref common.Referen
 							},
 						},
 					},
+					"resourceErrors": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "ResourceErrors/ResourceWarnings are the categorized counterparts to Errors/Warnings above, added alongside them (rather than replacing them) to keep the flat-string fields backwards compatible for any consumer still reading them.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(ResourceSyncIssue{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"resourceWarnings": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(ResourceSyncIssue{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
+		Dependencies: []string{
+			ResourceSyncIssue{}.OpenAPIModelName()},
 	}
 }
 
@@ -3399,6 +3440,42 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceStats(ref common.ReferenceCal
 		},
 		Dependencies: []string{
 			ManagerStats{}.OpenAPIModelName(), ResourceCount{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_ResourceSyncIssue(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"reason": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Reason is a machine-readable category for this issue (see the ReasonX constants). Empty when the underlying error has no classifier.",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{},
+						},
+					},
+					"message": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Message is a human-readable, actionable description of the issue.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Path is the repository file path this issue applies to, when known.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"message"},
+			},
+		},
 	}
 }
 

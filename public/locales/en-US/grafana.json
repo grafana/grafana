@@ -14508,7 +14508,9 @@
       "column-unchanged": "Unchanged",
       "column-updated": "Updated",
       "column-warnings": "Warnings",
-      "unknown-kind": "Unknown"
+      "errors-modal-title": "{{kind}} errors",
+      "unknown-kind": "Unknown",
+      "warnings-modal-title": "{{kind}} warnings"
     },
     "local": {
       "path-description": "Local file system path to the repository",

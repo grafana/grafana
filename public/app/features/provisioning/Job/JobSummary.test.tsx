@@ -36,6 +36,51 @@ describe('JobSummary', () => {
     expect(cells[cells.length - 1]).toHaveTextContent('7');
   });
 
+  it('shows resourceErrors/resourceWarnings messages in a modal when the count is clicked', async () => {
+    const { user } = setup([
+      {
+        group: 'dashboard.grafana.app',
+        kind: 'Dashboard',
+        error: 1,
+        warning: 1,
+        resourceErrors: [
+          { message: 'strict decoding error', path: 'dashboards/broken.json', reason: 'ResourceInvalid' },
+        ],
+        resourceWarnings: [{ message: 'missing folder metadata', path: 'dashboards/' }],
+      },
+    ]);
+
+    const row = rowFor('Dashboard');
+    const cells = within(row).getAllByRole('cell');
+    // Column order: resource, created, deleted, updated, unchanged, warnings, errors, total.
+    await user.click(within(cells[5]).getByText('1'));
+    expect(await screen.findByRole('dialog', { name: /dashboard warnings/i })).toBeInTheDocument();
+    expect(screen.getByText('dashboards/: missing folder metadata')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    await user.click(within(cells[6]).getByText('1'));
+    expect(await screen.findByRole('dialog', { name: /dashboard errors/i })).toBeInTheDocument();
+    expect(screen.getByText('dashboards/broken.json: strict decoding error')).toBeInTheDocument();
+  });
+
+  it('falls back to the deprecated errors/warnings string arrays when resourceErrors/resourceWarnings are absent', async () => {
+    const { user } = setup([
+      {
+        group: 'dashboard.grafana.app',
+        kind: 'Dashboard',
+        error: 1,
+        errors: ['legacy error message'],
+      },
+    ]);
+
+    const row = rowFor('Dashboard');
+    const cells = within(row).getAllByRole('cell');
+    await user.click(within(cells[6]).getByText('1'));
+    expect(await screen.findByText('legacy error message')).toBeInTheDocument();
+  });
+
   it('falls back to an Unknown label and a dash for rows missing a kind or counts', () => {
     setup([{ group: '', kind: '' }]);
 

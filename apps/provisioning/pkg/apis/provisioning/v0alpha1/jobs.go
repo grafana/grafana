@@ -422,8 +422,24 @@ type JobResourceSummary struct {
 
 	// Report errors/warnings for this resource type
 	// This may not be an exhaustive list and recommend looking at the logs for more info
-	Errors   []string `json:"errors,omitempty"`
+	//
+	// Deprecated: use ResourceErrors, which carries the same messages plus a
+	// machine-readable Reason and the affected Path. Kept for backwards
+	// compatibility with existing consumers.
+	Errors []string `json:"errors,omitempty"`
+	// Deprecated: use ResourceWarnings, which carries the same messages plus a
+	// machine-readable Reason and the affected Path. Kept for backwards
+	// compatibility with existing consumers.
 	Warnings []string `json:"warnings,omitempty"`
+
+	// ResourceErrors/ResourceWarnings are the categorized counterparts to
+	// Errors/Warnings above, added alongside them (rather than replacing them)
+	// to keep the flat-string fields backwards compatible for any consumer
+	// still reading them.
+	// +listType=atomic
+	ResourceErrors []ResourceSyncIssue `json:"resourceErrors,omitempty"`
+	// +listType=atomic
+	ResourceWarnings []ResourceSyncIssue `json:"resourceWarnings,omitempty"`
 }
 
 func (JobResourceSummary) OpenAPIModelName() string {

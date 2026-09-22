@@ -777,6 +777,23 @@ type ResourceWrapper struct {
 	// If errors exist, show them here
 	// +listType=atomic
 	Errors []string `json:"errors,omitempty"`
+
+	// TODO fcai: add validations here?
+	// +k8s:openapi-gen=false
+	Validations []Validation `json:"validations,omitempty"`
+}
+
+// TODO fcai: placeholder types so Validation compiles; not designed yet.
+type Severity string
+type Status string
+type Type string
+
+// +k8s:openapi-gen=false
+type Validation struct {
+	Severity // Low, Medium, High, Critical
+	Details  []string
+	Status   // Success, Fail
+	Type     // ValidationErr, PermissionErr,
 }
 
 func (ResourceWrapper) OpenAPIModelName() string {
@@ -994,6 +1011,7 @@ func (TestResults) OpenAPIModelName() string {
 // communicate validation or external reference errors that users can resolve by editing spec fields.
 // TODO: Rename this type to FieldError for consistency with Kubernetes conventions and to more clearly indicate that it represents field-level validation errors, not arbitrary error details.
 // +k8s:deepcopy-gen=false
+// TODO fcai:
 type ErrorDetails struct {
 	// Type is a machine-readable description of the cause of the error.
 	// This is intended for programmatic handling and matches Kubernetes' CauseType values.
@@ -1037,6 +1055,35 @@ func (in *ErrorDetails) DeepCopyInto(out *ErrorDetails) {
 
 func (ErrorDetails) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ErrorDetails"
+}
+
+// ResourceSyncIssue describes a single categorized error or warning encountered
+// while processing one file/resource during a job.
+// SyncIssueReason is a machine-readable category for a ResourceSyncIssue.
+// Shares its vocabulary with the PullStatus/Quota condition ReasonX constants
+// (e.g. ReasonQuotaExceeded, ReasonResourceInvalid) declared in health.go,
+// since those already enumerate the same underlying error taxonomy.
+// +enum
+type SyncIssueReason string
+
+func (SyncIssueReason) OpenAPIModelName() string {
+	return OpenAPIPrefix + "SyncIssueReason"
+}
+
+type ResourceSyncIssue struct {
+	// Reason is a machine-readable category for this issue (see the ReasonX
+	// constants). Empty when the underlying error has no classifier.
+	Reason SyncIssueReason `json:"reason,omitempty"`
+
+	// Message is a human-readable, actionable description of the issue.
+	Message string `json:"message"`
+
+	// Path is the repository file path this issue applies to, when known.
+	Path string `json:"path,omitempty"`
+}
+
+func (ResourceSyncIssue) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ResourceSyncIssue"
 }
 
 // HistoryList is a list of versions of a resource

@@ -186,7 +186,7 @@ func TestNewJobResourceResult_WithRequestEntityTooLargeAsWarning(t *testing.T) {
 
 	assert.Nil(t, result.Error(), "too-large error should be stored as a warning, not an error")
 	assert.NotNil(t, result.Warning(), "too-large error should be stored as a warning")
-	assert.Equal(t, provisioning.ReasonResourceTooLarge, result.WarningReason())
+	assert.Equal(t, provisioning.ReasonResourceTooLarge, string(result.WarningReason()))
 }
 
 func TestNewJobResourceResult_WithOwnershipConflictAsWarning(t *testing.T) {
@@ -357,7 +357,7 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 		quotaErr := quotas.NewQuotaExceededError(errors.New("over quota"))
 		result := NewResourceResult().WithError(quotaErr).Build()
 
-		assert.Equal(t, provisioning.ReasonQuotaExceeded, result.WarningReason())
+		assert.Equal(t, provisioning.ReasonQuotaExceeded, string(result.WarningReason()))
 	})
 
 	t.Run("wrapped QuotaExceededError returns ReasonQuotaExceeded", func(t *testing.T) {
@@ -365,14 +365,14 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 		wrapped := fmt.Errorf("sync failed: %w", quotaErr)
 		result := NewResourceResult().WithError(wrapped).Build()
 
-		assert.Equal(t, provisioning.ReasonQuotaExceeded, result.WarningReason())
+		assert.Equal(t, provisioning.ReasonQuotaExceeded, string(result.WarningReason()))
 	})
 
 	t.Run("ResourceValidationError returns ReasonResourceInvalid", func(t *testing.T) {
 		validationErr := resources.NewResourceValidationError(errors.New("bad field"))
 		result := NewResourceResult().WithError(validationErr).Build()
 
-		assert.Equal(t, provisioning.ReasonResourceInvalid, result.WarningReason())
+		assert.Equal(t, provisioning.ReasonResourceInvalid, string(result.WarningReason()))
 	})
 
 	t.Run("ResourceOwnershipConflictError returns ReasonResourceInvalid", func(t *testing.T) {
@@ -382,17 +382,17 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 		)
 		result := NewResourceResult().WithError(ownershipErr).Build()
 
-		assert.Equal(t, provisioning.ReasonResourceInvalid, result.WarningReason())
+		assert.Equal(t, provisioning.ReasonResourceInvalid, string(result.WarningReason()))
 	})
 
 	t.Run("nil warning returns empty reason", func(t *testing.T) {
 		result := NewResourceResult().Build()
-		assert.Empty(t, result.WarningReason())
+		assert.Empty(t, string(result.WarningReason()))
 	})
 
 	t.Run("regular error returns empty reason", func(t *testing.T) {
 		result := NewResourceResult().WithError(errors.New("not a warning")).Build()
-		assert.Empty(t, result.WarningReason())
+		assert.Empty(t, string(result.WarningReason()))
 	})
 
 	t.Run("ResourceUnmanagedConflictError returns ReasonResourceInvalid", func(t *testing.T) {
@@ -401,7 +401,7 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 		)
 		result := NewResourceResult().WithError(unmanagedErr).Build()
 
-		assert.Equal(t, provisioning.ReasonResourceInvalid, result.WarningReason())
+		assert.Equal(t, provisioning.ReasonResourceInvalid, string(result.WarningReason()))
 	})
 
 	t.Run("wrapped ResourceUnmanagedConflictError returns ReasonResourceInvalid", func(t *testing.T) {
@@ -411,7 +411,7 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 		wrapped := fmt.Errorf("writing resource: %w", unmanagedErr)
 		result := NewResourceResult().WithError(wrapped).Build()
 
-		assert.Equal(t, provisioning.ReasonResourceInvalid, result.WarningReason())
+		assert.Equal(t, provisioning.ReasonResourceInvalid, string(result.WarningReason()))
 	})
 
 	t.Run("ResourceManagedByOtherFileError returns ReasonResourceManagedByOther", func(t *testing.T) {
@@ -422,7 +422,7 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 		)
 		result := NewResourceResult().WithError(managedByOtherErr).Build()
 
-		assert.Equal(t, provisioning.ReasonResourceManagedByOther, result.WarningReason())
+		assert.Equal(t, provisioning.ReasonResourceManagedByOther, string(result.WarningReason()))
 	})
 
 	t.Run("wrapped ResourceManagedByOtherFileError returns ReasonResourceManagedByOther", func(t *testing.T) {
@@ -434,28 +434,28 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 		wrapped := fmt.Errorf("replacing resource from file paidly/pecan-dashboards/amounts-metrics.json: %w", managedByOtherErr)
 		result := NewResourceResult().WithError(wrapped).Build()
 
-		assert.Equal(t, provisioning.ReasonResourceManagedByOther, result.WarningReason())
+		assert.Equal(t, provisioning.ReasonResourceManagedByOther, string(result.WarningReason()))
 	})
 
 	t.Run("explicit WithWarning with QuotaExceededError returns reason", func(t *testing.T) {
 		quotaErr := quotas.NewQuotaExceededError(errors.New("over quota"))
 		result := NewResourceResult().WithWarning(quotaErr).Build()
 
-		assert.Equal(t, provisioning.ReasonQuotaExceeded, result.WarningReason())
+		assert.Equal(t, provisioning.ReasonQuotaExceeded, string(result.WarningReason()))
 	})
 
 	t.Run("MissingFolderMetadata classifies as ReasonMissingFolderMetadata", func(t *testing.T) {
 		missingErr := &resources.MissingFolderMetadata{Path: "somefolder/"}
 		result := NewResourceResult().WithWarning(missingErr).Build()
 
-		assert.Equal(t, provisioning.ReasonMissingFolderMetadata, result.WarningReason())
+		assert.Equal(t, provisioning.ReasonMissingFolderMetadata, string(result.WarningReason()))
 	})
 
 	t.Run("FolderMetadataConflict classifies as ReasonFolderMetadataConflict", func(t *testing.T) {
 		conflictErr := &resources.FolderMetadataConflict{Path: "somefolder/", Reason: "UID mismatch"}
 		result := NewResourceResult().WithWarning(conflictErr).Build()
 
-		assert.Equal(t, provisioning.ReasonFolderMetadataConflict, result.WarningReason())
+		assert.Equal(t, provisioning.ReasonFolderMetadataConflict, string(result.WarningReason()))
 	})
 
 	t.Run("wrapped FolderMetadataConflict classifies as ReasonFolderMetadataConflict", func(t *testing.T) {
@@ -463,14 +463,14 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 		wrapped := fmt.Errorf("processing folder: %w", conflictErr)
 		result := NewResourceResult().WithError(wrapped).Build()
 
-		assert.Equal(t, provisioning.ReasonFolderMetadataConflict, result.WarningReason())
+		assert.Equal(t, provisioning.ReasonFolderMetadataConflict, string(result.WarningReason()))
 	})
 
 	t.Run("FolderDepthExceededError classifies as ReasonFolderDepthExceeded", func(t *testing.T) {
 		depthErr := resources.NewFolderDepthExceededError("a/b/c/d/e/", errors.New("folder max depth exceeded, max depth is 4"))
 		result := NewResourceResult().WithError(depthErr).Build()
 
-		assert.Equal(t, provisioning.ReasonFolderDepthExceeded, result.WarningReason())
+		assert.Equal(t, provisioning.ReasonFolderDepthExceeded, string(result.WarningReason()))
 		assert.Nil(t, result.Error(), "depth-exceeded should be a warning, not an error")
 		assert.NotNil(t, result.Warning(), "depth-exceeded should populate the warning slot")
 	})
@@ -484,7 +484,7 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 		wrapped := fmt.Errorf("ensuring folder exists at path %s: %w", "a/b/c/d/e/", pathErr)
 		result := NewResourceResult().WithError(wrapped).Build()
 
-		assert.Equal(t, provisioning.ReasonFolderDepthExceeded, result.WarningReason())
+		assert.Equal(t, provisioning.ReasonFolderDepthExceeded, string(result.WarningReason()))
 		assert.Nil(t, result.Error(), "depth-exceeded should be a warning even when wrapped through PathCreationError")
 		assert.NotNil(t, result.Warning())
 	})
@@ -493,7 +493,7 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 		ownErr := resources.NewFolderManagedByOtherError("folder-id", "other-repo")
 		result := NewResourceResult().WithError(ownErr).Build()
 
-		assert.Equal(t, provisioning.ReasonFolderManagedByOther, result.WarningReason())
+		assert.Equal(t, provisioning.ReasonFolderManagedByOther, string(result.WarningReason()))
 		assert.Nil(t, result.Error(), "cross-manager conflict should be a warning, not an error")
 		assert.NotNil(t, result.Warning(), "cross-manager conflict should populate the warning slot")
 	})
@@ -507,7 +507,7 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 		wrapped := fmt.Errorf("ensuring folder exists at path %s: %w", "somefolder/", pathErr)
 		result := NewResourceResult().WithError(wrapped).Build()
 
-		assert.Equal(t, provisioning.ReasonFolderManagedByOther, result.WarningReason())
+		assert.Equal(t, provisioning.ReasonFolderManagedByOther, string(result.WarningReason()))
 		assert.Nil(t, result.Error())
 		assert.NotNil(t, result.Warning())
 	})
@@ -516,7 +516,7 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 		uidErr := resources.NewFolderUIDTooLongError("GMPO/bare-metal-services-engineering/", "a0123456789012345678901234567890123456789", errors.New("uid too long, max 40 characters"))
 		result := NewResourceResult().WithError(uidErr).Build()
 
-		assert.Equal(t, provisioning.ReasonFolderUIDTooLong, result.WarningReason())
+		assert.Equal(t, provisioning.ReasonFolderUIDTooLong, string(result.WarningReason()))
 		assert.Nil(t, result.Error(), "uid-too-long should be a warning, not an error")
 		assert.NotNil(t, result.Warning(), "uid-too-long should populate the warning slot")
 	})
@@ -530,7 +530,7 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 		wrapped := fmt.Errorf("ensuring folder exists at path %s: %w", "GMPO/bare-metal-services-engineering/", pathErr)
 		result := NewResourceResult().WithError(wrapped).Build()
 
-		assert.Equal(t, provisioning.ReasonFolderUIDTooLong, result.WarningReason())
+		assert.Equal(t, provisioning.ReasonFolderUIDTooLong, string(result.WarningReason()))
 		assert.Nil(t, result.Error(), "uid-too-long should be a warning even when wrapped through PathCreationError")
 		assert.NotNil(t, result.Warning())
 	})
@@ -539,7 +539,7 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 		validationErr := resources.NewFolderValidationError("bad-folder/", errors.New("uid contains illegal characters"))
 		result := NewResourceResult().WithError(validationErr).Build()
 
-		assert.Equal(t, provisioning.ReasonFolderValidationFailed, result.WarningReason())
+		assert.Equal(t, provisioning.ReasonFolderValidationFailed, string(result.WarningReason()))
 		assert.Nil(t, result.Error(), "folder validation should be a warning, not an error")
 		assert.NotNil(t, result.Warning(), "folder validation should populate the warning slot")
 	})
@@ -553,7 +553,7 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 		wrapped := fmt.Errorf("ensuring folder exists at path %s: %w", "bad-folder/", pathErr)
 		result := NewResourceResult().WithError(wrapped).Build()
 
-		assert.Equal(t, provisioning.ReasonFolderValidationFailed, result.WarningReason())
+		assert.Equal(t, provisioning.ReasonFolderValidationFailed, string(result.WarningReason()))
 		assert.Nil(t, result.Error(), "folder validation should be a warning even when wrapped through PathCreationError")
 		assert.NotNil(t, result.Warning())
 	})
@@ -565,7 +565,7 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 		depthErr := resources.NewFolderDepthExceededError("deep/", errors.New("folder max depth exceeded, max depth is 4"))
 		result := NewResourceResult().WithError(depthErr).Build()
 
-		assert.Equal(t, provisioning.ReasonFolderDepthExceeded, result.WarningReason(),
+		assert.Equal(t, provisioning.ReasonFolderDepthExceeded, string(result.WarningReason()),
 			"depth-exceeded must keep its specific reason; the generic FolderValidationFailed must not shadow it")
 	})
 
@@ -573,7 +573,7 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 		uidErr := resources.NewFolderUIDTooLongError("path/", "uid", errors.New("uid too long, max 40 characters"))
 		result := NewResourceResult().WithError(uidErr).Build()
 
-		assert.Equal(t, provisioning.ReasonFolderUIDTooLong, result.WarningReason(),
+		assert.Equal(t, provisioning.ReasonFolderUIDTooLong, string(result.WarningReason()),
 			"uid-too-long must keep its specific reason; the generic FolderValidationFailed must not shadow it")
 	})
 }

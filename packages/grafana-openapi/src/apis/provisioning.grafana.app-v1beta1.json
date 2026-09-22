@@ -4725,7 +4725,7 @@
             "format": "int64"
           },
           "errors": {
-            "description": "Report errors/warnings for this resource type This may not be an exhaustive list and recommend looking at the logs for more info",
+            "description": "Report errors/warnings for this resource type This may not be an exhaustive list and recommend looking at the logs for more info\n\nDeprecated: use ResourceErrors, which carries the same messages plus a machine-readable Reason and the affected Path. Kept for backwards compatibility with existing consumers.",
             "type": "array",
             "items": {
               "type": "string"
@@ -4741,6 +4741,21 @@
             "description": "No action required (useful for sync)",
             "type": "integer",
             "format": "int64"
+          },
+          "resourceErrors": {
+            "description": "ResourceErrors/ResourceWarnings are the categorized counterparts to Errors/Warnings above, added alongside them (rather than replacing them) to keep the flat-string fields backwards compatible for any consumer still reading them.",
+            "type": "array",
+            "items": {
+              "default": {}
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "resourceWarnings": {
+            "type": "array",
+            "items": {
+              "default": {}
+            },
+            "x-kubernetes-list-type": "atomic"
           },
           "total": {
             "type": "integer",
@@ -4761,6 +4776,7 @@
             "format": "int64"
           },
           "warnings": {
+            "description": "Deprecated: use ResourceWarnings, which carries the same messages plus a machine-readable Reason and the affected Path. Kept for backwards compatibility with existing consumers.",
             "type": "array",
             "items": {
               "type": "string"
@@ -5635,6 +5651,25 @@
             "version": "v1beta1"
           }
         ]
+      },
+      "ResourceSyncIssue": {
+        "type": "object",
+        "required": ["message"],
+        "properties": {
+          "message": {
+            "description": "Message is a human-readable, actionable description of the issue.",
+            "type": "string",
+            "default": ""
+          },
+          "path": {
+            "description": "Path is the repository file path this issue applies to, when known.",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Reason is a machine-readable category for this issue (see the ReasonX constants). Empty when the underlying error has no classifier.",
+            "type": "string"
+          }
+        }
       },
       "ResourceType": {
         "type": "object",

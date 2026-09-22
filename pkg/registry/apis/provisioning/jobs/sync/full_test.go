@@ -222,7 +222,7 @@ func TestFullSync_FolderCreationFailed_UnmanagedConflictBecomesWarning(t *testin
 
 	require.Nil(t, recorded.Error(), "conflict should be stored as warning, not error")
 	require.NotNil(t, recorded.Warning(), "conflict should be stored as warning")
-	require.Equal(t, provisioning.ReasonResourceInvalid, recorded.WarningReason())
+	require.Equal(t, provisioning.ReasonResourceInvalid, string(recorded.WarningReason()))
 }
 
 func TestFullSync_FolderCreationFailedWithInstanceTarget(t *testing.T) {

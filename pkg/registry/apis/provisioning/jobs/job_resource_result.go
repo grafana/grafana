@@ -50,7 +50,7 @@ const (
 )
 
 // classifyWarning returns the warning reason for err and whether it is a warning.
-func classifyWarning(err error) (string, bool) {
+func classifyWarning(err error) (provisioning.SyncIssueReason, bool) {
 	if err == nil {
 		return "", false
 	}
@@ -364,10 +364,23 @@ func (r JobResourceResult) Reason() string {
 
 // WarningReason returns the warning reason derived from classifyWarning,
 // or the explicit reason if set via WithReason.
-func (r JobResourceResult) WarningReason() string {
+func (r JobResourceResult) WarningReason() provisioning.SyncIssueReason {
 	if r.reason != "" {
-		return r.reason
+		return provisioning.SyncIssueReason(r.reason)
 	}
 	reason, _ := classifyWarning(r.warning)
+	return reason
+}
+
+// ErrorReason returns a reason for the result's error, or "" if the error
+// doesn't match any known category. It reuses classifyWarning's classifier:
+// the underlying error taxonomy (quota exceeded, resource invalid, folder
+// conflicts, etc.) is the same regardless of whether a given result ends up
+// downgraded to a warning or surfaced as a hard error.
+func (r JobResourceResult) ErrorReason() provisioning.SyncIssueReason {
+	if r.reason != "" {
+		return provisioning.SyncIssueReason(r.reason)
+	}
+	reason, _ := classifyWarning(r.err)
 	return reason
 }
