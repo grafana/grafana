@@ -50,8 +50,18 @@ export interface Props extends PanelProps<Options> {}
 
 export function TextNGPanel(props: Props) {
   const { app } = usePanelContext();
-  const { options, onOptionsChange, replaceVariables, data, renderCounter, fitContent, transparent, height, width } =
-    props;
+  const {
+    options,
+    onOptionsChange,
+    replaceVariables,
+    data,
+    renderCounter,
+    fitContent,
+    transparent,
+    height,
+    width,
+    title,
+  } = props;
   const styles = useStyles2(getStyles);
   const isEditing = app === CoreApp.PanelEditor;
   // Fit-content only applies to the rendered view: the inline editor keeps its
@@ -216,6 +226,7 @@ export function TextNGPanel(props: Props) {
         view={view}
         onViewChange={setView}
         transparent={transparent}
+        hasTitle={Boolean(title)}
       />
     </Suspense>
   ) : (
