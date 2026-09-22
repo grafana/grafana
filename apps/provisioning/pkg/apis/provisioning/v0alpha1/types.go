@@ -639,9 +639,9 @@ type RepositoryStatus struct {
 	// backwards compatibility with clients that read the concise string.
 	DeleteError string `json:"deleteError,omitempty"`
 
-	// Deletion reports the progress of an in-progress deletion and any structured
-	// problems blocking it, so clients can explain the holdup and offer recovery
-	// actions. Populated only while the repository is Terminating.
+	// Deletion reports the progress of an in-progress deletion and the problem
+	// blocking it, so a client can explain the holdup and force-remove the
+	// blocking finalizer. Populated only while the repository is Terminating.
 	Deletion *DeletionStatus `json:"deletion,omitempty"`
 
 	// Quota contains the configured quota limits for this repository

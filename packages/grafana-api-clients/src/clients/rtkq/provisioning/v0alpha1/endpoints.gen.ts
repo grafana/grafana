@@ -2048,6 +2048,14 @@ export type RepositorySpec = {
   /** UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly) */
   workflows: ('branch' | 'write')[];
 };
+export type DeletionStatus = {
+  /** Finalizer names the finalizer whose teardown is blocking deletion, i.e. which deletion step failed. A client force-removing deletion removes exactly this finalizer. */
+  finalizer?: string;
+  /** Message is a human-readable explanation of what went wrong, suitable for showing to users. */
+  message?: string;
+  /** State is the phase of the deletion. */
+  state?: string;
+};
 export type QuotaStatus = {
   /** MaxRepositories is the maximum number of repositories allowed. 0 means unlimited. */
   maxRepositories?: number;
@@ -2097,8 +2105,10 @@ export type WebhookStatus = {
 export type RepositoryStatus = {
   /** Conditions represent the latest available observations of the repository's state. */
   conditions?: Condition[];
-  /** Error information during repository deletion (if any) */
+  /** Error information during repository deletion (if any). Deprecated: prefer the structured Deletion field. Retained for backwards compatibility with clients that read the concise string. */
   deleteError?: string;
+  /** Deletion reports the progress of an in-progress deletion and the problem blocking it, so a client can explain the holdup and force-remove the blocking finalizer. Populated only while the repository is Terminating. */
+  deletion?: DeletionStatus;
   /** FieldErrors are errors that occurred during validation of the repository spec. These errors are intended to help users identify and fix issues in the spec. */
   fieldErrors?: ErrorDetails[];
   /** This will get updated with the current health status (and updated periodically) */

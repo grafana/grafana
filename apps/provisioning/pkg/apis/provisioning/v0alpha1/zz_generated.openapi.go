@@ -2783,7 +2783,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 					},
 					"deletion": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Deletion reports the progress of an in-progress deletion and any structured problems blocking it, so clients can explain the holdup and offer recovery actions. Populated only while the repository is Terminating.",
+							Description: "Deletion reports the progress of an in-progress deletion and the problem blocking it, so a client can explain the holdup and force-remove the blocking finalizer. Populated only while the repository is Terminating.",
 							Ref:         ref(DeletionStatus{}.OpenAPIModelName()),
 						},
 					},
