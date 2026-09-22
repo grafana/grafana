@@ -8,6 +8,7 @@ import {
 import { FieldType } from '../types/dataFrame';
 import { FieldConfigProperty, type FieldConfigPropertyItem } from '../types/fieldOverrides';
 import { type PanelMigrationModel } from '../types/panel';
+import { DataTopic } from '../types/query';
 import { VisualizationSuggestionsBuilder, VisualizationSuggestionScore } from '../types/suggestions';
 import { PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 
@@ -633,7 +634,10 @@ describe('PanelPlugin', () => {
     });
 
     it('treats an array result as prepended transformations', () => {
-      const panel = new PanelPlugin(() => <div />).setSystemTransformations(() => [{ id: 'reduce', options: {} }]);
+      const panel = new PanelPlugin(() => <div />).setSystemTransformations(() => [
+        { id: 'extractFields', options: {}, topic: DataTopic.Annotations },
+        { id: 'reduce', options: {} },
+      ]);
 
       expect(panel.getSystemTransformations({ series: [] })).toEqual({
         prepend: [{ id: 'reduce', options: {} }],
@@ -650,6 +654,24 @@ describe('PanelPlugin', () => {
       expect(panel.getSystemTransformations({ series: [] })).toEqual({
         prepend: [{ id: 'extractFields', options: {} }],
         append: [{ id: 'reduce', options: {} }],
+      });
+    });
+
+    it('filters transformations for unsupported data topics', () => {
+      const panel = new PanelPlugin(() => <div />).setSystemTransformations(() => ({
+        prepend: [
+          { id: 'extractFields', options: {}, topic: DataTopic.Series },
+          { id: 'reduce', options: {}, topic: DataTopic.Annotations },
+        ],
+        append: [
+          { id: 'transpose', options: {} },
+          { id: 'reduce', options: {}, topic: DataTopic.AlertStates },
+        ],
+      }));
+
+      expect(panel.getSystemTransformations({ series: [] })).toEqual({
+        prepend: [{ id: 'extractFields', options: {}, topic: DataTopic.Series }],
+        append: [{ id: 'transpose', options: {} }],
       });
     });
 

@@ -1,6 +1,8 @@
 import { defaultsDeep, set } from 'lodash';
 import { type ComponentClass, type ComponentType } from 'react';
 
+import { DataTopic } from '@grafana/schema';
+
 import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
 import { type StandardEditorContext } from '../field/standardFieldConfigEditorRegistry';
 import { type PanelModel } from '../types/dashboard';
@@ -467,9 +469,9 @@ export class PanelPlugin<
   }
 
   /**
-   * Transformations registered via {@link setSystemTransformations}, normalized to explicit
-   * positions so callers never have to handle the array shorthand. Both groups are empty when the
-   * plugin registered none, and when its supplier throws. Never throws.
+   * Transformations registered via {@link setSystemTransformations}, filtered to supported topics
+   * and normalized to explicit positions so callers never have to handle the array shorthand. Both
+   * groups are empty when the plugin registered none, and when its supplier throws. Never throws.
    *
    * @internal
    */
@@ -496,9 +498,14 @@ export class PanelPlugin<
       return { prepend: [], append: [] };
     }
 
-    return Array.isArray(registered)
+    const resolved = Array.isArray(registered)
       ? { prepend: registered, append: [] }
       : { prepend: registered.prepend ?? [], append: registered.append ?? [] };
+
+    return {
+      prepend: filterSupportedSystemTransformations(resolved.prepend),
+      append: filterSupportedSystemTransformations(resolved.append),
+    };
   }
 
   /**
@@ -740,4 +747,13 @@ export class PanelPlugin<
     this._viewPanelOptions = options;
     return this;
   }
+}
+
+function filterSupportedSystemTransformations(
+  transformations: NonNullable<SystemTransformations['prepend']>
+): NonNullable<SystemTransformations['prepend']> {
+  return transformations.filter(
+    (transformation) =>
+      typeof transformation === 'function' || transformation.topic == null || transformation.topic === DataTopic.Series
+  );
 }

@@ -114,9 +114,8 @@ export type ResolvedSystemTransformations = Required<SystemTransformations>;
  * entire cache key — nothing else about the panel invalidates it. Empty results pass through without
  * consulting the supplier, and a supplier that throws is treated as one that registered nothing.
  *
- * Grafana dashboards apply only transformations for `DataTopic.Series`. `PanelPlugin` returns all
- * registered transformations without filtering by topic. `VizPanel` ignores configurations for
- * annotations or alert states.
+ * Only `DataTopic.Series` is supported. `PanelPlugin` ignores configurations for annotations or
+ * alert states in both positions.
  *
  * Option strings are not interpolated: scenes skips these entries because they are carried by a
  * custom transform operator. Transformers that interpolate their own options through
