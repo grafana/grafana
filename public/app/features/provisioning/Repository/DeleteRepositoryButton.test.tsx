@@ -104,7 +104,7 @@ describe('DeleteRepositoryButton', () => {
   it('deletes a healthy repository without editing its finalizers', async () => {
     const event = await openMenuAndConfirm(createMockRepository(true), /remove resources/i);
 
-    expect(event.payload.text).not.toMatch(/unhealthy/i);
+    expect(event.payload.text).not.toMatch(/authentication/i);
 
     await confirmDelete(event);
 
@@ -120,9 +120,9 @@ describe('DeleteRepositoryButton', () => {
   it('warns and drops the cleanup finalizer when deleting an unhealthy repository', async () => {
     const event = await openMenuAndConfirm(createMockRepository(false), /remove resources/i);
 
-    // The warning must spell out the actual consequence: provider-side
-    // resources (webhooks) can't be removed and are left behind.
-    expect(event.payload.text).toMatch(/unhealthy/i);
+    // The warning must name the cause (authentication failing) and spell out
+    // the consequence: provider-side resources (webhooks) are left behind.
+    expect(event.payload.text).toMatch(/authentication/i);
     expect(event.payload.text).toMatch(/webhooks/i);
     expect(event.payload.text).toMatch(/left in place/i);
 
@@ -164,7 +164,7 @@ describe('DeleteRepositoryButton', () => {
     async (reason) => {
       const event = await openMenuAndConfirm(createMockRepository(false, reason), /remove resources/i);
 
-      expect(event.payload.text).not.toMatch(/unhealthy/i);
+      expect(event.payload.text).not.toMatch(/authentication/i);
 
       await confirmDelete(event);
 

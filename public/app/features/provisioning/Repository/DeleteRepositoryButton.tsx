@@ -84,9 +84,9 @@ export function DeleteRepositoryButton({ name, repository, redirectTo }: Props) 
   // Appended to the confirm text when the repository's credentials have failed,
   // so the user knows the delete will proceed but leave provider-side resources
   // behind.
-  const unhealthyWarning = t(
-    'provisioning.delete-repository-button.unhealthy-warning',
-    ' This repository is currently unhealthy (for example, its credentials may have expired), so provider-side resources such as webhooks cannot be removed and will be left in place. To remove them, fix the credentials before deleting.'
+  const authenticationWarning = t(
+    'provisioning.delete-repository-button.authentication-warning',
+    ' Authentication for this repository is currently failing (its credentials may have expired or been revoked), so provider-side resources such as webhooks cannot be removed and will be left in place. Fix the credentials before deleting to remove them.'
   );
 
   const showDeleteWithResourcesModal = useCallback(() => {
@@ -100,14 +100,14 @@ export function DeleteRepositoryButton({ name, repository, redirectTo }: Props) 
           'provisioning.delete-repository-button.title-delete-repository-and-resources',
           'Delete repository configuration and resources'
         ),
-        text: credentialFailure ? baseText + unhealthyWarning : baseText,
+        text: credentialFailure ? baseText + authenticationWarning : baseText,
         yesText: t('provisioning.delete-repository-button.button-delete', 'Delete'),
         noText: t('provisioning.delete-repository-button.button-cancel', 'Cancel'),
         yesButtonVariant: 'destructive',
         onConfirm: () => performDelete('remove-resources'),
       })
     );
-  }, [performDelete, credentialFailure, unhealthyWarning]);
+  }, [performDelete, credentialFailure, authenticationWarning]);
 
   const showDeleteKeepResourcesModal = useCallback(() => {
     const baseText = t(
@@ -120,14 +120,14 @@ export function DeleteRepositoryButton({ name, repository, redirectTo }: Props) 
           'provisioning.delete-repository-button.title-delete-repository-only',
           'Delete repository configuration only'
         ),
-        text: credentialFailure ? baseText + unhealthyWarning : baseText,
+        text: credentialFailure ? baseText + authenticationWarning : baseText,
         yesText: t('provisioning.delete-repository-button.button-delete', 'Delete'),
         noText: t('provisioning.delete-repository-button.button-cancel', 'Cancel'),
         yesButtonVariant: 'destructive',
         onConfirm: () => performDelete('keep-resources'),
       })
     );
-  }, [performDelete, credentialFailure, unhealthyWarning]);
+  }, [performDelete, credentialFailure, authenticationWarning]);
 
   const isLoading = deleteRequest.isLoading || replaceRequest.isLoading;
 

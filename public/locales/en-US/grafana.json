@@ -14274,6 +14274,7 @@
       "view": "View"
     },
     "delete-repository-button": {
+      "authentication-warning": " Authentication for this repository is currently failing (its credentials may have expired or been revoked), so provider-side resources such as webhooks cannot be removed and will be left in place. Fix the credentials before deleting to remove them.",
       "button-cancel": "Cancel",
       "button-delete": "Delete",
       "confirm-delete-keep-resources": "Are you sure you want to delete the repository configuration but keep its resources?",
@@ -14284,8 +14285,7 @@
       "error-repository-delete": "Failed to delete repository",
       "success-repository-deleted": "Repository settings queued for deletion",
       "title-delete-repository-and-resources": "Delete repository configuration and resources",
-      "title-delete-repository-only": "Delete repository configuration only",
-      "unhealthy-warning": " This repository is currently unhealthy (for example, its credentials may have expired), so provider-side resources such as webhooks cannot be removed and will be left in place. To remove them, fix the credentials before deleting."
+      "title-delete-repository-only": "Delete repository configuration only"
     },
     "edit-repository-page": {
       "back-to-repositories": "Back to repositories",
