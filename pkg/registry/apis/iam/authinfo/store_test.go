@@ -305,6 +305,24 @@ func TestLegacyStore_List(t *testing.T) {
 		require.Empty(t, list.Items)
 	})
 
+	t.Run("returns an empty list, not an error, for a stale or cross-org user_auth row", func(t *testing.T) {
+		authInfoStore := authinfotest.NewMockAuthInfoStore(t)
+		// UserId 999 has no entry in identities.users.
+		authInfoStore.On("GetAuthInfo", mock.Anything, &login.GetAuthInfoQuery{AuthId: "orphaned-id"}).
+			Return(&login.UserAuth{UserId: 999, AuthModule: "ldap", AuthId: "orphaned-id", Created: created}, nil)
+
+		store := NewLegacyStore(identities, authInfoStore, noop.NewTracerProvider().Tracer("test"))
+
+		obj, err := store.List(testCtx(), &internalversion.ListOptions{
+			FieldSelector: fields.OneTermEqualSelector("spec.authID", "orphaned-id"),
+		})
+		require.NoError(t, err)
+
+		list, ok := obj.(*iamv0alpha1.AuthInfoList)
+		require.True(t, ok)
+		require.Empty(t, list.Items)
+	})
+
 	t.Run("lists every module for the selected user", func(t *testing.T) {
 		authInfoStore := authinfotest.NewMockAuthInfoStore(t)
 		authInfoStore.On("GetUserAuthModules", mock.Anything, int64(1)).Return([]string{"ldap", "oauth_github"}, nil)

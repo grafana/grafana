@@ -159,6 +159,9 @@ func (l *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 
 		uidRes, err := l.identities.GetUserUIDByID(ctx, ns, legacy.GetUserUIDByIDQuery{ID: authInfo.UserId})
 		if err != nil {
+			if errors.Is(err, user.ErrUserNotFound) {
+				return &iamv0alpha1.AuthInfoList{}, nil
+			}
 			return nil, err
 		}
 
