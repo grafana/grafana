@@ -316,6 +316,11 @@ func TestPerKindTranslateQuery_sort(t *testing.T) {
 // generic search API returns, so the projection does not change when that
 // endpoint takes over.
 func TestPerKindTranslateQuery_returnFields(t *testing.T) {
+	t.Run("requests field-value results", func(t *testing.T) {
+		request := translate(t, query())
+		assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, request.req.ResultFormat)
+	})
+
 	t.Run("defaults to title and folder", func(t *testing.T) {
 		request := translate(t, query())
 		assert.Equal(t, []string{fieldTitle, fieldFolder}, request.fields)

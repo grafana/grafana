@@ -58,10 +58,11 @@ func buildPerKindSearchRequest(q *searchv0.SearchQuery, leaves []searchv0.WhereN
 	offset, _ := decodeCursor(q.Continue)
 	fields := resolvePerKindReturnFields(q.Fields)
 	req := &resourcepb.ResourceSearchRequest{
-		Options: &resourcepb.ListOptions{Key: resourceKey(namespace, k.groupResource())},
-		Limit:   resolvePerKindLimit(q.Limit),
-		Offset:  offset,
-		Fields:  append([]string{}, fields...),
+		Options:      &resourcepb.ListOptions{Key: resourceKey(namespace, k.groupResource())},
+		Limit:        resolvePerKindLimit(q.Limit),
+		Offset:       offset,
+		Fields:       append([]string{}, fields...),
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
 
 	applyPerKindLeaves(req, leaves)
