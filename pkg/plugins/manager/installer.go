@@ -202,6 +202,18 @@ func (m *PluginInstaller) Remove(ctx context.Context, pluginID, version string) 
 		return plugins.ErrUninstallCorePlugin
 	}
 
+	// Nested plugins (Zabbix and friends) stay loaded after the parent is
+	// unloaded. On NFS those open files make the parent RemoveAll fail with
+	// "directory not empty", so uninstall children first.
+	for _, child := range append([]*plugins.Plugin(nil), plugin.Children...) {
+		if child == nil {
+			continue
+		}
+		if err := m.Remove(ctx, child.ID, child.Info.Version); err != nil && !errors.Is(err, plugins.ErrPluginNotInstalled) {
+			return err
+		}
+	}
+
 	p, err := m.pluginLoader.Unload(ctx, plugin)
 	if err != nil {
 		return err

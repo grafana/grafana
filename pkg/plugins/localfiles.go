@@ -6,7 +6,9 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
+	"syscall"
 )
 
 var (
@@ -171,7 +173,99 @@ func (f LocalFS) Remove() error {
 			return ErrUninstallInvalidPluginDir
 		}
 	}
-	return os.RemoveAll(f.basePath)
+	if err := removeNestedPluginDirs(f.basePath); err != nil {
+		return err
+	}
+	if err := os.RemoveAll(f.basePath); err != nil {
+		if isDirNotEmpty(err) {
+			if retryErr := removeNestedPluginDirs(f.basePath); retryErr != nil {
+				return retryErr
+			}
+			return os.RemoveAll(f.basePath)
+		}
+		return err
+	}
+	return nil
+}
+
+func removeNestedPluginDirs(root string) error {
+	var nested []string
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.Name() != "plugin.json" {
+			return nil
+		}
+		dir := filepath.Dir(path)
+		if dir != root {
+			nested = append(nested, dir)
+		}
+		return nil
+	})
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	sort.Slice(nested, func(i, j int) bool {
+		return strings.Count(nested[i], string(os.PathSeparator)) > strings.Count(nested[j], string(os.PathSeparator))
+	})
+	for _, dir := range nested {
+		if err := os.RemoveAll(dir); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func isDirNotEmpty(err error) bool {
+	if errors.Is(err, syscall.ENOTEMPTY) {
+		return true
+	}
+	var pathErr *os.PathError
+	if errors.As(err, &pathErr) && errors.Is(pathErr.Err, syscall.ENOTEMPTY) {
+		return true
+	}
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "directory not empty") || strings.Contains(msg, "not empty")
+}
+
+// UserPlacedFiles returns files on disk under pluginFS that were not part of the
+// plugin file list captured when the FS was constructed (or walked now).
+func UserPlacedFiles(pluginFS FS) ([]string, error) {
+	if pluginFS == nil || !pluginFS.Type().Local() {
+		return nil, nil
+	}
+	allowed, err := pluginFS.Files()
+	if err != nil {
+		return nil, err
+	}
+	allow := make(map[string]struct{}, len(allowed))
+	for _, f := range allowed {
+		allow[filepath.ToSlash(filepath.Clean(f))] = struct{}{}
+	}
+	var extras []string
+	err = filepath.Walk(pluginFS.Base(), func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		rel, relErr := filepath.Rel(pluginFS.Base(), path)
+		if relErr != nil {
+			return relErr
+		}
+		rel = filepath.ToSlash(rel)
+		if _, ok := allow[rel]; !ok {
+			extras = append(extras, rel)
+		}
+		return nil
+	})
+	if err != nil && !os.IsNotExist(err) {
+		return nil, err
+	}
+	sort.Strings(extras)
+	return extras, nil
 }
 
 // staticFilesMap is a set-like map that contains files that can be accessed from a plugins.FS.

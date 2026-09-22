@@ -90,7 +90,7 @@ export const useUnsetInstall = () => {
 export const useUninstall = () => {
   const dispatch = useDispatch();
 
-  return (id: string) => dispatch(uninstall(id));
+  return (id: string, confirmUserData?: boolean) => dispatch(uninstall({ id, confirmUserData }));
 };
 
 export const useIsRemotePluginsAvailable = () => {

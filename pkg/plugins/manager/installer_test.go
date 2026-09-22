@@ -685,3 +685,30 @@ func TestPluginInstaller_Removal(t *testing.T) {
 		require.True(t, os.IsNotExist(err))
 	})
 }
+
+func TestPluginInstaller_RemoveUnloadsNestedChildrenFirst(t *testing.T) {
+	parent := createPlugin(t, "parent-app", plugins.ClassExternal, true, false, func(plugin *plugins.Plugin) {
+		plugin.Info.Version = "1.0.0"
+	})
+	child := createPlugin(t, "child-panel", plugins.ClassExternal, true, false, func(plugin *plugins.Plugin) {
+		plugin.Info.Version = "1.0.0"
+		plugin.Parent = parent
+	})
+	parent.Children = []*plugins.Plugin{child}
+
+	var unloaded []string
+	inst := New(&config.PluginManagementCfg{}, &pluginfakes.FakePluginRegistry{
+		Store: map[string]*plugins.Plugin{
+			"parent-app":  parent,
+			"child-panel": child,
+		},
+	}, &pluginfakes.FakeLoader{
+		UnloadFunc: func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+			unloaded = append(unloaded, p.ID)
+			return p, nil
+		},
+	}, &pluginfakes.FakePluginRepo{}, &pluginfakes.FakePluginStorage{}, storage.SimpleDirNameGeneratorFunc, &pluginfakes.FakeAuthService{}, &pluginfakes.FakeRBACCleaner{})
+
+	require.NoError(t, inst.Remove(context.Background(), "parent-app", "1.0.0"))
+	require.Equal(t, []string{"child-panel", "parent-app"}, unloaded)
+}
