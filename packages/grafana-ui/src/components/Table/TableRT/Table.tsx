@@ -133,6 +133,7 @@ export const Table = memo((props: Props) => {
   const tableHasGeoCell = useMemo(() => hasGeoCell(data), [data]);
   const initialState = useMemo(() => getInitialState(initialSortBy, memoizedColumns), [initialSortBy, memoizedColumns]);
   const [sorting, setSorting] = useState<SortingState>(initialState.sorting ?? []);
+  const previousSorting = useRef(sorting);
   const [expanded, setExpanded] = useState<ExpandedState>({});
   const [lastExpandedOrCollapsedIndex, setLastExpandedOrCollapsedIndex] = useState<number>();
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
@@ -166,19 +167,7 @@ export const Table = memo((props: Props) => {
     getRowId: hasUniqueId
       ? (_row, relativeIndex) => getRowUniqueId(data, relativeIndex) ?? String(relativeIndex)
       : undefined,
-    onSortingChange: (updater) => {
-      setSorting((current) => {
-        const next = functionalUpdate(updater, current);
-        setExpanded({});
-        props.onSortByChange?.(
-          next.flatMap((sortItem) => {
-            const field = data.fields[parseInt(sortItem.id, 10)];
-            return field ? [{ displayName: getFieldDisplayName(field, data), desc: sortItem.desc }] : [];
-          })
-        );
-        return next;
-      });
-    },
+    onSortingChange: (updater) => setSorting((current) => functionalUpdate(updater, current)),
     onExpandedChange: (updater) => {
       setExpanded((current) => {
         const next = functionalUpdate(updater, current);
@@ -205,6 +194,21 @@ export const Table = memo((props: Props) => {
   const state = tableInstance.getState();
   const totalColumnsWidth = tableInstance.getTotalSize();
   const extendedState: GrafanaTableState = { ...state, lastExpandedOrCollapsedIndex };
+
+  useEffect(() => {
+    if (previousSorting.current === sorting) {
+      return;
+    }
+
+    previousSorting.current = sorting;
+    setExpanded({});
+    props.onSortByChange?.(
+      sorting.flatMap((sortItem) => {
+        const field = data.fields[parseInt(sortItem.id, 10)];
+        return field ? [{ displayName: getFieldDisplayName(field, data), desc: sortItem.desc }] : [];
+      })
+    );
+  }, [data, props, sorting]);
 
   useEffect(() => {
     const previousColumn = resizingColumnRef.current;
