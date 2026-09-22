@@ -3033,13 +3033,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:8.19.0--canary.1651.35354177939.0":
-  version: 8.19.0--canary.1651.35354177939.0
-  resolution: "@grafana/scenes-react@npm:8.19.0--canary.1651.35354177939.0"
+"@grafana/scenes-react@npm:8.18.0":
+  version: 8.18.0
+  resolution: "@grafana/scenes-react@npm:8.18.0"
   dependencies:
     "@emotion/css": "npm:^11.13.5"
     "@emotion/react": "npm:^11.14.0"
-    "@grafana/scenes": "npm:8.19.0--canary.1651.35354177939.0"
+    "@grafana/scenes": "npm:8.18.0"
     lodash: "npm:^4.17.21"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
@@ -3053,7 +3053,38 @@ __metadata:
     react-dom: ^18.0.0 || ^19.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/3b0ada12131e7e8fe8827e809f3573a895710b2b8ae1941189cf31180f8c223fec30a81da7f27128faad07e38cd400c3540fa596cbed16595422f56018029e48
+  checksum: 10/7e1d77c4adc1c68395dd4c751f7dec1b0dd5562fc4ce1b51cd2ad211a7d6f787bb55e3899592a1d4cda700787ea43d65d0fed5022f5f562eef9c3626fb859814
+  languageName: node
+  linkType: hard
+
+"@grafana/scenes@npm:8.18.0":
+  version: 8.18.0
+  resolution: "@grafana/scenes@npm:8.18.0"
+  dependencies:
+    "@emotion/css": "npm:^11.13.5"
+    "@emotion/react": "npm:^11.14.0"
+    "@floating-ui/react": "npm:^0.27.0"
+    "@leeoniya/ufuzzy": "npm:^1.0.16"
+    "@tanstack/react-virtual": "npm:^3.9.0"
+    history: "npm:^4.9.0"
+    lodash: "npm:^4.17.21"
+    react-grid-layout: "npm:^1.3.4"
+    react-select: "npm:^5.10.2"
+    react-use: "npm:^17.5.0"
+    react-virtualized-auto-sizer: "npm:^1.0.24"
+    uuid: "npm:^11.0.0"
+  peerDependencies:
+    "@grafana/data": ">=11.6"
+    "@grafana/e2e-selectors": ">=11.6"
+    "@grafana/i18n": "*"
+    "@grafana/runtime": ">=11.6"
+    "@grafana/schema": ">=11.6"
+    "@grafana/ui": ">=11.6"
+    react: ^18.0.0 || ^19.0.0
+    react-dom: ^18.0.0 || ^19.0.0
+    react-router-dom: ^6.28.0
+    rxjs: ^7.8.1
+  checksum: 10/61f9fa79379e4eed67940f6ce5da865877d2063595b1dc2ad2b5848877228ef20e4ecd4c9c1d4dccea7a9a280dbffa823e450b5bda11bec5e0505d35865e0cef
   languageName: node
   linkType: hard
 
@@ -3088,9 +3119,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:8.19.0--canary.1651.35354177939.0":
-  version: 8.19.0--canary.1651.35354177939.0
-  resolution: "@grafana/scenes@npm:8.19.0--canary.1651.35354177939.0"
+"@grafana/scenes@patch:@grafana/scenes@npm%3A8.18.0#~/.yarn/patches/@grafana-scenes-npm-8.18.0-fdf27f2742.patch":
+  version: 8.18.0
+  resolution: "@grafana/scenes@patch:@grafana/scenes@npm%3A8.18.0#~/.yarn/patches/@grafana-scenes-npm-8.18.0-fdf27f2742.patch::version=8.18.0&hash=590d8c"
   dependencies:
     "@emotion/css": "npm:^11.13.5"
     "@emotion/react": "npm:^11.14.0"
@@ -3115,38 +3146,7 @@ __metadata:
     react-dom: ^18.0.0 || ^19.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/1fc8463c0ea8626b1be86bb78db1ac1cb41256dcad7a80ea11892977ff638f7ed850ec8f7f3185a0276d947f496d41264e311339b2fd83faba676272e102a21c
-  languageName: node
-  linkType: hard
-
-"@grafana/scenes@patch:@grafana/scenes@npm%3A8.19.0--canary.1651.35354177939.0#~/.yarn/patches/@grafana-scenes-npm-8.19.0--canary.1651.35354177939.0-1af9061d40.patch":
-  version: 8.19.0--canary.1651.35354177939.0
-  resolution: "@grafana/scenes@patch:@grafana/scenes@npm%3A8.19.0--canary.1651.35354177939.0#~/.yarn/patches/@grafana-scenes-npm-8.19.0--canary.1651.35354177939.0-1af9061d40.patch::version=8.19.0--canary.1651.35354177939.0&hash=91c18d"
-  dependencies:
-    "@emotion/css": "npm:^11.13.5"
-    "@emotion/react": "npm:^11.14.0"
-    "@floating-ui/react": "npm:^0.27.0"
-    "@leeoniya/ufuzzy": "npm:^1.0.16"
-    "@tanstack/react-virtual": "npm:^3.9.0"
-    history: "npm:^4.9.0"
-    lodash: "npm:^4.17.21"
-    react-grid-layout: "npm:^1.3.4"
-    react-select: "npm:^5.10.2"
-    react-use: "npm:^17.5.0"
-    react-virtualized-auto-sizer: "npm:^1.0.24"
-    uuid: "npm:^11.0.0"
-  peerDependencies:
-    "@grafana/data": ">=11.6"
-    "@grafana/e2e-selectors": ">=11.6"
-    "@grafana/i18n": "*"
-    "@grafana/runtime": ">=11.6"
-    "@grafana/schema": ">=11.6"
-    "@grafana/ui": ">=11.6"
-    react: ^18.0.0 || ^19.0.0
-    react-dom: ^18.0.0 || ^19.0.0
-    react-router-dom: ^6.28.0
-    rxjs: ^7.8.1
-  checksum: 10/8928ee78308b6c0e23a75e22f0023a1f8ef729fd3bb7d03b74f74b5d911c324c3cc6e1bff2ad166ecabbc823b30c663f2185cf806e1630f3e19f4d76ba34a5b1
+  checksum: 10/291695844729807c79f2650626b01409157db8d84f0f0d23f6fe34b61310c267fd7df68e15c0296738398c44b50361198b67dadf8041e95a7f88b94015f688cf
   languageName: node
   linkType: hard
 
@@ -3270,6 +3270,7 @@ __metadata:
     "@grafana/faro-web-sdk": "npm:^2.12.0"
     "@grafana/i18n": "npm:13.3.0-pre"
     "@grafana/react-data-grid": "patch:@grafana/react-data-grid@npm%3A7.0.0-beta.57#~/.yarn/patches/@grafana-react-data-grid-npm-7.0.0-beta.57-357135ee15.patch"
+    "@grafana/scenes": "npm:8.18.0"
     "@grafana/schema": "npm:13.3.0-pre"
     "@grafana/test-utils": "workspace:*"
     "@hello-pangea/dnd": "npm:^18.0.1"
@@ -20146,8 +20147,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.17.3"
     "@grafana/prometheus": "npm:13.1.14"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:8.19.0--canary.1651.35354177939.0"
-    "@grafana/scenes-react": "npm:8.19.0--canary.1651.35354177939.0"
+    "@grafana/scenes": "npm:8.18.0"
+    "@grafana/scenes-react": "npm:8.18.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"

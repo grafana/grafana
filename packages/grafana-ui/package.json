@@ -84,6 +84,7 @@
     "@grafana/faro-web-sdk": "^2.12.0",
     "@grafana/i18n": "13.3.0-pre",
     "@grafana/react-data-grid": "patch:@grafana/react-data-grid@npm%3A7.0.0-beta.57#~/.yarn/patches/@grafana-react-data-grid-npm-7.0.0-beta.57-357135ee15.patch",
+    "@grafana/scenes": "8.18.0",
     "@grafana/schema": "13.3.0-pre",
     "@hello-pangea/dnd": "^18.0.1",
     "@lezer/highlight": "^1.2.3",

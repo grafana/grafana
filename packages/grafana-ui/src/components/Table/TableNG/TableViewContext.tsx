@@ -31,16 +31,17 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type SortColumn } from '@grafana/react-data-grid';
+import { type VizPanelRuntimeTransformations } from '@grafana/scenes';
 
 import { Button } from '../../Button/Button';
 import { ErrorBoundary } from '../../ErrorBoundary/ErrorBoundary';
-import { type AdHocTransformationsApi } from '../../PanelChrome/PanelContext';
 
 import { type TableNGProps, type TableRow } from './types';
 import { type ApplyFilterResult } from './utils';
 
 export interface TableRowTransformations {
-  api: AdHocTransformationsApi;
+  api: VizPanelRuntimeTransformations;
+  owner: string;
   frameKey: string;
 }
 interface ViewContext {
@@ -121,12 +122,12 @@ function activeFilters(
 }
 
 export function TableViewProvider({ props, children }: { props: TableNGProps; children: React.ReactNode }) {
-  const { api } = props.rowTransformations ?? {};
+  const { api, owner = '' } = props.rowTransformations ?? {};
   const source = props.data;
   const frameKey = props.rowTransformations?.frameKey ?? tableFrameKey([source], 0);
   const stage = useSyncExternalStore(
-    useCallback((listener) => api?.subscribe(listener) ?? (() => {}), [api]),
-    useCallback(() => api?.get() ?? EMPTY_STAGE, [api])
+    useCallback((listener) => api?.subscribe(owner, listener) ?? (() => {}), [api, owner]),
+    useCallback(() => api?.get(owner) ?? EMPTY_STAGE, [api, owner])
   );
   const [local, setLocal] = useState<readonly DataTransformerConfig[]>(EMPTY_STAGE);
   const configs = api ? stage : local;
@@ -139,13 +140,13 @@ export function TableViewProvider({ props, children }: { props: TableNGProps; ch
         });
         return;
       }
-      const current = api.get();
+      const current = api.get(owner);
       const next = fn(current);
       if (!isEqual(current, next)) {
-        api.set(next);
+        api.set(owner, next);
       }
     },
-    [api]
+    [api, owner]
   );
   const filters = useMemo(() => activeFilters(configs, frameKey, source), [configs, frameKey, source]);
   const initialSort = useRef(props.sortBy);

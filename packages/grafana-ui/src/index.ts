@@ -180,7 +180,6 @@ export {
   type PanelChromeLoadingIndicatorProps,
   PanelContextProvider,
   type PanelContext,
-  type AdHocTransformationsApi,
   type AdHocTransformationsState,
   PanelContextRoot,
   usePanelContext,

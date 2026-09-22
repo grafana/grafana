@@ -38,7 +38,6 @@ export {
   useAdHocTransformations,
   PanelContextProvider,
   type PanelContext,
-  type AdHocTransformationsApi,
   type AdHocTransformationsState,
   PanelContextRoot,
 } from './PanelContext';

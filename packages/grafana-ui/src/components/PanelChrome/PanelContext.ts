@@ -10,29 +10,13 @@ import {
   type EventBus,
   EventBusSrv,
 } from '@grafana/data';
+import { type VizPanelRuntimeTransformations } from '@grafana/scenes';
 
 import { type AdHocFilterItem } from '../Table/types';
 
 import { type OnSelectRangeCallback, type SeriesVisibilityChangeMode } from './types';
 
-/** A single ordered view transformation list per panel, applied after saved transformations. @alpha */
-export interface AdHocTransformationsApi {
-  /** Returns a stable snapshot until the panel's view transformations change. */
-  get(): readonly DataTransformerConfig[];
-
-  /** Replaces the panel's view transformations. Pass `[]` to clear them. */
-  set(transformations: readonly DataTransformerConfig[]): void;
-
-  /**
-   * Returns the raw frames that entered this stage, including fields removed by its transformations.
-   */
-  getSourceSeries(): readonly DataFrame[];
-
-  /** Registers a listener for changes to the panel's view transformations. */
-  subscribe(callback: () => void): () => void;
-}
-
-/** Reactive view of the panel host's per-viewer transformation stage. @alpha */
+/** Reactive view of one owner's runtime transformation stage. @alpha */
 export interface AdHocTransformationsState {
   /** Transformations currently applied after the panel's saved transformations. */
   transformations: readonly DataTransformerConfig[];
@@ -130,7 +114,7 @@ export interface PanelContext {
   dataLinkPostProcessor?: DataLinkPostProcessor;
 
   /** Present when the panel host supports ad-hoc transformations. @alpha */
-  adHocTransformations?: AdHocTransformationsApi;
+  adHocTransformations?: VizPanelRuntimeTransformations;
 }
 
 export const PanelContextRoot = createContext<PanelContext>({
@@ -149,20 +133,23 @@ export const PanelContextProvider = PanelContextRoot.Provider;
 export const usePanelContext = () => useContext(PanelContextRoot);
 
 /**
- * Returns the current per-viewer transformations and re-renders when the panel host changes them.
+ * Returns the selected owner's transformations and re-renders when the panel host changes them.
  * Returns `undefined` when the panel host does not support ad-hoc transformations.
  *
  * @alpha
  */
-export function useAdHocTransformations(): AdHocTransformationsState | undefined {
+export function useAdHocTransformations(owner: string): AdHocTransformationsState | undefined {
   const api = usePanelContext().adHocTransformations;
-  const subscribe = useCallback((onChange: () => void) => (api ? api.subscribe(onChange) : () => {}), [api]);
-  const getSnapshot = useCallback(() => api?.get(), [api]);
+  const subscribe = useCallback(
+    (onChange: () => void) => (api ? api.subscribe(owner, onChange) : () => {}),
+    [api, owner]
+  );
+  const getSnapshot = useCallback(() => api?.get(owner), [api, owner]);
   const transformations = useSyncExternalStore(subscribe, getSnapshot);
-  const sourceSeries = api?.getSourceSeries();
+  const sourceSeries = api?.getSourceSeries(owner);
   const setTransformations = useCallback(
-    (nextTransformations: readonly DataTransformerConfig[]) => api?.set(nextTransformations),
-    [api]
+    (nextTransformations: readonly DataTransformerConfig[]) => api?.set(owner, nextTransformations),
+    [api, owner]
   );
 
   return useMemo(

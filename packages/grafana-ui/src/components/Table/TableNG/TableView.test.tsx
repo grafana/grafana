@@ -19,9 +19,8 @@ import {
   filterByValueTransformer,
   sortByTransformer,
 } from '@grafana/data/internal';
+import { type VizPanelRuntimeTransformations } from '@grafana/scenes';
 import { mockClientSize } from '@grafana/test-utils';
-
-import { type AdHocTransformationsApi } from '../../PanelChrome/PanelContext';
 
 import { TableNG } from './TableNG';
 import { transformTableFilters, tableFilterKey } from './TableViewContext';
@@ -176,13 +175,13 @@ it.each([false, true])(
     const source = makeFrame();
     let configs: readonly DataTransformerConfig[] = [{ id: 'organize', options: { excludeByName: { hidden: true } } }];
     const listeners = new Set<() => void>();
-    const api: AdHocTransformationsApi = {
+    const api: VizPanelRuntimeTransformations = {
       get: () => configs,
-      set: (next) => {
+      set: (_owner, next) => {
         configs = next;
         listeners.forEach((listener) => listener());
       },
-      subscribe: (listener) => {
+      subscribe: (_owner, listener) => {
         listeners.add(listener);
         return () => {
           listeners.delete(listener);
@@ -196,7 +195,7 @@ it.each([false, true])(
       height: 600,
       rowTransformationsEnabled: true,
       sortBy: savedSort ? [{ displayName: 'Value', desc: false }] : undefined,
-      rowTransformations: { api, frameKey: tableFrameKey([source], 0) },
+      rowTransformations: { api, owner: 'table', frameKey: tableFrameKey([source], 0) },
     };
     const { unmount } = render(<TableNG {...props} />);
     const user = userEvent.setup();
@@ -232,13 +231,13 @@ it('writes dashboard sort into the ad-hoc stage while preserving column transfor
   const frameKey = tableFrameKey([data], 0);
   let configs: readonly DataTransformerConfig[] = [{ id: 'organize', options: { excludeByName: { hidden: true } } }];
   const listeners = new Set<() => void>();
-  const api: AdHocTransformationsApi = {
+  const api: VizPanelRuntimeTransformations = {
     get: () => configs,
-    set: jest.fn((next: readonly DataTransformerConfig[]) => {
+    set: jest.fn((_owner: string, next: readonly DataTransformerConfig[]) => {
       configs = next;
       listeners.forEach((listener) => listener());
     }),
-    subscribe: (listener) => {
+    subscribe: (_owner, listener) => {
       listeners.add(listener);
       return () => {
         listeners.delete(listener);
@@ -247,12 +246,18 @@ it('writes dashboard sort into the ad-hoc stage while preserving column transfor
     getSourceSeries: () => [data],
   };
   render(
-    <TableNG data={data} width={800} height={600} rowTransformationsEnabled rowTransformations={{ api, frameKey }} />
+    <TableNG
+      data={data}
+      width={800}
+      height={600}
+      rowTransformationsEnabled
+      rowTransformations={{ api, owner: 'table', frameKey }}
+    />
   );
   await userEvent.setup().click(screen.getByRole('columnheader', { name: /Name/ }));
-  const view = api.get()[0];
+  const view = api.get('table')[0];
   expect(view.id).toBe('sortBy');
   expect(view.options.sort).toEqual([{ field: 'Name', displayName: 'Name', desc: false }]);
-  expect(api.get()[1]).toEqual({ id: 'organize', options: { excludeByName: { hidden: true } } });
+  expect(api.get('table')[1]).toEqual({ id: 'organize', options: { excludeByName: { hidden: true } } });
   expect(displayedNames()).toEqual(['alpha', 'beta', 'gamma', 'outlier']);
 });

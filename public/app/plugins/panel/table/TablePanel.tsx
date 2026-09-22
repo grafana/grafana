@@ -16,6 +16,7 @@ import { TableCellHeight, type TableOptions } from '@grafana/schema';
 import { Combobox, Field, Stack, usePanelContext, useStyles2, useTheme2 } from '@grafana/ui';
 import { TableNG } from '@grafana/ui/unstable';
 import {
+  TABLE_TRANSFORMATIONS_OWNER,
   useAdHocColumnState,
   useCacheFieldDisplayNames,
   useCellActions,
@@ -67,7 +68,7 @@ export function TablePanel(props: Props) {
   const currentIndex = getCurrentFrameIndex(frames, options);
   const outputMain = frames[currentIndex];
   const sourceMain = tableRefreshNewFeaturesEnabled
-    ? panelContext.adHocTransformations?.getSourceSeries()[currentIndex]
+    ? panelContext.adHocTransformations?.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER)[currentIndex]
     : undefined;
   // Rebuild display processors and link closures against original rows, before ad-hoc selection.
   const rawMain = useMemo(
@@ -119,7 +120,11 @@ export function TablePanel(props: Props) {
         tableRefreshNewFeaturesEnabled && panelContext.adHocTransformations
           ? {
               api: panelContext.adHocTransformations,
-              frameKey: tableFrameKey(panelContext.adHocTransformations.getSourceSeries(), currentIndex),
+              owner: TABLE_TRANSFORMATIONS_OWNER,
+              frameKey: tableFrameKey(
+                panelContext.adHocTransformations.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER),
+                currentIndex
+              ),
             }
           : undefined
       }

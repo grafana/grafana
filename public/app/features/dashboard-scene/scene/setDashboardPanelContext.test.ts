@@ -130,19 +130,19 @@ describe('setDashboardPanelContext', () => {
       const secondApi = second.context.adHocTransformations!;
       const firstChanged = jest.fn();
       const secondChanged = jest.fn();
-      const unsubscribe = firstApi.subscribe(firstChanged);
-      const unsubscribeSecond = secondApi.subscribe(secondChanged);
+      const unsubscribe = firstApi.subscribe('grafana:table-view', firstChanged);
+      const unsubscribeSecond = secondApi.subscribe('grafana:table-view', secondChanged);
 
-      firstApi.set([{ id: 'organize', options: { excludeByName: { hidden: true } } }]);
-      secondApi.set([{ id: 'limit', options: { limitField: 2 } }]);
-      firstApi.set([]);
+      firstApi.set('grafana:table-view', [{ id: 'organize', options: { excludeByName: { hidden: true } } }]);
+      secondApi.set('grafana:table-view', [{ id: 'limit', options: { limitField: 2 } }]);
+      firstApi.set('grafana:table-view', []);
 
-      expect(firstApi.get()).toEqual([]);
-      expect(secondApi.get()).toEqual([{ id: 'limit', options: { limitField: 2 } }]);
+      expect(firstApi.get('grafana:table-view')).toEqual([]);
+      expect(secondApi.get('grafana:table-view')).toEqual([{ id: 'limit', options: { limitField: 2 } }]);
       expect(firstChanged).toHaveBeenCalledTimes(2);
       expect(secondChanged).toHaveBeenCalledTimes(1);
       unsubscribe();
-      firstApi.set([{ id: 'limit', options: { limitField: 1 } }]);
+      firstApi.set('grafana:table-view', [{ id: 'limit', options: { limitField: 1 } }]);
       expect(firstChanged).toHaveBeenCalledTimes(2);
       unsubscribeSecond();
     });
@@ -151,32 +151,32 @@ describe('setDashboardPanelContext', () => {
       const { context } = buildTestScene({});
       const api = context.adHocTransformations!;
       const configs = [{ id: 'limit', options: { limitField: 2 } }];
-      api.set(configs);
-      const snapshot = api.get();
+      api.set('grafana:table-view', configs);
+      const snapshot = api.get('grafana:table-view');
       configs[0].options.limitField = 99;
 
-      expect(api.get()).toBe(snapshot);
-      expect(api.get()).toEqual([{ id: 'limit', options: { limitField: 2 } }]);
+      expect(api.get('grafana:table-view')).toBe(snapshot);
+      expect(api.get('grafana:table-view')).toEqual([{ id: 'limit', options: { limitField: 2 } }]);
       expect(Object.isFrozen(snapshot[0].options)).toBe(true);
-      api.set([{ id: 'organize', options: {} }]);
-      expect(api.get()).toEqual([{ id: 'organize', options: {} }]);
+      api.set('grafana:table-view', [{ id: 'organize', options: {} }]);
+      expect(api.get('grafana:table-view')).toEqual([{ id: 'organize', options: {} }]);
     });
 
-    it('restores field cleanup when the view is cleared or the plugin changes', () => {
+    it('keeps field cleanup enabled when the view is changed, cleared, or the plugin changes', () => {
       const { context, vizPanel } = buildTestScene({});
       vizPanel.setState({ _UNSAFE_clearPreviousFieldValues: true });
       const api = context.adHocTransformations!;
       const changed = jest.fn();
-      const unsubscribe = api.subscribe(changed);
+      const unsubscribe = api.subscribe('grafana:table-view', changed);
 
-      api.set([{ id: 'organize', options: {} }]);
-      expect(vizPanel.state._UNSAFE_clearPreviousFieldValues).toBe(false);
-      api.set([]);
+      api.set('grafana:table-view', [{ id: 'organize', options: {} }]);
       expect(vizPanel.state._UNSAFE_clearPreviousFieldValues).toBe(true);
-      api.set([{ id: 'limit', options: { limitField: 2 } }]);
-      expect(vizPanel.state._UNSAFE_clearPreviousFieldValues).toBe(false);
+      api.set('grafana:table-view', []);
+      expect(vizPanel.state._UNSAFE_clearPreviousFieldValues).toBe(true);
+      api.set('grafana:table-view', [{ id: 'limit', options: { limitField: 2 } }]);
+      expect(vizPanel.state._UNSAFE_clearPreviousFieldValues).toBe(true);
       vizPanel.setState({ pluginId: 'table' });
-      expect(api.get()).toEqual([]);
+      expect(api.get('grafana:table-view')).toEqual([]);
       expect(vizPanel.state._UNSAFE_clearPreviousFieldValues).toBe(true);
       expect(changed).toHaveBeenCalledTimes(4);
       unsubscribe();
@@ -187,13 +187,13 @@ describe('setDashboardPanelContext', () => {
       const controller = vizPanel.getRuntimeTransformations();
 
       expect(context.adHocTransformations).toBe(controller);
-      expect(context.adHocTransformations?.get()).toEqual([]);
+      expect(context.adHocTransformations?.get('grafana:table-view')).toEqual([]);
 
-      controller.set([{ id: 'organize', options: {} }]);
+      controller.set('grafana:table-view', [{ id: 'organize', options: {} }]);
       vizPanel.setState({ $data: new SceneDataTransformer({ transformations: [] }) });
 
       expect(context.adHocTransformations).toBe(controller);
-      expect(context.adHocTransformations?.get()).toEqual([{ id: 'organize', options: {} }]);
+      expect(context.adHocTransformations?.get('grafana:table-view')).toEqual([{ id: 'organize', options: {} }]);
     });
   });
 

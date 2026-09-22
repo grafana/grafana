@@ -5,10 +5,39 @@ filtering. Applied state consists only of serializable `filterByValue` configs, 
 per field and frame/parent scope. Controls select and update individual predicates;
 there is no intermediate `FilterType` model or whole-stage encode/decode step.
 
-Runtime/ad-hoc transformations are one ordered view list per panel, with no tags
-or owner groups. `set(configs)` replaces the whole list; individual controls preserve
-other configs when editing their own transforms. The Scenes canary is patched to
-use this same contract internally, pending an upstream release.
+The table keeps one ordered view list under the Scenes runtime owner
+`grafana:table-view`. `set(owner, configs)` replaces that owner's list; individual
+controls preserve other configs when editing their own transforms. `PanelContext`
+exposes the Scenes controller and its type directly. Other runtime owners retain
+independent transformations and subscriptions.
+
+## Temporary Scenes dependency patch
+
+Scenes and scenes-react use the stable `8.18.0` packages. The checked-in Yarn
+patch for Scenes replaces its distribution with the tested build from Scenes
+PR #1651 at `9edc66c9`, retention-aware field cleanup at `fb45d856`, and upstream
+undo/redo support (#1645), cherry-picked as `d7592f92`. No canary publication or
+local `file:` dependency is required. The patch includes CJS, ESM, declarations,
+and source maps; the previous ownerless-controller patch is removed.
+
+Cleanup remains enabled: arrays retained by upstream sources or runtime stages
+survive hiding/filtering, and obsolete rendered arrays are cleared after those
+references disappear. This does not establish global ownership across consumers.
+
+To regenerate, build `packages/scenes` at the above revision with Rollup, run
+`yarn patch @grafana/scenes@npm:8.18.0`, replace the extracted `dist` with that build,
+and run `yarn patch-commit -s <extracted-directory>`. Keep the root resolution
+pointing at the generated patch, keep direct versions at `8.18.0`, and preserve
+CloudWatch's separate `8.18.2` dependency (patch-commit may rewrite all consumers).
+Run `yarn install` and verify `yarn install --immutable` before committing.
+
+Verification: the patched distribution matches the local build byte-for-byte;
+99 Grafana tests across six table/context suites, `tsc --noEmit`, changed-file
+ESLint/formatting, and an immutable Yarn install passed with stable dependencies.
+The browser rerun passed 12 Playwright checks. Earlier local-build verification
+passed 233 Scenes tests (46 snapshots, one existing skip). Two stale browser
+assertions were excluded: the override picker accessible-name expectation and
+the expectation that pinning is unavailable. No heap benchmark was performed.
 
 Dashboard tables use that Scenes-owned list. Standalone Explore, Inspect, and
 Flamegraph tables keep the same config array locally and operate only

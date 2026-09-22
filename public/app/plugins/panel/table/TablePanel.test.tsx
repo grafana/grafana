@@ -100,6 +100,7 @@ it.each(['defaults', 'override'])('preserves image cell %s when rebuilding ad-ho
         fieldConfig: imageConfig,
         fieldConfigRegistry: plugin.fieldConfigRegistry,
         theme: createTheme(),
+        replaceVariables: (value) => value,
       }),
     },
   });
@@ -209,8 +210,8 @@ it.each(['hide-first', 'filter-first'])(
       );
       expect(screen.getAllByRole('gridcell').map((cell) => cell.textContent)).toEqual(['two', 'three']);
       expect(screen.getAllByRole('columnheader')[0]).not.toHaveClass('rdg-cell-frozen');
-      expect(api.get().map((config) => config.id)).toEqual(['filterByValue', 'sortBy', 'organize']);
-      expect(api.getSourceSeries()[0].fields[1].values).toEqual([3, 1, 2]);
+      expect(api.get('grafana:table-view').map((config) => config.id)).toEqual(['filterByValue', 'sortBy', 'organize']);
+      expect(api.getSourceSeries('grafana:table-view')[0].fields[1].values).toEqual([3, 1, 2]);
       expect(transformer.state.transformations).toEqual([]);
       expect(props.onOptionsChange).not.toHaveBeenCalled();
       expect(persistedEvents).toEqual([]);
@@ -232,11 +233,11 @@ it.each(['hide-first', 'filter-first'])(
       expect(props.onOptionsChange).not.toHaveBeenCalled();
       expect(persistedEvents).toEqual([]);
 
-      const previous = api.get();
-      act(() => api.set([...previous, { id: 'limit', options: { limitField: 1 } }]));
+      const previous = api.get('grafana:table-view');
+      act(() => api.set('grafana:table-view', [...previous, { id: 'limit', options: { limitField: 1 } }]));
       await waitFor(() => expect(transformer.state.data?.series[0].fields[1].values).toEqual(['one']));
-      expect(api.get().map((config) => config.id)).toEqual(['sortBy', 'organize', 'limit']);
-      act(() => api.set(previous));
+      expect(api.get('grafana:table-view').map((config) => config.id)).toEqual(['sortBy', 'organize', 'limit']);
+      act(() => api.set('grafana:table-view', previous));
       await waitFor(() => expect(transformer.state.data?.series[0].fields[1].values).toEqual(['one', 'two', 'three']));
     } finally {
       rendered.unmount();
@@ -267,7 +268,7 @@ it('restores pin-driven organize state in a fresh panel independently of frozen-
     const transformer = new SceneDataTransformer({ $data: source, transformations: [] });
     const panel = new VizPanel({ pluginId: 'table', $data: transformer });
     const api = panel.getRuntimeTransformations();
-    api.set(JSON.parse(serialized));
+    api.set('grafana:table-view', JSON.parse(serialized));
     const deactivate = transformer.activate();
     const props = getPanelProps<TableOptions>(
       { ...options, showColumnsSidebar: true, frozenColumns: { left: frozenColumns } },
@@ -312,7 +313,7 @@ it('restores pin-driven organize state in a fresh panel independently of frozen-
   let view = mount();
   try {
     await user.click(await screen.findByRole('button', { name: 'Pin Value' }));
-    const serialized = JSON.stringify(view.api.get());
+    const serialized = JSON.stringify(view.api.get('grafana:table-view'));
     expect(JSON.parse(serialized)).toEqual([
       {
         id: 'organize',
@@ -333,14 +334,18 @@ it('restores pin-driven organize state in a fresh panel independently of frozen-
     view = mount(serialized);
     await waitFor(() => expect(screen.getAllByRole('columnheader')[0]).toHaveTextContent('Value'));
     expect(screen.getAllByRole('columnheader')[0]).not.toHaveClass('rdg-cell-frozen');
-    expect(view.api.getSourceSeries()[0].fields.map((field) => field.name)).toEqual(['Label', 'Value', 'Extra']);
+    expect(view.api.getSourceSeries('grafana:table-view')[0].fields.map((field) => field.name)).toEqual([
+      'Label',
+      'Value',
+      'Extra',
+    ]);
     view.dispose();
 
     view = mount(serialized, 1);
     await waitFor(() => expect(screen.getAllByRole('columnheader')[0]).toHaveClass('rdg-cell-frozen'));
     await user.click(screen.getByRole('button', { name: 'Unpin Value' }));
     expect(screen.getAllByRole('columnheader')[0]).not.toHaveClass('rdg-cell-frozen');
-    expect(JSON.stringify(view.api.get())).toBe(serialized);
+    expect(JSON.stringify(view.api.get('grafana:table-view'))).toBe(serialized);
     expect(view.props.onOptionsChange).not.toHaveBeenCalled();
   } finally {
     view.dispose();

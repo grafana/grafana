@@ -309,8 +309,8 @@
     "@grafana/plugin-ui": "^0.17.3",
     "@grafana/prometheus": "13.1.14",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "8.19.0--canary.1651.35354177939.0",
-    "@grafana/scenes-react": "8.19.0--canary.1651.35354177939.0",
+    "@grafana/scenes": "8.18.0",
+    "@grafana/scenes-react": "8.18.0",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
     "@grafana/ui": "workspace:*",
@@ -489,7 +489,7 @@
     "@braintree/sanitize-url@npm:^7.0.1": "7.0.1",
     "@floating-ui/dom@npm:^1.8.0": "patch:@floating-ui/dom@npm%3A1.8.0#~/.yarn/patches/@floating-ui-dom-npm-1.8.0-a6d2aa48a8.patch",
     "@floating-ui/dom@npm:^1.0.1": "patch:@floating-ui/dom@npm%3A1.8.0#~/.yarn/patches/@floating-ui-dom-npm-1.8.0-a6d2aa48a8.patch",
-    "@grafana/scenes@npm:8.19.0--canary.1651.35354177939.0": "patch:@grafana/scenes@npm%3A8.19.0--canary.1651.35354177939.0#~/.yarn/patches/@grafana-scenes-npm-8.19.0--canary.1651.35354177939.0-1af9061d40.patch"
+    "@grafana/scenes@npm:8.18.0": "patch:@grafana/scenes@npm%3A8.18.0#~/.yarn/patches/@grafana-scenes-npm-8.18.0-fdf27f2742.patch"
   },
   "workspaces": {
     "packages": [
