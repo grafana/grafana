@@ -3,12 +3,14 @@ package resources
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -97,14 +99,20 @@ func (r *repositoryResources) FindResourcePath(ctx context.Context, name string,
 		return "", fmt.Errorf("failed to get resource %s/%s/%s: %w", gvr.Group, gvr.Resource, name, err)
 	}
 
-	// Extract the source path from annotations
-	annotations := obj.GetAnnotations()
-	if annotations == nil {
-		return "", fmt.Errorf("resource %s/%s/%s has no annotations", gvr.Group, gvr.Resource, name)
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return "", fmt.Errorf("create meta accessor for resource %s/%s/%s: %w", gvr.Group, gvr.Resource, name, err)
 	}
 
-	sourcePath, exists := annotations[utils.AnnoKeySourcePath]
-	if !exists || sourcePath == "" {
+	source, _ := meta.GetSourceProperties()
+	sourcePath := source.Path
+	if sourcePath == "" {
+		logging.FromContext(ctx).Warn("resource has no source path annotation",
+			"group", gvr.Group,
+			"resource", gvr.Resource,
+			"name", name,
+			"annotation_keys", provisioningAnnotationKeys(obj.GetAnnotations()),
+		)
 		return "", fmt.Errorf("resource %s/%s/%s has no source path annotation", gvr.Group, gvr.Resource, name)
 	}
 
@@ -114,6 +122,22 @@ func (r *repositoryResources) FindResourcePath(ctx context.Context, name string,
 	}
 
 	return sourcePath, nil
+}
+
+func provisioningAnnotationKeys(annotations map[string]string) []string {
+	annotationKeys := make([]string, 0, len(annotations))
+	// Custom annotation names can contain user data, so only log known provisioning keys.
+	for key := range annotations {
+		switch key {
+		case utils.AnnoKeyManagerKind, utils.AnnoKeyManagerIdentity,
+			utils.AnnoKeyManagerAllowsEdits, utils.AnnoKeyManagerSuspended,
+			utils.AnnoKeySourcePath, utils.AnnoKeySourceChecksum, utils.AnnoKeySourceTimestamp,
+			"grafana.app/repoName", "grafana.app/repoPath", "grafana.app/repoHash", "grafana.app/repoTimestamp":
+			annotationKeys = append(annotationKeys, key)
+		}
+	}
+	slices.Sort(annotationKeys)
+	return annotationKeys
 }
 
 func NewRepositoryResourcesFactory(parsers ParserFactory, clients ClientFactory, lister ResourceLister, folderMetadataEnabled bool) RepositoryResourcesFactory {
