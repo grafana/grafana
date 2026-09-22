@@ -18,15 +18,13 @@ review_date: 2026-09-22
 
 # Data source management
 
-Grafana supports many different storage backends for your time series data (data source).
-Refer to [data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/) for more information about using data sources in Grafana.
-Only users with the organization admin role can add data sources.
+Grafana supports many different storage backends, called data sources, for your time-series data. This document explains how administrators manage data sources in Grafana, including data source permissions, provisioned data sources, and query and resource caching.
 
-For links to data source-specific documentation, refer to [Data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/).
+Only users with the organization administrator role can add data sources. For more information about configuring and using individual data sources, refer to [Data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/).
 
 ## Data source permissions
 
-You can configure data source permissions to allow or deny certain users the ability to query, edit, or administrate a data source. Each data source's configuration includes a Permissions tab where you can restrict data source permissions to specific users, service accounts, teams, or basic roles.
+You can configure data source permissions to allow or deny certain users the ability to query, edit, or administrate a data source. Each data source's configuration includes a **Permissions** tab where you can restrict data source permissions to specific users, service accounts, teams, or basic roles.
 
 - The `query` permission allows users to query the data source.
 - The `edit` permission allows users to query the data source, edit the data source’s configuration and delete the data source.
@@ -36,7 +34,7 @@ You can configure data source permissions to allow or deny certain users the abi
 Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](https://grafana.com/docs/grafana-cloud/).
 {{< /admonition >}}
 
-By default, data sources in an organization can be queried by any user in that organization. For example, a user with the `Viewer` role can issue any possible query to a data source, not just queries that exist on dashboards to which they have access. Additionally, by default, data sources can be edited by the user who created the data source, as well as users with the `Admin` role.
+By default, any user in an organization can query the data sources in that organization. For example, a user with the `Viewer` role can issue any possible query to a data source, not just queries that exist on dashboards to which they have access. By default, only users with the `Admin` role can edit data sources.
 
 <div class="clearfix"></div>
 
@@ -84,7 +82,7 @@ Data sources added through [provisioning](https://grafana.com/docs/grafana/<GRAF
 To change a provisioned data source, use the method that matches how it's managed:
 
 - **Self-managed Grafana:** Edit the data source's provisioning file, then restart Grafana or reload provisioning. For more information, refer to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources).
-- **Grafana Cloud managed data source:** Open a support ticket from the Grafana Cloud Portal to request changes.
+- **Grafana Cloud managed data source:** You can't edit these directly. Create an editable copy that points at the same backend, as described in [Create an editable copy of a provisioned data source](#create-an-editable-copy-of-a-provisioned-data-source).
 
 ### Create an editable copy of a provisioned data source
 
@@ -92,7 +90,8 @@ If you need a data source you can edit in the UI, add another data source manual
 
 1. Click **Connections** in the left-side menu.
 1. Click **Add new connection**.
-1. Select the same data source type as the provisioned data source.
+1. Search for and select the same data source type as the provisioned data source.
+1. Click **Add new data source**.
 1. Enter the same connection settings as the provisioned data source so both point at the same backend. The exact settings depend on the data source type. For a URL-based data source, use the same **URL**.
 1. Configure authentication. For a Grafana Cloud-hosted backend, use basic authentication with your Grafana Cloud user ID as the user name and a Cloud Access Policy token as the password. The token's access policy must include the scope required to query the backend.
 1. Click **Save & test**.
@@ -105,9 +104,9 @@ The copy is independent of the provisioned data source. Later changes to the pro
 
 ## Query and resource caching
 
-When you enable query and resource caching, Grafana temporarily stores the results of data source queries and resource requests. When you or another user submit the same query or resource request again, the results will come back from the cache instead of from the data source.
+When you enable query and resource caching, Grafana temporarily stores the results of data source queries and resource requests. When you or another user submit the same query or resource request again, the results come back from the cache instead of from the data source.
 
-When using Grafana, a query pertains to a request for data frames to be modified or displayed. A resource relates to any HTTP requests made by a plugin, such as the Amazon Timestream plugin requesting a list of available databases from AWS. For more information on data source queries and resources, refer to the developers page on [backend plugins](https://grafana.com/developers/plugin-tools/key-concepts/backend-plugins/).
+In Grafana, a query is a request for data frames to display or transform. A resource is any HTTP request a plugin makes, such as the Amazon Timestream plugin requesting a list of available databases from AWS. For more information on data source queries and resources, refer to the developer documentation on [backend plugins](https://grafana.com/developers/plugin-tools/key-concepts/backend-plugins/).
 
 The caching feature works for most backend data sources. For details on which data sources support it, refer to [Data sources that work with query caching](#data-sources-that-work-with-query-caching). You can enable the cache globally in the Grafana [configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#caching), and configure a cache duration (also called Time to Live, or TTL) for each data source individually.
 
@@ -115,15 +114,15 @@ The caching feature works for most backend data sources. For details on which da
 Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](https://grafana.com/docs/grafana-cloud/).
 {{< /admonition >}}
 
-The following cache backend options are available: in-memory, Redis, and Memcached.
+Grafana supports the following cache backends: in-memory, Redis, and Memcached.
 
 {{< admonition type="note" >}}
 Storing cached queries in-memory can increase the Grafana memory footprint. In production environments, a Redis or Memcached backend is highly recommended.
 {{< /admonition >}}
 
-When a panel queries a data source with cached data, it will either fetch fresh data or use cached data depending on the panel's **interval.** The interval is used to round the query time range to a nearby cached time range, increasing the likelihood of cache hits. Therefore, wider panels and dashboards with shorter time ranges fetch new data more often than narrower panels and dashboards with longer time ranges.
+When a panel queries a data source with cached data, it either fetches fresh data or uses cached data depending on the panel's **interval**. Grafana uses the interval to round the query time range to a nearby cached time range, which increases the likelihood of cache hits. As a result, wider panels and dashboards with shorter time ranges fetch new data more often than narrower panels and dashboards with longer time ranges.
 
-A panel's interval is visible in the [query options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/). It is calculated as follows: `time range / max data points`. Max data points are calculated based on the width of the panel. For example, a wide panel with `1000 data points` on a dashboard with a time range of `last 7 days` will retrieve fresh data every 10 minutes: `7d / 1000 = 10m`. In this example, cached data for this panel will be served for up to 10 minutes before Grafana needs to query the data source again for new data.
+A panel's interval is visible in the [query options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/). Grafana calculates it as `time range / max data points`, where max data points depends on the panel's width. For example, a wide panel with `1000 data points` on a dashboard with a time range of `last 7 days` retrieves fresh data every 10 minutes: `7d / 1000 = 10m`. In this example, Grafana serves cached data for this panel for up to 10 minutes before it queries the data source again for new data.
 
 You can configure a panel to retrieve data more often by increasing the **Max data points** setting in the panel's [query options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/).
 
@@ -131,9 +130,10 @@ You can configure a panel to retrieve data more often by increasing the **Max da
 
 By reducing the number of queries and requests sent to data sources, caching can provide the following benefits:
 
-- Faster dashboard load times, especially for popular dashboards.
-- Reduced API costs.
-- Reduced likelihood that APIs will rate-limit or throttle requests.
+- **Faster dashboards:** Load times improve, especially for popular dashboards.
+- **Lower data source load:** Fewer queries reach the backend, helping it stay responsive under heavy dashboard usage.
+- **Reduced API costs:** Fewer requests to metered or paid data source APIs lowers usage-based charges.
+- **Fewer rate-limit errors:** Reducing request volume lowers the likelihood that data sources rate-limit or throttle Grafana.
 
 ### Data sources that work with query caching
 
@@ -143,7 +143,7 @@ Query caching works for the Grafana [built-in data sources](https://grafana.com/
 Logs Insights for the CloudWatch data source does not support query caching due to the way logs are requested from AWS.
 {{< /admonition >}}
 
-To verify that a data source works with query caching, follow the [instructions below](#enable-and-configure-query-caching) to **Enable and Configure query caching**. If caching is enabled in Grafana but the Caching tab is not visible for the given data source, then query caching is not available for that data source.
+To verify that a data source works with query caching, follow the steps in [Enable and configure query caching](#enable-and-configure-query-caching). If caching is enabled in Grafana but the Cache tab is not visible for the given data source, then query caching is not available for that data source.
 
 {{< admonition type="note" >}}
 Some data sources, such as Elasticsearch, Prometheus, and Loki, cache queries themselves, so Grafana _query_ caching does not significantly improve performance. However, _resource_ caching may help. Refer to [plugin resources](https://grafana.com/developers/plugin-tools/key-concepts/backend-plugins/) for details.
@@ -158,11 +158,11 @@ By default, data source queries are not cached. To enable query caching for a si
 1. Click **Connections** in the left-side menu.
 1. Click **Data sources**.
 1. In the data source list, click the data source that you want to turn on caching for.
-1. Go to the Cache tab.
+1. Go to the **Cache** tab.
 1. Click **Enable**.
 1. (Optional) Choose custom TTLs for the data source's queries and resources caching. If you skip this step, then Grafana uses the default TTL.
 
-You can optionally override a data source's configured TTL for individual dashboard panels. This can be useful when you have queries whose results change more or less often than the configured TTL. In the Edit Panel view, select the caching-enabled data source, expand the Query options, and enter your the TTL in milliseconds.
+You can optionally override a data source's configured TTL for individual dashboard panels. This can be useful when you have queries whose results change more or less often than the configured TTL. In the Edit Panel view, select the caching-enabled data source, expand **Query options**, and enter the TTL in milliseconds.
 
 {{< figure max-width="500px" src="/media/docs/grafana/per-panel-cache-ttl-9-4.png" caption="Set Cache TTL for a single panel" >}}
 
@@ -181,14 +181,14 @@ To disable query caching for a single data source:
 1. In the data source list, click the data source that you want to turn off caching for.
 1. On the Cache tab, click **Disable**.
 
-To disable query caching for an entire Grafana instance, set the `enabled` flag to `false` in the `caching` section of [Configure Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#caching). You will no longer see the Cache tab on any data sources, and no data source queries will be cached.
+To disable query caching for an entire Grafana instance, set the `enabled` flag to `false` in the `caching` section of [Configure Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#caching). The Cache tab no longer appears on any data source, and Grafana stops caching data source queries.
 
 ### Clear cache
 
 If you experience performance issues or repeated queries become slower to execute, consider clearing your cache.
 
 {{< admonition type="note" >}}
-This action impacts all cache-enabled data sources. If you are using Memcached, the system clears all data from the Memcached instance.
+This action impacts all cache-enabled data sources. If you are using Memcached, Grafana clears all data from the Memcached instance.
 {{< /admonition >}}
 
 1. Click **Connections** in the left-side menu.
@@ -196,6 +196,6 @@ This action impacts all cache-enabled data sources. If you are using Memcached, 
 1. In the data source list, click the data source that you want to clear the cache for.
 1. In the Cache tab, click **Clear cache**.
 
-### Sending a request without cache
+### Send a request without cache
 
 If a data source query request contains the `X-Cache-Skip: true` header, then Grafana skips the caching middleware, and does not search the cache for a response. This can be particularly useful when debugging data source queries using cURL.
