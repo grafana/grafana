@@ -15,6 +15,7 @@ import { PanelQueryEditor } from './PanelQueryEditor';
 import { MarkdownCell } from './cells/MarkdownCell';
 import { cellTypeRegistry } from './cells/cellTypeRegistry';
 import { NotebookBlockTypeMenu, type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
+import { NotebookCellTimeRangeControl } from './edit/NotebookCellTimeRangeControl';
 
 // A lone VizPanel fills its parent, so the parent needs a resolved height (not just
 // min-height) or PanelChrome measures 0 and nothing shows.
@@ -100,6 +101,12 @@ function PanelCell({
   return (
     <Stack direction="column" gap={1}>
       {isEditing && isEditableQueryPanel(panel) && <PanelQueryEditor cell={cell} panel={panel} autoFocus={autoFocus} />}
+      {/* Edit mode gets the clock inline with "Add query"/"Run query" instead — see PanelQueryEditor. */}
+      {!isEditing && (
+        <div className={styles.cellToolbar}>
+          <NotebookCellTimeRangeControl cell={cell} variant="label" />
+        </div>
+      )}
       <div className={styles.panel}>
         <panel.Component model={panel} />
       </div>
@@ -317,6 +324,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   panel: css({
     height: PANEL_HEIGHT,
     position: 'relative',
+  }),
+  cellToolbar: css({
+    display: 'flex',
+    justifyContent: 'flex-end',
   }),
   content: css({
     padding: theme.spacing(1, 0),

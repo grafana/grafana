@@ -13,8 +13,15 @@ import { NotebookAnalytics } from '../analytics/main';
 import { NOTEBOOK_AUTOSAVE_FAILED_REASON, NOTEBOOK_ENTRY_POINT } from '../analytics/types';
 import { createNotebook, updateNotebook } from '../api/notebookResource';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
-import { type NotebookElement, type PanelKind, type Spec as NotebookSpec } from '../types';
+import {
+  type NotebookCellTimeRangeSpec,
+  type NotebookElement,
+  type PanelKind,
+  type Spec as NotebookSpec,
+} from '../types';
 
+import { buildCellTimeRangeSpec } from './layout-notebook/cellTimeRange';
+import { type NotebookCellItem } from './layout-notebook/NotebookCellItem';
 import { type NotebookScene } from './NotebookScene';
 
 type PanelVizConfigState = Pick<VizPanel['state'], 'pluginId' | 'pluginVersion' | 'options' | 'fieldConfig'>;
@@ -46,8 +53,9 @@ export interface NotebookAutosaveState {
  * skips the write when they match.
  *
  * Changes only count while the notebook is being edited. Reading one changes it too: the time picker is
- * there for readers, and using a panel writes to its options and field config. Both belong to whoever
- * was reading rather than to the notebook, so both are held back from a save until someone editing says
+ * there for readers, and using a panel writes to its options and field config. A cell's own time-range
+ * toggle is there for readers too (see NotebookCellTimeRangeControl). All three belong to whoever was
+ * reading rather than to the notebook, so all are held back from a save until someone editing says
  * otherwise. Writers that never enter edit mode call `saveDocumentChange` instead.
  */
 export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
@@ -63,6 +71,10 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   private savedVizPanels?: Map<string, VizPanel>;
   /** The panels whose viz config was edited this session, by element name. As `timeSettingsEdited`. */
   private vizConfigsEdited = new Set<string>();
+  /** Each cell's own time range in `baseline`, by cell identity. As `savedVizConfigs`. */
+  private savedCellTimeRanges = new Map<NotebookCellItem, NotebookCellTimeRangeSpec | undefined>();
+  /** The cells whose own time range was edited this session, by cell identity. As `vizConfigsEdited`. */
+  private cellTimeRangesEdited = new Set<NotebookCellItem>();
   /** The panels a reader changed, by element name, waiting on the prompt edit mode opens with. */
   private vizConfigsChangedWhileReading = new Set<string>();
   /** Each panel's normalized state immediately before its first reader-owned change. */
@@ -144,6 +156,11 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
         this.vizConfigsEdited.add(revizzedPanel);
       }
 
+      const changedCell = changedCellTimeRange(payload, this.scene);
+      if (changedCell) {
+        this.cellTimeRangesEdited.add(changedCell);
+      }
+
       // Entering edit mode and the trailing empty block it keeps ready (see NotebookLayoutManager)
       // both publish state changes of their own, with nothing yet different to write. Answered once
       // and handed to `schedule`, because working it out serializes every panel in the notebook.
@@ -180,6 +197,9 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     for (const name of this.savedVizConfigs?.keys() ?? []) {
       this.vizConfigsEdited.add(name);
     }
+    for (const cell of this.scene.state.body.state.cells) {
+      this.cellTimeRangesEdited.add(cell);
+    }
     this.vizConfigsChangedWhileReading.clear();
     this.vizConfigsBeforeReadingChange.clear();
     this.editedByWriter = true;
@@ -209,6 +229,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   public notifyEditingStarted(): void {
     this.timeSettingsEdited = false;
     this.vizConfigsEdited.clear();
+    this.cellTimeRangesEdited.clear();
   }
 
   /**
@@ -409,12 +430,53 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
    */
   private buildSpecToSave(
     timeSettingsEdited = this.timeSettingsEdited,
-    vizConfigsEdited = this.vizConfigsEdited
+    vizConfigsEdited = this.vizConfigsEdited,
+    cellTimeRangesEdited = this.cellTimeRangesEdited
   ): NotebookSpec {
     const spec = transformNotebookSceneToSaveModel(this.scene);
     const timeSettings = timeSettingsEdited || !this.savedTimeSettings ? spec.timeSettings : this.savedTimeSettings;
 
-    return { ...spec, timeSettings, elements: this.withSavedVizConfigs(spec.elements, vizConfigsEdited) };
+    return {
+      ...spec,
+      timeSettings,
+      elements: this.withSavedVizConfigs(spec.elements, vizConfigsEdited),
+      layout: this.withSavedCellTimeRanges(spec.layout, cellTimeRangesEdited),
+    };
+  }
+
+  /**
+   * Puts the saved time range back on the cells nobody edited this session — as `withSavedVizConfigs`.
+   * Walked in lockstep with `contentCells()`, the same cells/order `serialize()` derives `cells` from.
+   */
+  private withSavedCellTimeRanges(
+    layout: NotebookSpec['layout'],
+    cellTimeRangesEdited: ReadonlySet<NotebookCellItem>
+  ): NotebookSpec['layout'] {
+    const saved = this.savedCellTimeRanges;
+    if (!saved.size) {
+      return layout;
+    }
+
+    const cells = this.scene.state.body.contentCells();
+    const items = layout.spec.cells.map((item, index) => {
+      const cell = cells[index];
+      if (!cell || cellTimeRangesEdited.has(cell) || !saved.has(cell)) {
+        return item;
+      }
+
+      const savedTimeRange = saved.get(cell);
+      if (savedTimeRange) {
+        return { ...item, spec: { ...item.spec, timeRange: savedTimeRange } };
+      }
+      if (item.spec.timeRange === undefined) {
+        return item;
+      }
+      const spec = { ...item.spec };
+      delete spec.timeRange;
+      return { ...item, spec };
+    });
+
+    return { ...layout, spec: { ...layout.spec, cells: items } };
   }
 
   /**
@@ -455,6 +517,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     this.savedTimeSettings = spec.timeSettings;
     this.savedVizConfigs = collectVizConfigs(spec);
     this.savedVizPanels = panels;
+    this.savedCellTimeRanges = collectCellTimeRanges(this.scene);
   }
 
   /** What to report when there is nothing waiting to be written. */
@@ -477,13 +540,14 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
 
     const timeSettingsEdited = this.timeSettingsEdited;
     const vizConfigsEdited = new Set(this.vizConfigsEdited);
+    const cellTimeRangesEdited = new Set(this.cellTimeRangesEdited);
     const editedByWriter = this.editedByWriter;
     const panels = collectVizPanels(this.scene);
 
     let spec: NotebookSpec;
     let serialized: string;
     try {
-      spec = this.buildSpecToSave(timeSettingsEdited, vizConfigsEdited);
+      spec = this.buildSpecToSave(timeSettingsEdited, vizConfigsEdited, cellTimeRangesEdited);
       serialized = JSON.stringify(spec);
     } catch (error) {
       // `hasSomethingToWrite` leaves this for the save to report, because this is the one place with
@@ -505,6 +569,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       // later view-only mutation ride in on reactivation as though a writer had made it.
       this.timeSettingsEdited = false;
       this.vizConfigsEdited.clear();
+      this.cellTimeRangesEdited.clear();
       this.editedByWriter = false;
       this.setState({ status: this.restingStatus() });
       return;
@@ -514,6 +579,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     // request fails, its snapshot is merged back below so none of those earlier edits are lost.
     this.timeSettingsEdited = false;
     this.vizConfigsEdited.clear();
+    this.cellTimeRangesEdited.clear();
     this.editedByWriter = false;
     this.inFlight = true;
     this.setState({ status: 'saving', errorMessage: undefined });
@@ -542,6 +608,9 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
         this.timeSettingsEdited ||= timeSettingsEdited;
         for (const name of vizConfigsEdited) {
           this.vizConfigsEdited.add(name);
+        }
+        for (const cell of cellTimeRangesEdited) {
+          this.cellTimeRangesEdited.add(cell);
         }
         this.editedByWriter ||= editedByWriter;
         this.failedAttempts += 1;
@@ -647,6 +716,39 @@ function collectVizPanels(scene: NotebookScene): Map<string, VizPanel> {
   }
 
   return panels;
+}
+
+/** Each cell's own time range right now, by cell identity — snapshotted right after a save lands. */
+function collectCellTimeRanges(scene: NotebookScene): Map<NotebookCellItem, NotebookCellTimeRangeSpec | undefined> {
+  const ranges = new Map<NotebookCellItem, NotebookCellTimeRangeSpec | undefined>();
+
+  for (const cell of scene.state.body.state.cells) {
+    ranges.set(cell, cell.state.$timeRange ? buildCellTimeRangeSpec(cell.state.$timeRange) : undefined);
+  }
+
+  return ranges;
+}
+
+/**
+ * The cell whose own time range a state change just altered, if it was one — either toggling the
+ * override on/off or dragging the picker while one is active. Mirrors `changesTimeSettings`.
+ */
+export function changedCellTimeRange(
+  payload: SceneObjectStateChangedPayload,
+  scene: NotebookScene
+): NotebookCellItem | undefined {
+  const { changedObject, partialUpdate } = payload;
+
+  for (const cell of scene.state.body.state.cells) {
+    if (changedObject === cell && ('$timeRange' in partialUpdate || 'timePicker' in partialUpdate)) {
+      return cell;
+    }
+    if (cell.state.$timeRange && changedObject === cell.state.$timeRange) {
+      return cell;
+    }
+  }
+
+  return undefined;
 }
 
 /** The panel state a reader can change without editing the notebook. */

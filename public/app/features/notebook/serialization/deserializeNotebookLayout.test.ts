@@ -78,6 +78,31 @@ describe('deserializeNotebookLayout', () => {
     expect(roundTripped).toEqual(layout);
   });
 
+  it("round-trips a panel cell's own time range", () => {
+    const { layout, elements } = fixture();
+    const panelItem = layout.spec.cells[0];
+    panelItem.spec.timeRange = { from: 'now-24h', to: 'now', timezone: 'utc' };
+
+    const manager = deserializeNotebookLayout(layout, elements);
+    const panelCell = manager.state.cells[0];
+
+    expect(panelCell.state.$timeRange?.state.from).toBe('now-24h');
+    expect(panelCell.state.$timeRange?.state.to).toBe('now');
+    expect(panelCell.state.$timeRange?.state.timeZone).toBe('utc');
+    expect(panelCell.state.timePicker).toBeDefined();
+    expect(manager.serialize()).toEqual(layout);
+  });
+
+  it('leaves a panel cell with no saved time range without one', () => {
+    const { layout, elements } = fixture();
+
+    const manager = deserializeNotebookLayout(layout, elements);
+    const panelCell = manager.state.cells[0];
+
+    expect(panelCell.state.$timeRange).toBeUndefined();
+    expect(panelCell.state.timePicker).toBeUndefined();
+  });
+
   it('surfaces the notebook title and tags on the layout manager for the document header', () => {
     const { layout, elements } = fixture();
 

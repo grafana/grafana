@@ -1,8 +1,14 @@
-import { SceneObjectBase, type SceneObjectState, type VizPanel } from '@grafana/scenes';
+import {
+  type SceneObjectState,
+  SceneObjectBase,
+  type SceneTimePicker,
+  type SceneTimeRange,
+  type VizPanel,
+} from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { type DashboardLayoutItem } from 'app/features/dashboard-scene/scene/types/DashboardLayoutItem';
 
-import { type CellContentKind } from '../../types';
+import { type CellContentKind, type NotebookCellTimeRangeSpec } from '../../types';
 
 import { type NotebookLayoutManager } from './NotebookLayoutManager';
 import { type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
@@ -19,6 +25,11 @@ export interface NotebookCellItemState extends SceneObjectState {
   // scene-graph tooling can find it. A markdown/code cell carries `content` instead.
   body?: VizPanel;
   content?: CellContentKind;
+  // Absent means sceneGraph.getTimeRange() resolves up to the notebook's own range, same as no
+  // override at all. `timePicker` is paired with it so the override UI can render a real
+  // SceneTimePicker, which needs a scene-graph parent to resolve its time range from.
+  $timeRange?: SceneTimeRange;
+  timePicker?: SceneTimePicker;
 }
 
 export class NotebookCellItem extends SceneObjectBase<NotebookCellItemState> implements DashboardLayoutItem {
@@ -53,6 +64,11 @@ export class NotebookCellItem extends SceneObjectBase<NotebookCellItemState> imp
 
   public onQueryStructureChange(label: string, queries: DataQuery[]): void {
     this.getParentLayout().runQueryEdit(this, label, queries);
+  }
+
+  /** Sets or clears this cell's own time range — see NotebookLayoutManager.setCellTimeRange. */
+  public onTimeRangeChange(spec: NotebookCellTimeRangeSpec | undefined): void {
+    this.getParentLayout().setCellTimeRange(this, spec);
   }
 
   /** Throws rather than returning undefined: a cell outside a layout is a wiring mistake. */

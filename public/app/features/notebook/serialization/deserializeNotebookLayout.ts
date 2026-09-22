@@ -1,10 +1,11 @@
-import { VizPanel } from '@grafana/scenes';
+import { SceneTimePicker, VizPanel } from '@grafana/scenes';
 import {
   buildLibraryPanelState,
   buildVizPanelState,
 } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { type PanelIdGenerator } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
 
+import { buildCellSceneTimeRange } from '../scene/layout-notebook/cellTimeRange';
 import { NotebookCellItem } from '../scene/layout-notebook/NotebookCellItem';
 import { NotebookLayoutManager } from '../scene/layout-notebook/NotebookLayoutManager';
 import { type NotebookElement, type NotebookLayoutKind } from '../types';
@@ -51,15 +52,29 @@ export function deserializeNotebookLayout(
       collapsed: item.spec.collapsed,
     };
 
+    // Only a panel-bearing cell can carry its own time range.
+    const timeRangeSpec = item.spec.timeRange;
+    const cellTimeRange = timeRangeSpec
+      ? { $timeRange: buildCellSceneTimeRange(timeRangeSpec), timePicker: new SceneTimePicker({}) }
+      : {};
+
     if (element.kind === 'Panel') {
       // buildVizPanelState is dashboard-typed and takes this directly: the notebook panel chain
       // carries the dashboard v2 shape, so the two generated types are structurally identical.
       cells.push(
-        new NotebookCellItem({ ...base, body: new VizPanel(buildVizPanelState(element, panelIdGenerator?.())) })
+        new NotebookCellItem({
+          ...base,
+          ...cellTimeRange,
+          body: new VizPanel(buildVizPanelState(element, panelIdGenerator?.())),
+        })
       );
     } else if (element.kind === 'LibraryPanel') {
       cells.push(
-        new NotebookCellItem({ ...base, body: new VizPanel(buildLibraryPanelState(element, panelIdGenerator?.())) })
+        new NotebookCellItem({
+          ...base,
+          ...cellTimeRange,
+          body: new VizPanel(buildLibraryPanelState(element, panelIdGenerator?.())),
+        })
       );
     } else if (element.kind === 'Cell') {
       cells.push(new NotebookCellItem({ ...base, content: element.spec.content }));

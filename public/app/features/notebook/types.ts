@@ -21,6 +21,7 @@ import {
   type CodeCellContentKind as GeneratedCodeCellContentKind,
   type LibraryPanelKind as GeneratedLibraryPanelKind,
   type MarkdownCellContentKind as GeneratedMarkdownCellContentKind,
+  type NotebookCellTimeRangeSpec as GeneratedNotebookCellTimeRangeSpec,
   type NotebookElement as GeneratedNotebookElement,
   type NotebookLayoutItemKind as GeneratedNotebookLayoutItemKind,
   type NotebookLayoutKind as GeneratedNotebookLayoutKind,
@@ -45,6 +46,7 @@ export type CellContentKind = GeneratedCellContentKind;
 export type CellKind = GeneratedCellKind;
 export type CodeCellContentKind = GeneratedCodeCellContentKind;
 export type MarkdownCellContentKind = GeneratedMarkdownCellContentKind;
+export type NotebookCellTimeRangeSpec = GeneratedNotebookCellTimeRangeSpec;
 export type NotebookElement = GeneratedNotebookElement;
 export type NotebookLayoutItemKind = GeneratedNotebookLayoutItemKind;
 export type NotebookLayoutKind = GeneratedNotebookLayoutKind;

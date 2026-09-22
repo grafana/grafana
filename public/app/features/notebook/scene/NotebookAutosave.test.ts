@@ -130,6 +130,11 @@ function savedTexts() {
   });
 }
 
+/** The first cell's own time range in each write, so a test can say what was actually sent. */
+function savedCellTimeRanges() {
+  return jest.mocked(updateNotebook).mock.calls.map(([, spec]) => spec.layout.spec.cells[0]?.spec.timeRange);
+}
+
 describe('NotebookAutosave', () => {
   let deactivate: (() => void) | undefined;
 
@@ -410,6 +415,64 @@ describe('NotebookAutosave', () => {
     await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
 
     expect(updateNotebook).not.toHaveBeenCalled();
+  });
+
+  describe("a cell's own time range a reader changed", () => {
+    it('does not save a change made outside edit mode', async () => {
+      const { scene, cell } = buildSceneWithPanel();
+      deactivate = scene.activate();
+
+      cell.setState({
+        $timeRange: new SceneTimeRange({ from: 'now-24h', to: 'now' }),
+        timePicker: new SceneTimePicker({}),
+      });
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+      expect(updateNotebook).not.toHaveBeenCalled();
+    });
+
+    it('keeps the saved cell time range when a reader set theirs before editing something else', async () => {
+      const { scene, cell } = buildSceneWithPanel();
+      deactivate = scene.activate();
+
+      cell.setState({
+        $timeRange: new SceneTimeRange({ from: 'now-24h', to: 'now' }),
+        timePicker: new SceneTimePicker({}),
+      });
+      scene.onEnterEditMode();
+      scene.onTitleChange('Renamed while editing');
+      await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+      expect(jest.mocked(updateNotebook).mock.calls[0][1].title).toBe('Renamed while editing');
+      expect(savedCellTimeRanges()).toEqual([undefined]);
+    });
+
+    it('sends nothing when a notebook is reopened after a reader set a cell time range', async () => {
+      const { scene, cell } = buildSceneWithPanel();
+      deactivate = scene.activate();
+
+      cell.setState({
+        $timeRange: new SceneTimeRange({ from: 'now-24h', to: 'now' }),
+        timePicker: new SceneTimePicker({}),
+      });
+      deactivate();
+      deactivate = scene.activate();
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+      expect(updateNotebook).not.toHaveBeenCalled();
+    });
+
+    it('saves a cell time range change made in edit mode', async () => {
+      const { scene, cell } = buildSceneWithPanel();
+      deactivate = scene.activate();
+      scene.onEnterEditMode();
+
+      scene.state.body.setCellTimeRange(cell, { from: 'now-24h', to: 'now' });
+      await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+      expect(updateNotebook).toHaveBeenCalledTimes(1);
+      expect(savedCellTimeRanges()).toEqual([{ from: 'now-24h', to: 'now' }]);
+    });
   });
 
   /** Meant to stay theirs: visible while they are reading, and never written. */

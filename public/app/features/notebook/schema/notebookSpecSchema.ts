@@ -25,6 +25,7 @@ import type {
   CellKind,
   CodeCellContentKind,
   MarkdownCellContentKind,
+  NotebookCellTimeRangeSpec,
   NotebookElement,
   NotebookLayoutItemKind,
   NotebookLayoutKind,
@@ -75,12 +76,19 @@ const notebookElementSchema = z.discriminatedUnion('kind', [
 // Layout (flat, ordered — no nesting, unlike every dashboard layout)
 // ---------------------------------------------------------------------------
 
+const notebookCellTimeRangeSpecSchema = z.object({
+  from: z.string(),
+  to: z.string(),
+  timezone: z.string().optional(),
+}) satisfies z.ZodType<NotebookCellTimeRangeSpec>;
+
 const notebookLayoutItemKindSchema = z.object({
   kind: z.literal('NotebookLayoutItem'),
   spec: z.object({
     element: elementReferenceSchema,
     source: z.enum(['assistant', 'user']),
     collapsed: z.boolean().optional(),
+    timeRange: notebookCellTimeRangeSpecSchema.optional(),
   }),
 }) satisfies z.ZodType<NotebookLayoutItemKind>;
 

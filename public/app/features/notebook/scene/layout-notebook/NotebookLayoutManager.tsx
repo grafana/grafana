@@ -8,6 +8,7 @@ import { t } from '@grafana/i18n';
 import {
   sceneGraph,
   SceneObjectBase,
+  SceneTimePicker,
   VizPanel,
   type SceneComponentProps,
   type SceneObject,
@@ -30,12 +31,14 @@ import {
   defaultCodeCellContentKind,
   defaultMarkdownCellContentKind,
   defaultVisualizationPanelKind,
+  type NotebookCellTimeRangeSpec,
   type NotebookLayoutItemKind,
   type NotebookLayoutKind,
 } from '../../types';
 import { NOTEBOOK_EDIT_KIND, type NotebookEditAction, type NotebookEditHistory } from '../NotebookEditHistory';
 import { isNotebookScene } from '../isNotebookScene';
 
+import { buildCellSceneTimeRange, buildCellTimeRangeSpec } from './cellTimeRange';
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookDocumentHeader } from './NotebookDocumentHeader';
 import { type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
@@ -197,6 +200,7 @@ export class NotebookLayoutManager
         source: cell.state.source,
         // Only write `collapsed` when it has a value, so a notebook that never had it does not gain it.
         ...(cell.state.collapsed !== undefined ? { collapsed: cell.state.collapsed } : {}),
+        ...(cell.state.$timeRange ? { timeRange: buildCellTimeRangeSpec(cell.state.$timeRange) } : {}),
       },
     }));
 
@@ -453,6 +457,31 @@ export class NotebookLayoutManager
   }
 
   /**
+   * Sets or clears `cell`'s own time range. Undoable while editing (see runQueryEdit); applied
+   * directly with no history entry while only viewing, like the document-level time/refresh pickers.
+   */
+  public setCellTimeRange(cell: NotebookCellItem, spec: NotebookCellTimeRangeSpec | undefined): void {
+    const before = { $timeRange: cell.state.$timeRange, timePicker: cell.state.timePicker };
+    const after = spec
+      ? { $timeRange: buildCellSceneTimeRange(spec), timePicker: cell.state.timePicker ?? new SceneTimePicker({}) }
+      : { $timeRange: undefined, timePicker: undefined };
+
+    if (!this.state.isEditing) {
+      cell.setState(after);
+      return;
+    }
+
+    this.executeEdit({
+      label: spec
+        ? t('notebooks.history.set-cell-time-range', 'Set panel time range')
+        : t('notebooks.history.reset-cell-time-range', 'Use notebook time range'),
+      kind: NOTEBOOK_EDIT_KIND.EDIT,
+      perform: () => cell.setState(after),
+      undo: () => cell.setState(before),
+    });
+  }
+
+  /**
    * Converts `cell`'s content to `type` in place — the trailing-slot markdown cell's "/" menu (see
    * NotebookCellRenderer) uses this rather than inserting a separate new cell the way the add-block
    * menu does, since the cell picking from that menu already exists and is already empty.
@@ -647,6 +676,13 @@ export class NotebookLayoutManager
       elementName: this.nextElementName(`${cell.state.elementName}-copy`),
       body: cell.state.body?.clone({ key: getVizPanelKeyForPanelId(nextId()) }),
       ...(cell.state.content ? { content: structuredClone(cell.state.content) } : {}),
+      // A bare .clone() would reuse the same $timeRange/timePicker instances across both cells.
+      ...(cell.state.$timeRange
+        ? {
+            $timeRange: cell.state.$timeRange.clone({ key: undefined }),
+            timePicker: cell.state.timePicker?.clone({ key: undefined }),
+          }
+        : {}),
     });
 
     this.executeEdit({
@@ -781,6 +817,12 @@ export class NotebookLayoutManager
         key: undefined,
         body: cell.state.body?.clone({ key: getVizPanelKeyForPanelId(nextId()) }),
         ...(cell.state.content ? { content: structuredClone(cell.state.content) } : {}),
+        ...(cell.state.$timeRange
+          ? {
+              $timeRange: cell.state.$timeRange.clone({ key: undefined }),
+              timePicker: cell.state.timePicker?.clone({ key: undefined }),
+            }
+          : {}),
       })
     );
 
