@@ -12,7 +12,7 @@ export default defineConfig({
   use: {
     actionTimeout: 10_000,
     permissions: ['clipboard-read', 'clipboard-write'],
-    baseURL: 'http://127.0.0.1:3017',
+    baseURL: process.env.GRAFANA_URL ?? 'http://127.0.0.1:3017',
     viewport: { width: 1600, height: 1000 },
     trace: 'on',
     screenshot: 'only-on-failure',
