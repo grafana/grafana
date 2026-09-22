@@ -13,6 +13,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -133,8 +134,9 @@ func (r *testResponder) Error(err error) {
 }
 
 type testConnectorDeps struct {
-	repo        repository.Repository
-	repoFactory repository.Factory
+	repo          repository.Repository
+	repoFactory   repository.Factory
+	repoValidator repository.Validator
 }
 
 func (d *testConnectorDeps) GetRepository(_ context.Context, _ string) (repository.Repository, error) {
@@ -159,6 +161,21 @@ func (d *testConnectorDeps) GetHealthChecker() *provisioningcontroller.Repositor
 
 func (d *testConnectorDeps) GetRepoFactory() repository.Factory {
 	return d.repoFactory
+}
+
+func (d *testConnectorDeps) GetRepoValidator() repository.Validator {
+	if d.repoValidator == nil {
+		return noopValidator{}
+	}
+	return d.repoValidator
+}
+
+// noopValidator is a repository.Validator that always passes - the default for tests that
+// aren't exercising validation itself.
+type noopValidator struct{}
+
+func (noopValidator) Validate(context.Context, *provisioningv0alpha1.Repository) field.ErrorList {
+	return nil
 }
 
 type staticTestRepository struct {

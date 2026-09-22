@@ -23,7 +23,12 @@ import (
 // in-memory, non-persisted repository.Repository from it - the same "temporary repository"
 // construction the /test subresource uses (see testConnector.Connect). It never reads from
 // or writes to storage, so it's safe to call before a Repository object exists.
-func buildEphemeralRepository(ctx context.Context, r *http.Request, name, ns string, connectionGetter ConnectionGetter, repoFactory repository.Factory) (repository.Repository, error) {
+//
+// The built config is run through validator (the same RepositoryValidator used for real
+// admission) before being returned, so callers can't use this to reach a repository host
+// that real create/update would reject - e.g. one resolving to a private/internal address
+// (see RepositoryValidator.validatePrivateEndpoint).
+func buildEphemeralRepository(ctx context.Context, r *http.Request, name, ns string, connectionGetter ConnectionGetter, repoFactory repository.Factory, validator repository.Validator) (repository.Repository, error) {
 	body, err := readBody(r, defaultMaxBodySize)
 	if err != nil {
 		return nil, err
@@ -78,6 +83,11 @@ func buildEphemeralRepository(ctx context.Context, r *http.Request, name, ns str
 		return nil, err
 	}
 	cfg.Spec.Connection = nil
+
+	if list := validator.Validate(ctx, repo.Config()); len(list) > 0 {
+		return nil, k8serrors.NewInvalid(provisioning.RepositoryResourceInfo.GroupVersionKind().GroupKind(), repo.Config().Name, list)
+	}
+
 	return repo, nil
 }
 
@@ -117,6 +127,7 @@ func connectionTokenError(err error) error {
 type FiletreeConnectorDependencies interface {
 	ConnectionGetter
 	GetRepoFactory() repository.Factory
+	GetRepoValidator() repository.Validator
 }
 
 // filetreeConnector handles the /filetree subresource for repositories: it builds a
@@ -125,12 +136,14 @@ type FiletreeConnectorDependencies interface {
 type filetreeConnector struct {
 	connectionGetter ConnectionGetter
 	repoFactory      repository.Factory
+	repoValidator    repository.Validator
 }
 
 func NewFiletreeConnector(deps FiletreeConnectorDependencies) *filetreeConnector {
 	return &filetreeConnector{
 		connectionGetter: deps,
 		repoFactory:      deps.GetRepoFactory(),
+		repoValidator:    deps.GetRepoValidator(),
 	}
 }
 
@@ -164,7 +177,7 @@ func (c *filetreeConnector) Connect(ctx context.Context, name string, _ runtime.
 			return
 		}
 
-		repo, err := buildEphemeralRepository(ctx, r, name, ns, c.connectionGetter, c.repoFactory)
+		repo, err := buildEphemeralRepository(ctx, r, name, ns, c.connectionGetter, c.repoFactory, c.repoValidator)
 		if err != nil {
 			responder.Error(err)
 			return
@@ -204,6 +217,7 @@ var (
 type ReftreeConnectorDependencies interface {
 	ConnectionGetter
 	GetRepoFactory() repository.Factory
+	GetRepoValidator() repository.Validator
 }
 
 // reftreeConnector handles the /reftree subresource for repositories: it builds a
@@ -217,12 +231,14 @@ type ReftreeConnectorDependencies interface {
 type reftreeConnector struct {
 	connectionGetter ConnectionGetter
 	repoFactory      repository.Factory
+	repoValidator    repository.Validator
 }
 
 func NewReftreeConnector(deps ReftreeConnectorDependencies) *reftreeConnector {
 	return &reftreeConnector{
 		connectionGetter: deps,
 		repoFactory:      deps.GetRepoFactory(),
+		repoValidator:    deps.GetRepoValidator(),
 	}
 }
 
@@ -256,7 +272,7 @@ func (c *reftreeConnector) Connect(ctx context.Context, name string, _ runtime.O
 			return
 		}
 
-		repo, err := buildEphemeralRepository(ctx, r, name, ns, c.connectionGetter, c.repoFactory)
+		repo, err := buildEphemeralRepository(ctx, r, name, ns, c.connectionGetter, c.repoFactory, c.repoValidator)
 		if err != nil {
 			responder.Error(err)
 			return

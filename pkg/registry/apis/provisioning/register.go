@@ -1862,6 +1862,10 @@ func (b *APIBuilder) GetRepoFactory() repository.Factory {
 	return b.repoFactory
 }
 
+func (b *APIBuilder) GetRepoValidator() repository.Validator {
+	return b.repoValidator
+}
+
 func (b *APIBuilder) GetHealthyRepository(ctx context.Context, name string) (repository.Repository, error) {
 	repo, err := b.GetRepository(ctx, name)
 	if err != nil {
