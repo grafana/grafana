@@ -96,7 +96,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
           </Box>
 
           <Stack alignItems="center" flex={1} wrap="wrap" columnGap={1} rowGap={0}>
-            <Box paddingBottom={0} flex={1} minWidth="50%">
+            <Box flex={1} minWidth="50%">
               <Text weight="medium">
                 <span className={styles.title}>{title}</span>
               </Text>
