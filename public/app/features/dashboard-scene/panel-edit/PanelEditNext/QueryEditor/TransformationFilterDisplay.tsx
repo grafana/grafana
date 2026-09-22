@@ -5,7 +5,7 @@ import { type DataFrame, type DataTransformerConfig, type GrafanaTheme2, type Pa
 import { t } from '@grafana/i18n';
 import { DataTopic } from '@grafana/schema';
 import { Combobox, Field, Stack, useStyles2 } from '@grafana/ui';
-import { FrameMultiSelectionEditor } from 'app/plugins/panel/geomap/editor/FrameSelectionEditor';
+import { FrameMultiSelectionEditor } from 'app/features/dashboard/components/TransformationsEditor/FrameSelectionEditor';
 
 import { usePreviousTransformationOutput } from './hooks/usePreviousTransformationOutput';
 import { type Transformation } from './types';
