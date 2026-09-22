@@ -148,6 +148,8 @@ func (b *VectorBackfiller) Run(ctx context.Context) error {
 func (b *VectorBackfiller) runBackfill(ctx context.Context) {
 	log := b.log.FromContext(ctx)
 
+	// Reuse one builder snapshot for every job in this run so manifest reloads
+	// cannot change content versions midway through a job.
 	builders, err := b.resolveBuilders(ctx)
 	if err != nil {
 		log.Error("backfill: resolve collections", "err", err)
@@ -229,8 +231,11 @@ func (b *VectorBackfiller) reopenStaleJobs(ctx context.Context, log log.Logger, 
 	}
 }
 
-// Jobs and cursors use catalog partition keys; storage scans retain the builder's
-// logical group/resource. An empty job resource retains the legacy all-builders behavior.
+// runBackfillJob iterates the builders selected for the job. An empty
+// job.Resource means all builders. Builders are processed in partition-key order,
+// each with its own paginated cross-namespace scan. job.LastSeenKey stores the
+// partition key and continuation token so the job can resume from the correct
+// builder and page.
 func (b *VectorBackfiller) runBackfillJob(ctx context.Context, job vector.BackfillJob, builders []collectionBuilder) error {
 	// Fresh title cache per job run; titles aren't carried across runs.
 	b.folderTitleCache = make(map[string]string)
@@ -285,9 +290,8 @@ type collectionBuilder struct {
 	partitionKey string
 }
 
-// Collections are provisioned by the reconciler's first write, not by the
-// backfiller. Resolve one immutable selection per backfill run so a manifest reload
-// cannot mix content versions halfway through a job.
+// resolveBuilders returns builders for existing collections, paired with their
+// catalog partition keys and sorted by those keys.
 func (b *VectorBackfiller) resolveBuilders(ctx context.Context) ([]collectionBuilder, error) {
 	snapshot := b.builders
 	if b.builderProvider != nil {
@@ -301,6 +305,7 @@ func (b *VectorBackfiller) resolveBuilders(ctx context.Context) ([]collectionBui
 			return nil, fmt.Errorf("%s/%s: %w", builder.Group(), builder.Resource(), err)
 		}
 		if !found {
+			// The reconciler provisions the collection when it processes its first write.
 			continue
 		}
 		if collection.IsExternal {
