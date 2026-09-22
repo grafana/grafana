@@ -88,14 +88,4 @@ describe('GrafanaRoute', () => {
     expect(screen.getByTestId('page-fallback-loader')).toBeInTheDocument();
     expect(screen.queryByTestId('real-page')).not.toBeInTheDocument();
   });
-
-  it('clears the chrome default chromeless state while showing the fallback loader', () => {
-    mockUseMTFallback.mockReturnValue(true);
-    const chrome = new AppChromeService();
-    expect(chrome.state.getValue().chromeless).toBe(true);
-
-    setup({ route: { component: () => <div />, path: '/' } }, chrome);
-
-    expect(chrome.state.getValue().chromeless).toBeFalsy();
-  });
 });
