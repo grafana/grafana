@@ -554,16 +554,6 @@
       "count": 13
     }
   },
-  "packages/grafana-ui/src/components/Table/TableRT/Filter.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/Table/TableRT/FilterPopup.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/Table/types.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
