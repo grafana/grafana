@@ -155,6 +155,8 @@ func (b *VectorBackfiller) Run(ctx context.Context) error {
 func (b *VectorBackfiller) runBackfill(ctx context.Context) {
 	log := b.log.FromContext(ctx)
 
+	// Reuse one builder snapshot for every job in this run so manifest reloads
+	// cannot change content versions midway through a job.
 	builders, err := b.resolveBuilders(ctx)
 	if err != nil {
 		log.Error("backfill: resolve collections", "err", err)
@@ -236,8 +238,11 @@ func (b *VectorBackfiller) reopenStaleJobs(ctx context.Context, log log.Logger, 
 	}
 }
 
-// Jobs and cursors use catalog partition keys; storage scans retain the builder's
-// logical group/resource. An empty job resource retains the legacy all-builders behavior.
+// runBackfillJob iterates the builders selected for the job. An empty
+// job.Resource means all builders. Builders are processed in partition-key order,
+// each with its own paginated cross-namespace scan. job.LastSeenKey stores the
+// partition key and continuation token so the job can resume from the correct
+// builder and page.
 func (b *VectorBackfiller) runBackfillJob(ctx context.Context, job vector.BackfillJob, builders []collectionBuilder) error {
 	// Fresh title cache per job run; titles aren't carried across runs.
 	b.folderTitleCache = make(map[string]string)
@@ -292,9 +297,8 @@ type collectionBuilder struct {
 	partitionKey string
 }
 
-// Collections are provisioned by the reconciler's first write, not by the
-// backfiller. Resolve one immutable selection per backfill run so a manifest reload
-// cannot mix content versions halfway through a job.
+// resolveBuilders returns builders for existing collections, paired with their
+// catalog partition keys and sorted by those keys.
 func (b *VectorBackfiller) resolveBuilders(ctx context.Context) ([]collectionBuilder, error) {
 	snapshot := b.builders
 	if b.builderProvider != nil {
@@ -308,6 +312,7 @@ func (b *VectorBackfiller) resolveBuilders(ctx context.Context) ([]collectionBui
 			return nil, fmt.Errorf("%s/%s: %w", builder.Group(), builder.Resource(), err)
 		}
 		if !found {
+			// The reconciler provisions the collection when it processes its first write.
 			continue
 		}
 		if collection.IsExternal {
@@ -455,16 +460,17 @@ const (
 )
 
 type preparedBackfillItem struct {
-	key       *resourcepb.ResourceKey
-	rv        int64
-	items     []embed.Item
-	folder    string
-	action    backfillAction
-	nextToken string
-	status    string
-	ctx       context.Context
-	span      trace.Span
-	start     time.Time
+	key          *resourcepb.ResourceKey
+	rv           int64
+	items        []embed.Item
+	folder       string
+	updateFolder bool
+	action       backfillAction
+	nextToken    string
+	status       string
+	ctx          context.Context
+	span         trace.Span
+	start        time.Time
 }
 
 // Preparation only reads storage. Writes wait until the page's provider calls
@@ -563,8 +569,10 @@ func (b *VectorBackfiller) prepareBackfillItem(ctx context.Context, job vector.B
 		if err != nil {
 			return item, fmt.Errorf("get stored content %s/%s: %w", namespace, name, err)
 		}
-		if identicalContent(stored, items) && storedFolder == items[0].Folder {
+		if identicalContent(stored, items) {
 			item.action = backfillUpdateVersion
+			item.folder = items[0].Folder
+			item.updateFolder = storedFolder != item.folder
 			item.status = "skipped_identical_content"
 			return item, nil
 		}
@@ -618,6 +626,12 @@ func (b *VectorBackfiller) writeBackfillItem(job vector.BackfillJob, builder col
 		}
 		return nil
 	case backfillUpdateVersion:
+		if item.updateFolder {
+			// Save the folder before advancing the version so a failed move stays retryable.
+			if err := b.vectorBackend.UpdateFolder(ctx, namespace, job.Model, builder.partitionKey, name, item.folder); err != nil {
+				return fmt.Errorf("update folder %s/%s: %w", namespace, name, err)
+			}
+		}
 		if err := b.vectorBackend.UpdateContentVersion(ctx, namespace, job.Model, builder.partitionKey, name, builder.Version()); err != nil {
 			return fmt.Errorf("update content version %s/%s: %w", namespace, name, err)
 		}

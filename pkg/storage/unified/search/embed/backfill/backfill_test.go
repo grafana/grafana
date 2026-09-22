@@ -702,6 +702,109 @@ func TestRunBackfillJob_UpdateContentVersionError_FailsJob(t *testing.T) {
 	assert.Empty(t, vec.upserts, "identical content must still not re-embed on the error path")
 }
 
+func TestRunBackfillJob_VersionStale_IdenticalContent_UpdatesFolder(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		folder     string
+		changed    bool
+		deleted    bool
+		folderErr  error
+		versionErr error
+	}{
+		{name: "move to another folder", folder: "folder-b"},
+		{name: "move to root"},
+		{name: "newer live resource", changed: true},
+		{name: "deleted live resource", deleted: true},
+		{name: "folder update failure", folderErr: errors.New("folder update failed")},
+		{name: "version update failure", versionErr: errors.New("version update failed")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			storage := newFakeStorage()
+			value := []byte(fmt.Sprintf(`{
+				"uid": "dash-a", "title": "Dashboard",
+				"metadata": {"annotations": {"grafana.app/folder": %q}},
+				"panels": [{"id": 1, "title": "CPU"}, {"id": 2, "title": "Memory"}]
+			}`, tc.folder))
+			storage.listItems = []listItem{{Namespace: "ns", Name: "dash-a", RV: 50, Value: value}}
+			folderTitle := ""
+			if tc.folder != "" {
+				folderTitle = "Production"
+				storage.seedFolder("ns", tc.folder, folderTitle)
+			}
+			if tc.changed {
+				storage.resources[storeKey("ns", "dashboard.grafana.app", "dashboards", "dash-a")] = storedResource{Value: value, RV: 60}
+			}
+			if tc.deleted {
+				storage.markNotFound("ns", "dashboard.grafana.app", "dashboards", "dash-a")
+			}
+			items := extractDashboardItems(t, "ns", "dash-a", value, folderTitle)
+			require.Len(t, items, 2)
+			vec := newFakeVector()
+			vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+			vec.jobContentVersion = map[int64]int{1: dashboard.New().Version()}
+			vec.updateFolderErr = tc.folderErr
+			vec.updateErr = tc.versionErr
+			key := rowsKey("ns", "test-model", "dashboards", "dash-a")
+			expected := make(map[string]vector.Vector, len(items))
+			for _, item := range items {
+				vec.seedStoredContent("ns", "test-model", "dashboards", "dash-a", item.Subresource, item.Content, 1)
+				row := vec.rows[key][item.Subresource]
+				row.Folder = "folder-a"
+				row.Metadata = json.RawMessage(`{"custom":"preserved"}`)
+				row.Embedding = []float32{0.1, 0.2}
+				vec.rows[key][item.Subresource] = row
+				if !tc.changed && !tc.deleted && tc.folderErr == nil {
+					row.Folder = tc.folder
+					if tc.versionErr == nil {
+						row.ContentVersion = dashboard.New().Version()
+					}
+				}
+				expected[item.Subresource] = row
+			}
+			b, text := newBackfillerWithEmbedder(t, storage, vec)
+
+			b.runBackfill(t.Context())
+
+			assert.Equal(t, expected, vec.rows[key])
+			assert.Zero(t, text.calls)
+			assert.Empty(t, vec.replaceCalls)
+			assert.Empty(t, vec.deletes)
+			if tc.folderErr != nil || tc.versionErr != nil {
+				assert.Empty(t, vec.completedJobIDs)
+				assert.Empty(t, vec.checkpoints)
+				assert.Empty(t, vec.updateCalls, "failed folder updates must not advance the content version")
+				require.Len(t, vec.errorMarks, 1)
+				if tc.folderErr != nil {
+					assert.Contains(t, vec.errorMarks[0].LastError, tc.folderErr.Error())
+				} else {
+					assert.Contains(t, vec.errorMarks[0].LastError, tc.versionErr.Error())
+				}
+
+				vec.updateFolderErr = nil
+				vec.updateErr = nil
+				b.runBackfill(t.Context())
+
+				for subresource, row := range expected {
+					row.Folder = tc.folder
+					row.ContentVersion = dashboard.New().Version()
+					expected[subresource] = row
+				}
+				assert.Equal(t, expected, vec.rows[key])
+				assert.Zero(t, text.calls, "retrying metadata updates must not call the embedding provider")
+				require.Len(t, vec.updateCalls, 1)
+			} else {
+				assert.Empty(t, vec.errorMarks)
+				if tc.changed || tc.deleted {
+					assert.Empty(t, vec.updateCalls)
+				} else {
+					require.Len(t, vec.updateCalls, 1)
+				}
+			}
+			assert.Equal(t, []int64{1}, vec.completedJobIDs)
+		})
+	}
+}
+
 func TestRunBackfillJob_VersionStale_IdenticalContent_SkipsEmbedAndTouchesVersion(t *testing.T) {
 	storage := newFakeStorage()
 	storage.listItems = []listItem{makeListItem("ns", "dash-a", 50)}

@@ -234,7 +234,7 @@ func (st *singleTenantFallback) Load(ctx context.Context) ([]Backend, error) {
 		}
 		backends = append(backends, &fallbackBackend{
 			group: group,
-			key:   hashHex(string(groupJSON)),
+			key:   "st:" + hashHex(string(groupJSON)),
 			st:    st,
 		})
 	}

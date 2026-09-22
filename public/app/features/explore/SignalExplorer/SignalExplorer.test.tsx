@@ -7,6 +7,7 @@ import {
   type DataSourcePluginMeta,
   type TimeRange,
 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { setDataSourceInstanceSettings, setDatasourcePluginMetas } from '@grafana/runtime/internal';
 import { type DataQuery } from '@grafana/schema';
 
@@ -22,7 +23,13 @@ jest.mock('../ContentOutline/ContentOutlineContext', () => ({
 // Mocked so an expanded card's metric list needs no Prometheus behind it.
 jest.mock('./data/useMetricCatalog');
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
+
 const useMetricCatalogMock = jest.mocked(useMetricCatalog);
+const reportInteractionMock = jest.mocked(reportInteraction);
 
 const makeMeta = (id: string) =>
   ({
@@ -124,6 +131,7 @@ const setup = async (queries: DataQuery[], paneDatasource?: DataSourceApi) => {
 describe('<SignalExplorer />', () => {
   beforeEach(() => {
     useMetricCatalogMock.mockReset().mockReturnValue({ metrics: [], loading: false });
+    reportInteractionMock.mockReset();
   });
 
   it('renders the header with the injected toggle button', async () => {
@@ -459,6 +467,70 @@ describe('<SignalExplorer />', () => {
       rerender(explorer([promQuery('A'), promQuery('B')], undefined, refreshed));
 
       expect(screen.getByTestId('metric-detail-panel')).toBeInTheDocument();
+    });
+  });
+
+  describe('analytics', () => {
+    const promPane = { uid: 'prom-uid', type: 'prometheus', meta: makeMeta('prometheus') } as unknown as DataSourceApi;
+    const mixedPane = {
+      uid: '-- Mixed --',
+      type: 'datasource',
+      meta: { ...makeMeta('mixed'), mixed: true },
+    } as unknown as DataSourceApi;
+
+    it('reports the panel opening once, with the queries stacked in it', async () => {
+      await setup([promQuery('A'), promQuery('B')], promPane);
+
+      expect(reportInteractionMock).toHaveBeenCalledTimes(1);
+      expect(reportInteractionMock).toHaveBeenCalledWith('signal_explorer_panel_opened', {
+        data_source_type: 'prometheus',
+        stacked_queries_count: 2,
+      });
+    });
+
+    // A Mixed pane's own type is the unhelpful `datasource`, and no one card speaks for the pane.
+    it('reports a Mixed pane as mixed rather than by its own type', async () => {
+      await setup([promQuery('A'), { refId: 'B', datasource: { uid: 'loki-uid', type: 'loki' } }], mixedPane);
+
+      expect(reportInteractionMock).toHaveBeenCalledWith(
+        'signal_explorer_panel_opened',
+        expect.objectContaining({ data_source_type: 'mixed' })
+      );
+    });
+
+    // The count reaching a card's own events is this component's to supply, and the two kinds of
+    // event deliberately disagree about the datasource: the card names its query's, the panel names
+    // the pane's.
+    it('reports the card’s own datasource on a card event, and the stacked query count with it', async () => {
+      useMetricCatalogMock.mockReturnValue({ metrics: [{ name: 'up', type: 'gauge' }], loading: false });
+      const { user } = await setup(
+        [promQuery('A'), { refId: 'B', datasource: { uid: 'loki-uid', type: 'loki' } }],
+        mixedPane
+      );
+
+      await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
+      await user.click(within(screen.getByTestId('signal-card-A')).getByRole('button', { name: 'Expand up' }));
+
+      expect(reportInteractionMock).toHaveBeenCalledWith('signal_explorer_metric_expanded', {
+        data_source_type: 'prometheus',
+        stacked_queries_count: 2,
+      });
+      expect(reportInteractionMock).toHaveBeenCalledWith(
+        'signal_explorer_panel_opened',
+        expect.objectContaining({ data_source_type: 'mixed' })
+      );
+    });
+
+    // Explore hands over a fresh queries array on every keystroke in a query editor, and the sidebar
+    // was opened once regardless.
+    it('does not report the panel opening again while a query is being edited', async () => {
+      const { rerender } = await setup([promQuery('A')], promPane);
+      reportInteractionMock.mockClear();
+
+      rerender(explorer([promQuery('A', 'u')], promPane));
+      rerender(explorer([promQuery('A', 'up'), promQuery('B')], promPane));
+
+      expect(reportInteractionMock).not.toHaveBeenCalled();
     });
   });
 });
