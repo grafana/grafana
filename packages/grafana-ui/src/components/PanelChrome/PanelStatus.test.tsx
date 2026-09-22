@@ -1,10 +1,21 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { type ReactElement } from 'react';
 
+import { EventBusSrv } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
+import { type PanelContext, PanelContextProvider } from './PanelContext';
 import { PanelStatus } from './PanelStatus';
 import { type PanelStatusItem } from './types';
+
+function renderWithPanelContext(ui: ReactElement, context: Partial<PanelContext> = {}) {
+  return render(
+    <PanelContextProvider value={{ eventsScope: 'global', eventBus: new EventBusSrv(), ...context }}>
+      {ui}
+    </PanelContextProvider>
+  );
+}
 
 describe('PanelStatus', () => {
   describe('legacy single message', () => {
@@ -143,11 +154,9 @@ describe('PanelStatus', () => {
 
     it('renders a single Fix with Assistant button and calls onInvestigateErrors when clicked', async () => {
       const onInvestigateErrors = jest.fn();
-      render(
-        <PanelStatus
-          items={[{ severity: 'error', text: 'Preparing expression failed' }, ...items]}
-          onInvestigateErrors={onInvestigateErrors}
-        />
+      renderWithPanelContext(
+        <PanelStatus items={[{ severity: 'error', text: 'Preparing expression failed' }, ...items]} />,
+        { onInvestigateErrors }
       );
 
       await userEvent.click(screen.getByTestId(selectors.components.Panels.Panel.status('error')));
@@ -160,7 +169,7 @@ describe('PanelStatus', () => {
     it('offers to explain rather than fix when there are no errors to fix', async () => {
       // `items` here is warning + info only, which is the case where the dashboard side asks the
       // assistant to explain the notices instead of fixing anything.
-      render(<PanelStatus items={items} onInvestigateErrors={jest.fn()} />);
+      renderWithPanelContext(<PanelStatus items={items} />, { onInvestigateErrors: jest.fn() });
 
       await userEvent.click(screen.getByTestId(selectors.components.Panels.Panel.status('warning')));
 
@@ -169,12 +178,12 @@ describe('PanelStatus', () => {
     });
 
     it('places the assistant button before the Inspect button', async () => {
-      render(
+      renderWithPanelContext(
         <PanelStatus
           items={[{ severity: 'error', text: 'Preparing expression failed' }, ...items]}
           onClick={jest.fn()}
-          onInvestigateErrors={jest.fn()}
-        />
+        />,
+        { onInvestigateErrors: jest.fn() }
       );
 
       await userEvent.click(screen.getByTestId(selectors.components.Panels.Panel.status('error')));
@@ -189,14 +198,12 @@ describe('PanelStatus', () => {
       // The portaled popover content sits elsewhere in the DOM than the trigger, so this only
       // reproduces the real page's Tab order if there's another focusable element right after the
       // trigger for focus to potentially escape to.
-      render(
+      renderWithPanelContext(
         <>
-          <PanelStatus
-            items={[{ severity: 'error', text: 'Preparing expression failed' }, ...items]}
-            onInvestigateErrors={jest.fn()}
-          />
+          <PanelStatus items={[{ severity: 'error', text: 'Preparing expression failed' }, ...items]} />
           <button>Next focusable element on the page</button>
-        </>
+        </>,
+        { onInvestigateErrors: jest.fn() }
       );
 
       const trigger = screen.getByTestId(selectors.components.Panels.Panel.status('error'));

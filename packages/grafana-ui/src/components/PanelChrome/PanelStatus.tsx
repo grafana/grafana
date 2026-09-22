@@ -12,6 +12,7 @@ import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
 import { Toggletip } from '../Toggletip/Toggletip';
 
+import { usePanelContext } from './PanelContext';
 import { type PanelStatusItem, type PanelStatusSeverity } from './types';
 
 export interface Props {
@@ -19,14 +20,9 @@ export interface Props {
   message?: string;
   /** Structured list of errors and notices to show in the status popover. */
   items?: PanelStatusItem[];
-  /** Opens the inspector "Errors and notices" tab. */
+  /** Fired when the user clicks Inspect, alongside PanelContext's `onOpenInspector`. Use for host-side side effects (e.g. telemetry). */
   onClick?: (e: React.SyntheticEvent) => void;
   ariaLabel?: string;
-  /**
-   * Triggers an AI-assisted investigation of the panel's errors/notices. The host (e.g.
-   * dashboard) owns what this does; PanelStatus only decides whether to show the action.
-   */
-  onInvestigateErrors?: (e: React.SyntheticEvent) => void;
 }
 
 const SEVERITY_RANK: Record<PanelStatusSeverity, number> = {
@@ -46,12 +42,20 @@ function getSeverityIcon(severity: PanelStatusSeverity): IconName {
   return severity === 'info' ? 'info-circle' : 'exclamation-triangle';
 }
 
-export function PanelStatus({ message, items, onClick, ariaLabel = 'status', onInvestigateErrors }: Props) {
+export function PanelStatus({ message, items, onClick, ariaLabel = 'status' }: Props) {
+  const { onOpenInspector, onInvestigateErrors } = usePanelContext();
+  const canInspect = Boolean(onClick) || Boolean(onOpenInspector);
+
+  const handleInspectClick = (e: React.SyntheticEvent) => {
+    onClick?.(e);
+    onOpenInspector?.();
+  };
+
   if (items && items.length > 0) {
     return (
       <PanelStatusPopover
         items={items}
-        onInspect={onClick}
+        onInspect={canInspect ? handleInspectClick : undefined}
         ariaLabel={ariaLabel}
         onInvestigateErrors={onInvestigateErrors}
       />
@@ -60,7 +64,7 @@ export function PanelStatus({ message, items, onClick, ariaLabel = 'status', onI
 
   return (
     <Button
-      onClick={onClick}
+      onClick={handleInspectClick}
       variant={'destructive'}
       icon="exclamation-triangle"
       size="sm"
@@ -75,7 +79,7 @@ interface PanelStatusPopoverProps {
   items: PanelStatusItem[];
   onInspect?: (e: React.SyntheticEvent) => void;
   ariaLabel: string;
-  onInvestigateErrors?: (e: React.SyntheticEvent) => void;
+  onInvestigateErrors?: () => void;
 }
 
 function PanelStatusPopover({ items, onInspect, ariaLabel, onInvestigateErrors }: PanelStatusPopoverProps) {
