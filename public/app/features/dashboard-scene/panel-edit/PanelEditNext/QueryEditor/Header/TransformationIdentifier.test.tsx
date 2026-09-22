@@ -18,14 +18,30 @@ import {
   ReduceTransformerMode,
 } from '@grafana/data/internal';
 
+import { usePreviousTransformationOutput } from '../hooks/usePreviousTransformationOutput';
+import { useTransformationGeneratedRefId } from '../hooks/useTransformationGeneratedRefId';
 import { type Transformation } from '../types';
 
 import { TransformationIdentifier } from './TransformationIdentifier';
 
+let mockReplace: (v: string) => string = (v) => v;
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getTemplateSrv: () => ({ replace: (v: string) => v }),
+  getTemplateSrv: () => ({ replace: (v: string) => mockReplace(v) }),
 }));
+
+// Wrapped rather than replaced, so the suite still exercises the real hooks while it can also
+// assert that the plain-text path never reaches them.
+jest.mock('../hooks/useTransformationGeneratedRefId', () => {
+  const actual = jest.requireActual('../hooks/useTransformationGeneratedRefId');
+  return { useTransformationGeneratedRefId: jest.fn(actual.useTransformationGeneratedRefId) };
+});
+
+jest.mock('../hooks/usePreviousTransformationOutput', () => {
+  const actual = jest.requireActual('../hooks/usePreviousTransformationOutput');
+  return { usePreviousTransformationOutput: jest.fn(actual.usePreviousTransformationOutput) };
+});
 
 const seriesA = toDataFrame({
   refId: 'A',
@@ -79,6 +95,12 @@ function renderIdentifier(transformation: Transformation, onUpdate = jest.fn(), 
 describe('TransformationIdentifier', () => {
   beforeAll(() => {
     mockTransformationsRegistry([mergeTransformer, reduceTransformer]);
+  });
+
+  beforeEach(() => {
+    mockReplace = (v) => v;
+    jest.mocked(useTransformationGeneratedRefId).mockClear();
+    jest.mocked(usePreviousTransformationOutput).mockClear();
   });
 
   it('offers the generated name as the placeholder until one is pinned', async () => {
@@ -146,5 +168,28 @@ describe('TransformationIdentifier', () => {
     await waitFor(() =>
       expect(screen.queryByRole('button', { name: /edit transformation name/i })).not.toBeInTheDocument()
     );
+  });
+
+  it('does not replay the pipeline for a transformation that shows plain text', async () => {
+    const transformation = getTransformation(
+      { id: DataTransformerID.reduce, options: { mode: ReduceTransformerMode.ReduceFields, reducers: ['max'] } },
+      (options) => options?.mode !== ReduceTransformerMode.ReduceFields
+    );
+    renderIdentifier(transformation);
+
+    expect(await screen.findByText('Merge series/tables')).toBeInTheDocument();
+    // Each replay walks every preceding transformation, so a row that cannot use the result must
+    // not start one — the stacked editor mounts an identifier per transformation.
+    expect(useTransformationGeneratedRefId).not.toHaveBeenCalled();
+    expect(usePreviousTransformationOutput).not.toHaveBeenCalled();
+  });
+
+  it('replays the pipeline for a transformation that can be named', async () => {
+    const transformation = getTransformation({ id: DataTransformerID.merge, options: {} }, true);
+    renderIdentifier(transformation);
+
+    expect(await screen.findByText('merge-A-B')).toBeInTheDocument();
+    expect(useTransformationGeneratedRefId).toHaveBeenCalled();
+    expect(usePreviousTransformationOutput).toHaveBeenCalled();
   });
 });

@@ -31,13 +31,38 @@ export function TransformationIdentifier({
   fallbackName,
   onUpdate,
 }: TransformationIdentifierProps) {
-  const rawData = data?.series ?? NO_SERIES;
-
   // Follows the configuration rather than the data, so the editor does not appear and disappear as
   // queries come and go.
   const canSetRefId = transformation.registryItem
     ? transformerUsesDynamicRefId(transformation.registryItem, transformation.transformConfig.options)
     : false;
+
+  if (!canSetRefId) {
+    return <>{fallbackName}</>;
+  }
+
+  return (
+    <EditableIdentifier
+      transformation={transformation}
+      transformations={transformations}
+      data={data}
+      onUpdate={onUpdate}
+    />
+  );
+}
+
+/**
+ * Split out so the replays below only run for the transformations that can use them. The stacked
+ * editor mounts one identifier per transformation and hooks cannot sit behind a condition, so
+ * inlining this would replay every preceding transformation for rows that render plain text.
+ */
+function EditableIdentifier({
+  transformation,
+  transformations,
+  data,
+  onUpdate,
+}: Omit<TransformationIdentifierProps, 'fallbackName'>) {
+  const rawData = data?.series ?? NO_SERIES;
 
   const dynamicRefId = useTransformationGeneratedRefId({ transformation, transformations, rawData });
 
@@ -52,10 +77,6 @@ export function TransformationIdentifier({
     () => previousOutput.map(({ refId }) => refId).filter((refId): refId is string => !!refId),
     [previousOutput]
   );
-
-  if (!canSetRefId) {
-    return <>{fallbackName}</>;
-  }
 
   return (
     <EditableTransformationName
