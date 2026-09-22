@@ -44,7 +44,7 @@ export const FilterPopup = ({
   const uniqueValues = useMemo(() => calculateUniqueFieldValues(preFilteredRows, field), [preFilteredRows, field]);
   const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);
   const filteredOptions = useMemo(
-    () => getFilteredOptions(options, filterValue as SelectableValue[] | undefined),
+    () => getFilteredOptions(options, Array.isArray(filterValue) ? filterValue : undefined),
     [options, filterValue]
   );
   const [values, setValues] = useState<SelectableValue[]>(filteredOptions);
