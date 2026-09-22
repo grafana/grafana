@@ -129,6 +129,56 @@ describe('RecommendationExisting', () => {
     expect(screen.getByTestId('solution-stats-skeleton')).toBeInTheDocument();
   });
 
+  it('clears the previous facts while a recreated selection reloads', async () => {
+    // The same solution id recreated with new inputs (a saved filter): the card keeps its key.
+    const build = (
+      stats: () => Promise<{ primary: string } | null>,
+      alert: () => Promise<{ primary: string } | null>
+    ) =>
+      solution('kubernetes', { status: 'active', data: stubDatasource, title: 'Kubernetes Monitoring', stats, alert });
+    const { rerender } = render(
+      <RecommendationExisting
+        solutions={[
+          build(
+            async () => ({ primary: '247 pods' }),
+            async () => ({ primary: 'Kubernetes alert' })
+          ),
+        ]}
+      />
+    );
+
+    expect(await screen.findByText('247 pods')).toBeInTheDocument();
+    expect(await screen.findByText('Kubernetes alert')).toBeInTheDocument();
+
+    const scopedStats = deferred<{ primary: string } | null>();
+    const scopedAlert = deferred<{ primary: string } | null>();
+    rerender(
+      <RecommendationExisting
+        solutions={[
+          build(
+            () => scopedStats.promise,
+            () => scopedAlert.promise
+          ),
+        ]}
+      />
+    );
+
+    // The card stays mounted but shows nothing from the previous scope while the new facts settle.
+    await waitFor(() => expect(screen.queryByText('247 pods')).not.toBeInTheDocument());
+    expect(screen.queryByText('Kubernetes alert')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
+    expect(screen.getByTestId('solution-stats-skeleton')).toBeInTheDocument();
+
+    await act(async () => {
+      scopedStats.resolve({ primary: '3 pods' });
+      scopedAlert.resolve(null);
+    });
+
+    expect(await screen.findByText('3 pods')).toBeInTheDocument();
+    expect(screen.queryByText('Kubernetes alert')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('solution-stats-skeleton')).not.toBeInTheDocument();
+  });
+
   it('streams optional facts into an already-selected card', async () => {
     const stats = deferred<{ primary: string } | null>();
     const metrics = solution('metrics', {

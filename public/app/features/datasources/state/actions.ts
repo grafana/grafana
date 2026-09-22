@@ -242,9 +242,9 @@ export function loadDataSourceMeta(dataSource: DataSourceSettings): ThunkResult<
 }
 
 export function addDataSource(
-  plugin: DataSourcePluginMeta,
+  plugin: Pick<DataSourcePluginMeta, 'id' | 'name'>,
   editRoute = DATASOURCES_ROUTES.Edit
-): ThunkResult<Promise<void>> {
+): ThunkResult<Promise<string>> {
   return async () => {
     const newInstance = {
       type: plugin.id,
@@ -274,6 +274,8 @@ export function addDataSource(
     });
 
     locationService.push(editRoute.replace(/:uid/gi, uid));
+
+    return uid;
   };
 }
 
