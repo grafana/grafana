@@ -24,7 +24,7 @@ type streamDecoder struct {
 	client      resourcepb.ResourceStore_WatchClient
 	newFunc     func() runtime.Object
 	predicate   storage.SelectionPredicate
-	codec       runtime.Codec
+	serializer  Serializer
 	cancelWatch context.CancelFunc
 	done        sync.WaitGroup
 
@@ -33,20 +33,18 @@ type streamDecoder struct {
 	expiredSent         bool
 }
 
-func newStreamDecoder(client resourcepb.ResourceStore_WatchClient, newFunc func() runtime.Object, predicate storage.SelectionPredicate, codec runtime.Codec, cancelWatch context.CancelFunc, sendInitialEvents bool) *streamDecoder {
+func newStreamDecoder(client resourcepb.ResourceStore_WatchClient, newFunc func() runtime.Object, predicate storage.SelectionPredicate, serializer Serializer, cancelWatch context.CancelFunc, sendInitialEvents bool) *streamDecoder {
 	return &streamDecoder{
 		client:            client,
 		newFunc:           newFunc,
 		predicate:         predicate,
-		codec:             codec,
+		serializer:        serializer,
 		cancelWatch:       cancelWatch,
 		sendInitialEvents: sendInitialEvents,
 	}
 }
 func (d *streamDecoder) toObject(w *resourcepb.WatchEvent_Resource) (runtime.Object, error) {
-	var obj runtime.Object
-	var err error
-	obj, _, err = d.codec.Decode(w.Value, nil, d.newFunc())
+	obj, err := d.serializer.Decode(d.client.Context(), w.Value, d.newFunc())
 	if err == nil {
 		accessor, err := utils.MetaAccessor(obj)
 		if err != nil {

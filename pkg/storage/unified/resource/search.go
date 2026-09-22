@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
@@ -382,6 +383,7 @@ type searchServer struct {
 	rateLimitPerTenant     int
 	rateLimitWindow        time.Duration
 	collectionAllowlist    vector.CollectionAllowlist
+	embeddingBuilders      embed.BuilderProvider
 
 	ownsIndexFn func(key NamespacedResource) (bool, error)
 
@@ -503,6 +505,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		rateLimitPerTenant:     opts.RateLimitPerTenant,
 		rateLimitWindow:        opts.RateLimitWindow,
 		collectionAllowlist:    vector.NewCollectionAllowlist(opts.AllowedInternalCollections, opts.AllowedExternalCollections),
+		embeddingBuilders:      opts.EmbeddingBuilders,
 	}
 
 	// pgvector doubles as the FTS lexical searcher.
@@ -1420,6 +1423,11 @@ func (s *searchServer) buildIndexes(ctx context.Context) (int, error) {
 }
 
 func (s *searchServer) init(ctx context.Context) error {
+	if s.embeddingBuilders != nil {
+		if err := s.embeddingBuilders.Validate(); err != nil {
+			return fmt.Errorf("embedding enrollment: %w", err)
+		}
+	}
 	origCtx := ctx
 
 	ctx, span := tracer.Start(ctx, "resource.searchServer.init")

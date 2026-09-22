@@ -697,7 +697,7 @@ var (
 			Name:        "perPanelNonApplicableDrilldowns",
 			Description: "Enables viewing non-applicable drilldowns on a panel level",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
 		},
