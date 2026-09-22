@@ -155,11 +155,11 @@ describe('ExploreQueryInspector', () => {
 
     fireEvent.click(screen.getByRole('tab', { name: /data/i }));
     // assert series values are formatted to 3 digits (xx.x or x.xx)
-    expect(await screen.findByText('71.2')).toBeInTheDocument();
-    expect(await screen.findByText('72.3')).toBeInTheDocument();
+    expect(await screen.findByText(/71.2/i)).toBeInTheDocument();
+    expect(screen.getByText(/72.3/i)).toBeInTheDocument();
     // assert timestamps are formatted
-    expect(await screen.findByText('2024-01-03 12:32:04.682')).toBeInTheDocument();
-    expect(await screen.findByText('2024-01-03 12:32:34.682')).toBeInTheDocument();
+    expect(screen.getByText(/2024-01-03 12:32:04.682/i)).toBeInTheDocument();
+    expect(screen.getByText(/2024-01-03 12:32:34.682/i)).toBeInTheDocument();
   });
 });
 

@@ -119,13 +119,8 @@ describe('TeamList', () => {
 
       // The initial (empty query) response lists all teams, so wait until the
       // non-matching team is filtered out before asserting on the results.
-      await waitFor(
-        () => {
-          expect(screen.getByText('k8s-test')).toBeInTheDocument();
-          expect(screen.queryByText('production')).not.toBeInTheDocument();
-        },
-        { timeout: 5000 }
-      );
+      await waitFor(() => expect(screen.queryByText('production')).not.toBeInTheDocument(), { timeout: 5000 });
+      expect(screen.getByText('k8s-test')).toBeInTheDocument();
     });
   });
 

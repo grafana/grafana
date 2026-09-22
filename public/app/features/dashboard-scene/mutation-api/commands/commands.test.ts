@@ -105,6 +105,7 @@ describe('Command consistency', () => {
     for (const lazyCommand of LAZY_DASHBOARD_COMMANDS) {
       const loadedCommand = await lazyCommand.load();
       expect(loadedCommand).toBe(eagerCommands.get(lazyCommand.name));
+      expect(lazyCommand.readOnly ?? false).toBe(loadedCommand.readOnly ?? false);
     }
   });
 });

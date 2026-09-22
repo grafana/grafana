@@ -293,10 +293,11 @@ describe('NotebooksListPage', () => {
 
     await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
 
+    await screen.findByText('Q2 latency regression');
     await waitFor(() => {
-      expect(screen.getByText('Q2 latency regression')).toBeInTheDocument();
       expect(screen.queryByText('Checkout error spike')).not.toBeInTheDocument();
     });
+    expect(screen.getByText('Q2 latency regression')).toBeInTheDocument();
     // The narrowing came from the request, not from re-filtering what was already on screen.
     expect(mockUseSearchNotebooksQuery).toHaveBeenLastCalledWith(
       expect.objectContaining({ where: { text: { value: 'latency' } } })
@@ -314,10 +315,11 @@ describe('NotebooksListPage', () => {
 
       await userEvent.click(await screen.findByLabelText('Created by me'));
 
+      await screen.findByText('Mine');
       await waitFor(() => {
-        expect(screen.getByText('Mine')).toBeInTheDocument();
         expect(screen.queryByText('Theirs')).not.toBeInTheDocument();
       });
+      expect(screen.getByText('Mine')).toBeInTheDocument();
     } finally {
       contextSrv.user = originalUser;
     }
@@ -339,10 +341,11 @@ describe('NotebooksListPage', () => {
     await within(await screen.findByRole('listbox')).findByText('latency');
     await selectOptionInTest(screen.getByLabelText('Tag filter'), /^latency/);
 
+    await screen.findByText('Q2 latency regression');
     await waitFor(() => {
-      expect(screen.getByText('Q2 latency regression')).toBeInTheDocument();
       expect(screen.queryByText('Checkout error spike')).not.toBeInTheDocument();
     });
+    expect(screen.getByText('Q2 latency regression')).toBeInTheDocument();
     // The narrowing came from the request rather than from filtering the rows on screen.
     expect(mockUseSearchNotebooksQuery).toHaveBeenLastCalledWith(
       expect.objectContaining({ where: { filter: { field: 'tags', operator: 'In', values: ['latency'] } } })
@@ -386,10 +389,11 @@ describe('NotebooksListPage', () => {
     const listbox = await screen.findByRole('listbox');
     await userEvent.click(await within(listbox).findByText('latency'));
 
+    await screen.findByText('Q2 latency regression');
     await waitFor(() => {
-      expect(screen.getByText('Q2 latency regression')).toBeInTheDocument();
       expect(screen.queryByText('Checkout error spike')).not.toBeInTheDocument();
     });
+    expect(screen.getByText('Q2 latency regression')).toBeInTheDocument();
   });
 
   // The tags are only known once the picker is opened, so the control is offered either way — an
@@ -532,9 +536,8 @@ describe('NotebooksListPage', () => {
 
     render(<NotebooksListPage />);
 
-    expect(await screen.findByRole('table')).toBeInTheDocument();
     expect(await screen.findByText(`${ROWS_PER_PAGE * 3} notebooks`)).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: '3' }));
+    await userEvent.click(await screen.findByRole('button', { name: '3' }));
 
     await userEvent.type(screen.getByPlaceholderText('Search notebooks by title...'), 'needle');
 

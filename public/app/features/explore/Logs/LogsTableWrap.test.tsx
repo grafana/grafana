@@ -88,9 +88,9 @@ describe('LogsTableWrap', () => {
       updatePanelState: updatePanelState,
     });
 
-    expect.assertions(4);
+    expect.assertions(3);
 
-    expect(await screen.findByRole('columnheader', { name: /Time/ })).toBeInTheDocument();
+    await screen.findByRole('columnheader', { name: /Time/ });
     expect(screen.getByLabelText('app')).toBeInTheDocument();
 
     // Add a new column
