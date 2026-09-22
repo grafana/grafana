@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { css, cx } from '@emotion/css';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
 
 import {
@@ -82,7 +82,8 @@ export type TracePageHeaderProps = {
   setSearch: (newSearch: TraceSearchProps) => void;
   showSpanFilters: boolean;
   setShowSpanFilters: (isOpen: boolean) => void;
-  setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;
+  setFocusedSpanIdForSearch: (spanID: string) => void;
+  onGoToSpan: (spanID: string) => void;
   spanFilterMatches: Set<string> | undefined;
   datasourceType: string;
   datasourceName: string;
@@ -106,6 +107,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     setSearch,
     showSpanFilters,
     setFocusedSpanIdForSearch,
+    onGoToSpan,
     spanFilterMatches,
     datasourceType,
     datasourceName,
@@ -124,6 +126,19 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   const [copyTraceIdClicked, setCopyTraceIdClicked] = useState(false);
   const [isOverviewOpen, setIsOverviewOpen] = useState(true);
   const [focusedSpanIndexForSearch, setFocusedSpanIndexForSearch] = useState(-1);
+
+  const goToBannerSpan = useCallback(
+    (spanId: string) => {
+      reportInteraction('grafana_traces_trace_view_go_to_span_clicked', {
+        app,
+        datasourceType,
+        grafana_version: config.buildInfo.version,
+        location: 'trace-banner',
+      });
+      onGoToSpan(spanId);
+    },
+    [app, datasourceType, onGoToSpan]
+  );
 
   // Create controller for adhoc filters
   const controller = useTraceAdHocFiltersController(trace, search, setSearch);
@@ -349,7 +364,9 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
         )}
       </div>
 
-      {!hideHeaderDetails && traceBanner && <TraceBanner highlight={traceBanner} traceDuration={trace.duration} />}
+      {!hideHeaderDetails && traceBanner && (
+        <TraceBanner highlight={traceBanner} traceDuration={trace.duration} onGoToSpan={goToBannerSpan} />
+      )}
 
       {/* Metadata row */}
       {!hideHeaderDetails && (

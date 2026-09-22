@@ -1916,7 +1916,7 @@
       "count": 1
     },
     "@grafana/no-config-feature-toggles": {
-      "count": 2
+      "count": 1
     }
   },
   "public/app/features/dashboard-scene/serialization/sceneVariablesSetToVariables.ts": {
@@ -1934,7 +1934,7 @@
   },
   "public/app/features/dashboard-scene/serialization/transformSaveModelToScene.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 4
+      "count": 3
     }
   },
   "public/app/features/dashboard-scene/serialization/transformSceneToSaveModel.test.ts": {
@@ -2134,7 +2134,7 @@
   },
   "public/app/features/dashboard-scene/utils/utils.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 3
+      "count": 2
     }
   },
   "public/app/features/dashboard-scene/utils/variables.ts": {
