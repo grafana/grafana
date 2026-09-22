@@ -2053,8 +2053,12 @@ export type DeletionStatus = {
   finalizer?: string;
   /** Message is a human-readable explanation of what went wrong, suitable for showing to users. */
   message?: string;
-  /** State is the phase of the deletion. */
-  state?: string;
+  /** State is the phase of the deletion.
+    
+    Possible enum values:
+     - `"Blocked"` indicates the latest finalizer pass failed and deletion did not complete. The controller keeps retrying, so a transient failure (a brief outage, an API conflict) may still clear on its own; a persistent one (credentials expired, a webhook that cannot be removed) needs the user to force-remove the blocking finalizer. Finalizer is the finalizer that failed on that pass.
+     - `"Working"` indicates finalizers are still running and deletion is expected to complete on its own. */
+  state?: 'Blocked' | 'Working';
 };
 export type QuotaStatus = {
   /** MaxRepositories is the maximum number of repositories allowed. 0 means unlimited. */

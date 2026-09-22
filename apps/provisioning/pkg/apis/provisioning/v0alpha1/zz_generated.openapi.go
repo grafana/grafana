@@ -816,9 +816,10 @@ func schema_pkg_apis_provisioning_v0alpha1_DeletionStatus(ref common.ReferenceCa
 				Properties: map[string]spec.Schema{
 					"state": {
 						SchemaProps: spec.SchemaProps{
-							Description: "State is the phase of the deletion.",
+							Description: "State is the phase of the deletion.\n\nPossible enum values:\n - `\"Blocked\"` indicates the latest finalizer pass failed and deletion did not complete. The controller keeps retrying, so a transient failure (a brief outage, an API conflict) may still clear on its own; a persistent one (credentials expired, a webhook that cannot be removed) needs the user to force-remove the blocking finalizer. Finalizer is the finalizer that failed on that pass.\n - `\"Working\"` indicates finalizers are still running and deletion is expected to complete on its own.",
 							Type:        []string{"string"},
 							Format:      "",
+							Enum:        []interface{}{"Blocked", "Working"},
 						},
 					},
 					"finalizer": {
