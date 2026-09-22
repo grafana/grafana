@@ -895,9 +895,16 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		// handleDelete builds the repository to run its finalizers, so the failure
 		// can be a secret-decrypt outage -- use the build classifier so that reads
 		// as a transient service issue, not an invalid spec.
-		readyCondition := buildReadyConditionWithReason(deleteHealthStatus, classifyBuildFailureReason(err))
+		deleteReason := classifyBuildFailureReason(err)
+		// A finalizer that can't reach the remote (e.g. credentials revoked while a
+		// delete is in flight) is exactly when force-delete is needed, so surface it
+		// on Reachable too rather than only on Ready.
+		conditions := []v1.Condition{
+			buildReadyConditionWithReason(deleteHealthStatus, deleteReason),
+			buildReachableCondition(false, deleteReason, err.Error()),
+		}
 		if conditionPatchOps := BuildConditionPatchOpsFromExisting(
-			obj.Status.Conditions, obj.GetGeneration(), readyCondition,
+			obj.Status.Conditions, obj.GetGeneration(), conditions...,
 		); conditionPatchOps != nil {
 			patchOps = append(patchOps, conditionPatchOps...)
 		}
@@ -1575,12 +1582,16 @@ func classifyOverdueCause(reason string) string {
 
 // classifyReachability turns the last health-check result (and any hook failure)
 // into the Reachable verdict, reusing the probe already performed -- it makes no
-// additional requests. A repository is reachable when the health check found it
-// accessible (isRepositoryAccessible); a webhook auth failure on an
-// otherwise-accessible repo still means the backend can't manage the remote, so it
-// counts as unreachable.
+// additional requests. Reachable is True only on positive evidence: the health
+// probe succeeded (for a write-workflow repo that includes the write-permission
+// check, so a passing probe means the backend can also manage webhooks). Any probe
+// failure -- including a validation error that never contacted the remote -- is
+// unreachable, so the verdict never claims success without evidence and never
+// clears a prior failure during an outage. A webhook auth failure on an otherwise
+// healthy repo also counts as unreachable, since the backend still can't manage
+// the remote.
 func classifyReachability(testResults *provisioning.TestResults, hookErr error) (reachable bool, reason, message string) {
-	if isRepositoryAccessible(testResults) {
+	if testResults != nil && testResults.Success {
 		if hookErr != nil && classifyHookFailureReason(hookErr) == provisioning.ReasonAuthenticationFailed {
 			return false, provisioning.ReasonAuthenticationFailed, hookErr.Error()
 		}
@@ -1589,10 +1600,10 @@ func classifyReachability(testResults *provisioning.TestResults, hookErr error) 
 	return false, reachabilityFailureReason(testResults), firstErrorDetail(testResults)
 }
 
-// reachabilityFailureReason maps an inaccessible health-check result to a Reachable
-// failure reason. isRepositoryAccessible only returns false for 401, a bare 403,
-// 404 and 503, so those are the cases distinguished here; anything else falls back
-// to InvalidSpec.
+// reachabilityFailureReason maps a failed health-check result to a Reachable
+// failure reason: 401/403 (bad or insufficient credentials) to AuthenticationFailed,
+// 404 to NotFound, 503 to the transient ServiceUnavailable, and anything else
+// (validation errors, 4xx/5xx) to InvalidSpec.
 func reachabilityFailureReason(testResults *provisioning.TestResults) string {
 	if testResults == nil {
 		return provisioning.ReasonInvalidSpec

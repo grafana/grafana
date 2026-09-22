@@ -1407,6 +1407,106 @@ func TestConnectionController_process_FieldErrors(t *testing.T) {
 	}
 }
 
+// TestConnectionController_process_ReachableCondition verifies the connection
+// controller publishes the dedicated Reachable condition from the health probe:
+// True/Available on success and False/AuthenticationFailed on a 401.
+func TestConnectionController_process_ReachableCondition(t *testing.T) {
+	tests := []struct {
+		name           string
+		testResults    *provisioning.TestResults
+		healthStatus   provisioning.HealthStatus
+		expectedStatus metav1.ConditionStatus
+		expectedReason string
+		expectedMsg    string
+	}{
+		{
+			name:           "successful probe is Reachable=True/Available",
+			testResults:    &provisioning.TestResults{Success: true, Code: http.StatusOK},
+			healthStatus:   provisioning.HealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
+			expectedStatus: metav1.ConditionTrue,
+			expectedReason: provisioning.ReasonAvailable,
+			expectedMsg:    "Repository is reachable",
+		},
+		{
+			name: "401 is Reachable=False/AuthenticationFailed",
+			testResults: &provisioning.TestResults{
+				Success: false,
+				Code:    http.StatusUnauthorized,
+				Errors:  []provisioning.ErrorDetails{{Detail: "bad token"}},
+			},
+			healthStatus:   provisioning.HealthStatus{Healthy: false, Checked: time.Now().UnixMilli()},
+			expectedStatus: metav1.ConditionFalse,
+			expectedReason: provisioning.ReasonAuthenticationFailed,
+			expectedMsg:    "bad token",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			conn := &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-conn", Namespace: "default", Generation: 2},
+				Status:     provisioning.ConnectionStatus{ObservedGeneration: 1},
+				Spec: provisioning.ConnectionSpec{
+					Type:   provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{AppID: "123", InstallationID: "456"},
+				},
+			}
+
+			var captured []metav1.Condition
+			mockPatcher := mocks.NewConnectionStatusPatcher(t)
+			mockPatcher.On("Patch", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+				Run(func(args mock.Arguments) {
+					for i := 2; i < len(args); i++ {
+						op, ok := args[i].(map[string]interface{})
+						if !ok {
+							continue
+						}
+						if path, _ := op["path"].(string); path == "/status/conditions" {
+							if conds, ok := op["value"].([]metav1.Condition); ok {
+								captured = conds
+							}
+						}
+					}
+				}).
+				Return(nil)
+
+			mockFactory := connection.NewMockFactory(t)
+			mockConn := connection.NewMockConnection(t)
+			mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConn, nil).Maybe()
+
+			mockHealthChecker := NewMockConnectionHealthChecker(t)
+			mockHealthChecker.EXPECT().ShouldCheckHealth(mock.IsType(&provisioning.Connection{})).Return(true)
+			mockHealthChecker.EXPECT().RefreshHealthWithPatchOps(mock.Anything, mock.Anything).Return(
+				ConnectionHealthResultWithPatchOps{
+					TestResults:    tt.testResults,
+					HealthStatus:   tt.healthStatus,
+					ReadyCondition: buildReadyConditionWithReason(tt.healthStatus, classifyTestResultReason(tt.testResults)),
+				},
+				nil,
+			)
+
+			cc := &ConnectionController{
+				conns:             informer.NewCachedConnectionGetter(&mockConnectionLister{conn: conn}),
+				connectionFactory: mockFactory,
+				healthChecker:     mockHealthChecker,
+				statusPatcher:     mockPatcher,
+				logger:            logging.DefaultLogger,
+				tracer:            tracing.InitializeTracerForTest(),
+			}
+
+			require.NoError(t, cc.process(t.Context(), "default/test-conn"))
+
+			reachable := findCondition(captured, provisioning.ConditionTypeReachable)
+			require.NotNil(t, reachable, "expected a Reachable condition on the connection")
+			assert.Equal(t, tt.expectedStatus, reachable.Status)
+			assert.Equal(t, tt.expectedReason, reachable.Reason)
+			assert.Equal(t, tt.expectedMsg, reachable.Message)
+			assert.Equal(t, conn.Generation, reachable.ObservedGeneration,
+				"controller should have observed the current generation")
+		})
+	}
+}
+
 // mockConnectionLister implements listers.ConnectionLister for testing
 type mockConnectionLister struct {
 	conn *provisioning.Connection

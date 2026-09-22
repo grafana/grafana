@@ -1607,6 +1607,13 @@ func TestRepositoryController_process_NonUserCausedDeleteFailureSurfacedOnStatus
 	}
 	require.NotNil(t, readyCond, "expected Ready condition to be present")
 	assert.Equal(t, metav1.ConditionFalse, readyCond.Status)
+
+	// The stuck-deletion reason must also land on Reachable so a force-delete
+	// consumer that reads it (rather than Ready) can still offer force-delete.
+	reachableCond := findCondition(conditions, provisioning.ConditionTypeReachable)
+	require.NotNil(t, reachableCond, "expected Reachable condition on a stuck deletion")
+	assert.Equal(t, metav1.ConditionFalse, reachableCond.Status)
+	assert.Equal(t, provisioning.ReasonInvalidSpec, reachableCond.Reason)
 }
 
 // TestRepositoryController_process_DeleteStatusPatchFailure verifies how a
@@ -2587,10 +2594,11 @@ func TestClassifyReachability(t *testing.T) {
 			wantReason:    provisioning.ReasonAuthenticationFailed,
 		},
 		{
-			name:          "write-permission 403 is still reachable",
+			name:          "write-permission 403 is unreachable (webhook removal needs write)",
 			testResults:   &provisioning.TestResults{Success: false, Code: http.StatusForbidden, Errors: detail(repository.WritePermissionDeniedDetail)},
-			wantReachable: true,
-			wantReason:    provisioning.ReasonAvailable,
+			wantReachable: false,
+			wantReason:    provisioning.ReasonAuthenticationFailed,
+			wantMessage:   repository.WritePermissionDeniedDetail,
 		},
 		{
 			name:          "404 is unreachable with NotFound",
@@ -2606,10 +2614,10 @@ func TestClassifyReachability(t *testing.T) {
 			wantReason:    provisioning.ReasonServiceUnavailable,
 		},
 		{
-			name:          "422 stays reachable (config gap, remote usable)",
+			name:          "422 validation failure is unreachable with InvalidSpec",
 			testResults:   &provisioning.TestResults{Success: false, Code: http.StatusUnprocessableEntity},
-			wantReachable: true,
-			wantReason:    provisioning.ReasonAvailable,
+			wantReachable: false,
+			wantReason:    provisioning.ReasonInvalidSpec,
 		},
 		{
 			name:          "hook auth failure on an accessible repo is unreachable",
