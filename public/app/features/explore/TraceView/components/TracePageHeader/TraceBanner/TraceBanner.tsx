@@ -25,7 +25,7 @@ export function TraceBanner({ highlight, traceDuration, onGoToSpan }: TraceBanne
   const metrics = t('explore.trace-page-header.trace-banner-metrics', '{{duration}} · {{percent}}% of trace', {
     duration: formatDuration(span.duration),
     percent,
-    // React escapes this on render; without opting out here the "<" of a "<0.1" share reads as "&lt;".
+    // i18next escapes this on render; without opting out here the "<" of a "<0.1" share reads as "&lt;".
     interpolation: { escapeValue: false },
   });
   const bannerLabel =
