@@ -174,7 +174,7 @@ func TestDualReadWriter_ReadNewDashboardPreviewWithTokenAuth(t *testing.T) {
 
 // A successful check against PR metadata must not bypass the configured folder's
 // permissions, even when the PR UID names an existing folder the caller can read.
-// Matching configured UIDs retain successful grants before their folders are synced.
+// Missing configured destinations still require permission on a real existing ancestor.
 func TestDualReadWriter_ReadNewDashboardPreviewValidatesConfiguredFolder(t *testing.T) {
 	for _, tt := range []struct {
 		name              string
@@ -184,13 +184,17 @@ func TestDualReadWriter_ReadNewDashboardPreviewValidatesConfiguredFolder(t *test
 		unsynced          bool
 		configuredFolder  string
 		canReadConfigured bool
+		ancestorExists    bool
+		canReadAncestor   bool
+		wantAllowed       bool
 	}{
 		{name: "allowed PR folder cannot bypass denied configured folder", folderMetadata: true, configuredFolder: "restricted-folder"},
-		{name: "different allowed configured folder permits preview", folderMetadata: true, configuredFolder: "other-allowed-folder", canReadConfigured: true},
-		{name: "matching allowed folder permits preview", folderMetadata: true, configuredFolder: "preview-folder", canReadConfigured: true},
+		{name: "different allowed configured folder permits preview", folderMetadata: true, configuredFolder: "other-allowed-folder", canReadConfigured: true, wantAllowed: true},
+		{name: "matching allowed folder permits preview", folderMetadata: true, configuredFolder: "preview-folder", wantAllowed: true},
 		{name: "allowed hash folder before instance sync", target: provisioning.SyncTargetTypeInstance, unsynced: true, canReadConfigured: true},
 		{name: "allowed repository root before folder sync", path: "dashboard.json", unsynced: true, canReadConfigured: true},
-		{name: "matching allowed metadata folder before sync", folderMetadata: true, configuredFolder: "preview-folder", unsynced: true, canReadConfigured: true},
+		{name: "matching allowed metadata folder requires ancestor permission", folderMetadata: true, configuredFolder: "preview-folder", unsynced: true, ancestorExists: true},
+		{name: "matching allowed metadata folder inherits from allowed ancestor", folderMetadata: true, configuredFolder: "preview-folder", unsynced: true, ancestorExists: true, canReadAncestor: true, wantAllowed: true},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			dashboardPath := tt.path
@@ -243,12 +247,16 @@ func TestDualReadWriter_ReadNewDashboardPreviewValidatesConfiguredFolder(t *test
 			})
 			folders := &MockDynamicResourceInterface{}
 			t.Cleanup(func() { folders.AssertExpectations(t) })
-			folderIDs := []string{destination}
+			probedFolderIDs := []string{destination}
 			if configuredFolder != destination {
-				folderIDs = append(folderIDs, configuredFolder)
+				probedFolderIDs = append(probedFolderIDs, configuredFolder)
 			}
-			for _, folderID := range folderIDs {
-				if tt.unsynced {
+			if tt.unsynced && safepath.Dir(dashboardPath) != "" && target == provisioning.SyncTargetTypeFolder {
+				probedFolderIDs = append(probedFolderIDs, cfg.Name)
+			}
+			for _, folderID := range probedFolderIDs {
+				folderExists := !tt.unsynced || (folderID == cfg.Name && tt.ancestorExists)
+				if !folderExists {
 					folders.On("Get", provisioningContext, folderID, metav1.GetOptions{}, mock.Anything).
 						Return(nil, apierrors.NewNotFound(FolderResource.GroupResource(), folderID)).Once()
 					continue
@@ -286,13 +294,16 @@ func TestDualReadWriter_ReadNewDashboardPreviewValidatesConfiguredFolder(t *test
 					Verb: utils.VerbGet, Name: "preview-dashboard",
 				}, req)
 				checkedFolders = append(checkedFolders, folder)
-				return authlib.CheckResponse{Allowed: folder == destination || (tt.canReadConfigured && folder == configuredFolder)}, nil
+				allowed := folder == destination ||
+					(tt.canReadConfigured && folder == configuredFolder) ||
+					(tt.canReadAncestor && folder == cfg.Name)
+				return authlib.CheckResponse{Allowed: allowed}, nil
 			})).WithFallbackRole(identity.RoleViewer)
 			authorizer := NewAuthorizer(cfg, repo, access, clients, tt.folderMetadata)
 			readWriter := NewDualReadWriter(repo, parser, nil, authorizer, tt.folderMetadata)
 
 			parsed, err := readWriter.Read(ctx, dashboardPath, "feature")
-			if tt.canReadConfigured {
+			if tt.wantAllowed {
 				require.NoError(t, err)
 				require.NotNil(t, parsed)
 				assert.Nil(t, parsed.Existing)
@@ -303,7 +314,13 @@ func TestDualReadWriter_ReadNewDashboardPreviewValidatesConfiguredFolder(t *test
 				assert.True(t, apierrors.IsForbidden(err), "expected forbidden, got %v", err)
 				assert.Nil(t, parsed)
 			}
-			assert.Equal(t, folderIDs, checkedFolders)
+			checkedFolderIDs := []string{destination}
+			if configuredFolder != destination {
+				checkedFolderIDs = append(checkedFolderIDs, configuredFolder)
+			} else if tt.unsynced && tt.ancestorExists {
+				checkedFolderIDs = append(checkedFolderIDs, cfg.Name)
+			}
+			assert.Equal(t, checkedFolderIDs, checkedFolders)
 			require.NotNil(t, dryRunObject)
 			meta, err := utils.MetaAccessor(dryRunObject)
 			require.NoError(t, err)

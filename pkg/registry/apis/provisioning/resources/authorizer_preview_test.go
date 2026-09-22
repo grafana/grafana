@@ -42,6 +42,7 @@ func TestAuthorizeResource_NewDashboardPreview(t *testing.T) {
 		metadataErr     error
 		existing        []string
 		allowed         string
+		alsoAllowed     string
 		lookupErrorID   string
 		clientErr       error
 		wantProbes      []string
@@ -113,25 +114,29 @@ func TestAuthorizeResource_NewDashboardPreview(t *testing.T) {
 			wantProbes: []string{newID, teamID}, wantChecks: []string{newID}, wantErr: denied,
 		},
 		{
-			name: "allowed missing trusted destination does not require ancestor permission", existing: []string{teamID}, allowed: newID,
-			wantProbes: []string{newID}, wantChecks: []string{newID},
+			name: "allowed missing destination inherits from an allowed ancestor", existing: []string{teamID},
+			allowed: newID, alsoAllowed: teamID, wantProbes: []string{newID, teamID}, wantChecks: []string{newID, teamID},
 		},
 		{
-			name: "allowed missing trusted destination does not require a repository root", allowed: newID,
-			wantProbes: []string{newID}, wantChecks: []string{newID},
+			name: "allowed missing destination still requires ancestor permission", existing: []string{teamID}, allowed: newID,
+			wantProbes: []string{newID, teamID}, wantChecks: []string{newID, teamID}, wantErr: denied,
 		},
 		{
-			name: "allowed missing trusted destination works in instance repositories", target: provisioning.SyncTargetTypeInstance, allowed: newID,
-			wantProbes: []string{newID}, wantChecks: []string{newID},
+			name: "allowed missing destination cannot authorize a missing repository root", allowed: newID,
+			wantProbes: []string{newID, teamID, repoName}, wantChecks: []string{newID}, wantForbidden: true,
 		},
 		{
-			name: "allowed missing configured UID preserves permission", destination: "configured-folder",
+			name: "allowed missing destination cannot substitute General", target: provisioning.SyncTargetTypeInstance, allowed: newID,
+			wantProbes: []string{newID, teamID}, wantChecks: []string{newID}, wantForbidden: true,
+		},
+		{
+			name: "allowed missing configured UID still requires an ancestor", destination: "configured-folder",
 			metadataEnabled: true, metadata: metadata, allowed: "configured-folder",
-			wantProbes: []string{"configured-folder"}, wantChecks: []string{"configured-folder"},
+			wantProbes: []string{"configured-folder", teamID, repoName}, wantChecks: []string{"configured-folder"}, wantForbidden: true,
 		},
 		{
-			name: "allowed missing repository root preserves permission", path: "dashboard.json", destination: repoName, allowed: repoName,
-			wantProbes: []string{repoName}, wantChecks: []string{repoName},
+			name: "allowed missing repository root is denied", path: "dashboard.json", destination: repoName, allowed: repoName,
+			wantProbes: []string{repoName}, wantChecks: []string{repoName}, wantForbidden: true,
 		},
 		{
 			name: "allowed PR UID cannot authorize a missing repository root", destination: "pr-controlled-uid", allowed: "pr-controlled-uid",
@@ -245,7 +250,7 @@ func TestAuthorizeResource_NewDashboardPreview(t *testing.T) {
 			access := auth.NewMockAccessChecker(t)
 			for _, id := range tt.wantChecks {
 				var accessErr error = denied
-				if id == tt.allowed {
+				if id == tt.allowed || id == tt.alsoAllowed {
 					accessErr = nil
 				}
 				access.On("Check", ctx, authlib.CheckRequest{
