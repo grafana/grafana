@@ -1341,7 +1341,6 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*re
 	}
 
 	return func(yield func(*BackendReadResponse) bool) {
-
 		type batchReadEntry struct {
 			request  *resourcepb.ReadRequest
 			key      kv.DataKey
