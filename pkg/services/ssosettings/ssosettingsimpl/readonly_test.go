@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -75,10 +76,11 @@ func TestReadOnlyDBService_WritesUnsupported(t *testing.T) {
 	svc := &readOnlyDBService{}
 	ctx := context.Background()
 
-	assert.ErrorIs(t, svc.Upsert(ctx, &models.SSOSettings{}, identity.Requester(nil)), errReadOnly)
-	assert.ErrorIs(t, svc.Delete(ctx, "github"), errReadOnly)
-	assert.ErrorIs(t, svc.Patch(ctx, "github", nil, identity.Requester(nil)), errReadOnly)
+	// Writes must map to 405 Method Not Allowed, not a generic 500.
+	assert.True(t, apierrors.IsMethodNotSupported(svc.Upsert(ctx, &models.SSOSettings{}, identity.Requester(nil))))
+	assert.True(t, apierrors.IsMethodNotSupported(svc.Delete(ctx, "github")))
+	assert.True(t, apierrors.IsMethodNotSupported(svc.Patch(ctx, "github", nil, identity.Requester(nil))))
 
 	_, err := svc.GetForProvider(ctx, "github")
-	assert.ErrorIs(t, err, errReadOnly)
+	assert.True(t, apierrors.IsMethodNotSupported(err))
 }
