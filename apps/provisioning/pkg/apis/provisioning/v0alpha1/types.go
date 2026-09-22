@@ -634,8 +634,15 @@ type RepositoryStatus struct {
 	// Token will get updated with current token information
 	Token TokenStatus `json:"token,omitempty"`
 
-	// Error information during repository deletion (if any)
+	// Error information during repository deletion (if any).
+	// Deprecated: prefer the structured Deletion field. Retained for
+	// backwards compatibility with clients that read the concise string.
 	DeleteError string `json:"deleteError,omitempty"`
+
+	// Deletion reports the progress of an in-progress deletion and any structured
+	// problems blocking it, so clients can explain the holdup and offer recovery
+	// actions. Populated only while the repository is Terminating.
+	Deletion *DeletionStatus `json:"deletion,omitempty"`
 
 	// Quota contains the configured quota limits for this repository
 	Quota QuotaStatus `json:"quota,omitempty"`
@@ -1037,6 +1044,119 @@ func (in *ErrorDetails) DeepCopyInto(out *ErrorDetails) {
 
 func (ErrorDetails) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ErrorDetails"
+}
+
+// DeletionState is the phase of an in-progress repository or connection deletion.
+// +enum
+type DeletionState string
+
+func (DeletionState) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DeletionState"
+}
+
+const (
+	// DeletionStateWorking indicates finalizers are still running and deletion is
+	// expected to complete on its own.
+	DeletionStateWorking DeletionState = "Working"
+
+	// DeletionStateBlocked indicates deletion cannot complete without user action
+	// (unmanaged resources remain in a folder, credentials expired, etc.).
+	// Automation keeps retrying but cannot recover on its own.
+	DeletionStateBlocked DeletionState = "Blocked"
+)
+
+// DeletionErrorCode is a stable, machine-readable identifier for a problem that
+// is blocking deletion. The frontend switches on it to choose a localized
+// message and an appropriate recovery action; new codes can be added without a
+// breaking API change.
+// +enum
+type DeletionErrorCode string
+
+func (DeletionErrorCode) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DeletionErrorCode"
+}
+
+const (
+	// DeletionErrorFolderNotEmpty indicates a managed folder still contains
+	// resources not managed by this repository, so the folder API refuses to
+	// delete it. Recovery: the user moves or deletes those resources.
+	DeletionErrorFolderNotEmpty DeletionErrorCode = "FolderNotEmpty"
+
+	// DeletionErrorRepositoryUnavailable indicates the repository client could not
+	// be built (e.g. credentials expired or a secret could not be decrypted), so
+	// provider-side cleanup such as webhook removal could not run. Recovery: the
+	// user force-removes the blocking finalizer to delete the repository anyway.
+	DeletionErrorRepositoryUnavailable DeletionErrorCode = "RepositoryUnavailable"
+
+	// DeletionErrorWebhookRemovalFailed indicates the provider rejected removal of
+	// the repository webhook (e.g. access to the repository was lost / 403).
+	// Recovery: the user force-removes the blocking finalizer, leaving the webhook
+	// behind on the provider.
+	DeletionErrorWebhookRemovalFailed DeletionErrorCode = "WebhookRemovalFailed"
+
+	// DeletionErrorUnknown is the fallback for a finalizer failure that has not
+	// been classified into a more specific code yet.
+	DeletionErrorUnknown DeletionErrorCode = "Unknown"
+)
+
+// DeletionStatus reports the progress of an in-progress deletion and any
+// problems blocking it. It is populated while the resource is Terminating and
+// its finalizers run. Clients use Errors to explain the holdup and offer
+// recovery actions.
+type DeletionStatus struct {
+	// State is the phase of the deletion.
+	State DeletionState `json:"state,omitempty"`
+
+	// Errors describes the problems blocking deletion. Today at most one entry is
+	// reported (the first blocking problem encountered on a pass); the list shape
+	// is intentional so that reporting N problems later is not a breaking change.
+	// +listType=atomic
+	Errors []DeletionError `json:"errors,omitempty"`
+}
+
+func (DeletionStatus) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DeletionStatus"
+}
+
+// DeletionError is a single, structured problem blocking deletion.
+type DeletionError struct {
+	// Code is a stable, machine-readable identifier the frontend switches on to
+	// choose a localized message and a recovery action.
+	Code DeletionErrorCode `json:"code"`
+
+	// Detail is a human-readable, English fallback message shown when the
+	// frontend has no localized message for Code. It should be actionable.
+	Detail string `json:"detail,omitempty"`
+
+	// Finalizer names the finalizer whose teardown produced this error, i.e.
+	// which deletion step is blocked. A client force-removing deletion removes
+	// exactly this finalizer.
+	Finalizer string `json:"finalizer,omitempty"`
+
+	// Target identifies the resource this error is about, when applicable (e.g.
+	// the folder that cannot be deleted). It may be empty for errors that are not
+	// about a specific resource.
+	Target *DeletionErrorTarget `json:"target,omitempty"`
+}
+
+func (DeletionError) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DeletionError"
+}
+
+// DeletionErrorTarget identifies the resource a DeletionError is about.
+type DeletionErrorTarget struct {
+	// Group is the API group of the resource (empty for the core group).
+	Group string `json:"group,omitempty"`
+
+	// Resource is the resource type (e.g. "folders").
+	Resource string `json:"resource,omitempty"`
+
+	// Name is the resource name or UID.
+	Name string `json:"name,omitempty"`
+}
+
+func (DeletionErrorTarget) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DeletionErrorTarget"
 }
 
 // HistoryList is a list of versions of a resource

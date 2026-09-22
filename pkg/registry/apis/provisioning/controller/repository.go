@@ -480,20 +480,48 @@ func (rc *RepositoryController) updateDeleteStatus(ctx context.Context, obj *pro
 	// resourceVersion, which the informer's UpdateFunc turns straight back into a
 	// re-enqueue, so rewriting the same deleteError on every failed pass would
 	// hot-loop the repository against the API server instead of retrying at the
-	// resync cadence.
+	// resync cadence. The structured deletion field is derived from the same
+	// error, so the string is a faithful proxy for "nothing changed".
 	if obj.Status.DeleteError == err.Error() {
 		return nil
 	}
 	logger := logging.FromContext(ctx)
 	logger.Info("updating repository status with deletion error", "error", err.Error())
-	// "add" rather than "replace": deleteError is omitempty and therefore absent
-	// before the first failure, where a "replace" on the missing path would fail.
-	// "add" creates it, and replaces it when already present.
-	return rc.statusPatcher.Patch(ctx, obj, map[string]interface{}{
-		"op":    "add",
-		"path":  "/status/deleteError",
-		"value": err.Error(),
-	})
+	// "add" rather than "replace": these fields are omitempty and therefore
+	// absent before the first failure, where a "replace" on the missing path
+	// would fail. "add" creates them, and replaces them when already present.
+	return rc.statusPatcher.Patch(ctx, obj,
+		map[string]interface{}{
+			"op":    "add",
+			"path":  "/status/deleteError",
+			"value": err.Error(),
+		},
+		map[string]interface{}{
+			"op":    "add",
+			"path":  "/status/deletion",
+			"value": buildDeletionStatus(err),
+		},
+	)
+}
+
+// buildDeletionStatus turns a finalizer failure into the structured
+// status.deletion the frontend consumes. Only the first blocking problem on a
+// pass is reported today; the Errors list shape lets that grow to N without an
+// API change.
+func buildDeletionStatus(err error) *provisioning.DeletionStatus {
+	de := provisioning.DeletionError{
+		Code:   provisioning.DeletionErrorUnknown,
+		Detail: err.Error(),
+	}
+	var fe *finalizerError
+	if errors.As(err, &fe) {
+		de.Code = fe.code
+		de.Finalizer = fe.finalizer
+	}
+	return &provisioning.DeletionStatus{
+		State:  provisioning.DeletionStateBlocked,
+		Errors: []provisioning.DeletionError{de},
+	}
 }
 
 func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provisioning.Repository) bool {

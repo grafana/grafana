@@ -252,7 +252,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				s := mocks.NewStatusPatcher(t)
 
 				s.
-					On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.AnythingOfType("map[string]interface {}")).
+					On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.AnythingOfType("map[string]interface {}"), mock.AnythingOfType("map[string]interface {}")).
 					Once().
 					Return(nil) // Return nil error for the status patch
 
@@ -299,7 +299,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				// patcher must be present.
 				s := mocks.NewStatusPatcher(t)
 				s.
-					On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.AnythingOfType("map[string]interface {}")).
+					On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.AnythingOfType("map[string]interface {}"), mock.AnythingOfType("map[string]interface {}")).
 					Once().
 					Return(nil)
 				return s
@@ -400,10 +400,13 @@ func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *t
 	}
 
 	// The removal-patch failure is a blind spot for the finalizer SLO, so it must
-	// be metered and recorded on status.deleteError instead.
+	// be metered and recorded on status (deleteError + the structured deletion)
+	// instead.
 	statusPatcher := mocks.NewStatusPatcher(t)
 	statusPatcher.
-		On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.AnythingOfType("map[string]interface {}")).
+		On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"),
+			mock.AnythingOfType("map[string]interface {}"),
+			mock.AnythingOfType("map[string]interface {}")).
 		Once().
 		Return(nil)
 
@@ -509,14 +512,25 @@ func TestRepositoryController_updateDeleteStatus_SkipsWhenUnchanged(t *testing.T
 }
 
 // TestRepositoryController_updateDeleteStatus_UsesAddOp verifies the patch uses
-// "add" (not "replace") so it creates the omitempty deleteError field on the
-// first failure, and only patches when the error actually changed.
+// "add" (not "replace") so it creates the omitempty deleteError/deletion fields
+// on the first failure, and only patches when the error actually changed. It
+// writes both the legacy deleteError string and the structured deletion field.
 func TestRepositoryController_updateDeleteStatus_UsesAddOp(t *testing.T) {
 	patcher := mocks.NewStatusPatcher(t)
 	patcher.
-		On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.MatchedBy(func(op map[string]interface{}) bool {
-			return op["op"] == "add" && op["path"] == "/status/deleteError" && op["value"] == "new"
-		})).
+		On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"),
+			mock.MatchedBy(func(op map[string]interface{}) bool {
+				return op["op"] == "add" && op["path"] == "/status/deleteError" && op["value"] == "new"
+			}),
+			mock.MatchedBy(func(op map[string]interface{}) bool {
+				if op["op"] != "add" || op["path"] != "/status/deletion" {
+					return false
+				}
+				ds, ok := op["value"].(*provisioning.DeletionStatus)
+				return ok && ds.State == provisioning.DeletionStateBlocked && len(ds.Errors) == 1 &&
+					ds.Errors[0].Code == provisioning.DeletionErrorUnknown && ds.Errors[0].Detail == "new"
+			}),
+		).
 		Once().
 		Return(nil)
 	c := &RepositoryController{statusPatcher: patcher}
@@ -524,6 +538,36 @@ func TestRepositoryController_updateDeleteStatus_UsesAddOp(t *testing.T) {
 		Status: provisioning.RepositoryStatus{DeleteError: "old"},
 	}
 	err := c.updateDeleteStatus(context.Background(), repo, errors.New("new"))
+	require.NoError(t, err)
+}
+
+// TestRepositoryController_updateDeleteStatus_ClassifiesFinalizerError verifies a
+// finalizerError is unwrapped into a structured code + finalizer on status.deletion,
+// even when wrapped by the caller.
+func TestRepositoryController_updateDeleteStatus_ClassifiesFinalizerError(t *testing.T) {
+	patcher := mocks.NewStatusPatcher(t)
+	patcher.
+		On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"),
+			mock.MatchedBy(func(op map[string]interface{}) bool {
+				return op["path"] == "/status/deleteError"
+			}),
+			mock.MatchedBy(func(op map[string]interface{}) bool {
+				ds, ok := op["value"].(*provisioning.DeletionStatus)
+				return ok && len(ds.Errors) == 1 &&
+					ds.Errors[0].Code == provisioning.DeletionErrorWebhookRemovalFailed &&
+					ds.Errors[0].Finalizer == repository.CleanFinalizer
+			}),
+		).
+		Once().
+		Return(nil)
+	c := &RepositoryController{statusPatcher: patcher}
+	repo := &provisioning.Repository{}
+	wrapped := fmt.Errorf("remove finalizers: %w", &finalizerError{
+		finalizer: repository.CleanFinalizer,
+		code:      provisioning.DeletionErrorWebhookRemovalFailed,
+		err:       errors.New("boom"),
+	})
+	err := c.updateDeleteStatus(context.Background(), repo, wrapped)
 	require.NoError(t, err)
 }
 

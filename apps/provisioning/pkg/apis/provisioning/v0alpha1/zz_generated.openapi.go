@@ -32,6 +32,9 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		ConnectionStatus{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref),
 		ConnectionWebhookConfig{}.OpenAPIModelName():               schema_pkg_apis_provisioning_v0alpha1_ConnectionWebhookConfig(ref),
 		DeleteJobOptions{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_DeleteJobOptions(ref),
+		DeletionError{}.OpenAPIModelName():                         schema_pkg_apis_provisioning_v0alpha1_DeletionError(ref),
+		DeletionErrorTarget{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_DeletionErrorTarget(ref),
+		DeletionStatus{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_DeletionStatus(ref),
 		ErrorDetails{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_ErrorDetails(ref),
 		ExportJobOptions{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref),
 		ExternalRepository{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_ExternalRepository(ref),
@@ -803,6 +806,125 @@ func schema_pkg_apis_provisioning_v0alpha1_DeleteJobOptions(ref common.Reference
 		},
 		Dependencies: []string{
 			ResourceRef{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_DeletionError(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "DeletionError is a single, structured problem blocking deletion.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"code": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Code is a stable, machine-readable identifier the frontend switches on to choose a localized message and a recovery action.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"detail": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Detail is a human-readable, English fallback message shown when the frontend has no localized message for Code. It should be actionable.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"finalizer": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Finalizer names the finalizer whose teardown produced this error, i.e. which deletion step is blocked. A client force-removing deletion removes exactly this finalizer.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"target": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Target identifies the resource this error is about, when applicable (e.g. the folder that cannot be deleted). It may be empty for errors that are not about a specific resource.",
+							Ref:         ref(DeletionErrorTarget{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"code"},
+			},
+		},
+		Dependencies: []string{
+			DeletionErrorTarget{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_DeletionErrorTarget(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "DeletionErrorTarget identifies the resource a DeletionError is about.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Group is the API group of the resource (empty for the core group).",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"resource": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Resource is the resource type (e.g. \"folders\").",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name is the resource name or UID.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_DeletionStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "DeletionStatus reports the progress of an in-progress deletion and any problems blocking it. It is populated while the resource is Terminating and its finalizers run. Clients use Errors to explain the holdup and offer recovery actions.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"state": {
+						SchemaProps: spec.SchemaProps{
+							Description: "State is the phase of the deletion.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"errors": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Errors describes the problems blocking deletion. Today at most one entry is reported (the first blocking problem encountered on a pass); the list shape is intentional so that reporting N problems later is not a breaking change.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(DeletionError{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			DeletionError{}.OpenAPIModelName()},
 	}
 }
 
@@ -2741,9 +2863,15 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 					},
 					"deleteError": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Error information during repository deletion (if any)",
+							Description: "Error information during repository deletion (if any). Deprecated: prefer the structured Deletion field. Retained for backwards compatibility with clients that read the concise string.",
 							Type:        []string{"string"},
 							Format:      "",
+						},
+					},
+					"deletion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Deletion reports the progress of an in-progress deletion and any structured problems blocking it, so clients can explain the holdup and offer recovery actions. Populated only while the repository is Terminating.",
+							Ref:         ref(DeletionStatus{}.OpenAPIModelName()),
 						},
 					},
 					"quota": {
@@ -2758,7 +2886,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 			},
 		},
 		Dependencies: []string{
-			ErrorDetails{}.OpenAPIModelName(), HealthStatus{}.OpenAPIModelName(), QuotaStatus{}.OpenAPIModelName(), ResourceCount{}.OpenAPIModelName(), SyncStatus{}.OpenAPIModelName(), TokenStatus{}.OpenAPIModelName(), WebhookStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.Condition"},
+			DeletionStatus{}.OpenAPIModelName(), ErrorDetails{}.OpenAPIModelName(), HealthStatus{}.OpenAPIModelName(), QuotaStatus{}.OpenAPIModelName(), ResourceCount{}.OpenAPIModelName(), SyncStatus{}.OpenAPIModelName(), TokenStatus{}.OpenAPIModelName(), WebhookStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.Condition"},
 	}
 }
 

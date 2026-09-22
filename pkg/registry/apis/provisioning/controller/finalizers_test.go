@@ -1282,6 +1282,14 @@ func TestProcess_CleanFinalizer_BuildFailureBlocks(t *testing.T) {
 	err := f.process(t.Context(), cfg)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "create repository from configuration")
+
+	// The failure is classified so status.deletion can name the blocked
+	// finalizer and offer a recovery action.
+	var fe *finalizerError
+	if assert.ErrorAs(t, err, &fe) {
+		assert.Equal(t, repository.CleanFinalizer, fe.finalizer)
+		assert.Equal(t, provisioning.DeletionErrorRepositoryUnavailable, fe.code)
+	}
 }
 
 // TestProcess_CleanFinalizer_SkipsWebhookWhenNotWebhookCapable verifies the
