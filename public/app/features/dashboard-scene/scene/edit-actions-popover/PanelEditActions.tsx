@@ -53,8 +53,28 @@ export function PanelEditActions({
         {t('dashboard-scene.panel-edit-actions.edit-visualization', 'Edit visualization')}
       </Button>
       <div className={styles.actionsDivider} />
-      <CopyActionButton onClick={onClickCopy} isRepeated={isRepeated} />
-      <DuplicateActionButton onClick={onClickDuplicate} isRepeated={isRepeated} />
+      <CopyActionButton
+        onClick={onClickCopy}
+        disabledReason={
+          isRepeated
+            ? t(
+                'dashboard-scene.control-edit-actions.copied-tooltip-disabled',
+                "Repeated panels can't be copied individually"
+              )
+            : undefined
+        }
+      />
+      <DuplicateActionButton
+        onClick={onClickDuplicate}
+        disabledReason={
+          isRepeated
+            ? t(
+                'dashboard-scene.control-edit-actions.duplicate-tooltip-disabled',
+                "Repeated panels can't be duplicated individually"
+              )
+            : undefined
+        }
+      />
       <DeleteActionButton
         title={t('dashboard.sidebar.viz-panel.delete-panel-title', 'Delete panel?')}
         text={t(
@@ -63,7 +83,14 @@ export function PanelEditActions({
         )}
         yesText={t('dashboard.sidebar.viz-panel.delete-panel-yes', 'Delete')}
         onConfirm={onClickDelete}
-        isRepeated={isRepeated}
+        disabledReason={
+          isRepeated
+            ? t(
+                'dashboard-scene.control-edit-actions.delete-tooltip-disabled',
+                "Repeated panels can't be deleted individually"
+              )
+            : undefined
+        }
       />
     </>
   );
