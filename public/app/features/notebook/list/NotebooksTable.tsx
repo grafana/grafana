@@ -127,7 +127,7 @@ export function NotebooksTable({ notebooks, onTagClick }: Props) {
             inline={false}
             href={notebookViewUrl(original.uid)}
             title={original.title}
-            data-testid={selectors.pages.Notebooks.List.table.row(original.title)}
+            data-testid={selectors.pages.Notebooks.List.table.row(original.uid)}
           >
             {original.title}
           </TextLink>

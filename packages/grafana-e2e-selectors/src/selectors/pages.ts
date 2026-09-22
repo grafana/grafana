@@ -1299,7 +1299,7 @@ export const versionedPages = {
       },
       table: {
         row: {
-          '13.3.0': (title: string) => `data-testid notebooks list row ${title}`,
+          '13.3.0': (uid: string) => `data-testid notebooks list row ${uid}`,
         },
         rowMenuButton: {
           '13.3.0': (uid: string) => `data-testid notebooks list row-menu-button ${uid}`,
@@ -1328,7 +1328,7 @@ export const versionedPages = {
         '13.3.0': (type: string) => `data-testid notebooks item footer-add-cell-button ${type}`,
       },
       panelCell: {
-        '13.3.0': 'data-testid notebooks item panel-cell',
+        '13.3.0': (elementName: string) => `data-testid notebooks item panel-cell ${elementName}`,
       },
     },
   },

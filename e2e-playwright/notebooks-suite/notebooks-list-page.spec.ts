@@ -1,5 +1,7 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
+import { withRowMenuOpen } from './rowMenuRetry';
+
 // `page`/`request` fixtures using the current org's namespace, such as the `namespace` fixture, are
 // per-test and cannot be used in beforeAll/afterAll - hardcoded to match custom.ini's stack_id, the
 // same way the dashboard-restore specs do.
@@ -56,8 +58,8 @@ test.describe('Notebooks list search and tag filter', () => {
   test('filters the list by search text and by clicking a row tag', async ({ page, selectors }) => {
     await page.goto('/notebooks');
 
-    const rowA = page.getByTestId(selectors.pages.Notebooks.List.table.row(TITLE_A));
-    const rowB = page.getByTestId(selectors.pages.Notebooks.List.table.row(TITLE_B));
+    const rowA = page.getByTestId(selectors.pages.Notebooks.List.table.row(uidA));
+    const rowB = page.getByTestId(selectors.pages.Notebooks.List.table.row(uidB));
 
     // Scoped to "Filter" throughout rather than ever going fully unfiltered - other specs'
     // notebooks running concurrently against the same server can otherwise push these two past
@@ -108,26 +110,30 @@ test.describe('Notebooks list row menu: copy link and export', () => {
     // Scoped to just this notebook - other specs' notebooks (e.g. the pagination test's 21 rows)
     // can otherwise push it past the default unfiltered first page.
     await page.getByTestId(selectors.pages.Notebooks.List.searchInput).fill(title);
-    const row = page.getByTestId(selectors.pages.Notebooks.List.table.row(title));
+    const row = page.getByTestId(selectors.pages.Notebooks.List.table.row(uid));
     await expect(row).toBeVisible();
 
     const rowMenuButton = page.getByTestId(selectors.pages.Notebooks.List.table.rowMenuButton(uid));
 
-    await rowMenuButton.click();
-    await page.getByTestId(selectors.pages.Notebooks.List.RowMenu.copyLink).click();
+    await withRowMenuOpen(rowMenuButton, async () => {
+      await page.getByTestId(selectors.pages.Notebooks.List.RowMenu.copyLink).click({ timeout: 5000 });
+    });
     await expect(page.getByText('Link copied to clipboard')).toBeVisible();
 
-    await rowMenuButton.click();
-    await page.getByRole('menuitem', { name: 'Export' }).hover();
-    await page.getByRole('menuitem', { name: 'Copy as Markdown' }).click();
+    await withRowMenuOpen(rowMenuButton, async () => {
+      await page.getByRole('menuitem', { name: 'Export' }).hover({ timeout: 5000 });
+      await page.getByRole('menuitem', { name: 'Copy as Markdown' }).click({ timeout: 5000 });
+    });
     await expect(page.getByText('Notebook copied as Markdown')).toBeVisible();
 
-    await rowMenuButton.click();
-    await page.getByRole('menuitem', { name: 'Export' }).hover();
-    const downloadPromise = page.waitForEvent('download');
-    await page.getByRole('menuitem', { name: 'Download as .md' }).click();
-    const download = await downloadPromise;
-    expect(download.suggestedFilename()).toMatch(/\.md$/);
+    let download: Awaited<ReturnType<typeof page.waitForEvent<'download'>>> | undefined;
+    await withRowMenuOpen(rowMenuButton, async () => {
+      await page.getByRole('menuitem', { name: 'Export' }).hover({ timeout: 5000 });
+      const downloadPromise = page.waitForEvent('download', { timeout: 5000 });
+      await page.getByRole('menuitem', { name: 'Download as .md' }).click({ timeout: 5000 });
+      download = await downloadPromise;
+    });
+    expect(download!.suggestedFilename()).toMatch(/\.md$/);
   });
 });
 
@@ -159,7 +165,7 @@ test.describe('Notebooks list pagination', () => {
     // Scoped to just this test's own rows - other specs' notebooks may exist in the list at the
     // same time, since Playwright runs spec files against the same server concurrently.
     await page.getByTestId(selectors.pages.Notebooks.List.searchInput).fill(pagePrefix);
-    await expect(page.getByTestId(selectors.pages.Notebooks.List.table.row(`${pagePrefix} 0`))).toBeVisible();
+    await expect(page.getByTestId(selectors.pages.Notebooks.List.table.row(uids[0]))).toBeVisible();
 
     const pageTwoButton = page.getByRole('button', { name: '2', exact: true });
     await expect(pageTwoButton).toBeVisible();

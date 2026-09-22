@@ -249,11 +249,18 @@ test.describe('Notebook block type menu', () => {
 
     const cellFrames = page.locator(`.${NOTEBOOK_CELL_FRAME_CLASS}`);
     await expect(cellFrames).toHaveCount(2);
+    const countBeforeAdding = await cellFrames.count();
 
     await page.getByTestId(selectors.pages.Notebooks.Item.footerAddCellButton('visualization')).click();
 
     await expect(cellFrames).toHaveCount(3);
-    await expect(page.getByTestId(selectors.pages.Notebooks.Item.panelCell)).toBeVisible();
+
+    // addCell inserts just before the editor's own trailing empty slot, not at the very end - see
+    // the same note in the keyboard test above. panelCell is keyed by the cell's generated
+    // elementName, which the test has no way to predict, so it's matched by prefix instead and
+    // scoped to this specific cell frame rather than assuming it's the only panel on the page.
+    const newCellFrame = cellFrames.nth(countBeforeAdding - 1);
+    await expect(newCellFrame.locator('[data-testid^="data-testid notebooks item panel-cell"]')).toBeVisible();
   });
 });
 

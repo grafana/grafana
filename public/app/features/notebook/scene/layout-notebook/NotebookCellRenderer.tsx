@@ -97,11 +97,12 @@ function PanelCell({
   autoFocus?: boolean;
 }) {
   const styles = useStyles2(getStyles);
+  const { elementName } = cell.useState();
 
   return (
     <Stack direction="column" gap={1}>
       {isEditing && isEditableQueryPanel(panel) && <PanelQueryEditor cell={cell} panel={panel} autoFocus={autoFocus} />}
-      <div className={styles.panel} data-testid={selectors.pages.Notebooks.Item.panelCell}>
+      <div className={styles.panel} data-testid={selectors.pages.Notebooks.Item.panelCell(elementName)}>
         <panel.Component model={panel} />
       </div>
     </Stack>

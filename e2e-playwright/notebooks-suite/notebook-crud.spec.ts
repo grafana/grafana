@@ -1,5 +1,7 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
+import { withRowMenuOpen } from './rowMenuRetry';
+
 // The `namespace` fixture is per-test and cannot be used in afterAll - hardcoded to match
 // custom.ini's stack_id, the same way the dashboard-restore specs do.
 const NAMESPACE = 'stacks-12345';
@@ -84,11 +86,13 @@ test.describe('Notebook create, rename, and delete', () => {
     await expect(page.getByText(tagName, { exact: true })).toBeVisible();
 
     await page.goto('/notebooks');
-    const row = page.getByTestId(selectors.pages.Notebooks.List.table.row(finalTitle));
+    const row = page.getByTestId(selectors.pages.Notebooks.List.table.row(notebookUid!));
     await expect(row).toBeVisible();
 
-    await page.getByTestId(selectors.pages.Notebooks.List.table.rowMenuButton(notebookUid!)).click();
-    await page.getByTestId(selectors.pages.Notebooks.List.RowMenu.delete).click();
+    const rowMenuButton = page.getByTestId(selectors.pages.Notebooks.List.table.rowMenuButton(notebookUid!));
+    await withRowMenuOpen(rowMenuButton, async () => {
+      await page.getByTestId(selectors.pages.Notebooks.List.RowMenu.delete).click({ timeout: 5000 });
+    });
     await page.getByTestId(selectors.pages.ConfirmModal.delete).click();
 
     await expect(row).toBeHidden();
