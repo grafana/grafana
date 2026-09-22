@@ -62,8 +62,9 @@ func RegisterAppInstaller(
 	tracer tracing.Tracer,
 ) (*AppInstaller, error) {
 	config := newConfigFromSettings(cfg)
-	folderResolver := NewDashboardFolderResolver(restConfigProvider.GetRestConfig, tracer, config.FolderCacheEnabled, config.FolderCacheTTL)
-	return NewAppInstaller(config, service, cleaner, accessClient, folderResolver, tracer, reg)
+	metrics := ProvideMetrics(reg)
+	folderResolver := NewDashboardFolderResolver(restConfigProvider.GetRestConfig, tracer, metrics, config.FolderCacheEnabled, config.FolderCacheTTL)
+	return NewAppInstaller(config, service, cleaner, accessClient, folderResolver, tracer, metrics, reg)
 }
 
 // NewAppInstaller Layers (from bottom to top):
@@ -80,13 +81,13 @@ func NewAppInstaller(
 	accessClient authtypes.AccessClient,
 	folderResolver DashboardFolderResolver,
 	tracer trace.Tracer,
+	metrics *Metrics,
 	reg prometheus.Registerer,
 ) (*AppInstaller, error) {
 	if folderResolver == nil {
 		return nil, fmt.Errorf("annotation service requires folder resolver")
 	}
 	logger := log.New("annotation.app")
-	metrics := ProvideMetrics(reg)
 	installer := &AppInstaller{
 		logger:  logger,
 		tracer:  tracer,

@@ -25,8 +25,8 @@ import (
 // NewDashboardFolderResolver returns a DashboardFolderResolver that fetches the dashboard's
 // parent folder via dashboard.grafana.app. restConfig is called once (lazily on first request)
 // to build the underlying client: loopback in ST, remote URL with token exchange in MT.
-func NewDashboardFolderResolver(restConfig func(context.Context) (*rest.Config, error), tracer trace.Tracer, cacheEnabled bool, cacheTTL time.Duration) DashboardFolderResolver {
-	r := &dashboardFolderResolver{client: newDashboardClient(restConfig), tracer: tracer}
+func NewDashboardFolderResolver(restConfig func(context.Context) (*rest.Config, error), tracer trace.Tracer, metrics *Metrics, cacheEnabled bool, cacheTTL time.Duration) DashboardFolderResolver {
+	r := &dashboardFolderResolver{client: newDashboardClient(restConfig), tracer: tracer, metrics: metrics}
 	if cacheEnabled {
 		r.cache = localcache.New(cacheTTL, 5*time.Minute)
 		r.cacheTTL = cacheTTL
@@ -45,6 +45,7 @@ func (NoopDashboardFolderResolver) ResolveFolder(_ context.Context, _, _ string)
 type dashboardFolderResolver struct {
 	client   *dashboardClient
 	tracer   trace.Tracer
+	metrics  *Metrics
 	cache    *localcache.CacheService
 	cacheTTL time.Duration
 }
@@ -59,7 +60,13 @@ func (r *dashboardFolderResolver) ResolveFolder(ctx context.Context, namespace, 
 	if r.cache != nil {
 		if v, ok := r.cache.Get(key); ok {
 			span.SetAttributes(attribute.Bool("cache_hit", true))
+			if r.metrics != nil {
+				r.metrics.FolderCacheHits.Inc()
+			}
 			return v.(string), nil
+		}
+		if r.metrics != nil {
+			r.metrics.FolderCacheMisses.Inc()
 		}
 	}
 

@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -24,8 +26,9 @@ func newTestDashboardFolderResolver(cacheEnabled bool, objects ...runtime.Object
 
 	const testCacheTTL = time.Minute
 	r := &dashboardFolderResolver{
-		client: &dashboardClient{gvr: gvr, dyn: fakeDyn},
-		tracer: testTracer,
+		client:  &dashboardClient{gvr: gvr, dyn: fakeDyn},
+		tracer:  testTracer,
+		metrics: ProvideMetrics(prometheus.NewRegistry()),
 	}
 	if cacheEnabled {
 		r.cache = localcache.New(testCacheTTL, time.Minute)
@@ -76,6 +79,8 @@ func TestDashboardFolderResolver_ResolveFolder(t *testing.T) {
 		assert.Equal(t, folderUID, folder)
 
 		assert.Equal(t, 1, countGets(fakeDyn), "subsequent ResolveFolder calls should be served from cache, not the apiserver")
+		assert.Equal(t, float64(1), testutil.ToFloat64(resolver.metrics.FolderCacheHits))
+		assert.Equal(t, float64(1), testutil.ToFloat64(resolver.metrics.FolderCacheMisses))
 	})
 
 	t.Run("cache disabled resolves every call from the apiserver", func(t *testing.T) {
