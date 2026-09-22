@@ -1,3 +1,3 @@
-export { getDataSourceInstance } from './datasources/getDataSourceInstance';
-export { getDataSourceInstanceList } from './datasources/getDataSourceInstanceList';
-export { getDataSourceInstanceSettings } from './datasources/getDataSourceInstanceSettings';
+export { getDataSourceInstance } from './datasources/getDataSourceInstance.js';
+export { getDataSourceInstanceList } from './datasources/getDataSourceInstanceList.js';
+export { getDataSourceInstanceSettings } from './datasources/getDataSourceInstanceSettings.js';

@@ -3,7 +3,7 @@ import { type ScopedVars, type DataSourceInstanceSettings } from '@grafana/data'
 import { getDataSourceSrv } from '@grafana/runtime';
 import { getDataSourceInstanceSettings as rtGetDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 
-import { type Ref } from './types';
+import { type Ref } from './types.js';
 
 export async function getDataSourceInstanceSettings(
   ref?: Ref,

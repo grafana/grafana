@@ -33,7 +33,9 @@ Package authors are free to create as many exports as they like but should consi
 
 We use [Lerna](https://github.com/lerna/lerna) for packages versioning and releases.
 
-All packages are versioned according to the current Grafana version:
+Lerna only manages the packages listed explicitly under `packages` in `lerna.json`. When you add a new package that should be released together with Grafana, add its directory to that list. `@grafana/plugin-compat` is deliberately left out: it is versioned by hand in its own `package.json` and released independently of Grafana.
+
+All other packages are versioned according to the current Grafana version:
 
 - Grafana v6.3.0-alpha1 -> @grafana/\* packages @ 6.3.0-alpha.1
 - Grafana v6.2.5 -> @grafana/\* packages @ 6.2.5

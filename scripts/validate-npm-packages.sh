@@ -5,6 +5,8 @@ set -e
 # It won't catch things like malformed JS or Types but it will assert that the package has
 # the correct files and package.json properties.
 ARTIFACTS_DIR="./npm-artifacts"
+# ESM-only packages (e.g. @grafana/plugin-compat) have no CJS entrypoint, so validate them with ATTW_PROFILE=esm-only.
+ATTW_PROFILE="${ATTW_PROFILE:-node16}"
 
 failed_checks=()
 
@@ -12,7 +14,7 @@ for file in "$ARTIFACTS_DIR"/*.tgz; do
   echo "🔍 Checking NPM package: $file"
 
   # If you need to debug ATTW issues, pass "--format json" to get verbose output.
-  if ! NODE_OPTIONS="-C @grafana-app/source" yarn attw "$file" --ignore-rules "false-cjs" --profile "node16"; then
+  if ! NODE_OPTIONS="-C @grafana-app/source" yarn attw "$file" --ignore-rules "false-cjs" --profile "$ATTW_PROFILE"; then
     echo "attw check failed for $file"
     echo ""
     failed_checks+=("$file - yarn attw")

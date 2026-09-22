@@ -1,5 +1,26 @@
 {
   "$schema": "node_modules/lerna/schemas/lerna-schema.json",
   "npmClient": "yarn",
+  "packages": [
+    "packages/get-document",
+    "packages/grafana-alerting",
+    "packages/grafana-api-clients",
+    "packages/grafana-data",
+    "packages/grafana-e2e-selectors",
+    "packages/grafana-eslint-rules",
+    "packages/grafana-flamegraph",
+    "packages/grafana-i18n",
+    "packages/grafana-o11y-ds-frontend",
+    "packages/grafana-openapi",
+    "packages/grafana-plugin-configs",
+    "packages/grafana-runtime",
+    "packages/grafana-schema",
+    "packages/grafana-sql",
+    "packages/grafana-test-utils",
+    "packages/grafana-ui",
+    "packages/mapbox-jsonlint-lines-primitives",
+    "public/app/plugins/*/*",
+    "e2e-playwright/test-plugins/*"
+  ],
   "version": "13.3.0-pre"
 }
