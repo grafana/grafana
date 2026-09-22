@@ -49,7 +49,15 @@
     "postpack": "mv package.json.bak package.json"
   },
   "devDependencies": {
+    "@grafana/data": "workspace:*",
+    "@grafana/runtime": "workspace:*",
+    "@grafana/schema": "workspace:*",
+    "@testing-library/dom": "10.4.1",
+    "@testing-library/react": "16.3.0",
+    "@types/react": "19.2.18",
     "@typescript/native": "npm:typescript@^7.0.2",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
     "rimraf": "^6.0.1",
     "rollup": "^4.60.1",
     "rollup-plugin-esbuild": "6.2.1",
@@ -59,6 +67,7 @@
   "peerDependencies": {
     "@grafana/data": ">=12.0.0",
     "@grafana/runtime": ">=12.0.0",
-    "@grafana/schema": ">=12.0.0"
+    "@grafana/schema": ">=12.0.0",
+    "react": ">=18"
   }
 }

@@ -2,13 +2,11 @@ package team
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
 
-	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -19,7 +17,6 @@ import (
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var (
@@ -30,18 +27,12 @@ var (
 )
 
 func NewTeamMembersREST(getter rest.Getter, tracer trace.Tracer) *TeamMembersREST {
-	return &TeamMembersREST{getter: getter, tracer: tracer, ofClient: openfeature.NewDefaultClient()}
-}
-
-func NewTeamMembersRESTWithFeature(getter rest.Getter, tracer trace.Tracer, enabled bool) *TeamMembersREST {
-	return &TeamMembersREST{getter: getter, tracer: tracer, teamsAPIEnabled: &enabled}
+	return &TeamMembersREST{getter: getter, tracer: tracer}
 }
 
 type TeamMembersREST struct {
-	getter          rest.Getter
-	tracer          trace.Tracer
-	ofClient        openfeature.IClient
-	teamsAPIEnabled *bool
+	getter rest.Getter
+	tracer trace.Tracer
 }
 
 // New implements rest.Storage.
@@ -70,16 +61,6 @@ func (s *TeamMembersREST) ProducesObject(verb string) interface{} {
 // Connect implements rest.Connecter.
 func (s *TeamMembersREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		enabled := s.teamsAPIEnabled != nil && *s.teamsAPIEnabled
-		if s.teamsAPIEnabled == nil {
-			enabled = s.ofClient.Boolean(r.Context(), featuremgmt.FlagKubernetesTeamsApi, false, openfeature.TransactionContext(r.Context()))
-		}
-		if !enabled {
-			responder.Error(apierrors.NewForbidden(iamv0alpha1.TeamResourceInfo.GroupResource(),
-				name, errors.New("functionality not available")))
-			return
-		}
-
 		ctx, span := s.tracer.Start(r.Context(), "team.members")
 		defer span.End()
 
