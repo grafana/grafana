@@ -16,6 +16,7 @@ import {
   BarGaugeValueMode,
   BarGaugeNamePlacement,
   BarGaugeSizing,
+  BigValueTextMode,
   LegendDisplayMode,
   type LegendPlacement,
 } from '@grafana/schema';
@@ -216,23 +217,37 @@ describe('BarGaugePanel', () => {
       expect(screen.getByTestId(valueSelector)).toBeInTheDocument();
     });
 
-    it.each([VizOrientation.Horizontal, VizOrientation.Vertical])(
-      'shows the series name for a single unnamed series when showNameForSingleSeries is enabled (%s)',
-      (orientation) => {
+    it.each([
+      [BigValueTextMode.Name, VizOrientation.Horizontal],
+      [BigValueTextMode.Name, VizOrientation.Vertical],
+      [BigValueTextMode.ValueAndName, VizOrientation.Horizontal],
+      [BigValueTextMode.ValueAndName, VizOrientation.Vertical],
+    ])('shows the series name for a single unnamed series when textMode is %s (%s)', (textMode, orientation) => {
+      const panelData = buildPanelData({ data: dataWithOneSeries() });
+      panelData.options.textMode = textMode;
+      panelData.options.orientation = orientation;
+
+      render(<BarGaugePanel {...panelData} />);
+
+      expect(screen.getByText(/onlyseries/i)).toBeInTheDocument();
+    });
+
+    it.each([BigValueTextMode.Value, BigValueTextMode.None])(
+      'hides the series name for a single unnamed series when textMode is %s',
+      (textMode) => {
         const panelData = buildPanelData({ data: dataWithOneSeries() });
-        panelData.options.showNameForSingleSeries = true;
-        panelData.options.orientation = orientation;
+        panelData.options.textMode = textMode;
 
         render(<BarGaugePanel {...panelData} />);
 
-        expect(screen.getByText(/onlyseries/i)).toBeInTheDocument();
+        expect(screen.queryByText(/onlyseries/i)).not.toBeInTheDocument();
         expect(screen.getByTestId(valueSelector)).toBeInTheDocument();
       }
     );
 
-    it('still hides the series name when showNameForSingleSeries is enabled but namePlacement is Hidden', () => {
+    it('still hides the series name when textMode is Name but namePlacement is Hidden', () => {
       const panelData = buildPanelData({ data: dataWithOneSeries() });
-      panelData.options.showNameForSingleSeries = true;
+      panelData.options.textMode = BigValueTextMode.Name;
       panelData.options.namePlacement = BarGaugeNamePlacement.Hidden;
 
       render(<BarGaugePanel {...panelData} />);
@@ -266,7 +281,7 @@ function buildPanelData(overrideValues?: Partial<BarGaugePanelProps>): BarGaugeP
       minVizWidth: 0,
       valueMode: BarGaugeValueMode.Color,
       namePlacement: BarGaugeNamePlacement.Auto,
-      showNameForSingleSeries: false,
+      textMode: BigValueTextMode.Auto,
       sizing: BarGaugeSizing.Auto,
       legend: {
         showLegend: false,

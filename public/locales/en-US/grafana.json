@@ -4366,7 +4366,6 @@
     "description-max-height": "Maximum row height (horizontal orientation)",
     "description-min-height": "Minimum row height (horizontal orientation)",
     "description-min-width": "Minimum column width (vertical orientation)",
-    "description-show-name-for-single-series": "Show the series name even when there is only one bar",
     "description-show-unfilled-area": "When enabled renders the unfilled region as gray",
     "display-mode-options": {
       "label-basic": "Basic",
@@ -4385,8 +4384,8 @@
       "label-left": "Left",
       "label-top": "Top"
     },
-    "name-show-name-for-single-series": "Show name for single series",
     "name-show-unfilled-area": "Show unfilled area",
+    "name-text-mode": "Text mode",
     "name-value-display": "Value display",
     "presets": {
       "basic": "Basic",
@@ -4405,6 +4404,13 @@
     "suggestions": {
       "basic": "Bar gauge",
       "lcd": "Bar gauge - LCD"
+    },
+    "text-mode-options": {
+      "label-auto": "Auto",
+      "label-name": "Name",
+      "label-none": "None",
+      "label-value": "Value",
+      "label-value-and-name": "Value and name"
     },
     "value-display-options": {
       "label-hidden": "Hidden",

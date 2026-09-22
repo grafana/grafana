@@ -6,7 +6,7 @@ import {
   standardEditorsRegistry,
   VizOrientation,
 } from '@grafana/data';
-import { BarGaugeDisplayMode, BarGaugeSizing } from '@grafana/schema';
+import { BarGaugeDisplayMode, BarGaugeSizing, BigValueTextMode } from '@grafana/schema';
 import { getAllOptionEditors } from 'app/core/components/OptionsUI/registry';
 
 import { plugin } from './module';
@@ -51,11 +51,11 @@ describe('bargauge module', () => {
     expect(displayMode?.defaultValue).toBe(BarGaugeDisplayMode.Gradient);
   });
 
-  it('registers showNameForSingleSeries as an always-visible, default-off switch', () => {
-    const showNameForSingleSeries = buildItems().find((item) => item.path === 'showNameForSingleSeries');
+  it('registers textMode as an always-visible dropdown defaulting to Auto', () => {
+    const textMode = buildItems().find((item) => item.path === 'textMode');
 
-    expect(showNameForSingleSeries?.defaultValue).toBe(false);
-    expect(showNameForSingleSeries?.showIf).toBeUndefined();
+    expect(textMode?.defaultValue).toBe(BigValueTextMode.Auto);
+    expect(textMode?.showIf).toBeUndefined();
   });
 
   it('registers two namePlacement radios gated by orientation', () => {

@@ -12,7 +12,7 @@ import {
   type PanelProps,
   VizOrientation,
 } from '@grafana/data';
-import { BarGaugeSizing } from '@grafana/schema';
+import { BarGaugeSizing, BigValueTextMode } from '@grafana/schema';
 import {
   BarGauge,
   DataLinksContextMenu,
@@ -177,7 +177,7 @@ function clearNameForSingleSeries(
   field: FieldConfig,
   display: DisplayValue
 ): DisplayValue {
-  if (count === 1 && !field.displayName && !options.showNameForSingleSeries) {
+  if (!shouldShowName(options.textMode, count, field)) {
     return {
       ...display,
       title: undefined,
@@ -185,4 +185,14 @@ function clearNameForSingleSeries(
   }
 
   return display;
+}
+
+// Auto keeps the historical single-bar heuristic; any other explicit choice decides
+// name visibility outright, independent of bar count, so it must override that heuristic.
+function shouldShowName(textMode: BigValueTextMode, count: number, field: FieldConfig): boolean {
+  if (textMode === BigValueTextMode.Auto) {
+    return count !== 1 || Boolean(field.displayName);
+  }
+
+  return textMode === BigValueTextMode.Name || textMode === BigValueTextMode.ValueAndName;
 }
