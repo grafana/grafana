@@ -3,22 +3,16 @@ import { type Unsubscribable } from 'rxjs';
 import { type SceneObjectUrlSyncHandler, type SceneObjectUrlValues, type VizPanel } from '@grafana/scenes';
 
 import { openPanelEditor } from '../panel-edit/openPanelEditor';
-import { loadShareDrawer } from '../sharing/ShareDrawer/openShareDrawer';
+import { createDashboardEditViewFor } from '../settings/createDashboardEditViewFor';
+import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { findEditPanel, getLibraryPanelBehavior } from '../utils/utils';
 
 import { type DashboardScene } from './DashboardScene';
 import { type LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from './UnconfiguredPanel';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { refuseWhilePlanning } from './refuseWhilePlanning';
 import { type DashboardSceneState } from './types/dashboard';
-
-async function loadDashboardEditView(editview: string) {
-  const { createDashboardEditViewFor } = await import(
-    /* webpackChunkName: "dashboard-settings" */ '../settings/createDashboardEditViewFor'
-  );
-
-  return createDashboardEditViewFor(editview);
-}
 
 export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   /**
@@ -29,8 +23,6 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
    * panel whose fetch fails) loses the editor for good.
    */
   private _heldEditPanelId?: string;
-  private _heldEditViewKey?: string;
-  private _heldShareView?: string;
   private _libPanelSub?: Unsubscribable;
 
   constructor(private _scene: DashboardScene) {}
@@ -45,11 +37,11 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     return {
       autofitpanels: this.getAutoFitPanels(),
       viewPanel: state.viewPanel,
-      editview: state.editview?.getUrlKey() ?? this._heldEditViewKey,
+      editview: state.editview?.getUrlKey(),
       // The hold only stands while the dashboard is still editing. Leaving edit mode clears the
       // param through its own navigation, and reporting the held id here would put it back.
       editPanel: state.editPanel?.getUrlKey() || (state.isEditing ? this._heldEditPanelId : undefined),
-      shareView: state.shareView ?? this._heldShareView,
+      shareView: state.shareView,
     };
   }
 
@@ -67,62 +59,6 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     this._heldEditPanelId = undefined;
   }
 
-  private _releaseEditView() {
-    this._heldEditViewKey = undefined;
-  }
-
-  private _enterEditView(editViewKey: string) {
-    if (this._scene.state.editview?.getUrlKey() === editViewKey || this._heldEditViewKey === editViewKey) {
-      return;
-    }
-
-    this._heldEditViewKey = editViewKey;
-    loadDashboardEditView(editViewKey)
-      .then((editview) => {
-        if (this._heldEditViewKey !== editViewKey) {
-          return;
-        }
-
-        this._heldEditViewKey = undefined;
-        this._scene.setState({ editview });
-      })
-      .catch((error) => {
-        if (this._heldEditViewKey === editViewKey) {
-          this._heldEditViewKey = undefined;
-          this._scene.setState({ editview: undefined });
-        }
-        console.error('Failed to load dashboard settings', error);
-      });
-  }
-
-  private _releaseShareView() {
-    this._heldShareView = undefined;
-  }
-
-  private _enterShareView(shareView: string) {
-    if (this._heldShareView === shareView) {
-      return;
-    }
-
-    this._heldShareView = shareView;
-    loadShareDrawer({ shareView })
-      .then((overlay) => {
-        if (this._heldShareView !== shareView) {
-          return;
-        }
-
-        this._heldShareView = undefined;
-        this._scene.setState({ shareView, overlay });
-      })
-      .catch((error) => {
-        if (this._heldShareView === shareView) {
-          this._heldShareView = undefined;
-          this._scene.setState({ shareView: undefined, overlay: undefined });
-        }
-        console.error('Failed to load share drawer', error);
-      });
-  }
-
   private getAutoFitPanels(): string | undefined {
     if (this._scene.state.body instanceof DefaultGridLayoutManager) {
       return this._scene.state.body.state.grid.state.UNSAFE_fitPanels ? 'true' : undefined;
@@ -135,7 +71,12 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     const { viewPanel, isEditing, editPanel, shareView } = this._scene.state;
     const update: Partial<DashboardSceneState> = {};
 
-    if (typeof values.editview === 'string' && this._scene.canEditDashboard()) {
+    // Reachable directly via ?editview=, independent of any settings entry point: without this
+    // check, the branch below calls onEnterEditMode() unconditionally when not already editing,
+    // undoing the invariant a plan preview depends on (see refuseWhilePlanning).
+    if (typeof values.editview === 'string' && this._scene.canEditDashboard() && !refuseWhilePlanning(this._scene)) {
+      update.editview = createDashboardEditViewFor(values.editview);
+
       // If we are not in editing (for example after full page reload)
       if (!isEditing) {
         if (this._scene.state.editable) {
@@ -143,31 +84,27 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
           // The reason for the timeout is for this change to happen after the url sync has completed
           setTimeout(() => this._scene.onEnterEditMode());
         } else {
-          this._releaseEditView();
           update.editview = undefined;
-        }
-      }
-
-      if (isEditing || this._scene.state.editable) {
-        if (this._scene.state.editview?.getUrlKey() !== values.editview) {
-          update.editview = undefined;
-          this._enterEditView(values.editview);
         }
       }
     } else if (values.hasOwnProperty('editview')) {
-      this._releaseEditView();
       update.editview = undefined;
     }
 
-    // Handle view panel state
-    if (typeof values.viewPanel === 'string') {
+    // Guarded like editview/editPanel/shareView below: a preview panel has no menu (see
+    // renderPlan.ts), but ?viewPanel= reaches the same view-panel pane directly. Its Quick
+    // toggles section is gated on the plugin's viewPanelOptions, not on isPlanning().
+    if (typeof values.viewPanel === 'string' && !refuseWhilePlanning(this._scene)) {
       update.viewPanel = values.viewPanel;
+    } else if (typeof values.viewPanel === 'string') {
+      update.viewPanel = undefined;
     } else if (viewPanel && values.viewPanel === null) {
       update.viewPanel = undefined;
     }
 
-    // Handle edit panel state
-    if (typeof values.editPanel === 'string') {
+    // Same reason as editview above: the branch below calls onEnterEditMode() unconditionally
+    // if not already editing, so this must be checked first.
+    if (typeof values.editPanel === 'string' && !refuseWhilePlanning(this._scene)) {
       const panel = findEditPanel(this._scene, values.editPanel);
 
       if (!panel) {
@@ -199,6 +136,10 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       }
 
       this._enterPanelEdit(values.editPanel, panel);
+    } else if (typeof values.editPanel === 'string') {
+      // Refused while planning: clear the param rather than leaving it to keep re-triggering on
+      // every sync tick.
+      update.editPanel = undefined;
     } else if (values.editPanel === null) {
       // Closing the pane supersedes a re-open still waiting on a library panel.
       this._releaseEditPanel();
@@ -208,18 +149,19 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       }
     }
 
-    if (typeof values.shareView === 'string') {
-      if (shareView !== values.shareView) {
-        update.shareView = undefined;
-        update.overlay = undefined;
-        this._enterShareView(values.shareView);
-      }
+    // Share is guarded elsewhere too (keyboardShortcuts.ts; the menu route is closed since a
+    // preview panel has no menu at all). ?shareView=snapshot would otherwise let a placeholder's
+    // synthetic sample data leave the preview as a durable, real-looking artifact.
+    if (typeof values.shareView === 'string' && !refuseWhilePlanning(this._scene)) {
+      update.shareView = values.shareView;
+      update.overlay = new ShareDrawer({
+        shareView: values.shareView,
+      });
+    } else if (typeof values.shareView === 'string') {
+      update.shareView = undefined;
     } else if (shareView && values.shareView === null) {
-      this._releaseShareView();
       update.overlay = undefined;
       update.shareView = undefined;
-    } else if (values.shareView === null) {
-      this._releaseShareView();
     }
 
     const layout = this._scene.state.body;
