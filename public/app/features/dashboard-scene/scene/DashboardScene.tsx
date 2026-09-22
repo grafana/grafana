@@ -42,7 +42,7 @@ import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
+import { isDashboardNewLayoutsEnabled, isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { type SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -550,7 +550,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
-    if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false)) {
+    if (isDashboardNewLayoutsEnabled()) {
       const canSave = Boolean(this.state.meta.canSave);
 
       appEvents.publish(
@@ -904,7 +904,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public copyPanel(vizPanel: VizPanel) {
-    if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false)) {
+    if (isDashboardNewLayoutsEnabled()) {
       const gridItem = vizPanel.parent;
 
       if (gridItem instanceof AutoGridItem) {
@@ -948,7 +948,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
-    if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false)) {
+    if (isDashboardNewLayoutsEnabled()) {
       const layout = getLayoutForObject(this);
       if (layout) {
         layout.pastePanel();

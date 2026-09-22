@@ -5,7 +5,6 @@ import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   type SceneObjectState,
   SceneObjectBase,
@@ -25,6 +24,7 @@ import {
 import { Box, Button, ButtonGroup, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { ContextualNavigationPaneToggle } from 'app/features/scopes/dashboards/ContextualNavigationPaneToggle';
 import { KioskMode } from 'app/types/dashboard';
@@ -215,7 +215,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const panelEditVariables = getPanelEditVariables(dashboard);
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
-  const dashboardNewLayoutsEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false);
+  const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
 
   if (!model.hasControls()) {
     // The controls row hosts the dashboard action buttons (with new layouts) and the panel edit

@@ -3,13 +3,12 @@ import { useState, useEffect } from 'react';
 import { AppEvents, LoadingState } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getBackendSrv, isFetchError, reportInteraction } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { Spinner, Stack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { ExportFormat } from 'app/features/dashboard/api/types';
-import { isDashboardV1Resource, isDashboardV2Resource } from 'app/features/dashboard/api/utils';
+import { isDashboardNewLayoutsEnabled, isDashboardV1Resource, isDashboardV2Resource } from 'app/features/dashboard/api/utils';
 
 import { type DashboardInputs, DashboardSource } from '../../types';
 import { detectExportFormat, extractV1Inputs, extractV2Inputs } from '../utils/inputs';
@@ -45,7 +44,7 @@ const initialState: ImportState = {
 };
 
 export function DashboardImportK8s({ queryParams }: Props) {
-  const dashboardNewLayoutsEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false);
+  const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
   const [state, setState] = useState<ImportState>(initialState);
 
   // Handle gcom dashboard ID from query params on mount

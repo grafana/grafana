@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { type SelectableValue, type UrlQueryMap, urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { Box, Button, Checkbox, Field, FieldSet, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 
 import { type Playlist } from '../../api/clients/playlist/v1';
 
@@ -16,7 +16,7 @@ export interface Props {
 }
 
 export const StartModal = ({ playlist, onDismiss }: Props) => {
-  const dashboardNewLayoutsEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false);
+  const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
   const [mode, setMode] = useState<PlaylistMode>(false);
   const [autoFit, setAutofit] = useState(false);
   const [hideLogo, setHideLogo] = useState(false);

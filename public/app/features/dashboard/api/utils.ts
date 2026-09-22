@@ -14,6 +14,13 @@ import { type SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { type DashboardWithAccessInfo } from './types';
 
+/**
+ * Prefer the `useDashboardNewLayouts` hook in React components - use this only where a hook can't be used
+ */
+export function isDashboardNewLayoutsEnabled(): boolean {
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false);
+}
+
 export function isV2StoredVersion(version: string | undefined): boolean {
   return version === 'v2alpha1' || version === 'v2beta1' || version === 'v2';
 }
@@ -26,7 +33,7 @@ export function getDashboardsApiVersion(responseFormat?: 'v1' | 'v2') {
   if (responseFormat === 'v1') {
     return 'v1';
   }
-  if (responseFormat === 'v2' || getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false)) {
+  if (responseFormat === 'v2' || isDashboardNewLayoutsEnabled()) {
     return 'v2';
   }
   return 'unified';

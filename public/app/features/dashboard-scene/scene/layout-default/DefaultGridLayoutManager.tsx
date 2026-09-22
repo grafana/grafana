@@ -4,7 +4,6 @@ import { AppEvents, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   type SceneObjectState,
   SceneGridLayout,
@@ -22,6 +21,7 @@ import {
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { useStyles2 } from '@grafana/ui';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty';
 
 import { addElement } from '../../actions/element/addElement';
@@ -130,7 +130,7 @@ export class DefaultGridLayoutManager
   }
 
   private _activationHandler() {
-    if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false)) {
+    if (isDashboardNewLayoutsEnabled()) {
       this._subs.add(
         this.subscribeToEvent(SceneGridLayoutDragStartEvent, ({ payload: { evt, panel } }) => {
           const gridItem = panel.parent;
@@ -157,7 +157,7 @@ export class DefaultGridLayoutManager
     vizPanel.clearParent();
 
     // With new edit mode we add panels to the bottom of the grid
-    if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false)) {
+    if (isDashboardNewLayoutsEnabled()) {
       const emptySpace = findSpaceForNewPanel(this.state.grid);
       const newGridItem = new DashboardGridItem({
         ...emptySpace,
@@ -205,7 +205,7 @@ export class DefaultGridLayoutManager
       return;
     }
 
-    if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false)) {
+    if (isDashboardNewLayoutsEnabled()) {
       edit({
         description: t('dashboard.edit-actions.paste-panel', 'Paste panel'),
         addedObject: newGridItem.state.body,
@@ -249,7 +249,7 @@ export class DefaultGridLayoutManager
       return;
     }
 
-    if (!getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false)) {
+    if (!isDashboardNewLayoutsEnabled()) {
       // No undo/redo support in legacy edit mode
       layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) });
       return;
@@ -308,7 +308,7 @@ export class DefaultGridLayoutManager
     });
 
     // No undo/redo support in legacy edit mode
-    if (!getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false)) {
+    if (!isDashboardNewLayoutsEnabled()) {
       if (gridItem.parent instanceof SceneGridRow) {
         const row = gridItem.parent;
 
@@ -435,7 +435,7 @@ export class DefaultGridLayoutManager
       forceRenderChildren(this.state.grid, true);
     };
 
-    if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false)) {
+    if (isDashboardNewLayoutsEnabled()) {
       // We do this in a timeout to wait a bit with enabling dragging as dragging enables grid animations
       // if we show the sidebar without animations it opens much faster and feels more responsive
       setTimeout(updateResizeAndDragging, 10);
@@ -670,7 +670,7 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
   const { isEditing } = dashboard.useState();
   const hasClonedParents = isRepeatCloneOrChildOf(model);
   const styles = useStyles2(getStyles);
-  const dashboardNewLayoutsEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false);
+  const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
   const showCanvasActions = isEditing && dashboardNewLayoutsEnabled && !hasClonedParents;
   const soloPanelContext = useSoloPanelContext();
 

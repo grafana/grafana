@@ -8,6 +8,7 @@
 import type * as z from 'zod';
 
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
 import type { MutationResult } from '../types';
@@ -76,7 +77,7 @@ export function readOnly(_scene: DashboardScene): PermissionCheckResult {
 }
 
 function isNewDashboardLayoutsEnabled(): boolean {
-  return getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false);
+  return isDashboardNewLayoutsEnabled();
 }
 
 /**

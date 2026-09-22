@@ -3,7 +3,6 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   ControlsLabel,
   type ControlsLayout,
@@ -16,6 +15,7 @@ import {
   useSceneObjectState,
 } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 
 import { duplicateVariable } from '../actions/variable/duplicateVariable';
 import { removeVariable } from '../actions/variable/removeVariable';
@@ -40,7 +40,7 @@ export function VariableControls({
 }) {
   const { variables: dashboardVariables } = sceneGraph.getVariables(dashboard)!.useState();
   const { isEditing } = dashboard.useState();
-  const dashboardNewLayoutsEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false);
+  const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
   const isEditingNewLayouts = isEditing && dashboardNewLayoutsEnabled;
   const variables = variablesOverride ?? dashboardVariables;
 

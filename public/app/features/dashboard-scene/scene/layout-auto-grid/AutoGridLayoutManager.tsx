@@ -13,6 +13,7 @@ import {
 } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { GRID_CELL_VMARGIN } from 'app/core/constants';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { type OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty';
 
@@ -197,7 +198,7 @@ export class AutoGridLayoutManager
       return;
     }
 
-    if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false)) {
+    if (isDashboardNewLayoutsEnabled()) {
       edit({
         description: t('dashboard.edit-actions.paste-panel', 'Paste panel'),
         addedObject: panel.state.body,

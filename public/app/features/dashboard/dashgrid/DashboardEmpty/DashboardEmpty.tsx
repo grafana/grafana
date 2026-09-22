@@ -4,8 +4,8 @@ import { useCallback, useEffect } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { Button, useStyles2, Text, Box, Stack, TextLink, Icon, FilterPill, Tooltip, Spinner } from '@grafana/ui';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { AssistantDashboardEmpty } from 'app/features/dashboard-prompt/AssistantDashboardEmpty';
 import { useDashboardGenerationAvailable } from 'app/features/dashboard-prompt/useDashboardGenerationAvailable';
@@ -36,7 +36,7 @@ const InternalDashboardEmpty = ({
   onImportDashboard,
 }: InternalProps) => {
   const styles = useStyles2(getStyles);
-  const dashboardNewLayoutsEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false);
+  const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
 
   return (
     <>
