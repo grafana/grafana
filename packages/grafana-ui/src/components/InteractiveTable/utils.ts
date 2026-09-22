@@ -38,10 +38,9 @@ function sortNumber<T extends object>(rowA: Row<T>, rowB: Row<T>, columnId: stri
 function toCellProps<T extends object, Value>(context: CellContext<T, Value>): CellProps<T, Value> {
   const value = context.getValue();
   return {
-    row: context.row,
-    cell: { value },
+    ...context,
+    cell: { ...context.cell, value },
     value,
-    table: context.table,
   };
 }
 
