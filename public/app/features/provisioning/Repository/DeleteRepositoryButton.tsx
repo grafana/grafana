@@ -12,7 +12,7 @@ import {
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { isRepositoryUnhealthy } from '../utils/repositoryStatus';
+import { isRepositoryInaccessible } from '../utils/repositoryStatus';
 
 // CLEANUP_FINALIZER removes the provider-side webhook on delete; it's the only
 // finalizer that needs the repository to be reachable. Dropping it lets an
@@ -32,12 +32,12 @@ export function DeleteRepositoryButton({ name, repository, redirectTo }: Props) 
   const [replaceRepository, replaceRequest] = useReplaceRepositoryMutation();
   const navigate = useNavigate();
 
-  // When the repository is unhealthy (e.g. its credentials have expired) the
+  // When the repository is unreachable (e.g. its credentials have expired) the
   // backend can't remove provider-side resources such as webhooks, which would
   // otherwise block deletion forever. In that case we force the deletion by
   // dropping the cleanup finalizer and warn the user those remote resources
   // will be left behind.
-  const unhealthy = isRepositoryUnhealthy(repository);
+  const inaccessible = isRepositoryInaccessible(repository);
 
   const performDelete = useCallback(
     async (deleteAction: DeleteAction) => {
@@ -51,7 +51,7 @@ export function DeleteRepositoryButton({ name, repository, redirectTo }: Props) 
       if (keepResources) {
         finalizers = [CLEANUP_FINALIZER, 'release-orphan-resources'];
       }
-      if (unhealthy) {
+      if (inaccessible) {
         const base = finalizers ?? repository?.metadata?.finalizers ?? [];
         finalizers = base.filter((finalizer) => finalizer !== CLEANUP_FINALIZER);
       }
@@ -67,7 +67,7 @@ export function DeleteRepositoryButton({ name, repository, redirectTo }: Props) 
         repositoryName: name,
         repositoryType: repository?.spec?.type ?? 'unknown',
         deleteAction,
-        forceDelete: unhealthy,
+        forceDelete: inaccessible,
         target: repository?.spec?.sync?.target ?? 'unknown',
         workflows: repository?.spec?.workflows ?? [],
       });
@@ -78,10 +78,10 @@ export function DeleteRepositoryButton({ name, repository, redirectTo }: Props) 
         navigate(redirectTo);
       }
     },
-    [deleteRepository, replaceRepository, name, repository, redirectTo, navigate, unhealthy]
+    [deleteRepository, replaceRepository, name, repository, redirectTo, navigate, inaccessible]
   );
 
-  // Appended to the confirm text when the repository is unhealthy, so the user
+  // Appended to the confirm text when the repository is unreachable, so the user
   // knows the delete will proceed but leave provider-side resources behind.
   const unhealthyWarning = t(
     'provisioning.delete-repository-button.unhealthy-warning',
@@ -99,14 +99,14 @@ export function DeleteRepositoryButton({ name, repository, redirectTo }: Props) 
           'provisioning.delete-repository-button.title-delete-repository-and-resources',
           'Delete repository configuration and resources'
         ),
-        text: unhealthy ? baseText + unhealthyWarning : baseText,
+        text: inaccessible ? baseText + unhealthyWarning : baseText,
         yesText: t('provisioning.delete-repository-button.button-delete', 'Delete'),
         noText: t('provisioning.delete-repository-button.button-cancel', 'Cancel'),
         yesButtonVariant: 'destructive',
         onConfirm: () => performDelete('remove-resources'),
       })
     );
-  }, [performDelete, unhealthy, unhealthyWarning]);
+  }, [performDelete, inaccessible, unhealthyWarning]);
 
   const showDeleteKeepResourcesModal = useCallback(() => {
     const baseText = t(
@@ -119,14 +119,14 @@ export function DeleteRepositoryButton({ name, repository, redirectTo }: Props) 
           'provisioning.delete-repository-button.title-delete-repository-only',
           'Delete repository configuration only'
         ),
-        text: unhealthy ? baseText + unhealthyWarning : baseText,
+        text: inaccessible ? baseText + unhealthyWarning : baseText,
         yesText: t('provisioning.delete-repository-button.button-delete', 'Delete'),
         noText: t('provisioning.delete-repository-button.button-cancel', 'Cancel'),
         yesButtonVariant: 'destructive',
         onConfirm: () => performDelete('keep-resources'),
       })
     );
-  }, [performDelete, unhealthy, unhealthyWarning]);
+  }, [performDelete, inaccessible, unhealthyWarning]);
 
   const isLoading = deleteRequest.isLoading || replaceRequest.isLoading;
 

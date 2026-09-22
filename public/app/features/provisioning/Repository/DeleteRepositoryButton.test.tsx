@@ -25,9 +25,15 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
 const mockDelete = jest.fn();
 const mockReplace = jest.fn();
 
-const createMockRepository = (healthy: boolean): Repository => ({
+// Builds a repository whose Ready condition reflects reachability. An
+// unreachable repo (bad creds) reports Ready=False with reason
+// AuthenticationFailed, which is what drives the force-delete path; a healthy
+// repo reports Ready=True. Pass a readyReason to model unhealthy-but-reachable
+// states (e.g. QuotaExceeded).
+const createMockRepository = (healthy: boolean, readyReason?: string): Repository => ({
   metadata: {
     name: 'test-repo',
+    generation: 1,
     // The default finalizer set the backend seeds on a repository.
     finalizers: ['remove-orphan-resources', 'remove-pending-jobs', 'cleanup'],
   },
@@ -39,7 +45,17 @@ const createMockRepository = (healthy: boolean): Repository => ({
     github: { url: 'https://github.com/owner/repo', branch: 'main' },
   },
   status: {
-    health: { healthy, checked: 0 },
+    health: { healthy, checked: 1 },
+    conditions: [
+      {
+        type: 'Ready',
+        status: healthy ? 'True' : 'False',
+        reason: healthy ? 'Available' : (readyReason ?? 'AuthenticationFailed'),
+        message: healthy ? '' : 'the repository is unhealthy',
+        lastTransitionTime: '2024-01-01T00:00:00Z',
+        observedGeneration: 1,
+      },
+    ],
     sync: { state: 'success', message: [] },
     observedGeneration: 1,
     webhook: {},
@@ -95,7 +111,11 @@ describe('DeleteRepositoryButton', () => {
   it('warns and drops the cleanup finalizer when deleting an unhealthy repository', async () => {
     const event = await openMenuAndConfirm(createMockRepository(false), /remove resources/i);
 
+    // The warning must spell out the actual consequence: provider-side
+    // resources (webhooks) can't be removed and are left behind.
     expect(event.payload.text).toMatch(/unhealthy/i);
+    expect(event.payload.text).toMatch(/webhooks/i);
+    expect(event.payload.text).toMatch(/left in place/i);
 
     event.payload.onConfirm?.();
 
@@ -142,5 +162,23 @@ describe('DeleteRepositoryButton', () => {
     await waitFor(() => expect(mockReplace).toHaveBeenCalledTimes(1));
     const replaceArg = mockReplace.mock.calls[0][0];
     expect(replaceArg.repository.metadata.finalizers).toEqual(['cleanup', 'release-orphan-resources']);
+  });
+
+  it('does not force-delete an unhealthy but still reachable repository (e.g. over quota)', async () => {
+    // Over quota reports Ready=False but the repository is still reachable, so
+    // the backend can delete the webhook — we must not drop the cleanup finalizer.
+    const event = await openMenuAndConfirm(createMockRepository(false, 'QuotaExceeded'), /remove resources/i);
+
+    expect(event.payload.text).not.toMatch(/unhealthy/i);
+
+    event.payload.onConfirm?.();
+
+    await waitFor(() => expect(mockDelete).toHaveBeenCalledWith({ name: 'test-repo' }));
+    // Reachable repo needs no finalizer edit, so no replace call and no force.
+    expect(mockReplace).not.toHaveBeenCalled();
+    expect(reportInteraction).toHaveBeenCalledWith(
+      'grafana_provisioning_repository_deleted',
+      expect.objectContaining({ deleteAction: 'remove-resources', forceDelete: false })
+    );
   });
 });
