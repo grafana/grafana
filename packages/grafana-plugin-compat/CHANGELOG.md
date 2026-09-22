@@ -1,3 +1,3 @@
-# Unreleased
+# 0.1.0 (2026-09-22)
 
-This package has not been published yet.
+Initial release. `@grafana/plugin-compat` is in **ALPHA**; the API may change between minor versions.

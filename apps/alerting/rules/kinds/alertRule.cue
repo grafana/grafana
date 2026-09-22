@@ -55,6 +55,48 @@ alertRulev0alpha1: alertRuleKind & {
 	// from spec.notificationSettings.* directly.
 	searchFields: [
 		{
+			name: "health"
+			path: "status.health"
+			type: "string"
+			capabilities: ["retrieve"]
+			description: "The health of the rule"
+		},
+		{
+			name: "lastEvaluationTime"
+			path: "status.lastEvaluationTime"
+			type: "string"
+			capabilities: ["retrieve"]
+			description: "The time of the last rule evaluation"
+		},
+		{
+			name: "evaluationDuration"
+			path: "status.evaluationDuration"
+			type: "double"
+			capabilities: ["retrieve"]
+			description: "The duration of the last rule evaluation in seconds"
+		},
+		{
+			name: "lastError"
+			path: "status.lastError"
+			type: "string"
+			capabilities: ["retrieve"]
+			description: "The error from the last rule evaluation"
+		},
+		{
+			name: "state"
+			path: "status.state"
+			type: "string"
+			capabilities: ["retrieve"]
+			description: "The state of the alert rule"
+		},
+		{
+			name: "stateReason"
+			path: "status.stateReason"
+			type: "string"
+			capabilities: ["retrieve"]
+			description: "The reason for the alert rule state"
+		},
+		{
 			name: "type"
 			type: "string"
 			capabilities: ["filter", "retrieve"]

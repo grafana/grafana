@@ -1,6 +1,7 @@
 import { render, screen } from 'test/test-utils';
 
 import { NotebookCellAddButton } from './NotebookCellAddButton';
+import { NOTEBOOK_CELL_CONTROLS_PINNED_CLASS } from './cellClassNames';
 
 describe('NotebookCellAddButton', () => {
   it('renders an accessible add-block trigger', () => {
@@ -35,5 +36,8 @@ describe('NotebookCellAddButton', () => {
     await user.click(addButton);
 
     expect(getComputedStyle(wrapper!).opacity).toBe('1');
+    // The cell list hides the controls on every cell the pointer is not over. This class is how the
+    // trigger opts out of that rule for as long as its menu is open.
+    expect(wrapper).toHaveClass(NOTEBOOK_CELL_CONTROLS_PINNED_CLASS);
   });
 });
