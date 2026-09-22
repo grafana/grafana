@@ -15,24 +15,24 @@ review_date: 2026-09-22
 
 # Configure LBAC for a Loki data source
 
+This document explains how to configure Label-Based Access Control (LBAC) for data sources for a Loki data source. LBAC for data sources filters the logs that a team can query based on labels. You can configure it on both Grafana Cloud and Grafana Enterprise.
+
 ## Grafana Cloud
 
-LBAC for data sources is generally available on Grafana Cloud for Loki data sources created with basic authentication. You create a new data source as described in [Task 1: LBAC configuration for a new Loki data source](#task-1-lbac-configuration-for-a-new-loki-data-source). Provisioning is currently not available.
+LBAC for data sources is generally available on Grafana Cloud for Loki data sources created with basic authentication. You create a new data source as described in [Configure a new Loki data source](#configure-a-new-loki-data-source-on-grafana-cloud). Provisioning is currently not available.
 
-You can't configure LBAC rules for Grafana-provisioned data sources from the UI. We recommend that you replicate the settings of the provisioned data source in a new data source as described in [Task 1: LBAC configuration for a new Loki data source](#task-1-lbac-configuration-for-a-new-loki-data-source), and then add the LBAC configuration to the new data source.
+You can't configure LBAC rules for Grafana-provisioned data sources from the UI. We recommend that you replicate the settings of the provisioned data source in a new data source, and then add the LBAC configuration to the new data source.
 
-## Before you begin
+### Before you begin
 
 Before you configure LBAC for data sources, ensure you have the following:
 
 - Permission to create a Loki tenant in Grafana Cloud.
 - Admin data source permissions for Grafana.
 
-### Permissions
+Grafana recommends that you remove all permissions for roles and teams that don't require access to the data source. This ensures that only the required teams access the data source. The recommended permissions are `Admin` permission for administrators, and `Query` permission only for the teams that you want to add LBAC for data sources rules for.
 
-We recommend that you remove all permissions for roles and teams that don't require access to the data source. This ensures that only the required teams access the data source. The recommended permissions are `Admin` permission for administrators, and `Query` permission only for the teams that you want to add LBAC for data sources rules for.
-
-## Task 1: LBAC configuration for a new Loki data source
+### Configure a new Loki data source on Grafana Cloud
 
 1. Access Loki data source details for your stack through grafana.com.
 1. Copy Loki details and create a CAP.
@@ -54,9 +54,9 @@ For more information on how to set up LBAC for data sources rules for a Loki dat
 
 LBAC for data sources is available in Grafana Enterprise for Loki connected to Grafana Enterprise Logs (GEL), created with basic authentication.
 
-You can't configure LBAC rules for Grafana-provisioned data sources from the UI. Alternatively, you can replicate the settings of the provisioned data source in a new data source as described in [Task 1: LBAC configuration for a new Loki data source](#task-1-lbac-configuration-for-a-new-loki-data-source-1), and then add the LBAC configuration to the new data source.
+You can't configure LBAC rules for Grafana-provisioned data sources from the UI. Alternatively, you can replicate the settings of the provisioned data source in a new data source, and then add the LBAC configuration to the new data source.
 
-## Before you begin
+### Before you begin
 
 Before you configure LBAC for data sources, ensure you have the following:
 
@@ -64,11 +64,9 @@ Before you configure LBAC for data sources, ensure you have the following:
 - Admin plugins permissions for Grafana.
 - Admin data source permissions for Grafana.
 
-### Permissions
+Grafana recommends that you remove all permissions for roles and teams that don't require access to the data source. This ensures that only the required teams access the data source. The recommended permissions are `Admin` permission for administrators, and `Query` permission only for the teams that you want to add LBAC for data sources rules for.
 
-We recommend that you remove all permissions for roles and teams that don't require access to the data source. This ensures that only the required teams access the data source. The recommended permissions are `Admin` permission for administrators, and `Query` permission only for the teams that you want to add LBAC for data sources rules for.
-
-## Task 0: Set up a Grafana Enterprise Logs tenant and access policies
+### Set up a Grafana Enterprise Logs tenant and access policies
 
 1. Access the plugins page and install the Grafana Enterprise Logs plugin.
 1. Connect your plugin and use the app as the cluster.
@@ -80,7 +78,7 @@ We recommend that you remove all permissions for roles and teams that don't requ
    - Ensure the access policy doesn't include `labels` rules.
    - Store the `token` to use as the password for authentication.
 
-## Task 1: LBAC configuration for a new Loki data source
+### Configure a new Loki data source on Grafana Enterprise
 
 1. Create a new Loki data source.
    - In Grafana, add a new data source and select Loki as the type.
