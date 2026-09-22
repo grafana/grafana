@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/backfill"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/enrollment"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/reconciler"
 	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
@@ -84,6 +85,7 @@ func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer
 		withSearch,
 		withSearchClient,
 		withQuotaConfig,
+		withSearchBackedListConfig,
 		withStorageMetrics,
 		withUsageStats,
 	)
@@ -253,6 +255,10 @@ func withVectorIndexers(opts *ServerOptions, resourceOpts *resource.ResourceServ
 		opts.Embedder == nil {
 		return nil
 	}
+	allowlist := vector.NewCollectionAllowlist(opts.Cfg.VectorAllowedInternalCollections, nil)
+	if !allowlist.Allows(vector.Collection{Group: "dashboard.grafana.app", Resource: "dashboards"}) {
+		return nil
+	}
 	batchEmbedder := embedder.NewBatchEmbedder(*opts.Embedder)
 	builders := []embed.Builder{dashboard.New()}
 
@@ -298,6 +304,22 @@ func withSearch(opts *ServerOptions, resourceOpts *resource.ResourceServerOption
 	if opts.VectorBackend != nil {
 		resourceOpts.Search.AllowedInternalCollections = opts.Cfg.VectorAllowedInternalCollections
 		resourceOpts.Search.AllowedExternalCollections = opts.Cfg.VectorAllowedExternalCollections
+		if resourceOpts.Search.EmbeddingBuilders == nil && (opts.Cfg.EnableSearch || opts.Cfg.VectorIndexingEnabled) {
+			configs := resourceOpts.Search.EmbeddingConfig
+			if configs == nil {
+				configs = resource.NewEmbeddingConfigRegistry(resource.AppManifests())
+				resourceOpts.Search.EmbeddingConfig = configs
+			}
+			var skipped *prometheus.CounterVec
+			if resourceOpts.VectorMetrics != nil {
+				skipped = resourceOpts.VectorMetrics.EmbedSkippedVersionsTotal
+			}
+			registry, err := enrollment.New(configs, opts.Cfg.VectorAllowedInternalCollections, []embed.Builder{dashboard.New()}, skipped)
+			if err != nil {
+				return fmt.Errorf("embedding enrollment: %w", err)
+			}
+			resourceOpts.Search.EmbeddingBuilders = registry
+		}
 		if opts.Cfg.VectorQueryCacheEnabled {
 			if cache, ok := opts.VectorBackend.(vector.QueryEmbeddingCache); ok {
 				resourceOpts.Search.QueryCache = cache
@@ -333,6 +355,17 @@ func withQuotaConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerO
 	resourceOpts.QuotasConfig = resource.QuotasConfig{
 		EnforcedResources: enforced,
 		SupportMessage:    opts.Cfg.QuotasErrorMessageSupportInfo,
+	}
+	return nil
+}
+
+func withSearchBackedListConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	allowed := make(map[string]bool, len(opts.Cfg.SearchBackedListResources))
+	for _, r := range opts.Cfg.SearchBackedListResources {
+		allowed[r] = true
+	}
+	resourceOpts.SearchBackedListConfig = resource.SearchBackedListConfig{
+		AllowedResources: allowed,
 	}
 	return nil
 }

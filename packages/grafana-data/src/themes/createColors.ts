@@ -155,7 +155,8 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     transparent: `rgba(${this.whiteBase}, 0.08)`,
     text: this.text.primary,
     contrastText: `rgb(${this.whiteBase})`,
-    border: `rgba(${this.whiteBase}, 0.08)`,
+    border: this.border.strong,
+    subtleBorder: this.border.weak,
   };
 
   tertiary = {
@@ -244,7 +245,8 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     transparent: `rgba(${this.blackBase}, 0.08)`,
     contrastText: `rgba(${this.blackBase},  1)`,
     text: this.text.primary,
-    border: this.border.weak,
+    border: this.border.strong,
+    subtleBorder: this.border.weak,
   };
 
   tertiary = {
@@ -348,7 +350,7 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
     }
 
     if (!color.background) {
-      color.background = alpha(color.main, 0.15);
+      color.background = color.main;
     }
     if (!color.backgroundEmphasis) {
       color.backgroundEmphasis = emphasize(color.background, tonalOffset);
@@ -366,6 +368,15 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
     }
     if (!color.borderEmphasis) {
       color.borderEmphasis = emphasize(color.border, tonalOffset);
+    }
+
+    // Falls back to matching background/border so themes that don't define these render identically
+    // to before subtleBackground/subtleBorder existed.
+    if (!color.subtleBackground) {
+      color.subtleBackground = alpha(color.background, 0.15);
+    }
+    if (!color.subtleBorder) {
+      color.subtleBorder = alpha(color.border, 0.25);
     }
 
     // deprecated properties, we should remove these in the future

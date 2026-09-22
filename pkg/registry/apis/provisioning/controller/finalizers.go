@@ -32,17 +32,23 @@ type jobQueueCleaner interface {
 type finalizer struct {
 	lister        resources.ResourceLister
 	clientFactory resources.ClientFactory
+	repoFactory   repository.Factory
 	jobs          jobQueueCleaner
 	metrics       *finalizerMetrics
 	maxWorkers    int
 }
 
+// process runs the repository's finalizers in a fixed order. cfg is the
+// repository configuration. The cleanup finalizer builds the repository (the
+// only finalizer that needs one) to remove the provider-side webhook; the
+// others operate on Grafana-side state from the configuration alone. A client
+// forcing deletion of an unhealthy repository removes the cleanup finalizer, so
+// the build never happens and expired credentials can't block deletion.
 func (f *finalizer) process(ctx context.Context,
-	repo repository.Repository,
-	finalizers []string,
+	cfg *provisioning.Repository,
 ) error {
 	logger := logging.FromContext(ctx)
-	logger.Info("process finalizers", "finalizers", finalizers)
+	logger.Info("process finalizers", "finalizers", cfg.Finalizers)
 
 	// Clear the job queue first so no pending job gets picked up and starts
 	// running against the repository while the rest of the teardown proceeds.
@@ -53,7 +59,7 @@ func (f *finalizer) process(ctx context.Context,
 		repository.RemoveOrphanResourcesFinalizer}
 
 	for _, finalizer := range orderedFinalizers {
-		if !slices.Contains(finalizers, finalizer) {
+		if !slices.Contains(cfg.Finalizers, finalizer) {
 			continue
 		}
 		logger.Info("running finalizer", "finalizer", finalizer)
@@ -65,7 +71,6 @@ func (f *finalizer) process(ctx context.Context,
 		switch finalizer {
 		case repository.RemovePendingJobsFinalizer:
 			logger.Info("clearing repository job queue")
-			cfg := repo.Config()
 			count, err = f.jobs.CleanupQueue(ctx, cfg.Namespace, cfg.Name)
 			if err != nil {
 				err = fmt.Errorf("clear job queue: %w", err)
@@ -73,10 +78,16 @@ func (f *finalizer) process(ctx context.Context,
 			}
 
 		case repository.CleanFinalizer:
-			// NOTE: the controller loop will never get run unless a finalizer is set
 			logger.Info("running cleanup finalizer")
-			webhookRepo, ok := repo.(repository.WebhookRepository)
-			if ok {
+			// Building decrypts secrets and constructs the provider client, so it
+			// fails when credentials have expired. That failure blocks deletion —
+			// forcing it is done by removing this finalizer, not by tolerating the
+			// error.
+			repo, buildErr := f.repoFactory.Build(ctx, cfg)
+			if buildErr != nil {
+				err = fmt.Errorf("create repository from configuration: %w", buildErr)
+				outcome = metricutils.ErrorOutcome
+			} else if webhookRepo, ok := repo.(repository.WebhookRepository); ok {
 				if err = webhookOnDelete(ctx, webhookRepo); err != nil {
 					err = fmt.Errorf("execute deletion hooks: %w", err)
 					outcome = metricutils.ErrorOutcome
@@ -85,7 +96,7 @@ func (f *finalizer) process(ctx context.Context,
 
 		case repository.ReleaseOrphanResourcesFinalizer:
 			logger.Info("releasing orphan resources")
-			count, err = f.releaseExistingItems(ctx, repo.Config())
+			count, err = f.releaseExistingItems(ctx, cfg)
 			if err != nil {
 				err = fmt.Errorf("release resources: %w", err)
 				outcome = metricutils.ErrorOutcome
@@ -93,7 +104,7 @@ func (f *finalizer) process(ctx context.Context,
 
 		case repository.RemoveOrphanResourcesFinalizer:
 			logger.Info("removing orphan resources")
-			count, err = f.deleteExistingItems(ctx, repo.Config())
+			count, err = f.deleteExistingItems(ctx, cfg)
 			if err != nil {
 				err = fmt.Errorf("remove resources: %w", err)
 				outcome = metricutils.ErrorOutcome

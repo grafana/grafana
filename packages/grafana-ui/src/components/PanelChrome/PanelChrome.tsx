@@ -60,6 +60,11 @@ interface BaseProps {
    */
   statusMessageOnClick?: (e: React.SyntheticEvent) => void;
   /**
+   * Triggers an AI-assisted investigation of the panel's errors/notices, shown as an action in
+   * the status popover. Omit to hide the action.
+   */
+  onInvestigateErrors?: (e: React.SyntheticEvent) => void;
+  /**
    * @deprecated use `actions' instead
    **/
   leftItems?: ReactNode[];
@@ -88,6 +93,11 @@ interface BaseProps {
    * Can contain text, pills, links, buttons, or any other React elements.
    */
   subHeaderContent?: ReactNode;
+  /**
+   * Minimum height (px) for the panel container. Used by content-fit layouts so
+   * the chrome still fills a floor when its content is shorter.
+   */
+  minHeight?: number;
 }
 
 interface FixedDimensions extends BaseProps {
@@ -152,6 +162,7 @@ export function PanelChrome({
   statusMessage,
   statusItems,
   statusMessageOnClick,
+  onInvestigateErrors,
   leftItems,
   actions,
   selectionId,
@@ -167,6 +178,7 @@ export function PanelChrome({
   showMenuAlways = false,
   subHeaderContent,
   subtitle,
+  minHeight,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -219,7 +231,7 @@ export function PanelChrome({
     paddingBottom: subHeaderHeight ? 0 : theme.spacing.gridSize,
   };
 
-  const containerStyles: CSSProperties = { width, height: collapsed ? undefined : height };
+  const containerStyles: CSSProperties = { width, height: collapsed ? undefined : height, minHeight };
   const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
 
   /** Old property name now maps to actions */
@@ -422,6 +434,7 @@ export function PanelChrome({
                   items={statusItems}
                   onClick={statusMessageOnClick}
                   ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-status', 'Panel status')}
+                  onInvestigateErrors={onInvestigateErrors}
                 />
               </div>
             )}
@@ -446,6 +459,7 @@ export function PanelChrome({
                     items={statusItems}
                     onClick={statusMessageOnClick}
                     ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-status', 'Panel status')}
+                    onInvestigateErrors={onInvestigateErrors}
                   />
                 </div>
               )}

@@ -196,42 +196,42 @@ export async function getDataSourceInstanceList(
   return (results.length > 0 ? results : getInstanceSettingsListFallback(filtersWithAdapter)).map(toListItem);
 }
 
-function toListItem(settings: DataSourceInstanceSettings): DataSourceInstanceListItem {
+// Expressions are included because `__expr__` (and the legacy `-100`) is the uid they are
+// registered under; they sit outside `byUid` only because they are set at boot.
+export function lookupByUid(uid: string): DataSourceInstanceSettings | undefined {
+  if (isExpressionReference(uid)) {
+    return getExpressionDataSourceSettings();
+  }
+  return byUid[uid];
+}
+
+export function toListItem(settings: DataSourceInstanceSettings): DataSourceInstanceListItem {
   return {
     uid: settings.uid,
     type: settings.type,
     apiVersion: settings.apiVersion,
     name: settings.name,
     meta: settings.meta,
-    readOnly: settings.readOnly,
     isDefault: settings.isDefault ?? false,
   };
 }
 
-// getDataSourceInstanceList appends the built-in -- Grafana -- data source to most results.
-// It is suppressed when pluginId or alerting filters are set, when tracing is set, or when
-// a custom filter callback returns false for it. Callers that want only true instances of a
-// given type must re-check the type to guard against a false positive from that appended
-// built-in. Mirrors the type predicate used inside applyFilters (exact type or aliasID match).
+// Mirrors the type predicate inside applyFilters, aliasID arm included.
 function matchesType(item: DataSourceInstanceListItem, type: string): boolean {
   return item.type === type || (item.meta.aliasIDs?.includes(type) ?? false);
 }
 
 /**
- * Resolve the default data source instance of a given type. Returns the instance flagged
- * as default, otherwise the first instance of that type, or `undefined` when none exist.
+ * Resolve the item flagged as the default data source, or `undefined` when the list holds none.
  *
- * Covers the common "get my data source" pattern (`list.find(ds => ds.isDefault) ?? list[0]`)
- * without exposing the full list. The heavy per-instance settings are not included — fetch
- * them on demand via {@link getDataSourceInstanceSettings}.
+ * At most one instance per org carries the flag, so a filtered list need not contain it.
  *
  * @public
  */
-export async function getDefaultDataSourceInstance(type: string): Promise<DataSourceInstanceListItem | undefined> {
-  const allOfType = await getDataSourceInstanceList({ type, all: true });
-  const list = allOfType.filter((item) => matchesType(item, type));
-  const defaultInstance = list.find((item) => item.isDefault);
-  return defaultInstance ?? list[0];
+export async function getDefaultDataSourceInstanceListItem(
+  items: DataSourceInstanceListItem[]
+): Promise<DataSourceInstanceListItem | undefined> {
+  return items.find((item) => item.isDefault);
 }
 
 /**
@@ -287,7 +287,13 @@ function lookupFromMaps(
   if (nameOrUid.includes('$')) {
     const interpolated = getTemplateSrv().replace(nameOrUid, scopedVars, variableInterpolation);
     if (interpolated !== nameOrUid) {
-      const resolved = interpolated === 'default' ? byName[defaultName] : (byUid[interpolated] ?? byName[interpolated]);
+      // The plain lookup below reads three maps; this branch must read the same three. Legacy
+      // DataSourceSrv.get() interpolates itself and then re-enters getInstanceSettings through
+      // that plain branch, so it reaches the id map and this one has to as well.
+      const resolved =
+        interpolated === 'default'
+          ? byName[defaultName]
+          : (byUid[interpolated] ?? byName[interpolated] ?? byId[interpolated]);
       if (!resolved) {
         return undefined;
       }

@@ -31,13 +31,11 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 	switch a.GetResource().Resource {
 	case dashboardV0.DASHBOARD_RESOURCE:
 		return b.mutateDashboard(ctx, a)
-	// Reachability invariant: Variable storage is always registered, but
-	// FlagGrafanaDashboardGlobalVariables is gated per request in GetAuthorizer. When
-	// the feature is disabled the authorizer denies the request (403) before
-	// admission runs, so this case only fires when global dashboard variables
-	// are enabled. If Variable is ever added to another version or moved to a
-	// subresource, update both the storage registration and this switch in
-	// lockstep.
+	// Reachability invariant: Variable storage is registered only when
+	// accessControl is set. The flag is gated per request in GetAuthorizer, so
+	// this case fires when the feature is enabled in embedded mode. Standalone
+	// skips storage. If Variable is added to another version or moved to a
+	// subresource, update storage registration and this switch in lockstep.
 	case dashboardV2beta1.VariableResourceInfo.GroupVersionResource().Resource:
 		return mutateVariable(a)
 

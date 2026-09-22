@@ -116,7 +116,9 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 	}
 
 	// Validating the presence of finalizers in resources not marked for deletion.
-	if cfg.DeletionTimestamp != nil || cfg.DeletionTimestamp.IsZero() {
+	// DeletionTimestamp.IsZero() is nil-safe (pointer receiver) and true exactly
+	// when the resource is not being deleted.
+	if cfg.DeletionTimestamp.IsZero() {
 		if len(cfg.Finalizers) == 0 {
 			list = append(list,
 				field.Invalid(
@@ -351,6 +353,10 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 	// AdmissionValidator is only for CREATE and UPDATE operations
 	if a.GetOperation() == admission.Delete {
 		return nil
+	}
+
+	if a.GetSubresource() != "" && !provisioningadmission.SpecAndSecureChanged(a) {
+		return nil // pure status patch: spec/secure untouched, nothing to (re)validate
 	}
 
 	obj := a.GetObject()

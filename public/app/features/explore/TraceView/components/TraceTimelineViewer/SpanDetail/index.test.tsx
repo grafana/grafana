@@ -255,6 +255,36 @@ describe('<SpanDetail>', () => {
     expect(props.processToggle).toHaveBeenLastCalledWith(span.spanID);
   });
 
+  it('keeps Resource attributes visible with an empty-state message when process.tags is empty', () => {
+    const spanWithoutResourceAttributes = {
+      ...span,
+      process: {
+        ...span.process,
+        tags: [],
+      },
+    };
+
+    render(<SpanDetail {...(props as unknown as SpanDetailProps)} span={spanWithoutResourceAttributes} />);
+
+    expect(screen.getByText('Resource attributes')).toBeInTheDocument();
+    expect(screen.getAllByText('No attributes').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole('switch', { name: /Span attributes/ })).toBeInTheDocument();
+    expect(screen.queryByRole('switch', { name: /Resource attributes/ })).not.toBeInTheDocument();
+  });
+
+  it('keeps Span attributes visible with an empty-state message when tags are empty', () => {
+    const spanWithoutSpanAttributes = {
+      ...span,
+      tags: [],
+    };
+
+    render(<SpanDetail {...(props as unknown as SpanDetailProps)} span={spanWithoutSpanAttributes} />);
+
+    expect(screen.getByText('Span attributes')).toBeInTheDocument();
+    expect(screen.getByText('No attributes')).toBeInTheDocument();
+    expect(screen.queryByRole('switch', { name: /Span attributes/ })).not.toBeInTheDocument();
+  });
+
   it('renders the logs', async () => {
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
     await userEvent.click(screen.getByRole('switch', { name: /Events/ }));
@@ -405,6 +435,42 @@ describe('<SpanDetail>', () => {
     it('does not render a Summary attributes accordion for non-summary spans', () => {
       render(<SpanDetail {...({ ...props, detailState: new DetailState() } as unknown as SpanDetailProps)} />);
       expect(screen.queryByRole('switch', { name: /Summary attributes/ })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('exception details', () => {
+    const exceptionSpan = {
+      ...span,
+      tags: [...span.tags, { key: 'http.status_code', value: 503 }],
+      logs: [
+        {
+          timestamp: 10,
+          name: 'exception',
+          fields: [
+            { key: 'exception.type', value: 'java.lang.NullPointerException' },
+            { key: 'exception.message', value: 'Cannot invoke User.getId()' },
+            { key: 'exception.stacktrace', value: 'at UserService.getUserId' },
+          ],
+        },
+      ],
+    };
+
+    it('renders the exception box above span attributes', () => {
+      render(<SpanDetail {...({ ...props, span: exceptionSpan } as unknown as SpanDetailProps)} />);
+
+      const exceptionBox = screen.getByRole('alert');
+      expect(exceptionBox).toHaveAccessibleName('Exception');
+      expect(exceptionBox).toHaveTextContent('Type:');
+      expect(exceptionBox).toHaveTextContent('java.lang.NullPointerException');
+      expect(exceptionBox).toHaveTextContent('Cannot invoke User.getId()');
+      expect(exceptionBox).not.toHaveTextContent('at UserService.getUserId');
+      expect(screen.getByRole('button', { name: 'Stacktrace' })).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    it('does not show the exception box when the span has no exception', () => {
+      render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
+
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
   });
 

@@ -252,7 +252,7 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme2, maxWidth: number | undefi
       userSelect: 'text',
     }),
     pinned: css({
-      boxShadow: theme.shadows.z3,
+      boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
     }),
   };
 };

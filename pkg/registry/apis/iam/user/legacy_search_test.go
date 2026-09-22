@@ -43,12 +43,24 @@ func TestUserLegacySearchClient_Search(t *testing.T) {
 		},
 		{
 			name:          "search by login",
-			fieldKey:      "fields.login",
+			fieldKey:      builders.USER_LOGIN,
 			fieldValues:   []string{"testlogin"},
 			expectedQuery: "testlogin",
 		},
 		{
 			name:          "search by email",
+			fieldKey:      builders.USER_EMAIL,
+			fieldValues:   []string{"test@example.com"},
+			expectedQuery: "test@example.com",
+		},
+		{
+			name:          "search by login, prefixed key",
+			fieldKey:      "fields.login",
+			fieldValues:   []string{"testlogin"},
+			expectedQuery: "testlogin",
+		},
+		{
+			name:          "search by email, prefixed key",
 			fieldKey:      "fields.email",
 			fieldValues:   []string{"test@example.com"},
 			expectedQuery: "test@example.com",
