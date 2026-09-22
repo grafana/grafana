@@ -527,7 +527,7 @@ func TestRepositoryResources_FindResourcePathAnnotations(t *testing.T) {
 				AnnotationKeys []string `json:"annotation_keys"`
 			}
 			require.NoError(t, json.Unmarshal(buf.Bytes(), &entry))
-			require.Equal(t, "WARN", entry.Level)
+			require.Equal(t, "ERROR", entry.Level)
 			require.Equal(t, gvr.Group, entry.Group)
 			require.Equal(t, gvr.Resource, entry.Resource)
 			require.Equal(t, obj.GetName(), entry.Name)

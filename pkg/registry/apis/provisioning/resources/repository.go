@@ -107,7 +107,7 @@ func (r *repositoryResources) FindResourcePath(ctx context.Context, name string,
 	source, _ := meta.GetSourceProperties()
 	sourcePath := source.Path
 	if sourcePath == "" {
-		logging.FromContext(ctx).Warn("resource has no source path annotation",
+		logging.FromContext(ctx).Error("resource has no source path annotation",
 			"group", gvr.Group,
 			"resource", gvr.Resource,
 			"name", name,
