@@ -12,6 +12,7 @@ type TokenAuthenticator interface {
 	AuthenticateToken(ctx context.Context, token string) (types.AuthInfo, error)
 }
 
+// GrafanaTokenAuthorizer is a temporary stub that returns a fixed identity without validating the token.
 type GrafanaTokenAuthorizer struct {
 	Dummy types.AuthInfo
 }

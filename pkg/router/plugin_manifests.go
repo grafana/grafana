@@ -21,6 +21,7 @@ import (
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana-app-sdk/plugin/grpcplugin"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
 	backendgrpcplugin "github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
@@ -154,7 +155,7 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 			slog.Warn("router: skipping unfingerprintable plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", keyErr)
 			continue
 		}
-		deploymentBackend := &pluginDeploymentBackend{Backend: backend, key: key}
+		deploymentBackend := &pluginDeploymentBackend{Backend: backend, key: key, authn: t.authn}
 		backends = append(backends, deploymentBackend)
 		keys[deploymentBackend.Key()] = struct{}{}
 	}
@@ -264,6 +265,10 @@ type pluginDeploymentBackend struct {
 func (b *pluginDeploymentBackend) Key() string { return b.key }
 
 func (b *pluginDeploymentBackend) Load(ctx context.Context) (http.Handler, error) {
+	if b.authn == nil {
+		return nil, fmt.Errorf("router: plugin deployment requires a token authenticator")
+	}
+
 	handler, err := b.Backend.Load(ctx)
 	if err != nil {
 		return nil, err
@@ -283,11 +288,7 @@ type authenticatingWrapper struct {
 func (a *authenticatingWrapper) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
-	token := req.Header.Get("X-????")
-	// if token == "" {
-	// 	_ = errhttp.Write(ctx, apierrors.NewUnauthorized("missing authorization token"), w)
-	// 	return
-	// }
+	token := req.Header.Get("X-Access-Token")
 
 	info, err := a.authn.AuthenticateToken(ctx, token)
 	if err != nil {
@@ -296,5 +297,9 @@ func (a *authenticatingWrapper) ServeHTTP(w http.ResponseWriter, req *http.Reque
 	}
 
 	ctx = types.WithAuthInfo(ctx, info)
-	a.ServeHTTP(w, req.WithContext(ctx))
+	// The plugin API server's authenticator still reads the legacy requester context.
+	if requester, ok := info.(identity.Requester); ok {
+		ctx = identity.WithRequester(ctx, requester)
+	}
+	a.Handler.ServeHTTP(w, req.WithContext(ctx))
 }

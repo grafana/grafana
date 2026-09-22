@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net"
 	"net/http"
@@ -10,13 +11,18 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	sdkbackend "github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	apiserverauthenticator "github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
+	"github.com/grafana/grafana/pkg/services/authn"
 )
 
 // pluginManifestsFixture is a minimal instance of the response shape a real
@@ -76,7 +82,8 @@ func TestPluginManifestsTarget_PollsFiltersAndSkipsEntriesWithoutManifest(t *tes
 	}))
 	defer srv.Close()
 
-	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{}, nil)
+	authenticator := &authn.GrafanaTokenAuthorizer{Dummy: &identity.StaticRequester{UserUID: "test-user"}}
+	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{}, authenticator)
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(t.Context())
@@ -91,6 +98,98 @@ func TestPluginManifestsTarget_PollsFiltersAndSkipsEntriesWithoutManifest(t *tes
 	backends := target.Backends()
 	require.Equal(t, "appsdktest.ext.grafana.app", backends[0].Group().Name)
 	require.Contains(t, backends[0].Key(), "managed:grafana-appsdktest-app:")
+	require.Same(t, authenticator, backends[0].(*pluginDeploymentBackend).authn)
+}
+
+type manifestTokenAuthenticatorFunc func(context.Context, string) (types.AuthInfo, error)
+
+func (f manifestTokenAuthenticatorFunc) AuthenticateToken(ctx context.Context, token string) (types.AuthInfo, error) {
+	return f(ctx, token)
+}
+
+type manifestHandlerBackend struct {
+	Backend
+	handler http.Handler
+}
+
+func (b manifestHandlerBackend) Load(context.Context) (http.Handler, error) {
+	return b.handler, nil
+}
+
+func TestPluginDeploymentBackendAuthentication(t *testing.T) {
+	for _, token := range []string{"Bearer obo-token", ""} {
+		t.Run("token="+token, func(t *testing.T) {
+			info := &identity.StaticRequester{Type: types.TypeUser, UserUID: "test-user", Namespace: "stacks-123"}
+			authCalls, handlerCalls := 0, 0
+			req := httptest.NewRequest(http.MethodGet, "/test", nil).WithContext(t.Context())
+			req.Header.Set("X-Access-Token", token)
+			backend := &pluginDeploymentBackend{
+				Backend: manifestHandlerBackend{handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					handlerCalls++
+					got, ok := types.AuthInfoFrom(r.Context())
+					require.True(t, ok)
+					require.Same(t, info, got)
+					authenticated, accepted, err := apiserverauthenticator.NewAuthenticator().AuthenticateRequest(r)
+					require.NoError(t, err)
+					require.True(t, accepted)
+					require.Same(t, info, authenticated.User)
+					require.Equal(t, req.URL, r.URL)
+					w.WriteHeader(http.StatusNoContent)
+				})},
+				authn: manifestTokenAuthenticatorFunc(func(ctx context.Context, got string) (types.AuthInfo, error) {
+					authCalls++
+					require.Equal(t, 1, authCalls, "authentication must not recurse")
+					require.Equal(t, token, got)
+					require.Equal(t, req.Context(), ctx)
+					return info, nil
+				}),
+			}
+			handler, err := backend.Load(t.Context())
+			require.NoError(t, err)
+			response := httptest.NewRecorder()
+			handler.ServeHTTP(response, req)
+			require.Equal(t, http.StatusNoContent, response.Code)
+			require.Equal(t, 1, authCalls)
+			require.Equal(t, 1, handlerCalls)
+			_, ok := types.AuthInfoFrom(req.Context())
+			require.False(t, ok, "original request must not be mutated")
+		})
+	}
+}
+
+func TestAuthenticatingWrapperRejectsAuthenticationError(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		err    error
+		status int
+	}{
+		{name: "unauthorized", err: apierrors.NewUnauthorized("invalid token"), status: http.StatusUnauthorized},
+		{name: "internal", err: errors.New("authentication unavailable"), status: http.StatusInternalServerError},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			wrapper := &authenticatingWrapper{
+				Handler: http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+					t.Fatal("handler must not run after authentication fails")
+				}),
+				authn: manifestTokenAuthenticatorFunc(func(context.Context, string) (types.AuthInfo, error) {
+					return nil, tc.err
+				}),
+			}
+			response := httptest.NewRecorder()
+			wrapper.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/test", nil))
+			require.Equal(t, tc.status, response.Code)
+		})
+	}
+}
+
+func TestPluginDeploymentBackendLoadErrors(t *testing.T) {
+	backend := &pluginDeploymentBackend{}
+	_, err := backend.Load(t.Context())
+	require.ErrorContains(t, err, "requires a token authenticator")
+	backend.authn = &authn.GrafanaTokenAuthorizer{}
+	backend.Backend = failingBackend{}
+	_, err = backend.Load(t.Context())
+	require.ErrorContains(t, err, "load failed")
 }
 
 func TestPluginManifestsTarget_GroupRegexNarrowsToMatchingGroups(t *testing.T) {
