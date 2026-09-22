@@ -79,14 +79,14 @@ func TestKVWatchSeedFallback(t *testing.T) {
 				b := srv.watchStartup.broadcaster
 				require.NoError(t, b.waitReady(ctx))
 				store.recovered.Store(true)
-				floor := b.initialCacheFloor
+				floor := b.cache.initialFloor
 				if tc.empty {
 					require.GreaterOrEqual(t, floor, before)
 				} else {
 					require.Equal(t, oldRV+1, floor)
 				}
-				require.Equal(t, floor, b.snapshotRV)
-				require.Zero(t, b.cache.len, "a failed read must not install a partial seed")
+				require.Equal(t, floor, srv.mostRecentRV.Load())
+				require.Zero(t, b.cache.events.len, "a failed read must not install a partial seed")
 				require.Equal(t, 1, logger.WarnLogs.Calls)
 				require.Contains(t, logger.WarnLogs.Message, "empty watch cache")
 				require.Contains(t, logger.WarnLogs.Ctx, floor)
