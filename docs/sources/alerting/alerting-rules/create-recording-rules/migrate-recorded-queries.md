@@ -20,7 +20,7 @@ weight: 402
 
 # Migrate recorded queries
 
-Users can transpose their [now-deprecated recorded queries](/docs/grafana/latest/administration/recorded-queries/) into Grafana-managed recording rules in a few easy steps. The query PromQL for each recorded query has been exposed on the recorded queries list along with the existing datasource, time range, and interval values to simplify the migration process.
+Users can transpose their [now-deprecated recorded queries](/docs/grafana/latest/administration/recorded-queries/) into Grafana-managed recording rules in a few easy steps. The query PromQL for each recorded query has been exposed on the recorded queries list along with the existing data source, time range, and interval values to simplify the migration process.
 
 ## Migrate your recorded queries to Grafana-managed alert rules
 
