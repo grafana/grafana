@@ -18,7 +18,7 @@ import {
   useGetAlertManagerDataSourcesByPermissionAndConfig,
 } from '../../../utils/datasource';
 import ConditionalWrap from '../../ConditionalWrap';
-import { stripInternalLabels } from '../../notification-policies/useNotificationPolicyRoute';
+import { stripNamedRouteLabel } from '../../notification-policies/useNotificationPolicyRoute';
 
 const NotificationPreviewByAlertManager = lazy(() => import('./NotificationPreviewByAlertManager'));
 const NotificationPreviewForGrafanaManaged = lazy(() => import('./NotificationPreviewGrafanaManaged'));
@@ -55,7 +55,7 @@ export const NotificationPreview = ({
   // potential instances are the instances that are going to be routed to the notification policies
   // convert data to list of labels: are the representation of the potential instances
   const potentialInstances = data.flatMap((instance) =>
-    instance.labels ? [stripInternalLabels(instance.labels)] : []
+    instance.labels ? [stripNamedRouteLabel(instance.labels)] : []
   );
 
   const onPreview = () => {

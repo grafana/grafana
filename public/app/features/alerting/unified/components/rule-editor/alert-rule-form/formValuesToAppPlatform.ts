@@ -14,7 +14,7 @@ import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 import { type RuleFormValues } from '../../../types/rule-form';
 import { cleanAnnotations, cleanLabels, fixBothInstantAndRangeQuery } from '../../../utils/rule-form';
-import { stripInternalLabels } from '../../notification-policies/useNotificationPolicyRoute';
+import { stripNamedRouteLabel } from '../../notification-policies/useNotificationPolicyRoute';
 
 const ALERT_RULE_API_VERSION = 'rules.alerting.grafana.app/v0alpha1';
 const FOLDER_ANNOTATION = 'grafana.app/folder';
@@ -71,7 +71,7 @@ export function buildAlertRuleResource(values: RuleFormValues, existingK8sName?:
   // The legacy label is fully superseded by routingTree — never send it, since the backend derives
   // the same routing label from routingTree and a stale one left in `labels` would win once
   // routingTree is unset (e.g. back to the Default policy).
-  const labels = stripInternalLabels(toRecord(cleanLabels(values.labels)));
+  const labels = stripNamedRouteLabel(toRecord(cleanLabels(values.labels)));
   const annotations = toRecord(cleanAnnotations(values.annotations));
   const notificationSettings = getNotificationSettings(values);
 

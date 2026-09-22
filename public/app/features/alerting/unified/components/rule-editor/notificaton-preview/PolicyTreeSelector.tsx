@@ -1,25 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useController, useFormContext } from 'react-hook-form';
 
+import { isDefaultRoutingTreeName } from '@grafana/alerting';
 import { type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Badge, Box, Button, Field, Select, Stack, Text, TextLink } from '@grafana/ui';
-import { type Route } from 'app/plugins/datasource/alertmanager/types';
 
 import { type RuleFormValues } from '../../../types/rule-form';
 import { ALERTING_PATHS } from '../../../utils/navigation';
-import {
-  NAMED_ROOT_LABEL_NAME,
-  useListNotificationPolicyRoutes,
-} from '../../notification-policies/useNotificationPolicyRoute';
-
-/**
- * Check if a policy is the default policy by looking at its object_matchers.
- * The default policy has a matcher for __grafana_managed_route__ with an empty value.
- */
-function isDefaultPolicy(policy: Route): boolean {
-  return policy.object_matchers?.some(([label, , value]) => label === NAMED_ROOT_LABEL_NAME && value === '') ?? false;
-}
+import { useListNotificationPolicyRoutes } from '../../notification-policies/useNotificationPolicyRoute';
 
 /**
  * PolicyTreeSelector - A component to select the notification policy tree for an alert rule.
@@ -70,7 +59,7 @@ export function PolicyTreeSelector() {
     const options: Array<SelectableValue<string>> = [];
 
     for (const policy of policies) {
-      const isDefault = isDefaultPolicy(policy);
+      const isDefault = isDefaultRoutingTreeName(policy.name);
 
       if (isDefault && defaultPolicyAdded) {
         continue;

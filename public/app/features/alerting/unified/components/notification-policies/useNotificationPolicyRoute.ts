@@ -19,7 +19,7 @@ import {
   type Route,
   type RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
-import { type Labels } from 'app/types/unified-alerting-dto';
+import { type GrafanaNotificationSettings, type Labels } from 'app/types/unified-alerting-dto';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { useNotificationPolicyAbility } from '../../hooks/abilities/alertmanager/useNotificationPolicyAbility';
@@ -425,14 +425,14 @@ export function isNamedRootMatcher(matcher: ObjectMatcher): boolean {
  * haven't been migrated to the dedicated field yet.
  */
 export function resolveNamedPolicyName(
-  notificationSettings: { policy?: string } | undefined,
+  notificationSettings: GrafanaNotificationSettings | undefined,
   labels: Labels | undefined
 ): string | undefined {
   return notificationSettings?.policy ?? labels?.[NAMED_ROOT_LABEL_NAME];
 }
 
-/** Strips the internal routing label that should never be shown to, or edited by, users. */
-export function stripInternalLabels(labels: Labels): Labels {
+/** Strips the legacy named-route label that should never be shown to, or edited by, users. */
+export function stripNamedRouteLabel(labels: Labels): Labels {
   const { [NAMED_ROOT_LABEL_NAME]: _, ...rest } = labels;
   return rest;
 }

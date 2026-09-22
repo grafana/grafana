@@ -41,7 +41,7 @@ import { type LokiQuery } from '../../../loki-helpers/types';
 import { EvalFunction } from '../../state/alertDef';
 import {
   resolveNamedPolicyName,
-  stripInternalLabels,
+  stripNamedRouteLabel,
 } from '../components/notification-policies/useNotificationPolicyRoute';
 import { getDefaultFormValues } from '../rule-editor/formDefaults';
 import { normalizeDefaultAnnotations } from '../rule-editor/formProcessing';
@@ -131,7 +131,7 @@ function resolveSelectedPolicyAndLabels(
 ): SelectedPolicyAndLabels {
   const selectedPolicy = resolveNamedPolicyName(notificationSettings, labels);
   const migratedFromLabel = selectedPolicy !== undefined && notificationSettings?.policy === undefined;
-  return { selectedPolicy, labels: migratedFromLabel ? stripInternalLabels(labels) : labels };
+  return { selectedPolicy, labels: migratedFromLabel ? stripNamedRouteLabel(labels) : labels };
 }
 
 export function getNotificationSettingsForDTO(
@@ -205,7 +205,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
   const annotations = arrayToRecord(cleanAnnotations(values.annotations));
   // The legacy label is fully superseded by notification_settings.policy — never send it, so it can
   // never coexist with (or mask) the dedicated field in the saved rule.
-  const labels = stripInternalLabels(arrayToRecord(cleanLabels(values.labels)));
+  const labels = stripNamedRouteLabel(arrayToRecord(cleanLabels(values.labels)));
 
   const wantsAlertingRule = isGrafanaAlertingRuleByType(type);
   const wantsRecordingRule = isGrafanaRecordingRuleByType(type!);

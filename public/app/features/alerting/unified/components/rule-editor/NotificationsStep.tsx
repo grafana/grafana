@@ -248,7 +248,10 @@ function AutomaticRooting({ alertUid }: AutomaticRootingProps) {
 
   // Forwards the active policy to the preview so it fetches the correct routing tree instead of
   // always defaulting to root.
-  const policyNameForPreview = resolveNamedPolicyName({ policy: selectedPolicy }, arrayToRecord(labels));
+  const policyNameForPreview = resolveNamedPolicyName(
+    selectedPolicy ? { policy: selectedPolicy } : undefined,
+    arrayToRecord(labels)
+  );
 
   return (
     <Stack direction="column" gap={2}>

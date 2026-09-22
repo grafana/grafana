@@ -36,7 +36,7 @@ import {
   parseAmConfigRoute,
   resolveNamedPolicyName,
   routeToK8sSubRoute,
-  stripInternalLabels,
+  stripNamedRouteLabel,
   useDeleteNotificationPolicy,
   useNotificationPolicyRoute,
 } from './useNotificationPolicyRoute';
@@ -176,21 +176,21 @@ describe('resolveNamedPolicyName', () => {
   });
 });
 
-describe('stripInternalLabels', () => {
+describe('stripNamedRouteLabel', () => {
   it('removes the internal routing label', () => {
     const labels: Labels = { [NAMED_ROOT_LABEL_NAME]: 'some-policy', team: 'frontend' };
-    expect(stripInternalLabels(labels)).toStrictEqual({ team: 'frontend' });
+    expect(stripNamedRouteLabel(labels)).toStrictEqual({ team: 'frontend' });
   });
 
   it('does not mutate the input object', () => {
     const labels: Labels = { [NAMED_ROOT_LABEL_NAME]: 'some-policy' };
-    stripInternalLabels(labels);
+    stripNamedRouteLabel(labels);
     expect(labels).toStrictEqual({ [NAMED_ROOT_LABEL_NAME]: 'some-policy' });
   });
 
   it('is a no-op when the internal label is absent', () => {
     const labels: Labels = { team: 'frontend' };
-    expect(stripInternalLabels(labels)).toStrictEqual({ team: 'frontend' });
+    expect(stripNamedRouteLabel(labels)).toStrictEqual({ team: 'frontend' });
   });
 });
 

@@ -29,6 +29,7 @@ import {
   getDefaultExpressions,
   getInstantFromDataQuery,
   getNotificationSettingsForDTO,
+  grafanaRuleDtoToFormValues,
   rulerRuleToFormValues,
 } from './rule-form';
 
@@ -478,6 +479,18 @@ function makeLegacyLabelRule(policyName: string): RuleWithLocation {
 describe('rulerRuleToFormValues with legacy label migration', () => {
   it('migrates the legacy label into selectedPolicy and strips it from the form labels', () => {
     const result = rulerRuleToFormValues(makeLegacyLabelRule('TestPolicy'));
+    expect(result.selectedPolicy).toBe('TestPolicy');
+    expect(result.manualRouting).toBe(false);
+    expect(result.labels).not.toContainEqual(expect.objectContaining({ key: '__grafana_managed_route__' }));
+  });
+});
+
+describe('grafanaRuleDtoToFormValues with legacy label migration', () => {
+  it('migrates the legacy label into selectedPolicy and strips it from the form labels', () => {
+    const result = grafanaRuleDtoToFormValues(
+      makeLegacyLabelRule('TestPolicy').rule as RulerGrafanaRuleDTO,
+      'my-folder'
+    );
     expect(result.selectedPolicy).toBe('TestPolicy');
     expect(result.manualRouting).toBe(false);
     expect(result.labels).not.toContainEqual(expect.objectContaining({ key: '__grafana_managed_route__' }));
