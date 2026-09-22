@@ -46,7 +46,7 @@ async function pickCluster(dialog: HTMLElement, user: UserEvent, cluster: string
 }
 
 describe('KubernetesFilterActions', () => {
-  it('saves a cluster and a custom namespace picked in the dialog, highlights the gear and reports the shape', async () => {
+  it('saves a cluster and a custom namespace picked in the dialog, highlights the gear and reports the dimensions', async () => {
     const clusters = deferred<string[]>();
     mockFetchLabelValues.mockImplementation((_uid, key) =>
       key === 'cluster' ? clusters.promise : Promise.resolve([])
@@ -82,31 +82,57 @@ describe('KubernetesFilterActions', () => {
     expect(
       screen.getByRole('button', { name: 'Edit filters (Cluster: prod · Namespaces: team/a)' })
     ).toBeInTheDocument();
-    // Only the shape of the scope is reported; cluster and namespace names never leave the browser.
+    // Dimension names only; the cluster and namespace values never leave the browser.
+    expect(mockCtaClicked).toHaveBeenCalledTimes(1);
     expect(mockCtaClicked).toHaveBeenCalledWith(GEAR_OPENED);
+    expect(mockFilterChanged).toHaveBeenCalledTimes(1);
     expect(mockFilterChanged).toHaveBeenCalledWith({
       solution: 'kubernetes',
       change: 'saved',
       previous: 'none',
-      has_cluster: true,
-      namespace_count: 1,
-      node_count: 0,
+      customized: 'cluster,namespaces',
     });
+  });
 
-    // Clearing an applied scope reports what it leaves behind: nothing.
-    await user.click(screen.getByRole('button', { name: 'Edit filters (Cluster: prod · Namespaces: team/a)' }));
+  it('clears an applied scope and reports that nothing is set', async () => {
+    window.localStorage.setItem(
+      kubernetesFilterStorageKey(),
+      JSON.stringify({
+        datasourceUid: 'prometheus',
+        datasourceName: 'Prometheus',
+        cluster: 'prod',
+        namespaces: [],
+        nodes: [],
+      })
+    );
+    const { user } = render(<KubernetesFilterActions datasource={stubDatasource} attention={false} />);
+
+    await user.click(screen.getByRole('button', { name: 'Edit filters (Cluster: prod)' }));
     await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Clear filters' }));
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    expect(mockCtaClicked).toHaveBeenCalledTimes(2);
-    expect(mockFilterChanged).toHaveBeenLastCalledWith({
+    expect(window.localStorage.getItem(kubernetesFilterStorageKey())).toBeNull();
+    expect(screen.getByRole('button', OPEN_GEAR)).toBeInTheDocument();
+    expect(mockFilterChanged).toHaveBeenCalledTimes(1);
+    expect(mockFilterChanged).toHaveBeenCalledWith({
       solution: 'kubernetes',
       change: 'cleared',
       previous: 'applied',
-      has_cluster: false,
-      namespace_count: 0,
-      node_count: 0,
+      customized: '',
     });
+  });
+
+  it('reports the gear open but no change when the dialog is cancelled', async () => {
+    const { user } = render(<KubernetesFilterActions datasource={stubDatasource} attention={false} />);
+
+    await user.click(screen.getByRole('button', OPEN_GEAR));
+    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Cancel' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(window.localStorage.getItem(kubernetesFilterStorageKey())).toBeNull();
+    expect(mockCtaClicked).toHaveBeenCalledTimes(1);
+    expect(mockCtaClicked).toHaveBeenCalledWith(GEAR_OPENED);
+    expect(mockFilterChanged).not.toHaveBeenCalled();
   });
 
   it('shows a filter saved for another datasource as not applied and lets the user clear it', async () => {
@@ -128,9 +154,13 @@ describe('KubernetesFilterActions', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(window.localStorage.getItem(kubernetesFilterStorageKey())).toBeNull();
     expect(screen.queryByText('Filters not applied')).not.toBeInTheDocument();
-    expect(mockFilterChanged).toHaveBeenCalledWith(
-      expect.objectContaining({ change: 'cleared', previous: 'other_datasource' })
-    );
+    expect(mockFilterChanged).toHaveBeenCalledTimes(1);
+    expect(mockFilterChanged).toHaveBeenCalledWith({
+      solution: 'kubernetes',
+      change: 'cleared',
+      previous: 'other_datasource',
+      customized: '',
+    });
   });
 
   it('keeps the dialog and draft and reports nothing when browser storage rejects the write', async () => {

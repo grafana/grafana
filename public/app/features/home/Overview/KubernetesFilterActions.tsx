@@ -32,13 +32,19 @@ import {
 
 const NO_SCOPE: KubernetesScope = { cluster: '', namespaces: [], nodes: [] };
 
-/** What analytics may know about a scope: label values are customer data and never leave the browser. */
-function scopeShape(scope: KubernetesScope) {
-  return {
-    has_cluster: scope.cluster !== '',
-    namespace_count: scope.namespaces.length,
-    node_count: scope.nodes.length,
-  };
+/** Names of the dimensions a scope sets, for analytics; the values are customer data and never leave the browser. */
+function customizedDimensions(scope: KubernetesScope): string {
+  const dimensions: string[] = [];
+  if (scope.cluster !== '') {
+    dimensions.push('cluster');
+  }
+  if (scope.namespaces.length > 0) {
+    dimensions.push('namespaces');
+  }
+  if (scope.nodes.length > 0) {
+    dimensions.push('nodes');
+  }
+  return dimensions.join(',');
 }
 
 interface KubernetesFilterActionsProps {
@@ -136,7 +142,7 @@ function KubernetesFilterModal({ datasource, filter, onClose }: KubernetesFilter
       setError(t('home.solutions.kubernetes.filter.save-failed', 'Could not save to browser storage. Try again.'));
       return;
     }
-    solutionFilterChanged({ solution: 'kubernetes', change, previous, ...scopeShape(scope) });
+    solutionFilterChanged({ solution: 'kubernetes', change, previous, customized: customizedDimensions(scope) });
     onClose();
   };
   const save = () =>

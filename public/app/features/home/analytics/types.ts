@@ -35,12 +35,12 @@ export interface SolutionFilterChanged extends EventProperty {
    * another datasource (shown on the card as not applied).
    */
   previous: 'none' | 'applied' | 'other_datasource';
-  /** Whether the scope in effect after the change names a cluster. Label values are customer data and never reported. */
-  has_cluster: boolean;
-  /** Number of namespaces in the scope in effect after the change. */
-  namespace_count: number;
-  /** Number of nodes in the scope in effect after the change. */
-  node_count: number;
+  /**
+   * Comma-separated names of the scope dimensions set after the change, in the solution's own terms
+   * (Kubernetes: cluster, namespaces, nodes); empty when cleared. Names only: the values are
+   * customer data and are never reported.
+   */
+  customized: string;
 }
 
 interface CtaClickedBase extends EventProperty {
