@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { type SVGProps } from 'react';
 import SVG from 'react-inlinesvg';
 
@@ -11,12 +11,13 @@ import grotCTASvg from './grot-cta.svg';
 export interface Props {
   width?: SVGProps<SVGElement>['width'];
   height?: SVGProps<SVGElement>['height'];
+  className?: SVGProps<SVGElement>['className'];
 }
 
-export const GrotCTA = ({ width = 'auto', height }: Props) => {
+export const GrotCTA = ({ width = 'auto', height, className }: Props) => {
   const styles = useStyles2(getStyles);
 
-  return <SVG src={grotCTASvg} className={styles.svg} height={height} width={width} />;
+  return <SVG src={grotCTASvg} className={cx(styles.svg, className)} height={height} width={width} />;
 };
 
 GrotCTA.displayName = 'GrotCTA';
