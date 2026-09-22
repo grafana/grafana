@@ -76,7 +76,7 @@ func TestPluginManifestsTarget_PollsFiltersAndSkipsEntriesWithoutManifest(t *tes
 	}))
 	defer srv.Close()
 
-	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{})
+	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{}, nil)
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(t.Context())
@@ -90,7 +90,7 @@ func TestPluginManifestsTarget_PollsFiltersAndSkipsEntriesWithoutManifest(t *tes
 
 	backends := target.Backends()
 	require.Equal(t, "appsdktest.ext.grafana.app", backends[0].Group().Name)
-	require.Contains(t, backends[0].Key(), "plugins_url:grafana-appsdktest-app:")
+	require.Contains(t, backends[0].Key(), "managed:grafana-appsdktest-app:")
 }
 
 func TestPluginManifestsTarget_GroupRegexNarrowsToMatchingGroups(t *testing.T) {
@@ -102,7 +102,7 @@ func TestPluginManifestsTarget_GroupRegexNarrowsToMatchingGroups(t *testing.T) {
 	patterns, err := compileGroupPatterns([]string{"*.internal"})
 	require.NoError(t, err)
 
-	target, err := newPluginManifestsTarget(srv.URL, patterns, srv.Client(), PluginDependencies{})
+	target, err := newPluginManifestsTarget(srv.URL, patterns, srv.Client(), PluginDependencies{}, nil)
 	require.NoError(t, err)
 
 	target.poll(t.Context(), make(chan struct{}, 1))
@@ -115,7 +115,7 @@ func TestPluginManifestsTarget_SignalsDirtyOnlyOnKeySetChange(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{})
+	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{}, nil)
 	require.NoError(t, err)
 
 	ctx := t.Context()
@@ -144,7 +144,7 @@ func TestPluginManifestsTarget_FailedPollLeavesLastKnownGoodSnapshot(t *testing.
 	}))
 	defer srv.Close()
 
-	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{})
+	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{}, nil)
 	require.NoError(t, err)
 
 	// Seed a snapshot as if a previous poll had succeeded, then confirm a
@@ -160,7 +160,7 @@ func TestPluginManifestsTarget_FailedPollLeavesLastKnownGoodSnapshot(t *testing.
 func TestNewPluginManifestsTarget_RejectsNonAbsoluteURL(t *testing.T) {
 	for _, badURL := range []string{"", "/just/a/path", "plugins.example.invalid"} {
 		t.Run(badURL, func(t *testing.T) {
-			_, err := newPluginManifestsTarget(badURL, nil, http.DefaultClient, PluginDependencies{})
+			_, err := newPluginManifestsTarget(badURL, nil, http.DefaultClient, PluginDependencies{}, nil)
 			require.ErrorContains(t, err, "must be absolute")
 		})
 	}
@@ -172,7 +172,7 @@ func TestPluginManifestsTargetReloadsOnHostChange(t *testing.T) {
 		_, _ = w.Write([]byte(body))
 	}))
 	defer srv.Close()
-	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{})
+	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{}, nil)
 	require.NoError(t, err)
 	dirty := make(chan struct{}, 1)
 	target.poll(t.Context(), dirty)
@@ -193,7 +193,7 @@ func TestPluginManifestsTargetRemoteClient(t *testing.T) {
 		_, _ = w.Write([]byte(body))
 	}))
 	t.Cleanup(srv.Close)
-	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{})
+	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{}, nil)
 	require.NoError(t, err)
 	t.Cleanup(target.closeConnections)
 

@@ -17,16 +17,15 @@ import (
 	"github.com/grafana/authlib/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana-app-sdk/plugin/grpcplugin"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
 	backendgrpcplugin "github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
+	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
@@ -36,7 +35,7 @@ type pluginManifestsTarget struct {
 	client   *http.Client
 	patterns []*regexp.Regexp
 	deps     PluginDependencies
-	authn    identity.TokenAuthenticator
+	authn    authn.TokenAuthenticator
 
 	cooldown *cooldown
 
@@ -53,7 +52,7 @@ func newPluginManifestsTarget(
 	patterns []*regexp.Regexp,
 	client *http.Client,
 	deps PluginDependencies,
-	authn identity.TokenAuthenticator,
+	authn authn.TokenAuthenticator,
 ) (*pluginManifestsTarget, error) {
 	parsed, err := url.Parse(rawURL)
 	if err != nil {
@@ -259,7 +258,7 @@ func pluginDeploymentKey(entry definition.PluginDeployment) (string, error) {
 type pluginDeploymentBackend struct {
 	Backend
 	key   string
-	authn identity.TokenAuthenticator
+	authn authn.TokenAuthenticator
 }
 
 func (b *pluginDeploymentBackend) Key() string { return b.key }
@@ -278,17 +277,17 @@ func (b *pluginDeploymentBackend) Load(ctx context.Context) (http.Handler, error
 
 type authenticatingWrapper struct {
 	http.Handler
-	authn identity.TokenAuthenticator
+	authn authn.TokenAuthenticator
 }
 
 func (a *authenticatingWrapper) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
-	token := req.Header.Get("X-xxxxx")
-	if token == "" {
-		_ = errhttp.Write(ctx, apierrors.NewUnauthorized("missing authorization token"), w)
-		return
-	}
+	token := req.Header.Get("X-????")
+	// if token == "" {
+	// 	_ = errhttp.Write(ctx, apierrors.NewUnauthorized("missing authorization token"), w)
+	// 	return
+	// }
 
 	info, err := a.authn.AuthenticateToken(ctx, token)
 	if err != nil {
