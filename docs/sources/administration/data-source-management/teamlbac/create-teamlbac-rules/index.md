@@ -55,7 +55,7 @@ Within a single rule, comma-separated selectors combine with **AND**. For exampl
 Across a team, multiple rules combine with **OR**. For example, the two rules `{namespace="dev"}` and `{cluster="us-west-0"}` match data where `namespace="dev"` **OR** `cluster="us-west-0"`.
 
 {{< admonition type="note" >}}
-An `Admin` user who's a member of a team with LBAC rules can access only that team's logs or metrics. An `Admin` user who isn't a member of any team with LBAC rules can access all logs or metrics.
+An `Admin` user who's a member of one or more teams with LBAC rules can access only the logs or metrics allowed by those teams' rules. An `Admin` user who isn't a member of any team with LBAC rules can access all logs or metrics.
 {{< /admonition >}}
 
 ### Traces rules
@@ -73,7 +73,11 @@ The same logic applies as for logs and metrics: comma-separated conditions in on
 Follow these recommendations when you set up rules:
 
 - Grant `Query` permission only to teams that should use the data source, and grant `Admin` permission only to administrators.
-- For a first setup, create as few rules as possible for each team and make them additive for simplicity.
+- Give every team that should be restricted its own rule. A team that has `Query` permission but no rule can query all logs or metrics.
+- Remove label selectors from the Cloud Access Policy for the data source. Cloud Access Policy rules override LBAC for data sources rules.
+- For a first setup, create as few rules as possible for each team and prefer rules that grant access over rules that exclude data, because access is the union of all rules.
+- Use a dedicated data source for LBAC, and keep a separate data source without LBAC for full access, so the separation is clear.
+- Manage rules as code with the Grafana Terraform provider for repeatable, reviewable setups.
 - To validate rules, test them in [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/). Explore shows the logs or metrics that a rule returns.
 
 ## Examples
@@ -89,6 +93,15 @@ A common use case is to grant a team access to data that has a specific label. I
 
 A user in Team A can access logs or metrics that match `namespace="dev"`. A user in both Team A and Team B can access data that matches `namespace="dev"` **OR** `namespace="prod"`.
 
+### Multiple rules for one team
+
+A team can have more than one rule, and its members can access data that matches any of them. In this example, Team A has two rules:
+
+- Rule 1: `namespace="dev"`
+- Rule 2: `namespace="prod"`
+
+A user in Team A can access logs or metrics that match `namespace="dev"` **OR** `namespace="prod"`.
+
 ### Exclude a label for a team
 
 You can exclude data that has a specific label. For example, to exclude all log lines labeled `secret="true"`, add the selector `secret!="true"`. In this example, Team A has one rule:
@@ -103,6 +116,8 @@ A single rule can combine multiple conditions with **AND**. In this example, Tea
 
 - Team A has the rule `cluster="us-west-0", namespace=~"dev|prod"`.
 - Team B has the rule `cluster="us-west-0", namespace="staging"`.
+
+The `=~` operator matches a regular expression, so `namespace=~"dev|prod"` matches either `dev` or `prod`.
 
 A user in only Team A can access logs or metrics that match `cluster="us-west-0"` **AND** (`namespace="dev"` **OR** `namespace="prod"`).
 
