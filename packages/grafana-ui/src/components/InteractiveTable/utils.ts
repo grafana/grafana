@@ -6,7 +6,6 @@ import {
   type ColumnDef,
   type HeaderContext,
   type Row,
-  type SortingFn,
   type SortingFnOption,
 } from '@tanstack/react-table';
 import { get } from 'lodash';
@@ -30,13 +29,13 @@ const SORTING_FNS: Record<Exclude<SortType, 'number'>, BuiltInSortingFn> = {
   alphanumeric: 'alphanumeric',
 };
 
-const sortNumber: SortingFn<object> = (rowA: Row<object>, rowB: Row<object>, columnId: string) => {
+function sortNumber<T extends object>(rowA: Row<T>, rowB: Row<T>, columnId: string) {
   const replaceNonNumeric = /[^0-9.]/gi;
   const a = Number(String(rowA.getValue(columnId)).replace(replaceNonNumeric, ''));
   const b = Number(String(rowB.getValue(columnId)).replace(replaceNonNumeric, ''));
 
   return a === b ? 0 : a > b ? 1 : -1;
-};
+}
 
 function toCellProps<T extends object, Value>(
   context: CellContext<T, Value> & { __rowID?: string }
