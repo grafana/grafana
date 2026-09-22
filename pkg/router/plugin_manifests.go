@@ -10,10 +10,18 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"sync"
 	"sync/atomic"
 	"time"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
+	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
+	"github.com/grafana/grafana-app-sdk/plugin/grpcplugin"
+	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/plugins"
+	backendgrpcplugin "github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 )
@@ -29,6 +37,10 @@ type pluginManifestsTarget struct {
 
 	snapshot atomic.Pointer[[]Backend]
 	lastKeys atomic.Pointer[map[string]struct{}]
+
+	connectionsMu sync.Mutex
+	connections   map[string]*grpc.ClientConn
+	closed        bool
 }
 
 func newPluginManifestsTarget(rawURL string, patterns []*regexp.Regexp, client *http.Client, deps PluginDependencies) (*pluginManifestsTarget, error) {
@@ -68,6 +80,7 @@ func (t *pluginManifestsTarget) Backends() []Backend {
 // shape to aggregateTarget.run; see that method's doc for why there is
 // deliberately only one timing source.
 func (t *pluginManifestsTarget) run(ctx context.Context, dirty chan<- struct{}) {
+	defer t.closeConnections()
 	timer := time.NewTimer(0) // fire immediately; don't wait an interval for the first attempt
 	defer timer.Stop()
 
@@ -107,6 +120,10 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 			continue
 		}
 
+		clients := func(ctx context.Context, id string) (plugins.Client, v3.ClientV3, error) {
+			return t.pluginClients(entry.Host)
+		}
+
 		// Remove any dependencies that may try to load settings
 		// After the manifest CRUD works, we can explore getting these wired properly
 		deps := t.deps
@@ -114,13 +131,7 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 		deps.ContextProvider = nil
 		deps.PluginSettings = nil
 		deps.DualWrite = nil
-		backend, err := NewPluginBackend(entry.Definition,
-			func(ctx context.Context, id string) (plugins.Client, v3.ClientV3, error) {
-				// TODO -- But not in this PR!
-				// we need to load a real client based on Host
-				return nil, nil, nil
-			}, deps,
-		)
+		backend, err := NewPluginBackend(entry.Definition, clients, deps)
 
 		if err != nil {
 			slog.Warn("router: skipping plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", err)
@@ -147,6 +158,53 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 		default: // already pending; coalesce
 		}
 	}
+}
+
+func (t *pluginManifestsTarget) pluginClients(host string) (plugins.Client, v3.ClientV3, error) {
+	t.connectionsMu.Lock()
+	defer t.connectionsMu.Unlock()
+	if t.closed {
+		return nil, nil, fmt.Errorf("router: plugin manifests target is closed")
+	}
+	if host == "" {
+		return nil, nil, fmt.Errorf("router: plugin deployment host is empty")
+	}
+	conn := t.connections[host]
+	if conn == nil {
+		// Plugin deployments expose plaintext gRPC on the internal cluster network.
+		var err error
+		conn, err = grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			return nil, nil, fmt.Errorf("router: creating plugin client for %q: %w", host, err)
+		}
+		if t.connections == nil {
+			t.connections = make(map[string]*grpc.ClientConn)
+		}
+		t.connections[host] = conn
+	}
+	// NOTE: ClientV2 is missing ALL the middleware...
+	return &backendgrpcplugin.ClientV2{
+			DiagnosticsClient: pluginv2.NewDiagnosticsClient(conn),
+			ResourceClient:    pluginv2.NewResourceClient(conn),
+			DataClient:        pluginv2.NewDataClient(conn),
+			StreamClient:      pluginv2.NewStreamClient(conn),
+			AdmissionClient:   pluginv2.NewAdmissionControlClient(conn),
+			ConversionClient:  pluginv2.NewResourceConversionClient(conn),
+		}, &grpcplugin.ClientV3{
+			AdmissionServiceClient:  pluginv3.NewAdmissionServiceClient(conn),
+			ConversionServiceClient: pluginv3.NewConversionServiceClient(conn),
+			RouteServiceClient:      pluginv3.NewRouteServiceClient(conn),
+		}, nil
+}
+
+func (t *pluginManifestsTarget) closeConnections() {
+	t.connectionsMu.Lock()
+	defer t.connectionsMu.Unlock()
+	t.closed = true
+	for _, conn := range t.connections {
+		_ = conn.Close()
+	}
+	t.connections = nil
 }
 
 // fetchPluginManifests fetches and decodes the plugin-manifests operator's
