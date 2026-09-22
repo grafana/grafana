@@ -5,12 +5,15 @@ import (
 	"fmt"
 
 	authlib "github.com/grafana/authlib/types"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -161,13 +164,16 @@ func NewAuthorizer(repo *provisioning.Repository, reader repository.Reader, acce
 //
 // Authorization Model:
 //   - For new resources: checks the destination folder (derived from the file path).
+//     New dashboard previews can inherit read access from the nearest existing
+//     ancestor when the destination folder has not been synced yet.
 //   - For existing resources where the folder is unchanged: checks that single folder.
 //   - For existing resources where the folder changes (cross-folder move): checks both
 //     the current DB location AND the destination. The user must have the required verb
 //     on both to prevent moving resources into folders they cannot access.
 //
-// The destination folder is always derived from the file path (parser.go), never from
-// user-supplied JSON body content, so it cannot be spoofed.
+// The destination folder is derived from the file path and repository folder metadata.
+// Preview fallback resolves ancestors from the configured branch so PR metadata cannot
+// bypass an existing folder's permissions.
 //
 // Example - Creating a new dashboard:
 //   - File path resolves to: folder="team-a"
@@ -215,12 +221,89 @@ func (a *ProvisioningAuthorizer) AuthorizeResource(ctx context.Context, parsed *
 		}
 	}
 
-	return a.access.Check(ctx, authlib.CheckRequest{
+	req := authlib.CheckRequest{
 		Group:    parsed.GVR.Group,
 		Resource: parsed.GVR.Resource,
 		Name:     name,
 		Verb:     verb,
-	}, metaFolder)
+	}
+	// Check the destination first. A new dashboard's folder may exist only in Git,
+	// leaving no stored hierarchy for permission inheritance. Only denied preview
+	// reads can try ancestor authorization; writes and existing dashboards retain
+	// their original permission checks.
+	err := a.access.Check(ctx, req, metaFolder)
+	if !apierrors.IsForbidden(err) || !isNewDashboardPreview(parsed, verb) {
+		return err
+	}
+	return a.authorizeNewDashboardPreview(ctx, parsed, req, err)
+}
+
+// isNewDashboardPreview limits ancestor lookup to new dashboard reads with a safe
+// repository path, preserving the normal checks for writes and existing resources.
+func isNewDashboardPreview(parsed *ParsedResource, verb string) bool {
+	if verb != utils.VerbGet || parsed.Existing != nil || !parsed.FolderScoped ||
+		parsed.GVR.GroupResource() != DashboardResource.GroupResource() {
+		return false
+	}
+	if parsed.Meta.GetFolder() == "" || parsed.Info == nil || parsed.Info.Path == "" {
+		return false
+	}
+	return IsPathSupported(parsed.Info.Path) == nil && !safepath.IsDir(parsed.Info.Path)
+}
+
+// authorizeNewDashboardPreview checks the nearest existing folder when a new
+// dashboard's destination has not been synced. Ancestors are resolved from the
+// configured branch so PR metadata cannot bypass an existing folder's permissions.
+// The search stops at the first existing folder or the repository root, preserving
+// the original denial if no real ancestor exists.
+func (a *ProvisioningAuthorizer) authorizeNewDashboardPreview(ctx context.Context, parsed *ParsedResource, req authlib.CheckRequest, denied error) error {
+	// Existence must be independent of the caller's folder access. Authorization
+	// below still uses the original caller, never the provisioning identity.
+	folderCtx, _, err := identity.WithProvisioningIdentity(ctx, a.repo.Namespace)
+	if err != nil {
+		return fmt.Errorf("use provisioning identity for folder lookup: %w", err)
+	}
+	folders, _, err := a.clients.Folder(folderCtx)
+	if err != nil {
+		return fmt.Errorf("get folder client for preview: %w", err)
+	}
+	destination := parsed.Meta.GetFolder()
+	if _, err := folders.Get(folderCtx, destination, metav1.GetOptions{}); err == nil {
+		// The privileged lookup only proves the folder exists, not that the caller
+		// can read it. Preserve the original denial; fallback is only for missing folders.
+		return denied
+	} else if !apierrors.IsNotFound(err) {
+		return fmt.Errorf("get preview destination folder %q: %w", destination, err)
+	}
+
+	// Walk from the dashboard's directory toward the repository root, skipping only
+	// folders absent from Grafana. The first existing folder's permission result
+	// is final. An empty directory selects RootFolder, which must be checked
+	// before ending the walk.
+	for dir := safepath.Dir(parsed.Info.Path); ; dir = safepath.Dir(dir) {
+		folderID := RootFolder(a.repo)
+		if dir != "" {
+			// Include the immediate directory: its configured UID may differ from
+			// a missing UID supplied by the PR, and still identify a real folder.
+			folderID, err = a.getFolderID(ctx, dir)
+			if err != nil {
+				return fmt.Errorf("resolve preview ancestor %q: %w", dir, err)
+			}
+		}
+		if folderID == "" {
+			return denied
+		}
+		if folderID != destination {
+			if _, err := folders.Get(folderCtx, folderID, metav1.GetOptions{}); err == nil {
+				return a.access.Check(ctx, req, folderID)
+			} else if !apierrors.IsNotFound(err) {
+				return fmt.Errorf("get preview ancestor folder %q: %w", folderID, err)
+			}
+		}
+		if dir == "" {
+			return denied
+		}
+	}
 }
 
 // getFolderID resolves the folder ID for the given path, always reading
