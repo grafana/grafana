@@ -18,7 +18,6 @@ import {
 import { type FacetedData, type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 
-
 import { getXAxisConfig } from '../../../core/components/TimeSeries/utils';
 import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
