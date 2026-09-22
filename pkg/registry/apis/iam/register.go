@@ -453,7 +453,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	}
 
 	if enableUserApi {
-		if err := b.UpdateUsersAPIGroup(opts, storage, enableZanzanaSync); err != nil {
+		if err := b.UpdateUsersAPIGroup(opts, storage, enableZanzanaSync, enableTeamsApi); err != nil {
 			return err
 		}
 	}
@@ -630,11 +630,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 		}
 	}
 
-	if b.features != nil {
-		storage[teamResource.StoragePath("members")] = team.NewTeamMembersRESTWithFeature(b.teamGetter, b.tracing, b.features.TeamsAPI)
-	} else {
-		storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(b.teamGetter, b.tracing)
-	}
+	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(b.teamGetter, b.tracing)
 
 	if b.teamSearchHandler != nil {
 		b.teamSearchHandler.SetTeamGetter(b.teamGetter)
@@ -717,7 +713,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAuthInfoAPIGroup(opts builder
 	return nil
 }
 
-func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableZanzanaSync bool) error {
+func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableZanzanaSync, enableTeamsAPI bool) error {
 	userResource := iamv0.UserResourceInfo
 
 	userSelectableFieldsOpts := grafanaregistry.SelectableFieldsOptions{
@@ -779,9 +775,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 				b.store,
 			)
 		}
-		if b.features != nil {
-			storage[userResource.StoragePath("teams")] = user.NewUserTeamRESTWithFeature(teamSearchClient, b.teamGetter, b.tracing, b.features.TeamsAPI)
-		} else {
+		if enableTeamsAPI {
 			storage[userResource.StoragePath("teams")] = user.NewUserTeamREST(teamSearchClient, b.teamGetter, b.tracing)
 		}
 	}

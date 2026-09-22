@@ -1,8 +1,9 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ComponentProps } from 'react';
 
 import { type TimeRange } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 
 import { MetricsList } from './MetricsList';
 import { useLabelValues } from './data/useLabelValues';
@@ -16,9 +17,15 @@ jest.mock('./data/useMetricCatalog');
 jest.mock('./data/useMetricDetail');
 jest.mock('./data/useLabelValues');
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
+
 const useMetricCatalogMock = jest.mocked(useMetricCatalog);
 const useMetricDetailMock = jest.mocked(useMetricDetail);
 const useLabelValuesMock = jest.mocked(useLabelValues);
+const reportInteractionMock = jest.mocked(reportInteraction);
 
 const timeRange = { raw: { from: 'now-1h', to: 'now' }, from: {}, to: {} } as unknown as TimeRange;
 const otherTimeRange = { raw: { from: 'now-6h', to: 'now' }, from: {}, to: {} } as unknown as TimeRange;
@@ -36,6 +43,7 @@ const list = (props: Partial<ComponentProps<typeof MetricsList>> = {}) => (
     refId="A"
     dsUid="prom-uid"
     dsType="prometheus"
+    stackedQueriesCount={1}
     timeRange={timeRange}
     onSelectMetric={onSelectMetric}
     {...props}
@@ -62,6 +70,7 @@ describe('<MetricsList />', () => {
     useMetricCatalogMock.mockReset();
     useMetricDetailMock.mockReset().mockReturnValue({ labelKeys: [], loading: false });
     useLabelValuesMock.mockReset().mockReturnValue({ values: [], loading: false });
+    reportInteractionMock.mockReset();
   });
 
   it('renders the search input', () => {
@@ -472,6 +481,193 @@ describe('<MetricsList />', () => {
 
       expect(screen.queryByText('web-1')).not.toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Show values for job' })).toBeInTheDocument();
+    });
+  });
+
+  describe('analytics', () => {
+    const selectMetric = (name: string) =>
+      userEvent.click(screen.getByRole('button', { name: `Show details for ${name}` }));
+
+    it('reports an expanded metric with its datasource and how many queries are stacked', async () => {
+      setCatalog([row('up')]);
+      renderList({ dsType: 'grafana-amazonprometheus-datasource', stackedQueriesCount: 3 });
+
+      await expandMetric('up');
+
+      expect(reportInteractionMock).toHaveBeenCalledWith('signal_explorer_metric_expanded', {
+        data_source_type: 'grafana-amazonprometheus-datasource',
+        stacked_queries_count: 3,
+      });
+    });
+
+    // Collapsing is not a metric being explored, and counting it would double every expansion.
+    it('reports nothing when the metric row collapses again', async () => {
+      setCatalog([row('up')]);
+      renderList();
+      await expandMetric('up');
+      reportInteractionMock.mockClear();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Collapse up' }));
+
+      expect(reportInteractionMock).not.toHaveBeenCalled();
+    });
+
+    it('reports a metric selected for its metadata', async () => {
+      setCatalog([row('up')]);
+      renderList({ stackedQueriesCount: 2 });
+
+      await selectMetric('up');
+
+      expect(reportInteractionMock).toHaveBeenCalledWith('signal_explorer_metrics_metadata_viewed', {
+        data_source_type: 'prometheus',
+        stacked_queries_count: 2,
+      });
+    });
+
+    // Re-picking the open metric closes the detail panel, which is nobody viewing metadata.
+    it('reports nothing when the open metric is picked again to close the panel', async () => {
+      setCatalog([row('up')]);
+      renderList({ selectedMetric: 'up' });
+
+      await selectMetric('up');
+
+      expect(onSelectMetric).toHaveBeenCalled();
+      expect(reportInteractionMock).not.toHaveBeenCalled();
+    });
+
+    describe('search', () => {
+      beforeEach(() => {
+        jest.useFakeTimers();
+      });
+
+      afterEach(() => {
+        jest.useRealTimers();
+      });
+
+      const searchInput = () => screen.getByPlaceholderText('Search metrics');
+
+      const fakeTimerUser = () => userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+
+      const settle = async () => {
+        await act(async () => {
+          jest.advanceTimersByTime(300);
+        });
+      };
+
+      it('reports one search per settled term rather than one per keystroke', async () => {
+        setCatalog([row('node_cpu_seconds_total'), row('node_load1')]);
+        renderList({ stackedQueriesCount: 2 });
+
+        await fakeTimerUser().type(searchInput(), 'node');
+        expect(reportInteractionMock).not.toHaveBeenCalled();
+
+        await settle();
+
+        expect(reportInteractionMock).toHaveBeenCalledTimes(1);
+        expect(reportInteractionMock).toHaveBeenCalledWith('signal_explorer_search_performed', {
+          data_source_type: 'prometheus',
+          stacked_queries_count: 2,
+          search_term_length: 4,
+          result_count: 2,
+        });
+      });
+
+      // The term can echo back label values from the user's own data, so only its length travels.
+      it('never sends the term itself', async () => {
+        setCatalog([row('up')]);
+        renderList();
+
+        await fakeTimerUser().type(searchInput(), 'secret_customer_id');
+        await settle();
+
+        expect(reportInteractionMock).toHaveBeenCalledTimes(1);
+        const [, properties] = reportInteractionMock.mock.calls[0];
+        expect(JSON.stringify(properties)).not.toContain('secret_customer_id');
+        expect(properties).toEqual(expect.objectContaining({ search_term_length: 18 }));
+      });
+
+      // The searches that find nothing are the interesting ones, and the guard against counting a
+      // catalog mid-fetch sits right next to the count.
+      it('reports a search that matched nothing', async () => {
+        setCatalog([]);
+        renderList();
+
+        await fakeTimerUser().type(searchInput(), 'no_such_metric');
+        await settle();
+
+        expect(reportInteractionMock).toHaveBeenCalledWith(
+          'signal_explorer_search_performed',
+          expect.objectContaining({ search_term_length: 14, result_count: 0 })
+        );
+      });
+
+      it('reports nothing when the box is cleared', async () => {
+        setCatalog([row('up')]);
+        renderList();
+        await fakeTimerUser().type(searchInput(), 'up');
+        await settle();
+        reportInteractionMock.mockClear();
+
+        await fakeTimerUser().clear(searchInput());
+        await settle();
+
+        expect(reportInteractionMock).not.toHaveBeenCalled();
+      });
+
+      // Otherwise every search typed against a slow datasource reports zero matches.
+      it('waits for the catalog instead of reporting a count taken mid-fetch', async () => {
+        setCatalog([], { loading: true });
+        const { rerender } = renderList();
+
+        await fakeTimerUser().type(searchInput(), 'up');
+        await settle();
+        expect(reportInteractionMock).not.toHaveBeenCalled();
+
+        // A refresh tick, which rebuilds the range object without changing the range. This component
+        // is memoized and the catalog hook is mocked, so something has to move for the arrived
+        // catalog to reach it the way a settling fetch would.
+        setCatalog([row('up'), row('uptime')]);
+        rerender(list({ timeRange: { ...timeRange } }));
+        await settle();
+
+        expect(reportInteractionMock).toHaveBeenCalledWith(
+          'signal_explorer_search_performed',
+          expect.objectContaining({ search_term_length: 2, result_count: 2 })
+        );
+      });
+
+      // Changing the range refetches the catalog, which raises `loading` again under a term the
+      // user never retyped. Reporting that would count a range change as a search.
+      it('reports nothing more when the catalog refetches under an unchanged term', async () => {
+        setCatalog([row('up'), row('uptime')]);
+        const { rerender } = renderList();
+        await fakeTimerUser().type(searchInput(), 'up');
+        await settle();
+        expect(reportInteractionMock).toHaveBeenCalledTimes(1);
+
+        setCatalog([], { loading: true });
+        rerender(list({ timeRange: { ...timeRange } }));
+        await settle();
+        setCatalog([row('up'), row('uptime')]);
+        rerender(list({ timeRange: { ...timeRange } }));
+        await settle();
+
+        expect(reportInteractionMock).toHaveBeenCalledTimes(1);
+      });
+
+      it('reports the same term again once it has been cleared and retyped', async () => {
+        setCatalog([row('up')]);
+        renderList();
+        await fakeTimerUser().type(searchInput(), 'up');
+        await settle();
+        await fakeTimerUser().clear(searchInput());
+        await settle();
+
+        await fakeTimerUser().type(searchInput(), 'up');
+        await settle();
+
+        expect(reportInteractionMock).toHaveBeenCalledTimes(2);
+      });
     });
   });
 });
