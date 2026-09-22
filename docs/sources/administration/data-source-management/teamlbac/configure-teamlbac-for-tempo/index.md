@@ -171,7 +171,7 @@ If a team can't see traces from a service you expect, a negation rule combined w
 If you're familiar with PromQL label matching, TraceQL attribute selectors behave differently for negation.
 
 In PromQL, `labelFoo != "abc"` matches series that don't have `labelFoo` or have a value other than `"abc"`.
-In TraceQL, `resource.attr != "abc"` and `resource.attr !~ "abc"` match only spans that **have** `resource.attr` and whose value doesn't match the condition.
+In TraceQL, `resource.attr != "abc"` and `resource.attr !~ "abc"` match only spans that **have** `resource.attr` and whose value matches the condition.
 Spans that don't include that attribute aren't returned.
 
 This difference matters when you combine attributes in one rule with `,` (AND).
