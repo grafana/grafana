@@ -14,6 +14,8 @@ import (
 	"k8s.io/apiserver/pkg/admission"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 
+	authlib "github.com/grafana/authlib/types"
+
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -307,6 +309,103 @@ func TestVariableMutationPermissionsStackWide(t *testing.T) {
 			require.True(t, apierrors.IsForbidden(err))
 		})
 	}
+}
+
+func TestVariableMutationPermissionsStandaloneAccessClient(t *testing.T) {
+	oldVariable := newCustomVariable("region", "region")
+	newVariable := newCustomVariable("region", "region")
+	folderVariable := newCustomVariable("region", "region--folder-a")
+	folderVariable.SetAnnotations(map[string]string{utils.AnnoKeyFolder: "folder-a"})
+	gvr := dashv2beta1.VariableResourceInfo.GroupVersionResource()
+	requester := &identity.StaticRequester{OrgID: 1, UserUID: "user-1", Namespace: "stacks-1"}
+
+	t.Run("denied Check is forbidden", func(t *testing.T) {
+		var gotRequest authlib.CheckRequest
+		var gotFolder string
+		builder := &DashboardsAPIBuilder{
+			accessClient: &recordingAccessClient{
+				check: func(_ context.Context, info authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+					require.Equal(t, requester, info)
+					gotRequest = req
+					gotFolder = folder
+					return authlib.CheckResponse{Allowed: false, Zookie: authlib.NoopZookie{}}, nil
+				},
+			},
+		}
+
+		err := builder.Validate(identity.WithRequester(context.Background(), requester), buildVariableAttributesForOp(admission.Create, newVariable, nil), nil)
+		require.Error(t, err)
+		require.True(t, apierrors.IsForbidden(err))
+		require.Equal(t, authlib.CheckRequest{
+			Verb:      utils.VerbCreate,
+			Group:     gvr.Group,
+			Resource:  gvr.Resource,
+			Namespace: "stacks-1",
+			Name:      newVariable.GetName(),
+		}, gotRequest)
+		require.Equal(t, accesscontrol.GeneralFolderUID, gotFolder)
+	})
+
+	t.Run("allowed Check admits create", func(t *testing.T) {
+		builder := &DashboardsAPIBuilder{
+			accessClient: &recordingAccessClient{
+				check: func(_ context.Context, _ authlib.AuthInfo, _ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+					return authlib.CheckResponse{Allowed: true, Zookie: authlib.NoopZookie{}}, nil
+				},
+			},
+		}
+
+		err := builder.Validate(identity.WithRequester(context.Background(), requester), buildVariableAttributesForOp(admission.Create, newVariable, nil), nil)
+		require.NoError(t, err)
+	})
+
+	t.Run("empty folder maps to general", func(t *testing.T) {
+		var gotFolder string
+		builder := &DashboardsAPIBuilder{
+			accessClient: &recordingAccessClient{
+				check: func(_ context.Context, _ authlib.AuthInfo, _ authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+					gotFolder = folder
+					return authlib.CheckResponse{Allowed: true, Zookie: authlib.NoopZookie{}}, nil
+				},
+			},
+		}
+
+		err := builder.Validate(identity.WithRequester(context.Background(), requester), buildVariableAttributesForOp(admission.Update, newVariable, oldVariable), nil)
+		require.NoError(t, err)
+		require.Equal(t, accesscontrol.GeneralFolderUID, gotFolder)
+	})
+
+	t.Run("folder-scoped create uses VerbCreate and folder UID", func(t *testing.T) {
+		var gotRequest authlib.CheckRequest
+		var gotFolder string
+		builder := &DashboardsAPIBuilder{
+			accessClient: &recordingAccessClient{
+				check: func(_ context.Context, _ authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+					gotRequest = req
+					gotFolder = folder
+					return authlib.CheckResponse{Allowed: true, Zookie: authlib.NoopZookie{}}, nil
+				},
+			},
+			folderClientProvider: &staticHandlerProvider{handler: &variableFolderAccessHandler{}},
+		}
+
+		ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+		ctx = identity.WithRequester(ctx, requester)
+		err := builder.Validate(ctx, buildVariableAttributesForOp(admission.Create, folderVariable, nil), nil)
+		require.NoError(t, err)
+		require.Equal(t, utils.VerbCreate, gotRequest.Verb)
+		require.Equal(t, gvr.Group, gotRequest.Group)
+		require.Equal(t, gvr.Resource, gotRequest.Resource)
+		require.Equal(t, "folder-a", gotFolder)
+	})
+
+	t.Run("both accessControl and accessClient nil is forbidden", func(t *testing.T) {
+		builder := &DashboardsAPIBuilder{}
+		err := builder.Validate(identity.WithRequester(context.Background(), requester), buildVariableAttributesForOp(admission.Create, newVariable, nil), nil)
+		require.Error(t, err)
+		require.True(t, apierrors.IsForbidden(err))
+		require.Contains(t, err.Error(), "access control is not configured")
+	})
 }
 
 func TestVariableMutationPermissionsFolderScoped(t *testing.T) {

@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 
 	restclient "k8s.io/client-go/rest"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -308,6 +310,42 @@ func ruleSearchReadAttributes(attr authorizer.Attributes) authorizer.Attributes 
 		return searchauthorizer.AsReadAttributes(attr)
 	}
 	return attr
+}
+
+func (a *AppInstaller) AdmissionPlugin() admission.Factory {
+	inner := a.AppInstaller.AdmissionPlugin()
+	if inner == nil {
+		return nil
+	}
+
+	return func(r io.Reader) (admission.Interface, error) {
+		plugin, err := inner(r)
+		if err != nil {
+			return nil, err
+		}
+
+		return resourceOnlyAdmissionHook{plugin}, nil
+	}
+}
+
+type resourceOnlyAdmissionHook struct{ admission.Interface }
+
+func (s resourceOnlyAdmissionHook) Admit(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	m, ok := s.Interface.(admission.MutationInterface)
+	if !ok || a.GetSubresource() != "" {
+		return nil
+	}
+
+	return m.Admit(ctx, a, o)
+}
+
+func (s resourceOnlyAdmissionHook) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	m, ok := s.Interface.(admission.ValidationInterface)
+	if !ok || a.GetSubresource() != "" {
+		return nil
+	}
+
+	return m.Validate(ctx, a, o)
 }
 
 func (a *AppInstaller) GetStorageOptions(gr schema.GroupResource) *apistore.StorageOptions {

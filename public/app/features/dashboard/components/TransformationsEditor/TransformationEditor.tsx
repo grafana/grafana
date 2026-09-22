@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { Suspense, createElement, useMemo } from 'react';
+import { Suspense, createElement, useCallback, useMemo } from 'react';
 
 import {
   type DataFrame,
@@ -9,7 +9,8 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Icon, JSONFormatter, LoadingPlaceholder, useStyles2, Drawer } from '@grafana/ui';
+import { ClipboardButton, Icon, JSONFormatter, LoadingPlaceholder, useStyles2, Drawer } from '@grafana/ui';
+import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 
 import { type TransformationsEditorTransformation } from './types';
 
@@ -36,6 +37,10 @@ export const TransformationEditor = ({
 }: TransformationEditorProps) => {
   const styles = useStyles2(getStyles);
   const config = useMemo(() => configs[index], [configs, index]);
+  const getInputJson = useCallback(() => getPrettyJSON(input), [input]);
+  const getOutputJson = useCallback(() => getPrettyJSON(output), [output]);
+  const copyInputDataLabel = t('dashboard.transformation-editor.copy-input-data', 'Copy input data to clipboard');
+  const copyOutputDataLabel = t('dashboard.transformation-editor.copy-output-data', 'Copy output data to clipboard');
 
   const editor = useMemo(
     () =>
@@ -72,6 +77,14 @@ export const TransformationEditor = ({
             <div className={styles.debug}>
               <div className={styles.debugTitle}>
                 <Trans i18nKey="dashboard.transformation-editor.input-data">Input data</Trans>
+                <ClipboardButton
+                  aria-label={copyInputDataLabel}
+                  icon="copy"
+                  size="sm"
+                  fill="text"
+                  getText={getInputJson}
+                  tooltip={copyInputDataLabel}
+                />
               </div>
               <div className={styles.debugJson}>
                 <JSONFormatter json={input} />
@@ -83,6 +96,14 @@ export const TransformationEditor = ({
             <div className={styles.debug}>
               <div className={styles.debugTitle}>
                 <Trans i18nKey="dashboard.transformation-editor.output-data">Output data</Trans>
+                <ClipboardButton
+                  aria-label={copyOutputDataLabel}
+                  icon="copy"
+                  size="sm"
+                  fill="text"
+                  getText={getOutputJson}
+                  tooltip={copyOutputDataLabel}
+                />
               </div>
               <div className={styles.debugJson}>{output && <JSONFormatter json={output} />}</div>
             </div>
@@ -110,6 +131,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.primary.text,
     }),
     debugTitle: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
       padding: `${theme.spacing(1)} ${theme.spacing(0.25)}`,
       fontFamily: theme.typography.fontFamilyMonospace,
       fontSize: theme.typography.bodySmall.fontSize,

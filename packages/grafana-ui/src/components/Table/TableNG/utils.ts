@@ -2000,7 +2000,12 @@ export const displayJsonValue: (field: Field) => DisplayProcessor = (field: Fiel
         jsonText = formattedValue; // Keep original if not valid JSON
       }
     } else {
-      jsonText = JSON.stringify(value, null, ' ');
+      try {
+        jsonText = JSON.stringify(value, null, ' ');
+      } catch {
+        // Frame references can be circular; retain the field formatter's representation.
+        jsonText = formattedValueToString(displayValue);
+      }
     }
 
     return { ...displayValue, text: jsonText };

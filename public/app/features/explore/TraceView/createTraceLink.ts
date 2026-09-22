@@ -121,14 +121,13 @@ export function createTraceLogsLink({
       })) ||
     link;
 
-  if (Array.isArray(query)) {
-    link.interpolatedParams = {
-      ...link.interpolatedParams,
-      alternativeQueries: interpolateQueries(query, scopedVars, replaceVariables).map((query) => ({
+  if (Array.isArray(query) && link.interpolatedParams) {
+    link.interpolatedParams.alternativeQueries = interpolateQueries(query, scopedVars, replaceVariables).map(
+      (query) => ({
         ...query,
         datasource: { uid: logsDataSourceSettings.uid },
-      })),
-    };
+      })
+    );
   }
 
   return {

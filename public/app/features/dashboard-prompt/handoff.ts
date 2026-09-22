@@ -1,5 +1,4 @@
 import { createAssistantContextItem, type ChatContextItem, openAssistant } from '@grafana/assistant';
-import { locationService } from '@grafana/runtime';
 
 import { PROMPT_ORIGIN, MAX_LISTED_DATASOURCES, formatDashboardRefs, formatDatasources } from './prompts';
 import { type PromptDashboardRef, type PromptDatasource } from './types';
@@ -12,63 +11,28 @@ import { type PromptDashboardRef, type PromptDatasource } from './types';
  */
 const PLANNING_INSTRUCTIONS_TITLE = 'Dashboard planning instructions';
 
-/** Where the plan (and later the build) plays out. */
-const NEW_DASHBOARD_PATH = '/dashboard/new';
-
 interface StartPlanningArgs {
-  /** The user's free text plus any entry-point hint (see composeRequest in the modal). */
+  /** The user's dashboard request. */
   request: string;
   /** The request as the user typed it — shown as their message in the conversation. */
   displayPrompt: string;
-  /** Datasources already scoped to the seed or picked on the landing prompt. */
+  /** Datasources selected on the landing prompt, or all available datasources. */
   datasources: PromptDatasource[];
   /** Original context items selected in the landing prompt. */
   context?: ChatContextItem[];
   /** Dashboards the user attached as context on the landing prompt. */
   dashboards?: PromptDashboardRef[];
-  /** Folder the draft should land in, when the entry point knows one. */
-  folderUid?: string;
-  /**
-   * Skip navigating to `/dashboard/new`. Use when the prompt is already on
-   * that page (the empty-dashboard landing), so a push cannot remount it.
-   */
-  skipNavigation?: boolean;
 }
 
 /**
  * Hands the user’s prompt to the assistant sidebar for planning:
- * lands the user in the new-dashboard editor and opens a dashboarding-mode
- * conversation seeded with their own words plus a hidden instruction item.
+ * opens a dashboarding-mode conversation seeded with their own words
+ * plus a hidden instruction item.
  * The assistant grounds a plan with its own datasource tools, asks clarifying
  * questions in the chat, renders the plan as a card with a "Build it" button,
  * and builds in the same conversation once the plan is accepted.
- *
- * Returns false when the navigation was refused and nothing was started, so the
- * caller can keep the user's prompt on screen instead of losing it.
  */
-export function startPlanningInAssistant(args: StartPlanningArgs): boolean {
-  if (!args.skipNavigation) {
-    // Land in the new-dashboard editor first so the plan (and later the build)
-    // plays out next to the dashboard it will produce. editSource=assistant
-    // tags the edit session at scene activation so Grafana skips the empty-
-    // dashboard Add pane and treats the canvas as assistant-driven
-    const search = new URLSearchParams();
-    search.set('editSource', 'assistant');
-    if (args.folderUid) {
-      search.set('folderUid', args.folderUid);
-    }
-    locationService.push(`${NEW_DASHBOARD_PATH}?${search.toString()}`);
-
-    // An unsaved dashboard blocks navigation (dashboard-scene's DashboardPrompt
-    // installs a history blocker and shows its own modal instead). That runs
-    // synchronously, so a pathname that hasn't moved means we never left: opening
-    // a dashboarding conversation now would point the assistant at the dashboard
-    // the user is still sitting on, and tell it a blank one is open.
-    if (locationService.getLocation().pathname !== NEW_DASHBOARD_PATH) {
-      return false;
-    }
-  }
-
+export function startPlanningInAssistant(args: StartPlanningArgs): void {
   const planningItem = createAssistantContextItem('structured', {
     title: PLANNING_INSTRUCTIONS_TITLE,
     hidden: true,
@@ -83,15 +47,12 @@ export function startPlanningInAssistant(args: StartPlanningArgs): boolean {
     prompt: args.displayPrompt,
     context: [planningItem, ...(args.context ?? [])],
   });
-
-  return true;
 }
 
 /**
  * The hidden instruction block that puts the conversation into the
- * plan-first flow. It carries what the modal knows and the sidebar cannot
- * discover on its own: the composed request (with the entry point's hint)
- * and the datasource scope the user arrived with.
+ * plan-first flow. It carries the user's request and datasource scope
+ * from the landing prompt.
  */
 export function buildPlanningInstructions(args: StartPlanningArgs): string {
   // Only a complete list can back a "no others exist" claim. Once truncated,

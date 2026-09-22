@@ -1,7 +1,8 @@
 import { createDataFrame, createTheme, DataFrameType, dateTime, FieldType, toDataFrame } from '@grafana/data';
 import { HeatmapCalculationMode, ScaleDistribution } from '@grafana/schema';
+import { rowsToCellsHeatmap } from 'app/features/transformers/calculateHeatmap/heatmap';
 
-import { prepareHeatmapData } from './fields';
+import { getExemplarYValues, prepareHeatmapData } from './fields';
 import { type Options } from './panelcfg.gen';
 
 const theme = createTheme();
@@ -54,6 +55,97 @@ function createSparseHeatmapCellsFrame() {
     ],
   });
 }
+
+describe('getExemplarYValues', () => {
+  function makeFrames(label: string, bounds: string[], values: Array<number | null>, exemplarLabels?: string[]) {
+    const rows = toDataFrame({
+      meta: { type: DataFrameType.HeatmapRows },
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1000] },
+        ...bounds.map((bound) => ({
+          name: 'Value',
+          type: FieldType.number,
+          labels: { [label]: bound },
+          values: [1],
+        })),
+      ],
+    });
+    const exemplars = toDataFrame({
+      name: 'exemplar',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: values.map(() => 1000) },
+        { name: 'Value', type: FieldType.number, values },
+        ...(exemplarLabels ? [{ name: label, type: FieldType.string, values: exemplarLabels }] : []),
+      ],
+    });
+    return { rows, exemplars };
+  }
+
+  it.each([
+    { label: 'ge', expected: [undefined, 0, 0, 1, 1, 2, 2] },
+    { label: 'le', expected: [0, 0, 1, 1, 2, 2, undefined] },
+  ])('maps raw exemplar values to $label buckets in Auto mode', ({ label, expected }) => {
+    const { rows, exemplars } = makeFrames(
+      label,
+      ['0.01', '0.02', '0.04'],
+      [0.005, 0.01, 0.015, 0.02, 0.032, 0.04, 0.08]
+    );
+    const heatmap = rowsToCellsHeatmap({ frame: rows });
+
+    expect(getExemplarYValues(heatmap, exemplars)).toEqual(expected);
+  });
+
+  it.each(['ge', 'le'])('omits null exemplar values for %s buckets', (label) => {
+    const { rows, exemplars } = makeFrames(label, ['0', '0.01', '0.02'], [null, 0.01]);
+
+    expect(getExemplarYValues(rowsToCellsHeatmap({ frame: rows }), exemplars)).toEqual([undefined, 1]);
+  });
+
+  it('maps numeric exemplars after switching from log scale to Auto without a ge field', () => {
+    const values = [0.524666, 1.223432, 0.471082];
+    const { rows, exemplars } = makeFrames('ge', ['0.4', '0.8', '1.6'], values);
+    const numeric = rowsToCellsHeatmap({ frame: rows, yBucketScale: { type: ScaleDistribution.Log, log: 10 } });
+    const auto = rowsToCellsHeatmap({ frame: rows });
+
+    expect(getExemplarYValues(numeric, exemplars)).toEqual(values);
+    expect(getExemplarYValues(auto, exemplars)).toEqual([0, 1, 0]);
+  });
+
+  it('maps values above the last finite le bound to the +Inf bucket', () => {
+    const { rows, exemplars } = makeFrames('le', ['0.01', '0.02', '+Inf'], [0.032, 10]);
+
+    expect(getExemplarYValues(rowsToCellsHeatmap({ frame: rows }), exemplars)).toEqual([2, 2]);
+  });
+
+  it('prefers explicit exemplar labels over numeric bucket lookup', () => {
+    const { rows, exemplars } = makeFrames('le', ['0.01', '0.02', '0.04'], [0.032], ['0.02']);
+
+    expect(getExemplarYValues(rowsToCellsHeatmap({ frame: rows }), exemplars)).toEqual([1]);
+  });
+
+  it('matches categorical exemplar labels', () => {
+    const { rows, exemplars } = makeFrames('status', ['success', 'failure'], [123], ['failure']);
+
+    expect(getExemplarYValues(rowsToCellsHeatmap({ frame: rows }), exemplars)).toEqual([1]);
+  });
+
+  it('uses the first matching label and preserves -1 for unknown labels', () => {
+    const { rows, exemplars } = makeFrames(
+      'status',
+      ['success', 'failure', 'success'],
+      [123, 456],
+      ['success', 'unknown']
+    );
+
+    expect(getExemplarYValues(rowsToCellsHeatmap({ frame: rows }), exemplars)).toEqual([0, -1]);
+  });
+
+  it('omits exemplars when categorical bucket labels are missing', () => {
+    const { rows, exemplars } = makeFrames('status', ['success', 'failure'], [123]);
+
+    expect(getExemplarYValues(rowsToCellsHeatmap({ frame: rows }), exemplars)).toEqual([undefined]);
+  });
+});
 
 describe('Heatmap data', () => {
   const options: Options = { color: {} } as Options;

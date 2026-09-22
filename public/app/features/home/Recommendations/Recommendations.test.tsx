@@ -4,6 +4,7 @@ import { type DataSourceInstanceListItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 import { contextSrv } from 'app/core/services/context_srv';
+import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { type LocalPlugin } from 'app/features/plugins/admin/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -33,7 +34,11 @@ const DEFAULT_STATE: SolutionState = {
   kubernetes: 'inactive',
   spanMetrics: 'inactive',
   synthetics: 'inactive',
+  irm: 'inactive',
 };
+
+// Kubernetes gives IRM its use case; the Synthetic Monitoring card it also selects stays out of the inventory.
+const KUBERNETES_STATE: SolutionState = { ...DEFAULT_STATE, kubernetes: 'active' };
 
 function plugin(id: string, enabled = false, canWrite = true, canAccess = true): LocalPlugin {
   return {
@@ -161,6 +166,21 @@ describe('Recommendations', () => {
         solution: undefined,
       })
     );
+  });
+
+  it('does not reselect or re-report when the solution set is recreated with the same signals', async () => {
+    const signals = jest.fn(async () => DEFAULT_STATE);
+    const metrics = solution('metrics', 'active', stubDatasource, { title: 'Metrics & infrastructure' });
+    const { rerender } = render(<Recommendations solutions={{ solutions: [metrics], signals }} />);
+
+    await carouselRegion();
+
+    // A filter change recreates one solution and with it the set; the signal snapshot is unchanged.
+    rerender(<Recommendations solutions={{ solutions: [solution('metrics', 'active', stubDatasource)], signals }} />);
+    await act(async () => {});
+
+    expect(signals).toHaveBeenCalledTimes(1);
+    expect(jest.mocked(recommendationsShown)).toHaveBeenCalledTimes(1);
   });
 
   it('follows the selected solution order and resets the carousel when the solution changes', async () => {
@@ -340,6 +360,23 @@ describe('Recommendations', () => {
       recommendation_id: 'kubernetes-monitoring',
       starting_state: 'ml_no_traces',
     });
+  });
+
+  it('offers to enable a disabled IRM plugin on a Kubernetes stack', async () => {
+    mockGet.mockResolvedValue([plugin(SupportedPlugin.Irm)]);
+    render(<Recommendations solutions={homepageSolutions(KUBERNETES_STATE)} />);
+
+    const link = await screen.findByRole('link', { name: /Enable IRM/ });
+    expect(link).toHaveAttribute('href', '/plugins/grafana-irm-app/');
+    expect(screen.getByRole('heading', { name: 'Get paged when it matters' })).toBeInTheDocument();
+  });
+
+  it('sends an enabled but unconnected IRM to its home page', async () => {
+    mockGet.mockResolvedValue([plugin(SupportedPlugin.Irm, true)]);
+    render(<Recommendations solutions={homepageSolutions(KUBERNETES_STATE)} />);
+
+    const link = await screen.findByRole('link', { name: 'Set up IRM' });
+    expect(link).toHaveAttribute('href', '/a/grafana-irm-app');
   });
 
   it('does not invent install actions for plugins missing from the inventory', async () => {
