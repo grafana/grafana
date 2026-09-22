@@ -33,16 +33,22 @@ const (
 	// True = last pull succeeded, False = last pull failed (quota exceeded, general error, etc.).
 	ConditionTypePullStatus = "PullStatus"
 
-	// ConditionTypeAuthentication indicates whether the resource's credentials are
-	// valid and the remote is reachable and authorized.
-	// True = credentials valid / repo reachable & authorized (reason Authenticated),
-	// False = authentication or authorization failed (reason AuthenticationFailed).
+	// ConditionTypeReachable indicates whether the backend can currently reach and
+	// operate the repository's remote: credentials valid, remote present, and the
+	// spec buildable.
+	// True  = the last health check found the remote reachable and usable (reason Available).
+	// False = it did not; the reason classifies why -- AuthenticationFailed (bad/empty
+	//         credentials), NotFound (repository gone or invisible to the token),
+	//         InvalidSpec (config can't be built), or ServiceUnavailable (transient outage).
 	//
-	// It is a dedicated condition, separate from Ready, so an authentication failure
-	// survives even when a co-occurring quota or hook failure wins the single Ready
-	// reason. Consumers that must know whether credentials are the problem (e.g. the
-	// force-delete flow) read this instead of Ready.reason.
-	ConditionTypeAuthentication = "Authentication"
+	// It is a dedicated condition, separate from Ready, so this verdict survives the
+	// quota/hook overrides that overwrite the single Ready reason (and that also flip
+	// Ready's underlying health.healthy on a quota-blocked but otherwise-fine repo).
+	// The force-delete flow reads this instead of Ready.reason / health.healthy: the
+	// cleanup finalizer's webhook removal can only succeed while the remote is
+	// reachable, so a False here (excluding the transient ServiceUnavailable) is the
+	// signal that force-delete is warranted.
+	ConditionTypeReachable = "Reachable"
 )
 
 // Condition reasons for the Ready condition
@@ -60,10 +66,11 @@ const (
 	// Automation should NOT automatically retry - wait for user to fix credentials.
 	ReasonAuthenticationFailed = "AuthenticationFailed"
 
-	// ReasonAuthenticated indicates the resource's credentials are valid and the
-	// remote is reachable and authorized. It is the positive counterpart of
-	// ReasonAuthenticationFailed for the Authentication condition.
-	ReasonAuthenticated = "Authenticated"
+	// ReasonNotFound indicates the repository's remote could not be found: it was
+	// deleted, or a private repository is invisible to the current token (git hosts
+	// return 404 rather than 403 for those). Distinct from AuthenticationFailed so the
+	// UI can say "repository no longer exists" rather than "credentials failed".
+	ReasonNotFound = "NotFound"
 
 	// ReasonServiceUnavailable indicates an external service issue (API down, network timeout).
 	// Automation CAN retry with standard backoff - the issue is transient and outside user control.

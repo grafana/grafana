@@ -134,28 +134,30 @@ func buildReadyConditionWithReason(healthStatus provisioning.HealthStatus, reaso
 	}
 }
 
-// buildAuthenticationCondition creates the dedicated Authentication condition.
-// When failed, it is False/AuthenticationFailed with the supplied message;
-// otherwise True/Authenticated. Being a distinct condition type, it is written in
-// the same combined patch as Ready and cannot be clobbered by the quota/hook
-// overrides that overwrite the single Ready reason.
-func buildAuthenticationCondition(failed bool, message string) metav1.Condition {
-	if !failed {
+// buildReachableCondition creates the dedicated Reachable condition, reporting
+// whether the backend can currently reach and operate the repository's remote.
+// When reachable it is True/Available; otherwise False with the supplied reason
+// (AuthenticationFailed, NotFound, InvalidSpec, ServiceUnavailable) and message.
+// Being a distinct condition type, it is written in the same combined patch as
+// Ready and cannot be clobbered by the quota/hook overrides that overwrite the
+// single Ready reason.
+func buildReachableCondition(reachable bool, reason, message string) metav1.Condition {
+	if reachable {
 		return metav1.Condition{
-			Type:    provisioning.ConditionTypeAuthentication,
+			Type:    provisioning.ConditionTypeReachable,
 			Status:  metav1.ConditionTrue,
-			Reason:  provisioning.ReasonAuthenticated,
-			Message: "Credentials are valid",
+			Reason:  provisioning.ReasonAvailable,
+			Message: "Repository is reachable",
 		}
 	}
 
 	if message == "" {
-		message = "Authentication failed"
+		message = "Repository is unreachable"
 	}
 	return metav1.Condition{
-		Type:    provisioning.ConditionTypeAuthentication,
+		Type:    provisioning.ConditionTypeReachable,
 		Status:  metav1.ConditionFalse,
-		Reason:  provisioning.ReasonAuthenticationFailed,
+		Reason:  reason,
 		Message: message,
 	}
 }

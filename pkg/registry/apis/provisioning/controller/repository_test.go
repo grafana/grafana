@@ -2217,13 +2217,13 @@ func TestRepositoryController_process_ConditionsNotOverwritten(t *testing.T) {
 	assert.Len(t, conditions, 3, "expected exactly 3 conditions (quota + ready + authentication)")
 }
 
-// TestRepositoryController_process_AuthConditionSurvivesQuotaOverride is the
-// regression this change fixes: when the health check detects an authentication
-// failure (401) AND the namespace is over quota in the same pass, the quota
+// TestRepositoryController_process_ReachableSurvivesQuotaOverride is the
+// regression this change fixes: when the health check finds the remote
+// unreachable (401) AND the namespace is over quota in the same pass, the quota
 // override wins the single Ready reason (QuotaExceeded), but the dedicated
-// Authentication condition must still report the auth failure so consumers
-// (e.g. force-delete) can see it.
-func TestRepositoryController_process_AuthConditionSurvivesQuotaOverride(t *testing.T) {
+// Reachable condition must still report the failure so consumers (e.g.
+// force-delete) can see it.
+func TestRepositoryController_process_ReachableSurvivesQuotaOverride(t *testing.T) {
 	namespace := "default"
 	repoName := "test-repo"
 
@@ -2295,17 +2295,17 @@ func TestRepositoryController_process_AuthConditionSurvivesQuotaOverride(t *test
 	assert.Equal(t, provisioning.ReasonQuotaExceeded, ready.Reason,
 		"the quota override should win the single Ready reason")
 
-	auth := findCondition(conditions, provisioning.ConditionTypeAuthentication)
-	require.NotNil(t, auth, "expected Authentication condition to survive the quota override")
-	assert.Equal(t, metav1.ConditionFalse, auth.Status)
-	assert.Equal(t, provisioning.ReasonAuthenticationFailed, auth.Reason)
-	assert.Equal(t, "bad credentials", auth.Message)
+	reachable := findCondition(conditions, provisioning.ConditionTypeReachable)
+	require.NotNil(t, reachable, "expected Reachable condition to survive the quota override")
+	assert.Equal(t, metav1.ConditionFalse, reachable.Status)
+	assert.Equal(t, provisioning.ReasonAuthenticationFailed, reachable.Reason)
+	assert.Equal(t, "bad credentials", reachable.Message)
 }
 
-// TestRepositoryController_process_AuthConditionHealthyIsAuthenticated verifies a
-// healthy repository reports Authentication=True/Authenticated, so a prior auth
-// failure clears on recovery.
-func TestRepositoryController_process_AuthConditionHealthyIsAuthenticated(t *testing.T) {
+// TestRepositoryController_process_ReachableHealthyIsAvailable verifies a healthy
+// repository reports Reachable=True/Available, so a prior failure clears on
+// recovery.
+func TestRepositoryController_process_ReachableHealthyIsAvailable(t *testing.T) {
 	namespace := "default"
 	repoName := "test-repo"
 
@@ -2359,17 +2359,89 @@ func TestRepositoryController_process_AuthConditionHealthyIsAuthenticated(t *tes
 	conditions, ok := condOp["value"].([]metav1.Condition)
 	require.True(t, ok, "expected conditions value to be []metav1.Condition")
 
-	auth := findCondition(conditions, provisioning.ConditionTypeAuthentication)
-	require.NotNil(t, auth, "expected Authentication condition on a healthy repository")
-	assert.Equal(t, metav1.ConditionTrue, auth.Status)
-	assert.Equal(t, provisioning.ReasonAuthenticated, auth.Reason)
+	reachable := findCondition(conditions, provisioning.ConditionTypeReachable)
+	require.NotNil(t, reachable, "expected Reachable condition on a healthy repository")
+	assert.Equal(t, metav1.ConditionTrue, reachable.Status)
+	assert.Equal(t, provisioning.ReasonAvailable, reachable.Reason)
 }
 
-// TestRepositoryController_process_AuthConditionOnHookAuthFailure verifies the
-// hook signal feeds the Authentication verdict: when the health check passes but
-// a webhook operation fails with an authorization error, Authentication is
-// False/AuthenticationFailed.
-func TestRepositoryController_process_AuthConditionOnHookAuthFailure(t *testing.T) {
+// TestRepositoryController_process_ReachableNotFoundWhenRepositoryGone verifies
+// that a 404 (repository deleted, or private and invisible to the token) is
+// distinguished as Reachable=False/NotFound rather than lumped into the generic
+// failure, so the UI can say the repository no longer exists.
+func TestRepositoryController_process_ReachableNotFoundWhenRepositoryGone(t *testing.T) {
+	namespace := "default"
+	repoName := "test-repo"
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: repoName, Namespace: namespace, Generation: 2},
+		Spec: provisioning.RepositorySpec{
+			Type: provisioning.LocalRepositoryType,
+			Sync: provisioning.SyncOptions{Enabled: false},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 1,
+			Health:             provisioning.HealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
+		},
+	}
+
+	indexer := cache.NewIndexer(
+		cache.MetaNamespaceKeyFunc,
+		cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc},
+	)
+	require.NoError(t, indexer.Add(repo))
+	repoLister := listers.NewRepositoryLister(indexer)
+
+	mockRepo := repository.NewMockRepository(t)
+	mockRepo.On("Config").Return(repo).Maybe()
+	mockRepo.On("Test", mock.Anything).Return(&provisioning.TestResults{
+		Success: false,
+		Code:    http.StatusNotFound,
+		Errors:  []provisioning.ErrorDetails{{Detail: "repository not found"}},
+	}, nil).Maybe()
+
+	repoFactory := repository.NewMockFactory(t)
+	repoFactory.On("Build", mock.Anything, mock.Anything).Return(mockRepo, nil).Maybe()
+
+	healthMetrics := NewMockHealthMetricsRecorder(t)
+	healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).Maybe()
+
+	patcher := &capturePatcher{}
+	tester := repository.NewTester()
+	healthChecker := NewRepositoryHealthChecker(patcher, tester, healthMetrics)
+
+	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
+	rc := &RepositoryController{
+		repos:         repoGetter,
+		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
+		healthChecker: healthChecker,
+		repoFactory:   repoFactory,
+		statusPatcher: patcher,
+		logger:        logging.DefaultLogger.With("logger", loggerName),
+		tracer:        tracing.InitializeTracerForTest(),
+	}
+
+	_, err := rc.process(namespace + "/" + repoName)
+	require.NoError(t, err)
+
+	condOp, ok := patcher.findPatchOp("/status/conditions")
+	require.True(t, ok, "expected a /status/conditions patch")
+	conditions, ok := condOp["value"].([]metav1.Condition)
+	require.True(t, ok, "expected conditions value to be []metav1.Condition")
+
+	reachable := findCondition(conditions, provisioning.ConditionTypeReachable)
+	require.NotNil(t, reachable, "expected Reachable condition")
+	assert.Equal(t, metav1.ConditionFalse, reachable.Status)
+	assert.Equal(t, provisioning.ReasonNotFound, reachable.Reason)
+	assert.Equal(t, "repository not found", reachable.Message)
+}
+
+// TestRepositoryController_process_ReachableOnHookAuthFailure verifies the hook
+// signal feeds the Reachable verdict: when the health check passes but a webhook
+// operation fails with an authorization error (the backend can't manage the
+// remote), Reachable is False/AuthenticationFailed.
+func TestRepositoryController_process_ReachableOnHookAuthFailure(t *testing.T) {
 	namespace := "default"
 	repoName := "test-repo"
 
@@ -2402,15 +2474,15 @@ func TestRepositoryController_process_AuthConditionOnHookAuthFailure(t *testing.
 	conditions, ok := condOp["value"].([]metav1.Condition)
 	require.True(t, ok, "expected conditions value to be []metav1.Condition")
 
-	auth := findCondition(conditions, provisioning.ConditionTypeAuthentication)
-	require.NotNil(t, auth, "expected Authentication condition from the hook auth failure")
-	assert.Equal(t, metav1.ConditionFalse, auth.Status)
-	assert.Equal(t, provisioning.ReasonAuthenticationFailed, auth.Reason)
+	reachable := findCondition(conditions, provisioning.ConditionTypeReachable)
+	require.NotNil(t, reachable, "expected Reachable condition from the hook auth failure")
+	assert.Equal(t, metav1.ConditionFalse, reachable.Status)
+	assert.Equal(t, provisioning.ReasonAuthenticationFailed, reachable.Reason)
 }
 
-// TestRepositoryController_process_AuthConditionOnTokenGenerationFailure verifies
-// the early-return token-generation path also stamps Authentication=False.
-func TestRepositoryController_process_AuthConditionOnTokenGenerationFailure(t *testing.T) {
+// TestRepositoryController_process_ReachableOnTokenGenerationFailure verifies the
+// early-return token-generation path also stamps Reachable=False.
+func TestRepositoryController_process_ReachableOnTokenGenerationFailure(t *testing.T) {
 	namespace := "default"
 	repoName := "test-repo"
 	connName := "my-connection"
@@ -2478,47 +2550,83 @@ func TestRepositoryController_process_AuthConditionOnTokenGenerationFailure(t *t
 	conditions, ok := condOp["value"].([]metav1.Condition)
 	require.True(t, ok, "expected conditions value to be []metav1.Condition")
 
-	auth := findCondition(conditions, provisioning.ConditionTypeAuthentication)
-	require.NotNil(t, auth, "expected Authentication condition on the token-generation failure path")
-	assert.Equal(t, metav1.ConditionFalse, auth.Status)
-	assert.Equal(t, provisioning.ReasonAuthenticationFailed, auth.Reason)
+	reachable := findCondition(conditions, provisioning.ConditionTypeReachable)
+	require.NotNil(t, reachable, "expected Reachable condition on the token-generation failure path")
+	assert.Equal(t, metav1.ConditionFalse, reachable.Status)
+	assert.Equal(t, provisioning.ReasonAuthenticationFailed, reachable.Reason)
 }
 
-func TestAuthFailureMessage(t *testing.T) {
-	authResults := &provisioning.TestResults{
-		Success: false,
-		Code:    http.StatusUnauthorized,
-		Errors:  []provisioning.ErrorDetails{{Detail: "bad credentials"}},
-	}
-	nonAuthResults := &provisioning.TestResults{Success: true, Code: http.StatusOK}
+func TestClassifyReachability(t *testing.T) {
+	detail := func(d string) []provisioning.ErrorDetails { return []provisioning.ErrorDetails{{Detail: d}} }
 
 	tests := []struct {
-		name        string
-		testResults *provisioning.TestResults
-		hookErr     error
-		want        string
+		name          string
+		testResults   *provisioning.TestResults
+		hookErr       error
+		wantReachable bool
+		wantReason    string
+		wantMessage   string
 	}{
 		{
-			name:        "health auth failure uses the test result detail",
-			testResults: authResults,
-			want:        "bad credentials",
+			name:          "success is reachable",
+			testResults:   &provisioning.TestResults{Success: true, Code: http.StatusOK},
+			wantReachable: true,
+			wantReason:    provisioning.ReasonAvailable,
 		},
 		{
-			name:        "hook auth failure uses the hook error when health is not the auth failure",
-			testResults: nonAuthResults,
-			hookErr:     repository.ErrUnauthorized,
-			want:        repository.ErrUnauthorized.Error(),
+			name:          "401 is unreachable with AuthenticationFailed",
+			testResults:   &provisioning.TestResults{Success: false, Code: http.StatusUnauthorized, Errors: detail("bad credentials")},
+			wantReachable: false,
+			wantReason:    provisioning.ReasonAuthenticationFailed,
+			wantMessage:   "bad credentials",
 		},
 		{
-			name:        "no signal yields an empty message",
-			testResults: nonAuthResults,
-			want:        "",
+			name:          "bare 403 is unreachable with AuthenticationFailed",
+			testResults:   &provisioning.TestResults{Success: false, Code: http.StatusForbidden},
+			wantReachable: false,
+			wantReason:    provisioning.ReasonAuthenticationFailed,
+		},
+		{
+			name:          "write-permission 403 is still reachable",
+			testResults:   &provisioning.TestResults{Success: false, Code: http.StatusForbidden, Errors: detail(repository.WritePermissionDeniedDetail)},
+			wantReachable: true,
+			wantReason:    provisioning.ReasonAvailable,
+		},
+		{
+			name:          "404 is unreachable with NotFound",
+			testResults:   &provisioning.TestResults{Success: false, Code: http.StatusNotFound, Errors: detail("repository not found")},
+			wantReachable: false,
+			wantReason:    provisioning.ReasonNotFound,
+			wantMessage:   "repository not found",
+		},
+		{
+			name:          "503 is unreachable with ServiceUnavailable",
+			testResults:   &provisioning.TestResults{Success: false, Code: http.StatusServiceUnavailable},
+			wantReachable: false,
+			wantReason:    provisioning.ReasonServiceUnavailable,
+		},
+		{
+			name:          "422 stays reachable (config gap, remote usable)",
+			testResults:   &provisioning.TestResults{Success: false, Code: http.StatusUnprocessableEntity},
+			wantReachable: true,
+			wantReason:    provisioning.ReasonAvailable,
+		},
+		{
+			name:          "hook auth failure on an accessible repo is unreachable",
+			testResults:   &provisioning.TestResults{Success: true, Code: http.StatusOK},
+			hookErr:       repository.ErrUnauthorized,
+			wantReachable: false,
+			wantReason:    provisioning.ReasonAuthenticationFailed,
+			wantMessage:   repository.ErrUnauthorized.Error(),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, authFailureMessage(tt.testResults, tt.hookErr))
+			reachable, reason, message := classifyReachability(tt.testResults, tt.hookErr)
+			assert.Equal(t, tt.wantReachable, reachable)
+			assert.Equal(t, tt.wantReason, reason)
+			assert.Equal(t, tt.wantMessage, message)
 		})
 	}
 }

@@ -455,13 +455,13 @@ func (cc *ConnectionController) process(ctx context.Context, key string) (err er
 	if len(healthResult.PatchOps) > 0 {
 		patchOperations = append(patchOperations, healthResult.PatchOps...)
 	}
-	// Connections have no quota/hook overrides, but stamp the dedicated
-	// Authentication condition here too so its semantics are uniform across
-	// Repository and Connection resources.
-	authFailed := classifyTestResultReason(testResults) == provisioning.ReasonAuthenticationFailed
-	authCondition := buildAuthenticationCondition(authFailed, authFailureMessage(testResults, nil))
+	// Connections have no quota/hook overrides, but stamp the dedicated Reachable
+	// condition here too so its semantics are uniform across Repository and
+	// Connection resources.
+	reachable, reason, message := classifyReachability(testResults, nil)
+	reachableCondition := buildReachableCondition(reachable, reason, message)
 	if conditionPatchOps := BuildConditionPatchOpsFromExisting(
-		conn.Status.Conditions, conn.GetGeneration(), healthResult.ReadyCondition, authCondition,
+		conn.Status.Conditions, conn.GetGeneration(), healthResult.ReadyCondition, reachableCondition,
 	); conditionPatchOps != nil {
 		patchOperations = append(patchOperations, conditionPatchOps...)
 	}

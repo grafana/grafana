@@ -76,46 +76,59 @@ func TestBuildReadyConditionFromHealth(t *testing.T) {
 	}
 }
 
-func TestBuildAuthenticationCondition(t *testing.T) {
+func TestBuildReachableCondition(t *testing.T) {
 	tests := []struct {
 		name           string
-		failed         bool
+		reachable      bool
+		reason         string
 		message        string
 		expectedStatus metav1.ConditionStatus
 		expectedReason string
 		expectedMsg    string
 	}{
 		{
-			name:           "not failed is True/Authenticated",
-			failed:         false,
-			message:        "ignored when not failed",
+			name:           "reachable is True/Available",
+			reachable:      true,
+			reason:         "ignored when reachable",
+			message:        "ignored when reachable",
 			expectedStatus: metav1.ConditionTrue,
-			expectedReason: provisioning.ReasonAuthenticated,
-			expectedMsg:    "Credentials are valid",
+			expectedReason: provisioning.ReasonAvailable,
+			expectedMsg:    "Repository is reachable",
 		},
 		{
-			name:           "failed with message is False/AuthenticationFailed",
-			failed:         true,
+			name:           "unreachable carries the supplied reason and message",
+			reachable:      false,
+			reason:         provisioning.ReasonAuthenticationFailed,
 			message:        "bad credentials",
 			expectedStatus: metav1.ConditionFalse,
 			expectedReason: provisioning.ReasonAuthenticationFailed,
 			expectedMsg:    "bad credentials",
 		},
 		{
-			name:           "failed without message falls back to a default",
-			failed:         true,
+			name:           "unreachable NotFound reason is preserved",
+			reachable:      false,
+			reason:         provisioning.ReasonNotFound,
+			message:        "repository not found",
+			expectedStatus: metav1.ConditionFalse,
+			expectedReason: provisioning.ReasonNotFound,
+			expectedMsg:    "repository not found",
+		},
+		{
+			name:           "unreachable without message falls back to a default",
+			reachable:      false,
+			reason:         provisioning.ReasonInvalidSpec,
 			message:        "",
 			expectedStatus: metav1.ConditionFalse,
-			expectedReason: provisioning.ReasonAuthenticationFailed,
-			expectedMsg:    "Authentication failed",
+			expectedReason: provisioning.ReasonInvalidSpec,
+			expectedMsg:    "Repository is unreachable",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			condition := buildAuthenticationCondition(tt.failed, tt.message)
+			condition := buildReachableCondition(tt.reachable, tt.reason, tt.message)
 
-			assert.Equal(t, provisioning.ConditionTypeAuthentication, condition.Type)
+			assert.Equal(t, provisioning.ConditionTypeReachable, condition.Type)
 			assert.Equal(t, tt.expectedStatus, condition.Status)
 			assert.Equal(t, tt.expectedReason, condition.Reason)
 			assert.Equal(t, tt.expectedMsg, condition.Message)

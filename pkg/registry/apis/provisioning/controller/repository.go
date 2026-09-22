@@ -1156,13 +1156,12 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 
 			// Patch status so user can see errors
 			buildReason := classifyBuildFailureReason(err)
-			conditions := []v1.Condition{buildReadyConditionWithReason(buildHealthStatus, buildReason)}
-			// Only assert the Authentication condition when the build itself failed
-			// for an auth reason. A non-auth build failure (e.g. transient decrypt
-			// error) says nothing about credential validity, so leave any existing
-			// Authentication condition untouched rather than falsely clearing it.
-			if buildReason == provisioning.ReasonAuthenticationFailed {
-				conditions = append(conditions, buildAuthenticationCondition(true, err.Error()))
+			// A repository that can't even be built can't be reached or operated, so
+			// mark it unreachable with the same reason (InvalidSpec / ServiceUnavailable
+			// / AuthenticationFailed) the build failure classified.
+			conditions := []v1.Condition{
+				buildReadyConditionWithReason(buildHealthStatus, buildReason),
+				buildReachableCondition(false, buildReason, err.Error()),
 			}
 			if conditionPatchOps := BuildConditionPatchOpsFromExisting(
 				obj.Status.Conditions, obj.GetGeneration(), conditions...,
@@ -1298,24 +1297,18 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 
 	// Build ALL condition patches together to avoid one overwriting another.
 	conditions := []v1.Condition{quotaCondition, healthResult.ReadyCondition}
-	// Derive the authentication verdict from the two override-proof signals evaluated
-	// this pass: the health-check test result (401 / bare-403) and a hook auth
-	// failure. Both are read from values captured before the quota/hook overrides
-	// mutate Ready, so the dedicated Authentication condition keeps reflecting real
-	// credential state even when a co-occurring quota or hook failure wins Ready.
+	// Derive the Reachable verdict from the health-check result (and any hook auth
+	// failure) captured before the quota/hook overrides mutate Ready, so it keeps
+	// reflecting whether the remote is actually reachable even when a co-occurring
+	// quota or hook failure wins Ready. Reuses the probe already performed -- no
+	// extra requests.
 	//
 	// testResults is nil only when the health refresh was skipped (hook-failure
 	// cooldown); with no fresh probe there is nothing new to judge, so leave any
-	// existing Authentication condition untouched rather than asserting a stale
-	// verdict.
+	// existing Reachable condition untouched rather than asserting a stale verdict.
 	if testResults != nil {
-		authFailed := classifyTestResultReason(testResults) == provisioning.ReasonAuthenticationFailed ||
-			(hookErr != nil && classifyHookFailureReason(hookErr) == provisioning.ReasonAuthenticationFailed)
-		var authMessage string
-		if authFailed {
-			authMessage = authFailureMessage(testResults, hookErr)
-		}
-		conditions = append(conditions, buildAuthenticationCondition(authFailed, authMessage))
+		reachable, reason, message := classifyReachability(testResults, hookErr)
+		conditions = append(conditions, buildReachableCondition(reachable, reason, message))
 	}
 	if conditionPatchOps := BuildConditionPatchOpsFromExisting(
 		obj.Status.Conditions, obj.GetGeneration(), conditions...,
@@ -1522,12 +1515,12 @@ func (rc *RepositoryController) tokenFailurePatchOps(obj *provisioning.Repositor
 	ops := rc.healthPatchIfChanged(obj, healthStatus)
 
 	// isUserCaused only matches credential-loss sentinels, so this path is always
-	// an authentication failure: stamp both Ready and the dedicated Authentication
+	// an authentication failure: stamp both Ready and the dedicated Reachable
 	// condition so the latter survives any later override on Ready.
 	readyCondition := buildReadyConditionWithReason(healthStatus, provisioning.ReasonAuthenticationFailed)
-	authCondition := buildAuthenticationCondition(true, err.Error())
+	reachableCondition := buildReachableCondition(false, provisioning.ReasonAuthenticationFailed, err.Error())
 	if conditionPatchOps := BuildConditionPatchOpsFromExisting(
-		obj.Status.Conditions, obj.GetGeneration(), readyCondition, authCondition,
+		obj.Status.Conditions, obj.GetGeneration(), readyCondition, reachableCondition,
 	); conditionPatchOps != nil {
 		ops = append(ops, conditionPatchOps...)
 	}
@@ -1580,21 +1573,53 @@ func classifyOverdueCause(reason string) string {
 	}
 }
 
-// authFailureMessage builds the message for a False Authentication condition.
-// It prefers the health-check test result's own detail when the probe is the
-// auth failure (the quota override may have already replaced healthStatus.Message,
-// so that field can't be trusted here), and otherwise falls back to the hook
-// error text.
-func authFailureMessage(testResults *provisioning.TestResults, hookErr error) string {
-	if testResults != nil && classifyTestResultReason(testResults) == provisioning.ReasonAuthenticationFailed {
-		for _, e := range testResults.Errors {
-			if e.Detail != "" {
-				return e.Detail
-			}
+// classifyReachability turns the last health-check result (and any hook failure)
+// into the Reachable verdict, reusing the probe already performed -- it makes no
+// additional requests. A repository is reachable when the health check found it
+// accessible (isRepositoryAccessible); a webhook auth failure on an
+// otherwise-accessible repo still means the backend can't manage the remote, so it
+// counts as unreachable.
+func classifyReachability(testResults *provisioning.TestResults, hookErr error) (reachable bool, reason, message string) {
+	if isRepositoryAccessible(testResults) {
+		if hookErr != nil && classifyHookFailureReason(hookErr) == provisioning.ReasonAuthenticationFailed {
+			return false, provisioning.ReasonAuthenticationFailed, hookErr.Error()
 		}
+		return true, provisioning.ReasonAvailable, ""
 	}
-	if hookErr != nil {
-		return hookErr.Error()
+	return false, reachabilityFailureReason(testResults), firstErrorDetail(testResults)
+}
+
+// reachabilityFailureReason maps an inaccessible health-check result to a Reachable
+// failure reason. isRepositoryAccessible only returns false for 401, a bare 403,
+// 404 and 503, so those are the cases distinguished here; anything else falls back
+// to InvalidSpec.
+func reachabilityFailureReason(testResults *provisioning.TestResults) string {
+	if testResults == nil {
+		return provisioning.ReasonInvalidSpec
+	}
+	switch testResults.Code {
+	case http.StatusUnauthorized, http.StatusForbidden:
+		return provisioning.ReasonAuthenticationFailed
+	case http.StatusNotFound:
+		return provisioning.ReasonNotFound
+	case http.StatusServiceUnavailable:
+		return provisioning.ReasonServiceUnavailable
+	default:
+		return provisioning.ReasonInvalidSpec
+	}
+}
+
+// firstErrorDetail returns the first non-empty detail from the health-check result,
+// used as the Reachable condition message. The quota override may have already
+// replaced healthStatus.Message, so the test result's own errors are used instead.
+func firstErrorDetail(testResults *provisioning.TestResults) string {
+	if testResults == nil {
+		return ""
+	}
+	for _, e := range testResults.Errors {
+		if e.Detail != "" {
+			return e.Detail
+		}
 	}
 	return ""
 }

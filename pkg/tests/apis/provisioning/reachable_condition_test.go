@@ -14,23 +14,27 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
-// TestIntegrationProvisioning_AuthenticationCondition verifies the dedicated
-// Authentication condition the controller now writes alongside Ready:
-//   - a healthy repository reports Authentication=True/Authenticated;
+// TestIntegrationProvisioning_ReachableCondition verifies the dedicated Reachable
+// condition the controller now writes alongside Ready:
+//   - a healthy repository reports Reachable=True/Available;
 //   - a repository whose credentials fail the health check reports
-//     Authentication=False/AuthenticationFailed.
+//     Reachable=False/AuthenticationFailed.
 //
-// The co-occurrence case (auth failure surviving a quota override on Ready) is
+// The co-occurrence case (the failure surviving a quota override on Ready) is
 // covered by an integration test in the quota package, which needs namespace
 // quota manipulation.
-func TestIntegrationProvisioning_AuthenticationCondition(t *testing.T) {
+func TestIntegrationProvisioning_ReachableCondition(t *testing.T) {
 	helper := sharedHelper(t)
 
-	t.Run("healthy repository is Authenticated", func(t *testing.T) {
-		const repo = "auth-cond-healthy"
+	t.Run("healthy repository is Reachable", func(t *testing.T) {
+		const repo = "reachable-healthy"
 		helper.CreateLocalRepo(t, common.TestRepo{
-			Name:     repo,
-			SkipSync: true,
+			Name:       repo,
+			SyncTarget: "folder",
+			SkipSync:   true,
+		})
+		t.Cleanup(func() {
+			_ = helper.Repositories.Resource.Delete(context.Background(), repo, metav1.DeleteOptions{})
 		})
 
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
@@ -40,20 +44,20 @@ func TestIntegrationProvisioning_AuthenticationCondition(t *testing.T) {
 			}
 			r := common.MustFromUnstructured[provisioning.Repository](t, obj)
 			assert.True(c, r.Status.Health.Healthy, "repository should be healthy")
-			auth := common.FindCondition(r.Status.Conditions, provisioning.ConditionTypeAuthentication)
-			if !assert.NotNil(c, auth, "Authentication condition should exist") {
+			reachable := common.FindCondition(r.Status.Conditions, provisioning.ConditionTypeReachable)
+			if !assert.NotNil(c, reachable, "Reachable condition should exist") {
 				return
 			}
-			assert.Equal(c, metav1.ConditionTrue, auth.Status)
-			assert.Equal(c, provisioning.ReasonAuthenticated, auth.Reason)
-			assert.Equal(c, r.Generation, auth.ObservedGeneration,
+			assert.Equal(c, metav1.ConditionTrue, reachable.Status)
+			assert.Equal(c, provisioning.ReasonAvailable, reachable.Reason)
+			assert.Equal(c, r.Generation, reachable.ObservedGeneration,
 				"controller should have observed the current generation")
 		}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
-			"healthy repository should report Authentication=True/Authenticated")
+			"healthy repository should report Reachable=True/Available")
 	})
 
-	t.Run("credential failure is AuthenticationFailed", func(t *testing.T) {
-		const repo = "auth-cond-failed"
+	t.Run("credential failure is Reachable=False/AuthenticationFailed", func(t *testing.T) {
+		const repo = "reachable-auth-failed"
 		repoConfig := &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": "provisioning.grafana.app/v0alpha1",
 			"kind":       "Repository",
@@ -66,7 +70,7 @@ func TestIntegrationProvisioning_AuthenticationCondition(t *testing.T) {
 				},
 			},
 			"spec": map[string]any{
-				"title": "Authentication condition failed repo",
+				"title": "Reachable condition auth-failed repo",
 				"type":  "git",
 				"git": map[string]any{
 					"url":    "https://github.com/grafana/grafana-git-sync-demo.git",
@@ -82,8 +86,8 @@ func TestIntegrationProvisioning_AuthenticationCondition(t *testing.T) {
 			"secure": map[string]any{
 				"token": map[string]any{
 					// A garbage token fails the authorization probe (401) before any
-					// write-permission check, so the health check records an
-					// authentication failure.
+					// write-permission check, so the health check finds the remote
+					// unreachable.
 					"create": base64.StdEncoding.EncodeToString([]byte("ghp_invalid_authentication_will_fail")),
 				},
 			},
@@ -102,15 +106,15 @@ func TestIntegrationProvisioning_AuthenticationCondition(t *testing.T) {
 			}
 			r := common.MustFromUnstructured[provisioning.Repository](t, obj)
 			assert.False(c, r.Status.Health.Healthy, "repository should be unhealthy")
-			auth := common.FindCondition(r.Status.Conditions, provisioning.ConditionTypeAuthentication)
-			if !assert.NotNil(c, auth, "Authentication condition should exist") {
+			reachable := common.FindCondition(r.Status.Conditions, provisioning.ConditionTypeReachable)
+			if !assert.NotNil(c, reachable, "Reachable condition should exist") {
 				return
 			}
-			assert.Equal(c, metav1.ConditionFalse, auth.Status)
-			assert.Equal(c, provisioning.ReasonAuthenticationFailed, auth.Reason)
-			assert.Equal(c, r.Generation, auth.ObservedGeneration,
+			assert.Equal(c, metav1.ConditionFalse, reachable.Status)
+			assert.Equal(c, provisioning.ReasonAuthenticationFailed, reachable.Reason)
+			assert.Equal(c, r.Generation, reachable.ObservedGeneration,
 				"controller should have observed the current generation")
 		}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
-			"repository with bad credentials should report Authentication=False/AuthenticationFailed")
+			"repository with bad credentials should report Reachable=False/AuthenticationFailed")
 	})
 }

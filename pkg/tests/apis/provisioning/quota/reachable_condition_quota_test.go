@@ -14,18 +14,18 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
-// TestIntegrationProvisioning_AuthenticationConditionSurvivesQuotaOverride is the
+// TestIntegrationProvisioning_ReachableConditionSurvivesQuotaOverride is the
 // end-to-end regression for the previously-broken case: a repository whose
-// health check detects an authentication failure while the namespace is over
-// quota. The quota override wins the single Ready reason (QuotaExceeded), but the
-// dedicated Authentication condition must keep reporting the auth failure so a
-// consumer (e.g. force-delete) can still tell the credentials are the problem.
-func TestIntegrationProvisioning_AuthenticationConditionSurvivesQuotaOverride(t *testing.T) {
+// health check finds the remote unreachable while the namespace is over quota.
+// The quota override wins the single Ready reason (QuotaExceeded), but the
+// dedicated Reachable condition must keep reporting the failure so a consumer
+// (e.g. force-delete) can still tell the remote can't be reached.
+func TestIntegrationProvisioning_ReachableConditionSurvivesQuotaOverride(t *testing.T) {
 	helper := sharedHelper(t)
 
 	const (
-		authRepo   = "auth-quota-auth-repo"
-		fillerRepo = "auth-quota-filler-repo"
+		authRepo   = "reachable-quota-auth-repo"
+		fillerRepo = "reachable-quota-filler-repo"
 	)
 
 	// --- Step 1: unlimited quota; create a git repo with a bad token plus a
@@ -44,7 +44,7 @@ func TestIntegrationProvisioning_AuthenticationConditionSurvivesQuotaOverride(t 
 			},
 		},
 		"spec": map[string]any{
-			"title": "Auth-failed repo over quota",
+			"title": "Unreachable repo over quota",
 			"type":  "git",
 			"git": map[string]any{
 				"url":    "https://github.com/grafana/grafana-git-sync-demo.git",
@@ -60,7 +60,7 @@ func TestIntegrationProvisioning_AuthenticationConditionSurvivesQuotaOverride(t 
 		"secure": map[string]any{
 			"token": map[string]any{
 				// Garbage token → 401 on the authorization probe → the health check
-				// records an authentication failure.
+				// finds the remote unreachable.
 				"create": base64.StdEncoding.EncodeToString([]byte("ghp_invalid_authentication_will_fail")),
 			},
 		},
@@ -79,8 +79,8 @@ func TestIntegrationProvisioning_AuthenticationConditionSurvivesQuotaOverride(t 
 		SkipSync:   true,
 	})
 
-	// --- Step 2: before touching quota, the auth failure is visible on both
-	// Ready and the dedicated Authentication condition. ----------------------
+	// --- Step 2: before touching quota, the failure is visible on both Ready and
+	// the dedicated Reachable condition. -------------------------------------
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		obj, err := helper.Repositories.Resource.Get(t.Context(), authRepo, metav1.GetOptions{})
 		if !assert.NoError(c, err) {
@@ -91,20 +91,20 @@ func TestIntegrationProvisioning_AuthenticationConditionSurvivesQuotaOverride(t 
 		if assert.NotNil(c, ready, "Ready condition should exist") {
 			assert.Equal(c, provisioning.ReasonAuthenticationFailed, ready.Reason)
 		}
-		auth := common.FindCondition(r.Status.Conditions, provisioning.ConditionTypeAuthentication)
-		if assert.NotNil(c, auth, "Authentication condition should exist") {
-			assert.Equal(c, metav1.ConditionFalse, auth.Status)
-			assert.Equal(c, provisioning.ReasonAuthenticationFailed, auth.Reason)
+		reachable := common.FindCondition(r.Status.Conditions, provisioning.ConditionTypeReachable)
+		if assert.NotNil(c, reachable, "Reachable condition should exist") {
+			assert.Equal(c, metav1.ConditionFalse, reachable.Status)
+			assert.Equal(c, provisioning.ReasonAuthenticationFailed, reachable.Reason)
 		}
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
-		"auth repo should settle on AuthenticationFailed on both Ready and Authentication")
+		"auth repo should settle on AuthenticationFailed on both Ready and Reachable")
 
 	// --- Step 3: lower quota to 1 — both repos now exceed the limit. --------
 	helper.SetQuotaStatus(provisioning.QuotaStatus{MaxRepositories: 1})
 	helper.TriggerRepositoryReconciliation(t, authRepo)
 
-	// --- Step 4: the quota override wins Ready, but the Authentication
-	// condition still reports the credential failure. ------------------------
+	// --- Step 4: the quota override wins Ready, but the Reachable condition still
+	// reports the unreachable remote. ----------------------------------------
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		obj, err := helper.Repositories.Resource.Get(t.Context(), authRepo, metav1.GetOptions{})
 		if !assert.NoError(c, err) {
@@ -119,14 +119,14 @@ func TestIntegrationProvisioning_AuthenticationConditionSurvivesQuotaOverride(t 
 		assert.Equal(c, provisioning.ReasonQuotaExceeded, ready.Reason,
 			"quota override should win the single Ready reason")
 
-		auth := common.FindCondition(r.Status.Conditions, provisioning.ConditionTypeAuthentication)
-		if !assert.NotNil(c, auth, "Authentication condition must survive the quota override") {
+		reachable := common.FindCondition(r.Status.Conditions, provisioning.ConditionTypeReachable)
+		if !assert.NotNil(c, reachable, "Reachable condition must survive the quota override") {
 			return
 		}
-		assert.Equal(c, metav1.ConditionFalse, auth.Status)
-		assert.Equal(c, provisioning.ReasonAuthenticationFailed, auth.Reason)
-		assert.Equal(c, r.Generation, auth.ObservedGeneration,
+		assert.Equal(c, metav1.ConditionFalse, reachable.Status)
+		assert.Equal(c, provisioning.ReasonAuthenticationFailed, reachable.Reason)
+		assert.Equal(c, r.Generation, reachable.ObservedGeneration,
 			"controller should have observed the current generation")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
-		"Authentication=AuthenticationFailed must survive while Ready reports QuotaExceeded")
+		"Reachable=AuthenticationFailed must survive while Ready reports QuotaExceeded")
 }
