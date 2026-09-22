@@ -35,6 +35,12 @@ const (
 	fieldRoutingTree         = "routingTree"
 	fieldMetric              = "metric"
 	fieldTargetDatasourceUID = "targetDatasourceUID"
+	fieldHealth              = "health"
+	fieldLastEvaluationTime  = "lastEvaluationTime"
+	fieldLastError           = "lastError"
+	fieldEvaluationDuration  = "evaluationDuration"
+	fieldState               = "state"
+	fieldStateReason         = "stateReason"
 )
 
 // resultColumns are the columns every search result table carries, in order.
@@ -44,6 +50,7 @@ var resultColumns = []string{
 	fieldAnnotations, fieldFor, fieldKeepFiringFor,
 	fieldDashboardUID, fieldPanelID, fieldReceiver, fieldNotificationType, fieldRoutingTree,
 	fieldMetric, fieldTargetDatasourceUID,
+	fieldHealth, fieldLastEvaluationTime, fieldLastError, fieldEvaluationDuration, fieldState, fieldStateReason,
 }
 
 // searchColumns is the column definition for every field a rule hit can carry,

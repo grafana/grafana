@@ -1059,6 +1059,7 @@ func createContactPointServiceSutWithConfigStore(t *testing.T,
 		false,
 		nil,
 		&notifier.NoopOrgEmailValidator{},
+		notifier.NoopReceiverStatusFetcher{},
 	)
 
 	return NewContactPointService(
