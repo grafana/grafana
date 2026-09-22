@@ -13,7 +13,7 @@ const noRestrictedImportsOptions = {
     {
       name: 'react-use',
       importNames: ['useCopyToClipboard'],
-      message: 'Please import useCopyToClipboard from @grafana/ui instead.',
+      message: 'Please import copyTextToClipboard from @grafana/ui instead.',
     },
   ],
 };
@@ -45,7 +45,7 @@ ruleTester.run('react-use import restrictions', noRestrictedImportsRule, {
           data: {
             importName: 'useCopyToClipboard',
             importSource: 'react-use',
-            customMessage: 'Please import useCopyToClipboard from @grafana/ui instead.',
+            customMessage: 'Please import copyTextToClipboard from @grafana/ui instead.',
           },
         },
       ],

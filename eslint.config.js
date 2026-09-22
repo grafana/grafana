@@ -83,7 +83,7 @@ const baseImportConfig = {
     {
       name: 'react-use',
       importNames: ['useCopyToClipboard'],
-      message: 'Please import useCopyToClipboard from @grafana/ui instead.',
+      message: 'Please import copyTextToClipboard from @grafana/ui instead.',
     },
   ],
 };

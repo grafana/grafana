@@ -15,7 +15,7 @@ import {
   Stack,
   Text,
   TextArea,
-  useCopyToClipboard,
+  copyTextToClipboard,
   useStyles2,
 } from '@grafana/ui';
 import {
@@ -142,7 +142,6 @@ export function TemplateSelector({ onSelect, onClose, option, valueInForm, filte
   const [templateOption, setTemplateOption] = useState<TemplateFieldOption | undefined>(
     valueInFormIsCustom ? 'Custom' : 'Existing'
   );
-  const copyToClipboard = useCopyToClipboard();
 
   const templateOptions: Array<SelectableValue<TemplateFieldOption>> = [
     {
@@ -254,7 +253,9 @@ export function TemplateSelector({ onSelect, onClose, option, valueInForm, filte
                   'alerting.template-selector.tooltip-copy',
                   'Copy selected notification template to clipboard. You can use it in the custom tab.'
                 )}
-                onClick={() => copyToClipboard(template?.value?.content ?? defaultTemplateValue?.value?.content ?? '')}
+                onClick={() =>
+                  copyTextToClipboard(template?.value?.content ?? defaultTemplateValue?.value?.content ?? '').catch()
+                }
                 name="copy"
               />
             </Stack>

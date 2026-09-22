@@ -27,6 +27,23 @@ type Collection struct {
 	IsExternal   bool   // externally-pushed rows
 }
 
+// InternalPartitionKey lets enrollment validate partition names before any
+// catalog or schema changes. Distinct resources may derive the same key;
+// callers must also reject conflicting ownership.
+func InternalPartitionKey(resource string) (string, error) {
+	if resource == "" {
+		return "", fmt.Errorf("internal resource must not be empty")
+	}
+	key := sanitizeIdentifier(resource)
+	if isExternalPartitionKey(key) {
+		return "", fmt.Errorf("internal resource %q derives reserved partition key %q (suffix _external); rename the resource", resource, key)
+	}
+	if len(key) > maxPartitionKeyLen {
+		return "", fmt.Errorf("resource name %q too long: derived partition key %q exceeds %d chars", resource, key, maxPartitionKeyLen)
+	}
+	return key, nil
+}
+
 func (b *pgvectorBackend) ResolveCollection(ctx context.Context, group, resource string) (Collection, bool, error) {
 	collections, err := b.listCollections(ctx)
 	if err != nil {
@@ -76,13 +93,14 @@ func (b *pgvectorBackend) EnsureCollection(ctx context.Context, group, resource 
 	key := sanitizeIdentifier(resource)
 	if isExternal {
 		key += "_external"
-	} else if isExternalPartitionKey(key) {
-		// The suffix encodes external-ness downstream; an internal key
-		// carrying it would be misclassified.
-		return Collection{}, fmt.Errorf("internal resource %q derives reserved partition key %q (suffix _external); rename the resource", resource, key)
-	}
-	if len(key) > maxPartitionKeyLen {
-		return Collection{}, fmt.Errorf("resource name %q too long: derived partition key %q exceeds %d chars", resource, key, maxPartitionKeyLen)
+		if len(key) > maxPartitionKeyLen {
+			return Collection{}, fmt.Errorf("resource name %q too long: derived partition key %q exceeds %d chars", resource, key, maxPartitionKeyLen)
+		}
+	} else {
+		key, err = InternalPartitionKey(resource)
+		if err != nil {
+			return Collection{}, err
+		}
 	}
 
 	_, err = dbutil.Exec(ctx, b.db, sqlVectorCatalogInsert, &sqlVectorCatalogInsertRequest{
