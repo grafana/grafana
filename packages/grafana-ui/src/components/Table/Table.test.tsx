@@ -1,5 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { StrictMode } from 'react';
 
 import { applyFieldOverrides, createTheme, type DataFrame, FieldType, toDataFrame } from '@grafana/data';
 
@@ -101,7 +102,7 @@ function applyOverrides(dataFrame: DataFrame) {
   return dataFrames[0];
 }
 
-function getTestContext(propOverrides: Partial<TableRTProps> = {}) {
+function getTestContext(propOverrides: Partial<TableRTProps> = {}, strictMode = false) {
   const onSortByChange = jest.fn();
   const onCellFilterAdded = jest.fn();
   const onColumnResize = jest.fn();
@@ -117,7 +118,8 @@ function getTestContext(propOverrides: Partial<TableRTProps> = {}) {
   };
 
   Object.assign(props, propOverrides);
-  const { rerender } = render(<Table {...props} />);
+  const table = <Table {...props} />;
+  const { rerender } = render(strictMode ? <StrictMode>{table}</StrictMode> : table);
 
   return { rerender, onSortByChange, onCellFilterAdded, onColumnResize };
 }
@@ -259,6 +261,15 @@ describe('Table', () => {
         { time: '2021-01-01 00:00:00', temperature: '10', link: '${__value.text} interpolation' },
         { time: '2021-01-01 03:00:00', temperature: 'NaN', link: '${__value.text} interpolation' },
       ]);
+    });
+
+    it('calls onSortByChange once with the sorted field', async () => {
+      const { onSortByChange } = getTestContext({}, true);
+
+      await userEvent.click(within(getColumnHeader(/temperature/)).getByText(/temperature/i));
+
+      expect(onSortByChange).toHaveBeenCalledTimes(1);
+      expect(onSortByChange).toHaveBeenCalledWith([{ displayName: 'temperature', desc: false }]);
     });
   });
 
