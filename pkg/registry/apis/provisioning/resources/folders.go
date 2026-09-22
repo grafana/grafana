@@ -293,7 +293,7 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 			Title:        currentTitle,
 			Path:         source.Path,
 			MetadataHash: source.Checksum,
-			ParentID:     meta.GetFolder(),
+			ParentID:     foldermodel.ToLegacyFolderUID(meta.GetFolder()),
 		}
 
 		if takeover || !folder.Equal(existing) {

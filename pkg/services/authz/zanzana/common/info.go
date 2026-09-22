@@ -10,6 +10,7 @@ import (
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 )
 
 type typeInfo struct {
@@ -134,6 +135,10 @@ func getTypeAndRelations(group, resource string) (string, []string) {
 func newResource(
 	typ, group, resource, name, folder, subresource string, relations []string,
 ) ResourceInfo {
+	// Global variables and library panels intentionally use root-folder permissions.
+	if group != "dashboard.grafana.app" || (resource != "variables" && resource != "librarypanels") {
+		folder = foldermodel.ToLegacyFolderUID(folder)
+	}
 	return ResourceInfo{
 		typ:         typ,
 		group:       group,

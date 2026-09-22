@@ -1034,3 +1034,8 @@ func TestParsedResource_Run(t *testing.T) {
 		mc.AssertNotCalled(t, "Update")
 	})
 }
+
+func TestExistingFolderCanonicalRoot(t *testing.T) {
+	parsed := &ParsedResource{Existing: &unstructured.Unstructured{Object: map[string]interface{}{"metadata": map[string]interface{}{"annotations": map[string]interface{}{"grafana.app/folder": "general"}}}}}
+	require.Empty(t, parsed.ExistingFolder(), "root must not become an orphan-folder cleanup target")
+}
