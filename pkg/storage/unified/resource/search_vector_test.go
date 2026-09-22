@@ -71,11 +71,13 @@ type fakeVectorBackend struct {
 	// {PartitionKey: resource}. Set collection to override, or
 	// resolveNotFound/resolveErr to exercise those paths.
 	collection      *vector.Collection
+	resolveCalls    int
 	resolveNotFound bool
 	resolveErr      error
 }
 
 func (f *fakeVectorBackend) ResolveCollection(_ context.Context, group, resource string) (vector.Collection, bool, error) {
+	f.resolveCalls++
 	if f.resolveErr != nil {
 		return vector.Collection{}, false, f.resolveErr
 	}
@@ -139,6 +141,9 @@ func (f *fakeVectorBackend) ContentVersion(context.Context, string, string, stri
 	return 0, false, nil
 }
 func (f *fakeVectorBackend) UpdateContentVersion(context.Context, string, string, string, string, int) error {
+	return nil
+}
+func (f *fakeVectorBackend) UpdateFolder(context.Context, string, string, string, string, string) error {
 	return nil
 }
 func (f *fakeVectorBackend) GetLatestRV(context.Context) (int64, error) { return 0, nil }

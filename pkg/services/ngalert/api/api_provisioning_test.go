@@ -1999,7 +1999,7 @@ func TestApiContactPointExportSnapshot(t *testing.T) {
 					},
 				},
 			},
-			Receivers: []*v1.PostableApiReceiver{postableReceiver},
+			Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{&postableReceiver}),
 		}
 
 		amConfig, err := legacy_storage.SerializeAlertmanagerConfig(postable)
@@ -2187,7 +2187,10 @@ func TestApiGetSnapshots(t *testing.T) {
 	receiver := models.ReceiverGen(models.ReceiverMuts.WithName(allIntegrationsName), models.ReceiverMuts.WithIntegrations(allIntegrations...))()
 	postableReceiver, err := legacy_storage.ReceiverToPostableApiReceiver(&receiver)
 	require.NoError(t, err)
-	cfg.Receivers = append(cfg.Receivers, postableReceiver)
+	if cfg.Receivers == nil {
+		cfg.Receivers = make(map[v1.ResourceUID]v1.PostableApiReceiver, 1)
+	}
+	cfg.Receivers[v1.ReceiverUID(postableReceiver.Name)] = postableReceiver
 
 	// Mute Timings
 	location, err := time.LoadLocation("America/Montreal")
@@ -2299,7 +2302,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 	// Encrypt secure settings.
 	c, err := notifier.Load([]byte(testConfig))
 	require.NoError(t, err)
-	err = notifier.EncryptReceiverConfigs(c.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
+	err = notifier.EncryptReceiverConfigs(c.GetReceivers(), func(ctx context.Context, payload []byte) ([]byte, error) {
 		return secretsService.Encrypt(ctx, payload, secrets.WithoutScope())
 	})
 	require.NoError(t, err)
@@ -2427,7 +2430,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 	tracer := tracing.InitializeTracerForTest()
 
 	configStore := legacy_storage.NewAlertmanagerConfigStore(&env.store, notifier.NewExtraConfigsCrypto(env.secrets), env.features)
-	routeAccess := ac.NewRouteAccess[*legacy_storage.ManagedRoute](env.ac, ngalertfakes.NewFakeRoutePermissionsService(), true)
+	routeAccess := ac.NewRouteAccess[*v1.ManagedRoute](env.ac, ngalertfakes.NewFakeRoutePermissionsService(), true)
 	rs := routes.NewService(configStore, env.store, env.xact, env.settings, env.features, env.log, validation.ValidateProvenanceRelaxed, tracer, routeAccess)
 
 	receiverAuthz := ac.NewReceiverAccess[*models.Receiver](env.ac, true)
@@ -2446,6 +2449,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		false,
 		nil,
 		&notifier.NoopOrgEmailValidator{},
+		notifier.NoopReceiverStatusFetcher{},
 	)
 	provisionRouteService := routes.NewService(
 		configStore,
@@ -2510,7 +2514,7 @@ func createFakeNotificationPolicyService() *fakeNotificationPolicyService {
 	}
 }
 
-func (f *fakeNotificationPolicyService) GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (legacy_storage.ManagedRoute, error) {
+func (f *fakeNotificationPolicyService) GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (v1.ManagedRoute, error) {
 	return routes.NewFakeService(f.config).GetManagedRoute(ctx, orgID, name, user)
 }
 

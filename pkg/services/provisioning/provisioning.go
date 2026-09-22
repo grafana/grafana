@@ -30,6 +30,7 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
@@ -429,7 +430,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		ps.log,
 		validation.ValidateProvenanceRelaxed,
 		ps.tracer,
-		alertingauthz.NewRouteAccess[*legacy_storage.ManagedRoute](ps.ac, ps.routesPermissions, true),
+		alertingauthz.NewRouteAccess[*v1.ManagedRoute](ps.ac, ps.routesPermissions, true),
 	)
 	receiverAuthz := alertingauthz.NewReceiverAccess[*ngmodels.Receiver](ps.ac, true)
 	emailValidator := notifier.NewEmailValidator(ps.orgService, ps.Cfg.UnifiedAlerting.LimitEmailToOrgMembers)
@@ -448,6 +449,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		false,
 		ps.Cfg.UnifiedAlerting.AllowedIntegrations,
 		emailValidator,
+		notifier.NoopReceiverStatusFetcher{},
 	)
 	contactPointService := provisioning.NewContactPointService(receiverAuthz, configStore, ps.secretService,
 		ps.alertingStore, ps.SQLStore, receiverSvc, ps.log, ps.alertingStore, ps.resourcePermissions, ps.Cfg.UnifiedAlerting.AllowedIntegrations, emailValidator)

@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	authnlib "github.com/grafana/authlib/authn"
@@ -495,4 +496,62 @@ func TestCloudLoader_AggregateOnlyNoAppManifest(t *testing.T) {
 		}
 		return false
 	}, 5*time.Second, 10*time.Millisecond)
+}
+
+func TestCloudLoaderSingleTenantFallback(t *testing.T) {
+	t.Run("disabled returns a nil interface", func(t *testing.T) {
+		loader := &cloudLoader{}
+		require.True(t, loader.SingleTenantFallback() == nil)
+	})
+	t.Run("discovery alone enables fallback", func(t *testing.T) {
+		gcom := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			require.Equal(t, http.MethodGet, r.Method)
+			require.Equal(t, "Bearer test-gcom-token", r.Header.Get("Authorization"))
+			switch r.URL.Path {
+			case "/api/instances/35611":
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = w.Write([]byte(`{"url":"https://play.grafana.org/"}`))
+			case "/api/instances/123":
+				w.WriteHeader(http.StatusNotFound)
+			default:
+				t.Errorf("unexpected gcom request: %s", r.URL.Path)
+				w.WriteHeader(http.StatusBadRequest)
+			}
+		}))
+		t.Cleanup(gcom.Close)
+		cfg := cfgWithCloudRouterSection(t, map[string]string{"st_discovery_url": "https://play.grafana.org/"})
+		cfg.GrafanaComAPIURL = gcom.URL + "/api"
+		cfg.GrafanaComSSOAPIToken = "test-gcom-token"
+		loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+		require.NoError(t, err)
+		cloud, ok := loader.(*cloudLoader)
+		require.True(t, ok)
+		require.Same(t, cloud.singleTenantFallback, cloud.SingleTenantFallback())
+		host, err := cloud.singleTenantFallback.hostForNamespace(t.Context(), "stacks-35611")
+		require.NoError(t, err)
+		require.Equal(t, "https://play.grafana.org/", host.String())
+		host, err = cloud.singleTenantFallback.hostForNamespace(t.Context(), "stacks-123")
+		require.NoError(t, err)
+		require.Nil(t, host)
+	})
+	for _, raw := range []string{"/relative", "http:///missing-host", "ftp://example.com", "http://%"} {
+		t.Run(raw, func(t *testing.T) {
+			cfg := cfgWithCloudRouterSection(t, map[string]string{"st_discovery_url": raw})
+			_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+			require.Error(t, err)
+		})
+	}
+}
+
+func TestCloudLoaderFallbackOnlyLifecycle(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		cfg := cfgWithCloudRouterSection(t, map[string]string{"st_discovery_url": "https://play.grafana.org/"})
+		loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+		require.NoError(t, err)
+		cloud := loader.(*cloudLoader)
+		require.NoError(t, services.StartAndAwaitRunning(t.Context(), cloud))
+		synctest.Wait()
+		require.Equal(t, services.Running, cloud.State())
+		require.NoError(t, services.StopAndAwaitTerminated(t.Context(), cloud))
+	})
 }

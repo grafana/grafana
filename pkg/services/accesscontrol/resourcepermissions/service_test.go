@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	serviceaccountsretriever "github.com/grafana/grafana/pkg/services/serviceaccounts/retriever"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
@@ -870,6 +871,7 @@ func setupTestEnvironmentWithCfg(t *testing.T, ops Options, features featuremgmt
 		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
+	serviceAccountRetriever := serviceaccountsretriever.ProvideService(sql, nil, nil, userSvc, orgSvc)
 
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
@@ -877,7 +879,7 @@ func setupTestEnvironmentWithCfg(t *testing.T, ops Options, features featuremgmt
 	ac := acimpl.ProvideAccessControl(features)
 	service, err := New(
 		cfg, ops, features, routing.NewRouteRegister(), license,
-		ac, acService, sql, teamSvc, userSvc, nil, NewActionSetService(),
+		ac, acService, sql, teamSvc, userSvc, serviceAccountRetriever, NewActionSetService(),
 	)
 	require.NoError(t, err)
 

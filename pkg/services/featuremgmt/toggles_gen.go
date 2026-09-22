@@ -19,10 +19,6 @@ const (
 	// Support new streaming approach for loki (prototype, needs special loki build)
 	FlagLokiExperimentalStreaming = "lokiExperimentalStreaming"
 
-	// FlagFeatureHighlights
-	// Highlight Grafana Enterprise features
-	FlagFeatureHighlights = "featureHighlights"
-
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
@@ -104,7 +100,7 @@ const (
 	FlagProvisioningUserAttribution = "provisioning.userAttribution"
 
 	// FlagGrafanaFrontendLegacyFeatureToggleHandling
-	// Controls how the frontend handles reads of the legacy config.featureToggles map. One of "off", "log" (report each toggle once) or "block" (report, and resolve every toggle to undefined).
+	// Controls how the frontend handles reads of the legacy config.featureToggles map. One of "off", "log" (warn in the console once per toggle), "alert" (also raise a warning alert) or "block" (console only, and resolve every toggle to undefined).
 	FlagGrafanaFrontendLegacyFeatureToggleHandling = "grafana.frontendLegacyFeatureToggleHandling"
 
 	// FlagProvisioningPerformance
@@ -889,10 +885,6 @@ const (
 	// FlagLokiAlignedQuerySplitting
 	// Aligns query splitting chunks with UTC midnight
 	FlagLokiAlignedQuerySplitting = "lokiAlignedQuerySplitting"
-
-	// FlagQueryFetchConfigFromSettingsService
-	// Enables the query service to fetch the configuration from the settings service
-	FlagQueryFetchConfigFromSettingsService = "queryFetchConfigFromSettingsService"
 
 	// FlagProfilesHeatmap
 	// Enables heatmap visualization support for Pyroscope profiles

@@ -16,7 +16,14 @@ export interface SolutionState {
   spanMetrics: SignalStatus;
   /** Gates only the Synthetics card; like spanMetrics, 'unknown' never blanks recommendations. */
   synthetics: SignalStatus;
+  /** Grafana Alerting routing into IRM. Gates only the IRM card; 'unknown' never blanks recommendations. */
+  irm: SignalStatus;
 }
+
+/** The signals that pick a matrix row; any of them `unknown` blanks the recommendations. */
+export const CORE_SIGNALS = ['metrics', 'logs', 'traces', 'kubernetes'] as const satisfies ReadonlyArray<
+  keyof SolutionState
+>;
 
 /** A settled signal: whether data is flowing, and the datasource that proved it. */
 export interface SignalDetection {

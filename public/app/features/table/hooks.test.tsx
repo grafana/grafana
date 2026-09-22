@@ -203,6 +203,7 @@ describe('useCommonTableProps', () => {
       disableSanitizeHtml: false,
       contentAwareWidthsEnabled: false,
       tableRefreshEnabled: false,
+      zebraStriping: false,
     });
   });
 
@@ -219,6 +220,25 @@ describe('useCommonTableProps', () => {
     });
 
     expect(result.current.hoverOverflow).toBe(true);
+  });
+
+  // A dashboard can carry the zebra striping option in from an instance that has the toggle on, so
+  // the option alone must not be enough to stripe.
+  it('ignores the zebra striping option with the refresh-new-features flag off', () => {
+    const { result } = renderHook(() => useCommonTableProps({ ...options, zebraStriping: true }, fieldConfig), {
+      wrapper: FeatureFlagsProvider,
+    });
+
+    expect(result.current.zebraStriping).toBe(false);
+  });
+
+  it('honours the zebra striping option with the refresh-new-features flag on', () => {
+    setTestFlags({ [FlagKeys.TableRefreshNewFeatures]: true });
+    const { result } = renderHook(() => useCommonTableProps({ ...options, zebraStriping: true }, fieldConfig), {
+      wrapper: FeatureFlagsProvider,
+    });
+
+    expect(result.current.zebraStriping).toBe(true);
   });
 
   it('passes pageSize through when the pagination-page-size flag is on', () => {
