@@ -31,7 +31,7 @@ Only users with the organization administrator role can add data sources. To add
 
 ## Data source permissions
 
-You can configure data source permissions to allow or deny certain users the ability to query, edit, or administrate a data source. Each data source's configuration includes a **Permissions** tab where you can restrict data source permissions to specific users, service accounts, teams, or basic roles.
+You can configure data source permissions to allow or deny certain users the ability to query, edit, or administrate a data source. Each data source's configuration includes a **Permissions** tab where you can restrict data source permissions to specific users, [service accounts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/), teams, or [basic roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#organization-users-and-permissions).
 
 - The `query` permission allows users to query the data source.
 - The `edit` permission allows users to query the data source, edit the data source's configuration and delete the data source.
@@ -88,7 +88,7 @@ Label Based Access Control (LBAC) for data sources lets you control access to lo
 
 ## Provisioned data sources
 
-Data sources added through [provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources), and Grafana-managed data sources on Grafana Cloud, are read-only in the UI. You can't change their configuration from the data source settings page, regardless of your data source permissions. This is separate from [data source permissions](#data-source-permissions): no permission level makes a provisioned data source editable in the UI. A read-only data source's settings page shows only a **Test** button instead of **Save & test**.
+Data sources added through [provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources), which defines data sources in configuration files, and Grafana-managed data sources on Grafana Cloud are read-only in the UI. You can't change their configuration from the data source settings page, regardless of your data source permissions. This is separate from [data source permissions](#data-source-permissions): no permission level makes a provisioned data source editable in the UI. A read-only data source's settings page shows only a **Test** button instead of **Save & test**.
 
 To change a provisioned data source, use the method that matches how it's managed:
 
@@ -104,7 +104,7 @@ If you need a data source you can edit in the UI, add another data source manual
 1. Search for and select the same data source type as the provisioned data source.
 1. Click **Add new data source**.
 1. Enter the same connection settings as the provisioned data source so both point at the same backend. The exact settings depend on the data source type. For a URL-based data source, use the same **URL**.
-1. Configure authentication. For a Grafana Cloud-hosted backend, use basic authentication with your Grafana Cloud user ID as the user name and a Cloud Access Policy token as the password. The token's access policy must include the scope required to query the backend.
+1. Configure authentication. For a Grafana Cloud-hosted backend, use basic authentication with your Grafana Cloud user ID as the user name and a [Cloud Access Policy token](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/access-policies/) as the password. The token's access policy must include the scope required to query the backend.
 1. Click **Save & test**.
 
 After you create the copy, update your dashboards, panels, and alert rules to query the new data source. Existing queries continue to use the provisioned data source until you point them at the copy.
@@ -115,9 +115,9 @@ The copy is independent of the provisioned data source. Later changes to the pro
 
 ## Query and resource caching
 
-When you enable query and resource caching, Grafana temporarily stores the results of data source queries and resource requests. When you or another user submit the same query or resource request again, the results come back from the cache instead of from the data source.
+Query and resource caching temporarily stores the results of data source queries and resource requests in Grafana. When you or another user submit the same query or resource request again before the cached result expires, Grafana returns the result from the cache instead of sending the request to the data source. Serving results from the cache is faster than querying the data source and reduces the number of requests the data source has to handle.
 
-In Grafana, a query is a request for data frames to display or transform. A resource is any HTTP request a plugin makes, such as the Amazon Timestream plugin requesting a list of available databases from AWS. For more information on data source queries and resources, refer to the developer documentation on [backend plugins](https://grafana.com/developers/plugin-tools/key-concepts/backend-plugins/).
+In Grafana, a query is a request for data frames, the structured results that Grafana displays or transforms. A resource is any HTTP request a plugin makes, such as the Amazon Timestream plugin requesting a list of available databases from AWS. For more information on data source queries and resources, refer to the developer documentation on [backend plugins](https://grafana.com/developers/plugin-tools/key-concepts/backend-plugins/).
 
 The caching feature works for most backend data sources. For details on which data sources support it, refer to [Data sources that work with query caching](#data-sources-that-work-with-query-caching). You can enable the cache globally in the Grafana [configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#caching), and configure a cache duration (also called Time to Live, or TTL) for each data source individually.
 
