@@ -190,12 +190,13 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   /**
    * Handles all edit actions
    * Adds to undo history and selects new object
-   * @param payload
    */
   private handleEditAction(action: DashboardEditActionEventPayload, skipPerform = false) {
     if (this._activeBatch) {
       this._activeBatch.actions.push(action);
-      this.performAction(action);
+      if (!skipPerform) {
+        this.performAction(action);
+      }
       return;
     }
     // Clear redo stack when user performs a new action
