@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 
+	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/alerting/receivers/schema"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -41,6 +42,7 @@ type ReceiverService struct {
 	includeImported        bool
 	allowedIntegrations    map[schema.IntegrationType]struct{}
 	emailValidator         EmailIntegrationValidator
+	amStatusFetcher        amReceiverStatusFetcher
 }
 
 type routeService interface {
@@ -57,6 +59,22 @@ type alertRuleNotificationSettingsStore interface {
 type secretService interface {
 	Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error)
 	Decrypt(ctx context.Context, payload []byte) ([]byte, error)
+}
+
+// amReceiverStatusFetcher retrieves the current receiver statuses (active state and per-integration
+// notification results) from the org's running Alertmanager instance.
+type amReceiverStatusFetcher interface {
+	GetReceiverStatuses(ctx context.Context, orgID int64) ([]alertingModels.ReceiverStatus, error)
+}
+
+// NoopReceiverStatusFetcher is an amReceiverStatusFetcher that reports no receiver statuses. Use it for
+// ReceiverService instances that never need to serve AM-derived receiver status, e.g. file-based provisioning.
+type NoopReceiverStatusFetcher struct{}
+
+var _ amReceiverStatusFetcher = &NoopReceiverStatusFetcher{}
+
+func (NoopReceiverStatusFetcher) GetReceiverStatuses(_ context.Context, _ int64) ([]alertingModels.ReceiverStatus, error) {
+	return nil, nil
 }
 
 // receiverAccessControlService provides access control for receivers.
@@ -108,6 +126,7 @@ func NewReceiverService(
 	includeStaged bool,
 	allowedIntegrations map[schema.IntegrationType]struct{},
 	emailValidator EmailIntegrationValidator,
+	amStatusFetcher amReceiverStatusFetcher,
 ) *ReceiverService {
 	return &ReceiverService{
 		authz:                  authz,
@@ -124,6 +143,7 @@ func NewReceiverService(
 		includeImported:        includeStaged,
 		allowedIntegrations:    allowedIntegrations,
 		emailValidator:         emailValidator,
+		amStatusFetcher:        amStatusFetcher,
 	}
 }
 
@@ -673,6 +693,83 @@ func (rs *ReceiverService) InUseMetadata(ctx context.Context, orgID int64, recei
 	}
 
 	return results, nil
+}
+
+// StatusMetadata returns the receiver statuses currently reported by the org's Alertmanager for the given Receivers.
+func (rs *ReceiverService) StatusMetadata(ctx context.Context, orgID int64, receivers ...*models.Receiver) (map[v1.ResourceUID]alertingModels.ReceiverStatus, error) {
+	ctx, span := rs.tracer.Start(ctx, "alerting.receivers.statusMetadata", trace.WithAttributes(
+		attribute.Int("count", len(receivers)),
+	))
+	defer span.End()
+
+	statuses, err := rs.amStatusFetcher.GetReceiverStatuses(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+	if len(statuses) == 0 {
+		return nil, nil
+	}
+
+	statusesByName := make(map[string]alertingModels.ReceiverStatus, len(statuses))
+	for _, s := range statuses {
+		statusesByName[s.Name] = s
+	}
+	result := make(map[v1.ResourceUID]alertingModels.ReceiverStatus, len(receivers))
+	for _, r := range receivers {
+		// Lookups done by name since that is all the AM receiver status has access to.
+		if s, ok := statusesByName[r.Name]; ok {
+			result[v1.ResourceUID(r.UID)] = s
+		}
+	}
+
+	return result, nil
+}
+
+// GetReceiverStatuses wrapper around StatusMetadata that returns the receiver statuses for all Receivers that the user
+// has read permissions on.
+// Eventually, if we move these statuses directly to the receiver API resource responses, instead of through a separate
+// API call, this method won't be necessary anymore.
+func (rs *ReceiverService) GetReceiverStatuses(ctx context.Context, orgID int64, user identity.Requester) ([]alertingModels.ReceiverStatus, error) {
+	ctx, span := rs.tracer.Start(ctx, "alerting.receivers.statusMetadata", trace.WithAttributes(
+		attribute.Int64("query_org_id", orgID),
+	))
+	defer span.End()
+
+	revision, err := rs.cfgStore.Get(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+	// No need for provenance here, so we skip the DB call.
+
+	receivers, err := revision.GetReceivers(nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if rs.includeImported {
+		imported := rs.getImportedReceivers(ctx, span, nil, revision)
+		receivers = append(receivers, imported...)
+	}
+
+	filtered, err := rs.authz.FilterRead(ctx, user, receivers...)
+	if err != nil {
+		return nil, err
+	}
+	// No need to encrypt/decrypt since we just need the Name.
+
+	statuses, err := rs.StatusMetadata(ctx, orgID, filtered...)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]alertingModels.ReceiverStatus, 0, len(statuses))
+	for _, r := range receivers {
+		if s, ok := statuses[v1.ResourceUID(r.UID)]; ok {
+			result = append(result, s)
+		}
+	}
+
+	return result, nil
 }
 
 func removedIntegrations(old, new *models.Receiver) []*models.Integration {
