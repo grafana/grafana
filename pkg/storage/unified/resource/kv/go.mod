@@ -9,7 +9,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/grafana/grafana-app-sdk/logging v0.60.2
 	github.com/grafana/grafana/pkg/util/sqlite v0.0.0
-	github.com/jackc/pgx/v5 v5.10.0
+	github.com/jackc/pgx/v5 v5.11.0
 	github.com/lib/pq v1.12.3
 	github.com/stretchr/testify v1.12.1
 )
