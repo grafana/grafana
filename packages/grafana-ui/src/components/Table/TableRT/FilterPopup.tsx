@@ -43,7 +43,10 @@ export const FilterPopup = ({
   const setFilter = column.setFilterValue;
   const uniqueValues = useMemo(() => calculateUniqueFieldValues(preFilteredRows, field), [preFilteredRows, field]);
   const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);
-  const filteredOptions = useMemo(() => getFilteredOptions(options, filterValue), [options, filterValue]);
+  const filteredOptions = useMemo(
+    () => getFilteredOptions(options, filterValue as SelectableValue[] | undefined),
+    [options, filterValue]
+  );
   const [values, setValues] = useState<SelectableValue[]>(filteredOptions);
   const [matchCase, setMatchCase] = useState(false);
   const ref = useRef<HTMLDivElement>(null);

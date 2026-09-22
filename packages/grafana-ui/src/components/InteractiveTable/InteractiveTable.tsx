@@ -113,7 +113,7 @@ export type InteractiveTableHeaderTooltip = {
   iconName?: IconName;
 };
 
-export type ColumnSort = { id: string; desc?: boolean };
+export type ColumnSort = { id: string; desc: boolean };
 export type FetchDataArgs<Data> = { sortBy: ColumnSort[] };
 export type FetchDataFunc<Data> = ({ sortBy }: FetchDataArgs<Data>) => void;
 
