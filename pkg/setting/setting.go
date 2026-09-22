@@ -503,6 +503,7 @@ type Cfg struct {
 	RudderstackV3SDKURL                 string
 	RudderstackConfigURL                string
 	RudderstackIntegrationsURL          string
+	RudderstackBatchInterval            int
 	PostHogToken                        string
 	PostHogHost                         string
 	FrontendAnalyticsConsoleReporting   bool
@@ -1683,6 +1684,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.RudderstackV3SDKURL = analytics.Key("rudderstack_v3_sdk_url").String()
 	cfg.RudderstackConfigURL = analytics.Key("rudderstack_config_url").String()
 	cfg.RudderstackIntegrationsURL = analytics.Key("rudderstack_integrations_url").String()
+	cfg.RudderstackBatchInterval = analytics.Key("rudderstack_batch_interval").MustInt(0)
 	cfg.PostHogToken = analytics.Key("posthog_token").String()
 	cfg.PostHogHost = analytics.Key("posthog_host").String()
 	cfg.FrontendAnalyticsConsoleReporting = analytics.Key("browser_console_reporter").MustBool(false)

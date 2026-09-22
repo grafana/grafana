@@ -45,6 +45,8 @@ import {
   HEADER_MENU_SPACE,
   HEADER_TOOLTIP_SPACE,
   LAST_COLUMN_CLASS,
+  NESTED_ROW_CLASS,
+  STRIPED_ROW_CLASS,
   TABLE,
 } from './constants';
 import type { TextAlign } from './styles';
@@ -2123,3 +2125,31 @@ export const getStableRowKey = (rowIndex: number, frame?: DataFrame): string => 
   const key = frame?.meta?.custom?.stableRowKey;
   return key != null ? String(key) : String(rowIndex);
 };
+
+/**
+ * Builds a `rowClass` that stripes every other row of data.
+ *
+ * react-data-grid's `rdg-row-odd` counts nested container rows, making parent-row parity depend on
+ * which rows have nested data. Count only depth-0 data rows to keep the stripe pattern stable.
+ * Containers get a separate class so hover styles can exclude them.
+ */
+export function makeStripedRowClass(rows: TableRow[]): (row: TableRow) => string | undefined {
+  const striped = new WeakSet<TableRow>();
+  let ordinal = 0;
+  for (const row of rows) {
+    if (row.__depth !== 0) {
+      continue;
+    }
+    if (ordinal % 2 === 1) {
+      striped.add(row);
+    }
+    ordinal++;
+  }
+
+  return (row) => {
+    if (row.__depth !== 0) {
+      return NESTED_ROW_CLASS;
+    }
+    return striped.has(row) ? STRIPED_ROW_CLASS : undefined;
+  };
+}
