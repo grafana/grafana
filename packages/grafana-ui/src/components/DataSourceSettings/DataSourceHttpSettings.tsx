@@ -86,6 +86,7 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
     azureAuthSettings,
     renderSigV4Editor,
     secureSocksDSProxyEnabled,
+    forwardedHeadersEnabled,
     urlLabel,
     urlDocs,
   } = props;
@@ -263,25 +264,27 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
               />
             </Field>
 
-            <Field
-              label={t(
-                'grafana-ui.data-source-http-settings.allowed-headers',
-                'Forwarded HTTP headers'
-              )}
-              description={t(
-                'grafana-ui.data-source-http-settings.allowed-headers-description',
-                'HTTP request headers from the user\u2019s request that Grafana will forward to this data source. Use exact names (X-Scope-OrgID), a prefix match (X-Tenant-[]) or [] to forward all. Grafana enforces an instance-wide deny-list that always blocks sensitive headers (Authorization, Cookie, X-Grafana-*, X-Forwarded-* and similar).'
-              )}
-            >
-              <TagsInput
-                tags={dataSourceConfig.jsonData.allowedHeaders}
-                width={40}
-                onChange={(headers) =>
-                  onSettingsChange({ jsonData: { ...dataSourceConfig.jsonData, allowedHeaders: headers } })
-                }
-                disabled={dataSourceConfig.readOnly}
-              />
-            </Field>
+            {forwardedHeadersEnabled && (
+              <Field
+                label={t(
+                  'grafana-ui.data-source-http-settings.allowed-headers',
+                  'Forwarded HTTP headers'
+                )}
+                description={t(
+                  'grafana-ui.data-source-http-settings.allowed-headers-description',
+                  'HTTP request headers from the user\u2019s request that Grafana will forward to this data source. Use exact names (X-Scope-OrgID), a prefix match (X-Tenant-[]) or [] to forward all. Grafana enforces an instance-wide deny-list that always blocks sensitive headers (Authorization, Cookie, X-Grafana-*, X-Forwarded-* and similar).'
+                )}
+              >
+                <TagsInput
+                  tags={dataSourceConfig.jsonData.allowedHeaders}
+                  width={40}
+                  onChange={(headers) =>
+                    onSettingsChange({ jsonData: { ...dataSourceConfig.jsonData, allowedHeaders: headers } })
+                  }
+                  disabled={dataSourceConfig.readOnly}
+                />
+              </Field>
+            )}
 
             <Field
               label={t('grafana-ui.data-source-http-settings.timeout-label', 'Timeout')}

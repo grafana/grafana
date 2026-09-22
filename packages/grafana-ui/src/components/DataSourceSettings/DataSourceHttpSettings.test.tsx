@@ -97,6 +97,7 @@ describe('DataSourceHttpSettings', () => {
         secureJsonFields: {},
         readOnly: false,
       },
+      forwardedHeadersEnabled: true,
     };
 
     it('renders the currently-configured allow-list entries when access is proxy', () => {
@@ -110,6 +111,14 @@ describe('DataSourceHttpSettings', () => {
       setup({
         ...proxyOverrides,
         dataSourceConfig: { ...proxyOverrides.dataSourceConfig, access: 'direct' as const },
+      });
+      expect(screen.queryByText('Forwarded HTTP headers')).not.toBeInTheDocument();
+    });
+
+    it('does not render the field when the feature toggle is disabled', () => {
+      setup({
+        ...proxyOverrides,
+        forwardedHeadersEnabled: false,
       });
       expect(screen.queryByText('Forwarded HTTP headers')).not.toBeInTheDocument();
     });

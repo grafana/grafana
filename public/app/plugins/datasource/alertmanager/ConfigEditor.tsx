@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom-v5-compat';
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { type DataSourcePluginOptionsEditorProps, type SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { useFlagGrafanaDatasourceForwardHeaders } from '@grafana/runtime/internal';
 import { Box, DataSourceHttpSettings, InlineField, InlineSwitch, Select, Text } from '@grafana/ui';
 
 import { type AlertManagerDataSourceJsonData, AlertManagerImplementation } from './types';
@@ -32,6 +33,7 @@ const IMPL_OPTIONS: Array<SelectableValue<AlertManagerImplementation>> = [
 
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
+  const forwardedHeadersEnabled = useFlagGrafanaDatasourceForwardHeaders();
 
   // As we default to Mimir, we need to make sure the implementation is set from the start
   useEffect(() => {
@@ -94,6 +96,7 @@ export const ConfigEditor = (props: Props) => {
         sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
         renderSigV4Editor={<SIGV4ConnectionConfig {...props}></SIGV4ConnectionConfig>}
         secureSocksDSProxyEnabled={false} // the proxy is not implemented to work with the alertmanager
+        forwardedHeadersEnabled={forwardedHeadersEnabled}
       />
     </>
   );
