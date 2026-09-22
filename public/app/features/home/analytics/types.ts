@@ -31,11 +31,6 @@ export interface SolutionFilterChanged extends EventProperty {
   /** Whether the user saved a scope or cleared it. */
   change: 'saved' | 'cleared';
   /**
-   * Scope stored before the change: none, one applied to the card's datasource, or one saved for
-   * another datasource (shown on the card as not applied).
-   */
-  previous: 'none' | 'applied' | 'other_datasource';
-  /**
    * Comma-separated names of the scope dimensions set after the change, in the solution's own terms
    * (Kubernetes: cluster, namespaces, nodes); empty when cleared. Names only: the values are
    * customer data and are never reported.

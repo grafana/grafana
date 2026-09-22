@@ -89,36 +89,7 @@ describe('KubernetesFilterActions', () => {
     expect(mockFilterChanged).toHaveBeenCalledWith({
       solution: 'kubernetes',
       change: 'saved',
-      previous: 'none',
       customized: 'cluster,namespaces',
-    });
-  });
-
-  it('clears an applied scope and reports that nothing is set', async () => {
-    window.localStorage.setItem(
-      kubernetesFilterStorageKey(),
-      JSON.stringify({
-        datasourceUid: 'prometheus',
-        datasourceName: 'Prometheus',
-        cluster: 'prod',
-        namespaces: [],
-        nodes: [],
-      })
-    );
-    const { user } = render(<KubernetesFilterActions datasource={stubDatasource} attention={false} />);
-
-    await user.click(screen.getByRole('button', { name: 'Edit filters (Cluster: prod)' }));
-    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Clear filters' }));
-
-    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    expect(window.localStorage.getItem(kubernetesFilterStorageKey())).toBeNull();
-    expect(screen.getByRole('button', OPEN_GEAR)).toBeInTheDocument();
-    expect(mockFilterChanged).toHaveBeenCalledTimes(1);
-    expect(mockFilterChanged).toHaveBeenCalledWith({
-      solution: 'kubernetes',
-      change: 'cleared',
-      previous: 'applied',
-      customized: '',
     });
   });
 
@@ -158,7 +129,6 @@ describe('KubernetesFilterActions', () => {
     expect(mockFilterChanged).toHaveBeenCalledWith({
       solution: 'kubernetes',
       change: 'cleared',
-      previous: 'other_datasource',
       customized: '',
     });
   });

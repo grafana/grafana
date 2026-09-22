@@ -132,7 +132,6 @@ function KubernetesFilterModal({ datasource, filter, onClose }: KubernetesFilter
 
   const storageKey = kubernetesFilterStorageKey();
   const [error, setError] = useState<string | null>(null);
-  const previous = filter === null ? 'none' : filter.datasourceUid === datasource.uid ? 'applied' : 'other_datasource';
   // Persist, report, then close; a quota or access failure keeps the dialog and draft so the user
   // can retry, and reports nothing.
   const persist = (write: () => void, change: SolutionFilterChanged['change'], scope: KubernetesScope) => {
@@ -142,7 +141,7 @@ function KubernetesFilterModal({ datasource, filter, onClose }: KubernetesFilter
       setError(t('home.solutions.kubernetes.filter.save-failed', 'Could not save to browser storage. Try again.'));
       return;
     }
-    solutionFilterChanged({ solution: 'kubernetes', change, previous, customized: customizedDimensions(scope) });
+    solutionFilterChanged({ solution: 'kubernetes', change, customized: customizedDimensions(scope) });
     onClose();
   };
   const save = () =>
