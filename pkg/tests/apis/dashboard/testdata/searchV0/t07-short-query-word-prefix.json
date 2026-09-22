@@ -9,7 +9,8 @@
         "gdev",
         "panel-tests",
         "graph-ng"
-      ]
+      ],
+      "folder": "general"
     }
   ],
   "maxScore": 0.843

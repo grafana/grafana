@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -577,7 +578,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		sp, _, _ := unstructured.NestedString(folderAfter.Object, "metadata", "annotations", "grafana.app/sourcePath")
 		require.Equal(t, "new-team", sp)
 		folderParent, _, _ := unstructured.NestedString(folderAfter.Object, "metadata", "annotations", "grafana.app/folder")
-		require.Empty(t, folderParent, "root-level folder should have no parent")
+		require.True(t, foldermodel.IsRootFolderUID(folderParent), "root-level folder should have no parent")
 
 		common.RequireRepoFolders(t, helper.Folders, repoName, []string{"new-team"})
 
@@ -737,7 +738,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		sp, _, _ := unstructured.NestedString(folderAfter.Object, "metadata", "annotations", "grafana.app/sourcePath")
 		require.Equal(t, "my-folder", sp)
 		folderParent, _, _ := unstructured.NestedString(folderAfter.Object, "metadata", "annotations", "grafana.app/folder")
-		require.Empty(t, folderParent, "folder moved to root should have no parent")
+		require.True(t, foldermodel.IsRootFolderUID(folderParent), "folder moved to root should have no parent")
 
 		common.RequireRepoFolders(t, helper.Folders, repoName, []string{"parent", "my-folder"})
 

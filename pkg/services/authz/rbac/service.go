@@ -1197,7 +1197,8 @@ func (s *Service) getScopeMap(permissions []accesscontrol.Permission) map[string
 }
 
 func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[string]bool, req *checkRequest, getTree folderTreeGetter) (bool, error) {
-	if req.ParentFolder == "" {
+	// Root grants target creation and global variables, not inheritance by stored resources.
+	if req.ParentFolder == "" || (folder.IsRootFolderUID(req.ParentFolder) && req.Verb != utils.VerbCreate && req.Resource != "variables") {
 		return false, nil
 	}
 
@@ -1326,7 +1327,7 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 	if strings.HasPrefix(req.Action, "folders:") || strings.HasPrefix(req.Action, "folders.permissions:") {
 		res = buildFolderList(scopeMap, tree)
 	} else {
-		res = buildItemList(scopeMap, tree, t.Prefix(), t.Resource() == "variables")
+		res = buildItemList(scopeMap, tree, t.Prefix(), t.Resource() == "variables", req.Verb == utils.VerbCreate)
 	}
 
 	if cacheHit {
@@ -1401,7 +1402,7 @@ func (s *Service) listPermissionWithFolderAuthz(ctx context.Context, scopeMap ma
 	// The prefix is irrelevant here since the folder scopeMap has no resource
 	// scopes. Do not use buildFolderList — it puts folder UIDs in the Items
 	// field, which would deny every real object.
-	res := buildItemList(folderScopeMap, tree, "", false)
+	res := buildItemList(folderScopeMap, tree, "", false, req.Verb == utils.VerbCreate)
 
 	if cacheHit {
 		res.Zookie = &authzv1.Zookie{Timestamp: time.Now().Add(-s.settings.CacheTTL).Unix()}
@@ -1436,12 +1437,15 @@ func buildFolderList(scopes map[string]bool, tree folderTree) *authzv1.ListRespo
 	return &authzv1.ListResponse{Items: itemList}
 }
 
-func buildItemList(scopes map[string]bool, tree folderTree, prefix string, aliasRootFolderSentinels bool) *authzv1.ListResponse {
+func buildItemList(scopes map[string]bool, tree folderTree, prefix string, aliasRootFolderSentinels bool, allowRootFolder bool) *authzv1.ListResponse {
 	folderSet := make(map[string]struct{}, len(scopes))
 	itemSet := make(map[string]struct{}, len(scopes))
 
 	for scope := range scopes {
 		if identifier, ok := strings.CutPrefix(scope, "folders:uid:"); ok {
+			if folder.IsRootFolderUID(identifier) && !aliasRootFolderSentinels && !allowRootFolder {
+				continue
+			}
 			if _, ok := folderSet[identifier]; ok {
 				continue
 			}

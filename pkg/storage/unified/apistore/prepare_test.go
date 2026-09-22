@@ -721,14 +721,14 @@ func TestVerifyFolder(t *testing.T) {
 		return acc
 	}
 
-	t.Run("support enabled, empty folder passes", func(t *testing.T) {
+	t.Run("support enabled, empty folder normalizes to general", func(t *testing.T) {
 		s := &Storage{
 			gr:   dashv1.DashboardResourceInfo.GroupResource(),
 			opts: StorageOptions{EnableFolderSupport: true},
 		}
 		obj := makeDash(t, "")
 		require.NoError(t, s.verifyFolder(obj))
-		require.Empty(t, obj.GetFolder())
+		require.Equal(t, folder.GeneralFolderUID, obj.GetFolder())
 	})
 
 	t.Run("support enabled, folder set passes unchanged", func(t *testing.T) {
@@ -1244,5 +1244,51 @@ func TestCheckGVK(t *testing.T) {
 		require.NoError(t, json.Unmarshal(raw, out))
 		require.Equal(t, group+"/v2", out.GetAPIVersion())
 		require.Equal(t, "Widget", out.GetKind())
+	})
+}
+
+func TestFolderNormalizationOnSave(t *testing.T) {
+	ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{UserID: 1, UserUID: "u1", Type: authlib.TypeUser})
+	s := &Storage{serializer: JSONSerializer(), opts: StorageOptions{EnableFolderSupport: true}}
+	for _, previousFolder := range []string{"", folder.GeneralFolderUID, "parent"} {
+		for _, nextFolder := range []string{"", folder.GeneralFolderUID, "parent"} {
+			t.Run(fmt.Sprintf("%q to %q", previousFolder, nextFolder), func(t *testing.T) {
+				previous := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "dash", UID: "uid", Generation: 3, Annotations: map[string]string{utils.AnnoKeyFolder: previousFolder}}}
+				next := previous.DeepCopy()
+				next.Annotations[utils.AnnoKeyFolder] = nextFolder
+				saved, err := s.prepareObjectForUpdate(ctx, next, previous)
+				require.NoError(t, err)
+				decoded, err := s.serializer.Decode(ctx, saved.raw, &dashv1.Dashboard{})
+				require.NoError(t, err)
+				meta, err := utils.MetaAccessor(decoded)
+				require.NoError(t, err)
+				expected := nextFolder
+				if expected == "" {
+					expected = folder.GeneralFolderUID
+				}
+				require.Equal(t, expected, meta.GetFolder())
+				generation := int64(3)
+				if folder.ToLegacyFolderUID(previousFolder) != folder.ToLegacyFolderUID(nextFolder) {
+					generation++
+				}
+				require.Equal(t, generation, meta.GetGeneration())
+				require.Equal(t, previousFolder, previous.Annotations[utils.AnnoKeyFolder])
+			})
+		}
+	}
+	t.Run("create persists root annotation", func(t *testing.T) {
+		saved, err := s.prepareObjectForStorage(ctx, &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "dash"}})
+		require.NoError(t, err)
+		var obj dashv1.Dashboard
+		require.NoError(t, json.Unmarshal(saved.raw, &obj))
+		require.Equal(t, folder.GeneralFolderUID, obj.Annotations[utils.AnnoKeyFolder])
+	})
+	t.Run("required folder rejects root", func(t *testing.T) {
+		required := &Storage{opts: StorageOptions{EnableFolderSupport: true, RequireFolder: true}}
+		for _, parent := range []string{"", folder.GeneralFolderUID} {
+			obj, err := utils.MetaAccessor(&dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Annotations: map[string]string{utils.AnnoKeyFolder: parent}}})
+			require.NoError(t, err)
+			require.True(t, apierrors.IsInvalid(required.verifyFolder(obj)))
+		}
 	})
 }

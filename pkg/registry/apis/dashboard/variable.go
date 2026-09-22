@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+	"github.com/grafana/grafana/pkg/services/folder"
 )
 
 var variableNameFormat = regexp.MustCompile(`^\w+$`)
@@ -63,8 +64,11 @@ func getVariableName(spec dashv2beta1.VariableSpec) string {
 	return name
 }
 
+// deriveVariableMetadataName treats both "" and "general" as the root scope so
+// a round-trip GET (which surfaces "general" via convertToObject) → POST stays
+// stable instead of producing "specName--general".
 func deriveVariableMetadataName(specName, folderUID string) string {
-	if folderUID == "" {
+	if folder.IsRootFolderUID(folderUID) {
 		return specName
 	}
 	return specName + "--" + folderUID
@@ -79,7 +83,7 @@ func validateVariableMetadataName(gotName, specName, folderUID string) error {
 		return nil
 	}
 
-	if folderUID == "" {
+	if folder.IsRootFolderUID(folderUID) {
 		return fmt.Errorf(
 			"metadata.name %q does not match the name required for spec.spec.name %q: expected %q (omit metadata.name to let the server set it)",
 			gotName,

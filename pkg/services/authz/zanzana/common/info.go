@@ -10,6 +10,7 @@ import (
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 )
 
 type typeInfo struct {
@@ -139,7 +140,7 @@ func newResource(
 		group:       group,
 		resource:    resource,
 		name:        name,
-		folder:      folder,
+		folder:      foldermodel.ToLegacyFolderUID(folder),
 		subresource: subresource,
 		relations:   relations,
 	}

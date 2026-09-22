@@ -1329,7 +1329,7 @@ func TestService_listPermission(t *testing.T) {
 			expectedFolders: []string{"folder-a"},
 		},
 		{
-			name: "should not alias empty parent for dashboard list with general grant",
+			name: "should not inherit general folder grants for dashboard list",
 			permissions: []accesscontrol.Permission{
 				{
 					Action:     "dashboards:read",
@@ -1346,7 +1346,6 @@ func TestService_listPermission(t *testing.T) {
 				Resource: "dashboards",
 				Options:  &ListRequestOptions{},
 			},
-			expectedFolders: []string{accesscontrol.GeneralFolderUID},
 		},
 		{
 			name: "should return dashboards that user has annotation read access to via subresource",
@@ -4560,4 +4559,23 @@ func TestService_BatchCheckRebuildsFolderTreeAtMostOnce(t *testing.T) {
 
 	assert.LessOrEqual(t, fStore.folderListCalls, 2,
 		"the folder list is fetched once and rebuilt at most once, not once per item")
+}
+
+func TestRootFolderInheritance(t *testing.T) {
+	s := &Service{}
+	for _, resource := range []string{"dashboards", "folders"} {
+		for _, verb := range []string{utils.VerbGet, utils.VerbUpdate, utils.VerbDelete} {
+			allowed, err := s.checkInheritedPermissions(t.Context(), map[string]bool{"folders:uid:general": true}, &checkRequest{Resource: resource, Verb: verb, ParentFolder: "general"}, func(bool) (*folderTree, error) {
+				t.Fatal("root is not a parent to inherit from")
+				return nil, nil
+			})
+			require.NoError(t, err)
+			require.False(t, allowed)
+		}
+	}
+	tree := newFolderTree(nil)
+	scopes := map[string]bool{"folders:uid:general": true}
+	require.Empty(t, buildItemList(scopes, tree, "dashboards:uid:", false, false).Folders)
+	require.ElementsMatch(t, []string{"general"}, buildItemList(scopes, tree, "dashboards:uid:", false, true).Folders)
+	require.ElementsMatch(t, []string{"", "general"}, buildItemList(scopes, tree, "", true, false).Folders)
 }

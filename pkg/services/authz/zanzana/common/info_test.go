@@ -154,3 +154,21 @@ func TestNewResourceInfoFromCheck_FolderCreateAtRootUsesGeneral(t *testing.T) {
 	require.Equal(t, accesscontrol.GeneralFolderUID, info.name)
 	require.Equal(t, NewTypedIdent(TypeFolder, accesscontrol.GeneralFolderUID), info.ResourceIdent())
 }
+
+func TestRootFolderSentinels(t *testing.T) {
+	for _, verb := range []string{utils.VerbCreate, utils.VerbGet, utils.VerbUpdate, utils.VerbDelete} {
+		for _, resource := range []string{"folders", "dashboards"} {
+			t.Run(resource+"/"+verb, func(t *testing.T) {
+				group := "dashboard.grafana.app"
+				if resource == "folders" {
+					group = "folder.grafana.app"
+				}
+				legacy := NewResourceInfoFromCheck(&authzv1.CheckRequest{Group: group, Resource: resource, Verb: verb})
+				canonical := NewResourceInfoFromCheck(&authzv1.CheckRequest{Group: group, Resource: resource, Verb: verb, Folder: "general"})
+				require.Equal(t, legacy, canonical)
+				batch := NewResourceInfoFromBatchCheckItem(&authzv1.BatchCheckItem{Group: group, Resource: resource, Verb: verb, Folder: "general"})
+				require.Equal(t, legacy, batch)
+			})
+		}
+	}
+}
