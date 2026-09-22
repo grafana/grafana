@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { useStoredString } from 'app/core/hooks/useStored';
 
 import { SOLUTION_IDS } from './solutions/constants';
+import { detectIrmSignal } from './solutions/irmSignal';
 import { kubernetesFilterStorageKey, parseKubernetesFilter } from './solutions/kubernetesFilter';
 import { kubernetesDetection, kubernetesSolution } from './solutions/kubernetesSolution';
 import { logsSolution } from './solutions/logsSolution';
@@ -39,13 +40,14 @@ export function useHomepageSolutions(): HomepageSolutions {
       synthetics: syntheticsSolution(),
     };
 
-    // App Observability is not a homepage solution; only the recommendation matrix reads this signal.
+    // App Observability and IRM are not homepage solutions; only the recommendation matrix reads these signals.
     const spanMetricsSignal = memoize(() => detectSignal(probeSpanMetrics));
+    const irmSignal = memoize(detectIrmSignal);
 
     // Core signals come from their solutions; the Kubernetes one from the detection its solutions
     // share, so a filter change never re-probes and never restarts recommendation selection.
     const signals = async (): Promise<SolutionState> => {
-      const [metrics, logs, traces, kubernetes, spanMetrics, synthetics] = await Promise.all([
+      const [metrics, logs, traces, kubernetes, spanMetrics, synthetics, irm] = await Promise.all([
         solutions.metrics.signal().catch(() => 'unknown' as const),
         solutions.logs.signal().catch(() => 'unknown' as const),
         solutions.traces.signal().catch(() => 'unknown' as const),
@@ -56,8 +58,9 @@ export function useHomepageSolutions(): HomepageSolutions {
           .then(({ status }) => status)
           .catch(() => 'unknown' as const),
         solutions.synthetics.signal().catch(() => 'unknown' as const),
+        irmSignal().catch(() => 'unknown' as const),
       ]);
-      return { metrics, logs, traces, kubernetes, spanMetrics, synthetics };
+      return { metrics, logs, traces, kubernetes, spanMetrics, synthetics, irm };
     };
 
     return { detectKubernetes, solutions, signals };
