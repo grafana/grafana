@@ -532,8 +532,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				Children:   sectionChildren,
 				Url:        "adaptive-telemetry",
 				// Use the icon URL from the first "Adaptive Telemetry" plugin in the list (they will all be the same)
-				Img:   s.cfg.AppSubURL + plugin.Info.Logos.Large,
-				IsNew: true,
+				Img: s.cfg.AppSubURL + plugin.Info.Logos.Large,
 			})
 		default:
 			s.log.Error("Plugin app nav id not found", "pluginId", plugin.ID, "navId", sectionID)
