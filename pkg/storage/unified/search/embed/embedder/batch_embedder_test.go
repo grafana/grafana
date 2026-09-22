@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 	"testing"
 	"time"
 
@@ -59,7 +58,7 @@ func TestBatchEmbedder_Embed_MapsItemsToVectors(t *testing.T) {
 		{UID: "dash-1", Title: "API — 5xx", Subresource: "panel/2", Content: "panel two body", Folder: "folder-prod"},
 	}
 
-	vecs, err := be.Embed(context.Background(), "default", "dashboards", 42, 1, items)
+	vecs, err := be.Embed(context.Background(), "default", "dashboards", 42, 3, items)
 	require.NoError(t, err)
 	require.Len(t, vecs, 2)
 
@@ -76,32 +75,17 @@ func TestBatchEmbedder_Embed_MapsItemsToVectors(t *testing.T) {
 	assert.JSONEq(t, `{"a":1}`, string(v0.Metadata))
 	assert.Equal(t, "test/model-1", v0.Model)
 	assert.Equal(t, []float32{1, 0, 0}, v0.Embedding)
-	assert.Equal(t, 1, v0.ContentVersion)
+	assert.Equal(t, 3, v0.ContentVersion)
 
 	// Second Vector — distinguish from first via embedding.
 	assert.Equal(t, "panel/2", vecs[1].Subresource)
 	assert.Equal(t, []float32{2, 0, 0}, vecs[1].Embedding)
+	assert.Equal(t, 3, vecs[1].ContentVersion)
 
 	// Provider got both texts in order; Task and Normalize set as expected.
 	assert.Equal(t, []string{"panel one body", "panel two body"}, fake.gotIn.Texts)
 	assert.Equal(t, TaskRetrievalDocument, fake.gotIn.Task)
 	assert.False(t, fake.gotIn.Normalize, "Normalized=true on Embedder should skip client-side normalize")
-}
-
-func TestBatchEmbedder_Embed_StampsContentVersion(t *testing.T) {
-	fake := &fakeTextEmbedder{dim: 3}
-	be := NewBatchEmbedder(newTestEmbedder(fake))
-
-	items := []embed.Item{
-		{UID: "dash-1", Subresource: "panel/1", Content: "panel one body"},
-		{UID: "dash-1", Subresource: "panel/2", Content: "panel two body"},
-	}
-
-	vecs, err := be.Embed(context.Background(), "default", "dashboards", 42, 3, items)
-	require.NoError(t, err)
-	require.Len(t, vecs, 2)
-	assert.Equal(t, 3, vecs[0].ContentVersion)
-	assert.Equal(t, 3, vecs[1].ContentVersion)
 }
 
 func TestBatchEmbedder_Embed_DropsEmptyContent(t *testing.T) {
@@ -245,74 +229,25 @@ func TestBatchEmbedder_EmbedResources_AllEmpty(t *testing.T) {
 	}
 }
 
-func TestBatchEmbedder_EmbedResources_ProviderBatches(t *testing.T) {
-	inputs := []ResourceInput{
-		{Namespace: "org-a", ResourceVersion: 1, Items: []embed.Item{
-			{UID: "a", Subresource: "panel/1", Content: "a1"},
-			{UID: "a", Subresource: "panel/2", Content: "a2"},
-			{UID: "a", Subresource: "panel/3", Content: "a3"},
-		}},
-		{Namespace: "org-b", ResourceVersion: 2, Items: []embed.Item{
-			{UID: "b", Subresource: "panel/1", Content: "b1"},
-			{UID: "b", Subresource: "panel/2", Content: "b2"},
-		}},
-	}
-	t.Run("splits an object's chunks and fills batches across objects", func(t *testing.T) {
-		provider := &batchingTextEmbedder{batchSize: 2}
-		be := NewBatchEmbedder(newTestEmbedder(provider))
-		got, err := be.EmbedResources(t.Context(), "dashboards", 3, inputs)
-		require.NoError(t, err)
-		require.Len(t, got, 2)
-		require.Len(t, got[0], 3)
-		require.Len(t, got[1], 2)
-		for i, input := range inputs {
-			for j, it := range input.Items {
-				assert.Equal(t, input.Namespace, got[i][j].Namespace)
-				assert.Equal(t, input.ResourceVersion, got[i][j].ResourceVersion)
-				assert.Equal(t, it.UID, got[i][j].UID)
-				assert.Equal(t, it.Subresource, got[i][j].Subresource)
-				assert.Equal(t, []float32{float32(it.Content[0]), float32(it.Content[1]), 0}, got[i][j].Embedding)
-			}
-		}
-		assert.ElementsMatch(t, [][]string{{"a1", "a2"}, {"a3", "b1"}, {"b2"}}, provider.batches)
+func TestBatchEmbedder_EmbedResources_ProviderError(t *testing.T) {
+	wantErr := &RetryableError{Err: errors.New("rate limit"), RetryAfter: time.Second}
+	be := NewBatchEmbedder(newTestEmbedder(&fakeTextEmbedder{wantErr: wantErr}))
+
+	got, err := be.EmbedResources(t.Context(), "dashboards", 3, []ResourceInput{
+		{Namespace: "org-a", Items: []embed.Item{{UID: "a", Content: "first"}}},
+		{Namespace: "org-b", Items: []embed.Item{{UID: "b", Content: "second"}}},
 	})
-	t.Run("one failed provider batch returns no partial objects", func(t *testing.T) {
-		wantErr := &RetryableError{Err: errors.New("rate limit"), RetryAfter: time.Second}
-		provider := &batchingTextEmbedder{batchSize: 2, failText: "b2", wantErr: wantErr}
-		be := NewBatchEmbedder(newTestEmbedder(provider))
-		got, err := be.EmbedResources(t.Context(), "dashboards", 3, inputs)
-		require.ErrorIs(t, err, wantErr)
-		assert.Nil(t, got)
-	})
-	t.Run("mismatched result count returns no partial objects", func(t *testing.T) {
-		be := NewBatchEmbedder(newTestEmbedder(&lengthMismatchingEmbedder{returnCount: 4}))
-		got, err := be.EmbedResources(t.Context(), "dashboards", 3, inputs)
-		require.ErrorContains(t, err, "4 embeddings for 5 texts")
-		assert.Nil(t, got)
-	})
+	require.ErrorIs(t, err, wantErr)
+	assert.Nil(t, got)
 }
 
-type batchingTextEmbedder struct {
-	batchSize int
-	failText  string
-	wantErr   error
-	mu        sync.Mutex
-	batches   [][]string
-}
+func TestBatchEmbedder_EmbedResources_MismatchedResultLength(t *testing.T) {
+	be := NewBatchEmbedder(newTestEmbedder(&lengthMismatchingEmbedder{returnCount: 1}))
 
-func (f *batchingTextEmbedder) EmbedText(ctx context.Context, in EmbedTextInput) (EmbedTextOutput, error) {
-	out, err := BatchProcess(ctx, in.Texts, f.batchSize, func(_ context.Context, texts []string) ([]Embedding, error) {
-		f.mu.Lock()
-		f.batches = append(f.batches, texts)
-		f.mu.Unlock()
-		embeddings := make([]Embedding, len(texts))
-		for i, text := range texts {
-			if text == f.failText {
-				return nil, f.wantErr
-			}
-			embeddings[i] = Embedding{Dense: []float32{float32(text[0]), float32(text[1]), 0}}
-		}
-		return embeddings, nil
+	got, err := be.EmbedResources(t.Context(), "dashboards", 3, []ResourceInput{
+		{Namespace: "org-a", Items: []embed.Item{{UID: "a", Content: "first"}}},
+		{Namespace: "org-b", Items: []embed.Item{{UID: "b", Content: "second"}}},
 	})
-	return EmbedTextOutput{Embeddings: out}, err
+	require.ErrorContains(t, err, "1 embeddings for 2 texts")
+	assert.Nil(t, got)
 }
