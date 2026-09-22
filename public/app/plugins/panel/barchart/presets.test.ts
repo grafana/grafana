@@ -97,12 +97,10 @@ describe('barchartPresetsSupplier', () => {
     });
   });
 
-  it('all presets include cardOptions with maxSeries', () => {
+  it('caps every preset preview at 8 series', () => {
     const dataSummary = getPanelDataSummary([createPresetFrame(2)]);
     const presets = barchartPresetsSupplier({ dataSummary });
-    for (const preset of presets!) {
-      expect(preset.cardOptions?.maxSeries).toBeDefined();
-    }
+    expect(presets!.map((preset) => preset.cardOptions?.maxSeries)).toEqual([8, 8, 8, 8]);
   });
 
   describe('preset structure', () => {
