@@ -217,7 +217,7 @@ func NewPluginBackend(plugin definition.PluginDefinition, client PluginClientPro
 	sum := sha256.Sum256(b)
 
 	return &PluginBackend{
-		key:    hex.EncodeToString(sum[:]),
+		key:    "p:" + hex.EncodeToString(sum[:]),
 		group:  group,
 		plugin: plugin,
 		client: client,

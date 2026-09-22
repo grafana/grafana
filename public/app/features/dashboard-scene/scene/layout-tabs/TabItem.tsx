@@ -202,7 +202,10 @@ export class TabItem
   }
 
   public createMultiSelectedElement(items: SceneObject[]): TabItems {
-    return new TabItems(items.filter((item) => item instanceof TabItem));
+    return new TabItems(
+      items.filter((item) => item instanceof TabItem),
+      getDashboardSceneFor(this)
+    );
   }
 
   public onDuplicate(): void {
