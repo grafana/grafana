@@ -742,9 +742,18 @@ func TestRequiredIndexFeaturesStoredFacets(t *testing.T) {
 
 	// An index built before the stored facet mapping is reused with the option
 	// off, and rebuilt once it is on.
-	buildInfo := IndexBuildInfo{Features: []IndexFeature{IndexFeatureDeletedMarker}}
+	buildInfo := IndexBuildInfo{Features: TrashIndexFeatures()}
 	require.Empty(t, MissingIndexFeatures(buildInfo, RequiredIndexFeatures(false)))
 	require.Equal(t, []IndexFeature{IndexFeatureStoredFacets}, MissingIndexFeatures(buildInfo, RequiredIndexFeatures(true)))
+}
+
+// An index missing the trash mappings must be rebuilt rather than serve an empty
+// trash, whatever the facet option is set to.
+func TestTrashIndexFeaturesAreRequired(t *testing.T) {
+	buildInfo := IndexBuildInfo{Features: []IndexFeature{IndexFeatureStoredFacets}}
+	for _, postRankAuthz := range []bool{false, true} {
+		require.Equal(t, TrashIndexFeatures(), MissingIndexFeatures(buildInfo, RequiredIndexFeatures(postRankAuthz)))
+	}
 }
 
 func TestShouldRebuildIndex(t *testing.T) {

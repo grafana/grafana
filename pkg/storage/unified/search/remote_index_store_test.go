@@ -1548,10 +1548,16 @@ func buildDownloadableSnapshot(t *testing.T, ns resource.NamespacedResource, ind
 	if buildTime.IsZero() {
 		buildTime = meta.UploadTimestamp
 	}
+	// Otherwise the index is rejected after download for missing a required feature.
+	// The manifest keeps meta as given, so "features not recorded" stays testable.
+	indexFeatures := meta.Features
+	if indexFeatures == nil {
+		indexFeatures = resource.CurrentIndexFeatures()
+	}
 	bi, err := json.Marshal(buildInfo{
 		BuildTime:    buildTime.Unix(),
 		BuildVersion: meta.BuildVersion,
-		Features:     meta.Features,
+		Features:     indexFeatures,
 	})
 	require.NoError(t, err)
 	require.NoError(t, idx.SetInternal([]byte(internalBuildInfoKey), bi))
