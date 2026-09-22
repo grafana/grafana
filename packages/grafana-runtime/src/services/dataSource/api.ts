@@ -9,7 +9,7 @@ import { getBackendSrv } from '../backendSrv';
 
 const DEPRECATED_INTERNAL_ID_LABEL = 'grafana.app/deprecatedInternalID';
 
-export interface DataSourceConnection {
+interface DataSourceConnection {
   title: string;
   name: string;
   group: string;

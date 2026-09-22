@@ -802,7 +802,7 @@ function findBuiltInListItem(id: string): DataSourceInstanceListItem | undefined
 
 // Expressions are included because `__expr__` (and the legacy `-100`) is the uid they are
 // registered under; they sit outside `byUid` only because they are set at boot.
-export function lookupByUid(uid: string): DataSourceInstanceSettings | undefined {
+function lookupByUid(uid: string): DataSourceInstanceSettings | undefined {
   if (isExpressionReference(uid)) {
     return getExpressionDataSourceSettings();
   }
@@ -819,7 +819,7 @@ export async function lookupListItemByUid(uid: string): Promise<DataSourceInstan
   return runtime ? toListItem(runtime) : undefined;
 }
 
-export function toListItem(settings: DataSourceInstanceSettings): DataSourceInstanceListItem {
+function toListItem(settings: DataSourceInstanceSettings): DataSourceInstanceListItem {
   return {
     uid: settings.uid,
     type: settings.type,
