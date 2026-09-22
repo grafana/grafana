@@ -333,6 +333,15 @@ func NewAPIService(
 					return serviceAccountAuthorizer.Authorize(ctx, a)
 				}
 
+				if a.GetResource() == legacyiamv0.SSOSettingResourceInfo.GetName() {
+					// Interim parity with the in-process authorizer: allow any
+					// authenticated identity (real settings RBAC is a follow-up).
+					if user.GetIdentityType() == types.TypeAnonymous {
+						return authorizer.DecisionDeny, "anonymous identities cannot access ssosettings", nil
+					}
+					return authorizer.DecisionAllow, "", nil
+				}
+
 				return authorizer.DecisionDeny, "access denied", nil
 			}),
 	}
