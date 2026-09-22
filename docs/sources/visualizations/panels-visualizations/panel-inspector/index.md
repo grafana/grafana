@@ -86,4 +86,4 @@ To inspect errors and notices, follow these steps:
 
    ![Errors and notices tooltip displayed on a panel](/media/docs/grafana/dashboards/screenshot-errors-notices-tooltip-v13.3.png)
 
-1. Click the icon to open the drawer where you can see the full text of errors and notices.
+1. Click **Inspect** to open the drawer where you can see the full text of errors and notices.
