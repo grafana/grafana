@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -86,6 +87,12 @@ type APIGroupRouteProvider interface {
 	GetAPIRoutes(gv schema.GroupVersion) *APIRoutes
 }
 
+// APIGroupResourceProvider lets a builder advertise the resources it serves to
+// hosts that discover per-kind routes from manifests.
+type APIGroupResourceProvider interface {
+	GetResourceInfos(gv schema.GroupVersion) []utils.ResourceInfo
+}
+
 type APIGroupPostStartHookProvider interface {
 	// GetPostStartHooks returns a list of functions that will be called after the server has started
 	GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error)
@@ -107,12 +114,7 @@ type APIGroupOptions struct {
 // shared by every version serving a resource: whichever version registers last
 // decides for the rest. This scopes the options to the single
 // group+version+resource being installed, so versions can differ.
-//
-// Scheme defaults to the group's scheme, which is what every caller passes.
 func (o APIGroupOptions) StorageOptsGetter(storageOpts apistore.StorageOptions) generic.RESTOptionsGetter {
-	if storageOpts.Scheme == nil {
-		storageOpts.Scheme = o.Scheme
-	}
 	// Tests and the noop getter do not support scoping; they ignore storage
 	// options entirely, so falling back leaves them no worse off.
 	if getter, ok := o.OptsGetter.(apistore.StorageOptionsGetter); ok {
@@ -183,6 +185,63 @@ func getGroup(builder APIGroupBuilder) (string, error) {
 	}
 
 	return "", fmt.Errorf("unable to get group: builder does not implement APIGroupVersionProvider or APIGroupVersionsProvider")
+}
+
+// ServedGroupVersions reports which group versions this process actually serves.
+// Builders and app installers are the two ways a kind reaches the apiserver, and
+// a manifest describes kinds a given deployment may not serve at all.
+func ServedGroupVersions(
+	builders []APIGroupBuilder,
+	installers []appsdkapiserver.AppInstaller,
+) map[schema.GroupVersion]bool {
+	served := map[schema.GroupVersion]bool{}
+	for _, b := range builders {
+		for _, gv := range GetGroupVersions(b) {
+			served[gv] = true
+		}
+	}
+	for _, i := range installers {
+		for _, gv := range i.GroupVersions() {
+			served[gv] = true
+		}
+	}
+	return served
+}
+
+// ManifestsFromBuilders synthesizes manifests for resources that builders
+// advertise directly, so manifest-driven per-kind routes can discover them.
+func ManifestsFromBuilders(builders []APIGroupBuilder) []*app.ManifestData {
+	var manifests []*app.ManifestData
+	for _, b := range builders {
+		provider, ok := b.(APIGroupResourceProvider)
+		if !ok {
+			continue
+		}
+		for _, gv := range GetGroupVersions(b) {
+			kinds := make([]app.ManifestVersionKind, 0)
+			for _, info := range provider.GetResourceInfos(gv) {
+				scope := "Namespaced"
+				if info.IsClusterScoped() {
+					scope = "Cluster"
+				}
+				kinds = append(kinds, app.ManifestVersionKind{
+					Kind:   info.GroupVersionKind().Kind,
+					Plural: info.GetName(),
+					Scope:  scope,
+				})
+			}
+			manifests = append(manifests, &app.ManifestData{
+				Group:            gv.Group,
+				PreferredVersion: gv.Version,
+				Versions: []app.ManifestVersion{{
+					Name:   gv.Version,
+					Served: true,
+					Kinds:  kinds,
+				}},
+			})
+		}
+	}
+	return manifests
 }
 
 func GetGroupVersions(builder APIGroupBuilder) []schema.GroupVersion {

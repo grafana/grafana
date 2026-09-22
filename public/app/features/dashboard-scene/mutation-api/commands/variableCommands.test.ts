@@ -10,8 +10,10 @@ import { getTestDashboardSceneFromSaveModel } from '../../utils/test-utils';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 import type { MutationResult } from '../types';
 
-function buildMockScene(options: { editable?: boolean; isEditing?: boolean } = {}): DashboardScene {
-  const { editable = true, isEditing = false } = options;
+function buildMockScene(
+  options: { editable?: boolean; isEditing?: boolean; isPlanning?: boolean } = {}
+): DashboardScene {
+  const { editable = true, isEditing = false, isPlanning = false } = options;
   const state: Record<string, unknown> = {
     uid: 'test-dash',
     isEditing,
@@ -20,6 +22,7 @@ function buildMockScene(options: { editable?: boolean; isEditing?: boolean } = {
   const scene = {
     state,
     canEditDashboard: jest.fn(() => editable),
+    isPlanning: jest.fn(() => isPlanning),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
@@ -253,6 +256,20 @@ describe('Variable mutation commands', () => {
     expect(scene.onEnterEditMode).not.toHaveBeenCalled();
   });
 
+  it('ENTER_EDIT_MODE refuses while a plan is being previewed, like every other mutating command', async () => {
+    scene = buildMockScene({ editable: true, isPlanning: true });
+    client = new DashboardMutationClient(scene);
+
+    const result = await client.execute({
+      type: 'ENTER_EDIT_MODE',
+      payload: {},
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('read-only');
+    expect(scene.onEnterEditMode).not.toHaveBeenCalled();
+  });
+
   it('rejects invalid payloads with a validation error', async () => {
     const result = await client.execute({
       type: 'ADD_VARIABLE',
@@ -304,6 +321,7 @@ describe('Variable mutation commands', () => {
       const scene = {
         state,
         canEditDashboard: jest.fn(() => true),
+        isPlanning: jest.fn(() => false),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
@@ -340,6 +358,7 @@ describe('Variable mutation commands', () => {
       const scene = {
         state,
         canEditDashboard: jest.fn(() => true),
+        isPlanning: jest.fn(() => false),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
@@ -373,6 +392,7 @@ describe('Variable mutation commands', () => {
       const scene = {
         state,
         canEditDashboard: jest.fn(() => true),
+        isPlanning: jest.fn(() => false),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),

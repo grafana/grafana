@@ -83,10 +83,14 @@ type StorageOptions struct {
 	// [RESTOptionsGetter.RegisterOptions] is keyed by GroupResource and shared by
 	// every version of a resource, so options registered there must leave it
 	// empty. Use [RESTOptionsGetter.WithStorageOptions] to set it.
+	//
+	// Left empty, the serializer receives the object's existing GVK.
 	GVK schema.GroupVersionKind
 
-	// Direct access to the schema (used for encode/decode)
-	Scheme *runtime.Scheme
+	// Serializer overrides encoding and decoding for writes, reads, lists, and watches.
+	// When nil, storage decodes through the configured Kubernetes codec and encodes
+	// through it unless GVK is declared, in which case writes preserve the object's GVK.
+	Serializer Serializer
 
 	// Required to force unique constraints
 	Index resourcepb.ResourceIndexClient
@@ -121,7 +125,6 @@ type StorageOptions struct {
 // Storage implements storage.Interface and storage resources as JSON files on disk.
 type Storage struct {
 	gr           schema.GroupResource
-	codec        runtime.Codec
 	keyFunc      func(obj runtime.Object) (string, error)
 	newFunc      func() runtime.Object
 	newListFunc  func() runtime.Object
@@ -139,7 +142,8 @@ type Storage struct {
 	// during API group installation — before the server is ready.
 	getDynClient func(ctx context.Context) (dynamic.Interface, error)
 
-	versioner storage.Versioner
+	serializer Serializer
+	versioner  storage.Versioner
 
 	// Resource options like large object support
 	opts StorageOptions
@@ -172,7 +176,6 @@ func NewStorage(
 	s := &Storage{
 		store:          store,
 		gr:             config.GroupResource,
-		codec:          config.Codec,
 		keyFunc:        keyFunc,
 		newFunc:        newFunc,
 		newListFunc:    newListFunc,
@@ -183,9 +186,24 @@ func NewStorage(
 
 		getKey: keyParser,
 
-		versioner: &storage.APIObjectVersioner{},
+		serializer: opts.Serializer,
+		versioner:  &storage.APIObjectVersioner{},
 
 		opts: opts,
+	}
+
+	if s.serializer == nil {
+		s.serializer = &codecSerializer{codec: config.Codec, preserveGVK: !opts.GVK.Empty()}
+	}
+
+	// Validate the GVK
+	if !opts.GVK.Empty() {
+		if opts.GVK.Group == "" || opts.GVK.Version == "" || opts.GVK.Kind == "" {
+			return nil, nil, fmt.Errorf("incomplete GVK for (%+v) %+v", s.gr, s.opts.GVK)
+		}
+		if opts.GVK.Group != s.gr.Group {
+			return nil, nil, fmt.Errorf("storage group mismatch (%+v) %+v", s.gr, s.opts.GVK)
+		}
 	}
 
 	if opts.EnableFolderSupport && configProvider != nil {
@@ -277,10 +295,9 @@ func (s *Storage) Versioner() storage.Versioner {
 }
 
 func (s *Storage) convertToObject(ctx context.Context, data []byte, obj runtime.Object) (runtime.Object, error) {
-	_, span := tracer.Start(ctx, "apistore.Storage.convertToObject")
+	ctx, span := tracer.Start(ctx, "apistore.Storage.convertToObject")
 	defer span.End()
-	obj, _, err := s.codec.Decode(data, nil, obj)
-	return obj, err
+	return s.serializer.Decode(ctx, data, obj)
 }
 
 // cleanupSecretsAfterFailedPreparation deletes inline secrets a failed preparation created, but only
@@ -325,7 +342,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return s.cleanupSecretsAfterFailedPreparation(ctx, v, cleanupSafe, err)
 	}
 	req := &resourcepb.CreateRequest{
-		Value: v.raw.Bytes(),
+		Value: v.raw,
 		Key:   rkey,
 	}
 
@@ -497,7 +514,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 	}
 
 	reporter := apierrors.NewClientErrorReporter(500, "WATCH", "")
-	decoder := newStreamDecoder(client, s.newFunc, predicate, s.codec, cancelWatch, cmd.SendInitialEvents)
+	decoder := newStreamDecoder(client, s.newFunc, predicate, s.serializer, cancelWatch, cmd.SendInitialEvents)
 
 	return watch.NewStreamWatcher(decoder, reporter), nil
 }
@@ -794,7 +811,7 @@ func (s *Storage) GuaranteedUpdate(
 			return s.cleanupSecretsAfterFailedPreparation(ctx, v, cleanupSafe, err)
 		}
 
-		req.Value = v.raw.Bytes()
+		req.Value = v.raw
 		req.ResourceVersion = readResponse.ResourceVersion
 		updateResponse, err := s.store.Update(ctx, req) // Also does RBAC check
 		if err = resource.ErrorFromResponse(updateResponse.GetError(), err); err != nil {
