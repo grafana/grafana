@@ -511,6 +511,13 @@ func (dr *DashboardServiceImpl) GetDashboardsByLibraryPanelUID(ctx context.Conte
 			},
 		},
 		Limit: listAllDashboardsLimit,
+		Fields: []string{
+			resource.SEARCH_FIELD_FOLDER,
+			resource.SEARCH_FIELD_LEGACY_ID,
+			// Per-label fields are requestable; this one is needed to derive the numeric legacy ID.
+			resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
+		},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
 
 	results, err := dashboardsearch.SearchAll(ctx, orgID, request, dr.k8sclient.Search)
