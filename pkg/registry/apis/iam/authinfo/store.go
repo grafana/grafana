@@ -324,7 +324,37 @@ func (l *LegacyStore) Update(ctx context.Context, name string, objInfo rest.Upda
 
 // Delete implements rest.GracefulDeleter.
 func (l *LegacyStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	return nil, false, apierrors.NewMethodNotSupported(resourceInfo.GroupResource(), "delete")
+	ctx, span := l.tracer.Start(ctx, "authinfo.delete")
+	defer span.End()
+
+	oldObj, err := l.Get(ctx, name, nil)
+	if err != nil {
+		return nil, false, err
+	}
+
+	if deleteValidation != nil {
+		if err := deleteValidation(ctx, oldObj); err != nil {
+			return nil, false, err
+		}
+	}
+
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, false, err
+	}
+
+	userID, _, authModule, err := l.resolveName(ctx, ns, name)
+	if err != nil {
+		return nil, false, err
+	}
+
+	if err := l.authInfoStore.DeleteAuthInfo(ctx, &login.DeleteAuthInfoCommand{
+		UserAuth: &login.UserAuth{UserId: userID, AuthModule: authModule},
+	}); err != nil {
+		return nil, false, err
+	}
+
+	return oldObj, true, nil
 }
 
 // DeleteCollection implements rest.CollectionDeleter.

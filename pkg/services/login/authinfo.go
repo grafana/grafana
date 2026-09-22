@@ -23,6 +23,7 @@ type Store interface {
 	SetAuthInfo(ctx context.Context, cmd *SetAuthInfoCommand) error
 	UpdateAuthInfo(ctx context.Context, cmd *UpdateAuthInfoCommand) error
 	DeleteUserAuthInfo(ctx context.Context, userID int64) error
+	DeleteAuthInfo(ctx context.Context, cmd *DeleteAuthInfoCommand) error
 }
 
 const (
