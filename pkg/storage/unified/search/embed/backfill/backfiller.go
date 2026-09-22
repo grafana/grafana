@@ -607,7 +607,8 @@ func (b *VectorBackfiller) writeBackfillItem(job vector.BackfillJob, builder col
 	namespace, name := item.key.Namespace, item.key.Name
 
 	// The reconciler may have handled a newer revision while this page was
-	// being embedded. Guard every deferred write, including metadata updates.
+	// being embedded. If the resource has been modified since, then skip it
+	// for backfilling.
 	if item.action != backfillSkip {
 		if outcome, err := b.checkLiveRV(ctx, item.key, item.rv); err != nil {
 			return err

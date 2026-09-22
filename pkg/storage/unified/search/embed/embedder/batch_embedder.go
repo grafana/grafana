@@ -60,7 +60,7 @@ func (b *BatchEmbedder) Embed(
 
 // EmbedResources batches chunks across objects of one resource type and builder
 // version. Results retain input object order, including nil entries for objects
-// with no non-empty content, so callers can save each object atomically.
+// without content, so callers can save each object atomically.
 func (b *BatchEmbedder) EmbedResources(
 	ctx context.Context,
 	resource string,
