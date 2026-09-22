@@ -529,13 +529,6 @@ func schema_pkg_apis_datasource_v0alpha1_GenericDataSourceSpec(ref common.Refere
 							Format: "",
 						},
 					},
-					"isDefault": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Deprecated this will be replaced with metadata.labels[\"default\"]",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
 					"url": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Server URL",
