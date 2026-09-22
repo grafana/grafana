@@ -88,19 +88,23 @@ export function FilterByNameTransformerEditor({ input, options, onChange }: Filt
 
   // Read at the point the effect below runs rather than subscribing to it: re-seeding whenever
   // the options change would discard in-progress edits, such as a regex that is not yet valid.
-  const latestOptions = useEffectEvent(() => options);
+  const latestSeed = useEffectEvent(() => ({ fieldNames, options }));
 
-  // New input frames mean new field names, so the selection has to be derived again.
+  // New field names mean the selection has to be derived again. Key on the names, not the input:
+  // upstream transformations send a new input array on every options change, and re-seeding then
+  // would turn "no fields selected" back into "all fields selected".
+  const fieldNamesKey = JSON.stringify(fieldNames.map((n) => n.name));
+
   useEffect(() => {
-    const seedOptions = latestOptions();
+    const { fieldNames: seedFieldNames, options: seedOptions } = latestSeed();
 
-    setSelected(getSelectedNames(fieldNames, seedOptions));
+    setSelected(getSelectedNames(seedFieldNames, seedOptions));
     setByVariable(seedOptions.byVariable || false);
     setVariable(seedOptions.include?.variable);
     setRegex(seedOptions.include?.pattern);
     // eslint-plugin-react-hooks only recognises effect events from 7.1.1
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fieldNames]);
+  }, [fieldNamesKey]);
 
   const onSelectionChange = (nextSelected: string[]) => {
     const nextOptions: FilterFieldsByNameTransformerOptions = {
