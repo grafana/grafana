@@ -181,12 +181,12 @@ function looksLikeCredentialUrl(value: string): boolean {
   } catch {
     return false;
   }
-  const candidates = [
-    url.username,
-    url.password,
-    ...url.pathname.split('/').filter(Boolean),
-    ...url.searchParams.values(),
-  ];
+  // A non-empty userinfo password is unambiguously a credential by construction, unlike a path
+  // segment or query param, so it doesn't need the high-entropy heuristic below.
+  if (url.password) {
+    return true;
+  }
+  const candidates = [url.username, ...url.pathname.split('/').filter(Boolean), ...url.searchParams.values()];
   return candidates.some((candidate) => HIGH_ENTROPY_URL_SEGMENT.test(candidate) && hasEntropyVariety(candidate));
 }
 

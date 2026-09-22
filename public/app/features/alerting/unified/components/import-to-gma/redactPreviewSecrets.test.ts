@@ -144,6 +144,21 @@ receivers:
     expect(result).not.toContain('S3cr3tTok3n123');
   });
 
+  it('redacts a low-entropy password embedded in a URL via userinfo', () => {
+    const yaml = `
+receivers:
+  - name: custom
+    webhook_configs:
+      - url: https://hooks.example.com/notify
+        http_config:
+          proxy_url: https://user:password@proxy.example.com:8080
+`;
+
+    const result = redactPreviewSecrets(yaml, 'yaml', {});
+
+    expect(result).not.toContain('user:password@proxy.example.com');
+  });
+
   it('redacts the authorization credentials field regardless of value shape', () => {
     const yaml = `
 receivers:
