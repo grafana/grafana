@@ -25,6 +25,24 @@ export interface ClearHistoryClicked extends EventProperty {
   dashboard_count: number;
 }
 
+export interface SolutionFilterChanged extends EventProperty {
+  /** Stable id of the solution whose card scope changed. */
+  solution: string;
+  /** Whether the user saved a scope or cleared it. */
+  change: 'saved' | 'cleared';
+  /**
+   * Scope stored before the change: none, one applied to the card's datasource, or one saved for
+   * another datasource (shown on the card as not applied).
+   */
+  previous: 'none' | 'applied' | 'other_datasource';
+  /** Whether the scope in effect after the change names a cluster. Label values are customer data and never reported. */
+  has_cluster: boolean;
+  /** Number of namespaces in the scope in effect after the change. */
+  namespace_count: number;
+  /** Number of nodes in the scope in effect after the change. */
+  node_count: number;
+}
+
 interface CtaClickedBase extends EventProperty {
   /** Which homepage widget fired the CTA. */
   surface: string;
@@ -129,6 +147,11 @@ export type CtaClicked = EventVariants<
         }
       | {
           action: 'open_guide';
+          placement: 'card';
+          solution: string;
+        }
+      | {
+          action: 'open_solution_filter';
           placement: 'card';
           solution: string;
         }

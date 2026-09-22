@@ -19,6 +19,8 @@ import {
 } from '@grafana/ui';
 import { useStoredString } from 'app/core/hooks/useStored';
 
+import { ctaClicked, solutionFilterChanged } from '../analytics/main';
+import { type SolutionFilterChanged } from '../analytics/types';
 import { hasSelection, type KubernetesScope } from '../solutions/kubernetesData';
 import {
   fetchKubernetesLabelValues,
@@ -27,6 +29,17 @@ import {
   parseKubernetesFilter,
   summarizeKubernetesFilter,
 } from '../solutions/kubernetesFilter';
+
+const NO_SCOPE: KubernetesScope = { cluster: '', namespaces: [], nodes: [] };
+
+/** What analytics may know about a scope: label values are customer data and never leave the browser. */
+function scopeShape(scope: KubernetesScope) {
+  return {
+    has_cluster: scope.cluster !== '',
+    namespace_count: scope.namespaces.length,
+    node_count: scope.nodes.length,
+  };
+}
 
 interface KubernetesFilterActionsProps {
   /** Datasource the card reads; a filter saved for another one is shown as not applied. */
@@ -68,7 +81,15 @@ export function KubernetesFilterActions({ datasource, attention }: KubernetesFil
             : t('home.solutions.kubernetes.filter.open', 'Filter by cluster, namespace, or node')
         }
         className={applied ? styles.applied : undefined}
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          setOpen(true);
+          ctaClicked({
+            surface: 'overview',
+            action: 'open_solution_filter',
+            placement: 'card',
+            solution: 'kubernetes',
+          });
+        }}
       />
       {open && <KubernetesFilterModal datasource={datasource} filter={filter} onClose={() => setOpen(false)} />}
     </>
@@ -86,9 +107,7 @@ function KubernetesFilterModal({ datasource, filter, onClose }: KubernetesFilter
   // The draft starts from the stored filter even when it was saved for another datasource, so the
   // user can re-save it for this one or clear it.
   const [draft, setDraft] = useState<KubernetesScope>(() =>
-    filter
-      ? { cluster: filter.cluster, namespaces: filter.namespaces, nodes: filter.nodes }
-      : { cluster: '', namespaces: [], nodes: [] }
+    filter ? { cluster: filter.cluster, namespaces: filter.namespaces, nodes: filter.nodes } : NO_SCOPE
   );
   const clusters = useAsync(() => fetchKubernetesLabelValues(datasource.uid, 'cluster', ''), [datasource.uid]);
   // Namespace and node lists follow the drafted cluster ('' = every cluster).
@@ -107,21 +126,29 @@ function KubernetesFilterModal({ datasource, filter, onClose }: KubernetesFilter
 
   const storageKey = kubernetesFilterStorageKey();
   const [error, setError] = useState<string | null>(null);
-  // Persist, then close; a quota or access failure keeps the dialog and draft so the user can retry.
-  const persist = (write: () => void) => {
+  const previous = filter === null ? 'none' : filter.datasourceUid === datasource.uid ? 'applied' : 'other_datasource';
+  // Persist, report, then close; a quota or access failure keeps the dialog and draft so the user
+  // can retry, and reports nothing.
+  const persist = (write: () => void, change: SolutionFilterChanged['change'], scope: KubernetesScope) => {
     try {
       write();
-      onClose();
     } catch {
       setError(t('home.solutions.kubernetes.filter.save-failed', 'Could not save to browser storage. Try again.'));
+      return;
     }
+    solutionFilterChanged({ solution: 'kubernetes', change, previous, ...scopeShape(scope) });
+    onClose();
   };
   const save = () =>
-    persist(() => {
-      const next: KubernetesFilter = { datasourceUid: datasource.uid, datasourceName: datasource.name, ...draft };
-      store.setObject(storageKey, next);
-    });
-  const clear = () => persist(() => store.delete(storageKey));
+    persist(
+      () => {
+        const next: KubernetesFilter = { datasourceUid: datasource.uid, datasourceName: datasource.name, ...draft };
+        store.setObject(storageKey, next);
+      },
+      'saved',
+      draft
+    );
+  const clear = () => persist(() => store.delete(storageKey), 'cleared', NO_SCOPE);
 
   return (
     <Modal
