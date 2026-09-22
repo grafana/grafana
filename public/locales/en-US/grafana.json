@@ -4588,7 +4588,6 @@
     },
     "folder-variables": {
       "empty": "No folder-scoped variables in this folder yet.",
-      "list-heading": "Folder variables",
       "new": "New folder variable"
     },
     "manage-folder-nav": {
@@ -8693,6 +8692,10 @@
       "aria-label-links": "Links",
       "links": "Links"
     },
+    "error-container": {
+      "title-query-error": "Query error",
+      "title-unknown-error": "Unknown error"
+    },
     "explore": {
       "title-flame-graph": "Flame graph",
       "title-graph": "Graph",
@@ -12772,7 +12775,7 @@
     },
     "global-variables": {
       "subtitle": "Template variables shared across dashboards, globally or per folder",
-      "title": "Variables"
+      "title": "Cross-dashboard variables"
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
