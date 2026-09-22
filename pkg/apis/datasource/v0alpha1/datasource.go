@@ -131,9 +131,6 @@ type GenericDataSourceSpec struct {
 	Access   DsAccess `json:"access,omitempty"`
 	ReadOnly bool     `json:"readOnly,omitempty"`
 
-	// Deprecated this will be replaced with metadata.labels["default"]
-	IsDefault bool `json:"isDefault,omitempty"`
-
 	// Server URL
 	URL string `json:"url,omitempty"`
 
