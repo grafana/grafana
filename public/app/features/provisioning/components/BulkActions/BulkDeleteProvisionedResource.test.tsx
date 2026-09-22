@@ -137,7 +137,7 @@ describe('BulkDeleteProvisionedResource', () => {
       selectedItemsRepoUID: 'test-folder',
       isInLockedRepo: jest.fn().mockReturnValue(false),
       isCrossRepo: false,
-      isUidInReadOnlyRepo: jest.fn().mockReturnValue(false),
+      isItemInReadOnlyRepo: jest.fn().mockReturnValue(false),
     });
   });
 
@@ -350,7 +350,7 @@ describe('BulkDeleteProvisionedResource', () => {
       selectedItemsRepoUID: undefined,
       isInLockedRepo: jest.fn().mockReturnValue(false),
       isCrossRepo: false,
-      isUidInReadOnlyRepo: jest.fn().mockReturnValue(false),
+      isItemInReadOnlyRepo: jest.fn().mockReturnValue(false),
     });
 
     rerender(

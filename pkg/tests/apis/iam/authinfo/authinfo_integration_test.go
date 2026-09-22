@@ -10,8 +10,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/authinfo"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -52,7 +52,7 @@ func TestIntegrationAuthInfo(t *testing.T) {
 			doAuthInfoCRUDTestsUsingTheNewAPIs(t, helper)
 			doAuthInfoAuthzTests(t, helper)
 			doAuthInfoListRequiresFieldSelectorTest(t, helper)
-			doAuthInfoDeleteUnsupportedTests(t, helper)
+			doAuthInfoDeleteTests(t, helper)
 			doAuthInfoUserDeleteCascadeTest(t, helper)
 		})
 	}
@@ -71,7 +71,7 @@ func doAuthInfoCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper
 		require.NotNil(t, created)
 
 		// The object name is deterministic: "<userUID>.<authModule>".
-		expectedName := authinfo.EncodeName(userUID, "ldap")
+		expectedName := iamv0alpha1.EncodeName(userUID, "ldap")
 		require.Equal(t, expectedName, created.GetName())
 
 		createdSpec := created.Object["spec"].(map[string]interface{})
@@ -206,27 +206,58 @@ func doAuthInfoListRequiresFieldSelectorTest(t *testing.T, helper *apis.K8sTestH
 	})
 }
 
-// doAuthInfoDeleteUnsupportedTests: deleting a single auth link isn't wired
-// up yet, so Delete/DeleteCollection deliberately return 405.
-func doAuthInfoDeleteUnsupportedTests(t *testing.T, helper *apis.K8sTestHelper) {
-	t.Run("delete and deleteCollection are not supported", func(t *testing.T) {
+func doAuthInfoDeleteTests(t *testing.T, helper *apis.K8sTestHelper) {
+	t.Run("delete removes the object and its user_auth row", func(t *testing.T) {
 		ctx := context.Background()
 		userUID := createTestUser(t, helper, "authinfo-delete-user", "authinfo-delete-user@example.com")
 		authInfoClient := authInfoResourceClient(helper, helper.Org1.Admin)
 
+		authID := "delete-test-" + userUID
+		created, err := authInfoClient.Resource.Create(ctx, createAuthInfoObject(helper, userUID, "ldap", authID), metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, int64(1), countUserAuthRowsByAuthID(t, helper, authID), "sanity check: the row should exist right after creation")
+
+		err = authInfoClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+		require.NoError(t, err)
+
+		_, err = authInfoClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(404), statusErr.ErrStatus.Code)
+
+		require.Equal(t, int64(0), countUserAuthRowsByAuthID(t, helper, authID), "user_auth row should be gone once the object is deleted")
+	})
+
+	t.Run("delete of an already-deleted object is a not-found", func(t *testing.T) {
+		ctx := context.Background()
+		userUID := createTestUser(t, helper, "authinfo-delete-missing-user", "authinfo-delete-missing-user@example.com")
+		authInfoClient := authInfoResourceClient(helper, helper.Org1.Admin)
+
 		created, err := authInfoClient.Resource.Create(ctx, createAuthInfoObject(helper, userUID, "ldap", "cn=test,dc=example,dc=com"), metav1.CreateOptions{})
 		require.NoError(t, err)
+		require.NoError(t, authInfoClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}))
 
 		err = authInfoClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
 		require.Error(t, err)
 		var statusErr *errors.StatusError
 		require.ErrorAs(t, err, &statusErr)
-		require.Equal(t, int32(405), statusErr.ErrStatus.Code)
+		require.Equal(t, int32(404), statusErr.ErrStatus.Code)
+	})
+
+	t.Run("deleteCollection is not supported", func(t *testing.T) {
+		ctx := context.Background()
+		userUID := createTestUser(t, helper, "authinfo-delete-collection-user", "authinfo-delete-collection-user@example.com")
+		authInfoClient := authInfoResourceClient(helper, helper.Org1.Admin)
+
+		_, err := authInfoClient.Resource.Create(ctx, createAuthInfoObject(helper, userUID, "ldap", "cn=test,dc=example,dc=com"), metav1.CreateOptions{})
+		require.NoError(t, err)
 
 		err = authInfoClient.Resource.DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{
 			FieldSelector: fmt.Sprintf("spec.userRef.name=%s", userUID),
 		})
 		require.Error(t, err)
+		var statusErr *errors.StatusError
 		require.ErrorAs(t, err, &statusErr)
 		require.Equal(t, int32(405), statusErr.ErrStatus.Code)
 	})
@@ -309,7 +340,7 @@ func createTestUser(t *testing.T, helper *apis.K8sTestHelper, login string, emai
 // createAuthInfoObject builds an AuthInfo object with its deterministic name pre-populated.
 func createAuthInfoObject(helper *apis.K8sTestHelper, userUID, authModule, authID string) *unstructured.Unstructured {
 	obj := helper.LoadYAMLOrJSONFile("../testdata/authinfo-test-create-v0.yaml")
-	obj.SetName(authinfo.EncodeName(userUID, authModule))
+	obj.SetName(iamv0alpha1.EncodeName(userUID, authModule))
 	obj.Object["spec"].(map[string]interface{})["userRef"].(map[string]interface{})["name"] = userUID
 	obj.Object["spec"].(map[string]interface{})["authModule"] = authModule
 	obj.Object["spec"].(map[string]interface{})["authID"] = authID

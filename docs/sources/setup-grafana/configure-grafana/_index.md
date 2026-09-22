@@ -922,10 +922,6 @@ The value is written into the dashboard when it is created, so authors can chang
 
 This setting only applies to dashboards created after you set it. Existing dashboards keep whatever `preload` value they already have, so turning it on never changes how they behave. It applies to dashboards created in the UI; dashboards created through the API or provisioning use the `preload` value in the payload.
 
-#### `report_render_query_grace_period`
-
-How long the report render page (/d-report/) waits, after all panel queries appear to have settled, before telling the image renderer the dashboard is done. This guards against repeat panels that register their queries late (e.g. after a repeat variable's own query resolves), which can otherwise get captured blank. Only used when the feature flag `reportRenderQueryDebounce` is enabled. Default is `3s`.
-
 ### `[dashboard_cleanup]`
 
 Settings related to cleaning up associated dashboards information if the dashboard was deleted through /apis.
@@ -2843,6 +2839,14 @@ To prevent automatic updates for specific plugins, pin them to a specific versio
 
 Directory containing Marketplace license files for plugins. Name each file `license-<PLUGIN_ID>.jwt`.
 Defaults to the Grafana data path, alongside the default Enterprise `license.jwt` file.
+
+#### `renewal_enabled`
+
+Available only in Grafana Enterprise.
+
+Controls periodic renewal of persisted Marketplace plugin licenses. The default is `true`.
+
+Set this option to `false` to disable automatic renewal network requests.
 
 <hr>
 

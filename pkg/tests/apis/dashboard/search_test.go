@@ -496,7 +496,7 @@ func runSearchPermissionTest(t *testing.T, mode rest.DualWriterMode) {
 				Param("limit", "1000").
 				Param("type", "folder") // Only search folders
 
-			for _, kv := range strings.Split(params, "&") {
+			for kv := range strings.SplitSeq(params, "&") {
 				if kv == "" {
 					continue
 				}
