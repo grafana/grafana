@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"math/rand"
+	"net/http"
 	"slices"
 	"strconv"
 	"strings"
@@ -36,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
@@ -381,6 +383,7 @@ type searchServer struct {
 	rateLimitPerTenant     int
 	rateLimitWindow        time.Duration
 	collectionAllowlist    vector.CollectionAllowlist
+	embeddingBuilders      embed.BuilderProvider
 
 	ownsIndexFn func(key NamespacedResource) (bool, error)
 
@@ -502,6 +505,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		rateLimitPerTenant:     opts.RateLimitPerTenant,
 		rateLimitWindow:        opts.RateLimitWindow,
 		collectionAllowlist:    vector.NewCollectionAllowlist(opts.AllowedInternalCollections, opts.AllowedExternalCollections),
+		embeddingBuilders:      opts.EmbeddingBuilders,
 	}
 
 	// pgvector doubles as the FTS lexical searcher.
@@ -625,6 +629,7 @@ func (s *searchServer) ListManagedObjects(ctx context.Context, req *resourcepb.L
 		}
 		if kind.NextPageToken != "" {
 			rsp.Error = &resourcepb.ErrorResult{
+				Code:    http.StatusNotImplemented,
 				Message: "Multiple pages are not yet supported",
 			}
 			return rsp, nil
@@ -833,8 +838,8 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		code := codes.OK
 		if retErr != nil {
 			code = status.Code(retErr)
-		} else if resp != nil && resp.Error != nil {
-			code = grpcCodeFromHTTPStatus(resp.Error.Code)
+		} else if resp != nil {
+			code = grpcCodeFromErrorResult(resp.Error)
 		}
 		if s.vectorMetrics != nil {
 			metricutil.ObserveWithExemplar(ctx,
@@ -1418,6 +1423,11 @@ func (s *searchServer) buildIndexes(ctx context.Context) (int, error) {
 }
 
 func (s *searchServer) init(ctx context.Context) error {
+	if s.embeddingBuilders != nil {
+		if err := s.embeddingBuilders.Validate(); err != nil {
+			return fmt.Errorf("embedding enrollment: %w", err)
+		}
+	}
 	origCtx := ctx
 
 	ctx, span := tracer.Start(ctx, "resource.searchServer.init")

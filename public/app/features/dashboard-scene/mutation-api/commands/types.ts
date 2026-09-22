@@ -116,6 +116,7 @@ export function enterEditModeIfNeeded(scene: DashboardScene): void {
     scene.onEnterEditMode('assistant');
   }
   // New-layout mutations only run while the sidebar is active, and it may not be mounted here.
+  // Independent of edit mode: addElement-based undo/redo tracking needs this regardless.
   scene.activateSidebar();
 }
 

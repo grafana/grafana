@@ -53,6 +53,8 @@ import type DetailState from './DetailState';
 import { isDrilldownContext } from './LogsLink';
 import { SpanDetailLinkButtons } from './SpanDetailLinkButtons';
 import SpanFlameGraph from './SpanFlameGraph';
+import SpanExceptionDetails from './exceptions/SpanExceptionDetails';
+import { getSpanException } from './exceptions/span-exception';
 import { useAttributePluginPromoGetter } from './pluginPromo/attributePluginPromos';
 
 const useResourceAttributesExtensionLinks = ({
@@ -241,6 +243,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexWrap: 'wrap',
       gap: '10px',
       marginBottom: theme.spacing(2),
+    }),
+    exceptionBox: css({
+      label: 'SpanDetailExceptionBox',
+      margin: theme.spacing(0.75),
     }),
     debugInfo: css({
       label: 'debugInfo',
@@ -454,6 +460,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     });
   }
 
+  const spanException = getSpanException(span);
   const { interpolatedParams, ...focusSpanLink } = createFocusSpanLink(traceID, spanID);
   const resourceLinksGetter = useResourceAttributesExtensionLinks({
     process,
@@ -647,6 +654,11 @@ export default function SpanDetail(props: SpanDetailProps) {
         </div>
       </div>
       <div className={styles.content}>
+        {spanException && (
+          <div className={styles.exceptionBox}>
+            <SpanExceptionDetails exception={spanException} />
+          </div>
+        )}
         <CardsContainer listOfContentCards={listOfContentCards} />
 
         <small className={styles.debugInfo}>

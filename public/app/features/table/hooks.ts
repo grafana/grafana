@@ -14,6 +14,7 @@ import {
   useFlagTableAutoColumnWidths,
   useFlagTablePaginationPageSize,
   useFlagTableRefresh,
+  useFlagTableRefreshNewFeatures,
 } from '@grafana/runtime/internal';
 import { type TableOptions } from '@grafana/schema';
 import { usePanelContext } from '@grafana/ui';
@@ -72,6 +73,7 @@ type CommonTableOptions = Pick<
   | 'maxRowHeight'
   | 'disableKeyboardEvents'
   | 'hoverOverflow'
+  | 'zebraStriping'
 >;
 
 /**
@@ -83,6 +85,7 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
   const contentAwareWidthsEnabled = useFlagTableAutoColumnWidths();
   const paginationPageSizeEnabled = useFlagTablePaginationPageSize();
   const tableRefreshEnabled = useFlagTableRefresh();
+  const refreshNewFeaturesEnabled = useFlagTableRefreshNewFeatures();
 
   return useMemo(
     () => ({
@@ -99,6 +102,7 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
       maxRowHeight: options.maxRowHeight,
       disableKeyboardEvents: options.disableKeyboardEvents,
       hoverOverflow: options.hoverOverflow ?? true,
+      zebraStriping: refreshNewFeaturesEnabled && options.zebraStriping,
       disableSanitizeHtml: getConfig().disableSanitizeHtml,
       contentAwareWidthsEnabled,
       tableRefreshEnabled,
@@ -114,10 +118,12 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
       options.maxRowHeight,
       options.disableKeyboardEvents,
       options.hoverOverflow,
+      options.zebraStriping,
       fieldConfig.defaults.noValue,
       contentAwareWidthsEnabled,
       paginationPageSizeEnabled,
       tableRefreshEnabled,
+      refreshNewFeaturesEnabled,
     ]
   );
 }

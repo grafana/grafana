@@ -33,6 +33,7 @@ import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from './ManagedDashboardNavBarBadge';
 import { Actions } from './new-toolbar/Actions';
 import { BreadcrumbActions } from './new-toolbar/BreadcrumbActions';
+import { PlanningBanner } from './new-toolbar/PlanningBanner';
 import { PublicDashboardBadge } from './new-toolbar/actions/PublicDashboardBadge';
 
 interface Props {
@@ -41,6 +42,14 @@ interface Props {
 
 export const NavToolbarActions = memo<Props>(({ dashboard }) => {
   const hasNewToolbar = getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false);
+  const { planning } = dashboard.useState();
+
+  // A plan preview replaces the whole toolbar with just the banner: the preview never enters
+  // edit mode, so none of the normal actions (Edit, Save, Settings, Share) apply, and checking
+  // this before any other branching keeps both toolbar variants consistent.
+  if (planning) {
+    return <AppChromeUpdate actions={<PlanningBanner planning={planning} />} />;
+  }
 
   return hasNewToolbar ? (
     <AppChromeUpdate
