@@ -32,6 +32,10 @@ export const ConnectStep = memo(function ConnectStep() {
     'githubApp.connectionName',
   ]);
   const connectionName = githubAuthType !== 'pat' ? githubAppConnectionName : undefined;
+  // Only meaningful for PAT auth - App-based auth authenticates via connectionName instead,
+  // and a leftover value here from switching auth types is harmless (buildEphemeralRepository
+  // overwrites it with the connection-generated token whenever connectionName is set).
+  const token = githubAuthType === 'pat' ? repositoryData.token : undefined;
   const isGitBased = isGitProvider(type);
 
   const {
@@ -42,6 +46,7 @@ export const ConnectStep = memo(function ConnectStep() {
   } = useGetEphemeralRepositoryRefs({
     data: repositoryData,
     connectionName,
+    token,
   });
 
   const {
@@ -51,6 +56,7 @@ export const ConnectStep = memo(function ConnectStep() {
   } = useGetEphemeralRepositoryFolders({
     data: repositoryData,
     connectionName,
+    token,
     ref: branch || undefined,
   });
 

@@ -16,19 +16,23 @@ import { dataToSpec } from '../../utils/data';
 export interface UseGetEphemeralRepositoryRefsProps {
   data: RepositoryFormData;
   connectionName?: string;
+  token?: string;
 }
 
-export function useGetEphemeralRepositoryRefs({ data, connectionName }: UseGetEphemeralRepositoryRefsProps) {
+export function useGetEphemeralRepositoryRefs({ data, connectionName, token }: UseGetEphemeralRepositoryRefsProps) {
   const [fetchRefs, { data: branchData, isLoading: branchLoading, error: branchError }] =
     useCreateRepositoryReftreeMutation();
 
-  const { url, type, token, tokenUser, email } = data;
+  const { url, type, tokenUser, email } = data;
 
   useEffect(() => {
     if (!url) {
       return;
     }
-    fetchRefs({ name: 'new', body: { spec: dataToSpec(data, connectionName) } });
+    fetchRefs({
+      name: 'new',
+      body: { spec: dataToSpec(data, connectionName), secure: token ? { token: { create: token } } : undefined },
+    });
     // url/token/etc identify the connection; other fields on `data` (path, title, ...)
     // shouldn't re-trigger this.
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -17,20 +17,30 @@ import { dataToSpec } from '../../utils/data';
 export interface UseGetEphemeralRepositoryFoldersProps {
   data: RepositoryFormData;
   connectionName?: string;
+  token?: string;
   ref?: string;
 }
 
-export function useGetEphemeralRepositoryFolders({ data, connectionName, ref }: UseGetEphemeralRepositoryFoldersProps) {
+export function useGetEphemeralRepositoryFolders({
+  data,
+  connectionName,
+  token,
+  ref,
+}: UseGetEphemeralRepositoryFoldersProps) {
   const [fetchFiles, { data: filesData, isLoading: isFilesLoading, error: filesError }] =
     useCreateRepositoryFiletreeMutation();
 
-  const { url, type, token, tokenUser, email } = data;
+  const { url, type, tokenUser, email } = data;
 
   useEffect(() => {
     if (!url) {
       return;
     }
-    fetchFiles({ name: 'new', ref, body: { spec: dataToSpec(data, connectionName) } });
+    fetchFiles({
+      name: 'new',
+      ref,
+      body: { spec: dataToSpec(data, connectionName), secure: token ? { token: { create: token } } : undefined },
+    });
     // url/token/etc identify the connection; other fields on `data` (path, title, ...)
     // shouldn't re-trigger this.
     // eslint-disable-next-line react-hooks/exhaustive-deps
