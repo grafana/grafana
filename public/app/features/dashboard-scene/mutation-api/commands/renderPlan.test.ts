@@ -55,7 +55,7 @@ describe('RENDER_PLAN', () => {
     const rows = (scene.state.body as RowsLayoutManager).state.rows;
     expect(rows.map((r) => r.state.title)).toEqual(['Throughput', 'Errors']);
     expect(scene.state.body.getVizPanels().map((p) => p.state.title)).toEqual(['Requests', 'Error rate']);
-    expect(scene.state.planning).toMatchObject({ planId: 'plan-1', planTitle: 'Kafka overview', panelCount: 2 });
+    expect(scene.state.planning).toMatchObject({ planId: 'plan-1', planTitle: 'Kafka overview' });
   });
 
   it('builds query-less placeholder panels with sample data, not a live query runner', async () => {

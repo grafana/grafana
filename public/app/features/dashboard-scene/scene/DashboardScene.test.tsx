@@ -3324,7 +3324,7 @@ describe('DashboardScene', () => {
       const onBuild = jest.fn();
       const onDismiss = jest.fn();
       scene.setState({
-        planning: { planId: 'plan-1', planTitle: 'Kafka overview', panelCount: 2, onBuild, onDismiss },
+        planning: { planId: 'plan-1', planTitle: 'Kafka overview', onBuild, onDismiss },
       });
       const events: unknown[] = [];
       const sub = appEvents.subscribe(DashboardPlanningEvent, (event) => events.push(event.payload));

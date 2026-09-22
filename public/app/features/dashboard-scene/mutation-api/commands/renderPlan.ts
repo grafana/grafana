@@ -143,7 +143,6 @@ export const renderPlanCommand: MutationCommand<RenderPlanPayload> = {
         planning: {
           planId,
           planTitle: payload.title,
-          panelCount: payload.sections.reduce((count, section) => count + section.panels.length, 0),
           onBuild: () => notify('build'),
           onDismiss: () => notify('dismiss'),
         },
