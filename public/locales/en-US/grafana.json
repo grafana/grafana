@@ -7433,7 +7433,6 @@
       },
       "render-save-button-and-error": {
         "body-plugin-dashboard": "Your changes will be lost when you update the plugin. Use <strong>Save as</strong> to create custom version.",
-        "title-failed-to-save-dashboard": "Failed to save dashboard",
         "title-plugin-dashboard": "Plugin dashboard",
         "title-someone-else-has-updated-this-dashboard": "Someone else has updated this dashboard",
         "would-still-dashboard": "Would you still like to save this dashboard?"

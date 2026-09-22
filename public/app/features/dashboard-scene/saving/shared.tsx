@@ -9,7 +9,7 @@ import { type DashboardMeta } from 'app/types/dashboard';
 import { type DashboardSceneState } from '../scene/types/dashboard';
 import { type Diffs } from '../settings/version-history/utils';
 
-import { getSaveDashboardErrorInfo, type SaveDashboardErrorInfo } from './saveErrors';
+import { type SaveDashboardErrorInfo } from './saveErrors';
 
 export interface DashboardChangeInfo {
   changedSaveModel: Dashboard | DashboardV2Spec;
@@ -32,18 +32,6 @@ export interface DashboardChangeInfo {
  */
 export function isNewDashboard({ uid, meta }: Pick<DashboardSceneState, 'uid' | 'meta'>): boolean {
   return !uid && !meta.k8s?.name;
-}
-
-export function isVersionMismatchError(error?: Error) {
-  return getSaveDashboardErrorInfo(error)?.kind === 'conflict';
-}
-
-export function isNameExistsError(error?: Error) {
-  return getSaveDashboardErrorInfo(error)?.kind === 'already-exists';
-}
-
-export function isPluginDashboardError(error?: Error) {
-  return getSaveDashboardErrorInfo(error)?.kind === 'plugin-dashboard';
 }
 
 /**
