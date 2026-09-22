@@ -43,8 +43,9 @@ export function NotebookSceneControls({ model, stickyOffset }: Props) {
   const { timePicker, refreshPicker, hideTimeControls, isEditing, uid } = model.useState();
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
-  // A display someone has put a notebook on: the editing affordances go away, but the time controls
-  // stay, since a live display may well want the range visible.
+  // A display someone has put a notebook on: everything you would act on goes away — save status,
+  // undo/redo, and the toolbar below — but the time controls stay, since a live display may well
+  // want the range visible.
   const isKioskFull = kioskMode === KioskMode.Full;
 
   return (
@@ -64,8 +65,8 @@ export function NotebookSceneControls({ model, stickyOffset }: Props) {
           <refreshPicker.Component model={refreshPicker} />
         </>
       )}
-      {/* Last in the row, as on the ordinary page. The toolbar checks nothing about kiosk itself —
-          it is chrome, so the row simply does not render it there. */}
+      {/* The toolbar checks nothing about kiosk itself — it is chrome, so the row simply does not
+          render it on a kiosk display. */}
       {!isKioskFull && <NotebookToolbar uid={uid} scene={model} />}
     </div>
   );

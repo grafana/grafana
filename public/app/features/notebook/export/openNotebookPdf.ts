@@ -4,7 +4,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { notebookRenderUrl } from '../urls';
 
 /** Whatever a caller has on hand for the notebook's current time range — see NotebookExportMenu. */
-export interface NotebookPdfTimeRange {
+interface NotebookPdfTimeRange {
   from: string;
   to: string;
   timezone?: string;
