@@ -23,11 +23,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 )
 
+const defaultFolderFetchTimeout = 10 * time.Second
+
 // NewDashboardFolderResolver returns a DashboardFolderResolver that fetches the dashboard's
 // parent folder via dashboard.grafana.app. restConfig is called once (lazily on first request)
 // to build the underlying client: loopback in ST, remote URL with token exchange in MT.
 func NewDashboardFolderResolver(restConfig func(context.Context) (*rest.Config, error), tracer trace.Tracer, metrics *Metrics, cacheEnabled bool, cacheTTL time.Duration) DashboardFolderResolver {
-	r := &dashboardFolderResolver{client: newDashboardClient(restConfig), tracer: tracer, metrics: metrics}
+	r := &dashboardFolderResolver{client: newDashboardClient(restConfig), tracer: tracer, metrics: metrics, fetchTimeout: defaultFolderFetchTimeout}
 	if cacheEnabled {
 		r.cache = localcache.New(cacheTTL, 5*time.Minute)
 		r.cacheTTL = cacheTTL
@@ -43,13 +45,19 @@ func (NoopDashboardFolderResolver) ResolveFolder(_ context.Context, _, _ string)
 	return "", nil
 }
 
+// dashboardGetter fetches a single dashboard. Implemented by *dashboardClient; a seam for tests.
+type dashboardGetter interface {
+	Get(ctx context.Context, namespace, name string) (*unstructured.Unstructured, error)
+}
+
 type dashboardFolderResolver struct {
-	client   *dashboardClient
-	tracer   trace.Tracer
-	metrics  *Metrics
-	cache    *localcache.CacheService
-	cacheTTL time.Duration
-	sf       singleflight.Group
+	client       dashboardGetter
+	tracer       trace.Tracer
+	metrics      *Metrics
+	cache        *localcache.CacheService
+	cacheTTL     time.Duration
+	fetchTimeout time.Duration
+	sf           singleflight.Group
 }
 
 func (r *dashboardFolderResolver) ResolveFolder(ctx context.Context, namespace, dashboardUID string) (string, error) {
@@ -73,7 +81,8 @@ func (r *dashboardFolderResolver) ResolveFolder(ctx context.Context, namespace, 
 	}
 
 	// Group concurrent cache misses for the same dashboard into a single fetch
-	fetchCtx := context.WithoutCancel(ctx)
+	fetchCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), r.fetchTimeout)
+	defer cancel()
 	v, err, _ := r.sf.Do(key, func() (any, error) {
 		nsInfo, err := authlib.ParseNamespace(namespace)
 		if err != nil {

@@ -30,15 +30,23 @@ func newTestDashboardFolderResolver(cacheEnabled bool, objects ...runtime.Object
 
 	const testCacheTTL = time.Minute
 	r := &dashboardFolderResolver{
-		client:  &dashboardClient{gvr: gvr, dyn: fakeDyn},
-		tracer:  testTracer,
-		metrics: ProvideMetrics(prometheus.NewRegistry()),
+		client:       &dashboardClient{gvr: gvr, dyn: fakeDyn},
+		tracer:       testTracer,
+		metrics:      ProvideMetrics(prometheus.NewRegistry()),
+		fetchTimeout: defaultFolderFetchTimeout,
 	}
 	if cacheEnabled {
 		r.cache = localcache.New(testCacheTTL, time.Minute)
 		r.cacheTTL = testCacheTTL
 	}
 	return r, fakeDyn
+}
+
+type blockingDashboardGetter struct{}
+
+func (blockingDashboardGetter) Get(ctx context.Context, _, _ string) (*unstructured.Unstructured, error) {
+	<-ctx.Done()
+	return nil, ctx.Err()
 }
 
 func newFakeDashboard(namespace, uid, folder string) *unstructured.Unstructured {
@@ -175,5 +183,14 @@ func TestDashboardFolderResolver_ResolveFolder(t *testing.T) {
 
 		require.NoError(t, waiterErr, "a waiter with a valid context should not fail because another caller's context was cancelled")
 		assert.Equal(t, folderUID, waiterFolder)
+	})
+
+	t.Run("shared fetch times out if the downstream call hangs", func(t *testing.T) {
+		resolver, _ := newTestDashboardFolderResolver(true, newFakeDashboard(ns, dashUID, folderUID))
+		resolver.fetchTimeout = 10 * time.Millisecond
+		resolver.client = blockingDashboardGetter{}
+
+		_, err := resolver.ResolveFolder(ctx, ns, dashUID)
+		require.Error(t, err, "the shared fetch should time out if the downstream call hangs")
 	})
 }
