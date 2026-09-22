@@ -1,13 +1,14 @@
-import { render, screen, waitFor } from 'test/test-utils';
+import { HttpResponse, http } from 'msw';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { reportInteraction } from '@grafana/runtime';
-import {
-  type Repository,
-  useDeleteRepositoryMutation,
-  useReplaceRepositoryMutation,
-} from 'app/api/clients/provisioning/v0alpha1';
+import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
+import server from '@grafana/test-utils/server';
+import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';
+
+import { setupProvisioningMswServer } from '../mocks/server';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
 
@@ -16,14 +17,7 @@ jest.mock('@grafana/runtime', () => ({
   reportInteraction: jest.fn(),
 }));
 
-jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
-  ...jest.requireActual('app/api/clients/provisioning/v0alpha1'),
-  useDeleteRepositoryMutation: jest.fn(),
-  useReplaceRepositoryMutation: jest.fn(),
-}));
-
-const mockDelete = jest.fn();
-const mockReplace = jest.fn();
+setupProvisioningMswServer();
 
 // Builds a repository whose Ready condition reflects reachability. An
 // unreachable repo (bad creds) reports Ready=False with reason
@@ -62,6 +56,28 @@ const createMockRepository = (healthy: boolean, readyReason?: string): Repositor
   },
 });
 
+// Records the delete/replace requests the component makes so tests can assert
+// the finalizer set that was PUT and that the repository was actually deleted.
+// The component always awaits the (optional) replace before the delete, so once
+// a delete is observed any replace that was going to happen already has.
+let captured: { replaceFinalizers?: string[]; deletedName?: string };
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  captured = {};
+  server.use(
+    http.put(`${BASE}/repositories/:name`, async ({ request }) => {
+      const body = (await request.json()) as Repository;
+      captured.replaceFinalizers = body.metadata?.finalizers;
+      return HttpResponse.json(body);
+    }),
+    http.delete(`${BASE}/repositories/:name`, ({ params }) => {
+      captured.deletedName = params.name as string;
+      return HttpResponse.json({});
+    })
+  );
+});
+
 // Opens the dropdown and clicks the named menu item, returning the confirm
 // event that was published so the caller can inspect its text and fire onConfirm.
 async function openMenuAndConfirm(repository: Repository, menuItem: RegExp) {
@@ -75,21 +91,14 @@ async function openMenuAndConfirm(repository: Repository, menuItem: RegExp) {
   return publishSpy.mock.calls[0][0] as ShowConfirmModalEvent;
 }
 
-beforeEach(() => {
-  jest.clearAllMocks();
-  mockDelete.mockResolvedValue({});
-  mockReplace.mockResolvedValue({});
-  jest
-    .mocked(useDeleteRepositoryMutation)
-    .mockReturnValue([mockDelete, { isLoading: false, reset: jest.fn() }] as unknown as ReturnType<
-      typeof useDeleteRepositoryMutation
-    >);
-  jest
-    .mocked(useReplaceRepositoryMutation)
-    .mockReturnValue([mockReplace, { isLoading: false, reset: jest.fn() }] as unknown as ReturnType<
-      typeof useReplaceRepositoryMutation
-    >);
-});
+// Fires the modal's confirm handler, which triggers the real delete/replace
+// mutations. Wrapped in act because those resolve asynchronously and flip the
+// component's loading state.
+async function confirmDelete(event: ShowConfirmModalEvent) {
+  await act(async () => {
+    await event.payload.onConfirm?.();
+  });
+}
 
 describe('DeleteRepositoryButton', () => {
   it('deletes a healthy repository without editing its finalizers', async () => {
@@ -97,11 +106,11 @@ describe('DeleteRepositoryButton', () => {
 
     expect(event.payload.text).not.toMatch(/unhealthy/i);
 
-    event.payload.onConfirm?.();
+    await confirmDelete(event);
 
-    await waitFor(() => expect(mockDelete).toHaveBeenCalledWith({ name: 'test-repo' }));
-    // Healthy + remove-resources needs no metadata edit, so no replace call.
-    expect(mockReplace).not.toHaveBeenCalled();
+    await waitFor(() => expect(captured.deletedName).toBe('test-repo'));
+    // Healthy + remove-resources needs no metadata edit, so no replace request.
+    expect(captured.replaceFinalizers).toBeUndefined();
     expect(reportInteraction).toHaveBeenCalledWith(
       'grafana_provisioning_repository_deleted',
       expect.objectContaining({ deleteAction: 'remove-resources', forceDelete: false })
@@ -117,19 +126,10 @@ describe('DeleteRepositoryButton', () => {
     expect(event.payload.text).toMatch(/webhooks/i);
     expect(event.payload.text).toMatch(/left in place/i);
 
-    event.payload.onConfirm?.();
+    await confirmDelete(event);
 
-    await waitFor(() =>
-      expect(mockReplace).toHaveBeenCalledWith({
-        name: 'test-repo',
-        repository: expect.objectContaining({
-          metadata: expect.objectContaining({
-            finalizers: ['remove-orphan-resources', 'remove-pending-jobs'],
-          }),
-        }),
-      })
-    );
-    expect(mockDelete).toHaveBeenCalledWith({ name: 'test-repo' });
+    await waitFor(() => expect(captured.deletedName).toBe('test-repo'));
+    expect(captured.replaceFinalizers).toEqual(['remove-orphan-resources', 'remove-pending-jobs']);
     expect(reportInteraction).toHaveBeenCalledWith(
       'grafana_provisioning_repository_deleted',
       expect.objectContaining({ deleteAction: 'remove-resources', forceDelete: true })
@@ -139,46 +139,42 @@ describe('DeleteRepositoryButton', () => {
   it('drops the cleanup finalizer from the keep-resources set for an unhealthy keep-resources delete', async () => {
     const event = await openMenuAndConfirm(createMockRepository(false), /keep resources/i);
 
-    event.payload.onConfirm?.();
+    await confirmDelete(event);
 
-    await waitFor(() =>
-      expect(mockReplace).toHaveBeenCalledWith({
-        name: 'test-repo',
-        repository: expect.objectContaining({
-          metadata: expect.objectContaining({
-            finalizers: ['release-orphan-resources'],
-          }),
-        }),
-      })
-    );
-    expect(mockDelete).toHaveBeenCalledWith({ name: 'test-repo' });
+    await waitFor(() => expect(captured.deletedName).toBe('test-repo'));
+    expect(captured.replaceFinalizers).toEqual(['release-orphan-resources']);
   });
 
   it('keeps the cleanup finalizer for a healthy keep-resources delete', async () => {
     const event = await openMenuAndConfirm(createMockRepository(true), /keep resources/i);
 
-    event.payload.onConfirm?.();
+    await confirmDelete(event);
 
-    await waitFor(() => expect(mockReplace).toHaveBeenCalledTimes(1));
-    const replaceArg = mockReplace.mock.calls[0][0];
-    expect(replaceArg.repository.metadata.finalizers).toEqual(['cleanup', 'release-orphan-resources']);
+    await waitFor(() => expect(captured.deletedName).toBe('test-repo'));
+    expect(captured.replaceFinalizers).toEqual(['cleanup', 'release-orphan-resources']);
   });
 
-  it('does not force-delete an unhealthy but still reachable repository (e.g. over quota)', async () => {
-    // Over quota reports Ready=False but the repository is still reachable, so
-    // the backend can delete the webhook — we must not drop the cleanup finalizer.
-    const event = await openMenuAndConfirm(createMockRepository(false, 'QuotaExceeded'), /remove resources/i);
+  // These are unhealthy (Ready=False) but must NOT force-delete: the backend can
+  // still clean up the webhook (invalid spec / over quota are reachable; the
+  // delete path never runs Test()) or the failure is transient and will
+  // self-heal (ServiceUnavailable), so dropping the cleanup finalizer would
+  // orphan the webhook needlessly.
+  it.each(['QuotaExceeded', 'InvalidSpec', 'ServiceUnavailable'])(
+    'does not force-delete an unhealthy repository whose Ready reason is %s',
+    async (reason) => {
+      const event = await openMenuAndConfirm(createMockRepository(false, reason), /remove resources/i);
 
-    expect(event.payload.text).not.toMatch(/unhealthy/i);
+      expect(event.payload.text).not.toMatch(/unhealthy/i);
 
-    event.payload.onConfirm?.();
+      await confirmDelete(event);
 
-    await waitFor(() => expect(mockDelete).toHaveBeenCalledWith({ name: 'test-repo' }));
-    // Reachable repo needs no finalizer edit, so no replace call and no force.
-    expect(mockReplace).not.toHaveBeenCalled();
-    expect(reportInteraction).toHaveBeenCalledWith(
-      'grafana_provisioning_repository_deleted',
-      expect.objectContaining({ deleteAction: 'remove-resources', forceDelete: false })
-    );
-  });
+      await waitFor(() => expect(captured.deletedName).toBe('test-repo'));
+      // Cleanup is still viable, so no finalizer edit, no replace request, no force.
+      expect(captured.replaceFinalizers).toBeUndefined();
+      expect(reportInteraction).toHaveBeenCalledWith(
+        'grafana_provisioning_repository_deleted',
+        expect.objectContaining({ deleteAction: 'remove-resources', forceDelete: false })
+      );
+    }
+  );
 });
