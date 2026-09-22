@@ -109,7 +109,7 @@ When you enable query and resource caching, Grafana temporarily stores the resul
 
 When using Grafana, a query pertains to a request for data frames to be modified or displayed. A resource relates to any HTTP requests made by a plugin, such as the Amazon Timestream plugin requesting a list of available databases from AWS. For more information on data source queries and resources, refer to the developers page on [backend plugins](https://grafana.com/developers/plugin-tools/key-concepts/backend-plugins/).
 
-The caching feature works for most backend data sources. For details on which data sources support it, refer to [Data sources that work with query caching](#data-sources-that-work-with-query-caching). You can enable the cache globally in Grafana's [configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#caching), and configure a cache duration (also called Time to Live, or TTL) for each data source individually.
+The caching feature works for most backend data sources. For details on which data sources support it, refer to [Data sources that work with query caching](#data-sources-that-work-with-query-caching). You can enable the cache globally in the Grafana [configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#caching), and configure a cache duration (also called Time to Live, or TTL) for each data source individually.
 
 {{< admonition type="note" >}}
 Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](https://grafana.com/docs/grafana-cloud/).
@@ -118,7 +118,7 @@ Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERS
 The following cache backend options are available: in-memory, Redis, and Memcached.
 
 {{< admonition type="note" >}}
-Storing cached queries in-memory can increase Grafana's memory footprint. In production environments, a Redis or Memcached backend is highly recommended.
+Storing cached queries in-memory can increase the Grafana memory footprint. In production environments, a Redis or Memcached backend is highly recommended.
 {{< /admonition >}}
 
 When a panel queries a data source with cached data, it will either fetch fresh data or use cached data depending on the panel's **interval.** The interval is used to round the query time range to a nearby cached time range, increasing the likelihood of cache hits. Therefore, wider panels and dashboards with shorter time ranges fetch new data more often than narrower panels and dashboards with longer time ranges.
@@ -137,7 +137,7 @@ By reducing the number of queries and requests sent to data sources, caching can
 
 ### Data sources that work with query caching
 
-Query caching works for Grafana's [built-in data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/#built-in-core-data-sources), and [backend data source plugins](https://grafana.com/grafana/plugins/?type=datasource) that extend the `DataSourceWithBackend` class in `@grafana/runtime`.
+Query caching works for the Grafana [built-in data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/#built-in-core-data-sources), and [backend data source plugins](https://grafana.com/grafana/plugins/?type=datasource) that extend the `DataSourceWithBackend` class in `@grafana/runtime`.
 
 {{< admonition type="note" >}}
 Logs Insights for the CloudWatch data source does not support query caching due to the way logs are requested from AWS.
