@@ -20,7 +20,6 @@
     "basicAuth": true,
     "basicAuthUser": "xxx",
     "database": "db",
-    "isDefault": true,
     "jsonData": {
       "aaa": "bbb",
       "bbb": true,

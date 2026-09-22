@@ -9,7 +9,6 @@
   "basicAuth": false,
   "basicAuthUser": "",
   "withCredentials": false,
-  "isDefault": false,
   "jsonData": null,
   "secureJsonData": {},
   "readOnly": false,

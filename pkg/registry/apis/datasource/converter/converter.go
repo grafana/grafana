@@ -11,9 +11,8 @@ import (
 	"strings"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/grafana/authlib/types"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -72,7 +71,6 @@ func (r *Converter) AsDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 		SetBasicAuth(ds.BasicAuth).
 		SetBasicAuthUser(ds.BasicAuthUser).
 		SetWithCredentials(ds.WithCredentials).
-		SetIsDefault(ds.IsDefault).
 		SetReadOnly(ds.ReadOnly)
 
 	if ds.JsonData != nil && !ds.JsonData.IsEmpty() {
