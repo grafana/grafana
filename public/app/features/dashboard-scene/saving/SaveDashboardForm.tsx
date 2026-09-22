@@ -106,7 +106,8 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
               Would you still like to save this dashboard?
             </Trans>
           </p>
-          <p>{errorInfo.message}</p>
+          {/* Bare text: a <p> here would stack its bottom margin onto the Box padding below. */}
+          {errorInfo.message}
           <Box paddingTop={2}>
             <Stack alignItems="center">
               {cancelButton}

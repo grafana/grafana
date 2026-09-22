@@ -1,8 +1,11 @@
+import { css } from '@emotion/css';
+
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { Alert, Button } from '@grafana/ui';
+import { Alert, Button, useStyles2 } from '@grafana/ui';
 import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { type DashboardMeta } from 'app/types/dashboard';
 
@@ -40,13 +43,28 @@ export function isNewDashboard({ uid, meta }: Pick<DashboardSceneState, 'uid' | 
  * the footer with their own recovery actions.
  */
 export function SaveDashboardErrorAlert({ info }: { info: SaveDashboardErrorInfo }) {
+  const styles = useStyles2(getSaveDashboardErrorStyles);
+
+  // Alert already pads its body, so the text is rendered bare: a <p> would add its global
+  // bottom margin on top of that padding and leave the alert looking bottom-heavy.
+  const body =
+    info.causes.length > 0 ? (
+      <ul className={styles.causes}>
+        {info.causes.map((cause) => (
+          <li key={cause}>{cause}</li>
+        ))}
+      </ul>
+    ) : (
+      info.message
+    );
+
   if (info.kind === 'forbidden') {
     return (
       <Alert
         title={t('save-dashboards.forbidden.title', 'You do not have permission to save this dashboard')}
         severity="error"
       >
-        <p>{info.message}</p>
+        {body}
       </Alert>
     );
   }
@@ -54,15 +72,7 @@ export function SaveDashboardErrorAlert({ info }: { info: SaveDashboardErrorInfo
   if (info.kind === 'invalid') {
     return (
       <Alert title={t('save-dashboards.invalid.title', 'This dashboard is not valid')} severity="error">
-        {info.causes.length > 0 ? (
-          <ul>
-            {info.causes.map((cause) => (
-              <li key={cause}>{cause}</li>
-            ))}
-          </ul>
-        ) : (
-          <p>{info.message}</p>
-        )}
+        {body}
       </Alert>
     );
   }
@@ -75,10 +85,17 @@ export function SaveDashboardErrorAlert({ info }: { info: SaveDashboardErrorInfo
       )}
       severity="error"
     >
-      <p>{info.message}</p>
+      {body}
     </Alert>
   );
 }
+
+const getSaveDashboardErrorStyles = (theme: GrafanaTheme2) => ({
+  causes: css({
+    margin: 0,
+    paddingLeft: theme.spacing(2),
+  }),
+});
 
 const FOLDER_BOUND_ANNOTATIONS: readonly string[] = [AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath];
 
