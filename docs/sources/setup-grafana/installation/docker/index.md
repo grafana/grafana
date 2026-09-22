@@ -373,6 +373,10 @@ volumes:
 If you want to specify the version of a plugin, add the version number to the `GF_PLUGINS_PREINSTALL` environment variable. For example: `-e "GF_PLUGINS_PREINSTALL=grafana-clock-panel@1.0.1,yesoreyeram-infinity-datasource@3.8.0"`. If you do not specify a version number, the latest version is used.
 {{< /admonition >}}
 
+## Run Grafana with Easypanel
+
+[Easypanel](https://easypanel.io) is a self-hosted Docker deployment platform, and Grafana has a one-click deployment template there: https://easypanel.io/templates/grafana. Easypanel sets up persistent storage for Grafana's data automatically.
+
 ## Next steps
 
 Refer to the [Getting Started](../../../getting-started/build-first-dashboard/) guide for information about logging in, setting up data sources, and so on.
