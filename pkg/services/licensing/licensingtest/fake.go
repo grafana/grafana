@@ -16,6 +16,11 @@ type FakeLicensing struct {
 	*mock.Mock
 }
 
+func (f *FakeLicensing) HasValidLicense() bool {
+	mockedArgs := f.Called()
+	return mockedArgs.Bool(0)
+}
+
 func (f *FakeLicensing) Expiry() int64 {
 	mockedArgs := f.Called()
 	return mockedArgs.Get(0).(int64)

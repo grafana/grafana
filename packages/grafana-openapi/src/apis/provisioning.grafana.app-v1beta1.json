@@ -4233,6 +4233,25 @@
           }
         }
       },
+      "DeletionStatus": {
+        "description": "DeletionStatus reports the progress of an in-progress deletion and the problem blocking it. It is populated while the repository is Terminating and its finalizers run, so a client can explain the holdup and force-remove the blocking finalizer.",
+        "type": "object",
+        "properties": {
+          "finalizer": {
+            "description": "Finalizer names the finalizer whose teardown is blocking deletion, i.e. which deletion step failed. A client force-removing deletion removes exactly this finalizer.",
+            "type": "string"
+          },
+          "message": {
+            "description": "Message is a human-readable explanation of what went wrong, suitable for showing to users.",
+            "type": "string"
+          },
+          "state": {
+            "description": "State is the phase of the deletion.\n\nPossible enum values:\n - `\"Blocked\"` indicates the latest finalizer pass failed and deletion did not complete. The controller keeps retrying, so a transient failure (a brief outage, an API conflict) may still clear on its own; a persistent one (credentials expired, a webhook that cannot be removed) needs the user to force-remove the blocking finalizer. Finalizer is the finalizer that failed on that pass. This is the only state the controller emits: status.deletion is written only when a pass fails. While finalizers are still running, status.deletion is absent, which (together with a set deletionTimestamp) is itself the \"in progress\" signal — so no separate Working state is needed.",
+            "type": "string",
+            "enum": ["Blocked"]
+          }
+        }
+      },
       "ErrorDetails": {
         "description": "ErrorDetails describes an individual field error intended to help users identify and fix issues in resource specifications. This type is modeled after Kubernetes' StatusCause and serves the same purpose: to deliver actionable feedback about fields in the spec that require attention. Errors may relate to invalid formats, missing or invalid values, or cases where a referenced value does not exist in an external system (not strictly format or syntax errors). Use ErrorDetails to communicate validation or external reference errors that users can resolve by editing spec fields.",
         "type": "object",
@@ -5212,8 +5231,11 @@
             "x-kubernetes-patch-strategy": "merge"
           },
           "deleteError": {
-            "description": "Error information during repository deletion (if any)",
+            "description": "Error information during repository deletion (if any). Deprecated: prefer the structured Deletion field. Retained for backwards compatibility with clients that read the concise string.",
             "type": "string"
+          },
+          "deletion": {
+            "description": "Deletion reports the progress of an in-progress deletion and the problem blocking it, so a client can explain the holdup and force-remove the blocking finalizer. Populated only while the repository is Terminating."
           },
           "fieldErrors": {
             "description": "FieldErrors are errors that occurred during validation of the repository spec. These errors are intended to help users identify and fix issues in the spec.",

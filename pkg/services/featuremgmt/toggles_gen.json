@@ -2202,7 +2202,8 @@
       "metadata": {
         "name": "featureHighlights",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2022-02-03T11:53:23Z"
+        "creationTimestamp": "2022-02-03T11:53:23Z",
+        "deletionTimestamp": "2026-09-17T07:33:54Z"
       },
       "spec": {
         "description": "Highlight Grafana Enterprise features",
