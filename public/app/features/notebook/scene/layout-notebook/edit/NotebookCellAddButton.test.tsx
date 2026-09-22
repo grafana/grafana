@@ -1,7 +1,7 @@
 import { render, screen } from 'test/test-utils';
 
 import { NotebookCellAddButton } from './NotebookCellAddButton';
-import { NOTEBOOK_CELL_CONTROLS_PINNED_CLASS } from './NotebookCellFrame';
+import { NOTEBOOK_CELL_CONTROLS_PINNED_CLASS } from './cellClassNames';
 
 describe('NotebookCellAddButton', () => {
   it('renders an accessible add-block trigger', () => {

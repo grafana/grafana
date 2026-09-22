@@ -6,7 +6,7 @@ import { t } from '@grafana/i18n';
 import { Dropdown, IconButton, useStyles2 } from '@grafana/ui';
 
 import { NotebookBlockTypeMenu, type NotebookBlockType } from './NotebookBlockTypeMenu';
-import { NOTEBOOK_CELL_CONTROLS_PINNED_CLASS } from './NotebookCellFrame';
+import { NOTEBOOK_CELL_CONTROLS_PINNED_CLASS } from './cellClassNames';
 
 interface Props {
   /** This cell's own position; the button always inserts directly below it, at index + 1. */

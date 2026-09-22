@@ -39,15 +39,13 @@ import { isNotebookScene } from '../isNotebookScene';
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookDocumentHeader } from './NotebookDocumentHeader';
 import { type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
+import { getCellDropIndicator, NotebookCellFrame, type NotebookDragState } from './edit/NotebookCellFrame';
+import { NotebookFooterAddCell } from './edit/NotebookFooterAddCell';
 import {
-  getCellDropIndicator,
-  NotebookCellFrame,
   NOTEBOOK_CELL_CONTROLS_CLASS,
   NOTEBOOK_CELL_CONTROLS_PINNED_CLASS,
   NOTEBOOK_CELL_FRAME_CLASS,
-  type NotebookDragState,
-} from './edit/NotebookCellFrame';
-import { NotebookFooterAddCell } from './edit/NotebookFooterAddCell';
+} from './edit/cellClassNames';
 import { isEmptyMarkdown } from './isEmptyMarkdown';
 import { setQueryRunnerQueries } from './setQueryRunnerQueries';
 
