@@ -1,5 +1,5 @@
 import { type IconName } from '@grafana/ui';
-import { type Repository, type SyncStatus } from 'app/api/clients/provisioning/v0alpha1';
+import { type SyncStatus } from 'app/api/clients/provisioning/v0alpha1';
 
 /**
  * Generic type for Kubernetes resources with generation tracking
@@ -18,34 +18,6 @@ export function isResourceReconciled(resource?: ReconciledResource): boolean {
   const generation = resource?.metadata?.generation;
   const observedGeneration = resource?.status?.observedGeneration;
   return generation !== undefined && observedGeneration !== undefined && observedGeneration >= generation;
-}
-
-/**
- * Reports whether a repository's credentials have permanently failed (expired
- * or revoked), which the backend surfaces as the Ready condition reason
- * AuthenticationFailed. This is the only state where provider-side cleanup
- * (deleting the webhook) can never run: without valid credentials the webhook
- * can't be removed, and unlike a transient outage it won't self-heal, so
- * deletion would wedge forever on the cleanup finalizer.
- *
- * Deliberately narrow. A repository can be unhealthy for reasons the backend
- * still cleans up webhooks for — an invalid spec (e.g. a wrong branch), over
- * quota, or branch protection — and the delete path never calls Test(), so
- * those delete normally; force-deleting them would orphan the webhook
- * needlessly. Transient failures (ServiceUnavailable, RateLimited) are excluded
- * too: retrying once infra recovers is better than orphaning the webhook.
- */
-export function hasRepositoryCredentialFailure(repository?: Repository): boolean {
-  const ready = repository?.status?.conditions?.find((condition) => condition.type === 'Ready');
-  if (ready?.status !== 'False' || ready.reason !== 'AuthenticationFailed') {
-    return false;
-  }
-  // Only trust a condition reported for the current spec. Right after the user
-  // fixes credentials the generation bumps but the stale AuthenticationFailed
-  // condition can linger until the next reconcile; acting on it would drop the
-  // cleanup finalizer and orphan a webhook the new credentials could remove.
-  // Mirrors the backend's repositoryAuthenticationFailed freshness check.
-  return ready.observedGeneration === repository?.metadata?.generation;
 }
 
 export const getStatusColor = (state?: SyncStatus['state']) => {

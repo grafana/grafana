@@ -12,11 +12,9 @@ import {
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { hasRepositoryCredentialFailure } from '../utils/repositoryStatus';
-
-// CLEANUP_FINALIZER removes the provider-side webhook on delete; it's the only
-// finalizer that needs the repository to be reachable. Dropping it lets an
-// unhealthy repository (e.g. expired credentials) finish deleting.
+// The cleanup finalizer removes the provider-side webhook on delete. keep-resources
+// keeps it (the webhook is still removed) but swaps the resource finalizer so
+// resources are released instead of removed.
 const CLEANUP_FINALIZER = 'cleanup';
 
 type DeleteAction = 'remove-resources' | 'keep-resources';
@@ -32,35 +30,24 @@ export function DeleteRepositoryButton({ name, repository, redirectTo }: Props) 
   const [replaceRepository, replaceRequest] = useReplaceRepositoryMutation();
   const navigate = useNavigate();
 
-  // When the repository's credentials have failed (e.g. expired) the backend
-  // can't remove provider-side resources such as webhooks, which would otherwise
-  // block deletion forever. In that case we force the deletion by dropping the
-  // cleanup finalizer and warn the user those remote resources will be left
-  // behind.
-  const credentialFailure = hasRepositoryCredentialFailure(repository);
-
   const performDelete = useCallback(
     async (deleteAction: DeleteAction) => {
       const keepResources = deleteAction === 'keep-resources';
 
-      // Work out the finalizer set we want before deleting. keep-resources
-      // swaps remove-orphan for release-orphan; remove-resources leaves the
-      // repository's finalizers as they are. A credential failure then drops
-      // the cleanup finalizer so the provider-side webhook step is skipped.
+      // keep-resources swaps remove-orphan for release-orphan; remove-resources
+      // leaves the repository's finalizers as they are. If a delete then wedges
+      // (e.g. dead credentials block webhook cleanup) the backend surfaces it as
+      // status.deleteError and the Overview banner offers "Delete anyway".
       let finalizers: string[] | undefined;
       if (keepResources) {
         finalizers = [CLEANUP_FINALIZER, 'release-orphan-resources'];
-      }
-      if (credentialFailure) {
-        const base = finalizers ?? repository?.metadata?.finalizers ?? [];
-        finalizers = base.filter((finalizer) => finalizer !== CLEANUP_FINALIZER);
       }
 
       if (finalizers && repository) {
         try {
           // unwrap so a rejected PUT throws: RTK Query triggers resolve to an
           // action even on error. If we don't stop here, deletion proceeds with
-          // cleanup still attached and wedges — the exact failure this guards.
+          // the wrong finalizer set.
           await replaceRepository({
             name,
             repository: { ...repository, metadata: { ...repository.metadata, finalizers } },
@@ -74,7 +61,7 @@ export function DeleteRepositoryButton({ name, repository, redirectTo }: Props) 
         repositoryName: name,
         repositoryType: repository?.spec?.type ?? 'unknown',
         deleteAction,
-        forceDelete: credentialFailure,
+        forceDelete: false,
         target: repository?.spec?.sync?.target ?? 'unknown',
         workflows: repository?.spec?.workflows ?? [],
       });
@@ -85,56 +72,46 @@ export function DeleteRepositoryButton({ name, repository, redirectTo }: Props) 
         navigate(redirectTo);
       }
     },
-    [deleteRepository, replaceRepository, name, repository, redirectTo, navigate, credentialFailure]
-  );
-
-  // Appended to the confirm text when the repository's credentials have failed,
-  // so the user knows the delete will proceed but leave provider-side resources
-  // behind.
-  const authenticationWarning = t(
-    'provisioning.delete-repository-button.authentication-warning',
-    ' Authentication for this repository is currently failing (its credentials may have expired or been revoked), so provider-side resources such as webhooks cannot be removed and will be left in place. Fix the credentials before deleting to remove them.'
+    [deleteRepository, replaceRepository, name, repository, redirectTo, navigate]
   );
 
   const showDeleteWithResourcesModal = useCallback(() => {
-    const baseText = t(
-      'provisioning.delete-repository-button.confirm-delete-with-resources',
-      'Are you sure you want to delete the repository configuration and all its resources?'
-    );
     appEvents.publish(
       new ShowConfirmModalEvent({
         title: t(
           'provisioning.delete-repository-button.title-delete-repository-and-resources',
           'Delete repository configuration and resources'
         ),
-        text: credentialFailure ? baseText + authenticationWarning : baseText,
+        text: t(
+          'provisioning.delete-repository-button.confirm-delete-with-resources',
+          'Are you sure you want to delete the repository configuration and all its resources?'
+        ),
         yesText: t('provisioning.delete-repository-button.button-delete', 'Delete'),
         noText: t('provisioning.delete-repository-button.button-cancel', 'Cancel'),
         yesButtonVariant: 'destructive',
         onConfirm: () => performDelete('remove-resources'),
       })
     );
-  }, [performDelete, credentialFailure, authenticationWarning]);
+  }, [performDelete]);
 
   const showDeleteKeepResourcesModal = useCallback(() => {
-    const baseText = t(
-      'provisioning.delete-repository-button.confirm-delete-keep-resources',
-      'Are you sure you want to delete the repository configuration but keep its resources?'
-    );
     appEvents.publish(
       new ShowConfirmModalEvent({
         title: t(
           'provisioning.delete-repository-button.title-delete-repository-only',
           'Delete repository configuration only'
         ),
-        text: credentialFailure ? baseText + authenticationWarning : baseText,
+        text: t(
+          'provisioning.delete-repository-button.confirm-delete-keep-resources',
+          'Are you sure you want to delete the repository configuration but keep its resources?'
+        ),
         yesText: t('provisioning.delete-repository-button.button-delete', 'Delete'),
         noText: t('provisioning.delete-repository-button.button-cancel', 'Cancel'),
         yesButtonVariant: 'destructive',
         onConfirm: () => performDelete('keep-resources'),
       })
     );
-  }, [performDelete, credentialFailure, authenticationWarning]);
+  }, [performDelete]);
 
   const isLoading = deleteRequest.isLoading || replaceRequest.isLoading;
 
