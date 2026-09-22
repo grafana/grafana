@@ -1,5 +1,6 @@
-import { render, screen } from 'test/test-utils';
+import { render, screen, waitFor, within } from 'test/test-utils';
 
+import { locationService, setReturnToPreviousHook } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { useRulesFilter } from '../../hooks/useFilteredRules';
@@ -10,6 +11,17 @@ import { pluginMeta } from '../../testSetup/plugins';
 import { SupportedPlugin } from '../../types/pluginBridges';
 
 import { RulesFilterSidebar } from './RulesFilterSidebar';
+
+jest.mock('@grafana/runtime', () => {
+  const runtime = jest.requireActual('@grafana/runtime');
+  return {
+    ...runtime,
+    locationService: {
+      ...runtime.locationService,
+      push: jest.fn(),
+    },
+  };
+});
 
 jest.mock('@grafana/alerting/unstable', () => ({
   ContactPointSelector: ({
@@ -77,6 +89,9 @@ setupMswServer();
 
 const mockUpdateFilters = jest.fn();
 const mockClearAll = jest.fn();
+const returnToPrevious = jest.fn();
+
+setReturnToPreviousHook(() => returnToPrevious);
 
 const baseFilterState: RulesFilter = { freeFormWords: [], dataSourceNames: [], labels: [] };
 
@@ -262,14 +277,40 @@ describe('RulesFilterSidebar — rule source filter', () => {
     expect(screen.getByRole('radio', { name: 'Data source managed' })).toBeInTheDocument();
   });
 
-  it('drops it once the Prometheus Alerting plugin owns those rules, but keeps the data source filter', async () => {
+  it('defaults to Grafana managed without offering All when the plugin owns data source managed rules', async () => {
     addPlugin(pluginMeta[SupportedPlugin.PrometheusAlerting]);
 
     render(<RulesFilterSidebar />);
 
-    // The data source filter is not about rule ownership, so it stays.
     expect(await screen.findByText('Data source')).toBeInTheDocument();
-    expect(screen.queryByRole('radiogroup', { name: 'Rule source' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('radio', { name: 'Data source managed' })).not.toBeInTheDocument();
+    const ruleSourceFilter = screen.getByRole('radiogroup', { name: 'Rule source' });
+    const grafanaManaged = within(ruleSourceFilter).getByRole('radio', { name: 'Grafana managed' });
+    await waitFor(() => expect(grafanaManaged).toBeChecked());
+    expect(within(ruleSourceFilter).queryByRole('radio', { name: 'All' })).not.toBeInTheDocument();
+    expect(within(ruleSourceFilter).getByRole('radio', { name: 'Data source managed' })).not.toBeChecked();
+  });
+
+  it('opens data source managed rules in the plugin with the current search query', async () => {
+    addPlugin(pluginMeta[SupportedPlugin.PrometheusAlerting]);
+    useRulesFilterMock.mockReturnValue({
+      filterState: baseFilterState,
+      updateFilters: mockUpdateFilters,
+      hasActiveFilters: true,
+      clearAll: mockClearAll,
+      searchQuery: 'state:firing team=search',
+      setSearchQuery: jest.fn(),
+      activeFilters: ['ruleState'],
+    });
+    const { user } = render(<RulesFilterSidebar />);
+
+    const grafanaManaged = await screen.findByRole('radio', { name: 'Grafana managed' });
+    await waitFor(() => expect(grafanaManaged).toBeChecked());
+    await user.click(screen.getByRole('radio', { name: 'Data source managed' }));
+
+    expect(mockUpdateFilters).not.toHaveBeenCalled();
+    expect(returnToPrevious).toHaveBeenCalledWith('Alert rules');
+    expect(locationService.push).toHaveBeenCalledWith(
+      `/a/${SupportedPlugin.PrometheusAlerting}/rules?search=state%3Afiring+team%3Dsearch`
+    );
   });
 });

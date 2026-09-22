@@ -6,6 +6,7 @@ import { ContactPointSelector, RoutingTreeSelector } from '@grafana/alerting/uns
 import type { RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { locationService, useReturnToPrevious } from '@grafana/runtime';
 import { Button, Combobox, Icon, Input, Label, MultiCombobox, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
@@ -19,7 +20,7 @@ import { isGranted } from '../../hooks/abilities/abilityUtils';
 import { useGlobalContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
 import { ContactPointAction } from '../../hooks/abilities/types';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
-import { usePrometheusAlertingPlugin } from '../../plugin-proxy/usePrometheusAlertingPlugin';
+import { usePluginRulesLink, usePrometheusAlertingPlugin } from '../../plugin-proxy/usePrometheusAlertingPlugin';
 import { RuleHealth, RuleSource, type RulesFilter } from '../../search/rulesSearchParser';
 
 import { type AdvancedFilters } from './types';
@@ -61,6 +62,8 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
   const { updateFilters } = useRulesFilter();
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
   const { installed: pluginInstalled } = usePrometheusAlertingPlugin();
+  const pluginRulesLink = usePluginRulesLink();
+  const returnToPrevious = useReturnToPrevious();
   const canRenderContactPointSelector = isGranted(useGlobalContactPointAbility(ContactPointAction.View));
 
   const defaults = searchQueryToDefaultValues(filterState);
@@ -241,40 +244,41 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
         <div className={styles.divider} />
 
         <SidebarSection>
-          {/* With the Prometheus Alerting plugin installed this list only holds Grafana managed
-              rules, so there is nothing left to pick between. */}
-          {!pluginInstalled && (
-            <SidebarField
-              label={<Trans i18nKey="alerting.search.property.rule-source">Rule source</Trans>}
-              labelId="filter-label-rule-source"
-            >
-              <Controller
-                name="ruleSource"
-                control={control}
-                render={({ field }) => (
-                  <ToggleButtonGroup<AdvancedFilters['ruleSource']>
-                    aria-labelledby="filter-label-rule-source"
-                    value={field.value}
-                    onChange={(value) => {
-                      field.onChange(value);
-                      applyFormValues({ ruleSource: value });
-                    }}
-                    options={[
-                      { label: t('common.all', 'All'), value: null },
-                      {
-                        label: t('alerting.rules-filter.rule-source.grafana', 'Grafana managed'),
-                        value: RuleSource.Grafana,
-                      },
-                      {
-                        label: t('alerting.rules-filter.rule-source.datasource', 'Data source managed'),
-                        value: RuleSource.DataSource,
-                      },
-                    ]}
-                  />
-                )}
-              />
-            </SidebarField>
-          )}
+          <SidebarField
+            label={<Trans i18nKey="alerting.search.property.rule-source">Rule source</Trans>}
+            labelId="filter-label-rule-source"
+          >
+            <Controller
+              name="ruleSource"
+              control={control}
+              render={({ field }) => (
+                <ToggleButtonGroup<AdvancedFilters['ruleSource']>
+                  aria-labelledby="filter-label-rule-source"
+                  value={pluginInstalled ? (field.value ?? RuleSource.Grafana) : field.value}
+                  onChange={(value) => {
+                    if (pluginInstalled && value === RuleSource.DataSource) {
+                      returnToPrevious(t('alerting.rule-list.return-button.title', 'Alert rules'));
+                      locationService.push(pluginRulesLink);
+                      return;
+                    }
+                    field.onChange(value);
+                    applyFormValues({ ruleSource: value });
+                  }}
+                  options={[
+                    ...(!pluginInstalled ? [{ label: t('common.all', 'All'), value: null }] : []),
+                    {
+                      label: t('alerting.rules-filter.rule-source.grafana', 'Grafana managed'),
+                      value: RuleSource.Grafana,
+                    },
+                    {
+                      label: t('alerting.rules-filter.rule-source.datasource', 'Data source managed'),
+                      value: RuleSource.DataSource,
+                    },
+                  ]}
+                />
+              )}
+            />
+          </SidebarField>
 
           <SidebarField
             label={

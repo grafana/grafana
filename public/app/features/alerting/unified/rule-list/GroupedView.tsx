@@ -39,6 +39,7 @@ export function GroupedView({ groupFilter, namespaceFilter }: GroupedViewProps) 
           groupFilter={groupFilter}
           namespaceFilter={namespaceFilter}
           onLoadingStateChange={updateState}
+          collapsible={!pluginInstalled}
           key={`${groupFilter}-${namespaceFilter}`}
         />
       </DataSourceErrorBoundary>

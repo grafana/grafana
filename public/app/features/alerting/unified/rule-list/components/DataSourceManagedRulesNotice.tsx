@@ -1,6 +1,7 @@
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Icon, LinkButton, Stack, Text } from '@grafana/ui';
 
+import { WithReturnButton } from '../../components/WithReturnButton';
 import { useHandedOverRulesSources, usePluginRulesLink } from '../../plugin-proxy/usePrometheusAlertingPlugin';
 
 /**
@@ -62,9 +63,14 @@ export function DataSourceManagedRulesInlineNotice() {
           defaultValue_other: '{{count}} data sources are managed by the Prometheus Alerting plugin',
         })}
       </Text>
-      <LinkButton size="sm" variant="secondary" fill="text" href={pluginRulesLink}>
-        <Trans i18nKey="alerting.rule-list.datasource-managed-notice.inline-action">View</Trans>
-      </LinkButton>
+      <WithReturnButton
+        title={t('alerting.rule-list.return-button.title', 'Alert rules')}
+        component={
+          <LinkButton size="sm" variant="secondary" fill="text" href={pluginRulesLink}>
+            <Trans i18nKey="alerting.rule-list.datasource-managed-notice.inline-action">View</Trans>
+          </LinkButton>
+        }
+      />
     </Stack>
   );
 }

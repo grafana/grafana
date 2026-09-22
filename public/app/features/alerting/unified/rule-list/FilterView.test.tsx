@@ -1,6 +1,6 @@
 import { act, render, screen, waitForElementToBeRemoved } from 'test/test-utils';
 
-import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
+import { setPluginComponentsHook, setPluginLinksHook, setReturnToPreviousHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
@@ -19,6 +19,8 @@ jest.mock('@grafana/assistant', () => ({
 
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));
+const returnToPrevious = jest.fn();
+setReturnToPreviousHook(() => returnToPrevious);
 
 grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
 
@@ -38,6 +40,7 @@ const mimirDs = alertingFactory.dataSource.build({ name: 'Mimir', uid: 'mimir' }
 const prometheusDs = alertingFactory.dataSource.build({ name: 'Prometheus', uid: 'prometheus' });
 
 beforeEach(() => {
+  returnToPrevious.mockClear();
   setPrometheusRules(mimirDs, mimirGroups);
   setPrometheusRules(prometheusDs, prometheusGroups);
 });
@@ -240,14 +243,18 @@ describe('RuleList - FilterView with the Prometheus Alerting plugin', () => {
   });
 
   it('offers to run the same search in the plugin when nothing matched', async () => {
-    render(<FilterView filterState={getFilter({ groupName: 'non-existing-group' })} />);
+    const { user } = render(<FilterView filterState={getFilter({ groupName: 'non-existing-group' })} />);
 
     await loadMoreResults();
 
     expect(await screen.findByText(/No matching rules found/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /search data source managed rules/i })).toHaveAttribute(
+    const link = screen.getByRole('link', { name: /search data source managed rules/i });
+    expect(link).toHaveAttribute(
       'href',
       `/a/${SupportedPlugin.PrometheusAlerting}/rules`
     );
+    link.addEventListener('click', (event) => event.preventDefault());
+    await user.click(link);
+    expect(returnToPrevious).toHaveBeenCalledWith('Alert rules');
   });
 });

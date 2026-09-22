@@ -25,6 +25,7 @@ export interface DataSourceSectionProps extends PropsWithChildren {
   error?: unknown;
   /** Extra content for the right hand side of the header row, before the "Configure" link. */
   actions?: ReactNode;
+  collapsible?: boolean;
 }
 
 export const DataSourceSection = ({
@@ -37,8 +38,10 @@ export const DataSourceSection = ({
   isLoading = false,
   description = null,
   actions = null,
+  collapsible = true,
 }: DataSourceSectionProps) => {
-  const [isCollapsed, toggleCollapsed] = useToggle(false);
+  const [collapsed, toggleCollapsed] = useToggle(false);
+  const isCollapsed = collapsible && collapsed;
   const styles = useStyles2((theme) => getStyles(theme, isCollapsed));
 
   const configureLink = (() => {
@@ -60,12 +63,14 @@ export const DataSourceSection = ({
           <div className={styles.dataSourceSectionTitle}>
             {loader ?? (
               <Stack alignItems="center">
-                <IconButton
-                  name={isCollapsed ? 'angle-right' : 'angle-down'}
-                  onClick={toggleCollapsed}
-                  aria-label={t('common.collapse', 'Collapse')}
-                  disabled={Boolean(error)}
-                />
+                {collapsible && (
+                  <IconButton
+                    name={isCollapsed ? 'angle-right' : 'angle-down'}
+                    onClick={toggleCollapsed}
+                    aria-label={t('common.collapse', 'Collapse')}
+                    disabled={Boolean(error)}
+                  />
+                )}
                 {application && <DataSourceIcon application={application} />}
 
                 <Text variant="body" weight="bold" element="h2" id={`datasource-${String(uid)}-heading`}>

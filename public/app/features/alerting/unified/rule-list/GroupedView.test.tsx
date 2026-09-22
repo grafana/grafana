@@ -48,9 +48,11 @@ describe('RuleList - GroupedView', () => {
   it('should render datasource sections', async () => {
     render(<GroupedView />);
 
+    const grafanaSection = await screen.findByRole('listitem', { name: /Grafana-managed/ });
     const mimirSection = await screen.findByRole('listitem', { name: /Mimir/ });
     const prometheusSection = await screen.findByRole('listitem', { name: /Prometheus/ });
 
+    expect(within(grafanaSection).getByRole('button', { name: /Collapse/ })).toBeInTheDocument();
     expect(mimirSection).toBeInTheDocument();
     expect(prometheusSection).toBeInTheDocument();
 
@@ -132,6 +134,7 @@ describe('RuleList - GroupedView with the Prometheus Alerting plugin', () => {
       'href',
       `/a/${SupportedPlugin.PrometheusAlerting}/rules`
     );
+    expect(within(grafanaSection).queryByRole('button', { name: /Collapse/ })).not.toBeInTheDocument();
 
     expect(screen.queryByRole('listitem', { name: /Mimir/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('listitem', { name: /Prometheus/ })).not.toBeInTheDocument();

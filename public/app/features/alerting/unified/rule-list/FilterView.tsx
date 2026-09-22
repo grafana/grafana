@@ -6,6 +6,7 @@ import { Trans, t } from '@grafana/i18n';
 import { EmptyState, LinkButton, Stack } from '@grafana/ui';
 
 import { withPerformanceLogging } from '../Analytics';
+import { WithReturnButton } from '../components/WithReturnButton';
 import { isLoading, useAsync } from '../hooks/useAsync';
 import { useHandedOverRulesSources, usePluginRulesLink } from '../plugin-proxy/usePrometheusAlertingPlugin';
 import { type RulesFilter } from '../search/rulesSearchParser';
@@ -208,11 +209,16 @@ function SearchInPluginCTA() {
   }
 
   return (
-    <LinkButton variant="secondary" icon="external-link-alt" href={pluginRulesLink}>
-      <Trans i18nKey="alerting.rule-list.filter-view.search-in-plugin">
-        Search data source managed rules in Prometheus Alerting
-      </Trans>
-    </LinkButton>
+    <WithReturnButton
+      title={t('alerting.rule-list.return-button.title', 'Alert rules')}
+      component={
+        <LinkButton variant="secondary" icon="external-link-alt" href={pluginRulesLink}>
+          <Trans i18nKey="alerting.rule-list.filter-view.search-in-plugin">
+            Search data source managed rules in Prometheus Alerting
+          </Trans>
+        </LinkButton>
+      }
+    />
   );
 }
 

@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from 'test/test-utils';
 
+import { setReturnToPreviousHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
@@ -14,8 +15,12 @@ import { DataSourceManagedRulesBanner, DataSourceManagedRulesInlineNotice } from
 setupMswServer();
 
 const MIMIR = mockDataSource({ name: 'Mimir', uid: 'mimir', type: 'prometheus', jsonData: { manageAlerts: true } });
+const returnToPrevious = jest.fn();
+
+setReturnToPreviousHook(() => returnToPrevious);
 
 beforeEach(() => {
+  returnToPrevious.mockClear();
   grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
   setupDataSources(MIMIR);
 });
@@ -66,19 +71,23 @@ describe('DataSourceManagedRulesBanner', () => {
 });
 
 describe('DataSourceManagedRulesInlineNotice', () => {
-  it('shows the same count with a shorter link', async () => {
+  it('shows the same count with a shorter link that records where to return', async () => {
     installPlugin();
     setupDataSources(
       MIMIR,
       mockDataSource({ name: 'Loki', uid: 'loki', type: 'loki', jsonData: { manageAlerts: true } })
     );
 
-    render(<DataSourceManagedRulesInlineNotice />);
+    const { user } = render(<DataSourceManagedRulesInlineNotice />);
 
     expect(await screen.findByText('2 data sources are managed by the Prometheus Alerting plugin')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'View' })).toHaveAttribute(
+    const link = screen.getByRole('link', { name: 'View' });
+    expect(link).toHaveAttribute(
       'href',
       `/a/${SupportedPlugin.PrometheusAlerting}/rules`
     );
+    link.addEventListener('click', (event) => event.preventDefault());
+    await user.click(link);
+    expect(returnToPrevious).toHaveBeenCalledWith('Alert rules');
   });
 });
