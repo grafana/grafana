@@ -113,16 +113,34 @@ func TestAuthorizeResource_NewDashboardPreview(t *testing.T) {
 			wantProbes: []string{newID, teamID}, wantChecks: []string{newID}, wantErr: denied,
 		},
 		{
-			name: "allowed missing destination still requires ancestor permission", existing: []string{teamID}, allowed: newID,
-			wantProbes: []string{newID, teamID}, wantChecks: []string{newID, teamID}, wantErr: denied,
+			name: "allowed missing trusted destination does not require ancestor permission", existing: []string{teamID}, allowed: newID,
+			wantProbes: []string{newID}, wantChecks: []string{newID},
 		},
 		{
-			name: "allowed destination cannot authorize a missing repository root", allowed: newID,
-			wantProbes: []string{newID, teamID, repoName}, wantChecks: []string{newID}, wantForbidden: true,
+			name: "allowed missing trusted destination does not require a repository root", allowed: newID,
+			wantProbes: []string{newID}, wantChecks: []string{newID},
 		},
 		{
-			name: "allowed destination cannot substitute General", target: provisioning.SyncTargetTypeInstance, allowed: newID,
-			wantProbes: []string{newID, teamID}, wantChecks: []string{newID}, wantForbidden: true,
+			name: "allowed missing trusted destination works in instance repositories", target: provisioning.SyncTargetTypeInstance, allowed: newID,
+			wantProbes: []string{newID}, wantChecks: []string{newID},
+		},
+		{
+			name: "allowed missing configured UID preserves permission", destination: "configured-folder",
+			metadataEnabled: true, metadata: metadata, allowed: "configured-folder",
+			wantProbes: []string{"configured-folder"}, wantChecks: []string{"configured-folder"},
+		},
+		{
+			name: "allowed missing repository root preserves permission", path: "dashboard.json", destination: repoName, allowed: repoName,
+			wantProbes: []string{repoName}, wantChecks: []string{repoName},
+		},
+		{
+			name: "allowed PR UID cannot authorize a missing repository root", destination: "pr-controlled-uid", allowed: "pr-controlled-uid",
+			wantProbes: []string{"pr-controlled-uid", newID, teamID, repoName}, wantChecks: []string{"pr-controlled-uid"}, wantForbidden: true,
+		},
+		{
+			name: "allowed PR UID cannot substitute General", destination: "pr-controlled-uid", allowed: "pr-controlled-uid",
+			target:     provisioning.SyncTargetTypeInstance,
+			wantProbes: []string{"pr-controlled-uid", newID, teamID}, wantChecks: []string{"pr-controlled-uid"}, wantForbidden: true,
 		},
 		{
 			name: "folder client errors propagate", clientErr: lookupErr, wantChecks: []string{newID}, wantErr: lookupErr,

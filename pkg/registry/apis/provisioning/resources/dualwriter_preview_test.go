@@ -174,40 +174,64 @@ func TestDualReadWriter_ReadNewDashboardPreviewWithTokenAuth(t *testing.T) {
 
 // A successful check against PR metadata must not bypass the configured folder's
 // permissions, even when the PR UID names an existing folder the caller can read.
+// Matching configured UIDs retain successful grants before their folders are synced.
 func TestDualReadWriter_ReadNewDashboardPreviewValidatesConfiguredFolder(t *testing.T) {
 	for _, tt := range []struct {
 		name              string
+		path              string
+		target            provisioning.SyncTargetType
+		folderMetadata    bool
+		unsynced          bool
 		configuredFolder  string
 		canReadConfigured bool
 	}{
-		{name: "allowed PR folder cannot bypass denied configured folder", configuredFolder: "restricted-folder"},
-		{name: "different allowed configured folder permits preview", configuredFolder: "other-allowed-folder", canReadConfigured: true},
-		{name: "matching allowed folder permits preview", configuredFolder: "preview-folder", canReadConfigured: true},
+		{name: "allowed PR folder cannot bypass denied configured folder", folderMetadata: true, configuredFolder: "restricted-folder"},
+		{name: "different allowed configured folder permits preview", folderMetadata: true, configuredFolder: "other-allowed-folder", canReadConfigured: true},
+		{name: "matching allowed folder permits preview", folderMetadata: true, configuredFolder: "preview-folder", canReadConfigured: true},
+		{name: "allowed hash folder before instance sync", target: provisioning.SyncTargetTypeInstance, unsynced: true, canReadConfigured: true},
+		{name: "allowed repository root before folder sync", path: "dashboard.json", unsynced: true, canReadConfigured: true},
+		{name: "matching allowed metadata folder before sync", folderMetadata: true, configuredFolder: "preview-folder", unsynced: true, canReadConfigured: true},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			const dashboardPath = "team/dashboard.json"
+			dashboardPath := tt.path
+			if dashboardPath == "" {
+				dashboardPath = "team/dashboard.json"
+			}
 			const metadataPath = "team/_folder.json"
-			const destination = "preview-folder"
+			target := tt.target
+			if target == "" {
+				target = provisioning.SyncTargetTypeFolder
+			}
 			cfg := &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "synced-dashboards", Namespace: "default"},
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.GitRepositoryType,
 					Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
-					Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+					Sync: provisioning.SyncOptions{Target: target},
 				},
 			}
+			destination := "preview-folder"
+			configuredFolder := tt.configuredFolder
+			if !tt.folderMetadata {
+				destination = ParentFolder(dashboardPath, cfg)
+				configuredFolder = destination
+			}
 			repo := repository.NewMockReaderWriter(t)
-			repo.EXPECT().Config().Return(cfg)
+			if safepath.Dir(dashboardPath) != "" {
+				repo.EXPECT().Config().Return(cfg)
+			}
 			repo.EXPECT().Read(mock.Anything, dashboardPath, "feature").Return(&repository.FileInfo{
 				Path: dashboardPath, Ref: "feature",
 				Data: []byte(fmt.Sprintf(`{"apiVersion":%q,"kind":"Dashboard","metadata":{"name":"preview-dashboard"},"spec":{"title":"Preview dashboard"}}`, DashboardKind.GroupVersion().String())),
 			}, nil).Once()
-			repo.EXPECT().Read(mock.Anything, metadataPath, "feature").Return(&repository.FileInfo{
-				Path: metadataPath, Data: []byte(fmt.Sprintf(`{"metadata":{"name":%q}}`, destination)),
-			}, nil).Once()
-			repo.EXPECT().Read(mock.Anything, metadataPath, "").Return(&repository.FileInfo{
-				Path: metadataPath, Data: []byte(fmt.Sprintf(`{"metadata":{"name":%q}}`, tt.configuredFolder)),
-			}, nil).Once()
+			if tt.folderMetadata {
+				repo.EXPECT().Read(mock.Anything, metadataPath, "feature").Return(&repository.FileInfo{
+					Path: metadataPath, Data: []byte(fmt.Sprintf(`{"metadata":{"name":%q}}`, destination)),
+				}, nil).Once()
+				repo.EXPECT().Read(mock.Anything, metadataPath, "").Return(&repository.FileInfo{
+					Path: metadataPath, Data: []byte(fmt.Sprintf(`{"metadata":{"name":%q}}`, configuredFolder)),
+				}, nil).Once()
+			}
 
 			caller := &identity.StaticRequester{Type: authlib.TypeUser, Namespace: cfg.Namespace, OrgRole: identity.RoleEditor}
 			ctx := authlib.WithAuthInfo(context.Background(), caller)
@@ -220,10 +244,15 @@ func TestDualReadWriter_ReadNewDashboardPreviewValidatesConfiguredFolder(t *test
 			folders := &MockDynamicResourceInterface{}
 			t.Cleanup(func() { folders.AssertExpectations(t) })
 			folderIDs := []string{destination}
-			if tt.configuredFolder != destination {
-				folderIDs = append(folderIDs, tt.configuredFolder)
+			if configuredFolder != destination {
+				folderIDs = append(folderIDs, configuredFolder)
 			}
 			for _, folderID := range folderIDs {
+				if tt.unsynced {
+					folders.On("Get", provisioningContext, folderID, metav1.GetOptions{}, mock.Anything).
+						Return(nil, apierrors.NewNotFound(FolderResource.GroupResource(), folderID)).Once()
+					continue
+				}
 				folders.On("Get", provisioningContext, folderID, metav1.GetOptions{}, mock.Anything).
 					Return(&unstructured.Unstructured{Object: map[string]interface{}{
 						"metadata": map[string]interface{}{"name": folderID, "namespace": cfg.Namespace},
@@ -246,7 +275,7 @@ func TestDualReadWriter_ReadNewDashboardPreviewValidatesConfiguredFolder(t *test
 			clients.EXPECT().Folder(provisioningContext).Return(folders, FolderKind, nil).Once()
 			parser := &parser{
 				repo:   provisioning.ResourceRepositoryInfo{Name: cfg.Name, Namespace: cfg.Namespace, Type: cfg.Spec.Type},
-				reader: repo, config: cfg, clients: clients, folderMetadataEnabled: true,
+				reader: repo, config: cfg, clients: clients, folderMetadataEnabled: tt.folderMetadata,
 			}
 			var checkedFolders []string
 			access := auth.NewTokenAccessChecker(previewTokenAccessChecker(func(checkCtx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
@@ -257,10 +286,10 @@ func TestDualReadWriter_ReadNewDashboardPreviewValidatesConfiguredFolder(t *test
 					Verb: utils.VerbGet, Name: "preview-dashboard",
 				}, req)
 				checkedFolders = append(checkedFolders, folder)
-				return authlib.CheckResponse{Allowed: folder == destination || (tt.canReadConfigured && folder == tt.configuredFolder)}, nil
+				return authlib.CheckResponse{Allowed: folder == destination || (tt.canReadConfigured && folder == configuredFolder)}, nil
 			})).WithFallbackRole(identity.RoleViewer)
-			authorizer := NewAuthorizer(cfg, repo, access, clients, true)
-			readWriter := NewDualReadWriter(repo, parser, nil, authorizer, true)
+			authorizer := NewAuthorizer(cfg, repo, access, clients, tt.folderMetadata)
+			readWriter := NewDualReadWriter(repo, parser, nil, authorizer, tt.folderMetadata)
 
 			parsed, err := readWriter.Read(ctx, dashboardPath, "feature")
 			if tt.canReadConfigured {

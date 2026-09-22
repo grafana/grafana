@@ -254,7 +254,7 @@ func isNewDashboardPreview(parsed *ParsedResource, verb string) bool {
 // using its nearest existing ancestor when folders have not been synced. This is
 // required even after a successful destination check because PR metadata may name
 // a different folder. An existing destination's denial remains authoritative, and
-// access is denied if no real configured ancestor exists.
+// inheriting access after a denial requires a real configured ancestor.
 func (a *ProvisioningAuthorizer) authorizeNewDashboardPreview(ctx context.Context, parsed *ParsedResource, req authlib.CheckRequest, destinationErr error) error {
 	// Existence must be independent of the caller's folder access. Authorization
 	// below still uses the original caller, never the provisioning identity.
@@ -284,9 +284,9 @@ func (a *ProvisioningAuthorizer) authorizeNewDashboardPreview(ctx context.Contex
 	}
 
 	// Walk from the dashboard's directory toward the repository root, skipping only
-	// folders absent from Grafana. The first existing folder's permission result
-	// is final. An empty directory selects RootFolder, which must be checked
-	// before ending the walk.
+	// folders absent from Grafana unless an existing grant matches a configured UID.
+	// The first existing folder's permission result is final. An empty directory
+	// selects RootFolder, which must be checked before ending the walk.
 	for dir := safepath.Dir(parsed.Info.Path); ; dir = safepath.Dir(dir) {
 		folderID := RootFolder(a.repo)
 		if dir != "" {
@@ -301,8 +301,10 @@ func (a *ProvisioningAuthorizer) authorizeNewDashboardPreview(ctx context.Contex
 			return denied
 		}
 		if folderID == destination {
-			if destinationExists {
-				// Reuse the successful check only after the configured branch confirms its UID.
+			if destinationErr == nil {
+				// The configured UID confirms the original grant is trustworthy. Preserve
+				// it even before sync creates the folder; only inherited access needs
+				// an existing ancestor to supply the permission context.
 				return nil
 			}
 		} else {
