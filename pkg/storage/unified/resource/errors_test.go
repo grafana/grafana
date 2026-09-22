@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"testing"
@@ -136,11 +137,16 @@ func TestErrorFromResponse(t *testing.T) {
 	})
 }
 
-func TestGRPCCodeFromHTTPStatus(t *testing.T) {
+func TestGRPCCodeFromErrorResult(t *testing.T) {
 	t.Parallel()
 
+	require.Equal(t, codes.OK, grpcCodeFromErrorResult(nil))
+	require.Equal(t, codes.Internal, grpcCodeFromErrorResult(&resourcepb.ErrorResult{}))
+
 	mapped := map[int32]codes.Code{
-		http.StatusOK:                           codes.OK,
+		http.StatusOK:                           codes.Internal,
+		http.StatusGone:                         codes.OutOfRange,
+		http.StatusRequestEntityTooLarge:        codes.InvalidArgument,
 		http.StatusBadRequest:                   codes.InvalidArgument,
 		http.StatusUnauthorized:                 codes.Unauthenticated,
 		http.StatusForbidden:                    codes.PermissionDenied,
@@ -158,23 +164,57 @@ func TestGRPCCodeFromHTTPStatus(t *testing.T) {
 		499:                                     codes.Canceled, // nginx's client-closed-request, what gRPC gateways emit for Canceled
 	}
 	for httpCode, want := range mapped {
-		require.Equal(t, want, grpcCodeFromHTTPStatus(httpCode), "http status %d", httpCode)
+		for _, reason := range []string{"", "error reading settings"} {
+			require.Equal(t, want, grpcCodeFromErrorResult(&resourcepb.ErrorResult{Code: httpCode, Reason: reason}), "http status %d, reason %q", httpCode, reason)
+		}
 	}
 
-	// Anything unmapped labels as Unknown: a signal to add a mapping rather
-	// than a silent mislabel.
-	unmapped := []int32{
-		0,
-		-1,
-		http.StatusNoContent,
-		http.StatusMovedPermanently,
-		http.StatusTeapot,
-		http.StatusGone,
-		http.StatusBadGateway,
-		599,
+	unmapped := map[int32]codes.Code{
+		0:                           codes.Internal,
+		-1:                          codes.Internal,
+		http.StatusNoContent:        codes.Internal,
+		http.StatusMovedPermanently: codes.Internal,
+		http.StatusTeapot:           codes.InvalidArgument,
+		498:                         codes.InvalidArgument,
+		http.StatusBadGateway:       codes.Internal,
+		599:                         codes.Internal,
+		600:                         codes.Internal,
 	}
-	for _, httpCode := range unmapped {
-		require.Equal(t, codes.Unknown, grpcCodeFromHTTPStatus(httpCode), "http status %d", httpCode)
+	for httpCode, want := range unmapped {
+		require.Equal(t, want, grpcCodeFromErrorResult(&resourcepb.ErrorResult{Code: httpCode}), "http status %d", httpCode)
+	}
+
+	reasons := []struct {
+		code   int32
+		reason metav1.StatusReason
+		want   codes.Code
+	}{
+		{401, metav1.StatusReasonUnauthorized, codes.Unauthenticated},
+		{403, metav1.StatusReasonForbidden, codes.PermissionDenied},
+		{404, metav1.StatusReasonNotFound, codes.NotFound},
+		{409, metav1.StatusReasonAlreadyExists, codes.AlreadyExists},
+		{409, metav1.StatusReasonConflict, codes.Aborted},
+		{410, metav1.StatusReasonGone, codes.OutOfRange},
+		{410, metav1.StatusReasonExpired, codes.OutOfRange},
+		{422, metav1.StatusReasonInvalid, codes.InvalidArgument},
+		{400, metav1.StatusReasonBadRequest, codes.InvalidArgument},
+		{406, metav1.StatusReasonNotAcceptable, codes.InvalidArgument},
+		{415, metav1.StatusReasonUnsupportedMediaType, codes.InvalidArgument},
+		{504, metav1.StatusReasonTimeout, codes.DeadlineExceeded},
+		{500, metav1.StatusReasonServerTimeout, codes.Unavailable},
+		{503, metav1.StatusReasonServiceUnavailable, codes.Unavailable},
+		{429, metav1.StatusReasonTooManyRequests, codes.ResourceExhausted},
+		{413, metav1.StatusReasonRequestEntityTooLarge, codes.InvalidArgument},
+		{405, metav1.StatusReasonMethodNotAllowed, codes.Unimplemented},
+		{500, metav1.StatusReasonInternalError, codes.Internal},
+		{500, metav1.StatusReasonStoreReadError, codes.Internal},
+	}
+	for _, tt := range reasons {
+		t.Run(string(tt.reason), func(t *testing.T) {
+			for _, code := range []int32{tt.code, 0, http.StatusOK, http.StatusInternalServerError} {
+				require.Equal(t, tt.want, grpcCodeFromErrorResult(&resourcepb.ErrorResult{Code: code, Reason: string(tt.reason)}), "http status %d", code)
+			}
+		})
 	}
 }
 
@@ -212,4 +252,176 @@ func TestIsConflict(t *testing.T) {
 			require.Equal(t, tc.expected, IsConflict(tc.err))
 		})
 	}
+}
+
+func TestStatusErrorFromResponse_NoErrorsReturnsNil(t *testing.T) {
+	require.NoError(t, StatusErrorFromResponse(nil, nil))
+}
+
+func TestStatusErrorFromResponse_EmbeddedErrorPreservesStatus(t *testing.T) {
+	responseError := &resourcepb.ErrorResult{
+		Code:    http.StatusConflict,
+		Reason:  string(metav1.StatusReasonConflict),
+		Message: "dashboard was modified",
+		Details: &resourcepb.ErrorDetails{
+			Group: "dashboard.grafana.app",
+			Kind:  "dashboards",
+			Name:  "dashboard",
+			Uid:   "uid",
+			Causes: []*resourcepb.ErrorCause{
+				{
+					Reason:  "FieldValueInvalid",
+					Field:   "metadata.resourceVersion",
+					Message: "outdated version",
+				},
+			},
+		},
+	}
+
+	err := StatusErrorFromResponse(responseError, nil)
+
+	var apiStatus apierrors.APIStatus
+	require.ErrorAs(t, err, &apiStatus)
+	require.Equal(t, metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusConflict,
+		Reason:  metav1.StatusReasonConflict,
+		Message: "dashboard was modified",
+		Details: &metav1.StatusDetails{
+			Group: "dashboard.grafana.app",
+			Kind:  "dashboards",
+			Name:  "dashboard",
+			UID:   "uid",
+			Causes: []metav1.StatusCause{
+				{
+					Type:    metav1.CauseTypeFieldValueInvalid,
+					Field:   "metadata.resourceVersion",
+					Message: "outdated version",
+				},
+			},
+		},
+	}, apiStatus.Status())
+}
+
+func TestStatusErrorFromResponse_GRPCDetailsOverrideTransportStatus(t *testing.T) {
+	grpcStatus, err := status.New(codes.Internal, "transport message").WithDetails(&resourcepb.ErrorResult{
+		Code:    http.StatusTooManyRequests,
+		Reason:  string(metav1.StatusReasonTooManyRequests),
+		Message: "search is busy",
+		Details: &resourcepb.ErrorDetails{RetryAfterSeconds: 12},
+	})
+	require.NoError(t, err)
+	transportError := fmt.Errorf("handler: %w", fmt.Errorf("search: %w", grpcStatus.Err()))
+
+	err = StatusErrorFromResponse(nil, transportError)
+
+	var apiStatus apierrors.APIStatus
+	require.ErrorAs(t, err, &apiStatus)
+	require.Equal(t, metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusTooManyRequests,
+		Reason:  metav1.StatusReasonTooManyRequests,
+		Message: "search is busy",
+		Details: &metav1.StatusDetails{RetryAfterSeconds: 12},
+	}, apiStatus.Status())
+}
+
+func TestStatusErrorFromResponse_TransportErrorTakesPrecedenceOverResponseError(t *testing.T) {
+	responseError := &resourcepb.ErrorResult{Code: http.StatusNotFound, Message: "missing dashboard"}
+	transportError := status.Error(codes.Unavailable, "storage unavailable")
+
+	err := StatusErrorFromResponse(responseError, transportError)
+
+	var apiStatus apierrors.APIStatus
+	require.ErrorAs(t, err, &apiStatus)
+	require.Equal(t, int32(http.StatusServiceUnavailable), apiStatus.Status().Code)
+	require.Contains(t, apiStatus.Status().Message, "storage unavailable")
+}
+
+func TestStatusErrorFromResponse_UnwrapsKubernetesStatusErrors(t *testing.T) {
+	want := metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusNotFound,
+		Reason:  metav1.StatusReasonNotFound,
+		Message: "dashboard not found",
+	}
+	wrappedError := fmt.Errorf("search: %w", &apierrors.StatusError{ErrStatus: want})
+
+	err := StatusErrorFromResponse(nil, wrappedError)
+
+	var apiStatus apierrors.APIStatus
+	require.ErrorAs(t, err, &apiStatus)
+	require.Equal(t, want, apiStatus.Status())
+}
+
+func TestStatusErrorFromResponse_MapsGRPCCodesWithoutDetails(t *testing.T) {
+	tests := []struct {
+		grpcCode codes.Code
+		httpCode int32
+	}{
+		{grpcCode: codes.NotFound, httpCode: http.StatusNotFound},
+		{grpcCode: codes.Aborted, httpCode: http.StatusConflict},
+		{grpcCode: codes.ResourceExhausted, httpCode: http.StatusTooManyRequests},
+		{grpcCode: codes.Unavailable, httpCode: http.StatusServiceUnavailable},
+		{grpcCode: codes.Canceled, httpCode: 499},
+		{grpcCode: codes.DeadlineExceeded, httpCode: http.StatusGatewayTimeout},
+	}
+	for _, tc := range tests {
+		t.Run(tc.grpcCode.String(), func(t *testing.T) {
+			transportError := status.Error(tc.grpcCode, "request failed")
+
+			err := StatusErrorFromResponse(nil, transportError)
+
+			var apiStatus apierrors.APIStatus
+			require.ErrorAs(t, err, &apiStatus)
+			require.Equal(t, tc.httpCode, apiStatus.Status().Code)
+		})
+	}
+}
+
+func TestStatusErrorFromResponse_MapsContextErrors(t *testing.T) {
+	tests := []struct {
+		name     string
+		err      error
+		httpCode int32
+	}{
+		{
+			name:     "canceled",
+			err:      context.Canceled,
+			httpCode: 499,
+		},
+		{
+			name:     "wrapped cancellation",
+			err:      fmt.Errorf("search: %w", context.Canceled),
+			httpCode: 499,
+		},
+		{
+			name:     "deadline exceeded",
+			err:      context.DeadlineExceeded,
+			httpCode: http.StatusGatewayTimeout,
+		},
+		{
+			name:     "wrapped deadline",
+			err:      fmt.Errorf("search: %w", context.DeadlineExceeded),
+			httpCode: http.StatusGatewayTimeout,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := StatusErrorFromResponse(nil, tc.err)
+
+			var apiStatus apierrors.APIStatus
+			require.ErrorAs(t, err, &apiStatus)
+			require.Equal(t, tc.httpCode, apiStatus.Status().Code)
+		})
+	}
+}
+
+func TestStatusErrorFromResponse_UnknownErrorBecomesInternalServerError(t *testing.T) {
+	err := StatusErrorFromResponse(nil, errors.New("unexpected failure"))
+
+	var apiStatus apierrors.APIStatus
+	require.ErrorAs(t, err, &apiStatus)
+	require.Equal(t, int32(http.StatusInternalServerError), apiStatus.Status().Code)
+	require.Equal(t, "unexpected failure", apiStatus.Status().Message)
 }

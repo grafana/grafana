@@ -17,7 +17,7 @@ labels:
 menuTitle: Annotations
 title: Azure Monitor annotations
 weight: 450
-review_date: 2026-05-12
+review_date: 2026-08-11
 ---
 
 # Azure Monitor annotations
