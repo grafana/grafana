@@ -634,8 +634,15 @@ type RepositoryStatus struct {
 	// Token will get updated with current token information
 	Token TokenStatus `json:"token,omitempty"`
 
-	// Error information during repository deletion (if any)
+	// Error information during repository deletion (if any).
+	// Deprecated: prefer the structured Deletion field. Retained for
+	// backwards compatibility with clients that read the concise string.
 	DeleteError string `json:"deleteError,omitempty"`
+
+	// Deletion reports the progress of an in-progress deletion and the problem
+	// blocking it, so a client can explain the holdup and force-remove the
+	// blocking finalizer. Populated only while the repository is Terminating.
+	Deletion *DeletionStatus `json:"deletion,omitempty"`
 
 	// Quota contains the configured quota limits for this repository
 	Quota QuotaStatus `json:"quota,omitempty"`
@@ -1037,6 +1044,51 @@ func (in *ErrorDetails) DeepCopyInto(out *ErrorDetails) {
 
 func (ErrorDetails) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ErrorDetails"
+}
+
+// DeletionState is the phase of an in-progress repository deletion.
+// +enum
+type DeletionState string
+
+func (DeletionState) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DeletionState"
+}
+
+const (
+	// DeletionStateBlocked indicates the latest finalizer pass failed and deletion
+	// did not complete. The controller keeps retrying, so a transient failure
+	// (a brief outage, an API conflict) may still clear on its own; a persistent
+	// one (credentials expired, a webhook that cannot be removed) needs the user
+	// to force-remove the blocking finalizer. Finalizer is the finalizer that
+	// failed on that pass.
+	//
+	// This is the only state the controller emits: status.deletion is written
+	// only when a pass fails. While finalizers are still running, status.deletion
+	// is absent, which (together with a set deletionTimestamp) is itself the
+	// "in progress" signal — so no separate Working state is needed.
+	DeletionStateBlocked DeletionState = "Blocked"
+)
+
+// DeletionStatus reports the progress of an in-progress deletion and the problem
+// blocking it. It is populated while the repository is Terminating and its
+// finalizers run, so a client can explain the holdup and force-remove the
+// blocking finalizer.
+type DeletionStatus struct {
+	// State is the phase of the deletion.
+	State DeletionState `json:"state,omitempty"`
+
+	// Finalizer names the finalizer whose teardown is blocking deletion, i.e.
+	// which deletion step failed. A client force-removing deletion removes exactly
+	// this finalizer.
+	Finalizer string `json:"finalizer,omitempty"`
+
+	// Message is a human-readable explanation of what went wrong, suitable for
+	// showing to users.
+	Message string `json:"message,omitempty"`
+}
+
+func (DeletionStatus) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DeletionStatus"
 }
 
 // HistoryList is a list of versions of a resource

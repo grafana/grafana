@@ -176,6 +176,7 @@
 "set service account foreign key to nil if 0"
 "Add last_used_at to api_key table"
 "Add is_revoked column to api_key table"
+"Add index api_key.org_id_service_account_id"
 "create dashboard_snapshot table v4"
 "drop table dashboard_snapshot_v4 #1"
 "create dashboard_snapshot table v5 #2"
@@ -738,3 +739,5 @@
 "alter alert_rule_state id column to bigint for postgres"
 "alter alert_rule_state id sequence to bigint for postgres"
 "ensure folder_fullpath column sorts the same way as golang"
+"alter alert_rule missing_series_evals_to_resolve column to bigint"
+"alter alert_rule_version missing_series_evals_to_resolve column to bigint"

@@ -13,7 +13,7 @@ ARG JS_SRC=js-builder
 
 # Dependabot cannot update dependencies listed in ARGs
 # By using FROM instructions we can delegate dependency updates to dependabot
-FROM alpine:3.24.1 AS alpine-base
+FROM alpine:3.24.2 AS alpine-base
 FROM ubuntu:24.04 AS ubuntu-base
 FROM golang:1.26.6-alpine AS go-builder-base
 FROM --platform=${JS_PLATFORM} node:24-alpine AS js-builder-base
@@ -67,7 +67,6 @@ ARG WIRE_TAGS="oss"
 
 RUN if grep -i -q alpine /etc/issue; then \
   apk add --no-cache \
-  bash \
   # Install build dependencies
   make git; \
   fi
@@ -226,7 +225,7 @@ ENV PATH="/usr/share/grafana/bin:$PATH" \
 
 WORKDIR $GF_PATHS_HOME
 
-RUN apk add --no-cache ca-certificates bash bubblewrap curl tzdata musl-utils && \
+RUN apk add --no-cache ca-certificates bubblewrap curl tzdata musl-utils && \
   apk info -vv | sort
 
 # glibc support for alpine x86_64 only

@@ -74,9 +74,10 @@ function createLinkModel(overrides: Partial<LinkModel> = {}): LinkModel {
 }
 
 /** Presence checks run when interpolatedParams.query is set. */
-function createProbingLinkModel(query: DataQuery): LinkModel {
+function createProbingLinkModel(query: DataQuery, overrides: Partial<LinkModel> = {}): LinkModel {
   return createLinkModel({
-    interpolatedParams: { query },
+    ...overrides,
+    interpolatedParams: { query, ...overrides.interpolatedParams },
   });
 }
 
@@ -619,20 +620,34 @@ describe('LogsLinkButton', () => {
     await waitFor(() => expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'false'));
   });
 
-  it('keeps an Explore href when not in a drilldown context', async () => {
+  it('rewrites a matching probe to a new-tab Explore href and still calls onClick', async () => {
     mockDatasourceReturningFrames([logsFrame], 'loki');
+    const onClick = jest.fn();
     const interpolatedQuery: LokiQuery = {
       refId: 'A',
       datasource: { uid: 'logs-ds-uid', type: 'loki' },
       expr: '{job="api"} |= "trace1"',
     };
+    const interpolatedParams = { query: interpolatedQuery };
 
     render(
-      <LogsLinkButton linkModel={createProbingLinkModel(interpolatedQuery)} traceDatasourceUid={TRACE_DATASOURCE_UID} />
+      <LogsLinkButton
+        linkModel={createLinkModel({ interpolatedParams, target: '_self', onClick })}
+        traceDatasourceUid={TRACE_DATASOURCE_UID}
+      />
     );
 
     await waitFor(() => expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'false'));
     expect(screen.getByRole('link')).toHaveAttribute('href', expect.stringContaining('/explore?left='));
+    expect(screen.getByRole('link')).toHaveAttribute('target', '_blank');
+    expect(interpolatedParams.query).toEqual({
+      refId: 'A',
+      datasource: { uid: 'logs-ds-uid', type: 'loki' },
+      expr: '{job="api"} |= "trace1"',
+    });
+
+    await userEvent.click(screen.getByRole('link'));
+    expect(onClick).toHaveBeenCalledTimes(1);
   });
 
   it('uses the Open in Logs Drilldown extension path when the panel app is unknown', async () => {
@@ -659,7 +674,7 @@ describe('LogsLinkButton', () => {
     render(
       <PanelContextProvider value={{ eventsScope: 'test', eventBus: new EventBusSrv(), app: CoreApp.Unknown }}>
         <LogsLinkButton
-          linkModel={createProbingLinkModel(interpolatedQuery)}
+          linkModel={createProbingLinkModel(interpolatedQuery, { target: '_self' })}
           traceDatasourceUid={TRACE_DATASOURCE_UID}
         />
       </PanelContextProvider>
@@ -667,6 +682,7 @@ describe('LogsLinkButton', () => {
 
     await waitFor(() => expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'false'));
     expect(screen.getByRole('link')).toHaveAttribute('href', '/a/grafana-lokiexplore-app/explore?var-ds=logs-ds-uid');
+    expect(screen.getByRole('link')).toHaveAttribute('target', '_blank');
     expect(usePluginLinksMock).toHaveBeenCalledWith({
       extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
       context: expect.objectContaining({
@@ -687,7 +703,7 @@ describe('LogsLinkButton', () => {
     render(
       <PanelContextProvider value={{ eventsScope: 'test', eventBus: new EventBusSrv(), app: CoreApp.Unknown }}>
         <LogsLinkButton
-          linkModel={createProbingLinkModel(interpolatedQuery)}
+          linkModel={createProbingLinkModel(interpolatedQuery, { target: '_self' })}
           traceDatasourceUid={TRACE_DATASOURCE_UID}
         />
       </PanelContextProvider>
@@ -695,6 +711,7 @@ describe('LogsLinkButton', () => {
 
     await waitFor(() => expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'false'));
     expect(screen.getByRole('link')).toHaveAttribute('href', expect.stringContaining('/explore?left='));
+    expect(screen.getByRole('link')).toHaveAttribute('target', '_blank');
   });
 });
 
@@ -839,7 +856,24 @@ describe('LogsLinkMenuItem', () => {
     render(<LogsLinkMenuItem linkModel={createLinkModel({ onClick })} traceDatasourceUid={TRACE_DATASOURCE_UID} />);
 
     await userEvent.click(screen.getByRole('menuitem'));
-    expect(onClick).toHaveBeenCalled();
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('invokes the original onClick after a matching probe', async () => {
+    mockDatasourceReturningFrames([logsFrame], 'loki');
+    const onClick = jest.fn();
+    const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
+
+    render(
+      <LogsLinkMenuItem
+        linkModel={createProbingLinkModel(interpolatedQuery, { onClick })}
+        traceDatasourceUid={TRACE_DATASOURCE_UID}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByRole('menuitem')).toBeEnabled());
+    await userEvent.click(screen.getByRole('menuitem'));
+    expect(onClick).toHaveBeenCalledTimes(1);
   });
 });
 

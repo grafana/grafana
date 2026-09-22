@@ -16,6 +16,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
@@ -30,10 +31,12 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/userpermissions"
+	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -106,6 +109,70 @@ func TestNewAPIService_WiresLegacyTeamStore(t *testing.T) {
 	require.NotNil(t, b.legacyTeamStore)
 }
 
+func TestNewAPIService_WiresSSOStore(t *testing.T) {
+	b := NewAPIService(
+		nil,
+		nil,
+		legacysql.NewDatabaseProvider(nil),
+		&NoopApiInstaller[*iamv0.RoleBinding]{ResourceInfo: iamv0.RoleBindingInfo},
+		&NoopApiInstaller[*iamv0.Role]{ResourceInfo: iamv0.RoleInfo},
+		&NoopApiInstaller[*iamv0.GlobalRole]{ResourceInfo: iamv0.GlobalRoleInfo},
+		&NoopApiInstaller[*iamv0.TeamLBACRule]{ResourceInfo: iamv0.TeamLBACRuleInfo},
+		nil,
+		prometheus.NewRegistry(),
+		nil,
+		nil,
+		tracing.InitializeTracerForTest(),
+		resourcepermission.NewMappersRegistry(),
+		nil,
+	)
+
+	// Standalone must wire the read-only SSO store so the SSOSetting kind is served
+	// once kubernetesSsoSettingsApi is enabled.
+	require.NotNil(t, b.ssoLegacyStore)
+}
+
+func TestNewAPIService_AuthorizesSSOSettings(t *testing.T) {
+	b := NewAPIService(
+		nil,
+		nil,
+		legacysql.NewDatabaseProvider(nil),
+		&NoopApiInstaller[*iamv0.RoleBinding]{ResourceInfo: iamv0.RoleBindingInfo},
+		&NoopApiInstaller[*iamv0.Role]{ResourceInfo: iamv0.RoleInfo},
+		&NoopApiInstaller[*iamv0.GlobalRole]{ResourceInfo: iamv0.GlobalRoleInfo},
+		&NoopApiInstaller[*iamv0.TeamLBACRule]{ResourceInfo: iamv0.TeamLBACRuleInfo},
+		nil,
+		prometheus.NewRegistry(),
+		nil,
+		nil,
+		tracing.InitializeTracerForTest(),
+		resourcepermission.NewMappersRegistry(),
+		nil,
+	)
+
+	// Serving the kind is moot unless the standalone authorizer allows it; the
+	// flat fall-through would otherwise deny every ssosettings request.
+	attrs := authorizer.AttributesRecord{
+		Resource:        legacyiamv0.SSOSettingResourceInfo.GetName(),
+		ResourceRequest: true,
+		Verb:            "get",
+	}
+
+	t.Run("allows an authenticated identity", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: authlib.TypeAccessPolicy})
+		decision, _, err := b.authorizer.Authorize(ctx, attrs)
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionAllow, decision)
+	})
+
+	t.Run("denies an anonymous identity", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: authlib.TypeAnonymous})
+		decision, _, err := b.authorizer.Authorize(ctx, attrs)
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+	})
+}
+
 func TestUpdateTeamLBACRulesAPIGroupWithNoopInstaller(t *testing.T) {
 	b := &IdentityAccessManagementAPIBuilder{
 		teamLBACApiInstaller: ProvideNoopTeamLBACApiInstaller(),
@@ -118,6 +185,37 @@ func TestUpdateTeamLBACRulesAPIGroupWithNoopInstaller(t *testing.T) {
 	err := b.UpdateTeamLBACRulesAPIGroup(&genericapiserver.APIGroupInfo{}, builder.APIGroupOptions{}, storage)
 	require.NoError(t, err)
 	require.NotNil(t, storage[iamv0.TeamLBACRuleInfo.StoragePath("for-subject")])
+}
+
+func TestUpdateUsersAPIGroup_TeamsSubresourceRequiresTeamsAPI(t *testing.T) {
+	for _, tt := range []struct {
+		name            string
+		teamsAPIEnabled bool
+		wantRegistered  bool
+	}{
+		{name: "not registered when Teams API is disabled"},
+		{name: "registered when Teams API is enabled", teamsAPIEnabled: true, wantRegistered: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			scheme := runtime.NewScheme()
+			require.NoError(t, iamv0.AddToScheme(scheme))
+
+			b := &IdentityAccessManagementAPIBuilder{
+				dual:    dualwrite.NewMockService(t),
+				unified: resource.NewMockResourceClient(t),
+				tracing: tracing.InitializeTracerForTest(),
+			}
+			storage := map[string]rest.Storage{}
+			err := b.UpdateUsersAPIGroup(builder.APIGroupOptions{
+				Scheme:     scheme,
+				OptsGetter: appinstaller.NewNoopRESTOptionsGetter(),
+			}, storage, false, tt.teamsAPIEnabled)
+			require.NoError(t, err)
+
+			_, registered := storage[iamv0.UserResourceInfo.StoragePath("teams")]
+			require.Equal(t, tt.wantRegistered, registered)
+		})
+	}
 }
 
 func TestInstallSchema_ResourcePermissionsGate(t *testing.T) {
@@ -159,6 +257,20 @@ func TestInstallSchema_ResourcePermissionsGate(t *testing.T) {
 				"ResourcePermission kind registration should match %s=%v", featuremgmt.FlagKubernetesAuthzResourcePermissionApis, tt.flagEnabled)
 		})
 	}
+}
+
+func TestInstallSchema_ConfiguredFeaturesOverrideOpenFeature(t *testing.T) {
+	require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{}))
+	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
+
+	b := &IdentityAccessManagementAPIBuilder{
+		ofClient: openfeature.NewDefaultClient(),
+		features: &Features{ResourcePermissionsAPI: true},
+	}
+	scheme := runtime.NewScheme()
+
+	require.NoError(t, b.InstallSchema(scheme))
+	require.True(t, scheme.Recognizes(iamv0.ResourcePermissionInfo.GroupVersionKind()))
 }
 
 // TestCodecPathResourcesRegisterOneVersionPerType guards apimachinery's LegacyCodec version-order
@@ -223,7 +335,7 @@ func assertNoTypeSpansMultipleGVKs(t *testing.T, scheme *runtime.Scheme) {
 		if commonMultiVersionTypes[typ] {
 			continue
 		}
-		obj, ok := reflect.New(typ).Interface().(runtime.Object)
+		obj, ok := reflect.TypeAssert[runtime.Object](reflect.New(typ))
 		if !ok {
 			continue
 		}
