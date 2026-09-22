@@ -669,10 +669,10 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		}
 	})
 
-	// Test that path conflicts are skipped when sync is disabled (wizard onboarding flow).
-	// The wizard creates repositories without sync first, then the user configures the path
-	// and enables sync in a later step. Conflict checks should only fire when sync is enabled.
-	t.Run("Git repository path validation allows conflicting paths when sync is disabled", func(t *testing.T) {
+	// Path conflicts must be enforced regardless of Sync.Enabled: a disabled repository can
+	// still be synced on demand (an explicit pull job, or a PR/branch webhook), so it isn't
+	// inert with respect to this conflict (see VerifyAgainstExistingRepositoriesValidator).
+	t.Run("Git repository path validation forbids conflicting paths even when sync is disabled", func(t *testing.T) {
 		baseURL := "https://github.com/grafana/test-repo-path-sync-disabled"
 
 		// Create an initial repo with sync disabled and a specific path
@@ -687,8 +687,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		_, err := helper.Repositories.Resource.Create(t.Context(), firstRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "First repository should be created successfully")
 
-		// Create a second repo pointing to same URL with a child path and sync disabled.
-		// This simulates the wizard onboarding flow where sync is not yet enabled.
+		// A second repo pointing at a child path should still be rejected, even with sync disabled.
 		secondRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
 			"Name":          "git-sync-disabled-2",
 			"URL":           baseURL,
@@ -698,9 +697,10 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			"WorkflowsJSON": `[]`,
 		})
 		_, err = helper.Repositories.Resource.Create(t.Context(), secondRepo, metav1.CreateOptions{FieldValidation: "Strict"})
-		require.NoError(t, err, "Second repository with child path should succeed when sync is disabled")
+		require.Error(t, err, "Second repository with child path should be rejected even when sync is disabled")
+		require.ErrorContains(t, err, provisioningAPIServer.ErrRepositoryParentFolderConflict.Error())
 
-		// Create a third repo with the same path (duplicate) and sync disabled
+		// A third repo with the exact same path should still be rejected, even with sync disabled.
 		thirdRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
 			"Name":          "git-sync-disabled-3",
 			"URL":           baseURL,
@@ -710,9 +710,10 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			"WorkflowsJSON": `[]`,
 		})
 		_, err = helper.Repositories.Resource.Create(t.Context(), thirdRepo, metav1.CreateOptions{FieldValidation: "Strict"})
-		require.NoError(t, err, "Third repository with duplicate path should succeed when sync is disabled")
+		require.Error(t, err, "Third repository with duplicate path should be rejected even when sync is disabled")
+		require.ErrorContains(t, err, provisioningAPIServer.ErrRepositoryDuplicatePath.Error())
 
-		// Create a fourth repo with empty path (root) and sync disabled - wizard step 1 scenario
+		// A fourth repo at the root path overlaps every path under it, so it should also be rejected.
 		fourthRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
 			"Name":          "git-sync-disabled-4",
 			"URL":           baseURL,
@@ -722,7 +723,8 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			"WorkflowsJSON": `[]`,
 		})
 		_, err = helper.Repositories.Resource.Create(t.Context(), fourthRepo, metav1.CreateOptions{FieldValidation: "Strict"})
-		require.NoError(t, err, "Fourth repository with empty path should succeed when sync is disabled")
+		require.Error(t, err, "Fourth repository at the root path should be rejected even when sync is disabled")
+		require.ErrorContains(t, err, provisioningAPIServer.ErrRepositoryParentFolderConflict.Error())
 	})
 
 	// Test that enabling sync on a repo with a conflicting path is rejected
@@ -877,7 +879,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		require.NoError(t, err, "Third repository with different branch and empty path should succeed")
 	})
 
-	t.Run("Git repository allows conflicting paths when sync is disabled", func(t *testing.T) {
+	t.Run("Git repository forbids conflicting paths on the same branch even when sync is disabled", func(t *testing.T) {
 		baseURL := "https://github.com/grafana/test-repo-branch-sync-disabled"
 
 		firstRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
@@ -892,6 +894,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		_, err := helper.Repositories.Resource.Create(t.Context(), firstRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "First repository with sync disabled should succeed")
 
+		// Same branch, same path: rejected even with sync disabled.
 		secondRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
 			"Name":          "git-branch-disabled-2",
 			"URL":           baseURL,
@@ -902,8 +905,10 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			"WorkflowsJSON": `[]`,
 		})
 		_, err = helper.Repositories.Resource.Create(t.Context(), secondRepo, metav1.CreateOptions{FieldValidation: "Strict"})
-		require.NoError(t, err, "Second repository with duplicate path should succeed when sync is disabled")
+		require.Error(t, err, "Second repository with duplicate path should be rejected even when sync is disabled")
+		require.ErrorContains(t, err, provisioningAPIServer.ErrRepositoryDuplicatePath.Error())
 
+		// Different branch, same path: no conflict - paths are only compared within a branch.
 		thirdRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
 			"Name":          "git-branch-disabled-3",
 			"URL":           baseURL,
@@ -916,6 +921,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		_, err = helper.Repositories.Resource.Create(t.Context(), thirdRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "Third repository with different branch should succeed when sync is disabled")
 
+		// Same branch, child path: rejected even with sync disabled.
 		fourthRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
 			"Name":          "git-branch-disabled-4",
 			"URL":           baseURL,
@@ -926,7 +932,8 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			"WorkflowsJSON": `[]`,
 		})
 		_, err = helper.Repositories.Resource.Create(t.Context(), fourthRepo, metav1.CreateOptions{FieldValidation: "Strict"})
-		require.NoError(t, err, "Fourth repository with parent-child path should succeed when sync is disabled")
+		require.Error(t, err, "Fourth repository with parent-child path should be rejected even when sync is disabled")
+		require.ErrorContains(t, err, provisioningAPIServer.ErrRepositoryParentFolderConflict.Error())
 	})
 
 	t.Run("should update sync interval", func(t *testing.T) {
@@ -1268,7 +1275,11 @@ func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
 					"target":  "folder",
 				},
 				"github": map[string]any{
-					"url":    "https://github.com/grafana/grafana-git-sync-demo",
+					// Distinct URL so this doesn't collide with "repo-with-webhook" above (an
+					// empty path overlaps every path on the same URL/branch, so a different
+					// path alone wouldn't be enough) - this test is only about webhook base
+					// URL handling.
+					"url":    "https://github.com/grafana/grafana-git-sync-demo-http-webhook",
 					"branch": "main",
 				},
 				"webhook": map[string]any{
@@ -2726,7 +2737,9 @@ func TestIntegrationProvisioning_ConcurrentRepositoryCreation(t *testing.T) {
 						"github": map[string]any{
 							"url":    "https://github.com/grafana/grafana-git-sync-demo",
 							"branch": "integration-test",
-							"path":   "grafana/",
+							// Distinct paths so these don't collide with each other - this test
+							// is about concurrent-write safety, not path uniqueness.
+							"path": fmt.Sprintf("grafana-%d/", idx),
 						},
 						"sync": map[string]any{
 							"enabled": false,

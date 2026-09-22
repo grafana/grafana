@@ -701,6 +701,7 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 				"github": map[string]any{
 					"url":    gitServer.URL + "/owner/repo",
 					"branch": "main",
+					"path":   "health-pr-reviews",
 				},
 				"sync": map[string]any{
 					"enabled": false,
@@ -802,6 +803,7 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 				"github": map[string]any{
 					"url":    gitServer.URL + "/owner/repo",
 					"branch": "main",
+					"path":   "health-locked",
 				},
 				"sync": map[string]any{
 					"enabled": false,
@@ -902,6 +904,7 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 				"github": map[string]any{
 					"url":    gitServer.URL + "/owner/repo",
 					"branch": "main",
+					"path":   "health-unprotected",
 				},
 				"sync": map[string]any{
 					"enabled": false,
