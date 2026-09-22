@@ -476,13 +476,17 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 }
 
 func (rc *RepositoryController) updateDeleteStatus(ctx context.Context, obj *provisioning.Repository, err error) error {
-	// Skip the patch when the recorded error is unchanged: it bumps the
-	// resourceVersion, which the informer's UpdateFunc turns straight back into a
-	// re-enqueue, so rewriting the same deleteError on every failed pass would
-	// hot-loop the repository against the API server instead of retrying at the
-	// resync cadence. The structured deletion field is derived from the same
-	// error, so the string is a faithful proxy for "nothing changed".
-	if obj.Status.DeleteError == err.Error() {
+	deletion := buildDeletionStatus(err)
+
+	// Skip the patch only when BOTH the legacy string and the structured status
+	// already match: the patch bumps the resourceVersion, which the informer's
+	// UpdateFunc turns straight back into a re-enqueue, so rewriting an unchanged
+	// status on every failed pass would hot-loop against the API server instead
+	// of retrying at the resync cadence. Comparing deleteError alone is not
+	// enough: a repository wedged before status.deletion existed has the string
+	// set but no structured status (it must be backfilled), and two finalizers
+	// can fail with the same message while blaming different finalizers.
+	if obj.Status.DeleteError == err.Error() && reflect.DeepEqual(obj.Status.Deletion, deletion) {
 		return nil
 	}
 	logger := logging.FromContext(ctx)
@@ -499,7 +503,7 @@ func (rc *RepositoryController) updateDeleteStatus(ctx context.Context, obj *pro
 		map[string]interface{}{
 			"op":    "add",
 			"path":  "/status/deletion",
-			"value": buildDeletionStatus(err),
+			"value": deletion,
 		},
 	)
 }

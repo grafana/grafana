@@ -499,15 +499,54 @@ func TestRepositoryController_handleDelete_EmptyFinalizersDoesNotCount(t *testin
 }
 
 // TestRepositoryController_updateDeleteStatus_SkipsWhenUnchanged guards against a
-// hot-loop: re-writing the same deleteError bumps the resourceVersion, which the
-// informer turns back into a re-enqueue, so an unchanged error must not be
-// patched. A patcher with no expectations fails the test if Patch is called.
+// hot-loop: re-writing the same status bumps the resourceVersion, which the
+// informer turns back into a re-enqueue, so an unchanged status must not be
+// patched. Both the legacy string and the structured status already match here,
+// so nothing is written. A patcher with no expectations fails the test if Patch
+// is called.
 func TestRepositoryController_updateDeleteStatus_SkipsWhenUnchanged(t *testing.T) {
 	c := &RepositoryController{statusPatcher: mocks.NewStatusPatcher(t)}
 	repo := &provisioning.Repository{
-		Status: provisioning.RepositoryStatus{DeleteError: "boom"},
+		Status: provisioning.RepositoryStatus{
+			DeleteError: "boom",
+			Deletion: &provisioning.DeletionStatus{
+				State:   provisioning.DeletionStateBlocked,
+				Message: "boom",
+			},
+		},
 	}
 	err := c.updateDeleteStatus(context.Background(), repo, errors.New("boom"))
+	require.NoError(t, err)
+}
+
+// TestRepositoryController_updateDeleteStatus_BackfillsMissingStructuredStatus
+// verifies a repository wedged before status.deletion existed - the legacy
+// deleteError already matches but the structured status is absent - is still
+// patched so the blocking finalizer gets backfilled rather than skipped forever.
+func TestRepositoryController_updateDeleteStatus_BackfillsMissingStructuredStatus(t *testing.T) {
+	patcher := mocks.NewStatusPatcher(t)
+	patcher.
+		On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"),
+			mock.MatchedBy(func(op map[string]interface{}) bool {
+				return op["path"] == "/status/deleteError"
+			}),
+			mock.MatchedBy(func(op map[string]interface{}) bool {
+				ds, ok := op["value"].(*provisioning.DeletionStatus)
+				return ok && ds.Finalizer == repository.CleanFinalizer
+			}),
+		).
+		Once().
+		Return(nil)
+	c := &RepositoryController{statusPatcher: patcher}
+	wrapped := fmt.Errorf("remove finalizers: %w", &finalizerError{
+		finalizer: repository.CleanFinalizer,
+		err:       errors.New("boom"),
+	})
+	// deleteError already equals the error, but status.deletion is nil (pre-upgrade).
+	repo := &provisioning.Repository{
+		Status: provisioning.RepositoryStatus{DeleteError: wrapped.Error()},
+	}
+	err := c.updateDeleteStatus(context.Background(), repo, wrapped)
 	require.NoError(t, err)
 }
 

@@ -1059,10 +1059,12 @@ const (
 	// expected to complete on its own.
 	DeletionStateWorking DeletionState = "Working"
 
-	// DeletionStateBlocked indicates deletion cannot complete without user action
-	// (credentials expired, a webhook cannot be removed, etc.). Automation keeps
-	// retrying but cannot recover on its own; the user can force-remove the
-	// blocking finalizer.
+	// DeletionStateBlocked indicates the latest finalizer pass failed and deletion
+	// did not complete. The controller keeps retrying, so a transient failure
+	// (a brief outage, an API conflict) may still clear on its own; a persistent
+	// one (credentials expired, a webhook that cannot be removed) needs the user
+	// to force-remove the blocking finalizer. Finalizer is the finalizer that
+	// failed on that pass.
 	DeletionStateBlocked DeletionState = "Blocked"
 )
 
