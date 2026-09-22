@@ -4147,6 +4147,48 @@ func TestRepositoryController_ServiceUnavailableRetriesUpToMaxAttempts(t *testin
 	assert.Equal(t, int32(maxAttempts), processCount.Load(), "ServiceUnavailable should retry exactly maxAttempts times then give up")
 }
 
+// TestRepositoryController_DecryptFailureRetriesUpToMaxAttempts verifies that a
+// decrypt/KMS outage (ErrSecretDecryptFailed) is re-queued for a fast retry by the
+// worker just like a Kubernetes 503, even though it is a plain sentinel rather than
+// a 503 StatusError. This exercises the queue decision in processNextWorkItem, which
+// the direct-call process() tests do not reach.
+func TestRepositoryController_DecryptFailureRetriesUpToMaxAttempts(t *testing.T) {
+	var processCount atomic.Int32
+	allAttemptsDone := make(chan struct{})
+
+	rc := &RepositoryController{
+		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
+			workqueue.DefaultTypedControllerRateLimiter[string](),
+			workqueue.TypedRateLimitingQueueConfig[string]{
+				Name: "test-decrypt-retry",
+			},
+		),
+		logger:       logging.DefaultLogger.With("logger", "test"),
+		drainTimeout: 5 * time.Second,
+	}
+
+	rc.processFn = func(key string) (string, error) {
+		if processCount.Add(1) == maxAttempts {
+			close(allAttemptsDone)
+		}
+		return "", fmt.Errorf("create repository from configuration: %w", repository.ErrSecretDecryptFailed)
+	}
+
+	rc.queue.Add("test/repo")
+
+	ctx, cancel := context.WithCancel(t.Context())
+	runDone := make(chan struct{})
+	go func() {
+		rc.Run(ctx, 1, func() {}, func() {})
+		close(runDone)
+	}()
+
+	<-allAttemptsDone
+	cancel()
+	<-runDone
+	assert.Equal(t, int32(maxAttempts), processCount.Load(), "a decrypt outage should retry exactly maxAttempts times then give up")
+}
+
 // TestRepositoryController_NonRetryableErrorIsNotRetried verifies that errors other
 // than ServiceUnavailable are dropped after a single attempt with no re-queue.
 func TestRepositoryController_NonRetryableErrorIsNotRetried(t *testing.T) {

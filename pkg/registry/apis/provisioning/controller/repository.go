@@ -317,6 +317,17 @@ func (rc *RepositoryController) popTrigger(key string) (usinformer.ProcessTrigge
 	return trigger, ok
 }
 
+// isRetryableProcessError reports whether a process() error should be re-queued
+// for a fast, rate-limited retry rather than dropped until the next informer
+// resync. A Kubernetes 503 qualifies, as does a decrypt/KMS outage
+// (ErrSecretDecryptFailed) -- a plain sentinel that is not a 503 StatusError but
+// is a transient infrastructure failure all the same. This is the single source
+// of truth for the retry decision: both the worker's queue predicate and the
+// delete branch's error-preference switch consult it, so they cannot drift.
+func isRetryableProcessError(err error) bool {
+	return apierrors.IsServiceUnavailable(err) || errors.Is(err, repository.ErrSecretDecryptFailed)
+}
+
 // processNextWorkItem deals with one key off the queue.
 // It returns false when it's time to quit.
 func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
@@ -366,12 +377,12 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 		return true
 	}
 
-	if !apierrors.IsServiceUnavailable(err) {
+	if !isRetryableProcessError(err) {
 		logger.Info("RepositoryController will not retry")
 		rc.queue.Forget(key)
 		return true
 	} else {
-		logger.Info("RepositoryController will retry as service is unavailable")
+		logger.Info("RepositoryController will retry as the failure is transient")
 	}
 
 	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", key, err))
@@ -903,12 +914,12 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		// happens to fail with something non-retryable. A failed status patch is
 		// returned too rather than swallowed, so the delete reason is re-attempted
 		// instead of the key being forgotten without ever reaching the user. A
-		// Kubernetes 503 and a decrypt/KMS outage (ErrSecretDecryptFailed, a plain
-		// sentinel that isn't a 503 StatusError but is classified ServiceUnavailable
-		// above) fast-retry; anything else is re-attempted on the next informer
-		// resync while the finalizer stays stuck.
+		// retryable delete error (see isRetryableProcessError) is preferred so the
+		// worker's queue predicate -- which consults the same helper -- fast-retries
+		// it; anything else is re-attempted on the next informer resync while the
+		// finalizer stays stuck.
 		switch {
-		case apierrors.IsServiceUnavailable(err) || errors.Is(err, repository.ErrSecretDecryptFailed):
+		case isRetryableProcessError(err):
 			return repoType, err
 		case patchErr != nil:
 			// The status write itself failed: count it under the status phase.
