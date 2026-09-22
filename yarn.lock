@@ -7422,33 +7422,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rc-component/tree@npm:1.1.0":
-  version: 1.1.0
-  resolution: "@rc-component/tree@npm:1.1.0"
+"@rc-component/tree@npm:1.5.3, @rc-component/tree@npm:~1.5.0":
+  version: 1.5.3
+  resolution: "@rc-component/tree@npm:1.5.3"
   dependencies:
     "@rc-component/motion": "npm:^1.0.0"
-    "@rc-component/util": "npm:^1.2.1"
-    "@rc-component/virtual-list": "npm:^1.0.1"
-    clsx: "npm:^2.1.1"
-  peerDependencies:
-    react: "*"
-    react-dom: "*"
-  checksum: 10/2195332316b95501d0afad15d2edeaddd1eb6ccf98f1c46588750ad6911d1692b64279a46e4cba7c2a202f170d4363a3a3411819bc3087e5a8d99323acb5056f
-  languageName: node
-  linkType: hard
-
-"@rc-component/tree@npm:~1.5.0":
-  version: 1.5.0
-  resolution: "@rc-component/tree@npm:1.5.0"
-  dependencies:
-    "@rc-component/motion": "npm:^1.0.0"
-    "@rc-component/util": "npm:^1.11.1"
+    "@rc-component/util": "npm:^1.13.0"
     "@rc-component/virtual-list": "npm:^1.2.0"
     clsx: "npm:^2.1.1"
   peerDependencies:
     react: "*"
     react-dom: "*"
-  checksum: 10/1cbccb10a5ccfbfd89b3702073ca379c11c1383ac343228022c7c00db34a778c482953d138d5b578fe0130c9f94c2a19e8cb1ed01477b3420fd280eec40d5940
+  checksum: 10/6d44a5479407f100d79e0577854136f0a596b80b5b122a99d48d9e173e7da2393ffe1c6d83c4b8a2a10661457134ba4ebd0da9b508a6027c0dace0d1e4731244
   languageName: node
   linkType: hard
 
@@ -7468,7 +7453,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rc-component/util@npm:^1.11.0, @rc-component/util@npm:^1.11.1, @rc-component/util@npm:^1.2.0, @rc-component/util@npm:^1.2.1, @rc-component/util@npm:^1.4.0":
+"@rc-component/util@npm:^1.11.0, @rc-component/util@npm:^1.11.1, @rc-component/util@npm:^1.13.0, @rc-component/util@npm:^1.2.0, @rc-component/util@npm:^1.2.1, @rc-component/util@npm:^1.4.0":
   version: 1.13.0
   resolution: "@rc-component/util@npm:1.13.0"
   dependencies:
@@ -7481,7 +7466,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rc-component/virtual-list@npm:^1.0.1, @rc-component/virtual-list@npm:^1.2.0":
+"@rc-component/virtual-list@npm:^1.2.0":
   version: 1.5.1
   resolution: "@rc-component/virtual-list@npm:1.5.1"
   dependencies:
@@ -20095,7 +20080,7 @@ __metadata:
     "@opentelemetry/exporter-collector": "npm:0.25.0"
     "@playwright/test": "npm:1.56.1"
     "@popperjs/core": "npm:2.11.8"
-    "@rc-component/tree": "npm:1.1.0"
+    "@rc-component/tree": "npm:1.5.3"
     "@react-aria/dialog": "npm:3.5.31"
     "@react-aria/focus": "npm:3.21.2"
     "@react-aria/overlays": "npm:3.30.0"
