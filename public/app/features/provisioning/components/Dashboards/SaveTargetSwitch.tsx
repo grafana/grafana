@@ -2,7 +2,8 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
 
-export type SaveTarget = 'repository' | 'database';
+import { type SaveTarget } from '../../hooks/useSaveRepositoryView';
+
 export type SaveTargetResource = 'dashboard' | 'folder';
 
 interface Props {

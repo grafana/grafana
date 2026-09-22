@@ -422,10 +422,13 @@ describe('SaveDashboardDrawer', () => {
 
     function view(overrides: Partial<DashboardRepositoryView> = {}): DashboardRepositoryView {
       const status = overrides.status ?? RepoViewStatus.Ready;
+      const isNewSave = overrides.isNewSave ?? true;
       return {
         status,
-        isNewSave: true,
+        isNewSave,
         isProvisioned: false,
+        // Derived like useSaveRepositoryView, so every override still describes a view the hook can return
+        canChooseTarget: isNewSave && !overrides.folderUid && overrides.repository?.target === 'folderless',
         isInstanceManaged: false,
         isReadOnlyRepo: false,
         isMissingRepo: false,

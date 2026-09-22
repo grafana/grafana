@@ -10,13 +10,14 @@ import { type RepositoryView, useCreateRepositoryFilesWithPathMutation } from 'a
 import { useUrlParams } from 'app/core/navigation/hooks';
 import { AnnoKeySourcePath, type Resource } from 'app/features/apiserver/types';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
+import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { type FolderDTO } from 'app/types/folders';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
-import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
-import { type ProvisionedFolderFormDataResult } from '../../hooks/useProvisionedFolderFormData';
+import { RepoViewStatus, type RepositoryViewData } from '../../hooks/useGetResourceRepositoryView';
+import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
 import { type BaseProvisionedFormData } from '../../types/form';
@@ -39,8 +40,8 @@ interface FormProps {
 
 interface Props {
   onDismiss?: () => void;
-  /** Looked up once by the caller, so this form and the caller always agree on the repository */
-  data: ProvisionedFolderFormDataResult;
+  /** Resolved once by the caller, so this form and the caller always agree on the repository */
+  view: RepositoryViewData;
 }
 
 function FormContent({ initialValues, repository, canPushToConfiguredBranch, folder, onDismiss }: FormProps) {
@@ -150,7 +151,8 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
 
   // Use the repository-type and resource-type aware provisioned request handler
   const { handleSuccess } = useProvisionedRequestHandler<FolderDTO>({
-    folderUID: folder?.metadata.name,
+    // No parent folder at the root, so the root list is the one to refetch
+    folderUID: folder?.metadata.name ?? GENERAL_FOLDER_UID,
     workflow,
     repository,
     resourceType: 'folder',
@@ -296,7 +298,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
   );
 }
 
-export function NewProvisionedFolderForm({ onDismiss, data }: Props) {
+export function NewProvisionedFolderForm({ onDismiss, view }: Props) {
   const {
     canPushToConfiguredBranch,
     repository,
@@ -307,7 +309,10 @@ export function NewProvisionedFolderForm({ onDismiss, data }: Props) {
     isLoading,
     status,
     error,
-  } = data;
+  } = useProvisionedFolderFormData({
+    view,
+    title: '', // Empty title for new folders
+  });
 
   return (
     <ProvisionedFormGate
