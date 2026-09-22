@@ -125,6 +125,15 @@ func (r *repositoryResources) FindResourcePath(ctx context.Context, name string,
 }
 
 func provisioningAnnotationKeys(annotations map[string]string) []string {
+	// Include legacy repository annotations in diagnostics because the shared metadata
+	// accessor still supports them, but their constants in apimachinery/utils are private.
+	const (
+		legacyAnnoKeyRepoName      = "grafana.app/repoName"
+		legacyAnnoKeyRepoPath      = "grafana.app/repoPath"
+		legacyAnnoKeyRepoHash      = "grafana.app/repoHash"
+		legacyAnnoKeyRepoTimestamp = "grafana.app/repoTimestamp"
+	)
+
 	annotationKeys := make([]string, 0, len(annotations))
 	// Custom annotation names can contain user data, so only log known provisioning keys.
 	for key := range annotations {
@@ -132,7 +141,7 @@ func provisioningAnnotationKeys(annotations map[string]string) []string {
 		case utils.AnnoKeyManagerKind, utils.AnnoKeyManagerIdentity,
 			utils.AnnoKeyManagerAllowsEdits, utils.AnnoKeyManagerSuspended,
 			utils.AnnoKeySourcePath, utils.AnnoKeySourceChecksum, utils.AnnoKeySourceTimestamp,
-			"grafana.app/repoName", "grafana.app/repoPath", "grafana.app/repoHash", "grafana.app/repoTimestamp":
+			legacyAnnoKeyRepoName, legacyAnnoKeyRepoPath, legacyAnnoKeyRepoHash, legacyAnnoKeyRepoTimestamp:
 			annotationKeys = append(annotationKeys, key)
 		}
 	}
