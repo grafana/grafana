@@ -21,9 +21,23 @@ import (
 	sdkbackend "github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	apiserverauthenticator "github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 )
+
+func TestPluginManifestAccessControl(t *testing.T) {
+	ac := pluginManifestAccessControl{}.WithoutResolvers()
+	for _, scope := range []string{"plugins:id:test-app", "plugins:id:another-app"} {
+		allowed, err := ac.Evaluate(t.Context(), nil, accesscontrol.EvalPermission(pluginaccesscontrol.ActionAppAccess, scope))
+		require.NoError(t, err)
+		require.True(t, allowed)
+	}
+	allowed, err := ac.Evaluate(t.Context(), nil, accesscontrol.EvalPermission("plugins:write", "plugins:id:test-app"))
+	require.NoError(t, err)
+	require.False(t, allowed)
+}
 
 // pluginManifestsFixture is a minimal instance of the response shape a real
 // plugin-manifests operator emits at GET /plugins -- the
