@@ -2,16 +2,20 @@ package ssosettingsimpl
 
 import (
 	"context"
-	"errors"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/database"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
-var errReadOnly = errors.New("sso settings are read-only in this apiserver")
+// errReadOnly is a status error (405) so writes to this read-only apiserver map
+// to Method Not Allowed instead of a generic 500.
+var errReadOnly = apierrors.NewMethodNotSupported(iamv0.SSOSettingResourceInfo.GroupResource(), "write")
 
 // readOnlyDBService serves the SSOSetting kind read-only for a standalone
 // apiserver: it redacts by field name without decrypting (so it needs no secrets
