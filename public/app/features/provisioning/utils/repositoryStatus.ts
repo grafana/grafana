@@ -37,7 +37,15 @@ export function isResourceReconciled(resource?: ReconciledResource): boolean {
  */
 export function hasRepositoryCredentialFailure(repository?: Repository): boolean {
   const ready = repository?.status?.conditions?.find((condition) => condition.type === 'Ready');
-  return ready?.status === 'False' && ready.reason === 'AuthenticationFailed';
+  if (ready?.status !== 'False' || ready.reason !== 'AuthenticationFailed') {
+    return false;
+  }
+  // Only trust a condition reported for the current spec. Right after the user
+  // fixes credentials the generation bumps but the stale AuthenticationFailed
+  // condition can linger until the next reconcile; acting on it would drop the
+  // cleanup finalizer and orphan a webhook the new credentials could remove.
+  // Mirrors the backend's repositoryAuthenticationFailed freshness check.
+  return ready.observedGeneration === repository?.metadata?.generation;
 }
 
 export const getStatusColor = (state?: SyncStatus['state']) => {

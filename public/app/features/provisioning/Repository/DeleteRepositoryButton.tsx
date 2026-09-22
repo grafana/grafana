@@ -57,10 +57,17 @@ export function DeleteRepositoryButton({ name, repository, redirectTo }: Props) 
       }
 
       if (finalizers && repository) {
-        await replaceRepository({
-          name,
-          repository: { ...repository, metadata: { ...repository.metadata, finalizers } },
-        });
+        try {
+          // unwrap so a rejected PUT throws: RTK Query triggers resolve to an
+          // action even on error. If we don't stop here, deletion proceeds with
+          // cleanup still attached and wedges — the exact failure this guards.
+          await replaceRepository({
+            name,
+            repository: { ...repository, metadata: { ...repository.metadata, finalizers } },
+          }).unwrap();
+        } catch {
+          return;
+        }
       }
 
       reportInteraction('grafana_provisioning_repository_deleted', {

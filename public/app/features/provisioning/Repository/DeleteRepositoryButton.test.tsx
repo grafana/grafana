@@ -139,6 +139,9 @@ describe('DeleteRepositoryButton', () => {
   it('drops the cleanup finalizer from the keep-resources set for an unhealthy keep-resources delete', async () => {
     const event = await openMenuAndConfirm(createMockRepository(false), /keep resources/i);
 
+    // The warning appears on the keep-resources modal too, not just remove-resources.
+    expect(event.payload.text).toMatch(/authentication/i);
+
     await confirmDelete(event);
 
     await waitFor(() => expect(captured.deletedName).toBe('test-repo'));
@@ -147,6 +150,8 @@ describe('DeleteRepositoryButton', () => {
 
   it('keeps the cleanup finalizer for a healthy keep-resources delete', async () => {
     const event = await openMenuAndConfirm(createMockRepository(true), /keep resources/i);
+
+    expect(event.payload.text).not.toMatch(/authentication/i);
 
     await confirmDelete(event);
 
@@ -177,4 +182,44 @@ describe('DeleteRepositoryButton', () => {
       );
     }
   );
+
+  it('does not force-delete on a stale AuthenticationFailed condition from a previous generation', async () => {
+    // Credentials were just fixed: the spec generation bumped to 2 but the
+    // AuthenticationFailed condition still reflects generation 1. The new
+    // credentials may work, so we must not drop the cleanup finalizer.
+    const repository = createMockRepository(false);
+    repository.metadata!.generation = 2;
+
+    const event = await openMenuAndConfirm(repository, /remove resources/i);
+
+    expect(event.payload.text).not.toMatch(/authentication/i);
+
+    await confirmDelete(event);
+
+    await waitFor(() => expect(captured.deletedName).toBe('test-repo'));
+    expect(captured.replaceFinalizers).toBeUndefined();
+    expect(reportInteraction).toHaveBeenCalledWith(
+      'grafana_provisioning_repository_deleted',
+      expect.objectContaining({ forceDelete: false })
+    );
+  });
+
+  it('does not delete when the finalizer update fails', async () => {
+    let replaceAttempted = false;
+    server.use(
+      http.put(`${BASE}/repositories/:name`, () => {
+        replaceAttempted = true;
+        return new HttpResponse(null, { status: 500 });
+      })
+    );
+
+    // Unhealthy repo → force path issues the finalizer PUT first. If that PUT
+    // fails we must abort: proceeding to DELETE with cleanup still attached is
+    // exactly the wedge this feature prevents.
+    const event = await openMenuAndConfirm(createMockRepository(false), /remove resources/i);
+    await confirmDelete(event);
+
+    await waitFor(() => expect(replaceAttempted).toBe(true));
+    expect(captured.deletedName).toBeUndefined();
+  });
 });
