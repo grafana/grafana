@@ -19,6 +19,37 @@ describe('FilterByNameTransformerEditor', () => {
     setTemplateSrv({ getVariables: () => [] } as unknown as TemplateSrv);
   });
 
+  it.each([
+    { button: 'Select all', pressed: 'true' },
+    { button: 'Deselect all', pressed: 'false' },
+  ])('$button saves an empty include, clears the regex, and keeps the exclude', async ({ button, pressed }) => {
+    const onChange = jest.fn();
+    render(
+      <FilterByNameTransformerEditor
+        input={createInput(['A', 'B'])}
+        options={{ include: { names: ['A'], pattern: 'B' }, exclude: { names: ['C'] } }}
+        onChange={onChange}
+      />
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: button }));
+
+    expect(onChange).toHaveBeenCalledWith({ include: { names: [] }, exclude: { names: ['C'] } });
+    expect(screen.getByPlaceholderText('Regular expression pattern')).toHaveValue('');
+    expect(getPill('A')).toHaveAttribute('aria-pressed', pressed);
+    expect(getPill('B')).toHaveAttribute('aria-pressed', pressed);
+  });
+
+  it('saves only the field picked after Deselect all', async () => {
+    const onChange = jest.fn();
+    render(<FilterByNameTransformerEditor input={createInput(['A', 'B', 'C'])} options={{}} onChange={onChange} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Deselect all' }));
+    await userEvent.click(getPill('B'));
+
+    expect(onChange).toHaveBeenLastCalledWith({ include: { names: ['B'] } });
+  });
+
   it('keeps every field deselected when the saved options come back with a new input of the same fields', async () => {
     const onChange = jest.fn();
     const { rerender } = render(

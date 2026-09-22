@@ -11,7 +11,7 @@ import {
 import { type FilterFieldsByNameTransformerOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
-import { Input, FilterPill, InlineFieldRow, InlineField, InlineSwitch, Select } from '@grafana/ui';
+import { Box, Button, Input, FilterPill, InlineFieldRow, InlineField, InlineSwitch, Select } from '@grafana/ui';
 
 interface FilterByNameTransformerEditorProps extends TransformerUIProps<FilterFieldsByNameTransformerOptions> {}
 
@@ -121,6 +121,16 @@ export function FilterByNameTransformerEditor({ input, options, onChange }: Filt
     onChange(nextOptions);
   };
 
+  // An empty include keeps every field, including ones that appear later, so both "Select all" and
+  // "Deselect all" save it: the transformer has no way to show no fields. The pattern is cleared too,
+  // otherwise only the fields it matches would pass.
+  const onResetSelection = (nextSelected: string[]) => {
+    setRegex(undefined);
+    setIsRegexValid(true);
+    setSelected(nextSelected);
+    onChange({ ...options, include: { names: [] } });
+  };
+
   const onFieldToggle = (fieldName: string) => {
     if (selected.indexOf(fieldName) > -1) {
       onSelectionChange(selected.filter((s) => s !== fieldName));
@@ -201,6 +211,14 @@ export function FilterByNameTransformerEditor({ input, options, onChange }: Filt
               width={25}
             />
           </InlineField>
+          <Box display="flex" gap={0.5} marginRight={0.5}>
+            <Button variant="secondary" onClick={() => onResetSelection(fieldNames.map((n) => n.name))}>
+              {t('transformers.filter-by-name-transformer-editor.select-all', 'Select all')}
+            </Button>
+            <Button variant="secondary" onClick={() => onResetSelection([])}>
+              {t('transformers.filter-by-name-transformer-editor.deselect-all', 'Deselect all')}
+            </Button>
+          </Box>
           {fieldNames.map((o, i) => {
             const label = `${o.name}${o.count > 1 ? ' (' + o.count + ')' : ''}`;
             const isSelected = selected.indexOf(o.name) > -1;
