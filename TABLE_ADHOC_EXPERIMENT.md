@@ -17,9 +17,11 @@ Scenes and scenes-react use the stable `8.18.0` packages. The checked-in Yarn
 patch for Scenes replaces its distribution with the tested build from Scenes
 PR #1651 at `9edc66c9`, retention-aware field cleanup at `fb45d856`, and upstream
 undo/redo support (#1645), cherry-picked as `d7592f92`. The current build at
-`47d138bf` also includes test teardown cleanup and the missing-data tracking fix
+`dbccbb64` also includes test teardown cleanup and the missing-data tracking fix
 from `e845c9cc`: temporary missing data preserves cleanup candidates, while
-explicitly disabling cleanup releases tracking. No canary publication or
+explicitly disabling cleanup releases tracking. It includes the hook relocation
+back into the renderer (`6437dfe6`) and controller/type simplifications
+(`1e7d9e94`); these require no Grafana consumer API changes. No canary publication or
 local `file:` dependency is required. The patch includes CJS, ESM, declarations,
 and source maps; the previous ownerless-controller patch is removed.
 

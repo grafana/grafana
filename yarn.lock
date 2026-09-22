@@ -3121,7 +3121,7 @@ __metadata:
 
 "@grafana/scenes@patch:@grafana/scenes@npm%3A8.18.0#~/.yarn/patches/@grafana-scenes-npm-8.18.0-fdf27f2742.patch":
   version: 8.18.0
-  resolution: "@grafana/scenes@patch:@grafana/scenes@npm%3A8.18.0#~/.yarn/patches/@grafana-scenes-npm-8.18.0-fdf27f2742.patch::version=8.18.0&hash=8f70fb"
+  resolution: "@grafana/scenes@patch:@grafana/scenes@npm%3A8.18.0#~/.yarn/patches/@grafana-scenes-npm-8.18.0-fdf27f2742.patch::version=8.18.0&hash=23c65c"
   dependencies:
     "@emotion/css": "npm:^11.13.5"
     "@emotion/react": "npm:^11.14.0"
@@ -3146,7 +3146,7 @@ __metadata:
     react-dom: ^18.0.0 || ^19.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/079e21b0221a119ccbe6f8763460e42e80360075f65a7a01823adb53db8821b7c40fa4fed65ea32c6ccbfdf2176acbe8d00b7e377814f3cb1972b593fcfbff8c
+  checksum: 10/5c82521363ca618434335738e57ec6c17209ccaf70597a72fc5f56918febcb0829724057a0c17447821fa53ac4beea3d0f10b9a25430791d7a95e2aeb6582865
   languageName: node
   linkType: hard
 
