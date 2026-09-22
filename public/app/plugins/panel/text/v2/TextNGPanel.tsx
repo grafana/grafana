@@ -6,6 +6,7 @@ import {
   CoreApp,
   getFrameDisplayName,
   type DataFrame,
+  type EventBus,
   type GrafanaTheme2,
   type PanelProps,
   type InterpolateFunction,
@@ -46,14 +47,14 @@ import { EMPTY_CONTENT, getCurrentFrameIndex, getInterpolateFormat, isTextNewFea
 
 const TextNGEditor = lazy(() => import('./editor/TextNGEditor').then((m) => ({ default: m.TextNGEditor })));
 
-export const viewModeSessionCache = new Map<string, ViewMode>();
+const viewModeByPanel = new WeakMap<EventBus, ViewMode>();
 
 export interface Props extends PanelProps<Options> {}
 
 export function TextNGPanel(props: Props) {
   const { app } = usePanelContext();
   const {
-    id,
+    eventBus,
     options,
     onOptionsChange,
     replaceVariables,
@@ -90,20 +91,17 @@ export function TextNGPanel(props: Props) {
     [isEditing, series]
   );
 
-  const viewModeSessionKey = `${id}`;
-  const [view, setViewState] = useState<ViewMode>(
-    () => viewModeSessionCache.get(viewModeSessionKey) ?? DEFAULT_VIEW_MODE
-  );
+  const [view, setViewState] = useState<ViewMode>(() => viewModeByPanel.get(eventBus) ?? DEFAULT_VIEW_MODE);
   const setView = (next: ViewMode) => {
     setViewState(next);
-    viewModeSessionCache.set(viewModeSessionKey, next);
+    viewModeByPanel.set(eventBus, next);
   };
 
   useEffect(() => {
     if (!isEditing) {
-      viewModeSessionCache.delete(viewModeSessionKey);
+      viewModeByPanel.delete(eventBus);
     }
-  }, [isEditing, viewModeSessionKey]);
+  }, [isEditing, eventBus]);
 
   const { active, page, numPages, rangeStart, rangeEnd, rowCount, rowWindow, smallVersion, setPage, contentRef } =
     usePagination({

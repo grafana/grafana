@@ -10,7 +10,7 @@ import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 import { CodeLanguage, RenderMode, TextMode } from '../panelcfg.gen';
 
 import { FOOTER_TEST_ID } from './TextNGFooter';
-import { type Props, TextNGPanel, viewModeSessionCache } from './TextNGPanel';
+import { type Props, TextNGPanel } from './TextNGPanel';
 import { PREVIEW_TEST_ID } from './editor/TextNGEditor';
 import { createData, createProps, renderPanel } from './test-utils';
 
@@ -74,7 +74,6 @@ const setup = (props: Props = defaultProps, app?: CoreApp) => {
 describe('TextNGPanel', () => {
   beforeEach(() => {
     replaceVariablesMock.mockReset();
-    viewModeSessionCache.clear();
   });
 
   it('renders an empty content container when there is no content', () => {
