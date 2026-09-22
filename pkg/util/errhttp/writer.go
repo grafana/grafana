@@ -37,8 +37,7 @@ func Write(ctx context.Context, err error, w http.ResponseWriter, opts ...func(E
 
 	var gErr errutil.Error
 	if !errors.As(err, &gErr) {
-		var apiStatus apierrors.APIStatus
-		if errors.As(err, &apiStatus) {
+		if apiStatus, ok := errors.AsType[*apierrors.StatusError](err); ok {
 			status := apiStatus.Status()
 			w.Header().Add("Content-Type", "application/json")
 			w.WriteHeader(int(status.Code))
