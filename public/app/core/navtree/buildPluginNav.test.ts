@@ -142,6 +142,18 @@ describe('mergePluginNavIntoTree', () => {
     expect((app?.children ?? []).map((child) => child.text)).toEqual(['Details']);
   });
 
+  // The app link is the page, so it has no children of its own — but it is
+  // still placed, matching the order the Go builder applies the two checks in
+  it('places an app whose only page is its default nav', async () => {
+    const merged = await mergeFromMetas([
+      appMeta('some-app', 'Some app', [page('Overview', '/a/some-app', { defaultNav: true })]),
+    ]);
+
+    const app = findById(merged, 'plugin-page-some-app');
+    expect(app?.url).toBe('/a/some-app');
+    expect(app?.children).toEqual([]);
+  });
+
   it('adds dashboard includes as /d/ links', async () => {
     const merged = await mergeFromMetas([
       appMeta('some-app', 'Some app', [

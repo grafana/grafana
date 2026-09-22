@@ -47,19 +47,27 @@ export function mergePluginNavIntoTree(apps: AppPluginConfig[]): NavModelItem[] 
 
 /**
  * Builds the nav items for one app plugin and returns a new tree with the app
- * link placed into the "More apps" section. An app with no accessible nav
- * children is not part of the tree.
+ * link placed into the "More apps" section.
+ *
+ * An app with no accessible nav children is not part of the tree. That is
+ * decided on navChildren, before the default nav is folded out: an app whose
+ * only page IS its default nav still belongs in the tree, as a link with no
+ * children of its own. The Go builder orders these two steps the same way.
  */
 function addAppToTree(tree: NavModelItem[], app: AppPluginConfig): NavModelItem[] {
-  const appLink = buildAppLink(app);
-  if ((appLink.children ?? []).length === 0) {
+  const { appLink, navChildren } = buildAppLink(app);
+  if (navChildren.length === 0) {
     return tree;
   }
   return placeInMoreApps(tree, appLink);
 }
 
-/** Builds the app's nav link from its page and dashboard includes */
-function buildAppLink(app: AppPluginConfig): NavModelItem {
+/**
+ * Builds the app's nav link from its page and dashboard includes. Returns the
+ * accessible includes as navChildren too, unfiltered, so the caller can tell an
+ * app with no nav items from one whose only item folded into the app link.
+ */
+function buildAppLink(app: AppPluginConfig): { appLink: NavModelItem; navChildren: NavModelItem[] } {
   let appUrl = `/a/${app.id}`;
   const children: NavModelItem[] = [];
 
@@ -99,16 +107,19 @@ function buildAppLink(app: AppPluginConfig): NavModelItem {
   }
 
   return {
-    text: app.name ?? app.id,
-    id: pluginPageId(app.id),
-    img: app.info?.logos?.small,
-    subTitle: app.info?.description,
-    sortWeight: NavWeight.plugin,
-    isSection: true,
-    pluginId: app.id,
-    url: appUrl,
-    // Children matching the app default nav are folded into the app link itself
-    children: children.filter((child) => child.url !== appUrl),
+    appLink: {
+      text: app.name ?? app.id,
+      id: pluginPageId(app.id),
+      img: app.info?.logos?.small,
+      subTitle: app.info?.description,
+      sortWeight: NavWeight.plugin,
+      isSection: true,
+      pluginId: app.id,
+      url: appUrl,
+      // Children matching the app default nav are folded into the app link itself
+      children: children.filter((child) => child.url !== appUrl),
+    },
+    navChildren: children,
   };
 }
 
