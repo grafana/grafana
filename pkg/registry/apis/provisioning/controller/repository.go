@@ -48,7 +48,7 @@ const (
 
 //go:generate mockery --name finalizerProcessor --structname MockFinalizerProcessor --inpackage --filename finalizer_mock.go --with-expecter
 type finalizerProcessor interface {
-	process(ctx context.Context, cfg *provisioning.Repository, finalizers []string) error
+	process(ctx context.Context, cfg *provisioning.Repository) error
 }
 
 // RepositoryController controls how and when CRD is established.
@@ -416,7 +416,7 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 
 	// Process any finalizers
 	if len(obj.Finalizers) > 0 {
-		err := rc.finalizer.process(ctx, obj, obj.Finalizers)
+		err := rc.finalizer.process(ctx, obj)
 		if err != nil {
 			rc.deletionMetrics.recordError(deletionStageFinalizers)
 			if statusErr := rc.updateDeleteStatus(ctx, obj, fmt.Errorf("remove finalizers: %w", err)); statusErr != nil {
@@ -902,11 +902,13 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		// delete error so a retryable one is never dropped when the status patch
 		// happens to fail with something non-retryable. A failed status patch is
 		// returned too rather than swallowed, so the delete reason is re-attempted
-		// instead of the key being forgotten without ever reaching the user. Only
-		// a Kubernetes 503 fast-retries; anything else is re-attempted on the next
-		// informer resync while the finalizer stays stuck.
+		// instead of the key being forgotten without ever reaching the user. A
+		// Kubernetes 503 and a decrypt/KMS outage (ErrSecretDecryptFailed, a plain
+		// sentinel that isn't a 503 StatusError but is classified ServiceUnavailable
+		// above) fast-retry; anything else is re-attempted on the next informer
+		// resync while the finalizer stays stuck.
 		switch {
-		case apierrors.IsServiceUnavailable(err):
+		case apierrors.IsServiceUnavailable(err) || errors.Is(err, repository.ErrSecretDecryptFailed):
 			return repoType, err
 		case patchErr != nil:
 			// The status write itself failed: count it under the status phase.

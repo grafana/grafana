@@ -720,8 +720,11 @@ func TestWebhookOnDelete(t *testing.T) {
 					},
 				},
 			},
-			// We don't return an error if access to the webhook is revoked
-			expectedError: nil,
+			// A 401 is fatal: while the cleanup finalizer is present, a webhook
+			// that cannot be deleted must fail the finalizer rather than orphan
+			// the webhook silently. Forcing deletion is done by removing the
+			// cleanup finalizer, not by swallowing this error.
+			expectedError: fmt.Errorf("delete webhook: %w", repository.ErrUnauthorized),
 		},
 		{
 			name: "permission denied to delete the webhook",

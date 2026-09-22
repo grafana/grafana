@@ -207,9 +207,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				f := NewMockFinalizerProcessor(t)
 
 				f.
-					On("process", mock.Anything, mock.Anything, []string{
-						repository.CleanFinalizer,
-					}).
+					On("process", mock.Anything, mock.Anything).
 					Once().
 					Return(nil)
 
@@ -244,9 +242,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				f := NewMockFinalizerProcessor(t)
 
 				f.
-					On("process", mock.Anything, mock.Anything, []string{
-						repository.CleanFinalizer,
-					}).
+					On("process", mock.Anything, mock.Anything).
 					Once().
 					Return(assert.AnError)
 
@@ -278,9 +274,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				f := NewMockFinalizerProcessor(t)
 
 				f.
-					On("process", mock.Anything, mock.Anything, []string{
-						repository.CleanFinalizer,
-					}).
+					On("process", mock.Anything, mock.Anything).
 					Once().
 					Return(nil)
 
@@ -349,7 +343,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 func TestRepositoryController_handleDelete_RetriesOnConflict(t *testing.T) {
 	finalizer := NewMockFinalizerProcessor(t)
 	finalizer.
-		On("process", mock.Anything, mock.Anything, []string{repository.CleanFinalizer}).
+		On("process", mock.Anything, mock.Anything).
 		Once().
 		Return(nil)
 
@@ -389,7 +383,7 @@ func TestRepositoryController_handleDelete_RetriesOnConflict(t *testing.T) {
 func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *testing.T) {
 	finalizer := NewMockFinalizerProcessor(t)
 	finalizer.
-		On("process", mock.Anything, mock.Anything, []string{repository.CleanFinalizer}).
+		On("process", mock.Anything, mock.Anything).
 		Once().
 		Return(nil)
 
@@ -443,7 +437,7 @@ func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *t
 func TestRepositoryController_handleDelete_ObservesPendingAge(t *testing.T) {
 	finalizer := NewMockFinalizerProcessor(t)
 	finalizer.
-		On("process", mock.Anything, mock.Anything, []string{repository.CleanFinalizer}).
+		On("process", mock.Anything, mock.Anything).
 		Once().
 		Return(nil)
 
@@ -1688,6 +1682,53 @@ func TestRepositoryController_process_DeleteStatusPatchFailure(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestRepositoryController_process_DeleteDecryptFailureFastRetries verifies that a
+// decrypt/KMS outage during the delete-path build (ErrSecretDecryptFailed, a plain
+// sentinel that is not a Kubernetes 503 StatusError) is returned to the workqueue
+// for fast retry -- not swallowed until the next informer resync -- matching how it
+// is classified as ServiceUnavailable on status.
+func TestRepositoryController_process_DeleteDecryptFailureFastRetries(t *testing.T) {
+	now := metav1.Now()
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              "test-repo",
+			Namespace:         "default",
+			DeletionTimestamp: &now,
+			Finalizers:        []string{repository.CleanFinalizer},
+		},
+		Spec: provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
+	}
+
+	mockNamespaceLister := &MockRepositoryNamespaceLister{}
+	mockNamespaceLister.On("List", mock.Anything).Return([]*provisioning.Repository{repo}, nil)
+	mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
+	mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
+
+	buildErr := fmt.Errorf("create gitlab client: %w", repository.ErrSecretDecryptFailed)
+	mockFactory := repository.NewMockFactory(t)
+	mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(nil, buildErr)
+	finalizerMetrics := registerFinalizerMetrics(prometheus.NewRegistry())
+
+	// The status patch succeeds here, so the returned error is the delete error
+	// itself -- proving decrypt failures fast-retry rather than being swallowed.
+	patcher := &capturePatcher{}
+	repoGetter := informer.NewCachedRepositoryGetter(mockLister)
+	rc := &RepositoryController{
+		repos:         repoGetter,
+		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
+		healthChecker: NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
+		finalizer:     &finalizer{repoFactory: mockFactory, metrics: &finalizerMetrics},
+		statusPatcher: patcher,
+		logger:        logging.DefaultLogger,
+		tracer:        tracing.InitializeTracerForTest(),
+	}
+
+	_, err := rc.process("default/test-repo")
+	require.Error(t, err, "a decrypt outage during delete must surface for fast retry, not be swallowed")
+	require.ErrorIs(t, err, repository.ErrSecretDecryptFailed)
 }
 
 // TestRepositoryController_process_UserCausedBuildFailure verifies that a Build

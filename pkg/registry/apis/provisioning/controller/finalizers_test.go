@@ -533,11 +533,12 @@ func TestFinalizer_process(t *testing.T) {
 				repoFactory:   factory,
 				metrics:       &metrics,
 			}
-			var cfg *provisioning.Repository
+			cfg := &provisioning.Repository{}
 			if tc.repo != nil {
 				cfg = tc.repo.Config()
 			}
-			err := f.process(context.Background(), cfg, tc.finalizers)
+			cfg.Finalizers = tc.finalizers
+			err := f.process(context.Background(), cfg)
 			if tc.expectedErr == "" {
 				assert.NoError(t, err)
 			} else {
@@ -1240,7 +1241,9 @@ func TestProcess_RemovePendingJobsFinalizer(t *testing.T) {
 	}
 
 	repo := mockRepo{name: "my-repo", namespace: "default"}
-	err := f.process(context.Background(), repo.Config(), []string{repository.RemovePendingJobsFinalizer})
+	cfg := repo.Config()
+	cfg.Finalizers = []string{repository.RemovePendingJobsFinalizer}
+	err := f.process(context.Background(), cfg)
 	assert.NoError(t, err)
 }
 
@@ -1257,7 +1260,9 @@ func TestProcess_RemovePendingJobsFinalizer_Error(t *testing.T) {
 	}
 
 	repo := mockRepo{name: "my-repo", namespace: "default"}
-	err := f.process(context.Background(), repo.Config(), []string{repository.RemovePendingJobsFinalizer})
+	cfg := repo.Config()
+	cfg.Finalizers = []string{repository.RemovePendingJobsFinalizer}
+	err := f.process(context.Background(), cfg)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "clear job queue")
 }
@@ -1272,9 +1277,9 @@ func TestProcess_CleanFinalizer_BuildFailureBlocks(t *testing.T) {
 	metrics := registerFinalizerMetrics(prometheus.NewRegistry())
 	f := &finalizer{repoFactory: factory, metrics: &metrics}
 
-	cfg := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
+	cfg := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default", Finalizers: []string{repository.CleanFinalizer}}}
 
-	err := f.process(t.Context(), cfg, []string{repository.CleanFinalizer})
+	err := f.process(t.Context(), cfg)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "create repository from configuration")
 }
@@ -1282,7 +1287,7 @@ func TestProcess_CleanFinalizer_BuildFailureBlocks(t *testing.T) {
 // TestProcess_CleanFinalizer_SkipsWebhookWhenNotWebhookCapable verifies the
 // cleanup finalizer is a no-op when the built repository has no webhook client.
 func TestProcess_CleanFinalizer_SkipsWebhookWhenNotWebhookCapable(t *testing.T) {
-	cfg := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
+	cfg := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default", Finalizers: []string{repository.CleanFinalizer}}}
 
 	factory := repository.NewMockFactory(t)
 	factory.EXPECT().Build(mock.Anything, mock.Anything).Return(nonWebhookRepo{cfg: cfg}, nil)
@@ -1290,7 +1295,7 @@ func TestProcess_CleanFinalizer_SkipsWebhookWhenNotWebhookCapable(t *testing.T) 
 	metrics := registerFinalizerMetrics(prometheus.NewRegistry())
 	f := &finalizer{repoFactory: factory, metrics: &metrics}
 
-	err := f.process(t.Context(), cfg, []string{repository.CleanFinalizer})
+	err := f.process(t.Context(), cfg)
 	assert.NoError(t, err)
 }
 

@@ -46,10 +46,9 @@ type finalizer struct {
 // the build never happens and expired credentials can't block deletion.
 func (f *finalizer) process(ctx context.Context,
 	cfg *provisioning.Repository,
-	finalizers []string,
 ) error {
 	logger := logging.FromContext(ctx)
-	logger.Info("process finalizers", "finalizers", finalizers)
+	logger.Info("process finalizers", "finalizers", cfg.Finalizers)
 
 	// Clear the job queue first so no pending job gets picked up and starts
 	// running against the repository while the rest of the teardown proceeds.
@@ -60,7 +59,7 @@ func (f *finalizer) process(ctx context.Context,
 		repository.RemoveOrphanResourcesFinalizer}
 
 	for _, finalizer := range orderedFinalizers {
-		if !slices.Contains(finalizers, finalizer) {
+		if !slices.Contains(cfg.Finalizers, finalizer) {
 			continue
 		}
 		logger.Info("running finalizer", "finalizer", finalizer)
