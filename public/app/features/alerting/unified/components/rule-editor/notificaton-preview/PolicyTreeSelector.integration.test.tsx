@@ -119,7 +119,7 @@ const grantAllPermissions = () => {
   ]);
 };
 
-describe('RoutingTreePolicyField', () => {
+describe('PolicyTreeSelector', () => {
   testWithFeatureToggles({ enable: ['alerting.rulesAPIV2'] });
 
   beforeEach(() => {
@@ -232,7 +232,7 @@ describe('RoutingTreePolicyField', () => {
 
       // Verify the policy was selected and "Reset to default" button appears
       await waitFor(() => {
-        expect(screen.getByDisplayValue(customPolicyName)).toBeInTheDocument();
+        expect(screen.getByText(customPolicyName)).toBeInTheDocument();
       });
       expect(policyTreeUi.resetButton.get()).toBeInTheDocument();
 
@@ -408,7 +408,7 @@ describe('RoutingTreePolicyField', () => {
       });
 
       // Should show the custom policy name as selected
-      expect(screen.getByDisplayValue(CUSTOM_POLICY_NAME)).toBeInTheDocument();
+      expect(screen.getByText(CUSTOM_POLICY_NAME)).toBeInTheDocument();
 
       // Reset to default button should be visible
       expect(policyTreeUi.resetButton.get()).toBeInTheDocument();
@@ -484,7 +484,7 @@ describe('RoutingTreePolicyField', () => {
         expect(policyTreeUi.policySelector.get()).toBeEnabled();
       });
 
-      expect(screen.getByDisplayValue(CUSTOM_POLICY_NAME)).toBeInTheDocument();
+      expect(screen.getByText(CUSTOM_POLICY_NAME)).toBeInTheDocument();
       expect(policyTreeUi.resetButton.get()).toBeInTheDocument();
       expect(policyTreeUi.changeButton.query()).not.toBeInTheDocument();
       expect(policyTreeUi.defaultBadge.query()).not.toBeInTheDocument();
@@ -512,7 +512,7 @@ describe('RoutingTreePolicyField', () => {
   });
 });
 
-describe('RoutingTreePolicyField - alertingPolicyRoutingSettings ON', () => {
+describe('PolicyTreeSelector - alertingPolicyRoutingSettings ON', () => {
   testWithFeatureToggles({
     enable: ['alertingPolicyRoutingSettings', 'alerting.rulesAPIV2'],
   });
@@ -643,7 +643,7 @@ describe('RoutingTreePolicyField - alertingPolicyRoutingSettings ON', () => {
         expect(policyTreeUi.policySelector.get()).toBeEnabled();
       });
 
-      expect(screen.getByDisplayValue(CUSTOM_POLICY_NAME)).toBeInTheDocument();
+      expect(screen.getByText(CUSTOM_POLICY_NAME)).toBeInTheDocument();
       expect(policyTreeUi.resetButton.get()).toBeInTheDocument();
       expect(policyTreeUi.changeButton.query()).not.toBeInTheDocument();
     });
@@ -693,7 +693,7 @@ describe('RoutingTreePolicyField - alertingPolicyRoutingSettings ON', () => {
       });
 
       // The selector should show the migrated policy, not "Default policy"
-      expect(screen.getByDisplayValue(CUSTOM_POLICY_NAME)).toBeInTheDocument();
+      expect(screen.getByText(CUSTOM_POLICY_NAME)).toBeInTheDocument();
       expect(policyTreeUi.resetButton.get()).toBeInTheDocument();
       expect(policyTreeUi.changeButton.query()).not.toBeInTheDocument();
     });
@@ -719,7 +719,7 @@ describe('RoutingTreePolicyField - alertingPolicyRoutingSettings ON', () => {
 
       // The selector must reflect the default policy, not the stale legacy label.
       expect(policyTreeUi.resetButton.query()).not.toBeInTheDocument();
-      expect(policyTreeUi.policySelector.get()).not.toHaveValue(CUSTOM_POLICY_NAME);
+      expect(within(policyTreeUi.policySelector.get()).queryByText(CUSTOM_POLICY_NAME)).not.toBeInTheDocument();
     });
   });
 });

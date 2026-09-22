@@ -22,7 +22,7 @@ import { SimplifiedRouting } from './alert-rule-form/simplifiedRouting/Simplifie
 import { LabelsEditorModal } from './labels/LabelsEditorModal';
 import { LabelsFieldInForm } from './labels/LabelsFieldInForm';
 import { NotificationPreview } from './notificaton-preview/NotificationPreview';
-import { RoutingTreePolicyField } from './notificaton-preview/RoutingTreePolicyField';
+import { PolicyTreeSelector } from './notificaton-preview/PolicyTreeSelector';
 
 type NotificationsStepProps = {
   alertUid?: string;
@@ -252,7 +252,7 @@ function AutomaticRooting({ alertUid }: AutomaticRootingProps) {
 
   return (
     <Stack direction="column" gap={2}>
-      <RoutingTreePolicyField />
+      <PolicyTreeSelector />
       <NotificationPreview
         alertQueries={queries}
         customLabels={labels}
