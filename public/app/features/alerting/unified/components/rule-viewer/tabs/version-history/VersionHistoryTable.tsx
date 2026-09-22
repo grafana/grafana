@@ -113,11 +113,10 @@ export function VersionHistoryTable({
     {
       id: 'diff',
       disableGrow: true,
-      cell: ({ table, row }) => {
+      cell: ({ row }) => {
         const isLastItem = row.index === ruleVersions.length - 1;
 
-        const rows = table.getRowModel().rows;
-        const prevVersion = isLastItem ? {} : rows[row.index + 1]?.original;
+        const prevVersion = isLastItem ? {} : ruleVersions[row.index + 1];
         const currentVersion = row.original;
         const diff = computeVersionDiff(prevVersion, currentVersion);
 
