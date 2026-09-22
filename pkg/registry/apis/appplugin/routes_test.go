@@ -26,11 +26,13 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
 // stubIndexClient is a search index that is never queried: the routes under
@@ -380,10 +382,13 @@ func TestRouteHandlerRouteInfo(t *testing.T) {
 		get := &recordingGetter{obj: stored}
 
 		req := httptest.NewRequest(http.MethodPost, "/reload", nil)
+		req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{IDToken: "kind-token"}))
 		req = req.WithContext(request.WithNamespace(req.Context(), "org-2"))
 		req = mux.SetURLVars(req, map[string]string{nameParameter: "thing-1"})
 
 		newBuilder(client, get.get).routeHandler(gv, "testkinds", "reload")(httptest.NewRecorder(), req)
+
+		require.Equal(t, []string{"kind-token"}, client.req.GetHeaders()[proxyutil.IDHeaderName].GetValues())
 
 		// Looked up under this version's own resource, not a hardcoded one.
 		require.Equal(t, gv.WithResource("testkinds"), get.gotGVR)
@@ -484,6 +489,59 @@ func TestRouteHandlerRouteInfo(t *testing.T) {
 		require.Equal(t, http.StatusInternalServerError, rec.Code)
 		require.Contains(t, rec.Body.String(), "no v3 backend")
 	})
+}
+
+func TestRouteHandlerForwardID(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		requester identity.Requester
+		wantToken string
+	}{
+		{
+			name:      "replaces untrusted identity with requester token",
+			requester: &identity.StaticRequester{IDToken: "verified-token"},
+			wantToken: "verified-token",
+		},
+		{
+			name: "removes untrusted identity without a requester",
+		},
+		{
+			name:      "removes untrusted identity without an ID token",
+			requester: &identity.StaticRequester{},
+		},
+		{
+			name:      "does not forward the requester's access token",
+			requester: &identity.StaticRequester{AccessToken: "access-token"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			client := &fakeRouteClient{}
+			b := &AppPluginAPIBuilder{clientV3: client}
+			req := httptest.NewRequest(http.MethodGet, "/foobar", nil)
+			req.Header.Add(proxyutil.IDHeaderName, "untrusted-token")
+			req.Header.Add(proxyutil.IDHeaderName, "another-untrusted-token")
+			req.Header.Set("X-Request-Id", "request-id")
+			originalHeaders := req.Header.Clone()
+			if tc.requester != nil {
+				req = req.WithContext(identity.WithRequester(req.Context(), tc.requester))
+			}
+			rec := httptest.NewRecorder()
+
+			b.routeHandler(schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"}, "", "foobar")(rec, req)
+
+			require.Equal(t, http.StatusOK, rec.Code)
+			require.NotNil(t, client.req)
+			headers := client.req.GetHeaders()
+			if tc.wantToken == "" {
+				require.NotContains(t, headers, proxyutil.IDHeaderName)
+			} else {
+				require.Equal(t, []string{tc.wantToken}, headers[proxyutil.IDHeaderName].GetValues())
+			}
+			require.NotContains(t, headers, "X-Access-Token")
+			require.Equal(t, []string{"request-id"}, headers["X-Request-Id"].GetValues())
+			require.Equal(t, originalHeaders, req.Header)
+		})
+	}
 }
 
 // fakeRouteClient records the request and returns an empty response stream.
