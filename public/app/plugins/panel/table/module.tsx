@@ -146,7 +146,22 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
   .setPanelOptions((builder) => {
     addTableCustomPanelOptions(builder);
   })
-  .setSuggestionsSupplier(tableSuggestionsSupplier);
+  .setSuggestionsSupplier(tableSuggestionsSupplier)
+  .setAdHocTransformRegistry({
+    interactions: [
+      {
+        id: 0,
+        name: 'hideColumn',
+        description: 'Hide a column',
+        mutates: 'TRANSFORMATION',
+        settings: ['columnName'],
+        promotionPath: (panel, settings) => {
+          // add or edit existing organize fields transformation to hide settings.columnName
+          return panel;
+        },
+      },
+    ],
+  });
 
 // `table.refresh` gives the header its own surface, which reads as a chrome element of the panel
 // rather than of the table — so it runs edge to edge, with the panel's own padding out of the way.

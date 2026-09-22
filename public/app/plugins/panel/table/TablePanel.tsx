@@ -12,6 +12,7 @@ import { PanelDataErrorView } from '@grafana/runtime';
 import { TableCellHeight, type TableOptions } from '@grafana/schema';
 import { Combobox, Field, Stack, usePanelContext, useStyles2, useTheme2 } from '@grafana/ui';
 import { TableNG } from '@grafana/ui/unstable';
+import { syncGetPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 import {
   useCacheFieldDisplayNames,
   useCellActions,
@@ -59,6 +60,22 @@ export function TablePanel(props: Props) {
   const hasFields = frames.some((frame) => frame.fields.length > 0);
   const currentIndex = getCurrentFrameIndex(frames, options);
   const main = frames[currentIndex];
+
+  const interactions = syncGetPanelPlugin('table')?.panelInteractions?.interactions;
+  const fakeURLData = [{ id: 0, settings: ['apple'] }];
+
+  fakeURLData.forEach((adhocTransform) => {
+    const interaction = interactions?.find((i) => i.id === adhocTransform.id);
+    if (interaction !== undefined) {
+      if (interaction.name === 'hideColumn') {
+        console.log(data);
+        const field = data.series[0].fields.find((f) => f.name === adhocTransform.settings[0]);
+        if (field !== undefined) {
+          field.config.custom.hideFrom = { viz: true };
+        }
+      }
+    }
+  });
 
   // Fit-content: the panel has no fixed height, so self-size from the row count.
   // The cell's CSS min/max bounds (and scrolls) the result.

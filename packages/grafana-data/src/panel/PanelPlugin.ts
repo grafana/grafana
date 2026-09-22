@@ -17,6 +17,7 @@ import {
   type PanelMigrationHandler,
   type PanelTypeChangedHandler,
   type PanelPluginDataSupport,
+  type PanelData,
 } from '../types/panel';
 import { GrafanaPlugin } from '../types/plugin';
 import {
@@ -164,6 +165,19 @@ export interface PanelPluginViewOptions {
   quickToggles?: PluginViewOptionsQuickToggles;
 }
 
+export interface PanelInteraction {
+  id: number;
+  name: string;
+  description?: string;
+  mutates: 'TRANSFORMATION' | 'PANEL_SETTING' | 'FIELD_OVERRIDE';
+  settings: any[];
+  promotionPath: (panel: PanelData, settings: any) => PanelData; // what should settings be here?
+}
+
+export interface PanelInteractions {
+  interactions: PanelInteraction[];
+}
+
 export interface PluginViewOptionsQuickToggles {
   optionProperties: string[];
   fieldConfigProperties: string[];
@@ -181,6 +195,7 @@ export class PanelPlugin<
 
   private _viewPanelOptions?: PanelPluginViewOptions;
   private _fieldConfigRegistry?: FieldConfigOptionsRegistry;
+  private _adhocRegistry?: PanelInteractions;
   private _initConfigRegistry = () => {
     return new FieldConfigOptionsRegistry();
   };
@@ -259,6 +274,10 @@ export class PanelPlugin<
 
   get viewPanelOptions() {
     return this._viewPanelOptions;
+  }
+
+  get panelInteractions(): PanelInteractions | undefined {
+    return this._adhocRegistry;
   }
 
   /**
@@ -643,6 +662,11 @@ export class PanelPlugin<
    */
   setViewPanelOptions(options: PanelPluginViewOptions) {
     this._viewPanelOptions = options;
+    return this;
+  }
+
+  setAdHocTransformRegistry(transforms: PanelInteractions) {
+    this._adhocRegistry = transforms;
     return this;
   }
 }
