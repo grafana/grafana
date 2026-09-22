@@ -234,6 +234,22 @@ describe('prepConfig', () => {
     };
   }
 
+  function createSparseHeatmapData(overrides?: Partial<HeatmapData>): HeatmapData {
+    const heatmap = createDataFrame({
+      meta: { type: DataFrameType.HeatmapCells },
+      fields: [
+        { name: 'x', type: FieldType.time, values: [1000, 1000, 2000, 2000] },
+        { name: 'yMin', type: FieldType.number, values: [1, 4, 1, 4] },
+        { name: 'yMax', type: FieldType.number, values: [4, 16, 4, 16] },
+        { name: 'count', type: FieldType.number, values: [5, 10, 15, 20] },
+      ],
+    });
+    return {
+      heatmap,
+      ...overrides,
+    };
+  }
+
   it('builds a mode-2 config with a bottom x axis, a left y axis and the heatmap + exemplar layers', () => {
     const dataRef = { current: createMinimalHeatmapData() };
 
@@ -265,6 +281,89 @@ describe('prepConfig', () => {
       ['x', yScaleKey],
       ['x', yScaleKey],
     ]);
+  });
+
+  it.each([
+    { ordinal: false, layout: HeatmapCellLayout.ge, value: 0.032, expectedY: 32 },
+    { ordinal: false, layout: HeatmapCellLayout.le, value: 0.032, expectedY: 32 },
+    { ordinal: true, layout: HeatmapCellLayout.ge, value: 1, expectedY: 1500 },
+    { ordinal: true, layout: HeatmapCellLayout.le, value: 1, expectedY: 500 },
+  ])('positions exemplars with ordinal=$ordinal and layout=$layout', ({ ordinal, layout, value, expectedY }) => {
+    const data = createMinimalHeatmapData({ yLayout: layout });
+    if (ordinal) {
+      data.heatmap!.meta!.custom = { yOrdinalDisplay: ['0', '1', '2'] };
+    }
+    const config = prepConfig({
+      dataRef: { current: data },
+      theme,
+      timeZone: 'utc',
+      getTimeRange: () => timeRange,
+      exemplarColor: 'magenta',
+      yAxisConfig: { axisPlacement: AxisPlacement.Left },
+    }).getConfig();
+
+    const drawClear = config.hooks?.drawClear?.[0];
+    const exemplarPaths = config.series?.[2]?.paths;
+    if (!drawClear || !exemplarPaths) {
+      throw new Error('Expected drawClear and exemplar paths');
+    }
+    const points: PointsData = [[100], [value]];
+    const rect = jest.fn();
+    const mockU = createMockU(points);
+    Object.assign(mockU, { series: [{}, {}, {}] });
+    const orientSpy = jest
+      .spyOn(uPlot, 'orient')
+      .mockImplementation(createOrientMock(points, { rect, valToPosY: (v) => v * 1000 }));
+    try {
+      drawClear(mockU);
+      exemplarPaths(mockU, 2, 0, 0);
+      expect(rect).toHaveBeenCalledWith(expect.anything(), 96, expectedY - 4, 8, 8);
+    } finally {
+      orientSpy.mockRestore();
+    }
+  });
+
+  it.each([2, 10])('centers sparse le heatmap exemplars at their numeric values on a log-%s scale', (log) => {
+    const builder = prepConfig({
+      dataRef: { current: createSparseHeatmapData({ yLayout: HeatmapCellLayout.le }) },
+      theme,
+      timeZone: 'utc',
+      getTimeRange: () => timeRange,
+      exemplarColor: 'magenta',
+      yAxisConfig: { axisPlacement: AxisPlacement.Left },
+      rowsFrame: { yBucketScale: { type: ScaleDistribution.Log, log } },
+    });
+    const config = builder.getConfig();
+    const { scaleKey } = getYScaleRangeInfo(builder);
+    const scaleY = config.scales?.[scaleKey];
+    expect(scaleY).toMatchObject({ distr: 3, log });
+
+    const drawClear = config.hooks?.drawClear?.[0];
+    const exemplarPaths = config.series?.[2]?.paths;
+    if (!drawClear || !exemplarPaths) {
+      throw new Error('Expected drawClear and exemplar paths');
+    }
+    const points: PointsData = [[1500], [2]];
+    const rect = jest.fn();
+    const valToPosY = jest.fn((v: number) => 100 - 25 * Math.log2(v));
+    const mockU = createMockU(points);
+    Object.assign(mockU, { series: [{}, {}, {}] });
+    const orientSpy = jest.spyOn(uPlot, 'orient').mockImplementation(
+      createOrientMock(points, {
+        rect,
+        scaleY: { ...scaleY, min: 1, max: 16 },
+        valToPosX: (v) => v / 100,
+        valToPosY,
+      })
+    );
+    try {
+      drawClear(mockU);
+      exemplarPaths(mockU, 2, 0, 0);
+      expect(valToPosY).toHaveBeenCalledWith(2, expect.objectContaining({ distr: 3, log }), 100, 0);
+      expect(rect).toHaveBeenCalledWith(expect.anything(), 11, 71, 8, 8);
+    } finally {
+      orientSpy.mockRestore();
+    }
   });
 
   it('aborts after the x scale and axis, adding no y scale and no layers, when the heatmap has no y field', () => {
@@ -511,25 +610,6 @@ describe('prepConfig', () => {
   });
 
   describe('y-scale range callback', () => {
-    /**
-     * Creates minimal sparse HeatmapData (yMin + yMax fields) for range callback tests.
-     */
-    function createSparseHeatmapData(overrides?: Partial<HeatmapData>): HeatmapData {
-      const heatmap = createDataFrame({
-        meta: { type: DataFrameType.HeatmapCells },
-        fields: [
-          { name: 'x', type: FieldType.time, values: [1000, 1000, 2000, 2000] },
-          { name: 'yMin', type: FieldType.number, values: [1, 4, 1, 4] },
-          { name: 'yMax', type: FieldType.number, values: [4, 16, 4, 16] },
-          { name: 'count', type: FieldType.number, values: [5, 10, 15, 20] },
-        ],
-      });
-      return {
-        heatmap,
-        ...overrides,
-      };
-    }
-
     describe('sparse heatmap', () => {
       const sparseData: uPlot.AlignedData = [
         [0, 1, 2],
@@ -1558,6 +1638,7 @@ describe('heatmapPathsPoints', () => {
       expect(spy).toHaveBeenNthCalledWith(3, 3.5, expect.anything(), 100, 0);
     });
 
+    // TODO: Remove if the prepConfig sparse exemplar tests supersede this direct path-builder regression test.
     it('skips yShift when scaleY is sparse heatmap (distr 3, log 2)', () => {
       const valToPosY = jest.fn((v: number) => v);
       const { valToPosY: spy } = invokePointsPathBuilder(minimalPointsOpts, 'red', {

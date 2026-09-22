@@ -3,6 +3,7 @@ import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
+import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { type LocalPlugin } from 'app/features/plugins/admin/types';
 
 import {
@@ -177,6 +178,22 @@ export function getRecommendationCards(): Record<RecommendedCardId, Recommendati
       action: t('home.recommendations.synthetic-monitoring.action', 'Enable Synthetic Monitoring'),
       setupAction: t('home.recommendations.synthetic-monitoring.setup-action', 'Create your first check'),
       setupPermission: SYNTHETIC_MONITORING_CHECKS_WRITE,
+    }),
+    // Setup lands on IRM Home: for an unconfigured org it opens on Get started (integrations, schedules, incidents).
+    irm: pluginCard({
+      id: 'irm',
+      pluginId: SupportedPlugin.Irm,
+      appPath: '',
+      icon: 'bell',
+      color: (theme) => theme.visualization.getColorByName('red'),
+      title: t('home.recommendations.irm.title', 'Get paged when it matters'),
+      context: t('home.recommendations.irm.context', 'Route alerts to on-call schedules and incidents'),
+      description: t(
+        'home.recommendations.irm.description',
+        'Connect Grafana Alerting to IRM to page the right person, escalate automatically, and manage incidents in one place.'
+      ),
+      action: t('home.recommendations.irm.action', 'Enable IRM'),
+      setupAction: t('home.recommendations.irm.setup-action', 'Set up IRM'),
     }),
   };
 }

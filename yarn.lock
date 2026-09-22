@@ -2765,8 +2765,15 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/plugin-compat@workspace:packages/grafana-plugin-compat"
   dependencies:
+    "@grafana/data": "workspace:*"
+    "@grafana/runtime": "workspace:*"
+    "@grafana/schema": "workspace:*"
+    "@testing-library/dom": "npm:10.4.1"
     "@testing-library/react": "npm:16.3.0"
+    "@types/react": "npm:19.2.18"
     "@typescript/native": "npm:typescript@^7.0.2"
+    react: "npm:19.2.8"
+    react-dom: "npm:19.2.8"
     rimraf: "npm:^6.0.1"
     rollup: "npm:^4.60.1"
     rollup-plugin-esbuild: "npm:6.2.1"
@@ -3218,7 +3225,6 @@ __metadata:
     "@types/jest": "npm:29.5.14"
     "@types/jquery": "npm:^3.5.33"
     "@types/lodash": "npm:^4.17.20"
-    "@types/mock-raf": "npm:1.0.6"
     "@types/node": "npm:24.10.1"
     "@types/prismjs": "npm:1.26.5"
     "@types/react": "npm:19.2.18"
@@ -3249,7 +3255,6 @@ __metadata:
     jquery: "npm:^3.7.1"
     lodash: "npm:^4.17.23"
     micro-memoize: "npm:^4.1.2"
-    mock-raf: "npm:1.0.1"
     monaco-editor: "npm:^0.34.1"
     msw: "npm:^2.10.2"
     msw-storybook-addon: "npm:^2.0.7"
@@ -11337,13 +11342,6 @@ __metadata:
   version: 1.2.5
   resolution: "@types/minimist@npm:1.2.5"
   checksum: 10/477047b606005058ab0263c4f58097136268007f320003c348794f74adedc3166ffc47c80ec3e94687787f2ab7f4e72c468223946e79892cf0fd9e25e9970a90
-  languageName: node
-  linkType: hard
-
-"@types/mock-raf@npm:1.0.6":
-  version: 1.0.6
-  resolution: "@types/mock-raf@npm:1.0.6"
-  checksum: 10/0389ac9a2f4be5d3c9dc05586c68d0c78f0d6a9dc167c57ee94da0bb1d9ef9a797871bcdf2f0ba43c951a423c05bdeb80807d5ca21a63c50c54ed21054a4aeb8
   languageName: node
   linkType: hard
 
@@ -25827,15 +25825,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mock-raf@npm:1.0.1":
-  version: 1.0.1
-  resolution: "mock-raf@npm:1.0.1"
-  dependencies:
-    object-assign: "npm:^3.0.0"
-  checksum: 10/d7db37842fc2f29b1483f1bbc5c62b60819bbca0c44360ab7ecead2334e7bc1f24dcf122ed61eac7ddff1d5eaeb20e08f1841bbc042fc16f177685c884993407
-  languageName: node
-  linkType: hard
-
 "modify-values@npm:^1.0.1":
   version: 1.0.1
   resolution: "modify-values@npm:1.0.1"
@@ -26886,13 +26875,6 @@ __metadata:
   bin:
     oazapfts: cli.js
   checksum: 10/804c3936702acf66bb9bcff6bdcdce2708783b31c83262d7097fb04a53d3720d96114cec345408cbf3f933f9c5d198815457853a07362796c6a6d5db7a31d150
-  languageName: node
-  linkType: hard
-
-"object-assign@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "object-assign@npm:3.0.0"
-  checksum: 10/56c66a77318aea95b11bd16a65c313e98786cea1db673a7fdd3bc92aced671b35f62a9819ad9cf7846921c773818329636cda5cd1b7c4fa0ce9908440e091dac
   languageName: node
   linkType: hard
 

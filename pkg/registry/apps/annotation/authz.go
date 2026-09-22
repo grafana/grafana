@@ -112,7 +112,6 @@ func canAccessAnnotations(ctx context.Context, tracer trace.Tracer, accessClient
 }
 
 // resolveDashboardFolders maps dashboard UID -> parent folder UID for unique dashboards in items.
-// TODO: cache results (TTL LRU by namespace+UID) and run lookups in parallel. Folder rarely changes.
 func resolveDashboardFolders(ctx context.Context, tracer trace.Tracer, folderResolver DashboardFolderResolver, namespace string, items []annotationV0.Annotation) (map[string]string, error) {
 	ctx, span := tracer.Start(ctx, "annotation.authz.resolveDashboardFolders")
 	defer span.End()
