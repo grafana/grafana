@@ -2,7 +2,6 @@ package resource
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"log/slog"
 	"sync"
@@ -57,7 +56,7 @@ func newBroadcasterMetrics(reg prometheus.Registerer) *BroadcasterMetrics {
 //
 // eventResourceFn extracts a resource label for an event entering the broadcaster.
 func NewBroadcaster[T any](ctx context.Context, input <-chan T, metrics *BroadcasterMetrics, eventResourceFn func(T) string) Broadcaster[T] {
-	return newBroadcasterWithSizes[T](ctx, input, watchChanSize, defaultOverflowCap, metrics, eventResourceFn, nil)
+	return newBroadcasterWithSizes[T](ctx, input, watchChanSize, defaultOverflowCap, metrics, eventResourceFn, nil, nil)
 }
 
 // Initialization runs asynchronously before the event loop. It must establish
@@ -65,17 +64,17 @@ func NewBroadcaster[T any](ctx context.Context, input <-chan T, metrics *Broadca
 type cacheInitializer[T any] func(context.Context) (cacheSeed[T], error)
 
 // newBroadcasterWithSizes creates a broadcaster with configurable buffer sizes for testing.
-func newBroadcasterWithSizes[T any](ctx context.Context, input <-chan T, subBufSize, ovfCap int, metrics *BroadcasterMetrics, eventResourceFn func(T) string, initialize cacheInitializer[T]) *broadcaster[T] {
+func newBroadcasterWithSizes[T any](ctx context.Context, input <-chan T, subBufSize, ovfCap int, metrics *BroadcasterMetrics, eventResourceFn func(T) string, identity eventIdentity[T], initialize cacheInitializer[T]) *broadcaster[T] {
 	if metrics == nil {
 		metrics = newBroadcasterMetrics(nil)
 	}
 	b := &broadcaster[T]{
 		ctx:             ctx,
-		ready:           make(chan struct{}),
 		initialize:      initialize,
 		initializeNext:  make(chan struct{}, 1),
-		cache:           newRingBuffer[T](defaultCacheSize),
-		subscribe:       make(chan *subscription[T], internalChanSize),
+		initAttempt:     &initializationAttempt{done: make(chan struct{})},
+		cache:           newWatchCache(defaultCacheSize, identity),
+		subscribe:       make(chan *subscribeRequest[T], internalChanSize),
 		unsubscribe:     make(chan (<-chan T), internalChanSize),
 		subs:            make(map[<-chan T]*subscription[T]),
 		terminated:      make(chan struct{}),
@@ -85,11 +84,7 @@ func newBroadcasterWithSizes[T any](ctx context.Context, input <-chan T, subBufS
 		overflowCap:     ovfCap,
 	}
 	if initialize == nil {
-		b.initialized = true
-		close(b.ready)
-	} else {
-		b.initializing = true
-		b.initAttempt = &initializationAttempt{done: make(chan struct{})}
+		close(b.initAttempt.done)
 	}
 
 	go b.stream(input)
@@ -102,57 +97,40 @@ type subscription[T any] struct {
 	resource string // metric label for subscriber-attributed metrics
 	ch       chan T
 	overflow []T // pending items when channel is full, nil when not overflowing
-	ctx      context.Context
-	resume   *watchResume
-	ack      chan error
 }
 
-type watchResume struct {
-	groupResource GroupResource
-	since         int64
-	requestedRV   int64
-}
-
-type cacheSeed[T any] struct {
-	items             []T
-	initialCacheFloor int64
-	highestRV         int64
-	identity          func(T) (GroupResource, int64)
+type subscribeRequest[T any] struct {
+	sub    *subscription[T]
+	ctx    context.Context
+	resume *watchResume
+	ack    chan error
 }
 
 type initializationAttempt struct {
-	done chan struct{}
-	err  error
+	done  chan struct{}
+	err   error
+	fatal bool
 }
 
 type broadcaster[T any] struct {
 	// lifecycle management
 
 	ctx            context.Context
-	ready          chan struct{}
 	terminated     chan struct{}
 	initialize     cacheInitializer[T]
 	initializeNext chan struct{}
 	initMu         sync.Mutex
-	initialized    bool
-	initializing   bool
 	initAttempt    *initializationAttempt
-	fatalInitErr   error
 
 	// subscription management
 
-	cache           ringBuffer[T]
-	subscribe       chan *subscription[T]
+	cache           watchCache[T]
+	subscribe       chan *subscribeRequest[T]
 	unsubscribe     chan (<-chan T)
 	subs            map[<-chan T]*subscription[T]
 	metrics         *BroadcasterMetrics
 	eventResourceFn func(T) string
 	submissionMu    sync.RWMutex // serializes enqueueing with shutdown's pending-subscription cleanup
-
-	initialCacheFloor int64
-	snapshotRV        int64
-	evictedThrough    map[GroupResource]int64
-	eventIdentity     func(T) (GroupResource, int64)
 
 	// configuration
 
@@ -207,13 +185,15 @@ const (
 
 func (b *broadcaster[T]) Subscribe(ctx context.Context, name, resource string) (<-chan T, error) {
 	sub := &subscription[T]{name: name, resource: resource, ch: make(chan T, b.watchBufSize)}
-	if err := b.submit(ctx, sub); err != nil {
+	// Generic subscriptions remain asynchronous; ctx only bounds enqueueing.
+	if err := b.submit(ctx, &subscribeRequest[T]{sub: sub}); err != nil {
 		return nil, err
 	}
 	return sub.ch, nil
 }
 
-func (b *broadcaster[T]) submit(ctx context.Context, sub *subscription[T]) error {
+func (b *broadcaster[T]) submit(ctx context.Context, req *subscribeRequest[T]) error {
+	sub := req.sub
 	b.submissionMu.RLock()
 	defer b.submissionMu.RUnlock()
 	// A select alone could enqueue after shutdown has drained the queue.
@@ -230,7 +210,7 @@ func (b *broadcaster[T]) submit(ctx context.Context, sub *subscription[T]) error
 	case <-b.terminated:
 		b.metrics.SubscriptionsTotal.WithLabelValues(sub.resource, subscriptionResultTerminated).Inc()
 		return io.EOF
-	case b.subscribe <- sub:
+	case b.subscribe <- req:
 		return nil
 	}
 }
@@ -241,12 +221,9 @@ func (b *broadcaster[T]) subscribeWatch(ctx context.Context, name, resource stri
 	if err := b.ensureReady(ctx); err != nil {
 		return nil, err
 	}
-	if resume != nil && b.eventIdentity == nil {
-		b.metrics.SubscriptionsTotal.WithLabelValues(resource, subscriptionResultReplayFailed).Inc()
-		return nil, fmt.Errorf("checked resume requires a seeded watch cache")
-	}
-	sub := &subscription[T]{name: name, resource: resource, ch: make(chan T, b.watchBufSize), ctx: ctx, resume: resume, ack: make(chan error, 1)}
-	if err := b.submit(ctx, sub); err != nil {
+	sub := &subscription[T]{name: name, resource: resource, ch: make(chan T, b.watchBufSize)}
+	req := &subscribeRequest[T]{sub: sub, ctx: ctx, resume: resume, ack: make(chan error, 1)}
+	if err := b.submit(ctx, req); err != nil {
 		return nil, err
 	}
 	select {
@@ -257,7 +234,7 @@ func (b *broadcaster[T]) subscribeWatch(ctx context.Context, name, resource stri
 		return nil, ctx.Err()
 	case <-b.terminated:
 		return nil, io.EOF
-	case err := <-sub.ack:
+	case err := <-req.ack:
 		if err != nil {
 			return nil, err
 		}
@@ -274,26 +251,25 @@ func (b *broadcaster[T]) subscribeWatch(ctx context.Context, name, resource stri
 // cancel initialization for the others.
 func (b *broadcaster[T]) ensureReady(ctx context.Context) error {
 	b.initMu.Lock()
-	if b.initialized {
-		b.initMu.Unlock()
-		return nil
-	}
-	if b.fatalInitErr != nil {
-		err := b.fatalInitErr
-		b.initMu.Unlock()
-		return err
+	attempt := b.initAttempt
+	start := false
+	select {
+	case <-attempt.done:
+		if attempt.err == nil || attempt.fatal {
+			err := attempt.err
+			b.initMu.Unlock()
+			return err
+		}
+		start = true
+	default:
 	}
 	if err := b.ctx.Err(); err != nil {
 		b.initMu.Unlock()
 		return err
 	}
-
-	attempt := b.initAttempt
-	start := !b.initializing
 	if start {
 		attempt = &initializationAttempt{done: make(chan struct{})}
 		b.initAttempt = attempt
-		b.initializing = true
 	}
 	b.initMu.Unlock()
 
@@ -330,27 +306,16 @@ func (b *broadcaster[T]) waitForInitialization(ctx context.Context, attempt *ini
 func (b *broadcaster[T]) finishInitialization(attempt *initializationAttempt, err error, fatal bool) {
 	b.initMu.Lock()
 	attempt.err = err
-	b.initializing = false
-	if err == nil {
-		b.initialized = true
-		close(b.ready)
-	} else if fatal {
-		b.fatalInitErr = err
-	}
+	attempt.fatal = fatal
 	close(attempt.done)
 	b.initMu.Unlock()
 }
 
 func (b *broadcaster[T]) installSeed(seed cacheSeed[T]) error {
-	if len(seed.items) > len(b.cache.buf) {
-		return fmt.Errorf("watch seed exceeds cache capacity")
+	if err := b.cache.seed(seed); err != nil {
+		return err
 	}
-	b.initialCacheFloor = seed.initialCacheFloor
-	b.snapshotRV = seed.highestRV
-	b.eventIdentity = seed.identity
-	b.evictedThrough = make(map[GroupResource]int64)
 	for _, item := range seed.items {
-		b.cache.add(item)
 		b.metrics.EventsReceivedTotal.WithLabelValues(b.eventResource(item)).Inc()
 	}
 	return nil
@@ -402,9 +367,9 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 		// was still pending. Close those too, including on initialization failure.
 		b.submissionMu.Lock()
 		for len(b.subscribe) > 0 {
-			sub := <-b.subscribe
-			close(sub.ch)
-			b.metrics.SubscriptionsTotal.WithLabelValues(sub.resource, subscriptionResultTerminated).Inc()
+			req := <-b.subscribe
+			close(req.sub.ch)
+			b.metrics.SubscriptionsTotal.WithLabelValues(req.sub.resource, subscriptionResultTerminated).Inc()
 		}
 		b.submissionMu.Unlock()
 		// terminate all subscriptions
@@ -451,16 +416,16 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 		case <-b.ctx.Done(): // service context cancelled
 			return
 
-		case sub := <-b.subscribe: // subscribe
-			b.addSubscriber(sub)
+		case req := <-b.subscribe: // subscribe
+			b.addSubscriber(req)
 
 		case recv := <-b.unsubscribe: // unsubscribe
 			// Drain pending subscribes so we don't miss one that was
 			// buffered before this unsubscribe.
 			for drained := false; !drained; {
 				select {
-				case sub := <-b.subscribe:
-					b.addSubscriber(sub)
+				case req := <-b.subscribe:
+					b.addSubscriber(req)
 				default:
 					drained = true
 				}
@@ -472,18 +437,8 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 			if !ok {
 				return
 			}
-			if b.eventIdentity != nil {
-				_, rv := b.eventIdentity(item)
-				if rv <= b.snapshotRV {
-					continue
-				}
-			}
 			b.metrics.EventsReceivedTotal.WithLabelValues(b.eventResource(item)).Inc()
-			evicted, ok := b.cache.add(item)
-			if ok && b.eventIdentity != nil {
-				gr, rv := b.eventIdentity(evicted)
-				b.evictedThrough[gr] = rv
-			}
+			b.cache.add(item)
 
 			var slow []<-chan T
 			for _, sub := range b.subs {
@@ -537,38 +492,39 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 
 // addSubscriber runs only on the stream goroutine so floor validation, replay,
 // and registration remain atomic with respect to cache eviction.
-func (b *broadcaster[T]) addSubscriber(sub *subscription[T]) {
+func (b *broadcaster[T]) addSubscriber(req *subscribeRequest[T]) {
+	sub := req.sub
 	reject := func(err error, result string) {
 		b.metrics.SubscriptionsTotal.WithLabelValues(sub.resource, result).Inc()
 		close(sub.ch)
-		if sub.ack != nil {
-			sub.ack <- err
+		if req.ack != nil {
+			req.ack <- err
 		}
 	}
-	if sub.ctx != nil && sub.ctx.Err() != nil {
-		reject(sub.ctx.Err(), subscriptionResultCtxCanceled)
+	if req.ctx != nil && req.ctx.Err() != nil {
+		reject(req.ctx.Err(), subscriptionResultCtxCanceled)
 		return
 	}
-	if sub.resume != nil {
-		floor, ok := b.evictedThrough[sub.resume.groupResource]
-		if !ok {
-			floor = b.initialCacheFloor
-		}
-		if sub.resume.since < floor {
-			reject(NewResourceVersionExpiredError(sub.resume.requestedRV), subscriptionResultExpired)
+	if req.resume != nil {
+		if err := b.cache.validateResume(*req.resume); err != nil {
+			result := subscriptionResultReplayFailed
+			if IsResourceVersionExpired(err) {
+				result = subscriptionResultExpired
+			}
+			reject(err, result)
 			return
 		}
 	}
 	// send initial batch of cached items
-	if !b.cache.readInto(sub.ch) {
-		reject(io.ErrShortBuffer, subscriptionResultReplayFailed)
+	if err := b.cache.replay(sub.ch); err != nil {
+		reject(err, subscriptionResultReplayFailed)
 		return
 	}
 	b.subs[sub.ch] = sub
 	b.metrics.SubscriptionsTotal.WithLabelValues(sub.resource, subscriptionResultOK).Inc()
 	b.metrics.Subscribers.WithLabelValues(sub.resource).Inc()
-	if sub.ack != nil {
-		sub.ack <- nil
+	if req.ack != nil {
+		req.ack <- nil
 	}
 }
 
@@ -617,7 +573,7 @@ func (r *ringBuffer[T]) add(item T) (evicted T, ok bool) {
 
 // readInto sends all cached items to dst without blocking. Returns true if all
 // items were sent, false if dst's buffer was full (slow consumer).
-func (r *ringBuffer[T]) readInto(dst chan T) bool {
+func (r *ringBuffer[T]) readInto(dst chan<- T) bool {
 	for i := 0; i < r.len; i++ {
 		select {
 		case dst <- r.buf[(r.zero+i)%len(r.buf)]:
