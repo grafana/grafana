@@ -499,6 +499,14 @@ const injectedRtkApi = api
         query: (queryArg) => ({ url: `/repositories/${queryArg.name}/resources` }),
         providesTags: ['Repository'],
       }),
+      resolveRepositoryResources: build.query<ResolveRepositoryResourcesApiResponse, ResolveRepositoryResourcesApiArg>({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/resources/resolve`,
+          method: 'POST',
+          body: queryArg.resourceResolveRequest,
+        }),
+        providesTags: ['Provisioning', 'Repository'],
+      }),
       getRepositoryStatus: build.query<GetRepositoryStatusApiResponse, GetRepositoryStatusApiArg>({
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}/status`,
@@ -1257,6 +1265,13 @@ export type GetRepositoryResourcesApiResponse = /** status 200 OK */ ResourceLis
 export type GetRepositoryResourcesApiArg = {
   /** name of the ResourceList */
   name: string;
+};
+export type ResolveRepositoryResourcesApiResponse =
+  /** status 200 Resource resolution results */ ResourceResolveResponse;
+export type ResolveRepositoryResourcesApiArg = {
+  /** repository name */
+  name: string;
+  resourceResolveRequest: ResourceResolveRequest;
 };
 export type GetRepositoryStatusApiResponse = /** status 200 OK */ Repository;
 export type GetRepositoryStatusApiArg = {
@@ -2230,6 +2245,19 @@ export type ResourceList = {
   kind?: string;
   metadata?: ListMeta;
 };
+export type ResourceResolveResult = {
+  path: string;
+  /** Resource is omitted when the path cannot be resolved to one readable synced resource. */
+  resource?: ResourceListItem;
+};
+export type ResourceResolveResponse = {
+  /** Results preserve the first occurrence of each requested path. */
+  results: ResourceResolveResult[];
+};
+export type ResourceResolveRequest = {
+  /** Paths must contain between 1 and 100 non-root resource paths. Folder paths accept a trailing slash. */
+  paths: string[];
+};
 export type TestResults = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
@@ -2405,6 +2433,8 @@ export const {
   useLazyGetRepositoryRenderWithPathQuery,
   useGetRepositoryResourcesQuery,
   useLazyGetRepositoryResourcesQuery,
+  useResolveRepositoryResourcesQuery,
+  useLazyResolveRepositoryResourcesQuery,
   useGetRepositoryStatusQuery,
   useLazyGetRepositoryStatusQuery,
   useReplaceRepositoryStatusMutation,

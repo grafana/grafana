@@ -1,10 +1,43 @@
 import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 
-import { createGrafanaLinkResolver } from './markdownResourceLinks';
+import { createGrafanaLinkResolver, getResourceLookupPath } from './markdownResourceLinks';
 
 function resource(overrides: Partial<ResourceListItem>): ResourceListItem {
   return { group: '', hash: '', name: '', path: '', resource: '', ...overrides };
 }
+
+describe('getResourceLookupPath', () => {
+  it.each([
+    { link: 'grafana/team-a/cpu.json', root: 'grafana', expected: 'team-a/cpu.json' },
+    { link: 'grafana/team-a/', root: 'grafana', expected: 'team-a' },
+    { link: 'grafana/team-a/_folder.json', root: 'grafana', expected: 'team-a' },
+    { link: 'grafana/team-a/Release Notes.md', root: 'grafana', expected: 'team-a' },
+    { link: 'grafana/team-a/Documentación.md', root: 'grafana', expected: 'team-a' },
+    { link: 'data/repo/team-a/cpu.json', root: '/data/repo/', expected: 'team-a/cpu.json' },
+    { link: 'cpu.yaml', root: undefined, expected: 'cpu.yaml' },
+    { link: 'grafana/', root: 'grafana', expected: '/' },
+    { link: 'grafana/README.md', root: 'grafana', expected: '/' },
+    { link: '_folder.json', root: undefined, expected: '/' },
+    { link: '/', root: undefined, expected: '/' },
+  ])('looks up $link beneath $root as $expected', ({ link, root, expected }) => {
+    expect(getResourceLookupPath(link, root)).toBe(expected);
+  });
+
+  it.each([
+    'grafana-other/cpu.json',
+    'elsewhere/cpu.json',
+    'grafana/../cpu.json',
+    'grafana/./cpu.json',
+    'grafana/a\\b',
+    'grafana/bad%.json',
+    'grafana/café.json',
+    'grafana/.hidden/cpu.json',
+    'grafana/team-a//cpu.json',
+    'grafana/%2e%2e/cpu.json',
+  ])('leaves %s on the host instead of querying a different resource', (link) => {
+    expect(getResourceLookupPath(link, 'grafana')).toBeUndefined();
+  });
+});
 
 describe('createGrafanaLinkResolver', () => {
   it('resolves a dashboard file to its in-app dashboard route', () => {

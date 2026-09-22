@@ -128,6 +128,12 @@ func TestUnmarshalJSON(t *testing.T) {
 			contentType: contentTypeJSON,
 		},
 		{
+			name:        "valid JSON with trailing whitespace",
+			body:        "{\"name\":\"test\"}\n\t ",
+			maxSize:     1024,
+			contentType: contentTypeJSON,
+		},
+		{
 			name:        "invalid content type",
 			body:        `{"name":"test"}`,
 			maxSize:     1024,
@@ -146,6 +152,22 @@ func TestUnmarshalJSON(t *testing.T) {
 		{
 			name:        "multiple JSON objects",
 			body:        `{"name":"test"} {"name":"test2"}`,
+			maxSize:     1024,
+			contentType: contentTypeJSON,
+			wantErr:     true,
+			errContains: "multiple JSON objects not allowed",
+		},
+		{
+			name:        "trailing closing array delimiter",
+			body:        `{"name":"test"}]`,
+			maxSize:     1024,
+			contentType: contentTypeJSON,
+			wantErr:     true,
+			errContains: "multiple JSON objects not allowed",
+		},
+		{
+			name:        "trailing closing object delimiter",
+			body:        `{"name":"test"}}`,
 			maxSize:     1024,
 			contentType: contentTypeJSON,
 			wantErr:     true,
@@ -171,7 +193,7 @@ func TestUnmarshalJSON(t *testing.T) {
 
 			if tt.wantErr {
 				if err == nil {
-					t.Error("unmarshalJSON() expected error but got none")
+					t.Fatal("unmarshalJSON() expected error but got none")
 				}
 				if !strings.Contains(err.Error(), tt.errContains) {
 					t.Errorf("unmarshalJSON() error = %v, want containing %v", err, tt.errContains)

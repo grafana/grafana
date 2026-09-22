@@ -113,3 +113,38 @@ func TestAuthorizeRepositorySubresource(t *testing.T) {
 		})
 	}
 }
+
+func TestAuthorizeRepositoryResourceResolve(t *testing.T) {
+	for _, version := range []string{"v0alpha1", "v1beta1"} {
+		base := "/apis/" + provisioning.GROUP + "/" + version + "/namespaces/default/repositories/my-repo/resources"
+		for _, tc := range []struct {
+			verb, path string
+			allowed    bool
+		}{
+			{"create", base + "/resolve", true},
+			{"get", base + "/resolve", false},
+			{"create", base, false},
+			{"get", base, false},
+			{"create", base + "/other", false},
+			{"create", base + "/resolve/child", false},
+			{"create", base + "/resolve/", false},
+			{"create", base + "/resolve-other", false},
+		} {
+			t.Run(version+"/"+tc.verb+"/"+tc.path, func(t *testing.T) {
+				admin := auth.NewMockAccessChecker(t)
+				if !tc.allowed {
+					admin.EXPECT().Check(mock.Anything, authlib.CheckRequest{Verb: utils.VerbUpdate, Group: provisioning.GROUP, Resource: "repositories", Name: "my-repo", Namespace: "default"}, "").Return(mockForbidden()).Once()
+				}
+				b := &APIBuilder{accessWithAdmin: admin}
+				attrs := authorizer.AttributesRecord{Subresource: "resources", Name: "my-repo", Namespace: "default", Verb: tc.verb, Path: tc.path, APIGroup: provisioning.GROUP, APIVersion: version}
+				decision, _, err := b.authorizeRepositorySubresource(context.Background(), attrs)
+				require.NoError(t, err)
+				if tc.allowed {
+					require.Equal(t, authorizer.DecisionAllow, decision)
+				} else {
+					require.Equal(t, authorizer.DecisionDeny, decision)
+				}
+			})
+		}
+	}
+}
