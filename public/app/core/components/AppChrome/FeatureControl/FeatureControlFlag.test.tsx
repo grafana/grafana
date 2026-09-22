@@ -4,11 +4,11 @@ import type { ComponentProps } from 'react';
 
 import { getLocalStorageProvider } from '@grafana/runtime/internal';
 import { mockComboboxRect } from '@grafana/test-utils';
-import type { CodeEditor } from '@grafana/ui';
+import type { CodeMirrorEditor } from '@grafana/ui/unstable';
 
 import { FeatureControlFlag, type FeatureControlFlagProps } from './FeatureControlFlag';
 
-type CodeEditorProps = ComponentProps<typeof CodeEditor>;
+type CodeMirrorEditorProps = ComponentProps<typeof CodeMirrorEditor>;
 
 jest.mock('@grafana/runtime/internal', () => ({
   ...jest.requireActual('@grafana/runtime/internal'),
@@ -21,10 +21,10 @@ jest.mock('@grafana/runtime/internal', () => ({
   } as never),
 }));
 
-jest.mock('@grafana/ui', () => ({
-  ...jest.requireActual('@grafana/ui'),
-  CodeEditor: ({ value, onChange }: CodeEditorProps) => (
-    <textarea aria-label="Flag value" value={value} onChange={(e) => onChange?.(e.target.value)} />
+jest.mock('@grafana/ui/unstable', () => ({
+  ...jest.requireActual('@grafana/ui/unstable'),
+  CodeMirrorEditor: ({ value, onChange, 'aria-label': ariaLabel }: CodeMirrorEditorProps) => (
+    <textarea aria-label={ariaLabel} value={value} onChange={(e) => onChange(e.target.value)} />
   ),
 }));
 
@@ -125,6 +125,41 @@ describe('FeatureControlFlag', () => {
         });
       });
     });
+  });
+
+  it('saves the latest JSON immediately after typing', async () => {
+    const user = userEvent.setup();
+    renderComponent({ key: 'alpha', value: '{"count":1}' });
+    await user.click(screen.getByText('alpha'));
+
+    const editor = screen.getByRole('textbox', { name: 'Flag value' });
+    await user.clear(editor);
+    await user.type(editor, '{{"count":2}');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(window.localStorage.getItem(getStorageKey('alpha'))).toBe('{"count":2}');
+  });
+
+  it('keeps invalid JSON drafts and the last valid value, then clears the error when corrected', async () => {
+    const user = userEvent.setup();
+    renderComponent({ key: 'alpha', value: '{"count":1}' });
+    await user.click(screen.getByText('alpha'));
+
+    const editor = screen.getByRole('textbox', { name: 'Flag value' });
+    await user.clear(editor);
+    await user.type(editor, '{{"count":2}');
+    await user.type(editor, 'x');
+
+    expect(editor).toHaveValue('{"count":2}x');
+    expect(screen.getByRole('alert')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    expect(window.localStorage.getItem(getStorageKey('alpha'))).toBe('{"count":2}');
+
+    await user.click(editor);
+    await user.keyboard('{End}{Backspace}');
+    expect(editor).toHaveValue('{"count":2}');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('removes an existing flag', async () => {
