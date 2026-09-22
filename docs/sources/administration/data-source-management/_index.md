@@ -7,6 +7,13 @@ aliases:
   - ../features/datasources/add-a-data-source/
   - ../permissions/datasource_permissions/
 description: Data source management information for Grafana administrators
+keywords:
+  - grafana
+  - data source
+  - data source management
+  - permissions
+  - query caching
+  - provisioning
 labels:
   products:
     - enterprise
@@ -18,16 +25,16 @@ review_date: 2026-09-22
 
 # Data source management
 
-Grafana supports many different storage backends, called data sources, for your time-series data. This document explains how administrators manage data sources in Grafana, including data source permissions, provisioned data sources, and query and resource caching.
+Grafana supports many different storage backends, called data sources, for your time-series data. This document explains how administrators manage data sources in Grafana, including data source permissions, Label Based Access Control (LBAC), provisioned data sources, and query and resource caching.
 
-Only users with the organization administrator role can add data sources. For more information about configuring and using individual data sources, refer to [Data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/).
+Only users with the organization administrator role can add data sources. To add a data source, refer to [Add a data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/#add-a-data-source). For more information about configuring and using individual data sources, refer to [Data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/).
 
 ## Data source permissions
 
 You can configure data source permissions to allow or deny certain users the ability to query, edit, or administrate a data source. Each data source's configuration includes a **Permissions** tab where you can restrict data source permissions to specific users, service accounts, teams, or basic roles.
 
 - The `query` permission allows users to query the data source.
-- The `edit` permission allows users to query the data source, edit the data source’s configuration and delete the data source.
+- The `edit` permission allows users to query the data source, edit the data source's configuration and delete the data source.
 - The `admin` permission allows users to query and edit the data source and change permissions on the data source.
 
 {{< admonition type="note" >}}
@@ -61,7 +68,7 @@ The **Role** option on the Permissions tab is limited to the basic roles **Viewe
 1. Click **Data sources**.
 1. Select the data source for which you want to edit permissions.
 1. On the Permissions tab, find the **User**, **Service Account**, **Team**, or **Role** permission you want to update.
-1. Select a different option in the **Permission** dropdown.
+1. Select a different option in the **Permission** drop-down.
 
 <div class="clearfix"></div>
 
@@ -74,6 +81,10 @@ The **Role** option on the Permissions tab is limited to the basic roles **Viewe
 1. Click the **X** next to the permission.
 
 <div class="clearfix"></div>
+
+## LBAC for data sources
+
+Label Based Access Control (LBAC) for data sources lets you control access to logs, metrics, and traces based on team memberships, so users can only query the data their team can access. LBAC works with Loki and Prometheus data sources, with traces support in public preview on Grafana Cloud. For more information, refer to [Label Based Access Control (LBAC) for data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/).
 
 ## Provisioned data sources
 
@@ -126,7 +137,7 @@ A panel's interval is visible in the [query options](https://grafana.com/docs/gr
 
 You can configure a panel to retrieve data more often by increasing the **Max data points** setting in the panel's [query options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/).
 
-### Caching benefits
+### Benefits of caching
 
 By reducing the number of queries and requests sent to data sources, caching can provide the following benefits:
 
@@ -140,20 +151,20 @@ By reducing the number of queries and requests sent to data sources, caching can
 Query caching works for the Grafana [built-in data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/#built-in-core-data-sources), and [backend data source plugins](https://grafana.com/grafana/plugins/?type=datasource) that extend the `DataSourceWithBackend` class in `@grafana/runtime`.
 
 {{< admonition type="note" >}}
-Logs Insights for the CloudWatch data source does not support query caching due to the way logs are requested from AWS.
+Logs Insights for the CloudWatch data source doesn't support query caching due to the way logs are requested from AWS.
 {{< /admonition >}}
 
-To verify that a data source works with query caching, follow the steps in [Enable and configure query caching](#enable-and-configure-query-caching). If caching is enabled in Grafana but the Cache tab is not visible for the given data source, then query caching is not available for that data source.
+To verify that a data source works with query caching, follow the steps in [Enable and configure query caching](#enable-and-configure-query-caching). If caching is enabled in Grafana but the Cache tab isn't visible for the given data source, then query caching isn't available for that data source.
 
 {{< admonition type="note" >}}
-Some data sources, such as Elasticsearch, Prometheus, and Loki, cache queries themselves, so Grafana _query_ caching does not significantly improve performance. However, _resource_ caching may help. Refer to [plugin resources](https://grafana.com/developers/plugin-tools/key-concepts/backend-plugins/) for details.
+Some data sources, such as Elasticsearch, Prometheus, and Loki, cache queries themselves, so Grafana _query_ caching doesn't significantly improve performance. However, _resource_ caching may help. Refer to [plugin resources](https://grafana.com/developers/plugin-tools/key-concepts/backend-plugins/) for details.
 {{< /admonition >}}
 
 ### Enable and configure query caching
 
-You must be an Org admin or Grafana admin to enable query caching for a data source. For more information on Grafana roles and permissions, refer to [About users and permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/).
+You must be an organization administrator or Grafana server administrator to enable query caching for a data source. For more information on Grafana roles and permissions, refer to [About users and permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/).
 
-By default, data source queries are not cached. To enable query caching for a single data source:
+By default, data source queries aren't cached. To enable query caching for a single data source:
 
 1. Click **Connections** in the left-side menu.
 1. Click **Data sources**.
@@ -167,7 +178,7 @@ You can optionally override a data source's configured TTL for individual dashbo
 {{< figure max-width="500px" src="/media/docs/grafana/per-panel-cache-ttl-9-4.png" caption="Set Cache TTL for a single panel" >}}
 
 {{< admonition type="note" >}}
-If query caching is enabled and the Cache tab is not visible in a data source's settings, then query caching is not available for that data source.
+If query caching is enabled and the Cache tab isn't visible in a data source's settings, then query caching isn't available for that data source.
 {{< /admonition >}}
 
 To configure global settings for query caching, refer to the `caching` section of [Configure Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#caching).
@@ -198,4 +209,12 @@ This action impacts all cache-enabled data sources. If you are using Memcached, 
 
 ### Send a request without cache
 
-If a data source query request contains the `X-Cache-Skip: true` header, then Grafana skips the caching middleware, and does not search the cache for a response. This can be particularly useful when debugging data source queries using cURL.
+If a data source query request contains the `X-Cache-Skip: true` header, then Grafana skips the caching middleware, and doesn't search the cache for a response. This can be particularly useful when debugging data source queries using cURL.
+
+## Next steps
+
+- [Add and configure individual data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/)
+- [Provision data sources with configuration files](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources)
+- [Control access with role-based access control (RBAC)](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/)
+- [Configure LBAC for a Loki data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/configure-teamlbac-for-loki/)
+- [Configure global caching settings in Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#caching)
