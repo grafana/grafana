@@ -91,6 +91,7 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 				Type:      types.TypeUser,
 				UserUID:   "x1234",
 				Name:      "dummy",
+				OrgID:     1,             // always 1
 				Namespace: "stacks-5457", // charandasbatra.grafana-dev.net
 			},
 		}
