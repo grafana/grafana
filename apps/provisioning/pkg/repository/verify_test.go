@@ -525,6 +525,40 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			maxRepositories: 10,
 		},
 		{
+			// filepath.Rel(v.Path(), cfg.Path()) alone can't distinguish "unrelated" from
+			// "cfg is an ancestor more than one level up" - both produce a "../..."-prefixed
+			// result. pathsOverlap must catch this direction too, not just descendant paths.
+			name: "forbids new repository that is an ancestor of an existing nested path",
+			cfg: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					Sync: provisioning.SyncOptions{Enabled: true},
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/org/repo",
+						Branch: "main",
+						Path:   "grafana",
+					},
+				},
+			},
+			existingRepos: []provisioning.Repository{
+				{
+					ObjectMeta: metav1.ObjectMeta{Name: "existing-repo"},
+					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
+						GitHub: &provisioning.GitHubRepositoryConfig{
+							URL:    "https://github.com/org/repo",
+							Branch: "main",
+							Path:   "grafana/dashboards/team",
+						},
+					},
+				},
+			},
+			wantErr:         true,
+			wantErrContains: ErrRepositoryParentFolderConflict.Error(),
+			maxRepositories: 10,
+		},
+		{
 			name: "allows self-update with identical URL branch and path",
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "same-repo", Namespace: "default"},
