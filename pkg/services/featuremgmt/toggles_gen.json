@@ -190,18 +190,17 @@
     {
       "metadata": {
         "name": "alerting.syncExternalAlertmanager",
-        "resourceVersion": "1790015011312",
+        "resourceVersion": "1790102317847",
         "creationTimestamp": "2026-09-16T10:24:28Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-09-21 18:23:31.312246505 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-09-22 18:38:37.847569524 +0000 UTC"
         }
       },
       "spec": {
-        "description": "Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana",
+        "description": "Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source",
         "stage": "privatePreview",
         "codeowner": "@grafana/alerting-squad",
         "requiresRestart": true,
-        "hideFromDocs": true,
         "expression": "false"
       }
     },
