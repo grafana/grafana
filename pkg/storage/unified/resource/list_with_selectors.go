@@ -15,6 +15,10 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 )
 
+// errSearchCannotAnswerList asks the caller for the store scan instead. It never
+// reaches a client.
+var errSearchCannotAnswerList = errors.New("search cannot answer this list")
+
 func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.server.ListWithFieldSelectors")
 	defer span.End()
@@ -36,43 +40,17 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
 
-	var listRv int64
-	if req.NextPageToken != "" {
-		span.AddEvent("continue token present")
-		token, err := GetContinueToken(req.NextPageToken)
-		if err != nil {
-			return &resourcepb.ListResponse{
-				Error: NewBadRequestError("invalid continue token"),
-			}, nil
-		}
-		if tokenFromOtherListPath(token, true) {
-			return &resourcepb.ListResponse{
-				Error: NewBadRequestError("continue token was not issued for a search-backed list"),
-			}, nil
-		}
-		listRv = token.ResourceVersion
-		srq.SearchAfter = token.SearchAfter
-		srq.SearchBefore = token.SearchBefore
+	listRv, errRes := applyContinueToken(srq, req.NextPageToken, span)
+	if errRes != nil {
+		return &resourcepb.ListResponse{Error: errRes}, nil
 	}
 
-	var searchResp *resourcepb.ResourceSearchResponse
-	var err error
-	if s.search != nil {
-		// Use local search service
-		searchResp, err = s.search.Search(ctx, srq)
-	} else {
-		// Use remote search service
-		// shouldUseSearchForList() already checks that either s.search or s.searchClient is set
-		searchResp, err = s.searchClient.Search(ctx, srq)
-	}
+	searchResp, errRes, err := s.searchForList(ctx, req, srq)
 	if err != nil {
 		return nil, err
 	}
-	// Logged as well as returned, because in environments where only logs are
-	// available an empty page and a failed search look the same.
-	if err := ErrorFromResponse(searchResp.GetError(), nil); err != nil {
-		s.log.Error("Search failed for List with selectors", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", err)
-		return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
+	if errRes != nil {
+		return &resourcepb.ListResponse{Error: errRes}, nil
 	}
 	rows, err := decodeListSearchRows(searchResp)
 	if err != nil {
@@ -177,6 +155,54 @@ func searchListNeedsContinue(limit int64, rowCount int, totalHitsExact bool) boo
 	// Authorization can shrink a full page, and post-rank authorization can stop
 	// before filling one. An inexact total cannot rule out more matching rows.
 	return limit > 0 && rowCount > 0 && (rowCount >= int(limit) || !totalHitsExact)
+}
+
+// searchForList runs the search behind a List. A returned errSearchCannotAnswerList
+// asks the caller to serve the request from the store instead.
+func (s *server) searchForList(ctx context.Context, req *resourcepb.ListRequest, srq *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, *resourcepb.ErrorResult, error) {
+	var searchResp *resourcepb.ResourceSearchResponse
+	var err error
+	if s.search != nil {
+		searchResp, err = s.search.Search(ctx, srq)
+	} else {
+		// shouldUseSearchForList() already checks that either s.search or s.searchClient is set
+		searchResp, err = s.searchClient.Search(ctx, srq)
+	}
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Logged as well as returned, because in environments where only logs are
+	// available an empty page and a failed search look the same.
+	if err := ErrorFromResponse(searchResp.GetError(), nil); err != nil {
+		// Only on the first page: a later page carries a position in the search results
+		// that the store scan cannot resume from.
+		if IsSelectableFieldNotIndexed(searchResp.GetError()) && req.NextPageToken == "" {
+			return nil, nil, fmt.Errorf("%w: %w", errSearchCannotAnswerList, err)
+		}
+		s.log.Error("Search failed for List with selectors", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", err)
+		return nil, AsErrorResult(err), nil
+	}
+	return searchResp, nil, nil
+}
+
+// applyContinueToken resumes a paginated search from where the token left off,
+// and returns the resource version the whole list is pinned to.
+func applyContinueToken(srq *resourcepb.ResourceSearchRequest, nextPageToken string, span trace.Span) (int64, *resourcepb.ErrorResult) {
+	if nextPageToken == "" {
+		return 0, nil
+	}
+	span.AddEvent("continue token present")
+	token, err := GetContinueToken(nextPageToken)
+	if err != nil {
+		return 0, NewBadRequestError("invalid continue token")
+	}
+	if tokenFromOtherListPath(token, true) {
+		return 0, NewBadRequestError("continue token was not issued for a search-backed list")
+	}
+	srq.SearchAfter = token.SearchAfter
+	srq.SearchBefore = token.SearchBefore
+	return token.ResourceVersion, nil
 }
 
 type listSearchRow struct {
