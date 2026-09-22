@@ -844,7 +844,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /.levignore.js @grafana/grafana-frontend-platform
 knip.config.ts @grafana/grafana-frontend-platform
 playwright.config.ts @grafana/grafana-catalog
-/playwright.lazy-review.config.ts @grafana/dashboards-squad
 
 # Claude Code skills — owned by the squad that maintains each skill
 /.claude/skills/frontend-testing-strategy/ @grafana/dataviz-squad
