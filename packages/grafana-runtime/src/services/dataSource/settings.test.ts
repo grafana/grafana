@@ -677,33 +677,33 @@ describe('instanceSettings', () => {
       return { uid: 'uid', type: 'test-db', name: 'name', meta: ds({}).meta, isDefault: false, ...overrides };
     }
 
-    it('returns the flagged item', () => {
+    it('returns the flagged item', async () => {
       const items = [
         listItem({ uid: 'uid-alpha', name: 'Alpha' }),
         listItem({ uid: 'uid-bravo', name: 'Bravo', isDefault: true }),
       ];
 
-      expect(getDefaultDataSourceInstanceListItem(items)?.name).toBe('Bravo');
+      expect((await getDefaultDataSourceInstanceListItem(items))?.name).toBe('Bravo');
     });
 
-    it('returns undefined when no item is flagged', () => {
+    it('returns undefined when no item is flagged', async () => {
       const items = [listItem({ uid: 'uid-alpha', name: 'Alpha' }), listItem({ uid: 'uid-charlie', name: 'Charlie' })];
 
-      expect(getDefaultDataSourceInstanceListItem(items)).toBeUndefined();
+      expect(await getDefaultDataSourceInstanceListItem(items)).toBeUndefined();
     });
 
-    it('returns the first flagged item when more than one is flagged', () => {
+    it('returns the first flagged item when more than one is flagged', async () => {
       const items = [
         listItem({ uid: 'uid-alpha', name: 'Alpha' }),
         listItem({ uid: 'uid-bravo', name: 'Bravo', isDefault: true }),
         listItem({ uid: 'uid-charlie', name: 'Charlie', isDefault: true }),
       ];
 
-      expect(getDefaultDataSourceInstanceListItem(items)?.name).toBe('Bravo');
+      expect((await getDefaultDataSourceInstanceListItem(items))?.name).toBe('Bravo');
     });
 
-    it('returns undefined for an empty list', () => {
-      expect(getDefaultDataSourceInstanceListItem([])).toBeUndefined();
+    it('returns undefined for an empty list', async () => {
+      expect(await getDefaultDataSourceInstanceListItem([])).toBeUndefined();
     });
 
     it('resolves the org default from an unfiltered list', async () => {
@@ -711,7 +711,7 @@ describe('instanceSettings', () => {
 
       const items = await getDataSourceInstanceList();
 
-      expect(getDefaultDataSourceInstanceListItem(items)?.name).toBe('Bravo');
+      expect((await getDefaultDataSourceInstanceListItem(items))?.name).toBe('Bravo');
     });
 
     it('returns undefined when the instance carrying the org default is filtered out', async () => {
@@ -721,7 +721,7 @@ describe('instanceSettings', () => {
       const items = await getDataSourceInstanceList({ tracing: true });
 
       expect(items.map((x) => x.name)).toEqual(['Charlie']);
-      expect(getDefaultDataSourceInstanceListItem(items)).toBeUndefined();
+      expect(await getDefaultDataSourceInstanceListItem(items)).toBeUndefined();
     });
 
     it('never returns an appended built-in', async () => {
@@ -730,7 +730,7 @@ describe('instanceSettings', () => {
       const items = await getDataSourceInstanceList({ type: 'nonexistent', all: true, mixed: true, dashboard: true });
 
       expect(items.map((x) => x.name)).toEqual(['-- Mixed --', '-- Dashboard --', '-- Grafana --']);
-      expect(getDefaultDataSourceInstanceListItem(items)).toBeUndefined();
+      expect(await getDefaultDataSourceInstanceListItem(items)).toBeUndefined();
     });
 
     it('finds the flagged instance in a list that also carries built-ins', async () => {
@@ -738,7 +738,7 @@ describe('instanceSettings', () => {
 
       const items = await getDataSourceInstanceList({ type: 'test-db', all: true, mixed: true });
 
-      expect(getDefaultDataSourceInstanceListItem(items)?.name).toBe('Bravo');
+      expect((await getDefaultDataSourceInstanceListItem(items))?.name).toBe('Bravo');
     });
   });
 

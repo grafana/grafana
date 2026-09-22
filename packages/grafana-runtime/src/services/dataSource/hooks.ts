@@ -15,6 +15,7 @@ import {
   type GetDataSourceInstanceListFilters,
   getDataSourceInstanceSettings,
   getDataSourceInstanceList,
+  getDefaultDataSourceInstanceListItem,
   hasDataSourceInstance,
 } from './settings';
 
@@ -52,6 +53,15 @@ export interface UseDataSourceInstanceResult {
   isLoading: boolean;
   error?: Error;
   dataSource?: DataSourceApi;
+}
+
+/**
+ * @public
+ */
+export interface UseDefaultDataSourceInstanceListItemResult {
+  isLoading: boolean;
+  error?: Error;
+  item?: DataSourceInstanceListItem;
 }
 
 /**
@@ -153,6 +163,21 @@ export function useDataSourceInstance(ref?: DataSourceRef | string | null): UseD
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const { loading, error, value } = useAsync(() => getDataSourceInstance(ref), [refKey]);
   return { isLoading: loading, error, dataSource: value };
+}
+
+/**
+ * React hook wrapping {@link getDefaultDataSourceInstanceListItem}. Re-resolves when the uid or
+ * `isDefault` flag of any item changes, so passing an inline array is safe.
+ *
+ * @public
+ */
+export function useDefaultDataSourceInstanceListItem(
+  items: DataSourceInstanceListItem[]
+): UseDefaultDataSourceInstanceListItemResult {
+  const itemsKey = stableKey(items.map((item) => [item.uid, item.isDefault]));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const { loading, error, value } = useAsync(() => getDefaultDataSourceInstanceListItem(items), [itemsKey]);
+  return { isLoading: loading, error, item: value };
 }
 
 /**

@@ -6,9 +6,9 @@ import { getDefaultDataSourceInstanceListItem as rtGetDefaultDataSourceInstanceL
  *
  * At most one instance per org carries the flag, so a filtered list need not contain it.
  */
-export function getDefaultDataSourceInstanceListItem(
+export async function getDefaultDataSourceInstanceListItem(
   items: DataSourceInstanceListItem[]
-): DataSourceInstanceListItem | undefined {
+): Promise<DataSourceInstanceListItem | undefined> {
   if (typeof rtGetDefaultDataSourceInstanceListItem === 'function') {
     return rtGetDefaultDataSourceInstanceListItem(items);
   }
@@ -16,8 +16,8 @@ export function getDefaultDataSourceInstanceListItem(
   return backwardsCompatibleGetDefaultDataSourceInstanceListItem(items);
 }
 
-function backwardsCompatibleGetDefaultDataSourceInstanceListItem(
+async function backwardsCompatibleGetDefaultDataSourceInstanceListItem(
   items: DataSourceInstanceListItem[]
-): DataSourceInstanceListItem | undefined {
+): Promise<DataSourceInstanceListItem | undefined> {
   return items.find((item) => item?.isDefault);
 }

@@ -1,5 +1,6 @@
-import { type DataSourceInstanceListItem } from '@grafana/data';
 import { getDefaultDataSourceInstanceListItem as rtGetDefaultDataSourceInstanceListItem } from '@grafana/runtime/unstable';
+
+import { getMockedListItem } from '../utils/mocks';
 
 import { getDefaultDataSourceInstanceListItem } from './getDefaultDataSourceInstanceListItem';
 
@@ -10,37 +11,26 @@ jest.mock('@grafana/runtime/unstable', () => ({
 
 const mockRuntimeGetDefaultDataSourceInstanceListItem = jest.mocked(rtGetDefaultDataSourceInstanceListItem);
 
-function listItem(overrides: Partial<DataSourceInstanceListItem>): DataSourceInstanceListItem {
-  return {
-    uid: 'uid',
-    type: 'loki',
-    name: 'name',
-    meta: {},
-    isDefault: false,
-    ...overrides,
-  } as DataSourceInstanceListItem;
-}
-
-const flagged = listItem({ uid: 'ds-b', name: 'B', isDefault: true });
-const notFlagged = listItem({ uid: 'ds-a', name: 'A' });
+const flagged = getMockedListItem({ uid: 'ds-b', name: 'B', isDefault: true });
+const notFlagged = getMockedListItem({ uid: 'ds-a', name: 'A' });
 const items = [notFlagged, flagged];
 
 describe('getDefaultDataSourceInstanceListItem', () => {
   beforeEach(() => {
     jest.resetAllMocks();
-    mockRuntimeGetDefaultDataSourceInstanceListItem.mockReturnValue(flagged);
+    mockRuntimeGetDefaultDataSourceInstanceListItem.mockResolvedValue(flagged);
   });
 
-  it('should call correct function when getDefaultDataSourceInstanceListItem exists', () => {
-    getDefaultDataSourceInstanceListItem(items);
+  it('should call correct function when getDefaultDataSourceInstanceListItem exists', async () => {
+    await getDefaultDataSourceInstanceListItem(items);
 
     expect(mockRuntimeGetDefaultDataSourceInstanceListItem).toHaveBeenCalledWith(items);
   });
 
-  it('should return the host answer rather than recomputing it locally', () => {
+  it('should return the host answer rather than recomputing it locally', async () => {
     // The local fallback would pick the flagged 'ds-b', so only the host can produce 'ds-a'.
-    mockRuntimeGetDefaultDataSourceInstanceListItem.mockReturnValue(notFlagged);
+    mockRuntimeGetDefaultDataSourceInstanceListItem.mockResolvedValue(notFlagged);
 
-    expect(getDefaultDataSourceInstanceListItem(items)?.uid).toBe('ds-a');
+    expect((await getDefaultDataSourceInstanceListItem(items))?.uid).toBe('ds-a');
   });
 });

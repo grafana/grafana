@@ -15,7 +15,8 @@ Grafana versions.
 
 - `@grafana/plugin-compat/datasources` — `getDataSourceInstance`,
   `getDataSourceInstanceList`, `getDataSourceInstanceSettings`,
-  `getDefaultDataSourceInstanceListItem`. Replacements for
+  `getDefaultDataSourceInstanceListItem` and its
+  `useDefaultDataSourceInstanceListItem` hook. Replacements for
   `getDataSourceSrv()` methods.
 - `@grafana/plugin-compat/apps` — `getPluginSettings`,
   `updateAppPluginSettings`. Replacements for the `getBackendSrv()`
@@ -28,14 +29,16 @@ import {
   getDataSourceInstance,
   getDataSourceInstanceList,
   getDefaultDataSourceInstanceListItem,
+  useDefaultDataSourceInstanceListItem,
 } from '@grafana/plugin-compat/datasources';
 import { getPluginSettings } from '@grafana/plugin-compat/apps';
 
 const ds = await getDataSourceInstance({ uid: 'my-uid' });
 const settings = await getPluginSettings('my-plugin-id');
 
-// `undefined` unless the org default is one of the items, so a filtered list
-// often has no default at all.
+// `undefined` unless the org default is one of the items.
 const items = await getDataSourceInstanceList({ type: 'prometheus' });
-const defaultProm = getDefaultDataSourceInstanceListItem(items);
+const defaultProm = await getDefaultDataSourceInstanceListItem(items);
+
+const { isLoading, error, item } = useDefaultDataSourceInstanceListItem(items);
 ```

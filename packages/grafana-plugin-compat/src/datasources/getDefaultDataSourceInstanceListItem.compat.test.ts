@@ -1,4 +1,6 @@
-import { type DataSourceInstanceListItem, type DataSourcePluginMeta } from '@grafana/data';
+import { type DataSourceInstanceListItem } from '@grafana/data';
+
+import { getMockedListItem } from '../utils/mocks';
 
 import { getDefaultDataSourceInstanceListItem } from './getDefaultDataSourceInstanceListItem';
 
@@ -7,62 +9,51 @@ jest.mock('@grafana/runtime/unstable', () => ({
   getDefaultDataSourceInstanceListItem: undefined,
 }));
 
-// `meta` is partial so a case can set just the one flag it cares about.
-function listItem({
-  meta,
-  ...rest
-}: Partial<Omit<DataSourceInstanceListItem, 'meta'>> & {
-  meta?: Partial<DataSourcePluginMeta>;
-}): DataSourceInstanceListItem {
-  return {
-    uid: 'uid',
-    type: 'loki',
-    name: 'name',
-    isDefault: false,
-    ...rest,
-    meta: { ...meta },
-  } as DataSourceInstanceListItem;
-}
-
 describe('getDefaultDataSourceInstanceListItem', () => {
-  it('should return the flagged item', () => {
-    const items = [listItem({ uid: 'ds-a', name: 'A' }), listItem({ uid: 'ds-b', name: 'B', isDefault: true })];
-
-    expect(getDefaultDataSourceInstanceListItem(items)?.uid).toBe('ds-b');
-  });
-
-  it('should return undefined when no item is flagged', () => {
-    const items = [listItem({ uid: 'ds-a', name: 'A' }), listItem({ uid: 'ds-b', name: 'B' })];
-
-    expect(getDefaultDataSourceInstanceListItem(items)).toBeUndefined();
-  });
-
-  it('should return the first flagged item when more than one is flagged', () => {
+  it('should return the flagged item', async () => {
     const items = [
-      listItem({ uid: 'ds-a', name: 'A' }),
-      listItem({ uid: 'ds-b', name: 'B', isDefault: true }),
-      listItem({ uid: 'ds-c', name: 'C', isDefault: true }),
+      getMockedListItem({ uid: 'ds-a', name: 'A' }),
+      getMockedListItem({ uid: 'ds-b', name: 'B', isDefault: true }),
     ];
 
-    expect(getDefaultDataSourceInstanceListItem(items)?.uid).toBe('ds-b');
+    expect((await getDefaultDataSourceInstanceListItem(items))?.uid).toBe('ds-b');
   });
 
-  it('should return undefined for an empty list', () => {
-    expect(getDefaultDataSourceInstanceListItem([])).toBeUndefined();
+  it('should return undefined when no item is flagged', async () => {
+    const items = [getMockedListItem({ uid: 'ds-a', name: 'A' }), getMockedListItem({ uid: 'ds-b', name: 'B' })];
+
+    expect(await getDefaultDataSourceInstanceListItem(items)).toBeUndefined();
   });
 
-  it('should never return a built-in', () => {
+  it('should return the first flagged item when more than one is flagged', async () => {
     const items = [
-      listItem({ uid: 'ds-mixed', type: 'mixed', name: '-- Mixed --', meta: { builtIn: true } }),
-      listItem({ uid: 'ds-grafana', type: 'grafana', name: '-- Grafana --', meta: { builtIn: true } }),
+      getMockedListItem({ uid: 'ds-a', name: 'A' }),
+      getMockedListItem({ uid: 'ds-b', name: 'B', isDefault: true }),
+      getMockedListItem({ uid: 'ds-c', name: 'C', isDefault: true }),
     ];
 
-    expect(getDefaultDataSourceInstanceListItem(items)).toBeUndefined();
+    expect((await getDefaultDataSourceInstanceListItem(items))?.uid).toBe('ds-b');
   });
 
-  it('should skip a nullish entry rather than throwing on it', () => {
-    const items = [null, listItem({ uid: 'ds-b', name: 'B', isDefault: true })] as DataSourceInstanceListItem[];
+  it('should return undefined for an empty list', async () => {
+    expect(await getDefaultDataSourceInstanceListItem([])).toBeUndefined();
+  });
 
-    expect(getDefaultDataSourceInstanceListItem(items)?.uid).toBe('ds-b');
+  it('should never return a built-in', async () => {
+    const items = [
+      getMockedListItem({ uid: 'ds-mixed', type: 'mixed', name: '-- Mixed --', meta: { builtIn: true } }),
+      getMockedListItem({ uid: 'ds-grafana', type: 'grafana', name: '-- Grafana --', meta: { builtIn: true } }),
+    ];
+
+    expect(await getDefaultDataSourceInstanceListItem(items)).toBeUndefined();
+  });
+
+  it('should skip a nullish entry rather than throwing on it', async () => {
+    const items = [
+      null,
+      getMockedListItem({ uid: 'ds-b', name: 'B', isDefault: true }),
+    ] as DataSourceInstanceListItem[];
+
+    expect((await getDefaultDataSourceInstanceListItem(items))?.uid).toBe('ds-b');
   });
 });

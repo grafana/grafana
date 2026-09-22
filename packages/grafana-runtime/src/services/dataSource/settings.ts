@@ -228,9 +228,9 @@ function matchesType(item: DataSourceInstanceListItem, type: string): boolean {
  *
  * @public
  */
-export function getDefaultDataSourceInstanceListItem(
+export async function getDefaultDataSourceInstanceListItem(
   items: DataSourceInstanceListItem[]
-): DataSourceInstanceListItem | undefined {
+): Promise<DataSourceInstanceListItem | undefined> {
   return items.find((item) => item.isDefault);
 }
 
