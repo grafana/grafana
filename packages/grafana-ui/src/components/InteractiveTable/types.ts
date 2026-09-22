@@ -2,8 +2,10 @@ import { type Cell, type CellContext, type HeaderContext, type Row } from '@tans
 import { type ReactNode } from 'react';
 
 /**
- * Props passed to a custom cell renderer. `value` and `cell.value` are kept from the react-table v7 API,
- * TanStack Table only provides `getValue()`.
+ * Props passed to a custom cell renderer.
+ *
+ * This uses the TanStack Table v8 context. `value` and `cell.value` are compatibility aliases for the
+ * equivalent react-table v7 properties; other v7 table-instance properties are not available.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- `any` keeps cell renderers typed for a specific value assignable, as in react-table v7
 export type CellProps<TableData extends object, Value = any> = Omit<CellContext<TableData, Value>, 'cell'> & {
@@ -14,6 +16,7 @@ export type CellProps<TableData extends object, Value = any> = Omit<CellContext<
 
 export type HeaderProps<TableData extends object> = HeaderContext<TableData, unknown>;
 
+/** Custom sorting function using TanStack Table v8 rows. */
 export type SortByFn<TableData extends object> = (
   rowA: Row<TableData>,
   rowB: Row<TableData>,
