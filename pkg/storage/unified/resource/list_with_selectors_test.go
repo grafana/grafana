@@ -1192,10 +1192,10 @@ func TestListWithSelectorsCarriesRuntimeFailureAcrossBatches(t *testing.T) {
 		opts.KvStore = kvWrapper
 	})
 
-	rows := make([]*resourcepb.ResourceTableRow, 0, batchReadResolveSize+1)
-	denied := make(map[string]struct{}, batchReadResolveSize)
+	rows := make([]*resourcepb.ResourceTableRow, 0, dataBatchSize+1)
+	denied := make(map[string]struct{}, dataBatchSize)
 	var listRV int64
-	for i := range batchReadResolveSize + 1 {
+	for i := range dataBatchSize + 1 {
 		name := fmt.Sprintf("cross-batch-%02d", i)
 		listRV = seedResource(t, backend, t.Context(), name, fmt.Sprintf("folder-%02d", i))
 		rows = append(rows, &resourcepb.ResourceTableRow{
@@ -1203,7 +1203,7 @@ func TestListWithSelectorsCarriesRuntimeFailureAcrossBatches(t *testing.T) {
 			ResourceVersion: listRV,
 			SortFields:      []string{name},
 		})
-		if i < batchReadResolveSize {
+		if i < dataBatchSize {
 			denied[name] = struct{}{}
 		}
 	}
@@ -1326,10 +1326,10 @@ func (b *batchFakeBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	return b.fakeBackend.ReadResource(ctx, req)
 }
 
-func (b *batchFakeBackend) BatchReadResource(_ context.Context, requests []*resourcepb.ReadRequest) (iter.Seq2[*BackendReadResponse, error], error) {
+func (b *batchFakeBackend) BatchReadResource(_ context.Context, requests []*resourcepb.ReadRequest) (iter.Seq[*BackendReadResponse], error) {
 	b.batchCalls++
 	b.batchReqs += len(requests)
-	return func(yield func(*BackendReadResponse, error) bool) {
+	return func(yield func(*BackendReadResponse) bool) {
 		for _, req := range requests {
 			b.pulledNames = append(b.pulledNames, req.Key.Name)
 			var response *BackendReadResponse
@@ -1352,7 +1352,7 @@ func (b *batchFakeBackend) BatchReadResource(_ context.Context, requests []*reso
 					Value:           []byte("value"),
 				}
 			}
-			if !yield(response, nil) {
+			if !yield(response) {
 				return
 			}
 		}

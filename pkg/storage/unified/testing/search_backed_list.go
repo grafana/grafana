@@ -77,7 +77,7 @@ type countingBackend struct {
 	reads      atomic.Int64
 }
 
-func (c *countingBackend) BatchReadResource(ctx context.Context, reqs []*resourcepb.ReadRequest) (iter.Seq2[*resource.BackendReadResponse, error], error) {
+func (c *countingBackend) BatchReadResource(ctx context.Context, reqs []*resourcepb.ReadRequest) (iter.Seq[*resource.BackendReadResponse], error) {
 	c.batchReads.Add(1)
 	return c.StorageBackend.BatchReadResource(ctx, reqs)
 }
@@ -130,7 +130,7 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		deniedFolder = "folder-denied"
 		matchTeam    = "a"
 		otherTeam    = "b"
-		authorized   = 55 // > batchReadResolveSize (50) so the read crosses an internal batch boundary
+		authorized   = 55 // > dataBatchSize (50) so the read crosses an internal batch boundary
 		unauthorized = 5
 		otherLabel   = 3
 	)

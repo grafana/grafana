@@ -183,8 +183,9 @@ type StorageBackend interface {
 
 	// BatchReadResource lazily reads several resources, yielding one response per
 	// request in order. Body reads stop when the consumer stops. The up-front error
-	// is ErrBatchReadUnsupported; runtime failures are yielded by the iterator.
-	BatchReadResource(context.Context, []*resourcepb.ReadRequest) (iter.Seq2[*BackendReadResponse, error], error)
+	// reports failures that happen before iteration; per-request failures are set
+	// on BackendReadResponse.Error.
+	BatchReadResource(context.Context, []*resourcepb.ReadRequest) (iter.Seq[*BackendReadResponse], error)
 
 	// When the ResourceServer executes a List request, this iterator will
 	// query the backend for potential results.  All results will be

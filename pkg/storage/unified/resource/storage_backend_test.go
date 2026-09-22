@@ -1370,6 +1370,21 @@ func TestKvStorageBackend_BatchReadResource_TooHighResourceVersion(t *testing.T)
 	require.Contains(t, got[1].Error.Message, "too large resource version")
 }
 
+func TestKvStorageBackend_BatchReadResource_LatestResourceVersionFailureIsUpfront(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	rv := seedResource(t, backend, t.Context(), "test-resource", "")
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+
+	responses, err := backend.BatchReadResource(ctx, []*resourcepb.ReadRequest{{
+		Key:             appsKey("test-resource"),
+		ResourceVersion: rv,
+	}})
+
+	require.ErrorIs(t, err, context.Canceled)
+	require.Nil(t, responses)
+}
+
 func TestKvStorageBackend_BatchReadResource_YieldsInRequestOrder(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	requests := make([]*resourcepb.ReadRequest, 0, 3)
@@ -1401,7 +1416,7 @@ func TestKvStorageBackend_BatchReadResource_StopsReadingBodiesWhenConsumerStops(
 		kvWrapper.KV = opts.KvStore
 		opts.KvStore = kvWrapper
 	})
-	requests := make([]*resourcepb.ReadRequest, 0, batchReadResolveSize+1)
+	requests := make([]*resourcepb.ReadRequest, 0, dataBatchSize+1)
 	for i := range cap(requests) {
 		name := fmt.Sprintf("lazy-%02d", i)
 		obj, err := createTestObjectWithName(name, appsNamespace, "value")
@@ -1418,8 +1433,7 @@ func TestKvStorageBackend_BatchReadResource_StopsReadingBodiesWhenConsumerStops(
 	require.NoError(t, err)
 	const wanted = 3
 	read := 0
-	for response, readErr := range responses {
-		require.NoError(t, readErr)
+	for response := range responses {
 		require.NotNil(t, response)
 		read++
 		if read == wanted {
@@ -1473,8 +1487,7 @@ func TestKvStorageBackend_BatchReadResource_ClosesPrefetchedBodyWhenConsumerStop
 
 	responses, err := backend.BatchReadResource(t.Context(), requests)
 	require.NoError(t, err)
-	for response, readErr := range responses {
-		require.NoError(t, readErr)
+	for response := range responses {
 		require.Equal(t, int32(http.StatusNotFound), response.Error.Code)
 		break
 	}
@@ -1546,11 +1559,10 @@ func TestUnimplementedStorageBackend_BatchReadResourceReturnsUnsupportedUpFront(
 	require.Nil(t, responses)
 }
 
-func collectBatchReadResponses(t *testing.T, responses iter.Seq2[*BackendReadResponse, error]) []*BackendReadResponse {
+func collectBatchReadResponses(t *testing.T, responses iter.Seq[*BackendReadResponse]) []*BackendReadResponse {
 	t.Helper()
 	var got []*BackendReadResponse
-	for response, err := range responses {
-		require.NoError(t, err)
+	for response := range responses {
 		got = append(got, response)
 	}
 	return got

@@ -212,20 +212,14 @@ func (s *server) consumeSearchRows(
 	user claims.AuthInfo,
 	req *resourcepb.ListRequest,
 	rows []listSearchRow,
-	values iter.Seq2[*BackendReadResponse, error],
+	values iter.Seq[*BackendReadResponse],
 	batched bool,
 	listRV int64,
 	rsp *resourcepb.ListResponse,
 ) *resourcepb.ListResponse {
 	i := 0
 	pageBytes := 0
-	for val, readErr := range values {
-		if readErr != nil {
-			return &resourcepb.ListResponse{Error: &resourcepb.ErrorResult{
-				Code:    http.StatusInternalServerError,
-				Message: readErr.Error(),
-			}}
-		}
+	for val := range values {
 		if i >= len(rows) {
 			return &resourcepb.ListResponse{Error: &resourcepb.ErrorResult{
 				Code:    http.StatusInternalServerError,
@@ -283,7 +277,7 @@ func (s *server) consumeSearchRows(
 	return nil
 }
 
-func (s *server) readSearchRows(ctx context.Context, rows []listSearchRow) (iter.Seq2[*BackendReadResponse, error], bool, error) {
+func (s *server) readSearchRows(ctx context.Context, rows []listSearchRow) (iter.Seq[*BackendReadResponse], bool, error) {
 	requests := make([]*resourcepb.ReadRequest, len(rows))
 	for i, row := range rows {
 		requests[i] = &resourcepb.ReadRequest{
@@ -304,14 +298,14 @@ func (s *server) readSearchRows(ctx context.Context, rows []listSearchRow) (iter
 	}
 
 	// Read authorizes internally, so the caller does not re-check the fallback path.
-	return func(yield func(*BackendReadResponse, error) bool) {
+	return func(yield func(*BackendReadResponse) bool) {
 		for _, row := range rows {
 			val, err := s.Read(ctx, &resourcepb.ReadRequest{
 				Key:             row.key,
 				ResourceVersion: row.resourceVersion,
 			})
 			if val == nil {
-				if !yield(&BackendReadResponse{Error: AsErrorResult(err)}, nil) {
+				if !yield(&BackendReadResponse{Error: AsErrorResult(err)}) {
 					return
 				}
 				continue
@@ -321,7 +315,7 @@ func (s *server) readSearchRows(ctx context.Context, rows []listSearchRow) (iter
 				ResourceVersion: val.ResourceVersion,
 				Value:           val.Value,
 				Error:           val.Error,
-			}, nil) {
+			}) {
 				return
 			}
 		}

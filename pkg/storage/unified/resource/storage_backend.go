@@ -1320,29 +1320,27 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	}
 }
 
-const batchReadResolveSize = 50
+func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*resourcepb.ReadRequest) (iter.Seq[*BackendReadResponse], error) {
+	// Reject a too-large RV the same way ReadResource does. GetResourceKeyAtRevision
+	// would otherwise resolve the highest retained revision below it, so the batch
+	// and single-read paths would disagree when search and storage briefly diverge.
+	var maxReqRV int64
+	for _, req := range requests {
+		if req != nil && req.Key != nil {
+			maxReqRV = max(maxReqRV, ToSnowflakeRV(req.ResourceVersion))
+		}
+	}
+	var latestRV int64
+	if maxReqRV > 0 {
+		latestRV = k.snowflake.Generate().Int64()
+		if lastEventKey, err := k.eventStore.LastEventKey(ctx); err == nil {
+			latestRV = lastEventKey.ResourceVersion
+		} else if !errors.Is(err, ErrNotFound) {
+			return nil, fmt.Errorf("failed to fetch latest resource version: %w", err)
+		}
+	}
 
-func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*resourcepb.ReadRequest) (iter.Seq2[*BackendReadResponse, error], error) {
-	return func(yield func(*BackendReadResponse, error) bool) {
-		// Reject a too-large RV the same way ReadResource does. GetResourceKeyAtRevision
-		// would otherwise resolve the highest retained revision below it, so the batch
-		// and single-read paths would disagree when search and storage briefly diverge.
-		var maxReqRV int64
-		for _, req := range requests {
-			if req != nil && req.Key != nil {
-				maxReqRV = max(maxReqRV, ToSnowflakeRV(req.ResourceVersion))
-			}
-		}
-		var latestRV int64
-		if maxReqRV > 0 {
-			latestRV = k.snowflake.Generate().Int64()
-			if lastEventKey, err := k.eventStore.LastEventKey(ctx); err == nil {
-				latestRV = lastEventKey.ResourceVersion
-			} else if !errors.Is(err, ErrNotFound) {
-				yield(nil, fmt.Errorf("failed to fetch latest resource version: %w", err))
-				return
-			}
-		}
+	return func(yield func(*BackendReadResponse) bool) {
 
 		type batchReadEntry struct {
 			request  *resourcepb.ReadRequest
@@ -1352,7 +1350,7 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*re
 		// Keep resolving metadata after a body read failure so the caller can
 		// authorize each row before deciding whether to expose the failure.
 		var runtimeErr error
-		for requestBatch := range slices.Chunk(requests, batchReadResolveSize) {
+		for requestBatch := range slices.Chunk(requests, dataBatchSize) {
 			entries := make([]batchReadEntry, 0, len(requestBatch))
 			keys := make([]kv.DataKey, 0, len(requestBatch))
 			for _, req := range requestBatch {
@@ -1416,7 +1414,7 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*re
 			}
 			for _, entry := range entries {
 				if entry.response != nil {
-					if !yield(entry.response, nil) {
+					if !yield(entry.response) {
 						stop()
 						return
 					}
@@ -1451,7 +1449,7 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*re
 				} else {
 					response.Error = NewNotFoundError(entry.request.Key)
 				}
-				if !yield(response, nil) {
+				if !yield(response) {
 					stop()
 					return
 				}
