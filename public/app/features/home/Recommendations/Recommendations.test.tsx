@@ -163,6 +163,21 @@ describe('Recommendations', () => {
     );
   });
 
+  it('does not reselect or re-report when the solution set is recreated with the same signals', async () => {
+    const signals = jest.fn(async () => DEFAULT_STATE);
+    const metrics = solution('metrics', 'active', stubDatasource, { title: 'Metrics & infrastructure' });
+    const { rerender } = render(<Recommendations solutions={{ solutions: [metrics], signals }} />);
+
+    await carouselRegion();
+
+    // A filter change recreates one solution and with it the set; the signal snapshot is unchanged.
+    rerender(<Recommendations solutions={{ solutions: [solution('metrics', 'active', stubDatasource)], signals }} />);
+    await act(async () => {});
+
+    expect(signals).toHaveBeenCalledTimes(1);
+    expect(jest.mocked(recommendationsShown)).toHaveBeenCalledTimes(1);
+  });
+
   it('follows the selected solution order and resets the carousel when the solution changes', async () => {
     const metrics = solution('metrics', 'active', stubDatasource, { title: 'Metrics & infrastructure' });
     const logs = solution(
