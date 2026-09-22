@@ -91,7 +91,6 @@ export function GroupByField({ value, onChange, disabled }: GroupByFieldProps) {
         onChange={handleChange}
         allowCustomValue
         onCreateOption={handleCreateOption}
-        disabled={disabled}
       />
     </Field>
   );
