@@ -40,23 +40,69 @@ func folderManifest(revision int, fields ...app.ManifestVersionKindEmbedField) *
 	}
 }
 
-func TestRuntimeEnrollmentAndCatalogPartition(t *testing.T) {
-	ctx := context.Background()
-	configs := resource.NewEmbeddingConfigRegistry(nil)
-	registry, err := enrollment.New(configs, []string{"folder.grafana.app/folders"}, nil, nil)
-	require.NoError(t, err)
-	provider := &countingProvider{BuilderProvider: registry}
+type enrollmentBackfillTest struct {
+	configs    *resource.EmbeddingConfigRegistry
+	provider   *countingProvider
+	storage    *fakeStorage
+	vec        *fakeVector
+	text       *fakeText
+	backfiller *VectorBackfiller
+}
 
-	storage := newFakeStorage()
-	storage.listItems = []listItem{
-		{Namespace: "ns", Name: "known", RV: 50, Value: []byte(`{"apiVersion":"folder.grafana.app/v1","spec":{"title":"Operations","description":"Production dashboards"}}`)},
-		{Namespace: "ns", Name: "unknown", RV: 60, Value: []byte(`{"apiVersion":"folder.grafana.app/v2","metadata":{"annotations":{"grafana.app/folder":"new-parent"}}}`)},
+func setupEnrollmentBackfillTest(t *testing.T, allowed []string, custom []embed.Builder) *enrollmentBackfillTest {
+	t.Helper()
+	configs := resource.NewEmbeddingConfigRegistry(nil)
+	registry, err := enrollment.New(configs, allowed, custom, nil)
+	require.NoError(t, err)
+	f := &enrollmentBackfillTest{
+		configs:  configs,
+		provider: &countingProvider{BuilderProvider: registry},
+		storage:  newFakeStorage(),
+		vec:      newFakeVector(),
+		text:     &fakeText{dim: 4},
 	}
-	for _, item := range storage.listItems {
-		storage.resources[storeKey(item.Namespace, "folder.grafana.app", "folders", item.Name)] = storedResource{Value: item.Value, RV: item.RV}
+	f.backfiller, err = NewVectorBackfiller(Options{
+		Storage: f.storage, VectorBackend: f.vec,
+		BatchEmbedder: embedder.NewBatchEmbedder(*newFakeEmbedder(f.text)), BuilderProvider: f.provider,
+	})
+	require.NoError(t, err)
+	assert.Zero(t, f.provider.snapshots, "live manifests need not be available during construction")
+	return f
+}
+
+func (f *enrollmentBackfillTest) seedFolders(items ...listItem) {
+	f.storage.listItems = items
+	for _, item := range items {
+		f.storage.resources[storeKey(item.Namespace, "folder.grafana.app", "folders", item.Name)] = storedResource{Value: item.Value, RV: item.RV}
 	}
-	storage.seedFolder("ns", "new-parent", "New parent")
-	vec := newFakeVector()
+}
+
+type backfillIteration struct {
+	upserts       int
+	completedJobs []int64
+}
+
+func (f *enrollmentBackfillTest) run(t *testing.T, want backfillIteration) {
+	t.Helper()
+	upserts, completed, snapshots := len(f.vec.upserts), len(f.vec.completedJobIDs), f.provider.snapshots
+	f.backfiller.runBackfill(t.Context())
+	assert.Empty(t, f.vec.errorMarks, "backfill iterations should complete without errors")
+	require.Len(t, f.vec.upserts[upserts:], want.upserts, "new upserts in this iteration")
+	require.Len(t, f.vec.completedJobIDs[completed:], len(want.completedJobs), "jobs completed in this iteration")
+	for i, id := range want.completedJobs {
+		assert.Equal(t, id, f.vec.completedJobIDs[completed+i])
+	}
+	assert.Equal(t, snapshots+1, f.provider.snapshots, "one immutable declaration snapshot per backfill run")
+}
+
+func TestRuntimeEnrollmentAndCatalogPartition(t *testing.T) {
+	f := setupEnrollmentBackfillTest(t, []string{"folder.grafana.app/folders"}, nil)
+	f.seedFolders(
+		listItem{Namespace: "ns", Name: "known", RV: 50, Value: []byte(`{"apiVersion":"folder.grafana.app/v1","spec":{"title":"Operations","description":"Production dashboards"}}`)},
+		listItem{Namespace: "ns", Name: "unknown", RV: 60, Value: []byte(`{"apiVersion":"folder.grafana.app/v2","metadata":{"annotations":{"grafana.app/folder":"new-parent"}}}`)},
+	)
+	f.storage.seedFolder("ns", "new-parent", "New parent")
+	vec := f.vec
 	vec.collections = map[string]vector.Collection{
 		"folder.grafana.app/folders": {Group: "folder.grafana.app", Resource: "folders", PartitionKey: "folder_partition"},
 	}
@@ -67,64 +113,50 @@ func TestRuntimeEnrollmentAndCatalogPartition(t *testing.T) {
 	oldUnknown.Folder = "old-parent"
 	vec.rows[rowsKey("ns", "test-model", "folder_partition", "unknown")][""] = oldUnknown
 
-	text := &fakeText{dim: 4}
-	b, err := NewVectorBackfiller(Options{
-		Storage: storage, VectorBackend: vec, BatchEmbedder: embedder.NewBatchEmbedder(*newFakeEmbedder(text)), BuilderProvider: provider,
-	})
-	require.NoError(t, err)
-	assert.Zero(t, provider.snapshots, "live manifests need not be available during construction")
-	b.runBackfill(ctx)
-	assert.Empty(t, storage.listCalls)
-	assert.Empty(t, vec.completedJobIDs, "an empty enrollment must leave pending jobs available")
+	f.run(t, backfillIteration{})
+	assert.Empty(t, f.storage.listCalls)
 
-	configs.Reload([]*app.ManifestData{folderManifest(1, app.ManifestVersionKindEmbedField{Name: "title", Path: "spec.title"})})
-	b.runBackfill(ctx)
-	require.Len(t, vec.upserts, 1)
+	f.configs.Reload([]*app.ManifestData{folderManifest(1, app.ManifestVersionKindEmbedField{Name: "title", Path: "spec.title"})})
+	f.run(t, backfillIteration{upserts: 1, completedJobs: []int64{1}})
 	assert.Equal(t, "folder_partition", vec.upserts[0][0].Resource)
 	assert.Equal(t, "title: Operations", vec.upserts[0][0].Content)
 	assert.Equal(t, 1, vec.upserts[0][0].ContentVersion)
-	assert.Equal(t, []resource.NamespacedResource{{Group: "folder.grafana.app", Resource: "folders"}}, storage.listKeys)
+	assert.Equal(t, []resource.NamespacedResource{{Group: "folder.grafana.app", Resource: "folders"}}, f.storage.listKeys)
 	require.NotEmpty(t, vec.checkpoints)
 	cursor, err := decodeCursor(vec.checkpoints[0].LastSeenKey)
 	require.NoError(t, err)
 	assert.Equal(t, "folder_partition", cursor.Resource)
 	assert.Equal(t, "folder_partition", vec.reopenCalls[0].Resource)
-	assert.Equal(t, []int64{1}, vec.completedJobIDs)
 	wantUnknown := oldUnknown
 	wantUnknown.Folder = "new-parent"
 	assert.Equal(t, wantUnknown, vec.rows[rowsKey("ns", "test-model", "folder_partition", "unknown")][""], "unsupported API versions retain their content and version but update the authorization folder")
 
-	configs.Reload(nil)
+	f.configs.Reload(nil)
 	vec.jobs[0].IsComplete = false
-	b.runBackfill(ctx)
-	assert.Len(t, vec.upserts, 1)
-	assert.Len(t, storage.listCalls, 1)
-	assert.Len(t, vec.completedJobIDs, 1, "removed resources leave their job incomplete and vectors intact")
+	f.run(t, backfillIteration{})
+	assert.Len(t, f.storage.listCalls, 1)
 	assert.False(t, vec.jobs[0].IsComplete)
 
-	configs.Reload([]*app.ManifestData{folderManifest(2, app.ManifestVersionKindEmbedField{Name: "description", Path: "spec.description"})})
-	b.runBackfill(ctx)
-	require.Len(t, vec.upserts, 2)
+	f.configs.Reload([]*app.ManifestData{folderManifest(2, app.ManifestVersionKindEmbedField{Name: "description", Path: "spec.description"})})
+	f.run(t, backfillIteration{upserts: 1, completedJobs: []int64{1}})
 	assert.Equal(t, "folder_partition", vec.upserts[1][0].Resource)
 	assert.Equal(t, "description: Production dashboards", vec.upserts[1][0].Content)
 	assert.Equal(t, 2, vec.upserts[1][0].ContentVersion)
 	assert.Equal(t, 2, vec.jobContentVersion[1])
 	assert.True(t, vec.jobs[0].IsComplete)
 
-	configs.Reload([]*app.ManifestData{folderManifest(3, app.ManifestVersionKindEmbedField{Name: "description", Path: "spec.description"})})
-	b.runBackfill(ctx)
-	assert.Len(t, vec.upserts, 2, "unchanged text only needs its version advanced")
+	f.configs.Reload([]*app.ManifestData{folderManifest(3, app.ManifestVersionKindEmbedField{Name: "description", Path: "spec.description"})})
+	f.run(t, backfillIteration{completedJobs: []int64{1}})
 	require.Len(t, vec.updateCalls, 1)
 	assert.Equal(t, "folder_partition", vec.updateCalls[0].Resource)
 	assert.Equal(t, 3, vec.updateCalls[0].Version)
 
-	configs.Reload([]*app.ManifestData{folderManifest(4)})
-	b.runBackfill(ctx)
+	f.configs.Reload([]*app.ManifestData{folderManifest(4)})
+	f.run(t, backfillIteration{completedJobs: []int64{1}})
 	require.Len(t, vec.deletes, 1)
 	assert.Equal(t, "folder_partition", vec.deletes[0].Resource)
 	assert.Equal(t, "known", vec.deletes[0].UID)
 	assert.Equal(t, wantUnknown, vec.rows[rowsKey("ns", "test-model", "folder_partition", "unknown")][""])
-	assert.Equal(t, 6, provider.snapshots, "one immutable declaration snapshot per backfill run")
 }
 
 func TestRunBackfillCollectionUnavailable(t *testing.T) {
@@ -156,88 +188,57 @@ func TestRunBackfillCollectionUnavailable(t *testing.T) {
 }
 
 func TestBackfillIdenticalContentUpdatesChangedFolder(t *testing.T) {
-	configs := resource.NewEmbeddingConfigRegistry([]*app.ManifestData{
+	f := setupEnrollmentBackfillTest(t, []string{"folder.grafana.app/folders"}, nil)
+	f.configs.Reload([]*app.ManifestData{
 		folderManifest(2, app.ManifestVersionKindEmbedField{Name: "title", Path: "spec.title"}),
 	})
-	registry, err := enrollment.New(configs, []string{"folder.grafana.app/folders"}, nil, nil)
-	require.NoError(t, err)
-	storage := newFakeStorage()
-	item := listItem{Namespace: "ns", Name: "folder", RV: 50, Value: []byte(`{"apiVersion":"folder.grafana.app/v1","metadata":{"annotations":{"grafana.app/folder":"new-parent"}},"spec":{"title":"Operations"}}`)}
-	storage.listItems = []listItem{item}
-	storage.resources[storeKey("ns", "folder.grafana.app", "folders", "folder")] = storedResource{Value: item.Value, RV: item.RV}
-	storage.seedFolder("ns", "new-parent", "New parent")
-	vec := newFakeVector()
+	f.seedFolders(listItem{Namespace: "ns", Name: "folder", RV: 50, Value: []byte(`{"apiVersion":"folder.grafana.app/v1","metadata":{"annotations":{"grafana.app/folder":"new-parent"}},"spec":{"title":"Operations"}}`)})
+	f.storage.seedFolder("ns", "new-parent", "New parent")
+	vec := f.vec
 	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", Resource: "folders", StoppingRV: 100}}
 	vec.seedStoredContent("ns", "test-model", "folders", "folder", "", "title: Operations", 1)
 	old := vec.rows[rowsKey("ns", "test-model", "folders", "folder")][""]
 	old.Folder = "old-parent"
 	old.Embedding = []float32{0.1, 0.2}
 	vec.rows[rowsKey("ns", "test-model", "folders", "folder")][""] = old
-	text := &fakeText{dim: 4}
-	b, err := NewVectorBackfiller(Options{
-		Storage: storage, VectorBackend: vec, BatchEmbedder: embedder.NewBatchEmbedder(*newFakeEmbedder(text)), BuilderProvider: registry,
-	})
-	require.NoError(t, err)
-	b.runBackfill(context.Background())
-	assert.Zero(t, text.calls)
-	assert.Empty(t, vec.upserts)
+	f.run(t, backfillIteration{completedJobs: []int64{1}})
+	assert.Zero(t, f.text.calls)
 	old.Folder = "new-parent"
 	old.ContentVersion = 2
 	assert.Equal(t, old, vec.rows[rowsKey("ns", "test-model", "folders", "folder")][""])
 	require.Len(t, vec.updateCalls, 1)
-	assert.Equal(t, []int64{1}, vec.completedJobIDs)
 }
 
 func TestBackfillDefersJobNewerThanSnapshot(t *testing.T) {
+	f := setupEnrollmentBackfillTest(t, []string{"folder.grafana.app/folders"}, nil)
 	fields := []app.ManifestVersionKindEmbedField{{Name: "title", Path: "spec.title"}}
-	configs := resource.NewEmbeddingConfigRegistry([]*app.ManifestData{folderManifest(1, fields...)})
-	registry, err := enrollment.New(configs, []string{"folder.grafana.app/folders"}, nil, nil)
-	require.NoError(t, err)
-	storage := newFakeStorage()
-	item := listItem{Namespace: "ns", Name: "folder", RV: 50, Value: []byte(`{"apiVersion":"folder.grafana.app/v1","spec":{"title":"Operations"}}`)}
-	storage.listItems = []listItem{item}
-	storage.resources[storeKey("ns", "folder.grafana.app", "folders", "folder")] = storedResource{Value: item.Value, RV: item.RV}
-	vec := newFakeVector()
+	f.configs.Reload([]*app.ManifestData{folderManifest(1, fields...)})
+	f.seedFolders(listItem{Namespace: "ns", Name: "folder", RV: 50, Value: []byte(`{"apiVersion":"folder.grafana.app/v1","spec":{"title":"Operations"}}`)})
+	vec := f.vec
 	vec.onListJobs = func() {
-		configs.Reload([]*app.ManifestData{folderManifest(2, fields...)})
+		f.configs.Reload([]*app.ManifestData{folderManifest(2, fields...)})
 		vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", Resource: "folders", StoppingRV: 100, ContentVersion: 2}}
 		vec.onListJobs = nil
 	}
-	b, err := NewVectorBackfiller(Options{
-		Storage: storage, VectorBackend: vec, BatchEmbedder: embedder.NewBatchEmbedder(*newFakeEmbedder(&fakeText{dim: 4})), BuilderProvider: registry,
-	})
-	require.NoError(t, err)
-	b.runBackfill(context.Background())
-	assert.Empty(t, storage.listCalls)
-	assert.Empty(t, vec.upserts)
-	assert.Empty(t, vec.completedJobIDs, "an old snapshot must not complete a new-revision job")
-	b.runBackfill(context.Background())
-	require.Len(t, vec.upserts, 1)
+	f.run(t, backfillIteration{})
+	assert.Empty(t, f.storage.listCalls)
+	f.run(t, backfillIteration{upserts: 1, completedJobs: []int64{1}})
 	assert.Equal(t, 2, vec.upserts[0][0].ContentVersion)
-	assert.Equal(t, []int64{1}, vec.completedJobIDs)
 }
 
 func TestBackfillRemovedDeclarationLeavesOtherResourcesAvailable(t *testing.T) {
-	configs := resource.NewEmbeddingConfigRegistry([]*app.ManifestData{folderManifest(1)})
-	registry, err := enrollment.New(configs, []string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"}, []embed.Builder{dashboard.New()}, nil)
-	require.NoError(t, err)
-	vec := newFakeVector()
+	f := setupEnrollmentBackfillTest(t, []string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"}, []embed.Builder{dashboard.New()})
+	f.configs.Reload([]*app.ManifestData{folderManifest(1)})
+	vec := f.vec
 	vec.jobs = []vector.BackfillJob{
 		{ID: 1, Model: "test-model", Resource: "dashboards", StoppingRV: 100},
 		{ID: 2, Model: "test-model", Resource: "folders", StoppingRV: 100},
 	}
-	storage := newFakeStorage()
-	b, err := NewVectorBackfiller(Options{
-		Storage: storage, VectorBackend: vec, BatchEmbedder: embedder.NewBatchEmbedder(*newFakeEmbedder(&fakeText{dim: 4})), BuilderProvider: registry,
-	})
-	require.NoError(t, err)
-	configs.Reload(nil)
-	b.runBackfill(context.Background())
-	assert.Equal(t, []int64{1}, vec.completedJobIDs)
-	assert.Equal(t, []resource.NamespacedResource{{Group: "dashboard.grafana.app", Resource: "dashboards"}}, storage.listKeys)
+	f.configs.Reload(nil)
+	f.run(t, backfillIteration{completedJobs: []int64{1}})
+	assert.Equal(t, []resource.NamespacedResource{{Group: "dashboard.grafana.app", Resource: "dashboards"}}, f.storage.listKeys)
 	assert.False(t, vec.jobs[1].IsComplete)
-	configs.Reload([]*app.ManifestData{folderManifest(1)})
-	b.runBackfill(context.Background())
-	assert.Equal(t, []int64{1, 2}, vec.completedJobIDs)
+	f.configs.Reload([]*app.ManifestData{folderManifest(1)})
+	f.run(t, backfillIteration{completedJobs: []int64{2}})
 	assert.True(t, vec.jobs[1].IsComplete)
 }
