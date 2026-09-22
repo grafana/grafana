@@ -77,6 +77,32 @@ The **Role** option on the Permissions tab is limited to the basic roles **Viewe
 
 <div class="clearfix"></div>
 
+## Provisioned data sources
+
+Data sources added through [provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources), and Grafana-managed data sources on Grafana Cloud, are read-only in the UI. You can't change their configuration from the data source settings page, regardless of your data source permissions. This is separate from [data source permissions](#data-source-permissions): no permission level makes a provisioned data source editable in the UI. A read-only data source's settings page shows only a **Test** button instead of **Save & test**.
+
+To change a provisioned data source, use the method that matches how it's managed:
+
+- **Self-managed Grafana:** Edit the data source's provisioning file, then restart Grafana or reload provisioning. For more information, refer to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources).
+- **Grafana Cloud managed data source:** Open a support ticket from the Grafana Cloud Portal to request changes.
+
+### Create an editable copy of a provisioned data source
+
+If you need a data source you can edit in the UI, add another data source manually that connects to the same backend, then manage it independently of the provisioned data source:
+
+1. Click **Connections** in the left-side menu.
+1. Click **Add new connection**.
+1. Select the same data source type as the provisioned data source.
+1. Enter the same connection settings as the provisioned data source so both point at the same backend. The exact settings depend on the data source type. For a URL-based data source, use the same **URL**.
+1. Configure authentication. For a Grafana Cloud-hosted backend, use basic authentication with your Grafana Cloud user ID as the user name and a Cloud Access Policy token as the password. The token's access policy must include the scope required to query the backend.
+1. Click **Save & test**.
+
+After you create the copy, update your dashboards, panels, and alert rules to query the new data source. Existing queries continue to use the provisioned data source until you point them at the copy.
+
+{{< admonition type="note" >}}
+The copy is independent of the provisioned data source. Later changes to the provisioned data source, such as credential rotations or URL updates, don't propagate to your copy. Update the copy manually if the backend configuration changes.
+{{< /admonition >}}
+
 ## Query and resource caching
 
 When you enable query and resource caching, Grafana temporarily stores the results of data source queries and resource requests. When you or another user submit the same query or resource request again, the results will come back from the cache instead of from the data source.

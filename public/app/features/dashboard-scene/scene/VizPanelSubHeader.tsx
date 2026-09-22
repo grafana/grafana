@@ -1,6 +1,6 @@
 import { type Unsubscribable } from 'rxjs';
 
-import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient, useFlagPerPanelNonApplicableDrilldowns } from '@grafana/runtime/internal';
 import {
   type SceneComponentProps,
   type SceneObjectState,
@@ -55,7 +55,7 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
       throw new Error('VizPanelSubHeader can be used only with VizPanel');
     }
 
-    if (config.featureToggles.perPanelNonApplicableDrilldowns) {
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.PerPanelNonApplicableDrilldowns, false)) {
       this.subscribeToDrilldownVariableChanges();
     }
 
@@ -194,10 +194,11 @@ function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPanelSubHea
   const adhocFiltersVar = variables.state.variables.find((variable) => variable instanceof AdHocFiltersVariable);
   const groupByVar = variables.state.variables.find((variable) => variable instanceof GroupByVariable);
   const queryRunner = model.getQueryRunner();
+  const perPanelNonApplicableDrilldownsEnabled = useFlagPerPanelNonApplicableDrilldowns();
 
   if (
     !queryRunner ||
-    !config.featureToggles.perPanelNonApplicableDrilldowns ||
+    !perPanelNonApplicableDrilldownsEnabled ||
     pluginHidesNonApplicableFilters ||
     !supportsApplicability
   ) {
