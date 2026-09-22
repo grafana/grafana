@@ -10,6 +10,7 @@ import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound'
 
 import { notebookResourceFor } from '../api/notebookResource';
 import { NotebookPageStateManager, type NotebookLoadError } from '../pages/NotebookPageStateManager';
+import { NotebookEmbeddedHost } from '../scene/NotebookEmbeddedContext';
 import { type NotebookScene } from '../scene/NotebookScene';
 import { NotebookSceneControls } from '../scene/NotebookSceneControls';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
@@ -263,19 +264,27 @@ function NotebookDocument({ scene, onTitleChange }: { scene: NotebookScene; onTi
   }, [onTitleChange, title]);
 
   /**
-   * `stickyOffset={0}` rather than a flag on the scene: this tree has no app header, but the same
-   * scene may also be mounted on /notebooks, which does, and the two share one object so they share
-   * one autosave. A prop answers per mount; scene state could not.
+   * Two answers this tree owes the notebook, both per-mount, because the same scene object may also
+   * be mounted on /notebooks at the same time and the two share it.
    *
-   * The column is explicit because this component renders into a host we do not control (the
-   * assistant's canvas), and the controls row and the document are two siblings that need a flex
-   * column above them for the sticky row to behave.
+   * `stickyOffset={0}`: there is no app header here for the sticky row to stop beneath.
+   *
+   * `NotebookEmbeddedHost`: the toolbar asks it whether the destructive actions are safe, and in a
+   * host like the assistant's canvas they are not — Delete would navigate the whole host away. That
+   * is a question about the tree rather than about layout, which is why it stays a context rather
+   * than becoming another prop.
+   *
+   * The column is explicit because this renders into a host we do not control, and the controls row
+   * and the document are two siblings that need a flex column above them for the sticky row to
+   * behave.
    */
   return (
-    <div className={styles.host}>
-      <NotebookSceneControls model={scene} stickyOffset={0} />
-      <scene.Component model={scene} />
-    </div>
+    <NotebookEmbeddedHost>
+      <div className={styles.host}>
+        <NotebookSceneControls model={scene} stickyOffset={0} />
+        <scene.Component model={scene} />
+      </div>
+    </NotebookEmbeddedHost>
   );
 }
 

@@ -6,8 +6,9 @@ import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { KioskMode } from 'app/types/dashboard';
 
+import { NotebookToolbar } from '../toolbar/NotebookToolbar';
+
 import { NotebookEditHistoryControls } from './NotebookEditHistoryControls';
-import { NotebookEditToggle } from './NotebookEditToggle';
 import { NotebookSaveStatus } from './NotebookSaveStatus';
 import { type NotebookScene } from './NotebookScene';
 
@@ -26,7 +27,8 @@ interface Props {
 }
 
 /**
- * The notebook's own controls row: save status, undo/redo, the edit toggle and the time controls.
+ * The notebook's own controls row: save status, undo/redo, the time controls, and the toolbar
+ * (which owns the edit toggle and the copy/export/delete actions).
  *
  * Rendered by each surface that wants it rather than by the scene, so that a surface which does not
  * — the PDF capture route — simply leaves it out instead of the scene having to ask who is drawing
@@ -38,7 +40,7 @@ interface Props {
 export function NotebookSceneControls({ model, stickyOffset }: Props) {
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const styles = useStyles2(getStyles, stickyOffset, visualRefreshEnabled);
-  const { timePicker, refreshPicker, hideTimeControls, isEditing } = model.useState();
+  const { timePicker, refreshPicker, hideTimeControls, isEditing, uid } = model.useState();
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
   // A display someone has put a notebook on: the editing affordances go away, but the time controls
@@ -54,7 +56,6 @@ export function NotebookSceneControls({ model, stickyOffset }: Props) {
               say. */}
           <NotebookSaveStatus autosave={model.autosave} />
           {isEditing && <NotebookEditHistoryControls history={model.editHistory} />}
-          <NotebookEditToggle notebook={model} />
         </>
       )}
       {!hideTimeControls && (
@@ -63,6 +64,9 @@ export function NotebookSceneControls({ model, stickyOffset }: Props) {
           <refreshPicker.Component model={refreshPicker} />
         </>
       )}
+      {/* Last in the row, as on the ordinary page. The toolbar checks nothing about kiosk itself —
+          it is chrome, so the row simply does not render it there. */}
+      {!isKioskFull && <NotebookToolbar uid={uid} scene={model} />}
     </div>
   );
 }

@@ -6,11 +6,17 @@ import { SceneTimeRange } from '@grafana/scenes';
 
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
+import { type DashboardPlanningState } from '../types/dashboard';
 
 import { RowItem } from './RowItem';
 import { RowsLayoutManager } from './RowsLayoutManager';
 
-function renderRow({ collapse = false, title = 'My row', isEditing = false } = {}) {
+function renderRow({
+  collapse = false,
+  title = 'My row',
+  isEditing = false,
+  planning,
+}: { collapse?: boolean; title?: string; isEditing?: boolean; planning?: DashboardPlanningState } = {}) {
   const row = new RowItem({
     key: 'row-1',
     title,
@@ -21,6 +27,7 @@ function renderRow({ collapse = false, title = 'My row', isEditing = false } = {
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
     body: new RowsLayoutManager({ rows: [row] }),
     isEditing,
+    planning,
   });
   render(<scene.Component model={scene} />);
   return { row };
@@ -88,6 +95,21 @@ describe('RowItemRenderer', () => {
       expect(document.querySelector('[data-rfd-drag-handle-draggable-id="row-1"]')).toBeInTheDocument();
     });
 
+    expect(screen.queryByRole('button', { name: 'Copy link to row' })).not.toBeInTheDocument();
+  });
+
+  it('hides the copy link button while previewing a dashboard plan (planning)', () => {
+    renderRow({
+      planning: {
+        planId: 'plan-1',
+        planTitle: 'Dashboard plan',
+        panelCount: 0,
+        onBuild: () => {},
+        onDismiss: () => {},
+      },
+    });
+
+    expect(screen.getByRole('button', { name: 'Collapse row My row' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Copy link to row' })).not.toBeInTheDocument();
   });
 

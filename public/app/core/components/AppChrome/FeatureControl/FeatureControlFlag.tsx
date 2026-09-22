@@ -9,7 +9,6 @@ import {
   Badge,
   type BadgeColor,
   Button,
-  CodeEditor,
   Combobox,
   type ComboboxOption,
   Field,
@@ -19,6 +18,7 @@ import {
   Text,
   useStyles2,
 } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 
 const compare = new Intl.Collator('en', { sensitivity: 'base', numeric: true }).compare;
 
@@ -311,7 +311,13 @@ export const FeatureControlFlag = ({ flag }: FeatureControlFlagProps) => {
 
         {type === 'object' && (
           <Field noMargin error={error} invalid={!!error}>
-            <CodeEditor value={json} onChange={changeJson} language="json" height={80} />
+            <CodeMirrorEditor
+              value={json}
+              onChange={changeJson}
+              language="json"
+              height="80px"
+              aria-label={t('feature-control.flag-value', 'Flag value')}
+            />
           </Field>
         )}
       </div>
