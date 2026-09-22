@@ -1,6 +1,5 @@
 import { createDataFrame, createTheme, DataFrameType, dateTime, FieldType, toDataFrame } from '@grafana/data';
 import { HeatmapCalculationMode, ScaleDistribution } from '@grafana/schema';
-
 import { rowsToCellsHeatmap } from 'app/features/transformers/calculateHeatmap/heatmap';
 
 import { getExemplarYValues, prepareHeatmapData } from './fields';
