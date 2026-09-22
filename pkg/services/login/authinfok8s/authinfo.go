@@ -13,6 +13,7 @@ import (
 	"golang.org/x/oauth2"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -382,9 +383,9 @@ func (s *Store) legacyUserID(ctx context.Context, client *iamv0alpha1.UserClient
 // findByAuthID looks up the most-recently-created AuthInfo object matching
 // authModule + authID, across all users.
 func (s *Store) findByAuthID(ctx context.Context, client *iamv0alpha1.AuthInfoClient, namespace, authModule, authID string) (iamv0alpha1.AuthInfo, error) {
-	selectors := []string{"spec.authID=" + authID}
+	selectors := []string{"spec.authID=" + fields.EscapeValue(authID)}
 	if authModule != "" {
-		selectors = append(selectors, "spec.authModule="+authModule)
+		selectors = append(selectors, "spec.authModule="+fields.EscapeValue(authModule))
 	}
 
 	list, err := client.ListAll(ctx, namespace, resource.ListOptions{FieldSelectors: selectors})

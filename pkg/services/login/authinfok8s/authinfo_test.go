@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	clientrest "k8s.io/client-go/rest"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -216,6 +217,31 @@ func TestStore_GetAuthInfo(t *testing.T) {
 				}
 			},
 			want: &login.UserAuth{UserId: 99, UserUID: "user-uid", AuthModule: "oauth_github", AuthId: "github-99", Created: created},
+		},
+		{
+			name:  "AuthId with selector metacharacters, no UserId",
+			query: &login.GetAuthInfoQuery{AuthId: "cn=test,ou=people,dc=example,dc=com", AuthModule: "ldap"},
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				switch {
+				case strings.HasSuffix(r.URL.Path, "/authinfos"):
+					fs := r.URL.Query().Get("fieldSelector")
+					assert.Contains(t, fs, `spec.authID=cn\=test\,ou\=people\,dc\=example\,dc\=com`)
+					sel, err := fields.ParseSelector(fs)
+					require.NoError(t, err)
+					authID, ok := sel.RequiresExactMatch("spec.authID")
+					require.True(t, ok)
+					assert.Equal(t, "cn=test,ou=people,dc=example,dc=com", authID, "the selector must round-trip back to the literal AuthId")
+
+					writeJSON(t, w, iamv0alpha1.AuthInfoList{Items: []iamv0alpha1.AuthInfo{
+						authInfoItem("user-uid.ldap", "user-uid", "ldap", "cn=test,ou=people,dc=example,dc=com", created),
+					}})
+				case strings.Contains(r.URL.Path, "/users/"):
+					userByUIDResponse(t, w, "user-uid", 99)
+				default:
+					t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+				}
+			},
+			want: &login.UserAuth{UserId: 99, UserUID: "user-uid", AuthModule: "ldap", AuthId: "cn=test,ou=people,dc=example,dc=com", Created: created},
 		},
 		{
 			name:  "AuthId only, no match",
