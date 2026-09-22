@@ -246,43 +246,6 @@ func doAuthInfoListByAuthIDTest(t *testing.T, helper *apis.K8sTestHelper) {
 	})
 }
 
-func doAuthInfoListByAuthIDTest(t *testing.T, helper *apis.K8sTestHelper) {
-	t.Run("should list by authID alone, without knowing the user", func(t *testing.T) {
-		ctx := context.Background()
-		userUID := createTestUser(t, helper, "authinfo-by-authid-user", "authinfo-by-authid-user@example.com")
-		authInfoClient := authInfoResourceClient(helper, helper.Org1.Admin)
-
-		authID := "by-authid-" + userUID
-		created, err := authInfoClient.Resource.Create(ctx, createAuthInfoObject(helper, userUID, "ldap", authID), metav1.CreateOptions{})
-		require.NoError(t, err)
-
-		list, err := authInfoClient.Resource.List(ctx, metav1.ListOptions{
-			FieldSelector: fmt.Sprintf("spec.authID=%s", authID),
-		})
-		require.NoError(t, err)
-		require.Len(t, list.Items, 1)
-		require.Equal(t, created.GetName(), list.Items[0].GetName())
-
-		list, err = authInfoClient.Resource.List(ctx, metav1.ListOptions{
-			FieldSelector: fmt.Sprintf("spec.authID=%s,spec.authModule=ldap", authID),
-		})
-		require.NoError(t, err)
-		require.Len(t, list.Items, 1)
-		require.Equal(t, created.GetName(), list.Items[0].GetName())
-	})
-
-	t.Run("should return an empty list for an authID with no match", func(t *testing.T) {
-		ctx := context.Background()
-		authInfoClient := authInfoResourceClient(helper, helper.Org1.Admin)
-
-		list, err := authInfoClient.Resource.List(ctx, metav1.ListOptions{
-			FieldSelector: "spec.authID=no-such-auth-id",
-		})
-		require.NoError(t, err)
-		require.Empty(t, list.Items)
-	})
-}
-
 func doAuthInfoDeleteTests(t *testing.T, helper *apis.K8sTestHelper) {
 	t.Run("delete removes the object and its user_auth row", func(t *testing.T) {
 		ctx := context.Background()
