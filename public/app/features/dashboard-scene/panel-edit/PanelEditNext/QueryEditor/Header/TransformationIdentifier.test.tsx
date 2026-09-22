@@ -5,6 +5,7 @@ import {
   type DataTransformerConfig,
   DataTransformerID,
   FieldType,
+  FrameMatcherID,
   LoadingState,
   type PanelData,
   type TransformerRegistryItem,
@@ -56,6 +57,14 @@ const seriesB = toDataFrame({
   fields: [
     { name: 'time', type: FieldType.time, values: [3000, 4000] },
     { name: 'value', type: FieldType.number, values: [3, 4] },
+  ],
+});
+
+const seriesC = toDataFrame({
+  refId: 'C',
+  fields: [
+    { name: 'time', type: FieldType.time, values: [5000, 6000] },
+    { name: 'value', type: FieldType.number, values: [5, 6] },
   ],
 });
 
@@ -191,5 +200,40 @@ describe('TransformationIdentifier', () => {
     expect(await screen.findByText('merge-A-B')).toBeInTheDocument();
     expect(useTransformationGeneratedRefId).toHaveBeenCalled();
     expect(usePreviousTransformationOutput).toHaveBeenCalled();
+  });
+
+  it('names the output of a filtered transformation, ignoring the frames the filter excluded', async () => {
+    const transformation = getTransformation(
+      { id: DataTransformerID.merge, options: {}, filter: { id: FrameMatcherID.byRefId, options: 'A|B' } },
+      true
+    );
+    renderIdentifier(transformation, jest.fn(), getData([seriesA, seriesB, seriesC]));
+
+    // C is spliced back into the output untouched, so it is not this transformation's to name.
+    expect(await screen.findByText('merge-A-B')).toBeInTheDocument();
+  });
+
+  it('resolves a variable in the filter before working out the name', async () => {
+    mockReplace = (v) => v.replace(/\$refs/g, 'A|B');
+    const transformation = getTransformation(
+      { id: DataTransformerID.merge, options: {}, filter: { id: FrameMatcherID.byRefId, options: '$refs' } },
+      true
+    );
+    renderIdentifier(transformation, jest.fn(), getData([seriesA, seriesB, seriesC]));
+
+    // Matching on the literal `$refs` would admit no frames at all, leaving nothing to name.
+    expect(await screen.findByText('merge-A-B')).toBeInTheDocument();
+  });
+
+  it('falls back to no filter when the configured one cannot be built into a matcher', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    const transformation = getTransformation(
+      { id: DataTransformerID.merge, options: {}, filter: { id: 'no-such-matcher', options: 'A' } },
+      true
+    );
+    renderIdentifier(transformation, jest.fn(), getData([seriesA, seriesB, seriesC]));
+
+    // A throw here would take the whole editor down, since this runs during render.
+    expect(await screen.findByRole('button', { name: /edit transformation name/i })).toBeInTheDocument();
   });
 });
