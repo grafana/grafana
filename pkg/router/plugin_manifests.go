@@ -143,7 +143,7 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 		deps.ContextProvider = nil
 		deps.PluginSettings = nil
 		deps.DualWrite = nil
-		deps.AccessControl = pluginManifestAccessControl{} // Says YES!
+		deps.AccessControl = pluginManifestAccessControl{}
 
 		backend, err := NewPluginBackend(entry.Definition, clients, deps)
 

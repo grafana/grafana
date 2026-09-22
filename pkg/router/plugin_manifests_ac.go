@@ -8,8 +8,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 )
 
-// This is an access control implementaiton that always says yes if you have access to an app
+// Remote deployments bypass the legacy app-access permission check because local
+// plugin settings are unavailable. Authentication remains in authenticatingWrapper;
+// this implementation grants app access regardless of the requester or scope.
 type pluginManifestAccessControl struct{}
+
+var _ accesscontrol.AccessControl = pluginManifestAccessControl{}
 
 func (pluginManifestAccessControl) Evaluate(_ context.Context, _ identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
 	return evaluator.EvaluateCustom(func(action string, _ ...string) (bool, error) {
