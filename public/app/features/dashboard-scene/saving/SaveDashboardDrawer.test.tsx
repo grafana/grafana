@@ -456,6 +456,31 @@ describe('SaveDashboardDrawer', () => {
       expect(await screen.findByText('dashboard quota reached')).toBeInTheDocument();
     });
 
+    it('Shows save failures when the copy title has surrounding whitespace', async () => {
+      const { openAndRender } = setup();
+      await openAndRender({ saveAsCopy: true });
+      const titleInput = await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput);
+      await userEvent.clear(titleInput);
+      await userEvent.type(titleInput, ' Copy title ');
+      await userEvent.tab();
+      mockSaveDashboard({
+        rawError: k8sStatusError(429, { reason: 'TooManyRequests', message: 'dashboard quota reached' }),
+      });
+
+      const saveButton = screen.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton);
+      await waitFor(() => expect(saveButton).toHaveAttribute('aria-disabled', 'false'));
+      await userEvent.click(saveButton);
+
+      expect(saveDashboardMutationMock).toHaveBeenCalledTimes(1);
+      expect(await screen.findByText('dashboard quota reached')).toBeInTheDocument();
+
+      await userEvent.clear(titleInput);
+      await userEvent.type(titleInput, 'Different title');
+
+      expect(titleInput).toHaveValue('Different title');
+      expect(screen.queryByText('dashboard quota reached')).not.toBeInTheDocument();
+    });
+
     it('Lists each field level cause when the apiserver rejects the copy as Invalid', async () => {
       const { openAndRender } = setup();
       openAndRender({ saveAsCopy: true });

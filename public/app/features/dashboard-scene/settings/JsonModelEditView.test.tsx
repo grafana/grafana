@@ -1,4 +1,26 @@
+import { cleanup, render, screen } from 'test/test-utils';
+
+import { type FetchError } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { defaultSpec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import { type MetaStatus } from 'app/features/apiserver/types';
+
+import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
+
 import { JsonModelEditView } from './JsonModelEditView';
+
+const saveDashboardMutationMock = jest.fn();
+
+jest.mock('app/features/browse-dashboards/api/browseDashboardsAPI', () => ({
+  ...jest.requireActual('app/features/browse-dashboards/api/browseDashboardsAPI'),
+  useSaveDashboardMutation: () => [saveDashboardMutationMock],
+}));
+
+// Monaco's web workers are unavailable in jsdom.
+jest.mock('../v2schema/DashboardSchemaEditor', () => ({
+  DashboardSchemaEditor: () => null,
+}));
 
 describe('JsonModelEditView.getEditedSaveModel', () => {
   it('unwraps the v2 resource envelope back to the bare spec', () => {
@@ -103,4 +125,68 @@ describe('JsonModelEditView.validateEditedResource', () => {
 
     expect(view.validateEditedResource()).toEqual({ success: true });
   });
+});
+
+describe('JsonModelEditView save failures', () => {
+  beforeEach(() => {
+    setTestFlags({ [FlagKeys.GrafanaDashboardSettingsRedesign]: false });
+    saveDashboardMutationMock.mockReset();
+  });
+
+  afterEach(() => {
+    cleanup();
+    setTestFlags({});
+  });
+
+  it.each([
+    {
+      reason: 'Invalid',
+      status: 422,
+      message: 'Dashboard is invalid',
+      details: { causes: [{ field: 'spec.title', message: 'title cannot be empty' }] },
+      expectedTitle: 'This dashboard is not valid',
+      expectedMessage: 'spec.title: title cannot be empty',
+    },
+    {
+      reason: 'Forbidden',
+      status: 403,
+      message: 'Permission to update this dashboard was revoked',
+      expectedTitle: 'You do not have permission to save this dashboard',
+      expectedMessage: 'Permission to update this dashboard was revoked',
+    },
+    {
+      reason: 'InternalError',
+      status: 500,
+      message: 'Failed to write to storage',
+      expectedTitle: 'Failed to save dashboard',
+      expectedMessage: 'Failed to write to storage',
+    },
+  ])(
+    'displays the server explanation for $reason',
+    async ({ status, reason, message, details, expectedTitle, expectedMessage }) => {
+      const error: FetchError<MetaStatus> = {
+        status,
+        config: { url: '/apis/dashboard.grafana.app/v2/namespaces/default/dashboards/my-uid' },
+        data: { kind: 'Status', status: 'Failure', message, reason, details, code: status },
+      };
+      saveDashboardMutationMock.mockResolvedValue({ error });
+      const dashboard = transformSaveModelSchemaV2ToScene({
+        apiVersion: 'dashboard.grafana.app/v2',
+        kind: 'DashboardWithAccessInfo',
+        metadata: { name: 'my-uid', resourceVersion: '1', creationTimestamp: '2026-01-01T00:00:00Z' },
+        spec: { ...defaultSpec(), title: 'Dashboard' },
+        access: { canSave: true },
+      });
+      const view = new JsonModelEditView({});
+      dashboard.setState({ editview: view });
+      view.setState({ jsonText: view.getJsonText() });
+      const { user } = render(<view.Component model={view} />);
+
+      await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+      expect(await screen.findByText(expectedTitle)).toBeInTheDocument();
+      expect(await screen.findByText(expectedMessage)).toBeInTheDocument();
+      expect(saveDashboardMutationMock).toHaveBeenCalledWith(expect.objectContaining({ showErrorAlert: false }));
+    }
+  );
 });

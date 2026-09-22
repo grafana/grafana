@@ -176,7 +176,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, drawer, isHeld }: P
   };
   function renderFooter(error?: Error) {
     const formValuesMatchContentSent =
-      formValues.title.trim() === contentSent.title && formValues.folder.uid === contentSent.folderUid;
+      formValues.title.trim() === contentSent.title?.trim() && formValues.folder.uid === contentSent.folderUid;
     // Once the user edits the title or folder the error no longer describes what they'd be saving.
     const errorInfo = formValuesMatchContentSent ? getSaveDashboardErrorInfo(error) : undefined;
 
