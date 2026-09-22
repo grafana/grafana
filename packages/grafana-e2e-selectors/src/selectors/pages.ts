@@ -1327,6 +1327,9 @@ export const versionedPages = {
       footerAddCellButton: {
         '13.3.0': (type: string) => `data-testid notebooks item footer-add-cell-button ${type}`,
       },
+      panelCell: {
+        '13.3.0': 'data-testid notebooks item panel-cell',
+      },
     },
   },
   Provisioning: {

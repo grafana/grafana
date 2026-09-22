@@ -3,6 +3,7 @@ import { offset, useDismiss, useFloating, useInteractions } from '@floating-ui/r
 import { Suspense, useEffect, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { SceneDataTransformer, type VizPanel } from '@grafana/scenes';
 import { floatingUtils, Portal, Stack, useStyles2 } from '@grafana/ui';
@@ -100,7 +101,7 @@ function PanelCell({
   return (
     <Stack direction="column" gap={1}>
       {isEditing && isEditableQueryPanel(panel) && <PanelQueryEditor cell={cell} panel={panel} autoFocus={autoFocus} />}
-      <div className={styles.panel}>
+      <div className={styles.panel} data-testid={selectors.pages.Notebooks.Item.panelCell}>
         <panel.Component model={panel} />
       </div>
     </Stack>
