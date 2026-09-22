@@ -402,7 +402,7 @@ func (r *ResourcesManager) deleteOldResource(ctx context.Context, sourcePath, ol
 
 	cfg := r.repo.Config()
 
-	ctx, _, err = identity.WithProvisioningIdentity(ctx, cfg.GetNamespace())
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, cfg.GetNamespace(), identity.WithServiceIdentityName(cfg.GetName()))
 	if err != nil {
 		return fmt.Errorf("unable to use provisioning identity: %w", err)
 	}
