@@ -1,15 +1,10 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 
-import {
-  FeatureState,
-  type FieldConfigSource,
-  type GrafanaTheme2,
-  type PanelPluginVisualizationSuggestion,
-} from '@grafana/data';
+import { type FieldConfigSource, type GrafanaTheme2, type PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { sceneGraph, type VizPanel } from '@grafana/scenes';
-import { FeatureBadge, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 import { VisualizationCardGrid } from 'app/features/panel/components/VizTypePicker/VisualizationCardGrid';
 import { VizSuggestionsInteractions } from 'app/features/panel/components/VizTypePicker/interactions';
@@ -79,7 +74,6 @@ export function PanelStylesSection({ panel, onApplyPreset }: PanelStylesSectionP
       renderTitle={() => (
         <Stack direction="row" alignItems="center" gap={1}>
           <Trans i18nKey="dashboard-scene.panel-styles.title">Panel styles</Trans>
-          <FeatureBadge featureState={FeatureState.new} />
         </Stack>
       )}
     >
