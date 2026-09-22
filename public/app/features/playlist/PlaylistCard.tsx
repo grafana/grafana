@@ -43,17 +43,29 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
         </Stack>
       </Card.Heading>
       <Card.Actions>
-        <Button variant="secondary" icon="play" onClick={() => setStartPlaylist(playlist)}>
-          <Trans i18nKey="playlist-page.card.start">Start playlist</Trans>
+        <Button variant="accent" icon="play" onClick={() => setStartPlaylist(playlist)} fill="outline" size="sm">
+          <Trans i18nKey="playlist-page.card.start">Start</Trans>
         </Button>
         {canWrite && (
-          <LinkButton key="edit" variant="secondary" href={`/playlists/edit/${playlist.metadata?.name}`} icon="cog">
-            <Trans i18nKey="playlist-page.card.edit">Edit playlist</Trans>
+          <LinkButton
+            key="edit"
+            variant="secondary"
+            href={`/playlists/edit/${playlist.metadata?.name}`}
+            icon="cog"
+            size="sm"
+          >
+            <Trans i18nKey="playlist-page.card.edit">Edit</Trans>
           </LinkButton>
         )}
         {canWrite && (
-          <Button disabled={false} onClick={() => setPlaylistToDelete(playlist)} icon="trash-alt" variant="destructive">
-            <Trans i18nKey="playlist-page.card.delete">Delete playlist</Trans>
+          <Button
+            disabled={false}
+            onClick={() => setPlaylistToDelete(playlist)}
+            icon="trash-alt"
+            variant="secondary"
+            size="sm"
+          >
+            <Trans i18nKey="playlist-page.card.delete">Delete</Trans>
           </Button>
         )}
       </Card.Actions>

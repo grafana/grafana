@@ -13666,9 +13666,9 @@
   },
   "playlist-page": {
     "card": {
-      "delete": "Delete playlist",
-      "edit": "Edit playlist",
-      "start": "Start playlist",
+      "delete": "Delete",
+      "edit": "Edit",
+      "start": "Start",
       "tooltip": "Share playlist"
     },
     "create-button": {
