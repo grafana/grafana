@@ -1044,13 +1044,16 @@ describe('DashboardDatasourceBehaviour', () => {
     let sourcePanel: VizPanel;
     let spy: jest.SpyInstance;
     let deactivate: (() => void) | undefined;
+    let deactivateSource: (() => void) | undefined;
 
     beforeEach(() => {
       deactivate = undefined;
+      deactivateSource = undefined;
       sourcePanel = new VizPanel({
         title: 'Panel A',
         pluginId: 'table',
         key: 'panel-1',
+        applyPluginTransformations: false,
         $data: new SceneDataTransformer({
           transformations: [],
           $data: new SceneQueryRunner({
@@ -1089,6 +1092,7 @@ describe('DashboardDatasourceBehaviour', () => {
 
     afterEach(() => {
       deactivate?.();
+      deactivateSource?.();
       spy?.mockRestore();
     });
 
@@ -1104,6 +1108,27 @@ describe('DashboardDatasourceBehaviour', () => {
         },
       });
 
+      expect(spy).toHaveBeenCalledTimes(1);
+    });
+
+    it('reruns the consumer when the source query runner updates with plugin transformations disabled', () => {
+      const sourceTransformer = sourcePanel.state.$data as SceneDataTransformer;
+      const sourceQueryRunner = sourceTransformer.state.$data as SceneQueryRunner;
+      deactivateSource = sourceTransformer.activate();
+
+      expect(sourcePanel.state.applyPluginTransformations).toBe(false);
+      expect(spy).not.toHaveBeenCalled();
+
+      sourceQueryRunner.setState({
+        data: {
+          state: LoadingState.Done,
+          series: [],
+          timeRange: getDefaultTimeRange(),
+          request: { requestId: 'new-request-id' } as DataQueryRequest,
+        },
+      });
+
+      expect(sourceTransformer.state.data).toBe(sourceQueryRunner.state.data);
       expect(spy).toHaveBeenCalledTimes(1);
     });
   });
