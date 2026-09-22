@@ -121,6 +121,9 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceU
 
 	var deletedCount, skippedCount int
 	err = srv.xactManager.InTransaction(c.Req.Context(), func(ctx context.Context) error {
+		// Reset on every invocation: InTransaction may retry this callback (e.g. on a SQLite busy
+		// error), and these counters must reflect only the attempt that actually committed.
+		deletedCount, skippedCount = 0, 0
 		deletionCandidates := map[ngmodels.AlertRuleGroupKey]ngmodels.RulesGroup{}
 		if finalGroup != "" {
 			key := ngmodels.AlertRuleGroupKey{
@@ -897,6 +900,9 @@ func (srv RulerSrv) RouteUpdateNamespaceRules(c *contextmodel.ReqContext, body a
 
 	var updated, skipped int
 	err = srv.xactManager.InTransaction(c.Req.Context(), func(ctx context.Context) error {
+		// Reset on every invocation: InTransaction may retry this callback (e.g. on a SQLite busy
+		// error), and these counters must reflect only the attempt that actually committed.
+		updated, skipped = 0, 0
 		for groupKey, rules := range ruleGroups {
 			// Check provenance directly instead of relying on performUpdateAlertRules to reject provisioned
 			// groups: if the requested change is a no-op (e.g. resuming a rule that was never paused because
