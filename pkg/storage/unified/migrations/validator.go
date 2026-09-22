@@ -3,11 +3,13 @@ package migrations
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
@@ -331,48 +333,63 @@ func (v *FolderTreeValidator) buildLegacyFolderParentMap(sess *xorm.Session, org
 	return parentMap, nil
 }
 
+// A variable so tests can page over a handful of folders.
+var folderSearchPageSize int64 = 10000
+
 func (v *FolderTreeValidator) buildUnifiedFolderParentMap(ctx context.Context, namespace string, log log.Logger) (map[string]string, error) {
-	// Search for all folders in this namespace
-	searchResp, err := v.client.Search(ctx, &resourcepb.ResourceSearchRequest{
-		Options: &resourcepb.ListOptions{
-			Key: &resourcepb.ResourceKey{
-				Namespace: namespace,
-				Group:     v.resource.Group,
-				Resource:  v.resource.Resource,
-			},
-		},
-		Limit: 100000, // Large limit to get all folders
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to search folders in unified storage: %w", err)
-	}
-
-	if searchResp.Results == nil {
-		return make(map[string]string), nil
-	}
-
 	parentMap := make(map[string]string)
-	for _, row := range searchResp.Results.Rows {
-		if row.Key == nil {
-			continue
+
+	// Paging with the cursor of the last row read, rather than with an offset,
+	// because a folder created or deleted while we page shifts every offset after
+	// it and would hide or duplicate folders.
+	var cursor []string
+	for page := 1; ; page++ {
+		searchResp, err := v.client.Search(ctx, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Namespace: namespace,
+					Group:     v.resource.Group,
+					Resource:  v.resource.Resource,
+				},
+			},
+			Limit:        folderSearchPageSize,
+			SearchAfter:  cursor,
+			Fields:       []string{resource.SEARCH_FIELD_FOLDER},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to search folders in unified storage (page %d): %w", page, err)
+		}
+		if searchResp == nil {
+			return nil, fmt.Errorf("failed to search folders in unified storage (page %d): empty response", page)
+		}
+		if searchResp.GetError() != nil {
+			return nil, fmt.Errorf("failed to search folders in unified storage (page %d): %w", page, resource.GetError(searchResp.GetError()))
 		}
 
-		folderUID := row.Key.Name
-		parentUID := ""
-
-		folderColIdx := -1
-		for i, col := range searchResp.Results.Columns {
-			if col.Name == "folder" {
-				folderColIdx = i
-				break
-			}
+		rows, err := decodeFolderRows(searchResp)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode folders from unified storage (page %d): %w", page, err)
+		}
+		for _, row := range rows {
+			parentMap[row.name] = row.parent
 		}
 
-		if folderColIdx >= 0 && folderColIdx < len(row.Cells) {
-			parentUID = string(row.Cells[folderColIdx])
+		// Only a full page can be followed by another one.
+		if int64(len(rows)) < folderSearchPageSize {
+			break
 		}
 
-		parentMap[folderUID] = parentUID
+		next := rows[len(rows)-1].cursor
+		// Without a usable cursor the next request would repeat this page forever,
+		// and the map built so far may be missing folders.
+		if len(next) == 0 {
+			return nil, fmt.Errorf("failed to page folders in unified storage: page %d of %d folders carries no pagination cursor", page, len(rows))
+		}
+		if slices.Equal(next, cursor) {
+			return nil, fmt.Errorf("failed to page folders in unified storage: page %d did not move past cursor %v", page, cursor)
+		}
+		cursor = next
 	}
 
 	log.Debug("Built unified folder parent map",
@@ -380,6 +397,79 @@ func (v *FolderTreeValidator) buildUnifiedFolderParentMap(ctx context.Context, n
 		"namespace", namespace)
 
 	return parentMap, nil
+}
+
+type unifiedFolderRow struct {
+	name   string
+	parent string
+	// Sort values of this row, passed back as SearchAfter to continue paging.
+	cursor []string
+}
+
+func decodeFolderRows(response *resourcepb.ResourceSearchResponse) ([]unifiedFolderRow, error) {
+	if response == nil {
+		return nil, nil
+	}
+
+	switch response.GetResultFormat() {
+	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
+		table := response.GetResults()
+		if table == nil {
+			return nil, nil
+		}
+		folderColumn := -1
+		for i, column := range table.GetColumns() {
+			if column.GetName() == resource.SEARCH_FIELD_FOLDER {
+				folderColumn = i
+				break
+			}
+		}
+		rows := make([]unifiedFolderRow, 0, len(table.GetRows()))
+		for i, row := range table.GetRows() {
+			if row == nil || row.GetKey() == nil {
+				return nil, fmt.Errorf("row %d has no key", i)
+			}
+			parentUID := ""
+			if folderColumn >= 0 && folderColumn < len(row.GetCells()) {
+				parentUID = string(row.GetCells()[folderColumn])
+			}
+			rows = append(rows, unifiedFolderRow{
+				name:   row.GetKey().GetName(),
+				parent: parentUID,
+				cursor: row.GetSortFields(),
+			})
+		}
+		return rows, nil
+
+	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
+		rows := make([]unifiedFolderRow, 0, len(response.GetRows()))
+		for i, row := range response.GetRows() {
+			if row == nil || row.GetKey() == nil {
+				return nil, fmt.Errorf("row %d has no key", i)
+			}
+			values, err := resource.DecodeSearchValues(response.GetFields(), row)
+			if err != nil {
+				return nil, fmt.Errorf("row %d: %w", i, err)
+			}
+			parentUID := ""
+			if value, ok := values[resource.SEARCH_FIELD_FOLDER]; ok {
+				var valid bool
+				parentUID, valid = value.(string)
+				if !valid {
+					return nil, fmt.Errorf("row %d field %q is not a string", i, resource.SEARCH_FIELD_FOLDER)
+				}
+			}
+			rows = append(rows, unifiedFolderRow{
+				name:   row.GetKey().GetName(),
+				parent: parentUID,
+				cursor: row.GetSortFields(),
+			})
+		}
+		return rows, nil
+
+	default:
+		return nil, fmt.Errorf("unsupported search result format %d", response.GetResultFormat())
+	}
 }
 
 func (v *FolderTreeValidator) buildUnifiedFolderParentMapSQLite(sess *xorm.Session, namespace string, log log.Logger) (map[string]string, error) {

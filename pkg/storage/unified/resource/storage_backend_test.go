@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -10,9 +11,11 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -76,6 +79,32 @@ func setupTestStorageBackend(t *testing.T, configs ...func(*KVBackendOptions)) *
 		_ = kvBackend.Stop(ctx)
 	})
 	return kvBackend
+}
+
+func TestNewLeaseHolder(t *testing.T) {
+	t.Run("prefers the configured instance ID", func(t *testing.T) {
+		const instanceID = "storage-instance"
+		holder := newLeaseHolder(instanceID)
+
+		require.Equal(t, instanceID, requireValidLeaseHolderUUID(t, holder))
+	})
+
+	t.Run("defaults when no instance ID is configured", func(t *testing.T) {
+		holder := newLeaseHolder("")
+
+		require.NotEmpty(t, requireValidLeaseHolderUUID(t, holder))
+	})
+}
+
+func requireValidLeaseHolderUUID(t *testing.T, holder string) string {
+	t.Helper()
+	uuidLength := len(uuid.Nil.String())
+	require.Greater(t, len(holder), uuidLength+1)
+	separatorIndex := len(holder) - uuidLength - 1
+	require.Equal(t, byte('-'), holder[separatorIndex])
+	_, err := uuid.Parse(holder[separatorIndex+1:])
+	require.NoError(t, err)
+	return holder[:separatorIndex]
 }
 
 func TestNewKvStorageBackend(t *testing.T) {
@@ -225,28 +254,52 @@ func TestKVStorageBackendRoutesTenantMetadataToExperimentalKV(t *testing.T) {
 	require.NotEmpty(t, record.DeletedAt)
 }
 
-// TestKvStorageBackend_Accessors verifies that KV() returns the configured
-// store and that LeaseManager() reflects whether EnableKVLeases is set.
-// These accessors let other subsystems (e.g. KV-backed search snapshots)
-// share the backend's KV store and lease manager rather than opening
-// their own.
+// TestKvStorageBackend_Accessors verifies that other subsystems can share the
+// backend's KV store and lease manager rather than opening their own.
 func TestKvStorageBackend_Accessors(t *testing.T) {
 	t.Run("KV returns configured store", func(t *testing.T) {
 		backend := setupTestStorageBackend(t)
 		assert.Same(t, backend.kv, backend.KV())
 	})
 
-	t.Run("LeaseManager is nil when leases are disabled", func(t *testing.T) {
+	t.Run("LeaseManager is always available", func(t *testing.T) {
 		backend := setupTestStorageBackend(t)
-		assert.Nil(t, backend.LeaseManager())
+		assert.NotNil(t, backend.LeaseManager())
 	})
 
-	t.Run("LeaseManager is non-nil when leases are enabled", func(t *testing.T) {
+	t.Run("uses a caller-supplied holder", func(t *testing.T) {
+		const holder = "test-holder"
 		backend := setupTestStorageBackend(t, func(o *KVBackendOptions) {
-			o.EnableKVLeases = true
-			o.Holder = "test-holder"
+			o.Holder = holder
 		})
-		assert.NotNil(t, backend.LeaseManager())
+
+		const leaseName = "configured-holder"
+		acquired, err := backend.LeaseManager().Acquire(t.Context(), leaseName)
+		require.NoError(t, err)
+
+		var leaseKey string
+		for key, err := range backend.KV().Keys(t.Context(), kv.LeasesSection, kv.ListOptions{
+			StartKey: leaseName + "~",
+			EndKey:   kv.PrefixRangeEnd(leaseName + "~"),
+			Limit:    1,
+		}) {
+			require.NoError(t, err)
+			leaseKey = key
+		}
+		require.NotEmpty(t, leaseKey)
+
+		reader, err := backend.KV().Get(t.Context(), kv.LeasesSection, leaseKey)
+		require.NoError(t, err)
+		data, err := io.ReadAll(reader)
+		require.NoError(t, err)
+		require.NoError(t, reader.Close())
+
+		var metadata struct {
+			Holder string `json:"holder"`
+		}
+		require.NoError(t, json.Unmarshal(data, &metadata))
+		assert.Equal(t, holder, metadata.Holder)
+		require.NoError(t, backend.LeaseManager().Release(t.Context(), acquired))
 	})
 }
 
@@ -1274,6 +1327,64 @@ func TestKvStorageBackend_ReadResource_TooHighResourceVersion(t *testing.T) {
 	require.Contains(t, response.Error.Message, "too large resource version")
 }
 
+func TestKvStorageBackend_BatchReadResource_TooHighResourceVersion(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	_, rv := createAndWriteTestObject(t, backend)
+	key := &resourcepb.ResourceKey{Namespace: "default", Group: "apps", Resource: "resources", Name: "test-resource"}
+
+	// A batch mixing a valid read with a too-high RV must reject only the latter,
+	// matching ReadResource, instead of resolving a lower retained revision.
+	responses, err := backend.BatchReadResource(ctx, []*resourcepb.ReadRequest{
+		{Key: key},
+		{Key: key, ResourceVersion: rv + 1000000000000},
+	})
+	require.NoError(t, err)
+	require.Len(t, responses, 2)
+
+	require.Nil(t, responses[0].Error, "valid read should succeed")
+	require.NotNil(t, responses[1].Error, "too-high RV should be rejected")
+	require.Equal(t, int32(400), responses[1].Error.Code)
+	require.Contains(t, responses[1].Error.Message, "too large resource version")
+}
+
+func TestKvStorageBackend_ReadResource_ResolvedButBodyMissing(t *testing.T) {
+	// The metadata still resolves (Keys lists the resource) but the body Get
+	// misses, reproducing the body vanishing (GC) between metadata resolution and
+	// body retrieval. Deleting the key instead would fail the earlier metadata
+	// lookup and never reach the body read.
+	kvWrapper := &bodyMissingKV{}
+	backend := setupTestStorageBackend(t, func(o *KVBackendOptions) {
+		kvWrapper.KV = o.KvStore
+		o.KvStore = kvWrapper
+	})
+	ctx := context.Background()
+
+	createAndWriteTestObject(t, backend)
+	kvWrapper.fail.Store(true)
+
+	response := backend.ReadResource(ctx, &resourcepb.ReadRequest{
+		Key: &resourcepb.ResourceKey{Namespace: "default", Group: "apps", Resource: "resources", Name: "test-resource"},
+	})
+	require.NotNil(t, response.Error, "read of a resolved key with a missing body should error")
+	require.Equal(t, int32(404), response.Error.Code, "missing body is a not-found, not a 500")
+}
+
+// bodyMissingKV makes data-section Get miss once fail is set, while leaving key
+// listing intact, so a read resolves metadata but finds no body.
+type bodyMissingKV struct {
+	KV
+	fail atomic.Bool
+}
+
+func (k *bodyMissingKV) Get(ctx context.Context, section, key string) (io.ReadCloser, error) {
+	if k.fail.Load() && section == kv.DataSection {
+		return nil, kv.ErrNotFound
+	}
+	return k.KV.Get(ctx, section, key)
+}
+
 func TestKvStorageBackend_ListIterator_Success(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()
@@ -1854,6 +1965,87 @@ func TestKvStorageBackend_ListIterator_InvalidContinueToken(t *testing.T) {
 	})
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "invalid continue token")
+}
+
+func TestKvStorageBackend_ListIterator_KeysOnlyRejectsContinueTokenScopeChanges(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := t.Context()
+	tests := []struct {
+		name             string
+		requestNamespace string
+		token            ContinueToken
+	}{
+		{
+			name:             "cluster-wide token reused for its cursor namespace",
+			requestNamespace: "ns-two",
+			token:            ContinueToken{Namespace: "ns-two", KeysOnly: true, ClusterWide: true, Name: "bbb", ResourceVersion: 1},
+		},
+		{
+			name:             "namespaced token reused cluster-wide",
+			requestNamespace: "",
+			token:            ContinueToken{Namespace: "ns-two", KeysOnly: true, Name: "bbb", ResourceVersion: 1},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := backend.ListIterator(ctx, &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+					Group: "apps", Resource: "resources", Namespace: tt.requestNamespace,
+				}},
+				KeysOnly:      true,
+				NextPageToken: tt.token.String(),
+			}, func(ListIterator) error { return nil })
+			require.ErrorContains(t, err, "list scope does not match request")
+		})
+	}
+}
+
+func TestKvStorageBackend_ListIterator_RejectsContinueTokenListTypeChanges(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := t.Context()
+
+	tests := []struct {
+		name        string
+		requestType bool
+		token       ContinueToken
+	}{
+		{
+			name:        "regular token used for keys-only list",
+			requestType: true,
+			token:       ContinueToken{Name: "bbb", ResourceVersion: 1},
+		},
+		{
+			name:        "keys-only token used for regular list",
+			requestType: false,
+			token:       ContinueToken{Namespace: "ns-two", KeysOnly: true, Name: "bbb", ResourceVersion: 1},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := backend.ListIterator(ctx, &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+					Group: "apps", Resource: "resources", Namespace: "ns-two",
+				}},
+				KeysOnly:      tt.requestType,
+				NextPageToken: tt.token.String(),
+			}, func(ListIterator) error { return nil })
+			require.ErrorContains(t, err, "list scope does not match request")
+		})
+	}
+}
+
+func TestContinueTokenMatchesListRequest_AcceptsLegacyClusterWideKeysOnlyToken(t *testing.T) {
+	token := &ContinueToken{Name: "bbb", ResourceVersion: 1}
+	req := &resourcepb.ListRequest{
+		Options:  &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{}},
+		KeysOnly: true,
+	}
+	require.True(t, continueTokenMatchesListRequest(token, req))
+
+	req.Options.Key.Namespace = "ns-two"
+	require.False(t, continueTokenMatchesListRequest(token, req))
 }
 
 func TestKvStorageBackend_ListIterator_SpecificResourceVersion(t *testing.T) {

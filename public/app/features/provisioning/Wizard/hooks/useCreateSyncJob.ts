@@ -1,7 +1,10 @@
 import { useCallback } from 'react';
 
 import { t } from '@grafana/i18n';
-import { type ResourceRef, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
+import {
+  type ProvisioningResourceRef as ResourceRef,
+  useCreateRepositoryJobsMutation,
+} from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
 import { withSavedByTrailer } from '../../utils/currentUser';

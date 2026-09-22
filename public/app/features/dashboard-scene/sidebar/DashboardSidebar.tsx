@@ -1,11 +1,14 @@
 import { isEqual } from 'lodash';
 
+import { reportInteraction } from '@grafana/runtime';
 import {
   NewSceneObjectAddedEvent,
   type SceneObject,
   SceneObjectBase,
   SceneObjectRemovedEvent,
   sceneGraph,
+  StateCommittedEvent,
+  type StateCommittedPayload,
 } from '@grafana/scenes';
 import { type ElementSelectionContextItem, type ElementSelectionOnSelectOptions } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
@@ -79,6 +82,12 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this._subs.add(
       dashboard.subscribeToEvent(DashboardEditActionEvent, ({ payload }) => {
         this.handleEditAction(payload);
+      })
+    );
+
+    this._subs.add(
+      dashboard.subscribeToEvent(StateCommittedEvent, ({ payload }) => {
+        this.handleStateCommitted(payload);
       })
     );
 
@@ -183,22 +192,43 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
    * Adds to undo history and selects new object
    * @param payload
    */
-  private handleEditAction(action: DashboardEditActionEventPayload) {
+  private handleEditAction(action: DashboardEditActionEventPayload, skipPerform = false) {
     if (this._activeBatch) {
       this._activeBatch.actions.push(action);
       this.performAction(action);
       return;
     }
-
     // Clear redo stack when user performs a new action
     // Otherwise things can get into very broken states
     if (this.state.redoStack.length > 0) {
       this.setState({ redoStack: [] });
     }
 
-    this.performAction(action);
+    if (!skipPerform) {
+      this.performAction(action);
+    }
 
     this.setState({ undoStack: [...this.state.undoStack, action] });
+  }
+
+  /**
+   * Any SceneObject can perform state changes inside the object (e.g., drag and drop or resize).
+   * To make such changes undoable SceneObject can provide a closure to revert and replay
+   * the change. Since the change already happens inside SceneObject we skip perform and just add
+   * the action to the stack.
+   * @private
+   */
+  private handleStateCommitted(payload: StateCommittedPayload) {
+    this.handleEditAction(
+      {
+        source: payload.source,
+        description: payload.description,
+        perform: payload.replay,
+        undo: payload.revert,
+      },
+      true
+    );
+    payload.source.publishEvent(new DashboardStateChangedEvent({ source: payload.source }), true);
   }
 
   /**
@@ -214,6 +244,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.undoSingleAction(action);
 
     this.setState({ undoStack, redoStack: [...this.state.redoStack, action] });
+    reportInteraction('grafana_dashboard_undo');
   }
 
   private undoSingleAction(action: DashboardEditActionEventPayload) {
@@ -270,6 +301,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.performAction(action);
 
     this.setState({ redoStack, undoStack: [...this.state.undoStack, action] });
+    reportInteraction('grafana_dashboard_redo');
   }
 
   public enableSelection() {
