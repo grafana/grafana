@@ -378,7 +378,13 @@ func (s *searchServer) resolveAllowedCollection(ctx context.Context, group, reso
 	if err != nil {
 		return vector.Collection{}, false, err
 	}
-	return coll, found && s.collectionAllowlist.Allows(coll), nil
+	if !found || !s.collectionAllowlist.Allows(coll) {
+		return coll, false, nil
+	}
+	if !coll.IsExternal && s.embeddingBuilders != nil {
+		return coll, s.embeddingBuilders.Has(group, resource), nil
+	}
+	return coll, true, nil
 }
 
 func (s *searchServer) grpcStatusError(ctx context.Context, op string, err error) error {
