@@ -745,13 +745,20 @@
     },
     "bulk-actions": {
       "delete": {
+        "affected-count": "Deleted {{num}} rules",
+        "no-rules-affected": "No rules were deleted from folder",
         "success": "Rules successfully deleted from folder"
       },
       "pause": {
+        "affected-count": "Paused {{num}} rules",
+        "no-rules-affected": "No rules were paused for folder",
         "success": "Rules evaluation successfully paused for folder"
       },
+      "skipped-provisioned": "Skipped {{num}} provisioned rules",
       "unpause": {
-        "success": "Rules successfully unpaused for this folder"
+        "affected-count": "Resumed {{num}} rules",
+        "no-rules-affected": "No rules were resumed for folder",
+        "success": "Rules successfully resumed for folder"
       }
     },
     "central-alert-history": {
@@ -11483,6 +11490,28 @@
         "clusters_one": "{{value}} cluster",
         "clusters_other": "{{value}} clusters",
         "description": "See cluster health, cost, and right-sizing savings in one view.",
+        "filter": {
+          "all-clusters": "All clusters",
+          "all-namespaces": "All namespaces",
+          "all-nodes": "All nodes",
+          "badge-ignored": "Filters not applied",
+          "cancel": "Cancel",
+          "clear": "Clear filters",
+          "cluster": "Cluster",
+          "edit": "Edit filters ({{summary}})",
+          "ignored-tooltip": "Saved for {{saved}}. This card reads {{current}}, so it shows the whole fleet.",
+          "namespaces": "Namespaces",
+          "no-match": "No matching data",
+          "no-match-hint": "Adjust the filters",
+          "nodes": "Nodes",
+          "open": "Filter by cluster, namespace, or node",
+          "save": "Save",
+          "save-failed": "Could not save to browser storage. Try again.",
+          "summary-cluster": "Cluster: {{cluster}}",
+          "summary-namespaces": "Namespaces: {{namespaces}}",
+          "summary-nodes": "Nodes: {{nodes}}",
+          "title": "Filter Kubernetes Monitoring"
+        },
         "health-nodes_one": "{{count}} node not ready",
         "health-nodes_other": "{{count}} nodes not ready",
         "health-pods_one": "{{count}} pod pending or failed",
@@ -13276,8 +13305,10 @@
       "table": {
         "author": "Author",
         "copy-link": "Copy link",
+        "copy-link-error": "Failed to copy link",
         "created": "Created",
         "edit": "Edit",
+        "link-copied": "Link copied to clipboard",
         "more-actions": "More actions",
         "tags": "Tags",
         "title": "Title",
