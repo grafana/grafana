@@ -1283,12 +1283,11 @@ func TestProcess_CleanFinalizer_BuildFailureBlocks(t *testing.T) {
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "create repository from configuration")
 
-	// The failure is classified so status.deletion can name the blocked
-	// finalizer and offer a recovery action.
+	// The failure names the blocked finalizer so status.deletion can point the
+	// user at the finalizer to force-remove.
 	var fe *finalizerError
 	if assert.ErrorAs(t, err, &fe) {
 		assert.Equal(t, repository.CleanFinalizer, fe.finalizer)
-		assert.Equal(t, provisioning.DeletionErrorRepositoryUnavailable, fe.code)
 	}
 }
 

@@ -16,9 +16,9 @@ import (
 // structured status.deletion field is served by the aggregated apiserver and
 // round-trips intact through a real status-subresource write. This is the
 // end-to-end guard the controller unit tests cannot provide: it proves the new
-// nested field (and every sub-field of DeletionStatus/DeletionError/
-// DeletionErrorTarget) is present in the served OpenAPI schema and is not pruned
-// by structural-schema enforcement on the way in or out.
+// nested field (and every sub-field of DeletionStatus) is present in the served
+// OpenAPI schema and is not pruned by structural-schema enforcement on the way
+// in or out.
 func TestIntegrationProvisioning_RepositoryDeletionStatus_RoundTrips(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -51,17 +51,9 @@ func TestIntegrationProvisioning_RepositoryDeletionStatus_RoundTrips(t *testing.
 	// subresource, mirroring exactly what the controller records when a
 	// finalizer wedges deletion.
 	want := provisioning.DeletionStatus{
-		State: provisioning.DeletionStateBlocked,
-		Errors: []provisioning.DeletionError{{
-			Code:      provisioning.DeletionErrorWebhookRemovalFailed,
-			Detail:    "execute deletion hooks: delete webhook: access to the repository was lost",
-			Finalizer: repository.CleanFinalizer,
-			Target: &provisioning.DeletionErrorTarget{
-				Group:    provisioning.GROUP,
-				Resource: "repositories",
-				Name:     repoName,
-			},
-		}},
+		State:     provisioning.DeletionStateBlocked,
+		Finalizer: repository.CleanFinalizer,
+		Message:   "execute deletion hooks: delete webhook: access to the repository was lost",
 	}
 	patch := mustMarshalJSONPatch(t, []map[string]any{
 		{"op": "add", "path": "/status/deletion", "value": want},
@@ -74,13 +66,7 @@ func TestIntegrationProvisioning_RepositoryDeletionStatus_RoundTrips(t *testing.
 	got := common.MustFromUnstructured[provisioning.Repository](t, updated).Status.Deletion
 
 	require.NotNil(t, got, "deletion status must be served back, not pruned")
-	require.Equal(t, provisioning.DeletionStateBlocked, got.State)
-	require.Len(t, got.Errors, 1, "the single blocking error must round-trip")
-	require.Equal(t, want.Errors[0].Code, got.Errors[0].Code)
-	require.Equal(t, want.Errors[0].Detail, got.Errors[0].Detail)
-	require.Equal(t, want.Errors[0].Finalizer, got.Errors[0].Finalizer)
-	require.NotNil(t, got.Errors[0].Target, "the error target must round-trip, not be pruned")
-	require.Equal(t, want.Errors[0].Target.Group, got.Errors[0].Target.Group)
-	require.Equal(t, want.Errors[0].Target.Resource, got.Errors[0].Target.Resource)
-	require.Equal(t, want.Errors[0].Target.Name, got.Errors[0].Target.Name)
+	require.Equal(t, want.State, got.State)
+	require.Equal(t, want.Finalizer, got.Finalizer, "the blocking finalizer must round-trip, not be pruned")
+	require.Equal(t, want.Message, got.Message)
 }

@@ -505,23 +505,19 @@ func (rc *RepositoryController) updateDeleteStatus(ctx context.Context, obj *pro
 }
 
 // buildDeletionStatus turns a finalizer failure into the structured
-// status.deletion the frontend consumes. Only the first blocking problem on a
-// pass is reported today; the Errors list shape lets that grow to N without an
-// API change.
+// status.deletion the frontend consumes: the deletion state, the finalizer that
+// is blocking it (so the client can force-remove exactly that finalizer), and a
+// human-readable message.
 func buildDeletionStatus(err error) *provisioning.DeletionStatus {
-	de := provisioning.DeletionError{
-		Code:   provisioning.DeletionErrorUnknown,
-		Detail: err.Error(),
+	deletion := &provisioning.DeletionStatus{
+		State:   provisioning.DeletionStateBlocked,
+		Message: err.Error(),
 	}
 	var fe *finalizerError
 	if errors.As(err, &fe) {
-		de.Code = fe.code
-		de.Finalizer = fe.finalizer
+		deletion.Finalizer = fe.finalizer
 	}
-	return &provisioning.DeletionStatus{
-		State:  provisioning.DeletionStateBlocked,
-		Errors: []provisioning.DeletionError{de},
-	}
+	return deletion
 }
 
 func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provisioning.Repository) bool {

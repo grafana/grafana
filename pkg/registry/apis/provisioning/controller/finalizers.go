@@ -38,15 +38,13 @@ type finalizer struct {
 	maxWorkers    int
 }
 
-// finalizerError carries the structured classification of a finalizer failure
-// so handleDelete can surface it on status.deletion. It implements error and
-// unwraps to the underlying cause, so existing callers that only inspect the
-// error string keep working; a caller wanting the structure uses errors.As.
+// finalizerError names the finalizer whose teardown failed so handleDelete can
+// surface it on status.deletion. It implements error and unwraps to the
+// underlying cause, so existing callers that only inspect the error string keep
+// working; a caller wanting the finalizer name uses errors.As.
 type finalizerError struct {
 	// finalizer is the name of the finalizer whose teardown failed.
 	finalizer string
-	// code is the machine-readable classification the frontend switches on.
-	code provisioning.DeletionErrorCode
 	// err is the underlying cause.
 	err error
 }
@@ -81,9 +79,6 @@ func (f *finalizer) process(ctx context.Context,
 		logger.Info("running finalizer", "finalizer", finalizer)
 		var err error
 		var count int
-		// code classifies a failure for status.deletion so the frontend can pick
-		// a recovery action. It is only read when err != nil.
-		code := provisioning.DeletionErrorUnknown
 		start := time.Now()
 		outcome := metricutils.SuccessOutcome
 
@@ -105,12 +100,10 @@ func (f *finalizer) process(ctx context.Context,
 			repo, buildErr := f.repoFactory.Build(ctx, cfg)
 			if buildErr != nil {
 				err = fmt.Errorf("create repository from configuration: %w", buildErr)
-				code = provisioning.DeletionErrorRepositoryUnavailable
 				outcome = metricutils.ErrorOutcome
 			} else if webhookRepo, ok := repo.(repository.WebhookRepository); ok {
 				if err = webhookOnDelete(ctx, webhookRepo); err != nil {
 					err = fmt.Errorf("execute deletion hooks: %w", err)
-					code = provisioning.DeletionErrorWebhookRemovalFailed
 					outcome = metricutils.ErrorOutcome
 				}
 			}
@@ -139,7 +132,7 @@ func (f *finalizer) process(ctx context.Context,
 		f.metrics.RecordFinalizer(finalizer, outcome, count, time.Since(start).Seconds())
 
 		if err != nil {
-			return &finalizerError{finalizer: finalizer, code: code, err: err}
+			return &finalizerError{finalizer: finalizer, err: err}
 		}
 	}
 	return nil

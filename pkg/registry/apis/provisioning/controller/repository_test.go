@@ -527,8 +527,7 @@ func TestRepositoryController_updateDeleteStatus_UsesAddOp(t *testing.T) {
 					return false
 				}
 				ds, ok := op["value"].(*provisioning.DeletionStatus)
-				return ok && ds.State == provisioning.DeletionStateBlocked && len(ds.Errors) == 1 &&
-					ds.Errors[0].Code == provisioning.DeletionErrorUnknown && ds.Errors[0].Detail == "new"
+				return ok && ds.State == provisioning.DeletionStateBlocked && ds.Message == "new"
 			}),
 		).
 		Once().
@@ -541,10 +540,10 @@ func TestRepositoryController_updateDeleteStatus_UsesAddOp(t *testing.T) {
 	require.NoError(t, err)
 }
 
-// TestRepositoryController_updateDeleteStatus_ClassifiesFinalizerError verifies a
-// finalizerError is unwrapped into a structured code + finalizer on status.deletion,
-// even when wrapped by the caller.
-func TestRepositoryController_updateDeleteStatus_ClassifiesFinalizerError(t *testing.T) {
+// TestRepositoryController_updateDeleteStatus_NamesBlockingFinalizer verifies a
+// finalizerError is unwrapped so status.deletion names the blocking finalizer,
+// even when the error is wrapped by the caller.
+func TestRepositoryController_updateDeleteStatus_NamesBlockingFinalizer(t *testing.T) {
 	patcher := mocks.NewStatusPatcher(t)
 	patcher.
 		On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"),
@@ -553,9 +552,8 @@ func TestRepositoryController_updateDeleteStatus_ClassifiesFinalizerError(t *tes
 			}),
 			mock.MatchedBy(func(op map[string]interface{}) bool {
 				ds, ok := op["value"].(*provisioning.DeletionStatus)
-				return ok && len(ds.Errors) == 1 &&
-					ds.Errors[0].Code == provisioning.DeletionErrorWebhookRemovalFailed &&
-					ds.Errors[0].Finalizer == repository.CleanFinalizer
+				return ok && ds.State == provisioning.DeletionStateBlocked &&
+					ds.Finalizer == repository.CleanFinalizer
 			}),
 		).
 		Once().
@@ -564,7 +562,6 @@ func TestRepositoryController_updateDeleteStatus_ClassifiesFinalizerError(t *tes
 	repo := &provisioning.Repository{}
 	wrapped := fmt.Errorf("remove finalizers: %w", &finalizerError{
 		finalizer: repository.CleanFinalizer,
-		code:      provisioning.DeletionErrorWebhookRemovalFailed,
 		err:       errors.New("boom"),
 	})
 	err := c.updateDeleteStatus(context.Background(), repo, wrapped)
