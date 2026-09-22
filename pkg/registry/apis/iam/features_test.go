@@ -168,3 +168,11 @@ func TestProvideStartupFeatures(t *testing.T) {
 		})
 	}
 }
+
+func TestNewStartupFeatures(t *testing.T) {
+	features := Features{RolesAPI: true}
+
+	snapshot := NewStartupFeatures(features).Snapshot()
+	require.NotNil(t, snapshot)
+	require.Equal(t, features, *snapshot)
+}

@@ -67,6 +67,11 @@ type StartupFeatures struct {
 	configured bool
 }
 
+// NewStartupFeatures creates a configured startup feature snapshot.
+func NewStartupFeatures(features Features) StartupFeatures {
+	return StartupFeatures{features: features, configured: true}
+}
+
 // ProvideStartupFeatures resolves the optional [iam] startup configuration.
 func ProvideStartupFeatures(cfg *setting.Cfg) (StartupFeatures, error) {
 	if cfg == nil || cfg.Raw == nil {
@@ -110,7 +115,7 @@ func ProvideStartupFeatures(cfg *setting.Cfg) (StartupFeatures, error) {
 		return StartupFeatures{}, err
 	}
 
-	return StartupFeatures{features: features, configured: true}, nil
+	return NewStartupFeatures(features), nil
 }
 
 // Snapshot returns a copy of the configured features, or nil when callers
