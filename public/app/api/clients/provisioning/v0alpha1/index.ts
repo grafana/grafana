@@ -48,6 +48,12 @@ const handleProvisioningFormError = (e: unknown, dispatch: ThunkDispatch, title:
 
 export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
   endpoints: {
+    getRepositoryResources: {
+      providesTags: (_result, _error, { name }) => ['Repository', { type: 'Repository', id: `resources:${name}` }],
+    },
+    resolveRepositoryResources: {
+      providesTags: (_result, _error, { name }) => ['Repository', { type: 'Repository', id: `resources:${name}` }],
+    },
     listJob: {
       // Do not include 'watch' in the first query, so we can get the initial list of jobs
       // and then start watching for changes

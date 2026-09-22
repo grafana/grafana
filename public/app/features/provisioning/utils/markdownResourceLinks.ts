@@ -7,6 +7,33 @@ import { FOLDER_METADATA_FILE } from '../constants';
 import { FOLDER_DOC_TAB_PARAM, isMarkdownFile } from './folderDocConventions';
 import { getKindInfoByResource, resourceKindInfos } from './resourceKinds';
 
+export function getResourceLookupPath(repoPath: string, repositoryPath: string | undefined): string | undefined {
+  const normalized = trimSlashes(repoPath);
+  const prefix = trimSlashes(joinRepoPath(repositoryPath, ''));
+
+  if (normalized.includes('\\') || normalized.split('/').some((part) => part === '.' || part === '..')) {
+    return undefined;
+  }
+  // A link can leave the configured sync root while still pointing inside the host repository.
+  if (prefix && normalized !== prefix && !normalized.startsWith(`${prefix}/`)) {
+    return undefined;
+  }
+
+  const relative = prefix ? trimSlashes(normalized.slice(prefix.length)) : normalized;
+  const path = isMarkdownFile(relative) ? splitPath(relative).directory : (folderMetadataDir(relative) ?? relative);
+  // One unsupported path would reject the entire batch, including its valid links.
+  if (
+    path &&
+    (path.length > 1024 ||
+      !/^[a-zA-Z0-9 /_.-]+$/.test(path) ||
+      path.split('/').some((part) => !part || part.startsWith('.')))
+  ) {
+    return undefined;
+  }
+  // The root folder has no exact lookup; this explicitly requests the admin-only listing.
+  return path || '/';
+}
+
 /**
  * Builds a resolver that maps a repo file/directory path to the in-app Grafana
  * route of the resource synced from it (dashboard, folder, playlist, ...), or
