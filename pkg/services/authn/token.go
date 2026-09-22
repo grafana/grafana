@@ -3,20 +3,23 @@ package authn
 import (
 	"context"
 
-	"github.com/grafana/authlib/types"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
-// This type (and implementation?) should be moved to authlib
 type TokenAuthenticator interface {
-	// Given a token, return valid AuthInfo
-	AuthenticateToken(ctx context.Context, token string) (types.AuthInfo, error)
+	AuthenticateToken(ctx context.Context, token string) (identity.Requester, error)
 }
 
 // GrafanaTokenAuthorizer is a temporary stub that returns a fixed identity without validating the token.
 type GrafanaTokenAuthorizer struct {
-	Dummy types.AuthInfo
+	Dummy identity.Requester
 }
 
-func (t *GrafanaTokenAuthorizer) AuthenticateToken(ctx context.Context, token string) (types.AuthInfo, error) {
+func (t *GrafanaTokenAuthorizer) AuthenticateToken(ctx context.Context, token string) (identity.Requester, error) {
+	if token == "" {
+		return nil, apierrors.NewUnauthorized("empty token")
+	}
 	return t.Dummy, nil
 }

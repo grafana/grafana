@@ -101,9 +101,9 @@ func TestPluginManifestsTarget_PollsFiltersAndSkipsEntriesWithoutManifest(t *tes
 	require.Same(t, authenticator, backends[0].(*pluginDeploymentBackend).authn)
 }
 
-type manifestTokenAuthenticatorFunc func(context.Context, string) (types.AuthInfo, error)
+type manifestTokenAuthenticatorFunc func(context.Context, string) (identity.Requester, error)
 
-func (f manifestTokenAuthenticatorFunc) AuthenticateToken(ctx context.Context, token string) (types.AuthInfo, error) {
+func (f manifestTokenAuthenticatorFunc) AuthenticateToken(ctx context.Context, token string) (identity.Requester, error) {
 	return f(ctx, token)
 }
 
@@ -117,42 +117,63 @@ func (b manifestHandlerBackend) Load(context.Context) (http.Handler, error) {
 }
 
 func TestPluginDeploymentBackendAuthentication(t *testing.T) {
-	for _, token := range []string{"Bearer obo-token", ""} {
-		t.Run("token="+token, func(t *testing.T) {
-			info := &identity.StaticRequester{Type: types.TypeUser, UserUID: "test-user", Namespace: "stacks-123"}
-			authCalls, handlerCalls := 0, 0
-			req := httptest.NewRequest(http.MethodGet, "/test", nil).WithContext(t.Context())
-			req.Header.Set("X-Access-Token", token)
-			backend := &pluginDeploymentBackend{
-				Backend: manifestHandlerBackend{handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					handlerCalls++
-					got, ok := types.AuthInfoFrom(r.Context())
-					require.True(t, ok)
-					require.Same(t, info, got)
-					authenticated, accepted, err := apiserverauthenticator.NewAuthenticator().AuthenticateRequest(r)
-					require.NoError(t, err)
-					require.True(t, accepted)
-					require.Same(t, info, authenticated.User)
-					require.Equal(t, req.URL, r.URL)
-					w.WriteHeader(http.StatusNoContent)
-				})},
-				authn: manifestTokenAuthenticatorFunc(func(ctx context.Context, got string) (types.AuthInfo, error) {
-					authCalls++
-					require.Equal(t, 1, authCalls, "authentication must not recurse")
-					require.Equal(t, token, got)
-					require.Equal(t, req.Context(), ctx)
-					return info, nil
+	const token = "Bearer obo-token"
+	info := &identity.StaticRequester{Type: types.TypeUser, UserUID: "test-user", Namespace: "stacks-123"}
+	authCalls, handlerCalls := 0, 0
+	req := httptest.NewRequest(http.MethodGet, "/test", nil).WithContext(t.Context())
+	req.Header.Set("X-Access-Token", token)
+	backend := &pluginDeploymentBackend{
+		Backend: manifestHandlerBackend{handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			handlerCalls++
+			got, ok := types.AuthInfoFrom(r.Context())
+			require.True(t, ok)
+			require.Same(t, info, got)
+			authenticated, accepted, err := apiserverauthenticator.NewAuthenticator().AuthenticateRequest(r)
+			require.NoError(t, err)
+			require.True(t, accepted)
+			require.Same(t, info, authenticated.User)
+			require.Equal(t, req.URL, r.URL)
+			w.WriteHeader(http.StatusNoContent)
+		})},
+		authn: manifestTokenAuthenticatorFunc(func(ctx context.Context, got string) (identity.Requester, error) {
+			authCalls++
+			require.Equal(t, 1, authCalls, "authentication must not recurse")
+			require.Equal(t, token, got)
+			require.Equal(t, req.Context(), ctx)
+			return info, nil
+		}),
+	}
+	handler, err := backend.Load(t.Context())
+	require.NoError(t, err)
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, req)
+	require.Equal(t, http.StatusNoContent, response.Code)
+	require.Equal(t, 1, authCalls)
+	require.Equal(t, 1, handlerCalls)
+	_, ok := types.AuthInfoFrom(req.Context())
+	require.False(t, ok, "original request must not be mutated")
+}
+
+func TestAuthenticatingWrapperRejectsMissingAccessToken(t *testing.T) {
+	for _, header := range []string{"", "Authorization"} {
+		t.Run("header="+header, func(t *testing.T) {
+			wrapper := &authenticatingWrapper{
+				Handler: http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+					t.Fatal("handler must not run without an access token")
+				}),
+				authn: manifestTokenAuthenticatorFunc(func(context.Context, string) (identity.Requester, error) {
+					t.Fatal("authenticator must not run without an access token")
+					return nil, nil
 				}),
 			}
-			handler, err := backend.Load(t.Context())
-			require.NoError(t, err)
+			req := httptest.NewRequest(http.MethodGet, "/test", nil)
+			if header != "" {
+				req.Header.Set(header, "Bearer obo-token")
+			}
 			response := httptest.NewRecorder()
-			handler.ServeHTTP(response, req)
-			require.Equal(t, http.StatusNoContent, response.Code)
-			require.Equal(t, 1, authCalls)
-			require.Equal(t, 1, handlerCalls)
-			_, ok := types.AuthInfoFrom(req.Context())
-			require.False(t, ok, "original request must not be mutated")
+			wrapper.ServeHTTP(response, req)
+			require.Equal(t, http.StatusUnauthorized, response.Code)
+			require.Contains(t, response.Body.String(), "missing access token header")
 		})
 	}
 }
@@ -167,17 +188,22 @@ func TestAuthenticatingWrapperRejectsAuthenticationError(t *testing.T) {
 		{name: "internal", err: errors.New("authentication unavailable"), status: http.StatusInternalServerError},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			authCalls := 0
 			wrapper := &authenticatingWrapper{
 				Handler: http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
 					t.Fatal("handler must not run after authentication fails")
 				}),
-				authn: manifestTokenAuthenticatorFunc(func(context.Context, string) (types.AuthInfo, error) {
+				authn: manifestTokenAuthenticatorFunc(func(context.Context, string) (identity.Requester, error) {
+					authCalls++
 					return nil, tc.err
 				}),
 			}
 			response := httptest.NewRecorder()
-			wrapper.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/test", nil))
+			req := httptest.NewRequest(http.MethodGet, "/test", nil)
+			req.Header.Set("X-Access-Token", "Bearer invalid-token")
+			wrapper.ServeHTTP(response, req)
 			require.Equal(t, tc.status, response.Code)
+			require.Equal(t, 1, authCalls)
 		})
 	}
 }

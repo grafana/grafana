@@ -14,9 +14,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/grafana/authlib/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana-app-sdk/plugin/grpcplugin"
@@ -289,6 +289,10 @@ func (a *authenticatingWrapper) ServeHTTP(w http.ResponseWriter, req *http.Reque
 	ctx := req.Context()
 
 	token := req.Header.Get("X-Access-Token")
+	if token == "" {
+		_ = errhttp.Write(ctx, apierrors.NewUnauthorized("missing access token header"), w)
+		return
+	}
 
 	info, err := a.authn.AuthenticateToken(ctx, token)
 	if err != nil {
@@ -296,10 +300,6 @@ func (a *authenticatingWrapper) ServeHTTP(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	ctx = types.WithAuthInfo(ctx, info)
-	// The plugin API server's authenticator still reads the legacy requester context.
-	if requester, ok := info.(identity.Requester); ok {
-		ctx = identity.WithRequester(ctx, requester)
-	}
+	ctx = identity.WithRequester(ctx, info)
 	a.Handler.ServeHTTP(w, req.WithContext(ctx))
 }
