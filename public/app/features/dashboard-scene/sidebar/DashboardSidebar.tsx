@@ -1,5 +1,6 @@
 import { isEqual } from 'lodash';
 
+import { reportInteraction } from '@grafana/runtime';
 import {
   NewSceneObjectAddedEvent,
   type SceneObject,
@@ -199,6 +200,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     }
 
     this.setState({ undoStack, redoStack: [...this.state.redoStack, action] });
+    reportInteraction('grafana_dashboard_undo');
   }
 
   /**
@@ -238,6 +240,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.performAction(action);
 
     this.setState({ redoStack, undoStack: [...this.state.undoStack, action] });
+    reportInteraction('grafana_dashboard_redo');
   }
 
   public enableSelection() {

@@ -458,6 +458,46 @@ func TestListWithSelectors(t *testing.T) {
 		require.Equal(t, "search failed", resp.Error.Message)
 	})
 
+	t.Run("asks for the store scan when the index lacks a requested field", func(t *testing.T) {
+		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+		searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
+			Error: NewSelectableFieldNotIndexedError([]string{SEARCH_SELECTABLE_FIELDS_PREFIX + "spec.foo"}),
+		}}
+		s := createTestServer(searchClient, 1024)
+		req := &resourcepb.ListRequest{
+			Limit: 10,
+			Options: &resourcepb.ListOptions{
+				Key:    &resourcepb.ResourceKey{Namespace: "nsx"},
+				Fields: []*resourcepb.Requirement{{Key: "spec.foo", Operator: "=", Values: []string{"bar"}}},
+			},
+		}
+
+		resp, err := s.listWithSelectors(ctx, req)
+		require.ErrorIs(t, err, errSearchCannotAnswerList)
+		require.Nil(t, resp)
+	})
+
+	t.Run("keeps the error mid-pagination, where the store scan cannot resume", func(t *testing.T) {
+		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+		searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
+			Error: NewSelectableFieldNotIndexedError([]string{SEARCH_SELECTABLE_FIELDS_PREFIX + "spec.foo"}),
+		}}
+		s := createTestServer(searchClient, 1024)
+		req := &resourcepb.ListRequest{
+			Limit:         10,
+			NextPageToken: ContinueToken{SearchAfter: []string{"s1"}, ResourceVersion: searchServerRv}.String(),
+			Options: &resourcepb.ListOptions{
+				Key:    &resourcepb.ResourceKey{Namespace: "nsx"},
+				Fields: []*resourcepb.Requirement{{Key: "spec.foo", Operator: "=", Values: []string{"bar"}}},
+			},
+		}
+
+		resp, err := s.listWithSelectors(ctx, req)
+		require.NoError(t, err)
+		require.NotNil(t, resp.Error)
+		require.True(t, IsSelectableFieldNotIndexed(resp.Error))
+	})
+
 	t.Run("returns transport errors directly", func(t *testing.T) {
 		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
 		searchErr := errors.New("search unavailable")
@@ -857,6 +897,38 @@ func TestListWithSelectors(t *testing.T) {
 		require.Empty(t, resp.Items)
 		require.Equal(t, searchServerRv, resp.ResourceVersion)
 	})
+}
+
+// countingListBackend records how often the store scan was used.
+type countingListBackend struct {
+	*fakeBackend
+	listCalls int
+}
+
+func (b *countingListBackend) ListIterator(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error) {
+	b.listCalls++
+	return 1, nil
+}
+
+func TestListFallsBackToStoreWhenIndexLacksField(t *testing.T) {
+	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+	backend := &countingListBackend{fakeBackend: &fakeBackend{}}
+	s := createTestServer(&stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
+		Error: NewSelectableFieldNotIndexedError([]string{SEARCH_SELECTABLE_FIELDS_PREFIX + "spec.foo"}),
+	}}, 1024)
+	s.backend = backend
+
+	resp, err := s.List(ctx, &resourcepb.ListRequest{
+		Source: resourcepb.ListRequest_STORE,
+		Limit:  10,
+		Options: &resourcepb.ListOptions{
+			Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+			Fields: []*resourcepb.Requirement{{Key: "spec.foo", Operator: "=", Values: []string{"bar"}}},
+		},
+	})
+	require.NoError(t, err)
+	require.Nil(t, resp.Error)
+	require.Equal(t, 1, backend.listCalls, "the store scan must serve the request the index refused")
 }
 
 func TestListWithSelectorsUsesBatchReadsAndAuthorization(t *testing.T) {

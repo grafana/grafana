@@ -38,6 +38,7 @@ policy:
             - Workflow .github/workflows/pr-k8s-codegen-check.yml succeeded or skipped
             - Workflow .github/workflows/pr-mt-service-compatibility.yml succeeded or skipped
             - Workflow .github/workflows/pr-patch-check.yml succeeded or skipped
+            - Workflow .github/workflows/pr-resource-search-result-format.yml succeeded or skipped
             - Workflow .github/workflows/pr-test-docker.yml succeeded or skipped
             - Workflow .github/workflows/pr-test-integration-pgvector.yml succeeded or skipped
             - Workflow .github/workflows/pr-test-integration.yml succeeded or skipped
@@ -587,6 +588,24 @@ approval_rules:
             - success
           workflows:
             - .github/workflows/pr-patch-check.yml
+  - name: Workflow .github/workflows/pr-resource-search-result-format.yml succeeded or skipped
+    if:
+      changed_files:
+        paths:
+          - ^(?:(?:[^/]*(?:/|$))*)(?:[^/]*)\.go$
+          - ^pkg\/storage\/unified\/semgrep\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.github\/workflows\/pr-resource-search-result-format\.yml$
+      file_not_deleted:
+        paths:
+          - ^\.github\/workflows\/pr-resource-search-result-format\.yml$
+    requires:
+      conditions:
+        has_workflow_result:
+          conclusions:
+            - skipped
+            - success
+          workflows:
+            - .github/workflows/pr-resource-search-result-format.yml
   - name: Workflow .github/workflows/pr-test-docker.yml succeeded or skipped
     if:
       changed_files:
