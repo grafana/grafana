@@ -592,6 +592,9 @@ export const versionedComponents = {
       headerCornerInfo: {
         [MIN_GRAFANA_VERSION]: (mode: string) => `Panel header ${mode}`,
       },
+      headerNotice: {
+        '13.3.0': (severity: string) => `data-testid Panel header notice ${severity}`,
+      },
       status: {
         '10.2.0': (status: string) => `data-testid Panel status ${status}`,
         [MIN_GRAFANA_VERSION]: (_: string) => 'Panel status',
@@ -772,6 +775,11 @@ export const versionedComponents = {
       rcContentWrapper: { '9.4.0': () => '.rc-drawer-content-wrapper' },
       subtitle: {
         '10.4.0': 'data-testid drawer subtitle',
+      },
+    },
+    PanelTimeRangeDrawer: {
+      timeComparisonSelect: {
+        '13.3.0': 'data-testid Panel time range drawer time comparison select',
       },
     },
     DashboardSaveDrawer: {
@@ -1641,6 +1649,9 @@ export const versionedComponents = {
     traceBanner: {
       container: {
         '13.3.0': 'data-testid TraceViewer trace-banner',
+      },
+      goToSpanButton: {
+        '13.3.0': 'data-testid TraceViewer trace-banner go-to-span-button',
       },
       row: {
         '13.3.0': (spanId: string) => `data-testid TraceViewer trace-banner row ${spanId}`,

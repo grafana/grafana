@@ -168,12 +168,17 @@ trusted.
 
 Aggregate targets do not go through `transportFor` (they have no `RouteBackend` spec and so no TLS
 settings to key on), but they follow the same intent: `newAggregateBaseTransport` clones
-`http.DefaultTransport` **once per target** and hands it to `rest.Config.Transport`, so each target
-owns its connection pool instead of sharing the process-global default's (`MaxIdleConnsPerHost` 2,
-shared with every other `DefaultTransport` user in the process). That matters because the same client
-carries both the target's discovery poll and all user traffic proxied to it. `rest.Config.Transport`
-is the base round tripper and `WrapTransport` layers on top of it (`rest.TransportFor` →
-`transport.New` → `HTTPWrappersForConfig`), so the CAP-token exchange wrapper still applies.
+`http.DefaultTransport` **once per target** so each target owns its connection pool instead of
+sharing the process-global default's (`MaxIdleConnsPerHost` 2, shared with every other
+`DefaultTransport` user in the process).
+
+**Two separate transports per target.** `ProvideCloudRoutesLoaderFactory` builds two
+`newAggregateBaseTransport` clones: one becomes `rest.Config.Transport`, wrapped via
+`WrapTransport`/`aggregateTokenWrapper` into the CAP-token-exchanging `httpClient` used only for the
+router's own discovery poll (`discoverGroups`, learning which groups the target serves). The other,
+plain and unwrapped, is `proxyTransport`, passed to `newAggregateTarget` and from there into every
+`aggregateBackend.proxy.Transport` (`aggregate_poller.go`'s `poll`) — it forwards the caller's own
+credentials transparently, same contract as `forwardBackend`'s `transportFor` transport.
 
 ## Path model
 
