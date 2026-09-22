@@ -3,18 +3,29 @@ import { t } from '@grafana/i18n';
 export type FolderBulkRuleAction = 'pause' | 'resume' | 'delete';
 
 /**
+ * What a folder-level bulk rule action did.
+ *
+ * `affected` counts the rules the action succeeded on. `skipped` counts the rules it left alone because
+ * they belong to a provisioned rule group — those can't be paused, resumed or deleted this way.
+ *
+ * Both are optional because an older backend may reply with just `{ message }`. The frontend and backend
+ * deploy separately, so a new frontend can briefly be talking to a backend that doesn't send counts yet.
+ * We only have counts to report when the backend sends them.
+ */
+export interface BulkActionResults {
+  affected?: number;
+  skipped?: number;
+}
+
+/**
  * Builds the toast message shown after a folder-level bulk rule action (pause/resume/delete all rules).
  *
- * `affected` is the number of rules that were successfully acted upon, and `skipped` is the number of
- * rules that were skipped because they belong to a provisioned rule group (provisioned rules cannot be
- * paused/resumed/deleted through this action).
- *
- * `affected`/`skipped` are optional because the backend response may not include them yet: frontend and
- * backend deploy independently, so a newer frontend can briefly talk to an older backend that only
- * returns `{ message }`. In that case we fall back to the original count-less message instead of
- * treating the missing fields as zero, which would incorrectly claim nothing was affected.
+ * When the backend didn't send an `affected` count we show the older message that mentions no numbers,
+ * rather than reading the missing count as zero and wrongly claiming nothing happened.
  */
-export function getFolderActionResultMessage(action: FolderBulkRuleAction, affected?: number, skipped?: number) {
+export function getFolderActionResultMessage(action: FolderBulkRuleAction, results: BulkActionResults = {}) {
+  const { affected, skipped } = results;
+
   if (affected === undefined) {
     switch (action) {
       case 'pause':

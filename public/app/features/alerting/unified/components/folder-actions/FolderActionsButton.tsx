@@ -53,7 +53,7 @@ export const FolderActionsButton = ({ folderUID }: Props) => {
 
   const onConfirmDelete = async () => {
     const result = await deleteGrafanaRulesFromFolder({ namespace: folderUID }).unwrap();
-    const message = getFolderActionResultMessage('delete', result.deleted, result.skipped);
+    const message = getFolderActionResultMessage('delete', { affected: result.deleted, skipped: result.skipped });
     appEvents.emit(AppEvents.alertSuccess, [message]);
     await redirectToListView();
   };
@@ -163,7 +163,10 @@ function BulkActions({
             action="pause"
             executeAction={async (folderUID) => {
               const result = await pauseFolder({ namespace: folderUID }).unwrap();
-              const message = getFolderActionResultMessage('pause', result.updated, result.skipped);
+              const message = getFolderActionResultMessage('pause', {
+                affected: result.updated,
+                skipped: result.skipped,
+              });
               appEvents.emit(AppEvents.alertSuccess, [message]);
               await redirectToListView();
             }}
@@ -174,7 +177,10 @@ function BulkActions({
             action="unpause"
             executeAction={async (folderUID) => {
               const result = await unpauseFolder({ namespace: folderUID }).unwrap();
-              const message = getFolderActionResultMessage('resume', result.updated, result.skipped);
+              const message = getFolderActionResultMessage('resume', {
+                affected: result.updated,
+                skipped: result.skipped,
+              });
               appEvents.emit(AppEvents.alertSuccess, [message]);
               await redirectToListView();
             }}

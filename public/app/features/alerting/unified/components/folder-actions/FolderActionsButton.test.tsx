@@ -113,7 +113,9 @@ describe('FolderActionsButton', () => {
       expect(pauseTrigger).toHaveBeenCalledTimes(1);
     });
     expect(emitSpy).toHaveBeenCalledTimes(1);
-    expect(emitSpy).toHaveBeenCalledWith(AppEvents.alertSuccess, [getFolderActionResultMessage('pause', 3, 2)]);
+    expect(emitSpy).toHaveBeenCalledWith(AppEvents.alertSuccess, [
+      getFolderActionResultMessage('pause', { affected: 3, skipped: 2 }),
+    ]);
   });
 
   it('falls back to the count-less message when the backend response has no counts (rolling deploy compatibility)', async () => {
@@ -141,7 +143,9 @@ describe('FolderActionsButton', () => {
       expect(unpauseTrigger).toHaveBeenCalledTimes(1);
     });
     expect(emitSpy).toHaveBeenCalledTimes(1);
-    expect(emitSpy).toHaveBeenCalledWith(AppEvents.alertSuccess, [getFolderActionResultMessage('resume', 4, 1)]);
+    expect(emitSpy).toHaveBeenCalledWith(AppEvents.alertSuccess, [
+      getFolderActionResultMessage('resume', { affected: 4, skipped: 1 }),
+    ]);
   });
 
   it('shows exactly one success toast built from the delete response counts', async () => {
@@ -157,6 +161,8 @@ describe('FolderActionsButton', () => {
       expect(deleteTrigger).toHaveBeenCalledTimes(1);
     });
     expect(emitSpy).toHaveBeenCalledTimes(1);
-    expect(emitSpy).toHaveBeenCalledWith(AppEvents.alertSuccess, [getFolderActionResultMessage('delete', 5, 0)]);
+    expect(emitSpy).toHaveBeenCalledWith(AppEvents.alertSuccess, [
+      getFolderActionResultMessage('delete', { affected: 5, skipped: 0 }),
+    ]);
   });
 });
