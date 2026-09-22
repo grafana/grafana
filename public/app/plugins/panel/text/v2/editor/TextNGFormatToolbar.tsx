@@ -3,10 +3,10 @@ import { type ReactNode, type RefObject } from 'react';
 
 import { type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import { Stack, ToolbarButton } from '@grafana/ui';
 
 import { TextMode } from '../../panelcfg.gen';
+import { isTextNewFeaturesEnabled } from '../utils';
 
 import { insertAtCursor, toggleLinePrefix, toggleOrderedList, toggleSurround } from './editorCommands';
 
@@ -75,7 +75,7 @@ function getFormatActions(mode: TextMode): FormatAction[] {
     },
   ];
 
-  const diagramAction: FormatAction[] = getFeatureFlagClient().getBooleanValue('text.newFeatures', false)
+  const diagramAction: FormatAction[] = isTextNewFeaturesEnabled()
     ? [
         {
           key: 'diagram',

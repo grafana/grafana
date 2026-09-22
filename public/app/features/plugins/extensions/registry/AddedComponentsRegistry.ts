@@ -3,7 +3,8 @@ import { type ReplaySubject } from 'rxjs';
 import { type AppPluginConfig, type PluginExtensionAddedComponentConfig } from '@grafana/data';
 
 import * as errors from '../errors';
-import { isGrafanaDevMode, wrapWithPluginContext } from '../utils';
+import { isGrafanaDevMode } from '../isGrafanaDevMode';
+import { wrapWithPluginContext } from '../utils';
 import { isAddedComponentMetaInfoMissing } from '../validators';
 
 import { type PluginExtensionConfigs, Registry, type RegistryType } from './Registry';

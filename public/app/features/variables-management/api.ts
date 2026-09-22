@@ -9,29 +9,12 @@ import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
 import { extractErrorMessage } from 'app/api/utils';
 import { createWarningNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
-import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
-import { clearPredefinedVariablesCache } from 'app/features/dashboard-scene/utils/predefinedVariables';
 import { dispatch } from 'app/store/store';
 
+import { invalidateAfterVariableMutation, variableListTag } from './cache';
 import { buildVariableResource, getVariableFolderUid, getVariableKind, getVariableSpecName } from './utils';
 
 const LIST_PAGE_SIZE = 500;
-
-const variableListTag = { type: 'Variable' as const, id: 'LIST' };
-
-/**
- * Clears caches so dashboards pick up Variable CRUD without a hard refresh.
- * Owned by variables-management (mutation sites), not the API client veneer.
- */
-export function invalidatePredefinedVariableCaches() {
-  clearPredefinedVariablesCache();
-  getDashboardScenePageStateManager().clearSceneCache();
-}
-
-function invalidateAfterVariableMutation() {
-  dispatch(dashboardAPIv2beta1.util.invalidateTags([variableListTag]));
-  invalidatePredefinedVariableCaches();
-}
 
 /**
  * Lists every Variable resource by paging through the k8s-style list endpoint with
@@ -39,7 +22,7 @@ function invalidateAfterVariableMutation() {
  * hook is the data-fetching seam for the variables tree: if fetch-all proves not to
  * scale, swap this for a per-folder labelSelector strategy without touching the UI.
  */
-const variablesManagementAPI = dashboardAPIv2beta1.injectEndpoints({
+export const variablesManagementAPI = dashboardAPIv2beta1.injectEndpoints({
   endpoints: (build) => ({
     listAllVariables: build.query<Variable[], void>({
       queryFn: async (_arg, _api, _extraOptions, baseQuery) => {

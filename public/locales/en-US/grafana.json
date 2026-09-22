@@ -745,13 +745,20 @@
     },
     "bulk-actions": {
       "delete": {
+        "affected-count": "Deleted {{num}} rules",
+        "no-rules-affected": "No rules were deleted from folder",
         "success": "Rules successfully deleted from folder"
       },
       "pause": {
+        "affected-count": "Paused {{num}} rules",
+        "no-rules-affected": "No rules were paused for folder",
         "success": "Rules evaluation successfully paused for folder"
       },
+      "skipped-provisioned": "Skipped {{num}} provisioned rules",
       "unpause": {
-        "success": "Rules successfully unpaused for this folder"
+        "affected-count": "Resumed {{num}} rules",
+        "no-rules-affected": "No rules were resumed for folder",
+        "success": "Rules successfully resumed for folder"
       }
     },
     "central-alert-history": {
@@ -1780,6 +1787,8 @@
         },
         "source-title": "Import Source",
         "subtitle": "Import contact points, notification policies, templates, and mute timings from an external Alertmanager.",
+        "templates-added-title_one": "Template file added",
+        "templates-added-title_other": "Template files added",
         "templates-desc": "Optional. Upload the template files referenced by your Alertmanager config. Each file is imported as a template named after the file.",
         "templates-dropzone": "Drop template files here or click to upload",
         "templates-duplicate": "Duplicate template file name: \"{{name}}\". Template file names must be unique.",
@@ -1792,6 +1801,7 @@
         "validation-success": "Validation successful",
         "validation-success-desc": "No conflicts found. The configuration is ready to import.",
         "validation-warning": "Some resources will be renamed to avoid conflicts with existing ones",
+        "yaml-added-title": "Configuration file uploaded",
         "yaml-desc": "Accepted file types: {{extensions}}",
         "yaml-file": "Alertmanager config YAML",
         "yaml-invalid-type": "File must be a YAML file ({{extensions}})",
@@ -2661,6 +2671,9 @@
         "text-converted-prometheus": "Imported",
         "text-provisioned": "Provisioned"
       }
+    },
+    "proxied-alerting-route": {
+      "text-redirecting": "Redirecting…"
     },
     "query-and-expressions-step": {
       "add-query": "Add query",
@@ -5793,16 +5806,24 @@
       "add-library-panel-header": "Import panel",
       "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "add-visualization-button": "Add visualization",
+      "add-visualization-description": "Visualizations are panels for your data. Organize them with Auto grid or Custom grid.",
       "add-visualization-header": "Start your new dashboard by adding a visualization",
+      "add-visualization-heading": "Add a visualization",
+      "assistant-placeholder": "Describe your dashboard. This will open the assistant chat and start a conversation.",
       "auto-grid": "Auto grid",
       "auto-grid-description": "Panels resize to fit and form uniform grids",
+      "build-assistant": "Build your dashboard with Assistant",
       "custom-grid": "Custom grid",
       "custom-grid-description": "Position and size each panel individually",
       "description": "Add a panel to visualize your data",
+      "grid-auto": "Auto",
+      "grid-custom": "Custom",
+      "grid-label": "Grid:",
       "import-a-dashboard-body": "Import dashboards from files or <2>grafana.com</2>.",
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard",
       "layout-default-hint": "The selected layout will also be used as the default for all new tabs and rows. You can change this later in Dashboard Settings > General.",
+      "or-start-blank": "Or build it yourself",
       "select-layout-header": "Select layout",
       "title": "New dashboard"
     },
@@ -6112,6 +6133,17 @@
     },
     "panel-not-supported": {
       "go-back-to-queries": "Go back to Queries"
+    },
+    "plan-placeholder-badge": {
+      "text": "Sample data",
+      "tooltip": "The numbers shown are sample data for illustration and do not come from real queries."
+    },
+    "planning-banner": {
+      "build": "Build",
+      "dismiss": "Dismiss",
+      "panel-count_one": "{{count}} panel",
+      "panel-count_other": "{{count}} panels",
+      "plan-label": "Plan"
     },
     "public-dashboard-not-available": {
       "does-not-exist": "The dashboard you are trying to access does not exist",
@@ -6788,7 +6820,7 @@
     "viz-panel": {
       "options": {
         "description": "Description",
-        "description-as-subtitle": "as subtitle"
+        "description-as-subtitle": "Use as subtitle"
       }
     }
   },
@@ -8954,6 +8986,7 @@
     },
     "rich-history-notification": {
       "query-copied": "Query copied to clipboard",
+      "query-copy-failed": "Could not copy query to clipboard",
       "query-deleted": "Query deleted"
     },
     "rich-history-queries-tab": {
@@ -9080,6 +9113,10 @@
       "attribute-category": {
         "other": "Other"
       },
+      "exception-message": "Message:",
+      "exception-stacktrace": "Stacktrace",
+      "exception-title": "Exception",
+      "exception-type": "Type:",
       "label": {
         "kind": "Kind:",
         "library-name": "Library Name:",
@@ -9198,6 +9235,7 @@
       "high-latency": "High latency",
       "high-latency-tooltip": "Selects the 10% longest spans in the trace (p90).",
       "link-copied": "Link copied to clipboard",
+      "link-copy-failed": "Could not copy link to clipboard",
       "overview": "Overview",
       "path": "Path",
       "route": "Route",
@@ -9212,6 +9250,7 @@
       "target": "Target",
       "tooltip-url": "{{route}} or {{url}} or {{target}} or {{path}}",
       "trace-banner-error": "Trace error banner",
+      "trace-banner-go-to-span": "Go to span",
       "trace-banner-metrics": "{{duration}} · {{percent}}% of trace",
       "trace-banner-warning": "Trace warning banner",
       "trace-id": "Trace ID",
@@ -10728,7 +10767,9 @@
       "aria-label-toggle-collapse": "toggle collapse panel",
       "ariaLabel-panel-loading": "Panel loading bar",
       "ariaLabel-panel-status": "Panel status",
-      "errors-and-notices": "Errors and notices",
+      "explain-with-assistant": "Explain with Assistant",
+      "fix-with-assistant": "Fix with Assistant",
+      "inspect": "Inspect",
       "tooltip-cancel": "Cancel query",
       "tooltip-cancel-loading": "Cancel query",
       "tooltip-stop-streaming": "Stop streaming",
@@ -11456,6 +11497,28 @@
         "clusters_one": "{{value}} cluster",
         "clusters_other": "{{value}} clusters",
         "description": "See cluster health, cost, and right-sizing savings in one view.",
+        "filter": {
+          "all-clusters": "All clusters",
+          "all-namespaces": "All namespaces",
+          "all-nodes": "All nodes",
+          "badge-ignored": "Filters not applied",
+          "cancel": "Cancel",
+          "clear": "Clear filters",
+          "cluster": "Cluster",
+          "edit": "Edit filters ({{summary}})",
+          "ignored-tooltip": "Saved for {{saved}}. This card reads {{current}}, so it shows the whole fleet.",
+          "namespaces": "Namespaces",
+          "no-match": "No matching data",
+          "no-match-hint": "Adjust the filters",
+          "nodes": "Nodes",
+          "open": "Filter by cluster, namespace, or node",
+          "save": "Save",
+          "save-failed": "Could not save to browser storage. Try again.",
+          "summary-cluster": "Cluster: {{cluster}}",
+          "summary-namespaces": "Namespaces: {{namespaces}}",
+          "summary-nodes": "Nodes: {{nodes}}",
+          "title": "Filter Kubernetes Monitoring"
+        },
         "health-nodes_one": "{{count}} node not ready",
         "health-nodes_other": "{{count}} nodes not ready",
         "health-pods_one": "{{count}} pod pending or failed",
@@ -11859,6 +11922,7 @@
       "waiting-for-data": "Waiting for data:"
     },
     "live-publish": {
+      "message": "Message to publish",
       "publish": "Publish"
     }
   },
@@ -12775,7 +12839,7 @@
       "title": "New folder"
     },
     "notebooks": {
-      "subtitle": "Investigation notebooks created from workspaces, dashboards, alerts, and incidents.",
+      "subtitle": "Create and manage notebooks to tell a story with your data",
       "title": "Notebooks"
     },
     "observability": {
@@ -13200,6 +13264,7 @@
     "history": {
       "add-block": "Add block",
       "add-query": "Add query",
+      "add-tag": "Add tag",
       "delete-block": "Delete block",
       "duplicate-block": "Duplicate block",
       "duplicate-query": "Duplicate query",
@@ -13209,11 +13274,21 @@
       "redo": "Redo",
       "redo-action": "Redo: {{action}}",
       "remove-query": "Remove query",
+      "remove-tag": "Remove tag",
       "select-query": "Select query",
       "split-block": "Split block",
       "switch-datasource": "Switch datasource",
       "undo": "Undo",
       "undo-action": "Undo: {{action}}"
+    },
+    "incidents": {
+      "attach-title": "Attach to incident",
+      "attached": "Notebook attached to \"{{incident}}\"",
+      "attached-untitled": "Notebook attached to the incident",
+      "caption": "Notebook: {{title}}",
+      "declare": "Declare incident",
+      "menu": "IRM",
+      "view-incident": "View incident"
     },
     "list": {
       "count_one": "{{count}} notebook",
@@ -13237,8 +13312,10 @@
       "table": {
         "author": "Author",
         "copy-link": "Copy link",
+        "copy-link-error": "Failed to copy link",
         "created": "Created",
         "edit": "Edit",
+        "link-copied": "Link copied to clipboard",
         "more-actions": "More actions",
         "tags": "Tags",
         "title": "Title",
@@ -15142,7 +15219,7 @@
     },
     "public-sharing": {
       "accept-button": "Accept",
-      "alert-text": "Sharing this dashboard externally makes it entirely accessible to anyone with the link.",
+      "alert-text": "Sharing this dashboard externally makes it entirely accessible to anyone with the link. This is not recommended for dashboards with sensitive data.",
       "cancel-button": "Cancel",
       "learn-more-button": "Learn more",
       "public-ack": "I understand that this entire dashboard will be public.*",
@@ -16208,6 +16285,8 @@
       "new-snapshot-button": "New snapshot",
       "success-creation": "Your snapshot has been created",
       "success-delete": "Your snapshot has been deleted",
+      "too-large-body": "This snapshot is {{size}}, over the {{limit}} limit. Snapshot a single panel, shorten the time range, or select fewer template variable values, then try again.",
+      "too-large-title": "Snapshot is too large to publish",
       "view-all-button": "View all snapshots"
     },
     "share-panel": {
@@ -16493,6 +16572,7 @@
     "description-page-size": "Number of rows per page. When empty, the page size is based on the panel height.",
     "description-styling-from-field": "A field containing JSON objects with CSS properties",
     "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
+    "description-zebra-striping": "Alternate the background color of every other row",
     "frame-picker": {
       "label": "Query"
     },
@@ -16531,6 +16611,7 @@
     "name-tooltip-placement": "Tooltip placement",
     "name-wrap-header-text": "Wrap header text",
     "name-wrap-text": "Wrap text",
+    "name-zebra-striping": "Zebra striping",
     "no-value-placeholder": "No rows",
     "placeholder-column-width": "auto",
     "placeholder-frozen-columns": "none",
