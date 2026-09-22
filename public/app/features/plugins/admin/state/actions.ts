@@ -250,6 +250,7 @@ export const uninstall = createAsyncThunk<
   } catch (e) {
     console.error(e);
     if (isFetchError(e) && e.status === 409 && e.data?.status === 'user-data') {
+      e.isHandled = true;
       return thunkApi.rejectWithValue('USER_DATA');
     }
 
