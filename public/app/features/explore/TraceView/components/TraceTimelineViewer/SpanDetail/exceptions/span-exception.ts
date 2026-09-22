@@ -43,20 +43,16 @@ function isExceptionLog(log: TraceLog): boolean {
   return Boolean(log.fields?.some((field) => isExceptionAttributeKey(field.key)));
 }
 
-function assignExceptionFields(target: SpanException, pairs: TraceKeyValuePair[] | undefined) {
+function getExceptionFields(pairs: TraceKeyValuePair[] | undefined): SpanException {
   const type = getPairValue(pairs, EXCEPTION_TYPE_KEYS);
   const message = getPairValue(pairs, EXCEPTION_MESSAGE_KEYS);
   const stacktrace = getPairValue(pairs, EXCEPTION_STACKTRACE_KEYS);
 
-  if (type) {
-    target.type = type;
-  }
-  if (message) {
-    target.message = message;
-  }
-  if (stacktrace) {
-    target.stacktrace = stacktrace;
-  }
+  return {
+    ...(type && { type }),
+    ...(message && { message }),
+    ...(stacktrace && { stacktrace }),
+  };
 }
 
 /**
@@ -64,17 +60,15 @@ function assignExceptionFields(target: SpanException, pairs: TraceKeyValuePair[]
  * Jaeger `stackTraces` field. Later exception events win over earlier ones.
  */
 export function getSpanException(span: TraceSpan): SpanException | undefined {
-  const exception: SpanException = {};
-
-  assignExceptionFields(exception, span.tags);
+  let exception: SpanException = getExceptionFields(span.tags);
 
   const exceptionLogs = (span.logs ?? []).filter(isExceptionLog).sort((a, b) => a.timestamp - b.timestamp);
   for (const log of exceptionLogs) {
-    assignExceptionFields(exception, log.fields);
+    exception = { ...exception, ...getExceptionFields(log.fields) };
   }
 
   if (!exception.stacktrace && span.stackTraces?.length) {
-    exception.stacktrace = span.stackTraces.join('\n\n');
+    exception = { ...exception, stacktrace: span.stackTraces.join('\n\n') };
   }
 
   if (!exception.type && !exception.message && !exception.stacktrace) {
