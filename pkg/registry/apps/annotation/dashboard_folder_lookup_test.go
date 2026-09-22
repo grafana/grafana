@@ -1,6 +1,9 @@
 package annotation
 
 import (
+	"context"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -12,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
+	k8stesting "k8s.io/client-go/testing"
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -103,5 +107,73 @@ func TestDashboardFolderResolver_ResolveFolder(t *testing.T) {
 		folder, err := resolver.ResolveFolder(ctx, ns, "missing-uid")
 		require.NoError(t, err)
 		assert.Equal(t, "", folder)
+	})
+
+	t.Run("concurrent calls for the same dashboard groups into one fetch", func(t *testing.T) {
+		resolver, fakeDyn := newTestDashboardFolderResolver(true, newFakeDashboard(ns, dashUID, folderUID))
+
+		release := make(chan struct{})
+		var hits atomic.Int32
+		fakeDyn.PrependReactor("get", "dashboards", func(k8stesting.Action) (bool, runtime.Object, error) {
+			hits.Add(1)
+			<-release
+			return false, nil, nil
+		})
+
+		const callers = 10
+		var wg sync.WaitGroup
+		results := make([]string, callers)
+		errs := make([]error, callers)
+		for i := range callers {
+			wg.Add(1)
+			go func(idx int) {
+				defer wg.Done()
+				results[idx], errs[idx] = resolver.ResolveFolder(ctx, ns, dashUID)
+			}(i)
+		}
+
+		assert.Eventually(t, func() bool { return hits.Load() > 0 }, time.Second, time.Millisecond)
+		close(release)
+		wg.Wait()
+
+		for i := range callers {
+			require.NoError(t, errs[i])
+			assert.Equal(t, folderUID, results[i])
+		}
+		assert.Equal(t, int32(1), hits.Load(), "concurrent lookups for the same dashboard should share a single apiserver fetch")
+	})
+
+	t.Run("cancelling one caller does not fail others sharing the fetch", func(t *testing.T) {
+		resolver, fakeDyn := newTestDashboardFolderResolver(true, newFakeDashboard(ns, dashUID, folderUID))
+
+		release := make(chan struct{})
+		entered := make(chan struct{})
+		fakeDyn.PrependReactor("get", "dashboards", func(k8stesting.Action) (bool, runtime.Object, error) {
+			close(entered)
+			<-release
+			return false, nil, nil
+		})
+
+		cancelCtx, cancel := context.WithCancel(ctx)
+
+		var wg sync.WaitGroup
+		wg.Go(func() {
+			_, _ = resolver.ResolveFolder(cancelCtx, ns, dashUID)
+		})
+
+		<-entered
+		cancel()
+
+		var waiterFolder string
+		var waiterErr error
+		wg.Go(func() {
+			waiterFolder, waiterErr = resolver.ResolveFolder(ctx, ns, dashUID)
+		})
+
+		close(release)
+		wg.Wait()
+
+		require.NoError(t, waiterErr, "a waiter with a valid context should not fail because another caller's context was cancelled")
+		assert.Equal(t, folderUID, waiterFolder)
 	})
 }

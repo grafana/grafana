@@ -73,6 +73,7 @@ func (r *dashboardFolderResolver) ResolveFolder(ctx context.Context, namespace, 
 	}
 
 	// Group concurrent cache misses for the same dashboard into a single fetch
+	fetchCtx := context.WithoutCancel(ctx)
 	v, err, _ := r.sf.Do(key, func() (any, error) {
 		nsInfo, err := authlib.ParseNamespace(namespace)
 		if err != nil {
@@ -81,7 +82,7 @@ func (r *dashboardFolderResolver) ResolveFolder(ctx context.Context, namespace, 
 
 		// The downstream apiserver authorizes the fetch against the service identity, not the caller's -
 		// so a viewer without dashboards:read can still resolve the folder for annotation inheritance checks.
-		svcCtx := identity.WithServiceIdentityContext(ctx, nsInfo.OrgID)
+		svcCtx := identity.WithServiceIdentityContext(fetchCtx, nsInfo.OrgID)
 
 		dash, err := r.client.Get(svcCtx, namespace, dashboardUID)
 		if err != nil {
