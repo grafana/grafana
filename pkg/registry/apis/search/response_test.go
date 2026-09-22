@@ -69,7 +69,7 @@ func TestSearchResults_MapsItemsAndFields(t *testing.T) {
 		Results:        table,
 		TotalHits:      2,
 		TotalHitsExact: true,
-	}, testKind, 10)
+	}, testKind, 10, nil)
 	require.NoError(t, err)
 
 	require.Len(t, out.Items, 2)
@@ -101,7 +101,7 @@ func TestSearchResults_ScoreIsSeparateFromFields(t *testing.T) {
 		{"__name": "dash-b", "title": "B", resource.SEARCH_FIELD_SCORE: float64(0)},
 	}, nil)
 
-	out, err := searchResults(&resourcepb.ResourceSearchResponse{Results: table}, testKind, 10)
+	out, err := searchResults(&resourcepb.ResourceSearchResponse{Results: table}, testKind, 10, nil)
 	require.NoError(t, err)
 
 	require.NotNil(t, out.Items[0].Score)
@@ -150,7 +150,7 @@ func TestSearchResults_MapsFieldValueResults(t *testing.T) {
 		TotalHitsExact: true,
 	}
 
-	out, err := searchResults(response, testKind, 2)
+	out, err := searchResults(response, testKind, 2, nil)
 	require.NoError(t, err)
 	require.Len(t, out.Items, 2)
 
@@ -175,6 +175,37 @@ func TestSearchResults_MapsFieldValueResults(t *testing.T) {
 	assert.Equal(t, []string{"dash-b"}, decoded)
 }
 
+func TestSearchResults_ReconstructsStringMapsFromBothWireFormats(t *testing.T) {
+	provider := &fakeProvider{fields: []resource.SearchFieldDefinition{{
+		Name: "attributes", Type: resource.SearchFieldTypeStringMap,
+		Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve},
+	}}}
+	terms := []string{"env", "env=prod", "team", "team=platform"}
+	want := map[string]string{"env": "prod", "team": "platform"}
+
+	mapColumn := col("attributes", resourcepb.ResourceTableColumnDefinition_STRING)
+	mapColumn.IsArray = true
+	table := buildTable(t, []*resourcepb.ResourceTableColumnDefinition{mapColumn}, []map[string]any{{
+		"__name": "dash-a", "attributes": terms,
+	}}, nil)
+	tableResult, err := searchResults(&resourcepb.ResourceSearchResponse{Results: table}, testKind, 10, provider)
+	require.NoError(t, err)
+	assert.Equal(t, want, tableResult.Items[0].Fields.Object["attributes"])
+
+	fieldValueResult, err := searchResults(&resourcepb.ResourceSearchResponse{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields:       []*resourcepb.ResourceSearchField{{Name: "attributes", Type: resourcepb.ResourceSearchField_STRING, IsArray: true}},
+		Rows: []*resourcepb.ResourceSearchRow{{
+			Key:    &resourcepb.ResourceKey{Name: "dash-a"},
+			Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: terms}},
+		}},
+	}, testKind, 10, provider)
+	require.NoError(t, err)
+	assert.Equal(t, want, fieldValueResult.Items[0].Fields.Object["attributes"])
+
+	assert.Equal(t, map[string]string{}, publicFieldValue("attributes", []string{}, map[string]bool{"attributes": true}))
+}
+
 func TestSearchResults_TotalHitsRelation(t *testing.T) {
 	table := buildTable(t, []*resourcepb.ResourceTableColumnDefinition{
 		col("title", resourcepb.ResourceTableColumnDefinition_STRING),
@@ -182,14 +213,14 @@ func TestSearchResults_TotalHitsRelation(t *testing.T) {
 
 	exact, err := searchResults(&resourcepb.ResourceSearchResponse{
 		Results: table, TotalHits: 1, TotalHitsExact: true,
-	}, testKind, 10)
+	}, testKind, 10, nil)
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), exact.Metadata.TotalHits)
 	assert.Equal(t, searchv0.TotalHitsEqual, exact.Metadata.TotalHitsRelation)
 
 	approx, err := searchResults(&resourcepb.ResourceSearchResponse{
 		Results: table, TotalHits: 700, TotalHitsExact: false,
-	}, testKind, 10)
+	}, testKind, 10, nil)
 	require.NoError(t, err)
 	assert.Equal(t, int64(700), approx.Metadata.TotalHits)
 	assert.Equal(t, searchv0.TotalHitsAtMost, approx.Metadata.TotalHitsRelation)
@@ -206,7 +237,7 @@ func TestSearchResults_ContinueToken(t *testing.T) {
 
 	// A full page offers a cursor built from the last row's sort fields.
 	full := buildTable(t, cols, []map[string]any{rows[0], rows[1]}, [][]string{{"a"}, {"b"}})
-	out, err := searchResults(&resourcepb.ResourceSearchResponse{Results: full}, testKind, 2)
+	out, err := searchResults(&resourcepb.ResourceSearchResponse{Results: full}, testKind, 2, nil)
 	require.NoError(t, err)
 	require.NotEmpty(t, out.Metadata.Continue)
 	decoded, err := decodeContinue(out.Metadata.Continue)
@@ -217,7 +248,7 @@ func TestSearchResults_ContinueToken(t *testing.T) {
 	short := buildTable(t, cols, []map[string]any{{"__name": "a", "title": "A"}}, [][]string{{"a"}})
 	out, err = searchResults(&resourcepb.ResourceSearchResponse{
 		Results: short, TotalHitsExact: true,
-	}, testKind, 2)
+	}, testKind, 2, nil)
 	require.NoError(t, err)
 	assert.Empty(t, out.Metadata.Continue)
 
@@ -225,7 +256,7 @@ func TestSearchResults_ContinueToken(t *testing.T) {
 	// early, so more rows may exist and must stay reachable.
 	out, err = searchResults(&resourcepb.ResourceSearchResponse{
 		Results: short, TotalHitsExact: false,
-	}, testKind, 2)
+	}, testKind, 2, nil)
 	require.NoError(t, err)
 	require.NotEmpty(t, out.Metadata.Continue, "an early-stopped scan must remain pageable")
 
@@ -233,13 +264,13 @@ func TestSearchResults_ContinueToken(t *testing.T) {
 	empty := buildTable(t, cols, nil, nil)
 	out, err = searchResults(&resourcepb.ResourceSearchResponse{
 		Results: empty, TotalHitsExact: false,
-	}, testKind, 2)
+	}, testKind, 2, nil)
 	require.NoError(t, err)
 	assert.Empty(t, out.Metadata.Continue)
 
 	// Without sort fields no cursor can be built.
 	noSort := buildTable(t, cols, []map[string]any{rows[0], rows[1]}, nil)
-	out, err = searchResults(&resourcepb.ResourceSearchResponse{Results: noSort}, testKind, 2)
+	out, err = searchResults(&resourcepb.ResourceSearchResponse{Results: noSort}, testKind, 2, nil)
 	require.NoError(t, err)
 	assert.Empty(t, out.Metadata.Continue)
 }
@@ -262,7 +293,7 @@ func TestSearchResults_Facets(t *testing.T) {
 				},
 			},
 		},
-	}, testKind, 10)
+	}, testKind, 10, nil)
 	require.NoError(t, err)
 
 	require.Contains(t, out.Facets, "panel_types")
@@ -275,7 +306,7 @@ func TestSearchResults_Facets(t *testing.T) {
 func TestSearchResults_RejectsUnsupportedResultFormat(t *testing.T) {
 	_, err := searchResults(&resourcepb.ResourceSearchResponse{
 		ResultFormat: resourcepb.ResourceSearchRequest_ResultFormat(99),
-	}, testKind, 10)
+	}, testKind, 10, nil)
 	require.ErrorContains(t, err, "unsupported search result format 99")
 }
 
@@ -288,7 +319,7 @@ func TestSearchResults_RejectsMalformedFieldValueResults(t *testing.T) {
 		Rows: []*resourcepb.ResourceSearchRow{
 			{Key: &resourcepb.ResourceKey{Name: "a"}, Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 1, StringValues: []string{"A"}}}},
 		},
-	}, testKind, 10)
+	}, testKind, 10, nil)
 	require.ErrorContains(t, err, "field index 1 is out of range")
 }
 
@@ -304,6 +335,6 @@ func TestSearchResults_RejectsMalformedTable(t *testing.T) {
 			{Key: &resourcepb.ResourceKey{Name: "a"}, Cells: [][]byte{[]byte("A")}},
 		},
 	}
-	_, err := searchResults(&resourcepb.ResourceSearchResponse{Results: table}, testKind, 10)
+	_, err := searchResults(&resourcepb.ResourceSearchResponse{Results: table}, testKind, 10, nil)
 	require.Error(t, err)
 }

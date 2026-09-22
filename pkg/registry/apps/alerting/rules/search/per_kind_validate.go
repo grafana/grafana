@@ -3,6 +3,7 @@ package search
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	searchregex "github.com/grafana/grafana/pkg/storage/unified/search/regex"
 )
 
 var datasourceUIDPattern = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
@@ -163,8 +165,8 @@ func validateWhere(where *searchv0.WhereNode, k perKind, p *field.Path) ([]searc
 				errs = append(errs, cerr)
 				continue
 			}
-			if ck != "text" && ck != "filter" {
-				errs = append(errs, field.Invalid(cp, ck, "only text and filter leaves are allowed inside and"))
+			if ck != "text" && ck != "filter" && ck != "regex" {
+				errs = append(errs, field.Invalid(cp, ck, "only text, filter and regex leaves are allowed inside and"))
 				continue
 			}
 			// A second text leaf would overwrite the backend query, so it is rejected
@@ -176,18 +178,26 @@ func validateWhere(where *searchv0.WhereNode, k perKind, p *field.Path) ([]searc
 				}
 				sawText = true
 			}
-			if ck == "filter" && child.Filter.Field != fieldLabels {
-				if seenFilterFields[child.Filter.Field] {
-					errs = append(errs, field.Duplicate(cp.Child("filter").Child("field"), child.Filter.Field))
+			if ck == "filter" || ck == "regex" {
+				name := ""
+				path := cp.Child(ck).Child("field")
+				if ck == "filter" {
+					name = child.Filter.Field
+				} else {
+					name = child.Regex.Field
+				}
+				resolved, _, _ := k.fields.resolvePredicateField(name)
+				if resolved.name != fieldLabels && seenFilterFields[name] {
+					errs = append(errs, field.Duplicate(path, name))
 					continue
 				}
-				seenFilterFields[child.Filter.Field] = true
+				seenFilterFields[name] = true
 			}
 			errs = append(errs, validateLeaf(&child, ck, k, cp)...)
 			leaves = append(leaves, child)
 		}
 		return leaves, errs
-	case "text", "filter":
+	case "text", "filter", "regex":
 		return []searchv0.WhereNode{*where}, validateLeaf(where, key, k, p)
 	default:
 		// or, not, range, exists: modelled for the future, rejected today.
@@ -214,6 +224,9 @@ func singleKey(n *searchv0.WhereNode, p *field.Path) (string, *field.Error) {
 	if n.Filter != nil {
 		set = append(set, "filter")
 	}
+	if n.Regex != nil {
+		set = append(set, "regex")
+	}
 	if n.Range != nil {
 		set = append(set, "range")
 	}
@@ -226,7 +239,7 @@ func singleKey(n *searchv0.WhereNode, p *field.Path) (string, *field.Error) {
 	case 0:
 		// An empty node matters as much as an over-set one: it would flatten to no
 		// constraint at all and quietly return every rule.
-		return "", field.Invalid(p, "{}", "node must set exactly one of: and, or, not, text, filter")
+		return "", field.Invalid(p, "{}", "node must set exactly one of: and, or, not, text, filter, regex")
 	default:
 		return "", field.Invalid(p, strings.Join(set, ", "), "node must set exactly one key")
 	}
@@ -238,6 +251,8 @@ func validateLeaf(n *searchv0.WhereNode, key string, k perKind, p *field.Path) f
 		return validateTextLeaf(n.Text, k, p.Child("text"))
 	case "filter":
 		return validateFilterLeaf(n.Filter, k, p.Child("filter"))
+	case "regex":
+		return validatePerKindRegexLeaf(n.Regex, k, p.Child("regex"))
 	}
 	return nil
 }
@@ -275,38 +290,21 @@ func validateTextLeaf(t *searchv0.TextPredicate, k perKind, p *field.Path) field
 
 func validateFilterLeaf(f *searchv0.FilterPredicate, k perKind, p *field.Path) field.ErrorList {
 	var errs field.ErrorList
+	resolved, _, _ := k.fields.resolvePredicateField(f.Field)
 
 	if f.Field == "" {
 		errs = append(errs, field.Required(p.Child("field"), "filter field is required"))
 	} else {
 		errs = append(errs, validateFilterField(f.Field, k, p.Child("field"))...)
 	}
-	if f.Operator != perKindFilterOperatorIn && f.Operator != perKindFilterOperatorNotIn {
-		errs = append(errs, field.NotSupported(p.Child("operator"), f.Operator, []string{perKindFilterOperatorIn, perKindFilterOperatorNotIn}))
-	}
-	if len(f.Values) == 0 {
-		errs = append(errs, field.Required(p.Child("values"), "at least one value is required"))
-	}
-	for i, v := range f.Values {
-		// The backend still reads '*' as a wildcard in field filters, so a literal
-		// '*' in a value would be misinterpreted.
-		if strings.Contains(v, "*") {
-			errs = append(errs, field.Invalid(p.Child("values").Index(i), v, "wildcard values are not allowed"))
-		}
-		// An empty value is the worst kind of divergence: the legacy backend reads
-		// it as "no filter" and returns every rule of the kind (see stringFilter and
-		// includeFilter), while unified matches the empty term and returns none.
-		if v == "" {
-			errs = append(errs, field.Required(p.Child("values").Index(i), "filter values must not be empty"))
-		}
-	}
+	errs = append(errs, validateFilterShape(f, resolved, p)...)
 	// Everything below reads a value or pairs field with operator, so it only
 	// makes sense once both are present and well-formed.
 	if len(errs) > 0 {
 		return errs
 	}
 
-	if _, scalar := scalarFilterFields[f.Field]; scalar && len(f.Values) != 1 {
+	if _, scalar := scalarFilterFields[f.Field]; scalar && resolved.mapKey == "" && len(f.Values) != 1 {
 		errs = append(errs, field.Invalid(p.Child("values"), f.Values, fmt.Sprintf("filter on %q accepts exactly one value", f.Field)))
 		return errs
 	}
@@ -314,12 +312,12 @@ func validateFilterLeaf(f *searchv0.FilterPredicate, k perKind, p *field.Path) f
 	// (requirementToLabelMatcher reads the operator). Every other field's legacy
 	// matcher ignores the operator and would apply NotIn as an inclusive match,
 	// returning the opposite of what was asked for.
-	if f.Operator == perKindFilterOperatorNotIn && f.Field != fieldLabels {
+	if f.Operator == perKindFilterOperatorNotIn && resolved.name != fieldLabels {
 		errs = append(errs, field.Invalid(p.Child("operator"), f.Operator, fmt.Sprintf("the NotIn operator is not supported on %q", f.Field)))
 		return errs
 	}
 
-	switch f.Field {
+	switch resolved.name {
 	case fieldType:
 		if _, ok := perKindValidRuleTypes[f.Values[0]]; !ok {
 			errs = append(errs, field.NotSupported(p.Child("values").Index(0), f.Values[0], perKindRuleTypeNames()))
@@ -371,14 +369,75 @@ func validateFilterLeaf(f *searchv0.FilterPredicate, k perKind, p *field.Path) f
 	return errs
 }
 
+func validateFilterShape(f *searchv0.FilterPredicate, resolved perKindResolvedField, p *field.Path) field.ErrorList {
+	var errs field.ErrorList
+	supportedOperators := []string{perKindFilterOperatorIn, perKindFilterOperatorNotIn}
+	if resolved.mapKey != "" {
+		supportedOperators = append(supportedOperators, "All")
+	}
+	if !slices.Contains(supportedOperators, f.Operator) {
+		errs = append(errs, field.NotSupported(p.Child("operator"), f.Operator, supportedOperators))
+	}
+	if len(f.Values) == 0 {
+		errs = append(errs, field.Required(p.Child("values"), "at least one value is required"))
+	}
+	for i, v := range f.Values {
+		// The backend still reads '*' as a wildcard in field filters, so a literal
+		// '*' in a value would be misinterpreted.
+		if strings.Contains(v, "*") {
+			errs = append(errs, field.Invalid(p.Child("values").Index(i), v, "wildcard values are not allowed"))
+		}
+		// An empty value is the worst kind of divergence: the legacy backend reads
+		// it as "no filter" and returns every rule of the kind (see stringFilter and
+		// includeFilter), while unified matches the empty term and returns none.
+		if v == "" && resolved.mapKey == "" {
+			errs = append(errs, field.Required(p.Child("values").Index(i), "filter values must not be empty"))
+		}
+	}
+	if resolved.mapKey != "" && f.Operator == "All" && len(f.Values) > 1 {
+		errs = append(errs, field.Invalid(p.Child("operator"), f.Operator, "All with several values is not supported for a string-map entry"))
+	}
+	return errs
+}
+
+func validatePerKindRegexLeaf(r *searchv0.RegexPredicate, k perKind, p *field.Path) field.ErrorList {
+	var errs field.ErrorList
+	resolved, found, err := k.fields.resolvePredicateField(r.Field)
+	switch {
+	case r.Field == "":
+		errs = append(errs, field.Required(p.Child("field"), "regex field is required"))
+	case err != nil:
+		errs = append(errs, field.Invalid(p.Child("field"), r.Field, err.Error()))
+	case !found:
+		errs = append(errs, field.Invalid(p.Child("field"), r.Field, "unknown field"))
+	case resolved.mapKey == "":
+		errs = append(errs, field.Invalid(p.Child("field"), r.Field, "regex is supported only on a string-map entry"))
+	case !resolved.definition.HasCapability(resource.SearchCapabilityFilter):
+		errs = append(errs, field.Invalid(p.Child("field"), r.Field, "field does not support filter"))
+	}
+	if r.Pattern == "" {
+		errs = append(errs, field.Required(p.Child("pattern"), "regex pattern is required"))
+	} else if _, err := searchregex.Parse(r.Pattern); err != nil {
+		errs = append(errs, field.Invalid(p.Child("pattern"), r.Pattern, err.Error()))
+	}
+	return errs
+}
+
 // validateFilterField reports whether the field can be filtered on at all: it
 // must be declared filterable by the kind, and the legacy backend must have a
 // matcher for it.
 func validateFilterField(name string, k perKind, p *field.Path) field.ErrorList {
-	if errs := checkCapability(k, name, resource.SearchCapabilityFilter, p); len(errs) > 0 {
-		return errs
+	resolved, found, err := k.fields.resolvePredicateField(name)
+	if err != nil {
+		return field.ErrorList{field.Invalid(p, name, err.Error())}
 	}
-	if _, ok := legacyFilterableFields[name]; !ok {
+	if !found {
+		return field.ErrorList{field.Invalid(p, name, "unknown field")}
+	}
+	if !resolved.definition.HasCapability(resource.SearchCapabilityFilter) {
+		return field.ErrorList{field.Invalid(p, name, "field does not support filter")}
+	}
+	if _, ok := legacyFilterableFields[resolved.name]; !ok {
 		return field.ErrorList{field.Invalid(p, name, "filtering on this field is not supported")}
 	}
 	return nil

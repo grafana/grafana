@@ -86,7 +86,7 @@ func schema_pkg_apis_search_v0alpha1_FilterPredicate(ref common.ReferenceCallbac
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "FilterPredicate is an exact / set-based predicate against a single field. Values are strings whatever the field's declared type, so a boolean field takes \"true\" or \"false\" and a numeric field takes the number written out.\n\nNumbers are held as float64, so only integers up to 2^53 are compared exactly. Past that, values a whole number apart share one representation, and a filter can both match a neighbour and miss the value asked for.",
+				Description: "FilterPredicate is an exact / set-based predicate against a single field. Values are strings whatever the field's declared type, so a boolean field takes \"true\" or \"false\" and a numeric field takes the number written out. A single entry of a declared stringMap is addressed as \"field.key\". Dots in the key are literal; the longest declared stringMap field prefix wins.\n\nNumbers are held as float64, so only integers up to 2^53 are compared exactly. Past that, values a whole number apart share one representation, and a filter can both match a neighbour and miss the value asked for.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"field": {
@@ -173,7 +173,7 @@ func schema_pkg_apis_search_v0alpha1_RegexPredicate(ref common.ReferenceCallback
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "RegexPredicate matches a single field against a regular expression, one pattern per leaf the way a single Prometheus matcher works. Negate turns the leaf from =~ into !~.\n\nMatching is against the whole indexed term and is case-sensitive, so it is restricted to filterable keyword string fields that keep their original case. The pattern is a portable RE2 subset: literals, character classes, grouping, alternation, and greedy repetition. The backend is the source of truth for what the subset admits; it rejects unsupported syntax, fields that do not preserve case, and patterns that expand to too many terms with a 400.",
+				Description: "RegexPredicate matches a single field against a regular expression, one pattern per leaf the way a single Prometheus matcher works. Negate turns the leaf from =~ into !~.\n\nMatching is against the whole indexed term and is case-sensitive, so it is restricted to filterable keyword string fields that keep their original case. A single entry of a declared stringMap is addressed as \"field.key\". A missing key is evaluated as an empty string, including when Negate is true. The pattern is a portable RE2 subset: literals, character classes, grouping, alternation, and greedy repetition. The backend is the source of truth for what the subset admits; it rejects unsupported syntax, fields that do not preserve case, and patterns that expand to too many terms with a 400.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"field": {

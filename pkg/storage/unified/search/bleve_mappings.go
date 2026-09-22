@@ -33,6 +33,8 @@ type kindSearchFields struct {
 	// variants drives the index-time copy of per-kind values into the variant
 	// fields this kind's mapping declares.
 	variants []fieldVariant
+	// stringMapFields are flattened into key and key=value terms before indexing.
+	stringMapFields []string
 
 	// resultFields maps request field names to their declared response shape.
 	resultFields map[string]resource.SearchFieldDefinition
@@ -48,6 +50,7 @@ func newKindSearchFields(provider resource.SearchFieldsProvider, group, kindReso
 		textQueryKinds:     textQueryKindsForMapping(provider, group, kindResource, selectableFields),
 		sortableFields:     sortableFieldsForMapping(provider, group, kindResource),
 		variants:           fieldVariantsOf(fieldDefinitionsForMapping(provider, group, kindResource)),
+		stringMapFields:    stringMapFieldsOf(fieldDefinitionsForMapping(provider, group, kindResource)),
 		resultFields:       resultFields,
 		allResultFields:    allResultFields,
 	}
@@ -179,6 +182,7 @@ type keywordField struct {
 	lowered    bool
 	filterable bool
 	facetable  bool
+	stringMap  bool
 }
 
 // term returns value in the form the field was indexed in, because a TermQuery
@@ -210,6 +214,7 @@ func keywordFieldsForMapping(provider resource.SearchFieldsProvider, group, kind
 			lowered:    name != f.def.Name,
 			filterable: f.def.HasCapability(resource.SearchCapabilityFilter),
 			facetable:  f.def.HasCapability(resource.SearchCapabilityFacet),
+			stringMap:  f.def.Type == resource.SearchFieldTypeStringMap,
 		}
 	}
 	// Selectable fields and the keyword sub-documents exist to be filtered on,
@@ -362,6 +367,19 @@ func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.Se
 	hasRetrieve := def.HasCapability(resource.SearchCapabilityRetrieve)
 	hasUnranked := def.HasCapability(resource.SearchCapabilityUnranked)
 
+	if def.Type == resource.SearchFieldTypeStringMap {
+		if hasFilter || hasRetrieve {
+			m := bleve.NewKeywordFieldMapping()
+			m.Index = hasFilter
+			m.IncludeTermVectors = false
+			m.SkipFreqNorm = true
+			m.Store = hasRetrieve
+			m.IncludeInAll = false
+			parent.AddFieldMappingsAt(def.Name, m)
+		}
+		return
+	}
+
 	// Non-string fields (int64, double, boolean) must be mapped to their own
 	// type: bleve silently drops a numeric or boolean value fed through a
 	// keyword mapping. Text, partial and facet are validated as string-only, so
@@ -469,6 +487,9 @@ func keywordVariantName(name string, hasText bool) string {
 // when def gets no keyword mapping. The mapping builder and the index-time
 // copy both call this, so a mapped variant cannot end up unwritten.
 func keywordVariant(def resource.SearchFieldDefinition) (string, bool) {
+	if def.Type == resource.SearchFieldTypeStringMap {
+		return def.Name, def.HasCapability(resource.SearchCapabilityFilter)
+	}
 	if def.Type != resource.SearchFieldTypeString {
 		return "", false
 	}
@@ -478,6 +499,30 @@ func keywordVariant(def resource.SearchFieldDefinition) (string, bool) {
 		return "", false
 	}
 	return keywordVariantName(def.Name, def.HasCapability(resource.SearchCapabilityText)), true
+}
+
+func stringMapFieldsOf(defs []resource.SearchFieldDefinition) []string {
+	var fields []string
+	for _, def := range defs {
+		if def.Type == resource.SearchFieldTypeStringMap {
+			fields = append(fields, def.Name)
+		}
+	}
+	return fields
+}
+
+func populateStringMapTerms(doc *resource.IndexableDocument, fields []string) {
+	for _, field := range fields {
+		value, ok := doc.Fields[field]
+		if !ok {
+			continue
+		}
+		values, ok := value.(map[string]string)
+		if !ok {
+			continue
+		}
+		doc.Fields[field] = resource.StringMapTerms(values)
+	}
 }
 
 // ngramVariant returns the field def's ngram form is mapped to, and false when

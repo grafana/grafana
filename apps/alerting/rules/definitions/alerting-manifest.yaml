@@ -318,13 +318,13 @@ spec:
         name: paused
         path: spec.paused
         type: boolean
-      - array: true
-        capabilities:
+      - capabilities:
         - filter
         - retrieve
-        description: The rule's labels, flattened to key and key=value terms
+        description: The rule's labels
         name: labels
-        type: string
+        path: spec.labels
+        type: stringMap
       - capabilities:
         - retrieve
         description: The rule's annotations, JSON-encoded for display
@@ -589,13 +589,13 @@ spec:
         name: paused
         path: spec.paused
         type: boolean
-      - array: true
-        capabilities:
+      - capabilities:
         - filter
         - retrieve
-        description: The rule's labels, flattened to key and key=value terms
+        description: The rule's labels
         name: labels
-        type: string
+        path: spec.labels
+        type: stringMap
       - array: true
         capabilities:
         - filter
@@ -1211,6 +1211,19 @@ spec:
           - operator
           - values
           type: object
+        createSearchRulesSearchRegexLeaf:
+          additionalProperties: false
+          properties:
+            field:
+              type: string
+            negate:
+              type: boolean
+            pattern:
+              type: string
+          required:
+          - field
+          - pattern
+          type: object
         createSearchRulesSearchResultHit:
           additionalProperties: false
           description: |-
@@ -1288,7 +1301,7 @@ spec:
           description: |-
             #SearchWhereNode is a single node of the where query tree. A node has
             exactly one key naming its type. v1 supports a top-level "and" combinator
-            plus the "text" and "filter" leaves; "or"/"not"/nesting and the "range"/
+            plus the "text", "filter", and "regex" leaves; "or"/"not"/nesting and the "range"/
             "exists" leaves are future, additive extensions.
           properties:
             and:
@@ -1297,6 +1310,8 @@ spec:
               type: array
             filter:
               $ref: '#/components/schemas/createSearchRulesSearchFilterLeaf'
+            regex:
+              $ref: '#/components/schemas/createSearchRulesSearchRegexLeaf'
             text:
               $ref: '#/components/schemas/createSearchRulesSearchTextLeaf'
           type: object

@@ -71,9 +71,10 @@ const (
 	// SearchFieldTypeDouble covers floating-point fields. The protobuf-level
 	// distinction between FLOAT and DOUBLE is similarly collapsed; SFDs use
 	// float64 for both.
-	SearchFieldTypeDouble  SearchFieldType = "double"
-	SearchFieldTypeBoolean SearchFieldType = "boolean"
-	SearchFieldTypeDate    SearchFieldType = "date"
+	SearchFieldTypeDouble    SearchFieldType = "double"
+	SearchFieldTypeBoolean   SearchFieldType = "boolean"
+	SearchFieldTypeDate      SearchFieldType = "date"
+	SearchFieldTypeStringMap SearchFieldType = "stringMap"
 )
 
 // SearchFieldDefinition is the internal representation of a single searchable
@@ -107,7 +108,7 @@ type SearchFieldDefinition struct {
 	Description string
 
 	// EmitZeroIfAbsent makes the path extractor emit the type's zero value
-	// (false, 0, 0.0, "", or an empty array) when Path resolves to nil.
+	// (false, 0, 0.0, "", an empty array, or an empty map) when Path resolves to nil.
 	// Without it, missing paths are skipped and the field is absent from the
 	// indexed document. Set this when sort or range queries depend on every
 	// document having the field present.
@@ -137,7 +138,7 @@ func SearchFieldDefinitionsToTableColumns(sfds []SearchFieldDefinition) []*resou
 		col := &resourcepb.ResourceTableColumnDefinition{
 			Name:        def.Name,
 			Type:        protoTypeFromSearchFieldType(def.Type),
-			IsArray:     def.Array,
+			IsArray:     def.Array || def.Type == SearchFieldTypeStringMap,
 			Description: def.Description,
 		}
 		filterable := def.HasCapability(SearchCapabilityFilter)
@@ -170,7 +171,7 @@ func TableColumnsByName(sfds []SearchFieldDefinition) map[string]*resourcepb.Res
 // in every case.
 func protoTypeFromSearchFieldType(t SearchFieldType) resourcepb.ResourceTableColumnDefinition_ColumnType {
 	switch t {
-	case SearchFieldTypeString:
+	case SearchFieldTypeString, SearchFieldTypeStringMap:
 		return resourcepb.ResourceTableColumnDefinition_STRING
 	case SearchFieldTypeInt64:
 		return resourcepb.ResourceTableColumnDefinition_INT64
@@ -414,8 +415,8 @@ func validateCrossVersionConsistency(fields map[schema.GroupVersionResource][]Se
 // pairs a capability with a field type that cannot support it. The rules live
 // in the shared searchfields package, which the app-SDK codegen validator also
 // uses, so the two cannot drift: text, partial and facet require a string
-// type; sort works on string, numeric and boolean; filter, retrieve and
-// unranked work on any type.
+// type; sort works on string, numeric and boolean; string maps support only
+// filter and retrieve.
 func validateSearchFieldDefinitions(sfds []SearchFieldDefinition) error {
 	var violations []string
 	for _, sfd := range sfds {
@@ -423,7 +424,7 @@ func validateSearchFieldDefinitions(sfds []SearchFieldDefinition) error {
 		for i, c := range sfd.Capabilities {
 			caps[i] = string(c)
 		}
-		if err := searchfields.Validate(string(sfd.Type), caps); err != nil {
+		if err := searchfields.ValidateField(searchfields.Field{Type: string(sfd.Type), Array: sfd.Array, Capabilities: caps}); err != nil {
 			violations = append(violations, "field "+sfd.Name+": "+err.Error())
 		}
 	}

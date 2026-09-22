@@ -3,6 +3,8 @@ package search
 import (
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -18,8 +20,8 @@ type decodedResults struct {
 //
 // limit is the page size that was requested; it decides whether a continue
 // token is offered, since the backend does not say whether more results exist.
-func searchResults(res *resourcepb.ResourceSearchResponse, kind kindRef, limit int64) (*searchv0.SearchResults, error) {
-	decoded, err := decodeResults(res, kind)
+func searchResults(res *resourcepb.ResourceSearchResponse, kind kindRef, limit int64, provider resource.SearchFieldsProvider) (*searchv0.SearchResults, error) {
+	decoded, err := decodeResults(res, kind, stringMapFieldNames(provider, kind.gvr()))
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +42,7 @@ func searchResults(res *resourcepb.ResourceSearchResponse, kind kindRef, limit i
 // trashResults maps a backend search response into the trash envelope. No facets:
 // trash never requests any, so the backend never returns any.
 func trashResults(res *resourcepb.ResourceSearchResponse, kind kindRef, limit int64) (*searchv0.TrashResults, error) {
-	decoded, err := decodeResults(res, kind)
+	decoded, err := decodeResults(res, kind, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -89,12 +91,12 @@ func continueToken(rowCount int, lastSortFields []string, limit int64, totalIsEx
 	return encodeContinue(lastSortFields)
 }
 
-func decodeResults(res *resourcepb.ResourceSearchResponse, kind kindRef) (decodedResults, error) {
+func decodeResults(res *resourcepb.ResourceSearchResponse, kind kindRef, stringMaps map[string]bool) (decodedResults, error) {
 	switch res.GetResultFormat() {
 	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
-		return decodeTableResults(res.GetResults(), kind)
+		return decodeTableResults(res.GetResults(), kind, stringMaps)
 	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
-		return decodeFieldValueResults(res.GetFields(), res.GetRows(), kind)
+		return decodeFieldValueResults(res.GetFields(), res.GetRows(), kind, stringMaps)
 	default:
 		return decodedResults{}, fmt.Errorf("unsupported search result format %d", res.GetResultFormat())
 	}
@@ -103,7 +105,7 @@ func decodeResults(res *resourcepb.ResourceSearchResponse, kind kindRef) (decode
 // decodeTableResults converts the legacy backend result table into envelope items.
 // Column names are already public names: the backend resolves them back from
 // their physical fields.* form when it builds the table.
-func decodeTableResults(table *resourcepb.ResourceTable, kind kindRef) (decodedResults, error) {
+func decodeTableResults(table *resourcepb.ResourceTable, kind kindRef, stringMaps map[string]bool) (decodedResults, error) {
 	rows := table.GetRows()
 	items := make([]searchv0.ResultItem, 0, len(rows))
 	cols := table.GetColumns()
@@ -130,7 +132,7 @@ func decodeTableResults(table *resourcepb.ResourceTable, kind kindRef) (decodedR
 				}
 				continue
 			}
-			values[col.GetName()] = v
+			values[col.GetName()] = publicFieldValue(col.GetName(), v, stringMaps)
 		}
 		if len(values) > 0 {
 			item.Fields = &common.Unstructured{Object: values}
@@ -146,7 +148,7 @@ func decodeTableResults(table *resourcepb.ResourceTable, kind kindRef) (decodedR
 	return decodedResults{items: items, lastSortFields: lastSortFields}, nil
 }
 
-func decodeFieldValueResults(fields []*resourcepb.ResourceSearchField, rows []*resourcepb.ResourceSearchRow, kind kindRef) (decodedResults, error) {
+func decodeFieldValueResults(fields []*resourcepb.ResourceSearchField, rows []*resourcepb.ResourceSearchRow, kind kindRef, stringMaps map[string]bool) (decodedResults, error) {
 	items := make([]searchv0.ResultItem, 0, len(rows))
 	for i, row := range rows {
 		if row == nil || row.GetKey() == nil {
@@ -155,6 +157,9 @@ func decodeFieldValueResults(fields []*resourcepb.ResourceSearchField, rows []*r
 		values, err := resource.DecodeSearchValues(fields, row)
 		if err != nil {
 			return decodedResults{}, fmt.Errorf("decoding field-value search result row %d: %w", i, err)
+		}
+		for name, value := range values {
+			values[name] = publicFieldValue(name, value, stringMaps)
 		}
 
 		item := resultItem(kind, row.GetKey())
@@ -173,6 +178,30 @@ func decodeFieldValueResults(fields []*resourcepb.ResourceSearchField, rows []*r
 		lastSortFields = rows[len(rows)-1].GetSortFields()
 	}
 	return decodedResults{items: items, lastSortFields: lastSortFields}, nil
+}
+
+func stringMapFieldNames(provider resource.SearchFieldsProvider, gvr schema.GroupVersionResource) map[string]bool {
+	if provider == nil {
+		return nil
+	}
+	fields := map[string]bool{}
+	for _, definition := range provider.Fields(gvr) {
+		if definition.Type == resource.SearchFieldTypeStringMap {
+			fields[definition.Name] = true
+		}
+	}
+	return fields
+}
+
+func publicFieldValue(name string, value any, stringMaps map[string]bool) any {
+	if !stringMaps[name] {
+		return value
+	}
+	decoded, ok := resource.StringMapFromWireValue(value)
+	if !ok {
+		return value
+	}
+	return decoded
 }
 
 func resultItem(kind kindRef, key *resourcepb.ResourceKey) searchv0.ResultItem {

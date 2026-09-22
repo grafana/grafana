@@ -75,11 +75,11 @@ alertRulev0alpha1: alertRuleKind & {
 			description: "Whether the rule is paused"
 		},
 		{
-			name:  "labels"
-			type:  "string"
-			array: true
+			name: "labels"
+			path: "spec.labels"
+			type: "stringMap"
 			capabilities: ["filter", "retrieve"]
-			description: "The rule's labels, flattened to key and key=value terms"
+			description: "The rule's labels"
 		},
 		{
 			name: "annotations"

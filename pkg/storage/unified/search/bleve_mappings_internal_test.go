@@ -60,6 +60,18 @@ func TestAddCapabilityFieldMappings_FilterRetrieve_LegacyShape(t *testing.T) {
 	assert.True(t, m.SkipFreqNorm)
 }
 
+func TestAddCapabilityFieldMappings_StringMap(t *testing.T) {
+	got := flatMappings(t, resource.SearchFieldDefinition{
+		Name: "attributes", Type: resource.SearchFieldTypeStringMap,
+		Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve},
+	})
+	require.Equal(t, []string{"attributes"}, slices.Sorted(maps.Keys(got)))
+	m := got["attributes"]
+	assert.Equal(t, keyword.Name, m.Analyzer)
+	assert.True(t, m.Index)
+	assert.True(t, m.Store)
+}
+
 func TestAddCapabilityFieldMappings_TextRetrieve(t *testing.T) {
 	got := flatMappings(t, resource.SearchFieldDefinition{
 		Name: "summary",

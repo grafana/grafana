@@ -165,7 +165,7 @@ func (b *bleveIndex) resolveFieldValueSchema(selectFields []string) (*fieldValue
 		schema.fields = append(schema.fields, &resourcepb.ResourceSearchField{
 			Name:    definition.Name,
 			Type:    fieldType,
-			IsArray: definition.Array,
+			IsArray: definition.Array || definition.Type == resource.SearchFieldTypeStringMap,
 		})
 		schema.definitions = append(schema.definitions, definition)
 	}
@@ -219,7 +219,7 @@ func (b *bleveIndex) hitsToFieldValues(
 
 func fieldValueType(fieldType resource.SearchFieldType) (resourcepb.ResourceSearchField_Type, error) {
 	switch fieldType {
-	case resource.SearchFieldTypeString:
+	case resource.SearchFieldTypeString, resource.SearchFieldTypeStringMap:
 		return resourcepb.ResourceSearchField_STRING, nil
 	case resource.SearchFieldTypeBoolean:
 		return resourcepb.ResourceSearchField_BOOLEAN, nil
@@ -294,14 +294,14 @@ func newSearchResultValue(
 	value any,
 ) (*resourcepb.ResourceSearchValue, error) {
 	values := flattenSearchResultValue(value)
-	if !definition.Array && len(values) != 1 {
+	if !definition.Array && definition.Type != resource.SearchFieldTypeStringMap && len(values) != 1 {
 		return nil, fmt.Errorf("scalar field has %d values", len(values))
 	}
 
 	result := &resourcepb.ResourceSearchValue{FieldIndex: fieldIndex}
 	for _, value := range values {
 		switch definition.Type {
-		case resource.SearchFieldTypeString:
+		case resource.SearchFieldTypeString, resource.SearchFieldTypeStringMap:
 			v, ok := value.(string)
 			if !ok {
 				return nil, fmt.Errorf("expected string, got %T", value)

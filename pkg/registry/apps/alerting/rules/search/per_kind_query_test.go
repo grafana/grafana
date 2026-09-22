@@ -283,6 +283,69 @@ func TestPerKindTranslateQuery_labelsFilterLeaf(t *testing.T) {
 	})
 }
 
+func TestPerKindTranslateQuery_KeyedStringMapPredicates(t *testing.T) {
+	q := query()
+	q.Where = perKindAndNode(
+		perKindFilterLeaf("labels.team", perKindFilterOperatorIn, "platform", "ops"),
+		searchv0.WhereNode{Regex: &searchv0.RegexPredicate{Field: "labels.env", Pattern: "prod-.*", Negate: true}},
+	)
+	req := translate(t, q).req
+	require.Len(t, req.Options.Fields, 2)
+	assert.Equal(t, &resourcepb.Requirement{Key: fieldLabels, Operator: "in", Values: []string{"team=platform", "team=ops"}}, req.Options.Fields[0])
+	assert.Equal(t, &resourcepb.Requirement{Key: fieldLabels, Operator: string(resource.OperatorNotRegex), Values: []string{"env=prod-.*"}}, req.Options.Fields[1])
+
+	matchers := extractFilters(req).labelMatchers
+	assert.True(t, matchLabels(&ngmodels.AlertRule{Labels: map[string]string{"team": "ops", "env": "staging"}}, matchers))
+	assert.False(t, matchLabels(&ngmodels.AlertRule{Labels: map[string]string{"team": "other", "env": "staging"}}, matchers))
+	assert.False(t, matchLabels(&ngmodels.AlertRule{Labels: map[string]string{"team": "platform", "env": "prod-us"}}, matchers))
+	assert.True(t, matchLabels(&ngmodels.AlertRule{Labels: map[string]string{"team": "platform"}}, matchers), "missing env is evaluated as an empty string")
+
+	t.Run("All with one value is equivalent to In", func(t *testing.T) {
+		q := query()
+		q.Where = &searchv0.WhereNode{Filter: &searchv0.FilterPredicate{
+			Field: "labels.team", Operator: "All", Values: []string{"platform"},
+		}}
+		requirement := translate(t, q).req.Options.Fields[0]
+		assert.Equal(t, "in", requirement.Operator)
+		assert.Equal(t, []string{"team=platform"}, requirement.Values)
+	})
+
+	t.Run("empty values remain exact values", func(t *testing.T) {
+		q := query()
+		q.Where = &searchv0.WhereNode{Filter: &searchv0.FilterPredicate{
+			Field: "labels.team", Operator: perKindFilterOperatorIn, Values: []string{""},
+		}}
+		matchers := extractFilters(translate(t, q).req).labelMatchers
+		assert.True(t, matchLabels(&ngmodels.AlertRule{Labels: map[string]string{"team": ""}}, matchers))
+		assert.False(t, matchLabels(&ngmodels.AlertRule{}, matchers))
+	})
+
+	t.Run("All rejects multiple values", func(t *testing.T) {
+		q := query()
+		q.Where = &searchv0.WhereNode{Filter: &searchv0.FilterPredicate{
+			Field: "labels.team", Operator: "All", Values: []string{"platform", "ops"},
+		}}
+		_, errs := validatePerKindQuery(q, alertRuleKind(t))
+		require.NotEmpty(t, errs)
+		assert.Contains(t, errs.ToAggregate().Error(), "All with several values")
+	})
+}
+
+func TestPerKindLabelRegexCaseAndMissingSemantics(t *testing.T) {
+	matcher := requirementToLabelMatcher(&resourcepb.Requirement{
+		Key: fieldLabels, Operator: string(resource.OperatorRegex), Values: []string{"team=plat.*"},
+	})
+	assert.True(t, matchLabel(&ngmodels.AlertRule{Labels: map[string]string{"team": "platform"}}, matcher))
+	assert.False(t, matchLabel(&ngmodels.AlertRule{Labels: map[string]string{"team": "Platform"}}, matcher))
+	assert.False(t, matchLabel(&ngmodels.AlertRule{}, matcher))
+
+	negated := requirementToLabelMatcher(&resourcepb.Requirement{
+		Key: fieldLabels, Operator: string(resource.OperatorNotRegex), Values: []string{"team=plat.*"},
+	})
+	assert.False(t, matchLabel(&ngmodels.AlertRule{Labels: map[string]string{"team": "platform"}}, negated))
+	assert.True(t, matchLabel(&ngmodels.AlertRule{}, negated))
+}
+
 // TestTranslateQuery_sort covers the sort lowering. An absent sort becomes title
 // ascending so free-text order does not change with the storage mode.
 func TestPerKindTranslateQuery_sort(t *testing.T) {

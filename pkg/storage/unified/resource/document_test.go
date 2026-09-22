@@ -216,6 +216,7 @@ func TestStandardDocumentBuilder_DeclaredFields(t *testing.T) {
 					{Name: "ratio", Path: "spec.ratio", Type: SearchFieldTypeDouble, EmitZeroIfAbsent: true},
 					{Name: "label", Path: "spec.label", Type: SearchFieldTypeString, EmitZeroIfAbsent: true},
 					{Name: "tags", Path: "spec.tags", Type: SearchFieldTypeString, Array: true, EmitZeroIfAbsent: true},
+					{Name: "attributes", Path: "spec.attributes", Type: SearchFieldTypeStringMap, EmitZeroIfAbsent: true},
 					// Without the flag, an absent field stays absent.
 					{Name: "silent", Path: "spec.silent", Type: SearchFieldTypeString},
 				},
@@ -229,6 +230,7 @@ func TestStandardDocumentBuilder_DeclaredFields(t *testing.T) {
 		assert.Equal(t, float64(0), doc.Fields["ratio"])
 		assert.Equal(t, "", doc.Fields["label"])
 		assert.Equal(t, []any{}, doc.Fields["tags"])
+		assert.Equal(t, map[string]string{}, doc.Fields["attributes"])
 		_, hasSilent := doc.Fields["silent"]
 		assert.False(t, hasSilent, "field without EmitZeroIfAbsent must stay absent")
 	})

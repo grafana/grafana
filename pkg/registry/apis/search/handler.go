@@ -93,7 +93,7 @@ func (h *Handler) SearchFor(kind kindRef) http.HandlerFunc {
 			return req, ferrs, nil
 		},
 		func(res *resourcepb.ResourceSearchResponse, limit int64) (any, error) {
-			return searchResults(res, kind, limit)
+			return searchResults(res, kind, limit, h.provider)
 		},
 	)
 }

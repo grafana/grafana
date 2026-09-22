@@ -17,6 +17,24 @@ func coerceToFieldShape(val any, t SearchFieldType, isArray bool) (any, bool) {
 	if val == nil {
 		return nil, false
 	}
+	if t == SearchFieldTypeStringMap {
+		if isArray {
+			return nil, false
+		}
+		values, ok := val.(map[string]any)
+		if !ok {
+			return nil, false
+		}
+		out := make(map[string]string, len(values))
+		for key, value := range values {
+			text, ok := value.(string)
+			if !ok {
+				return nil, false
+			}
+			out[key] = text
+		}
+		return out, true
+	}
 	if !isArray {
 		return coerceScalar(val, t)
 	}
@@ -50,6 +68,8 @@ const maxInt64AsFloat float64 = 1 << 63
 func coerceScalar(val any, t SearchFieldType) (any, bool) {
 	switch t {
 	case SearchFieldTypeUnknown:
+		return nil, false
+	case SearchFieldTypeStringMap:
 		return nil, false
 	case SearchFieldTypeString, SearchFieldTypeDate:
 		s, ok := val.(string)

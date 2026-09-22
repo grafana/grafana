@@ -48,8 +48,8 @@ var (
 // alertRuleSearchBuilder builds an AlertRule search document. It delegates the
 // path-declared fields (declared in the CUE manifest) to the standard document
 // builder, then decodes the typed spec to compute the fields that cannot be
-// expressed as a JSON path: type is a constant, labels and annotations are maps
-// (the path extractor has no map support), and datasourceUIDs must exclude
+// expressed as a JSON path: type is a constant, annotations are encoded for
+// display, and datasourceUIDs must exclude
 // server-side expression datasources and deduplicate across the expression map.
 type alertRuleSearchBuilder struct {
 	declared resource.DocumentBuilder
@@ -66,8 +66,8 @@ func (b *alertRuleSearchBuilder) BuildDocument(ctx context.Context, key *resourc
 
 	// The delegate already unmarshalled value into an unstructured object to
 	// extract the path-declared fields, but it does not expose it. We re-parse
-	// into the typed spec here to compute the map-shaped and derived fields
-	// (labels, annotations, datasourceUIDs) that cannot be expressed as a JSON
+	// into the typed spec here to compute the derived fields
+	// (annotations and datasourceUIDs) that cannot be expressed as a JSON
 	// path. The extra parse is the cost of keeping every path field declarative
 	// (in the manifest) instead of hand-populating it here.
 	rule := &rulesv0alpha1.AlertRule{}
@@ -82,9 +82,6 @@ func (b *alertRuleSearchBuilder) BuildDocument(ctx context.Context, key *resourc
 	}
 	if a := searchencoding.AnnotationsJSON(rule.Spec.Annotations); a != "" {
 		doc.Fields[ruleSearchAnnotations] = a
-	}
-	if terms := searchencoding.LabelTerms(rule.Spec.Labels); len(terms) > 0 {
-		doc.Fields[ruleSearchLabels] = terms
 	}
 	return doc, nil
 }
@@ -104,7 +101,7 @@ func (b *recordingRuleSearchBuilder) BuildDocument(ctx context.Context, key *res
 		doc.Fields = make(map[string]any)
 	}
 
-	// Re-parse into the typed spec to compute the map-shaped and derived fields;
+	// Re-parse into the typed spec to compute the derived fields;
 	// see alertRuleSearchBuilder.BuildDocument for why this second parse exists.
 	rule := &rulesv0alpha1.RecordingRule{}
 	if err := json.Unmarshal(value, rule); err != nil {
@@ -115,9 +112,6 @@ func (b *recordingRuleSearchBuilder) BuildDocument(ctx context.Context, key *res
 
 	if uids := recordingRuleDatasourceUIDs(rule.Spec.Expressions); len(uids) > 0 {
 		doc.Fields[ruleSearchDatasourceUIDs] = uids
-	}
-	if terms := searchencoding.LabelTerms(rule.Spec.Labels); len(terms) > 0 {
-		doc.Fields[ruleSearchLabels] = terms
 	}
 	return doc, nil
 }

@@ -352,6 +352,31 @@ func TestValidateSearchFieldDefinitions(t *testing.T) {
 		})
 		require.NoError(t, err)
 	})
+	t.Run("string map with filter and retrieve is valid", func(t *testing.T) {
+		err := validateSearchFieldDefinitions([]SearchFieldDefinition{{
+			Name: "attributes", Type: SearchFieldTypeStringMap,
+			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve},
+		}})
+		require.NoError(t, err)
+	})
+	for _, capability := range []SearchCapability{
+		SearchCapabilityText, SearchCapabilityPartial, SearchCapabilitySort,
+		SearchCapabilityFacet, SearchCapabilityUnranked,
+	} {
+		t.Run("string map rejects "+string(capability), func(t *testing.T) {
+			err := validateSearchFieldDefinitions([]SearchFieldDefinition{{
+				Name: "attributes", Type: SearchFieldTypeStringMap, Capabilities: []SearchCapability{capability},
+			}})
+			require.Error(t, err)
+		})
+	}
+	t.Run("string map rejects array", func(t *testing.T) {
+		err := validateSearchFieldDefinitions([]SearchFieldDefinition{{
+			Name: "attributes", Type: SearchFieldTypeStringMap, Array: true,
+			Capabilities: []SearchCapability{SearchCapabilityFilter},
+		}})
+		require.Error(t, err)
+	})
 }
 
 func TestValidateCrossVersionConsistency(t *testing.T) {

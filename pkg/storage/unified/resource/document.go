@@ -440,6 +440,8 @@ func zeroValueForFieldDefinition(def SearchFieldDefinition) any {
 		return float64(0)
 	case SearchFieldTypeString, SearchFieldTypeDate:
 		return ""
+	case SearchFieldTypeStringMap:
+		return map[string]string{}
 	case SearchFieldTypeUnknown:
 		return nil
 	}

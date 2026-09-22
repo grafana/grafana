@@ -97,10 +97,10 @@ var appManifestData = app.ManifestData{
 						},
 						{
 							Name:         "labels",
-							Type:         "string",
-							Array:        true,
+							Path:         "spec.labels",
+							Type:         "stringMap",
 							Capabilities: []string{"filter", "retrieve"},
-							Description:  "The rule's labels, flattened to key and key=value terms",
+							Description:  "The rule's labels",
 						},
 						{
 							Name:         "annotations",
@@ -217,10 +217,10 @@ var appManifestData = app.ManifestData{
 						},
 						{
 							Name:         "labels",
-							Type:         "string",
-							Array:        true,
+							Path:         "spec.labels",
+							Type:         "stringMap",
 							Capabilities: []string{"filter", "retrieve"},
-							Description:  "The rule's labels, flattened to key and key=value terms",
+							Description:  "The rule's labels",
 						},
 						{
 							Name:         "datasourceUIDs",
@@ -967,6 +967,32 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
+					"createSearchRulesSearchRegexLeaf": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"field": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"negate": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"boolean"},
+									},
+								},
+								"pattern": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+							},
+							Required: []string{
+								"field",
+								"pattern",
+							},
+						},
+					},
 					"createSearchRulesSearchResultHit": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
@@ -1091,7 +1117,7 @@ var appManifestData = app.ManifestData{
 					"createSearchRulesSearchWhereNode": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
-							Description: "#SearchWhereNode is a single node of the where query tree. A node has\nexactly one key naming its type. v1 supports a top-level \"and\" combinator\nplus the \"text\" and \"filter\" leaves; \"or\"/\"not\"/nesting and the \"range\"/\n\"exists\" leaves are future, additive extensions.",
+							Description: "#SearchWhereNode is a single node of the where query tree. A node has\nexactly one key naming its type. v1 supports a top-level \"and\" combinator\nplus the \"text\", \"filter\", and \"regex\" leaves; \"or\"/\"not\"/nesting and the \"range\"/\n\"exists\" leaves are future, additive extensions.",
 							Properties: map[string]spec.Schema{
 								"and": {
 									SchemaProps: spec.SchemaProps{
@@ -1109,6 +1135,12 @@ var appManifestData = app.ManifestData{
 									SchemaProps: spec.SchemaProps{
 
 										Ref: spec.MustCreateRef("#/components/schemas/createSearchRulesSearchFilterLeaf"),
+									},
+								},
+								"regex": {
+									SchemaProps: spec.SchemaProps{
+
+										Ref: spec.MustCreateRef("#/components/schemas/createSearchRulesSearchRegexLeaf"),
 									},
 								},
 								"text": {

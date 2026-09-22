@@ -79,8 +79,8 @@ Per field:
 
 - `name`: the name callers use in queries and see in results. Must not collide with a standard field.
 - `path`: the JSON path that supplies the value, for example `spec.email` or `spec.members[*].name`. Omit it only if a custom document builder fills the field in.
-- `type`: one of `string`, `int64`, `double`, `boolean`, `date`.
-- `array`: the field holds a list of values of that type.
+- `type`: one of `string`, `int64`, `double`, `boolean`, `date`, or `stringMap`.
+- `array`: the field holds a list of values of that type. It is invalid for `stringMap`, which is already a collection.
 - `capabilities`: what callers may do with the field. Nothing is implied; a field with no capability is indexed and unusable.
 - `emitZeroIfAbsent`: index the type's zero value when the path resolves to nothing. Without it a document missing the path omits the field, which matters for sort and range.
 - `description`: informational only, never affects the index.
@@ -97,7 +97,9 @@ Capabilities:
 | `retrieve` | The value is stored and can come back in results. **Without this the field is never returned.** |
 | `unranked` | Text fields only: drop the ranking statistics to save space. Use when the field is searched but never ranked on. |
 
-Type rules, enforced at codegen and at startup (`pkg/storage/unified/resource/search_field.go`): `text`, `partial` and `facet` need a string type; `sort` works on string, numeric and boolean; `filter`, `retrieve` and `unranked` work on any type. Query-time validation is a little narrower still, see [Other things worth knowing](#other-things-worth-knowing).
+Type rules, enforced at codegen and at startup (`pkg/storage/unified/resource/search_field.go`): `text`, `partial` and `facet` need a string type; `sort` works on string, numeric and boolean. A `stringMap` models `map[string]string` and supports only `filter` and `retrieve`. Query-time validation is a little narrower still, see [Other things worth knowing](#other-things-worth-knowing).
+
+A filter addresses one string-map entry with a dotted field name. For a declaration named `labels`, `labels.team` targets the `team` entry. An exact declared field name wins; otherwise the longest declared string-map prefix wins, so dots inside the key remain literal. Empty keys and keys containing `=` cannot be queried. The parent field can be retrieved and is returned as a JSON object; keyed child projection is not supported.
 
 ### Changing declared fields rebuilds indexes
 
@@ -176,9 +178,9 @@ In practice that means when your kind graduates from `v1beta1` to `v1`, the URL 
 **`where`** is a predicate tree. Today it accepts either a single leaf, or a single `and` of leaves. Leaf types:
 
 - `text`: the free-text query, the thing a user types into a search box. `value` is required. `text.fields` says which fields to match it against, defaulting to `title`, and each field named there needs the `text` capability. At most one text leaf. Omitting `text` is fine and common: the query then matches on the other leaves alone, results come back ordered by `name` rather than by relevance, and no `score` is returned.
-- `filter`: `field`, `operator` (`In`, `NotIn` or `All`), `values`. `In` matches **any** of the values, `NotIn` excludes all of them, and `All` requires the field to hold **every** value, see [Requiring every value](#requiring-every-value). Values are always strings, whatever the field's type: a boolean field takes `"true"` or `"false"`, a number is written out. `*` in a value is rejected.
+- `filter`: `field`, `operator` (`In`, `NotIn` or `All`), `values`. `In` matches **any** of the values, `NotIn` excludes all of them, and `All` requires the field to hold **every** value, see [Requiring every value](#requiring-every-value). Values are always strings, whatever the field's type: a boolean field takes `"true"` or `"false"`, a number is written out. For a declared `stringMap`, use `field.key`; `NotIn` includes resources where the key is missing, and `All` with multiple values is rejected because one key has one value. `*` in a value is rejected.
 - `range`: numeric fields only, and the field must declare `filter`. There is no separate range capability, so a field you cannot filter is also a field you cannot range over. `gt`/`gte`/`lt`/`lte`, at least one bound, and you cannot combine `gt` with `gte` or `lt` with `lte`. On an `int64` field bounds must be whole numbers.
-- `regex`: `field`, `pattern`, and optional `negate`, matching how a single Prometheus matcher works (`negate` is `!~`). String fields declaring `filter` only. The match is against the whole indexed term and case-sensitive, so it only works on keyword fields that keep their original case; a field indexed lowercased (such as `title`) is rejected. `pattern` is a portable RE2 subset (literals, character classes, grouping, alternation, greedy repetition); the backend rejects unsupported syntax, case-losing fields, and patterns that expand to too many terms (10,000 inspected or matched) with a 400. An empty pattern is rejected, because it would match only the empty string and quietly return nothing.
+- `regex`: `field`, `pattern`, and optional `negate`, matching how a single Prometheus matcher works (`negate` is `!~`). String fields declaring `filter` only. A declared `stringMap` entry uses `field.key`; a missing key is evaluated as an empty string. The match is against the whole value and case-sensitive, so it only works on keyword fields that keep their original case; a field indexed lowercased (such as `title`) is rejected. `pattern` is a portable RE2 subset (literals, character classes, grouping, alternation, greedy repetition); the backend rejects unsupported syntax, case-losing fields, and patterns that expand to too many terms (10,000 inspected or matched) with a 400. An empty pattern is rejected.
 
 To exclude empty values, prefer a `filter` leaf over a regex: `NotIn` with a single `""` value is a single-term negation, where the regex `.+` scans the whole field (so `.+` only works under 10,000 distinct values). Note `NotIn` also matches documents missing the field, so it means "value is not empty" rather than "present and non-empty"; use `.+` (and `negate` it for empty-or-missing) only when you need that stricter sense.
 
@@ -217,7 +219,7 @@ One filter leaf per value inside an `and` means the same thing and stays valid:
 
 `or`, `not` and `exists` are in the schema for later and rejected today.
 
-**`labelSelector`** is a standard Kubernetes label selector on `metadata.labels`, ANDed with `where`. It takes the same `matchLabels` and `matchExpressions` shape you would pass to `kubectl` or a list call, as in the example above, and supports the `In` and `NotIn` operators.
+**`labelSelector`** is a standard Kubernetes label selector on `metadata.labels`, ANDed with `where`. It takes the same `matchLabels` and `matchExpressions` shape you would pass to `kubectl` or a list call, as in the example above, and supports the `In` and `NotIn` operators. It is separate from manifest-declared `stringMap` fields such as an alert rule's `spec.labels`.
 
 **`sort`** is a list of `{field, direction}`, direction `asc` (default) or `desc`. The field must declare `sort`. With no sort: results come back by `name` ascending, or by relevance if the query has a text leaf.
 
@@ -263,7 +265,7 @@ The sampled path already exists: when per-item authorization runs after ranking,
 
 - `resource` is the full identity of the hit. Namespace is implicit from the URL.
 - `score` appears only when the query had a text leaf.
-- `fields` carries the requested fields; array fields come back as JSON arrays, absent values are omitted.
+- `fields` carries the requested fields; array fields come back as JSON arrays, `stringMap` fields as JSON objects, and absent values are omitted.
 - `totalHits` must be read together with `totalHitsRelation`. `eq` means the count is exact. `lte` is short for "less than or equal to": the real number is at or below `totalHits`, which the server falls back to when counting exactly would be too expensive.
 - `facets` counts are approximate, as above.
 - `metadata.continue` present means ask again for more. An empty string means you are done. You may occasionally get one extra empty page.

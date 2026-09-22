@@ -4,12 +4,13 @@ package v0alpha1
 
 // #SearchWhereNode is a single node of the where query tree. A node has
 // exactly one key naming its type. v1 supports a top-level "and" combinator
-// plus the "text" and "filter" leaves; "or"/"not"/nesting and the "range"/
+// plus the "text", "filter", and "regex" leaves; "or"/"not"/nesting and the "range"/
 // "exists" leaves are future, additive extensions.
 type CreateSearchRulesRequestSearchWhereNode struct {
 	And    []CreateSearchRulesRequestSearchWhereNode `json:"and,omitempty"`
 	Text   *CreateSearchRulesRequestSearchTextLeaf   `json:"text,omitempty"`
 	Filter *CreateSearchRulesRequestSearchFilterLeaf `json:"filter,omitempty"`
+	Regex  *CreateSearchRulesRequestSearchRegexLeaf  `json:"regex,omitempty"`
 }
 
 // NewCreateSearchRulesRequestSearchWhereNode creates a new CreateSearchRulesRequestSearchWhereNode object.
@@ -59,6 +60,22 @@ func NewCreateSearchRulesRequestSearchFilterLeaf() *CreateSearchRulesRequestSear
 // OpenAPIModelName returns the OpenAPI model name for CreateSearchRulesRequestSearchFilterLeaf.
 func (CreateSearchRulesRequestSearchFilterLeaf) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.CreateSearchRulesRequestSearchFilterLeaf"
+}
+
+type CreateSearchRulesRequestSearchRegexLeaf struct {
+	Field   string `json:"field"`
+	Pattern string `json:"pattern"`
+	Negate  *bool  `json:"negate,omitempty"`
+}
+
+// NewCreateSearchRulesRequestSearchRegexLeaf creates a new CreateSearchRulesRequestSearchRegexLeaf object.
+func NewCreateSearchRulesRequestSearchRegexLeaf() *CreateSearchRulesRequestSearchRegexLeaf {
+	return &CreateSearchRulesRequestSearchRegexLeaf{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for CreateSearchRulesRequestSearchRegexLeaf.
+func (CreateSearchRulesRequestSearchRegexLeaf) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.CreateSearchRulesRequestSearchRegexLeaf"
 }
 
 // #SearchSortField selects a result ordering. A leading "-" denotes

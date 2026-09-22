@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 
 	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
-	"github.com/grafana/grafana/apps/alerting/rules/pkg/searchencoding"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
@@ -291,7 +290,7 @@ func (r rowReader) strings(name string) []string {
 }
 
 func (r rowReader) labels() map[string]string {
-	return searchencoding.LabelMap(r.strings(fieldLabels))
+	return resource.StringMapFromTerms(r.strings(fieldLabels))
 }
 
 func (r rowReader) jsonMap(name string) map[string]string {

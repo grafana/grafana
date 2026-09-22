@@ -86,6 +86,12 @@ func textLeaf(value string) model.CreateSearchRulesRequestSearchWhereNode {
 	}
 }
 
+func regexLeaf(field, pattern string, negate bool) model.CreateSearchRulesRequestSearchWhereNode {
+	return model.CreateSearchRulesRequestSearchWhereNode{
+		Regex: &model.CreateSearchRulesRequestSearchRegexLeaf{Field: field, Pattern: pattern, Negate: &negate},
+	}
+}
+
 func andNode(children ...model.CreateSearchRulesRequestSearchWhereNode) *model.CreateSearchRulesRequestSearchWhereNode {
 	return &model.CreateSearchRulesRequestSearchWhereNode{And: children}
 }
@@ -132,6 +138,24 @@ func TestBuildSearchRequestExtractRoundTrip(t *testing.T) {
 	// The labelSelector on the group metadata label becomes a group filter.
 	assert.Equal(t, []string{"g1"}, f.groupsInclude)
 	assert.Empty(t, f.groupsExclude)
+}
+
+func TestBuildSearchRequest_KeyedStringMapPredicates(t *testing.T) {
+	body := model.CreateSearchRulesRequestBody{Where: andNode(
+		filterLeaf("labels.team", opIn, "platform", "ops"),
+		regexLeaf("labels.env", "prod-.*", true),
+	)}
+	req, _, err := buildSearchRequest(body, "default", alertrule.ResourceInfo.GroupResource(), nil)
+	require.NoError(t, err)
+	require.Len(t, req.Options.Fields, 2)
+	assert.Equal(t, &resourcepb.Requirement{Key: fieldLabels, Operator: "in", Values: []string{"team=platform", "team=ops"}}, req.Options.Fields[0])
+	assert.Equal(t, &resourcepb.Requirement{Key: fieldLabels, Operator: string(resource.OperatorNotRegex), Values: []string{"env=prod-.*"}}, req.Options.Fields[1])
+
+	matchers := extractFilters(req).labelMatchers
+	assert.True(t, matchLabels(&ngmodels.AlertRule{Labels: map[string]string{"team": "ops", "env": "staging"}}, matchers))
+	assert.False(t, matchLabels(&ngmodels.AlertRule{Labels: map[string]string{"team": "other", "env": "staging"}}, matchers))
+	assert.False(t, matchLabels(&ngmodels.AlertRule{Labels: map[string]string{"team": "platform", "env": "prod-eu"}}, matchers))
+	assert.True(t, matchLabels(&ngmodels.AlertRule{Labels: map[string]string{"team": "platform"}}, matchers))
 }
 
 // TestBuildSearchRequest_labelSelector covers the labelSelector lowering onto

@@ -46,7 +46,10 @@ func TestIntegrationRuleSearch(t *testing.T) {
 	}
 }
 
-const opIn = v0alpha1.CreateSearchRulesRequestSearchFilterLeafOperatorIn
+const (
+	opIn    = v0alpha1.CreateSearchRulesRequestSearchFilterLeafOperatorIn
+	opNotIn = v0alpha1.CreateSearchRulesRequestSearchFilterLeafOperatorNotIn
+)
 
 // query is a small builder for a SearchQuery body used by the tests.
 type query struct {
@@ -65,6 +68,13 @@ func (q *query) text(v string) *query {
 func (q *query) filter(field string, op v0alpha1.CreateSearchRulesRequestSearchFilterLeafOperator, values ...string) *query {
 	q.and(v0alpha1.CreateSearchRulesRequestSearchWhereNode{
 		Filter: &v0alpha1.CreateSearchRulesRequestSearchFilterLeaf{Field: field, Operator: op, Values: values},
+	})
+	return q
+}
+
+func (q *query) regex(field, pattern string, negate bool) *query {
+	q.and(v0alpha1.CreateSearchRulesRequestSearchWhereNode{
+		Regex: &v0alpha1.CreateSearchRulesRequestSearchRegexLeaf{Field: field, Pattern: pattern, Negate: &negate},
 	})
 	return q
 }
@@ -93,8 +103,8 @@ func runRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.Dual
 	alertClient := common.NewAlertRuleClient(t, helper.Org1.Admin)
 	recClient := common.NewRecordingRuleClient(t, helper.Org1.Admin)
 
-	createAlertRule(t, ctx, alertClient, "cpu usage high", false, map[string]string{"team": "a"}, "ds-prom", 1234)
-	createAlertRule(t, ctx, alertClient, "memory usage high", true, map[string]string{"team": "b"}, "ds-loki", 4321)
+	createAlertRule(t, ctx, alertClient, "cpu usage high", false, map[string]string{"team": "a", "environment": "Prod", "owner.name": "core"}, "ds-prom", 1234)
+	createAlertRule(t, ctx, alertClient, "memory usage high", true, map[string]string{"team": "b", "environment": "prod"}, "ds-loki", 4321)
 	createAlertRule(t, ctx, alertClient, "disk low", false, map[string]string{"team": "a"}, "ds-prom", 1000)
 	createRecordingRule(t, ctx, recClient, "cpu recording", "ds-prom", "cpu_seconds_total")
 	createRecordingRule(t, ctx, recClient, "disk recording", "ds-prom", "disk_bytes_total")
@@ -182,6 +192,34 @@ func runRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.Dual
 	// labelSelector selects on resource metadata labels, not these.
 	t.Run("alert rules: label matcher", func(t *testing.T) {
 		require.ElementsMatch(t, []string{"cpu usage high", "disk low"}, titles(searchKind(t, "alertrule", newQuery().filter("labels", opIn, "team=a"))))
+	})
+
+	t.Run("alert rules: keyed label exact matcher", func(t *testing.T) {
+		require.ElementsMatch(t, []string{"cpu usage high", "disk low"}, titles(searchKind(t, "alertrule", newQuery().filter("labels.team", opIn, "a"))))
+		require.Equal(t, []string{"cpu usage high"}, titles(searchKind(t, "alertrule", newQuery().filter("labels.owner.name", opIn, "core"))))
+	})
+
+	t.Run("alert rules: keyed label NotIn includes missing labels", func(t *testing.T) {
+		require.ElementsMatch(t, []string{"memory usage high", "disk low"}, titles(searchKind(t, "alertrule", newQuery().filter("labels.environment", opNotIn, "Prod"))))
+	})
+
+	t.Run("alert rules: keyed label regex is case-sensitive", func(t *testing.T) {
+		require.Equal(t, []string{"cpu usage high"}, titles(searchKind(t, "alertrule", newQuery().regex("labels.environment", "Prod.*", false))))
+		require.Equal(t, []string{"memory usage high"}, titles(searchKind(t, "alertrule", newQuery().regex("labels.environment", "prod.*", false))))
+	})
+
+	t.Run("alert rules: negated keyed label regex includes missing labels", func(t *testing.T) {
+		require.ElementsMatch(t, []string{"memory usage high", "disk low"}, titles(searchKind(t, "alertrule", newQuery().regex("labels.environment", "Prod.*", true))))
+	})
+
+	t.Run("alert rules: retrieved labels are a map", func(t *testing.T) {
+		for _, hit := range searchKind(t, "alertrule", nil).Items {
+			if title(hit) == "cpu usage high" {
+				require.Equal(t, map[string]string{"team": "a", "environment": "Prod", "owner.name": "core"}, hit.Fields.Labels)
+				return
+			}
+		}
+		require.Fail(t, "cpu usage high was not returned")
 	})
 
 	// labelSelector targets metadata labels. Selecting a group that no rule is

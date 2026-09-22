@@ -25,14 +25,21 @@ import (
 	values: [...string]
 }
 
+#SearchRegexLeaf: {
+	field:   string
+	pattern: string
+	negate?: bool
+}
+
 // #SearchWhereNode is a single node of the where query tree. A node has
 // exactly one key naming its type. v1 supports a top-level "and" combinator
-// plus the "text" and "filter" leaves; "or"/"not"/nesting and the "range"/
+// plus the "text", "filter", and "regex" leaves; "or"/"not"/nesting and the "range"/
 // "exists" leaves are future, additive extensions.
 #SearchWhereNode: {
 	and?: [...#SearchWhereNode]
 	text?:   #SearchTextLeaf
 	filter?: #SearchFilterLeaf
+	regex?:  #SearchRegexLeaf
 }
 
 // #SearchSortField selects a result ordering. A leading "-" denotes

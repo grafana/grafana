@@ -65,6 +65,8 @@ type TextPredicate struct {
 // FilterPredicate is an exact / set-based predicate against a single field.
 // Values are strings whatever the field's declared type, so a boolean field
 // takes "true" or "false" and a numeric field takes the number written out.
+// A single entry of a declared stringMap is addressed as "field.key". Dots in
+// the key are literal; the longest declared stringMap field prefix wins.
 //
 // Numbers are held as float64, so only integers up to 2^53 are compared exactly.
 // Past that, values a whole number apart share one representation, and a filter
@@ -104,6 +106,8 @@ type RangePredicate struct {
 //
 // Matching is against the whole indexed term and is case-sensitive, so it is
 // restricted to filterable keyword string fields that keep their original case.
+// A single entry of a declared stringMap is addressed as "field.key". A missing
+// key is evaluated as an empty string, including when Negate is true.
 // The pattern is a portable RE2 subset: literals, character classes, grouping,
 // alternation, and greedy repetition. The backend is the source of truth for
 // what the subset admits; it rejects unsupported syntax, fields that do not

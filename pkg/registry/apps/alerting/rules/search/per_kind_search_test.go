@@ -318,14 +318,13 @@ func TestPerKindSearch_projection(t *testing.T) {
 		assert.Equal(t, "5m", values["for"])
 	})
 
-	// labels are the flattened terms the index holds and annotations a JSON
-	// string, because that is what the generic endpoint returns. A client reading
-	// them has to parse them; a client reading them today will not have to change.
-	t.Run("returns labels and annotations as indexed", func(t *testing.T) {
+	// Labels are reconstructed from the index's flattened wire terms; annotations
+	// remain a JSON string because they are not declared as a string map.
+	t.Run("returns labels as a map and annotations as indexed", func(t *testing.T) {
 		rec, _ := callWithBody(t, projection("labels", "annotations", "datasourceUIDs"), resp)
 		values := decodeResults(t, rec).Items[0].Fields.Object
 
-		assert.ElementsMatch(t, []any{"team", "team=a"}, values["labels"])
+		assert.Equal(t, map[string]any{"team": "a"}, values["labels"])
 		assert.JSONEq(t, `{"summary":"cpu is high"}`, values["annotations"].(string))
 		// The synthetic expression datasource is not a queried datasource, so it
 		// is not indexed as one.

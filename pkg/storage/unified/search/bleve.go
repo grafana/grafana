@@ -1934,6 +1934,7 @@ func (b *bleveIndex) mapBatch(req *resource.BulkIndexRequest) (*bleve.Batch, err
 			}
 
 			doc := item.Doc.UpdateCopyFields()
+			populateStringMapTerms(doc, b.searchFields.stringMapFields)
 			populateFieldVariants(doc, b.searchFields.variants)
 
 			// The static fields.* mapping drops values written under an undeclared

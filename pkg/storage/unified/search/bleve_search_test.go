@@ -1246,6 +1246,29 @@ func TestRegexFilterOnAlertRuleKeywordFields(t *testing.T) {
 	}
 }
 
+func TestStringMapFieldFilters(t *testing.T) {
+	key := resource.NamespacedResource{Namespace: "default", Group: "test.grafana.app", Resource: "items"}
+	index := newTestIndexWithTypedFields(t, key, []resource.SearchFieldDefinition{{
+		Name: "attributes", Type: resource.SearchFieldTypeStringMap,
+		Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve},
+	}})
+	items := []*resource.BulkIndexItem{
+		regexTestDocument(key, "platform", map[string]any{"attributes": map[string]string{"team": "platform"}}),
+		regexTestDocument(key, "uppercase", map[string]any{"attributes": map[string]string{"team": "Platform"}}),
+		regexTestDocument(key, "ops", map[string]any{"attributes": map[string]string{"team": "ops"}}),
+		regexTestDocument(key, "empty", map[string]any{"attributes": map[string]string{"team": ""}}),
+		regexTestDocument(key, "missing", map[string]any{"attributes": map[string]string{"env": "prod"}}),
+	}
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: items}))
+
+	checkSearchQueryUnordered(t, index, regexFieldQuery(key, "attributes", "in", "team=platform"), []string{"platform"})
+	checkSearchQueryUnordered(t, index, regexFieldQuery(key, "attributes", "notin", "team=platform"), []string{"uppercase", "ops", "empty", "missing"})
+	checkSearchQueryUnordered(t, index, regexFieldQuery(key, "attributes", string(resource.OperatorRegex), "team=plat.*"), []string{"platform"})
+	checkSearchQueryUnordered(t, index, regexFieldQuery(key, "attributes", string(resource.OperatorRegex), "team=(?i)plat.*"), []string{"platform", "uppercase"})
+	checkSearchQueryUnordered(t, index, regexFieldQuery(key, "attributes", string(resource.OperatorRegex), "team=.*"), []string{"platform", "uppercase", "ops", "empty", "missing"})
+	checkSearchQueryUnordered(t, index, regexFieldQuery(key, "attributes", string(resource.OperatorNotRegex), "team=plat.*"), []string{"uppercase", "ops", "empty", "missing"})
+}
+
 func TestFlattenedLabelRegexConformance(t *testing.T) {
 	key, index := newAlertRegexFieldIndex(t)
 	items := []*resource.BulkIndexItem{

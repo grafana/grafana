@@ -1,6 +1,9 @@
 package search
 
 import (
+	"fmt"
+	"strings"
+
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	rulesmanifest "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/manifestdata"
@@ -16,6 +19,35 @@ const (
 
 type perKindFieldSet struct {
 	byName map[string]resource.SearchFieldDefinition
+}
+
+type perKindResolvedField struct {
+	definition resource.SearchFieldDefinition
+	name       string
+	mapKey     string
+}
+
+func (s *perKindFieldSet) resolvePredicateField(name string) (perKindResolvedField, bool, error) {
+	if def, ok := s.byName[name]; ok {
+		return perKindResolvedField{definition: def, name: name}, true, nil
+	}
+	var match perKindResolvedField
+	for parent, def := range s.byName {
+		if def.Type != resource.SearchFieldTypeStringMap || !strings.HasPrefix(name, parent+".") || len(parent) <= len(match.name) {
+			continue
+		}
+		match = perKindResolvedField{definition: def, name: parent, mapKey: strings.TrimPrefix(name, parent+".")}
+	}
+	if match.name == "" {
+		return perKindResolvedField{}, false, nil
+	}
+	if match.mapKey == "" {
+		return perKindResolvedField{}, true, fmt.Errorf("map key must not be empty")
+	}
+	if strings.Contains(match.mapKey, "=") {
+		return perKindResolvedField{}, true, fmt.Errorf("map key must not contain '='")
+	}
+	return match, true, nil
 }
 
 func (s *perKindFieldSet) has(name string, c resource.SearchCapability) bool {

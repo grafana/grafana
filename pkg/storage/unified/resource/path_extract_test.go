@@ -111,3 +111,14 @@ func TestCoerceToFieldShape_Nil(t *testing.T) {
 	_, ok := coerceToFieldShape(nil, SearchFieldTypeString, false)
 	assert.False(t, ok)
 }
+
+func TestCoerceToFieldShape_StringMap(t *testing.T) {
+	value, ok := coerceToFieldShape(map[string]any{"team": "platform", "env": "prod"}, SearchFieldTypeStringMap, false)
+	require.True(t, ok)
+	assert.Equal(t, map[string]string{"team": "platform", "env": "prod"}, value)
+
+	_, ok = coerceToFieldShape(map[string]any{"team": 42}, SearchFieldTypeStringMap, false)
+	assert.False(t, ok)
+	_, ok = coerceToFieldShape(map[string]any{"team": "platform"}, SearchFieldTypeStringMap, true)
+	assert.False(t, ok)
+}

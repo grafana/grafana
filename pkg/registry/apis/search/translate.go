@@ -79,7 +79,7 @@ func TranslateSearchQuery(q *searchv0.SearchQuery, gvr schema.GroupVersionResour
 	}
 
 	req := newRequest(gvr, namespace)
-	applyLeaves(req, leaves)
+	applyLeaves(req, leaves, fs)
 	applyLabelSelector(req, q.LabelSelector)
 	applySort(req, q.Sort, hasTextLeaf(leaves), &resourcepb.ResourceSearchRequest_Sort{Field: resource.SEARCH_FIELD_NAME})
 	req.Fields = defaultReturnFields(q.Fields)
@@ -116,7 +116,7 @@ func TranslateTrashQuery(q *searchv0.TrashQuery, gvr schema.GroupVersionResource
 
 	req := newRequest(gvr, namespace)
 	req.IsDeleted = true
-	applyLeaves(req, leaves)
+	applyLeaves(req, leaves, fs)
 	// Trash's default order is deletion_time desc (search uses name asc); when a
 	// text query is present both fall back to relevance instead.
 	applySort(req, q.Sort, hasTextLeaf(leaves), &resourcepb.ResourceSearchRequest_Sort{Field: trashFieldDeletionTime, Desc: true})
@@ -130,6 +130,36 @@ func TranslateTrashQuery(q *searchv0.TrashQuery, gvr schema.GroupVersionResource
 // name, with the capabilities each field supports.
 type fieldSet struct {
 	byName map[string]resource.SearchFieldDefinition
+}
+
+type resolvedPredicateField struct {
+	definition resource.SearchFieldDefinition
+	name       string
+	mapKey     string
+}
+
+func (fs *fieldSet) resolvePredicateField(name string) (resolvedPredicateField, bool, error) {
+	if def, ok := fs.byName[name]; ok {
+		return resolvedPredicateField{definition: def, name: name}, true, nil
+	}
+
+	var match resolvedPredicateField
+	for parent, def := range fs.byName {
+		if def.Type != resource.SearchFieldTypeStringMap || !strings.HasPrefix(name, parent+".") || len(parent) <= len(match.name) {
+			continue
+		}
+		match = resolvedPredicateField{definition: def, name: parent, mapKey: strings.TrimPrefix(name, parent+".")}
+	}
+	if match.name == "" {
+		return resolvedPredicateField{}, false, nil
+	}
+	if match.mapKey == "" {
+		return resolvedPredicateField{}, true, errors.New("map key must not be empty")
+	}
+	if strings.Contains(match.mapKey, "=") {
+		return resolvedPredicateField{}, true, errors.New("map key must not contain '='")
+	}
+	return match, true, nil
 }
 
 func newFieldSet(gvr schema.GroupVersionResource, provider resource.SearchFieldsProvider) *fieldSet {
@@ -311,52 +341,58 @@ func validateLeaf(n *searchv0.WhereNode, key string, fs *fieldSet, p *field.Path
 			errs = append(errs, checkCapability(fs, f, resource.SearchCapabilityText, fp)...)
 		}
 	case "filter":
-		fp := p.Child("filter")
-		f := n.Filter
-		if f.Field == "" {
-			errs = append(errs, field.Required(fp.Child("field"), "filter field is required"))
-		} else {
-			capErrs := checkCapability(fs, f.Field, resource.SearchCapabilityFilter, fp.Child("field"))
-			errs = append(errs, capErrs...)
-			if len(capErrs) == 0 {
-				def := fs.byName[f.Field]
-				if !filterableFieldType(def.Type) {
-					errs = append(errs, field.Invalid(fp.Child("field"), f.Field, "v1 filters support string, numeric and boolean fields only"))
-				}
-				// Caught here so the caller gets a field path, instead of a 400 from the
-				// search server.
-				for i, v := range f.Values {
-					if err := checkFilterValue(def.Type, v); err != nil {
-						errs = append(errs, field.Invalid(fp.Child("values").Index(i), v, err.Error()))
-					}
-				}
-				// A field holding one value cannot hold two, so this would always come
-				// back empty and the caller would have no way to tell that apart from
-				// nothing matching.
-				if f.Operator == "All" && len(f.Values) > 1 && !def.Array {
-					errs = append(errs, field.Invalid(fp.Child("operator"), f.Operator,
-						fmt.Sprintf("All with several values requires a field holding a list of values; %q holds a single value", f.Field)))
-				}
-			}
-		}
-		if f.Operator != "In" && f.Operator != "NotIn" && f.Operator != "All" {
-			errs = append(errs, field.NotSupported(fp.Child("operator"), f.Operator, []string{"In", "NotIn", "All"}))
-		}
-		if len(f.Values) == 0 {
-			errs = append(errs, field.Required(fp.Child("values"), "at least one value is required"))
-		}
-		for i, v := range f.Values {
-			// v1 rejects '*' because the backend still treats it as a wildcard in
-			// field filters, so a literal '*' in a value would be misinterpreted.
-			// Once exact-match filtering lands this restriction can be lifted.
-			if strings.Contains(v, "*") {
-				errs = append(errs, field.Invalid(fp.Child("values").Index(i), v, "wildcard values are not allowed"))
-			}
-		}
+		errs = append(errs, validateFilterLeaf(n.Filter, fs, p.Child("filter"))...)
 	case "range":
 		errs = append(errs, validateRangeLeaf(n.Range, fs, p.Child("range"))...)
 	case "regex":
 		errs = append(errs, validateRegexLeaf(n.Regex, fs, p.Child("regex"))...)
+	}
+	return errs
+}
+
+func validateFilterLeaf(f *searchv0.FilterPredicate, fs *fieldSet, p *field.Path) field.ErrorList {
+	var errs field.ErrorList
+	if f.Field == "" {
+		errs = append(errs, field.Required(p.Child("field"), "filter field is required"))
+	} else {
+		resolved, found, resolveErr := fs.resolvePredicateField(f.Field)
+		switch {
+		case resolveErr != nil:
+			errs = append(errs, field.Invalid(p.Child("field"), f.Field, resolveErr.Error()))
+		case !found:
+			errs = append(errs, field.Invalid(p.Child("field"), f.Field, "unknown field"))
+		case !resolved.definition.HasCapability(resource.SearchCapabilityFilter):
+			errs = append(errs, field.Invalid(p.Child("field"), f.Field, "field does not support filter"))
+		default:
+			def := resolved.definition
+			if resolved.mapKey != "" {
+				def.Type = resource.SearchFieldTypeString
+				def.Array = false
+			}
+			if !filterableFieldType(def.Type) {
+				errs = append(errs, field.Invalid(p.Child("field"), f.Field, "v1 filters support string, numeric and boolean fields only"))
+			}
+			for i, v := range f.Values {
+				if err := checkFilterValue(def.Type, v); err != nil {
+					errs = append(errs, field.Invalid(p.Child("values").Index(i), v, err.Error()))
+				}
+			}
+			if f.Operator == "All" && len(f.Values) > 1 && !def.Array {
+				errs = append(errs, field.Invalid(p.Child("operator"), f.Operator,
+					fmt.Sprintf("All with several values requires a field holding a list of values; %q holds a single value", f.Field)))
+			}
+		}
+	}
+	if f.Operator != "In" && f.Operator != "NotIn" && f.Operator != "All" {
+		errs = append(errs, field.NotSupported(p.Child("operator"), f.Operator, []string{"In", "NotIn", "All"}))
+	}
+	if len(f.Values) == 0 {
+		errs = append(errs, field.Required(p.Child("values"), "at least one value is required"))
+	}
+	for i, v := range f.Values {
+		if strings.Contains(v, "*") {
+			errs = append(errs, field.Invalid(p.Child("values").Index(i), v, "wildcard values are not allowed"))
+		}
 	}
 	return errs
 }
@@ -371,12 +407,18 @@ func validateRegexLeaf(r *searchv0.RegexPredicate, fs *fieldSet, p *field.Path) 
 	if r.Field == "" {
 		errs = append(errs, field.Required(p.Child("field"), "regex field is required"))
 	} else {
-		capErrs := checkCapability(fs, r.Field, resource.SearchCapabilityFilter, p.Child("field"))
-		errs = append(errs, capErrs...)
-		if len(capErrs) == 0 {
+		resolved, found, resolveErr := fs.resolvePredicateField(r.Field)
+		switch {
+		case resolveErr != nil:
+			errs = append(errs, field.Invalid(p.Child("field"), r.Field, resolveErr.Error()))
+		case !found:
+			errs = append(errs, field.Invalid(p.Child("field"), r.Field, "unknown field"))
+		case !resolved.definition.HasCapability(resource.SearchCapabilityFilter):
+			errs = append(errs, field.Invalid(p.Child("field"), r.Field, "field does not support filter"))
+		default:
 			// Regex matches whole string terms; numbers and booleans are indexed in
 			// their native form, so a pattern would never reach them.
-			if def := fs.byName[r.Field]; def.Type != resource.SearchFieldTypeString {
+			if resolved.mapKey == "" && resolved.definition.Type != resource.SearchFieldTypeString {
 				errs = append(errs, field.Invalid(p.Child("field"), r.Field, "regex supports string fields only"))
 			}
 		}
@@ -618,28 +660,33 @@ func hasTextLeaf(leaves []searchv0.WhereNode) bool {
 // backend prerequisite; this includes routing exact filters on text-capable
 // fields (e.g. title) to their keyword variant so In/NotIn stay exact. Pure
 // keyword fields (folder, tags, name, ...) already work unprefixed.
-func applyLeaves(req *resourcepb.ResourceSearchRequest, leaves []searchv0.WhereNode) {
+func applyLeaves(req *resourcepb.ResourceSearchRequest, leaves []searchv0.WhereNode, fs *fieldSet) {
 	for i := range leaves {
 		n := leaves[i]
 		switch {
 		case n.Text != nil:
 			applyText(req, n.Text)
 		case n.Filter != nil:
-			req.Options.Fields = append(req.Options.Fields, filterRequirement(n.Filter))
+			req.Options.Fields = append(req.Options.Fields, filterRequirement(n.Filter, fs))
 		case n.Range != nil:
 			req.Options.Fields = append(req.Options.Fields, rangeRequirements(n.Range)...)
 		case n.Regex != nil:
-			req.Options.Fields = append(req.Options.Fields, regexRequirement(n.Regex))
+			req.Options.Fields = append(req.Options.Fields, regexRequirement(n.Regex, fs))
 		}
 	}
 }
 
-func regexRequirement(r *searchv0.RegexPredicate) *resourcepb.Requirement {
+func regexRequirement(r *searchv0.RegexPredicate, fs *fieldSet) *resourcepb.Requirement {
 	op := resource.OperatorRegex
 	if r.Negate {
 		op = resource.OperatorNotRegex
 	}
-	return &resourcepb.Requirement{Key: r.Field, Operator: string(op), Values: []string{r.Pattern}}
+	resolved, _, _ := fs.resolvePredicateField(r.Field)
+	pattern := r.Pattern
+	if resolved.mapKey != "" {
+		pattern = resolved.mapKey + "=" + pattern
+	}
+	return &resourcepb.Requirement{Key: resolved.name, Operator: string(op), Values: []string{pattern}}
 }
 
 func applyText(req *resourcepb.ResourceSearchRequest, t *searchv0.TextPredicate) {
@@ -658,7 +705,7 @@ func applyText(req *resourcepb.ResourceSearchRequest, t *searchv0.TextPredicate)
 	}
 }
 
-func filterRequirement(f *searchv0.FilterPredicate) *resourcepb.Requirement {
+func filterRequirement(f *searchv0.FilterPredicate, fs *fieldSet) *resourcepb.Requirement {
 	op := "in"
 	switch f.Operator {
 	case "NotIn":
@@ -671,7 +718,15 @@ func filterRequirement(f *searchv0.FilterPredicate) *resourcepb.Requirement {
 			op = string(selection.Equals)
 		}
 	}
-	return &resourcepb.Requirement{Key: f.Field, Operator: op, Values: f.Values}
+	resolved, _, _ := fs.resolvePredicateField(f.Field)
+	values := f.Values
+	if resolved.mapKey != "" {
+		values = make([]string, len(f.Values))
+		for i, value := range f.Values {
+			values[i] = resolved.mapKey + "=" + value
+		}
+	}
+	return &resourcepb.Requirement{Key: resolved.name, Operator: op, Values: values}
 }
 
 // Each bound becomes its own requirement, which the backend ANDs together like

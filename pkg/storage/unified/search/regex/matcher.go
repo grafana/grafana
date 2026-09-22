@@ -4,6 +4,7 @@ package regex
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"regexp/syntax"
 	"strings"
 )
@@ -15,6 +16,16 @@ type Matcher struct {
 	Expression *syntax.Regexp
 	// CaseInsensitive enables whole-value case folding.
 	CaseInsensitive bool
+}
+
+// Compile returns a case-aware regular expression that matches the entire
+// value after an optional literal prefix.
+func (m Matcher) Compile(prefix string) (*regexp.Regexp, error) {
+	pattern := m.Expression.String()
+	if m.CaseInsensitive {
+		pattern = "(?i:" + pattern + ")"
+	}
+	return regexp.Compile("^" + regexp.QuoteMeta(prefix) + "(?:" + pattern + ")$")
 }
 
 // Parse accepts the search regex subset and removes redundant outer anchors.

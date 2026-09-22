@@ -13,6 +13,7 @@ import (
 
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 var dashboardsGVR = schema.GroupVersionResource{
@@ -75,6 +76,21 @@ func testProvider() resource.SearchFieldsProvider {
 			Type:         resource.SearchFieldTypeString,
 			Array:        true,
 			Capabilities: []resource.SearchCapability{resource.SearchCapabilitySort, resource.SearchCapabilityRetrieve},
+		},
+		{
+			Name:         "labels",
+			Type:         resource.SearchFieldTypeStringMap,
+			Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve},
+		},
+		{
+			Name:         "labels.nested",
+			Type:         resource.SearchFieldTypeStringMap,
+			Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter},
+		},
+		{
+			Name:         "labels.exact",
+			Type:         resource.SearchFieldTypeString,
+			Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter},
 		},
 	}}
 }
@@ -152,6 +168,25 @@ func TestTranslateSearchQuery_Regex(t *testing.T) {
 	assert.Equal(t, "panel_type", req.Options.Fields[1].Key)
 	assert.Equal(t, string(resource.OperatorNotRegex), req.Options.Fields[1].Operator)
 	assert.Equal(t, []string{"row|graph"}, req.Options.Fields[1].Values)
+}
+
+func TestTranslateSearchQuery_StringMapPredicates(t *testing.T) {
+	q := searchQuery(&searchv0.WhereNode{And: []searchv0.WhereNode{
+		{Filter: &searchv0.FilterPredicate{Field: "labels.team", Operator: "In", Values: []string{"platform", "ops"}}},
+		{Filter: &searchv0.FilterPredicate{Field: "labels.grafana.app/team", Operator: "NotIn", Values: []string{"frontend"}}},
+		{Regex: &searchv0.RegexPredicate{Field: "labels.env", Pattern: "prod-.*", Negate: true}},
+		{Regex: &searchv0.RegexPredicate{Field: "labels.nested.key.with.dots", Pattern: "value.*"}},
+		{Filter: &searchv0.FilterPredicate{Field: "labels.exact", Operator: "In", Values: []string{"declared"}}},
+	}})
+
+	req, errs := TranslateSearchQuery(q, dashboardsGVR, "default", testProvider())
+	require.Empty(t, errs)
+	require.Len(t, req.Options.Fields, 5)
+	assert.Equal(t, &resourcepb.Requirement{Key: "labels", Operator: "in", Values: []string{"team=platform", "team=ops"}}, req.Options.Fields[0])
+	assert.Equal(t, &resourcepb.Requirement{Key: "labels", Operator: "notin", Values: []string{"grafana.app/team=frontend"}}, req.Options.Fields[1])
+	assert.Equal(t, &resourcepb.Requirement{Key: "labels", Operator: string(resource.OperatorNotRegex), Values: []string{"env=prod-.*"}}, req.Options.Fields[2])
+	assert.Equal(t, &resourcepb.Requirement{Key: "labels.nested", Operator: string(resource.OperatorRegex), Values: []string{"key.with.dots=value.*"}}, req.Options.Fields[3])
+	assert.Equal(t, &resourcepb.Requirement{Key: "labels.exact", Operator: "in", Values: []string{"declared"}}, req.Options.Fields[4])
 }
 
 func TestTranslateSearchQuery_SingleLeaf(t *testing.T) {
@@ -323,6 +358,27 @@ func TestTranslateSearchQuery_ValidationErrors(t *testing.T) {
 				q.Where = &searchv0.WhereNode{Filter: &searchv0.FilterPredicate{Field: "labels", Operator: "In", Values: []string{"a"}}}
 			},
 			wantField: "where.filter.field",
+		},
+		{
+			name: "string map key is empty",
+			mutate: func(q *searchv0.SearchQuery) {
+				q.Where = &searchv0.WhereNode{Filter: &searchv0.FilterPredicate{Field: "labels.", Operator: "In", Values: []string{"a"}}}
+			},
+			wantField: "where.filter.field",
+		},
+		{
+			name: "string map key contains equals",
+			mutate: func(q *searchv0.SearchQuery) {
+				q.Where = &searchv0.WhereNode{Regex: &searchv0.RegexPredicate{Field: "labels.a=b", Pattern: "a.*"}}
+			},
+			wantField: "where.regex.field",
+		},
+		{
+			name: "All with several values on one string map key",
+			mutate: func(q *searchv0.SearchQuery) {
+				q.Where = &searchv0.WhereNode{Filter: &searchv0.FilterPredicate{Field: "labels.team", Operator: "All", Values: []string{"a", "b"}}}
+			},
+			wantField: "where.filter.operator",
 		},
 		{
 			name:      "sort on non-sortable field",

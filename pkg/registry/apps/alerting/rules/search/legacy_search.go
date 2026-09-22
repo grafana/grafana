@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -51,6 +52,9 @@ func (c *legacyClient) Search(ctx context.Context, req *resourcepb.ResourceSearc
 	}
 
 	f := extractFilters(req)
+	if f.err != nil {
+		return nil, f.err
+	}
 	perKindSearch := isPerKindSearch(ctx)
 	if perKindSearch && f.ruleType != "" && f.ruleType != ruleTypeForResource(req) {
 		return emptyResponse(), nil
@@ -145,7 +149,11 @@ func ruleColumnValues(r *ngmodels.AlertRule) map[string]any {
 	// labels and annotations go through the shared encoding so the legacy rows
 	// carry exactly what the unified index holds: labels flattened to matchable
 	// terms, annotations kept whole as a JSON object.
-	if terms := searchencoding.LabelTerms(r.Labels); len(terms) > 0 {
+	labels := make(map[string]string, len(r.Labels))
+	for key, value := range r.Labels {
+		labels[key] = value
+	}
+	if terms := resource.StringMapTerms(labels); len(terms) > 0 {
 		vals[fieldLabels] = terms
 	}
 	if a := searchencoding.AnnotationsJSON(r.Annotations); a != "" {

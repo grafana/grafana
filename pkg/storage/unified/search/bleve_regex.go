@@ -35,7 +35,7 @@ func (b *bleveIndex) regexRequirementQuery(req *resourcepb.Requirement, negate b
 		return nil, resource.NewBadRequestError(fmt.Sprintf("field %s does not support regex filtering because it does not preserve original case", req.Key))
 	}
 
-	filter, err := parseRegexFilter(req.Key, req.Values[0], kf.name == resource.SEARCH_FIELD_PREFIX+resource.SEARCH_FIELD_LABELS)
+	filter, err := parseRegexFilter(req.Key, req.Values[0], kf.stringMap || kf.name == resource.SEARCH_FIELD_PREFIX+resource.SEARCH_FIELD_LABELS)
 	if err != nil {
 		return nil, resource.NewBadRequestError(err.Error())
 	}
@@ -144,11 +144,7 @@ func splitLabel(expression string) (prefix, value string, err error) {
 
 // Quote the label key and group the value so alternation cannot escape its prefix.
 func compileRegex(m regex.Matcher, prefix string) (*regexp.Regexp, error) {
-	pattern := m.Expression.String()
-	if m.CaseInsensitive {
-		pattern = "(?i:" + pattern + ")"
-	}
-	return regexp.Compile("^" + regexp.QuoteMeta(prefix) + "(?:" + pattern + ")$")
+	return m.Compile(prefix)
 }
 
 // Bounded Bleve execution

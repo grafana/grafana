@@ -32,6 +32,7 @@ func manifestWithSearchFields() *app.ManifestData {
 					SearchFields: []app.ManifestVersionKindSearchField{
 						{Name: "color", Path: "spec.settings.color", Type: "string", Capabilities: []string{"filter", "sort"}},
 						{Name: "size", Path: "spec.size", Type: "int64", Array: true, EmitZeroIfAbsent: true, Capabilities: []string{"filter"}},
+						{Name: "attributes", Path: "spec.attributes", Type: "stringMap", Capabilities: []string{"filter", "retrieve"}},
 					},
 				}},
 			},
@@ -44,7 +45,7 @@ func TestNewManifestBackedProvider(t *testing.T) {
 
 	v2 := schema.GroupVersionResource{Group: "widgets.example.test", Version: "v2", Resource: "widgets"}
 	got := p.Fields(v2)
-	require.Len(t, got, 2)
+	require.Len(t, got, 3)
 
 	assert.Equal(t, SearchFieldDefinition{
 		Name:         "color",
@@ -60,6 +61,10 @@ func TestNewManifestBackedProvider(t *testing.T) {
 		EmitZeroIfAbsent: true,
 		Capabilities:     []SearchCapability{SearchCapabilityFilter},
 	}, got[1])
+	assert.Equal(t, SearchFieldDefinition{
+		Name: "attributes", Path: "spec.attributes", Type: SearchFieldTypeStringMap,
+		Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve},
+	}, got[2])
 
 	// Path may differ per version; v1 declares the same field at a different path.
 	v1 := schema.GroupVersionResource{Group: "widgets.example.test", Version: "v1", Resource: "widgets"}
@@ -104,7 +109,7 @@ func TestSearchFieldProviders_MapsDeclaredKinds(t *testing.T) {
 
 	// The mapped provider answers for that kind's own (group, resource).
 	gvr := schema.GroupVersionResource{Group: "widgets.example.test", Version: "v2", Resource: "widgets"}
-	assert.Len(t, provider.Fields(gvr), 2)
+	assert.Len(t, provider.Fields(gvr), 3)
 }
 
 func TestSearchFieldProviders_NoManifestDeclarationsIsEmpty(t *testing.T) {

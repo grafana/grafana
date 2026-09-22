@@ -227,11 +227,8 @@ func totalHitsRelation(exact bool) searchv0.TotalHitsRelation {
 // resultItems converts the backend result table into envelope items, projected
 // down to the requested fields.
 //
-// The values are the decoded index values, unshaped: labels arrive as the
-// flattened key / key=value terms the index holds and annotations as a JSON
-// string, because that is what the generic endpoint will return for the same
-// fields. Re-shaping them into maps here would make the response change at
-// migration even though the schema would not.
+// Declared string maps are reconstructed from the flattened wire terms before
+// they are exposed in the public response.
 func (h *Handler) resultItems(ctx context.Context, namespace string, resp *resourcepb.ResourceSearchResponse, fields []string, k perKind) ([]searchv0.ResultItem, error) {
 	table := resp.GetResults()
 	rows := table.GetRows()
@@ -274,6 +271,11 @@ func (h *Handler) resultItems(ctx context.Context, namespace string, resp *resou
 			}
 			if v == nil {
 				continue
+			}
+			if def, ok := k.fields.byName[col.GetName()]; ok && def.Type == resource.SearchFieldTypeStringMap {
+				if decoded, ok := resource.StringMapFromWireValue(v); ok {
+					v = decoded
+				}
 			}
 			values[col.GetName()] = v
 		}

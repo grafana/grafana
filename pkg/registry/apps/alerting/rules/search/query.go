@@ -1,7 +1,10 @@
 package search
 
 import (
+	"errors"
 	"fmt"
+	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -14,7 +17,9 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	searchregex "github.com/grafana/grafana/pkg/storage/unified/search/regex"
 )
 
 // filterableFields are the field names a filter leaf may target. They mirror
@@ -120,7 +125,7 @@ func rejectRepeatedFilterFields(node *model.CreateSearchRulesRequestSearchWhereN
 		if n == nil {
 			return nil
 		}
-		if leaf := n.Filter; leaf != nil && leaf.Field != fieldLabels {
+		if leaf := n.Filter; leaf != nil && !isRuleStringMapField(leaf.Field) {
 			if _, repeated := seen[leaf.Field]; repeated {
 				return fmt.Errorf("field %q is filtered more than once; combine the values into one filter", leaf.Field)
 			}
@@ -134,6 +139,14 @@ func rejectRepeatedFilterFields(node *model.CreateSearchRulesRequestSearchWhereN
 		return nil
 	}
 	return walk(node)
+}
+
+func isRuleStringMapField(fieldName string) bool {
+	if fieldName == fieldLabels {
+		return true
+	}
+	_, ok, _ := ruleStringMapKey(fieldName)
+	return ok
 }
 
 // applyWhere flattens the where tree onto the request. v1 supports a top-level
@@ -153,11 +166,14 @@ func applyWhere(req *resourcepb.ResourceSearchRequest, node *model.CreateSearchR
 	if node.Filter != nil {
 		set++
 	}
+	if node.Regex != nil {
+		set++
+	}
 	// Rejecting an unset node matters as much as rejecting an over-set one: an
 	// empty node would otherwise flatten to no constraint at all and quietly
 	// return every rule.
 	if set != 1 {
-		return fmt.Errorf("where node must set exactly one of and/text/filter")
+		return fmt.Errorf("where node must set exactly one of and/text/filter/regex")
 	}
 
 	for i := range node.And {
@@ -175,6 +191,11 @@ func applyWhere(req *resourcepb.ResourceSearchRequest, node *model.CreateSearchR
 	}
 	if node.Filter != nil {
 		if err := applyFilter(req, node.Filter); err != nil {
+			return err
+		}
+	}
+	if node.Regex != nil {
+		if err := applyRegex(req, node.Regex); err != nil {
 			return err
 		}
 	}
@@ -222,7 +243,11 @@ var validRuleTypes = map[string]struct{}{
 // special: its values are label matchers flattened into indexed terms. Values
 // that the backend cannot honor are rejected rather than silently dropped.
 func applyFilter(req *resourcepb.ResourceSearchRequest, leaf *model.CreateSearchRulesRequestSearchFilterLeaf) error {
-	if _, ok := filterableFields[leaf.Field]; !ok {
+	mapKey, keyedMap, mapErr := ruleStringMapKey(leaf.Field)
+	if mapErr != nil {
+		return mapErr
+	}
+	if _, ok := filterableFields[leaf.Field]; !ok && !keyedMap {
 		return fmt.Errorf("field %q is not filterable", leaf.Field)
 	}
 	if len(leaf.Values) == 0 {
@@ -233,7 +258,17 @@ func applyFilter(req *resourcepb.ResourceSearchRequest, leaf *model.CreateSearch
 		return err
 	}
 	if err := checkAndNormalizeFilterLeaf(leaf); err != nil {
-		return err
+		if !keyedMap {
+			return err
+		}
+	}
+	if keyedMap {
+		values := make([]string, len(leaf.Values))
+		for i, value := range leaf.Values {
+			values[i] = mapKey + "=" + value
+		}
+		req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{Key: fieldLabels, Operator: op, Values: values})
+		return nil
 	}
 
 	// The type filter selects the kind via kindSelection, which routes the query
@@ -276,6 +311,45 @@ func applyFilter(req *resourcepb.ResourceSearchRequest, leaf *model.CreateSearch
 		Values:   values,
 	})
 	return nil
+}
+
+func applyRegex(req *resourcepb.ResourceSearchRequest, leaf *model.CreateSearchRulesRequestSearchRegexLeaf) error {
+	mapKey, ok, err := ruleStringMapKey(leaf.Field)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return fmt.Errorf("field %q does not support regex filtering", leaf.Field)
+	}
+	if leaf.Pattern == "" {
+		return fmt.Errorf("regex on %q requires a pattern", leaf.Field)
+	}
+	if _, err := searchregex.Parse(leaf.Pattern); err != nil {
+		return fmt.Errorf("invalid regex for field %q: %w", leaf.Field, err)
+	}
+	op := string(resource.OperatorRegex)
+	if leaf.Negate != nil && *leaf.Negate {
+		op = string(resource.OperatorNotRegex)
+	}
+	req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{
+		Key: fieldLabels, Operator: op, Values: []string{mapKey + "=" + leaf.Pattern},
+	})
+	return nil
+}
+
+func ruleStringMapKey(fieldName string) (string, bool, error) {
+	const prefix = fieldLabels + "."
+	if !strings.HasPrefix(fieldName, prefix) {
+		return "", false, nil
+	}
+	key := strings.TrimPrefix(fieldName, prefix)
+	if key == "" {
+		return "", true, fmt.Errorf("map key must not be empty")
+	}
+	if strings.Contains(key, "=") {
+		return "", true, fmt.Errorf("map key must not contain '='")
+	}
+	return key, true, nil
 }
 
 // legacyUnsupportedFilterFields are declared in the kinds' searchFields (so the
@@ -427,6 +501,14 @@ func negateMatcher(m labelMatcher) labelMatcher {
 		m.op = matchNotExists
 	case matchNotExists:
 		m.op = matchExists
+	case matchRegex:
+		m.op = matchNotRegex
+	case matchNotRegex:
+		m.op = matchRegex
+	case matchIn:
+		m.op = matchNotIn
+	case matchNotIn:
+		m.op = matchIn
 	}
 	return m
 }
@@ -457,6 +539,7 @@ func trimSortPrefix(s string) string {
 // legacy backend. The handler encodes these into the request; the legacy and
 // unified backends each decode the request in their own way.
 type filters struct {
+	err error
 	// title is the free-text query: a word search over the rule title, pushed
 	// down as SearchTitle. A title filter leaf is rejected (see
 	// legacyUnsupportedFilterFields), so there is no exact-match counterpart.
@@ -498,8 +581,11 @@ func extractFilters(req *resourcepb.ResourceSearchRequest) filters {
 			case fieldType:
 				f.ruleType = firstValue(r.Values)
 			case fieldLabels:
-				if len(r.Values) == 1 {
-					f.labelMatchers = append(f.labelMatchers, requirementToLabelMatcher(r))
+				for _, matcher := range requirementToLabelMatchers(r) {
+					if matcher.err != nil && f.err == nil {
+						f.err = matcher.err
+					}
+					f.labelMatchers = append(f.labelMatchers, matcher)
 				}
 			case fieldDatasourceUIDs:
 				f.datasourceUIDs = r.Values
@@ -554,9 +640,12 @@ func firstValue(values []string) string {
 }
 
 type labelMatcher struct {
-	key   string
-	value string
-	op    matcherOp
+	key    string
+	value  string
+	op     matcherOp
+	regex  *regexp.Regexp
+	values []string
+	err    error
 }
 
 type matcherOp int
@@ -566,6 +655,10 @@ const (
 	matchNotEquals
 	matchExists
 	matchNotExists
+	matchRegex
+	matchNotRegex
+	matchIn
+	matchNotIn
 )
 
 // parseLabelMatcher parses a "labels" query value: key=value, key!=value, key
@@ -613,6 +706,28 @@ func labelMatcherIsNegated(m labelMatcher) bool {
 // requirementToLabelMatcher rebuilds the matcher a labels requirement encodes.
 // The term carries the key and value, the operator carries the polarity.
 func requirementToLabelMatcher(r *resourcepb.Requirement) labelMatcher {
+	if r.Operator == string(resource.OperatorRegex) || r.Operator == string(resource.OperatorNotRegex) {
+		if len(r.Values) != 1 {
+			return labelMatcher{err: fmt.Errorf("regex labels requirement takes exactly one value")}
+		}
+		key, pattern, ok := strings.Cut(r.Values[0], "=")
+		if !ok || key == "" {
+			return labelMatcher{err: fmt.Errorf("regex labels requirement requires key=pattern")}
+		}
+		matcher, err := searchregex.Parse(pattern)
+		if err != nil {
+			return labelMatcher{err: err}
+		}
+		compiled, err := matcher.Compile("")
+		if err != nil {
+			return labelMatcher{err: err}
+		}
+		op := matchRegex
+		if r.Operator == string(resource.OperatorNotRegex) {
+			op = matchNotRegex
+		}
+		return labelMatcher{key: key, value: pattern, op: op, regex: compiled}
+	}
 	negated := r.Operator == "notin" || r.Operator == "!="
 	if k, v, ok := strings.Cut(r.Values[0], "="); ok {
 		op := matchEquals
@@ -628,6 +743,30 @@ func requirementToLabelMatcher(r *resourcepb.Requirement) labelMatcher {
 	return labelMatcher{key: r.Values[0], op: op}
 }
 
+func requirementToLabelMatchers(r *resourcepb.Requirement) []labelMatcher {
+	if len(r.Values) == 0 {
+		return []labelMatcher{{err: errors.New("labels requirement must include a value")}}
+	}
+	if len(r.Values) <= 1 || r.Operator == string(resource.OperatorRegex) || r.Operator == string(resource.OperatorNotRegex) {
+		return []labelMatcher{requirementToLabelMatcher(r)}
+	}
+	key := ""
+	values := make([]string, 0, len(r.Values))
+	for _, term := range r.Values {
+		termKey, value, ok := strings.Cut(term, "=")
+		if !ok || termKey == "" || (key != "" && key != termKey) {
+			return []labelMatcher{{err: fmt.Errorf("multi-value labels requirement must target one key")}}
+		}
+		key = termKey
+		values = append(values, value)
+	}
+	op := matchIn
+	if r.Operator == "notin" || r.Operator == "!=" {
+		op = matchNotIn
+	}
+	return []labelMatcher{{key: key, values: values, op: op}}
+}
+
 // matchLabels returns true when a rule satisfies every matcher. Each labels
 // filter leaf carries one matcher, and separate leaves conjoin.
 func matchLabels(r *ngmodels.AlertRule, matchers []labelMatcher) bool {
@@ -640,6 +779,9 @@ func matchLabels(r *ngmodels.AlertRule, matchers []labelMatcher) bool {
 }
 
 func matchLabel(r *ngmodels.AlertRule, m labelMatcher) bool {
+	if m.err != nil {
+		return false
+	}
 	v, ok := r.Labels[m.key]
 	switch m.op {
 	case matchExists:
@@ -650,6 +792,14 @@ func matchLabel(r *ngmodels.AlertRule, m labelMatcher) bool {
 		return ok && v == m.value
 	case matchNotEquals:
 		return !ok || v != m.value
+	case matchRegex:
+		return m.regex.MatchString(v)
+	case matchNotRegex:
+		return !m.regex.MatchString(v)
+	case matchIn:
+		return ok && slices.Contains(m.values, v)
+	case matchNotIn:
+		return !ok || !slices.Contains(m.values, v)
 	}
 	return false
 }

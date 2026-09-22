@@ -157,7 +157,7 @@ func TestAlertRuleBuilder_omits_absent_optional_fields(t *testing.T) {
 	assert.NotContains(t, doc.Fields, ruleSearchDatasourceUIDs)
 }
 
-func TestAlertRuleBuilder_flattens_labels(t *testing.T) {
+func TestAlertRuleBuilder_extracts_labels(t *testing.T) {
 	doc := buildAlertRuleDoc(t, `{
 		"apiVersion": "rules.alerting.grafana.app/v0alpha1",
 		"kind": "AlertRule",
@@ -166,9 +166,9 @@ func TestAlertRuleBuilder_flattens_labels(t *testing.T) {
 			"labels": {"severity": "critical"}}
 	}`)
 
-	labels, ok := doc.Fields[ruleSearchLabels].([]string)
-	require.True(t, ok, "labels should be []string, got %T", doc.Fields[ruleSearchLabels])
-	assert.ElementsMatch(t, []string{"severity", "severity=critical"}, labels)
+	labels, ok := doc.Fields[ruleSearchLabels].(map[string]string)
+	require.True(t, ok, "labels should be map[string]string, got %T", doc.Fields[ruleSearchLabels])
+	assert.Equal(t, map[string]string{"severity": "critical"}, labels)
 }
 
 func TestAlertRuleBuilder_encodes_annotations_as_json(t *testing.T) {
@@ -227,7 +227,7 @@ func TestRecordingRuleBuilder_extracts_and_computes_fields(t *testing.T) {
 	assert.Equal(t, "my_metric", doc.Fields[testFieldMetric])
 	assert.Equal(t, "ds-target", doc.Fields[testFieldTargetDatasourceUID])
 	assert.Equal(t, []string{"ds-prom"}, doc.Fields[ruleSearchDatasourceUIDs])
-	assert.ElementsMatch(t, []string{"team", "team=obs"}, doc.Fields[ruleSearchLabels])
+	assert.Equal(t, map[string]string{"team": "obs"}, doc.Fields[ruleSearchLabels])
 }
 
 // TestRuleSearchFields_derivedFromManifest verifies the rule kinds' manifest

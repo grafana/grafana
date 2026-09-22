@@ -31,7 +31,10 @@ const (
 	recordingRules = "recordingrules"
 )
 
-const perKindOpIn = "In"
+const (
+	perKindOpIn    = "In"
+	perKindOpNotIn = "NotIn"
+)
 
 func TestIntegrationPerKindRuleSearch(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
@@ -76,6 +79,11 @@ func (q *perKindQuery) filter(field, op string, values ...string) *perKindQuery 
 	return q
 }
 
+func (q *perKindQuery) regex(field, pattern string, negate bool) *perKindQuery {
+	q.and(searchv0.WhereNode{Regex: &searchv0.RegexPredicate{Field: field, Pattern: pattern, Negate: negate}})
+	return q
+}
+
 func (q *perKindQuery) and(node searchv0.WhereNode) {
 	if q.body.Where == nil {
 		q.body.Where = &searchv0.WhereNode{}
@@ -104,8 +112,8 @@ func runPerKindRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode re
 	alertClient := common.NewAlertRuleClient(t, helper.Org1.Admin)
 	recClient := common.NewRecordingRuleClient(t, helper.Org1.Admin)
 
-	createPerKindAlertRule(t, ctx, alertClient, "cpu usage high", false, map[string]string{"team": "a"}, "ds-prom", 1234)
-	createPerKindAlertRule(t, ctx, alertClient, "memory usage high", true, map[string]string{"team": "b"}, "ds-loki", 4321)
+	createPerKindAlertRule(t, ctx, alertClient, "cpu usage high", false, map[string]string{"team": "a", "environment": "Prod", "owner.name": "core"}, "ds-prom", 1234)
+	createPerKindAlertRule(t, ctx, alertClient, "memory usage high", true, map[string]string{"team": "b", "environment": "prod"}, "ds-loki", 4321)
 	createPerKindAlertRule(t, ctx, alertClient, "disk low", false, map[string]string{"team": "a"}, "ds-prom", 1000)
 	createPerKindRecordingRule(t, ctx, recClient, "cpu recording", "ds-prom", "cpu_seconds_total")
 	createPerKindRecordingRule(t, ctx, recClient, "disk recording", "ds-prom", "disk_bytes_total")
@@ -291,6 +299,31 @@ func runPerKindRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode re
 	// labelSelector selects on resource metadata labels, not these.
 	t.Run("alert rules: label matcher", func(t *testing.T) {
 		require.ElementsMatch(t, []string{"cpu usage high", "disk low"}, perKindTitles(searchAlerts(t, newPerKindQuery().filter("labels", perKindOpIn, "team=a"))))
+	})
+
+	t.Run("alert rules: keyed label exact matcher", func(t *testing.T) {
+		require.ElementsMatch(t, []string{"cpu usage high", "disk low"}, perKindTitles(searchAlerts(t, newPerKindQuery().filter("labels.team", perKindOpIn, "a"))))
+		require.Equal(t, []string{"cpu usage high"}, perKindTitles(searchAlerts(t, newPerKindQuery().filter("labels.owner.name", perKindOpIn, "core"))))
+	})
+
+	t.Run("alert rules: keyed label NotIn includes missing labels", func(t *testing.T) {
+		require.ElementsMatch(t, []string{"memory usage high", "disk low"}, perKindTitles(searchAlerts(t, newPerKindQuery().filter("labels.environment", perKindOpNotIn, "Prod"))))
+	})
+
+	t.Run("alert rules: keyed label regex is case-sensitive", func(t *testing.T) {
+		require.Equal(t, []string{"cpu usage high"}, perKindTitles(searchAlerts(t, newPerKindQuery().regex("labels.environment", "Prod.*", false))))
+		require.Equal(t, []string{"memory usage high"}, perKindTitles(searchAlerts(t, newPerKindQuery().regex("labels.environment", "prod.*", false))))
+	})
+
+	t.Run("alert rules: negated keyed label regex includes missing labels", func(t *testing.T) {
+		require.ElementsMatch(t, []string{"memory usage high", "disk low"}, perKindTitles(searchAlerts(t, newPerKindQuery().regex("labels.environment", "Prod.*", true))))
+	})
+
+	t.Run("alert rules: retrieved labels are a map", func(t *testing.T) {
+		hit := perKindHitFor(t, searchAlerts(t, newPerKindQuery().fields("title", "labels")), "cpu usage high")
+		labels, ok := perKindFieldValues(hit)["labels"].(map[string]any)
+		require.True(t, ok)
+		require.Equal(t, map[string]any{"team": "a", "environment": "Prod", "owner.name": "core"}, labels)
 	})
 
 	// labelSelector targets metadata labels. Selecting a group that no rule is in

@@ -99,6 +99,14 @@ func TestNewSearchResultValue(t *testing.T) {
 		require.Equal(t, []string{"one", "two"}, value.StringValues)
 	})
 
+	t.Run("string map uses the compatible string-array wire shape", func(t *testing.T) {
+		value, err := newSearchResultValue(5, resource.SearchFieldDefinition{
+			Type: resource.SearchFieldTypeStringMap,
+		}, []string{"env", "env=prod"})
+		require.NoError(t, err)
+		require.Equal(t, []string{"env", "env=prod"}, value.StringValues)
+	})
+
 	t.Run("other scalar types", func(t *testing.T) {
 		double, err := newSearchResultValue(5, resource.SearchFieldDefinition{Type: resource.SearchFieldTypeDouble}, float64(1.5))
 		require.NoError(t, err)

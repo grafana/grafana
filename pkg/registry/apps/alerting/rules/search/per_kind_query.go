@@ -8,6 +8,7 @@ import (
 
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -64,7 +65,7 @@ func buildPerKindSearchRequest(q *searchv0.SearchQuery, leaves []searchv0.WhereN
 		Fields:  append([]string{}, fields...),
 	}
 
-	applyPerKindLeaves(req, leaves)
+	applyPerKindLeaves(req, leaves, k)
 	applyPerKindLabelSelector(req, q.LabelSelector)
 	applyPerKindSort(req, q.Sort)
 
@@ -89,26 +90,45 @@ func resolvePerKindReturnFields(fields []string) []string {
 	return fields
 }
 
-func applyPerKindLeaves(req *resourcepb.ResourceSearchRequest, leaves []searchv0.WhereNode) {
+func applyPerKindLeaves(req *resourcepb.ResourceSearchRequest, leaves []searchv0.WhereNode, k perKind) {
 	for i := range leaves {
 		switch n := leaves[i]; {
 		case n.Text != nil:
 			req.Query = n.Text.Value
 		case n.Filter != nil:
-			req.Options.Fields = append(req.Options.Fields, perKindFilterRequirement(n.Filter))
+			req.Options.Fields = append(req.Options.Fields, perKindFilterRequirement(n.Filter, k))
+		case n.Regex != nil:
+			req.Options.Fields = append(req.Options.Fields, perKindRegexRequirement(n.Regex, k))
 		}
 	}
 }
 
-func perKindFilterRequirement(f *searchv0.FilterPredicate) *resourcepb.Requirement {
-	if f.Field == fieldLabels {
+func perKindFilterRequirement(f *searchv0.FilterPredicate, k perKind) *resourcepb.Requirement {
+	resolved, _, _ := k.fields.resolvePredicateField(f.Field)
+	if resolved.name == fieldLabels && resolved.mapKey == "" {
 		m := parseLabelMatcher(f.Values[0])
 		if f.Operator == perKindFilterOperatorNotIn {
 			m = negateMatcher(m)
 		}
 		return labelMatcherRequirement(m)
 	}
+	if resolved.mapKey != "" {
+		values := make([]string, len(f.Values))
+		for i, value := range f.Values {
+			values[i] = resolved.mapKey + "=" + value
+		}
+		return &resourcepb.Requirement{Key: resolved.name, Operator: perKindFilterOperator(f.Operator), Values: values}
+	}
 	return &resourcepb.Requirement{Key: f.Field, Operator: perKindFilterOperator(f.Operator), Values: f.Values}
+}
+
+func perKindRegexRequirement(r *searchv0.RegexPredicate, k perKind) *resourcepb.Requirement {
+	resolved, _, _ := k.fields.resolvePredicateField(r.Field)
+	op := string(resource.OperatorRegex)
+	if r.Negate {
+		op = string(resource.OperatorNotRegex)
+	}
+	return &resourcepb.Requirement{Key: resolved.name, Operator: op, Values: []string{resolved.mapKey + "=" + r.Pattern}}
 }
 
 func perKindFilterOperator(op string) string {
