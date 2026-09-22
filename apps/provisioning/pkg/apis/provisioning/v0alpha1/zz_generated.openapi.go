@@ -816,10 +816,10 @@ func schema_pkg_apis_provisioning_v0alpha1_DeletionStatus(ref common.ReferenceCa
 				Properties: map[string]spec.Schema{
 					"state": {
 						SchemaProps: spec.SchemaProps{
-							Description: "State is the phase of the deletion.\n\nPossible enum values:\n - `\"Blocked\"` indicates the latest finalizer pass failed and deletion did not complete. The controller keeps retrying, so a transient failure (a brief outage, an API conflict) may still clear on its own; a persistent one (credentials expired, a webhook that cannot be removed) needs the user to force-remove the blocking finalizer. Finalizer is the finalizer that failed on that pass.\n - `\"Working\"` indicates finalizers are still running and deletion is expected to complete on its own.",
+							Description: "State is the phase of the deletion.\n\nPossible enum values:\n - `\"Blocked\"` indicates the latest finalizer pass failed and deletion did not complete. The controller keeps retrying, so a transient failure (a brief outage, an API conflict) may still clear on its own; a persistent one (credentials expired, a webhook that cannot be removed) needs the user to force-remove the blocking finalizer. Finalizer is the finalizer that failed on that pass. This is the only state the controller emits: status.deletion is written only when a pass fails. While finalizers are still running, status.deletion is absent, which (together with a set deletionTimestamp) is itself the \"in progress\" signal — so no separate Working state is needed.",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"Blocked", "Working"},
+							Enum:        []interface{}{"Blocked"},
 						},
 					},
 					"finalizer": {
