@@ -50,3 +50,24 @@ func requirePanicContains(t *testing.T, want string, fn func()) {
 	}()
 	fn()
 }
+
+func TestSearchFieldsRegistryReplaceWarnsOnRemovedKinds(t *testing.T) {
+	key := NewLowerGroupResource("test.grafana.app", "things")
+	provider := NewManifestBackedProvider(&app.ManifestData{
+		Group: key.Group,
+		Versions: []app.ManifestVersion{{
+			Name: "v1",
+			Kinds: []app.ManifestVersionKind{{
+				Kind:         "Thing",
+				Plural:       "things",
+				SearchFields: []app.ManifestVersionKindSearchField{{Name: "title", Path: "spec.title", Type: "string"}},
+			}},
+		}},
+	})
+
+	registry := NewSearchFieldsRegistry(nil, nil, map[LowerGroupResource]SearchFieldsProvider{key: provider})
+	registry.Replace(nil, nil, nil)
+
+	_, _, got := registry.For(key)
+	require.Nil(t, got, "the kind is gone after the swap; the warning only reports it")
+}
