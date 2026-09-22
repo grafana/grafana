@@ -1680,7 +1680,7 @@ export type ConnectionAuthorizeRequest = {
   spec: ConnectionAuthorizeRequestSpec;
   status?: ConnectionAuthorizeRequestStatus;
 };
-export type ResourceRef = {
+export type ProvisioningResourceRef = {
   /** Group is the group of the resource, such as "dashboard.grafana.app". */
   group?: string;
   /** Kind is the type of resource, for example, "Dashboard". */
@@ -1694,7 +1694,7 @@ export type DeleteJobOptions = {
   /** Ref to the branch or commit hash to delete from */
   ref?: string;
   /** Resources to delete This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths. */
-  resources?: ResourceRef[];
+  resources?: ProvisioningResourceRef[];
 };
 export type FixFolderMetadataJobOptions = {
   /** Ref to the branch to create the commit on (uses repository's default branch if not specified) */
@@ -1708,7 +1708,7 @@ export type MigrateJobOptions = {
   /** Message to use when committing the changes in a single commit. Deprecated: set JobSpec.Message instead. This field is kept for backwards compatibility and is only used when JobSpec.Message is empty. */
   message?: string;
   /** Resources to migrate. When empty, every unmanaged resource in the namespace is migrated (legacy behavior). When non-empty, only the listed resources are exported to the repository — the folder hierarchy is still emitted so parent paths resolve, and the subsequent pull phase only takes ownership of those resources. Currently only unmanaged Dashboards are supported. */
-  resources?: ResourceRef[];
+  resources?: ProvisioningResourceRef[];
   /** SkipResourceDeletion keeps the migrated resources on the instance instead of removing them. By default a migration deletes the resources it moved (the whole namespace for an instance target, or the exported resources for a branch migration); when true, no deletion happens and the resources are left in place. */
   skipResourceDeletion?: boolean;
 };
@@ -1718,7 +1718,7 @@ export type MoveJobOptions = {
   /** Ref to the branch or commit hash that should move */
   ref?: string;
   /** Resources to move This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths. */
-  resources?: ResourceRef[];
+  resources?: ProvisioningResourceRef[];
   /** Destination path for the move (e.g. "new-location/") */
   targetPath?: string;
 };
@@ -1752,7 +1752,7 @@ export type ExportJobOptions = {
   /** FIXME: we should validate this in admission hooks Prefix in target file system */
   path?: string;
   /** Resources to export. When empty, every unmanaged resource in the namespace is exported (legacy behavior). When non-empty, only the listed resources are exported — the folder hierarchy is still emitted so parent paths resolve. Currently only unmanaged Dashboards are supported. */
-  resources?: ResourceRef[];
+  resources?: ProvisioningResourceRef[];
 };
 export type Duration = string;
 export type TestJobOptions = {
@@ -2048,6 +2048,17 @@ export type RepositorySpec = {
   /** UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly) */
   workflows: ('branch' | 'write')[];
 };
+export type DeletionStatus = {
+  /** Finalizer names the finalizer whose teardown is blocking deletion, i.e. which deletion step failed. A client force-removing deletion removes exactly this finalizer. */
+  finalizer?: string;
+  /** Message is a human-readable explanation of what went wrong, suitable for showing to users. */
+  message?: string;
+  /** State is the phase of the deletion.
+    
+    Possible enum values:
+     - `"Blocked"` indicates the latest finalizer pass failed and deletion did not complete. The controller keeps retrying, so a transient failure (a brief outage, an API conflict) may still clear on its own; a persistent one (credentials expired, a webhook that cannot be removed) needs the user to force-remove the blocking finalizer. Finalizer is the finalizer that failed on that pass. This is the only state the controller emits: status.deletion is written only when a pass fails. While finalizers are still running, status.deletion is absent, which (together with a set deletionTimestamp) is itself the "in progress" signal — so no separate Working state is needed. */
+  state?: 'Blocked';
+};
 export type QuotaStatus = {
   /** MaxRepositories is the maximum number of repositories allowed. 0 means unlimited. */
   maxRepositories?: number;
@@ -2097,8 +2108,10 @@ export type WebhookStatus = {
 export type RepositoryStatus = {
   /** Conditions represent the latest available observations of the repository's state. */
   conditions?: Condition[];
-  /** Error information during repository deletion (if any) */
+  /** Error information during repository deletion (if any). Deprecated: prefer the structured Deletion field. Retained for backwards compatibility with clients that read the concise string. */
   deleteError?: string;
+  /** Deletion reports the progress of an in-progress deletion and the problem blocking it, so a client can explain the holdup and force-remove the blocking finalizer. Populated only while the repository is Terminating. */
+  deletion?: DeletionStatus;
   /** FieldErrors are errors that occurred during validation of the repository spec. These errors are intended to help users identify and fix issues in the spec. */
   fieldErrors?: ErrorDetails[];
   /** This will get updated with the current health status (and updated periodically) */

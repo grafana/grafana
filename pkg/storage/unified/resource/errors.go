@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -17,6 +18,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
@@ -116,6 +118,27 @@ func ErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
 	return GetError(respErr)
 }
 
+// StatusErrorFromResponse converts a unified storage failure to a Kubernetes
+// [apierrors.StatusError] for API-facing callers. The transport error takes
+// precedence over respErr; if both are nil, it returns nil. Context cancellation
+// and deadline errors map to HTTP 499 and 504, respectively.
+//
+// Unlike [ErrorFromResponse], this replaces transport errors. Callers that need
+// the original error chain or gRPC retry classification must use that helper instead.
+//
+// Only errors coming from grpc should be passed to this function, other errors will lose
+// their chain through this.
+func StatusErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
+	if err == nil {
+		return GetError(respErr)
+	}
+	// In-process calls can return context errors instead of gRPC statuses.
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		err = grpcstatus.FromContextError(err).Err()
+	}
+	return GetError(AsErrorResult(err))
+}
+
 func errorResultFromGRPCDetails(err error) *resourcepb.ErrorResult {
 	st, ok := grpcstatus.FromError(err)
 	if !ok || st == nil {
@@ -168,6 +191,40 @@ func newInvalidFieldError(
 			},
 		},
 	}
+}
+
+// SelectableFieldNotIndexedReason is a cause reason, not a top-level one: the
+// top-level reason has to stay a Kubernetes reason so grpcCodeFromErrorResult can
+// map it without falling back to the HTTP code.
+const SelectableFieldNotIndexedReason = "SelectableFieldNotIndexed"
+
+// NewSelectableFieldNotIndexedError reports that the index cannot answer a filter
+// on the given fields.
+func NewSelectableFieldNotIndexedError(fields []string) *resourcepb.ErrorResult {
+	causes := make([]*resourcepb.ErrorCause, 0, len(fields))
+	for _, f := range fields {
+		causes = append(causes, &resourcepb.ErrorCause{
+			Reason: SelectableFieldNotIndexedReason,
+			Field:  f,
+		})
+	}
+	return &resourcepb.ErrorResult{
+		Message: fmt.Sprintf("the index does not hold the selectable fields %v, so it cannot answer a filter on them", fields),
+		Code:    http.StatusBadRequest,
+		Reason:  string(metav1.StatusReasonBadRequest),
+		Details: &resourcepb.ErrorDetails{Causes: causes},
+	}
+}
+
+// IsSelectableFieldNotIndexed reports whether a search was refused because the
+// index does not hold a field the request filtered on.
+func IsSelectableFieldNotIndexed(res *resourcepb.ErrorResult) bool {
+	for _, c := range res.GetDetails().GetCauses() {
+		if c.GetReason() == SelectableFieldNotIndexedReason {
+			return true
+		}
+	}
+	return false
 }
 
 func newRequiredFieldError(
@@ -319,19 +376,30 @@ func NewValidationError(field, value, msg string) error {
 	return ValidationError{Field: field, Value: value, Msg: msg}
 }
 
-// grpcCodeFromHTTPStatus is lossy in a way runtime.HTTPStatusFromCode is not:
-// several gRPC codes collapse onto the same HTTP status going out
-// (AlreadyExists and Aborted both become 409, InvalidArgument /
-// FailedPrecondition / OutOfRange all become 400), so coming back we pick the
-// code that unified storage actually produces for that status.
-// An unmapped code labels as Unknown — a signal to add a mapping, not a silent
-// mislabel.
-// This is just a helper to set the correct codes in metric labels
-func grpcCodeFromHTTPStatus(httpCode int32) grpccodes.Code {
+var errorMappingLog = log.New("resource-error-mapping")
+
+// grpcCodeFromErrorResult returns a grpc status code based on the ErrorResult. If no ErrorResult is given "OK" is
+// returned. ErrorResult reason takes priority over the embedded http code due to a generally lossy http to grpc code
+// conversion.
+// A non nil ErrorResult will never return "OK".
+func grpcCodeFromErrorResult(res *resourcepb.ErrorResult) grpccodes.Code {
+	if res == nil {
+		return grpccodes.OK
+	}
+	httpCode, reason := res.Code, res.Reason
+	if code, ok := grpcCodeFromReason(metav1.StatusReason(reason)); ok {
+		return code
+	}
+	if reason != "" {
+		errorMappingLog.Warn("Unrecognized error reason, falling back to HTTP status", "httpCode", httpCode, "reason", reason)
+	}
+
 	switch httpCode {
 	case http.StatusOK:
-		return grpccodes.OK
-	case http.StatusBadRequest:
+		// An embedded error must not be labeled as a success.
+		errorMappingLog.Warn("ErrorResult is non nil with a 200 OK http code", "reason", reason)
+		return grpccodes.Internal
+	case http.StatusBadRequest, http.StatusRequestEntityTooLarge:
 		return grpccodes.InvalidArgument
 	case http.StatusUnauthorized:
 		return grpccodes.Unauthenticated
@@ -345,7 +413,7 @@ func grpcCodeFromHTTPStatus(httpCode int32) grpccodes.Code {
 		return grpccodes.AlreadyExists
 	case http.StatusPreconditionFailed:
 		return grpccodes.FailedPrecondition
-	case http.StatusRequestedRangeNotSatisfiable:
+	case http.StatusGone, http.StatusRequestedRangeNotSatisfiable:
 		return grpccodes.OutOfRange
 	case http.StatusUnprocessableEntity:
 		return grpccodes.InvalidArgument
@@ -363,5 +431,43 @@ func grpcCodeFromHTTPStatus(httpCode int32) grpccodes.Code {
 		return grpccodes.Canceled
 	}
 
-	return grpccodes.Unknown
+	if httpCode >= 400 && httpCode < 500 {
+		errorMappingLog.Warn("Unmapped HTTP status, assuming InvalidArgument", "httpCode", httpCode)
+		return grpccodes.InvalidArgument
+	}
+	errorMappingLog.Warn("Unmapped HTTP status, assuming Internal", "httpCode", httpCode)
+	return grpccodes.Internal
+}
+
+func grpcCodeFromReason(reason metav1.StatusReason) (grpccodes.Code, bool) {
+	switch reason {
+	case metav1.StatusReasonUnauthorized:
+		return grpccodes.Unauthenticated, true
+	case metav1.StatusReasonForbidden:
+		return grpccodes.PermissionDenied, true
+	case metav1.StatusReasonNotFound:
+		return grpccodes.NotFound, true
+	case metav1.StatusReasonAlreadyExists:
+		return grpccodes.AlreadyExists, true
+	case metav1.StatusReasonConflict:
+		return grpccodes.Aborted, true
+	case metav1.StatusReasonGone, metav1.StatusReasonExpired:
+		return grpccodes.OutOfRange, true
+	case metav1.StatusReasonBadRequest, metav1.StatusReasonInvalid,
+		metav1.StatusReasonNotAcceptable, metav1.StatusReasonUnsupportedMediaType,
+		metav1.StatusReasonRequestEntityTooLarge:
+		return grpccodes.InvalidArgument, true
+	case metav1.StatusReasonTimeout:
+		return grpccodes.DeadlineExceeded, true
+	case metav1.StatusReasonServerTimeout, metav1.StatusReasonServiceUnavailable:
+		return grpccodes.Unavailable, true
+	case metav1.StatusReasonTooManyRequests:
+		return grpccodes.ResourceExhausted, true
+	case metav1.StatusReasonMethodNotAllowed:
+		return grpccodes.Unimplemented, true
+	case metav1.StatusReasonInternalError, metav1.StatusReasonStoreReadError:
+		return grpccodes.Internal, true
+	default:
+		return grpccodes.Unknown, false
+	}
 }

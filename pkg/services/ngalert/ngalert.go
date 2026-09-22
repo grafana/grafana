@@ -48,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote"
 	remoteClient "github.com/grafana/grafana/pkg/services/ngalert/remote/client"
@@ -494,7 +495,7 @@ func (ng *AlertNG) init() error {
 
 	configStore := legacy_storage.NewAlertmanagerConfigStore(ng.store, notifier.NewExtraConfigsCrypto(ng.SecretsService), ng.FeatureToggles)
 
-	routeAccess := ac.NewRouteAccess[*legacy_storage.ManagedRoute](ng.accesscontrol, ng.RouteResourcePermissions, false)
+	routeAccess := ac.NewRouteAccess[*v1.ManagedRoute](ng.accesscontrol, ng.RouteResourcePermissions, false)
 	routeService := routes.NewService(configStore, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.FeatureToggles, ng.Log, validation.NewPermissionAwareValidator(ng.accesscontrol), ng.tracer, routeAccess)
 	provisionRouteService := routes.NewService(
 		configStore,
@@ -505,7 +506,7 @@ func (ng *AlertNG) init() error {
 		ng.Log,
 		validation.NewPermissionAwareValidator(ng.accesscontrol),
 		ng.tracer,
-		ac.NewRouteAccess[*legacy_storage.ManagedRoute](ng.accesscontrol, ng.RouteResourcePermissions, true),
+		ac.NewRouteAccess[*v1.ManagedRoute](ng.accesscontrol, ng.RouteResourcePermissions, true),
 	)
 
 	emailValidator := notifier.NewEmailValidator(ng.orgService, ng.Cfg.UnifiedAlerting.LimitEmailToOrgMembers)
@@ -527,6 +528,7 @@ func (ng *AlertNG) init() error {
 		ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI),
 		ng.Cfg.UnifiedAlerting.AllowedIntegrations,
 		emailValidator,
+		ng.MultiOrgAlertmanager,
 	)
 	receiverTestService := notifier.NewReceiverTestingService(
 		receiverService,
@@ -553,6 +555,7 @@ func (ng *AlertNG) init() error {
 		false, // imported resources are not exposed via provisioning APIs
 		ng.Cfg.UnifiedAlerting.AllowedIntegrations,
 		emailValidator,
+		ng.MultiOrgAlertmanager,
 	)
 
 	// Create limits provider based on alertmanager mode.
