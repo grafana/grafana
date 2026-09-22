@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { Field, Input } from '@grafana/ui';
@@ -20,12 +20,23 @@ export function DurationField({ label, description, value, onChange, placeholder
   const [draft, setDraft] = useState(value);
   const [error, setError] = useState<string | undefined>(undefined);
 
+  // Resyncs when the parent replaces `value` from the outside (e.g. clearing the contact point
+  // resets timingsValue) - only fires on an actual prop change, not on every render.
+  useEffect(() => {
+    setDraft(value);
+  }, [value]);
+
   const commit = () => {
     if (isValidPromDuration(draft)) {
       setError(undefined);
       onChange(draft);
     } else {
-      setError(t('alerting.duration-field.invalid', 'Invalid duration format. Must be {{number}}{{time_unit}}'));
+      setError(
+        t(
+          'alerting.duration-field.invalid',
+          'Invalid duration format. Use a number followed by a time unit, for example 30s or 5m.'
+        )
+      );
     }
   };
 

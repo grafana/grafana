@@ -178,7 +178,11 @@ function NotificationPolicyRecipient({
   instancesToPreview,
   viewPoliciesHref,
 }: NotificationPolicyRecipientProps) {
-  const { currentData: routingTrees } = useListRoutingTrees();
+  const { currentData: routingTrees, isError } = useListRoutingTrees();
+
+  // Same reasoning as ContactPointRecipient's isError guard: falling back to null here would show
+  // "Default policy" for a rule that actually has a named tree we just couldn't confirm yet.
+  const isResolvingTree = Boolean(value?.routingTree) && !routingTrees?.items;
 
   const selectedTree = value?.routingTree
     ? (routingTrees?.items?.find((tree) => tree.metadata.name === value.routingTree) ?? null)
@@ -191,6 +195,19 @@ function NotificationPolicyRecipient({
     }
     onChange({ type: 'NamedRoutingTree', routingTree: tree.metadata.name });
   };
+
+  if (isError) {
+    return (
+      <Alert
+        severity="error"
+        title={t('alerting.recipient-picker.routing-trees-error', 'Could not load notification policies')}
+      />
+    );
+  }
+
+  if (isResolvingTree) {
+    return null;
+  }
 
   return (
     <RoutingTreePicker

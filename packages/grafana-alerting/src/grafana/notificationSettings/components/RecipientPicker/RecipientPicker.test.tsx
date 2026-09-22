@@ -9,6 +9,7 @@ import {
   contactPointsListScenario,
   deploymentToolsRoutingTree,
   emptyTimeIntervalsScenario,
+  routingTreesErrorScenario,
   routingTreesListScenario,
   slackOncallContactPoint,
 } from './RecipientPicker.scenario';
@@ -80,6 +81,23 @@ describe('RecipientPicker', () => {
       type: 'NamedRoutingTree',
       routingTree: deploymentToolsRoutingTree.metadata.name,
     });
+  });
+
+  it('shows an error state instead of silently defaulting when routing trees fail to load', async () => {
+    server.use(...routingTreesErrorScenario);
+
+    renderPicker({ mode: 'notificationPolicy', value: { type: 'NamedRoutingTree', routingTree: 'deployment-tools' } });
+
+    expect(await screen.findByText(/could not load notification policies/i)).toBeInTheDocument();
+    expect(screen.queryByText(/default policy/i)).not.toBeInTheDocument();
+  });
+
+  it('does not show "Default policy" for a named tree while routing trees are still loading', () => {
+    // Assert synchronously, right after render and before MSW has resolved anything - this is
+    // exactly the in-flight state useListRoutingTrees() is in immediately after mount.
+    renderPicker({ mode: 'notificationPolicy', value: { type: 'NamedRoutingTree', routingTree: 'deployment-tools' } });
+
+    expect(screen.queryByText(/default policy/i)).not.toBeInTheDocument();
   });
 
   it('emits null when resetting an existing named policy back to default', async () => {

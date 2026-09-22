@@ -32,6 +32,8 @@ export const routingTreesListScenario = [
   ),
 ];
 
+export const routingTreesErrorScenario = [listRoutingTreeHandler(() => new HttpResponse(null, { status: 500 }))];
+
 export const emptyTimeIntervalsScenario = [
   listTimeIntervalHandler(ListTimeIntervalApiResponseFactory.build({ items: [] })),
 ];

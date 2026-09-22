@@ -46,7 +46,11 @@ export function SimplifiedRoutingFields({ value, onChange, disabledReason }: Sim
   const [overrideTimings, setOverrideTimings] = useState(() =>
     Boolean(value.groupWait || value.groupInterval || value.repeatInterval)
   );
-  const hasRouteSettings = overrideGrouping || overrideTimings || Boolean(value.muteTimeIntervals?.length);
+  const hasRouteSettings =
+    overrideGrouping ||
+    overrideTimings ||
+    Boolean(value.muteTimeIntervals?.length) ||
+    Boolean(value.activeTimeIntervals?.length);
 
   // Mirrors RouteSettings.tsx's own effect: seed the required labels on opt-in, rather than
   // starting empty (which would mean "group by nothing", not "the defaults plus whatever you add").
@@ -135,7 +139,15 @@ export function SimplifiedRoutingFields({ value, onChange, disabledReason }: Sim
               <Switch
                 id="override-grouping-toggle"
                 value={overrideGrouping}
-                onChange={(e) => setOverrideGrouping(e.currentTarget.checked)}
+                onChange={(e) => {
+                  const next = e.currentTarget.checked;
+                  setOverrideGrouping(next);
+                  // Turning the override off must drop groupBy too, or a caller that persists
+                  // `value` still ships the override the summary text claims no longer applies.
+                  if (!next) {
+                    onChange({ ...value, groupBy: undefined });
+                  }
+                }}
               />
             </InlineField>
             {!overrideGrouping && (
@@ -167,7 +179,14 @@ export function SimplifiedRoutingFields({ value, onChange, disabledReason }: Sim
               <Switch
                 id="override-timings-toggle"
                 value={overrideTimings}
-                onChange={(e) => setOverrideTimings(e.currentTarget.checked)}
+                onChange={(e) => {
+                  const next = e.currentTarget.checked;
+                  setOverrideTimings(next);
+                  // Same reasoning as the grouping switch above: drop the timing fields on opt-out.
+                  if (!next) {
+                    onChange({ ...value, groupWait: undefined, groupInterval: undefined, repeatInterval: undefined });
+                  }
+                }}
               />
             </InlineField>
             {!overrideTimings && (

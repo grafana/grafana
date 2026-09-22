@@ -14,11 +14,12 @@
       "common-labels-count_other": "+{{count}} common labels"
     },
     "duration-field": {
-      "invalid": "Invalid duration format. Must be {{number}}{{time_unit}}"
+      "invalid": "Invalid duration format. Use a number followed by a time unit, for example 30s or 5m."
     },
     "group-by-field": {
       "aria-label": "Group by",
-      "description": "Group alert instances that have these labels in common into a single notification.",
+      "description": "Alerts are always grouped by grafana_folder and alertname, plus any additional labels you select. Select \"Disable (...)\" to send each alert as a separate notification.",
+      "disable-option": "Disable (...)",
       "label": "Group by"
     },
     "paused-badge": {
@@ -30,6 +31,7 @@
       "contact-point-description": "Notifications for firing alerts are routed to a selected contact point.",
       "contact-points-error": "Could not load contact points",
       "manage-contact-points": "View or create contact points",
+      "routing-trees-error": "Could not load notification policies",
       "timings-disabled": "Select a contact point first"
     },
     "routing-tree-picker": {
