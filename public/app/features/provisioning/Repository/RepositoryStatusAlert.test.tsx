@@ -60,25 +60,25 @@ describe('RepositoryStatusAlert', () => {
     expect(screen.queryByRole('button', { name: /delete anyway/i })).not.toBeInTheDocument();
   });
 
-  it('shows the deletion error and a force-delete button', () => {
-    const deleteError = 'Repository cleanup could not delete the provider webhook.';
+  it('shows the deletion error and a force-delete button for a blocked deletion', () => {
+    const message = 'The cleanup step could not remove the provider webhook.';
     render(
       <RepositoryStatusAlert
         repository={{
           ...repository,
           metadata: { ...repository.metadata, deletionTimestamp: '2026-09-11T00:00:00Z' },
-          status: { ...repository.status!, deleteError },
+          status: { ...repository.status!, deletion: { state: 'Blocked', finalizer: 'cleanup', message } },
         }}
       />
     );
 
     expect(screen.getByRole('alert')).toBeInTheDocument();
     expect(screen.getByText('Repository deletion error')).toBeInTheDocument();
-    expect(screen.getByText(deleteError)).toBeInTheDocument();
+    expect(screen.getByText(message)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete anyway/i })).toBeInTheDocument();
   });
 
-  it('drops the cleanup finalizer when the user confirms Delete anyway', async () => {
+  it('force-removes exactly the blocking finalizer the backend named', async () => {
     let replaceFinalizers: string[] | undefined;
     server.use(
       http.put(`${BASE}/repositories/:name`, async ({ request }) => {
@@ -94,7 +94,10 @@ describe('RepositoryStatusAlert', () => {
         repository={{
           ...repository,
           metadata: { ...repository.metadata, deletionTimestamp: '2026-09-11T00:00:00Z' },
-          status: { ...repository.status!, deleteError: 'Repository cleanup could not delete the provider webhook.' },
+          status: {
+            ...repository.status!,
+            deletion: { state: 'Blocked', finalizer: 'cleanup', message: 'blocked' },
+          },
         }}
       />
     );
@@ -108,8 +111,8 @@ describe('RepositoryStatusAlert', () => {
       await event.payload.onConfirm?.();
     });
 
-    // Only the cleanup finalizer is dropped; the resource finalizers stay so the
-    // in-progress deletion still releases/removes resources.
+    // Only the named finalizer is dropped; the rest stay so the in-progress
+    // deletion still releases/removes resources.
     expect(replaceFinalizers).toEqual(['remove-orphan-resources', 'remove-pending-jobs']);
   });
 });

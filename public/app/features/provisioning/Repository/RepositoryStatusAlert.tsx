@@ -11,38 +11,39 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { PROVISIONING_URL } from '../constants';
 
-// The cleanup finalizer removes the provider-side webhook on delete; it's the
-// only finalizer that needs the repository to be reachable. When a deletion
-// wedges (e.g. dead credentials can't remove the webhook) dropping it lets the
-// in-progress deletion finish, orphaning the webhook.
-const CLEANUP_FINALIZER = 'cleanup';
-
 const preserveNewlines = css({ whiteSpace: 'pre-line' });
 
 export function RepositoryStatusAlert({ repository }: { repository: Repository }) {
   const [replaceRepository, replaceRequest] = useReplaceRepositoryMutation();
   const navigate = useNavigate();
 
-  const deleteError = repository.status?.deleteError;
+  const deletion = repository.status?.deletion;
+  // status.deletion is the structured signal; deleteError is the deprecated
+  // free-text kept for older backends. Prefer the structured message.
+  const deletionMessage = deletion?.message ?? repository.status?.deleteError;
+  // The backend names exactly which finalizer is blocking deletion; force-remove
+  // that one rather than guessing (e.g. cleanup for a webhook that can't be removed).
+  const blockingFinalizer = deletion?.finalizer;
+
   const errors = [
-    ...(deleteError ? [deleteError] : []),
+    ...(deletionMessage ? [deletionMessage] : []),
     ...(repository.status?.fieldErrors?.flatMap((error) => (error.detail ? [error.detail] : [])) ?? []),
   ];
 
   const forceDelete = useCallback(() => {
     const name = repository.metadata?.name;
-    if (!name) {
+    if (!name || !blockingFinalizer) {
       return;
     }
 
-    const finalizers = (repository.metadata?.finalizers ?? []).filter((finalizer) => finalizer !== CLEANUP_FINALIZER);
+    const finalizers = (repository.metadata?.finalizers ?? []).filter((finalizer) => finalizer !== blockingFinalizer);
 
     appEvents.publish(
       new ShowConfirmModalEvent({
         title: t('provisioning.repository-status-alert.force-delete-title', 'Delete repository anyway'),
         text: t(
           'provisioning.repository-status-alert.force-delete-warning',
-          'This skips removing provider-side resources such as webhooks, which will be left in place. Only do this if the repository can no longer be reached (for example its credentials have expired or been revoked).'
+          'This removes the repository without completing the blocking step, so anything it manages on the provider side (for example a webhook) is left in place. Only do this if the repository can no longer be reached — for example its credentials have expired or been revoked.'
         ),
         yesText: t('provisioning.repository-status-alert.force-delete-confirm', 'Delete anyway'),
         noText: t('provisioning.repository-status-alert.force-delete-cancel', 'Cancel'),
@@ -52,6 +53,7 @@ export function RepositoryStatusAlert({ repository }: { repository: Repository }
             repositoryName: name,
             repositoryType: repository.spec?.type ?? 'unknown',
             forceDelete: true,
+            finalizer: blockingFinalizer,
             target: repository.spec?.sync?.target ?? 'unknown',
             workflows: repository.spec?.workflows ?? [],
           });
@@ -69,7 +71,7 @@ export function RepositoryStatusAlert({ repository }: { repository: Repository }
         },
       })
     );
-  }, [replaceRepository, repository, navigate]);
+  }, [replaceRepository, repository, blockingFinalizer, navigate]);
 
   if (!errors.length) {
     return null;
@@ -79,7 +81,7 @@ export function RepositoryStatusAlert({ repository }: { repository: Repository }
     <Alert
       severity="error"
       title={
-        deleteError
+        deletionMessage
           ? t('provisioning.repository-status-alert.deletion-title', 'Repository deletion error')
           : t('provisioning.repository-status-alert.error-title', 'Repository error')
       }
@@ -90,7 +92,7 @@ export function RepositoryStatusAlert({ repository }: { repository: Repository }
             {error}
           </div>
         ))}
-        {deleteError && (
+        {blockingFinalizer && (
           <div>
             <Button variant="destructive" size="sm" onClick={forceDelete} disabled={replaceRequest.isLoading}>
               <Trans i18nKey="provisioning.repository-status-alert.force-delete-button">Delete anyway</Trans>
