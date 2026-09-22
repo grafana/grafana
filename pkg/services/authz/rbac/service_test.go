@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/authlib/authn"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -4603,9 +4604,10 @@ func TestRootFolderPermissionMapping(t *testing.T) {
 				ns := types.NamespaceInfo{Value: "default", OrgID: 1}
 				s.folderCache.Set(t.Context(), folderCacheKey(ns.Value), newFolderTree(nil))
 				action := "variables:read"
-				if resource == "librarypanels" {
+				switch resource {
+				case "librarypanels":
 					action = "library.panels:read"
-				} else if resource == "dashboards" {
+				case "dashboards":
 					action = "dashboards:read"
 				}
 				result, err := s.listPermission(t.Context(), map[string]bool{"folders:uid:general": true}, &listRequest{Namespace: ns, Group: "dashboard.grafana.app", Resource: resource, Verb: verb, Action: action, Options: &ListRequestOptions{}})
