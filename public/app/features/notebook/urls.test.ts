@@ -81,9 +81,6 @@ describe('notebook urls', () => {
     expect(isNotebookEditUrl()).toBe(expected);
   });
 
-  // `encoding=pdf` is the render pipeline's own param, not one this route defines — it reaches the
-  // page verbatim because Grafana builds the headless browser's target url from the whole
-  // `/render/...` request's raw query string, the same way `kiosk`/`hideNav` do.
   // Nested under the notebook, with `render` as a static segment: a v6 `<Routes>` ranks that above
   // the view route's `:slug?`, so it resolves to the render route rather than being read as a slug —
   // the same ranking `/notebooks/new` relies on. Nothing generates a notebook slug today anyway.

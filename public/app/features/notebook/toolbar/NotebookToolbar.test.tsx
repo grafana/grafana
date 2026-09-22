@@ -179,9 +179,10 @@ describe('NotebookToolbar', () => {
     expect(screen.getByRole('menuitem', { name: 'Download as .md' })).toBeInTheDocument();
   });
 
-  // A PDF export renders the notebook headlessly with kiosk mode on. Unlike the dashboard toolbar,
-  // this one is not portaled into the app-chrome header, so it needs its own check to disappear.
-  it('hides entirely when kiosk mode is full, for a clean PDF render', () => {
+  // A display someone has put a notebook on: copy-link, export and delete are chrome. Checked in the
+  // toolbar itself because, unlike the dashboard's, it is not portaled into the app-chrome header,
+  // so suppressing that header does not suppress this.
+  it('hides entirely when kiosk mode is full', () => {
     const context = getGrafanaContextMock();
     context.chrome.update({ kioskMode: KioskMode.Full });
     const wrapper = getWrapper({ renderWithRouter: true, grafanaContext: context });

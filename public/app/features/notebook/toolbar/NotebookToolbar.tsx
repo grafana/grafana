@@ -35,9 +35,13 @@ export function NotebookToolbar({ uid, scene }: { uid?: string; scene: NotebookS
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
 
-  // Unlike the dashboard toolbar, this one is a plain sibling of the scene rather than something
-  // portaled into the app-chrome header, so it needs its own check to disappear from a PDF export's
-  // headless render — kiosk mode there suppresses the app-chrome nav for free, but not this.
+  // A display someone has put a notebook on: copy-link, export and delete are chrome, and kiosk mode
+  // means chrome goes away. Checked here because, unlike the dashboard toolbar, this one is a plain
+  // sibling of the scene rather than something portaled into the app-chrome header — so suppressing
+  // that header does not suppress this.
+  //
+  // Nothing to do with the PDF export, despite what this comment used to claim: that renders on its
+  // own route (see pages/NotebookRenderPage), which never renders a toolbar in the first place.
   if (kioskMode === KioskMode.Full) {
     return null;
   }
