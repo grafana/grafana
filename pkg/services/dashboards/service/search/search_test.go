@@ -382,3 +382,28 @@ func TestSearchAll(t *testing.T) {
 		assert.Equal(t, []int64{0, 3, 5}, offsets)
 	})
 }
+
+// Regression test: the FIELD_VALUES result format rejects response fields that have no typed
+// definition, while the table format silently skips them. Requesting IncludeFields as-is on a
+// field-value search therefore failed with `unknown response field "labels"`, which broke
+// folder search by title (and with it the library panel list's search box).
+func TestFieldValueIncludeFields(t *testing.T) {
+	assert.NotContains(t, FieldValueIncludeFields, resource.SEARCH_FIELD_LABELS)
+	assert.NotContains(t, FieldValueIncludeFields, resource.SEARCH_FIELD_UPDATED_BY)
+
+	// Per-label fields are typed by the "labels." prefix and must survive; the legacy ID is read
+	// back out of them.
+	assert.Contains(t, FieldValueIncludeFields, resource.SEARCH_FIELD_LABELS+"."+resource.SEARCH_FIELD_LEGACY_ID)
+
+	// Everything else carries over untouched.
+	for _, field := range IncludeFields {
+		if field == resource.SEARCH_FIELD_LABELS || field == resource.SEARCH_FIELD_UPDATED_BY {
+			continue
+		}
+		assert.Contains(t, FieldValueIncludeFields, field)
+	}
+
+	// Deriving the list must not mutate the original.
+	assert.Contains(t, IncludeFields, resource.SEARCH_FIELD_LABELS)
+	assert.Contains(t, IncludeFields, resource.SEARCH_FIELD_UPDATED_BY)
+}
