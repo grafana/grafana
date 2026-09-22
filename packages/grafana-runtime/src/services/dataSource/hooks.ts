@@ -176,15 +176,17 @@ export function useDataSourceInstance(ref?: DataSourceRef | string | null): UseD
 }
 
 /**
- * React hook wrapping {@link getDefaultDataSourceInstanceListItem}. Re-fetches when
- * `type` or the data source cache changes.
+ * React hook wrapping {@link getDefaultDataSourceInstanceListItem}. Re-resolves when the uid or
+ * `isDefault` flag of any item changes, so passing an inline array is safe.
  *
  * @public
  */
-export function useDefaultDataSourceInstanceListItem(type: string): UseDefaultDataSourceInstanceListItemResult {
-  const cacheGeneration = useDataSourceCacheGeneration();
+export function useDefaultDataSourceInstanceListItem(
+  items: DataSourceInstanceListItem[]
+): UseDefaultDataSourceInstanceListItemResult {
+  const itemsKey = stableKey(items.map((item) => [item.uid, item.isDefault]));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const { loading, error, value } = useAsync(() => getDefaultDataSourceInstanceListItem(type), [type, cacheGeneration]);
+  const { loading, error, value } = useAsync(() => getDefaultDataSourceInstanceListItem(items), [itemsKey]);
   return { isLoading: loading, error, item: value };
 }
 

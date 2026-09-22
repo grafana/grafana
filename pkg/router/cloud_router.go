@@ -122,18 +122,26 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 		if err != nil {
 			return nil, fmt.Errorf("%s: %s: %w", cloudRouterSection, targetCfg.Name, err)
 		}
+		// proxyTransport carries real caller traffic proxied to this target's
+		// discovered groups (handed straight to aggregateBackend's
+		// ReverseProxy by newAggregateTarget/poll) -- it must forward the
+		// caller's own credentials transparently, same as the forward path's
+		// transportFor, so it is deliberately plain: no WrapTransport, no
+		// CAP-token exchange. The CAP token is for the router's own identity
+		// when it polls this target's /apis for discovery, not for requests
+		// made on a caller's behalf.
+		proxyTransport := newAggregateBaseTransport(tlsCfg)
 		restCfg := &rest.Config{
 			Host: targetCfg.URL,
 			// A fresh clone per target, not the process-global
 			// http.DefaultTransport that client-go's transport cache would
-			// otherwise wrap: this one client carries both the discovery poll
-			// and every user request proxied to this target (newAggregateTarget
-			// hands client.Transport to aggregateBackend's ReverseProxy), so it
-			// must own its connection pool. Same intent as transportFor's
-			// per-tlsCacheKey clone on the forward path. rest.Config.Transport
-			// is the base RoundTripper and WrapTransport layers on top of it
-			// (rest.TransportFor -> transport.New -> HTTPWrappersForConfig), so
-			// the CAP-token exchange below still applies.
+			// otherwise wrap: this client is used only for the router's own
+			// discovery poll, so it must own its connection pool. Same intent
+			// as transportFor's per-tlsCacheKey clone on the forward path.
+			// rest.Config.Transport is the base RoundTripper and
+			// WrapTransport layers on top of it (rest.TransportFor ->
+			// transport.New -> HTTPWrappersForConfig), so the CAP-token
+			// exchange below still applies -- to this discovery client only.
 			//
 			// TLS is set directly on this transport (not via
 			// rest.Config.TLSClientConfig) because client-go's transport.New
@@ -147,7 +155,7 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 		if err != nil {
 			return nil, fmt.Errorf("%s: building http client for %s: %w", cloudRouterSection, targetCfg.Name, err)
 		}
-		target, err := newAggregateTarget(targetCfg, httpClient)
+		target, err := newAggregateTarget(targetCfg, httpClient, proxyTransport)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %s: %w", cloudRouterSection, targetCfg.Name, err)
 		}
@@ -177,15 +185,10 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 		if err != nil {
 			return nil, fmt.Errorf("%s: st_discovery_url: %w", cloudRouterSection, err)
 		}
+
 		singleTenantFallback, err = newSingleTenantFallback(singleTenantFallbackOptions{
-			cacheSize: 100,
-			// TODO: replace the Play-only stub with a stack host lookup.
-			resolveHost: func(_ context.Context, stackID int64) (string, error) {
-				if stackID != 35611 {
-					return "", nil
-				}
-				return "https://play.grafana.org/", nil
-			},
+			cacheSize:     100,
+			resolveHost:   newGComURLResolver(cfg.GrafanaComAPIURL, cfg.GrafanaComSSOAPIToken),
 			discoveryHost: discoURL,
 		})
 		if err != nil {
