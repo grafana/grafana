@@ -50,17 +50,25 @@ function buildScene() {
   });
 }
 
-function stubStateManager(scene?: NotebookScene) {
+function stubStateManager(scene?: NotebookScene, loadError?: { message: string; status?: number }) {
   const loadNotebook = jest.fn();
   const clearState = jest.fn();
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only the three members the page touches
   mockGetStateManager.mockReturnValue({
-    useState: () => ({ scene, isLoading: false }),
+    useState: () => ({ scene, isLoading: false, loadError }),
     loadNotebook,
     clearState,
   } as unknown as ReturnType<typeof getNotebookPageStateManager>);
 
   return { loadNotebook, clearState };
+}
+
+/** Stands in for the chromedp binding grafana-image-renderer injects. */
+function captureRenderMessages() {
+  const channel = jest.fn();
+  window.__grafanaImageRendererMessageChannel = channel;
+
+  return () => channel.mock.calls.map(([raw]) => JSON.parse(String(raw)));
 }
 
 const NOTEBOOKS_FLAG = 'dashboard.notebooks';
@@ -71,6 +79,7 @@ describe('NotebookRenderPage', () => {
     await act(async () => {
       setTestFlags({});
     });
+    delete window.__grafanaImageRendererMessageChannel;
     jest.clearAllMocks();
   });
 
@@ -143,5 +152,52 @@ describe('NotebookRenderPage', () => {
 
     await screen.findByText('Findings');
     expect(abandon).toHaveBeenCalled();
+  });
+});
+
+describe('NotebookRenderPage readiness', () => {
+  afterEach(async () => {
+    await act(async () => {
+      setTestFlags({});
+    });
+    delete window.__grafanaImageRendererMessageChannel;
+    jest.clearAllMocks();
+  });
+
+  // A failure is an answer, and the renderer is left waiting without one. Success needs no message:
+  // the renderer polls for the page to settle, which is how a good capture is detected today.
+  it('reports failure to the renderer when the notebook could not be loaded', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    const messages = captureRenderMessages();
+    stubStateManager(undefined, { message: 'Notebook not found', status: 404 });
+
+    render(<NotebookRenderPage />);
+
+    await waitFor(() => {
+      expect(messages()).toEqual([{ type: 'REPORT_RENDER_COMPLETE', data: { success: false } }]);
+    });
+  });
+
+  it('says nothing to the renderer on the way to a successful capture', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    const messages = captureRenderMessages();
+    stubStateManager(buildScene());
+
+    render(<NotebookRenderPage />);
+
+    await screen.findByText('Findings');
+    expect(messages()).toEqual([]);
+  });
+
+  // Rendered rather than swallowed, so a polling capture produces something diagnosable instead of
+  // a blank sheet.
+  it('shows the failure on the page', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    captureRenderMessages();
+    stubStateManager(undefined, { message: 'Notebook not found', status: 404 });
+
+    render(<NotebookRenderPage />);
+
+    expect(await screen.findByText('Notebook not found')).toBeInTheDocument();
   });
 });

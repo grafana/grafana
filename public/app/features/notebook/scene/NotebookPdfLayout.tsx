@@ -7,8 +7,8 @@ import { NOTEBOOK_DOCUMENT_CLASS } from './layout-notebook/NotebookLayoutManager
 import { NOTEBOOK_CELL_CONTENT_CLASS } from './layout-notebook/edit/NotebookCellFrame';
 
 // A4 portrait. In millimetres because the target is a physical sheet, which keeps the sizing honest
-// instead of routing it through a dpi assumption. The inset is applied as the document's own padding
-// rather than a page margin — see the `@page` rule below for why a real page margin is not usable.
+// instead of routing it through a dpi assumption. The inset is applied as padding on the document
+// column rather than as a page margin — see the `@page` rule below for why a margin is not usable.
 export const PDF_PAGE_WIDTH_MM = 210;
 const PDF_PAGE_HEIGHT_MM = 297;
 const PDF_PAGE_MARGIN_MM = 12;
@@ -46,25 +46,17 @@ export function NotebookPdfLayout() {
         // real. Sized on `html`/`body` because that is what the renderer measures — constraining
         // something further in leaves the document as wide as it ever was.
         //
-        // The inset is padding rather than an `@page` margin because Chromium paints nothing into a
-        // page's margin area and does not support a background there: a margin would leave a
-        // bare-paper band around a document whose own canvas is deliberately not white. Padding
-        // keeps the canvas edge to edge, so the notebook's grey still does the job it does on
-        // screen — giving the white panels something to sit on.
-        //
-        // Left and right insets repeat on every page (they belong to a block that spans all of
-        // them); top and bottom apply once, at the start and end of the flow.
-        //
-        // The padding comes out of this width rather than adding to it, because @grafana/ui's base
-        // styles already put `box-sizing: border-box` on `html` and have everything inherit it
-        // (GlobalStyles/elements.ts).
+        // The background belongs here for the same reason the inset does not: it has to reach the
+        // sheet's edge. Chromium paints nothing into an `@page` margin area and supports no
+        // background there, so a real page margin would leave a bare-paper band around a canvas
+        // that is deliberately not white. Keeping the colour edge to edge lets the notebook's grey
+        // do the job it does on screen — giving the white panels something to sit on.
         'html, body': {
           maxWidth: `${PDF_PAGE_WIDTH_MM}mm`,
           margin: '0 auto',
-          padding: `${PDF_PAGE_MARGIN_MM}mm`,
           background: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.canvas,
         },
-        // The body's padding above insets the top of page one and the bottom of the last page, but
+        // The column's padding below insets the top of page one and the bottom of the last page, but
         // not the pages in between — a block's vertical padding is spent at the start and end of its
         // whole flow, not per fragment. Padding on the cells covers the gap: unlike a margin, which
         // fragmentation drops at a break, padding on a box that begins a page is drawn there, so
@@ -72,18 +64,22 @@ export function NotebookPdfLayout() {
         [`.${NOTEBOOK_CELL_CONTENT_CLASS}`]: {
           paddingTop: `${PDF_CELL_INSET_MM}mm`,
         },
-        // The column's own inset, dropped on every side so the page padding above is the single
-        // thing holding the document off the paper. Its reading-width padding exists to stop prose
-        // running the full width of a wide screen, which the page width already does here — left in
-        // place the two stack, costing ~110px of a 794px sheet across.
+        // The page inset, applied exactly once and on a container of its own.
+        //
+        // Not on `html`/`body`: padding on both doubles it, and @grafana/ui's base styles pin
+        // `body { padding-right: 0 !important }` (GlobalStyles/elements.ts), so only the left would
+        // have doubled — roughly 24mm against 12mm. The column already spans the sheet once its
+        // reading-width cap is lifted, which makes it the honest place for a symmetric inset.
+        //
+        // Comes out of the width rather than adding to it: `html` is `box-sizing: border-box` in
+        // those same base styles, and everything inherits it.
         [`.${NOTEBOOK_DOCUMENT_CLASS}`]: {
           maxWidth: 'none',
-          padding: 0,
+          padding: `${PDF_PAGE_MARGIN_MM}mm`,
         },
         // The actual lever a headless-Chrome PDF engine consults for physical page shape, per the
-        // CSS Paged Media spec. Margin stays zero: the inset lives in the body's padding above
-        // instead, so the notebook's canvas colour reaches the paper's edge rather than stopping
-        // short of it.
+        // CSS Paged Media spec. Margin stays zero: the inset lives on the document column instead,
+        // so the notebook's canvas colour reaches the paper's edge rather than stopping short of it.
         '@page': {
           size: `${PDF_PAGE_WIDTH_MM}mm ${PDF_PAGE_HEIGHT_MM}mm`,
           margin: 0,

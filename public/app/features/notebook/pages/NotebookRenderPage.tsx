@@ -1,14 +1,17 @@
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
+import { t } from '@grafana/i18n';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
 import { UrlSyncContextProvider } from '@grafana/scenes';
+import { Alert } from '@grafana/ui';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 
 import { NotebookPdfLayout } from '../scene/NotebookPdfLayout';
 import { type NotebookScene } from '../scene/NotebookScene';
 
 import { getNotebookPageStateManager } from './NotebookPageStateManager';
+import { reportRenderFailed } from './notebookRenderReadiness';
 
 /**
  * A notebook drawn to be captured rather than read — the page the headless browser behind
@@ -32,7 +35,7 @@ export function NotebookRenderPage() {
 
   const { uid } = useParams();
   const stateManager = getNotebookPageStateManager();
-  const { scene } = stateManager.useState();
+  const { scene, loadError } = stateManager.useState();
 
   useEffect(() => {
     if (notebooksEnabled && uid) {
@@ -44,13 +47,39 @@ export function NotebookRenderPage() {
     };
   }, [stateManager, uid, notebooksEnabled]);
 
+  // Reported so the renderer is not left waiting on a page that has already failed. Above the
+  // returns below because hooks run in the same order every render.
+  //
+  // Only the failure. A successful capture is detected by the renderer polling for the page to
+  // settle, which needs nothing from us — signalling success properly would mean waiting for every
+  // panel's queries to go idle, and that only pays off under the `reportRenderBinding` toggle
+  // (experimental, off by default), where the renderer waits for a message instead of polling. With
+  // that toggle on, a successful notebook export currently waits out the renderer's timeout; worth
+  // fixing against a real renderer if the toggle heads for GA.
+  useEffect(() => {
+    if (loadError) {
+      reportRenderFailed();
+    }
+  }, [loadError]);
+
   if (!notebooksEnabled) {
     return <PageNotFound />;
   }
 
-  // No loader and no error page: nothing here is for a reader. The renderer waits for the page to
-  // settle and captures whatever is on it, so a spinner would simply become the PDF — better to
-  // render nothing and let the render time out than to hand back a picture of a loading state.
+  // Shown rather than swallowed: the renderer polls as well as listening, so a page left blank can
+  // be captured as a blank PDF once the failed request settles. An error on the sheet is at least
+  // diagnosable, and is what the dashboard report page does too. No Page shell — this route has
+  // none by design.
+  if (loadError) {
+    return (
+      <Alert title={t('notebook.errors.failed-to-load', 'Failed to load notebook')} severity="error">
+        {loadError.message}
+      </Alert>
+    );
+  }
+
+  // No spinner, deliberately: the renderer captures whatever is on the page once it settles, so a
+  // loading state would simply become the PDF.
   if (!scene) {
     return null;
   }
