@@ -42,3 +42,26 @@ const defaultProm = await getDefaultDataSourceInstanceListItem(items);
 
 const { isLoading, error, item } = useDefaultDataSourceInstanceListItem(items);
 ```
+
+## Testing with Jest
+
+This package is ESM-only and ships `.mjs` files. Jest runs plugin tests as
+CommonJS and does not transform `node_modules` by default, so it has to be told
+to transform this package. Plugins scaffolded or updated with
+`@grafana/create-plugin` 7.11.1 or later get this out of the box. On older
+scaffolds, extend `jest.config.js` like so:
+
+```js
+const { grafanaESModules, nodeModulesToTransform } = require('./.config/jest/utils');
+const baseConfig = require('./.config/jest.config');
+
+module.exports = {
+  ...baseConfig,
+  transformIgnorePatterns: [nodeModulesToTransform([...grafanaESModules, '@grafana/plugin-compat'])],
+  transform: {
+    // The scaffolded pattern only matches .ts/.tsx/.js/.jsx, so .mjs files
+    // would otherwise be loaded untransformed.
+    '^.+\\.(t|j)sx?$|^.+\\.mjs$': baseConfig.transform['^.+\\.(t|j)sx?$'],
+  },
+};
+```
