@@ -31,4 +31,6 @@ export const DASHBOARD_COMMAND_SCHEMAS = [
   { name: 'UPDATE_DASHBOARD_SETTINGS', payloadSchema: payloads.updateDashboardSettings },
   { name: 'GET_SPEC', payloadSchema: payloads.getSpec },
   { name: 'APPLY_SPEC', payloadSchema: payloads.applySpec },
+  { name: 'RENDER_PLAN', payloadSchema: payloads.renderPlan },
+  { name: 'END_PLANNING', payloadSchema: payloads.endPlanning },
 ] as const;

@@ -301,12 +301,22 @@ describe('DashboardSceneUrlSync', () => {
     };
 
     describe('pending URL loads', () => {
+      let scene: DashboardScene;
+
       beforeEach(() => {
         jest.useFakeTimers();
+        scene = buildTestScene();
       });
       afterEach(() => {
+        scene.pauseTrackingChanges();
+        scene.urlSync!.updateFromUrl({ editview: null, shareView: null, editPanel: null });
+        jest.clearAllTimers();
+        jest.restoreAllMocks();
         jest.useRealTimers();
       });
+
+      // Settle imports and the zero-delay edit-mode callback without draining recurring dependency timers.
+      const settleUrlLoad = () => jest.advanceTimersByTimeAsync(0);
 
       describe.each([
         { key: 'editview', value: 'settings' },
@@ -314,18 +324,16 @@ describe('DashboardSceneUrlSync', () => {
         { key: 'editPanel', value: '1' },
       ] as const)('$key', ({ key, value }) => {
         function startLoad() {
-          const scene = buildTestScene();
           scene.setState({ editable: true, isEditing: true, meta: { ...scene.state.meta, canEdit: true } });
           scene.urlSync!.updateFromUrl({ [key]: value });
           expect(scene.urlSync!.getUrlState()[key]).toBe(value);
           expect(scene.state[key]).toBeUndefined();
-          return scene;
         }
 
         it('keeps the URL held until the lazy view opens', async () => {
-          const scene = startLoad();
+          startLoad();
 
-          await jest.runAllTimersAsync();
+          await settleUrlLoad();
 
           expect(scene.urlSync!.getUrlState()[key]).toBe(value);
           if (key === 'shareView') {
@@ -337,10 +345,10 @@ describe('DashboardSceneUrlSync', () => {
         });
 
         it('does not reopen a lazy view after its URL parameter is cleared', async () => {
-          const scene = startLoad();
+          startLoad();
           scene.urlSync!.updateFromUrl({ [key]: null });
 
-          await jest.runAllTimersAsync();
+          await settleUrlLoad();
 
           expect(scene.urlSync!.getUrlState()[key]).toBeUndefined();
           expect(scene.state[key]).toBeUndefined();
@@ -348,7 +356,7 @@ describe('DashboardSceneUrlSync', () => {
         });
 
         it.each([false, true])('refuses a pending import when planning starts (resync: %s)', async (resync) => {
-          const scene = startLoad();
+          startLoad();
           scene.setState({ planning });
           if (resync) {
             scene.urlSync!.updateFromUrl({ [key]: value });
@@ -357,7 +365,7 @@ describe('DashboardSceneUrlSync', () => {
             scene.setState({ planning: undefined });
           }
 
-          await jest.runAllTimersAsync();
+          await settleUrlLoad();
 
           expect(scene.urlSync!.getUrlState()[key]).toBeUndefined();
           expect(scene.state[key]).toBeUndefined();
@@ -366,12 +374,11 @@ describe('DashboardSceneUrlSync', () => {
       });
 
       it('enters edit mode after URL sync when settings are still requested', async () => {
-        const scene = buildTestScene();
         scene.setState({ editable: true, isEditing: false, meta: { ...scene.state.meta, canEdit: true } });
         scene.urlSync!.updateFromUrl({ editview: 'settings' });
         expect(scene.state.isEditing).toBe(false);
 
-        await jest.runAllTimersAsync();
+        await settleUrlLoad();
 
         expect(scene.state.isEditing).toBe(true);
         expect(scene.state.editview?.getUrlKey()).toBe('settings');
@@ -380,7 +387,6 @@ describe('DashboardSceneUrlSync', () => {
       it.each(['planning', 'cancel'] as const)(
         'does not enter edit mode after deferred settings entry is superseded by %s',
         async (action) => {
-          const scene = buildTestScene();
           scene.setState({ editable: true, isEditing: false, meta: { ...scene.state.meta, canEdit: true } });
           const onEnterEditMode = jest.spyOn(scene, 'onEnterEditMode');
           scene.urlSync!.updateFromUrl({ editview: 'settings' });
@@ -391,7 +397,7 @@ describe('DashboardSceneUrlSync', () => {
           } else {
             scene.urlSync!.updateFromUrl({ editview: null });
           }
-          await jest.runAllTimersAsync();
+          await settleUrlLoad();
 
           expect(scene.state.isEditing).toBe(false);
           expect(onEnterEditMode).not.toHaveBeenCalled();
@@ -402,7 +408,6 @@ describe('DashboardSceneUrlSync', () => {
 
       it.each([false, true])('refuses a pending library panel when planning starts (resync: %s)', async (resync) => {
         const libPanel = new LibraryPanelBehavior({ name: 'Library panel', uid: 'lib-1' });
-        const scene = buildTestScene();
         scene.setState({
           isEditing: true,
           body: DefaultGridLayoutManager.fromVizPanels([
@@ -419,7 +424,7 @@ describe('DashboardSceneUrlSync', () => {
           scene.setState({ planning: undefined });
         }
         libPanel.setState({ isLoaded: true });
-        await jest.runAllTimersAsync();
+        await settleUrlLoad();
 
         expect(scene.state.editPanel).toBeUndefined();
         expect(scene.urlSync!.getUrlState().editPanel).toBeUndefined();
