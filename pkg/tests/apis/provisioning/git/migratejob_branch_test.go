@@ -108,6 +108,8 @@ func TestIntegrationProvisioning_SelectiveMigrateToBranch(t *testing.T) {
 	// Selective migration is only supported on folder/folderless targets (an
 	// instance target must migrate everything).
 	helper.CreateFolderTargetGitRepo(t, repo, nil, "write", "branch")
+	helper.SyncAndWait(t, repo)
+	helper.RequireFolders(t, repo)
 
 	helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionMigrate,

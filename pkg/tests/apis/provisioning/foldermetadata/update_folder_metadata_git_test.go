@@ -131,7 +131,7 @@ func TestIntegrationGitFiles_EditorCreatesDashboardOnNewBranchWithGranularPermis
 	helper := sharedGitHelper(t)
 
 	const repoName = "editor-new-branch-granular-perms"
-	helper.CreateGitRepo(t, repoName, nil, "write", "branch")
+	helper.CreateFolderTargetGitRepo(t, repoName, nil, "write", "branch")
 
 	// Create a subfolder on the default branch (writes _folder.json with stable UID).
 	resp := postFolderViaFilesAPI(t, helper, repoName, "team-a/", "", "Create team-a folder")
@@ -141,6 +141,8 @@ func TestIntegrationGitFiles_EditorCreatesDashboardOnNewBranchWithGranularPermis
 
 	folderUID := readFolderFieldOnRef(t, helper, repoName, "team-a/_folder.json", "", "metadata", "name")
 	require.NotEmpty(t, folderUID, "team-a should have a stable UID from _folder.json")
+	helper.SyncAndWait(t, repoName)
+	helper.RequireFolders(t, repoName, folderUID)
 
 	// Grant editor granular permissions scoped to the repo root folder only.
 	helper.SetPermissions(helper.Org1.Editor, []resourcepermissions.SetResourcePermissionCommand{
