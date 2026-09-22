@@ -15,6 +15,7 @@ import (
 	"sync/atomic"
 
 	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
 	"golang.org/x/sync/errgroup"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,7 +27,9 @@ import (
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/clientauth"
+	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/setting"
 	unifiedresource "github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -81,8 +84,19 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
 		}
+		auth := &authn.GrafanaTokenAuthorizer{
+			// Temporary, getting the hello world authn wired up
+			// This will be replaced quickly!
+			Dummy: &identity.StaticRequester{
+				Type:      types.TypeUser,
+				UserUID:   "x1234",
+				Name:      "dummy",
+				OrgID:     1,             // always 1
+				Namespace: "stacks-5457", // charandasbatra.grafana-dev.net
+			},
+		}
 		pluginsTarget, err = newPluginManifestsTarget(pluginsURL,
-			patterns, &http.Client{Timeout: defaultAggregateDiscoveryTimeout}, deps)
+			patterns, &http.Client{Timeout: defaultAggregateDiscoveryTimeout}, deps, auth)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
 		}

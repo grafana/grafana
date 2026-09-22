@@ -22,6 +22,7 @@ const EDIT_SETUP = {
   lineNumbers: false,
   foldGutter: false,
   history: false,
+  syntaxHighlighting: false,
 };
 
 export interface MarkdownCellEditorProps {

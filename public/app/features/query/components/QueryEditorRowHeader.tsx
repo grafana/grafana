@@ -163,6 +163,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden',
     }),
     queryNameWrapper: css({
+      // The name is one or two characters and it is what tells the rows apart, so it keeps its
+      // width. The data source picker beside it shrinks instead.
+      flexShrink: 0,
       display: 'flex',
       cursor: 'pointer',
       border: '1px solid transparent',
@@ -207,6 +210,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin: '-4px 0',
     }),
     collapsedText: css({
+      // The query name, the data source picker and this text share one flex row. A base width of
+      // zero keeps the text from taking width from the other two, so a long query gives up its own
+      // width and ends in an ellipsis.
+      flex: '1 1 0',
       fontWeight: theme.typography.fontWeightRegular,
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.secondary,

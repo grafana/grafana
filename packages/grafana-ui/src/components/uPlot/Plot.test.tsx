@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import createMockRaf from 'mock-raf';
 import uPlot from 'uplot';
 
 import { type FieldConfig, FieldType, MutableDataFrame } from '@grafana/data';
@@ -10,7 +9,6 @@ import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 import { type SeriesProps } from './config/UPlotSeriesBuilder';
 import { preparePlotData2, getStackingGroups } from './utils';
 
-const mockRaf = createMockRaf();
 const setDataMock = jest.fn();
 const setSizeMock = jest.fn();
 const initializeMock = jest.fn();
@@ -62,7 +60,7 @@ describe('UPlotChart', () => {
     initializeMock.mockClear();
     destroyMock.mockClear();
 
-    jest.spyOn(window, 'requestAnimationFrame').mockImplementation(mockRaf.raf);
+    jest.spyOn(window, 'requestAnimationFrame');
   });
 
   it('destroys uPlot instance when component unmounts', () => {
