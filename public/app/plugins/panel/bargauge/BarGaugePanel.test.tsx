@@ -5,6 +5,7 @@ import {
   dateMath,
   dateTime,
   type EventBus,
+  type FieldDisplay,
   LoadingState,
   type TimeRange,
   toDataFrame,
@@ -24,12 +25,13 @@ import {
 import {
   BarGaugePanel,
   calcBarSize,
+  getBarGaugeAlignmentFactors,
   getItemSpacing,
   getLegend,
   getOrientation,
   type BarGaugePanelProps,
 } from './BarGaugePanel';
-import { defaultOptions } from './panelcfg.gen';
+import { defaultOptions, type Options } from './panelcfg.gen';
 
 const valueSelector = selectors.components.Panels.Visualization.BarGauge.valueV2;
 
@@ -256,6 +258,39 @@ describe('BarGaugePanel', () => {
       expect(screen.getByText(/onlyseries/i)).not.toBeVisible();
       expect(screen.getByTestId(valueSelector)).toBeInTheDocument();
     });
+  });
+
+  describe('getBarGaugeAlignmentFactors', () => {
+    function buildFieldDisplay(title: string): FieldDisplay {
+      return {
+        name: title,
+        field: {},
+        display: { numeric: 0, text: String(42), title },
+        hasLinks: false,
+      };
+    }
+
+    // BarGauge reserves name-column/row space purely based on alignmentFactors.title being
+    // non-empty, so it must reflect per-bar suppression or hidden names still take up space.
+    it.each([BigValueTextMode.Value, BigValueTextMode.None])(
+      'clears the shared title for multiple bars when textMode is %s',
+      (textMode) => {
+        const values = [buildFieldDisplay('ServerA'), buildFieldDisplay('ServerB'), buildFieldDisplay('ServerC')];
+        const options = { ...defaultOptions, textMode } as Options;
+
+        expect(getBarGaugeAlignmentFactors(values, options).title).toBeFalsy();
+      }
+    );
+
+    it.each([BigValueTextMode.Auto, BigValueTextMode.Name, BigValueTextMode.ValueAndName])(
+      'keeps the longest shared title for multiple bars when textMode is %s',
+      (textMode) => {
+        const values = [buildFieldDisplay('ServerA'), buildFieldDisplay('ServerB'), buildFieldDisplay('ServerC')];
+        const options = { ...defaultOptions, textMode } as Options;
+
+        expect(getBarGaugeAlignmentFactors(values, options).title).toBe('ServerA');
+      }
+    );
   });
 });
 

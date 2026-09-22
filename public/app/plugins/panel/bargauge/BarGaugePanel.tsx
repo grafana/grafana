@@ -112,7 +112,7 @@ export function BarGaugePanel(props: BarGaugePanelProps) {
         return (
           <VizRepeater
             source={data}
-            getAlignmentFactors={getDisplayValueAlignmentFactors}
+            getAlignmentFactors={(values) => getBarGaugeAlignmentFactors(values, options)}
             getValues={getValues}
             renderValue={renderValue}
             renderCounter={renderCounter}
@@ -169,6 +169,22 @@ export function getLegend(options: Options, data: BarGaugePanelProps['data']) {
   }
 
   return null;
+}
+
+// BarGauge sizes the shared name column/row from alignmentFactors.title, so it must reflect the
+// same per-bar suppression as renderComponent's clearNameForSingleSeries call, or hidden names
+// still reserve layout space even though nothing is drawn there.
+export function getBarGaugeAlignmentFactors(
+  values: FieldDisplay[],
+  options: Options
+): DisplayValueAlignmentFactors {
+  const count = values.length;
+  return getDisplayValueAlignmentFactors(
+    values.map((value) => ({
+      ...value,
+      display: clearNameForSingleSeries(count, options, value.field, value.display),
+    }))
+  );
 }
 
 function clearNameForSingleSeries(
