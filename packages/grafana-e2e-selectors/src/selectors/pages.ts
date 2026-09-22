@@ -1286,6 +1286,49 @@ export const versionedPages = {
       },
     },
   },
+  Notebooks: {
+    List: {
+      newButton: {
+        '13.3.0': 'data-testid notebooks list new-button',
+      },
+      searchInput: {
+        '13.3.0': 'data-testid notebooks list search-input',
+      },
+      createdByMeCheckbox: {
+        '13.3.0': 'data-testid notebooks list created-by-me-checkbox',
+      },
+      table: {
+        row: {
+          '13.3.0': (title: string) => `data-testid notebooks list row ${title}`,
+        },
+        rowMenuButton: {
+          '13.3.0': (uid: string) => `data-testid notebooks list row-menu-button ${uid}`,
+        },
+      },
+      RowMenu: {
+        copyLink: {
+          '13.3.0': 'data-testid notebooks list row-menu copy-link',
+        },
+        delete: {
+          '13.3.0': 'data-testid notebooks list row-menu delete',
+        },
+      },
+    },
+    Item: {
+      titleEditorTrigger: {
+        '13.3.0': 'data-testid notebooks item title-editor-trigger',
+      },
+      editModeToggle: {
+        '13.3.0': 'data-testid notebooks item edit-mode-toggle',
+      },
+      toolbarKebabButton: {
+        '13.3.0': 'data-testid notebooks item toolbar-kebab-button',
+      },
+      footerAddCellButton: {
+        '13.3.0': (type: string) => `data-testid notebooks item footer-add-cell-button ${type}`,
+      },
+    },
+  },
   Provisioning: {
     repositoryTypeCard: {
       '13.2.0': (type: string) => `data-testid Provisioning repository type card ${type}`,

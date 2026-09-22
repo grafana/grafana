@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
 import { Alert, Box, Button, Checkbox, EmptyState, FilterInput, Stack, Text } from '@grafana/ui';
@@ -86,7 +87,7 @@ export function NotebooksListPage() {
   const onCreate = () => navigate(notebookNewEditUrl());
 
   const createButton = canCreate ? (
-    <Button icon="plus" onClick={onCreate}>
+    <Button icon="plus" onClick={onCreate} data-testid={selectors.pages.Notebooks.List.newButton}>
       <Trans i18nKey="notebooks.list.new-notebook">New notebook</Trans>
     </Button>
   ) : undefined;
@@ -169,6 +170,7 @@ export function NotebooksListPage() {
                   onChange={setSearchQuery}
                   escapeRegex={false}
                   placeholder={t('notebooks.list.search-placeholder', 'Search notebooks by title...')}
+                  data-testid={selectors.pages.Notebooks.List.searchInput}
                 />
                 <Stack justifyContent="space-between" alignItems="center" gap={2} wrap="wrap">
                   <Stack alignItems="center" gap={1} wrap="wrap">
@@ -186,6 +188,7 @@ export function NotebooksListPage() {
                         value={createdByMe}
                         onChange={(event) => setCreatedByMe(event.currentTarget.checked)}
                         label={t('notebooks.list.created-by-me', 'Created by me')}
+                        data-testid={selectors.pages.Notebooks.List.createdByMeCheckbox}
                       />
                     )}
                   </Stack>

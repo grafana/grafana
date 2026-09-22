@@ -3,6 +3,7 @@ import { memo, type ReactNode, useCallback, useMemo, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import {
   type Column,
@@ -121,7 +122,13 @@ export function NotebooksTable({ notebooks, onTagClick }: Props) {
         ...withoutSkeleton(layout.title),
         sortType: 'string',
         cell: ({ row: { original } }) => (
-          <TextLink color="primary" inline={false} href={notebookViewUrl(original.uid)} title={original.title}>
+          <TextLink
+            color="primary"
+            inline={false}
+            href={notebookViewUrl(original.uid)}
+            title={original.title}
+            data-testid={selectors.pages.Notebooks.List.table.row(original.title)}
+          >
             {original.title}
           </TextLink>
         ),
@@ -287,6 +294,7 @@ const NotebookRowActions = memo(function NotebookRowActions({
           aria-haspopup="menu"
           // No aria-label alongside: IconButton uses a string tooltip as the accessible name.
           tooltip={t('notebooks.list.table.more-actions', 'More actions')}
+          data-testid={selectors.pages.Notebooks.List.table.rowMenuButton(uid)}
         />
       </Dropdown>
     </Stack>
