@@ -57,6 +57,21 @@ type filters struct {
 	targetDatasourceUID string
 	sortField           string
 	sortDesc            bool
+	states              listFilter
+	healths             listFilter
+}
+
+type listFilter struct {
+	include []string
+	exclude []string
+}
+
+func (l *listFilter) add(r *resourcepb.Requirement) {
+	if r.Operator == "notin" {
+		l.exclude = append(l.exclude, r.Values...)
+		return
+	}
+	l.include = append(l.include, r.Values...)
 }
 
 func extractFilters(req *resourcepb.ResourceSearchRequest) filters {
@@ -97,6 +112,10 @@ func extractFilters(req *resourcepb.ResourceSearchRequest) filters {
 				f.metric = firstValue(r.Values)
 			case fieldTargetDatasourceUID:
 				f.targetDatasourceUID = firstValue(r.Values)
+			case fieldState:
+				f.states.add(r)
+			case fieldHealth:
+				f.healths.add(r)
 			}
 		}
 		// Metadata label requirements come from the labelSelector. Only the
@@ -250,4 +269,8 @@ func stringFilter(value string) provisioning.ListRuleStringFilter {
 		return provisioning.ListRuleStringFilter{}
 	}
 	return provisioning.ListRuleStringFilter{Include: []string{value}}
+}
+
+func listStringFilter(f listFilter) provisioning.ListRuleStringFilter {
+	return provisioning.ListRuleStringFilter{Include: f.include, Exclude: f.exclude}
 }

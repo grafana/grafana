@@ -1333,6 +1333,38 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 		q = q.Where(fmt.Sprintf("uid IN (%s)", strings.Join(in, ",")), args...)
 	}
 
+	if len(query.States) > 0 {
+		body, args, err := jsonValueIn(st.SQLStore.GetDialect(), "k8s_status", "state", query.States)
+		if err != nil {
+			return nil, groupsSet, err
+		}
+		q = q.Where(body, args...)
+	}
+
+	if len(query.ExcludeStates) > 0 {
+		body, args, err := jsonValueNotIn(st.SQLStore.GetDialect(), "k8s_status", "state", query.ExcludeStates)
+		if err != nil {
+			return nil, groupsSet, err
+		}
+		q = q.Where(body, args...)
+	}
+
+	if len(query.Healths) > 0 {
+		body, args, err := jsonValueIn(st.SQLStore.GetDialect(), "k8s_status", "health", query.Healths)
+		if err != nil {
+			return nil, groupsSet, err
+		}
+		q = q.Where(body, args...)
+	}
+
+	if len(query.ExcludeHealths) > 0 {
+		body, args, err := jsonValueNotIn(st.SQLStore.GetDialect(), "k8s_status", "health", query.ExcludeHealths)
+		if err != nil {
+			return nil, groupsSet, err
+		}
+		q = q.Where(body, args...)
+	}
+
 	q, groupsSet, err = buildRuleGroupFilter(q, query.RuleGroups)
 	if err != nil {
 		return nil, groupsSet, err

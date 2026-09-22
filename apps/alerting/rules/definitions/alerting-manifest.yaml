@@ -299,6 +299,7 @@ spec:
       scope: Namespaced
       searchFields:
       - capabilities:
+        - filter
         - retrieve
         description: The health of the rule
         name: health
@@ -323,6 +324,7 @@ spec:
         path: status.lastError
         type: string
       - capabilities:
+        - filter
         - retrieve
         description: The state of the alert rule
         name: state
@@ -606,6 +608,7 @@ spec:
       scope: Namespaced
       searchFields:
       - capabilities:
+        - filter
         - retrieve
         description: The health of the rule
         name: health

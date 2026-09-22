@@ -44,7 +44,7 @@ recordingRulev0alpha1: recordingRuleKind & {
 			name: "health"
 			path: "status.health"
 			type: "string"
-			capabilities: ["retrieve"]
+			capabilities: ["filter", "retrieve"]
 			description: "The health of the rule"
 		},
 		{

@@ -42,6 +42,38 @@ func jsonKeyExists(dialect migrator.Dialect, column, key string) (string, []any,
 	return jsonKeyCondition(dialect, column, key, true)
 }
 
+func jsonValueIn(dialect migrator.Dialect, column, key string, values []string) (string, []any, error) {
+	value, err := jsonValue(dialect, column, key)
+	if err != nil {
+		return "", nil, err
+	}
+	inArgs, in := getINSubQueryArgs(values)
+	return fmt.Sprintf("%s IN (%s)", value, strings.Join(in, ",")), append([]any{key}, inArgs...), nil
+}
+
+// jsonValueNotIn also matches rows where the key is missing
+func jsonValueNotIn(dialect migrator.Dialect, column, key string, values []string) (string, []any, error) {
+	value, err := jsonValue(dialect, column, key)
+	if err != nil {
+		return "", nil, err
+	}
+	inArgs, in := getINSubQueryArgs(values)
+	return fmt.Sprintf("(%s IS NULL OR %s NOT IN (%s))", value, value, strings.Join(in, ",")), append([]any{key, key}, inArgs...), nil
+}
+
+func jsonValue(dialect migrator.Dialect, column, key string) (string, error) {
+	switch dialect.DriverName() {
+	case migrator.MySQL:
+		return fmt.Sprintf(`JSON_UNQUOTE(JSON_EXTRACT(NULLIF(%s, ''), CONCAT('$."', ?, '"')))`, column), nil
+	case migrator.Postgres:
+		return fmt.Sprintf("jsonb_extract_path_text(NULLIF(%s, '')::jsonb, ?)", column), nil
+	case migrator.SQLite:
+		return fmt.Sprintf(`json_extract(NULLIF(%s, ''), '$."' || ? || '"')`, column), nil
+	default:
+		return "", fmt.Errorf("unsupported dialect for JSON value extraction: %s", dialect.DriverName())
+	}
+}
+
 func jsonKeyCondition(dialect migrator.Dialect, column, key string, exists bool) (string, []any, error) {
 	nullCheck := "IS NULL"
 	if exists {
