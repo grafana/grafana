@@ -1,0 +1,71 @@
+import { ArgTypes } from '@storybook/addon-docs/blocks';
+import { RecipientPicker } from './RecipientPicker';
+
+# RecipientPicker
+
+A component for picking where an alert rule's notifications go — a contact point directly, or a
+named notification policy tree — with no dependency on the alert-rule form. Built on top of
+`ContactPointSelector` and `RoutingTreePicker`. Only works with the built-in Grafana Alertmanager.
+
+⚠️ This component's shape is still exploratory and may change before it stabilizes.
+
+`mode` is caller-controlled: this component renders no "Advanced options" toggle of its own, only
+whichever half `mode` selects. Place your own toggle wherever it belongs in your layout, and flip
+`mode` in response — see the story for the simplest version of that wiring. The alert-rule form's
+own "Advanced options" toggle (`RuleEditorSection.tsx`) is an `InlineSwitch`, right-aligned, with
+the label rendered _before_ the switch (a `flexDirection: row-reverse` className) — match that if
+you want visual parity with the rest of the form, rather than a plain checkbox.
+
+It fetches through the `notifications.alerting/v1beta1` RTK Query client (the same one
+`ContactPointSelector` and `RoutingTreePicker` use), so the host app's Redux store needs that
+API's reducer and middleware registered, and a `<Provider>` wrapping the tree - see
+`configureStore.ts` for how Grafana core wires this in. No `RuleFormValues` or
+`AlertmanagerProvider` is required.
+
+## Basic usage
+
+`value` is typed as the public `rules.alerting/v0alpha1` `AlertRuleNotificationSettings` union
+(`AlertRuleSimplifiedRouting | AlertRuleNamedRoutingTree`), so the result can be attached to a
+rule payload with no translation step. `null` means "using the default policy" — only meaningful
+in `notificationPolicy` mode.
+
+```tsx
+import { css } from '@emotion/css';
+import { RecipientPicker, type RecipientMode } from '@grafana/alerting/unstable';
+import type { AlertRuleNotificationSettings } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import { InlineSwitch, Stack, useStyles2 } from '@grafana/ui';
+
+function MyComponent() {
+  const styles = useStyles2((theme) => ({
+    reverse: css({ flexDirection: 'row-reverse', gap: theme.spacing(1) }),
+  }));
+  const [mode, setMode] = useState<RecipientMode>('contactPoint');
+  const [value, setValue] = useState<AlertRuleNotificationSettings | null>(null);
+
+  return (
+    <Stack direction="column" gap={2}>
+      <Stack direction="row" justifyContent="flex-end">
+        <InlineSwitch
+          value={mode === 'notificationPolicy'}
+          onChange={(e) => setMode(e.currentTarget.checked ? 'notificationPolicy' : 'contactPoint')}
+          label="Advanced options"
+          showLabel
+          transparent
+          className={styles.reverse}
+        />
+      </Stack>
+      <RecipientPicker
+        mode={mode}
+        value={value}
+        onChange={setValue}
+        manageContactPointsHref="/alerting/notifications"
+        viewPoliciesHref="/alerting/routes"
+      />
+    </Stack>
+  );
+}
+```
+
+## Props
+
+<ArgTypes of={RecipientPicker} />
