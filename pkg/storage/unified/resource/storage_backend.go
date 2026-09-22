@@ -1349,6 +1349,8 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*re
 			key      kv.DataKey
 			response *BackendReadResponse
 		}
+		// Keep resolving metadata after a body read failure so the caller can
+		// authorize each row before deciding whether to expose the failure.
 		var runtimeErr error
 		for requestBatch := range slices.Chunk(requests, batchReadResolveSize) {
 			entries := make([]batchReadEntry, 0, len(requestBatch))
@@ -1392,7 +1394,6 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*re
 					ResourceVersion: meta.ResourceVersion,
 					Action:          meta.Action,
 					Folder:          meta.Folder,
-					GUID:            meta.GUID,
 				}
 				entries = append(entries, entry)
 				keys = append(keys, entry.key)
