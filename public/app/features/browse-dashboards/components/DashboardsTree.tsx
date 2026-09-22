@@ -111,22 +111,8 @@ export function DashboardsTree({
     const checkboxColumn: DashboardsTreeColumn = {
       id: 'checkbox',
       size: 0,
-      header: (props) => (
-        <CheckboxHeaderCell
-          {...props}
-          isSelected={isSelected}
-          onAllSelectionChange={onAllSelectionChange}
-          permissions={permissions}
-        />
-      ),
-      cell: (props) => (
-        <CheckboxCell
-          {...props}
-          isSelected={isSelected}
-          onItemSelectionChange={onItemSelectionChange}
-          permissions={permissions}
-        />
-      ),
+      header: CheckboxHeaderCell,
+      cell: CheckboxCell,
     };
 
     const nameColumn: DashboardsTreeColumn = {
@@ -137,20 +123,20 @@ export function DashboardsTree({
           <Trans i18nKey="browse-dashboards.dashboards-tree.name-column">Name</Trans>
         </span>
       ),
-      cell: (props) => <NameCell {...props} onFolderClick={onFolderClick} treeID={treeID} permissions={permissions} />,
+      cell: (props: DashboardsTreeCellProps) => <NameCell {...props} onFolderClick={onFolderClick} />,
     };
 
     const tagsColumns: DashboardsTreeColumn = {
       id: 'tags',
       size: 2,
       header: t('browse-dashboards.dashboards-tree.tags-column', 'Tags'),
-      cell: (props) => <TagsCell {...props} onTagClick={onTagClick} />,
+      cell: (props: DashboardsTreeCellProps) => <TagsCell {...props} onTagClick={onTagClick} />,
     };
     const canSelect = canSelectItems(permissions);
     const columns = [canSelect && checkboxColumn, nameColumn, tagsColumns].filter(isTruthy);
 
     return columns;
-  }, [isSelected, onAllSelectionChange, onFolderClick, onItemSelectionChange, onTagClick, permissions, treeID]);
+  }, [onFolderClick, onTagClick, permissions]);
 
   const table = useReactTable({
     columns: tableColumns,
@@ -250,7 +236,12 @@ export function DashboardsTree({
                   role="columnheader"
                   className={styles.cell}
                 >
-                  {flexRender(header.column.columnDef.header, header.getContext())}
+                  {flexRender(header.column.columnDef.header, {
+                    ...header.getContext(),
+                    isSelected,
+                    onAllSelectionChange,
+                    permissions,
+                  })}
                 </div>
               );
             })}
@@ -346,7 +337,13 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
       {row.getVisibleCells().map((cell) => {
         return (
           <div key={cell.id} role="cell" style={getColumnFlexStyle(cell.column)} className={styles.cell}>
-            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+            {flexRender(cell.column.columnDef.cell, {
+              ...cell.getContext(),
+              isSelected,
+              onItemSelectionChange,
+              treeID,
+              permissions,
+            })}
           </div>
         );
       })}
