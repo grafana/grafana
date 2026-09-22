@@ -24,7 +24,13 @@ var (
 // directly does not work: any later rebuild replaces the registry from
 // AppManifests and drops the app's kinds.
 //
-// Call this from an init function, before anything reads AppManifests.
+// Call this from an init function, before anything reads AppManifests. If the
+// app later moves under apps/, the generated list covers it and the
+// registration has to go away in the same change, or startup panics on the
+// duplicate group.
+//
+// A manifest served by the live manifest source takes precedence over a
+// registered one for the kinds it declares, see MergeManifestsByKind.
 //
 // It panics on a manifest without a group, or on a group that is already
 // registered or already in the generated list: two manifests claiming one group
