@@ -11428,6 +11428,13 @@
         "setup-action": "Set up Hosted Traces",
         "title": "Trace requests across services"
       },
+      "irm": {
+        "action": "Enable IRM",
+        "context": "Route alerts to on-call schedules and incidents",
+        "description": "Connect Grafana Alerting to IRM to page the right person, escalate automatically, and manage incidents in one place.",
+        "setup-action": "Set up IRM",
+        "title": "Get paged when it matters"
+      },
       "kubernetes-monitoring": {
         "action": "Enable Kubernetes Monitoring",
         "context": "Cluster health next to your existing telemetry",
@@ -13840,6 +13847,11 @@
     },
     "get-started-with-data-source": {
       "add-new-data-source": "Add new data source",
+      "plugin-id": "Plugin ID",
+      "setup-assistant": "Set up with assistant",
+      "setup-assistant-description": "Guided configuration",
+      "setup-manually": "Set up manually",
+      "setup-manually-description": "Configure all settings yourself",
       "title-button-disabled": "The plugin isn't usable yet, it may take some time to complete the installation."
     },
     "install-controls": {
