@@ -14,10 +14,10 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/grafana/authlib/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-
-	"github.com/grafana/authlib/types"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana-app-sdk/plugin/grpcplugin"
@@ -27,6 +27,7 @@ import (
 	backendgrpcplugin "github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
+	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
 // pluginManifestsTarget discovers remote plugin deployments and builds their API handlers.
@@ -35,6 +36,7 @@ type pluginManifestsTarget struct {
 	client   *http.Client
 	patterns []*regexp.Regexp
 	deps     PluginDependencies
+	authn    identity.TokenAuthenticator
 
 	cooldown *cooldown
 
@@ -46,7 +48,13 @@ type pluginManifestsTarget struct {
 	closed        bool
 }
 
-func newPluginManifestsTarget(rawURL string, patterns []*regexp.Regexp, client *http.Client, deps PluginDependencies) (*pluginManifestsTarget, error) {
+func newPluginManifestsTarget(
+	rawURL string,
+	patterns []*regexp.Regexp,
+	client *http.Client,
+	deps PluginDependencies,
+	authn identity.TokenAuthenticator,
+) (*pluginManifestsTarget, error) {
 	parsed, err := url.Parse(rawURL)
 	if err != nil {
 		return nil, fmt.Errorf("router: parsing plugins_url %q: %w", rawURL, err)
@@ -64,6 +72,7 @@ func newPluginManifestsTarget(rawURL string, patterns []*regexp.Regexp, client *
 		url:      rawURL,
 		client:   client,
 		patterns: patterns,
+		authn:    authn,
 		cooldown: newCooldown(defaultAggregatePollInterval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff),
 	}
 	empty := []Backend{}
@@ -249,7 +258,8 @@ func pluginDeploymentKey(entry definition.PluginDeployment) (string, error) {
 // Standard plugin, but with OBO authentication and custom key
 type pluginDeploymentBackend struct {
 	Backend
-	key string
+	key   string
+	authn identity.TokenAuthenticator
 }
 
 func (b *pluginDeploymentBackend) Key() string { return b.key }
@@ -262,32 +272,30 @@ func (b *pluginDeploymentBackend) Load(ctx context.Context) (http.Handler, error
 
 	return &authenticatingWrapper{
 		Handler: handler,
+		authn:   b.authn,
 	}, nil
 }
 
 type authenticatingWrapper struct {
 	http.Handler
+	authn identity.TokenAuthenticator
 }
 
 func (a *authenticatingWrapper) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
-	// TODO... read user from header
 	token := req.Header.Get("X-xxxxx")
 	if token == "" {
-		http.Error(w, "missing token", http.StatusUnauthorized)
+		_ = errhttp.Write(ctx, apierrors.NewUnauthorized("missing authorization token"), w)
 		return
 	}
 
-	fmt.Printf("TODO... validate token and put user in context: %s\n", token)
-
-	requester := &identity.StaticRequester{
-		Type:        types.TypeUser,
-		UserUID:     "a123456",
-		Name:        "test",
-		AccessToken: token,
+	info, err := a.authn.AuthenticateToken(ctx, token)
+	if err != nil {
+		_ = errhttp.Write(ctx, err, w)
+		return
 	}
 
-	ctx = identity.WithRequester(ctx, requester)
+	ctx = types.WithAuthInfo(ctx, info)
 	a.ServeHTTP(w, req.WithContext(ctx))
 }
