@@ -111,6 +111,22 @@ Multiple rules assigned to the same team are combined with `OR`. The following t
 {cluster="us-west-0"}
 ```
 
+### Match multiple values with a regular expression
+
+Use the `=~` operator to match a label against a regular expression. The following rule grants access to log lines in the `dev` or `prod` namespace:
+
+```logql
+{namespace=~"dev|prod"}
+```
+
+### Exclude a label value
+
+Use the `!=` operator to exclude log lines that carry a specific label value. The following rule grants access to all log lines except those labeled `secret="true"`:
+
+```logql
+{secret!="true"}
+```
+
 ### User on multiple teams
 
 Users on multiple teams receive access based on all the combined rules assigned to each team, combined with `OR`. For example, if Team A has `{namespace="dev"}` and Team B has `{namespace="prod"}`, a user on both teams can access log lines that match `namespace="dev"` or `namespace="prod"`.
