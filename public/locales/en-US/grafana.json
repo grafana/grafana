@@ -16677,10 +16677,6 @@
       "external-group-id": "External Group ID",
       "external-group-sync": "External group sync",
       "label-add-external-group": "Add external group",
-      "team-sync-upgrade": "Add a group to enable team sync for free during your trial of Grafana Pro",
-      "text": {
-        "add-group": "Add group"
-      },
       "title-there-external-groups": "There are no external groups to sync with",
       "tooltip-add-external-group": "LDAP group example: {{example}}"
     },
@@ -16727,9 +16723,6 @@
       "label-role": "Role",
       "label-team-details": "Team details",
       "save": "Save team details"
-    },
-    "team-sync-upgrade-content": {
-      "description": "Team Sync makes it easier for you to manage users' access in Grafana, by immediately updating each user's Grafana teams and permissions based on their single sign-on group membership, instead of when users sign in"
     }
   },
   "text": {
@@ -17894,13 +17887,6 @@
     "description-x-field": "An increasing numeric value",
     "name-x-field": "X field",
     "placeholder-x-field": "First numeric value"
-  },
-  "upgrade-box": {
-    "discovery-text": "You’ve discovered a Pro feature!",
-    "discovery-text-continued": "Get the Grafana Pro plan to access {{featureName}}.",
-    "get-started": "Get started with {{featureName}}",
-    "learn-more": "Learn more",
-    "upgrade-button": "Upgrade"
   },
   "user-orgs": {
     "current-org-button": "Current",
