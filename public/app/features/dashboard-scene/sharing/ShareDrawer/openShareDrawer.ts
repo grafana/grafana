@@ -4,7 +4,7 @@ import { type ShareDrawerState } from './ShareDrawer';
 
 type ShareDrawerOptions = Omit<ShareDrawerState, 'activeShare'>;
 
-export async function loadShareDrawer(options: ShareDrawerOptions) {
+async function loadShareDrawer(options: ShareDrawerOptions) {
   const { ShareDrawer } = await import(/* webpackChunkName: "share-drawer" */ './ShareDrawer');
   return new ShareDrawer(options);
 }
