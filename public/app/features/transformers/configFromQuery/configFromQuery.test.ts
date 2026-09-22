@@ -154,6 +154,21 @@ describe('config from data', () => {
     expect(extractColorConfig(value)).toBeUndefined();
   });
 
+  it('Skips a color mapping that uses the All values reducer', () => {
+    const colorConfig = toDataFrame({
+      fields: [{ name: 'Color', type: FieldType.string, values: ['red', 'yellow', 'orange'] }],
+      refId: 'A',
+    });
+
+    const options: ConfigFromQueryTransformOptions = {
+      configRefId: 'A',
+      mappings: [{ fieldName: 'Color', handlerKey: 'color', reducerId: ReducerID.allValues }],
+    };
+
+    const results = extractConfigFromQuery(options, [colorConfig, seriesA]);
+    expect(results[0].fields[1].config.color).toBeUndefined();
+  });
+
   it('With custom reducer', () => {
     const options: ConfigFromQueryTransformOptions = {
       configRefId: 'A',
