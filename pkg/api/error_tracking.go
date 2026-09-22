@@ -85,21 +85,32 @@ func parseEnvelope(data []byte) (envelopeEvent, error) {
 			continue
 		}
 		var event struct {
-			EventID   string `json:"event_id"`
-			Message   string `json:"message"`
-			Exception struct {
-				Values []struct {
-					Type  string `json:"type"`
-					Value string `json:"value"`
-				} `json:"values"`
-			} `json:"exception"`
+			EventID   string          `json:"event_id"`
+			Message   string          `json:"message"`
+			Exception json.RawMessage `json:"exception"`
 		}
 		if err := json.Unmarshal(payload, &event); err != nil {
 			return envelopeEvent{}, fmt.Errorf("invalid event payload")
 		}
+		var exceptions struct {
+			Values []struct {
+				Type  string `json:"type"`
+				Value string `json:"value"`
+			} `json:"values"`
+		}
+		if raw := bytes.TrimSpace(event.Exception); len(raw) > 0 {
+			if raw[0] == '[' {
+				err = json.Unmarshal(raw, &exceptions.Values)
+			} else {
+				err = json.Unmarshal(raw, &exceptions)
+			}
+			if err != nil {
+				return envelopeEvent{}, fmt.Errorf("invalid exception payload")
+			}
+		}
 		message := strings.TrimSpace(event.Message)
-		if message == "" && len(event.Exception.Values) > 0 {
-			message = strings.TrimSpace(strings.TrimSpace(event.Exception.Values[0].Type + ": " + event.Exception.Values[0].Value))
+		if message == "" && len(exceptions.Values) > 0 {
+			message = strings.TrimSpace(strings.TrimSpace(exceptions.Values[0].Type + ": " + exceptions.Values[0].Value))
 		}
 		if message == "" {
 			message = "Captured error"
