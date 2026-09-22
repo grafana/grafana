@@ -4,10 +4,13 @@ import { act, render, screen, waitFor, within } from 'test/test-utils';
 import { store } from '@grafana/data';
 import { mockComboboxRect } from '@grafana/test-utils';
 
+import { ctaClicked, solutionFilterChanged } from '../analytics/main';
 import { fetchKubernetesLabelValues, kubernetesFilterStorageKey } from '../solutions/kubernetesFilter';
 import { deferred, stubDatasource } from '../solutions/test-utils';
 
 import { KubernetesFilterActions } from './KubernetesFilterActions';
+
+jest.mock('../analytics/main', () => ({ ctaClicked: jest.fn(), solutionFilterChanged: jest.fn() }));
 
 jest.mock('../solutions/kubernetesFilter', () => ({
   ...jest.requireActual('../solutions/kubernetesFilter'),
@@ -15,17 +18,22 @@ jest.mock('../solutions/kubernetesFilter', () => ({
 }));
 
 const mockFetchLabelValues = jest.mocked(fetchKubernetesLabelValues);
+const mockCtaClicked = jest.mocked(ctaClicked);
+const mockFilterChanged = jest.mocked(solutionFilterChanged);
 
 // The comboboxes virtualize their options; without mocked element rects the virtualizer measures 0
 // height in jsdom and renders no options.
 mockComboboxRect();
 
 const OPEN_GEAR = { name: 'Filter by cluster, namespace, or node' };
+const GEAR_OPENED = { surface: 'overview', action: 'open_solution_filter', placement: 'card', solution: 'kubernetes' };
 
 beforeEach(() => {
   window.localStorage.clear();
   mockFetchLabelValues.mockReset();
   mockFetchLabelValues.mockImplementation(async (_uid, key) => (key === 'cluster' ? ['prod', 'staging'] : []));
+  mockCtaClicked.mockClear();
+  mockFilterChanged.mockClear();
 });
 
 afterEach(() => jest.restoreAllMocks());
@@ -38,7 +46,7 @@ async function pickCluster(dialog: HTMLElement, user: UserEvent, cluster: string
 }
 
 describe('KubernetesFilterActions', () => {
-  it('saves a cluster and a custom namespace picked in the dialog and highlights the gear', async () => {
+  it('saves a cluster and a custom namespace picked in the dialog, highlights the gear and reports the dimensions', async () => {
     const clusters = deferred<string[]>();
     mockFetchLabelValues.mockImplementation((_uid, key) =>
       key === 'cluster' ? clusters.promise : Promise.resolve([])
@@ -74,6 +82,28 @@ describe('KubernetesFilterActions', () => {
     expect(
       screen.getByRole('button', { name: 'Edit filters (Cluster: prod · Namespaces: team/a)' })
     ).toBeInTheDocument();
+    // Dimension names only; the cluster and namespace values never leave the browser.
+    expect(mockCtaClicked).toHaveBeenCalledTimes(1);
+    expect(mockCtaClicked).toHaveBeenCalledWith(GEAR_OPENED);
+    expect(mockFilterChanged).toHaveBeenCalledTimes(1);
+    expect(mockFilterChanged).toHaveBeenCalledWith({
+      solution: 'kubernetes',
+      change: 'saved',
+      customized: 'cluster,namespaces',
+    });
+  });
+
+  it('reports the gear open but no change when the dialog is cancelled', async () => {
+    const { user } = render(<KubernetesFilterActions datasource={stubDatasource} attention={false} />);
+
+    await user.click(screen.getByRole('button', OPEN_GEAR));
+    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Cancel' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(window.localStorage.getItem(kubernetesFilterStorageKey())).toBeNull();
+    expect(mockCtaClicked).toHaveBeenCalledTimes(1);
+    expect(mockCtaClicked).toHaveBeenCalledWith(GEAR_OPENED);
+    expect(mockFilterChanged).not.toHaveBeenCalled();
   });
 
   it('shows a filter saved for another datasource as not applied and lets the user clear it', async () => {
@@ -95,9 +125,15 @@ describe('KubernetesFilterActions', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(window.localStorage.getItem(kubernetesFilterStorageKey())).toBeNull();
     expect(screen.queryByText('Filters not applied')).not.toBeInTheDocument();
+    expect(mockFilterChanged).toHaveBeenCalledTimes(1);
+    expect(mockFilterChanged).toHaveBeenCalledWith({
+      solution: 'kubernetes',
+      change: 'cleared',
+      customized: '',
+    });
   });
 
-  it('keeps the dialog and draft when browser storage rejects the write', async () => {
+  it('keeps the dialog and draft and reports nothing when browser storage rejects the write', async () => {
     // jsdom has no quota, so the failure the store surfaces on a full localStorage is simulated.
     jest.spyOn(store, 'setObject').mockImplementation(() => {
       throw new Error('quota');
@@ -112,5 +148,6 @@ describe('KubernetesFilterActions', () => {
     expect(await within(dialog).findByText('Could not save to browser storage. Try again.')).toBeInTheDocument();
     expect(within(dialog).getByRole('combobox', { name: 'Cluster' })).toHaveDisplayValue('prod');
     expect(window.localStorage.getItem(kubernetesFilterStorageKey())).toBeNull();
+    expect(mockFilterChanged).not.toHaveBeenCalled();
   });
 });

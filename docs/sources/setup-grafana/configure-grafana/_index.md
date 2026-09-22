@@ -2842,7 +2842,7 @@ Defaults to the Grafana data path, alongside the default Enterprise `license.jwt
 
 #### `renewal_enabled`
 
-Available only in Grafana Enterprise.
+Available in Grafana Enterprise and Grafana Pro.
 
 Controls periodic renewal of persisted Marketplace plugin licenses. The default is `true`.
 

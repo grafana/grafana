@@ -53,7 +53,7 @@ func legacyRows(t *testing.T, rules ...*ngmodels.AlertRule) *resourcepb.Resource
 	t.Helper()
 	table := &resourcepb.ResourceTable{Columns: resultColumnDefinitions()}
 	for _, r := range rules {
-		cells, err := ruleCells(r)
+		cells, err := ruleCells(ruleColumnValues(r))
 		require.NoError(t, err)
 		table.Rows = append(table.Rows, &resourcepb.ResourceTableRow{Key: ruleKey("default", r), Cells: cells})
 	}
