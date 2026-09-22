@@ -149,12 +149,13 @@ describe('useHomepageSolutions', () => {
     expect(mockDetectIrmSignal).toHaveBeenCalledTimes(1);
   });
 
-  it('shares the memoized span-metrics probe between repeated snapshot reads', async () => {
+  it('shares the memoized span-metrics and IRM probes between repeated snapshot reads', async () => {
     const { result } = renderHook(() => useHomepageSolutions());
 
     await Promise.all([result.current.signals(), result.current.signals()]);
 
     expect(mockProbeSpanMetrics).toHaveBeenCalledTimes(1);
+    expect(mockDetectIrmSignal).toHaveBeenCalledTimes(1);
   });
 
   it('maps a rejecting solution getter to unknown without rejecting the snapshot', async () => {

@@ -40,8 +40,9 @@ export function useHomepageSolutions(): HomepageSolutions {
       synthetics: syntheticsSolution(),
     };
 
-    // App Observability is not a homepage solution; only the recommendation matrix reads this signal.
+    // App Observability and IRM are not homepage solutions; only the recommendation matrix reads these signals.
     const spanMetricsSignal = memoize(() => detectSignal(probeSpanMetrics));
+    const irmSignal = memoize(detectIrmSignal);
 
     // Core signals come from their solutions; the Kubernetes one from the detection its solutions
     // share, so a filter change never re-probes and never restarts recommendation selection.
@@ -57,8 +58,7 @@ export function useHomepageSolutions(): HomepageSolutions {
           .then(({ status }) => status)
           .catch(() => 'unknown' as const),
         solutions.synthetics.signal().catch(() => 'unknown' as const),
-        // IRM is not a homepage solution either; its probe is TTL-cached in irmSignal.ts rather than memoized here.
-        detectIrmSignal().catch(() => 'unknown' as const),
+        irmSignal().catch(() => 'unknown' as const),
       ]);
       return { metrics, logs, traces, kubernetes, spanMetrics, synthetics, irm };
     };

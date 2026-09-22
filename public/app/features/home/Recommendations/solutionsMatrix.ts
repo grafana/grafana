@@ -161,13 +161,18 @@ export function selectRecommendations(state: SolutionState): RecommendationSelec
       : { cards: ['hosted-traces', 'kubernetes-monitoring', ...irmCard], baseRow: 'ml_no_traces' };
   }
 
-  // M+L+T (OTel starters): App Observability unless span metrics show it is already in use.
-  const appO11y: RecommendedCardId[] = spanMetrics === 'inactive' ? ['application-observability'] : [];
+  // M+L+T (OTel starters): span metrics decide whether App Observability is still the next step.
   const k8sMonitoring: RecommendedCardId[] = kubernetes === 'active' ? [] : ['kubernetes-monitoring'];
-  // The matrix ranks these rows differently: "M+L+T, no App O11y" has App O11y PRIMARY and IRM SECONDARY;
-  // "App O11y active" has IRM PRIMARY over K8s Monitoring SECONDARY. So IRM leads only once App
-  // Observability is proven in use; an unknown probe hides App O11y but does not promote IRM.
-  const cards: RecommendedCardId[] =
-    spanMetrics === 'active' ? [...irmCard, ...k8sMonitoring] : [...appO11y, ...k8sMonitoring, ...irmCard];
-  return { cards, baseRow: kubernetes === 'active' ? 'fully_active' : 'mlt' };
+  const baseRow: BaseRow = kubernetes === 'active' ? 'fully_active' : 'mlt';
+  switch (spanMetrics) {
+    // App Observability leads; IRM is the matrix's SECONDARY.
+    case 'inactive':
+      return { cards: ['application-observability', ...k8sMonitoring, ...irmCard], baseRow };
+    // App Observability proven in use: the matrix's "App O11y active" row ranks IRM PRIMARY.
+    case 'active':
+      return { cards: [...irmCard, ...k8sMonitoring], baseRow };
+    // An inconclusive probe hides App Observability without promoting IRM.
+    case 'unknown':
+      return { cards: [...k8sMonitoring, ...irmCard], baseRow };
+  }
 }

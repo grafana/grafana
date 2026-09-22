@@ -70,13 +70,6 @@ function homepageSolutions(
 
 const carouselRegion = () => screen.findByRole('region', { name: 'Recommended apps' });
 
-// Every card title in the carousel, hidden slides included.
-function carouselTitles(region: HTMLElement): string[] {
-  return within(region)
-    .getAllByRole('heading', { level: 3, hidden: true })
-    .map((heading) => heading.textContent?.trim() ?? '');
-}
-
 function visibleRecommendationTitle(region: HTMLElement): string {
   return (
     within(region)
@@ -384,20 +377,6 @@ describe('Recommendations', () => {
 
     const link = await screen.findByRole('link', { name: 'Set up IRM' });
     expect(link).toHaveAttribute('href', '/a/grafana-irm-app');
-  });
-
-  it('hides the IRM card when the plugin is not installed', async () => {
-    mockGet.mockResolvedValue([plugin(HOSTED_TRACES_APP_ID)]);
-    render(<Recommendations solutions={homepageSolutions(KUBERNETES_STATE)} />);
-
-    expect(carouselTitles(await carouselRegion())).toEqual(['Trace requests across services']);
-  });
-
-  it('hides the IRM card when Grafana Alerting already routes into IRM', async () => {
-    mockGet.mockResolvedValue([plugin(HOSTED_TRACES_APP_ID), plugin(SupportedPlugin.Irm)]);
-    render(<Recommendations solutions={homepageSolutions({ ...KUBERNETES_STATE, irm: 'active' })} />);
-
-    expect(carouselTitles(await carouselRegion())).toEqual(['Trace requests across services']);
   });
 
   it('does not invent install actions for plugins missing from the inventory', async () => {

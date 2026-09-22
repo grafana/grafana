@@ -1,4 +1,4 @@
-import { type BackendSrvRequest, type FetchError, getBackendSrv, isFetchError } from '@grafana/runtime';
+import { type FetchError, getBackendSrv, isFetchError } from '@grafana/runtime';
 
 import { GRAFANA_ONCALL_INTEGRATION_TYPE } from '../components/receivers/grafanaAppReceivers/onCall/onCall';
 
@@ -51,16 +51,14 @@ function grafanaOnCallIntegrationsRequest(pluginId: string) {
       integration: [GRAFANA_ONCALL_INTEGRATION_TYPE, 'legacy_grafana_alerting'],
       skip_pagination: true,
     },
+    showErrorAlert: false,
   };
 }
 
 export const onCallApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     grafanaOnCallIntegrations: build.query<OnCallIntegrationDTO[], { pluginId: string }>({
-      query: ({ pluginId }) => ({
-        ...grafanaOnCallIntegrationsRequest(pluginId),
-        showErrorAlert: false,
-      }),
+      query: ({ pluginId }) => grafanaOnCallIntegrationsRequest(pluginId),
       transformResponse: readOnCallIntegrations,
       providesTags: ['OnCallIntegrations'],
     }),
@@ -106,13 +104,16 @@ function readOnCallIntegrations(response: AlertReceiveChannelsResult): OnCallInt
   return isPaginatedResponse(response) ? response.results : response;
 }
 
-/** The Grafana Alerting integrations configured in OnCall/IRM, for callers outside RTK Query. */
+/** The Grafana Alerting integrations configured in OnCall/IRM. */
 export async function fetchGrafanaOnCallIntegrations(
   pluginId: string,
-  requestOptions?: Partial<BackendSrvRequest>
+  abortSignal?: AbortSignal
 ): Promise<OnCallIntegrationDTO[]> {
-  const { url, params } = grafanaOnCallIntegrationsRequest(pluginId);
-  const response = await getBackendSrv().get<AlertReceiveChannelsResult>(url, params, undefined, requestOptions);
+  const { url, params, showErrorAlert } = grafanaOnCallIntegrationsRequest(pluginId);
+  const response = await getBackendSrv().get<AlertReceiveChannelsResult>(url, params, undefined, {
+    showErrorAlert,
+    abortSignal,
+  });
   return readOnCallIntegrations(response);
 }
 
