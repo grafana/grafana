@@ -88,7 +88,7 @@ function filtersKey(filters: GetDataSourceInstanceListFilters | GetDataSourceLis
 }
 
 function useDataSourceCacheGeneration(): number {
-  return useSyncExternalStore(subscribeToDataSourceCache, getDataSourceCacheGeneration, getDataSourceCacheGeneration);
+  return useSyncExternalStore(subscribeToDataSourceCache, getDataSourceCacheGeneration);
 }
 
 /**
