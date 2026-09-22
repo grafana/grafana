@@ -29,16 +29,16 @@ func ConvertToK8sResources(orgID int64, routes v1.ManagedRoutes, namespacer requ
 				access = &a
 			}
 		}
-		k8sResource, err := ConvertToK8sResource(orgID, r, namespacer, access)
+		k8sResource, err := ConvertToK8sResource(orgID, r, r.GetUID(), namespacer, access)
 		if err != nil {
-			return nil, fmt.Errorf("failed to convert route %q to k8s resource: %w", r.Name, err)
+			return nil, fmt.Errorf("failed to convert route %q to k8s resource: %w", r.GetUID(), err)
 		}
 		result.Items = append(result.Items, *k8sResource)
 	}
 	return result, nil
 }
 
-func ConvertToK8sResource(orgID int64, r *v1.ManagedRoute, namespacer request.NamespaceMapper, access *ngmodels.RoutePermissionSet) (*model.RoutingTree, error) {
+func ConvertToK8sResource(orgID int64, r *v1.ManagedRoute, name string, namespacer request.NamespaceMapper, access *ngmodels.RoutePermissionSet) (*model.RoutingTree, error) {
 	spec := model.RoutingTreeSpec{
 		Defaults: model.RoutingTreeRouteDefaults{
 			GroupBy:        r.GroupBy,
@@ -62,7 +62,9 @@ func ConvertToK8sResource(orgID int64, r *v1.ManagedRoute, namespacer request.Na
 			Kind:       kind.Kind(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            r.Name,
+			// We allow a separate name argument instead of using r.UID so that we can support returning
+			// both the default route canonical name and alias based on the request.
+			Name:            name,
 			Namespace:       namespacer(orgID),
 			ResourceVersion: r.Version,
 		},

@@ -40,6 +40,7 @@ export function syntheticsSolution(): Solution {
         t('home.solutions.synthetics.failing-worst', '{{check}} at {{percent}}%', {
           check: status.worstCheck,
           percent: Math.round(status.worstRatio * 100),
+          interpolation: { escapeValue: false },
         })
       );
     }
