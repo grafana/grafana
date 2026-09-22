@@ -9,6 +9,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"golang.org/x/sync/singleflight"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -48,6 +49,7 @@ type dashboardFolderResolver struct {
 	metrics  *Metrics
 	cache    *localcache.CacheService
 	cacheTTL time.Duration
+	sf       singleflight.Group
 }
 
 func (r *dashboardFolderResolver) ResolveFolder(ctx context.Context, namespace, dashboardUID string) (string, error) {
@@ -70,33 +72,40 @@ func (r *dashboardFolderResolver) ResolveFolder(ctx context.Context, namespace, 
 		}
 	}
 
-	nsInfo, err := authlib.ParseNamespace(namespace)
-	if err != nil {
-		return "", fmt.Errorf("parse namespace %q: %w", namespace, err)
-	}
-
-	// The downstream apiserver authorizes the fetch against the service identity, not the caller's -
-	// so a viewer without dashboards:read can still resolve the folder for annotation inheritance checks.
-	svcCtx := identity.WithServiceIdentityContext(ctx, nsInfo.OrgID)
-
-	dash, err := r.client.Get(svcCtx, namespace, dashboardUID)
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			return "", nil
+	// Group concurrent cache misses for the same dashboard into a single fetch
+	v, err, _ := r.sf.Do(key, func() (any, error) {
+		nsInfo, err := authlib.ParseNamespace(namespace)
+		if err != nil {
+			return "", fmt.Errorf("parse namespace %q: %w", namespace, err)
 		}
+
+		// The downstream apiserver authorizes the fetch against the service identity, not the caller's -
+		// so a viewer without dashboards:read can still resolve the folder for annotation inheritance checks.
+		svcCtx := identity.WithServiceIdentityContext(ctx, nsInfo.OrgID)
+
+		dash, err := r.client.Get(svcCtx, namespace, dashboardUID)
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				return "", nil
+			}
+			return "", err
+		}
+
+		// GetFolder reads metadata.annotations["grafana.app/folder"].
+		meta, err := utils.MetaAccessor(dash)
+		if err != nil {
+			return "", fmt.Errorf("meta accessor for dashboard %q: %w", dashboardUID, err)
+		}
+		folder := meta.GetFolder()
+		if r.cache != nil {
+			r.cache.Set(key, folder, r.cacheTTL)
+		}
+		return folder, nil
+	})
+	if err != nil {
 		return "", err
 	}
-
-	// GetFolder reads metadata.annotations["grafana.app/folder"].
-	meta, err := utils.MetaAccessor(dash)
-	if err != nil {
-		return "", fmt.Errorf("meta accessor for dashboard %q: %w", dashboardUID, err)
-	}
-	folder := meta.GetFolder()
-	if r.cache != nil {
-		r.cache.Set(key, folder, r.cacheTTL)
-	}
-	return folder, nil
+	return v.(string), nil
 }
 
 type dashboardClient struct {
