@@ -52,11 +52,49 @@ func TestManagedAuthorizer_ManagerKindConflict(t *testing.T) {
 	}
 }
 
+// TestManagedAuthorizer_CrossRepoDelete covers checkManagerPropertiesOnDelete specifically:
+// unlike update, delete never had an "old vs new" comparison to lean on, so without the
+// repo-identity check in enforceManagerProperties, one repository's sync could delete a
+// resource another repository owns as long as it ran under the shared provisioning identity.
+func TestManagedAuthorizer_CrossRepoDelete(t *testing.T) {
+	_, provisioner, err := identity.WithProvisioningIdentity(context.Background(), "default")
+	require.NoError(t, err)
+	_, provisionerRepoA, err := identity.WithProvisioningIdentity(context.Background(), "default", identity.WithServiceIdentityName("repo-a"))
+	require.NoError(t, err)
+	_, provisionerRepoB, err := identity.WithProvisioningIdentity(context.Background(), "default", identity.WithServiceIdentityName("repo-b"))
+	require.NoError(t, err)
+
+	owned := &dashboard.Dashboard{
+		ObjectMeta: v1.ObjectMeta{
+			Annotations: map[string]string{
+				utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+				utils.AnnoKeyManagerIdentity: "repo-a",
+			},
+		},
+	}
+	ownedObj, err := utils.MetaAccessor(owned)
+	require.NoError(t, err)
+
+	err = checkManagerPropertiesOnDelete(provisionerRepoA, ownedObj)
+	require.NoError(t, err, "repo-a should be able to delete a resource it owns")
+
+	err = checkManagerPropertiesOnDelete(provisionerRepoB, ownedObj)
+	require.Error(t, err, "repo-b must not be able to delete a resource repo-a owns")
+	require.ErrorContains(t, err, `resource is managed by repository "repo-a", not "repo-b"`)
+
+	err = checkManagerPropertiesOnDelete(provisioner, ownedObj)
+	require.NoError(t, err, "the coarse provisioning identity (no repo-specific identity set) keeps today's behavior")
+}
+
 func TestManagedAuthorizer(t *testing.T) {
 	user := &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "uuu"}
 	serverAdmin := &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "server-admin-uuu", IsGrafanaAdmin: true}
 	orgAdmin := &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "org-admin-uuu", OrgRole: identity.RoleAdmin}
 	_, provisioner, err := identity.WithProvisioningIdentity(context.Background(), "default")
+	require.NoError(t, err)
+	_, provisionerRepoA, err := identity.WithProvisioningIdentity(context.Background(), "default", identity.WithServiceIdentityName("repo-a"))
+	require.NoError(t, err)
+	_, provisionerRepoB, err := identity.WithProvisioningIdentity(context.Background(), "default", identity.WithServiceIdentityName("repo-b"))
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -92,6 +130,49 @@ func TestManagedAuthorizer(t *testing.T) {
 					Annotations: map[string]string{
 						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
 						utils.AnnoKeyManagerIdentity: "abc",
+					},
+				},
+			},
+		},
+		{
+			// The shared provisioning service identity alone doesn't prove which repository
+			// is writing - a repository-scoped caller (identity.WithServiceIdentityName) must
+			// also match the resource's own claimed identity.
+			name: "repo can claim a resource under its own identity",
+			auth: provisionerRepoA,
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "repo-a",
+					},
+				},
+			},
+		},
+		{
+			name: "repo can not claim a resource under a different repo's identity",
+			auth: provisionerRepoB,
+			err:  `resource is managed by repository "repo-a", not "repo-b"`,
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "repo-a",
+					},
+				},
+			},
+		},
+		{
+			// A caller using the coarse, repo-agnostic provisioning identity (no
+			// WithServiceIdentityName) is unaffected - this is the fail-open path for
+			// callers that haven't been updated to assert a specific repo identity yet.
+			name: "coarse provisioning identity is unaffected by the repo-identity check",
+			auth: provisioner,
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "repo-a",
 					},
 				},
 			},
