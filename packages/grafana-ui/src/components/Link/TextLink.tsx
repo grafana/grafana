@@ -4,7 +4,7 @@ import { type AnchorHTMLAttributes, forwardRef } from 'react';
 import { type GrafanaTheme2, locationUtil, textUtil, type ThemeTypographyVariantTypes } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { type IconName, type IconSize } from '../../types/icon';
+import { type IconName } from '../../types/icon';
 import { Icon } from '../Icon/Icon';
 import { customWeight } from '../Text/utils';
 
@@ -21,7 +21,7 @@ interface TextLinkProps extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 't
   external?: boolean;
   /** True when the link will be displayed inline with surrounding text, false if it will be displayed as a block. Depending on this prop correspondant default styles will be applied */
   inline?: boolean;
-  /** The default variant is 'body'. To fit another styles set the correspondent variant as it is necessary also to adjust the icon size. `code` is excluded, as it is not fit for links. */
+  /** The default variant is 'body'. `code` is excluded, as it is not fit for links. */
   variant?: TextLinkVariants;
   /** Override the default weight for the used variant */
   weight?: 'light' | 'regular' | 'medium' | 'bold';
@@ -29,28 +29,6 @@ interface TextLinkProps extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 't
   icon?: IconName;
   children: React.ReactNode;
 }
-
-const svgSizes: {
-  [key in TextLinkVariants]: IconSize;
-} = {
-  '2xl': 'xl',
-  xl: 'xl',
-  // TODO fix icon alignment
-  lg: 'lg',
-  md: 'md',
-  base: 'sm',
-  sm: 'xs',
-
-  // deprecated
-  h1: 'xl',
-  h2: 'xl',
-  h3: 'lg',
-  h4: 'lg',
-  h5: 'md',
-  h6: 'md',
-  body: 'md',
-  bodySmall: 'xs',
-};
 
 /**
  * The TextLink component renders an anchor tag `<a>` that takes users to another page, external or internal to Grafana.
@@ -72,7 +50,7 @@ export const TextLink = forwardRef<HTMLAnchorElement, TextLinkProps>(
       return (
         <a href={validUrl} ref={ref} {...rest} target="_blank" rel="noreferrer" className={styles.wrapper}>
           {children}
-          <Icon className={styles.icon} size={svgSizes[variant] || 'md'} name={externalIcon} />
+          <Icon className={styles.icon} name={externalIcon} />
         </a>
       );
     }
@@ -82,7 +60,7 @@ export const TextLink = forwardRef<HTMLAnchorElement, TextLinkProps>(
     return (
       <Link ref={ref} href={strippedUrl} {...rest} className={styles.wrapper}>
         {children}
-        {icon && <Icon className={styles.icon} name={icon} size={svgSizes[variant] || 'md'} />}
+        {icon && <Icon className={styles.icon} name={icon} />}
       </Link>
     );
   }
@@ -100,7 +78,8 @@ const getLinkStyles = (
   return {
     icon: css({
       marginLeft: '0.25em',
-      verticalAlign: 'text-bottom',
+      width: '1em',
+      height: '1em',
     }),
     wrapper: css([
       variant && {
