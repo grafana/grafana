@@ -288,13 +288,13 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
 
 1. Optionally, set the [Keep firing for](ref:keep-firing-for) period.
 
-   You can set the minimum amount of time that an alert remains firing after the breached threshold expression no longer returns any results. This sets an alert to a "Recovering" state for the duration of time set here. The Recovering state can be used to reduce noise from flapping alerts. Select "none" stop an alert from firing immediately after the breach threshold is cleared.
+   You can set the minimum amount of time that an alert remains firing after the breached threshold expression no longer returns any results. This sets an alert to a "Recovering" state for the duration of time set here. The Recovering state can be used to reduce noise from flapping alerts. Select "none" to stop an alert from firing immediately after the breach threshold is cleared.
 
 1. Turn on pause alert notifications, if required.
 
    You can pause alert rule evaluation to prevent noisy alerting while tuning your alerts.
    Pausing stops alert rule evaluation and doesn't create any alert instances.
-   This is different to [mute timings](ref:mute-timings), which stop notifications from being delivered, but still allows for alert rule evaluation and the creation of alert instances.
+   This is different from [mute timings](ref:mute-timings), which stop notifications from being delivered, but still allow for alert rule evaluation and the creation of alert instances.
 
 1. In **Configure no data and error handling**, you can define the alerting behavior and alerting state for two scenarios:
    - When the evaluation returns **No data** or all values are null.

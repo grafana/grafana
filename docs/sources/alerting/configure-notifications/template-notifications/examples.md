@@ -219,7 +219,7 @@ Execute the template by passing the dot (`.`):
 
   Summary: The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes.
   Status: resolved
-  Description: This alert fires when a web server responds with more 5xx errors than is expected. This could be an issue with the web server or a backend service.
+  Description: This alert fires when a web server responds with more 5xx errors than expected. This could be an issue with the web server or a backend service.
 ```
 
 ## Print firing and resolved alerts
@@ -263,7 +263,7 @@ Run the template by passing the dot (`.`):
 
   Summary: The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes.
   Status: firing
-  Description: This alert fires when a web server responds with more 5xx errors than is expected. This could be an issue with the web server or a backend service.
+  Description: This alert fires when a web server responds with more 5xx errors than expected. This could be an issue with the web server or a backend service.
 ```
 
 ## Print common labels and annotations
@@ -364,7 +364,7 @@ Alert labels: 4
 
 Alert annotations: 2
 - summary = The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes.
-- description = This alert fires when a web server responds with more 5xx errors than is expected. This could be an issue with the web server or a backend service.
+- description = This alert fires when a web server responds with more 5xx errors than expected. This could be an issue with the web server or a backend service.
 ```
 
 ## Print URLs for runbook and alert data in Grafana

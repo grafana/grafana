@@ -155,7 +155,7 @@ Mute timings are not inherited from a parent notification policy, and they have 
 
 By default, Grafana uses a single notification policy tree for all alert routing. As organizations grow in size and complexity, managing a single global tree can become difficult. Multiple notification policy trees allow you to split routing logic into separate, independently managed routing trees.
 
-Each notification policy tree has its own name, root policy, and child policies which function similar to the default policy tree. You can create additional routing trees to organize routing logic by team, service, or domain.
+Each notification policy tree has its own name, root policy, and child policies which function similarly to the default policy tree. You can create additional routing trees to organize routing logic by team, service, or domain.
 
 The Default Policy can't be deleted. You can, however, reset the policy to clear it.
 

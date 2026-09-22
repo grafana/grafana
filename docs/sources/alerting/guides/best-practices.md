@@ -182,7 +182,7 @@ Finally, avoid rapid resolve-and-fire notifications by using [`keep_firing_for`]
 
 ## Graduate symptom-based alerts into SLOs
 
-When a symptom-based alert fires frequently, it usually indicates a reliability concern that should be measured and managed more deliberately. This is often a sign that the alert could evolve into an [service level objective (SLO)](/docs/grafana-cloud/alerting-and-irm/slo/introduction).
+When a symptom-based alert fires frequently, it usually indicates a reliability concern that should be measured and managed more deliberately. This is often a sign that the alert could evolve into a [service level objective (SLO)](/docs/grafana-cloud/alerting-and-irm/slo/introduction).
 
 Traditional alerts create pressure to react immediately, while error budgets introduce a buffer of time to act, changing how urgency is handled. Alerts can then be defined in terms of error budget burn rate rather than reacting to every minor deviation.
 
