@@ -52,8 +52,9 @@ func TestRefsConnector_RejectsUnsupportedMethod(t *testing.T) {
 // fakeVersionedRepository is a minimal repository.Repository + repository.Versioned fake,
 // mirroring staticTestRepository's role for the /test connector tests.
 type fakeVersionedRepository struct {
-	cfg  *provisioningv0alpha1.Repository
-	refs []provisioningv0alpha1.RefItem
+	cfg            *provisioningv0alpha1.Repository
+	refs           []provisioningv0alpha1.RefItem
+	listRefsCalled bool
 }
 
 func (r *fakeVersionedRepository) Config() *provisioningv0alpha1.Repository {
@@ -73,6 +74,7 @@ func (r *fakeVersionedRepository) LatestRef(context.Context) (string, error) {
 }
 
 func (r *fakeVersionedRepository) ListRefs(context.Context) ([]provisioningv0alpha1.RefItem, error) {
+	r.listRefsCalled = true
 	return r.refs, nil
 }
 
