@@ -1,5 +1,4 @@
 ---
-title: 'Configure Team LBAC for Tempo or Cloud Traces'
 description: 'Use label-based access control (LBAC) to restrict Cloud Traces data by team and attribute rules.'
 keywords:
   - tempo
