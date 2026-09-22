@@ -135,12 +135,16 @@ func getTypeAndRelations(group, resource string) (string, []string) {
 func newResource(
 	typ, group, resource, name, folder, subresource string, relations []string,
 ) ResourceInfo {
+	// Global variables and library panels intentionally use root-folder permissions.
+	if group != "dashboard.grafana.app" || (resource != "variables" && resource != "librarypanels") {
+		folder = foldermodel.ToLegacyFolderUID(folder)
+	}
 	return ResourceInfo{
 		typ:         typ,
 		group:       group,
 		resource:    resource,
 		name:        name,
-		folder:      foldermodel.ToLegacyFolderUID(folder),
+		folder:      folder,
 		subresource: subresource,
 		relations:   relations,
 	}

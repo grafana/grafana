@@ -1037,11 +1037,10 @@ func (s *Service) checkPermissionWithMapping(ctx context.Context, scopeMap map[s
 	// not: Viewer holds folders:read on general, and treating that as the parent
 	// of every root-parented object would list folders the user cannot access.
 	//
-	// Variables are the exception: they persist with an empty folder annotation
-	// while admission and RBAC grants use folders:uid:general, so empty must
-	// match general on every verb.
+	// Variables and library panels use root-folder grants on every verb,
+	// so both root representations must resolve to folders:uid:general.
 	if t.HasFolderSupport() && req.ParentFolder == "" &&
-		(req.Verb == utils.VerbCreate || t.Resource() == "variables") {
+		(req.Verb == utils.VerbCreate || usesRootFolderPermissions(req.Group, req.Resource)) {
 		req.ParentFolder = accesscontrol.GeneralFolderUID
 	}
 
@@ -1196,9 +1195,15 @@ func (s *Service) getScopeMap(permissions []accesscontrol.Permission) map[string
 	return permMap
 }
 
+// Variables and library panels use folder permissions even at root. Dashboards
+// and folders have their own permissions and must not inherit synthetic-root grants.
+func usesRootFolderPermissions(group, resource string) bool {
+	return group == "dashboard.grafana.app" && (resource == "variables" || resource == "librarypanels")
+}
+
 func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[string]bool, req *checkRequest, getTree folderTreeGetter) (bool, error) {
-	// Root grants target creation and global variables, not inheritance by stored resources.
-	if req.ParentFolder == "" || (folder.IsRootFolderUID(req.ParentFolder) && req.Verb != utils.VerbCreate && req.Resource != "variables") {
+	// Root grants target creation, global variables, and library panels.
+	if req.ParentFolder == "" || (folder.IsRootFolderUID(req.ParentFolder) && req.Verb != utils.VerbCreate && !usesRootFolderPermissions(req.Group, req.Resource)) {
 		return false, nil
 	}
 
@@ -1327,7 +1332,7 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 	if strings.HasPrefix(req.Action, "folders:") || strings.HasPrefix(req.Action, "folders.permissions:") {
 		res = buildFolderList(scopeMap, tree)
 	} else {
-		res = buildItemList(scopeMap, tree, t.Prefix(), t.Resource() == "variables", req.Verb == utils.VerbCreate)
+		res = buildItemList(scopeMap, tree, t.Prefix(), usesRootFolderPermissions(req.Group, req.Resource), req.Verb == utils.VerbCreate)
 	}
 
 	if cacheHit {
@@ -1450,7 +1455,7 @@ func buildItemList(scopes map[string]bool, tree folderTree, prefix string, alias
 				continue
 			}
 			folderSet[identifier] = struct{}{}
-			// Variables persist as "" while grants use folders:uid:general.
+			// Variables and library panels can persist either root representation.
 			// Do not alias for dashboards/folders: Folders[""] would match
 			// every root-parented object for anyone with a general grant.
 			if aliasRootFolderSentinels && folder.IsRootFolderUID(identifier) {

@@ -803,7 +803,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		sp, _, _ := unstructured.NestedString(parentAfter.Object, "metadata", "annotations", "grafana.app/sourcePath")
 		require.Equal(t, "new-parent", sp)
 		parentAnnotation, _, _ := unstructured.NestedString(parentAfter.Object, "metadata", "annotations", "grafana.app/folder")
-		require.Empty(t, parentAnnotation, "root-level parent should have no parent annotation")
+		require.Equal(t, foldermodel.GeneralFolderUID, parentAnnotation, "root-level parent should use the canonical root annotation")
 
 		// Verify child folder updated in place and still parented under the renamed parent.
 		childAfter, err := helper.Folders.Resource.Get(t.Context(), childUID, metav1.GetOptions{})

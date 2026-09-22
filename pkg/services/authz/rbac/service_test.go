@@ -4579,3 +4579,43 @@ func TestRootFolderInheritance(t *testing.T) {
 	require.ElementsMatch(t, []string{"general"}, buildItemList(scopes, tree, "dashboards:uid:", false, true).Folders)
 	require.ElementsMatch(t, []string{"", "general"}, buildItemList(scopes, tree, "", true, false).Folders)
 }
+
+func TestRootFolderPermissionMapping(t *testing.T) {
+	for _, resource := range []string{"variables", "librarypanels", "dashboards"} {
+		for _, parent := range []string{"", "general"} {
+			for _, verb := range []string{utils.VerbGet, utils.VerbUpdate, utils.VerbDelete} {
+				for _, scope := range []string{"general", "other-folder"} {
+					t.Run(fmt.Sprintf("%s/%q/%s/%s", resource, parent, verb, scope), func(t *testing.T) {
+						s := setupService()
+						ns := types.NamespaceInfo{Value: "default", OrgID: 1}
+						s.folderCache.Set(t.Context(), folderCacheKey(ns.Value), newFolderTree(nil))
+						req := &checkRequest{Namespace: ns, Group: "dashboard.grafana.app", Resource: resource, Name: "resource", Verb: verb, ParentFolder: parent}
+						allowed, err := s.checkPermission(t.Context(), map[string]bool{"folders:uid:" + scope: true}, nil, req, s.newFolderTreeGetter(t.Context(), ns, false))
+						require.NoError(t, err)
+						require.Equal(t, resource != "dashboards" && scope == "general", allowed)
+					})
+				}
+			}
+		}
+		for _, verb := range []string{utils.VerbList, utils.VerbWatch} {
+			t.Run(resource+"/"+verb, func(t *testing.T) {
+				s := setupService()
+				ns := types.NamespaceInfo{Value: "default", OrgID: 1}
+				s.folderCache.Set(t.Context(), folderCacheKey(ns.Value), newFolderTree(nil))
+				action := "variables:read"
+				if resource == "librarypanels" {
+					action = "library.panels:read"
+				} else if resource == "dashboards" {
+					action = "dashboards:read"
+				}
+				result, err := s.listPermission(t.Context(), map[string]bool{"folders:uid:general": true}, &listRequest{Namespace: ns, Group: "dashboard.grafana.app", Resource: resource, Verb: verb, Action: action, Options: &ListRequestOptions{}})
+				require.NoError(t, err)
+				if resource == "dashboards" {
+					require.Empty(t, result.Folders)
+				} else {
+					require.ElementsMatch(t, []string{"", "general"}, result.Folders)
+				}
+			})
+		}
+	}
+}
