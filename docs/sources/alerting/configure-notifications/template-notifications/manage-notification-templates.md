@@ -44,7 +44,7 @@ refs:
 
 In contact points, you can select notification templates to customize the notification messages sent.
 
-For Grafana integrations, `{{define "default.title"}}` formats the notification title and `{{define "default.message"}}` formats the notification message. Both default templates display common alert details. Legacy integrations use different defaults. Before selecting or reusing a template, check whether the integration uses [Grafana or Legacy notification templates](ref:grafana-and-legacy-templates).
+For Grafana integrations, `{{define "default.title"}}` formats the notification title and `{{define "default.message"}}` formats the notification message. Both default templates display common alert details. Legacy integrations use different defaults. Before selecting or reusing a template, refer to [Grafana and Legacy notification templates](ref:grafana-and-legacy-templates).
 
 You can also create custom templates to customize the content and format of notification messages, which can then be applied to one or more contact points. In Grafana, a custom notification template is created within a notification template group.
 
@@ -75,7 +75,7 @@ Create notification templates to customize notification messages and reuse them 
 
 In Grafana, custom notification templates (`{{define "<NAME>"}}`) are created within a notification template group, allowing you to test and implement multiple templates together.
 
-Grafana and Legacy templates have separate definition namespaces. Use a unique notification template name (`{{define "<NAME>"}}`) within each namespace, including across different notification template groups. Duplicate definitions in one namespace can override each other. The same name can exist independently in a Grafana template group and a Legacy template group. Avoid reusing built-in names available to your integration, such as `__subject` or, for Grafana templates, `default.title` and `default.message`.
+Grafana and Legacy templates have separate definition namespaces. Within a namespace, a notification template name (`{{define "<NAME>"}}`) must be unique across all notification template groups, because the last definition parsed overrides any earlier one with the same name. The same name can exist independently in a Grafana template group and a Legacy template group. Avoid reusing built-in names available to your integration, such as `__subject` and `__text_alert_list` or, for Grafana templates, `__text_values_list`, `default.title`, and `default.message`.
 
 To create a notification template in Grafana, complete the following steps.
 

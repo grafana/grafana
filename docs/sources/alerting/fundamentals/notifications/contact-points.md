@@ -82,7 +82,7 @@ A contact point, also known as a _receiver_, groups integrations under one name.
 
 An integration has a _type_, such as Slack, and a _version_ that identifies its configuration and notification behavior. This version isn't the destination service's API version. Grafana integrations use `v1`. The UI labels Mimir-compatible integrations as **Legacy** (`v0mimir1`) or **Legacy v2** (`v0mimir2`). Not every type supports every version.
 
-When you create an integration using the contact point editor or file provisioning, Grafana uses the `v1` format. The [Grafana App Platform notifications API](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) (`notifications.alerting.grafana.app/v1beta1`) exposes the `version` field for each integration in a receiver.
+When you create an integration using the contact point editor or file provisioning, Grafana uses the `v1` format. The notifications API exposes a `version` field for each integration in a receiver. For the schema, refer to the [Grafana App Platform notifications API](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) (`notifications.alerting.grafana.app/v1beta1`).
 
 ## Grafana and Legacy templates
 
@@ -94,15 +94,17 @@ For differences in defaults, functions, notification data, and template dependen
 
 ## Replace a Legacy integration
 
-After you promote an imported Alertmanager configuration, you can modify its Legacy integrations through the regular notification APIs and user interface. An Alertmanager configuration import is the supported way to create Legacy integrations.
+After you promote an imported Alertmanager configuration, you can modify its Legacy integrations through the notification APIs and the Grafana user interface. An Alertmanager configuration import is the supported way to create Legacy integrations.
 
-To move from a Legacy integration to a Grafana integration, manually replace it. Updating an integration's version from `v0mimir1` or `v0mimir2` to `v1` isn't a supported upgrade path. The replacement has different configuration and notification behavior, and uses Grafana templates instead of Legacy templates.
+To move from a Legacy integration to a Grafana integration, replace the Legacy integration manually. Updating an integration's version from `v0mimir1` or `v0mimir2` to `v1` isn't a supported upgrade path. The replacement has different configuration and notification behavior, and uses Grafana templates instead of Legacy templates.
 
-Before you begin, ensure you have the following:
+Before you begin:
 
 - **A promoted configuration:** If your import is still staged, [promote the imported configuration](ref:import-alertmanager-configuration) before editing or replacing its integrations.
-- **Integration details:** Identify the Legacy integration's destination, notification settings, and named template dependencies.
-- **Permissions and credentials:** Ensure you have permission to edit the contact point and access to the credentials needed for the replacement.
+- **Integration details:** The Legacy integration's destination, notification settings, and named template dependencies.
+- **Permissions and credentials:** Permission to edit the contact point, and the credentials needed for the replacement.
+
+To replace a Legacy integration, complete the following steps.
 
 1. Add a new Grafana integration for the destination. Configure it using the Grafana integration's settings rather than copying the Legacy configuration unchanged. For instructions, refer to [Configure contact points](ref:configure-contact-points).
 1. Adapt the notification templates for the Grafana integration. Check named definitions and their dependencies, built-in defaults, functions, and available data. A definition in a Legacy template group isn't available to the new integration. Refer to [Grafana and Legacy notification templates](ref:grafana-and-legacy-templates).

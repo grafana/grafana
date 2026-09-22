@@ -59,7 +59,7 @@ This reference covers shared notification data and functions, along with additio
 
 ## Notification Data
 
-In notification templates, dot (`.`) is initialized with notification data. Grafana and Legacy integrations share the fields from `Receiver` through `ExternalURL` in the following table. `GroupKey` and `TruncatedAlerts` are integration-specific extensions, not fields you can assume exist in every template's input data:
+In notification templates, dot (`.`) is initialized with notification data. Legacy integrations don't provide `GroupKey` or `TruncatedAlerts`. For Grafana integrations, `GroupKey` is always set, and `TruncatedAlerts` is set only by the Webhook and Grafana IRM integrations:
 
 | Name                | Type              | Description                                                                                             |
 | ------------------- | ----------------- | ------------------------------------------------------------------------------------------------------- |
@@ -113,7 +113,7 @@ You can execute this template by passing the dot (`.`):
 | `GeneratorURL` | string        | A link to Grafana, or the source of the alert if using an external alert generator.                                                                 |
 | `Fingerprint`  | string        | A unique string that identifies the alert.                                                                                                          |
 
-Grafana integrations provide these additional alert properties. Legacy integrations don't provide them, even when the alert originates in Grafana. Values depend on the alert's annotations and evaluation data, as described below:
+Grafana integrations provide these additional alert properties. Legacy integrations don't provide them, even when the alert originates in Grafana. Values depend on the alert's annotations and evaluation data, as described in the following table:
 
 | Name           | Type      | Description                                                                                                                                          |
 | -------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -274,7 +274,7 @@ You can then use `tz` to change the timezone from UTC to local time, such as `Eu
 
 ## Namespaced Functions
 
-The following namespaced functions are available only in Grafana templates. Legacy integrations can't use them.
+The following namespaced functions are available only in Grafana templates.
 
 {{< admonition type="note" >}}
 

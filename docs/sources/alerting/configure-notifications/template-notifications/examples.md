@@ -84,7 +84,7 @@ Avoid adding extra information about alert instances in notification templates, 
 Instead, you should [use annotations or labels](ref:template-annotations-and-labels) to add information directly to the alert, ensuring it's also visible in the alert state and alert history within Grafana. You can then print the new alert annotation or label in notification templates.
 {{< /admonition >}}
 
-Examples that use shared fields such as `.Status`, `.Alerts`, labels, and annotations apply to both Grafana and Legacy integrations. Examples that use Grafana-only fields, defaults, or namespaced functions require a Grafana integration. Refer to [Grafana and Legacy notification templates](ref:grafana-and-legacy-templates) before using an example with a Legacy integration.
+Examples that use shared fields such as `.Status`, `.Alerts`, labels, and annotations apply to both Grafana and Legacy integrations. Examples that use Grafana-only fields, defaults, or namespaced functions require a Grafana integration. Refer to [Grafana and Legacy notification templates](ref:grafana-and-legacy-templates) before you use an example with a Legacy integration.
 
 This page provides various examples illustrating how to template common notification messages. For more details about notification templates, refer to:
 

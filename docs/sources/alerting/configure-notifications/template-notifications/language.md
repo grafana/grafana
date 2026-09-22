@@ -56,7 +56,7 @@ However, it's important to note that because notifications and alert rules opera
 - [Annotation and label template reference](ref:alert-rule-template-reference)
 - [Notification template reference](ref:notification-template-reference)
 
-[Grafana and Legacy notification templates](ref:grafana-and-legacy-templates) use the same Go template syntax, but differ in their available definitions and functions. The integration also determines the notification data passed to a template. Changing dot with `range` or `with` changes that data context; it doesn't switch between Grafana and Legacy templates.
+Grafana and Legacy notification templates use the same Go template syntax, but differ in their available definitions and functions. The integration also determines the notification data passed to a template. Changing dot with `range` or `with` changes that data context; it doesn't switch between Grafana and Legacy templates. Refer to [Grafana and Legacy notification templates](ref:grafana-and-legacy-templates).
 
 This documentation provides an overview of the functions and operators of the Go template language that are available for both notification and alert rule templates.
 

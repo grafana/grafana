@@ -98,9 +98,9 @@ Instead, you should [use annotations or labels](ref:template-annotations-and-lab
 
 #### Select a notification template for a contact point
 
-You can share a notification template across multiple contact points and integration types, such as email and Slack, when they all use Grafana templates or all use Legacy templates and provide the data that the template expects.
+You can share a notification template across multiple contact points and integration types, such as email and Slack. All the integrations must use the same template type, Grafana or Legacy, and must provide the data that the template expects.
 
-Select the template in each integration's templated settings to customize its notification message.
+Select the template in each integration's settings that support templates to customize its notification message.
 
 {{< figure src="/media/docs/alerting/how-notification-templates-works.png" max-width="1200px" caption="A flow of the alert notification process, from querying the alert rule to sending the alert notification message." >}}
 

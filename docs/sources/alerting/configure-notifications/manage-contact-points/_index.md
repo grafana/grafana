@@ -178,7 +178,11 @@ The ability to modify protected fields is controlled by the RBAC action `alert.n
 
 Each contact point integration has its own configuration options and setup process. The following list shows Grafana integrations. Their configuration, behavior, and features differ from integrations in Prometheus Alertmanager, even when they notify the same service.
 
-Grafana also supports imported integrations, which the UI identifies as **Legacy**. These preserve Mimir-compatible notification behavior and use Mimir-compatible templates. Importing Alertmanager configurations is in public preview and disabled by default. For enablement requirements and prerequisites, refer to [Import Alertmanager configuration](ref:import-alertmanager-configuration). For the relationship between these badges and API versions, refer to [contact point fundamentals](ref:contact-point-fundamentals).
+Grafana also supports imported integrations, which the UI identifies as **Legacy**. These preserve Mimir-compatible notification behavior and use Mimir-compatible templates. For how the **Legacy** label maps to API integration versions, refer to [Contact points](ref:contact-point-fundamentals).
+
+{{< admonition type="note" >}}
+Importing Alertmanager configurations is in public preview and disabled by default. For enablement requirements and prerequisites, refer to [Import Alertmanager configuration](ref:import-alertmanager-configuration).
+{{< /admonition >}}
 
 {{< column-list >}}
 
@@ -244,7 +248,7 @@ By default, notification messages include common alert details, which are usuall
 
 If necessary, you can customize the content and format of notification messages. You can create a custom notification template, which can then be applied to one or more contact points.
 
-Grafana integrations use Grafana templates. Legacy integrations use templates labeled **Legacy**, regardless of where their alerts originate. Named definitions must be available to the integration: Grafana and Legacy templates don't share definitions. Before reusing templates with imported integrations or migrating a contact point, review [Grafana and Legacy notification templates](ref:grafana-and-legacy-templates).
+Grafana integrations use Grafana templates. Legacy integrations use templates labeled **Legacy**, regardless of where their alerts originate. Named definitions must be available to the integration, and Grafana and Legacy templates don't share definitions. Before reusing templates with imported integrations or migrating a contact point, refer to [Grafana and Legacy notification templates](ref:grafana-and-legacy-templates).
 
 On the **Templates** tab under **Notification configuration**, you can view, edit, copy or delete notification templates. Refer to [manage notification templates](ref:manage-notification-templates) for instructions on selecting or creating a template for a contact point.
 
