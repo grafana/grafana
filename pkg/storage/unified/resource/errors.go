@@ -125,6 +125,9 @@ func ErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
 //
 // Unlike [ErrorFromResponse], this replaces transport errors. Callers that need
 // the original error chain or gRPC retry classification must use that helper instead.
+//
+// Only errors coming from grpc should be passed to this function, other errors will lose
+// their chain through this.
 func StatusErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
 	if err == nil {
 		return GetError(respErr)
