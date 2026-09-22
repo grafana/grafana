@@ -30,10 +30,12 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/userpermissions"
+	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -120,6 +122,37 @@ func TestUpdateTeamLBACRulesAPIGroupWithNoopInstaller(t *testing.T) {
 	require.NotNil(t, storage[iamv0.TeamLBACRuleInfo.StoragePath("for-subject")])
 }
 
+func TestUpdateUsersAPIGroup_TeamsSubresourceRequiresTeamsAPI(t *testing.T) {
+	for _, tt := range []struct {
+		name            string
+		teamsAPIEnabled bool
+		wantRegistered  bool
+	}{
+		{name: "not registered when Teams API is disabled"},
+		{name: "registered when Teams API is enabled", teamsAPIEnabled: true, wantRegistered: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			scheme := runtime.NewScheme()
+			require.NoError(t, iamv0.AddToScheme(scheme))
+
+			b := &IdentityAccessManagementAPIBuilder{
+				dual:    dualwrite.NewMockService(t),
+				unified: resource.NewMockResourceClient(t),
+				tracing: tracing.InitializeTracerForTest(),
+			}
+			storage := map[string]rest.Storage{}
+			err := b.UpdateUsersAPIGroup(builder.APIGroupOptions{
+				Scheme:     scheme,
+				OptsGetter: appinstaller.NewNoopRESTOptionsGetter(),
+			}, storage, false, tt.teamsAPIEnabled)
+			require.NoError(t, err)
+
+			_, registered := storage[iamv0.UserResourceInfo.StoragePath("teams")]
+			require.Equal(t, tt.wantRegistered, registered)
+		})
+	}
+}
+
 func TestInstallSchema_ResourcePermissionsGate(t *testing.T) {
 	gvk := iamv0.ResourcePermissionInfo.GroupVersionKind()
 
@@ -159,6 +192,20 @@ func TestInstallSchema_ResourcePermissionsGate(t *testing.T) {
 				"ResourcePermission kind registration should match %s=%v", featuremgmt.FlagKubernetesAuthzResourcePermissionApis, tt.flagEnabled)
 		})
 	}
+}
+
+func TestInstallSchema_ConfiguredFeaturesOverrideOpenFeature(t *testing.T) {
+	require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{}))
+	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
+
+	b := &IdentityAccessManagementAPIBuilder{
+		ofClient: openfeature.NewDefaultClient(),
+		features: &Features{ResourcePermissionsAPI: true},
+	}
+	scheme := runtime.NewScheme()
+
+	require.NoError(t, b.InstallSchema(scheme))
+	require.True(t, scheme.Recognizes(iamv0.ResourcePermissionInfo.GroupVersionKind()))
 }
 
 // TestCodecPathResourcesRegisterOneVersionPerType guards apimachinery's LegacyCodec version-order

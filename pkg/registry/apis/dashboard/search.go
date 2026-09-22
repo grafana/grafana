@@ -37,6 +37,7 @@ import (
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
+	searchsort "github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -895,16 +896,13 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		return nil, err
 	}
 
-	// Add sorting. Field names are passed through as the client sent them; the
-	// search backend knows where each field lives in the index. The leading "-"
-	// descending marker is stripped first.
+	// Add sorting. Index field names reach the backend unchanged, the other
+	// spellings clients still send are translated first (see parseSortParam).
 	if queryParams.Has("sort") {
 		for _, raw := range queryParams["sort"] {
-			field := raw
-			desc := false
-			if strings.HasPrefix(field, "-") {
-				desc = true
-				field = field[1:]
+			field, desc := parseSortParam(raw)
+			if field == "" {
+				continue
 			}
 			searchRequest.SortBy = append(searchRequest.SortBy, &resourcepb.ResourceSearchRequest_Sort{
 				Field: field,
@@ -1051,6 +1049,37 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		})
 	}
 	return searchRequest, nil
+}
+
+// uiSortAliases maps a sort value the Grafana UI has used to the field the index
+// actually holds it under. Grafana keeps the selected sort in browser storage
+// and in the page URL, so these names keep arriving from browsers and bookmarks
+// long after the UI itself stopped sending them.
+var uiSortAliases = map[string]string{
+	"name_sort": resource.SEARCH_FIELD_TITLE,
+}
+
+// parseSortParam turns one "sort" query parameter into the index field to sort on
+// and whether the order is descending.
+//
+// Three spellings reach this endpoint. An index field name, optionally prefixed
+// with "-" for descending, such as "-views_total". A name the UI used for a field
+// the index calls something else, such as "name_sort". And a sort name of the
+// older /api/search endpoint, which carries its direction as a suffix, such as
+// "viewed-recently-desc". The last two name no index field, so without
+// translation they sort on nothing and results come back in an arbitrary order.
+func parseSortParam(raw string) (string, bool) {
+	field, desc := strings.CutPrefix(raw, "-")
+	if field == "" {
+		return "", false
+	}
+	if alias, ok := uiSortAliases[field]; ok {
+		return alias, desc
+	}
+	if mapped, mappedDesc, err := searchsort.ParseSortName(field); err == nil && mapped != "" {
+		return mapped, mappedDesc
+	}
+	return field, desc
 }
 
 func (s *SearchHandler) write(w http.ResponseWriter, obj any) {
