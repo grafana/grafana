@@ -230,7 +230,7 @@ const SKELETON_ROWS = 5;
  * The table renders every row it is given — no virtualization — and each row carries a link, a tag
  * list, two tooltipped timestamps and three buttons. At a full page from the server that is thousands
  * of elements rebuilt whenever a filter changes, which is felt as a delay on the click. Sorting and
- * the row counts still run over the whole set: react-table paginates after sorting.
+ * the row counts still run over the whole set: the table paginates after sorting.
  *
  * The other page-level tables in Grafana sit between 10 and 30, so this is in step with them.
  */

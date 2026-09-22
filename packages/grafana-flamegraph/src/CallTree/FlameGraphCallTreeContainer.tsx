@@ -616,7 +616,6 @@ const FlameGraphCallTreeContainer = memo(
         sorting: [{ id: 'total', desc: true }],
       },
       autoResetExpanded: false,
-      autoResetAll: false,
     });
 
     tableInstanceRef.current = {

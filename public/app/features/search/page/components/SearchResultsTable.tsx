@@ -74,9 +74,7 @@ export const SearchResultsTable = React.memo(
         return [];
       }
 
-      // as we only use this to fake the length of our data set for react-table we need to make sure we always return an array
-      // filled with values at each index otherwise we'll end up trying to call accessRow for null|undefined value in
-      // https://github.com/tannerlinsley/react-table/blob/7be2fc9d8b5e223fc998af88865ae86a88792fdb/src/hooks/useTable.js#L585
+      // Length placeholder: cells read values from the DataFrame field, not from this array.
       return Array(response.totalRows).fill(0);
     }, [response]);
 
@@ -90,7 +88,6 @@ export const SearchResultsTable = React.memo(
       }
     }, [memoizedData, listEl]);
 
-    // React-table column definitions
     const memoizedColumns = useMemo(() => {
       return generateColumns(
         response,
