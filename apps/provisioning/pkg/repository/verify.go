@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
-	"path/filepath"
+	"path"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -31,6 +31,18 @@ func NewVerifyAgainstExistingRepositoriesValidator(lister RepositoryLister, quot
 		lister:      lister,
 		quotaGetter: quotaGetter,
 	}
+}
+
+// pathsOverlap reports whether a and b are the same directory tree, or one is nested inside the
+// other, checked in both directions - either the new or the existing repository could be the
+// ancestor. An empty path is the repository root, which contains every other path.
+func pathsOverlap(a, b string) bool {
+	if a == "" || b == "" {
+		return true
+	}
+	a = strings.Trim(path.Clean(a), "/")
+	b = strings.Trim(path.Clean(b), "/")
+	return a == b || strings.HasPrefix(a, b+"/") || strings.HasPrefix(b, a+"/")
 }
 
 // VerifyAgainstExistingRepositoriesValidator verifies repository configurations for conflicts within a namespace.
@@ -90,13 +102,7 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 
 			// Skip parent/child conflict check when both paths are empty (both at repository root)
 			if v.Path() != "" || cfg.Path() != "" {
-				relPath, err := filepath.Rel(v.Path(), cfg.Path())
-				if err != nil {
-					return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"), cfg.Path(), "failed to evaluate path: "+err.Error())}
-				}
-				// https://pkg.go.dev/path/filepath#Rel
-				// Rel will return "../" if the relative paths are not related
-				if !strings.HasPrefix(relPath, "../") {
+				if pathsOverlap(v.Path(), cfg.Path()) {
 					return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"), cfg.Path(),
 						fmt.Sprintf("%s: %s", ErrRepositoryParentFolderConflict.Error(), v.Name))}
 				}

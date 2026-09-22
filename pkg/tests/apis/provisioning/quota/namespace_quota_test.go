@@ -183,6 +183,9 @@ func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t 
 				"github": map[string]any{
 					"url":    "https://github.com/some/url",
 					"branch": "main",
+					// Distinct paths so the two repos don't trip the duplicate/overlapping-path
+					// check - this test is only about quota handling.
+					"path": name,
 				},
 				"sync": map[string]any{
 					"enabled": false,
