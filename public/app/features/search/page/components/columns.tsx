@@ -56,11 +56,6 @@ function toSearchColumn({
   };
 }
 
-const TYPE_COLUMN_WIDTH = 175;
-const DURATION_COLUMN_WIDTH = 200;
-const DATASOURCE_COLUMN_WIDTH = 200;
-const DELETED_BY_COLUMN_WIDTH = 200;
-
 export const generateColumns = (
   response: QueryResponse,
   availableWidth: number,
