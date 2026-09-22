@@ -29,10 +29,8 @@ import (
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/search/embed/backfill")
 
-const backfillPageSize = 100
+const defaultBackfillPageSize = 50
 
-// dashboardGroup / dashboardResource gate the views filter to dashboard
-// builders; the filter is a no-op for any other resource type.
 const (
 	dashboardGroup    = "dashboard.grafana.app"
 	dashboardResource = "dashboards"
@@ -57,6 +55,8 @@ type Options struct {
 	// Interval is how often Run re-scans for incomplete jobs (jobs are
 	// created lazily by the reconciler's write path). Defaults to 1m.
 	Interval time.Duration
+	// PageSize is the number of non-dashboard resources per page. Defaults to 50.
+	PageSize int
 }
 
 type VectorBackfiller struct {
@@ -69,6 +69,7 @@ type VectorBackfiller struct {
 	log             log.Logger
 	metrics         *resource.VectorMetrics
 	interval        time.Duration
+	pageSize        int
 
 	folderTitleResolver *foldertitle.Resolver
 	folderTitleCache    map[string]string
@@ -103,6 +104,10 @@ func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
 	if interval <= 0 {
 		interval = defaultBackfillInterval
 	}
+	pageSize := opts.PageSize
+	if pageSize <= 0 {
+		pageSize = defaultBackfillPageSize
+	}
 
 	return &VectorBackfiller{
 		storage:             opts.Storage,
@@ -114,6 +119,7 @@ func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
 		log:                 log.New("backfill"),
 		metrics:             opts.Metrics,
 		interval:            interval,
+		pageSize:            pageSize,
 		folderTitleResolver: foldertitle.NewResolver(opts.Storage),
 	}, nil
 }
@@ -321,11 +327,16 @@ func hasBuilderForPartition(builders []collectionBuilder, partitionKey string) b
 	})
 }
 
-// runBackfillPage processes up to backfillPageSize items. Returns the
+// runBackfillPage processes one page of items. Returns the
 // next-page token; empty when the iterator exhausted (no more pages).
 func (b *VectorBackfiller) runBackfillPage(ctx context.Context, job vector.BackfillJob, builder collectionBuilder, pageToken string) (_ string, retErr error) {
+	pageSize := b.pageSize
+	if builder.Group() == dashboardGroup && builder.Resource() == dashboardResource {
+		// A dashboard already produces a batch of panel texts.
+		pageSize = 1
+	}
 	req := &resourcepb.ListRequest{
-		Limit:           backfillPageSize,
+		Limit:           int64(pageSize),
 		NextPageToken:   pageToken,
 		ResourceVersion: job.StoppingRV,
 		Options: &resourcepb.ListOptions{
@@ -337,7 +348,7 @@ func (b *VectorBackfiller) runBackfillPage(ctx context.Context, job vector.Backf
 		},
 	}
 
-	page := make([]*preparedBackfillItem, 0, backfillPageSize)
+	page := make([]*preparedBackfillItem, 0, pageSize)
 	completed := 0
 	defer func() {
 		for _, item := range page[completed:] {
@@ -359,7 +370,7 @@ func (b *VectorBackfiller) runBackfillPage(ctx context.Context, job vector.Backf
 				page[len(page)-1].nextToken = pendingTok
 				pendingTok = ""
 			}
-			if len(page) == backfillPageSize {
+			if len(page) == pageSize {
 				nextToken = page[len(page)-1].nextToken
 				return nil
 			}

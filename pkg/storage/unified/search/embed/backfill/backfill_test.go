@@ -119,15 +119,18 @@ func newBackfillerWithBuilders(t *testing.T, storage *fakeStorage, vec *fakeVect
 
 // newBackfillerWithEmbedder is newBackfiller exposing the fake embedder so
 // tests can assert whether the provider was called.
-func newBackfillerWithEmbedder(t *testing.T, storage *fakeStorage, vec *fakeVector) (*VectorBackfiller, *fakeText) {
+func newBackfillerWithEmbedder(t *testing.T, storage *fakeStorage, vec *fakeVector, builders ...embed.Builder) (*VectorBackfiller, *fakeText) {
 	t.Helper()
+	if len(builders) == 0 {
+		builders = []embed.Builder{dashboard.New()}
+	}
 	text := &fakeText{dim: 4}
 	emb := newFakeEmbedder(text)
 	b, err := NewVectorBackfiller(Options{
 		Storage:       storage,
 		VectorBackend: vec,
 		BatchEmbedder: embedder.NewBatchEmbedder(*emb),
-		Builders:      []embed.Builder{dashboard.New()},
+		Builders:      builders,
 	})
 	require.NoError(t, err)
 	return b, text
@@ -1029,12 +1032,12 @@ func TestRunBackfillJob_DifferentModel_IgnoredCompletely(t *testing.T) {
 func TestRunBackfillJob_PaginatedAcrossPages(t *testing.T) {
 	// Build a result set one page + 5 items long so the backfiller must
 	// fetch exactly two pages.
-	const total = backfillPageSize + 5
+	const total = defaultBackfillPageSize + 5
 
 	storage := newFakeStorage()
 	storage.listItems = make([]listItem, total)
 	for i := range storage.listItems {
-		storage.listItems[i] = makeListItem("ns", uniqName(i), int64(i+1))
+		storage.listItems[i] = makeFolderListItem("ns", uniqName(i), int64(i+1))
 	}
 
 	vec := newFakeVector()
@@ -1042,7 +1045,7 @@ func TestRunBackfillJob_PaginatedAcrossPages(t *testing.T) {
 		ID: 7, Model: "test-model", StoppingRV: int64(total + 100),
 	}}
 
-	o := newBackfiller(t, storage, vec)
+	o := newBackfillerWithBuilders(t, storage, vec, newFolderBuilder())
 	o.runBackfill(context.Background())
 
 	assert.Len(t, vec.upserts, total, "every item across all pages is embedded")
@@ -1054,19 +1057,19 @@ func TestRunBackfillJob_PaginatedAcrossPages(t *testing.T) {
 }
 
 // TestRunBackfillJob_ExactPageMultiple exercises the boundary where total
-// item count is exactly N * backfillPageSize. A naive implementation would
+// item count is exactly N * defaultBackfillPageSize. A naive implementation would
 // emit a continue token built from the post-last-item peek (Name="") and
 // re-feed it through ListIterator on the next page call, which the kv
 // backend rejects with "name is required". The fix defers the per-item
 // checkpoint by one Next()==true so the last item of a page is only
 // persisted after a confirming peek.
 func TestRunBackfillJob_ExactPageMultiple(t *testing.T) {
-	const total = backfillPageSize
+	const total = defaultBackfillPageSize
 
 	storage := newFakeStorage()
 	storage.listItems = make([]listItem, total)
 	for i := range storage.listItems {
-		storage.listItems[i] = makeListItem("ns", uniqName(i), int64(i+1))
+		storage.listItems[i] = makeFolderListItem("ns", uniqName(i), int64(i+1))
 	}
 
 	vec := newFakeVector()
@@ -1074,7 +1077,7 @@ func TestRunBackfillJob_ExactPageMultiple(t *testing.T) {
 		ID: 9, Model: "test-model", StoppingRV: int64(total + 100),
 	}}
 
-	o := newBackfiller(t, storage, vec)
+	o := newBackfillerWithBuilders(t, storage, vec, newFolderBuilder())
 	o.runBackfill(context.Background())
 
 	assert.Len(t, vec.upserts, total, "every item is embedded")

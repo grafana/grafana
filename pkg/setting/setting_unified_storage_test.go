@@ -7,7 +7,36 @@ import (
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func TestVectorBackfillPageSize(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		configured string
+		env        string
+		expected   int
+	}{
+		{name: "default", expected: 50},
+		{name: "custom", configured: "25", expected: 25},
+		{name: "environment override", configured: "25", env: "75", expected: 75},
+		{name: "zero", configured: "0", expected: 50},
+		{name: "negative", configured: "-1", expected: 50},
+		{name: "malformed", configured: "invalid", expected: 50},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("GF_UNIFIED_STORAGE_VECTOR_BACKFILL_PAGE_SIZE", tc.env)
+			args := CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"}
+			if tc.configured != "" {
+				args.Args = []string{"cfg:unified_storage.vector_backfill_page_size=" + tc.configured}
+			}
+			cfg := NewCfg()
+			require.NoError(t, cfg.Load(args))
+
+			assert.Equal(t, tc.expected, cfg.VectorBackfillPageSize)
+		})
+	}
+}
 
 func TestKVLeaseTTLBounds(t *testing.T) {
 	for _, tc := range []struct {

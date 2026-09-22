@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
@@ -37,18 +38,18 @@ func numberedEmbeddings(input embedder.EmbedTextInput) embedder.EmbedTextOutput 
 func TestRunBackfillPage_BatchesObjectsAndPreservesIdentity(t *testing.T) {
 	storage := newFakeStorage()
 	storage.listItems = []listItem{
-		makeListItem("ns-a", "shared", 11),
-		makeListItem("ns-a", "existing", 12),
-		{Namespace: "ns-b", Name: "shared", RV: 23, Value: []byte(`{"uid":"shared","title":"Second","panels":[{"id":2,"title":"CPU"},{"id":3,"title":"Memory"}]}`)},
+		makeFolderListItem("ns-a", "shared", 11),
+		makeFolderListItem("ns-a", "existing", 12),
+		makeFolderListItem("ns-b", "shared", 23),
 	}
 	vec := newFakeVector()
-	b := newBackfiller(t, storage, vec)
-	builder := collectionBuilder{Builder: dashboard.New(), partitionKey: "dashboards"}
-	vec.seedEmbeddedRows("ns-a", "test-model", "dashboards", "existing", builder.Version(), "panel/1")
+	b := newBackfillerWithBuilders(t, storage, vec, newFolderBuilder())
+	builder := collectionBuilder{Builder: newFolderBuilder(), partitionKey: "folders"}
+	vec.seedEmbeddedRows("ns-a", "test-model", "folders", "existing", builder.Version(), "")
 	calls := 0
 	setPageTextEmbedder(b, func(_ context.Context, input embedder.EmbedTextInput) (embedder.EmbedTextOutput, error) {
 		calls++
-		require.Len(t, input.Texts, 3)
+		require.Len(t, input.Texts, 2)
 		assert.Empty(t, vec.replaceCalls, "the whole page must be embedded before any object is replaced")
 		return numberedEmbeddings(input), nil
 	})
@@ -58,39 +59,38 @@ func TestRunBackfillPage_BatchesObjectsAndPreservesIdentity(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, next)
 	assert.Equal(t, 1, calls)
-	require.Len(t, vec.replaceCalls, 2, "all panels of each dashboard must be written together")
+	require.Len(t, vec.replaceCalls, 2)
 	wantDense := float32(1)
 	for i, source := range []listItem{storage.listItems[0], storage.listItems[2]} {
 		call := vec.replaceCalls[i]
 		assert.Equal(t, source.Namespace, call.Namespace)
 		assert.Equal(t, source.Name, call.UID)
-		require.Len(t, call.Changed, i+1)
-		assert.Len(t, call.Desired, i+1)
+		require.Len(t, call.Changed, 1)
+		assert.Equal(t, []string{""}, call.Desired)
 		for _, row := range call.Changed {
 			assert.Equal(t, source.Namespace, row.Namespace)
 			assert.Equal(t, source.Name, row.UID)
 			assert.Equal(t, source.RV, row.ResourceVersion)
 			assert.Equal(t, builder.Version(), row.ContentVersion)
-			assert.Equal(t, "dashboards", row.Resource)
+			assert.Equal(t, "folders", row.Resource)
 			assert.Equal(t, "test-model", row.Model)
 			assert.Equal(t, []float32{wantDense}, row.Embedding)
 			assert.Contains(t, call.Desired, row.Subresource)
 			wantDense++
 		}
 	}
-	assert.Equal(t, []string{"panel/2", "panel/3"}, vec.replaceCalls[1].Desired)
 	require.Len(t, vec.checkpoints, 2)
-	assert.Equal(t, encodeCursor("dashboards", "tok-2"), vec.checkpoints[1].LastSeenKey)
+	assert.Equal(t, encodeCursor("folders", "tok-2"), vec.checkpoints[1].LastSeenKey)
 }
 
 func TestRunBackfillPage_AllSkippedDoesNotCallProvider(t *testing.T) {
 	storage := newFakeStorage()
-	storage.listItems = []listItem{makeListItem("ns", "current", 1), makeListItem("ns", "newer", 2)}
+	storage.listItems = []listItem{makeFolderListItem("ns", "current", 1), makeFolderListItem("ns", "newer", 2)}
 	vec := newFakeVector()
-	b, text := newBackfillerWithEmbedder(t, storage, vec)
-	builder := collectionBuilder{Builder: dashboard.New(), partitionKey: "dashboards"}
-	vec.seedEmbeddedRows("ns", "test-model", "dashboards", "current", builder.Version(), "panel/1")
-	vec.seedEmbeddedRows("ns", "test-model", "dashboards", "newer", builder.Version()+1, "panel/1")
+	b, text := newBackfillerWithEmbedder(t, storage, vec, newFolderBuilder())
+	builder := collectionBuilder{Builder: newFolderBuilder(), partitionKey: "folders"}
+	vec.seedEmbeddedRows("ns", "test-model", "folders", "current", builder.Version(), "")
+	vec.seedEmbeddedRows("ns", "test-model", "folders", "newer", builder.Version()+1, "")
 
 	next, err := b.runBackfillPage(t.Context(), vector.BackfillJob{ID: 1, Model: "test-model", StoppingRV: 100}, builder, "")
 
@@ -99,20 +99,20 @@ func TestRunBackfillPage_AllSkippedDoesNotCallProvider(t *testing.T) {
 	assert.Zero(t, text.calls)
 	assert.Empty(t, vec.replaceCalls)
 	require.Len(t, vec.checkpoints, 1)
-	assert.Equal(t, encodeCursor("dashboards", "tok-1"), vec.checkpoints[0].LastSeenKey)
+	assert.Equal(t, encodeCursor("folders", "tok-1"), vec.checkpoints[0].LastSeenKey)
 }
 
 func TestRunBackfillPage_ProviderFailureLeavesWholePageRetryable(t *testing.T) {
 	storage := newFakeStorage()
 	storage.listItems = []listItem{
-		{Namespace: "ns", Name: "empty", RV: 1, Value: []byte(`{"uid":"empty","title":"Empty"}`)},
-		makeListItem("ns", "a", 2),
-		makeListItem("ns", "b", 3),
+		{Group: "folder.grafana.app", Resource: "folders", Namespace: "ns", Name: "empty", RV: 1, Value: []byte(`{"apiVersion":"folder.grafana.app/v1","spec":{}}`)},
+		makeFolderListItem("ns", "a", 2),
+		makeFolderListItem("ns", "b", 3),
 	}
 	vec := newFakeVector()
-	b, text := newBackfillerWithEmbedder(t, storage, vec)
-	builder := collectionBuilder{Builder: dashboard.New(), partitionKey: "dashboards"}
-	vec.seedEmbeddedRows("ns", "test-model", "dashboards", "empty", builder.Version()-1, "panel/1")
+	b, text := newBackfillerWithEmbedder(t, storage, vec, newFolderBuilder())
+	builder := collectionBuilder{Builder: newFolderBuilder(), partitionKey: "folders"}
+	vec.seedEmbeddedRows("ns", "test-model", "folders", "empty", builder.Version()-1, "")
 	providerErr := errors.New("provider unavailable")
 	text.err = providerErr
 
@@ -140,13 +140,13 @@ func (v *pageWriteFailure) UpsertReplaceSubresources(ctx context.Context, ns, mo
 
 func TestRunBackfillPage_WriteFailureResumesAfterSuccessfulPrefix(t *testing.T) {
 	storage := newFakeStorage()
-	storage.listItems = []listItem{makeListItem("ns", "a", 1), makeListItem("ns", "b", 2), makeListItem("ns", "c", 3)}
+	storage.listItems = []listItem{makeFolderListItem("ns", "a", 1), makeFolderListItem("ns", "b", 2), makeFolderListItem("ns", "c", 3)}
 	vec := newFakeVector()
-	b, text := newBackfillerWithEmbedder(t, storage, vec)
+	b, text := newBackfillerWithEmbedder(t, storage, vec, newFolderBuilder())
 	writeErr := errors.New("database unavailable")
 	failing := &pageWriteFailure{fakeVector: vec, failUID: "b", err: writeErr}
 	b.vectorBackend = failing
-	builders := []collectionBuilder{{Builder: dashboard.New(), partitionKey: "dashboards"}}
+	builders := []collectionBuilder{{Builder: newFolderBuilder(), partitionKey: "folders"}}
 	job := vector.BackfillJob{ID: 1, Model: "test-model", StoppingRV: 100}
 
 	err := b.runBackfillJob(t.Context(), job, builders)
@@ -156,14 +156,19 @@ func TestRunBackfillPage_WriteFailureResumesAfterSuccessfulPrefix(t *testing.T) 
 	require.Len(t, vec.replaceCalls, 1)
 	assert.Equal(t, "a", vec.replaceCalls[0].UID)
 	require.Len(t, vec.checkpoints, 1)
-	assert.Equal(t, encodeCursor("dashboards", "tok-1"), vec.checkpoints[0].LastSeenKey)
+	assert.Equal(t, encodeCursor("folders", "tok-1"), vec.checkpoints[0].LastSeenKey)
 
 	job.LastSeenKey = vec.checkpoints[0].LastSeenKey
-	failing.failUID = ""
+	b, err = NewVectorBackfiller(Options{
+		Storage: storage, VectorBackend: vec, BatchEmbedder: embedder.NewBatchEmbedder(*newFakeEmbedder(text)),
+		Builders: []embed.Builder{newFolderBuilder()}, PageSize: 1,
+	})
+	require.NoError(t, err)
 	require.NoError(t, b.runBackfillJob(t.Context(), job, builders))
 
-	assert.Equal(t, 2, text.calls)
-	assert.Equal(t, []string{"", "tok-1"}, storage.listCalls)
+	assert.Equal(t, 3, text.calls)
+	assert.Equal(t, []string{"", "tok-1", "tok-2"}, storage.listCalls)
+	assert.Equal(t, []int64{50, 1, 1}, storage.listLimits)
 	require.Len(t, vec.replaceCalls, 3)
 	assert.Equal(t, "b", vec.replaceCalls[1].UID)
 	assert.Equal(t, "c", vec.replaceCalls[2].UID)
@@ -171,9 +176,9 @@ func TestRunBackfillPage_WriteFailureResumesAfterSuccessfulPrefix(t *testing.T) 
 
 func TestRunBackfillPage_CanceledAfterEmbeddingDoesNotWriteOrCheckpoint(t *testing.T) {
 	storage := newFakeStorage()
-	storage.listItems = []listItem{makeListItem("ns", "a", 1), makeListItem("ns", "b", 2)}
+	storage.listItems = []listItem{makeFolderListItem("ns", "a", 1), makeFolderListItem("ns", "b", 2)}
 	vec := newFakeVector()
-	b := newBackfiller(t, storage, vec)
+	b := newBackfillerWithBuilders(t, storage, vec, newFolderBuilder())
 	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 	setPageTextEmbedder(b, func(_ context.Context, input embedder.EmbedTextInput) (embedder.EmbedTextOutput, error) {
@@ -181,7 +186,7 @@ func TestRunBackfillPage_CanceledAfterEmbeddingDoesNotWriteOrCheckpoint(t *testi
 		return numberedEmbeddings(input), nil
 	})
 
-	_, err := b.runBackfillPage(ctx, vector.BackfillJob{ID: 1, Model: "test-model", StoppingRV: 100}, collectionBuilder{Builder: dashboard.New(), partitionKey: "dashboards"}, "")
+	_, err := b.runBackfillPage(ctx, vector.BackfillJob{ID: 1, Model: "test-model", StoppingRV: 100}, collectionBuilder{Builder: newFolderBuilder(), partitionKey: "folders"}, "")
 
 	require.ErrorIs(t, err, context.Canceled)
 	assert.Empty(t, vec.replaceCalls)
@@ -219,13 +224,13 @@ func (s *pageIteratorErrorStorage) ListIterator(ctx context.Context, req *resour
 
 func TestRunBackfillPage_TerminalIteratorErrorLeavesPageRetryable(t *testing.T) {
 	storage := newFakeStorage()
-	storage.listItems = []listItem{makeListItem("ns", "a", 1), makeListItem("ns", "b", 2)}
+	storage.listItems = []listItem{makeFolderListItem("ns", "a", 1), makeFolderListItem("ns", "b", 2)}
 	vec := newFakeVector()
-	b, text := newBackfillerWithEmbedder(t, storage, vec)
+	b, text := newBackfillerWithEmbedder(t, storage, vec, newFolderBuilder())
 	iteratorErr := errors.New("scan interrupted")
 	b.storage = &pageIteratorErrorStorage{fakeStorage: storage, err: iteratorErr}
 
-	_, err := b.runBackfillPage(t.Context(), vector.BackfillJob{ID: 1, Model: "test-model", StoppingRV: 100}, collectionBuilder{Builder: dashboard.New(), partitionKey: "dashboards"}, "")
+	_, err := b.runBackfillPage(t.Context(), vector.BackfillJob{ID: 1, Model: "test-model", StoppingRV: 100}, collectionBuilder{Builder: newFolderBuilder(), partitionKey: "folders"}, "")
 
 	require.ErrorIs(t, err, iteratorErr)
 	assert.Zero(t, text.calls)
@@ -236,20 +241,20 @@ func TestRunBackfillPage_TerminalIteratorErrorLeavesPageRetryable(t *testing.T) 
 func TestRunBackfillPage_RechecksLiveStateAfterProvider(t *testing.T) {
 	storage := newFakeStorage()
 	storage.listItems = []listItem{
-		makeListItem("ns", "changed", 1),
-		makeListItem("ns", "deleted", 2),
-		{Namespace: "ns", Name: "empty", RV: 3, Value: []byte(`{"uid":"empty","title":"Empty"}`)},
-		makeListItem("ns", "identical", 4),
-		makeListItem("ns", "good", 5),
+		makeFolderListItem("ns", "changed", 1),
+		makeFolderListItem("ns", "deleted", 2),
+		{Group: "folder.grafana.app", Resource: "folders", Namespace: "ns", Name: "empty", RV: 3, Value: []byte(`{"apiVersion":"folder.grafana.app/v1","spec":{}}`)},
+		makeFolderListItem("ns", "identical", 4),
+		makeFolderListItem("ns", "good", 5),
 	}
 	vec := newFakeVector()
-	b := newBackfiller(t, storage, vec)
-	builder := collectionBuilder{Builder: dashboard.New(), partitionKey: "dashboards"}
-	vec.seedEmbeddedRows("ns", "test-model", "dashboards", "empty", builder.Version()-1, "panel/1")
-	items, err := builder.Extract(t.Context(), &resourcepb.ResourceKey{Name: "identical"}, storage.listItems[3].Value, "")
+	b := newBackfillerWithBuilders(t, storage, vec, newFolderBuilder())
+	builder := collectionBuilder{Builder: newFolderBuilder(), partitionKey: "folders"}
+	vec.seedEmbeddedRows("ns", "test-model", "folders", "empty", builder.Version()-1, "")
+	items, err := builder.Extract(t.Context(), &resourcepb.ResourceKey{Group: builder.Group(), Resource: builder.Resource(), Name: "identical"}, storage.listItems[3].Value, "")
 	require.NoError(t, err)
 	require.Len(t, items, 1)
-	vec.seedStoredContent("ns", "test-model", "dashboards", "identical", items[0].Subresource, items[0].Content, builder.Version()-1)
+	vec.seedStoredContent("ns", "test-model", "folders", "identical", items[0].Subresource, items[0].Content, builder.Version()-1)
 	setPageTextEmbedder(b, func(_ context.Context, input embedder.EmbedTextInput) (embedder.EmbedTextOutput, error) {
 		require.Len(t, input.Texts, 3)
 		assert.Empty(t, vec.updateCalls)
@@ -275,12 +280,12 @@ func TestRunBackfillPage_RechecksLiveStateAfterProvider(t *testing.T) {
 func TestRunBackfillPage_PermanentExtractionFailureDoesNotShiftResults(t *testing.T) {
 	storage := newFakeStorage()
 	storage.listItems = []listItem{
-		makeListItem("ns", "a", 1),
-		{Namespace: "ns", Name: "bad", RV: 2, Value: []byte(`{"uid":`)},
-		makeListItem("ns", "b", 3),
+		makeFolderListItem("ns", "a", 1),
+		{Group: "folder.grafana.app", Resource: "folders", Namespace: "ns", Name: "bad", RV: 2, Value: []byte(`{"spec":`)},
+		makeFolderListItem("ns", "b", 3),
 	}
 	vec := newFakeVector()
-	b := newBackfiller(t, storage, vec)
+	b := newBackfillerWithBuilders(t, storage, vec, newFolderBuilder())
 	calls := 0
 	setPageTextEmbedder(b, func(_ context.Context, input embedder.EmbedTextInput) (embedder.EmbedTextOutput, error) {
 		calls++
@@ -288,7 +293,7 @@ func TestRunBackfillPage_PermanentExtractionFailureDoesNotShiftResults(t *testin
 		return numberedEmbeddings(input), nil
 	})
 
-	_, err := b.runBackfillPage(t.Context(), vector.BackfillJob{ID: 1, Model: "test-model", StoppingRV: 100}, collectionBuilder{Builder: dashboard.New(), partitionKey: "dashboards"}, "")
+	_, err := b.runBackfillPage(t.Context(), vector.BackfillJob{ID: 1, Model: "test-model", StoppingRV: 100}, collectionBuilder{Builder: newFolderBuilder(), partitionKey: "folders"}, "")
 
 	require.NoError(t, err)
 	assert.Equal(t, 1, calls)
@@ -302,18 +307,110 @@ func TestRunBackfillPage_PermanentExtractionFailureDoesNotShiftResults(t *testin
 
 func TestRunBackfillJob_BatchesOncePerExactPage(t *testing.T) {
 	storage := newFakeStorage()
-	storage.listItems = make([]listItem, 2*backfillPageSize)
+	storage.listItems = make([]listItem, 2*defaultBackfillPageSize)
 	for i := range storage.listItems {
-		storage.listItems[i] = makeListItem("ns", fmt.Sprintf("dashboard-%03d", i), int64(i+1))
+		storage.listItems[i] = makeFolderListItem("ns", fmt.Sprintf("folder-%03d", i), int64(i+1))
 	}
 	vec := newFakeVector()
-	b, text := newBackfillerWithEmbedder(t, storage, vec)
+	b, text := newBackfillerWithEmbedder(t, storage, vec, newFolderBuilder())
 
-	err := b.runBackfillJob(t.Context(), vector.BackfillJob{ID: 1, Model: "test-model", StoppingRV: 1000}, []collectionBuilder{{Builder: dashboard.New(), partitionKey: "dashboards"}})
+	err := b.runBackfillJob(t.Context(), vector.BackfillJob{ID: 1, Model: "test-model", StoppingRV: 1000}, []collectionBuilder{{Builder: newFolderBuilder(), partitionKey: "folders"}})
 
 	require.NoError(t, err)
 	assert.Equal(t, 2, text.calls)
 	assert.Len(t, storage.listCalls, 2)
-	assert.Len(t, vec.replaceCalls, 2*backfillPageSize)
-	assert.Len(t, vec.checkpoints, 2*backfillPageSize-1)
+	assert.Len(t, vec.replaceCalls, 2*defaultBackfillPageSize)
+	assert.Len(t, vec.checkpoints, 2*defaultBackfillPageSize-1)
+}
+
+func TestRunBackfillJob_GenericPageSize(t *testing.T) {
+	for _, tc := range []struct {
+		name           string
+		pageSize       int
+		wantLimit      int64
+		wantBatchSizes []int
+	}{
+		{name: "default", wantLimit: 50, wantBatchSizes: []int{50, 7}},
+		{name: "negative uses default", pageSize: -1, wantLimit: 50, wantBatchSizes: []int{50, 7}},
+		{name: "configured", pageSize: 2, wantLimit: 2, wantBatchSizes: []int{2, 2, 1}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			storage := newFakeStorage()
+			for _, count := range tc.wantBatchSizes {
+				for range count {
+					i := len(storage.listItems)
+					storage.listItems = append(storage.listItems, makeFolderListItem("ns", fmt.Sprintf("folder-%03d", i), int64(i+1)))
+				}
+			}
+			vec := newFakeVector()
+			builder := newFolderBuilder()
+			b, err := NewVectorBackfiller(Options{
+				Storage: storage, VectorBackend: vec, BatchEmbedder: embedder.NewBatchEmbedder(*newFakeEmbedder(&fakeText{dim: 4})),
+				Builders: []embed.Builder{builder}, PageSize: tc.pageSize,
+			})
+			require.NoError(t, err)
+			var batchSizes []int
+			setPageTextEmbedder(b, func(_ context.Context, input embedder.EmbedTextInput) (embedder.EmbedTextOutput, error) {
+				batchSizes = append(batchSizes, len(input.Texts))
+				return numberedEmbeddings(input), nil
+			})
+
+			err = b.runBackfillJob(t.Context(), vector.BackfillJob{ID: 1, Model: "test-model", StoppingRV: 1000}, []collectionBuilder{{Builder: builder, partitionKey: "folders"}})
+
+			require.NoError(t, err)
+			assert.Equal(t, tc.wantBatchSizes, batchSizes)
+			require.Len(t, storage.listLimits, len(tc.wantBatchSizes))
+			for _, limit := range storage.listLimits {
+				assert.Equal(t, tc.wantLimit, limit)
+			}
+			assert.Len(t, vec.replaceCalls, len(storage.listItems))
+			assert.Len(t, vec.checkpoints, len(storage.listItems)-1)
+		})
+	}
+}
+
+func TestRunBackfillJob_DashboardsUseOneResourcePerPage(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{
+		{Namespace: "ns-a", Name: "shared", RV: 11, Value: []byte(`{"uid":"shared","title":"First","panels":[{"id":2,"title":"CPU"},{"id":3,"title":"Memory"}]}`)},
+		makeListItem("ns-b", "shared", 23),
+	}
+	vec := newFakeVector()
+	builder := dashboard.New()
+	b, err := NewVectorBackfiller(Options{
+		Storage: storage, VectorBackend: vec, BatchEmbedder: embedder.NewBatchEmbedder(*newFakeEmbedder(&fakeText{dim: 4})),
+		Builders: []embed.Builder{builder}, PageSize: 25,
+	})
+	require.NoError(t, err)
+	var batchSizes []int
+	setPageTextEmbedder(b, func(_ context.Context, input embedder.EmbedTextInput) (embedder.EmbedTextOutput, error) {
+		assert.Len(t, vec.replaceCalls, len(batchSizes), "the preceding dashboard is written before the next page is embedded")
+		batchSizes = append(batchSizes, len(input.Texts))
+		return numberedEmbeddings(input), nil
+	})
+
+	err = b.runBackfillJob(t.Context(), vector.BackfillJob{ID: 1, Model: "test-model", StoppingRV: 100}, []collectionBuilder{{Builder: builder, partitionKey: "custom_dashboard_partition"}})
+
+	require.NoError(t, err)
+	assert.Equal(t, []int{2, 1}, batchSizes)
+	assert.Equal(t, []int64{1, 1}, storage.listLimits)
+	assert.Equal(t, []string{"", "tok-1"}, storage.listCalls)
+	require.Len(t, vec.replaceCalls, 2, "all panels of each dashboard must be written together")
+	for i, call := range vec.replaceCalls {
+		source := storage.listItems[i]
+		assert.Equal(t, source.Namespace, call.Namespace)
+		assert.Equal(t, source.Name, call.UID)
+		require.Len(t, call.Changed, 2-i)
+		for j, row := range call.Changed {
+			assert.Equal(t, source.Namespace, row.Namespace)
+			assert.Equal(t, source.Name, row.UID)
+			assert.Equal(t, source.RV, row.ResourceVersion)
+			assert.Equal(t, builder.Version(), row.ContentVersion)
+			assert.Equal(t, "custom_dashboard_partition", row.Resource)
+			assert.Equal(t, []float32{float32(j + 1)}, row.Embedding)
+		}
+	}
+	assert.Equal(t, []string{"panel/2", "panel/3"}, vec.replaceCalls[0].Desired)
+	require.Len(t, vec.checkpoints, 1)
+	assert.Equal(t, encodeCursor("custom_dashboard_partition", "tok-1"), vec.checkpoints[0].LastSeenKey)
 }
