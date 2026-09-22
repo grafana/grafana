@@ -8,13 +8,6 @@ import {
 
 import { type NotebookCellTimeRangeSpec } from '../../types';
 
-/**
- * A raw SceneTimeRange always wires up browser-URL sync unconditionally, which is right for the
- * notebook's own document-level range but wrong for a per-cell override — it would collide with the
- * document range for the same URL keys once active, and the URL would win over the saved value on
- * reload. PanelTimeRange (the dashboard's own per-panel override) avoids this the same way, by not
- * extending SceneTimeRange at all; this instead overrides the inherited `urlSync` getter.
- */
 class NotebookCellTimeRange extends SceneTimeRange {
   // Typed to match the inherited getter, not narrowed to `undefined` alone — narrowing it breaks
   // structural compatibility with SceneTimeRange.

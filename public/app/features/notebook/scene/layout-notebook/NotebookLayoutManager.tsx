@@ -38,9 +38,9 @@ import {
 import { NOTEBOOK_EDIT_KIND, type NotebookEditAction, type NotebookEditHistory } from '../NotebookEditHistory';
 import { isNotebookScene } from '../isNotebookScene';
 
-import { buildCellSceneTimeRange, buildCellTimeRangeSpec } from './cellTimeRange';
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookDocumentHeader } from './NotebookDocumentHeader';
+import { buildCellSceneTimeRange, buildCellTimeRangeSpec } from './cellTimeRange';
 import { type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
 import { getCellDropIndicator, NotebookCellFrame, type NotebookDragState } from './edit/NotebookCellFrame';
 import { NotebookFooterAddCell } from './edit/NotebookFooterAddCell';
@@ -456,10 +456,6 @@ export class NotebookLayoutManager
     });
   }
 
-  /**
-   * Sets or clears `cell`'s own time range. Undoable while editing (see runQueryEdit); applied
-   * directly with no history entry while only viewing, like the document-level time/refresh pickers.
-   */
   public setCellTimeRange(cell: NotebookCellItem, spec: NotebookCellTimeRangeSpec | undefined): void {
     const before = { $timeRange: cell.state.$timeRange, timePicker: cell.state.timePicker };
     const after = spec

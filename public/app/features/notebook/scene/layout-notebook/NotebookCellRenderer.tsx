@@ -5,7 +5,7 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { SceneDataTransformer, type VizPanel } from '@grafana/scenes';
-import { floatingUtils, Portal, Stack, useStyles2 } from '@grafana/ui';
+import { Box, floatingUtils, Portal, Stack, useStyles2 } from '@grafana/ui';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
 import { type CellContentKind } from 'app/features/notebook/types';
@@ -101,11 +101,10 @@ function PanelCell({
   return (
     <Stack direction="column" gap={1}>
       {isEditing && isEditableQueryPanel(panel) && <PanelQueryEditor cell={cell} panel={panel} autoFocus={autoFocus} />}
-      {/* Edit mode gets the clock inline with "Add query"/"Run query" instead — see PanelQueryEditor. */}
       {!isEditing && (
-        <div className={styles.cellToolbar}>
+        <Box display="flex" justifyContent="flex-end">
           <NotebookCellTimeRangeControl cell={cell} variant="label" />
-        </div>
+        </Box>
       )}
       <div className={styles.panel}>
         <panel.Component model={panel} />
@@ -324,10 +323,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   panel: css({
     height: PANEL_HEIGHT,
     position: 'relative',
-  }),
-  cellToolbar: css({
-    display: 'flex',
-    justifyContent: 'flex-end',
   }),
   content: css({
     padding: theme.spacing(1, 0),
