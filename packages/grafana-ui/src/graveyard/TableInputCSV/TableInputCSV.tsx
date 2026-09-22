@@ -111,6 +111,7 @@ export const TableInputCSV = withTheme2(UnThemedTableInputCSV);
 TableInputCSV.displayName = 'TableInputCSV';
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return {
     tableInputCsv: css({
       position: 'relative',
@@ -119,15 +120,21 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       height: '100%',
       width: '100%',
     }),
-    footer: css({
-      position: 'absolute',
-      bottom: '15px',
-      right: '15px',
-      border: `1px solid ${theme.colors.success.border}`,
-      background: theme.colors.success.main,
-      color: theme.colors.success.contrastText,
-      padding: `1px ${theme.spacing(0.5)}`,
-      fontSize: '80%',
-    }),
+    footer: css(
+      {
+        position: 'absolute',
+        bottom: '15px',
+        right: '15px',
+        border: `1px solid ${theme.colors.success.border}`,
+        background: theme.colors.success.main,
+        color: theme.colors.success.contrastText,
+        padding: `1px ${theme.spacing(0.5)}`,
+        fontSize: '80%',
+        borderRadius: theme.shape.radius.md,
+      },
+      visualRefreshEnabled && {
+        background: theme.colors.success.background,
+      }
+    ),
   };
 });

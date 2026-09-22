@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/runtime"
 	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -38,31 +39,6 @@ func (f *identitiesFake) GetUserInternalID(_ context.Context, _ claims.Namespace
 
 func testCtx() context.Context {
 	return genericapirequest.WithNamespace(context.Background(), "default")
-}
-
-func TestEncodeName(t *testing.T) {
-	tests := []struct {
-		userUID    string
-		authModule string
-		want       string
-	}{
-		{"abc123", "ldap", "abc123.ldap"},
-		{"abc123", "oauth_github", "abc123.oauth-github"},
-		{"abc123", "auth.saml", "abc123.auth.saml"},
-	}
-	for _, tt := range tests {
-		require.Equal(t, tt.want, EncodeName(tt.userUID, tt.authModule))
-
-		userUID, authModule, ok := decodeName(tt.want)
-		require.True(t, ok)
-		require.Equal(t, tt.userUID, userUID)
-		require.Equal(t, tt.authModule, authModule)
-	}
-
-	t.Run("no separator", func(t *testing.T) {
-		_, _, ok := decodeName("no-dot-in-this-name")
-		require.False(t, ok)
-	})
 }
 
 func TestLegacyStore_Get(t *testing.T) {
@@ -297,5 +273,63 @@ func TestLegacyStore_List(t *testing.T) {
 		list, ok := obj.(*iamv0alpha1.AuthInfoList)
 		require.True(t, ok)
 		require.Empty(t, list.Items)
+	})
+}
+
+func TestLegacyStore_Delete(t *testing.T) {
+	identities := &identitiesFake{users: map[string]int64{"user-uid": 1}}
+	created := time.Unix(1000, 0).UTC()
+
+	t.Run("deletes the named module", func(t *testing.T) {
+		authInfoStore := authinfotest.NewMockAuthInfoStore(t)
+		authInfoStore.On("GetAuthInfo", mock.Anything, &login.GetAuthInfoQuery{UserId: 1, AuthModule: "oauth_github"}).
+			Return(&login.UserAuth{UserId: 1, UserUID: "user-uid", AuthModule: "oauth_github", AuthId: "gh-123", Created: created}, nil)
+		authInfoStore.On("DeleteAuthInfo", mock.Anything, &login.DeleteAuthInfoCommand{
+			UserAuth: &login.UserAuth{UserId: 1, AuthModule: "oauth_github"},
+		}).Return(nil)
+
+		store := NewLegacyStore(identities, authInfoStore, noop.NewTracerProvider().Tracer("test"))
+
+		obj, immediate, err := store.Delete(testCtx(), "user-uid.oauth-github", nil, &metav1.DeleteOptions{})
+		require.NoError(t, err)
+		require.True(t, immediate)
+
+		authInfo, ok := obj.(*iamv0alpha1.AuthInfo)
+		require.True(t, ok)
+		require.Equal(t, "user-uid.oauth-github", authInfo.Name)
+	})
+
+	t.Run("not found when the user doesn't exist", func(t *testing.T) {
+		authInfoStore := authinfotest.NewMockAuthInfoStore(t)
+		store := NewLegacyStore(identities, authInfoStore, noop.NewTracerProvider().Tracer("test"))
+
+		_, _, err := store.Delete(testCtx(), "no-such-user.ldap", nil, &metav1.DeleteOptions{})
+		require.Error(t, err)
+		require.True(t, apierrors.IsNotFound(err))
+	})
+
+	t.Run("not found when the user has no such module", func(t *testing.T) {
+		authInfoStore := authinfotest.NewMockAuthInfoStore(t)
+		authInfoStore.On("GetAuthInfo", mock.Anything, &login.GetAuthInfoQuery{UserId: 1, AuthModule: "oauth_github"}).
+			Return(nil, user.ErrUserNotFound)
+		store := NewLegacyStore(identities, authInfoStore, noop.NewTracerProvider().Tracer("test"))
+
+		_, _, err := store.Delete(testCtx(), "user-uid.oauth-github", nil, &metav1.DeleteOptions{})
+		require.Error(t, err)
+		require.True(t, apierrors.IsNotFound(err))
+	})
+
+	t.Run("propagates a deleteValidation rejection without deleting", func(t *testing.T) {
+		authInfoStore := authinfotest.NewMockAuthInfoStore(t)
+		authInfoStore.On("GetAuthInfo", mock.Anything, &login.GetAuthInfoQuery{UserId: 1, AuthModule: "oauth_github"}).
+			Return(&login.UserAuth{UserId: 1, UserUID: "user-uid", AuthModule: "oauth_github", AuthId: "gh-123", Created: created}, nil)
+
+		store := NewLegacyStore(identities, authInfoStore, noop.NewTracerProvider().Tracer("test"))
+
+		wantErr := apierrors.NewBadRequest("rejected")
+		_, _, err := store.Delete(testCtx(), "user-uid.oauth-github", func(context.Context, runtime.Object) error {
+			return wantErr
+		}, &metav1.DeleteOptions{})
+		require.ErrorIs(t, err, wantErr)
 	})
 }

@@ -29,7 +29,6 @@ func TestIntegrationProvisioning_ResourceKinds_FilesEndpoint(t *testing.T) {
 	helper := sharedHelper(t)
 
 	for _, rk := range resourceKinds {
-		rk := rk
 		t.Run(rk.name, func(t *testing.T) {
 			client := rk.client(t, helper)
 

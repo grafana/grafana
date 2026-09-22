@@ -321,6 +321,18 @@ describe('v2 dashboard API', () => {
       expect(requestBody.metadata.annotations[AnnoKeyMessage]).toBe('Save without folder');
     });
 
+    it('does not send resourceVersion when creating a dashboard', async () => {
+      const api = new K8sDashboardV2API();
+      await api.saveDashboard({
+        dashboard: defaultDashboardV2Spec(),
+        k8s: { resourceVersion: '0' },
+      });
+
+      expect(mockPut).not.toHaveBeenCalled();
+      expect(mockPost).toHaveBeenCalledTimes(1);
+      expect(mockPost.mock.calls[0][1].metadata).not.toHaveProperty('resourceVersion');
+    });
+
     it.each([
       ['update path (metadata.name set)', { name: 'imported-dash' }, mockPut],
       ['create path (metadata.name unset)', {}, mockPost],

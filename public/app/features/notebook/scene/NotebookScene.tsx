@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { isEqual } from 'lodash';
 
 import { CoreApp, type DataQueryRequest, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -35,12 +36,12 @@ import {
   type NotebookEditSessionSource,
 } from '../analytics/types';
 import { canEditNotebooks } from '../permissions';
+import { NotebookToolbar } from '../toolbar/NotebookToolbar';
 import { NOTEBOOK_EDIT_PARAM } from '../urls';
 
 import { changesTimeSettings, NotebookAutosave } from './NotebookAutosave';
-import { NotebookEditHistory } from './NotebookEditHistory';
+import { NOTEBOOK_EDIT_KIND, NotebookEditHistory } from './NotebookEditHistory';
 import { NotebookEditHistoryControls } from './NotebookEditHistoryControls';
-import { NotebookEditToggle } from './NotebookEditToggle';
 import { useIsNotebookEmbedded } from './NotebookEmbeddedContext';
 import { NotebookSaveStatus } from './NotebookSaveStatus';
 import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
@@ -250,7 +251,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
 
   /**
    * Permission is checked here rather than only where the toggle renders, so no caller — including
-   * a hand-typed `?edit=true` — can force edit mode for a user without `dashboards:write`.
+   * a hand-typed `?edit=true` — can force edit mode for a user without `notebooks:write`.
    */
   public onEnterEditMode = (source: NotebookEditSessionSource = NOTEBOOK_EDIT_SESSION_SOURCE.TOGGLE) => {
     if (!canEditNotebooks()) {
@@ -346,9 +347,30 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
   /**
    * The scene stays the single writer for tags — it is what transformNotebookSceneToSaveModel reads.
    * The layout manager's copy is refreshed by the subscription above, so the two cannot drift.
+   *
+   * Recorded on editHistory like a cell edit, so an accidental tag add/remove is undoable. TagFilter
+   * is used with isClearable={false} and no bulk-clear control, so every call here already represents
+   * exactly one add or one remove — unlike cell content, there is nothing to coalesce.
    */
   public onTagsChange = (tags: string[]) => {
-    this.setState({ tags });
+    const previous = this.state.tags ?? [];
+    if (isEqual(previous, tags)) {
+      return;
+    }
+
+    // Closes out any cell edit still coalescing, so it lands as its own undo step under this one
+    // instead of being interrupted by it.
+    this.state.body.commitPendingEdits();
+
+    this.editHistory.execute({
+      label:
+        tags.length > previous.length
+          ? t('notebooks.history.add-tag', 'Add tag')
+          : t('notebooks.history.remove-tag', 'Remove tag'),
+      kind: NOTEBOOK_EDIT_KIND.TAGS,
+      perform: () => this.setState({ tags }),
+      undo: () => this.setState({ tags: previous }),
+    });
   };
 
   /**
@@ -392,7 +414,7 @@ function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
   // to come from the chrome rather than a constant.
   const headerHeight = useChromeHeaderHeight();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
-  const { body, timePicker, refreshPicker, hideTimeControls, overlay, isEditing } = model.useState();
+  const { body, timePicker, refreshPicker, hideTimeControls, overlay, isEditing, uid } = model.useState();
   /**
    * From the tree, not the scene. The same notebook can be rendered on the route and in a host with
    * no app header at the same time, and those two share one scene object — so the answer has to come
@@ -411,13 +433,13 @@ function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
             be visible and retryable there too. This renders nothing until there is something to say. */}
         <NotebookSaveStatus autosave={model.autosave} />
         {isEditing && <NotebookEditHistoryControls history={model.editHistory} />}
-        <NotebookEditToggle notebook={model} />
         {!hideTimeControls && (
           <>
             <timePicker.Component model={timePicker} />
             <refreshPicker.Component model={refreshPicker} />
           </>
         )}
+        <NotebookToolbar uid={uid} scene={model} />
       </div>
       <body.Component model={body} />
       {overlay && <overlay.Component model={overlay} />}
@@ -459,7 +481,9 @@ const getStyles = (theme: GrafanaTheme2, headerHeight: number, visualRefreshEnab
   controls: css({
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    // `safe`, because a plain flex-end row overflows to the left, over the docked nav.
+    justifyContent: 'safe flex-end',
+    flexWrap: 'wrap',
     gap: theme.spacing(1),
     padding: theme.spacing(1, 2),
     // A sticky row is transparent by default, so the notebook would scroll visibly through it. These two

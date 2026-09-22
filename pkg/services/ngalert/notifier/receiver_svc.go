@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 
+	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/alerting/receivers/schema"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -41,6 +42,7 @@ type ReceiverService struct {
 	includeImported        bool
 	allowedIntegrations    map[schema.IntegrationType]struct{}
 	emailValidator         EmailIntegrationValidator
+	amStatusFetcher        amReceiverStatusFetcher
 }
 
 type routeService interface {
@@ -57,6 +59,22 @@ type alertRuleNotificationSettingsStore interface {
 type secretService interface {
 	Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error)
 	Decrypt(ctx context.Context, payload []byte) ([]byte, error)
+}
+
+// amReceiverStatusFetcher retrieves the current receiver statuses (active state and per-integration
+// notification results) from the org's running Alertmanager instance.
+type amReceiverStatusFetcher interface {
+	GetReceiverStatuses(ctx context.Context, orgID int64) ([]alertingModels.ReceiverStatus, error)
+}
+
+// NoopReceiverStatusFetcher is an amReceiverStatusFetcher that reports no receiver statuses. Use it for
+// ReceiverService instances that never need to serve AM-derived receiver status, e.g. file-based provisioning.
+type NoopReceiverStatusFetcher struct{}
+
+var _ amReceiverStatusFetcher = &NoopReceiverStatusFetcher{}
+
+func (NoopReceiverStatusFetcher) GetReceiverStatuses(_ context.Context, _ int64) ([]alertingModels.ReceiverStatus, error) {
+	return nil, nil
 }
 
 // receiverAccessControlService provides access control for receivers.
@@ -108,6 +126,7 @@ func NewReceiverService(
 	includeStaged bool,
 	allowedIntegrations map[schema.IntegrationType]struct{},
 	emailValidator EmailIntegrationValidator,
+	amStatusFetcher amReceiverStatusFetcher,
 ) *ReceiverService {
 	return &ReceiverService{
 		authz:                  authz,
@@ -124,6 +143,7 @@ func NewReceiverService(
 		includeImported:        includeStaged,
 		allowedIntegrations:    allowedIntegrations,
 		emailValidator:         emailValidator,
+		amStatusFetcher:        amStatusFetcher,
 	}
 }
 
@@ -138,10 +158,6 @@ func (rs *ReceiverService) checkAllowedIntegrations(r *models.Receiver) error {
 		}
 	}
 	return nil
-}
-
-func (rs *ReceiverService) loadProvenances(ctx context.Context, orgID int64) (map[string]models.Provenance, error) {
-	return rs.provisioningStore.GetProvenances(ctx, orgID, (&models.Integration{}).ResourceType())
 }
 
 // GetReceiver returns a receiver by its UID.
@@ -162,12 +178,11 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, uid string, decrypt 
 		return nil, err
 	}
 
-	prov, err := rs.loadProvenances(ctx, user.GetOrgID())
-	if err != nil {
+	if err := rs.assignProvenance(ctx, user.GetOrgID(), revision); err != nil {
 		return nil, err
 	}
 
-	rcv, err := revision.GetReceiver(uid, prov)
+	rcv, err := revision.GetReceiver(uid)
 	if err != nil {
 		if errors.Is(err, models.ErrReceiverNotFound) && rs.includeImported {
 			imported := rs.getImportedReceivers(ctx, span, []string{uid}, revision)
@@ -221,20 +236,18 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 
 	uids := make([]string, 0, len(q.Names))
 	for _, name := range q.Names {
-		uids = append(uids, legacy_storage.NameToUid(name))
+		uids = append(uids, string(v1.ReceiverUID(name))) // TODO: This won't work with static UIDs.
 	}
 
 	revision, err := rs.cfgStore.Get(ctx, q.OrgID)
 	if err != nil {
 		return nil, err
 	}
-
-	prov, err := rs.loadProvenances(ctx, q.OrgID)
-	if err != nil {
+	if err := rs.assignProvenance(ctx, q.OrgID, revision); err != nil {
 		return nil, err
 	}
 
-	receivers, err := revision.GetReceivers(uids, prov)
+	receivers, err := revision.GetReceivers(uids)
 	if err != nil {
 		return nil, err
 	}
@@ -296,12 +309,11 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 		return err
 	}
 
-	prov, err := rs.loadProvenances(ctx, orgID)
-	if err != nil {
+	if err := rs.assignProvenance(ctx, orgID, revision); err != nil {
 		return err
 	}
 
-	existing, err := revision.GetReceiver(uid, prov)
+	existing, err := revision.GetReceiver(uid)
 	if err != nil {
 		if !errors.Is(err, models.ErrReceiverNotFound) {
 			return err
@@ -410,7 +422,7 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	}
 
 	// Generate UID from name.
-	createdReceiver.UID = legacy_storage.NameToUid(createdReceiver.Name)
+	createdReceiver.UID = string(v1.ReceiverUID(createdReceiver.Name))
 
 	result, err = revision.CreateReceiver(&createdReceiver)
 	if err != nil {
@@ -465,12 +477,11 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
-	prov, err := rs.loadProvenances(ctx, orgID)
-	if err != nil {
+	if err := rs.assignProvenance(ctx, orgID, revision); err != nil {
 		return nil, err
 	}
 
-	existing, err := revision.GetReceiver(r.GetUID(), prov)
+	existing, err := revision.GetReceiver(r.GetUID())
 	if err != nil {
 		if errors.Is(err, models.ErrReceiverNotFound) && rs.includeImported {
 			// try to get the imported receiver and return a specific error if it exists
@@ -556,14 +567,14 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 				return err
 			}
 			// Update receiver permissions
-			permissionsUpdated, err := rs.resourcePermissions.CopyPermissions(ctx, orgID, user, legacy_storage.NameToUid(existing.Name), legacy_storage.NameToUid(r.Name))
+			permissionsUpdated, err := rs.resourcePermissions.CopyPermissions(ctx, orgID, user, existing.UID, result.UID)
 			if err != nil {
 				return err
 			}
 			if permissionsUpdated > 0 {
 				logger.Info("Moved custom receiver permissions", "oldName", existing.Name, "count", permissionsUpdated)
 			}
-			if err := rs.resourcePermissions.DeleteResourcePermissions(ctx, orgID, legacy_storage.NameToUid(existing.Name)); err != nil {
+			if err := rs.resourcePermissions.DeleteResourcePermissions(ctx, orgID, existing.UID); err != nil {
 				return err
 			}
 		}
@@ -684,6 +695,83 @@ func (rs *ReceiverService) InUseMetadata(ctx context.Context, orgID int64, recei
 	return results, nil
 }
 
+// StatusMetadata returns the receiver statuses currently reported by the org's Alertmanager for the given Receivers.
+func (rs *ReceiverService) StatusMetadata(ctx context.Context, orgID int64, receivers ...*models.Receiver) (map[v1.ResourceUID]alertingModels.ReceiverStatus, error) {
+	ctx, span := rs.tracer.Start(ctx, "alerting.receivers.statusMetadata", trace.WithAttributes(
+		attribute.Int("count", len(receivers)),
+	))
+	defer span.End()
+
+	statuses, err := rs.amStatusFetcher.GetReceiverStatuses(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+	if len(statuses) == 0 {
+		return nil, nil
+	}
+
+	statusesByName := make(map[string]alertingModels.ReceiverStatus, len(statuses))
+	for _, s := range statuses {
+		statusesByName[s.Name] = s
+	}
+	result := make(map[v1.ResourceUID]alertingModels.ReceiverStatus, len(receivers))
+	for _, r := range receivers {
+		// Lookups done by name since that is all the AM receiver status has access to.
+		if s, ok := statusesByName[r.Name]; ok {
+			result[v1.ResourceUID(r.UID)] = s
+		}
+	}
+
+	return result, nil
+}
+
+// GetReceiverStatuses wrapper around StatusMetadata that returns the receiver statuses for all Receivers that the user
+// has read permissions on.
+// Eventually, if we move these statuses directly to the receiver API resource responses, instead of through a separate
+// API call, this method won't be necessary anymore.
+func (rs *ReceiverService) GetReceiverStatuses(ctx context.Context, orgID int64, user identity.Requester) ([]alertingModels.ReceiverStatus, error) {
+	ctx, span := rs.tracer.Start(ctx, "alerting.receivers.statusMetadata", trace.WithAttributes(
+		attribute.Int64("query_org_id", orgID),
+	))
+	defer span.End()
+
+	revision, err := rs.cfgStore.Get(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+	// No need for provenance here, so we skip the DB call.
+
+	receivers, err := revision.GetReceivers(nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if rs.includeImported {
+		imported := rs.getImportedReceivers(ctx, span, nil, revision)
+		receivers = append(receivers, imported...)
+	}
+
+	filtered, err := rs.authz.FilterRead(ctx, user, receivers...)
+	if err != nil {
+		return nil, err
+	}
+	// No need to encrypt/decrypt since we just need the Name.
+
+	statuses, err := rs.StatusMetadata(ctx, orgID, filtered...)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]alertingModels.ReceiverStatus, 0, len(statuses))
+	for _, r := range receivers {
+		if s, ok := statuses[v1.ResourceUID(r.UID)]; ok {
+			result = append(result, s)
+		}
+	}
+
+	return result, nil
+}
+
 func removedIntegrations(old, new *models.Receiver) []*models.Integration {
 	updatedUIDs := make(map[string]struct{}, len(new.Integrations))
 	for _, integration := range new.Integrations {
@@ -715,6 +803,20 @@ func (rs *ReceiverService) deleteProvenances(ctx context.Context, orgID int64, i
 			return err
 		}
 	}
+	return nil
+}
+
+func (rs *ReceiverService) assignProvenance(ctx context.Context, orgID int64, rev *legacy_storage.ConfigRevision) error {
+	if len(rev.Config.Receivers) == 0 {
+		return nil
+	}
+
+	provenances, err := rs.provisioningStore.GetProvenances(ctx, orgID, (&models.Integration{}).ResourceType())
+	if err != nil {
+		return err
+	}
+
+	rev.AssignReceiverProvenances(provenances)
 	return nil
 }
 
