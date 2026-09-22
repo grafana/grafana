@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { memo, useCallback, useId, useMemo, useRef, useState } from 'react';
+import { useDebounce } from 'react-use';
 
 import { type DataSourceRef, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -11,6 +12,11 @@ import { blockId } from './blockId';
 import { dsKey, rangeKey } from './data/metricResourceClient';
 import { useMetricCatalog } from './data/useMetricCatalog';
 import { useVisibleBatch } from './hooks/useVisibleBatch';
+import {
+  trackSignalExplorerMetricExpanded,
+  trackSignalExplorerMetricsMetadataViewed,
+  trackSignalExplorerSearchPerformed,
+} from './tracking';
 import { type MetricSelection } from './types';
 
 interface Props {
@@ -24,6 +30,8 @@ interface Props {
    */
   dsUid?: string;
   dsType?: string;
+  /** Cards on screen, reported with this list's events so stacking can be correlated with engagement. */
+  stackedQueriesCount: number;
   timeRange: TimeRange;
   /** Name of the metric the detail panel is showing, if it belongs to this list. */
   selectedMetric?: string;
@@ -50,6 +58,7 @@ export const MetricsList = memo(function MetricsList({
   refId,
   dsUid,
   dsType,
+  stackedQueriesCount,
   timeRange,
   selectedMetric,
   onSelectMetric,
@@ -67,12 +76,31 @@ export const MetricsList = memo(function MetricsList({
   const [expandedMetric, setExpandedMetric] = useState<string | null>(null);
   const [expandedLabel, setExpandedLabel] = useState<string | null>(null);
 
-  const toggleMetric = useCallback((name: string) => {
-    setExpandedMetric((current) => (current === name ? null : name));
-    // Forget the open label too: re-expanding a metric should open collapsed rather than restore a
-    // label the user closed the row on.
-    setExpandedLabel(null);
-  }, []);
+  // Through refs, like `metricsRef` below: both callbacks consult the current value only to tell an
+  // opening from a closing, and taking them as dependencies would rebuild the callbacks on every
+  // expand and every selection, undoing `MetricRow`'s `memo()` for every row that did not move.
+  const expandedMetricRef = useRef(expandedMetric);
+  expandedMetricRef.current = expandedMetric;
+  const selectedMetricRef = useRef(selectedMetric);
+  selectedMetricRef.current = selectedMetric;
+
+  const toggleMetric = useCallback(
+    (name: string) => {
+      // Only the opening half is an event: collapsing a row is not a metric being explored.
+      if (expandedMetricRef.current !== name) {
+        trackSignalExplorerMetricExpanded({
+          data_source_type: dsType,
+          stacked_queries_count: stackedQueriesCount,
+        });
+      }
+
+      setExpandedMetric((current) => (current === name ? null : name));
+      // Forget the open label too: re-expanding a metric should open collapsed rather than restore a
+      // label the user closed the row on.
+      setExpandedLabel(null);
+    },
+    [dsType, stackedQueriesCount]
+  );
 
   const toggleLabel = useCallback((labelKey: string) => {
     setExpandedLabel((current) => (current === labelKey ? null : labelKey));
@@ -83,6 +111,39 @@ export const MetricsList = memo(function MetricsList({
   const dsRef = useMemo<DataSourceRef>(() => ({ uid: dsUid, type: dsType }), [dsUid, dsType]);
   const { metrics, loading, error } = useMetricCatalog(dsRef, timeRange, { searchText: searchTerm });
 
+  // The last term reported. `loading` is a dependency below and rises again on every refetch — a
+  // range change, a card switching datasource, an invalidation — and none of those are a search.
+  const reportedTermRef = useRef<string | null>(null);
+
+  // `FilterInput` fires per keystroke, so a term only becomes an event once the user stops typing.
+  // Filtering is synchronous, so `metrics` already matches `searchTerm` by the time this runs.
+  useDebounce(
+    () => {
+      if (!searchTerm) {
+        // An empty box is not a search, but it does arm the next one: clearing and retyping the
+        // same term is a second search.
+        reportedTermRef.current = null;
+        return;
+      }
+
+      // A count taken mid-fetch would report zero results for a catalog that simply has not
+      // arrived; `loading` is a dependency, so the term is reported once it does.
+      if (loading || reportedTermRef.current === searchTerm) {
+        return;
+      }
+
+      reportedTermRef.current = searchTerm;
+      trackSignalExplorerSearchPerformed({
+        data_source_type: dsType,
+        stacked_queries_count: stackedQueriesCount,
+        search_term_length: searchTerm.length,
+        result_count: metrics.length,
+      });
+    },
+    300,
+    [searchTerm, loading]
+  );
+
   // Rows are handed a name, so the entry is looked up here. Through a ref, not a dependency:
   // `metrics` is a fresh array on every keystroke, which would undo `MetricRow`'s `memo()`.
   const metricsRef = useRef(metrics);
@@ -92,10 +153,18 @@ export const MetricsList = memo(function MetricsList({
     (name: string) => {
       const metric = metricsRef.current.find((candidate) => candidate.name === name);
       if (metric) {
+        // Re-picking the open metric closes the detail panel, which is nobody viewing metadata.
+        if (selectedMetricRef.current !== name) {
+          trackSignalExplorerMetricsMetadataViewed({
+            data_source_type: dsType,
+            stacked_queries_count: stackedQueriesCount,
+          });
+        }
+
         onSelectMetric({ refId, dsKey: dsKey(dsRef), metric });
       }
     },
-    [onSelectMetric, refId, dsRef]
+    [onSelectMetric, refId, dsRef, dsType, stackedQueriesCount]
   );
 
   // Paging resets on anything that swaps the catalog out for a different one — the search, but also

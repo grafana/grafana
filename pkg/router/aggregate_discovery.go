@@ -11,13 +11,25 @@ import (
 	"net/url"
 	"strings"
 
+	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// discoverGroups fetches and decodes the APIGroupList a target apiserver
+// discoverGroups fetches and decodes the discovery document a target apiserver
 // exposes at /apis. Aggregate targets have no RouteBackend CR to define what
 // they serve, so this active discovery call is unavoidable; forward backends
 // avoid it by learning their group from their CR instead.
+//
+// The request asks for the aggregated discovery format (aggregatedDiscoveryJSON)
+// ahead of the classic one. This matters for a target running the standalone
+// apiextensions apiserver (baas_apiserver): its plain, no-Accept-header /apis
+// response is served from a static map only ever populated for
+// apiextensions.k8s.io itself at startup, never updated as CRDs come and go --
+// CRD-backed groups are only ever pushed into the aggregated-discovery manager.
+// Without requesting that format explicitly, this poll would silently never see
+// any CRD group on that target. A target that doesn't support the aggregated
+// format (older or non-k8s-style servers) still negotiates down to the classic
+// one, which decodeDiscoveryResponse falls back to.
 func discoverGroups(ctx context.Context, client *http.Client, baseURL string) ([]metav1.APIGroup, error) {
 	// Trim a trailing slash before joining: a configured "https://host/" would
 	// otherwise produce "//apis", which most servers route differently than
@@ -26,6 +38,7 @@ func discoverGroups(ctx context.Context, client *http.Client, baseURL string) ([
 	if err != nil {
 		return nil, fmt.Errorf("router: building discovery request: %w", err)
 	}
+	req.Header.Set("Accept", aggregatedDiscoveryJSON+", application/json")
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("router: discovery request to %s failed: %w", baseURL, err)
@@ -35,11 +48,51 @@ func discoverGroups(ctx context.Context, client *http.Client, baseURL string) ([
 		return nil, fmt.Errorf("router: discovery request to %s returned status %d", baseURL, resp.StatusCode)
 	}
 
+	return decodeDiscoveryResponse(resp, baseURL)
+}
+
+// decodeDiscoveryResponse decodes an /apis response as aggregated discovery
+// when the server actually served that format (its Content-Type carries the
+// apidiscovery.k8s.io group), and as the classic APIGroupList otherwise -- a
+// target may ignore the requested Accept header entirely and always answer
+// with the classic format.
+func decodeDiscoveryResponse(resp *http.Response, baseURL string) ([]metav1.APIGroup, error) {
+	if strings.Contains(resp.Header.Get("Content-Type"), "apidiscovery.k8s.io") {
+		var list apidiscoveryv2.APIGroupDiscoveryList
+		if err := json.NewDecoder(resp.Body).Decode(&list); err != nil {
+			return nil, fmt.Errorf("router: decoding APIGroupDiscoveryList from %s: %w", baseURL, err)
+		}
+		return apiGroupDiscoveryListToGroups(list), nil
+	}
+
 	var list metav1.APIGroupList
 	if err := json.NewDecoder(resp.Body).Decode(&list); err != nil {
 		return nil, fmt.Errorf("router: decoding APIGroupList from %s: %w", baseURL, err)
 	}
 	return list.Groups, nil
+}
+
+// apiGroupDiscoveryListToGroups converts the aggregated discovery document into
+// the classic APIGroup shape the rest of this package already expects
+// (matchesAnyPattern, newAggregateBackend). Versions keep the priority order
+// the upstream server returned them in; the first entry becomes
+// PreferredVersion, matching that ordering convention.
+func apiGroupDiscoveryListToGroups(list apidiscoveryv2.APIGroupDiscoveryList) []metav1.APIGroup {
+	groups := make([]metav1.APIGroup, 0, len(list.Items))
+	for _, item := range list.Items {
+		group := metav1.APIGroup{Name: item.Name}
+		for _, v := range item.Versions {
+			group.Versions = append(group.Versions, metav1.GroupVersionForDiscovery{
+				GroupVersion: item.Name + "/" + v.Version,
+				Version:      v.Version,
+			})
+		}
+		if len(group.Versions) > 0 {
+			group.PreferredVersion = group.Versions[0]
+		}
+		groups = append(groups, group)
+	}
+	return groups
 }
 
 // aggregateBackend is a Backend for one group discovered on a fixed

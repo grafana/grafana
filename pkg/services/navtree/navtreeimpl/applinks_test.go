@@ -1002,6 +1002,7 @@ func TestProcessAssistantAppPlugin(t *testing.T) {
 			Type: plugins.TypeApp,
 			Includes: []*plugins.Includes{
 				{Name: "Home", Path: "/a/grafana-assistant-app", Type: "page", AddToNav: true, DefaultNav: true},
+				{Name: "Investigations", Path: "/a/grafana-assistant-app/investigations", Type: "page", AddToNav: true},
 				{Name: "Workspace", Path: "/a/grafana-assistant-app/workspace", Type: "page", AddToNav: true},
 				{Name: "Automations", Path: "/a/grafana-assistant-app/automations", Type: "page", AddToNav: true},
 				{Name: "Watchers", Path: "/a/grafana-assistant-app/watchers", Type: "page", AddToNav: true},
@@ -1013,6 +1014,7 @@ func TestProcessAssistantAppPlugin(t *testing.T) {
 	}
 
 	cloudChildPaths := []string{
+		"/a/grafana-assistant-app/investigations",
 		"/a/grafana-assistant-app/workspace",
 		"/a/grafana-assistant-app/automations",
 		"/a/grafana-assistant-app/watchers",

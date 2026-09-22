@@ -217,9 +217,6 @@ export class GrafanaBootConfig {
   recordedQueries = {
     enabled: true,
   };
-  featureHighlights = {
-    enabled: false,
-  };
   reporting = {
     enabled: true,
   };
@@ -236,6 +233,7 @@ export class GrafanaBootConfig {
   rudderstackV3SdkUrl?: string;
   rudderstackConfigUrl?: string;
   rudderstackIntegrationsUrl?: string;
+  rudderstackBatchInterval?: number;
   postHogToken?: string;
   postHogHost?: string;
   analyticsConsoleReporting = false;

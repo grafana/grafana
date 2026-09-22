@@ -2432,62 +2432,44 @@ func TestGetDashboardsByLibraryPanelUID(t *testing.T) {
 	}
 
 	searchResponse := &resourcepb.ResourceSearchResponse{
-		TotalHits: 3,
+		ResultFormat: resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+		TotalHits:    3,
 		Results: &resourcepb.ResourceTable{
 			Columns: []*resourcepb.ResourceTableColumnDefinition{
-				{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.ResourceTableColumnDefinition_STRING},
 				{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceTableColumnDefinition_STRING},
-				{Name: resource.SEARCH_FIELD_TAGS, Type: resourcepb.ResourceTableColumnDefinition_STRING},
 				{Name: resource.SEARCH_FIELD_LEGACY_ID, Type: resourcepb.ResourceTableColumnDefinition_INT64},
+				{Name: resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID, Type: resourcepb.ResourceTableColumnDefinition_STRING},
 			},
 			Rows: []*resourcepb.ResourceTableRow{
 				{
-					Key: &resourcepb.ResourceKey{
-						Name:     "dashboard1",
-						Resource: "dashboard",
-					},
-					Cells: [][]byte{
-						[]byte("Dashboard 1"),
-						[]byte("folder1"),
-						[]byte("[]"),
-						[]byte("1"),
-					},
+					Key:   &resourcepb.ResourceKey{Name: "dashboard1", Resource: "dashboard"},
+					Cells: [][]byte{[]byte("folder1"), []byte("1"), []byte("1")},
 				},
 				{
-					Key: &resourcepb.ResourceKey{
-						Name:     "dashboard2",
-						Resource: "dashboard",
-					},
-					Cells: [][]byte{
-						[]byte("Dashboard 2"),
-						[]byte("folder2"),
-						[]byte("[]"),
-						[]byte("2"),
-					},
+					Key:   &resourcepb.ResourceKey{Name: "dashboard2", Resource: "dashboard"},
+					Cells: [][]byte{[]byte("folder2"), []byte("2"), []byte("2")},
 				},
 				{
-					Key: &resourcepb.ResourceKey{
-						Name:     "dashboard3",
-						Resource: "dashboard",
-					},
-					Cells: [][]byte{
-						[]byte("Dashboard 3"),
-						[]byte(""),
-						[]byte("[]"),
-						[]byte("3"),
-					},
+					Key:   &resourcepb.ResourceKey{Name: "dashboard3", Resource: "dashboard"},
+					Cells: [][]byte{nil, []byte("3"), []byte("3")},
 				},
 			},
 		},
 	}
 
 	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
-		return len(req.Options.Fields) == 1 &&
+		return req.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES &&
+			slices.Equal(req.Fields, []string{
+				resource.SEARCH_FIELD_FOLDER,
+				resource.SEARCH_FIELD_LEGACY_ID,
+				resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
+			}) &&
+			len(req.Options.Fields) == 1 &&
 			req.Options.Fields[0].Key == builders.DASHBOARD_LIBRARY_PANEL_REFERENCE &&
 			req.Options.Fields[0].Values[0] == "test-library-panel"
 	})).Return(searchResponse, nil).Once()
 
-	results, err := service.GetDashboardsByLibraryPanelUID(context.Background(), "test-library-panel", 1)
+	results, err := service.GetDashboardsByLibraryPanelUID(t.Context(), "test-library-panel", 1)
 
 	require.NoError(t, err)
 	require.Len(t, results, 3)
@@ -2512,5 +2494,45 @@ func TestGetDashboardsByLibraryPanelUID(t *testing.T) {
 		require.Equal(t, expected.id, result.ID, "ID mismatch for %s", uid) // nolint:staticcheck
 	}
 
+	k8sCliMock.AssertExpectations(t)
+}
+
+func TestGetDashboardsByLibraryPanelUIDWithFieldValueResponse(t *testing.T) {
+	k8sCliMock := new(client.MockK8sHandler)
+	service := &DashboardServiceImpl{k8sclient: k8sCliMock}
+
+	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: resource.SEARCH_FIELD_LEGACY_ID, Type: resourcepb.ResourceSearchField_INT64},
+			{Name: resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID, Type: resourcepb.ResourceSearchField_STRING},
+		},
+		Rows: []*resourcepb.ResourceSearchRow{
+			{
+				Key: &resourcepb.ResourceKey{Name: "dashboard1", Resource: "dashboard"},
+				Values: []*resourcepb.ResourceSearchValue{
+					{FieldIndex: 0, StringValues: []string{"folder1"}},
+					{FieldIndex: 1, Int64Values: []int64{1}},
+					{FieldIndex: 2, StringValues: []string{"1"}},
+				},
+			},
+			{
+				Key: &resourcepb.ResourceKey{Name: "dashboard2", Resource: "dashboard"},
+				Values: []*resourcepb.ResourceSearchValue{
+					{FieldIndex: 1, Int64Values: []int64{2}},
+					{FieldIndex: 2, StringValues: []string{"2"}},
+				},
+			},
+		},
+		TotalHits: 2,
+	}, nil).Once()
+
+	results, err := service.GetDashboardsByLibraryPanelUID(t.Context(), "test-library-panel", 1)
+	require.NoError(t, err)
+	require.Equal(t, []*dashboards.DashboardRef{
+		{UID: "dashboard1", FolderUID: "folder1", ID: 1},
+		{UID: "dashboard2", ID: 2},
+	}, results)
 	k8sCliMock.AssertExpectations(t)
 }
