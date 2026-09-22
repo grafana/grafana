@@ -21,6 +21,10 @@ export interface DateTimeOptionsWithFormat extends DateTimeOptions {
   defaultWithMS?: boolean;
 }
 
+export interface DateTimeOptionsWithTimeAgo extends DateTimeOptions {
+  now?: DateTimeInput;
+}
+
 type DateTimeFormatter<T extends DateTimeOptions = DateTimeOptions> = (dateInUtc: DateTimeInput, options?: T) => string;
 
 // NOTE:
@@ -62,8 +66,12 @@ export const dateTimeFormatISO: DateTimeFormatter = (dateInUtc, options?) =>
  *
  * @public
  */
-export const dateTimeFormatTimeAgo: DateTimeFormatter = (dateInUtc, options?) =>
-  toTz(dateInUtc, getTimeZone(options)).fromNow();
+export const dateTimeFormatTimeAgo: DateTimeFormatter<DateTimeOptionsWithTimeAgo> = (dateInUtc, options?) => {
+  const timeZone = getTimeZone(options);
+  const date = toTz(dateInUtc, timeZone);
+
+  return options?.now == null ? date.fromNow() : date.from(toTz(options.now, timeZone));
+};
 
 /**
  * Helper function to format date and time according to the Grafana default formatting, but it

@@ -233,6 +233,50 @@ func TestService_Update(t *testing.T) {
 		require.ErrorIs(t, err, user.ErrPasswordTooShort)
 	})
 
+	t.Run("should return error if new password matches current password", func(t *testing.T) {
+		service := setup(func(svc *LegacyService) {
+			stored, err := user.Password("test").Hash("salt")
+			require.NoError(t, err)
+			svc.cfg = setting.NewCfg()
+			svc.store = &FakeUserStore{ExpectedUser: &user.User{Password: stored, Salt: "salt"}}
+		})
+
+		err := service.Update(context.Background(), &user.UpdateUserCommand{
+			OldPassword: passwordPtr("test"),
+			Password:    passwordPtr("test"),
+		})
+		require.ErrorIs(t, err, user.ErrNewPasswordSameAsOld)
+	})
+
+	t.Run("should return error if new password matches stored password without old password", func(t *testing.T) {
+		service := setup(func(svc *LegacyService) {
+			stored, err := user.Password("test").Hash("salt")
+			require.NoError(t, err)
+			svc.cfg = setting.NewCfg()
+			svc.store = &FakeUserStore{ExpectedUser: &user.User{Password: stored, Salt: "salt"}}
+		})
+
+		err := service.Update(context.Background(), &user.UpdateUserCommand{
+			Password: passwordPtr("test"),
+		})
+		require.ErrorIs(t, err, user.ErrNewPasswordSameAsOld)
+	})
+
+	t.Run("should update password when new password differs from current", func(t *testing.T) {
+		service := setup(func(svc *LegacyService) {
+			stored, err := user.Password("test").Hash("salt")
+			require.NoError(t, err)
+			svc.cfg = setting.NewCfg()
+			svc.store = &FakeUserStore{ExpectedUser: &user.User{Password: stored, Salt: "salt"}}
+		})
+
+		err := service.Update(context.Background(), &user.UpdateUserCommand{
+			OldPassword: passwordPtr("test"),
+			Password:    passwordPtr("newpassword"),
+		})
+		require.NoError(t, err)
+	})
+
 	t.Run("Can set using org", func(t *testing.T) {
 		orgID := int64(1)
 		service := setup(func(svc *LegacyService) {
@@ -415,6 +459,24 @@ func TestService_GetSignedInUser_FallbackOnlyOnNotFound(t *testing.T) {
 		require.Equal(t, "from-legacy", got.Login)
 	})
 
+	t.Run("k8s not-found preserves skip-team lookup when falling back for a service account", func(t *testing.T) {
+		legacy := &usertest.FakeUserService{
+			GetSignedInUserFn: func(_ context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+				require.True(t, query.SkipTeamLookup)
+				return &user.SignedInUser{UserID: 5, UserUID: "sa-uid", IsServiceAccount: true}, nil
+			},
+		}
+		s := newWrapperServiceForTest(
+			&usertest.FakeUserService{ExpectedError: user.ErrUserNotFound},
+			legacy,
+		)
+
+		got, err := s.GetSignedInUser(context.Background(), &user.GetSignedInUserQuery{OrgID: 1, UserID: 5, SkipTeamLookup: true})
+		require.NoError(t, err)
+		require.Equal(t, "sa-uid", got.UserUID)
+		require.True(t, got.IsServiceAccount)
+	})
+
 	t.Run("k8s forbidden is surfaced, no fallback to legacy", func(t *testing.T) {
 		forbidden := apierrors.NewForbidden(schema.GroupResource{Group: "iam.grafana.app", Resource: "users"}, "u", errors.New("nope"))
 		s := newWrapperServiceForTest(
@@ -459,6 +521,25 @@ func TestService_GetSignedInUser_FallbackOnlyOnNotFound(t *testing.T) {
 		require.ErrorIs(t, err, user.ErrUserNotFound)
 		require.Nil(t, got)
 	})
+}
+
+func TestLegacyService_GetSignedInUserSkipsTeamLookup(t *testing.T) {
+	teamSvc := teamtest.NewFakeService()
+	teamSvc.ExpectedError = errors.New("team lookup should not be called")
+	s := LegacyService{
+		store:       &FakeUserStore{ExpectedSignedInUser: &user.SignedInUser{UserID: 5, UserUID: "sa-uid", OrgID: 1, IsServiceAccount: true}},
+		teamService: teamSvc,
+		tracer:      tracing.InitializeTracerForTest(),
+	}
+
+	got, err := s.GetSignedInUser(context.Background(), &user.GetSignedInUserQuery{
+		OrgID:          1,
+		UserID:         5,
+		SkipTeamLookup: true,
+	})
+	require.NoError(t, err)
+	require.Equal(t, "sa-uid", got.UserUID)
+	require.True(t, got.IsServiceAccount)
 }
 
 // ctxCapturingUserService records the context passed to GetProfile so tests can

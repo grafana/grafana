@@ -2,7 +2,6 @@ package dashboard
 
 import (
 	"context"
-	"errors"
 	"strings"
 	"testing"
 
@@ -14,6 +13,8 @@ import (
 	types "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/admission"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
+
+	authlib "github.com/grafana/authlib/types"
 
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -310,6 +311,103 @@ func TestVariableMutationPermissionsStackWide(t *testing.T) {
 	}
 }
 
+func TestVariableMutationPermissionsStandaloneAccessClient(t *testing.T) {
+	oldVariable := newCustomVariable("region", "region")
+	newVariable := newCustomVariable("region", "region")
+	folderVariable := newCustomVariable("region", "region--folder-a")
+	folderVariable.SetAnnotations(map[string]string{utils.AnnoKeyFolder: "folder-a"})
+	gvr := dashv2beta1.VariableResourceInfo.GroupVersionResource()
+	requester := &identity.StaticRequester{OrgID: 1, UserUID: "user-1", Namespace: "stacks-1"}
+
+	t.Run("denied Check is forbidden", func(t *testing.T) {
+		var gotRequest authlib.CheckRequest
+		var gotFolder string
+		builder := &DashboardsAPIBuilder{
+			accessClient: &recordingAccessClient{
+				check: func(_ context.Context, info authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+					require.Equal(t, requester, info)
+					gotRequest = req
+					gotFolder = folder
+					return authlib.CheckResponse{Allowed: false, Zookie: authlib.NoopZookie{}}, nil
+				},
+			},
+		}
+
+		err := builder.Validate(identity.WithRequester(context.Background(), requester), buildVariableAttributesForOp(admission.Create, newVariable, nil), nil)
+		require.Error(t, err)
+		require.True(t, apierrors.IsForbidden(err))
+		require.Equal(t, authlib.CheckRequest{
+			Verb:      utils.VerbCreate,
+			Group:     gvr.Group,
+			Resource:  gvr.Resource,
+			Namespace: "stacks-1",
+			Name:      newVariable.GetName(),
+		}, gotRequest)
+		require.Equal(t, accesscontrol.GeneralFolderUID, gotFolder)
+	})
+
+	t.Run("allowed Check admits create", func(t *testing.T) {
+		builder := &DashboardsAPIBuilder{
+			accessClient: &recordingAccessClient{
+				check: func(_ context.Context, _ authlib.AuthInfo, _ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+					return authlib.CheckResponse{Allowed: true, Zookie: authlib.NoopZookie{}}, nil
+				},
+			},
+		}
+
+		err := builder.Validate(identity.WithRequester(context.Background(), requester), buildVariableAttributesForOp(admission.Create, newVariable, nil), nil)
+		require.NoError(t, err)
+	})
+
+	t.Run("empty folder maps to general", func(t *testing.T) {
+		var gotFolder string
+		builder := &DashboardsAPIBuilder{
+			accessClient: &recordingAccessClient{
+				check: func(_ context.Context, _ authlib.AuthInfo, _ authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+					gotFolder = folder
+					return authlib.CheckResponse{Allowed: true, Zookie: authlib.NoopZookie{}}, nil
+				},
+			},
+		}
+
+		err := builder.Validate(identity.WithRequester(context.Background(), requester), buildVariableAttributesForOp(admission.Update, newVariable, oldVariable), nil)
+		require.NoError(t, err)
+		require.Equal(t, accesscontrol.GeneralFolderUID, gotFolder)
+	})
+
+	t.Run("folder-scoped create uses VerbCreate and folder UID", func(t *testing.T) {
+		var gotRequest authlib.CheckRequest
+		var gotFolder string
+		builder := &DashboardsAPIBuilder{
+			accessClient: &recordingAccessClient{
+				check: func(_ context.Context, _ authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+					gotRequest = req
+					gotFolder = folder
+					return authlib.CheckResponse{Allowed: true, Zookie: authlib.NoopZookie{}}, nil
+				},
+			},
+			folderClientProvider: &staticHandlerProvider{handler: &variableFolderAccessHandler{}},
+		}
+
+		ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+		ctx = identity.WithRequester(ctx, requester)
+		err := builder.Validate(ctx, buildVariableAttributesForOp(admission.Create, folderVariable, nil), nil)
+		require.NoError(t, err)
+		require.Equal(t, utils.VerbCreate, gotRequest.Verb)
+		require.Equal(t, gvr.Group, gotRequest.Group)
+		require.Equal(t, gvr.Resource, gotRequest.Resource)
+		require.Equal(t, "folder-a", gotFolder)
+	})
+
+	t.Run("both accessControl and accessClient nil is forbidden", func(t *testing.T) {
+		builder := &DashboardsAPIBuilder{}
+		err := builder.Validate(identity.WithRequester(context.Background(), requester), buildVariableAttributesForOp(admission.Create, newVariable, nil), nil)
+		require.Error(t, err)
+		require.True(t, apierrors.IsForbidden(err))
+		require.Contains(t, err.Error(), "access control is not configured")
+	})
+}
+
 func TestVariableMutationPermissionsFolderScoped(t *testing.T) {
 	folderUID := "folder-a"
 	oldVariable := newCustomVariable("region", "region--folder-a")
@@ -438,7 +536,6 @@ func TestVariableMutationPermissionsMissingFolder(t *testing.T) {
 	newVariable := newCustomVariable("region", "region--missing-folder")
 	newVariable.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
 	generalScope := folder.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID)
-
 	otherFolderScope := folder.ScopeFoldersProvider.GetResourceScopeUID("other-folder")
 
 	tests := []struct {
@@ -447,18 +544,17 @@ func TestVariableMutationPermissionsMissingFolder(t *testing.T) {
 		op       admission.Operation
 		expected bool
 	}{
-		{name: "root delete grant can delete orphaned folder variable", perms: map[string][]string{ActionVariablesDelete: {generalScope}}, op: admission.Delete, expected: true},
-		{name: "all-folders write can update orphaned folder variable", perms: map[string][]string{ActionVariablesWrite: {folder.ScopeFoldersAll}}, op: admission.Update, expected: true},
-		{name: "other-folder write cannot update orphaned folder variable", perms: map[string][]string{ActionVariablesWrite: {otherFolderScope}}, op: admission.Update, expected: false},
-		{name: "other-folder delete cannot delete orphaned folder variable", perms: map[string][]string{ActionVariablesDelete: {otherFolderScope}}, op: admission.Delete, expected: false},
-		{name: "read-only cannot delete orphaned folder variable", perms: map[string][]string{ActionVariablesRead: {generalScope}}, op: admission.Delete, expected: false},
+		{name: "root delete grant cannot delete variable whose folder is gone", perms: map[string][]string{ActionVariablesDelete: {generalScope}}, op: admission.Delete, expected: false},
+		// folders:* matches folders:uid:<gone> without a second-chance root check.
+		{name: "all-folders write can update variable whose folder is gone", perms: map[string][]string{ActionVariablesWrite: {folder.ScopeFoldersAll}}, op: admission.Update, expected: true},
+		{name: "other-folder write cannot update variable whose folder is gone", perms: map[string][]string{ActionVariablesWrite: {otherFolderScope}}, op: admission.Update, expected: false},
+		{name: "other-folder delete cannot delete variable whose folder is gone", perms: map[string][]string{ActionVariablesDelete: {otherFolderScope}}, op: admission.Delete, expected: false},
+		{name: "read-only cannot delete variable whose folder is gone", perms: map[string][]string{ActionVariablesRead: {generalScope}}, op: admission.Delete, expected: false},
 		{name: "root create cannot create into missing folder", perms: map[string][]string{ActionVariablesCreate: {generalScope}}, op: admission.Create, expected: false},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			// Production registers FolderUIDScopeResolver; without it, Evaluate never
-			// errors on a missing folder and the general-scope orphan path is untested.
 			acSvc := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 			folderSvc := foldertest.NewFakeService()
 			folderSvc.ExpectedError = folder.ErrFolderNotFound
@@ -477,47 +573,16 @@ func TestVariableMutationPermissionsMissingFolder(t *testing.T) {
 					1: tc.perms,
 				},
 			})
-			attrs := buildVariableAttributesForOp(tc.op, newVariable, oldVariable)
 
-			err := builder.Validate(ctx, attrs, nil)
+			err := builder.Validate(ctx, buildVariableAttributesForOp(tc.op, newVariable, oldVariable), nil)
 			if tc.expected {
 				require.NoError(t, err)
 				return
 			}
-
 			require.Error(t, err)
 			require.True(t, apierrors.IsNotFound(err) || apierrors.IsForbidden(err))
 		})
 	}
-}
-
-func TestVariableMutationPermissionsFolderLookupError(t *testing.T) {
-	folderUID := "folder-a"
-	oldVariable := newCustomVariable("region", "region--folder-a")
-	oldVariable.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
-	newVariable := newCustomVariable("region", "region--folder-a")
-	newVariable.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
-
-	lookupErr := errors.New("folder lookup timed out")
-	builder := &DashboardsAPIBuilder{
-		accessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
-		folderClientProvider: &staticHandlerProvider{
-			handler: &variableFolderAccessHandler{getError: lookupErr},
-		},
-	}
-
-	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
-	ctx = identity.WithRequester(ctx, &identity.StaticRequester{
-		OrgID: 1,
-		// No folder-scoped grant so Evaluate fails and allowMissingFolder path runs.
-		Permissions: map[int64]map[string][]string{
-			1: {ActionVariablesWrite: {folder.ScopeFoldersProvider.GetResourceScopeUID("other-folder")}},
-		},
-	})
-
-	err := builder.Validate(ctx, buildVariableAttributesForOp(admission.Update, newVariable, oldVariable), nil)
-	require.ErrorIs(t, err, lookupErr)
-	require.False(t, apierrors.IsForbidden(err))
 }
 
 func newCustomVariable(variableName, metadataName string) *dashv2beta1.Variable {

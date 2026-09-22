@@ -108,7 +108,7 @@ export function useDataSourceInstanceSettings(
  * changes (compared by value, so inline objects are safe).
  *
  * Prefer this over {@link useDataSourceInstanceSettings} whenever only identity or plugin
- * metadata is needed — `item` carries `uid`, `type`, `name`, `meta`, `readOnly` and
+ * metadata is needed — `item` carries `uid`, `type`, `apiVersion`, `name`, `meta` and
  * `isDefault`, and avoids depending on per-instance settings that will later be fetched on
  * demand.
  *
@@ -166,13 +166,17 @@ export function useDataSourceInstance(ref?: DataSourceRef | string | null): UseD
 }
 
 /**
- * React hook wrapping {@link getDefaultDataSourceInstanceListItem}. Re-fetches when
- * `type` changes.
+ * React hook wrapping {@link getDefaultDataSourceInstanceListItem}. Re-resolves when the uid or
+ * `isDefault` flag of any item changes, so passing an inline array is safe.
  *
  * @public
  */
-export function useDefaultDataSourceInstanceListItem(type: string): UseDefaultDataSourceInstanceListItemResult {
-  const { loading, error, value } = useAsync(() => getDefaultDataSourceInstanceListItem(type), [type]);
+export function useDefaultDataSourceInstanceListItem(
+  items: DataSourceInstanceListItem[]
+): UseDefaultDataSourceInstanceListItemResult {
+  const itemsKey = stableKey(items.map((item) => [item.uid, item.isDefault]));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const { loading, error, value } = useAsync(() => getDefaultDataSourceInstanceListItem(items), [itemsKey]);
   return { isLoading: loading, error, item: value };
 }
 

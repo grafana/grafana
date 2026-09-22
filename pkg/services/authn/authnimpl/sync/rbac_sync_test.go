@@ -242,6 +242,21 @@ func TestRBACSync_FetchPermissions(t *testing.T) {
 				"dashboards:create": {"dashboards:uid:*", "folders:uid:*"},
 			},
 		},
+		{
+			name: "access policy with K8s token permissions translates correctly",
+			identity: &authn.Identity{
+				ID: "ap-uid", Type: claims.TypeAccessPolicy, OrgID: 1,
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						K8s: []string{"dashboard.grafana.app/dashboards:get"},
+					},
+				},
+			},
+			expectedPermissions: map[string][]string{
+				"dashboards:read": {"dashboards:uid:*", "folders:uid:*"},
+			},
+		},
 	}
 
 	for _, tt := range testCases {
@@ -257,6 +272,34 @@ func TestRBACSync_FetchPermissions(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRBACSync_FetchPermissions_AccessPolicyNoTokenPermissions(t *testing.T) {
+	acMock := &acmock.Mock{
+		GetUserPermissionsFunc: func(ctx context.Context, siu identity.Requester, o accesscontrol.Options) ([]accesscontrol.Permission, error) {
+			t.Fatal("GetUserPermissions should not be called for access policy subjects")
+			return nil, nil
+		},
+	}
+
+	s := &RBACSync{
+		ac:           acMock,
+		log:          log.NewNopLogger(),
+		tracer:       tracing.InitializeTracerForTest(),
+		permRegistry: permreg.ProvidePermissionRegistry(t),
+		mapper:       rbac.NewMapperRegistry(),
+	}
+
+	ident := &authn.Identity{
+		ID: "ap-uid", Type: claims.TypeAccessPolicy, OrgID: 1,
+		ClientParams: authn.ClientParams{
+			SyncPermissions: true,
+		},
+	}
+
+	err := s.SyncPermissionsHook(context.Background(), ident, &authn.Request{})
+	require.NoError(t, err)
+	require.Empty(t, ident.Permissions[ident.OrgID])
 }
 
 func TestRBACSync_SyncCloudRoles(t *testing.T) {
@@ -630,6 +673,24 @@ func TestRBACSync_ClearUserPermissionCacheHook(t *testing.T) {
 			assert.Equal(t, tt.expectedCalled, called)
 		})
 	}
+}
+
+func TestRBACSync_ClearUserPermissionCacheHook_NilIdentity(t *testing.T) {
+	var called bool
+	s := &RBACSync{
+		ac: &acmock.Mock{
+			ClearUserPermissionCacheFunc: func(_ identity.Requester) {
+				called = true
+			},
+		},
+		log:    log.NewNopLogger(),
+		tracer: tracing.InitializeTracerForTest(),
+	}
+
+	require.NotPanics(t, func() {
+		s.ClearUserPermissionCacheHook(context.Background(), nil, &authn.Request{}, nil)
+	})
+	assert.False(t, called)
 }
 
 func TestRBACSync_translateK8sPermissions(t *testing.T) {

@@ -2,12 +2,21 @@ package resources
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/client-go/rest"
+
+	"github.com/grafana/grafana/pkg/services/apiserver"
 )
 
 // playlistKind is an arbitrary identifier used only to exercise the supported-set plumbing
@@ -125,4 +134,47 @@ func TestParseSupportedResources(t *testing.T) {
 		_, err := ParseSupportedResources([]string{"dashboard.grafana.app/Dashboard:folder", "dashboard.grafana.app/Dashboard"})
 		require.Error(t, err)
 	})
+}
+
+// TestSingleAPIClients_PropagatesTraceContext verifies that the dynamic client built by
+// singleAPIClients wraps its transport with otelhttp, so outbound requests to the apiserver
+// carry a W3C traceparent header. Without this the operator's writes (resource creates,
+// folder ensures, job status updates) show up as leaf spans with no children because the
+// apiserver has no incoming context to continue the trace.
+func TestSingleAPIClients_PropagatesTraceContext(t *testing.T) {
+	var gotTraceparent string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotTraceparent = r.Header.Get("traceparent")
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"PlaylistList","items":[]}`))
+	}))
+	defer srv.Close()
+
+	// otelhttp captures the global propagator when the transport is built, so install
+	// the W3C TraceContext propagator before the client (and its transport) is created.
+	prevProp := otel.GetTextMapPropagator()
+	otel.SetTextMapPropagator(propagation.TraceContext{})
+	t.Cleanup(func() { otel.SetTextMapPropagator(prevProp) })
+
+	provider := apiserver.RestConfigProviderFunc(func(_ context.Context) (*rest.Config, error) {
+		return &rest.Config{Host: srv.URL}, nil
+	})
+
+	clients := newSingleAPIClients(provider)
+	dyn, _, err := clients.GetClientsForResource(context.Background(), schema.GroupVersionResource{})
+	require.NoError(t, err)
+
+	// Start a sampled span so there is an active SpanContext for the propagator to inject.
+	tp := sdktrace.NewTracerProvider(sdktrace.WithSampler(sdktrace.AlwaysSample()))
+	t.Cleanup(func() { _ = tp.Shutdown(context.Background()) })
+	ctx, span := tp.Tracer("test").Start(context.Background(), "outbound")
+
+	gvr := schema.GroupVersionResource{Group: "playlist.grafana.app", Version: "v0alpha1", Resource: "playlists"}
+	_, err = dyn.Resource(gvr).Namespace("default").List(ctx, metav1.ListOptions{})
+	span.End()
+	require.NoError(t, err)
+
+	require.NotEmpty(t, gotTraceparent, "expected the dynamic client to send a traceparent header")
+	assert.Contains(t, gotTraceparent, span.SpanContext().TraceID().String(),
+		"traceparent should carry the active span's trace id")
 }

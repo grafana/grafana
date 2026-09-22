@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social/socialtest"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestRegisterOAuthClients(t *testing.T) {
@@ -24,6 +25,7 @@ func TestRegisterOAuthClients(t *testing.T) {
 
 		registerOAuthClients(
 			t.Context(), log.NewNopLogger(), authnService, nil, nil, socialService,
+			setting.ProvideProvider(setting.NewCfg()),
 			featuremgmt.WithFeatures(), tracing.InitializeTracerForTest(),
 		)
 
@@ -40,6 +42,7 @@ func TestRegisterOAuthClients(t *testing.T) {
 
 		registerOAuthClients(
 			t.Context(), log.NewNopLogger(), authnService, nil, nil, socialService,
+			setting.ProvideProvider(setting.NewCfg()),
 			featuremgmt.WithFeatures(), tracing.InitializeTracerForTest(),
 		)
 

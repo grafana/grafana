@@ -955,7 +955,7 @@ func TestMarshalQueryDataArtifactWithLimit_skipsEncodeForClearlyOversizedRespons
 func TestMarshalQueryDataArtifactWithLimit_fullEncodeStillMeasuredWhenEstimateMisses(t *testing.T) {
 	const limit = 200
 	frames := make(data.Frames, 0, 20)
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		frames = append(frames, data.NewFrame("f", data.NewField("v", nil, []float64{42})))
 	}
 	resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: frames}}}

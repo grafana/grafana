@@ -9,10 +9,12 @@ import {
   type RecordingRuleSpec,
 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { isExpressionQuery } from 'app/features/expressions/guards';
+import { ExpressionQueryType } from 'app/features/expressions/types';
 import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 import { type RuleFormValues } from '../../../types/rule-form';
 import { cleanAnnotations, cleanLabels, fixBothInstantAndRangeQuery } from '../../../utils/rule-form';
+import { stripNamedRouteLabel } from '../../notification-policies/useNotificationPolicyRoute';
 
 const ALERT_RULE_API_VERSION = 'rules.alerting.grafana.app/v0alpha1';
 const FOLDER_ANNOTATION = 'grafana.app/folder';
@@ -66,8 +68,12 @@ export function buildAlertRuleResource(values: RuleFormValues, existingK8sName?:
     throw new Error('Condition is required to create a Grafana-managed alert rule');
   }
 
-  const labels = toRecord(cleanLabels(values.labels));
+  // The legacy label is fully superseded by routingTree — never send it, since the backend derives
+  // the same routing label from routingTree and a stale one left in `labels` would win once
+  // routingTree is unset (e.g. back to the Default policy).
+  const labels = stripNamedRouteLabel(toRecord(cleanLabels(values.labels)));
   const annotations = toRecord(cleanAnnotations(values.annotations));
+  const notificationSettings = getNotificationSettings(values);
 
   const spec = {
     title: values.name,
@@ -83,7 +89,7 @@ export function buildAlertRuleResource(values: RuleFormValues, existingK8sName?:
     missingSeriesEvalsToResolve: values.missingSeriesEvalsToResolve
       ? Number(values.missingSeriesEvalsToResolve)
       : undefined,
-    notificationSettings: getNotificationSettings(values),
+    notificationSettings,
   } satisfies AlertRuleSpec;
 
   return {
@@ -142,7 +148,7 @@ function toRecordingExpressionMap(values: RuleFormValues): Record<string, Record
   }, {});
 }
 
-function toExpression(
+export function toExpression(
   query: RuleFormValues['queries'][number],
   condition: RuleFormValues['condition']
 ): AlertRuleExpression {
@@ -150,13 +156,17 @@ function toExpression(
   const isSource = normalizedQuery.refId === condition;
   const hasRelativeTimeRange = normalizedQuery.relativeTimeRange !== undefined;
   const isExpression = isExpressionQuery(normalizedQuery.model);
+  // Resample is the one expression type that needs its own time window (copied from the
+  // source query by the query editor); every other expression type never has one.
+  const isResample =
+    isExpressionQuery(normalizedQuery.model) && normalizedQuery.model.type === ExpressionQueryType.resample;
 
   return {
     model: normalizedQuery.model,
     queryType: normalizedQuery.queryType || undefined,
     datasourceUID: isExpression ? undefined : normalizedQuery.datasourceUid,
     relativeTimeRange:
-      hasRelativeTimeRange && normalizedQuery.relativeTimeRange
+      (!isExpression || isResample) && hasRelativeTimeRange && normalizedQuery.relativeTimeRange
         ? {
             from: `${normalizedQuery.relativeTimeRange.from}s`,
             to: `${normalizedQuery.relativeTimeRange.to}s`,
@@ -187,7 +197,14 @@ function toRecord(items: Array<{ key: string; value: string }>): Record<string, 
   }, {});
 }
 
-function getNotificationSettings(values: RuleFormValues): AlertRuleSpec['notificationSettings'] {
+export function getNotificationSettings(values: RuleFormValues): AlertRuleSpec['notificationSettings'] {
+  if (values.selectedPolicy && !values.manualRouting) {
+    return {
+      type: 'NamedRoutingTree',
+      routingTree: values.selectedPolicy,
+    };
+  }
+
   const settings = values.contactPoints?.grafana;
   if (!values.manualRouting || !settings?.selectedContactPoint) {
     return undefined;

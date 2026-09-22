@@ -269,9 +269,10 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 	}
 
 	req := &resourcepb.ResourceSearchRequest{
-		Options: &resourcepb.ListOptions{Fields: fields},
-		Limit:   q.Limit,
-		Offset:  q.Limit * (q.Page - 1),
+		Options:      &resourcepb.ListOptions{Fields: fields},
+		Limit:        q.Limit,
+		Offset:       q.Limit * (q.Page - 1),
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
 	hits, _, err := ss.doSearchPage(ctx, q.OrgID, req)
 	return hits, err
@@ -459,9 +460,10 @@ func (ss *FolderUnifiedStoreImpl) searchAllFolders(ctx context.Context, orgID in
 	var all []*folder.FolderReference
 	for offset := int64(0); ; {
 		req := &resourcepb.ResourceSearchRequest{
-			Options: &resourcepb.ListOptions{},
-			Limit:   searchPageSize,
-			Offset:  offset,
+			Options:      &resourcepb.ListOptions{},
+			Limit:        searchPageSize,
+			Offset:       offset,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}
 		hits, raw, err := ss.doSearchPage(ctx, orgID, req)
 		if err != nil {
@@ -500,9 +502,10 @@ func (ss *FolderUnifiedStoreImpl) searchChildren(ctx context.Context, orgID int6
 	var all []*folder.FolderReference
 	for offset := int64(0); ; {
 		req := &resourcepb.ResourceSearchRequest{
-			Options: &resourcepb.ListOptions{Fields: fields},
-			Limit:   searchPageSize,
-			Offset:  offset,
+			Options:      &resourcepb.ListOptions{Fields: fields},
+			Limit:        searchPageSize,
+			Offset:       offset,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}
 		hits, raw, err := ss.doSearchPage(ctx, orgID, req)
 		if err != nil {
@@ -664,15 +667,13 @@ func toFolderLegacyCounts(u *unstructured.Unstructured) (*folder.DescendantCount
 		return nil, err
 	}
 
+	// A resource can be reported twice, by unified storage and by the "sql-fallback"
+	// group. Resources not yet in unified storage still get an entry there with a count
+	// of 0, so treat 0 as no data, otherwise a folder holding only alert rules looks empty.
 	var out = make(folder.DescendantCounts)
 	for _, v := range ds.Counts {
-		// if stats come from unified storage, we will use them
-		if v.Group != "sql-fallback" {
-			out[v.Resource] = v.Count
-			continue
-		}
-		// if stats are from single tenant DB and they are not in unified storage, we will use them
-		if _, ok := out[v.Resource]; !ok {
+		current, seen := out[v.Resource]
+		if !seen || current == 0 || (v.Group != "sql-fallback" && v.Count != 0) {
 			out[v.Resource] = v.Count
 		}
 	}

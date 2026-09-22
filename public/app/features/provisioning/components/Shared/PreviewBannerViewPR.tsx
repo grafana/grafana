@@ -11,6 +11,7 @@ import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequ
 
 import { appendPullRequestTitleParam } from '../../utils/pullRequestTitle';
 import { isGitProvider } from '../../utils/repositoryTypes';
+import { getBranchUrl } from '../utils/url';
 
 import { BranchDisplay } from './BranchDisplay';
 
@@ -53,7 +54,13 @@ export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, bra
   // Prefill the provider's "open pull request" form title from pullRequest.titleTemplate; only the
   // PR/compare URL carries it. Returns prURL unchanged when no title was threaded through.
   const prLink = appendPullRequestTitleParam(prURL, repoType, prTitle);
-  const linkUrl = prLink || branchInfo?.repoBaseUrl || repoUrl;
+  // When the PR/compare link is unavailable (e.g. the branch was removed after the PR was closed),
+  // fall back to the branch itself rather than the repo root, which is disorienting.
+  const branchLink =
+    branchInfo?.repoBaseUrl && branchInfo?.targetBranch
+      ? getBranchUrl(branchInfo.repoBaseUrl, branchInfo.targetBranch, repoType)
+      : '';
+  const linkUrl = prLink || branchLink || branchInfo?.repoBaseUrl || repoUrl;
 
   const bannerAction = action ?? paramAction;
   const actionText = getBannerText(bannerAction, isNewPr, capitalizedRepoType);

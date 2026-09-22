@@ -24,7 +24,24 @@ type Collection struct {
 	Group        string // e.g. "dashboard.grafana.app"
 	Resource     string // resource name as callers send it, e.g. "dashboards"
 	PartitionKey string // value stored in embeddings.resource (LIST partition key)
-	IsExternal   bool   // externally-pushed rows; reads skip per-result authz
+	IsExternal   bool   // externally-pushed rows
+}
+
+// InternalPartitionKey lets enrollment validate partition names before any
+// catalog or schema changes. Distinct resources may derive the same key;
+// callers must also reject conflicting ownership.
+func InternalPartitionKey(resource string) (string, error) {
+	if resource == "" {
+		return "", fmt.Errorf("internal resource must not be empty")
+	}
+	key := sanitizeIdentifier(resource)
+	if isExternalPartitionKey(key) {
+		return "", fmt.Errorf("internal resource %q derives reserved partition key %q (suffix _external); rename the resource", resource, key)
+	}
+	if len(key) > maxPartitionKeyLen {
+		return "", fmt.Errorf("resource name %q too long: derived partition key %q exceeds %d chars", resource, key, maxPartitionKeyLen)
+	}
+	return key, nil
 }
 
 func (b *pgvectorBackend) ResolveCollection(ctx context.Context, group, resource string) (Collection, bool, error) {
@@ -76,9 +93,14 @@ func (b *pgvectorBackend) EnsureCollection(ctx context.Context, group, resource 
 	key := sanitizeIdentifier(resource)
 	if isExternal {
 		key += "_external"
-	}
-	if len(key) > maxPartitionKeyLen {
-		return Collection{}, fmt.Errorf("resource name %q too long: derived partition key %q exceeds %d chars", resource, key, maxPartitionKeyLen)
+		if len(key) > maxPartitionKeyLen {
+			return Collection{}, fmt.Errorf("resource name %q too long: derived partition key %q exceeds %d chars", resource, key, maxPartitionKeyLen)
+		}
+	} else {
+		key, err = InternalPartitionKey(resource)
+		if err != nil {
+			return Collection{}, err
+		}
 	}
 
 	_, err = dbutil.Exec(ctx, b.db, sqlVectorCatalogInsert, &sqlVectorCatalogInsertRequest{

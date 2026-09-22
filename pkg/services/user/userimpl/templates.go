@@ -27,5 +27,7 @@ var (
 	countUsersTemplate                     = mustTemplate("count_users.sql")
 	countUserAccountsWithEmptyRoleTemplate = mustTemplate("count_user_accounts_with_empty_role.sql")
 	batchDisableUsersTemplate              = mustTemplate("batch_disable_users.sql")
+	searchUsersTemplate                    = mustTemplate("search_users.sql")
+	countSearchUsersTemplate               = mustTemplate("count_search_users.sql")
 	updateUserTemplate                     = mustTemplate("update_user.sql")
 )

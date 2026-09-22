@@ -81,6 +81,12 @@ export enum AccessControlAction {
   DashboardsPermissionsRead = 'dashboards.permissions:read',
   DashboardsPermissionsWrite = 'dashboards.permissions:write',
   DashboardsPublicWrite = 'dashboards.public:write',
+
+  NotebooksCreate = 'notebooks:create',
+  NotebooksDelete = 'notebooks:delete',
+  NotebooksRead = 'notebooks:read',
+  NotebooksWrite = 'notebooks:write',
+
   SnapshotsCreate = 'snapshots:create',
   SnapshotsDelete = 'snapshots:delete',
   SnapshotsRead = 'snapshots:read',
@@ -94,6 +100,11 @@ export enum AccessControlAction {
 
   PlaylistsRead = 'playlists:read',
   PlaylistsWrite = 'playlists:write',
+
+  VariablesCreate = 'variables:create',
+  VariablesRead = 'variables:read',
+  VariablesWrite = 'variables:write',
+  VariablesDelete = 'variables:delete',
 
   // Support bundle actions
   ActionSupportBundlesCreate = 'support.bundles:create',
@@ -148,6 +159,7 @@ export enum AccessControlAction {
   AlertingReceiversCreate = 'alert.notifications.receivers:create',
   AlertingReceiversWrite = 'alert.notifications.receivers:write',
   AlertingReceiversRead = 'alert.notifications.receivers:read',
+  AlertingReceiversReadSecrets = 'alert.notifications.receivers.secrets:read',
   AlertingReceiversDelete = 'alert.notifications.receivers:delete',
   /** @deprecated Use AlertingReceiversTestCreate instead */
   AlertingReceiversTest = 'alert.notifications.receivers:test',
