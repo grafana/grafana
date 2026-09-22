@@ -4,7 +4,7 @@ import { type KeyboardEvent, useEffect, useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, useStyles2 } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
 
 import { type NotebookCellItem } from '../NotebookCellItem';
@@ -14,13 +14,7 @@ import { resolveScrollAlign } from '../cells/focusExtension';
 import { type NotebookBlockType } from './NotebookBlockTypeMenu';
 import { NotebookCellActions } from './NotebookCellActions';
 import { NotebookCellAddButton } from './NotebookCellAddButton';
-
-/**
- * Stable class name the frame's hover rule targets. Emotion class names are generated, so revealing a
- * child's style from a parent needs a hand-written class plus a descendant selector — the same
- * convention as `dashboard-canvas-controls` in the dashboard layouts.
- */
-const NOTEBOOK_CELL_AFFORDANCES_CLASS = 'notebook-cell-affordances';
+import { NOTEBOOK_CELL_CONTROLS_CLASS, NOTEBOOK_CELL_FRAME_CLASS } from './cellClassNames';
 
 const NOTEBOOK_CELL_CONTENT_CLASS = 'notebook-cell-content';
 
@@ -93,9 +87,9 @@ interface Props {
 }
 
 /**
- * One notebook cell plus its edit-mode affordances: a drag handle and an add-cell button in the left
+ * One notebook cell plus its edit-mode controls: a drag handle and an add-cell button in the left
  * gutter, both revealed by hovering (or focusing into) the cell. The cell renderer itself stays a pure
- * content dispatcher — everything editing-related lives here.
+ * content dispatcher, so everything about editing lives here.
  */
 export function NotebookCellFrame({
   cell,
@@ -124,6 +118,7 @@ export function NotebookCellFrame({
   const frameLabel = collapsed
     ? t('notebook.cell.frame.aria-label-collapsed', 'Collapsed block: {{name}}', { name: elementName })
     : t('notebook.cell.frame.aria-label-panel', 'Visualization block: {{name}}', { name: elementName });
+  const dragHandleLabel = t('notebook.cell.drag-handle', 'Drag to reorder');
 
   const frameRef = useRef<HTMLDivElement>(null);
   const pendingAutoFocus = useRef(Boolean(autoFocus && isEditing && !isEditorCell));
@@ -189,11 +184,12 @@ export function NotebookCellFrame({
           role={!isEditorCell ? 'group' : undefined}
           aria-label={!isEditorCell ? frameLabel : undefined}
           className={cx(
+            NOTEBOOK_CELL_FRAME_CLASS,
             styles.frame,
             isEditing && styles.frameEditing,
             !isEditorCell && styles.frameFocusable,
             dragSnapshot.isDragging && styles.dragging,
-            (dragSnapshot.isDragging || isDragActive) && styles.affordancesHidden,
+            (dragSnapshot.isDragging || isDragActive) && styles.controlsHidden,
             dropIndicator === 'top' && styles.dropLineTop,
             dropIndicator === 'bottom' && styles.dropLineBottom
           )}
@@ -201,18 +197,16 @@ export function NotebookCellFrame({
           {isEditing && (
             <div
               {...dragProvided.dragHandleProps}
-              aria-label={t('notebook.cell.drag-handle', 'Drag to reorder')}
-              className={cx(styles.handle, NOTEBOOK_CELL_AFFORDANCES_CLASS)}
+              aria-label={dragHandleLabel}
+              className={cx(styles.handle, NOTEBOOK_CELL_CONTROLS_CLASS)}
             >
-              <Tooltip content={t('notebook.cell.drag-handle', 'Drag to reorder')} placement="left">
-                <Icon name="draggabledots" size="md" />
-              </Tooltip>
+              {/* Labelled on the handle, not through a Tooltip: Tooltip makes its child a tab stop,
+                  so the icon was a second stop with no name. */}
+              <Icon title={dragHandleLabel} name="draggabledots" size="md" />
             </div>
           )}
 
-          {isEditing && (
-            <NotebookCellAddButton index={index} onAdd={onAdd} className={NOTEBOOK_CELL_AFFORDANCES_CLASS} />
-          )}
+          {isEditing && <NotebookCellAddButton index={index} onAdd={onAdd} className={NOTEBOOK_CELL_CONTROLS_CLASS} />}
 
           {isEditing && onDuplicate && onDelete && (
             <>
@@ -225,7 +219,7 @@ export function NotebookCellFrame({
               <NotebookCellActions
                 onDuplicate={onDuplicate}
                 onDelete={onDelete}
-                className={NOTEBOOK_CELL_AFFORDANCES_CLASS}
+                className={NOTEBOOK_CELL_CONTROLS_CLASS}
               />
             </>
           )}
@@ -280,7 +274,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       paddingLeft: theme.spacing(10),
       marginLeft: theme.spacing(-10),
     },
-    [`&:hover > .${NOTEBOOK_CELL_AFFORDANCES_CLASS}, &:focus-within > .${NOTEBOOK_CELL_AFFORDANCES_CLASS}`]: {
+    [`&:hover > .${NOTEBOOK_CELL_CONTROLS_CLASS}, &:focus-within > .${NOTEBOOK_CELL_CONTROLS_CLASS}`]: {
       opacity: 1,
       pointerEvents: 'auto',
     },
@@ -341,8 +335,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
       boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
     },
   }),
-  affordancesHidden: css({
-    [`& .${NOTEBOOK_CELL_AFFORDANCES_CLASS}`]: {
+  controlsHidden: css({
+    [`& .${NOTEBOOK_CELL_CONTROLS_CLASS}`]: {
       visibility: 'hidden',
     },
   }),
