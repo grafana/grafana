@@ -42,4 +42,6 @@ export interface HttpSettingsProps extends HttpSettingsBaseProps {
   renderSigV4Editor?: React.ReactNode;
   /** Show the Secure Socks Datasource Proxy toggle option */
   secureSocksDSProxyEnabled?: boolean;
+  /** Show the Forwarded HTTP headers option (gated behind the grafana.datasourceForwardHeaders feature toggle) */
+  forwardedHeadersEnabled?: boolean;
 }

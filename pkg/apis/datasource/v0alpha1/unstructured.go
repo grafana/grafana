@@ -139,6 +139,18 @@ func (u *UnstructuredSpec) KeepCookies() []string {
 	return v
 }
 
+// AllowedHeaders is a per-datasource allow-list of HTTP request header names
+// that Grafana will forward from the user's incoming request through to the
+// datasource (and, when the datasource uses the Grafana SDK HTTP client, on to
+// its downstream). Names use the same matching syntax as KeepCookies:
+// exact match, "prefix[]" for prefix match, and "[]" for match-all. The
+// forwarding is subject to the instance-wide deny-list configured in the
+// [datasource_forward_headers] section.
+func (u *UnstructuredSpec) AllowedHeaders() []string {
+	v, _, _ := unstructured.NestedStringSlice(u.Object, "jsonData", "allowedHeaders")
+	return v
+}
+
 // Check if the oauthPassThru is enabled
 func (u *UnstructuredSpec) IsOAuthPassThruEnabled() bool {
 	v, _, _ := unstructured.NestedBool(u.Object, "jsonData", "oauthPassThru")

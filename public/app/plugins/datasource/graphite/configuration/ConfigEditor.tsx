@@ -8,6 +8,7 @@ import {
   store,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { useFlagGrafanaDatasourceForwardHeaders } from '@grafana/runtime/internal';
 import { Alert, DataSourceHttpSettings, Field, FieldSet, Select, Switch } from '@grafana/ui';
 
 import { type GraphiteOptions, GraphiteType } from '../types';
@@ -30,6 +31,7 @@ export type Props = DataSourcePluginOptionsEditorProps<GraphiteOptions>;
 export function ConfigEditor(props: Props) {
   const { options, onOptionsChange } = props;
   const [showMappingsHelp, setShowMappingsHelp] = useState(() => store.getObject(SHOW_MAPPINGS_HELP_KEY, true));
+  const forwardedHeadersEnabled = useFlagGrafanaDatasourceForwardHeaders();
 
   const currentGraphiteVersion = options.jsonData.graphiteVersion || DEFAULT_GRAPHITE_VERSION;
 
@@ -56,6 +58,7 @@ export function ConfigEditor(props: Props) {
         dataSourceConfig={options}
         onChange={onOptionsChange}
         secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
+        forwardedHeadersEnabled={forwardedHeadersEnabled}
       />
       <FieldSet>
         <legend className="page-heading">Graphite details</legend>
