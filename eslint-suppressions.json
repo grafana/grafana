@@ -1244,7 +1244,7 @@
   },
   "public/app/features/alerting/unified/components/rule-editor/query-and-alert-condition/QueryAndExpressionsStep.tsx": {
     "@grafana/no-config-feature-toggles": {
-      "count": 2
+      "count": 1
     },
     "@grafana/no-get-data-source-srv": {
       "count": 1
@@ -1438,7 +1438,7 @@
   },
   "public/app/features/alerting/unified/rule-list/RuleList.v2.tsx": {
     "@grafana/no-config-feature-toggles": {
-      "count": 3
+      "count": 2
     }
   },
   "public/app/features/alerting/unified/rule-list/RuleListPageTitle.tsx": {
