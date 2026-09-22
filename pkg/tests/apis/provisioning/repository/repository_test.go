@@ -966,7 +966,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		require.Contains(t, createdRepo.Finalizers, repository.CleanFinalizer, "should contain CleanFinalizer")
 	})
 
-	t.Run("should re-add finalizers when removed during update", func(t *testing.T) {
+	t.Run("should re-seed structural finalizers but not cleanup when emptied during update", func(t *testing.T) {
 		// Create a repository with finalizers
 		r := helper.RenderObject(t, common.TestdataPath("local.json.tmpl"), map[string]any{
 			"Name":          "repo-update-finalizers",
@@ -988,16 +988,62 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			storedRepo, err := helper.Repositories.Resource.Get(t.Context(), "repo-update-finalizers", metav1.GetOptions{})
 			require.NoError(t, err, "repository retrieve should succeed")
 
-			// Update the repository and try to remove finalizers
+			// Update the repository and try to remove all finalizers.
 			storedRepo.SetFinalizers([]string{})
 			updated, err := helper.Repositories.Resource.Update(t.Context(), storedRepo, metav1.UpdateOptions{})
 			require.NoError(collect, err, "repository update should succeed")
 
-			// Verify finalizers were re-added by the mutator
+			// The structural finalizers are re-seeded by the mutator, but the cleanup
+			// finalizer is removable and must not be re-added on update.
 			updatedRepo := common.MustFromUnstructured[provisioning.Repository](t, updated)
-			require.NotEmpty(collect, updatedRepo.Finalizers, "finalizers should be re-added after update")
+			require.NotEmpty(collect, updatedRepo.Finalizers, "structural finalizers should be re-added after update")
 			require.Contains(collect, updatedRepo.Finalizers, repository.RemoveOrphanResourcesFinalizer, "should contain RemoveOrphanResourcesFinalizer")
-			require.Contains(collect, updatedRepo.Finalizers, repository.CleanFinalizer, "should contain CleanFinalizer")
+			require.Contains(collect, updatedRepo.Finalizers, repository.RemovePendingJobsFinalizer, "should contain RemovePendingJobsFinalizer")
+			require.NotContains(collect, updatedRepo.Finalizers, repository.CleanFinalizer, "cleanup finalizer should not be re-added")
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
+	})
+
+	t.Run("should allow removing the cleanup finalizer while not being deleted", func(t *testing.T) {
+		// The cleanup finalizer builds the repository (decrypting secrets and
+		// constructing the provider client) to remove the provider-side webhook, so
+		// a repository whose credentials have expired can never finish deleting
+		// while it is attached. Dropping the cleanup finalizer up front — while the
+		// repository is still live and not marked for deletion — is the escape hatch
+		// that lets such a repository be force-deleted. The mutator only re-seeds
+		// finalizers when none are left, so removing just the cleanup finalizer must
+		// survive the update untouched.
+		r := helper.RenderObject(t, common.TestdataPath("local.json.tmpl"), map[string]any{
+			"Name":          "repo-remove-cleanup-finalizer",
+			"SyncEnabled":   false,
+			"Path":          helper.ProvisioningPath,
+			"WorkflowsJSON": `[]`,
+		})
+
+		created, err := helper.Repositories.Resource.Create(t.Context(), r, metav1.CreateOptions{})
+		require.NoError(t, err, "repository creation should succeed")
+
+		createdRepo := common.MustFromUnstructured[provisioning.Repository](t, created)
+		require.Contains(t, createdRepo.Finalizers, repository.CleanFinalizer, "cleanup finalizer should be present after creation")
+
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			storedRepo, err := helper.Repositories.Resource.Get(t.Context(), "repo-remove-cleanup-finalizer", metav1.GetOptions{})
+			require.NoError(collect, err, "repository retrieve should succeed")
+
+			// Drop only the cleanup finalizer, keeping the others so the resource is
+			// never left without finalizers while it is not being deleted.
+			storedRepo.SetFinalizers([]string{
+				repository.RemoveOrphanResourcesFinalizer,
+				repository.RemovePendingJobsFinalizer,
+			})
+			updated, err := helper.Repositories.Resource.Update(t.Context(), storedRepo, metav1.UpdateOptions{})
+			require.NoError(collect, err, "repository update should succeed")
+
+			// The mutator must not re-add the cleanup finalizer, and must leave the
+			// remaining finalizers in place.
+			updatedRepo := common.MustFromUnstructured[provisioning.Repository](t, updated)
+			require.NotContains(collect, updatedRepo.Finalizers, repository.CleanFinalizer, "cleanup finalizer should stay removed")
+			require.Contains(collect, updatedRepo.Finalizers, repository.RemoveOrphanResourcesFinalizer, "should still contain RemoveOrphanResourcesFinalizer")
+			require.Contains(collect, updatedRepo.Finalizers, repository.RemovePendingJobsFinalizer, "should still contain RemovePendingJobsFinalizer")
 		}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 	})
 }

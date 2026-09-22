@@ -89,14 +89,32 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			wantErr:         false,
 		},
 		{
-			name: "does not add finalizers on update",
+			name: "re-seeds structural finalizers but not cleanup on update",
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec:       provisioning.RepositorySpec{},
 			},
 			operation:       admission.Update,
 			minSyncInterval: 60 * time.Second,
-			wantFinalizers:  nil,
+			// The cleanup finalizer is removable: once dropped it must not be
+			// re-added on update, only the structural finalizers are re-seeded.
+			wantFinalizers: []string{RemoveOrphanResourcesFinalizer, RemovePendingJobsFinalizer},
+			wantInterval:   60,
+			wantWorkflows:  []provisioning.Workflow{},
+			wantErr:        false,
+		},
+		{
+			name: "does not re-add cleanup finalizer when only it is removed on update",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test",
+					Finalizers: []string{RemoveOrphanResourcesFinalizer, RemovePendingJobsFinalizer},
+				},
+				Spec: provisioning.RepositorySpec{},
+			},
+			operation:       admission.Update,
+			minSyncInterval: 60 * time.Second,
+			wantFinalizers:  []string{RemoveOrphanResourcesFinalizer, RemovePendingJobsFinalizer},
 			wantInterval:    60,
 			wantWorkflows:   []provisioning.Workflow{},
 			wantErr:         false,

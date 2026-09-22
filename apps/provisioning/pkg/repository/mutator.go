@@ -45,13 +45,19 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 		return fmt.Errorf("expected repository configuration, got %T", obj)
 	}
 
-	// Enforcing the presence of finalizers in resources not marked for deletion.
+	// Enforce the presence of finalizers on repositories not marked for deletion.
+	// The structural finalizers are re-seeded whenever the list is emptied, but the
+	// cleanup finalizer is only seeded on creation. Removing it is the escape hatch
+	// that lets an unhealthy repository — one whose credentials can no longer build
+	// a provider client — be force-deleted, so it must never be re-added on update.
 	if r.DeletionTimestamp == nil || r.DeletionTimestamp.IsZero() {
 		if len(r.Finalizers) == 0 {
 			r.Finalizers = []string{
 				RemoveOrphanResourcesFinalizer,
 				RemovePendingJobsFinalizer,
-				CleanFinalizer,
+			}
+			if a.GetOperation() == admission.Create {
+				r.Finalizers = append(r.Finalizers, CleanFinalizer)
 			}
 		}
 	}
