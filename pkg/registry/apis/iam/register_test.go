@@ -16,6 +16,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
@@ -106,6 +107,70 @@ func TestNewAPIService_WiresLegacyTeamStore(t *testing.T) {
 	)
 
 	require.NotNil(t, b.legacyTeamStore)
+}
+
+func TestNewAPIService_WiresSSOStore(t *testing.T) {
+	b := NewAPIService(
+		nil,
+		nil,
+		legacysql.NewDatabaseProvider(nil),
+		&NoopApiInstaller[*iamv0.RoleBinding]{ResourceInfo: iamv0.RoleBindingInfo},
+		&NoopApiInstaller[*iamv0.Role]{ResourceInfo: iamv0.RoleInfo},
+		&NoopApiInstaller[*iamv0.GlobalRole]{ResourceInfo: iamv0.GlobalRoleInfo},
+		&NoopApiInstaller[*iamv0.TeamLBACRule]{ResourceInfo: iamv0.TeamLBACRuleInfo},
+		nil,
+		prometheus.NewRegistry(),
+		nil,
+		nil,
+		tracing.InitializeTracerForTest(),
+		resourcepermission.NewMappersRegistry(),
+		nil,
+	)
+
+	// Standalone must wire the read-only SSO store so the SSOSetting kind is served
+	// once kubernetesSsoSettingsApi is enabled.
+	require.NotNil(t, b.ssoLegacyStore)
+}
+
+func TestNewAPIService_AuthorizesSSOSettings(t *testing.T) {
+	b := NewAPIService(
+		nil,
+		nil,
+		legacysql.NewDatabaseProvider(nil),
+		&NoopApiInstaller[*iamv0.RoleBinding]{ResourceInfo: iamv0.RoleBindingInfo},
+		&NoopApiInstaller[*iamv0.Role]{ResourceInfo: iamv0.RoleInfo},
+		&NoopApiInstaller[*iamv0.GlobalRole]{ResourceInfo: iamv0.GlobalRoleInfo},
+		&NoopApiInstaller[*iamv0.TeamLBACRule]{ResourceInfo: iamv0.TeamLBACRuleInfo},
+		nil,
+		prometheus.NewRegistry(),
+		nil,
+		nil,
+		tracing.InitializeTracerForTest(),
+		resourcepermission.NewMappersRegistry(),
+		nil,
+	)
+
+	// Serving the kind is moot unless the standalone authorizer allows it; the
+	// flat fall-through would otherwise deny every ssosettings request.
+	attrs := authorizer.AttributesRecord{
+		Resource:        legacyiamv0.SSOSettingResourceInfo.GetName(),
+		ResourceRequest: true,
+		Verb:            "get",
+	}
+
+	t.Run("allows an authenticated identity", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: authlib.TypeAccessPolicy})
+		decision, _, err := b.authorizer.Authorize(ctx, attrs)
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionAllow, decision)
+	})
+
+	t.Run("denies an anonymous identity", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: authlib.TypeAnonymous})
+		decision, _, err := b.authorizer.Authorize(ctx, attrs)
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+	})
 }
 
 func TestUpdateTeamLBACRulesAPIGroupWithNoopInstaller(t *testing.T) {
