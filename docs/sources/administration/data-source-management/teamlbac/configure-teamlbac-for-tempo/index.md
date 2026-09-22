@@ -45,7 +45,7 @@ To use team LBAC for Tempo or Cloud Traces, you need to have the following:
 - Administrator permissions for Grafana
 - A team setup in Grafana
 
-Team LBAC works with Grafana Cloud and Grafana Enterprise v12.3 and later.
+Team LBAC works with Grafana Cloud and Grafana Enterprise v12.3 and later when the data source uses Grafana Cloud Traces. It doesn't work with self-hosted Tempo OSS or Grafana Enterprise Traces (GET).
 
 ### Known limitations
 
