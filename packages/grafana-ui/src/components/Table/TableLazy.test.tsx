@@ -22,6 +22,7 @@ it('uses the latest data and forwards sorting callbacks through the lazy boundar
   const { rerender } = render(<Table {...props} data={makeData('Sweden')} />);
   rerender(<Table {...props} data={makeData('Belgium')} />);
 
+  // eslint-disable-next-line testing-library/prefer-find-by -- findByText can return a node that detaches before the assertion.
   await waitFor(() => expect(screen.getByText('Belgium')).toBeInTheDocument());
   expect(screen.queryByText('Sweden')).not.toBeInTheDocument();
 
