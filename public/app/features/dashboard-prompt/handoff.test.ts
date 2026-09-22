@@ -1,5 +1,4 @@
 import { type ChatContextItem, openAssistant } from '@grafana/assistant';
-import { locationService } from '@grafana/runtime';
 
 import { buildPlanningInstructions, startPlanningInAssistant } from './handoff';
 import { PROMPT_ORIGIN, MAX_LISTED_DATASOURCES } from './prompts';
@@ -21,26 +20,7 @@ jest.mock('@grafana/assistant', () => ({
   })),
 }));
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  locationService: { push: jest.fn(), getLocation: jest.fn() },
-}));
-
 const openAssistantMock = jest.mocked(openAssistant);
-const pushMock = jest.mocked(locationService.push);
-const getLocationMock = jest.mocked(locationService.getLocation);
-
-/** Navigation succeeded: we're on the new-dashboard editor afterwards. */
-function landedOnNewDashboard() {
-  getLocationMock.mockReturnValue({ pathname: '/dashboard/new' } as ReturnType<typeof locationService.getLocation>);
-}
-
-/** Navigation was refused, e.g. by the unsaved-changes blocker. */
-function stayedPut() {
-  getLocationMock.mockReturnValue({ pathname: '/d/abc/my-dashboard' } as ReturnType<
-    typeof locationService.getLocation
-  >);
-}
 
 const args = {
   request: 'Monitor my checkout service\n\nWhere this request came from:\nPrometheus datasource page',
@@ -51,13 +31,11 @@ const args = {
 describe('startPlanningInAssistant', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    landedOnNewDashboard();
   });
 
-  it('lands in the new-dashboard editor and opens a dashboarding conversation', () => {
-    expect(startPlanningInAssistant(args)).toBe(true);
+  it('opens a dashboarding conversation', () => {
+    startPlanningInAssistant(args);
 
-    expect(pushMock).toHaveBeenCalledWith('/dashboard/new?editSource=assistant');
     expect(openAssistantMock).toHaveBeenCalledTimes(1);
 
     const call = openAssistantMock.mock.calls[0][0];
@@ -79,65 +57,6 @@ describe('startPlanningInAssistant', () => {
     expect(planningItem?.node.name).toBe('Dashboard planning instructions');
     expect(planningItem?.node.data?.params?.hidden).toBe(true);
   });
-});
-
-describe('startPlanningInAssistant when navigation is refused', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    stayedPut();
-  });
-
-  it('starts nothing, so the assistant is never pointed at the wrong dashboard', () => {
-    expect(startPlanningInAssistant(args)).toBe(false);
-
-    // The push was attempted; the blocker swallowed it.
-    expect(pushMock).toHaveBeenCalledWith('/dashboard/new?editSource=assistant');
-    expect(openAssistantMock).not.toHaveBeenCalled();
-  });
-});
-
-describe('startPlanningInAssistant folder handling', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    landedOnNewDashboard();
-  });
-
-  it('creates the draft in the folder the entry point knew about', () => {
-    startPlanningInAssistant({ ...args, folderUid: 'folder-1' });
-    expect(pushMock).toHaveBeenCalledWith('/dashboard/new?editSource=assistant&folderUid=folder-1');
-  });
-
-  it('does not attach the destination folder as assistant context', () => {
-    startPlanningInAssistant({ ...args, folderUid: 'folder-1' });
-
-    const call = openAssistantMock.mock.calls[0][0];
-    expect(call.context).toHaveLength(1);
-  });
-
-  it('escapes the folder uid', () => {
-    startPlanningInAssistant({ ...args, folderUid: 'a b/c&d' });
-    expect(pushMock).toHaveBeenCalledWith('/dashboard/new?editSource=assistant&folderUid=a+b%2Fc%26d');
-  });
-
-  it('goes to the bare new-dashboard path when no folder is known', () => {
-    startPlanningInAssistant(args);
-    expect(pushMock).toHaveBeenCalledWith('/dashboard/new?editSource=assistant');
-  });
-});
-
-describe('startPlanningInAssistant skipNavigation', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    stayedPut();
-  });
-
-  it('starts planning on the current page without pushing', () => {
-    expect(startPlanningInAssistant({ ...args, skipNavigation: true })).toBe(true);
-
-    expect(pushMock).not.toHaveBeenCalled();
-    expect(openAssistantMock).toHaveBeenCalledTimes(1);
-  });
-
   it('preserves selected context objects alongside the hidden planning instructions', () => {
     const contextItems: ChatContextItem[] = [
       {
@@ -160,24 +79,13 @@ describe('startPlanningInAssistant skipNavigation', () => {
         occurrences: [],
       },
     ];
-    startPlanningInAssistant({ ...args, skipNavigation: true, context: contextItems });
+    startPlanningInAssistant({ ...args, context: contextItems });
 
     const context = openAssistantMock.mock.calls[0][0].context;
     expect(context).toHaveLength(3);
     expect(context?.[0].node.name).toBe('Dashboard planning instructions');
     expect(context?.[1]).toBe(contextItems[0]);
     expect(context?.[2]).toBe(contextItems[1]);
-  });
-
-  it('does not attach the destination folder as context when already on the page', () => {
-    startPlanningInAssistant({
-      ...args,
-      skipNavigation: true,
-      folderUid: 'folder-1',
-    });
-
-    const call = openAssistantMock.mock.calls[0][0];
-    expect(call.context).toHaveLength(1);
   });
 });
 
@@ -195,16 +103,14 @@ describe('buildPlanningInstructions', () => {
     expect(instructions).toContain('starting from a brand-new dashboard');
   });
 
-  it('lists attached dashboards without treating folderUid as context', () => {
+  it('lists attached dashboards', () => {
     const instructions = buildPlanningInstructions({
       ...args,
       dashboards: [{ uid: 'dash-1', title: 'Checkout' }],
-      folderUid: 'folder-1',
     });
 
     expect(instructions).toContain('Dashboards the user attached as context');
     expect(instructions).toContain('Checkout (uid: dash-1)');
-    expect(instructions).not.toContain('folder-1');
   });
 
   it('does not claim completeness when the datasource scope is truncated', () => {
