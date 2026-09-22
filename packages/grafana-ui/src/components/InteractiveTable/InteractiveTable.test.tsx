@@ -41,7 +41,7 @@ describe('InteractiveTable', () => {
   });
 
   it('should correctly sort rows', async () => {
-    // We are not testing the sorting logic here since it is already tested in react-table,
+    // We are not testing the sorting logic here since it is already tested in TanStack Table,
     // but instead we are testing that the sorting is applied correctly to the table and correct aria attributes are set
     // according to https://www.w3.org/WAI/ARIA/apg/example-index/table/sortable-table
     const columns: Array<Column<TableData>> = [
@@ -80,6 +80,21 @@ describe('InteractiveTable', () => {
     expect(valueColumnHeader).not.toHaveAttribute('aria-sort');
     expect(countryColumnHeader).not.toHaveAttribute('aria-sort');
   });
+
+  it('sorts numeric strings with the react-table v7 number semantics', async () => {
+    const columns: Array<Column<TableData>> = [{ id: 'value', header: 'Value', sortType: 'number' }];
+    const data: TableData[] = [
+      { id: '1', value: '10' },
+      { id: '2', value: '$3' },
+      { id: '3', value: '2' },
+    ];
+    const { user } = setup(<InteractiveTable columns={columns} data={data} getRowId={getRowId} />);
+
+    await user.click(within(screen.getByRole('columnheader', { name: 'Value' })).getByRole('button'));
+
+    expect(screen.getAllByRole('cell').map((cell) => cell.textContent)).toEqual(['2', '$3', '10']);
+  });
+
   describe('row expansion', () => {
     it('correctly expands rows', async () => {
       const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }];

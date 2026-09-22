@@ -5,6 +5,8 @@ import {
   type CellContext,
   type ColumnDef,
   type HeaderContext,
+  type Row,
+  type SortingFn,
   type SortingFnOption,
 } from '@tanstack/react-table';
 import { get } from 'lodash';
@@ -21,12 +23,19 @@ export type InternalColumn<T extends object> = ColumnDef<T> & {
 };
 
 // react-table v7 sort types mapped onto the TanStack Table sorting functions
-const SORTING_FNS: Record<SortType, BuiltInSortingFn> = {
+const SORTING_FNS: Record<Exclude<SortType, 'number'>, BuiltInSortingFn> = {
   string: 'text',
-  number: 'basic',
   datetime: 'datetime',
   basic: 'basic',
   alphanumeric: 'alphanumeric',
+};
+
+const sortNumber: SortingFn<object> = (rowA: Row<object>, rowB: Row<object>, columnId: string) => {
+  const replaceNonNumeric = /[^0-9.]/gi;
+  const a = Number(String(rowA.getValue(columnId)).replace(replaceNonNumeric, ''));
+  const b = Number(String(rowB.getValue(columnId)).replace(replaceNonNumeric, ''));
+
+  return a === b ? 0 : a > b ? 1 : -1;
 };
 
 function toCellProps<T extends object, Value>(
@@ -44,6 +53,10 @@ function getSortingFn<K extends object>(column: Column<K>): SortingFnOption<K> {
   if (typeof column.sortType === 'function') {
     const sortType = column.sortType;
     return (rowA, rowB, columnId) => sortType(rowA, rowB, columnId);
+  }
+
+  if (column.sortType === 'number') {
+    return sortNumber;
   }
 
   return column.sortType ? SORTING_FNS[column.sortType] : 'alphanumeric';
