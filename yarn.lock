@@ -7401,15 +7401,15 @@ __metadata:
   linkType: hard
 
 "@rc-component/slider@npm:^1.0.1":
-  version: 1.2.0
-  resolution: "@rc-component/slider@npm:1.2.0"
+  version: 1.2.1
+  resolution: "@rc-component/slider@npm:1.2.1"
   dependencies:
-    "@rc-component/util": "npm:^1.11.1"
+    "@rc-component/util": "npm:^1.13.0"
     clsx: "npm:^2.1.1"
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 10/d32f0ba509427e9327eb6493029e6a73a9ed155780512bd71273231654671fc359aeb50f2e4878342d2edb99d0c5c1f59c1c37bf67cc58b2578e81cffff28369
+  checksum: 10/bb4524a5291ea2d4d6c75bccbeca51ff9d4686ebabd727e7dd1db30cb4cdb952a0d2ccf9d835142063f409d904c73b8a9c5cc3b53cb7be617b9f88a87d29b987
   languageName: node
   linkType: hard
 
