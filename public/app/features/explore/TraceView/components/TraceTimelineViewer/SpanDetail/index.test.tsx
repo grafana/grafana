@@ -438,6 +438,42 @@ describe('<SpanDetail>', () => {
     });
   });
 
+  describe('exception details', () => {
+    const exceptionSpan = {
+      ...span,
+      tags: [...span.tags, { key: 'http.status_code', value: 503 }],
+      logs: [
+        {
+          timestamp: 10,
+          name: 'exception',
+          fields: [
+            { key: 'exception.type', value: 'java.lang.NullPointerException' },
+            { key: 'exception.message', value: 'Cannot invoke User.getId()' },
+            { key: 'exception.stacktrace', value: 'at UserService.getUserId' },
+          ],
+        },
+      ],
+    };
+
+    it('renders the exception box above span attributes', () => {
+      render(<SpanDetail {...({ ...props, span: exceptionSpan } as unknown as SpanDetailProps)} />);
+
+      const exceptionBox = screen.getByRole('alert');
+      expect(exceptionBox).toHaveAccessibleName('Exception');
+      expect(exceptionBox).toHaveTextContent('Type:');
+      expect(exceptionBox).toHaveTextContent('java.lang.NullPointerException');
+      expect(exceptionBox).toHaveTextContent('Cannot invoke User.getId()');
+      expect(exceptionBox).not.toHaveTextContent('at UserService.getUserId');
+      expect(screen.getByRole('button', { name: 'Stacktrace' })).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    it('does not show the exception box when the span has no exception', () => {
+      render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
+
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
+  });
+
   it('should load plugin links for resource attributes', () => {
     const usePluginLinksMock = jest.fn().mockReturnValue({ links: [] });
     setPluginLinksHook(usePluginLinksMock);

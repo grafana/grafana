@@ -57,10 +57,12 @@ func (e ImportedConfigRevision) GetReceivers(uids []string) ([]*models.Receiver,
 		if !ok {
 			continue
 		}
-		recv, err := PostableApiReceiverToReceiver(&r, models.ProvenanceConvertedPrometheus, models.ResourceOriginImported)
+		recv, err := PostableApiReceiverToReceiver(r, models.ResourceOriginImported)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert receiver %q: %w", r.Name, err)
 		}
+
+		recv.Provenance = models.ProvenanceConvertedPrometheus
 		result = append(result, recv)
 	}
 	return result, nil
@@ -115,7 +117,7 @@ func (e ImportedConfigRevision) ReceiverUseByName() map[string]int {
 	return m
 }
 
-func (e ImportedConfigRevision) GetManagedRoute() (*ManagedRoute, error) {
+func (e ImportedConfigRevision) GetManagedRoute() (*v1.ManagedRoute, error) {
 	if e.importedConfig == nil {
 		return nil, nil
 	}
@@ -126,7 +128,7 @@ func (e ImportedConfigRevision) GetManagedRoute() (*ManagedRoute, error) {
 
 	merge.RenameResourceUsagesInRoutes([]*v1.Route{route}, renamed)
 
-	mr := NewManagedRoute(e.identifier, route)
+	mr := v1.NewManagedRoute(e.identifier, route)
 	mr.Provenance = models.ProvenanceConvertedPrometheus
 	mr.Origin = models.ResourceOriginImported
 	return mr, nil

@@ -124,6 +124,7 @@ function buildPanelScene(panels: VizPanel[] = [], elementMap: Record<string, num
     state,
     serializer: mockSerializer(elementMap),
     canEditDashboard: jest.fn(() => true),
+    isPlanning: jest.fn(() => false),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
@@ -156,6 +157,7 @@ function buildAutoGridPanelScene(panels: VizPanel[] = [], elementMap: Record<str
     state,
     serializer: mockSerializer(elementMap),
     canEditDashboard: jest.fn(() => true),
+    isPlanning: jest.fn(() => false),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),

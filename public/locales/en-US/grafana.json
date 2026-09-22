@@ -1780,6 +1780,8 @@
         },
         "source-title": "Import Source",
         "subtitle": "Import contact points, notification policies, templates, and mute timings from an external Alertmanager.",
+        "templates-added-title_one": "Template file added",
+        "templates-added-title_other": "Template files added",
         "templates-desc": "Optional. Upload the template files referenced by your Alertmanager config. Each file is imported as a template named after the file.",
         "templates-dropzone": "Drop template files here or click to upload",
         "templates-duplicate": "Duplicate template file name: \"{{name}}\". Template file names must be unique.",
@@ -1792,6 +1794,7 @@
         "validation-success": "Validation successful",
         "validation-success-desc": "No conflicts found. The configuration is ready to import.",
         "validation-warning": "Some resources will be renamed to avoid conflicts with existing ones",
+        "yaml-added-title": "Configuration file uploaded",
         "yaml-desc": "Accepted file types: {{extensions}}",
         "yaml-file": "Alertmanager config YAML",
         "yaml-invalid-type": "File must be a YAML file ({{extensions}})",
@@ -6124,6 +6127,17 @@
     "panel-not-supported": {
       "go-back-to-queries": "Go back to Queries"
     },
+    "plan-placeholder-badge": {
+      "text": "Sample data",
+      "tooltip": "The numbers shown are sample data for illustration and do not come from real queries."
+    },
+    "planning-banner": {
+      "build": "Build",
+      "dismiss": "Dismiss",
+      "panel-count_one": "{{count}} panel",
+      "panel-count_other": "{{count}} panels",
+      "plan-label": "Plan"
+    },
     "public-dashboard-not-available": {
       "does-not-exist": "The dashboard you are trying to access does not exist",
       "paused": "This dashboard has been paused by the administrator",
@@ -9092,6 +9106,10 @@
       "attribute-category": {
         "other": "Other"
       },
+      "exception-message": "Message:",
+      "exception-stacktrace": "Stacktrace",
+      "exception-title": "Exception",
+      "exception-type": "Type:",
       "label": {
         "kind": "Kind:",
         "library-name": "Library Name:",
@@ -9225,6 +9243,7 @@
       "target": "Target",
       "tooltip-url": "{{route}} or {{url}} or {{target}} or {{path}}",
       "trace-banner-error": "Trace error banner",
+      "trace-banner-go-to-span": "Go to span",
       "trace-banner-metrics": "{{duration}} · {{percent}}% of trace",
       "trace-banner-warning": "Trace warning banner",
       "trace-id": "Trace ID",
@@ -10741,7 +10760,9 @@
       "aria-label-toggle-collapse": "toggle collapse panel",
       "ariaLabel-panel-loading": "Panel loading bar",
       "ariaLabel-panel-status": "Panel status",
-      "errors-and-notices": "Errors and notices",
+      "explain-with-assistant": "Explain with Assistant",
+      "fix-with-assistant": "Fix with Assistant",
+      "inspect": "Inspect",
       "tooltip-cancel": "Cancel query",
       "tooltip-cancel-loading": "Cancel query",
       "tooltip-stop-streaming": "Stop streaming",
@@ -16226,6 +16247,8 @@
       "new-snapshot-button": "New snapshot",
       "success-creation": "Your snapshot has been created",
       "success-delete": "Your snapshot has been deleted",
+      "too-large-body": "This snapshot is {{size}}, over the {{limit}} limit. Snapshot a single panel, shorten the time range, or select fewer template variable values, then try again.",
+      "too-large-title": "Snapshot is too large to publish",
       "view-all-button": "View all snapshots"
     },
     "share-panel": {
@@ -16511,6 +16534,7 @@
     "description-page-size": "Number of rows per page. When empty, the page size is based on the panel height.",
     "description-styling-from-field": "A field containing JSON objects with CSS properties",
     "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
+    "description-zebra-striping": "Alternate the background color of every other row",
     "frame-picker": {
       "label": "Query"
     },
@@ -16549,6 +16573,7 @@
     "name-tooltip-placement": "Tooltip placement",
     "name-wrap-header-text": "Wrap header text",
     "name-wrap-text": "Wrap text",
+    "name-zebra-striping": "Zebra striping",
     "no-value-placeholder": "No rows",
     "placeholder-column-width": "auto",
     "placeholder-frozen-columns": "none",

@@ -337,7 +337,8 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 				if cfg.Receivers == nil {
 					cfg.Receivers = make(map[v1.ResourceUID]v1.PostableApiReceiver, 1)
 				}
-				cfg.Receivers[v1.ReceiverUID("new-receiver")] = v1.PostableApiReceiver{Name: "new-receiver"}
+				r := v1.NewReceiver("new-receiver", nil, ngmodels.ProvenanceNone)
+				cfg.Receivers[r.UID] = r
 			},
 		},
 		{
@@ -369,7 +370,7 @@ receivers:
 			features: featuremgmt.WithFeatures(),
 			initialConfig: func() *v1.AMConfigV1 {
 				cfg := baseConfig("default-receiver", "team-a", "team-b", "team-c")
-				cfg.ManagedRoutes = v1.ManagedRoutes{
+				cfg.ManagedRoutes = map[string]*v1.Route{
 					"team-b-policy": {Receiver: "team-b"},
 					"team-a-policy": {Receiver: "team-a"},
 				}
