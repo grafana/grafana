@@ -11,6 +11,8 @@ description: Create and manage notebooks, a linear, narrative artifact for inves
 
 # Notebooks
 
+{{< docs/public-preview product="Notebooks" featureFlag="`dashboard.notebooks`" >}}
+
 A notebook is a linear page of blocks.
 Text blocks hold narrative and notes, and panel blocks hold queries that render inline.
 The sequence mirrors how an investigation proceeds, so it tells the story of an investigation without extra authoring.
