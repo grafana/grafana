@@ -38,7 +38,11 @@ export const LAZY_DASHBOARD_COMMANDS: LazyMutationCommand[] = [
   { name: 'ADD_PANEL', load: () => import('./addPanel').then((module) => module.addPanelCommand) },
   { name: 'UPDATE_PANEL', load: () => import('./updatePanel').then((module) => module.updatePanelCommand) },
   { name: 'REMOVE_PANEL', load: () => import('./removePanel').then((module) => module.removePanelCommand) },
-  { name: 'LIST_PANELS', readOnly: true, load: () => import('./listPanels').then((module) => module.listPanelsCommand) },
+  {
+    name: 'LIST_PANELS',
+    readOnly: true,
+    load: () => import('./listPanels').then((module) => module.listPanelsCommand),
+  },
   {
     name: 'GET_DASHBOARD_INFO',
     readOnly: true,
