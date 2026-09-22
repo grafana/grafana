@@ -1,6 +1,8 @@
 package plugins
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -229,22 +231,27 @@ func isDirNotEmpty(err error) bool {
 	return strings.Contains(msg, "directory not empty") || strings.Contains(msg, "not empty")
 }
 
-// UserPlacedFiles returns files on disk under pluginFS that were not part of the
-// plugin file list captured when the FS was constructed (or walked now).
+// UserPlacedFiles returns files on disk under pluginFS that Grafana did not install.
+// Signed plugins use MANIFEST.txt as the allow list so grafana-cli still sees extras
+// even though Discover builds a fresh StaticFS. Unsigned plugins fall back to the
+// FS file list, which catches files added after Grafana loaded a StaticFS snapshot.
 func UserPlacedFiles(pluginFS FS) ([]string, error) {
 	if pluginFS == nil || !pluginFS.Type().Local() {
 		return nil, nil
 	}
-	allowed, err := pluginFS.Files()
-	if err != nil {
-		return nil, err
-	}
-	allow := make(map[string]struct{}, len(allowed))
-	for _, f := range allowed {
-		allow[filepath.ToSlash(filepath.Clean(f))] = struct{}{}
+	allow, ok := manifestAllowList(pluginFS.Base())
+	if !ok {
+		allowed, err := pluginFS.Files()
+		if err != nil {
+			return nil, err
+		}
+		allow = make(map[string]struct{}, len(allowed))
+		for _, f := range allowed {
+			allow[filepath.ToSlash(filepath.Clean(f))] = struct{}{}
+		}
 	}
 	var extras []string
-	err = filepath.Walk(pluginFS.Base(), func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(pluginFS.Base(), func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -256,7 +263,7 @@ func UserPlacedFiles(pluginFS FS) ([]string, error) {
 			return relErr
 		}
 		rel = filepath.ToSlash(rel)
-		if _, ok := allow[rel]; !ok {
+		if _, exists := allow[rel]; !exists {
 			extras = append(extras, rel)
 		}
 		return nil
@@ -266,6 +273,30 @@ func UserPlacedFiles(pluginFS FS) ([]string, error) {
 	}
 	sort.Strings(extras)
 	return extras, nil
+}
+
+func manifestAllowList(base string) (map[string]struct{}, bool) {
+	body, err := os.ReadFile(filepath.Join(base, "MANIFEST.txt"))
+	if err != nil {
+		return nil, false
+	}
+	start := bytes.IndexByte(body, '{')
+	end := bytes.LastIndexByte(body, '}')
+	if start < 0 || end <= start {
+		return nil, false
+	}
+	var manifest struct {
+		Files map[string]string `json:"files"`
+	}
+	if err := json.Unmarshal(body[start:end+1], &manifest); err != nil || len(manifest.Files) == 0 {
+		return nil, false
+	}
+	allow := make(map[string]struct{}, len(manifest.Files)+1)
+	allow["MANIFEST.txt"] = struct{}{}
+	for name := range manifest.Files {
+		allow[filepath.ToSlash(name)] = struct{}{}
+	}
+	return allow, true
 }
 
 // staticFilesMap is a set-like map that contains files that can be accessed from a plugins.FS.

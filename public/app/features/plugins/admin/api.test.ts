@@ -122,7 +122,9 @@ describe('api', () => {
           { method: 'DELETE' }
         );
         expect(getBackendSrv().post).toHaveBeenCalledTimes(1);
-        expect(getBackendSrv().post).toHaveBeenCalledWith('/api/plugins/myorg-test-panel/uninstall');
+        expect(getBackendSrv().post).toHaveBeenCalledWith('/api/plugins/myorg-test-panel/uninstall', undefined, {
+          showErrorAlert: false,
+        });
       });
 
       it('should call legacy api when uninstallPluginMeta fails but log failure', async () => {
@@ -180,7 +182,9 @@ describe('api', () => {
         expect(uninstallPluginMetaMock).toHaveBeenCalledWith('myorg-test-panel');
         expect(global.fetch).not.toHaveBeenCalled(); // no call to fetch is made because of feature flag check in uninstallPluginMeta
         expect(getBackendSrv().post).toHaveBeenCalledTimes(1);
-        expect(getBackendSrv().post).toHaveBeenCalledWith('/api/plugins/myorg-test-panel/uninstall');
+        expect(getBackendSrv().post).toHaveBeenCalledWith('/api/plugins/myorg-test-panel/uninstall', undefined, {
+          showErrorAlert: false,
+        });
       });
     });
   });

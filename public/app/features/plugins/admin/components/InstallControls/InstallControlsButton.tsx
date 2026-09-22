@@ -47,7 +47,7 @@ export function InstallControlsButton({
   const [queryParams] = useQueryParams();
   const location = useLocation();
   const { isInstalling, error: errorInstalling } = useInstallStatus();
-  const { isUninstalling, error: errorUninstalling } = useUninstallStatus();
+  const { isUninstalling } = useUninstallStatus();
   const install = useInstall();
   const uninstall = useUninstall();
   const unsetInstall = useUnsetInstall();
@@ -99,7 +99,7 @@ export function InstallControlsButton({
       setIsUserDataModalVisible(true);
       return;
     }
-    if (!errorUninstalling) {
+    if (result.meta.requestStatus === 'fulfilled') {
       // If an app plugin is uninstalled we need to reset the active tab when the config / dashboards tabs are removed.
       const activePageId = queryParams.page;
       const isViewingAppConfigPage = activePageId !== PluginTabIds.OVERVIEW && activePageId !== PluginTabIds.VERSIONS;

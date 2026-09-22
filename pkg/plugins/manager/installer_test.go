@@ -712,3 +712,38 @@ func TestPluginInstaller_RemoveUnloadsNestedChildrenFirst(t *testing.T) {
 	require.NoError(t, inst.Remove(context.Background(), "parent-app", "1.0.0"))
 	require.Equal(t, []string{"child-panel", "parent-app"}, unloaded)
 }
+
+func TestPluginInstaller_RemoveUnloadsNestedChildrenDeepestFirst(t *testing.T) {
+	parent := createPlugin(t, "parent-app", plugins.ClassExternal, true, false, func(plugin *plugins.Plugin) {
+		plugin.Info.Version = "1.0.0"
+	})
+	shallow := createPlugin(t, "shallow-panel", plugins.ClassExternal, true, false, func(plugin *plugins.Plugin) {
+		plugin.Info.Version = "1.0.0"
+		plugin.Parent = parent
+		plugin.FS = pluginfakes.NewFakePluginFS(filepath.Join("plugins", "parent-app", "datasource"))
+	})
+	deep := createPlugin(t, "deep-panel", plugins.ClassExternal, true, false, func(plugin *plugins.Plugin) {
+		plugin.Info.Version = "1.0.0"
+		plugin.Parent = parent
+		plugin.FS = pluginfakes.NewFakePluginFS(filepath.Join("plugins", "parent-app", "datasource", "nested"))
+	})
+	// Shallower sibling listed first so the test fails if Remove does not depth-sort.
+	parent.Children = []*plugins.Plugin{shallow, deep}
+
+	var unloaded []string
+	inst := New(&config.PluginManagementCfg{}, &pluginfakes.FakePluginRegistry{
+		Store: map[string]*plugins.Plugin{
+			"parent-app":    parent,
+			"shallow-panel": shallow,
+			"deep-panel":    deep,
+		},
+	}, &pluginfakes.FakeLoader{
+		UnloadFunc: func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+			unloaded = append(unloaded, p.ID)
+			return p, nil
+		},
+	}, &pluginfakes.FakePluginRepo{}, &pluginfakes.FakePluginStorage{}, storage.SimpleDirNameGeneratorFunc, &pluginfakes.FakeAuthService{}, &pluginfakes.FakeRBACCleaner{})
+
+	require.NoError(t, inst.Remove(context.Background(), "parent-app", "1.0.0"))
+	require.Equal(t, []string{"deep-panel", "shallow-panel", "parent-app"}, unloaded)
+}

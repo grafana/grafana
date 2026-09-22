@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path/filepath"
+	"sort"
+	"strings"
 	"sync"
 
 	"github.com/grafana/grafana/pkg/plugins"
@@ -204,12 +207,17 @@ func (m *PluginInstaller) Remove(ctx context.Context, pluginID, version string) 
 
 	// Nested plugins (Zabbix and friends) stay loaded after the parent is
 	// unloaded. On NFS those open files make the parent RemoveAll fail with
-	// "directory not empty", so uninstall children first.
-	for _, child := range append([]*plugins.Plugin(nil), plugin.Children...) {
+	// "directory not empty", so uninstall children deepest-first.
+	children := append([]*plugins.Plugin(nil), plugin.Children...)
+	sort.Slice(children, func(i, j int) bool {
+		return pluginFSDepth(children[i]) > pluginFSDepth(children[j])
+	})
+	for _, child := range children {
 		if child == nil {
 			continue
 		}
-		if err := m.Remove(ctx, child.ID, child.Info.Version); err != nil && !errors.Is(err, plugins.ErrPluginNotInstalled) {
+		err := m.Remove(ctx, child.ID, child.Info.Version)
+		if err != nil && !errors.Is(err, plugins.ErrPluginNotInstalled) && !errors.Is(err, plugins.ErrUninstallInvalidPluginDir) {
 			return err
 		}
 	}
@@ -244,6 +252,13 @@ func (m *PluginInstaller) plugin(ctx context.Context, pluginID, pluginVersion st
 	}
 
 	return p, true
+}
+
+func pluginFSDepth(p *plugins.Plugin) int {
+	if p == nil || p.FS == nil {
+		return 0
+	}
+	return strings.Count(filepath.Clean(p.FS.Base()), string(filepath.Separator))
 }
 
 func RepoCompatOpts(opts plugins.AddOpts) (repo.CompatOpts, error) {

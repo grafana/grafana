@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
@@ -207,21 +209,32 @@ func uninstallPlugin(_ context.Context, pluginID string, c utils.CommandLine) er
 			continue
 		}
 		logger.Infof("Removing plugin: %v\n", pluginID)
-		for _, child := range bundle.Children {
+		if extras, err := plugins.UserPlacedFiles(bundle.Primary.FS); err == nil && len(extras) > 0 && !c.Bool("force") {
+			return fmt.Errorf("plugin directory contains extra files: %s. re-run with --force to delete them", strings.Join(extras, ", "))
+		}
+		children := append([]*plugins.FoundPlugin(nil), bundle.Children...)
+		sort.Slice(children, func(i, j int) bool {
+			return foundPluginDepth(children[i]) > foundPluginDepth(children[j])
+		})
+		for _, child := range children {
 			if child == nil {
 				continue
 			}
-			if err := removePluginFS(child.JSONData.ID, child.FS); err != nil {
+			if err := removePluginFS(child.JSONData.ID, child.FS); err != nil && !errors.Is(err, plugins.ErrUninstallInvalidPluginDir) {
 				return err
 			}
-		}
-		if extras, err := plugins.UserPlacedFiles(bundle.Primary.FS); err == nil && len(extras) > 0 && !c.Bool("force") {
-			return fmt.Errorf("plugin directory contains extra files: %s. re-run with --force to delete them", strings.Join(extras, ", "))
 		}
 		return removePluginFS(pluginID, bundle.Primary.FS)
 	}
 
 	return nil
+}
+
+func foundPluginDepth(p *plugins.FoundPlugin) int {
+	if p == nil || p.FS == nil {
+		return 0
+	}
+	return strings.Count(filepath.Clean(p.FS.Base()), string(filepath.Separator))
 }
 
 func osAndArchString() string {

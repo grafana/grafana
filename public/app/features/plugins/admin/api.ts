@@ -260,7 +260,10 @@ export async function uninstallPlugin(id: string, options?: { confirmUserData?: 
 
   // Legacy uninstall path — kept until K8s settings API covers all plugin types.
   const query = options?.confirmUserData ? '?confirmUserData=true' : '';
-  return await getBackendSrv().post(`${API_ROOT}/${id}/uninstall${query}`);
+  return await getBackendSrv().post(`${API_ROOT}/${id}/uninstall${query}`, undefined, {
+    // 409 USER_DATA is shown as a confirm modal, not a toast.
+    showErrorAlert: false,
+  });
 }
 
 export async function getPluginEntitlement(id: string): Promise<boolean> {
