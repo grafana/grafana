@@ -1,6 +1,6 @@
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
-import { store, type SelectableValue } from '@grafana/data';
+import { formattedValueToString, getValueFormat, store, type SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {
@@ -12,7 +12,7 @@ import {
 } from '@grafana/scenes';
 import { type Dashboard } from '@grafana/schema';
 import { Button, ClipboardButton, Field, Input, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
-import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { getDashboardSnapshotSrv, type SnapshotSharingOptions } from 'app/features/dashboard/services/SnapshotSrv';
@@ -53,6 +53,35 @@ export const getExpireOptions = () => {
     },
   ];
 };
+
+// A snapshot embeds every panel's query results, so a dashboard that repeats panels over many
+// variable values can serialize to a body no request can deliver. This mirrors the apiserver's
+// MaxRequestBodyBytes, the lower of the two ceilings a create request can hit, so the check is
+// valid whether the request goes to /apis or to the legacy /api endpoint. A reverse proxy in
+// front of Grafana may also cap body size and reject the request before it reaches Grafana at
+// all, leaving no response we can turn into a useful message.
+const MAX_SNAPSHOT_PAYLOAD_BYTES = 16 * 1024 * 1024;
+
+// JSON.stringify().length counts UTF-16 code units, which undercounts every non-ASCII series
+// name or label value in the embedded data, so measure the encoded length actually sent.
+export function getSnapshotPayloadSizeBytes(payload: object): number {
+  return new Blob([JSON.stringify(payload)]).size;
+}
+
+const SIZE_DECIMALS = 1;
+
+// IEC units to match the 1024-based limit above.
+function formatBytes(bytes: number): string {
+  return formattedValueToString(getValueFormat('bytes')(bytes, SIZE_DECIMALS));
+}
+
+// Rounds up to the precision we render, so a payload only slightly over the limit is never
+// reported as equal to it ("16.0 MiB, over the 16.0 MiB limit").
+export function formatSnapshotSize(bytes: number): string {
+  const unit = 1024 ** Math.floor(Math.log2(Math.max(bytes, 1)) / 10);
+  const step = unit / 10 ** SIZE_DECIMALS;
+  return formatBytes(Math.ceil(bytes / step) * step);
+}
 
 const SNAPSHOT_SHARE_CONFIGURATION = 'grafana.dashboard.snapshot.shareConfiguration';
 
@@ -100,6 +129,9 @@ interface DashboardV2SpecWithUid extends DashboardV2Spec {
 export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> implements ShareView {
   public tabId = shareDashboardType.snapshot;
   static Component = ShareSnapshotTabRenderer;
+
+  // Overridable so the size guard can be exercised without building a payload this large
+  protected maxPayloadSizeBytes = MAX_SNAPSHOT_PAYLOAD_BYTES;
 
   public constructor(
     state: Omit<ShareSnapshotTabState, 'snapshotName' | 'selectedExpireOption' | 'snapshotSharingOptions'>
@@ -183,7 +215,28 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> imp
       external,
     };
 
+    const payloadSizeBytes = getSnapshotPayloadSizeBytes(cmdData);
+
     try {
+      if (payloadSizeBytes > this.maxPayloadSizeBytes) {
+        const message = t(
+          'snapshot.share.too-large-body',
+          'This snapshot is {{size}}, over the {{limit}} limit. Snapshot a single panel, shorten the time range, or select fewer template variable values, then try again.',
+          {
+            size: formatSnapshotSize(payloadSizeBytes),
+            limit: formatBytes(this.maxPayloadSizeBytes),
+          }
+        );
+
+        dispatch(
+          notifyApp(
+            createErrorNotification(t('snapshot.share.too-large-title', 'Snapshot is too large to publish'), message)
+          )
+        );
+
+        throw new Error(message);
+      }
+
       const response = await getDashboardSnapshotSrv().create(cmdData);
       dispatch(
         notifyApp(createSuccessNotification(t('snapshot.share.success-creation', 'Your snapshot has been created')))

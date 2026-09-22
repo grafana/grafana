@@ -22,5 +22,6 @@ var (
 	lookupDuplicateUserAuthTemplate = mustTemplate("lookup_duplicate_user_auth.sql")
 	deleteDuplicateUserAuthTemplate = mustTemplate("delete_duplicate_user_auth.sql")
 	deleteUserAuthTemplate          = mustTemplate("delete_user_auth.sql")
+	deleteAuthInfoTemplate          = mustTemplate("delete_auth_info.sql")
 	userAuthUIDMigrationTemplate    = mustTemplate("user_auth_uid_migration.sql")
 )
