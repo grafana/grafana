@@ -55,7 +55,11 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
   }, [sidebar]);
 
   const onOpenCodePane = useCallback(async () => {
+    const stateAtRequest = sidebar.state;
     const { DashboardCodePane } = await import(/* webpackChunkName: "dashboard-code-pane" */ './DashboardCodePane');
+    if (!sidebar.isActive || sidebar.state !== stateAtRequest) {
+      return;
+    }
     sidebar.openPane(new DashboardCodePane({}));
   }, [sidebar]);
 
