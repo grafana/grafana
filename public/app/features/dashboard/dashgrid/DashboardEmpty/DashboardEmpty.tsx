@@ -12,7 +12,6 @@ import { useDashboardGenerationAvailable } from 'app/features/dashboard-prompt/u
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { AutoGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager';
-import { AddNewPane } from 'app/features/dashboard-scene/sidebar/add-new/AddNewPane';
 
 import { DashboardEmptyExtensionPoint } from './DashboardEmptyExtensionPoint';
 import {
@@ -77,13 +76,25 @@ const NewLayoutEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
     if (generationLoading || generationAvailable) {
       return;
     }
+
+    let cancelled = false;
     if (
       isEditingNewDashboard &&
       dashboard.getEditSessionSource() !== 'assistant' &&
       sidebar.state.openPane?.getId() !== 'add'
     ) {
-      sidebar.openPane(new AddNewPane({}));
+      import(
+        /* webpackChunkName: "dashboard-add-new-pane" */ 'app/features/dashboard-scene/sidebar/add-new/AddNewPane'
+      ).then(({ AddNewPane }) => {
+        if (!cancelled && sidebar.state.openPane?.getId() !== 'add') {
+          sidebar.openPane(new AddNewPane({}));
+        }
+      });
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, [isEditingNewDashboard, dashboard, sidebar, generationLoading, generationAvailable]);
 
   if (generationLoading) {

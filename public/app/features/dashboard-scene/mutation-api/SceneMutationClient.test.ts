@@ -33,6 +33,28 @@ function command<T = any>(overrides: TestCommandOverrides<T> = {}): MutationComm
 
 describe('SceneMutationClient', () => {
   describe('command lookup', () => {
+    it.each([true, false])('reports readOnly=%s without loading lazy commands', (readOnly) => {
+      class InspectableClient extends SceneMutationClient<MutationTargetScene> {
+        public isReadOnly(type: string) {
+          return super.isReadOnly(type);
+        }
+      }
+
+      const load = jest.fn(async () => command({ name: 'LAZY_COMMAND', readOnly }));
+      const client = new InspectableClient(scene(), [
+        { name: 'LAZY_COMMAND', readOnly, load },
+        command({ name: 'EAGER_COMMAND', readOnly }),
+        { name: 'DEFAULT_COMMAND', load },
+      ]);
+
+      expect(client.getAvailableCommands()).toEqual(['LAZY_COMMAND', 'EAGER_COMMAND', 'DEFAULT_COMMAND']);
+      expect(client.isReadOnly('lazy_command')).toBe(readOnly);
+      expect(client.isReadOnly('eager_command')).toBe(readOnly);
+      expect(client.isReadOnly('DEFAULT_COMMAND')).toBe(false);
+      expect(client.isReadOnly('UNKNOWN_COMMAND')).toBe(false);
+      expect(load).not.toHaveBeenCalled();
+    });
+
     it('loads a lazy command only when it is first executed', async () => {
       const load = jest.fn(async () => command({ name: 'LAZY_COMMAND' }));
       const lazyCommand: LazyMutationCommand<MutationTargetScene> = { name: 'LAZY_COMMAND', load };

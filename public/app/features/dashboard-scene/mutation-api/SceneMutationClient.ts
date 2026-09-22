@@ -31,7 +31,7 @@ interface CommandRegistration<TScene> {
 }
 
 export class SceneMutationClient<TScene extends MutationTargetScene> implements MutationClient {
-  private commands: Map<string, () => Promise<CommandRegistration<TScene>>> = new Map();
+  private commands = new Map<string, { readOnly: boolean; load: () => Promise<CommandRegistration<TScene>> }>();
 
   constructor(
     protected scene: TScene,
@@ -41,13 +41,16 @@ export class SceneMutationClient<TScene extends MutationTargetScene> implements 
     for (const cmd of commands) {
       if ('load' in cmd) {
         let registration: Promise<CommandRegistration<TScene>> | undefined;
-        this.commands.set(cmd.name, () => {
-          registration ??= cmd.load().then(createCommandRegistration);
-          return registration;
+        this.commands.set(cmd.name, {
+          readOnly: cmd.readOnly ?? false,
+          load: () => {
+            registration ??= cmd.load().then(createCommandRegistration);
+            return registration;
+          },
         });
       } else {
         const registration = createCommandRegistration(cmd);
-        this.commands.set(cmd.name, () => Promise.resolve(registration));
+        this.commands.set(cmd.name, { readOnly: registration.readOnly, load: () => Promise.resolve(registration) });
       }
     }
   }
@@ -55,8 +58,8 @@ export class SceneMutationClient<TScene extends MutationTargetScene> implements 
   async execute(mutation: MutationRequest): Promise<MutationResult> {
     const type = mutation.type.toUpperCase();
 
-    const loadRegistration = this.commands.get(type);
-    if (!loadRegistration) {
+    const command = this.commands.get(type);
+    if (!command) {
       // Name what IS here: an unknown command is usually a caller aimed at the wrong document, and the
       // list says what to send instead.
       return {
@@ -68,7 +71,7 @@ export class SceneMutationClient<TScene extends MutationTargetScene> implements 
 
     let registration: CommandRegistration<TScene>;
     try {
-      registration = await loadRegistration();
+      registration = await command.load();
     } catch (error) {
       return {
         success: false,

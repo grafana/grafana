@@ -7,6 +7,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 
 import { DashboardMutationClient } from './DashboardMutationClient';
+import { LAZY_DASHBOARD_COMMANDS } from './commands/lazyRegistry';
 import { DASHBOARD_COMMANDS } from './commands/registry';
 
 setPluginImportUtils({
@@ -35,6 +36,16 @@ describe('DashboardMutationClient', () => {
       expect(available.has(cmd.name)).toBe(true);
     }
   });
+
+  it.each(LAZY_DASHBOARD_COMMANDS)(
+    'loads the upstream command and preserves read-only metadata for $name',
+    async (lazy) => {
+      const command = await lazy.load();
+
+      expect(command).toBe(DASHBOARD_COMMANDS.find((command) => command.name === lazy.name));
+      expect(lazy.readOnly ?? false).toBe(command.readOnly ?? false);
+    }
+  );
 
   it('also exposes CREATE_NOTEBOOK_SPEC when notebooks are enabled', () => {
     setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
@@ -94,43 +105,58 @@ describe('DashboardMutationClient', () => {
       return scene;
     }
 
-    it('refuses a mutating command', async () => {
-      const scene = activeScene();
-      const client = new DashboardMutationClient(scene);
-      await client.execute({ type: 'RENDER_PLAN', payload: plan });
+    it.each(['enter_edit_mode', 'APPLY_SPEC', 'CREATE_NOTEBOOK_SPEC', 'UNKNOWN_COMMAND'])(
+      'refuses %s while planning',
+      async (type) => {
+        setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
+        const scene = activeScene();
+        const client = new DashboardMutationClient(scene);
+        const rendered = await client.execute({ type: 'RENDER_PLAN', payload: plan });
+        expect(rendered.success).toBe(true);
+        expect(scene.isPlanning()).toBe(true);
 
-      const result = await client.execute({ type: 'ENTER_EDIT_MODE', payload: {} });
+        const result = await client.execute({ type, payload: {} });
 
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('read-only');
-      expect(scene.state.isEditing).toBeFalsy();
-    });
+        expect(result.success).toBe(false);
+        expect(result.error).toContain('read-only');
+        expect(scene.state.isEditing).toBeFalsy();
+      }
+    );
 
     it('still allows a read-only command', async () => {
       const scene = activeScene();
       const client = new DashboardMutationClient(scene);
-      await client.execute({ type: 'RENDER_PLAN', payload: plan });
+      const rendered = await client.execute({ type: 'RENDER_PLAN', payload: plan });
+      expect(rendered.success).toBe(true);
+      expect(scene.isPlanning()).toBe(true);
 
-      const result = await client.execute({ type: 'GET_DASHBOARD_INFO', payload: {} });
+      const result = await client.execute({ type: 'get_dashboard_info', payload: {} });
 
       expect(result.success).toBe(true);
+      expect(result.data).toMatchObject({ title: 'Plan', uid: '' });
     });
 
     it('still allows RENDER_PLAN to re-render and END_PLANNING to close the preview', async () => {
       const scene = activeScene();
       const client = new DashboardMutationClient(scene);
-      await client.execute({ type: 'RENDER_PLAN', payload: plan });
+      const rendered = await client.execute({ type: 'RENDER_PLAN', payload: plan });
+      expect(rendered.success).toBe(true);
+      expect(scene.isPlanning()).toBe(true);
 
       const rerender = await client.execute({
-        type: 'RENDER_PLAN',
+        type: 'render_plan',
         payload: { ...plan, planId: 'plan-2', title: 'Replacement' },
       });
       expect(rerender.success).toBe(true);
       expect(scene.state.title).toBe('Replacement');
 
-      const close = await client.execute({ type: 'END_PLANNING', payload: { planId: 'plan-2' } });
+      const close = await client.execute({ type: 'end_planning', payload: { planId: 'plan-2' } });
       expect(close.success).toBe(true);
       expect(scene.state.planning).toBeUndefined();
+
+      const edit = await client.execute({ type: 'ENTER_EDIT_MODE', payload: {} });
+      expect(edit.success).toBe(true);
+      expect(scene.state.isEditing).toBe(true);
     });
   });
 });

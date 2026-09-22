@@ -2,9 +2,7 @@ import { type Unsubscribable } from 'rxjs';
 
 import { type SceneObjectUrlSyncHandler, type SceneObjectUrlValues, type VizPanel } from '@grafana/scenes';
 
-import { openPanelEditor } from '../panel-edit/openPanelEditor';
-import { createDashboardEditViewFor } from '../settings/createDashboardEditViewFor';
-import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
+import { loadShareDrawer } from '../sharing/ShareDrawer/openShareDrawer';
 import { findEditPanel, getLibraryPanelBehavior } from '../utils/utils';
 
 import { type DashboardScene } from './DashboardScene';
@@ -13,6 +11,14 @@ import { UNCONFIGURED_PANEL_PLUGIN_ID } from './UnconfiguredPanel';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { refuseWhilePlanning } from './refuseWhilePlanning';
 import { type DashboardSceneState } from './types/dashboard';
+
+async function loadDashboardEditView(editview: string) {
+  const { createDashboardEditViewFor } = await import(
+    /* webpackChunkName: "dashboard-settings" */ '../settings/createDashboardEditViewFor'
+  );
+
+  return createDashboardEditViewFor(editview);
+}
 
 export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   /**
@@ -23,6 +29,8 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
    * panel whose fetch fails) loses the editor for good.
    */
   private _heldEditPanelId?: string;
+  private _heldEditViewKey?: string;
+  private _heldShareView?: string;
   private _libPanelSub?: Unsubscribable;
 
   constructor(private _scene: DashboardScene) {}
@@ -37,11 +45,11 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     return {
       autofitpanels: this.getAutoFitPanels(),
       viewPanel: state.viewPanel,
-      editview: state.editview?.getUrlKey(),
+      editview: state.editview?.getUrlKey() ?? this._heldEditViewKey,
       // The hold only stands while the dashboard is still editing. Leaving edit mode clears the
       // param through its own navigation, and reporting the held id here would put it back.
       editPanel: state.editPanel?.getUrlKey() || (state.isEditing ? this._heldEditPanelId : undefined),
-      shareView: state.shareView,
+      shareView: state.shareView ?? this._heldShareView,
     };
   }
 
@@ -57,6 +65,64 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     this._libPanelSub?.unsubscribe();
     this._libPanelSub = undefined;
     this._heldEditPanelId = undefined;
+  }
+
+  private _releaseEditView() {
+    this._heldEditViewKey = undefined;
+  }
+
+  private _enterEditView(editViewKey: string) {
+    if (this._scene.state.editview?.getUrlKey() === editViewKey || this._heldEditViewKey === editViewKey) {
+      return;
+    }
+
+    this._heldEditViewKey = editViewKey;
+    loadDashboardEditView(editViewKey)
+      .then((editview) => {
+        if (this._heldEditViewKey !== editViewKey) {
+          return;
+        }
+
+        this._heldEditViewKey = undefined;
+        this._scene.setState({ editview: refuseWhilePlanning(this._scene) ? undefined : editview });
+      })
+      .catch((error) => {
+        if (this._heldEditViewKey === editViewKey) {
+          this._heldEditViewKey = undefined;
+          this._scene.setState({ editview: undefined });
+        }
+        console.error('Failed to load dashboard settings', error);
+      });
+  }
+
+  private _releaseShareView() {
+    this._heldShareView = undefined;
+  }
+
+  private _enterShareView(shareView: string) {
+    if (this._heldShareView === shareView) {
+      return;
+    }
+
+    this._heldShareView = shareView;
+    loadShareDrawer({ shareView })
+      .then((overlay) => {
+        if (this._heldShareView !== shareView) {
+          return;
+        }
+
+        this._heldShareView = undefined;
+        this._scene.setState(
+          refuseWhilePlanning(this._scene) ? { shareView: undefined, overlay: undefined } : { shareView, overlay }
+        );
+      })
+      .catch((error) => {
+        if (this._heldShareView === shareView) {
+          this._heldShareView = undefined;
+          this._scene.setState({ shareView: undefined, overlay: undefined });
+        }
+        console.error('Failed to load share drawer', error);
+      });
   }
 
   private getAutoFitPanels(): string | undefined {
@@ -75,19 +141,30 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     // check, the branch below calls onEnterEditMode() unconditionally when not already editing,
     // undoing the invariant a plan preview depends on (see refuseWhilePlanning).
     if (typeof values.editview === 'string' && this._scene.canEditDashboard() && !refuseWhilePlanning(this._scene)) {
-      update.editview = createDashboardEditViewFor(values.editview);
-
       // If we are not in editing (for example after full page reload)
       if (!isEditing) {
         if (this._scene.state.editable) {
           // Not sure what is best to do here.
           // The reason for the timeout is for this change to happen after the url sync has completed
-          setTimeout(() => this._scene.onEnterEditMode());
+          setTimeout(() => {
+            if (this.getUrlState().editview === values.editview && !refuseWhilePlanning(this._scene)) {
+              this._scene.onEnterEditMode();
+            }
+          });
         } else {
+          this._releaseEditView();
           update.editview = undefined;
         }
       }
+
+      if (isEditing || this._scene.state.editable) {
+        if (this._scene.state.editview?.getUrlKey() !== values.editview) {
+          update.editview = undefined;
+          this._enterEditView(values.editview);
+        }
+      }
     } else if (values.hasOwnProperty('editview')) {
+      this._releaseEditView();
       update.editview = undefined;
     }
 
@@ -139,6 +216,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     } else if (typeof values.editPanel === 'string') {
       // Refused while planning: clear the param rather than leaving it to keep re-triggering on
       // every sync tick.
+      this._releaseEditPanel();
       update.editPanel = undefined;
     } else if (values.editPanel === null) {
       // Closing the pane supersedes a re-open still waiting on a library panel.
@@ -153,15 +231,21 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     // preview panel has no menu at all). ?shareView=snapshot would otherwise let a placeholder's
     // synthetic sample data leave the preview as a durable, real-looking artifact.
     if (typeof values.shareView === 'string' && !refuseWhilePlanning(this._scene)) {
-      update.shareView = values.shareView;
-      update.overlay = new ShareDrawer({
-        shareView: values.shareView,
-      });
+      if (shareView !== values.shareView) {
+        update.shareView = undefined;
+        update.overlay = undefined;
+        this._enterShareView(values.shareView);
+      }
     } else if (typeof values.shareView === 'string') {
+      this._releaseShareView();
       update.shareView = undefined;
+      update.overlay = undefined;
     } else if (shareView && values.shareView === null) {
+      this._releaseShareView();
       update.overlay = undefined;
       update.shareView = undefined;
+    } else if (values.shareView === null) {
+      this._releaseShareView();
     }
 
     const layout = this._scene.state.body;
@@ -217,7 +301,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     // The pane is closed for the whole wait, so anything the user does meanwhile is the newer
     // intent: leaving edit mode, or opening a different panel, would be silently undone by
     // re-opening on the id this wait captured.
-    if (!this._scene.state.isEditing || this._scene.state.editPanel) {
+    if (refuseWhilePlanning(this._scene) || !this._scene.state.isEditing || this._scene.state.editPanel) {
       this._releaseEditPanel();
       return;
     }
@@ -246,10 +330,19 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     this._libPanelSub = undefined;
     this._heldEditPanelId = panelId;
 
-    openPanelEditor(this._scene, panel, panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID).then(() => {
-      if (this._heldEditPanelId === panelId) {
-        this._heldEditPanelId = undefined;
+    // Check again after the import: planning or a newer URL can supersede this request.
+    import(/* webpackChunkName: "panel-edit" */ '../panel-edit/PanelEditor').then(({ buildPanelEditScene }) => {
+      if (this._heldEditPanelId !== panelId) {
+        return;
       }
+
+      this._heldEditPanelId = undefined;
+      this._scene.setState({
+        editPanel:
+          refuseWhilePlanning(this._scene) || !this._scene.state.isEditing
+            ? undefined
+            : buildPanelEditScene(panel, panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID),
+      });
     });
   }
 }

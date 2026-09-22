@@ -4,7 +4,11 @@ export const LAZY_DASHBOARD_COMMANDS: LazyMutationCommand[] = [
   { name: 'ADD_VARIABLE', load: () => import('./addVariable').then((module) => module.addVariableCommand) },
   { name: 'REMOVE_VARIABLE', load: () => import('./removeVariable').then((module) => module.removeVariableCommand) },
   { name: 'UPDATE_VARIABLE', load: () => import('./updateVariable').then((module) => module.updateVariableCommand) },
-  { name: 'LIST_VARIABLES', load: () => import('./listVariables').then((module) => module.listVariablesCommand) },
+  {
+    name: 'LIST_VARIABLES',
+    readOnly: true,
+    load: () => import('./listVariables').then((module) => module.listVariablesCommand),
+  },
   { name: 'ADD_ANNOTATION', load: () => import('./addAnnotation').then((module) => module.addAnnotationCommand) },
   {
     name: 'UPDATE_ANNOTATION',
@@ -16,10 +20,11 @@ export const LAZY_DASHBOARD_COMMANDS: LazyMutationCommand[] = [
   },
   {
     name: 'LIST_ANNOTATIONS',
+    readOnly: true,
     load: () => import('./listAnnotations').then((module) => module.listAnnotationsCommand),
   },
   { name: 'ENTER_EDIT_MODE', load: () => import('./enterEditMode').then((module) => module.enterEditModeCommand) },
-  { name: 'GET_LAYOUT', load: () => import('./getLayout').then((module) => module.getLayoutCommand) },
+  { name: 'GET_LAYOUT', readOnly: true, load: () => import('./getLayout').then((module) => module.getLayoutCommand) },
   { name: 'ADD_ROW', load: () => import('./addRow').then((module) => module.addRowCommand) },
   { name: 'REMOVE_ROW', load: () => import('./removeRow').then((module) => module.removeRowCommand) },
   { name: 'UPDATE_ROW', load: () => import('./updateRow').then((module) => module.updateRowCommand) },
@@ -33,13 +38,15 @@ export const LAZY_DASHBOARD_COMMANDS: LazyMutationCommand[] = [
   { name: 'ADD_PANEL', load: () => import('./addPanel').then((module) => module.addPanelCommand) },
   { name: 'UPDATE_PANEL', load: () => import('./updatePanel').then((module) => module.updatePanelCommand) },
   { name: 'REMOVE_PANEL', load: () => import('./removePanel').then((module) => module.removePanelCommand) },
-  { name: 'LIST_PANELS', load: () => import('./listPanels').then((module) => module.listPanelsCommand) },
+  { name: 'LIST_PANELS', readOnly: true, load: () => import('./listPanels').then((module) => module.listPanelsCommand) },
   {
     name: 'GET_DASHBOARD_INFO',
+    readOnly: true,
     load: () => import('./getDashboardInfo').then((module) => module.getDashboardInfoCommand),
   },
   {
     name: 'GET_METADATA_ANNOTATIONS',
+    readOnly: true,
     load: () => import('./getMetadataAnnotations').then((module) => module.getMetadataAnnotationsCommand),
   },
   {
@@ -50,6 +57,8 @@ export const LAZY_DASHBOARD_COMMANDS: LazyMutationCommand[] = [
     name: 'UPDATE_DASHBOARD_SETTINGS',
     load: () => import('./updateDashboardSettings').then((module) => module.updateDashboardSettingsCommand),
   },
-  { name: 'GET_SPEC', load: () => import('./getSpec').then((module) => module.getSpecCommand) },
+  { name: 'GET_SPEC', readOnly: true, load: () => import('./getSpec').then((module) => module.getSpecCommand) },
   { name: 'APPLY_SPEC', load: () => import('./applySpec').then((module) => module.applySpecCommand) },
+  { name: 'RENDER_PLAN', load: () => import('./renderPlan').then((module) => module.renderPlanCommand) },
+  { name: 'END_PLANNING', load: () => import('./endPlanning').then((module) => module.endPlanningCommand) },
 ];
