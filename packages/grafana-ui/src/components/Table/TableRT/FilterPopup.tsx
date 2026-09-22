@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { type Column } from '@tanstack/react-table';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
 
@@ -17,7 +18,7 @@ import { FilterList } from './FilterList';
 import { type TableStyles } from './styles';
 
 interface Props {
-  column: any;
+  column: Column<unknown, unknown>;
   tableStyles: TableStyles;
   onClose: () => void;
   field?: Field;

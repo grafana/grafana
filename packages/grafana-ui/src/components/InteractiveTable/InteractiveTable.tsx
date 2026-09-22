@@ -233,7 +233,7 @@ export function InteractiveTable<TableData extends object>({
     // Rows are expandable through renderExpandedRow, they never have sub rows
     getRowCanExpand: () => Boolean(renderExpandedRow),
     enableMultiSort: false,
-    // TanStack Table sorts number columns descending first, react-table always started ascending
+    // TanStack Table sorts number columns descending first; v7 always started ascending
     sortDescFirst: false,
     manualSorting: Boolean(fetchData),
     enableSortingRemoval: !disableSortRemove,

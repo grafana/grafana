@@ -100,15 +100,11 @@ export const Table = memo((props: Props) => {
     return EXTENDED_ROW_HEIGHT;
   }, [footerItems]);
 
-  // React table data array. This data acts just like a dummy array to let react-table know how many rows exist.
-  // The cells use the field to look up values, therefore this is simply a length/size placeholder.
+  // Length placeholder: cells read values from the DataFrame field, not from this array.
   const memoizedData = useMemo(() => {
     if (!data.fields.length) {
       return [];
     }
-    // As we only use this to fake the length of our data set for react-table we need to make sure we always return an array
-    // filled with values at each index otherwise we'll end up trying to call accessRow for null|undefined value in
-    // https://github.com/tannerlinsley/react-table/blob/7be2fc9d8b5e223fc998af88865ae86a88792fdb/src/hooks/useTable.js#L585
     return Array(data.length).fill(0);
   }, [data]);
 
@@ -123,7 +119,6 @@ export const Table = memo((props: Props) => {
   const nestedDataField = data.fields.find((f) => f.type === FieldType.nestedFrames);
   const hasNestedData = nestedDataField !== undefined;
 
-  // React-table column definitions
   const memoizedColumns = useMemo(
     () => getColumns(data, width, columnMinWidth, hasNestedData, footerItems, isCountRowsSet),
     [data, width, columnMinWidth, hasNestedData, footerItems, isCountRowsSet]
@@ -135,6 +130,7 @@ export const Table = memo((props: Props) => {
   const [sorting, setSorting] = useState<SortingState>(initialState.sorting ?? []);
   const previousSorting = useRef(sorting);
   const [expanded, setExpanded] = useState<ExpandedState>({});
+  const previousExpanded = useRef(expanded);
   const [lastExpandedOrCollapsedIndex, setLastExpandedOrCollapsedIndex] = useState<number>();
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
   const [columnSizingInfo, setColumnSizingInfo] = useState<ColumnSizingInfoState>({
@@ -160,7 +156,7 @@ export const Table = memo((props: Props) => {
     getRowCanExpand: () => hasNestedData,
     enableColumnResizing: resizable,
     columnResizeMode: 'onChange',
-    // TanStack Table sorts number columns descending first, react-table always started ascending
+    // TanStack Table sorts number columns descending first; v7 always started ascending
     sortDescFirst: false,
     autoResetPageIndex: false,
     autoResetExpanded: !hasUniqueId,
@@ -168,21 +164,7 @@ export const Table = memo((props: Props) => {
       ? (_row, relativeIndex) => getRowUniqueId(data, relativeIndex) ?? String(relativeIndex)
       : undefined,
     onSortingChange: (updater) => setSorting((current) => functionalUpdate(updater, current)),
-    onExpandedChange: (updater) => {
-      setExpanded((current) => {
-        const next = functionalUpdate(updater, current);
-        if (next !== true) {
-          const currentState = current === true ? {} : current;
-          const changedId = Array.from(new Set([...Object.keys(currentState), ...Object.keys(next)])).find(
-            (id) => Boolean(currentState[id]) !== Boolean(next[id])
-          );
-          if (changedId) {
-            setLastExpandedOrCollapsedIndex(parseInt(changedId, 10));
-          }
-        }
-        return next;
-      });
-    },
+    onExpandedChange: (updater) => setExpanded((current) => functionalUpdate(updater, current)),
     onColumnSizingChange: setColumnSizing,
     onColumnSizingInfoChange: setColumnSizingInfo,
   });
@@ -209,6 +191,23 @@ export const Table = memo((props: Props) => {
       })
     );
   }, [data, props, sorting]);
+
+  useEffect(() => {
+    const previous = previousExpanded.current;
+    previousExpanded.current = expanded;
+
+    if (previous === expanded || expanded === true) {
+      return;
+    }
+
+    const previousState = previous === true ? {} : previous;
+    const changedId = Array.from(new Set([...Object.keys(previousState), ...Object.keys(expanded)])).find(
+      (id) => Boolean(previousState[id]) !== Boolean(expanded[id])
+    );
+    if (changedId) {
+      setLastExpandedOrCollapsedIndex(parseInt(changedId, 10));
+    }
+  }, [expanded]);
 
   useEffect(() => {
     const previousColumn = resizingColumnRef.current;
@@ -279,10 +278,8 @@ export const Table = memo((props: Props) => {
   }, [pageSize, tableInstance]);
 
   useEffect(() => {
-    // Reset page index when data changes
-    // This is needed because react-table does not do this automatically
-    // autoResetPage is set to false because setting it to true causes the issue described in
-    // https://github.com/grafana/grafana/pull/67477
+    // Reset the page when data no longer covers the current page. autoResetPageIndex is false
+    // because enabling it caused the issue described in https://github.com/grafana/grafana/pull/67477
     if (data.length / pageSize < state.pagination.pageIndex) {
       tableInstance.setPageIndex(0);
     }

@@ -119,9 +119,8 @@ export interface TableFooterCalc {
 }
 
 export interface GrafanaTableState extends TableState {
-  // We manually track this to know where to reset the row heights. This is needed because react-table removed the
-  // collapsed IDs/indexes from the state.expanded map so when collapsing we would have to do a diff of current and
-  // previous state.expanded to know what changed.
+  // We manually track this to know where to reset the row heights. Collapsed IDs disappear from the expanded map,
+  // so without a recorded index we would have to diff current and previous expanded state to know what changed.
   lastExpandedOrCollapsedIndex?: number;
 }
 
