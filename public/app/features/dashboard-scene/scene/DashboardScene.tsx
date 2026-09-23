@@ -1205,7 +1205,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.state.sidebar.cancelPaneRequest();
   }
 
-  /** View and loading fields have dedicated writers; ordinary edits must not cancel requests. */
+  /** Ordinary edits must not cancel requests; view transitions should use updateView. */
   public override setState(state: DashboardStateUpdate) {
     super.setState(state);
   }
