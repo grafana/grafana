@@ -300,11 +300,9 @@ func (s *cascadeDeleteStorage) dashboardsInFolder(ctx context.Context, namespace
 			Offset:       offset,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
-		if err != nil {
-			return nil, fmt.Errorf("search dashboards in folder %q: %w", folderUID, err)
-		}
-		if resp.Error != nil {
-			return nil, fmt.Errorf("search dashboards in folder %q: %s", folderUID, resp.Error.Message)
+		if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+			logging.FromContext(ctx).Error("Failed to search dashboards in folder", "namespace", namespace, "folder", folderUID, "error", err)
+			return nil, err
 		}
 		rows, err := decodeSearchRows(resp)
 		if err != nil {
@@ -382,11 +380,9 @@ func (s *cascadeDeleteStorage) variablesInFolder(ctx context.Context, namespace,
 			Offset:       offset,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
-		if err != nil {
-			return nil, fmt.Errorf("search variables in folder %q: %w", folderUID, err)
-		}
-		if resp.Error != nil {
-			return nil, fmt.Errorf("search variables in folder %q: %s", folderUID, resp.Error.Message)
+		if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+			logging.FromContext(ctx).Error("Failed to search variables in folder", "namespace", namespace, "folder", folderUID, "error", err)
+			return nil, err
 		}
 		rows, err := decodeSearchRows(resp)
 		if err != nil {
