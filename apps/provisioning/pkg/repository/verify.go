@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
-	"path/filepath"
+	"path"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -19,6 +19,47 @@ var ErrRepositoryDuplicatePath = fmt.Errorf("duplicate repository path")
 
 // ErrRepositoryParentFolderConflict is returned when a repository path conflicts with a parent folder
 var ErrRepositoryParentFolderConflict = fmt.Errorf("repository path conflicts with existing repository")
+
+// PathConflict reports whether cfg's URL/branch/path overlaps with v's, and if so, the error
+// describing the conflict (ErrRepositoryDuplicatePath for an exact match,
+// ErrRepositoryParentFolderConflict for a parent/child overlap). It only compares two git
+// repositories with the same URL and branch; anything else is never a conflict.
+//
+// This used to gate repository creation/update directly (rejecting the write outright). It no
+// longer does: two repositories are allowed to have the same or overlapping paths - the
+// resource-level ManagerProperties identity check prevents them from actually overwriting each
+// other's synced resources (see pkg/storage/unified/apistore/managed.go). Callers now use this
+// to surface a warning (see controller.RepositoryPathConflictChecker) rather than to block.
+func PathConflict(cfg, v *provisioning.Repository) (error, bool) {
+	if !cfg.Spec.Type.IsGit() || !v.Spec.Type.IsGit() {
+		return nil, false
+	}
+	if cfg.Name == v.Name {
+		return nil, false
+	}
+	if v.URL() != cfg.URL() || v.Branch() != cfg.Branch() {
+		return nil, false
+	}
+	if v.Path() == cfg.Path() {
+		return ErrRepositoryDuplicatePath, true
+	}
+	if pathsOverlap(v.Path(), cfg.Path()) {
+		return ErrRepositoryParentFolderConflict, true
+	}
+	return nil, false
+}
+
+// pathsOverlap reports whether a and b are the same directory tree, or one is nested inside the
+// other, checked in both directions - either the new or the existing repository could be the
+// ancestor. An empty path is the repository root, which contains every other path.
+func pathsOverlap(a, b string) bool {
+	if a == "" || b == "" {
+		return true
+	}
+	a = strings.Trim(path.Clean(a), "/")
+	b = strings.Trim(path.Clean(b), "/")
+	return a == b || strings.HasPrefix(a, b+"/") || strings.HasPrefix(b, a+"/")
+}
 
 type VerifyAgainstExistingRepositoriesValidator struct {
 	lister      RepositoryLister
@@ -38,8 +79,11 @@ func NewVerifyAgainstExistingRepositoriesValidator(lister RepositoryLister, quot
 // This validator enforces the following rules:
 // - You can only create an instance sync repository if no other repositories exist in the namespace.
 // - You cannot create a non-instance (folder or folderless) sync repository if an instance repository already exists in the namespace.
-// - Git repositories must not have duplicate or overlapping paths with existing repositories.
 // - The total number of repositories in a single namespace cannot exceed the configured limit (default 10, 0 = unlimited).
+//
+// It no longer rejects repositories with duplicate/overlapping URL+branch+path - see
+// PathConflict's doc comment for why, and controller.RepositoryPathConflictChecker for the
+// warning that replaced it.
 func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Context, cfg *provisioning.Repository) field.ErrorList {
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, cfg.Namespace)
 	if err != nil {
@@ -70,38 +114,11 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 		}
 	}
 
-	// If repo is git and sync is enabled, ensure no other repository is defined with a conflicting path.
-	// Path checks are skipped when sync is disabled to allow the onboarding wizard to create repositories
-	// in multiple steps (first with empty path, then configure path, then enable sync).
-	if cfg.Spec.Type.IsGit() && cfg.Spec.Sync.Enabled {
-		for _, v := range all {
-			// skip itself
-			if cfg.Name == v.Name {
-				continue
-			}
-			if v.URL() == cfg.URL() && v.Branch() == cfg.Branch() {
-				if v.Path() == cfg.Path() {
-					return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"),
-						cfg.Path(),
-						fmt.Sprintf("%s: %s", ErrRepositoryDuplicatePath.Error(), v.Name))}
-				}
-
-				// Skip parent/child conflict check when both paths are empty (both at repository root)
-				if v.Path() != "" || cfg.Path() != "" {
-					relPath, err := filepath.Rel(v.Path(), cfg.Path())
-					if err != nil {
-						return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"), cfg.Path(), "failed to evaluate path: "+err.Error())}
-					}
-					// https://pkg.go.dev/path/filepath#Rel
-					// Rel will return "../" if the relative paths are not related
-					if !strings.HasPrefix(relPath, "../") {
-						return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"), cfg.Path(),
-							fmt.Sprintf("%s: %s", ErrRepositoryParentFolderConflict.Error(), v.Name))}
-					}
-				}
-			}
-		}
-	}
+	// Note: this validator used to reject a repository whose URL/branch/path overlapped with
+	// another repository's here, gated on cfg.Spec.Sync.Enabled. It no longer does - see
+	// PathConflict's doc comment for why blocking creation/update stopped being necessary. A
+	// conflict is now surfaced as a warning during reconciliation instead (see
+	// controller.RepositoryPathConflictChecker).
 
 	// Get quota status for the namespace
 	quotaStatus, err := v.quotaGetter.GetQuotaStatus(ctx, cfg.Namespace)
