@@ -74,7 +74,7 @@ async function isPluginAvailable(): Promise<boolean> {
  *
  * With the proxy switched off this answers straight away, without fetching the availability chunk.
  */
-export async function isRouteProxyActive(): Promise<boolean> {
+async function isRouteProxyActive(): Promise<boolean> {
   return isRouteProxyEnabled() && isPluginAvailable();
 }
 
