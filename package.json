@@ -344,7 +344,7 @@
     "@visx/tooltip": "3.12.0",
     "@welldone-software/why-did-you-render": "8.0.3",
     "ansicolor": "2.0.3",
-    "centrifuge": "5.5.3",
+    "centrifuge": "5.7.4",
     "clsx": "^2.1.1",
     "combokeys": "^3.0.0",
     "comlink": "4.4.2",
