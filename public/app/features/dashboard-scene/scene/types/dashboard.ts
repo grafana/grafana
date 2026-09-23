@@ -59,6 +59,8 @@ export interface DashboardSceneState extends SceneObjectState {
   editPanel?: PanelEditor;
   /** Scene object that handles the current drawer or modal */
   overlay?: SceneObject;
+  /** A drawer's implementation is being loaded. */
+  isModalLoading?: boolean;
   /** Share view */
   shareView?: string;
   /** Renders panels in grid and filtered */
@@ -97,6 +99,7 @@ interface DashboardScenePreferences {
 
 export interface DashboardSceneLike extends SceneObject<DashboardSceneState>, LayoutParent {
   isDashboardScene: boolean;
+  updateView(state: Partial<DashboardSceneState>): void;
 
   copyPanel(vizPanel: VizPanel): void;
 

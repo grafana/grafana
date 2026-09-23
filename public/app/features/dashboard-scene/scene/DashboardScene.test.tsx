@@ -51,6 +51,7 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { findVizPanelByKey } from '../utils/findVizPanel';
 import { DashboardInteractions } from '../utils/interactions';
 import { toControlSourceRef } from '../utils/predefinedVariables';
+import { createDeferred } from '../utils/test-utils';
 import { getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 import * as utils from '../utils/utils';
 
@@ -2030,6 +2031,20 @@ describe('DashboardScene', () => {
   describe('lazy overlays', () => {
     beforeEach(() => {
       locationService.push('/d/dash-1/test');
+    });
+
+    it('does not restore an old loading indicator when discarding an edit session', async () => {
+      const scene = buildTestScene();
+      const pending = createDeferred<SceneObject>();
+      const opening = scene.showModalAsync(() => pending.promise);
+      expect(scene.state.isModalLoading).toBe(true);
+      scene.onEnterEditMode();
+      scene.exitEditMode({ skipConfirm: true, restoreInitialState: true });
+      expect(scene.state.isModalLoading).toBe(false);
+
+      pending.resolve(new SceneGridLayout({ children: [] }));
+      await opening;
+      expect(scene.state.overlay).toBeUndefined();
     });
 
     it.each(['older first', 'newer first'])('only opens the latest request when loads finish %s', async (order) => {

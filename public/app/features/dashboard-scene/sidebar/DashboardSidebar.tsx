@@ -60,6 +60,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.cancelPaneRequest();
     const controller = new AbortController();
     this._paneRequest = controller;
+    this.setState({ isLoading: true });
     if (!this.isActive) {
       this.cancelPaneRequest();
     }
@@ -67,10 +68,27 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     return controller.signal;
   }
 
+  public async runPaneRequest(load: (signal: AbortSignal) => Promise<void>) {
+    const signal = this.beginPaneRequest();
+    try {
+      if (!signal.aborted) {
+        await load(signal);
+      }
+    } finally {
+      // An older load must not clear the indicator for a newer selection.
+      if (this._paneRequest?.signal === signal) {
+        this.cancelPaneRequest();
+      }
+    }
+  }
+
   private cancelPaneRequest() {
     const request = this._paneRequest;
     this._paneRequest = undefined;
     request?.abort();
+    if (this.state.isLoading) {
+      this.setState({ isLoading: false });
+    }
   }
 
   /** Set while a batch of edit actions is being collected, see startBatchAction/endBatchAction. */
@@ -85,8 +103,8 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   }
 
   public clone(withState: Partial<DashboardSidebarState>): this {
-    // Clone without any undo/redo history
-    return super.clone({ ...withState, redoStack: [], undoStack: [] });
+    // Pending requests and edit history belong to the live sidebar, not its snapshots.
+    return super.clone({ ...withState, redoStack: [], undoStack: [], isLoading: false });
   }
 
   private onActivate() {

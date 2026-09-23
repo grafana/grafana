@@ -1199,13 +1199,16 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   /** Use for view transitions and content replacement; ordinary data edits should use setState. */
   public updateView(state: Partial<DashboardSceneState>) {
     this.beginViewTransition();
-    this.setState(state);
+    // Restored view snapshots must not revive an already-cancelled loading indicator.
+    this.setState({ ...state, isModalLoading: false });
   }
 
   public async showModalAsync(load: () => Promise<SceneObject | undefined>) {
     this.beginViewTransition();
     const request = new AbortController();
     this._modalRequest = request;
+    request.signal.addEventListener('abort', () => this.setState({ isModalLoading: false }), { once: true });
+    this.setState({ isModalLoading: true, overlay: undefined });
     const location = locationService.getLocation();
     const search = new URLSearchParams(location.search);
     // Time range and variable URL updates do not supersede a drawer request.
@@ -1228,6 +1231,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     } finally {
       unlisten();
       if (this._modalRequest === request) {
+        request.abort();
         this._modalRequest = undefined;
       }
     }
