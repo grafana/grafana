@@ -28,6 +28,7 @@ func TestIntegrationEmbeddedServer(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("publisher buffer overflows and recovers after reconnect", testPublisherBufferOverflowRecovers)
+	t.Run("starting fails when the server rejects authentication", testStartingFailsOnAuthRejection)
 	t.Run("single subscriber receives a published message", testSingleSubscriberReceives)
 	t.Run("queue group delivers each message to exactly one subscriber", testQueueGroupDeliversOnce)
 	t.Run("two independent subscribers each receive the message (fan-out)", testFanOutDelivery)
@@ -100,6 +101,16 @@ func testPublisherBufferOverflowRecovers(t *testing.T) {
 	require.NotEmpty(t, accepted)
 	require.Greater(t, promtestutil.ToFloat64(pub.metrics.pendingBytes), float64(0))
 
+	// The publisher reconnects on its own and replays its buffer the moment the
+	// server accepts connections. Start the recovery broker only just after a
+	// failed reconnect attempt, so the publisher is parked in its ReconnectWait
+	// backoff and cannot replay before recoverySub registers interest. Core NATS
+	// drops messages published with no matching interest.
+	attemptsBefore := promtestutil.ToFloat64(pub.metrics.connectionErrors)
+	require.Eventually(t, func() bool {
+		return promtestutil.ToFloat64(pub.metrics.connectionErrors) > attemptsBefore
+	}, 5*time.Second, 10*time.Millisecond)
+
 	srv = start(port)
 	recoverySub := newTestSubscriber(t, srv)
 	startService(t, ctx, recoverySub)
@@ -133,6 +144,38 @@ func testPublisherBufferOverflowRecovers(t *testing.T) {
 			t.Fatalf("received %d/%d buffered messages", len(seen), len(accepted))
 		}
 	}
+}
+
+func testStartingFailsOnAuthRejection(t *testing.T) {
+	srv, err := natsserver.NewServer(&natsserver.Options{
+		Host: "127.0.0.1", Port: natsserver.RANDOM_PORT, NoLog: true, NoSigs: true,
+		JetStream: false, NoSystemAccount: true,
+		Authorization: "right-token",
+	})
+	require.NoError(t, err)
+	go srv.Start()
+	require.True(t, srv.ReadyForConnections(5*time.Second))
+	t.Cleanup(srv.Shutdown)
+	port := srv.Addr().(*net.TCPAddr).Port
+
+	// RetryOnFailedConnect makes the initial dial succeed with a reconnecting
+	// client, so a permanent authentication rejection only surfaces
+	// asynchronously. starting must still fail rather than accept publishes that
+	// can never be delivered.
+	cfg := setting.NATSSettings{
+		Enabled:    true,
+		Mode:       setting.NATSModeExternal,
+		ClientURLs: []string{fmt.Sprintf("nats://127.0.0.1:%d", port)},
+		Auth:       setting.NATSAuthSettings{Mode: setting.NATSAuthModeToken, Token: "wrong-token"},
+	}
+	pub := newPublisher(log.NewNopLogger(), newPublisherMetrics(), newConfig(cfg, nil))
+	t.Cleanup(pub.close)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	t.Cleanup(cancel)
+	err = pub.starting(ctx)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "authentication rejected")
 }
 
 // waitSubscriberReady blocks until the subscription's interest is registered on the server.

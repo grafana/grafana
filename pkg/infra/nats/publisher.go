@@ -7,10 +7,13 @@ import (
 	"time"
 
 	"github.com/grafana/dskit/services"
+	natsclient "github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 )
+
+const startupConnectProbe = 2 * time.Second
 
 const publisherName = "nats-publisher"
 
@@ -91,11 +94,36 @@ func (p *PublisherService) starting(ctx context.Context) error {
 		return err
 	}
 	if !nc.IsConnected() {
-		p.log.Warn("nats publisher not yet connected at startup; retrying in the background",
-			"status", nc.Status(), "last_err", nc.LastError())
+		if err := p.awaitConnectOrAuthRejection(ctx, nc); err != nil {
+			return err
+		}
 	}
 
 	return nil
+}
+
+func (p *PublisherService) awaitConnectOrAuthRejection(ctx context.Context, nc *natsclient.Conn) error {
+	ticker := time.NewTicker(20 * time.Millisecond)
+	defer ticker.Stop()
+	deadline := time.NewTimer(startupConnectProbe)
+	defer deadline.Stop()
+	for {
+		if err := p.authRejection(); err != nil {
+			return err
+		}
+		if nc.IsConnected() {
+			return nil
+		}
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-deadline.C:
+			p.log.Warn("nats publisher not yet connected at startup; retrying in the background",
+				"status", nc.Status(), "last_err", nc.LastError())
+			return nil
+		case <-ticker.C:
+		}
+	}
 }
 
 func (p *PublisherService) running(ctx context.Context) error {

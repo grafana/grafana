@@ -43,6 +43,11 @@ type connection struct {
 	// reconnect handler can record how long the connection was down. Accessed only
 	// from the NATS callback goroutine, but kept atomic to stay race-free.
 	disconnectedAt atomic.Int64
+	// authRejected holds the message of the last permanent authentication rejection
+	// reported by the (re)connect error handler. With RetryOnFailedConnect such
+	// rejections never surface as a synchronous connect error, so startup consults
+	// this instead of the connect result.
+	authRejected atomic.Pointer[string]
 
 	mu       sync.Mutex
 	conn     *natsclient.Conn
@@ -226,6 +231,8 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 			}
 			c.metrics.connectionErrors.Inc()
 			if isAuthErr(err) {
+				msg := err.Error()
+				c.authRejected.Store(&msg)
 				c.log.Error("nats (re)connect rejected by server", "role", roleStr, "reason", asyncErrorReason(err), "err", err)
 				return
 			}
@@ -302,6 +309,13 @@ func (c *connection) healthy() error {
 	return nil
 }
 
+func (c *connection) authRejection() error {
+	if msg := c.authRejected.Load(); msg != nil {
+		return fmt.Errorf("nats %s authentication rejected by server: %s", c.role, *msg)
+	}
+	return nil
+}
+
 // close drains the connection and waits for the drain to complete so it does not
 // outlive the caller. Terminal: once closed, get() refuses to reopen.
 func (c *connection) close() {
@@ -324,6 +338,15 @@ func (c *connection) closeWithResult() bool {
 		return false
 	}
 	initialErr := nc.LastError()
+
+	// A reconnecting client cannot flush its buffer: Drain would close the
+	// connection and silently discard the reconnect queue. Report an unclean
+	// close so the caller accounts for the dropped messages rather than assuming
+	// a successful server flush.
+	if !nc.IsConnected() {
+		nc.Close()
+		return false
+	}
 
 	// Drain closes the connection on a background goroutine; wait for it below.
 	if err := nc.Drain(); err != nil {
