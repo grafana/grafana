@@ -36,12 +36,12 @@ import {
   type NotebookEditSessionSource,
 } from '../analytics/types';
 import { canEditNotebooks } from '../permissions';
+import { NotebookToolbar } from '../toolbar/NotebookToolbar';
 import { NOTEBOOK_EDIT_PARAM } from '../urls';
 
 import { changesTimeSettings, NotebookAutosave } from './NotebookAutosave';
 import { NOTEBOOK_EDIT_KIND, NotebookEditHistory } from './NotebookEditHistory';
 import { NotebookEditHistoryControls } from './NotebookEditHistoryControls';
-import { NotebookEditToggle } from './NotebookEditToggle';
 import { useIsNotebookEmbedded } from './NotebookEmbeddedContext';
 import { NotebookSaveStatus } from './NotebookSaveStatus';
 import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
@@ -414,7 +414,7 @@ function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
   // to come from the chrome rather than a constant.
   const headerHeight = useChromeHeaderHeight();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
-  const { body, timePicker, refreshPicker, hideTimeControls, overlay, isEditing } = model.useState();
+  const { body, timePicker, refreshPicker, hideTimeControls, overlay, isEditing, uid } = model.useState();
   /**
    * From the tree, not the scene. The same notebook can be rendered on the route and in a host with
    * no app header at the same time, and those two share one scene object — so the answer has to come
@@ -433,13 +433,13 @@ function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
             be visible and retryable there too. This renders nothing until there is something to say. */}
         <NotebookSaveStatus autosave={model.autosave} />
         {isEditing && <NotebookEditHistoryControls history={model.editHistory} />}
-        <NotebookEditToggle notebook={model} />
         {!hideTimeControls && (
           <>
             <timePicker.Component model={timePicker} />
             <refreshPicker.Component model={refreshPicker} />
           </>
         )}
+        <NotebookToolbar uid={uid} scene={model} />
       </div>
       <body.Component model={body} />
       {overlay && <overlay.Component model={overlay} />}

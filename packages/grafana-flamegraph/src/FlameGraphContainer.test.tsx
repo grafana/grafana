@@ -244,6 +244,16 @@ describe('FlameGraphContainer with useTableNG', () => {
     expect(screen.getByDisplayValue('^net/http\\.HandlerFunc\\.ServeHTTP$')).toBeInTheDocument();
   });
 
+  it('keeps horizontal overflow inside the table', () => {
+    render(<FlameGraphContainer data={makeFlameGraphData()} getTheme={getTheme} useTableNG={true} />);
+
+    const pane = screen.getByTestId('topTable').closest<HTMLElement>('[class*="horizontalPaneContainer"]');
+    expect(pane).not.toBeNull();
+    const styles = window.getComputedStyle(pane!);
+    expect(styles.overflowX).toBe('hidden');
+    expect(styles.overflowY).toBe('auto');
+  });
+
   // TableNG's feature-toggle values have to travel from here down to the top table, and the refreshed
   // header lifts the sort arrow out of the label button - so the arrow's placement is the observable
   // proof that the whole chain is wired, not just the top table's own prop.

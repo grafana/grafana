@@ -43,14 +43,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "featureHighlights",
-			Description: "Highlight Grafana Enterprise features",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaOperatorExperienceSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "canvasPanelNesting",
 			Description: "Allow elements nesting",
 			Stage:       FeatureStageExperimental,
@@ -289,7 +281,7 @@ var (
 		},
 		{
 			Name:         "grafana.frontendLegacyFeatureToggleHandling",
-			Description:  `Controls how the frontend handles reads of the legacy config.featureToggles map. One of "off", "log" (report each toggle once) or "block" (report, and resolve every toggle to undefined).`,
+			Description:  `Controls how the frontend handles reads of the legacy config.featureToggles map. One of "off", "log" (warn in the console once per toggle), "alert" (also raise a warning alert) or "block" (console only, and resolve every toggle to undefined).`,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
@@ -697,7 +689,7 @@ var (
 			Name:        "perPanelNonApplicableDrilldowns",
 			Description: "Enables viewing non-applicable drilldowns on a panel level",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
 		},

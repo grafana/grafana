@@ -5,6 +5,7 @@ import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 import { act, render, screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
 
 import { mockBoundingClientRect } from '@grafana/test-utils';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions, grantUserRole, mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupAlertmanagersStatus } from 'app/features/alerting/unified/mocks/server/configure/alertmanagers';
@@ -27,6 +28,11 @@ import { useDryRunNotifications } from '../useImport';
 import { Step1Content, useStep1Validation } from './Step1AlertmanagerResources';
 
 const server = setupMswServer();
+
+// Toasts are reported through app notifications, so that is where drop-confirmation text has to be
+// asserted — it never reaches the DOM from here.
+jest.mock('app/core/copy/appNotification');
+const notifySuccess = jest.fn();
 
 // Wrapper to provide react-hook-form context
 function TestWrapper({
@@ -118,6 +124,13 @@ describe('Step1AlertmanagerResources', () => {
   beforeEach(() => {
     setupDataSources(alertmanagerDataSource);
     grantUserPermissions([AccessControlAction.AlertingNotificationsWrite]);
+    notifySuccess.mockClear();
+    jest.mocked(useAppNotification).mockReturnValue({
+      success: notifySuccess,
+      error: jest.fn(),
+      warning: jest.fn(),
+      info: jest.fn(),
+    });
   });
 
   describe('Step1Content rendering', () => {
@@ -209,6 +222,7 @@ describe('Step1AlertmanagerResources', () => {
       expect(await screen.findByText(/upload failed/i)).toBeInTheDocument();
       expect(screen.queryByText('config.json')).not.toBeInTheDocument();
       expect(screen.getByText(/drop yaml file here or click to upload/i)).toBeInTheDocument();
+      expect(notifySuccess).not.toHaveBeenCalled();
     });
 
     it('rejects a .txt file even though its MIME type collides with the accepted .yml bucket', async () => {
@@ -226,6 +240,7 @@ describe('Step1AlertmanagerResources', () => {
       expect(await screen.findByText(/upload failed/i)).toBeInTheDocument();
       expect(screen.queryByText('notes.txt')).not.toBeInTheDocument();
       expect(screen.getByText(/drop yaml file here or click to upload/i)).toBeInTheDocument();
+      expect(notifySuccess).not.toHaveBeenCalled();
     });
 
     it('removes the YAML file when its remove button is clicked', async () => {
@@ -247,6 +262,20 @@ describe('Step1AlertmanagerResources', () => {
       await user.click(screen.getByRole('button', { name: /remove am\.yaml/i }));
 
       expect(screen.queryByText('am.yaml')).not.toBeInTheDocument();
+    });
+
+    it('shows a success toast when the YAML file is dropped', async () => {
+      const { user } = render(
+        <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      const input = await screen.findByLabelText(/alertmanager config yaml/i);
+      await user.upload(input, new File(['route:\n  receiver: default\n'], 'am.yaml', { type: 'application/yaml' }));
+
+      expect(await screen.findByText('am.yaml')).toBeInTheDocument();
+      expect(notifySuccess).toHaveBeenCalledWith('Configuration file uploaded', 'am.yaml');
     });
 
     it('should render datasource picker when datasource source selected', () => {
@@ -281,6 +310,66 @@ describe('Step1AlertmanagerResources', () => {
       );
 
       expect(screen.queryByText(/drop template files here or click to upload/i)).not.toBeInTheDocument();
+    });
+
+    it('shows a success toast when a single template file is dropped', async () => {
+      const { user } = render(
+        <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      const input = await screen.findByLabelText(/notification templates/i);
+      await user.upload(input, new File(['a'], 'email.tmpl', { type: 'text/plain' }));
+
+      expect(await screen.findByText('email.tmpl')).toBeInTheDocument();
+      expect(notifySuccess).toHaveBeenCalledWith('Template file added', 'email.tmpl');
+    });
+
+    it('shows a single pluralized toast when multiple template files are dropped in one gesture', async () => {
+      const { user } = render(
+        <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      const input = await screen.findByLabelText(/notification templates/i);
+      await user.upload(input, [
+        new File(['a'], 'email.tmpl', { type: 'text/plain' }),
+        new File(['b'], 'slack.tmpl', { type: 'text/plain' }),
+      ]);
+
+      expect(await screen.findByText('email.tmpl')).toBeInTheDocument();
+      expect(notifySuccess).toHaveBeenCalledTimes(1);
+      expect(notifySuccess).toHaveBeenCalledWith('Template files added', 'email.tmpl, slack.tmpl');
+    });
+
+    it('shows the toast for a template drop even while the dry-run banner reports an error for the config', async () => {
+      const { user } = render(
+        <TestWrapper
+          defaultValues={{
+            notificationsSource: 'yaml',
+            policyTreeName: 'prometheus-prod',
+            notificationsYamlFile: new File(['not valid yaml'], 'am.yaml', { type: 'application/yaml' }),
+          }}
+        >
+          <Step1Content
+            {...defaultStep1Props}
+            dryRunState="error"
+            dryRunResult={{ valid: false, error: 'invalid config', renamedReceivers: [], renamedTimeIntervals: [] }}
+          />
+        </TestWrapper>
+      );
+
+      expect(screen.getByText(/validation failed/i)).toBeInTheDocument();
+
+      const input = await screen.findByLabelText(/notification templates/i);
+      await user.upload(input, new File(['a'], 'email.tmpl', { type: 'text/plain' }));
+
+      expect(await screen.findByText('email.tmpl')).toBeInTheDocument();
+      // The dry-run error banner is unrelated to (and unaffected by) the template drop.
+      expect(screen.getByText(/validation failed/i)).toBeInTheDocument();
+      expect(notifySuccess).toHaveBeenCalledWith('Template file added', 'email.tmpl');
     });
 
     it('should list uploaded template files and show a duplicate-name error', async () => {

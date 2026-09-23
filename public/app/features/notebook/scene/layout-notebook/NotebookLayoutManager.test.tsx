@@ -195,7 +195,7 @@ describe('NotebookLayoutManager', () => {
     expect(screen.getByText('hidden-panel')).toBeInTheDocument();
   });
 
-  describe('add cell affordances', () => {
+  describe('add cell controls', () => {
     it('does not offer them outside edit mode', () => {
       renderNotebook();
 
@@ -269,7 +269,7 @@ describe('NotebookLayoutManager', () => {
   });
 
   // The "always one more empty block ready" invariant: unlike the old dedicated prompt component,
-  // there is no separate affordance any more — the trailing cell in `cells` itself is always an empty,
+  // there is no separate prompt any more. The trailing cell in `cells` itself is always an empty,
   // placeholder-showing markdown editor, and offers the same "/" menu any empty markdown cell does
   // (see NotebookCellRenderer/NotebookLayoutManager's own setCellContent doc comment).
   describe('the trailing empty cell', () => {
@@ -420,7 +420,7 @@ describe('NotebookLayoutManager', () => {
       expect(screen.getAllByRole('button', { name: 'Delete block' })).toHaveLength(3);
     });
 
-    // Inside the frame, so the existing hover rule reveals them with the rest of the cell's affordances
+    // Inside the frame, so the existing hover rule reveals them with the rest of the cell's controls
     // rather than needing a second mechanism.
     it('places them inside the frame of their own cell', async () => {
       renderNotebook(true);
@@ -648,7 +648,7 @@ describe('NotebookLayoutManager', () => {
       expect(sibling.state.elementName).toBe('shared');
     });
 
-    // The trailing-invariant bootstrap is the only affordance an empty notebook has, so this is the
+    // The trailing-invariant bootstrap is the only control an empty notebook has, so this is the
     // sole path to a first cell.
     it('gives an empty notebook its first cell', async () => {
       const { manager, user } = renderManager(buildManager([], true));
@@ -792,7 +792,7 @@ describe('NotebookLayoutManager', () => {
     });
 
     // The handle is a tab stop, which is what gives keyboard users the reorder for free — and the
-    // reason the frame reveals affordances on :focus-within as well as :hover.
+    // reason the frame reveals controls on :focus-within as well as :hover.
     it('keeps the handle focusable', () => {
       const { container } = renderNotebook(true);
 
@@ -1635,7 +1635,7 @@ describe('NotebookLayoutManager', () => {
       expect(frame).toHaveFocus();
     });
 
-    // The rest of every other affordance on this frame (drag handle, actions bar, the add-block
+    // The rest of every other control on this frame (drag handle, actions bar, the add-block
     // button) is edit-mode-only too — arrow-key navigation follows the same rule rather than being
     // a special case, which is also why the frame is not even a tab stop outside edit mode.
     it('does not respond to arrow keys outside edit mode', () => {

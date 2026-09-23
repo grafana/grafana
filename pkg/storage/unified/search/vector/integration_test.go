@@ -677,6 +677,54 @@ func TestIntegrationVectorUpdateContentVersion(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestIntegrationVectorUpdateFolder(t *testing.T) {
+	backend, engine, ctx := setupIntegrationTest(t)
+	rows := []Vector{
+		{Namespace: "integration-test", Resource: testResource, UID: "folder-move", Title: "First",
+			Subresource: "panel/1", Content: "first content", Metadata: json.RawMessage(`{"custom":"first"}`),
+			Embedding: makeEmbedding(0.5, 0.5), Model: testModel, ContentVersion: 1, Folder: "folder-a"},
+		{Namespace: "integration-test", Resource: testResource, UID: "folder-move", Title: "Second",
+			Subresource: "panel/2", Content: "second content", Metadata: json.RawMessage(`{"custom":"second"}`),
+			Embedding: makeEmbedding(0.2, 0.8), Model: testModel, ContentVersion: 2, Folder: "folder-a"},
+		{Namespace: "integration-test", Resource: testResource, UID: "other", Title: "Other",
+			Content: "untouched", Embedding: makeEmbedding(0.5, 0.5), Model: testModel, Folder: "folder-a"},
+		{Namespace: "integration-test-other", Resource: testResource, UID: "folder-move", Title: "Other namespace",
+			Content: "untouched", Embedding: makeEmbedding(0.5, 0.5), Model: testModel, Folder: "folder-a"},
+		{Namespace: "integration-test", Resource: testResource, UID: "folder-move", Title: "Other model",
+			Content: "untouched", Embedding: makeEmbedding(0.5, 0.5), Model: "other-model", Folder: "folder-a"},
+	}
+	require.NoError(t, backend.Upsert(ctx, rows))
+	snapshot := func(v Vector) (string, string) {
+		t.Helper()
+		var payload, folder string
+		err := engine.DB().QueryRowContext(ctx, `SELECT (to_jsonb(e) - 'folder' - 'updated_at')::text, folder
+			FROM embeddings e WHERE namespace=$1 AND model=$2 AND resource=$3 AND uid=$4 AND subresource=$5`,
+			v.Namespace, v.Model, v.Resource, v.UID, v.Subresource).Scan(&payload, &folder)
+		require.NoError(t, err)
+		return payload, folder
+	}
+	before := make([]string, len(rows))
+	for i, v := range rows {
+		before[i], _ = snapshot(v)
+	}
+	for _, folder := range []string{"folder-b", ""} {
+		require.NoError(t, backend.UpdateFolder(ctx, "integration-test", testModel, testResource, "folder-move", folder))
+		for i, v := range rows {
+			payload, actualFolder := snapshot(v)
+			assert.Equal(t, before[i], payload, "all other columns are preserved")
+			if i < 2 {
+				assert.Equal(t, folder, actualFolder)
+			} else {
+				assert.Equal(t, "folder-a", actualFolder, "other entities are untouched")
+			}
+		}
+	}
+	require.NoError(t, backend.UpdateFolder(ctx, "integration-test", testModel, testResource, "missing", "folder-b"))
+	exists, err := backend.Exists(ctx, "integration-test", testModel, testResource, "missing")
+	require.NoError(t, err)
+	assert.False(t, exists, "a folder refresh must not recreate missing rows")
+}
+
 func TestIntegrationVectorGetLatestRV(t *testing.T) {
 	backend, _, ctx := setupIntegrationTest(t)
 
@@ -715,6 +763,7 @@ func TestIntegrationVectorCreateBackfillJob(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, jobs, 1, "exactly one job exists after the conflicting insert")
 	assert.Equal(t, int64(100), jobs[0].StoppingRV, "original stopping_rv preserved")
+	assert.Equal(t, 1, jobs[0].ContentVersion)
 }
 
 func TestIntegrationVectorReopenStaleBackfillJobs(t *testing.T) {
@@ -748,6 +797,7 @@ func TestIntegrationVectorReopenStaleBackfillJobs(t *testing.T) {
 	require.Len(t, jobs, 1)
 	assert.False(t, jobs[0].IsComplete)
 	assert.Equal(t, int64(999), jobs[0].StoppingRV)
+	assert.Equal(t, 2, jobs[0].ContentVersion)
 	assert.Empty(t, jobs[0].LastSeenKey)
 	assert.Empty(t, jobs[0].LastError)
 }
