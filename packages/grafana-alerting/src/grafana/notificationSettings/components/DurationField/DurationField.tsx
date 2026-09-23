@@ -21,9 +21,12 @@ export function DurationField({ label, description, value, onChange, placeholder
   const [error, setError] = useState<string | undefined>(undefined);
 
   // Resyncs when the parent replaces `value` from the outside (e.g. clearing the contact point
-  // resets timingsValue) - only fires on an actual prop change, not on every render.
+  // resets timingsValue) - only fires on an actual prop change, not on every render. Clears any
+  // stale error from a previous failed blur too, or a reset to a valid (possibly empty) value
+  // could still show the old "Invalid duration format" message.
   useEffect(() => {
     setDraft(value);
+    setError(undefined);
   }, [value]);
 
   const commit = () => {

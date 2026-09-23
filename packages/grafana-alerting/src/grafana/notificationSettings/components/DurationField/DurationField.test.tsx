@@ -52,4 +52,21 @@ describe('DurationField', () => {
     const error = await screen.findByText(/invalid duration format/i);
     expect(error).not.toHaveTextContent('{{');
   });
+
+  it('clears a stale validation error when the parent resets value from the outside', async () => {
+    const user = userEvent.setup();
+    const props: DurationFieldProps = { label: 'Group wait', value: '30s', onChange: jest.fn(), placeholder: '30s' };
+    const { rerender } = render(<DurationField {...props} />);
+
+    await user.clear(screen.getByRole('textbox', { name: 'Group wait' }));
+    await user.type(screen.getByRole('textbox', { name: 'Group wait' }), 'notaduration');
+    await user.tab();
+    expect(await screen.findByText(/invalid duration format/i)).toBeInTheDocument();
+
+    // A genuine external reset (e.g. clearing the contact point resets every timing field) - must
+    // actually change `value` for the resync effect to fire at all.
+    rerender(<DurationField {...props} value="" />);
+
+    expect(screen.queryByText(/invalid duration format/i)).not.toBeInTheDocument();
+  });
 });
