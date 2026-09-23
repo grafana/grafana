@@ -64,12 +64,12 @@ func TestSearchResults_MapsItemsAndFields(t *testing.T) {
 		{"__name": "dash-b", "title": "B dashboard"},
 	}, nil)
 
-	out, err := ToSearchResults(&resourcepb.ResourceSearchResponse{
+	out, err := searchResults(&resourcepb.ResourceSearchResponse{
 		ResultFormat:   resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
 		Results:        table,
 		TotalHits:      2,
 		TotalHitsExact: true,
-	}, testKind.gvr(), testKind.kind, 10)
+	}, testKind, 10)
 	require.NoError(t, err)
 
 	require.Len(t, out.Items, 2)
@@ -150,7 +150,7 @@ func TestSearchResults_MapsFieldValueResults(t *testing.T) {
 		TotalHitsExact: true,
 	}
 
-	out, err := ToSearchResults(response, testKind.gvr(), testKind.kind, 2)
+	out, err := searchResults(response, testKind, 2)
 	require.NoError(t, err)
 	require.Len(t, out.Items, 2)
 
