@@ -532,7 +532,7 @@ export function prepConfig(opts: PrepConfigOpts) {
         },
       },
       exemplarFillColor,
-      dataRef.current.yLayout
+      isOrdinalY ? dataRef.current.yLayout : undefined
     ),
     theme,
     scaleKey: '', // facets' scales used (above)
