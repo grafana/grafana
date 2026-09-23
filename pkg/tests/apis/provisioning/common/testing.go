@@ -1290,6 +1290,30 @@ func (h *ProvisioningTestHelper) WaitForUnhealthyRepository(t *testing.T, name s
 	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s should become unhealthy", name)
 }
 
+// WaitForRepositoryPathConflictMessageContains waits for a repository's PathConflict
+// status condition to report a conflict whose message contains substr (e.g. naming the
+// other repository it conflicts with). Unlike WaitForUnhealthyRepository, a path
+// conflict is purely informational - it does not affect status.health or block sync,
+// so this checks status.conditions instead.
+func (h *ProvisioningTestHelper) WaitForRepositoryPathConflictMessageContains(t *testing.T, name, substr string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		obj, err := h.Repositories.Resource.Get(t.Context(), name, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get repository %s", name) {
+			return
+		}
+		repo := MustFromUnstructured[provisioning.Repository](t, obj)
+		cond := FindCondition(repo.Status.Conditions, provisioning.ConditionTypePathConflict)
+		if !assert.NotNil(collect, cond, "repository %s should have a PathConflict condition", name) {
+			return
+		}
+		assert.Equal(collect, metav1.ConditionFalse, cond.Status,
+			"repository %s PathConflict condition should be False (conflict present)", name)
+		assert.Contains(collect, cond.Message, substr,
+			"repository %s PathConflict message %q should contain %q", name, cond.Message, substr)
+	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s should report a path conflict containing %q", name, substr)
+}
+
 // WaitForHealthyConnection polls until the connection controller has reconciled
 // the connection: its ObservedGeneration has caught up to the object
 // generation, a health check has run, it is healthy, and the Ready condition is

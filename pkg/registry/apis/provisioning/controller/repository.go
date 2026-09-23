@@ -1027,15 +1027,17 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	isCurrentlyBlocked := isQuotaExceeded(obj.Status.Conditions)
 	isOverQuota := isQuotaExceeded([]v1.Condition{quotaCondition})
 
-	// Path conflicts are a warning, not a blocking condition (see
-	// RepositoryPathConflictChecker) - unlike quota, they never prevent reconciliation.
+	// Path conflicts are surfaced only as their own status condition (see
+	// RepositoryPathConflictChecker) - unlike quota, they never affect health or Ready,
+	// and so never block sync, the Files API, or manual job creation (all gated on
+	// health). The resource-level ManagerProperties identity check is what actually
+	// prevents two repositories from overwriting each other's synced resources.
 	pathConflictCtx, pathConflictSpan := rc.tracer.Start(ctx, "provisioning.controller.check_path_conflict", repoSpanAttrs(obj))
 	pathConflictCondition, err := rc.pathConflictChecker.RepositoryPathConflictCondition(pathConflictCtx, obj)
 	pathConflictSpan.End()
 	if err != nil {
 		return repoType, fmt.Errorf("check repository path conflict: %w", err)
 	}
-	hasPathConflict := pathConflictCondition.Status == v1.ConditionFalse
 
 	// Blocked repos MUST process to check if they can unblock
 	forceProcessForUnblock := isCurrentlyBlocked && !isOverQuota
@@ -1324,16 +1326,6 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		}
 
 		healthResult.ReadyCondition = buildReadyConditionWithReason(healthStatus, provisioning.ReasonQuotaExceeded)
-		patchOperations = append(patchOperations, rc.healthPatchIfChanged(obj, healthStatus)...)
-	} else if hasPathConflict {
-		healthStatus = provisioning.HealthStatus{
-			Healthy: false,
-			Error:   provisioning.HealthFailureHealth,
-			Checked: time.Now().UnixMilli(),
-			Message: []string{pathConflictCondition.Message},
-		}
-
-		healthResult.ReadyCondition = buildReadyConditionWithReason(healthStatus, provisioning.ReasonPathConflict)
 		patchOperations = append(patchOperations, rc.healthPatchIfChanged(obj, healthStatus)...)
 	} else if len(healthResult.PatchOps) > 0 {
 		patchOperations = append(patchOperations, healthResult.PatchOps...)
