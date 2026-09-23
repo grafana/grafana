@@ -57,7 +57,7 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(2),
       margin: theme.spacing(1, 0),
       padding: theme.spacing(1.5, 2),
-      border: `2px solid ${theme.colors.info.borderEmphasis}`,
+      border: `2px solid ${theme.colors.info.subtleBorder}`,
       borderRadius: theme.shape.radius.default,
       backgroundColor: theme.colors.info.subtleBackground,
       color: theme.colors.text.primary,
