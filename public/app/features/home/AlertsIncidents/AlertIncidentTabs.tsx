@@ -13,12 +13,7 @@ import { DeclareAndViewIncidentsButtons } from './DeclareAndViewIncidentsButtons
 import { FiringAlertsCard } from './FiringAlertsCard';
 import { IncidentsCard } from './IncidentsCard';
 import { TeamFilterCombobox, type TeamFilterOption } from './TeamFilterCombobox';
-import {
-  type IncidentFilterSelection,
-  canonicalIncidentFilter,
-  decodeIncidentFilter,
-  encodeIncidentFilter,
-} from './incidentFilter';
+import { type IncidentFilterSelection, decodeIncidentFilter, encodeIncidentFilter } from './incidentFilter';
 import { type TeamSelection } from './teamFilter';
 import { useAlertTeamLabelValues } from './useAlertTeamLabelValues';
 import { type FiringAlertsData } from './useFiringAlerts';
@@ -157,8 +152,7 @@ export function AlertIncidentTabs({
             counterCappedAt: ACTIVE_INCIDENTS_QUERY_LIMIT,
             filter: {
               options: incidentOptions,
-              // Canonical so a legacy bare team value still matches (and highlights) its `team:value` option.
-              selected: canonicalIncidentFilter(incidentsFilter),
+              selected: incidentsFilter,
               onChange: onIncidentsFilterChange,
               // Incidents have no "your teams" scope: the unfiltered default is every active incident.
               offersYourTeams: false,

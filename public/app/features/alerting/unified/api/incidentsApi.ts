@@ -32,8 +32,8 @@ export interface ActiveIncidents {
 // Subset of the Incident API's custom-field definitions — only what's needed to list filter options.
 interface IncidentFieldDto {
   slug: string;
-  name?: string;
-  type?: string;
+  name: string;
+  type: string;
   archived?: boolean;
   selectoptions?: Array<{ value: string; archived?: boolean }>;
 }
@@ -51,8 +51,8 @@ export interface IncidentFilterOption {
   value: string;
 }
 
-// A custom-field clause to narrow the active-incidents query to.
-interface IncidentFieldFilter {
+/** A custom-field clause to narrow the active-incidents query to. */
+export interface IncidentFieldFilter {
   slug: string;
   value: string;
 }
@@ -94,7 +94,7 @@ function getFieldFilterOptions(field: IncidentFieldDto, archivedPairs: Set<strin
     if (archivedPairs.has(labelPairKey(field.slug, option.value))) {
       continue;
     }
-    options.push({ slug: field.slug, fieldName: field.name || field.slug, value: option.value });
+    options.push({ slug: field.slug, fieldName: field.name, value: option.value });
   }
   return options;
 }

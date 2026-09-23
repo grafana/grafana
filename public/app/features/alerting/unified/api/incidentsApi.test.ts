@@ -18,12 +18,6 @@ describe('getIncidentFilterOptions', () => {
     ]);
   });
 
-  it('falls back to the slug when a field has no display name', () => {
-    expect(getIncidentFilterOptions({ fields: [{ ...teamField, name: undefined }] })).toEqual([
-      { slug: 'team', fieldName: 'team', value: 'Platform' },
-    ]);
-  });
-
   it.each([
     {
       case: 'an archived field',

@@ -32,7 +32,7 @@ export function mockIncidents(
 }
 
 /** Wire shape of one incident custom field, as far as the filter dropdown reads it. */
-export interface MockIncidentField {
+interface MockIncidentField {
   slug: string;
   name: string;
   type: string;

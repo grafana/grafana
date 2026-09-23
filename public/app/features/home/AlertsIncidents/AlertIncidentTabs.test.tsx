@@ -191,19 +191,9 @@ afterEach(async () => {
 function AlertIncidentTabsWithData({
   switchRef,
   initialIncidentsFilter = '',
-  onIncidentsFilterChange,
-}: {
-  switchRef?: Ref<AlertIncidentSwitchHandle>;
-  initialIncidentsFilter?: IncidentFilterSelection;
-  /** Observes every incidents selection change on top of the wrapper's own state. */
-  onIncidentsFilterChange?: (filter: IncidentFilterSelection) => void;
-} = {}) {
+}: { switchRef?: Ref<AlertIncidentSwitchHandle>; initialIncidentsFilter?: IncidentFilterSelection } = {}) {
   const [alertsTeam, setAlertsTeam] = useState<TeamSelection>('');
-  const [incidentsFilter, setIncidentsFilterState] = useState<IncidentFilterSelection>(initialIncidentsFilter);
-  const setIncidentsFilter = (filter: IncidentFilterSelection) => {
-    onIncidentsFilterChange?.(filter);
-    setIncidentsFilterState(filter);
-  };
+  const [incidentsFilter, setIncidentsFilter] = useState<IncidentFilterSelection>(initialIncidentsFilter);
   const alertsData = useFiringAlerts(alertsTeam);
   const incidentsData = useIncidents(incidentsFilter);
   return (
@@ -844,29 +834,14 @@ describe('AlertIncidentTabs', () => {
       await waitFor(() => expect(queries).toHaveLength(2));
       expect(queries[1]).toBe(`${ACTIVE_INCIDENTS_QUERY} field:squad:"Frontend"`);
       expect(combobox).toHaveDisplayValue('Frontend');
-    });
 
-    it('matches the field name when searching, listing every value under it', async () => {
-      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
-      mockIrmPlugin();
-      mockIncidentFields([
-        { slug: 'team', name: 'Team', type: 'single-select', selectoptions: [{ value: 'Platform' }] },
-        { slug: 'squad', name: 'Squad', type: 'multi-select', selectoptions: [{ value: 'Frontend' }] },
-      ]);
-      mockIncidents([activeIncident]);
-
-      const { user } = render(<AlertIncidentTabsWithData />);
-
-      expect(await screen.findByText('Database outage')).toBeInTheDocument();
-      const combobox = await screen.findByRole('combobox', { name: /filter incidents by label/i });
+      // Typing a field name lists everything under it: "squ" matches no value, only the Squad field.
+      // keyboard() rather than type(): type() re-clicks the input, which toggles the menu closed.
       await user.click(combobox);
       expect(await screen.findByRole('option', { name: 'Platform' })).toBeInTheDocument();
-      // keyboard() rather than type(): type() re-clicks the input, which toggles the menu closed.
       await user.keyboard('squ');
-
-      // "squ" matches no value, only the Squad field; its values still show while the rest drop out.
       await waitFor(() => expect(screen.queryByRole('option', { name: 'Platform' })).not.toBeInTheDocument());
-      expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual(['Frontend']);
+      expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual(['Backend', 'Frontend']);
     });
 
     it('shows a stored pick by its value when its field is no longer offered', async () => {
@@ -882,29 +857,6 @@ describe('AlertIncidentTabs', () => {
       await waitFor(() => expect(queries).toEqual([`${ACTIVE_INCIDENTS_QUERY} field:squad:"Frontend"`]));
       const combobox = await screen.findByRole('combobox', { name: /filter incidents by label/i });
       expect(combobox).toHaveDisplayValue('Frontend');
-    });
-
-    it('treats a legacy bare team selection as its live team option', async () => {
-      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
-      mockIrmPlugin();
-      mockIncidentTeamField(['Team A', 'Team B']);
-      const queries = mockIncidents([activeIncident]);
-
-      // Stored before the selection carried a field slug.
-      const onChange = jest.fn();
-      const { user } = render(
-        <AlertIncidentTabsWithData initialIncidentsFilter="Team A" onIncidentsFilterChange={onChange} />
-      );
-
-      await waitFor(() => expect(queries).toEqual([`${ACTIVE_INCIDENTS_QUERY} field:team:"Team A"`]));
-      const combobox = await screen.findByRole('combobox', { name: /filter incidents by label/i });
-      expect(combobox).toHaveDisplayValue('Team A');
-
-      // The bare value resolves to the `team:Team A` option, so re-picking it is the usual
-      // same-value no-op rather than a "new" selection.
-      await user.click(combobox);
-      await user.click(await screen.findByRole('option', { name: 'Team A' }));
-      expect(onChange).not.toHaveBeenCalled();
     });
 
     it('keeps the Alerts and Incidents team selections independent', async () => {
