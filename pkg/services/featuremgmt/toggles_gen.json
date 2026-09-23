@@ -4711,7 +4711,8 @@
       "metadata": {
         "name": "react19",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T10:24:28Z"
+        "creationTimestamp": "2026-09-16T10:24:28Z",
+        "deletionTimestamp": "2026-09-23T12:09:24Z"
       },
       "spec": {
         "description": "Whether to use the new React 19 runtime",
