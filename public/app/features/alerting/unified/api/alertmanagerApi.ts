@@ -85,7 +85,7 @@ export interface AlertGroupsFilter {
  *
  * i.e. "things that should be fetched fresh if the AM config has changed"
  */
-const ALERTMANAGER_PROVIDED_ENTITY_TAGS = [
+export const ALERTMANAGER_PROVIDED_ENTITY_TAGS = [
   'AlertingConfiguration',
   'AlertmanagerConfiguration',
   'AlertmanagerConnectionStatus',

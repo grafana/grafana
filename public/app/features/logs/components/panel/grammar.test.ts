@@ -124,6 +124,15 @@ describe('generateLogGrammar', () => {
     }
     expect.assertions(3);
   });
+
+  test('Identifies keys in key-value pairs', () => {
+    const { tokens } = generateScenario('foo=bar');
+    if (tokens[0] instanceof Token) {
+      expect(tokens[0].content).toBe('foo');
+      expect(tokens[0].type).toBe('log-token-key');
+    }
+    expect.assertions(3);
+  });
 });
 
 describe('generateTextMatchGrammar', () => {

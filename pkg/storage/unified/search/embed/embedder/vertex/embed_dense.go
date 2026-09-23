@@ -50,7 +50,7 @@ func (e *DenseEmbedder) EmbedText(ctx context.Context, input embedder.EmbedTextI
 		res, err := e.client.PredictEmbeddings(callCtx, e.model, texts, e.dim, taskType)
 		if err != nil {
 			if errors.Is(context.Cause(callCtx), ErrCallTimeout) {
-				return nil, ErrCallTimeout
+				return nil, &embedder.RetryableError{Err: ErrCallTimeout}
 			}
 			return nil, err
 		}

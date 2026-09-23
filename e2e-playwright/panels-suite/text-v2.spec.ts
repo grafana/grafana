@@ -9,10 +9,11 @@ const MARKDOWN_PANEL = '4';
 const HTML_PANEL = '6';
 const CODE_PANEL = '5';
 
-// Render mode needs query data, which text-options.json has none of.
+// Rendering per row needs query data, which text-options.json has none of.
 const DATA_DASHBOARD_UID = 'adssfc8';
 const EVERY_ROW_PANEL = '6';
 const HANDLEBARS_PANEL = '5';
+const MERMAID_PANEL = '7';
 
 test.use({ openFeature: { flags: { 'grafana.newTextPanel': true, 'text.newFeatures': true } } });
 
@@ -46,7 +47,7 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       queryParams: new URLSearchParams({ editPanel: MARKDOWN_PANEL }),
     });
 
-    // In edit mode v2 replaces the panel body with the inline editor, which opens on Preview.
+    // In edit mode v2 replaces the panel body with the inline editor, which opens on Split.
     const preview = page.getByTestId('TextNGEditor-preview');
     await expect(preview).toBeVisible();
     await expect(preview.locator('h2').first()).toBeVisible();
@@ -94,11 +95,8 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
     const preview = page.getByTestId('TextNGEditor-preview');
     const writableEditor = editor.locator('.cm-editor');
 
-    // Preview is the default view: rendered output only, no editable surface.
-    await expect(preview).toBeVisible();
-    await expect(writableEditor).toHaveCount(0);
-
-    await page.getByRole('radio', { name: 'Split' }).click();
+    // Split is the default view: editable surface and rendered output together.
+    await expect(page.getByRole('radio', { name: 'Split' })).toBeChecked();
     await expect(writableEditor).toBeVisible();
     await expect(preview).toBeVisible();
 
@@ -109,6 +107,10 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
     await page.getByRole('radio', { name: 'Preview' }).click();
     await expect(preview).toBeVisible();
     await expect(writableEditor).toHaveCount(0);
+
+    await page.getByRole('radio', { name: 'Split' }).click();
+    await expect(writableEditor).toBeVisible();
+    await expect(preview).toBeVisible();
   });
 
   test('can switch between modes in panel editor', async ({ gotoDashboardPage, page }) => {
@@ -271,6 +273,34 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       const preview = page.getByTestId('TextNGEditor-preview');
       await expect(preview).toContainText('John Smith');
       await expect(preview).not.toContainText('{{#each data}}');
+    });
+  });
+
+  test.describe('mermaid', () => {
+    test('renders diagrams in the panel', async ({ gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: DATA_DASHBOARD_UID });
+
+      const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content, {
+        root: dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Mermaid diagrams')),
+      });
+      await panel.scrollIntoViewIfNeeded();
+
+      // The flowchart and the sequence diagram render; the third fence is invalid on purpose.
+      await expect(panel.locator('.mermaid-diagram svg')).toHaveCount(2);
+      await expect(panel.locator('.mermaid-diagram-error')).toHaveCount(1);
+
+      // htmlLabels is off, so label text has to survive as SVG text.
+      await expect(panel.locator('.mermaid-diagram svg').first()).toContainText('Page on-call');
+    });
+
+    test('renders diagrams in the edit preview', async ({ gotoDashboardPage, page }) => {
+      await gotoDashboardPage({
+        uid: DATA_DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: MERMAID_PANEL }),
+      });
+
+      const preview = page.getByTestId('TextNGEditor-preview');
+      await expect(preview.locator('.mermaid-diagram svg')).toHaveCount(2);
     });
   });
 });

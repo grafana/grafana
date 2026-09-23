@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/sony/gobreaker/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestIsBackendFailure(t *testing.T) {
@@ -74,7 +75,7 @@ func withGroupHandler(group string, h http.Handler) *GrafanaRouter {
 	s := NewGrafanaRouter(stubLoader{})
 	s.served[group] = &handlerEntry{
 		handler: h,
-		lastRV:  "1",
+		lastKey: "1",
 		breaker: newGroupBreaker(group),
 	}
 	s.publish()
@@ -159,7 +160,7 @@ func TestHandleFuncBreakerIgnoresPlain500(t *testing.T) {
 
 func withGroupHandlerAndBreaker(group string, h http.Handler, cb *gobreaker.CircuitBreaker[struct{}]) *GrafanaRouter {
 	s := NewGrafanaRouter(stubLoader{})
-	s.served[group] = &handlerEntry{handler: h, lastRV: "1", breaker: cb}
+	s.served[group] = &handlerEntry{handler: h, lastKey: "1", breaker: cb}
 	s.publish()
 	return s
 }
@@ -295,11 +296,11 @@ func tripBreaker(cb *gobreaker.CircuitBreaker[struct{}]) {
 	_, _ = cb.Execute(func() (struct{}, error) { return struct{}{}, errors.New("forced failure") })
 }
 
-// TestReconcileUnchangedRVPreservesBreakerState pins that a group whose RV
+// TestReconcileUnchangedKeyPreservesBreakerState pins that a group whose key
 // hasn't changed is left completely untouched by reconcile -- including an
 // already-tripped breaker -- same as the existing backend/handler/pool
 // preservation.
-func TestReconcileUnchangedRVPreservesBreakerState(t *testing.T) {
+func TestReconcileUnchangedKeyPreservesBreakerState(t *testing.T) {
 	group := "dashboard.grafana.app"
 	cb := gobreaker.NewCircuitBreaker[struct{}](gobreaker.Settings{
 		Name:        group,
@@ -311,9 +312,9 @@ func TestReconcileUnchangedRVPreservesBreakerState(t *testing.T) {
 	}
 
 	r := NewGrafanaRouter(staticLoader{backends: []Backend{
-		&fakeBackend{group: group, rv: "5"},
+		&fakeBackend{group: metav1.APIGroup{Name: group}, key: "5"},
 	}})
-	r.served[group] = &handlerEntry{handler: http.NotFoundHandler(), lastRV: "5", breaker: cb}
+	r.served[group] = &handlerEntry{handler: http.NotFoundHandler(), lastKey: "5", breaker: cb}
 
 	if err := r.reconcile(context.Background()); err != nil {
 		t.Fatalf("reconcile: %v", err)
@@ -321,17 +322,17 @@ func TestReconcileUnchangedRVPreservesBreakerState(t *testing.T) {
 
 	got := r.served[group]
 	if got.breaker != cb {
-		t.Errorf("breaker instance replaced on unchanged-RV reconcile; want the same pointer preserved")
+		t.Errorf("breaker instance replaced on unchanged-key reconcile; want the same pointer preserved")
 	}
 	if got.breaker.State() != gobreaker.StateOpen {
-		t.Errorf("breaker state = %v after unchanged-RV reconcile, want still open", got.breaker.State())
+		t.Errorf("breaker state = %v after unchanged-key reconcile, want still open", got.breaker.State())
 	}
 }
 
-// TestReconcileChangedRVResetsBreaker pins the opposite: an RV change rebuilds
+// TestReconcileChangedKeyResetsBreaker pins the opposite: a key change rebuilds
 // the group, and the breaker is reset to a fresh, closed instance -- even if
 // the old one was open -- because the target may have moved.
-func TestReconcileChangedRVResetsBreaker(t *testing.T) {
+func TestReconcileChangedKeyResetsBreaker(t *testing.T) {
 	group := "dashboard.grafana.app"
 	oldCB := gobreaker.NewCircuitBreaker[struct{}](gobreaker.Settings{
 		Name:        group,
@@ -343,9 +344,9 @@ func TestReconcileChangedRVResetsBreaker(t *testing.T) {
 	}
 
 	r := NewGrafanaRouter(staticLoader{backends: []Backend{
-		&fakeBackend{group: group, rv: "6"}, // changed from "5"
+		&fakeBackend{group: metav1.APIGroup{Name: group}, key: "6"}, // changed from "5"
 	}})
-	r.served[group] = &handlerEntry{handler: http.NotFoundHandler(), lastRV: "5", breaker: oldCB}
+	r.served[group] = &handlerEntry{handler: http.NotFoundHandler(), lastKey: "5", breaker: oldCB}
 
 	if err := r.reconcile(context.Background()); err != nil {
 		t.Fatalf("reconcile: %v", err)
@@ -353,10 +354,10 @@ func TestReconcileChangedRVResetsBreaker(t *testing.T) {
 
 	got := r.served[group]
 	if got.breaker == oldCB {
-		t.Fatalf("breaker instance not replaced on changed-RV reconcile")
+		t.Fatalf("breaker instance not replaced on changed-key reconcile")
 	}
 	if got.breaker.State() != gobreaker.StateClosed {
-		t.Errorf("breaker state = %v after changed-RV rebuild, want closed (fresh instance)", got.breaker.State())
+		t.Errorf("breaker state = %v after changed-key rebuild, want closed (fresh instance)", got.breaker.State())
 	}
 }
 
@@ -394,7 +395,7 @@ func TestOpenAPIGroupVersionRoutesThroughBreaker(t *testing.T) {
 // TestOpenAPIGroupVersionCacheHitBypassesBreaker pins that a cache hit never
 // touches the breaker at all -- it never calls the backend, so there's
 // nothing to protect. Even with the breaker forced open, a cached doc at the
-// matching RV must still be served successfully from cache.
+// matching key must still be served successfully from cache.
 func TestOpenAPIGroupVersionCacheHitBypassesBreaker(t *testing.T) {
 	group := "dashboard.grafana.app"
 	upstream := &countingHandler{body: `{"openapi":"3.0.0"}`}
@@ -420,7 +421,7 @@ func TestOpenAPIGroupVersionCacheHitBypassesBreaker(t *testing.T) {
 		t.Fatalf("precondition: breaker state = %v, want open", cb.State())
 	}
 
-	// Second request, same RV: must still be served from cache, untouched by
+	// Second request, same key: must still be served from cache, untouched by
 	// the open breaker.
 	rec2 := httptest.NewRecorder()
 	s.HandleFunc(rec2, httptest.NewRequest(http.MethodGet, path, nil), next)

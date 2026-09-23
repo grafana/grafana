@@ -25,7 +25,7 @@ function getTableSuggestionScore(dataSummary: PanelDataSummary): VisualizationSu
 export const logstableSuggestionsSupplier: VisualizationSuggestionsSupplier<Options, TableFieldConfig> = (
   dataSummary
 ) => {
-  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.LogsTablePanelNG, false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.LogsTablePanelNG, true)) {
     return;
   }
   const score = getTableSuggestionScore(dataSummary);

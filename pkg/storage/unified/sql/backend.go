@@ -8,7 +8,6 @@ import (
 	"iter"
 	"math"
 	"math/rand"
-	"os"
 	"path/filepath"
 	"sync"
 	"sync/atomic"
@@ -16,7 +15,6 @@ import (
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	"github.com/go-sql-driver/mysql"
-	"github.com/google/uuid"
 	"github.com/grafana/dskit/services"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
@@ -223,19 +221,13 @@ func NewStorageBackend(
 			Dialect:                 dialect,
 			DB:                      dbConn,
 			BatchTransactionTimeout: cfg.ResourceVersionBatchTransactionTimeout,
+			Reg:                     reg,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create resource version manager: %w", err)
 		}
 
 		kvBackendOpts.RvManager = rvManager
-	}
-
-	if cfg.EnableKVLeases {
-		kvBackendOpts.EnableKVLeases = true
-		kvBackendOpts.Holder = ResolveLeaseHolder(cfg)
-		kvBackendOpts.LeaseTTL = cfg.KVLeaseTTL
-		kvBackendOpts.LeaseAutoRenew = cfg.KVLeaseAutoRenew
 	}
 
 	return resource.NewKVStorageBackend(kvBackendOpts)
@@ -256,13 +248,6 @@ func newKVGrpcBackendOptions(cfg *setting.Cfg, reg prometheus.Registerer, disabl
 	kvBackendOpts.GCGate = gcGate
 	kvBackendOpts.DisableStorageServices = disableStorageServices || cfg.DisablePruner
 
-	if cfg.EnableKVLeases {
-		kvBackendOpts.EnableKVLeases = true
-		kvBackendOpts.Holder = ResolveLeaseHolder(cfg)
-		kvBackendOpts.LeaseTTL = cfg.KVLeaseTTL
-		kvBackendOpts.LeaseAutoRenew = cfg.KVLeaseAutoRenew
-	}
-
 	for _, opt := range opts {
 		opt(&kvBackendOpts)
 	}
@@ -279,24 +264,6 @@ func NewFileBackend(cfg *setting.Cfg, kvStore kv.KV) (resource.StorageBackend, e
 		Log:                     log.New("storage-backend"),
 		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
 	})
-}
-
-// ResolveLeaseHolder builds a stable-per-process identifier used for KV
-// lease ownership. Exported so other unified-storage backend wirings
-// (e.g. the enterprise unified-kv-grpc backend) can produce the same
-// holder format without duplicating the logic.
-func ResolveLeaseHolder(cfg *setting.Cfg) string {
-	id := "unknown"
-	if cfg.InstanceID != "" {
-		id = cfg.InstanceID
-	}
-
-	hostname, err := os.Hostname()
-	if err == nil {
-		id = hostname
-	}
-
-	return fmt.Sprintf("%s-%s", id, uuid.NewString())
 }
 
 type BackendOptions struct {
@@ -519,6 +486,7 @@ func (b *backend) initLocked(ctx context.Context) error {
 		Dialect:                 b.dialect,
 		DB:                      b.db,
 		BatchTransactionTimeout: b.batchTxnTimeout,
+		Reg:                     b.reg,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create resource version manager: %w", err)
@@ -982,20 +950,17 @@ func IsRowAlreadyExistsError(err error) bool {
 		return true
 	}
 
-	var pg *pgconn.PgError
-	if errors.As(err, &pg) {
+	if pg, ok := errors.AsType[*pgconn.PgError](err); ok {
 		// https://www.postgresql.org/docs/current/errcodes-appendix.html
 		return pg.Code == "23505" // unique_violation
 	}
 
-	var pqerr *pq.Error
-	if errors.As(err, &pqerr) {
+	if pqerr, ok := errors.AsType[*pq.Error](err); ok {
 		// https://www.postgresql.org/docs/current/errcodes-appendix.html
 		return pqerr.Code == "23505" // unique_violation
 	}
 
-	var mysqlerr *mysql.MySQLError
-	if errors.As(err, &mysqlerr) {
+	if mysqlerr, ok := errors.AsType[*mysql.MySQLError](err); ok {
 		// https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html
 		return mysqlerr.Number == 1062 // ER_DUP_ENTRY
 	}
@@ -1135,6 +1100,12 @@ func (b *backend) checkConflict(res db.Result, key *resourcepb.ResourceKey, rv i
 	return resource.NewConflictStatusError(key.Group, key.Resource, key.Name, "requested RV does not match current RV")
 }
 
+// BatchReadResource is unsupported: the SQL backend is retiring, so batched
+// search-list reads live only on the KV backend.
+func (*backend) BatchReadResource(context.Context, []*resourcepb.ReadRequest) ([]*resource.BackendReadResponse, error) {
+	return nil, resource.ErrBatchReadUnsupported
+}
+
 func (b *backend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
 	b.logCall("ReadResource")
 	_, span := tracer.Start(ctx, "sql.backend.ReadResource")
@@ -1225,7 +1196,12 @@ func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, c
 		return 0, fmt.Errorf("only works for the 'latest' resource version")
 	}
 
-	iter := &listIter{sortAsc: false}
+	iter := &listIter{
+		sortAsc:     false,
+		keysOnly:    req.KeysOnly,
+		listScope:   req.Options.Key.Namespace,
+		clusterWide: req.KeysOnly && req.Options.Key.Namespace == "",
+	}
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
 		iter.listRV, err = b.fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
@@ -1337,17 +1313,39 @@ func (b *backend) ListModifiedSince(ctx context.Context, key resource.Namespaced
 	return latestRv, seq
 }
 
+func continueTokenMatchesListRequest(token *ContinueToken, req *resourcepb.ListRequest) bool {
+	if !token.KeysOnly {
+		return !req.KeysOnly || req.Options.Key.Namespace == ""
+	}
+	if !req.KeysOnly {
+		return false
+	}
+	if req.Options.Key.Namespace == "" {
+		return token.ClusterWide
+	}
+	return !token.ClusterWide && token.Namespace == req.Options.Key.Namespace
+}
+
 // listAtRevision fetches the resources from the resource_history table at a specific revision.
 func (b *backend) listAtRevision(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	ctx, span := tracer.Start(ctx, "sql.backend.listAtRevision")
 	defer span.End()
 
 	// Get the RV
-	iter := &listIter{listRV: req.ResourceVersion, sortAsc: false}
+	iter := &listIter{
+		listRV:      req.ResourceVersion,
+		sortAsc:     false,
+		keysOnly:    req.KeysOnly,
+		listScope:   req.Options.Key.Namespace,
+		clusterWide: req.KeysOnly && req.Options.Key.Namespace == "",
+	}
 	if req.NextPageToken != "" {
 		continueToken, err := GetContinueToken(req.NextPageToken)
 		if err != nil {
 			return 0, fmt.Errorf("get continue token (%q): %w", req.NextPageToken, err)
+		}
+		if !continueTokenMatchesListRequest(continueToken, req) {
+			return 0, apierrors.NewBadRequest("continue token scope does not match request")
 		}
 		iter.listRV = toMicrosecondRV(continueToken.ResourceVersion)
 		iter.offset = continueToken.StartOffset
@@ -1612,6 +1610,18 @@ func (b *backend) lastImportTimeDB(ctx context.Context) db.ContextExecer {
 	}
 
 	return b.db
+}
+
+func (b *backend) GetResourceLastImportTime(ctx context.Context, nsr resource.NamespacedResource) (time.Time, error) {
+	for importTime, err := range b.GetResourceLastImportTimes(ctx) {
+		if err != nil {
+			return time.Time{}, err
+		}
+		if importTime.NamespacedResource == nsr {
+			return importTime.LastImportTime, nil
+		}
+	}
+	return time.Time{}, nil
 }
 
 func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {

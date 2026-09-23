@@ -215,7 +215,7 @@ func createTestAnnotations(t *testing.T, store db.DB, expectedCount int, oldAnno
 
 	newAnnotations := make([]*annotations.Item, 0, expectedCount)
 	newAnnotationTags := make([]*annotationTag, 0, 2*expectedCount)
-	for i := 0; i < expectedCount; i++ {
+	for i := range expectedCount {
 		a := &annotations.Item{
 			ID:           int64(i + 1),
 			DashboardID:  1,

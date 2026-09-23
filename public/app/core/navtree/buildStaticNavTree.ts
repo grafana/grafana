@@ -3,11 +3,26 @@ import { cloneDeep } from 'lodash';
 import { type NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { alertingNavEntry } from 'app/features/alerting/unified/navigation/alerting.navEntry';
 
+import { getRegisteredNavEntries } from './registry';
+import { adminNavEntry } from './sections/admin.navEntry';
+import { connectionsNavEntry } from './sections/connections.navEntry';
 import { dashboardsNavEntry } from './sections/dashboards.navEntry';
+import { drilldownNavEntry, exploreNavEntry } from './sections/explore.navEntry';
+import { helpNavEntry } from './sections/help.navEntry';
 import { getHomeNode } from './sections/home.navEntry';
+import { notebooksNavEntry } from './sections/notebooks.navEntry';
 import { profileNavEntry } from './sections/profile.navEntry';
-import { applyAppSubUrl, buildEntries, type NavEntryBuilder, pruneEmptyNavSections, sortNavTree } from './utils';
+import { bookmarksNavEntry, starredNavEntry } from './sections/savedItems.navEntry';
+import {
+  appendIntoSection,
+  applyAppSubUrl,
+  buildEntries,
+  type NavEntryBuilder,
+  pruneEmptyNavSections,
+  sortNavTree,
+} from './utils';
 
 /**
  * Whether to build the nav tree client-side. Gated on grafana.multiTenantNavTree
@@ -49,8 +64,8 @@ export function getInitialNavTree(): NavModelItem[] {
   }
 
   const staticTree = applyAppSubUrl(buildStaticNavTree());
-  // Empty attachment-parent sections are pruned like the server prunes them
-  // after its enterprise hooks run.
+  // Empty sections (cfg/access without children) are pruned like the server
+  // prunes them after its enterprise hooks run.
   return pruneEmptyNavSections(staticTree);
 }
 
@@ -60,13 +75,45 @@ export function getInitialNavTree(): NavModelItem[] {
  * seeds the tree. The entries are defined in ./sections; this module only
  * composes them.
  */
-const STATIC_NAV_ENTRIES: NavEntryBuilder[] = [dashboardsNavEntry, profileNavEntry];
+const STATIC_NAV_ENTRIES: NavEntryBuilder[] = [
+  starredNavEntry,
+  dashboardsNavEntry,
+  exploreNavEntry,
+  drilldownNavEntry,
+  notebooksNavEntry,
+  profileNavEntry,
+  alertingNavEntry,
+  connectionsNavEntry,
+  adminNavEntry,
+  helpNavEntry,
+  bookmarksNavEntry,
+];
 
 /**
  * Builds the static (non-plugin) portion of the nav tree, sorted, with urls
  * app-sub-url relative: callers apply the prefix once via applyAppSubUrl at
- * the end of their pipeline.
+ * the end of their pipeline. Nav items registered via addNavEntries (e.g. by
+ * the enterprise bundle) are appended into their target sections.
  */
 export function buildStaticNavTree(): NavModelItem[] {
-  return sortNavTree([getHomeNode(), ...buildEntries(STATIC_NAV_ENTRIES)]);
+  const tree = [getHomeNode(), ...buildEntries(STATIC_NAV_ENTRIES)];
+  return sortNavTree(applyRegisteredNavEntries(tree));
+}
+
+/** Appends registered extension items into their parent sections. Returns a new tree. */
+function applyRegisteredNavEntries(tree: NavModelItem[]): NavModelItem[] {
+  return getRegisteredNavEntries().reduce((current, { parentId, entry }) => {
+    const built = buildEntries([entry]);
+    if (built.length === 0) {
+      return current;
+    }
+    const next = appendIntoSection(current, parentId, built);
+    if (!next) {
+      // A registered item naming a section that isn't there is a bug in the
+      // registering bundle, so say so rather than dropping it silently
+      console.warn('[navtree] registered nav entry parent not found', parentId);
+      return current;
+    }
+    return next;
+  }, tree);
 }

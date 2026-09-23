@@ -175,8 +175,8 @@ function escapeRegExp(value: string): string {
 
 /** Field-name pairs used when probing which structured id labels exist in logs. */
 const TRACE_SPAN_ID_FIELD_VARIANTS = [
-  { trace: 'traceID', span: 'spanID' },
   { trace: 'trace_id', span: 'span_id' },
+  { trace: 'traceID', span: 'spanID' },
   { trace: 'traceId', span: 'spanId' },
   { trace: 'TraceID', span: 'SpanID' },
   { trace: 'TraceId', span: 'SpanId' },

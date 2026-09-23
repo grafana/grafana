@@ -9,33 +9,13 @@ import { createRepository } from '../mocks/factories';
 import { getMockLiveSrv, setupProvisioningMswServer } from '../mocks/server';
 
 import { useFolderReadme } from './useFolderReadme';
-import { RepoViewStatus, useGetResourceRepositoryView } from './useGetResourceRepositoryView';
-
-jest.mock('./useGetResourceRepositoryView', () => ({
-  ...jest.requireActual('./useGetResourceRepositoryView'),
-  useGetResourceRepositoryView: jest.fn(),
-}));
 
 setupProvisioningMswServer();
-
-const mockRepoView = jest.mocked(useGetResourceRepositoryView);
 
 // Matches createRepository's default name so the watch's fieldSelector matches.
 const REPO_NAME = 'test-repo-abc123';
 
 describe('useFolderReadme live refresh wiring', () => {
-  beforeEach(() => {
-    mockRepoView.mockReturnValue({
-      repository: { name: REPO_NAME, title: 'Repo', type: 'github', target: 'folder', workflows: [] },
-      folder: undefined,
-      status: RepoViewStatus.Ready,
-      isLoading: false,
-      isInstanceManaged: false,
-      isReadOnlyRepo: false,
-      isMissingRepo: false,
-    });
-  });
-
   // status.sync is the durable signal: a newer `finished` once per completed pull.
   // (The Job is deleted on completion, so its terminal state is never watchable.)
   function setup() {
@@ -73,7 +53,7 @@ describe('useFolderReadme live refresh wiring', () => {
   it('refetches and shows new README content when a newer pull sync completes', async () => {
     const { setReadme, getFileHits } = setup();
 
-    const { result } = renderHook(() => useFolderReadme('test-folder'), { wrapper: getWrapper({}) });
+    const { result } = renderHook(() => useFolderReadme(REPO_NAME, 'README.md'), { wrapper: getWrapper({}) });
 
     await waitFor(() => expect(result.current.markdownContent).toBe('# v1'));
     expect(getFileHits()).toBe(1);
@@ -89,7 +69,7 @@ describe('useFolderReadme live refresh wiring', () => {
   it('does not refetch when the sync finished timestamp has not advanced', async () => {
     const { setReadme, getFileHits } = setup();
 
-    const { result } = renderHook(() => useFolderReadme('test-folder'), { wrapper: getWrapper({}) });
+    const { result } = renderHook(() => useFolderReadme(REPO_NAME, 'README.md'), { wrapper: getWrapper({}) });
 
     await waitFor(() => expect(result.current.markdownContent).toBe('# v1'));
     expect(getFileHits()).toBe(1);
@@ -106,7 +86,7 @@ describe('useFolderReadme live refresh wiring', () => {
   it('does not refetch when a newer sync finished but did not write content', async () => {
     const { setReadme, getFileHits } = setup();
 
-    const { result } = renderHook(() => useFolderReadme('test-folder'), { wrapper: getWrapper({}) });
+    const { result } = renderHook(() => useFolderReadme(REPO_NAME, 'README.md'), { wrapper: getWrapper({}) });
 
     await waitFor(() => expect(result.current.markdownContent).toBe('# v1'));
     expect(getFileHits()).toBe(1);

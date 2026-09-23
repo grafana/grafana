@@ -5,11 +5,13 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
 	"net"
 	"net/mail"
 	"net/textproto"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -55,16 +57,18 @@ func (sc *SmtpClient) Send(ctx context.Context, messages ...*Message) (int, erro
 		return sentEmailsCount, err
 	}
 
+	var errs []error
+
 	for _, msg := range messages {
 		err := sc.sendMessage(ctx, dialer, msg)
 		if err != nil {
-			return sentEmailsCount, err
+			errs = append(errs, err)
+			continue
 		}
-
 		sentEmailsCount++
 	}
 
-	return sentEmailsCount, nil
+	return sentEmailsCount, errors.Join(errs...)
 }
 
 func (sc *SmtpClient) sendMessage(ctx context.Context, dialer *gomail.Dialer, msg *Message) error {
@@ -122,11 +126,11 @@ func (sc *SmtpClient) buildEmail(ctx context.Context, msg *Message) *gomail.Mess
 	}
 	// loop over content types from settings in reverse order as they are ordered in according to descending
 	// preference while the alternatives should be ordered according to ascending preference
-	for i := len(sc.cfg.ContentTypes) - 1; i >= 0; i-- {
+	for i, v := range slices.Backward(sc.cfg.ContentTypes) {
 		if i == len(sc.cfg.ContentTypes)-1 {
-			m.SetBody(sc.cfg.ContentTypes[i], msg.Body[sc.cfg.ContentTypes[i]])
+			m.SetBody(v, msg.Body[v])
 		} else {
-			m.AddAlternative(sc.cfg.ContentTypes[i], msg.Body[sc.cfg.ContentTypes[i]])
+			m.AddAlternative(v, msg.Body[v])
 		}
 	}
 
@@ -150,7 +154,6 @@ func (sc *SmtpClient) setFiles(
 	}
 
 	for _, file := range msg.AttachedFiles {
-		file := file
 		m.Attach(file.Name, gomail.SetCopyFunc(func(writer io.Writer) error {
 			_, err := writer.Write(file.Content)
 			return err

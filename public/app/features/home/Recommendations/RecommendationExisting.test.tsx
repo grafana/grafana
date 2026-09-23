@@ -7,6 +7,7 @@ import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClic
 
 import { ctaClicked } from '../analytics/main';
 import { type SignalStatus } from '../solutions/solutionState';
+import { deferred, stubDatasource, stubSolution } from '../solutions/test-utils';
 import { type Solution, type SolutionId } from '../solutions/types';
 
 import { RecommendationExisting } from './RecommendationExisting';
@@ -20,15 +21,6 @@ jest.mock('@grafana/runtime/internal', () => ({
 const mockCtaClicked = jest.mocked(ctaClicked);
 const mockUseAppPluginMetas = jest.mocked(useAppPluginMetas);
 
-const datasource: DataSourceInstanceListItem = {
-  uid: 'prometheus',
-  name: 'Prometheus',
-  type: 'prometheus',
-  meta: { id: 'prometheus' } as DataSourceInstanceListItem['meta'],
-  readOnly: false,
-  isDefault: true,
-};
-
 function solution(
   id: SolutionId,
   {
@@ -40,29 +32,7 @@ function solution(
     data?: DataSourceInstanceListItem | null;
   } = {}
 ): Solution {
-  return {
-    id,
-    title: id,
-    icon: 'chart-line',
-    signal: async () => status,
-    datasource: async () => data,
-    needsAttention: async () => false,
-    stats: async () => null,
-    refinedStats: async () => null,
-    sparkline: async () => null,
-    cta: async () => null,
-    alert: async () => null,
-    offer: async () => null,
-    ...overrides,
-  };
-}
-
-function deferred<T>() {
-  let resolve!: (value: T) => void;
-  const promise = new Promise<T>((res) => {
-    resolve = res;
-  });
-  return { promise, resolve };
+  return stubSolution(id, { signal: async () => status, datasource: async () => data, ...overrides });
 }
 
 beforeEach(() => {
@@ -83,7 +53,7 @@ describe('RecommendationExisting', () => {
   it('does not let an inactive solution datasource block choosing the active solution', async () => {
     const logsDatasource = jest.fn(() => new Promise<DataSourceInstanceListItem | null>(() => {}));
     const selection = jest.fn();
-    const metrics = solution('metrics', { status: 'active', data: datasource, title: 'Metrics' });
+    const metrics = solution('metrics', { status: 'active', data: stubDatasource, title: 'Metrics' });
     const logs = solution('logs', {
       status: 'inactive',
       title: 'Logs',
@@ -100,13 +70,13 @@ describe('RecommendationExisting', () => {
   it('lists only live solutions and lets the user switch between them', async () => {
     const kubernetes = solution('kubernetes', {
       status: 'active',
-      data: datasource,
+      data: stubDatasource,
       title: 'Kubernetes Monitoring',
       icon: 'kubernetes',
     });
     const metrics = solution('metrics', {
       status: 'active',
-      data: datasource,
+      data: stubDatasource,
       title: 'Metrics & infrastructure',
     });
     const logs = solution('logs', { status: 'inactive', title: 'Logs' });
@@ -133,14 +103,14 @@ describe('RecommendationExisting', () => {
     const logsAlert = deferred<{ primary: string } | null>();
     const kubernetes = solution('kubernetes', {
       status: 'active',
-      data: datasource,
+      data: stubDatasource,
       title: 'Kubernetes Monitoring',
       stats: async () => ({ primary: '247 pods' }),
       alert: async () => ({ primary: 'Kubernetes alert' }),
     });
     const logs = solution('logs', {
       status: 'active',
-      data: datasource,
+      data: stubDatasource,
       title: 'Logs',
       stats: () => logsStats.promise,
       alert: () => logsAlert.promise,
@@ -159,11 +129,61 @@ describe('RecommendationExisting', () => {
     expect(screen.getByTestId('solution-stats-skeleton')).toBeInTheDocument();
   });
 
+  it('clears the previous facts while a recreated selection reloads', async () => {
+    // The same solution id recreated with new inputs (a saved filter): the card keeps its key.
+    const build = (
+      stats: () => Promise<{ primary: string } | null>,
+      alert: () => Promise<{ primary: string } | null>
+    ) =>
+      solution('kubernetes', { status: 'active', data: stubDatasource, title: 'Kubernetes Monitoring', stats, alert });
+    const { rerender } = render(
+      <RecommendationExisting
+        solutions={[
+          build(
+            async () => ({ primary: '247 pods' }),
+            async () => ({ primary: 'Kubernetes alert' })
+          ),
+        ]}
+      />
+    );
+
+    expect(await screen.findByText('247 pods')).toBeInTheDocument();
+    expect(await screen.findByText('Kubernetes alert')).toBeInTheDocument();
+
+    const scopedStats = deferred<{ primary: string } | null>();
+    const scopedAlert = deferred<{ primary: string } | null>();
+    rerender(
+      <RecommendationExisting
+        solutions={[
+          build(
+            () => scopedStats.promise,
+            () => scopedAlert.promise
+          ),
+        ]}
+      />
+    );
+
+    // The card stays mounted but shows nothing from the previous scope while the new facts settle.
+    await waitFor(() => expect(screen.queryByText('247 pods')).not.toBeInTheDocument());
+    expect(screen.queryByText('Kubernetes alert')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
+    expect(screen.getByTestId('solution-stats-skeleton')).toBeInTheDocument();
+
+    await act(async () => {
+      scopedStats.resolve({ primary: '3 pods' });
+      scopedAlert.resolve(null);
+    });
+
+    expect(await screen.findByText('3 pods')).toBeInTheDocument();
+    expect(screen.queryByText('Kubernetes alert')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('solution-stats-skeleton')).not.toBeInTheDocument();
+  });
+
   it('streams optional facts into an already-selected card', async () => {
     const stats = deferred<{ primary: string } | null>();
     const metrics = solution('metrics', {
       status: 'active',
-      data: datasource,
+      data: stubDatasource,
       title: 'Metrics & infrastructure',
       stats: () => stats.promise,
       cta: async () => ({ label: 'Open Metrics Drilldown', href: '/a/metrics', action: 'open_solution' }),
@@ -186,7 +206,7 @@ describe('RecommendationExisting', () => {
     };
     const metrics = solution('metrics', {
       status: 'active',
-      data: datasource,
+      data: stubDatasource,
       title: 'Metrics & infrastructure',
       stats: reject,
       refinedStats: reject,
@@ -204,7 +224,7 @@ describe('RecommendationExisting', () => {
   it('renders and tracks the selected solution alert action', async () => {
     const metrics = solution('metrics', {
       status: 'active',
-      data: datasource,
+      data: stubDatasource,
       title: 'Metrics & infrastructure',
       alert: async () => ({
         primary: '3 hosts above 90% disk',
@@ -269,7 +289,7 @@ describe('RecommendationExisting', () => {
   it('tracks the selected solution action', async () => {
     const metrics = solution('metrics', {
       status: 'active',
-      data: datasource,
+      data: stubDatasource,
       title: 'Metrics & infrastructure',
       cta: async () => ({ label: 'Open Metrics Drilldown', href: '/a/metrics', action: 'open_solution' }),
     });
@@ -288,7 +308,7 @@ describe('RecommendationExisting', () => {
   it('does not track re-selecting the current solution', async () => {
     const metrics = solution('metrics', {
       status: 'active',
-      data: datasource,
+      data: stubDatasource,
       title: 'Metrics & infrastructure',
     });
     const { user } = render(<RecommendationExisting solutions={[metrics]} />);
@@ -303,7 +323,7 @@ describe('RecommendationExisting', () => {
   it('does not restart required detection when optional facts update', async () => {
     const stats = deferred<{ primary: string } | null>();
     const signal = jest.fn(async () => 'active' as const);
-    const getDatasource = jest.fn(async () => datasource);
+    const getDatasource = jest.fn(async () => stubDatasource);
     const metrics = solution('metrics', { signal, datasource: getDatasource, stats: () => stats.promise });
 
     render(<RecommendationExisting solutions={[metrics]} />);

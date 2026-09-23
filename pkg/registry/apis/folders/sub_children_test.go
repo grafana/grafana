@@ -88,17 +88,32 @@ func childRow(uid, title string) *resourcepb.ResourceTableRow {
 	}
 }
 
+func childrenFieldValueResponse(uid, title string) *resourcepb.ResourceSearchResponse {
+	return &resourcepb.ResourceSearchResponse{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{{
+			Name: resource.SEARCH_FIELD_TITLE,
+			Type: resourcepb.ResourceSearchField_STRING,
+		}},
+		Rows: []*resourcepb.ResourceSearchRow{{
+			Key:             &resourcepb.ResourceKey{Name: uid, Namespace: "default"},
+			ResourceVersion: 42,
+			Values: []*resourcepb.ResourceSearchValue{{
+				FieldIndex:   0,
+				StringValues: []string{title},
+			}},
+		}},
+		TotalHits: 1,
+	}
+}
+
 func newChildrenCtx() context.Context {
 	return apirequest.WithNamespace(context.Background(), "default")
 }
 
 func TestSubChildren_GeneralFolderSkipsGetterAndFiltersOnEmptyParent(t *testing.T) {
 	getter := &stubGetter{err: errors.New("should not be called")}
-	search := &capturingSearchClient{
-		resp: childrenResponseWith([]*resourcepb.ResourceTableRow{
-			childRow("a", "Alpha"),
-		}, 1),
-	}
+	search := &capturingSearchClient{resp: childrenFieldValueResponse("a", "Alpha")}
 	rest := &subChildrenREST{getter: getter, searcher: search}
 
 	resp := &recordingResponder{}
@@ -110,6 +125,8 @@ func TestSubChildren_GeneralFolderSkipsGetterAndFiltersOnEmptyParent(t *testing.
 	require.NoError(t, resp.err)
 	require.NotNil(t, search.lastReq)
 	require.Len(t, search.lastReq.Options.Fields, 1)
+	require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, search.lastReq.ResultFormat)
+	require.Equal(t, []string{resource.SEARCH_FIELD_TITLE, resource.SEARCH_FIELD_RV}, search.lastReq.Fields)
 	require.Equal(t, resource.SEARCH_FIELD_FOLDER, search.lastReq.Options.Fields[0].Key)
 	require.Equal(t, []string{""}, search.lastReq.Options.Fields[0].Values)
 
@@ -118,6 +135,7 @@ func TestSubChildren_GeneralFolderSkipsGetterAndFiltersOnEmptyParent(t *testing.
 	require.Len(t, list.Items, 1)
 	require.Equal(t, "a", list.Items[0].Name)
 	require.Equal(t, "Alpha", list.Items[0].Spec.Title)
+	require.Equal(t, "42", list.Items[0].ResourceVersion)
 }
 
 func TestSubChildren_NamedFolderHitsGetterAndFiltersOnUID(t *testing.T) {

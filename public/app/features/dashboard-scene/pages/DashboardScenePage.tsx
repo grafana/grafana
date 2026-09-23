@@ -157,7 +157,13 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 
   return (
     <UrlSyncContextProvider scene={dashboard} updateUrlOnInit={true} createBrowserHistorySteps={true}>
-      <DashboardPreviewBanner queryParams={queryParams} route={route.routeName} slug={slug} path={path} />
+      <DashboardPreviewBanner
+        queryParams={queryParams}
+        route={route.routeName}
+        slug={slug}
+        path={path}
+        dashboard={dashboard}
+      />
       <DashboardConversionWarningBanner dashboard={dashboard} />
       <ScriptedDashboardDeprecationBanner isScripted={type === 'script'} />
       <OrphanedDashboardBanner dashboard={dashboard} />

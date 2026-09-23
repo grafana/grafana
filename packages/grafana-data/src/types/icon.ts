@@ -135,6 +135,7 @@ export const availableIconsIndex = {
   'file-landscape-alt': true,
   filter: true,
   flask: true,
+  'flask-bubbling': true,
   'filter-plus': true,
   'filter-minus': true,
   flip: true,

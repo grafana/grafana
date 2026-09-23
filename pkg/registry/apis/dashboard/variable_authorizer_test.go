@@ -9,11 +9,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
+	"github.com/grafana/authlib/authn"
+
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
@@ -22,7 +25,7 @@ import (
 func TestVariableAuthorizer(t *testing.T) {
 	setGlobalVariablesToggle(t, true)
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
-	authz := newVariableAuthorizer(ac)
+	authz := newVariableAuthorizer(ac, nil)
 	generalScope := folder.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID)
 	folderAScope := folder.ScopeFoldersProvider.GetResourceScopeUID("folder-a")
 
@@ -127,24 +130,36 @@ func TestVariableAuthorizer(t *testing.T) {
 
 func TestVariableAuthorizer_NilAccessControl(t *testing.T) {
 	setGlobalVariablesToggle(t, true)
-	authz := newVariableAuthorizer(nil)
-	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{OrgID: 1})
+	authz := newVariableAuthorizer(nil, grafanaauthorizer.NewServiceAuthorizer())
 
-	decision, reason, err := authz.Authorize(ctx, authorizer.AttributesRecord{
-		ResourceRequest: true,
-		Verb:            "list",
-		APIGroup:        "dashboard.grafana.app",
-		Resource:        "variables",
+	t.Run("denies when there is no identity", func(t *testing.T) {
+		decision, _, err := authz.Authorize(context.Background(), authorizer.AttributesRecord{
+			ResourceRequest: true,
+			Verb:            "list",
+			APIGroup:        "dashboard.grafana.app",
+			Resource:        "variables",
+		})
+		require.ErrorContains(t, err, "no identity found")
+		require.Equal(t, authorizer.DecisionDeny, decision)
 	})
-	require.NoError(t, err)
-	require.Equal(t, authorizer.DecisionDeny, decision)
-	require.Equal(t, "access control is not configured", reason)
+
+	t.Run("falls through to the service authorizer for a user with delegated permissions", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), variableServiceAuthorizedRequester())
+		decision, reason, err := authz.Authorize(ctx, authorizer.AttributesRecord{
+			ResourceRequest: true,
+			Verb:            "list",
+			APIGroup:        "dashboard.grafana.app",
+			Resource:        "variables",
+		})
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionAllow, decision)
+		require.Empty(t, reason)
+	})
 }
 
-func TestVariableAuthorizer_OrphanedFolderScopedUpdate(t *testing.T) {
-	// Regression: scoped update/delete used to resolve variables:uid via
-	// GetInheritedScopes; when the parent folder was gone the resolver erred and
-	// the authorizer denied before admission allowMissingFolder could run.
+func TestVariableAuthorizer_CoarseUpdateDoesNotResolveParentFolder(t *testing.T) {
+	// Mutations are any-scope; a missing parent must not fail the authorizer.
+	// Admission applies the folder-scoped variables:* check.
 	setGlobalVariablesToggle(t, true)
 	acSvc := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	folderSvc := foldertest.NewFakeService()
@@ -152,7 +167,7 @@ func TestVariableAuthorizer_OrphanedFolderScopedUpdate(t *testing.T) {
 	prefix, resolver := VariableUIDScopeResolver(folderSvc)
 	acSvc.RegisterScopeAttributeResolver(prefix, resolver)
 
-	authz := newVariableAuthorizer(acSvc)
+	authz := newVariableAuthorizer(acSvc, nil)
 	generalScope := folder.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID)
 
 	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
@@ -226,6 +241,45 @@ func TestDashboardsAPIBuilderVariableAuthorizer(t *testing.T) {
 		}
 	})
 
+	t.Run("denies user requests when disabled even with a requester", func(t *testing.T) {
+		setGlobalVariablesToggle(t, false)
+		userCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{OrgID: 1})
+		for _, verb := range []string{"get", "list", "watch", "create", "update", "delete", "deletecollection"} {
+			t.Run(verb, func(t *testing.T) {
+				decision, reason, err := authz.Authorize(userCtx, authzAttributes(dashv2beta1.VariableResourceInfo.GetName(), verb))
+				require.NoError(t, err)
+				require.Equal(t, authorizer.DecisionDeny, decision)
+				require.Equal(t, "global dashboard variables feature is not enabled", reason)
+			})
+		}
+	})
+
+	t.Run("allows service identity read and delete when disabled so folder cleanup can remove leftovers", func(t *testing.T) {
+		setGlobalVariablesToggle(t, false)
+		svcCtx := identity.WithServiceIdentityContext(context.Background(), 1)
+		for _, verb := range []string{"get", "list", "watch", "delete", "deletecollection"} {
+			t.Run(verb, func(t *testing.T) {
+				decision, reason, err := authz.Authorize(svcCtx, authzAttributes(dashv2beta1.VariableResourceInfo.GetName(), verb))
+				require.NoError(t, err)
+				require.Equal(t, authorizer.DecisionAllow, decision)
+				require.Empty(t, reason)
+			})
+		}
+	})
+
+	t.Run("denies service identity writes when disabled", func(t *testing.T) {
+		setGlobalVariablesToggle(t, false)
+		svcCtx := identity.WithServiceIdentityContext(context.Background(), 1)
+		for _, verb := range []string{"create", "update", "patch"} {
+			t.Run(verb, func(t *testing.T) {
+				decision, reason, err := authz.Authorize(svcCtx, authzAttributes(dashv2beta1.VariableResourceInfo.GetName(), verb))
+				require.NoError(t, err)
+				require.Equal(t, authorizer.DecisionDeny, decision)
+				require.Equal(t, "global dashboard variables feature is not enabled", reason)
+			})
+		}
+	})
+
 	t.Run("checks RBAC when the feature is enabled", func(t *testing.T) {
 		setGlobalVariablesToggle(t, true)
 		// With the flag on, the authorizer proceeds past the feature gate and
@@ -246,16 +300,39 @@ func TestDashboardsAPIBuilderVariableAuthorizer(t *testing.T) {
 
 func TestDashboardsAPIBuilderVariableAuthorizer_StandaloneNilAccessControl(t *testing.T) {
 	// NewAPIService leaves accessControl unset. With the flag on, Authorize
-	// must deny rather than panic on Evaluate.
+	// must fall through to the service authorizer rather than panic on Evaluate.
 	setGlobalVariablesToggle(t, true)
 	authz := (&DashboardsAPIBuilder{}).GetAuthorizer()
 
-	for _, verb := range []string{"get", "list", "watch", "create", "update", "delete", "deletecollection"} {
-		t.Run(verb, func(t *testing.T) {
-			decision, reason, err := authz.Authorize(context.Background(), authzAttributes(dashv2beta1.VariableResourceInfo.GetName(), verb))
-			require.NoError(t, err)
-			require.Equal(t, authorizer.DecisionDeny, decision)
-			require.Equal(t, "access control is not configured", reason)
-		})
+	t.Run("no identity", func(t *testing.T) {
+		for _, verb := range []string{"get", "list", "watch", "create", "update", "delete", "deletecollection"} {
+			t.Run(verb, func(t *testing.T) {
+				_, _, err := authz.Authorize(context.Background(), authzAttributes(dashv2beta1.VariableResourceInfo.GetName(), verb))
+				require.ErrorContains(t, err, "no identity found")
+			})
+		}
+	})
+
+	t.Run("user with delegated permissions is allowed at the authorizer", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), variableServiceAuthorizedRequester())
+		for _, verb := range []string{"get", "list", "watch", "create", "update", "delete", "deletecollection"} {
+			t.Run(verb, func(t *testing.T) {
+				decision, reason, err := authz.Authorize(ctx, authzAttributes(dashv2beta1.VariableResourceInfo.GetName(), verb))
+				require.NoError(t, err)
+				require.Equal(t, authorizer.DecisionAllow, decision)
+				require.Empty(t, reason)
+			})
+		}
+	})
+}
+
+func variableServiceAuthorizedRequester() *identity.StaticRequester {
+	return &identity.StaticRequester{
+		OrgID: 1,
+		AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
+			Rest: authn.AccessTokenClaims{
+				DelegatedPermissions: []string{"dashboard.grafana.app/variables:*"},
+			},
+		},
 	}
 }

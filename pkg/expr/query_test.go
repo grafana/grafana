@@ -89,7 +89,7 @@ func TestQueryTypeDefinitions(t *testing.T) {
 		},
 	}, {
 		Discriminators: data.NewDiscriminators("type", QueryTypeClassic),
-		GoType:         reflect.TypeOf(&ClassicQuery{}),
+		GoType:         reflect.TypeFor[*ClassicQuery](),
 		Examples: []data.QueryExample{
 			{
 				Name: "Where query A > 5",
@@ -116,7 +116,7 @@ func TestQueryTypeDefinitions(t *testing.T) {
 		},
 	}, {
 		Discriminators: data.NewDiscriminators("type", QueryTypeThreshold),
-		GoType:         reflect.TypeOf(&ThresholdQuery{}),
+		GoType:         reflect.TypeFor[*ThresholdQuery](),
 		Examples: []data.QueryExample{
 			{
 				Name: "Where query A > 5",

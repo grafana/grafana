@@ -86,9 +86,8 @@ var QueryError = errutil.BadRequest("sse.dataQueryError").MustTemplate(
 
 func MakeQueryError(refID, datasourceUID string, err error) error {
 	var pErr error
-	var utilErr errutil.Error
 	// See if this is grafana error, if so, grab public message
-	if errors.As(err, &utilErr) {
+	if utilErr, ok := errors.AsType[errutil.Error](err); ok {
 		pErr = utilErr.Public()
 	} else {
 		pErr = err

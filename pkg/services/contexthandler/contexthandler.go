@@ -136,8 +136,7 @@ func (h *ContextHandler) setRequestContext(ctx context.Context) context.Context 
 		// Hack: set all errors on LookupTokenErr, so we can check it in auth middlewares
 		reqContext.LookupTokenErr = err
 
-		var tokenRotationErr authn.TokenNeedsRotationError
-		if errors.As(err, &tokenRotationErr) {
+		if tokenRotationErr, ok := errors.AsType[authn.TokenNeedsRotationError](err); ok {
 			userId = tokenRotationErr.UserID
 		}
 	} else {
@@ -165,9 +164,10 @@ func (h *ContextHandler) setRequestContext(ctx context.Context) context.Context 
 
 	// Set open feature evaluation context with namespace
 	ns := "default"
-	if id != nil {
+	switch {
+	case id != nil && id.Namespace != "" && id.Namespace != "*":
 		ns = id.Namespace
-	} else if h.cfg.StackID != "" {
+	case h.cfg.StackID != "":
 		ns = "stacks-" + h.cfg.StackID
 	}
 	evalCtx := openfeature.NewEvaluationContext(ns, map[string]any{

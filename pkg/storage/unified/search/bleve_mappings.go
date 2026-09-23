@@ -33,15 +33,23 @@ type kindSearchFields struct {
 	// variants drives the index-time copy of per-kind values into the variant
 	// fields this kind's mapping declares.
 	variants []fieldVariant
+
+	// resultFields maps request field names to their declared response shape.
+	resultFields map[string]resource.SearchFieldDefinition
+	// allResultFields is the curated default response field list.
+	allResultFields []resource.SearchFieldDefinition
 }
 
 func newKindSearchFields(provider resource.SearchFieldsProvider, group, kindResource string, selectableFields []string) kindSearchFields {
+	resultFields, allResultFields := fieldValueDefinitions(provider, group, kindResource)
 	return kindSearchFields{
 		keywordFields:      keywordFieldsForMapping(provider, group, kindResource, selectableFields),
 		numberOrBoolFields: numberOrBoolFieldsForMapping(provider, group, kindResource),
 		textQueryKinds:     textQueryKindsForMapping(provider, group, kindResource, selectableFields),
 		sortableFields:     sortableFieldsForMapping(provider, group, kindResource),
 		variants:           fieldVariantsOf(fieldDefinitionsForMapping(provider, group, kindResource)),
+		resultFields:       resultFields,
+		allResultFields:    allResultFields,
 	}
 }
 
@@ -593,6 +601,7 @@ func getBleveDocMappings(provider resource.SearchFieldsProvider, group, kindReso
 
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_IS_DELETED, internalBoolField())
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_IS_PROVISIONED, internalBoolField())
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_RV_STRING, internalStoredStringField())
 
 	// Trash fields sit at the top level next to the standard ones, so /trash reads
 	// them by the names the API layer already uses.
@@ -660,6 +669,20 @@ func internalBoolField() *mapping.FieldMapping {
 	m := bleve.NewBooleanFieldMapping()
 	m.Store = false
 	m.Index = true
+	m.DocValues = false
+	m.IncludeInAll = false
+	m.IncludeTermVectors = false
+	m.SkipFreqNorm = true
+	return m
+}
+
+// internalStoredStringField maps a value that search results return but nothing
+// queries, so it is stored without being indexed. Mapped here rather than
+// declared as a SearchFieldDefinition for the same reasons as internalBoolField.
+func internalStoredStringField() *mapping.FieldMapping {
+	m := bleve.NewKeywordFieldMapping()
+	m.Store = true
+	m.Index = false
 	m.DocValues = false
 	m.IncludeInAll = false
 	m.IncludeTermVectors = false

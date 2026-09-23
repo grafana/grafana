@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"strconv"
 
 	"github.com/open-feature/go-sdk/openfeature"
@@ -46,8 +47,8 @@ type api struct {
 func newApi(cfg *setting.Cfg, ac accesscontrol.AccessControl, router routing.RouteRegister, manager *Service, features featuremgmt.FeatureToggles, restConfigProvider apiserver.DirectRestConfigProvider) *api {
 	permissions := make([]string, 0, len(manager.permissions))
 	// reverse the permissions order for display
-	for i := len(manager.permissions) - 1; i >= 0; i-- {
-		permissions = append(permissions, manager.permissions[i])
+	for _, v := range slices.Backward(manager.permissions) {
+		permissions = append(permissions, v)
 	}
 	return &api{
 		cfg:                cfg,

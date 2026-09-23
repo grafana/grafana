@@ -8,7 +8,8 @@ import { Icon, useStyles2 } from '@grafana/ui';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
-import { getQueryRunnerFor, useDashboardState } from '../../../utils/utils';
+import { getQueryRunnerFor } from '../../../utils/getQueryRunnerFor';
+import { useDashboardState } from '../../../utils/utils';
 import { DashboardGridItem } from '../DashboardGridItem';
 import { RowRepeaterBehavior } from '../RowRepeaterBehavior';
 

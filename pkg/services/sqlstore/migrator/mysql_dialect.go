@@ -205,8 +205,7 @@ func (db *MySQLDialect) TruncateDBTables(engine *xorm.Engine) error {
 }
 
 func (db *MySQLDialect) isThisError(err error, errcode uint16) bool {
-	var driverErr *mysql.MySQLError
-	if errors.As(err, &driverErr) {
+	if driverErr, ok := errors.AsType[*mysql.MySQLError](err); ok {
 		if driverErr.Number == errcode {
 			return true
 		}
@@ -220,8 +219,7 @@ func (db *MySQLDialect) IsUniqueConstraintViolation(err error) bool {
 }
 
 func (db *MySQLDialect) ErrorMessage(err error) string {
-	var driverErr *mysql.MySQLError
-	if errors.As(err, &driverErr) {
+	if driverErr, ok := errors.AsType[*mysql.MySQLError](err); ok {
 		return driverErr.Message
 	}
 	return ""
@@ -258,7 +256,7 @@ func (db *MySQLDialect) UpsertMultipleSQL(tableName string, keyCols, updateCols 
 	valuesStr := strings.Builder{}
 	separator = ", "
 	colPlaceHolders := colPlaceHoldersStr.String()
-	for i := 0; i < count; i++ {
+	for i := range count {
 		if i == count-1 {
 			separator = ""
 		}

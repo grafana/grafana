@@ -33,6 +33,11 @@ type JobProgressRecorder interface {
 	SetFinalMessage(ctx context.Context, msg string)
 	SetMessage(ctx context.Context, msg string)
 	SetTotal(ctx context.Context, total int)
+	// SetVariance tags the job with a sub-type of its action (e.g. full vs
+	// incremental for a pull job) for the driver's throughput metric.
+	SetVariance(variance string)
+	// Variance returns the sub-type set via SetVariance, or "" if none was set.
+	Variance() string
 	TooManyErrors() error
 	StrictMaxErrors(maxErrors int)
 	SetRefURLs(ctx context.Context, refURLs *provisioning.RepositoryURLs)

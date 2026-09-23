@@ -9,8 +9,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-func manifestWithSearchFields() app.Manifest {
-	return app.Manifest{ManifestData: &app.ManifestData{
+func manifestWithSearchFields() *app.ManifestData {
+	return &app.ManifestData{
 		Group:            "widgets.example.test",
 		PreferredVersion: "v2",
 		Versions: []app.ManifestVersion{
@@ -36,11 +36,11 @@ func manifestWithSearchFields() app.Manifest {
 				}},
 			},
 		},
-	}}
+	}
 }
 
 func TestNewManifestBackedProvider(t *testing.T) {
-	p := NewManifestBackedProvider([]app.Manifest{manifestWithSearchFields()})
+	p := NewManifestBackedProvider(manifestWithSearchFields())
 
 	v2 := schema.GroupVersionResource{Group: "widgets.example.test", Version: "v2", Resource: "widgets"}
 	got := p.Fields(v2)
@@ -74,7 +74,7 @@ func TestNewManifestBackedProvider(t *testing.T) {
 func TestNewManifestBackedProvider_DefaultsPluralAndPreferredVersion(t *testing.T) {
 	// No plural and no explicit preferredVersion: resource defaults to kind+"s"
 	// (lower-cased) and the last declaring version is preferred.
-	p := NewManifestBackedProvider([]app.Manifest{{ManifestData: &app.ManifestData{
+	p := NewManifestBackedProvider(&app.ManifestData{
 		Group: "widgets.example.test",
 		Versions: []app.ManifestVersion{
 			{Name: "v1", Kinds: []app.ManifestVersionKind{{
@@ -86,7 +86,7 @@ func TestNewManifestBackedProvider_DefaultsPluralAndPreferredVersion(t *testing.
 				SearchFields: []app.ManifestVersionKindSearchField{{Name: "name", Path: "spec.name", Type: "string", Capabilities: []string{"filter"}}},
 			}}},
 		},
-	}}})
+	})
 
 	gvr := schema.GroupVersionResource{Group: "widgets.example.test", Version: "v1", Resource: "gadgets"}
 	require.Len(t, p.Fields(gvr), 1)
@@ -94,7 +94,7 @@ func TestNewManifestBackedProvider_DefaultsPluralAndPreferredVersion(t *testing.
 }
 
 func TestSearchFieldProviders_MapsDeclaredKinds(t *testing.T) {
-	got, err := SearchFieldProviders([]app.Manifest{manifestWithSearchFields()})
+	got, err := SearchFieldProviders(manifestWithSearchFields())
 	require.NoError(t, err)
 
 	// The one kind that declares search fields is present and provider-backed.
@@ -109,15 +109,15 @@ func TestSearchFieldProviders_MapsDeclaredKinds(t *testing.T) {
 
 func TestSearchFieldProviders_NoManifestDeclarationsIsEmpty(t *testing.T) {
 	// A manifest that declares no search fields yields an empty map.
-	manifestNoFields := app.Manifest{ManifestData: &app.ManifestData{
+	manifestNoFields := &app.ManifestData{
 		Group: "widgets.example.test",
 		Versions: []app.ManifestVersion{{
 			Name:  "v1",
 			Kinds: []app.ManifestVersionKind{{Kind: "Widget", Plural: "widgets"}},
 		}},
-	}}
+	}
 
-	got, err := SearchFieldProviders([]app.Manifest{manifestNoFields})
+	got, err := SearchFieldProviders(manifestNoFields)
 	require.NoError(t, err)
 	assert.Empty(t, got)
 }
@@ -125,7 +125,7 @@ func TestSearchFieldProviders_NoManifestDeclarationsIsEmpty(t *testing.T) {
 func TestSearchFieldProviders_InvalidManifestReturnsError(t *testing.T) {
 	// A runtime manifest source can carry an invalid declaration; the path must
 	// surface it as an error rather than panicking.
-	invalid := app.Manifest{ManifestData: &app.ManifestData{
+	invalid := &app.ManifestData{
 		Group: "widgets.example.test",
 		Versions: []app.ManifestVersion{{
 			Name: "v1",
@@ -137,20 +137,20 @@ func TestSearchFieldProviders_InvalidManifestReturnsError(t *testing.T) {
 				},
 			}},
 		}},
-	}}
+	}
 
-	got, err := SearchFieldProviders([]app.Manifest{invalid})
+	got, err := SearchFieldProviders(invalid)
 	require.Error(t, err)
 	assert.Nil(t, got)
 
 	// Same set through the constructor a runtime caller uses.
-	p, err := ManifestBackedProvider([]app.Manifest{invalid})
+	p, err := ManifestBackedProvider(invalid)
 	require.Error(t, err)
 	assert.Nil(t, p)
 }
 
-func mergeTestManifest(appName, group string, versions ...app.ManifestVersion) app.Manifest {
-	return app.Manifest{ManifestData: &app.ManifestData{AppName: appName, Group: group, Versions: versions}}
+func mergeTestManifest(appName, group string, versions ...app.ManifestVersion) *app.ManifestData {
+	return &app.ManifestData{AppName: appName, Group: group, Versions: versions}
 }
 
 func mergeTestKind(kind, field string) app.ManifestVersionKind {
@@ -164,9 +164,9 @@ func mergeTestKind(kind, field string) app.ManifestVersionKind {
 }
 
 // fieldNames lets a test assert whose declaration of a kind survived a merge.
-func fieldNames(t *testing.T, manifests []app.Manifest, group, version, resource string) []string {
+func fieldNames(t *testing.T, manifests []*app.ManifestData, group, version, resource string) []string {
 	t.Helper()
-	p, err := ManifestBackedProvider(manifests)
+	p, err := ManifestBackedProvider(manifests...)
 	require.NoError(t, err)
 	fields := p.Fields(schema.GroupVersionResource{Group: group, Version: version, Resource: resource})
 	names := make([]string, 0, len(fields))
@@ -181,7 +181,7 @@ func TestMergeManifestsByKind(t *testing.T) {
 		builtin := mergeTestManifest("builtin", "a.test", app.ManifestVersion{Name: "v1", Kinds: []app.ManifestVersionKind{mergeTestKind("Foo", "one")}})
 		live := mergeTestManifest("live", "b.test", app.ManifestVersion{Name: "v1", Kinds: []app.ManifestVersionKind{mergeTestKind("Bar", "two")}})
 
-		merged := MergeManifestsByKind([]app.Manifest{builtin}, []app.Manifest{live})
+		merged := MergeManifestsByKind([]*app.ManifestData{builtin}, []*app.ManifestData{live})
 
 		require.Equal(t, []string{"one"}, fieldNames(t, merged, "a.test", "v1", "foos"))
 		require.Equal(t, []string{"two"}, fieldNames(t, merged, "b.test", "v1", "bars"))
@@ -197,7 +197,7 @@ func TestMergeManifestsByKind(t *testing.T) {
 			app.ManifestVersion{Name: "v1", Kinds: []app.ManifestVersionKind{mergeTestKind("Foo", "live_v1")}},
 		)
 
-		merged := MergeManifestsByKind([]app.Manifest{builtin}, []app.Manifest{live})
+		merged := MergeManifestsByKind([]*app.ManifestData{builtin}, []*app.ManifestData{live})
 
 		// Whole kind comes from the winner: v2 is gone, not kept from built-in.
 		require.Equal(t, []string{"live_v1"}, fieldNames(t, merged, "g.test", "v1", "foos"))
@@ -208,10 +208,10 @@ func TestMergeManifestsByKind(t *testing.T) {
 		builtin := mergeTestManifest("builtin", "g.test", app.ManifestVersion{Name: "v1", Kinds: []app.ManifestVersionKind{mergeTestKind("Foo", "builtin")}})
 		live := mergeTestManifest("live", "g.test", app.ManifestVersion{Name: "v1", Kinds: []app.ManifestVersionKind{mergeTestKind("Foo", "live")}})
 
-		merged := MergeManifestsByKind([]app.Manifest{builtin}, []app.Manifest{live})
+		merged := MergeManifestsByKind([]*app.ManifestData{builtin}, []*app.ManifestData{live})
 
 		require.Len(t, merged, 1)
-		require.Equal(t, "live", merged[0].ManifestData.AppName)
+		require.Equal(t, "live", merged[0].AppName)
 	})
 
 	t.Run("a source without search fields for a kind does not override another source", func(t *testing.T) {
@@ -221,7 +221,7 @@ func TestMergeManifestsByKind(t *testing.T) {
 		// search fields.
 		live := mergeTestManifest("live", "g.test", app.ManifestVersion{Name: "v1", Kinds: []app.ManifestVersionKind{{Kind: "Foo", Plural: "foos", SelectableFields: []string{"spec.x"}}}})
 
-		merged := MergeManifestsByKind([]app.Manifest{builtin}, []app.Manifest{live})
+		merged := MergeManifestsByKind([]*app.ManifestData{builtin}, []*app.ManifestData{live})
 
 		require.Equal(t, []string{"builtin"}, fieldNames(t, merged, "g.test", "v1", "foos"))
 	})
@@ -232,7 +232,7 @@ func TestMergeManifestsByKind(t *testing.T) {
 		a := mergeTestManifest("a", "g.test", app.ManifestVersion{Name: "v1", Kinds: []app.ManifestVersionKind{mergeTestKind("Foo", "first")}})
 		b := mergeTestManifest("b", "g.test", app.ManifestVersion{Name: "v1", Kinds: []app.ManifestVersionKind{mergeTestKind("Foo", "second")}})
 
-		merged := MergeManifestsByKind([]app.Manifest{a, b})
+		merged := MergeManifestsByKind([]*app.ManifestData{a, b})
 
 		require.Equal(t, []string{"first"}, fieldNames(t, merged, "g.test", "v1", "foos"))
 	})
@@ -241,35 +241,35 @@ func TestMergeManifestsByKind(t *testing.T) {
 		// Its kinds declare only selectable fields (no search fields), and the merge
 		// output drives selectable-field wiring too, so it must not be dropped.
 		kind := app.ManifestVersionKind{Kind: "Foo", Plural: "foos", SelectableFields: []string{"spec.x"}}
-		in := []app.Manifest{mergeTestManifest("app", "g.test", app.ManifestVersion{Name: "v1", Kinds: []app.ManifestVersionKind{kind}})}
+		in := []*app.ManifestData{mergeTestManifest("app", "g.test", app.ManifestVersion{Name: "v1", Kinds: []app.ManifestVersionKind{kind}})}
 
 		merged := MergeManifestsByKind(in)
 
-		require.NotEmpty(t, SelectableFieldsForManifests(merged))
-		require.Equal(t, SelectableFieldsForManifests(in), SelectableFieldsForManifests(merged))
+		require.NotEmpty(t, SelectableFieldsForManifests(merged...))
+		require.Equal(t, SelectableFieldsForManifests(in...), SelectableFieldsForManifests(merged...))
 	})
 
 	t.Run("manifests without data pass through", func(t *testing.T) {
-		merged := MergeManifestsByKind([]app.Manifest{{ManifestData: nil}})
+		merged := MergeManifestsByKind([]*app.ManifestData{nil})
 		require.Len(t, merged, 1)
-		require.Nil(t, merged[0].ManifestData)
+		require.Nil(t, merged[0])
 	})
 }
 
 func TestSearchFieldsForManifests(t *testing.T) {
 	kind := mergeTestKind("Foo", "one")
 	kind.SelectableFields = []string{"spec.two"}
-	manifests := []app.Manifest{mergeTestManifest("app", "g.test", app.ManifestVersion{Name: "v1", Kinds: []app.ManifestVersionKind{kind}})}
+	manifests := []*app.ManifestData{mergeTestManifest("app", "g.test", app.ManifestVersion{Name: "v1", Kinds: []app.ManifestVersionKind{kind}})}
 
-	selectable, hashes, providers, err := SearchFieldsForManifests(manifests)
+	selectable, hashes, providers, err := SearchFieldsForManifests(manifests...)
 	require.NoError(t, err)
 
 	// The three inputs all come from the same manifests.
-	wantProviders, err := SearchFieldProviders(manifests)
+	wantProviders, err := SearchFieldProviders(manifests...)
 	require.NoError(t, err)
 	require.Equal(t, wantProviders, providers)
 	require.Equal(t, SearchFieldsHashesForProviders(wantProviders), hashes)
-	require.Equal(t, SelectableFieldsForManifests(manifests), selectable)
+	require.Equal(t, SelectableFieldsForManifests(manifests...), selectable)
 
 	// The kind declares both search and selectable fields, so none is empty.
 	require.NotEmpty(t, providers)
@@ -279,7 +279,7 @@ func TestSearchFieldsForManifests(t *testing.T) {
 
 func TestApplyManifests(t *testing.T) {
 	registry := NewSearchFieldsRegistry(nil, nil, nil)
-	builtin := []app.Manifest{
+	builtin := []*app.ManifestData{
 		mergeTestManifest("builtin", "a.test", app.ManifestVersion{Name: "v1", Kinds: []app.ManifestVersionKind{mergeTestKind("Foo", "builtinfield")}}),
 	}
 	require.NoError(t, ApplyManifests(registry, builtin, nil))
@@ -292,7 +292,7 @@ func TestApplyManifests(t *testing.T) {
 
 	// A live source overrides the same kind with a different field. The registry
 	// must reflect the live declaration and its hash must change.
-	live := []app.Manifest{
+	live := []*app.ManifestData{
 		mergeTestManifest("live", "a.test", app.ManifestVersion{Name: "v1", Kinds: []app.ManifestVersionKind{mergeTestKind("Foo", "livefield")}}),
 	}
 	require.NoError(t, ApplyManifests(registry, builtin, live))

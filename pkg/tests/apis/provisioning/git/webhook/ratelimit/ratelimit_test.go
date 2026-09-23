@@ -42,7 +42,7 @@ func TestIntegrationProvisioning_WebhookRateLimited(t *testing.T) {
 	// the rest must be throttled.
 	const attempts = 100
 	codes := make([]int, 0, attempts)
-	for i := 0; i < attempts; i++ {
+	for range attempts {
 		req, err := http.NewRequestWithContext(t.Context(), http.MethodPost, webhookURL, http.NoBody)
 		require.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
@@ -115,7 +115,7 @@ func TestIntegrationProvisioning_WebhookRateLimitTrustedIPHeader(t *testing.T) {
 	// Saturate the flooded IP's bucket.
 	const attempts = 100
 	throttledHeader := 0
-	for i := 0; i < attempts; i++ {
+	for range attempts {
 		if post(t, floodedIP) == http.StatusTooManyRequests {
 			throttledHeader++
 		}
@@ -124,7 +124,7 @@ func TestIntegrationProvisioning_WebhookRateLimitTrustedIPHeader(t *testing.T) {
 
 	// A different X-Real-Ip is an independent bucket and must stay unaffected
 	// while the flooded IP is throttled — even though it shares the same peer.
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		code := post(t, otherIP)
 		assert.NotEqualf(t, http.StatusTooManyRequests, code,
 			"a different trusted IP must have its own bucket (probe %d)", i)
@@ -203,7 +203,7 @@ func TestIntegrationProvisioning_WebhookRateLimitNamespaceIsolation(t *testing.T
 	// Saturate orgA's bucket.
 	const attempts = 100
 	throttledA := 0
-	for i := 0; i < attempts; i++ {
+	for range attempts {
 		if post(t, clientA, webhookURL(orgA.Namespace, repoA)) == http.StatusTooManyRequests {
 			throttledA++
 		}
@@ -213,7 +213,7 @@ func TestIntegrationProvisioning_WebhookRateLimitNamespaceIsolation(t *testing.T
 	// orgB, keyed on a different namespace, must be unaffected while orgA is
 	// throttled: every probe reaches the handler (same baseline code), none are
 	// 429. A handful stays well under orgB's burst.
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		codeB := post(t, clientB, webhookURL(orgB.Namespace, repoB))
 		assert.NotEqualf(t, http.StatusTooManyRequests, codeB,
 			"orgB must not be throttled by orgA's flood (probe %d)", i)

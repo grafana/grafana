@@ -372,7 +372,7 @@ describe('BarGauge', () => {
         valueDisplayMode: BarGaugeValueMode.Text,
       });
       const styles = getBasicAndGradientStyles(props);
-      expect(styles.bar.background).toBe('rgba(255, 0, 0, 0.35)');
+      expect(styles.bar.background).toBe('rgb(from #FF0000 r g b / 0.35)');
       expect(styles.value.color).toBe('rgb(204, 204, 220)');
     });
   });
@@ -386,7 +386,7 @@ describe('BarGauge', () => {
         valueDisplayMode: BarGaugeValueMode.Color,
       });
       const styles = getBasicAndGradientStyles(props);
-      expect(styles.bar.background).toBe('rgba(255, 0, 0, 0.35)');
+      expect(styles.bar.background).toBe('rgb(from #FF0000 r g b / 0.35)');
       expect(styles.value.color).toBe('#FF0000');
     });
   });

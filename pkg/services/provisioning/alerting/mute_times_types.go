@@ -16,10 +16,7 @@ type MuteTimeV1 struct {
 }
 
 func (mt *MuteTimeV1) mapToModel() MuteTime {
-	orgID := mt.OrgID.Value()
-	if orgID < 1 {
-		orgID = 1
-	}
+	orgID := max(mt.OrgID.Value(), 1)
 	return MuteTime{
 		OrgID: orgID,
 		MuteTime: v1.TimeInterval{
@@ -47,10 +44,7 @@ func (v1 *DeleteMuteTimeV1) mapToModel() (DeleteMuteTime, error) {
 	if name == "" {
 		return DeleteMuteTime{}, errors.New("delete mute time missing name")
 	}
-	orgID := v1.OrgID.Value()
-	if orgID < 1 {
-		orgID = 1
-	}
+	orgID := max(v1.OrgID.Value(), 1)
 	return DeleteMuteTime{
 		OrgID: orgID,
 		Name:  name,

@@ -9,6 +9,38 @@ import (
 func TestV12(t *testing.T) {
 	tests := []migrationTestCase{
 		{
+			name: "non-boolean truthy refresh/hideVariable are coerced like the frontend",
+			input: map[string]interface{}{
+				"title":         "V12 Truthy Coercion Test",
+				"schemaVersion": 11,
+				"templating": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{
+							"type":         "query",
+							"name":         "v",
+							"refresh":      2,
+							"hideVariable": 1,
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"title":         "V12 Truthy Coercion Test",
+				"schemaVersion": 12,
+				"templating": map[string]interface{}{
+					"list": []interface{}{
+						map[string]interface{}{
+							"type":         "query",
+							"name":         "v",
+							"refresh":      1,
+							"hideVariable": 1,
+							"hide":         2,
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "variable with refresh=true gets refresh=1",
 			input: map[string]interface{}{
 				"title":         "V12 Refresh True Test",

@@ -40,7 +40,9 @@ local_resource(
 local_resource(
   'yarn start',
   cmd='rm -rf %s' % manifest_path,
-  serve_cmd='yarn start:rspack:noLint' if use_rspack else 'yarn start:noLint',
+  # noHmr: this stack serves assets from a disk-backed CDN mount, so the build has to write
+  # files rather than hold them in a dev server.
+  serve_cmd='yarn start:rspack:noHmr -- --env noTsCheck=1 --env noLint=1' if use_rspack else 'yarn start:noLint',
   resource_deps=['yarn install'],
 
   # Note: this doesn't seem to work as expected - the assets-manifest is somehow created before
@@ -53,6 +55,19 @@ local_resource(
   allow_parallel=True,
   labels=["local"]
 )
+
+# boot.js has its own rspack config, so the watch that 'yarn start' runs no longer rebuilds
+# it. The image copies boot.js and live_update syncs it, so without this an edit to
+# public/boot would never reach the container.
+if use_rspack:
+  local_resource(
+    'rspack boot',
+    cmd='yarn build:rspack:boot --env develop',
+    deps=['../../public/boot'],
+    resource_deps=['yarn install'],
+    allow_parallel=True,
+    labels=["local"]
+  )
 
 local_resource(
   'backend-build',

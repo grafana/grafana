@@ -61,28 +61,54 @@ expect(results[0].text).toBe('100%'); // (formatting is secondary)
 
 If the function mostly delegates, assert the delegation with exact arguments (see Step 2).
 
-**Expected values are literals, not recomputations.** Never derive the expected side by calling the
+**Expected values are literals, not recomputations, except for theme colors (see below).** Never derive the expected side by calling the
 code under test, a collaborator it calls internally, or by re-typing the production formula — the
 test then passes whenever the code and the expectation share the same bug, and comparing a value to
 _itself_ asserts nothing at all. Freeze the expected value as a literal, computed once by hand or
 captured from a known-good run:
 
 ```ts
-// ❌ circular: `expected` is produced the same way the code produces its result
-const expected = theme.visualization.getColorByName('red');
-expect(dim.value()).toBe(expected);
 // ❌ re-derives the production formula — a bug in the formula is copied into `expected`
 const expected = TABLE.CELL_PADDING * 2 + theme.typography.fontSize * theme.typography.body.lineHeight;
 expect(getDefaultRowHeight(theme, [])).toBe(expected);
 
-// ✅ frozen literals — a change in the resolver or the formula now fails the test
-expect(dim.value()).toBe('#F2495C');
+// ✅ frozen literal — a change in the formula now fails the test
 expect(getDefaultRowHeight(theme, [])).toBe(34);
 ```
+
+**Theme colors are an explicit exception.** When testing that a component or consumer uses a
+theme color, derive the expected color from the theme supplied to that component (or its theme
+provider), rather than hardcoding the current hex/RGB value. Assert the specific semantic token
+or named theme color the element should use. Palette changes should not break these tests;
+using the wrong token should.
+
+For example, the JSON highlighting assertions in
+`packages/grafana-ui/src/components/Table/TableNG/TableNG.test.tsx` should express the
+string and number token choices:
+
+```ts
+// Before: pins today's palette
+expect(await screen.findByText('"us-east-1"')).toHaveStyle({ color: '#6CCF8E' });
+expect(screen.getByText('3')).toHaveStyle({ color: '#FBAD37' });
+
+// After: checks the intended theme tokens
+expect(await screen.findByText('"us-east-1"')).toHaveStyle({ color: theme.components.codeEditor.string });
+expect(screen.getByText('3')).toHaveStyle({ color: theme.components.codeEditor.number });
+```
+
+For theme-switching tests, assert against each supplied theme after rerendering. This exception
+does not apply when the color resolver, transformation, or palette definition itself is under
+test: keep independent literal expectations there rather than calling the implementation to
+produce its own expected result.
 
 For values awkward to write by hand (projected coordinates, hashes), assert an **independent
 readback** rather than re-running the same path — e.g. project lng/lat, read it back in WGS84, and
 compare to the literal input — or freeze it with `toMatchInlineSnapshot`.
+
+The same "assert nothing" failure mode applies to what you choose to test, not only what you
+assert. A test earns its place only if you can name a code change it would catch — skip
+"renders without crashing" (unless there's a known crash bug), "initial value is empty
+string", or a boolean branch with no real logic behind it.
 
 **Prove the assertion has teeth.** Before landing, mutate the asserted value (or the source it
 derives from) and confirm the test goes **red**. A test that stays green — because its expectation
@@ -113,6 +139,54 @@ When a test fails after updating functionality, behaviour or features, this is a
 
 Net new functionality requires net new tests. Existing tests should be treated as a spec, and if you cause a test to fail -- STOP -- and analyze why that test fails, only after thorough analysis based on tracing real code should an existing test ever be updated.
 
+## Principle 5 — Test production code, not frameworks or test-local helpers
+
+Every test must exercise a function or component that's actually importable from elsewhere
+in the codebase (a `public/app/**` module, a `packages/*/src/**` export, a plugin's own
+source) — never a helper defined inside the test file, and never behavior owned by an
+external library (React, `@grafana/ui`, a Jest matcher). If the thing under test only exists
+in the test file, the test is wrong, not the code.
+
+Watch for the anti-pattern where a test defines a small helper "to make setup easier" and then
+only calls the helper — that test passes or fails independently of the production code, so it
+can't function as a regression check.
+
+## Principle 6 — Minimize mocking
+
+Every mock is an unverified assumption about how the mocked thing behaves. Prefer letting real
+code run in the test environment; each mock you add is confidence you're giving up.
+
+**Do not mock:**
+
+- `localStorage` / `sessionStorage` — jsdom provides real implementations.
+- The module's own helpers, constants, or simple data transforms.
+- Anything else that runs fine as-is under Jest/jsdom.
+
+**Acceptable to mock:**
+
+- Network/API calls (`getBackendSrv`, `fetch`, RTK Query endpoints).
+- Time (`jest.useFakeTimers()`).
+- Things genuinely unavailable in the test environment.
+
+Feature-flag clients are a special case, not a "mock freely" one — see Step 2: never mock
+`@grafana/runtime/internal` directly, drive the real client via `setTestFlags` or
+`testWithFeatureToggles` instead.
+
+Prefer integration-style component tests that render the real component tree over shallow
+rendering or mocking child components — the more production code a test exercises, the more
+regressions it can catch. Assert observable behavior (what the user sees/does), not internal
+state or implementation details.
+
+## Principle 7 — Lead with positive assertions
+
+Every test needs at least one assertion that something **is** present/true/correct, not only
+that something is absent. A test asserting solely "no error is shown" or "the spinner is gone"
+passes on an empty render — it proves nothing.
+
+When waiting on async UI, assert the expected state first (`findByText`, `waitFor` on a
+positive check), then make any negative assertion after. Negative-first assertions race the
+component's actual state.
+
 ## Step 1 — Name the test for exactly what it asserts
 
 The `it(...)` string is triage documentation — a reviewer reads it first when a test fails,
@@ -127,6 +201,11 @@ it('sets the field to disabled when the parent form is read-only', () => {
   expect(getByRole('textbox')).toBeDisabled();
 });
 ```
+
+Before adding a new test, scan the file for existing ones with overlapping intent or
+near-identical implementation. Similar descriptions but different bodies → confirm they
+actually test different things, or delete one. Different descriptions but near-identical
+bodies → consolidate under one description that captures both intents.
 
 Use `it.each` with `$name` / `$desc` interpolation for enumerable variants so each row
 self-labels. Delete duplicate cases — if two tests exercise the same path, keep one.
@@ -206,6 +285,32 @@ For classic `featuremgmt` toggles (not OpenFeature flags), use `testWithFeatureT
 - Deferring comprehensiveness to a follow-up PR is acceptable — leave an explicit note
   rather than shipping a shallow test that looks complete.
 
+## Step 4 — Assert full query strings for datasource query builders
+
+When a test asserts on a query string produced by a datasource query builder — a Graphite
+target, a SQL statement (MSSQL/MySQL/Postgres), CloudWatch's metric-math expression, or any
+other query language built by a `public/app/plugins/datasource/*` in-repo datasource — assert
+the **entire** string, not a fragment. A stray label matcher, operator, or grouping clause
+silently changes query semantics that a partial match won't catch. This is already repo
+convention, e.g. `public/app/plugins/datasource/graphite/datasource.test.ts`:
+
+```ts
+// ❌ partial match hides regressions elsewhere in the query
+expect(target).toContain('asPercent(series1');
+
+// ✅ full string catches any unintended change to the rest of the query
+expect(results[2]).toBe('target=asPercent(series1%2Cseries2)');
+```
+
+Prometheus and Loki's query builders ship in separate repos (`grafana/grafana-prometheus`,
+`grafana/grafana-loki`) and aren't covered by this skill — apply the same rule there if you're
+working in one of those repos.
+
+Loose assertions (`toContain`, loose `toMatch`) are acceptable only when the full query is
+genuinely non-deterministic (it embeds a timestamp or generated UUID). This rule is scoped to
+query-language strings — other strings (rendered text, error messages) can match at whatever
+granularity fits.
+
 ## Anti-flake rules
 
 Each rule maps to a real stabilization; global Playwright config retries once in CI only.
@@ -262,15 +367,25 @@ that stays green without the fix documents nothing and will not catch the bug co
 Pointers to the sections above — read them for the detail:
 
 - Principle 2 — assert concrete values / exact call args; never bare `toBeDefined`,
-  `instanceof`, "did not throw", or length-mirrors-input. Expected values are frozen literals, never
-  recomputed from the code under test; mutate the value and confirm red before landing.
+  `instanceof`, "did not throw", or length-mirrors-input. Expected values are frozen literals,
+  except theme-color consumers should assert the intended theme token instead of a hardcoded
+  color. Never recompute expectations using the code under test; mutate the value and confirm
+  red before landing.
 - Principle 3 — no unfocused/verbose/implementation-coupled slop; review AI output before a PR.
 - Principle 4 — a failing test after a behavior change is a regression signal, not something to
   patch over; net new functionality needs net new tests.
-- Step 1 — `it(...)` equivalent to the assertion; `it.each` for variants, delete duplicates.
+- Principle 5 — exercise real `src/` code, never a test-local helper or plain framework behavior.
+- Principle 6 — minimize mocking; don't mock `localStorage` or your own simple helpers, do mock
+  network calls, time, and things unavailable in the test environment.
+- Principle 7 — every test has a positive assertion; wait on a positive check before asserting
+  something is absent.
+- Step 1 — `it(...)` equivalent to the assertion; scan for overlapping tests before adding a new
+  one; `it.each` for variants, delete duplicates.
 - Step 2 — verify the test reaches the target branch (set gates); type mocks with
   `jest.mocked(fn)`, never `as jest.MockedFunction<…>`.
 - Step 3 — no tests for code slated for deletion.
+- Step 4 — assert full query strings for in-repo datasource query builders (Graphite, SQL,
+  CloudWatch, etc.), not fragments.
 - Anti-flake — apply all 7 rules.
 - SDLC — tests land in the same PR as the feature/fix; close every bug with a regression test that
   fails on `main` (red without the fix, green with it).

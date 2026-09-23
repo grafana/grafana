@@ -187,11 +187,6 @@ func upgradeValueMappings(oldMappings []interface{}, thresholds map[string]inter
 		return oldMappings
 	}
 
-	// Check if all mappings are already in the new format
-	if areAllMappingsNewFormat(oldMappings) {
-		return oldMappings
-	}
-
 	valueMaps := createValueMaps()
 	var newMappings []interface{}
 	hasValueMappings := false
@@ -212,22 +207,6 @@ func upgradeValueMappings(oldMappings []interface{}, thresholds map[string]inter
 	}
 
 	return newMappings
-}
-
-// areAllMappingsNewFormat checks if all mappings are already in the new format
-func areAllMappingsNewFormat(oldMappings []interface{}) bool {
-	for _, mapping := range oldMappings {
-		if mappingMap, ok := mapping.(map[string]interface{}); ok {
-			if mappingType, ok := mappingMap["type"].(string); ok && mappingType != "" {
-				// This is already in new format, keep it as-is
-				continue
-			} else {
-				// Found a legacy format mapping, need to process
-				return false
-			}
-		}
-	}
-	return true
 }
 
 // createValueMaps creates the base value maps structure
@@ -302,8 +281,13 @@ func getColorFromThresholds(mappingMap map[string]interface{}, thresholds map[st
 // processValueToTextMapping handles ValueToText legacy mappings
 func processValueToTextMapping(mappingMap map[string]interface{}, color interface{}, thresholds map[string]interface{}, valueMaps map[string]interface{}, newMappings *[]interface{}, hasValueMappings bool) bool {
 	if value, ok := mappingMap["value"]; ok {
+		if value == nil {
+			// Frontend: `case 1: if (old.value != null)` - an actual null value is
+			// skipped entirely (it must not become an empty-string key mapping).
+			return hasValueMappings
+		}
 		if valueStr, ok := value.(string); ok && valueStr == "null" {
-			// Handle null values as special value mapping
+			// Handle the string "null" as a special value mapping
 			processNullValueMapping(mappingMap, color, thresholds, newMappings)
 		} else {
 			// Regular value mapping
@@ -366,40 +350,53 @@ func processRangeToTextMapping(mappingMap map[string]interface{}, color interfac
 	})
 }
 
-// getActiveThresholdColor returns the color for a value based on thresholds (matches frontend getActiveThreshold)
+// fallbackThresholdColor mirrors the frontend FALLBACK_COLOR used by
+// getActiveThreshold's fallBackThreshold when a field has no threshold steps.
+const fallbackThresholdColor = "#808080"
+
+// getActiveThresholdColor returns the color for a value based on thresholds,
+// mirroring the frontend getActiveThreshold: it starts from steps[0] (the base
+// step) and keeps the last step whose value is <= value, using JavaScript's
+// numeric coercion (null -> 0; a missing or non-numeric value -> NaN, which makes
+// the comparison false and stops the scan).
 func getActiveThresholdColor(value float64, thresholds map[string]interface{}) interface{} {
-	if steps, ok := thresholds["steps"].([]interface{}); ok {
-		if len(steps) == 0 {
-			return nil
+	steps, ok := thresholds["steps"].([]interface{})
+	if !ok || len(steps) == 0 {
+		return fallbackThresholdColor
+	}
+
+	activeStep, _ := steps[0].(map[string]interface{})
+
+	for _, step := range steps {
+		stepMap, ok := step.(map[string]interface{})
+		if !ok {
+			continue
 		}
 
-		var activeStep map[string]interface{}
+		stepValue, has := stepMap["value"]
+		if !has {
+			break
+		}
 
-		for _, step := range steps {
-			if stepMap, ok := step.(map[string]interface{}); ok {
-				if stepValue, ok := stepMap["value"]; ok {
-					if stepValue == nil {
-						// Null value represents negative infinity - this is always the base color
-						activeStep = stepMap
-						continue
-					}
-
-					if stepNum := GetFloatValue(stepMap, "value", -1); stepNum != -1 {
-						if value >= stepNum {
-							activeStep = stepMap
-						} else {
-							break
-						}
-					}
-				}
+		var stepNum float64
+		if stepValue != nil {
+			num, ok := ConvertToFloat(stepValue)
+			if !ok {
+				break
 			}
+			stepNum = num
 		}
 
-		if activeStep != nil {
-			return activeStep["color"]
+		if value >= stepNum {
+			activeStep = stepMap
+		} else {
+			break
 		}
 	}
 
+	if activeStep != nil {
+		return activeStep["color"]
+	}
 	return nil
 }
 

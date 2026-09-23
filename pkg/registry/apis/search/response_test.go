@@ -65,6 +65,7 @@ func TestSearchResults_MapsItemsAndFields(t *testing.T) {
 	}, nil)
 
 	out, err := searchResults(&resourcepb.ResourceSearchResponse{
+		ResultFormat:   resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
 		Results:        table,
 		TotalHits:      2,
 		TotalHitsExact: true,
@@ -110,6 +111,68 @@ func TestSearchResults_ScoreIsSeparateFromFields(t *testing.T) {
 
 	// _score is an envelope field, never a searchable field.
 	assert.NotContains(t, out.Items[0].Fields.Object, resource.SEARCH_FIELD_SCORE)
+}
+
+func TestSearchResults_MapsFieldValueResults(t *testing.T) {
+	score := 0.0
+	response := &resourcepb.ResourceSearchResponse{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+			{Name: "tags", Type: resourcepb.ResourceSearchField_STRING, IsArray: true},
+			{Name: "created", Type: resourcepb.ResourceSearchField_DATE},
+			{Name: "ratio", Type: resourcepb.ResourceSearchField_DOUBLE},
+			{Name: "published", Type: resourcepb.ResourceSearchField_BOOLEAN},
+		},
+		Rows: []*resourcepb.ResourceSearchRow{
+			{
+				Key:        &resourcepb.ResourceKey{Name: "dash-a"},
+				SortFields: []string{"dash-a"},
+				Score:      &score,
+				Values: []*resourcepb.ResourceSearchValue{
+					{FieldIndex: 0, StringValues: []string{"A dashboard"}},
+					{FieldIndex: 1, StringValues: []string{"prod", "ops"}},
+					{FieldIndex: 2, Int64Values: []int64{1234}},
+					{FieldIndex: 3, DoubleValues: []float64{1.5}},
+					{FieldIndex: 4, BooleanValues: []bool{true}},
+				},
+			},
+			{
+				Key:        &resourcepb.ResourceKey{Name: "dash-b"},
+				SortFields: []string{"dash-b"},
+				Values: []*resourcepb.ResourceSearchValue{
+					{FieldIndex: 0, StringValues: []string{"B dashboard"}},
+					{FieldIndex: 1},
+				},
+			},
+		},
+		TotalHits:      2,
+		TotalHitsExact: true,
+	}
+
+	out, err := searchResults(response, testKind, 2)
+	require.NoError(t, err)
+	require.Len(t, out.Items, 2)
+
+	assert.Equal(t, "dash-a", out.Items[0].Resource.Name)
+	require.NotNil(t, out.Items[0].Fields)
+	assert.Equal(t, "A dashboard", out.Items[0].Fields.Object["title"])
+	assert.Equal(t, []string{"prod", "ops"}, out.Items[0].Fields.Object["tags"])
+	assert.Equal(t, int64(1234), out.Items[0].Fields.Object["created"])
+	assert.Equal(t, 1.5, out.Items[0].Fields.Object["ratio"])
+	assert.Equal(t, true, out.Items[0].Fields.Object["published"])
+	require.NotNil(t, out.Items[0].Score, "a score of zero must remain present")
+	assert.InDelta(t, 0, *out.Items[0].Score, 1e-9)
+
+	require.NotNil(t, out.Items[1].Fields)
+	assert.Equal(t, []string{}, out.Items[1].Fields.Object["tags"], "present empty arrays remain arrays")
+	assert.NotContains(t, out.Items[1].Fields.Object, "ratio", "absent fields are omitted")
+	assert.Nil(t, out.Items[1].Score)
+
+	require.NotEmpty(t, out.Metadata.Continue)
+	decoded, err := decodeContinue(out.Metadata.Continue)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"dash-b"}, decoded)
 }
 
 func TestSearchResults_TotalHitsRelation(t *testing.T) {
@@ -207,6 +270,26 @@ func TestSearchResults_Facets(t *testing.T) {
 		{Value: "timeseries", Count: 5},
 		{Value: "table", Count: 2},
 	}, out.Facets["panel_types"])
+}
+
+func TestSearchResults_RejectsUnsupportedResultFormat(t *testing.T) {
+	_, err := searchResults(&resourcepb.ResourceSearchResponse{
+		ResultFormat: resourcepb.ResourceSearchRequest_ResultFormat(99),
+	}, testKind, 10)
+	require.ErrorContains(t, err, "unsupported search result format 99")
+}
+
+func TestSearchResults_RejectsMalformedFieldValueResults(t *testing.T) {
+	_, err := searchResults(&resourcepb.ResourceSearchResponse{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+		},
+		Rows: []*resourcepb.ResourceSearchRow{
+			{Key: &resourcepb.ResourceKey{Name: "a"}, Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 1, StringValues: []string{"A"}}}},
+		},
+	}, testKind, 10)
+	require.ErrorContains(t, err, "field index 1 is out of range")
 }
 
 func TestSearchResults_RejectsMalformedTable(t *testing.T) {

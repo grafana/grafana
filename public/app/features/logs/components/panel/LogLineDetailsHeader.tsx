@@ -7,7 +7,6 @@ import { reportInteraction } from '@grafana/runtime';
 import { Dropdown, IconButton, Input, Menu, useStyles2 } from '@grafana/ui';
 
 import { copyText, handleOpenLogsContextClick } from '../../utils';
-import { LOG_LINE_BODY_FIELD_NAME } from '../fieldSelector/logFields';
 
 import { useLogDetailsContext } from './LogDetailsContext';
 import { type LogLineDetailsMode } from './LogLineDetails';
@@ -39,13 +38,10 @@ export const LogLineDetailsHeader = ({
   onSearch,
 }: Props) => {
   const {
-    displayedFields,
     getRowContextQuery,
     logOptionsStorageKey,
     logSupportsContext,
     noInteractions,
-    onClickHideField,
-    onClickShowField,
     onOpenContext,
     onPermalinkClick,
     onPinLine,
@@ -113,9 +109,6 @@ export const LogLineDetailsHeader = ({
     [log, getRowContextQuery, reportInteractionWrapper, onOpenContext]
   );
 
-  const showLogLineToggle = onClickHideField && onClickShowField && displayedFields.length > 0;
-  const logLineDisplayed = displayedFields.includes(LOG_LINE_BODY_FIELD_NAME);
-
   const toggleDetailsMode = useCallback(() => {
     const newMode = detailsMode === 'inline' ? 'sidebar' : 'inline';
     if (logOptionsStorageKey) {
@@ -141,15 +134,6 @@ export const LogLineDetailsHeader = ({
       scroll: !newState,
     });
   }, [inlineNoScroll, logOptionsStorageKey, reportInteractionWrapper, setInlineNoScroll]);
-
-  const toggleLogLine = useCallback(() => {
-    if (logLineDisplayed) {
-      onClickHideField?.(LOG_LINE_BODY_FIELD_NAME);
-    } else {
-      onClickShowField?.(LOG_LINE_BODY_FIELD_NAME);
-    }
-    reportInteractionWrapper('logs_log_line_details_header_show_logline_clicked');
-  }, [logLineDisplayed, onClickHideField, onClickShowField, reportInteractionWrapper]);
 
   const clearSearch = useMemo(
     () => (
@@ -224,21 +208,6 @@ export const LogLineDetailsHeader = ({
             name="arrows-v"
             onClick={scrollToLogLine}
             tabIndex={0}
-          />
-        )}
-        {showLogLineToggle && (
-          <IconButton
-            tooltip={
-              logLineDisplayed
-                ? t('logs.log-line-details.hide-log-line', 'Hide log line')
-                : t('logs.log-line-details.show-log-line', 'Show log line')
-            }
-            tooltipPlacement="top"
-            size="md"
-            name="eye"
-            onClick={toggleLogLine}
-            tabIndex={0}
-            variant={logLineDisplayed ? 'primary' : undefined}
           />
         )}
         <Dropdown overlay={copyMenu} placement="auto-end">

@@ -3,7 +3,9 @@ package embedder
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -168,4 +170,22 @@ func (l *lengthMismatchingEmbedder) EmbedText(_ context.Context, _ EmbedTextInpu
 		out[i] = Embedding{Dense: []float32{0, 0, 0}}
 	}
 	return EmbedTextOutput{Embeddings: out}, nil
+}
+
+func TestBatchEmbedder_Embed_PreservesRetryableError(t *testing.T) {
+	cause := errors.New("provider failure")
+	for _, hint := range []time.Duration{0, time.Minute} {
+		t.Run(hint.String(), func(t *testing.T) {
+			retryErr := &RetryableError{Err: cause, RetryAfter: hint}
+			fake := &fakeTextEmbedder{wantErr: fmt.Errorf("provider client: %w", retryErr)}
+			be := NewBatchEmbedder(newTestEmbedder(fake))
+			vectors, err := be.Embed(t.Context(), "ns", "dashboards", 42, 1, []embed.Item{{UID: "dash", Content: "CPU usage"}})
+			require.Error(t, err)
+			assert.Nil(t, vectors)
+			assert.ErrorIs(t, err, cause)
+			var got *RetryableError
+			require.ErrorAs(t, err, &got)
+			assert.Same(t, retryErr, got)
+		})
+	}
 }

@@ -73,7 +73,7 @@ This flexibility allows teams to use the same data source for multiple use cases
 
 ## Before you begin
 
-To be able to use LBAC for data sources metrics, you need to enable the feature toggle `teamHttpHeadersMimir` on your Grafana instance.
+LBAC for data sources metrics requires the backend to be Grafana Cloud Metrics (Mimir) or Grafana Enterprise Metrics (GEM). No feature toggle is required.
 
 ## Limitations
 

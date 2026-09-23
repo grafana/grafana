@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { css, cx } from '@emotion/css';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
 
 import {
@@ -34,6 +34,7 @@ import {
   usePluginComponents,
   usePluginLinks,
   config,
+  logError,
 } from '@grafana/runtime';
 import { AdHocFiltersComboboxRenderer } from '@grafana/scenes';
 import { type TimeZone } from '@grafana/schema';
@@ -42,6 +43,7 @@ import {
   type BadgeColor,
   Button,
   CollapsableSection,
+  copyTextToClipboard,
   Dropdown,
   Icon,
   Label,
@@ -59,26 +61,29 @@ import {
   type TUpdateViewRangeTimeFunction,
   type ViewRange,
 } from '../TraceTimelineViewer/types';
-import { getHeaderTags, getTraceName } from '../model/trace-viewer';
+import { getHeaderTags, getRootSpan } from '../model/trace-viewer';
 import { type Trace, type TraceViewPluginExtensionContext } from '../types/trace';
 import { formatDuration } from '../utils/date';
-import { getServiceColorKey } from '../utils/service-name';
+import { getServiceColorKey, getServiceDisplayName } from '../utils/service-name';
 
 import TracePageSearchBar from './SearchBar/TracePageSearchBar';
 import SpanGraph from './SpanGraph';
+import { TraceBanner } from './TraceBanner/TraceBanner';
+import { findTraceBanner, HttpStatusClass } from './TraceBanner/findTraceBanner';
 import { TraceFilterPills } from './TraceFilterPills';
 import { useTraceAdHocFiltersController } from './useTraceAdHocFiltersController';
 
 export type TracePageHeaderProps = {
   trace: Trace | null;
   data: DataFrame;
-  app?: CoreApp;
+  app: CoreApp | string;
   timeZone: TimeZone;
   search: TraceSearchProps;
   setSearch: (newSearch: TraceSearchProps) => void;
   showSpanFilters: boolean;
   setShowSpanFilters: (isOpen: boolean) => void;
-  setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;
+  setFocusedSpanIdForSearch: (spanID: string) => void;
+  onGoToSpan: (spanID: string) => void;
   spanFilterMatches: Set<string> | undefined;
   datasourceType: string;
   datasourceName: string;
@@ -102,6 +107,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     setSearch,
     showSpanFilters,
     setFocusedSpanIdForSearch,
+    onGoToSpan,
     spanFilterMatches,
     datasourceType,
     datasourceName,
@@ -120,6 +126,19 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   const [copyTraceIdClicked, setCopyTraceIdClicked] = useState(false);
   const [isOverviewOpen, setIsOverviewOpen] = useState(true);
   const [focusedSpanIndexForSearch, setFocusedSpanIndexForSearch] = useState(-1);
+
+  const goToBannerSpan = useCallback(
+    (spanId: string) => {
+      reportInteraction('grafana_traces_trace_view_go_to_span_clicked', {
+        app,
+        datasourceType,
+        grafana_version: config.buildInfo.version,
+        location: 'trace-banner',
+      });
+      onGoToSpan(spanId);
+    },
+    [app, datasourceType, onGoToSpan]
+  );
 
   // Create controller for adhoc filters
   const controller = useTraceAdHocFiltersController(trace, search, setSearch);
@@ -146,9 +165,19 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     extensionPointId: PluginExtensionPoints.TraceViewHeaderActions,
   });
 
+  const traceBanner = useMemo(() => (trace ? findTraceBanner(trace.spans) : undefined), [trace]);
+
   useEffect(() => {
     setHeaderHeight(document.querySelector('.' + styles.header)?.scrollHeight ?? 0);
-  }, [setHeaderHeight, showSpanFilters, styles.header, extensionComponents, extensionLinks, logsLinkModel]);
+  }, [
+    setHeaderHeight,
+    showSpanFilters,
+    styles.header,
+    extensionComponents,
+    extensionLinks,
+    logsLinkModel,
+    traceBanner,
+  ]);
 
   // Memoize service count to avoid recomputing on every render
   // Uses getServiceColorKey to count namespace/serviceName pairs as distinct services
@@ -161,18 +190,25 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   }
 
   const { method, status, url } = getHeaderTags(trace.spans);
-  const traceName = getTraceName(trace.spans);
+  const rootSpan = getRootSpan(trace.spans);
+  const serviceName = rootSpan ? getServiceDisplayName(rootSpan.process) : '';
+  const operationName = rootSpan?.operationName ?? '';
+  const traceTitle = [serviceName, operationName].filter(Boolean).join(' ');
+  const statusValue = status?.length ? status[0].value.toString() : undefined;
+  const statusClass = statusValue?.charAt(0);
+  // Match the banner: severity comes from every span, not only the root / first HTTP span.
+  const showErrorIcon = traceBanner?.severity === 'error';
+  const showWarningIcon = traceBanner?.severity === 'warning';
+  const showSuccessIcon = !traceBanner && statusClass === HttpStatusClass.Success;
 
   // Convert date from micro to milli seconds
   const formattedTimestamp = dateTimeFormat(trace.startTime / 1000, { timeZone, defaultWithMS: true });
 
   let statusColor: BadgeColor = 'green';
-  if (status && status.length > 0) {
-    if (status[0].value.toString().charAt(0) === '4') {
-      statusColor = 'orange';
-    } else if (status[0].value.toString().charAt(0) === '5') {
-      statusColor = 'red';
-    }
+  if (statusClass === HttpStatusClass.ClientError) {
+    statusColor = 'orange';
+  } else if (statusClass === HttpStatusClass.ServerError) {
+    statusColor = 'red';
   }
 
   const copyTraceId = () => {
@@ -200,9 +236,14 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
           label={t('explore.trace-page-header.share-copy-link', 'Copy link')}
           icon="link"
           testId={selectors.components.TraceViewer.shareMenu.copyLinkButton}
-          onClick={() => {
-            navigator.clipboard.writeText(window.location.href);
-            notifyApp.success(t('explore.trace-page-header.link-copied', 'Link copied to clipboard'));
+          onClick={async () => {
+            try {
+              await copyTextToClipboard(window.location.href);
+              notifyApp.success(t('explore.trace-page-header.link-copied', 'Link copied to clipboard'));
+            } catch (e) {
+              logError(e instanceof Error ? e : new Error(String(e)));
+              notifyApp.error(t('explore.trace-page-header.link-copy-failed', 'Could not copy link to clipboard'));
+            }
           }}
         />
         <Menu.Item
@@ -234,10 +275,36 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
       {/* Main title row */}
       <div className={styles.titleRow}>
         <div className={styles.titleSection}>
-          <h1 className={styles.title}>{traceName}</h1>
+          {showErrorIcon && (
+            <Icon
+              name="exclamation-triangle"
+              className={styles.errorIcon}
+              aria-label={t('explore.trace-page-header.error-indicator', 'Trace has errors')}
+            />
+          )}
+          {showWarningIcon && (
+            <Icon
+              name="exclamation-triangle"
+              className={styles.warningIcon}
+              aria-label={t('explore.trace-page-header.warning-indicator', 'Trace has client errors')}
+            />
+          )}
+          {showSuccessIcon && (
+            <Icon
+              name="check-circle"
+              className={styles.successIcon}
+              aria-label={t('explore.trace-page-header.success-indicator', 'Trace succeeded')}
+            />
+          )}
+          <h1 className={styles.title} aria-label={traceTitle}>
+            {serviceName && (
+              <span className={styles.serviceName}>{operationName ? `${serviceName} ` : serviceName}</span>
+            )}
+            {operationName && <span className={styles.operationName}>{operationName}</span>}
+          </h1>
           <div className={styles.badges}>
             {method && method.length > 0 && <Badge text={method[0].value} color="blue" />}
-            {status && status.length > 0 && <Badge text={status[0].value} color={statusColor} />}
+            {statusValue && <Badge text={statusValue} color={statusColor} />}
           </div>
         </div>
 
@@ -284,8 +351,8 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
             <Dropdown overlay={shareDropdownMenu} placement="bottom-end">
               <Button
                 size="sm"
-                variant="primary"
-                fill="outline"
+                variant="secondary"
+                fill="text"
                 icon="ellipsis-v"
                 tooltip={t('explore.trace-page-header.share-tooltip', 'Share and feedback')}
                 aria-label={t('explore.trace-page-header.aria-label-share-dropdown', 'Open share and feedback menu')}
@@ -296,6 +363,10 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
           </div>
         )}
       </div>
+
+      {!hideHeaderDetails && traceBanner && (
+        <TraceBanner highlight={traceBanner} traceDuration={trace.duration} onGoToSpan={goToBannerSpan} />
+      )}
 
       {/* Metadata row */}
       {!hideHeaderDetails && (
@@ -312,7 +383,10 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
             </div>
 
             <div className={styles.metadataItem}>
-              <span className={styles.metadataLabel}>{t('explore.trace-page-header.start-time', 'Start time')}</span>
+              <span className={styles.metadataField}>
+                <Icon name="clock-nine" size="xs" className={styles.metadataIcon} aria-hidden />
+                <span className={styles.metadataLabel}>{t('explore.trace-page-header.start-time', 'Start time')}</span>
+              </span>
               <span
                 className={cx(
                   styles.metadataValue,
@@ -327,13 +401,21 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
             </div>
 
             <div className={styles.metadataItem}>
-              <span className={styles.metadataLabel}>{t('explore.trace-page-header.duration', 'Duration')}</span>
+              <span className={styles.metadataField}>
+                <Icon name="stopwatch" type="default" size="sm" className={styles.metadataIcon} aria-hidden />
+                <span className={styles.metadataLabel}>{t('explore.trace-page-header.duration', 'Duration')}</span>
+              </span>
               <span className={styles.metadataValue}>{formatDuration(trace.duration)}</span>
             </div>
 
             <div className={styles.metadataItem}>
               <span className={styles.metadataLabel}>{t('explore.trace-page-header.services', 'Services')}</span>
               <span className={styles.metadataValue}>{serviceCount}</span>
+            </div>
+
+            <div className={styles.metadataItem}>
+              <span className={styles.metadataLabel}>{t('explore.trace-page-header.spans', 'Spans')}</span>
+              <span className={styles.metadataValue}>{trace.spans.length}</span>
             </div>
 
             {url && url.length > 0 && (
@@ -450,26 +532,58 @@ const getStyles = (theme: GrafanaTheme2) => {
     titleSection: css({
       display: 'flex',
       alignItems: 'center',
-      gap: theme.spacing(2),
+      gap: theme.spacing(1),
       flex: 1,
       minWidth: 0, // Allow text truncation
     }),
 
     title: css({
+      display: 'flex',
+      alignItems: 'baseline',
+      gap: theme.spacing(1),
       color: theme.colors.text.primary,
-      fontSize: theme.typography.h3.fontSize,
-      fontWeight: theme.typography.h3.fontWeight,
-      lineHeight: theme.typography.h3.lineHeight,
+      fontSize: theme.typography.h4.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      lineHeight: theme.typography.h4.lineHeight,
       margin: 0,
       minWidth: 0,
+      overflow: 'hidden',
+    }),
+
+    serviceName: css({
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
     }),
 
+    operationName: css({
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.body.fontSize,
+      fontWeight: theme.typography.fontWeightRegular,
+      lineHeight: theme.typography.body.lineHeight,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    }),
+
+    errorIcon: css({
+      color: theme.colors.error.text,
+      flexShrink: 0,
+    }),
+
+    warningIcon: css({
+      color: theme.colors.warning.text,
+      flexShrink: 0,
+    }),
+
+    successIcon: css({
+      color: theme.colors.success.text,
+      flexShrink: 0,
+    }),
+
     badges: css({
       display: 'flex',
-      gap: theme.spacing(1),
+      gap: theme.spacing(0.5),
       alignItems: 'center',
       flexShrink: 0,
     }),
@@ -508,7 +622,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       columnGap: theme.spacing(3),
+      rowGap: theme.spacing(0.5),
       fontSize: theme.typography.bodySmall.fontSize,
+      lineHeight: theme.typography.bodySmall.lineHeight,
       color: theme.colors.text.secondary,
       flexWrap: 'wrap',
     }),
@@ -517,11 +633,28 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(0.5),
+      lineHeight: 1,
+    }),
+
+    metadataField: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      lineHeight: 1,
+    }),
+
+    metadataIcon: css({
+      color: theme.colors.text.secondary,
+      display: 'block',
+      flexShrink: 0,
+      lineHeight: 0,
+      transform: 'translateY(-1px)',
     }),
 
     metadataLabel: css({
       fontWeight: theme.typography.fontWeightMedium,
       color: theme.colors.text.secondary,
+      lineHeight: 1,
     }),
 
     metadataValue: css({
@@ -529,6 +662,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(1),
+      lineHeight: 1,
     }),
 
     traceIdButton: css({
@@ -536,12 +670,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: 'none',
       color: theme.colors.text.primary,
       cursor: 'pointer',
-      textDecoration: 'underline',
+      textDecoration: 'none',
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(0.5),
       padding: 0,
       font: 'inherit',
+      lineHeight: theme.typography.bodySmall.lineHeight,
 
       '&:hover': {
         color: theme.colors.emphasize(theme.colors.text.primary, 0.15),
@@ -563,11 +698,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
 
     url: css({
-      maxWidth: '700px',
+      maxWidth: '240px',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
-      display: 'inline-block',
+      display: 'block',
+      lineHeight: theme.typography.bodySmall.lineHeight,
       color: theme.colors.text.primary,
     }),
     overviewLabel: css({

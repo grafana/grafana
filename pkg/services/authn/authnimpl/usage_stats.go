@@ -2,6 +2,7 @@ package authnimpl
 
 import (
 	"context"
+	"maps"
 
 	"github.com/grafana/grafana/pkg/services/authn"
 )
@@ -43,9 +44,7 @@ func (s *Service) getUsageStats(ctx context.Context) (map[string]any, error) {
 				s.log.Warn("Failed to get usage stats from client", "client", client.Name(), "error", err)
 			}
 
-			for k, v := range clientStats {
-				m[k] = v
-			}
+			maps.Copy(m, clientStats)
 		}
 	}
 

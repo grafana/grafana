@@ -5,18 +5,20 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Input, Switch, Field, Label, TextArea, Stack, Alert, Box } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import {
-  AnnoKeyIgnorePredefinedVariables,
-  AnnoKeyManagerIdentity,
-  AnnoKeyManagerKind,
-} from 'app/features/apiserver/types';
+import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
-import { getProvisionedMeta } from 'app/features/provisioning/components/utils/getProvisionedMeta';
-import { type DashboardMeta } from 'app/types/dashboard';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
-import { type DashboardChangeInfo, NameAlreadyExistsError, SaveButton, isNameExistsError } from './shared';
+import { type SaveDashboardDrawer } from './SaveDashboardDrawer';
+import {
+  type DashboardChangeInfo,
+  NameAlreadyExistsError,
+  SaveButton,
+  isNameExistsError,
+  nextMetaAfterFolderPick,
+} from './shared';
+import { useParkSaveFormDraft } from './useParkSaveFormDraft';
 import { useSaveDashboard } from './useSaveDashboard';
 
 interface SaveDashboardAsFormDTO {
@@ -30,51 +32,21 @@ interface SaveDashboardAsFormDTO {
 export interface Props {
   dashboard: DashboardScene;
   changeInfo: DashboardChangeInfo;
-  /** Prefer drawer.onClose so Save As folder/meta mutations are restored on cancel. */
-  onCancel?: () => void;
+  /** Owns cancel (restoring Save As folder/meta mutations) and carries title/description across a swap to another save form */
+  drawer: SaveDashboardDrawer;
+  /** The drawer's view is held: a folder pick's lookup is still loading or dead-ended, so where this save would land is not known yet and saving must wait */
+  isHeld: boolean;
 }
 
-/**
- * Merges folder/provisioning overlay into dashboard meta for Save As without dropping
- * existing k8s identity fields (name, resourceVersion, etc.). Canceling Save As after a
- * folder change must leave the live scene able to save as an update.
- */
-export function nextMetaAfterSaveAsFolderChange(
-  currentMeta: DashboardMeta,
-  folderUid: string | undefined,
-  provisionedMeta: Awaited<ReturnType<typeof getProvisionedMeta>>
-): DashboardMeta {
-  const currentAnnotations = currentMeta.k8s?.annotations ?? {};
-  const ignoreValue = currentAnnotations[AnnoKeyIgnorePredefinedVariables];
-
-  // Drop previous folder's manager annotations; keep everything else (including denylist).
-  const preservedAnnotations = Object.fromEntries(
-    Object.entries(currentAnnotations).filter(([key]) => key !== AnnoKeyManagerIdentity && key !== AnnoKeyManagerKind)
-  );
-
-  return {
-    ...currentMeta,
-    folderUid,
-    k8s: {
-      ...currentMeta.k8s,
-      ...provisionedMeta.k8s,
-      annotations: {
-        ...preservedAnnotations,
-        ...provisionedMeta.k8s?.annotations,
-        ...(ignoreValue !== undefined ? { [AnnoKeyIgnorePredefinedVariables]: ignoreValue } : {}),
-      },
-    },
-  };
-}
-
-export function SaveDashboardAsForm({ dashboard, changeInfo, onCancel }: Props) {
+export function SaveDashboardAsForm({ dashboard, changeInfo, drawer, isHeld }: Props) {
   const { changedSaveModel } = changeInfo;
+  const draft = drawer.saveFormDraft;
 
   const { register, handleSubmit, setValue, formState, getValues, watch, trigger } = useForm<SaveDashboardAsFormDTO>({
     mode: 'onBlur',
     defaultValues: {
-      title: changeInfo.isNew ? changedSaveModel.title! : `${changedSaveModel.title} Copy`,
-      description: changedSaveModel.description ?? '',
+      title: draft?.title ?? (changeInfo.isNew ? changedSaveModel.title! : `${changedSaveModel.title} Copy`),
+      description: draft?.description ?? changedSaveModel.description ?? '',
       folder: {
         uid: dashboard.state.meta.folderUid,
         title: dashboard.state.meta.folderTitle,
@@ -108,6 +80,19 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, onCancel }: Props) 
     };
   }, []);
 
+  useParkSaveFormDraft(drawer, formValues.title, formValues.description);
+
+  const onFolderChange = useCallback(
+    (uid: string | undefined, title: string | undefined) => {
+      setValue('folder', { uid, title });
+      // Meta is where the drawer resolves the repository from
+      dashboard.setState({ meta: nextMetaAfterFolderPick(dashboard.state.meta, uid, title) });
+      // Re-validate title when folder changes to check for duplicates in new folder
+      trigger('title');
+    },
+    [dashboard, setValue, trigger]
+  );
+
   const handleTitleChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       setValue('title', e.target.value, { shouldDirty: true });
@@ -122,6 +107,10 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, onCancel }: Props) 
   );
 
   const onSave = async (overwrite: boolean) => {
+    if (isHeld) {
+      return;
+    }
+
     if (validationTimeoutRef.current) {
       clearTimeout(validationTimeoutRef.current);
     }
@@ -135,11 +124,11 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, onCancel }: Props) 
 
     const data = getValues();
 
-    // Only forward the denylist annotation. Spreading full getK8SMetadata() would include
+    // Only forward the selection annotation. Spreading full getK8SMetadata() would include
     // name/resourceVersion and turn Save As into an update of the source dashboard.
-    const ignoreValue =
-      dashboard.state.meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables] ??
-      dashboard.serializer.getK8SMetadata()?.annotations?.[AnnoKeyIgnorePredefinedVariables];
+    const useCrossDashboardVariables =
+      dashboard.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables] ??
+      dashboard.serializer.getK8SMetadata()?.annotations?.[AnnoKeyUseCrossDashboardVariables];
 
     const result = await onSaveDashboard(dashboard, {
       overwrite,
@@ -152,11 +141,11 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, onCancel }: Props) 
       copyTags: data.copyTags,
       title: data.title,
       description: data.description,
-      ...(ignoreValue !== undefined
+      ...(useCrossDashboardVariables !== undefined
         ? {
             k8s: {
               annotations: {
-                [AnnoKeyIgnorePredefinedVariables]: ignoreValue,
+                [AnnoKeyUseCrossDashboardVariables]: useCrossDashboardVariables,
               },
             },
           }
@@ -174,13 +163,15 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, onCancel }: Props) 
   };
 
   const cancelButton = (
-    <Button variant="secondary" onClick={() => (onCancel ? onCancel() : dashboard.closeModal())} fill="outline">
+    <Button variant="secondary" onClick={drawer.onClose} fill="outline">
       <Trans i18nKey="dashboard-scene.save-dashboard-as-form.cancel-button.cancel">Cancel</Trans>
     </Button>
   );
 
   const saveButton = (overwrite: boolean) => {
-    return <SaveButton isValid={isValid} isLoading={state.loading} onSave={onSave} overwrite={overwrite} />;
+    return (
+      <SaveButton isValid={isValid} isLoading={state.loading} disabled={isHeld} onSave={onSave} overwrite={overwrite} />
+    );
   };
   function renderFooter(error?: Error) {
     const formValuesMatchContentSent =
@@ -248,18 +239,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, onCancel }: Props) 
         </Field>
 
         <Field noMargin label={t('dashboard-scene.save-dashboard-as-form.label-folder', 'Folder')}>
-          <FolderPicker
-            onChange={async (uid: string | undefined, title: string | undefined) => {
-              setValue('folder', { uid, title });
-              const provisionedMeta = await getProvisionedMeta(uid);
-              dashboard.setState({
-                meta: nextMetaAfterSaveAsFolderChange(dashboard.state.meta, uid, provisionedMeta),
-              });
-              // Re-validate title when folder changes to check for duplicates in new folder
-              trigger('title');
-            }}
-            value={formValues.folder?.uid}
-          />
+          <FolderPicker onChange={onFolderChange} value={formValues.folder?.uid} />
         </Field>
         {!changeInfo.isNew && (
           <Field noMargin label={t('dashboard-scene.save-dashboard-as-form.label-copy-tags', 'Copy tags')}>

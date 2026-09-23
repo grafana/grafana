@@ -2,7 +2,7 @@ module github.com/grafana/grafana/hack
 
 go 1.26.6
 
-require k8s.io/code-generator v0.36.4
+require k8s.io/code-generator v0.37.0
 
 require (
 	github.com/go-logr/logr v1.4.3 // indirect
@@ -11,6 +11,7 @@ require (
 	golang.org/x/sync v0.22.0 // indirect
 	golang.org/x/text v0.41.0 // indirect
 	golang.org/x/tools v0.48.0 // indirect
-	k8s.io/gengo/v2 v2.0.0-20250922181213-ec3ebc5fd46b // indirect
+	k8s.io/apimachinery v0.37.0 // indirect
+	k8s.io/gengo/v2 v2.0.0-20260408192533-25e2208e0dc3 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
 )

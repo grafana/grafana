@@ -215,7 +215,7 @@ func TestStoreReadDailyRangeBatching(t *testing.T) {
 		// individual days straddle chunk boundaries (3 does not divide 50).
 		const days = 40
 		want := make(map[string]uint64, days)
-		for i := 0; i < days; i++ {
+		for i := range days {
 			day := fmt.Sprintf("2026-06-%02d", i+1)
 			views := uint64(i + 1)
 			require.NoError(t, store.IncrementDaily(ctx, o, day, map[string]uint64{
@@ -297,7 +297,7 @@ func TestStoreFoldIntoOverflowChunking(t *testing.T) {
 		n := kv.MaxBatchOps*2 + 3
 		expired := make(map[string]map[string]uint64, n)
 		var want uint64
-		for i := 0; i < n; i++ {
+		for i := range n {
 			day := fmt.Sprintf("2026-01-%03d", i)
 			require.NoError(t, store.IncrementDaily(ctx, o, day, map[string]uint64{"views": uint64(i + 1)}))
 			expired[day] = map[string]uint64{"views": uint64(i + 1)}
@@ -382,7 +382,7 @@ func TestStoreWriteAggregatesChunking(t *testing.T) {
 		// More fields than MaxBatchOps so the write spans multiple batches.
 		n := kv.MaxBatchOps*2 + 3
 		fields := make(map[string]uint64, n)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			fields[fmt.Sprintf("field_%03d", i)] = uint64(i)
 		}
 		require.NoError(t, store.WriteAggregates(ctx, o, fields))
@@ -390,7 +390,7 @@ func TestStoreWriteAggregatesChunking(t *testing.T) {
 		all, err := store.ScanAggregates(ctx, dashboardsGroup, dashboardsResource, "default")
 		require.NoError(t, err)
 		require.Len(t, all["dash-a"], n)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			require.Equal(t, uint64(i), all["dash-a"][fmt.Sprintf("field_%03d", i)])
 		}
 	})

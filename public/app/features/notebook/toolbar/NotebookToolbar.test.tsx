@@ -7,7 +7,11 @@ import { useDeleteNotebookMutation } from 'app/api/clients/dashboard/v2beta1';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { contextSrv } from 'app/core/services/context_srv';
 
+import { NotebookAnalytics } from '../analytics/main';
+import { notebookIncidents, stubAttachForm, stubDeclareForm } from '../incidents/testHelpers';
+import { useNotebookIncidents } from '../incidents/useNotebookIncidents';
 import { getNotebookPageStateManager } from '../pages/NotebookPageStateManager';
+import { NotebookEmbeddedHost } from '../scene/NotebookEmbeddedContext';
 import { NotebookScene } from '../scene/NotebookScene';
 import { NotebookCellItem } from '../scene/layout-notebook/NotebookCellItem';
 import { NotebookLayoutManager } from '../scene/layout-notebook/NotebookLayoutManager';
@@ -21,11 +25,41 @@ jest.mock('app/api/clients/dashboard/v2beta1', () => ({
 // Stubbed because the notebook header reads its tag options from a facet on this module, which calls
 // injectEndpoints on the real client as it loads - and the mock above does not provide one. The list
 // page and the row menu stub it for the same reason.
-jest.mock('../list/notebookSearchApi', () => ({
-  useNotebookFieldFacetQuery: jest.fn(),
+jest.mock('../list/notebookSearchApi', () => ({}));
+// Partial mock: this spies on exported and linkCopied only. Every other real call the scene makes
+// (editSessionStarted on entering edit mode, deleted on confirming one) keeps working.
+jest.mock('../analytics/main', () => ({
+  NotebookAnalytics: {
+    ...jest.requireActual('../analytics/main').NotebookAnalytics,
+    exported: jest.fn(),
+    linkCopied: jest.fn(),
+  },
+}));
+
+// Stubbed so each test states whether IRM is there. The rules themselves are covered in
+// useNotebookIncidents.test.
+jest.mock('../incidents/useNotebookIncidents', () => ({
+  ...jest.requireActual('../incidents/useNotebookIncidents'),
+  useNotebookIncidents: jest.fn(),
 }));
 
 const mockUseDeleteNotebookMutation = jest.mocked(useDeleteNotebookMutation);
+const mockUseNotebookIncidents = jest.mocked(useNotebookIncidents);
+const mockLinkCopied = jest.mocked(NotebookAnalytics.linkCopied);
+const mockExported = jest.mocked(NotebookAnalytics.exported);
+
+/** Whether IRM's exposed incident components are there for the toolbar to render. */
+function setIrmAvailable(available: boolean) {
+  const stubs = available
+    ? { AttachToIncidentForm: stubAttachForm().Stub, DeclareIncidentForm: stubDeclareForm().Stub }
+    : {};
+  mockUseNotebookIncidents.mockReturnValue(notebookIncidents(stubs));
+}
+
+/** A stack exposing only the attach component, which is a button rather than a menu item. */
+function setAttachOnly() {
+  mockUseNotebookIncidents.mockReturnValue(notebookIncidents({ AttachToIncidentForm: stubAttachForm().Stub }));
+}
 
 /** Stands in for the delete mutation hook, whose result is awaited through `.unwrap()`. */
 function setupDelete(unwrap: () => Promise<unknown> = async () => ({})) {
@@ -68,12 +102,13 @@ describe('NotebookToolbar', () => {
   const originalIsSecureContext = window.isSecureContext;
 
   beforeEach(() => {
-    // Outside a secure context ClipboardButton falls back to document.execCommand, which jsdom
+    // Outside a secure context copyTextToClipboard falls back to document.execCommand, which jsdom
     // does not implement — the copy would fail silently and never reach the clipboard stub.
     Object.assign(window, { isSecureContext: true });
     config.appUrl = 'https://host/';
     // Every render mounts the delete hook, including the tests that never delete anything.
     setupDelete();
+    setIrmAvailable(false);
   });
 
   afterEach(() => {
@@ -91,7 +126,12 @@ describe('NotebookToolbar', () => {
    * service when the button is clicked, not at render, so setting it afterwards is enough.
    */
   function setup() {
-    const rendered = render(<NotebookToolbar uid="nb1" scene={buildScene()} />);
+    const rendered = render(
+      <>
+        <AppNotificationList />
+        <NotebookToolbar uid="nb1" scene={buildScene()} />
+      </>
+    );
 
     const history = new HistoryWrapper(createMemoryHistory({ initialEntries: ['/'] }));
     history.setOrgIdGetter(() => 3);
@@ -108,14 +148,34 @@ describe('NotebookToolbar', () => {
     // Both halves matter for a pasted link: the origin, or it is useless outside the app, and the
     // orgId, or it opens whichever org the reader happens to be in.
     expect(await navigator.clipboard.readText()).toBe('https://host/notebooks/nb1?orgId=3');
+    expect(mockLinkCopied).toHaveBeenCalledWith('nb1', 'notebook_toolbar');
   });
 
+  // An app notification, not ClipboardButton's inline toast: this button calls copyTextToClipboard
+  // directly rather than going through ClipboardButton.
   it('confirms the copy, so the single click does not look like it did nothing', async () => {
     const { user } = setup();
 
     await user.click(screen.getByRole('button', { name: 'Copy link' }));
 
-    expect(await screen.findByText('Copied')).toBeInTheDocument();
+    expect(await screen.findByText('Link copied to clipboard')).toBeInTheDocument();
+  });
+
+  it('reports a failed copy rather than claiming success', async () => {
+    const { user } = setup();
+
+    // After render: userEvent installs its own clipboard stub during setup, which would replace this.
+    const writeText = jest.fn().mockRejectedValue(new Error('NotAllowedError'));
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true, writable: true });
+    // This mock isn't cleared between tests in this file, so an earlier successful copy would
+    // otherwise still be sitting in its call history.
+    mockLinkCopied.mockClear();
+
+    await user.click(screen.getByRole('button', { name: 'Copy link' }));
+
+    expect(await screen.findByText('Failed to copy link')).toBeInTheDocument();
+    expect(screen.queryByText('Link copied to clipboard')).not.toBeInTheDocument();
+    expect(mockLinkCopied).not.toHaveBeenCalled();
   });
 
   // Drives the whole path the PR made live: scene -> transformNotebookSceneToSaveModel ->
@@ -123,23 +183,64 @@ describe('NotebookToolbar', () => {
   it('copies markdown built from the scene, panel and all', async () => {
     const { user } = setup();
 
-    await user.click(screen.getByRole('button', { name: /Export/ }));
+    await user.click(screen.getByRole('button', { name: 'More actions' }));
     await user.click(await screen.findByRole('menuitem', { name: 'Copy as Markdown' }));
 
     const markdown = await navigator.clipboard.readText();
     expect(markdown).toContain('# Q2 latency regression');
     expect(markdown).toContain('### p95 latency');
     expect(markdown).toContain('_timeseries panel_');
+    expect(mockExported).toHaveBeenCalledWith('nb1', 'clipboard', 'notebook_toolbar');
   });
 
-  it('offers the export actions from a dropdown', async () => {
+  // Export's actions are flattened directly into the kebab rather than nested under their own
+  // "Export" submenu, so they read as top-level menu items.
+  it('offers the export actions from the more actions menu', async () => {
     const { user } = setup();
 
-    await user.click(screen.getByRole('button', { name: /Export/ }));
+    await user.click(screen.getByRole('button', { name: 'More actions' }));
 
     expect(await screen.findByRole('menuitem', { name: 'Copy as Markdown' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Download as .md' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Open in Cursor' })).toBeInTheDocument();
+  });
+
+  // NotebookView.tsx's embed component (grafana/notebook-view/v1) renders this same toolbar for a
+  // notebook that exists, but its contract only promises the edit toggle — not copy/export/delete,
+  // whose Delete would navigate the whole embedding host to /notebooks on success.
+  it('hides copy link and the kebab when embedded, keeping only the edit toggle', () => {
+    const hasPermission = jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+
+    render(
+      <NotebookEmbeddedHost>
+        <NotebookToolbar uid="nb1" scene={buildScene()} />
+      </NotebookEmbeddedHost>
+    );
+
+    expect(screen.queryByRole('button', { name: 'Copy link' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'More actions' })).not.toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'View' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Edit' })).toBeInTheDocument();
+
+    hasPermission.mockRestore();
+  });
+
+  // A draft embed (NotebookView.tsx's DraftNotebookView) never gets a uid, so it renders this
+  // branch for its whole session — same embedded contract as the real actions above.
+  it('hides the disabled copy link and kebab placeholders when embedded with no uid yet', () => {
+    const hasPermission = jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+
+    render(
+      <NotebookEmbeddedHost>
+        <NotebookToolbar scene={buildScene()} />
+      </NotebookEmbeddedHost>
+    );
+
+    expect(screen.queryByRole('button', { name: 'Copy link' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'More actions' })).not.toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'View' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Edit' })).toBeInTheDocument();
+
+    hasPermission.mockRestore();
   });
 
   describe('Delete', () => {
@@ -229,8 +330,12 @@ describe('NotebookToolbar', () => {
       const { user, scene } = setupWithScene();
       // Activated and editing, so autosave is actually watching for changes — a scene the toolbar
       // merely renders has never started its subscription and would look untouched either way.
-      const deactivate = scene.activate();
-      scene.onEnterEditMode();
+      // Wrapped in act: the toolbar now renders the edit toggle, which subscribes to this state.
+      let deactivate: () => void = () => {};
+      act(() => {
+        deactivate = scene.activate();
+        scene.onEnterEditMode();
+      });
 
       await confirmDelete(user);
       await waitFor(() => expect(screen.getByRole('button', { name: 'More actions' })).toBeInTheDocument());
@@ -241,15 +346,19 @@ describe('NotebookToolbar', () => {
       act(() => scene.setState({ title: 'Edited after the failed delete' }));
       await waitFor(() => expect(scene.autosave.state.status).toBe('pending'));
 
-      deactivate();
+      act(() => deactivate());
     });
 
     // The state manager caches scenes by uid, so a stale entry would rebuild the deleted notebook
     // from cache the next time this uid was opened rather than reporting it gone.
     it('drops the deleted notebook from the scene cache', async () => {
       setupDelete();
-      const removeSceneCache = jest.spyOn(getNotebookPageStateManager(), 'removeSceneCache');
-      const { user } = setupWithScene();
+      const stateManager = getNotebookPageStateManager();
+      const removeSceneCache = jest.spyOn(stateManager, 'removeSceneCache');
+      const { user, scene } = setupWithScene();
+      // The eviction subscription is wired when a scene enters the cache, which setupWithScene's
+      // plain buildScene() never does on its own.
+      stateManager.setSceneCacheForTests('nb1', scene);
 
       await confirmDelete(user);
 
@@ -271,15 +380,106 @@ describe('NotebookToolbar', () => {
       expect(history.getLocation().pathname).toBe('/notebooks/nb1');
     });
 
-    it('offers no delete at all to a user who cannot delete dashboards', () => {
+    // The kebab still holds Export regardless, so it never disappears on its own.
+    it('offers no delete at all to a user who cannot delete dashboards', async () => {
       setupDelete();
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
-      setupWithScene();
+      const { user } = setupWithScene();
+      await user.click(screen.getByRole('button', { name: 'More actions' }));
 
-      expect(screen.queryByRole('button', { name: 'More actions' })).not.toBeInTheDocument();
       // Export is unaffected, so this is the delete permission being read and not a blanket denial.
-      expect(screen.getByRole('button', { name: /Export/ })).toBeInTheDocument();
+      expect(await screen.findByRole('menuitem', { name: 'Copy as Markdown' })).toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: 'Delete' })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('incident actions', () => {
+    // Grouped rather than sitting in the toolbar: most notebooks are not incident-related.
+    it('groups them behind an IRM submenu rather than a toolbar button', async () => {
+      setIrmAvailable(true);
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+
+      const { user } = setup();
+
+      expect(screen.queryByRole('button', { name: /Attach to incident/ })).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'More actions' }));
+
+      expect(await screen.findByRole('menuitem', { name: /^IRM/ })).toBeInTheDocument();
+    });
+
+    it('offers nothing incident-related on a stack without IRM', async () => {
+      setIrmAvailable(false);
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+
+      const { user } = setup();
+      await user.click(screen.getByRole('button', { name: 'More actions' }));
+
+      expect(screen.queryByRole('menuitem', { name: /^IRM/ })).not.toBeInTheDocument();
+      expect(await screen.findByRole('menuitem', { name: 'Delete' })).toBeInTheDocument();
+    });
+
+    // This case had no way in when the menu was gated on declare alone.
+    it('opens the overflow menu for a stack exposing only attach, without delete permission', async () => {
+      setAttachOnly();
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+
+      const { user } = setup();
+      await user.click(screen.getByRole('button', { name: 'More actions' }));
+
+      expect(await screen.findByRole('menuitem', { name: /^IRM/ })).toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: 'Delete' })).not.toBeInTheDocument();
+    });
+
+    // The case the old attach-only test was really protecting: with neither IRM nor delete, the
+    // kebab still has Export to show, so the trigger stays put rather than disappearing.
+    it('offers only export in the overflow menu without IRM and without delete permission', async () => {
+      setIrmAvailable(false);
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+
+      const { user } = setup();
+      await user.click(screen.getByRole('button', { name: 'More actions' }));
+
+      expect(await screen.findByRole('menuitem', { name: 'Copy as Markdown' })).toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: /^IRM/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: 'Delete' })).not.toBeInTheDocument();
+    });
+  });
+
+  /**
+   * A notebook created by typing gets its uid part way through the first sentence. The bar has to be
+   * there before that, or it appears under the writer and pushes the document down.
+   */
+  describe('before the notebook exists', () => {
+    function setupUnsaved() {
+      const scene = buildScene();
+      scene.setState({ uid: undefined });
+      return render(<NotebookToolbar uid={undefined} scene={scene} />);
+    }
+
+    it('still renders both actions, so nothing moves when the notebook is created', () => {
+      setupUnsaved();
+
+      expect(screen.getByRole('button', { name: 'Copy link' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'More actions' })).toBeInTheDocument();
+    });
+
+    // aria-disabled rather than the disabled attribute: Grafana's Button switches to it when there is
+    // a tooltip, so that the reason is reachable on an element a pointer can still reach.
+    it('disables them and says why', () => {
+      setupUnsaved();
+
+      expect(screen.getByRole('button', { name: 'Copy link' })).toHaveAttribute('aria-disabled', 'true');
+      expect(screen.getByRole('button', { name: 'More actions' })).toHaveAttribute('aria-disabled', 'true');
+    });
+
+    it('opens no menu, since there is nothing to act on yet', async () => {
+      const { user } = setupUnsaved();
+
+      await user.click(screen.getByRole('button', { name: 'More actions' }));
+
+      expect(screen.queryByRole('menuitem', { name: 'Copy as Markdown' })).not.toBeInTheDocument();
     });
   });
 });

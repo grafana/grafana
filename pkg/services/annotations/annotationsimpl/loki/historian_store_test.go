@@ -378,7 +378,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			})
 			require.Len(t, items, numTransitions)
 
-			for i := 0; i < numTransitions; i++ {
+			for i := range numTransitions {
 				item := items[i]
 				transition := transitions[i]
 
@@ -747,7 +747,7 @@ func genStateTransitions(t *testing.T, num int, start time.Time) []state.StateTr
 		},
 	}
 
-	for i := 0; i < num; i++ {
+	for i := range num {
 		stateVal := rand.Intn(4)
 		if stateVal == int(lastState.State) {
 			stateVal = (stateVal + 1) % 4

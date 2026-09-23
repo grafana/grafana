@@ -1,13 +1,12 @@
 import { css } from '@emotion/css';
 import memoizeOne from 'memoize-one';
-import tinycolor from 'tinycolor2';
 
 import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 import { styleMixins } from '@grafana/ui';
 
 export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
   const hoverBgColor = styleMixins.hoverColor(theme.colors.background.secondary, theme);
-  const contextOutlineColor = tinycolor(theme.components.dashboard.background).setAlpha(0.7).toRgbString();
+  const contextOutlineColor = `rgb(from ${theme.components.dashboard.background} r g b / 0.7)`;
   return {
     logsRowLevel: css({
       label: 'logs-row__level',
@@ -57,7 +56,7 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       contain: 'strict',
     }),
     highlightBackground: css({
-      backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),
+      backgroundColor: `rgb(from ${theme.colors.info.transparent} r g b / 0.25)`,
     }),
     logsRow: css({
       label: 'logs-row',

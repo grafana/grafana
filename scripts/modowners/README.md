@@ -4,9 +4,9 @@
 
 Modowners is a way to ensure that each Go dependency has at least one team responsible for maintaining and upgrading it.
 
-The `validate-modfile` drone step checks `go.mod` and will pass if every dependency has an owner. When adding a new dependency, add the responsible team in a line comment.
+The Backend Code Checks workflow runs `modowners check`. It fails if a direct dependency has no owner. When adding a new dependency, add the responsible team in a line comment.
 
-Currently `validate-modfile` is non-blocking, but will eventually become a blocking step. All newly added dependencies will require an assigned owner.
+Pull requests that change `go.mod` get review requests for the teams on the changed require lines. That is the `reviewers` command, run by `.github/workflows/modowners-reviewers.yml`. GitHub CODEOWNERS does not own `go.mod`.
 
 ### Example of ownership assignment
 
@@ -60,6 +60,21 @@ Example output:
 @grafana/grafana-backend-group
 ```
 
+### `reviewers`
+
+Print GitHub team slugs that should review a `go.mod` diff. Compares two files and prints one slug per line. Indirect requires are ignored. Owners must be `@grafana/<team-slug>`.
+
+Example CLI command:
+
+`go run scripts/modowners/modowners.go reviewers go.mod.base go.mod`
+
+Example output:
+
+```
+alerting-backend
+grafana-backend-services-squad
+```
+
 ### `module`
 
 List all dependencies of given owner(s).
@@ -87,4 +102,4 @@ filippo.io/age@v1.1.1
 For existing dependencies, please review and update ownership of your team’s dependencies in `go.mod`.
 
 - If any assignments are incorrect, you can replace your team name with the correct team in `go.mod`.
-- If you don’t know who the correct team is, you can reassign the dependency back to backend platform. Afterwards, open a PR and assign backend platform as reviewers.
+- If you don’t know who the correct team is, you can reassign the dependency to `@grafana/grafana-backend-group`. The reviewers workflow will request that team.

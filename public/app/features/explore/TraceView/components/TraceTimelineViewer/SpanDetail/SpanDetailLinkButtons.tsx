@@ -42,7 +42,7 @@ export type Props = {
   datasourceUid: string;
   timeRange: TimeRange;
   createSpanLink?: SpanLinkFunc;
-  app: CoreApp;
+  app: CoreApp | string;
   focusSpanLink: LinkModel;
 };
 

@@ -1,6 +1,7 @@
 package setting
 
 import (
+	"strconv"
 	"testing"
 	"time"
 
@@ -79,6 +80,44 @@ func TestLoadAnnotationAppPlatformSettings(t *testing.T) {
 
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedTTL, settings.RetentionTTL)
+			})
+		}
+	})
+
+	t.Run("FolderCacheTTL", func(t *testing.T) {
+		cases := []struct {
+			name        string
+			enabled     bool
+			iniValue    *string
+			expectedTTL time.Duration
+			expectErr   bool
+		}{
+			{name: "default when key absent", enabled: true, expectedTTL: 30 * time.Second},
+			{name: "explicit positive", enabled: true, iniValue: new("1m"), expectedTTL: time.Minute},
+			{name: "zero is rejected when enabled", enabled: true, iniValue: new("0"), expectErr: true},
+			{name: "negative is rejected when enabled", enabled: true, iniValue: new("-1s"), expectErr: true},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				iniFile := ini.Empty()
+				section, err := iniFile.NewSection("annotations.app_platform")
+				require.NoError(t, err)
+				_, err = section.NewKey("folder_cache_enabled", strconv.FormatBool(tc.enabled))
+				require.NoError(t, err)
+				if tc.iniValue != nil {
+					_, err = section.NewKey("folder_cache_ttl", *tc.iniValue)
+					require.NoError(t, err)
+				}
+
+				settings, err := loadAnnotationAppPlatformSettings(&Cfg{Raw: iniFile})
+				if tc.expectErr {
+					assert.Error(t, err)
+					return
+				}
+
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedTTL, settings.FolderCacheTTL)
 			})
 		}
 	})

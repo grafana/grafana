@@ -18,10 +18,7 @@ type DeleteContactPointV1 struct {
 }
 
 func (v1 *DeleteContactPointV1) MapToModel() DeleteContactPoint {
-	orgID := v1.OrgID.Value()
-	if orgID < 1 {
-		orgID = 1
-	}
+	orgID := max(v1.OrgID.Value(), 1)
 	return DeleteContactPoint{
 		OrgID: orgID,
 		UID:   v1.UID.Value(),
@@ -41,10 +38,7 @@ type ContactPointV1 struct {
 
 func (cpV1 *ContactPointV1) MapToModel() (ContactPoint, error) {
 	contactPoint := ContactPoint{}
-	orgID := cpV1.OrgID.Value()
-	if orgID < 1 {
-		orgID = 1
-	}
+	orgID := max(cpV1.OrgID.Value(), 1)
 	contactPoint.OrgID = orgID
 	name := strings.TrimSpace(cpV1.Name.Value())
 	if name == "" {

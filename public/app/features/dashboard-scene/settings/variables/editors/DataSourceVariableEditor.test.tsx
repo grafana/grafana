@@ -3,11 +3,12 @@
 import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { JSX } from 'react';
+import { lastValueFrom } from 'rxjs';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourceVariable } from '@grafana/scenes';
 
-import { DataSourceVariableEditor } from './DataSourceVariableEditor';
+import { DataSourceVariableEditor, getDataSourceVariableOptions } from './DataSourceVariableEditor';
 
 //mock getDataSourceInstanceList() to return a list of datasources
 const dsList = [
@@ -156,6 +157,56 @@ describe('DataSourceVariableEditor', () => {
     await user.click(includeAllCheckbox);
     expect(includeAllCheckbox).toBeChecked();
     expect(onRunQuery).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('getDataSourceVariableOptions', () => {
+  const renderPreviewItem = (variable: DataSourceVariable) => {
+    const previewItem = getDataSourceVariableOptions(variable).find(
+      (item) => item.props.id === 'datasource-options-preview'
+    );
+    expect(previewItem).toBeDefined();
+
+    return render(previewItem!.props.render(previewItem!));
+  };
+
+  const previewedValues = async (findAllByTestId: ReturnType<typeof render>['findAllByTestId']) => {
+    const rendered = await findAllByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption
+    );
+
+    return rendered.map((option) => option.textContent);
+  };
+
+  it('renders a values preview listing the resolved data source instances', async () => {
+    const variable = new DataSourceVariable({
+      name: 'dsVariable',
+      type: 'datasource',
+      pluginId: 'dsTestDataSource',
+    });
+    await lastValueFrom(variable.validateAndUpdate!());
+
+    const { findAllByTestId } = renderPreviewItem(variable);
+
+    expect(await previewedValues(findAllByTestId)).toEqual([
+      'DataSourceInstance1',
+      'DataSourceInstance2',
+      'ABCDataSourceInstance',
+    ]);
+  });
+
+  it('narrows the previewed values to those matching the name filter', async () => {
+    const variable = new DataSourceVariable({
+      name: 'dsVariable',
+      type: 'datasource',
+      pluginId: 'dsTestDataSource',
+      regex: '/Instance2$/',
+    });
+    await lastValueFrom(variable.validateAndUpdate!());
+
+    const { findAllByTestId } = renderPreviewItem(variable);
+
+    expect(await previewedValues(findAllByTestId)).toEqual(['DataSourceInstance2']);
   });
 });
 

@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -321,6 +322,25 @@ func TestParseLibraryPanelRow(t *testing.T) {
 		require.Equal(t, "Database Name", item.Spec.Title)
 	})
 
+	t.Run("typed fields are not retained in status missing", func(t *testing.T) {
+		p := basePanel
+		p.Name = "Test Panel"
+		modelBytes, err := json.Marshal(map[string]interface{}{
+			"title":       "Panel title",
+			"type":        "graph",
+			"description": "desc from db",
+			"links":       []interface{}{map[string]interface{}{"title": "Link"}},
+			"transparent": true,
+		})
+		require.NoError(t, err)
+		p.Model = modelBytes
+
+		item, err := parseLibraryPanelRow(p)
+		require.NoError(t, err)
+		require.NotContains(t, item.Status.Missing.Object, "links")
+		require.NotContains(t, item.Status.Missing.Object, "transparent")
+	})
+
 	t.Run("handles NULL created_by and updated_by fields", func(t *testing.T) {
 		p := basePanel
 		p.Name = "Test Panel"
@@ -382,6 +402,38 @@ func TestParseLibraryPanelRow(t *testing.T) {
 		require.NoError(t, err)
 		require.Nil(t, updatedTimestamp)
 	})
+}
+
+func TestCollectLibraryPanelPagePaginatesReadableItems(t *testing.T) {
+	mockDB, mockDBController, err := sqlmock.New()
+	require.NoError(t, err)
+	defer mockDB.Close() // nolint:errcheck
+
+	columns := []string{
+		"id", "uid", "folder_uid", "created", "created_by", "updated", "updated_by",
+		"name", "type", "description", "model", "version",
+	}
+	now := time.Now()
+	model := []byte(`{"type":"text","title":"Panel","options":{},"fieldConfig":{}}`)
+	rows := sqlmock.NewRows(columns).
+		AddRow(3, "denied", "", now, nil, now, nil, "Denied", "text", "", model, 1).
+		AddRow(2, "first-readable", "", now, nil, now, nil, "First", "text", "", model, 1).
+		AddRow(1, "second-readable", "", now, nil, now, nil, "Second", "text", "", model, 1)
+	mockDBController.ExpectQuery("SELECT").WillReturnRows(rows)
+
+	sqlRows, err := mockDB.Query("SELECT")
+	require.NoError(t, err)
+	defer sqlRows.Close() // nolint:errcheck
+
+	page, err := collectLibraryPanelPage(sqlRows, 1, func(item dashboardV0.LibraryPanel) (bool, error) {
+		return item.Name != "denied", nil
+	})
+
+	require.NoError(t, err)
+	require.Len(t, page.Items, 1)
+	require.Equal(t, "first-readable", page.Items[0].Name)
+	require.Equal(t, "2", page.Continue)
+	require.NoError(t, mockDBController.ExpectationsWereMet())
 }
 
 func TestRowsWrapper_PropagatesRowsErr(t *testing.T) {

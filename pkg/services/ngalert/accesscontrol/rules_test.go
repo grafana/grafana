@@ -48,7 +48,7 @@ func createAllCombinationsOfPermissions(permissions map[string][]string) []map[s
 	var permissionCombinations []map[string][]string
 	for bit := uint(0); bit < uint(math.Pow(2, float64(l))); bit++ {
 		var tuple []actionscope
-		for idx := 0; idx < l; idx++ {
+		for idx := range l {
 			if (bit>>idx)&1 == 1 {
 				tuple = append(tuple, flattenPermissions[idx])
 			}

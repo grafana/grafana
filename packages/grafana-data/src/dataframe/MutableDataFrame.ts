@@ -75,6 +75,10 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     return this.first.length;
   }
 
+  // Writes are ignored because length is derived, but a setter has to exist so object copiers
+  // like cloneDeep can write back the value they just read instead of throwing.
+  set length(_value: number) {}
+
   addFieldFor(value: unknown, name?: string): Field {
     return this.addField({
       name: name || '', // Will be filled in
