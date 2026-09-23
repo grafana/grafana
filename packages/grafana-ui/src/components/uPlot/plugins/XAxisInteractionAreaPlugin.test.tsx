@@ -1,7 +1,11 @@
-import { render } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import type uPlot from 'uplot';
 
+import { createTheme } from '@grafana/data';
+import { AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
+
 import { mockBoundingClientRect } from '../../../test-utils/mockDom';
+import { UPlotChart } from '../Plot';
 import { UPlotConfigBuilder, type UPlotConfigBuilder as UPlotConfigBuilderType } from '../config/UPlotConfigBuilder';
 
 import { calculatePanRange, setupXAxisPan, XAxisInteractionAreaPlugin } from './XAxisInteractionAreaPlugin';
@@ -223,6 +227,72 @@ describe('XAxisInteractionAreaPlugin', () => {
 
       runUnmountCleanupAssertions({ midDrag: false });
       runUnmountCleanupAssertions({ midDrag: true });
+    });
+  });
+
+  // Real uPlot copies its hooks at construction, so these render the plugin inside a real UPlotChart instead of
+  // calling the latest `init` callback registered on a spied config builder.
+  describe('with a real uPlot instance', () => {
+    const FROM_MS = Date.UTC(2025, 9, 2, 10);
+    const TO_MS = Date.UTC(2025, 9, 2, 11);
+
+    const createConfig = () => {
+      const config = new UPlotConfigBuilder();
+      config.addScale({
+        scaleKey: 'x',
+        orientation: ScaleOrientation.Horizontal,
+        direction: ScaleDirection.Right,
+        isTime: true,
+        range: () => [FROM_MS, TO_MS],
+      });
+      config.addAxis({ scaleKey: 'x', isTime: true, placement: AxisPlacement.Bottom, theme: createTheme() });
+      return config;
+    };
+
+    const chart = (config: UPlotConfigBuilder, queryZoom: (range: { from: number; to: number }) => void) => (
+      <UPlotChart config={config} data={[[FROM_MS, TO_MS]]} width={800} height={400}>
+        <XAxisInteractionAreaPlugin config={config} queryZoom={queryZoom} />
+      </UPlotChart>
+    );
+
+    // uPlot sets its scales and bbox in a microtask after construction.
+    const uPlotCommit = () => act(() => Promise.resolve());
+
+    const dragXAxisBy = (dragPixels: number) => {
+      const xAxis = document.querySelector('.u-axis')!;
+      xAxis.dispatchEvent(new MouseEvent('mousedown', { clientX: 400, bubbles: true }));
+      document.dispatchEvent(new MouseEvent('mousemove', { clientX: 400 + dragPixels, bubbles: true }));
+      document.dispatchEvent(new MouseEvent('mouseup', { clientX: 400 + dragPixels, bubbles: true }));
+    };
+
+    it('pans the x axis through the queryZoom it was mounted with, keeping the range span', async () => {
+      const queryZoom = jest.fn();
+      render(chart(createConfig(), queryZoom));
+      await uPlotCommit();
+
+      dragXAxisBy(-50);
+
+      expect(queryZoom).toHaveBeenCalledTimes(1);
+      const { from, to } = queryZoom.mock.calls[0][0];
+      expect(to - from).toBeCloseTo(60 * 60 * 1000);
+    });
+
+    // Known bug: the effect depends on `queryZoom`, so a new callback with the same config runs the cleanup
+    // (removing the pan listeners) and registers an `init` hook the existing plot never fires. Callers that
+    // pass an unstable callback (e.g. PanelRenderer's `onChangeTimeRange = () => {}` default) lose panning
+    // after the first rerender. Change to `it` once fixed.
+    it.failing('pans through the latest queryZoom after the callback changes without a config change', async () => {
+      const config = createConfig();
+      const initialQueryZoom = jest.fn();
+      const latestQueryZoom = jest.fn();
+      const { rerender } = render(chart(config, initialQueryZoom));
+      await uPlotCommit();
+
+      rerender(chart(config, latestQueryZoom));
+      dragXAxisBy(-50);
+
+      expect(latestQueryZoom).toHaveBeenCalledTimes(1);
+      expect(initialQueryZoom).not.toHaveBeenCalled();
     });
   });
 });

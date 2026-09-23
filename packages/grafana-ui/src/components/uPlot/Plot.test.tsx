@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { useLayoutEffect } from 'react';
 import uPlot from 'uplot';
 
 import { type FieldConfig, FieldType, MutableDataFrame } from '@grafana/data';
@@ -193,6 +194,49 @@ describe('UPlotChart', () => {
       expect(destroyMock).toBeCalledTimes(0);
       expect(uPlot).toBeCalledTimes(1);
       expect(setSizeMock).toBeCalledTimes(1);
+    });
+  });
+
+  describe('plot lifecycle timing', () => {
+    function LayoutEffectProbe({ onLayoutEffect }: { onLayoutEffect: () => void }) {
+      useLayoutEffect(onLayoutEffect);
+      return null;
+    }
+
+    // uPlot copies its hooks at construction and fires `ready` in a microtask afterwards. Plugins
+    // (e.g. AnnotationsPlugin) rely on no render landing in between, which only holds while the plot is
+    // constructed in the same commit's layout phase. Constructing it in a passive effect caused annotations
+    // to intermittently never render.
+    it('constructs uPlot in the layout phase of the commit, on mount and on config change', () => {
+      const { data, config } = mockData();
+      const plotsConstructedAtLayoutEffect: number[] = [];
+      const recordPlotCount = () => {
+        plotsConstructedAtLayoutEffect.push(jest.mocked(uPlot).mock.calls.length);
+      };
+
+      const { rerender } = render(
+        <>
+          <UPlotChart data={preparePlotData2(data, getStackingGroups(data))} config={config} width={100} height={100} />
+          <LayoutEffectProbe onLayoutEffect={recordPlotCount} />
+        </>
+      );
+
+      const nextConfig = new UPlotConfigBuilder();
+      nextConfig.addSeries({} as SeriesProps);
+
+      rerender(
+        <>
+          <UPlotChart
+            data={preparePlotData2(data, getStackingGroups(data))}
+            config={nextConfig}
+            width={100}
+            height={100}
+          />
+          <LayoutEffectProbe onLayoutEffect={recordPlotCount} />
+        </>
+      );
+
+      expect(plotsConstructedAtLayoutEffect).toEqual([1, 2]);
     });
   });
 });
