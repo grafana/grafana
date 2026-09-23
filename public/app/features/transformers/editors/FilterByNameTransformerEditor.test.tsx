@@ -70,6 +70,21 @@ describe('FilterByNameTransformerEditor', () => {
     expect(getPill('B')).toHaveAttribute('aria-pressed', 'false');
   });
 
+  it('keeps every field deselected when the input brings the same fields in a new order', async () => {
+    const onChange = jest.fn();
+    const { rerender } = render(
+      <FilterByNameTransformerEditor input={createInput(['A', 'B'])} options={{}} onChange={onChange} />
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Deselect all' }));
+    const saved: FilterFieldsByNameTransformerOptions = onChange.mock.lastCall[0];
+
+    rerender(<FilterByNameTransformerEditor input={createInput(['B', 'A'])} options={saved} onChange={onChange} />);
+
+    expect(getPill('A')).toHaveAttribute('aria-pressed', 'false');
+    expect(getPill('B')).toHaveAttribute('aria-pressed', 'false');
+  });
+
   it('selects every field again when the input brings a new field', async () => {
     const onChange = jest.fn();
     const { rerender } = render(

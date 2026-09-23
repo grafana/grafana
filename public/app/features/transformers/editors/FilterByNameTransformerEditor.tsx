@@ -92,8 +92,9 @@ export function FilterByNameTransformerEditor({ input, options, onChange }: Filt
 
   // New field names mean the selection has to be derived again. Key on the names, not the input:
   // upstream transformations send a new input array on every options change, and re-seeding then
-  // would turn "no fields selected" back into "all fields selected".
-  const fieldNamesKey = JSON.stringify(fieldNames.map((n) => n.name));
+  // would turn "no fields selected" back into "all fields selected". Sorted so a reorder alone does
+  // not count as new names.
+  const fieldNamesKey = JSON.stringify(fieldNames.map((n) => n.name).sort());
 
   useEffect(() => {
     const { fieldNames: seedFieldNames, options: seedOptions } = latestSeed();
