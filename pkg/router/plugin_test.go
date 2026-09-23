@@ -170,6 +170,7 @@ func TestPluginBackendLoad(t *testing.T) {
 			if span.Name() == "router.plugin" {
 				found = true
 				require.Contains(t, span.Attributes(), attribute.String("grafana.plugin.id", plugin.JSONData.ID))
+				require.Contains(t, span.Attributes(), attribute.String("grafana.router.group", plugin.Manifest.Group))
 				require.Contains(t, span.Attributes(), attribute.Int("http.response.status_code", http.StatusOK))
 			}
 		}

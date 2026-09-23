@@ -15,8 +15,8 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	semconv "go.opentelemetry.io/otel/semconv/v1.43.0"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -306,7 +306,7 @@ func (a *authenticatingWrapper) authenticate(w http.ResponseWriter, req *http.Re
 
 	token := req.Header.Get("X-Access-Token")
 	if token == "" {
-		span.SetAttributes(attribute.String("error.type", "missing_token"))
+		span.SetAttributes(semconv.ErrorTypeKey.String("missing_token"))
 		span.SetStatus(codes.Error, "")
 		_ = errhttp.Write(ctx, apierrors.NewUnauthorized("missing access token header"), w)
 		return nil
@@ -318,7 +318,7 @@ func (a *authenticatingWrapper) authenticate(w http.ResponseWriter, req *http.Re
 		if apierrors.IsUnauthorized(err) {
 			errorType = "invalid_token"
 		}
-		span.SetAttributes(attribute.String("error.type", errorType))
+		span.SetAttributes(semconv.ErrorTypeKey.String(errorType))
 		span.SetStatus(codes.Error, "")
 		_ = errhttp.Write(ctx, err, w)
 		return nil

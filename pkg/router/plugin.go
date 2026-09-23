@@ -288,5 +288,5 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &tracedPluginHandler{Handler: handler, pluginID: b.plugin.JSONData.ID}, nil
+	return &tracedPluginHandler{Handler: handler, pluginID: b.plugin.JSONData.ID, group: b.group.Name}, nil
 }

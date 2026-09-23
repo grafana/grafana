@@ -44,7 +44,7 @@ func TestPluginRouteTracing(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, "/apis/test.ext.grafana.app/v1/resources", nil)
 			req.Header.Set("X-Access-Token", token)
 			response := httptest.NewRecorder()
-			serveThroughBreaker(newGroupBreaker("test.ext.grafana.app"), handler, response, req)
+			serveThroughBreaker(newGroupBreaker("test.ext.grafana.app"), "test.ext.grafana.app", handler, response, req)
 			ended := spans.Ended()
 			require.Equal(t, "router.plugin.authenticate", ended[0].Name())
 			if token == "valid" {

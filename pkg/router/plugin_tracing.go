@@ -12,6 +12,7 @@ import (
 type tracedPluginHandler struct {
 	*pluginroute.Handler
 	pluginID string
+	group    string
 }
 
 func (h *tracedPluginHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -22,7 +23,7 @@ func (h *tracedPluginHandler) ServeHTTP(w http.ResponseWriter, req *http.Request
 		h.Handler.ServeHTTP(w, req)
 		return
 	}
-	rec, req, endSpan := traceRouterRequest(w, req, "router.plugin", attribute.String("grafana.plugin.id", h.pluginID))
+	rec, req, endSpan := traceRouterRequest(w, req, "router.plugin", h.group, attribute.String("grafana.plugin.id", h.pluginID))
 	defer endSpan()
 	h.Handler.ServeHTTP(rec, req)
 }

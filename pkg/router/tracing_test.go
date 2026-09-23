@@ -2,6 +2,8 @@ package router
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -16,6 +18,7 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	"go.opentelemetry.io/otel/trace"
+	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -43,7 +46,7 @@ func TestBackendTracing(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, "/apis/test.grafana.app/v1/resources", nil)
 			otel.GetTextMapPropagator().Inject(parentCtx, propagation.HeaderCarrier(req.Header))
 			var backendContext trace.SpanContext
-			serveThroughBreaker(newGroupBreaker("test.grafana.app"), http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			serveThroughBreaker(newGroupBreaker("test.grafana.app"), "test.grafana.app", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				backendContext = trace.SpanContextFromContext(r.Context())
 				w.WriteHeader(status)
 			}), httptest.NewRecorder(), req)
@@ -104,7 +107,7 @@ func TestProxyTracing(t *testing.T) {
 			// A context parent must take precedence over an older forwarded header.
 			req.Header.Set("traceparent", "00-11111111111111111111111111111111-1111111111111111-01")
 			response := httptest.NewRecorder()
-			serveThroughBreaker(newGroupBreaker(group.Name), handler, response, req)
+			serveThroughBreaker(newGroupBreaker(group.Name), group.Name, handler, response, req)
 			require.Equal(t, http.StatusNoContent, response.Code)
 			propagated := <-upstreamContext
 			require.Equal(t, parent.SpanContext().TraceID(), propagated.TraceID())
@@ -128,7 +131,7 @@ func TestBackendTracingOpenCircuit(t *testing.T) {
 		w.WriteHeader(http.StatusServiceUnavailable)
 	})
 	for range 7 {
-		serveThroughBreaker(breaker, handler, httptest.NewRecorder(),
+		serveThroughBreaker(breaker, "test.grafana.app", handler, httptest.NewRecorder(),
 			httptest.NewRequest(http.MethodGet, "/apis/test.grafana.app/v1", nil))
 	}
 	require.Equal(t, 6, calls)
@@ -142,7 +145,7 @@ func TestBackendTracingCancellation(t *testing.T) {
 	recorder := setupRouterTracing(t)
 	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
-	serveThroughBreaker(newGroupBreaker("test.grafana.app"), http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	serveThroughBreaker(newGroupBreaker("test.grafana.app"), "test.grafana.app", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cancel()
 	}), httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/apis/test.grafana.app/v1", nil).WithContext(ctx))
 	spans := recorder.Ended()
@@ -150,13 +153,16 @@ func TestBackendTracingCancellation(t *testing.T) {
 	require.Equal(t, codes.Unset, spans[0].Status().Code)
 	require.Contains(t, spans[0].Attributes(), attribute.Bool("grafana.router.canceled", true))
 	require.Empty(t, spans[0].Events())
+	for _, attr := range spans[0].Attributes() {
+		require.NotEqual(t, attribute.Key("http.response.status_code"), attr.Key)
+	}
 }
 
 func TestBackendTracingDeadline(t *testing.T) {
 	recorder := setupRouterTracing(t)
 	ctx, cancel := context.WithDeadline(t.Context(), time.Now().Add(-time.Second))
 	defer cancel()
-	serveThroughBreaker(newGroupBreaker("test.grafana.app"), http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	serveThroughBreaker(newGroupBreaker("test.grafana.app"), "test.grafana.app", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusGatewayTimeout)
 	}), httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/apis/test.grafana.app/v1", nil).WithContext(ctx))
 	spans := recorder.Ended()
@@ -168,7 +174,7 @@ func TestBackendTracingDeadline(t *testing.T) {
 
 func TestBackendTracingUnknownMethod(t *testing.T) {
 	recorder := setupRouterTracing(t)
-	serveThroughBreaker(newGroupBreaker("test.grafana.app"), http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	serveThroughBreaker(newGroupBreaker("test.grafana.app"), "test.grafana.app", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, "CUSTOM", r.Method, "normalization must only affect telemetry")
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	}), httptest.NewRecorder(), httptest.NewRequest("CUSTOM", "/apis/test.grafana.app/v1", nil))
@@ -209,6 +215,138 @@ func TestOpenAPIBackendTracing(t *testing.T) {
 				require.Contains(t, span.Attributes(), attribute.Int("http.response.status_code", status))
 				if status >= 500 {
 					require.Equal(t, codes.Error, span.Status().Code)
+				}
+			}
+		})
+	}
+}
+
+func TestDiscoveryBackendTracing(t *testing.T) {
+	for _, mode := range []string{"aggregate", "legacy", "unavailable"} {
+		t.Run(mode, func(t *testing.T) {
+			recorder := setupRouterTracing(t)
+			ctx, parent := otel.Tracer("test").Start(t.Context(), "parent")
+			defer parent.End()
+			const group = "test.grafana.app"
+			router := discoveryRouter(t, group, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+				if mode == "unavailable" {
+					w.WriteHeader(http.StatusServiceUnavailable)
+				} else if mode == "legacy" {
+					if req.URL.Path == "/apis" {
+						http.NotFound(w, req)
+						return
+					}
+					require.Equal(t, "/apis/"+group+"/v1", req.URL.Path)
+					require.NoError(t, json.NewEncoder(w).Encode(metav1.APIResourceList{TypeMeta: metav1.TypeMeta{Kind: "APIResourceList"}}))
+				} else {
+					require.Equal(t, "/apis", req.URL.Path)
+					require.NoError(t, json.NewEncoder(w).Encode(apidiscoveryv2.APIGroupDiscoveryList{
+						TypeMeta: metav1.TypeMeta{Kind: "APIGroupDiscoveryList", APIVersion: "apidiscovery.k8s.io/v2"},
+						Items:    []apidiscoveryv2.APIGroupDiscovery{{ObjectMeta: metav1.ObjectMeta{Name: group}}},
+					}))
+				}
+			}))
+			req := httptest.NewRequest(http.MethodGet, "/apis", nil).WithContext(ctx)
+			req.Header.Set("Accept", aggregatedDiscoveryJSON)
+			response := httptest.NewRecorder()
+			router.HandleFunc(response, req, http.NotFoundHandler())
+			require.Equal(t, http.StatusOK, response.Code)
+			expected := 1
+			if mode == "legacy" {
+				expected = 2
+			}
+			var spans []sdktrace.ReadOnlySpan
+			for _, span := range recorder.Ended() {
+				if span.Name() == "router.backend" {
+					spans = append(spans, span)
+				}
+			}
+			require.Len(t, spans, expected)
+			for _, span := range spans {
+				require.Equal(t, "router.backend", span.Name())
+				require.Equal(t, parent.SpanContext().SpanID(), span.Parent().SpanID())
+				require.Contains(t, span.Attributes(), attribute.String("grafana.router.group", group))
+				if mode == "unavailable" {
+					require.Equal(t, codes.Error, span.Status().Code)
+				}
+			}
+		})
+	}
+}
+
+func TestBackendTracingResponseStatus(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		handle func(http.ResponseWriter)
+		status int
+	}{
+		{"empty", func(http.ResponseWriter) {}, http.StatusOK},
+		{"implicit", func(w http.ResponseWriter) {
+			_, _ = w.Write([]byte("body"))
+			w.WriteHeader(http.StatusServiceUnavailable)
+		}, http.StatusOK},
+		{"explicit", func(w http.ResponseWriter) {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			w.WriteHeader(http.StatusOK)
+		}, http.StatusServiceUnavailable},
+		{"informational", func(w http.ResponseWriter) { w.WriteHeader(http.StatusEarlyHints); w.WriteHeader(http.StatusCreated) }, http.StatusCreated},
+		{"informational only", func(w http.ResponseWriter) { w.WriteHeader(http.StatusEarlyHints) }, http.StatusOK},
+		{"flush", func(w http.ResponseWriter) {
+			_ = http.NewResponseController(w).Flush()
+			w.WriteHeader(http.StatusServiceUnavailable)
+		}, http.StatusOK},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			recorder := setupRouterTracing(t)
+			done := make(chan struct{})
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+				defer close(done)
+				serveThroughBreaker(newGroupBreaker("test.grafana.app"), "test.grafana.app", http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) { tc.handle(w) }), w, req)
+			}))
+			defer server.Close()
+			res, err := server.Client().Get(server.URL)
+			require.NoError(t, err)
+			_, err = io.Copy(io.Discard, res.Body)
+			require.NoError(t, err)
+			require.NoError(t, res.Body.Close())
+			<-done
+			require.Equal(t, tc.status, res.StatusCode)
+			spans := recorder.Ended()
+			require.Len(t, spans, 1)
+			require.Contains(t, spans[0].Attributes(), attribute.Int("http.response.status_code", tc.status))
+			expected := codes.Unset
+			if tc.status >= 500 {
+				expected = codes.Error
+			}
+			require.Equal(t, expected, spans[0].Status().Code)
+		})
+	}
+}
+
+func TestBackendTracingPanic(t *testing.T) {
+	for _, status := range []int{0, http.StatusOK} {
+		t.Run(http.StatusText(status), func(t *testing.T) {
+			recorder := setupRouterTracing(t)
+			sentinel := "private panic detail"
+			require.PanicsWithValue(t, sentinel, func() {
+				serveThroughBreaker(newGroupBreaker("test.grafana.app"), "test.grafana.app", http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+					if status != 0 {
+						w.WriteHeader(status)
+					}
+					panic(sentinel)
+				}), httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/apis/test.grafana.app/v1", nil))
+			})
+			spans := recorder.Ended()
+			require.Len(t, spans, 1)
+			require.Equal(t, codes.Error, spans[0].Status().Code)
+			require.Contains(t, spans[0].Attributes(), attribute.String("error.type", "panic"))
+			require.Empty(t, spans[0].Status().Description)
+			require.Empty(t, spans[0].Events())
+			if status != 0 {
+				require.Contains(t, spans[0].Attributes(), attribute.Int("http.response.status_code", status))
+			} else {
+				for _, attr := range spans[0].Attributes() {
+					require.NotEqual(t, attribute.Key("http.response.status_code"), attr.Key)
 				}
 			}
 		})
