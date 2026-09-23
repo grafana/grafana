@@ -12,7 +12,7 @@ import {
   type PanelProps,
   VizOrientation,
 } from '@grafana/data';
-import { BarGaugeSizing, BigValueTextMode } from '@grafana/schema';
+import { BarGaugeSizing, BarGaugeValueMode, BigValueTextMode } from '@grafana/schema';
 import {
   BarGauge,
   DataLinksContextMenu,
@@ -64,7 +64,7 @@ export function BarGaugePanel(props: BarGaugePanelProps) {
         className={targetClassName}
         alignmentFactors={count > 1 ? alignmentFactors : undefined}
         showUnfilled={options.showUnfilled}
-        valueDisplayMode={options.valueMode}
+        valueDisplayMode={shouldShowValue(options.textMode) ? options.valueMode : BarGaugeValueMode.Hidden}
         namePlacement={options.namePlacement}
         isOverflow={isOverflow}
       />
@@ -211,4 +211,9 @@ function shouldShowName(textMode: BigValueTextMode, count: number, field: FieldC
   }
 
   return textMode === BigValueTextMode.Name || textMode === BigValueTextMode.ValueAndName;
+}
+
+// Matches Gauge/Stat: Name and None hide the value, independent of the "Value display" setting.
+function shouldShowValue(textMode: BigValueTextMode): boolean {
+  return textMode !== BigValueTextMode.Name && textMode !== BigValueTextMode.None;
 }

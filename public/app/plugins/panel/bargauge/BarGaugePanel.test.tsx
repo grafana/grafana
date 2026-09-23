@@ -234,18 +234,15 @@ describe('BarGaugePanel', () => {
       expect(screen.getByText(/onlyseries/i)).toBeInTheDocument();
     });
 
-    it.each([BigValueTextMode.Value, BigValueTextMode.None])(
-      'hides the series name for a single unnamed series when textMode is %s',
-      (textMode) => {
-        const panelData = buildPanelData({ data: dataWithOneSeries() });
-        panelData.options.textMode = textMode;
+    it('hides the series name but keeps the value for a single unnamed series when textMode is Value', () => {
+      const panelData = buildPanelData({ data: dataWithOneSeries() });
+      panelData.options.textMode = BigValueTextMode.Value;
 
-        render(<BarGaugePanel {...panelData} />);
+      render(<BarGaugePanel {...panelData} />);
 
-        expect(screen.queryByText(/onlyseries/i)).not.toBeInTheDocument();
-        expect(screen.getByTestId(valueSelector)).toBeInTheDocument();
-      }
-    );
+      expect(screen.queryByText(/onlyseries/i)).not.toBeInTheDocument();
+      expect(screen.getByTestId(valueSelector)).toBeInTheDocument();
+    });
 
     it('still hides the series name when textMode is Name but namePlacement is Hidden', () => {
       const panelData = buildPanelData({ data: dataWithOneSeries() });
@@ -256,7 +253,67 @@ describe('BarGaugePanel', () => {
 
       // The name stays in the DOM, hidden by the styles getTitleStyles applies.
       expect(screen.getByText(/onlyseries/i)).not.toBeVisible();
-      expect(screen.getByTestId(valueSelector)).toBeInTheDocument();
+      expect(screen.queryByTestId(valueSelector)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('value visibility', () => {
+    function dataWithNamedSeries() {
+      return {
+        series: [
+          toDataFrame({ target: 'ServerA', datapoints: [[100, 1000]] }),
+          toDataFrame({ target: 'ServerB', datapoints: [[200, 1000]] }),
+        ],
+        timeRange: createTimeRange(),
+        state: LoadingState.Done,
+      };
+    }
+
+    it.each([BigValueTextMode.Auto, BigValueTextMode.Value, BigValueTextMode.ValueAndName])(
+      'shows the value when textMode is %s',
+      (textMode) => {
+        const panelData = buildPanelData({ data: dataWithNamedSeries() });
+        panelData.options.textMode = textMode;
+
+        render(<BarGaugePanel {...panelData} />);
+
+        expect(screen.getAllByTestId(valueSelector)).toHaveLength(2);
+      }
+    );
+
+    it.each([BigValueTextMode.Name, BigValueTextMode.None])(
+      'hides the value when textMode is %s, regardless of the "Value display" setting',
+      (textMode) => {
+        const panelData = buildPanelData({ data: dataWithNamedSeries() });
+        panelData.options.textMode = textMode;
+        panelData.options.valueMode = BarGaugeValueMode.Color;
+
+        render(<BarGaugePanel {...panelData} />);
+
+        expect(screen.queryByTestId(valueSelector)).not.toBeInTheDocument();
+      }
+    );
+
+    it('hides both the value and the series name when textMode is None', () => {
+      const panelData = buildPanelData({ data: dataWithNamedSeries() });
+      panelData.options.textMode = BigValueTextMode.None;
+
+      render(<BarGaugePanel {...panelData} />);
+
+      expect(screen.queryByText(/servera/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/serverb/i)).not.toBeInTheDocument();
+      expect(screen.queryByTestId(valueSelector)).not.toBeInTheDocument();
+    });
+
+    it('shows the series name but hides the value when textMode is Name', () => {
+      const panelData = buildPanelData({ data: dataWithNamedSeries() });
+      panelData.options.textMode = BigValueTextMode.Name;
+
+      render(<BarGaugePanel {...panelData} />);
+
+      expect(screen.getByText(/servera/i)).toBeInTheDocument();
+      expect(screen.getByText(/serverb/i)).toBeInTheDocument();
+      expect(screen.queryByTestId(valueSelector)).not.toBeInTheDocument();
     });
   });
 
