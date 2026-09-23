@@ -5,6 +5,7 @@ import { PageLayoutType } from '@grafana/data';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
 import { useSelector } from 'app/types/store';
 
@@ -14,7 +15,6 @@ import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../solo/Sol
 import { type DashboardScene } from './DashboardScene';
 import { PanelSearchLayout } from './PanelSearchLayout';
 import { PlanningControls } from './new-toolbar/PlanningControls';
-import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const {

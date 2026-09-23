@@ -1,5 +1,6 @@
 import { type VariableType } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 
 import { type GroupConditionConditionType } from '../conditional-rendering/group/types';
 import {
@@ -8,7 +9,6 @@ import {
 } from '../serialization/DashboardSceneSerializer';
 
 import { type GlobalVariablesMode, type PredefinedVariableScope } from './crossDashboardVariablesSelection';
-import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 
 let isScenesContextSet = false;
 
