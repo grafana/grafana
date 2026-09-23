@@ -2269,8 +2269,8 @@ func TestWatchEventMetricsDropClockSkewedSample(t *testing.T) {
 	metrics := ProvideStorageMetrics(prometheus.NewPedanticRegistry())
 	sendStartedAt := time.Now()
 
-	// The commit timestamp is ahead of send start, but the delayed send ends after
-	// it. Recording total and send while dropping ready would give the three
+	// The resource version timestamp is ahead of send start, but the delayed send
+	// ends after it. Recording total and send while dropping ready would give the three
 	// histograms different event populations.
 	metrics.observeWatchEvent(
 		watchTestGroup,
