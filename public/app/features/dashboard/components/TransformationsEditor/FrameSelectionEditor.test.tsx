@@ -15,7 +15,9 @@ describe('FrameSelectionEditor', () => {
   it('emits a byRefId matcher when a query is selected', async () => {
     const user = userEvent.setup();
     const onChange = jest.fn();
-    render(<FrameSelectionEditor value={undefined} context={context} item={item} onChange={onChange} />);
+    render(
+      <FrameSelectionEditor value={{ id: FrameMatcherID.byRefId }} context={context} item={item} onChange={onChange} />
+    );
 
     await user.click(screen.getByRole('combobox'));
     await user.click(screen.getByText('Query: B'));
