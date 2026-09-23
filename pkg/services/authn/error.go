@@ -23,8 +23,3 @@ func NewTokenNeedsRotationError(userID int64) TokenNeedsRotationError {
 		UserID:       userID,
 	}
 }
-
-// Unwrap exposes the structured error so HTTP handlers can preserve its message ID.
-func (e TokenNeedsRotationError) Unwrap() error {
-	return e.errutilError
-}
