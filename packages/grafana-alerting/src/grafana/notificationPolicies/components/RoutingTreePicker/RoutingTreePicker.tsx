@@ -14,11 +14,8 @@ export interface RoutingTreePickerProps {
   /** `null` means "use the default policy" - no explicit tree chosen. */
   value: RoutingTree | null;
   onChange: (value: RoutingTree | null) => void;
-  /**
-   * Alert instance label sets to preview which policy route would receive the notification.
-   * Works whether `value` is an explicit tree or `null` (the default policy). Omit to skip the
-   * preview entirely.
-   */
+  /** Alert instance label sets to preview which policy route would receive the notification,
+   * whether `value` is explicit or `null` (default policy). Omit to skip the preview. */
   instancesToPreview?: Label[][];
   /** Link target for "View policies". Omit to hide the link. */
   viewPoliciesHref?: string;
@@ -28,11 +25,8 @@ function isUsingDefaultPolicy(value: RoutingTree | null): boolean {
   return value === null || isDefaultRoutingTree(value);
 }
 
-/**
- * Lets a caller pick which notification policy tree routes an alert rule, with no dependency on
- * any alert-rule-form context. Mirrors the collapsed/expanded UX of the internal PolicyTreeSelector,
- * built on the exported RoutingTreeSelector primitive instead of the legacy label-based mechanism.
- */
+/** Lets a caller pick which notification policy tree routes an alert rule, with no alert-rule-form
+ * dependency. Mirrors the internal PolicyTreeSelector's collapsed/expanded UX, built on RoutingTreeSelector. */
 export function RoutingTreePicker({ value, onChange, instancesToPreview, viewPoliciesHref }: RoutingTreePickerProps) {
   const usingDefault = isUsingDefaultPolicy(value);
   const [isExpanded, setIsExpanded] = useState(!usingDefault);
@@ -46,9 +40,8 @@ export function RoutingTreePicker({ value, onChange, instancesToPreview, viewPol
     setIsExpanded(false);
   };
 
-  // RoutingTreeSelector always returns the concrete tree object, even for the default-named one.
-  // Normalize that case to null so "default" has one representation regardless of whether the
-  // caller got there via this dropdown or the Reset button below.
+  // RoutingTreeSelector always returns the concrete tree object, even the default-named one — normalize
+  // to null so the dropdown and Reset button agree on one "default" representation.
   const handleRoutingTreeSelectorChange = (tree: RoutingTree) => {
     onChange(isDefaultRoutingTree(tree) ? null : tree);
   };
@@ -149,9 +142,8 @@ interface RoutingTreePickerPreviewProps {
 }
 
 function RoutingTreePickerPreview({ routingTree, instances }: RoutingTreePickerPreviewProps) {
-  // `routingTree` is null when the caller is using the default policy (no explicit selection).
-  // We still need the actual default tree object to preview against, so resolve it from the list
-  // RoutingTreeSelector already fetches - RTKQ dedupes this against that same cached query.
+  // `routingTree` is null for the default policy (no explicit selection) — resolve the actual default
+  // tree from the list RoutingTreeSelector already fetches (RTKQ dedupes the query).
   const { currentData: routingTrees } = useListRoutingTrees();
   const defaultTree = routingTrees?.items?.find(isDefaultRoutingTree) ?? null;
   const resolvedTree = routingTree ?? defaultTree;

@@ -27,10 +27,8 @@ export interface RecipientPickerProps {
   mode: RecipientMode;
   value: AlertRuleNotificationSettings | null;
   onChange: (value: AlertRuleNotificationSettings | null) => void;
-  /** Fires on mount and whenever computed validity changes. Only ever `false` in `contactPoint`
-   * mode with no receiver selected — `notificationPolicy` mode has no required field, `null` there
-   * legitimately means "use the default policy". Lets a caller signal a validation error without
-   * reaching into RecipientPickerField's internal write target. */
+  /** Fires on mount and whenever computed validity changes. Only ever `false` in `contactPoint` mode
+   * with no receiver selected — `notificationPolicy` mode has no required field. */
   onValidityChange?: (isValid: boolean) => void;
   /** Forwarded to RoutingTreePicker in notificationPolicy mode. See RoutingTreePicker's own docs. */
   instancesToPreview?: Label[][];
@@ -38,9 +36,8 @@ export interface RecipientPickerProps {
   manageContactPointsHref?: string;
 }
 
-// `type` isn't a true discriminant here — both branches share the same AlertRuleNotificationSettingsType
-// union — so narrow on `receiver`/`routingTree` instead, each unique to one branch. Exported so
-// consumers don't have to rediscover and reimplement this narrowing themselves.
+// `type` isn't a true discriminant here (both branches share AlertRuleNotificationSettingsType) — narrow
+// on `receiver`/`routingTree` instead. Exported so consumers don't reimplement this.
 export function asSimplifiedRouting(value: AlertRuleNotificationSettings | null): AlertRuleSimplifiedRouting | null {
   if (value !== null && 'receiver' in value) {
     return value;

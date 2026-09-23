@@ -19,10 +19,8 @@ const meta: Meta<typeof RecipientPicker> = {
   component: RecipientPicker,
   title: 'Notification Settings/RecipientPicker',
   decorators: defaultDecorators,
-  // onValidityChange fires from a useEffect on mount, not from a user interaction — Storybook's
-  // implicit-action auto-mock only supports actions triggered by real interactions, and errors
-  // (not just warns) if an unmocked callback-shaped prop fires during render. Provide a defined
-  // no-op so both stories mount cleanly.
+  // onValidityChange fires from a useEffect on mount, not a user interaction — Storybook's implicit-action
+  // auto-mock errors on an unmocked callback firing during render, so provide a no-op.
   args: {
     onValidityChange: () => {},
   },

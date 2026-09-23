@@ -2,15 +2,12 @@ import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Field, MultiSelect } from '@grafana/ui';
 
-// Mirrors public/app/features/alerting/unified/utils/amroutes.ts's REQUIRED_FIELDS_IN_GROUPBY /
-// DISABLE_GROUPING / commonGroupByOptions exactly — same product behavior, ported because
-// RecipientPicker can't depend on internals code.
+// Mirrors amroutes.ts's REQUIRED_FIELDS_IN_GROUPBY/DISABLE_GROUPING/commonGroupByOptions — ported
+// since RecipientPicker can't depend on internals code.
 const REQUIRED_GROUP_BY_LABELS = ['grafana_folder', 'alertname'];
 const DISABLE_GROUPING = '...';
-// Only the *values* are locale-independent and safe to hoist. The "Disable (...)" option's
-// label goes through t() and must be computed inside the component (below) — a module-scope
-// t() call runs once at import time, before i18n is guaranteed ready, and never re-runs on a
-// later language change.
+// Only the *values* are locale-independent and safe to hoist — the label goes through t() inside
+// the component, since a module-scope t() call runs once at import and never updates on a language change.
 const BASE_OPTION_VALUES = new Set([...REQUIRED_GROUP_BY_LABELS, DISABLE_GROUPING]);
 
 export interface GroupByFieldProps {
@@ -29,12 +26,10 @@ function withRequiredFields(values: string[]): string[] {
   return result;
 }
 
-/** Freeform label multi-select for `notificationSettings.groupBy`. `grafana_folder`/`alertname`
- * are always included unless the user picks "Disable (...)", which clears every other value —
- * matches RouteSettings.tsx's group-by semantics exactly. `isFixed` on the two required options
- * is a no-op in this @grafana/ui version (MultiValueRemove ignores it); kept anyway since it's
- * free and matches upstream if that ever changes. */
+/** Freeform label multi-select for `notificationSettings.groupBy`. `grafana_folder`/`alertname` stay
+ * included unless the user picks "Disable (...)", which clears every other value — matches RouteSettings.tsx. */
 export function GroupByField({ value, onChange, disabled }: GroupByFieldProps) {
+  // isFixed is a no-op in this @grafana/ui version (MultiValueRemove ignores it) but kept for forward-compat.
   const baseOptions: Array<SelectableValue<string>> = [
     { label: 'grafana_folder', value: 'grafana_folder', isFixed: true },
     { label: 'alertname', value: 'alertname', isFixed: true },
