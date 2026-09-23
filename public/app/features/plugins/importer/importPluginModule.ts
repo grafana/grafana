@@ -5,6 +5,7 @@ import { getLogger } from '@grafana/runtime/unstable';
 
 import builtInPlugins, { isBuiltinPluginPath } from '../built_in_plugins';
 import { registerPluginInfoInCache } from '../loader/pluginInfoCache';
+import { classifyPluginLoadError, PluginLoadError, type PluginLoadErrorInfo } from '../loader/pluginLoadError';
 import { SystemJS } from '../loader/systemjs';
 import { resolveModulePath } from '../loader/utils';
 import { shouldLoadPluginInFrontendSandbox } from '../sandbox/sandboxPluginLoaderRegistry';
@@ -15,6 +16,7 @@ import { type PluginImportInfo } from './types';
 export async function importPluginModule({
   path,
   pluginId,
+  pluginType,
   loadingStrategy,
   version,
   moduleHash,
@@ -72,12 +74,14 @@ export async function importPluginModule({
     return importPluginModuleInSandbox({ pluginId });
   }
 
-  return SystemJS.import(modulePath).catch((e) => {
+  return SystemJS.import(modulePath).catch((e: unknown) => {
     let errorMessage = 'Could not load plugin';
     if (hasUpdate) {
       errorMessage = `Could not load plugin. Updating the "${pluginName}" plugin to the latest version may fix the problem.`;
     }
-    let error = new Error(errorMessage, { cause: e });
+    const errorInfo = classifyPluginLoadError(e);
+    const error = new PluginLoadError(errorMessage, { cause: e, ...errorInfo });
+    const originalErrorMessage = e instanceof Error ? e.message : String(e);
     console.error(error);
     getLogger('features.plugins').logError(error, {
       path,
@@ -86,10 +90,22 @@ export async function importPluginModule({
       expectedHash: moduleHash ?? '',
       loadingStrategy: loadingStrategy.toString(),
       sriChecksEnabled: String(Boolean(config.featureToggles.pluginsSriChecks)),
-      originalErrorMessage: e.originalErr?.message || '',
-      originalErrorStack: e.originalErr?.stack || '',
-      systemJSOriginalErr: e.originalErr?.message || '',
+      originalErrorMessage,
+      originalErrorStack: e instanceof Error ? (e.stack ?? '') : '',
+      systemJSOriginalErr: originalErrorMessage,
+      pluginType,
+      ...toLogContext(errorInfo),
     });
     throw error;
   });
+}
+
+function toLogContext({ errorType, httpStatusSource, httpStatus, failedUrl, chunkErrorType }: PluginLoadErrorInfo) {
+  return {
+    errorType,
+    httpStatusSource,
+    ...(httpStatus && { httpStatus: String(httpStatus) }),
+    ...(failedUrl && { failedUrl }),
+    ...(chunkErrorType && { chunkErrorType }),
+  };
 }

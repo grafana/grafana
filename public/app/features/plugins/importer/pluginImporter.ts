@@ -31,6 +31,7 @@ const defaultPreImport: PreImportStrategy = (plugin) => {
     version: plugin.info?.version,
     loadingStrategy: fallbackLoadingStrategy,
     pluginId: plugin.id,
+    pluginType: plugin.type,
     moduleHash: plugin.moduleHash,
     translations: plugin.translations,
     hasUpdate: plugin.hasUpdate,
