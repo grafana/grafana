@@ -27,6 +27,7 @@ type PublisherService struct {
 	*connection
 	metrics       *publisherMetrics
 	pendingMu     sync.Mutex
+	pendingConn   *natsclient.Conn
 	pendingBytes  int64
 	oldestPending int64
 }
@@ -111,19 +112,18 @@ func (p *PublisherService) running(ctx context.Context) error {
 }
 
 func (p *PublisherService) stopping(_ error) error {
+	p.pendingMu.Lock()
+	defer p.pendingMu.Unlock()
+	p.discardClosedPending()
 	drained := p.closeWithResult()
 	if drained {
-		p.pendingMu.Lock()
 		p.pendingBytes = 0
 		p.oldestPending = 0
 		p.metrics.pendingBytes.Set(0)
 		p.metrics.oldestPending.Set(0)
-		p.pendingMu.Unlock()
 		return nil
 	}
-	p.pendingMu.Lock()
 	pending := p.pendingBytes
-	p.pendingMu.Unlock()
 	if pending > 0 {
 		p.metrics.forcedDrainLoss.Inc()
 		p.log.Warn("nats publisher closed with locally accepted messages pending", "bytes", pending)
@@ -136,10 +136,17 @@ func (p *PublisherService) Health(_ context.Context) error {
 }
 
 func (p *PublisherService) Publish(ctx context.Context, subject string, data []byte) error {
+	// Serialize acceptance and accounting with replacement/closure observation.
+	p.pendingMu.Lock()
+	defer p.pendingMu.Unlock()
+	p.discardClosedPending()
 	nc, err := p.get(ctx)
 	if err != nil {
 		return err
 	}
+	// The previous client may have closed during get's replacement dial.
+	p.discardClosedPending()
+	p.pendingConn = nc
 	if !p.canPublish(nc) {
 		p.metrics.publishErrors.Inc()
 		return fmt.Errorf("publish to %q: nats connection has not connected successfully: %w", subject, natsclient.ErrConnectionReconnecting)
@@ -156,29 +163,31 @@ func (p *PublisherService) Publish(ctx context.Context, subject string, data []b
 	// while disconnected; a successful FlushWithContext clears that estimate.
 	if !nc.IsConnected() {
 		bytes := int64(len(subject) + len(data))
-		p.pendingMu.Lock()
 		p.pendingBytes += bytes
 		if p.oldestPending == 0 {
 			p.oldestPending = time.Now().UnixNano()
 			p.metrics.oldestPending.Set(float64(time.Now().Unix()))
 		}
 		p.metrics.pendingBytes.Set(float64(p.pendingBytes))
-		p.pendingMu.Unlock()
 	}
 	p.log.Debug("accepted message for publish", "subject", subject, "bytes", len(data), "connected", nc.IsConnected())
 	return nil
 }
 
 func (p *PublisherService) flush(ctx context.Context) {
+	p.pendingMu.Lock()
+	p.discardClosedPending()
 	p.mu.Lock()
 	nc := p.conn
 	p.mu.Unlock()
+	p.discardClosedPending()
 	if nc == nil || !nc.IsConnected() {
+		p.pendingMu.Unlock()
 		return
 	}
-	// Snapshot the pending estimate before flushing, since FlushWithContext only covers
-	// data buffered before the call and a concurrent Publish may add more.
-	p.pendingMu.Lock()
+	// Snapshot both owner and watermark: another Publish may replace a closed
+	// client or add more buffered bytes while this flush is in flight.
+	p.pendingConn = nc
 	watermark := p.pendingBytes
 	p.pendingMu.Unlock()
 
@@ -188,15 +197,19 @@ func (p *PublisherService) flush(ctx context.Context) {
 		p.log.Warn("nats publisher flush failed", "err", err)
 		return
 	}
-	p.reconcilePending(watermark)
-	p.metrics.lastSuccessfulFlush.Set(float64(time.Now().Unix()))
+	if p.reconcilePending(nc, watermark) {
+		p.metrics.lastSuccessfulFlush.Set(float64(time.Now().Unix()))
+	}
 }
 
 // reconcilePending clears at most watermark bytes from the pending estimate,
 // preserving accounting for messages buffered after the watermark was snapshotted.
-func (p *PublisherService) reconcilePending(watermark int64) {
+func (p *PublisherService) reconcilePending(nc *natsclient.Conn, watermark int64) bool {
 	p.pendingMu.Lock()
 	defer p.pendingMu.Unlock()
+	if p.pendingConn != nc {
+		return false
+	}
 	p.pendingBytes -= watermark
 	if p.pendingBytes < 0 {
 		p.pendingBytes = 0
@@ -206,4 +219,22 @@ func (p *PublisherService) reconcilePending(watermark int64) {
 		p.metrics.oldestPending.Set(0)
 	}
 	p.metrics.pendingBytes.Set(float64(p.pendingBytes))
+	return true
+}
+
+// discardClosedPending requires pendingMu. A terminally closed client's buffer
+// cannot be flushed by its replacement; record unconfirmed work as loss first.
+func (p *PublisherService) discardClosedPending() {
+	if p.pendingConn == nil || !p.pendingConn.IsClosed() {
+		return
+	}
+	if p.pendingBytes > 0 {
+		p.metrics.connectionLoss.Inc()
+		p.log.Warn("nats publisher connection closed with locally accepted messages pending", "bytes", p.pendingBytes)
+	}
+	p.pendingConn = nil
+	p.pendingBytes = 0
+	p.oldestPending = 0
+	p.metrics.pendingBytes.Set(0)
+	p.metrics.oldestPending.Set(0)
 }

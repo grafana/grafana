@@ -88,6 +88,7 @@ type publisherMetrics struct {
 	oldestPending       prometheus.Gauge
 	lastSuccessfulFlush prometheus.Gauge
 	forcedDrainLoss     prometheus.Counter
+	connectionLoss      prometheus.Counter
 }
 
 func newPublisherMetrics() *publisherMetrics {
@@ -123,6 +124,12 @@ func newPublisherMetrics() *publisherMetrics {
 			Name:      "publisher_last_successful_flush_timestamp_seconds",
 			Help:      "Unix timestamp of the last successful NATS server flush; this is not subscriber acknowledgement.",
 		}),
+		connectionLoss: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      "publisher_connection_loss_total",
+			Help:      "Terminal connection closures observed with locally accepted messages still awaiting a confirmed flush.",
+		}),
 		forcedDrainLoss: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,
@@ -133,7 +140,7 @@ func newPublisherMetrics() *publisherMetrics {
 }
 
 func (m *publisherMetrics) collectors() []prometheus.Collector {
-	return append(m.connectionMetrics.collectors(), m.messagesAccepted, m.publishErrors, m.pendingBytes, m.oldestPending, m.lastSuccessfulFlush, m.forcedDrainLoss)
+	return append(m.connectionMetrics.collectors(), m.messagesAccepted, m.publishErrors, m.pendingBytes, m.oldestPending, m.lastSuccessfulFlush, m.forcedDrainLoss, m.connectionLoss)
 }
 
 // subscriberMetrics covers the subscriber connection plus its delivery counters.

@@ -184,6 +184,28 @@ func testPublisherFirstSuccess(t *testing.T) {
 	// had connected successfully and was allowed to buffer during an outage.
 	nc.Close()
 	require.ErrorIs(t, pub.Publish(ctx, "test", []byte("replacement")), natsclient.ErrConnectionReconnecting)
+	require.Equal(t, float64(1), promtestutil.ToFloat64(pub.metrics.connectionLoss))
+	require.Zero(t, promtestutil.ToFloat64(pub.metrics.pendingBytes))
+	require.Zero(t, promtestutil.ToFloat64(pub.metrics.oldestPending))
+	require.Zero(t, promtestutil.ToFloat64(pub.metrics.lastSuccessfulFlush))
+
+	recovery, err := natsserver.NewServer(&natsserver.Options{
+		Host: "127.0.0.1", Port: port, NoLog: true, NoSigs: true,
+	})
+	require.NoError(t, err)
+	go recovery.Start()
+	t.Cleanup(recovery.Shutdown)
+	require.True(t, recovery.ReadyForConnections(5*time.Second))
+	require.Eventually(t, func() bool {
+		flushCtx, cancel := context.WithTimeout(ctx, time.Second)
+		defer cancel()
+		pub.flush(flushCtx)
+		return promtestutil.ToFloat64(pub.metrics.lastSuccessfulFlush) > 0
+	}, 5*time.Second, 20*time.Millisecond)
+	// A successful replacement flush cannot erase or count the old loss twice.
+	require.Equal(t, float64(1), promtestutil.ToFloat64(pub.metrics.connectionLoss))
+	require.NoError(t, pub.stopping(nil))
+	require.Zero(t, promtestutil.ToFloat64(pub.metrics.forcedDrainLoss))
 }
 
 func testPublishingFailsOnAuthRejection(t *testing.T) {

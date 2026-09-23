@@ -73,16 +73,60 @@ func TestPublisher(t *testing.T) {
 		p.pendingBytes = 140
 		p.oldestPending = time.Now().UnixNano()
 
-		p.reconcilePending(100)
+		p.reconcilePending(nil, 100)
 
 		require.Equal(t, int64(40), p.pendingBytes)
 		require.NotZero(t, p.oldestPending)
 		require.Equal(t, float64(40), promtestutil.ToFloat64(p.metrics.pendingBytes))
 
-		p.reconcilePending(40)
+		p.reconcilePending(nil, 40)
 		require.Zero(t, p.pendingBytes)
 		require.Zero(t, p.oldestPending)
 		require.Equal(t, float64(0), promtestutil.ToFloat64(p.metrics.pendingBytes))
+	})
+
+	for _, observe := range []string{"flush", "stopping"} {
+		t.Run("terminal loss is observed by "+observe+" without a replacement publish", func(t *testing.T) {
+			p := newTestPublisher(t, startTestServer(t))
+			nc, err := p.get(context.Background())
+			require.NoError(t, err)
+			p.pendingConn = nc
+			p.pendingBytes = 100
+			p.oldestPending = time.Now().UnixNano()
+			p.metrics.pendingBytes.Set(100)
+			nc.Close()
+
+			if observe == "flush" {
+				p.flush(context.Background())
+			} else {
+				require.NoError(t, p.stopping(nil))
+			}
+			require.Equal(t, float64(1), promtestutil.ToFloat64(p.metrics.connectionLoss))
+			require.Zero(t, promtestutil.ToFloat64(p.metrics.pendingBytes))
+			require.Zero(t, promtestutil.ToFloat64(p.metrics.oldestPending))
+			require.Zero(t, promtestutil.ToFloat64(p.metrics.lastSuccessfulFlush))
+			require.NoError(t, p.stopping(nil))
+			require.Equal(t, float64(1), promtestutil.ToFloat64(p.metrics.connectionLoss))
+			require.Zero(t, promtestutil.ToFloat64(p.metrics.forcedDrainLoss))
+		})
+	}
+
+	t.Run("stale flush cannot clear a replacement connection's pending estimate", func(t *testing.T) {
+		p := newTestPublisher(t, startTestServer(t))
+		old, err := p.get(context.Background())
+		require.NoError(t, err)
+		old.Close()
+		replacement, err := p.get(context.Background())
+		require.NoError(t, err)
+		p.pendingConn = replacement
+		p.pendingBytes = 140
+		p.oldestPending = time.Now().UnixNano()
+		p.metrics.pendingBytes.Set(140)
+
+		require.False(t, p.reconcilePending(old, 100))
+		require.Equal(t, int64(140), p.pendingBytes)
+		require.Equal(t, float64(140), promtestutil.ToFloat64(p.metrics.pendingBytes))
+		require.NotZero(t, p.oldestPending)
 	})
 
 	t.Run("publish honours a cancelled context", func(t *testing.T) {
