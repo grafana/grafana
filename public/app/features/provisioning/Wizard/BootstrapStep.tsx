@@ -100,7 +100,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
           onClick: retryRepositoryStatus,
         },
       });
-    } else if (pathConflict) {
+    } else if (!isLoading && pathConflict) {
       setStepStatusInfo({
         status: 'warning',
         warning: {
