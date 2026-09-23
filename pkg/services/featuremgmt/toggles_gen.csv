@@ -2,7 +2,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2022-02-15,panelTitleSearch,preview,@grafana/search-and-storage,false,false,false
 2023-01-03,publicDashboardsEmailSharing,preview,@grafana/grafana-operator-experience-squad,false,false,false
 2023-06-19,lokiExperimentalStreaming,experimental,@grafana/data-sources-plugins,false,false,false
-2022-02-03,featureHighlights,GA,@grafana/grafana-operator-experience-squad,false,false,false
 2022-05-31,canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,true
 2022-11-28,cloudWatchCrossAccountQuerying,GA,@grafana/data-sources-plugins,false,false,false
 2022-12-14,alertingBacktesting,experimental,@grafana/alerting-squad,false,false,false
@@ -165,6 +164,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-16,alertingAIGenTemplates,experimental,@grafana/alerting-squad,false,false,false
 2025-07-31,alertingEnrichmentPerRule,experimental,@grafana/alerting-squad,false,false,false
 2025-08-29,alertingEnrichmentAssistantInvestigations,experimental,@grafana/alerting-squad,false,false,false
+2026-09-16,alerting.dataSourceManagedRouteProxy,experimental,@grafana/alerting-squad,false,false,true
 2026-09-16,alerting.manualAssistantInvestigation,experimental,@grafana/alerting-squad,false,false,true
 2025-07-16,alertingAIAnalyzeCentralStateHistory,experimental,@grafana/alerting-squad,false,false,false
 2026-09-16,alerting.ruleQuality,experimental,@grafana/alerting-squad,false,false,false
@@ -221,7 +221,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-31,alertEnrichmentConditional,experimental,@grafana/alerting-squad,false,false,false
 2026-09-16,alertEnrichmentPreview,experimental,@grafana/alerting-squad,false,false,false
 2025-06-10,alertingImportAlertmanagerAPI,preview,@grafana/alerting-squad,false,false,false
-2026-09-16,alertingDisableDMAinUI,experimental,@grafana/alerting-squad,false,false,false
 2025-06-17,preferLibraryPanelTitle,privatePreview,@grafana/dashboards-squad,false,false,false
 2025-06-25,newInfluxDSConfigPageDesign,privatePreview,@grafana/data-sources-plugins,false,false,false
 2025-06-30,enableAppChromeExtensions,experimental,@grafana/grafana-catalog,false,false,true
@@ -315,7 +314,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,splashScreen,preview,@grafana/grafana-frontend-platform,false,false,true
 2026-09-16,streamingForwardTeamHeadersTempo,privatePreview,@grafana/data-sources-plugins,false,false,false
 2026-09-16,lokiAlignedQuerySplitting,experimental,@grafana/observability-logs,false,false,false
-2026-09-16,queryFetchConfigFromSettingsService,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-09-16,profilesHeatmap,experimental,@grafana/observability-traces-and-profiling,false,false,false
 2026-09-16,tracesDrilldownTimeSeeker,experimental,@grafana/observability-traces-and-profiling,false,false,true
 2026-09-16,enableColorblindSafePanelOptions,experimental,@grafana/dataviz-squad,false,false,true
@@ -367,6 +365,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,grafana.dashboardSettingsRedesign,GA,@grafana/dashboards-squad,false,false,true
 2026-09-16,grafana.growthHomepage,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-09-16,kubernetesReporting,experimental,@grafana/grafana-operator-experience-squad,false,true,false
+2026-09-16,reporting.legacyServiceUsesK8SClient,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 2026-09-16,reporting.redirectReportsToK8SApi,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 2026-09-16,reporting.redirectReportSettingsToK8SApi,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 2026-09-16,grafana.onDemandDiagnostics,experimental,@grafana/data-sources,false,false,false

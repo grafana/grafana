@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -644,7 +643,7 @@ func (hs *HTTPServer) RemoveOrgUserForCurrentOrg(c *contextmodel.ReqContext) res
 		return response.Error(http.StatusBadRequest, "userId is invalid", err)
 	}
 
-	return hs.removeOrgUserHelper(c.Req.Context(), &org.RemoveOrgUserCommand{
+	return hs.removeOrgUserHelper(c, &org.RemoveOrgUserCommand{
 		UserID:                   userId,
 		OrgID:                    c.GetOrgID(),
 		ShouldDeleteOrphanedUser: true,
@@ -673,13 +672,19 @@ func (hs *HTTPServer) RemoveOrgUser(c *contextmodel.ReqContext) response.Respons
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
 	}
-	return hs.removeOrgUserHelper(c.Req.Context(), &org.RemoveOrgUserCommand{
+	return hs.removeOrgUserHelper(c, &org.RemoveOrgUserCommand{
 		UserID: userId,
 		OrgID:  orgId,
 	})
 }
 
-func (hs *HTTPServer) removeOrgUserHelper(ctx context.Context, cmd *org.RemoveOrgUserCommand) response.Response {
+func (hs *HTTPServer) removeOrgUserHelper(c *contextmodel.ReqContext, cmd *org.RemoveOrgUserCommand) response.Response {
+	ctx := c.Req.Context()
+	if cmd.OrgID == c.GetOrgID() && hs.Cfg.RBAC.SingleOrganization &&
+		ofClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx)) {
+		return hs.removeOrgUserUsingK8s(c, cmd)
+	}
+
 	if err := hs.orgService.RemoveOrgUser(ctx, cmd); err != nil {
 		if errors.Is(err, org.ErrLastOrgAdmin) {
 			return response.Error(http.StatusBadRequest, "Cannot remove last organization admin", nil)
@@ -701,6 +706,38 @@ func (hs *HTTPServer) removeOrgUserHelper(ctx context.Context, cmd *org.RemoveOr
 	}
 
 	return response.Success("User removed from organization")
+}
+
+// removeOrgUserUsingK8s removes an org user by deleting the namespaced User
+// resource for the caller's current org.
+func (hs *HTTPServer) removeOrgUserUsingK8s(c *contextmodel.ReqContext, cmd *org.RemoveOrgUserCommand) response.Response {
+	ctx := c.Req.Context()
+
+	targetUser, err := hs.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: cmd.UserID})
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to remove user from organization", err)
+	}
+	if targetUser.IsAdmin {
+		return response.Error(http.StatusBadRequest, "Cannot remove a Grafana server admin from their only organization", nil)
+	}
+
+	hasOtherAdmin, err := hs.orgHasOtherAdmin(c, cmd.OrgID, cmd.UserID)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to remove user from organization", err)
+	}
+	if !hasOtherAdmin {
+		return response.Error(http.StatusBadRequest, "Cannot remove last organization admin", nil)
+	}
+
+	if err := hs.userService.Delete(ctx, &user.DeleteUserCommand{UserID: cmd.UserID}); err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to remove user from organization", err)
+	}
+
+	if err := hs.accesscontrolService.DeleteUserPermissions(ctx, accesscontrol.GlobalOrgID, cmd.UserID); err != nil {
+		hs.log.Warn("failed to delete permissions for user", "userID", cmd.UserID, "orgID", accesscontrol.GlobalOrgID, "err", err)
+	}
+
+	return response.Success("User deleted")
 }
 
 // swagger:parameters addOrgUserToCurrentOrg

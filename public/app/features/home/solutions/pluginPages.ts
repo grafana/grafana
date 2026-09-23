@@ -1,7 +1,8 @@
 import { locationUtil, type DataSourceInstanceListItem, type PluginMeta } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
-import { canAccessPluginPage, isPluginEnabled, probePlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { isPluginEnabled, probePlugin } from 'app/features/alerting/unified/hooks/pluginBridgeProbe';
+import { canAccessPluginPage } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { constructDataSourceExploreUrl } from 'app/features/datasources/utils';
 
 import { PROBE_TIMEOUT_MS, withDeadline } from './probeUtils';

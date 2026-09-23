@@ -96,6 +96,12 @@ type StorageOptions struct {
 	// have no client.
 	SearchIndexClient resourcepb.ResourceIndexClient
 
+	// KeysStoreClient is the list half of the same client, kept for the list-keys
+	// endpoints on the same terms as SearchIndexClient: the narrow interface, not a
+	// general back door to unified storage. Nil until ApplyTo runs, and for storage
+	// types that have no client.
+	KeysStoreClient resourcepb.ResourceStoreClient
+
 	// {resource}.{group} = 1|2|3|4
 	UnifiedStorageConfig map[string]setting.UnifiedStorageConfig
 
@@ -302,6 +308,7 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 	}
 
 	o.SearchIndexClient = unified
+	o.KeysStoreClient = unified
 
 	serverConfig.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(unified, o.InlineSecrets, etcdOptions.StorageConfig, o.ConfigProvider, o.VersionPolicy)
 	return nil

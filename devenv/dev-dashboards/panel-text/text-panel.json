@@ -243,7 +243,7 @@
                   "showLineNumbers": false,
                   "showMiniMap": false
                 },
-                "content": "## User accounts ({{data.length}})\n\n| User | Role | Last login | Status |\n| --- | --- | --- | --- |\n{{#each data}}| **{{first_name}} {{last_name}}** | {{role}} | {{last_login_date}} | {{#if (match status \"^[Aa]ctive$\")}}\ud83d\udfe2 Active{{else}}\ud83d\udd34 {{status}}{{/if}} |\n{{/each}}\n\n### Needs attention\n\n{{#each data}}{{#unless (match status \"^[Aa]ctive$\")}}- **{{first_name}} {{last_name}}** ({{role}}) - {{status}}, last seen {{last_login_date}}\n{{/unless}}{{/each}}",
+                "content": "## User accounts ({{data.length}})\n\n| User | Role | Last login | Status |\n| --- | --- | --- | --- |\n{{#each data}}| **{{first_name}} {{last_name}}** | {{role}} | {{last_login_date}} | {{#if (match status \"^[Aa]ctive$\")}}🟢 Active{{else}}🔴 {{status}}{{/if}} |\n{{/each}}\n\n### Needs attention\n\n{{#each data}}{{#unless (match status \"^[Aa]ctive$\")}}- **{{first_name}} {{last_name}}** ({{role}}) - {{status}}, last seen {{last_login_date}}\n{{/unless}}{{/each}}",
                 "mode": "markdown",
                 "renderMode": "once"
               },
@@ -639,6 +639,75 @@
             }
           }
         }
+      },
+      "panel-9": {
+        "kind": "Panel",
+        "spec": {
+          "id": 11,
+          "title": "Pagination and frame selection",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "version": "v0",
+                      "group": "grafana-testdata-datasource",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "predictable_csv_wave",
+                        "csvWave": [
+                          {
+                            "name": "requests / 30s",
+                            "timeStep": 30,
+                            "valuesCSV": "12,18,25,33,41,36,28,19"
+                          },
+                          {
+                            "name": "requests / 1m",
+                            "timeStep": 60,
+                            "valuesCSV": "60,74,88,120,96,71"
+                          },
+                          {
+                            "name": "requests / 10m",
+                            "timeStep": 600,
+                            "valuesCSV": "480,610,540,720"
+                          }
+                        ]
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "mode": "html",
+                "renderMode": "perRow",
+                "content": "<div style=\"display:flex;gap:12px;align-items:baseline;padding:3px 8px;border-bottom:1px solid rgba(204,204,220,0.09);font-size:13px;white-space:nowrap\">\n\n  <span style=\"flex:0 0 200px;opacity:0.7\">${__data.fields.Time}</span>\n\n  <strong style=\"flex:0 0 70px;text-align:right\">${__data.fields.Value}</strong>\n\n  <em style=\"flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;opacity:0.55\">${__series.name}</em>\n\n</div>"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
       }
     },
     "layout": {
@@ -746,6 +815,19 @@
               "element": {
                 "kind": "ElementReference",
                 "name": "panel-7"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 32,
+              "width": 24,
+              "height": 10,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-9"
               }
             }
           }

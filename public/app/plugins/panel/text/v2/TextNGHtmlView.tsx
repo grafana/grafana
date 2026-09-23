@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 import DangerouslySetHtmlContent from 'dangerously-set-html-content';
 import { useRef } from 'react';
 
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import { useMermaidDiagrams } from 'app/core/hooks/useMermaidDiagrams';
 
 import { BLOCKS_ATTR } from './pagination';
+import { isTextNewFeaturesEnabled } from './utils';
 
 interface Props {
   html: string;
@@ -20,8 +20,7 @@ const hostStyle = css({ display: 'contents' });
 export function TextNGHtmlView({ html, className, testId }: Props) {
   const ref = useRef<HTMLDivElement>(null);
 
-  // Not cached: the flag value can change after the providers settle.
-  useMermaidDiagrams(ref, html, getFeatureFlagClient().getBooleanValue('text.newFeatures', false));
+  useMermaidDiagrams(ref, html, isTextNewFeaturesEnabled());
 
   return (
     // DangerouslySetHtmlContent overwrites any ref it is given, so the hook needs this wrapper.

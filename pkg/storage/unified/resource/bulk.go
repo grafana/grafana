@@ -181,8 +181,7 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 	if err != nil {
 		return sendAndClose(&resourcepb.BulkResponse{
 			Error: &resourcepb.ErrorResult{
-				Message: "error reading settings",
-				Reason:  err.Error(),
+				Message: fmt.Sprintf("error reading settings: %s", err.Error()),
 				Code:    http.StatusPreconditionFailed,
 			},
 		})

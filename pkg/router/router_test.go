@@ -325,3 +325,46 @@ func TestReadyOKWithPartialLoadFailureGivenAtLeastOneServedGroup(t *testing.T) {
 		t.Errorf("Ready() = %v, want nil (one group succeeded, so last-known-good exists)", err)
 	}
 }
+
+func TestRouterFallbackOnlyForUnregisteredGroups(t *testing.T) {
+	for _, tc := range []struct {
+		path     string
+		fallback bool
+		status   int
+	}{
+		{"/apis/unknown", true, http.StatusAccepted},
+		{"/apis/unknown/v1/namespaces/stacks-123/widgets", true, http.StatusAccepted},
+		{"/openapi/v3/apis/unknown/v1", true, http.StatusAccepted},
+		{"/apis/known/v1/namespaces/stacks-123/missing", false, http.StatusNotFound},
+		{"/apis/known/unsupported-version/widgets", false, http.StatusNotFound},
+		{"/openapi/v3/apis/known/v1", false, http.StatusNotFound},
+		{"/apis", false, http.StatusOK},
+		{"/apis/", false, http.StatusOK},
+		{"/openapi/v3", false, http.StatusOK},
+		{"/openapi/v3/", false, http.StatusOK},
+		{"/openapi/v3/apis/unknown", false, http.StatusNotFound},
+		{"/openapi/v3/apis/unknown/v1/extra", false, http.StatusNotFound},
+		{"/apis//v1/namespaces/stacks-123/widgets", false, http.StatusNotFound},
+		{"/apisfoo/unknown", false, http.StatusNotFound},
+		{"/healthz", false, http.StatusNotFound},
+	} {
+		t.Run(tc.path, func(t *testing.T) {
+			router := withGroups("known")
+			router.served["known"].handler = http.NotFoundHandler()
+			router.publish()
+			called := false
+			router.unregisteredGroupHandler = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				called = true
+				w.WriteHeader(http.StatusAccepted)
+			})
+			recorder := httptest.NewRecorder()
+			router.HandleFunc(recorder, httptest.NewRequest(http.MethodGet, tc.path, nil), http.NotFoundHandler())
+			if recorder.Code != tc.status {
+				t.Errorf("status = %d, want %d", recorder.Code, tc.status)
+			}
+			if called != tc.fallback {
+				t.Errorf("fallback called = %v, want %v", called, tc.fallback)
+			}
+		})
+	}
+}

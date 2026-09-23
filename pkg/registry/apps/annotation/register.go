@@ -12,6 +12,7 @@ import (
 	"github.com/bwmarrin/snowflake"
 	authtypes "github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -28,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apiserverrest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
@@ -45,6 +47,7 @@ type AppInstaller struct {
 	cleanupCancel context.CancelFunc
 	cleanupWg     sync.WaitGroup
 	logger        log.Logger
+	tracer        trace.Tracer
 	metrics       *Metrics
 }
 
@@ -56,8 +59,12 @@ func RegisterAppInstaller(
 	accessClient authtypes.AccessClient,
 	restConfigProvider apiserver.RestConfigProvider,
 	reg prometheus.Registerer,
+	tracer tracing.Tracer,
 ) (*AppInstaller, error) {
-	return NewAppInstaller(newConfigFromSettings(cfg), service, cleaner, accessClient, NewDashboardFolderResolver(restConfigProvider.GetRestConfig), reg)
+	config := newConfigFromSettings(cfg)
+	metrics := ProvideMetrics(reg)
+	folderResolver := NewDashboardFolderResolver(restConfigProvider.GetRestConfig, tracer, metrics, config.FolderCacheEnabled, config.FolderCacheTTL)
+	return NewAppInstaller(config, service, cleaner, accessClient, folderResolver, tracer, metrics, reg)
 }
 
 // NewAppInstaller Layers (from bottom to top):
@@ -73,15 +80,17 @@ func NewAppInstaller(
 	cleaner annotations.Cleaner,
 	accessClient authtypes.AccessClient,
 	folderResolver DashboardFolderResolver,
+	tracer trace.Tracer,
+	metrics *Metrics,
 	reg prometheus.Registerer,
 ) (*AppInstaller, error) {
 	if folderResolver == nil {
 		return nil, fmt.Errorf("annotation service requires folder resolver")
 	}
 	logger := log.New("annotation.app")
-	metrics := ProvideMetrics(reg)
 	installer := &AppInstaller{
 		logger:  logger,
+		tracer:  tracer,
 		metrics: metrics,
 	}
 
@@ -97,7 +106,7 @@ func NewAppInstaller(
 		reg.MustRegister(newPgxPoolCollector(pgStore.pool))
 	}
 
-	instrumentedStore := newInstrumentedStore(store, installer.metrics, logger)
+	instrumentedStore := newInstrumentedStore(store, installer.tracer, installer.metrics, logger)
 
 	// Start background cleanup if the store supports lifecycle management
 	if lifecycleMgr, ok := store.(LifecycleManager); ok {
@@ -115,6 +124,7 @@ func NewAppInstaller(
 
 	installer.k8sAdapter = &k8sRESTAdapter{
 		store:          instrumentedStore,
+		tracer:         installer.tracer,
 		accessClient:   accessClient,
 		folderResolver: folderResolver,
 		installer:      installer,
@@ -130,13 +140,13 @@ func NewAppInstaller(
 		// We could consider combining the TagProvider with the Store interface to avoid this type assertion?
 		return nil, fmt.Errorf("store does not implement TagProvider, cannot serve tags API")
 	}
-	tagHandler := withAPIStatusErrorResponse(newTagsHandler(tagProvider, accessClient, installer.metrics, logger))
+	tagHandler := withAPIStatusErrorResponse(newTagsHandler(tagProvider, installer.tracer, accessClient, installer.metrics, logger))
 
 	// Create the search handler
-	searchHandler := withAPIStatusErrorResponse(newSearchHandler(instrumentedStore, accessClient, folderResolver, installer.metrics, logger))
+	searchHandler := withAPIStatusErrorResponse(newSearchHandler(instrumentedStore, installer.tracer, accessClient, folderResolver, installer.metrics, logger))
 
 	// Create the graphite handler
-	graphiteHandler := withAPIStatusErrorResponse(newGraphiteHandler(installer.k8sAdapter, installer.metrics, logger))
+	graphiteHandler := withAPIStatusErrorResponse(newGraphiteHandler(installer.k8sAdapter, installer.tracer, installer.metrics, logger))
 
 	provider := simple.NewAppProvider(apis.LocalManifest(), nil, annotationapp.New)
 

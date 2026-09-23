@@ -203,6 +203,10 @@ export interface AzureLogsQuery {
    */
   intersectTime?: boolean;
   /**
+   * Discriminates which Logs tier the query targets: "Basic" or "Auxiliary". Both tiers share the /search endpoint (gated by basicLogsQuery). When basicLogsQuery is true and logTier is unset, the query is treated as Basic for back-compat with dashboards saved before Auxiliary support was added.
+   */
+  logTier?: ('Basic' | 'Auxiliary');
+  /**
    * Denotes if logs query editor is in builder mode
    */
   mode?: LogsEditorMode;

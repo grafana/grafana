@@ -196,60 +196,53 @@ func TestListKeys_RejectsUnsupportedListOptions(t *testing.T) {
 
 // Asserting the store was never called matters more than the status code: it is
 // what shows the gate runs before any read.
-func TestListKeys_ServiceIdentitiesOnly(t *testing.T) {
-	withType := func(typ claims.IdentityType) claims.AuthInfo {
-		ident := serviceIdentity()
-		ident.Type = typ
-		return ident
-	}
+func TestListKeys_RefusesWithoutIdentity(t *testing.T) {
+	store := &fakeStore{}
+	rec := do(t, store, nil, `{}`)
 
-	cases := map[string]struct {
-		ident      claims.AuthInfo
-		wantStatus int
-	}{
-		"no identity at all": {ident: nil, wantStatus: http.StatusUnauthorized},
-	}
-	cases["allowed: service identity"] = struct {
-		ident      claims.AuthInfo
-		wantStatus int
-	}{ident: serviceIdentity(), wantStatus: http.StatusOK}
+	require.Equal(t, http.StatusUnauthorized, rec.Code, rec.Body.String())
+	assert.Empty(t, store.calls, "a refused caller must not reach the store")
+}
 
-	// The sharp case: an access policy is the right type, so only the UID
-	// distinguishes the service identity from any other token.
-	other := serviceIdentity()
-	other.UserUID = "some-other-policy"
-	cases["refused: another access policy"] = struct {
-		ident      claims.AuthInfo
-		wantStatus int
-	}{ident: other, wantStatus: http.StatusForbidden}
+// An access policy is admitted whatever it is called. Service credentials are named
+// per deployment, and per cluster in multi-tenant, so a check against known names
+// refuses the very callers the endpoint exists for.
+func TestListKeys_AdmitsAnyServiceAccessPolicy(t *testing.T) {
+	ident := serviceIdentity()
+	// A real service policy: the right shape, a name no literal list holds.
+	ident.UserUID = "provisioning-connection-operator-system"
 
+	store := &fakeStore{}
+	rec := do(t, store, ident, `{}`)
+
+	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+	require.Len(t, store.calls, 1)
+	assert.Empty(t, store.calls[0].Options.Key.Namespace, "the read must stay cluster-wide")
+}
+
+// A wildcard namespace does not make a caller a service. On-behalf-of copies the
+// service token's namespace onto an identity typed as the actor (ext_jwt.go), so a
+// user can hold "*", and per-item authorization allows groups outside its RBAC
+// allowlist wholesale (resource/access.go). Without the type check those two let an
+// on-behalf-of user enumerate metadata in every tenant namespace.
+func TestListKeys_RefusesNonServiceCallersScopedToAllNamespaces(t *testing.T) {
 	for _, typ := range []claims.IdentityType{
-		claims.TypeServiceAccount,
 		claims.TypeUser,
-		claims.TypeAPIKey,
-		claims.TypeAnonymous,
+		claims.TypeServiceAccount,
 		claims.TypeRenderService,
-		claims.TypeUnauthenticated,
-		claims.TypeProvisioning,
-		claims.TypePublic,
+		claims.TypeAnonymous,
+		claims.TypeAPIKey,
 		claims.TypeEmpty,
 	} {
-		cases["refused: "+string(typ)] = struct {
-			ident      claims.AuthInfo
-			wantStatus int
-		}{ident: withType(typ), wantStatus: http.StatusForbidden}
-	}
+		t.Run(string(typ), func(t *testing.T) {
+			ident := serviceIdentity()
+			ident.Type = typ
+			require.Equal(t, "*", ident.GetNamespace(), "the scope check must not be what refuses these")
 
-	for name, tc := range cases {
-		t.Run(name, func(t *testing.T) {
 			store := &fakeStore{}
-			rec := do(t, store, tc.ident, `{}`)
-			require.Equal(t, tc.wantStatus, rec.Code, rec.Body.String())
+			rec := do(t, store, ident, `{}`)
 
-			if tc.wantStatus == http.StatusOK {
-				assert.Len(t, store.calls, 1)
-				return
-			}
+			require.Equal(t, http.StatusForbidden, rec.Code, rec.Body.String())
 			assert.Empty(t, store.calls, "a refused caller must not reach the store")
 		})
 	}
@@ -268,9 +261,6 @@ func TestListKeys_RequiresWildcardNamespaceScope(t *testing.T) {
 		"multi tenant stack":            {"stacks-1234", http.StatusForbidden},
 		"org scoped":                    {"org-3", http.StatusForbidden},
 		"unscoped":                      {"", http.StatusForbidden},
-		// The case the wildcard check exists for: WithProvisioningIdentity also
-		// satisfies IsServiceIdentity, but is scoped to one namespace.
-		"provisioning identity": {"stacks-1234", http.StatusForbidden},
 	} {
 		t.Run(name, func(t *testing.T) {
 			store := &fakeStore{}
