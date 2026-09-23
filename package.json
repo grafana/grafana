@@ -438,7 +438,7 @@
     "type-fest": "^4.18.2",
     "uplot": "1.6.32",
     "vis-data": "^8.0.0",
-    "vis-network": "10.0.2",
+    "vis-network": "10.1.2",
     "whatwg-fetch": "3.6.20"
   },
   "resolutions": {
