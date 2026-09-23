@@ -1,4 +1,3 @@
-
 import { defaultDashboard } from '@grafana/schema';
 import { defaultPanelKind, defaultSpec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { InspectTab } from 'app/features/inspector/types';
