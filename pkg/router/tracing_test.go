@@ -80,13 +80,14 @@ func TestProxyTracing(t *testing.T) {
 			var backend Backend
 			var handler http.Handler
 			var err error
-			if mode == "forward" {
+			switch mode {
+			case "forward":
 				backend, err = NewForwardBackend(group, forwardSpec(upstream.URL), "1", transport)
-			} else if mode == "aggregate" {
+			case "aggregate":
 				base, parseErr := url.Parse(upstream.URL)
 				require.NoError(t, parseErr)
 				backend, err = newAggregateBackend("test", group, base, transport)
-			} else {
+			default:
 				handler, err = newSingleTenantFallback(singleTenantFallbackOptions{
 					cacheSize: 10, transport: transport,
 					resolveHost: func(context.Context, int64) (string, error) { return upstream.URL, nil },
