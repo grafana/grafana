@@ -1,4 +1,4 @@
-import { type DataSourceInstanceSettings, type DataSourceJsonData } from '@grafana/data';
+import { type DataSourceInstanceSettings } from '@grafana/data';
 
 export const SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES = [
   'prometheus',
@@ -18,10 +18,12 @@ export function isSupportedExternalPrometheusFlavoredRulesSourceType(
   return SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES.find((t) => t === type) !== undefined;
 }
 
-export function isDataSourceAllowedAsRecordingRulesTarget(ds: DataSourceInstanceSettings<DataSourceJsonData>) {
+export type RecordingTargetCandidate = Pick<DataSourceInstanceSettings, 'type' | 'jsonData'>;
+
+export function isDataSourceAllowedAsRecordingRulesTarget(ds: Pick<RecordingTargetCandidate, 'jsonData'>): boolean {
   return ds.jsonData.allowAsRecordingRulesTarget !== false; // if this prop is undefined it defaults to true
 }
 
-export function isValidRecordingRulesTarget(ds: DataSourceInstanceSettings<DataSourceJsonData>): boolean {
+export function isValidRecordingRulesTarget(ds: RecordingTargetCandidate): boolean {
   return isSupportedExternalPrometheusFlavoredRulesSourceType(ds.type) && isDataSourceAllowedAsRecordingRulesTarget(ds);
 }
