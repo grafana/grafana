@@ -31,23 +31,34 @@ export function mockIncidents(
   return queries;
 }
 
-/** Org custom fields with a `team` select field offering the given values. */
+/** Wire shape of one incident custom field, as far as the filter dropdown reads it. */
+export interface MockIncidentField {
+  slug: string;
+  name?: string;
+  type?: string;
+  archived?: boolean;
+  selectoptions?: Array<{ value: string; archived?: boolean }>;
+}
+
+/** Org custom fields as given, plus optional org-wide archived `key:value` label pairs. */
+export function mockIncidentFields(
+  fields: MockIncidentField[],
+  { archived = [] }: { archived?: Array<{ key: string; value: string }> } = {}
+) {
+  server.use(http.post(GET_FIELDS_PATH, () => HttpResponse.json({ fields, archived })));
+}
+
+/** Org custom fields with a single `team` select field offering the given values. */
 export function mockIncidentTeamField(values: string[]) {
-  server.use(
-    http.post(GET_FIELDS_PATH, () =>
-      HttpResponse.json({
-        fields: [
-          { slug: 'severity', archived: false, selectoptions: [{ value: 'Critical' }] },
-          {
-            slug: 'team',
-            archived: false,
-            // A blank value and one with both quote kinds; neither can be offered as an option.
-            selectoptions: [...values.map((value) => ({ value })), { value: '  ' }, { value: `Ops "A" 'B'` }],
-          },
-        ],
-      })
-    )
-  );
+  mockIncidentFields([
+    {
+      slug: 'team',
+      name: 'Team',
+      type: 'single-select',
+      // A blank value and one with both quote kinds; neither can be offered as an option.
+      selectoptions: [...values.map((value) => ({ value })), { value: '  ' }, { value: `Ops "A" 'B'` }],
+    },
+  ]);
 }
 
 /** Org with no custom fields at all, so the incidents team dropdown stays hidden. */

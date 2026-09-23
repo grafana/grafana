@@ -17,7 +17,7 @@ import { useNewsFeed } from 'app/plugins/panel/news/useNewsFeed';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { ACTIVE_INCIDENTS_QUERY, mockIncidents } from './AlertsIncidents/mockIncidentsApi';
-import { ALERTS_TEAM_FILTER_STORAGE_KEY, INCIDENTS_TEAM_FILTER_STORAGE_KEY } from './AlertsIncidents/teamFilter';
+import { ALERTS_TEAM_FILTER_STORAGE_KEY, INCIDENTS_FILTER_STORAGE_KEY } from './AlertsIncidents/teamFilter';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import HomePage from './HomePage';
 import { homepageViewed } from './analytics/main';
@@ -144,14 +144,29 @@ describe('HomePage', () => {
     expect(filters[0][0]).toContain('platform');
   });
 
-  it('scopes active incidents to their own stored team, not the alerts one', async () => {
+  it('scopes active incidents to their own stored filter, not the alerts team', async () => {
     mockUsePluginBridge.mockReturnValue({
       installed: true,
       loading: false,
       settings: { ...pluginMeta[SupportedPlugin.Irm], includes: [] },
     });
     window.localStorage.setItem(ALERTS_TEAM_FILTER_STORAGE_KEY, 'backend');
-    window.localStorage.setItem(INCIDENTS_TEAM_FILTER_STORAGE_KEY, 'platform');
+    window.localStorage.setItem(INCIDENTS_FILTER_STORAGE_KEY, 'squad:Frontend');
+    const queries = mockIncidents([]);
+
+    render(<HomePage />);
+
+    await waitFor(() => expect(queries).toHaveLength(1));
+    expect(queries[0]).toBe(`${ACTIVE_INCIDENTS_QUERY} field:squad:"Frontend"`);
+  });
+
+  it('still reads a bare team name stored before the incidents filter carried a field slug', async () => {
+    mockUsePluginBridge.mockReturnValue({
+      installed: true,
+      loading: false,
+      settings: { ...pluginMeta[SupportedPlugin.Irm], includes: [] },
+    });
+    window.localStorage.setItem(INCIDENTS_FILTER_STORAGE_KEY, 'platform');
     const queries = mockIncidents([]);
 
     render(<HomePage />);

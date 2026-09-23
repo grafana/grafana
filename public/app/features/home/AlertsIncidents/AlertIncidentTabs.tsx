@@ -1,4 +1,4 @@
-import { useImperativeHandle, useRef, useState, type Ref } from 'react';
+import { useImperativeHandle, useMemo, useRef, useState, type Ref } from 'react';
 
 import { t } from '@grafana/i18n';
 import { Box, ScrollContainer, Stack, Tab, TabContent, TabsBar, Text } from '@grafana/ui';
@@ -12,11 +12,16 @@ import { CreateAndViewAlertsButtons } from './CreateAndViewAlertsButtons';
 import { DeclareAndViewIncidentsButtons } from './DeclareAndViewIncidentsButtons';
 import { FiringAlertsCard } from './FiringAlertsCard';
 import { IncidentsCard } from './IncidentsCard';
-import { TeamFilterCombobox } from './TeamFilterCombobox';
-import { type TeamSelection } from './teamFilter';
+import { TeamFilterCombobox, type TeamFilterOption } from './TeamFilterCombobox';
+import {
+  type IncidentFilterSelection,
+  type TeamSelection,
+  decodeIncidentFilter,
+  encodeIncidentFilter,
+} from './teamFilter';
 import { useAlertTeamLabelValues } from './useAlertTeamLabelValues';
 import { type FiringAlertsData } from './useFiringAlerts';
-import { useIncidentTeamValues } from './useIncidentTeamValues';
+import { useIncidentFilterOptions } from './useIncidentFilterOptions';
 import { type IncidentsData } from './useIncidents';
 
 export const ALERTS_TAB_ID = 'firing-alerts' as const;
@@ -29,6 +34,10 @@ type TabId = typeof ALERTS_TAB_ID | typeof INCIDENTS_TAB_ID;
 const PANEL_ID = 'alerts-incidents-panel';
 const tabElementId = (id: TabId) => `alerts-incidents-tab-${id}`;
 
+// Module-level so the combobox's memoized value option doesn't churn on every render.
+const staleIncidentFilterLabel = (selection: IncidentFilterSelection) =>
+  decodeIncidentFilter(selection)?.value ?? selection;
+
 export type AlertIncidentSwitchHandle = {
   switch: (tab: TabId, scroll?: boolean) => void;
 };
@@ -38,16 +47,16 @@ export function AlertIncidentTabs({
   incidentsData,
   alertsTeam,
   onAlertsTeamChange,
-  incidentsTeam,
-  onIncidentsTeamChange,
+  incidentsFilter,
+  onIncidentsFilterChange,
   switchRef,
 }: {
   alertsData: FiringAlertsData;
   incidentsData: IncidentsData;
   alertsTeam: TeamSelection;
   onAlertsTeamChange: (team: TeamSelection) => void;
-  incidentsTeam: TeamSelection;
-  onIncidentsTeamChange: (team: TeamSelection) => void;
+  incidentsFilter: IncidentFilterSelection;
+  onIncidentsFilterChange: (filter: IncidentFilterSelection) => void;
   switchRef?: Ref<AlertIncidentSwitchHandle>;
 }) {
   const canViewIncidents = !!incidentsData.enabled;
@@ -67,7 +76,22 @@ export function AlertIncidentTabs({
   } = incidentsData;
   // Fetched here rather than in the dropdown so the values survive tab switches.
   const alertTeamValues = useAlertTeamLabelValues(canViewAlerts);
-  const incidentTeamValues = useIncidentTeamValues(canViewIncidents);
+  const incidentFilterOptions = useIncidentFilterOptions(canViewIncidents);
+
+  const alertTeamOptions = useMemo<TeamFilterOption[]>(
+    () => alertTeamValues.map((value) => ({ label: value, value })),
+    [alertTeamValues]
+  );
+  // Grouped by field so a value shared across fields (e.g. "Frontend" as both team and squad) reads
+  // unambiguously. A single field needs no header: most orgs only have `team`, and a lone header is noise.
+  const incidentOptions = useMemo<TeamFilterOption[]>(() => {
+    const fieldCount = new Set(incidentFilterOptions.map((option) => option.fieldSlug)).size;
+    return incidentFilterOptions.map(({ fieldSlug, fieldName, value }) => ({
+      label: value,
+      value: encodeIncidentFilter({ slug: fieldSlug, value }),
+      group: fieldCount > 1 ? fieldName : undefined,
+    }));
+  }, [incidentFilterOptions]);
 
   const isAlertActionsVisible = canViewAlerts && !loading && !error && activeTab === ALERTS_TAB_ID;
   const isIncidentsActionsVisible =
@@ -99,8 +123,8 @@ export function AlertIncidentTabs({
         ? t('home.alerts-incidents.title-incidents', 'Incidents')
         : t('home.alerts-incidents.title-alerts', 'Alerts');
 
-  // Each tab keeps its own team selection: the two option lists rarely match, so a shared
-  // pick would often name a team the other tab's field can't hold.
+  // Each tab keeps its own selection: alerts filter by the `team` label, incidents by any
+  // custom field, so a shared pick would often name a value the other tab can't hold.
   const tabs = [
     ...(canViewAlerts
       ? [
@@ -109,11 +133,12 @@ export function AlertIncidentTabs({
             label: t('home.alerts-incidents.alert-tab-label', 'Firing alerts'),
             // Undefined while loading so the counter doesn't flash 0 before the alerts arrive.
             counter: loading ? undefined : count,
-            teamFilter: {
-              teamValues: alertTeamValues,
-              selectedTeam: alertsTeam,
+            filter: {
+              options: alertTeamOptions,
+              selected: alertsTeam,
               onChange: onAlertsTeamChange,
               offersYourTeams: hasTeams,
+              allOptionLabel: t('home.alerts-incidents.team-filter-all', 'All teams'),
               ariaLabel: t('home.alerts-incidents.team-filter-label', 'Filter alerts by team'),
             },
           },
@@ -129,19 +154,22 @@ export function AlertIncidentTabs({
             // the strictly-greater-than cap renders "{limit}+" instead of the misleading exact count.
             counter: incidentsLoading ? undefined : incidentsHasMore ? incidentsCount + 1 : incidentsCount,
             counterCappedAt: ACTIVE_INCIDENTS_QUERY_LIMIT,
-            teamFilter: {
-              teamValues: incidentTeamValues,
-              selectedTeam: incidentsTeam,
-              onChange: onIncidentsTeamChange,
+            filter: {
+              options: incidentOptions,
+              selected: incidentsFilter,
+              onChange: onIncidentsFilterChange,
               // Incidents have no "your teams" scope: the unfiltered default is every active incident.
               offersYourTeams: false,
-              ariaLabel: t('home.alerts-incidents.team-filter-label-incidents', 'Filter incidents by team'),
+              allOptionLabel: t('home.alerts-incidents.incident-filter-all', 'All incidents'),
+              // Show a stale pick by its value, not the raw `slug:value` encoding.
+              formatStaleSelection: staleIncidentFilterLabel,
+              ariaLabel: t('home.alerts-incidents.incident-filter-label', 'Filter incidents by label'),
             },
           },
         ]
       : []),
   ];
-  const teamFilter = tabs.find((tab) => tab.id === activeTab)?.teamFilter;
+  const filter = tabs.find((tab) => tab.id === activeTab)?.filter;
 
   return (
     <Stack direction="column" gap={1} minWidth={0} ref={containerRef}>
@@ -172,9 +200,9 @@ export function AlertIncidentTabs({
         <TabContent id={PANEL_ID} role="tabpanel" aria-labelledby={tabElementId(activeTab)}>
           {/* Fixed height so the section doesn't jump between tabs; the list fills whatever the filter row leaves. */}
           <Box display="flex" direction="column" height={`${DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN}px`}>
-            {teamFilter && teamFilter.teamValues.length > 0 && (
+            {filter && filter.options.length > 0 && (
               <Box paddingTop={2}>
-                <TeamFilterCombobox {...teamFilter} />
+                <TeamFilterCombobox {...filter} />
               </Box>
             )}
             <ScrollContainer showScrollIndicators>
