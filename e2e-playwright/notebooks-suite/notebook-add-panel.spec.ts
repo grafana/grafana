@@ -99,9 +99,12 @@ test.describe('Add panel to notebook from a dashboard panel', () => {
 
     // Left in view mode deliberately: "Add to notebook" writes to the notebook, not the
     // dashboard, so it's not gated on edit mode - this is the regression that gate would catch.
-    const dashboardPage = await gotoDashboardPage({ uid: 'edediimbjhdz4b/a-tall-dashboard' });
+    // A real timeseries panel with actual queries, not a text panel - every panel on the "tall
+    // dashboard" fixture other specs use for panel-menu tests is a text panel, which is a poor
+    // target for asserting a query survived the add-to-notebook round trip.
+    const dashboardPage = await gotoDashboardPage({ uid: 'gdev-view-panel-tests' });
 
-    const panelTitle = 'Panel #1';
+    const panelTitle = 'Time series panel';
     const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(panelTitle));
     await panel.hover();
     await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.menu(panelTitle)).click();
