@@ -73,6 +73,8 @@ var (
 	})
 )
 
+// SearchFunc is in practice only invoking the unified storage search grpc API due to which we handle errors from it as
+// if they were grpc errors. If other implementation are considered the error handling will need changes.
 type SearchFunc func(ctx context.Context, orgID int64, request *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error)
 
 // SearchAll executes a search request and paginates through all results by incrementing the offset until the offset is greater than total hits
@@ -85,7 +87,7 @@ func SearchAll(ctx context.Context, orgID int64, request *resourcepb.ResourceSea
 	request.Offset = int64(0)
 
 	res, err := searchFn(ctx, orgID, request)
-	if err != nil {
+	if err := resource.StatusErrorFromResponse(res.GetError(), err); err != nil {
 		return v0alpha1.SearchResults{}, err
 	}
 	results, err := ParseResults(res, 0)
@@ -97,7 +99,7 @@ func SearchAll(ctx context.Context, orgID int64, request *resourcepb.ResourceSea
 	request.Page++
 	for request.Offset < res.TotalHits {
 		res, err = searchFn(ctx, orgID, request)
-		if err != nil {
+		if err := resource.StatusErrorFromResponse(res.GetError(), err); err != nil {
 			return v0alpha1.SearchResults{}, err
 		}
 

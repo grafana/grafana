@@ -3,11 +3,15 @@ package dashboardsearch
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -214,6 +218,119 @@ func makeResponse(names []string, totalHits int64) *resourcepb.ResourceSearchRes
 		},
 		TotalHits: totalHits,
 	}
+}
+
+func TestSearchAll_EmbeddedErrorOnFirstPage(t *testing.T) {
+	failure := dashboardSearchRateLimitResult()
+	calls := 0
+	searchFn := func(_ context.Context, _ int64, _ *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+		calls++
+		return &resourcepb.ResourceSearchResponse{Error: failure}, nil
+	}
+	request := &resourcepb.ResourceSearchRequest{Limit: 1}
+
+	results, err := SearchAll(context.Background(), 1, request, searchFn)
+
+	requireDashboardSearchRateLimitStatus(t, err)
+	require.Empty(t, results.Hits)
+	require.Equal(t, 1, calls)
+}
+
+func TestSearchAll_GRPCErrorOnFirstPage(t *testing.T) {
+	failure := wrappedDashboardSearchRateLimitGRPCError(t)
+	calls := 0
+	searchFn := func(_ context.Context, _ int64, _ *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+		calls++
+		return nil, failure
+	}
+	request := &resourcepb.ResourceSearchRequest{Limit: 1}
+
+	results, err := SearchAll(context.Background(), 1, request, searchFn)
+
+	requireDashboardSearchRateLimitStatus(t, err)
+	require.Empty(t, results.Hits)
+	require.Equal(t, 1, calls)
+}
+
+func TestSearchAll_EmbeddedErrorOnSecondPage(t *testing.T) {
+	failure := dashboardSearchRateLimitResult()
+	calls := 0
+	searchFn := func(_ context.Context, _ int64, _ *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+		calls++
+		if calls == 1 {
+			return makeResponse([]string{"dashboard-1"}, 2), nil
+		}
+		return &resourcepb.ResourceSearchResponse{Error: failure}, nil
+	}
+	request := &resourcepb.ResourceSearchRequest{Limit: 1}
+
+	results, err := SearchAll(context.Background(), 1, request, searchFn)
+
+	requireDashboardSearchRateLimitStatus(t, err)
+	require.Empty(t, results.Hits, "the first page must not be returned as a complete result")
+	require.Equal(t, 2, calls)
+}
+
+func TestSearchAll_GRPCErrorOnSecondPage(t *testing.T) {
+	failure := wrappedDashboardSearchRateLimitGRPCError(t)
+	calls := 0
+	searchFn := func(_ context.Context, _ int64, _ *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+		calls++
+		if calls == 1 {
+			return makeResponse([]string{"dashboard-1"}, 2), nil
+		}
+		return nil, failure
+	}
+	request := &resourcepb.ResourceSearchRequest{Limit: 1}
+
+	results, err := SearchAll(context.Background(), 1, request, searchFn)
+
+	requireDashboardSearchRateLimitStatus(t, err)
+	require.Empty(t, results.Hits, "the first page must not be returned as a complete result")
+	require.Equal(t, 2, calls)
+}
+
+func dashboardSearchRateLimitResult() *resourcepb.ErrorResult {
+	return &resourcepb.ErrorResult{
+		Code:    http.StatusTooManyRequests,
+		Reason:  string(metav1.StatusReasonTooManyRequests),
+		Message: "search is busy",
+		Details: &resourcepb.ErrorDetails{
+			Name:              "dashboard",
+			Group:             "dashboard.grafana.app",
+			Kind:              "dashboards",
+			Uid:               "uid",
+			RetryAfterSeconds: 12,
+		},
+	}
+}
+
+func wrappedDashboardSearchRateLimitGRPCError(t *testing.T) error {
+	t.Helper()
+
+	grpcStatus, err := status.New(codes.ResourceExhausted, "search is busy").WithDetails(dashboardSearchRateLimitResult())
+	require.NoError(t, err)
+	return fmt.Errorf("search: %w", grpcStatus.Err())
+}
+
+func requireDashboardSearchRateLimitStatus(t *testing.T, err error) {
+	t.Helper()
+
+	var apiStatus apierrors.APIStatus
+	require.ErrorAs(t, err, &apiStatus)
+	require.Equal(t, metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusTooManyRequests,
+		Reason:  metav1.StatusReasonTooManyRequests,
+		Message: "search is busy",
+		Details: &metav1.StatusDetails{
+			Name:              "dashboard",
+			Group:             "dashboard.grafana.app",
+			Kind:              "dashboards",
+			UID:               "uid",
+			RetryAfterSeconds: 12,
+		},
+	}, apiStatus.Status())
 }
 
 func TestSearchAll(t *testing.T) {
