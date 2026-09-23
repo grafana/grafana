@@ -8,6 +8,7 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 
 import { useAlertManagersByPermission } from '../hooks/useAlertManagerSources';
+import { useRouteProxyStatus } from '../plugin-proxy/withRouteProxy';
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from '../utils/constants';
 import {
   type AlertManagerDataSource,
@@ -42,6 +43,13 @@ const AlertmanagerProvider = ({ children, accessType, alertmanagerSourceName }: 
   const allAvailableAlertManagers = useAlertManagersByPermission(accessType);
   const localStorageKey = getOrgAlertmanagerLocalStorageKey(config.bootData.user.orgId);
 
+  // When external Alertmanagers are handed to the Prometheus Alerting plugin, only a URL with
+  // ?alertmanager= gets redirected there. Nav links don't carry it, so a remembered external choice
+  // would quietly open here instead. We also hold off while the plugin check is still out, so the
+  // page doesn't start loading from an Alertmanager it's about to let go of.
+  const routeProxy = useRouteProxyStatus();
+  const externalGoesToPlugin = routeProxy.active || routeProxy.loading;
+
   const availableAlertManagers = React.useMemo(() => {
     const regularAlertManagers = allAvailableAlertManagers.availableInternalDataSources.concat(
       allAvailableAlertManagers.availableExternalDataSources
@@ -70,25 +78,32 @@ const AlertmanagerProvider = ({ children, accessType, alertmanagerSourceName }: 
         store.delete(localStorageKey);
         updateQueryParams({ [ALERTMANAGER_NAME_QUERY_KEY]: undefined });
       } else {
-        store.set(localStorageKey, selectedAlertManager);
+        if (!externalGoesToPlugin) {
+          store.set(localStorageKey, selectedAlertManager);
+        }
         updateQueryParams({ [ALERTMANAGER_NAME_QUERY_KEY]: selectedAlertManager });
       }
     },
-    [availableAlertManagers, localStorageKey, updateQueryParams]
+    [availableAlertManagers, externalGoesToPlugin, localStorageKey, updateQueryParams]
   );
 
   const sourceFromQuery = queryParams.get(ALERTMANAGER_NAME_QUERY_KEY);
-  const sourceFromStore = store.get(localStorageKey);
+  const storedSource: string | undefined = store.get(localStorageKey);
+  const sourceFromStore = externalGoesToPlugin && storedSource !== GRAFANA_RULES_SOURCE_NAME ? undefined : storedSource;
   const defaultSource = GRAFANA_RULES_SOURCE_NAME;
 
   // This overrides AM in the store to be in sync with the one in the URL
   // When the user uses multiple tabs with different AMs, the store will be changing all the time
   // It's safest to always use URLs with alertmanager query param
   React.useEffect(() => {
-    if (sourceFromQuery && sourceFromQuery !== sourceFromStore) {
-      store.set(localStorageKey, sourceFromQuery);
+    if (!sourceFromQuery || sourceFromQuery === storedSource) {
+      return;
     }
-  }, [localStorageKey, sourceFromQuery, sourceFromStore]);
+    if (externalGoesToPlugin && sourceFromQuery !== GRAFANA_RULES_SOURCE_NAME) {
+      return;
+    }
+    store.set(localStorageKey, sourceFromQuery);
+  }, [externalGoesToPlugin, localStorageKey, sourceFromQuery, storedSource]);
 
   // queryParam > localStorage > default
   const desiredAlertmanager = alertmanagerSourceName ?? sourceFromQuery ?? sourceFromStore ?? defaultSource;
@@ -103,10 +118,10 @@ const AlertmanagerProvider = ({ children, accessType, alertmanagerSourceName }: 
 
   // Clean up stale org-scoped key if the stored value no longer resolves to an available AM
   React.useEffect(() => {
-    if (sourceFromStore && !isAlertManagerAvailable(availableAlertManagers, sourceFromStore)) {
+    if (storedSource && !isAlertManagerAvailable(availableAlertManagers, storedSource)) {
       store.delete(localStorageKey);
     }
-  }, [availableAlertManagers, localStorageKey, sourceFromStore]);
+  }, [availableAlertManagers, localStorageKey, storedSource]);
 
   const selectedAlertmanagerConfig = React.useMemo(() => {
     return selectedAlertmanager ? getAlertmanagerDataSourceByName(selectedAlertmanager)?.jsonData : undefined;
