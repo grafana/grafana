@@ -200,6 +200,10 @@ function NotificationPolicyRecipient({
     ? (routingTrees?.items?.find((tree) => tree.metadata.name === value.routingTree) ?? null)
     : null;
 
+  // A deleted/inaccessible tree also resolves selectedTree to null - warn instead of silently
+  // showing "Default policy" for it, without clearing the caller's actual value.
+  const isTreeNotFound = Boolean(value?.routingTree) && !isResolvingTree && !selectedTree;
+
   const handleChange = (tree: RoutingTree | null) => {
     if (!tree || !tree.metadata.name || isDefaultRoutingTree(tree)) {
       onChange(null);
@@ -222,11 +226,22 @@ function NotificationPolicyRecipient({
   }
 
   return (
-    <RoutingTreePicker
-      value={selectedTree}
-      onChange={handleChange}
-      instancesToPreview={instancesToPreview}
-      viewPoliciesHref={viewPoliciesHref}
-    />
+    <Stack direction="column" gap={1}>
+      {isTreeNotFound && (
+        <Alert
+          severity="warning"
+          title={t(
+            'alerting.recipient-picker.routing-tree-not-found',
+            'The previously selected notification policy could not be found — it may have been deleted'
+          )}
+        />
+      )}
+      <RoutingTreePicker
+        value={selectedTree}
+        onChange={handleChange}
+        instancesToPreview={instancesToPreview}
+        viewPoliciesHref={viewPoliciesHref}
+      />
+    </Stack>
   );
 }

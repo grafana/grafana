@@ -140,4 +140,36 @@ describe('SimplifiedRoutingFields', () => {
     expect(screen.getByLabelText(/mute timings/i)).toBeDisabled();
     expect(screen.getByRole('switch', { name: /override grouping/i })).toBeDisabled();
   });
+
+  it('expands the section when a value with overrides arrives after mount, not just at mount time', () => {
+    // The real caller loads an existing rule via `useQuery` and only has `value` once it resolves -
+    // the section must react to that later value, not just whatever `value` was on first render.
+    const { renderResult } = renderField();
+
+    expect(screen.queryByLabelText(/^group wait$/i)).not.toBeInTheDocument();
+
+    renderResult.rerender(<SimplifiedRoutingFields value={{ groupWait: '1m' }} onChange={jest.fn()} />);
+
+    expect(screen.getByLabelText(/^group wait$/i)).toBeInTheDocument();
+  });
+
+  it('turns the override toggle on when its value arrives after mount, without needing a user click', () => {
+    // Start already expanded (via muteTimeIntervals) so this isolates the toggle-sync fix from the
+    // section-expand fix covered above.
+    const { renderResult } = renderField({ value: { muteTimeIntervals: ['weekends'] } });
+
+    expect(screen.getByText(/grouping:/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/^group by$/i)).not.toBeInTheDocument();
+
+    renderResult.rerender(
+      <SimplifiedRoutingFields
+        value={{ muteTimeIntervals: ['weekends'], groupBy: ['grafana_folder', 'alertname', 'team'] }}
+        onChange={jest.fn()}
+      />
+    );
+
+    expect(screen.queryByText(/grouping:/i)).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/^group by$/i)).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: /override grouping/i })).toBeChecked();
+  });
 });

@@ -31,6 +31,7 @@
       "contact-point-description": "Notifications for firing alerts are routed to a selected contact point.",
       "contact-points-error": "Could not load contact points",
       "manage-contact-points": "View or create contact points",
+      "routing-tree-not-found": "The previously selected notification policy could not be found — it may have been deleted",
       "routing-trees-error": "Could not load notification policies",
       "timings-disabled": "Select a contact point first"
     },

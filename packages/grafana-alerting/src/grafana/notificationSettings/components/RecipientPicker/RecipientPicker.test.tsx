@@ -100,6 +100,13 @@ describe('RecipientPicker', () => {
     expect(screen.queryByText(/default policy/i)).not.toBeInTheDocument();
   });
 
+  it('warns instead of silently defaulting when the referenced routing tree no longer exists', async () => {
+    renderPicker({ mode: 'notificationPolicy', value: { type: 'NamedRoutingTree', routingTree: 'deleted-tree' } });
+
+    expect(await screen.findByText(/could not be found/i)).toBeInTheDocument();
+    expect(screen.getByText(/default policy/i)).toBeInTheDocument();
+  });
+
   it('emits null when resetting an existing named policy back to default', async () => {
     const onChange = jest.fn();
     const { user } = renderPicker({

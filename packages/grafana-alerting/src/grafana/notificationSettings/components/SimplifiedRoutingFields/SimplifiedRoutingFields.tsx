@@ -42,15 +42,34 @@ export function SimplifiedRoutingFields({ value, onChange, disabledReason }: Sim
   const { currentData: timeIntervals, isError: isTimeIntervalsError } = useListTimeIntervals();
   const disabled = Boolean(disabledReason);
 
-  const [overrideGrouping, setOverrideGrouping] = useState(() => Boolean(value.groupBy?.length));
-  const [overrideTimings, setOverrideTimings] = useState(() =>
-    Boolean(value.groupWait || value.groupInterval || value.repeatInterval)
-  );
+  const groupingOverridden = Boolean(value.groupBy?.length);
+  const timingsOverridden = Boolean(value.groupWait || value.groupInterval || value.repeatInterval);
+
+  const [overrideGrouping, setOverrideGrouping] = useState(groupingOverridden);
+  const [overrideTimings, setOverrideTimings] = useState(timingsOverridden);
+
+  // Local state drives a user's own click; this resyncs it when `value` itself changes, so a rule
+  // loaded asynchronously after mount (the `useQuery` then `value={data ?? null}` pattern) still shows.
+  useEffect(() => {
+    setOverrideGrouping(groupingOverridden);
+  }, [groupingOverridden]);
+
+  useEffect(() => {
+    setOverrideTimings(timingsOverridden);
+  }, [timingsOverridden]);
+
   const hasRouteSettings =
     overrideGrouping ||
     overrideTimings ||
+    groupingOverridden ||
+    timingsOverridden ||
     Boolean(value.muteTimeIntervals?.length) ||
     Boolean(value.activeTimeIntervals?.length);
+
+  const [isSectionOpen, setIsSectionOpen] = useState(hasRouteSettings);
+  useEffect(() => {
+    setIsSectionOpen(hasRouteSettings);
+  }, [hasRouteSettings]);
 
   // Mirrors RouteSettings.tsx's own effect: seed the required labels on opt-in, rather than
   // starting empty (which would mean "group by nothing", not "the defaults plus whatever you add").
@@ -70,7 +89,8 @@ export function SimplifiedRoutingFields({ value, onChange, disabledReason }: Sim
     <div className={styles.routingSection}>
       <CollapsableSection
         label={t('alerting.simplified-routing-fields.toggle', 'Muting, grouping and timings (optional)')}
-        isOpen={hasRouteSettings}
+        isOpen={isSectionOpen}
+        onToggle={setIsSectionOpen}
         className={styles.collapsableSection}
         contentClassName={styles.collapsableSectionContent}
       >
