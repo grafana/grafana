@@ -19,6 +19,22 @@ import (
 // reconcile running with a stale informer cache can overwrite the PullStatus the
 // sync worker just wrote). Emitting per-condition ops (`add /-` for new types,
 // `replace /<index>` for changed types) leaves unrelated conditions untouched.
+// ConditionChanged reports whether newCondition differs (by Status, Reason, or Message)
+// from the matching condition already stored in existingConditions. Used to trigger a
+// reconcile pass for a repository whose condition changed for a reason the trigger
+// switch in RepositoryController.process does not otherwise catch - e.g. a PathConflict
+// condition that changed only because a different repository was created, updated, or
+// deleted, not because anything about this repository's own spec/health/quota changed.
+func ConditionChanged(existingConditions []metav1.Condition, newCondition metav1.Condition) bool {
+	existing := meta.FindStatusCondition(existingConditions, newCondition.Type)
+	if existing == nil {
+		return true
+	}
+	return existing.Status != newCondition.Status ||
+		existing.Reason != newCondition.Reason ||
+		existing.Message != newCondition.Message
+}
+
 func BuildConditionPatchOpsFromExisting(existingConditions []metav1.Condition, generation int64, newConditions ...metav1.Condition) []map[string]interface{} {
 	// When the conditions array has never been initialized, a single whole-array
 	// replace both creates the array and seeds it. JSON Patch `add /path/-` requires

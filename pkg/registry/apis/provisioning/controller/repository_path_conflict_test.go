@@ -29,11 +29,13 @@ func TestRepositoryPathConflictCondition(t *testing.T) {
 	}
 
 	tests := []struct {
-		name           string
-		cfg            *provisioning.Repository
-		others         []*provisioning.Repository
-		expectedStatus metav1.ConditionStatus
-		expectedReason string
+		name             string
+		cfg              *provisioning.Repository
+		others           []*provisioning.Repository
+		expectedStatus   metav1.ConditionStatus
+		expectedReason   string
+		expectedInMsg    []string // every one of these must appear in condition.Message
+		notExpectedInMsg []string // none of these may appear in condition.Message
 	}{
 		{
 			name:           "no other repositories",
@@ -48,8 +50,9 @@ func TestRepositoryPathConflictCondition(t *testing.T) {
 			others: []*provisioning.Repository{
 				gitRepo("other-repo", "https://github.com/org/other", "main", "grafana"),
 			},
-			expectedStatus: metav1.ConditionTrue,
-			expectedReason: provisioning.ReasonNoPathConflict,
+			expectedStatus:   metav1.ConditionTrue,
+			expectedReason:   provisioning.ReasonNoPathConflict,
+			notExpectedInMsg: []string{"other-repo"},
 		},
 		{
 			name: "duplicate path - this is a warning, not a block",
@@ -59,6 +62,7 @@ func TestRepositoryPathConflictCondition(t *testing.T) {
 			},
 			expectedStatus: metav1.ConditionFalse,
 			expectedReason: provisioning.ReasonPathConflict,
+			expectedInMsg:  []string{"existing-repo"},
 		},
 		{
 			name: "overlapping parent/child path",
@@ -68,6 +72,28 @@ func TestRepositoryPathConflictCondition(t *testing.T) {
 			},
 			expectedStatus: metav1.ConditionFalse,
 			expectedReason: provisioning.ReasonPathConflict,
+			expectedInMsg:  []string{"existing-repo"},
+		},
+		{
+			// new-repo (path "grafana/dashboards") conflicts with all three others at once:
+			// an exact duplicate and two ancestor/descendant overlaps. The message must name
+			// every conflicting repository, not just whichever one a single-match check
+			// happens to find first in an unordered list.
+			name: "conflicts with multiple repositories at once - all are named",
+			cfg:  gitRepo("new-repo", "https://github.com/org/repo", "main", "grafana/dashboards"),
+			others: []*provisioning.Repository{
+				gitRepo("zebra-duplicate", "https://github.com/org/repo", "main", "grafana/dashboards"),
+				gitRepo("apple-duplicate", "https://github.com/org/repo", "main", "grafana/dashboards"),
+				gitRepo("parent-overlap", "https://github.com/org/repo", "main", "grafana"),
+				gitRepo("child-overlap", "https://github.com/org/repo", "main", "grafana/dashboards/nested"),
+				gitRepo("unrelated", "https://github.com/org/repo", "main", "totally/different"),
+			},
+			expectedStatus: metav1.ConditionFalse,
+			expectedReason: provisioning.ReasonPathConflict,
+			expectedInMsg: []string{
+				"zebra-duplicate", "apple-duplicate", "parent-overlap", "child-overlap",
+			},
+			notExpectedInMsg: []string{"unrelated"},
 		},
 	}
 
@@ -88,6 +114,12 @@ func TestRepositoryPathConflictCondition(t *testing.T) {
 			assert.Equal(t, tt.expectedStatus, condition.Status)
 			assert.Equal(t, tt.expectedReason, condition.Reason)
 			assert.NotEmpty(t, condition.Message)
+			for _, name := range tt.expectedInMsg {
+				assert.Contains(t, condition.Message, name)
+			}
+			for _, name := range tt.notExpectedInMsg {
+				assert.NotContains(t, condition.Message, name)
+			}
 		})
 	}
 }
