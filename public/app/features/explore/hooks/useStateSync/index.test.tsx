@@ -84,8 +84,8 @@ function setup({ queryParams = {}, datasourceGetter = defaultDsGetter }: SetupPa
   const location = new HistoryWrapper(history);
 
   const datasources = [
-    makeDatasourceSetup({ name: 'loki', uid: 'loki-uid' }),
-    makeDatasourceSetup({ name: 'elastic', uid: 'elastic-uid' }),
+    makeDatasourceSetup({ name: 'loki', uid: 'loki-uid', pluginId: 'logs' }),
+    makeDatasourceSetup({ name: 'elastic', uid: 'elastic-uid', pluginId: 'logs' }),
     makeDatasourceSetup({ name: MIXED_DATASOURCE_NAME, uid: MIXED_DATASOURCE_NAME, id: 999 }),
   ];
 

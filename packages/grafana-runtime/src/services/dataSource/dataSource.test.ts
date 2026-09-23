@@ -10,6 +10,8 @@ import { TracedError } from '../../utils/TracedError';
 import { RuntimeDataSource } from '../RuntimeDataSource';
 import { type DataSourceSrv, setDataSourceSrv } from '../dataSourceSrv';
 import { setLogger } from '../logging/registry';
+import * as datasourceMetas from '../pluginMeta/datasources';
+import { setDatasourcePluginMetas } from '../pluginMeta/datasources';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
 import { FALLBACK_TO_LEGACY_INSTANCE_WARNING, PLUGIN_CACHE_UID_MISMATCH_WARNING } from './constants';
@@ -22,6 +24,7 @@ import {
 import { setExpressionDataSourceInstance } from './expressionDs';
 import { _resetForTests as resetPluginCache } from './pluginCache';
 import {
+  getDataSourceInstanceSettings,
   reloadDataSourceInstanceSettings,
   setDataSourceInstanceSettings,
   syncDataSourceInstanceSettings,
@@ -69,6 +72,7 @@ const logWarning = jest.fn();
 beforeEach(() => {
   resetPlugin();
   resetPluginCache();
+  setDatasourcePluginMetas({ 'test-db': ds().meta });
   logError.mockClear();
   logWarning.mockClear();
   setLogger('grafana/runtime.plugins.datasource', {
@@ -448,8 +452,9 @@ describe('plugin', () => {
       });
     });
 
-    it('passes settings.meta to the importer', async () => {
+    it('falls back to settings.meta when the plugin metadata cache misses', async () => {
       const settings = ds();
+      setDatasourcePluginMetas({ unrelated: { ...settings.meta, id: 'unrelated' } });
       setDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
 
       const mockImport = jest.fn().mockResolvedValue({
@@ -460,7 +465,85 @@ describe('plugin', () => {
 
       await getDataSourceInstance(settings.uid);
 
-      expect(mockImport).toHaveBeenCalledWith(settings.meta);
+      const cachedSettings = await getDataSourceInstanceSettings(settings.uid);
+      expect(mockImport.mock.calls[0][0]).toBe(cachedSettings?.meta);
+    });
+
+    it.each([
+      { type: 'test-db', name: 'Alpha', pluginId: 'test-db' },
+      { type: 'datasource', name: '-- Grafana --', pluginId: 'grafana' },
+      { type: 'loki-alias', name: 'Aliased Loki', pluginId: 'loki' },
+    ])(
+      'imports cached plugin metadata for $type and patches legacy plugins consistently',
+      async ({ type, name, pluginId }) => {
+        const settings = ds({ type, name });
+        const meta = { ...settings.meta, id: pluginId, module: 'plugin/module', aliasIDs: ['loki-alias'] };
+        setDatasourcePluginMetas({ [pluginId]: meta });
+        setDataSourceInstanceSettings({ [name]: settings });
+        const instance = {};
+        const DataSourceClass = jest.fn().mockReturnValue(instance);
+        const importer = jest.fn().mockResolvedValue({ DataSourceClass, components: {} });
+        setDataSourcePluginImporter(importer);
+
+        const result = await getDataSourceInstance(settings.uid);
+
+        expect(result).toBe(instance);
+        expect(importer).toHaveBeenCalledWith(meta);
+        expect(DataSourceClass).toHaveBeenCalledWith(settings);
+        expect(result.meta).toEqual(meta);
+        expect(result.type).toBe(type === 'datasource' ? 'grafana' : type);
+        expect(result.getRef()).toEqual({ uid: 'uid-alpha', type: type === 'datasource' ? 'grafana' : type });
+      }
+    );
+
+    it('shares metadata resolution for concurrent loads of one uid and reloads after invalidation', async () => {
+      const settings = ds();
+      setDataSourceInstanceSettings({ [settings.name]: settings });
+      const resolveMeta = jest.spyOn(datasourceMetas, 'getDatasourcePluginMeta');
+      const instance = Object.create(DataSourceApi.prototype) as DataSourceApi;
+      const importer = jest
+        .fn()
+        .mockResolvedValue({ DataSourceClass: jest.fn().mockReturnValue(instance), components: {} });
+      setDataSourcePluginImporter(importer);
+
+      try {
+        const results = await Promise.all([getDataSourceInstance(settings.uid), getDataSourceInstance(settings.uid)]);
+        expect(results).toEqual([instance, instance]);
+        expect(await getDataSourceInstance(settings.uid)).toBe(instance);
+        expect(resolveMeta).toHaveBeenCalledTimes(1);
+        expect(importer).toHaveBeenCalledTimes(1);
+
+        syncDataSourceInstanceSettings({
+          datasources: { [settings.name]: settings },
+          defaultDatasource: settings.name,
+        });
+        expect(await getDataSourceInstance(settings.uid)).toBe(instance);
+        expect(resolveMeta).toHaveBeenCalledTimes(2);
+      } finally {
+        resolveMeta.mockRestore();
+      }
+    });
+
+    it('retries a failed import using refreshed plugin metadata', async () => {
+      const settings = ds();
+      setDataSourceInstanceSettings({ [settings.name]: settings });
+      const instance = Object.create(DataSourceApi.prototype) as DataSourceApi;
+      const importer = jest
+        .fn()
+        .mockRejectedValueOnce(new Error('unavailable'))
+        .mockResolvedValue({
+          DataSourceClass: jest.fn().mockReturnValue(instance),
+          components: {},
+        });
+      setDataSourcePluginImporter(importer);
+
+      await expect(getDataSourceInstance(settings.uid)).rejects.toThrow('unavailable');
+      const refreshedMeta = { ...settings.meta, module: 'refreshed/module' };
+      setDatasourcePluginMetas({ 'test-db': refreshedMeta });
+
+      expect(await getDataSourceInstance(settings.uid)).toBe(instance);
+      expect(importer).toHaveBeenLastCalledWith(refreshedMeta);
+      expect(importer).toHaveBeenCalledTimes(2);
     });
 
     it('patches legacy plugins that do not extend DataSourceApi', async () => {
