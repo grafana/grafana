@@ -112,7 +112,7 @@ export function createTypography(colors: ThemeColors, typographyInput: ThemeTypo
 
   // All our fonts/line heights should be integer multiples of 2 to prevent issues with alignment
   const variants = {
-    '2xl': buildVariant(fontFamily, fontWeightBold, 24, 34, -0.3),
+    xxl: buildVariant(fontFamily, fontWeightBold, 24, 34, -0.3),
     xl: buildVariant(fontFamily, fontWeightBold, 22, 30, -0.2),
     lg: buildVariant(fontFamily, fontWeightMedium, 20, 26),
     md: buildVariant(fontFamily, fontWeightMedium, 16, 22),
@@ -159,7 +159,7 @@ function round(value: number) {
 }
 
 export interface ThemeTypographyVariantTypes {
-  ['2xl']: ThemeTypographyVariant;
+  xxl: ThemeTypographyVariant;
   xl: ThemeTypographyVariant;
   lg: ThemeTypographyVariant;
   md: ThemeTypographyVariant;
@@ -167,7 +167,7 @@ export interface ThemeTypographyVariantTypes {
   sm: ThemeTypographyVariant;
   code: ThemeTypographyVariant;
 
-  /** @deprecated use `2xl` instead */
+  /** @deprecated use `xxl` instead */
   h1: ThemeTypographyVariant;
   /** @deprecated use `xl` instead */
   h2: ThemeTypographyVariant;

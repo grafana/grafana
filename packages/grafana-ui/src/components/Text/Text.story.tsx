@@ -19,7 +19,7 @@ const meta: Meta = {
   argTypes: {
     variant: {
       control: 'select',
-      options: ['2xl', 'xl', 'lg', 'md', 'base', 'sm', 'code', undefined],
+      options: ['xxl', 'xl', 'lg', 'md', 'base', 'sm', 'code', undefined],
     },
     weight: {
       control: 'select',
