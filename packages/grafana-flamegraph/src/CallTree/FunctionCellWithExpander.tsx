@@ -173,14 +173,6 @@ function getStyles(theme: GrafanaTheme2) {
       minWidth: 0,
     }),
     functionButton: css({
-      // Matches the top table, where the symbol is a data link. A text button would otherwise default to
-      // the accent variant, which the refresh turns orange on every row.
-      color: theme.colors.text.link,
-      '&:hover, &:focus': {
-        color: theme.colors.text.link,
-        background: 'transparent',
-        textDecoration: 'underline',
-      },
       padding: 0,
       fontSize: theme.typography.fontSize,
       textAlign: 'left',
