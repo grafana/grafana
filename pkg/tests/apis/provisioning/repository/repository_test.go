@@ -2065,10 +2065,12 @@ func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
 		// Step 2: Create second repository with same URL, branch, and empty path. Empty path
 		// represents the repository root, so this is a duplicate path - creation still succeeds,
 		// and the second repository only gets a non-blocking path-conflict warning rather than
-		// being rejected outright.
+		// being rejected outright. Sync stays disabled: PathConflict is detected independently of
+		// sync state, and enabling it would race the finalizer's orphan cleanup against the sync
+		// job actually creating repo2's copy of repo1's tree when the test deletes repo2 below.
 		secondRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
 			"Name":          repo2,
-			"SyncEnabled":   true,
+			"SyncEnabled":   false,
 			"SyncTarget":    "folder",
 			"WorkflowsJSON": `[]`,
 		})

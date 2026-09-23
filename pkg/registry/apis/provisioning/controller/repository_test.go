@@ -1904,6 +1904,20 @@ func TestRepositoryController_process_UserCausedBuildFailure(t *testing.T) {
 	require.NotNil(t, readyCond, "expected Ready condition to be present")
 	assert.Equal(t, metav1.ConditionFalse, readyCond.Status)
 	assert.Equal(t, provisioning.ReasonAuthenticationFailed, readyCond.Reason)
+
+	// PathConflict (and quota) are computed before Build is ever attempted, independently of
+	// whether the repository client can be constructed, so a build failure - which may persist
+	// indefinitely, e.g. expired credentials - must not prevent them from being persisted.
+	var pathConflictCond *metav1.Condition
+	for i := range conditions {
+		if conditions[i].Type == provisioning.ConditionTypePathConflict {
+			pathConflictCond = &conditions[i]
+			break
+		}
+	}
+	require.NotNil(t, pathConflictCond, "expected PathConflict condition to be present despite the build failure")
+	assert.Equal(t, metav1.ConditionTrue, pathConflictCond.Status)
+	assert.Equal(t, provisioning.ReasonNoPathConflict, pathConflictCond.Reason)
 }
 
 // TestRepositoryController_process_RecordsReconcileErrorPhase drives process()

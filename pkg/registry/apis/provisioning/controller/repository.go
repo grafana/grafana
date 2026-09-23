@@ -1237,10 +1237,14 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			}
 			patchOperations = append(patchOperations, rc.healthPatchIfChanged(obj, buildHealthStatus)...)
 
-			// Patch status so user can see errors
+			// Patch status so user can see errors. quotaCondition and pathConflictCondition
+			// are computed independently of building the repository client, so persist them
+			// here too - otherwise a build failure that persists indefinitely (e.g. expired
+			// credentials) means this repository's Quota/PathConflict conditions are never
+			// written, since the only other place that patches them is unreachable below.
 			readyCondition := buildReadyConditionWithReason(buildHealthStatus, classifyBuildFailureReason(err))
 			if conditionPatchOps := BuildConditionPatchOpsFromExisting(
-				obj.Status.Conditions, obj.GetGeneration(), readyCondition,
+				obj.Status.Conditions, obj.GetGeneration(), quotaCondition, pathConflictCondition, readyCondition,
 			); conditionPatchOps != nil {
 				patchOperations = append(patchOperations, conditionPatchOps...)
 			}
