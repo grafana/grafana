@@ -1,3 +1,6 @@
+// Dependencies may use Trusted Types sinks during module initialization.
+import './trustedTypes';
+
 declare let __webpack_public_path__: string;
 declare let __webpack_nonce__: string;
 
@@ -16,21 +19,9 @@ if (window.nonce) {
 
 import 'swagger-ui-react/swagger-ui.css';
 
-import DOMPurify from 'dompurify';
 import { createRoot } from 'react-dom/client';
 
-import { enforcingTrustedTypesPolicy } from 'app/core/trustedTypesPolicy';
-
 import { Page } from './SwaggerPage';
-
-// Use dom purify for the default policy
-const tt = window.trustedTypes;
-if (tt?.createPolicy) {
-  tt.createPolicy('default', {
-    ...enforcingTrustedTypesPolicy,
-    createHTML: (html) => DOMPurify.sanitize(html, { RETURN_TRUSTED_TYPE: false }),
-  });
-}
 
 window.onload = () => {
   // the trailing slash breaks relative URL loading
