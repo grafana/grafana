@@ -26,10 +26,13 @@ describe('getSaveDashboardErrorInfo', () => {
   });
 
   describe('apimachinery Status errors', () => {
-    it('classifies reason Conflict as conflict so the overwrite affordance can be offered', () => {
+    // The apiserver reports Conflict for a deleted object or a deprecatedInternalID collision, and
+    // never for a concurrent edit (the client strips resourceVersion, so that check never runs).
+    // Offering "Save and overwrite" for those would just repeat the identical failing request.
+    it('does not treat an apiserver Conflict as a version mismatch', () => {
       const info = getSaveDashboardErrorInfo(k8sError({ reason: 'Conflict', message: 'the object was deleted' }, 409));
 
-      expect(info?.kind).toBe('conflict');
+      expect(info?.kind).toBe('unknown');
       expect(info?.message).toBe('the object was deleted');
     });
 
@@ -110,7 +113,7 @@ describe('getSaveDashboardErrorInfo', () => {
 
   describe('legacy dashboard error shapes', () => {
     it.each([
-      ['version-mismatch', 'conflict'],
+      ['version-mismatch', 'version-mismatch'],
       ['name-exists', 'already-exists'],
       ['plugin-dashboard', 'plugin-dashboard'],
     ])('classifies legacy status %s as %s', (legacyStatus, expectedKind) => {

@@ -20,7 +20,7 @@ import { type DashboardDataDTO, type SaveDashboardResponseDTO } from 'app/types/
 
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { getSaveDashboardErrorInfo } from '../saving/saveErrors';
-import { NameAlreadyExistsError, SaveDashboardErrorAlert } from '../saving/shared';
+import { SaveDashboardErrorAlert } from '../saving/shared';
 import { useSaveDashboard } from '../saving/useSaveDashboard';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
@@ -269,7 +269,7 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
     const errorInfo = isSaving ? getSaveDashboardErrorInfo(error) : undefined;
 
     if (errorInfo) {
-      if (errorInfo.kind === 'conflict') {
+      if (errorInfo.kind === 'version-mismatch') {
         return (
           <Alert
             title={t(
@@ -291,10 +291,6 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
             </Box>
           </Alert>
         );
-      }
-
-      if (errorInfo.kind === 'already-exists') {
-        return <NameAlreadyExistsError />;
       }
 
       if (errorInfo.kind === 'plugin-dashboard') {
@@ -320,6 +316,9 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
       }
     }
 
+    // Everything else, `already-exists` included, keeps the save button. The identifier can't be
+    // changed from this editor, so the "pick a different name or folder" alert would be
+    // unactionable advice that also removed the only way to retry.
     return (
       <>
         {errorInfo && <SaveDashboardErrorAlert info={errorInfo} />}

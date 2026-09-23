@@ -3,7 +3,13 @@ import { isFetchError } from '@grafana/runtime';
 
 import { isApiMachineryError, type MetaStatusCause } from '../../apiserver/types';
 
-type SaveDashboardErrorKind = 'conflict' | 'already-exists' | 'forbidden' | 'invalid' | 'plugin-dashboard' | 'unknown';
+type SaveDashboardErrorKind =
+  | 'version-mismatch'
+  | 'already-exists'
+  | 'forbidden'
+  | 'invalid'
+  | 'plugin-dashboard'
+  | 'unknown';
 
 export interface SaveDashboardErrorInfo {
   kind: SaveDashboardErrorKind;
@@ -17,13 +23,17 @@ export interface SaveDashboardErrorInfo {
 // Legacy `/api/dashboards/db` statuses are still recognised because provisioning and other
 // non-apiserver paths can surface them.
 const LEGACY_STATUS_KINDS: Record<string, SaveDashboardErrorKind> = {
-  'version-mismatch': 'conflict',
+  'version-mismatch': 'version-mismatch',
   'name-exists': 'already-exists',
   'plugin-dashboard': 'plugin-dashboard',
 };
 
+// Deliberately no entry for `Conflict`: the apiserver reports it for a deleted object or a
+// deprecatedInternalID collision, never for a concurrent edit, because the client strips
+// metadata.resourceVersion before writing so that precondition never runs. Such a conflict falls
+// through to `unknown`, which shows the server's reason and a plain retry rather than the
+// "someone else edited this, save and overwrite" prompt — overwrite resends the same request.
 const API_MACHINERY_REASON_KINDS: Record<string, SaveDashboardErrorKind> = {
-  Conflict: 'conflict',
   AlreadyExists: 'already-exists',
   Forbidden: 'forbidden',
   Invalid: 'invalid',

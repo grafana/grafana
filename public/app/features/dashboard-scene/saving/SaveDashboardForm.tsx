@@ -9,7 +9,7 @@ import { type DashboardScene } from '../scene/DashboardScene';
 
 import { type SaveDashboardDrawer } from './SaveDashboardDrawer';
 import { getSaveDashboardErrorInfo } from './saveErrors';
-import { type DashboardChangeInfo, NameAlreadyExistsError, SaveButton, SaveDashboardErrorAlert } from './shared';
+import { type DashboardChangeInfo, SaveButton, SaveDashboardErrorAlert } from './shared';
 import { useSaveDashboard } from './useSaveDashboard';
 
 export interface Props {
@@ -92,7 +92,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
 
     const errorInfo = getSaveDashboardErrorInfo(error);
 
-    if (errorInfo?.kind === 'conflict') {
+    if (errorInfo?.kind === 'version-mismatch') {
       return (
         <Alert
           title={t(
@@ -118,10 +118,6 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
       );
     }
 
-    if (errorInfo?.kind === 'already-exists') {
-      return <NameAlreadyExistsError />;
-    }
-
     if (errorInfo?.kind === 'plugin-dashboard') {
       return (
         <Alert
@@ -144,6 +140,9 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
       );
     }
 
+    // Everything else, `already-exists` included, keeps Save and Cancel. This form has no title or
+    // folder field, so the "pick a different name or folder" alert would be unactionable advice
+    // that also replaced the footer, leaving the user no way to retry.
     return (
       <>
         {errorInfo && <SaveDashboardErrorAlert info={errorInfo} />}

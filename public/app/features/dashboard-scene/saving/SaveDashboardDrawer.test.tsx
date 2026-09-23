@@ -274,11 +274,11 @@ describe('SaveDashboardDrawer', () => {
       expect(dataSent.overwrite).toEqual(true);
     });
 
-    it('Offers overwrite when the apiserver rejects the save with reason Conflict', async () => {
+    it('Does not offer overwrite when the apiserver rejects the save with reason Conflict', async () => {
       const { dashboard, openAndRender } = setup();
 
       dashboard.setState({ title: 'New title' });
-      openAndRender();
+      await openAndRender();
 
       mockSaveDashboard({
         rawError: k8sStatusError(409, {
@@ -289,8 +289,32 @@ describe('SaveDashboardDrawer', () => {
 
       await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
 
-      expect(await screen.findByText('Someone else has updated this dashboard')).toBeInTheDocument();
-      expect(await screen.findByText('Save and overwrite')).toBeInTheDocument();
+      // Overwrite would resend the identical request, so the user gets the server's reason and a
+      // plain retry instead of a misleading "someone else edited this" prompt.
+      expect(await screen.findByText('deprecatedInternalID=5 is already in use')).toBeInTheDocument();
+      expect(screen.queryByText('Someone else has updated this dashboard')).not.toBeInTheDocument();
+      expect(screen.queryByText('Save and overwrite')).not.toBeInTheDocument();
+      expect(screen.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton)).toBeInTheDocument();
+    });
+
+    it('Keeps Save and Cancel available when the apiserver rejects the save with reason AlreadyExists', async () => {
+      const { dashboard, openAndRender } = setup();
+
+      dashboard.setState({ title: 'New title' });
+      await openAndRender();
+
+      mockSaveDashboard({
+        rawError: k8sStatusError(409, { reason: 'AlreadyExists', message: 'the resource already exists' }),
+      });
+
+      await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+      // This form has no title or folder field, so the "pick a different name or folder" alert
+      // would strand the user with no way to retry.
+      expect(await screen.findByText('the resource already exists')).toBeInTheDocument();
+      expect(screen.queryByText('Dashboard name already exists')).not.toBeInTheDocument();
+      expect(screen.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
     });
 
     it('Lists each field level cause when the apiserver rejects the save as Invalid', async () => {
