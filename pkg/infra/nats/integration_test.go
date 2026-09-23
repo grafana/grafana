@@ -28,7 +28,8 @@ func TestIntegrationEmbeddedServer(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("publisher buffer overflows and recovers after reconnect", testPublisherBufferOverflowRecovers)
-	t.Run("starting fails when the server rejects authentication", testStartingFailsOnAuthRejection)
+	t.Run("publisher requires first success for every connection", testPublisherFirstSuccess)
+	t.Run("publishing fails when the server rejects authentication", testPublishingFailsOnAuthRejection)
 	t.Run("single subscriber receives a published message", testSingleSubscriberReceives)
 	t.Run("queue group delivers each message to exactly one subscriber", testQueueGroupDeliversOnce)
 	t.Run("two independent subscribers each receive the message (fan-out)", testFanOutDelivery)
@@ -146,7 +147,46 @@ func testPublisherBufferOverflowRecovers(t *testing.T) {
 	}
 }
 
-func testStartingFailsOnAuthRejection(t *testing.T) {
+func testPublisherFirstSuccess(t *testing.T) {
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	port := listener.Addr().(*net.TCPAddr).Port
+	require.NoError(t, listener.Close())
+	ctx := context.Background()
+	cfg := setting.NATSSettings{
+		Enabled: true, Mode: setting.NATSModeExternal,
+		ClientURLs: []string{fmt.Sprintf("nats://127.0.0.1:%d", port)},
+	}
+	pub := newPublisher(log.NewNopLogger(), newPublisherMetrics(), newConfig(cfg, nil))
+	t.Cleanup(pub.close)
+	require.NoError(t, pub.starting(ctx))
+	require.ErrorIs(t, pub.Publish(ctx, "test", []byte("before")), natsclient.ErrConnectionReconnecting)
+
+	srv, err := natsserver.NewServer(&natsserver.Options{
+		Host: "127.0.0.1", Port: port, NoLog: true, NoSigs: true,
+	})
+	require.NoError(t, err)
+	go srv.Start()
+	t.Cleanup(srv.Shutdown)
+	require.True(t, srv.ReadyForConnections(5*time.Second))
+	require.Eventually(t, func() bool {
+		return pub.Publish(ctx, "test", []byte("after")) == nil
+	}, 5*time.Second, 20*time.Millisecond)
+
+	nc, err := pub.get(ctx)
+	require.NoError(t, err)
+	srv.Shutdown()
+	srv.WaitForShutdown()
+	require.Eventually(t, nc.IsReconnecting, 5*time.Second, 10*time.Millisecond)
+	require.NoError(t, pub.Publish(ctx, "test", []byte("buffered")))
+
+	// A new client must authenticate independently, even if the old client
+	// had connected successfully and was allowed to buffer during an outage.
+	nc.Close()
+	require.ErrorIs(t, pub.Publish(ctx, "test", []byte("replacement")), natsclient.ErrConnectionReconnecting)
+}
+
+func testPublishingFailsOnAuthRejection(t *testing.T) {
 	srv, err := natsserver.NewServer(&natsserver.Options{
 		Host: "127.0.0.1", Port: natsserver.RANDOM_PORT, NoLog: true, NoSigs: true,
 		JetStream: false, NoSystemAccount: true,
@@ -158,10 +198,8 @@ func testStartingFailsOnAuthRejection(t *testing.T) {
 	t.Cleanup(srv.Shutdown)
 	port := srv.Addr().(*net.TCPAddr).Port
 
-	// RetryOnFailedConnect makes the initial dial succeed with a reconnecting
-	// client, so a permanent authentication rejection only surfaces
-	// asynchronously. starting must still fail rather than accept publishes that
-	// can never be delivered.
+	// Authentication can recover, but messages must not be accepted before
+	// the connection has authenticated successfully.
 	cfg := setting.NATSSettings{
 		Enabled:    true,
 		Mode:       setting.NATSModeExternal,
@@ -173,9 +211,10 @@ func testStartingFailsOnAuthRejection(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	t.Cleanup(cancel)
-	err = pub.starting(ctx)
-	require.Error(t, err)
-	require.ErrorContains(t, err, "authentication rejected")
+	require.NoError(t, pub.starting(ctx))
+	require.ErrorIs(t, pub.Publish(ctx, "grafana.test.auth", []byte("hello")), natsclient.ErrConnectionReconnecting)
+	require.Zero(t, promtestutil.ToFloat64(pub.metrics.messagesAccepted))
+	require.Zero(t, promtestutil.ToFloat64(pub.metrics.pendingBytes))
 }
 
 // waitSubscriberReady blocks until the subscription's interest is registered on the server.

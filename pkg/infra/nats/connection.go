@@ -43,11 +43,9 @@ type connection struct {
 	// reconnect handler can record how long the connection was down. Accessed only
 	// from the NATS callback goroutine, but kept atomic to stay race-free.
 	disconnectedAt atomic.Int64
-	// authRejected holds the message of the last permanent authentication rejection
-	// reported by the (re)connect error handler. With RetryOnFailedConnect such
-	// rejections never surface as a synchronous connect error, so startup consults
-	// this instead of the connect result.
-	authRejected atomic.Pointer[string]
+	// Each dial gets its own flag so replacement connections cannot inherit
+	// permission to buffer from a previously authenticated connection.
+	everConnected *atomic.Bool
 
 	mu       sync.Mutex
 	conn     *natsclient.Conn
@@ -139,6 +137,18 @@ func (c *connection) connect(ctx context.Context) (*natsclient.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
+	everConnected := &atomic.Bool{}
+	c.everConnected = everConnected
+	options = append(options, func(opts *natsclient.Options) error {
+		onConnect := opts.ConnectedCB
+		opts.ConnectedCB = func(nc *natsclient.Conn) {
+			everConnected.Store(true)
+			if onConnect != nil {
+				onConnect(nc)
+			}
+		}
+		return nil
+	})
 	options = append(options, c.config.DialOptions()...)
 
 	// nats.Connect blocks on the initial dial; honour ctx cancellation.
@@ -167,6 +177,9 @@ func (c *connection) connect(ctx context.Context) (*natsclient.Conn, error) {
 		if res.err != nil {
 			c.metrics.connectionErrors.Inc()
 			return nil, fmt.Errorf("connect nats %s: %w", c.role, res.err)
+		}
+		if res.conn.IsConnected() {
+			everConnected.Store(true)
 		}
 		if !res.conn.IsConnected() {
 			c.metrics.connectionErrors.Inc()
@@ -230,12 +243,6 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 				return
 			}
 			c.metrics.connectionErrors.Inc()
-			if isAuthErr(err) {
-				msg := err.Error()
-				c.authRejected.Store(&msg)
-				c.log.Error("nats (re)connect rejected by server", "role", roleStr, "reason", asyncErrorReason(err), "err", err)
-				return
-			}
 			c.log.Warn("nats (re)connect attempt failed", "role", roleStr, "err", err)
 		}),
 		natsclient.ClosedHandler(func(nc *natsclient.Conn) {
@@ -309,11 +316,16 @@ func (c *connection) healthy() error {
 	return nil
 }
 
-func (c *connection) authRejection() error {
-	if msg := c.authRejected.Load(); msg != nil {
-		return fmt.Errorf("nats %s authentication rejected by server: %s", c.role, *msg)
+func (c *connection) canPublish(nc *natsclient.Conn) bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.closed || c.conn != nc {
+		return false
 	}
-	return nil
+	if nc.IsConnected() {
+		c.everConnected.Store(true)
+	}
+	return c.everConnected.Load()
 }
 
 // close drains the connection and waits for the drain to complete so it does not

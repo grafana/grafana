@@ -13,8 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-const startupConnectProbe = 2 * time.Second
-
 const publisherName = "nats-publisher"
 
 // Publisher hides nats.go types so callers can mock it.
@@ -81,11 +79,8 @@ func (p *PublisherService) starting(ctx context.Context) error {
 		}
 	}
 
-	// Establish the connection so config/auth failures surface at startup. A
-	// broker outage at boot is not fatal: RetryOnFailedConnect(true) returns a
-	// reconnecting client that keeps retrying in the background while Publish
-	// buffers into the bounded reconnect queue, so storage can continue. Failing
-	// here would take down Grafana (or the NATS module) for a transient outage.
+	// Keep retrying initial broker/authentication failures without failing Grafana
+	// startup. Publish rejects messages until this connection first succeeds.
 	nc, err := p.get(ctx)
 	if err != nil {
 		if ctx.Err() != nil {
@@ -94,36 +89,10 @@ func (p *PublisherService) starting(ctx context.Context) error {
 		return err
 	}
 	if !nc.IsConnected() {
-		if err := p.awaitConnectOrAuthRejection(ctx, nc); err != nil {
-			return err
-		}
+		p.log.Warn("nats publisher not yet connected at startup; retrying in the background",
+			"status", nc.Status(), "last_err", nc.LastError())
 	}
-
 	return nil
-}
-
-func (p *PublisherService) awaitConnectOrAuthRejection(ctx context.Context, nc *natsclient.Conn) error {
-	ticker := time.NewTicker(20 * time.Millisecond)
-	defer ticker.Stop()
-	deadline := time.NewTimer(startupConnectProbe)
-	defer deadline.Stop()
-	for {
-		if err := p.authRejection(); err != nil {
-			return err
-		}
-		if nc.IsConnected() {
-			return nil
-		}
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-deadline.C:
-			p.log.Warn("nats publisher not yet connected at startup; retrying in the background",
-				"status", nc.Status(), "last_err", nc.LastError())
-			return nil
-		case <-ticker.C:
-		}
-	}
 }
 
 func (p *PublisherService) running(ctx context.Context) error {
@@ -170,6 +139,10 @@ func (p *PublisherService) Publish(ctx context.Context, subject string, data []b
 	nc, err := p.get(ctx)
 	if err != nil {
 		return err
+	}
+	if !p.canPublish(nc) {
+		p.metrics.publishErrors.Inc()
+		return fmt.Errorf("publish to %q: nats connection has not connected successfully: %w", subject, natsclient.ErrConnectionReconnecting)
 	}
 	if err := nc.Publish(subject, data); err != nil {
 		p.metrics.publishErrors.Inc()

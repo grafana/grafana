@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	natsclient "github.com/nats-io/nats.go"
 	promtestutil "github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 
@@ -45,9 +46,9 @@ func TestPublisher(t *testing.T) {
 		t.Cleanup(p.close)
 
 		err := p.Publish(context.Background(), "grafana.test.a", []byte("hello"))
-		// The bounded publisher reconnect buffer accepts the message locally even
-		// though the initial connection is still retrying.
-		require.NoError(t, err)
+		require.ErrorIs(t, err, natsclient.ErrConnectionReconnecting)
+		require.Zero(t, promtestutil.ToFloat64(p.metrics.messagesAccepted))
+		require.Zero(t, promtestutil.ToFloat64(p.metrics.pendingBytes))
 	})
 
 	t.Run("starting tolerates a broker outage at boot", func(t *testing.T) {
