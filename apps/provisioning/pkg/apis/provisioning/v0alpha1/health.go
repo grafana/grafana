@@ -32,6 +32,15 @@ const (
 	// ConditionTypePullStatus indicates the outcome of the last completed pull operation.
 	// True = last pull succeeded, False = last pull failed (quota exceeded, general error, etc.).
 	ConditionTypePullStatus = "PullStatus"
+
+	// ConditionTypePathConflict indicates whether the repository's URL/branch/path
+	// overlaps with another repository in the same namespace. This is a warning, not a
+	// blocking condition - two repositories are still allowed to coexist with overlapping
+	// paths (the resource-level ManagerProperties identity check prevents them from
+	// actually overwriting each other's synced resources; see
+	// pkg/storage/unified/apistore/managed.go).
+	// True = no conflict, False = a conflicting repository was found.
+	ConditionTypePathConflict = "PathConflict"
 )
 
 // Condition reasons for the Ready condition
@@ -133,6 +142,15 @@ const (
 	ReasonQuotaReached = "QuotaReached"
 	// ReasonQuotaExceeded indicates the resource count exceeds the limit.
 	ReasonQuotaExceeded = "QuotaExceeded"
+)
+
+// Condition reasons for the PathConflict condition
+const (
+	// ReasonNoPathConflict indicates no other repository shares this repository's URL/branch/path.
+	ReasonNoPathConflict = "NoPathConflict"
+	// ReasonPathConflict indicates another repository in the namespace has the same or an
+	// overlapping URL/branch/path.
+	ReasonPathConflict = "PathConflict"
 )
 
 type HealthStatus struct {

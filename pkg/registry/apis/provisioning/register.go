@@ -1214,6 +1214,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				30*time.Second,
 				b.quotaGetter,
 				controller.NewRepositoryQuotaChecker(reconcileRepoGetter),
+				controller.NewRepositoryPathConflictChecker(reconcileRepoGetter),
 				b.incrementalPolicy,
 				webhookSecretRotationInterval,
 				nats.Enabled(b.natsSubscriber),
