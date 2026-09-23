@@ -29,11 +29,15 @@ API's reducer and middleware registered, and a `<Provider>` wrapping the tree - 
 rule payload with no translation step. `null` means "using the default policy" — only meaningful
 in `notificationPolicy` mode.
 
+`asSimplifiedRouting`/`asNamedRoutingTree` are also exported — `type` isn't a true discriminant on
+this union (both members share the same `AlertRuleNotificationSettingsType`), so use these instead
+of comparing `.type` yourself if you need to narrow a `value` outside this component.
+
 ```tsx
 import { css } from '@emotion/css';
 import { RecipientPicker, type RecipientMode } from '@grafana/alerting/unstable';
 import type { AlertRuleNotificationSettings } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
-import { InlineSwitch, Stack, useStyles2 } from '@grafana/ui';
+import { InlineSwitch, Stack, Text, useStyles2 } from '@grafana/ui';
 
 function MyComponent() {
   const styles = useStyles2((theme) => ({
@@ -41,6 +45,7 @@ function MyComponent() {
   }));
   const [mode, setMode] = useState<RecipientMode>('contactPoint');
   const [value, setValue] = useState<AlertRuleNotificationSettings | null>(null);
+  const [error, setError] = useState<string | undefined>(undefined);
 
   return (
     <Stack direction="column" gap={2}>
@@ -58,9 +63,11 @@ function MyComponent() {
         mode={mode}
         value={value}
         onChange={setValue}
+        onValidityChange={(isValid) => setError(isValid ? undefined : 'Contact point is required.')}
         manageContactPointsHref="/alerting/notifications"
         viewPoliciesHref="/alerting/routes"
       />
+      {error && <Text color="error">{error}</Text>}
     </Stack>
   );
 }

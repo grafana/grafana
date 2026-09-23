@@ -114,6 +114,33 @@ describe('RecipientPicker', () => {
   });
 });
 
+describe('onValidityChange', () => {
+  it('reports false on mount in contactPoint mode with no receiver, then true once one is set', async () => {
+    const onValidityChange = jest.fn();
+    const { renderResult } = renderPicker({ onValidityChange });
+
+    expect(onValidityChange).toHaveBeenCalledWith(false);
+
+    renderResult.rerender(
+      <RecipientPicker
+        mode="contactPoint"
+        value={{ type: 'SimplifiedRouting', receiver: 'slack-oncall' }}
+        onChange={jest.fn()}
+        onValidityChange={onValidityChange}
+      />
+    );
+
+    expect(onValidityChange).toHaveBeenCalledWith(true);
+  });
+
+  it('reports true in notificationPolicy mode regardless of value', () => {
+    const onValidityChange = jest.fn();
+    renderPicker({ mode: 'notificationPolicy', onValidityChange });
+
+    expect(onValidityChange).toHaveBeenCalledWith(true);
+  });
+});
+
 describe('asSimplifiedRouting', () => {
   it('returns the value when it has a receiver', () => {
     const value = { type: 'SimplifiedRouting' as const, receiver: 'slack-oncall' };

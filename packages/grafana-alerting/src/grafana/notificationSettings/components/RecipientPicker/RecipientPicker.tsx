@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+
 import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import {
   type AlertRuleNamedRoutingTree,
@@ -25,6 +27,11 @@ export interface RecipientPickerProps {
   mode: RecipientMode;
   value: AlertRuleNotificationSettings | null;
   onChange: (value: AlertRuleNotificationSettings | null) => void;
+  /** Fires on mount and whenever computed validity changes. Only ever `false` in `contactPoint`
+   * mode with no receiver selected — `notificationPolicy` mode has no required field, `null` there
+   * legitimately means "use the default policy". Lets a caller signal a validation error without
+   * reaching into RecipientPickerField's internal write target. */
+  onValidityChange?: (isValid: boolean) => void;
   /** Forwarded to RoutingTreePicker in notificationPolicy mode. See RoutingTreePicker's own docs. */
   instancesToPreview?: Label[][];
   viewPoliciesHref?: string;
@@ -54,10 +61,17 @@ export function RecipientPicker({
   mode,
   value,
   onChange,
+  onValidityChange,
   instancesToPreview,
   viewPoliciesHref,
   manageContactPointsHref,
 }: RecipientPickerProps) {
+  const isValid = mode === 'notificationPolicy' || Boolean(asSimplifiedRouting(value)?.receiver);
+
+  useEffect(() => {
+    onValidityChange?.(isValid);
+  }, [isValid, onValidityChange]);
+
   return (
     <Stack direction="column" gap={1}>
       {mode === 'contactPoint' ? (
