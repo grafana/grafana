@@ -1,8 +1,8 @@
 import { buildTimeSettingsSpec } from 'app/features/dashboard-scene/serialization/shared/timeSettings';
 import { vizPanelToSchemaV2 } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
 
-import { buildCellTimeRangeSpec, withQueryOptionsTimeRange } from '../scene/layout-notebook/cellTimeRange';
 import { type NotebookScene } from '../scene/NotebookScene';
+import { buildCellTimeRangeSpec, withQueryOptionsTimeRange } from '../scene/layout-notebook/cellTimeRange';
 import { type NotebookElement, type Spec as NotebookSpec } from '../types';
 
 /**
@@ -64,8 +64,6 @@ function getElements(scene: NotebookScene): Record<string, NotebookElement> {
       // here either. Neither constraint is visible in the signature, and the save PR is where
       // someone would thread a mapping through to preserve datasource references.
       const built = vizPanelToSchemaV2(panel);
-      // The only place a notebook panel's own queryOptions.timeFrom/.timeTo get written — nothing
-      // else populates them for a notebook panel, so there's nothing else to conflict with.
       elements[elementName] =
         built.kind === 'Panel' && $timeRange
           ? withQueryOptionsTimeRange(built, buildCellTimeRangeSpec($timeRange))

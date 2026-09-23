@@ -55,9 +55,6 @@ export function deserializeNotebookLayout(
     if (element.kind === 'Panel') {
       const { timeFrom, timeTo } = element.spec.data.spec.queryOptions;
       const cellTimeRange = timeFrom && timeTo ? { $timeRange: buildCellSceneTimeRange(timeFrom, timeTo) } : {};
-      // Stripped before buildVizPanelState runs: it auto-attaches its own PanelTimeRange straight
-      // onto the VizPanel whenever timeFrom is truthy, which would shadow this cell-level override
-      // — sceneGraph.getTimeRange checks a panel's own $timeRange before ever reaching its parent.
       const panelElement = timeFrom || timeTo ? withQueryOptionsTimeRange(element, undefined) : element;
 
       // buildVizPanelState is dashboard-typed and takes this directly: the notebook panel chain

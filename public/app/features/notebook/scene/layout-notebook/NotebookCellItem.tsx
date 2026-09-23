@@ -4,8 +4,8 @@ import { type DashboardLayoutItem } from 'app/features/dashboard-scene/scene/typ
 
 import { type CellContentKind } from '../../types';
 
-import { type CellTimeRangeSpec } from './cellTimeRange';
 import { type NotebookLayoutManager } from './NotebookLayoutManager';
+import { type CellTimeRangeSpec } from './cellTimeRange';
 import { type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
 import { isNotebookLayoutManager } from './isNotebookLayoutManager';
 

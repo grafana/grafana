@@ -48,13 +48,10 @@ export function NotebookCellTimeRangeControl({ cell }: Props) {
   );
 }
 
-function noop() {}
-
 function NotebookCellTimeRangePopoverContent({ cell, onClose }: { cell: NotebookCellItem; onClose: () => void }) {
   const styles = useStyles2(getStyles);
   // Timezone always follows the notebook, never the cell — same convention as a dashboard panel's
-  // own time override (PanelTimeRange), which never owns its timezone either. This is a one-time
-  // snapshot for the draft's own internal date math only — never persisted, never editable here.
+  // own time override (PanelTimeRange), which never owns its timezone either.
   const ancestorTimeZone = sceneGraph.getTimeRange(cell.parent ?? cell).getTimeZone();
   const committed = cell.state.$timeRange ? buildCellTimeRangeSpec(cell.state.$timeRange) : seedFromAncestor(cell);
 
@@ -93,9 +90,10 @@ function NotebookCellTimeRangePopoverContent({ cell, onClose }: { cell: Notebook
         {/* TimeRangePicker directly, not SceneTimePicker.Component: omitting timeZone/fiscalYearStartMonth
             hides its "Change time settings" footer entirely, so neither is ever editable per cell. */}
         <TimeRangePicker
+          isOnCanvas
           value={value}
           onChange={(range) => host.state.$timeRange.onTimeRangeChange(range)}
-          onChangeTimeZone={noop}
+          onChangeTimeZone={() => {}}
           onMoveBackward={() => host.state.timePicker.onMoveBackward()}
           onMoveForward={() => host.state.timePicker.onMoveForward()}
           onZoom={() => host.state.timePicker.onZoom()}

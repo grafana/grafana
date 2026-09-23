@@ -16,8 +16,8 @@ import { transformNotebookSceneToSaveModel } from '../serialization/transformNot
 import { type NotebookElement, type PanelKind, type Spec as NotebookSpec } from '../types';
 
 import { type NotebookScene } from './NotebookScene';
-import { type CellTimeRangeSpec, withQueryOptionsTimeRange } from './layout-notebook/cellTimeRange';
 import { type NotebookCellItem } from './layout-notebook/NotebookCellItem';
+import { type CellTimeRangeSpec, withQueryOptionsTimeRange } from './layout-notebook/cellTimeRange';
 
 type PanelVizConfigState = Pick<VizPanel['state'], 'pluginId' | 'pluginVersion' | 'options' | 'fieldConfig'>;
 
@@ -441,11 +441,6 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     };
   }
 
-  /**
-   * Puts the saved time range back on the panels nobody edited this session — as `withSavedVizConfigs`,
-   * which this runs after (they touch disjoint sub-paths — `vizConfig` vs. `data.spec.queryOptions` —
-   * so the order between them doesn't matter).
-   */
   private withSavedCellTimeRanges(
     elements: NotebookSpec['elements'],
     cellTimeRangesEdited: ReadonlySet<NotebookCellItem>
@@ -710,12 +705,6 @@ function collectVizPanels(scene: NotebookScene): Map<string, VizPanel> {
   return panels;
 }
 
-/**
- * Each cell's own time range as it was actually sent, by cell identity — snapshotted from `spec`
- * (what landed), not from the live scene, which can already differ by the time a save resolves
- * (e.g. a reader's edit that `withSavedCellTimeRanges` deliberately left out of `spec`). `cells`
- * must be `contentCells()` captured at the same time `spec` was built.
- */
 function collectCellTimeRangesFromSpec(
   spec: NotebookSpec,
   cells: NotebookCellItem[]
