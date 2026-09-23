@@ -2071,61 +2071,57 @@ describe('DashboardScene', () => {
       expect(scene.state.overlay).toBe(newer);
     });
 
-    it.each([
-      'close',
-      'overlay replacement',
-      'navigation away and back',
-      'editor URL change',
-      'edit mode change',
-      'layout replacement',
-      'save drawer close',
-      'settings URL sync',
-      'unchanged view transition',
-      'deactivation and reactivation',
-    ])('discards a pending overlay after %s', async (action) => {
+    it.each<{
+      name: string;
+      run: (scene: DashboardScene, deactivate: () => void) => void | (() => void);
+    }>([
+      { name: 'close', run: (scene) => scene.closeModal() },
+      {
+        name: 'overlay replacement',
+        run: (scene) => {
+          scene.showModal(new SceneGridLayout({ children: [] }));
+          scene.closeModal();
+        },
+      },
+      {
+        name: 'navigation away and back',
+        run: () => {
+          locationService.push('/dashboards');
+          locationService.push('/d/dash-1/test');
+        },
+      },
+      { name: 'editor URL change', run: () => locationService.partial({ inspect: 'panel-1' }) },
+      {
+        name: 'edit mode change',
+        run: (scene) => {
+          scene.onEnterEditMode();
+          scene.exitEditMode({ skipConfirm: true });
+        },
+      },
+      {
+        name: 'layout replacement',
+        run: (scene) => scene.switchLayout(DefaultGridLayoutManager.createEmpty(), true),
+      },
+      {
+        name: 'save drawer close',
+        run: (scene) => new SaveDashboardDrawer({ dashboardRef: scene.getRef() }).onClose(),
+      },
+      { name: 'settings URL sync', run: (scene) => scene.urlSync?.updateFromUrl({ editview: null }) },
+      { name: 'unchanged view transition', run: (scene) => scene.updateView({ viewPanel: undefined }) },
+      {
+        name: 'deactivation and reactivation',
+        run: (scene, deactivate) => {
+          deactivate();
+          return scene.activate();
+        },
+      },
+    ])('discards a pending overlay after $name', async ({ run }) => {
       const scene = buildTestScene();
       const deactivate = scene.activate();
       const modal = new SceneGridLayout({ children: [] });
       let resolveLoad!: (modal: SceneObject) => void;
       const opening = scene.showModalAsync(() => new Promise((resolve) => (resolveLoad = resolve)));
-      let cleanup = deactivate;
-
-      switch (action) {
-        case 'close':
-          scene.closeModal();
-          break;
-        case 'overlay replacement':
-          scene.showModal(new SceneGridLayout({ children: [] }));
-          scene.closeModal();
-          break;
-        case 'navigation away and back':
-          locationService.push('/dashboards');
-          locationService.push('/d/dash-1/test');
-          break;
-        case 'editor URL change':
-          locationService.partial({ inspect: 'panel-1' });
-          break;
-        case 'edit mode change':
-          scene.onEnterEditMode();
-          scene.exitEditMode({ skipConfirm: true });
-          break;
-        case 'layout replacement':
-          scene.switchLayout(DefaultGridLayoutManager.createEmpty(), true);
-          break;
-        case 'save drawer close':
-          new SaveDashboardDrawer({ dashboardRef: scene.getRef() }).onClose();
-          break;
-        case 'settings URL sync':
-          scene.urlSync?.updateFromUrl({ editview: null });
-          break;
-        case 'unchanged view transition':
-          scene.updateView({ viewPanel: undefined });
-          break;
-        case 'deactivation and reactivation':
-          deactivate();
-          cleanup = scene.activate();
-          break;
-      }
+      const cleanup = run(scene, deactivate) ?? deactivate;
 
       resolveLoad(modal);
       await opening;
