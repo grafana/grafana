@@ -13,6 +13,7 @@ import {
   type DataFrame,
   type DataQueryRequest,
   FieldType,
+  type GrafanaTheme2,
   LoadingState,
   type MapLayerHandler,
   type MapLayerOptions,
@@ -27,7 +28,7 @@ import { MARKERS_LAYER_ID } from '../layers/data/markersLayer';
 import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from '../layers/registry';
 import { type MapLayerState } from '../types';
 
-import { applyLayerFilter, getMapLayerState, initLayer } from './layers';
+import { applyLayerFilter, getMapLayerState, initLayer, reinitLayers } from './layers';
 
 const getIfExists = jest.spyOn(geomapLayerRegistry, 'getIfExists');
 
@@ -326,6 +327,100 @@ describe('initLayer', () => {
 
       expect(attributionOf(child)).toEqual(['<img src="x">']);
     });
+  });
+});
+
+describe('reinitLayers', () => {
+  const dark = { isDark: true } as GrafanaTheme2;
+  const light = { isDark: false } as GrafanaTheme2;
+
+  const themesSeen: GrafanaTheme2[] = [];
+  const disposed: string[] = [];
+
+  // A panel whose map holds on to the layers it is given, so a swap can be observed
+  const createPanel = (theme: GrafanaTheme2) => {
+    const mapLayers: BaseLayer[] = [];
+    const setAt = jest.fn((index: number, layer: BaseLayer) => {
+      mapLayers[index] = layer;
+    });
+    const panel = {
+      map: { getLayers: () => ({ getArray: () => mapLayers, setAt }) },
+      layers: [],
+      byName: new Map<string, MapLayerState>(),
+      setState: jest.fn(),
+      getLegends: jest.fn().mockReturnValue(['legend']),
+      props: { eventBus: {}, data: {}, theme, options: { controls: {} } },
+    } as unknown as GeomapPanel;
+    return { panel, mapLayers, setAt };
+  };
+
+  const addLayer = async (panel: GeomapPanel, mapLayers: BaseLayer[], options: MapLayerOptions, isBasemap: boolean) => {
+    const state = await initLayer(panel, panel.map!, options, isBasemap);
+    panel.layers = [...panel.layers, state];
+    mapLayers.push(state.layer);
+    return state;
+  };
+
+  beforeEach(() => {
+    themesSeen.length = 0;
+    disposed.length = 0;
+    getIfExists.mockImplementation((type) => ({
+      id: type ?? '',
+      name: type ?? '',
+      create: async (_map, options, _eventBus, theme) => {
+        themesSeen.push(theme);
+        return {
+          init: () => ({ setOpacity: jest.fn() }) as unknown as BaseLayer,
+          dispose: () => disposed.push(options.name!),
+        };
+      },
+    }));
+  });
+
+  it('rebuilds every layer with the theme the panel now has', async () => {
+    const { panel, mapLayers, setAt } = createPanel(dark);
+    const basemap = await addLayer(panel, mapLayers, { type: 'carto', name: 'Basemap' }, true);
+    const markers = await addLayer(panel, mapLayers, { type: 'markers', name: 'Markers' }, false);
+    expect(themesSeen).toEqual([dark, dark]);
+
+    Object.assign(panel.props, { theme: light });
+    await reinitLayers(panel);
+
+    expect(themesSeen).toEqual([dark, dark, light, light]);
+    expect(disposed).toEqual(['Basemap', 'Markers']);
+    expect(panel.layers[0]).not.toBe(basemap);
+    expect(panel.layers[1]).not.toBe(markers);
+    expect(panel.layers[0].isBasemap).toBe(true);
+    expect(panel.layers[1].isBasemap).toBe(false);
+    expect(setAt).toHaveBeenCalledTimes(2);
+    expect(mapLayers).toEqual([panel.layers[0].layer, panel.layers[1].layer]);
+    expect(panel.setState).toHaveBeenCalledWith({ legends: ['legend'] });
+  });
+
+  it('leaves layers the panel does not own where they are', async () => {
+    const { panel, mapLayers } = createPanel(dark);
+    await addLayer(panel, mapLayers, { type: 'carto', name: 'Basemap' }, true);
+    // The measure layer is added straight to the map, in between the layers the panel tracks
+    const measureLayer = {} as BaseLayer;
+    mapLayers.splice(1, 0, measureLayer);
+    await addLayer(panel, mapLayers, { type: 'markers', name: 'Markers' }, false);
+
+    await reinitLayers(panel);
+
+    expect(mapLayers[0]).toBe(panel.layers[0].layer);
+    expect(mapLayers[1]).toBe(measureLayer);
+    expect(mapLayers[2]).toBe(panel.layers[1].layer);
+  });
+
+  it('does nothing before the map exists', async () => {
+    const { panel, mapLayers } = createPanel(dark);
+    await addLayer(panel, mapLayers, { type: 'carto', name: 'Basemap' }, true);
+    Object.assign(panel, { map: undefined });
+
+    await reinitLayers(panel);
+
+    expect(disposed).toEqual([]);
+    expect(panel.setState).not.toHaveBeenCalled();
   });
 });
 
