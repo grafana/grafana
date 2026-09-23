@@ -127,10 +127,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
       const dashboard = getDashboardSceneFor(this);
       const isPublicDashboard = dashboard.state.meta.publicDashboardEnabled === true;
       const isScriptedDashboard = dashboard.state.meta.fromScript === true;
-      const shouldSkipRepeatMigration =
-        isDashboardNewLayoutsEnabled() &&
-        !isPublicDashboard &&
-        !isScriptedDashboard;
+      const shouldSkipRepeatMigration = isDashboardNewLayoutsEnabled() && !isPublicDashboard && !isScriptedDashboard;
 
       // Migrate repeat options to layout element (only for legacy dashboards, or public/scripted dashboards)
       if (!shouldSkipRepeatMigration) {

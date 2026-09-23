@@ -8,7 +8,11 @@ import { appEvents } from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { ExportFormat } from 'app/features/dashboard/api/types';
-import { isDashboardNewLayoutsEnabled, isDashboardV1Resource, isDashboardV2Resource } from 'app/features/dashboard/api/utils';
+import {
+  isDashboardNewLayoutsEnabled,
+  isDashboardV1Resource,
+  isDashboardV2Resource,
+} from 'app/features/dashboard/api/utils';
 
 import { type DashboardInputs, DashboardSource } from '../../types';
 import { detectExportFormat, extractV1Inputs, extractV2Inputs } from '../utils/inputs';

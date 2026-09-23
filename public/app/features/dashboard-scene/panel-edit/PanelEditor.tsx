@@ -153,10 +153,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const originalState = this._layoutItemState!;
 
     // Temp fix for old edit mode
-    if (
-      this._layoutItem instanceof DashboardGridItem &&
-      !isDashboardNewLayoutsEnabled()
-    ) {
+    if (this._layoutItem instanceof DashboardGridItem && !isDashboardNewLayoutsEnabled()) {
       this._layoutItem.handleEditChange();
       return;
     }

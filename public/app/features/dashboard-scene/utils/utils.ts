@@ -263,9 +263,7 @@ export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
 }
 
 export function getDefaultPluginId(): string {
-  return isDashboardNewLayoutsEnabled()
-    ? UNCONFIGURED_PANEL_PLUGIN_ID
-    : 'timeseries';
+  return isDashboardNewLayoutsEnabled() ? UNCONFIGURED_PANEL_PLUGIN_ID : 'timeseries';
 }
 
 export async function getDefaultVizPanel(): Promise<VizPanel> {

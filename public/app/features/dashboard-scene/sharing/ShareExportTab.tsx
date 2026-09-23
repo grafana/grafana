@@ -48,9 +48,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
       ...state,
       isSharingExternally: false,
       isViewingJSON: false,
-      exportFormat: isDashboardNewLayoutsEnabled()
-        ? ExportFormat.V2Resource
-        : ExportFormat.Classic,
+      exportFormat: isDashboardNewLayoutsEnabled() ? ExportFormat.V2Resource : ExportFormat.Classic,
     });
   }
 
@@ -336,10 +334,7 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
             dashboardJson={dashboardJson}
             isSharingExternally={isSharingExternally ?? false}
             exportFormat={
-              exportFormat ??
-              (isDashboardNewLayoutsEnabled()
-                ? ExportFormat.V2Resource
-                : ExportFormat.Classic)
+              exportFormat ?? (isDashboardNewLayoutsEnabled() ? ExportFormat.V2Resource : ExportFormat.Classic)
             }
             isViewingYAML={isViewingYAML ?? false}
             onExportFormatChange={model.onExportFormatChange}

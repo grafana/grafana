@@ -1,5 +1,5 @@
 import { type VariableType } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 
 import { type GroupConditionConditionType } from '../conditional-rendering/group/types';
 import {
