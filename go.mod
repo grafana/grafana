@@ -178,7 +178,6 @@ require (
 	github.com/sony/gobreaker/v2 v2.4.0 // @grafana/grafana-app-platform-squad
 	github.com/spf13/cobra v1.10.2 // @grafana/grafana-app-platform-squad
 	github.com/spf13/pflag v1.0.10 // @grafana/grafana-app-platform-squad
-	github.com/spyzhov/ajson v0.9.6 // indirect; @grafana/grafana-sharing-squad
 	github.com/stretchr/testify v1.12.1 // @grafana/grafana-backend-group
 	github.com/testcontainers/testcontainers-go v0.43.0 // @grafana/grafana-app-platform-squad
 	github.com/thomaspoignant/go-feature-flag v1.42.0 // @grafana/grafana-backend-services-squad
@@ -481,6 +480,7 @@ require (
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.20 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
+	github.com/grafana/grafana-enterprise v0.0.0
 	github.com/grafana/nanogit v1.6.0 // indirect
 	github.com/grafana/regexp v0.0.0-20250905093917-f7b3be9d1853 // indirect
 	github.com/grafana/sqlds/v5 v5.3.1 // indirect
@@ -711,6 +711,7 @@ require (
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 	software.sslmate.com/src/go-pkcs12 v0.7.2 // indirect
+	github.com/spyzhov/ajson v0.9.6 // indirect; @grafana/grafana-sharing-squad
 )
 
 replace (
@@ -729,3 +730,5 @@ replace (
 // This was retracted, but seems to be known by the Go module proxy,
 // and is otherwise pulled in as a transitive dependency.
 exclude k8s.io/client-go v12.0.0+incompatible
+
+replace github.com/grafana/grafana-enterprise => ../grafana-enterprise
