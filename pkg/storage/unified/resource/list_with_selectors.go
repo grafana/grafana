@@ -8,7 +8,6 @@ import (
 	"slices"
 
 	claims "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -397,17 +396,32 @@ func (s *server) shouldUseSearchForList(req *resourcepb.ListRequest) bool {
 	}
 
 	// Labels are indexed for every kind, so a list filtered only by labels does not
-	// need to know the kind. Selectable fields are different: they are mapped into
-	// the index from the manifests compiled into this binary, so a field selector on
-	// any other group would ask the index for a field it never indexed and get
-	// nothing back.
+	// need to know the kind.
 	if len(req.Options.Fields) == 0 {
 		return true
 	}
 
-	// TODO have a way of including enterprise manifests
-	manifests := AppManifestsWithKinds(AppManifests()...)
-	return slices.ContainsFunc(manifests, func(m *app.ManifestData) bool {
-		return m.Group == req.Options.Key.Group
-	})
+	return s.selectableFieldsDeclared(req.Options.Key.Group, req.Options.Key.Resource, req.Options.Fields)
+}
+
+// selectableFieldsDeclared reports whether the kind declares every field the
+// request filters on. Only a declared field is mapped into the index, and a
+// filter on anything else would find nothing there.
+//
+// The declarations come from the same registry the index mapping is built from,
+// which a manifest watcher keeps up to date, so a kind this binary was not
+// compiled with still gets its selectors pushed down. The index can still be
+// behind the registry, which the search side refuses rather than answers
+// (see IsSelectableFieldNotIndexed).
+func (s *server) selectableFieldsDeclared(group, resource string, fields []*resourcepb.Requirement) bool {
+	if s.manifestSearchFields == nil {
+		return false
+	}
+	declared, _, _ := s.manifestSearchFields.For(NewLowerGroupResource(group, resource))
+	for _, f := range fields {
+		if !slices.Contains(declared, f.Key) {
+			return false
+		}
+	}
+	return true
 }

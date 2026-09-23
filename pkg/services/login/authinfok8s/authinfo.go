@@ -275,6 +275,31 @@ func (s *Store) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
 	return nil
 }
 
+// DeleteAuthInfo implements login.Store.
+func (s *Store) DeleteAuthInfo(ctx context.Context, cmd *login.DeleteAuthInfoCommand) error {
+	ctx, span := s.tracer.Start(ctx, "authinfo.k8s.DeleteAuthInfo")
+	defer span.End()
+
+	authClient, userClient, namespace, err := s.clients(ctx)
+	if err != nil {
+		return err
+	}
+
+	userUID, err := s.userUID(ctx, userClient, namespace, cmd.UserAuth.UserId)
+	if err != nil {
+		if errors.Is(err, user.ErrUserNotFound) {
+			return nil
+		}
+		return err
+	}
+
+	name := iamv0alpha1.EncodeName(userUID, cmd.UserAuth.AuthModule)
+	if err := authClient.Delete(ctx, resource.Identifier{Namespace: namespace, Name: name}, resource.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+		return err
+	}
+	return nil
+}
+
 // hasTokenValue reports whether t actually carries token data worth
 // persisting, as opposed to an empty token used only to clear one.
 func hasTokenValue(t *oauth2.Token) bool {

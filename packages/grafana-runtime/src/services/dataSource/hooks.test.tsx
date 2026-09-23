@@ -194,8 +194,23 @@ describe('useDataSourceInstance', () => {
 });
 
 describe('useDefaultDataSourceInstanceListItem', () => {
-  it('starts loading then resolves to the default instance of the type', async () => {
-    const { result } = renderHook(() => useDefaultDataSourceInstanceListItem('test-db'));
+  const alpha = {
+    uid: 'uid-alpha',
+    type: 'test-db',
+    name: 'Alpha',
+    meta: {},
+    isDefault: false,
+  } as DataSourceInstanceListItem;
+  const bravo = {
+    uid: 'uid-bravo',
+    type: 'test-db',
+    name: 'Bravo',
+    meta: {},
+    isDefault: true,
+  } as DataSourceInstanceListItem;
+
+  it('starts loading then resolves to the flagged item', async () => {
+    const { result } = renderHook(() => useDefaultDataSourceInstanceListItem([alpha, bravo]));
 
     expect(result.current.isLoading).toBe(true);
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -203,11 +218,40 @@ describe('useDefaultDataSourceInstanceListItem', () => {
     expect(result.current.error).toBeUndefined();
   });
 
-  it('resolves to undefined for an unknown type', async () => {
-    const { result } = renderHook(() => useDefaultDataSourceInstanceListItem('nonexistent'));
+  it('resolves to undefined when no item is flagged', async () => {
+    const { result } = renderHook(() => useDefaultDataSourceInstanceListItem([alpha]));
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.item).toBeUndefined();
+  });
+
+  it('does not re-resolve when an equivalent inline array is re-rendered', async () => {
+    const { result, rerender } = renderHook(() => useDefaultDataSourceInstanceListItem([{ ...alpha }, { ...bravo }]));
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    const itemAfterFirstRender = result.current.item;
+
+    rerender();
+    await act(async () => {});
+
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.item).toBe(itemAfterFirstRender);
+  });
+
+  it('re-resolves when the flag moves to another item', async () => {
+    const { result, rerender } = renderHook(({ items }) => useDefaultDataSourceInstanceListItem(items), {
+      initialProps: { items: [alpha, bravo] },
+    });
+
+    await waitFor(() => expect(result.current.item?.name).toBe('Bravo'));
+
+    rerender({
+      items: [
+        { ...alpha, isDefault: true },
+        { ...bravo, isDefault: false },
+      ],
+    });
+    await waitFor(() => expect(result.current.item?.name).toBe('Alpha'));
   });
 });
 
