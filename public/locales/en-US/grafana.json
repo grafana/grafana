@@ -14760,6 +14760,9 @@
       "submit-error": "Failed to create job for orphaned resources",
       "title": "This resource is managed by a repository that no longer exists"
     },
+    "path-conflict-banner": {
+      "title": "This repository shares a url, branch, and path combination with another repository. There will be sync errors because resources can only be managed by 1 repository."
+    },
     "provisioning-wizard": {
       "on-submit": {
         "error": {

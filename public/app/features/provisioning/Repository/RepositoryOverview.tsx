@@ -20,9 +20,11 @@ import {
 import { type Repository, type ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RecentJobs } from '../Job/RecentJobs';
+import { PathConflictBanner } from '../Shared/PathConflictBanner';
 import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
 import { MissingFolderMetadataBanner } from '../components/Folders/MissingFolderMetadataBanner';
 import { hasMissingFolderMetadata } from '../utils/folderMetadata';
+import { getPathConflictCondition } from '../utils/pathConflict';
 import { isQuotaReachedOrExceeded } from '../utils/quota';
 import { isGitHubBased } from '../utils/repositoryTypes';
 import { getKindInfoByStat, getRepositoryRoute } from '../utils/resourceKinds';
@@ -48,6 +50,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
 
   const status = repo.status;
   const { conditions, quota } = status ?? {};
+  const pathConflict = getPathConflictCondition(conditions);
   const webhookURL = getWebhookURL(repo);
   const { lgColumn, xxlColumn } = getColumnCount(Boolean(status?.webhook));
 
@@ -104,6 +107,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
         {showFolderMetadataCheck && hasMissingFolderMetadata(conditions) && (
           <MissingFolderMetadataBanner repositoryName={repoName} variant="repo" />
         )}
+        {pathConflict && <PathConflictBanner message={pathConflict.message} />}
         <Grid columns={{ xs: 1, sm: 2, lg: lgColumn, xxl: xxlColumn }} gap={2} alignItems={'flex-start'}>
           <div className={styles.cardContainer}>
             <Card
