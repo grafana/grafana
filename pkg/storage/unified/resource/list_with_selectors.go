@@ -8,12 +8,15 @@ import (
 	"slices"
 
 	claims "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
 )
+
+// errSearchCannotAnswerList asks the caller for the store scan instead. It never
+// reaches a client.
+var errSearchCannotAnswerList = errors.New("search cannot answer this list")
 
 func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.server.ListWithFieldSelectors")
@@ -36,43 +39,17 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
 
-	var listRv int64
-	if req.NextPageToken != "" {
-		span.AddEvent("continue token present")
-		token, err := GetContinueToken(req.NextPageToken)
-		if err != nil {
-			return &resourcepb.ListResponse{
-				Error: NewBadRequestError("invalid continue token"),
-			}, nil
-		}
-		if tokenFromOtherListPath(token, true) {
-			return &resourcepb.ListResponse{
-				Error: NewBadRequestError("continue token was not issued for a search-backed list"),
-			}, nil
-		}
-		listRv = token.ResourceVersion
-		srq.SearchAfter = token.SearchAfter
-		srq.SearchBefore = token.SearchBefore
+	listRv, errRes := applyContinueToken(srq, req.NextPageToken, span)
+	if errRes != nil {
+		return &resourcepb.ListResponse{Error: errRes}, nil
 	}
 
-	var searchResp *resourcepb.ResourceSearchResponse
-	var err error
-	if s.search != nil {
-		// Use local search service
-		searchResp, err = s.search.Search(ctx, srq)
-	} else {
-		// Use remote search service
-		// shouldUseSearchForList() already checks that either s.search or s.searchClient is set
-		searchResp, err = s.searchClient.Search(ctx, srq)
-	}
+	searchResp, errRes, err := s.searchForList(ctx, req, srq)
 	if err != nil {
 		return nil, err
 	}
-	// Logged as well as returned, because in environments where only logs are
-	// available an empty page and a failed search look the same.
-	if err := ErrorFromResponse(searchResp.GetError(), nil); err != nil {
-		s.log.Error("Search failed for List with selectors", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", err)
-		return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
+	if errRes != nil {
+		return &resourcepb.ListResponse{Error: errRes}, nil
 	}
 	rows, err := decodeListSearchRows(searchResp)
 	if err != nil {
@@ -155,7 +132,76 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 		}
 	}
 
+	if searchListNeedsContinue(req.Limit, len(rows), searchResp.GetTotalHitsExact()) {
+		sortFields := rows[len(rows)-1].sortFields
+		if len(sortFields) == 0 {
+			s.log.Warn("Cannot continue search-backed List: last row has no sort fields", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource)
+			return rsp, nil
+		}
+		token, err := NewSearchContinueToken(sortFields, listRv)
+		if err != nil {
+			return &resourcepb.ListResponse{
+				Error: NewBadRequestError("invalid continue token"),
+			}, nil
+		}
+		rsp.NextPageToken = token
+	}
+
 	return rsp, nil
+}
+
+func searchListNeedsContinue(limit int64, rowCount int, totalHitsExact bool) bool {
+	// Authorization can shrink a full page, and post-rank authorization can stop
+	// before filling one. An inexact total cannot rule out more matching rows.
+	return limit > 0 && rowCount > 0 && (rowCount >= int(limit) || !totalHitsExact)
+}
+
+// searchForList runs the search behind a List. A returned errSearchCannotAnswerList
+// asks the caller to serve the request from the store instead.
+func (s *server) searchForList(ctx context.Context, req *resourcepb.ListRequest, srq *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, *resourcepb.ErrorResult, error) {
+	var searchResp *resourcepb.ResourceSearchResponse
+	var err error
+	if s.search != nil {
+		searchResp, err = s.search.Search(ctx, srq)
+	} else {
+		// shouldUseSearchForList() already checks that either s.search or s.searchClient is set
+		searchResp, err = s.searchClient.Search(ctx, srq)
+	}
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Logged as well as returned, because in environments where only logs are
+	// available an empty page and a failed search look the same.
+	if err := ErrorFromResponse(searchResp.GetError(), nil); err != nil {
+		// Only on the first page: a later page carries a position in the search results
+		// that the store scan cannot resume from.
+		if IsSelectableFieldNotIndexed(searchResp.GetError()) && req.NextPageToken == "" {
+			return nil, nil, fmt.Errorf("%w: %w", errSearchCannotAnswerList, err)
+		}
+		s.log.Error("Search failed for List with selectors", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", err)
+		return nil, AsErrorResult(err), nil
+	}
+	return searchResp, nil, nil
+}
+
+// applyContinueToken resumes a paginated search from where the token left off,
+// and returns the resource version the whole list is pinned to.
+func applyContinueToken(srq *resourcepb.ResourceSearchRequest, nextPageToken string, span trace.Span) (int64, *resourcepb.ErrorResult) {
+	if nextPageToken == "" {
+		return 0, nil
+	}
+	span.AddEvent("continue token present")
+	token, err := GetContinueToken(nextPageToken)
+	if err != nil {
+		return 0, NewBadRequestError("invalid continue token")
+	}
+	if tokenFromOtherListPath(token, true) {
+		return 0, NewBadRequestError("continue token was not issued for a search-backed list")
+	}
+	srq.SearchAfter = token.SearchAfter
+	srq.SearchBefore = token.SearchBefore
+	return token.ResourceVersion, nil
 }
 
 type listSearchRow struct {
@@ -253,13 +299,19 @@ func (s *server) readSearchRows(ctx context.Context, rows []listSearchRow) ([]*B
 
 // tokenFromOtherListPath reports whether a continue token was issued by the other
 // list path. The two encode a position differently, sort values against the index
-// and a name against the store, so continuing with the wrong one would silently
-// restart from the first result.
+// and a name or a row offset against the store, so continuing with the wrong one
+// would silently restart from the first result.
+//
+// Only the search path records sort values, and every search page has at least one
+// sort field, so a token without them came from a store scan. Checking it this way
+// round also covers the SQL backend, whose token records an offset this type does
+// not even decode.
 func tokenFromOtherListPath(token *ContinueToken, searchPath bool) bool {
+	fromSearch := len(token.SearchAfter) > 0 || len(token.SearchBefore) > 0
 	if searchPath {
-		return token.Name != "" || token.Namespace != ""
+		return !fromSearch
 	}
-	return len(token.SearchAfter) > 0 || len(token.SearchBefore) > 0
+	return fromSearch
 }
 
 // filterSelectors drops the requirements the index cannot answer, so a request
@@ -333,9 +385,43 @@ func (s *server) shouldUseSearchForList(req *resourcepb.ListRequest) bool {
 		return false
 	}
 
-	// TODO have a way of including enterprise manifests
-	manifests := AppManifestsWithKinds(AppManifests()...)
-	return slices.ContainsFunc(manifests, func(m *app.ManifestData) bool {
-		return m.Group == req.Options.Key.Group
-	})
+	// A client that started paging on the store scan has to finish there, even if
+	// this gate would now pick search: its token records a position in the store,
+	// which search cannot resume from. Without this, a client paging while the gate
+	// changes would get its next page rejected.
+	if req.NextPageToken != "" {
+		if token, err := GetContinueToken(req.NextPageToken); err == nil && tokenFromOtherListPath(token, true) {
+			return false
+		}
+	}
+
+	// Labels are indexed for every kind, so a list filtered only by labels does not
+	// need to know the kind.
+	if len(req.Options.Fields) == 0 {
+		return true
+	}
+
+	return s.selectableFieldsDeclared(req.Options.Key.Group, req.Options.Key.Resource, req.Options.Fields)
+}
+
+// selectableFieldsDeclared reports whether the kind declares every field the
+// request filters on. Only a declared field is mapped into the index, and a
+// filter on anything else would find nothing there.
+//
+// The declarations come from the same registry the index mapping is built from,
+// which a manifest watcher keeps up to date, so a kind this binary was not
+// compiled with still gets its selectors pushed down. The index can still be
+// behind the registry, which the search side refuses rather than answers
+// (see IsSelectableFieldNotIndexed).
+func (s *server) selectableFieldsDeclared(group, resource string, fields []*resourcepb.Requirement) bool {
+	if s.manifestSearchFields == nil {
+		return false
+	}
+	declared, _, _ := s.manifestSearchFields.For(NewLowerGroupResource(group, resource))
+	for _, f := range fields {
+		if !slices.Contains(declared, f.Key) {
+			return false
+		}
+	}
+	return true
 }

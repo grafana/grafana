@@ -275,14 +275,6 @@ func generateSelfSignedCAPEM(t *testing.T) []byte {
 	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})
 }
 
-// stubTokenExchanger is a fake authnlib.TokenExchanger returning a fixed
-// token, just enough to exercise which header a wrapper writes it into.
-type stubTokenExchanger struct{}
-
-func (stubTokenExchanger) Exchange(_ context.Context, _ authnlib.TokenExchangeRequest) (*authnlib.TokenExchangeResponse, error) {
-	return &authnlib.TokenExchangeResponse{Token: "exchanged-token"}, nil
-}
-
 // capturingRoundTripper records the last request it saw instead of sending it.
 type capturingRoundTripper struct {
 	req *http.Request
@@ -301,7 +293,7 @@ func (c *capturingRoundTripper) RoundTrip(req *http.Request) (*http.Response, er
 func TestAggregateTokenWrapper_HeaderPerTarget(t *testing.T) {
 	t.Run("cloud_app_platform_apiserver uses Authorization", func(t *testing.T) {
 		captured := &capturingRoundTripper{}
-		wrapped := aggregateTokenWrapper("cloud_app_platform_apiserver", stubTokenExchanger{}, "aud")(captured)
+		wrapped := aggregateTokenWrapper("cloud_app_platform_apiserver", authnlib.NewStaticTokenExchanger("exchanged-token"), "aud")(captured)
 
 		resp, err := wrapped.RoundTrip(httptest.NewRequest(http.MethodGet, "https://cap.invalid/apis", nil))
 		require.NoError(t, err)
@@ -313,7 +305,7 @@ func TestAggregateTokenWrapper_HeaderPerTarget(t *testing.T) {
 
 	t.Run("baas_apiserver uses X-Access-Token", func(t *testing.T) {
 		captured := &capturingRoundTripper{}
-		wrapped := aggregateTokenWrapper("baas_apiserver", stubTokenExchanger{}, "aud")(captured)
+		wrapped := aggregateTokenWrapper("baas_apiserver", authnlib.NewStaticTokenExchanger("exchanged-token"), "aud")(captured)
 
 		resp, err := wrapped.RoundTrip(httptest.NewRequest(http.MethodGet, "https://baas.invalid/apis", nil))
 		require.NoError(t, err)
@@ -364,6 +356,8 @@ func TestProvideCloudRoutesLoaderFactory_PluginsURLAloneActivatesWithoutCapToken
 	cfg := cfgWithCloudRouterSection(t, map[string]string{
 		"plugins_url": "https://plugins.invalid/plugins",
 	})
+	cfg.ExtJWTAuth.JWKSUrl = "https://jwks.invalid/keys"
+	cfg.ExtJWTAuth.Audiences = []string{"grafana"}
 
 	loaderIface, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 	require.NoError(t, err)
@@ -380,6 +374,8 @@ func TestProvideCloudRoutesLoaderFactory_PluginsURLRejectsNonAbsoluteURL(t *test
 	cfg := cfgWithCloudRouterSection(t, map[string]string{
 		"plugins_url": "/just/a/path",
 	})
+	cfg.ExtJWTAuth.JWKSUrl = "https://jwks.invalid/keys"
+	cfg.ExtJWTAuth.Audiences = []string{"grafana"}
 
 	_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 	require.ErrorContains(t, err, "must be absolute")
@@ -415,6 +411,8 @@ func TestCloudLoader_AllThreeSourcesCombineInLoad(t *testing.T) {
 		"baas_apiserver.audience": "baas",
 		"plugins_url":             pluginsUpstream.URL,
 	})
+	cfg.ExtJWTAuth.JWKSUrl = "https://jwks.invalid/keys"
+	cfg.ExtJWTAuth.Audiences = []string{"grafana"}
 
 	loaderIface, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 	require.NoError(t, err)
@@ -504,7 +502,24 @@ func TestCloudLoaderSingleTenantFallback(t *testing.T) {
 		require.True(t, loader.SingleTenantFallback() == nil)
 	})
 	t.Run("discovery alone enables fallback", func(t *testing.T) {
+		gcom := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			require.Equal(t, http.MethodGet, r.Method)
+			require.Equal(t, "Bearer test-gcom-token", r.Header.Get("Authorization"))
+			switch r.URL.Path {
+			case "/api/instances/35611":
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = w.Write([]byte(`{"url":"https://play.grafana.org/"}`))
+			case "/api/instances/123":
+				w.WriteHeader(http.StatusNotFound)
+			default:
+				t.Errorf("unexpected gcom request: %s", r.URL.Path)
+				w.WriteHeader(http.StatusBadRequest)
+			}
+		}))
+		t.Cleanup(gcom.Close)
 		cfg := cfgWithCloudRouterSection(t, map[string]string{"st_discovery_url": "https://play.grafana.org/"})
+		cfg.GrafanaComAPIURL = gcom.URL + "/api"
+		cfg.GrafanaComSSOAPIToken = "test-gcom-token"
 		loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 		require.NoError(t, err)
 		cloud, ok := loader.(*cloudLoader)
@@ -537,4 +552,24 @@ func TestCloudLoaderFallbackOnlyLifecycle(t *testing.T) {
 		require.Equal(t, services.Running, cloud.State())
 		require.NoError(t, services.StopAndAwaitTerminated(t.Context(), cloud))
 	})
+}
+
+func TestProvideCloudRoutesLoaderFactory_PluginsRequireTokenVerificationConfig(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		jwksURL   string
+		wantError string
+	}{
+		{name: "missing JWKS URL", wantError: "missing cfg.ExtJWTAuth.JWKSUrl"},
+		{name: "missing audiences", jwksURL: "https://jwks.invalid/keys", wantError: "missing cfg.ExtJWTAuth.Audiences"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := cfgWithCloudRouterSection(t, map[string]string{"plugins_url": "https://plugins.invalid/plugins"})
+			cfg.ExtJWTAuth.JWKSUrl = tc.jwksURL
+			cfg.ExtJWTAuth.Audiences = nil
+			loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+			require.ErrorContains(t, err, cloudRouterSection+": "+tc.wantError)
+			require.Nil(t, loader)
+		})
+	}
 }

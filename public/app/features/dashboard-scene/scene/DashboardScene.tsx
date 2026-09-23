@@ -127,6 +127,7 @@ import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutMana
 import { addNewRowTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
 import { getUpdatedHoverHeader } from './panel-timerange/utils';
+import { DashboardPlanningEvent } from './planningEvents';
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './types/DashboardLayoutManager';
 import { type DashboardSceneLike, type DashboardSceneState } from './types/dashboard';
 
@@ -259,16 +260,25 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     if (isNew) {
-      // Silent CUJ signal so the dashboard_edit journey starts on /dashboard/new
-      // (the regular `dashboards_edit_button_clicked` doesn't fire here — auto-edit
-      // mode bypasses the button).
-      reportInteraction('dashboards_new_dashboard_init', {}, { silent: true });
       // New dashboards enter edit mode on activation, before any caller can tag the
       // session, so the initiator is carried in the url (set by the assistant when it
       // opens the editor to build a dashboard itself)
       const editSource = locationService.getSearchObject().editSource;
-      this.onEnterEditMode(editSource === 'assistant' ? 'assistant' : 'user');
-      this.setState({ isDirty: true });
+
+      // A plan preview opens /dashboard/new only so RENDER_PLAN can populate it, and never
+      // intends to edit -- entering edit mode here and exiting again a moment later would still
+      // show a real edit toolbar for the round trip in between. Skip the auto-edit entirely
+      // instead. This is a withhold-from-URL check (a missing/forged marker just degrades to
+      // the normal edit-mode behaviour below), unlike a grant-from-URL check such as ?editview=,
+      // which is why this is safe where that one was not.
+      if (editSource !== 'plan-preview') {
+        // Silent CUJ signal so the dashboard_edit journey starts on /dashboard/new
+        // (the regular `dashboards_edit_button_clicked` doesn't fire here — auto-edit
+        // mode bypasses the button).
+        reportInteraction('dashboards_new_dashboard_init', {}, { silent: true });
+        this.onEnterEditMode(editSource === 'assistant' ? 'assistant' : 'user');
+        this.setState({ isDirty: true });
+      }
     }
 
     if (!this.state.meta.isEmbedded && this.state.uid) {
@@ -287,6 +297,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const destroyMutationClient = createMutationClient(this, 'dashboard');
 
     return () => {
+      // A plan preview that's still showing when the scene deactivates (navigated away, tab
+      // closed) never got a Build or Dismiss decision — report that honestly as 'closed' rather
+      // than leaving the caller holding a stale reference to a preview nothing is showing.
+      if (this.state.planning) {
+        appEvents.publish(new DashboardPlanningEvent({ planId: this.state.planning.planId, action: 'closed' }));
+        // Lifecycle hygiene, not a cache fix: a fresh /dashboard/new always builds an uncached
+        // scene with no planning state, so this only matters if that ever changes.
+        this.setState({ planning: undefined });
+      }
       destroyMutationClient();
       window.__grafanaSceneContext = prevSceneContext;
       clearKeyBindings();
@@ -1164,6 +1183,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public closeModal() {
     this.setState({ overlay: undefined });
+  }
+
+  /**
+   * True while an unbuilt dashboard plan is being previewed on this scene. The preview is a
+   * static, view-mode surface: it never enters edit mode, so there is no exit-edit-mode dance and
+   * no `_initialState` snapshot to restore later.
+   */
+  public isPlanning(): boolean {
+    return this.state.planning !== undefined;
   }
 
   public onOpenSettings = () => {

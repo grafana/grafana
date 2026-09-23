@@ -1059,6 +1059,7 @@ func createContactPointServiceSutWithConfigStore(t *testing.T,
 		false,
 		nil,
 		&notifier.NoopOrgEmailValidator{},
+		notifier.NoopReceiverStatusFetcher{},
 	)
 
 	return NewContactPointService(
@@ -1138,7 +1139,7 @@ func createEncryptedConfig(t *testing.T,
 ) string {
 	c, err := notifier.Load([]byte(defaultAlertmanagerConfigJSON))
 	require.NoError(t, err)
-	err = notifier.EncryptReceiverConfigs(c.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
+	err = notifier.EncryptReceiverConfigs(c.GetReceivers(), func(ctx context.Context, payload []byte) ([]byte, error) {
 		return secretService.Encrypt(ctx, payload, secrets.WithoutScope())
 	})
 	require.NoError(t, err)
@@ -1153,7 +1154,7 @@ func TestStitchReceivers(t *testing.T) {
 		initial            *v1.AMConfigV1
 		new                *v1.PostableGrafanaReceiver
 		expCfg             v1.AMConfigV1
-		expOldReceiver     *string
+		expOldReceiver     string
 		expCreatedReceiver bool
 		expFullRemoval     bool
 	}
@@ -1164,7 +1165,7 @@ func TestStitchReceivers(t *testing.T) {
 			new: &v1.PostableGrafanaReceiver{
 				UID: "does not exist",
 			},
-			expOldReceiver: nil,
+			expOldReceiver: "",
 			expCfg:         *createTestConfigWithReceivers(),
 		},
 		{
@@ -1174,7 +1175,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-2",
 				Type: "teams",
 			},
-			expOldReceiver: new("receiver-2"),
+			expOldReceiver: "receiver-2",
 			expCfg: v1.AMConfigV1{
 				AlertmanagerConfig: v1.PostableApiAlertingConfig{
 					Config: v1.Config{
@@ -1188,7 +1189,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "receiver-1",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1219,7 +1220,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
-				},
+				}),
 			},
 		},
 		{
@@ -1229,7 +1230,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "new-receiver",
 				Type: "slack",
 			},
-			expOldReceiver:     new("receiver-1"),
+			expOldReceiver:     "receiver-1",
 			expCreatedReceiver: true,
 			expFullRemoval:     true,
 			expCfg: v1.AMConfigV1{
@@ -1245,7 +1246,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "new-receiver",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1276,7 +1277,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
-				},
+				}),
 			},
 		},
 		{
@@ -1286,7 +1287,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-1",
 				Type: "slack",
 			},
-			expOldReceiver:     new("receiver-2"),
+			expOldReceiver:     "receiver-2",
 			expCreatedReceiver: false,
 			expCfg: v1.AMConfigV1{
 				AlertmanagerConfig: v1.PostableApiAlertingConfig{
@@ -1301,7 +1302,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "receiver-1",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1332,7 +1333,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
-				},
+				}),
 			},
 		},
 		{
@@ -1350,7 +1351,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "receiver-1",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1386,14 +1387,14 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
-				},
+				}),
 			},
 			new: &v1.PostableGrafanaReceiver{
 				UID:  "2",
 				Name: "receiver-2",
 				Type: "slack",
 			},
-			expOldReceiver:     new("receiver-1"),
+			expOldReceiver:     "receiver-1",
 			expCreatedReceiver: false,
 			expCfg: v1.AMConfigV1{
 				AlertmanagerConfig: v1.PostableApiAlertingConfig{
@@ -1408,7 +1409,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "receiver-1",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1444,7 +1445,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
-				},
+				}),
 			},
 		},
 		{
@@ -1462,7 +1463,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "receiver-1",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1508,14 +1509,14 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
-				},
+				}),
 			},
 			new: &v1.PostableGrafanaReceiver{
 				UID:  "2",
 				Name: "receiver-4",
 				Type: "slack",
 			},
-			expOldReceiver:     new("receiver-1"),
+			expOldReceiver:     "receiver-1",
 			expCreatedReceiver: false,
 			expCfg: v1.AMConfigV1{
 				AlertmanagerConfig: v1.PostableApiAlertingConfig{
@@ -1530,7 +1531,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "receiver-1",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1576,7 +1577,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
-				},
+				}),
 			},
 		},
 		{
@@ -1586,7 +1587,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "brand-new-group",
 				Type: "opsgenie",
 			},
-			expOldReceiver:     new("receiver-2"),
+			expOldReceiver:     "receiver-2",
 			expCreatedReceiver: true,
 			expCfg: v1.AMConfigV1{
 				AlertmanagerConfig: v1.PostableApiAlertingConfig{
@@ -1601,7 +1602,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "receiver-1",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1637,7 +1638,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
-				},
+				}),
 			},
 		},
 		{
@@ -1648,7 +1649,7 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "brand-new-group",
 				Type: "opsgenie",
 			},
-			expOldReceiver:     new("receiver-2"), // Not the inconsistent receiver-3?
+			expOldReceiver:     "receiver-2", // Not the inconsistent receiver-3?
 			expCreatedReceiver: true,
 			expCfg: v1.AMConfigV1{
 				AlertmanagerConfig: v1.PostableApiAlertingConfig{
@@ -1663,7 +1664,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "receiver-1",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1699,7 +1700,64 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
+				}),
+			},
+		},
+		{
+			name:    "update inconsistent group in the database, algorithm fixes it",
+			initial: createInconsistentTestConfigWithReceivers(),
+			new: &v1.PostableGrafanaReceiver{
+				UID:  "ghi",
+				Name: "receiver-2",
+				Type: "opsgenie",
+			},
+			expOldReceiver:     "receiver-2",
+			expCreatedReceiver: false,
+			expCfg: v1.AMConfigV1{
+				AlertmanagerConfig: v1.PostableApiAlertingConfig{
+					Config: v1.Config{
+						Route: &v1.Route{
+							Receiver: "receiver-1",
+							Routes: []*v1.Route{
+								{
+									Receiver: "receiver-1",
+								},
+							},
+						},
+					},
 				},
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
+					{
+						Name: "receiver-1",
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:  "abc",
+								Name: "receiver-1",
+								Type: "slack",
+							},
+						},
+					},
+					{
+						Name: "receiver-2",
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:  "def",
+								Name: "receiver-2",
+								Type: "slack",
+							},
+							{
+								UID:  "ghi",
+								Name: "receiver-2",
+								Type: "opsgenie",
+							},
+							{
+								UID:  "jkl",
+								Name: "receiver-2",
+								Type: "discord",
+							},
+						},
+					},
+				}),
 			},
 		},
 		{
@@ -1720,7 +1778,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "receiver-1",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1746,14 +1804,14 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
-				},
+				}),
 			},
 			new: &v1.PostableGrafanaReceiver{
 				UID:  "3",
 				Name: "receiver-1",
 				Type: "slack",
 			},
-			expOldReceiver:     new("receiver-2"),
+			expOldReceiver:     "receiver-2",
 			expCreatedReceiver: false,
 			expFullRemoval:     true,
 			expCfg: v1.AMConfigV1{
@@ -1772,7 +1830,7 @@ func TestStitchReceivers(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
+				Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 					{
 						Name: "receiver-1",
 						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1793,7 +1851,7 @@ func TestStitchReceivers(t *testing.T) {
 							},
 						},
 					},
-				},
+				}),
 			},
 		},
 	}
@@ -1805,7 +1863,12 @@ func TestStitchReceivers(t *testing.T) {
 				cfg = c.initial
 			}
 
-			renamedReceiver, fullRemoval, createdReceiver := stitchReceiver(cfg, c.new)
+			oldReceiver, _, fullRemoval, createdReceiver := stitchReceiver(cfg, c.new)
+			var renamedReceiver string
+			if oldReceiver != nil {
+				renamedReceiver = oldReceiver.Name
+			}
+
 			assert.EqualValuesf(t, c.expOldReceiver, renamedReceiver, "expected old receiver to be %v, got %v", c.expOldReceiver, renamedReceiver)
 			assert.Equalf(t, c.expFullRemoval, fullRemoval, "expected full removal to be %t, got %t", c.expFullRemoval, fullRemoval)
 			assert.Equalf(t, c.expCreatedReceiver, createdReceiver, "expected created receiver to be %t, got %t", c.expCreatedReceiver, createdReceiver)
@@ -1828,7 +1891,7 @@ func createTestConfigWithReceivers() *v1.AMConfigV1 {
 				},
 			},
 		},
-		Receivers: []*v1.PostableApiReceiver{
+		Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 			{
 				Name: "receiver-1",
 				GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1859,7 +1922,7 @@ func createTestConfigWithReceivers() *v1.AMConfigV1 {
 					},
 				},
 			},
-		},
+		}),
 	}
 }
 
@@ -1878,7 +1941,7 @@ func createInconsistentTestConfigWithReceivers() *v1.AMConfigV1 {
 				},
 			},
 		},
-		Receivers: []*v1.PostableApiReceiver{
+		Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 			{
 				Name: "receiver-1",
 				GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -1909,7 +1972,7 @@ func createInconsistentTestConfigWithReceivers() *v1.AMConfigV1 {
 					},
 				},
 			},
-		},
+		}),
 	}
 }
 

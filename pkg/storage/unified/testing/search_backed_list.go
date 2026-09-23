@@ -20,8 +20,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// searchBackedListGroup must be an AppManifests() group so a search-backed LIST
-// is allowed to route through search.
+// The test selects on labels only, which any group may do, so the group here is
+// just a realistic one.
 const (
 	searchBackedListGroup    = "playlist.grafana.app"
 	searchBackedListResource = "playlists"

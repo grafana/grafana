@@ -5,7 +5,6 @@ import Skeleton from 'react-loading-skeleton';
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
-  ClipboardButton,
   type Column,
   Dropdown,
   IconButton,
@@ -18,12 +17,11 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
-import { NotebookAnalytics } from '../analytics/main';
-import { NOTEBOOK_DELETE_SOURCE, NOTEBOOK_LINK_COPY_SOURCE } from '../analytics/types';
+import { NOTEBOOK_DELETE_SOURCE } from '../analytics/types';
 import { DeleteNotebookModal } from '../delete/DeleteNotebookModal';
 import { useDeleteNotebook } from '../delete/useDeleteNotebook';
 import { canEditNotebooks } from '../permissions';
-import { notebookEditHref, notebookShareUrl, notebookViewUrl } from '../urls';
+import { notebookEditHref, notebookViewUrl } from '../urls';
 
 import { NotebookRowMenu } from './NotebookRowMenu';
 import { type NotebookRow } from './useNotebooksList';
@@ -280,15 +278,6 @@ const NotebookRowActions = memo(function NotebookRowActions({
           {t('notebooks.list.table.edit', 'Edit')}
         </LinkButton>
       )}
-      <ClipboardButton
-        variant="secondary"
-        size="sm"
-        icon="link"
-        getText={() => notebookShareUrl(uid)}
-        onClipboardCopy={() => NotebookAnalytics.linkCopied(uid, NOTEBOOK_LINK_COPY_SOURCE.NOTEBOOK_LIST)}
-      >
-        {t('notebooks.list.table.copy-link', 'Copy link')}
-      </ClipboardButton>
       <Dropdown overlay={<NotebookRowMenu uid={uid} onDelete={() => onDelete(uid, title)} />} placement="bottom-end">
         <IconButton
           name="ellipsis-v"

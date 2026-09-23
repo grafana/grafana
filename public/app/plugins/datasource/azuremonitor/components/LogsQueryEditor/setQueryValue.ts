@@ -45,7 +45,7 @@ export function setTimeColumn(query: AzureMonitorQuery, timeColumn: string): Azu
   };
 }
 
-export function setLogTier(query: AzureMonitorQuery, logTier: LogTier | undefined): AzureMonitorQuery {
+function setLogTier(query: AzureMonitorQuery, logTier: LogTier | undefined): AzureMonitorQuery {
   return {
     ...query,
     azureLogAnalytics: {

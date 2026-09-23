@@ -10,7 +10,7 @@ import { AssistantDashboardEmpty } from './AssistantDashboardEmpty';
 import { startPlanningInAssistant } from './handoff';
 
 jest.mock('./handoff', () => ({
-  startPlanningInAssistant: jest.fn(() => true),
+  startPlanningInAssistant: jest.fn(),
 }));
 
 jest.mock('./datasources', () => ({
@@ -67,7 +67,7 @@ describe('AssistantDashboardEmpty', () => {
   });
 
   it('derives planning summaries from context data and forwards the original selection', () => {
-    const { dashboard } = renderEmpty();
+    renderEmpty();
     const contextItems: ChatContextItem[] = [
       {
         node: {
@@ -104,30 +104,8 @@ describe('AssistantDashboardEmpty', () => {
       datasources: [{ uid: 'prom-1', type: 'prometheus', name: 'Prometheus' }],
       context: contextItems,
       dashboards: [{ uid: 'dash-1', title: 'Checkout' }],
-      folderUid: dashboard.state.meta.folderUid,
-      skipNavigation: true,
     });
     expect(mockStartPlanning.mock.calls[0][0].context).toBe(contextItems);
-  });
-
-  it('passes the destination folder through when the new dashboard lives in one', () => {
-    const dashboard = new DashboardScene({
-      isEditing: true,
-      body: AutoGridLayoutManager.createEmpty(),
-      meta: { folderUid: 'folder-1', folderTitle: 'Reliability' },
-    });
-    jest.spyOn(dashboard.state.sidebar, 'addNewPanel').mockImplementation(() => {});
-    render(<AssistantDashboardEmpty dashboard={dashboard} />);
-
-    act(() => {
-      latestOnSubmit?.('monitor checkout', []);
-    });
-
-    expect(mockStartPlanning).toHaveBeenCalledWith(
-      expect.objectContaining({
-        folderUid: 'folder-1',
-      })
-    );
   });
 
   it('falls back to every datasource when the user picked none', () => {
@@ -144,17 +122,5 @@ describe('AssistantDashboardEmpty', () => {
         dashboards: [],
       })
     );
-  });
-
-  it('leaves the canvas interactive when planning does not start', () => {
-    mockStartPlanning.mockReturnValueOnce(false);
-    const { dashboard } = renderEmpty();
-
-    act(() => {
-      latestOnSubmit?.('monitor checkout', []);
-    });
-
-    expect(dashboard.getEditSessionSource()).not.toBe('assistant');
-    expect(screen.queryByTestId('dashboard-assistant-interaction-lock')).not.toBeInTheDocument();
   });
 });

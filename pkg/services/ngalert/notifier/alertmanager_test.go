@@ -92,11 +92,11 @@ func TestAlertmanager_SaveAndApplyExtraConfiguration_WithExternalSecrets(t *test
 				},
 			},
 		},
-		Receivers: []*v1.PostableApiReceiver{
+		Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 			{
 				Name: "default-receiver",
 			},
-		},
+		}),
 	}
 
 	err = moa.saveAndApplyConfig(context.Background(), 1, am, cfg)
@@ -160,12 +160,12 @@ func TestAlertmanager_ApplyConfig(t *testing.T) {
 			},
 		}
 	}
-	basicReceivers := func() []*v1.PostableApiReceiver {
-		return []*v1.PostableApiReceiver{
+	basicReceivers := func() map[v1.ResourceUID]v1.PostableApiReceiver {
+		return v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 			{
 				Name: "default-receiver",
 			},
-		}
+		})
 	}
 
 	grafanaTmpl := v1.NewTemplateGroup("", "grafana-template", "{{ define \"grafana.title\" }}Alert{{ end }}", v1.TemplateKindGrafana, ngmodels.ProvenanceNone)
@@ -279,7 +279,7 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 					Route: &v1.Route{Receiver: receivers[0]},
 				},
 			},
-			Receivers: postableReceivers,
+			Receivers: v1.ReceiversFromSlice(postableReceivers),
 		}
 	}
 
@@ -334,9 +334,11 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 				return baseConfig("default-receiver", "extra-receiver")
 			},
 			mutate: func(cfg *v1.AMConfigV1, _ map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
-				cfg.Receivers = append(cfg.Receivers, &v1.PostableApiReceiver{
-					Name: "new-receiver",
-				})
+				if cfg.Receivers == nil {
+					cfg.Receivers = make(map[v1.ResourceUID]v1.PostableApiReceiver, 1)
+				}
+				r := v1.NewReceiver("new-receiver", nil, ngmodels.ProvenanceNone)
+				cfg.Receivers[r.UID] = r
 			},
 		},
 		{
@@ -368,7 +370,7 @@ receivers:
 			features: featuremgmt.WithFeatures(),
 			initialConfig: func() *v1.AMConfigV1 {
 				cfg := baseConfig("default-receiver", "team-a", "team-b", "team-c")
-				cfg.ManagedRoutes = v1.ManagedRoutes{
+				cfg.ManagedRoutes = map[string]*v1.Route{
 					"team-b-policy": {Receiver: "team-b"},
 					"team-a-policy": {Receiver: "team-a"},
 				}

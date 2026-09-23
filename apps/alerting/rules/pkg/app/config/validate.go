@@ -3,9 +3,19 @@ package config
 import (
 	"context"
 	"fmt"
+	"time"
+
+	prommodel "github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/validation"
+)
+
+// minRulerSyncPollInterval and maxRulerSyncPollInterval bound
+// externalRulerSync.pollInterval to a reasonable range.
+const (
+	minRulerSyncPollInterval = time.Minute
+	maxRulerSyncPollInterval = time.Hour
 )
 
 // Config is a per-org singleton, so the only valid name is the well-known
@@ -24,6 +34,23 @@ func ValidateConfigWrite(cfg RuntimeConfig) validation.ValidateFunc[*v0alpha1.Co
 				if err := cfg.CheckExternalRulerSyncDatasource(ctx, newUID); err != nil {
 					return fmt.Errorf("externalRulerSync.datasourceUid: %w", err)
 				}
+			}
+		}
+
+		// The CUE schema constrains pollInterval to #PromDuration, but that
+		// constraint isn't reflected in the generated Go/OpenAPI type (a plain
+		// *string) or enforced anywhere else -- externalRulerSyncPollIntervalFromConfig
+		// silently falls back to the default on a parse error, so an invalid
+		// value would otherwise be accepted here and silently ignored at sync
+		// time, with no signal to the writer that their value didn't take.
+		if ers := obj.Spec.ExternalRulerSync; ers != nil && ers.PollInterval != nil && *ers.PollInterval != "" {
+			d, err := prommodel.ParseDuration(*ers.PollInterval)
+			if err != nil {
+				return fmt.Errorf("externalRulerSync.pollInterval: %w", err)
+			}
+			if dur := time.Duration(d); dur < minRulerSyncPollInterval || dur > maxRulerSyncPollInterval {
+				return fmt.Errorf("externalRulerSync.pollInterval: must be between %s and %s, got %s",
+					minRulerSyncPollInterval, maxRulerSyncPollInterval, dur)
 			}
 		}
 
