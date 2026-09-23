@@ -364,6 +364,8 @@ func TestProvideCloudRoutesLoaderFactory_PluginsURLAloneActivatesWithoutCapToken
 	cfg := cfgWithCloudRouterSection(t, map[string]string{
 		"plugins_url": "https://plugins.invalid/plugins",
 	})
+	cfg.ExtJWTAuth.JWKSUrl = "https://jwks.invalid/keys"
+	cfg.ExtJWTAuth.Audiences = []string{"grafana"}
 
 	loaderIface, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 	require.NoError(t, err)
@@ -380,6 +382,8 @@ func TestProvideCloudRoutesLoaderFactory_PluginsURLRejectsNonAbsoluteURL(t *test
 	cfg := cfgWithCloudRouterSection(t, map[string]string{
 		"plugins_url": "/just/a/path",
 	})
+	cfg.ExtJWTAuth.JWKSUrl = "https://jwks.invalid/keys"
+	cfg.ExtJWTAuth.Audiences = []string{"grafana"}
 
 	_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 	require.ErrorContains(t, err, "must be absolute")
@@ -415,6 +419,8 @@ func TestCloudLoader_AllThreeSourcesCombineInLoad(t *testing.T) {
 		"baas_apiserver.audience": "baas",
 		"plugins_url":             pluginsUpstream.URL,
 	})
+	cfg.ExtJWTAuth.JWKSUrl = "https://jwks.invalid/keys"
+	cfg.ExtJWTAuth.Audiences = []string{"grafana"}
 
 	loaderIface, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 	require.NoError(t, err)
@@ -554,4 +560,24 @@ func TestCloudLoaderFallbackOnlyLifecycle(t *testing.T) {
 		require.Equal(t, services.Running, cloud.State())
 		require.NoError(t, services.StopAndAwaitTerminated(t.Context(), cloud))
 	})
+}
+
+func TestProvideCloudRoutesLoaderFactory_PluginsRequireTokenVerificationConfig(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		jwksURL   string
+		wantError string
+	}{
+		{name: "missing JWKS URL", wantError: "missing cfg.ExtJWTAuth.JWKSUrl"},
+		{name: "missing audiences", jwksURL: "https://jwks.invalid/keys", wantError: "missing cfg.ExtJWTAuth.Audiences"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := cfgWithCloudRouterSection(t, map[string]string{"plugins_url": "https://plugins.invalid/plugins"})
+			cfg.ExtJWTAuth.JWKSUrl = tc.jwksURL
+			cfg.ExtJWTAuth.Audiences = nil
+			loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+			require.ErrorContains(t, err, cloudRouterSection+": "+tc.wantError)
+			require.Nil(t, loader)
+		})
+	}
 }
