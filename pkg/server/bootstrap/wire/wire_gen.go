@@ -372,7 +372,11 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		return nil, err
 	}
 	eventualRestConfigProvider := apiserver.ProvideEventualRestConfigProvider()
-	teamimplService, err := teamimpl.ProvideService(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider)
+	features, err := iam.ProvideFeatures(cfg)
+	if err != nil {
+		return nil, err
+	}
+	teamimplService, err := teamimpl.ProvideService(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features)
 	if err != nil {
 		return nil, err
 	}
@@ -951,10 +955,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	}
 	contentsCleaner := cleaner.ProvideFolderContentsDeleter(dBstore, libraryPanelService)
 	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderPermissionsService, accessClient, registerer, resourceClient, zanzanaClient, eventualRestConfigProvider, contentsCleaner)
-	startupFeatures, err := iam.ProvideStartupFeatures(cfg)
-	if err != nil {
-		return nil, err
-	}
 	userPermissionsClient := authz.ProvideAuthZUserPermissionsClient(authZClients)
 	roleApiInstaller := iam.ProvideNoopRoleApiInstaller()
 	globalRoleApiInstaller := inmemory.ProvideInMemoryGlobalRoleApiInstaller(acimplService)
@@ -964,7 +964,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	noopSearchREST := externalgroupmapping.ProvideNoopSearchREST()
 	externalGroupReconciler := _wireNoopExternalGroupReconcilerValue
 	mappersRegistry := resourcepermission.ProvideMappersRegistry()
-	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, startupFeatures, configProvider, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, userPermissionsClient, zanzanaClient, registerer, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, tracingService, roleBindingApiInstaller, teamGroupsHandlerProvider, noopSearchREST, externalGroupReconciler, dualwriteService, resourceClient, orgService, userimplService, teamimplService, eventualRestConfigProvider, mappersRegistry, loginStore, remoteCache)
+	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, features, configProvider, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, userPermissionsClient, zanzanaClient, registerer, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, tracingService, roleBindingApiInstaller, teamGroupsHandlerProvider, noopSearchREST, externalGroupReconciler, dualwriteService, resourceClient, orgService, userimplService, teamimplService, eventualRestConfigProvider, mappersRegistry, loginStore, remoteCache)
 	if err != nil {
 		return nil, err
 	}
@@ -1013,7 +1013,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	teamAPI := teamapi.ProvideTeamAPI(routeRegisterImpl, teamimplService, acimplService, accessControl, teamPermissionsService, userimplService, ossLicensingService, cfg, prefService, k8sHandler, dashboardService, featureToggles, resourceClient, eventualRestConfigProvider)
+	teamAPI := teamapi.ProvideTeamAPI(routeRegisterImpl, teamimplService, acimplService, accessControl, teamPermissionsService, userimplService, ossLicensingService, cfg, prefService, k8sHandler, dashboardService, featureToggles, resourceClient, eventualRestConfigProvider, features)
 	cloudmigrationService, err := cloudmigrationimpl.ProvideService(cfg, httpclientProvider, featureToggles, sqlStore, service13, secretsKVStore, secretsService, routeRegisterImpl, registerer, tracingService, dashboardService, folderimplService, pluginstoreService, service12, accessControl, acimplService, kvStore, libraryElementService, alertNG)
 	if err != nil {
 		return nil, err
@@ -1153,7 +1153,11 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	eventualRestConfigProvider := apiserver.ProvideEventualRestConfigProvider()
-	teamimplService, err := teamimpl.ProvideService(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider)
+	features, err := iam.ProvideFeatures(cfg)
+	if err != nil {
+		return nil, err
+	}
+	teamimplService, err := teamimpl.ProvideService(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features)
 	if err != nil {
 		return nil, err
 	}
@@ -1731,10 +1735,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	contentsCleaner := cleaner.ProvideFolderContentsDeleter(dBstore, libraryPanelService)
 	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, apiserverService, folderPermissionsService, accessClient, registerer, resourceClient, zanzanaClient, eventualRestConfigProvider, contentsCleaner)
-	startupFeatures, err := iam.ProvideStartupFeatures(cfg)
-	if err != nil {
-		return nil, err
-	}
 	userPermissionsClient := authz.ProvideAuthZUserPermissionsClient(authZClients)
 	roleApiInstaller := iam.ProvideNoopRoleApiInstaller()
 	globalRoleApiInstaller := inmemory.ProvideInMemoryGlobalRoleApiInstaller(acimplService)
@@ -1744,7 +1744,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	noopSearchREST := externalgroupmapping.ProvideNoopSearchREST()
 	externalGroupReconciler := _wireNoopExternalGroupReconcilerValue
 	mappersRegistry := resourcepermission.ProvideMappersRegistry()
-	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, startupFeatures, configProvider, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, userPermissionsClient, zanzanaClient, registerer, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, tracingService, roleBindingApiInstaller, teamGroupsHandlerProvider, noopSearchREST, externalGroupReconciler, dualwriteService, resourceClient, orgService, userimplService, teamimplService, eventualRestConfigProvider, mappersRegistry, loginStore, remoteCache)
+	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, features, configProvider, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, userPermissionsClient, zanzanaClient, registerer, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, tracingService, roleBindingApiInstaller, teamGroupsHandlerProvider, noopSearchREST, externalGroupReconciler, dualwriteService, resourceClient, orgService, userimplService, teamimplService, eventualRestConfigProvider, mappersRegistry, loginStore, remoteCache)
 	if err != nil {
 		return nil, err
 	}
@@ -1793,7 +1793,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	teamAPI := teamapi.ProvideTeamAPI(routeRegisterImpl, teamimplService, acimplService, accessControl, teamPermissionsService, userimplService, ossLicensingService, cfg, prefService, k8sHandler, dashboardService, featureToggles, resourceClient, eventualRestConfigProvider)
+	teamAPI := teamapi.ProvideTeamAPI(routeRegisterImpl, teamimplService, acimplService, accessControl, teamPermissionsService, userimplService, ossLicensingService, cfg, prefService, k8sHandler, dashboardService, featureToggles, resourceClient, eventualRestConfigProvider, features)
 	cloudmigrationService, err := cloudmigrationimpl.ProvideService(cfg, httpclientProvider, featureToggles, sqlStore, service13, secretsKVStore, secretsService, routeRegisterImpl, registerer, tracingService, dashboardService, folderimplService, pluginstoreService, service12, accessControl, acimplService, kvStore, libraryElementService, alertNG)
 	if err != nil {
 		return nil, err
@@ -1876,7 +1876,11 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (server.Runner, err
 		return server.Runner{}, err
 	}
 	eventualRestConfigProvider := apiserver.ProvideEventualRestConfigProvider()
-	teamimplService, err := teamimpl.ProvideService(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider)
+	features, err := iam.ProvideFeatures(cfg)
+	if err != nil {
+		return server.Runner{}, err
+	}
+	teamimplService, err := teamimpl.ProvideService(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features)
 	if err != nil {
 		return server.Runner{}, err
 	}
@@ -2088,7 +2092,11 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	backendFactoryProvider := coreplugin.ProvideCoreProvider(corepluginRegistry)
 	processService := process.ProvideService()
 	eventualRestConfigProvider := apiserver.ProvideEventualRestConfigProvider()
-	teamimplService, err := teamimpl.ProvideService(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider)
+	features, err := iam.ProvideFeatures(cfg)
+	if err != nil {
+		return nil, err
+	}
+	teamimplService, err := teamimpl.ProvideService(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features)
 	if err != nil {
 		return nil, err
 	}

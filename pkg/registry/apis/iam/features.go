@@ -1,11 +1,16 @@
 package iam
 
 import (
+	"context"
 	"fmt"
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -59,41 +64,52 @@ type Features struct {
 	ZanzanaSync                       bool
 }
 
-// StartupFeatures is the IAM feature snapshot resolved from Grafana's static
-// configuration. An unconfigured snapshot preserves the legacy OpenFeature
-// fallback during migration.
-type StartupFeatures struct {
-	features   Features
-	configured bool
+// ProvideFeatures resolves the IAM startup feature set before any consumers
+// are constructed. Explicit [iam] configuration takes precedence; when it is
+// absent, legacy OpenFeature flags are evaluated once for staged migration.
+func ProvideFeatures(cfg *setting.Cfg) (Features, error) {
+	configured, err := featuresFromConfig(cfg)
+	if err != nil {
+		return Features{}, err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	return ResolveFeatures(ctx, configured, openfeature.NewDefaultClient()), nil
 }
 
-// NewStartupFeatures creates a configured startup feature snapshot.
-func NewStartupFeatures(features Features) StartupFeatures {
-	return StartupFeatures{features: features, configured: true}
+// ResolveFeatures returns explicit startup configuration when supplied, or a
+// one-time snapshot of the legacy flags otherwise. The optional value is kept
+// at the initialization boundary and is never passed to consumers.
+func ResolveFeatures(ctx context.Context, configured *Features, client openfeature.IClient) Features {
+	if configured != nil {
+		return *configured
+	}
+	return FeaturesFromFlags(ctx, client)
 }
 
-// ProvideStartupFeatures resolves the optional [iam] startup configuration.
-func ProvideStartupFeatures(cfg *setting.Cfg) (StartupFeatures, error) {
+func featuresFromConfig(cfg *setting.Cfg) (*Features, error) {
 	if cfg == nil || cfg.Raw == nil {
-		return StartupFeatures{}, nil
+		return nil, nil
 	}
 
 	section := cfg.Raw.Section("iam")
 	apiValue := strings.TrimSpace(section.Key("api").String())
 	zanzanaSync, err := parseOptionalBool(section.Key("zanzana_sync_enabled").String())
 	if err != nil {
-		return StartupFeatures{}, fmt.Errorf("invalid iam.zanzana_sync_enabled: %w", err)
+		return nil, fmt.Errorf("invalid iam.zanzana_sync_enabled: %w", err)
 	}
 	serviceAccountResourcePermissions, err := parseOptionalBool(section.Key("service_account_resource_permissions_enabled").String())
 	if err != nil {
-		return StartupFeatures{}, fmt.Errorf("invalid iam.service_account_resource_permissions_enabled: %w", err)
+		return nil, fmt.Errorf("invalid iam.service_account_resource_permissions_enabled: %w", err)
 	}
 
 	if apiValue == "" {
 		if zanzanaSync || serviceAccountResourcePermissions {
-			return StartupFeatures{}, fmt.Errorf("iam.api must be configured when IAM behavior settings are enabled")
+			return nil, fmt.Errorf("iam.api must be configured when IAM behavior settings are enabled")
 		}
-		return StartupFeatures{}, nil
+		return nil, nil
 	}
 
 	values := strings.Split(apiValue, ",")
@@ -103,7 +119,7 @@ func ProvideStartupFeatures(cfg *setting.Cfg) (StartupFeatures, error) {
 
 	apis, err := ParseAPIs(values)
 	if err != nil {
-		return StartupFeatures{}, err
+		return nil, err
 	}
 
 	features := Features{
@@ -112,20 +128,10 @@ func ProvideStartupFeatures(cfg *setting.Cfg) (StartupFeatures, error) {
 	}
 	features.SetAPIs(apis)
 	if err := features.Validate(); err != nil {
-		return StartupFeatures{}, err
+		return nil, err
 	}
 
-	return NewStartupFeatures(features), nil
-}
-
-// Snapshot returns a copy of the configured features, or nil when callers
-// should use the legacy OpenFeature fallback.
-func (f StartupFeatures) Snapshot() *Features {
-	if !f.configured {
-		return nil
-	}
-	features := f.features
-	return &features
+	return &features, nil
 }
 
 func parseOptionalBool(value string) (bool, error) {
@@ -134,6 +140,30 @@ func parseOptionalBool(value string) (bool, error) {
 		return false, nil
 	}
 	return strconv.ParseBool(value)
+}
+
+// FeaturesFromFlags evaluates the legacy IAM startup flags into one immutable value.
+func FeaturesFromFlags(ctx context.Context, client openfeature.IClient) Features {
+	flag := func(key string) bool {
+		return client.Boolean(ctx, key, false, openfeature.TransactionContext(ctx))
+	}
+
+	return Features{
+		RolesAPI:                          flag(featuremgmt.FlagKubernetesAuthzRolesApi),
+		RoleBindingsAPI:                   flag(featuremgmt.FlagKubernetesAuthzRoleBindingsApi),
+		GlobalRolesAPI:                    flag(featuremgmt.FlagKubernetesAuthzGlobalRolesApi),
+		ResourcePermissionsAPI:            flag(featuremgmt.FlagKubernetesAuthzResourcePermissionApis),
+		TeamLBACRulesAPI:                  flag(featuremgmt.FlagKubernetesAuthzTeamLBACRuleApi),
+		TeamsAPI:                          flag(featuremgmt.FlagKubernetesTeamsApi),
+		UsersAPI:                          flag(featuremgmt.FlagKubernetesUsersApi),
+		ServiceAccountsAPI:                flag(featuremgmt.FlagKubernetesServiceAccountsApi),
+		ServiceAccountTokensAPI:           flag(featuremgmt.FlagKubernetesServiceAccountTokensApi),
+		SSOSettingsAPI:                    flag(featuremgmt.FlagKubernetesSsoSettingsApi),
+		AuthInfoAPI:                       flag(featuremgmt.FlagKubernetesAuthInfoApi),
+		UserPermissionsAPI:                flag(featuremgmt.FlagAuthzUserPermissions),
+		ServiceAccountResourcePermissions: flag(featuremgmt.FlagKubernetesAuthzServiceAccountResourcePermissions),
+		ZanzanaSync:                       flag(featuremgmt.FlagKubernetesAuthzZanzanaSync),
+	}
 }
 
 func ParseAPIs(values []string) ([]API, error) {
