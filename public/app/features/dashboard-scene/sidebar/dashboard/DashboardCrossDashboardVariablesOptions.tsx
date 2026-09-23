@@ -68,7 +68,7 @@ export function updateDashboardScopeAll(
 }
 
 /** Opt the shown names in or out without changing the rest of the scope. */
-export function setShownScopeNames(
+function setShownScopeNames(
   selection: UseCrossDashboardVariables,
   scope: PredefinedVariableScope,
   shownNames: string[],
