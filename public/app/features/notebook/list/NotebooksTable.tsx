@@ -127,6 +127,10 @@ export function NotebooksTable({ notebooks, onTagClick }: Props) {
             inline={false}
             href={notebookViewUrl(original.uid)}
             title={original.title}
+            // This is the title cell, not the row - InteractiveTable gives no per-row prop to
+            // attach a testid to the actual <tr>. Fine for the visibility checks this is used for
+            // today, but a test that needs to scope off "the row" to reach a sibling cell won't
+            // be able to from this locator.
             data-testid={selectors.pages.Notebooks.List.table.row(original.uid)}
           >
             {original.title}

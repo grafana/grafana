@@ -1,6 +1,11 @@
 import { type APIRequestContext } from '@playwright/test';
 
 import { test, expect } from '@grafana/plugin-e2e';
+// Intentional, not a stray deviation from this suite's usual relative/@grafana/* imports:
+// `yarn e2e:playwright` sets NODE_OPTIONS='-C @grafana-app/source' (locally and in CI), which
+// registers the `app/` alias for Playwright's Node-side TS loader. Verified across all CI shards
+// on this PR - no module-resolution error - and this file is a bare string constant with no
+// further imports of its own, so it's safe to pull in this way.
 import { NOTEBOOK_CELL_FRAME_CLASS } from 'app/features/notebook/scene/layout-notebook/edit/cellClassNames';
 
 // The `namespace` fixture is per-test and cannot be used in beforeAll/afterAll - hardcoded to match

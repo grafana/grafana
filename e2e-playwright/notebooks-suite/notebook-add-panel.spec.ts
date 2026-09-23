@@ -1,3 +1,5 @@
+import { type APIRequestContext } from '@playwright/test';
+
 import { test, expect } from '@grafana/plugin-e2e';
 
 // The `namespace` fixture is per-test and cannot be used in afterAll - hardcoded to match
@@ -12,6 +14,26 @@ function extractNotebookUid(href: string | null): string | undefined {
   return href?.match(/\/notebooks\/([^/?]+)/)?.[1];
 }
 
+/**
+ * The toast + link only prove the modal reported success, not that the panel itself survived the
+ * write - a regression that silently dropped it would still show the same toast. Fetches the
+ * notebook back from the API and asserts it actually persisted exactly one real panel element
+ * with at least one query, rather than an empty or missing one.
+ */
+async function expectPersistedPanel(request: APIRequestContext, uid: string): Promise<void> {
+  const response = await request.get(`${NOTEBOOKS_API}/${uid}`);
+  expect(response.ok()).toBeTruthy();
+  const spec = (await response.json()).spec;
+  const elements = Object.values(spec.elements ?? {}) as Array<{
+    kind: string;
+    spec?: { data?: { spec?: { queries?: unknown[] } } };
+  }>;
+
+  const panels = elements.filter((element) => element.kind === 'Panel');
+  expect(panels).toHaveLength(1);
+  expect(panels[0].spec?.data?.spec?.queries?.length ?? 0).toBeGreaterThan(0);
+}
+
 test.describe('Add panel to notebook from Explore', () => {
   let createdUid: string | undefined;
 
@@ -21,7 +43,12 @@ test.describe('Add panel to notebook from Explore', () => {
     }
   });
 
-  test('runs a query in Explore and adds the panel to a new notebook', async ({ page, dashboardPage, selectors }) => {
+  test('runs a query in Explore and adds the panel to a new notebook', async ({
+    page,
+    dashboardPage,
+    selectors,
+    request,
+  }) => {
     const notebookTitle = `E2E Notebook From Explore ${SUFFIX}`;
 
     await page.goto('/explore');
@@ -48,6 +75,8 @@ test.describe('Add panel to notebook from Explore', () => {
     await expect(viewLink).toBeVisible();
     createdUid = extractNotebookUid(await viewLink.getAttribute('href'));
     expect(createdUid).toBeTruthy();
+
+    await expectPersistedPanel(request, createdUid!);
   });
 });
 
@@ -64,6 +93,7 @@ test.describe('Add panel to notebook from a dashboard panel', () => {
     gotoDashboardPage,
     page,
     selectors,
+    request,
   }) => {
     const notebookTitle = `E2E Notebook From Dashboard ${SUFFIX}`;
 
@@ -84,5 +114,7 @@ test.describe('Add panel to notebook from a dashboard panel', () => {
     await expect(viewLink).toBeVisible();
     createdUid = extractNotebookUid(await viewLink.getAttribute('href'));
     expect(createdUid).toBeTruthy();
+
+    await expectPersistedPanel(request, createdUid!);
   });
 });

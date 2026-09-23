@@ -12,6 +12,11 @@ export async function withRowMenuOpen(
   attempts = 3
 ): Promise<void> {
   for (let attempt = 1; attempt <= attempts; attempt++) {
+    // The trigger toggles the menu, so a retry can't assume it's closed - `interact` may have
+    // failed for a reason other than the menu closing on it (a stray overlay, a slow animation),
+    // in which case clicking the trigger again would close an already-open menu instead of
+    // reopening one. Escape first so every attempt starts from the same closed state.
+    await rowMenuButton.page().keyboard.press('Escape');
     await rowMenuButton.click();
     try {
       await interact();
