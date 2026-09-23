@@ -407,19 +407,24 @@ func TestDashboardAPIBuilder_LibraryPanelFolderValidationForProvisioningIdentity
 	ctx, _, err := identity.WithProvisioningIdentity(t.Context(), "stacks-1")
 	require.NoError(t, err)
 	ctx = k8srequest.WithNamespace(ctx, "stacks-1")
+	missingFolderBuilder := &DashboardsAPIBuilder{
+		folderClientProvider: &staticHandlerProvider{handler: &variableFolderAccessHandler{notFoundAccessSubresource: true}},
+	}
 
-	t.Run("allows an existing folder", func(t *testing.T) {
-		builder := &DashboardsAPIBuilder{
-			folderClientProvider: &staticHandlerProvider{handler: &variableFolderAccessHandler{}},
-		}
-		require.NoError(t, builder.validateLibraryPanelFolder(ctx, testLibraryPanel("panel-a", "provisioned-folder")))
+	t.Run("allows a repository managed resource when the folder is not visible yet", func(t *testing.T) {
+		panel := testLibraryPanel("panel-a", "provisioned-folder")
+		accessor, err := utils.MetaAccessor(panel)
+		require.NoError(t, err)
+		accessor.SetManagerProperties(utils.ManagerProperties{
+			Kind:     utils.ManagerKindRepo,
+			Identity: "library-panels-repo",
+		})
+
+		require.NoError(t, missingFolderBuilder.validateLibraryPanelFolder(ctx, panel))
 	})
 
-	t.Run("rejects a missing folder", func(t *testing.T) {
-		builder := &DashboardsAPIBuilder{
-			folderClientProvider: &staticHandlerProvider{handler: &variableFolderAccessHandler{notFoundAccessSubresource: true}},
-		}
-		err := builder.validateLibraryPanelFolder(ctx, testLibraryPanel("panel-a", "missing-folder"))
+	t.Run("still rejects an unmanaged resource with a missing folder", func(t *testing.T) {
+		err := missingFolderBuilder.validateLibraryPanelFolder(ctx, testLibraryPanel("panel-a", "missing-folder"))
 		require.True(t, apierrors.IsNotFound(err))
 	})
 }
