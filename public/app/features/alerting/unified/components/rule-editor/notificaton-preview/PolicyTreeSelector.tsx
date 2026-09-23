@@ -82,7 +82,10 @@ export function PolicyTreeSelector() {
     setIsExpanded(true);
   };
 
-  if (error) {
+  // Only hide the section when we have no list at all. RoutingTreeSelector refetches this same
+  // query on mount and on window focus, and a failed refetch sets error while the last good list is
+  // still cached - bailing out then would make the whole policy section vanish mid-edit.
+  if (error && !policies) {
     return null; // Silently fail - the user can still use the form without this feature
   }
 

@@ -43,7 +43,10 @@ export type RoutingTreeSelectorProps = SingleSelectProps | MultiSelectProps;
 function RoutingTreeSelector(props: RoutingTreeSelectorProps) {
   const { options, trees, isLoading, isError } = useRoutingTreeOptions();
 
-  if (isError) {
+  // Only give up when we have nothing to show. A failed refetch (this query refetches on mount and
+  // on window focus) sets isError while the last good list is still in the cache, and replacing a
+  // working dropdown with a warning would lose the user's current selection along with the list.
+  if (isError && options.length === 0) {
     return (
       <Alert
         severity="warning"

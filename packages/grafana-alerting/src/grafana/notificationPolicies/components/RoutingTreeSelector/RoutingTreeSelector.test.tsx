@@ -1,7 +1,8 @@
+import { generatedAPI as notificationsAPIv1beta1 } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { setupMockServer } from '@grafana/test-utils/server';
 
-import { render, screen } from '../../../../../tests/test-utils';
+import { act, render, screen } from '../../../../../tests/test-utils';
 import { DEFAULT_ROUTING_TREE_NAME_ALIAS, USER_DEFINED_TREE_NAME } from '../../routingTrees';
 
 import { RoutingTreeSelector } from './RoutingTreeSelector';
@@ -220,5 +221,25 @@ describe('default tree presented with the "default" canonical name', () => {
     const options = await screen.findAllByRole('option');
     // `billing` sorts before `default` alphabetically; the default tree is first only if recognised.
     expect(options[0]).toHaveTextContent(/default policy/i);
+  });
+});
+
+describe('a refetch that fails after a successful load', () => {
+  // This query refetches on mount and on window focus, and RTK Query keeps the last good data
+  // alongside the error. Replacing a working dropdown with a warning would throw away both the list
+  // and the user's visible selection, so the list has to survive a failed refetch.
+  it('keeps showing the list instead of swapping in the error alert', async () => {
+    const { store } = render(<RoutingTreeSelector value="team-platform" onChange={jest.fn()} />);
+
+    expect(await screen.findByDisplayValue('team-platform')).toBeInTheDocument();
+
+    // Now the endpoint starts failing, and something refetches the entry we're subscribed to.
+    server.use(...routingTreeWithErrorScenario);
+    await act(async () => {
+      await store.dispatch(notificationsAPIv1beta1.endpoints.listRoutingTree.initiate({}, { forceRefetch: true }));
+    });
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByDisplayValue('team-platform')).toBeInTheDocument();
   });
 });
