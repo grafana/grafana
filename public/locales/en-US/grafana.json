@@ -14845,6 +14845,15 @@
     "repository-status": {
       "error": "Failed to load repository"
     },
+    "repository-status-alert": {
+      "deletion-title": "Repository deletion error",
+      "error-title": "Repository error",
+      "force-delete-button": "Delete anyway",
+      "force-delete-cancel": "Cancel",
+      "force-delete-confirm": "Delete anyway",
+      "force-delete-title": "Delete repository anyway",
+      "force-delete-warning": "This removes the repository without completing the blocking step, so anything it manages on the provider side (for example a webhook) is left in place. Only do this if the repository can no longer be reached — for example its credentials have expired or been revoked."
+    },
     "repository-status-page": {
       "back-to-repositories": "Back to repositories",
       "cleaning-up-resources": "Cleaning up repository resources",
