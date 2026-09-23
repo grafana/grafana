@@ -3740,11 +3740,6 @@
       "count": 1
     }
   },
-  "public/swagger/index.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
-    }
-  },
   "public/swagger/plugins.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2

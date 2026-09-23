@@ -1,4 +1,3 @@
-import '../app/core/trustedTypePolicies';
 declare let __webpack_public_path__: string;
 declare let __webpack_nonce__: string;
 
@@ -20,7 +19,7 @@ import 'swagger-ui-react/swagger-ui.css';
 import DOMPurify from 'dompurify';
 import { createRoot } from 'react-dom/client';
 
-import { textUtil } from '@grafana/data';
+import { enforcingTrustedTypesPolicy } from 'app/core/trustedTypesPolicy';
 
 import { Page } from './SwaggerPage';
 
@@ -28,9 +27,8 @@ import { Page } from './SwaggerPage';
 const tt = window.trustedTypes;
 if (tt?.createPolicy) {
   tt.createPolicy('default', {
-    createHTML: (string, sink) => DOMPurify.sanitize(string, { RETURN_TRUSTED_TYPE: true }) as unknown as string,
-    createScriptURL: (url, sink) => textUtil.sanitizeUrl(url),
-    createScript: (script, sink) => script,
+    ...enforcingTrustedTypesPolicy,
+    createHTML: (html) => DOMPurify.sanitize(html, { RETURN_TRUSTED_TYPE: false }),
   });
 }
 
