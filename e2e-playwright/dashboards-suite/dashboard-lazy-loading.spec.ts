@@ -298,6 +298,91 @@ async function enterEditMode(page: Page) {
   await page.getByTestId('data-testid Edit dashboard button').click();
 }
 
+test.describe('Options variable lists', { tag: '@options-flow' }, () => {
+  test.beforeEach(async ({ page }) => {
+    const response = await page.request.get(`/api/dashboards/uid/${dashboardUid}`);
+    expect(response.ok()).toBe(true);
+    const { dashboard } = await response.json();
+    dashboard.templating.list = [
+      { name: 'TextVariable', type: 'textbox', query: 'initial', current: { text: 'initial', value: 'initial' } },
+      { name: 'Region', type: 'custom', query: 'east,west', current: { text: 'east', value: 'east' } },
+    ];
+    const saved = await page.request.post('/api/dashboards/db', { data: { dashboard, overwrite: true } });
+    expect(saved.ok(), await saved.text()).toBe(true);
+  });
+
+  test('cold Options mounts draggable variables and preserves edits and order across remounts', async ({ page }) => {
+    const errors: string[] = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    await enterEditMode(page);
+    const options = page.getByTestId('data-testid Dashboard Sidebar options button');
+    await options.click();
+    const variables = page.getByTestId('variables-list-visible');
+    await expect(variables.getByTestId('variable-name')).toHaveText(['TextVariable', 'Region']);
+
+    // A working keyboard drag proves the real drag-and-drop components replaced the loading stand-ins.
+    const region = variables.getByRole('button', { name: 'Region', exact: true });
+    await region.focus();
+    await region.press('Space');
+    await region.press('ArrowUp');
+    await region.press('Space');
+    await expect(variables.getByTestId('variable-name')).toHaveText(['Region', 'TextVariable']);
+
+    const textVariable = variables
+      .getByRole('listitem')
+      .filter({ has: page.getByText('TextVariable', { exact: true }) });
+    await textVariable.hover();
+    await textVariable.getByRole('button', { name: 'Edit', exact: true }).click();
+    await expect(page.getByLabel('Name', { exact: true })).toHaveValue('TextVariable');
+    await page.getByRole('textbox', { name: 'Label Optional display name', exact: true }).fill('Updated text variable');
+    await page.getByRole('textbox', { name: 'Label Optional display name', exact: true }).press('Tab');
+
+    await options.click();
+    await expect(variables.getByTestId('variable-name')).toHaveText(['Region', 'TextVariable']);
+    await page.getByTestId('data-testid sidebar-show-hide-toggle').click();
+    await expect(variables).toBeHidden();
+    await page.getByTestId('data-testid sidebar-show-hide-toggle').click();
+    await options.click();
+    await expect(variables.getByTestId('variable-name')).toHaveText(['Region', 'TextVariable']);
+    await textVariable.hover();
+    await textVariable.getByRole('button', { name: 'Edit', exact: true }).click();
+    await expect(page.getByRole('textbox', { name: 'Label Optional display name', exact: true })).toHaveValue(
+      'Updated text variable'
+    );
+    await expect(page.getByTestId('TextPanel-converted-content')).toHaveText('Browser review content');
+    expect(errors).toEqual([]);
+  });
+
+  test('closing Options during its first load does not reopen it, and it remains usable afterward', async ({
+    page,
+  }) => {
+    const errors: string[] = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const held = await holdChunk(page, /\/dashboard-edit-actions\.[^/]+\.js$/);
+    await enterEditMode(page);
+    await page.getByTestId('data-testid Dashboard Sidebar options button').click();
+    await held.wait();
+    await page.getByRole('button', { name: 'Exit edit mode', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Enter edit mode', exact: true })).toBeVisible();
+    await held.release();
+    await expect(page.getByRole('button', { name: 'Enter edit mode', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'View all settings' })).toBeHidden();
+
+    await page.getByTestId('data-testid Edit dashboard button').click();
+    await page.getByTestId('data-testid Dashboard Sidebar options button').click();
+    const variables = page.getByTestId('variables-list-visible');
+    await expect(variables.getByTestId('variable-name')).toHaveText(['TextVariable', 'Region']);
+    const textVariable = variables
+      .getByRole('listitem')
+      .filter({ has: page.getByText('TextVariable', { exact: true }) });
+    await textVariable.hover();
+    await textVariable.getByRole('button', { name: 'Edit', exact: true }).click();
+    await expect(page.getByLabel('Name', { exact: true })).toHaveValue('TextVariable');
+    await expect(page.getByTestId('TextPanel-converted-content')).toHaveText('Browser review content');
+    expect(errors).toEqual([]);
+  });
+});
+
 for (const pane of ['Add', 'Filters'] as const) {
   test(`Options supersedes a pending ${pane} pane`, { tag: '@pane-request' }, async ({ page }) => {
     const held = await holdChunk(page, pane === 'Add' ? addPaneChunk : filtersPaneChunk);
