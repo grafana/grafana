@@ -47,13 +47,12 @@ export function InstallControlsButton({
   const [queryParams] = useQueryParams();
   const location = useLocation();
   const { isInstalling, error: errorInstalling } = useInstallStatus();
-  const { isUninstalling } = useUninstallStatus();
+  const { isUninstalling, error: errorUninstalling } = useUninstallStatus();
   const install = useInstall();
   const uninstall = useUninstall();
   const unsetInstall = useUnsetInstall();
   const fetchDetails = useFetchDetailsLazy();
   const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
-  const [isUserDataModalVisible, setIsUserDataModalVisible] = useState(false);
   const showConfirmModal = () => setIsConfirmModalVisible(true);
   const hideConfirmModal = () => setIsConfirmModalVisible(false);
   const uninstallBtnText = isUninstalling ? 'Uninstalling' : 'Uninstall';
@@ -91,15 +90,10 @@ export function InstallControlsButton({
     }
   };
 
-  const onUninstall = async (confirmUserData = false) => {
+  const onUninstall = async () => {
     hideConfirmModal();
-    setIsUserDataModalVisible(false);
-    const result = await uninstall(plugin.id, confirmUserData);
-    if (result.meta.requestStatus === 'rejected' && result.payload === 'USER_DATA') {
-      setIsUserDataModalVisible(true);
-      return;
-    }
-    if (result.meta.requestStatus === 'fulfilled') {
+    await uninstall(plugin.id);
+    if (!errorUninstalling) {
       // If an app plugin is uninstalled we need to reset the active tab when the config / dashboards tabs are removed.
       const activePageId = queryParams.page;
       const isViewingAppConfigPage = activePageId !== PluginTabIds.OVERVIEW && activePageId !== PluginTabIds.VERSIONS;
@@ -152,21 +146,8 @@ export function InstallControlsButton({
           'Are you sure you want to uninstall this plugin?'
         )}
         confirmText={t('plugins.install-controls-button.uninstall-controls.confirmText-confirm', 'Confirm')}
-        onConfirm={() => onUninstall()}
+        onConfirm={onUninstall}
         onDismiss={hideConfirmModal}
-      />
-      <ConfirmModal
-        isOpen={isUserDataModalVisible}
-        title={t('plugins.install-controls-button.title-uninstall-user-data-modal', 'Delete extra files in {{plugin}}?', {
-          plugin: plugin.name,
-        })}
-        body={t(
-          'plugins.install-controls-button.uninstall-controls.body-uninstall-user-data',
-          'This plugin folder has extra files Grafana did not install. Confirm again to delete the whole folder.'
-        )}
-        confirmText={t('plugins.install-controls-button.uninstall-controls.confirmText-delete-all', 'Delete all')}
-        onConfirm={() => onUninstall(true)}
-        onDismiss={() => setIsUserDataModalVisible(false)}
       />
       <Button
         variant="destructive"

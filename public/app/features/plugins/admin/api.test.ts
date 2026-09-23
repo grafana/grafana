@@ -182,22 +182,6 @@ describe('api', () => {
         expect(getBackendSrv().post).toHaveBeenCalledTimes(1);
         expect(getBackendSrv().post).toHaveBeenCalledWith('/api/plugins/myorg-test-panel/uninstall');
       });
-
-      it('should mark extra-file 409 as handled so other uninstall errors still toast', async () => {
-        const error = { status: 409, data: { status: 'user-data' } };
-        jest.mocked(getBackendSrv().post).mockRejectedValue(error);
-
-        await expect(uninstallPlugin('myorg-test-panel')).rejects.toBe(error);
-        expect(error).toHaveProperty('isHandled', true);
-      });
-
-      it('should not mark other uninstall errors as handled', async () => {
-        const error = { status: 500, data: { message: 'boom' } };
-        jest.mocked(getBackendSrv().post).mockRejectedValue(error);
-
-        await expect(uninstallPlugin('myorg-test-panel')).rejects.toBe(error);
-        expect(error).not.toHaveProperty('isHandled');
-      });
     });
   });
 });

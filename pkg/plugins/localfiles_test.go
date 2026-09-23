@@ -57,43 +57,6 @@ func TestLocalFS_Remove(t *testing.T) {
 		require.True(t, os.IsNotExist(err))
 	})
 
-	t.Run("Uninstall removes nested plugin directories first", func(t *testing.T) {
-		pluginDir := filepath.Join(t.TempDir(), "zabbix")
-		childDir := filepath.Join(pluginDir, "nested")
-		require.NoError(t, os.MkdirAll(childDir, 0o750))
-		require.NoError(t, os.WriteFile(filepath.Join(pluginDir, "plugin.json"), []byte(`{"id":"parent"}`), 0o644))
-		require.NoError(t, os.WriteFile(filepath.Join(childDir, "plugin.json"), []byte(`{"id":"child"}`), 0o644))
-
-		fs := NewLocalFS(pluginDir)
-		require.NoError(t, fs.Remove())
-
-		_, err := os.Stat(pluginDir)
-		require.True(t, os.IsNotExist(err))
-	})
-
-	t.Run("UserPlacedFiles reports files added after StaticFS snapshot", func(t *testing.T) {
-		pluginDir := t.TempDir()
-		require.NoError(t, os.WriteFile(filepath.Join(pluginDir, "plugin.json"), []byte(`{"id":"p"}`), 0o644))
-		staticFS, err := NewStaticFS(NewLocalFS(pluginDir))
-		require.NoError(t, err)
-		require.NoError(t, os.WriteFile(filepath.Join(pluginDir, "notes.txt"), []byte("keep me"), 0o644))
-
-		extras, err := UserPlacedFiles(staticFS)
-		require.NoError(t, err)
-		require.Equal(t, []string{"notes.txt"}, extras)
-	})
-
-	t.Run("UserPlacedFiles uses MANIFEST.txt allow list on LocalFS", func(t *testing.T) {
-		pluginDir := t.TempDir()
-		require.NoError(t, os.WriteFile(filepath.Join(pluginDir, "plugin.json"), []byte(`{"id":"p"}`), 0o644))
-		require.NoError(t, os.WriteFile(filepath.Join(pluginDir, "MANIFEST.txt"), []byte("-----BEGIN PGP SIGNED MESSAGE-----\nHash: SHA512\n\n{\"plugin\":\"p\",\"version\":\"1.0.0\",\"files\":{\"plugin.json\":\"abc\"}}\n-----BEGIN PGP SIGNATURE-----\n\nxg==\n-----END PGP SIGNATURE-----\n"), 0o644))
-		require.NoError(t, os.WriteFile(filepath.Join(pluginDir, "notes.txt"), []byte("keep me"), 0o644))
-
-		extras, err := UserPlacedFiles(NewLocalFS(pluginDir))
-		require.NoError(t, err)
-		require.Equal(t, []string{"notes.txt"}, extras)
-	})
-
 	t.Run("Uninstall will not delete folder if cannot recognize plugin structure", func(t *testing.T) {
 		pluginDir = filepath.Join(t.TempDir(), "system32")
 		err = os.Mkdir(pluginDir, 0o750)

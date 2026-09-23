@@ -120,13 +120,6 @@ var pluginCommands = []*cli.Command{
 		Aliases: []string{"remove"},
 		Usage:   "uninstall <plugin id>",
 		Action:  runPluginCommand(removeCommand),
-		Flags: []cli.Flag{
-			&cli.BoolFlag{
-				Name:  "force",
-				Usage: "Delete extra files in the plugin directory that Grafana did not install",
-				Value: false,
-			},
-		},
 	},
 }
 

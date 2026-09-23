@@ -245,7 +245,7 @@ export async function installPlugin(id: string, version?: string) {
   );
 }
 
-export async function uninstallPlugin(id: string, options?: { confirmUserData?: boolean }) {
+export async function uninstallPlugin(id: string) {
   // Uninstall via K8s PluginMeta API (no-op when plugins.useMTPlugins is off).
   // We call both this and the legacy path because the K8s settings API doesn't cover all
   // plugin types yet — the legacy call keeps the UI in sync across browser refreshes.
@@ -259,16 +259,7 @@ export async function uninstallPlugin(id: string, options?: { confirmUserData?: 
   }
 
   // Legacy uninstall path — kept until K8s settings API covers all plugin types.
-  const query = options?.confirmUserData ? '?confirmUserData=true' : '';
-  try {
-    return await getBackendSrv().post(`${API_ROOT}/${id}/uninstall${query}`);
-  } catch (error: unknown) {
-    // Extra files are confirmed in a modal. Other uninstall failures still toast.
-    if (isFetchError(error) && error.status === 409 && error.data?.status === 'user-data') {
-      error.isHandled = true;
-    }
-    throw error;
-  }
+  return await getBackendSrv().post(`${API_ROOT}/${id}/uninstall`);
 }
 
 export async function getPluginEntitlement(id: string): Promise<boolean> {

@@ -233,30 +233,26 @@ export const install = createAsyncThunk<
 
 export const unsetInstall = createAsyncThunk(`${STATE_PREFIX}/install`, async () => ({}));
 
-export const uninstall = createAsyncThunk<
-  Update<CatalogPlugin, string>,
-  { id: string; confirmUserData?: boolean }
->(`${STATE_PREFIX}/uninstall`, async ({ id, confirmUserData }, thunkApi) => {
-  try {
-    await uninstallPlugin(id, { confirmUserData });
-    await refetchPanelPluginMetas();
+export const uninstall = createAsyncThunk<Update<CatalogPlugin, string>, string>(
+  `${STATE_PREFIX}/uninstall`,
+  async (id, thunkApi) => {
+    try {
+      await uninstallPlugin(id);
+      await refetchPanelPluginMetas();
 
-    clearPluginInfoInCache(id);
+      clearPluginInfoInCache(id);
 
-    return {
-      id,
-      changes: { isInstalled: false, installedVersion: undefined, isFullyInstalled: false },
-    };
-  } catch (e) {
-    console.error(e);
-    if (isFetchError(e) && e.status === 409 && e.data?.status === 'user-data') {
-      e.isHandled = true;
-      return thunkApi.rejectWithValue('USER_DATA');
+      return {
+        id,
+        changes: { isInstalled: false, installedVersion: undefined, isFullyInstalled: false },
+      };
+    } catch (e) {
+      console.error(e);
+
+      return thunkApi.rejectWithValue('Unknown error.');
     }
-
-    return thunkApi.rejectWithValue('Unknown error.');
   }
-});
+);
 
 // We need this to be backwards-compatible with other parts of Grafana.
 // (Originally in "public/app/features/plugins/state/actions.ts")

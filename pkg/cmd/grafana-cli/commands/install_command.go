@@ -5,9 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"runtime"
-	"sort"
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
@@ -193,48 +191,24 @@ func doInstallPlugin(ctx context.Context, pluginID, version string, o pluginInst
 	return nil
 }
 
-func removePluginFS(label string, pluginFS plugins.FS) error {
-	remover, ok := pluginFS.(plugins.FSRemover)
-	if !ok {
-		return fmt.Errorf("plugin %v is immutable and therefore cannot be uninstalled", label)
-	}
-	logger.Debugf("Removing directory %v\n\n", pluginFS.Base())
-	return remover.Remove()
-}
-
-// uninstallPlugin removes the plugin directory, nested child plugins first.
+// uninstallPlugin removes the plugin directory
 func uninstallPlugin(_ context.Context, pluginID string, c utils.CommandLine) error {
 	for _, bundle := range services.GetLocalPlugins(c.PluginDirectory()) {
-		if bundle.Primary.JSONData.ID != pluginID {
-			continue
-		}
-		logger.Infof("Removing plugin: %v\n", pluginID)
-		if extras, err := plugins.UserPlacedFiles(bundle.Primary.FS); err == nil && len(extras) > 0 && !c.Bool("force") {
-			return fmt.Errorf("plugin directory contains extra files: %s. re-run with --force to delete them", strings.Join(extras, ", "))
-		}
-		children := append([]*plugins.FoundPlugin(nil), bundle.Children...)
-		sort.Slice(children, func(i, j int) bool {
-			return foundPluginDepth(children[i]) > foundPluginDepth(children[j])
-		})
-		for _, child := range children {
-			if child == nil {
-				continue
-			}
-			if err := removePluginFS(child.JSONData.ID, child.FS); err != nil && !errors.Is(err, plugins.ErrUninstallInvalidPluginDir) {
-				return err
+		if bundle.Primary.JSONData.ID == pluginID {
+			logger.Infof("Removing plugin: %v\n", pluginID)
+			if remover, ok := bundle.Primary.FS.(plugins.FSRemover); ok {
+				logger.Debugf("Removing directory %v\n\n", bundle.Primary.FS.Base())
+				if err := remover.Remove(); err != nil {
+					return err
+				}
+				return nil
+			} else {
+				return fmt.Errorf("plugin %v is immutable and therefore cannot be uninstalled", pluginID)
 			}
 		}
-		return removePluginFS(pluginID, bundle.Primary.FS)
 	}
 
 	return nil
-}
-
-func foundPluginDepth(p *plugins.FoundPlugin) int {
-	if p == nil || p.FS == nil {
-		return 0
-	}
-	return strings.Count(filepath.Clean(p.FS.Base()), string(filepath.Separator))
 }
 
 func osAndArchString() string {

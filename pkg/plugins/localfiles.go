@@ -1,16 +1,12 @@
 package plugins
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
-	"syscall"
 )
 
 var (
@@ -175,128 +171,7 @@ func (f LocalFS) Remove() error {
 			return ErrUninstallInvalidPluginDir
 		}
 	}
-	if err := removeNestedPluginDirs(f.basePath); err != nil {
-		return err
-	}
-	if err := os.RemoveAll(f.basePath); err != nil {
-		if isDirNotEmpty(err) {
-			if retryErr := removeNestedPluginDirs(f.basePath); retryErr != nil {
-				return retryErr
-			}
-			return os.RemoveAll(f.basePath)
-		}
-		return err
-	}
-	return nil
-}
-
-func removeNestedPluginDirs(root string) error {
-	var nested []string
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.Name() != "plugin.json" {
-			return nil
-		}
-		dir := filepath.Dir(path)
-		if dir != root {
-			nested = append(nested, dir)
-		}
-		return nil
-	})
-	if err != nil && !os.IsNotExist(err) {
-		return err
-	}
-	sort.Slice(nested, func(i, j int) bool {
-		return strings.Count(nested[i], string(os.PathSeparator)) > strings.Count(nested[j], string(os.PathSeparator))
-	})
-	for _, dir := range nested {
-		if err := os.RemoveAll(dir); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func isDirNotEmpty(err error) bool {
-	if errors.Is(err, syscall.ENOTEMPTY) {
-		return true
-	}
-	var pathErr *os.PathError
-	if errors.As(err, &pathErr) && errors.Is(pathErr.Err, syscall.ENOTEMPTY) {
-		return true
-	}
-	msg := strings.ToLower(err.Error())
-	return strings.Contains(msg, "directory not empty") || strings.Contains(msg, "not empty")
-}
-
-// UserPlacedFiles returns files on disk under pluginFS that Grafana did not install.
-// Signed plugins use MANIFEST.txt as the allow list so grafana-cli still sees extras
-// even though Discover builds a fresh StaticFS. Unsigned plugins fall back to the
-// FS file list, which catches files added after Grafana loaded a StaticFS snapshot.
-func UserPlacedFiles(pluginFS FS) ([]string, error) {
-	if pluginFS == nil || !pluginFS.Type().Local() {
-		return nil, nil
-	}
-	allow, ok := manifestAllowList(pluginFS.Base())
-	if !ok {
-		allowed, err := pluginFS.Files()
-		if err != nil {
-			return nil, err
-		}
-		allow = make(map[string]struct{}, len(allowed))
-		for _, f := range allowed {
-			allow[filepath.ToSlash(filepath.Clean(f))] = struct{}{}
-		}
-	}
-	var extras []string
-	err := filepath.Walk(pluginFS.Base(), func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() {
-			return nil
-		}
-		rel, relErr := filepath.Rel(pluginFS.Base(), path)
-		if relErr != nil {
-			return relErr
-		}
-		rel = filepath.ToSlash(rel)
-		if _, exists := allow[rel]; !exists {
-			extras = append(extras, rel)
-		}
-		return nil
-	})
-	if err != nil && !os.IsNotExist(err) {
-		return nil, err
-	}
-	sort.Strings(extras)
-	return extras, nil
-}
-
-func manifestAllowList(base string) (map[string]struct{}, bool) {
-	body, err := os.ReadFile(filepath.Join(base, "MANIFEST.txt"))
-	if err != nil {
-		return nil, false
-	}
-	start := bytes.IndexByte(body, '{')
-	end := bytes.LastIndexByte(body, '}')
-	if start < 0 || end <= start {
-		return nil, false
-	}
-	var manifest struct {
-		Files map[string]string `json:"files"`
-	}
-	if err := json.Unmarshal(body[start:end+1], &manifest); err != nil || len(manifest.Files) == 0 {
-		return nil, false
-	}
-	allow := make(map[string]struct{}, len(manifest.Files)+1)
-	allow["MANIFEST.txt"] = struct{}{}
-	for name := range manifest.Files {
-		allow[filepath.ToSlash(name)] = struct{}{}
-	}
-	return allow, true
+	return os.RemoveAll(f.basePath)
 }
 
 // staticFilesMap is a set-like map that contains files that can be accessed from a plugins.FS.

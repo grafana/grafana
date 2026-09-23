@@ -520,15 +520,6 @@ func (hs *HTTPServer) UninstallPlugin(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusConflict, "Cannot uninstall a pre-installed plugin", nil)
 	}
 
-	if c.Query("confirmUserData") != "true" {
-		if extras, extraErr := plugins.UserPlacedFiles(plugin.FS); extraErr == nil && len(extras) > 0 {
-			return response.JSON(http.StatusConflict, map[string]string{
-				"status":  "user-data",
-				"message": "Plugin directory contains extra files. Confirm to delete them.",
-			})
-		}
-	}
-
 	err := hs.pluginInstaller.Remove(c.Req.Context(), pluginID, plugin.Info.Version)
 	if err != nil {
 		if errors.Is(err, plugins.ErrPluginNotInstalled) {
