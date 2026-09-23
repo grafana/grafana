@@ -228,5 +228,16 @@ func InvalidateAuthInfoCache(ctx context.Context, cache remotecache.CacheStorage
 		if errA != nil {
 			logger.Warn("failed to delete user module auth info from cache", "error", errA)
 		}
+
+		if query.AuthId != "" {
+			errU := cache.Delete(ctx, generateCacheKey(
+				&login.GetAuthInfoQuery{
+					UserId: query.UserId,
+					AuthId: query.AuthId,
+				}))
+			if errU != nil {
+				logger.Warn("failed to delete user authID auth info from cache", "error", errU)
+			}
+		}
 	}
 }

@@ -352,6 +352,7 @@ func (l *LegacyStore) Update(ctx context.Context, name string, objInfo rest.Upda
 	})
 	if oldAuthInfo.Spec.AuthID != newAuthInfo.Spec.AuthID {
 		authinfoimpl.InvalidateAuthInfoCache(ctx, l.remoteCache, l.logger.FromContext(ctx), &login.GetAuthInfoQuery{
+			UserId:     userRes.ID,
 			AuthModule: oldAuthInfo.Spec.AuthModule,
 			AuthId:     oldAuthInfo.Spec.AuthID,
 		})

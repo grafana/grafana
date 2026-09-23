@@ -136,6 +136,7 @@ func TestLegacyStore_Create(t *testing.T) {
 			authinfoimpl.AuthInfoCacheKey(&login.GetAuthInfoQuery{AuthModule: "oauth_github", AuthId: "gh-123"}),
 			authinfoimpl.AuthInfoCacheKey(&login.GetAuthInfoQuery{UserId: 1}),
 			authinfoimpl.AuthInfoCacheKey(&login.GetAuthInfoQuery{UserId: 1, AuthModule: "oauth_github"}),
+			authinfoimpl.AuthInfoCacheKey(&login.GetAuthInfoQuery{UserId: 1, AuthId: "gh-123"}),
 		}
 		for _, key := range cacheKeys {
 			require.NoError(t, cache.Set(context.Background(), key, []byte("stale"), 0))
@@ -215,6 +216,8 @@ func TestLegacyStore_Update(t *testing.T) {
 			authinfoimpl.AuthInfoCacheKey(&login.GetAuthInfoQuery{AuthModule: "oauth_github", AuthId: "gh-123"}), // old AuthID
 			authinfoimpl.AuthInfoCacheKey(&login.GetAuthInfoQuery{UserId: 1}),
 			authinfoimpl.AuthInfoCacheKey(&login.GetAuthInfoQuery{UserId: 1, AuthModule: "oauth_github"}),
+			authinfoimpl.AuthInfoCacheKey(&login.GetAuthInfoQuery{UserId: 1, AuthId: "gh-456"}), // new AuthID, no module
+			authinfoimpl.AuthInfoCacheKey(&login.GetAuthInfoQuery{UserId: 1, AuthId: "gh-123"}), // old AuthID, no module
 		}
 		for _, key := range cacheKeys {
 			require.NoError(t, cache.Set(context.Background(), key, []byte("stale"), 0))
@@ -288,7 +291,7 @@ func TestLegacyStore_List(t *testing.T) {
 		authInfoStore.On("GetAuthInfo", mock.Anything, &login.GetAuthInfoQuery{AuthId: "gh-123"}).
 			Return(&login.UserAuth{UserId: 1, UserUID: "user-uid", AuthModule: "oauth_github", AuthId: "gh-123", Created: created}, nil)
 
-		store := NewLegacyStore(identities, authInfoStore, noop.NewTracerProvider().Tracer("test"))
+		store := NewLegacyStore(identities, authInfoStore, noop.NewTracerProvider().Tracer("test"), remotecache.NewFakeCacheStorage())
 
 		obj, err := store.List(testCtx(), &internalversion.ListOptions{
 			FieldSelector: fields.OneTermEqualSelector("spec.authID", "gh-123"),
@@ -306,7 +309,7 @@ func TestLegacyStore_List(t *testing.T) {
 		authInfoStore.On("GetAuthInfo", mock.Anything, &login.GetAuthInfoQuery{AuthId: "gh-123", AuthModule: "oauth_github"}).
 			Return(&login.UserAuth{UserId: 1, UserUID: "user-uid", AuthModule: "oauth_github", AuthId: "gh-123", Created: created}, nil)
 
-		store := NewLegacyStore(identities, authInfoStore, noop.NewTracerProvider().Tracer("test"))
+		store := NewLegacyStore(identities, authInfoStore, noop.NewTracerProvider().Tracer("test"), remotecache.NewFakeCacheStorage())
 
 		obj, err := store.List(testCtx(), &internalversion.ListOptions{
 			FieldSelector: fields.AndSelectors(
@@ -326,7 +329,7 @@ func TestLegacyStore_List(t *testing.T) {
 		authInfoStore.On("GetAuthInfo", mock.Anything, &login.GetAuthInfoQuery{AuthId: "no-such-id"}).
 			Return(nil, user.ErrUserNotFound)
 
-		store := NewLegacyStore(identities, authInfoStore, noop.NewTracerProvider().Tracer("test"))
+		store := NewLegacyStore(identities, authInfoStore, noop.NewTracerProvider().Tracer("test"), remotecache.NewFakeCacheStorage())
 
 		obj, err := store.List(testCtx(), &internalversion.ListOptions{
 			FieldSelector: fields.OneTermEqualSelector("spec.authID", "no-such-id"),
@@ -344,7 +347,7 @@ func TestLegacyStore_List(t *testing.T) {
 		authInfoStore.On("GetAuthInfo", mock.Anything, &login.GetAuthInfoQuery{AuthId: "orphaned-id"}).
 			Return(&login.UserAuth{UserId: 999, AuthModule: "ldap", AuthId: "orphaned-id", Created: created}, nil)
 
-		store := NewLegacyStore(identities, authInfoStore, noop.NewTracerProvider().Tracer("test"))
+		store := NewLegacyStore(identities, authInfoStore, noop.NewTracerProvider().Tracer("test"), remotecache.NewFakeCacheStorage())
 
 		obj, err := store.List(testCtx(), &internalversion.ListOptions{
 			FieldSelector: fields.OneTermEqualSelector("spec.authID", "orphaned-id"),
@@ -408,6 +411,7 @@ func TestLegacyStore_Delete(t *testing.T) {
 			authinfoimpl.AuthInfoCacheKey(&login.GetAuthInfoQuery{AuthModule: "oauth_github", AuthId: "gh-123"}),
 			authinfoimpl.AuthInfoCacheKey(&login.GetAuthInfoQuery{UserId: 1}),
 			authinfoimpl.AuthInfoCacheKey(&login.GetAuthInfoQuery{UserId: 1, AuthModule: "oauth_github"}),
+			authinfoimpl.AuthInfoCacheKey(&login.GetAuthInfoQuery{UserId: 1, AuthId: "gh-123"}),
 		}
 		for _, key := range cacheKeys {
 			require.NoError(t, cache.Set(context.Background(), key, []byte("stale"), 0))
