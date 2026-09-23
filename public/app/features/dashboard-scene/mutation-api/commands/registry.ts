@@ -11,6 +11,7 @@ import { addRowCommand } from './addRow';
 import { addTabCommand } from './addTab';
 import { addVariableCommand } from './addVariable';
 import { applySpecCommand } from './applySpec';
+import { endPlanningCommand } from './endPlanning';
 import { enterEditModeCommand } from './enterEditMode';
 import { getDashboardInfoCommand } from './getDashboardInfo';
 import { getLayoutCommand } from './getLayout';
@@ -27,6 +28,7 @@ import { removePanelCommand } from './removePanel';
 import { removeRowCommand } from './removeRow';
 import { removeTabCommand } from './removeTab';
 import { removeVariableCommand } from './removeVariable';
+import { renderPlanCommand } from './renderPlan';
 import type { MutationCommand } from './types';
 import { updateAnnotationCommand } from './updateAnnotation';
 import { updateDashboardSettingsCommand } from './updateDashboardSettings';
@@ -69,4 +71,6 @@ export const DASHBOARD_COMMANDS: Array<MutationCommand<any>> = [
   updateDashboardSettingsCommand,
   getSpecCommand,
   applySpecCommand,
+  renderPlanCommand,
+  endPlanningCommand,
 ];

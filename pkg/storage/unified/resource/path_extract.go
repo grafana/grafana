@@ -1,96 +1,8 @@
 package resource
 
-import (
-	"fmt"
-	"math"
-	"strings"
+import "math"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-)
-
-// arrayProjection is the substring that marks an array projection step in a
-// declared search field path. The current evaluator supports a single
-// projection per path: everything before it is dot-traversed to a slice;
-// everything after it is dot-traversed against each element of that slice.
-const arrayProjection = "[*]"
-
-// extractPath evaluates path against the given unstructured object. Three
-// shapes are supported:
-//
-//   - Plain dot path ("spec.email"): traverses the object via
-//     unstructured.NestedFieldNoCopy. The returned value reflects whatever
-//     sits at the path — a scalar, a slice, or a map. coerceToFieldShape
-//     accepts scalars and slices of scalars only; a map will fail
-//     coercion and the field will be dropped with a warning. There is no
-//     SearchFieldType for maps today.
-//   - Scalar-array passthrough ("spec.tags"): identical to the plain dot
-//     path; the result happens to be a slice of scalars.
-//   - Array projection ("spec.members[*].name"): traverses to the slice
-//     before "[*]", then evaluates the remainder against each element. The
-//     returned value is []any with one entry per source element. Elements
-//     that fail their own traversal contribute nil; coerceToFieldShape
-//     skips those positions so a single missing sub-field does not drop
-//     the whole array.
-//
-// Returns (nil, nil) when the path resolves to a missing field at any step
-// (or to a JSON null). The caller drops such fields. An error is returned
-// only for malformed paths or type mismatches during projection (a non-slice
-// found at the [*] step).
-func extractPath(obj map[string]any, path string) (any, error) {
-	if path == "" {
-		return nil, fmt.Errorf("empty path")
-	}
-
-	before, after, ok0 := strings.Cut(path, arrayProjection)
-	if !ok0 {
-		return extractDotPath(obj, path)
-	}
-
-	pre := strings.TrimSuffix(before, ".")
-	post := strings.TrimPrefix(after, ".")
-
-	if strings.Contains(post, arrayProjection) {
-		return nil, fmt.Errorf("path %q: only one %s projection is supported", path, arrayProjection)
-	}
-
-	val, err := extractDotPath(obj, pre)
-	if err != nil || val == nil {
-		return nil, err
-	}
-
-	slice, ok := val.([]any)
-	if !ok {
-		return nil, fmt.Errorf("path %q: expected slice at %q, got %T", path, pre, val)
-	}
-
-	out := make([]any, 0, len(slice))
-	for _, elem := range slice {
-		if post == "" {
-			out = append(out, elem)
-			continue
-		}
-		elemMap, ok := elem.(map[string]any)
-		if !ok {
-			// Non-object element under a projection that wants a sub-field.
-			// Contribute nil rather than fail the whole extraction.
-			out = append(out, nil)
-			continue
-		}
-		sub, err := extractDotPath(elemMap, post)
-		if err != nil {
-			return nil, fmt.Errorf("path %q: %w", path, err)
-		}
-		out = append(out, sub)
-	}
-	return out, nil
-}
-
-func extractDotPath(obj map[string]any, path string) (any, error) {
-	val, _, err := unstructured.NestedFieldNoCopy(obj, strings.Split(path, ".")...)
-	return val, err
-}
-
-// coerceToFieldShape converts the raw value produced by extractPath into the
+// coerceToFieldShape converts the raw path value into the
 // shape declared by the SearchFieldDefinition. Returns (nil, false) on type
 // mismatch or on a nil input; the caller is expected to drop the field and
 // log a warning.
@@ -115,7 +27,7 @@ func coerceToFieldShape(val any, t SearchFieldType, isArray bool) (any, bool) {
 	out := make([]any, 0, len(slice))
 	for _, elem := range slice {
 		// Nil entries come from array-projection elements whose sub-path was
-		// missing (see extractPath). Skip them so the array stays indexed
+		// missing. Skip them so the array stays indexed
 		// with the elements that did resolve, rather than dropping the
 		// whole field on a single missing sub-path.
 		if elem == nil {

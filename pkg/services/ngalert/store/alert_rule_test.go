@@ -213,6 +213,35 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 		})
 	})
 
+	t.Run("should persist missing series evaluations above the smallint limit", func(t *testing.T) {
+		const missingSeriesEvalsToResolve = int64(43200)
+
+		rule := createRule(t, store, gen)
+		newRule := models.CopyRule(rule)
+		newRule.MissingSeriesEvalsToResolve = new(missingSeriesEvalsToResolve)
+		err := store.UpdateAlertRules(context.Background(), &usr, []models.UpdateRule{{
+			Existing: rule,
+			New:      *newRule,
+		}})
+		require.NoError(t, err)
+
+		savedRule, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+			OrgID: rule.OrgID,
+			UID:   rule.UID,
+		})
+		require.NoError(t, err)
+		require.Equal(t, new(missingSeriesEvalsToResolve), savedRule.MissingSeriesEvalsToResolve)
+
+		dbVersion := &alertRuleVersion{}
+		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+			exists, err := sess.Table(alertRuleVersion{}).Where("rule_uid = ? AND version = ?", savedRule.UID, savedRule.Version).Get(dbVersion)
+			require.True(t, exists, "new version of the rule does not exist in version table")
+			return err
+		})
+		require.NoError(t, err)
+		require.Equal(t, new(missingSeriesEvalsToResolve), dbVersion.MissingSeriesEvalsToResolve)
+	})
+
 	t.Run("should save noop update", func(t *testing.T) {
 		rule := createRule(t, store, gen)
 		newRule := models.CopyRule(rule)

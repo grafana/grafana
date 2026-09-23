@@ -196,12 +196,14 @@ func (s *Store) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) 
 		}
 	}
 
+	now := time.Now().UnixMilli()
 	obj := &iamv0alpha1.AuthInfo{
 		ObjectMeta: metav1.ObjectMeta{Name: iamv0alpha1.EncodeName(userUID, cmd.AuthModule), Namespace: namespace},
 		Spec: iamv0alpha1.AuthInfoSpec{
 			UserRef:    iamv0alpha1.AuthInfoUserRef{Name: userUID},
 			AuthModule: cmd.AuthModule,
 			AuthID:     cmd.AuthId,
+			Created:    &now,
 		},
 	}
 	if cmd.ExternalUID != "" {
@@ -269,6 +271,31 @@ func (s *Store) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
 		if err := authClient.Delete(ctx, resource.Identifier{Namespace: namespace, Name: item.Name}, resource.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
 			return err
 		}
+	}
+	return nil
+}
+
+// DeleteAuthInfo implements login.Store.
+func (s *Store) DeleteAuthInfo(ctx context.Context, cmd *login.DeleteAuthInfoCommand) error {
+	ctx, span := s.tracer.Start(ctx, "authinfo.k8s.DeleteAuthInfo")
+	defer span.End()
+
+	authClient, userClient, namespace, err := s.clients(ctx)
+	if err != nil {
+		return err
+	}
+
+	userUID, err := s.userUID(ctx, userClient, namespace, cmd.UserAuth.UserId)
+	if err != nil {
+		if errors.Is(err, user.ErrUserNotFound) {
+			return nil
+		}
+		return err
+	}
+
+	name := iamv0alpha1.EncodeName(userUID, cmd.UserAuth.AuthModule)
+	if err := authClient.Delete(ctx, resource.Identifier{Namespace: namespace, Name: name}, resource.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+		return err
 	}
 	return nil
 }

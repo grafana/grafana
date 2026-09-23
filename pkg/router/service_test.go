@@ -2,8 +2,10 @@ package router
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync/atomic"
 	"testing"
 
@@ -153,4 +155,68 @@ func TestProvideServiceHonorsFeatureToggle(t *testing.T) {
 		w.WriteHeader(http.StatusNoContent)
 	}))
 	require.Equal(t, http.StatusNoContent, recorder.Code)
+}
+
+func TestRouterTargetCloudFallback(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		cfg := setting.NewCfg()
+		cfg.Target = []string{"router"}
+		loader := &cloudLoader{}
+		if enabled {
+			loader.singleTenantFallback = newTestSingleTenantFallback(t)
+			loader.singleTenantFallback.resolveHost = func(context.Context, int64) (string, error) {
+				return "https://tenant.example.com", nil
+			}
+			loader.singleTenantFallback.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {
+				require.Equal(t, "tenant.example.com", req.URL.Host)
+				return &http.Response{StatusCode: http.StatusNoContent, Header: make(http.Header), Body: http.NoBody}, nil
+			})
+		}
+		svc, err := ProvideService(cfg, featuremgmt.WithFeatures(), loader, prometheus.NewRegistry())
+		require.NoError(t, err)
+		httpRouter := mux.NewRouter()
+		httpRouter.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
+		require.NoError(t, svc.RegisterTargetRoutes(httpRouter, nil))
+		recorder := httptest.NewRecorder()
+		httpRouter.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/apis/example/v1/namespaces/stacks-123/widgets", nil))
+		if enabled {
+			require.Equal(t, http.StatusNoContent, recorder.Code)
+		} else {
+			require.Equal(t, http.StatusTeapot, recorder.Code)
+		}
+	}
+}
+
+func TestRouterTargetServesRegisteredSingleTenantDiscovery(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{"st_discovery_url": "https://discovery.example.com"})
+	cfg.Target = []string{"router"}
+	loader, err := ProvideRoutesLoader(cfg, PluginLoaderDependencies{})
+	require.NoError(t, err)
+	cloud := loader.(*cloudLoader)
+	cloud.singleTenantFallback.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {
+		require.Equal(t, "https://discovery.example.com/apis", req.URL.String())
+		return &http.Response{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": {"application/json"}}, Body: io.NopCloser(strings.NewReader(`{"kind":"APIGroupList","apiVersion":"v1","groups":[{"name":"fallback.example.com","versions":[],"preferredVersion":{"groupVersion":"","version":""}}]}`))}, nil
+	})
+	svc, err := ProvideService(cfg, featuremgmt.WithFeatures(), loader, prometheus.NewRegistry())
+	require.NoError(t, err)
+	httpRouter := mux.NewRouter()
+	require.NoError(t, svc.RegisterTargetRoutes(httpRouter, nil))
+	require.NoError(t, svc.router.reconcile(t.Context()))
+	recorder := httptest.NewRecorder()
+	httpRouter.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/apis", nil))
+	require.Equal(t, http.StatusOK, recorder.Code)
+	require.Contains(t, recorder.Body.String(), "fallback.example.com")
+}
+
+func TestRouterMiddlewarePreservesDelegateWithSTLoader(t *testing.T) {
+	cfg := setting.NewCfg()
+	loader := &cloudLoader{singleTenantFallback: newTestSingleTenantFallback(t)}
+	svc, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), loader, prometheus.NewRegistry())
+	require.NoError(t, err)
+	require.NoError(t, svc.RegisterTargetRoutes(mux.NewRouter(), nil))
+	recorder := httptest.NewRecorder()
+	svc.HandleFunc(recorder, httptest.NewRequest(http.MethodGet, "/apis/unknown/v1/namespaces/stacks-123/widgets", nil), http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusTeapot)
+	}))
+	require.Equal(t, http.StatusTeapot, recorder.Code)
 }

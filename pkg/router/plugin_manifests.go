@@ -10,12 +10,24 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"sync"
 	"sync/atomic"
 	"time"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
+	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
+	"github.com/grafana/grafana-app-sdk/plugin/grpcplugin"
+	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
+	backendgrpcplugin "github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
+	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
 // pluginManifestsTarget discovers remote plugin deployments and builds their API handlers.
@@ -24,14 +36,25 @@ type pluginManifestsTarget struct {
 	client   *http.Client
 	patterns []*regexp.Regexp
 	deps     PluginDependencies
+	authn    authn.TokenAuthenticator
 
 	cooldown *cooldown
 
 	snapshot atomic.Pointer[[]Backend]
 	lastKeys atomic.Pointer[map[string]struct{}]
+
+	connectionsMu sync.Mutex
+	connections   map[string]*grpc.ClientConn
+	closed        bool
 }
 
-func newPluginManifestsTarget(rawURL string, patterns []*regexp.Regexp, client *http.Client, deps PluginDependencies) (*pluginManifestsTarget, error) {
+func newPluginManifestsTarget(
+	rawURL string,
+	patterns []*regexp.Regexp,
+	client *http.Client,
+	deps PluginDependencies,
+	authn authn.TokenAuthenticator,
+) (*pluginManifestsTarget, error) {
 	parsed, err := url.Parse(rawURL)
 	if err != nil {
 		return nil, fmt.Errorf("router: parsing plugins_url %q: %w", rawURL, err)
@@ -49,6 +72,7 @@ func newPluginManifestsTarget(rawURL string, patterns []*regexp.Regexp, client *
 		url:      rawURL,
 		client:   client,
 		patterns: patterns,
+		authn:    authn,
 		cooldown: newCooldown(defaultAggregatePollInterval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff),
 	}
 	empty := []Backend{}
@@ -68,6 +92,7 @@ func (t *pluginManifestsTarget) Backends() []Backend {
 // shape to aggregateTarget.run; see that method's doc for why there is
 // deliberately only one timing source.
 func (t *pluginManifestsTarget) run(ctx context.Context, dirty chan<- struct{}) {
+	defer t.closeConnections()
 	timer := time.NewTimer(0) // fire immediately; don't wait an interval for the first attempt
 	defer timer.Stop()
 
@@ -107,6 +132,10 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 			continue
 		}
 
+		clients := func(ctx context.Context, id string) (plugins.Client, v3.ClientV3, error) {
+			return t.pluginClients(entry.Host)
+		}
+
 		// Remove any dependencies that may try to load settings
 		// After the manifest CRUD works, we can explore getting these wired properly
 		deps := t.deps
@@ -114,13 +143,9 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 		deps.ContextProvider = nil
 		deps.PluginSettings = nil
 		deps.DualWrite = nil
-		backend, err := NewPluginBackend(entry.Definition,
-			func(ctx context.Context, id string) (plugins.Client, v3.ClientV3, error) {
-				// TODO -- But not in this PR!
-				// we need to load a real client based on Host
-				return nil, nil, nil
-			}, deps,
-		)
+		deps.AccessControl = pluginManifestAccessControl{}
+
+		backend, err := NewPluginBackend(entry.Definition, clients, deps)
 
 		if err != nil {
 			slog.Warn("router: skipping plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", err)
@@ -132,7 +157,7 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 			slog.Warn("router: skipping unfingerprintable plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", keyErr)
 			continue
 		}
-		deploymentBackend := &pluginDeploymentBackend{Backend: backend, key: key}
+		deploymentBackend := &pluginDeploymentBackend{Backend: backend, key: key, authn: t.authn}
 		backends = append(backends, deploymentBackend)
 		keys[deploymentBackend.Key()] = struct{}{}
 	}
@@ -147,6 +172,53 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 		default: // already pending; coalesce
 		}
 	}
+}
+
+func (t *pluginManifestsTarget) pluginClients(host string) (plugins.Client, v3.ClientV3, error) {
+	t.connectionsMu.Lock()
+	defer t.connectionsMu.Unlock()
+	if t.closed {
+		return nil, nil, fmt.Errorf("router: plugin manifests target is closed")
+	}
+	if host == "" {
+		return nil, nil, fmt.Errorf("router: plugin deployment host is empty")
+	}
+	conn := t.connections[host]
+	if conn == nil {
+		// Plugin deployments expose plaintext gRPC on the internal cluster network.
+		var err error
+		conn, err = grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			return nil, nil, fmt.Errorf("router: creating plugin client for %q: %w", host, err)
+		}
+		if t.connections == nil {
+			t.connections = make(map[string]*grpc.ClientConn)
+		}
+		t.connections[host] = conn
+	}
+	// NOTE: ClientV2 is missing ALL the middleware...
+	return &backendgrpcplugin.ClientV2{
+			DiagnosticsClient: pluginv2.NewDiagnosticsClient(conn),
+			ResourceClient:    pluginv2.NewResourceClient(conn),
+			DataClient:        pluginv2.NewDataClient(conn),
+			StreamClient:      pluginv2.NewStreamClient(conn),
+			AdmissionClient:   pluginv2.NewAdmissionControlClient(conn),
+			ConversionClient:  pluginv2.NewResourceConversionClient(conn),
+		}, &grpcplugin.ClientV3{
+			AdmissionServiceClient:  pluginv3.NewAdmissionServiceClient(conn),
+			ConversionServiceClient: pluginv3.NewConversionServiceClient(conn),
+			RouteServiceClient:      pluginv3.NewRouteServiceClient(conn),
+		}, nil
+}
+
+func (t *pluginManifestsTarget) closeConnections() {
+	t.connectionsMu.Lock()
+	defer t.connectionsMu.Unlock()
+	t.closed = true
+	for _, conn := range t.connections {
+		_ = conn.Close()
+	}
+	t.connections = nil
 }
 
 // fetchPluginManifests fetches and decodes the plugin-manifests operator's
@@ -182,12 +254,54 @@ func pluginDeploymentKey(entry definition.PluginDeployment) (string, error) {
 		return "", fmt.Errorf("router: fingerprinting plugin manifest entry %q: %w", entry.Definition.JSONData.ID, err)
 	}
 	sum := sha256.Sum256(body)
-	return "plugins_url:" + entry.Definition.JSONData.ID + ":" + hex.EncodeToString(sum[:])[:16], nil
+	return "managed:" + entry.Definition.JSONData.ID + ":" + hex.EncodeToString(sum[:])[:16], nil
 }
 
+// Standard plugin, but with OBO authentication and custom key
 type pluginDeploymentBackend struct {
 	Backend
-	key string
+	key   string
+	authn authn.TokenAuthenticator
 }
 
 func (b *pluginDeploymentBackend) Key() string { return b.key }
+
+func (b *pluginDeploymentBackend) Load(ctx context.Context) (http.Handler, error) {
+	if b.authn == nil {
+		return nil, fmt.Errorf("router: plugin deployment requires a token authenticator")
+	}
+
+	handler, err := b.Backend.Load(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &authenticatingWrapper{
+		Handler: handler,
+		authn:   b.authn,
+	}, nil
+}
+
+type authenticatingWrapper struct {
+	http.Handler
+	authn authn.TokenAuthenticator
+}
+
+func (a *authenticatingWrapper) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+
+	token := req.Header.Get("X-Access-Token")
+	if token == "" {
+		_ = errhttp.Write(ctx, apierrors.NewUnauthorized("missing access token header"), w)
+		return
+	}
+
+	info, err := a.authn.AuthenticateToken(ctx, token)
+	if err != nil {
+		_ = errhttp.Write(ctx, err, w)
+		return
+	}
+
+	ctx = identity.WithRequester(ctx, info)
+	a.Handler.ServeHTTP(w, req.WithContext(ctx))
+}

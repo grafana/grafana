@@ -136,6 +136,9 @@ TableOptions: {
 	disableKeyboardEvents?: bool
 	// Controls whether cells overflow when hovered. Selected cells always overflow.
 	hoverOverflow?: bool | *true
+	// Alternates the background color of every other row. Only applies when the
+	// `table.refreshNewFeatures` feature toggle is enabled.
+	zebraStriping?: bool | *false
 } @cuetsy(kind="interface")
 
 // Field options for each field within a table (e.g 10, "The String", 64.20, etc.)

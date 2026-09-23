@@ -362,6 +362,8 @@ func TestStore_SetAuthInfo(t *testing.T) {
 					assert.Equal(t, "github-42", obj.Spec.AuthID)
 					require.NotNil(t, obj.Spec.ExternalUID)
 					assert.Equal(t, "external-42", *obj.Spec.ExternalUID)
+					require.NotNil(t, obj.Spec.Created)
+					assert.WithinDuration(t, time.Now(), time.UnixMilli(*obj.Spec.Created), 10*time.Second)
 					writeJSON(t, w, obj)
 				default:
 					t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
@@ -644,6 +646,80 @@ func TestStore_DeleteUserAuthInfo(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			store := newTestStore(t, tc.handler)
 			err := store.DeleteUserAuthInfo(contextWithReqContext(7), 42)
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			if tc.check != nil {
+				tc.check(t)
+			}
+		})
+	}
+}
+
+func TestStore_DeleteAuthInfo(t *testing.T) {
+	type testCase struct {
+		name    string
+		cmd     *login.DeleteAuthInfoCommand
+		handler http.HandlerFunc
+		wantErr bool
+		check   func(t *testing.T)
+	}
+
+	cases := []testCase{
+		func() testCase {
+			var deleted string
+			return testCase{
+				name: "deletes only the named module",
+				cmd:  &login.DeleteAuthInfoCommand{UserAuth: &login.UserAuth{UserId: 42, AuthModule: "oauth_github"}},
+				handler: func(w http.ResponseWriter, r *http.Request) {
+					switch {
+					case strings.Contains(r.URL.Path, "/users"):
+						usersResponse(t, w, "user-uid")
+					case r.Method == http.MethodDelete:
+						deleted = r.URL.Path
+						w.WriteHeader(http.StatusOK)
+					default:
+						t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+					}
+				},
+				check: func(t *testing.T) {
+					assert.Equal(t, "/apis/iam.grafana.app/v0alpha1/namespaces/org-7/authinfos/user-uid.oauth-github", deleted)
+				},
+			}
+		}(),
+		{
+			name: "user not found is a no-op",
+			cmd:  &login.DeleteAuthInfoCommand{UserAuth: &login.UserAuth{UserId: 42, AuthModule: "oauth_github"}},
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				if strings.Contains(r.URL.Path, "/users") {
+					noUsersResponse(t, w)
+					return
+				}
+				t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+			},
+		},
+		{
+			name: "object not found is a no-op",
+			cmd:  &login.DeleteAuthInfoCommand{UserAuth: &login.UserAuth{UserId: 42, AuthModule: "oauth_github"}},
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				switch {
+				case strings.Contains(r.URL.Path, "/users"):
+					usersResponse(t, w, "user-uid")
+				case r.Method == http.MethodDelete:
+					writeStatus(w, http.StatusNotFound, metav1.StatusReasonNotFound)
+				default:
+					t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+				}
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			store := newTestStore(t, tc.handler)
+			err := store.DeleteAuthInfo(contextWithReqContext(7), tc.cmd)
 			if tc.wantErr {
 				require.Error(t, err)
 				return

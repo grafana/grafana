@@ -5877,16 +5877,24 @@
       "add-library-panel-header": "Importuj panel",
       "add-visualization-body": "Wybierz źródło danych, a następnie wyszukaj i zwizualizuj dane na wykresach, w statystykach i tabelach lub utwórz listy, korzystaj ze znaczników markdown i innych widżetów.",
       "add-visualization-button": "Dodaj wizualizację",
+      "add-visualization-description": "",
       "add-visualization-header": "Dodaj wizualizację, aby rozpocząć tworzenie nowego pulpitu",
+      "add-visualization-heading": "",
+      "assistant-placeholder": "",
       "auto-grid": "Automatyczna siatka",
       "auto-grid-description": "Panele zmieniają rozmiar, aby pasowały i tworzyły jednolite siatki",
+      "build-assistant": "",
       "custom-grid": "Siatka niestandardowa",
       "custom-grid-description": "Umieść każdy panel osobno i zmień jego rozmiar",
       "description": "Dodaj panel, aby wizualizować dane",
+      "grid-auto": "",
+      "grid-custom": "",
+      "grid-label": "",
       "import-a-dashboard-body": "Zaimportuj pulpity z plików lub witryny <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importuj pulpit",
       "import-dashboard-button": "Importuj pulpit",
       "layout-default-hint": "Wybrany układ będzie również używany jako domyślny dla wszystkich nowych kart i wierszy. Możesz to zmienić później w sekcji Ustawienia pulpitu > Ogólne.",
+      "or-start-blank": "",
       "select-layout-header": "Wybierz układ",
       "title": "Nowy pulpit"
     },
@@ -6014,6 +6022,7 @@
       "randomize-field-names-label-field-names": "Nazwy pól",
       "randomize-labels-label-labels": "Etykiety",
       "randomize-string-values-label-string-values": "Wartości ciągu znaków",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Dane",
@@ -6054,6 +6063,7 @@
     "inspect-json": {
       "dataframe-description": "Nieprzetworzone dane bez zastosowanych transformacji i konfiguracji pola. ",
       "dataframe-label": "DataFrame JSON (z zapytania)",
+      "editor-label": "",
       "panel-data-description": "Nieprzetworzony model przekazany do wizualizacji panelu",
       "panel-data-label": "Dane panelu",
       "panel-json-description": "Model zapisany w pliku JSON pulpitu konfigurującym działanie wszystkiego.",
@@ -7451,6 +7461,7 @@
       "randomize-field-names-label-field-names": "Nazwy pól",
       "randomize-labels-label-labels": "Etykiety",
       "randomize-string-values-label-string-values": "Wartości ciągu znaków",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Dane",
@@ -7844,6 +7855,7 @@
         "model-label": "Model",
         "v2-resource": "Zasób V2"
       },
+      "json-preview-label": "",
       "label-description": "Opis",
       "label-folder-name": "Nazwa folderu",
       "label-target-folder": "Katalog docelowy",
@@ -11290,6 +11302,7 @@
       "incident-tab-label": "Incydenty",
       "team-filter-all": "Wszystkie zespoły",
       "team-filter-label": "Filtruj alerty według zespołu",
+      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Twoje zespoły",
       "title": "Alerty i incydenty",
       "title-alerts": "Alerty",
@@ -11353,6 +11366,7 @@
     "incidents-card": {
       "declare": "Zadeklaruj incydent",
       "empty": "Brak aktywnych incydentów.",
+      "empty-selected-team": "",
       "error-title": "Nie udało się załadować aktywnych incydentów",
       "title": "Aktywne incydenty",
       "view-all": "Wyświetl wszystkie incydenty"
@@ -12014,6 +12028,7 @@
       "waiting-for-data": "Oczekiwanie na dane:"
     },
     "live-publish": {
+      "message": "",
       "publish": "Publikuj"
     }
   },
@@ -12367,6 +12382,10 @@
     "enable-log-details": {
       "description": "Po włączeniu tej opcji wyświetlane są szczegóły logu dla każdego wiersza.",
       "name": "Włącz szczegóły logu"
+    },
+    "hover-overflow": {
+      "description": "",
+      "name": ""
     },
     "show-copy-log": {
       "description": "Włącza/wyłącza przycisk linku do wiersza logu w pierwszej kolumnie każdego wiersza",
@@ -15345,7 +15364,7 @@
     },
     "public-sharing": {
       "accept-button": "Zaakceptuj",
-      "alert-text": "Zewnętrzne udostępnienie tego pulpitu sprawi, że będzie on dostępny dla każdej osoby mającej link.",
+      "alert-text": "",
       "cancel-button": "Anuluj",
       "learn-more-button": "Dowiedz się więcej",
       "public-ack": "Rozumiem, że cały pulpit będzie publiczny.*",

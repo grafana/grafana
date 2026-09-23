@@ -76,6 +76,21 @@
     },
     {
       "metadata": {
+        "name": "alerting.dataSourceManagedRouteProxy",
+        "resourceVersion": "1789551536572",
+        "creationTimestamp": "2026-09-16T09:38:56Z"
+      },
+      "spec": {
+        "description": "Hand data source managed alerting URLs over to the grafana-prometheusalerting-app plugin",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.folderHasRulesLabel",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"
@@ -2187,7 +2202,8 @@
       "metadata": {
         "name": "featureHighlights",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2022-02-03T11:53:23Z"
+        "creationTimestamp": "2022-02-03T11:53:23Z",
+        "deletionTimestamp": "2026-09-17T07:33:54Z"
       },
       "spec": {
         "description": "Highlight Grafana Enterprise features",
@@ -2527,11 +2543,14 @@
     {
       "metadata": {
         "name": "grafana.frontendLegacyFeatureToggleHandling",
-        "resourceVersion": "1789557808090",
-        "creationTimestamp": "2026-09-16T11:23:28Z"
+        "resourceVersion": "1790067388872",
+        "creationTimestamp": "2026-09-16T11:23:28Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-09-22 08:56:28.872026 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Controls how the frontend handles reads of the legacy config.featureToggles map. One of \"off\", \"log\" (report each toggle once) or \"block\" (report, and resolve every toggle to undefined).",
+        "description": "Controls how the frontend handles reads of the legacy config.featureToggles map. One of \"off\", \"log\" (warn in the console once per toggle), \"alert\" (also raise a warning alert) or \"block\" (console only, and resolve every toggle to undefined).",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
         "hideFromDocs": true,
@@ -4497,7 +4516,8 @@
       "metadata": {
         "name": "queryFetchConfigFromSettingsService",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T10:24:28Z"
+        "creationTimestamp": "2026-09-16T10:24:28Z",
+        "deletionTimestamp": "2026-09-17T18:24:30Z"
       },
       "spec": {
         "description": "Enables the query service to fetch the configuration from the settings service",
@@ -4791,6 +4811,20 @@
         "description": "Enables reporting for any page in Grafana",
         "stage": "experimental",
         "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "reporting.legacyServiceUsesK8SClient",
+        "resourceVersion": "1789561851165",
+        "creationTimestamp": "2026-09-16T12:30:51Z"
+      },
+      "spec": {
+        "description": "Redirect legacy report service to use the Kubernetes client wrapper",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "requiresRestart": true,
         "expression": "false"
       }
     },

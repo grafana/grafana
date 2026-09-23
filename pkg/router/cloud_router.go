@@ -1,15 +1,21 @@
 package router
 
 import (
+	"cmp"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
 	"log/slog"
+	"maps"
 	"net/http"
+	"net/url"
 	"os"
+	"slices"
+	"sync/atomic"
 
 	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
 	"golang.org/x/sync/errgroup"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,7 +27,9 @@ import (
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/clientauth"
+	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/setting"
 	unifiedresource "github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -35,11 +43,11 @@ const cloudRouterSection = "cloud_router"
 // ProvideCloudRoutesLoaderFactory builds the cloud-router RoutesLoader from
 // grafana.ini settings when [cloud_router].appmanifest_apiserver_url is set,
 // any aggregate target (baas_apiserver, cloud_app_platform_apiserver) has
-// its .url configured, or plugins_url is set, so the router module (not a
+// its .url configured, or plugins_url or st_discovery_url is set, so the router module (not a
 // separate process) owns its lifecycle. Returns (nil, nil) when none of
 // those are set -- an ini section is never truly absent
 // (SectionWithEnvOverrides always returns a valid, empty section), so it's
-// the presence of at least one of these three sources that actually gates
+// the presence of at least one configured source that actually gates
 // whether this loader activates; callers fall back to the dummy loader when
 // it doesn't.
 //
@@ -76,14 +84,26 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
 		}
+		auth := &authn.GrafanaTokenAuthorizer{
+			// Temporary, getting the hello world authn wired up
+			// This will be replaced quickly!
+			Dummy: &identity.StaticRequester{
+				Type:      types.TypeUser,
+				UserUID:   "x1234",
+				Name:      "dummy",
+				OrgID:     1,             // always 1
+				Namespace: "stacks-5457", // charandasbatra.grafana-dev.net
+			},
+		}
 		pluginsTarget, err = newPluginManifestsTarget(pluginsURL,
-			patterns, &http.Client{Timeout: defaultAggregateDiscoveryTimeout}, deps)
+			patterns, &http.Client{Timeout: defaultAggregateDiscoveryTimeout}, deps, auth)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
 		}
 	}
 
-	if appManifestApiserverURL == "" && len(aggregateTargetConfigs) == 0 && pluginsTarget == nil {
+	singleTenantDiscoveryURL := section.Key("st_discovery_url").MustString("")
+	if appManifestApiserverURL == "" && len(aggregateTargetConfigs) == 0 && pluginsTarget == nil && singleTenantDiscoveryURL == "" {
 		return nil, nil
 	}
 
@@ -116,18 +136,26 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 		if err != nil {
 			return nil, fmt.Errorf("%s: %s: %w", cloudRouterSection, targetCfg.Name, err)
 		}
+		// proxyTransport carries real caller traffic proxied to this target's
+		// discovered groups (handed straight to aggregateBackend's
+		// ReverseProxy by newAggregateTarget/poll) -- it must forward the
+		// caller's own credentials transparently, same as the forward path's
+		// transportFor, so it is deliberately plain: no WrapTransport, no
+		// CAP-token exchange. The CAP token is for the router's own identity
+		// when it polls this target's /apis for discovery, not for requests
+		// made on a caller's behalf.
+		proxyTransport := newAggregateBaseTransport(tlsCfg)
 		restCfg := &rest.Config{
 			Host: targetCfg.URL,
 			// A fresh clone per target, not the process-global
 			// http.DefaultTransport that client-go's transport cache would
-			// otherwise wrap: this one client carries both the discovery poll
-			// and every user request proxied to this target (newAggregateTarget
-			// hands client.Transport to aggregateBackend's ReverseProxy), so it
-			// must own its connection pool. Same intent as transportFor's
-			// per-tlsCacheKey clone on the forward path. rest.Config.Transport
-			// is the base RoundTripper and WrapTransport layers on top of it
-			// (rest.TransportFor -> transport.New -> HTTPWrappersForConfig), so
-			// the CAP-token exchange below still applies.
+			// otherwise wrap: this client is used only for the router's own
+			// discovery poll, so it must own its connection pool. Same intent
+			// as transportFor's per-tlsCacheKey clone on the forward path.
+			// rest.Config.Transport is the base RoundTripper and
+			// WrapTransport layers on top of it (rest.TransportFor ->
+			// transport.New -> HTTPWrappersForConfig), so the CAP-token
+			// exchange below still applies -- to this discovery client only.
 			//
 			// TLS is set directly on this transport (not via
 			// rest.Config.TLSClientConfig) because client-go's transport.New
@@ -141,7 +169,7 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 		if err != nil {
 			return nil, fmt.Errorf("%s: building http client for %s: %w", cloudRouterSection, targetCfg.Name, err)
 		}
-		target, err := newAggregateTarget(targetCfg, httpClient)
+		target, err := newAggregateTarget(targetCfg, httpClient, proxyTransport)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %s: %w", cloudRouterSection, targetCfg.Name, err)
 		}
@@ -165,7 +193,24 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 		clients = k8s.NewClientRegistry(restCfg, k8s.ClientConfig{})
 	}
 
-	return newCloudLoader(clients, aggregateTargets, pluginsTarget)
+	var singleTenantFallback *singleTenantFallback
+	if singleTenantDiscoveryURL != "" {
+		discoURL, err := url.Parse(singleTenantDiscoveryURL)
+		if err != nil {
+			return nil, fmt.Errorf("%s: st_discovery_url: %w", cloudRouterSection, err)
+		}
+
+		singleTenantFallback, err = newSingleTenantFallback(singleTenantFallbackOptions{
+			cacheSize:     100,
+			resolveHost:   newGComURLResolver(cfg.GrafanaComAPIURL, cfg.GrafanaComSSOAPIToken),
+			discoveryHost: discoURL,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("%s: st_discovery_url: %w", cloudRouterSection, err)
+		}
+	}
+
+	return newCloudLoader(clients, aggregateTargets, pluginsTarget, singleTenantFallback)
 }
 
 // embeddedManifestKey is the key component used for API groups sourced from
@@ -205,6 +250,10 @@ type cloudLoader struct {
 	// configured, independent of both the CRD/appmanifest side and the
 	// aggregate targets.
 	pluginsTarget *pluginManifestsTarget
+
+	// Until all requests are moved to MT, we can fallback to ST instances
+	singleTenantFallback     *singleTenantFallback
+	lastSingleTenantBackends atomic.Pointer[[]Backend]
 }
 
 type tlsCacheKey struct {
@@ -217,7 +266,7 @@ type apiGroupWithKey struct {
 	key   string
 }
 
-func newCloudLoader(clients *k8s.ClientRegistry, aggregateTargets []*aggregateTarget, pluginsTarget *pluginManifestsTarget) (*cloudLoader, error) {
+func newCloudLoader(clients *k8s.ClientRegistry, aggregateTargets []*aggregateTarget, pluginsTarget *pluginManifestsTarget, singleTenantFallback *singleTenantFallback) (*cloudLoader, error) {
 	l := &cloudLoader{
 		dirty:                      make(chan struct{}, 1),
 		transports:                 map[tlsCacheKey]*http.Transport{},
@@ -225,6 +274,7 @@ func newCloudLoader(clients *k8s.ClientRegistry, aggregateTargets []*aggregateTa
 		clients:                    clients,
 		aggregateTargets:           aggregateTargets,
 		pluginsTarget:              pluginsTarget,
+		singleTenantFallback:       singleTenantFallback,
 	}
 
 	if clients != nil {
@@ -296,7 +346,18 @@ func (l *cloudLoader) running(ctx context.Context) error {
 			return nil
 		})
 	}
-	return g.Wait()
+	if l.singleTenantFallback != nil {
+		g.Go(func() error {
+			l.singleTenantFallback.notifyDiscoveryChanges(gctx, l.dirty)
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		return err
+	}
+	// An empty loader still remains available until shutdown.
+	<-ctx.Done()
+	return nil
 }
 
 // newInformer builds a kind's informer against clients and attaches watcher
@@ -406,7 +467,34 @@ func (l *cloudLoader) Notify(ctx context.Context) (<-chan struct{}, error) {
 }
 
 func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
-	var combined []Backend
+	lookup := make(map[string]Backend)
+	var discoveryErr error
+
+	// Lowest priority first -- the MT backends will replace the ST flavors
+	if l.singleTenantFallback != nil {
+		backends, err := l.singleTenantFallback.Load(ctx)
+		if err != nil {
+			discoveryErr = fmt.Errorf("single-tenant discovery: %w", err)
+			slog.Warn("router: single-tenant discovery failed, keeping last-known-good routes", "err", err)
+			if previous := l.lastSingleTenantBackends.Load(); previous != nil {
+				backends = *previous
+			}
+		} else {
+			l.lastSingleTenantBackends.Store(&backends)
+		}
+		for _, b := range backends {
+			lookup[b.Group().Name] = b
+		}
+	}
+
+	// Aggregate targets override ST; later targets override earlier targets.
+	for _, target := range l.aggregateTargets {
+		for _, b := range target.Backends() {
+			lookup[b.Group().Name] = b
+		}
+	}
+
+	// Explicitly configured routes from manifest API server
 	if l.routeBackendClient != nil {
 		backends, err := l.routeBackendClient.ListAll(ctx, "", resource.ListOptions{})
 		if err != nil {
@@ -417,16 +505,35 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 		if err != nil {
 			return nil, err
 		}
-		combined = l.combineByName(manifests.Items, backends.Items)
+		for _, b := range l.combineByName(manifests.Items, backends.Items) {
+			lookup[b.Group().Name] = b
+		}
 	}
 
-	for _, target := range l.aggregateTargets {
-		combined = append(combined, target.Backends()...)
-	}
+	// Managed plugins
 	if l.pluginsTarget != nil {
-		combined = append(combined, l.pluginsTarget.Backends()...)
+		for _, b := range l.pluginsTarget.Backends() {
+			lookup[b.Group().Name] = b
+		}
 	}
-	return combined, nil
+
+	if len(lookup) == 0 && discoveryErr != nil {
+		return nil, discoveryErr
+	}
+
+	backends := slices.Collect(maps.Values(lookup))
+	slices.SortFunc(backends, func(a Backend, b Backend) int {
+		return cmp.Compare(a.Group().Name, b.Group().Name)
+	})
+
+	return backends, nil
+}
+
+func (l *cloudLoader) SingleTenantFallback() http.Handler {
+	if l.singleTenantFallback == nil {
+		return nil
+	}
+	return l.singleTenantFallback
 }
 
 // transportFor returns a transport for the given TLS settings, building and

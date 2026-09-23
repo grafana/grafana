@@ -5793,16 +5793,24 @@
       "add-library-panel-header": "Importar painel",
       "add-visualization-body": "Selecione uma origem de dados e, em seguida, consulte e visualize os seus dados com gráficos, estatísticas e tabelas ou crie listas, remarcações e outros widgets.",
       "add-visualization-button": "Adicionar visualização",
+      "add-visualization-description": "",
       "add-visualization-header": "Inicie o seu novo painel de controlo ao adicionar uma visualização",
+      "add-visualization-heading": "",
+      "assistant-placeholder": "",
       "auto-grid": "Grelha automática",
       "auto-grid-description": "Os painéis são redimensionados para se ajustarem e formarem grelhas uniformes",
+      "build-assistant": "",
       "custom-grid": "Grelha personalizada",
       "custom-grid-description": "Posicionar e dimensionar cada painel individualmente",
       "description": "Adicione um painel para visualizar os seus dados",
+      "grid-auto": "",
+      "grid-custom": "",
+      "grid-label": "",
       "import-a-dashboard-body": "Importe painéis de controlo de ficheiros ou de <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importar um painel de controlo",
       "import-dashboard-button": "Importar painel de controlo",
       "layout-default-hint": "A disposição selecionada também será utilizada como predefinição para todos os novos separadores e linhas. Pode alterar isto mais tarde em Definições do painel de controlo > Geral.",
+      "or-start-blank": "",
       "select-layout-header": "Selecionar layout",
       "title": "Novo painel de controlo"
     },
@@ -5930,6 +5938,7 @@
       "randomize-field-names-label-field-names": "Nomes dos campos",
       "randomize-labels-label-labels": "Etiquetas",
       "randomize-string-values-label-string-values": "Valores de cadeia",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Dados",
@@ -5970,6 +5979,7 @@
     "inspect-json": {
       "dataframe-description": "Dados brutos sem transformações e configuração de campo aplicada. ",
       "dataframe-label": "JSON de DataFrame (da consulta)",
+      "editor-label": "",
       "panel-data-description": "O modelo bruto passou para a visualização do painel",
       "panel-data-label": "Dados do painel",
       "panel-json-description": "O modelo guardado no painel de controlo JSON que configura como tudo funciona.",
@@ -7361,6 +7371,7 @@
       "randomize-field-names-label-field-names": "Nomes dos campos",
       "randomize-labels-label-labels": "Etiquetas",
       "randomize-string-values-label-string-values": "Valores de cadeia",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Dados",
@@ -7750,6 +7761,7 @@
         "model-label": "Modelo",
         "v2-resource": "Recurso V2"
       },
+      "json-preview-label": "",
       "label-description": "Descrição",
       "label-folder-name": "Nome da pasta",
       "label-target-folder": "Pasta de destino",
@@ -11164,6 +11176,7 @@
       "incident-tab-label": "Incidentes",
       "team-filter-all": "Todas as equipas",
       "team-filter-label": "Filtrar alertas por equipa",
+      "team-filter-label-incidents": "",
       "team-filter-your-teams": "As suas equipas",
       "title": "Alertas e incidentes",
       "title-alerts": "Alertas",
@@ -11223,6 +11236,7 @@
     "incidents-card": {
       "declare": "Declarar um incidente",
       "empty": "Nenhum incidente ativo.",
+      "empty-selected-team": "",
       "error-title": "Não foi possível carregar os incidentes ativos",
       "title": "Incidentes ativos",
       "view-all": "Ver todos os incidentes"
@@ -11846,6 +11860,7 @@
       "waiting-for-data": "A aguardar dados:"
     },
     "live-publish": {
+      "message": "",
       "publish": "Publicar"
     }
   },
@@ -12193,6 +12208,10 @@
     "enable-log-details": {
       "description": "Quando ativado, mostra detalhes do registo para cada linha.",
       "name": "Ativar detalhes do registo"
+    },
+    "hover-overflow": {
+      "description": "",
+      "name": ""
     },
     "show-copy-log": {
       "description": "Ativa/desativa o botão de ligação à linha de registo na primeira coluna de cada linha",
@@ -15125,7 +15144,7 @@
     },
     "public-sharing": {
       "accept-button": "Aceitar",
-      "alert-text": "Partilhar este painel de controlo externamente torna-o totalmente acessível a qualquer pessoa com o link.",
+      "alert-text": "",
       "cancel-button": "Cancelar",
       "learn-more-button": "Saiba mais",
       "public-ack": "Compreendo que todo este painel de controlo será público.*",

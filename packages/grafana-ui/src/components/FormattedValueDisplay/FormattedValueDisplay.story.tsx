@@ -1,4 +1,4 @@
-import { type Meta } from '@storybook/react-webpack5';
+import { type Meta } from '@storybook/react';
 
 import { FormattedValueDisplay } from './FormattedValueDisplay';
 import mdx from './FormattedValueDisplay.mdx';

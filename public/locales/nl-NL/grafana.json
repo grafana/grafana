@@ -5793,16 +5793,24 @@
       "add-library-panel-header": "Paneel importeren",
       "add-visualization-body": "Selecteer een gegevensbron en zoek en visualiseer je gegevens met grafieken, statistieken en tabellen of maak lijsten, prijsverlagingen en andere widgets.",
       "add-visualization-button": "Visualisatie toevoegen",
+      "add-visualization-description": "",
       "add-visualization-header": "Begin je nieuwe dashboard door een visualisatie toe te voegen",
+      "add-visualization-heading": "",
+      "assistant-placeholder": "",
       "auto-grid": "Automatisch raster",
       "auto-grid-description": "Panelen verkleinen zodat ze passen en uniforme rasters vormen",
+      "build-assistant": "",
       "custom-grid": "Aangepast raster",
       "custom-grid-description": "Plaats en formatteer elk paneel afzonderlijk",
       "description": "Voeg een paneel toe om je gegevens te visualiseren",
+      "grid-auto": "",
+      "grid-custom": "",
+      "grid-label": "",
       "import-a-dashboard-body": "Importeer dashboards uit bestanden of <2>grafana.com</2>.",
       "import-a-dashboard-header": "Dashboard importeren",
       "import-dashboard-button": "Dashboard importeren",
       "layout-default-hint": "De geselecteerde indeling wordt ook als standaardindeling voor alle nieuwe tabbladen en rijen. Je kunt dit later wijzigen via Dashboardinstellingen > Algemeen.",
+      "or-start-blank": "",
       "select-layout-header": "Indeling selecteren",
       "title": "Nieuw dashboard"
     },
@@ -5930,6 +5938,7 @@
       "randomize-field-names-label-field-names": "Veldnamen",
       "randomize-labels-label-labels": "Labels",
       "randomize-string-values-label-string-values": "Tekenreekswaarden",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Gegevens",
@@ -5970,6 +5979,7 @@
     "inspect-json": {
       "dataframe-description": "Onbewerkte gegevens zonder transformaties en veldconfiguratie toegepast. ",
       "dataframe-label": "DataFrame JSON (van Query)",
+      "editor-label": "",
       "panel-data-description": "Het ruwe model doorgegeven aan de paneelvisualisatie",
       "panel-data-label": "Paneelgegevens",
       "panel-json-description": "Het model opgeslagen in het dashboard JSON dat configureert hoe alles werkt.",
@@ -7361,6 +7371,7 @@
       "randomize-field-names-label-field-names": "Veldnamen",
       "randomize-labels-label-labels": "Labels",
       "randomize-string-values-label-string-values": "Tekenreekswaarden",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Gegevens",
@@ -7750,6 +7761,7 @@
         "model-label": "Model",
         "v2-resource": "V2-bron"
       },
+      "json-preview-label": "",
       "label-description": "Beschrijving",
       "label-folder-name": "Mapnaam",
       "label-target-folder": "Doelmap",
@@ -11164,6 +11176,7 @@
       "incident-tab-label": "Incidenten",
       "team-filter-all": "Alle teams",
       "team-filter-label": "Waarschuwingen filteren op team",
+      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Je teams",
       "title": "Waarschuwingen en incidenten",
       "title-alerts": "Waarschuwingen",
@@ -11223,6 +11236,7 @@
     "incidents-card": {
       "declare": "Een incident melden",
       "empty": "Geen actieve incidenten.",
+      "empty-selected-team": "",
       "error-title": "Kon actieve incidenten niet laden",
       "title": "Actieve incidenten",
       "view-all": "Alle incidenten bekijken"
@@ -11846,6 +11860,7 @@
       "waiting-for-data": "Wachten op gegevens:"
     },
     "live-publish": {
+      "message": "",
       "publish": "Publiceren"
     }
   },
@@ -12193,6 +12208,10 @@
     "enable-log-details": {
       "description": "Wanneer ingeschakeld, worden logboekdetails voor elke rij weergegeven.",
       "name": "Logboekdetails inschakelen"
+    },
+    "hover-overflow": {
+      "description": "",
+      "name": ""
     },
     "show-copy-log": {
       "description": "Schakelt de knop voor de logregellink in de eerste kolom van elke rij in/uit",
@@ -15125,7 +15144,7 @@
     },
     "public-sharing": {
       "accept-button": "Accepteren",
-      "alert-text": "Door dit dashboard extern te delen, is het volledig toegankelijk voor iedereen met de link.",
+      "alert-text": "",
       "cancel-button": "Annuleren",
       "learn-more-button": "Meer informatie",
       "public-ack": "Ik begrijp dat dit hele dashboard openbaar is.*",

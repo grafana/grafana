@@ -79,24 +79,23 @@ export function getAppRoutes(): RouteDescriptor[] {
       // precedence: routes are rendered by a v6 `<Routes>` (see AppWrapper), which ranks a static
       // segment above a dynamic one, so this wins over `:uid` wherever it is in the list.
       path: NOTEBOOK_NEW_URL,
-      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.NotebooksCreate]),
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Notebook,
       component: NotebookPageComponent,
     },
     {
       path: `${NOTEBOOKS_BASE_URL}/:uid/:slug?`,
-      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsRead]),
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.NotebooksRead]),
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Notebook,
       component: NotebookPageComponent,
     },
     {
-      // Notebooks reuse dashboard RBAC actions: dashboards:read to read one, and dashboards:create
-      // for the blank route above. The feature flag is enforced inside the pages instead, since
-      // getAppRoutes cannot use hooks.
+      // notebooks:read to read one, notebooks:create for the blank route above. The feature flag is
+      // enforced inside the pages instead, since getAppRoutes cannot use hooks.
       path: NOTEBOOKS_BASE_URL,
-      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsRead]),
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.NotebooksRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "NotebooksListPage" */ '../features/notebook/pages/NotebooksListPage')
       ),

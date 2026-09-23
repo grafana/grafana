@@ -34,11 +34,6 @@ export interface FeatureToggles {
   */
   lokiExperimentalStreaming?: boolean;
   /**
-  * Highlight Grafana Enterprise features
-  * @default false
-  */
-  featureHighlights?: boolean;
-  /**
   * Allow elements nesting
   * @default false
   */
@@ -1321,11 +1316,6 @@ export interface FeatureToggles {
   * @default false
   */
   lokiAlignedQuerySplitting?: boolean;
-  /**
-  * Enables the query service to fetch the configuration from the settings service
-  * @default false
-  */
-  queryFetchConfigFromSettingsService?: boolean;
   /**
   * Enables heatmap visualization support for Pyroscope profiles
   * @default false

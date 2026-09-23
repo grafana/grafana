@@ -5877,16 +5877,24 @@
       "add-library-panel-header": "Importovat panel",
       "add-visualization-body": "Vyberte zdroj dat a poté se dotazujte a vizualizujte data pomocí grafů, statistik a tabulek nebo vytvářejte seznamy, přehledy a další widgety.",
       "add-visualization-button": "Přidat vizualizaci",
+      "add-visualization-description": "",
       "add-visualization-header": "Začněte novou nástěnku přidáním vizualizace",
+      "add-visualization-heading": "",
+      "assistant-placeholder": "",
       "auto-grid": "Automatická mřížka",
       "auto-grid-description": "Panely mění velikost tak, aby odpovídaly jednotným mřížkám",
+      "build-assistant": "",
       "custom-grid": "Vlastní mřížka",
       "custom-grid-description": "Umístěte a upravte velikost každého panelu jednotlivě",
       "description": "Přidejte panel pro vizualizaci dat",
+      "grid-auto": "",
+      "grid-custom": "",
+      "grid-label": "",
       "import-a-dashboard-body": "Importujte nástěnky ze souborů nebo z <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importovat nástěnku",
       "import-dashboard-button": "Importovat nástěnku",
       "layout-default-hint": "Vybrané rozvržení bude také použito jako výchozí pro všechny nové karty a řádky. Toto můžete později změnit v části Nastavení nástěnky > Obecné.",
+      "or-start-blank": "",
       "select-layout-header": "Vybrat rozvržení",
       "title": "Nová nástěnka"
     },
@@ -6014,6 +6022,7 @@
       "randomize-field-names-label-field-names": "Názvy polí",
       "randomize-labels-label-labels": "Štítky",
       "randomize-string-values-label-string-values": "Hodnoty řetězců",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Data",
@@ -6054,6 +6063,7 @@
     "inspect-json": {
       "dataframe-description": "Nezpracovaná data bez transformací a konfigurace pole. ",
       "dataframe-label": "Rámec dat JSON (z dotazu)",
+      "editor-label": "",
       "panel-data-description": "Nezpracovaný model přešel do vizualizace panelu",
       "panel-data-label": "Data panelu",
       "panel-json-description": "Model uložený v nástěnce JSON, který konfiguruje, jak vše funguje.",
@@ -7451,6 +7461,7 @@
       "randomize-field-names-label-field-names": "Názvy polí",
       "randomize-labels-label-labels": "Štítky",
       "randomize-string-values-label-string-values": "Hodnoty řetězců",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Data",
@@ -7844,6 +7855,7 @@
         "model-label": "Model",
         "v2-resource": "Zdroj V2"
       },
+      "json-preview-label": "",
       "label-description": "Popis",
       "label-folder-name": "Název složky",
       "label-target-folder": "Cílová složka",
@@ -11290,6 +11302,7 @@
       "incident-tab-label": "Incidenty",
       "team-filter-all": "Všechny týmy",
       "team-filter-label": "Filtrovat výstrahy podle týmu",
+      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Vaše týmy",
       "title": "Výstrahy a incidenty",
       "title-alerts": "Výstrahy",
@@ -11353,6 +11366,7 @@
     "incidents-card": {
       "declare": "Nahlásit incident",
       "empty": "Žádné aktivní incidenty.",
+      "empty-selected-team": "",
       "error-title": "Nelze načíst aktivní incidenty",
       "title": "Aktivní incidenty",
       "view-all": "Zobrazit všechny incidenty"
@@ -12014,6 +12028,7 @@
       "waiting-for-data": "Čekání na data:"
     },
     "live-publish": {
+      "message": "",
       "publish": "Zveřejnit"
     }
   },
@@ -12367,6 +12382,10 @@
     "enable-log-details": {
       "description": "Pokud je tato možnost povolena, zobrazí se podrobnosti protokolu pro každý řádek.",
       "name": "Povolit podrobnosti protokolu"
+    },
+    "hover-overflow": {
+      "description": "",
+      "name": ""
     },
     "show-copy-log": {
       "description": "Povolit/zakázat tlačítko odkazu na řádek protokolu v prvním sloupci každého řádku",
@@ -15345,7 +15364,7 @@
     },
     "public-sharing": {
       "accept-button": "Přijmout",
-      "alert-text": "Sdílením této nástěnky externě ji zpřístupníte všem uživatelům s odkazem.",
+      "alert-text": "",
       "cancel-button": "Zrušit",
       "learn-more-button": "Zjistěte víc",
       "public-ack": "Rozumím, že celá nástěnka bude veřejná.*",

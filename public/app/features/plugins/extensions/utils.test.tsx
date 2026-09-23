@@ -8,10 +8,10 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { ShowModalReactEvent } from 'app/types/events';
 
+import { deepFreeze } from './deepFreeze';
 import { log } from './logs/log';
 import { resetLogMock } from './logs/testUtils';
 import {
-  deepFreeze,
   handleErrorsInFn,
   getReadOnlyProxy,
   createOpenModalFunction,

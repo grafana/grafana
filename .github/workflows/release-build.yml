@@ -929,11 +929,11 @@ jobs:
   run-meticulous-tests:
     if: github.repository == 'grafana/grafana' && needs.setup.outputs.run-meticulous == 'true'
     name: Run Meticulous tests
-    runs-on: ubuntu-x64-small
+    runs-on: ubuntu-x64-large
     continue-on-error: true
     needs:
       - setup
-      - build-docker-linux-amd64
+      - build-targz
     permissions:
       actions: write
       contents: read
@@ -949,12 +949,36 @@ jobs:
 
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: artifacts-docker-distroless-slim-linux-amd64
+          name: artifacts-packages-linux-amd64
           path: dist
+
+      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.4
+
+      - name: Set up Docker Buildx
+        run: docker buildx create --use
+
+      # Upload the baseline without waiting for the other release Docker variants.
+      - name: Build Docker image for Meticulous
+        env:
+          GOOS: linux
+          GOARCH: amd64
+          BUILD_NUMBER: ${{ github.run_id }}
+          BUILD_VERSION: ${{ needs.setup.outputs.version }}
+        run: |
+          set -euo pipefail
+          for TARGZ in dist/*.tar.gz; do break; done
+          TAG_VERSION="${BUILD_VERSION//+/-}"
+          make build-docker-distroless \
+            -o "$TARGZ" \
+            BUILD_VERSION="$BUILD_VERSION" \
+            BUILD_NUMBER="$BUILD_NUMBER" \
+            SLIM=true \
+            DOCKER_TAG="grafana/grafana-image-tags:${TAG_VERSION}-distroless-slim-amd64"
 
       - name: Load Docker image under test
         id: load-image
         run: |
+          set -euo pipefail
           PACKAGE_PATH="$(find dist -type f -name '*_linux_amd64.distroless-slim.docker.tar.gz' | sort | sed -n '1p')"
           if [ -z "$PACKAGE_PATH" ]; then
             echo "No distroless-slim docker package found in dist/"

@@ -8,21 +8,20 @@ import { Alert, Box, Button, Checkbox, EmptyState, FilterInput, Stack, Text } fr
 import { extractErrorMessage } from 'app/api/utils';
 import { Page } from 'app/core/components/Page/Page';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
 
 import { NotebookTagsField } from '../NotebookTagsField';
 import { NotebookAnalytics } from '../analytics/main';
 import { NOTEBOOK_LIST_FILTER_TYPE } from '../analytics/types';
 import { NotebooksTable, NotebooksTableSkeleton } from '../list/NotebooksTable';
 import { useNotebooksList } from '../list/useNotebooksList';
+import { canCreateNotebooks } from '../permissions';
 import { notebookNewEditUrl } from '../urls';
 
 export function NotebooksListPage() {
   // The route is registered unconditionally (getAppRoutes is not a React component), so the
   // feature flag is enforced here. When it is off this is not a real route, so render not-found.
   const notebooksEnabled = useFlagDashboardNotebooks();
-  const canCreate = contextSrv.hasPermission(AccessControlAction.DashboardsCreate);
+  const canCreate = canCreateNotebooks();
   const navigate = useNavigate();
 
   const {
@@ -114,7 +113,11 @@ export function NotebooksListPage() {
 
   return (
     // When nothing exists the empty state carries the create button, so drop it from the header.
-    <Page navId="notebooks" actions={hasNoNotebooks ? undefined : createButton}>
+    <Page
+      navId="notebooks"
+      renderTitle={(title) => <Text element="h1">{title}</Text>}
+      actions={hasNoNotebooks ? undefined : createButton}
+    >
       <Page.Contents isLoading={isLoading}>
         <Stack direction="column" gap={2}>
           {/* With nothing loaded and nothing filtered the alert is the whole story — filters over
@@ -160,47 +163,48 @@ export function NotebooksListPage() {
                   {extractErrorMessage(error)}
                 </Alert>
               )}
-              <Stack justifyContent="space-between" alignItems="center" gap={2} wrap="wrap">
-                <Stack alignItems="center" gap={1} wrap="wrap">
-                  <FilterInput
-                    width={40}
-                    value={searchQuery}
-                    onChange={setSearchQuery}
-                    escapeRegex={false}
-                    placeholder={t('notebooks.list.search-placeholder', 'Search notebooks by title...')}
-                  />
-                  <NotebookTagsField
-                    value={tagFilter}
-                    onChange={setTagFilter}
-                    // Where the search route is not served the facet cannot answer, and these are
-                    // the only tags there are to offer.
-                    fallbackTags={loadedTags}
-                    placeholder={t('notebooks.list.tag-filter-placeholder', 'Filter by tag')}
-                  />
-                  {canFilterByMe && (
-                    <Checkbox
-                      id="notebooks-created-by-me"
-                      value={createdByMe}
-                      onChange={(event) => setCreatedByMe(event.currentTarget.checked)}
-                      label={t('notebooks.list.created-by-me', 'Created by me')}
+              <Stack direction="column" gap={1}>
+                <FilterInput
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  escapeRegex={false}
+                  placeholder={t('notebooks.list.search-placeholder', 'Search notebooks by title...')}
+                />
+                <Stack justifyContent="space-between" alignItems="center" gap={2} wrap="wrap">
+                  <Stack alignItems="center" gap={1} wrap="wrap">
+                    <NotebookTagsField
+                      value={tagFilter}
+                      onChange={setTagFilter}
+                      // Where the search route is not served the facet cannot answer, and these are
+                      // the only tags there are to offer.
+                      fallbackTags={loadedTags}
+                      placeholder={t('notebooks.list.tag-filter-placeholder', 'Filter by tag')}
                     />
-                  )}
-                </Stack>
-                <Stack alignItems="center" gap={1}>
-                  {/* Nothing is held for these filters yet, so every number here would be zero —
-                      "0 notebooks" beside a loading table claims a result we do not have. */}
-                  {isReloading ? (
-                    <Skeleton width={COUNT_SKELETON_WIDTH} />
-                  ) : (
-                    <CountSummary
-                      shown={rows.length}
-                      loadedCount={loadedCount}
-                      totalCount={totalCount}
-                      isTotalExact={isTotalExact}
-                      isTruncated={isTruncated}
-                      isLoadingMore={isLoadingMore}
-                    />
-                  )}
+                    {canFilterByMe && (
+                      <Checkbox
+                        id="notebooks-created-by-me"
+                        value={createdByMe}
+                        onChange={(event) => setCreatedByMe(event.currentTarget.checked)}
+                        label={t('notebooks.list.created-by-me', 'Created by me')}
+                      />
+                    )}
+                  </Stack>
+                  <Stack alignItems="center" gap={1}>
+                    {/* Nothing is held for these filters yet, so every number here would be zero —
+                        "0 notebooks" beside a loading table claims a result we do not have. */}
+                    {isReloading ? (
+                      <Skeleton width={COUNT_SKELETON_WIDTH} />
+                    ) : (
+                      <CountSummary
+                        shown={rows.length}
+                        loadedCount={loadedCount}
+                        totalCount={totalCount}
+                        isTotalExact={isTotalExact}
+                        isTruncated={isTruncated}
+                        isLoadingMore={isLoadingMore}
+                      />
+                    )}
+                  </Stack>
                 </Stack>
               </Stack>
 

@@ -44,6 +44,14 @@ type aggregateTarget struct {
 	client   *http.Client
 	patterns []*regexp.Regexp
 
+	// proxyTransport carries real caller traffic proxied to this target's
+	// discovered groups. It is deliberately separate from client's transport:
+	// client is CAP-token-wrapped for the router's own discovery poll, but a
+	// proxied resource request must forward the caller's own credentials
+	// transparently -- same as forwardBackend -- not get re-signed with the
+	// router's m2m identity.
+	proxyTransport http.RoundTripper
+
 	// cooldown is the only thing that paces run(): its steady interval is the
 	// healthy re-poll cadence and its backoff is the post-failure retry
 	// schedule. Written and read solely from run()'s goroutine.
@@ -53,7 +61,7 @@ type aggregateTarget struct {
 	lastKeys atomic.Pointer[map[string]struct{}]
 }
 
-func newAggregateTarget(cfg aggregateTargetConfig, client *http.Client) (*aggregateTarget, error) {
+func newAggregateTarget(cfg aggregateTargetConfig, client *http.Client, proxyTransport http.RoundTripper) (*aggregateTarget, error) {
 	base, err := url.Parse(cfg.URL)
 	if err != nil {
 		return nil, fmt.Errorf("router: parsing %s url %q: %w", cfg.Name, cfg.URL, err)
@@ -78,11 +86,12 @@ func newAggregateTarget(cfg aggregateTargetConfig, client *http.Client) (*aggreg
 		return nil, err
 	}
 	t := &aggregateTarget{
-		name:     cfg.Name,
-		base:     base,
-		client:   client,
-		patterns: patterns,
-		cooldown: newCooldown(defaultAggregatePollInterval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff),
+		name:           cfg.Name,
+		base:           base,
+		client:         client,
+		proxyTransport: proxyTransport,
+		patterns:       patterns,
+		cooldown:       newCooldown(defaultAggregatePollInterval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff),
 	}
 	empty := []Backend{}
 	t.snapshot.Store(&empty)
@@ -150,7 +159,7 @@ func (t *aggregateTarget) poll(ctx context.Context, dirty chan<- struct{}) {
 		if !matchesAnyPattern(group.Name, t.patterns) {
 			continue
 		}
-		backend, err := newAggregateBackend(t.name, group, t.base, t.client.Transport)
+		backend, err := newAggregateBackend(t.name, group, t.base, t.proxyTransport)
 		if err != nil {
 			slog.Warn("router: skipping unfingerprintable discovered group", "target", t.name, "group", group.Name, "err", err)
 			continue

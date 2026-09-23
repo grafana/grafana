@@ -1,5 +1,5 @@
 import { type DataSourceApi, type PanelData } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 
 export async function getDataSourceWithInspector(data?: PanelData): Promise<DataSourceApi | undefined> {
   const targets = data?.request?.targets || [];
@@ -8,7 +8,7 @@ export async function getDataSourceWithInspector(data?: PanelData): Promise<Data
     for (const frame of data.series) {
       if (frame.meta && frame.meta.custom) {
         // get data source from first query
-        const dataSource = await getDataSourceSrv().get(targets[0].datasource);
+        const dataSource = await getDataSourceInstance(targets[0].datasource);
         if (dataSource && dataSource.components?.MetadataInspector) {
           return dataSource;
         }
@@ -51,7 +51,7 @@ export async function getDataSourceWithErrorsAndNoticesInspector(data?: PanelDat
     return undefined;
   }
 
-  const dataSource = await getDataSourceSrv().get(targets[0].datasource);
+  const dataSource = await getDataSourceInstance(targets[0].datasource);
   if (dataSource && dataSource.components?.ErrorsAndNoticesInspector) {
     return dataSource;
   }

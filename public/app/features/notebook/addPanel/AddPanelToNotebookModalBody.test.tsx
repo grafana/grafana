@@ -83,7 +83,7 @@ function setPicker(overrides: Partial<ReturnType<typeof useNotebookPicker>> = {}
   } as ReturnType<typeof useNotebookPicker>);
 }
 
-/** Both permissions unless told otherwise — the two tabs are gated on different ones. */
+/** Both granted unless told otherwise — the two tabs are gated on different actions. */
 function grant(permissions: string[]) {
   mockContextSrv.hasPermission.mockImplementation((permission) => permissions.includes(permission));
 }
@@ -123,7 +123,7 @@ describe('AddPanelToNotebookModalBody', () => {
   beforeEach(() => {
     mockComboboxRect();
     setPicker();
-    grant([AccessControlAction.DashboardsWrite, AccessControlAction.DashboardsCreate]);
+    grant([AccessControlAction.NotebooksWrite, AccessControlAction.NotebooksCreate]);
     addToExisting.mockResolvedValue({ uid: 'nb1', title: 'Q2 latency regression' });
     createWithPanel.mockResolvedValue({ uid: 'nb3', title: 'New investigation' });
   });
@@ -586,10 +586,10 @@ describe('AddPanelToNotebookModalBody', () => {
       expect(screen.getByText(/Create one instead/)).toBeInTheDocument();
     });
 
-    // dashboards:write opens this picker, dashboards:create is what the create tab needs, so a reader
-    // can arrive here with no way to make the notebook they are being told to make.
+    // notebooks:write opens this picker and notebooks:create is what the create tab needs, so a
+    // reader can arrive here with no way to make the notebook they are being told to make.
     it('does not suggest it to a reader who cannot create', () => {
-      grant([AccessControlAction.DashboardsWrite]);
+      grant([AccessControlAction.NotebooksWrite]);
       setPicker({ rows: [], isFiltered: false });
       renderModal();
 
@@ -602,7 +602,7 @@ describe('AddPanelToNotebookModalBody', () => {
     // With one route open there is nothing to choose, so the control is not offered at all rather
     // than offered with a single option in it.
     it('drops the chooser and goes straight to the picker for a user who can only add to existing', () => {
-      grant([AccessControlAction.DashboardsWrite]);
+      grant([AccessControlAction.NotebooksWrite]);
       renderModal();
 
       expect(screen.queryByRole('radio', { name: 'New notebook' })).not.toBeInTheDocument();
@@ -611,7 +611,7 @@ describe('AddPanelToNotebookModalBody', () => {
     });
 
     it('drops it the other way for a user who can only create', () => {
-      grant([AccessControlAction.DashboardsCreate]);
+      grant([AccessControlAction.NotebooksCreate]);
       renderModal();
 
       expect(screen.queryByRole('radio', { name: 'Existing notebook' })).not.toBeInTheDocument();

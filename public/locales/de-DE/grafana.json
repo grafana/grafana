@@ -5793,16 +5793,24 @@
       "add-library-panel-header": "Panel importieren",
       "add-visualization-body": "Wählen Sie eine Datenquelle aus und visualisieren und fragen Sie dann Ihre Daten mit Diagrammen, Statistiken und Tabellen ab oder erstellen Sie Listen, Markierungen und andere Widgets.",
       "add-visualization-button": "Visualisierung hinzufügen",
+      "add-visualization-description": "",
       "add-visualization-header": "Starten Sie Ihr neues Dashboard, indem Sie eine Visualisierung hinzufügen",
+      "add-visualization-heading": "",
+      "assistant-placeholder": "",
       "auto-grid": "Automatisches Raster",
       "auto-grid-description": "Die Größe der Panels wird zur Bildung einheitlicher Raster angepasst",
+      "build-assistant": "",
       "custom-grid": "Benutzerdefiniertes Raster",
       "custom-grid-description": "Positionieren und ändern Sie die Größe jedes Panels einzeln",
       "description": "Fügen Sie zur Visualisierung Ihrer Daten ein Panel hinzu",
+      "grid-auto": "",
+      "grid-custom": "",
+      "grid-label": "",
       "import-a-dashboard-body": "Importieren Sie Dashboards aus Dateien oder von <2>grafana.com</2>.",
       "import-a-dashboard-header": "Dashboard importieren",
       "import-dashboard-button": "Dashboard importieren",
       "layout-default-hint": "Das ausgewählte Layout wird auch als Standard für alle neuen Tabs und Zeilen verwendet. Sie können dies zu einem späteren Zeitpunkt unter Dashboard-Einstellungen > Allgemein ändern.",
+      "or-start-blank": "",
       "select-layout-header": "Layout auswählen",
       "title": "Neues Dashboard"
     },
@@ -5930,6 +5938,7 @@
       "randomize-field-names-label-field-names": "Feldnamen",
       "randomize-labels-label-labels": "Labels",
       "randomize-string-values-label-string-values": "String-Werte",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Daten",
@@ -5970,6 +5979,7 @@
     "inspect-json": {
       "dataframe-description": "Rohdaten ohne Transformationen und angewendete Feldkonfiguration. ",
       "dataframe-label": "Datenrahmen-JSON (aus Abfrage)",
+      "editor-label": "",
       "panel-data-description": "Das Rohmodell wurde an die Panel-Visualisierung übertragen",
       "panel-data-label": "Panel-Daten",
       "panel-json-description": "Das im Dashboard-JSON gespeicherte Modell, das konfiguriert, wie alles funktioniert.",
@@ -7361,6 +7371,7 @@
       "randomize-field-names-label-field-names": "Feldnamen",
       "randomize-labels-label-labels": "Labels",
       "randomize-string-values-label-string-values": "String-Werte",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Daten",
@@ -7750,6 +7761,7 @@
         "model-label": "Modell",
         "v2-resource": "V2-Ressource"
       },
+      "json-preview-label": "",
       "label-description": "Beschreibung",
       "label-folder-name": "Ordnername",
       "label-target-folder": "Zielordner",
@@ -11164,6 +11176,7 @@
       "incident-tab-label": "Vorfälle",
       "team-filter-all": "Alle Teams",
       "team-filter-label": "Warnungen nach Team filtern",
+      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Ihre Teams",
       "title": "Warnungen und Vorfälle",
       "title-alerts": "Warnungen",
@@ -11223,6 +11236,7 @@
     "incidents-card": {
       "declare": "Vorfall angeben",
       "empty": "Keine aktiven Vorfälle.",
+      "empty-selected-team": "",
       "error-title": "Es konnten keine aktiven Vorfälle geladen werden",
       "title": "Aktive Vorfälle",
       "view-all": "Alle Vorfälle anzeigen"
@@ -11846,6 +11860,7 @@
       "waiting-for-data": "Warten auf Daten:"
     },
     "live-publish": {
+      "message": "",
       "publish": "Veröffentlichen"
     }
   },
@@ -12193,6 +12208,10 @@
     "enable-log-details": {
       "description": "Wenn dies aktiviert ist, werden Log-Details für jede Zeile angezeigt.",
       "name": "Log-Details aktivieren"
+    },
+    "hover-overflow": {
+      "description": "",
+      "name": ""
     },
     "show-copy-log": {
       "description": "Aktiviert/deaktiviert die Schaltfläche „Logzeilen-Link“ in der ersten Spalte jeder Zeile",
@@ -15125,7 +15144,7 @@
     },
     "public-sharing": {
       "accept-button": "Annehmen",
-      "alert-text": "Wenn Sie dieses Dashboard extern teilen, ist es für jeden mit dem Link vollständig zugänglich.",
+      "alert-text": "",
       "cancel-button": "Abbrechen",
       "learn-more-button": "Mehr erfahren",
       "public-ack": "Mir ist bewusst, dass das gesamte Dashboard öffentlich sein wird.*",

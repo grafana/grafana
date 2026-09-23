@@ -3,12 +3,7 @@ import { type FeatureLike } from 'ol/Feature';
 import { useCallback, useMemo } from 'react';
 import { type Observable } from 'rxjs';
 
-import {
-  type GrafanaTheme2,
-  type SelectableValue,
-  type StandardEditorProps,
-  type StandardEditorsRegistryItem,
-} from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue, type StandardEditorProps } from '@grafana/data';
 import { useObservable } from '@grafana/data/unstable';
 import { t } from '@grafana/i18n';
 import { ComparisonOperation } from '@grafana/schema';
@@ -29,7 +24,10 @@ export interface StyleRuleEditorSettings {
   layerInfo: Observable<LayerContentInfo>;
 }
 
-type Props = StandardEditorProps<FeatureStyleConfig, StyleRuleEditorSettings, unknown>;
+type EditorProps = StandardEditorProps<FeatureStyleConfig, StyleRuleEditorSettings, unknown>;
+type Props = Omit<EditorProps, 'item'> & {
+  item: Pick<EditorProps['item'], 'settings'>;
+};
 
 export const StyleRuleEditor = ({ value, onChange, item, context }: Props) => {
   const settings = item.settings;
@@ -195,14 +193,12 @@ export const StyleRuleEditor = ({ value, onChange, item, context }: Props) => {
           value={value.style ?? defaultStyleConfig}
           context={context}
           onChange={onChangeStyle}
-          item={
-            {
-              settings: {
-                simpleFixedValues: true,
-                layerInfo,
-              },
-            } as StandardEditorsRegistryItem
-          }
+          item={{
+            settings: {
+              simpleFixedValues: true,
+              layerInfo,
+            },
+          }}
         />
       </div>
     </div>
