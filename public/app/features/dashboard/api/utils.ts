@@ -18,7 +18,7 @@ import { type DashboardWithAccessInfo } from './types';
  * Prefer the `useDashboardNewLayouts` hook in React components - use this only where a hook can't be used
  */
 export function isDashboardNewLayoutsEnabled(): boolean {
-  return getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, false);
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, true);
 }
 
 export function isV2StoredVersion(version: string | undefined): boolean {
