@@ -18,9 +18,11 @@ review_date: 2026-09-23
 
 This document explains how to configure Label-Based Access Control (LBAC) for data sources for a Tempo or Cloud Traces data source. LBAC for data sources lets you restrict which spans a team can access by defining rules based on trace attributes, providing fine-grained, team-based access control within a single tenant. It mirrors the experience used for logs and metrics LBAC in Grafana Cloud.
 
-Grafana uses LBAC as an umbrella term for label-based access control across all data sources. Traces use **attributes**, not labels, for access control, but the Grafana UI surfaces this functionality as LBAC for consistency. This feature applies only to Grafana Cloud Traces, specifically the Cloud-provisioned tracing data source.
+Grafana uses LBAC as an umbrella term for label-based access control across all data sources. Traces use **attributes**, not labels, for access control, but the Grafana UI surfaces this functionality as LBAC for consistency.
 
 {{< admonition type="note" >}}
+LBAC for traces is available only on Grafana Cloud. It isn't available in Grafana Enterprise. It applies only to the Cloud-provisioned Tempo or Cloud Traces data source that Grafana hosts, not to self-managed data sources.
+
 Unlike logs and metrics, which also support data source-level LBAC through cloud access policies, traces LBAC is available only at the team level.
 {{< /admonition >}}
 
@@ -35,6 +37,8 @@ LBAC rules use attribute selectors, such as:
 ```
 
 Multiple conditions in the same rule are combined with `AND` (`,`), while multiple rules across teams are combined with `OR`.
+
+If none of a user's teams have LBAC rules for the data source, that user can query all traces, subject to their data source permissions.
 
 ## Before you begin
 
@@ -127,7 +131,18 @@ A user on both teams can access spans that match `resource.cluster="us-east-1"` 
 
 ## How LBAC affects returned data
 
-Cloud Traces supports three redaction modes that control how unauthorized spans are handled in trace-by-ID search responses. The active mode is configured per tenant. To change the mode for your organization, contact Grafana Support.
+How LBAC filters data depends on the endpoint:
+
+- **Trace-by-ID lookups** use one of three redaction modes, described in the following sections, that control how non-matching spans are handled.
+- **Search, metrics, and autocomplete endpoints** always return only the spans that match the LBAC rules, regardless of the configured redaction mode.
+
+Cloud Traces supports three redaction modes for trace-by-ID lookups. The active mode is configured per tenant. To change the mode for your organization, contact Grafana Support.
+
+| Mode | Non-matching spans | Best for |
+| --------------------- | --------------------------------------------- | ---------------------------------------------- |
+| Attributes (default) | Kept, but attributes and intrinsics redacted | Preserving trace structure |
+| Spans | Removed entirely | Hiding the existence of spans (may break traces) |
+| Error | Entire request returns a `404` | Strict, all-or-nothing visibility |
 
 ### Attributes mode (default)
 
@@ -147,8 +162,6 @@ Non-matching spans are removed from the response entirely. This can result in br
 ### Error mode
 
 If any span in a requested trace doesn't match the LBAC policy, the entire request returns a `404` error. This is the strictest mode and suits environments where partial trace visibility isn't acceptable.
-
-For search, metrics, and autocomplete endpoints, only spans that match the LBAC rules appear, regardless of the configured redaction mode.
 
 ## Manage LBAC rules
 
