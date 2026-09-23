@@ -53,6 +53,11 @@
       "placeholder-symbol-client-secret": "yapılandırılmış",
       "reset-symbol-client-secret": "Sıfırla"
     },
+    "auxiliary-logs-toggle": {
+      "aria-label-enable-auxiliary-logs": "",
+      "description-auxiliary-logs": "",
+      "label-enable-auxiliary-logs": ""
+    },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "{{queryDisplayName}} ham sorgusu",
       "aria-label-use-query": "Bu sorgu düğmesini kullanın",
@@ -105,11 +110,11 @@
       "load-subscriptions": "Abonelikleri Yükle"
     },
     "dimension-fields": {
-      "aria-label-field": "",
-      "aria-label-operator": "",
-      "aria-label-remove": "",
-      "aria-label-value": "",
-      "aria-label-values": "",
+      "aria-label-field": "Boyut {{position}} alanı",
+      "aria-label-operator": "Boyut {{position}} işleci",
+      "aria-label-remove": "{{position}} boyutunu kaldır",
+      "aria-label-value": "Boyut {{position}} değeri",
+      "aria-label-values": "Boyut {{position}} değerleri",
       "label-dimensions": "Boyutlar",
       "placeholder-field": "Alan",
       "placeholder-operation": "Çalıştırma",
@@ -182,19 +187,47 @@
       "tooltip-limit": "Döndürülen satır sayısını kısıtlayın (varsayılan 1000'dir)."
     },
     "logs-management": {
+      "body-auxiliary-logs-queries": "",
       "body-basic-logs-queries": "Temel Günlüklere geçmek istediğinizden emin misiniz?",
       "confirmText-confirm": "Onayla",
+      "description-auxiliary-logs-queries": "",
       "description-basic-logs-queries": "Temel Günlük sorguları, taranan veri miktarına bağlı olarak maliyet doğurur.",
+      "label-analytics": "",
+      "label-auxiliary": "",
+      "label-basic": "",
       "label-logs": "Günlük kayıtları",
+      "title-auxiliary-logs-queries": "",
       "title-basic-logs-queries": "Temel Günlük Sorguları",
-      "tooltip-logs": "Temel veya Analitik Günlükleri sorgusunun çalıştırılıp çalıştırılmayacağını belirtir."
+      "tooltip-logs": "Temel veya Analitik Günlükleri sorgusunun çalıştırılıp çalıştırılmayacağını belirtir.",
+      "tooltip-logs-all": "",
+      "tooltip-logs-aux": ""
     },
     "logs-query-builder": {
       "title-no-tables": "Kaynak başarıyla yüklendi ancak herhangi bir tablo yok"
     },
     "logs-query-editor": {
       "learn-more": "Daha Fazla Bilgi Edinin",
-      "view-query": "Sorguyu Azure Portal'da görüntüleyin"
+      "notice-auxiliary-single-resource": "",
+      "notice-basic-single-resource": "",
+      "notice-same-resource-type": "",
+      "tier-switch-body-analytics": "",
+      "tier-switch-body-auxiliary": "",
+      "tier-switch-body-basic": "",
+      "tier-switch-revert": "",
+      "tier-switch-title": "",
+      "view-query": "Sorguyu Azure Portal'da görüntüleyin",
+      "warning-auxiliary-data-ingested": "",
+      "warning-auxiliary-raw": "",
+      "warning-basic-raw": "",
+      "warning-data-ingested": ""
+    },
+    "logs-table-section": {
+      "description-auxiliary-disabled": "",
+      "description-auxiliary-enabled": "",
+      "description-basic-disabled": "",
+      "description-basic-enabled": "",
+      "description-plan-unavailable": "",
+      "label-all-columns": ""
     },
     "metric-name-field": {
       "label-metric": "Metrik"

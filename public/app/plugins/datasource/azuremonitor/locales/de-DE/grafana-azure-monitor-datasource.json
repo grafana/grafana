@@ -53,6 +53,11 @@
       "placeholder-symbol-client-secret": "konfiguriert",
       "reset-symbol-client-secret": "Zurücksetzen"
     },
+    "auxiliary-logs-toggle": {
+      "aria-label-enable-auxiliary-logs": "",
+      "description-auxiliary-logs": "",
+      "label-enable-auxiliary-logs": ""
+    },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "{{queryDisplayName}}-Raw-Abfrage",
       "aria-label-use-query": "Diese Abfrage-Schaltfläche nutzen",
@@ -105,11 +110,11 @@
       "load-subscriptions": "Abonnements laden"
     },
     "dimension-fields": {
-      "aria-label-field": "",
-      "aria-label-operator": "",
-      "aria-label-remove": "",
-      "aria-label-value": "",
-      "aria-label-values": "",
+      "aria-label-field": "{{position}} Dimensionsfeld",
+      "aria-label-operator": "{{position}} Dimensionsoperator",
+      "aria-label-remove": "{{position}} Dimension entfernen",
+      "aria-label-value": "{{position}} Dimensionswert",
+      "aria-label-values": "{{position}} Dimensionswerte",
       "label-dimensions": "Abmessungen",
       "placeholder-field": "Feld",
       "placeholder-operation": "Operation",
@@ -182,19 +187,47 @@
       "tooltip-limit": "Beschränken Sie die Zahl der zurückgegebenen Zeilen (Standard ist 1000)."
     },
     "logs-management": {
+      "body-auxiliary-logs-queries": "",
       "body-basic-logs-queries": "Sind Sie sicher, dass Sie zu Basic-Logs wechseln möchten?",
       "confirmText-confirm": "Bestätigen",
+      "description-auxiliary-logs-queries": "",
       "description-basic-logs-queries": "Für Abfragen von Basis-Logs fallen Kosten an, je nach der Menge der gescannten Daten.",
+      "label-analytics": "",
+      "label-auxiliary": "",
+      "label-basic": "",
       "label-logs": "Logs",
+      "title-auxiliary-logs-queries": "",
       "title-basic-logs-queries": "Abfragen von Basis-Logs",
-      "tooltip-logs": "Gibt an, ob eine Basis- oder Analyse-Logs-Abfrage ausgeführt wird."
+      "tooltip-logs": "Gibt an, ob eine Basis- oder Analyse-Logs-Abfrage ausgeführt wird.",
+      "tooltip-logs-all": "",
+      "tooltip-logs-aux": ""
     },
     "logs-query-builder": {
       "title-no-tables": "Ressource erfolgreich geladen, aber ohne Tabellen"
     },
     "logs-query-editor": {
       "learn-more": "Mehr erfahren",
-      "view-query": "Abfrage im Azure Portal anzeigen"
+      "notice-auxiliary-single-resource": "",
+      "notice-basic-single-resource": "",
+      "notice-same-resource-type": "",
+      "tier-switch-body-analytics": "",
+      "tier-switch-body-auxiliary": "",
+      "tier-switch-body-basic": "",
+      "tier-switch-revert": "",
+      "tier-switch-title": "",
+      "view-query": "Abfrage im Azure Portal anzeigen",
+      "warning-auxiliary-data-ingested": "",
+      "warning-auxiliary-raw": "",
+      "warning-basic-raw": "",
+      "warning-data-ingested": ""
+    },
+    "logs-table-section": {
+      "description-auxiliary-disabled": "",
+      "description-auxiliary-enabled": "",
+      "description-basic-disabled": "",
+      "description-basic-enabled": "",
+      "description-plan-unavailable": "",
+      "label-all-columns": ""
     },
     "metric-name-field": {
       "label-metric": "Metrik"

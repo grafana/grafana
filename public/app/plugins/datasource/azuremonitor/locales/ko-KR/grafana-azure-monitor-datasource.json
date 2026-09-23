@@ -53,6 +53,11 @@
       "placeholder-symbol-client-secret": "구성됨",
       "reset-symbol-client-secret": "재설정"
     },
+    "auxiliary-logs-toggle": {
+      "aria-label-enable-auxiliary-logs": "",
+      "description-auxiliary-logs": "",
+      "label-enable-auxiliary-logs": ""
+    },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "{{queryDisplayName}} 원시 쿼리",
       "aria-label-use-query": "이 쿼리 사용 버튼",
@@ -105,11 +110,11 @@
       "load-subscriptions": "구독 불러오기"
     },
     "dimension-fields": {
-      "aria-label-field": "",
-      "aria-label-operator": "",
-      "aria-label-remove": "",
-      "aria-label-value": "",
-      "aria-label-values": "",
+      "aria-label-field": "차원 {{position}} 필드",
+      "aria-label-operator": "차원 {{position}} 연산자",
+      "aria-label-remove": "차원 {{position}} 제거",
+      "aria-label-value": "차원 {{position}} 값",
+      "aria-label-values": "차원 {{position}} 값",
       "label-dimensions": "차원",
       "placeholder-field": "필드",
       "placeholder-operation": "연산",
@@ -182,19 +187,47 @@
       "tooltip-limit": "반환되는 행 수를 제한합니다(기본값은 1000)."
     },
     "logs-management": {
+      "body-auxiliary-logs-queries": "",
       "body-basic-logs-queries": "기본 로그로 전환하시겠어요?",
       "confirmText-confirm": "확인",
+      "description-auxiliary-logs-queries": "",
       "description-basic-logs-queries": "기본 로그 쿼리는 스캔된 데이터 양에 따라 비용이 발생합니다.",
+      "label-analytics": "",
+      "label-auxiliary": "",
+      "label-basic": "",
       "label-logs": "로그",
+      "title-auxiliary-logs-queries": "",
       "title-basic-logs-queries": "기본 로그 쿼리",
-      "tooltip-logs": "기본 또는 분석 로그 쿼리를 실행할지 여부를 지정합니다."
+      "tooltip-logs": "기본 또는 분석 로그 쿼리를 실행할지 여부를 지정합니다.",
+      "tooltip-logs-all": "",
+      "tooltip-logs-aux": ""
     },
     "logs-query-builder": {
       "title-no-tables": "리소스를 성공적으로 불러왔지만 테이블이 없습니다"
     },
     "logs-query-editor": {
       "learn-more": "자세히 알아보기",
-      "view-query": "Azure Portal에서 쿼리 보기"
+      "notice-auxiliary-single-resource": "",
+      "notice-basic-single-resource": "",
+      "notice-same-resource-type": "",
+      "tier-switch-body-analytics": "",
+      "tier-switch-body-auxiliary": "",
+      "tier-switch-body-basic": "",
+      "tier-switch-revert": "",
+      "tier-switch-title": "",
+      "view-query": "Azure Portal에서 쿼리 보기",
+      "warning-auxiliary-data-ingested": "",
+      "warning-auxiliary-raw": "",
+      "warning-basic-raw": "",
+      "warning-data-ingested": ""
+    },
+    "logs-table-section": {
+      "description-auxiliary-disabled": "",
+      "description-auxiliary-enabled": "",
+      "description-basic-disabled": "",
+      "description-basic-enabled": "",
+      "description-plan-unavailable": "",
+      "label-all-columns": ""
     },
     "metric-name-field": {
       "label-metric": "메트릭"

@@ -53,6 +53,11 @@
       "placeholder-symbol-client-secret": "configurado",
       "reset-symbol-client-secret": "Redefinir"
     },
+    "auxiliary-logs-toggle": {
+      "aria-label-enable-auxiliary-logs": "",
+      "description-auxiliary-logs": "",
+      "label-enable-auxiliary-logs": ""
+    },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "{{queryDisplayName}} consulta bruta",
       "aria-label-use-query": "Utilizar este botão de consulta",
@@ -105,11 +110,11 @@
       "load-subscriptions": "Carregar subscrições"
     },
     "dimension-fields": {
-      "aria-label-field": "",
-      "aria-label-operator": "",
-      "aria-label-remove": "",
-      "aria-label-value": "",
-      "aria-label-values": "",
+      "aria-label-field": "Campo de {{position}} de dimensão",
+      "aria-label-operator": "Operador de {{position}} de dimensão",
+      "aria-label-remove": "Remover dimensão {{position}}",
+      "aria-label-value": "Valor de {{position}} de dimensão",
+      "aria-label-values": "Valores de {{position}} de dimensão",
       "label-dimensions": "Dimensões",
       "placeholder-field": "Campo",
       "placeholder-operation": "Funcionamento",
@@ -182,19 +187,47 @@
       "tooltip-limit": "Restrinja o número de linhas devolvidas (a predefinição é 1000)."
     },
     "logs-management": {
+      "body-auxiliary-logs-queries": "",
       "body-basic-logs-queries": "Tem a certeza de que pretende mudar para Registos básicos?",
       "confirmText-confirm": "Confirmar",
+      "description-auxiliary-logs-queries": "",
       "description-basic-logs-queries": "As consultas de registos básicos incorrem em custos com base na quantidade de dados lidos.",
+      "label-analytics": "",
+      "label-auxiliary": "",
+      "label-basic": "",
       "label-logs": "Registos",
+      "title-auxiliary-logs-queries": "",
       "title-basic-logs-queries": "Consultas de registos básicos",
-      "tooltip-logs": "Especifica se deve ser executada uma consulta de registos básicos ou analíticos."
+      "tooltip-logs": "Especifica se deve ser executada uma consulta de registos básicos ou analíticos.",
+      "tooltip-logs-all": "",
+      "tooltip-logs-aux": ""
     },
     "logs-query-builder": {
       "title-no-tables": "Recurso carregado com sucesso, mas sem quaisquer tabelas"
     },
     "logs-query-editor": {
       "learn-more": "Saber mais",
-      "view-query": "Ver consulta no Portal do Azure"
+      "notice-auxiliary-single-resource": "",
+      "notice-basic-single-resource": "",
+      "notice-same-resource-type": "",
+      "tier-switch-body-analytics": "",
+      "tier-switch-body-auxiliary": "",
+      "tier-switch-body-basic": "",
+      "tier-switch-revert": "",
+      "tier-switch-title": "",
+      "view-query": "Ver consulta no Portal do Azure",
+      "warning-auxiliary-data-ingested": "",
+      "warning-auxiliary-raw": "",
+      "warning-basic-raw": "",
+      "warning-data-ingested": ""
+    },
+    "logs-table-section": {
+      "description-auxiliary-disabled": "",
+      "description-auxiliary-enabled": "",
+      "description-basic-disabled": "",
+      "description-basic-enabled": "",
+      "description-plan-unavailable": "",
+      "label-all-columns": ""
     },
     "metric-name-field": {
       "label-metric": "Métrica"

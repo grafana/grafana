@@ -53,6 +53,11 @@
       "placeholder-symbol-client-secret": "已設定",
       "reset-symbol-client-secret": "重設"
     },
+    "auxiliary-logs-toggle": {
+      "aria-label-enable-auxiliary-logs": "",
+      "description-auxiliary-logs": "",
+      "label-enable-auxiliary-logs": ""
+    },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "「{{queryDisplayName}}」原始查詢",
       "aria-label-use-query": "使用此查詢按鈕",
@@ -105,11 +110,11 @@
       "load-subscriptions": "載入訂閱"
     },
     "dimension-fields": {
-      "aria-label-field": "",
-      "aria-label-operator": "",
-      "aria-label-remove": "",
-      "aria-label-value": "",
-      "aria-label-values": "",
+      "aria-label-field": "維度 {{position}} 欄位",
+      "aria-label-operator": "維度 {{position}} 運算子",
+      "aria-label-remove": "移除維度 {{position}}",
+      "aria-label-value": "維度 {{position}} 值",
+      "aria-label-values": "維度 {{position}} 值",
       "label-dimensions": "尺寸",
       "placeholder-field": "欄位",
       "placeholder-operation": "操作",
@@ -182,19 +187,47 @@
       "tooltip-limit": "限制傳回的列數（預設為 1000）。"
     },
     "logs-management": {
+      "body-auxiliary-logs-queries": "",
       "body-basic-logs-queries": "確定要切換至基本記錄嗎？",
       "confirmText-confirm": "確認",
+      "description-auxiliary-logs-queries": "",
       "description-basic-logs-queries": "基本記錄查詢會根據掃描的資料量產生費用。",
+      "label-analytics": "",
+      "label-auxiliary": "",
+      "label-basic": "",
       "label-logs": "紀錄",
+      "title-auxiliary-logs-queries": "",
       "title-basic-logs-queries": "基本記錄查詢",
-      "tooltip-logs": "指定是否執行基本或分析記錄查詢。"
+      "tooltip-logs": "指定是否執行基本或分析記錄查詢。",
+      "tooltip-logs-all": "",
+      "tooltip-logs-aux": ""
     },
     "logs-query-builder": {
       "title-no-tables": "已成功載入資源，但沒有任何表格"
     },
     "logs-query-editor": {
       "learn-more": "了解更多",
-      "view-query": "在 Azure Portal 中檢視查詢"
+      "notice-auxiliary-single-resource": "",
+      "notice-basic-single-resource": "",
+      "notice-same-resource-type": "",
+      "tier-switch-body-analytics": "",
+      "tier-switch-body-auxiliary": "",
+      "tier-switch-body-basic": "",
+      "tier-switch-revert": "",
+      "tier-switch-title": "",
+      "view-query": "在 Azure Portal 中檢視查詢",
+      "warning-auxiliary-data-ingested": "",
+      "warning-auxiliary-raw": "",
+      "warning-basic-raw": "",
+      "warning-data-ingested": ""
+    },
+    "logs-table-section": {
+      "description-auxiliary-disabled": "",
+      "description-auxiliary-enabled": "",
+      "description-basic-disabled": "",
+      "description-basic-enabled": "",
+      "description-plan-unavailable": "",
+      "label-all-columns": ""
     },
     "metric-name-field": {
       "label-metric": "指標"

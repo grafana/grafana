@@ -53,6 +53,11 @@
       "placeholder-symbol-client-secret": "dikonfigurasi",
       "reset-symbol-client-secret": "Atur ulang"
     },
+    "auxiliary-logs-toggle": {
+      "aria-label-enable-auxiliary-logs": "",
+      "description-auxiliary-logs": "",
+      "label-enable-auxiliary-logs": ""
+    },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "kueri {{queryDisplayName}} mentah",
       "aria-label-use-query": "Gunakan tombol kueri ini",
@@ -105,11 +110,11 @@
       "load-subscriptions": "Muat Langganan"
     },
     "dimension-fields": {
-      "aria-label-field": "",
-      "aria-label-operator": "",
-      "aria-label-remove": "",
-      "aria-label-value": "",
-      "aria-label-values": "",
+      "aria-label-field": "Kolom {{position}} dimensi",
+      "aria-label-operator": "Operator {{position}} dimensi",
+      "aria-label-remove": "Hapus {{position}} dimensi",
+      "aria-label-value": "Nilai {{position}} dimensi",
+      "aria-label-values": "Nilai {{position}} dimensi",
       "label-dimensions": "Dimensi",
       "placeholder-field": "Bidang",
       "placeholder-operation": "Pengoperasian",
@@ -182,19 +187,47 @@
       "tooltip-limit": "Batasi jumlah baris yang dikembalikan (default-nya adalah 1000)."
     },
     "logs-management": {
+      "body-auxiliary-logs-queries": "",
       "body-basic-logs-queries": "Yakin ingin beralih ke Log Dasar?",
       "confirmText-confirm": "Konfirmasi",
+      "description-auxiliary-logs-queries": "",
       "description-basic-logs-queries": "Kueri Log Dasar dikenakan biaya berdasarkan jumlah data yang dipindai.",
+      "label-analytics": "",
+      "label-auxiliary": "",
+      "label-basic": "",
       "label-logs": "Log",
+      "title-auxiliary-logs-queries": "",
       "title-basic-logs-queries": "Kueri Log Dasar",
-      "tooltip-logs": "Menentukan apakah akan menjalankan kueri Log Dasar atau Analitik."
+      "tooltip-logs": "Menentukan apakah akan menjalankan kueri Log Dasar atau Analitik.",
+      "tooltip-logs-all": "",
+      "tooltip-logs-aux": ""
     },
     "logs-query-builder": {
       "title-no-tables": "Sumber daya berhasil dimuat tetapi tanpa tabel"
     },
     "logs-query-editor": {
       "learn-more": "Pelajari Lebih Lanjut",
-      "view-query": "Lihat kueri di Portal Azure"
+      "notice-auxiliary-single-resource": "",
+      "notice-basic-single-resource": "",
+      "notice-same-resource-type": "",
+      "tier-switch-body-analytics": "",
+      "tier-switch-body-auxiliary": "",
+      "tier-switch-body-basic": "",
+      "tier-switch-revert": "",
+      "tier-switch-title": "",
+      "view-query": "Lihat kueri di Portal Azure",
+      "warning-auxiliary-data-ingested": "",
+      "warning-auxiliary-raw": "",
+      "warning-basic-raw": "",
+      "warning-data-ingested": ""
+    },
+    "logs-table-section": {
+      "description-auxiliary-disabled": "",
+      "description-auxiliary-enabled": "",
+      "description-basic-disabled": "",
+      "description-basic-enabled": "",
+      "description-plan-unavailable": "",
+      "label-all-columns": ""
     },
     "metric-name-field": {
       "label-metric": "Metrik"

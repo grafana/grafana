@@ -53,6 +53,11 @@
       "placeholder-symbol-client-secret": "konfigurálva",
       "reset-symbol-client-secret": "Visszaállítás"
     },
+    "auxiliary-logs-toggle": {
+      "aria-label-enable-auxiliary-logs": "",
+      "description-auxiliary-logs": "",
+      "label-enable-auxiliary-logs": ""
+    },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "{{queryDisplayName}} nyers lekérdezés",
       "aria-label-use-query": "Használja ezt a lekérdezési gombot",
@@ -105,11 +110,11 @@
       "load-subscriptions": "Előfizetések betöltése"
     },
     "dimension-fields": {
-      "aria-label-field": "",
-      "aria-label-operator": "",
-      "aria-label-remove": "",
-      "aria-label-value": "",
-      "aria-label-values": "",
+      "aria-label-field": "{{position}} dimenzió mezője",
+      "aria-label-operator": "{{position}} dimenzió operátora",
+      "aria-label-remove": "{{position}} dimenzió eltávolítása",
+      "aria-label-value": "{{position}} dimenzió értéke",
+      "aria-label-values": "{{position}} dimenzió értékei",
       "label-dimensions": "Dimenziók",
       "placeholder-field": "Mező",
       "placeholder-operation": "Művelet",
@@ -182,19 +187,47 @@
       "tooltip-limit": "A visszaadott sorok számának korlátozása (az alapértelmezett érték az 1000)."
     },
     "logs-management": {
+      "body-auxiliary-logs-queries": "",
       "body-basic-logs-queries": "Biztosan átvált az alapvető naplókra?",
       "confirmText-confirm": "Megerősítés",
+      "description-auxiliary-logs-queries": "",
       "description-basic-logs-queries": "Az Alapvető naplók lekérdezései a beolvasott adatok mennyiségétől függően költséget eredményeznek.",
+      "label-analytics": "",
+      "label-auxiliary": "",
+      "label-basic": "",
       "label-logs": "Naplók",
+      "title-auxiliary-logs-queries": "",
       "title-basic-logs-queries": "Alapvető naplók lekérdezései",
-      "tooltip-logs": "Megadja, hogy Alapvető vagy Analitikai naplók lekérdezését kell-e futtatni."
+      "tooltip-logs": "Megadja, hogy Alapvető vagy Analitikai naplók lekérdezését kell-e futtatni.",
+      "tooltip-logs-all": "",
+      "tooltip-logs-aux": ""
     },
     "logs-query-builder": {
       "title-no-tables": "Az erőforrás sikeresen betöltődött, de táblák nélkül"
     },
     "logs-query-editor": {
       "learn-more": "További információ",
-      "view-query": "Lekérdezés megtekintése az Azure Portalon"
+      "notice-auxiliary-single-resource": "",
+      "notice-basic-single-resource": "",
+      "notice-same-resource-type": "",
+      "tier-switch-body-analytics": "",
+      "tier-switch-body-auxiliary": "",
+      "tier-switch-body-basic": "",
+      "tier-switch-revert": "",
+      "tier-switch-title": "",
+      "view-query": "Lekérdezés megtekintése az Azure Portalon",
+      "warning-auxiliary-data-ingested": "",
+      "warning-auxiliary-raw": "",
+      "warning-basic-raw": "",
+      "warning-data-ingested": ""
+    },
+    "logs-table-section": {
+      "description-auxiliary-disabled": "",
+      "description-auxiliary-enabled": "",
+      "description-basic-disabled": "",
+      "description-basic-enabled": "",
+      "description-plan-unavailable": "",
+      "label-all-columns": ""
     },
     "metric-name-field": {
       "label-metric": "Metrika"
