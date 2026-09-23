@@ -177,7 +177,7 @@ function PlaylistTableRow({
   const [clearViewConfirmationOpen, setClearViewConfirmationOpen] = useState(false);
   const [dashboardLinkDraft, setDashboardLinkDraft] = useState('');
   const [customViewToken] = useState(createPlaylistCustomViewToken);
-  const customViewChannel = useRef<BroadcastChannel>();
+  const customViewChannel = useRef<BroadcastChannel | undefined>(undefined);
   const currentIndex = useRef(index);
   const mounted = useRef(true);
   currentIndex.current = index;
