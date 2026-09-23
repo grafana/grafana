@@ -21339,10 +21339,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ip-address@npm:10.7.1, ip-address@npm:^10.2.0":
-  version: 10.7.1
-  resolution: "ip-address@npm:10.7.1"
-  checksum: 10/651a0dd6a8c87c070c5be59a2170fb250753c4b0719f70774dee835cc37456404548b8283b368d95bf60f56a24d44cf96d0bdc598cae202e4cecbf27b9ab2fd2
+"ip-address@npm:10.7.2, ip-address@npm:^10.2.0":
+  version: 10.7.2
+  resolution: "ip-address@npm:10.7.2"
+  checksum: 10/3a051cb5234cff142bb527e8b40bf0f9dd895b0334161b1ffe0256700a50a49f4d3b94ef72a809f086b2bd6489d4f7a4a52025b03db9c2e9e83a5f9e4d4bdb60
   languageName: node
   linkType: hard
 
