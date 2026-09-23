@@ -11,6 +11,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 
@@ -20,6 +21,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	legacyuser "github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -46,7 +49,11 @@ func TestSearchFallback(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockClient := &MockClient{}
-			mockLegacyClient := &MockClient{}
+			legacyService := orgtest.NewMockService(t)
+			if !tt.expectUnified {
+				legacyService.On("SearchOrgUsers", mock.Anything, mock.Anything).
+					Return(&org.SearchOrgUsersQueryResult{}, nil).Once()
+			}
 
 			cfg := &setting.Cfg{
 				UnifiedStorage: map[string]setting.UnifiedStorageConfig{
@@ -55,8 +62,10 @@ func TestSearchFallback(t *testing.T) {
 			}
 			dual := dualwrite.ProvideServiceForTests(cfg)
 
-			searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(), mockClient, mockLegacyClient)
-			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), searchClient, cfg, nil)
+			searchClient := dualwrite.NewSelector[SearchBackend](dual, iamv0.UserResourceInfo.GroupResource(),
+				NewUserLegacySearchClient(legacyService, tracing.NewNoopTracerService(), cfg),
+				NewUnifiedSearchClient(mockClient, cfg))
+			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), searchClient, nil)
 
 			rr := httptest.NewRecorder()
 			req := httptest.NewRequest("GET", "/searchUsers", nil)
@@ -65,14 +74,14 @@ func TestSearchFallback(t *testing.T) {
 
 			searchHandler.DoSearch(rr, req)
 
-			var searchRequest *resourcepb.ResourceSearchRequest
-			if tt.expectUnified {
-				searchRequest = mockClient.LastSearchRequest
-				require.NotNil(t, searchRequest, "expected Unified Search to be called")
-			} else {
-				searchRequest = mockLegacyClient.LastSearchRequest
-				require.NotNil(t, searchRequest, "expected Legacy Search to be called")
+			require.Equal(t, 200, rr.Code)
+			if !tt.expectUnified {
+				require.Nil(t, mockClient.LastSearchRequest, "legacy search must not call the index")
+				return
 			}
+			legacyService.AssertNotCalled(t, "SearchOrgUsers", mock.Anything, mock.Anything)
+			searchRequest := mockClient.LastSearchRequest
+			require.NotNil(t, searchRequest, "expected Unified Search to be called")
 			require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, searchRequest.ResultFormat)
 			require.Equal(t, []string{
 				resource.SEARCH_FIELD_TITLE,
@@ -87,6 +96,11 @@ func TestSearchFallback(t *testing.T) {
 			}, searchRequest.Fields)
 		})
 	}
+}
+
+func selectorForBackend(backend SearchBackend) *dualwrite.Selector[SearchBackend] {
+	return dualwrite.NewSelector[SearchBackend](dualwrite.ProvideServiceForTests(&setting.Cfg{}),
+		iamv0.UserResourceInfo.GroupResource(), backend, nil)
 }
 
 func TestUserSearchFieldsAcceptedByIndex(t *testing.T) {
@@ -327,8 +341,7 @@ func TestSearchSort(t *testing.T) {
 			mockClient := mockClientWithHits()
 			searchHandler := NewSearchHandler(
 				tracing.NewNoopTracerService(),
-				mockClient,
-				&setting.Cfg{},
+				selectorForBackend(NewUnifiedSearchClient(mockClient, &setting.Cfg{})),
 				authlib.FixedAccessClient(true),
 			)
 
@@ -517,8 +530,7 @@ func TestAccessControl(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			searchHandler := NewSearchHandler(
 				tracing.NewNoopTracerService(),
-				mockClientWithHits(),
-				&setting.Cfg{},
+				selectorForBackend(NewUnifiedSearchClient(mockClientWithHits(), &setting.Cfg{})),
 				tc.client,
 			)
 
