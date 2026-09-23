@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -49,6 +48,7 @@ func TestAuth_Middleware(t *testing.T) {
 		authMiddleware web.Handler
 		expecedReached bool
 		expectedCode   int
+		expectedBody   string
 	}
 
 	tests := []testCase{
@@ -73,6 +73,14 @@ func TestAuth_Middleware(t *testing.T) {
 			identity:       &authn.Identity{Type: authlib.TypeAnonymous},
 			expecedReached: true,
 			expectedCode:   http.StatusOK,
+		},
+		{
+			desc:           "ReqSignedIn should preserve the token rotation error",
+			path:           "/api/secure",
+			authMiddleware: ReqSignedIn,
+			authErr:        authn.NewTokenNeedsRotationError(1),
+			expectedCode:   http.StatusUnauthorized,
+			expectedBody:   `{"message":"Unauthorized","messageId":"session.token.rotate","statusCode":401,"traceID":"","extra":null}`,
 		},
 		{
 			desc:           "ReqSignedIn should return redirect anonymous user with forceLogin query string",
@@ -214,31 +222,12 @@ func TestAuth_Middleware(t *testing.T) {
 			res := recorder.Result()
 			assert.Equal(t, tt.expecedReached, reached)
 			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			if tt.expectedBody != "" {
+				assert.JSONEq(t, tt.expectedBody, recorder.Body.String())
+			}
 			require.NoError(t, res.Body.Close())
 		})
 	}
-}
-
-func TestAuth_Middleware_TokenNeedsRotationResponse(t *testing.T) {
-	ctxHandler := setupAuthMiddlewareTest(t, nil, authn.NewTokenNeedsRotationError(1))
-	server := web.New()
-	server.Use(ctxHandler.Middleware)
-	server.Use(ReqSignedIn)
-	server.Post("/api/ds/query", func(c *contextmodel.ReqContext) {
-		t.Fatal("Unauthenticated request reached the query handler")
-	})
-
-	recorder := httptest.NewRecorder()
-	server.ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "/api/ds/query", nil))
-	require.Equal(t, http.StatusUnauthorized, recorder.Code)
-
-	var body struct {
-		MessageID  string `json:"messageId"`
-		StatusCode int    `json:"statusCode"`
-	}
-	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &body))
-	require.Equal(t, "session.token.rotate", body.MessageID)
-	require.Equal(t, http.StatusUnauthorized, body.StatusCode)
 }
 
 func TestRoleAppPluginAuth(t *testing.T) {
