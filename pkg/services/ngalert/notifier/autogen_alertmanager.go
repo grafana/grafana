@@ -16,10 +16,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 )
 
 type autogenRuleStore interface {
-	ListContactPointRoutings(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error)
+	rulestore.ContactPointRoutingReader
 }
 
 type InvalidReceiversAction string

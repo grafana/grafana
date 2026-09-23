@@ -10,15 +10,15 @@ import (
 // method there cannot leave a stale copy here. It is still declared in this package, because what
 // the API layer depends on is this package's concern.
 //
-// Composing whole segments means this is slightly wider than the set the API layer actually calls:
-// it also pulls in GetRuleByID, ListAlertRulesPaginated, GetRuleGroupInterval, Count and
-// GetAlertRuleVersionFolders. That is the trade for not duplicating twenty signatures.
+// The segments compose to exactly the methods the API layer calls — nothing wider.
 type RuleStore interface {
 	// TODO after deprecating namespace_id field in GettableGrafanaRule we can simplify this
 	// interface by returning map[string]struct{} instead of map[string]*folder.FolderReference
 	rulestore.NamespaceStore
 	rulestore.RuleReader
+	rulestore.RuleGroupReader
 	rulestore.RuleWriter
+	rulestore.RuleAdminWriter
 	rulestore.RuleVersionReader
 	rulestore.StatusWriter
 }

@@ -4,12 +4,13 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type RuleUsageReader interface {
-	Count(ctx context.Context, orgID int64) (int64, error)
+	rulestore.RuleCounter
 }
 
 func RegisterQuotas(cfg *setting.Cfg, qs quota.Service, rules RuleUsageReader) error {

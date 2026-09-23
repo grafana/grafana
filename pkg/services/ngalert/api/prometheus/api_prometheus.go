@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -282,11 +283,11 @@ type RuleGroupStatusesOptions struct {
 }
 
 type ListAlertRulesStore interface {
-	ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (ngmodels.RulesGroup, error)
+	rulestore.RuleLister
 }
 
 type ListAlertRulesStoreV2 interface {
-	ListAlertRulesByGroup(ctx context.Context, query *ngmodels.ListAlertRulesExtendedQuery) (ngmodels.RulesGroup, string, error)
+	rulestore.RuleGroupReader
 }
 
 func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) response.Response {

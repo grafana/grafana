@@ -45,10 +45,9 @@ const fullSyncJitterFactor = 0.1
 
 // syncerStore is the rule-side dependency, satisfied by *rules.RuleStore.
 //
-// Source: pkg/services/ngalert/store/rules/persist.go (FolderRegistryStore)
+// Source: pkg/services/ngalert/store/rules/persist.go (FolderRuleCounter)
 type syncerStore interface {
-	CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) (int64, error)
-	GetAllFoldersWithRules(ctx context.Context, orgID int64) (result map[string]struct{}, err error)
+	rules.FolderRuleCounter
 }
 
 // syncerOrgStore lists orgs to walk during a full sync. Separate from syncerStore because orgs are

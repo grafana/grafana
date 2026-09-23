@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	historymodel "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -41,7 +42,7 @@ var (
 )
 
 type RuleStore interface {
-	GetRuleByID(ctx context.Context, query ngmodels.GetAlertRuleByIDQuery) (result *ngmodels.AlertRule, err error)
+	rulestore.RuleByIDReader
 }
 
 type lokiQueryClient interface {
