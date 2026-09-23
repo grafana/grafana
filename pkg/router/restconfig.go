@@ -22,6 +22,7 @@ type loopbackRestConfigProvider struct {
 }
 
 func (p *loopbackRestConfigProvider) GetRestConfig(context.Context) (*clientrest.Config, error) {
+	// Host is a placeholder - requests forward directly to the provided handler.
 	// Folder checks share this client; the default 5 QPS limiter can exhaust write deadlines.
 	return &clientrest.Config{Host: "http://router", Transport: p, QPS: -1}, nil
 }
