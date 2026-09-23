@@ -116,7 +116,7 @@ describe('RecentQueriesLayout', () => {
     const { RecentQueriesFilters } = jest.requireMock('./RecentQueriesFilters');
     expect(RecentQueriesFilters).toHaveBeenCalledWith(
       expect.objectContaining({ availableDatasources: ['Prometheus', 'Loki'] }),
-      undefined
+      expect.anything()
     );
   });
 
@@ -163,7 +163,7 @@ describe('RecentQueriesLayout', () => {
     const { RecentQueriesFilters } = jest.requireMock('./RecentQueriesFilters');
     expect(RecentQueriesFilters).toHaveBeenCalledWith(
       expect.objectContaining({ onAnalyticsEvent: mockOnAnalyticsEvent }),
-      undefined
+      expect.anything()
     );
   });
 
@@ -172,6 +172,6 @@ describe('RecentQueriesLayout', () => {
     mockDataHook.isLoading = true;
     render(<RecentQueriesLayout {...defaultProps} />);
     const { RecentQueriesFilters } = jest.requireMock('./RecentQueriesFilters');
-    expect(RecentQueriesFilters).toHaveBeenCalledWith(expect.objectContaining({ disabled: true }), undefined);
+    expect(RecentQueriesFilters).toHaveBeenCalledWith(expect.objectContaining({ disabled: true }), expect.anything());
   });
 });
