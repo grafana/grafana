@@ -6142,6 +6142,11 @@
       "dismiss": "Dismiss",
       "preview-label": "Preview"
     },
+    "preview": {
+      "shortcut-tooltip": "Toggle Preview (D then P)",
+      "toggle": "Preview",
+      "view-changes": "View changes"
+    },
     "public-dashboard-not-available": {
       "does-not-exist": "The dashboard you are trying to access does not exist",
       "paused": "This dashboard has been paused by the administrator",
@@ -6171,6 +6176,9 @@
           "no-template-variables-found": "No template variables found"
         }
       }
+    },
+    "review": {
+      "no-changes": "No changes to save"
     },
     "rows-layout": {
       "cancel": "Cancel",
@@ -11170,6 +11178,7 @@
       "toggle-active-mode": "Toggle in-active / view mode",
       "toggle-all-panel-legends": "Toggle all panel legends",
       "toggle-auto-fit": "Toggle auto fit panels (experimental feature)",
+      "toggle-dashboard-preview": "Toggle Preview while editing",
       "toggle-exemplars": "Toggle exemplars in all panel",
       "toggle-graph-crosshair": "Toggle shared graph crosshair",
       "toggle-kiosk": "Toggle kiosk mode (hides top nav)",
