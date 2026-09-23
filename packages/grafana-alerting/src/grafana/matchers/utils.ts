@@ -135,8 +135,8 @@ export function matchLabelsSet(matchers: LabelMatcher[], labels: Label[]): boole
   return matchIndexedLabelsSet(matchers, indexLabels(labels));
 }
 
-// same as matchLabelsSet, for callers that already built the lookups and want to reuse them
-export function matchIndexedLabelsSet(matchers: LabelMatcher[], indexedLabels: IndexedLabels): boolean {
+// same as matchLabelsSet, but takes the prebuilt lookups so callers in here can reuse them
+function matchIndexedLabelsSet(matchers: LabelMatcher[], indexedLabels: IndexedLabels): boolean {
   for (const matcher of matchers) {
     if (!isLabelMatchInSet(matcher, indexedLabels)) {
       return false;
