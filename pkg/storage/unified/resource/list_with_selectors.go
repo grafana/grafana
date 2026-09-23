@@ -78,12 +78,7 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 		}}, nil
 	}
 
-	values, batched, err := s.readSearchRows(ctx, rows)
-	if err != nil {
-		return nil, err
-	}
-
-	if result := s.consumeSearchRows(ctx, user, req, rows, values, batched, listRv, rsp); result != nil {
+	if result := s.consumeSearchRows(ctx, user, req, rows, s.readSearchRows(ctx, rows), listRv, rsp); result != nil {
 		return result, nil
 	}
 
@@ -212,7 +207,6 @@ func (s *server) consumeSearchRows(
 	req *resourcepb.ListRequest,
 	rows []listSearchRow,
 	values iter.Seq[*BackendReadResponse],
-	batched bool,
 	listRV int64,
 	rsp *resourcepb.ListResponse,
 ) *resourcepb.ListResponse {
@@ -233,12 +227,11 @@ func (s *server) consumeSearchRows(
 				Message: "empty resource read response",
 			}}
 		}
-		// The batched read did no authorization, so authorize each row here (the
-		// fallback path already authorized inside Read). Do it before surfacing a
-		// row-scoped error, so an unauthorized row is skipped, not revealed as errored.
+		// The storage reads do no authorization, so authorize each row before
+		// surfacing a row-scoped error. An unauthorized row must not reveal details.
 		// authorizeRead surfaces a stale NotFound (pruned/GC'd between search and
 		// read) without authorizing, like server.read.
-		if batched && row.key != nil {
+		if row.key != nil {
 			if errRes := s.authorizeRead(ctx, user, row.key, val); errRes != nil {
 				if errRes.Code == http.StatusForbidden {
 					if val.Error != nil {
@@ -292,7 +285,7 @@ func (s *server) consumeSearchRows(
 
 const searchReadChunkSize = 10
 
-func (s *server) readSearchRows(ctx context.Context, rows []listSearchRow) (iter.Seq[*BackendReadResponse], bool, error) {
+func (s *server) readSearchRows(ctx context.Context, rows []listSearchRow) iter.Seq[*BackendReadResponse] {
 	requests := make([]*resourcepb.ReadRequest, len(rows))
 	for i, row := range rows {
 		requests[i] = &resourcepb.ReadRequest{
@@ -301,80 +294,50 @@ func (s *server) readSearchRows(ctx context.Context, rows []listSearchRow) (iter
 		}
 	}
 
-	if len(requests) == 0 {
-		return func(func(*BackendReadResponse) bool) {}, true, nil
-	}
-
-	firstChunk := requests[:min(searchReadChunkSize, len(requests))]
-	firstValues, err := s.backend.BatchReadResource(ctx, firstChunk)
-	if err == nil {
-		if firstValues == nil {
-			return nil, true, fmt.Errorf("batch resource reader returned a nil iterator")
-		}
-		return func(yield func(*BackendReadResponse) bool) {
-			values := firstValues
-			first := true
-			for chunk := range slices.Chunk(requests, searchReadChunkSize) {
-				if first {
-					first = false
-				} else {
-					nextValues, batchErr := s.backend.BatchReadResource(ctx, chunk)
-					if batchErr != nil {
-						yield(&BackendReadResponse{Error: AsErrorResult(batchErr)})
-						return
-					}
-					if nextValues == nil {
-						yield(&BackendReadResponse{Error: AsErrorResult(fmt.Errorf("batch resource reader returned a nil iterator"))})
-						return
-					}
-					values = nextValues
-				}
-
-				count := 0
-				for value := range values {
-					if count >= len(chunk) {
-						yield(&BackendReadResponse{Error: AsErrorResult(fmt.Errorf("batch resource reader returned too many responses"))})
-						return
-					}
-					count++
-					if !yield(value) {
-						return
-					}
-				}
-				if count != len(chunk) {
-					yield(&BackendReadResponse{Error: AsErrorResult(fmt.Errorf("batch resource reader returned %d responses for %d requests", count, len(chunk)))})
-					return
-				}
-			}
-		}, true, nil
-	}
-	if !errors.Is(err, ErrBatchReadUnsupported) {
-		return nil, true, err
-	}
-
-	// Read authorizes internally, so the caller does not re-check the fallback path.
 	return func(yield func(*BackendReadResponse) bool) {
-		for _, row := range rows {
-			val, err := s.Read(ctx, &resourcepb.ReadRequest{
-				Key:             row.key,
-				ResourceVersion: row.resourceVersion,
-			})
-			if val == nil {
-				if !yield(&BackendReadResponse{Error: AsErrorResult(err)}) {
-					return
+		batchSupported := true
+		for chunk := range slices.Chunk(requests, searchReadChunkSize) {
+			if !batchSupported {
+				for _, request := range chunk {
+					if !yield(s.backend.ReadResource(ctx, request)) {
+						return
+					}
 				}
 				continue
 			}
-			if !yield(&BackendReadResponse{
-				Key:             row.key,
-				ResourceVersion: val.ResourceVersion,
-				Value:           val.Value,
-				Error:           val.Error,
-			}) {
+
+			values, err := s.backend.BatchReadResource(ctx, chunk)
+			if errors.Is(err, ErrBatchReadUnsupported) {
+				batchSupported = false
+				for _, request := range chunk {
+					if !yield(s.backend.ReadResource(ctx, request)) {
+						return
+					}
+				}
+				continue
+			}
+			if err != nil {
+				yield(&BackendReadResponse{Error: AsErrorResult(err)})
+				return
+			}
+
+			count := 0
+			for value := range values {
+				if count >= len(chunk) {
+					yield(&BackendReadResponse{Error: AsErrorResult(fmt.Errorf("batch resource reader returned too many responses"))})
+					return
+				}
+				count++
+				if !yield(value) {
+					return
+				}
+			}
+			if count != len(chunk) {
+				yield(&BackendReadResponse{Error: AsErrorResult(fmt.Errorf("batch resource reader returned %d responses for %d requests", count, len(chunk)))})
 				return
 			}
 		}
-	}, false, nil
+	}
 }
 
 // tokenFromOtherListPath reports whether a continue token was issued by the other
