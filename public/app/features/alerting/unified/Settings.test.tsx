@@ -7,10 +7,8 @@ import DataSourcesResponse from './components/settings/mocks/api/datasources.jso
 import { setupGrafanaManagedServer, withExternalOnlySetting } from './components/settings/mocks/server';
 import { setupMswServer } from './mockApi';
 import { grantUserRole } from './mocks';
-import { addPlugin } from './mocks/server/configure';
 import { addSettingsSection } from './settings/extensions';
-import { pluginMeta } from './testSetup/plugins';
-import { SupportedPlugin } from './types/pluginBridges';
+import { setupPrometheusAlertingPlugin } from './testSetup/prometheusAlertingPlugin';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -265,10 +263,11 @@ describe('Alerting settings', () => {
 });
 
 describe('Alerting settings with the Prometheus Alerting plugin', () => {
+  setupPrometheusAlertingPlugin();
+
   beforeEach(() => {
     grantUserRole('ServerAdmin');
     setupGrafanaManagedServer(server);
-    addPlugin(pluginMeta[SupportedPlugin.PrometheusAlerting]);
   });
 
   it('leaves external Alertmanager configuration to the plugin but keeps enable/disable', async () => {

@@ -5,7 +5,7 @@ import { Stack } from '@grafana/ui';
 import { type DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting';
 
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
-import { usePrometheusAlertingPlugin } from '../plugin-proxy/usePrometheusAlertingPlugin';
+import { useRouteProxyActive } from '../plugin-proxy/withRouteProxy';
 import { GrafanaRulesSource, getExternalRulesSources } from '../utils/datasource';
 
 import { PaginatedDataSourceLoader } from './PaginatedDataSourceLoader';
@@ -26,8 +26,8 @@ export function GroupedView({ groupFilter, namespaceFilter }: GroupedViewProps) 
   const hasFilters = Boolean(groupFilter || namespaceFilter);
   // Once the Prometheus Alerting plugin is installed it owns these, so we don't render a section
   // per data source any more. The Grafana-managed section header says where they went.
-  const { installed: pluginInstalled } = usePrometheusAlertingPlugin();
-  const externalRuleSources = useMemo(() => (pluginInstalled ? [] : getExternalRulesSources()), [pluginInstalled]);
+  const routeProxyActive = useRouteProxyActive();
+  const externalRuleSources = useMemo(() => (routeProxyActive ? [] : getExternalRulesSources()), [routeProxyActive]);
 
   // Use custom hook for centralized state management
   const { updateState, loadingDataSources } = useDataSourceLoadingStates();
@@ -39,7 +39,7 @@ export function GroupedView({ groupFilter, namespaceFilter }: GroupedViewProps) 
           groupFilter={groupFilter}
           namespaceFilter={namespaceFilter}
           onLoadingStateChange={updateState}
-          collapsible={!pluginInstalled}
+          collapsible={!routeProxyActive}
           key={`${groupFilter}-${namespaceFilter}`}
         />
       </DataSourceErrorBoundary>

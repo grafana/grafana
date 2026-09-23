@@ -5,10 +5,10 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';
-import { addPlugin, setPrometheusRules } from '../mocks/server/configure';
+import { setPrometheusRules } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
 import { type RulesFilter } from '../search/rulesSearchParser';
-import { pluginMeta } from '../testSetup/plugins';
+import { setupPrometheusAlertingPlugin } from '../testSetup/prometheusAlertingPlugin';
 import { SupportedPlugin } from '../types/pluginBridges';
 
 import { FilterView } from './FilterView';
@@ -225,9 +225,7 @@ function installControllableIntersectionObserver() {
 }
 
 describe('RuleList - FilterView with the Prometheus Alerting plugin', () => {
-  beforeEach(() => {
-    addPlugin(pluginMeta[SupportedPlugin.PrometheusAlerting]);
-  });
+  setupPrometheusAlertingPlugin();
 
   it('leaves data source managed rules out and says where they went', async () => {
     render(<FilterView filterState={getFilter({ dataSourceNames: ['Mimir'] })} />);
@@ -249,10 +247,7 @@ describe('RuleList - FilterView with the Prometheus Alerting plugin', () => {
 
     expect(await screen.findByText(/No matching rules found/)).toBeInTheDocument();
     const link = screen.getByRole('link', { name: /search data source managed rules/i });
-    expect(link).toHaveAttribute(
-      'href',
-      `/a/${SupportedPlugin.PrometheusAlerting}/rules`
-    );
+    expect(link).toHaveAttribute('href', `/a/${SupportedPlugin.PrometheusAlerting}/rules`);
     link.addEventListener('click', (event) => event.preventDefault());
     await user.click(link);
     expect(returnToPrevious).toHaveBeenCalledWith('Alert rules');

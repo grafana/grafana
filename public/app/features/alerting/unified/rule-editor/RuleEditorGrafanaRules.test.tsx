@@ -18,11 +18,10 @@ import {
   grafanaRulerRule,
   mockPreviewApiResponse,
 } from '../mocks/grafanaRulerApi';
-import { addPlugin, setFolderResponse } from '../mocks/server/configure';
+import { setFolderResponse } from '../mocks/server/configure';
 import { captureRequests, serializeRequests } from '../mocks/server/events';
 import { setupDataSources } from '../testSetup/datasources';
-import { pluginMeta } from '../testSetup/plugins';
-import { SupportedPlugin } from '../types/pluginBridges';
+import { setupPrometheusAlertingPlugin } from '../testSetup/prometheusAlertingPlugin';
 import { Annotation } from '../utils/constants';
 import { grafanaRuleDtoToFormValues } from '../utils/rule-form';
 
@@ -250,6 +249,8 @@ describe('RuleEditor grafana managed rules', () => {
 });
 
 describe('RuleEditor with the Prometheus Alerting plugin', () => {
+  setupPrometheusAlertingPlugin();
+
   beforeEach(() => {
     jest.clearAllMocks();
     contextSrv.isEditor = true;
@@ -276,8 +277,6 @@ describe('RuleEditor with the Prometheus Alerting plugin', () => {
         { alerting: true, module: 'core:plugin/prometheus' }
       )
     );
-
-    addPlugin(pluginMeta[SupportedPlugin.PrometheusAlerting]);
   });
 
   it('does not offer to author a data source managed rule', async () => {

@@ -5,7 +5,7 @@ import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { InlineField, Select, SelectMenuOptions, useStyles2 } from '@grafana/ui';
 
-import { usePrometheusAlertingPlugin } from '../plugin-proxy/usePrometheusAlertingPlugin';
+import { useRouteProxyActive } from '../plugin-proxy/withRouteProxy';
 import { useAlertmanager } from '../state/AlertmanagerContext';
 import { type AlertManagerDataSource, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
@@ -26,7 +26,7 @@ export const AlertManagerPicker = ({ disabled = false }: Props) => {
   const { selectedAlertmanager, availableAlertManagers, setSelectedAlertmanager } = useAlertmanager();
   // Picking one of these hands the page over to the plugin, so say so before it happens rather than
   // leaving people to work it out from the redirect.
-  const { installed: pluginInstalled } = usePrometheusAlertingPlugin();
+  const routeProxyActive = useRouteProxyActive();
 
   const options = useMemo(() => {
     const grafanaAM = availableAlertManagers.find((am) => am.name === GRAFANA_RULES_SOURCE_NAME);
@@ -46,7 +46,7 @@ export const AlertManagerPicker = ({ disabled = false }: Props) => {
 
     if (datasourceAMs.length > 0) {
       groupedOptions.push({
-        label: pluginInstalled
+        label: routeProxyActive
           ? t(
               'alerting.alert-manager-picker.external-alertmanagers-group-plugin',
               'External Alertmanagers (opens in Prometheus Alerting)'
@@ -62,7 +62,7 @@ export const AlertManagerPicker = ({ disabled = false }: Props) => {
     }
 
     return groupedOptions;
-  }, [availableAlertManagers, pluginInstalled]);
+  }, [availableAlertManagers, routeProxyActive]);
 
   const isDisabled = disabled || options.length === 1;
   const label = isDisabled ? 'Alertmanager' : 'Choose Alertmanager';

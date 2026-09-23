@@ -4,18 +4,17 @@ import { byRole, byTestId } from 'testing-library-selector';
 
 import { OrgRole } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
+import { setPluginComponentsHook, setPluginLinksHook, setReturnToPreviousHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions, grantUserRole, mockDataSource } from '../mocks';
-import { addPlugin, setGrafanaRuleGroupExportResolver } from '../mocks/server/configure';
+import { setGrafanaRuleGroupExportResolver } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
 import { setupAutoSyncConfig } from '../mocks/server/handlers/k8s/config.k8s';
 import { type RulesFilter } from '../search/rulesSearchParser';
 import { setupDataSources } from '../testSetup/datasources';
-import { pluginMeta } from '../testSetup/plugins';
-import { SupportedPlugin } from '../types/pluginBridges';
+import { setupPrometheusAlertingPlugin } from '../testSetup/prometheusAlertingPlugin';
 
 import RuleListPage, { RuleListActions } from './RuleList.v2';
 import { loadDefaultSavedSearch } from './filter/useSavedSearches';
@@ -65,6 +64,7 @@ const ui = {
 };
 
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
+setReturnToPreviousHook(() => () => {});
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 
 grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
@@ -681,6 +681,8 @@ describe('RuleListPage v2 - Default search auto-apply', () => {
 });
 
 describe('RuleListActions with the Prometheus Alerting plugin', () => {
+  setupPrometheusAlertingPlugin();
+
   const ui = {
     newRuleButton: byRole('link', { name: /^new alert rule$/i }),
     moreButton: byRole('button', { name: /more/i }),
@@ -702,7 +704,6 @@ describe('RuleListActions with the Prometheus Alerting plugin', () => {
         jsonData: { manageAlerts: true },
       })
     );
-    addPlugin(pluginMeta[SupportedPlugin.PrometheusAlerting]);
   });
 
   it('stops offering to create a data source recording rule', async () => {

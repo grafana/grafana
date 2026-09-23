@@ -5,9 +5,8 @@ import { contextSrv } from 'app/core/services/context_srv';
 
 import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { setupMswServer } from '../../mockApi';
-import { addPlugin } from '../../mocks/server/configure';
 import type { RulesFilter } from '../../search/rulesSearchParser';
-import { pluginMeta } from '../../testSetup/plugins';
+import { setupPrometheusAlertingPlugin } from '../../testSetup/prometheusAlertingPlugin';
 import { SupportedPlugin } from '../../types/pluginBridges';
 
 import { RulesFilterSidebar } from './RulesFilterSidebar';
@@ -276,10 +275,12 @@ describe('RulesFilterSidebar — rule source filter', () => {
     expect(await screen.findByRole('radiogroup', { name: 'Rule source' })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: 'Data source managed' })).toBeInTheDocument();
   });
+});
+
+describe('RulesFilterSidebar — rule source filter with the Prometheus Alerting plugin', () => {
+  setupPrometheusAlertingPlugin();
 
   it('defaults to Grafana managed without offering All when the plugin owns data source managed rules', async () => {
-    addPlugin(pluginMeta[SupportedPlugin.PrometheusAlerting]);
-
     render(<RulesFilterSidebar />);
 
     expect(await screen.findByText('Data source')).toBeInTheDocument();
@@ -291,7 +292,6 @@ describe('RulesFilterSidebar — rule source filter', () => {
   });
 
   it('opens data source managed rules in the plugin with the current search query', async () => {
-    addPlugin(pluginMeta[SupportedPlugin.PrometheusAlerting]);
     useRulesFilterMock.mockReturnValue({
       filterState: baseFilterState,
       updateFilters: mockUpdateFilters,

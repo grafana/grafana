@@ -24,7 +24,7 @@ import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
 import { useCombinedRuleNamespaces } from 'app/features/alerting/unified/hooks/useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
-import { usePrometheusAlertingPlugin } from 'app/features/alerting/unified/plugin-proxy/usePrometheusAlertingPlugin';
+import { useRouteProxyActive } from 'app/features/alerting/unified/plugin-proxy/withRouteProxy';
 import {
   fetchAllPromAndRulerRulesAction,
   fetchPromAndRulerRulesAction,
@@ -297,9 +297,9 @@ function StatView({
   const theme = useTheme2();
   // Grafana's rule list stops showing data source managed rules once the plugin is installed, so a
   // panel pointed at one of those data sources has to link into the plugin instead.
-  const { installed: pluginInstalled } = usePrometheusAlertingPlugin();
+  const routeProxyActive = useRouteProxyActive();
   const linksToPluginRules =
-    pluginInstalled && Boolean(options.datasource) && options.datasource !== GRAFANA_DATASOURCE_NAME;
+    routeProxyActive && Boolean(options.datasource) && options.datasource !== GRAFANA_DATASOURCE_NAME;
 
   const displayValue = enhancementsEnabled
     ? getStatDisplayValue(

@@ -11,6 +11,7 @@ import { Button, Combobox, Icon, Input, Label, MultiCombobox, Stack, Text, Toolt
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { trackAlertRuleFilterEvent } from '../../Analytics';
+import { createBridgeURL } from '../../components/PluginBridge';
 import {
   useAlertingDataSourceOptions,
   useLabelOptions,
@@ -20,8 +21,9 @@ import { isGranted } from '../../hooks/abilities/abilityUtils';
 import { useGlobalContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
 import { ContactPointAction } from '../../hooks/abilities/types';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
-import { usePluginRulesLink, usePrometheusAlertingPlugin } from '../../plugin-proxy/usePrometheusAlertingPlugin';
+import { useRouteProxyActive } from '../../plugin-proxy/withRouteProxy';
 import { RuleHealth, RuleSource, type RulesFilter } from '../../search/rulesSearchParser';
+import { SupportedPlugin } from '../../types/pluginBridges';
 
 import { type AdvancedFilters } from './types';
 import { advancedFiltersToRulesFilter, searchQueryToDefaultValues, usePluginsFilterStatus } from './utils';
@@ -59,10 +61,9 @@ interface FilterSidebarFormProps {
 function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
   const styles = useStyles2(getStyles);
 
-  const { updateFilters } = useRulesFilter();
+  const { updateFilters, searchQuery } = useRulesFilter();
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
-  const { installed: pluginInstalled } = usePrometheusAlertingPlugin();
-  const pluginRulesLink = usePluginRulesLink();
+  const routeProxyActive = useRouteProxyActive();
   const returnToPrevious = useReturnToPrevious();
   const canRenderContactPointSelector = isGranted(useGlobalContactPointAbility(ContactPointAction.View));
 
@@ -254,18 +255,24 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
               render={({ field }) => (
                 <ToggleButtonGroup<AdvancedFilters['ruleSource']>
                   aria-labelledby="filter-label-rule-source"
-                  value={pluginInstalled ? (field.value ?? RuleSource.Grafana) : field.value}
+                  value={routeProxyActive ? (field.value ?? RuleSource.Grafana) : field.value}
                   onChange={(value) => {
-                    if (pluginInstalled && value === RuleSource.DataSource) {
+                    if (routeProxyActive && value === RuleSource.DataSource) {
                       returnToPrevious(t('alerting.rule-list.return-button.title', 'Alert rules'));
-                      locationService.push(pluginRulesLink);
+                      locationService.push(
+                        createBridgeURL(
+                          SupportedPlugin.PrometheusAlerting,
+                          '/rules',
+                          searchQuery ? { search: searchQuery } : {}
+                        )
+                      );
                       return;
                     }
                     field.onChange(value);
                     applyFormValues({ ruleSource: value });
                   }}
                   options={[
-                    ...(!pluginInstalled ? [{ label: t('common.all', 'All'), value: null }] : []),
+                    ...(!routeProxyActive ? [{ label: t('common.all', 'All'), value: null }] : []),
                     {
                       label: t('alerting.rules-filter.rule-source.grafana', 'Grafana managed'),
                       value: RuleSource.Grafana,

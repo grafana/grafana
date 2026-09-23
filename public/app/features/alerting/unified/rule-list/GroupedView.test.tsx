@@ -6,9 +6,9 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';
-import { addPlugin, setPrometheusRules } from '../mocks/server/configure';
+import { setPrometheusRules } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
-import { pluginMeta } from '../testSetup/plugins';
+import { setupPrometheusAlertingPlugin } from '../testSetup/prometheusAlertingPlugin';
 import { SupportedPlugin } from '../types/pluginBridges';
 
 import { GroupedView } from './GroupedView';
@@ -119,9 +119,7 @@ describe('RuleList - GroupedView', () => {
 });
 
 describe('RuleList - GroupedView with the Prometheus Alerting plugin', () => {
-  beforeEach(() => {
-    addPlugin(pluginMeta[SupportedPlugin.PrometheusAlerting]);
-  });
+  setupPrometheusAlertingPlugin();
 
   it('drops the data source sections and says where those rules went', async () => {
     render(<GroupedView />);
