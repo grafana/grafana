@@ -745,13 +745,20 @@
     },
     "bulk-actions": {
       "delete": {
+        "affected-count": "Deleted {{num}} rules",
+        "no-rules-affected": "No rules were deleted from folder",
         "success": "Rules successfully deleted from folder"
       },
       "pause": {
+        "affected-count": "Paused {{num}} rules",
+        "no-rules-affected": "No rules were paused for folder",
         "success": "Rules evaluation successfully paused for folder"
       },
+      "skipped-provisioned": "Skipped {{num}} provisioned rules",
       "unpause": {
-        "success": "Rules successfully unpaused for this folder"
+        "affected-count": "Resumed {{num}} rules",
+        "no-rules-affected": "No rules were resumed for folder",
+        "success": "Rules successfully resumed for folder"
       }
     },
     "central-alert-history": {
@@ -920,6 +927,7 @@
       "button-view": "View",
       "export-ariaLabel-export": "Export",
       "export-label-export": "Export",
+      "export-legacy-integration-tooltip": "Export is not available for contact points that contain legacy integrations",
       "label-delete": "Delete",
       "label-manage-permissions": "Manage permissions",
       "tooltip-history": "View the history of notification attempts made to this contact point",
@@ -1484,6 +1492,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "Loading...."
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "Contact points that contain only legacy integrations are omitted. Contact points that contain both legacy and v1 integrations are exported without their legacy integrations.",
+      "warning-v0-integrations-title": "Legacy integrations are not included"
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "Loading...."
     },
@@ -1716,6 +1728,9 @@
         "pause-none": "No rules paused",
         "pause-recording": "Recording rules paused",
         "policy-tree": "Policy tree",
+        "preview": "Preview",
+        "preview-config-aria": "Preview configuration",
+        "preview-rules-aria": "Preview alert rules",
         "routing": "Notification routing",
         "routing-none": "No policy tree selected",
         "routing-tree": "Policy tree: {{name}}",
@@ -1772,19 +1787,25 @@
         },
         "source-title": "Import Source",
         "subtitle": "Import contact points, notification policies, templates, and mute timings from an external Alertmanager.",
+        "templates-added-title_one": "Template file added",
+        "templates-added-title_other": "Template files added",
         "templates-desc": "Optional. Upload the template files referenced by your Alertmanager config. Each file is imported as a template named after the file.",
         "templates-dropzone": "Drop template files here or click to upload",
         "templates-duplicate": "Duplicate template file name: \"{{name}}\". Template file names must be unique.",
         "templates-label": "Notification templates",
         "templates-remove": "Remove {{name}}",
-        "upload": "Upload YAML file",
+        "upload": "Drop YAML file here or click to upload",
         "validating": "Validating configuration...",
         "validation-error": "Validation failed",
         "validation-error-desc": "Failed to validate the configuration.",
         "validation-success": "Validation successful",
         "validation-success-desc": "No conflicts found. The configuration is ready to import.",
         "validation-warning": "Some resources will be renamed to avoid conflicts with existing ones",
-        "yaml-file": "Alertmanager config YAML"
+        "yaml-added-title": "Configuration file uploaded",
+        "yaml-desc": "Accepted file types: {{extensions}}",
+        "yaml-file": "Alertmanager config YAML",
+        "yaml-invalid-type": "File must be a YAML file ({{extensions}})",
+        "yaml-remove": "Remove {{name}}"
       },
       "step2": {
         "datasource": "Data source",
@@ -2651,6 +2672,9 @@
         "text-provisioned": "Provisioned"
       }
     },
+    "proxied-alerting-route": {
+      "text-redirecting": "Redirecting…"
+    },
     "query-and-expressions-step": {
       "add-query": "Add query",
       "body-queries-expressions-configured": "Create at least one query or expression to be alerted on",
@@ -3245,14 +3269,19 @@
         "action-disable": "Disable sync",
         "add-datasource-link": "Add Mimir datasource",
         "badge-active": "Active",
+        "badge-failing": "Sync failing",
         "badge-not-configured": "Not configured",
         "badge-operator-managed": "Managed by operator",
+        "badge-pending": "Pending first sync",
+        "badge-stopped": "Sync stopped",
         "description": "Continuously sync alert configuration from a Mimir or Cortex Alertmanager datasource into Grafana.",
         "disable-confirm-action": "Disable sync",
         "disable-confirm-body": "Disabling will stop continuous sync from datasource {{uid}}. You can re-enable it later by selecting a datasource again.",
         "disable-confirm-body-generic": "Disabling will stop continuous sync. You can re-enable it later by selecting a datasource again.",
         "disable-confirm-title": "Disable Mimir Alertmanager auto-sync?",
         "disable-success": "Mimir Alertmanager auto-sync disabled",
+        "merge-committed-info": "The external Alertmanager configuration has been merged into Grafana. Automatic sync from this datasource has stopped.",
+        "merge-committed-title": "Configuration merged into Grafana",
         "not-ready-body": "Grafana has not finished setting up auto-sync for this organization. Try again in a moment.",
         "not-ready-title": "Auto-sync is still initializing",
         "operator-managed-info": "This value is set by the <1>[unified_alerting] external_alertmanager_uid</1> key in grafana.ini and cannot be changed from the UI. Edit the configuration file and restart Grafana, or remove the key to manage sync from here.",
@@ -3271,6 +3300,7 @@
         "staged-conflict-active-title": "Auto-sync is not running",
         "staged-conflict-body": "Grafana holds one imported configuration at a time, and {{identifier}} currently occupies that slot. Promote or revert it below to free auto-sync.",
         "staged-conflict-title": "Auto-sync is unavailable while a configuration is staged",
+        "sync-failed-title": "Last sync attempt failed",
         "title": "Auto-sync configuration"
       },
       "import": {
@@ -3318,7 +3348,9 @@
           "rules-note-body": "Alert rules and recording rules are already active as Grafana-managed rules — promote only merges the Alertmanager resources above.",
           "success-body": "The imported resources were merged into your live config.",
           "success-title": "Configuration promoted",
-          "sync-not-cleared-body": "Nothing syncs from the datasource any more. Disable auto-sync in Alerting settings to import notification resources again — if it is set in grafana.ini, remove the key there.",
+          "sync-ini-managed-body": "Grafana keeps syncing from the datasource set in grafana.ini. Remove that key to stop the sync and import notification resources again.",
+          "sync-ini-managed-title": "Configuration promoted, but auto-sync is still active",
+          "sync-not-cleared-body": "The auto-sync setting could not be cleared. Disable auto-sync in Alerting settings to import notification resources again.",
           "sync-not-cleared-title": "Configuration promoted, but auto-sync is still configured",
           "sync-stops-body": "Once merged, the resources become normal Grafana resources and stop tracking the datasource. Auto-sync is turned off as part of the merge.",
           "sync-stops-title": "This will stop auto-sync",
@@ -4482,9 +4514,6 @@
     "create-new": {
       "dashboard-group": "Dashboard"
     },
-    "create-new-button": {
-      "generate-dashboard": "Generate dashboard"
-    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "This item is not in the same repository as the selected items."
@@ -4559,7 +4588,6 @@
     },
     "folder-variables": {
       "empty": "No folder-scoped variables in this folder yet.",
-      "list-heading": "Folder variables",
       "new": "New folder variable"
     },
     "manage-folder-nav": {
@@ -4609,11 +4637,15 @@
     },
     "readme": {
       "add-readme": "Add README",
-      "edit-tooltip": "Edit README",
+      "edit-doc-tooltip": "Edit document",
       "empty-message": "Add a README to describe what's in this folder and where to find the right dashboards.",
       "load-error-retry": "Try again",
-      "load-error-title": "Couldn't load README",
-      "parse-error": "Unable to display README content."
+      "load-error-title": "Couldn't load this document",
+      "panel-label": "Folder documentation",
+      "parse-error": "Unable to display this document.",
+      "tab-contributing": "Contributing",
+      "tab-readme": "README",
+      "tab-security": "Security"
     },
     "recently-viewed": {
       "clear": "Clear history",
@@ -5742,15 +5774,15 @@
       "group-into-row": "Group into row",
       "group-into-tab": "Group into tab",
       "move": "Move {{typeName}}",
-      "panel-background": "Change panel background",
-      "panel-description": "Change panel description",
+      "panel-background": "panel background change",
+      "panel-description": "panel description change",
       "panel-edit": "Panel changes",
       "panel-fit-content": "Panel auto fit content",
       "panel-max-repeats-per-row": "Max repeats per row",
       "panel-preset": "Apply panel preset",
       "panel-repeat-direction": "Repeat direction",
       "panel-repeat-variable": "Panel repeat by",
-      "panel-title": "Change panel title",
+      "panel-title": "panel title change",
       "paste-panel": "Paste panel",
       "remove": "Remove {{typeName}}",
       "row-fill-screen-disable": "Disable row fill screen",
@@ -5758,6 +5790,7 @@
       "row-hide-header": "Hide row header",
       "row-repeat-variable": "Row repeat by",
       "row-show-header": "Show row header",
+      "remove-multiple": "Remove {{typeName}} ({{num}})",
       "row-title": "Change row title",
       "switch-layout": "Switch layout",
       "switch-layout-row": "Switch layout",
@@ -5776,16 +5809,24 @@
       "add-library-panel-header": "Import panel",
       "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "add-visualization-button": "Add visualization",
+      "add-visualization-description": "Visualizations are panels for your data. Organize them with Auto grid or Custom grid.",
       "add-visualization-header": "Start your new dashboard by adding a visualization",
+      "add-visualization-heading": "Add a visualization",
+      "assistant-placeholder": "Describe your dashboard. This will open the assistant chat and start a conversation.",
       "auto-grid": "Auto grid",
       "auto-grid-description": "Panels resize to fit and form uniform grids",
+      "build-assistant": "Build your dashboard with Assistant",
       "custom-grid": "Custom grid",
       "custom-grid-description": "Position and size each panel individually",
       "description": "Add a panel to visualize your data",
+      "grid-auto": "Auto",
+      "grid-custom": "Custom",
+      "grid-label": "Grid:",
       "import-a-dashboard-body": "Import dashboards from files or <2>grafana.com</2>.",
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard",
       "layout-default-hint": "The selected layout will also be used as the default for all new tabs and rows. You can change this later in Dashboard Settings > General.",
+      "or-start-blank": "Or build it yourself",
       "select-layout-header": "Select layout",
       "title": "New dashboard"
     },
@@ -5913,6 +5954,7 @@
       "randomize-field-names-label-field-names": "Field names",
       "randomize-labels-label-labels": "Labels",
       "randomize-string-values-label-string-values": "String values",
+      "support-snapshot-editor": "Support snapshot editor",
       "tabs": {
         "label": {
           "data": "Data",
@@ -5953,6 +5995,7 @@
     "inspect-json": {
       "dataframe-description": "Raw data without transformations and field config applied. ",
       "dataframe-label": "DataFrame JSON (from Query)",
+      "editor-label": "JSON content",
       "panel-data-description": "The raw model passed to the panel visualization",
       "panel-data-label": "Panel data",
       "panel-json-description": "The model saved in the dashboard JSON that configures how everything works.",
@@ -6011,6 +6054,11 @@
       "page-count": "{{currentPage}} of {{numberOfPages}}",
       "tooltip-next": "Next",
       "tooltip-previous": "Previous"
+    },
+    "mutation-api": {
+      "apply-spec": {
+        "undo-title": "Assistant schema edit"
+      }
     },
     "new-dashboard-with-ds": {
       "not-found": "Data source with UID \"{{datasourceUid}}\" not found."
@@ -6093,6 +6141,17 @@
     },
     "panel-not-supported": {
       "go-back-to-queries": "Go back to Queries"
+    },
+    "plan-placeholder-badge": {
+      "text": "Sample data",
+      "tooltip": "The numbers shown are sample data for illustration and do not come from real queries."
+    },
+    "planning-banner": {
+      "build": "Build",
+      "dismiss": "Dismiss",
+      "panel-count_one": "{{count}} panel",
+      "panel-count_other": "{{count}} panels",
+      "plan-label": "Plan"
     },
     "public-dashboard-not-available": {
       "does-not-exist": "The dashboard you are trying to access does not exist",
@@ -6691,6 +6750,8 @@
       "unlink-library-panel-short": "Unlink"
     },
     "transformation-editor": {
+      "copy-input-data": "Copy input data to clipboard",
+      "copy-output-data": "Copy output data to clipboard",
       "input-data": "Input data",
       "loading": "Loading editor...",
       "output-data": "Output data",
@@ -6710,6 +6771,10 @@
         "title-show-transform-help": "Show transform help"
       },
       "title-delete": "Delete {{name}}?"
+    },
+    "transformation-operation-rows": {
+      "remove-transformation": "Remove",
+      "unknown-transformation-title": "Unknown transformation: {{transformationId}}"
     },
     "transformation-picker-ng": {
       "clear-search": "Clear search",
@@ -6761,6 +6826,12 @@
     "view-panel": {
       "back-to-dashboard": "Back to dashboard",
       "not-found": "Panel not found"
+    },
+    "viz-panel": {
+      "options": {
+        "description": "Description",
+        "description-as-subtitle": "Use as subtitle"
+      }
     }
   },
   "dashboard-import": {
@@ -6885,21 +6956,6 @@
     "no-options": "No dashboards found",
     "placeholder": "Select dashboard",
     "unknown-dashboard": "Unknown dashboard ({{uid}})"
-  },
-  "dashboard-prompt": {
-    "datasource-entry": {
-      "generate-dashboard": "Generate dashboard"
-    },
-    "modal": {
-      "title": "What do you want to monitor?"
-    },
-    "prompt": {
-      "cancel": "Cancel",
-      "description": "Describe it in your own words — mention the services, data, or questions you care about.",
-      "input-label": "Describe the dashboard you want",
-      "placeholder": "e.g. Error rates and latency for my checkout service, broken down by environment",
-      "submit": "Build it"
-    }
   },
   "dashboard-scene": {
     "ad-hoc-filters-variable-editor": {
@@ -7334,6 +7390,7 @@
       "randomize-field-names-label-field-names": "Field names",
       "randomize-labels-label-labels": "Labels",
       "randomize-string-values-label-string-values": "String values",
+      "support-snapshot-editor": "Support snapshot editor",
       "tabs": {
         "label": {
           "data": "Data",
@@ -7723,6 +7780,7 @@
         "model-label": "Model",
         "v2-resource": "V2 Resource"
       },
+      "json-preview-label": "Provisioned dashboard JSON",
       "label-description": "Description",
       "label-folder-name": "Folder name",
       "label-target-folder": "Target folder",
@@ -8642,6 +8700,10 @@
       "aria-label-links": "Links",
       "links": "Links"
     },
+    "error-container": {
+      "title-query-error": "Query error",
+      "title-unknown-error": "Unknown error"
+    },
     "explore": {
       "title-flame-graph": "Flame graph",
       "title-graph": "Graph",
@@ -8652,6 +8714,16 @@
       "title-raw-prometheus": "Raw Prometheus",
       "title-table": "Table",
       "title-traces": "Traces"
+    },
+    "explore-actions": {
+      "close-split-view-left": "Close split view left",
+      "close-split-view-right": "Close split view right",
+      "correlations-editor": "Correlations editor",
+      "open-split-view": "Open split view",
+      "run-query": "Run query",
+      "run-query-left": "Run query (left)",
+      "run-query-right": "Run query (right)",
+      "section-explore": "Explore"
     },
     "explore-query-inspector": {
       "data-tab": {
@@ -8913,6 +8985,7 @@
     },
     "rich-history-notification": {
       "query-copied": "Query copied to clipboard",
+      "query-copy-failed": "Could not copy query to clipboard",
       "query-deleted": "Query deleted"
     },
     "rich-history-queries-tab": {
@@ -9039,6 +9112,10 @@
       "attribute-category": {
         "other": "Other"
       },
+      "exception-message": "Message:",
+      "exception-stacktrace": "Stacktrace",
+      "exception-title": "Exception",
+      "exception-type": "Type:",
       "label": {
         "kind": "Kind:",
         "library-name": "Library Name:",
@@ -9157,6 +9234,7 @@
       "high-latency": "High latency",
       "high-latency-tooltip": "Selects the 10% longest spans in the trace (p90).",
       "link-copied": "Link copied to clipboard",
+      "link-copy-failed": "Could not copy link to clipboard",
       "overview": "Overview",
       "path": "Path",
       "route": "Route",
@@ -9171,6 +9249,7 @@
       "target": "Target",
       "tooltip-url": "{{route}} or {{url}} or {{target}} or {{path}}",
       "trace-banner-error": "Trace error banner",
+      "trace-banner-go-to-span": "Go to span",
       "trace-banner-metrics": "{{duration}} · {{percent}}% of trace",
       "trace-banner-warning": "Trace warning banner",
       "trace-id": "Trace ID",
@@ -10687,7 +10766,9 @@
       "aria-label-toggle-collapse": "toggle collapse panel",
       "ariaLabel-panel-loading": "Panel loading bar",
       "ariaLabel-panel-status": "Panel status",
-      "errors-and-notices": "Errors and notices",
+      "explain-with-assistant": "Explain with Assistant",
+      "fix-with-assistant": "Fix with Assistant",
+      "inspect": "Inspect",
       "tooltip-cancel": "Cancel query",
       "tooltip-cancel-loading": "Cancel query",
       "tooltip-stop-streaming": "Stop streaming",
@@ -11127,6 +11208,7 @@
       "incident-tab-label": "Incidents",
       "team-filter-all": "All teams",
       "team-filter-label": "Filter alerts by team",
+      "team-filter-label-incidents": "Filter incidents by team",
       "team-filter-your-teams": "Your teams",
       "title": "Alerts & incidents",
       "title-alerts": "Alerts",
@@ -11186,6 +11268,7 @@
     "incidents-card": {
       "declare": "Declare an incident",
       "empty": "No active incidents.",
+      "empty-selected-team": "No active incidents for {{team}}.",
       "error-title": "Could not load active incidents",
       "title": "Active incidents",
       "view-all": "View all incidents"
@@ -11356,6 +11439,13 @@
         "setup-action": "Set up Hosted Traces",
         "title": "Trace requests across services"
       },
+      "irm": {
+        "action": "Enable IRM",
+        "context": "Route alerts to on-call schedules and incidents",
+        "description": "Connect Grafana Alerting to IRM to page the right person, escalate automatically, and manage incidents in one place.",
+        "setup-action": "Set up IRM",
+        "title": "Get paged when it matters"
+      },
       "kubernetes-monitoring": {
         "action": "Enable Kubernetes Monitoring",
         "context": "Cluster health next to your existing telemetry",
@@ -11406,6 +11496,28 @@
         "clusters_one": "{{value}} cluster",
         "clusters_other": "{{value}} clusters",
         "description": "See cluster health, cost, and right-sizing savings in one view.",
+        "filter": {
+          "all-clusters": "All clusters",
+          "all-namespaces": "All namespaces",
+          "all-nodes": "All nodes",
+          "badge-ignored": "Filters not applied",
+          "cancel": "Cancel",
+          "clear": "Clear filters",
+          "cluster": "Cluster",
+          "edit": "Edit filters ({{summary}})",
+          "ignored-tooltip": "Saved for {{saved}}. This card reads {{current}}, so it shows the whole fleet.",
+          "namespaces": "Namespaces",
+          "no-match": "No matching data",
+          "no-match-hint": "Adjust the filters",
+          "nodes": "Nodes",
+          "open": "Filter by cluster, namespace, or node",
+          "save": "Save",
+          "save-failed": "Could not save to browser storage. Try again.",
+          "summary-cluster": "Cluster: {{cluster}}",
+          "summary-namespaces": "Namespaces: {{namespaces}}",
+          "summary-nodes": "Nodes: {{nodes}}",
+          "title": "Filter Kubernetes Monitoring"
+        },
         "health-nodes_one": "{{count}} node not ready",
         "health-nodes_other": "{{count}} nodes not ready",
         "health-pods_one": "{{count}} pod pending or failed",
@@ -11422,8 +11534,6 @@
         "description": "Aggregate and search logs from your applications and infrastructure.",
         "setup-hint": "connect a logs source",
         "stats": "ingested · 7d",
-        "stats-sources_one": "ingested · 7d · ~{{count}} source",
-        "stats-sources_other": "ingested · 7d · ~{{count}} sources",
         "title": "Logs",
         "volume": "Ingest volume · last 24h"
       },
@@ -11811,6 +11921,7 @@
       "waiting-for-data": "Waiting for data:"
     },
     "live-publish": {
+      "message": "Message to publish",
       "publish": "Publish"
     }
   },
@@ -12159,6 +12270,10 @@
       "description": "When enabled, shows log details for each row.",
       "name": "Enable log details"
     },
+    "hover-overflow": {
+      "description": "Expand overflowing cell content on hover. Selected cells always expand.",
+      "name": "Cell hover overflow"
+    },
     "show-copy-log": {
       "description": "Enables/disables the log line link button in the first column of each row",
       "name": "Show copy log link button"
@@ -12226,6 +12341,10 @@
     "selected-team-not-found": "Selected team not found, or you do not have the necessary permissions to view it.",
     "team-not-found": "[Unknown team]",
     "unknown-error": "Unknown error"
+  },
+  "mermaid": {
+    "invalid-syntax": "invalid diagram syntax",
+    "render-error": "Diagram error: {{message}}"
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "No options found"
@@ -12559,6 +12678,10 @@
     "authentication": {
       "title": "Authentication"
     },
+    "banner-settings": {
+      "subtitle": "Show important updates and information at the top of every page",
+      "title": "Announcement banner"
+    },
     "bookmarks": {
       "title": "Bookmarks"
     },
@@ -12655,7 +12778,7 @@
     },
     "global-variables": {
       "subtitle": "Template variables shared across dashboards, globally or per folder",
-      "title": "Variables"
+      "title": "Cross-dashboard variables"
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
@@ -12715,7 +12838,7 @@
       "title": "New folder"
     },
     "notebooks": {
-      "subtitle": "Investigation notebooks created from workspaces, dashboards, alerts, and incidents.",
+      "subtitle": "Create and manage notebooks to tell a story with your data",
       "title": "Notebooks"
     },
     "observability": {
@@ -12765,6 +12888,7 @@
       "title": "Recorded queries"
     },
     "reporting": {
+      "subtitle": "Create and manage PDF reports distributed via e-mail",
       "title": "Reporting"
     },
     "saved-queries": {
@@ -12779,6 +12903,10 @@
     },
     "search-dashboards": {
       "title": "Search dashboards"
+    },
+    "secrets-management": {
+      "subtitle": "Manage secrets for your Grafana instance",
+      "title": "Secrets Management"
     },
     "server-settings": {
       "subtitle": "View the settings defined in your Grafana config",
@@ -12933,7 +13061,6 @@
     },
     "quick-add": {
       "aria-label": "New",
-      "generate-dashboard-button": "Generate dashboard",
       "new-template-dashboard-button": "Use template"
     },
     "rss-button": "Latest from the blog"
@@ -13130,13 +13257,12 @@
       "copy-markdown": "Copy as Markdown",
       "download-markdown": "Download as .md",
       "error": "Failed to export notebook",
-      "label": "Export",
-      "open-in-cursor": "Open in Cursor",
-      "opening-in-cursor": "Opening in Cursor"
+      "label": "Export"
     },
     "history": {
       "add-block": "Add block",
       "add-query": "Add query",
+      "add-tag": "Add tag",
       "delete-block": "Delete block",
       "duplicate-block": "Duplicate block",
       "duplicate-query": "Duplicate query",
@@ -13146,11 +13272,21 @@
       "redo": "Redo",
       "redo-action": "Redo: {{action}}",
       "remove-query": "Remove query",
+      "remove-tag": "Remove tag",
       "select-query": "Select query",
       "split-block": "Split block",
       "switch-datasource": "Switch datasource",
       "undo": "Undo",
       "undo-action": "Undo: {{action}}"
+    },
+    "incidents": {
+      "attach-title": "Attach to incident",
+      "attached": "Notebook attached to \"{{incident}}\"",
+      "attached-untitled": "Notebook attached to the incident",
+      "caption": "Notebook: {{title}}",
+      "declare": "Declare incident",
+      "menu": "IRM",
+      "view-incident": "View incident"
     },
     "list": {
       "count_one": "{{count}} notebook",
@@ -13174,8 +13310,10 @@
       "table": {
         "author": "Author",
         "copy-link": "Copy link",
+        "copy-link-error": "Failed to copy link",
         "created": "Created",
         "edit": "Edit",
+        "link-copied": "Link copied to clipboard",
         "more-actions": "More actions",
         "tags": "Tags",
         "title": "Title",
@@ -13720,6 +13858,11 @@
     },
     "get-started-with-data-source": {
       "add-new-data-source": "Add new data source",
+      "plugin-id": "Plugin ID",
+      "setup-assistant": "Set up with assistant",
+      "setup-assistant-description": "Guided configuration",
+      "setup-manually": "Set up manually",
+      "setup-manually-description": "Configure all settings yourself",
       "title-button-disabled": "The plugin isn't usable yet, it may take some time to complete the installation."
     },
     "install-controls": {
@@ -14776,6 +14919,7 @@
     "resource-view": {
       "base": "Base",
       "dashboard-preview": "Dashboard Preview",
+      "editor-label": "Resource JSON",
       "existing-dashboard": "Existing dashboard",
       "history": "History",
       "message": {
@@ -15079,7 +15223,7 @@
     },
     "public-sharing": {
       "accept-button": "Accept",
-      "alert-text": "Sharing this dashboard externally makes it entirely accessible to anyone with the link.",
+      "alert-text": "Sharing this dashboard externally makes it entirely accessible to anyone with the link. This is not recommended for dashboards with sensitive data.",
       "cancel-button": "Cancel",
       "learn-more-button": "Learn more",
       "public-ack": "I understand that this entire dashboard will be public.*",
@@ -15441,6 +15585,8 @@
       "transformation": "Transformation"
     },
     "transformation-debug": {
+      "copy-input-data": "Copy input data to clipboard",
+      "copy-output-data": "Copy output data to clipboard",
       "input-data": "Input data",
       "output-data": "Output data",
       "title": "Debug transformation"
@@ -16145,6 +16291,8 @@
       "new-snapshot-button": "New snapshot",
       "success-creation": "Your snapshot has been created",
       "success-delete": "Your snapshot has been deleted",
+      "too-large-body": "This snapshot is {{size}}, over the {{limit}} limit. Snapshot a single panel, shorten the time range, or select fewer template variable values, then try again.",
+      "too-large-title": "Snapshot is too large to publish",
       "view-all-button": "View all snapshots"
     },
     "share-panel": {
@@ -16430,6 +16578,7 @@
     "description-page-size": "Number of rows per page. When empty, the page size is based on the panel height.",
     "description-styling-from-field": "A field containing JSON objects with CSS properties",
     "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
+    "description-zebra-striping": "Alternate the background color of every other row",
     "frame-picker": {
       "label": "Query"
     },
@@ -16438,6 +16587,9 @@
       "description-title-text": "Text that will be displayed when the image is hovered by a cursor",
       "label-alt-text": "Alt text",
       "label-title-text": "Title text"
+    },
+    "json-cell-options": {
+      "syntax-highlighting": "Syntax highlighting"
     },
     "link-wrapper": {
       "menu": "view data links and actions"
@@ -16468,6 +16620,7 @@
     "name-tooltip-placement": "Tooltip placement",
     "name-wrap-header-text": "Wrap header text",
     "name-wrap-text": "Wrap text",
+    "name-zebra-striping": "Zebra striping",
     "no-value-placeholder": "No rows",
     "placeholder-column-width": "auto",
     "placeholder-frozen-columns": "none",
@@ -16554,10 +16707,6 @@
       "external-group-id": "External Group ID",
       "external-group-sync": "External group sync",
       "label-add-external-group": "Add external group",
-      "team-sync-upgrade": "Add a group to enable team sync for free during your trial of Grafana Pro",
-      "text": {
-        "add-group": "Add group"
-      },
       "title-there-external-groups": "There are no external groups to sync with",
       "tooltip-add-external-group": "LDAP group example: {{example}}"
     },
@@ -16604,9 +16753,6 @@
       "label-role": "Role",
       "label-team-details": "Team details",
       "save": "Save team details"
-    },
-    "team-sync-upgrade-content": {
-      "description": "Team Sync makes it easier for you to manage users' access in Grafana, by immediately updating each user's Grafana teams and permissions based on their single sign-on group membership, instead of when users sign in"
     }
   },
   "text": {
@@ -16656,10 +16802,6 @@
     },
     "frame-picker": {
       "label": "Query"
-    },
-    "mermaid": {
-      "invalid-syntax": "invalid diagram syntax",
-      "render-error": "Diagram error: {{message}}"
     },
     "options": {
       "page-size": "Page size",
@@ -17775,13 +17917,6 @@
     "description-x-field": "An increasing numeric value",
     "name-x-field": "X field",
     "placeholder-x-field": "First numeric value"
-  },
-  "upgrade-box": {
-    "discovery-text": "You’ve discovered a Pro feature!",
-    "discovery-text-continued": "Get the Grafana Pro plan to access {{featureName}}.",
-    "get-started": "Get started with {{featureName}}",
-    "learn-more": "Learn more",
-    "upgrade-button": "Upgrade"
   },
   "user-orgs": {
     "current-org-button": "Current",

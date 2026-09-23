@@ -1,7 +1,7 @@
 import { t } from '@grafana/i18n';
 
 import { NotebookAnalytics } from '../analytics/main';
-import { type NotebookEntryPoint } from '../analytics/types';
+import { NOTEBOOK_ADD_FAILED_REASON, type NotebookAddFailedReason, type NotebookEntryPoint } from '../analytics/types';
 import { createNotebook, NotebookConflictError, updateNotebookSpec } from '../api/notebookResource';
 import { defaultSpec as defaultNotebookSpec, type PanelElement } from '../types';
 
@@ -27,8 +27,20 @@ interface CreateNotebookFields {
  * The writes themselves belong to api/notebookResource, which owns every write to the resource and is
  * the one file that changes when the spec moves off v2beta1. Nothing here touches the API client.
  */
-export async function addPanelToExistingNotebook(uid: string, panel: PanelElement): Promise<AddedToNotebook> {
+export async function addPanelToExistingNotebook(
+  uid: string,
+  panel: PanelElement,
+  entryPoint: NotebookEntryPoint,
+  isLibraryPanel: boolean
+): Promise<AddedToNotebook> {
   const spec = await updateNotebookSpec(uid, (current) => appendPanelToNotebook(current, panel));
+
+  // Reported here, not in the layout manager. The notebook is not open, so no scene holds this cell.
+  // `appendPanelToNotebook` puts the panel last, so the index is the last one.
+  NotebookAnalytics.cellAddedFromAddToNotebook(uid, entryPoint, spec.layout.spec.cells.length - 1, {
+    panel,
+    isLibraryPanel,
+  });
 
   return { uid, title: spec.title };
 }
@@ -36,7 +48,8 @@ export async function addPanelToExistingNotebook(uid: string, panel: PanelElemen
 export async function createNotebookWithPanel(
   fields: CreateNotebookFields,
   panel: PanelElement,
-  entryPoint: NotebookEntryPoint
+  entryPoint: NotebookEntryPoint,
+  isLibraryPanel: boolean
 ): Promise<AddedToNotebook> {
   const spec = appendPanelToNotebook(
     {
@@ -51,9 +64,27 @@ export async function createNotebookWithPanel(
   );
 
   const created = await createNotebook(spec);
-  NotebookAnalytics.created(created.uid, entryPoint, spec.layout.spec.cells.length);
+  NotebookAnalytics.created(created.uid, entryPoint, spec.layout.spec.cells.length, { panel, isLibraryPanel });
 
   return { uid: created.uid, title: spec.title };
+}
+
+/**
+ * Why the attempt failed, for the failure event.
+ *
+ * A panel that would not serialize and a request that came back 400 both arrive as plain Errors. So
+ * the caller has to say whether the panel was built.
+ */
+export function addPanelFailureReason(error: unknown, panelWasBuilt: boolean): NotebookAddFailedReason {
+  if (!panelWasBuilt) {
+    return NOTEBOOK_ADD_FAILED_REASON.BUILD_FAILED;
+  }
+
+  if (error instanceof NotebookConflictError) {
+    return NOTEBOOK_ADD_FAILED_REASON.CONFLICT;
+  }
+
+  return NOTEBOOK_ADD_FAILED_REASON.WRITE_FAILED;
 }
 
 /**

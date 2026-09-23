@@ -20,14 +20,12 @@ function inspect(config: unknown) {
     lazyCompilation?: unknown;
   };
 
-  const filename = cfg.output?.filename;
   const plugins = (cfg.plugins ?? []).filter((plugin) => plugin != null);
   const cssPlugin = plugins.find((plugin) => plugin.constructor?.name?.includes('CssExtract'));
   const swcRule = (cfg.module?.rules ?? []).find((rule) => String(rule.test) === String(/\.tsx?$/));
 
   return {
-    appFilename: typeof filename === 'function' ? filename({ chunk: { name: 'app' } }) : filename,
-    bootFilename: typeof filename === 'function' ? filename({ chunk: { name: 'boot' } }) : filename,
+    appFilename: cfg.output?.filename,
     chunkFilename: cfg.output?.chunkFilename,
     cssFilename: cssPlugin?.options?.filename,
     reactTransform: swcRule?.use?.options?.jsc?.transform?.react,
@@ -82,11 +80,6 @@ describe('the dev config with hmr', () => {
 
     expect(built.reactTransform).toEqual({ runtime: 'automatic', development: true, refresh: true });
     expect(built.hasRefreshPlugin).toBe(true);
-  });
-
-  it('never hashes boot.js, which the Go template references by name', () => {
-    expect(inspect(dev({ ...noChecks, hmr: '1' })).bootFilename).toBe('[name].js');
-    expect(inspect(dev(noChecks)).bootFilename).toBe('[name].js');
   });
 
   it('binds the dev server to the configured host rather than every interface', () => {

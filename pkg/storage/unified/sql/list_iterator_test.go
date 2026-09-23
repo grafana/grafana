@@ -58,6 +58,29 @@ func TestListIterPreservesScanError(t *testing.T) {
 	require.ErrorIs(t, iter.Error(), scanErr)
 }
 
+func TestListIterKeysOnlyContinueToken(t *testing.T) {
+	iter := &listIter{
+		listRV:      123,
+		offset:      2,
+		keysOnly:    true,
+		clusterWide: true,
+	}
+
+	token, err := GetContinueToken(iter.ContinueToken())
+	require.NoError(t, err)
+	require.True(t, token.KeysOnly)
+	require.True(t, token.ClusterWide)
+	require.Empty(t, token.Namespace)
+
+	iter.clusterWide = false
+	iter.listScope = "ns-one"
+	token, err = GetContinueToken(iter.ContinueToken())
+	require.NoError(t, err)
+	require.True(t, token.KeysOnly)
+	require.False(t, token.ClusterWide)
+	require.Equal(t, "ns-one", token.Namespace)
+}
+
 func TestIntegrationListIter(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 

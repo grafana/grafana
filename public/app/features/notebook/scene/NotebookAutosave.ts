@@ -10,7 +10,7 @@ import {
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 
 import { NotebookAnalytics } from '../analytics/main';
-import { NOTEBOOK_ENTRY_POINT } from '../analytics/types';
+import { NOTEBOOK_AUTOSAVE_FAILED_REASON, NOTEBOOK_ENTRY_POINT } from '../analytics/types';
 import { createNotebook, updateNotebook } from '../api/notebookResource';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 import { type NotebookElement, type PanelKind, type Spec as NotebookSpec } from '../types';
@@ -89,6 +89,8 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   private hasSavedOnce = false;
   /** Latched by `abandon`, for a notebook that is being deleted. Nothing writes again after it. */
   private abandoned = false;
+  /** Failures in a row since the last save that landed. `autosave_failed` sends this as `attempt`. */
+  private failedAttempts = 0;
 
   public constructor(private scene: NotebookScene) {
     super({ status: 'idle' });
@@ -486,6 +488,12 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     } catch (error) {
       // `hasSomethingToWrite` leaves this for the save to report, because this is the one place with
       // somewhere to say it. A notebook whose spec cannot be built is not going to save.
+      this.failedAttempts += 1;
+      NotebookAnalytics.autosaveFailed(
+        this.scene.state.uid ?? '',
+        NOTEBOOK_AUTOSAVE_FAILED_REASON.BUILD_FAILED,
+        this.failedAttempts
+      );
       this.setState({ status: 'error', errorMessage: error instanceof Error ? error.message : String(error) });
       return;
     }
@@ -518,6 +526,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       .then(({ generation }) => {
         this.recordWritten(spec, serialized, panels);
         this.hasSavedOnce = true;
+        this.failedAttempts = 0;
         this.setState({
           // Something can have changed while this was in flight, and reporting it saved would claim
           // content that has not been written.
@@ -535,6 +544,12 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
           this.vizConfigsEdited.add(name);
         }
         this.editedByWriter ||= editedByWriter;
+        this.failedAttempts += 1;
+        NotebookAnalytics.autosaveFailed(
+          this.scene.state.uid ?? '',
+          NOTEBOOK_AUTOSAVE_FAILED_REASON.WRITE_FAILED,
+          this.failedAttempts
+        );
         this.setState({
           status: 'error',
           errorMessage: error instanceof Error ? error.message : String(error),
@@ -658,7 +673,7 @@ function isVizPanelState(state: SceneObjectState): state is VizPanel['state'] {
  * `buildTimeSettingsSpec` reads them from these four places, so all four have to be named here: one left
  * out is one whose edits get thrown away as if a reader had made them.
  */
-function changesTimeSettings(payload: SceneObjectStateChangedPayload, scene: NotebookScene): boolean {
+export function changesTimeSettings(payload: SceneObjectStateChangedPayload, scene: NotebookScene): boolean {
   const { changedObject, partialUpdate } = payload;
   const { $timeRange, timePicker, refreshPicker } = scene.state;
 

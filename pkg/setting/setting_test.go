@@ -789,6 +789,20 @@ func TestDashboardDefaultPreload(t *testing.T) {
 	})
 }
 
+func TestAssetSriChecksEnabled(t *testing.T) {
+	t.Run("defaults to false when unset", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte(``))
+		require.NoError(t, err)
+		require.False(t, cfg.AssetSriChecksEnabled)
+	})
+
+	t.Run("reads the configured value", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte("[security]\nasset_sri_checks_enabled = true"))
+		require.NoError(t, err)
+		require.True(t, cfg.AssetSriChecksEnabled)
+	})
+}
+
 func TestDynamicSection(t *testing.T) {
 	t.Parallel()
 

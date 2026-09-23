@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { TextLink, Tooltip, useStyles2 } from '@grafana/ui';
+import { TextLink, Tooltip } from '@grafana/ui';
 
 import { type Annotation, annotationLabels } from '../utils/constants';
 
@@ -28,15 +27,13 @@ export const AnnotationDetailsField = ({ annotationKey, value, valueLink }: Prop
   );
 
   return (
-    <DetailsField label={label} horizontal={true}>
+    <DetailsField label={label} horizontal={true} childrenWrapperClassName={styles.value}>
       <AnnotationValue annotationKey={annotationKey} value={value} valueLink={valueLink} />
     </DetailsField>
   );
 };
 
 const AnnotationValue = ({ annotationKey, value, valueLink }: Props) => {
-  const styles = useStyles2(getStyles);
-
   const needsWell = wellableAnnotationKeys.includes(annotationKey);
   const needsExternalLink = value && value.startsWith('http');
 
@@ -65,8 +62,12 @@ const AnnotationValue = ({ annotationKey, value, valueLink }: Props) => {
   return <>{tokenizeValue}</>;
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const styles = {
+  value: css({
+    minWidth: 0,
+    overflowWrap: 'anywhere',
+  }),
   well: css({
     wordBreak: 'break-word',
   }),
-});
+};

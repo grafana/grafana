@@ -1,7 +1,15 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { createDataFrame, type DataFrame, DataFrameType, EventBusSrv, FieldType, type PanelProps } from '@grafana/data';
+import {
+  createDataFrame,
+  type DataFrame,
+  DataFrameType,
+  EventBusSrv,
+  FieldType,
+  getDefaultTimeRange,
+  type PanelProps,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import { PanelContextProvider } from '@grafana/ui';
@@ -204,12 +212,14 @@ describe('TimeSeriesPanel', () => {
   });
 
   describe('TimeComparison high cardinality (#126181)', () => {
-    function makePodFrame(pod: string, opts: { compare?: boolean } = {}) {
+    const DAY_MS = 24 * 60 * 60 * 1000;
+
+    function makePodFrame(pod: string, opts: { compare?: boolean; times?: number[] } = {}) {
       return createDataFrame({
         refId: opts.compare ? 'A-compare' : 'A',
-        meta: opts.compare ? { timeCompare: { isTimeShiftQuery: true, diffMs: -86400000 } } : undefined,
+        meta: opts.compare ? { timeCompare: { isTimeShiftQuery: true, diffMs: -DAY_MS } } : undefined,
         fields: [
-          { name: 'time', type: FieldType.time, values: [1000, 2000, 3000], config: {} },
+          { name: 'time', type: FieldType.time, values: opts.times ?? [1000, 2000, 3000], config: {} },
           {
             name: 'Value',
             type: FieldType.number,
@@ -248,6 +258,38 @@ describe('TimeSeriesPanel', () => {
       // Solid current-period icon vs dashed compare icon (lineStyle from alignTimeRangeCompareData).
       expect(currentIcon.style.borderRadius).toBeTruthy();
       expect(compareIcon.style.backgroundSize).toBe('6px 4px');
+    });
+
+    it('renders compare series that have no current-period counterpart inside the range (#132370)', async () => {
+      // The current period returned nothing, so the compare frames arrive on their own, still sitting
+      // a day back. Unshifted they fall outside the panel range and the panel renders the outside-range
+      // fallback instead of the series - the symptom users report. The frames are built one comparison
+      // period behind the range getPanelProps renders with, so shifting them lands inside it; fixed
+      // timestamps would sit outside the range whether or not the shift happened.
+      const { from, to } = getDefaultTimeRange();
+      const comparePeriod = [from.valueOf(), (from.valueOf() + to.valueOf()) / 2, to.valueOf()].map(
+        (time) => time - DAY_MS
+      );
+
+      renderPanel(undefined, [
+        makePodFrame('a', { compare: true, times: comparePeriod }),
+        makePodFrame('b', { compare: true, times: comparePeriod }),
+      ]);
+
+      // The fallback only appears once uPlot has drawn and reported its x scale, so asserting its
+      // absence before that would pass no matter what the panel did.
+      await waitFor(() =>
+        expect(screen.getByTestId(selectors.components.VizLayout.container).querySelector('.u-over')).toBeVisible()
+      );
+      expect(screen.queryByText('Data outside time range')).not.toBeInTheDocument();
+
+      // Shifted, but still identifiable as comparison data rather than the current period.
+      for (const label of ['a (comparison)', 'b (comparison)']) {
+        const icon = within(screen.getByTestId(selectors.components.VizLegend.seriesName(label))).getByTestId(
+          'series-icon'
+        );
+        expect(icon.style.backgroundSize).toBe('6px 4px');
+      }
     });
   });
 });

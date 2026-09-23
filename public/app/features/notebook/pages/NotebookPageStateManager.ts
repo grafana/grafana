@@ -10,6 +10,7 @@ import { dispatch } from 'app/store/store';
 import { NotebookAnalytics } from '../analytics/main';
 import { notebookResourceFor } from '../api/notebookResource';
 import { type NotebookScene } from '../scene/NotebookScene';
+import { NotebookDeletedEvent } from '../scene/events';
 import { transformNotebookToScene } from '../serialization/transformNotebookToScene';
 import { type Spec as NotebookSpec, defaultSpec as defaultNotebookSpec } from '../types';
 
@@ -128,7 +129,7 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
 
       // Cache even when superseded: the work is already paid for, so a later visit to this uid can
       // reuse it. Only the state write has to be suppressed.
-      this.cache.set(uid, { generation: notebook.metadata.generation, scene });
+      this.cacheScene(uid, notebook.metadata.generation, scene);
 
       if (this.isSuperseded(seq)) {
         return;
@@ -192,7 +193,7 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
     this.unsavedScene = undefined;
     // Into the keyed cache, so coming back to this notebook later reuses it too rather than rebuilding
     // it from a fetch. The generation is the one its create returned.
-    this.cache.set(uid, { generation: scene.autosave.state.savedGeneration, scene });
+    this.cacheScene(uid, scene.autosave.state.savedGeneration, scene);
     this.setState({ scene, isLoading: false, loadError: undefined });
 
     return true;
@@ -201,6 +202,12 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
   /** Whether a newer load (or a page teardown) has taken over since the given one started. */
   private isSuperseded(seq: number): boolean {
     return seq !== this.requestSeq;
+  }
+
+  /** Caches a scene by uid and wires it to evict itself once deleted. */
+  private cacheScene(uid: string, generation: number | undefined, scene: NotebookScene): void {
+    this.cache.set(uid, { generation, scene });
+    scene.subscribeToEvent(NotebookDeletedEvent, () => this.removeSceneCache(uid));
   }
 
   public clearState(): void {
@@ -218,7 +225,7 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
    * cache went back to being per instance, which is the regression it exists to catch.
    */
   public setSceneCacheForTests(uid: string, scene: NotebookScene): void {
-    this.cache.set(uid, { generation: undefined, scene });
+    this.cacheScene(uid, undefined, scene);
   }
 
   /** @internal -- test seam, as above. */

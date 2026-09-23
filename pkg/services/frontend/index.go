@@ -84,6 +84,9 @@ type IndexViewData struct {
 	// Feature flag for controlling behaviour of blocking or alerting legacy api usage from the frontend
 	LegacyAPIMode string
 
+	// Feature flag for controlling how the frontend handles reads of the legacy feature toggle map
+	LegacyFeatureToggleMode string
+
 	// Feature flag for gradually rolling out the root /ofrep/v1 OFREP route instead of the namespaced route
 	OFREPRootUrlEnabled bool
 
@@ -178,12 +181,12 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	ofClient := openfeature.NewDefaultClient()
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
 	useLuxon, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagDatetimeUseLuxon, false, openfeature.TransactionContext(ctx))
-	grafanaAssetSriChecks, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaAssetSriChecks, false, openfeature.TransactionContext(ctx))
 	meticulousAIMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaMeticulousAIMode, "off", openfeature.TransactionContext(ctx))
 	meticulousAIEnabled := meticulousAIMode == "on-prod-env" || meticulousAIMode == "on-dev-env"
 	meticulousAIProductionEnvironmentFlag := meticulousAIMode == "on-prod-env"
 	reduceBootdataAPI := requestConfig.FullFrontendSettings != nil
 	legacyAPIMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaFrontendLegacyAPIHandling, "off", openfeature.TransactionContext(ctx))
+	legacyFeatureToggleMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaFrontendLegacyFeatureToggleHandling, "off", openfeature.TransactionContext(ctx))
 	ofrepRootUrlEnabled := ofClient.Boolean(ctx, featuremgmt.FlagGrafanaOfrepRootUrl, false, openfeature.TransactionContext(ctx))
 
 	data := IndexViewData{
@@ -199,13 +202,14 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		FullSettings:                          requestConfig.FullFrontendSettings, // only populated when FlagFrontendServiceReducedBootDataAPI enabled
 		RenderBindingSupported:                renderBindingSupported,
 		UseLuxon:                              useLuxon,
-		AssetSriChecksEnabled:                 grafanaAssetSriChecks,
+		AssetSriChecksEnabled:                 p.config.AssetSriChecksEnabled,
 		MeticulousAIEnabled:                   meticulousAIEnabled,
 		MeticulousAIRecordingToken:            p.config.MeticulousAIRecordingToken,
 		MeticulousAIProductionEnvironmentFlag: meticulousAIProductionEnvironmentFlag,
 		ReduceBootdataAPI:                     reduceBootdataAPI,
 		BootScript:                            bootScript,
 		LegacyAPIMode:                         legacyAPIMode,
+		LegacyFeatureToggleMode:               legacyFeatureToggleMode,
 		OFREPRootUrlEnabled:                   ofrepRootUrlEnabled,
 		ESModuleAssetsEnabled:                 assetsManifest.ESModule,
 	}

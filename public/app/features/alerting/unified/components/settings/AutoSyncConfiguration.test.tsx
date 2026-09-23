@@ -14,6 +14,8 @@ import { setupAlertmanagersStatus } from '../../mocks/server/configure/alertmana
 import { setupDatasourcesEndpoint } from '../../mocks/server/configure/datasources';
 import {
   CONFIG_READ_FAILURE_MESSAGE,
+  SYNC_NOT_CONFIGURED_CONDITION,
+  SYNC_SUCCEEDED_CONDITION,
   setupAutoSyncConfig,
   setupAutoSyncConfigAbsent,
   setupAutoSyncConfigReadError,
@@ -21,6 +23,7 @@ import {
   setupStatefulAutoSyncConfig,
 } from '../../mocks/server/handlers/k8s/config.k8s';
 import { setupDataSources } from '../../testSetup/datasources';
+import { MERGE_COMMITTED_REASON } from '../../utils/autoSync';
 import { DataSourceType } from '../../utils/datasource';
 
 import { AutoSyncConfiguration } from './AutoSyncConfiguration';
@@ -52,10 +55,11 @@ const SECOND_MIMIR_DS_PAYLOAD = {
   name: SECOND_MIMIR_DS_NAME,
 };
 
-/** A Config whose status reports the configured UID as the last sync target. */
+/** A Config whose status confirms a successful sync of the configured UID. */
 const SYNCED = {
   specUid: MIMIR_DS_UID,
   statusUid: MIMIR_DS_UID,
+  condition: SYNC_SUCCEEDED_CONDITION,
 };
 
 function registerMimirDataSources(datasources: Array<typeof MIMIR_DS_PAYLOAD> = [MIMIR_DS_PAYLOAD]) {
@@ -94,6 +98,9 @@ beforeEach(() => {
 const ui = {
   notConfiguredBadge: byText(/not configured/i),
   activeBadge: byText(/^active$/i),
+  pendingBadge: byText(/pending first sync/i),
+  failingBadge: byText(/sync failing/i),
+  stoppedBadge: byText(/sync stopped/i),
   saveButton: byRole('button', { name: /^save$/i }),
   disableSyncButton: byRole('button', { name: /^disable sync$/i }),
   picker: byLabelText(/^datasource$/i),
@@ -105,6 +112,9 @@ const ui = {
 
 const edgeUi = {
   initializingTooltip: byText(/Grafana has not finished setting up auto-sync/i),
+  syncFailedCallout: byRole('alert', { name: /last sync attempt failed/i }),
+  // Alert names itself from its title; severity="info" renders role="status" rather than role="alert".
+  mergeCommittedCallout: byRole('status', { name: /configuration merged into grafana/i }),
   operatorManagedCallout: byText(/key in grafana\.ini and cannot be changed from the UI/i),
   orphanWarning: byText(/is not available\. Disable sync or restore the datasource to continue/i),
   noDatasourcesMessage: byText(/no mimir or cortex datasources available/i),
@@ -127,7 +137,7 @@ describe('AutoSyncConfiguration — basic states (cases 1–3)', () => {
     expect(ui.disableSyncButton.query()).not.toBeInTheDocument();
   });
 
-  it('case 2: save success — writes the UID to spec and the badge flips to Active once the Config refetches', async () => {
+  it('case 2: save success — writes the UID to spec and the badge reports the sync is pending its first run', async () => {
     const { getStored } = setupStatefulAutoSyncConfig(server);
     setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
     registerMimirDataSources();
@@ -143,7 +153,8 @@ describe('AutoSyncConfiguration — basic states (cases 1–3)', () => {
     await user.click(ui.saveButton.get());
 
     await waitFor(() => expect(getStored().spec.externalAlertmanagerSync).toEqual({ datasourceUid: MIMIR_DS_UID }));
-    expect(await ui.activeBadge.find()).toBeInTheDocument();
+    // The worker has not synced the new target yet, so the honest state is pending — not Active.
+    expect(await ui.pendingBadge.find()).toBeInTheDocument();
   });
 
   it('case 3: configured — Disable sync opens a confirm modal and clears the UID only after confirmation', async () => {
@@ -189,7 +200,7 @@ describe('AutoSyncConfiguration — edge-case states', () => {
   it('case 5b: a removed ini key releases the lock, which is what the callout tells the admin to do', async () => {
     // origin stays 'ini' after the key is removed, so trusting it alone left the admin with a locked
     // picker, no Save and no Disable — permanently.
-    setupAutoSyncConfig(server, { statusUid: MIMIR_DS_UID, origin: 'ini', syncedReason: 'NotConfigured' });
+    setupAutoSyncConfig(server, { statusUid: MIMIR_DS_UID, origin: 'ini', condition: SYNC_NOT_CONFIGURED_CONDITION });
     setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
     registerMimirDataSources();
 
@@ -245,6 +256,34 @@ describe('AutoSyncConfiguration — edge-case states', () => {
     expect(ui.saveButton.get()).toBeInTheDocument();
   });
 
+  it('case 9: sync failing — badge reports the failure and the reason is shown outside the tooltip', async () => {
+    setupAutoSyncConfig(server, {
+      specUid: MIMIR_DS_UID,
+      statusUid: MIMIR_DS_UID,
+      condition: { status: 'False', reason: 'MimirFetchFailed', message: 'connection refused' },
+    });
+    setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
+    registerMimirDataSources();
+
+    render(<AutoSyncConfiguration />);
+
+    expect(await ui.failingBadge.find()).toBeInTheDocument();
+    expect(ui.activeBadge.query()).not.toBeInTheDocument();
+    // The reason must be readable without hovering the badge.
+    expect(await edgeUi.syncFailedCallout.find()).toHaveTextContent('connection refused');
+  });
+
+  it('case 11: healthy sync — no failure callout', async () => {
+    setupAutoSyncConfig(server, SYNCED);
+    setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
+    registerMimirDataSources();
+
+    render(<AutoSyncConfiguration />);
+
+    expect(await ui.activeBadge.find()).toBeInTheDocument();
+    expect(edgeUi.syncFailedCallout.query()).not.toBeInTheDocument();
+  });
+
   it('case 10: unseeded singleton — reads as unconfigured and keeps Save disabled even once a datasource is picked', async () => {
     // The sync worker seeds the singleton on its first tick; humans cannot create it. Save must stay
     // disabled until then, otherwise the click fails with a "still initializing" toast.
@@ -266,7 +305,7 @@ describe('AutoSyncConfiguration — edge-case states', () => {
     expect(ui.saveButton.get()).toBeDisabled();
   });
 
-  it('case 11: unseeded singleton — the Save tooltip tells the admin the wait is temporary', async () => {
+  it('case 12: unseeded singleton — the Save tooltip tells the admin the wait is temporary', async () => {
     setupAutoSyncConfigAbsent(server);
     setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
     registerMimirDataSources();
@@ -282,7 +321,7 @@ describe('AutoSyncConfiguration — edge-case states', () => {
     expect(await edgeUi.initializingTooltip.find()).toBeInTheDocument();
   });
 
-  it('case 12: failed Config read — the Save tooltip carries the reason instead of promising a wait', async () => {
+  it('case 13: failed Config read — the Save tooltip carries the reason instead of promising a wait', async () => {
     // Waiting fixes a 404, not a 500, and nothing else surfaces this one: the k8s base query raises no
     // error alert of its own. Asserting the whole string also proves the quoted resource name survived
     // i18n interpolation instead of arriving as `&quot;default&quot;`.
@@ -302,6 +341,55 @@ describe('AutoSyncConfiguration — edge-case states', () => {
       await screen.findByText(`Could not load the auto-sync configuration: ${CONFIG_READ_FAILURE_MESSAGE}`)
     ).toBeInTheDocument();
     expect(edgeUi.initializingTooltip.query()).not.toBeInTheDocument();
+  });
+
+  it('case 14: merge committed — badge reports the sync stopped and the merge is explained outside the tooltip', async () => {
+    setupAutoSyncConfig(server, {
+      specUid: MIMIR_DS_UID,
+      statusUid: MIMIR_DS_UID,
+      condition: { status: 'True', reason: MERGE_COMMITTED_REASON, message: 'automatic sync has stopped' },
+    });
+    setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
+    registerMimirDataSources();
+
+    render(<AutoSyncConfiguration />);
+
+    expect(await ui.stoppedBadge.find()).toBeInTheDocument();
+    expect(ui.activeBadge.query()).not.toBeInTheDocument();
+    expect(await edgeUi.mergeCommittedCallout.find()).toBeInTheDocument();
+  });
+
+  it('case 15: merge committed on an operator-managed org — the badge names the owner, the callout explains the stop', async () => {
+    // The badge is spent on origin for ini orgs, so without the callout nothing would tell the admin
+    // that the worker stopped — the exact "True means running" misreading the reason exists to prevent.
+    setupAutoSyncConfig(server, {
+      statusUid: MIMIR_DS_UID,
+      origin: 'ini',
+      condition: { status: 'True', reason: MERGE_COMMITTED_REASON, message: 'automatic sync has stopped' },
+    });
+    setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
+    registerMimirDataSources();
+
+    render(<AutoSyncConfiguration />);
+
+    expect(await edgeUi.mergeCommittedCallout.find()).toBeInTheDocument();
+    expect(await edgeUi.operatorManagedCallout.find()).toBeInTheDocument();
+    expect(ui.stoppedBadge.query()).not.toBeInTheDocument();
+  });
+
+  it('case 16: failing sync on an operator-managed org — the reason is still surfaced', async () => {
+    setupAutoSyncConfig(server, {
+      statusUid: MIMIR_DS_UID,
+      origin: 'ini',
+      condition: { status: 'False', reason: 'MimirFetchFailed', message: 'connection refused' },
+    });
+    setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
+    registerMimirDataSources();
+
+    render(<AutoSyncConfiguration />);
+
+    expect(await edgeUi.syncFailedCallout.find()).toHaveTextContent('connection refused');
+    expect(await edgeUi.operatorManagedCallout.find()).toBeInTheDocument();
   });
 });
 

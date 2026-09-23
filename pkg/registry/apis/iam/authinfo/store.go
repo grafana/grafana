@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -76,23 +75,9 @@ func (l *LegacyStore) ConvertToTable(ctx context.Context, object runtime.Object,
 	return resourceInfo.TableConverter().ConvertToTable(ctx, object, tableOptions)
 }
 
-// EncodeName builds the deterministic object name for a (userUID, authModule) pair.
-func EncodeName(userUID, authModule string) string {
-	return userUID + "." + strings.ReplaceAll(authModule, "_", "-")
-}
-
-// decodeName reverses EncodeName.
-func decodeName(name string) (userUID, authModule string, ok bool) {
-	userUID, encodedModule, ok := strings.Cut(name, ".")
-	if !ok {
-		return "", "", false
-	}
-	return userUID, strings.ReplaceAll(encodedModule, "-", "_"), true
-}
-
 // resolveName maps an object name back to the legacy (userID, authModule) pair it identifies.
 func (l *LegacyStore) resolveName(ctx context.Context, ns claims.NamespaceInfo, name string) (userID int64, userUID string, authModule string, err error) {
-	userUID, authModule, ok := decodeName(name)
+	userUID, authModule, ok := iamv0alpha1.DecodeName(name)
 	if !ok {
 		return 0, "", "", resourceInfo.NewNotFound(name)
 	}
@@ -137,7 +122,9 @@ func (l *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 
 // List implements rest.Lister.
 //
-// Listing is scoped to one user via the spec.userRef.name field selector.
+// Listing is scoped to one user via the spec.userRef.name field selector, or to one
+// (authModule, authID) pair via the spec.authID field selector (with an optional
+// spec.authModule) when the caller doesn't know the user yet.
 func (l *LegacyStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	ctx, span := l.tracer.Start(ctx, "authinfo.list")
 	defer span.End()
@@ -148,18 +135,37 @@ func (l *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 	}
 
 	var userUID string
+	var hasUserRef bool
 	var authModuleFilter string
 	var authIDFilter string
+	var hasAuthID bool
 	if options.FieldSelector != nil {
-		var ok bool
-		userUID, ok = options.FieldSelector.RequiresExactMatch("spec.userRef.name")
-		if !ok {
-			return nil, apierrors.NewBadRequest("listing authinfo requires a spec.userRef.name field selector")
-		}
+		userUID, hasUserRef = options.FieldSelector.RequiresExactMatch("spec.userRef.name")
 		authModuleFilter, _ = options.FieldSelector.RequiresExactMatch("spec.authModule")
-		authIDFilter, _ = options.FieldSelector.RequiresExactMatch("spec.authID")
-	} else {
-		return nil, apierrors.NewBadRequest("listing authinfo requires a spec.userRef.name field selector")
+		authIDFilter, hasAuthID = options.FieldSelector.RequiresExactMatch("spec.authID")
+	}
+	if !hasUserRef && !hasAuthID {
+		return nil, apierrors.NewBadRequest("listing authinfo requires a spec.userRef.name or spec.authID field selector")
+	}
+
+	if !hasUserRef {
+		authInfo, err := l.authInfoStore.GetAuthInfo(ctx, &login.GetAuthInfoQuery{AuthModule: authModuleFilter, AuthId: authIDFilter})
+		if err != nil {
+			if errors.Is(err, user.ErrUserNotFound) {
+				return &iamv0alpha1.AuthInfoList{}, nil
+			}
+			return nil, err
+		}
+
+		uidRes, err := l.identities.GetUserUIDByID(ctx, ns, legacy.GetUserUIDByIDQuery{ID: authInfo.UserId})
+		if err != nil {
+			if errors.Is(err, user.ErrUserNotFound) {
+				return &iamv0alpha1.AuthInfoList{}, nil
+			}
+			return nil, err
+		}
+
+		return &iamv0alpha1.AuthInfoList{Items: []iamv0alpha1.AuthInfo{mapToAuthInfoObject(ns, uidRes.UID, authInfo)}}, nil
 	}
 
 	userRes, err := l.identities.GetUserInternalID(ctx, ns, legacy.GetUserInternalIDQuery{UID: userUID})
@@ -217,7 +223,7 @@ func (l *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 	userUID := authInfoObj.Spec.UserRef.Name
 	authModule := authInfoObj.Spec.AuthModule
 
-	expectedName := EncodeName(userUID, authModule)
+	expectedName := iamv0alpha1.EncodeName(userUID, authModule)
 	if authInfoObj.Name != "" && authInfoObj.Name != expectedName {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("metadata.name must be %q for spec.userRef.name %q and spec.authModule %q", expectedName, userUID, authModule))
 	}
@@ -339,7 +345,37 @@ func (l *LegacyStore) Update(ctx context.Context, name string, objInfo rest.Upda
 
 // Delete implements rest.GracefulDeleter.
 func (l *LegacyStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	return nil, false, apierrors.NewMethodNotSupported(resourceInfo.GroupResource(), "delete")
+	ctx, span := l.tracer.Start(ctx, "authinfo.delete")
+	defer span.End()
+
+	oldObj, err := l.Get(ctx, name, nil)
+	if err != nil {
+		return nil, false, err
+	}
+
+	if deleteValidation != nil {
+		if err := deleteValidation(ctx, oldObj); err != nil {
+			return nil, false, err
+		}
+	}
+
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, false, err
+	}
+
+	userID, _, authModule, err := l.resolveName(ctx, ns, name)
+	if err != nil {
+		return nil, false, err
+	}
+
+	if err := l.authInfoStore.DeleteAuthInfo(ctx, &login.DeleteAuthInfoCommand{
+		UserAuth: &login.UserAuth{UserId: userID, AuthModule: authModule},
+	}); err != nil {
+		return nil, false, err
+	}
+
+	return oldObj, true, nil
 }
 
 // DeleteCollection implements rest.CollectionDeleter.
@@ -350,7 +386,7 @@ func (l *LegacyStore) DeleteCollection(ctx context.Context, deleteValidation res
 func mapToAuthInfoObject(ns claims.NamespaceInfo, userUID string, ua *login.UserAuth) iamv0alpha1.AuthInfo {
 	result := iamv0alpha1.AuthInfo{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:              EncodeName(userUID, ua.AuthModule),
+			Name:              iamv0alpha1.EncodeName(userUID, ua.AuthModule),
 			Namespace:         ns.Value,
 			ResourceVersion:   fmt.Sprintf("%d", ua.Created.UnixMilli()),
 			CreationTimestamp: metav1.NewTime(ua.Created),

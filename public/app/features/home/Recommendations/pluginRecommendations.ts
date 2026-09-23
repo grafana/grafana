@@ -3,6 +3,7 @@ import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
+import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { type LocalPlugin } from 'app/features/plugins/admin/types';
 
 import {
@@ -12,7 +13,7 @@ import {
   SYNTHETIC_MONITORING_CHECKS_WRITE,
 } from '../solutions/appPluginIds';
 import { KUBERNETES_APP_ID } from '../solutions/kubernetesData';
-import { createTtlCachedPromise, PROBE_TIMEOUT_MS, PROBE_TTL_MS, withTimeout } from '../solutions/probeUtils';
+import { createTtlCachedPromise, PROBE_TIMEOUT_MS, PROBE_TTL_MS, withDeadline } from '../solutions/probeUtils';
 import { TELEMETRY_SETUP_DOCS, type TelemetryType } from '../solutions/telemetrySetup';
 
 import { type RecommendedCardId } from './solutionsMatrix';
@@ -178,6 +179,22 @@ export function getRecommendationCards(): Record<RecommendedCardId, Recommendati
       setupAction: t('home.recommendations.synthetic-monitoring.setup-action', 'Create your first check'),
       setupPermission: SYNTHETIC_MONITORING_CHECKS_WRITE,
     }),
+    // Setup lands on IRM Home: for an unconfigured org it opens on Get started (integrations, schedules, incidents).
+    irm: pluginCard({
+      id: 'irm',
+      pluginId: SupportedPlugin.Irm,
+      appPath: '',
+      icon: 'bell',
+      color: (theme) => theme.visualization.getColorByName('red'),
+      title: t('home.recommendations.irm.title', 'Get paged when it matters'),
+      context: t('home.recommendations.irm.context', 'Route alerts to on-call schedules and incidents'),
+      description: t(
+        'home.recommendations.irm.description',
+        'Connect Grafana Alerting to IRM to page the right person, escalate automatically, and manage incidents in one place.'
+      ),
+      action: t('home.recommendations.irm.action', 'Enable IRM'),
+      setupAction: t('home.recommendations.irm.setup-action', 'Set up IRM'),
+    }),
   };
 }
 
@@ -185,11 +202,11 @@ export function getRecommendationCards(): Record<RecommendedCardId, Recommendati
 // Share the response because Overview and Recommendations request the same large inventory.
 const installedPlugins = createTtlCachedPromise(
   () =>
-    withTimeout(
+    withDeadline(PROBE_TIMEOUT_MS, undefined, (signal) =>
       getBackendSrv().get<LocalPlugin[]>('/api/plugins', accessControlQueryParam({ embedded: 0 }), undefined, {
         showErrorAlert: false,
-      }),
-      PROBE_TIMEOUT_MS
+        abortSignal: signal,
+      })
     ),
   PROBE_TTL_MS
 );

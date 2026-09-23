@@ -308,3 +308,15 @@ func TestUpdateLastEvent(t *testing.T) {
 		assert.ErrorContains(t, err, "boom")
 	})
 }
+
+func TestPullRequestResponseForkStatus(t *testing.T) {
+	fork, sameRepo := true, false
+	for _, status := range []*bool{&fork, &sameRepo, nil} {
+		response := pullRequestResponse(repository.WebhookEvent{
+			SourceRef: "feature", Hash: "abc", PRNumber: 123, IsFork: status, ForkURL: "https://github.example.com/contributor/repo",
+		})
+		require.Equal(t, &provisioning.PullRequestJobOptions{
+			Ref: "feature", Hash: "abc", PR: 123, IsFork: status, ForkURL: "https://github.example.com/contributor/repo",
+		}, response.Job.PullRequest)
+	}
+}

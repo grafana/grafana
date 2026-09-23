@@ -62,5 +62,37 @@ describe('useChildrenState', () => {
     });
   });
 
-  // Other function are not yet used.
+  describe('revealSpan', () => {
+    const grandparent = { spanID: 'grandparent', references: [] } as unknown as TraceSpan;
+    const parent = {
+      spanID: 'parent',
+      references: [{ refType: 'CHILD_OF', spanID: 'grandparent', span: grandparent }],
+    } as TraceSpan;
+    const child = {
+      spanID: 'child',
+      references: [{ refType: 'CHILD_OF', spanID: 'parent', span: parent }],
+    } as TraceSpan;
+
+    it('expands collapsed ancestors of the span and leaves other collapses alone', () => {
+      const { result } = renderHook(() => useChildrenState());
+      act(() => result.current.childrenToggle('grandparent'));
+      act(() => result.current.childrenToggle('parent'));
+      act(() => result.current.childrenToggle('unrelated'));
+
+      act(() => result.current.revealSpan(child));
+
+      expect(result.current.childrenHiddenIDs.has('grandparent')).toBe(false);
+      expect(result.current.childrenHiddenIDs.has('parent')).toBe(false);
+      expect(result.current.childrenHiddenIDs.has('unrelated')).toBe(true);
+    });
+
+    it('does nothing when ancestors are already expanded', () => {
+      const { result } = renderHook(() => useChildrenState());
+      act(() => result.current.childrenToggle('unrelated'));
+
+      act(() => result.current.revealSpan(child));
+
+      expect([...result.current.childrenHiddenIDs]).toEqual(['unrelated']);
+    });
+  });
 });
