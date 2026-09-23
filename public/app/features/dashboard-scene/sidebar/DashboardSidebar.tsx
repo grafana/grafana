@@ -343,6 +343,19 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.selectObject(obj, options);
   }
 
+  public openElementSettings(obj: SceneObject) {
+    const sourceKey = getRepeatCloneSourceKey(obj);
+    const source = sourceKey ? sceneGraph.findByKey(this, sourceKey) : obj;
+    if (!source) {
+      return;
+    }
+
+    this.selectObject(source, { force: true });
+    if (!this.state.openPane) {
+      this.openPane(new ElementEditPane({}));
+    }
+  }
+
   public selectObject(obj: SceneObject, { multi, force }: ElementSelectionOnSelectOptions = {}) {
     const id = obj.state.key!;
     const hasItem = this.state.selectionContext.selected.find((i) => i.id === id);
@@ -357,8 +370,8 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       selectedDisconnectedObject = obj;
     }
 
-    // If current open pane is not showing selected element, then we should maintain selection (force = true) which disables selection toggling
-    if (this.state.openPane?.getId() !== 'element') {
+    // Keep the selection when switching from another pane to element settings.
+    if (this.state.openPane && this.state.openPane.getId() !== 'element') {
       force = true;
     }
 
@@ -422,7 +435,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     const newState: DashboardSidebarState = {
       ...this.state,
       selectionContext: { ...this.state.selectionContext, selected },
-      openPane: selected.length ? new ElementEditPane({}) : undefined,
+      openPane: selected.length && this.state.openPane ? new ElementEditPane({}) : undefined,
       isNewElement: false,
       selectedDisconnectedObject,
     };

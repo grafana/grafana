@@ -21,8 +21,7 @@ export function RowEditActions({ row }: { row: RowItem }) {
   const styles = useStyles2(getActionStyles);
   const isRepeated = isRepeatCloneOrChildOf(row);
   const onClickEdit = useCallback(() => {
-    const { selectionContext } = getDashboardSceneLike(row).state.sidebar.state;
-    selectionContext.onSelect({ id: row.state.key! }, { force: true });
+    getDashboardSceneLike(row).state.sidebar.openElementSettings(row);
   }, [row]);
 
   return (

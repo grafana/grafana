@@ -102,8 +102,7 @@ export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; 
   const { getPortalRoot, getSidebarShiftPadding } = useEditActionsLayout();
 
   const onClickEdit = useCallback(() => {
-    const { selectionContext } = getDashboardSceneLike(panel).state.sidebar.state;
-    selectionContext.onSelect({ id: panel.state.key! }, { force: true });
+    getDashboardSceneLike(panel).state.sidebar.openElementSettings(panel);
   }, [panel]);
 
   const onClickEditVisualization = useCallback(() => {

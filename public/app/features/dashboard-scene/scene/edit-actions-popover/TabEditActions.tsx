@@ -21,8 +21,7 @@ export function TabEditActions({ tab }: { tab: TabItem }) {
   const styles = useStyles2(getActionStyles);
   const isRepeated = isRepeatCloneOrChildOf(tab);
   const onClickEdit = useCallback(() => {
-    const { selectionContext } = getDashboardSceneLike(tab).state.sidebar.state;
-    selectionContext.onSelect({ id: tab.state.key! }, { force: true });
+    getDashboardSceneLike(tab).state.sidebar.openElementSettings(tab);
   }, [tab]);
 
   return (

@@ -48,9 +48,13 @@ export function linkSelectionId(linkIndex: number) {
   return `dashboard-link-${linkIndex}`;
 }
 
-export function openEditLinkPane(dashboard: DashboardSceneLike, linkIndex: number) {
+export function openEditLinkPane(dashboard: DashboardSceneLike, linkIndex: number, openSidebar = false) {
   const element = createLinkEdit(dashboard, linkIndex);
-  dashboard.state.sidebar.selectObject(element, { force: true, multi: false });
+  if (openSidebar) {
+    dashboard.state.sidebar.openElementSettings(element);
+  } else {
+    dashboard.state.sidebar.selectObject(element, { force: true, multi: false });
+  }
 }
 
 export function duplicateLink(dashboard: DashboardSceneLike, linkIndex: number) {
