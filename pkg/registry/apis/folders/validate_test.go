@@ -3,6 +3,7 @@ package folders
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"regexp"
 	"testing"
 
@@ -1109,11 +1110,13 @@ func TestValidateDelete(t *testing.T) {
 		searcher: &mockSearchClient{
 			stats: &resourcepb.ResourceStatsResponse{
 				Error: &resourcepb.ErrorResult{
-					Reason: "error",
+					Reason:  string(metav1.StatusReasonInternalError),
+					Code:    http.StatusInternalServerError,
+					Message: "stats unavailable",
 				},
 			},
 		},
-		expectedErr: "could not verify if folder is empty",
+		expectedErr: "stats unavailable",
 	}, {
 		name: "folder not empty with gracePeriodSeconds=0 is allowed",
 		folder: &folders.Folder{

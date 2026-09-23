@@ -1,5 +1,5 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { act, render, screen, fireEvent } from '@testing-library/react';
+import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { type ComponentProps } from 'react';
 import type AutoSizer from 'react-virtualized-auto-sizer';
 import { Observable } from 'rxjs';
@@ -113,7 +113,7 @@ describe('ExploreQueryInspector', () => {
     fireEvent.click(screen.getByText(/expand all/i));
     expect(screen.getByText(/very unique test value/i)).toBeInTheDocument();
   });
-  it('should display formatted data', () => {
+  it('should display formatted data', async () => {
     setup({
       queryResponse: {
         state: LoadingState.Done,
@@ -155,11 +155,11 @@ describe('ExploreQueryInspector', () => {
 
     fireEvent.click(screen.getByRole('tab', { name: /data/i }));
     // assert series values are formatted to 3 digits (xx.x or x.xx)
-    expect(screen.getByText(/71.2/i)).toBeInTheDocument();
-    expect(screen.getByText(/72.3/i)).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText(/71.2/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/72.3/i)).toBeInTheDocument());
     // assert timestamps are formatted
-    expect(screen.getByText(/2024-01-03 12:32:04.682/i)).toBeInTheDocument();
-    expect(screen.getByText(/2024-01-03 12:32:34.682/i)).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText(/2024-01-03 12:32:04.682/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/2024-01-03 12:32:34.682/i)).toBeInTheDocument());
   });
 });
 

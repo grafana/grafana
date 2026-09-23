@@ -41,7 +41,7 @@ import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { type DashboardDropTarget } from '../scene/types/DashboardDropTarget';
 import { type DashboardSceneState } from '../scene/types/dashboard';
 
-import { getVizPanelKeyForPanelId } from './utils-panels';
+import { findVizPanelByKey } from './findVizPanel';
 
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;
@@ -56,58 +56,6 @@ const V1_PANEL_PROPERTIES = {
  */
 export function isNewPanelQueryErrorsUIEnabled(): boolean {
   return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewPanelQueryErrorsUI, false);
-}
-
-/**
- * This will also try lookup based on panelId
- */
-export function findVizPanelByKey(scene: SceneObject, key: string | undefined): VizPanel | null {
-  if (!key) {
-    return null;
-  }
-
-  const panel = findVizPanelInternal(scene, key);
-  if (panel) {
-    return panel;
-  }
-
-  // Also try to find by panel id
-  const id = parseInt(key, 10);
-  if (isNaN(id)) {
-    return null;
-  }
-
-  return findVizPanelInternal(scene, getVizPanelKeyForPanelId(id));
-}
-
-function findVizPanelInternal(scene: SceneObject, key: string | undefined): VizPanel | null {
-  if (!key) {
-    return null;
-  }
-
-  const panel = sceneGraph.findObject(scene, (obj) => {
-    const objKey = obj.state.key!;
-
-    if (objKey === key) {
-      return true;
-    }
-
-    if (!(obj instanceof VizPanel)) {
-      return false;
-    }
-
-    return false;
-  });
-
-  if (panel) {
-    if (panel instanceof VizPanel) {
-      return panel;
-    } else {
-      throw new Error(`Found panel with key ${key} but it was not a VizPanel`);
-    }
-  }
-
-  return null;
 }
 
 export function findEditPanel(scene: SceneObject, key: string | undefined): VizPanel | null {
@@ -202,12 +150,6 @@ export function getIntervalsFromQueryString(query: string | undefined): string[]
   }, uniqueIntervals);
 
   return Array.from(intervals);
-}
-
-// Transform new interval scene model to old interval core model
-export function getIntervalsQueryFromNewIntervalModel(intervals: string[]): string {
-  const variableQuery = Array.isArray(intervals) ? intervals.join(',') : '';
-  return variableQuery;
 }
 
 export function getCurrentValueForOldIntervalModel(variable: IntervalVariableModel, intervals: string[]): string {

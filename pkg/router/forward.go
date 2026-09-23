@@ -55,7 +55,7 @@ func NewForwardBackend(group metav1.APIGroup, routeBackend v1alpha2.RouteBackend
 		key:          key,
 		proxy: &httputil.ReverseProxy{
 			Rewrite:        func(pr *httputil.ProxyRequest) { pr.SetURL(u) },
-			Transport:      transport,
+			Transport:      newBackendTransport(transport),
 			ModifyResponse: rejectBackendRedirects,
 		},
 	}, nil

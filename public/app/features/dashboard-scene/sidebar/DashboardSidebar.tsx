@@ -13,7 +13,6 @@ import {
 import { type ElementSelectionContextItem, type ElementSelectionOnSelectOptions } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
-import { getEditableElementFor } from '../actions/utils/getEditableElementFor';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { getRepeatCloneSourceKey } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
@@ -55,6 +54,24 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   }
 
   private panelEditAction?: DashboardEditActionEvent;
+  private _paneRequest?: AbortController;
+
+  public beginPaneRequest(): AbortSignal {
+    this.cancelPaneRequest();
+    const controller = new AbortController();
+    this._paneRequest = controller;
+    if (!this.isActive) {
+      this.cancelPaneRequest();
+    }
+
+    return controller.signal;
+  }
+
+  private cancelPaneRequest() {
+    const request = this._paneRequest;
+    this._paneRequest = undefined;
+    request?.abort();
+  }
 
   /** Set while a batch of edit actions is being collected, see startBatchAction/endBatchAction. */
   private _activeBatch?: {
@@ -74,6 +91,19 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
   private onActivate() {
     const dashboard = getDashboardSceneFor(this);
+
+    this._subs.add(
+      dashboard.subscribeToState((state, previous) => {
+        if (
+          state.isEditing !== previous.isEditing ||
+          state.editview !== previous.editview ||
+          state.editPanel !== previous.editPanel ||
+          state.viewPanel !== previous.viewPanel
+        ) {
+          this.cancelPaneRequest();
+        }
+      })
+    );
 
     if (dashboard.state.isEditing) {
       this.enableSelection();
@@ -314,6 +344,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   }
 
   public disableSelection() {
+    this.cancelPaneRequest();
     if (!this.state.selectionContext.enabled) {
       return;
     }
@@ -344,6 +375,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   }
 
   public selectObject(obj: SceneObject, { multi, force }: ElementSelectionOnSelectOptions = {}) {
+    this.cancelPaneRequest();
     const id = obj.state.key!;
     const hasItem = this.state.selectionContext.selected.find((i) => i.id === id);
 
@@ -392,6 +424,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   }
 
   public goBackToPrevious() {
+    this.cancelPaneRequest();
     if (!this.state.previousState) {
       return;
     }
@@ -406,8 +439,12 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     if (this.state.openPane?.getId() === 'element' && this.state.selectionContext.selected.length === 1) {
       const selectedObj = this.getSelectedObject();
       if (selectedObj) {
-        const element = getEditableElementFor(selectedObj);
-        element?.scrollIntoView?.();
+        void import(/* webpackChunkName: "dashboard-edit-actions" */ '../actions/utils/getEditableElementFor').then(
+          ({ getEditableElementFor }) => {
+            const element = getEditableElementFor(selectedObj);
+            element?.scrollIntoView?.();
+          }
+        );
       }
     }
   }
@@ -463,6 +500,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
    * @returns
    */
   public clearSelection(force = false) {
+    this.cancelPaneRequest();
     if (!this.state.selectionContext.selected.length) {
       return;
     }
@@ -481,6 +519,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   }
 
   public openPane(openPane: DashboardSidebarPane) {
+    this.cancelPaneRequest();
     if (this.state.openPane?.getId() === openPane.getId()) {
       this.setState({ openPane: undefined });
       return;
@@ -493,6 +532,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   }
 
   public closePane() {
+    this.cancelPaneRequest();
     if (this.state.selectionContext.selected.length) {
       this.clearSelection(true);
     }

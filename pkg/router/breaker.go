@@ -17,7 +17,8 @@ import (
 // status code, so Write/Header pass straight through to preserve streaming.
 type statusRecorder struct {
 	http.ResponseWriter
-	status int
+	status      int
+	wroteHeader bool
 }
 
 func newStatusRecorder(w http.ResponseWriter) *statusRecorder {
@@ -25,8 +26,28 @@ func newStatusRecorder(w http.ResponseWriter) *statusRecorder {
 }
 
 func (r *statusRecorder) WriteHeader(code int) {
-	r.status = code
+	if r.wroteHeader {
+		return
+	}
+	if code >= 200 || code == http.StatusSwitchingProtocols {
+		r.status = code
+		r.wroteHeader = true
+	}
 	r.ResponseWriter.WriteHeader(code)
+}
+
+func (r *statusRecorder) Write(body []byte) (int, error) {
+	if !r.wroteHeader {
+		r.WriteHeader(http.StatusOK)
+	}
+	return r.ResponseWriter.Write(body)
+}
+
+func (r *statusRecorder) FlushError() error {
+	if !r.wroteHeader {
+		r.WriteHeader(http.StatusOK)
+	}
+	return http.NewResponseController(r.ResponseWriter).Flush()
 }
 
 // Unwrap exposes the real ResponseWriter to http.ResponseController, so
@@ -90,14 +111,16 @@ func breakerOutcome(req *http.Request, status int) error {
 // buffering, so streaming is preserved); open (or half-open already at its
 // trial cap) skips h entirely and fails fast with a local 503 -- no dial
 // attempted.
-func serveThroughBreaker(cb *gobreaker.CircuitBreaker[struct{}], h http.Handler, w http.ResponseWriter, req *http.Request) {
+func serveThroughBreaker(cb *gobreaker.CircuitBreaker[struct{}], group string, h http.Handler, w http.ResponseWriter, req *http.Request) {
 	// A handler spanning multiple destinations must not also share a group-wide breaker.
 	if _, ownsBreakers := h.(interface{ managesCircuitBreaking() }); ownsBreakers {
 		h.ServeHTTP(w, req)
 		return
 	}
+	rec, req, endSpan := traceRouterRequest(w, req, "router.backend", group)
+	defer endSpan()
+	w = rec
 	_, err := cb.Execute(func() (struct{}, error) {
-		rec := newStatusRecorder(w)
 		h.ServeHTTP(rec, req)
 		return struct{}{}, breakerOutcome(req, rec.status)
 	})
