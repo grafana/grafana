@@ -2968,7 +2968,7 @@ var (
 		{
 			Name:         "grafana.visualDesignRefresh",
 			Description:  "Enables the new visual design refresh for the Grafana UI",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
 			Expression:   "false",
