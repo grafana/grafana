@@ -19,48 +19,46 @@ describe('featureToggles', () => {
   });
 
   describe('shouldUseAlertingListViewV2', () => {
-    describe('when alertingListViewV2 toggle is disabled', () => {
+    describe('when alertingListViewV2PreviewToggle is enabled', () => {
       beforeEach(() => {
-        config.featureToggles.alertingListViewV2 = false;
+        config.featureToggles.alertingListViewV2PreviewToggle = true;
       });
 
-      it('should return false when no localStorage preference is set', () => {
-        expect(shouldUseAlertingListViewV2()).toBe(false);
-      });
+      it.each`
+        listViewV2 | storedPreference | expected
+        ${false}   | ${undefined}     | ${false}
+        ${false}   | ${true}          | ${true}
+        ${false}   | ${false}         | ${false}
+        ${true}    | ${undefined}     | ${true}
+        ${true}    | ${true}          | ${true}
+        ${true}    | ${false}         | ${false}
+      `(
+        'returns $expected when alertingListViewV2 is $listViewV2 and the stored preference is $storedPreference',
+        ({ listViewV2, storedPreference, expected }) => {
+          config.featureToggles.alertingListViewV2 = listViewV2;
+          setPreviewToggle('alertingListViewV2', storedPreference);
 
-      it('should return true when localStorage preference is true', () => {
-        setPreviewToggle('alertingListViewV2', true);
-
-        expect(shouldUseAlertingListViewV2()).toBe(true);
-      });
-
-      it('should return false when localStorage preference is false', () => {
-        setPreviewToggle('alertingListViewV2', false);
-
-        expect(shouldUseAlertingListViewV2()).toBe(false);
-      });
+          expect(shouldUseAlertingListViewV2()).toBe(expected);
+        }
+      );
     });
 
-    describe('when alertingListViewV2 toggle is enabled', () => {
-      beforeEach(() => {
-        config.featureToggles.alertingListViewV2 = true;
-      });
+    describe('when alertingListViewV2PreviewToggle is disabled', () => {
+      it.each`
+        listViewV2 | storedPreference | expected
+        ${false}   | ${undefined}     | ${false}
+        ${false}   | ${true}          | ${false}
+        ${true}    | ${undefined}     | ${true}
+        ${true}    | ${false}         | ${true}
+      `(
+        'returns $expected when alertingListViewV2 is $listViewV2, ignoring the stored preference $storedPreference',
+        ({ listViewV2, storedPreference, expected }) => {
+          config.featureToggles.alertingListViewV2 = listViewV2;
+          setPreviewToggle('alertingListViewV2', storedPreference);
 
-      it('should return true when no localStorage preference is set', () => {
-        expect(shouldUseAlertingListViewV2()).toBe(true);
-      });
-
-      it('should return true when localStorage preference is true', () => {
-        setPreviewToggle('alertingListViewV2', true);
-
-        expect(shouldUseAlertingListViewV2()).toBe(true);
-      });
-
-      it('should return false when localStorage preference is false', () => {
-        setPreviewToggle('alertingListViewV2', false);
-
-        expect(shouldUseAlertingListViewV2()).toBe(false);
-      });
+          expect(shouldUseAlertingListViewV2()).toBe(expected);
+        }
+      );
     });
   });
 });

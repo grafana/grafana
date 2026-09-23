@@ -104,6 +104,11 @@ describe('RuleListPageTitle', () => {
       expect(ui.useNewExperienceButton.query()).not.toBeInTheDocument();
     });
 
+    it('should label the revert button as deprecated', () => {
+      renderRuleListPageTitle();
+      expect(ui.revertButton.get()).toHaveTextContent('Revert to previous experience (deprecated)');
+    });
+
     describe('when alertingTriage is disabled', () => {
       it('should revert directly without showing a modal', async () => {
         const { user } = renderRuleListPageTitle();
