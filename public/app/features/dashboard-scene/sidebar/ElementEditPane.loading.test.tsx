@@ -1,14 +1,17 @@
+import * as React from 'react';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
+import * as scenes from '@grafana/scenes';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { ErrorBoundary } from '@grafana/ui';
 
-import { ElementEditPane } from './ElementEditPane';
+import { type ElementEditPane as ElementEditPaneModel } from './ElementEditPane';
 import { type ElementEditPaneRenderer } from './ElementEditPaneRenderer';
 
 type RendererModule = { ElementEditPaneRenderer: typeof ElementEditPaneRenderer };
 
 let mockRendererPromise: Promise<RendererModule>;
+let ElementEditPane: typeof ElementEditPaneModel;
 
 jest.mock('./ElementEditPaneRenderer', () => ({
   __esModule: true,
@@ -30,10 +33,21 @@ function deferRenderer() {
 }
 
 const rendererModule = {
-  ElementEditPaneRenderer: ({ model }: SceneComponentProps<ElementEditPane>) => <div>Editing {model.state.key}</div>,
+  ElementEditPaneRenderer: ({ model }: SceneComponentProps<ElementEditPaneModel>) => (
+    <div>Editing {model.state.key}</div>
+  ),
 };
 
 describe('ElementEditPane loading', () => {
+  beforeEach(() => {
+    // Reset the renderer cache without creating another React or scenes instance.
+    jest.isolateModules(() => {
+      jest.doMock('react', () => React);
+      jest.doMock('@grafana/scenes', () => scenes);
+      ElementEditPane = jest.requireActual('./ElementEditPane').ElementEditPane;
+    });
+  });
+
   it('renders nothing while loading, then renders the latest model', async () => {
     const deferred = deferRenderer();
     const original = new ElementEditPane({ key: 'original' });
@@ -49,20 +63,34 @@ describe('ElementEditPane loading', () => {
     expect(screen.queryByText('Editing original')).not.toBeInTheDocument();
   });
 
-  it('can reopen after closing while the renderer is loading', async () => {
-    const deferred = deferRenderer();
-    const closed = new ElementEditPane({ key: 'closed' });
-    const { unmount } = render(<closed.Component model={closed} />);
-    unmount();
+  it.each([true, false])(
+    'reopens synchronously after loading (closed before completion: %s)',
+    async (closeBeforeLoad) => {
+      const deferred = deferRenderer();
+      const closed = new ElementEditPane({ key: 'closed' });
+      const { unmount } = render(<closed.Component model={closed} />);
+      if (closeBeforeLoad) {
+        unmount();
+      }
 
-    await act(async () => deferred.resolve(rendererModule));
+      await act(async () => deferred.resolve(rendererModule));
 
-    const reopened = new ElementEditPane({ key: 'reopened' });
-    render(<reopened.Component model={reopened} />);
+      if (!closeBeforeLoad) {
+        expect(await screen.findByText('Editing closed')).toBeInTheDocument();
+        unmount();
+      }
 
-    expect(await screen.findByText('Editing reopened')).toBeInTheDocument();
-    expect(screen.queryByText('Editing closed')).not.toBeInTheDocument();
-  });
+      const reopened = new ElementEditPane({ key: 'reopened' });
+      const reopenedView = render(<reopened.Component model={reopened} />);
+
+      try {
+        expect(screen.getByText('Editing reopened')).toBeInTheDocument();
+        expect(screen.queryByText('Editing closed')).not.toBeInTheDocument();
+      } finally {
+        reopenedView.unmount();
+      }
+    }
+  );
 
   it('reports a failed import to the surrounding error boundary', async () => {
     const deferred = deferRenderer();
