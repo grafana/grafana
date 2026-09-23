@@ -4588,7 +4588,6 @@
     },
     "folder-variables": {
       "empty": "No folder-scoped variables in this folder yet.",
-      "list-heading": "Folder variables",
       "new": "New folder variable"
     },
     "manage-folder-nav": {
@@ -5765,6 +5764,7 @@
     "edit-actions": {
       "add": "Add {{typeName}}",
       "add-conditional-rule": "Add {{ruleDescription}} rule",
+      "collapse-all-rows": "Collapse all rows",
       "dashboard-description": "Change dashboard description",
       "dashboard-title": "Change dashboard title",
       "duplicate": "Duplicate {{typeName}}",
@@ -5772,6 +5772,7 @@
       "edit-query-result-rule": "Change query result rule",
       "edit-template-variable-rule": "Change template variable rule",
       "edit-time-range-rule": "Change time range rule",
+      "expand-all-rows": "Expand all rows",
       "group-into-row": "Group into row",
       "group-into-tab": "Group into tab",
       "move": "Move {{typeName}}",
@@ -6743,6 +6744,8 @@
       "unlink-library-panel-short": "Unlink"
     },
     "transformation-editor": {
+      "copy-input-data": "Copy input data to clipboard",
+      "copy-output-data": "Copy output data to clipboard",
       "input-data": "Input data",
       "loading": "Loading editor...",
       "output-data": "Output data",
@@ -8690,6 +8693,10 @@
     "drop-down-menu": {
       "aria-label-links": "Links",
       "links": "Links"
+    },
+    "error-container": {
+      "title-query-error": "Query error",
+      "title-unknown-error": "Unknown error"
     },
     "explore": {
       "title-flame-graph": "Flame graph",
@@ -11426,6 +11433,13 @@
         "setup-action": "Set up Hosted Traces",
         "title": "Trace requests across services"
       },
+      "irm": {
+        "action": "Enable IRM",
+        "context": "Route alerts to on-call schedules and incidents",
+        "description": "Connect Grafana Alerting to IRM to page the right person, escalate automatically, and manage incidents in one place.",
+        "setup-action": "Set up IRM",
+        "title": "Get paged when it matters"
+      },
       "kubernetes-monitoring": {
         "action": "Enable Kubernetes Monitoring",
         "context": "Cluster health next to your existing telemetry",
@@ -12758,7 +12772,7 @@
     },
     "global-variables": {
       "subtitle": "Template variables shared across dashboards, globally or per folder",
-      "title": "Variables"
+      "title": "Cross-dashboard variables"
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
@@ -13838,6 +13852,11 @@
     },
     "get-started-with-data-source": {
       "add-new-data-source": "Add new data source",
+      "plugin-id": "Plugin ID",
+      "setup-assistant": "Set up with assistant",
+      "setup-assistant-description": "Guided configuration",
+      "setup-manually": "Set up manually",
+      "setup-manually-description": "Configure all settings yourself",
       "title-button-disabled": "The plugin isn't usable yet, it may take some time to complete the installation."
     },
     "install-controls": {
@@ -15560,6 +15579,8 @@
       "transformation": "Transformation"
     },
     "transformation-debug": {
+      "copy-input-data": "Copy input data to clipboard",
+      "copy-output-data": "Copy output data to clipboard",
       "input-data": "Input data",
       "output-data": "Output data",
       "title": "Debug transformation"
@@ -16560,6 +16581,9 @@
       "description-title-text": "Text that will be displayed when the image is hovered by a cursor",
       "label-alt-text": "Alt text",
       "label-title-text": "Title text"
+    },
+    "json-cell-options": {
+      "syntax-highlighting": "Syntax highlighting"
     },
     "link-wrapper": {
       "menu": "view data links and actions"

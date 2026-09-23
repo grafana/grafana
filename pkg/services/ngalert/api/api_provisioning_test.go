@@ -2449,6 +2449,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		false,
 		nil,
 		&notifier.NoopOrgEmailValidator{},
+		notifier.NoopReceiverStatusFetcher{},
 	)
 	provisionRouteService := routes.NewService(
 		configStore,
