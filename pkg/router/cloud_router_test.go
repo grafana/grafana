@@ -18,7 +18,6 @@ import (
 	"testing/synctest"
 	"time"
 
-	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -275,14 +274,6 @@ func generateSelfSignedCAPEM(t *testing.T) []byte {
 	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})
 }
 
-// stubTokenExchanger is a fake authnlib.TokenExchanger returning a fixed
-// token, just enough to exercise which header a wrapper writes it into.
-type stubTokenExchanger struct{}
-
-func (stubTokenExchanger) Exchange(_ context.Context, _ authnlib.TokenExchangeRequest) (*authnlib.TokenExchangeResponse, error) {
-	return &authnlib.TokenExchangeResponse{Token: "exchanged-token"}, nil
-}
-
 // capturingRoundTripper records the last request it saw instead of sending it.
 type capturingRoundTripper struct {
 	req *http.Request
@@ -301,7 +292,7 @@ func (c *capturingRoundTripper) RoundTrip(req *http.Request) (*http.Response, er
 func TestAggregateTokenWrapper_HeaderPerTarget(t *testing.T) {
 	t.Run("cloud_app_platform_apiserver uses Authorization", func(t *testing.T) {
 		captured := &capturingRoundTripper{}
-		wrapped := aggregateTokenWrapper("cloud_app_platform_apiserver", stubTokenExchanger{}, "aud")(captured)
+		wrapped := aggregateTokenWrapper("cloud_app_platform_apiserver", &stubTokenExchanger{}, "aud")(captured)
 
 		resp, err := wrapped.RoundTrip(httptest.NewRequest(http.MethodGet, "https://cap.invalid/apis", nil))
 		require.NoError(t, err)
@@ -313,7 +304,7 @@ func TestAggregateTokenWrapper_HeaderPerTarget(t *testing.T) {
 
 	t.Run("baas_apiserver uses X-Access-Token", func(t *testing.T) {
 		captured := &capturingRoundTripper{}
-		wrapped := aggregateTokenWrapper("baas_apiserver", stubTokenExchanger{}, "aud")(captured)
+		wrapped := aggregateTokenWrapper("baas_apiserver", &stubTokenExchanger{}, "aud")(captured)
 
 		resp, err := wrapped.RoundTrip(httptest.NewRequest(http.MethodGet, "https://baas.invalid/apis", nil))
 		require.NoError(t, err)

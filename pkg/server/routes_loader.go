@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
@@ -33,7 +32,7 @@ func (s *ModuleServer) provideRoutesLoader() (router.RoutesLoader, error) {
 
 func (s *ModuleServer) routerStorageClient(accessClient types.AccessClient) (resource.ResourceClient, error) {
 	if !routerUsesLocalStorage(s.cfg) {
-		return unified.NewRemoteResourceClientFromConfig(s.cfg, s.features, s.tracer, s.registerer)
+		return router.NewRemoteResourceClient(s.cfg, s.tracer, s.registerer)
 	}
 
 	// A local ResourceServer exposes the write APIs and initializes a write-event
