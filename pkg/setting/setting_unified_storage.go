@@ -265,12 +265,12 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.TenantDeleterInterval = section.Key("tenant_deleter_interval").MustDuration(1 * time.Hour)
 
 	// garbage collection
-	cfg.EnableGarbageCollection = section.Key("garbage_collection_enabled").MustBool(false)
+	cfg.EnableGarbageCollection = section.Key("garbage_collection_enabled").MustBool(true)
 	cfg.GarbageCollectionDryRun = section.Key("garbage_collection_dry_run").MustBool(false)
 	cfg.GarbageCollectionInterval = section.Key("garbage_collection_interval").MustDuration(15 * time.Minute)
 	cfg.GarbageCollectionBatchSize = section.Key("garbage_collection_batch_size").MustInt(100)
 	cfg.GarbageCollectionBatchWait = section.Key("garbage_collection_batch_wait").MustDuration(1 * time.Second)
-	cfg.GarbageCollectionMaxAge = section.Key("garbage_collection_max_age").MustDuration(24 * time.Hour)
+	cfg.GarbageCollectionMaxAge = section.Key("garbage_collection_max_age").MustDuration(7 * 24 * time.Hour)
 	cfg.DashboardsGarbageCollectionMaxAge = section.Key("dashboards_garbage_collection_max_age").MustDuration(365 * 24 * time.Hour)
 
 	cfg.EventRetentionPeriod = section.Key("event_retention_period").MustDuration(1 * time.Hour)
