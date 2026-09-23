@@ -10570,7 +10570,7 @@
     "data-source-settings": {
       "alerting-settings-heading": "Alerting",
       "alerting-settings-label": "Manage alert rules in Alerting UI",
-      "alerting-settings-tooltip": "Manage alert rules for this data source. To manage other alerting resources, add an Alertmanager data source.",
+      "alerting-settings-tooltip": "Manage alert rules for this data source. They're shown in Grafana Alerting, or in the Prometheus Alerting app when that's in use. To manage other alerting resources, add an Alertmanager data source.",
       "cert-key-reset": "Reset",
       "custom-headers-add": "Add header",
       "custom-headers-header": "Header",
