@@ -684,7 +684,7 @@ describe('show values', () => {
     const fillText = jest.fn();
     const frame = makeValuesFrame();
     const builder = buildBuilder(frame);
-    const draw = builder.getConfig().hooks.draw![0] as unknown as (u: MockUPlot) => void;
+    const draw = builder.getConfig().hooks!.draw![0] as unknown as (u: MockUPlot) => void;
 
     draw({
       data: frame.fields.map((field) => field.values),
