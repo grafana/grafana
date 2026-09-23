@@ -3,22 +3,24 @@ import { ObjectsReorderedOnCanvasEvent } from '../../sidebar/events';
 import { moveElement } from '../element/moveElement';
 
 export function reorderRows(layout: RowsLayoutManager, fromIndex: number, toIndex: number) {
-  const originalRows = [...layout.state.rows];
-  const reorderedRows = [...originalRows];
-  const [row] = reorderedRows.splice(fromIndex, 1);
-  reorderedRows.splice(toIndex, 0, row);
+  const row = layout.state.rows[fromIndex];
+
+  const moveToIndex = (index: number) => {
+    if (!layout.state.rows.includes(row)) {
+      return;
+    }
+
+    const rows = layout.state.rows.filter((current) => current !== row);
+    rows.splice(Math.min(index, rows.length), 0, row);
+    layout.setState({ rows });
+    layout.publishEvent(new ObjectsReorderedOnCanvasEvent(layout), true);
+  };
 
   moveElement({
     source: layout,
     movedObject: row,
     selectOnMove: false,
-    perform: () => {
-      layout.setState({ rows: reorderedRows });
-      layout.publishEvent(new ObjectsReorderedOnCanvasEvent(layout), true);
-    },
-    undo: () => {
-      layout.setState({ rows: originalRows });
-      layout.publishEvent(new ObjectsReorderedOnCanvasEvent(layout), true);
-    },
+    perform: () => moveToIndex(toIndex),
+    undo: () => moveToIndex(fromIndex),
   });
 }
