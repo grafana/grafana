@@ -88,7 +88,6 @@ export function DashboardVariablesList({
         renderItemLabel={renderItemLabel}
         leading={<ReadOnlyVariableRows variables={visible.readOnly} itemTestId="variable-name" />}
         itemsCount={visible.editable.length + visible.readOnly.length}
-        flushLabel
         {...variableActions}
       />
       {!hideControlsMenuList && (
@@ -99,7 +98,6 @@ export function DashboardVariablesList({
           renderItemLabel={renderItemLabel}
           leading={<ReadOnlyVariableRows variables={controlsMenu.readOnly} itemTestId="variable-name" />}
           itemsCount={controlsMenu.editable.length + controlsMenu.readOnly.length}
-          flushLabel
           {...variableActions}
         />
       )}
@@ -110,7 +108,6 @@ export function DashboardVariablesList({
         renderItemLabel={renderItemLabel}
         leading={<ReadOnlyVariableRows variables={hidden.readOnly} itemTestId="variable-name" />}
         itemsCount={hidden.editable.length + hidden.readOnly.length}
-        flushLabel
         {...variableActions}
       />
     </DragDropContext>

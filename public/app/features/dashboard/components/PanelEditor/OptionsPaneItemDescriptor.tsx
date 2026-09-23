@@ -3,7 +3,6 @@ import { type ReactNode } from 'react';
 import * as React from 'react';
 import Highlighter from 'react-highlight-words';
 
-import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Field, Label, useStyles2 } from '@grafana/ui';
 import { getLabelStyles } from '@grafana/ui/internal';
@@ -68,7 +67,6 @@ function OptionsPaneItem({ itemDescriptor, searchQuery }: OptionsPaneItemProps) 
   const key = `${itemDescriptor.parent.props.id} ${title}`;
   const showIf = itemDescriptor.useShowIf();
   const readOnly = useOptionsPaneReadOnly();
-  const styles = useStyles2(getOptionsPaneItemStyles);
 
   if (!showIf) {
     return null;
@@ -79,20 +77,17 @@ function OptionsPaneItem({ itemDescriptor, searchQuery }: OptionsPaneItemProps) 
   }
 
   return (
-    <div className={styles.item}>
-      <Field
-        noMargin
-        label={renderOptionLabel(itemDescriptor, searchQuery)}
-        description={description}
-        key={key}
-        data-testid={selectors.components.PanelEditor.OptionsPane.fieldLabel(key)}
-        htmlFor={id}
-        useFieldset={useFieldset}
-        disabled={readOnly ? true : undefined}
-      >
-        {render(itemDescriptor)}
-      </Field>
-    </div>
+    <Field
+      label={renderOptionLabel(itemDescriptor, searchQuery)}
+      description={description}
+      key={key}
+      data-testid={selectors.components.PanelEditor.OptionsPane.fieldLabel(key)}
+      htmlFor={id}
+      useFieldset={useFieldset}
+      disabled={readOnly ? true : undefined}
+    >
+      {render(itemDescriptor)}
+    </Field>
   );
 }
 
@@ -174,14 +169,6 @@ function OptionPaneLabel({ title, description, overrides, addon, htmlFor, useFie
       {addon}
     </div>
   );
-}
-
-function getOptionsPaneItemStyles(theme: GrafanaTheme2) {
-  return {
-    item: css({
-      marginBottom: theme.spacing(2),
-    }),
-  };
 }
 
 function getOptionPaneLabelStyles() {

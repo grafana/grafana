@@ -85,6 +85,7 @@ function getStyles(theme: GrafanaTheme2) {
       minWidth: 0,
       minHeight: theme.spacing(4),
       padding: 0,
+      paddingLeft: theme.spacing(1),
       border: 'none',
       background: 'none',
       color: 'inherit',

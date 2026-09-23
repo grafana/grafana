@@ -80,7 +80,6 @@ export function DashboardFiltersList({
         renderItemLabel={renderItemLabel}
         leading={<ReadOnlyVariableRows variables={visible.readOnly} itemTestId="filter-name" />}
         itemsCount={visible.editable.length + visible.readOnly.length}
-        flushLabel
         {...filterActions}
       />
       <DraggableList
@@ -90,7 +89,6 @@ export function DashboardFiltersList({
         renderItemLabel={renderItemLabel}
         leading={<ReadOnlyVariableRows variables={controlsMenu.readOnly} itemTestId="filter-name" />}
         itemsCount={controlsMenu.editable.length + controlsMenu.readOnly.length}
-        flushLabel
         {...filterActions}
       />
       <DraggableList
@@ -100,7 +98,6 @@ export function DashboardFiltersList({
         renderItemLabel={renderItemLabel}
         leading={<ReadOnlyVariableRows variables={hidden.readOnly} itemTestId="filter-name" />}
         itemsCount={hidden.editable.length + hidden.readOnly.length}
-        flushLabel
         {...filterActions}
       />
     </DragDropContext>
