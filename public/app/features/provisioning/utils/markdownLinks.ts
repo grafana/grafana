@@ -14,8 +14,8 @@ const SCHEME_RE = /^[a-z][a-z0-9+\-.]*:/i;
 /**
  * Attribute stamped on links whose target could be viewed in-app: a Grafana
  * resource (JSON/YAML files or folder directories) or a `.md` doc (which opens
- * as a tab on its containing folder's page). It carries the resolved repo path;
- * the README click handler reads it to lazily resolve the link to the in-app page
+ * as a tab on its containing folder's page). It carries the resolved repo path
+ * so documentation can prefetch only its linked resources
  * — untagged links (images, other files, external) always open the host URL.
  */
 export const RESOURCE_PATH_ATTR = 'data-provisioning-repo-path';
@@ -70,7 +70,7 @@ export function rewriteRelativeMarkdownLinks(html: string, options: RewriteOptio
 
     // Tag JSON/YAML/folder/markdown links so the README click handler can resolve
     // them to the in-app Grafana page. Done regardless of the host URL so links in
-    // repos without one (local/git) still resolve via the resource listing.
+    // repos without one (local/git) still resolve to Grafana resources.
     if (isResourceLinkCandidate(result.path)) {
       anchor.setAttribute(RESOURCE_PATH_ATTR, result.path);
     }
@@ -136,7 +136,7 @@ function resolveRepoRelativePath(baseDir: string, relPath: string): { path: stri
   const trailingSlash = decoded.endsWith('/') ? '/' : '';
 
   if (decoded.startsWith('/')) {
-    return { path: stripLeadingSlashes(decoded), suffix };
+    return { path: stripLeadingSlashes(decoded) || '/', suffix };
   }
 
   const baseParts = baseDir.split('/').filter(Boolean);

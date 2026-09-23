@@ -36,6 +36,16 @@ describe('rewriteRelativeMarkdownLinks', () => {
     expect(out).toContain('href="https://github.com/grafana/grafana-manifests/blob/main/.github/CODEOWNERS"');
   });
 
+  it('preserves the repository root directory for resource lookup and host navigation', () => {
+    const out = rewriteRelativeMarkdownLinks('<a href="/">Root</a>', {
+      repository: githubRepo,
+      baseDirInRepo: baseDir,
+    });
+
+    expect(out).toContain('href="https://github.com/grafana/grafana-manifests/tree/main/"');
+    expect(out).toContain(`${RESOURCE_PATH_ATTR}="/"`);
+  });
+
   it('resolves sibling paths against the README directory', () => {
     const html = `<p><a href="./notes.md">notes</a></p>`;
     const out = rewriteRelativeMarkdownLinks(html, { repository: githubRepo, baseDirInRepo: baseDir });

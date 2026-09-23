@@ -499,16 +499,13 @@ const injectedRtkApi = api
         query: (queryArg) => ({ url: `/repositories/${queryArg.name}/resources` }),
         providesTags: ['Repository'],
       }),
-      resolveRepositoryResources: build.mutation<
-        ResolveRepositoryResourcesApiResponse,
-        ResolveRepositoryResourcesApiArg
-      >({
+      resolveRepositoryResources: build.query<ResolveRepositoryResourcesApiResponse, ResolveRepositoryResourcesApiArg>({
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}/resources/resolve`,
           method: 'POST',
           body: queryArg.resourceResolveRequest,
         }),
-        invalidatesTags: ['Provisioning', 'Repository'],
+        providesTags: ['Provisioning', 'Repository'],
       }),
       getRepositoryStatus: build.query<GetRepositoryStatusApiResponse, GetRepositoryStatusApiArg>({
         query: (queryArg) => ({
@@ -2449,7 +2446,8 @@ export const {
   useLazyGetRepositoryRenderWithPathQuery,
   useGetRepositoryResourcesQuery,
   useLazyGetRepositoryResourcesQuery,
-  useResolveRepositoryResourcesMutation,
+  useResolveRepositoryResourcesQuery,
+  useLazyResolveRepositoryResourcesQuery,
   useGetRepositoryStatusQuery,
   useLazyGetRepositoryStatusQuery,
   useReplaceRepositoryStatusMutation,
