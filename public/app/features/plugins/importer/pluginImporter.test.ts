@@ -14,9 +14,17 @@ import { AddedComponentsRegistry } from '../extensions/registry/AddedComponentsR
 import { AddedFunctionsRegistry } from '../extensions/registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from '../extensions/registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from '../extensions/registry/ExposedComponentsRegistry';
+import { PluginLoadError } from '../loader/pluginLoadError';
 
 import * as importPluginModule from './importPluginModule';
 import { pluginImporter, clearCaches } from './pluginImporter';
+
+const mockLogError = jest.fn();
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getLogger: () => ({ logError: mockLogError, logDebug: jest.fn() }),
+}));
 
 jest.mock('../extensions/registry/setup', () => ({
   ...jest.requireActual('../extensions/registry/setup'),
@@ -408,6 +416,101 @@ describe('pluginImporter', () => {
       });
 
       expect(result).toEqual({ ...new AppPlugin(), meta: { ...appPlugin } });
+    });
+  });
+
+  describe('logging failures after the module has loaded', () => {
+    const loadError = new PluginLoadError('Could not load plugin', {
+      cause: new Error('boom'),
+      errorType: 'evaluation',
+      httpStatusSource: 'none',
+    });
+
+    beforeEach(() => {
+      jest.spyOn(console, 'warn').mockImplementation(() => {});
+    });
+
+    it('logs a panel with a missing export as invalid-module and still returns the error panel', async () => {
+      jest.spyOn(importPluginModule, 'importPluginModule').mockResolvedValue({});
+
+      const result = await pluginImporter.importPanel({ ...panelPlugin });
+
+      expect(result).toBeInstanceOf(PanelPlugin);
+      expect(mockLogError).toHaveBeenCalledWith(expect.objectContaining({ message: 'Could not initialise plugin' }), {
+        pluginId: 'test-plugin',
+        pluginType: 'panel',
+        pluginVersion: '1.0.0',
+        errorType: 'invalid-module',
+        originalErrorMessage: 'missing export: plugin',
+      });
+    });
+
+    it('logs a panel whose plugin export rejects as evaluation', async () => {
+      jest
+        .spyOn(importPluginModule, 'importPluginModule')
+        .mockResolvedValue({ plugin: Promise.reject(new Error('setup failed')) });
+
+      await pluginImporter.importPanel({ ...panelPlugin });
+
+      expect(mockLogError).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({ errorType: 'evaluation', originalErrorMessage: 'setup failed' })
+      );
+    });
+
+    it('logs an Angular panel as angular', async () => {
+      jest.spyOn(importPluginModule, 'importPluginModule').mockResolvedValue({ PanelCtrl: class {} });
+
+      await pluginImporter.importPanel({ ...panelPlugin });
+
+      expect(mockLogError).toHaveBeenCalledWith(expect.any(Error), expect.objectContaining({ errorType: 'angular' }));
+    });
+
+    it('logs a data source with a missing export as invalid-module and still throws the original error', async () => {
+      jest.spyOn(importPluginModule, 'importPluginModule').mockResolvedValue({});
+
+      await expect(pluginImporter.importDataSource({ ...dataSourcePlugin })).rejects.toThrow(
+        'Plugin module is missing DataSourcePlugin or Datasource constructor export'
+      );
+      expect(mockLogError).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({ pluginType: 'datasource', errorType: 'invalid-module' })
+      );
+    });
+
+    it('logs an app whose init throws as evaluation and still throws the original error', async () => {
+      const initError = new Error('init failed');
+      const plugin = new AppPlugin();
+      plugin.init = () => {
+        throw initError;
+      };
+      jest.spyOn(importPluginModule, 'importPluginModule').mockResolvedValue({ plugin });
+
+      await expect(pluginImporter.importApp({ ...appPlugin })).rejects.toBe(initError);
+      expect(mockLogError).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({ pluginType: 'app', errorType: 'evaluation', originalErrorMessage: 'init failed' })
+      );
+    });
+
+    it('logs an Angular app as angular', async () => {
+      jest.spyOn(importPluginModule, 'importPluginModule').mockResolvedValue({ ConfigCtrl: class {} });
+
+      await expect(pluginImporter.importApp({ ...appPlugin })).rejects.toThrow('Angular plugins are not supported');
+      expect(mockLogError).toHaveBeenCalledWith(expect.any(Error), expect.objectContaining({ errorType: 'angular' }));
+    });
+
+    it.each`
+      importer                                                          | description
+      ${() => pluginImporter.importPanel({ ...panelPlugin })}           | ${'panel'}
+      ${() => pluginImporter.importDataSource({ ...dataSourcePlugin })} | ${'data source'}
+      ${() => pluginImporter.importApp({ ...appPlugin })}               | ${'app'}
+    `('does not log a $description load failure a second time', async ({ importer }) => {
+      jest.spyOn(importPluginModule, 'importPluginModule').mockRejectedValue(loadError);
+
+      await importer().catch(() => {});
+
+      expect(mockLogError).not.toHaveBeenCalled();
     });
   });
 
