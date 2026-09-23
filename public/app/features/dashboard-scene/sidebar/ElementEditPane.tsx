@@ -1,21 +1,43 @@
-import { lazy, Suspense } from 'react';
+import { useEffect, useState } from 'react';
 
 import { type SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 
-// The renderer pulls in getEditableElementFor and every editable element class
-// (plus their options forms), so it is loaded on demand when the pane first renders.
-const ElementEditPaneRenderer = lazy(() =>
-  import(/* webpackChunkName: "dashboard-edit-actions" */ './ElementEditPaneRenderer').then((m) => ({
-    default: m.ElementEditPaneRenderer,
-  }))
-);
+import { type ElementEditPaneRenderer } from './ElementEditPaneRenderer';
+
+type Renderer = typeof ElementEditPaneRenderer;
 
 function LazyElementEditPaneRenderer(props: SceneComponentProps<ElementEditPane>) {
-  return (
-    <Suspense fallback={null}>
-      <ElementEditPaneRenderer {...props} />
-    </Suspense>
-  );
+  const [Renderer, setRenderer] = useState<Renderer>();
+  const [loadError, setLoadError] = useState<{ error: unknown }>();
+
+  useEffect(() => {
+    let cancelled = false;
+
+    // Keep the options forms lazy without Suspense, which triggers a drag-and-drop
+    // class lifecycle failure when opening Options in recorded session replays.
+    import(/* webpackChunkName: "dashboard-edit-actions" */ './ElementEditPaneRenderer').then(
+      (module) => {
+        if (!cancelled) {
+          setRenderer(() => module.ElementEditPaneRenderer);
+        }
+      },
+      (error: unknown) => {
+        if (!cancelled) {
+          setLoadError({ error });
+        }
+      }
+    );
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (loadError) {
+    throw loadError.error;
+  }
+
+  return Renderer ? <Renderer {...props} /> : null;
 }
 
 export class ElementEditPane extends SceneObjectBase {
