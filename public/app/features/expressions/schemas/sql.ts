@@ -3,6 +3,7 @@ import * as z from 'zod';
 import { ExpressionQueryType } from '../types';
 
 import { type KnownFields, queryBaseMemory, queryBaseWire } from './common';
+import type { ExpressionIssueId } from './issues';
 
 /**
  * A SQL query over the results of other queries. `expression` is SQL text (MySQL dialect), not a
@@ -44,6 +45,6 @@ export const sqlCodec = z.codec(sqlWireSchema, sqlMemorySchema, {
 
 /** The backend rejects an empty query outright. */
 export const sqlSaveRules = sqlMemorySchema.refine((query) => query.expression.trim() !== '', {
-  error: 'Enter a SQL expression.',
+  error: 'sql.expression.required' satisfies ExpressionIssueId,
   path: ['expression'],
 });

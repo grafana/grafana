@@ -14,6 +14,7 @@ import {
   queryBaseMemory,
   queryBaseWire,
 } from './common';
+import type { ExpressionIssueId } from './issues';
 
 /**
  * The old condition type. Each condition reduces one query, compares it to a number, and the
@@ -121,14 +122,14 @@ function classicEvaluatorParamCountOk(evaluator: ClassicCondition['evaluator']):
 
 export const classicSaveRules = classicMemorySchema
   .refine((query) => query.conditions.length > 0, {
-    error: 'Add at least one condition.',
+    error: 'classic.conditions.required' satisfies ExpressionIssueId,
     path: ['conditions'],
   })
   .refine((query) => query.conditions.every((condition) => condition.query.params[0]), {
-    error: 'Every condition needs a query to read from.',
+    error: 'classic.condition.query.required' satisfies ExpressionIssueId,
     path: ['conditions'],
   })
   .refine((query) => query.conditions.every((condition) => classicEvaluatorParamCountOk(condition.evaluator)), {
-    error: 'A range condition needs two values; the others need one.',
+    error: 'classic.condition.params.invalid' satisfies ExpressionIssueId,
     path: ['conditions'],
   });

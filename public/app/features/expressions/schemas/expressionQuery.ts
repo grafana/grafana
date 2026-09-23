@@ -5,6 +5,7 @@ import { logWarning } from '@grafana/runtime';
 import { ExpressionQueryType } from '../types';
 
 import { type ClassicExpressionQuery, classicCodec, classicSaveRules } from './classic';
+import { type ExpressionIssue, toExpressionIssues } from './issues';
 import { type MathExpressionQuery, mathCodec, mathSaveRules } from './math';
 import { type ReduceExpressionQuery, reduceCodec, reduceSaveRules } from './reduce';
 import { type ResampleExpressionQuery, resampleCodec, resampleSaveRules } from './resample';
@@ -82,6 +83,15 @@ export function encodeExpressionQuery(query: ExpressionQuery): ExpressionQueryWi
  */
 export function validateExpressionQuery(query: ExpressionQuery) {
   return saveRulesByType[query.type].safeParse(query);
+}
+
+/**
+ * Everything wrong with this expression, each pointing at the field it is about so it can be shown
+ * next to the right input. Empty means it is fine to save.
+ */
+export function getExpressionIssues(query: ExpressionQuery): ExpressionIssue[] {
+  const result = validateExpressionQuery(query);
+  return result.success ? [] : toExpressionIssues(result.error);
 }
 
 export function isMathExpression(query: ExpressionQuery): query is MathExpressionQuery {

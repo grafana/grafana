@@ -24,11 +24,12 @@ import { isSupportedExternalRulesSourceType } from '../utils/datasource';
 import { getInstantFromDataQuery } from '../utils/rule-form';
 
 /**
- * Checks the expressions against the stricter rules the backend applies and returns the first
- * problem found, as a message.
+ * Stops a save when any expression still has something wrong with it.
  *
- * Only run on save. A half-finished expression is normal while someone is still editing it, but it
- * should not reach the backend, which rejects it with a much less helpful error.
+ * Only checked on save - a half-finished expression is normal while someone is editing, but it
+ * should not reach the backend, which rejects it with a much less helpful error. This says nothing
+ * about *what* is wrong: each expression shows its own problems next to the field they belong to,
+ * so there is no message to pass along here.
  */
 export function validateExpressionQueries(queries: Array<AlertQuery<AlertDataQuery | ExpressionQuery>>) {
   for (const query of queries) {
@@ -43,10 +44,8 @@ export function validateExpressionQueries(queries: Array<AlertQuery<AlertDataQue
       continue;
     }
 
-    const result = validateExpressionQuery(parsed);
-
-    if (!result.success) {
-      return `${query.refId}: ${result.error.issues[0].message}`;
+    if (!validateExpressionQuery(parsed).success) {
+      return false;
     }
   }
 

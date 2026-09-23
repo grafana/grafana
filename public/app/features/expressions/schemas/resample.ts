@@ -12,6 +12,7 @@ import {
   queryBaseWire,
   stripRefIdPrefix,
 } from './common';
+import type { ExpressionIssueId } from './issues';
 
 /**
  * Re-spaces the timestamps in a series onto a regular interval.
@@ -64,10 +65,10 @@ export const resampleCodec = z.codec(resampleWireSchema, resampleMemorySchema, {
 
 export const resampleSaveRules = resampleMemorySchema
   .refine((query) => query.expression.trim() !== '', {
-    error: 'Select a query to resample.',
+    error: 'resample.expression.required' satisfies ExpressionIssueId,
     path: ['expression'],
   })
   .refine((query) => query.window.trim() !== '', {
-    error: 'Enter a window duration, for example 10m.',
+    error: 'resample.window.required' satisfies ExpressionIssueId,
     path: ['window'],
   });

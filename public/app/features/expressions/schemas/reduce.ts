@@ -10,6 +10,7 @@ import {
   queryBaseWire,
   stripRefIdPrefix,
 } from './common';
+import type { ExpressionIssueId } from './issues';
 
 /** Turns each series from another query into a single number. */
 
@@ -73,7 +74,7 @@ export const reduceCodec = z.codec(reduceWireSchema, reduceMemorySchema, {
 
 export const reduceSaveRules = reduceMemorySchema
   .refine((query) => query.expression.trim() !== '', {
-    error: 'Select a query to reduce.',
+    error: 'reduce.expression.required' satisfies ExpressionIssueId,
     path: ['expression'],
   })
   .refine(
@@ -82,7 +83,7 @@ export const reduceSaveRules = reduceMemorySchema
       // otherwise.
       query.settings?.mode !== ReducerMode.ReplaceNonNumbers || typeof query.settings.replaceWithValue === 'number',
     {
-      error: 'Enter a replacement value.',
+      error: 'reduce.replace-value.required' satisfies ExpressionIssueId,
       path: ['settings', 'replaceWithValue'],
     }
   );

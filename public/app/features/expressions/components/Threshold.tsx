@@ -9,13 +9,15 @@ import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, Stack, useStyles2 } from '@grafana/ui';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 
+import { getExpressionIssues } from '../schemas/expressionQuery';
+import { expressionIssueMessage } from '../schemas/issueMessages';
+import { type ExpressionIssue, issueAt } from '../schemas/issues';
 import type { ThresholdCondition, ThresholdExpressionQuery } from '../schemas/threshold';
 import { thresholdFunctions } from '../types';
 
 import { ThresholdSelect } from './ThresholdSelect';
 import { ToLabel } from './ToLabel';
 import {
-  isInvalid,
   thresholdReducer,
   updateHysteresisChecked,
   updateRefId,
@@ -29,13 +31,12 @@ interface Props {
   refIds: Array<SelectableValue<string>>;
   query: ThresholdExpressionQuery;
   onChange: (query: ThresholdExpressionQuery) => void;
-  onError?: (error: string | undefined) => void;
   useHysteresis?: boolean;
 }
 
 const defaultThresholdFunction = EvalFunction.IsAbove;
 
-export const Threshold = ({ labelWidth, onChange, refIds, query, onError, useHysteresis = false }: Props) => {
+export const Threshold = ({ labelWidth, onChange, refIds, query, useHysteresis = false }: Props) => {
   const styles = useStyles2(getStyles);
 
   // this queryState is the source of truth for the threshold component.
@@ -44,6 +45,10 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError, useHys
   const conditionInState = queryState.conditions[0];
 
   const thresholdFunction = thresholdFunctions.find((fn) => fn.value === conditionInState.evaluator.type);
+
+  // What the schema says is wrong with this threshold. The recovery inputs below pick out the
+  // problems that belong to them; anything else shows on the expression card.
+  const issues = getExpressionIssues(queryState);
 
   const onRefIdChange = (value: SelectableValue<string>) => {
     dispatch(updateRefId(value.value));
@@ -56,7 +61,7 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError, useHys
   }, [queryState]);
 
   const onEvalFunctionChange = (value: SelectableValue<EvalFunction>) => {
-    dispatch(updateThresholdType({ evalFunction: value.value ?? defaultThresholdFunction, onError }));
+    dispatch(updateThresholdType({ evalFunction: value.value ?? defaultThresholdFunction }));
   };
 
   const onEvaluateValueChange = (event: FormEvent<HTMLInputElement>, index: number) => {
@@ -106,19 +111,18 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError, useHys
           />
         )}
       </InlineFieldRow>
-      {useHysteresis && <HysteresisSection isRange={isRange} onError={onError} />}
+      {useHysteresis && <HysteresisSection isRange={isRange} />}
     </>
   );
   interface HysteresisSectionProps {
     isRange: boolean;
-    onError?: (error: string | undefined) => void;
   }
 
-  function HysteresisSection({ isRange, onError }: HysteresisSectionProps) {
+  function HysteresisSection({ isRange }: HysteresisSectionProps) {
     const hasHysteresis = Boolean(conditionInState.unloadEvaluator);
 
     const onHysteresisCheckChange = (event: FormEvent<HTMLInputElement>) => {
-      dispatch(updateHysteresisChecked({ hysteresisChecked: event.currentTarget.checked, onError }));
+      dispatch(updateHysteresisChecked({ hysteresisChecked: event.currentTarget.checked }));
       allowOnblurFromUnload.current = true;
     };
     const allowOnblurFromUnload = React.useRef(true);
@@ -150,7 +154,7 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError, useHys
           <RecoveryThresholdRow
             isRange={isRange}
             condition={conditionInState}
-            onError={onError}
+            issues={issues}
             dispatch={dispatch}
             allowOnblur={allowOnblurFromUnload}
           />
@@ -163,23 +167,27 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError, useHys
 interface RecoveryThresholdRowProps {
   isRange: boolean;
   condition: ThresholdCondition;
-  onError?: (error: string | undefined) => void;
+  issues: ExpressionIssue[];
   dispatch: React.Dispatch<AnyAction>;
   allowOnblur: React.MutableRefObject<boolean>;
 }
 
-function RecoveryThresholdRow({ isRange, condition, onError, dispatch, allowOnblur }: RecoveryThresholdRowProps) {
+function RecoveryThresholdRow({ isRange, condition, issues, dispatch, allowOnblur }: RecoveryThresholdRowProps) {
   const styles = useStyles2(getStyles);
 
   const onUnloadValueChange = (event: FormEvent<HTMLInputElement>, paramIndex: number) => {
     const newValue = parseFloat(event.currentTarget.value);
-    dispatch(updateUnloadParams({ param: newValue, index: paramIndex, onError }));
+    dispatch(updateUnloadParams({ param: newValue, index: paramIndex }));
   };
 
-  // check if is valid for the current unload evaluator params
-  const error = isInvalid(condition);
-  // get the error message depending on the unload evaluator type
-  const { errorMsg: invalidErrorMsg, errorMsgFrom, errorMsgTo } = error ?? {};
+  // Pick out the problems that belong to the two recovery inputs.
+  const firstIssue = issueAt(issues, ['conditions', 0, 'unloadEvaluator', 'params', 0]);
+  const secondIssue = issueAt(issues, ['conditions', 0, 'unloadEvaluator', 'params', 1]);
+
+  // The single-value inputs and the low end of a range are the same field, so they share a message.
+  const invalidErrorMsg = firstIssue && expressionIssueMessage(firstIssue);
+  const errorMsgFrom = invalidErrorMsg;
+  const errorMsgTo = secondIssue && expressionIssueMessage(secondIssue);
 
   if (isRange) {
     return <RecoveryForRange allowOnblur={allowOnblur} />;

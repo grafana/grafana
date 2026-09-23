@@ -1230,6 +1230,7 @@
     "expression": {
       "not-supported": "Expression not supported: {{expression}}",
       "title-expression-failed": "Expression failed",
+      "title-expression-incomplete": "Finish setting up this expression",
       "title-expression-warning": "Expression warning"
     },
     "expression-editor": {
@@ -9367,6 +9368,28 @@
     "expression-query-editor": {
       "helper-text-sql": "Run MySQL-dialect SQL against the tables returned from your data sources. Data source queries (ie \"A\", \"B\") are available as tables and referenced by query-name. Fields are available as columns, as returned from the data source.",
       "label-operation": "Operation"
+    },
+    "issue": {
+      "classic-condition-params-invalid": "A range condition needs two values; the others need one.",
+      "classic-condition-query-required": "Every condition needs a query to read from.",
+      "classic-conditions-required": "Add at least one condition.",
+      "math-expression-required": "Enter a math expression.",
+      "reduce-expression-required": "Select a query to reduce.",
+      "reduce-replace-value-required": "Enter a replacement value.",
+      "resample-expression-required": "Select a query to resample.",
+      "resample-window-required": "Enter a window duration, for example 10m.",
+      "sql-expression-required": "Enter a SQL expression.",
+      "threshold-conditions-one-only": "A threshold takes exactly one condition.",
+      "threshold-expression-bare-name": "Refer to the query by name only, without a leading \"$\".",
+      "threshold-expression-required": "Select a query to threshold.",
+      "threshold-recovery-at-least": "Enter a number more than or equal to {{limit}}",
+      "threshold-recovery-at-most": "Enter a number less than or equal to {{limit}}",
+      "threshold-recovery-different": "Enter a different number than {{limit}}",
+      "threshold-recovery-less-than": "Enter a number less than {{limit}}",
+      "threshold-recovery-more-than": "Enter a number more than {{limit}}",
+      "threshold-recovery-required": "This value cannot be empty",
+      "threshold-recovery-same": "Enter the same number as {{limit}}",
+      "threshold-value-required": "Enter a threshold value."
     },
     "math": {
       "available-math-functions": "Available math functions",

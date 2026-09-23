@@ -3,6 +3,7 @@ import * as z from 'zod';
 import { ExpressionQueryType } from '../types';
 
 import { type KnownFields, queryBaseMemory, queryBaseWire } from './common';
+import type { ExpressionIssueId } from './issues';
 
 /**
  * A free-form formula over other queries, referencing them as `$A`. Unlike the other types the
@@ -34,6 +35,6 @@ export const mathCodec = z.codec(mathWireSchema, mathMemorySchema, {
 
 /** An empty formula fails to parse in the backend, so block it before the user saves. */
 export const mathSaveRules = mathMemorySchema.refine((query) => query.expression.trim() !== '', {
-  error: 'Enter a math expression.',
+  error: 'math.expression.required' satisfies ExpressionIssueId,
   path: ['expression'],
 });
