@@ -35,7 +35,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getTraceToLogsOptions } from '@grafana/o11y-ds-frontend';
-import { locationService, reportInteraction, usePluginLinks } from '@grafana/runtime';
+import { reportInteraction, usePluginLinks } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient, useFlagGrafanaDynamicTraceToLogs } from '@grafana/runtime/internal';
 import {
   getDataSourceInstance,
@@ -432,23 +432,16 @@ function rewriteLinkForMatch(linkModel: LinkModel, match: LogsCheckMatch, drilld
     ? locationUtil.assureBaseUrl(drilldownPath)
     : rebuildExploreHref(linkModel, matchedQueries, match.datasourceUid);
 
+  // Mutate the original interpolatedParams object so Explore split onClick
+  // (closed over that reference) uses the matched query and datasource.
+  if (linkModel.interpolatedParams) {
+    linkModel.interpolatedParams.query = matchedQueries[0];
+  }
+
   return {
     ...linkModel,
     href,
-    interpolatedParams: {
-      ...linkModel.interpolatedParams,
-      query: matchedQueries[0],
-    },
-    // Original onClick closes over the configured datasource/queries; replace it so navigation
-    // uses the matched datasource and successful query variation (or the Logs Drilldown extension path).
-    onClick: linkModel.onClick
-      ? (event) => {
-          if (event?.preventDefault) {
-            event.preventDefault();
-          }
-          locationService.push(href);
-        }
-      : undefined,
+    target: '_blank',
   };
 }
 

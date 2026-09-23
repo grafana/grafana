@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -96,12 +97,9 @@ func (r *subChildrenREST) Connect(ctx context.Context, name string, _ runtime.Ob
 			Offset:       offset,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
-		if err != nil {
+		if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+			logging.FromContext(ctx).Error("Failed to search child folders", "namespace", ns.Value, "folder", name, "error", err)
 			responder.Error(err)
-			return
-		}
-		if resp.Error != nil {
-			responder.Error(resource.GetError(resp.Error))
 			return
 		}
 

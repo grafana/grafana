@@ -188,10 +188,10 @@ func (st *singleTenantFallback) forward(host *url.URL, group string, w http.Resp
 		Rewrite: func(pr *httputil.ProxyRequest) {
 			pr.SetURL(host)
 		},
-		Transport:      st.transport,
+		Transport:      newBackendTransport(st.transport),
 		ModifyResponse: rejectBackendRedirects,
 	}
-	serveThroughBreaker(st.breakerForDestination(host, group), proxy, w, req)
+	serveThroughBreaker(st.breakerForDestination(host, group), group, proxy, w, req)
 }
 
 // ST groups span multiple hosts, so their handler isolates breakers by destination and group.
@@ -234,7 +234,7 @@ func (st *singleTenantFallback) Load(ctx context.Context) ([]Backend, error) {
 		}
 		backends = append(backends, &fallbackBackend{
 			group: group,
-			key:   hashHex(string(groupJSON)),
+			key:   "st:" + hashHex(string(groupJSON)),
 			st:    st,
 		})
 	}

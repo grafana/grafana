@@ -143,6 +143,9 @@ func (f *fakeVectorBackend) ContentVersion(context.Context, string, string, stri
 func (f *fakeVectorBackend) UpdateContentVersion(context.Context, string, string, string, string, int) error {
 	return nil
 }
+func (f *fakeVectorBackend) UpdateFolder(context.Context, string, string, string, string, string) error {
+	return nil
+}
 func (f *fakeVectorBackend) GetLatestRV(context.Context) (int64, error) { return 0, nil }
 func (f *fakeVectorBackend) SetLatestRV(context.Context, int64) error   { return nil }
 func (f *fakeVectorBackend) TryAcquireReconcilerLock(context.Context) (func(), bool, error) {

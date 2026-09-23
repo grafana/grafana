@@ -205,14 +205,14 @@ In addition, the following functions are also available for templating annotatio
 
 **Numbers**
 
-| Name                                      | Arguments        | Returns | Description                                                      |
-| ----------------------------------------- | ---------------- | ------- | ---------------------------------------------------------------- |
-| [humanize](#humanize)                     | number or string | string  | Humanizes decimal numbers.                                       |
-| [humanize1024](#humanize1024)             | number or string | string  | Like `humanize`, but but uses 1024 as the base rather than 1000. |
-| [humanizeDuration](#humanizeduration)     | number or string | string  | Humanizes a duration in seconds.                                 |
-| [humanizePercentage](#humanizepercentage) | number or string | string  | Humanizes a ratio value to a percentage.                         |
-| [humanizeTimestamp](#humanizetimestamp)   | number or string | string  | Humanizes a Unix timestamp.                                      |
-| [toTime](#totime)                         | number or string | time    | Converts a Unix timestamp in seconds to time.                    |
+| Name                                      | Arguments        | Returns | Description                                                  |
+| ----------------------------------------- | ---------------- | ------- | ------------------------------------------------------------ |
+| [humanize](#humanize)                     | number or string | string  | Humanizes decimal numbers.                                   |
+| [humanize1024](#humanize1024)             | number or string | string  | Like `humanize`, but uses 1024 as the base rather than 1000. |
+| [humanizeDuration](#humanizeduration)     | number or string | string  | Humanizes a duration in seconds.                             |
+| [humanizePercentage](#humanizepercentage) | number or string | string  | Humanizes a ratio value to a percentage.                     |
+| [humanizeTimestamp](#humanizetimestamp)   | number or string | string  | Humanizes a Unix timestamp.                                  |
+| [toTime](#totime)                         | number or string | time    | Converts a Unix timestamp in seconds to time.                |
 
 **Strings**
 
@@ -254,7 +254,7 @@ The `humanize` function humanizes decimal numbers:
 
 #### humanize1024
 
-The `humanize1024` works similar to `humanize` but but uses 1024 as the base rather than 1000:
+The `humanize1024` function works similarly to `humanize` but uses 1024 as the base rather than 1000:
 
 ```
 {{ humanize1024 1024.0 }}

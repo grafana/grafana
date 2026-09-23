@@ -48,7 +48,7 @@ const (
 
 //go:generate mockery --name finalizerProcessor --structname MockFinalizerProcessor --inpackage --filename finalizer_mock.go --with-expecter
 type finalizerProcessor interface {
-	process(ctx context.Context, repo repository.Repository, finalizers []string) error
+	process(ctx context.Context, cfg *provisioning.Repository) error
 }
 
 // RepositoryController controls how and when CRD is established.
@@ -151,6 +151,7 @@ func NewRepositoryController(
 		finalizer: &finalizer{
 			lister:        resourceLister,
 			clientFactory: clients,
+			repoFactory:   repoFactory,
 			jobs:          jobs,
 			metrics:       &finalizerMetrics,
 			maxWorkers:    parallelOperations,
@@ -316,6 +317,17 @@ func (rc *RepositoryController) popTrigger(key string) (usinformer.ProcessTrigge
 	return trigger, ok
 }
 
+// isRetryableProcessError reports whether a process() error should be re-queued
+// for a fast, rate-limited retry rather than dropped until the next informer
+// resync. A Kubernetes 503 qualifies, as does a decrypt/KMS outage
+// (ErrSecretDecryptFailed) -- a plain sentinel that is not a 503 StatusError but
+// is a transient infrastructure failure all the same. This is the single source
+// of truth for the retry decision: both the worker's queue predicate and the
+// delete branch's error-preference switch consult it, so they cannot drift.
+func isRetryableProcessError(err error) bool {
+	return apierrors.IsServiceUnavailable(err) || errors.Is(err, repository.ErrSecretDecryptFailed)
+}
+
 // processNextWorkItem deals with one key off the queue.
 // It returns false when it's time to quit.
 func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
@@ -365,12 +377,12 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 		return true
 	}
 
-	if !apierrors.IsServiceUnavailable(err) {
+	if !isRetryableProcessError(err) {
 		logger.Info("RepositoryController will not retry")
 		rc.queue.Forget(key)
 		return true
 	} else {
-		logger.Info("RepositoryController will retry as service is unavailable")
+		logger.Info("RepositoryController will retry as the failure is transient")
 	}
 
 	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", key, err))
@@ -415,16 +427,7 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 
 	// Process any finalizers
 	if len(obj.Finalizers) > 0 {
-		repo, err := rc.repoFactory.Build(ctx, obj)
-		if err != nil {
-			rc.deletionMetrics.recordError(deletionStageBuild)
-			if statusErr := rc.updateDeleteStatus(ctx, obj, fmt.Errorf("create repository from configuration: %w", err)); statusErr != nil {
-				logger.Error("failed to update repository status after repository build error", "error", statusErr)
-			}
-			return fmt.Errorf("create repository from configuration: %w", err)
-		}
-
-		err = rc.finalizer.process(ctx, repo, obj.Finalizers)
+		err := rc.finalizer.process(ctx, obj)
 		if err != nil {
 			rc.deletionMetrics.recordError(deletionStageFinalizers)
 			if statusErr := rc.updateDeleteStatus(ctx, obj, fmt.Errorf("remove finalizers: %w", err)); statusErr != nil {
@@ -473,24 +476,52 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 }
 
 func (rc *RepositoryController) updateDeleteStatus(ctx context.Context, obj *provisioning.Repository, err error) error {
-	// Skip the patch when the recorded error is unchanged: it bumps the
-	// resourceVersion, which the informer's UpdateFunc turns straight back into a
-	// re-enqueue, so rewriting the same deleteError on every failed pass would
-	// hot-loop the repository against the API server instead of retrying at the
-	// resync cadence.
-	if obj.Status.DeleteError == err.Error() {
+	deletion := buildDeletionStatus(err)
+
+	// Skip the patch only when BOTH the legacy string and the structured status
+	// already match: the patch bumps the resourceVersion, which the informer's
+	// UpdateFunc turns straight back into a re-enqueue, so rewriting an unchanged
+	// status on every failed pass would hot-loop against the API server instead
+	// of retrying at the resync cadence. Comparing deleteError alone is not
+	// enough: a repository wedged before status.deletion existed has the string
+	// set but no structured status (it must be backfilled), and two finalizers
+	// can fail with the same message while blaming different finalizers.
+	if obj.Status.DeleteError == err.Error() && reflect.DeepEqual(obj.Status.Deletion, deletion) {
 		return nil
 	}
 	logger := logging.FromContext(ctx)
 	logger.Info("updating repository status with deletion error", "error", err.Error())
-	// "add" rather than "replace": deleteError is omitempty and therefore absent
-	// before the first failure, where a "replace" on the missing path would fail.
-	// "add" creates it, and replaces it when already present.
-	return rc.statusPatcher.Patch(ctx, obj, map[string]interface{}{
-		"op":    "add",
-		"path":  "/status/deleteError",
-		"value": err.Error(),
-	})
+	// "add" rather than "replace": these fields are omitempty and therefore
+	// absent before the first failure, where a "replace" on the missing path
+	// would fail. "add" creates them, and replaces them when already present.
+	return rc.statusPatcher.Patch(ctx, obj,
+		map[string]interface{}{
+			"op":    "add",
+			"path":  "/status/deleteError",
+			"value": err.Error(),
+		},
+		map[string]interface{}{
+			"op":    "add",
+			"path":  "/status/deletion",
+			"value": deletion,
+		},
+	)
+}
+
+// buildDeletionStatus turns a finalizer failure into the structured
+// status.deletion the frontend consumes: the deletion state, the finalizer that
+// is blocking it (so the client can force-remove exactly that finalizer), and a
+// human-readable message.
+func buildDeletionStatus(err error) *provisioning.DeletionStatus {
+	deletion := &provisioning.DeletionStatus{
+		State:   provisioning.DeletionStateBlocked,
+		Message: err.Error(),
+	}
+	var fe *finalizerError
+	if errors.As(err, &fe) {
+		deletion.Finalizer = fe.finalizer
+	}
+	return deletion
 }
 
 func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provisioning.Repository) bool {
@@ -910,11 +941,13 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		// delete error so a retryable one is never dropped when the status patch
 		// happens to fail with something non-retryable. A failed status patch is
 		// returned too rather than swallowed, so the delete reason is re-attempted
-		// instead of the key being forgotten without ever reaching the user. Only
-		// a Kubernetes 503 fast-retries; anything else is re-attempted on the next
-		// informer resync while the finalizer stays stuck.
+		// instead of the key being forgotten without ever reaching the user. A
+		// retryable delete error (see isRetryableProcessError) is preferred so the
+		// worker's queue predicate -- which consults the same helper -- fast-retries
+		// it; anything else is re-attempted on the next informer resync while the
+		// finalizer stays stuck.
 		switch {
-		case apierrors.IsServiceUnavailable(err):
+		case isRetryableProcessError(err):
 			return repoType, err
 		case patchErr != nil:
 			// The status write itself failed: count it under the status phase.
