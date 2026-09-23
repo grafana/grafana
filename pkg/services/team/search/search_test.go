@@ -1,14 +1,28 @@
 package search
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
+
+func TestParseResultsPreservesErrorStatus(t *testing.T) {
+	failure := &resourcepb.ErrorResult{
+		Code: http.StatusTooManyRequests, Reason: string(metav1.StatusReasonTooManyRequests), Message: "search is busy",
+		Details: &resourcepb.ErrorDetails{Name: "team", Group: "iam.grafana.app", Kind: "teams", Uid: "uid", RetryAfterSeconds: 12},
+	}
+	_, err := ParseResults(&resourcepb.ResourceSearchResponse{Error: failure}, 0)
+	var apiStatus apierrors.APIStatus
+	require.ErrorAs(t, err, &apiStatus)
+	require.Equal(t, resource.GetError(failure).(apierrors.APIStatus).Status(), apiStatus.Status())
+}
 
 func TestParseResults(t *testing.T) {
 	t.Run("should parse results", func(t *testing.T) {
@@ -191,7 +205,10 @@ func TestParseResults(t *testing.T) {
 
 		results, err := ParseResults(searchResp, 0)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "500 error searching: Internal server error")
+		require.ErrorContains(t, err, "Internal server error")
+		var apiStatus apierrors.APIStatus
+		require.ErrorAs(t, err, &apiStatus)
+		require.Equal(t, int32(http.StatusInternalServerError), apiStatus.Status().Code)
 		require.Empty(t, results.Hits)
 	})
 

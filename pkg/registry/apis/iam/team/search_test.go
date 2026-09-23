@@ -13,6 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -31,6 +33,31 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
+
+func TestSearchErrorStatus(t *testing.T) {
+	failure := &resourcepb.ErrorResult{
+		Code: http.StatusTooManyRequests, Reason: string(metav1.StatusReasonTooManyRequests), Message: "search is busy",
+		Details: &resourcepb.ErrorDetails{Name: "team", Group: "iam.grafana.app", Kind: "teams", Uid: "uid", RetryAfterSeconds: 12},
+	}
+	st, err := status.New(codes.ResourceExhausted, "search is busy").WithDetails(failure)
+	require.NoError(t, err)
+	for name, client := range map[string]*MockClient{
+		"embedded":  {MockResponses: []*resourcepb.ResourceSearchResponse{{Error: failure}}},
+		"transport": {MockError: fmt.Errorf("search: %w", st.Err())},
+	} {
+		t.Run(name, func(t *testing.T) {
+			handler := NewSearchHandler(tracing.NewNoopTracerService(), client, nil)
+			req := httptest.NewRequest("GET", "/searchTeams", nil)
+			req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+			recorder := httptest.NewRecorder()
+			handler.DoTeamSearch(recorder, req)
+			require.Equal(t, http.StatusTooManyRequests, recorder.Code)
+			var got metav1.Status
+			require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &got))
+			require.Equal(t, resource.GetError(failure).(apierrors.APIStatus).Status(), got)
+		})
+	}
+}
 
 func TestTeamSearchFallback(t *testing.T) {
 	t.Skip("Skipping team search fallback test: https://github.com/grafana/identity-access-team/issues/2048")

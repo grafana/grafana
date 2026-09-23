@@ -402,7 +402,11 @@ func TestValidateOnDelete(t *testing.T) {
 		searchErr := errors.New("search unavailable")
 		searcher := &deleteValidationSearchClient{err: searchErr}
 
-		assert.ErrorIs(t, ValidateOnDelete(t.Context(), searcher, team), searchErr)
+		err := ValidateOnDelete(t.Context(), searcher, team)
+		var apiStatus apierrors.APIStatus
+		require.ErrorAs(t, err, &apiStatus)
+		assert.Equal(t, int32(http.StatusInternalServerError), apiStatus.Status().Code)
+		assert.Equal(t, searchErr.Error(), apiStatus.Status().Message)
 	})
 
 	t.Run("returns errors embedded in the search response", func(t *testing.T) {

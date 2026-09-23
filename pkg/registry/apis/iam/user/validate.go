@@ -180,7 +180,7 @@ func validateEmail(ctx context.Context, searchClient resourcepb.ResourceIndexCli
 	})
 
 	resp, err := searchClient.Search(ctx, req)
-	if err != nil {
+	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
 		return err
 	}
 
@@ -213,7 +213,7 @@ func validateLogin(ctx context.Context, searchClient resourcepb.ResourceIndexCli
 		},
 	})
 	resp, err := searchClient.Search(ctx, req)
-	if err != nil {
+	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
 		return err
 	}
 

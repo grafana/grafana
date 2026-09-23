@@ -353,7 +353,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp, err := s.client.Search(ctx, request)
-	if err != nil {
+	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "user search failed")
 		errhttp.Write(ctx, err, w)
@@ -434,7 +434,7 @@ func ParseResults(result *resourcepb.ResourceSearchResponse) (*iamv0.GetSearchUs
 		return iamv0.NewGetSearchUsersResponse(), nil
 	}
 	if result.Error != nil {
-		return iamv0.NewGetSearchUsersResponse(), fmt.Errorf("%d error searching: %s: %s", result.Error.Code, result.Error.Message, result.Error.Details)
+		return iamv0.NewGetSearchUsersResponse(), resource.GetError(result.Error)
 	}
 
 	switch result.GetResultFormat() {
