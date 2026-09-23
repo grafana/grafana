@@ -390,7 +390,11 @@ type SearchDashboardSnapshotsResponse struct {
 }
 
 // swagger:response getDashboardSnapshotResponse
-type GetDashboardSnapshotResponse DashboardResponse
+type GetDashboardSnapshotResponse struct {
+	// The response message
+	// in: body
+	Body dtos.DashboardFullWithMeta `json:"body"`
+}
 
 // swagger:response getSharingOptionsResponse
 type GetSharingOptionsResponse struct {

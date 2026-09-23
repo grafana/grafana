@@ -21,43 +21,43 @@ describe('The FileDropzone component', () => {
     jest.resetAllMocks();
   });
 
-  it('should show the default text of the dropzone component when no props passed', () => {
+  it('should show the default text of the dropzone component when no props passed', async () => {
     render(<FileDropzone />);
 
-    expect(screen.getByText('Upload file')).toBeInTheDocument();
+    expect(await screen.findByText('Upload file')).toBeInTheDocument();
   });
 
-  it('should show the accepted file type(s) when passed in as a string', () => {
+  it('should show the accepted file type(s) when passed in as a string', async () => {
     render(<FileDropzone options={{ accept: '.json' }} />);
 
-    expect(screen.getByText('Accepted file type: .json')).toBeInTheDocument();
+    expect(await screen.findByText('Accepted file type: .json')).toBeInTheDocument();
   });
 
   it('should show an error message when the file size exceeds the max file size', async () => {
     render(<FileDropzone options={{ maxSize: 1 }} />);
 
-    dispatchEvt(screen.getByTestId('dropzone'), 'drop', mockData(files));
+    dispatchEvt(await screen.findByTestId('dropzone'), 'drop', mockData(files));
 
     expect(await screen.findByText('File is larger than 1 B')).toBeInTheDocument();
   });
 
-  it('should show the accepted file type(s) when passed in as a array of strings', () => {
+  it('should show the accepted file type(s) when passed in as a array of strings', async () => {
     render(<FileDropzone options={{ accept: ['.json', '.txt'] }} />);
 
-    expect(screen.getByText('Accepted file types: .json, .txt')).toBeInTheDocument();
+    expect(await screen.findByText('Accepted file types: .json, .txt')).toBeInTheDocument();
   });
 
-  it('should show the accepted file type(s) when passed in as an `Accept` object', () => {
+  it('should show the accepted file type(s) when passed in as an `Accept` object', async () => {
     render(<FileDropzone options={{ accept: { 'text/*': ['.json', '.txt'] } }} />);
 
-    expect(screen.getByText('Accepted file types: .json, .txt')).toBeInTheDocument();
+    expect(await screen.findByText('Accepted file types: .json, .txt')).toBeInTheDocument();
   });
 
   it('should handle file removal from the list', async () => {
     const user = userEvent.setup();
     render(<FileDropzone />);
 
-    dispatchEvt(screen.getByTestId('dropzone'), 'drop', mockData(files));
+    dispatchEvt(await screen.findByTestId('dropzone'), 'drop', mockData(files));
 
     expect(await screen.findAllByLabelText(REMOVE_FILE)).toHaveLength(3);
 
@@ -69,7 +69,7 @@ describe('The FileDropzone component', () => {
   it('should overwrite selected file when multiple false', async () => {
     render(<FileDropzone options={{ multiple: false }} />);
 
-    dispatchEvt(screen.getByTestId('dropzone'), 'drop', mockData([file({})]));
+    dispatchEvt(await screen.findByTestId('dropzone'), 'drop', mockData([file({})]));
 
     expect(await screen.findAllByLabelText(REMOVE_FILE)).toHaveLength(1);
     expect(screen.getByText('ping.json')).toBeInTheDocument();
@@ -84,7 +84,7 @@ describe('The FileDropzone component', () => {
     render(<FileDropzone readAs="readAsDataURL" />);
     const fileReaderSpy = jest.spyOn(FileReader.prototype, 'readAsDataURL');
 
-    dispatchEvt(screen.getByTestId('dropzone'), 'drop', mockData([file({})]));
+    dispatchEvt(await screen.findByTestId('dropzone'), 'drop', mockData([file({})]));
 
     expect(await screen.findByText('ping.json')).toBeInTheDocument();
     expect(fileReaderSpy).toBeCalled();
@@ -94,7 +94,7 @@ describe('The FileDropzone component', () => {
     render(<FileDropzone />);
     const fileReaderSpy = jest.spyOn(FileReader.prototype, 'readAsText');
 
-    dispatchEvt(screen.getByTestId('dropzone'), 'drop', mockData([file({})]));
+    dispatchEvt(await screen.findByTestId('dropzone'), 'drop', mockData([file({})]));
 
     expect(await screen.findByText('ping.json')).toBeInTheDocument();
     expect(fileReaderSpy).toBeCalled();
@@ -106,14 +106,14 @@ describe('The FileDropzone component', () => {
     render(<FileDropzone options={{ onDrop }} />);
     const fileReaderSpy = jest.spyOn(FileReader.prototype, 'readAsText');
 
-    dispatchEvt(screen.getByTestId('dropzone'), 'drop', mockData([fileToUpload]));
+    dispatchEvt(await screen.findByTestId('dropzone'), 'drop', mockData([fileToUpload]));
 
     expect(await screen.findByText('ping.json')).toBeInTheDocument();
     expect(fileReaderSpy).not.toBeCalled();
     expect(onDrop).toHaveBeenCalledWith([fileToUpload], [], expect.anything());
   });
 
-  it('should show children inside the dropzone', () => {
+  it('should show children inside the dropzone', async () => {
     const component = (
       <FileDropzone>
         <p>Custom dropzone text</p>
@@ -121,13 +121,13 @@ describe('The FileDropzone component', () => {
     );
     render(component);
 
-    expect(screen.getByText('Custom dropzone text')).toBeInTheDocument();
+    expect(await screen.findByText('Custom dropzone text')).toBeInTheDocument();
   });
 
   it('should handle file list overwrite when fileListRenderer is passed', async () => {
     render(<FileDropzone fileListRenderer={() => null} />);
 
-    dispatchEvt(screen.getByTestId('dropzone'), 'drop', mockData([file({})]));
+    dispatchEvt(await screen.findByTestId('dropzone'), 'drop', mockData([file({})]));
 
     // need to await this in order to have the drop finished
     await screen.findByTestId('dropzone');

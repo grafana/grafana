@@ -19,6 +19,8 @@ const (
 	// defaultMaxScopeCount caps how many scopes can be attached to a single
 	// annotation. 0 means no scopes are allowed.
 	defaultMaxScopeCount = 5
+	// defaultFolderCacheTTL is how long a resolved dashboard->folder mapping is cached.
+	defaultFolderCacheTTL = 30 * time.Second
 )
 
 // Config holds the store backend configuration for the annotation app.
@@ -51,6 +53,11 @@ type Config struct {
 	// rejected by the settings loader.
 	MaxScopeCount int
 
+	// FolderCacheEnabled controls whether resolved dashboard->folder mappings are cached.
+	FolderCacheEnabled bool
+	// FolderCacheTTL is how long a resolved dashboard->folder mapping is cached.
+	FolderCacheTTL time.Duration
+
 	// CleanupSettings configures annotation pruning for the SQL backend's LifecycleManager.
 	// Zero value (all limits unset) disables cleanup. Not used by memory or gRPC backends.
 	CleanupSettings annotations.CleanupSettings
@@ -65,6 +72,9 @@ func (c *Config) AddFlags(flags *pflag.FlagSet) {
 	flags.DurationVar(&c.RetentionTTL, "annotation.retention-ttl", defaultRetentionTTL, "Retention TTL for annotations (old data will be cleaned up)")
 
 	flags.IntVar(&c.MaxScopeCount, "annotation.max-scope-count", defaultMaxScopeCount, "Maximum number of scopes that can be attached to a single annotation")
+
+	flags.BoolVar(&c.FolderCacheEnabled, "annotation.folder-cache-enabled", true, "Cache resolved dashboard->folder mappings on the annotation authz read path")
+	flags.DurationVar(&c.FolderCacheTTL, "annotation.folder-cache-ttl", defaultFolderCacheTTL, "TTL for cached dashboard->folder mappings")
 
 	// gRPC flags
 	flags.StringVar(&c.GRPCAddress, "annotation.grpc-address", "", "gRPC server address for the annotation store")
@@ -87,6 +97,9 @@ func newConfigFromSettings(cfg *setting.Cfg) Config {
 		RetentionTTL:   cfg.AnnotationAppPlatform.RetentionTTL,
 		EnableLegacyID: cfg.AnnotationAppPlatform.EnableLegacyID,
 		MaxScopeCount:  cfg.AnnotationAppPlatform.MaxScopeCount,
+
+		FolderCacheEnabled: cfg.AnnotationAppPlatform.FolderCacheEnabled,
+		FolderCacheTTL:     cfg.AnnotationAppPlatform.FolderCacheTTL,
 
 		GRPCAddress:       cfg.AnnotationAppPlatform.GRPCAddress,
 		GRPCUseTLS:        cfg.AnnotationAppPlatform.GRPCUseTLS,

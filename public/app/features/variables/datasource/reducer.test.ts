@@ -20,7 +20,6 @@ function toListItems(plugins: ReturnType<typeof getMockPlugins>): DataSourceInst
       type: settings.type,
       name: settings.name,
       meta: settings.meta,
-      readOnly: settings.readOnly,
       isDefault: settings.isDefault ?? false,
     };
   });

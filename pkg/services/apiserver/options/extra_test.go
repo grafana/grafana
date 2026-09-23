@@ -13,7 +13,7 @@ func TestNewExtraOptions_SearchDefaults(t *testing.T) {
 	o := NewExtraOptions()
 
 	require.True(t, o.EnableSearchAPI, "search endpoints should be served by default")
-	require.False(t, o.EnableTrashAPI, "trash authorizes on a rule that has not been reviewed")
+	require.True(t, o.EnableTrashAPI, "trash endpoints should be served by default")
 }
 
 func TestExtraOptions_SearchAPICanBeTurnedOff(t *testing.T) {

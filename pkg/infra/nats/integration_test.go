@@ -250,15 +250,13 @@ func TestIntegrationEmbeddedServer(t *testing.T) {
 		// -race build asserts it stays thread-safe.
 		var wg sync.WaitGroup
 		for range publishers {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			wg.Go(func() {
 				for range perPublisher {
 					if err := pub.Publish(ctx, subject, []byte("x")); err != nil {
 						t.Errorf("publish: %v", err)
 					}
 				}
-			}()
+			})
 		}
 		wg.Wait()
 

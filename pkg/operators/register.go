@@ -1,11 +1,18 @@
 package operators
 
 import (
+	"github.com/grafana/grafana/pkg/operators/folder"
 	"github.com/grafana/grafana/pkg/operators/provisioning"
 	"github.com/grafana/grafana/pkg/server"
 )
 
 func init() {
+	server.RegisterOperator(server.Operator{
+		Name:        "folder-controller",
+		Description: "Watch folders and log deletion events",
+		RunFunc:     folder.RunFolderController,
+	})
+
 	// Provisioning Operators
 	server.RegisterOperator(server.Operator{
 		Name:        "provisioning-repo",

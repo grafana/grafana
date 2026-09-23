@@ -104,11 +104,11 @@ func newAlertMetrics(r prometheus.Registerer, queueCap int, queueLen, alertmanag
 			Name: "alertmanagers_discovered",
 			Help: "The number of alertmanagers discovered and active.",
 		}, alertmanagersDiscovered),
-		// Extension: New metric counting label/annotation strings clamped before sending.
-		clampedStrings: prometheus.NewCounterVec(prometheus.CounterOpts{
+		// Extension: New metric counting label/annotation strings truncated or dropped before sending.
+		truncatedStrings: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
-			Name:      "clamped_strings_total",
+			Name:      "truncated_strings_total",
 			Help:      "Total number of label/annotation strings clamped before sending: oversized values truncated or oversized names dropped.",
 		},
 			[]string{"kind", "reason"},
@@ -126,7 +126,7 @@ func newAlertMetrics(r prometheus.Registerer, queueCap int, queueLen, alertmanag
 			m.queueLength,
 			m.queueCapacity,
 			m.alertmanagersDiscovered,
-			m.clampedStrings,
+			m.truncatedStrings,
 		)
 	}
 

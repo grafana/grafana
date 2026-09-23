@@ -1,16 +1,17 @@
 import { locationUtil, type DataSourceInstanceListItem, type PluginMeta } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
-import { canAccessPluginPage, isPluginEnabled, probePlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { isPluginEnabled, probePlugin } from 'app/features/alerting/unified/hooks/pluginBridgeProbe';
+import { canAccessPluginPage } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { constructDataSourceExploreUrl } from 'app/features/datasources/utils';
 
-import { PROBE_TIMEOUT_MS, withTimeout } from './probeUtils';
+import { PROBE_TIMEOUT_MS, withDeadline } from './probeUtils';
 import { type SolutionCta } from './types';
 
 async function probeApp(appId: string): Promise<PluginMeta<{}> | null> {
   try {
     // getPluginSettings has no timeout, and some offer checks block Overview grouping.
-    const { settings } = await withTimeout(probePlugin(appId), PROBE_TIMEOUT_MS);
+    const { settings } = await withDeadline(PROBE_TIMEOUT_MS, undefined, () => probePlugin(appId));
     return settings && isPluginEnabled(settings) ? settings : null;
   } catch {
     return null;

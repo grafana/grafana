@@ -20,7 +20,7 @@ export function getFlotPairs({ xField, yField, nullValueMode }: FlotPairsOptions
   const ignoreNulls = nullValueMode === NullValueMode.Ignore;
   const nullAsZero = nullValueMode === NullValueMode.AsZero;
 
-  const pairs: any[][] = [];
+  const pairs: GraphSeriesValue[][] = [];
 
   for (let i = 0; i < length; i++) {
     const x = vX[i];

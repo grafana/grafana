@@ -58,6 +58,13 @@ module.exports = createNoRestrictedSyntax(
       'Usage of config.datasources is not allowed. Use getDataSourceInstanceSettings, getDataSourceInstanceList or the matching hooks from @grafana/runtime/unstable instead',
   },
   {
+    name: 'no-config-feature-toggles',
+    // Matches on the property rather than `object.name="config"` because the receiver is not always
+    // called config - aliased imports and namespace imports reach the same map.
+    selector: 'MemberExpression[property.name="featureToggles"]',
+    message: 'Usage of legacy config.featureToggles is no longer allowed. Use OpenFeature feature flags instead.',
+  },
+  {
     name: 'no-direct-date-fns',
     selector: 'ImportDeclaration[source.value="date-fns"][importKind!="type"]',
     message: 'Use deep imports instead (e.g. date-fns/format) to avoid pulling in the entire library.',

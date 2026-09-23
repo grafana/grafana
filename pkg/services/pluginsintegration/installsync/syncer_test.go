@@ -4,9 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
+	"net/http"
 	"testing"
+	"testing/synctest"
 	"time"
 
+	"github.com/grafana/dskit/backoff"
+	sdkK8s "github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/stretchr/testify/require"
@@ -16,12 +21,189 @@ import (
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/install"
+	infraserverlock "github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
+
+func testBackoffConfig(maxRetries int) backoff.Config {
+	return backoff.Config{
+		MinBackoff: time.Millisecond,
+		MaxBackoff: 2 * time.Millisecond,
+		MaxRetries: maxRetries,
+	}
+}
+
+func TestSyncer_syncWithRetry(t *testing.T) {
+	t.Run("succeeds without retrying when the first attempt succeeds", func(t *testing.T) {
+		s := newSyncer(nil, nil, nil, nil, nil, nil, nil)
+		s.backoffConfig = testBackoffConfig(3)
+
+		var calls int
+		s.syncWithRetry(t.Context(), func(context.Context) error {
+			calls++
+			return nil
+		})
+
+		require.Equal(t, 1, calls)
+	})
+
+	t.Run("retries after a failure and stops once an attempt succeeds", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			s := newSyncer(nil, nil, nil, nil, nil, nil, nil)
+			s.backoffConfig = testBackoffConfig(5)
+
+			var calls int
+			s.syncWithRetry(t.Context(), func(context.Context) error {
+				calls++
+				if calls < 3 {
+					return errorsK8s.NewTooManyRequests("throttled", 5)
+				}
+				return nil
+			})
+
+			require.Equal(t, 3, calls)
+		})
+	})
+
+	t.Run("retries a request deadline while the retry context remains active", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			s := newSyncer(nil, nil, nil, nil, nil, nil, nil)
+			s.backoffConfig = testBackoffConfig(3)
+
+			var calls int
+			s.syncWithRetry(t.Context(), func(context.Context) error {
+				calls++
+				if calls == 1 {
+					return context.DeadlineExceeded
+				}
+				return nil
+			})
+
+			require.Equal(t, 2, calls)
+		})
+	})
+
+	t.Run("gives up after the configured number of retries", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			s := newSyncer(nil, nil, nil, nil, nil, nil, nil)
+			s.backoffConfig = testBackoffConfig(2)
+
+			var calls int
+			s.syncWithRetry(t.Context(), func(context.Context) error {
+				calls++
+				return errorsK8s.NewTooManyRequests("still throttled", 5)
+			})
+
+			// dskit/backoff counts retries after the initial attempt, so
+			// MaxRetries=2 allows 1 initial try + 2 retries = 3 calls.
+			require.Equal(t, 3, calls)
+		})
+	})
+
+	t.Run("stops promptly when the context is cancelled mid-retry", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(t.Context())
+			time.AfterFunc(5*time.Millisecond, cancel)
+			s := newSyncer(nil, nil, nil, nil, nil, nil, nil)
+			s.backoffConfig = backoff.Config{MinBackoff: 10 * time.Millisecond, MaxBackoff: 10 * time.Millisecond, MaxRetries: 0}
+
+			var calls int
+			s.syncWithRetry(ctx, func(context.Context) error {
+				calls++
+				return errorsK8s.NewTooManyRequests("throttled", 5)
+			})
+
+			require.Equal(t, 2, calls)
+		})
+	})
+
+	t.Run("stops immediately without retrying on a non-retryable error", func(t *testing.T) {
+		s := newSyncer(nil, nil, nil, nil, nil, nil, nil)
+		s.backoffConfig = testBackoffConfig(3)
+
+		var calls int
+		s.syncWithRetry(t.Context(), func(context.Context) error {
+			calls++
+			return errorsK8s.NewBadRequest("malformed plugin install")
+		})
+
+		require.Equal(t, 1, calls)
+	})
+
+	t.Run("stops immediately without retrying an unknown error", func(t *testing.T) {
+		s := newSyncer(nil, nil, nil, nil, nil, nil, nil)
+		s.backoffConfig = testBackoffConfig(3)
+
+		var calls int
+		s.syncWithRetry(t.Context(), func(context.Context) error {
+			calls++
+			return errors.New("unknown failure")
+		})
+
+		require.Equal(t, 1, calls)
+	})
+
+	t.Run("stops immediately when another instance holds the sync lock", func(t *testing.T) {
+		s := newSyncer(nil, nil, nil, nil, nil, nil, nil)
+		s.backoffConfig = testBackoffConfig(3)
+
+		var calls int
+		s.syncWithRetry(t.Context(), func(context.Context) error {
+			calls++
+			return &infraserverlock.ServerLockExistsError{}
+		})
+
+		require.Equal(t, 1, calls)
+	})
+}
+
+func TestIsRetryableSyncError(t *testing.T) {
+	tests := []struct {
+		name        string
+		err         error
+		isRetryable bool
+	}{
+		{name: "nil error", err: nil, isRetryable: false},
+		{name: "generic error", err: errors.New("connection refused"), isRetryable: false},
+		{name: "context canceled", err: context.Canceled, isRetryable: false},
+		{name: "context deadline exceeded", err: context.DeadlineExceeded, isRetryable: true},
+		{name: "too many requests", err: errorsK8s.NewTooManyRequests("throttled", 5), isRetryable: true},
+		{name: "service unavailable", err: errorsK8s.NewServiceUnavailable("unavailable"), isRetryable: true},
+		{name: "server timeout", err: errorsK8s.NewServerTimeout(schema.GroupResource{}, "list", 5), isRetryable: true},
+		{name: "timeout", err: errorsK8s.NewTimeoutError("timeout", 5), isRetryable: true},
+		{name: "network timeout", err: &net.DNSError{Err: "timeout", IsTimeout: true}, isRetryable: true},
+		{name: "network operation", err: &net.OpError{Op: "read", Err: errors.New("connection refused")}, isRetryable: true},
+		{name: "bad request", err: errorsK8s.NewBadRequest("bad request"), isRetryable: false},
+		{name: "unauthorized", err: errorsK8s.NewUnauthorized("unauthorized"), isRetryable: false},
+		{name: "forbidden", err: errorsK8s.NewForbidden(schema.GroupResource{}, "plugin-1", errors.New("denied")), isRetryable: false},
+		{name: "invalid", err: errorsK8s.NewInvalid(schema.GroupKind{}, "plugin-1", nil), isRetryable: false},
+		{name: "app SDK forbidden", err: sdkK8s.NewServerResponseError(errors.New("denied"), http.StatusForbidden), isRetryable: false},
+		{name: "app SDK forbidden overrides wrapped network error", err: sdkK8s.NewServerResponseError(&net.OpError{Op: "read", Err: errors.New("connection refused")}, http.StatusForbidden), isRetryable: false},
+		{name: "wrapped app SDK forbidden overrides wrapped network error", err: fmt.Errorf("update plugin: %w", sdkK8s.NewServerResponseError(&net.OpError{Op: "read", Err: errors.New("connection refused")}, http.StatusForbidden)), isRetryable: false},
+		{name: "app SDK too many requests", err: sdkK8s.NewServerResponseError(errors.New("throttled"), http.StatusTooManyRequests), isRetryable: true},
+		{name: "app SDK bad gateway", err: sdkK8s.NewServerResponseError(errors.New("bad gateway"), http.StatusBadGateway), isRetryable: true},
+		{name: "app SDK gateway timeout", err: sdkK8s.NewServerResponseError(errors.New("gateway timeout"), http.StatusGatewayTimeout), isRetryable: true},
+		{name: "app SDK transport failure", err: sdkK8s.ParseKubernetesError(nil, 0, &net.OpError{Op: "read", Err: errors.New("connection refused")}), isRetryable: true},
+		{name: "app SDK request deadline", err: sdkK8s.ParseKubernetesError(nil, 0, context.DeadlineExceeded), isRetryable: true},
+		{name: "wrapped too many requests", err: fmt.Errorf("list plugins: %w", errorsK8s.NewTooManyRequests("throttled", 5)), isRetryable: true},
+		{name: "non-converging sync", err: fmt.Errorf("namespace: %w", install.ErrSyncDidNotConverge), isRetryable: false},
+		{name: "non-converging sync overrides a joined retryable error", err: errors.Join(install.ErrSyncDidNotConverge, errorsK8s.NewTooManyRequests("throttled", 5)), isRetryable: false},
+		{name: "joined non-retryable errors", err: errors.Join(errorsK8s.NewBadRequest("bad request"), errorsK8s.NewUnauthorized("unauthorized")), isRetryable: false},
+		{name: "non-retryable then retryable joined errors", err: errors.Join(errorsK8s.NewForbidden(schema.GroupResource{}, "plugin-1", errors.New("denied")), errorsK8s.NewTooManyRequests("throttled", 5)), isRetryable: true},
+		{name: "retryable then non-retryable joined errors", err: errors.Join(errorsK8s.NewTooManyRequests("throttled", 5), errorsK8s.NewForbidden(schema.GroupResource{}, "plugin-1", errors.New("denied"))), isRetryable: true},
+		{name: "wrapped joined errors", err: fmt.Errorf("sync namespaces: %w", errors.Join(errorsK8s.NewForbidden(schema.GroupResource{}, "plugin-1", errors.New("denied")), errorsK8s.NewTooManyRequests("throttled", 5))), isRetryable: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.isRetryable, isRetryableSyncError(tt.err))
+		})
+	}
+}
 
 func TestSyncer_Sync(t *testing.T) {
 	tests := []struct {

@@ -54,8 +54,8 @@ export function useRulesFilter() {
   );
 
   const setSearchQuery = useCallback(
-    (newSearchQuery: string | undefined) => {
-      updateQueryParams({ search: newSearchQuery });
+    (newSearchQuery: string | undefined, options?: { replace?: boolean }) => {
+      updateQueryParams({ search: newSearchQuery }, options?.replace);
     },
     [updateQueryParams]
   );

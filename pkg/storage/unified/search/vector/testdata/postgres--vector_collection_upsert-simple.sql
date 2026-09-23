@@ -9,7 +9,8 @@ INSERT INTO embeddings (
     "content",
     "metadata",
     "embedding",
-    "content_version"
+    "content_version",
+    "ts"
 )
 VALUES (
     'dashboards',
@@ -22,7 +23,8 @@ VALUES (
     'panel title with queries',
     '[123 34 100 97 116 97 115 111 117 114 99 101 95 117 105 100 115 34 58 91 34 100 115 49 34 93 125]',
     '[0.1,0.2,0.3]',
-    3
+    3,
+    NULL
 )
 ON CONFLICT ("resource", "namespace", "model", "uid", "subresource")
 DO UPDATE SET
@@ -32,5 +34,6 @@ DO UPDATE SET
     "metadata"        = '[123 34 100 97 116 97 115 111 117 114 99 101 95 117 105 100 115 34 58 91 34 100 115 49 34 93 125]',
     "embedding"       = '[0.1,0.2,0.3]',
     "content_version" = 3,
+    "ts"              = EXCLUDED."ts",
     "updated_at"      = CURRENT_TIMESTAMP
 ;

@@ -1,7 +1,7 @@
 package appplugin
 
 import (
-	"sync"
+	"errors"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -28,14 +28,19 @@ var (
 		},
 		[]string{"endpoint", "plugin_id"},
 	)
-
-	registerSubresourceMetricsOnce sync.Once
 )
 
 func registerSubresourceMetrics(reg prometheus.Registerer) {
-	registerSubresourceMetricsOnce.Do(func() {
-		reg.MustRegister(appSubresourceRequests, appSubresourceRequestDuration)
-	})
+	if reg == nil {
+		return
+	}
+	for _, collector := range []prometheus.Collector{appSubresourceRequests, appSubresourceRequestDuration} {
+		if err := reg.Register(collector); err != nil {
+			if _, ok := errors.AsType[prometheus.AlreadyRegisteredError](err); !ok {
+				panic(err)
+			}
+		}
+	}
 }
 
 // connectMetric tracks a single request across the Connect (setup) and

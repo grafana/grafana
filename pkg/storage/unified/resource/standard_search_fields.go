@@ -134,7 +134,7 @@ func TrashSearchFieldDefinitions() []SearchFieldDefinition {
 		},
 		// A string, unlike deletion_time: resource versions are snowflake ids around
 		// 1.8e18, where a float64 can only represent multiples of 256, so a number
-		// would come back rounded. Restore submits this value, so it has to be exact.
+		// would come back rounded. It has to stay exact to be usable for a restore.
 		{
 			Name:         SEARCH_FIELD_DELETED_RV,
 			Type:         SearchFieldTypeString,
@@ -152,6 +152,22 @@ var trashSearchFieldNames = func() map[string]bool {
 	}
 	return names
 }()
+
+// internalSearchFieldNames are index fields no caller may name. They are mapped
+// without being declared as search fields, so nothing else refuses them.
+//
+// Not every underscore-prefixed name belongs here: _id, _score, _explain and
+// _all_columns are part of the request API.
+var internalSearchFieldNames = map[string]bool{
+	SEARCH_FIELD_IS_DELETED:     true,
+	SEARCH_FIELD_IS_PROVISIONED: true,
+	SEARCH_FIELD_RV_STRING:      true,
+}
+
+// IsInternalSearchField reports whether name is an index field callers cannot use.
+func IsInternalSearchField(name string) bool {
+	return internalSearchFieldNames[name]
+}
 
 // IsTrashSearchField reports whether name is a field only deleted documents carry.
 func IsTrashSearchField(name string) bool {

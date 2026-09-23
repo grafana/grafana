@@ -108,6 +108,7 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (model.
 		Permission:    query.Permission,
 		IsDeleted:     query.IsDeleted,
 	}
+	dashboardQuery.UseFieldValueResults = s.features != nil && s.features.IsEnabled(ctx, featuremgmt.FlagDashboardApiSearchFieldValueResults) // nolint:staticcheck
 
 	if sortOpt, exists := s.sortService.GetSortOption(query.Sort); exists {
 		dashboardQuery.Sort = sortOpt

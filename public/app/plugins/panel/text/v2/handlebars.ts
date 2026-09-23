@@ -31,10 +31,11 @@ export type CompiledTemplate = (context: TemplateContext) => string;
 
 // Values stay raw so the numeric helpers can compare them; `fmt` holds the
 // display strings. Fields are assigned last so a field named `fmt` wins.
-export function buildRows(frame: DataFrame, series: DataFrame[], maxRows = Infinity): TemplateRow[] {
+export function buildRows(frame: DataFrame, series: DataFrame[], maxRows = Infinity, startRow = 0): TemplateRow[] {
   const names = frame.fields.map((field) => getFieldDisplayName(field, frame, series));
 
-  return Array.from({ length: Math.max(Math.min(frame.length, maxRows), 0) }, (_, rowIndex) => {
+  return Array.from({ length: Math.max(Math.min(frame.length - startRow, maxRows), 0) }, (_, offset) => {
+    const rowIndex = startRow + offset;
     const formatted: TemplateRow = {};
     const row: TemplateRow = { fmt: formatted };
 

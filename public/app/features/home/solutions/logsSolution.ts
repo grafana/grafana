@@ -6,15 +6,12 @@ import { t } from '@grafana/i18n';
 import { LOGS_DRILLDOWN_APP_ID } from './appPluginIds';
 import { drilldownActiveCta } from './pluginPages';
 import { datasourceFact } from './probeUtils';
-import { CLOUD_UTILITY_LOKI_DATASOURCE_UIDS, labelRecencyProbe, probeFound } from './solutionDataProbes';
+import { CLOUD_UTILITY_LOKI_DATASOURCE_UIDS, lokiHasRecentLabels, probeFound } from './solutionDataProbes';
 import { solutionOffer } from './solutionOffer';
 import { detectSignal } from './solutionState';
 import { fetchLogsActivity } from './telemetryData';
 import { getTelemetrySetupCta, getTelemetrySetupLearnMore } from './telemetrySetup';
 import { type Solution } from './types';
-
-// Loki label APIs use nanoseconds. This matches LokiDatasource, including its accepted precision loss.
-const lokiHasRecentLabels = labelRecencyProbe('labels', (ms) => ms * 1e6);
 
 export function logsSolution(): Solution {
   const detect = memoize(() =>
@@ -52,14 +49,7 @@ export function logsSolution(): Solution {
       }
       return {
         primary: formattedValueToString(getValueFormat('decbytes')(logs.bytes)),
-        secondary:
-          logs.sources != null
-            ? t('home.solutions.logs.stats-sources', '', {
-                count: logs.sources,
-                defaultValue_one: 'ingested · 7d · ~{{count}} source',
-                defaultValue_other: 'ingested · 7d · ~{{count}} sources',
-              })
-            : t('home.solutions.logs.stats', 'ingested · 7d'),
+        secondary: t('home.solutions.logs.stats', 'ingested · 7d'),
       };
     },
     sparkline: async () => {

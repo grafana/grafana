@@ -4,14 +4,19 @@ import {
   ConstantVariable,
   CustomVariable,
   type MultiValueVariable,
+  type SceneObject,
   SceneGridLayout,
   SceneTimeRange,
   SceneVariableSet,
+  StateCommittedEvent,
   TestVariable,
   VizPanel,
 } from '@grafana/scenes';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
+import { groupSelectionInto } from '../actions/layout/groupSelectionInto';
+import { endBatch, startBatch } from '../actions/utils/batch';
+import { edit } from '../actions/utils/edit';
 import { changeVariableName } from '../actions/variable/changeVariableName';
 import { changeVariableType } from '../actions/variable/changeVariableType';
 import { removeVariable } from '../actions/variable/removeVariable';
@@ -31,6 +36,7 @@ import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManag
 import { toControlSourceRef } from '../utils/predefinedVariables';
 import { activateFullSceneTree } from '../utils/test-utils';
 
+import { DashboardStateChangedEvent } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
 import { type DashboardSidebarLike } from './types';
 
@@ -39,6 +45,11 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: () => ({
     getInstanceSettings: (_uid: string | null) => ({ uid: 'ds1' }),
   }),
+}));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
 }));
 
 setPluginImportUtils({
@@ -54,10 +65,10 @@ describe('DashboardSidebar', () => {
       expect(scene.state.sidebar.getSelectedObject()).toBe(scene);
     });
 
-    it('single panel and multi panel selection', () => {
+    it('single panel and multi panel selection', async () => {
       const scene = buildTestScene();
       const sidebar = scene.state.sidebar;
-      const panel1 = scene.onCreateNewPanel();
+      const panel1 = await scene.onCreateNewPanel();
 
       expect(sidebar.getSelectedObject()).toBe(panel1);
 
@@ -66,7 +77,7 @@ describe('DashboardSidebar', () => {
 
       expect(sidebar.getSelectedObject()).toBeUndefined();
 
-      const panel2 = scene.onCreateNewPanel();
+      const panel2 = await scene.onCreateNewPanel();
       sidebar.state.selectionContext.onSelect({ id: panel1.state.key! }, { multi: true });
 
       expect(sidebar.state.selectionContext.selected).toHaveLength(2);
@@ -94,7 +105,7 @@ describe('DashboardSidebar', () => {
       sidebar.selectObject(panel1, { force: true });
       sidebar.selectObject(panel2, { multi: true });
 
-      layout.groupSelectionInto([panel1, panel2], 'tab');
+      groupSelectionInto({ source: dashboard, items: [panel1, panel2], target: 'tab' });
 
       const selectedObject = sidebar.getSelectedObject();
       expect(selectedObject).toBeInstanceOf(TabItem);
@@ -115,11 +126,11 @@ describe('DashboardSidebar', () => {
       expect(sidebar.state.selectionContext.selected).toHaveLength(0);
     });
 
-    it('Clear selection should select dashboard when docked', () => {
+    it('Clear selection should select dashboard when docked', async () => {
       const scene = buildTestScene();
       const sidebar = scene.state.sidebar;
 
-      const panel = scene.onCreateNewPanel();
+      const panel = await scene.onCreateNewPanel();
       sidebar.clearSelection();
 
       expect(sidebar.getSelectedObject()).toBeUndefined();
@@ -131,12 +142,12 @@ describe('DashboardSidebar', () => {
       expect(sidebar.getSelectedObject()).toBe(scene);
     });
 
-    it('Force selecting should keep selecting if already selected', () => {
+    it('Force selecting should keep selecting if already selected', async () => {
       const scene = buildTestScene();
       const sidebar = scene.state.sidebar;
 
       // This selects panel
-      const panel = scene.onCreateNewPanel();
+      const panel = await scene.onCreateNewPanel();
 
       // Force select
       sidebar.state.selectionContext.onSelect({ id: panel.state.key! }, { multi: false, force: true });
@@ -151,11 +162,11 @@ describe('DashboardSidebar', () => {
       expect(sidebar.state.selectionContext.selected).toHaveLength(1);
     });
 
-    it('Selecting when none element pane is open should not toggle selection', () => {
+    it('Selecting when none element pane is open should not toggle selection', async () => {
       const scene = buildTestScene();
       const sidebar = scene.state.sidebar;
 
-      const panel = scene.onCreateNewPanel();
+      const panel = await scene.onCreateNewPanel();
 
       sidebar.openPane(new DashboardOutline({}));
 
@@ -185,12 +196,12 @@ describe('DashboardSidebar', () => {
       expect(sidebar.getSelectedObject()).toBe(tab1);
     });
 
-    it('Removing a panel that is not selected', () => {
+    it('Removing a panel that is not selected', async () => {
       const scene = buildTestScene();
       const sidebar = scene.state.sidebar;
 
-      const panel1 = scene.onCreateNewPanel();
-      const panel2 = scene.onCreateNewPanel();
+      const panel1 = await scene.onCreateNewPanel();
+      const panel2 = await scene.onCreateNewPanel();
 
       scene.removePanel(panel1);
 
@@ -205,11 +216,11 @@ describe('DashboardSidebar', () => {
     });
   });
 
-  it('Handles edit action events that adds objects', () => {
+  it('Handles edit action events that adds objects', async () => {
     const scene = buildTestScene();
     const sidebar = scene.state.sidebar;
 
-    scene.onCreateNewPanel();
+    await scene.onCreateNewPanel();
 
     expect(sidebar.state.undoStack).toHaveLength(1);
 
@@ -224,27 +235,27 @@ describe('DashboardSidebar', () => {
     expect(sidebar.getSelectedObject()).toBeUndefined();
   });
 
-  it('when new action comes in clears redo stack', () => {
+  it('when new action comes in clears redo stack', async () => {
     const scene = buildTestScene();
     const sidebar = scene.state.sidebar;
 
-    scene.onCreateNewPanel();
+    await scene.onCreateNewPanel();
 
     sidebar.undoAction();
 
     expect(sidebar.state.redoStack).toHaveLength(1);
 
-    scene.onCreateNewPanel();
+    await scene.onCreateNewPanel();
 
     expect(sidebar.state.redoStack).toHaveLength(0);
   });
 
-  it('clone should not include undo/redo history', () => {
+  it('clone should not include undo/redo history', async () => {
     const scene = buildTestScene();
     const sidebar = scene.state.sidebar;
 
-    scene.onCreateNewPanel();
-    scene.onCreateNewPanel();
+    await scene.onCreateNewPanel();
+    await scene.onCreateNewPanel();
 
     sidebar.undoAction();
 
@@ -255,6 +266,95 @@ describe('DashboardSidebar', () => {
 
     expect(cloned.state.redoStack).toHaveLength(0);
     expect(cloned.state.undoStack).toHaveLength(0);
+  });
+
+  describe('batching', () => {
+    function fakeAction(calls: string[], name: string) {
+      return {
+        perform: jest.fn(() => calls.push(`perform-${name}`)),
+        undo: jest.fn(() => calls.push(`undo-${name}`)),
+      };
+    }
+
+    it('aggregates edit actions performed between startBatch/endBatch into a single undo/redo entry', () => {
+      const scene = buildTestScene();
+      const sidebar = scene.state.sidebar;
+      const calls: string[] = [];
+      const action1 = fakeAction(calls, '1');
+      const action2 = fakeAction(calls, '2');
+
+      startBatch(scene, 'Remove things (2)');
+      edit({ source: scene, perform: action1.perform, undo: action1.undo });
+      edit({ source: scene, perform: action2.perform, undo: action2.undo });
+      endBatch(scene);
+
+      // Both actions are performed immediately as they're collected, in the order they came in.
+      expect(calls).toEqual(['perform-1', 'perform-2']);
+      // But they're aggregated into a single undo entry, not two.
+      expect(sidebar.state.undoStack).toHaveLength(1);
+      expect(sidebar.state.undoStack[0].source).toBe(scene);
+      expect(sidebar.state.undoStack[0].description).toBe('Remove things (2)');
+
+      calls.length = 0;
+      sidebar.undoAction();
+
+      // A single undo reverts both actions, last-performed first.
+      expect(calls).toEqual(['undo-2', 'undo-1']);
+      expect(sidebar.state.undoStack).toHaveLength(0);
+      expect(sidebar.state.redoStack).toHaveLength(1);
+
+      calls.length = 0;
+      sidebar.redoAction();
+
+      // A single redo replays both actions again, in their original order.
+      expect(calls).toEqual(['perform-1', 'perform-2']);
+      expect(sidebar.state.undoStack).toHaveLength(1);
+      expect(sidebar.state.redoStack).toHaveLength(0);
+    });
+
+    it('clears the redo stack when a batch starts, same as a regular action', () => {
+      const scene = buildTestScene();
+      const sidebar = scene.state.sidebar;
+
+      edit({ source: scene, perform: jest.fn(), undo: jest.fn() });
+      sidebar.undoAction();
+      expect(sidebar.state.redoStack).toHaveLength(1);
+
+      startBatch(scene, 'A batch');
+      expect(sidebar.state.redoStack).toHaveLength(0);
+
+      endBatch(scene);
+    });
+
+    it('does not push an undo entry for a batch with no actions', () => {
+      const scene = buildTestScene();
+      const sidebar = scene.state.sidebar;
+
+      startBatch(scene, 'Empty batch');
+      endBatch(scene);
+
+      expect(sidebar.state.undoStack).toHaveLength(0);
+    });
+
+    it('routes a multi-row delete through RowItems and batches it into a single undo entry', () => {
+      const { sidebar, row1, row2 } = setupWithTwoRows();
+
+      row1.createMultiSelectedElement([row1, row2]).onDelete();
+
+      // Two row deletions, aggregated into one undo entry, not two.
+      expect(sidebar.state.undoStack).toHaveLength(1);
+      expect(sidebar.state.undoStack[0].description).toBe('Remove rows (2)');
+    });
+
+    it('routes a multi-tab delete through TabItems and batches it into a single undo entry', () => {
+      const { sidebar, tab1, tab2 } = setupWithTwoTabs();
+
+      tab1.createMultiSelectedElement([tab1, tab2]).onDelete();
+
+      // Two tab deletions, aggregated into one undo entry, not two.
+      expect(sidebar.state.undoStack).toHaveLength(1);
+      expect(sidebar.state.undoStack[0].description).toBe('Remove tabs (2)');
+    });
   });
 
   it('clone should preserve the outline collapsed state', () => {
@@ -415,6 +515,84 @@ describe('DashboardSidebar', () => {
     expect(variableSet.state.variables).toEqual([predefined]);
   });
 
+  describe('StateCommittedEvent', () => {
+    it('publishes DashboardStateChangedEvent with the committed source', () => {
+      const { dashboard, source } = buildTestScene();
+      const onStateChanged = jest.fn();
+      dashboard.subscribeToEvent(DashboardStateChangedEvent, onStateChanged);
+
+      stateCommited(source, 'Some change', jest.fn(), jest.fn());
+
+      expect(onStateChanged).toHaveBeenCalledTimes(1);
+      expect(onStateChanged).toHaveBeenCalledWith(new DashboardStateChangedEvent({ source }));
+    });
+
+    function buildTestScene() {
+      const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'P1' });
+      const gridItem = new AutoGridItem({ body: panel });
+      const layoutManager = new AutoGridLayoutManager({
+        layout: new AutoGridLayout({ children: [gridItem] }),
+      });
+      const dashboard = new DashboardScene({
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+        isEditing: true,
+        body: layoutManager,
+      });
+      activateFullSceneTree(dashboard);
+
+      return { dashboard, sidebar: dashboard.state.sidebar, source: panel };
+    }
+
+    function stateCommited(source: SceneObject, description: string, replay: () => void, revert: () => void) {
+      source.publishEvent(new StateCommittedEvent({ source, description, replay, revert }), true);
+    }
+
+    it('records new entry on the undo stack without performing it again', () => {
+      const { sidebar, source } = buildTestScene();
+      const replay = jest.fn();
+      const revert = jest.fn();
+
+      stateCommited(source, 'Some change', replay, revert);
+
+      expect(sidebar.state.undoStack).toHaveLength(1);
+      expect(sidebar.state.undoStack[0].description).toEqual('Some change');
+      expect(replay).not.toHaveBeenCalled();
+      expect(revert).not.toHaveBeenCalled();
+    });
+
+    it('undo reverts the change and redo re-applies it', () => {
+      const { sidebar, source } = buildTestScene();
+      const replay = jest.fn();
+      const revert = jest.fn();
+
+      stateCommited(source, 'Some change', replay, revert);
+      sidebar.undoAction();
+
+      expect(revert).toHaveBeenCalledTimes(1);
+      expect(replay).not.toHaveBeenCalled();
+      expect(sidebar.state.undoStack).toHaveLength(0);
+      expect(sidebar.state.redoStack).toHaveLength(1);
+
+      sidebar.redoAction();
+
+      expect(replay).toHaveBeenCalledTimes(1);
+      expect(sidebar.state.undoStack).toHaveLength(1);
+      expect(sidebar.state.redoStack).toHaveLength(0);
+    });
+
+    it('clears the redo stack when a new transaction is committed', () => {
+      const { sidebar, source } = buildTestScene();
+
+      stateCommited(source, 'Change 1', jest.fn(), jest.fn());
+      sidebar.undoAction();
+      expect(sidebar.state.redoStack).toHaveLength(1);
+
+      stateCommited(source, 'Change 2', jest.fn(), jest.fn());
+
+      expect(sidebar.state.redoStack).toHaveLength(0);
+    });
+  });
+
   describe('Selecting repeated elements', () => {
     it('Selecting a repeated panel selects the source panel', () => {
       const layoutManager = new DefaultGridLayoutManager({
@@ -499,51 +677,51 @@ describe('DashboardSidebar', () => {
   });
 
   describe('addNewPanel', () => {
-    it('adds panel to the correct tab layout when target is first tab', () => {
+    it('adds panel to the correct tab layout when target is first tab', async () => {
       const { tab1, tab2, sidebar } = setupWithTwoTabs();
-      sidebar.addNewPanel(tab1);
+      await sidebar.addNewPanel(tab1);
       expect(tab1.getLayout().getVizPanels()).toHaveLength(2);
       expect(tab2.getLayout().getVizPanels()).toHaveLength(0);
     });
 
-    it('adds panel to the correct tab layout when target is second tab', () => {
+    it('adds panel to the correct tab layout when target is second tab', async () => {
       const { tab1, tab2, sidebar } = setupWithTwoTabs();
-      sidebar.addNewPanel(tab2);
+      await sidebar.addNewPanel(tab2);
       expect(tab1.getLayout().getVizPanels()).toHaveLength(1);
       expect(tab2.getLayout().getVizPanels()).toHaveLength(1);
     });
 
-    it('adds panel to the correct row layout when target is first row', () => {
+    it('adds panel to the correct row layout when target is first row', async () => {
       const { row1, row2, sidebar } = setupWithTwoRows();
-      sidebar.addNewPanel(row1);
+      await sidebar.addNewPanel(row1);
       expect(row1.getLayout().getVizPanels()).toHaveLength(2);
       expect(row2.getLayout().getVizPanels()).toHaveLength(0);
     });
 
-    it('adds panel to the correct row layout when target is second row', () => {
+    it('adds panel to the correct row layout when target is second row', async () => {
       const { row1, row2, sidebar } = setupWithTwoRows();
-      sidebar.addNewPanel(row2);
+      await sidebar.addNewPanel(row2);
       expect(row1.getLayout().getVizPanels()).toHaveLength(1);
       expect(row2.getLayout().getVizPanels()).toHaveLength(1);
     });
 
-    it('adds panel to the first element in the dashboard when target is the dashboard itself', () => {
+    it('adds panel to the first element in the dashboard when target is the dashboard itself', async () => {
       const { dashboard, tab1, tab2, sidebar } = setupWithTwoTabs();
-      sidebar.addNewPanel(dashboard);
+      await sidebar.addNewPanel(dashboard);
       expect(tab1.getLayout().getVizPanels()).toHaveLength(2);
       expect(tab2.getLayout().getVizPanels()).toHaveLength(0);
     });
 
-    it('adds panel to the first element in the dashboard when target is undefined', () => {
+    it('adds panel to the first element in the dashboard when target is undefined', async () => {
       const { tab1, tab2, sidebar } = setupWithTwoTabs();
-      sidebar.addNewPanel(undefined);
+      await sidebar.addNewPanel(undefined);
       expect(tab1.getLayout().getVizPanels()).toHaveLength(2);
       expect(tab2.getLayout().getVizPanels()).toHaveLength(0);
     });
 
-    it('adds panel to the dashboard when dashboard is empty', () => {
+    it('adds panel to the dashboard when dashboard is empty', async () => {
       const { dashboard, sidebar } = setupEmptyDashboard();
-      sidebar.addNewPanel(undefined);
+      await sidebar.addNewPanel(undefined);
       expect(dashboard.getLayout().getVizPanels()).toHaveLength(1);
     });
   });

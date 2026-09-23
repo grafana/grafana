@@ -30,7 +30,7 @@ test.describe(
       sidebar,
       panels,
     }) => {
-      await prepareTestDashboard(gotoDashboardPage, selectors, sidebar);
+      await prepareTestDashboard(page, gotoDashboardPage, selectors, sidebar);
 
       const panelBoxBeforeResize = await getPanelBox(panels, 'New panel');
 
@@ -65,7 +65,7 @@ test.describe(
       canvas,
       panels,
     }) => {
-      await prepareTestDashboard(gotoDashboardPage, selectors, sidebar);
+      await prepareTestDashboard(page, gotoDashboardPage, selectors, sidebar);
 
       const panelBoxBeforeResize = await getPanelBox(panels, 'New panel');
 
@@ -99,12 +99,18 @@ test.describe(
 );
 
 async function prepareTestDashboard(
+  page: Page,
   gotoDashboardPage: (args: DashboardPageArgs) => Promise<DashboardPage>,
   selectors: E2ESelectorGroups,
   sidebar: Sidebar
 ) {
   const dashboardPage = await gotoDashboardPage({});
   await undockMegaMenu(dashboardPage, selectors);
+
+  // New dashboards default to auto grid (grafana.dashboardAutoGridDefault is GA and on by
+  // default), but these tests exercise custom grid resize, so pin the layout via the
+  // empty-state layout picker.
+  await page.getByRole('button', { name: 'Custom grid' }).click();
 
   await sidebar.addOptions.addPanel();
   await sidebar.closePane();

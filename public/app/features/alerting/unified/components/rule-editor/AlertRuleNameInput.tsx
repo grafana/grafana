@@ -54,11 +54,12 @@ export const AlertRuleNameAndMetric = () => {
         </Text>
       }
     >
-      <Stack direction="column">
+      <Stack direction="column" gap={2}>
         <Field
           label={t('alerting.alert-rule-name-and-metric.label-name', 'Name')}
           error={errors?.name?.message}
           invalid={!!errors.name?.message}
+          noMargin
         >
           <Input
             data-testid={selectors.components.AlertRules.ruleNameField}
@@ -86,6 +87,7 @@ export const AlertRuleNameAndMetric = () => {
             label={t('alerting.alert-rule-name-and-metric.label-metric', 'Metric')}
             error={errors?.metric?.message}
             invalid={!!errors.metric?.message}
+            noMargin
           >
             <Input
               id="metric"
@@ -120,6 +122,7 @@ export const AlertRuleNameAndMetric = () => {
             )}
             error={errors.targetDatasourceUid?.message}
             invalid={!!errors.targetDatasourceUid?.message}
+            noMargin
           >
             <Controller
               render={({ field: { onChange, ref, ...field } }) => (

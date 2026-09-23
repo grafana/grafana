@@ -201,8 +201,8 @@ func buildDataFrames(ctx context.Context, aggregatedResponse models.QueryRowResp
 					}
 				}
 
-				timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, []*time.Time{})
-				valueField := data.NewField(data.TimeSeriesValueFieldName, labels, []*float64{})
+				timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, []time.Time{})
+				valueField := data.NewField(data.TimeSeriesValueFieldName, labels, []float64{})
 
 				valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: label, Links: createDataLinks(deepLink)})
 

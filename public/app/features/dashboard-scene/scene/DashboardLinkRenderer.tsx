@@ -16,8 +16,9 @@ import { duplicateLink, linkSelectionId, openEditLinkPane } from '../settings/li
 import { linkEditActions } from '../settings/links/actions';
 import { LINK_ICON_MAP } from '../settings/links/utils';
 
-import { ControlActionsPopover, LinkEditActions } from './ControlActionsPopover';
 import { type DashboardScene } from './DashboardScene';
+import { EditActionsPopover } from './edit-actions-popover/EditActionsPopover';
+import { LinkEditActions } from './edit-actions-popover/LinkEditActions';
 
 export interface Props {
   link: DashboardLink;
@@ -91,11 +92,11 @@ export function DashboardLinkRenderer({ link, dashboardUID, inMenu, linkIndex, d
   );
 
   return (
-    <ControlActionsPopover isEditable={Boolean(isSelectable)} content={editActions}>
+    <EditActionsPopover content={editActions}>
       <div className={containerClassName} data-testid={selectors.components.DashboardLinks.container}>
         {content}
       </div>
-    </ControlActionsPopover>
+    </EditActionsPopover>
   );
 }
 

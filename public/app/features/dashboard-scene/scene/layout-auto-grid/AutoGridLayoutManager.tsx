@@ -23,15 +23,10 @@ import { serializeAutoGridLayout } from '../../serialization/layoutSerializers/A
 import { NewObjectAddedToCanvasEvent } from '../../sidebar/events';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';
-import {
-  forceRenderChildren,
-  getDashboardSceneFor,
-  getGridItemKeyForPanelId,
-  getVizPanelKeyForPanelId,
-  useDashboard,
-} from '../../utils/utils';
+import { forceRenderChildren, getDashboardSceneFor, useDashboard } from '../../utils/utils';
+import { getGridItemKeyForPanelId, getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
-import { buildGroupEdit, canGroupSelection } from '../layouts-shared/groupLayout';
+import { canGroupSelection } from '../layouts-shared/groupLayout';
 import { clearClipboard, getAutoGridItemFromClipboard } from '../layouts-shared/paste';
 import { type DashboardDropTarget } from '../types/DashboardDropTarget';
 import { type DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
@@ -131,7 +126,12 @@ export class AutoGridLayoutManager
         new AutoGridLayout({
           isDraggable: true,
           templateColumns: getTemplateColumnsTemplate(maxColumnCount, columnWidth),
-          autoRows: getAutoRowsTemplate(rowHeight, fillScreen, fitContent && isAutoHeightPanelsEnabled()),
+          autoRows: getAutoRowsTemplate(
+            rowHeight,
+            fillScreen,
+            fitContent && isAutoHeightPanelsEnabled(),
+            state.minHeight
+          ),
         }),
     });
 
@@ -342,16 +342,6 @@ export class AutoGridLayoutManager
     return canGroupSelection(items, target);
   }
 
-  public groupSelectionInto(items: SceneObject[], target: GroupTarget): void {
-    const groupEdit = buildGroupEdit(items, target);
-
-    if (!groupEdit) {
-      return;
-    }
-
-    edit({ ...groupEdit, source: getDashboardSceneFor(this) });
-  }
-
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
     return this.clone({});
   }
@@ -398,6 +388,7 @@ export class AutoGridLayoutManager
       );
     }
     this.setState({ minHeight });
+    this.updateAutoRows();
   }
 
   public onMaxHeightModeChanged(maxHeightMode: AutoGridMaxHeightMode | undefined) {
@@ -447,7 +438,12 @@ export class AutoGridLayoutManager
   /** Recomputes the grid's `autoRows` from the current state. Call after a per-panel fit change. */
   public updateAutoRows() {
     this.state.layout.setState({
-      autoRows: getAutoRowsTemplate(this.state.rowHeight, this.state.fillScreen, this.hasFitContent()),
+      autoRows: getAutoRowsTemplate(
+        this.state.rowHeight,
+        this.state.fillScreen,
+        this.hasFitContent(),
+        this.state.minHeight
+      ),
     });
   }
 
@@ -638,12 +634,26 @@ export function getNamedHeightInPixels(rowHeight: AutoGridRowHeight) {
   }
 }
 
-export function getAutoRowsTemplate(rowHeight: AutoGridRowHeight, fillScreen: boolean, hasFitContent?: boolean) {
+export function getAutoRowsTemplate(
+  rowHeight: AutoGridRowHeight,
+  fillScreen: boolean,
+  hasFitContent?: boolean,
+  minHeight?: AutoGridMinHeight
+) {
   const rowHeightPixels = getNamedHeightInPixels(rowHeight);
-  // Row tracks always floor at the configured row height. The max grows when:
+  // A smaller content-fit floor must also lower the shared row track, otherwise
+  // the panel shrinks inside a row that still reserves the configured row height.
+  // Clamp larger fit minimums to the row height: the fit panel itself contributes
+  // its minimum, without inflating rows that contain only non-fit panels.
+  const minRowHeightPixels =
+    hasFitContent && !fillScreen
+      ? Math.min(rowHeightPixels, getFitMinHeightInPixels(minHeight, rowHeight))
+      : rowHeightPixels;
+
+  // The max grows when:
   //  - fill screen: stretch to fill the viewport (`auto`)
   //  - content-fit present: grow to the tallest panel's content (`max-content`)
   //  - otherwise: fixed at the row height
   const maxRowHeightValue = fillScreen ? 'auto' : hasFitContent ? 'max-content' : `${rowHeightPixels}px`;
-  return `minmax(${rowHeightPixels}px, ${maxRowHeightValue})`;
+  return `minmax(${minRowHeightPixels}px, ${maxRowHeightValue})`;
 }

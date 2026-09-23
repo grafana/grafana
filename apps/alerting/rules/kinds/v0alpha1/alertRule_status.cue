@@ -1,0 +1,17 @@
+package v0alpha1
+
+import "time"
+
+#AlertRuleHealth:      "Unknown" | "OK" | "Paused" | "Error" | "NoData"
+#AlertRuleState:       "Inactive" | "Healthy" | "Firing" | "Pending" | "Recovering"
+#AlertRuleStateReason: "Evaluated" | "KeepLast"
+
+#AlertRuleStatus: {
+	health?:             #AlertRuleHealth
+	state?:              #AlertRuleState
+	stateReason?:        #AlertRuleStateReason
+	lastEvaluationTime?: string & time.Time
+	// duration of the last evaluation in seconds
+	evaluationDuration?: float
+	lastError?:          string
+}

@@ -1,19 +1,13 @@
 import { css } from '@emotion/css';
-import {
-  DragDropContext,
-  Draggable,
-  type DraggableProvidedDragHandleProps,
-  Droppable,
-  type DropResult,
-} from '@hello-pangea/dnd';
+import { type DraggableProvidedDragHandleProps, type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, generateUUID } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { type VariableValueOption, type VariableValueOptionProperties } from '@grafana/scenes';
 import { Button, Icon, IconButton, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { useDragAndDrop } from '@grafana/ui/internal';
 import {
   type StaticOptionsOrderType,
   type StaticOptionsType,
@@ -40,7 +34,7 @@ interface VariableOptionsSpreadsheetProps {
 
 function toSpreadsheetOptions(options: VariableValueOption[]): SpreadsheetOption[] {
   return options.map((o) => ({
-    id: uuidv4(),
+    id: generateUUID(),
     ...o,
     properties: { ...o.properties, value: o.value, text: o.label },
   }));
@@ -67,7 +61,7 @@ function useVariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProps) {
   );
 
   const handleAdd = useCallback(() => {
-    const newId = uuidv4();
+    const newId = generateUUID();
     autoFocusIdRef.current = newId;
     const newOption: SpreadsheetOption = {
       id: newId,
@@ -188,7 +182,7 @@ function useVariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProps) {
           stringifiedProps[key] = typeof val === 'object' && val !== null ? JSON.stringify(val) : val;
         }
         return {
-          id: uuidv4(),
+          id: generateUUID(),
           ...o,
           properties: { ...emptyProps, ...stringifiedProps, value: o.value, text: o.label },
         };
@@ -235,6 +229,7 @@ function useVariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProps) {
 }
 
 export function VariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProps) {
+  const { DragDropContext, Droppable } = useDragAndDrop();
   const styles = useStyles2(getStyles);
   const {
     properties,
@@ -413,6 +408,7 @@ function SpreadsheetRowCells({
 }
 
 function SpreadsheetRow(props: SpreadsheetRowProps) {
+  const { Draggable } = useDragAndDrop();
   const styles = useStyles2(getStyles);
   const { option, index } = props;
 

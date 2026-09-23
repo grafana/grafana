@@ -195,7 +195,7 @@ func TestIntegrationMigrateSnapshots(t *testing.T) {
 		store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		m := newTestMigrator(secretsfakes.NewFakeSecretsService(), store)
 		const total = 150 // batch limit in MigrateSnapshots is 100
-		for i := 0; i < total; i++ {
+		for i := range total {
 			insertSnapshot(t, store, &dashboardsnapshots.DashboardSnapshot{
 				OrgID: 1, Name: fmt.Sprintf("n%d", i), Key: fmt.Sprintf("k%d", i),
 				External: true, ExternalURL: "x",

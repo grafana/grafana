@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"runtime"
 	"slices"
@@ -167,7 +168,7 @@ func (s *ServiceImpl) executeConcurrentQueries(ctx context.Context, user identit
 	// Query each datasource concurrently
 	for _, queries := range queriesbyDs {
 		rawQueries := make([]*simplejson.Json, len(queries))
-		for i := 0; i < len(queries); i++ {
+		for i := range queries {
 			rawQueries[i] = queries[i].rawQuery
 		}
 		g.Go(func() error {
@@ -198,9 +199,7 @@ func (s *ServiceImpl) executeConcurrentQueries(ctx context.Context, user identit
 	resp := backend.NewQueryDataResponse()
 	reqCtx := contexthandler.FromContext(ctx)
 	for result := range rchan {
-		for refId, dataResponse := range result.responses {
-			resp.Responses[refId] = dataResponse
-		}
+		maps.Copy(resp.Responses, result.responses)
 		if reqCtx != nil {
 			for k, v := range result.header {
 				for _, val := range v {

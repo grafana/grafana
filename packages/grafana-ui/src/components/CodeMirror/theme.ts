@@ -7,7 +7,8 @@ import { type GrafanaTheme2 } from '@grafana/data';
 
 import { getFocusStyles } from '../../themes/mixins';
 
-export function createCodeEditorTheme(theme: GrafanaTheme2): Extension {
+export function createCodeEditorTheme(theme: GrafanaTheme2, options?: { transparent?: boolean }): Extension {
+  const background = options?.transparent ? 'transparent' : theme.components.input.background;
   const selectionState = EditorView.editorAttributes.compute(
     ['selection'],
     (state): Record<string, string> => (state.selection.main.empty ? {} : { class: 'cm-hasSelection' })
@@ -16,7 +17,7 @@ export function createCodeEditorTheme(theme: GrafanaTheme2): Extension {
     {
       '&': {
         color: theme.components.input.text,
-        backgroundColor: theme.components.input.background,
+        backgroundColor: background,
         fontFamily: theme.typography.fontFamilyMonospace,
         fontSize: theme.typography.code.fontSize,
       },
@@ -35,7 +36,7 @@ export function createCodeEditorTheme(theme: GrafanaTheme2): Extension {
       },
       '.cm-gutters': {
         color: theme.colors.text.secondary,
-        backgroundColor: theme.components.input.background,
+        backgroundColor: background,
         borderRightColor: theme.components.input.borderColor,
       },
       '.cm-activeLine, .cm-activeLineGutter': {

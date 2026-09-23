@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import Skeleton from 'react-loading-skeleton';
 import { useLocation } from 'react-router-dom-v5-compat';
-import { useAsync } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -13,11 +13,14 @@ import { ctaClicked } from '../analytics/main';
 import { type Solution } from '../solutions/types';
 
 import { GetStarted } from './GetStarted';
-import { Solutions } from './Solutions';
-import { groupOverviewCards, resolveOverviewCards } from './solutionGroups';
+import { SolutionGridSkeleton, Solutions } from './Solutions';
+import { groupOverviewCards } from './solutionGroups';
 import { useGuides } from './useGuides';
+import { useOverviewPlacement } from './useOverviewPlacement';
 
 const HOME_OVERVIEW_OPTION_LOCAL_STORAGE_KEY = 'grafana.home.overview.option';
+
+const GET_STARTED_OPTION_VALUE = 'get-started';
 
 interface Option {
   value: string;
@@ -32,11 +35,13 @@ interface OverviewProps {
 }
 
 export function Overview({ solutions }: OverviewProps) {
+  const { cards, pendingCount } = useOverviewPlacement(solutions);
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const guides = useGuides();
-  const { value: cards, loading: cardsLoading } = useAsync(() => resolveOverviewCards(solutions), [solutions]);
-  const groups = useMemo(() => groupOverviewCards(cards ?? []), [cards]);
+  const groups = useMemo(() => groupOverviewCards(cards), [cards]);
+  // Get started is offered while guides load and once any exist; settled-empty guides drop it.
+  const guidesOffered = !guides || guides.length > 0;
 
   const options = useMemo<Option[]>(
     () => [
@@ -45,8 +50,8 @@ export function Overview({ solutions }: OverviewProps) {
         label: t('home.overview.options.all', 'All solutions'),
         content: (
           <Solutions
-            loading={cardsLoading}
-            cards={cards ?? []}
+            cards={cards}
+            pendingCount={pendingCount}
             emptyMessage={t('home.overview.empty.all', 'No solutions were found.')}
           />
         ),
@@ -56,8 +61,8 @@ export function Overview({ solutions }: OverviewProps) {
         label: t('home.overview.options.attention', 'Needs attention'),
         content: (
           <Solutions
-            loading={cardsLoading}
             cards={groups.attention}
+            pendingCount={pendingCount}
             emptyMessage={t('home.overview.empty.attention', 'No solutions need attention.')}
           />
         ),
@@ -67,8 +72,8 @@ export function Overview({ solutions }: OverviewProps) {
         label: t('home.overview.options.enabled', 'Enabled solutions'),
         content: (
           <Solutions
-            loading={cardsLoading}
             cards={groups.enabled}
+            pendingCount={pendingCount}
             emptyMessage={t('home.overview.empty.enabled', 'No enabled solutions with recent activity were found.')}
           />
         ),
@@ -78,17 +83,16 @@ export function Overview({ solutions }: OverviewProps) {
         label: t('home.overview.options.available', 'Available solutions'),
         content: (
           <Solutions
-            loading={cardsLoading}
             cards={groups.available}
+            pendingCount={pendingCount}
             emptyMessage={t('home.overview.empty.available', 'No available solutions to show yet.')}
           />
         ),
       },
-      // Hide get started if there are no guides to show, but do show it while loading
-      ...(!guides || guides.length > 0
+      ...(guidesOffered
         ? [
             {
-              value: 'get-started',
+              value: GET_STARTED_OPTION_VALUE,
               label: t('home.overview.options.get-started', 'Get started'),
               icon: 'rocket' as const,
               highlight: true,
@@ -97,10 +101,20 @@ export function Overview({ solutions }: OverviewProps) {
           ]
         : []),
     ],
-    [cards, cardsLoading, groups, guides]
+    [cards, pendingCount, groups, guides, guidesOffered]
   );
-  const [stored, setStored] = useStoredString(HOME_OVERVIEW_OPTION_LOCAL_STORAGE_KEY, options[0].value);
-  const option = useMemo(() => options.find((o) => o.value === stored) ?? options[0], [options, stored]);
+  const [storedRaw, setStored] = useStoredString(HOME_OVERVIEW_OPTION_LOCAL_STORAGE_KEY, '');
+  const settled = pendingCount === 0;
+  const anyLive = cards.some((card) => card.kind === 'live');
+  // The unset default is computed from settled cards and guides; keep the filter hidden until
+  // then so its label never flips (e.g. All solutions → Get started) in front of the user.
+  const optionsSettled = settled && guides !== undefined;
+  // The unset default is knowable once a live card exists or every input behind it settled; until
+  // then nothing renders, since offers painted now could flip to Get started, and Get started
+  // painted now could flip to All solutions once guides settle empty.
+  const decided = !!storedRaw || anyLive || optionsSettled;
+  const defaultView = !anyLive && guidesOffered ? GET_STARTED_OPTION_VALUE : options[0].value;
+  const option = options.find((o) => o.value === (storedRaw || defaultView)) ?? options[0];
 
   const ref = useRef<HTMLDivElement>(null);
   const location = useLocation();
@@ -170,27 +184,31 @@ export function Overview({ solutions }: OverviewProps) {
           <Trans i18nKey="home.overview.title">Your observability stack overview</Trans>
         </Text>
 
-        <Dropdown overlay={menu} onVisibleChange={setOpen} placement="bottom-end">
-          <Button variant="secondary" size="md">
-            <Stack direction="row" alignItems="center" columnGap={1}>
-              {option.icon && (
-                <Icon
-                  name={option.icon}
-                  color={
-                    theme.flags.visualDesignRefresh
-                      ? theme.colors.accent.main
-                      : theme.visualization.getColorByName('orange')
-                  }
-                />
-              )}
-              {option.label}
-              <Icon name={open ? 'angle-up' : 'angle-down'} />
-            </Stack>
-          </Button>
-        </Dropdown>
+        {optionsSettled ? (
+          <Dropdown overlay={menu} onVisibleChange={setOpen} placement="bottom-end">
+            <Button variant="secondary" size="md">
+              <Stack direction="row" alignItems="center" columnGap={1}>
+                {option.icon && (
+                  <Icon
+                    name={option.icon}
+                    color={
+                      theme.flags.visualDesignRefresh
+                        ? theme.colors.accent.main
+                        : theme.visualization.getColorByName('orange')
+                    }
+                  />
+                )}
+                {option.label}
+                <Icon name={open ? 'angle-up' : 'angle-down'} />
+              </Stack>
+            </Button>
+          </Dropdown>
+        ) : (
+          <Skeleton width={140} height={32} />
+        )}
       </Stack>
 
-      {option.content}
+      {decided ? option.content : <SolutionGridSkeleton count={cards.length + pendingCount} />}
     </Stack>
   );
 }

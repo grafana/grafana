@@ -463,12 +463,10 @@ func (am *Alertmanager) CreateSilence(ctx context.Context, silence *apimodels.Po
 	if err != nil {
 		// Translate downstream 4xx errors into a well-known bad payload error so callers can surface HTTP 400.
 		// The swagger client returns typed errors and/or an *openapiRuntime.APIError with a Code field.
-		var badReq *amsilence.PostSilencesBadRequest
-		if errors.As(err, &badReq) {
+		if _, ok := errors.AsType[*amsilence.PostSilencesBadRequest](err); ok {
 			return "", fmt.Errorf("%w: %v", alertingNotify.ErrCreateSilenceBadPayload, err)
 		}
-		var apiErr *openapiRuntime.APIError
-		if errors.As(err, &apiErr) {
+		if apiErr, ok := errors.AsType[*openapiRuntime.APIError](err); ok {
 			if apiErr.Code >= http.StatusBadRequest && apiErr.Code < http.StatusInternalServerError {
 				return "", fmt.Errorf("%w: %v", alertingNotify.ErrCreateSilenceBadPayload, err)
 			}

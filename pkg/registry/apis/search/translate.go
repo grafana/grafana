@@ -35,10 +35,12 @@ const (
 	MaxFacetLimit     = 1000
 )
 
-// Trash-specific field names. title and folder reuse the standard field names.
+// Trash-specific field names. title, folder and tags reuse the standard field
+// names.
 const (
 	trashFieldTitle        = resource.SEARCH_FIELD_TITLE
 	trashFieldFolder       = resource.SEARCH_FIELD_FOLDER
+	trashFieldTags         = resource.SEARCH_FIELD_TAGS
 	trashFieldDeletedBy    = "deleted_by"
 	trashFieldDeletionTime = "deletion_time"
 	trashFieldDeletedRV    = "deleted_rv"
@@ -147,6 +149,11 @@ func newFieldSet(gvr schema.GroupVersionResource, provider resource.SearchFields
 // fieldSet so the shared validators enforce the trash rules. Capabilities
 // mirror the design: text on title; filter on folder/deleted_by; sort on
 // title/folder/deleted_by/deletion_time; all retrievable.
+//
+// tags is filterable and retrievable, as it is for live search, so a caller can
+// show the tags a deleted object had and narrow the list to one. Faceting is left
+// out because trash rejects facets outright, and sorting because ordering by a
+// list of values has no defined meaning.
 func trashFieldSet() *fieldSet {
 	def := func(name string, caps ...resource.SearchCapability) resource.SearchFieldDefinition {
 		return resource.SearchFieldDefinition{Name: name, Type: resource.SearchFieldTypeString, Capabilities: caps}
@@ -157,9 +164,21 @@ func trashFieldSet() *fieldSet {
 	for _, d := range resource.TrashSearchFieldDefinitions() {
 		trash[d.Name] = d
 	}
+	// tags is taken from the standard declarations for the same reason, so trash and
+	// live search agree it holds a list of strings, with faceting dropped.
+	var tags resource.SearchFieldDefinition
+	for _, d := range resource.StandardSearchFieldDefinitions() {
+		if d.Name == trashFieldTags {
+			tags = d
+			tags.Capabilities = []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}
+			break
+		}
+	}
+
 	return &fieldSet{byName: map[string]resource.SearchFieldDefinition{
 		trashFieldTitle:        def(trashFieldTitle, resource.SearchCapabilityText, resource.SearchCapabilitySort, resource.SearchCapabilityRetrieve),
 		trashFieldFolder:       def(trashFieldFolder, resource.SearchCapabilityFilter, resource.SearchCapabilitySort, resource.SearchCapabilityRetrieve),
+		trashFieldTags:         tags,
 		trashFieldDeletedBy:    trash[trashFieldDeletedBy],
 		trashFieldDeletionTime: trash[trashFieldDeletionTime],
 		trashFieldDeletedRV:    trash[trashFieldDeletedRV],
@@ -205,8 +224,8 @@ func validateWhere(where *searchv0.WhereNode, fs *fieldSet, p *field.Path) ([]se
 				errs = append(errs, cerr)
 				continue
 			}
-			if ck != "text" && ck != "filter" && ck != "range" {
-				errs = append(errs, field.Invalid(cp, ck, "only text, filter and range leaves are allowed inside and in v1"))
+			if ck != "text" && ck != "filter" && ck != "range" && ck != "regex" {
+				errs = append(errs, field.Invalid(cp, ck, "only text, filter, range and regex leaves are allowed inside and in v1"))
 				continue
 			}
 			// A second text leaf would overwrite the backend Query, so v1 rejects it.
@@ -221,7 +240,7 @@ func validateWhere(where *searchv0.WhereNode, fs *fieldSet, p *field.Path) ([]se
 			leaves = append(leaves, child)
 		}
 		return leaves, errs
-	case "text", "filter", "range":
+	case "text", "filter", "range", "regex":
 		return []searchv0.WhereNode{*where}, validateLeaf(where, key, fs, p)
 	default:
 		// or, not, exists: modelled for the future, rejected in v1.
@@ -251,6 +270,9 @@ func singleKey(n *searchv0.WhereNode, p *field.Path) (string, *field.Error) {
 	if n.Range != nil {
 		set = append(set, "range")
 	}
+	if n.Regex != nil {
+		set = append(set, "regex")
+	}
 	if n.Exists != nil {
 		set = append(set, "exists")
 	}
@@ -258,7 +280,7 @@ func singleKey(n *searchv0.WhereNode, p *field.Path) (string, *field.Error) {
 	case 1:
 		return set[0], nil
 	case 0:
-		return "", field.Invalid(p, "{}", "node must set exactly one of: and, or, not, text, filter, range")
+		return "", field.Invalid(p, "{}", "node must set exactly one of: and, or, not, text, filter, range, regex")
 	default:
 		return "", field.Invalid(p, strings.Join(set, ", "), "node must set exactly one key")
 	}
@@ -308,10 +330,17 @@ func validateLeaf(n *searchv0.WhereNode, key string, fs *fieldSet, p *field.Path
 						errs = append(errs, field.Invalid(fp.Child("values").Index(i), v, err.Error()))
 					}
 				}
+				// A field holding one value cannot hold two, so this would always come
+				// back empty and the caller would have no way to tell that apart from
+				// nothing matching.
+				if f.Operator == "All" && len(f.Values) > 1 && !def.Array {
+					errs = append(errs, field.Invalid(fp.Child("operator"), f.Operator,
+						fmt.Sprintf("All with several values requires a field holding a list of values; %q holds a single value", f.Field)))
+				}
 			}
 		}
-		if f.Operator != "In" && f.Operator != "NotIn" {
-			errs = append(errs, field.NotSupported(fp.Child("operator"), f.Operator, []string{"In", "NotIn"}))
+		if f.Operator != "In" && f.Operator != "NotIn" && f.Operator != "All" {
+			errs = append(errs, field.NotSupported(fp.Child("operator"), f.Operator, []string{"In", "NotIn", "All"}))
 		}
 		if len(f.Values) == 0 {
 			errs = append(errs, field.Required(fp.Child("values"), "at least one value is required"))
@@ -326,6 +355,37 @@ func validateLeaf(n *searchv0.WhereNode, key string, fs *fieldSet, p *field.Path
 		}
 	case "range":
 		errs = append(errs, validateRangeLeaf(n.Range, fs, p.Child("range"))...)
+	case "regex":
+		errs = append(errs, validateRegexLeaf(n.Regex, fs, p.Child("regex"))...)
+	}
+	return errs
+}
+
+// validateRegexLeaf checks only what this layer can decide locally: the field
+// exists, is filterable, and holds a string, and the pattern is present. The
+// backend owns the regex subset, case-preservation, and the caps on how many
+// terms a pattern may expand to, and answers a violation with a 400, so nothing
+// here re-implements that parser.
+func validateRegexLeaf(r *searchv0.RegexPredicate, fs *fieldSet, p *field.Path) field.ErrorList {
+	errs := field.ErrorList{}
+	if r.Field == "" {
+		errs = append(errs, field.Required(p.Child("field"), "regex field is required"))
+	} else {
+		capErrs := checkCapability(fs, r.Field, resource.SearchCapabilityFilter, p.Child("field"))
+		errs = append(errs, capErrs...)
+		if len(capErrs) == 0 {
+			// Regex matches whole string terms; numbers and booleans are indexed in
+			// their native form, so a pattern would never reach them.
+			if def := fs.byName[r.Field]; def.Type != resource.SearchFieldTypeString {
+				errs = append(errs, field.Invalid(p.Child("field"), r.Field, "regex supports string fields only"))
+			}
+		}
+	}
+	// An empty pattern matches only the empty string, which on a whole-term match
+	// almost never means anything and silently returns nothing. Requiring a
+	// pattern turns that into a clear error.
+	if r.Pattern == "" {
+		errs = append(errs, field.Required(p.Child("pattern"), "regex pattern is required"))
 	}
 	return errs
 }
@@ -568,8 +628,18 @@ func applyLeaves(req *resourcepb.ResourceSearchRequest, leaves []searchv0.WhereN
 			req.Options.Fields = append(req.Options.Fields, filterRequirement(n.Filter))
 		case n.Range != nil:
 			req.Options.Fields = append(req.Options.Fields, rangeRequirements(n.Range)...)
+		case n.Regex != nil:
+			req.Options.Fields = append(req.Options.Fields, regexRequirement(n.Regex))
 		}
 	}
+}
+
+func regexRequirement(r *searchv0.RegexPredicate) *resourcepb.Requirement {
+	op := resource.OperatorRegex
+	if r.Negate {
+		op = resource.OperatorNotRegex
+	}
+	return &resourcepb.Requirement{Key: r.Field, Operator: string(op), Values: []string{r.Pattern}}
 }
 
 func applyText(req *resourcepb.ResourceSearchRequest, t *searchv0.TextPredicate) {
@@ -590,8 +660,16 @@ func applyText(req *resourcepb.ResourceSearchRequest, t *searchv0.TextPredicate)
 
 func filterRequirement(f *searchv0.FilterPredicate) *resourcepb.Requirement {
 	op := "in"
-	if f.Operator == "NotIn" {
+	switch f.Operator {
+	case "NotIn":
 		op = "notin"
+	case "All":
+		// The backend combines several values of "=" with AND, which is what All
+		// asks for. A single value stays on the "in" path so All and In agree on it,
+		// including on title, where only "in" matches exactly.
+		if len(f.Values) > 1 {
+			op = string(selection.Equals)
+		}
 	}
 	return &resourcepb.Requirement{Key: f.Field, Operator: op, Values: f.Values}
 }
@@ -682,7 +760,7 @@ func trashReturnFields(fields []string) []string {
 	if len(fields) == 0 {
 		fields = []string{trashFieldTitle, trashFieldFolder, trashFieldDeletedBy, trashFieldDeletionTime}
 	}
-	// deleted_rv is mandatory in the response; it drives restore.
+	// Always returned, so a client can restore from a trash hit without a second read.
 	if !slices.Contains(fields, trashFieldDeletedRV) {
 		fields = append(fields, trashFieldDeletedRV)
 	}

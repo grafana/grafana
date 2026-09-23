@@ -79,6 +79,7 @@ export type AccordionKeyValuesProps = {
   onToggle?: null | (() => void);
   promoGetter?: AttributePluginPromoGetter;
   datasourceType?: string;
+  openLinksInSameTab?: boolean;
 };
 
 export default function AccordionKeyValues({
@@ -96,6 +97,7 @@ export default function AccordionKeyValues({
   onToggle = null,
   promoGetter,
   datasourceType,
+  openLinksInSameTab,
 }: AccordionKeyValuesProps) {
   const isEmpty = (!Array.isArray(data) || !data.length) && !logName;
   const styles = useStyles2(getStyles);
@@ -146,6 +148,7 @@ export default function AccordionKeyValues({
           onlyValues={onlyValues}
           promoGetter={promoGetter}
           datasourceType={datasourceType}
+          openLinksInSameTab={openLinksInSameTab}
         />
       )}
     </div>

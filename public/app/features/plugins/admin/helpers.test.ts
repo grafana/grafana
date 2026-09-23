@@ -294,21 +294,7 @@ describe('Plugins/Helpers', () => {
     });
 
     describe('.managed', () => {
-      test('should map V1 config to managed object when plugin is in pluginCatalogManagedPlugins', () => {
-        const oldPluginCatalogManagedPlugins = config.pluginCatalogManagedPlugins;
-        config.pluginCatalogManagedPlugins = [remotePlugin.slug];
-        const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
-        config.pluginAdminExternalManageEnabled = true;
-
-        expect(mapRemoteToCatalog(remotePlugin)).toMatchObject({
-          managed: { enabled: true, strategy: PluginUpdateStrategy.Assigned },
-        });
-
-        config.pluginCatalogManagedPlugins = oldPluginCatalogManagedPlugins;
-        config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
-      });
-
-      test('should set managed.enabled to false if plugin is not in pluginCatalogManagedPlugins', () => {
+      test('should set managed.enabled to false if feature is not enabled', () => {
         expect(mapRemoteToCatalog(remotePlugin)).toMatchObject({
           managed: { enabled: false, strategy: undefined },
         });
@@ -891,21 +877,7 @@ describe('Plugins/Helpers', () => {
     });
 
     describe('.managed', () => {
-      test('should map V1 config to managed object when plugin is in pluginCatalogManagedPlugins', () => {
-        const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
-        config.pluginAdminExternalManageEnabled = true;
-        const oldPluginCatalogManagedPlugins = config.pluginCatalogManagedPlugins;
-        config.pluginCatalogManagedPlugins = [localPlugin.id];
-
-        expect(mapToCatalogPlugin(localPlugin)).toMatchObject({
-          managed: { enabled: true, strategy: PluginUpdateStrategy.Assigned },
-        });
-
-        config.pluginCatalogManagedPlugins = oldPluginCatalogManagedPlugins;
-        config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
-      });
-
-      test('should set managed.enabled to false if plugin is not in pluginCatalogManagedPlugins', () => {
+      test('should set managed.enabled to false if feature is not enabled', () => {
         expect(mapToCatalogPlugin(localPlugin)).toMatchObject({
           managed: { enabled: false, strategy: undefined },
         });

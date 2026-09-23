@@ -3,7 +3,7 @@ import { HttpResponse, delay, http } from 'msw';
 import { render, screen, userEvent, waitFor } from 'test/test-utils';
 import { byLabelText, byRole, byText } from 'testing-library-selector';
 
-import { setPluginLinksHook } from '@grafana/runtime';
+import { config, setPluginLinksHook } from '@grafana/runtime';
 import server from '@grafana/test-utils/server';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
@@ -607,6 +607,45 @@ describe('RuleViewer', () => {
       expect(ELEMENTS.metadata.summary(mockRule.annotations[Annotation.summary]).getAll()).toHaveLength(2);
 
       expect(ELEMENTS.details.pendingPeriod.get()).toHaveTextContent(/15m/i);
+    });
+  });
+
+  describe('History tab', () => {
+    const mockRule = getGrafanaRule(
+      { name: 'Test alert', uid: 'test-rule-uid' },
+      { uid: grafanaRulerRule.grafana_alert.uid }
+    );
+    const mockRuleIdentifier = ruleId.fromCombinedRule('grafana', mockRule);
+    const originalStateHistory = config.unifiedAlerting.stateHistory;
+    const originalDeprecatedBackend = config.unifiedAlerting.alertStateHistoryBackend;
+
+    beforeEach(() => {
+      grantPermissionsHelper([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingInstanceRead]);
+    });
+
+    afterEach(() => {
+      config.unifiedAlerting.stateHistory = originalStateHistory;
+      config.unifiedAlerting.alertStateHistoryBackend = originalDeprecatedBackend;
+    });
+
+    it('shows the history tab when a backend records state history', async () => {
+      config.unifiedAlerting.stateHistory = { backend: 'annotations' };
+
+      await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.Query);
+
+      expect(screen.getByText('History')).toBeInTheDocument();
+    });
+
+    it.each([
+      { name: 'the prometheus backend cannot answer history queries', stateHistory: { backend: 'prometheus' } },
+      { name: 'state history is turned off', stateHistory: undefined },
+    ])('hides the history tab when $name', async ({ stateHistory }) => {
+      config.unifiedAlerting.stateHistory = stateHistory;
+      config.unifiedAlerting.alertStateHistoryBackend = undefined;
+
+      await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.Query);
+
+      expect(screen.queryByText('History')).not.toBeInTheDocument();
     });
   });
 

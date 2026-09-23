@@ -23,6 +23,7 @@ import (
 var countedKinds = []string{
 	"folder.grafana.app/folders",
 	"dashboard.grafana.app/dashboards",
+	"dashboard.grafana.app/variables",
 	"dashboard.grafana.app/librarypanels",
 	"rules.alerting.grafana.app/alertrules",
 	"rules.alerting.grafana.app/recordingrules",

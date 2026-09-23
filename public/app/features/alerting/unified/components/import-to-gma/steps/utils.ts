@@ -1,7 +1,7 @@
 /**
  * Shared validation utilities for import-to-gma steps
  */
-import { isRulesForcedSkipped } from '../Wizard/steps';
+import { isAutoSyncSelected } from '../Wizard/steps';
 
 /** RFC 1123 subdomain pattern — must match the backend's identifier validation */
 const POLICY_TREE_NAME_PATTERN = /^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/;
@@ -67,8 +67,8 @@ export interface Step1ValidationParams {
 }
 
 /**
- * Validates that Step 1 form is complete and valid. When Auto-sync force-skips Rules, only a
- * data source is required.
+ * Validates that Step 1 form is complete and valid. When Auto-sync is selected, only a data
+ * source is required — there's no staged config to name or dry-run.
  */
 export function isStep1Valid(params: Step1ValidationParams): boolean {
   const {
@@ -80,7 +80,7 @@ export function isStep1Valid(params: Step1ValidationParams): boolean {
     autoSyncNotificationsEnabled,
   } = params;
 
-  if (isRulesForcedSkipped(autoSyncNotificationsEnabled, notificationsSource)) {
+  if (isAutoSyncSelected(autoSyncNotificationsEnabled, notificationsSource)) {
     return Boolean(notificationsDatasourceUID);
   }
 

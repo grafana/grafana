@@ -1,6 +1,7 @@
 import { locationService } from '@grafana/runtime';
 import { type SceneObjectUrlSyncHandler, type SceneObjectUrlValues } from '@grafana/scenes';
 
+import { NOTEBOOK_EDIT_SESSION_SOURCE } from '../analytics/types';
 import { canEditNotebooks } from '../permissions';
 import { NOTEBOOK_EDIT_PARAM, NOTEBOOK_EDIT_PARAM_ON } from '../urls';
 
@@ -44,6 +45,6 @@ export class NotebookSceneUrlSync implements SceneObjectUrlSyncHandler {
       return;
     }
 
-    this._scene.onEnterEditMode();
+    this._scene.onEnterEditMode(NOTEBOOK_EDIT_SESSION_SOURCE.NAVIGATION);
   }
 }

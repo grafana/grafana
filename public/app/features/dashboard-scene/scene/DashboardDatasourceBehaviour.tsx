@@ -11,13 +11,9 @@ import {
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
-import {
-  findVizPanelByKey,
-  getDashboardSceneFor,
-  getLibraryPanelBehavior,
-  getQueryRunnerFor,
-  getVizPanelKeyForPanelId,
-} from '../utils/utils';
+import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
+import { findVizPanelByKey, getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
+import { getVizPanelKeyForPanelId } from '../utils/utils-panels';
 
 import { type DashboardScene } from './DashboardScene';
 import { type LibraryPanelBehaviorState } from './LibraryPanelBehavior';

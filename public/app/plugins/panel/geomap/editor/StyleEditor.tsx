@@ -47,7 +47,10 @@ interface StyleEditorOptions {
   frameMatcher?: FrameMatcher;
 }
 
-type Props = StandardEditorProps<StyleConfig, StyleEditorOptions>;
+type EditorProps = StandardEditorProps<StyleConfig, StyleEditorOptions>;
+type Props = Omit<EditorProps, 'item'> & {
+  item: Pick<EditorProps['item'], 'settings'>;
+};
 
 export const StyleEditor = (props: Props) => {
   const { value, onChange, item } = props;

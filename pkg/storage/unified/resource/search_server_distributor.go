@@ -214,10 +214,7 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 	errorCh := make(chan error, expectedInstances)
 
 	for _, inst := range rs.Instances {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
+		wg.Go(func() {
 			client, err := ds.clientPool.GetClientForInstance(inst)
 			if err != nil {
 				errorCh <- fmt.Errorf("instance %s: failed to get client, %w", inst.Id, err)
@@ -225,13 +222,8 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 			}
 
 			rsp, err := client.(*RingClient).Client.RebuildIndexes(rCtx, r)
-			if err != nil {
-				errorCh <- fmt.Errorf("instance %s: failed to distribute rebuild index request, %w", inst.Id, err)
-				return
-			}
-
-			if rsp.Error != nil {
-				errorCh <- fmt.Errorf("instance %s: rebuild index request returned the error %s", inst.Id, rsp.Error.Message)
+			if err := ErrorFromResponse(rsp.GetError(), err); err != nil {
+				errorCh <- fmt.Errorf("instance %s: rebuild index request returned the error %w", inst.Id, err)
 				return
 			}
 
@@ -241,7 +233,7 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 			}
 
 			responseCh <- rsp
-		}()
+		})
 	}
 
 	wg.Wait()

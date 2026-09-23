@@ -164,7 +164,7 @@ describe('InspectJsonTab', () => {
   it('Can update model', async () => {
     const { tab, panel, scene } = await buildTestScene();
 
-    tab.onCodeEditorBlur(`{
+    tab.onJsonTextChange(`{
       "id": 12,
       "type": "table",
       "title": "New title",
@@ -203,7 +203,7 @@ describe('InspectJsonTab', () => {
     expect(originalGridItem.state.width).toBe(8);
     expect(originalGridItem.state.height).toBe(10);
 
-    tab.onCodeEditorBlur(`{
+    tab.onJsonTextChange(`{
       "id": 12,
       "type": "table",
       "title": "Panel A",
@@ -259,7 +259,7 @@ describe('InspectJsonTab', () => {
       const grid = layoutManager.state.grid as SceneGridLayout;
       const forceRenderSpy = jest.spyOn(grid, 'forceRender');
 
-      tab.onCodeEditorBlur(`{
+      tab.onJsonTextChange(`{
         "kind": "GridLayoutItem",
         "spec": {
           "x": 5,
@@ -289,7 +289,7 @@ describe('InspectJsonTab', () => {
       const { tab } = await buildTestSceneWithV2Spec();
       tab.onChangeSource({ value: 'panel-layout' });
 
-      tab.onCodeEditorBlur(`{
+      tab.onJsonTextChange(`{
         "kind": "GridLayoutItem",
         "spec": {
           "x": "not a number"

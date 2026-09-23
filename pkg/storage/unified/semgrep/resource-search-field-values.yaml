@@ -1,0 +1,17 @@
+rules:
+  - id: direct-go-resource-search-requires-field-values
+    languages: [go]
+    message: >-
+      New direct Go ResourceSearchRequest clients must request FIELD_VALUES and decode the
+      response's actual ResultFormat for mixed-version compatibility. Suppress
+      this rule at the allocation with a reason when compatibility requires a
+      different format.
+    severity: ERROR
+    pattern-either:
+      - patterns:
+          - pattern: $PB.ResourceSearchRequest{...}
+          - pattern-not: >-
+              $PB.ResourceSearchRequest{..., ResultFormat:
+              $FORMAT.ResourceSearchRequest_FIELD_VALUES, ...}
+      - pattern: new($PB.ResourceSearchRequest)
+      - pattern: var $REQUEST $PB.ResourceSearchRequest

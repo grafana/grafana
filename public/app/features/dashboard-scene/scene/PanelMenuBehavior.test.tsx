@@ -13,7 +13,7 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { config, locationService } from '@grafana/runtime';
-import { setGetObservablePluginLinks } from '@grafana/runtime/internal';
+import { FlagKeys, setGetObservablePluginLinks } from '@grafana/runtime/internal';
 import {
   LocalValueVariable,
   SceneQueryRunner,
@@ -22,6 +22,7 @@ import {
   VizPanel,
   VizPanelMenu,
 } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type GetExploreUrlArguments } from 'app/core/utils/explore';
@@ -1123,6 +1124,64 @@ describe('panelMenuBehavior', () => {
       const stylesMenu = menu.state.items?.find((i) => i.text === 'Styles')?.subMenu;
       expect(stylesMenu).toHaveLength(1);
       expect(stylesMenu?.[0].text).toBe('Copy styles');
+    });
+  });
+
+  describe('choose notebook', () => {
+    afterEach(() => {
+      setTestFlags({});
+      mocks.contextSrv.hasPermission.mockReset();
+    });
+
+    async function itemsWith({ notebooks, permission }: { notebooks: boolean; permission: boolean }) {
+      setTestFlags({ [FlagKeys.DashboardNotebooks]: notebooks });
+      mocks.contextSrv.hasPermission.mockReturnValue(permission);
+
+      const { menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      return menu.state.items ?? [];
+    }
+
+    it('is hidden when notebooks are disabled', async () => {
+      const items = await itemsWith({ notebooks: false, permission: true });
+
+      expect(items.find((item) => item.text === 'Add to notebook')).toBeUndefined();
+    });
+
+    it('is hidden without permission to write or create', async () => {
+      const items = await itemsWith({ notebooks: true, permission: false });
+
+      expect(items.find((item) => item.text === 'Add to notebook')).toBeUndefined();
+    });
+
+    // Adding a panel to a notebook writes to the notebook, so it must not be gated on dashboard
+    // edit mode the way Remove is.
+    it('is offered while reading the dashboard, not only while editing it', async () => {
+      const items = await itemsWith({ notebooks: true, permission: true });
+
+      expect(items.find((item) => item.text === 'Add to notebook')).toEqual(
+        expect.objectContaining({ iconClassName: 'search' })
+      );
+      expect(items.find((item) => item.text === 'Remove')).toBeUndefined();
+    });
+
+    it('sits in its own section immediately above Remove while editing', async () => {
+      setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
+      mocks.contextSrv.hasPermission.mockReturnValue(true);
+
+      const { scene, menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+      scene.setState({ isEditing: true });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      const texts = (menu.state.items ?? []).map((item) => (item.type === 'divider' ? '---' : item.text));
+      expect(texts.slice(-4)).toEqual(['---', 'Add to notebook', '---', 'Remove']);
     });
   });
 });

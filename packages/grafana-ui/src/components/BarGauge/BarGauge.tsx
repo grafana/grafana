@@ -2,7 +2,6 @@
 import { cx } from '@emotion/css';
 import { type CSSProperties, memo, type JSX } from 'react';
 import * as React from 'react';
-import tinycolor from 'tinycolor2';
 
 import {
   colorManipulator,
@@ -478,15 +477,15 @@ export function getCellColor(
     // if we are past real value the cell is not "on"
     if (value === null || isNaN(value.numeric) || (positionValue !== null && positionValue > value.numeric)) {
       return {
-        background: tinycolor(color).setAlpha(0.18).toRgbString(),
+        background: `rgb(from ${color} r g b / 0.18)`,
         border: 'transparent',
         isLit: false,
       };
     } else {
       return {
-        background: tinycolor(color).setAlpha(0.95).toRgbString(),
-        backgroundShade: tinycolor(color).setAlpha(0.55).toRgbString(),
-        border: tinycolor(color).setAlpha(0.9).toRgbString(),
+        background: `rgb(from ${color} r g b / 0.95)`,
+        backgroundShade: `rgb(from ${color} r g b / 0.55)`,
+        border: `rgb(from ${color} r g b / 0.9)`,
         isLit: true,
       };
     }
@@ -566,7 +565,7 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
 
     if (isBasic) {
       // Basic styles
-      barStyles.background = `${tinycolor(barColor).setAlpha(0.35).toRgbString()}`;
+      barStyles.background = `rgb(from ${barColor} r g b / 0.35)`;
       barStyles.borderTop = `2px solid ${barColor}`;
     } else {
       // Gradient styles
@@ -592,7 +591,7 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
 
     if (isBasic) {
       // Basic styles
-      barStyles.background = `${tinycolor(barColor).setAlpha(0.35).toRgbString()}`;
+      barStyles.background = `rgb(from ${barColor} r g b / 0.35)`;
       barStyles.borderRight = `2px solid ${barColor}`;
     } else {
       // Gradient styles

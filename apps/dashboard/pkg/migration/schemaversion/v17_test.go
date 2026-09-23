@@ -9,6 +9,26 @@ import (
 func TestV17(t *testing.T) {
 	tests := []migrationTestCase{
 		{
+			name: "panel with minSpan greater than the grid width gets minSpan removed without setting maxPerRow",
+			input: map[string]interface{}{
+				"schemaVersion": 16,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":      1,
+						"minSpan": 25,
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 17,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id": 1,
+					},
+				},
+			},
+		},
+		{
 			name: "panel with minSpan 8 gets converted to maxPerRow 3",
 			input: map[string]interface{}{
 				"title":         "V17 MinSpan to MaxPerRow Migration Test Dashboard",

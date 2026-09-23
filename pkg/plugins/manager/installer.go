@@ -75,8 +75,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 
 		err = m.Add(ctx, dep.ID, "", plugins.NewAddOpts(opts.GrafanaVersion(), opts.OS(), opts.Arch(), ""))
 		if err != nil {
-			var dupeErr plugins.DuplicateError
-			if errors.As(err, &dupeErr) {
+			if _, ok := errors.AsType[plugins.DuplicateError](err); ok {
 				m.log.Info("Dependency already installed", "pluginId", dep.ID)
 				continue
 			}

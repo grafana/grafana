@@ -67,6 +67,13 @@ func (p *CatalogProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, 
 		logger = logger.With("requestNamespace", ns.Value)
 	}
 
+	// An empty version would collapse the URL below to the "list all versions"
+	// endpoint instead of "get this version"
+	if ref.Version == "" {
+		metrics.MetaFetchErrorsTotal.WithLabelValues(p.Name(), "missing_version").Inc()
+		return nil, fmt.Errorf("version is required to fetch plugin metadata from grafana.com API")
+	}
+
 	u, err := url.Parse(p.grafanaComAPIURL)
 	if err != nil {
 		return nil, fmt.Errorf("invalid grafana.com API URL: %w", err)
@@ -116,7 +123,7 @@ func (p *CatalogProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, 
 	var gcomMeta grafanaComPluginVersionMeta
 	if err = json.NewDecoder(resp.Body).Decode(&gcomMeta); err != nil {
 		metrics.MetaFetchErrorsTotal.WithLabelValues(p.Name(), "decode").Inc()
-		return nil, fmt.Errorf("failed to decode response: %w", err)
+		return nil, fmt.Errorf("failed to decode plugin version API response from %s: %w", p.grafanaComAPIURL, err)
 	}
 
 	// If we're looking up a child plugin, filter for it in the children field

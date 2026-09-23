@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"iter"
+	"maps"
 	"math"
 	"net/http"
 	"os"
@@ -265,11 +266,19 @@ type bleveBackend struct {
 	// and BuildIndex unregisters it after the call completes.
 	inFlightBuildDirsMu sync.Mutex
 	inFlightBuildDirs   map[string]int
+
+	// Kinds with a value in the indexed kinds metric. Used to drop series for kinds
+	// that no longer have an open index. Only touched by updateIndexMetricsPeriodically.
+	reportedIndexedKinds map[string]struct{}
 }
 
 func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics) (*bleveBackend, error) {
 	if opts.Root == "" {
 		return nil, fmt.Errorf("bleve backend missing root folder configuration")
+	}
+	// Recording sites should not have to check for nil.
+	if indexMetrics == nil {
+		indexMetrics = resource.ProvideIndexMetrics(nil)
 	}
 	absRoot, err := filepath.Abs(opts.Root)
 	if err != nil {
@@ -339,6 +348,7 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 		maxSupportedIndexFormat: maxSupportedFormat,
 		lastUploadTime:          map[resource.NamespacedResource]time.Time{},
 		inFlightBuildDirs:       map[string]int{},
+		reportedIndexedKinds:    map[string]struct{}{},
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -375,10 +385,8 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 		go be.cleanupDiskPeriodically(ctx)
 	}
 
-	if be.indexMetrics != nil {
-		be.bgTasksWg.Add(1)
-		go be.updateIndexSizeMetric(ctx, opts.Root)
-	}
+	be.bgTasksWg.Add(1)
+	go be.updateIndexMetricsPeriodically(ctx, opts.Root)
 
 	return be, nil
 }
@@ -428,9 +436,7 @@ func (b *bleveBackend) closeIndex(idx *bleveIndex, key resource.NamespacedResour
 		b.log.Error("failed to close index", "key", key, "err", err)
 	}
 
-	if b.indexMetrics != nil {
-		b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage).Dec()
-	}
+	b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage).Dec()
 }
 
 // This function will periodically evict expired or un-owned indexes from the cache.
@@ -644,55 +650,119 @@ func (b *bleveBackend) runUploadSnapshots(ctx context.Context) {
 		}
 		b.setUploadTracking(key, time.Now())
 		b.recordSnapshotUploadStatus(snapshotUploadStatusSuccess)
-		if b.indexMetrics != nil {
-			b.indexMetrics.IndexSnapshotUploadDuration.Observe(time.Since(start).Seconds())
-		}
+		b.indexMetrics.IndexSnapshotUploadDuration.Observe(time.Since(start).Seconds())
 	}
 }
 
 func (b *bleveBackend) recordSnapshotUploadStatus(status string) {
-	if b.indexMetrics == nil {
-		return
-	}
 	b.indexMetrics.IndexSnapshotUploads.WithLabelValues(status).Inc()
 }
 
-// updateIndexSizeMetric sets the total size of all file-based indices metric.
-func (b *bleveBackend) updateIndexSizeMetric(ctx context.Context, indexPath string) {
+const indexMetricsRefreshInterval = 60 * time.Second
+
+// updateIndexMetricsPeriodically refreshes the metrics that describe what the
+// indexes currently hold.
+func (b *bleveBackend) updateIndexMetricsPeriodically(ctx context.Context, indexPath string) {
 	defer b.bgTasksWg.Done()
 
 	for ctx.Err() == nil {
-		var totalSize int64
-
-		err := filepath.WalkDir(indexPath, func(path string, info os.DirEntry, err error) error {
-			if err != nil {
-				return err
-			}
-			if err = ctx.Err(); err != nil {
-				return err
-			}
-			if !info.IsDir() {
-				fileInfo, err := info.Info()
-				if err != nil {
-					return err
-				}
-				totalSize += fileInfo.Size()
-			}
-			return nil
-		})
-
-		if err == nil {
-			b.indexMetrics.IndexSize.Set(float64(totalSize))
-		} else {
-			b.log.Error("got error while trying to calculate bleve file index size", "error", err)
-		}
+		b.updateIndexSizeMetric(ctx, indexPath)
+		b.updateIndexedKindsMetric(ctx)
 
 		select {
 		case <-ctx.Done():
 			return
-		case <-time.After(60 * time.Second):
+		case <-time.After(indexMetricsRefreshInterval):
+		}
+	}
+}
+
+// indexedDocCounts holds the document counts reported for one kind.
+type indexedDocCounts struct {
+	live    int64
+	deleted int64
+}
+
+// updateIndexedKindsMetric reports the number of documents currently indexed per
+// kind. The value is recomputed on every run rather than accumulated, so rebuilds
+// and incremental updates don't inflate it.
+func (b *bleveBackend) updateIndexedKindsMetric(ctx context.Context) {
+	counts := map[string]indexedDocCounts{}
+	for _, key := range b.GetOpenIndexes() {
+		if ctx.Err() != nil {
+			return
+		}
+		// peekCachedIndex so this scan doesn't keep unowned indexes from being evicted.
+		idx := b.peekCachedIndex(key)
+		if idx == nil {
 			continue
 		}
+		// How many documents the index holds is free to ask for, and counting trash
+		// only visits the documents in it, so live comes out of the difference.
+		// Counting live documents directly would visit every document in the index.
+		total, err := idx.index.DocCount()
+		if err != nil {
+			b.log.Debug("skipping index in indexed kinds metric because document count is unavailable", "key", key, "err", err)
+			continue
+		}
+		deleted, err := idx.deletedDocCount(ctx)
+		if err != nil {
+			b.log.Debug("skipping index in indexed kinds metric because deleted document count is unavailable", "key", key, "err", err)
+			continue
+		}
+
+		// The same kind can be indexed in many namespaces, each with its own index.
+		c := counts[key.Resource]
+		// The two counts are read one after the other, so a write in between can make
+		// this negative.
+		c.live += max(int64(total)-deleted, 0)
+		c.deleted += deleted
+		counts[key.Resource] = c
+	}
+
+	for kind, count := range counts {
+		b.indexMetrics.IndexedKinds.WithLabelValues(kind, resource.IndexedDocumentsLive).Set(float64(count.live))
+		b.indexMetrics.IndexedKinds.WithLabelValues(kind, resource.IndexedDocumentsDeleted).Set(float64(count.deleted))
+		b.reportedIndexedKinds[kind] = struct{}{}
+	}
+
+	// Without this, a kind whose index was closed or evicted would keep reporting
+	// the count it had when it was last open.
+	for kind := range b.reportedIndexedKinds {
+		if _, ok := counts[kind]; ok {
+			continue
+		}
+		b.indexMetrics.IndexedKinds.DeleteLabelValues(kind, resource.IndexedDocumentsLive)
+		b.indexMetrics.IndexedKinds.DeleteLabelValues(kind, resource.IndexedDocumentsDeleted)
+		delete(b.reportedIndexedKinds, kind)
+	}
+}
+
+// updateIndexSizeMetric sets the total size of all file-based indices metric.
+func (b *bleveBackend) updateIndexSizeMetric(ctx context.Context, indexPath string) {
+	var totalSize int64
+
+	err := filepath.WalkDir(indexPath, func(path string, info os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if err = ctx.Err(); err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			fileInfo, err := info.Info()
+			if err != nil {
+				return err
+			}
+			totalSize += fileInfo.Size()
+		}
+		return nil
+	})
+
+	if err == nil {
+		b.indexMetrics.IndexSize.Set(float64(totalSize))
+	} else {
+		b.log.Error("got error while trying to calculate bleve file index size", "error", err)
 	}
 }
 
@@ -948,9 +1018,7 @@ func (b *bleveBackend) BuildIndex(
 
 		idx.resourceVersion.Store(prepared.indexRV)
 
-		if b.indexMetrics != nil {
-			b.indexMetrics.IndexBuildSkipped.Inc()
-		}
+		b.indexMetrics.IndexBuildSkipped.Inc()
 	}
 
 	// Set expiration after building the index. Only expire in-memory indexes.
@@ -975,18 +1043,14 @@ func (b *bleveBackend) BuildIndex(
 
 	// If there was a previous index in the cache, close it.
 	if prev != nil {
-		if b.indexMetrics != nil {
-			b.indexMetrics.OpenIndexes.WithLabelValues(prev.indexStorage).Dec()
-		}
+		b.indexMetrics.OpenIndexes.WithLabelValues(prev.indexStorage).Dec()
 
 		err := prev.stopUpdaterAndCloseIndex()
 		if err != nil {
 			logWithDetails.Error("failed to close previous index", "key", key, "err", err)
 		}
 	}
-	if b.indexMetrics != nil {
-		b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage).Inc()
-	}
+	b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage).Inc()
 
 	// Clean up the old index directories. If we have built a new file-based index, the new name is ignored.
 	// If we have created in-memory index and fileIndexName is empty, all old directories can be removed.
@@ -1280,7 +1344,11 @@ func (a *adaptiveBuildIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 		return nil
 	}
 
+	// Copying the index to disk is work this batch caused, so it is reported
+	// rather than left unaccounted.
+	promoteStart := time.Now()
 	promoted, fileIndexName, cleanupDir, err := a.promote(a.bleveIndex)
+	a.recordPromotePhase(req.Path, time.Since(promoteStart))
 	if err != nil {
 		return err
 	}
@@ -1361,17 +1429,13 @@ func countDocsForLog(index bleve.Index) uint64 {
 }
 
 func (b *bleveBackend) buildIndexFromScratch(idx buildResourceIndex, indexBuildReason string, builder resource.BuildFn, logger log.Logger) error {
-	if b.indexMetrics != nil {
-		b.indexMetrics.IndexBuilds.WithLabelValues(indexBuildReason).Inc()
-	}
+	b.indexMetrics.IndexBuilds.WithLabelValues(indexBuildReason).Inc()
 
 	start := time.Now()
 	listRV, err := builder(idx)
 	if err != nil {
 		logger.Error("Failed to build index", "err", err)
-		if b.indexMetrics != nil {
-			b.indexMetrics.IndexBuildFailures.Inc()
-		}
+		b.indexMetrics.IndexBuildFailures.Inc()
 		return fmt.Errorf("failed to build index: %w", err)
 	}
 	if err := idx.updateResourceVersion(listRV); err != nil {
@@ -1382,9 +1446,7 @@ func (b *bleveBackend) buildIndexFromScratch(idx buildResourceIndex, indexBuildR
 	elapsed := time.Since(start)
 	logger.Info("Finished building index", "elapsed", elapsed, "listRV", listRV)
 
-	if b.indexMetrics != nil {
-		b.indexMetrics.IndexCreationTime.WithLabelValues().Observe(elapsed.Seconds())
-	}
+	b.indexMetrics.IndexCreationTime.WithLabelValues().Observe(elapsed.Seconds())
 	return nil
 }
 
@@ -1689,9 +1751,7 @@ func (b *bleveBackend) closeAllIndexes() {
 		}
 		delete(b.cache, key)
 
-		if b.indexMetrics != nil {
-			b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage).Dec()
-		}
+		b.indexMetrics.OpenIndexes.WithLabelValues(idx.indexStorage).Dec()
 	}
 }
 
@@ -1711,6 +1771,8 @@ type bleveIndex struct {
 	index bleve.Index
 	// Index features this index was built with, from its build info.
 	features []resource.IndexFeature
+	// Selectable fields this index was built with, from its build info.
+	mappedSelectableFields []string
 	// Whether this index holds label values whole, from its own mapping.
 	labelsAreKeyword bool
 	// Both are needed to tell "trash is off" from "trash is on but this index has
@@ -1753,7 +1815,7 @@ type bleveIndex struct {
 
 	indexMetrics     *resource.BleveIndexMetrics
 	updateLatency    prometheus.Histogram
-	updatedDocuments prometheus.Summary
+	updatedDocuments prometheus.Histogram
 
 	// Used to detect if the index can be safely closed, if it no longer belongs to this instance. UnixMilli.
 	lastFetchedFromCache atomic.Int64
@@ -1784,37 +1846,38 @@ func (b *bleveBackend) newBleveIndex(
 ) *bleveIndex {
 	// Read once: what an index maps cannot change while it is open.
 	var features []resource.IndexFeature
+	var mappedSelectableFields []string
 	if info, err := getBuildInfo(index); err == nil {
 		features = info.Features
+		mappedSelectableFields = info.SelectableFields
 	} else {
 		logger.Warn("failed to read index features, treating the index as having none", "err", err)
 	}
 
 	bi := &bleveIndex{
-		key:                   key,
-		index:                 index,
-		features:              features,
-		labelsAreKeyword:      labelAnalyzerIsKeyword(index),
-		keepsDeletedDocuments: slices.Contains(features, resource.IndexFeatureHoldsDeletedDocuments),
-		wantsDeletedDocuments: b.opts.IndexDeletedDocuments,
-		indexStorage:          newIndexType,
-		fields:                fields,
-		allFields:             allFields,
-		standard:              standardSearchFields,
-		logger:                logger,
-		updaterFn:             updaterFn,
-		minUpdateInterval:     b.opts.IndexMinUpdateInterval,
-		indexMetrics:          b.indexMetrics,
-		enforceSortCapability: b.opts.EnforceSortCapability,
-		postRankAuthzEnabled:  b.opts.PostRankAuthzEnabled,
-		postRankAuthz:         b.opts.PostRankAuthz.effective(),
-		trashRetention:        b.opts.TrashRetention,
+		key:                    key,
+		index:                  index,
+		features:               features,
+		mappedSelectableFields: mappedSelectableFields,
+		labelsAreKeyword:       labelAnalyzerIsKeyword(index),
+		keepsDeletedDocuments:  slices.Contains(features, resource.IndexFeatureHoldsDeletedDocuments),
+		wantsDeletedDocuments:  b.opts.IndexDeletedDocuments,
+		indexStorage:           newIndexType,
+		fields:                 fields,
+		allFields:              allFields,
+		standard:               standardSearchFields,
+		logger:                 logger,
+		updaterFn:              updaterFn,
+		minUpdateInterval:      b.opts.IndexMinUpdateInterval,
+		indexMetrics:           b.indexMetrics,
+		enforceSortCapability:  b.opts.EnforceSortCapability,
+		postRankAuthzEnabled:   b.opts.PostRankAuthzEnabled,
+		postRankAuthz:          b.opts.PostRankAuthz.effective(),
+		trashRetention:         b.opts.TrashRetention,
 	}
 	bi.updaterCond = sync.NewCond(&bi.updaterMu)
-	if b.indexMetrics != nil {
-		bi.updateLatency = b.indexMetrics.UpdateLatency
-		bi.updatedDocuments = b.indexMetrics.UpdatedDocuments
-	}
+	bi.updateLatency = b.indexMetrics.UpdateLatency
+	bi.updatedDocuments = b.indexMetrics.UpdatedDocuments
 	return bi
 }
 
@@ -1824,6 +1887,32 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 		return nil
 	}
 
+	mapStart := time.Now()
+	batch, mapErr := b.mapBatch(req)
+	mapElapsed := time.Since(mapStart)
+	if mapErr != nil {
+		// The time still counts, so a batch that fails to map is not missing from
+		// the metrics.
+		b.recordBatchPhases(req.Path, mapElapsed, 0, 0, 0, false)
+		return mapErr
+	}
+
+	// The mutation count is part of writing the batch: it reads and writes the
+	// index's own data, so it belongs to the commit phase. Its failure does not
+	// unmake the write, so the bytes are reported on the batch alone.
+	commitStart := time.Now()
+	commitErr := b.index.Batch(batch)
+	err := commitErr
+	if err == nil {
+		err = b.addSnapshotMutationCount(int64(len(req.Items)))
+	}
+	b.recordBatchPhases(req.Path, mapElapsed, time.Since(commitStart), batch.TotalDocsSize(), len(req.Items), commitErr == nil)
+	return err
+}
+
+// mapBatch turns the request into a bleve batch, mapping each document onto the
+// index schema.
+func (b *bleveIndex) mapBatch(req *resource.BulkIndexRequest) (*bleve.Batch, error) {
 	batch := b.index.NewBatch()
 	var undeclaredFields map[string]struct{}
 	droppedMarkers := 0
@@ -1831,7 +1920,7 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 		switch item.Action {
 		case resource.ActionIndex:
 			if item.Doc == nil {
-				return fmt.Errorf("missing document")
+				return nil, fmt.Errorf("missing document")
 			}
 
 			// An index built before these fields were mapped drops them, which would
@@ -1861,7 +1950,7 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 
 			err := batch.Index(resource.SearchID(doc.Key), doc)
 			if err != nil {
-				return err
+				return nil, err
 			}
 		case resource.ActionDelete:
 			batch.Delete(resource.SearchID(item.Key))
@@ -1877,10 +1966,33 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 			"documents", droppedMarkers)
 	}
 
-	if err := b.index.Batch(batch); err != nil {
-		return err
+	return batch, nil
+}
+
+// recordPromotePhase reports what copying the index to disk cost, for the one
+// batch that crosses the threshold.
+func (a *adaptiveBuildIndex) recordPromotePhase(path string, d time.Duration) {
+	if a.bleveIndex == nil || path == "" {
+		return
 	}
-	return b.addSnapshotMutationCount(int64(len(req.Items)))
+	a.indexMetrics.BuildPhaseSeconds.WithLabelValues(resource.IndexPhasePromote, path, a.key.Group, a.key.Resource).Add(d.Seconds())
+}
+
+// recordBatchPhases separates the CPU spent mapping documents onto the index
+// schema from the write that follows, so a slow index can be told apart from a
+// slow disk. Time counts whether or not the write succeeded, since it was
+// spent; documents and bytes count what the write accepted, which only the
+// index knows. An empty path means the caller is not measuring.
+func (b *bleveIndex) recordBatchPhases(path string, mapped, commit time.Duration, indexedBytes uint64, documents int, committed bool) {
+	if path == "" {
+		return
+	}
+	b.indexMetrics.BuildPhaseSeconds.WithLabelValues(resource.IndexPhaseMap, path, b.key.Group, b.key.Resource).Add(mapped.Seconds())
+	b.indexMetrics.BuildPhaseSeconds.WithLabelValues(resource.IndexPhaseCommit, path, b.key.Group, b.key.Resource).Add(commit.Seconds())
+	if committed {
+		b.indexMetrics.BuildDocuments.WithLabelValues(resource.IndexPhaseCommit, path, b.key.Group, b.key.Resource).Add(float64(documents))
+		b.indexMetrics.BuildIndexedBytes.WithLabelValues(path, b.key.Group, b.key.Resource).Add(float64(indexedBytes))
+	}
 }
 
 // mapsTrashFields reports whether this index can hold everything a deleted
@@ -1979,10 +2091,7 @@ func (b *bleveIndex) subtractSnapshotMutationCount(delta int64) error {
 	if err != nil {
 		return err
 	}
-	remaining := current - delta
-	if remaining < 0 {
-		remaining = 0
-	}
+	remaining := max(current-delta, 0)
 	return writeSnapshotMutationCount(b.index, remaining)
 }
 
@@ -2195,6 +2304,32 @@ func (b *bleveIndex) CountManagedObjects(ctx context.Context, stats *resource.Se
 	return vals, nil
 }
 
+func (b *bleveIndex) observeSearchResultFormat(response *resourcepb.ResourceSearchResponse) {
+	if response.GetResultFormat() == resourcepb.ResourceSearchRequest_UNSPECIFIED {
+		return
+	}
+	b.indexMetrics.SearchResultFormats.WithLabelValues(strings.ToLower(response.ResultFormat.String())).Inc()
+}
+
+func (b *bleveIndex) initialSearchResponse(req *resourcepb.ResourceSearchRequest) *resourcepb.ResourceSearchResponse {
+	resultFormat, err := selectedResultFormat(req.ResultFormat)
+	if err != nil {
+		return &resourcepb.ResourceSearchResponse{
+			Error: resource.NewBadRequestError(err.Error()),
+		}
+	}
+	if req.Options == nil || req.Options.Key == nil {
+		return &resourcepb.ResourceSearchResponse{
+			Error: resource.NewBadRequestError("missing query key"),
+		}
+	}
+	return &resourcepb.ResourceSearchResponse{
+		Error:           b.verifyKey(req.Options.Key),
+		ResourceVersion: b.resourceVersion.Load(),
+		ResultFormat:    resultFormat,
+	}
+}
+
 // Search implements resource.DocumentIndex.
 func (b *bleveIndex) Search(
 	ctx context.Context,
@@ -2202,23 +2337,17 @@ func (b *bleveIndex) Search(
 	req *resourcepb.ResourceSearchRequest,
 	federate []resource.ResourceIndex, // For federated queries, these will match the values in req.federate
 	stats *resource.SearchStats,
-) (*resourcepb.ResourceSearchResponse, error) {
+) (response *resourcepb.ResourceSearchResponse, _ error) {
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.Search")
 	defer span.End()
 
-	if req.Options == nil || req.Options.Key == nil {
-		return &resourcepb.ResourceSearchResponse{
-			Error: resource.NewBadRequestError("missing query key"),
-		}, nil
-	}
-
-	response := &resourcepb.ResourceSearchResponse{
-		Error:           b.verifyKey(req.Options.Key),
-		ResourceVersion: b.resourceVersion.Load(),
-	}
+	response = b.initialSearchResponse(req)
 	if response.Error != nil {
 		return response, nil
 	}
+	defer func() {
+		b.observeSearchResultFormat(response)
+	}()
 
 	// Verifies the index federation
 	index, err := b.getIndex(ctx, req, federate)
@@ -2268,6 +2397,13 @@ func (b *bleveIndex) Search(
 		return response, nil
 	}
 
+	// Keep the response fields before ensureSearchFields expands the Bleve load
+	// list. The query conversion may have added _score, which is part of the
+	// response shape but is not a stored index field.
+	selectFields := slices.Clone(searchrequest.Fields)
+	if len(req.Fields) < 1 && req.Limit > 0 {
+		selectFields = append(selectFields, resource.SEARCH_FIELD_ALL_FIELDS)
+	}
 	if err := b.ensureSearchFields(searchrequest, req); err != nil {
 		return nil, err
 	}
@@ -2301,23 +2437,25 @@ func (b *bleveIndex) Search(
 		return response, nil
 	}
 
-	// selectFields is the response column list, derived from the caller's
-	// requested fields (or the all-fields sentinel when none were requested).
-	// It is snapshotted before ensureAuthzFields so the folder field — which
-	// bleve loads only to authorize hits — is never returned to the caller.
-	// This keeps "fields loaded from bleve" (searchrequest.Fields) separate
-	// from "fields returned to the caller" (selectFields).
-	selectFields := slices.Clone(searchrequest.Fields)
+	var fieldValueSchema *fieldValueResultSchema
+	if response.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES {
+		fieldValueSchema, err = b.resolveFieldValueSchema(selectFields)
+		if err != nil {
+			return &resourcepb.ResourceSearchResponse{
+				Error: resource.NewBadRequestError(err.Error()),
+			}, nil
+		}
+	}
 	if postRank {
 		b.ensureAuthzFields(searchrequest, trashAuthz != nil)
 	}
 	stats.AddRequestConversionTime(time.Since(conversionStarts))
 
 	if postRank {
-		return b.runPostFilterAuthz(ctx, access, req, index, searchrequest, selectFields, stats, response, trashAuthz)
+		return b.runPostFilterAuthz(ctx, access, req, index, searchrequest, selectFields, fieldValueSchema, stats, response, trashAuthz)
 	}
 
-	res, err := index.SearchInContext(ctx, searchrequest)
+	res, err := searchInContext(ctx, index, searchrequest)
 	if err != nil {
 		return nil, err
 	}
@@ -2333,8 +2471,7 @@ func (b *bleveIndex) Search(
 	stats.AddReturnedDocuments(len(res.Hits))
 
 	resultsConversionStart := time.Now()
-	response.Results, err = b.hitsToTable(ctx, selectFields, res.Hits, searchrequest.Sort, req.Explain)
-	if err != nil {
+	if err := b.setSearchResults(ctx, response, selectFields, fieldValueSchema, res.Hits, searchrequest.Sort, req.Explain); err != nil {
 		return nil, err
 	}
 
@@ -2353,6 +2490,36 @@ func (b *bleveIndex) Search(
 	}
 	stats.AddResultsConversionTime(time.Since(resultsConversionStart))
 	return response, nil
+}
+
+func searchInContext(ctx context.Context, index bleve.Index, req *bleve.SearchRequest) (*bleve.SearchResult, error) {
+	result, err := index.SearchInContext(ctx, req)
+	if err := regexSearchError(result, err); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// deletedDocCount counts the documents the index keeps so they can be found in
+// trash. Only documents carrying the marker are visited, so this costs about as
+// much as the trash is big, not as much as the index is big.
+func (b *bleveIndex) deletedDocCount(ctx context.Context) (int64, error) {
+	ctx, span := tracer.Start(ctx, "search.bleveIndex.deletedDocCount")
+	defer span.End()
+
+	marked := bleve.NewBoolFieldQuery(true)
+	marked.SetField(resource.SEARCH_FIELD_IS_DELETED)
+
+	req := &bleve.SearchRequest{
+		Size:   0, // we just need the count
+		Fields: []string{},
+		Query:  marked,
+	}
+	rsp, err := b.index.SearchInContext(ctx, req)
+	if rsp == nil {
+		return 0, err
+	}
+	return int64(rsp.Total), err
 }
 
 // DocCount counts live documents, so callers using it as a size estimate
@@ -2434,7 +2601,15 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.toBleveSearchRequest") //nolint:staticcheck,ineffassign // SA4006: ctx intentionally kept so future code added to this function inherits the traced span
 	defer span.End()
 
+	if errResult := rejectInternalFields(req); errResult != nil {
+		return nil, errResult
+	}
+
 	if errResult := validateTrashRequest(req); errResult != nil {
+		return nil, errResult
+	}
+
+	if errResult := b.rejectUnmappedSelectableFields(req); errResult != nil {
 		return nil, errResult
 	}
 
@@ -2515,10 +2690,14 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	textQuery := b.buildTextQuery(searchrequest, req)
 	expirationThreshold := int64(0)
 	if req.IsDeleted {
-		// An index built before deleted documents were being kept holds none, so trash
-		// would read as empty when it is really unavailable until the index rebuilds.
-		if !b.keepsDeletedDocuments && b.wantsDeletedDocuments {
-			return nil, resource.NewServiceUnavailableError("trash is not available for this resource until its search index has been rebuilt")
+		// An index that does not keep deleted documents cannot distinguish an empty
+		// trash from unavailable trash, so fail instead of returning a misleading result.
+		if !b.keepsDeletedDocuments {
+			message := "trash is not available for this resource because indexing deleted documents is disabled"
+			if b.wantsDeletedDocuments {
+				message = "trash is not available for this resource until its search index has been rebuilt"
+			}
+			return nil, resource.NewServiceUnavailableError(message)
 		}
 		if t, ok := b.trashRetention.expirationThreshold(b.key.Group, b.key.Resource, time.Now()); ok {
 			expirationThreshold = t
@@ -2807,6 +2986,48 @@ func validateTrashRequest(req *resourcepb.ResourceSearchRequest) *resourcepb.Err
 	return nil
 }
 
+// rejectInternalFields refuses a request naming an index field that exists for the
+// backend's own use. Without this a filter on one matches nothing and a sort on one
+// orders by nothing, neither with any sign the field was never usable.
+//
+// Unconditional, unlike the sort capability check: an internal name is not a field
+// whose capabilities fall short, it is a field no request may name.
+func rejectInternalFields(req *resourcepb.ResourceSearchRequest) *resourcepb.ErrorResult {
+	refused := func(key string) *resourcepb.ErrorResult {
+		return resource.NewBadRequestError(fmt.Sprintf("field %q is internal to the search index", key))
+	}
+	for _, f := range req.Fields {
+		if resource.IsInternalSearchField(f) {
+			return refused(f)
+		}
+	}
+	for _, sort := range req.SortBy {
+		if resource.IsInternalSearchField(sort.Field) {
+			return refused(sort.Field)
+		}
+	}
+	for _, f := range req.QueryFields {
+		if resource.IsInternalSearchField(f.Name) {
+			return refused(f.Name)
+		}
+	}
+	for _, facet := range req.Facet {
+		if resource.IsInternalSearchField(facet.GetField()) {
+			return refused(facet.GetField())
+		}
+	}
+	// Labels are left out on purpose: a label key is user data, and an object may
+	// carry a label named like an internal field without any conflict.
+	if req.Options != nil {
+		for _, f := range req.Options.Fields {
+			if resource.IsInternalSearchField(f.Key) {
+				return refused(f.Key)
+			}
+		}
+	}
+	return nil
+}
+
 // rejectTrashFieldsOnLiveSearch refuses a live search naming a field only deleted
 // documents carry, so a filter that would match nothing fails loudly instead.
 func rejectTrashFieldsOnLiveSearch(req *resourcepb.ResourceSearchRequest) *resourcepb.ErrorResult {
@@ -2837,6 +3058,35 @@ func rejectTrashFieldsOnLiveSearch(req *resourcepb.ResourceSearchRequest) *resou
 		}
 	}
 	return nil
+}
+
+// rejectUnmappedSelectableFields refuses a filter on a selectable field this index
+// was not built with. Without this the filter is an exact term query against a
+// field that does not exist, which matches nothing and reads as "no object
+// matches".
+//
+// An index that maps selectable fields records them, so an empty list is read as
+// none mapped rather than unknown: refusing a request the index could have
+// answered costs a slower path, letting one through returns a wrong answer.
+func (b *bleveIndex) rejectUnmappedSelectableFields(req *resourcepb.ResourceSearchRequest) *resourcepb.ErrorResult {
+	if req.Options == nil {
+		return nil
+	}
+
+	var unmapped []string
+	for _, f := range req.Options.Fields {
+		name, ok := strings.CutPrefix(f.Key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX)
+		if !ok {
+			continue
+		}
+		if !slices.Contains(b.mappedSelectableFields, name) {
+			unmapped = append(unmapped, f.Key)
+		}
+	}
+	if len(unmapped) == 0 {
+		return nil
+	}
+	return resource.NewSelectableFieldNotIndexedError(unmapped)
 }
 
 // resolveFieldName maps a public field name to its physical index name. Clients
@@ -2988,7 +3238,9 @@ func (b *bleveIndex) buildTextQuery(searchrequest *bleve.SearchRequest, req *res
 	}
 
 	// Free-text search uses explicit query fields so each title field can use the query type that matches its analyzer.
-	searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_SCORE)
+	if !slices.Contains(searchrequest.Fields, resource.SEARCH_FIELD_SCORE) {
+		searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_SCORE)
+	}
 	queryFields := b.resolveQueryFields(req.QueryFields)
 
 	for _, field := range queryFields {
@@ -3328,9 +3580,7 @@ func (b *bleveIndex) checkSortCapability(req *resourcepb.ResourceSearchRequest) 
 		if b.sortableField(sort.Field) {
 			continue
 		}
-		if b.indexMetrics != nil {
-			b.indexMetrics.SearchCapabilityViolations.WithLabelValues(b.key.Resource, string(resource.SearchCapabilitySort)).Inc()
-		}
+		b.indexMetrics.SearchCapabilityViolations.WithLabelValues(b.key.Resource, string(resource.SearchCapabilitySort)).Inc()
 		if !b.enforceSortCapability {
 			b.logger.Warn("search sorts on a field that does not declare the sort capability", "field", sort.Field)
 			continue
@@ -3395,8 +3645,19 @@ func (b *bleveIndex) usesExactTermFilter(key string) bool {
 	return ok && kf.filterable
 }
 
-// Convert a "requirement" into a bleve query
+// Convert a "requirement" into a bleve query.
+//
+// Combining rules for several values: "=" is an AND, so the field must hold
+// every value, while "in" is an OR, so at least one is enough. The numeric path
+// (numberOrBoolSetQuery) follows the same rules.
 func (b *bleveIndex) requirementQuery(req *resourcepb.Requirement) (query.Query, *resourcepb.ErrorResult) {
+	if selection.Operator(req.Operator) == resource.OperatorRegex {
+		return b.regexRequirementQuery(req, false)
+	}
+	if selection.Operator(req.Operator) == resource.OperatorNotRegex {
+		return b.regexRequirementQuery(req, true)
+	}
+
 	// Boolean and numeric fields are indexed in their native form, which a term
 	// or match query cannot reach, so they take a separate path.
 	if nb, ok := b.numberOrBoolFieldFor(req.Key); ok {
@@ -3488,8 +3749,7 @@ func numberOrBoolQuery(nb numberOrBoolField, req *resourcepb.Requirement) (query
 	}
 }
 
-// Combining rules follow the string path: "=" with several values is an AND,
-// "in" is an OR.
+// Combining rules follow the string path, see requirementQuery.
 func numberOrBoolSetQuery(nb numberOrBoolField, req *resourcepb.Requirement) (query.Query, *resourcepb.ErrorResult) {
 	op := selection.Operator(req.Operator)
 	if op == selection.DoubleEquals && len(req.Values) != 1 {
@@ -3877,9 +4137,10 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 	}
 	for rowID, match := range hits {
 		row := &resourcepb.ResourceTableRow{
-			Key:        &resourcepb.ResourceKey{},
-			Cells:      make([][]byte, len(fields)),
-			SortFields: hitSortFields(match, sort),
+			Key:             &resourcepb.ResourceKey{},
+			ResourceVersion: b.hitResourceVersion(match),
+			Cells:           make([][]byte, len(fields)),
+			SortFields:      hitSortFields(match, sort),
 		}
 		table.Rows[rowID] = row
 
@@ -3902,13 +4163,16 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 					row.Cells[i], err = json.Marshal(match.Expl)
 				}
 			case resource.SEARCH_FIELD_LEGACY_ID:
-				v := match.Fields[resource.SEARCH_FIELD_LABELS+"."+resource.SEARCH_FIELD_LEGACY_ID]
-				if v != nil {
-					str, ok := v.(string)
-					if ok {
-						id, _ := strconv.ParseInt(str, 10, 64)
-						row.Cells[i], err = encoders[i](id)
-					}
+				v, ok, _ := searchHitLegacyID(match)
+				if ok {
+					row.Cells[i], err = encoders[i](v)
+				}
+
+			// Served from the row rather than the stored field, which holds a string
+			// the INT64 column encoder would reject.
+			case resource.SEARCH_FIELD_RV:
+				if row.ResourceVersion > 0 {
+					row.Cells[i], err = encoders[i](row.ResourceVersion)
 				}
 			default:
 				fieldName := f.Name
@@ -3933,16 +4197,24 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 	return table, nil
 }
 
+func defaultSearchResultFieldNames() []string {
+	return []string{
+		resource.SEARCH_FIELD_ID,
+		resource.SEARCH_FIELD_TITLE,
+		resource.SEARCH_FIELD_TAGS,
+		resource.SEARCH_FIELD_FOLDER,
+		resource.SEARCH_FIELD_RV,
+		resource.SEARCH_FIELD_CREATED,
+		resource.SEARCH_FIELD_LEGACY_ID,
+		resource.SEARCH_FIELD_MANAGER_KIND,
+	}
+}
+
 func getAllFields(standard resource.SearchableDocumentFields, custom resource.SearchableDocumentFields) ([]*resourcepb.ResourceTableColumnDefinition, error) {
-	fields := []*resourcepb.ResourceTableColumnDefinition{
-		standard.Field(resource.SEARCH_FIELD_ID),
-		standard.Field(resource.SEARCH_FIELD_TITLE),
-		standard.Field(resource.SEARCH_FIELD_TAGS),
-		standard.Field(resource.SEARCH_FIELD_FOLDER),
-		standard.Field(resource.SEARCH_FIELD_RV),
-		standard.Field(resource.SEARCH_FIELD_CREATED),
-		standard.Field(resource.SEARCH_FIELD_LEGACY_ID),
-		standard.Field(resource.SEARCH_FIELD_MANAGER_KIND),
+	defaultFields := defaultSearchResultFieldNames()
+	fields := make([]*resourcepb.ResourceTableColumnDefinition, len(defaultFields))
+	for i, name := range defaultFields {
+		fields[i] = standard.Field(name)
 	}
 
 	if custom != nil {
@@ -4248,6 +4520,7 @@ func (s *batchAuthzSearcher) Close() error {
 	if s.stop != nil {
 		s.stop()
 	}
+	s.logIfNothingAuthorized()
 	if s.span != nil {
 		s.span.SetAttributes(
 			attribute.Int64("search.candidates", s.candidates.Load()),
@@ -4256,6 +4529,20 @@ func (s *batchAuthzSearcher) Close() error {
 		s.span.End()
 	}
 	return s.searcher.Close()
+}
+
+// logIfNothingAuthorized reports a search that matched documents and then returned
+// none of them. The caller sees an empty result either way, so without this the
+// only record of it is a trace.
+func (s *batchAuthzSearcher) logIfNothingAuthorized() {
+	candidates, authorized := s.candidates.Load(), s.authorized.Load()
+	if candidates == 0 || authorized > 0 {
+		return
+	}
+	s.log.Warn("Search matched documents but none passed the permission check",
+		"namespace", s.namespace, "group", s.group,
+		"resources", strings.Join(slices.Sorted(maps.Keys(s.resources)), ","),
+		"candidates", candidates, "authorized", authorized)
 }
 
 func (s *batchAuthzSearcher) Size() int {

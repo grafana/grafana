@@ -15,7 +15,6 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
-import * as store from '../../../../store/store';
 
 import { UnifiedAlertStatesWorker } from './UnifiedAlertStatesWorker';
 import { type DashboardQueryRunnerOptions } from './types';
@@ -40,10 +39,10 @@ function getDefaultOptions(): DashboardQueryRunnerOptions {
 
 function getTestContext() {
   jest.clearAllMocks();
-  const dispatchMock = jest.spyOn(store, 'dispatch');
+  const getMock = jest.spyOn(backendSrv, 'get');
   const options = getDefaultOptions();
 
-  return { options, dispatchMock };
+  return { options, getMock };
 }
 
 describe('UnifiedAlertStatesWorker', () => {
@@ -105,8 +104,8 @@ describe('UnifiedAlertStatesWorker', () => {
 
   describe('when run repeatedly for the same dashboard and no alert rules are found', () => {
     const nameSpaces = [mockPromRuleNamespace({ groups: [] })];
-    const { dispatchMock, options } = getTestContext();
-    dispatchMock.mockResolvedValue(nameSpaces);
+    const { getMock, options } = getTestContext();
+    getMock.mockResolvedValue({ data: { groups: nameSpaces.flatMap((namespace) => namespace.groups) } });
     it('then canWork should start returning false', async () => {
       const worker = new UnifiedAlertStatesWorker();
       expect(worker.canWork(options)).toBe(true);
@@ -162,8 +161,8 @@ describe('UnifiedAlertStatesWorker', () => {
           ],
         }),
       ];
-      const { dispatchMock, options } = getTestContext();
-      dispatchMock.mockResolvedValue({ data: nameSpaces });
+      const { getMock, options } = getTestContext();
+      getMock.mockResolvedValue({ data: { groups: nameSpaces.flatMap((namespace) => namespace.groups) } });
 
       await expect(worker.work(options)).toEmitValuesWith((received) => {
         expect(received).toHaveLength(1);
@@ -177,15 +176,15 @@ describe('UnifiedAlertStatesWorker', () => {
         });
       });
 
-      expect(dispatchMock).toHaveBeenCalledTimes(1);
+      expect(getMock).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('when run is called with correct props and request fails', () => {
     silenceConsoleOutput();
     it('then it should return the correct results', async () => {
-      const { options, dispatchMock } = getTestContext();
-      dispatchMock.mockResolvedValue({ error: 'An error' });
+      const { options, getMock } = getTestContext();
+      getMock.mockRejectedValue(new Error('An error'));
 
       await expect(worker.work(options)).toEmitValuesWith((received) => {
         expect(received).toHaveLength(1);
@@ -197,8 +196,8 @@ describe('UnifiedAlertStatesWorker', () => {
   describe('when run is called with correct props and request is cancelled', () => {
     silenceConsoleOutput();
     it('then it should return the correct results', async () => {
-      const { options, dispatchMock } = getTestContext();
-      dispatchMock.mockResolvedValue({ error: { message: 'Get error' } });
+      const { options, getMock } = getTestContext();
+      getMock.mockRejectedValue(new Error('Get error'));
 
       await expect(worker.work(options)).toEmitValuesWith((received) => {
         expect(received).toHaveLength(1);
