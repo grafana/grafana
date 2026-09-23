@@ -79,7 +79,7 @@ const customNumberAllowed: FieldConfigPropertyItem = {
   path: 'numberAllowed',
   isCustom: true,
   process: numberOverrideProcessor,
-  allowVariables: true, // opted in, e.g. addNumberInput({ allowVariables: true })
+  allowVariables: true, // opted in explicitly, e.g. addNumberInput({ allowVariables: true }) (also the addNumberInput/addSliderInput default now)
   shouldApply: () => true,
   override: jest.fn(),
   editor: jest.fn(),
@@ -91,11 +91,11 @@ const customNumberDisallowed: FieldConfigPropertyItem = {
   path: 'numberDisallowed',
   isCustom: true,
   process: numberOverrideProcessor,
-  allowVariables: false, // the addNumberInput/addSliderInput default
+  allowVariables: false, // opted out explicitly, e.g. addNumberInput({ allowVariables: false })
   shouldApply: () => true,
   override: jest.fn(),
   editor: jest.fn(),
-  name: 'Custom Number (default, not opted in)',
+  name: 'Custom Number (opted out)',
 };
 
 export const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<FieldConfigPropertyItem>(() => {
