@@ -42,7 +42,14 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
         </Stack>
       </Card.Heading>
       <Card.Actions>
-        <Button variant="accent" icon="play" onClick={() => setStartPlaylist(playlist)} fill="outline" size="sm">
+        <Button
+          variant="accent"
+          icon="play"
+          onClick={() => setStartPlaylist(playlist)}
+          fill="outline"
+          size="sm"
+          aria-label={t('playlist-page.card.start-label', 'Start playlist {{ name }} ', { name: playlist.spec?.title })}
+        >
           <Trans i18nKey="playlist-page.card.start">Start</Trans>
         </Button>
         <ModalsController key="button-share">
@@ -52,6 +59,9 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
               icon="share-alt"
               variant="secondary"
               size="sm"
+              aria-label={t('playlist-page.card.share-label', 'Share playlist {{ name }} ', {
+                name: playlist.spec?.title,
+              })}
               onClick={() => {
                 showModal(ShareModal, {
                   playlistUid: playlist.metadata?.name ?? '',
@@ -70,6 +80,7 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
             href={`/playlists/edit/${playlist.metadata?.name}`}
             icon="cog"
             size="sm"
+            aria-label={t('playlist-page.card.edit-label', 'Edit playlist {{ name }} ', { name: playlist.spec?.title })}
           >
             <Trans i18nKey="playlist-page.card.edit">Edit</Trans>
           </LinkButton>
@@ -81,6 +92,9 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
             icon="trash-alt"
             variant="secondary"
             size="sm"
+            aria-label={t('playlist-page.card.delete-label', 'Delete playlist {{ name }} ', {
+              name: playlist.spec?.title,
+            })}
           >
             <Trans i18nKey="playlist-page.card.delete">Delete</Trans>
           </Button>

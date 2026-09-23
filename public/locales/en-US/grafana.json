@@ -13667,9 +13667,13 @@
   "playlist-page": {
     "card": {
       "delete": "Delete",
+      "delete-label": "Delete playlist {{ name }} ",
       "edit": "Edit",
+      "edit-label": "Edit playlist {{ name }} ",
       "share": "Share",
+      "share-label": "Share playlist {{ name }} ",
       "start": "Start",
+      "start-label": "Start playlist {{ name }} ",
       "tooltip": "Share"
     },
     "create-button": {
