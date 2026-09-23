@@ -8,12 +8,12 @@ import (
 	"maps"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/dataplane/sdata/numeric"
 	"github.com/m3db/prometheus_remote_client_golang/promremote"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -320,8 +320,11 @@ func (w PrometheusWriter) WriteDatasource(ctx context.Context, dsUID string, nam
 
 // Write writes the given frames to the Prometheus remote write endpoint.
 // If the writer is configured with a MaxBatchSize, a write whose estimated
-// size exceeds it is split into several requests (run with up to
-// MaxWriteConcurrency in parallel); errors from every batch are joined.
+// size exceeds it is split into several requests, run with up to
+// MaxWriteConcurrency in parallel: the first batch to fail cancels the
+// others (in flight or not yet started) and its error is returned. In that
+// split case, WriteDuration/WritesTotal are observed once per batch rather
+// than once per Write call.
 func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, frames data.Frames, orgID int64, extraLabels map[string]string) error {
 	l := w.logger.FromContext(ctx)
 
@@ -348,26 +351,29 @@ func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, f
 		return w.writeBatch(ctx, orgID, series)
 	}
 
+	l.Debug("Splitting metric write into multiple requests", "requests", len(batches), "maxBatchSize", w.maxBatchSize)
+
 	concurrency := w.maxWriteConcurrency
 	if concurrency <= 0 {
 		concurrency = 1
 	}
 
-	sem := make(chan struct{}, concurrency)
-	var wg sync.WaitGroup
-	errs := make([]error, len(batches))
-	for i, batch := range batches {
-		wg.Add(1)
-		sem <- struct{}{}
-		go func(i int, batch []promremote.TimeSeries) {
-			defer wg.Done()
-			defer func() { <-sem }()
-			errs[i] = w.writeBatch(ctx, orgID, batch)
-		}(i, batch)
+	// errgroup cancels gctx as soon as one batch fails, so batches that
+	// haven't started yet are skipped instead of running to completion
+	// regardless, and in-flight requests are aborted rather than left to
+	// report a partial write as a success.
+	g, gctx := errgroup.WithContext(ctx)
+	g.SetLimit(concurrency)
+	for _, batch := range batches {
+		g.Go(func() error {
+			if err := gctx.Err(); err != nil {
+				return err
+			}
+			return w.writeBatch(gctx, orgID, batch)
+		})
 	}
-	wg.Wait()
 
-	return errors.Join(errs...)
+	return g.Wait()
 }
 
 // writeBatch sends a single batch of series to the remote write endpoint.
