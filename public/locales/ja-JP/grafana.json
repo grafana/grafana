@@ -915,6 +915,7 @@
       "button-view": "表示",
       "export-ariaLabel-export": "エクスポート",
       "export-label-export": "エクスポート",
+      "export-legacy-integration-tooltip": "",
       "label-delete": "削除",
       "label-manage-permissions": "権限を管理する",
       "tooltip-history": "このコンタクトポイントへの通知試行の履歴を表示する",
@@ -1477,6 +1478,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "読み込み中..."
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "",
+      "warning-v0-integrations-title": ""
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "読み込み中..."
     },
@@ -1705,6 +1710,9 @@
         "pause-none": "一時停止されているルールはありません",
         "pause-recording": "記録ルールが一時停止されました",
         "policy-tree": "ポリシーツリー",
+        "preview": "",
+        "preview-config-aria": "",
+        "preview-rules-aria": "",
         "routing": "通知ルーティング",
         "routing-none": "ポリシーツリーが選択されていません",
         "routing-tree": "ポリシーツリー：{{name}}",
@@ -1765,14 +1773,17 @@
         "templates-duplicate": "テンプレートファイル名が重複しています：「{{name}}」。テンプレートファイル名は一意である必要があります。",
         "templates-label": "通知テンプレート",
         "templates-remove": "{{name}}を削除",
-        "upload": "YAMLファイルをアップロード",
+        "upload": "",
         "validating": "設定を検証中...",
         "validation-error": "検証に失敗しました",
         "validation-error-desc": "設定の検証に失敗しました。",
         "validation-success": "検証に成功しました",
         "validation-success-desc": "競合は見つかりませんでした。構成のインポートの準備ができています。",
         "validation-warning": "既存のリソースとの競合を回避するため、一部のリソースの名前が変更されます",
-        "yaml-file": "Alertmanager設定YAML"
+        "yaml-desc": "",
+        "yaml-file": "Alertmanager設定YAML",
+        "yaml-invalid-type": "",
+        "yaml-remove": ""
       },
       "step2": {
         "datasource": "データソース",
@@ -4579,11 +4590,15 @@
     },
     "readme": {
       "add-readme": "READMEを追加",
-      "edit-tooltip": "READMEを編集",
+      "edit-doc-tooltip": "",
       "empty-message": "このフォルダの内容と、適切なダッシュボードの場所を説明するREADMEを追加します。",
       "load-error-retry": "もう一度試してください",
-      "load-error-title": "READMEを読み込めませんでした",
-      "parse-error": "READMEの内容を表示できませんでした。"
+      "load-error-title": "",
+      "panel-label": "",
+      "parse-error": "",
+      "tab-contributing": "",
+      "tab-readme": "",
+      "tab-security": ""
     },
     "recently-viewed": {
       "clear": "履歴をクリア",
@@ -5736,16 +5751,24 @@
       "add-library-panel-header": "パネルをインポート",
       "add-visualization-body": "データソースを選択し、グラフ、統計、テーブルを使用してデータをクエリおよび視覚化するか、リスト、マークダウン、その他のウィジェットを作成します。",
       "add-visualization-button": "視覚化を追加",
+      "add-visualization-description": "",
       "add-visualization-header": "視覚化を追加して新しいダッシュボードを開始します",
+      "add-visualization-heading": "",
+      "assistant-placeholder": "",
       "auto-grid": "自動グリッド",
       "auto-grid-description": "パネルはサイズ変更され、均一なグリッドになります",
+      "build-assistant": "",
       "custom-grid": "カスタムグリッド",
       "custom-grid-description": "各パネルを個別に配置してサイズを変更する",
       "description": "パネルを追加してデータを視覚化します",
+      "grid-auto": "",
+      "grid-custom": "",
+      "grid-label": "",
       "import-a-dashboard-body": "ファイルまたは<2>grafana.com</2>からダッシュボードをインポートします。",
       "import-a-dashboard-header": "ダッシュボードをインポートする",
       "import-dashboard-button": "ダッシュボードをインポート",
       "layout-default-hint": "選択したレイアウトは、すべての新しいタブと行のデフォルトとしても使用されます。この設定は後から、[ダッシュボード設定] > [一般] で変更できます。",
+      "or-start-blank": "",
       "select-layout-header": "レイアウトを選択",
       "title": "新しいダッシュボード"
     },
@@ -5873,6 +5896,7 @@
       "randomize-field-names-label-field-names": "フィールド名",
       "randomize-labels-label-labels": "ラベル",
       "randomize-string-values-label-string-values": "文字列値",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "データ",
@@ -5913,6 +5937,7 @@
     "inspect-json": {
       "dataframe-description": "変換とフィールド構成が適用されていない未加工のデータ。",
       "dataframe-label": "DataFrame JSON（クエリから）",
+      "editor-label": "",
       "panel-data-description": "パネルの視覚化に渡された未加工のモデル",
       "panel-data-label": "パネルデータ",
       "panel-json-description": "すべての動作を構成するダッシュボードJSONに保存されたモデル。",
@@ -7301,6 +7326,7 @@
       "randomize-field-names-label-field-names": "フィールド名",
       "randomize-labels-label-labels": "ラベル",
       "randomize-string-values-label-string-values": "文字列値",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "データ",
@@ -7688,6 +7714,7 @@
         "model-label": "モデル",
         "v2-resource": "V2リソース"
       },
+      "json-preview-label": "",
       "label-description": "説明",
       "label-folder-name": "フォルダ名",
       "label-target-folder": "ターゲットフォルダ",
@@ -11086,6 +11113,7 @@
       "incident-tab-label": "インシデント",
       "team-filter-all": "すべてのチーム",
       "team-filter-label": "チームでアラートを絞り込む",
+      "team-filter-label-incidents": "",
       "team-filter-your-teams": "自分のチーム",
       "title": "アラートとインシデント",
       "title-alerts": "アラート",
@@ -11143,6 +11171,7 @@
     "incidents-card": {
       "declare": "インシデントを宣言",
       "empty": "アクティブなインシデントはありません。",
+      "empty-selected-team": "",
       "error-title": "アクティブなインシデントを読み込めませんでした",
       "title": "アクティブなインシデント",
       "view-all": "すべてのインシデントを表示"
@@ -11747,6 +11776,7 @@
       "waiting-for-data": "データ待ち中..."
     },
     "live-publish": {
+      "message": "",
       "publish": "公開"
     }
   },
@@ -12092,6 +12122,10 @@
       "description": "有効にすると、各行のログの詳細が表示されます。",
       "name": "ログの詳細を有効化"
     },
+    "hover-overflow": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "各行の最初の列にあるログ行リンクボタンを有効/無効化",
       "name": "ログリンクのコピーボタンを表示"
@@ -12159,6 +12193,10 @@
     "selected-team-not-found": "選択したチームが見つからないか、このチームを表示するために必要な権限がありません。",
     "team-not-found": "[不明なチーム]",
     "unknown-error": "不明なエラー"
+  },
+  "mermaid": {
+    "invalid-syntax": "",
+    "render-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "オプションが見つかりません"
@@ -12492,6 +12530,10 @@
     "authentication": {
       "title": "認証"
     },
+    "banner-settings": {
+      "subtitle": "",
+      "title": ""
+    },
     "bookmarks": {
       "title": "ブックマーク"
     },
@@ -12698,6 +12740,7 @@
       "title": "記録されたクエリ"
     },
     "reporting": {
+      "subtitle": "",
       "title": "レポート作成"
     },
     "saved-queries": {
@@ -12712,6 +12755,10 @@
     },
     "search-dashboards": {
       "title": "ダッシュボードを検索"
+    },
+    "secrets-management": {
+      "subtitle": "",
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Grafana構成で定義された設定を表示する",
@@ -14987,7 +15034,7 @@
     },
     "public-sharing": {
       "accept-button": "承諾",
-      "alert-text": "このダッシュボードを外部と共有すると、リンクを知っている人なら誰でもアクセスできるようになります。",
+      "alert-text": "",
       "cancel-button": "キャンセル",
       "learn-more-button": "もっと詳しく",
       "public-ack": "このダッシュボード全体が公開されることを理解しています。*",
@@ -16552,10 +16599,6 @@
     },
     "frame-picker": {
       "label": ""
-    },
-    "mermaid": {
-      "invalid-syntax": "",
-      "render-error": ""
     },
     "options": {
       "page-size": "",

@@ -15,6 +15,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/storage"
 
 	claims "github.com/grafana/authlib/types"
@@ -397,10 +398,10 @@ func TestSecureLifecycle(t *testing.T) {
 			Return(nil).Once()
 
 		s := &Storage{
-			codec:     unstructured.UnstructuredJSONScheme,
-			newFunc:   func() runtime.Object { return &unstructured.Unstructured{} },
-			versioner: &storage.APIObjectVersioner{},
-			store:     &conflictOnceClient{prev: raw.Bytes()},
+			serializer: &jsonSerializer{},
+			newFunc:    func() runtime.Object { return &unstructured.Unstructured{} },
+			versioner:  &storage.APIObjectVersioner{},
+			store:      &conflictOnceClient{prev: raw.Bytes()},
 			getKey: func(string) (*resourcepb.ResourceKey, error) {
 				return &resourcepb.ResourceKey{Namespace: "default", Group: "example.grafana.app", Resource: "examples", Name: "test"}, nil
 			},
@@ -513,11 +514,12 @@ func TestCreateCleansUpSecretsWhenPermissionCreationFails(t *testing.T) {
 
 	// store is left nil: the object must never be written, so any store access would panic.
 	s := &Storage{
+		serializer: &jsonSerializer{},
 		getKey: func(string) (*resourcepb.ResourceKey, error) {
 			return &resourcepb.ResourceKey{Namespace: "default", Resource: "customkinds", Name: "test"}, nil
 		},
 		opts: StorageOptions{
-			Scheme:               runtime.NewScheme(),
+			GVK:                  schema.GroupVersionKind{Group: "something.grafana.app", Version: "v1beta1", Kind: "CustomKind"},
 			SecureValues:         secureStore,
 			MaximumNameLength:    100,
 			DeprecatedInternalID: DeprecatedID_None,

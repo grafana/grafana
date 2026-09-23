@@ -10,7 +10,7 @@ temporarily reuses that package's resources, authorization, admission, and custo
 routes; `appplugin.RegisterAPIService` remains available during the transition.
 
 The handler serves group and resource discovery, manifest kinds, settings and their
-subresources, custom v3 routes, and OpenAPI v3. `APIGroup(plugin)` describes the
+subresources, custom v3 routes, and OpenAPI v3. `APIGroup(plugin, opts)` describes the
 same served versions, including the existing settings version and excluding
 manifest versions with `served: false`. Plugins without a manifest keep their
 plugin ID as the API group and serve settings and their subresources at `v0alpha1`.

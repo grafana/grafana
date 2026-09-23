@@ -8,6 +8,7 @@ import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { setupProvisioningMswServer } from 'app/features/provisioning/mocks/server';
+import { type DashboardViewItem } from 'app/features/search/types';
 
 import { NestedFolderList, type NestedFolderListProps } from './NestedFolderList';
 
@@ -25,7 +26,7 @@ const READ_ONLY_REPOSITORY: RepositoryView = {
 };
 
 // Root folder of the repository above: its uid is the repository name.
-const PROVISIONED_FOLDER: DashboardsTreeItem = {
+const PROVISIONED_FOLDER: DashboardsTreeItem<DashboardViewItem> = {
   item: {
     kind: 'folder',
     uid: 'repo-1',
@@ -35,6 +36,18 @@ const PROVISIONED_FOLDER: DashboardsTreeItem = {
   },
   level: 0,
   isOpen: false,
+};
+
+const NESTED_PROVISIONED_FOLDER: DashboardsTreeItem<DashboardViewItem> = {
+  item: {
+    ...PROVISIONED_FOLDER.item,
+    uid: 'nested-folder',
+    title: 'Nested folder',
+    parentUID: PROVISIONED_FOLDER.item.uid,
+  },
+  level: 1,
+  isOpen: false,
+  parentUID: PROVISIONED_FOLDER.item.uid,
 };
 
 function renderList(props: Partial<NestedFolderListProps> = {}) {
@@ -80,5 +93,17 @@ describe('NestedFolderList', () => {
 
     expect(await screen.findByTestId('icon-exchange-alt')).toBeInTheDocument();
     expect(screen.queryByText('Read only')).not.toBeInTheDocument();
+  });
+
+  it('shows the managed badge for a nested search result', async () => {
+    renderList({ items: [NESTED_PROVISIONED_FOLDER], foldersAreOpenable: false });
+
+    expect(await screen.findByTestId('icon-exchange-alt')).toBeInTheDocument();
+  });
+
+  it('hides the managed badge for a nested browse row', () => {
+    renderList({ items: [NESTED_PROVISIONED_FOLDER], foldersAreOpenable: true });
+
+    expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
   });
 });

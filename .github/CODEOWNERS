@@ -452,7 +452,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards/V2DashWithRepeats.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/V2DashWithRowRepeats.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/V2DashWithTabRepeats.json @grafana/dashboards-squad
-/e2e-playwright/dashboards/V2DashWithTabs.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/V2DashboardWithTabsForSlugTest.json @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/adhoc-filter-from-panel.spec.ts @grafana/datapro
 /e2e-playwright/dashboards-suite/dashboard-browse.spec.ts @grafana/grafana-frontend-navigation
@@ -671,6 +670,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/components/PanelDataErrorView.tsx @grafana/dashboards-squad
 /packages/grafana-runtime/src/components/PluginPage.tsx @grafana/grafana-frontend-navigation
 /packages/grafana-runtime/src/components/QueryEditorWithMigration* @grafana/grafana-catalog
+/packages/grafana-runtime/src/config.test.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/services/ @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/services/dataSource @grafana/grafana-catalog
@@ -685,6 +685,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/utils/chromeHeaderHeight.ts @grafana/grafana-frontend-navigation
 /packages/grafana-runtime/src/utils/DataSourceWithBackend* @grafana/grafana-datasources-core-services
 /packages/grafana-runtime/src/utils/expressionRef* @grafana/grafana-datasources-core-services
+/packages/grafana-runtime/src/utils/legacyFeatureToggles* @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/utils/licensing.ts @grafana/grafana-operator-experience-squad
 /packages/grafana-runtime/src/utils/logging.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/utils/megaMenuOpen.ts @grafana/grafana-frontend-navigation
@@ -858,6 +859,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/components/AccentBoxBadge/ @grafana/grafana-frontend-platform
 /public/app/core/components/AppNotifications/ @grafana/grafana-frontend-navigation
 /public/app/core/components/AppChrome/ @grafana/grafana-frontend-navigation
+/public/app/core/components/AppChrome/FeatureControl/ @grafana/grafana-frontend-platform
 /public/app/core/components/AssistantTooltip/ @grafana/dataviz-squad
 /public/app/core/components/Branding/ @grafana/grafana-frontend-platform
 /public/app/core/components/Breadcrumbs/ @grafana/grafana-frontend-navigation
@@ -904,7 +906,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/components/TimelineChart/ @grafana/dataviz-squad
 /public/app/core/components/TimePicker/ @grafana/grafana-frontend-platform
 /public/app/core/components/TimeSeries/ @grafana/dataviz-squad
-/public/app/core/components/Upgrade/ @grafana/grafana-operator-experience-squad
 /public/app/core/components/ValidationLabels/ @grafana/grafana-frontend-navigation
 /public/app/core/components/VersionHistory/ @grafana/dashboards-squad
 /public/app/core/config.ts @grafana/grafana-frontend-platform
@@ -917,6 +918,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/hooks/useCleanup.ts @grafana/grafana-frontend-platform
 /public/app/core/hooks/useHomeNav* @grafana/grafana-frontend-navigation
 /public/app/core/hooks/useMediaQueryMinWidth.ts @grafana/grafana-frontend-platform
+/public/app/core/hooks/useMermaidDiagrams* @grafana/grafana-frontend-navigation @grafana/dataviz-squad
 /public/app/core/hooks/useNavModel.ts @grafana/grafana-frontend-navigation
 /public/app/core/hooks/useQueryParams.ts @grafana/grafana-frontend-platform
 /public/app/core/hooks/useStored.ts @grafana/grafana-frontend-platform @grafana/grafana-frontend-navigation
@@ -992,6 +994,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/isOnPrem.ts @grafana/grafana-frontend-navigation
 /public/app/core/utils/isRecord.ts @grafana/dashboards-squad
 /public/app/core/utils/kbn* @grafana/grafana-frontend-platform
+/public/app/core/utils/mermaid* @grafana/grafana-frontend-navigation @grafana/dataviz-squad
 /public/app/core/utils/navBarItem-translations* @grafana/grafana-frontend-navigation
 /public/app/core/utils/object* @grafana/grafana-frontend-platform
 /public/app/core/utils/query* @grafana/grafana-datasources-core-services
@@ -1367,6 +1370,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-commands.yml @tolzhabayev
 /.github/workflows/pr-external-labelling.yml @Proximyst
 /.github/workflows/pr-patch-check.yml @grafana/grafana-backend-services-squad
+/.github/workflows/pr-resource-search-result-format.yml @grafana/grafana-search-and-storage
 /.github/workflows/pr-test-integration-pgvector.yml @grafana/grafana-search-and-storage
 /.github/workflows/pr-test-integration.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/reject-gh-secrets.yml @grafana/grafana-backend-services-squad

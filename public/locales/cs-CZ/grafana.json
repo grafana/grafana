@@ -930,6 +930,7 @@
       "button-view": "Zobrazit",
       "export-ariaLabel-export": "Exportovat",
       "export-label-export": "Exportovat",
+      "export-legacy-integration-tooltip": "",
       "label-delete": "Odstranit",
       "label-manage-permissions": "Spravovat oprávnění",
       "tooltip-history": "Zobrazit historii pokusů o odeslání oznámení na tento kontaktní bod",
@@ -1498,6 +1499,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "Načítání…"
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "",
+      "warning-v0-integrations-title": ""
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "Načítání…"
     },
@@ -1726,6 +1731,9 @@
         "pause-none": "Žádná pravidla nebyla pozastavena",
         "pause-recording": "Pravidla nahrávání byla pozastavena",
         "policy-tree": "Strom zásad",
+        "preview": "",
+        "preview-config-aria": "",
+        "preview-rules-aria": "",
         "routing": "Směrování oznámení",
         "routing-none": "Není vybrán žádný strom zásad",
         "routing-tree": "Strom zásad: {{name}}",
@@ -1789,14 +1797,17 @@
         "templates-duplicate": "Duplikovat název souboru šablony: „{{name}}“. Názvy souborů šablon musí být jedinečné.",
         "templates-label": "Šablony oznámení",
         "templates-remove": "Odebrat {{name}}",
-        "upload": "Nahrát soubor YAML",
+        "upload": "",
         "validating": "Ověřování konfigurace…",
         "validation-error": "Ověření se nezdařilo",
         "validation-error-desc": "Konfiguraci se nepodařilo ověřit.",
         "validation-success": "Ověření proběhlo úspěšně",
         "validation-success-desc": "Nebyly nalezeny žádné konflikty. Konfigurace je připravena k importu.",
         "validation-warning": "Některé zdroje budou přejmenovány, aby se předešlo konfliktům se stávajícími zdroji",
-        "yaml-file": "Konfigurace správce výstrah YAML"
+        "yaml-desc": "",
+        "yaml-file": "Konfigurace správce výstrah YAML",
+        "yaml-invalid-type": "",
+        "yaml-remove": ""
       },
       "step2": {
         "datasource": "Zdroj dat",
@@ -4693,11 +4704,15 @@
     },
     "readme": {
       "add-readme": "Přidat README",
-      "edit-tooltip": "Upravit README",
+      "edit-doc-tooltip": "",
       "empty-message": "Přidejte soubor README, abyste popsali, co je v této složce a kde najdete správné nástěnky.",
       "load-error-retry": "Zkusit znovu",
-      "load-error-title": "README se nepodařilo načíst",
-      "parse-error": "Obsah README nelze zobrazit."
+      "load-error-title": "",
+      "panel-label": "",
+      "parse-error": "",
+      "tab-contributing": "",
+      "tab-readme": "",
+      "tab-security": ""
     },
     "recently-viewed": {
       "clear": "Vymazat historii",
@@ -5862,16 +5877,24 @@
       "add-library-panel-header": "Importovat panel",
       "add-visualization-body": "Vyberte zdroj dat a poté se dotazujte a vizualizujte data pomocí grafů, statistik a tabulek nebo vytvářejte seznamy, přehledy a další widgety.",
       "add-visualization-button": "Přidat vizualizaci",
+      "add-visualization-description": "",
       "add-visualization-header": "Začněte novou nástěnku přidáním vizualizace",
+      "add-visualization-heading": "",
+      "assistant-placeholder": "",
       "auto-grid": "Automatická mřížka",
       "auto-grid-description": "Panely mění velikost tak, aby odpovídaly jednotným mřížkám",
+      "build-assistant": "",
       "custom-grid": "Vlastní mřížka",
       "custom-grid-description": "Umístěte a upravte velikost každého panelu jednotlivě",
       "description": "Přidejte panel pro vizualizaci dat",
+      "grid-auto": "",
+      "grid-custom": "",
+      "grid-label": "",
       "import-a-dashboard-body": "Importujte nástěnky ze souborů nebo z <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importovat nástěnku",
       "import-dashboard-button": "Importovat nástěnku",
       "layout-default-hint": "Vybrané rozvržení bude také použito jako výchozí pro všechny nové karty a řádky. Toto můžete později změnit v části Nastavení nástěnky > Obecné.",
+      "or-start-blank": "",
       "select-layout-header": "Vybrat rozvržení",
       "title": "Nová nástěnka"
     },
@@ -5999,6 +6022,7 @@
       "randomize-field-names-label-field-names": "Názvy polí",
       "randomize-labels-label-labels": "Štítky",
       "randomize-string-values-label-string-values": "Hodnoty řetězců",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Data",
@@ -6039,6 +6063,7 @@
     "inspect-json": {
       "dataframe-description": "Nezpracovaná data bez transformací a konfigurace pole. ",
       "dataframe-label": "Rámec dat JSON (z dotazu)",
+      "editor-label": "",
       "panel-data-description": "Nezpracovaný model přešel do vizualizace panelu",
       "panel-data-label": "Data panelu",
       "panel-json-description": "Model uložený v nástěnce JSON, který konfiguruje, jak vše funguje.",
@@ -7436,6 +7461,7 @@
       "randomize-field-names-label-field-names": "Názvy polí",
       "randomize-labels-label-labels": "Štítky",
       "randomize-string-values-label-string-values": "Hodnoty řetězců",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Data",
@@ -7829,6 +7855,7 @@
         "model-label": "Model",
         "v2-resource": "Zdroj V2"
       },
+      "json-preview-label": "",
       "label-description": "Popis",
       "label-folder-name": "Název složky",
       "label-target-folder": "Cílová složka",
@@ -11275,6 +11302,7 @@
       "incident-tab-label": "Incidenty",
       "team-filter-all": "Všechny týmy",
       "team-filter-label": "Filtrovat výstrahy podle týmu",
+      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Vaše týmy",
       "title": "Výstrahy a incidenty",
       "title-alerts": "Výstrahy",
@@ -11338,6 +11366,7 @@
     "incidents-card": {
       "declare": "Nahlásit incident",
       "empty": "Žádné aktivní incidenty.",
+      "empty-selected-team": "",
       "error-title": "Nelze načíst aktivní incidenty",
       "title": "Aktivní incidenty",
       "view-all": "Zobrazit všechny incidenty"
@@ -11999,6 +12028,7 @@
       "waiting-for-data": "Čekání na data:"
     },
     "live-publish": {
+      "message": "",
       "publish": "Zveřejnit"
     }
   },
@@ -12353,6 +12383,10 @@
       "description": "Pokud je tato možnost povolena, zobrazí se podrobnosti protokolu pro každý řádek.",
       "name": "Povolit podrobnosti protokolu"
     },
+    "hover-overflow": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Povolit/zakázat tlačítko odkazu na řádek protokolu v prvním sloupci každého řádku",
       "name": "Zobrazit tlačítko pro kopírování odkazu na protokol"
@@ -12420,6 +12454,10 @@
     "selected-team-not-found": "Vybraný tým nebyl nalezen nebo nemáte potřebná oprávnění k jeho zobrazení.",
     "team-not-found": "[Neznámý tým]",
     "unknown-error": "Neznámá chyba"
+  },
+  "mermaid": {
+    "invalid-syntax": "",
+    "render-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Nebyly nalezeny žádné možnosti"
@@ -12753,6 +12791,10 @@
     "authentication": {
       "title": "Ověření"
     },
+    "banner-settings": {
+      "subtitle": "",
+      "title": ""
+    },
     "bookmarks": {
       "title": "Záložky"
     },
@@ -12959,6 +13001,7 @@
       "title": "Zaznamenané dotazy"
     },
     "reporting": {
+      "subtitle": "",
       "title": "Vykazování"
     },
     "saved-queries": {
@@ -12973,6 +13016,10 @@
     },
     "search-dashboards": {
       "title": "Hledat nástěnky"
+    },
+    "secrets-management": {
+      "subtitle": "",
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Zobrazení nastavení definovaných v konfiguraci Grafany",
@@ -15317,7 +15364,7 @@
     },
     "public-sharing": {
       "accept-button": "Přijmout",
-      "alert-text": "Sdílením této nástěnky externě ji zpřístupníte všem uživatelům s odkazem.",
+      "alert-text": "",
       "cancel-button": "Zrušit",
       "learn-more-button": "Zjistěte víc",
       "public-ack": "Rozumím, že celá nástěnka bude veřejná.*",
@@ -16918,10 +16965,6 @@
     },
     "frame-picker": {
       "label": ""
-    },
-    "mermaid": {
-      "invalid-syntax": "",
-      "render-error": ""
     },
     "options": {
       "page-size": "",

@@ -26,7 +26,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 
 | Feature toggle name                          | Description                                                                                                                         | Enabled by default |
 | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| `featureHighlights`                          | Highlight Grafana Enterprise features                                                                                               |                    |
 | `cloudWatchCrossAccountQuerying`             | Enables cross-account querying in CloudWatch datasources                                                                            | Yes                |
 | `lokiQuerySplitting`                         | Split large interval queries into subqueries with smaller time intervals                                                            | Yes                |
 | `renderAuthJWT`                              | Uses JWT-based auth for rendering instead of relying on remote cache                                                                | Yes                |

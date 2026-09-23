@@ -920,6 +920,7 @@
       "button-view": "Görüntüle",
       "export-ariaLabel-export": "Dışa aktar",
       "export-label-export": "Dışa aktar",
+      "export-legacy-integration-tooltip": "",
       "label-delete": "Sil",
       "label-manage-permissions": "İzinleri yönet",
       "tooltip-history": "Bu iletişim noktasına yapılan bildirim denemelerinin geçmişini görüntüleyin",
@@ -1484,6 +1485,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "Yükleniyor..."
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "",
+      "warning-v0-integrations-title": ""
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "Yükleniyor..."
     },
@@ -1712,6 +1717,9 @@
         "pause-none": "Hiçbir kural duraklatılmadı",
         "pause-recording": "Kayıt kuralları duraklatıldı",
         "policy-tree": "Politika ağacı",
+        "preview": "",
+        "preview-config-aria": "",
+        "preview-rules-aria": "",
         "routing": "Bildirim yönlendirme",
         "routing-none": "Politika ağacı seçilmedi",
         "routing-tree": "Politika ağacı: {{name}}",
@@ -1773,14 +1781,17 @@
         "templates-duplicate": "Yinelenen şablon dosyası adı: \"{{name}}\". Şablon dosyası adları benzersiz olmalıdır.",
         "templates-label": "Bildirim şablonları",
         "templates-remove": "{{name}} ögesini kaldır",
-        "upload": "YAML dosyasını yükle",
+        "upload": "",
         "validating": "Yapılandırma doğrulanıyor...",
         "validation-error": "Doğrulanamadı",
         "validation-error-desc": "Yapılandırma doğrulanamadı.",
         "validation-success": "Doğrulandı",
         "validation-success-desc": "Çakışma bulunamadı. Yapılandırma içe aktarmaya hazır.",
         "validation-warning": "Mevcut olanlarla çakışmayı önlemek için bazı kaynaklar yeniden adlandırılacak",
-        "yaml-file": "Alertmanager yapılandırması YAML'i"
+        "yaml-desc": "",
+        "yaml-file": "Alertmanager yapılandırması YAML'i",
+        "yaml-invalid-type": "",
+        "yaml-remove": ""
       },
       "step2": {
         "datasource": "Veri kaynağı",
@@ -4617,11 +4628,15 @@
     },
     "readme": {
       "add-readme": "BENİOKU dosyası ekle",
-      "edit-tooltip": "BENİOKU dosyasını düzenle",
+      "edit-doc-tooltip": "",
       "empty-message": "Bu klasörde neler olduğunu ve doğru panoların nerede bulunacağını açıklayan bir BENİOKU dosyası ekleyin.",
       "load-error-retry": "Tekrar dene",
-      "load-error-title": "BENİOKU dosyası yüklenemedi",
-      "parse-error": "BENİOKU içeriği görüntülenemiyor."
+      "load-error-title": "",
+      "panel-label": "",
+      "parse-error": "",
+      "tab-contributing": "",
+      "tab-readme": "",
+      "tab-security": ""
     },
     "recently-viewed": {
       "clear": "Geçmişi temizle",
@@ -5778,16 +5793,24 @@
       "add-library-panel-header": "Paneli içe aktarın",
       "add-visualization-body": "Bir veri kaynağı seçin ve ardından grafikler, istatistikler ve tablolarla verilerinizi sorgulayın ve görselleştirin veya listeler, markdown'lar ve diğer widget'lar oluşturun.",
       "add-visualization-button": "Görselleştirme ekle",
+      "add-visualization-description": "",
       "add-visualization-header": "Bir görselleştirme ekleyerek yeni panonuzu başlatın",
+      "add-visualization-heading": "",
+      "assistant-placeholder": "",
       "auto-grid": "Otomatik ızgara",
       "auto-grid-description": "Paneller, sığacak şekilde yeniden boyutlandırılır ve düzgün ızgaralar oluşturur",
+      "build-assistant": "",
       "custom-grid": "Özel ızgara",
       "custom-grid-description": "Her paneli ayrı ayrı konumlandır ve boyutlandır",
       "description": "Verilerinizi görselleştirmek için bir panel ekleyin",
+      "grid-auto": "",
+      "grid-custom": "",
+      "grid-label": "",
       "import-a-dashboard-body": "Panoları dosyalardan veya <2>grafana.com</2>'dan içe aktarın.",
       "import-a-dashboard-header": "Bir panoyu içe aktar",
       "import-dashboard-button": "Panoyu içe aktar",
       "layout-default-hint": "Seçilen düzen, tüm yeni sekmeler ve satırlar için de varsayılan olarak kullanılacaktır. Bunu daha sonra Panel Ayarları > Genel bölümünden değiştirebilirsiniz.",
+      "or-start-blank": "",
       "select-layout-header": "Düzen seçin",
       "title": "Yeni pano"
     },
@@ -5915,6 +5938,7 @@
       "randomize-field-names-label-field-names": "Alan adları",
       "randomize-labels-label-labels": "Etiketler",
       "randomize-string-values-label-string-values": "Dize değerleri",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Veri",
@@ -5955,6 +5979,7 @@
     "inspect-json": {
       "dataframe-description": "Dönüşümler ve alan yapılandırması uygulanmamış ham veriler. ",
       "dataframe-label": "Veri Çerçevesi JSON (Sorgudan)",
+      "editor-label": "",
       "panel-data-description": "Panel görselleştirmesine iletilen ham model",
       "panel-data-label": "Panel verileri",
       "panel-json-description": "Her şeyin nasıl çalıştığını yapılandıran ve pano JSON'unda kaydedilen model.",
@@ -7346,6 +7371,7 @@
       "randomize-field-names-label-field-names": "Alan adları",
       "randomize-labels-label-labels": "Etiketler",
       "randomize-string-values-label-string-values": "Dize değerleri",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Veri",
@@ -7735,6 +7761,7 @@
         "model-label": "Model",
         "v2-resource": "V2 Kaynağı"
       },
+      "json-preview-label": "",
       "label-description": "Açıklama",
       "label-folder-name": "Klasör adı",
       "label-target-folder": "Hedef klasör",
@@ -11149,6 +11176,7 @@
       "incident-tab-label": "Olaylar",
       "team-filter-all": "Tüm ekipler",
       "team-filter-label": "Uyarıları ekibe göre filtrele",
+      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Ekipleriniz",
       "title": "Uyarılar ve olaylar",
       "title-alerts": "Uyarılar",
@@ -11208,6 +11236,7 @@
     "incidents-card": {
       "declare": "Olay bildir",
       "empty": "Etkin olay yok.",
+      "empty-selected-team": "",
       "error-title": "Etkin olaylar yüklenemedi",
       "title": "Etkin olaylar",
       "view-all": "Tüm olayları göster"
@@ -11831,6 +11860,7 @@
       "waiting-for-data": "Veriler bekleniyor:"
     },
     "live-publish": {
+      "message": "",
       "publish": "Yayımla"
     }
   },
@@ -12179,6 +12209,10 @@
       "description": "Etkinleştirildiğinde, her satır için günlük ayrıntılarını gösterir.",
       "name": "Günlük ayrıntılarını etkinleştir"
     },
+    "hover-overflow": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Her satırın ilk sütunundaki günlük kaydı satırı bağlantı düğmesini etkinleştirir/devre dışı bırakır",
       "name": "Günlük kaydı bağlantısını kopyala düğmesini göster"
@@ -12246,6 +12280,10 @@
     "selected-team-not-found": "Seçilen ekip bulunamadı veya bu ekibi görüntülemek için gerekli izinlere sahip değilsiniz.",
     "team-not-found": "[Bilinmeyen ekip]",
     "unknown-error": "Bilinmeyen hata"
+  },
+  "mermaid": {
+    "invalid-syntax": "",
+    "render-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Seçenek bulunamadı"
@@ -12579,6 +12617,10 @@
     "authentication": {
       "title": "Kimlik doğrulama"
     },
+    "banner-settings": {
+      "subtitle": "",
+      "title": ""
+    },
     "bookmarks": {
       "title": "Yer imleri"
     },
@@ -12785,6 +12827,7 @@
       "title": "Kaydedilen sorgular"
     },
     "reporting": {
+      "subtitle": "",
       "title": "Raporlama"
     },
     "saved-queries": {
@@ -12799,6 +12842,10 @@
     },
     "search-dashboards": {
       "title": "Pano ara"
+    },
+    "secrets-management": {
+      "subtitle": "",
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Grafana yapılandırmanızda tanımlanan ayarları görüntüleyin",
@@ -15097,7 +15144,7 @@
     },
     "public-sharing": {
       "accept-button": "Kabul et",
-      "alert-text": "Bu panoyu haricî olarak paylaşmak, bağlantıya sahip herkesin tamamen erişebilmesini sağlar.",
+      "alert-text": "",
       "cancel-button": "İptal",
       "learn-more-button": "Daha fazla bilgi edinin",
       "public-ack": "Bu panonun tamamen herkese açık olacağını anlıyorum.*",
@@ -16674,10 +16721,6 @@
     },
     "frame-picker": {
       "label": ""
-    },
-    "mermaid": {
-      "invalid-syntax": "",
-      "render-error": ""
     },
     "options": {
       "page-size": "",

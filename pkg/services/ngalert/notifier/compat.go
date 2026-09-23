@@ -64,7 +64,7 @@ func PostableAPIConfigToNotificationsConfiguration(
 	cfg v1.AMConfigV1,
 	limits alertingNotify.DynamicLimits,
 ) (alertingNotify.NotificationsConfiguration, error) {
-	receivers, err := ModelToAPIReceivers(cfg.AlertmanagerConfig.Receivers)
+	receivers, err := ModelToAPIReceivers(cfg.GetReceivers())
 	if err != nil {
 		return alertingNotify.NotificationsConfiguration{}, err
 	}

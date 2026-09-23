@@ -45,16 +45,21 @@ interface RefetchChildrenResult {
   lastPageOfKind: boolean;
 }
 
+interface RefreshParentsArgs {
+  kind: DashboardViewItemKind;
+  uids: string[];
+}
+
 export const refreshParents = createAsyncThunk(
   'browseDashboards/refreshParents',
-  async (uids: string[], { getState, dispatch }) => {
+  async ({ kind, uids }: RefreshParentsArgs, { getState, dispatch }) => {
     const { browseDashboards } = getState();
     const { rootItems, childrenByParentUID } = browseDashboards;
     const parentsToRefresh = new Set<string | undefined>();
 
     for (const uid of uids) {
       // find the parent folder uid
-      const item = findItem(rootItems?.items ?? [], childrenByParentUID, uid);
+      const item = findItem(rootItems?.items ?? [], childrenByParentUID, kind, uid);
       parentsToRefresh.add(item?.parentUID);
     }
 

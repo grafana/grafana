@@ -20,6 +20,7 @@ import {
   FieldType,
   type GrafanaTheme2,
   getDisplayProcessor,
+  formattedValueToString,
   type TimeRange,
 } from '@grafana/data';
 import {
@@ -44,7 +45,7 @@ import { HeaderCell } from './components/HeaderCell';
 import { SummaryCell } from './components/SummaryCell';
 import { TableCellActions } from './components/TableCellActions';
 import { TableCellTooltip } from './components/TableCellTooltip';
-import { CELL_HORIZONTAL_CHROME } from './constants';
+import { CELL_HORIZONTAL_CHROME, OVERFLOW_CELL_CLASS } from './constants';
 import {
   getCellActionStyles,
   getDefaultCellStyles,
@@ -66,6 +67,7 @@ import {
   type TableFilterActionCallback,
   type TableRow,
   type TableSummaryRow,
+  type TypographyCtx,
 } from './types';
 import {
   type ApplyFilterResult,
@@ -149,6 +151,7 @@ export function useDataGridRows(
 
 export interface ColumnBuildConfig {
   disableKeyboardEvents?: boolean;
+  hoverOverflow?: boolean;
   disableSanitizeHtml?: boolean;
   filter: FilterType;
   /**
@@ -159,6 +162,7 @@ export interface ColumnBuildConfig {
    * carries the inset itself.
    */
   firstColumnExtraPadding?: number;
+  lastColumnExtraPadding?: number;
   frozenColumns: number;
   getCellActions: GetActionsFunctionLocal;
   getCellColorInlineStyles: ReturnType<typeof getCellColorInlineStylesFactory>;
@@ -173,8 +177,10 @@ export interface ColumnBuildConfig {
   setInspectCell: Dispatch<SetStateAction<InspectCellProps | null>>;
   showTypeIcons?: boolean;
   tableRefreshEnabled?: boolean;
+  jsonSyntaxHighlightingEnabled?: boolean;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
+  typographyCtx: TypographyCtx;
 }
 
 export type FromFieldsFn = (
@@ -182,7 +188,8 @@ export type FromFieldsFn = (
   widths: number[],
   frame: DataFrame,
   rawRows: TableRow[],
-  visibleRows: TableRow[]
+  visibleRows: TableRow[],
+  lastColumnExtraPadding?: number
 ) => FromFieldsResult;
 
 /**
@@ -258,11 +265,15 @@ function buildColumnsFromFields(
     numFrozenColsFullyInView,
     maxRowHeight,
     disableKeyboardEvents,
+    hoverOverflow = true,
     disableSanitizeHtml,
     showTypeIcons,
     tableRefreshEnabled,
+    jsonSyntaxHighlightingEnabled,
     timeRange,
     firstColumnExtraPadding = 0,
+    lastColumnExtraPadding = 0,
+    typographyCtx,
   } = config;
 
   // Resolve the apply-to-row background function against this frame's own fields.
@@ -336,7 +347,11 @@ function buildColumnsFromFields(
     const showFilters = Boolean(field.config.filterable && onCellFilterAdded != null);
     const showActions = cellInspect || showFilters;
     const width = widths[i];
-    const contentWidth = width - CELL_HORIZONTAL_CHROME - (i === 0 ? firstColumnExtraPadding : 0);
+    const contentWidth =
+      width -
+      CELL_HORIZONTAL_CHROME -
+      (i === 0 ? firstColumnExtraPadding : 0) -
+      (i === fields.length - 1 ? lastColumnExtraPadding : 0);
 
     // helps us avoid string cx and emotion per-cell
     const cellActionClassName = showActions
@@ -345,6 +360,7 @@ function buildColumnsFromFields(
 
     const shouldOverflow =
       !IS_SAFARI_26 && typeof rowHeight !== 'string' && (shouldTextOverflow(field) || Boolean(maxRowHeight));
+    const textWidthCache = new Map<string, number>();
     const textWrap = typeof rowHeight === 'string' || shouldTextWrap(field);
     const canBeColorized = canFieldBeColorized(cellType, applyToRowBgFn);
     const fieldAppliesToRow =
@@ -353,6 +369,7 @@ function buildColumnsFromFields(
       textAlign,
       textWrap,
       shouldOverflow,
+      hoverOverflow,
       maxHeight: maxRowHeight,
     };
 
@@ -400,6 +417,16 @@ function buildColumnsFromFields(
       if (hasValidStyleField) {
         style = { ...style, ...parseStyleJson(props.row[styleFieldName!]) };
       }
+      const value = props.row[props.column.key];
+      const formattedValue = shouldOverflow ? formattedValueToString(field.display!(value)) : '';
+      let measuredWidth = textWidthCache.get(formattedValue);
+      if (measuredWidth == null && formattedValue !== '') {
+        measuredWidth = typographyCtx.measureWidth(formattedValue);
+        textWidthCache.set(formattedValue, measuredWidth);
+      }
+      const hasOverflow =
+        shouldOverflow &&
+        (maxRowHeight != null || rendersAsJson(field, cellType) || (measuredWidth ?? 0) > contentWidth);
 
       return (
         <Cell
@@ -408,6 +435,7 @@ function buildColumnsFromFields(
           className={clsx(
             props.className,
             cellParentStyles,
+            hasOverflow && OVERFLOW_CELL_CLASS,
             cellSpecificStyles != null && maxRowHeight == null ? cellSpecificStyles : ''
           )}
           style={style}
@@ -442,6 +470,7 @@ function buildColumnsFromFields(
             showFilters={showFilters}
             getActions={getCellActions}
             disableSanitizeHtml={disableSanitizeHtml}
+            jsonSyntaxHighlightingEnabled={jsonSyntaxHighlightingEnabled}
             getTextColorForBackground={getTextColorForBackground}
           />
           {showActions && (
@@ -487,6 +516,7 @@ function buildColumnsFromFields(
           // (which would line-clamp/cut off the content).
           textWrap: true,
           shouldOverflow: false,
+          hoverOverflow: true,
         } satisfies TableCellStyleOptions;
         const tooltipCanBeColorized = canFieldBeColorized(tooltipCellOptions.type, applyToRowBgFn);
         const tooltipDefaultStyles = getDefaultCellStyles(theme, tooltipCellStyleOptions);
@@ -516,6 +546,7 @@ function buildColumnsFromFields(
           ),
           data: frame,
           disableSanitizeHtml,
+          jsonSyntaxHighlightingEnabled,
           field: tooltipField,
           getActions: getCellActions,
           getTextColorForBackground,
@@ -556,6 +587,7 @@ function buildColumnsFromFields(
       width,
       headerCellClass,
       frozen: Math.min(frozenColumns, numFrozenColsFullyInView) > i,
+      resizable: field.config.custom?.resizable,
       sortable: isSortableField(field),
       renderCell: renderCellContent,
       renderHeaderCell: ({ column, sortDirection }) => (
@@ -606,11 +638,14 @@ export function useColumnBuilderFromFields(
   nestedRows?: NestedRowEntry[]
 ): FromFieldsFn {
   return useCallback(
-    (fields, widths, frame, rawRows, visibleRows) => {
+    (fields, widths, frame, rawRows, visibleRows, lastColumnExtraPadding = 0) => {
       const parentIndex = visibleRows[0]?.__parentIndex;
       const resolvedFilterResult =
         parentIndex == null || nestedRows == null ? filterResult : nestedRows[parentIndex].filterResult;
-      return buildColumnsFromFields(fields, widths, frame, rawRows, visibleRows, resolvedFilterResult, config);
+      return buildColumnsFromFields(fields, widths, frame, rawRows, visibleRows, resolvedFilterResult, {
+        ...config,
+        lastColumnExtraPadding,
+      });
     },
     [filterResult, nestedRows, config]
   );

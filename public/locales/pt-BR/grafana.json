@@ -920,6 +920,7 @@
       "button-view": "Visualizar",
       "export-ariaLabel-export": "Exportar",
       "export-label-export": "Exportar",
+      "export-legacy-integration-tooltip": "",
       "label-delete": "Excluir",
       "label-manage-permissions": "Gerenciar permissões",
       "tooltip-history": "Ver o histórico de tentativas de notificação feitas para este ponto de contato",
@@ -1484,6 +1485,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "Carregando…."
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "",
+      "warning-v0-integrations-title": ""
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "Carregando…."
     },
@@ -1712,6 +1717,9 @@
         "pause-none": "Nenhuma regra pausada",
         "pause-recording": "Regras de registro pausadas",
         "policy-tree": "Árvore de políticas",
+        "preview": "",
+        "preview-config-aria": "",
+        "preview-rules-aria": "",
         "routing": "Encaminhamento de notificação",
         "routing-none": "Nenhuma árvore de políticas selecionada",
         "routing-tree": "Árvore de políticas: {{name}}",
@@ -1773,14 +1781,17 @@
         "templates-duplicate": "Duplique o nome do arquivo de modelo: \"{{name}}\". Os nomes dos arquivos de modelo devem ser exclusivos.",
         "templates-label": "Modelos de notificação",
         "templates-remove": "Remover {{name}}",
-        "upload": "Carregar arquivo YAML",
+        "upload": "",
         "validating": "Validando configuração…",
         "validation-error": "Falha na validação",
         "validation-error-desc": "Falha ao validar a configuração.",
         "validation-success": "Validação bem-sucedida",
         "validation-success-desc": "Nenhum conflito encontrado. A configuração está pronta para ser importada.",
         "validation-warning": "Alguns recursos serão renomeados para evitar conflitos com os recursos existentes",
-        "yaml-file": "YAML de configuração do Alertmanager"
+        "yaml-desc": "",
+        "yaml-file": "YAML de configuração do Alertmanager",
+        "yaml-invalid-type": "",
+        "yaml-remove": ""
       },
       "step2": {
         "datasource": "Fonte de dados",
@@ -4617,11 +4628,15 @@
     },
     "readme": {
       "add-readme": "Adicionar README",
-      "edit-tooltip": "Editar README",
+      "edit-doc-tooltip": "",
       "empty-message": "Adicione um README para descrever o que está nesta pasta e onde encontrar os painéis certos.",
       "load-error-retry": "Tente novamente",
-      "load-error-title": "Não foi possível carregar o README",
-      "parse-error": "Não é possível exibir o conteúdo do README."
+      "load-error-title": "",
+      "panel-label": "",
+      "parse-error": "",
+      "tab-contributing": "",
+      "tab-readme": "",
+      "tab-security": ""
     },
     "recently-viewed": {
       "clear": "Limpar histórico",
@@ -5778,16 +5793,24 @@
       "add-library-panel-header": "Painel de importação",
       "add-visualization-body": "Selecione uma fonte de dados e consulte e visualize seus dados com gráficos, estatísticas e tabelas ou crie listas, markdowns e outros widgets.",
       "add-visualization-button": "Adicionar visualização",
+      "add-visualization-description": "",
       "add-visualization-header": "Comece seu novo painel de controle adicionando uma visualização",
+      "add-visualization-heading": "",
+      "assistant-placeholder": "",
       "auto-grid": "Grade automática",
       "auto-grid-description": "Os painéis são redimensionados para se ajustarem e formarem grades uniformes",
+      "build-assistant": "",
       "custom-grid": "Grade personalizada",
       "custom-grid-description": "Posicione e dimensione cada painel individualmente",
       "description": "Adicione um painel para visualizar seus dados",
+      "grid-auto": "",
+      "grid-custom": "",
+      "grid-label": "",
       "import-a-dashboard-body": "Importe painéis por meio de arquivos ou do <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importar um painel de controle",
       "import-dashboard-button": "Importar painel de controle",
       "layout-default-hint": "O layout selecionado também será o padrão para todas as novas guias e linhas. Você pode alterar essa opção mais tarde em Configurações do painel > Geral.",
+      "or-start-blank": "",
       "select-layout-header": "Selecionar layout",
       "title": "Novo painel"
     },
@@ -5915,6 +5938,7 @@
       "randomize-field-names-label-field-names": "Nomes dos campos",
       "randomize-labels-label-labels": "Etiquetas",
       "randomize-string-values-label-string-values": "Valores da string",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Dados",
@@ -5955,6 +5979,7 @@
     "inspect-json": {
       "dataframe-description": "Dados brutos sem transformações e configuração de campo aplicada. ",
       "dataframe-label": "DataFrame JSON (da consulta)",
+      "editor-label": "",
       "panel-data-description": "O modelo bruto passado para a visualização do painel",
       "panel-data-label": "Dados do painel",
       "panel-json-description": "O modelo salvo no JSON do painel de controle que configura como tudo funciona.",
@@ -7346,6 +7371,7 @@
       "randomize-field-names-label-field-names": "Nomes dos campos",
       "randomize-labels-label-labels": "Etiquetas",
       "randomize-string-values-label-string-values": "Valores da string",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Dados",
@@ -7735,6 +7761,7 @@
         "model-label": "Modelo",
         "v2-resource": "Recurso V2"
       },
+      "json-preview-label": "",
       "label-description": "Descrição",
       "label-folder-name": "Nome da pasta",
       "label-target-folder": "Pasta de destino",
@@ -11149,6 +11176,7 @@
       "incident-tab-label": "Incidentes",
       "team-filter-all": "Todas as equipes",
       "team-filter-label": "Filtrar alertas por equipe",
+      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Suas equipes",
       "title": "Alertas e incidentes",
       "title-alerts": "Alertas",
@@ -11208,6 +11236,7 @@
     "incidents-card": {
       "declare": "Comunicar um incidente",
       "empty": "Nenhum incidente ativo.",
+      "empty-selected-team": "",
       "error-title": "Não foi possível carregar os incidentes ativos",
       "title": "Incidentes ativos",
       "view-all": "Ver todos os incidentes"
@@ -11831,6 +11860,7 @@
       "waiting-for-data": "Aguardando dados:"
     },
     "live-publish": {
+      "message": "",
       "publish": "Publicar"
     }
   },
@@ -12179,6 +12209,10 @@
       "description": "Quando ativada, exibe detalhes do log para cada linha.",
       "name": "Ativar detalhes do log"
     },
+    "hover-overflow": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Ativa/desativa o botão de link da linha de log na primeira coluna de cada linha",
       "name": "Exibir botão de cópia do link do log"
@@ -12246,6 +12280,10 @@
     "selected-team-not-found": "A equipe selecionada não foi encontrada ou você não tem as permissões necessárias para visualizá-la.",
     "team-not-found": "[Equipe desconhecida]",
     "unknown-error": "Erro desconhecido"
+  },
+  "mermaid": {
+    "invalid-syntax": "",
+    "render-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Nenhuma opção encontrada"
@@ -12579,6 +12617,10 @@
     "authentication": {
       "title": "Autenticação"
     },
+    "banner-settings": {
+      "subtitle": "",
+      "title": ""
+    },
     "bookmarks": {
       "title": "Marcadores"
     },
@@ -12785,6 +12827,7 @@
       "title": "Consultas gravadas"
     },
     "reporting": {
+      "subtitle": "",
       "title": "Relatórios"
     },
     "saved-queries": {
@@ -12799,6 +12842,10 @@
     },
     "search-dashboards": {
       "title": "Buscar painéis de controle"
+    },
+    "secrets-management": {
+      "subtitle": "",
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Veja as configurações definidas nas suas configurações do Grafana",
@@ -15097,7 +15144,7 @@
     },
     "public-sharing": {
       "accept-button": "Aceitar",
-      "alert-text": "Ao compartilhar este painel de controle externamente, todas as suas informações poderão ser acessadas por qualquer pessoa com acesso ao link.",
+      "alert-text": "",
       "cancel-button": "Cancelar",
       "learn-more-button": "Saiba mais",
       "public-ack": "Estou ciente de que todas as informações deste painel de controle serão públicas.*",
@@ -16674,10 +16721,6 @@
     },
     "frame-picker": {
       "label": ""
-    },
-    "mermaid": {
-      "invalid-syntax": "",
-      "render-error": ""
     },
     "options": {
       "page-size": "",

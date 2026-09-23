@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -1474,6 +1475,8 @@ func TestGetChildrenBatchPagination(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, children, 2)
 		require.True(t, hasMore)
+		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, searcher.lastSearchRequest.ResultFormat)
+		require.Equal(t, []string{resource.SEARCH_FIELD_NAME}, searcher.lastSearchRequest.Fields)
 	})
 
 	t.Run("hasMore false on the final page", func(t *testing.T) {
@@ -1548,7 +1551,8 @@ type mockSearchClient struct {
 	useNextPageToken bool
 	dropTotalHits    bool
 
-	searchCalls int
+	searchCalls       int
+	lastSearchRequest *resourcepb.ResourceSearchRequest
 }
 
 // GetStats implements resourcepb.ResourceIndexClient.
@@ -1559,6 +1563,7 @@ func (m *mockSearchClient) GetStats(ctx context.Context, in *resourcepb.Resource
 // Search implements resourcepb.ResourceIndexClient.
 func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	m.searchCalls++
+	m.lastSearchRequest = req
 
 	// get the list of parents from the search request
 	parentSet := make(map[string]bool)

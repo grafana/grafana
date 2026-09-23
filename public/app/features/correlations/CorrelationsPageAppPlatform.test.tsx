@@ -2,12 +2,13 @@ import { render, waitFor, screen, within, type Matcher, getByRole } from '@testi
 import userEvent from '@testing-library/user-event';
 import { openMenu } from 'react-select-event';
 import { TestProvider } from 'test/helpers/TestProvider';
+import { seedDataSources, watchDataSourceFallbacks } from 'test/helpers/seedDataSources';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
+import { type DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { type DataSourceSrv, type reportInteraction, setAppEvents, setDataSourceSrv, config } from '@grafana/runtime';
-import { type DataSourceRef } from '@grafana/schema';
+import { type reportInteraction, setAppEvents, config } from '@grafana/runtime';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { appEvents } from 'app/core/app_events';
 import { type createSuccessNotification } from 'app/core/copy/appNotification';
@@ -25,7 +26,6 @@ import {
 } from './__mocks__/correlations.scenario';
 import { prePopulateCorrelations, setupMockCorrelations } from './__mocks__/fixtures';
 import { setupCorrelationsMswServer } from './__mocks__/server';
-import { MockDataSourceSrv } from './__mocks__/useCorrelations.mocks';
 
 const server = setupCorrelationsMswServer();
 
@@ -34,29 +34,31 @@ const originalFeatureToggles = config.featureToggles;
 // Set app events up, otherwise plugin modules will fail to load
 setAppEvents(appEvents);
 
-const renderWithContext = async (datasources: ConstructorParameters<typeof MockDataSourceSrv>[0] = {}) => {
+// The fallback's warning is inert in public/app suites, so green plus a quiet console proves
+// nothing. Spy on the logger instead and fail if a lookup resolved through the legacy service.
+let dataSourceFallbacks: ReturnType<typeof watchDataSourceFallbacks> | undefined;
+
+afterEach(() => {
+  const fallbacks = dataSourceFallbacks;
+  dataSourceFallbacks = undefined;
+  fallbacks?.expectNoFallbacks(['instance', 'settings', 'list']);
+});
+
+const renderWithContext = async (datasources: Record<string, DataSourceInstanceSettings> = {}) => {
   const grafanaContext = getGrafanaContextMock();
-  const dsServer = new MockDataSourceSrv(datasources) as unknown as DataSourceSrv;
-  dsServer.get = (name: string) => {
-    const dsApi = new MockDataSourceApi(name);
-    // Mock the QueryEditor component
-    dsApi.components = {
-      QueryEditor: () => <>{name} query editor</>,
-    };
-    return Promise.resolve(dsApi);
-  };
 
-  // the getInstanceSettings in MockDataSourceSrv finds by string only, not ref, so we build it out here
-  dsServer.getInstanceSettings = (ref: DataSourceRef | string) => {
-    const lookupName = typeof ref === 'string' ? ref : ref?.uid;
-    if (lookupName === undefined) {
-      return undefined;
-    } else {
-      return datasources[lookupName];
-    }
-  };
-
-  setDataSourceSrv(dsServer);
+  seedDataSources(
+    Object.values(datasources).map((settings) => {
+      const dsApi = new MockDataSourceApi(settings);
+      // Mock the QueryEditor component
+      dsApi.components = {
+        QueryEditor: () => <>{settings.name} query editor</>,
+      };
+      return { settings, api: dsApi };
+    }),
+    { legacySrv: 'mock' }
+  );
+  dataSourceFallbacks = watchDataSourceFallbacks();
 
   // the new render method doesn't seem to offer custom queries for now, so we can't change over yet
   const renderResult = render(
@@ -151,21 +153,6 @@ jest.mock('@grafana/runtime', () => {
     reportInteraction: (...args: Parameters<typeof reportInteraction>) => {
       mocks.reportInteraction(...args);
     },
-  };
-});
-
-// Delegate the new async datasource APIs to the legacy srv configured per-test via setDataSourceSrv,
-// so the cache-miss legacy fallback (which logs a warning that fails on console) is never hit.
-jest.mock('@grafana/runtime/unstable', () => {
-  const actualRuntime = jest.requireActual('@grafana/runtime');
-  const actualUnstable = jest.requireActual('@grafana/runtime/unstable');
-
-  return {
-    ...actualUnstable,
-    getDataSourceInstanceSettings: (ref: Parameters<typeof actualUnstable.getDataSourceInstanceSettings>[0]) =>
-      Promise.resolve(actualRuntime.getDataSourceSrv().getInstanceSettings(ref)),
-    getDataSourceInstance: (ref: Parameters<typeof actualUnstable.getDataSourceInstance>[0]) =>
-      actualRuntime.getDataSourceSrv().get(ref),
   };
 });
 

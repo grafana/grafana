@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/storage/unified/fieldpath"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -390,7 +391,7 @@ func (s *standardDocumentBuilder) extractDeclaredFields(provider SearchFieldsPro
 		if def.Path == "" {
 			continue
 		}
-		raw, err := extractPath(tmp.Object, def.Path)
+		raw, err := fieldpath.Extract(tmp.Object, def.Path)
 		if err != nil {
 			s.log.Warn("declared search field path failed to evaluate",
 				"group", gvr.Group, "version", gvr.Version, "resource", gvr.Resource,

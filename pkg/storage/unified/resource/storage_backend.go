@@ -129,7 +129,7 @@ type kvStorageBackend struct {
 }
 
 type kvBackendMetrics struct {
-	ConflictErrors                   *prometheus.CounterVec
+	WriteConflicts                   *prometheus.CounterVec
 	EventEmitFailures                *prometheus.CounterVec
 	NatsNotifierDropped              *prometheus.CounterVec
 	WatchNotificationsPublished      *prometheus.CounterVec
@@ -139,9 +139,9 @@ type kvBackendMetrics struct {
 
 func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
 	return &kvBackendMetrics{
-		ConflictErrors: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "storage_server_optimistic_lock_conflicts_total",
-			Help: "Total number of optimistic lock conflict errors in the KV storage backend",
+		WriteConflicts: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "storage_server_write_conflicts_total",
+			Help: "Total number of write conflicts in the KV storage backend (lease races and resource-version mismatches)",
 		}, []string{"resource", "action"}),
 		EventEmitFailures: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "storage_server_event_emit_after_commit_failures_total",
@@ -184,7 +184,7 @@ func (m *kvBackendMetrics) recordConflict(event WriteEvent) {
 	if m == nil {
 		return
 	}
-	m.ConflictErrors.WithLabelValues(event.Key.Resource, event.Type.String()).Inc()
+	m.WriteConflicts.WithLabelValues(event.Key.Resource, event.Type.String()).Inc()
 }
 
 func (m *kvBackendMetrics) recordEventEmitFailure(event WriteEvent) {
@@ -586,7 +586,7 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 
 	prunerMaxLimit := LookupPrunerHistoryLimit(key.Group, key.Resource, k.dashboardVersionsToKeep)
 	counter := 0
-	deleted := 0
+	toDelete := make([]DataKey, 0)
 	// iterate over all keys for the resource and delete versions beyond the configured limit
 	for datakey, err := range k.dataStore.Keys(ctx, ListRequestKey{
 		Namespace: key.Namespace,
@@ -606,12 +606,11 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 
 		// If we already have the configured number of versions, delete any more create or update events
 		if datakey.Action != DataActionDeleted {
-			err := k.dataStore.Delete(ctx, datakey)
-			if err != nil {
-				return err
-			}
-			deleted += 1
+			toDelete = append(toDelete, datakey)
 		}
+	}
+	if err := k.dataStore.BatchDelete(ctx, toDelete); err != nil {
+		return err
 	}
 
 	k.log.Debug("pruned history successfully",
@@ -619,7 +618,7 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 		"group", key.Group,
 		"resource", key.Resource,
 		"name", key.Name,
-		"rows", deleted)
+		"rows", len(toDelete))
 
 	return nil
 }
@@ -788,7 +787,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 			return nil
 		}
 		if !b.garbageCollection.DryRun {
-			if err := b.dataStore.batchDelete(ctx, buffer); err != nil {
+			if err := b.dataStore.BatchDelete(ctx, buffer); err != nil {
 				return fmt.Errorf("failed to batch delete keys: %s", err)
 			}
 		}
@@ -919,15 +918,14 @@ func conflictError(event WriteEvent, message string) error {
 	)
 }
 
-// maybeAcquireWriteLease acquires the per-resource lease that serializes WriteEvent
+// acquireWriteLease acquires the per-resource lease that serializes WriteEvent
 // for this resource. It returns:
 //
 //   - a context derived from ctx that is cancelled if the lease is lost
 //     (e.g. its TTL expires while the write is in flight);
-//   - a boolean indicating that a lease was acquired;
 //   - a release closure to be deferred — it stops the watcher goroutine and
 //     releases the lease.
-func (k *kvStorageBackend) maybeAcquireWriteLease(ctx context.Context, event WriteEvent) (context.Context, bool, func(), error) {
+func (k *kvStorageBackend) acquireWriteLease(ctx context.Context, event WriteEvent) (context.Context, func(), error) {
 	name := event.Key.Group + "/" + event.Key.Resource + "/" +
 		event.Key.Namespace + "/" + event.Key.Name
 	if event.Key.Namespace == "" {
@@ -942,9 +940,9 @@ func (k *kvStorageBackend) maybeAcquireWriteLease(ctx context.Context, event Wri
 	if err != nil {
 		if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
 			k.metrics.recordConflict(event)
-			return nil, false, nil, conflictError(event, "concurrent modification on the same resource, please retry")
+			return nil, nil, conflictError(event, "concurrent modification on the same resource, please retry")
 		}
-		return nil, false, nil, fmt.Errorf("acquiring write lease: %w", err)
+		return nil, nil, fmt.Errorf("acquiring write lease: %w", err)
 	}
 
 	leaseCtx, cancel := context.WithCancel(ctx)
@@ -967,7 +965,7 @@ func (k *kvStorageBackend) maybeAcquireWriteLease(ctx context.Context, event Wri
 		}
 	}
 
-	return leaseCtx, true, release, nil
+	return leaseCtx, release, nil
 }
 
 func recordSpanError(span trace.Span, err error) {
@@ -1032,7 +1030,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 	defer span.End()
 	defer func() { recordSpanError(span, err) }()
 
-	ctx, leasesActive, releaseLease, err := k.maybeAcquireWriteLease(ctx, event)
+	ctx, releaseLease, err := k.acquireWriteLease(ctx, event)
 	if err != nil {
 		return 0, err
 	}
@@ -1089,35 +1087,14 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 	case resourcepb.WatchEvent_ADDED:
 		action = DataActionCreated
 		// Check if resource already exists for create operations
-		latestKey, err := k.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
+		_, err = k.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
 			Group:     event.Key.Group,
 			Resource:  event.Key.Resource,
 			Namespace: namespace,
 			Name:      event.Key.Name,
 		})
 		if err == nil {
-			if latestKey.Action == kv.DataActionUpdated {
-				return 0, ErrResourceAlreadyExists
-			}
-
-			if leasesActive {
-				// Holding the lease guarantees no concurrent in-flight writes
-				// for this resource, so a non-deleted latest key is genuine.
-				return 0, ErrResourceAlreadyExists
-			}
-
-			// A creation event was found, but it might be a transient write from a
-			// concurrent create that hasn't gone through the optimistic lock
-			// checks. Confirm via the event store before returning AlreadyExists.
-			committed, err := k.confirmExistence(ctx, latestKey)
-			if err != nil {
-				return 0, fmt.Errorf("checking concurrent creation in event store: %w", err)
-			}
-			if committed {
-				return 0, ErrResourceAlreadyExists
-			}
-			// Not confirmed: the data is likely transient. Proceed with the
-			// write and let the optimistic lock checks determine the winner.
+			return 0, ErrResourceAlreadyExists
 		} else if errors.Is(err, ErrNotFound) && k.rvManager != nil {
 			// TODO: remove this branch when sql/backend backwards compatibility is no longer needed.
 			// In compat mode the legacy `resource` table is the source of truth
@@ -1212,70 +1189,6 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 	defer cancelPersist()
 	ctx = persistCtx
 
-	// Optimistic concurrency control to verify our write is the latest version
-	// and that the resource still had the expected PreviousRV when we wrote it.
-	if !leasesActive {
-		if event.PreviousRV != 0 {
-			// Update operations: verify PreviousRV matches and our write is latest
-			// Get both the latest and predecessor
-			latestKey, prevKey, err := k.dataStore.GetLatestAndPredecessor(ctx, ListRequestKey{
-				Group:     event.Key.Group,
-				Resource:  event.Key.Resource,
-				Namespace: namespace,
-				Name:      event.Key.Name,
-			})
-			if err != nil {
-				// If we can't read the latest version, clean up what we wrote
-				_ = k.dataStore.Delete(ctx, dataKey)
-				return 0, fmt.Errorf("failed to check latest version: %w", err)
-			}
-
-			// Check if the RV we just wrote is the latest. If not, a concurrent write with higher RV happened
-			if latestKey.ResourceVersion != dataKey.ResourceVersion {
-				// Delete the data we just wrote since it's not the latest
-				_ = k.dataStore.Delete(ctx, dataKey)
-				k.metrics.recordConflict(event)
-				return 0, conflictError(event, "concurrent modification detected")
-			}
-
-			if !rvmanager.IsRvEqual(prevKey.ResourceVersion, event.PreviousRV) {
-				// Another concurrent write happened between our read and write
-				_ = k.dataStore.Delete(ctx, dataKey)
-				k.metrics.recordConflict(event)
-				return 0, conflictError(event, "resource was modified concurrently")
-			}
-		} else if event.Type == resourcepb.WatchEvent_ADDED {
-			// Create operations: verify our write is the latest version
-			latestKey, prevKey, err := k.dataStore.GetLatestAndPredecessor(ctx, ListRequestKey{
-				Group:     event.Key.Group,
-				Resource:  event.Key.Resource,
-				Namespace: namespace,
-				Name:      event.Key.Name,
-			})
-			if err != nil {
-				// If we can't read the latest version, clean up what we wrote
-				_ = k.dataStore.Delete(ctx, dataKey)
-				return 0, fmt.Errorf("failed to check latest version: %w", err)
-			}
-
-			// Check if the RV we just wrote is the latest. If not, a concurrent create with higher RV happened
-			if latestKey.ResourceVersion != dataKey.ResourceVersion {
-				// Delete the data we just wrote since it's not the latest
-				_ = k.dataStore.Delete(ctx, dataKey)
-				k.metrics.recordConflict(event)
-				return 0, conflictError(event, "concurrent create detected")
-			}
-
-			// Verify that the immediate predecessor is not a create
-			if prevKey.Action == DataActionCreated {
-				// Another concurrent create happened - delete our write and return error
-				_ = k.dataStore.Delete(ctx, dataKey)
-				k.metrics.recordConflict(event)
-				return 0, conflictError(event, "concurrent create attempts detected")
-			}
-		}
-	}
-
 	// Write event
 	eventData := Event{
 		Namespace:       namespace,
@@ -1312,43 +1225,6 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 	k.publishWatchNotification(ctx, eventData)
 
 	return rv, nil
-}
-
-// confirmExistence checks whether a resource with the given `key` is genuinely
-// committed. During concurrent creates, the datastore can contain transient
-// writes that haven't survived the post-write optimistic lock checks. The
-// eventstore is used as a commit signal: an event is written only after the
-// optimistic locking checks, so its presence proves the write is committed.
-func (k *kvStorageBackend) confirmExistence(ctx context.Context, key DataKey) (bool, error) {
-	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.confirmExistence")
-	defer span.End()
-
-	const eventThreshold = 30 * time.Second
-
-	// Extract the timestamp from the snowflake-formatted RV.
-	rvTime := time.Unix(0, snowflake.ID(key.ResourceVersion).Time()*int64(time.Millisecond))
-	if time.Since(rvTime) > eventThreshold {
-		// Old RV: by this point, it can be assumed to be committed.
-		return true, nil
-	}
-
-	// Recent RV: look up the corresponding event to confirm it was committed.
-	_, err := k.eventStore.Get(ctx, EventKey{
-		Namespace:       key.Namespace,
-		Group:           key.Group,
-		Resource:        key.Resource,
-		Name:            key.Name,
-		ResourceVersion: key.ResourceVersion,
-		Action:          key.Action,
-		Folder:          key.Folder,
-	})
-	if err == nil {
-		return true, nil
-	}
-	if errors.Is(err, ErrNotFound) {
-		return false, nil
-	}
-	return false, err
 }
 
 func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) (rsp *BackendReadResponse) {
@@ -1424,7 +1300,12 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		Action:          meta.Action,
 		Folder:          meta.Folder,
 	})
-	if err != nil || data == nil {
+	if errors.Is(err, ErrNotFound) || (err == nil && data == nil) {
+		// Metadata resolved but the body is gone (GC'd between resolve and read),
+		// which is a not-found like the batch path returns.
+		return &BackendReadResponse{Error: NewNotFoundError(req.Key)}
+	}
+	if err != nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
 	}
 	value, err := readAndClose(data)
@@ -1437,6 +1318,129 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		Value:           value,
 		Folder:          meta.Folder,
 	}
+}
+
+func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*resourcepb.ReadRequest) ([]*BackendReadResponse, error) {
+	responses := make([]*BackendReadResponse, len(requests))
+	type batchReadEntry struct {
+		index int
+		key   kv.DataKey
+	}
+	entries := make([]batchReadEntry, 0, len(requests))
+	keys := make([]kv.DataKey, 0, len(requests))
+
+	// Reject a too-large RV the same way ReadResource does. GetResourceKeyAtRevision
+	// would otherwise resolve the highest retained revision below it, so the batch
+	// and single-read paths would disagree when search and storage briefly diverge.
+	// The latest RV is fetched once and shared across the batch.
+	var maxReqRV int64
+	for _, req := range requests {
+		if req != nil && req.Key != nil {
+			if rv := ToSnowflakeRV(req.ResourceVersion); rv > maxReqRV {
+				maxReqRV = rv
+			}
+		}
+	}
+	var latestRV int64
+	if maxReqRV > 0 {
+		latestRV = k.snowflake.Generate().Int64()
+		if lastEventKey, err := k.eventStore.LastEventKey(ctx); err == nil {
+			latestRV = lastEventKey.ResourceVersion
+		} else if !errors.Is(err, ErrNotFound) {
+			return nil, fmt.Errorf("failed to fetch latest resource version: %w", err)
+		}
+	}
+
+	for i, req := range requests {
+		if req == nil || req.Key == nil {
+			responses[i] = &BackendReadResponse{Error: NewBadRequestError("missing key")}
+			continue
+		}
+
+		rv := ToSnowflakeRV(req.ResourceVersion)
+		if rv > latestRV {
+			responses[i] = &BackendReadResponse{Error: NewBadRequestError(fmt.Sprintf("too large resource version: %d (current %d)", rv, latestRV))}
+			continue
+		}
+		name := req.Key.Name
+		getKey := GetRequestKey{
+			Group:     req.Key.Group,
+			Resource:  req.Key.Resource,
+			Namespace: req.Key.Namespace,
+			Name:      name,
+		}
+		meta, err := k.dataStore.GetResourceKeyAtRevision(ctx, getKey, rv)
+		if errors.Is(err, ErrNotFound) {
+			responses[i] = &BackendReadResponse{Error: NewNotFoundError(req.Key)}
+			continue
+		}
+		if err != nil {
+			responses[i] = &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
+			continue
+		}
+
+		dataKey := kv.DataKey{
+			Group:           req.Key.Group,
+			Resource:        req.Key.Resource,
+			Namespace:       req.Key.Namespace,
+			Name:            name,
+			ResourceVersion: meta.ResourceVersion,
+			Action:          meta.Action,
+			Folder:          meta.Folder,
+			GUID:            meta.GUID,
+		}
+		entries = append(entries, batchReadEntry{index: i, key: dataKey})
+		keys = append(keys, dataKey)
+	}
+
+	if len(keys) == 0 {
+		return responses, nil
+	}
+
+	values := make(map[string][]byte, len(keys))
+	var batchErr error
+	for obj, err := range k.dataStore.BatchGet(ctx, keys) {
+		if err != nil {
+			batchErr = err
+			break
+		}
+		value, err := readAndClose(obj.Value)
+		if err != nil {
+			batchErr = err
+			break
+		}
+		values[obj.Key.String()] = value
+	}
+
+	for _, entry := range entries {
+		// A late batch failure must not discard values already read.
+		if value, ok := values[entry.key.String()]; ok {
+			responses[entry.index] = &BackendReadResponse{
+				Key:             requests[entry.index].Key,
+				ResourceVersion: entry.key.ResourceVersion,
+				Value:           value,
+				Folder:          entry.key.Folder,
+			}
+			continue
+		}
+		// A batch-level failure is a 500; an individually missing key means the
+		// resource vanished between resolve and read (e.g. GC), which is a not-found
+		// like the single-read path returns.
+		errRes := NewNotFoundError(requests[entry.index].Key)
+		if batchErr != nil {
+			errRes = &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: batchErr.Error()}
+		}
+		// Folder/RV are set so authorization (which runs before the error surfaces)
+		// checks the real folder instead of denying on an empty one.
+		responses[entry.index] = &BackendReadResponse{
+			Key:             requests[entry.index].Key,
+			ResourceVersion: entry.key.ResourceVersion,
+			Folder:          entry.key.Folder,
+			Error:           errRes,
+		}
+	}
+
+	return responses, nil
 }
 
 // ListIterator returns an iterator for listing resources.
@@ -2628,7 +2632,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		}
 
 		previousCount := int64(len(historyKeys))
-		if err := b.dataStore.batchDelete(ctx, historyKeys); err != nil {
+		if err := b.dataStore.BatchDelete(ctx, historyKeys); err != nil {
 			reportError(err, "failed to delete collection")
 			return rsp
 		}
@@ -2654,7 +2658,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	saved := make([]DataKey, 0)
 	rollback := func() {
 		// we don't have transactions in the kv store, so we simply delete everything we created
-		err = b.dataStore.batchDelete(ctx, saved)
+		err = b.dataStore.BatchDelete(ctx, saved)
 		if err != nil {
 			b.log.Error("failed to delete during rollback: %s", err)
 		}

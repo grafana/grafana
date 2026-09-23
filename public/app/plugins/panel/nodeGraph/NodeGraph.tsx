@@ -456,8 +456,8 @@ const Edges = memo(function Edges(props: EdgesProps) {
             key={`${e.id}-${e.source.y ?? ''}-${props.processedNodesLength}-${props.processedEdgesLength}-${index}`}
             edge={e}
             hovering={
-              (e.source as NodeDatum).id === props.nodeHoveringId ||
-              (e.target as NodeDatum).id === props.nodeHoveringId ||
+              e.source.id === props.nodeHoveringId ||
+              e.target.id === props.nodeHoveringId ||
               props.edgeHoveringId === e.id
             }
             onClick={props.onClick}
@@ -483,9 +483,7 @@ const EdgeLabels = memo(function EdgeLabels(props: EdgeLabelsProps) {
         // We show the edge label in case user hovers over the edge directly or if they hover over node edge is
         // connected to.
         const shouldShow =
-          (e.source as NodeDatum).id === props.nodeHoveringId ||
-          (e.target as NodeDatum).id === props.nodeHoveringId ||
-          props.edgeHoveringId === e.id;
+          e.source.id === props.nodeHoveringId || e.target.id === props.nodeHoveringId || props.edgeHoveringId === e.id;
 
         const hasStats = e.mainStat || e.secondaryStat;
         return shouldShow && hasStats && <EdgeLabel key={e.id} edge={e} />;

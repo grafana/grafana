@@ -48,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote"
 	remoteClient "github.com/grafana/grafana/pkg/services/ngalert/remote/client"
@@ -66,7 +67,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -314,18 +314,14 @@ func (ng *AlertNG) init() error {
 
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
-	// Reuse the validator wired into the user-driven datasource proxy so the sync
-	// worker honours the same allow/deny rules. Tests construct ngalert without a
-	// DataProxy — fall back to the no-op OSS validator so they don't NPE.
-	var dsRequestValidator validations.DataSourceRequestValidator = &validations.OSSDataSourceRequestValidator{}
-	if ng.DataProxy != nil && ng.DataProxy.DataSourceRequestValidator != nil {
-		dsRequestValidator = ng.DataProxy.DataSourceRequestValidator
-	}
 
+	// Routes the config GET through the datasource proxy service (same
+	// transport, auth and egress validation as the user-driven proxy and the
+	// external ruler sync worker) — the syncer no longer owns its own transport
+	// or request validator.
 	externalAMSyncer := notifier.NewExternalAMSyncer(
 		ng.DataSourceService,
-		ng.httpClientProvider,
-		dsRequestValidator,
+		ng.DataProxy,
 		ng.Cfg,
 		multiOrgMetrics,
 		moaLogger,
@@ -499,7 +495,7 @@ func (ng *AlertNG) init() error {
 
 	configStore := legacy_storage.NewAlertmanagerConfigStore(ng.store, notifier.NewExtraConfigsCrypto(ng.SecretsService), ng.FeatureToggles)
 
-	routeAccess := ac.NewRouteAccess[*legacy_storage.ManagedRoute](ng.accesscontrol, ng.RouteResourcePermissions, false)
+	routeAccess := ac.NewRouteAccess[*v1.ManagedRoute](ng.accesscontrol, ng.RouteResourcePermissions, false)
 	routeService := routes.NewService(configStore, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.FeatureToggles, ng.Log, validation.NewPermissionAwareValidator(ng.accesscontrol), ng.tracer, routeAccess)
 	provisionRouteService := routes.NewService(
 		configStore,
@@ -510,7 +506,7 @@ func (ng *AlertNG) init() error {
 		ng.Log,
 		validation.NewPermissionAwareValidator(ng.accesscontrol),
 		ng.tracer,
-		ac.NewRouteAccess[*legacy_storage.ManagedRoute](ng.accesscontrol, ng.RouteResourcePermissions, true),
+		ac.NewRouteAccess[*v1.ManagedRoute](ng.accesscontrol, ng.RouteResourcePermissions, true),
 	)
 
 	emailValidator := notifier.NewEmailValidator(ng.orgService, ng.Cfg.UnifiedAlerting.LimitEmailToOrgMembers)
@@ -532,6 +528,7 @@ func (ng *AlertNG) init() error {
 		ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI),
 		ng.Cfg.UnifiedAlerting.AllowedIntegrations,
 		emailValidator,
+		ng.MultiOrgAlertmanager,
 	)
 	receiverTestService := notifier.NewReceiverTestingService(
 		receiverService,
@@ -558,6 +555,7 @@ func (ng *AlertNG) init() error {
 		false, // imported resources are not exposed via provisioning APIs
 		ng.Cfg.UnifiedAlerting.AllowedIntegrations,
 		emailValidator,
+		ng.MultiOrgAlertmanager,
 	)
 
 	// Create limits provider based on alertmanager mode.
@@ -607,8 +605,10 @@ func (ng *AlertNG) init() error {
 
 	// External Mimir ruler sync worker. Routes the ruler config GET through
 	// the datasource proxy service (same transport, auth and egress validation as
-	// the user-driven proxy). It only runs when the operator has set the
-	// external_ruler_uid setting (the enable signal; no separate feature flag).
+	// the user-driven proxy). Runs operator-wide via the external_ruler_uid
+	// setting and/or per-org via the rules Config resource; neither path needs
+	// a feature flag — setting the ini value or the resource's
+	// spec.externalRulerSync.datasourceUid is itself the enable signal.
 	ng.externalRulerSyncer = rulesync.NewExternalRulerSyncer(
 		&ng.Cfg.UnifiedAlerting,
 		log.New("ngalert.rulesync"),
@@ -619,6 +619,8 @@ func (ng *AlertNG) init() error {
 		ng.store,
 		ng.store,
 		ng.FolderResourcePermissions,
+		ng.clientGenerator,
+		request.GetNamespaceMapper(ng.Cfg),
 	)
 
 	ng.Api = &api.API{

@@ -1,0 +1,196 @@
+import { css } from '@emotion/css';
+import { useCallback, useEffect, useId, useState } from 'react';
+
+import { type ChatContextItem } from '@grafana/assistant';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { Trans, t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
+import { Box, Button, Combobox, type ComboboxOption, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { AutoGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManager';
+import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager';
+
+import { DashboardLandingPrompt } from './DashboardLandingPrompt';
+import { getPromptDatasources } from './datasources';
+import { startPlanningInAssistant } from './handoff';
+
+interface Props {
+  dashboard: DashboardScene;
+}
+
+type LayoutValue = 'auto' | 'custom';
+
+export function AssistantDashboardEmpty({ dashboard }: Props) {
+  const styles = useStyles2(getStyles);
+  const gridLabelId = useId();
+  const { sidebar, body } = dashboard.useState();
+  const isAutoGrid = body instanceof AutoGridLayoutManager;
+  // Set at scene activation when the URL has editSource=assistant
+  // (create_dashboard), or on submit from this landing so the same session
+  // tag applies without a remount.
+  const [assistantDriven, setAssistantDriven] = useState(() => dashboard.getEditSessionSource() === 'assistant');
+
+  const onSelectAutoGrid = () => {
+    dashboard.switchLayout(AutoGridLayoutManager.createEmpty());
+    dashboard.updateDefaultLayoutTemplate(AutoGridLayoutManager.createEmpty());
+  };
+
+  const onSelectCustomGrid = () => {
+    dashboard.switchLayout(DefaultGridLayoutManager.createEmpty());
+    dashboard.updateDefaultLayoutTemplate(DefaultGridLayoutManager.createEmpty());
+  };
+
+  const onLayoutChange = (option: ComboboxOption<LayoutValue>) => {
+    if (option.value === 'auto') {
+      onSelectAutoGrid();
+      return;
+    }
+    onSelectCustomGrid();
+  };
+
+  const onAddVisualization = () => {
+    sidebar.addNewPanel(sidebar.getSelectedObject());
+  };
+
+  const onSubmitPrompt = useCallback((prompt: string, contextItems: ChatContextItem[]) => {
+    const selectedDatasources = contextItems.flatMap(({ node }) => {
+      const data = node.data;
+      if (data?.type !== 'datasource' || typeof data.datasourceUid !== 'string') {
+        return [];
+      }
+      return [
+        {
+          uid: data.datasourceUid,
+          type: typeof data.datasourceType === 'string' ? data.datasourceType : 'unknown',
+          name: typeof data.datasourceName === 'string' ? data.datasourceName : node.name,
+        },
+      ];
+    });
+    const dashboards = contextItems.flatMap(({ node }) => {
+      const data = node.data;
+      if (data?.type !== 'dashboard' || typeof data.dashboardUid !== 'string') {
+        return [];
+      }
+      return [
+        {
+          uid: data.dashboardUid,
+          title: typeof data.dashboardTitle === 'string' ? data.dashboardTitle : node.name,
+        },
+      ];
+    });
+
+    startPlanningInAssistant({
+      request: prompt,
+      displayPrompt: prompt,
+      datasources: selectedDatasources.length > 0 ? selectedDatasources : getPromptDatasources(),
+      context: contextItems,
+      dashboards,
+    });
+
+    setAssistantDriven(true);
+    reportInteraction('dashboard_prompt_planning_started', { source: 'empty_dashboard' });
+  }, []);
+
+  useEffect(() => {
+    if (!assistantDriven) {
+      return;
+    }
+    if (sidebar.state.openPane?.getId() === 'add') {
+      sidebar.closePane();
+    }
+  }, [assistantDriven, sidebar]);
+
+  const layoutOptions: Array<ComboboxOption<LayoutValue>> = [
+    { label: t('dashboard.empty.grid-auto', 'Auto'), value: 'auto' },
+    { label: t('dashboard.empty.grid-custom', 'Custom'), value: 'custom' },
+  ];
+
+  return (
+    <div className={styles.root}>
+      <Stack alignItems="stretch" justifyContent="center" direction="column" gap={4} width="100%">
+        <Stack alignItems="center" direction="column" gap={2}>
+          <div className={styles.appsIconWrap}>
+            <Icon name="apps" size="xxl" className={styles.appsIcon} />
+          </div>
+          <Text element="h2" variant="h5" weight="medium">
+            <Trans i18nKey="dashboard.empty.build-assistant">Build your dashboard with Assistant</Trans>
+          </Text>
+          <div className={styles.prompt}>
+            <DashboardLandingPrompt onSubmit={onSubmitPrompt} />
+          </div>
+        </Stack>
+
+        <Stack alignItems="center" height={4}>
+          <div className={styles.orLine} />
+          <Text color="secondary">
+            <Trans i18nKey="dashboard.empty.or-start-blank">Or build it yourself</Trans>
+          </Text>
+          <div className={styles.orLine} />
+        </Stack>
+
+        <div>
+          <Text element="h2" variant="h5" weight="medium">
+            <Trans i18nKey="dashboard.empty.add-visualization-heading">Add a visualization</Trans>
+          </Text>
+          <Box marginTop={0.5} marginBottom={2}>
+            <Text element="p" variant="bodySmall" color="secondary">
+              <Trans i18nKey="dashboard.empty.add-visualization-description">
+                Visualizations are panels for your data. Organize them with Auto grid or Custom grid.
+              </Trans>
+            </Text>
+          </Box>
+          <Stack alignItems="center" gap={1}>
+            <Button
+              size="sm"
+              icon="plus"
+              variant="secondary"
+              data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
+              onClick={onAddVisualization}
+            >
+              <Trans i18nKey="dashboard.empty.add-visualization-button">Add visualization</Trans>
+            </Button>
+            <Text element="span" variant="bodySmall" color="secondary" id={gridLabelId}>
+              <Trans i18nKey="dashboard.empty.grid-label">Grid:</Trans>
+            </Text>
+            <Combobox
+              options={layoutOptions}
+              value={isAutoGrid ? 'auto' : 'custom'}
+              onChange={onLayoutChange}
+              width="auto"
+              minWidth={12}
+              aria-labelledby={gridLabelId}
+            />
+          </Stack>
+        </div>
+      </Stack>
+    </div>
+  );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    root: css({
+      position: 'relative',
+      width: '100%',
+      height: '100%',
+      minHeight: '100%',
+    }),
+    appsIconWrap: css({
+      display: 'flex',
+      justifyContent: 'center',
+      width: '100%',
+    }),
+    appsIcon: css({
+      fill: theme.v1.palette.orange,
+    }),
+    prompt: css({
+      width: '100%',
+    }),
+    orLine: css({
+      flex: 1,
+      height: 1,
+      background: theme.colors.border.weak,
+    }),
+  };
+}

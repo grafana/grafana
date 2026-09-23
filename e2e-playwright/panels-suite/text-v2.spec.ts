@@ -286,11 +286,11 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       await panel.scrollIntoViewIfNeeded();
 
       // The flowchart and the sequence diagram render; the third fence is invalid on purpose.
-      await expect(panel.locator('.textng-mermaid svg')).toHaveCount(2);
-      await expect(panel.locator('.textng-mermaid-error')).toHaveCount(1);
+      await expect(panel.locator('.mermaid-diagram svg')).toHaveCount(2);
+      await expect(panel.locator('.mermaid-diagram-error')).toHaveCount(1);
 
       // htmlLabels is off, so label text has to survive as SVG text.
-      await expect(panel.locator('.textng-mermaid svg').first()).toContainText('Page on-call');
+      await expect(panel.locator('.mermaid-diagram svg').first()).toContainText('Page on-call');
     });
 
     test('renders diagrams in the edit preview', async ({ gotoDashboardPage, page }) => {
@@ -300,7 +300,7 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       });
 
       const preview = page.getByTestId('TextNGEditor-preview');
-      await expect(preview.locator('.textng-mermaid svg')).toHaveCount(2);
+      await expect(preview.locator('.mermaid-diagram svg')).toHaveCount(2);
     });
   });
 });

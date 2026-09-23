@@ -920,6 +920,7 @@
       "button-view": "Visa",
       "export-ariaLabel-export": "Exportera",
       "export-label-export": "Exportera",
+      "export-legacy-integration-tooltip": "",
       "label-delete": "Ta bort",
       "label-manage-permissions": "Hantera behörigheter",
       "tooltip-history": "Visa historiken över aviseringsförsök som gjorts till denna kontaktpunkt",
@@ -1484,6 +1485,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "Laddar …"
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "",
+      "warning-v0-integrations-title": ""
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "Laddar …"
     },
@@ -1712,6 +1717,9 @@
         "pause-none": "Inga regler pausade",
         "pause-recording": "Inspelningsregler pausade",
         "policy-tree": "Policyträd",
+        "preview": "",
+        "preview-config-aria": "",
+        "preview-rules-aria": "",
         "routing": "Dirigering av aviseringar",
         "routing-none": "Inget policyträd har valts",
         "routing-tree": "Policyträd: {{name}}",
@@ -1773,14 +1781,17 @@
         "templates-duplicate": "Dubblerat mallfilsnamn: ”{{name}}”. Mallfilnamnen måste vara unika.",
         "templates-label": "Aviseringsmallar",
         "templates-remove": "Ta bort {{name}}",
-        "upload": "Ladda upp YAML-fil",
+        "upload": "",
         "validating": "Validerar konfiguration …",
         "validation-error": "Valideringen misslyckades",
         "validation-error-desc": "Det gick inte att validera konfigurationen.",
         "validation-success": "Valideringen lyckades",
         "validation-success-desc": "Inga konflikter hittades. Konfigurationen är redo att importeras.",
         "validation-warning": "Vissa resurser kommer att döpas om för att undvika konflikter med befintliga resurser",
-        "yaml-file": "YAML för konfigurationen för Alertmanager"
+        "yaml-desc": "",
+        "yaml-file": "YAML för konfigurationen för Alertmanager",
+        "yaml-invalid-type": "",
+        "yaml-remove": ""
       },
       "step2": {
         "datasource": "Datakälla",
@@ -4617,11 +4628,15 @@
     },
     "readme": {
       "add-readme": "Lägg till README",
-      "edit-tooltip": "Redigera README",
+      "edit-doc-tooltip": "",
       "empty-message": "Lägg till en README för att beskriva vad som finns i den här mappen och var du hittar de rätta instrumentpanelerna.",
       "load-error-retry": "Försök igen",
-      "load-error-title": "Det gick inte att ladda README",
-      "parse-error": "Det gick inte att visa README-innehåll."
+      "load-error-title": "",
+      "panel-label": "",
+      "parse-error": "",
+      "tab-contributing": "",
+      "tab-readme": "",
+      "tab-security": ""
     },
     "recently-viewed": {
       "clear": "Rensa historik",
@@ -5778,16 +5793,24 @@
       "add-library-panel-header": "Importera panel",
       "add-visualization-body": "Välj en datakälla och sedan en fråga och visualisera dina data med diagram, statistik och tabeller eller skapa listor, markdown-dokument och andra widgetar.",
       "add-visualization-button": "Lägg till visualisering",
+      "add-visualization-description": "",
       "add-visualization-header": "Starta din nya instrumentpanel genom att lägga till en visualisering",
+      "add-visualization-heading": "",
+      "assistant-placeholder": "",
       "auto-grid": "Automatiskt rutnät",
       "auto-grid-description": "Paneler ändrar storlek för att passa ihop och bilda enhetliga rutnät",
+      "build-assistant": "",
       "custom-grid": "Anpassat rutnät",
       "custom-grid-description": "Placera och storleksanpassa varje panel var för sig",
       "description": "Lägg till en panel för att visualisera dina data",
+      "grid-auto": "",
+      "grid-custom": "",
+      "grid-label": "",
       "import-a-dashboard-body": "Importera instrumentpaneler från filer eller från <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importera en instrumentpanel",
       "import-dashboard-button": "Importera instrumentpanel",
       "layout-default-hint": "Den valda layouten kommer också att användas som standard för alla nya flikar och rader. Du kan ändra det senare under Dashboard-inställningar > Allmänt.",
+      "or-start-blank": "",
       "select-layout-header": "Välj layout",
       "title": "Ny instrumentpanel"
     },
@@ -5915,6 +5938,7 @@
       "randomize-field-names-label-field-names": "Fältnamn",
       "randomize-labels-label-labels": "Etiketter",
       "randomize-string-values-label-string-values": "Strängvärden",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Data",
@@ -5955,6 +5979,7 @@
     "inspect-json": {
       "dataframe-description": "Rådata utan omvandlingar och fältkonfiguration. ",
       "dataframe-label": "DataFrame JSON (från förfrågan)",
+      "editor-label": "",
       "panel-data-description": "Den råa modellen skickades till panelvisualiseringen",
       "panel-data-label": "Paneldata",
       "panel-json-description": "Modellen som sparas i instrumentpanelens JSON som konfigurerar hur allt fungerar.",
@@ -7346,6 +7371,7 @@
       "randomize-field-names-label-field-names": "Fältnamn",
       "randomize-labels-label-labels": "Etiketter",
       "randomize-string-values-label-string-values": "Strängvärden",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Data",
@@ -7735,6 +7761,7 @@
         "model-label": "Modell",
         "v2-resource": "V2-resurs"
       },
+      "json-preview-label": "",
       "label-description": "Beskrivning",
       "label-folder-name": "Mappnamn",
       "label-target-folder": "Målmapp",
@@ -11149,6 +11176,7 @@
       "incident-tab-label": "Incidenter",
       "team-filter-all": "Alla team",
       "team-filter-label": "Filtrera larm efter team",
+      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Dina team",
       "title": "Larm och incidenter",
       "title-alerts": "Larm",
@@ -11208,6 +11236,7 @@
     "incidents-card": {
       "declare": "Deklarera en incident",
       "empty": "Inga aktiva incidenter.",
+      "empty-selected-team": "",
       "error-title": "Det gick inte att ladda aktiva incidenter",
       "title": "Aktiva incidenter",
       "view-all": "Visa alla incidenter"
@@ -11831,6 +11860,7 @@
       "waiting-for-data": "Väntar på data:"
     },
     "live-publish": {
+      "message": "",
       "publish": "Publicera"
     }
   },
@@ -12179,6 +12209,10 @@
       "description": "När det är aktiverat visas logginformation för varje rad.",
       "name": "Aktivera logginformation"
     },
+    "hover-overflow": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Aktiverar/inaktiverar länkknappen för loggraden i den första kolumnen på varje rad",
       "name": "Visa knappen för att kopiera logglänk"
@@ -12246,6 +12280,10 @@
     "selected-team-not-found": "Det valda teamet hittades inte, eller så har du inte behörighet att visa det.",
     "team-not-found": "[Okänt team]",
     "unknown-error": "Okänt fel"
+  },
+  "mermaid": {
+    "invalid-syntax": "",
+    "render-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Inga alternativ hittades"
@@ -12579,6 +12617,10 @@
     "authentication": {
       "title": "Autentisering"
     },
+    "banner-settings": {
+      "subtitle": "",
+      "title": ""
+    },
     "bookmarks": {
       "title": "Bokmärken"
     },
@@ -12785,6 +12827,7 @@
       "title": "Registrerade frågor"
     },
     "reporting": {
+      "subtitle": "",
       "title": "Rapportering"
     },
     "saved-queries": {
@@ -12799,6 +12842,10 @@
     },
     "search-dashboards": {
       "title": "Sök instrumentpaneler"
+    },
+    "secrets-management": {
+      "subtitle": "",
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Visa inställningarna som definierats i Grafana-konfigurationen",
@@ -15097,7 +15144,7 @@
     },
     "public-sharing": {
       "accept-button": "Acceptera",
-      "alert-text": "Att dela denna instrumentpanel externt gör den helt tillgänglig för alla som har länken.",
+      "alert-text": "",
       "cancel-button": "Avbryt",
       "learn-more-button": "Läs mer",
       "public-ack": "Jag förstår att hela denna instrumentpanel kommer att vara offentlig.*",
@@ -16674,10 +16721,6 @@
     },
     "frame-picker": {
       "label": ""
-    },
-    "mermaid": {
-      "invalid-syntax": "",
-      "render-error": ""
     },
     "options": {
       "page-size": "",

@@ -379,11 +379,11 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 		}
 	case dashv0.SNAPSHOT_RESOURCE:
 		return nil // OK for now
-	// Reachability invariant: Variable storage is registered only when
-	// accessControl is set. The flag is gated per request in GetAuthorizer, so
-	// this case fires when the feature is enabled in embedded mode. Standalone
-	// skips storage. If Variable is added to another version or moved to a
-	// subresource, update storage registration and this switch in lockstep.
+	// Reachability invariant: variable storage is always registered, but
+	// FlagGrafanaDashboardGlobalVariables is gated per request in GetAuthorizer.
+	// When the feature is disabled the authorizer denies the request (403)
+	// before admission runs, so this case only fires when global variables
+	// are enabled.
 	case dashv2beta1.VariableResourceInfo.GroupVersionResource().Resource:
 		switch op {
 		case admission.Create:
@@ -774,7 +774,7 @@ func (b *DashboardsAPIBuilder) validateVariableCreate(ctx context.Context, a adm
 		return apierrors.NewBadRequest(err.Error())
 	}
 
-	if err := b.validateVariableMutationPermissions(ctx, folderUID, ActionVariablesCreate); err != nil {
+	if err := b.validateVariableMutationPermissions(ctx, a, folderUID, ActionVariablesCreate); err != nil {
 		return err
 	}
 
@@ -825,7 +825,7 @@ func (b *DashboardsAPIBuilder) validateVariableUpdate(ctx context.Context, a adm
 		return apierrors.NewBadRequest("folder scope cannot be changed; delete the variable and create a new one")
 	}
 
-	return b.validateVariableMutationPermissions(ctx, oldAccessor.GetFolder(), ActionVariablesWrite)
+	return b.validateVariableMutationPermissions(ctx, a, oldAccessor.GetFolder(), ActionVariablesWrite)
 }
 
 func (b *DashboardsAPIBuilder) validateVariableDelete(ctx context.Context, a admission.Attributes) error {
@@ -843,36 +843,80 @@ func (b *DashboardsAPIBuilder) validateVariableDelete(ctx context.Context, a adm
 		return fmt.Errorf("error getting variable meta accessor: %w", err)
 	}
 
-	return b.validateVariableMutationPermissions(ctx, accessor.GetFolder(), ActionVariablesDelete)
+	return b.validateVariableMutationPermissions(ctx, a, accessor.GetFolder(), ActionVariablesDelete)
 }
 
 // validateVariableMutationPermissions authorizes variable create/update/delete via
 // variables:* RBAC actions scoped to the target folder (general/root when empty).
-func (b *DashboardsAPIBuilder) validateVariableMutationPermissions(ctx context.Context, folderUID string, action string) error {
+// Embedded Grafana uses classic Evaluate. Standalone uses accessClient.Check
+// (same pattern as library panels); user variables:* still map through the
+// authz mapper.
+func (b *DashboardsAPIBuilder) validateVariableMutationPermissions(ctx context.Context, a admission.Attributes, folderUID string, action string) error {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewForbidden(dashv2beta1.VariableResourceInfo.GroupResource(), "", fmt.Errorf("valid user is required"))
 	}
 
-	if b.accessControl == nil {
+	if b.accessControl != nil {
+		folderScope := variableFolderScope(folderUID)
+		ok, err := b.accessControl.Evaluate(ctx, requester, accesscontrol.EvalPermission(action, folderScope))
+		if err != nil {
+			// FolderUIDScopeResolver errors when the parent is gone. Treat that as
+			// a failed scope check rather than leaking a resolver error.
+			if !isFolderNotFound(err) {
+				return err
+			}
+			ok = false
+		}
+		if ok {
+			return nil
+		}
+
+		return apierrors.NewForbidden(dashv2beta1.VariableResourceInfo.GroupResource(), "", fmt.Errorf("access denied to %s variables", action))
+	}
+
+	if b.accessClient == nil {
 		return apierrors.NewForbidden(dashv2beta1.VariableResourceInfo.GroupResource(), "", fmt.Errorf("access control is not configured"))
 	}
 
-	folderScope := variableFolderScope(folderUID)
-	ok, err := b.accessControl.Evaluate(ctx, requester, accesscontrol.EvalPermission(action, folderScope))
-	if err != nil {
-		// FolderUIDScopeResolver errors when the parent is gone. Treat that as
-		// a failed scope check rather than leaking a resolver error.
-		if !isFolderNotFound(err) {
-			return err
-		}
-		ok = false
-	}
-	if ok {
-		return nil
+	verb := variableMutationVerb(action)
+	if verb == "" {
+		return apierrors.NewForbidden(dashv2beta1.VariableResourceInfo.GroupResource(), "", fmt.Errorf("unsupported action %s", action))
 	}
 
-	return apierrors.NewForbidden(dashv2beta1.VariableResourceInfo.GroupResource(), "", fmt.Errorf("access denied to %s variables", action))
+	checkFolder := folderUID
+	if checkFolder == "" {
+		checkFolder = accesscontrol.GeneralFolderUID
+	}
+
+	gvr := dashv2beta1.VariableResourceInfo.GroupVersionResource()
+	resp, err := b.accessClient.Check(ctx, requester, authlib.CheckRequest{
+		Verb:      verb,
+		Group:     gvr.Group,
+		Resource:  gvr.Resource,
+		Namespace: a.GetNamespace(),
+		Name:      a.GetName(),
+	}, checkFolder)
+	if err != nil {
+		return err
+	}
+	if !resp.Allowed {
+		return apierrors.NewForbidden(dashv2beta1.VariableResourceInfo.GroupResource(), a.GetName(), fmt.Errorf("access denied to %s variables", action))
+	}
+	return nil
+}
+
+func variableMutationVerb(action string) string {
+	switch action {
+	case ActionVariablesCreate:
+		return utils.VerbCreate
+	case ActionVariablesWrite:
+		return utils.VerbUpdate
+	case ActionVariablesDelete:
+		return utils.VerbDelete
+	default:
+		return ""
+	}
 }
 
 // validateFolderExists checks if a folder exists
@@ -978,9 +1022,12 @@ func validateDashboardTags(obj runtime.Object) error {
 	return nil
 }
 
-func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
+// dashboardStorageOpts are the unified storage options every dashboard version
+// shares. storageForVersion pairs them with the GVK of the version it installs,
+// so each version persists as itself rather than as whichever registration the
+// scheme happened to report first (v1beta1 and v1 share one Go type).
+func (b *DashboardsAPIBuilder) dashboardStorageOpts() apistore.StorageOptions {
 	storageOpts := apistore.StorageOptions{
-		Scheme:               opts.Scheme,
 		Index:                b.unified,
 		DeprecatedInternalID: apistore.DeprecatedID_Required,
 		EnableFolderSupport:  true,
@@ -992,21 +1039,55 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	} else {
 		storageOpts.Permissions = b.dashboardPermissions.SetDefaultPermissionsAfterCreate
 	}
+	return storageOpts
+}
 
-	opts.StorageOptsRegister(dashv0.DashboardResourceInfo.GroupResource(), storageOpts)
-
-	// Library panels live inside folders, so the unified storage backend must accept the
-	// grafana.app/folder annotation. They are keyed by their own GroupResource, so they need
-	// a separate registration from dashboards; without it they default to
-	// EnableFolderSupport=false and any folder-scoped write (e.g. provisioning syncing a panel
-	// into a managed folder) is rejected with "folders are not supported". The folder is
-	// optional (panels may live at the root), so RequireFolder stays false.
-	opts.StorageOptsRegister(dashv0.LibraryPanelResourceInfo.GroupResource(), apistore.StorageOptions{
-		Scheme:              opts.Scheme,
+// libraryPanelStorageOpts configures library panel storage.
+//
+// Library panels live inside folders, so the unified storage backend must accept the
+// grafana.app/folder annotation. Without it they default to EnableFolderSupport=false
+// and any folder-scoped write (e.g. provisioning syncing a panel into a managed folder)
+// is rejected with "folders are not supported". The folder is optional (panels may live
+// at the root), so RequireFolder stays false.
+func (b *DashboardsAPIBuilder) libraryPanelStorageOpts() apistore.StorageOptions {
+	return apistore.StorageOptions{
 		Index:               b.unified,
 		EnableFolderSupport: true,
-	})
+	}
+}
 
+// variableStorageOpts configures global variable storage: the folder annotation
+// is accepted but not required, so a variable may sit in a folder or at the root.
+func variableStorageOpts() apistore.StorageOptions {
+	return apistore.StorageOptions{
+		EnableFolderSupport: true,
+	}
+}
+
+// notebookStorageOpts configures notebook storage.
+//
+// EnableFolderSupport is deliberately OFF for the MVP: notebook RBAC is a flat, org-wide
+// grant (fixed:notebooks:reader/writer on notebooks:*, see pkg/api/accesscontrol.go), and
+// there is no folder UI. If folder-scoped notebooks could exist (e.g. created via API or
+// provisioning with a grafana.app/folder annotation), that wildcard would let every Viewer
+// read them regardless of the folder's permissions. Forbidding a folder annotation keeps
+// every notebook folderless, so the wildcard cannot bypass any folder ACL. Flip this back to
+// true at GA, when a folder UI and folder-scoped notebook RBAC replace the flat grants.
+func notebookStorageOpts() apistore.StorageOptions {
+	return apistore.StorageOptions{
+		EnableFolderSupport: false,
+	}
+}
+
+// snapshotStorageOpts configures snapshot storage. Snapshots need nothing beyond
+// the GVK that storageForVersion pairs these with, which is the whole point of
+// going through it: the declared kind is what stops a snapshot from being
+// persisted as some other kind in the dashboard group.
+func snapshotStorageOpts() apistore.StorageOptions {
+	return apistore.StorageOptions{}
+}
+
+func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	// v0alpha1
 	if err := b.storageForVersion(apiGroupInfo, opts,
 		dashv0.DashboardResourceInfo,
@@ -1120,48 +1201,29 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		return err
 	}
 
-	// Variable storage is registered when accessControl is wired (embedded Grafana)
-	// so FlagGrafanaDashboardGlobalVariables can be evaluated per request via
-	// OpenFeature in the authorizer. Standalone NewAPIService leaves accessControl
-	// nil — skip registration so the resource is not served (same idea as snapshots,
-	// which storageForVersion omits when isStandalone). See GetAuthorizer.
-	if b.accessControl != nil {
-		opts.StorageOptsRegister(dashv2beta1.VariableResourceInfo.GroupResource(), apistore.StorageOptions{
-			EnableFolderSupport: true,
-		})
-
-		gvStore, err := grafanaregistry.NewRegistryStoreWithSelectableFields(
-			opts.Scheme,
-			dashv2beta1.VariableResourceInfo,
-			opts.OptsGetter,
-			grafanaregistry.SelectableFieldsOptions{
-				GetAttrs: VariableGetAttrs,
-			},
-		)
-		if err != nil {
-			return err
-		}
-
-		variableStorage := apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]
-		variableStorage[dashv2beta1.VariableResourceInfo.StoragePath()] = gvStore
+	// Variable storage is always registered so FlagGrafanaDashboardGlobalVariables
+	// can be evaluated per request (and targeted per tenant) via OpenFeature in the
+	// authorizer, without requiring a restart. See GetAuthorizer.
+	gvStore, err := grafanaregistry.NewRegistryStoreWithSelectableFields(
+		opts.Scheme,
+		dashv2beta1.VariableResourceInfo,
+		opts.StorageOptsGetterFor(dashv2beta1.VariableResourceInfo, variableStorageOpts()),
+		grafanaregistry.SelectableFieldsOptions{
+			GetAttrs: VariableGetAttrs,
+		},
+	)
+	if err != nil {
+		return err
 	}
+
+	variableStorage := apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]
+	variableStorage[dashv2beta1.VariableResourceInfo.StoragePath()] = gvStore
 
 	// Notebook storage is always registered so FlagDashboardNotebooks can be
 	// evaluated per request (and targeted per tenant) via OpenFeature in the
 	// authorizer, without requiring a restart. See GetAuthorizer.
-	//
-	// EnableFolderSupport is deliberately OFF for the MVP: notebook RBAC is a flat, org-wide
-	// grant (fixed:notebooks:reader/writer on notebooks:*, see pkg/api/accesscontrol.go), and
-	// there is no folder UI. If folder-scoped notebooks could exist (e.g. created via API or
-	// provisioning with a grafana.app/folder annotation), that wildcard would let every Viewer
-	// read them regardless of the folder's permissions. Forbidding a folder annotation keeps
-	// every notebook folderless, so the wildcard cannot bypass any folder ACL. Flip this back to
-	// true at GA, when a folder UI and folder-scoped notebook RBAC replace the flat grants.
-	opts.StorageOptsRegister(dashv2beta1.NotebookResourceInfo.GroupResource(), apistore.StorageOptions{
-		EnableFolderSupport: false,
-	})
-
-	nbStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashv2beta1.NotebookResourceInfo, opts.OptsGetter)
+	nbStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashv2beta1.NotebookResourceInfo,
+		opts.StorageOptsGetterFor(dashv2beta1.NotebookResourceInfo, notebookStorageOpts()))
 	if err != nil {
 		return err
 	}
@@ -1186,7 +1248,8 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	apiVersion := dashboards.GroupVersion().Version
 	apiGroupInfo.VersionedResourcesStorageMap[apiVersion] = storage
 
-	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashboards, opts.OptsGetter)
+	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashboards,
+		opts.StorageOptsGetterFor(dashboards, b.dashboardStorageOpts()))
 	if err != nil {
 		return err
 	}
@@ -1209,7 +1272,8 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		// unified storage directly (no dual writer).
 		if libraryPanels != nil {
 			// status.missing preserves legacy model fields that have no typed spec field.
-			unifiedLibraryStore, storeErr := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, *libraryPanels, opts.OptsGetter)
+			unifiedLibraryStore, storeErr := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, *libraryPanels,
+				opts.StorageOptsGetterFor(*libraryPanels, b.libraryPanelStorageOpts()))
 			if storeErr != nil {
 				return storeErr
 			}
@@ -1255,7 +1319,8 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		}
 
 		// status.missing preserves legacy model fields that have no typed spec field.
-		unifiedLibraryStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, *libraryPanels, opts.OptsGetter)
+		unifiedLibraryStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, *libraryPanels,
+			opts.StorageOptsGetterFor(*libraryPanels, b.libraryPanelStorageOpts()))
 		if err != nil {
 			return err
 		}
@@ -1279,7 +1344,9 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 			GetAttrs: snapshot.SnapshotGetAttrs,
 		}
 		unifiedSnapshotStore, err := grafanaregistry.NewRegistryStoreWithSelectableFields(
-			opts.Scheme, *snapshots, opts.OptsGetter, selectableFieldsOpts,
+			opts.Scheme, *snapshots,
+			opts.StorageOptsGetterFor(*snapshots, snapshotStorageOpts()),
+			selectableFieldsOpts,
 		)
 		if err != nil {
 			return err
@@ -1637,13 +1704,16 @@ func (b *DashboardsAPIBuilder) GetPolicyRuleEvaluator() auditing.PolicyRuleEvalu
 
 // GetAuthorizer returns a composite authorizer that dispatches by resource type.
 // Notebooks, snapshots, and variables use dedicated authorizers; other resources
-// fall back to ServiceAuthorizer.
+// fall back to ServiceAuthorizer. Variables with no classic accessControl (standalone)
+// fall through to ServiceAuthorizer after the feature flag.
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	serviceAuthorizer := grafanaauthorizer.NewServiceAuthorizer()
 	snapshotAuthorizer := snapshot.NewSnapshotAuthorizer(b.accessControl)
 	// Notebooks defer to the service authorizer when the feature is enabled.
 	notebookAuthorizer := newNotebookAuthorizer(serviceAuthorizer)
-	variableAuthorizer := newVariableAuthorizer(b.accessControl)
+	// Variables use classic variables:* when accessControl is wired; otherwise
+	// they fall through to the service authorizer (standalone / Cloud).
+	variableAuthorizer := newVariableAuthorizer(b.accessControl, serviceAuthorizer)
 
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {

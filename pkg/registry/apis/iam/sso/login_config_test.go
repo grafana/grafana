@@ -74,10 +74,10 @@ func TestLoginConfigHandler_Source(t *testing.T) {
 		want string
 	}{
 		{"unset", nil, "database"},
-		{"mode 0", ptr(grafanarest.Mode0), "database"},
-		{"mode 2", ptr(grafanarest.Mode2), "database"},
-		{"mode 3", ptr(grafanarest.Mode3), "mt-settings"},
-		{"mode 5", ptr(grafanarest.Mode5), "mt-settings"},
+		{"mode 0", new(grafanarest.Mode0), "database"},
+		{"mode 2", new(grafanarest.Mode2), "database"},
+		{"mode 3", new(grafanarest.Mode3), "mt-settings"},
+		{"mode 5", new(grafanarest.Mode5), "mt-settings"},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -113,5 +113,3 @@ func TestTruthy(t *testing.T) {
 		assert.Equalf(t, tc.want, truthy(tc.in), "truthy(%#v)", tc.in)
 	}
 }
-
-func ptr(m grafanarest.DualWriterMode) *grafanarest.DualWriterMode { return &m }

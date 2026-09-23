@@ -242,13 +242,13 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
           htmlFor="panel-subtitle-switch"
           data-testid={selectors.components.PanelEditor.OptionsPane.fieldLabel('subtitle-switch')}
         >
-          <Trans i18nKey="dashboard.viz-panel.options.description-as-subtitle">as subtitle</Trans>
+          <Trans i18nKey="dashboard.viz-panel.options.description-as-subtitle">Use as subtitle</Trans>
         </Label>
         <Switch
           value={!!subtitle}
           id="panel-subtitle-switch"
           onChange={onToggleSubtitle}
-          label={t('dashboard.viz-panel.options.description-as-subtitle', 'as subtitle')}
+          label={t('dashboard.viz-panel.options.description-as-subtitle', 'Use as subtitle')}
         />
       </Stack>
     </Stack>

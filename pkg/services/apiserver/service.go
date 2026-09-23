@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
+	keysapi "github.com/grafana/grafana/pkg/registry/apis/keys"
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver/aggregatorrunner"
@@ -44,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/keysroutes"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/apiserver/searchroutes"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
@@ -429,12 +431,16 @@ func (s *service) start(ctx context.Context) error {
 	apiserverSection := s.cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
 	searchAPIEnabled := apiserverSection.Key(searchapi.ConfigKey).MustBool(true)
 	trashAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyTrash).MustBool(true)
-	searchRoutes := searchroutes.BuildWithOptions(
+	searchAndStorageRoutes := searchroutes.BuildWithOptions(
 		searchAPIEnabled, trashAPIEnabled, s.tracing, s.unified, builders, s.appInstallers,
 		searchroutes.BuildOptions{FieldValueResultsEnabled: func(ctx context.Context) bool {
 			return s.features != nil && s.features.IsEnabled(ctx, featuremgmt.FlagSearchApiFieldValueResults) // nolint:staticcheck
 		}},
 	)
+
+	keysAPIEnabled := apiserverSection.Key(keysapi.ConfigKey).MustBool(false)
+	searchAndStorageRoutes = append(searchAndStorageRoutes,
+		keysroutes.Build(keysAPIEnabled, s.tracing, s.unified, builders, s.appInstallers)...)
 
 	// Add OpenAPI specs for each group+version (existing builders)
 	err = builder.SetupConfig(
@@ -447,7 +453,7 @@ func (s *service) start(ctx context.Context) error {
 		defGetters,
 		s.metrics,
 		apiResourceConfig,
-		searchRoutes...,
+		searchAndStorageRoutes...,
 	)
 	if err != nil {
 		return err
@@ -545,7 +551,7 @@ func (s *service) start(ctx context.Context) error {
 			builders,
 			s.metrics,
 			serverConfig.MergedResourceConfig,
-			searchRoutes...,
+			searchAndStorageRoutes...,
 		); err != nil {
 			return fmt.Errorf("failed to augment web services with custom routes: %w", err)
 		}

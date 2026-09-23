@@ -11,6 +11,7 @@ import {
   type DisplayValue,
   type Field,
   FieldType,
+  getRawDisplayProcessor,
   type GrafanaTheme2,
   type LinkModel,
   type ValueLinkConfig,
@@ -20,7 +21,7 @@ import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellHeight } 
 
 import { TableCellDisplayMode, type TableCellOptions } from '../types';
 
-import { COLUMN, FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, TABLE } from './constants';
+import { COLUMN, FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, NESTED_ROW_CLASS, STRIPED_ROW_CLASS, TABLE } from './constants';
 import { getJustifyContent } from './styles';
 import {
   type FilterType,
@@ -41,6 +42,7 @@ import {
   compileFrameToRecords,
   computeColWidths,
   computeContentAwareColWidths,
+  createBoundedCache,
   createFitWidthMeasurer,
   createTypographyContext,
   displayJsonValue,
@@ -52,17 +54,17 @@ import {
   getCellLinks,
   getCellOptions,
   getColumnTypes,
-  markEdgeColumns,
   getComparator,
   getDataLinksHeightMeasurer,
   getDefaultRowHeight,
   getDisplayName,
   getPillCellHeightMeasurer,
   getRowHeight,
-  inferPills,
-  createBoundedCache,
   getTextHeightEstimator,
   getTextHeightMeasurerFromUwrapCount,
+  inferPills,
+  makeStripedRowClass,
+  markEdgeColumns,
   migrateTableDisplayModeToCellOptions,
   parseStyleJson,
   predicateByName,
@@ -1298,25 +1300,43 @@ describe('TableNG utils', () => {
   });
 
   describe('getPillCellHeightMeasurer', () => {
+    // horizontal chrome of a legacy pill: 6px of padding on each side.
+    const PILL_SPACING = 12;
+    // a refreshed pill is a Tag, with theme.spacing.x1 of padding on each side.
+    const REFRESHED_PILL_SPACING = 16;
+    const PILL_GAP = 4;
+
     it('counts up the number of lines using the pill measuring method', () => {
-      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const measurer = getPillCellHeightMeasurer(
+        jest.fn((str) => str.length * 5),
+        PILL_SPACING,
+        PILL_GAP
+      );
       expect(measurer('tag1,tag2', 100, {} as Field, 0, 20)).toBe(20);
       expect(measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20)).toBe(68);
     });
 
     it('returns 0 if value is null', () => {
-      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const measurer = getPillCellHeightMeasurer(
+        jest.fn((str) => str.length * 5),
+        PILL_SPACING,
+        PILL_GAP
+      );
       expect(measurer(null, 100, {} as Field, 0, 20)).toBe(0);
     });
 
     it('returns 0 if no pills are inferred', () => {
-      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const measurer = getPillCellHeightMeasurer(
+        jest.fn((str) => str.length * 5),
+        PILL_SPACING,
+        PILL_GAP
+      );
       expect(measurer('', 100, {} as Field, 0, 20)).toBe(0);
     });
 
     it('caches the width measurement for the same value', () => {
       const widthMeasurement = jest.fn((str) => str.length * 5);
-      const measurer = getPillCellHeightMeasurer(widthMeasurement);
+      const measurer = getPillCellHeightMeasurer(widthMeasurement, PILL_SPACING, PILL_GAP);
       measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20);
       measurer('tag1,tag2', 100, {} as Field, 0, 20);
       measurer('tag2', 200, {} as Field, 0, 20);
@@ -1326,7 +1346,7 @@ describe('TableNG utils', () => {
 
     it('does not re-measure pill text when only the column width changes (resize)', () => {
       const widthMeasurement = jest.fn((str) => str.length * 5);
-      const measurer = getPillCellHeightMeasurer(widthMeasurement);
+      const measurer = getPillCellHeightMeasurer(widthMeasurement, PILL_SPACING, PILL_GAP);
       const value = 'aaaa,bbbb,cccc';
       measurer(value, 100, {} as Field, 0, 20);
       expect(widthMeasurement).toHaveBeenCalledTimes(3); // one per unique pill
@@ -1337,21 +1357,44 @@ describe('TableNG utils', () => {
     });
 
     it('returns a consistent height when the same value and width are measured repeatedly', () => {
-      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const measurer = getPillCellHeightMeasurer(
+        jest.fn((str) => str.length * 5),
+        PILL_SPACING,
+        PILL_GAP
+      );
       const first = measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20);
       // react-data-grid re-measures every row on each layout pass; repeats must be stable
       expect(measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20)).toBe(first);
     });
 
     it('wraps to more lines as the column narrows', () => {
-      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const measurer = getPillCellHeightMeasurer(
+        jest.fn((str) => str.length * 5),
+        PILL_SPACING,
+        PILL_GAP
+      );
       const wide = measurer('tag1,tag2,tag3,tag4,tag5,tag6', 400, {} as Field, 0, 20);
       const narrow = measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20);
       expect(narrow).toBeGreaterThan(wide);
     });
 
+    it('wraps sooner when the pills carry the wider refreshed chrome', () => {
+      const measureWidth = jest.fn((str: string) => str.length * 5);
+      const value = 'tag1,tag2,tag3';
+      // 3 pills of 20px text: 3*(20+12) + 2*4 = 104, so all three fit one 110px line.
+      expect(getPillCellHeightMeasurer(measureWidth, PILL_SPACING, PILL_GAP)(value, 110, {} as Field, 0, 20)).toBe(20);
+      // the same pills at 16px chrome need 3*(20+16) + 2*4 = 116, so one wraps to a second line.
+      expect(
+        getPillCellHeightMeasurer(measureWidth, REFRESHED_PILL_SPACING, PILL_GAP)(value, 110, {} as Field, 0, 20)
+      ).toBe(44);
+    });
+
     it('scales the height with the caller line height at the same width', () => {
-      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const measurer = getPillCellHeightMeasurer(
+        jest.fn((str) => str.length * 5),
+        PILL_SPACING,
+        PILL_GAP
+      );
       const value = 'tag1,tag2,tag3,tag4,tag5,tag6';
       // this value wraps to 3 lines at width 100: 3*20 + 2*4 = 68.
       expect(measurer(value, 100, {} as Field, 0, 20)).toBe(68);
@@ -1404,6 +1447,7 @@ describe('TableNG utils', () => {
   });
 
   describe('buildCellHeightMeasurers', () => {
+    const theme = createTheme();
     const ctx = {
       fontFamily: 'sans-serif',
       letterSpacing: 0.15,
@@ -1424,7 +1468,7 @@ describe('TableNG utils', () => {
           config: { custom: { wrapText: true } },
         },
       ];
-      const measurers = buildCellHeightMeasurers(fields, ctx);
+      const measurers = buildCellHeightMeasurers(fields, ctx, theme);
       expect(measurers![0].measure).toEqual(expect.any(Function));
       expect(measurers![0].fieldIdxs).toEqual([0, 1]);
     });
@@ -1440,7 +1484,7 @@ describe('TableNG utils', () => {
         },
       ];
 
-      const measurers = buildCellHeightMeasurers(fields, ctx);
+      const measurers = buildCellHeightMeasurers(fields, ctx, theme);
       expect(measurers![0].fieldIdxs).toEqual([1]);
     });
 
@@ -1453,7 +1497,7 @@ describe('TableNG utils', () => {
           config: { custom: { wrapText: true, cellOptions: { type: TableCellDisplayMode.Pill } } },
         },
       ];
-      const measurers = buildCellHeightMeasurers(fields, ctx);
+      const measurers = buildCellHeightMeasurers(fields, ctx, theme);
       // pills are measured precisely (the cheap estimate was removed because it mis-ranked columns)
       expect(measurers![0].measure).toEqual(expect.any(Function));
       expect(measurers![0].measure('tag1,tag2', 100, fields[0], 0, 22)).toEqual(expect.any(Number));
@@ -1473,7 +1517,7 @@ describe('TableNG utils', () => {
           ]),
         },
       ];
-      const measurers = buildCellHeightMeasurers(fields, ctx);
+      const measurers = buildCellHeightMeasurers(fields, ctx, theme);
       expect(measurers![0].measure).toEqual(expect.any(Function));
       expect(measurers![0].measure('http://example.com/1', 100, fields[0], 0, 22)).toEqual(expect.any(Number));
       expect(measurers![0].fieldIdxs).toEqual([0]);
@@ -1491,7 +1535,7 @@ describe('TableNG utils', () => {
         },
       ];
 
-      const measurers = buildCellHeightMeasurers(fields, ctx);
+      const measurers = buildCellHeightMeasurers(fields, ctx, theme);
       // Time fields use AutoCellRenderer (same as string fields) and can produce long formatted strings
       expect(measurers).toBeDefined();
       expect(measurers![0].fieldIdxs).toEqual([1]);
@@ -1508,7 +1552,7 @@ describe('TableNG utils', () => {
         },
       ];
 
-      const measurers = buildCellHeightMeasurers(fields, ctx);
+      const measurers = buildCellHeightMeasurers(fields, ctx, theme);
       expect(measurers).toBeDefined();
       expect(measurers![0].fieldIdxs).toEqual([0]);
     });
@@ -1524,7 +1568,7 @@ describe('TableNG utils', () => {
         },
       ];
 
-      const measurers = buildCellHeightMeasurers(fields, ctx);
+      const measurers = buildCellHeightMeasurers(fields, ctx, theme);
       // Gauge cells don't use AutoCellRenderer, so no measurer is set up
       expect(measurers).toBeUndefined();
     });
@@ -1535,7 +1579,7 @@ describe('TableNG utils', () => {
         { name: 'Age', type: FieldType.number, values: [], config: { custom: {} } },
       ];
 
-      const measurers = buildCellHeightMeasurers(fields, ctx);
+      const measurers = buildCellHeightMeasurers(fields, ctx, theme);
       expect(measurers).toBeUndefined();
     });
 
@@ -1548,11 +1592,11 @@ describe('TableNG utils', () => {
           config: { custom: { wrapText: true, cellOptions: { type: TableCellDisplayMode.Pill } } },
         },
       ];
-      const measurers = buildCellHeightMeasurers(fields, ctx);
+      const measurers = buildCellHeightMeasurers(fields, ctx, theme);
       expect(measurers![0].measure!(fields[0].values[2], 20, fields[0], 2, 100)).toBeGreaterThan(50);
 
       fields[0].config!.custom!.maxHeight = 50;
-      const measurersWithMax = buildCellHeightMeasurers(fields, ctx, 50);
+      const measurersWithMax = buildCellHeightMeasurers(fields, ctx, theme, 50);
       expect(measurersWithMax![0].measure!(fields[0].values[2], 20, fields[0], 2, 100)).toBe(50);
     });
   });
@@ -1847,6 +1891,7 @@ describe('TableNG utils', () => {
     // 0, which would otherwise make both meaningless). CELL_CHROME = 2 * CELL_PADDING + BORDER_RIGHT = 13.
     const CHAR_W = 8;
     const CELL_CHROME = 2 * TABLE.CELL_PADDING + TABLE.BORDER_RIGHT;
+    const theme = createTheme();
 
     const makeTypographyCtx = () => {
       const typographyCtx = createTypographyContext(14, 'sans-serif', 0.15);
@@ -1860,11 +1905,13 @@ describe('TableNG utils', () => {
       return typographyCtx;
     };
 
-    const compute = (fields: Field[], availWidth: number, showTypeIcons = false) =>
+    const compute = (fields: Field[], availWidth: number, showTypeIcons = false, preventHorizontalOverflow = false) =>
       computeContentAwareColWidths(fields, availWidth, {
         typographyCtx: makeTypographyCtx(),
         headerTypographyCtx: makeTypographyCtx(),
+        theme,
         showTypeIcons,
+        preventHorizontalOverflow,
       });
 
     afterEach(() => jest.restoreAllMocks());
@@ -1964,6 +2011,146 @@ describe('TableNG utils', () => {
       expect(compute(fields, 100)).toEqual([COLUMN.MAX_AUTO_WIDTH]);
     });
 
+    it('levels a wrapped column down to fit the panel rather than overflowing it', () => {
+      const cols = (wrap: boolean): Field[] => [
+        // 100*8+13+6 = 819, well over the 400 cap.
+        { name: 'S', type: FieldType.string, values: ['x'.repeat(100)], config: { custom: { wrapText: wrap } } },
+        { name: 'N', type: FieldType.number, values: [999], config: {} }, // 37 => floored to 50
+      ];
+
+      // Content totals 400 + 50 = 450 against a 300px panel. The wrapped column can trade the 150px
+      // of overflow for extra row height, so it gives all of it back and the table fits exactly.
+      expect(compute(cols(true), 300)).toEqual([250, 50]);
+      // Unwrapped, the same content would be clipped rather than reflowed, so it keeps its width and
+      // the grid scrolls instead.
+      expect(compute(cols(false), 300)).toEqual([COLUMN.MAX_AUTO_WIDTH, 50]);
+    });
+
+    it('takes the overflow from the widest wrapped column first, then levels them together', () => {
+      const fields: Field[] = [
+        // 40*8+13+6 = 339
+        { name: 'A', type: FieldType.string, values: ['x'.repeat(40)], config: { custom: { wrapText: true } } },
+        // 20*8+13+6 = 179
+        { name: 'B', type: FieldType.string, values: ['x'.repeat(20)], config: { custom: { wrapText: true } } },
+      ];
+
+      // Content totals 518. A 40px deficit comes entirely out of A, which is 160px wider than B:
+      // the narrower column gives up nothing while a wider one still has slack.
+      expect(compute(fields, 478)).toEqual([299, 179]);
+      // A 200px deficit first levels A down to B (160px), then splits the remaining 40px between
+      // them (20px each), so they land on a common width instead of A collapsing on its own.
+      expect(compute(fields, 318)).toEqual([159, 159]);
+    });
+
+    it('never levels a wrapped column below its header label, keeping the residual overflow', () => {
+      const fields: Field[] = [
+        {
+          name: 'A'.repeat(30), // header 30*8 + sort arrow 22 + 13 = 275
+          type: FieldType.string,
+          values: ['x'.repeat(60)], // 499 => capped to 400
+          config: { custom: { wrapText: true } },
+        },
+        { name: 'N', type: FieldType.number, values: [999], config: {} }, // 50
+      ];
+
+      // The 250px deficit against a 200px panel is more than the wrapped column can give: the header
+      // label doesn't reflow, so it stops at 275 and the grid still scrolls, just 125px less far.
+      expect(compute(fields, 200)).toEqual([275, 50]);
+    });
+
+    it('never levels a wrapped column below its configured minWidth', () => {
+      const fields: Field[] = [
+        {
+          name: 'S',
+          type: FieldType.string,
+          values: ['x'.repeat(100)], // 819 => capped to 400
+          config: { custom: { wrapText: true, minWidth: 300 } },
+        },
+      ];
+
+      expect(compute(fields, 100)).toEqual([300]);
+    });
+
+    it('leaves a graphical column at its measured width even when wrapText is set on it', () => {
+      const fields: Field[] = [
+        { name: 'S', type: FieldType.string, values: ['x'.repeat(100)], config: { custom: { wrapText: true } } }, // capped to 400
+        {
+          name: 'g',
+          type: FieldType.number,
+          values: [1],
+          // wrapText has no effect on a sparkline's rendering, but a default applied to every column
+          // shouldn't make this one eligible for the level-down either — there's nothing to reflow.
+          config: { custom: { wrapText: true, cellOptions: { type: TableCellDisplayMode.Sparkline } } }, // 150
+        },
+      ];
+
+      // Same 300px deficit as the preventHorizontalOverflow case below: S gives back everything a
+      // wrapped column can (down to its header), the sparkline stays untouched.
+      expect(compute(fields, 250)).toEqual([100, COLUMN.DEFAULT_WIDTH]);
+    });
+
+    describe('preventHorizontalOverflow', () => {
+      it('levels an unwrapped column down to fit, truncating its content instead of scrolling', () => {
+        const fields: Field[] = [
+          // 100*8+13+6 = 819, well over the 400 cap; no wrapText, so the content ellipsizes.
+          { name: 'S', type: FieldType.string, values: ['x'.repeat(100)], config: {} },
+          { name: 'N', type: FieldType.number, values: [999], config: {} }, // 37 => floored to 50
+        ];
+
+        // Content totals 450 against a 300px panel. With the option the 150px of overflow comes out
+        // of the text column, which then shows an ellipsis rather than hiding N behind a scrollbar.
+        expect(compute(fields, 300, false, true)).toEqual([250, 50]);
+        // Without it, an unwrapped column keeps its content width and the grid scrolls (the default).
+        expect(compute(fields, 300)).toEqual([COLUMN.MAX_AUTO_WIDTH, 50]);
+      });
+
+      it('still takes the overflow from the widest column first, then levels them together', () => {
+        const fields: Field[] = [
+          { name: 'A', type: FieldType.string, values: ['x'.repeat(40)], config: {} }, // 339
+          { name: 'B', type: FieldType.string, values: ['x'.repeat(20)], config: {} }, // 179
+        ];
+
+        // Same widest-first levelling wrapped columns get: a 40px deficit comes entirely out of A,
+        // which is 160px wider than B...
+        expect(compute(fields, 478, false, true)).toEqual([299, 179]);
+        // ...while a 200px deficit levels A down to B and then splits the last 40px between them.
+        expect(compute(fields, 318, false, true)).toEqual([159, 159]);
+      });
+
+      it('leaves graphical columns at their measured width — there is nothing in them to truncate', () => {
+        const fields: Field[] = [
+          { name: 'S', type: FieldType.string, values: ['x'.repeat(100)], config: {} }, // capped to 400
+          {
+            name: 'g',
+            type: FieldType.number,
+            values: [1],
+            config: { custom: { cellOptions: { type: TableCellDisplayMode.Sparkline } } }, // 150
+          },
+        ];
+
+        // The 300px deficit is more than levelling S down to the sparkline's width would cover, so a
+        // shrinkable sparkline would have been dragged down with it ([125, 125]). Squeezing a
+        // sparkline clips the graphic instead of ellipsizing text, so S absorbs the whole deficit.
+        expect(compute(fields, 250, false, true)).toEqual([100, COLUMN.DEFAULT_WIDTH]);
+      });
+
+      it('still stops at the header label, keeping the residual overflow', () => {
+        const fields: Field[] = [
+          {
+            name: 'A'.repeat(30), // header 30*8 + sort arrow 22 + 13 = 275
+            type: FieldType.string,
+            values: ['x'.repeat(60)], // 499 => capped to 400
+            config: {},
+          },
+          { name: 'N', type: FieldType.number, values: [999], config: {} }, // 50
+        ];
+
+        // Truncating the values is fine; truncating the column's own title isn't. The option gets as
+        // close to fitting as the header allows and the grid scrolls the rest.
+        expect(compute(fields, 200, false, true)).toEqual([275, 50]);
+      });
+    });
+
     it('measures the display-formatted string, not the raw value', () => {
       const fields: Field[] = [
         {
@@ -2061,8 +2248,9 @@ describe('TableNG utils', () => {
       const longestLine = Math.max(...pretty.split('\n').map((line) => line.length));
       const expected = longestLine * CHAR_W + CELL_CHROME;
 
-      // availWidth below the content so it can't grow to fill (which would mask the difference).
-      expect(compute([jsonField(value, true)], 40)).toEqual([expected]);
+      // availWidth exactly at the content width, so the column neither grows to fill (which would
+      // mask the difference) nor levels down to fit (wrapped columns give width back on overflow).
+      expect(compute([jsonField(value, true)], expected)).toEqual([expected]);
       // the widest line is far narrower than the whole blob, which would hit the cap.
       expect(expected).toBeLessThan(COLUMN.MAX_AUTO_WIDTH);
       expect(pretty.length * CHAR_W + CELL_CHROME).toBeGreaterThan(COLUMN.MAX_AUTO_WIDTH);
@@ -2159,11 +2347,13 @@ describe('TableNG utils', () => {
       });
       // Wrapped links stack vertically, so the column follows the widest link ("Open dashboard",
       // 14*8+8=120; +CELL_CHROME 13 = 133) rather than the summed inline run of both links.
-      const wrapped = computeContentAwareColWidths([field(true)], 50, {
+      // availWidth is the wrapped content width, so neither column grows and the wrapped one has no
+      // overflow to level down into.
+      const wrapped = computeContentAwareColWidths([field(true)], 133, {
         typographyCtx: makeTypographyCtx(),
         headerTypographyCtx: makeTypographyCtx(),
       });
-      const inline = computeContentAwareColWidths([field(false)], 50, {
+      const inline = computeContentAwareColWidths([field(false)], 133, {
         typographyCtx: makeTypographyCtx(),
         headerTypographyCtx: makeTypographyCtx(),
       });
@@ -2541,16 +2731,26 @@ describe('TableNG utils', () => {
         config: { custom: { cellOptions: { type: TableCellDisplayMode.Pill } } },
       });
 
-      const computeWithPills = (fields: Field[], availWidth: number) =>
+      const computeWithPills = (fields: Field[], availWidth: number, pillTheme = theme) =>
         computeContentAwareColWidths(fields, availWidth, {
           typographyCtx: makeTypographyCtx(),
           headerTypographyCtx: makeTypographyCtx(),
+          theme: pillTheme,
         });
 
       it('sizes to fit an average row of pills across a couple of entries, not the longest value', () => {
         // one row: "AB" (2*8+12=28) + gap 4 + "CDE" (3*8+12=36) => rowTotal 68; +CELL_CHROME 13 = 81.
         const [width] = computeWithPills([pillField('a', [['AB', 'CDE']])], 81);
         expect(width).toBe(81);
+      });
+
+      it('uses the active theme to measure pill padding', () => {
+        const refreshTheme = createTheme();
+        refreshTheme.flags.visualDesignRefresh = true;
+        const field = pillField('a', [['AB', 'CDE']]);
+
+        expect(computeWithPills([field], 1)).toEqual([81]);
+        expect(computeWithPills([field], 1, refreshTheme)).toEqual([89]);
       });
 
       it('never sizes below the widest single pill, so no chip is clipped', () => {
@@ -2735,6 +2935,16 @@ describe('TableNG utils', () => {
 
     it('should render arrays as JSON', () => {
       expect(displayJsonValue(field)([1, 2, 3]).text).toBe('[\n 1,\n 2,\n 3\n]');
+    });
+
+    it.each([false, true])('uses formatted text for circular values (array: %s)', (asArray) => {
+      const value: { name: string; frame?: unknown } = { name: 'nested' };
+      value.frame = value;
+      field.display = getRawDisplayProcessor();
+
+      expect(displayJsonValue(field)(asArray ? [value] : value).text).toBe(
+        asArray ? '[{"name":"nested"}]' : '{"name":"nested"}'
+      );
     });
   });
 
@@ -3500,5 +3710,55 @@ describe('TableNG utils', () => {
     ])('should handle $name', ({ input: { field, valueIdx = 0, formatGeometry } }) => {
       expect(buildInspectValue(field.values[valueIdx], field, formatGeometry)).toMatchSnapshot();
     });
+  });
+});
+
+describe('makeStripedRowClass', () => {
+  const flatRows = (count: number): TableRow[] => Array.from({ length: count }, (_, i) => ({ __index: i, __depth: 0 }));
+
+  it('stripes every other row of a flat table, starting from the second', () => {
+    const rows = flatRows(5);
+    const rowClass = makeStripedRowClass(rows);
+
+    expect(rows.map(rowClass)).toEqual([undefined, STRIPED_ROW_CLASS, undefined, STRIPED_ROW_CLASS, undefined]);
+  });
+
+  // A nested table interleaves a container row after each parent that has nested data, in one
+  // grid. Counting every row - as react-data-grid's own `rdg-row-odd` does - put the parity on the
+  // containers and left every parent row unstriped.
+  it('counts only the parent rows of a nested table, skipping the containers', () => {
+    const rows: TableRow[] = [
+      { __index: 0, __depth: 0 },
+      { __index: 0, __depth: 1 },
+      { __index: 1, __depth: 0 },
+      { __index: 1, __depth: 1 },
+      { __index: 2, __depth: 0 },
+      { __index: 2, __depth: 1 },
+    ];
+    const rowClass = makeStripedRowClass(rows);
+
+    expect(rows.map(rowClass)).toEqual([
+      undefined,
+      NESTED_ROW_CLASS,
+      STRIPED_ROW_CLASS,
+      NESTED_ROW_CLASS,
+      undefined,
+      NESTED_ROW_CLASS,
+    ]);
+  });
+
+  // Only rows with nested data get a container row, so the interleaving isn't regular and the
+  // parity can't be derived from the grid's own row index arithmetic either.
+  it('keeps the rhythm when only some parents have a container row', () => {
+    const rows: TableRow[] = [
+      { __index: 0, __depth: 0 },
+      { __index: 0, __depth: 1 },
+      { __index: 1, __depth: 0 },
+      { __index: 2, __depth: 0 },
+      { __index: 2, __depth: 1 },
+    ];
+    const rowClass = makeStripedRowClass(rows);
+
+    expect(rows.filter((r) => r.__depth === 0).map(rowClass)).toEqual([undefined, STRIPED_ROW_CLASS, undefined]);
   });
 });

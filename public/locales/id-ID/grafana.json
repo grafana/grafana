@@ -915,6 +915,7 @@
       "button-view": "Lihat",
       "export-ariaLabel-export": "Ekspor",
       "export-label-export": "Ekspor",
+      "export-legacy-integration-tooltip": "",
       "label-delete": "Hapus",
       "label-manage-permissions": "Kelola izin",
       "tooltip-history": "Lihat riwayat upaya notifikasi yang dilakukan ke titik kontak ini",
@@ -1477,6 +1478,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "Memuat...."
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "",
+      "warning-v0-integrations-title": ""
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "Memuat...."
     },
@@ -1705,6 +1710,9 @@
         "pause-none": "Tidak ada aturan yang dijeda",
         "pause-recording": "Aturan perekaman dijeda",
         "policy-tree": "Pohon kebijakan",
+        "preview": "",
+        "preview-config-aria": "",
+        "preview-rules-aria": "",
         "routing": "Perutean notifikasi",
         "routing-none": "Tidak ada pohon kebijakan yang dipilih",
         "routing-tree": "Pohon kebijakan: {{name}}",
@@ -1765,14 +1773,17 @@
         "templates-duplicate": "Nama file templat duplikat: \"{{name}}\". Nama file templat harus unik.",
         "templates-label": "Templat notifikasi",
         "templates-remove": "Hapus {{name}}",
-        "upload": "Unggah file YAML",
+        "upload": "",
         "validating": "Memvalidasi konfigurasi...",
         "validation-error": "Validasi gagal",
         "validation-error-desc": "Gagal memvalidasi konfigurasi.",
         "validation-success": "Validasi berhasil",
         "validation-success-desc": "Tidak ada konflik yang ditemukan. Konfigurasi siap diimpor.",
         "validation-warning": "Beberapa sumber daya akan diganti namanya untuk menghindari konflik dengan sumber daya yang sudah ada",
-        "yaml-file": "YAML konfigurasi Alertmanager"
+        "yaml-desc": "",
+        "yaml-file": "YAML konfigurasi Alertmanager",
+        "yaml-invalid-type": "",
+        "yaml-remove": ""
       },
       "step2": {
         "datasource": "Sumber data",
@@ -4579,11 +4590,15 @@
     },
     "readme": {
       "add-readme": "Tambahkan README",
-      "edit-tooltip": "Edit README",
+      "edit-doc-tooltip": "",
       "empty-message": "Tambahkan README untuk menjelaskan apa yang ada dalam folder ini dan di mana menemukan dasbor yang tepat.",
       "load-error-retry": "Coba lagi",
-      "load-error-title": "Tidak dapat memuat README",
-      "parse-error": "Tidak dapat menampilkan konten README."
+      "load-error-title": "",
+      "panel-label": "",
+      "parse-error": "",
+      "tab-contributing": "",
+      "tab-readme": "",
+      "tab-security": ""
     },
     "recently-viewed": {
       "clear": "Hapus riwayat",
@@ -5736,16 +5751,24 @@
       "add-library-panel-header": "Impor panel",
       "add-visualization-body": "Pilih sumber data, kemudian kueri dan visualisasikan data Anda dengan bagan, statistik, dan tabel atau buat daftar, markdown, dan widget lainnya.",
       "add-visualization-button": "Tambahkan visualisasi",
+      "add-visualization-description": "",
       "add-visualization-header": "Mulai dasbor baru Anda dengan menambahkan visualisasi",
+      "add-visualization-heading": "",
+      "assistant-placeholder": "",
       "auto-grid": "Kisi otomatis",
       "auto-grid-description": "Ukuran panel diubah agar pas dan membentuk kisi yang seragam",
+      "build-assistant": "",
       "custom-grid": "Kisi kustom",
       "custom-grid-description": "Posisikan dan ukur setiap panel secara individu",
       "description": "Tambahkan panel untuk memvisualisasikan data Anda",
+      "grid-auto": "",
+      "grid-custom": "",
+      "grid-label": "",
       "import-a-dashboard-body": "Impor dasbor dari file atau <2>grafana.com</2>.",
       "import-a-dashboard-header": "Impor dasbor",
       "import-dashboard-button": "Impor dasbor",
       "layout-default-hint": "Tata letak yang dipilih juga akan digunakan sebagai default untuk semua tab dan baris baru. Anda bisa mengubahnya nanti di Pengaturan Dasbor > Umum.",
+      "or-start-blank": "",
       "select-layout-header": "Pilih tata letak",
       "title": "Dasbor baru"
     },
@@ -5873,6 +5896,7 @@
       "randomize-field-names-label-field-names": "Nama bidang",
       "randomize-labels-label-labels": "Label",
       "randomize-string-values-label-string-values": "Nilai string",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Data",
@@ -5913,6 +5937,7 @@
     "inspect-json": {
       "dataframe-description": "Data mentah tanpa transformasi dan konfigurasi bidang diterapkan. ",
       "dataframe-label": "JSON DataFrame (dari Kueri)",
+      "editor-label": "",
       "panel-data-description": "Model mentah diteruskan ke visualisasi panel",
       "panel-data-label": "Data panel",
       "panel-json-description": "Model disimpan di JSON dasbor yang mengonfigurasi cara kerja semuanya.",
@@ -7301,6 +7326,7 @@
       "randomize-field-names-label-field-names": "Nama bidang",
       "randomize-labels-label-labels": "Label",
       "randomize-string-values-label-string-values": "Nilai string",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Data",
@@ -7688,6 +7714,7 @@
         "model-label": "Model",
         "v2-resource": "Sumber Daya V2"
       },
+      "json-preview-label": "",
       "label-description": "Deskripsi",
       "label-folder-name": "Nama folder",
       "label-target-folder": "Folder target",
@@ -11086,6 +11113,7 @@
       "incident-tab-label": "Insiden",
       "team-filter-all": "Semua tim",
       "team-filter-label": "Filter peringatan berdasarkan tim",
+      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Tim Anda",
       "title": "Peringatan & insiden",
       "title-alerts": "Peringatan",
@@ -11143,6 +11171,7 @@
     "incidents-card": {
       "declare": "Nyatakan sebuah insiden",
       "empty": "Tidak ada insiden aktif.",
+      "empty-selected-team": "",
       "error-title": "Tidak dapat memuat insiden aktif",
       "title": "Insiden aktif",
       "view-all": "Lihat semua insiden"
@@ -11747,6 +11776,7 @@
       "waiting-for-data": "Menunggu data:"
     },
     "live-publish": {
+      "message": "",
       "publish": "Publikasikan"
     }
   },
@@ -12092,6 +12122,10 @@
       "description": "Saat diaktifkan, menampilkan detail log untuk setiap baris.",
       "name": "Aktifkan detail log"
     },
+    "hover-overflow": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Mengaktifkan/menonaktifkan tombol tautan baris log di kolom pertama setiap baris",
       "name": "Tampilkan tombol salin tautan log"
@@ -12159,6 +12193,10 @@
     "selected-team-not-found": "Tim yang dipilih tidak ditemukan, atau Anda tidak memiliki izin yang diperlukan untuk melihatnya.",
     "team-not-found": "[Tim tidak diketahui]",
     "unknown-error": "Kesalahan tidak diketahui"
+  },
+  "mermaid": {
+    "invalid-syntax": "",
+    "render-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Opsi tidak ditemukan"
@@ -12492,6 +12530,10 @@
     "authentication": {
       "title": "Autentikasi"
     },
+    "banner-settings": {
+      "subtitle": "",
+      "title": ""
+    },
     "bookmarks": {
       "title": "Bookmark"
     },
@@ -12698,6 +12740,7 @@
       "title": "Kueri yang direkam"
     },
     "reporting": {
+      "subtitle": "",
       "title": "Pelaporan"
     },
     "saved-queries": {
@@ -12712,6 +12755,10 @@
     },
     "search-dashboards": {
       "title": "Cari dasbor"
+    },
+    "secrets-management": {
+      "subtitle": "",
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Lihat pengaturan yang ditentukan dalam konfigurasi Grafana Anda",
@@ -14987,7 +15034,7 @@
     },
     "public-sharing": {
       "accept-button": "Setuju",
-      "alert-text": "Berbagi dasbor ini secara eksternal membuatnya sepenuhnya dapat diakses oleh siapa saja yang memiliki tautan.",
+      "alert-text": "",
       "cancel-button": "Batalkan",
       "learn-more-button": "Pelajari lebih lanjut",
       "public-ack": "Saya memahami bahwa seluruh dasbor ini akan menjadi publik.*",
@@ -16552,10 +16599,6 @@
     },
     "frame-picker": {
       "label": ""
-    },
-    "mermaid": {
-      "invalid-syntax": "",
-      "render-error": ""
     },
     "options": {
       "page-size": "",

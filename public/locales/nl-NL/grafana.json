@@ -920,6 +920,7 @@
       "button-view": "Weergave",
       "export-ariaLabel-export": "Exporteren",
       "export-label-export": "Exporteren",
+      "export-legacy-integration-tooltip": "",
       "label-delete": "Verwijderen",
       "label-manage-permissions": "Toestemmingen beheren",
       "tooltip-history": "De geschiedenis bekijken van meldingspogingen naar dit contactpunt",
@@ -1484,6 +1485,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "Laden...."
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "",
+      "warning-v0-integrations-title": ""
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "Laden...."
     },
@@ -1712,6 +1717,9 @@
         "pause-none": "Geen regels gepauzeerd",
         "pause-recording": "Opnameregels gepauzeerd",
         "policy-tree": "Beleidsboom",
+        "preview": "",
+        "preview-config-aria": "",
+        "preview-rules-aria": "",
         "routing": "Meldingsroutering",
         "routing-none": "Geen beleidsboom geselecteerd",
         "routing-tree": "Beleidsboom: {{name}}",
@@ -1773,14 +1781,17 @@
         "templates-duplicate": "Sjabloonbestandsnaam: \"{{name}}\" dupliceren. Namen van sjabloonbestanden moeten uniek zijn.",
         "templates-label": "Meldingsjablonen",
         "templates-remove": "Verwijder {{name}}",
-        "upload": "YAML-bestand uploaden",
+        "upload": "",
         "validating": "Configuratie valideren...",
         "validation-error": "Validatie is mislukt",
         "validation-error-desc": "Kan de configuratie niet valideren.",
         "validation-success": "Validatie is geslaagd",
         "validation-success-desc": "Geen conflicten gevonden. De configuratie is klaar om te importeren.",
         "validation-warning": "Sommige bronnen krijgen een nieuwe naam om conflicten met bestaande bronnen te voorkomen",
-        "yaml-file": "YAML voor configuratie van Alertmanager"
+        "yaml-desc": "",
+        "yaml-file": "YAML voor configuratie van Alertmanager",
+        "yaml-invalid-type": "",
+        "yaml-remove": ""
       },
       "step2": {
         "datasource": "Databron",
@@ -4617,11 +4628,15 @@
     },
     "readme": {
       "add-readme": "README toevoegen",
-      "edit-tooltip": "README bewerken",
+      "edit-doc-tooltip": "",
       "empty-message": "Voeg een README toe om te beschrijven wat er in deze map staat en waar je de juiste dashboards kunt vinden.",
       "load-error-retry": "Probeer het opnieuw",
-      "load-error-title": "Kan README niet laden",
-      "parse-error": "Kan de inhoud van de README niet weergeven."
+      "load-error-title": "",
+      "panel-label": "",
+      "parse-error": "",
+      "tab-contributing": "",
+      "tab-readme": "",
+      "tab-security": ""
     },
     "recently-viewed": {
       "clear": "Geschiedenis wissen",
@@ -5778,16 +5793,24 @@
       "add-library-panel-header": "Paneel importeren",
       "add-visualization-body": "Selecteer een gegevensbron en zoek en visualiseer je gegevens met grafieken, statistieken en tabellen of maak lijsten, prijsverlagingen en andere widgets.",
       "add-visualization-button": "Visualisatie toevoegen",
+      "add-visualization-description": "",
       "add-visualization-header": "Begin je nieuwe dashboard door een visualisatie toe te voegen",
+      "add-visualization-heading": "",
+      "assistant-placeholder": "",
       "auto-grid": "Automatisch raster",
       "auto-grid-description": "Panelen verkleinen zodat ze passen en uniforme rasters vormen",
+      "build-assistant": "",
       "custom-grid": "Aangepast raster",
       "custom-grid-description": "Plaats en formatteer elk paneel afzonderlijk",
       "description": "Voeg een paneel toe om je gegevens te visualiseren",
+      "grid-auto": "",
+      "grid-custom": "",
+      "grid-label": "",
       "import-a-dashboard-body": "Importeer dashboards uit bestanden of <2>grafana.com</2>.",
       "import-a-dashboard-header": "Dashboard importeren",
       "import-dashboard-button": "Dashboard importeren",
       "layout-default-hint": "De geselecteerde indeling wordt ook als standaardindeling voor alle nieuwe tabbladen en rijen. Je kunt dit later wijzigen via Dashboardinstellingen > Algemeen.",
+      "or-start-blank": "",
       "select-layout-header": "Indeling selecteren",
       "title": "Nieuw dashboard"
     },
@@ -5915,6 +5938,7 @@
       "randomize-field-names-label-field-names": "Veldnamen",
       "randomize-labels-label-labels": "Labels",
       "randomize-string-values-label-string-values": "Tekenreekswaarden",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Gegevens",
@@ -5955,6 +5979,7 @@
     "inspect-json": {
       "dataframe-description": "Onbewerkte gegevens zonder transformaties en veldconfiguratie toegepast. ",
       "dataframe-label": "DataFrame JSON (van Query)",
+      "editor-label": "",
       "panel-data-description": "Het ruwe model doorgegeven aan de paneelvisualisatie",
       "panel-data-label": "Paneelgegevens",
       "panel-json-description": "Het model opgeslagen in het dashboard JSON dat configureert hoe alles werkt.",
@@ -7346,6 +7371,7 @@
       "randomize-field-names-label-field-names": "Veldnamen",
       "randomize-labels-label-labels": "Labels",
       "randomize-string-values-label-string-values": "Tekenreekswaarden",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Gegevens",
@@ -7735,6 +7761,7 @@
         "model-label": "Model",
         "v2-resource": "V2-bron"
       },
+      "json-preview-label": "",
       "label-description": "Beschrijving",
       "label-folder-name": "Mapnaam",
       "label-target-folder": "Doelmap",
@@ -11149,6 +11176,7 @@
       "incident-tab-label": "Incidenten",
       "team-filter-all": "Alle teams",
       "team-filter-label": "Waarschuwingen filteren op team",
+      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Je teams",
       "title": "Waarschuwingen en incidenten",
       "title-alerts": "Waarschuwingen",
@@ -11208,6 +11236,7 @@
     "incidents-card": {
       "declare": "Een incident melden",
       "empty": "Geen actieve incidenten.",
+      "empty-selected-team": "",
       "error-title": "Kon actieve incidenten niet laden",
       "title": "Actieve incidenten",
       "view-all": "Alle incidenten bekijken"
@@ -11831,6 +11860,7 @@
       "waiting-for-data": "Wachten op gegevens:"
     },
     "live-publish": {
+      "message": "",
       "publish": "Publiceren"
     }
   },
@@ -12179,6 +12209,10 @@
       "description": "Wanneer ingeschakeld, worden logboekdetails voor elke rij weergegeven.",
       "name": "Logboekdetails inschakelen"
     },
+    "hover-overflow": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Schakelt de knop voor de logregellink in de eerste kolom van elke rij in/uit",
       "name": "Knop voor kopiëren van loglink weergeven"
@@ -12246,6 +12280,10 @@
     "selected-team-not-found": "Het geselecteerde team is niet gevonden, of je hebt niet de vereiste toestemmingen om het te bekijken.",
     "team-not-found": "[Onbekend team]",
     "unknown-error": "Onbekende fout"
+  },
+  "mermaid": {
+    "invalid-syntax": "",
+    "render-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Geen opties gevonden"
@@ -12579,6 +12617,10 @@
     "authentication": {
       "title": "Autorisate"
     },
+    "banner-settings": {
+      "subtitle": "",
+      "title": ""
+    },
     "bookmarks": {
       "title": "Bladwijzers"
     },
@@ -12785,6 +12827,7 @@
       "title": "Geregistreerde query's"
     },
     "reporting": {
+      "subtitle": "",
       "title": "Rapporteren"
     },
     "saved-queries": {
@@ -12799,6 +12842,10 @@
     },
     "search-dashboards": {
       "title": "Dashboards doorzoeken"
+    },
+    "secrets-management": {
+      "subtitle": "",
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Bekijk de instellingen die zijn gedefinieerd in je Grafana-configuratie",
@@ -15097,7 +15144,7 @@
     },
     "public-sharing": {
       "accept-button": "Accepteren",
-      "alert-text": "Door dit dashboard extern te delen, is het volledig toegankelijk voor iedereen met de link.",
+      "alert-text": "",
       "cancel-button": "Annuleren",
       "learn-more-button": "Meer informatie",
       "public-ack": "Ik begrijp dat dit hele dashboard openbaar is.*",
@@ -16674,10 +16721,6 @@
     },
     "frame-picker": {
       "label": ""
-    },
-    "mermaid": {
-      "invalid-syntax": "",
-      "render-error": ""
     },
     "options": {
       "page-size": "",

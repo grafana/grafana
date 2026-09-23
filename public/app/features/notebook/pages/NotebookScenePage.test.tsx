@@ -1,6 +1,6 @@
 import { act, render, screen, waitFor } from 'test/test-utils';
 
-import { locationService } from '@grafana/runtime';
+import { locationService, setPluginComponentHook } from '@grafana/runtime';
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -11,6 +11,10 @@ import { NotebookLayoutManager } from '../scene/layout-notebook/NotebookLayoutMa
 
 import { getNotebookPageStateManager } from './NotebookPageStateManager';
 import { NotebookScenePage } from './NotebookScenePage';
+
+// The toolbar asks for IRM's exposed components, and usePluginComponent throws until the hook
+// app.ts installs at startup is there. Answered with "no plugin".
+setPluginComponentHook(() => ({ component: null, isLoading: false }));
 
 // Partial rather than a whole-module replacement so `loaded` stays real: the tests that open an
 // existing notebook run loadNotebook, which imports it from here.

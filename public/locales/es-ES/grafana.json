@@ -920,6 +920,7 @@
       "button-view": "Vista",
       "export-ariaLabel-export": "Exportar",
       "export-label-export": "Exportar",
+      "export-legacy-integration-tooltip": "",
       "label-delete": "Eliminar",
       "label-manage-permissions": "Gestionar permisos",
       "tooltip-history": "Consulta el historial de intentos de notificación realizados a este punto de contacto.",
@@ -1484,6 +1485,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "Cargando…"
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "",
+      "warning-v0-integrations-title": ""
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "Cargando…"
     },
@@ -1712,6 +1717,9 @@
         "pause-none": "No hay reglas en pausa.",
         "pause-recording": "Reglas de registro en pausa",
         "policy-tree": "Árbol de políticas",
+        "preview": "",
+        "preview-config-aria": "",
+        "preview-rules-aria": "",
         "routing": "Enrutamiento de notificaciones",
         "routing-none": "No se ha seleccionado ningún árbol de políticas.",
         "routing-tree": "Árbol de políticas: {{name}}",
@@ -1773,14 +1781,17 @@
         "templates-duplicate": "Nombre de archivo de plantilla duplicado: «{{name}}». Los nombres de los archivos de plantilla deben ser únicos.",
         "templates-label": "Plantillas de notificación",
         "templates-remove": "Eliminar {{name}}",
-        "upload": "Subir archivo YAML",
+        "upload": "",
         "validating": "Validando configuración...",
         "validation-error": "Error en la validación",
         "validation-error-desc": "Error al validar la configuración.",
         "validation-success": "Validación correcta",
         "validation-success-desc": "No se han encontrado conflictos. La configuración está lista para importarse.",
         "validation-warning": "Se cambiará el nombre de algunos recursos para evitar conflictos con los recursos existentes.",
-        "yaml-file": "YAML de configuración de Alertmanager"
+        "yaml-desc": "",
+        "yaml-file": "YAML de configuración de Alertmanager",
+        "yaml-invalid-type": "",
+        "yaml-remove": ""
       },
       "step2": {
         "datasource": "Fuente de datos",
@@ -4617,11 +4628,15 @@
     },
     "readme": {
       "add-readme": "Añadir README",
-      "edit-tooltip": "Editar README",
+      "edit-doc-tooltip": "",
       "empty-message": "Añade un archivo README para describir lo que hay en esta carpeta e indicar dónde encontrar los dashboards adecuados.",
       "load-error-retry": "Intentar de nuevo",
-      "load-error-title": "No se ha podido cargar el README",
-      "parse-error": "No se puede mostrar el contenido del README."
+      "load-error-title": "",
+      "panel-label": "",
+      "parse-error": "",
+      "tab-contributing": "",
+      "tab-readme": "",
+      "tab-security": ""
     },
     "recently-viewed": {
       "clear": "Borrar historial",
@@ -5778,16 +5793,24 @@
       "add-library-panel-header": "Importar panel",
       "add-visualization-body": "Selecciona una fuente de datos y luego consulta y visualiza tus datos con gráficos, estadísticas y tablas o cree listas, anotaciones y otros widgets.",
       "add-visualization-button": "Añadir visualización",
+      "add-visualization-description": "",
       "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización",
+      "add-visualization-heading": "",
+      "assistant-placeholder": "",
       "auto-grid": "Cuadrícula automática",
       "auto-grid-description": "Los paneles se redimensionan para ajustarse y formar cuadrículas uniformes",
+      "build-assistant": "",
       "custom-grid": "Cuadrícula personalizada",
       "custom-grid-description": "Posicionar y dimensionar cada panel individualmente",
       "description": "Añade un panel para visualizar tus datos",
+      "grid-auto": "",
+      "grid-custom": "",
+      "grid-label": "",
       "import-a-dashboard-body": "Importa dashboards desde archivos o <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importar un tablero",
       "import-dashboard-button": "Importar panel de control",
       "layout-default-hint": "El diseño seleccionado también se utilizará de forma predeterminada para todas las pestañas y filas nuevas. Puedes modificar esta opción más adelante en Ajustes del dashboard > Generales.",
+      "or-start-blank": "",
       "select-layout-header": "Seleccionar diseño",
       "title": "Nuevo dashboard"
     },
@@ -5915,6 +5938,7 @@
       "randomize-field-names-label-field-names": "Nombres de campos",
       "randomize-labels-label-labels": "Etiquetas",
       "randomize-string-values-label-string-values": "Valores de cadena",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Datos",
@@ -5955,6 +5979,7 @@
     "inspect-json": {
       "dataframe-description": "Datos brutos sin configuración de campo ni transformaciones aplicadas. ",
       "dataframe-label": "JSON del marco de datos (de la consulta)",
+      "editor-label": "",
       "panel-data-description": "El modelo bruto (RAW) ha pasado a la visualización del panel",
       "panel-data-label": "Datos de panel",
       "panel-json-description": "El modelo guardado en el panel de control JSON que configura cómo funciona todo.",
@@ -7346,6 +7371,7 @@
       "randomize-field-names-label-field-names": "Nombres de campos",
       "randomize-labels-label-labels": "Etiquetas",
       "randomize-string-values-label-string-values": "Valores de cadena",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Datos",
@@ -7735,6 +7761,7 @@
         "model-label": "Modelo",
         "v2-resource": "Recurso V2"
       },
+      "json-preview-label": "",
       "label-description": "Descripción",
       "label-folder-name": "Nombre de la carpeta",
       "label-target-folder": "Carpeta de destino",
@@ -11149,6 +11176,7 @@
       "incident-tab-label": "Incidentes",
       "team-filter-all": "Todos los equipos",
       "team-filter-label": "Filtrar alertas por equipo",
+      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Tus equipos",
       "title": "Alertas e incidentes",
       "title-alerts": "Alertas",
@@ -11208,6 +11236,7 @@
     "incidents-card": {
       "declare": "Declarar un incidente",
       "empty": "No hay incidentes activos.",
+      "empty-selected-team": "",
       "error-title": "No se han podido cargar los incidentes activos",
       "title": "Incidentes activos",
       "view-all": "Ver todos los incidentes"
@@ -11831,6 +11860,7 @@
       "waiting-for-data": "Esperando datos:"
     },
     "live-publish": {
+      "message": "",
       "publish": "Publicar"
     }
   },
@@ -12179,6 +12209,10 @@
       "description": "Cuando está habilitado, muestra los datos del log para cada fila.",
       "name": "Habilitar datos de log"
     },
+    "hover-overflow": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Habilita/deshabilita el botón de enlace a la línea de log en la primera columna de cada fila.",
       "name": "Mostrar botón para copiar enlace del log"
@@ -12246,6 +12280,10 @@
     "selected-team-not-found": "No se ha encontrado el equipo seleccionado o no tienes los permisos necesarios para verlo.",
     "team-not-found": "[Equipo desconocido]",
     "unknown-error": "Error desconocido"
+  },
+  "mermaid": {
+    "invalid-syntax": "",
+    "render-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "No se han encontrado opciones"
@@ -12579,6 +12617,10 @@
     "authentication": {
       "title": "Autenticación"
     },
+    "banner-settings": {
+      "subtitle": "",
+      "title": ""
+    },
     "bookmarks": {
       "title": "Marcadores"
     },
@@ -12785,6 +12827,7 @@
       "title": "Consultas grabadas"
     },
     "reporting": {
+      "subtitle": "",
       "title": "Creación de informes"
     },
     "saved-queries": {
@@ -12799,6 +12842,10 @@
     },
     "search-dashboards": {
       "title": "Buscar paneles de control"
+    },
+    "secrets-management": {
+      "subtitle": "",
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Vea la configuración definida en los ajustes de Grafana",
@@ -15097,7 +15144,7 @@
     },
     "public-sharing": {
       "accept-button": "Aceptar",
-      "alert-text": "Al compartir este panel de control de forma externa, cualquier persona que tenga el enlace podrá acceder a él.",
+      "alert-text": "",
       "cancel-button": "Cancelar",
       "learn-more-button": "Más información",
       "public-ack": "Entiendo que todo el panel de control será público.*",
@@ -16674,10 +16721,6 @@
     },
     "frame-picker": {
       "label": ""
-    },
-    "mermaid": {
-      "invalid-syntax": "",
-      "render-error": ""
     },
     "options": {
       "page-size": "",

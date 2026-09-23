@@ -35,14 +35,14 @@ type alertmanagerConfigStore interface {
 }
 
 type routeAccessControl interface {
-	FilterRead(ctx context.Context, user identity.Requester, routes ...*legacy_storage.ManagedRoute) ([]*legacy_storage.ManagedRoute, error)
+	FilterRead(ctx context.Context, user identity.Requester, routes ...*v1.ManagedRoute) ([]*v1.ManagedRoute, error)
 	AuthorizeReadByUID(ctx context.Context, user identity.Requester, uid string) error
 	AuthorizeCreate(ctx context.Context, user identity.Requester) error
 	AuthorizeUpdateByUID(ctx context.Context, user identity.Requester, uid string) error
 	AuthorizeDeleteByUID(ctx context.Context, user identity.Requester, uid string) error
-	SetDefaultPermissions(ctx context.Context, user identity.Requester, route *legacy_storage.ManagedRoute) error
-	DeleteAllPermissions(ctx context.Context, orgID int64, route *legacy_storage.ManagedRoute) error
-	Access(ctx context.Context, user identity.Requester, routes ...*legacy_storage.ManagedRoute) (map[string]models.RoutePermissionSet, error)
+	SetDefaultPermissions(ctx context.Context, user identity.Requester, route *v1.ManagedRoute) error
+	DeleteAllPermissions(ctx context.Context, orgID int64, route *v1.ManagedRoute) error
+	Access(ctx context.Context, user identity.Requester, routes ...*v1.ManagedRoute) (map[string]models.RoutePermissionSet, error)
 }
 
 type Service struct {
@@ -57,7 +57,7 @@ type Service struct {
 	routeAccess                         routeAccessControl
 }
 
-func (nps *Service) AccessControlMetadata(ctx context.Context, user identity.Requester, routes ...*legacy_storage.ManagedRoute) (map[string]models.RoutePermissionSet, error) {
+func (nps *Service) AccessControlMetadata(ctx context.Context, user identity.Requester, routes ...*v1.ManagedRoute) (map[string]models.RoutePermissionSet, error) {
 	permissions, err := nps.routeAccess.Access(ctx, user, routes...)
 	if err != nil {
 		return nil, err
@@ -99,7 +99,7 @@ func NewService(
 	}
 }
 
-func (nps *Service) GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (legacy_storage.ManagedRoute, error) {
+func (nps *Service) GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (v1.ManagedRoute, error) {
 	ctx, span := nps.tracer.Start(ctx, "alerting.routes.get", trace.WithAttributes(
 		attribute.Int64("query_org_id", orgID),
 		attribute.String("query_name", name),
@@ -108,23 +108,23 @@ func (nps *Service) GetManagedRoute(ctx context.Context, orgID int64, name strin
 	defer span.End()
 
 	if err := nps.routeAccess.AuthorizeReadByUID(ctx, user, name); err != nil {
-		return legacy_storage.ManagedRoute{}, err
+		return v1.ManagedRoute{}, err
 	}
 	rev, err := nps.configStore.Get(ctx, orgID)
 	if err != nil {
-		return legacy_storage.ManagedRoute{}, err
+		return v1.ManagedRoute{}, err
 	}
 
 	route := rev.GetManagedRoute(name)
 	if route == nil {
 		// Check if this is referring to the imported config.
 		if nps.includeImported() {
-			if importedRoute := nps.getImportedRoute(ctx, span, rev); importedRoute != nil && importedRoute.Name == name {
+			if importedRoute := nps.getImportedRoute(ctx, span, rev); importedRoute != nil && importedRoute.GetUID() == models.CanonicalizeRoutingTreeName(name) {
 				route = importedRoute
 			}
 		}
 		if route == nil {
-			return legacy_storage.ManagedRoute{}, models.ErrRouteNotFound.Errorf("route %q not found", name)
+			return v1.ManagedRoute{}, models.ErrRouteNotFound.Errorf("route %q not found", name)
 		}
 	}
 
@@ -138,7 +138,7 @@ func (nps *Service) GetManagedRoute(ctx context.Context, orgID int64, name strin
 	if route.Origin != models.ResourceOriginImported {
 		provenance, err := nps.provenanceStore.GetProvenance(ctx, route, orgID)
 		if err != nil {
-			return legacy_storage.ManagedRoute{}, err
+			return v1.ManagedRoute{}, err
 		}
 		route.Provenance = provenance
 	}
@@ -146,7 +146,7 @@ func (nps *Service) GetManagedRoute(ctx context.Context, orgID int64, name strin
 	return *route, nil
 }
 
-func (nps *Service) GetManagedRoutes(ctx context.Context, orgID int64, user identity.Requester) (legacy_storage.ManagedRoutes, error) {
+func (nps *Service) GetManagedRoutes(ctx context.Context, orgID int64, user identity.Requester) (v1.ManagedRoutes, error) {
 	ctx, span := nps.tracer.Start(ctx, "alerting.routes.getMany", trace.WithAttributes(
 		attribute.Int64("query_org_id", orgID),
 		attribute.Bool("include_imported", nps.includeImported()),
@@ -158,7 +158,7 @@ func (nps *Service) GetManagedRoutes(ctx context.Context, orgID int64, user iden
 		return nil, err
 	}
 
-	provenances, err := nps.provenanceStore.GetProvenances(ctx, orgID, (&legacy_storage.ManagedRoute{}).ResourceType())
+	provenances, err := nps.provenanceStore.GetProvenances(ctx, orgID, (&v1.ManagedRoute{}).ResourceType())
 	if err != nil {
 		return nil, err
 	}
@@ -176,11 +176,10 @@ func (nps *Service) GetManagedRoutes(ctx context.Context, orgID int64, user iden
 		importedRoute := nps.getImportedRoute(ctx, span, rev)
 		if importedRoute != nil {
 			// This shouldn't happen under normal circumstances as we guard during create. However, if it happens, we error for now.
-			// When UIDs are introduced to managed routes, we can choose to de-duplicate the name as rules will reference the route by UID, not name.
-			if exists := managedRoutes.Contains(importedRoute.Name); exists {
-				nps.log.FromContext(ctx).Warn("Imported route name conflicts with existing managed route. Skipping imported route.", "route_name", importedRoute.Name)
+			if exists := managedRoutes.Contains(importedRoute.GetUID()); exists {
+				nps.log.FromContext(ctx).Warn("Imported route name conflicts with existing managed route. Skipping imported route.", "route_name", importedRoute.GetUID())
 				span.AddEvent("Skipped imported route due to name conflict", trace.WithAttributes(
-					attribute.String("route_name", importedRoute.Name),
+					attribute.String("route_name", importedRoute.GetUID()),
 				))
 			} else {
 				managedRoutes = append(managedRoutes, importedRoute)
@@ -202,7 +201,7 @@ func (nps *Service) GetManagedRoutes(ctx context.Context, orgID int64, user iden
 	return managedRoutes, nil
 }
 
-func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name string, subtree v1.Route, p models.Provenance, version string, user identity.Requester) (*legacy_storage.ManagedRoute, error) {
+func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name string, subtree v1.Route, p models.Provenance, version string, user identity.Requester) (*v1.ManagedRoute, error) {
 	ctx, span := nps.tracer.Start(ctx, "alerting.routes.update", trace.WithAttributes(
 		attribute.Int64("query_org_id", orgID),
 		attribute.String("route_name", name),
@@ -228,7 +227,7 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 	if existing == nil {
 		// Check if this is referring to the imported config to return a better error message.
 		if nps.includeImported() {
-			if importedRoute := nps.getImportedRoute(ctx, span, revision); importedRoute != nil && importedRoute.Name == name {
+			if importedRoute := nps.getImportedRoute(ctx, span, revision); importedRoute != nil && importedRoute.GetUID() == models.CanonicalizeRoutingTreeName(name) {
 				return nil, models.MakeErrRouteOrigin(name, "update")
 			}
 		}
@@ -241,7 +240,7 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 		attribute.String("route_version", existing.Version),
 	))
 
-	err = nps.checkOptimisticConcurrency(existing, version)
+	err = nps.checkOptimisticConcurrency(name, existing, version)
 	if err != nil {
 		return nil, err
 	}
@@ -299,7 +298,7 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 	if existing == nil {
 		// Check if this is referring to the imported config to return a better error message.
 		if nps.includeImported() {
-			if importedRoute := nps.getImportedRoute(ctx, span, revision); importedRoute != nil && importedRoute.Name == name {
+			if importedRoute := nps.getImportedRoute(ctx, span, revision); importedRoute != nil && importedRoute.GetUID() == models.CanonicalizeRoutingTreeName(name) {
 				return models.MakeErrRouteOrigin(name, "delete")
 			}
 		}
@@ -308,7 +307,7 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 
 	// Optimistic concurrency is optional for delete operations, but we still check it if a version is provided.
 	if version != "" {
-		err = nps.checkOptimisticConcurrency(existing, version)
+		err = nps.checkOptimisticConcurrency(name, existing, version)
 		if err != nil {
 			return err
 		}
@@ -361,7 +360,7 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 	return nil
 }
 
-func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name string, subtree v1.Route, p models.Provenance, user identity.Requester) (*legacy_storage.ManagedRoute, error) {
+func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name string, subtree v1.Route, p models.Provenance, user identity.Requester) (*v1.ManagedRoute, error) {
 	ctx, span := nps.tracer.Start(ctx, "alerting.routes.create", trace.WithAttributes(
 		attribute.Int64("query_org_id", orgID),
 		attribute.String("route_name", name),
@@ -393,9 +392,8 @@ func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name st
 	}
 
 	// Check if this conflicts with an imported config.
-	// When UIDs are introduced to managed routes, we can choose to de-duplicate the name as rules will reference the route by UID, not name.
 	if nps.includeImported() {
-		if importedRoute := nps.getImportedRoute(ctx, span, revision); importedRoute != nil && importedRoute.Name == name {
+		if importedRoute := nps.getImportedRoute(ctx, span, revision); importedRoute != nil && importedRoute.GetUID() == models.CanonicalizeRoutingTreeName(name) {
 			return nil, models.ErrRouteExists.Errorf("cannot create a managed route with the name %q, as it conflicts with an imported route", name)
 		}
 	}
@@ -420,9 +418,9 @@ func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name st
 }
 
 // checkOptimisticConcurrency checks if the existing routes's version matches the desired version.
-func (nps *Service) checkOptimisticConcurrency(current *legacy_storage.ManagedRoute, desiredVersion string) error {
+func (nps *Service) checkOptimisticConcurrency(name string, current *v1.ManagedRoute, desiredVersion string) error {
 	if current.Version != desiredVersion {
-		return models.MakeErrRouteVersionConflict(current.Name, current.Version, desiredVersion)
+		return models.MakeErrRouteVersionConflict(name, current.Version, desiredVersion)
 	}
 	return nil
 }
@@ -443,8 +441,8 @@ func (nps *Service) RenameTimeIntervalInRoutes(_ context.Context, rev *legacy_st
 	return rev.RenameTimeIntervalInRoutes(oldName, newName)
 }
 
-func (nps *Service) getImportedRoute(ctx context.Context, span trace.Span, revision *legacy_storage.ConfigRevision) *legacy_storage.ManagedRoute {
-	var result *legacy_storage.ManagedRoute
+func (nps *Service) getImportedRoute(ctx context.Context, span trace.Span, revision *legacy_storage.ConfigRevision) *v1.ManagedRoute {
+	var result *v1.ManagedRoute
 	imported, err := revision.Imported()
 	if err == nil {
 		result, err = imported.GetManagedRoute()

@@ -920,6 +920,7 @@
       "button-view": "Visualizza",
       "export-ariaLabel-export": "Esporta",
       "export-label-export": "Esporta",
+      "export-legacy-integration-tooltip": "",
       "label-delete": "Elimina",
       "label-manage-permissions": "Gestisci autorizzazioni",
       "tooltip-history": "Visualizza la cronologia dei tentativi di notifica effettuati a questo punto di contatto",
@@ -1484,6 +1485,10 @@
     "grafana-receivers-export-preview": {
       "text-loading": "Caricamento in corso..."
     },
+    "grafana-receivers-exporter": {
+      "warning-v0-integrations-description": "",
+      "warning-v0-integrations-title": ""
+    },
     "grafana-rule-design-export-preview": {
       "text-loading": "Caricamento in corso..."
     },
@@ -1712,6 +1717,9 @@
         "pause-none": "Nessuna regola sospesa",
         "pause-recording": "Regole di registrazione sospese",
         "policy-tree": "Struttura dei criteri",
+        "preview": "",
+        "preview-config-aria": "",
+        "preview-rules-aria": "",
         "routing": "Instradamento delle notifiche",
         "routing-none": "Nessuna struttura dei criteri selezionata",
         "routing-tree": "Struttura dei criteri: {{name}}",
@@ -1773,14 +1781,17 @@
         "templates-duplicate": "Duplica il nome del file del modello: \"{{name}}\". I nomi dei file modello devono essere univoci.",
         "templates-label": "Modelli di notifica",
         "templates-remove": "Rimuovi {{name}}",
-        "upload": "Carica il file YAML",
+        "upload": "",
         "validating": "Convalida della configurazione in corso...",
         "validation-error": "Convalida non riuscita",
         "validation-error-desc": "Impossibile convalidare la configurazione.",
         "validation-success": "Convalida riuscita",
         "validation-success-desc": "Nessun conflitto trovato. La configurazione è pronta per l'importazione.",
         "validation-warning": "Alcune risorse verranno rinominate per evitare conflitti con quelle esistenti",
-        "yaml-file": "YAML di configurazione di Alertmanager"
+        "yaml-desc": "",
+        "yaml-file": "YAML di configurazione di Alertmanager",
+        "yaml-invalid-type": "",
+        "yaml-remove": ""
       },
       "step2": {
         "datasource": "Origine dei dati",
@@ -4617,11 +4628,15 @@
     },
     "readme": {
       "add-readme": "Aggiungi README",
-      "edit-tooltip": "Modifica README",
+      "edit-doc-tooltip": "",
       "empty-message": "Aggiungi un README per descrivere il contenuto di questa cartella e indicare dove trovare le dashboard giuste.",
       "load-error-retry": "Riprova",
-      "load-error-title": "Impossibile caricare il README",
-      "parse-error": "Impossibile visualizzare il contenuto del README."
+      "load-error-title": "",
+      "panel-label": "",
+      "parse-error": "",
+      "tab-contributing": "",
+      "tab-readme": "",
+      "tab-security": ""
     },
     "recently-viewed": {
       "clear": "Cancella cronologia",
@@ -5778,16 +5793,24 @@
       "add-library-panel-header": "Importa pannello",
       "add-visualization-body": "Seleziona un'origine dati, quindi esegui query e visualizza i dati con grafici, statistiche e tabelle o crea elenchi, markdown e altri widget.",
       "add-visualization-button": "Aggiungi visualizzazione",
+      "add-visualization-description": "",
       "add-visualization-header": "Avvia il tuo nuovo dashboard aggiungendo una visualizzazione",
+      "add-visualization-heading": "",
+      "assistant-placeholder": "",
       "auto-grid": "Griglia automatica",
       "auto-grid-description": "I pannelli si ridimensionano per adattarsi e formare griglie uniformi",
+      "build-assistant": "",
       "custom-grid": "Griglia personalizzata",
       "custom-grid-description": "Posiziona e ridimensiona ogni pannello singolarmente",
       "description": "Aggiungi un pannello per visualizzare i tuoi dati",
+      "grid-auto": "",
+      "grid-custom": "",
+      "grid-label": "",
       "import-a-dashboard-body": "Importa dashboard da file o <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importa un dashboard",
       "import-dashboard-button": "Importa dashboard",
       "layout-default-hint": "Il layout selezionato verrà utilizzato anche come impostazione predefinita per tutte le nuove schede e righe. Puoi modificarlo in un secondo momento in Impostazioni dashboard > Generale.",
+      "or-start-blank": "",
       "select-layout-header": "Seleziona layout",
       "title": "Nuova dashboard"
     },
@@ -5915,6 +5938,7 @@
       "randomize-field-names-label-field-names": "Nomi campi",
       "randomize-labels-label-labels": "Etichette",
       "randomize-string-values-label-string-values": "Valori stringa",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Data",
@@ -5955,6 +5979,7 @@
     "inspect-json": {
       "dataframe-description": "Dati non elaborati senza trasformazioni e configurazione del campo applicata. ",
       "dataframe-label": "JSON del DataFrame (da Query)",
+      "editor-label": "",
       "panel-data-description": "Il modello non elaborato è passato alla visualizzazione del pannello",
       "panel-data-label": "Dati del pannello",
       "panel-json-description": "Il modello salvato nel dashboard JSON che configura il funzionamento di tutto.",
@@ -7346,6 +7371,7 @@
       "randomize-field-names-label-field-names": "Nomi campi",
       "randomize-labels-label-labels": "Etichette",
       "randomize-string-values-label-string-values": "Valori stringa",
+      "support-snapshot-editor": "",
       "tabs": {
         "label": {
           "data": "Data",
@@ -7735,6 +7761,7 @@
         "model-label": "Modello",
         "v2-resource": "Risorsa V2"
       },
+      "json-preview-label": "",
       "label-description": "Descrizione",
       "label-folder-name": "Nome cartella",
       "label-target-folder": "Cartella di destinazione",
@@ -11149,6 +11176,7 @@
       "incident-tab-label": "Incidenti",
       "team-filter-all": "Tutti i team",
       "team-filter-label": "Filtra gli avvisi per team",
+      "team-filter-label-incidents": "",
       "team-filter-your-teams": "I tuoi team",
       "title": "Avvisi e incidenti",
       "title-alerts": "Avvisi",
@@ -11208,6 +11236,7 @@
     "incidents-card": {
       "declare": "Dichiara un incidente",
       "empty": "Nessun incidente attivo.",
+      "empty-selected-team": "",
       "error-title": "Impossibile caricare gli incidenti attivi",
       "title": "Incidenti attivi",
       "view-all": "Visualizza tutti gli incidenti"
@@ -11831,6 +11860,7 @@
       "waiting-for-data": "In attesa di dati:"
     },
     "live-publish": {
+      "message": "",
       "publish": "Pubblica"
     }
   },
@@ -12179,6 +12209,10 @@
       "description": "Quando è abilitata, questa opzione mostra i dettagli del registro per ogni riga.",
       "name": "Abilita i dettagli del registro"
     },
+    "hover-overflow": {
+      "description": "",
+      "name": ""
+    },
     "show-copy-log": {
       "description": "Abilita/disabilita il pulsante di collegamento alla riga registro nella prima colonna di ogni riga",
       "name": "Mostra il pulsante collegamento al registro delle copie"
@@ -12246,6 +12280,10 @@
     "selected-team-not-found": "Il team selezionato non è stato trovato oppure non disponi delle autorizzazioni necessarie per visualizzarlo.",
     "team-not-found": "[Team sconosciuto]",
     "unknown-error": "Errore sconosciuto"
+  },
+  "mermaid": {
+    "invalid-syntax": "",
+    "render-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Nessuna opzione trovata"
@@ -12579,6 +12617,10 @@
     "authentication": {
       "title": "Autenticazione"
     },
+    "banner-settings": {
+      "subtitle": "",
+      "title": ""
+    },
     "bookmarks": {
       "title": "Segnalibri"
     },
@@ -12785,6 +12827,7 @@
       "title": "Query registrate"
     },
     "reporting": {
+      "subtitle": "",
       "title": "Segnalazione"
     },
     "saved-queries": {
@@ -12799,6 +12842,10 @@
     },
     "search-dashboards": {
       "title": "Cerca dashboard"
+    },
+    "secrets-management": {
+      "subtitle": "",
+      "title": ""
     },
     "server-settings": {
       "subtitle": "Visualizza le impostazioni definite nella configurazione di Grafana",
@@ -15097,7 +15144,7 @@
     },
     "public-sharing": {
       "accept-button": "Accetta",
-      "alert-text": "Condividendo questo dashboard esternamente, lo rendi completamente accessibile a chiunque disponga del link.",
+      "alert-text": "",
       "cancel-button": "Annulla",
       "learn-more-button": "Scopri di più",
       "public-ack": "Sono consapevole che l'intero dashboard sarà pubblico.*",
@@ -16674,10 +16721,6 @@
     },
     "frame-picker": {
       "label": ""
-    },
-    "mermaid": {
-      "invalid-syntax": "",
-      "render-error": ""
     },
     "options": {
       "page-size": "",

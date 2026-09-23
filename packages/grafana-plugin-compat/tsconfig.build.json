@@ -2,6 +2,6 @@
   "compilerOptions": {
     "rootDir": "./src"
   },
-  "exclude": ["dist", "node_modules", "**/*.test.ts*"],
+  "exclude": ["dist", "node_modules", "**/*.test.ts*", "src/utils/mocks.ts"],
   "extends": "./tsconfig.json"
 }
