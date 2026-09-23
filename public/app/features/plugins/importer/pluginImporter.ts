@@ -18,9 +18,43 @@ import { type GenericDataSourcePlugin } from 'app/features/datasources/types';
 import { getPanelPluginLoadError } from 'app/features/panel/components/PanelPluginError';
 
 import { getPluginExtensionRegistries } from '../extensions/registry/setup';
+import { PluginLoadError, type PluginLoadErrorType } from '../loader/pluginLoadError';
 
 import { importPluginModule } from './importPluginModule';
 import { type PluginImporter, type PostImportStrategy, type PreImportStrategy } from './types';
+
+// Must match the message thrown by throwIfAngular in @grafana/data.
+const ANGULAR_ERROR_MESSAGE = 'Angular plugins are not supported';
+const MISSING_PANEL_EXPORT_MESSAGE = 'missing export: plugin';
+const MISSING_DATASOURCE_EXPORT_MESSAGE = 'Plugin module is missing DataSourcePlugin or Datasource constructor export';
+
+function getPostImportErrorType(error: unknown): PluginLoadErrorType {
+  if (!(error instanceof Error)) {
+    return 'unknown';
+  }
+  if (error.message === ANGULAR_ERROR_MESSAGE) {
+    return 'angular';
+  }
+  if (error.message === MISSING_PANEL_EXPORT_MESSAGE || error.message === MISSING_DATASOURCE_EXPORT_MESSAGE) {
+    return 'invalid-module';
+  }
+  return 'evaluation';
+}
+
+function logPostImportError(meta: PluginMeta, error: unknown) {
+  // Load failures are already logged by importPluginModule.
+  if (error instanceof PluginLoadError) {
+    return;
+  }
+
+  getLogger('features.plugins').logError(new Error('Could not initialise plugin', { cause: error }), {
+    pluginId: meta.id,
+    pluginType: meta.type,
+    pluginVersion: meta.info?.version ?? '',
+    errorType: getPostImportErrorType(error),
+    originalErrorMessage: error instanceof Error ? error.message : String(error),
+  });
+}
 
 const defaultPreImport: PreImportStrategy = (plugin) => {
   throwIfAngular(plugin);
@@ -54,10 +88,11 @@ const panelPluginPostImport: PostImportStrategy<PanelPlugin, PanelPluginMeta> = 
     }
 
     throwIfAngular(pluginExports);
-    throw new Error('missing export: plugin');
+    throw new Error(MISSING_PANEL_EXPORT_MESSAGE);
   } catch (error) {
     // TODO, maybe a different error plugin
     console.warn('Error loading panel plugin: ' + meta.id, error);
+    logPostImportError(meta, error);
     return getPanelPluginLoadError(meta, error);
   }
 };
@@ -66,6 +101,18 @@ const datasourcePluginPostImport: PostImportStrategy<GenericDataSourcePlugin, Da
   meta,
   module
 ) => {
+  try {
+    return await createDatasourcePlugin(meta, module);
+  } catch (error) {
+    logPostImportError(meta, error);
+    throw error;
+  }
+};
+
+async function createDatasourcePlugin(
+  meta: DataSourcePluginMeta,
+  module: Promise<System.Module>
+): Promise<GenericDataSourcePlugin> {
   const pluginExports = await module;
 
   if (pluginExports.plugin) {
@@ -85,10 +132,19 @@ const datasourcePluginPostImport: PostImportStrategy<GenericDataSourcePlugin, Da
     return dsPlugin;
   }
 
-  throw new Error('Plugin module is missing DataSourcePlugin or Datasource constructor export');
-};
+  throw new Error(MISSING_DATASOURCE_EXPORT_MESSAGE);
+}
 
 const appPluginPostImport: PostImportStrategy<AppPlugin, AppPluginMeta> = async (meta, module) => {
+  try {
+    return await createAppPlugin(meta, module);
+  } catch (error) {
+    logPostImportError(meta, error);
+    throw error;
+  }
+};
+
+async function createAppPlugin(meta: AppPluginMeta, module: Promise<System.Module>): Promise<AppPlugin> {
   const pluginExports = await module;
 
   const { plugin = new AppPlugin() } = pluginExports;
@@ -109,7 +165,7 @@ const appPluginPostImport: PostImportStrategy<AppPlugin, AppPluginMeta> = async 
 
   pluginsCache.set(meta.id, plugin);
   return plugin;
-};
+}
 
 const promisesCache: Map<string, Promise<PanelPlugin | GenericDataSourcePlugin | AppPlugin>> = new Map();
 
