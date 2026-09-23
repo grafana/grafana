@@ -32,6 +32,8 @@ TableColorTextCellOptions: {
 // Json view cell options
 TableJsonViewCellOptions: {
 	type: TableCellDisplayMode & "json-view"
+	// Enables syntax highlighting. Defaults to true when omitted.
+	syntaxHighlighting?: bool
 } @cuetsy(kind="interface")
 
 // Json view cell options

@@ -476,24 +476,52 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 }
 
 func (rc *RepositoryController) updateDeleteStatus(ctx context.Context, obj *provisioning.Repository, err error) error {
-	// Skip the patch when the recorded error is unchanged: it bumps the
-	// resourceVersion, which the informer's UpdateFunc turns straight back into a
-	// re-enqueue, so rewriting the same deleteError on every failed pass would
-	// hot-loop the repository against the API server instead of retrying at the
-	// resync cadence.
-	if obj.Status.DeleteError == err.Error() {
+	deletion := buildDeletionStatus(err)
+
+	// Skip the patch only when BOTH the legacy string and the structured status
+	// already match: the patch bumps the resourceVersion, which the informer's
+	// UpdateFunc turns straight back into a re-enqueue, so rewriting an unchanged
+	// status on every failed pass would hot-loop against the API server instead
+	// of retrying at the resync cadence. Comparing deleteError alone is not
+	// enough: a repository wedged before status.deletion existed has the string
+	// set but no structured status (it must be backfilled), and two finalizers
+	// can fail with the same message while blaming different finalizers.
+	if obj.Status.DeleteError == err.Error() && reflect.DeepEqual(obj.Status.Deletion, deletion) {
 		return nil
 	}
 	logger := logging.FromContext(ctx)
 	logger.Info("updating repository status with deletion error", "error", err.Error())
-	// "add" rather than "replace": deleteError is omitempty and therefore absent
-	// before the first failure, where a "replace" on the missing path would fail.
-	// "add" creates it, and replaces it when already present.
-	return rc.statusPatcher.Patch(ctx, obj, map[string]interface{}{
-		"op":    "add",
-		"path":  "/status/deleteError",
-		"value": err.Error(),
-	})
+	// "add" rather than "replace": these fields are omitempty and therefore
+	// absent before the first failure, where a "replace" on the missing path
+	// would fail. "add" creates them, and replaces them when already present.
+	return rc.statusPatcher.Patch(ctx, obj,
+		map[string]interface{}{
+			"op":    "add",
+			"path":  "/status/deleteError",
+			"value": err.Error(),
+		},
+		map[string]interface{}{
+			"op":    "add",
+			"path":  "/status/deletion",
+			"value": deletion,
+		},
+	)
+}
+
+// buildDeletionStatus turns a finalizer failure into the structured
+// status.deletion the frontend consumes: the deletion state, the finalizer that
+// is blocking it (so the client can force-remove exactly that finalizer), and a
+// human-readable message.
+func buildDeletionStatus(err error) *provisioning.DeletionStatus {
+	deletion := &provisioning.DeletionStatus{
+		State:   provisioning.DeletionStateBlocked,
+		Message: err.Error(),
+	}
+	var fe *finalizerError
+	if errors.As(err, &fe) {
+		deletion.Finalizer = fe.finalizer
+	}
+	return deletion
 }
 
 func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provisioning.Repository) bool {

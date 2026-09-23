@@ -26,8 +26,8 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
   const gridLabelId = useId();
   const { sidebar, body } = dashboard.useState();
   const isAutoGrid = body instanceof AutoGridLayoutManager;
-  // Set at scene activation when the URL has editSource=assistant (modal /
-  // create_dashboard), or on submit from this landing so the same session
+  // Set at scene activation when the URL has editSource=assistant
+  // (create_dashboard), or on submit from this landing so the same session
   // tag applies without a remount.
   const [assistantDriven, setAssistantDriven] = useState(() => dashboard.getEditSessionSource() === 'assistant');
 
@@ -53,51 +53,44 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
     sidebar.addNewPanel(sidebar.getSelectedObject());
   };
 
-  const onSubmitPrompt = useCallback(
-    (prompt: string, contextItems: ChatContextItem[]) => {
-      const selectedDatasources = contextItems.flatMap(({ node }) => {
-        const data = node.data;
-        if (data?.type !== 'datasource' || typeof data.datasourceUid !== 'string') {
-          return [];
-        }
-        return [
-          {
-            uid: data.datasourceUid,
-            type: typeof data.datasourceType === 'string' ? data.datasourceType : 'unknown',
-            name: typeof data.datasourceName === 'string' ? data.datasourceName : node.name,
-          },
-        ];
-      });
-      const dashboards = contextItems.flatMap(({ node }) => {
-        const data = node.data;
-        if (data?.type !== 'dashboard' || typeof data.dashboardUid !== 'string') {
-          return [];
-        }
-        return [
-          {
-            uid: data.dashboardUid,
-            title: typeof data.dashboardTitle === 'string' ? data.dashboardTitle : node.name,
-          },
-        ];
-      });
-
-      const started = startPlanningInAssistant({
-        request: prompt,
-        displayPrompt: prompt,
-        datasources: selectedDatasources.length > 0 ? selectedDatasources : getPromptDatasources(),
-        context: contextItems,
-        dashboards,
-        folderUid: dashboard.state.meta.folderUid,
-        skipNavigation: true,
-      });
-
-      if (started) {
-        setAssistantDriven(true);
-        reportInteraction('dashboard_prompt_planning_started', { source: 'empty_dashboard' });
+  const onSubmitPrompt = useCallback((prompt: string, contextItems: ChatContextItem[]) => {
+    const selectedDatasources = contextItems.flatMap(({ node }) => {
+      const data = node.data;
+      if (data?.type !== 'datasource' || typeof data.datasourceUid !== 'string') {
+        return [];
       }
-    },
-    [dashboard]
-  );
+      return [
+        {
+          uid: data.datasourceUid,
+          type: typeof data.datasourceType === 'string' ? data.datasourceType : 'unknown',
+          name: typeof data.datasourceName === 'string' ? data.datasourceName : node.name,
+        },
+      ];
+    });
+    const dashboards = contextItems.flatMap(({ node }) => {
+      const data = node.data;
+      if (data?.type !== 'dashboard' || typeof data.dashboardUid !== 'string') {
+        return [];
+      }
+      return [
+        {
+          uid: data.dashboardUid,
+          title: typeof data.dashboardTitle === 'string' ? data.dashboardTitle : node.name,
+        },
+      ];
+    });
+
+    startPlanningInAssistant({
+      request: prompt,
+      displayPrompt: prompt,
+      datasources: selectedDatasources.length > 0 ? selectedDatasources : getPromptDatasources(),
+      context: contextItems,
+      dashboards,
+    });
+
+    setAssistantDriven(true);
+    reportInteraction('dashboard_prompt_planning_started', { source: 'empty_dashboard' });
+  }, []);
 
   useEffect(() => {
     if (!assistantDriven) {

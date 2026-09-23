@@ -210,7 +210,13 @@ func (h *Handler) results(ctx context.Context, namespace string, resp *resourcep
 // backend paginates one globally-ordered set: pages ordered differently would
 // skip or duplicate rows.
 func nextPageToken(resp *resourcepb.ResourceSearchResponse, offset int64) string {
-	rows := int64(len(resp.GetResults().GetRows()))
+	var rows int64
+	switch resp.GetResultFormat() {
+	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
+		rows = int64(len(resp.GetResults().GetRows()))
+	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
+		rows = int64(len(resp.GetRows()))
+	}
 	if rows == 0 || (resp.GetTotalHitsExact() && offset+rows >= resp.GetTotalHits()) {
 		return ""
 	}
@@ -224,39 +230,31 @@ func totalHitsRelation(exact bool) searchv0.TotalHitsRelation {
 	return searchv0.TotalHitsAtMost
 }
 
-// resultItems converts the backend result table into envelope items, projected
-// down to the requested fields.
-//
-// The values are the decoded index values, unshaped: labels arrive as the
-// flattened key / key=value terms the index holds and annotations as a JSON
-// string, because that is what the generic endpoint will return for the same
-// fields. Re-shaping them into maps here would make the response change at
-// migration even though the schema would not.
+// resultItems converts the backend response into envelope items, projected down
+// to the requested fields. Decoding follows the response format so a new client
+// remains compatible with servers that return the legacy table.
 func (h *Handler) resultItems(ctx context.Context, namespace string, resp *resourcepb.ResourceSearchResponse, fields []string, k perKind) ([]searchv0.ResultItem, error) {
-	table := resp.GetResults()
+	switch resp.GetResultFormat() {
+	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
+		return h.tableResultItems(ctx, namespace, resp.GetResults(), fields, k)
+	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
+		return fieldValueResultItems(resp.GetFields(), resp.GetRows(), fields, k)
+	default:
+		return nil, fmt.Errorf("unsupported search result format %d", resp.GetResultFormat())
+	}
+}
+
+func (h *Handler) tableResultItems(ctx context.Context, namespace string, table *resourcepb.ResourceTable, fields []string, k perKind) ([]searchv0.ResultItem, error) {
 	rows := table.GetRows()
 	cols := table.GetColumns()
-
-	// Resolved once per response rather than per row.
-	wanted := make(map[string]bool, len(fields))
-	for _, name := range fields {
-		wanted[name] = true
-	}
+	wanted := requestedFields(fields)
 
 	items := make([]searchv0.ResultItem, 0, len(rows))
 	for _, row := range rows {
 		if len(row.GetCells()) != len(cols) {
 			return nil, fmt.Errorf("row has %d cells but the table declares %d columns", len(row.GetCells()), len(cols))
 		}
-		item := searchv0.ResultItem{
-			Resource: searchv0.ResourceRef{
-				Group:    k.groupResource().Group,
-				Resource: k.groupResource().Resource,
-				Kind:     k.info.GroupVersionKind().Kind,
-				Name:     row.GetKey().GetName(),
-			},
-			// This compatibility API omits relevance scores; use generic search for scoring.
-		}
+		item := perKindResultItem(row.GetKey(), k)
 		values := map[string]any{}
 		for i, col := range cols {
 			if !wanted[col.GetName()] {
@@ -272,10 +270,9 @@ func (h *Handler) resultItems(ctx context.Context, namespace string, resp *resou
 					"rule", row.GetKey().GetName(), "error", err)
 				continue
 			}
-			if v == nil {
-				continue
+			if v != nil {
+				values[col.GetName()] = v
 			}
-			values[col.GetName()] = v
 		}
 		if len(values) > 0 {
 			item.Fields = &common.Unstructured{Object: values}
@@ -283,6 +280,53 @@ func (h *Handler) resultItems(ctx context.Context, namespace string, resp *resou
 		items = append(items, item)
 	}
 	return items, nil
+}
+
+func fieldValueResultItems(fields []*resourcepb.ResourceSearchField, rows []*resourcepb.ResourceSearchRow, projected []string, k perKind) ([]searchv0.ResultItem, error) {
+	wanted := requestedFields(projected)
+	items := make([]searchv0.ResultItem, 0, len(rows))
+	for i, row := range rows {
+		if row == nil || row.GetKey() == nil {
+			return nil, fmt.Errorf("field-value search result row %d has no resource key", i)
+		}
+		decoded, err := resource.DecodeSearchValues(fields, row)
+		if err != nil {
+			return nil, fmt.Errorf("decoding field-value search result row %d: %w", i, err)
+		}
+
+		values := make(map[string]any, len(decoded))
+		for name, value := range decoded {
+			if wanted[name] {
+				values[name] = value
+			}
+		}
+		item := perKindResultItem(row.GetKey(), k)
+		if len(values) > 0 {
+			item.Fields = &common.Unstructured{Object: values}
+		}
+		items = append(items, item)
+	}
+	return items, nil
+}
+
+func requestedFields(fields []string) map[string]bool {
+	wanted := make(map[string]bool, len(fields))
+	for _, name := range fields {
+		wanted[name] = true
+	}
+	return wanted
+}
+
+func perKindResultItem(key *resourcepb.ResourceKey, k perKind) searchv0.ResultItem {
+	return searchv0.ResultItem{
+		Resource: searchv0.ResourceRef{
+			Group:    k.groupResource().Group,
+			Resource: k.groupResource().Resource,
+			Kind:     k.info.GroupVersionKind().Kind,
+			Name:     key.GetName(),
+		},
+		// This compatibility API omits relevance scores; use generic search for scoring.
+	}
 }
 
 func metaForKind(kindName string) metav1.TypeMeta {

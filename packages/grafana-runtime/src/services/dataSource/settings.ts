@@ -13,6 +13,7 @@ import { getBackendSrv } from '../backendSrv';
 import { getDataSourceSrv, type GetDataSourceListFilters } from '../dataSourceSrv';
 import { getTemplateSrv } from '../templateSrv';
 
+import { notifyDataSourceCacheChanged } from './cacheGeneration';
 import { FALLBACK_TO_LEGACY_LIST_WARNING, FALLBACK_TO_LEGACY_SETTINGS_WARNING } from './constants';
 import { getExpressionDataSourceSettings, _resetForTests as resetExpressionDs } from './expressionDs';
 import { describeRef, logDataSourceWarning } from './logging';
@@ -46,6 +47,15 @@ function populateMaps(settings: Record<string, DataSourceInstanceSettings>) {
   }
 }
 
+function replaceInstanceSettings(
+  settings: Record<string, DataSourceInstanceSettings>,
+  defaultDatasourceName: string
+): void {
+  populateMaps(settings);
+  defaultName = defaultDatasourceName;
+  notifyDataSourceCacheChanged();
+}
+
 /**
  * Populate the instance-settings cache from boot data. Intended to be called
  * exactly once at application startup via the `@grafana/runtime/internal` export.
@@ -57,8 +67,7 @@ export function initDataSourceInstanceSettings(
   settings: Record<string, DataSourceInstanceSettings>,
   defaultDsName: string
 ): void {
-  defaultName = defaultDsName;
-  populateMaps(settings);
+  replaceInstanceSettings(settings, defaultDsName);
 }
 
 /**
@@ -79,8 +88,10 @@ export function setDataSourceInstanceSettings(
   }
 
   _resetForTests();
-  populateMaps(structuredClone(settings));
-  defaultName = defaultDatasourceName ?? Object.values(settings).find((ds) => ds.isDefault)?.name ?? '';
+  replaceInstanceSettings(
+    structuredClone(settings),
+    defaultDatasourceName ?? Object.values(settings).find((ds) => ds.isDefault)?.name ?? ''
+  );
 }
 
 /**
@@ -93,8 +104,7 @@ const RELOAD_CACHE_KEY = 'grafana-runtime:ds-reload';
 
 async function fetchAndPopulate(): Promise<void> {
   const settings = await getBackendSrv().get('/api/frontend/settings');
-  populateMaps(settings.datasources);
-  defaultName = settings.defaultDatasource;
+  replaceInstanceSettings(settings.datasources, settings.defaultDatasource);
 }
 
 async function performReload(): Promise<void> {
@@ -135,8 +145,7 @@ interface SyncDataSourceSettings {
  */
 export function syncDataSourceInstanceSettings(settings: SyncDataSourceSettings): void {
   clearPluginCache();
-  populateMaps(settings.datasources);
-  defaultName = settings.defaultDatasource;
+  replaceInstanceSettings(settings.datasources, settings.defaultDatasource);
 }
 
 /**
