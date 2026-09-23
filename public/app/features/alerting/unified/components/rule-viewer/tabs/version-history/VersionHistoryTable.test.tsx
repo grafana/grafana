@@ -34,7 +34,7 @@ describe('VersionHistoryTable', () => {
       />
     );
 
-    await user.click(screen.getByRole('button', { name: /next/i }));
+    await user.click(await screen.findByRole('button', { name: /next/i }));
 
     expect(computeVersionDiffMock).toHaveBeenCalledWith(ruleVersions[21], ruleVersions[20]);
   });
