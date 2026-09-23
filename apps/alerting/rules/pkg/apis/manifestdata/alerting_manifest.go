@@ -76,6 +76,48 @@ var appManifestData = app.ManifestData{
 					},
 					SearchFields: []app.ManifestVersionKindSearchField{
 						{
+							Name:         "health",
+							Path:         "status.health",
+							Type:         "string",
+							Capabilities: []string{"retrieve"},
+							Description:  "The health of the rule",
+						},
+						{
+							Name:         "lastEvaluationTime",
+							Path:         "status.lastEvaluationTime",
+							Type:         "string",
+							Capabilities: []string{"retrieve"},
+							Description:  "The time of the last rule evaluation",
+						},
+						{
+							Name:         "evaluationDuration",
+							Path:         "status.evaluationDuration",
+							Type:         "double",
+							Capabilities: []string{"retrieve"},
+							Description:  "The duration of the last rule evaluation in seconds",
+						},
+						{
+							Name:         "lastError",
+							Path:         "status.lastError",
+							Type:         "string",
+							Capabilities: []string{"retrieve"},
+							Description:  "The error from the last rule evaluation",
+						},
+						{
+							Name:         "state",
+							Path:         "status.state",
+							Type:         "string",
+							Capabilities: []string{"retrieve"},
+							Description:  "The state of the alert rule",
+						},
+						{
+							Name:         "stateReason",
+							Path:         "status.stateReason",
+							Type:         "string",
+							Capabilities: []string{"retrieve"},
+							Description:  "The reason for the alert rule state",
+						},
+						{
 							Name:         "type",
 							Type:         "string",
 							Capabilities: []string{"filter", "retrieve"},
@@ -195,6 +237,34 @@ var appManifestData = app.ManifestData{
 						"spec.targetDatasourceUID",
 					},
 					SearchFields: []app.ManifestVersionKindSearchField{
+						{
+							Name:         "health",
+							Path:         "status.health",
+							Type:         "string",
+							Capabilities: []string{"retrieve"},
+							Description:  "The health of the rule",
+						},
+						{
+							Name:         "lastEvaluationTime",
+							Path:         "status.lastEvaluationTime",
+							Type:         "string",
+							Capabilities: []string{"retrieve"},
+							Description:  "The time of the last rule evaluation",
+						},
+						{
+							Name:         "evaluationDuration",
+							Path:         "status.evaluationDuration",
+							Type:         "double",
+							Capabilities: []string{"retrieve"},
+							Description:  "The duration of the last rule evaluation in seconds",
+						},
+						{
+							Name:         "lastError",
+							Path:         "status.lastError",
+							Type:         "string",
+							Capabilities: []string{"retrieve"},
+							Description:  "The error from the last rule evaluation",
+						},
 						{
 							Name:         "type",
 							Type:         "string",

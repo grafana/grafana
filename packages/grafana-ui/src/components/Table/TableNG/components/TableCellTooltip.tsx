@@ -27,6 +27,7 @@ export interface TableCellTooltipProps {
   className?: string;
   data: DataFrame;
   disableSanitizeHtml?: boolean;
+  jsonSyntaxHighlightingEnabled?: boolean;
   field: Field;
   getActions: (field: Field, rowIdx: number) => ActionModel[];
   getTextColorForBackground: (bgColor: string) => string;
@@ -48,6 +49,7 @@ export const TableCellTooltip = memo(
     className,
     data,
     disableSanitizeHtml,
+    jsonSyntaxHighlightingEnabled,
     field,
     getActions,
     getTextColorForBackground,
@@ -106,6 +108,7 @@ export const TableCellTooltip = memo(
           cellInspect: false,
           cellOptions,
           disableSanitizeHtml,
+          jsonSyntaxHighlightingEnabled,
           field,
           frame: data,
           getActions,
@@ -121,6 +124,7 @@ export const TableCellTooltip = memo(
         cellOptions,
         data,
         disableSanitizeHtml,
+        jsonSyntaxHighlightingEnabled,
         field,
         getActions,
         getTextColorForBackground,
