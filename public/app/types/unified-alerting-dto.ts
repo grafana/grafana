@@ -3,7 +3,7 @@
 import { type MergeExclusive } from 'type-fest';
 
 import { type DataQuery, type RelativeTimeRange } from '@grafana/data';
-import { type ExpressionQuery } from 'app/features/expressions/types';
+import type { ExpressionQuery } from 'app/features/expressions/schemas/expressionQuery';
 
 import { type AlertGroupTotals, type AlertInstanceTotals } from './unified-alerting';
 

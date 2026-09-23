@@ -6,7 +6,8 @@ import { Trans } from '@grafana/i18n';
 import { Button, ButtonSelect, Icon, InlineFieldRow, Input, Select, useStyles2, Stack } from '@grafana/ui';
 
 import alertDef, { EvalFunction } from '../../alerting/state/alertDef';
-import { type ClassicCondition, type ReducerType } from '../types';
+import { type ClassicCondition, toClassicOperator } from '../schemas/classic';
+import type { ClassicReducerId } from '../schemas/common';
 
 interface Props {
   condition: ClassicCondition;
@@ -18,7 +19,7 @@ interface Props {
 
 const reducerFunctions = alertDef.reducerTypes.map<{
   label: string;
-  value: ReducerType;
+  value: ClassicReducerId;
 }>((rt) => ({ label: rt.text, value: rt.value }));
 const evalOperators = alertDef.evalOperators.map((eo) => ({ label: eo.text, value: eo.value }));
 const evalFunctions = alertDef.evalFunctions.map((ef) => ({ label: ef.text, value: ef.value }));
@@ -29,11 +30,11 @@ export const Condition = ({ condition, index, onChange, onRemoveCondition, refId
   const onEvalOperatorChange = (evalOperator: SelectableValue<string>) => {
     onChange({
       ...condition,
-      operator: { type: evalOperator.value! },
+      operator: { type: toClassicOperator(evalOperator.value) },
     });
   };
 
-  const onReducerFunctionChange = (conditionFunction: SelectableValue<ReducerType>) => {
+  const onReducerFunctionChange = (conditionFunction: SelectableValue<ClassicReducerId>) => {
     onChange({
       ...condition,
       reducer: { type: conditionFunction.value!, params: [] },
@@ -91,7 +92,7 @@ export const Condition = ({ condition, index, onChange, onRemoveCondition, refId
               value={evalOperators.find((ea) => ea.value === condition.operator!.type)}
             />
           )}
-          <Select<ReducerType>
+          <Select<ClassicReducerId>
             options={reducerFunctions}
             onChange={onReducerFunctionChange}
             width={20}

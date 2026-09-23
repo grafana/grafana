@@ -12,7 +12,9 @@ import { config } from '@grafana/runtime';
 import { GraphThresholdsStyleMode } from '@grafana/schema';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { type ClassicCondition, ExpressionQueryType } from 'app/features/expressions/types';
+import { isClassicExpression, isThresholdExpression } from 'app/features/expressions/schemas/expressionQuery';
+import { ExpressionQueryType } from 'app/features/expressions/types';
+import { isRangeEvaluator } from 'app/features/expressions/utils/expressionTypes';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { createDagFromQueries, getOriginOfRefId } from './dag';
@@ -31,47 +33,48 @@ export function queriesWithUpdatedReferences(
       return query;
     }
 
-    const isMathExpression = query.model.type === 'math';
-    const isReduceExpression = query.model.type === 'reduce';
-    const isResampleExpression = query.model.type === 'resample';
-    const isClassicExpression = query.model.type === 'classic_conditions';
-    const isThresholdExpression = query.model.type === 'threshold';
+    const model = query.model;
 
-    if (isMathExpression) {
-      return {
-        ...query,
-        model: {
-          ...query.model,
-          expression: updateMathExpressionRefs(query.model.expression ?? '', previousRefId, newRefId),
-        },
-      };
+    switch (model.type) {
+      case ExpressionQueryType.math:
+        return {
+          ...query,
+          model: {
+            ...model,
+            expression: updateMathExpressionRefs(model.expression, previousRefId, newRefId),
+          },
+        };
+
+      case ExpressionQueryType.reduce:
+      case ExpressionQueryType.resample:
+      case ExpressionQueryType.threshold:
+        return {
+          ...query,
+          model: {
+            ...model,
+            expression: model.expression === previousRefId ? newRefId : model.expression,
+          },
+        };
+
+      case ExpressionQueryType.classic:
+        return {
+          ...query,
+          model: {
+            ...model,
+            conditions: model.conditions.map((condition) => ({
+              ...condition,
+              query: {
+                ...condition.query,
+                params: condition.query.params.map((param) => (param === previousRefId ? newRefId : param)),
+              },
+            })),
+          },
+        };
+
+      // SQL names its inputs inside the query text, which we do not rewrite.
+      case ExpressionQueryType.sql:
+        return query;
     }
-
-    if (isResampleExpression || isReduceExpression || isThresholdExpression) {
-      const isReferencing = query.model.expression === previousRefId;
-
-      return {
-        ...query,
-        model: {
-          ...query.model,
-          expression: isReferencing ? newRefId : query.model.expression,
-        },
-      };
-    }
-
-    if (isClassicExpression) {
-      const conditions = query.model.conditions?.map((condition) => ({
-        ...condition,
-        query: {
-          ...condition.query,
-          params: condition.query.params.map((param: string) => (param === previousRefId ? newRefId : param)),
-        },
-      }));
-
-      return { ...query, model: { ...query.model, conditions } };
-    }
-
-    return query;
   });
 }
 
@@ -134,7 +137,6 @@ export type ThresholdDefinitions = Record<string, ThresholdDefinition>;
  */
 export function getThresholdsForQueries(queries: AlertQuery[], condition: string | null) {
   const thresholds: ThresholdDefinitions = {};
-  const SUPPORTED_EXPRESSION_TYPES = [ExpressionQueryType.threshold, ExpressionQueryType.classic];
 
   if (!condition) {
     return thresholds;
@@ -145,35 +147,43 @@ export function getThresholdsForQueries(queries: AlertQuery[], condition: string
       continue;
     }
 
+    const model = query.model;
+
     // currently only supporting "threshold" & "classic_condition" expressions
-    if (!SUPPORTED_EXPRESSION_TYPES.includes(query.model.type)) {
+    if (!isThresholdExpression(model) && !isClassicExpression(model)) {
       continue;
     }
 
-    if (!Array.isArray(query.model.conditions)) {
+    if (model.refId !== condition) {
       continue;
     }
 
-    if (query.model.refId !== condition) {
-      continue;
-    }
+    // The two types name the query they read differently: a classic condition carries it per
+    // condition, a threshold has one expression for the whole thing. Flatten both to the same
+    // shape so the rest of this only has one case to handle.
+    const conditions = isClassicExpression(model)
+      ? model.conditions.map((condition) => ({
+          evaluator: condition.evaluator,
+          refId: condition.query.params[0],
+        }))
+      : model.conditions.map((condition) => ({
+          evaluator: condition.evaluator,
+          refId: model.expression,
+        }));
 
     // if any of the conditions are a "range" we switch to an "area" threshold view and ignore single threshold values
     // the time series panel does not support both.
-    const hasRangeThreshold = query.model.conditions.some(isRangeCondition);
+    const hasRangeThreshold = conditions.some(({ evaluator }) => isRangeEvaluator(evaluator.type));
 
-    query.model.conditions.forEach((condition) => {
-      const threshold = condition.evaluator.params;
-
-      // "classic_conditions" use `condition.query.params[]` and "threshold" uses `query.model.expression`
-      const refId = condition.query?.params?.[0] ?? query.model.expression;
+    conditions.forEach(({ evaluator, refId }) => {
+      const threshold = evaluator.params;
 
       // if an expression hasn't been linked to a data query yet, it won't have a refId
       if (!refId) {
         return;
       }
 
-      const isRangeThreshold = isRangeCondition(condition);
+      const isRangeThreshold = isRangeEvaluator(evaluator.type);
 
       try {
         // create a DAG so we can find the origin of the current expression
@@ -211,7 +221,7 @@ export function getThresholdsForQueries(queries: AlertQuery[], condition: string
             if (!threshold) {
               return;
             }
-            appendRangeThreshold(originRefID, threshold, condition.evaluator.type);
+            appendRangeThreshold(originRefID, threshold, evaluator.type);
             thresholds[originRefID].mode = GraphThresholdsStyleMode.LineAndArea;
           }
         });
@@ -341,15 +351,6 @@ export function getThresholdsForQueries(queries: AlertQuery[], condition: string
   }
 
   return thresholds;
-}
-
-function isRangeCondition(condition: ClassicCondition) {
-  return (
-    condition.evaluator.type === EvalFunction.IsWithinRange ||
-    condition.evaluator.type === EvalFunction.IsOutsideRange ||
-    condition.evaluator.type === EvalFunction.IsOutsideRangeIncluded ||
-    condition.evaluator.type === EvalFunction.IsWithinRangeIncluded
-  );
 }
 
 export function getStatusMessage(data: PanelData): string | undefined {

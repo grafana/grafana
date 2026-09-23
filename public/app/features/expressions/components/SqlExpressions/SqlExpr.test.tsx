@@ -6,7 +6,9 @@ import { reportInteraction } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { dataSource } from '../../ExpressionDatasource';
-import { type ExpressionQuery, ExpressionQueryType } from '../../types';
+import type { ExpressionQuery } from '../../schemas/expressionQuery';
+import type { SqlExpressionQuery } from '../../schemas/sql';
+import { ExpressionQueryType } from '../../types';
 import { ALLOWED_FUNCTIONS, fetchSQLFields } from '../../utils/metaSqlExpr';
 
 import { SqlEditor } from './SqlEditor/SqlEditor';
@@ -121,7 +123,7 @@ describe('SqlExpr', () => {
   it('initializes new expressions with default query', async () => {
     const onChange = jest.fn();
     const refIds = [{ value: 'A' }];
-    const query = { refId: 'expr1', type: 'sql', expression: '' } as ExpressionQuery;
+    const query = { refId: 'expr1', type: ExpressionQueryType.sql, expression: '' } as SqlExpressionQuery;
 
     render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
 
@@ -135,7 +137,7 @@ describe('SqlExpr', () => {
 
   it('uses a placeholder table when initializing without refIds', async () => {
     const onChange = jest.fn();
-    const query = { refId: 'expr1', type: 'sql', expression: '' } as ExpressionQuery;
+    const query = { refId: 'expr1', type: ExpressionQueryType.sql, expression: '' } as SqlExpressionQuery;
 
     render(<SqlExpr onChange={onChange} refIds={[]} query={query} queries={[]} />);
 
@@ -147,7 +149,11 @@ describe('SqlExpr', () => {
     const onChange = jest.fn();
     const refIds = [{ value: 'A' }];
     const existingExpression = 'SELECT 1 AS foo';
-    const query = { refId: 'expr1', type: 'sql', expression: existingExpression } as ExpressionQuery;
+    const query = {
+      refId: 'expr1',
+      type: ExpressionQueryType.sql,
+      expression: existingExpression,
+    } as SqlExpressionQuery;
 
     render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
 
@@ -159,7 +165,11 @@ describe('SqlExpr', () => {
   it('uses the legacy SQL editor when sqlExpressionsCodeMirror is disabled', async () => {
     const onChange = jest.fn();
     const refIds = [{ value: 'A' }];
-    const query = { refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery;
+    const query = {
+      refId: 'expr1',
+      type: ExpressionQueryType.sql,
+      expression: 'SELECT * FROM A',
+    } as SqlExpressionQuery;
 
     const { findByTestId } = render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
 
@@ -179,7 +189,9 @@ describe('SqlExpr', () => {
       <SqlExpr
         onChange={jest.fn()}
         refIds={[{ value: 'table A' }]}
-        query={{ refId: 'expr1', type: 'sql', expression: 'SELECT * FROM `table A`' } as ExpressionQuery}
+        query={
+          { refId: 'expr1', type: ExpressionQueryType.sql, expression: 'SELECT * FROM `table A`' } as SqlExpressionQuery
+        }
         queries={[]}
       />
     );
@@ -205,7 +217,11 @@ describe('SqlExpr', () => {
 
     const onChange = jest.fn();
     const refIds = [{ value: 'A' }];
-    const query = { refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery;
+    const query = {
+      refId: 'expr1',
+      type: ExpressionQueryType.sql,
+      expression: 'SELECT * FROM A',
+    } as SqlExpressionQuery;
 
     render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
 
@@ -224,7 +240,11 @@ describe('SqlExpr', () => {
     const onChange = jest.fn();
     const refIds = [{ value: 'A' }];
     const existingExpression = 'SELECT 1 AS foo';
-    const query = { refId: 'expr1', type: 'sql', expression: existingExpression } as ExpressionQuery;
+    const query = {
+      refId: 'expr1',
+      type: ExpressionQueryType.sql,
+      expression: existingExpression,
+    } as SqlExpressionQuery;
     const { findByTestId, getByRole, rerender } = render(
       <SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />
     );
@@ -243,7 +263,7 @@ describe('SqlExpr', () => {
   it('adds alerting format when alerting prop is true', async () => {
     const onChange = jest.fn();
     const refIds = [{ value: 'A' }];
-    const query = { refId: 'expr1', type: 'sql' } as ExpressionQuery;
+    const query = { refId: 'expr1', type: ExpressionQueryType.sql, expression: '' } as SqlExpressionQuery;
 
     render(<SqlExpr onChange={onChange} refIds={refIds} query={query} alerting queries={[]} />);
 
@@ -258,7 +278,11 @@ describe('SqlExpr', () => {
 
     const onChange = jest.fn();
     const refIds = [{ label: 'Query A', value: 'A' }];
-    const query = { refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery;
+    const query = {
+      refId: 'expr1',
+      type: ExpressionQueryType.sql,
+      expression: 'SELECT * FROM A',
+    } as SqlExpressionQuery;
 
     render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
 
@@ -281,7 +305,7 @@ describe('SqlExpr', () => {
 
     const onChange = jest.fn();
     const refIds = [{ label: 'table A', value: 'table A' }];
-    const query = { refId: 'expr1', type: 'sql', expression: '' } as ExpressionQuery;
+    const query = { refId: 'expr1', type: ExpressionQueryType.sql, expression: '' } as SqlExpressionQuery;
 
     render(<SqlExpr onChange={onChange} refIds={refIds} query={query} queries={[]} />);
 
@@ -331,7 +355,7 @@ describe('SqlExpr', () => {
         <SqlExpr
           onChange={onChange}
           refIds={[{ value: 'A' }]}
-          query={{ refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery}
+          query={{ refId: 'expr1', type: ExpressionQueryType.sql, expression: 'SELECT * FROM A' } as SqlExpressionQuery}
           queries={[sourceQuery]}
           metadata={mockMetadata({ scopedVars, filters })}
         />
@@ -363,7 +387,7 @@ describe('SqlExpr', () => {
       <SqlExpr
         onChange={jest.fn()}
         refIds={[{ value: 'A' }]}
-        query={{ refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery}
+        query={{ refId: 'expr1', type: ExpressionQueryType.sql, expression: 'SELECT * FROM A' } as SqlExpressionQuery}
         queries={[{ refId: 'A' }]}
       />
     );
@@ -396,7 +420,7 @@ describe('SqlExpr', () => {
         <SqlExpr
           onChange={jest.fn()}
           refIds={[{ value: 'A' }]}
-          query={{ refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery}
+          query={{ refId: 'expr1', type: ExpressionQueryType.sql, expression: 'SELECT * FROM A' } as SqlExpressionQuery}
           queries={[{ refId: 'A' }]}
         />
       );
@@ -421,7 +445,7 @@ describe('SqlExpr', () => {
         <SqlExpr
           onChange={jest.fn()}
           refIds={[{ value: 'A' }]}
-          query={{ refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery}
+          query={{ refId: 'expr1', type: ExpressionQueryType.sql, expression: 'SELECT * FROM A' } as SqlExpressionQuery}
           queries={[{ refId: 'A' }]}
         />
       );
@@ -451,7 +475,13 @@ describe('SqlExpr', () => {
         <SqlExpr
           onChange={jest.fn()}
           refIds={[{ value: 'table A' }]}
-          query={{ refId: 'expr1', type: 'sql', expression: 'SELECT t. FROM `table A` as t' } as ExpressionQuery}
+          query={
+            {
+              refId: 'expr1',
+              type: ExpressionQueryType.sql,
+              expression: 'SELECT t. FROM `table A` as t',
+            } as SqlExpressionQuery
+          }
           queries={[{ refId: 'table A' }]}
         />
       );
@@ -481,7 +511,7 @@ describe('SqlExpr', () => {
         <SqlExpr
           onChange={jest.fn()}
           refIds={[{ value: 'A' }]}
-          query={{ refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery}
+          query={{ refId: 'expr1', type: ExpressionQueryType.sql, expression: 'SELECT * FROM A' } as SqlExpressionQuery}
           queries={[{ refId: 'A' }]}
         />
       );
@@ -514,7 +544,7 @@ describe('SqlExpr', () => {
       <SqlExpr
         onChange={jest.fn()}
         refIds={[{ value: 'A' }]}
-        query={{ refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery}
+        query={{ refId: 'expr1', type: ExpressionQueryType.sql, expression: 'SELECT * FROM A' } as SqlExpressionQuery}
         queries={[]}
       />
     );
@@ -534,7 +564,7 @@ describe('SqlExpr', () => {
         <SqlExpr
           onChange={jest.fn()}
           refIds={[{ value: 'A' }]}
-          query={{ refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery}
+          query={{ refId: 'expr1', type: ExpressionQueryType.sql, expression: 'SELECT * FROM A' } as SqlExpressionQuery}
           queries={[]}
           metadata={
             {
@@ -557,7 +587,7 @@ describe('SqlExpr', () => {
         <SqlExpr
           onChange={jest.fn()}
           refIds={[{ value: 'A' }]}
-          query={{ refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery}
+          query={{ refId: 'expr1', type: ExpressionQueryType.sql, expression: 'SELECT * FROM A' } as SqlExpressionQuery}
           queries={[]}
           metadata={
             {
@@ -581,7 +611,7 @@ describe('SqlExpr', () => {
       <SqlExpr
         onChange={jest.fn()}
         refIds={[{ value: 'A' }]}
-        query={{ refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery}
+        query={{ refId: 'expr1', type: ExpressionQueryType.sql, expression: 'SELECT * FROM A' } as SqlExpressionQuery}
         queries={[]}
         metadata={
           {
@@ -612,7 +642,7 @@ describe('SqlExpr', () => {
       <SqlExpr
         onChange={jest.fn()}
         refIds={[{ value: 'A' }]}
-        query={{ refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery}
+        query={{ refId: 'expr1', type: ExpressionQueryType.sql, expression: 'SELECT * FROM A' } as SqlExpressionQuery}
         queries={[]}
         onRunQuery={onRunQuery}
       />
@@ -627,7 +657,7 @@ describe('SqlExpr', () => {
     });
     expect(reportInteraction).toHaveBeenCalledWith(
       'dashboards_expression_interaction',
-      expect.objectContaining({ action: 'execute_expression', expression_type: 'sql' })
+      expect.objectContaining({ action: 'execute_expression', expression_type: ExpressionQueryType.sql })
     );
   });
 
@@ -640,7 +670,7 @@ describe('SqlExpr', () => {
       <SqlExpr
         onChange={jest.fn()}
         refIds={[{ value: 'A' }]}
-        query={{ refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery}
+        query={{ refId: 'expr1', type: ExpressionQueryType.sql, expression: 'SELECT * FROM A' } as SqlExpressionQuery}
         queries={[]}
         onRunQuery={onRunQuery}
       />
@@ -665,14 +695,14 @@ describe('SqlExpr', () => {
         <SqlExpr
           onChange={jest.fn()}
           refIds={[{ value: 'A' }]}
-          query={{ refId: 'exprA', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery}
+          query={{ refId: 'exprA', type: ExpressionQueryType.sql, expression: 'SELECT * FROM A' } as SqlExpressionQuery}
           queries={[]}
           onRunQuery={onRunQueryA}
         />
         <SqlExpr
           onChange={jest.fn()}
           refIds={[{ value: 'B' }]}
-          query={{ refId: 'exprB', type: 'sql', expression: 'SELECT * FROM B' } as ExpressionQuery}
+          query={{ refId: 'exprB', type: ExpressionQueryType.sql, expression: 'SELECT * FROM B' } as SqlExpressionQuery}
           queries={[]}
           onRunQuery={onRunQueryB}
         />

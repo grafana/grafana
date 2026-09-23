@@ -473,10 +473,10 @@ describe('formValuesFromPrefill', () => {
     const result = formValuesFromPrefill(prefillData);
     const [query] = result.queries.filter(isExpressionQueryInAlert);
 
-    expect(query.model).toHaveProperty('type', 'classic_conditions');
-    expect(query.model.conditions).toHaveLength(2);
-    expect(query.model.conditions?.[0].evaluator.type).toBe('gt');
-    expect(query.model.conditions?.[1].evaluator.type).toBe('within_range');
+    expect(query.model).toMatchObject({
+      type: 'classic_conditions',
+      conditions: [{ evaluator: { type: 'gt' } }, { evaluator: { type: 'within_range' } }],
+    });
   });
 
   it('should preserve resample expression query structure', () => {

@@ -14,7 +14,7 @@ import { formatSQL, quoteIdentifierIfNecessary } from '@grafana/sql';
 import { Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { type ExpressionQueryEditorProps } from '../../ExpressionQueryEditor';
-import { type SqlExpressionQuery } from '../../types';
+import type { SqlExpressionQuery } from '../../schemas/sql';
 import { ALLOWED_FUNCTIONS, fetchSQLFields, type FetchSQLFieldsOptions } from '../../utils/metaSqlExpr';
 import { SQL_EXPRESSIONS_DIALECT } from '../../utils/sqlIdentifier';
 import { QueryToolbox } from '../QueryToolbox';

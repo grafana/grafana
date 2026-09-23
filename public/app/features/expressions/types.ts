@@ -1,4 +1,4 @@
-import { type DataQuery, ReducerID, type SelectableValue } from '@grafana/data';
+import { ReducerID, type SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { EvalFunction } from '../alerting/state/alertDef';
@@ -8,6 +8,7 @@ import { EvalFunction } from '../alerting/state/alertDef';
  */
 export const ExpressionDatasourceUID = '__expr__';
 
+/** The kinds of server-side expression. The schemas under `./schemas` describe each one. */
 export enum ExpressionQueryType {
   math = 'math',
   reduce = 'reduce',
@@ -15,6 +16,12 @@ export enum ExpressionQueryType {
   classic = 'classic_conditions',
   threshold = 'threshold',
   sql = 'sql',
+}
+
+export enum ReducerMode {
+  Strict = '', // backend API wants an empty string to support "strict" mode
+  ReplaceNonNumbers = 'replaceNN',
+  DropNonNumbers = 'dropNN',
 }
 
 export const getExpressionLabel = (type: ExpressionQueryType) => {
@@ -85,12 +92,6 @@ export const reducerTypes: Array<SelectableValue<string>> = [
   { value: ReducerID.last, label: 'Last', description: 'Get the last value' },
 ];
 
-export enum ReducerMode {
-  Strict = '', // backend API wants an empty string to support "strict" mode
-  ReplaceNonNumbers = 'replaceNN',
-  DropNonNumbers = 'dropNN',
-}
-
 export const reducerModes: Array<SelectableValue<ReducerMode>> = [
   {
     value: ReducerMode.Strict,
@@ -135,67 +136,3 @@ export const thresholdFunctions: Array<SelectableValue<EvalFunction>> = [
   { value: EvalFunction.IsWithinRangeIncluded, label: 'Is within range included' },
   { value: EvalFunction.IsOutsideRangeIncluded, label: 'Is outside range included' },
 ];
-
-/**
- * For now this is a single object to cover all the types.... would likely
- * want to split this up by type as the complexity increases
- */
-export interface ExpressionQuery extends DataQuery {
-  type: ExpressionQueryType;
-  reducer?: string;
-  expression?: string;
-  window?: string;
-  downsampler?: string;
-  upsampler?: string;
-  conditions?: ClassicCondition[];
-  settings?: ExpressionQuerySettings;
-}
-
-export interface SqlExpressionQuery extends ExpressionQuery {
-  /** Format `alerting` is expected when using SQL expressions in alert rules */
-  format?: 'alerting';
-}
-
-export interface ThresholdExpressionQuery extends ExpressionQuery {
-  conditions: ClassicCondition[];
-}
-export interface ExpressionQuerySettings {
-  mode?: ReducerMode;
-  replaceWithValue?: number;
-}
-
-export interface ClassicCondition {
-  evaluator: {
-    params: number[];
-    type: EvalFunction;
-  };
-  unloadEvaluator?: {
-    params: number[];
-    type: EvalFunction;
-  };
-  operator?: {
-    type: string;
-  };
-  query: {
-    params: string[];
-  };
-  reducer?: {
-    params: [];
-    type: ReducerType;
-  };
-  type: 'query';
-}
-
-export type ReducerType =
-  | 'avg'
-  | 'min'
-  | 'max'
-  | 'sum'
-  | 'count'
-  | 'last'
-  | 'median'
-  | 'diff'
-  | 'diff_abs'
-  | 'percent_diff'
-  | 'percent_diff_abs'
-  | 'count_non_null';
