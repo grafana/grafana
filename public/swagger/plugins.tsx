@@ -81,9 +81,8 @@ export const WrappedPlugins = function () {
           if (mime) {
             v = mime.get('schema').toJS();
           }
-          console.log('RequestBody', v, mime, props);
+          // console.log('RequestBody', v, mime, props);
         }
-        // console.log('RequestBody PROPS', props);
         return (
           <SchemaContext.Provider value={v}>
             <Original {...props} />
