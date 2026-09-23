@@ -216,6 +216,13 @@ message ResourceSearchResponse {
 
   // Populated only when result_format is FIELD_VALUES.
   repeated ResourceSearchRow rows = 12;
+
+  // Optional sort values to pass as search_after on the next request, independent
+  // of result_format. A bounded scan can advance beyond its last returned row,
+  // or return no rows, while more matches remain. When non-empty, these values
+  // take precedence over the last row's sort_fields. When absent, clients retain
+  // their existing row-based continuation behavior; absence does not imply exhaustion.
+  repeated string next_search_after = 13;
 }
 
 message ResourceSearchField {
@@ -442,4 +449,3 @@ message HybridSearchChunk {
   // Structured chunk metadata as raw JSON; empty for synthesized chunks.
   bytes metadata = 3;
 }
-
