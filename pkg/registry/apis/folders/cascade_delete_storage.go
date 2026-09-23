@@ -295,8 +295,10 @@ func (s *cascadeDeleteStorage) dashboardsInFolder(ctx context.Context, namespace
 					Values:   []string{folderUID},
 				}},
 			},
-			Limit:  childFolderPageSize,
-			Offset: offset,
+			Fields:       []string{resource.SEARCH_FIELD_NAME},
+			Limit:        childFolderPageSize,
+			Offset:       offset,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("search dashboards in folder %q: %w", folderUID, err)
@@ -304,19 +306,21 @@ func (s *cascadeDeleteStorage) dashboardsInFolder(ctx context.Context, namespace
 		if resp.Error != nil {
 			return nil, fmt.Errorf("search dashboards in folder %q: %s", folderUID, resp.Error.Message)
 		}
-		if resp.Results == nil || len(resp.Results.Rows) == 0 {
+		rows, err := decodeSearchRows(resp)
+		if err != nil {
+			return nil, fmt.Errorf("decode dashboards in folder %q: %w", folderUID, err)
+		}
+		if len(rows) == 0 {
 			return names, nil
 		}
 
-		for _, row := range resp.Results.Rows {
-			if row.Key != nil {
-				names = append(names, row.Key.Name)
-			}
+		for _, row := range rows {
+			names = append(names, row.key.Name)
 		}
 
 		// The bleve Search path drives pagination off TotalHits + offset rather than a page token.
 		// Advance by the rows actually returned so a short page doesn't skip the remainder.
-		offset += int64(len(resp.Results.Rows))
+		offset += int64(len(rows))
 		if offset >= resp.TotalHits {
 			return names, nil
 		}
@@ -373,8 +377,10 @@ func (s *cascadeDeleteStorage) variablesInFolder(ctx context.Context, namespace,
 					Values:   []string{folderUID},
 				}},
 			},
-			Limit:  childFolderPageSize,
-			Offset: offset,
+			Fields:       []string{resource.SEARCH_FIELD_NAME},
+			Limit:        childFolderPageSize,
+			Offset:       offset,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("search variables in folder %q: %w", folderUID, err)
@@ -382,19 +388,21 @@ func (s *cascadeDeleteStorage) variablesInFolder(ctx context.Context, namespace,
 		if resp.Error != nil {
 			return nil, fmt.Errorf("search variables in folder %q: %s", folderUID, resp.Error.Message)
 		}
-		if resp.Results == nil || len(resp.Results.Rows) == 0 {
+		rows, err := decodeSearchRows(resp)
+		if err != nil {
+			return nil, fmt.Errorf("decode variables in folder %q: %w", folderUID, err)
+		}
+		if len(rows) == 0 {
 			return names, nil
 		}
 
-		for _, row := range resp.Results.Rows {
-			if row.Key != nil {
-				names = append(names, row.Key.Name)
-			}
+		for _, row := range rows {
+			names = append(names, row.key.Name)
 		}
 
 		// The bleve Search path drives pagination off TotalHits + offset rather than a page token.
 		// Advance by the rows actually returned so a short page doesn't skip the remainder.
-		offset += int64(len(resp.Results.Rows))
+		offset += int64(len(rows))
 		if offset >= resp.TotalHits {
 			return names, nil
 		}

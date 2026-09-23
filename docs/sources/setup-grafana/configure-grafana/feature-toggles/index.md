@@ -26,7 +26,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 
 | Feature toggle name                          | Description                                                                                                                         | Enabled by default |
 | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| `featureHighlights`                          | Highlight Grafana Enterprise features                                                                                               |                    |
 | `cloudWatchCrossAccountQuerying`             | Enables cross-account querying in CloudWatch datasources                                                                            | Yes                |
 | `lokiQuerySplitting`                         | Split large interval queries into subqueries with smaller time intervals                                                            | Yes                |
 | `renderAuthJWT`                              | Uses JWT-based auth for rendering instead of relying on remote cache                                                                | Yes                |
@@ -50,7 +49,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `pluginProxyPreserveTrailingSlash`           | Preserve plugin proxy trailing slash.                                                                                               |                    |
 | `azureMonitorPrometheusExemplars`            | Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars                                        | Yes                |
 | `cloudWatchRoundUpEndTime`                   | Round up end time for metric queries to the next minute to avoid missing data                                                       | Yes                |
-| `alertingQueryAndExpressionsStepMode`        | Enables step mode for alerting queries and expressions                                                                              | Yes                |
 | `useSessionStorageForRedirection`            | Use session storage for handling the redirection after login                                                                        | Yes                |
 | `pluginsSriChecks`                           | Enables SRI checks for plugin assets                                                                                                |                    |
 | `azureMonitorDisableLogLimit`                | Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.                                    |                    |

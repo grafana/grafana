@@ -14,7 +14,7 @@
 
 import { css } from '@emotion/css';
 import cx from 'clsx';
-import * as React from 'react';
+import { useEffect, useEffectEvent, useRef, useState, type CSSProperties } from 'react';
 
 import type TNil from '../../types/TNil';
 import DraggableManager from '../../utils/DraggableManager/DraggableManager';
@@ -100,113 +100,95 @@ export type TimelineColumnResizerProps = {
   columnResizeHandleHeight: number;
 };
 
-type TimelineColumnResizerState = {
-  dragPosition: number | TNil;
-};
+export default function TimelineColumnResizer({
+  min,
+  max,
+  onChange,
+  position,
+  columnResizeHandleHeight,
+}: TimelineColumnResizerProps) {
+  const [dragPosition, setDragPosition] = useState<number | TNil>(null);
+  const rootElmRef = useRef<HTMLDivElement>(null);
 
-export default class TimelineColumnResizer extends React.PureComponent<
-  TimelineColumnResizerProps,
-  TimelineColumnResizerState
-> {
-  state: TimelineColumnResizerState;
-
-  _dragManager: DraggableManager;
-  _rootElm: Element | TNil;
-
-  constructor(props: TimelineColumnResizerProps) {
-    super(props);
-    this._dragManager = new DraggableManager({
-      getBounds: this._getDraggingBounds,
-      onDragEnd: this._handleDragEnd,
-      onDragMove: this._handleDragUpdate,
-      onDragStart: this._handleDragUpdate,
-    });
-    this._rootElm = undefined;
-    this.state = {
-      dragPosition: null,
-    };
-  }
-
-  componentWillUnmount() {
-    this._dragManager.dispose();
-  }
-
-  _setRootElm = (elm: Element | TNil) => {
-    this._rootElm = elm;
-  };
-
-  _getDraggingBounds = (): DraggableBounds => {
-    if (!this._rootElm) {
+  // The manager captures its callbacks once at construction, so these have to keep a stable
+  // identity while still seeing the latest props. They only ever run from mouse handlers.
+  const getDraggingBounds = useEffectEvent((): DraggableBounds => {
+    if (!rootElmRef.current) {
       throw new Error('invalid state');
     }
-    const { left: clientXLeft, width } = this._rootElm.getBoundingClientRect();
-    const { min, max } = this.props;
+    const { left: clientXLeft, width } = rootElmRef.current.getBoundingClientRect();
     return {
       clientXLeft,
       width,
       maxValue: max,
       minValue: min,
     };
-  };
+  });
 
-  _handleDragUpdate = ({ value }: DraggingUpdate) => {
-    this.setState({ dragPosition: value });
-  };
+  const handleDragUpdate = useEffectEvent(({ value }: DraggingUpdate) => {
+    setDragPosition(value);
+  });
 
-  _handleDragEnd = ({ manager, value }: DraggingUpdate) => {
+  const handleDragEnd = useEffectEvent(({ manager, value }: DraggingUpdate) => {
     manager.resetBounds();
-    this.setState({ dragPosition: null });
-    this.props.onChange(value);
-  };
+    setDragPosition(null);
+    onChange(value);
+  });
 
-  render() {
-    let left;
-    let draggerStyle: React.CSSProperties;
-    const { position, columnResizeHandleHeight } = this.props;
-    const { dragPosition } = this.state;
-    left = `${position * 100}%`;
-    const gripStyle = { left };
-    let isDraggingLeft = false;
-    let isDraggingRight = false;
-    const styles = getStyles();
+  const [dragManager] = useState(
+    () =>
+      new DraggableManager({
+        getBounds: getDraggingBounds,
+        onDragEnd: handleDragEnd,
+        onDragMove: handleDragUpdate,
+        onDragStart: handleDragUpdate,
+      })
+  );
 
-    if (this._dragManager.isDragging() && this._rootElm && dragPosition != null) {
-      isDraggingLeft = dragPosition < position;
-      isDraggingRight = dragPosition > position;
-      // Draw a highlight from the current dragged position back to the original
-      // position, e.g. highlight the change. Draw the highlight via `left` and
-      // `right` css styles (simpler than using `width`).
-      const draggerLeft = `${Math.min(position, dragPosition) * 100}%`;
-      // subtract 1px for draggerRight to deal with the right border being off
-      // by 1px when dragging left
-      const draggerRight = `calc(${(1 - Math.max(position, dragPosition)) * 100}% - 1px)`;
-      draggerStyle = { left: draggerLeft, right: draggerRight };
-    } else {
-      draggerStyle = gripStyle;
-    }
-    draggerStyle.height = columnResizeHandleHeight;
+  useEffect(() => () => dragManager.dispose(), [dragManager]);
 
-    const isDragging = isDraggingLeft || isDraggingRight;
-    return (
-      <div className={styles.TimelineColumnResizer} ref={this._setRootElm} data-testid="TimelineColumnResizer">
-        <div
-          className={cx(styles.gripIcon, isDragging && styles.gripIconDragging)}
-          style={gripStyle}
-          data-testid="TimelineColumnResizer--gripIcon"
-        />
-        <div
-          aria-hidden
-          className={cx(
-            styles.dragger,
-            isDragging && styles.draggerDragging,
-            isDraggingRight && styles.draggerDraggingRight,
-            isDraggingLeft && styles.draggerDraggingLeft
-          )}
-          onMouseDown={this._dragManager.handleMouseDown}
-          style={draggerStyle}
-          data-testid="TimelineColumnResizer--dragger"
-        />
-      </div>
-    );
+  const styles = getStyles();
+  const gripStyle = { left: `${position * 100}%` };
+  let draggerStyle: CSSProperties;
+  let isDraggingLeft = false;
+  let isDraggingRight = false;
+
+  if (dragManager.isDragging() && rootElmRef.current && dragPosition != null) {
+    isDraggingLeft = dragPosition < position;
+    isDraggingRight = dragPosition > position;
+    // Draw a highlight from the current dragged position back to the original
+    // position, e.g. highlight the change. Draw the highlight via `left` and
+    // `right` css styles (simpler than using `width`).
+    const draggerLeft = `${Math.min(position, dragPosition) * 100}%`;
+    // subtract 1px for draggerRight to deal with the right border being off
+    // by 1px when dragging left
+    const draggerRight = `calc(${(1 - Math.max(position, dragPosition)) * 100}% - 1px)`;
+    draggerStyle = { left: draggerLeft, right: draggerRight };
+  } else {
+    draggerStyle = gripStyle;
   }
+  draggerStyle.height = columnResizeHandleHeight;
+
+  const isDragging = isDraggingLeft || isDraggingRight;
+  return (
+    <div className={styles.TimelineColumnResizer} ref={rootElmRef} data-testid="TimelineColumnResizer">
+      <div
+        className={cx(styles.gripIcon, isDragging && styles.gripIconDragging)}
+        style={gripStyle}
+        data-testid="TimelineColumnResizer--gripIcon"
+      />
+      <div
+        aria-hidden
+        className={cx(
+          styles.dragger,
+          isDragging && styles.draggerDragging,
+          isDraggingRight && styles.draggerDraggingRight,
+          isDraggingLeft && styles.draggerDraggingLeft
+        )}
+        onMouseDown={dragManager.handleMouseDown}
+        style={draggerStyle}
+        data-testid="TimelineColumnResizer--dragger"
+      />
+    </div>
+  );
 }

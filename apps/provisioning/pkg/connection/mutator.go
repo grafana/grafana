@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"k8s.io/apiserver/pkg/admission"
 
+	provisioningadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
@@ -30,6 +31,10 @@ func NewAdmissionMutator(factory Factory) *AdmissionMutator {
 
 // Mutate applies mutations to Connection resources
 func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	if a.GetSubresource() != "" && !provisioningadmission.SpecAndSecureChanged(a) {
+		return nil // pure status patch: spec/secure untouched, nothing to (re)mutate
+	}
+
 	obj := a.GetObject()
 	if obj == nil {
 		return nil

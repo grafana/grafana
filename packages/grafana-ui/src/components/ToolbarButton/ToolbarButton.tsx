@@ -142,15 +142,19 @@ function renderIcon(icon: IconName | React.ReactNode, iconSize?: IconSize) {
 const getStyles = (theme: GrafanaTheme2) => {
   const primaryVariant = getPropertiesForVariant(theme, 'primary', 'solid');
   const destructiveVariant = getPropertiesForVariant(theme, 'destructive', 'solid');
+  const background = theme.flags.visualDesignRefresh ? theme.colors.secondary.background : theme.colors.secondary.main;
+  const backgroundHover = theme.flags.visualDesignRefresh
+    ? theme.colors.secondary.backgroundEmphasis
+    : theme.colors.secondary.shade;
 
   const defaultOld = css({
     color: theme.colors.text.primary,
-    background: theme.colors.secondary.main,
+    background,
 
-    '&:hover, &:focus': {
+    '&:hover': {
       color: theme.colors.text.primary,
-      background: theme.colors.secondary.shade,
-      border: `1px solid ${theme.colors.secondary.borderEmphasis}`,
+      background: backgroundHover,
+      border: `1px solid ${theme.colors.secondary.border}`,
     },
 
     '&:active': {
@@ -169,7 +173,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.radius.default,
       lineHeight: `${theme.components.height.md * theme.spacing.gridSize - 2}px`,
       fontWeight: theme.typography.fontWeightMedium,
-      border: `1px solid ${theme.colors.secondary.border}`,
+      border: `1px solid ${theme.colors.secondary.subtleBorder}`,
       whiteSpace: 'nowrap',
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
         transition: theme.transitions.create(['background-color', 'border-color', 'color'], {

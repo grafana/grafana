@@ -16,9 +16,9 @@ func TestReadGrafanaJavascriptAgentConfig(t *testing.T) {
 			expected *bool
 		}{
 			{name: "nil when key absent"},
-			{name: "nil when key is empty", iniValue: strPtr("")},
-			{name: "true when explicitly enabled", iniValue: strPtr("true"), expected: boolPtr(true)},
-			{name: "false when explicitly disabled", iniValue: strPtr("false"), expected: boolPtr(false)},
+			{name: "nil when key is empty", iniValue: new("")},
+			{name: "true when explicitly enabled", iniValue: new("true"), expected: new(true)},
+			{name: "false when explicitly disabled", iniValue: new("false"), expected: new(false)},
 		}
 
 		for _, tc := range cases {
@@ -39,12 +39,4 @@ func TestReadGrafanaJavascriptAgentConfig(t *testing.T) {
 			})
 		}
 	})
-}
-
-func strPtr(s string) *string {
-	return &s
-}
-
-func boolPtr(b bool) *bool {
-	return &b
 }

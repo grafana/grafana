@@ -109,8 +109,7 @@ func TestHealthWatch(t *testing.T) {
 		svc := newTestHealthService(t)
 		svc.setServingStatus("storage", grpc_health_v1.HealthCheckResponse_SERVING)
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 		stream := newFakeHealthWatchServer(ctx)
 		go func() {
 			_ = svc.Watch(&grpc_health_v1.HealthCheckRequest{}, stream)
@@ -127,8 +126,7 @@ func TestHealthWatch(t *testing.T) {
 		svc := newTestHealthService(t)
 		svc.setServingStatus("storage", grpc_health_v1.HealthCheckResponse_SERVING)
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 		stream := newFakeHealthWatchServer(ctx)
 		go func() {
 			_ = svc.Watch(&grpc_health_v1.HealthCheckRequest{}, stream)
@@ -161,8 +159,7 @@ func TestHealthWatch(t *testing.T) {
 		svc := newTestHealthService(t)
 		svc.setServingStatus("storage", grpc_health_v1.HealthCheckResponse_SERVING)
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 		stream := newFakeHealthWatchServer(ctx)
 		go func() {
 			_ = svc.Watch(&grpc_health_v1.HealthCheckRequest{}, stream)

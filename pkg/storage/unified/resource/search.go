@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"math/rand"
+	"net/http"
 	"slices"
 	"strconv"
 	"strings"
@@ -36,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
@@ -123,17 +125,15 @@ type IndexFeature string
 
 // IndexFeatureTrashFields means the index maps TrashSearchFieldDefinitions. An
 // index without them drops the values, so trash would come back missing the
-// deleter and in arbitrary order. Checked by writers alongside
-// IndexFeatureDeletedMarker, so an older index keeps no deleted documents until it
-// rebuilds.
+// deleter and in arbitrary order. Required, so such an index is rebuilt before it
+// serves anything.
 const IndexFeatureTrashFields IndexFeature = "trash-fields"
 
 // IndexFeatureDeletedMarker means the index maps the markers on deleted
 // documents, SEARCH_FIELD_IS_DELETED and SEARCH_FIELD_IS_PROVISIONED. An index
 // without them drops the values, so a deleted document indexed there would look
-// live, and a provisioned one would show up in trash. Recorded but not required:
-// rather than reindex every existing index to add the mapping, writers check for
-// this feature before keeping a deleted document.
+// live, and a provisioned one would show up in trash. Required too: both mappings
+// arrived together, so an index has either both or neither.
 const IndexFeatureDeletedMarker IndexFeature = "deleted-marker"
 
 // IndexFeatureStoredFacets means every facet-capable field is stored, so the
@@ -143,14 +143,21 @@ const IndexFeatureDeletedMarker IndexFeature = "deleted-marker"
 // that path reports facet-capable but unstored fields as missing values.
 const IndexFeatureStoredFacets IndexFeature = "facets-are-stored"
 
+// IndexFeatureStoredResourceVersion means the index stores each document's resource
+// version; without it a search returns 0, which callers read as "unknown".
+//
+// Recorded but not required, because requiring it rebuilds every existing index at
+// once. Recording it now is what lets a later release require it.
+const IndexFeatureStoredResourceVersion IndexFeature = "resource-version-stored"
+
 // IndexFeatureHoldsDeletedDocuments means the index keeps deleted documents, so a
 // reader that does not exclude them returns deleted resources as live. Describes
 // what the index holds, not what it maps.
 const IndexFeatureHoldsDeletedDocuments IndexFeature = "holds-deleted-documents"
 
 // TrashIndexFeatures are the features an index needs before a deleted document may
-// be kept in it. Both writers read this one list, so the producer and the
-// BulkIndex backstop cannot disagree about what makes an index usable for trash.
+// be kept in it. Read by the writers and by requiredIndexFeatures, so nothing can
+// disagree about what makes an index usable for trash.
 func TrashIndexFeatures() []IndexFeature {
 	return []IndexFeature{IndexFeatureDeletedMarker, IndexFeatureTrashFields}
 }
@@ -164,6 +171,7 @@ func TrashIndexFeatures() []IndexFeature {
 var currentIndexFeatures = []IndexFeature{
 	IndexFeatureDeletedMarker,
 	IndexFeatureStoredFacets,
+	IndexFeatureStoredResourceVersion,
 	IndexFeatureTrashFields,
 }
 
@@ -173,6 +181,7 @@ var currentIndexFeatures = []IndexFeature{
 var knownIndexFeatures = []IndexFeature{
 	IndexFeatureDeletedMarker,
 	IndexFeatureStoredFacets,
+	IndexFeatureStoredResourceVersion,
 	IndexFeatureTrashFields,
 	IndexFeatureHoldsDeletedDocuments,
 }
@@ -185,7 +194,10 @@ var knownIndexFeatures = []IndexFeature{
 //
 // Every required feature must also be current, otherwise indexes rebuild forever
 // (TestRequiredIndexFeaturesAreCurrent).
-var requiredIndexFeatures = []IndexFeature{}
+//
+// Without the trash features the writers drop deleted documents, so trash comes
+// back empty, which reads as "nothing was deleted".
+var requiredIndexFeatures = TrashIndexFeatures()
 
 // CurrentIndexFeatures returns the features sorted, so declaration order cannot
 // change what an index records.
@@ -372,6 +384,7 @@ type searchServer struct {
 	rateLimitPerTenant     int
 	rateLimitWindow        time.Duration
 	collectionAllowlist    vector.CollectionAllowlist
+	embeddingBuilders      embed.BuilderProvider
 
 	ownsIndexFn func(key NamespacedResource) (bool, error)
 
@@ -458,6 +471,11 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		searchFields = NewSearchFieldsRegistry(nil, nil, nil)
 	}
 
+	// Recording sites should not have to check for nil.
+	if indexMetrics == nil {
+		indexMetrics = ProvideIndexMetrics(nil)
+	}
+
 	s := &searchServer{
 		access:         access,
 		storage:        storage,
@@ -488,6 +506,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		rateLimitPerTenant:     opts.RateLimitPerTenant,
 		rateLimitWindow:        opts.RateLimitWindow,
 		collectionAllowlist:    vector.NewCollectionAllowlist(opts.AllowedInternalCollections, opts.AllowedExternalCollections),
+		embeddingBuilders:      opts.EmbeddingBuilders,
 	}
 
 	// pgvector doubles as the FTS lexical searcher.
@@ -611,6 +630,7 @@ func (s *searchServer) ListManagedObjects(ctx context.Context, req *resourcepb.L
 		}
 		if kind.NextPageToken != "" {
 			rsp.Error = &resourcepb.ErrorResult{
+				Code:    http.StatusNotImplemented,
 				Message: "Multiple pages are not yet supported",
 			}
 			return rsp, nil
@@ -819,8 +839,8 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		code := codes.OK
 		if retErr != nil {
 			code = status.Code(retErr)
-		} else if resp != nil && resp.Error != nil {
-			code = grpcCodeFromHTTPStatus(resp.Error.Code)
+		} else if resp != nil {
+			code = grpcCodeFromErrorResult(resp.Error)
 		}
 		if s.vectorMetrics != nil {
 			metricutil.ObserveWithExemplar(ctx,
@@ -1404,6 +1424,11 @@ func (s *searchServer) buildIndexes(ctx context.Context) (int, error) {
 }
 
 func (s *searchServer) init(ctx context.Context) error {
+	if s.embeddingBuilders != nil {
+		if err := s.embeddingBuilders.Validate(); err != nil {
+			return fmt.Errorf("embedding enrollment: %w", err)
+		}
+	}
 	origCtx := ctx
 
 	ctx, span := tracer.Start(ctx, "resource.searchServer.init")
@@ -1516,10 +1541,7 @@ func (s *searchServer) startRateBucketSweeper(ctx context.Context) {
 		return
 	}
 	s.bgTaskWg.Go(func() {
-		interval := s.rateLimitWindow / 2
-		if interval < time.Minute {
-			interval = time.Minute
-		}
+		interval := max(s.rateLimitWindow/2, time.Minute)
 		t := time.NewTicker(interval)
 		defer t.Stop()
 		for {
@@ -1604,9 +1626,7 @@ func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResour
 			rebuildReq := newRebuildRequest(key, minBuildTime, lastImportTime, s.minBuildVersion, sfields, expectedSearchFieldsHash, completeCh)
 			s.rebuildQueue.Add(rebuildReq)
 
-			if s.indexMetrics != nil {
-				s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
-			}
+			s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
 		}
 	}
 	return completeChs
@@ -1637,9 +1657,7 @@ func (s *searchServer) runIndexRebuilder(ctx context.Context) {
 			return
 		}
 
-		if s.indexMetrics != nil {
-			s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
-		}
+		s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
 
 		s.rebuildIndex(ctx, req)
 	}
@@ -1717,9 +1735,7 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 			// shouldRebuildIndex against the just-built BuildTime and either run
 			// another rebuild or close the deferred completion channels as a no-op.
 			s.rebuildQueue.Add(*deferred)
-			if s.indexMetrics != nil {
-				s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
-			}
+			s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
 		}
 	}()
 
@@ -1935,9 +1951,7 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 	}
 	elapsed := time.Since(start)
 	stats.AddIndexUpdateTime(elapsed)
-	if s.indexMetrics != nil {
-		s.indexMetrics.SearchUpdateWaitTime.WithLabelValues(reason).Observe(elapsed.Seconds())
-	}
+	s.indexMetrics.SearchUpdateWaitTime.WithLabelValues(reason).Observe(elapsed.Seconds())
 	s.log.FromContext(ctx).Debug("Index updated before search", "namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "reason", reason, "duration", elapsed, "rv", rv)
 	span.AddEvent("Index updated")
 
@@ -2309,18 +2323,10 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		return nil, err
 	}
 
-	// Record the number of objects indexed for the kind/resource
-	// We don't pass searchStats to DocCount here, as it's not really user-initiated search. Time spent
-	// here will be recorded in the index build time instead.
-	docCount, err := index.DocCount(ctx, "", nil)
-	if err != nil {
-		logger.Warn("error getting doc count", "error", err)
-	}
-	if s.indexMetrics != nil {
-		s.indexMetrics.IndexedKinds.WithLabelValues(nsr.Resource).Add(float64(docCount))
-	}
-
-	return index, err
+	// The indexed kinds metric is not recorded here: the search backend refreshes it
+	// from the open indexes, so it also follows incremental updates and it is not
+	// added up over repeated rebuilds.
+	return index, nil
 }
 
 // keepsDeletedDocuments reports whether deleted objects should stay in this

@@ -29,6 +29,7 @@ import (
 // stubbing only the datasource HTTP API. The rule service and folder store are
 // in-memory fakes so assertions can inspect what was applied and pruned.
 func newPipelineSyncer(proxy *fakeDatasourceProxy, rs *fakeRuleService, ns fakeNamespaceStore) *ExternalRulerSyncer {
+	cs := newFakeConfigClient()
 	return &ExternalRulerSyncer{
 		settings:          &setting.UnifiedAlertingSettings{DefaultRuleEvaluationInterval: time.Minute, ExternalRulerUID: "ds1"},
 		logger:            log.NewNopLogger(),
@@ -39,6 +40,9 @@ func newPipelineSyncer(proxy *fakeDatasourceProxy, rs *fakeRuleService, ns fakeN
 		namespaceStore:    ns,
 		folderPermissions: &recordingFolderPermissions{},
 		lastSyncHash:      make(map[int64]uint64),
+		lastAttemptAt:     make(map[int64]time.Time),
+		lastPollInterval:  make(map[int64]time.Duration),
+		cfgStore:          newCfgStore(cs, cs.nsMapper),
 	}
 }
 

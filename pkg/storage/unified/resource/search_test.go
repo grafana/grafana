@@ -681,6 +681,15 @@ func TestRequiredIndexFeaturesAreCurrent(t *testing.T) {
 	}
 }
 
+// Asserts both halves, so requiring the feature — which rebuilds every existing
+// index — cannot happen by accident.
+func TestStoredResourceVersionIsRecordedButNotRequired(t *testing.T) {
+	require.Contains(t, IndexFeaturesForNewIndex(false), IndexFeatureStoredResourceVersion)
+	for _, postRankAuthz := range []bool{false, true} {
+		require.NotContains(t, RequiredIndexFeatures(postRankAuthz), IndexFeatureStoredResourceVersion)
+	}
+}
+
 // One index keeping deleted documents must not change what every other index
 // records.
 func TestIndexFeaturesForNewIndexLeavesCurrentAlone(t *testing.T) {
@@ -733,9 +742,18 @@ func TestRequiredIndexFeaturesStoredFacets(t *testing.T) {
 
 	// An index built before the stored facet mapping is reused with the option
 	// off, and rebuilt once it is on.
-	buildInfo := IndexBuildInfo{Features: []IndexFeature{IndexFeatureDeletedMarker}}
+	buildInfo := IndexBuildInfo{Features: TrashIndexFeatures()}
 	require.Empty(t, MissingIndexFeatures(buildInfo, RequiredIndexFeatures(false)))
 	require.Equal(t, []IndexFeature{IndexFeatureStoredFacets}, MissingIndexFeatures(buildInfo, RequiredIndexFeatures(true)))
+}
+
+// An index missing the trash mappings must be rebuilt rather than serve an empty
+// trash, whatever the facet option is set to.
+func TestTrashIndexFeaturesAreRequired(t *testing.T) {
+	buildInfo := IndexBuildInfo{Features: []IndexFeature{IndexFeatureStoredFacets}}
+	for _, postRankAuthz := range []bool{false, true} {
+		require.Equal(t, TrashIndexFeatures(), MissingIndexFeatures(buildInfo, RequiredIndexFeatures(postRankAuthz)))
+	}
 }
 
 func TestShouldRebuildIndex(t *testing.T) {
@@ -1772,6 +1790,7 @@ func TestSearchServer_VectorSearch_ObservesDuration(t *testing.T) {
 	s := &searchServer{
 		log:           log.New("test-vector-search"),
 		vectorMetrics: m,
+		indexMetrics:  ProvideIndexMetrics(nil),
 	}
 
 	_, err := s.VectorSearch(context.Background(), &resourcepb.VectorSearchRequest{
@@ -1796,6 +1815,7 @@ func TestSearchServer_HybridSearch_ObservesDuration(t *testing.T) {
 	s := &searchServer{
 		log:           log.New("test-hybrid-search"),
 		vectorMetrics: m,
+		indexMetrics:  ProvideIndexMetrics(nil),
 	}
 
 	_, err := s.HybridSearch(context.Background(), &resourcepb.HybridSearchRequest{

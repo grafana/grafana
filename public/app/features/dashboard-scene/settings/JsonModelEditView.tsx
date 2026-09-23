@@ -8,7 +8,8 @@ import { useFlagGrafanaDashboardSettingsRedesign } from '@grafana/runtime/intern
 import { type SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, sceneUtils } from '@grafana/scenes';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { Alert, Box, Button, CodeEditor, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Box, Button, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { Page } from 'app/core/components/Page/Page';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
@@ -379,15 +380,16 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
               showFormatToggle={true}
             />
           ) : (
-            <CodeEditor
-              width="100%"
-              value={jsonText}
-              language="json"
-              showLineNumbers={true}
-              showMiniMap={true}
-              containerStyles={styles.codeEditor}
-              onBlur={model.onCodeEditorBlur}
-            />
+            <div className={styles.codeEditor}>
+              <CodeMirrorEditor
+                value={jsonText}
+                language="json"
+                height="100%"
+                aria-label={t('dashboard-settings.json-editor.aria-label', 'Dashboard JSON model')}
+                onChange={() => {}}
+                onBlur={model.onCodeEditorBlur}
+              />
+            </div>
           )}
         </div>
         {resourceError && (

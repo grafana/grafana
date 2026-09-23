@@ -13,13 +13,10 @@
 
 import * as z from 'zod';
 
-import { NewSceneObjectAddedEvent, sceneUtils, type SceneObjectUrlValues } from '@grafana/scenes';
+import { t } from '@grafana/i18n';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { type ObjectMeta } from 'app/features/apiserver/types';
-import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
-import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 
-import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
+import { applyDashboardSpec } from '../../actions/dashboard/applyDashboardSpec';
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
 import { dashboardV2SpecSchema } from '../../v2schema/dashboardV2Schema';
 
@@ -37,84 +34,6 @@ const applySpecPayloadSchema = z.object({
 });
 
 export type ApplySpecPayload = z.infer<typeof applySpecPayloadSchema>;
-
-/**
- * Wrap a bare spec in the access/metadata envelope `transformSaveModelSchemaV2ToScene`
- * expects, reusing the live scene's metadata + access so identity and
- * permissions survive the rebuild.
- */
-function dtoFromScene(scene: MutationContextScene, spec: DashboardV2Spec): DashboardWithAccessInfo<DashboardV2Spec> {
-  const meta = scene.state.meta;
-  return {
-    kind: 'DashboardWithAccessInfo',
-    metadata: resolveMetadata(scene),
-    access: {
-      canEdit: meta.canEdit !== false,
-      canSave: meta.canSave !== false,
-      canShare: meta.canShare !== false,
-      canStar: meta.canStar !== false,
-      canDelete: meta.canDelete !== false,
-      canAdmin: meta.canAdmin !== false,
-      slug: meta.slug,
-      url: meta.url,
-    },
-    // Whichever v2 version the backend serves (stable v2 or v2beta1). It is
-    // stamped onto the scene, so a wrong literal would mislabel it on save.
-    apiVersion: dashboardAPIVersionResolver.getV2(),
-    spec,
-  };
-}
-
-/**
- * `transformSaveModelSchemaV2ToScene` reads `metadata.name`/`generation`/
- * `creationTimestamp` unguarded, which throws on a brand-new / unsaved dashboard
- * whose serializer metadata is absent or partial. Guarantee a populated
- * envelope, preferring whatever the scene already has.
- */
-function resolveMetadata(scene: MutationContextScene): DashboardWithAccessInfo<DashboardV2Spec>['metadata'] {
-  const existing = scene.serializer.getK8SMetadata() ?? {};
-  const meta = scene.state.meta;
-  const uid =
-    (typeof existing.name === 'string' && existing.name) ||
-    (typeof meta.uid === 'string' && meta.uid) ||
-    (typeof meta.key === 'string' && meta.key) ||
-    'new-dashboard';
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- assemble the metadata envelope
-  return {
-    ...existing,
-    name: uid,
-    generation: typeof existing.generation === 'number' ? existing.generation : 1,
-    creationTimestamp:
-      typeof existing.creationTimestamp === 'string' ? existing.creationTimestamp : new Date().toISOString(),
-    annotations: existing.annotations ?? {},
-  } as DashboardWithAccessInfo<DashboardV2Spec>['metadata'];
-}
-
-// Minimal structural type for the bits of DashboardScene this command touches,
-// kept local to avoid a circular import.
-type MutationContextScene = {
-  state: {
-    meta: Record<string, unknown> & {
-      canEdit?: boolean;
-      canSave?: boolean;
-      canShare?: boolean;
-      canStar?: boolean;
-      canDelete?: boolean;
-      canAdmin?: boolean;
-      slug?: string;
-      url?: string;
-      key?: string;
-    };
-  };
-  serializer: { getK8SMetadata: () => Partial<ObjectMeta> | undefined };
-  setState: (state: unknown) => void;
-};
-
-// Same reason: the bits of DashboardSceneUrlSync the rebuild drives, without importing it.
-type DashboardUrlSync = {
-  retainEditPanelAcrossRebuild: (panelId: string) => void;
-  updateFromUrl: (values: SceneObjectUrlValues) => void;
-};
 
 export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
   name: 'APPLY_SPEC',
@@ -153,45 +72,12 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
 
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- unvalidated path: caller-supplied spec is checked by the transform
       const spec = validatedSpec ?? (payload.spec as unknown as DashboardV2Spec);
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- narrow DashboardScene to the fields this command reads
-      const dto = dtoFromScene(scene as unknown as MutationContextScene, spec);
 
-      const rebuilt = transformSaveModelSchemaV2ToScene(dto);
-
-      // Reuse the live key so existing references (incl. the mutation client's
-      // `scene`) survive the swap.
-      const newState = sceneUtils.cloneSceneObjectState(rebuilt.state, { key: scene.state.key });
-      // `setState` merges, so an open panel editor would survive the swap still driving the
-      // VizPanel and layout item of the tree we just discarded: edits made through it never reach
-      // the new tree, and so are absent from a save or a read. Drop it and re-open through url
-      // sync, the same path `?editPanel=` takes, which resolves the id against the current tree,
-      // waits for a library panel to load, and leaves the pane closed when the applied spec no
-      // longer has the panel.
-      const editPanelKey = scene.state.editPanel?.getUrlKey();
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- narrow the base handler to the dashboard's own, which owns the hold below
-      const urlSync = scene.urlSync as DashboardUrlSync | undefined;
-
-      if (editPanelKey) {
-        // Dropping the pane below writes `?editPanel=` out of the URL, and the re-open cannot
-        // always put it back in the same tick: a library panel has to load first. Hold the param
-        // so a reload during that window, or a load that never completes, still names the panel.
-        urlSync?.retainEditPanelAcrossRebuild(editPanelKey);
-      }
-
-      scene.setState({ ...newState, editPanel: undefined });
-      // Dashboard state is replaced in place losing all edit-only properties.
-      // Calling editModeChange rehydrates the panel's edit state (for example isDraggable state)
-      scene.state.body.editModeChanged?.(true);
-
-      // The swapped-in children have never seen the URL, so url-only state is gone and a tabs
-      // layout writes its default over `?dtab=`. Per child rather than for the scene itself: that
-      // keeps the dashboard's own keys out of the pass, leaving the re-open below the only path
-      // into panel edit.
-      scene.forEachChild((child) => scene.publishEvent(new NewSceneObjectAddedEvent(child), true));
-
-      if (editPanelKey) {
-        urlSync?.updateFromUrl({ editPanel: editPanelKey });
-      }
+      applyDashboardSpec({
+        scene,
+        spec,
+        description: t('dashboard.mutation-api.apply-spec.undo-title', 'Assistant schema edit'),
+      });
 
       // Return the re-serialized spec so the caller gets the rekeyed element
       // names (rebuild rekeys to `panel-<id>`) without a follow-up GET_SPEC.

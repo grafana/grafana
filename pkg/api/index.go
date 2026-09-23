@@ -1,9 +1,6 @@
 package api
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -102,8 +99,8 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	ctx := c.Req.Context()
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
 	useLuxon, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagDatetimeUseLuxon, false, openfeature.TransactionContext(ctx))
-	grafanaAssetSriChecks, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaAssetSriChecks, false, openfeature.TransactionContext(ctx))
 	ofrepRootUrlEnabled := ofClient.Boolean(ctx, featuremgmt.FlagGrafanaOfrepRootUrl, false, openfeature.TransactionContext(ctx))
+	legacyFeatureToggleMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaFrontendLegacyFeatureToggleHandling, "off", openfeature.TransactionContext(ctx))
 
 	// With the client-built nav tree the frontend only needs the items it cannot
 	// know about (enterprise index-data hooks add theirs to the empty root below,
@@ -195,8 +192,9 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		Assets:                              assets,
 		RenderBindingSupported:              renderBindingSupported,
 		UseLuxon:                            useLuxon,
-		AssetSriChecksEnabled:               grafanaAssetSriChecks,
+		AssetSriChecksEnabled:               hs.Cfg.AssetSriChecksEnabled,
 		OFREPRootUrlEnabled:                 ofrepRootUrlEnabled,
+		LegacyFeatureToggleMode:             legacyFeatureToggleMode,
 		ESModuleAssetsEnabled:               assets.ESModule,
 	}
 
@@ -247,8 +245,7 @@ func (hs *HTTPServer) buildUserAnalyticsSettings(c *contextmodel.ReqContext) dto
 	}
 
 	return dtos.AnalyticsSettings{
-		Identifier:         identifier,
-		IntercomIdentifier: hashUserIdentifier(identifier, hs.Cfg.IntercomSecret),
+		Identifier: identifier,
 	}
 }
 
@@ -267,17 +264,6 @@ func (hs *HTTPServer) getUserOrgCount(c *contextmodel.ReqContext, userID int64) 
 	}
 
 	return len(userOrgs)
-}
-
-func hashUserIdentifier(identifier string, secret string) string {
-	if secret == "" {
-		return ""
-	}
-
-	key := []byte(secret)
-	h := hmac.New(sha256.New, key)
-	h.Write([]byte(identifier))
-	return hex.EncodeToString(h.Sum(nil))
 }
 
 func (hs *HTTPServer) Index(c *contextmodel.ReqContext) {

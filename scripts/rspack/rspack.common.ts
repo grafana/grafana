@@ -106,10 +106,6 @@ export default (env: Env = {}, { hmr = false }: CommonOptions = {}): Configurati
 
     entry: {
       app: './public/app/index.ts',
-      boot: {
-        import: './public/boot/index.ts',
-        runtime: false,
-      },
       dark: './public/sass/grafana.dark.scss',
       light: './public/sass/grafana.light.scss',
     },
@@ -118,16 +114,12 @@ export default (env: Env = {}, { hmr = false }: CommonOptions = {}): Configurati
       asyncWebAssembly: true,
     },
     output: {
-      clean: true,
+      // rspack.boot.ts writes boot.js into the build directory from its own compilation.
+      // As the two compile concurrently we need to guarantee that boot.js doesn't get deleted.
+      clean: { keep: 'boot.js' },
       // keep `path` and `publicPath` aligned otherwise 404s will occur.
       path: path.resolve(import.meta.dirname, '../..', PUBLIC_PATH),
-      filename: (pathData) => {
-        // boot.js is referenced by name from the Go template, so it never carries a hash.
-        if (pathData.chunk?.name === 'boot') {
-          return '[name].js';
-        }
-        return `[name]${contentHash}.js`;
-      },
+      filename: `[name]${contentHash}.js`,
       chunkFilename: `[name]${contentHash}.js`,
       publicPath: 'auto',
       // Dynamic imports can run before Grafana's default Trusted Types policy is initialized.

@@ -233,10 +233,7 @@ func (k *SqlKV) InsertDataImportBatch(ctx context.Context, rows []DataImportRow)
 	statementCount := dataImportBatchStatementCount(len(rows), maxRows)
 	payloadBytes := dataImportBatchPayloadBytes(rows)
 	for start := 0; start < len(rows); start += maxRows {
-		end := start + maxRows
-		if end > len(rows) {
-			end = len(rows)
-		}
+		end := min(start+maxRows, len(rows))
 
 		query, args, err := qb.buildInsertDatastoreBatchQuery(rows[start:end])
 		if err != nil {

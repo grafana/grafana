@@ -11,7 +11,6 @@ import (
 
 	alertingmodels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
-
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -20,24 +19,25 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-type receiversAuthz interface {
-	FilterRead(ctx context.Context, user identity.Requester, receivers ...ReceiverStatus) ([]ReceiverStatus, error)
+// receiverStatusMetadataGetter retrieves the AM-reported receiver statuses for an org, filtered to
+// receivers the requesting user has permission to read.
+type receiverStatusMetadataGetter interface {
+	GetReceiverStatuses(ctx context.Context, orgID int64, user identity.Requester) ([]alertingmodels.ReceiverStatus, error)
 }
 
 type AlertmanagerSrv struct {
-	log            log.Logger
-	ac             accesscontrol.AccessControl
-	mam            *notifier.MultiOrgAlertmanager
-	crypto         notifier.Crypto
-	silenceSvc     SilenceService
-	featureManager featuremgmt.FeatureToggles
-	receiverAuthz  receiversAuthz
+	log             log.Logger
+	ac              accesscontrol.AccessControl
+	mam             *notifier.MultiOrgAlertmanager
+	crypto          notifier.Crypto
+	silenceSvc      SilenceService
+	featureManager  featuremgmt.FeatureToggles
+	receiverService receiverStatusMetadataGetter
 }
 
 type UnknownReceiverError struct {
@@ -171,23 +171,11 @@ func (srv AlertmanagerSrv) RoutePostGrafanaAlertingConfigHistoryActivate(c *cont
 }
 
 func (srv AlertmanagerSrv) RouteGetReceivers(c *contextmodel.ReqContext) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.GetOrgID())
-	if errResp != nil {
-		return errResp
+	statuses, err := srv.receiverService.GetReceiverStatuses(c.Req.Context(), c.GetOrgID(), c.SignedInUser)
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to retrieve receivers", err)
 	}
 
-	rcvs, err := am.GetReceivers(c.Req.Context())
-	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "failed to retrieve receivers")
-	}
-	statuses := make([]ReceiverStatus, 0, len(rcvs))
-	for _, rcv := range rcvs { // TODO this is temporary so we can use authz filter logic.
-		statuses = append(statuses, ReceiverStatus(rcv))
-	}
-	statuses, err = srv.receiverAuthz.FilterRead(c.Req.Context(), c.SignedInUser, statuses...)
-	if err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "failed to apply permissions to the receivers", err)
-	}
 	return response.JSON(http.StatusOK, statuses)
 }
 
@@ -270,10 +258,4 @@ func (srv AlertmanagerSrv) AlertmanagerFor(orgID int64) (notifier.Alertmanager, 
 
 	srv.log.Error("Unable to obtain the org's Alertmanager", "error", err)
 	return nil, response.Error(http.StatusInternalServerError, "unable to obtain org's Alertmanager", err)
-}
-
-type ReceiverStatus alertingmodels.ReceiverStatus
-
-func (rs ReceiverStatus) GetUID() string {
-	return legacy_storage.NameToUid(rs.Name)
 }

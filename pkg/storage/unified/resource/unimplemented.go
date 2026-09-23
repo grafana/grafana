@@ -45,6 +45,10 @@ func (UnimplementedStorageBackend) ReadResource(_ context.Context, req *resource
 	}
 }
 
+func (UnimplementedStorageBackend) BatchReadResource(context.Context, []*resourcepb.ReadRequest) ([]*BackendReadResponse, error) {
+	return nil, ErrBatchReadUnsupported
+}
+
 func (UnimplementedStorageBackend) ListIterator(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error) {
 	return 0, errUnimplemented
 }

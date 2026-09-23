@@ -113,3 +113,83 @@ describe('fieldConfigSchema matcher validation', () => {
     expect(result.success).toBe(false);
   });
 });
+
+describe('GET_METADATA_ANNOTATIONS payload', () => {
+  const key = 'grafana.app/useCrossDashboardVariables';
+
+  it('accepts the allowlisted key', () => {
+    expect(payloads.getMetadataAnnotations.safeParse({ annotations: [key] }).success).toBe(true);
+  });
+
+  it('rejects an empty key list', () => {
+    expect(payloads.getMetadataAnnotations.safeParse({ annotations: [] }).success).toBe(false);
+    expect(payloads.getMetadataAnnotations.safeParse({}).success).toBe(false);
+  });
+
+  it('rejects an unknown annotation key', () => {
+    expect(
+      payloads.getMetadataAnnotations.safeParse({
+        annotations: ['grafana.app/createdBy'],
+      }).success
+    ).toBe(false);
+  });
+});
+
+describe('UPDATE_METADATA_ANNOTATIONS payload', () => {
+  const key = 'grafana.app/useCrossDashboardVariables';
+
+  it('accepts all/none/name-array scopes under the allowlisted key', () => {
+    expect(
+      payloads.updateMetadataAnnotations.safeParse({
+        annotations: { [key]: { global: 'all', folder: 'none' } },
+      }).success
+    ).toBe(true);
+    expect(
+      payloads.updateMetadataAnnotations.safeParse({
+        annotations: { [key]: { global: ['env'], folder: ['cluster'] } },
+      }).success
+    ).toBe(true);
+  });
+
+  it('accepts null to clear the allowlisted annotation', () => {
+    expect(
+      payloads.updateMetadataAnnotations.safeParse({
+        annotations: { [key]: null },
+      }).success
+    ).toBe(true);
+  });
+
+  it('rejects an invalid scope value', () => {
+    expect(
+      payloads.updateMetadataAnnotations.safeParse({
+        annotations: { [key]: { global: 'maybe', folder: 'none' } },
+      }).success
+    ).toBe(false);
+    expect(
+      payloads.updateMetadataAnnotations.safeParse({
+        annotations: { [key]: { global: [1], folder: 'none' } },
+      }).success
+    ).toBe(false);
+    expect(
+      payloads.updateMetadataAnnotations.safeParse({
+        annotations: { [key]: { global: 'all' } },
+      }).success
+    ).toBe(false);
+  });
+
+  it('rejects an unknown annotation key', () => {
+    expect(
+      payloads.updateMetadataAnnotations.safeParse({
+        annotations: { 'grafana.app/createdBy': 'me' },
+      }).success
+    ).toBe(false);
+    expect(
+      payloads.updateMetadataAnnotations.safeParse({
+        annotations: {
+          [key]: { global: 'all', folder: 'none' },
+          'grafana.app/folder': 'folder-1',
+        },
+      }).success
+    ).toBe(false);
+  });
+});

@@ -457,6 +457,7 @@ export { attachDebugger } from './utils/debug';
 export { NodeGraphDataFrameFieldNames } from './utils/nodeGraph';
 export { fuzzyMatch } from './utils/fuzzy';
 export { logOptions } from './utils/logOptions';
+export { copyTextToClipboard } from './utils/copyToClipboard';
 
 export { DOMUtil, ReactUtils, floatingUtils };
 

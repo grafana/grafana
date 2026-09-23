@@ -3,16 +3,52 @@ package router
 import (
 	"bytes"
 	"net/http"
+	"strings"
 )
 
 // openapiCacheEntry is one cached per-group-version OpenAPI v3 document.
-// Valid only while key matches the backend's current key (checked by the
-// caller); a stale key is a cache miss, not an eviction — the sync.Map entry
-// is simply overwritten on the next successful fetch.
+// The backend key and requested representation must match. Each group-version
+// retains at most one representation, replaced on the next cacheable response.
 type openapiCacheEntry struct {
-	key  string
-	etag string
-	body []byte
+	key      string
+	etag     string
+	body     []byte
+	header   http.Header
+	accept   string
+	encoding string
+}
+
+func cacheableOpenAPIResponse(header http.Header) bool {
+	for _, value := range header.Values("Cache-Control") {
+		for directive := range strings.SplitSeq(value, ",") {
+			name, _, _ := strings.Cut(strings.TrimSpace(directive), "=")
+			switch strings.ToLower(name) {
+			case "private", "no-store", "no-cache":
+				return false
+			}
+		}
+	}
+	for _, value := range header.Values("Vary") {
+		for field := range strings.SplitSeq(value, ",") {
+			switch strings.ToLower(strings.TrimSpace(field)) {
+			case "accept", "accept-encoding":
+			default:
+				return false
+			}
+		}
+	}
+	return len(header.Values("Set-Cookie")) == 0
+}
+
+func openAPICacheHeaders(header http.Header) http.Header {
+	result := make(http.Header)
+	// Keep representation metadata without replaying per-request headers such as Audit-Id.
+	for _, name := range []string{"Content-Type", "Content-Encoding", "Vary", "Cache-Control", "Last-Modified"} {
+		if values := header.Values(name); len(values) > 0 {
+			result[name] = append([]string(nil), values...)
+		}
+	}
+	return result
 }
 
 // stripConditionalHeaders removes conditional-GET headers from a request

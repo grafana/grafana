@@ -4,6 +4,9 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useEffect, useRef } from 'react';
 
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+
 import { TextMode } from '../../panelcfg.gen';
 
 import { TextNGFormatToolbar } from './TextNGFormatToolbar';
@@ -43,8 +46,13 @@ const setup = (mode: TextMode, doc = '', selection?: { anchor: number; head?: nu
 
 const clickButton = (name: string) => userEvent.click(screen.getByRole('button', { name }));
 
+beforeEach(() => {
+  setTestFlags({ [FlagKeys.TextNewFeatures]: true });
+});
+
 afterEach(() => {
   view = undefined;
+  setTestFlags({});
 });
 
 describe('TextNGFormatToolbar', () => {
@@ -68,6 +76,15 @@ describe('TextNGFormatToolbar', () => {
       // Markdown-only syntax has no HTML equivalent worth a one-click insert.
       expect(screen.queryByRole('button', { name: 'Heading' })).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Table' })).not.toBeInTheDocument();
+    });
+
+    it('hides the diagram action when the text.newFeatures flag is off', () => {
+      setTestFlags({ [FlagKeys.TextNewFeatures]: false });
+
+      setup(TextMode.Markdown);
+
+      expect(screen.getByRole('button', { name: 'Bold' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Mermaid diagram' })).not.toBeInTheDocument();
     });
 
     it('renders nothing in code mode', () => {
@@ -129,6 +146,14 @@ describe('TextNGFormatToolbar', () => {
       expect(view!.state.doc.toString()).toContain('| Column | Column |');
     });
 
+    it('inserts a mermaid fence the renderer will pick up', async () => {
+      setup(TextMode.Markdown, '');
+
+      await clickButton('Mermaid diagram');
+
+      expect(view!.state.doc.toString()).toBe('\n```mermaid\ngraph TD\n  A[Start] --> B[End]\n```\n');
+    });
+
     it('inserts a variable placeholder', async () => {
       setup(TextMode.Markdown, '');
 
@@ -139,6 +164,14 @@ describe('TextNGFormatToolbar', () => {
   });
 
   describe('HTML actions', () => {
+    it('inserts a mermaid block the renderer will pick up', async () => {
+      setup(TextMode.HTML);
+
+      await clickButton('Mermaid diagram');
+
+      expect(view!.state.doc.toString()).toBe('\n<pre class="mermaid">\ngraph TD\n  A[Start] --> B[End]\n</pre>\n');
+    });
+
     it('wraps the selection in tags', async () => {
       setup(TextMode.HTML, 'hello', { anchor: 0, head: 5 });
 

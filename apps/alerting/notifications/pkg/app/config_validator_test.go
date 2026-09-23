@@ -31,8 +31,6 @@ func configObjV1beta1(name string, uid *string) resource.Object {
 	return o
 }
 
-func ptr[T any](v T) *T { return &v }
-
 // failIfCalled is a datasource validator that fails the test if invoked. Used
 // to assert the validator is NOT reached for a given request.
 func failIfCalled(t *testing.T) func(context.Context, string) error {
@@ -76,7 +74,7 @@ func TestNewConfigValidator(t *testing.T) {
 					called = true
 					return fmt.Errorf("boom: %s", uid)
 				}}
-				err := newConfigValidator(cfg).ValidateFunc(ctx, &app.AdmissionRequest{Object: configObj(v1beta1.ConfigSingletonName, ptr("uid-1"))})
+				err := newConfigValidator(cfg).ValidateFunc(ctx, &app.AdmissionRequest{Object: configObj(v1beta1.ConfigSingletonName, new("uid-1"))})
 				if !called {
 					t.Fatal("expected datasource validator to be called")
 				}
@@ -88,7 +86,7 @@ func TestNewConfigValidator(t *testing.T) {
 			t.Run("allows clearing UID without running validator", func(t *testing.T) {
 				req := &app.AdmissionRequest{
 					Object:    configObj(v1beta1.ConfigSingletonName, nil),
-					OldObject: configObj(v1beta1.ConfigSingletonName, ptr("uid-1")),
+					OldObject: configObj(v1beta1.ConfigSingletonName, new("uid-1")),
 				}
 				if err := newConfigValidator(&Config{ValidateExternalSyncDatasource: failIfCalled(t)}).ValidateFunc(ctx, req); err != nil {
 					t.Fatalf("expected no error when clearing UID, got %v", err)
