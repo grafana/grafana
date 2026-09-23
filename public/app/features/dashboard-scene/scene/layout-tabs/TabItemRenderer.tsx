@@ -15,6 +15,7 @@ import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getDashboardSceneFor, interpolateSectionTitle, useDashboardState } from '../../utils/utils';
 import { SectionVariableControls } from '../VariableControls';
+import { TabEditActionsWrapper } from '../edit-actions-popover/TabEditActions';
 import { LayoutModeIndicator } from '../layouts-shared/LayoutModeIndicator';
 import { mapIdToGridLayoutType } from '../layouts-shared/utils';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
@@ -82,71 +83,77 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   return (
     <Draggable key={key!} draggableId={key!} index={myIndex} isDragDisabled={!isDraggable}>
       {(dragProvided, dragSnapshot) => (
-        <div
-          ref={(ref) => {
-            dragProvided.innerRef(ref);
-            model.containerRef.current = ref;
-          }}
-          className={cx(dragSnapshot.isDragging && styles.dragging)}
-          {...dragProvided.draggableProps}
-          {...dragProvided.dragHandleProps}
-          style={getDraggableStyle(dragProvided.draggableProps.style, dragSnapshot)}
-        >
-          <Tab
-            truncate
-            className={cx(
-              isConditionallyHidden && styles.hidden,
-              // !isParentDropTarget prevents highlighting tabs during drag (we use a placeholder instead)
-              isSelectable && !isSelected && !isSourceSelected && !isParentDropTarget && 'dashboard-selectable-element',
-              (isSelected || isSourceSelected) && !isParentDropTarget && 'dashboard-selected-element',
-              (isSelected || isSourceSelected) && styles.selectedTab,
-              isDropTarget && 'dashboard-drop-target'
-            )}
-            active={isActive}
-            title={titleInterpolated}
-            suffix={tabSuffix}
-            href={href}
-            aria-selected={isActive}
-            onChangeTab={(evt) => {
-              evt.preventDefault();
+        <TabEditActionsWrapper tab={model} disabled={dragSnapshot.isDragging}>
+          <div
+            ref={(ref) => {
+              dragProvided.innerRef(ref);
+              model.containerRef.current = ref;
+            }}
+            className={cx(dragSnapshot.isDragging && styles.dragging)}
+            {...dragProvided.draggableProps}
+            {...dragProvided.dragHandleProps}
+            style={getDraggableStyle(dragProvided.draggableProps.style, dragSnapshot)}
+          >
+            <Tab
+              truncate
+              className={cx(
+                isConditionallyHidden && styles.hidden,
+                // !isParentDropTarget prevents highlighting tabs during drag (we use a placeholder instead)
+                isSelectable &&
+                  !isSelected &&
+                  !isSourceSelected &&
+                  !isParentDropTarget &&
+                  'dashboard-selectable-element',
+                (isSelected || isSourceSelected) && !isParentDropTarget && 'dashboard-selected-element',
+                (isSelected || isSourceSelected) && styles.selectedTab,
+                isDropTarget && 'dashboard-drop-target'
+              )}
+              active={isActive}
+              title={titleInterpolated}
+              suffix={tabSuffix}
+              href={href}
+              aria-selected={isActive}
+              onChangeTab={(evt) => {
+                evt.preventDefault();
 
-              const dashboard = getDashboardSceneFor(model);
-              dashboard.rememberScrollPos();
+                const dashboard = getDashboardSceneFor(model);
+                dashboard.rememberScrollPos();
 
-              // When switching tabs, React unmounts old content and mounts new content.
-              // This causes the browser to adjust scroll position if we're at the bottom of the page.
-              // We use MutationObserver to detect when React has committed the DOM changes,
-              // then restore scroll after the browser has completed its layout adjustments.
-              const observer = new MutationObserver(() => {
-                observer.disconnect();
-                requestAnimationFrame(() => {
-                  dashboard.restoreScrollPos();
+                // When switching tabs, React unmounts old content and mounts new content.
+                // This causes the browser to adjust scroll position if we're at the bottom of the page.
+                // We use MutationObserver to detect when React has committed the DOM changes,
+                // then restore scroll after the browser has completed its layout adjustments.
+                const observer = new MutationObserver(() => {
+                  observer.disconnect();
+                  requestAnimationFrame(() => {
+                    dashboard.restoreScrollPos();
+                  });
                 });
-              });
-              observer.observe(document.body, { childList: true, subtree: true });
+                observer.observe(document.body, { childList: true, subtree: true });
 
-              locationService.partial({ [urlKey]: mySlug });
-            }}
-            onPointerDown={(evt) => {
-              evt.stopPropagation();
-              pointerDistance.set(evt);
-            }}
-            onPointerUp={(evt) => {
-              evt.stopPropagation();
+                locationService.partial({ [urlKey]: mySlug });
+              }}
+              onPointerDown={(evt) => {
+                evt.stopPropagation();
+                pointerDistance.set(evt);
+              }}
+              onPointerUp={(evt) => {
+                evt.stopPropagation();
 
-              if (!isSelectable || pointerDistance.check(evt)) {
-                return;
-              }
+                if (!isSelectable || pointerDistance.check(evt)) {
+                  return;
+                }
 
-              onSelect?.(evt);
-            }}
-            label={titleInterpolated}
-            data-tab-activation-key={key}
-            data-dashboard-element-key={key}
-            data-dashboard-element-type="tab"
-            {...titleCollisionProps}
-          />
-        </div>
+                onSelect?.(evt);
+              }}
+              label={titleInterpolated}
+              data-tab-activation-key={key}
+              data-dashboard-element-key={key}
+              data-dashboard-element-type="tab"
+              {...titleCollisionProps}
+            />
+          </div>
+        </TabEditActionsWrapper>
       )}
     </Draggable>
   );
