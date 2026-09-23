@@ -227,17 +227,11 @@ func (a *ProvisioningAuthorizer) AuthorizeResource(ctx context.Context, parsed *
 		Name:     name,
 		Verb:     verb,
 	}
-	// Check the destination first, but validate the configured location even after
-	// success: PR metadata may name a different folder that the caller can read.
 	// Writes and existing resources retain their original permission checks.
-	if !isNewResourcePreview(parsed, verb) {
-		return a.access.Check(ctx, req, metaFolder)
+	if isNewResourcePreview(parsed, verb) {
+		return a.authorizeNewResourcePreview(ctx, parsed, req)
 	}
-	err := a.checkPreviewFolderAccess(ctx, req, metaFolder)
-	if err != nil && !apierrors.IsForbidden(err) {
-		return err
-	}
-	return a.authorizeNewResourcePreview(ctx, parsed, req, err)
+	return a.access.Check(ctx, req, metaFolder)
 }
 
 // isNewResourcePreview limits ancestor lookup to new folder-scoped resource reads with a safe
@@ -254,9 +248,10 @@ func isNewResourcePreview(parsed *ParsedResource, verb string) bool {
 	return IsPathSupported(parsed.Info.Path) == nil && !safepath.IsDir(parsed.Info.Path)
 }
 
-func (a *ProvisioningAuthorizer) checkPreviewFolderAccess(ctx context.Context, req authlib.CheckRequest, folderID string) error {
+func (a *ProvisioningAuthorizer) checkPreviewAncestorAccess(ctx context.Context, req authlib.CheckRequest, folderID string) error {
 	if req.Group == FolderResource.Group && req.Resource == FolderResource.Resource {
-		// Folder reads authorize the named folder itself, not the contextual folder.
+		// A new folder manifest inherits from this real parent/ancestor. Folder GET
+		// authorizes the named folder, not the contextual folder or the absent child.
 		req.Name = folderID
 	}
 	return a.access.Check(ctx, req, folderID)
@@ -267,67 +262,85 @@ func (a *ProvisioningAuthorizer) checkPreviewFolderAccess(ctx context.Context, r
 // required even after a successful destination check because PR metadata may name
 // a different folder. An existing destination's denial remains authoritative, and
 // access is denied if no real configured ancestor exists.
-func (a *ProvisioningAuthorizer) authorizeNewResourcePreview(ctx context.Context, parsed *ParsedResource, req authlib.CheckRequest, destinationErr error) error {
-	// Existence must be independent of the caller's folder access. Authorization
-	// below still uses the original caller, never the provisioning identity.
+func (a *ProvisioningAuthorizer) authorizeNewResourcePreview(ctx context.Context, parsed *ParsedResource, req authlib.CheckRequest) error {
+	// Probe existence as the provisioning identity so an inaccessible folder cannot
+	// be mistaken for a missing one. Permission checks and configured-branch reads
+	// still use the original caller.
 	folderCtx, _, err := identity.WithProvisioningIdentity(ctx, a.repo.Namespace)
 	if err != nil {
 		return fmt.Errorf("use provisioning identity for folder lookup: %w", err)
 	}
+
 	folders, _, err := a.clients.Folder(folderCtx)
 	if err != nil {
 		return fmt.Errorf("get folder client for preview: %w", err)
 	}
+
+	// The destination UID comes from the parsed resource and may be PR-controlled.
+	// Establish whether that folder exists before attempting any permission check.
 	destination := parsed.Meta.GetFolder()
 	_, err = folders.Get(folderCtx, destination, metav1.GetOptions{})
 	destinationExists := err == nil
-	if destinationExists && destinationErr != nil {
-		// The privileged lookup only proves the folder exists, not that the caller
-		// can read it. Preserve the original denial; fallback is only for missing folders.
-		return destinationErr
-	}
 	if err != nil && !apierrors.IsNotFound(err) {
 		return fmt.Errorf("get preview destination folder %q: %w", destination, err)
 	}
-	denied := destinationErr
-	if denied == nil {
-		// A grant on a PR-supplied UID cannot authorize a path with no trusted ancestor.
-		denied = apierrors.NewForbidden(parsed.GVR.GroupResource(), req.Name, fmt.Errorf("no existing folder for preview authorization"))
+
+	// A real destination's denial or access-check failure must stop the preview.
+	// Forbidden can represent an authorization-service failure as well as a denial.
+	if destinationExists {
+		if err := a.checkPreviewAncestorAccess(ctx, req, destination); err != nil {
+			return err
+		}
 	}
 
-	// Walk from the resource's directory toward the repository root, skipping folders
-	// absent from Grafana. The first existing folder's permission result is final. An
-	// empty directory selects RootFolder, which must be checked before ending the walk.
+	// Even a granted destination check cannot authorize a configured path that has
+	// no real ancestor: the PR may have supplied an unrelated, readable folder UID.
+	denied := apierrors.NewForbidden(parsed.GVR.GroupResource(), req.Name, fmt.Errorf("no existing folder for preview authorization"))
+
+	// Include the containing directory so its configured UID is validated too,
+	// even when the PR supplied a different UID for that same directory.
 	dir := safepath.Dir(parsed.Info.Path)
 	if a.folderMetadataEnabled && IsFolderMetadataFile(parsed.Info.Path) {
 		// A folder manifest represents its own directory, so authorization starts at its parent.
 		dir = safepath.Dir(dir)
 	}
+
+	// Walk nearest-first, including the empty path for the repository root.
+	// The first existing candidate's permission result is final, including a denial.
 	for ; ; dir = safepath.Dir(dir) {
 		folderID := RootFolder(a.repo)
 		if dir != "" {
-			// Include the immediate directory: its configured UID may differ from
-			// a missing UID supplied by the PR, and still identify a real folder.
+			// Resolve from the configured branch, never from the PR's metadata.
 			folderID, err = a.getFolderID(ctx, dir)
 			if err != nil {
 				return fmt.Errorf("resolve preview ancestor %q: %w", dir, err)
 			}
 		}
-		if folderID == "" {
+
+		switch folderID {
+		case "":
+			// Instance-target repositories have no root folder to inherit from.
 			return denied
-		}
-		if folderID == destination {
+
+		case destination:
 			if destinationExists {
 				// Reuse the successful check only after the configured branch confirms its UID.
 				return nil
 			}
-		} else {
+			// This missing folder was already probed above; continue toward its parent.
+
+		default:
+			// Missing candidates are skipped without checking permissions. For a real
+			// candidate, return the caller's result without trying a higher ancestor.
 			if _, err := folders.Get(folderCtx, folderID, metav1.GetOptions{}); err == nil {
-				return a.checkPreviewFolderAccess(ctx, req, folderID)
+				return a.checkPreviewAncestorAccess(ctx, req, folderID)
 			} else if !apierrors.IsNotFound(err) {
 				return fmt.Errorf("get preview ancestor folder %q: %w", folderID, err)
 			}
 		}
+
+		// Stop only after trying the root: "" can map to a real repository folder.
+		// Checking this at the top would skip that candidate; Dir("") also stays "".
 		if dir == "" {
 			return denied
 		}
