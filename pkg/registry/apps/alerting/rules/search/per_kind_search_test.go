@@ -620,3 +620,14 @@ func minimalAlertRule() *ngmodels.AlertRule {
 		IntervalSeconds: 60,
 	}
 }
+
+func testRecordingRule() *ngmodels.AlertRule {
+	return &ngmodels.AlertRule{
+		UID:             "rec1",
+		Title:           "cpu recording",
+		NamespaceUID:    "folder1",
+		IntervalSeconds: 60,
+		Record:          &ngmodels.Record{Metric: "cpu_total", TargetDatasourceUID: "ds-target"},
+		Data:            []ngmodels.AlertQuery{{DatasourceUID: "ds1"}},
+	}
+}
