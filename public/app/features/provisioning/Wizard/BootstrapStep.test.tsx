@@ -59,16 +59,20 @@ function StepStatusDisplay() {
     );
   }
   if (stepStatusInfo.status === 'warning' && 'warning' in stepStatusInfo) {
-    const warning = stepStatusInfo.warning;
-    const title = typeof warning === 'string' ? warning : warning.title;
-    const message = typeof warning === 'string' ? warning : warning.message;
     return (
       <div>
-        <div>{title}</div>
-        <div>{typeof message === 'string' ? message : message}</div>
-        {'action' in stepStatusInfo && stepStatusInfo.action && (
-          <button onClick={stepStatusInfo.action.onClick}>{stepStatusInfo.action.label}</button>
-        )}
+        {stepStatusInfo.warning.map((warning, i) => {
+          const title = typeof warning === 'string' ? warning : warning.title;
+          const message = typeof warning === 'string' ? warning : warning.message;
+          const action = typeof warning === 'string' ? undefined : warning.action;
+          return (
+            <div key={i}>
+              <div>{title}</div>
+              <div>{message}</div>
+              {action && <button onClick={action.onClick}>{action.label}</button>}
+            </div>
+          );
+        })}
       </div>
     );
   }
@@ -712,6 +716,7 @@ describe('BootstrapStep', () => {
       status: 'False',
       reason: 'PathConflict',
       message: 'repository path conflicts with existing repository: other-repo',
+      lastTransitionTime: '2024-01-01T00:00:00Z',
     };
 
     it('should show loading state, not the warning, while resource stats are still loading', async () => {
@@ -793,6 +798,46 @@ describe('BootstrapStep', () => {
           'This repository shares a url, branch, and path combination with another repository. There will be sync errors because resources can only be managed by 1 repository.'
         )
       ).toBeInTheDocument();
+    });
+
+    it('should show both the path conflict and quota warnings at once when both apply', async () => {
+      mockUseRepositoryStatus.mockReturnValue({
+        isReady: true,
+        isLoading: false,
+        isFetching: false,
+        hasError: false,
+        isHealthy: true,
+        isUnhealthy: false,
+        isReconciled: true,
+        healthMessage: undefined,
+        healthStatusNotReady: false,
+        fieldErrors: undefined,
+        quota: { maxResourcesPerRepository: 20 },
+        conditions: [pathConflictCondition],
+        refetch: jest.fn(),
+      });
+
+      mockUseResourceStats.mockReturnValue({
+        managedCount: 25,
+        unmanagedCount: 0,
+        fileCount: 25,
+        resourceCount: 25,
+        resourceCountString: '25 resources',
+        fileCountString: '25 files',
+        isLoading: false,
+        requiresMigration: false,
+        shouldSkipSync: false,
+      });
+
+      setup();
+
+      // Neither warning replaces the other - both are shown.
+      expect(
+        await screen.findByText(
+          'This repository shares a url, branch, and path combination with another repository. There will be sync errors because resources can only be managed by 1 repository.'
+        )
+      ).toBeInTheDocument();
+      expect(screen.getByText('Resource limit may be exceeded')).toBeInTheDocument();
     });
   });
 

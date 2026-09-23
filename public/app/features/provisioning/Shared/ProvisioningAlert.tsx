@@ -13,9 +13,16 @@ export interface AlertAction {
   external?: boolean;
 }
 
+// A warning entry may carry its own action (e.g. one warning links to an upgrade page,
+// another has no action at all), unlike error/success which are singular and share the
+// top-level action prop.
+export interface WarningInfo extends StatusInfo {
+  action?: AlertAction;
+}
+
 interface ProvisioningAlertProps {
   error?: string | StatusInfo;
-  warning?: string | StatusInfo;
+  warning?: Array<string | WarningInfo>;
   success?: string | StatusInfo;
   action?: AlertAction;
 }
@@ -46,52 +53,63 @@ const getMessage = (alert: string | StatusInfo) => {
   return alert.message;
 };
 
-export function ProvisioningAlert({ error, warning, success, action }: ProvisioningAlertProps) {
-  const alertData = error || warning || success;
-  const type = error ? 'error' : warning ? 'warning' : 'success';
-  const severity = type === 'success' ? 'success' : type;
-
-  if (!alertData) {
-    return null;
+const getButtonContent = (action?: AlertAction) => {
+  if (!action) {
+    return undefined;
   }
+  if (action.href && action.external) {
+    return (
+      <Stack alignItems="center">
+        {action.label}
+        <Icon name="external-link-alt" />
+      </Stack>
+    );
+  }
+  return <span>{action.label}</span>;
+};
 
-  const message = getMessage(alertData);
+const getOnRemove = (action?: AlertAction) => {
+  if (!action) {
+    return undefined;
+  }
+  // Save href to a var for the types to resolve properly
+  const href = action.href;
+  if (href) {
+    return () => window.open(textUtil.sanitizeUrl(href), '_blank');
+  }
+  return action.onClick;
+};
 
-  const getButtonContent = () => {
-    if (!action) {
-      return undefined;
-    }
-    if (action.href && action.external) {
-      return (
-        <Stack alignItems="center">
-          {action.label}
-          <Icon name="external-link-alt" />
-        </Stack>
-      );
-    }
-    return <span>{action.label}</span>;
-  };
-
-  const getOnRemove = () => {
-    if (!action) {
-      return undefined;
-    }
-    // Save href to a var for the types to resolve properly
-    const href = action.href;
-    if (href) {
-      return () => window.open(textUtil.sanitizeUrl(href), '_blank');
-    }
-    return action.onClick;
-  };
+export function ProvisioningAlert({ error, warning, success, action }: ProvisioningAlertProps) {
+  const alertData = error || success;
+  const type = error ? 'error' : 'success';
 
   return (
-    <Alert
-      severity={severity}
-      title={getTitle(alertData, type)}
-      buttonContent={action ? getButtonContent() : undefined}
-      onRemove={getOnRemove()}
-    >
-      {message}
-    </Alert>
+    <>
+      {alertData && (
+        <Alert
+          severity={type}
+          title={getTitle(alertData, type)}
+          buttonContent={getButtonContent(action)}
+          onRemove={getOnRemove(action)}
+        >
+          {getMessage(alertData)}
+        </Alert>
+      )}
+      {warning?.map((w, i) => {
+        const warningAction = typeof w === 'string' ? undefined : w.action;
+        return (
+          <Alert
+            key={i}
+            severity="warning"
+            title={getTitle(w, 'warning')}
+            buttonContent={getButtonContent(warningAction)}
+            onRemove={getOnRemove(warningAction)}
+          >
+            {getMessage(w)}
+          </Alert>
+        );
+      })}
+    </>
   );
 }

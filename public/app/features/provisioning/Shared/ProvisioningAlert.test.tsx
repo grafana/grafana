@@ -27,9 +27,35 @@ describe('ProvisioningAlert', () => {
   });
 
   it('should render warning alert', () => {
-    render(<ProvisioningAlert warning="This is a warning" />, { wrapper: EmptyWrapper });
+    render(<ProvisioningAlert warning={['This is a warning']} />, { wrapper: EmptyWrapper });
     expect(screen.getByRole('alert')).toBeInTheDocument();
     expect(screen.getByText('This is a warning')).toBeInTheDocument();
+  });
+
+  it('should render multiple warning alerts, each with its own action', async () => {
+    const onClick = jest.fn();
+    const { user } = render(
+      <ProvisioningAlert
+        warning={[
+          { title: 'First warning', message: 'First message' },
+          { title: 'Second warning', message: 'Second message', action: { label: 'Fix it', onClick } },
+        ]}
+      />,
+      { wrapper: EmptyWrapper }
+    );
+
+    expect(screen.getAllByRole('alert')).toHaveLength(2);
+    expect(screen.getByText('First warning')).toBeInTheDocument();
+    expect(screen.getByText('First message')).toBeInTheDocument();
+    expect(screen.getByText('Second warning')).toBeInTheDocument();
+    expect(screen.getByText('Second message')).toBeInTheDocument();
+
+    // Only the second warning has an action, so there's exactly one button (the Alert
+    // component's own close button, labeled by its action text).
+    const button = screen.getByRole('button');
+    expect(screen.getByText('Fix it')).toBeInTheDocument();
+    await user.click(button);
+    expect(onClick).toHaveBeenCalledTimes(1);
   });
 
   it('should render success alert', () => {

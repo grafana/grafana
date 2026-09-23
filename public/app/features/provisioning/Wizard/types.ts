@@ -1,6 +1,6 @@
 import { type RepositorySpec, type SyncOptions } from 'app/api/clients/provisioning/v0alpha1';
 
-import { type AlertAction } from '../Shared/ProvisioningAlert';
+import { type AlertAction, type WarningInfo } from '../Shared/ProvisioningAlert';
 import { type RepositoryFormData, type StatusInfo } from '../types';
 
 export type WizardStep = 'authType' | 'githubApp' | 'connection' | 'bootstrap' | 'finish' | 'synchronize';
@@ -53,8 +53,13 @@ export const RepoTypeDisplay: { [key in RepoType]: string } = {
 export type StepStatusInfo =
   | { status: 'idle' | 'running' }
   | { status: 'success'; success?: string | StatusInfo }
-  | { status: 'error'; error: string | StatusInfo; warning?: string | StatusInfo; action?: AlertAction }
-  | { status: 'warning'; warning: string | StatusInfo; action?: AlertAction };
+  | {
+      status: 'error';
+      error: string | StatusInfo;
+      warning?: Array<string | WarningInfo>;
+      action?: AlertAction;
+    }
+  | { status: 'warning'; warning: Array<string | WarningInfo> };
 
 export type ConnectionCreationResult = { success: true; connectionName: string } | { success: false; error: string };
 
