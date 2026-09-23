@@ -18,6 +18,7 @@ import (
 	"testing/synctest"
 	"time"
 
+	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -292,7 +293,7 @@ func (c *capturingRoundTripper) RoundTrip(req *http.Request) (*http.Response, er
 func TestAggregateTokenWrapper_HeaderPerTarget(t *testing.T) {
 	t.Run("cloud_app_platform_apiserver uses Authorization", func(t *testing.T) {
 		captured := &capturingRoundTripper{}
-		wrapped := aggregateTokenWrapper("cloud_app_platform_apiserver", &stubTokenExchanger{}, "aud")(captured)
+		wrapped := aggregateTokenWrapper("cloud_app_platform_apiserver", authnlib.NewStaticTokenExchanger("exchanged-token"), "aud")(captured)
 
 		resp, err := wrapped.RoundTrip(httptest.NewRequest(http.MethodGet, "https://cap.invalid/apis", nil))
 		require.NoError(t, err)
@@ -304,7 +305,7 @@ func TestAggregateTokenWrapper_HeaderPerTarget(t *testing.T) {
 
 	t.Run("baas_apiserver uses X-Access-Token", func(t *testing.T) {
 		captured := &capturingRoundTripper{}
-		wrapped := aggregateTokenWrapper("baas_apiserver", &stubTokenExchanger{}, "aud")(captured)
+		wrapped := aggregateTokenWrapper("baas_apiserver", authnlib.NewStaticTokenExchanger("exchanged-token"), "aud")(captured)
 
 		resp, err := wrapped.RoundTrip(httptest.NewRequest(http.MethodGet, "https://baas.invalid/apis", nil))
 		require.NoError(t, err)
