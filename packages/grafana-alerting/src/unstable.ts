@@ -31,6 +31,8 @@ export {
   RecipientPicker,
   type RecipientMode,
   type RecipientPickerProps,
+  asSimplifiedRouting,
+  asNamedRoutingTree,
 } from './grafana/notificationSettings/components/RecipientPicker/RecipientPicker';
 
 // Rules

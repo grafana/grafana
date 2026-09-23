@@ -3,7 +3,7 @@ import { setupMockServer } from '@grafana/test-utils/server';
 
 import { render, screen } from '../../../../../tests/test-utils';
 
-import { RecipientPicker } from './RecipientPicker';
+import { RecipientPicker, asNamedRoutingTree, asSimplifiedRouting } from './RecipientPicker';
 import {
   contactPointsErrorScenario,
   contactPointsListScenario,
@@ -111,5 +111,35 @@ describe('RecipientPicker', () => {
     await user.click(await screen.findByRole('button', { name: /reset to default policy/i }));
 
     expect(onChange).toHaveBeenCalledWith(null);
+  });
+});
+
+describe('asSimplifiedRouting', () => {
+  it('returns the value when it has a receiver', () => {
+    const value = { type: 'SimplifiedRouting' as const, receiver: 'slack-oncall' };
+    expect(asSimplifiedRouting(value)).toBe(value);
+  });
+
+  it('returns null for a named-routing-tree value', () => {
+    expect(asSimplifiedRouting({ type: 'NamedRoutingTree' as const, routingTree: 'deployment-tools' })).toBeNull();
+  });
+
+  it('returns null for null', () => {
+    expect(asSimplifiedRouting(null)).toBeNull();
+  });
+});
+
+describe('asNamedRoutingTree', () => {
+  it('returns the value when it has a routingTree', () => {
+    const value = { type: 'NamedRoutingTree' as const, routingTree: 'deployment-tools' };
+    expect(asNamedRoutingTree(value)).toBe(value);
+  });
+
+  it('returns null for a simplified-routing value', () => {
+    expect(asNamedRoutingTree({ type: 'SimplifiedRouting' as const, receiver: 'slack-oncall' })).toBeNull();
+  });
+
+  it('returns null for null', () => {
+    expect(asNamedRoutingTree(null)).toBeNull();
   });
 });

@@ -32,15 +32,16 @@ export interface RecipientPickerProps {
 }
 
 // `type` isn't a true discriminant here — both branches share the same AlertRuleNotificationSettingsType
-// union — so narrow on `receiver`/`routingTree` instead, each unique to one branch.
-function asSimplifiedRouting(value: AlertRuleNotificationSettings | null): AlertRuleSimplifiedRouting | null {
+// union — so narrow on `receiver`/`routingTree` instead, each unique to one branch. Exported so
+// consumers don't have to rediscover and reimplement this narrowing themselves.
+export function asSimplifiedRouting(value: AlertRuleNotificationSettings | null): AlertRuleSimplifiedRouting | null {
   if (value !== null && 'receiver' in value) {
     return value;
   }
   return null;
 }
 
-function asNamedRoutingTree(value: AlertRuleNotificationSettings | null): AlertRuleNamedRoutingTree | null {
+export function asNamedRoutingTree(value: AlertRuleNotificationSettings | null): AlertRuleNamedRoutingTree | null {
   if (value !== null && 'routingTree' in value) {
     return value;
   }
