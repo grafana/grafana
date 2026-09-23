@@ -13,7 +13,9 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -21,12 +23,27 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-func TestAuthorizeResource_NewDashboardPreview(t *testing.T) {
+func TestAuthorizeResource_NewResourcePreview(t *testing.T) {
+	for _, gvr := range []schema.GroupVersionResource{
+		DashboardResource,
+		DashboardResourceV2beta1,
+		dashboard.LibraryPanelResourceInfo.GroupVersionResource(),
+		FolderResource,
+		{Group: "example.grafana.app", Version: "v1alpha1", Resource: "widgets"},
+	} {
+		t.Run(gvr.Resource+"/"+gvr.Version, func(t *testing.T) {
+			testAuthorizeNewResourcePreview(t, gvr)
+		})
+	}
+}
+
+func testAuthorizeNewResourcePreview(t *testing.T, gvr schema.GroupVersionResource) {
+	t.Helper()
 	const repoName = "preview-repo"
 	teamID := ParseFolder("team/", repoName).ID
 	newID := ParseFolder("team/new/", repoName).ID
 	deepID := ParseFolder("team/new/deep/", repoName).ID
-	denied := apierrors.NewForbidden(DashboardResource.GroupResource(), "test-dashboard", errors.New("no read permission"))
+	denied := apierrors.NewForbidden(gvr.GroupResource(), "test-resource", errors.New("no read permission"))
 	lookupErr := errors.New("folder lookup failed")
 	readErr := errors.New("repository unavailable")
 	metadata, err := json.Marshal(NewFolderManifest("configured-folder", "New", FolderKind))
@@ -55,7 +72,7 @@ func TestAuthorizeResource_NewDashboardPreview(t *testing.T) {
 			wantProbes: []string{newID, teamID}, wantChecks: []string{newID, teamID},
 		},
 		{
-			name: "skips several missing folders", path: "team/new/deep/dashboard.json", destination: deepID,
+			name: "skips several missing folders", path: "team/new/deep/resource.json", destination: deepID,
 			existing: []string{teamID}, allowed: teamID,
 			wantProbes: []string{deepID, newID, teamID}, wantChecks: []string{deepID, teamID},
 		},
@@ -135,7 +152,7 @@ func TestAuthorizeResource_NewDashboardPreview(t *testing.T) {
 			wantProbes: []string{"configured-folder", teamID, repoName}, wantChecks: []string{"configured-folder"}, wantForbidden: true,
 		},
 		{
-			name: "allowed missing repository root is denied", path: "dashboard.json", destination: repoName, allowed: repoName,
+			name: "allowed missing repository root is denied", path: "resource.json", destination: repoName, allowed: repoName,
 			wantProbes: []string{repoName}, wantChecks: []string{repoName}, wantForbidden: true,
 		},
 		{
@@ -196,11 +213,12 @@ func TestAuthorizeResource_NewDashboardPreview(t *testing.T) {
 				destination = newID
 			}
 			parsed := makeAuthorizeResourceParsed(t, destination, "", false)
+			parsed.Obj.SetName("test-resource")
 			parsed.FolderScoped = true
-			parsed.GVR.Version = "v2beta1"
+			parsed.GVR = gvr
 			parsed.Info = &repository.FileInfo{Path: tt.path, Ref: "feature-branch"}
 			if parsed.Info.Path == "" {
-				parsed.Info.Path = "team/new/dashboard.json"
+				parsed.Info.Path = "team/new/resource.json"
 			}
 			original := parsed.Obj.DeepCopy()
 			reader := repository.NewMockReaderWriter(t)
@@ -253,8 +271,12 @@ func TestAuthorizeResource_NewDashboardPreview(t *testing.T) {
 				if id == tt.allowed || id == tt.alsoAllowed {
 					accessErr = nil
 				}
+				name := parsed.Obj.GetName()
+				if gvr.GroupResource() == FolderResource.GroupResource() {
+					name = id
+				}
 				access.On("Check", ctx, authlib.CheckRequest{
-					Group: parsed.GVR.Group, Resource: parsed.GVR.Resource, Name: parsed.Obj.GetName(), Verb: utils.VerbGet,
+					Group: parsed.GVR.Group, Resource: parsed.GVR.Resource, Name: name, Verb: utils.VerbGet,
 				}, id).Return(accessErr).Run(func(args mock.Arguments) {
 					checks = append(checks, args.String(2))
 					id, err := identity.GetRequester(args.Get(0).(context.Context))
@@ -280,44 +302,67 @@ func TestAuthorizeResource_NewDashboardPreview(t *testing.T) {
 }
 
 func TestAuthorizeResource_PreviewFallbackEligibility(t *testing.T) {
-	denied := apierrors.NewForbidden(DashboardResource.GroupResource(), "test-dashboard", errors.New("no read permission"))
+	for _, gvr := range []schema.GroupVersionResource{
+		DashboardResource,
+		dashboard.LibraryPanelResourceInfo.GroupVersionResource(),
+		FolderResource,
+		{Group: "example.grafana.app", Version: "v1alpha1", Resource: "widgets"},
+	} {
+		t.Run(gvr.Resource, func(t *testing.T) {
+			testPreviewFallbackEligibility(t, gvr)
+		})
+	}
+}
+
+func testPreviewFallbackEligibility(t *testing.T, gvr schema.GroupVersionResource) {
+	t.Helper()
+	denied := apierrors.NewForbidden(gvr.GroupResource(), "test-resource", errors.New("no read permission"))
 	tests := []struct {
-		name   string
-		verb   string
-		result error
-		modify func(*ParsedResource)
+		name     string
+		verb     string
+		eligible bool
+		result   error
+		modify   func(*ParsedResource)
 	}{
-		{name: "successful existing dashboard check", verb: utils.VerbGet, modify: func(p *ParsedResource) { p.Existing = p.Obj.DeepCopy() }},
-		{name: "non-forbidden failure", verb: utils.VerbGet, result: assert.AnError},
-		{name: "existing dashboard", verb: utils.VerbGet, result: denied, modify: func(p *ParsedResource) { p.Existing = p.Obj.DeepCopy() }},
+		{name: "successful existing resource check", verb: utils.VerbGet, modify: func(p *ParsedResource) { p.Existing = p.Obj.DeepCopy() }},
+		{name: "non-forbidden failure", verb: utils.VerbGet, eligible: true, result: assert.AnError},
+		{name: "existing resource", verb: utils.VerbGet, result: denied, modify: func(p *ParsedResource) { p.Existing = p.Obj.DeepCopy() }},
 		{name: "create", verb: utils.VerbCreate, result: denied},
 		{name: "update", verb: utils.VerbUpdate, result: denied},
 		{name: "delete", verb: utils.VerbDelete, result: denied},
-		{name: "other group", verb: utils.VerbGet, result: denied, modify: func(p *ParsedResource) { p.GVR.Group = "other.grafana.app" }},
-		{name: "other resource in dashboard group", verb: utils.VerbGet, result: denied, modify: func(p *ParsedResource) { p.GVR.Resource = "librarypanels" }},
 		{name: "not folder scoped", verb: utils.VerbGet, result: denied, modify: func(p *ParsedResource) { p.FolderScoped = false }},
+		{name: "successful org-scoped preview", verb: utils.VerbGet, modify: func(p *ParsedResource) {
+			p.FolderScoped = false
+			p.Meta.SetFolder("")
+		}},
 		{name: "missing source", verb: utils.VerbGet, result: denied, modify: func(p *ParsedResource) { p.Info = nil }},
 		{name: "empty source path", verb: utils.VerbGet, result: denied, modify: func(p *ParsedResource) { p.Info.Path = "" }},
-		{name: "traversal", verb: utils.VerbGet, result: denied, modify: func(p *ParsedResource) { p.Info.Path = "../dashboard.json" }},
-		{name: "absolute path", verb: utils.VerbGet, result: denied, modify: func(p *ParsedResource) { p.Info.Path = "/dashboard.json" }},
+		{name: "traversal", verb: utils.VerbGet, result: denied, modify: func(p *ParsedResource) { p.Info.Path = "../resource.json" }},
+		{name: "absolute path", verb: utils.VerbGet, result: denied, modify: func(p *ParsedResource) { p.Info.Path = "/resource.json" }},
 		{name: "directory", verb: utils.VerbGet, result: denied, modify: func(p *ParsedResource) { p.Info.Path = "team/new/" }},
 		{name: "missing destination", verb: utils.VerbGet, result: denied, modify: func(p *ParsedResource) { p.Meta.SetFolder("") }},
+		{name: "successful root preview", verb: utils.VerbGet, modify: func(p *ParsedResource) { p.Meta.SetFolder("") }},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			obj := &unstructured.Unstructured{}
-			obj.SetName("test-dashboard")
+			obj.SetName("test-resource")
 			meta, err := utils.MetaAccessor(obj)
 			require.NoError(t, err)
 			meta.SetFolder("destination")
-			parsed := &ParsedResource{Obj: obj, Meta: meta, GVR: DashboardResource, FolderScoped: true,
-				Info: &repository.FileInfo{Path: "team/new/dashboard.json"}}
+			parsed := &ParsedResource{Obj: obj, Meta: meta, GVR: gvr, FolderScoped: true,
+				Info: &repository.FileInfo{Path: "team/new/resource.json"}}
 			if tt.modify != nil {
 				tt.modify(parsed)
 			}
+			assert.Equal(t, tt.eligible, isNewResourcePreview(parsed, tt.verb))
+			name := parsed.Obj.GetName()
+			if tt.eligible && gvr.GroupResource() == FolderResource.GroupResource() {
+				name = parsed.Meta.GetFolder()
+			}
 			access := auth.NewMockAccessChecker(t)
 			access.On("Check", mock.Anything, authlib.CheckRequest{
-				Group: parsed.GVR.Group, Resource: parsed.GVR.Resource, Name: parsed.Obj.GetName(), Verb: tt.verb,
+				Group: parsed.GVR.Group, Resource: parsed.GVR.Resource, Name: name, Verb: tt.verb,
 			}, parsed.Meta.GetFolder()).Return(tt.result).Once()
 			clients := NewMockResourceClients(t)
 			reader := repository.NewMockReaderWriter(t)
