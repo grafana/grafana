@@ -509,7 +509,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
   /**
    * This should be called when state of the DashboardScene got swapped
-   * and selected element or code pane need to refreshed. In case the change
+   * and selected element or code pane needs to be refreshed. In case the change
    * in DashboardScene means the element no longer exists - the sidebar is closed
    */
   public refreshAfterRebuild() {
