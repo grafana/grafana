@@ -14,8 +14,7 @@ var oboExchangerLog = log.New("obo-exchanger")
 
 // oboTokenExchanger decorates a TokenExchanger to inject the caller's access
 // token as SubjectToken, producing an OBO token for cross-pod storage calls.
-// It is only used for namespaced (non-cluster-scoped) resources; cluster-scoped
-// resources use a separate service-identity client that skips OBO entirely.
+// Missing caller credentials must fail rather than fall back to service identity.
 type oboTokenExchanger struct {
 	delegate authnlib.TokenExchanger
 }

@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
+	"time"
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/prometheus/client_golang/prometheus"
@@ -22,8 +23,14 @@ func NewRemoteResourceClient(cfg *setting.Cfg, tracer trace.Tracer, reg promethe
 	allowInsecure := cfg.Env == setting.Dev
 	var exchangeOpts []authnlib.ExchangeClientOpts
 	if allowInsecure {
+		// Keep connection timeouts and pooling when overriding certificate verification.
+		transport := http.DefaultTransport.(*http.Transport).Clone()
+		transport.TLSClientConfig = &tls.Config{
+			MinVersion:         tls.VersionTLS13,
+			InsecureSkipVerify: true, // #nosec G402 -- development mode only.
+		}
 		exchangeOpts = append(exchangeOpts, authnlib.WithHTTPClient(
-			&http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}},
+			&http.Client{Transport: transport, Timeout: 5 * time.Second},
 		))
 	}
 	baseExchanger, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
