@@ -9,11 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type RuleUsageReader interface {
-	rulestore.RuleCounter
-}
-
-func RegisterQuotas(cfg *setting.Cfg, qs quota.Service, rules RuleUsageReader) error {
+func RegisterQuotas(cfg *setting.Cfg, qs quota.Service, rules rulestore.RuleCounter) error {
 	defaultLimits, err := readQuotaConfig(cfg)
 	if err != nil {
 		return err
@@ -26,7 +22,7 @@ func RegisterQuotas(cfg *setting.Cfg, qs quota.Service, rules RuleUsageReader) e
 	})
 }
 
-func UsageReporter(rules RuleUsageReader) quota.UsageReporterFunc {
+func UsageReporter(rules rulestore.RuleCounter) quota.UsageReporterFunc {
 	return func(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
 		u := &quota.Map{}
 

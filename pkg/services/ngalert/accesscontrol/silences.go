@@ -80,16 +80,12 @@ var (
 	}
 )
 
-type RuleUIDToNamespaceStore interface {
-	rulestore.RuleNamespaceLookup
-}
-
 type SilenceService struct {
 	genericService
-	store RuleUIDToNamespaceStore
+	store rulestore.RuleNamespaceLookup
 }
 
-func NewSilenceService(ac ac.AccessControl, store RuleUIDToNamespaceStore) *SilenceService {
+func NewSilenceService(ac ac.AccessControl, store rulestore.RuleNamespaceLookup) *SilenceService {
 	return &SilenceService{
 		genericService: genericService{
 			ac: ac,

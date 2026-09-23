@@ -55,9 +55,9 @@ func setupAMTest(t *testing.T) *alertmanager {
 		Logger:         l,
 	}
 	s := CompositeAlertingStore{
-		AlertingStore:            dbStore,
-		ImageStore:               dbStore,
-		ContactPointRoutingStore: rulestore.SetupStoreForTesting(t, sqlStore),
+		AlertingStore:             dbStore,
+		ImageStore:                dbStore,
+		ContactPointRoutingReader: rulestore.SetupStoreForTesting(t, sqlStore),
 	}
 
 	kvStore := fakes.NewFakeKVStore(t)

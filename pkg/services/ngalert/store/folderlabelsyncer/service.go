@@ -43,13 +43,6 @@ const HasRulesLabel = "alerting.grafana.app/has-rules"
 // started together drift apart rather than all walking every folder at the same moment.
 const fullSyncJitterFactor = 0.1
 
-// syncerStore is the rule-side dependency, satisfied by *rules.RuleStore.
-//
-// Source: pkg/services/ngalert/store/rules/persist.go (FolderRuleCounter)
-type syncerStore interface {
-	rules.FolderRuleCounter
-}
-
 // syncerOrgStore lists orgs to walk during a full sync. Separate from syncerStore because orgs are
 // still owned by *store.DBstore, not by the rule store.
 //
@@ -70,7 +63,7 @@ func serviceIdentity(ctx context.Context, orgID int64) (context.Context, identit
 }
 
 type Service struct {
-	store            syncerStore
+	store            rules.FolderRuleCounter
 	orgs             syncerOrgStore
 	clients          resource.ClientGenerator
 	namespacer       request.NamespaceMapper
@@ -91,7 +84,7 @@ type Service struct {
 	folders  folderPatcher
 }
 
-func NewService(cfg *setting.Cfg, b bus.Bus, store syncerStore, orgs syncerOrgStore, clients resource.ClientGenerator, m *metrics.FolderLabelSyncer) *Service {
+func NewService(cfg *setting.Cfg, b bus.Bus, store rules.FolderRuleCounter, orgs syncerOrgStore, clients resource.ClientGenerator, m *metrics.FolderLabelSyncer) *Service {
 	s := &Service{
 		store:            store,
 		orgs:             orgs,

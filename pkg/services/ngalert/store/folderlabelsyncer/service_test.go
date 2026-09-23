@@ -147,7 +147,7 @@ func (f *fakeFolderClient) ListAll(_ context.Context, ns string, opts resource.L
 // newTestService builds a Service with the folder client already injected, bypassing the lazy
 // generator that needs a live apiserver.
 func newTestService(store interface {
-	syncerStore
+	rulestore.FolderRuleCounter
 	syncerOrgStore
 }, folders folderPatcher) *Service {
 	return &Service{

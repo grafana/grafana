@@ -27,7 +27,7 @@ type SilenceService struct {
 	xact           transactionManager
 	log            log.Logger
 	store          SilenceStore
-	ruleStore      RuleStore
+	ruleStore      rulestore.RuleLister
 	ruleAuthz      RuleAccessControlService
 	limitsProvider LimitsProvider
 }
@@ -55,16 +55,12 @@ type SilenceStore interface {
 	DeleteSilence(ctx context.Context, orgID int64, id string) error
 }
 
-type RuleStore interface {
-	rulestore.RuleLister
-}
-
 func NewSilenceService(
 	authz SilenceAccessControlService,
 	xact transactionManager,
 	log log.Logger,
 	store SilenceStore,
-	ruleStore RuleStore,
+	ruleStore rulestore.RuleLister,
 	ruleAuthz RuleAccessControlService,
 	limitsProvider LimitsProvider,
 ) *SilenceService {

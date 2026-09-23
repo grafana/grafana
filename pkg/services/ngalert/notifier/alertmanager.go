@@ -18,6 +18,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -36,12 +37,8 @@ const (
 type AlertingStore interface {
 	store.AlertingStore
 	store.ImageStore
-	autogenRuleStore
+	rulestore.ContactPointRoutingReader
 }
-
-// ContactPointRoutingStore is the rule-store slice AlertingStore needs, exported so that callers
-// outside this package can compose a CompositeAlertingStore.
-type ContactPointRoutingStore = autogenRuleStore
 
 // CompositeAlertingStore satisfies AlertingStore by composing the two stores it now spans: the
 // Alertmanager configuration and images come from *store.DBstore, while ListContactPointRoutings
@@ -50,7 +47,7 @@ type ContactPointRoutingStore = autogenRuleStore
 type CompositeAlertingStore struct {
 	store.AlertingStore
 	store.ImageStore
-	ContactPointRoutingStore
+	rulestore.ContactPointRoutingReader
 }
 
 type stateStore interface {

@@ -231,9 +231,9 @@ func (ng *AlertNG) newRuleSequenceStore() schedule.RuleSequenceStore {
 
 func (ng *AlertNG) alertmanagerStore() notifier.AlertingStore {
 	return notifier.CompositeAlertingStore{
-		AlertingStore:            ng.store,
-		ImageStore:               ng.store,
-		ContactPointRoutingStore: ng.ruleStore,
+		AlertingStore:             ng.store,
+		ImageStore:                ng.store,
+		ContactPointRoutingReader: ng.ruleStore,
 	}
 }
 

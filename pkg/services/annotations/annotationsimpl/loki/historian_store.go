@@ -41,10 +41,6 @@ var (
 	ErrLokiStoreNotFound = errutil.NotFound("annotations.loki.notFound")
 )
 
-type RuleStore interface {
-	rulestore.RuleByIDReader
-}
-
 type lokiQueryClient interface {
 	RangeQuery(ctx context.Context, query string, start, end, limit int64) (lokiclient.QueryRes, error)
 	MaxQuerySize() int
@@ -55,10 +51,10 @@ type LokiHistorianStore struct {
 	client    lokiQueryClient
 	db        db.DB
 	log       log.Logger
-	ruleStore RuleStore
+	ruleStore rulestore.RuleByIDReader
 }
 
-func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, db db.DB, ruleStore RuleStore, log log.Logger, tracer tracing.Tracer, reg prometheus.Registerer) *LokiHistorianStore {
+func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, db db.DB, ruleStore rulestore.RuleByIDReader, log log.Logger, tracer tracing.Tracer, reg prometheus.Registerer) *LokiHistorianStore {
 	if !useStore(cfg) {
 		return nil
 	}
