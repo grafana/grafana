@@ -1,5 +1,5 @@
 /* eslint-disable @grafana/i18n/no-untranslated-strings */
-import { type AppPluginConfig, PluginExtensionExposedComponents } from '@grafana/data';
+import { type AppPluginConfig, PluginExtensionExposedComponents, PluginExtensionPoints } from '@grafana/data';
 import { getAppPluginMetas, getCachedPromise } from '@grafana/runtime/internal';
 import CentralAlertHistorySceneExposedComponent from 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistorySceneExposedComponent';
 import { CreateAlertFromPanelExposedComponentLazy } from 'app/features/alerting/unified/extensions/CreateAlertFromPanelExposedComponentLazy';
@@ -7,6 +7,8 @@ import { AddToDashboardFormExposedComponent } from 'app/features/dashboard-scene
 import { OpenQueryLibraryExposedComponent } from 'app/features/explore/QueryLibrary/OpenQueryLibraryExposedComponent';
 import { PrometheusQueryResultsContainer } from 'app/features/explore/RawPrometheus/PrometheusQueryResultsContainer';
 import { NotebookViewLazy } from 'app/features/notebook/embed/NotebookViewLazy';
+import { NotebookCaptureSidebarLazy } from 'app/features/notebook/sidebar/NotebookCaptureSidebarLazy';
+import { NOTEBOOK_CAPTURE_SIDEBAR_TITLE } from 'app/features/notebook/sidebar/getNotebookCaptureSidebarExtension';
 
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
 
@@ -24,11 +26,27 @@ export function initRegistries(apps: AppPluginConfig[]): PluginExtensionRegistri
   return { addedComponentsRegistry, addedFunctionsRegistry, addedLinksRegistry, exposedComponentsRegistry };
 }
 
-function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry }: PluginExtensionRegistries) {
+function registerCoreExtensions({
+  addedComponentsRegistry,
+  addedLinksRegistry,
+  exposedComponentsRegistry,
+}: PluginExtensionRegistries) {
   // Registering core extension links
   addedLinksRegistry.register({
     pluginId: 'grafana',
     configs: getCoreExtensionConfigurations(),
+  });
+
+  addedComponentsRegistry.register({
+    pluginId: 'grafana',
+    configs: [
+      {
+        targets: [PluginExtensionPoints.ExtensionSidebar],
+        title: NOTEBOOK_CAPTURE_SIDEBAR_TITLE,
+        description: 'Capture notes in a notebook without leaving your current view',
+        component: NotebookCaptureSidebarLazy,
+      },
+    ],
   });
 
   // Registering core exposed components

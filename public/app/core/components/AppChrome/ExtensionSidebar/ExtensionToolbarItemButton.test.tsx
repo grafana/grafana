@@ -48,6 +48,7 @@ describe('ExtensionToolbarItemButton', () => {
   });
 
   it.each([
+    ['grafana', 'book'],
     ['grafana-grafanadocsplugin-app', 'book'],
     ['grafana-pathfinder-app', 'book'],
     ['grafana-grotfood-app', 'gf-grotfood'],

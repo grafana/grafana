@@ -107,6 +107,7 @@ export const {
   // tags itself into the same namespace so create/delete refetch it too.
   useListNotebookQuery,
   useCreateNotebookMutation,
+  useGetNotebookQuery,
   // Lazy because exporting a list row has to fetch that one notebook's spec on demand rather than
   // every row's up front.
   useLazyGetNotebookQuery,
