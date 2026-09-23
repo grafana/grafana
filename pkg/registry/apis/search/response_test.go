@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/proto"
 
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -65,12 +64,12 @@ func TestSearchResults_MapsItemsAndFields(t *testing.T) {
 		{"__name": "dash-b", "title": "B dashboard"},
 	}, nil)
 
-	out, err := searchResults(&resourcepb.ResourceSearchResponse{
+	out, err := ToSearchResults(&resourcepb.ResourceSearchResponse{
 		ResultFormat:   resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
 		Results:        table,
 		TotalHits:      2,
 		TotalHitsExact: true,
-	}, testKind, 10)
+	}, testKind.gvr(), testKind.kind, 10)
 	require.NoError(t, err)
 
 	require.Len(t, out.Items, 2)
@@ -151,7 +150,7 @@ func TestSearchResults_MapsFieldValueResults(t *testing.T) {
 		TotalHitsExact: true,
 	}
 
-	out, err := searchResults(response, testKind, 2)
+	out, err := ToSearchResults(response, testKind.gvr(), testKind.kind, 2)
 	require.NoError(t, err)
 	require.Len(t, out.Items, 2)
 
@@ -243,71 +242,6 @@ func TestSearchResults_ContinueToken(t *testing.T) {
 	out, err = searchResults(&resourcepb.ResourceSearchResponse{Results: noSort}, testKind, 2)
 	require.NoError(t, err)
 	assert.Empty(t, out.Metadata.Continue)
-}
-
-func TestResults_ContinuationAcrossFormats(t *testing.T) {
-	for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
-		resourcepb.ResourceSearchRequest_UNSPECIFIED,
-		resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
-		resourcepb.ResourceSearchRequest_FIELD_VALUES,
-	} {
-		t.Run(format.String(), func(t *testing.T) {
-			for _, tc := range []struct {
-				name     string
-				rows     int
-				exact    bool
-				explicit []string
-				want     []string
-			}{
-				{name: "empty bounded scan", explicit: []string{"last-examined", "10"}, want: []string{"last-examined", "10"}},
-				{name: "partial bounded scan", rows: 1, explicit: []string{"last-examined"}, want: []string{"last-examined"}},
-				{name: "explicit cursor overrides full page", rows: 2, explicit: []string{"last-examined"}, want: []string{"last-examined"}},
-				{name: "explicit cursor overrides exact count", rows: 1, exact: true, explicit: []string{"last-examined"}, want: []string{"last-examined"}},
-				{name: "old server full page", rows: 2, want: []string{"last-returned"}},
-				{name: "old server partial scan", rows: 1, want: []string{"last-returned"}},
-				{name: "old server exhausted page", rows: 1, exact: true},
-				{name: "old server empty page"},
-				{name: "empty cursor retains fallback", rows: 2, explicit: []string{}, want: []string{"last-returned"}},
-			} {
-				t.Run(tc.name, func(t *testing.T) {
-					res := &resourcepb.ResourceSearchResponse{
-						ResultFormat: format, TotalHitsExact: tc.exact, NextSearchAfter: tc.explicit,
-					}
-					if format != resourcepb.ResourceSearchRequest_FIELD_VALUES {
-						// This legacy list token must not acquire search semantics.
-						res.Results = &resourcepb.ResourceTable{NextPageToken: "not-a-search-cursor"}
-					}
-					for i := 0; i < tc.rows; i++ {
-						key := &resourcepb.ResourceKey{Name: "hit"}
-						if format == resourcepb.ResourceSearchRequest_FIELD_VALUES {
-							res.Rows = append(res.Rows, &resourcepb.ResourceSearchRow{Key: key, SortFields: []string{"last-returned"}})
-						} else {
-							res.Results.Rows = append(res.Results.Rows, &resourcepb.ResourceTableRow{Key: key, SortFields: []string{"last-returned"}})
-						}
-					}
-					data, err := proto.Marshal(res)
-					require.NoError(t, err)
-					var received resourcepb.ResourceSearchResponse
-					require.NoError(t, proto.Unmarshal(data, &received))
-					search, err := searchResults(&received, testKind, 2)
-					require.NoError(t, err)
-					trash, err := trashResults(&received, testKind, 2)
-					require.NoError(t, err)
-					require.Len(t, search.Items, tc.rows)
-					require.Len(t, trash.Items, tc.rows)
-					for _, token := range []string{search.Metadata.Continue, trash.Metadata.Continue} {
-						if len(tc.want) == 0 {
-							assert.Empty(t, token)
-							continue
-						}
-						cursor, err := decodeContinue(token)
-						require.NoError(t, err)
-						assert.Equal(t, tc.want, cursor)
-					}
-				})
-			}
-		})
-	}
 }
 
 func TestSearchResults_Facets(t *testing.T) {

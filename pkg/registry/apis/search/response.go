@@ -3,6 +3,8 @@ package search
 import (
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -14,10 +16,16 @@ type decodedResults struct {
 	lastSortFields []string
 }
 
+// ToSearchResults converts either backend result format to the public search
+// envelope. Custom endpoints can reuse it after applying resource-specific access checks.
+func ToSearchResults(res *resourcepb.ResourceSearchResponse, gvr schema.GroupVersionResource, kind string, limit int64) (*searchv0.SearchResults, error) {
+	return searchResults(res, kindRef{group: gvr.Group, version: gvr.Version, resource: gvr.Resource, kind: kind}, limit)
+}
+
 // searchResults maps a backend search response into the public envelope.
 //
-// An explicit cursor takes precedence over continuation inferred from the page
-// size and last row: a bounded scan may advance beyond its returned rows.
+// limit is the page size that was requested; it decides whether a continue
+// token is offered, since the backend does not say whether more results exist.
 func searchResults(res *resourcepb.ResourceSearchResponse, kind kindRef, limit int64) (*searchv0.SearchResults, error) {
 	decoded, err := decodeResults(res, kind)
 	if err != nil {
@@ -29,7 +37,7 @@ func searchResults(res *resourcepb.ResourceSearchResponse, kind kindRef, limit i
 		Metadata: searchv0.ResultsMetadata{
 			TotalHits:         res.GetTotalHits(),
 			TotalHitsRelation: totalHitsRelation(res.GetTotalHitsExact()),
-			Continue:          continueToken(len(decoded.items), decoded.lastSortFields, limit, res.GetTotalHitsExact(), res.GetNextSearchAfter()),
+			Continue:          continueToken(len(decoded.items), decoded.lastSortFields, limit, res.GetTotalHitsExact()),
 		},
 		Items:  decoded.items,
 		Facets: facets(res.GetFacet()),
@@ -50,7 +58,7 @@ func trashResults(res *resourcepb.ResourceSearchResponse, kind kindRef, limit in
 		Metadata: searchv0.ResultsMetadata{
 			TotalHits:         res.GetTotalHits(),
 			TotalHitsRelation: totalHitsRelation(res.GetTotalHitsExact()),
-			Continue:          continueToken(len(decoded.items), decoded.lastSortFields, limit, res.GetTotalHitsExact(), res.GetNextSearchAfter()),
+			Continue:          continueToken(len(decoded.items), decoded.lastSortFields, limit, res.GetTotalHitsExact()),
 		},
 		Items: decoded.items,
 	}, nil
@@ -70,10 +78,7 @@ func totalHitsRelation(exact bool) searchv0.TotalHitsRelation {
 // total as inexact. Ending the walk there would leave those results
 // unreachable, so only an exact total lets a short page finish. The cost is at
 // most one extra empty page.
-func continueToken(rowCount int, lastSortFields []string, limit int64, totalIsExact bool, nextSearchAfter []string) string {
-	if len(nextSearchAfter) > 0 {
-		return encodeContinue(nextSearchAfter)
-	}
+func continueToken(rowCount int, lastSortFields []string, limit int64, totalIsExact bool) string {
 	// Translation always resolves a limit, so the zero check is only here to keep
 	// the function honest if it is ever called directly.
 	if limit <= 0 || rowCount == 0 {
