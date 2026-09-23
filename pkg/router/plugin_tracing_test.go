@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
@@ -48,19 +49,27 @@ func TestPluginRouteTracing(t *testing.T) {
 			require.Equal(t, "router.plugin.authenticate", ended[0].Name())
 			if token == "valid" {
 				require.Equal(t, http.StatusCreated, response.Code)
-				require.Len(t, ended, 3)
-				require.Equal(t, "router.plugin", ended[1].Name())
+				require.Len(t, ended, 2)
+				require.Equal(t, "router.backend", ended[1].Name())
+				require.Contains(t, ended[1].Attributes(), attribute.String("grafana.plugin.id", "test-app"))
 				require.Equal(t, handlerContext, ended[1].SpanContext())
-				require.Equal(t, ended[2].SpanContext().SpanID(), ended[1].Parent().SpanID())
 				require.Contains(t, ended[1].Attributes(), attribute.Int("http.response.status_code", http.StatusCreated))
 			} else {
 				require.Equal(t, http.StatusUnauthorized, response.Code)
 				require.Len(t, ended, 2)
 				require.False(t, handlerContext.IsValid())
-				require.Contains(t, ended[0].Attributes(), attribute.Int("http.response.status_code", http.StatusUnauthorized))
+				require.Equal(t, codes.Error, ended[0].Status().Code)
+				expectedError := "invalid_token"
+				if token == "" {
+					expectedError = "missing_token"
+				}
+				require.Contains(t, ended[0].Attributes(), attribute.String("error.type", expectedError))
 			}
 			if token != "" {
 				require.Equal(t, authContext, ended[0].SpanContext())
+			}
+			for _, attr := range ended[0].Attributes() {
+				require.NotEqual(t, attribute.Key("http.response.status_code"), attr.Key)
 			}
 			backend := ended[len(ended)-1]
 			require.Equal(t, "router.backend", backend.Name())

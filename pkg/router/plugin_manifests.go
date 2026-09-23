@@ -14,6 +14,9 @@ import (
 	"sync/atomic"
 	"time"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -298,19 +301,25 @@ func (a *authenticatingWrapper) ServeHTTP(w http.ResponseWriter, req *http.Reque
 }
 
 func (a *authenticatingWrapper) authenticate(w http.ResponseWriter, req *http.Request) identity.Requester {
-	rec, req, endSpan := traceRouterRequest(w, req, "router.plugin.authenticate")
-	defer endSpan()
-	w = rec
-	ctx := req.Context()
+	ctx, span := otel.Tracer("github.com/grafana/grafana/pkg/router").Start(routerTraceContext(req), "router.plugin.authenticate")
+	defer span.End()
 
 	token := req.Header.Get("X-Access-Token")
 	if token == "" {
+		span.SetAttributes(attribute.String("error.type", "missing_token"))
+		span.SetStatus(codes.Error, "")
 		_ = errhttp.Write(ctx, apierrors.NewUnauthorized("missing access token header"), w)
 		return nil
 	}
 
 	info, err := a.authn.AuthenticateToken(ctx, token)
 	if err != nil {
+		errorType := "authentication_failure"
+		if apierrors.IsUnauthorized(err) {
+			errorType = "invalid_token"
+		}
+		span.SetAttributes(attribute.String("error.type", errorType))
+		span.SetStatus(codes.Error, "")
 		_ = errhttp.Write(ctx, err, w)
 		return nil
 	}

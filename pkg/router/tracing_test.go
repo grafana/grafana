@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
@@ -109,6 +110,7 @@ func TestProxyTracing(t *testing.T) {
 			spans := recorder.Ended()
 			require.Len(t, spans, 2)
 			require.Equal(t, trace.SpanKindClient, spans[0].SpanKind())
+			require.Equal(t, "GET", spans[0].Name())
 			require.Equal(t, propagated.SpanID(), spans[0].SpanContext().SpanID())
 			require.Equal(t, spans[1].SpanContext().SpanID(), spans[0].Parent().SpanID())
 			require.Equal(t, parent.SpanContext().SpanID(), spans[1].Parent().SpanID())
@@ -144,7 +146,70 @@ func TestBackendTracingCancellation(t *testing.T) {
 	}), httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/apis/test.grafana.app/v1", nil).WithContext(ctx))
 	spans := recorder.Ended()
 	require.Len(t, spans, 1)
+	require.Equal(t, codes.Unset, spans[0].Status().Code)
+	require.Contains(t, spans[0].Attributes(), attribute.Bool("grafana.router.canceled", true))
+	require.Empty(t, spans[0].Events())
+}
+
+func TestBackendTracingDeadline(t *testing.T) {
+	recorder := setupRouterTracing(t)
+	ctx, cancel := context.WithDeadline(t.Context(), time.Now().Add(-time.Second))
+	defer cancel()
+	serveThroughBreaker(newGroupBreaker("test.grafana.app"), http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusGatewayTimeout)
+	}), httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/apis/test.grafana.app/v1", nil).WithContext(ctx))
+	spans := recorder.Ended()
+	require.Len(t, spans, 1)
 	require.Equal(t, codes.Error, spans[0].Status().Code)
-	require.Equal(t, context.Canceled.Error(), spans[0].Status().Description)
-	require.Len(t, spans[0].Events(), 1)
+	require.Contains(t, spans[0].Attributes(), attribute.String("error.type", "timeout"))
+	require.Empty(t, spans[0].Events(), "the timeout attribute is sufficient without a duplicate exception event")
+}
+
+func TestBackendTracingUnknownMethod(t *testing.T) {
+	recorder := setupRouterTracing(t)
+	serveThroughBreaker(newGroupBreaker("test.grafana.app"), http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, "CUSTOM", r.Method, "normalization must only affect telemetry")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}), httptest.NewRecorder(), httptest.NewRequest("CUSTOM", "/apis/test.grafana.app/v1", nil))
+	spans := recorder.Ended()
+	require.Len(t, spans, 1)
+	require.Equal(t, "router.backend", spans[0].Name())
+	require.Contains(t, spans[0].Attributes(), attribute.String("http.request.method", "_OTHER"))
+	require.Equal(t, codes.Unset, spans[0].Status().Code)
+}
+
+func TestOpenAPIBackendTracing(t *testing.T) {
+	for _, status := range []int{http.StatusOK, http.StatusServiceUnavailable} {
+		t.Run(http.StatusText(status), func(t *testing.T) {
+			spans := setupRouterTracing(t)
+			hits := 0
+			router := buildRouterWithBackend("test.grafana.app", "1", http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+				hits++
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(status)
+				_, _ = w.Write([]byte(`{"openapi":"3.0.0"}`))
+			}))
+			for range 2 {
+				response := httptest.NewRecorder()
+				req := httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/test.grafana.app/v1?hash=revision", nil)
+				router.HandleFunc(response, req, http.NotFoundHandler())
+				require.Equal(t, status, response.Code)
+			}
+			if status == http.StatusOK {
+				require.Equal(t, 1, hits, "cache hits must not call or trace the backend")
+			} else {
+				require.Equal(t, 2, hits, "failed responses must not be cached")
+			}
+			ended := spans.Ended()
+			require.Len(t, ended, hits)
+			for _, span := range ended {
+				require.Equal(t, "router.backend", span.Name())
+				require.Contains(t, span.Attributes(), attribute.String("grafana.router.group", "test.grafana.app"))
+				require.Contains(t, span.Attributes(), attribute.Int("http.response.status_code", status))
+				if status >= 500 {
+					require.Equal(t, codes.Error, span.Status().Code)
+				}
+			}
+		})
+	}
 }

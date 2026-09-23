@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/authlib/types"
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/sony/gobreaker/v2"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"golang.org/x/sync/singleflight"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -189,7 +188,7 @@ func (st *singleTenantFallback) forward(host *url.URL, group string, w http.Resp
 		Rewrite: func(pr *httputil.ProxyRequest) {
 			pr.SetURL(host)
 		},
-		Transport:      otelhttp.NewTransport(st.transport),
+		Transport:      newBackendTransport(st.transport),
 		ModifyResponse: rejectBackendRedirects,
 	}
 	serveThroughBreaker(st.breakerForDestination(host, group), proxy, w, req)
