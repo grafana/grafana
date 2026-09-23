@@ -48,11 +48,17 @@ func TestPostRankContinuationCappedPage(t *testing.T) {
 				require.Nil(t, res.Error)
 				require.Equal(t, []string{"a"}, cursorResultNames(res))
 				require.NotEmpty(t, res.NextSearchAfter)
-				require.Equal(t, "default/dashboard.grafana.app/dashboards/c", res.NextSearchAfter[len(res.NextSearchAfter)-1])
+				require.Equal(t, []string{"a", "a", "default/dashboard.grafana.app/dashboards/a"}, res.NextSearchAfter,
+					"continuation must not disclose denied candidates' sort values")
 				q.SearchAfter = res.NextSearchAfter
 				res = searchResponse(t, index, ac, q)
 				require.Nil(t, res.Error)
 				require.Equal(t, []string{"d"}, cursorResultNames(res))
+				require.NotEmpty(t, res.NextSearchAfter)
+				q.SearchAfter = res.NextSearchAfter
+				res = searchResponse(t, index, ac, q)
+				require.Nil(t, res.Error)
+				require.Empty(t, cursorResultNames(res))
 				require.Empty(t, res.NextSearchAfter, "the page scan is exhausted")
 			})
 		}

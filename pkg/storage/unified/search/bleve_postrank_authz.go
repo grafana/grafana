@@ -309,7 +309,6 @@ func (b *bleveIndex) runPostFilterAuthz(
 	var authorized int64
 	var exhausted bool
 	var firstRes *bleve.SearchResult
-	var lastExamined *search.DocumentMatch
 	maxCandidates := int64(cfg.MaxCandidates)
 
 	// SearchBefore is a reversed-sort SearchAfter (mirrors bleve's native
@@ -340,7 +339,6 @@ func (b *bleveIndex) runPostFilterAuthz(
 				if candidates >= maxCandidates && (countOnly || len(page) > 0) {
 					return
 				}
-				lastExamined = hit
 				info, ok := parseHitDocInfo(hit, resources)
 				if !ok {
 					continue
@@ -409,7 +407,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 		attribute.Int64("search.candidates", candidates),
 		attribute.Int64("search.authorized", authorized),
 	)
-	response.NextSearchAfter = postFilterContinuation(page, lastExamined, firstReq.Sort, limit, exhausted, reverseSort)
+	response.NextSearchAfter = postFilterContinuation(page, firstReq.Sort, limit, exhausted, reverseSort)
 	if wantFacets {
 		// The independent facet scan defines exactness, but a returned page may
 		// observe more authorized hits than a capped top sample.
@@ -420,19 +418,18 @@ func (b *bleveIndex) runPostFilterAuthz(
 		authorized, exhausted, reverseSort, wantFacets, trashAuthz != nil, agg, stats)
 }
 
-func postFilterContinuation(page search.DocumentMatchCollection, lastExamined *search.DocumentMatch, sort search.SortOrder, limit int, exhausted, reverseSort bool) []string {
+func postFilterContinuation(page search.DocumentMatchCollection, sort search.SortOrder, limit int, exhausted, reverseSort bool) []string {
 	// SearchBefore scans in reverse; its scan position is not a forward cursor.
 	// Count-only requests have no result page to continue.
-	if limit <= 0 || reverseSort {
+	if limit <= 0 || reverseSort || len(page) == 0 {
 		return nil
 	}
-	if len(page) == limit {
+	if len(page) == limit || !exhausted {
 		// Authorization batches and trash totals can examine authorized hits
 		// beyond the page. Advancing past them would skip unreturned results.
+		// Denied candidates must not supply a cursor: sort values expose their
+		// titles and identities even when their result rows are withheld.
 		return hitSortFields(page[len(page)-1], sort)
-	}
-	if !exhausted {
-		return hitSortFields(lastExamined, sort)
 	}
 	return nil
 }
