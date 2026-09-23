@@ -28,6 +28,7 @@ declare module "@openfeature/core" {
     | "grafana.newPanelQueryErrorsUI"
     | "useKubernetesShortURLsAPI"
     | "dashboard.notebooks"
+    | "grafana.dashboardPreviewMode"
     | "perPanelNonApplicableDrilldowns"
     | "feedbackButton"
     | "stateTimeline.nameAboveBars"
