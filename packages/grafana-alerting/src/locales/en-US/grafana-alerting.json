@@ -13,8 +13,26 @@
       "common-labels-count_one": "+{{count}} common labels",
       "common-labels-count_other": "+{{count}} common labels"
     },
+    "duration-field": {
+      "invalid": "Invalid duration format. Use a number followed by a time unit, for example 30s or 5m."
+    },
+    "group-by-field": {
+      "aria-label": "Group by",
+      "description": "Alerts are always grouped by grafana_folder and alertname, plus any additional labels you select. Select \"Disable (...)\" to send each alert as a separate notification.",
+      "disable-option": "Disable (...)",
+      "label": "Group by"
+    },
     "paused-badge": {
       "paused": "Paused"
+    },
+    "recipient-picker": {
+      "alertmanager-label": "Alertmanager: grafana",
+      "contact-point-aria": "Contact point",
+      "contact-point-description": "Notifications for firing alerts are routed to a selected contact point.",
+      "contact-points-error": "Could not load contact points",
+      "manage-contact-points": "View or create contact points",
+      "routing-trees-error": "Could not load notification policies",
+      "timings-disabled": "Select a contact point first"
     },
     "routing-tree-picker": {
       "change": "Change",
@@ -38,6 +56,23 @@
       "default-policy": "Default policy",
       "default-policy-desc": "Routes alerts using the default notification policy tree",
       "error": "Failed to load notification policies"
+    },
+    "simplified-routing-fields": {
+      "active-timings": "Active timings",
+      "active-timings-description": "Select a time interval to define when to only send notifications for this alert rule",
+      "description": "Configure how notifications for this alert rule are sent.",
+      "group-interval": "Group interval",
+      "group-wait": "Group wait",
+      "grouping-summary": "Grouping: <strong>{{fields}}</strong>",
+      "mute-timings": "Mute timings",
+      "mute-timings-description": "Select a mute timing to define when not to send notifications for this alert rule",
+      "override-grouping": "Override grouping",
+      "override-timings": "Override timings",
+      "repeat-interval": "Repeat interval",
+      "select-time-intervals": "Select time intervals...",
+      "time-intervals-error": "Could not load mute/active timings — showing the rest of the section without them.",
+      "timings-summary": "Group wait: <strong>{{groupWait}}</strong>, Group interval: <strong>{{groupInterval}}</strong>, Repeat interval: <strong>{{repeatInterval}}</strong>",
+      "toggle": "Muting, grouping and timings (optional)"
     }
   }
 }
