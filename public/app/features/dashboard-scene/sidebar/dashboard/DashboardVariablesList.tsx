@@ -4,19 +4,20 @@ import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { type SceneVariableSet, type SceneVariable, sceneUtils } from '@grafana/scenes';
+import { type SceneVariableSet, type SceneVariable } from '@grafana/scenes';
 import { useDragAndDrop } from '@grafana/ui/internal';
 
 import { duplicateVariable } from '../../actions/variable/duplicateVariable';
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { openAddVariablePane } from '../../settings/variables/VariableTypeSelectionPane';
-import { partitionVariablesByDisplay } from '../../settings/variables/partitionVariables';
 import { getDefaultTopPlacementLabel, isVariableEditable } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
 
 import { DraggableList } from './DraggableList';
+import { ReadOnlyVariableRows } from './ReadOnlyVariableGroup';
 import { SidebarAddButton } from './SidebarAddButton';
 import { partitionSceneObjects, selectSidebarObject, toDraggableListItemActions } from './helpers';
+import { groupSidebarVariablesByDisplay } from './partitionSidebarVariables';
 import { confirmDeleteVariable, createDragEndHandler } from './variableListActions';
 
 const ID_VISIBLE_LIST = 'variables-list-visible';
@@ -35,6 +36,8 @@ interface DashboardVariablesListProps {
   topPlacementLabel?: string;
   includeAdHoc?: boolean;
   hideControlsMenuList?: boolean;
+  /** Dashboard options show opted-in global and folder variables. Section lists do not. */
+  showPredefinedGroups?: boolean;
 }
 
 export function DashboardVariablesList({
@@ -43,19 +46,18 @@ export function DashboardVariablesList({
   topPlacementLabel,
   hideControlsMenuList = false,
   includeAdHoc = false,
+  showPredefinedGroups = false,
 }: DashboardVariablesListProps) {
   const { DragDropContext } = useDragAndDrop();
   const { variables: allVariables } = sourceVariableSet.useState();
   const listVariables = renderVariables ?? allVariables;
+  const includePredefined = showPredefinedGroups;
+  const excludeFilters = Boolean(config.featureToggles.dashboardUnifiedDrilldownControls) && !includeAdHoc;
   const resolvedTopPlacementLabel = topPlacementLabel ? topPlacementLabel : getDefaultTopPlacementLabel();
-  const editable = useMemo(() => {
-    const { editable } = partitionVariablesByEditability(listVariables);
-    if (!config.featureToggles.dashboardUnifiedDrilldownControls || includeAdHoc) {
-      return editable;
-    }
-    return editable.filter((v) => !sceneUtils.isAdHocVariable(v));
-  }, [includeAdHoc, listVariables]);
-  const { visible, controlsMenu, hidden } = useMemo(() => partitionVariablesByDisplay(editable), [editable]);
+  const { visible, controlsMenu, hidden } = useMemo(
+    () => groupSidebarVariablesByDisplay(listVariables, { includePredefined, excludeFilters }),
+    [excludeFilters, includePredefined, listVariables]
+  );
 
   const variableActions = toDraggableListItemActions<SceneVariable>(
     selectSidebarObject,
@@ -68,38 +70,47 @@ export function DashboardVariablesList({
       createDragEndHandler(
         sourceVariableSet,
         { visible: ID_VISIBLE_LIST, controlsMenu: ID_CONTROLS_MENU_LIST, hidden: ID_HIDDEN_LIST },
-        visible,
-        controlsMenu,
-        hidden,
+        visible.editable,
+        controlsMenu.editable,
+        hidden.editable,
         t('dashboard.sidebar.variables.reorder-description', 'Reorder variables list'),
         DROPPABLE_TO_HIDE
       ),
-    [sourceVariableSet, visible, controlsMenu, hidden]
+    [sourceVariableSet, visible.editable, controlsMenu.editable, hidden.editable]
   );
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <DraggableList
-        items={visible}
+        items={visible.editable}
         droppableId={ID_VISIBLE_LIST}
         title={resolvedTopPlacementLabel ?? t('dashboard.sidebar.variables.title-above-dashboard', 'Above dashboard')}
         renderItemLabel={renderItemLabel}
+        leading={<ReadOnlyVariableRows variables={visible.readOnly} itemTestId="variable-name" />}
+        itemsCount={visible.editable.length + visible.readOnly.length}
+        flushLabel
         {...variableActions}
       />
       {!hideControlsMenuList && (
         <DraggableList
-          items={controlsMenu}
+          items={controlsMenu.editable}
           droppableId={ID_CONTROLS_MENU_LIST}
           title={t('dashboard.sidebar.variables.title-controls-menu', 'Controls menu')}
           renderItemLabel={renderItemLabel}
+          leading={<ReadOnlyVariableRows variables={controlsMenu.readOnly} itemTestId="variable-name" />}
+          itemsCount={controlsMenu.editable.length + controlsMenu.readOnly.length}
+          flushLabel
           {...variableActions}
         />
       )}
       <DraggableList
-        items={hidden}
+        items={hidden.editable}
         droppableId={ID_HIDDEN_LIST}
         title={t('dashboard.sidebar.variables.title-hidden', 'Hidden')}
         renderItemLabel={renderItemLabel}
+        leading={<ReadOnlyVariableRows variables={hidden.readOnly} itemTestId="variable-name" />}
+        itemsCount={hidden.editable.length + hidden.readOnly.length}
+        flushLabel
         {...variableActions}
       />
     </DragDropContext>

@@ -59,15 +59,19 @@ function createDashboard(annotations: Record<string, string> = {}): CrossDashboa
   } as unknown as CrossDashboardVariablesDashboard;
 }
 
-function makeCandidate(name: string, origin: 'global' | 'folder'): VariableKind {
+function makeCandidate(
+  name: string,
+  origin: 'global' | 'folder',
+  kind: VariableKind['kind'] = 'CustomVariable'
+): VariableKind {
   return {
-    kind: 'CustomVariable',
+    kind,
     spec: {
       ...defaultCustomVariableSpec(),
       name,
       origin: toControlSourceRef(origin === 'global' ? { type: 'global' } : { type: 'folder', folderUid: 'folder-1' }),
     },
-  };
+  } as VariableKind;
 }
 
 function deferred<T>() {
@@ -238,5 +242,21 @@ describe('DashboardCrossDashboardVariablesOptions', () => {
     expect(screen.queryByText('No global variables in this organization.')).not.toBeInTheDocument();
     expect(screen.queryByText('No folder variables in this folder.')).not.toBeInTheDocument();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+  });
+
+  it('lists only ad hoc and group-by variables when opened from add filter', async () => {
+    mockFetchPredefinedVariables.mockResolvedValue([
+      makeCandidate('env', 'global'),
+      makeCandidate('service', 'global', 'AdhocVariable'),
+      makeCandidate('cluster', 'folder', 'GroupByVariable'),
+      makeCandidate('region', 'folder'),
+    ]);
+
+    render(<DashboardCrossDashboardVariablesOptions dashboard={createDashboard()} filtersOnly />);
+
+    expect(await screen.findByRole('checkbox', { name: 'service' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'cluster' })).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: 'env' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: 'region' })).not.toBeInTheDocument();
   });
 });

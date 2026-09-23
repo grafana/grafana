@@ -7,12 +7,15 @@ import { selectors } from '@grafana/e2e-selectors';
 import { setPluginLinksHook } from '@grafana/runtime';
 import { CustomVariable, SceneTimeRange, SceneVariableSet } from '@grafana/scenes';
 import { Sidebar, useSidebar } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { DashboardSidebarRenderer } from '../../sidebar/DashboardSidebarRenderer';
 import { DashboardInteractions } from '../../utils/interactions';
+import { toControlSourceRef } from '../../utils/predefinedVariables';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
 import { shouldHideControlsMenuOption, VariableEditableElement } from './VariableEditableElement';
@@ -22,6 +25,7 @@ jest.mock('../../utils/interactions', () => ({
   DashboardInteractions: {
     editSessionStarted: jest.fn(),
     variableActionButtonClicked: jest.fn(),
+    trackDeleteDashboardElement: jest.fn(),
   },
 }));
 
@@ -144,6 +148,70 @@ describe('VariableEditableElement', () => {
 });
 
 describe('VariableEditableElement', () => {
+  it.each([
+    ['global', { type: 'global' as const }, 'This variable is defined globally'],
+    ['folder', { type: 'folder' as const, folderUid: 'folder-1' }, 'This variable is defined on this folder'],
+  ])('disables editing when the variable is defined at %s scope', async (_scope, origin, notice) => {
+    const variable = new CustomVariable({
+      name: 'edition',
+      label: 'Edition',
+      query: 'a,b',
+      origin: toControlSourceRef(origin),
+    });
+    const dashboard = new DashboardScene({
+      $variables: new SceneVariableSet({ variables: [variable] }),
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      body: AutoGridLayoutManager.createEmpty(),
+      isEditing: true,
+    });
+    activateFullSceneTree(dashboard);
+    dashboard.state.sidebar.selectObject(variable, { force: true });
+    renderVariableSidebar(dashboard);
+
+    expect(await screen.findByText(notice)).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.variableNameInput)).toBeDisabled();
+    expect(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.variableLabelInput)).toBeDisabled();
+    expect(screen.getByRole('switch', { name: 'Multi-value' })).toBeDisabled();
+    expect(screen.getByRole('switch', { name: /Include All value/ })).toBeDisabled();
+    expect(screen.getByRole('switch', { name: /Allow custom values/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Open variable editor' })).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType)).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Remove' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.EditPaneHeader.duplicate)).not.toBeInTheDocument();
+  });
+
+  it('asks to remove an opted-in variable from the dashboard', async () => {
+    const publishSpy = jest.spyOn(appEvents, 'publish').mockImplementation(() => undefined);
+    const variable = new CustomVariable({
+      name: 'edition',
+      query: 'a,b',
+      origin: toControlSourceRef({ type: 'global' }),
+    });
+    const dashboard = new DashboardScene({
+      $variables: new SceneVariableSet({ variables: [variable] }),
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      body: AutoGridLayoutManager.createEmpty(),
+      isEditing: true,
+    });
+    activateFullSceneTree(dashboard);
+    dashboard.state.sidebar.selectObject(variable, { force: true });
+    renderVariableSidebar(dashboard);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Remove' }));
+
+    expect(publishSpy).toHaveBeenCalledWith(expect.any(ShowConfirmModalEvent));
+    const event = publishSpy.mock.calls.find(([published]) => published instanceof ShowConfirmModalEvent)?.[0];
+    expect(event).toMatchObject({
+      payload: {
+        title: 'Remove variable',
+        text: 'Are you sure you want to remove: edition?',
+        yesText: 'Remove',
+      },
+    });
+    publishSpy.mockRestore();
+  });
+
   it('clicking Change switches selection to VariableTypeChange', async () => {
     const { dashboard } = buildDashboardVariableScene();
     const user = userEvent.setup();

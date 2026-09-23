@@ -10,11 +10,12 @@ import { getLabelStyles } from '@grafana/ui/internal';
 
 import { type OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemOverrides } from './OptionsPaneItemOverrides';
+import { useOptionsPaneReadOnly } from './OptionsPaneReadOnlyContext';
 import { type OptionPaneItemOverrideInfo } from './types';
 
 export interface OptionsPaneItemInfo {
   title?: string;
-  value?: any;
+  value?: unknown;
   description?: string;
   popularRank?: number;
   render: (descriptor: OptionsPaneItemDescriptor) => React.ReactElement<Record<string, unknown>>;
@@ -66,6 +67,8 @@ function OptionsPaneItem({ itemDescriptor, searchQuery }: OptionsPaneItemProps) 
   const { title, description, id, render, skipField, useFieldset } = itemDescriptor.props;
   const key = `${itemDescriptor.parent.props.id} ${title}`;
   const showIf = itemDescriptor.useShowIf();
+  const readOnly = useOptionsPaneReadOnly();
+  const styles = useStyles2(getOptionsPaneItemStyles);
 
   if (!showIf) {
     return null;
@@ -76,16 +79,20 @@ function OptionsPaneItem({ itemDescriptor, searchQuery }: OptionsPaneItemProps) 
   }
 
   return (
-    <Field
-      label={renderOptionLabel(itemDescriptor, searchQuery)}
-      description={description}
-      key={key}
-      data-testid={selectors.components.PanelEditor.OptionsPane.fieldLabel(key)}
-      htmlFor={id}
-      useFieldset={useFieldset}
-    >
-      {render(itemDescriptor)}
-    </Field>
+    <div className={styles.item}>
+      <Field
+        noMargin
+        label={renderOptionLabel(itemDescriptor, searchQuery)}
+        description={description}
+        key={key}
+        data-testid={selectors.components.PanelEditor.OptionsPane.fieldLabel(key)}
+        htmlFor={id}
+        useFieldset={useFieldset}
+        disabled={readOnly ? true : undefined}
+      >
+        {render(itemDescriptor)}
+      </Field>
+    </div>
   );
 }
 
@@ -169,7 +176,15 @@ function OptionPaneLabel({ title, description, overrides, addon, htmlFor, useFie
   );
 }
 
-function getOptionPaneLabelStyles(theme: GrafanaTheme2) {
+function getOptionsPaneItemStyles(theme: GrafanaTheme2) {
+  return {
+    item: css({
+      marginBottom: theme.spacing(2),
+    }),
+  };
+}
+
+function getOptionPaneLabelStyles() {
   return {
     container: css({
       display: 'flex',

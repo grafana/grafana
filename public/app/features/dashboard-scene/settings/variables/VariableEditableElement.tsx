@@ -15,9 +15,10 @@ import {
   sceneUtils,
   useSceneObjectState,
 } from '@grafana/scenes';
-import { Alert, Box, Button, Combobox, Field, Input, Stack, TextArea } from '@grafana/ui';
+import { Alert, Box, Button, Combobox, Field, Input, Stack, Text, TextArea } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import { useOptionsPaneReadOnly } from 'app/features/dashboard/components/PanelEditor/OptionsPaneReadOnlyContext';
 
 import { changeVariableDescription } from '../../actions/variable/changeVariableDescription';
 import { changeVariableHideValue } from '../../actions/variable/changeVariableHideValue';
@@ -40,14 +41,14 @@ import {
   restoreUnshadowedPredefinedVariables,
   validateVariableName,
 } from '../../settings/variables/utils';
-import { confirmDeleteVariable } from '../../sidebar/dashboard/variableListActions';
+import { confirmDeleteVariable, confirmRemovePredefinedVariable } from '../../sidebar/dashboard/variableListActions';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getTopPlacementLabel } from '../../utils/getTopPlacementLabel';
+import { getPredefinedOrigin, type PredefinedControlSourceRef } from '../../utils/predefinedVariables';
 
 import { openChangeVariableTypePane } from './VariableTypeSelectionPane';
 import { useVariableSelectionOptionsCategory } from './useVariableSelectionOptionsCategory';
 
-// TODO fix conditional hook usage here...
 function useSidebarOptions(this: VariableEditableElement, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const variable = this.variable;
   const variableOptionsCategoryId = useId();
@@ -61,12 +62,24 @@ function useSidebarOptions(this: VariableEditableElement, isNewElement: boolean)
   // the variable and destroy all state subscriptions used by the editors below.
   useSceneObjectState(variable, { shouldActivateOrKeepAlive: true });
 
-  if (variable instanceof LocalValueVariable) {
-    return useLocalVariableOptions(variable);
-  }
+  const predefinedOrigin =
+    variable instanceof LocalValueVariable ? undefined : getPredefinedOrigin(variable.state.origin);
 
   const basicOptions = useMemo(() => {
-    return new OptionsPaneCategoryDescriptor({ title: '', id: variableOptionsCategoryId })
+    const category = new OptionsPaneCategoryDescriptor({ title: '', id: variableOptionsCategoryId });
+
+    if (predefinedOrigin) {
+      category.addItem(
+        new OptionsPaneItemDescriptor({
+          title: '',
+          id: `${variable.state.key}-predefined-notice`,
+          skipField: true,
+          render: () => <PredefinedVariableNotice origin={predefinedOrigin} />,
+        })
+      );
+    }
+
+    return category
       .addItem(
         new OptionsPaneItemDescriptor({
           title: '',
@@ -98,14 +111,28 @@ function useSidebarOptions(this: VariableEditableElement, isNewElement: boolean)
           render: () => <VariableDisplayInput variable={variable} />,
         })
       );
-  }, [variableOptionsCategoryId, variableNameId, labelId, descriptionId, variableDisplayId, variable, isNewElement]);
+  }, [
+    variableOptionsCategoryId,
+    variableNameId,
+    labelId,
+    descriptionId,
+    variableDisplayId,
+    variable,
+    isNewElement,
+    predefinedOrigin,
+  ]);
 
-  const categories = [basicOptions];
   const typeCategory = useVariableTypeCategory(variable);
-  categories.push(typeCategory);
+  const selectionCategory = useVariableSelectionOptionsCategory(variable);
+  const localOptions = useLocalVariableOptions(variable);
 
-  if (variable instanceof MultiValueVariable) {
-    categories.push(useVariableSelectionOptionsCategory(variable));
+  if (variable instanceof LocalValueVariable) {
+    return localOptions;
+  }
+
+  const categories = [basicOptions, typeCategory];
+  if (selectionCategory) {
+    categories.push(selectionCategory);
   }
 
   return categories;
@@ -116,6 +143,10 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
   public readonly typeName = 'Variable';
 
   public constructor(public variable: SceneVariable) {}
+
+  public get isReadOnly(): boolean {
+    return getPredefinedOrigin(this.variable.state.origin) !== undefined;
+  }
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
     if (this.variable instanceof LocalValueVariable) {
@@ -159,14 +190,23 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
   }
 
   public onDuplicate() {
+    if (this.isReadOnly) {
+      return;
+    }
     duplicateVariable(this.variable);
   }
 
   public onConfirmDelete() {
+    if (this.isReadOnly) {
+      return;
+    }
     confirmDeleteVariable(this.variable);
   }
 
   public onDelete() {
+    if (this.isReadOnly) {
+      return;
+    }
     const set = this.variable.parent;
     if (!(set instanceof SceneVariableSet)) {
       return;
@@ -174,7 +214,17 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
     removeVariable({ source: set, removedObject: this.variable });
   }
 
+  public onRemove() {
+    if (!this.isReadOnly) {
+      return;
+    }
+    confirmRemovePredefinedVariable(this.variable);
+  }
+
   public onChangeName(name: string) {
+    if (this.isReadOnly) {
+      return;
+    }
     this.variable.setState({ name });
 
     const result = validateVariableName(this.variable, name);
@@ -192,6 +242,9 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
    * variable freed by the rename, then drops any shadowed by the committed name.
    */
   public onCommitName() {
+    if (this.isReadOnly) {
+      return;
+    }
     restoreUnshadowedPredefinedVariables(this.variable);
     dropShadowedPredefinedVariables(this.variable, this.variable.state.name);
   }
@@ -214,6 +267,8 @@ interface VariableInputProps {
 }
 
 function ChangeVariableTypeButton({ variable }: { variable: SceneVariable }) {
+  const readOnly = useOptionsPaneReadOnly();
+
   if (!(variable.parent instanceof SceneVariableSet)) {
     return null;
   }
@@ -221,6 +276,7 @@ function ChangeVariableTypeButton({ variable }: { variable: SceneVariable }) {
   return (
     <Button
       size="sm"
+      disabled={readOnly}
       onClick={() => openChangeVariableTypePane(variable)}
       data-testid={selectors.components.PanelEditor.ElementEditPane.changeVariableType}
       aria-label={t('dashboard.sidebar.variable.change-type-aria-label', 'Change variable type')}
@@ -233,7 +289,8 @@ function ChangeVariableTypeButton({ variable }: { variable: SceneVariable }) {
 
 function VariableNameInput({ variable, autoFocus }: { variable: SceneVariable; autoFocus: boolean }) {
   const { name } = variable.useState();
-  const ref = useSidebarInputAutoFocus({ autoFocus });
+  const readOnly = isPredefinedVariable(variable);
+  const ref = useSidebarInputAutoFocus({ autoFocus: autoFocus && !readOnly });
   const [nameError, setNameError] = useState<string>();
   const [nameWarning, setNameWarning] = useState<string>();
   const id = useId();
@@ -266,6 +323,7 @@ function VariableNameInput({ variable, autoFocus }: { variable: SceneVariable; a
         <Input
           id={id}
           ref={ref}
+          disabled={readOnly}
           value={name}
           onFocus={() => {
             oldName.current = name;
@@ -306,10 +364,12 @@ function VariableNameInput({ variable, autoFocus }: { variable: SceneVariable; a
 function VariableLabelInput({ variable, id }: VariableInputProps) {
   const { label } = variable.useState();
   const oldLabel = useRef(label ?? '');
+  const readOnly = isPredefinedVariable(variable);
 
   return (
     <Input
       id={id}
+      disabled={readOnly}
       value={label}
       onFocus={() => {
         oldLabel.current = label ?? '';
@@ -337,10 +397,12 @@ function VariableLabelInput({ variable, id }: VariableInputProps) {
 function VariableDescriptionTextArea({ variable, id }: VariableInputProps) {
   const { description } = variable.useState();
   const oldDescription = useRef(description ?? '');
+  const readOnly = isPredefinedVariable(variable);
 
   return (
     <TextArea
       id={id}
+      disabled={readOnly}
       value={description ?? ''}
       placeholder={t('dashboard.sidebar.variable.description-placeholder', 'Descriptive text')}
       onFocus={() => {
@@ -385,7 +447,22 @@ function VariableDisplayInput({ variable }: VariableInputProps) {
       hideControlsMenuOption={shouldHideControlsMenuOption(variable)}
       topPlacementLabel={topPlacementLabel}
       onChange={onChange}
+      disabled={isPredefinedVariable(variable)}
     />
+  );
+}
+
+function isPredefinedVariable(variable: SceneVariable): boolean {
+  return getPredefinedOrigin(variable.state.origin) !== undefined;
+}
+
+function PredefinedVariableNotice({ origin }: { origin: PredefinedControlSourceRef }) {
+  return (
+    <Text variant="bodySmall" color="secondary" element="p">
+      {origin.type === 'global'
+        ? t('dashboard.sidebar.variable.defined-globally', 'This variable is defined globally')
+        : t('dashboard.sidebar.variable.defined-on-folder', 'This variable is defined on this folder')}
+    </Text>
   );
 }
 
@@ -470,6 +547,7 @@ function RefreshSelect({ variable }: { variable: QueryVariable }) {
 }
 
 function OpenOldVariableEditButton({ variable }: VariableInputProps) {
+  const readOnly = useOptionsPaneReadOnly();
   const onOpenVariableEdior = () => {
     const set = variable.parent!;
     if (!(set instanceof SceneVariableSet)) {
@@ -487,6 +565,7 @@ function OpenOldVariableEditButton({ variable }: VariableInputProps) {
         onClick={onOpenVariableEdior}
         size="sm"
         fullWidth
+        disabled={readOnly}
       >
         <Trans i18nKey="dashboard.sidebar.variable.open-editor">Open variable editor</Trans>
       </Button>
@@ -494,10 +573,14 @@ function OpenOldVariableEditButton({ variable }: VariableInputProps) {
   );
 }
 
-function useLocalVariableOptions(variable: LocalValueVariable): OptionsPaneCategoryDescriptor[] {
+function useLocalVariableOptions(variable: SceneVariable): OptionsPaneCategoryDescriptor[] {
   const localVariableOptionsCategoryId = useId();
   const localVariableId = useId();
   return useMemo(() => {
+    if (!(variable instanceof LocalValueVariable)) {
+      return [];
+    }
+
     const category = new OptionsPaneCategoryDescriptor({
       title: '',
       id: localVariableOptionsCategoryId,

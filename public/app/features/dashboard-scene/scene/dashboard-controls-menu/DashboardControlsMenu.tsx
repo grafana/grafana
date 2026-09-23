@@ -53,7 +53,12 @@ export function DashboardControlsMenu({
         {/* Variables */}
         {sortDefaultVarsFirst(variables).map((variable) => (
           <div key={variable.state.key}>
-            <VariableValueSelectWrapper variable={variable} inMenu isEditingNewLayouts={isEditingNewLayouts} />
+            <VariableValueSelectWrapper
+              variable={variable}
+              inMenu
+              isEditing={isEditing}
+              isEditingNewLayouts={isEditingNewLayouts}
+            />
           </div>
         ))}
 

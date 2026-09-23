@@ -99,6 +99,16 @@ describe('DashboardSidebarRenderer', () => {
     expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument();
   });
 
+  it('does not render a cross-dashboard variables toolbar button', async () => {
+    const scene = buildTestScene();
+
+    act(() => activateFullSceneTree(scene));
+    render(<DashboardSidebarSplitter dashboard={scene} isEditing />);
+
+    expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Cross-dashboard' })).not.toBeInTheDocument();
+  });
+
   it('opens the add pane when the Add button is clicked', async () => {
     const user = userEvent.setup();
     const scene = buildTestScene();

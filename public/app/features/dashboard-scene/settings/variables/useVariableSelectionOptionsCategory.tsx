@@ -1,7 +1,7 @@
 import { useCallback, useId, useMemo, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
-import { type MultiValueVariable, SceneVariableValueChangedEvent } from '@grafana/scenes';
+import { MultiValueVariable, type SceneVariable, SceneVariableValueChangedEvent } from '@grafana/scenes';
 import { Input, Switch } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -12,13 +12,17 @@ function useVariableHasMultiProps(variable: MultiValueVariable) {
   return hasMultiProps;
 }
 
-export function useVariableSelectionOptionsCategory(variable: MultiValueVariable): OptionsPaneCategoryDescriptor {
+export function useVariableSelectionOptionsCategory(variable: SceneVariable): OptionsPaneCategoryDescriptor | null {
   const multiValueId = useId();
   const includeAllId = useId();
   const customAllValueId = useId();
   const allowCustomId = useId();
 
   return useMemo(() => {
+    if (!(variable instanceof MultiValueVariable)) {
+      return null;
+    }
+
     return new OptionsPaneCategoryDescriptor({
       title: t('dashboard.sidebar.variable.selection-options.category', 'Selection options'),
       id: 'selection-options-category',

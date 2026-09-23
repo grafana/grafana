@@ -5,11 +5,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import {
-  useFlagGrafanaDashboardGlobalVariables,
-  useFlagGrafanaViewPanelPane,
-  useFlagFeedbackButton,
-} from '@grafana/runtime/internal';
+import { useFlagGrafanaViewPanelPane, useFlagFeedbackButton } from '@grafana/runtime/internal';
 import { sceneGraph, type SceneVariable, useSceneObjectState } from '@grafana/scenes';
 import { Sidebar, useStyles2, useSidebarContext } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -23,7 +19,6 @@ import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardSidebarExtensionPoint } from './DashboardSidebarExtensionPoint';
-import { DashboardCrossDashboardVariablesPane } from './dashboard/DashboardCrossDashboardVariablesPane';
 import { ToggleViewPanePaneEvent } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
 import { type DashboardSidebarLike, type DashboardSidebarPane } from './types';
@@ -47,7 +42,6 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
   const selectedObject = sidebar.getSelectedObject();
   const sidebarContext = useSidebarContext();
   const viewPanelPane = useFlagGrafanaViewPanelPane();
-  const globalDashboardVariablesEnabled = useFlagGrafanaDashboardGlobalVariables();
   const feedbackButton = useFlagFeedbackButton();
   const onOpenAddPane = useCallback(async () => {
     const signal = sidebar.beginPaneRequest();
@@ -133,15 +127,6 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
               data-testid={selectors.pages.Dashboard.Sidebar.codeButton}
               active={openPane?.getId() === 'code'}
             />
-            {globalDashboardVariablesEnabled && (
-              <Sidebar.Button
-                icon="gf-variable"
-                onClick={() => sidebar.openPane(new DashboardCrossDashboardVariablesPane({}))}
-                title={t('dashboard.sidebar.cross-dashboard-variables.title', 'Cross-dashboard')}
-                tooltip={t('dashboard.sidebar.cross-dashboard-variables.tooltip', 'Choose global and folder variables')}
-                active={openPane instanceof DashboardCrossDashboardVariablesPane}
-              />
-            )}
             {config.featureToggles.dashboardUndoRedo && (
               <>
                 <Sidebar.Divider />

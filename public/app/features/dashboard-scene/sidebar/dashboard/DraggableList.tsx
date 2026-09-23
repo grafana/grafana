@@ -17,6 +17,11 @@ interface DraggableListProps<T extends { state: { key?: string; name: string } }
   onDuplicateItem: (item: T) => void;
   onDeleteItem: (item: T) => void;
   renderItemLabel: (item: T) => NonNullable<ReactNode>;
+  /** Rows shown in this category that cannot be reordered, duplicated, or deleted. */
+  leading?: ReactNode;
+  itemsCount?: number;
+  /** Drop the extra label inset so these rows line up with read-only rows in the same list. */
+  flushLabel?: boolean;
 }
 
 export function DraggableList<T extends { state: { key?: string; name: string } }>({
@@ -27,12 +32,16 @@ export function DraggableList<T extends { state: { key?: string; name: string } 
   onDuplicateItem,
   onDeleteItem,
   renderItemLabel,
+  leading,
+  itemsCount,
+  flushLabel = false,
 }: DraggableListProps<T>) {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, flushLabel);
 
   return (
-    <DroppableCategory droppableId={droppableId} title={title} itemsCount={items.length}>
+    <DroppableCategory droppableId={droppableId} title={title} itemsCount={itemsCount ?? items.length}>
       <ul className={styles.list} data-testid={droppableId}>
+        {leading}
         {items.map((item, index) => (
           <DraggableListItem
             key={item.state.key ?? item.state.name}
@@ -83,7 +92,7 @@ export function DraggableList<T extends { state: { key?: string; name: string } 
   );
 }
 
-function getStyles(theme: GrafanaTheme2) {
+function getStyles(theme: GrafanaTheme2, flushLabel: boolean) {
   return {
     list: css({
       listStyle: 'none',
@@ -93,7 +102,7 @@ function getStyles(theme: GrafanaTheme2) {
     itemLabel: css({
       flexGrow: 1,
       overflow: 'hidden',
-      paddingLeft: theme.spacing(1),
+      paddingLeft: flushLabel ? undefined : theme.spacing(1),
     }),
     itemButtons: css({
       visibility: 'hidden',

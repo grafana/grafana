@@ -67,13 +67,57 @@ export function updateDashboardScopeAll(
   DashboardInteractions.predefinedVariableToggled({ scope, checked });
 }
 
+/** Opt the shown names in or out without changing the rest of the scope. */
+export function setShownScopeNames(
+  selection: UseCrossDashboardVariables,
+  scope: PredefinedVariableScope,
+  shownNames: string[],
+  allNamesInScope: string[],
+  checked: boolean
+): UseCrossDashboardVariables {
+  const current = selection[scope];
+
+  if (checked) {
+    if (current === 'all') {
+      return selection;
+    }
+    const names = current === 'none' ? [] : [...current];
+    for (const name of shownNames) {
+      if (!names.includes(name)) {
+        names.push(name);
+      }
+    }
+    const coversScope =
+      allNamesInScope.length > 0 && allNamesInScope.every((name) => names.includes(name));
+    return {
+      ...selection,
+      [scope]: coversScope ? 'all' : names.length === 0 ? 'none' : names,
+    };
+  }
+
+  const names = current === 'all' ? allNamesInScope : current === 'none' ? [] : current;
+  const remaining = names.filter((name) => !shownNames.includes(name));
+  return {
+    ...selection,
+    [scope]: remaining.length === 0 ? 'none' : remaining,
+  };
+}
+
 interface Props {
   dashboard: CrossDashboardVariablesDashboard;
+  /** When set, only ad hoc and group-by variables are listed. */
+  filtersOnly?: boolean;
+}
+
+const FILTER_VARIABLE_KINDS = new Set<VariableKind['kind']>(['AdhocVariable', 'GroupByVariable']);
+
+function isFilterVariableKind(variable: VariableKind): boolean {
+  return FILTER_VARIABLE_KINDS.has(variable.kind);
 }
 
 type CandidatesLoadState = { status: 'loading' } | { status: 'error' } | { status: 'ready'; variables: VariableKind[] };
 
-export function DashboardCrossDashboardVariablesOptions({ dashboard }: Props) {
+export function DashboardCrossDashboardVariablesOptions({ dashboard, filtersOnly = false }: Props) {
   const { meta } = dashboard.useState();
   const canEditSelection = Boolean(meta.canSave) && !dashboard.managedResourceCannotBeEdited();
   const globalDashboardVariablesEnabled = useFlagGrafanaDashboardGlobalVariables();
@@ -119,14 +163,21 @@ export function DashboardCrossDashboardVariablesOptions({ dashboard }: Props) {
   const candidates = loadState.status === 'ready' ? loadState.variables : [];
   const globalVars = candidates.filter((variable) => getPredefinedOrigin(variable.spec.origin)?.type === 'global');
   const folderVars = candidates.filter((variable) => getPredefinedOrigin(variable.spec.origin)?.type === 'folder');
+  const visibleGlobalVars = filtersOnly ? globalVars.filter(isFilterVariableKind) : globalVars;
+  const visibleFolderVars = filtersOnly ? folderVars.filter(isFilterVariableKind) : folderVars;
 
   return (
     <Stack direction="column" gap={2}>
       <Text variant="bodySmall" color="secondary">
-        {t(
-          'dashboard.sidebar.cross-dashboard-variables.description',
-          'Choose which global and folder-scoped variables this dashboard receives.'
-        )}
+        {filtersOnly
+          ? t(
+              'dashboard.sidebar.cross-dashboard-variables.filters-description',
+              'Choose which global and folder-scoped filters this dashboard receives.'
+            )
+          : t(
+              'dashboard.sidebar.cross-dashboard-variables.description',
+              'Choose which global and folder-scoped variables this dashboard receives.'
+            )}
       </Text>
       {loadState.status === 'loading' && <Spinner />}
       {loadState.status === 'error' && (
@@ -140,25 +191,40 @@ export function DashboardCrossDashboardVariablesOptions({ dashboard }: Props) {
         <div>
           <ScopeCheckboxSection
             scope="global"
-            variables={globalVars}
+            variables={visibleGlobalVars}
+            allNamesInScope={globalVars.map((variable) => variable.spec.name)}
+            limitSelectionToShown={filtersOnly}
             selection={selection}
             canEdit={canEditSelection}
-            emptyLabel={t(
-              'dashboard.sidebar.cross-dashboard-variables.empty-global',
-              'No global variables in this organization.'
-            )}
+            emptyLabel={
+              filtersOnly
+                ? t(
+                    'dashboard.sidebar.cross-dashboard-variables.empty-global-filters',
+                    'No global filters in this organization.'
+                  )
+                : t(
+                    'dashboard.sidebar.cross-dashboard-variables.empty-global',
+                    'No global variables in this organization.'
+                  )
+            }
             sectionLabel={t('dashboard.sidebar.cross-dashboard-variables.global-section', 'Global')}
             dashboard={dashboard}
           />
           <ScopeCheckboxSection
             scope="folder"
-            variables={folderVars}
+            variables={visibleFolderVars}
+            allNamesInScope={folderVars.map((variable) => variable.spec.name)}
+            limitSelectionToShown={filtersOnly}
             selection={selection}
             canEdit={canEditSelection}
-            emptyLabel={t(
-              'dashboard.sidebar.cross-dashboard-variables.empty-folder',
-              'No folder variables in this folder.'
-            )}
+            emptyLabel={
+              filtersOnly
+                ? t(
+                    'dashboard.sidebar.cross-dashboard-variables.empty-folder-filters',
+                    'No folder filters in this folder.'
+                  )
+                : t('dashboard.sidebar.cross-dashboard-variables.empty-folder', 'No folder variables in this folder.')
+            }
             sectionLabel={t('dashboard.sidebar.cross-dashboard-variables.folder-section', 'Folder')}
             dashboard={dashboard}
           />
@@ -171,6 +237,10 @@ export function DashboardCrossDashboardVariablesOptions({ dashboard }: Props) {
 interface ScopeCheckboxSectionProps {
   scope: PredefinedVariableScope;
   variables: VariableKind[];
+  /** Every name in the scope, including ones hidden by filtersOnly. */
+  allNamesInScope: string[];
+  /** All checkbox opts in only the listed variables, not the whole scope. */
+  limitSelectionToShown: boolean;
   selection: UseCrossDashboardVariables | undefined;
   canEdit: boolean;
   emptyLabel: string;
@@ -181,6 +251,8 @@ interface ScopeCheckboxSectionProps {
 function ScopeCheckboxSection({
   scope,
   variables,
+  allNamesInScope,
+  limitSelectionToShown,
   selection,
   canEdit,
   emptyLabel,
@@ -189,7 +261,9 @@ function ScopeCheckboxSection({
 }: ScopeCheckboxSectionProps) {
   const styles = useStyles2(getScopeSectionStyles);
   const scopeSelection = selection?.[scope] ?? 'none';
-  const allNames = variables.map((variable) => variable.spec.name);
+  const shownNames = variables.map((variable) => variable.spec.name);
+  const allShownSelected =
+    shownNames.length > 0 && shownNames.every((name) => isPredefinedNameSelected(selection, scope, name));
   const categoryId = `cross-dashboard-variables-${scope}`;
 
   return (
@@ -224,9 +298,23 @@ function ScopeCheckboxSection({
                     ? t('dashboard.sidebar.cross-dashboard-variables.select-all-global', 'All global')
                     : t('dashboard.sidebar.cross-dashboard-variables.select-all-folder', 'All folder')
                 }
-                value={scopeSelection === 'all'}
+                value={limitSelectionToShown ? allShownSelected : scopeSelection === 'all'}
                 disabled={!canEdit}
-                onChange={(event) => updateDashboardScopeAll(dashboard, scope, event.currentTarget.checked)}
+                onChange={(event) => {
+                  if (!limitSelectionToShown) {
+                    updateDashboardScopeAll(dashboard, scope, event.currentTarget.checked);
+                    return;
+                  }
+                  const current = parseUseCrossDashboardVariablesFromHost(dashboard) ?? {
+                    global: 'none' as const,
+                    folder: 'none' as const,
+                  };
+                  void persistUseCrossDashboardVariables(
+                    dashboard,
+                    setShownScopeNames(current, scope, shownNames, allNamesInScope, event.currentTarget.checked)
+                  );
+                  DashboardInteractions.predefinedVariableToggled({ scope, checked: event.currentTarget.checked });
+                }}
               />
             </li>
             {variables.map((variable) => (
@@ -241,7 +329,7 @@ function ScopeCheckboxSection({
                       scope,
                       variable.spec.name,
                       event.currentTarget.checked,
-                      allNames
+                      allNamesInScope
                     )
                   }
                 />
