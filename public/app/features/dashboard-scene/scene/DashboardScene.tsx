@@ -116,6 +116,7 @@ import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { dashboardViews, dashboardViewChanged, type DashboardViewRequest } from './dashboardViewRegistry';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
@@ -126,12 +127,7 @@ import { clearClipboard } from './layouts-shared/paste';
 import { getUpdatedHoverHeader } from './panel-timerange/utils';
 import { DashboardPlanningEvent } from './planningEvents';
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './types/DashboardLayoutManager';
-import {
-  type DashboardSceneLike,
-  type DashboardSceneState,
-  type DashboardStateUpdate,
-  type DashboardViewUpdate,
-} from './types/dashboard';
+import { type DashboardSceneLike, type DashboardSceneState } from './types/dashboard';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
 const PANEL_SEARCH_VAR = 'systemPanelFilterVar';
@@ -300,7 +296,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const destroyMutationClient = createMutationClient(this, 'dashboard');
 
     return () => {
-      this.beginViewTransition();
+      this.cancelPendingViews();
       // A plan preview that's still showing when the scene deactivates (navigated away, tab
       // closed) never got a Build or Dismiss decision — report that honestly as 'closed' rather
       // than leaving the caller holding a stale reference to a preview nothing is showing.
@@ -470,7 +466,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this._initialUrlState = locationService.getLocation();
 
     // Switch to edit mode
-    this.updateView({ isEditing: true, editable: true });
+    this.setState({ isEditing: true, editable: true });
 
     // Propagate change edit mode change to children
     this.state.body.editModeChanged?.(true);
@@ -518,7 +514,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // Save As / first save mint a new uid; skip the refresh await below so redirect isn't delayed.
     const isNewResource = result.uid !== this.state.uid;
 
-    this.updateView({
+    this.setState({
       version: result.version,
       isDirty: false,
       uid: result.uid,
@@ -634,13 +630,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (restoreInitialState) {
       // Restore initial state and disable editing
       const { isModalLoading, ...initialState } = this._initialState ?? {};
-      this.updateView({ ...initialState, isEditing: false });
+      this.setState({ ...initialState, isEditing: false });
       this.restoreSerializerAnnotationsFromInitialState();
       appEvents.publish(new DashboardDiscardedEvent());
       DashboardInteractions.dashboardEditDiscarded();
     } else {
       // Do not restore
-      this.updateView({ isEditing: false });
+      this.setState({ isEditing: false });
     }
 
     // if we are in edit panel, we need to onDiscard()
@@ -683,7 +679,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // Ensure the restored layout stays editable.
     restoredState.body.editModeChanged?.(true);
 
-    this.updateView({
+    this.setState({
       ...restoredState,
       isEditing: true,
       editable: true,
@@ -773,7 +769,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const { isModalLoading, ...newState } = sceneUtils.cloneSceneObjectState(dashScene.state);
     newState.version = versionRsp.version;
 
-    this.updateView(newState);
+    this.setState(newState);
     this.exitEditMode({ skipConfirm: true, restoreInitialState: false });
 
     return true;
@@ -796,25 +792,19 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
-    await this.showModalAsync(async () => {
-      const { SaveDashboardDrawer } = await import(
-        /* webpackChunkName: "save-dashboard-drawer" */ '../saving/SaveDashboardDrawer'
-      );
-
-      if (!this.state.isEditing) {
-        return;
-      }
-
-      return new SaveDashboardDrawer({
-        dashboardRef: this.getRef(),
-        saveAsCopy,
-        saveAsDashboardTemplate,
-        saveDashboardTemplate,
-        onSaveSuccess,
-        recoverToNewBranch,
-        showVariablesWarning: this.hasVariableErrors(),
-      });
-    });
+    await this.loadView(
+      dashboardViews.overlay.save(
+        this,
+        {
+          saveAsCopy,
+          saveAsDashboardTemplate,
+          saveDashboardTemplate,
+          onSaveSuccess,
+          recoverToNewBranch,
+        },
+        () => this.hasVariableErrors()
+      )
+    );
   }
 
   public getPageNav(location: H.Location, navIndex: NavIndex) {
@@ -1200,21 +1190,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   /** Cancel pending views and sidebar panes before a view transition starts. */
-  public beginViewTransition() {
+  public cancelPendingViews() {
     this._viewRequest?.abort();
     this.state.sidebar.cancelPaneRequest();
-  }
-
-  /** Ordinary edits must not cancel requests; view transitions should use updateView. */
-  public override setState(state: DashboardStateUpdate) {
-    super.setState(state);
-  }
-
-  /** Use for view transitions and content replacement; ordinary data edits should use setState. */
-  public updateView(state: DashboardViewUpdate) {
-    this.beginViewTransition();
-    // Restored view snapshots must not revive an already-cancelled loading indicator.
-    super.setState({ ...state, isModalLoading: false });
   }
 
   private setModalLoading(isModalLoading: boolean) {
@@ -1223,19 +1201,23 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public async showModalAsync(load: () => Promise<SceneObject | undefined>) {
-    await this.updateViewAsync(async () => {
-      this.setModalLoading(true);
-      const overlay = await load();
-      return overlay ? { overlay } : undefined;
-    });
+    await this.loadView({ key: 'overlay', load });
   }
 
   /** Apply a lazy view only if no newer transition superseded it while loading. */
-  public async updateViewAsync(load: () => Promise<DashboardViewUpdate | undefined>) {
-    this.beginViewTransition();
+  public async loadView(view: DashboardViewRequest) {
+    this.cancelPendingViews();
     const request = new AbortController();
     this._viewRequest = request;
     request.signal.addEventListener('abort', () => this.setModalLoading(false), { once: true });
+    if (view.key === 'overlay') {
+      this.setModalLoading(true);
+    }
+    const subscription = this.subscribeToState((state, previous) => {
+      if (dashboardViewChanged(state, previous)) {
+        request.abort();
+      }
+    });
     const location = locationService.getLocation();
     const search = new URLSearchParams(location.search);
     // Time range and variable URL updates do not supersede a view request.
@@ -1251,11 +1233,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       }
     });
     try {
-      const update = await load();
-      if (update && !request.signal.aborted) {
-        this.updateView(update);
+      const value = await view.load();
+      if (value !== undefined && !request.signal.aborted) {
+        this.setState({ [view.key]: value });
       }
     } finally {
+      subscription.unsubscribe();
       unlisten();
       if (this._viewRequest === request) {
         request.abort();
@@ -1265,11 +1248,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public showModal(modal: SceneObject) {
-    this.updateView({ overlay: modal });
+    this.cancelPendingViews();
+    this.setState({ overlay: modal });
   }
 
   public closeModal() {
-    this.updateView({ overlay: undefined });
+    this.cancelPendingViews();
+    this.setState({ overlay: undefined });
   }
 
   /**
@@ -1305,8 +1290,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public switchLayout(layout: DashboardLayoutManager, skipUndo?: boolean) {
     const currentLayout = this.state.body;
-    const perform = () => this.updateView({ body: layout });
-    const undo = () => this.updateView({ body: currentLayout });
+    const perform = () => this.setState({ body: layout });
+    const undo = () => this.setState({ body: currentLayout });
     if (skipUndo) {
       perform();
     } else {

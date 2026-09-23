@@ -307,10 +307,10 @@ describe('DashboardScene', () => {
         // Put the scene into panel edit to verify we clear it
         const panel = findVizPanelByKey(scene, 'panel-1')!;
         const editPanel = buildPanelEditScene(panel);
-        scene.updateView({ editPanel });
+        scene.setState({ editPanel });
 
         // Add an overlay as well to verify it is cleared
-        scene.updateView({ overlay: new SaveDashboardDrawer({ dashboardRef: scene.getRef() }) });
+        scene.setState({ overlay: new SaveDashboardDrawer({ dashboardRef: scene.getRef() }) });
         expect(scene.state.overlay).toBeDefined();
 
         scene.discardChangesAndKeepEditing();
@@ -486,7 +486,7 @@ describe('DashboardScene', () => {
       it('Should exit edit mode and discard panel changes if leaving the dashboard while in panel edit', async () => {
         const panel = findVizPanelByKey(scene, 'panel-1')!;
         const editPanel = buildPanelEditScene(panel!);
-        scene.updateView({ editPanel });
+        scene.setState({ editPanel });
 
         panel.setState({ title: 'new title' });
         scene.exitEditMode({ skipConfirm: true });
@@ -1823,7 +1823,7 @@ describe('DashboardScene', () => {
       test('when editing', () => {
         const panel = findVizPanelByKey(scene, 'panel-1');
         const editPanel = buildPanelEditScene(panel!);
-        scene.updateView({ editPanel });
+        scene.setState({ editPanel });
 
         const queryRunner = editPanel.getPanel().state.$data!;
 
@@ -2107,7 +2107,8 @@ describe('DashboardScene', () => {
         run: (scene) => new SaveDashboardDrawer({ dashboardRef: scene.getRef() }).onClose(),
       },
       { name: 'panel view URL sync', run: (scene) => scene.urlSync?.updateFromUrl({ viewPanel: 'panel-1' }) },
-      { name: 'unchanged view transition', run: (scene) => scene.updateView({ viewPanel: undefined }) },
+      { name: 'share state replacement', run: (scene) => scene.setState({ shareView: 'snapshot' }) },
+      { name: 'inspect state replacement', run: (scene) => scene.setState({ inspectPanelKey: 'panel-1' }) },
       {
         name: 'deactivation and reactivation',
         run: (scene, deactivate) => {
@@ -2158,6 +2159,22 @@ describe('DashboardScene', () => {
       expect(drawer).toBeDefined();
       await opening;
       expect(scene.state.overlay).toBe(drawer);
+    });
+
+    it('cancels a pending drawer when an existing consumer restores a full snapshot', async () => {
+      const scene = buildTestScene();
+      const pending = createDeferred<SceneObject>();
+      const opening = scene.showModalAsync(() => pending.promise);
+      const body = DefaultGridLayoutManager.createEmpty();
+
+      scene.setState({ ...scene.state, body, title: 'Restored dashboard' });
+      pending.resolve(new SceneGridLayout({ children: [] }));
+      await opening;
+
+      expect(scene.state.title).toBe('Restored dashboard');
+      expect(scene.state.body).toBe(body);
+      expect(scene.state.isModalLoading).toBe(false);
+      expect(scene.state.overlay).toBeUndefined();
     });
 
     it('allows ordinary dashboard data updates while loading', async () => {
@@ -2262,7 +2279,7 @@ describe('DashboardScene', () => {
       name: string;
       run: (scene: DashboardScene, deactivate: () => void) => void;
     }>([
-      { name: 'close', run: (scene) => scene.updateView({ editPanel: undefined }) },
+      { name: 'close', run: (scene) => scene.cancelPendingViews() },
       { name: 'editor URL removal', run: () => locationService.partial({ editPanel: null }) },
       {
         name: 'navigation away and back',
@@ -3615,7 +3632,7 @@ describe('DashboardScene', () => {
     it('prefixes the dashboard parent crumb url with the app sub url when editing a panel', () => {
       const scene = buildTestScene({ meta: { slug: 'dash-1-slug' } });
       const panel = findVizPanelByKey(scene, 'panel-1')!;
-      scene.updateView({ editPanel: buildPanelEditScene(panel) });
+      scene.setState({ editPanel: buildPanelEditScene(panel) });
       const location = { pathname: '/d/dash-1/dash-1-slug', search: '?editPanel=1', hash: '', state: null, key: '' };
 
       const pageNav = scene.getPageNav(location, {} as NavIndex);

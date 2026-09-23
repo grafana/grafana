@@ -229,7 +229,7 @@ describe('PanelEditor', () => {
 
     /** Replace the layout tree wholesale, as APPLY_SPEC and the json/code editors do. */
     function swapBody(dashboard: DashboardScene) {
-      dashboard.updateView({
+      dashboard.setState({
         body: DefaultGridLayoutManager.fromVizPanels([new VizPanel({ key: 'panel-1', pluginId: 'text' })]),
       });
     }

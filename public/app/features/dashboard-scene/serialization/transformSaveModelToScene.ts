@@ -49,6 +49,7 @@ import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavio
 import { PanelNotices } from '../scene/PanelNotices';
 import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
+import { dashboardViews } from '../scene/dashboardViewRegistry';
 import { DashboardGridItem, type RepeatDirection } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
@@ -566,12 +567,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
 // setup, which would introduce a circular dependency.
 setPanelInspectorOpener(async (panel, tab) => {
   const dashboard = getDashboardSceneFor(panel);
-  await dashboard.showModalAsync(async () => {
-    const { PanelInspectDrawer } = await import(
-      /* webpackChunkName: "panel-inspect" */ '../inspect/PanelInspectDrawer'
-    );
-    return new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: tab });
-  });
+  await dashboard.loadView(dashboardViews.overlay.inspect(panel, tab));
 });
 
 export function registerPanelInteractionsReporter(scene: DashboardScene) {

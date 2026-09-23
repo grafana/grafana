@@ -278,7 +278,7 @@ describe('DashboardSceneUrlSync', () => {
 
     it('keeps the URL and selected edit view in sync after successive updates', async () => {
       const scene = buildTestScene();
-      scene.updateView({
+      scene.setState({
         editable: true,
         isEditing: true,
         meta: { ...scene.state.meta, canEdit: true },
@@ -295,7 +295,7 @@ describe('DashboardSceneUrlSync', () => {
 
     it('opens the editor when the same URL update closes panel view and already-closed settings', async () => {
       const scene = buildTestScene();
-      scene.updateView({ isEditing: false });
+      scene.setState({ isEditing: false });
       scene.urlSync?.updateFromUrl({ viewPanel: 'panel-1' });
       expect(scene.state.viewPanel).toBeDefined();
       scene.urlSync?.updateFromUrl({ editPanel: 'panel-1', editview: null });
@@ -306,7 +306,7 @@ describe('DashboardSceneUrlSync', () => {
 
     it('does not reopen the editor when URL sync closes it before its chunk arrives', async () => {
       const scene = buildTestScene();
-      scene.updateView({ isEditing: true });
+      scene.setState({ isEditing: true });
       const openEditor = jest.spyOn(panelEditor, 'openPanelEditor');
       try {
         scene.urlSync?.updateFromUrl({ editPanel: 'panel-1' });
@@ -338,7 +338,7 @@ describe('DashboardSceneUrlSync', () => {
 
     it('does not open dashboard settings from an editview url param, and does not enter edit mode', () => {
       const scene = buildTestScene();
-      scene.updateView({ isEditing: false, planning });
+      scene.setState({ isEditing: false, planning });
       jest.spyOn(scene, 'canEditDashboard').mockReturnValue(true);
       const onEnterEditMode = jest.spyOn(scene, 'onEnterEditMode');
 
@@ -353,7 +353,7 @@ describe('DashboardSceneUrlSync', () => {
       // Without this guard, the branch below calls onEnterEditMode() directly when not already
       // editing, undoing the invariant the static preview depends on.
       const scene = buildTestScene();
-      scene.updateView({ isEditing: false, planning });
+      scene.setState({ isEditing: false, planning });
       const onEnterEditMode = jest.spyOn(scene, 'onEnterEditMode');
 
       scene.urlSync?.updateFromUrl({ editPanel: 'panel-1' });

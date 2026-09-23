@@ -53,7 +53,7 @@ function buildApplyDashboard(uid?: string): DashboardScene {
     },
     serializer: { metadata: {}, getK8SMetadata: () => ({}) },
     onEnterEditMode: jest.fn(),
-    updateView: jest.fn(),
+    setState: jest.fn(),
     forEachChild: jest.fn(),
     publishEvent: jest.fn((event: { payload?: { perform?: () => void } }) => {
       event.payload?.perform?.();

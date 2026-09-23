@@ -12,7 +12,7 @@ import { type DashboardLayoutOrchestrator } from '../DashboardLayoutOrchestrator
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './DashboardLayoutManager';
 import { type LayoutParent } from './LayoutParent';
 
-interface DashboardViewState {
+export interface DashboardViewState {
   /**
    * Any dashboard/notebook layout. Replacement must cancel requests targeting the old content.
    */
@@ -87,14 +87,6 @@ export interface DashboardSceneState extends SceneObjectState, DashboardViewStat
   planning?: DashboardPlanningState;
 }
 
-// Optional never also rejects pre-typed patches and spreads, unlike Omit alone.
-// Without exactOptionalPropertyTypes, explicit undefined remains allowed.
-type WithoutStateKeys<T, K extends keyof T> = Partial<Omit<T, K>> & { [P in K]?: never };
-
-// Keep snapshot writes compatible until enterprise restore callers migrate to updateView.
-export type DashboardStateUpdate = Partial<DashboardSceneState>;
-export type DashboardViewUpdate = WithoutStateKeys<DashboardSceneState, keyof DashboardLoadingState>;
-
 export interface DashboardPlanningState {
   /** Identifies the plan being previewed, so a stale request against a superseded plan can be refused. */
   planId: string;
@@ -112,8 +104,6 @@ interface DashboardScenePreferences {
 
 export interface DashboardSceneLike extends SceneObject<DashboardSceneState>, LayoutParent {
   isDashboardScene: boolean;
-  setState(state: DashboardStateUpdate): void;
-  updateView(state: DashboardViewUpdate): void;
 
   copyPanel(vizPanel: VizPanel): void;
 

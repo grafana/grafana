@@ -89,7 +89,7 @@ function ViewPanelSidePaneRenderer({ model }: SceneComponentProps<ViewPanelSideP
           <Box display="flex" direction="column" gap={0} padding={2} paddingBottom={2}>
             <Button
               variant="secondary"
-              onClick={() => dashboard.updateView({ viewPanel: undefined })}
+              onClick={() => dashboard.setState({ viewPanel: undefined })}
               size="sm"
               fullWidth
               data-testid={selectors.components.ViewPanelSidePane.goBackButton}

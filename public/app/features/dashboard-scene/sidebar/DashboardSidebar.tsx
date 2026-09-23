@@ -13,6 +13,7 @@ import {
 import { type ElementSelectionContextItem, type ElementSelectionOnSelectOptions } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
+import { dashboardViewChanged } from '../scene/dashboardViewRegistry';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { getRepeatCloneSourceKey } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
@@ -109,6 +110,14 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
   private onActivate() {
     const dashboard = getDashboardSceneFor(this);
+
+    this._subs.add(
+      dashboard.subscribeToState((state, previous) => {
+        if (dashboardViewChanged(state, previous)) {
+          this.cancelPaneRequest();
+        }
+      })
+    );
 
     if (dashboard.state.isEditing) {
       this.enableSelection();

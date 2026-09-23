@@ -103,7 +103,7 @@ describe('panelMenuBehavior', () => {
 
   it('should have reduced menu options when panel editor is open', async () => {
     const { scene, menu, panel } = await buildTestScene({});
-    scene.updateView({ editPanel: buildPanelEditScene(panel) });
+    scene.setState({ editPanel: buildPanelEditScene(panel) });
     panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
 
     mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
@@ -608,7 +608,7 @@ describe('panelMenuBehavior', () => {
 
     it('it should contain remove and duplicate menu items when in edit mode', async () => {
       const { scene, menu, panel } = await buildTestScene({});
-      scene.updateView({ isEditing: true });
+      scene.setState({ isEditing: true });
 
       panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
 
@@ -1175,7 +1175,7 @@ describe('panelMenuBehavior', () => {
 
       const { scene, menu, panel } = await buildTestScene({});
       panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
-      scene.updateView({ isEditing: true });
+      scene.setState({ isEditing: true });
 
       menu.activate();
       await new Promise((r) => setTimeout(r, 1));

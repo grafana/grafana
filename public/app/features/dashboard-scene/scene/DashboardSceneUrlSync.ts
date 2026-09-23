@@ -12,7 +12,7 @@ import { type LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from './UnconfiguredPanel';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { refuseWhilePlanning } from './refuseWhilePlanning';
-import { type DashboardViewUpdate } from './types/dashboard';
+import { type DashboardSceneState } from './types/dashboard';
 
 export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   /**
@@ -55,7 +55,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
   private _releaseEditPanel() {
     if (this._heldEditPanelId !== undefined) {
-      this._scene.beginViewTransition();
+      this._scene.cancelPendingViews();
     }
     this._libPanelSub?.unsubscribe();
     this._libPanelSub = undefined;
@@ -72,7 +72,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
   updateFromUrl(values: SceneObjectUrlValues): void {
     const { viewPanel, isEditing, editPanel, editview, shareView } = this._scene.state;
-    const update: DashboardViewUpdate = {};
+    const update: Partial<DashboardSceneState> = {};
     let panelToEdit: VizPanel | undefined;
 
     // Reachable directly via ?editview=, independent of any settings entry point: without this
@@ -118,7 +118,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         const wasHeld = this._heldEditPanelId !== undefined;
         this._releaseEditPanel();
         if (wasHeld) {
-          this._scene.updateView({ editPanel: undefined });
+          this._scene.setState({ editPanel: undefined });
         }
         return;
       }
@@ -180,7 +180,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     }
 
     if (Object.keys(update).length > 0) {
-      this._scene.updateView(update);
+      this._scene.setState(update);
     }
 
     // Apply synchronous URL changes first so they do not cancel the editor requested by this same update.

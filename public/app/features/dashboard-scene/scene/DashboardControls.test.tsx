@@ -234,7 +234,7 @@ describe('DashboardControls', () => {
           hideDashboardControls: true,
         }),
       });
-      dashboard.updateView({ editPanel: buildPanelEditScene(panel) });
+      dashboard.setState({ editPanel: buildPanelEditScene(panel) });
       dashboard.activate();
       const controls = dashboard.state.controls as DashboardControls;
 
@@ -830,7 +830,7 @@ describe('DashboardControls', () => {
         // hideTimeControls + no variables/links/dashboard-controls makes hasControls() return false.
         controls: new DashboardControls({ hideTimeControls: true }),
       });
-      dashboard.updateView({ editPanel: buildPanelEditScene(panel) });
+      dashboard.setState({ editPanel: buildPanelEditScene(panel) });
       dashboard.activate();
       const controls = dashboard.state.controls as DashboardControls;
 
@@ -849,7 +849,7 @@ describe('DashboardControls', () => {
     it('hides the dashboard save button while editing a library panel', () => {
       jest.mocked(contextSrv).hasEditPermissionInFolders = false;
       const { dashboard, controls } = buildLibraryPanelEditControlsScene();
-      dashboard.updateView({ isEditing: true, meta: { canSave: true } });
+      dashboard.setState({ isEditing: true, meta: { canSave: true } });
 
       renderInGrafanaContext(<controls.Component model={controls} />);
 
@@ -867,7 +867,7 @@ describe('DashboardControls', () => {
         rows: [new RowItem({ title: 'Row' })],
         dashboardVariables: [],
       });
-      dashboard.updateView({ isEditing: true, meta: { canSave: true } });
+      dashboard.setState({ isEditing: true, meta: { canSave: true } });
 
       renderInGrafanaContext(<controls.Component model={controls} />);
 
@@ -1050,7 +1050,7 @@ function buildPanelViewVariablesScene() {
     ],
   });
 
-  dashboard.updateView({ editPanel: undefined, viewPanel: editedPanel.getPathId() });
+  dashboard.setState({ editPanel: undefined, viewPanel: editedPanel.getPathId() });
 
   return { controls };
 }
@@ -1111,7 +1111,7 @@ function buildPanelEditControlsScene({
   });
 
   const editPanel = buildPanelEditScene(editedPanel);
-  dashboard.updateView({ editPanel });
+  dashboard.setState({ editPanel });
   dashboard.activate();
 
   return { dashboard, controls: dashboard.state.controls as DashboardControls, editedPanel, editPanel };
@@ -1136,7 +1136,7 @@ function buildLibraryPanelEditControlsScene() {
     controls: new DashboardControls({}),
   });
 
-  dashboard.updateView({ editPanel: buildPanelEditScene(panel) });
+  dashboard.setState({ editPanel: buildPanelEditScene(panel) });
   dashboard.activate();
 
   return { dashboard, controls: dashboard.state.controls as DashboardControls };

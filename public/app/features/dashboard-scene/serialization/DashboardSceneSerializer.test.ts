@@ -317,7 +317,7 @@ describe('DashboardSceneSerializer', () => {
         const editScene = buildPanelEditScene(panel);
 
         dashboard.onEnterEditMode();
-        dashboard.updateView({ editPanel: editScene });
+        dashboard.setState({ editPanel: editScene });
 
         editScene.state.panelRef.resolve().setState({ title: 'changed title' });
 
@@ -736,7 +736,7 @@ describe('DashboardSceneSerializer', () => {
         const editScene = buildPanelEditScene(panel);
 
         dashboard.onEnterEditMode();
-        dashboard.updateView({ editPanel: editScene });
+        dashboard.setState({ editPanel: editScene });
 
         editScene.state.panelRef.resolve().setState({ title: 'changed title' });
 

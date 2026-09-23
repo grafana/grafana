@@ -169,7 +169,7 @@ describe('NavToolbarActions', () => {
       await act(() => {
         dashboard.onEnterEditMode();
         const panel = dashboard.state.body.getVizPanels()[0];
-        dashboard.updateView({ editPanel: buildPanelEditScene(panel) });
+        dashboard.setState({ editPanel: buildPanelEditScene(panel) });
       });
 
       expect(await screen.findByText('Save dashboard')).toBeInTheDocument();

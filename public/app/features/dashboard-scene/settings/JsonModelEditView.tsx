@@ -120,7 +120,7 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
       dashboard.setInitialSaveModel(dto.spec, dto.metadata);
       this._updateTimeRangeInURL(dashboard, newState);
 
-      dashboard.updateView(newState);
+      dashboard.setState(newState);
     } else {
       jsonModel.version = result.version;
       newDashboardScene = transformSaveModelToScene({
@@ -137,7 +137,7 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
 
       this._updateTimeRangeInURL(dashboard, newState);
 
-      dashboard.updateView(newState);
+      dashboard.setState(newState);
     }
 
     this.setState({ jsonText: this.getJsonText() });

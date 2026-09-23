@@ -340,7 +340,7 @@ function setupScenario(
     dashboardRef: dashboard.getRef(),
     onDismiss,
   });
-  dashboard.updateView({ overlay: tab });
+  dashboard.setState({ overlay: tab });
 
   // Constructing the scene wires up parent pointers, which is all sceneGraph.getTimeRange and the
   // query-runner lookup need here. We deliberately skip activation so the SceneQueryRunner does not

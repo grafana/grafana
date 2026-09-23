@@ -135,10 +135,10 @@ describe('DashboardSidebar', () => {
             sidebar.disableSelection();
             break;
           case 'leave edit mode':
-            dashboard.updateView({ isEditing: false });
+            dashboard.setState({ isEditing: false });
             break;
           case 'view panel':
-            dashboard.updateView({ viewPanel: 'panel-1' });
+            dashboard.setState({ viewPanel: 'panel-1' });
             break;
         }
         expect(request.aborted).toBe(true);
@@ -173,7 +173,7 @@ describe('DashboardSidebar', () => {
       });
       expect(sidebar.state.isLoading).toBe(true);
 
-      dashboard.beginViewTransition();
+      dashboard.cancelPendingViews();
       expect(sidebar.state.isLoading).toBe(false);
       pending.resolve();
       await opening;

@@ -131,7 +131,7 @@ export const renderPlanCommand: MutationCommand<RenderPlanPayload> = {
         scene.state.sidebar.closePane();
       }
 
-      scene.updateView({
+      scene.setState({
         title: payload.title,
         description: payload.description,
         body,
