@@ -116,6 +116,15 @@ export interface FieldConfig<TOptions = any> {
 
   // Calculate min max per field
   fieldMinMax?: boolean;
+
+  /**
+   * Maps field-config property ids (the same flat id space `DynamicConfigValue.id` uses, e.g.
+   * `min`, `decimals`, `custom.lineWidth`) to a variable expression that should be resolved
+   * during `applyFieldOverrides` in place of the property's stored value. The property's own
+   * value (e.g. `min`) is left untouched and used as the fallback when the expression cannot be
+   * resolved to a finite number. Resolved field configs never carry `varMappings`.
+   */
+  varMappings?: Record<string, string>;
 }
 
 export interface FieldTypeConfig {
