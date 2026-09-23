@@ -41,6 +41,17 @@ export interface ThemeTypographyVariant {
   letterSpacing?: string;
 }
 
+// sizes are in px, matching the defaults passed to buildVariant
+const ThemeTypographyVariantInputSchema = z
+  .object({
+    fontFamily: z.string(),
+    fontWeight: z.number().positive(),
+    fontSize: z.number().positive(),
+    lineHeight: z.number().positive(),
+    letterSpacing: z.number(),
+  })
+  .partial();
+
 export const ThemeTypographyInputSchema = z.object({
   fontFamily: z.string().optional(),
   fontFamilyMonospace: z.string().optional(),
@@ -52,9 +63,25 @@ export const ThemeTypographyInputSchema = z.object({
   // what's the font-size on the html element.
   // 16px is the default font-size used by browsers.
   htmlFontSize: z.number().positive().optional(),
+  xxl: ThemeTypographyVariantInputSchema.optional(),
+  xl: ThemeTypographyVariantInputSchema.optional(),
+  lg: ThemeTypographyVariantInputSchema.optional(),
+  md: ThemeTypographyVariantInputSchema.optional(),
+  base: ThemeTypographyVariantInputSchema.optional(),
+  sm: ThemeTypographyVariantInputSchema.optional(),
+  code: ThemeTypographyVariantInputSchema.optional(),
+  h1: ThemeTypographyVariantInputSchema.optional(),
+  h2: ThemeTypographyVariantInputSchema.optional(),
+  h3: ThemeTypographyVariantInputSchema.optional(),
+  h4: ThemeTypographyVariantInputSchema.optional(),
+  h5: ThemeTypographyVariantInputSchema.optional(),
+  h6: ThemeTypographyVariantInputSchema.optional(),
+  body: ThemeTypographyVariantInputSchema.optional(),
+  bodySmall: ThemeTypographyVariantInputSchema.optional(),
 });
 
 export type ThemeTypographyInput = z.infer<typeof ThemeTypographyInputSchema>;
+type ThemeTypographyVariantInput = z.infer<typeof ThemeTypographyVariantInputSchema>;
 
 const defaultFontFamily = "'Inter', 'Helvetica', 'Arial', sans-serif";
 const defaultFontFamilyMonospace = "'Roboto Mono', monospace";
@@ -87,13 +114,19 @@ export function createTypography(colors: ThemeColors, typographyInput: ThemeTypo
   const coef = fontSize / 14;
   const pxToRem = (size: number) => `${(size / htmlFontSize) * coef}rem`;
   const buildVariant = (
-    fontFamily: string,
-    fontWeight: number,
-    size: number,
-    lineHeight: number,
-    letterSpacing: number,
-    casing?: object
+    overrides: ThemeTypographyVariantInput | undefined,
+    defaultFontFamily: string,
+    defaultFontWeight: number,
+    defaultSize: number,
+    defaultLineHeight: number,
+    defaultLetterSpacing: number
   ): ThemeTypographyVariant => {
+    const fontFamily = overrides?.fontFamily ?? defaultFontFamily;
+    const fontWeight = overrides?.fontWeight ?? defaultFontWeight;
+    const size = overrides?.fontSize ?? defaultSize;
+    const lineHeight = overrides?.lineHeight ?? defaultLineHeight;
+    const letterSpacing = overrides?.letterSpacing ?? defaultLetterSpacing;
+
     if (lineHeight % 2 !== 0 || size % 2 !== 0) {
       throw new Error('Font size and line height should be integer multiples of 2 to prevent issues with alignment');
     }
@@ -104,11 +137,11 @@ export function createTypography(colors: ThemeColors, typographyInput: ThemeTypo
       fontSize: pxToRem(size),
       lineHeight: lineHeight / size,
       ...(fontFamily === defaultFontFamily ? { letterSpacing: `${round(letterSpacing / size)}em` } : {}),
-      ...casing,
     };
   };
 
   // All our fonts/line heights should be integer multiples of 2 to prevent issues with alignment
+<<<<<<< HEAD
   const variants = {
     xxl: buildVariant(fontFamily, fontWeightRegular, 28, 32, -0.25),
     xl: buildVariant(fontFamily, fontWeightRegular, 24, 28, 0),
@@ -127,6 +160,26 @@ export function createTypography(colors: ThemeColors, typographyInput: ThemeTypo
     h6: buildVariant(fontFamily, fontWeightMedium, 14, 22, 0.15),
     body: buildVariant(fontFamily, fontWeightRegular, fontSize, 22, 0.15),
     bodySmall: buildVariant(fontFamily, fontWeightRegular, 12, 18, 0.15),
+=======
+  const variants: ThemeTypographyVariantTypes = {
+    xxl: buildVariant(typographyInput.xxl, fontFamily, fontWeightBold, 24, 34, 0.3),
+    xl: buildVariant(typographyInput.xl, fontFamily, fontWeightBold, 22, 30, -0.2),
+    lg: buildVariant(typographyInput.lg, fontFamily, fontWeightMedium, 20, 26, 0),
+    md: buildVariant(typographyInput.md, fontFamily, fontWeightMedium, 16, 22, 0),
+    base: buildVariant(typographyInput.base, fontFamily, fontWeightRegular, fontSize, 22, 0),
+    sm: buildVariant(typographyInput.sm, fontFamily, fontWeightMedium, 12, 18, 0.2),
+    code: buildVariant(typographyInput.code, fontFamilyMonospace, fontWeightRegular, 14, 16, 0.15),
+
+    // Deprecated variants
+    h1: buildVariant(typographyInput.h1, fontFamily, fontWeightRegular, 28, 32, -0.25),
+    h2: buildVariant(typographyInput.h2, fontFamily, fontWeightRegular, 24, 28, 0),
+    h3: buildVariant(typographyInput.h3, fontFamily, fontWeightRegular, 22, 24, 0),
+    h4: buildVariant(typographyInput.h4, fontFamily, fontWeightRegular, 18, 22, 0.25),
+    h5: buildVariant(typographyInput.h5, fontFamily, fontWeightRegular, 16, 22, 0),
+    h6: buildVariant(typographyInput.h6, fontFamily, fontWeightMedium, 14, 22, 0.15),
+    body: buildVariant(typographyInput.body, fontFamily, fontWeightRegular, fontSize, 22, 0.15),
+    bodySmall: buildVariant(typographyInput.bodySmall, fontFamily, fontWeightRegular, 12, 18, 0.15),
+>>>>>>> f88c3b30edf (override typography variants in visual_refresh themes)
   };
 
   const size = {

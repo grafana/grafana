@@ -247,6 +247,14 @@
     }
   },
   "typography": {
-    "fontWeightBold": 600
+    "fontWeightBold": 600,
+    "h1": { "fontWeight": 600, "fontSize": 24, "lineHeight": 34, "letterSpacing": 0.3 },
+    "h2": { "fontWeight": 600, "fontSize": 22, "lineHeight": 30, "letterSpacing": -0.2 },
+    "h3": { "fontWeight": 500, "fontSize": 20, "lineHeight": 26, "letterSpacing": 0 },
+    "h4": { "fontWeight": 500, "fontSize": 16, "lineHeight": 22, "letterSpacing": 0 },
+    "h5": { "fontWeight": 400, "fontSize": 14, "lineHeight": 22, "letterSpacing": 0 },
+    "h6": { "fontWeight": 500, "fontSize": 12, "lineHeight": 18, "letterSpacing": 0.2 },
+    "body": { "fontWeight": 400, "fontSize": 14, "lineHeight": 22, "letterSpacing": 0 },
+    "bodySmall": { "fontWeight": 500, "fontSize": 12, "lineHeight": 18, "letterSpacing": 0.2 }
   }
 }
