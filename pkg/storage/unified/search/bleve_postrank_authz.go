@@ -309,6 +309,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 	var authorized int64
 	var exhausted bool
 	var firstRes *bleve.SearchResult
+	var lastExamined *search.DocumentMatch
 	maxCandidates := int64(cfg.MaxCandidates)
 
 	// SearchBefore is a reversed-sort SearchAfter (mirrors bleve's native
@@ -339,6 +340,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 				if candidates >= maxCandidates && (countOnly || len(page) > 0) {
 					return
 				}
+				lastExamined = hit
 				info, ok := parseHitDocInfo(hit, resources)
 				if !ok {
 					continue
@@ -407,6 +409,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 		attribute.Int64("search.candidates", candidates),
 		attribute.Int64("search.authorized", authorized),
 	)
+	response.NextSearchAfter = postFilterContinuation(page, lastExamined, firstReq.Sort, limit, exhausted, reverseSort)
 	if wantFacets {
 		// The independent facet scan defines exactness, but a returned page may
 		// observe more authorized hits than a capped top sample.
@@ -415,6 +418,23 @@ func (b *bleveIndex) runPostFilterAuthz(
 	}
 	return response, b.finalizePostFilter(ctx, response, page, selectFields, fieldValueSchema, firstReq.Sort, req, firstRes,
 		authorized, exhausted, reverseSort, wantFacets, trashAuthz != nil, agg, stats)
+}
+
+func postFilterContinuation(page search.DocumentMatchCollection, lastExamined *search.DocumentMatch, sort search.SortOrder, limit int, exhausted, reverseSort bool) []string {
+	// SearchBefore scans in reverse; its scan position is not a forward cursor.
+	// Count-only requests have no result page to continue.
+	if limit <= 0 || reverseSort {
+		return nil
+	}
+	if len(page) == limit {
+		// Authorization batches and trash totals can examine authorized hits
+		// beyond the page. Advancing past them would skip unreturned results.
+		return hitSortFields(page[len(page)-1], sort)
+	}
+	if !exhausted {
+		return hitSortFields(lastExamined, sort)
+	}
+	return nil
 }
 
 // authorizeHits filters ranked hits by the trash rule when trashAuthz is set,
