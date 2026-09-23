@@ -465,6 +465,28 @@ for (const order of ['older first', 'newer first'] as const) {
   );
 }
 
+test(
+  'closing a loading sidebar prevents it reopening when its chunk arrives',
+  { tag: '@pane-request' },
+  async ({ page, dashboardPath, selectors }) => {
+    const held = await holdChunk(page, addPaneChunk);
+    await enterEditMode(page, dashboardPath);
+    // Keep a pane open so closing is possible before loading placeholders are introduced.
+    await page.getByTestId(selectors.pages.Dashboard.Sidebar.optionsButton).click();
+    await expect(page.getByRole('button', { name: 'View all settings' })).toBeVisible();
+    await page.getByTestId(selectors.pages.Dashboard.Sidebar.addButton).click();
+    await held.wait();
+    await page.getByText('Browser review content', { exact: true }).hover();
+    await expect(page.getByRole('tooltip')).toBeHidden();
+    await page.getByTestId(selectors.components.Sidebar.closePane).click();
+    await expect(page.getByTestId(selectors.components.Sidebar.headerTitle)).toBeHidden();
+    await held.release();
+    await expect(page.getByTestId(selectors.components.Sidebar.headerTitle)).toBeHidden();
+    await page.getByTestId(selectors.pages.Dashboard.Sidebar.addButton).click();
+    await expect(page.getByTestId(selectors.components.Sidebar.headerTitle)).toHaveText('Add');
+  }
+);
+
 for (const action of ['hide sidebar', 'exit edit mode'] as const) {
   test(`${action} cancels a pending Add pane`, { tag: '@pane-request' }, async ({ page, dashboardPath }) => {
     const held = await holdChunk(page, addPaneChunk);
