@@ -232,3 +232,30 @@ func TestFeaturesFromFlagsResolvesOnce(t *testing.T) {
 	require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{}))
 	require.True(t, got.RolesAPI)
 }
+
+func TestResolveFeaturesExplicitConfigurationDoesNotEvaluateLegacyFlags(t *testing.T) {
+	configured := Features{UsersAPI: true}
+
+	// A nil client would panic if ResolveFeatures attempted legacy evaluation.
+	got := ResolveFeatures(context.Background(), &configured, nil)
+
+	require.Equal(t, configured, got)
+}
+
+func TestFeaturesFromFlagsExcludesRuntimeFlags(t *testing.T) {
+	flags := map[string]memprovider.InMemoryFlag{}
+	for _, flag := range []string{
+		featuremgmt.FlagKubernetesTeamsRedirect,
+		featuremgmt.FlagTeamHttpHeadersTempo,
+	} {
+		flags[flag] = memprovider.InMemoryFlag{
+			Key:            flag,
+			DefaultVariant: "enabled",
+			Variants:       map[string]any{"enabled": true},
+		}
+	}
+	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(flags)))
+	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
+
+	require.Equal(t, Features{}, FeaturesFromFlags(context.Background(), openfeature.NewDefaultClient()))
+}

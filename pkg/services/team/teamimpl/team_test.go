@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
 
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
@@ -53,6 +54,45 @@ func TestIsK8sRedirectEnabledUsesResolvedStartupFeatures(t *testing.T) {
 			require.Equal(t, tt.want, service.isK8sRedirectEnabled(ctx))
 		})
 	}
+}
+
+func TestIsK8sRedirectEnabledKeepsUsersAPIAtStartupAndRedirectDynamic(t *testing.T) {
+	domain := t.Name()
+	setProvider := func(usersAPI, teamsRedirect bool) {
+		t.Helper()
+		flags := map[string]memprovider.InMemoryFlag{
+			featuremgmt.FlagKubernetesUsersApi: {
+				Key:            featuremgmt.FlagKubernetesUsersApi,
+				DefaultVariant: "configured",
+				Variants:       map[string]any{"configured": usersAPI},
+			},
+			featuremgmt.FlagKubernetesTeamsRedirect: {
+				Key:            featuremgmt.FlagKubernetesTeamsRedirect,
+				DefaultVariant: "configured",
+				Variants:       map[string]any{"configured": teamsRedirect},
+			},
+		}
+		require.NoError(t, openfeature.SetNamedProviderAndWait(domain, memprovider.NewInMemoryProvider(flags)))
+	}
+	t.Cleanup(func() {
+		require.NoError(t, openfeature.SetNamedProviderAndWait(domain, openfeature.NoopProvider{}))
+	})
+
+	setProvider(true, true)
+	client := openfeature.NewClient(domain)
+	service := &Service{
+		openFeatureClient: client,
+		iamFeatures:       iamapi.FeaturesFromFlags(context.Background(), client),
+	}
+	require.True(t, service.isK8sRedirectEnabled(context.Background()))
+
+	// Users API availability is a startup value. A later legacy flag change does
+	// not alter it, while the request-time redirect remains a live kill switch.
+	setProvider(false, true)
+	require.True(t, service.isK8sRedirectEnabled(context.Background()))
+
+	setProvider(false, false)
+	require.False(t, service.isK8sRedirectEnabled(context.Background()))
 }
 
 type stackRedirectProvider struct {

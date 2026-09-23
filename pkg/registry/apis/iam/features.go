@@ -142,7 +142,7 @@ func parseOptionalBool(value string) (bool, error) {
 	return strconv.ParseBool(value)
 }
 
-// FeaturesFromFlags evaluates the legacy IAM startup flags into one immutable value.
+// FeaturesFromFlags evaluates the legacy IAM startup flags into one resolved startup value.
 func FeaturesFromFlags(ctx context.Context, client openfeature.IClient) Features {
 	flag := func(key string) bool {
 		return client.Boolean(ctx, key, false, openfeature.TransactionContext(ctx))

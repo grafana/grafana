@@ -76,6 +76,7 @@ func TestGetAPIRoutes_UserPermissionsGate(t *testing.T) {
 }
 
 func TestNewAPIService_WiresLegacyTeamStore(t *testing.T) {
+	features := Features{TeamsAPI: true, UsersAPI: true}
 	b := NewAPIService(
 		nil,
 		nil,
@@ -91,10 +92,11 @@ func TestNewAPIService_WiresLegacyTeamStore(t *testing.T) {
 		tracing.InitializeTracerForTest(),
 		resourcepermission.NewMappersRegistry(),
 		nil,
-		Features{},
+		features,
 	)
 
 	require.NotNil(t, b.legacyTeamStore)
+	require.Equal(t, features, b.features)
 }
 
 func TestNewAPIService_WiresSSOStore(t *testing.T) {
