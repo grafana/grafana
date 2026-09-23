@@ -109,6 +109,33 @@ const createJsonDataFrame = (wrapText: boolean): DataFrame =>
     })
   );
 
+it.each([false, true])('highlights Auto JSON independently of table.refresh=%s', async (tableRefreshEnabled) => {
+  const theme = createTheme();
+  const { rerender } = render(
+    <TableNG
+      data={createJsonDataFrame(true)}
+      width={800}
+      height={400}
+      tableRefreshEnabled={tableRefreshEnabled}
+      jsonSyntaxHighlightingEnabled
+    />
+  );
+  expect(await screen.findByText('"us-east-1"')).toHaveStyle({ color: theme.components.codeEditor.string });
+  expect(screen.getByText('3')).toHaveStyle({ color: theme.components.codeEditor.number });
+  expect(screen.getByRole('gridcell', { name: /us-east-1/ })).toHaveTextContent(
+    '{\n "region": "us-east-1",\n "replicas": 3\n}',
+    { normalizeWhitespace: false }
+  );
+  rerender(
+    <TableNG data={createJsonDataFrame(true)} width={800} height={400} tableRefreshEnabled={tableRefreshEnabled} />
+  );
+  expect(screen.getByRole('gridcell', { name: /us-east-1/ })).toHaveTextContent(
+    '{\n "region": "us-east-1",\n "replicas": 3\n}',
+    { normalizeWhitespace: false }
+  );
+  expect(screen.queryByText('"us-east-1"')).not.toBeInTheDocument();
+});
+
 // Field has a raw `name` distinct from its configured `displayName`, and no pre-cached
 // `field.state.displayName` (applyFieldOverrides explicitly nulls it out). This lets tests
 // tell apart "the display name was cached" (header shows displayName) from "it wasn't"

@@ -19,7 +19,7 @@ func TestHardcodedMetrics_GetHardCodedDimensionKeysByNamespace(t *testing.T) {
 	t.Run("Should return keys if namespace exist", func(t *testing.T) {
 		resp, err := GetHardCodedDimensionKeysByNamespace("AWS/EC2")
 		require.NoError(t, err)
-		assert.Equal(t, []resources.ResourceResponse[string]{{Value: "AutoScalingGroupName"}, {Value: "ImageId"}, {Value: "InstanceId"}, {Value: "InstanceType"}}, resp)
+		assert.Equal(t, []resources.ResourceResponse[string]{{Value: "AutoScalingGroupName"}, {Value: "ImageId"}, {Value: "InstanceId"}, {Value: "InstanceType"}, {Value: "Per-VPC Metrics"}}, resp)
 	})
 }
 
