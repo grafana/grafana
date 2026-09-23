@@ -1,7 +1,7 @@
 import { type Locator } from '@playwright/test';
 
-import { test, expect } from './fixtures';
-import { flows, type Variable } from './helpers';
+import { test, expect } from '../fixtures';
+import { flows, type Variable } from '../helpers';
 
 test.use({
   featureToggles: {
