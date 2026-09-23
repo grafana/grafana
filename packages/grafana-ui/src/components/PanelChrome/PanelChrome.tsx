@@ -56,14 +56,11 @@ interface BaseProps {
    */
   statusItems?: PanelStatusItem[];
   /**
-   * Handle opening error details view (like inspect / error tab)
+   * Fired when the user clicks the status message/popover, alongside PanelContext's
+   * `onOpenInspector` which actually opens the error details view. Use for host-side side
+   * effects (e.g. telemetry).
    */
   statusMessageOnClick?: (e: React.SyntheticEvent) => void;
-  /**
-   * Triggers an AI-assisted investigation of the panel's errors/notices, shown as an action in
-   * the status popover. Omit to hide the action.
-   */
-  onInvestigateErrors?: (e: React.SyntheticEvent) => void;
   /**
    * @deprecated use `actions' instead
    **/
@@ -162,7 +159,6 @@ export function PanelChrome({
   statusMessage,
   statusItems,
   statusMessageOnClick,
-  onInvestigateErrors,
   leftItems,
   actions,
   selectionId,
@@ -434,7 +430,6 @@ export function PanelChrome({
                   items={statusItems}
                   onClick={statusMessageOnClick}
                   ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-status', 'Panel status')}
-                  onInvestigateErrors={onInvestigateErrors}
                 />
               </div>
             )}
@@ -459,7 +454,6 @@ export function PanelChrome({
                     items={statusItems}
                     onClick={statusMessageOnClick}
                     ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-status', 'Panel status')}
-                    onInvestigateErrors={onInvestigateErrors}
                   />
                 </div>
               )}

@@ -961,11 +961,6 @@ export interface FeatureToggles {
   */
   alertingImportAlertmanagerAPI?: boolean;
   /**
-  * Disables the DMA feature in the UI
-  * @default false
-  */
-  alertingDisableDMAinUI?: boolean;
-  /**
   * Prefer library panel title over viz panel title.
   * @default false
   */
@@ -1256,11 +1251,6 @@ export interface FeatureToggles {
   * @default true
   */
   alertingNotificationHistoryDetail?: boolean;
-  /**
-  * Whether to use the new React 19 runtime
-  * @default true
-  */
-  react19?: boolean;
   /**
   * Enables managed plugins v2 (expanded rollout, community plugin coverage)
   * @default false

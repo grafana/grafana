@@ -6145,9 +6145,7 @@
     "planning-banner": {
       "build": "Build",
       "dismiss": "Dismiss",
-      "panel-count_one": "{{count}} panel",
-      "panel-count_other": "{{count}} panels",
-      "plan-label": "Plan"
+      "preview-label": "Preview"
     },
     "public-dashboard-not-available": {
       "does-not-exist": "The dashboard you are trying to access does not exist",
