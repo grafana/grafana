@@ -22,6 +22,11 @@ import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.gra
 import { useStyles2 } from '@grafana/ui';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty';
+import {
+  isDashboardReviewing,
+  isDashboardSceneLike,
+  isFullDashboardEditing,
+} from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { addElement } from '../../actions/element/addElement';
 import { removeElement } from '../../actions/element/removeElement';
@@ -129,6 +134,10 @@ export class DefaultGridLayoutManager
   }
 
   private _activationHandler() {
+    const root = this.getRoot();
+    if (isDashboardSceneLike(root) && isDashboardReviewing(root.state)) {
+      this.editModeChanged(false);
+    }
     if (config.featureToggles.dashboardNewLayouts) {
       this._subs.add(
         this.subscribeToEvent(SceneGridLayoutDragStartEvent, ({ payload: { evt, panel } }) => {
@@ -428,16 +437,19 @@ export class DefaultGridLayoutManager
     return row;
   }
 
+  private editModeTimeout?: ReturnType<typeof setTimeout>;
+
   public editModeChanged(isEditing: boolean) {
+    clearTimeout(this.editModeTimeout);
     const updateResizeAndDragging = () => {
       this.state.grid.setState({ isDraggable: isEditing, isResizable: isEditing });
       forceRenderChildren(this.state.grid, true);
     };
 
-    if (config.featureToggles.dashboardNewLayouts) {
+    if (isEditing && config.featureToggles.dashboardNewLayouts) {
       // We do this in a timeout to wait a bit with enabling dragging as dragging enables grid animations
       // if we show the sidebar without animations it opens much faster and feels more responsive
-      setTimeout(updateResizeAndDragging, 10);
+      this.editModeTimeout = setTimeout(updateResizeAndDragging, 10);
       return;
     }
 
@@ -586,7 +598,11 @@ export class DefaultGridLayoutManager
 
   public static createFromLayout(currentLayout: DashboardLayoutManager): DefaultGridLayoutManager {
     const panels = currentLayout.getVizPanels();
-    return DefaultGridLayoutManager.fromVizPanels(panels);
+    const root = currentLayout.getRoot();
+    const isEditing = !isDashboardSceneLike(root) || isFullDashboardEditing(root.state);
+    const layout = DefaultGridLayoutManager.fromVizPanels(panels);
+    layout.state.grid.setState({ isDraggable: isEditing, isResizable: isEditing });
+    return layout;
   }
 
   public static createEmpty(): DefaultGridLayoutManager {
@@ -666,7 +682,8 @@ export class DefaultGridLayoutManager
 function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<DefaultGridLayoutManager>) {
   const { children } = useSceneObjectState(model.state.grid, { shouldActivateOrKeepAlive: true });
   const dashboard = useDashboard(model);
-  const { isEditing } = dashboard.useState();
+  const dashboardState = dashboard.useState();
+  const isEditing = isFullDashboardEditing(dashboardState);
   const hasClonedParents = isRepeatCloneOrChildOf(model);
   const styles = useStyles2(getStyles);
   const showCanvasActions = isEditing && config.featureToggles.dashboardNewLayouts && !hasClonedParents;

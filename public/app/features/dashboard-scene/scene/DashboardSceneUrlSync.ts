@@ -75,6 +75,9 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     // check, the branch below calls onEnterEditMode() unconditionally when not already editing,
     // undoing the invariant a plan preview depends on (see refuseWhilePlanning).
     if (typeof values.editview === 'string' && this._scene.canEditDashboard() && !refuseWhilePlanning(this._scene)) {
+      if (isEditing) {
+        this._scene.openFullEditor();
+      }
       update.editview = createDashboardEditViewFor(values.editview);
 
       // If we are not in editing (for example after full page reload)
@@ -125,9 +128,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       }
 
       // If we are not in editing (for example after full page reload)
-      if (!isEditing) {
-        this._scene.onEnterEditMode();
-      }
+      this._scene.openFullEditor();
 
       const libPanelBehavior = getLibraryPanelBehavior(panel);
       if (libPanelBehavior && !libPanelBehavior?.state.isLoaded) {

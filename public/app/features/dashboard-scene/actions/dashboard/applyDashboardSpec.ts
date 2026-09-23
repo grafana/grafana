@@ -54,7 +54,7 @@ export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardS
       scene.setState({ ...newState, editPanel: undefined, isDirty: true });
       // Dashboard state is replaced in place losing all edit-only properties.
       // Calling editModeChange rehydrates the panel's edit state (for example isDraggable state)
-      scene.state.body.editModeChanged?.(true);
+      scene.applyEditPresentation();
 
       // Sidebar keeps selected element memoized. In case assistant calls applySpec while an element
       // is selected it may lead to interacting with the old copy of the element.

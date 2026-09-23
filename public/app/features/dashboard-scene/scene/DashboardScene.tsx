@@ -87,6 +87,8 @@ import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { normalizeTransformation } from '../serialization/transformationCompat';
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
 import { DashboardSidebar } from '../sidebar/DashboardSidebar';
+import { DashboardStateChangedEvent } from '../sidebar/events';
+import { type DashboardSidebarState } from '../sidebar/types';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import {
@@ -126,7 +128,12 @@ import { clearClipboard } from './layouts-shared/paste';
 import { getUpdatedHoverHeader } from './panel-timerange/utils';
 import { DashboardPlanningEvent } from './planningEvents';
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './types/DashboardLayoutManager';
-import { type DashboardSceneLike, type DashboardSceneState } from './types/dashboard';
+import {
+  isFullDashboardEditing,
+  isDashboardReviewing,
+  type DashboardSceneLike,
+  type DashboardSceneState,
+} from './types/dashboard';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
 const PANEL_SEARCH_VAR = 'systemPanelFilterVar';
@@ -191,6 +198,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   private _sidebarActivation?: CancelActivationHandler;
   private _modalRequestId = 0;
+  private _sidebarBeforePreview?: Pick<DashboardSidebarState, 'openPane' | 'selectionContext'>;
 
   /**
    * Remember scroll position when going into panel edit
@@ -293,6 +301,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     getDashboardSrv().setCurrent(oldDashboardWrapper);
 
     const destroyMutationClient = createMutationClient(this, 'dashboard');
+    const presentationSubscription = this.subscribeToState((state, previousState) => {
+      if (
+        isDashboardReviewing(state) &&
+        (state.body !== previousState.body || state.sidebar !== previousState.sidebar)
+      ) {
+        this.applyEditPresentation();
+      }
+    });
 
     return () => {
       this._modalRequestId++;
@@ -305,6 +321,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         // scene with no planning state, so this only matters if that ever changes.
         this.setState({ planning: undefined });
       }
+      presentationSubscription.unsubscribe();
       destroyMutationClient();
       window.__grafanaSceneContext = prevSceneContext;
       clearKeyBindings();
@@ -452,30 +469,107 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onEnterEditMode = (source: 'user' | 'assistant' = 'user') => {
-    const wasEditing = this.state.isEditing;
+    if (!this.state.isEditing) {
+      this._editSessionSource = source;
+      this._sidebarBeforePreview = undefined;
 
-    if (!wasEditing) {
       this.state.sidebar.setState({ undoStack: [], redoStack: [] });
-    }
 
-    this._editSessionSource = source;
+      // Capture the discard baseline only once per edit session.
+      this._initialState = sceneUtils.cloneSceneObjectState(this.state, { isDirty: false });
+      this._initialUrlState = locationService.getLocation();
 
-    // Save this state
-    this._initialState = sceneUtils.cloneSceneObjectState(this.state, { isDirty: false });
-    this._initialUrlState = locationService.getLocation();
+      this.setState({ isEditing: true, editable: true, editPresentation: undefined });
+      this.state.body.editModeChanged?.(true);
+      this._changeTracker.startTrackingChanges();
 
-    // Switch to edit mode
-    this.setState({ isEditing: true, editable: true });
-
-    // Propagate change edit mode change to children
-    this.state.body.editModeChanged?.(true);
-
-    this._changeTracker.startTrackingChanges();
-
-    if (!wasEditing) {
       DashboardInteractions.editSessionStarted({ dashboard_uid: this.state.uid, source });
     }
+
+    // Full is an explicit user choice; undefined is the default manual edit presentation.
+    if (source === 'assistant' && this.state.editPresentation !== 'full') {
+      this.setEditPresentation('preview');
+    }
   };
+
+  public setEditPresentation(presentation: 'preview' | 'full') {
+    if (!this.state.isEditing || this.state.editPanel || this.state.editview) {
+      return;
+    }
+    // A drag may temporarily detach an item. Finish it before changing interaction policy.
+    if (this.state.layoutOrchestrator.isDragging()) {
+      return;
+    }
+    // Always allow returning to editing if the flag changes during a session.
+    if (
+      presentation === 'preview' &&
+      !getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDashboardPreviewMode, false)
+    ) {
+      return;
+    }
+    if (this.state.editPresentation === presentation) {
+      return;
+    }
+
+    const sidebar = this.state.sidebar;
+    if (presentation === 'preview') {
+      this._sidebarBeforePreview = {
+        openPane: sidebar.state.openPane,
+        selectionContext: sidebar.state.selectionContext,
+      };
+    }
+    sidebar.closePane();
+    this.setState({ editPresentation: presentation });
+    this.applyEditPresentation();
+    if (presentation === 'full') {
+      this.restoreSidebarAfterPreview();
+    }
+    reportInteraction('dashboards_edit_presentation_changed', { presentation });
+  }
+
+  private restoreSidebarAfterPreview() {
+    const saved = this._sidebarBeforePreview;
+    this._sidebarBeforePreview = undefined;
+    if (!saved?.openPane) {
+      return;
+    }
+
+    const sidebar = this.state.sidebar;
+    // Assistant mutations may have removed or replaced selected items while Preview was open.
+    const selected = saved.selectionContext.selected.filter(({ id }) => sidebar.getSelectedObject(id));
+    if (saved.openPane.getId() === 'element' && selected.length === 0) {
+      return;
+    }
+
+    sidebar.setState({ selectionContext: { ...sidebar.state.selectionContext, selected } });
+    // A spec replacement may have replaced the sidebar too; attach a pane belonging to this tree.
+    sidebar.openPane(saved.openPane.clone());
+  }
+
+  public openFullEditor() {
+    if (!this.state.isEditing) {
+      this.onEnterEditMode();
+    }
+    this.setEditPresentation('full');
+  }
+
+  public applyEditPresentation() {
+    const fullEditing = isFullDashboardEditing(this.state);
+    this.state.body.editModeChanged?.(fullEditing);
+    if (this.state.isEditing) {
+      this.activateSidebar();
+    }
+    if (fullEditing) {
+      this.state.sidebar.enableSelection();
+    } else {
+      this.state.sidebar.disableSelection();
+    }
+  }
+
+  public openChanges() {
+    reportInteraction('dashboards_changes_opened', { presentation: this.state.editPresentation ?? 'full' });
+    return this.openSaveDrawer({ showDiff: true });
+  }
 
   public getEditSessionSource() {
     return this._editSessionSource;
@@ -540,6 +634,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this._initialUrlState = locationService.getLocation();
 
     this._changeTracker.startTrackingChanges();
+    this.publishEvent(new DashboardStateChangedEvent({ source: this }), true);
   }
 
   public exitEditMode({ skipConfirm, restoreInitialState }: { skipConfirm: boolean; restoreInitialState?: boolean }) {
@@ -602,6 +697,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   private exitEditModeConfirmed(restoreInitialState = true) {
+    this._sidebarBeforePreview = undefined;
     // No need to listen to changes anymore
     this._changeTracker.stopTrackingChanges();
 
@@ -628,13 +724,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     if (restoreInitialState) {
       // Restore initial state and disable editing
-      this.setState({ ...this._initialState, isEditing: false });
+      this.setState({ ...this._initialState, isEditing: false, editPresentation: undefined });
       this.restoreSerializerAnnotationsFromInitialState();
       appEvents.publish(new DashboardDiscardedEvent());
       DashboardInteractions.dashboardEditDiscarded();
     } else {
       // Do not restore
-      this.setState({ isEditing: false });
+      this.setState({ isEditing: false, editPresentation: undefined });
     }
 
     // if we are in edit panel, we need to onDiscard()
@@ -670,13 +766,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const hadProgrammaticSidebar = this._sidebarActivation !== undefined;
     this.deactivateSidebar();
 
+    const editPresentation = this.state.editPresentation;
     const restoredState = sceneUtils.cloneSceneObjectState(this._initialState!, { isDirty: false });
 
     // Ensure the restored layout stays editable.
-    restoredState.body.editModeChanged?.(true);
+    restoredState.body.editModeChanged?.(isFullDashboardEditing(this.state));
 
     this.setState({
       ...restoredState,
+      editPresentation,
       isEditing: true,
       editable: true,
       isDirty: false,
@@ -772,6 +870,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   };
 
   public async openSaveDrawer({
+    showDiff,
     saveAsCopy,
     saveDashboardTemplate,
     saveAsDashboardTemplate,
@@ -783,6 +882,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     saveAsDashboardTemplate?: boolean;
     onSaveSuccess?: () => void;
     recoverToNewBranch?: RecoverToNewBranch;
+    showDiff?: boolean;
   }) {
     if (!this.state.isEditing) {
       return;
@@ -797,7 +897,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         return;
       }
 
+      if (showDiff && this.state.overlay instanceof SaveDashboardDrawer) {
+        this.state.overlay.setState({ showDiff: true });
+        return this.state.overlay;
+      }
+
       return new SaveDashboardDrawer({
+        showDiff,
         dashboardRef: this.getRef(),
         saveAsCopy,
         saveAsDashboardTemplate,

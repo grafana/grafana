@@ -12,5 +12,6 @@ import { type DashboardScene } from '../scene/DashboardScene';
  */
 export async function openPanelEditor(dashboard: DashboardScene, panel: VizPanel, isNewPanel = false) {
   const { buildPanelEditScene } = await import(/* webpackChunkName: "panel-edit" */ './PanelEditor');
+  dashboard.openFullEditor();
   dashboard.setState({ editPanel: buildPanelEditScene(panel, isNewPanel) });
 }

@@ -12,6 +12,7 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { addElement } from '../../actions/element/addElement';
 import { moveElement } from '../../actions/element/moveElement';
@@ -248,9 +249,7 @@ export class TabsLayoutManager
       perform: () => {
         this.setState({ tabs: [...this.state.tabs, newTab], currentTabSlug: newTab.getSlug() });
         const dashboard = getDashboardSceneFor(this);
-        if (dashboard.state.isEditing) {
-          newTab.getLayout().editModeChanged?.(true);
-        }
+        newTab.getLayout().editModeChanged?.(isFullDashboardEditing(dashboard.state));
       },
       undo: () => {
         this.setState({

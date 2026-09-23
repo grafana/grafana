@@ -39,12 +39,14 @@ import { DashboardEventAction } from 'app/features/live/dashboard/types';
 import { VariablesChanged } from 'app/features/variables/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { changeTitle } from '../actions/dashboard/changeTitle';
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { createWorker } from '../saving/createDetectChangesWorker';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import * as DashboardTemplateExtensionModule from '../settings/enterprise-components/DashboardTemplateExtension';
 import { openShareDrawer } from '../sharing/ShareDrawer/openShareDrawer';
+import { DashboardSidebar } from '../sidebar/DashboardSidebar';
 import { getCloneKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { findVizPanelByKey } from '../utils/findVizPanel';
@@ -268,6 +270,248 @@ describe('DashboardScene', () => {
         expect(scene.state.isEditing).toBeFalsy();
         expect(scene.state.isDirty).toBeFalsy();
         expect(scene.getEditSessionSource()).toBeUndefined();
+      });
+    });
+
+    describe('Review presentation', () => {
+      let scene: DashboardScene;
+      let deactivateScene: () => void;
+
+      beforeEach(() => {
+        setTestFlags({ 'grafana.dashboardPreviewMode': true });
+        locationService.push('/d/dash-1');
+        scene = buildTestScene();
+        deactivateScene = scene.activate();
+        scene.onEnterEditMode();
+      });
+
+      afterEach(() => {
+        deactivateScene();
+        setTestFlags({});
+      });
+
+      it.each([false, true])('enables Preview for Assistant edits (already editing: %s)', (alreadyEditing) => {
+        if (!alreadyEditing) {
+          scene.exitEditMode({ skipConfirm: true });
+        }
+        scene.onEnterEditMode('assistant');
+
+        expect(scene.state.editPresentation).toBe('preview');
+        expect((scene.state.body as DefaultGridLayoutManager).state.grid.state.isDraggable).toBe(false);
+        expect(scene.state.sidebar.state.selectionContext.enabled).toBe(false);
+      });
+
+      it('starts a dashboard created by Assistant in Preview', () => {
+        locationService.push('/dashboard/new?editSource=assistant');
+        const newScene = buildTestScene();
+        const deactivate = newScene.activate();
+        try {
+          expect(newScene.state.editPresentation).toBe('preview');
+          expect((newScene.state.body as DefaultGridLayoutManager).state.grid.state.isDraggable).toBe(false);
+          expect(newScene.getEditSessionSource()).toBe('assistant');
+        } finally {
+          deactivate();
+        }
+      });
+
+      it('restores dashboard options after an Assistant layout replacement in Preview', () => {
+        scene.state.sidebar.selectObject(scene);
+        scene.setEditPresentation('preview');
+        scene.setState({ sidebar: new DashboardSidebar() });
+        scene.applyEditPresentation();
+        scene.setEditPresentation('full');
+
+        expect(scene.state.sidebar.getSelectedObject()).toBe(scene);
+        expect(scene.state.sidebar.state.openPane?.getId()).toBe('element');
+      });
+
+      it('does not reopen options for a panel removed in Preview', () => {
+        const panel = findVizPanelByKey(scene, 'panel-1')!;
+        scene.state.sidebar.selectObject(panel);
+        scene.setEditPresentation('preview');
+        scene.removePanel(panel);
+        scene.setEditPresentation('full');
+
+        expect(scene.state.sidebar.state.selectionContext.enabled).toBe(true);
+        expect(scene.state.sidebar.state.selectionContext.selected).toEqual([]);
+        expect(scene.state.sidebar.state.openPane).toBeUndefined();
+      });
+
+      it('keeps Preview off after the user turns it off, until a new edit session', () => {
+        scene.onEnterEditMode('assistant');
+        scene.setEditPresentation('full');
+        scene.onEnterEditMode('assistant');
+        scene.onEnterEditMode('assistant');
+
+        expect(scene.state.editPresentation).toBe('full');
+        expect((scene.state.body as DefaultGridLayoutManager).state.grid.state.isDraggable).toBe(true);
+
+        scene.exitEditMode({ skipConfirm: true });
+        scene.onEnterEditMode('assistant');
+        expect(scene.state.editPresentation).toBe('preview');
+      });
+
+      it('respects opening the full editor before Assistant edits', () => {
+        scene.openFullEditor();
+        scene.onEnterEditMode('assistant');
+
+        expect(scene.state.editPresentation).toBe('full');
+        expect((scene.state.body as DefaultGridLayoutManager).state.grid.state.isDraggable).toBe(true);
+      });
+
+      it('keeps manual edits and undo history when Assistant enables Preview', () => {
+        scene.activateSidebar();
+        changeTitle({ source: scene, oldValue: 'hello', newValue: 'Manual edit' });
+        scene.onEnterEditMode('assistant');
+
+        expect(scene.state.editPresentation).toBe('preview');
+        expect(scene.state.title).toBe('Manual edit');
+        scene.openFullEditor();
+        scene.state.sidebar.undoAction();
+        expect(scene.state.title).toBe('hello');
+      });
+
+      it('does not enable Preview for Assistant when the flag is disabled', () => {
+        setTestFlags({ 'grafana.dashboardPreviewMode': false });
+        scene.onEnterEditMode('assistant');
+
+        expect(scene.state.editPresentation).toBeUndefined();
+        expect((scene.state.body as DefaultGridLayoutManager).state.grid.state.isDraggable).toBe(true);
+      });
+
+      it('preserves the session source and discard baseline when edit mode is entered again', () => {
+        scene.setState({ title: 'Unsaved title' });
+        scene.setEditPresentation('preview');
+
+        scene.onEnterEditMode('assistant');
+
+        expect(scene.getEditSessionSource()).toBe('user');
+        expect(scene.state.editPresentation).toBe('preview');
+        expect(scene.state.isDirty).toBe(true);
+
+        scene.exitEditMode({ skipConfirm: true });
+
+        expect(scene.state.title).toBe('hello');
+        expect(scene.state.isEditing).toBe(false);
+        expect(scene.state.editPresentation).toBeUndefined();
+      });
+
+      it('preserves undo and redo across Edit to Review to Edit transitions', () => {
+        scene.activateSidebar();
+        changeTitle({ source: scene, oldValue: 'hello', newValue: 'First edit' });
+        changeTitle({ source: scene, oldValue: 'First edit', newValue: 'Second edit' });
+        scene.state.sidebar.undoAction();
+
+        scene.setEditPresentation('preview');
+        scene.openFullEditor();
+
+        expect(scene.state.editPresentation).toBe('full');
+        expect(scene.state.title).toBe('First edit');
+        scene.state.sidebar.redoAction();
+        expect(scene.state.title).toBe('Second edit');
+        scene.state.sidebar.undoAction();
+        scene.state.sidebar.undoAction();
+        expect(scene.state.title).toBe('hello');
+      });
+
+      it('finishes an active panel drag before allowing a switch to review', () => {
+        const panel = findVizPanelByKey(scene, 'panel-1')!;
+        const gridItem = sceneGraph.getAncestor(panel, DashboardGridItem);
+        scene.state.layoutOrchestrator.setState({ draggingGridItem: gridItem.getRef() });
+        scene.setEditPresentation('preview');
+        expect(
+          sceneGraph.getAncestor(findVizPanelByKey(scene, 'panel-1')!, DefaultGridLayoutManager).state.grid.state
+            .isDraggable
+        ).toBe(true);
+        expect(scene.state.editPresentation).toBeUndefined();
+
+        scene.state.layoutOrchestrator.setState({ draggingGridItem: undefined });
+        scene.setEditPresentation('preview');
+        expect(scene.state.editPresentation).toBe('preview');
+        expect(
+          sceneGraph.getAncestor(findVizPanelByKey(scene, 'panel-1')!, DefaultGridLayoutManager).state.grid.state
+            .isDraggable
+        ).toBe(false);
+      });
+
+      it('keeps programmatic edit actions working while review disables canvas selection', () => {
+        scene.setEditPresentation('preview');
+
+        changeTitle({ source: scene, oldValue: 'hello', newValue: 'Changed during review' });
+
+        expect(scene.state.title).toBe('Changed during review');
+        expect(scene.state.isDirty).toBe(true);
+        expect(scene.state.sidebar.state.selectionContext.enabled).toBe(false);
+        scene.openFullEditor();
+        scene.state.sidebar.undoAction();
+        expect(scene.state.title).toBe('hello');
+      });
+
+      it.each(['preview', 'full'] as const)(
+        'keeps %s after saving and discards subsequent edits to the saved baseline',
+        async (presentation) => {
+          scene.setState({ title: 'Saved title' });
+          scene.setEditPresentation(presentation);
+
+          await scene.saveCompleted({} as Dashboard, {
+            slug: 'saved-title',
+            uid: 'dash-1',
+            url: '/d/dash-1/saved-title',
+            version: 2,
+            status: 'success',
+          });
+
+          scene.onEnterEditMode('assistant');
+          expect(scene.state.editPresentation).toBe(presentation);
+          expect(scene.state.isEditing).toBe(true);
+          expect(scene.state.isDirty).toBe(false);
+
+          scene.setState({ title: 'Later unsaved title' });
+          scene.exitEditMode({ skipConfirm: true });
+
+          expect(scene.state.title).toBe('Saved title');
+          expect(scene.state.meta.version).toBe(2);
+          expect(scene.state.isEditing).toBe(false);
+          expect(scene.state.editPresentation).toBeUndefined();
+        }
+      );
+
+      it('discards changes while retaining review and an active mutation listener', () => {
+        scene.setEditPresentation('preview');
+        changeTitle({ source: scene, oldValue: 'hello', newValue: 'Discard me' });
+
+        scene.discardChangesAndKeepEditing();
+
+        expect(scene.state.title).toBe('hello');
+        expect(scene.state.isDirty).toBe(false);
+        expect(scene.state.editPresentation).toBe('preview');
+        expect(scene.state.sidebar.state.selectionContext.enabled).toBe(false);
+        expect(scene.state.sidebar.state.undoStack).toEqual([]);
+
+        changeTitle({ source: scene, oldValue: 'hello', newValue: 'New review edit' });
+        expect(scene.state.title).toBe('New review edit');
+        expect(scene.state.isDirty).toBe(true);
+      });
+
+      it('keeps full editing when the OpenFeature flag is disabled', () => {
+        setTestFlags({ 'grafana.dashboardPreviewMode': false });
+
+        scene.setEditPresentation('preview');
+
+        expect(scene.state.isEditing).toBe(true);
+        expect((scene.state.body as DefaultGridLayoutManager).state.grid.state.isDraggable).toBe(true);
+        expect(scene.state.editPresentation).toBeUndefined();
+      });
+
+      it('allows returning to full editing when the flag is disabled during review', () => {
+        scene.setEditPresentation('preview');
+        setTestFlags({ 'grafana.dashboardPreviewMode': false });
+
+        scene.openFullEditor();
+
+        expect(scene.state.editPresentation).toBe('full');
+        expect((scene.state.body as DefaultGridLayoutManager).state.grid.state.isDraggable).toBe(true);
+        expect(scene.state.sidebar.state.selectionContext.enabled).toBe(true);
       });
     });
 

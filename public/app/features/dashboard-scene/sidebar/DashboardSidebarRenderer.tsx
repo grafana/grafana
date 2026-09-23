@@ -13,6 +13,7 @@ import {
 import { sceneGraph, type SceneVariable, useSceneObjectState } from '@grafana/scenes';
 import { Sidebar, useStyles2, useSidebarContext } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 import { onOpenSnapshotOriginalDashboard } from '../scene/GoToSnapshotOriginButton';
@@ -40,7 +41,9 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
   const { openPane, selectionContext, outlinePane } = useSceneObjectState(sidebar, {
     shouldActivateOrKeepAlive: true,
   });
-  const { isEditing, meta, uid, viewPanel } = dashboard.useState();
+  const dashboardState = dashboard.useState();
+  const { meta, uid, viewPanel } = dashboardState;
+  const isEditing = isFullDashboardEditing(dashboardState);
   const styles = useStyles2(getStyles, isEditing);
   const hasUid = Boolean(uid);
   const isEmbedded = meta.isEmbedded;

@@ -5,7 +5,7 @@ import { byTestId, byText } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
-import { ConstantVariable, sceneGraph, SceneRefreshPicker } from '@grafana/scenes';
+import { ConstantVariable, sceneGraph, SceneRefreshPicker, VizPanel } from '@grafana/scenes';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeyManagerKind, AnnoKeyUseCrossDashboardVariables, ManagerKind } from 'app/features/apiserver/types';
 import {
@@ -15,6 +15,7 @@ import {
 import { RepoViewStatus } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
+import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { type DashboardSceneState } from '../scene/types/dashboard';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
@@ -37,7 +38,9 @@ jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => ({
 
 // Monaco can't boot web workers in jsdom
 jest.mock('app/core/components/MonacoDiffEditor/MonacoDiffEditor', () => ({
-  MonacoDiffEditor: () => <div data-testid="schema-diff-editor" />,
+  MonacoDiffEditor: ({ modified }: { modified: string }) => (
+    <div data-testid="schema-diff-editor" data-modified={modified} />
+  ),
 }));
 
 const saveDashboardMutationMock = jest.fn();
@@ -77,6 +80,61 @@ const ui = {
 };
 
 describe('SaveDashboardDrawer', () => {
+  it('updates an open Changes tab after successive panel edits while the dashboard stays dirty', async () => {
+    const { dashboard, openAndRender } = setup();
+    const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'First title' });
+    dashboard.addPanel(panel);
+    dashboard.setState({ isDirty: true });
+    await act(async () => {
+      await openAndRender({ showDiff: true });
+    });
+
+    const readPanelTitle = () => {
+      const json = screen.getByTestId('schema-diff-editor').getAttribute('data-modified')!;
+      return JSON.parse(json).panels[0].title;
+    };
+    await waitFor(() => expect(readPanelTitle()).toBe('First title'));
+    act(() => panel.setState({ title: 'Second title' }));
+    await waitFor(() => expect(readPanelTitle()).toBe('Second title'));
+    act(() => panel.setState({ title: 'Third title' }));
+    await waitFor(() => expect(readPanelTitle()).toBe('Third title'));
+    expect(dashboard.state.isDirty).toBe(true);
+  });
+
+  it('updates Changes when an auto-grid panel is removed from an already dirty dashboard', async () => {
+    const { dashboard, openAndRender } = setup();
+    const layout = AutoGridLayoutManager.createEmpty();
+    dashboard.setState({ body: layout });
+    dashboard.activateSidebar();
+    const first = new VizPanel({ pluginId: 'text', title: 'Keep this panel' });
+    const second = new VizPanel({ pluginId: 'text', title: 'Remove this panel' });
+    layout.addPanel(first);
+    layout.addPanel(second);
+    dashboard.setState({ isDirty: true });
+    await act(async () => {
+      await openAndRender({ showDiff: true });
+    });
+    await waitFor(() =>
+      expect(screen.getByTestId('schema-diff-editor').getAttribute('data-modified')).toContain('Remove this panel')
+    );
+
+    act(() => layout.removePanel(second));
+    await waitFor(() => {
+      const current = screen.getByTestId('schema-diff-editor').getAttribute('data-modified');
+      expect(current).toContain('Keep this panel');
+      expect(current).not.toContain('Remove this panel');
+    });
+  });
+
+  it('opens Changes for a clean dashboard and keeps the empty state selected', async () => {
+    const { openAndRender } = setup();
+    await act(async () => {
+      await openAndRender({ showDiff: true });
+    });
+    expect(await screen.findByRole('tab', { name: 'Changes 0' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByText('No changes to save', { selector: 'span' })).toBeVisible();
+  });
+
   describe('Given an already saved dashboard', () => {
     it('should render save drawer with only message textarea', async () => {
       await setup().openAndRender();
@@ -844,7 +902,12 @@ function setup(overrides?: Partial<DashboardSceneState>) {
   dashboard.onEnterEditMode();
 
   const openAndRender = async (
-    opts: { saveAsCopy?: boolean; saveAsDashboardTemplate?: boolean; saveDashboardTemplate?: boolean } = {}
+    opts: {
+      showDiff?: boolean;
+      saveAsCopy?: boolean;
+      saveAsDashboardTemplate?: boolean;
+      saveDashboardTemplate?: boolean;
+    } = {}
   ) => {
     await dashboard.openSaveDrawer(opts);
     const drawer = dashboard.state.overlay as SaveDashboardDrawer;

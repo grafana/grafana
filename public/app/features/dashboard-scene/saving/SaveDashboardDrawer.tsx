@@ -1,6 +1,6 @@
 import { t } from '@grafana/i18n';
 import { type SceneComponentProps, SceneObjectBase, type SceneObjectState, type SceneObjectRef } from '@grafana/scenes';
-import { Drawer, Spinner, Stack, Tab, TabsBar } from '@grafana/ui';
+import { Drawer, EmptyState, Spinner, Stack, Tab, TabsBar } from '@grafana/ui';
 import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
 import { FolderDeadEndAlert } from 'app/features/provisioning/components/Dashboards/FolderDeadEndAlert';
@@ -22,6 +22,7 @@ import { SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
 import { getSaveAsTemplateForm } from './enterprise-components/SaveAsTemplateFormExtension';
 import { getSaveDashboardTemplateForm } from './enterprise-components/SaveDashboardTemplateFormExtension';
 import { isNewDashboard } from './shared';
+import { useDashboardSaveChanges } from './useDashboardSaveChanges';
 
 interface SaveDashboardDrawerState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
@@ -91,7 +92,12 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     saveTarget,
   } = model.useState();
 
-  const changeInfo = model.state.dashboardRef.resolve().getDashboardChanges(saveTimeRange, saveVariables, saveRefresh);
+  const changeInfo = useDashboardSaveChanges(
+    model.state.dashboardRef.resolve(),
+    saveTimeRange,
+    saveVariables,
+    saveRefresh
+  );
 
   const {
     changedSaveModel,
@@ -122,7 +128,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
         active={!showDiff}
         onChangeTab={() => model.setState({ showDiff: false })}
       />
-      {changesCount > 0 && !managedResourceCannotBeEdited && (
+      {(changesCount > 0 || showDiff) && !managedResourceCannotBeEdited && (
         <Tab
           label={t('dashboard-scene.save-dashboard-drawer.tabs.label-changes', 'Changes')}
           active={showDiff}
@@ -203,7 +209,10 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
           )}
         </Stack>
       </div>
-      {showDiff && (
+      {showDiff && changesCount === 0 && (
+        <EmptyState variant="completed" message={t('dashboard.review.no-changes', 'No changes to save')} />
+      )}
+      {showDiff && changesCount > 0 && (
         <SaveDashboardDiff
           diff={diffs}
           oldValue={initialSaveModel}

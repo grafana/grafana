@@ -593,6 +593,19 @@ describe('setupKeyboardShortcuts', () => {
         expect(DashboardInteractions.trackPastePanelClick).toHaveBeenCalledWith('keyboard', 'dashboard', 'keyboard');
       });
 
+      it('ignores paste in review and enables the same shortcut after returning to full editing', () => {
+        mockScene.setState({ isEditing: true, editPresentation: 'preview' });
+        localStorageMock.setItem(LS_PANEL_COPY_KEY, JSON.stringify({ panelId: 'panel-1' }));
+        setupKeyboardShortcuts(mockScene);
+
+        getBinding('p v')!.onTrigger();
+        expect(mockScene.pastePanel).not.toHaveBeenCalled();
+
+        mockScene.setState({ editPresentation: 'full' });
+        getBinding('p v')!.onTrigger();
+        expect(mockScene.pastePanel).toHaveBeenCalledTimes(1);
+      });
+
       it('does not paste when not editing', () => {
         mockScene.setState({ isEditing: false });
         setupKeyboardShortcuts(mockScene);

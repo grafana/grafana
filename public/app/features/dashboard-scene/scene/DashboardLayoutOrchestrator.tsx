@@ -142,6 +142,12 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     };
   }
 
+  public isDragging(): boolean {
+    return Boolean(
+      this.state.draggingGridItem || this.state.draggingRow || this._tabDragState || this._dropNewItemPointerUpHandler
+    );
+  }
+
   public startDraggingSync(
     evt: ReactPointerEvent,
     gridItem: SceneGridItemLike,

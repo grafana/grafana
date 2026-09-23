@@ -1,4 +1,4 @@
-import { act, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
@@ -6,11 +6,13 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils, setPluginLinksHook, config } from '@grafana/runtime';
 import { SceneGridLayout, SceneTimeRange, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { isFullDashboardEditing } from '../scene/types/dashboard';
 import { DashboardInteractions } from '../utils/interactions';
 import { activateFullSceneTree } from '../utils/test-utils';
 
@@ -111,6 +113,38 @@ describe('DashboardSidebarRenderer', () => {
     await waitFor(() => expect(scene.state.sidebar.state.openPane?.getId()).toBe('add'));
   });
 
+  describe('returning from Preview', () => {
+    beforeEach(() => setTestFlags({ 'grafana.dashboardPreviewMode': true }));
+    afterEach(() => {
+      cleanup();
+      setTestFlags({});
+    });
+
+    it('restores the docked dashboard options pane after toggling Preview off', async () => {
+      const scene = buildTestScene();
+      act(() => activateFullSceneTree(scene));
+      function SidebarWithPresentation() {
+        const state = scene.useState();
+        return <DashboardSidebarSplitter dashboard={scene} isEditing={isFullDashboardEditing(state)} />;
+      }
+      const user = userEvent.setup();
+      render(<SidebarWithPresentation />);
+      await user.click(screen.getByTestId(selectors.pages.Dashboard.Sidebar.optionsButton));
+      expect(await screen.findByTestId(selectors.components.Sidebar.dockToggle)).toBeInTheDocument();
+      expect(scene.state.sidebar.getSelectedObject()).toBe(scene);
+      expect(scene.state.sidebar.state.isDocked).toBe(true);
+
+      act(() => scene.setEditPresentation('preview'));
+      expect(screen.queryByTestId(selectors.components.Sidebar.dockToggle)).not.toBeInTheDocument();
+      act(() => scene.setEditPresentation('full'));
+
+      expect(await screen.findByTestId(selectors.components.Sidebar.dockToggle)).toBeInTheDocument();
+      expect(scene.state.sidebar.getSelectedObject()).toBe(scene);
+      expect(scene.state.sidebar.state.openPane?.getId()).toBe('element');
+      expect(scene.state.sidebar.state.isDocked).toBe(true);
+    });
+  });
+
   it('Should sync sidebar docked state with sidebar state', async () => {
     const scene = buildTestScene();
 
@@ -143,6 +177,23 @@ describe('DashboardSidebarRenderer', () => {
       await user.click(outlineButton);
       expect(DashboardInteractions.dashboardOutlineClicked).toHaveBeenCalled();
     });
+  });
+
+  it('shows the same sidebar buttons as view mode and opens Outline in Preview', async () => {
+    const scene = buildTestScene();
+    scene.setState({ isEditing: false, uid: 'dashboard-1' });
+    act(() => activateFullSceneTree(scene));
+    render(<DashboardSidebarSplitter dashboard={scene} />);
+    expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument();
+    const buttonLabels = () =>
+      screen.getAllByRole('button').map((button) => button.getAttribute('aria-label') ?? button.textContent);
+    const viewButtons = buttonLabels();
+
+    act(() => scene.setState({ isEditing: true, editPresentation: 'preview' }));
+    expect(buttonLabels()).toEqual(viewButtons);
+    expect(screen.queryByTestId(selectors.pages.Dashboard.Sidebar.addButton)).not.toBeInTheDocument();
+    await userEvent.click(screen.getByTestId(selectors.pages.Dashboard.Sidebar.outlineButton));
+    expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outline.searchInput)).toBeInTheDocument();
   });
 
   describe('hide button', () => {

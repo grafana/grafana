@@ -25,6 +25,7 @@ import { isOnPrem } from 'app/core/utils/isOnPrem';
 import { type RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { appendExtensionsToPanelMenu } from 'app/features/dashboard/utils/appendExtensionsToPanelMenu';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 import { InspectTab } from 'app/features/inspector/types';
 import { AddPanelToNotebookScene } from 'app/features/notebook/addPanel/AddPanelToNotebookScene';
 import { canAddPanelToNotebook } from 'app/features/notebook/permissions';
@@ -169,7 +170,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       },
     });
 
-    if (dashboard.state.isEditing && !isReadOnlyRepeat && !isEditingPanel) {
+    if (isFullDashboardEditing(dashboard.state) && !isReadOnlyRepeat && !isEditingPanel) {
       moreSubMenu.push({
         text: t('panel.header-menu.duplicate', `Duplicate`),
         iconClassName: 'file-copy-alt',
@@ -193,7 +194,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (dashboard.state.isEditing && !isReadOnlyRepeat && !isEditingPanel) {
+    if (isFullDashboardEditing(dashboard.state) && !isReadOnlyRepeat && !isEditingPanel) {
       if (isLibraryPanel(panel)) {
         moreSubMenu.push({
           text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
@@ -312,7 +313,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       })
     );
 
-    if (extensions.length > 0 && !dashboard.state.isEditing) {
+    if (extensions.length > 0 && !isFullDashboardEditing(dashboard.state)) {
       const extensionsSubmenuName = t('dashboard-scene.panel-menu-behavior.async-func.text.extensions', 'Extensions');
       const reservedNames = new Set<string>(items.map((m) => m.text));
       reservedNames.add(t('panel.header-menu.styles', `Styles`));
@@ -328,7 +329,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (getPanelStyleConfig(panel.state.pluginId) && dashboard.state.isEditing) {
+    if (getPanelStyleConfig(panel.state.pluginId) && isFullDashboardEditing(dashboard.state)) {
       const stylesSubMenu: PanelMenuItem[] = [];
 
       stylesSubMenu.push({
@@ -399,7 +400,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (dashboard.state.isEditing && !isReadOnlyRepeat && !isEditingPanel) {
+    if (isFullDashboardEditing(dashboard.state) && !isReadOnlyRepeat && !isEditingPanel) {
       items.push({
         text: '',
         type: 'divider',
