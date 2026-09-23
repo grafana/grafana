@@ -42,7 +42,7 @@ import { locationUtil } from '../utils/location';
 
 import { type FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
-import { numberOverrideProcessor, resolveVarMapping } from './overrides/processors';
+import { isVarMappingEligible, resolveVarMapping } from './overrides/processors';
 import { getMinMaxAndDelta } from './scale';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 
@@ -419,7 +419,7 @@ function resolveVarMappingInput(
   rawValue: unknown,
   context: FieldOverrideEnv
 ): unknown {
-  if (item.process !== numberOverrideProcessor || item.allowVariables === false) {
+  if (!isVarMappingEligible(item)) {
     return rawValue;
   }
 

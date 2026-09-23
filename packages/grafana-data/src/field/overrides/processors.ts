@@ -1,7 +1,7 @@
 import { type Action } from '../../types/action';
 import { type Field } from '../../types/dataFrame';
 import { type DataLink } from '../../types/dataLink';
-import { type FieldOverrideContext } from '../../types/fieldOverrides';
+import { type FieldConfigPropertyItem, type FieldOverrideContext } from '../../types/fieldOverrides';
 import { type SelectableValue } from '../../types/select';
 import { type SliderMarks } from '../../types/slider';
 import { type Threshold, type ThresholdsConfig } from '../../types/thresholds';
@@ -157,6 +157,20 @@ export function resolveVarMapping(expr: string, context: FieldOverrideContext): 
   const num = text === '' ? NaN : Number(text);
 
   return multiInvalid || !Number.isFinite(num) ? undefined : num;
+}
+
+/**
+ * True when a field-config property is eligible for `varMappings` expression support: it must be
+ * registered with `numberOverrideProcessor` (the only processor whose stored value is a raw
+ * number, so a resolved expression can safely substitute for it without touching
+ * `booleanOverrideProcessor`/`selectOverrideProcessor` or any other type), and not explicitly
+ * opted out via `allowVariables: false` (the `addNumberInput`/`addSliderInput` default for plugin
+ * custom options - standard `min`/`max`/`decimals` set `allowVariables: true`). Shared by the
+ * `applyFieldOverrides` resolution pre-pass and the defaults/override-row editor wiring so both
+ * sides agree on exactly the same set of properties.
+ */
+export function isVarMappingEligible(item: Pick<FieldConfigPropertyItem, 'process' | 'allowVariables'>): boolean {
+  return item.process === numberOverrideProcessor && item.allowVariables !== false;
 }
 
 export interface ThresholdsFieldConfigSettings {

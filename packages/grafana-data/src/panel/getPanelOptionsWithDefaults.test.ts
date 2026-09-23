@@ -339,6 +339,59 @@ describe('getPanelOptionsWithDefaults', () => {
       expect(result.fieldConfig.overrides[0].properties.length).toBe(0);
     });
   });
+
+  describe('varMappings', () => {
+    it('keeps defaults.varMappings intact through cleanProperties, even for keys whose property id no longer exists', () => {
+      // varMappings is a flat id -> expression sidecar map, not itself a registry-tracked
+      // property (and 'doesNotExist' below isn't a registered property id either) - it must
+      // survive wholesale, unlike custom.customPropNoExist above which does get pruned.
+      const result = runScenario({
+        defaults: {
+          unit: 'bytes',
+          varMappings: { unit: '$myVar', doesNotExist: '$other' },
+        },
+      });
+
+      expect(result.fieldConfig.defaults.varMappings).toEqual({ unit: '$myVar', doesNotExist: '$other' });
+    });
+
+    it('keeps a varMappings.<id> override entry when the wrapped property id is registered', () => {
+      // varMappings.custom.customProp is never itself a registered id - filterFieldConfigOverrides
+      // must unwrap the 'varMappings.' prefix and check the wrapped id (custom.customProp,
+      // registered by runScenario's default plugin) instead of dropping it as unknown.
+      const result = runScenario({
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: 'byName', options: 'A-series' },
+            properties: [
+              { id: 'custom.customProp', value: 30 },
+              { id: 'varMappings.custom.customProp', value: '$expr' },
+            ],
+          },
+        ],
+      });
+
+      expect(result.fieldConfig.overrides[0].properties).toEqual([
+        { id: 'custom.customProp', value: 30 },
+        { id: 'varMappings.custom.customProp', value: '$expr' },
+      ]);
+    });
+
+    it('drops a varMappings.<id> override entry when the wrapped property id no longer exists in the registry', () => {
+      const result = runScenario({
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: 'byName', options: 'A-series' },
+            properties: [{ id: 'varMappings.custom.doesNotExist', value: '$expr' }],
+          },
+        ],
+      });
+
+      expect(result.fieldConfig.overrides[0].properties).toEqual([]);
+    });
+  });
 });
 
 describe('restoreCustomOverrideRules', () => {

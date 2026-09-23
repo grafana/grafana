@@ -5,6 +5,9 @@ import {
   type FieldConfigOptionsRegistry,
   type SelectableValue,
   isSystemOverride as isSystemOverrideGuard,
+  isVarMappingEligible,
+  isVarMappingProp,
+  wrapVarMappingPropId,
   type VariableSuggestionsScope,
   type DynamicConfigValue,
   type ConfigOverrideRule,
@@ -284,27 +287,52 @@ export function getFieldOverrideCategories(
      */
     for (let propIdx = 0; propIdx < override.properties.length; propIdx++) {
       const property = override.properties[propIdx];
+
+      // Synthetic varMappings.<id> entries are a sibling of the real property's own row, not a
+      // row of their own - the real property's row below reads/writes them transparently.
+      if (isVarMappingProp(property)) {
+        continue;
+      }
+
       const registryItemForProperty = registry.getIfExists(property.id);
 
       if (!registryItemForProperty) {
         continue;
       }
 
-      const onPropertyChange = (value: DynamicConfigValue) => {
-        onOverrideChange(idx, {
-          ...override,
-          properties: override.properties.map((prop, i) => {
-            if (i === propIdx) {
-              return { ...prop, value: value };
-            }
+      const varMappingId = wrapVarMappingPropId(property.id);
+      const eligibleForVarMapping = isVarMappingEligible(registryItemForProperty);
+      const varMappingExpr = eligibleForVarMapping
+        ? override.properties.find((p) => p.id === varMappingId)?.value
+        : undefined;
+      // A varMappings expression, when present, takes over the row's displayed value - the
+      // property's own stored value (property.value) stays untouched as the numeric fallback.
+      const displayValue = typeof varMappingExpr === 'string' ? varMappingExpr : property.value;
 
-            return prop;
-          }),
-        });
+      const onPropertyChange = (value: unknown) => {
+        if (eligibleForVarMapping && typeof value === 'string') {
+          const varMappingEntry: DynamicConfigValue = { id: varMappingId, value };
+          const properties = override.properties.some((p) => p.id === varMappingId)
+            ? override.properties.map((p) => (p.id === varMappingId ? varMappingEntry : p))
+            : [...override.properties, varMappingEntry];
+          onOverrideChange(idx, { ...override, properties });
+          return;
+        }
+
+        // A plain number (or clearing) always clears a stale expression too, so typing a number
+        // over an expression puts the property back into plain-value mode.
+        const properties = override.properties
+          .filter((p) => p.id !== varMappingId)
+          .map((prop, i) => (prop.id === property.id ? { ...prop, value } : prop));
+
+        onOverrideChange(idx, { ...override, properties });
       };
 
       const onPropertyRemove = () => {
-        onOverrideChange(idx, { ...override, properties: override.properties.filter((_, i) => i !== propIdx) });
+        onOverrideChange(idx, {
+          ...override,
+          properties: override.properties.filter((p, i) => i !== propIdx && p.id !== varMappingId),
+        });
       };
 
       const htmlId = `${overrideId}-property-${property.id}`;
@@ -323,7 +351,7 @@ export function getFieldOverrideCategories(
                 isSystemOverride={isSystemOverride}
                 onChange={onPropertyChange}
                 onRemove={onPropertyRemove}
-                property={property}
+                property={{ ...property, value: displayValue }}
                 registry={registry}
                 context={context}
                 searchQuery={searchQuery}

@@ -280,3 +280,14 @@ export function isVarMappingProp(prop: DynamicConfigValue): boolean {
 export function unwrapVarMappingPropId(id: string): string {
   return id.slice(VAR_MAPPING_PROP_PREFIX.length);
 }
+
+/**
+ * Builds the synthetic `varMappings.<id>` override entry id for a property id (e.g. `min` ->
+ * `varMappings.min`, `custom.lineWidth` -> `varMappings.custom.lineWidth`). Inverse of
+ * `unwrapVarMappingPropId`.
+ * Used internally, not intended for external use.
+ * @internal
+ */
+export function wrapVarMappingPropId(id: string): string {
+  return `${VAR_MAPPING_PROP_PREFIX}${id}`;
+}

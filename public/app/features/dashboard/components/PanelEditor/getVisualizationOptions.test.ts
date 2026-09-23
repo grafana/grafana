@@ -7,6 +7,7 @@ import {
   FieldType,
   getDefaultTimeRange,
   LoadingState,
+  numberOverrideProcessor,
   type PanelOptionsEditorBuilder,
   type PanelPlugin,
   Registry,
@@ -437,6 +438,151 @@ describe('getVisualizationOptions', () => {
       expect(showIfSpy.mock.calls.length).toEqual(1);
       expect(showIfSpy.mock.calls[0][0].displayName).toBe('default');
       expect(showIfSpy.mock.calls[0][2][0].fields[0].config.displayName).toBe('annotation');
+    });
+  });
+
+  describe('varMappings wiring', () => {
+    const buildMinProperty = (allowVariables = true): FieldConfigPropertyItem => ({
+      id: 'min',
+      path: 'min',
+      name: 'Min',
+      process: numberOverrideProcessor,
+      allowVariables,
+      shouldApply: () => true,
+      override: jest.fn(),
+      editor: jest.fn(),
+    });
+
+    const buildPlugin = (fieldConfigItems: FieldConfigPropertyItem[]) =>
+      ({
+        meta: { skipDataQuery: false, name: 'Timeseries' },
+        getPanelOptionsSupplier: jest.fn,
+        fieldConfigRegistry: new Registry<FieldConfigPropertyItem>(() => fieldConfigItems),
+      }) as unknown as PanelPlugin;
+
+    it('displays the stored expression instead of the numeric value when varMappings holds one', () => {
+      const plugin = buildPlugin([buildMinProperty()]);
+      const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'timeseries', key: 'panel-var-1' });
+
+      const vizOptions = getVisualizationOptions2({
+        panel: vizPanel,
+        eventBus: new EventBusSrv(),
+        plugin,
+        instanceState: {},
+        currentOptions: {},
+        currentFieldConfig: { defaults: { min: 0, varMappings: { min: '$myVar' } }, overrides: [] },
+        reportInteractionUI: 'panel-edit',
+      });
+
+      const item = vizOptions[0].items[0];
+      const element = item.props.render(item) as React.ReactElement<{ value: unknown }>;
+      expect(element.props.value).toBe('$myVar');
+    });
+
+    it('routes a $-containing onChange value into defaults.varMappings, leaving the stored value untouched', () => {
+      const plugin = buildPlugin([buildMinProperty()]);
+      const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'timeseries', key: 'panel-var-2' });
+      const onFieldConfigChange = jest.spyOn(vizPanel, 'onFieldConfigChange').mockImplementation();
+
+      const vizOptions = getVisualizationOptions2({
+        panel: vizPanel,
+        eventBus: new EventBusSrv(),
+        plugin,
+        instanceState: {},
+        currentOptions: {},
+        currentFieldConfig: { defaults: { min: 0 }, overrides: [] },
+        reportInteractionUI: 'panel-edit',
+      });
+
+      const item = vizOptions[0].items[0];
+      const element = item.props.render(item) as React.ReactElement<{ onChange: (v: unknown) => void }>;
+      element.props.onChange('$myVar');
+
+      expect(onFieldConfigChange).toHaveBeenCalledWith(
+        { defaults: { min: 0, varMappings: { min: '$myVar' } }, overrides: [] },
+        true
+      );
+    });
+
+    it('clears an existing varMappings entry when a plain number is committed', () => {
+      const plugin = buildPlugin([buildMinProperty()]);
+      const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'timeseries', key: 'panel-var-3' });
+      const onFieldConfigChange = jest.spyOn(vizPanel, 'onFieldConfigChange').mockImplementation();
+
+      const vizOptions = getVisualizationOptions2({
+        panel: vizPanel,
+        eventBus: new EventBusSrv(),
+        plugin,
+        instanceState: {},
+        currentOptions: {},
+        currentFieldConfig: { defaults: { min: 0, varMappings: { min: '$myVar' } }, overrides: [] },
+        reportInteractionUI: 'panel-edit',
+      });
+
+      const item = vizOptions[0].items[0];
+      const element = item.props.render(item) as React.ReactElement<{ onChange: (v: unknown) => void }>;
+      element.props.onChange(42);
+
+      expect(onFieldConfigChange).toHaveBeenCalledWith({ defaults: { min: 42 }, overrides: [] }, true);
+    });
+
+    it('does not route a string onChange value into varMappings for a property without allowVariables', () => {
+      const plugin = buildPlugin([buildMinProperty(false)]);
+      const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'timeseries', key: 'panel-var-4' });
+      const onFieldConfigChange = jest.spyOn(vizPanel, 'onFieldConfigChange').mockImplementation();
+
+      const vizOptions = getVisualizationOptions2({
+        panel: vizPanel,
+        eventBus: new EventBusSrv(),
+        plugin,
+        instanceState: {},
+        currentOptions: {},
+        currentFieldConfig: { defaults: { min: 0 }, overrides: [] },
+        reportInteractionUI: 'panel-edit',
+      });
+
+      const item = vizOptions[0].items[0];
+      const element = item.props.render(item) as React.ReactElement<{ onChange: (v: unknown) => void }>;
+      element.props.onChange('$myVar');
+
+      // no allowVariables -> treated as a plain (if unusual) value write, never varMappings
+      expect(onFieldConfigChange).toHaveBeenCalledWith({ defaults: { min: '$myVar' }, overrides: [] }, true);
+    });
+
+    it('routes a $-containing onChange value into varMappings for a custom addNumberInput property too', () => {
+      const customLineWidth: FieldConfigPropertyItem = {
+        id: 'custom.lineWidth',
+        path: 'lineWidth',
+        name: 'Line width',
+        isCustom: true,
+        process: numberOverrideProcessor,
+        allowVariables: true,
+        shouldApply: () => true,
+        override: jest.fn(),
+        editor: jest.fn(),
+      };
+      const plugin = buildPlugin([customLineWidth]);
+      const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'timeseries', key: 'panel-var-5' });
+      const onFieldConfigChange = jest.spyOn(vizPanel, 'onFieldConfigChange').mockImplementation();
+
+      const vizOptions = getVisualizationOptions2({
+        panel: vizPanel,
+        eventBus: new EventBusSrv(),
+        plugin,
+        instanceState: {},
+        currentOptions: {},
+        currentFieldConfig: { defaults: { custom: { lineWidth: 2 } }, overrides: [] },
+        reportInteractionUI: 'panel-edit',
+      });
+
+      const item = vizOptions[0].items[0];
+      const element = item.props.render(item) as React.ReactElement<{ onChange: (v: unknown) => void }>;
+      element.props.onChange('$myVar');
+
+      expect(onFieldConfigChange).toHaveBeenCalledWith(
+        { defaults: { custom: { lineWidth: 2 }, varMappings: { 'custom.lineWidth': '$myVar' } }, overrides: [] },
+        true
+      );
     });
   });
 

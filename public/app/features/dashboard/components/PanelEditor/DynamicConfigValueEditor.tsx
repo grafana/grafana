@@ -8,9 +8,11 @@ import {
   FieldConfigProperty,
   type FieldOverrideContext,
   type GrafanaTheme2,
+  isVarMappingEligible,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Counter, Field, Stack, IconButton, Label, useStyles2 } from '@grafana/ui';
+import { VarMappingNumberValueEditor } from 'app/core/components/OptionsUI/number';
 
 import { OptionsPaneCategory } from './OptionsPaneCategory';
 
@@ -42,6 +44,11 @@ export const DynamicConfigValueEditor = ({
   if (!item) {
     return null;
   }
+
+  // Rendered instead of item.override for a property that opts into varMappings expression
+  // support (see isVarMappingEligible) - item.override itself stays untouched since it's also
+  // used directly by some panel editors with a strictly numeric onChange.
+  const Override = isVarMappingEligible(item) ? VarMappingNumberValueEditor : item.override;
 
   const isCollapsible =
     Array.isArray(property.value) ||
@@ -99,7 +106,7 @@ export const DynamicConfigValueEditor = ({
         isNested
         isOpenDefault={property.value !== undefined}
       >
-        <item.override
+        <Override
           value={property.value}
           onChange={(value) => {
             onChange(value);
@@ -113,7 +120,7 @@ export const DynamicConfigValueEditor = ({
     editor = (
       <div>
         <Field label={renderLabel()()} description={item.description}>
-          <item.override
+          <Override
             value={property.value}
             onChange={(value) => {
               onChange(value);

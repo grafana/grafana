@@ -208,6 +208,7 @@ export {
   unitOverrideProcessor,
   booleanOverrideProcessor,
   FieldNamePickerBaseNameMode,
+  isVarMappingEligible,
 } from './field/overrides/processors';
 
 // Utils
@@ -460,6 +461,9 @@ export {
   restoreCustomOverrideRules,
   isCustomFieldProp,
   isStandardFieldProp,
+  isVarMappingProp,
+  unwrapVarMappingPropId,
+  wrapVarMappingPropId,
   type OptionDefaults,
 } from './panel/getPanelOptionsWithDefaults';
 export { type PanelDataSummary, getPanelDataSummary } from './panel/suggestions/getPanelDataSummary';

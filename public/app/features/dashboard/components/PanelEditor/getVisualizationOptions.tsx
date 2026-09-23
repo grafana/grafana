@@ -4,6 +4,7 @@ import {
   type EventBus,
   type InterpolateFunction,
   isNestedPanelOptions,
+  isVarMappingEligible,
   type NestedValueAccess,
   type PanelData,
   type PanelPlugin,
@@ -17,6 +18,7 @@ import {
 import { t } from '@grafana/i18n';
 import { type VizPanel } from '@grafana/scenes';
 import { Input } from '@grafana/ui';
+import { VarMappingNumberValueEditor } from 'app/core/components/OptionsUI/number';
 import { LibraryVizPanelInfo } from 'app/features/dashboard-scene/panel-edit/LibraryVizPanelInfo';
 import { type LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
@@ -26,7 +28,7 @@ import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { getOptionOverrides } from './state/getOptionOverrides';
 import { type OptionPaneRenderProps } from './types';
-import { setOptionImmutably, updateDefaultFieldConfigValue } from './utils';
+import { setOptionImmutably, updateDefaultFieldConfigValue, updateDefaultFieldConfigVarMapping } from './utils';
 
 type categoryGetter = (categoryNames?: string[]) => OptionsPaneCategoryDescriptor;
 
@@ -144,17 +146,21 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
     }
 
     const category = getOptionsPaneCategory(fieldOption.category);
-    const Editor = fieldOption.editor;
+    const Editor = isVarMappingEligible(fieldOption) ? VarMappingNumberValueEditor : fieldOption.editor;
 
     const defaults = currentFieldConfig.defaults;
-    const value = fieldOption.isCustom
+    const numericValue = fieldOption.isCustom
       ? defaults.custom
         ? lodashGet(defaults.custom, fieldOption.path)
         : undefined
       : lodashGet(defaults, fieldOption.path);
+    // A varMappings expression, when present, takes over the editor's displayed value - the
+    // property's own stored value (numericValue) stays untouched as the numeric fallback.
+    const varMappingExpr = isVarMappingEligible(fieldOption) ? defaults.varMappings?.[fieldOption.id] : undefined;
+    const value = varMappingExpr ?? numericValue;
 
     if (fieldOption.getItemsCount) {
-      category.props.itemsCount = fieldOption.getItemsCount(value);
+      category.props.itemsCount = fieldOption.getItemsCount(numericValue);
     }
 
     const htmlId = fieldOption.path;
@@ -168,9 +174,18 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
         overrides: getOptionOverrides(fieldOption, currentFieldConfig, data?.series),
         render: function renderEditor() {
           const onChange = (v: unknown) => {
-            onFieldConfigsChange(
-              updateDefaultFieldConfigValue(currentFieldConfig, fieldOption.path, v, fieldOption.isCustom)
-            );
+            if (isVarMappingEligible(fieldOption) && typeof v === 'string') {
+              onFieldConfigsChange(updateDefaultFieldConfigVarMapping(currentFieldConfig, fieldOption.id, v));
+              return;
+            }
+
+            // A plain number (or clearing) always clears a stale expression too, so typing a
+            // number over an expression puts the property back into plain-value mode.
+            const withoutExpr = isVarMappingEligible(fieldOption)
+              ? updateDefaultFieldConfigVarMapping(currentFieldConfig, fieldOption.id, undefined)
+              : currentFieldConfig;
+
+            onFieldConfigsChange(updateDefaultFieldConfigValue(withoutExpr, fieldOption.path, v, fieldOption.isCustom));
           };
 
           return <Editor value={value} onChange={onChange} item={fieldOption} context={context} id={htmlId} />;
@@ -290,17 +305,21 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
     }
 
     const category = getOptionsPaneCategory(fieldOption.category);
-    const Editor = fieldOption.editor;
+    const Editor = isVarMappingEligible(fieldOption) ? VarMappingNumberValueEditor : fieldOption.editor;
     const defaults = currentFieldConfig.defaults;
 
-    const value = fieldOption.isCustom
+    const numericValue = fieldOption.isCustom
       ? defaults.custom
         ? lodashGet(defaults.custom, fieldOption.path)
         : undefined
       : lodashGet(defaults, fieldOption.path);
+    // A varMappings expression, when present, takes over the editor's displayed value - the
+    // property's own stored value (numericValue) stays untouched as the numeric fallback.
+    const varMappingExpr = isVarMappingEligible(fieldOption) ? defaults.varMappings?.[fieldOption.id] : undefined;
+    const value = varMappingExpr ?? numericValue;
 
     if (fieldOption.getItemsCount) {
-      category.props.itemsCount = fieldOption.getItemsCount(value);
+      category.props.itemsCount = fieldOption.getItemsCount(numericValue);
     }
 
     const htmlId = `${fieldOption.isCustom ? 'custom.' : ''}${fieldOption.path}`;
@@ -314,10 +333,23 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
         overrides: getOptionOverrides(fieldOption, currentFieldConfig, data?.series),
         render: function renderEditor() {
           const onChange = (v: unknown) => {
-            panel.onFieldConfigChange(
-              updateDefaultFieldConfigValue(currentFieldConfig, fieldOption.path, v, fieldOption.isCustom),
-              true
-            );
+            if (isVarMappingEligible(fieldOption) && typeof v === 'string') {
+              panel.onFieldConfigChange(
+                updateDefaultFieldConfigVarMapping(currentFieldConfig, fieldOption.id, v),
+                true
+              );
+            } else {
+              // A plain number (or clearing) always clears a stale expression too, so typing a
+              // number over an expression puts the property back into plain-value mode.
+              const withoutExpr = isVarMappingEligible(fieldOption)
+                ? updateDefaultFieldConfigVarMapping(currentFieldConfig, fieldOption.id, undefined)
+                : currentFieldConfig;
+
+              panel.onFieldConfigChange(
+                updateDefaultFieldConfigValue(withoutExpr, fieldOption.path, v, fieldOption.isCustom),
+                true
+              );
+            }
 
             // Record interaction for analytics
             DashboardInteractions.setVisualOption({
