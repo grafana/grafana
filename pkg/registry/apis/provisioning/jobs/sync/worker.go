@@ -45,6 +45,10 @@ type SyncWorker struct {
 	// maxFileSize caps the size in bytes of files read from the repository
 	// during sync. <=0 disables the check.
 	maxFileSize int64
+
+	// repos lists repositories in a namespace to check for path conflicts before
+	// syncing. Nil disables the check (e.g. in tests that don't exercise it).
+	repos RepositoriesGetter
 }
 
 func NewSyncWorker(
@@ -56,6 +60,7 @@ func NewSyncWorker(
 	tracer tracing.Tracer,
 	maxSyncWorkers int,
 	maxFileSize int64,
+	repos RepositoriesGetter,
 ) *SyncWorker {
 	return &SyncWorker{
 		clients:             clients,
@@ -66,6 +71,7 @@ func NewSyncWorker(
 		tracer:              tracer,
 		maxSyncWorkers:      maxSyncWorkers,
 		maxFileSize:         maxFileSize,
+		repos:               repos,
 	}
 }
 
@@ -107,6 +113,10 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		if m, ok := rw.(repository.SizeLimitedReader); ok {
 			m.WithMaxFileSize(r.maxFileSize)
 		}
+	}
+
+	if err := r.checkPathConflict(ctx, cfg); err != nil {
+		return tracing.Error(span, err)
 	}
 
 	syncStatus := job.Status.ToSyncStatus(job.Name)

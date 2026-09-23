@@ -58,6 +58,7 @@ func TestIntegrationSyncWorker_EarlySetupFailure(t *testing.T) {
 		tracing.NewNoopTracerService(),
 		10,
 		0,
+		nil,
 	)
 
 	progress := jobs.NewJobProgressRecorder(func(ctx context.Context, status provisioning.JobStatus) error {

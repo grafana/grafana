@@ -1066,6 +1066,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.tracer,
 				10,
 				b.maxFileSize,
+				b.GetClient(),
 			)
 
 			// Migration export preserves original names so the takeover
