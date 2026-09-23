@@ -43,6 +43,8 @@ export interface DashboardSceneState extends SceneObjectState {
   controls?: DashboardControls;
   /** True when editing */
   isEditing?: boolean;
+  /** Omitted means default editing; explicit full editing opts out of automatic Assistant preview. */
+  editPresentation?: 'preview' | 'full';
   /** True when user made a change */
   isDirty?: boolean;
   /** meta flags */
@@ -78,6 +80,14 @@ export interface DashboardSceneState extends SceneObjectState {
    * toolbar shows only the plan banner (Build/Dismiss) in place of the normal actions.
    */
   planning?: DashboardPlanningState;
+}
+
+export function isFullDashboardEditing(state: Pick<DashboardSceneState, 'isEditing' | 'editPresentation'>): boolean {
+  return Boolean(state.isEditing && state.editPresentation !== 'preview');
+}
+
+export function isDashboardReviewing(state: Pick<DashboardSceneState, 'isEditing' | 'editPresentation'>): boolean {
+  return Boolean(state.isEditing && state.editPresentation === 'preview');
 }
 
 export interface DashboardPlanningState {

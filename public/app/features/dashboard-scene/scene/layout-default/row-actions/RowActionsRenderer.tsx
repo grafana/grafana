@@ -5,6 +5,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type SceneComponentProps, VizPanel } from '@grafana/scenes';
 import { Icon, useStyles2 } from '@grafana/ui';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
@@ -19,7 +20,9 @@ import { RowOptionsButton } from './RowOptionsButton';
 export function RowActionsRenderer({ model }: SceneComponentProps<RowActions>) {
   const row = model.getParent();
   const { title, children } = row.useState();
-  const { meta, isEditing } = useDashboardState(model);
+  const dashboardState = useDashboardState(model);
+  const { meta } = dashboardState;
+  const isEditing = isFullDashboardEditing(dashboardState);
   const styles = useStyles2(getStyles);
 
   const isUsingDashboardDS = useMemo(

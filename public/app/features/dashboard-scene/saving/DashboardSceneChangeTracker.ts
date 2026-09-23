@@ -205,6 +205,7 @@ export class DashboardSceneChangeTracker {
   }
 
   public startTrackingChanges() {
+    this.stopTrackingChanges();
     if (!this._changesWorker) {
       this.init();
     }
@@ -231,6 +232,7 @@ export class DashboardSceneChangeTracker {
 
   public stopTrackingChanges() {
     this._changeTrackerSub?.unsubscribe();
+    this._changeTrackerSub = undefined;
   }
 
   public terminate() {

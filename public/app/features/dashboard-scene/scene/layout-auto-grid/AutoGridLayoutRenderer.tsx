@@ -5,6 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useFlagGrafanaDashboardsAutoHeightPanels } from '@grafana/runtime/internal';
 import { type SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
@@ -20,11 +21,13 @@ import { AutoGridLayoutManager } from './AutoGridLayoutManager';
 export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLayout>) {
   const { children, isHidden, draggedChildren } = model.useState();
   const styles = useStyles2(getStyles, model.state);
+  const dashboardState = useDashboardState(model);
   const {
     layoutOrchestrator,
-    isEditing,
+
     meta: { isEmbedded },
-  } = useDashboardState(model);
+  } = dashboardState;
+  const isEditing = isFullDashboardEditing(dashboardState);
   const layoutManager = sceneGraph.getAncestor(model, AutoGridLayoutManager);
   const { fillScreen, matchRowHeights, dropPosition } = layoutManager.useState();
   const soloPanelContext = useSoloPanelContext();

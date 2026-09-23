@@ -1,6 +1,8 @@
-import { renderHook } from '@testing-library/react';
+import { cleanup, renderHook } from '@testing-library/react';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { useAssistant } from '@grafana/assistant';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { useShortcuts } from './HelpModal';
 
@@ -21,6 +23,33 @@ describe('useShortcuts', () => {
     jest.clearAllMocks();
   });
 
+  it.each([true, false])('lists the Preview shortcut only when its feature is enabled (%s)', (enabled) => {
+    mockUseAssistant.mockReturnValue({
+      isLoading: false,
+      isAvailable: false,
+      openAssistant: jest.fn(),
+      closeAssistant: jest.fn(),
+      toggleAssistant: jest.fn(),
+    });
+    setTestFlags({ 'grafana.dashboardPreviewMode': enabled });
+    try {
+      const { result } = renderHook(() => useShortcuts(), { wrapper: TestProvider });
+      const dashboard = result.current.find(({ category }) => category === 'Dashboard');
+      expect(dashboard?.shortcuts).toEqual(
+        expect.arrayContaining([expect.objectContaining({ description: 'Save dashboard' })])
+      );
+      const preview = dashboard?.shortcuts.find(({ description }) => description === 'Toggle Preview while editing');
+      if (enabled) {
+        expect(preview?.keys).toEqual(['d', 'p']);
+      } else {
+        expect(preview).toBeUndefined();
+      }
+    } finally {
+      cleanup();
+      setTestFlags({});
+    }
+  });
+
   it('should return shortcuts without assistant shortcut when assistant is not available', () => {
     mockUseAssistant.mockReturnValue({
       isLoading: false,
@@ -28,7 +57,7 @@ describe('useShortcuts', () => {
       toggleAssistant: jest.fn(),
     } as unknown as ReturnType<typeof useAssistant>);
 
-    const { result } = renderHook(() => useShortcuts());
+    const { result } = renderHook(() => useShortcuts(), { wrapper: TestProvider });
 
     expect(result.current).toHaveLength(4); // Global, Time range, Dashboard, Focused panel
 
@@ -49,7 +78,7 @@ describe('useShortcuts', () => {
       toggleAssistant: jest.fn(),
     });
 
-    const { result } = renderHook(() => useShortcuts());
+    const { result } = renderHook(() => useShortcuts(), { wrapper: TestProvider });
 
     expect(result.current).toHaveLength(4); // Global, Time range, Dashboard, Focused panel
 
@@ -71,7 +100,7 @@ describe('useShortcuts', () => {
       toggleAssistant: jest.fn(),
     });
 
-    const { result } = renderHook(() => useShortcuts());
+    const { result } = renderHook(() => useShortcuts(), { wrapper: TestProvider });
 
     const categories = result.current.map((category) => category.category);
 
@@ -94,7 +123,7 @@ describe('useShortcuts', () => {
       toggleAssistant: jest.fn(),
     });
 
-    const { result } = renderHook(() => useShortcuts());
+    const { result } = renderHook(() => useShortcuts(), { wrapper: TestProvider });
 
     // Find a shortcut that uses modKey (like save dashboard)
     const dashboardCategory = result.current.find((category) => category.category.includes('Dashboard'));
@@ -115,7 +144,7 @@ describe('useShortcuts', () => {
       toggleAssistant: jest.fn(),
     });
 
-    const { result, rerender } = renderHook(() => useShortcuts());
+    const { result, rerender } = renderHook(() => useShortcuts(), { wrapper: TestProvider });
     const firstResult = result.current;
 
     // Rerender without changing dependencies
@@ -134,7 +163,7 @@ describe('useShortcuts', () => {
       toggleAssistant: jest.fn(),
     });
 
-    const { result, rerender } = renderHook(() => useShortcuts());
+    const { result, rerender } = renderHook(() => useShortcuts(), { wrapper: TestProvider });
     const firstResult = result.current;
 
     // Change assistant availability
@@ -168,7 +197,7 @@ describe('useShortcuts', () => {
     });
 
     it('should show new zoom shortcuts', () => {
-      const { result } = renderHook(() => useShortcuts());
+      const { result } = renderHook(() => useShortcuts(), { wrapper: TestProvider });
 
       const timeRangeCategory = result.current.find((cat) => cat.category.includes('Time range'));
 
@@ -182,7 +211,7 @@ describe('useShortcuts', () => {
     });
 
     it('should show isNew badge on new shortcuts', () => {
-      const { result } = renderHook(() => useShortcuts());
+      const { result } = renderHook(() => useShortcuts(), { wrapper: TestProvider });
 
       const timeRangeCategory = result.current.find((cat) => cat.category.includes('Time range'));
 

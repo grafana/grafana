@@ -19,6 +19,39 @@ jest.mock('../serialization/transformSceneToSaveModel', () => {
 });
 
 describe('DashboardSceneChangeTracker', () => {
+  it('keeps one change subscription when restarted and releases it on stop', () => {
+    const scene = new DashboardScene({ title: 'Initial dashboard' });
+    scene.setInitialSaveModel({ title: 'Initial dashboard', schemaVersion: 30 });
+    const postMessage = jest.fn();
+    const workerSpy = jest
+      .spyOn(createDetectChangesWorker, 'createWorker')
+      .mockImplementation(() => ({ postMessage }) as unknown as CorsWorker);
+    const tracker = new DashboardSceneChangeTracker(scene);
+
+    try {
+      tracker.startTrackingChanges();
+      tracker.startTrackingChanges();
+      scene.setState({ title: 'First edit' });
+
+      expect(postMessage).toHaveBeenCalledTimes(1);
+      expect(postMessage).toHaveBeenCalledWith({
+        initial: { title: 'Initial dashboard', schemaVersion: 30 },
+        changed: { title: 'updated dashboard' },
+      });
+
+      tracker.stopTrackingChanges();
+      scene.setState({ title: 'Edit after stop' });
+      expect(postMessage).toHaveBeenCalledTimes(1);
+
+      tracker.startTrackingChanges();
+      scene.setState({ title: 'Edit after restart' });
+      expect(postMessage).toHaveBeenCalledTimes(2);
+    } finally {
+      tracker.stopTrackingChanges();
+      workerSpy.mockRestore();
+    }
+  });
+
   it('should set _changesWorker to undefined when terminate is called', () => {
     const terminate = jest.fn();
     jest.spyOn(createDetectChangesWorker, 'createWorker').mockImplementation(

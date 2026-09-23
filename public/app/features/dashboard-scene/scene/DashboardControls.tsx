@@ -39,6 +39,7 @@ import { AddControlsButton } from './ControlsAddButton';
 import { DashboardDataLayerControls } from './DashboardDataLayerControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
 import { type DashboardScene } from './DashboardScene';
+import { PreviewModeControls } from './PreviewModeControls';
 import { VariableControls } from './VariableControls';
 import { DashboardControlsButton } from './dashboard-controls-menu/DashboardControlsMenuButton';
 import { hasDashboardControls, useHasDashboardControls } from './dashboard-controls-menu/utils';
@@ -322,13 +323,14 @@ function DashboardControlActions({
 
   const showShareButton = hasUid && !isSnapshot && !isEmbedded && !isPlaying && !editPanel;
   const showSaveButton = isEditing && (canSave || canSaveAs) && !isEditingLibraryPanel;
-  const showEditButton = hasUid && !isPlaying && canEditDashboard && isEditable && !editPanel;
+  const showEditButton = (hasUid || isEditing) && !isPlaying && canEditDashboard && isEditable && !editPanel;
   const showMakeEditableButton = !isPlaying && canEditDashboard && !isEditable && !isEditing;
   const showPanelEditButtons = Boolean(editPanel);
 
   return (
     <>
       {showShareButton && <ShareDashboardButton dashboard={dashboard} />}
+      {isEditing && <PreviewModeControls dashboard={dashboard} />}
       {showSaveButton && <SaveDashboard dashboard={dashboard} />}
       {showEditButton && <EditDashboardSwitch dashboard={dashboard} />}
       {showMakeEditableButton && <MakeDashboardEditableButton dashboard={dashboard} />}

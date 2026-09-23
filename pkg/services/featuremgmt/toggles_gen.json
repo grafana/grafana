@@ -2429,6 +2429,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.dashboardPreviewMode",
+        "resourceVersion": "1790158863859",
+        "creationTimestamp": "2026-09-23T10:21:03Z"
+      },
+      "spec": {
+        "description": "Switch between editing and previewing a dashboard within the same edit session",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.dashboardSettingsRedesign",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"

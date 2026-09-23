@@ -1,7 +1,9 @@
+import type { ReactElement, ReactNode } from 'react';
+
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
+import { useFlagGrafanaCustomDashboardTemplates, useFlagGrafanaDashboardPreviewMode } from '@grafana/runtime/internal';
 import { Button, ButtonGroup, Dropdown, Menu } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { canManageDashboardTemplates } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/templatePermissions';
@@ -11,8 +13,10 @@ import { getSaveAsTemplateForm } from 'app/features/dashboard-scene/saving/enter
 import { type ToolbarActionProps } from '../types';
 
 export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
-  const { meta, isDirty, uid, editview } = dashboard.state;
+  const { meta, isDirty, uid, editview, isEditing } = dashboard.state;
   const isDashboardTemplatesFlagEnabled = useFlagGrafanaCustomDashboardTemplates();
+  const isPreviewModeEnabled = useFlagGrafanaDashboardPreviewMode();
+  const showChanges = isPreviewModeEnabled && isEditing;
 
   const isNew = !Boolean(uid || dashboard.isManaged());
   const isManaged = dashboard.isManaged();
@@ -24,12 +28,47 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
     dashboard.openSaveDrawer({ saveAsCopy: true });
   };
 
+  const renderSaveButton = (button: ReactElement, saveOptions?: ReactNode) => {
+    if (!saveOptions && !showChanges) {
+      return button;
+    }
+
+    return (
+      <ButtonGroup>
+        {button}
+        <Dropdown
+          overlay={
+            <Menu>
+              {saveOptions}
+              {showChanges && saveOptions && <Menu.Divider />}
+              {showChanges && (
+                <Menu.Item
+                  label={t('dashboard.preview.view-changes', 'View changes')}
+                  icon="code-branch"
+                  onClick={() => dashboard.openChanges()}
+                />
+              )}
+            </Menu>
+          }
+        >
+          <Button
+            aria-label={t('dashboard.toolbar.new.more-save-options', 'More save options')}
+            icon="angle-down"
+            variant={isDirty || isNew ? 'primary' : 'secondary'}
+            size={buttonSize}
+            data-testid={selectors.components.NavToolbar.editDashboard.moreSaveOptionsButton}
+          />
+        </Dropdown>
+      </ButtonGroup>
+    );
+  };
+
   // Template edit flow
   if (isDashboardTemplatesFlagEnabled && meta.isDashboardTemplate) {
     if (!meta.canSave) {
       return null;
     }
-    return (
+    return renderSaveButton(
       <Button
         onClick={() => dashboard.openSaveDrawer({ saveDashboardTemplate: true })}
         tooltip={t('dashboard.toolbar.new.save-template.tooltip', 'Save template changes')}
@@ -44,7 +83,7 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
 
   // if we only can save
   if (isNew) {
-    return (
+    return renderSaveButton(
       <Button
         onClick={() => dashboard.openSaveDrawer({})}
         tooltip={t('dashboard.toolbar.new.save-dashboard.tooltip', 'Save changes')}
@@ -59,7 +98,7 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
 
   // If we only can save as copy
   if (contextSrv.hasEditPermissionInFolders && !meta.canSave && !meta.canMakeEditable && !isManaged) {
-    return (
+    return renderSaveButton(
       <Button
         onClick={onSaveAsCopy}
         tooltip={t('dashboard.toolbar.new.save-dashboard-copy.tooltip', 'Save as copy')}
@@ -71,58 +110,44 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
     );
   }
 
-  return (
-    <ButtonGroup>
-      <Button
+  return renderSaveButton(
+    <Button
+      onClick={() => dashboard.openSaveDrawer({})}
+      tooltip={t('dashboard.toolbar.new.save-dashboard.tooltip', 'Save changes')}
+      size={buttonSize}
+      data-testid={selectors.components.NavToolbar.editDashboard.saveButton}
+      variant={isDirty ? 'primary' : 'secondary'}
+      data-testactive={isDirty || undefined} // used in e2e tests to verify if dsahboard has unsaved changes
+    >
+      <Trans i18nKey="dashboard.toolbar.new.save-dashboard.label">Save</Trans>
+    </Button>,
+    <>
+      <Menu.Item
+        label={t('dashboard.toolbar.new.save-dashboard-short', 'Save')}
+        icon="save"
         onClick={() => dashboard.openSaveDrawer({})}
-        tooltip={t('dashboard.toolbar.new.save-dashboard.tooltip', 'Save changes')}
-        size={buttonSize}
-        data-testid={selectors.components.NavToolbar.editDashboard.saveButton}
-        variant={isDirty ? 'primary' : 'secondary'}
-        data-testactive={isDirty || undefined} // used in e2e tests to verify if dsahboard has unsaved changes
-      >
-        <Trans i18nKey="dashboard.toolbar.new.save-dashboard.label">Save</Trans>
-      </Button>
-      <Dropdown
-        overlay={
-          <Menu>
-            <Menu.Item
-              label={t('dashboard.toolbar.new.save-dashboard-short', 'Save')}
-              icon="save"
-              onClick={() => dashboard.openSaveDrawer({})}
-            />
-            <Menu.Item
-              label={t('dashboard.toolbar.new.save-dashboard-copy.label', 'Save as copy')}
-              icon="copy"
-              onClick={onSaveAsCopy}
-              testId={selectors.components.NavToolbar.editDashboard.saveAsCopyButton}
-            />
-            {isDashboardTemplatesFlagEnabled &&
-              canManageDashboardTemplates() &&
-              meta.canSave &&
-              getSaveAsTemplateForm() !== null && (
-                <Menu.Item
-                  label={t('dashboard.toolbar.save-as-template.label', 'Save as template')}
-                  icon="grid"
-                  onClick={() => {
-                    CustomDashboardTemplateInteractions.saveAsOpened({
-                      dashboardUid: uid ?? '',
-                    });
-                    dashboard.openSaveDrawer({ saveAsDashboardTemplate: true });
-                  }}
-                />
-              )}
-          </Menu>
-        }
-      >
-        <Button
-          aria-label={t('dashboard.toolbar.new.more-save-options', 'More save options')}
-          icon="angle-down"
-          variant={isDirty ? 'primary' : 'secondary'}
-          size={buttonSize}
-          data-testid={selectors.components.NavToolbar.editDashboard.moreSaveOptionsButton}
-        />
-      </Dropdown>
-    </ButtonGroup>
+      />
+      <Menu.Item
+        label={t('dashboard.toolbar.new.save-dashboard-copy.label', 'Save as copy')}
+        icon="copy"
+        onClick={onSaveAsCopy}
+        testId={selectors.components.NavToolbar.editDashboard.saveAsCopyButton}
+      />
+      {isDashboardTemplatesFlagEnabled &&
+        canManageDashboardTemplates() &&
+        meta.canSave &&
+        getSaveAsTemplateForm() !== null && (
+          <Menu.Item
+            label={t('dashboard.toolbar.save-as-template.label', 'Save as template')}
+            icon="grid"
+            onClick={() => {
+              CustomDashboardTemplateInteractions.saveAsOpened({
+                dashboardUid: uid ?? '',
+              });
+              dashboard.openSaveDrawer({ saveAsDashboardTemplate: true });
+            }}
+          />
+        )}
+    </>
   );
 };

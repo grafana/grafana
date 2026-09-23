@@ -61,6 +61,7 @@ import {
 } from 'app/types/dashboard';
 
 import { type PanelEditor } from '../panel-edit/PanelEditor';
+import { consumeEditPresentationAfterSave } from '../saving/editPresentationAfterSave';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from '../serialization/buildNewDashboardSaveModel';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
@@ -457,6 +458,12 @@ abstract class DashboardScenePageStateManagerBase<T>
 
       if (config.featureToggles.preserveDashboardStateWhenNavigating && Boolean(options.uid)) {
         restoreDashboardStateFromLocalStorage(dashboard);
+      }
+
+      const editPresentation = consumeEditPresentationAfterSave(options.uid);
+      if (editPresentation && dashboard.canEditDashboard() && dashboard.state.editable) {
+        dashboard.onEnterEditMode();
+        dashboard.setEditPresentation(editPresentation);
       }
 
       this.setState({ dashboard: dashboard, isLoading: false });

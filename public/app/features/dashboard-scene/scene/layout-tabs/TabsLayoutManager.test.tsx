@@ -155,6 +155,19 @@ describe('TabsLayoutManager', () => {
   });
 
   describe('addNewTab', () => {
+    it('disables interaction in the inner layout added during review', () => {
+      const manager = new TabsLayoutManager({ tabs: [] });
+      new DashboardScene({ body: manager, isEditing: true, editPresentation: 'preview' });
+      const layout = AutoGridLayoutManager.createEmpty();
+      expect(layout.state.layout.state.isDraggable).toBe(true);
+
+      manager.addNewTab(new TabItem({ layout }));
+
+      expect(layout.state.layout.state.isDraggable).toBe(false);
+      manager.editModeChanged(true);
+      expect(layout.state.layout.state.isDraggable).toBe(true);
+    });
+
     beforeEach(() => {
       lastUndo = undefined;
     });

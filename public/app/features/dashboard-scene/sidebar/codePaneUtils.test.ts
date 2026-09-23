@@ -1,6 +1,6 @@
 import yaml from 'js-yaml';
 
-import { type DashboardScene } from '../scene/DashboardScene';
+import { DashboardScene } from '../scene/DashboardScene';
 
 import { applyJsonToDashboard, getDashboardDiffTexts, getDashboardResourceText } from './codePaneUtils';
 
@@ -49,10 +49,12 @@ function buildApplyDashboard(uid?: string): DashboardScene {
       isEditing: true,
       meta: {},
       body: { editModeChanged: jest.fn() },
-      sidebar: { closePane: jest.fn() },
+      sidebar: { closePane: jest.fn(), enableSelection: jest.fn(), disableSelection: jest.fn() },
     },
     serializer: { metadata: {}, getK8SMetadata: () => ({}) },
     onEnterEditMode: jest.fn(),
+    applyEditPresentation: DashboardScene.prototype.applyEditPresentation,
+    activateSidebar: jest.fn(),
     setState: jest.fn(),
     forEachChild: jest.fn(),
     publishEvent: jest.fn((event: { payload?: { perform?: () => void } }) => {
