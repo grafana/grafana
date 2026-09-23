@@ -164,7 +164,10 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
 
       const dataTransformer = sourcePanelQueryRunner.parent;
 
-      if (dataTransformer instanceof SceneDataTransformer && dataTransformer.state.transformations.length) {
+      // A transformer can reprocess without its source re-querying - a variable used inside a
+      // transformation, an edit, a plugin's transformations resolving - so it needs its own
+      // subscription whether or not its user transformation list is currently empty.
+      if (dataTransformer instanceof SceneDataTransformer) {
         // In mixed DS scenario we complete the observable and merge data, so on a variable change
         // the data transformer will emit but there will be no subscription and thus no visual update
         // on the panel. Similar thing happens when going to edit mode and back, where we unsubscribe and
@@ -172,8 +175,8 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
         const transformerSub = dataTransformer.subscribeToState(onSourceDataChange);
         transformerSubs.push(transformerSub);
       } else {
-        // Source panel has no transformer (or empty transformations). Subscribe to the query runner
-        // so we re-run when the source panel's data updates (e.g. after variable resolution or
+        // Source panel's provider is a bare query runner with no transformer above it. Subscribe to
+        // it so we re-run when the source panel's data updates (e.g. after variable resolution or
         // time range change). Without this, the dashboard-datasource panel can read stale data
         // when it runs before the source panels complete and never updates.
         const queryRunnerSub = sourcePanelQueryRunner.subscribeToState(onSourceDataChange);
