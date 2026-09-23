@@ -175,13 +175,14 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 }
 
 func (t *pluginManifestsTarget) pluginClients(host string) (plugins.Client, v3.ClientV3, error) {
+	if host == "" {
+		return nil, nil, nil // no client exists
+	}
+
 	t.connectionsMu.Lock()
 	defer t.connectionsMu.Unlock()
 	if t.closed {
 		return nil, nil, fmt.Errorf("router: plugin manifests target is closed")
-	}
-	if host == "" {
-		return nil, nil, fmt.Errorf("router: plugin deployment host is empty")
 	}
 	conn := t.connections[host]
 	if conn == nil {
