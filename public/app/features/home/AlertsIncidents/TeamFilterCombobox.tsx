@@ -8,7 +8,7 @@ import { ALL_TEAMS, resolveTeamScope } from './teamFilter';
 const collator = new Intl.Collator();
 
 /** A pickable value; `group` renders as a header above the options sharing it. */
-export interface FilterOption {
+export interface TeamFilterOption {
   label: string;
   value: string;
   group?: string;
@@ -24,7 +24,7 @@ const getAllOption = (label: string, value: string): ComboboxOption<string> => (
 
 interface Props {
   /** Options to offer; the caller hides the dropdown when there are none. */
-  options: FilterOption[];
+  options: TeamFilterOption[];
   /** Opaque to this component: '' is the default scope, ALL_TEAMS the org-wide pick, anything else an option value. */
   selected: string;
   onChange: (selection: string) => void;
@@ -49,7 +49,7 @@ interface Props {
  * Dropdown to filter a homepage view. Presentational: the caller supplies the options
  * (alert team label values or incident custom-field values) and owns the selection.
  */
-export function FilterCombobox({
+export function TeamFilterCombobox({
   options,
   selected,
   onChange,

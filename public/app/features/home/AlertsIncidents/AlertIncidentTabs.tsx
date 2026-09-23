@@ -10,9 +10,9 @@ import { tabChanged } from '../analytics/main';
 
 import { CreateAndViewAlertsButtons } from './CreateAndViewAlertsButtons';
 import { DeclareAndViewIncidentsButtons } from './DeclareAndViewIncidentsButtons';
-import { FilterCombobox, type FilterOption } from './FilterCombobox';
 import { FiringAlertsCard } from './FiringAlertsCard';
 import { IncidentsCard } from './IncidentsCard';
+import { TeamFilterCombobox, type TeamFilterOption } from './TeamFilterCombobox';
 import {
   type IncidentFilterSelection,
   canonicalIncidentFilter,
@@ -79,13 +79,13 @@ export function AlertIncidentTabs({
   const alertTeamValues = useAlertTeamLabelValues(canViewAlerts);
   const incidentFilterOptions = useIncidentFilterOptions(canViewIncidents);
 
-  const alertTeamOptions = useMemo<FilterOption[]>(
+  const alertTeamOptions = useMemo<TeamFilterOption[]>(
     () => alertTeamValues.map((value) => ({ label: value, value })),
     [alertTeamValues]
   );
   // Grouped by field so a value shared across fields (e.g. "Frontend" as both team and squad) reads
   // unambiguously. A single field needs no header: most orgs only have `team`, and a lone header is noise.
-  const incidentOptions = useMemo<FilterOption[]>(() => {
+  const incidentOptions = useMemo<TeamFilterOption[]>(() => {
     const fieldCount = new Set(incidentFilterOptions.map((option) => option.slug)).size;
     return incidentFilterOptions.map((option) => ({
       label: option.value,
@@ -204,7 +204,7 @@ export function AlertIncidentTabs({
           <Box display="flex" direction="column" height={`${DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN}px`}>
             {filter && filter.options.length > 0 && (
               <Box paddingTop={2}>
-                <FilterCombobox {...filter} />
+                <TeamFilterCombobox {...filter} />
               </Box>
             )}
             <ScrollContainer showScrollIndicators>
