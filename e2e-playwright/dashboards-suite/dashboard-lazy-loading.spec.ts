@@ -288,3 +288,93 @@ test('Options replaces Code and Code can be reopened', { tag: '@behavior' }, asy
   await expect(page.getByRole('button', { name: 'Apply changes', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'View all settings' })).toBeHidden();
 });
+
+const addPaneChunk = /\/dashboard-add-new-pane\.[^/]+\.js$/;
+const filtersPaneChunk = /\/dashboard-filters-overview\.[^/]+\.js$/;
+const addControlsChunk = /\/dashboard-add-controls\.[^/]+\.js$/;
+
+async function enterEditMode(page: Page) {
+  await page.goto(dashboardPath);
+  await page.getByTestId('data-testid Edit dashboard button').click();
+}
+
+for (const pane of ['Add', 'Filters'] as const) {
+  test(`Options supersedes a pending ${pane} pane`, { tag: '@pane-request' }, async ({ page }) => {
+    const held = await holdChunk(page, pane === 'Add' ? addPaneChunk : filtersPaneChunk);
+    await enterEditMode(page);
+    if (pane === 'Add') {
+      await page.getByTestId('data-testid Dashboard Sidebar new button').click();
+    } else {
+      await page.getByRole('button', { name: 'Filters', exact: true }).click();
+    }
+    await held.wait();
+    await page.getByTestId('data-testid Dashboard Sidebar options button').click();
+    await expect(page.getByRole('button', { name: 'View all settings' })).toBeVisible();
+    await held.release();
+    await expect(page.getByRole('button', { name: 'View all settings' })).toBeVisible();
+    await expect(page.getByTestId('data-testid sidebar add new panel')).toBeHidden();
+    await expect(page.getByText('Edit filters', { exact: true })).toBeHidden();
+  });
+}
+
+for (const order of ['older first', 'newer first'] as const) {
+  test(`latest pane wins when two imports finish ${order}`, { tag: '@pane-request' }, async ({ page }) => {
+    const add = await holdChunk(page, addPaneChunk);
+    const filters = await holdChunk(page, filtersPaneChunk);
+    await enterEditMode(page);
+    await page.getByTestId('data-testid Dashboard Sidebar new button').click();
+    await add.wait();
+    await page.getByRole('button', { name: 'Filters', exact: true }).click();
+    await filters.wait();
+    if (order === 'older first') {
+      await add.release();
+      await expect(page.getByTestId('data-testid sidebar add new panel')).toBeHidden();
+      await filters.release();
+    } else {
+      await filters.release();
+      await expect(page.getByText('Edit filters', { exact: true })).toBeVisible();
+      await add.release();
+    }
+    await expect(page.getByText('Edit filters', { exact: true })).toBeVisible();
+    await expect(page.getByText('environment', { exact: true }).last()).toBeVisible();
+    await expect(page.getByTestId('data-testid sidebar add new panel')).toBeHidden();
+  });
+}
+
+for (const action of ['hide sidebar', 'exit edit mode'] as const) {
+  test(`${action} cancels a pending Add pane`, { tag: '@pane-request' }, async ({ page }) => {
+    const held = await holdChunk(page, addPaneChunk);
+    await enterEditMode(page);
+    await page.getByTestId('data-testid Dashboard Sidebar new button').click();
+    await held.wait();
+    if (action === 'hide sidebar') {
+      await page.getByTestId('data-testid sidebar-show-hide-toggle').click();
+    } else {
+      await page.getByRole('button', { name: 'Exit edit mode', exact: true }).click();
+      await expect(page.getByRole('button', { name: 'Enter edit mode', exact: true })).toBeVisible();
+    }
+    await held.release();
+    if (action === 'hide sidebar') {
+      await page.getByTestId('data-testid sidebar-show-hide-toggle').click();
+      await expect(page.getByTestId('data-testid Dashboard Sidebar new button')).toBeVisible();
+    } else {
+      await expect(page.getByRole('button', { name: 'Enter edit mode', exact: true })).toBeVisible();
+    }
+    await expect(page.getByTestId('data-testid sidebar add new panel')).toBeHidden();
+    await expect(page.getByTestId('TextPanel-converted-content')).toHaveText('Browser review content');
+  });
+}
+
+for (const control of ['Variable', 'Filter and Group by', 'Annotation query', 'Link']) {
+  test(`Options supersedes pending Add ${control}`, { tag: '@pane-request' }, async ({ page }) => {
+    const held = await holdChunk(page, addControlsChunk);
+    await enterEditMode(page);
+    await page.getByTestId('data-testid ControlsAddButton trigger button').click();
+    await page.getByRole('menuitem', { name: control, exact: true }).click();
+    await held.wait();
+    await page.getByTestId('data-testid Dashboard Sidebar options button').click();
+    await expect(page.getByRole('button', { name: 'View all settings' })).toBeVisible();
+    await held.release();
+    await expect(page.getByRole('button', { name: 'View all settings' })).toBeVisible();
+  });
+}
