@@ -74,7 +74,7 @@ var WireSet = wire.NewSet(
 
 	// Resource Permission
 	resourcepermission.ProvideMappersRegistry,
-	iam.ProvideStartupFeatures,
+	iam.ProvideFeatures,
 
 	// Each must be added here *and* in the ServiceSink above
 	dashboardinternal.RegisterAPIService,

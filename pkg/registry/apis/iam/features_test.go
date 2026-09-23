@@ -1,12 +1,14 @@
 package iam
 
 import (
+	"context"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/ini.v1"
 
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func TestParseAPIs(t *testing.T) {
@@ -89,90 +91,52 @@ func TestFeaturesValidate(t *testing.T) {
 	})
 }
 
-func TestProvideStartupFeatures(t *testing.T) {
+func TestFeaturesFromFlags(t *testing.T) {
 	tests := []struct {
-		name       string
-		values     map[string]string
-		configured bool
-		want       Features
-		wantErr    string
+		name string
+		flag string
+		want Features
 	}{
-		{
-			name: "uses legacy fallback when api is empty",
-		},
-		{
-			name: "resolves API and behavior settings",
-			values: map[string]string{
-				"api":                  "roles, rolebindings, resourcepermissions",
-				"zanzana_sync_enabled": "true",
-				"service_account_resource_permissions_enabled": "true",
-			},
-			configured: true,
-			want: Features{
-				RolesAPI:                          true,
-				RoleBindingsAPI:                   true,
-				ResourcePermissionsAPI:            true,
-				ZanzanaSync:                       true,
-				ServiceAccountResourcePermissions: true,
-			},
-		},
-		{
-			name:       "none configures an empty API surface",
-			values:     map[string]string{"api": "none"},
-			configured: true,
-		},
-		{
-			name:    "rejects behavior settings without APIs",
-			values:  map[string]string{"zanzana_sync_enabled": "true"},
-			wantErr: "iam.api must be configured",
-		},
-		{
-			name:    "rejects unknown APIs",
-			values:  map[string]string{"api": "teams,unknown"},
-			wantErr: "unknown iam api",
-		},
-		{
-			name:    "rejects invalid behavior settings",
-			values:  map[string]string{"zanzana_sync_enabled": "sometimes"},
-			wantErr: "invalid iam.zanzana_sync_enabled",
-		},
-		{
-			name: "validates dependencies",
-			values: map[string]string{
-				"api": "teams",
-				"service_account_resource_permissions_enabled": "true",
-			},
-			wantErr: "resource permissions",
-		},
+		{name: "all disabled", want: Features{}},
+		{name: "roles", flag: featuremgmt.FlagKubernetesAuthzRolesApi, want: Features{RolesAPI: true}},
+		{name: "role bindings", flag: featuremgmt.FlagKubernetesAuthzRoleBindingsApi, want: Features{RoleBindingsAPI: true}},
+		{name: "global roles", flag: featuremgmt.FlagKubernetesAuthzGlobalRolesApi, want: Features{GlobalRolesAPI: true}},
+		{name: "resource permissions", flag: featuremgmt.FlagKubernetesAuthzResourcePermissionApis, want: Features{ResourcePermissionsAPI: true}},
+		{name: "team LBAC rules", flag: featuremgmt.FlagKubernetesAuthzTeamLBACRuleApi, want: Features{TeamLBACRulesAPI: true}},
+		{name: "teams", flag: featuremgmt.FlagKubernetesTeamsApi, want: Features{TeamsAPI: true}},
+		{name: "users", flag: featuremgmt.FlagKubernetesUsersApi, want: Features{UsersAPI: true}},
+		{name: "service accounts", flag: featuremgmt.FlagKubernetesServiceAccountsApi, want: Features{ServiceAccountsAPI: true}},
+		{name: "service account tokens", flag: featuremgmt.FlagKubernetesServiceAccountTokensApi, want: Features{ServiceAccountTokensAPI: true}},
+		{name: "SSO settings", flag: featuremgmt.FlagKubernetesSsoSettingsApi, want: Features{SSOSettingsAPI: true}},
+		{name: "auth info", flag: featuremgmt.FlagKubernetesAuthInfoApi, want: Features{AuthInfoAPI: true}},
+		{name: "user permissions", flag: featuremgmt.FlagAuthzUserPermissions, want: Features{UserPermissionsAPI: true}},
+		{name: "service account resource permissions", flag: featuremgmt.FlagKubernetesAuthzServiceAccountResourcePermissions, want: Features{ServiceAccountResourcePermissions: true}},
+		{name: "Zanzana sync", flag: featuremgmt.FlagKubernetesAuthzZanzanaSync, want: Features{ZanzanaSync: true}},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			raw := ini.Empty()
-			for key, value := range tt.values {
-				raw.Section("iam").Key(key).SetValue(value)
+			flags := map[string]memprovider.InMemoryFlag{}
+			if tt.flag != "" {
+				flags[tt.flag] = memprovider.InMemoryFlag{Key: tt.flag, DefaultVariant: "enabled", Variants: map[string]any{"enabled": true}}
 			}
+			require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(flags)))
+			t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
 
-			got, err := ProvideStartupFeatures(&setting.Cfg{Raw: raw})
-			if tt.wantErr != "" {
-				require.ErrorContains(t, err, tt.wantErr)
-				return
-			}
-			require.NoError(t, err)
-			features := got.Snapshot()
-			if !tt.configured {
-				require.Nil(t, features)
-				return
-			}
-			require.Equal(t, tt.want, *features)
+			require.Equal(t, tt.want, FeaturesFromFlags(context.Background(), openfeature.NewDefaultClient()))
 		})
 	}
 }
 
-func TestNewStartupFeatures(t *testing.T) {
-	features := Features{RolesAPI: true}
+func TestFeaturesFromFlagsResolvesOnce(t *testing.T) {
+	flag := featuremgmt.FlagKubernetesAuthzRolesApi
+	provider := memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		flag: {Key: flag, DefaultVariant: "enabled", Variants: map[string]any{"enabled": true}},
+	})
+	require.NoError(t, openfeature.SetProviderAndWait(provider))
+	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
 
-	snapshot := NewStartupFeatures(features).Snapshot()
-	require.NotNil(t, snapshot)
-	require.Equal(t, features, *snapshot)
+	got := FeaturesFromFlags(context.Background(), openfeature.NewDefaultClient())
+	require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{}))
+	require.True(t, got.RolesAPI)
 }

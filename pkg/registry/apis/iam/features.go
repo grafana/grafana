@@ -1,12 +1,14 @@
 package iam
 
 import (
+	"context"
 	"fmt"
 	"slices"
-	"strconv"
-	"strings"
+	"time"
 
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/open-feature/go-sdk/openfeature"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 type API string
@@ -59,81 +61,34 @@ type Features struct {
 	ZanzanaSync                       bool
 }
 
-// StartupFeatures is the IAM feature snapshot resolved from Grafana's static
-// configuration. An unconfigured snapshot preserves the legacy OpenFeature
-// fallback during migration.
-type StartupFeatures struct {
-	features   Features
-	configured bool
+func ProvideFeatures() Features {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	return FeaturesFromFlags(ctx, openfeature.NewDefaultClient())
 }
 
-// NewStartupFeatures creates a configured startup feature snapshot.
-func NewStartupFeatures(features Features) StartupFeatures {
-	return StartupFeatures{features: features, configured: true}
-}
-
-// ProvideStartupFeatures resolves the optional [iam] startup configuration.
-func ProvideStartupFeatures(cfg *setting.Cfg) (StartupFeatures, error) {
-	if cfg == nil || cfg.Raw == nil {
-		return StartupFeatures{}, nil
+func FeaturesFromFlags(ctx context.Context, client openfeature.IClient) Features {
+	flag := func(key string) bool {
+		return client.Boolean(ctx, key, false, openfeature.TransactionContext(ctx))
 	}
 
-	section := cfg.Raw.Section("iam")
-	apiValue := strings.TrimSpace(section.Key("api").String())
-	zanzanaSync, err := parseOptionalBool(section.Key("zanzana_sync_enabled").String())
-	if err != nil {
-		return StartupFeatures{}, fmt.Errorf("invalid iam.zanzana_sync_enabled: %w", err)
+	return Features{
+		RolesAPI:                          flag(featuremgmt.FlagKubernetesAuthzRolesApi),
+		RoleBindingsAPI:                   flag(featuremgmt.FlagKubernetesAuthzRoleBindingsApi),
+		GlobalRolesAPI:                    flag(featuremgmt.FlagKubernetesAuthzGlobalRolesApi),
+		ResourcePermissionsAPI:            flag(featuremgmt.FlagKubernetesAuthzResourcePermissionApis),
+		TeamLBACRulesAPI:                  flag(featuremgmt.FlagKubernetesAuthzTeamLBACRuleApi),
+		TeamsAPI:                          flag(featuremgmt.FlagKubernetesTeamsApi),
+		UsersAPI:                          flag(featuremgmt.FlagKubernetesUsersApi),
+		ServiceAccountsAPI:                flag(featuremgmt.FlagKubernetesServiceAccountsApi),
+		ServiceAccountTokensAPI:           flag(featuremgmt.FlagKubernetesServiceAccountTokensApi),
+		SSOSettingsAPI:                    flag(featuremgmt.FlagKubernetesSsoSettingsApi),
+		AuthInfoAPI:                       flag(featuremgmt.FlagKubernetesAuthInfoApi),
+		UserPermissionsAPI:                flag(featuremgmt.FlagAuthzUserPermissions),
+		ServiceAccountResourcePermissions: flag(featuremgmt.FlagKubernetesAuthzServiceAccountResourcePermissions),
+		ZanzanaSync:                       flag(featuremgmt.FlagKubernetesAuthzZanzanaSync),
 	}
-	serviceAccountResourcePermissions, err := parseOptionalBool(section.Key("service_account_resource_permissions_enabled").String())
-	if err != nil {
-		return StartupFeatures{}, fmt.Errorf("invalid iam.service_account_resource_permissions_enabled: %w", err)
-	}
-
-	if apiValue == "" {
-		if zanzanaSync || serviceAccountResourcePermissions {
-			return StartupFeatures{}, fmt.Errorf("iam.api must be configured when IAM behavior settings are enabled")
-		}
-		return StartupFeatures{}, nil
-	}
-
-	values := strings.Split(apiValue, ",")
-	for i := range values {
-		values[i] = strings.TrimSpace(values[i])
-	}
-
-	apis, err := ParseAPIs(values)
-	if err != nil {
-		return StartupFeatures{}, err
-	}
-
-	features := Features{
-		ZanzanaSync:                       zanzanaSync,
-		ServiceAccountResourcePermissions: serviceAccountResourcePermissions,
-	}
-	features.SetAPIs(apis)
-	if err := features.Validate(); err != nil {
-		return StartupFeatures{}, err
-	}
-
-	return NewStartupFeatures(features), nil
-}
-
-// Snapshot returns a copy of the configured features, or nil when callers
-// should use the legacy OpenFeature fallback.
-func (f StartupFeatures) Snapshot() *Features {
-	if !f.configured {
-		return nil
-	}
-	features := f.features
-	return &features
-}
-
-func parseOptionalBool(value string) (bool, error) {
-	value = strings.TrimSpace(value)
-	if value == "" {
-		return false, nil
-	}
-	return strconv.ParseBool(value)
 }
 
 func ParseAPIs(values []string) ([]API, error) {
