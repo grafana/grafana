@@ -1,4 +1,4 @@
-import { DataFrameType, FieldType, toDataFrame } from '@grafana/data';
+import { CircularDataFrame, DataFrameType, FieldType, toDataFrame } from '@grafana/data';
 import {
   LOGS_DATAPLANE_BODY_NAME,
   LOGS_DATAPLANE_TIMESTAMP_NAME,
@@ -121,6 +121,43 @@ describe('buildColumnsWithMeta', () => {
       index: undefined,
       percentOfLinesWithLabel: 100,
     });
+    expect(fieldNameMeta['service']).toMatchObject({ active: false, index: undefined, percentOfLinesWithLabel: 100 });
+    expect(fieldNameMeta['backend']).toMatchObject({ active: true, index: 0, percentOfLinesWithLabel: 50 });
+  });
+
+  // Loki live tailing produces a CircularDataFrame, whose field values are a CircularVector (not a plain array)
+  it('counts label cardinality for frames backed by a CircularDataFrame', () => {
+    const circularFrame = new CircularDataFrame({ capacity: 10 });
+    circularFrame.meta = { type: DataFrameType.LogLines };
+    circularFrame.addField({ name: LOGS_DATAPLANE_TIMESTAMP_NAME, type: FieldType.time });
+    circularFrame.addField({ name: LOGS_DATAPLANE_BODY_NAME, type: FieldType.string });
+    circularFrame.addField({ name: 'service', type: FieldType.string });
+    circularFrame.addField({ name: 'backend', type: FieldType.string });
+    circularFrame.add({
+      [LOGS_DATAPLANE_TIMESTAMP_NAME]: 1,
+      [LOGS_DATAPLANE_BODY_NAME]: 'log 1',
+      service: 'service 1',
+      backend: 'backend 1',
+    });
+    circularFrame.add({
+      [LOGS_DATAPLANE_TIMESTAMP_NAME]: 2,
+      [LOGS_DATAPLANE_BODY_NAME]: 'log 2',
+      service: 'service 2',
+      backend: null,
+    });
+    const circularLogsFrame = parseLogsFrame(circularFrame) as LogsFrame;
+
+    const fieldNameMeta = buildColumnsWithMeta(
+      {
+        severityField: circularLogsFrame.severityField,
+        extraFields: circularLogsFrame.extraFields,
+        timeField: circularLogsFrame.timeField,
+        bodyField: circularLogsFrame.bodyField,
+      },
+      circularFrame,
+      ['backend']
+    );
+
     expect(fieldNameMeta['service']).toMatchObject({ active: false, index: undefined, percentOfLinesWithLabel: 100 });
     expect(fieldNameMeta['backend']).toMatchObject({ active: true, index: 0, percentOfLinesWithLabel: 50 });
   });

@@ -44,12 +44,7 @@ export const buildColumnsWithMeta = (
     dataFrame.fields.forEach((field) => {
       const fieldName = field.name;
       // Count the valid values
-      const countOfValues = field.values.reduce((acc: number, value) => {
-        if (value !== undefined && value !== null) {
-          return acc + 1;
-        }
-        return acc;
-      }, 0);
+      const countOfValues = field.values.filter((value) => value !== undefined && value !== null).length;
 
       labelCardinality.set(fieldName, {
         percentOfLinesWithLabel: countOfValues,
