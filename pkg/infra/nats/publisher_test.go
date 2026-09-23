@@ -36,6 +36,68 @@ func TestPublisher(t *testing.T) {
 		require.ErrorIs(t, p.Publish(context.Background(), "grafana.test.a", []byte("world")), ErrClosed)
 	})
 
+	t.Run("publish returns ErrClosed while shutdown is draining", func(t *testing.T) {
+		p := newTestPublisher(t, startTestServer(t))
+		nc, err := p.get(context.Background())
+		require.NoError(t, err)
+
+		entered := make(chan struct{})
+		release := make(chan struct{})
+		_, err = nc.Subscribe("hold.drain", func(_ *natsclient.Msg) {
+			close(entered)
+			<-release
+		})
+		require.NoError(t, err)
+		var stopped chan error
+		t.Cleanup(func() {
+			close(release)
+			if stopped != nil {
+				select {
+				case err := <-stopped:
+					require.NoError(t, err)
+					require.Zero(t, promtestutil.ToFloat64(p.metrics.pendingBytes))
+					require.Zero(t, promtestutil.ToFloat64(p.metrics.connectionLoss))
+					require.Zero(t, promtestutil.ToFloat64(p.metrics.forcedDrainLoss))
+				case <-time.After(5 * time.Second):
+					t.Error("shutdown did not finish after releasing the drain")
+				}
+			}
+		})
+		require.NoError(t, nc.Publish("hold.drain", nil))
+		require.NoError(t, nc.Flush())
+		select {
+		case <-entered:
+		case <-time.After(time.Second):
+			t.Fatal("subscription callback did not start")
+		}
+
+		p.pendingConn = nc
+		p.pendingBytes = 100
+		p.metrics.pendingBytes.Set(100)
+		stopped = make(chan error, 1)
+		go func() {
+			stopped <- p.stopping(nil)
+			close(stopped)
+		}()
+		require.Eventually(t, nc.IsDraining, time.Second, time.Millisecond)
+
+		published := make(chan error, 1)
+		go func() { published <- p.Publish(context.Background(), "test", nil) }()
+		select {
+		case err := <-published:
+			require.ErrorIs(t, err, ErrClosed)
+		case <-time.After(time.Second):
+			t.Fatal("Publish blocked behind shutdown drain")
+		}
+		require.False(t, p.reconcilePending(nc, 100))
+		require.Equal(t, float64(100), promtestutil.ToFloat64(p.metrics.pendingBytes))
+		select {
+		case <-stopped:
+			t.Fatal("drain completed before the subscription was released")
+		default:
+		}
+	})
+
 	t.Run("publish reports a connection that was never established", func(t *testing.T) {
 		cfg := setting.NATSSettings{
 			Enabled:    true,

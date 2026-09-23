@@ -27,6 +27,7 @@ type PublisherService struct {
 	*connection
 	metrics       *publisherMetrics
 	pendingMu     sync.Mutex
+	shuttingDown  bool
 	pendingConn   *natsclient.Conn
 	pendingBytes  int64
 	oldestPending int64
@@ -113,17 +114,27 @@ func (p *PublisherService) running(ctx context.Context) error {
 
 func (p *PublisherService) stopping(_ error) error {
 	p.pendingMu.Lock()
-	defer p.pendingMu.Unlock()
+	if p.shuttingDown {
+		p.pendingMu.Unlock()
+		return nil
+	}
+	p.shuttingDown = true
 	p.discardClosedPending()
+	pending := p.pendingBytes
+	p.pendingConn = nil
+	p.pendingMu.Unlock()
+
+	// Freeze accounting before draining, but let concurrent publishes fail fast.
 	drained := p.closeWithResult()
 	if drained {
+		p.pendingMu.Lock()
+		defer p.pendingMu.Unlock()
 		p.pendingBytes = 0
 		p.oldestPending = 0
 		p.metrics.pendingBytes.Set(0)
 		p.metrics.oldestPending.Set(0)
 		return nil
 	}
-	pending := p.pendingBytes
 	if pending > 0 {
 		p.metrics.forcedDrainLoss.Inc()
 		p.log.Warn("nats publisher closed with locally accepted messages pending", "bytes", pending)
@@ -139,6 +150,9 @@ func (p *PublisherService) Publish(ctx context.Context, subject string, data []b
 	// Serialize acceptance and accounting with replacement/closure observation.
 	p.pendingMu.Lock()
 	defer p.pendingMu.Unlock()
+	if p.shuttingDown {
+		return ErrClosed
+	}
 	p.discardClosedPending()
 	nc, err := p.get(ctx)
 	if err != nil {
@@ -176,6 +190,10 @@ func (p *PublisherService) Publish(ctx context.Context, subject string, data []b
 
 func (p *PublisherService) flush(ctx context.Context) {
 	p.pendingMu.Lock()
+	if p.shuttingDown {
+		p.pendingMu.Unlock()
+		return
+	}
 	p.discardClosedPending()
 	p.mu.Lock()
 	nc := p.conn
@@ -207,7 +225,7 @@ func (p *PublisherService) flush(ctx context.Context) {
 func (p *PublisherService) reconcilePending(nc *natsclient.Conn, watermark int64) bool {
 	p.pendingMu.Lock()
 	defer p.pendingMu.Unlock()
-	if p.pendingConn != nc {
+	if p.shuttingDown || p.pendingConn != nc {
 		return false
 	}
 	p.pendingBytes -= watermark
