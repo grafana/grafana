@@ -53,6 +53,11 @@
       "placeholder-symbol-client-secret": "configurato",
       "reset-symbol-client-secret": "Ripristina"
     },
+    "auxiliary-logs-toggle": {
+      "aria-label-enable-auxiliary-logs": "",
+      "description-auxiliary-logs": "",
+      "label-enable-auxiliary-logs": ""
+    },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "query {{queryDisplayName}} non elaborata",
       "aria-label-use-query": "Utilizza questo pulsante di query",
@@ -105,11 +110,11 @@
       "load-subscriptions": "Carica abbonamenti"
     },
     "dimension-fields": {
-      "aria-label-field": "",
-      "aria-label-operator": "",
-      "aria-label-remove": "",
-      "aria-label-value": "",
-      "aria-label-values": "",
+      "aria-label-field": "Campo dimensione {{position}}",
+      "aria-label-operator": "Operatore dimensione {{position}}",
+      "aria-label-remove": "Rimuovi dimensione {{position}}",
+      "aria-label-value": "Valore dimensione {{position}}",
+      "aria-label-values": "Valori dimensione {{position}}",
       "label-dimensions": "Dimensioni",
       "placeholder-field": "Campo",
       "placeholder-operation": "Operazione",
@@ -182,19 +187,47 @@
       "tooltip-limit": "Limita il numero di righe restituite (il valore predefinito è 1000)."
     },
     "logs-management": {
+      "body-auxiliary-logs-queries": "",
       "body-basic-logs-queries": "Vuoi davvero passare ai registri di base?",
       "confirmText-confirm": "Conferma",
+      "description-auxiliary-logs-queries": "",
       "description-basic-logs-queries": "Le query dei registri di base comportano un costo in base alla quantità di dati analizzati.",
+      "label-analytics": "",
+      "label-auxiliary": "",
+      "label-basic": "",
       "label-logs": "Registri",
+      "title-auxiliary-logs-queries": "",
       "title-basic-logs-queries": "Query sui registri di base",
-      "tooltip-logs": "Specifica se eseguire una query di base o di analisi sui registri."
+      "tooltip-logs": "Specifica se eseguire una query di base o di analisi sui registri.",
+      "tooltip-logs-all": "",
+      "tooltip-logs-aux": ""
     },
     "logs-query-builder": {
       "title-no-tables": "Risorsa caricata correttamente ma senza tabelle"
     },
     "logs-query-editor": {
       "learn-more": "Scopri di più",
-      "view-query": "Visualizza query in Azure Portal"
+      "notice-auxiliary-single-resource": "",
+      "notice-basic-single-resource": "",
+      "notice-same-resource-type": "",
+      "tier-switch-body-analytics": "",
+      "tier-switch-body-auxiliary": "",
+      "tier-switch-body-basic": "",
+      "tier-switch-revert": "",
+      "tier-switch-title": "",
+      "view-query": "Visualizza query in Azure Portal",
+      "warning-auxiliary-data-ingested": "",
+      "warning-auxiliary-raw": "",
+      "warning-basic-raw": "",
+      "warning-data-ingested": ""
+    },
+    "logs-table-section": {
+      "description-auxiliary-disabled": "",
+      "description-auxiliary-enabled": "",
+      "description-basic-disabled": "",
+      "description-basic-enabled": "",
+      "description-plan-unavailable": "",
+      "label-all-columns": ""
     },
     "metric-name-field": {
       "label-metric": "Metrica"
