@@ -26986,14 +26986,14 @@ __metadata:
   linkType: hard
 
 "ol-mapbox-style@npm:^13.0.1":
-  version: 13.5.0
-  resolution: "ol-mapbox-style@npm:13.5.0"
+  version: 13.5.1
+  resolution: "ol-mapbox-style@npm:13.5.1"
   dependencies:
     "@maplibre/maplibre-gl-style-spec": "npm:^26.4.1"
     mapbox-to-css-font: "npm:^3.2.0"
   peerDependencies:
     ol: "*"
-  checksum: 10/7928efb8028134c7a568b484e25675f4f5aa13cdec27dbce7922db91fee3c66a68a51f1a1ab3a9d936f24097fa23394e6110055cb0df04e9b32a30720a498406
+  checksum: 10/9772d36eb29da600fce4e04fc963d8043aa1c2e746974b3d513302aefdecf333d1e8b5e15409e236c3bc6b981aee8ef1a1b755d6ad2bf1f35e305863a8a7cc53
   languageName: node
   linkType: hard
 
