@@ -1061,7 +1061,7 @@ async function setupScene(panelId: string) {
   const panel = findVizPanelByKey(dashboard, panelId)!;
 
   const panelEditor = buildPanelEditScene(panel);
-  dashboard.setState({ editPanel: panelEditor });
+  dashboard.updateView({ editPanel: panelEditor });
 
   const deactivate = activateSceneObjectAndParentTree(panel);
 
@@ -1088,7 +1088,7 @@ async function setupV2Scene(panelKey: string) {
   const panel = vizPanels.find((p) => p.state.key === panelKey)!;
 
   const panelEditor = buildPanelEditScene(panel);
-  dashboard.setState({ editPanel: panelEditor });
+  dashboard.updateView({ editPanel: panelEditor });
 
   const deactivate = activateSceneObjectAndParentTree(panel);
 

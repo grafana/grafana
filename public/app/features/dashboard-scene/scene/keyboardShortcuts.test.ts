@@ -583,7 +583,7 @@ describe('setupKeyboardShortcuts', () => {
       });
 
       it('pastes a panel while editing', () => {
-        mockScene.setState({ isEditing: true });
+        mockScene.updateView({ isEditing: true });
         localStorageMock.setItem(LS_PANEL_COPY_KEY, JSON.stringify({ panelId: 'panel-1' }));
         setupKeyboardShortcuts(mockScene);
 
@@ -594,7 +594,7 @@ describe('setupKeyboardShortcuts', () => {
       });
 
       it('does not paste when not editing', () => {
-        mockScene.setState({ isEditing: false });
+        mockScene.updateView({ isEditing: false });
         setupKeyboardShortcuts(mockScene);
 
         getBinding('p v')!.onTrigger();

@@ -263,7 +263,7 @@ describe('DashboardSceneUrlSync', () => {
   describe('entering edit mode', () => {
     it('keeps the URL and selected edit view in sync after successive updates', async () => {
       const scene = buildTestScene();
-      scene.setState({
+      scene.updateView({
         editable: true,
         isEditing: true,
         meta: { ...scene.state.meta, canEdit: true },
@@ -280,7 +280,7 @@ describe('DashboardSceneUrlSync', () => {
 
     it('it should be possible to go from the view panel view to the edit view when the dashboard is not in edit mdoe', async () => {
       const scene = buildTestScene();
-      scene.setState({ isEditing: false });
+      scene.updateView({ isEditing: false });
       scene.urlSync?.updateFromUrl({ viewPanel: 'panel-1' });
       expect(scene.state.viewPanel).toBeDefined();
       scene.urlSync?.updateFromUrl({ editPanel: 'panel-1' });
@@ -300,7 +300,7 @@ describe('DashboardSceneUrlSync', () => {
 
     it('does not open dashboard settings from an editview url param, and does not enter edit mode', () => {
       const scene = buildTestScene();
-      scene.setState({ isEditing: false, planning });
+      scene.updateView({ isEditing: false, planning });
       jest.spyOn(scene, 'canEditDashboard').mockReturnValue(true);
       const onEnterEditMode = jest.spyOn(scene, 'onEnterEditMode');
 
@@ -315,7 +315,7 @@ describe('DashboardSceneUrlSync', () => {
       // Without this guard, the branch below calls onEnterEditMode() directly when not already
       // editing, undoing the invariant the static preview depends on.
       const scene = buildTestScene();
-      scene.setState({ isEditing: false, planning });
+      scene.updateView({ isEditing: false, planning });
       const onEnterEditMode = jest.spyOn(scene, 'onEnterEditMode');
 
       scene.urlSync?.updateFromUrl({ editPanel: 'panel-1' });

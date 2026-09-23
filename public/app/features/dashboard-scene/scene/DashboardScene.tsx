@@ -126,7 +126,12 @@ import { clearClipboard } from './layouts-shared/paste';
 import { getUpdatedHoverHeader } from './panel-timerange/utils';
 import { DashboardPlanningEvent } from './planningEvents';
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './types/DashboardLayoutManager';
-import { type DashboardSceneLike, type DashboardSceneState } from './types/dashboard';
+import {
+  type DashboardSceneLike,
+  type DashboardSceneState,
+  type DashboardStateUpdate,
+  type DashboardViewUpdate,
+} from './types/dashboard';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
 const PANEL_SEARCH_VAR = 'systemPanelFilterVar';
@@ -628,7 +633,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     if (restoreInitialState) {
       // Restore initial state and disable editing
-      this.updateView({ ...this._initialState, isEditing: false });
+      const { isModalLoading, ...initialState } = this._initialState ?? {};
+      this.updateView({ ...initialState, isEditing: false });
       this.restoreSerializerAnnotationsFromInitialState();
       appEvents.publish(new DashboardDiscardedEvent());
       DashboardInteractions.dashboardEditDiscarded();
@@ -670,7 +676,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const hadProgrammaticSidebar = this._sidebarActivation !== undefined;
     this.deactivateSidebar();
 
-    const restoredState = sceneUtils.cloneSceneObjectState(this._initialState!, { isDirty: false });
+    const { isModalLoading, ...restoredState } = sceneUtils.cloneSceneObjectState(this._initialState!, {
+      isDirty: false,
+    });
 
     // Ensure the restored layout stays editable.
     restoredState.body.editModeChanged?.(true);
@@ -762,7 +770,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       dashScene = transformSaveModelToScene(dashboardDTO);
     }
 
-    const newState = sceneUtils.cloneSceneObjectState(dashScene.state);
+    const { isModalLoading, ...newState } = sceneUtils.cloneSceneObjectState(dashScene.state);
     newState.version = versionRsp.version;
 
     this.updateView(newState);
@@ -1191,24 +1199,35 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     console.error('Trying to unlink a lib panel in a layout that is not DashboardGridItem or AutoGridItem');
   }
 
-  /** Cancel pending drawers at navigation intent, including before an asynchronous view loads. */
+  /** Cancel pending drawers and sidebar panes before an asynchronous view transition starts. */
   public beginViewTransition() {
     this._modalRequest?.abort();
+    this.state.sidebar.cancelPaneRequest();
+  }
+
+  /** View and loading fields have dedicated writers; ordinary edits must not cancel requests. */
+  public override setState(state: DashboardStateUpdate) {
+    super.setState(state);
   }
 
   /** Use for view transitions and content replacement; ordinary data edits should use setState. */
-  public updateView(state: Partial<DashboardSceneState>) {
+  public updateView(state: DashboardViewUpdate) {
     this.beginViewTransition();
     // Restored view snapshots must not revive an already-cancelled loading indicator.
-    this.setState({ ...state, isModalLoading: false });
+    super.setState({ ...state, isModalLoading: false });
+  }
+
+  private setModalLoading(isModalLoading: boolean) {
+    // Loading bookkeeping must not recursively cancel the request it belongs to.
+    super.setState(isModalLoading ? { isModalLoading, overlay: undefined } : { isModalLoading });
   }
 
   public async showModalAsync(load: () => Promise<SceneObject | undefined>) {
     this.beginViewTransition();
     const request = new AbortController();
     this._modalRequest = request;
-    request.signal.addEventListener('abort', () => this.setState({ isModalLoading: false }), { once: true });
-    this.setState({ isModalLoading: true, overlay: undefined });
+    request.signal.addEventListener('abort', () => this.setModalLoading(false), { once: true });
+    this.setModalLoading(true);
     const location = locationService.getLocation();
     const search = new URLSearchParams(location.search);
     // Time range and variable URL updates do not supersede a drawer request.

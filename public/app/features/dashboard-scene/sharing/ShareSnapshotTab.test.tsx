@@ -212,7 +212,7 @@ function buildSnapshotTab() {
 function parentToScene<T extends ShareSnapshotTab>(build: (scene: DashboardScene) => T): T {
   const scene = buildScene();
   const tab = build(scene);
-  scene.setState({ overlay: tab });
+  scene.updateView({ overlay: tab });
 
   return tab;
 }

@@ -97,7 +97,7 @@ function buildScene(spec: DashboardV2Spec): DashboardScene {
 
   const scene = transformSaveModelSchemaV2ToScene(dto);
   scene.state.sidebar.activate();
-  scene.setState({ isEditing: true });
+  scene.updateView({ isEditing: true });
   return scene;
 }
 

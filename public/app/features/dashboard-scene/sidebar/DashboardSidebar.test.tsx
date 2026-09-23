@@ -135,10 +135,10 @@ describe('DashboardSidebar', () => {
             sidebar.disableSelection();
             break;
           case 'leave edit mode':
-            dashboard.setState({ isEditing: false });
+            dashboard.updateView({ isEditing: false });
             break;
           case 'view panel':
-            dashboard.setState({ viewPanel: 'panel-1' });
+            dashboard.updateView({ viewPanel: 'panel-1' });
             break;
         }
         expect(request.aborted).toBe(true);
@@ -160,6 +160,38 @@ describe('DashboardSidebar', () => {
       dashboard.setState({ title: 'Renamed dashboard' });
 
       expect(request.aborted).toBe(false);
+    });
+
+    it('cancels before a view transition commits and allows a later pane request', async () => {
+      const pending = createDeferred<void>();
+      const stalePane = new DashboardOutline({});
+      const opening = sidebar.runPaneRequest(async (signal) => {
+        await pending.promise;
+        if (!signal.aborted) {
+          sidebar.openPane(stalePane);
+        }
+      });
+      expect(sidebar.state.isLoading).toBe(true);
+
+      dashboard.beginViewTransition();
+      expect(sidebar.state.isLoading).toBe(false);
+      pending.resolve();
+      await opening;
+      expect(sidebar.state.openPane).toBeUndefined();
+
+      const nextPane = new DashboardOutline({});
+      await sidebar.runPaneRequest(async () => sidebar.openPane(nextPane));
+      expect(sidebar.state.openPane).toBe(nextPane);
+    });
+
+    it('cancels a pending pane when a drawer starts loading', async () => {
+      const request = sidebar.beginPaneRequest();
+      const pending = createDeferred<undefined>();
+      const opening = dashboard.showModalAsync(() => pending.promise);
+      expect(request.aborted).toBe(true);
+      expect(sidebar.state.isLoading).toBe(false);
+      pending.resolve(undefined);
+      await opening;
     });
   });
 

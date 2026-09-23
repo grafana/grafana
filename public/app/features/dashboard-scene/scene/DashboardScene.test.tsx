@@ -307,10 +307,10 @@ describe('DashboardScene', () => {
         // Put the scene into panel edit to verify we clear it
         const panel = findVizPanelByKey(scene, 'panel-1')!;
         const editPanel = buildPanelEditScene(panel);
-        scene.setState({ editPanel });
+        scene.updateView({ editPanel });
 
         // Add an overlay as well to verify it is cleared
-        scene.setState({ overlay: new SaveDashboardDrawer({ dashboardRef: scene.getRef() }) });
+        scene.updateView({ overlay: new SaveDashboardDrawer({ dashboardRef: scene.getRef() }) });
         expect(scene.state.overlay).toBeDefined();
 
         scene.discardChangesAndKeepEditing();
@@ -486,7 +486,7 @@ describe('DashboardScene', () => {
       it('Should exit edit mode and discard panel changes if leaving the dashboard while in panel edit', async () => {
         const panel = findVizPanelByKey(scene, 'panel-1')!;
         const editPanel = buildPanelEditScene(panel!);
-        scene.setState({ editPanel });
+        scene.updateView({ editPanel });
 
         panel.setState({ title: 'new title' });
         scene.exitEditMode({ skipConfirm: true });
@@ -1823,7 +1823,7 @@ describe('DashboardScene', () => {
       test('when editing', () => {
         const panel = findVizPanelByKey(scene, 'panel-1');
         const editPanel = buildPanelEditScene(panel!);
-        scene.setState({ editPanel });
+        scene.updateView({ editPanel });
 
         const queryRunner = editPanel.getPanel().state.$data!;
 
@@ -2197,18 +2197,23 @@ describe('DashboardScene', () => {
       expect(scene.state.overlay).toBe(modal);
     });
 
-    it('cancels a pending drawer before the panel editor import completes', async () => {
+    it('cancels pending drawer and pane requests before the panel editor import completes', async () => {
       const scene = buildTestScene();
       const modal = new SceneGridLayout({ children: [] });
       const panel = findVizPanelByKey(scene, 'panel-1')!;
+      const deactivateSidebar = scene.state.sidebar.activate();
       // This continuation runs before the panel editor's dynamic import resolves.
       const opening = scene.showModalAsync(async () => modal);
+      const paneRequest = scene.state.sidebar.beginPaneRequest();
       const editing = openPanelEditor(scene, panel);
+      expect(paneRequest.aborted).toBe(true);
+      expect(scene.state.editPanel).toBeUndefined();
 
       await opening;
       expect(scene.state.overlay === modal).toBe(false);
       await editing;
       expect(scene.state.editPanel).toBeDefined();
+      deactivateSidebar();
     });
 
     it('propagates a load failure and allows a later request', async () => {
@@ -3508,7 +3513,7 @@ describe('DashboardScene', () => {
     it('prefixes the dashboard parent crumb url with the app sub url when editing a panel', () => {
       const scene = buildTestScene({ meta: { slug: 'dash-1-slug' } });
       const panel = findVizPanelByKey(scene, 'panel-1')!;
-      scene.setState({ editPanel: buildPanelEditScene(panel) });
+      scene.updateView({ editPanel: buildPanelEditScene(panel) });
       const location = { pathname: '/d/dash-1/dash-1-slug', search: '?editPanel=1', hash: '', state: null, key: '' };
 
       const pageNav = scene.getPageNav(location, {} as NavIndex);

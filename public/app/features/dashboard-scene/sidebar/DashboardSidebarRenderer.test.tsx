@@ -171,7 +171,7 @@ describe('DashboardSidebarRenderer', () => {
   describe('hide button', () => {
     it('renders the hide button in view mode', async () => {
       const scene = buildTestScene();
-      scene.setState({ isEditing: false });
+      scene.updateView({ isEditing: false });
       act(() => activateFullSceneTree(scene));
 
       render(<DashboardSidebarSplitter dashboard={scene} />);

@@ -82,7 +82,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     }
   }
 
-  private cancelPaneRequest() {
+  public cancelPaneRequest() {
     const request = this._paneRequest;
     this._paneRequest = undefined;
     request?.abort();
@@ -109,19 +109,6 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
   private onActivate() {
     const dashboard = getDashboardSceneFor(this);
-
-    this._subs.add(
-      dashboard.subscribeToState((state, previous) => {
-        if (
-          state.isEditing !== previous.isEditing ||
-          state.editview !== previous.editview ||
-          state.editPanel !== previous.editPanel ||
-          state.viewPanel !== previous.viewPanel
-        ) {
-          this.cancelPaneRequest();
-        }
-      })
-    );
 
     if (dashboard.state.isEditing) {
       this.enableSelection();

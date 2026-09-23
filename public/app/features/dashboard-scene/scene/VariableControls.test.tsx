@@ -51,7 +51,7 @@ describe('VariableControls', () => {
     const variables = [scopesVariable];
     const dashboard = buildScene(variables);
     dashboard.activate();
-    dashboard.setState({ isEditing: true });
+    dashboard.updateView({ isEditing: true });
 
     render(<VariableControls dashboard={dashboard} />);
     expect(screen.queryByText('__scopes')).not.toBeInTheDocument();
@@ -78,7 +78,7 @@ describe('VariableControls', () => {
     const dashboard = buildScene(variables);
     dashboard.activate();
 
-    dashboard.setState({ isEditing: true });
+    dashboard.updateView({ isEditing: true });
     render(<VariableControls dashboard={dashboard} />);
 
     expect(screen.queryByText('HiddenVar')).not.toBeInTheDocument();
@@ -89,7 +89,7 @@ describe('VariableControls', () => {
     const dashboard = buildScene([new TextBoxVariable({ name: 'TextVarControls', hide: VariableHide.inControlsMenu })]);
     dashboard.activate();
 
-    dashboard.setState({ isEditing: true });
+    dashboard.updateView({ isEditing: true });
     render(<VariableControls dashboard={dashboard} />);
 
     expect(screen.queryByText('TextVarControls')).not.toBeInTheDocument();
@@ -99,7 +99,7 @@ describe('VariableControls', () => {
     const dashboard = buildScene([new TextBoxVariable({ name: 'TextVarVisible', hide: VariableHide.dontHide })]);
     dashboard.activate();
 
-    dashboard.setState({ isEditing: true });
+    dashboard.updateView({ isEditing: true });
     render(<VariableControls dashboard={dashboard} />);
 
     expect(await screen.findByText('TextVarVisible')).toBeInTheDocument();
@@ -116,7 +116,7 @@ describe('VariableControls', () => {
       }),
     ]);
     dashboard.activate();
-    dashboard.setState({ isEditing: true });
+    dashboard.updateView({ isEditing: true });
 
     render(<VariableControls dashboard={dashboard} />);
 
@@ -160,7 +160,7 @@ describe('VariableControls', () => {
       }),
     ]);
     dashboard.activate();
-    dashboard.setState({ isEditing: true });
+    dashboard.updateView({ isEditing: true });
 
     render(<VariableControls dashboard={dashboard} />);
 

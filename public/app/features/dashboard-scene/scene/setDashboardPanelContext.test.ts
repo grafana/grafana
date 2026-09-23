@@ -128,7 +128,7 @@ describe('setDashboardPanelContext', () => {
       expect(context.app).toBe(CoreApp.Dashboard);
 
       scene.onEnterEditMode();
-      scene.setState({ editPanel: buildPanelEditScene(vizPanel) });
+      scene.updateView({ editPanel: buildPanelEditScene(vizPanel) });
 
       expect(context.app).toBe(CoreApp.PanelEditor);
     });
@@ -143,7 +143,7 @@ describe('setDashboardPanelContext', () => {
       const deactivate = scene.activate();
 
       scene.onEnterEditMode();
-      scene.setState({ editPanel: buildPanelEditScene(vizPanel) });
+      scene.updateView({ editPanel: buildPanelEditScene(vizPanel) });
 
       expect(context.app).toBe(CoreApp.PanelEditor);
 

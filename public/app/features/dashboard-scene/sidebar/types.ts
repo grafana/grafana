@@ -28,6 +28,7 @@ export interface DashboardSidebarState extends SceneObjectState {
  */
 export interface DashboardSidebarLike extends SceneObject<DashboardSidebarState> {
   beginPaneRequest(): AbortSignal;
+  cancelPaneRequest(): void;
   runPaneRequest(load: (signal: AbortSignal) => Promise<void>): Promise<void>;
   enableSelection(): void;
   disableSelection(): void;

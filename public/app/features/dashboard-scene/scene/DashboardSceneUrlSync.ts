@@ -12,7 +12,7 @@ import { type LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from './UnconfiguredPanel';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { refuseWhilePlanning } from './refuseWhilePlanning';
-import { type DashboardSceneState } from './types/dashboard';
+import { type DashboardViewUpdate } from './types/dashboard';
 
 export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   /**
@@ -69,7 +69,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
   updateFromUrl(values: SceneObjectUrlValues): void {
     const { viewPanel, isEditing, editPanel, shareView } = this._scene.state;
-    const update: Partial<DashboardSceneState> = {};
+    const update: DashboardViewUpdate = {};
 
     // Reachable directly via ?editview=, independent of any settings entry point: without this
     // check, the branch below calls onEnterEditMode() unconditionally when not already editing,

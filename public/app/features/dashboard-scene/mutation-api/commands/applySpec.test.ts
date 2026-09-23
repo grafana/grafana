@@ -82,7 +82,7 @@ async function readSpec(scene: DashboardScene): Promise<DashboardV2Spec> {
 function openPanelEdit(scene: DashboardScene, key: string) {
   const panel = findVizPanelByKey(scene, key)!;
   scene.onEnterEditMode();
-  scene.setState({ editPanel: buildPanelEditScene(panel) });
+  scene.updateView({ editPanel: buildPanelEditScene(panel) });
   return panel;
 }
 

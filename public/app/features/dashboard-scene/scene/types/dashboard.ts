@@ -12,7 +12,33 @@ import { type DashboardLayoutOrchestrator } from '../DashboardLayoutOrchestrator
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './DashboardLayoutManager';
 import { type LayoutParent } from './LayoutParent';
 
-export interface DashboardSceneState extends SceneObjectState {
+export interface DashboardViewState {
+  /**
+   * Any dashboard/notebook layout. Replacement must cancel requests targeting the old content.
+   */
+  body: AnyDashboardLayoutManager;
+  /** True when editing */
+  isEditing?: boolean;
+  /** Panel to inspect */
+  inspectPanelKey?: string;
+  /** Panel key to view in fullscreen */
+  viewPanel?: string;
+  /** Edit view */
+  editview?: DashboardEditView;
+  /** Edit panel */
+  editPanel?: PanelEditor;
+  /** Scene object that handles the current drawer or modal */
+  overlay?: SceneObject;
+  /** Share view */
+  shareView?: string;
+}
+
+interface DashboardLoadingState {
+  /** A drawer's implementation is being loaded. */
+  isModalLoading?: boolean;
+}
+
+export interface DashboardSceneState extends SceneObjectState, DashboardViewState, DashboardLoadingState {
   /** Dashboard-specific preferences **/
   preferences?: DashboardScenePreferences;
 
@@ -32,37 +58,16 @@ export interface DashboardSceneState extends SceneObjectState {
   uid?: string;
   /** @experimental */
   scopeMeta?: ScopeMeta;
-  /**
-   * Layout of panels. Any kind, because a sibling resource's layout manager (the notebook) also
-   * rides this scene and serializes its own kind rather than a dashboard layout kind.
-   */
-  body: AnyDashboardLayoutManager;
   /** NavToolbar actions */
   actions?: SceneObject[];
   /** Fixed row at the top of the canvas with for example variables and time range controls */
   controls?: DashboardControls;
-  /** True when editing */
-  isEditing?: boolean;
   /** True when user made a change */
   isDirty?: boolean;
   /** meta flags */
   meta: Omit<DashboardMeta, 'isNew'>;
   /** Version of the dashboard */
   version?: number;
-  /** Panel to inspect */
-  inspectPanelKey?: string;
-  /** Panel key to view in fullscreen */
-  viewPanel?: string;
-  /** Edit view */
-  editview?: DashboardEditView;
-  /** Edit panel */
-  editPanel?: PanelEditor;
-  /** Scene object that handles the current drawer or modal */
-  overlay?: SceneObject;
-  /** A drawer's implementation is being loaded. */
-  isModalLoading?: boolean;
-  /** Share view */
-  shareView?: string;
   /** Renders panels in grid and filtered */
   panelSearch?: string;
   /** How many panels to show per row for search results */
@@ -82,6 +87,16 @@ export interface DashboardSceneState extends SceneObjectState {
   planning?: DashboardPlanningState;
 }
 
+// Optional never also rejects pre-typed patches and spreads, unlike Omit alone.
+// Without exactOptionalPropertyTypes, explicit undefined remains allowed.
+type WithoutStateKeys<T, K extends keyof T> = Partial<Omit<T, K>> & { [P in K]?: never };
+
+export type DashboardStateUpdate = WithoutStateKeys<
+  DashboardSceneState,
+  keyof DashboardViewState | keyof DashboardLoadingState
+>;
+export type DashboardViewUpdate = WithoutStateKeys<DashboardSceneState, keyof DashboardLoadingState>;
+
 export interface DashboardPlanningState {
   /** Identifies the plan being previewed, so a stale request against a superseded plan can be refused. */
   planId: string;
@@ -99,7 +114,8 @@ interface DashboardScenePreferences {
 
 export interface DashboardSceneLike extends SceneObject<DashboardSceneState>, LayoutParent {
   isDashboardScene: boolean;
-  updateView(state: Partial<DashboardSceneState>): void;
+  setState(state: DashboardStateUpdate): void;
+  updateView(state: DashboardViewUpdate): void;
 
   copyPanel(vizPanel: VizPanel): void;
 

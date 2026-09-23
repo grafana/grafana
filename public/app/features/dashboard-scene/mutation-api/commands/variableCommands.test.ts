@@ -556,7 +556,7 @@ describe('Variable mutation commands', () => {
     it('runs section variable mutations against a real DashboardScene instance', async () => {
       const scene = getTestDashboardSceneFromSaveModel();
       const row = new RowItem({ title: 'R', layout: DefaultGridLayoutManager.fromVizPanels([]) });
-      scene.setState({
+      scene.updateView({
         body: new RowsLayoutManager({ rows: [row] }),
         isEditing: true,
       });

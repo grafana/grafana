@@ -59,7 +59,7 @@ describe('getVariablesCompatibility', () => {
         body: new RowsLayoutManager({ rows: [row1, row2] }),
       });
 
-      dashboard.setState({
+      dashboard.updateView({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         editPanel: { state: { panelRef: { resolve: () => panel } } } as any,
       });
