@@ -444,8 +444,11 @@ type searchServer struct {
 // getIndexMaxAge returns the configured rebuild interval for the given
 // resource: dashboards use IndexRebuildInterval (cfg.IndexRebuildInterval),
 // other resources use MaxFileIndexAge. Zero means "no age-based rebuild".
+//
+// A namespace-wide index holds dashboards too, and it is the more expensive one
+// to rebuild, so it follows the dashboard interval rather than the default.
 func (s *searchServer) getIndexMaxAge(key NamespacedResource) time.Duration {
-	if key.Resource == dashboardv1.DASHBOARD_RESOURCE {
+	if key.Resource == dashboardv1.DASHBOARD_RESOURCE || key.IsGlobal() {
 		return s.dashboardIndexMaxAge
 	}
 	return s.maxIndexAge
