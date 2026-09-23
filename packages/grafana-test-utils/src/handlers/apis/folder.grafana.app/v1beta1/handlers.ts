@@ -358,7 +358,7 @@ export const customCreateFolderHandler = (resolver: HttpResponseResolver) => htt
 const customFolderCountsHandler = (resolver: HttpResponseResolver) =>
   http.get('/apis/folder.grafana.app/:version/namespaces/:namespace/folders/:folderUid/counts', resolver);
 
-export const mockFolderCountsHandler = (panels: number, rules: number, recordingRules = 0) =>
+export const mockFolderCountsHandler = (panels: number, rules: number, recordingRules = 0, variables = 0) =>
   customFolderCountsHandler(() =>
     HttpResponse.json({
       kind: 'DescendantCounts',
@@ -367,6 +367,7 @@ export const mockFolderCountsHandler = (panels: number, rules: number, recording
         { group: 'sql-fallback', resource: 'library_elements', count: panels },
         { group: 'sql-fallback', resource: 'alertrules', count: rules },
         { group: 'sql-fallback', resource: 'recordingrules', count: recordingRules },
+        { group: 'dashboard.grafana.app', resource: 'variables', count: variables },
       ],
     })
   );

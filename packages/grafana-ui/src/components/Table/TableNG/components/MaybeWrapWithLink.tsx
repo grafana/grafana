@@ -4,7 +4,7 @@ import { type Field } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { renderSingleLink } from '../../DataLinksActionsTooltip';
-import { getCellLinks } from '../utils';
+import { getCellLinks } from '../cellLinks';
 
 interface MaybeWrapWithLinkProps {
   field: Field;
