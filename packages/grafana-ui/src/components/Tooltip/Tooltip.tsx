@@ -10,7 +10,17 @@ import {
   useInteractions,
   safePolygon,
 } from '@floating-ui/react';
-import { forwardRef, cloneElement, isValidElement, useCallback, useId, useRef, useState, type JSX } from 'react';
+import {
+  forwardRef,
+  cloneElement,
+  isValidElement,
+  useCallback,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type JSX,
+} from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -79,17 +89,44 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
     const styles = useStyles2(getStyles);
     const style = styles[theme ?? 'info'];
 
+    // Keep the callback ref identity stable across re-renders. React re-invokes a
+    // callback ref (with null, then the node) whenever its identity changes, so a
+    // new handleRef per render turns every parent re-render into a floating-ui
+    // reference detach/reattach. Each reattach is a floating-ui state update, and
+    // when the parent re-renders in response to ref calls this cascades into
+    // React's nested-update limit ("Maximum update depth exceeded", error #185).
+    const nodeRef = useRef<HTMLElement | null>(null);
+    const forwardedRefRef = useRef(forwardedRef);
+    useLayoutEffect(() => {
+      forwardedRefRef.current = forwardedRef;
+      // React will not re-invoke the stable callback ref when the forwarded ref
+      // changes, so surface the current node to a swapped object ref here.
+      // Function refs are deliberately not re-invoked for an unchanged node:
+      // re-calling unstable function refs on every render is exactly the churn
+      // this guards against.
+      const node = nodeRef.current;
+      if (forwardedRef && typeof forwardedRef !== 'function' && node != null) {
+        forwardedRef.current = node;
+      }
+    }, [forwardedRef]);
+
     const handleRef = useCallback(
       (ref: HTMLElement | null) => {
-        refs.setReference(ref);
+        // Skip redundant floating-ui reference updates for the same node to
+        // avoid scheduling unnecessary re-renders.
+        if (ref !== nodeRef.current) {
+          nodeRef.current = ref;
+          refs.setReference(ref);
+        }
 
-        if (typeof forwardedRef === 'function') {
-          forwardedRef(ref);
-        } else if (forwardedRef) {
-          forwardedRef.current = ref;
+        const currentForwardedRef = forwardedRefRef.current;
+        if (typeof currentForwardedRef === 'function') {
+          currentForwardedRef(ref);
+        } else if (currentForwardedRef) {
+          currentForwardedRef.current = ref;
         }
       },
-      [forwardedRef, refs]
+      [refs]
     );
 
     // if the child has a matching aria-label, this should take precedence over the tooltip content

@@ -1,6 +1,6 @@
 ﻿import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { type MutableRefObject } from 'react';
+import { type MutableRefObject, useState } from 'react';
 
 import { TextLink } from '../Link/TextLink';
 
@@ -97,5 +97,60 @@ describe('Tooltip', () => {
         description: 'Tooltip content',
       })
     ).toBeInTheDocument();
+  });
+
+  it('does not crash when an unstable function ref re-renders the parent on every ref call (#130469)', () => {
+    // An inline function ref gets a new identity on every parent render, which
+    // makes React re-invoke it (null, then the node) on each commit. When the
+    // ref also triggers a parent re-render, this used to cascade through the
+    // floating-ui reference state updates into React's nested-update limit
+    // ("Maximum update depth exceeded", error #185).
+    const UnstableRefTooltip = () => {
+      const [, forceRender] = useState(0);
+      return (
+        <Tooltip content="Tooltip content" ref={() => forceRender((v) => v + 1)}>
+          <span>On the page</span>
+        </Tooltip>
+      );
+    };
+
+    expect(() => render(<UnstableRefTooltip />)).not.toThrow();
+    expect(screen.getByText('On the page')).toBeInTheDocument();
+  });
+
+  it('keeps the floating reference intact when the parent re-renders with a new function ref', async () => {
+    const { rerender } = render(
+      <Tooltip content="Tooltip content" ref={() => {}}>
+        <span>On the page</span>
+      </Tooltip>
+    );
+    // new function ref identity on every render must not detach the reference
+    rerender(
+      <Tooltip content="Tooltip content" ref={() => {}}>
+        <span>On the page</span>
+      </Tooltip>
+    );
+
+    await userEvent.hover(screen.getByText('On the page'));
+    expect(await screen.findByText('Tooltip content')).toBeInTheDocument();
+  });
+
+  it('surfaces the current node to a swapped object ref', () => {
+    const firstRef: MutableRefObject<HTMLElement | null> = { current: null };
+    const secondRef: MutableRefObject<HTMLElement | null> = { current: null };
+
+    const { rerender } = render(
+      <Tooltip content="Tooltip content" ref={firstRef}>
+        <span>On the page</span>
+      </Tooltip>
+    );
+    expect(firstRef.current).not.toBeNull();
+
+    rerender(
+      <Tooltip content="Tooltip content" ref={secondRef}>
+        <span>On the page</span>
+      </Tooltip>
+    );
+    expect(secondRef.current).toBe(firstRef.current);
   });
 });
