@@ -19,22 +19,31 @@ export function AddControlsButton({ dashboard }: { dashboard: DashboardScene }) 
   // The add flows are edit-only, so their implementations (variable type pane,
   // filter form, annotation actions, link pane) load on first use.
   const handleAddVariable = useCallback(async () => {
+    const signal = dashboard.state.sidebar.beginPaneRequest();
     const { openAddVariablePane } = await import(
       /* webpackChunkName: "dashboard-add-controls" */ '../settings/variables/VariableTypeSelectionPane'
     );
+    if (signal.aborted) {
+      return;
+    }
     openAddVariablePane(dashboard);
     DashboardInteractions.addVariableButtonClicked({ source: 'variable_controls' });
   }, [dashboard]);
 
   const handleAddFilter = useCallback(async () => {
+    const signal = dashboard.state.sidebar.beginPaneRequest();
     const { openAddFilterForm } = await import(
       /* webpackChunkName: "dashboard-add-controls" */ '../sidebar/add-new/AddFilters'
     );
-    openAddFilterForm(dashboard, dashboard);
+    if (signal.aborted) {
+      return;
+    }
+    await openAddFilterForm(dashboard, dashboard, signal);
     DashboardInteractions.addFilterButtonClicked({ source: 'variable_controls' });
   }, [dashboard]);
 
   const handleAddAnnotationQuery = useCallback(async () => {
+    const signal = dashboard.state.sidebar.beginPaneRequest();
     const dataLayers = sceneGraph.getData(dashboard);
     if (!(dataLayers instanceof DashboardDataLayerSet)) {
       return;
@@ -43,14 +52,21 @@ export function AddControlsButton({ dashboard }: { dashboard: DashboardScene }) 
       /* webpackChunkName: "dashboard-add-controls" */ '../settings/annotations/actions'
     );
     const newAnnotation = await dataLayers.createDefaultAnnotationLayer();
+    if (signal.aborted) {
+      return;
+    }
     annotationEditActions.addAnnotation({ source: dataLayers, addedObject: newAnnotation });
     DashboardInteractions.addAnnotationButtonClicked({ source: 'variable_controls' });
   }, [dashboard]);
 
   const handleAddLink = useCallback(async () => {
+    const signal = dashboard.state.sidebar.beginPaneRequest();
     const { openAddLinkPane } = await import(
       /* webpackChunkName: "dashboard-add-controls" */ '../settings/links/LinkAddEditableElement'
     );
+    if (signal.aborted) {
+      return;
+    }
     openAddLinkPane(dashboard);
     DashboardInteractions.addLinkButtonClicked({ source: 'variable_controls' });
   }, [dashboard]);

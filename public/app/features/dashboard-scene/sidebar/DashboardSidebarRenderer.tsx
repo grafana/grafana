@@ -50,17 +50,19 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
   const globalDashboardVariablesEnabled = useFlagGrafanaDashboardGlobalVariables();
   const feedbackButton = useFlagFeedbackButton();
   const onOpenAddPane = useCallback(async () => {
+    const signal = sidebar.beginPaneRequest();
     const { AddNewPane } = await import(/* webpackChunkName: "dashboard-add-new-pane" */ './add-new/AddNewPane');
-    sidebar.openPane(new AddNewPane({}));
+    if (!signal.aborted) {
+      sidebar.openPane(new AddNewPane({}));
+    }
   }, [sidebar]);
 
   const onOpenCodePane = useCallback(async () => {
-    const stateAtRequest = sidebar.state;
+    const signal = sidebar.beginPaneRequest();
     const { DashboardCodePane } = await import(/* webpackChunkName: "dashboard-code-pane" */ './DashboardCodePane');
-    if (!sidebar.isActive || sidebar.state !== stateAtRequest) {
-      return;
+    if (!signal.aborted) {
+      sidebar.openPane(new DashboardCodePane({}));
     }
-    sidebar.openPane(new DashboardCodePane({}));
   }, [sidebar]);
 
   const onClickHideSidebar: React.MouseEventHandler<HTMLButtonElement> = useCallback(
@@ -210,10 +212,13 @@ function FiltersOverviewButton({
   const hasFilters = variables.some((v) => v.state.type === 'adhoc');
 
   const onClick = useCallback(async () => {
+    const signal = sidebar.beginPaneRequest();
     const { DashboardFiltersOverviewPane } = await import(
       /* webpackChunkName: "dashboard-filters-overview" */ '../scene/dashboard-filters-overview/DashboardFiltersOverviewPane'
     );
-    sidebar.openPane(new DashboardFiltersOverviewPane({}));
+    if (!signal.aborted) {
+      sidebar.openPane(new DashboardFiltersOverviewPane({}));
+    }
   }, [sidebar]);
 
   if (!hasFilters) {
