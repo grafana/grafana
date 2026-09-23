@@ -472,8 +472,14 @@ export class NotebookLayoutManager
         ? t('notebooks.history.set-cell-time-range', 'Set panel time range')
         : t('notebooks.history.reset-cell-time-range', 'Use notebook time range'),
       kind: NOTEBOOK_EDIT_KIND.EDIT,
-      perform: () => cell.setState(after),
-      undo: () => cell.setState(before),
+      perform: () => {
+        cell.setState(after);
+        getQueryRunnerFor(cell.state.body)?.runQueries();
+      },
+      undo: () => {
+        cell.setState(before);
+        getQueryRunnerFor(cell.state.body)?.runQueries();
+      },
     });
   }
 

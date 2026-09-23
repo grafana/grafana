@@ -1286,7 +1286,8 @@ describe('NotebookLayoutManager', () => {
     });
 
     it('records a discrete, correctly labeled undo step while editing', () => {
-      const { cell } = panelCell('latency');
+      const { cell, runner } = panelCell('latency');
+      const runQueries = jest.spyOn(runner, 'runQueries').mockImplementation(() => {});
       const manager = new NotebookLayoutManager({ cells: [cell], isEditing: true });
       const history = attachHistory(manager);
 
@@ -1294,12 +1295,15 @@ describe('NotebookLayoutManager', () => {
 
       expect(cell.state.$timeRange?.state.from).toBe('now-24h');
       expect(history.state.undoLabel).toBe('Set panel time range');
+      expect(runQueries).toHaveBeenCalledTimes(1);
 
       act(() => history.undo());
       expect(cell.state.$timeRange).toBeUndefined();
+      expect(runQueries).toHaveBeenCalledTimes(2);
 
       act(() => history.redo());
       expect(cell.state.$timeRange?.state.from).toBe('now-24h');
+      expect(runQueries).toHaveBeenCalledTimes(3);
     });
 
     it('clears the override, labeled as reverting to the notebook time, while editing', () => {

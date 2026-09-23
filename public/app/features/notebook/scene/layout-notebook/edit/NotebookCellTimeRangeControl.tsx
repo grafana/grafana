@@ -13,18 +13,14 @@ import { buildCellTimeRangeSpec, buildDraftTimeRangeHost } from '../cellTimeRang
 
 interface Props {
   cell: NotebookCellItem;
-  /** 'button': edit-mode icon, next to "Add query"/"Run query". 'label': read-only "Locked: …"
-   * trigger, shown only once a cell actually has its own time range. */
+  /** 'button': plain clock icon. 'label': descriptive "Locked: from → to" — callers only use this
+   * once the cell actually has its own time range; PanelCell hides the trigger entirely otherwise. */
   variant: 'button' | 'label';
 }
 
 export function NotebookCellTimeRangeControl({ cell, variant }: Props) {
   const { $timeRange } = cell.useState();
   const [open, setOpen] = useState(false);
-
-  if (variant === 'label' && !$timeRange) {
-    return null;
-  }
 
   return (
     <Toggletip
@@ -36,7 +32,14 @@ export function NotebookCellTimeRangeControl({ cell, variant }: Props) {
       fitContent
       content={<NotebookCellTimeRangePopoverContent cell={cell} onClose={() => setOpen(false)} />}
     >
-      {variant === 'button' ? (
+      {variant === 'label' && $timeRange ? (
+        <Button fill="solid" size="sm" icon="lock" variant="secondary">
+          {t('notebook.cell.time-range.locked', 'Locked: {{from}} → {{to}}', {
+            from: $timeRange.state.from,
+            to: $timeRange.state.to,
+          })}
+        </Button>
+      ) : (
         <IconButton
           name="clock-nine"
           size="sm"
@@ -48,13 +51,6 @@ export function NotebookCellTimeRangeControl({ cell, variant }: Props) {
           }
           aria-label={t('notebook.cell.time-range.button', 'Update time range')}
         />
-      ) : (
-        <Button fill="solid" size="sm" icon="lock" variant="secondary">
-          {t('notebook.cell.time-range.locked', 'Locked: {{from}} → {{to}}', {
-            from: $timeRange!.state.from,
-            to: $timeRange!.state.to,
-          })}
-        </Button>
       )}
     </Toggletip>
   );
@@ -68,7 +64,10 @@ function NotebookCellTimeRangePopoverContent({ cell, onClose }: { cell: Notebook
   const [useNotebookTime, setUseNotebookTime] = useState(cell.state.$timeRange === undefined);
 
   const onReset = () => {
-    host.state.$timeRange.setState({ fiscalYearStartMonth: committed.fiscalYearStartMonth });
+    host.state.$timeRange.setState({
+      timeZone: committed.timezone,
+      fiscalYearStartMonth: committed.fiscalYearStartMonth,
+    });
     const range = rangeUtil.convertRawToRange({ from: committed.from, to: committed.to }, committed.timezone);
     host.state.$timeRange.onTimeRangeChange(range);
     setUseNotebookTime(cell.state.$timeRange === undefined);
@@ -84,7 +83,10 @@ function NotebookCellTimeRangePopoverContent({ cell, onClose }: { cell: Notebook
     setUseNotebookTime(checked);
     if (checked) {
       const ancestor = seedFromAncestor(cell);
-      host.state.$timeRange.setState({ fiscalYearStartMonth: ancestor.fiscalYearStartMonth });
+      host.state.$timeRange.setState({
+        timeZone: ancestor.timezone,
+        fiscalYearStartMonth: ancestor.fiscalYearStartMonth,
+      });
       const range = rangeUtil.convertRawToRange({ from: ancestor.from, to: ancestor.to }, ancestor.timezone);
       host.state.$timeRange.onTimeRangeChange(range);
     }

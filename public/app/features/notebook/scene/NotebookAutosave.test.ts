@@ -447,6 +447,25 @@ describe('NotebookAutosave', () => {
       expect(savedCellTimeRanges()).toEqual([undefined]);
     });
 
+    it('keeps discarding the reader time range across multiple unrelated saves', async () => {
+      const { scene, cell } = buildSceneWithPanel();
+      deactivate = scene.activate();
+
+      cell.setState({
+        $timeRange: new SceneTimeRange({ from: 'now-24h', to: 'now' }),
+        timePicker: new SceneTimePicker({}),
+      });
+      scene.onEnterEditMode();
+      scene.onTitleChange('First edit');
+      await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+      scene.onTitleChange('Second edit');
+      await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+      expect(updateNotebook).toHaveBeenCalledTimes(2);
+      expect(savedCellTimeRanges()).toEqual([undefined, undefined]);
+    });
+
     it('sends nothing when a notebook is reopened after a reader set a cell time range', async () => {
       const { scene, cell } = buildSceneWithPanel();
       deactivate = scene.activate();

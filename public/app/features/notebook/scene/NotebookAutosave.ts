@@ -20,9 +20,8 @@ import {
   type Spec as NotebookSpec,
 } from '../types';
 
-import { buildCellTimeRangeSpec } from './layout-notebook/cellTimeRange';
-import { type NotebookCellItem } from './layout-notebook/NotebookCellItem';
 import { type NotebookScene } from './NotebookScene';
+import { type NotebookCellItem } from './layout-notebook/NotebookCellItem';
 
 type PanelVizConfigState = Pick<VizPanel['state'], 'pluginId' | 'pluginVersion' | 'options' | 'fieldConfig'>;
 
@@ -511,13 +510,14 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   private recordWritten(
     spec: NotebookSpec,
     serialized = JSON.stringify(spec),
-    panels = collectVizPanels(this.scene)
+    panels = collectVizPanels(this.scene),
+    cells = this.scene.state.body.contentCells()
   ): void {
     this.baseline = serialized;
     this.savedTimeSettings = spec.timeSettings;
     this.savedVizConfigs = collectVizConfigs(spec);
     this.savedVizPanels = panels;
-    this.savedCellTimeRanges = collectCellTimeRanges(this.scene);
+    this.savedCellTimeRanges = collectCellTimeRangesFromSpec(spec, cells);
   }
 
   /** What to report when there is nothing waiting to be written. */
@@ -543,6 +543,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     const cellTimeRangesEdited = new Set(this.cellTimeRangesEdited);
     const editedByWriter = this.editedByWriter;
     const panels = collectVizPanels(this.scene);
+    const cells = this.scene.state.body.contentCells();
 
     let spec: NotebookSpec;
     let serialized: string;
@@ -590,7 +591,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
 
     this.inFlightSave = this.write(uid, spec)
       .then(({ generation }) => {
-        this.recordWritten(spec, serialized, panels);
+        this.recordWritten(spec, serialized, panels, cells);
         this.hasSavedOnce = true;
         this.failedAttempts = 0;
         this.setState({
@@ -718,13 +719,25 @@ function collectVizPanels(scene: NotebookScene): Map<string, VizPanel> {
   return panels;
 }
 
-/** Each cell's own time range right now, by cell identity — snapshotted right after a save lands. */
-function collectCellTimeRanges(scene: NotebookScene): Map<NotebookCellItem, NotebookCellTimeRangeSpec | undefined> {
+/**
+ * Each cell's own time range as it was actually sent, by cell identity — snapshotted from `spec`
+ * (what landed), not from the live scene, which can already differ by the time a save resolves
+ * (e.g. a reader's edit that `withSavedCellTimeRanges` deliberately left out of `spec`). `cells`
+ * must be `contentCells()` captured at the same time `spec` was built, for the same positional
+ * pairing `withSavedCellTimeRanges` relies on.
+ */
+function collectCellTimeRangesFromSpec(
+  spec: NotebookSpec,
+  cells: NotebookCellItem[]
+): Map<NotebookCellItem, NotebookCellTimeRangeSpec | undefined> {
   const ranges = new Map<NotebookCellItem, NotebookCellTimeRangeSpec | undefined>();
 
-  for (const cell of scene.state.body.state.cells) {
-    ranges.set(cell, cell.state.$timeRange ? buildCellTimeRangeSpec(cell.state.$timeRange) : undefined);
-  }
+  spec.layout.spec.cells.forEach((item, index) => {
+    const cell = cells[index];
+    if (cell) {
+      ranges.set(cell, item.spec.timeRange);
+    }
+  });
 
   return ranges;
 }

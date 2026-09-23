@@ -97,13 +97,21 @@ function PanelCell({
   autoFocus?: boolean;
 }) {
   const styles = useStyles2(getStyles);
+  const { $timeRange } = cell.useState();
+
+  // PanelQueryEditor already mounts its own copy of this control inline, so this one only needs to fill in for the
+  // two cases isEditableQueryPanel excludes (a library panel, or one with transformations),
+  // where there is no query editor to be inline with. In view mode there's nothing to fill in for —
+  // only show the "Locked: ..." label when there's actually an override to report; a reader can't
+  // start one anyway, so a clock hinting at the notebook's own (unremarkable) range is just noise.
+  const showStandaloneClock = isEditing ? !isEditableQueryPanel(panel) : Boolean($timeRange);
 
   return (
     <Stack direction="column" gap={1}>
       {isEditing && isEditableQueryPanel(panel) && <PanelQueryEditor cell={cell} panel={panel} autoFocus={autoFocus} />}
-      {!isEditing && (
+      {showStandaloneClock && (
         <Box display="flex" justifyContent="flex-end">
-          <NotebookCellTimeRangeControl cell={cell} variant="label" />
+          <NotebookCellTimeRangeControl cell={cell} variant={isEditing ? 'button' : 'label'} />
         </Box>
       )}
       <div className={styles.panel}>
