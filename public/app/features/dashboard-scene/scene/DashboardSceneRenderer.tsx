@@ -2,7 +2,6 @@ import { useEffect, useMemo } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { PageLayoutType } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -15,6 +14,7 @@ import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../solo/Sol
 import { type DashboardScene } from './DashboardScene';
 import { PanelSearchLayout } from './PanelSearchLayout';
 import { PlanningControls } from './new-toolbar/PlanningControls';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const {
@@ -113,9 +113,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
    */
   function renderControls() {
     if (planning) {
-      return config.featureToggles.dashboardNewLayouts ? (
-        <PlanningControls dashboard={model} planning={planning} />
-      ) : null;
+      return isDashboardNewLayoutsEnabled() ? <PlanningControls dashboard={model} planning={planning} /> : null;
     }
 
     return controls && <controls.Component model={controls} />;

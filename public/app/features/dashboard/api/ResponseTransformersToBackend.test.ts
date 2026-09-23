@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'fs';
 import path from 'path';
 
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { getSceneCreationOptions } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { normalizeBackendOutputForFrontendComparison } from 'app/features/dashboard-scene/serialization/serialization-test-utils';
 import { transformSaveModelSchemaV2ToScene } from 'app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene';
@@ -95,9 +96,6 @@ jest.mock('@grafana/runtime', () => {
         meta: { id: 'prometheus' },
       },
     },
-    featureToggles: {
-      dashboardNewLayouts: true,
-    },
   };
 
   return {
@@ -125,6 +123,10 @@ describe('V1 to V2 Dashboard Transformation Comparison (ResponseTransformers)', 
     // Mock console methods to avoid test failures from expected warnings
     jest.spyOn(console, 'error').mockImplementation(() => {});
     jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    setTestFlags({});
   });
 
   const inputDir = path.join(
@@ -174,6 +176,8 @@ describe('V1 to V2 Dashboard Transformation Comparison (ResponseTransformers)', 
 
       const backendOutput = JSON.parse(readFileSync(outputFilePath, 'utf8'));
       expect(backendOutput.apiVersion).toBe(LATEST_API_VERSION);
+
+      setTestFlags({ dashboardNewLayouts: true });
 
       // Backend path: Load backend output into Scene, then serialize back to v2beta1
       // This normalizes the backend output through the same Scene
