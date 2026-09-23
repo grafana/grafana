@@ -64,7 +64,7 @@ test.use({
   viewport: { width: 1064, height: 1840 },
 });
 
-test.describe.only('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, () => {
+test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, () => {
   test.describe('width: 1064', () => {
     test('Clustering status', async ({ gotoDashboardPage, selectors }) => {
       const dashboardPage = await gotoDashboardPage({
