@@ -1901,7 +1901,7 @@ func TestIntegrationGetRuleVersions(t *testing.T) {
 		require.NoError(t, err)
 		assert.Len(t, versions, 2)
 		assert.IsDecreasing(t, []int64{versions[0].ID, versions[1].ID})
-		diff := versions[1].Diff(&versions[0].AlertRule, AlertRuleFieldsToIgnoreInDiff[:]...)
+		diff := versions[1].Diff(&versions[0].AlertRule, alertRuleFieldsToIgnoreInDiff[:]...)
 		assert.ElementsMatch(t, []string{"Title", "RuleGroupIndex"}, diff.Paths())
 	})
 
@@ -1931,7 +1931,7 @@ func TestIntegrationGetRuleVersions(t *testing.T) {
 		versions, err := store.GetAlertRuleVersions(context.Background(), ruleV3.OrgID, ruleV3.GUID)
 		require.NoError(t, err)
 		assert.Len(t, versions, 3)
-		diff := versions[0].Diff(&versions[1].AlertRule, AlertRuleFieldsToIgnoreInDiff[:]...)
+		diff := versions[0].Diff(&versions[1].AlertRule, alertRuleFieldsToIgnoreInDiff[:]...)
 		assert.ElementsMatch(t, []string{"RuleGroup", "NamespaceUID"}, diff.Paths())
 	})
 }
@@ -3953,12 +3953,12 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
 	store.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore)
 
-	oldT := TimeNow
+	oldT := timeNow
 	t.Cleanup(func() {
-		TimeNow = oldT
+		timeNow = oldT
 	})
 	clk := clock.NewMock()
-	TimeNow = func() time.Time {
+	timeNow = func() time.Time {
 		return clk.Now()
 	}
 
@@ -4026,13 +4026,13 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 func TestIntegration_CleanUpDeletedAlertRules(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
-	oldClk := TimeNow
+	oldClk := timeNow
 	t.Cleanup(func() {
-		TimeNow = oldClk
+		timeNow = oldClk
 	})
 
 	t0 := time.Now().UTC().Truncate(time.Second)
-	TimeNow = func() time.Time {
+	timeNow = func() time.Time {
 		return t0
 	}
 
@@ -4064,7 +4064,7 @@ func TestIntegration_CleanUpDeletedAlertRules(t *testing.T) {
 	// simulate rule deletion at different time.
 	// t0, t0+10s, t0+20s
 	for idx, uid := range uids {
-		TimeNow = func() time.Time {
+		timeNow = func() time.Time {
 			return t0.Add(time.Duration(idx) * 10 * time.Second)
 		}
 		err = store.DeleteAlertRulesByUID(context.Background(), orgID, new(models.UserUID("test")), false, uid)
@@ -4083,7 +4083,7 @@ func TestIntegration_CleanUpDeletedAlertRules(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, after, 1)
 	for _, rule := range after {
-		assert.GreaterOrEqual(t, rule.Updated, TimeNow().Add(-cfg.UnifiedAlerting.DeletedRuleRetention))
+		assert.GreaterOrEqual(t, rule.Updated, timeNow().Add(-cfg.UnifiedAlerting.DeletedRuleRetention))
 	}
 }
 

@@ -99,7 +99,7 @@ func (st RuleStore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user
 				version := &versions[idx]
 				version.ID = 0
 				version.RuleUID = ""
-				version.Created = TimeNow()
+				version.Created = timeNow()
 				version.CreatedBy = nil
 				if user != nil {
 					version.CreatedBy = new(string(*user))
@@ -166,7 +166,7 @@ func (st RuleStore) getLatestVersionOfRulesByUID(ctx context.Context, orgID int6
 func (st RuleStore) IncreaseVersionForAllRulesInNamespaces(ctx context.Context, orgID int64, namespaceUIDs []string) ([]ngmodels.AlertRuleKeyWithVersion, error) {
 	var keys []ngmodels.AlertRuleKeyWithVersion
 	err := st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		now := TimeNow()
+		now := timeNow()
 		namespaceUIDsArgs, in := getINSubQueryArgs(namespaceUIDs)
 		sql := fmt.Sprintf(
 			"UPDATE alert_rule SET version = version + 1, updated = ? WHERE org_id = ? AND namespace_uid IN (%s)",
@@ -570,7 +570,7 @@ func (st RuleStore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID
 			if err := st.validateAlertRule(r.AlertRule); err != nil {
 				return err
 			}
-			if err := (&r).PreSave(TimeNow, user); err != nil {
+			if err := (&r).PreSave(timeNow, user); err != nil {
 				return err
 			}
 
@@ -663,7 +663,7 @@ func (st RuleStore) UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID
 			if err := st.validateAlertRule(r.New); err != nil {
 				return err
 			}
-			if err := (&r.New).PreSave(TimeNow, user); err != nil {
+			if err := (&r.New).PreSave(timeNow, user); err != nil {
 				return err
 			}
 
@@ -872,7 +872,7 @@ func (st RuleStore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.L
 			_ = rows.Close()
 		}()
 
-		opts := AlertRuleConvertOptions{}
+		opts := alertRuleConvertOptions{}
 		if query.Compact {
 			opts.ExcludeAlertQueries = true
 			opts.ExcludeContactPointRouting = true
@@ -2193,7 +2193,7 @@ func (st RuleStore) GetNamespacesByRuleUID(ctx context.Context, orgID int64, uid
 func (st RuleStore) CleanUpDeletedAlertRules(ctx context.Context) (int64, error) {
 	affectedRows := int64(-1)
 	err := st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		expire := TimeNow().Add(-st.Cfg.DeletedRuleRetention)
+		expire := timeNow().Add(-st.Cfg.DeletedRuleRetention)
 		st.Logger.Debug("Permanently remove expired deleted rules", "deletedBefore", expire)
 		result, err := sess.Exec("DELETE FROM alert_rule_version WHERE rule_uid='' AND created <= ?", expire)
 		if err != nil {

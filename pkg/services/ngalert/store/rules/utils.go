@@ -2,5 +2,5 @@ package rules
 
 import "time"
 
-// TimeNow makes it possible to test usage of time
-var TimeNow = time.Now
+// timeNow makes it possible to test usage of time
+var timeNow = time.Now

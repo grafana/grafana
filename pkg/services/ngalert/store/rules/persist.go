@@ -41,8 +41,7 @@ type NamespaceStore interface {
 	GetNamespacesByRuleUID(ctx context.Context, orgID int64, uids ...string) (map[string]string, error)
 }
 
-// RuleQuerier queries alert rules. Named to avoid colliding with RuleReader in deltas.go, which is
-// the narrower dependency of CalculateChanges.
+// RuleReader queries alert rules.
 //
 // Source: pkg/services/ngalert/api/persist.go (RuleStore)
 // Source: pkg/services/ngalert/provisioning/persist.go (RuleStore)
@@ -50,7 +49,7 @@ type NamespaceStore interface {
 // Source: pkg/services/annotations/annotationsimpl/loki/historian_store.go (RuleStore)
 // Source: pkg/services/ngalert/api/prometheus/api_prometheus.go (ListAlertRulesStore, ListAlertRulesStoreV2)
 // Source: pkg/services/ngalert/limits.go (RuleUsageReader)
-type RuleQuerier interface {
+type RuleReader interface {
 	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) (*ngmodels.AlertRule, error)
 	GetRuleByID(ctx context.Context, query ngmodels.GetAlertRuleByIDQuery) (*ngmodels.AlertRule, error)
 	GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmodels.GetAlertRulesGroupByRuleUIDQuery) ([]*ngmodels.AlertRule, error)
@@ -141,7 +140,7 @@ type MaintenanceStore interface {
 // Store is the full surface implemented by *RuleStore.
 type Store interface {
 	NamespaceStore
-	RuleQuerier
+	RuleReader
 	RuleWriter
 	RuleVersionReader
 	SchedulableRuleReader
