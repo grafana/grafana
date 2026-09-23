@@ -608,7 +608,6 @@ import (
 	_ "github.com/russellhaering/goxmldsig"
 	_ "github.com/spf13/cobra"
 	_ "github.com/spf13/pflag"
-	_ "github.com/spyzhov/ajson"
 	_ "github.com/stretchr/testify/assert"
 	_ "github.com/stretchr/testify/mock"
 	_ "github.com/stretchr/testify/require"
@@ -688,7 +687,6 @@ import (
 	_ "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	_ "k8s.io/apimachinery/pkg/apis/meta/v1"
 	_ "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	_ "k8s.io/apimachinery/pkg/conversion"
 	_ "k8s.io/apimachinery/pkg/fields"
 	_ "k8s.io/apimachinery/pkg/labels"
 	_ "k8s.io/apimachinery/pkg/runtime"
@@ -816,7 +814,6 @@ import (
 	_ "k8s.io/kube-openapi/pkg/spec3"
 	_ "k8s.io/kube-openapi/pkg/validation/spec"
 	_ "k8s.io/utils/net"
-	_ "k8s.io/utils/ptr"
 	_ "sigs.k8s.io/structured-merge-diff/v6/typed"
 	_ "xorm.io/builder"
 )
