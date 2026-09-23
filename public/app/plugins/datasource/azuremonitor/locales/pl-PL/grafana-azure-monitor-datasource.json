@@ -53,6 +53,11 @@
       "placeholder-symbol-client-secret": "skonfigurowano",
       "reset-symbol-client-secret": "Zresetuj"
     },
+    "auxiliary-logs-toggle": {
+      "aria-label-enable-auxiliary-logs": "",
+      "description-auxiliary-logs": "",
+      "label-enable-auxiliary-logs": ""
+    },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "Nieprzetworzone zapytanie {{queryDisplayName}}",
       "aria-label-use-query": "Użyj tego przycisku zapytania",
@@ -105,11 +110,11 @@
       "load-subscriptions": "Załaduj subskrypcje"
     },
     "dimension-fields": {
-      "aria-label-field": "",
-      "aria-label-operator": "",
-      "aria-label-remove": "",
-      "aria-label-value": "",
-      "aria-label-values": "",
+      "aria-label-field": "Pole wymiaru {{position}}",
+      "aria-label-operator": "Operator wymiaru {{position}}",
+      "aria-label-remove": "Usuń wymiar {{position}}",
+      "aria-label-value": "Wartość wymiaru {{position}}",
+      "aria-label-values": "Wartości wymiaru {{position}}",
       "label-dimensions": "Wymiary",
       "placeholder-field": "Pole",
       "placeholder-operation": "Operacja",
@@ -182,19 +187,47 @@
       "tooltip-limit": "Ogranicz liczbę zwracanych wierszy (domyślnie 1000)."
     },
     "logs-management": {
+      "body-auxiliary-logs-queries": "",
       "body-basic-logs-queries": "Czy na pewno chcesz przełączyć się na logi podstawowe?",
       "confirmText-confirm": "Potwierdź",
+      "description-auxiliary-logs-queries": "",
       "description-basic-logs-queries": "Zapytania dotyczące podstawowych dzienników wiążą się z kosztami w zależności od ilości przeskanowanych danych.",
+      "label-analytics": "",
+      "label-auxiliary": "",
+      "label-basic": "",
       "label-logs": "Logi",
+      "title-auxiliary-logs-queries": "",
       "title-basic-logs-queries": "Zapytania dotyczące podstawowych dzienników",
-      "tooltip-logs": "Określa, czy uruchomić zapytanie dotyczące dzienników podstawowych, czy analitycznych."
+      "tooltip-logs": "Określa, czy uruchomić zapytanie dotyczące dzienników podstawowych, czy analitycznych.",
+      "tooltip-logs-all": "",
+      "tooltip-logs-aux": ""
     },
     "logs-query-builder": {
       "title-no-tables": "Zasób został załadowany, ale bez tabel"
     },
     "logs-query-editor": {
       "learn-more": "Dowiedz się więcej",
-      "view-query": "Wyświetl zapytanie w Portalu Azure"
+      "notice-auxiliary-single-resource": "",
+      "notice-basic-single-resource": "",
+      "notice-same-resource-type": "",
+      "tier-switch-body-analytics": "",
+      "tier-switch-body-auxiliary": "",
+      "tier-switch-body-basic": "",
+      "tier-switch-revert": "",
+      "tier-switch-title": "",
+      "view-query": "Wyświetl zapytanie w Portalu Azure",
+      "warning-auxiliary-data-ingested": "",
+      "warning-auxiliary-raw": "",
+      "warning-basic-raw": "",
+      "warning-data-ingested": ""
+    },
+    "logs-table-section": {
+      "description-auxiliary-disabled": "",
+      "description-auxiliary-enabled": "",
+      "description-basic-disabled": "",
+      "description-basic-enabled": "",
+      "description-plan-unavailable": "",
+      "label-all-columns": ""
     },
     "metric-name-field": {
       "label-metric": "Metryka"
