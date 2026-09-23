@@ -68,7 +68,9 @@ test.describe('Panels test: Table - ad-hoc columns', { tag: ['@panels', '@table'
     await expect.poll(() => headerNames(panel)).toEqual(['region', 'cpu', 'mem']);
 
     await dashboardPage.getByGrafanaSelector(selectors.components.ValuePicker.button('Add field override')).click();
-    await page.getByRole('option', { name: 'Fields with name', exact: true }).click();
+    await page
+      .getByRole('option', { name: 'Fields with name Set properties for a specific field', exact: true })
+      .click();
 
     const fieldNameMatcher = page.getByPlaceholder('Choose').last();
     await fieldNameMatcher.click();
@@ -100,7 +102,11 @@ test.describe('Panels test: Table - ad-hoc columns', { tag: ['@panels', '@table'
     }
   });
 
-  test('does not offer pinning', async ({ gotoDashboardPage, selectors, page }) => {
+  test('pins a column first and preserves its order after unpinning', async ({
+    gotoDashboardPage,
+    selectors,
+    page,
+  }) => {
     const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID });
     const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Ad-hoc columns'));
 
@@ -108,8 +114,17 @@ test.describe('Panels test: Table - ad-hoc columns', { tag: ['@panels', '@table'
     await panel.getByLabel('Column options for host').click();
 
     const menu = selectors.components.Panels.Visualization.TableNG.headerColumnMenu;
-    await expect(page.getByTestId(menu.hideItem)).toBeVisible();
-    await expect(page.getByTestId(menu.pinItem)).toBeHidden();
+    await expect(page.getByTestId(menu.pinItem)).toHaveText('Pin column left');
+    await page.getByTestId(menu.pinItem).click();
+    await expect.poll(() => headerNames(panel)).toEqual(['host', 'region', 'cpu', 'mem']);
+
+    await panel.getByLabel('Column options for host').click();
+    await expect(page.getByTestId(menu.pinItem)).toHaveText('Unpin column');
+    await page.getByTestId(menu.pinItem).click();
+    await expect.poll(() => headerNames(panel)).toEqual(['host', 'region', 'cpu', 'mem']);
+
+    await panel.getByLabel('Column options for host').click();
+    await expect(page.getByTestId(menu.pinItem)).toHaveText('Pin column left');
   });
 
   test('retains column state across data refreshes', async ({ gotoDashboardPage, selectors, page }) => {

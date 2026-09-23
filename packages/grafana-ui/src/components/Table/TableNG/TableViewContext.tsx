@@ -54,7 +54,7 @@ interface ViewContext {
   clearFilters: () => void;
   timeZone?: string;
 }
-export const TableViewContext = createContext<ViewContext | undefined>(undefined);
+const TableViewContext = createContext<ViewContext | undefined>(undefined);
 export const useTableView = () => useContext(TableViewContext);
 const EMPTY_STAGE: readonly DataTransformerConfig[] = [];
 
@@ -66,7 +66,7 @@ export function tableFilterKey(field: Pick<Field, 'name' | 'labels'>, parentInde
   ]);
 }
 
-export function matchesTableFilter(config: FilterByValueConfig, field: Field, parentIndex?: number) {
+function matchesTableFilter(config: FilterByValueConfig, field: Field, parentIndex?: number) {
   return (
     config.options.target?.parentIndex === parentIndex &&
     config.options.filters.some((predicate) =>

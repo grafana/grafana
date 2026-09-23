@@ -68,8 +68,8 @@ test.describe('Panels test: Table - ad-hoc typed filters', { tag: ['@panels', '@
     await panel.getByRole('button', { name: 'Column options for observed_at' }).click();
     await page.getByTestId(table.headerColumnMenu.filterItem).click();
     await expect(page.getByText('Timezone: America/New_York')).toBeVisible();
-    await page.getByTestId(table.Filters.Range.minimum).fill('2026-09-17T12:00');
-    await page.getByTestId(table.Filters.Range.maximum).fill('2026-09-17T12:30');
+    await page.getByTestId(table.Filters.Range.minimum).fill('2026-09-17 12:00:00.000');
+    await page.getByTestId(table.Filters.Range.maximum).fill('2026-09-17 12:30:00.000');
     await expect(page.getByRole('status')).toHaveText('31 of 126 rows match');
     await page.getByTestId(table.Filters.Range.apply).click();
     await expect(panel.getByText(/^\d+ - \d+ of 31 rows$/)).toBeVisible();

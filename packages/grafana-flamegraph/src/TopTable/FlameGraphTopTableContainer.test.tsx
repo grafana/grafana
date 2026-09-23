@@ -123,7 +123,7 @@ describe('FlameGraphTopTableContainer with useTableNG', () => {
     await user.type(screen.getByRole('textbox', { name: 'Minimum' }), '1');
     await user.click(screen.getByRole('button', { name: 'Apply' }));
     expect(screen.getByText('net/http.HandlerFunc.ServeHTTP')).toBeInTheDocument();
-    const row = screen.getByText('net/http.HandlerFunc.ServeHTTP').closest('[role="row"]')!;
+    const row = screen.getByText('net/http.HandlerFunc.ServeHTTP').closest<HTMLDivElement>('[role="row"]')!;
     await user.click(within(row).getByRole('button', { name: /sandwich/i }));
     expect(mocks.onSandwich).toHaveBeenCalledWith('net/http.HandlerFunc.ServeHTTP');
   });

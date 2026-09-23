@@ -25,6 +25,7 @@
 /README.md @grafana/docs-grafana
 /ROADMAP.md @torkelo
 /SUPPORT.md @torkelo
+/TABLE_ADHOC_EXPERIMENT.md @grafana/dataviz-squad
 /WORKFLOW.md @torkelo
 /contribute/ @grafana/grafana-community-support
 /contribute/UPGRADING_DEPENDENCIES.md @grafana/docs-grafana

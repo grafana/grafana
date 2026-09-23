@@ -10863,6 +10863,8 @@
         "add-all": "Add all displayed values to the filter",
         "blanks": "(Blanks)",
         "button": "Filter {{name}}",
+        "cancel": "Cancel",
+        "clear": "Clear filter",
         "operator": {
           "contains": "Contains",
           "equals": "Equals",
@@ -10877,7 +10879,8 @@
         "remove-all": "Remove all displayed values from the filter",
         "select-all": "Select all",
         "selected": "{{ numSelected }} selected",
-        "selected-some-hidden": "{{ numSelected }} selected ({{ numHidden }} hidden)"
+        "selected-some-hidden": "{{ numSelected }} selected ({{ numHidden }} hidden)",
+        "unsupported": "This filter cannot be edited here. Clear it to create a new filter."
       },
       "filter-placeholder": "Filter values",
       "filter-popup-apply": "Ok",
@@ -10902,6 +10905,24 @@
       "no-values-label": "No values",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows",
       "pin-column-label": "Pin {{columnName}}",
+      "range": {
+        "apply": "Apply",
+        "cancel": "Cancel",
+        "clear": "Clear",
+        "empty": "No finite values match the other filters.",
+        "end": "End",
+        "histogram": "Value distribution, {{amount}} finite values",
+        "invalid": "Enter valid bounds with minimum no greater than maximum.",
+        "label": "Filter {{field}}",
+        "matches": "{{amount}} of {{total}} rows match",
+        "maximum": "Maximum",
+        "minimum": "Minimum",
+        "missing": "Include missing / non-finite values ({{amount}})",
+        "start": "Start",
+        "timezone": "Timezone: {{timeZone}}",
+        "unbounded": "No limit",
+        "units": "Exact bounds use raw values (field unit: {{unit}})."
+      },
       "reorder-column-label": "Reorder {{columnName}}",
       "show-column-label": "Show {{columnName}}",
       "sort-by-column": "Sort by column {{column}}",
@@ -10914,7 +10935,12 @@
       "tooltip": {
         "trigger": "Toggle tooltip"
       },
-      "unpin-column-label": "Unpin {{columnName}}"
+      "unpin-column-label": "Unpin {{columnName}}",
+      "view": {
+        "clear": "Clear filters ({{total}})",
+        "error": "Unable to apply this table view.",
+        "reset": "Reset view"
+      }
     },
     "tags": {
       "list-label": "Tags"
