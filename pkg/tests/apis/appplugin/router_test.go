@@ -8,6 +8,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"net/http/httputil"
+	"net/url"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -25,6 +28,8 @@ import (
 	"k8s.io/client-go/dynamic"
 	k8srest "k8s.io/client-go/rest"
 
+	"github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -75,7 +80,7 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
     "versions":[{"name":"v1","served":true,"kinds":[
      {"kind":"Thing","plural":"things","scope":"Namespaced","folderScoped":false,
       "schemas":{"Thing":{"type":"object","properties":{"spec":{"type":"object","properties":{"value":{"type":"string"}}}}}}},
-     {"kind":"Widget","plural":"widgets","scope":"Namespaced","folderScoped":false,
+     {"kind":"Widget","plural":"widgets","scope":"Namespaced","folderScoped":true,
       "schemas":{"Widget":{"type":"object","properties":{"spec":{"type":"object","properties":{"value":{"type":"string"}}}}}}}
     ]}]
    }
@@ -90,14 +95,44 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 	manifests := httptest.NewServer(mux)
 	t.Cleanup(manifests.Close)
 
+	t.Setenv("GF_ENVIRONMENT_STACK_ID", "1234")
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{DisableAnonymous: true})
 	t.Cleanup(helper.Shutdown)
+	const folderUID = "router-widgets"
+	createFolder(t, t.Context(), helper, folderUID, "Router widgets")
+	// The backing test server uses basic auth; the router-facing endpoint uses
+	// the same access token as the plugin API.
+	folderConfig := helper.Org1.Admin.NewRestConfig()
+	folderURL, err := url.Parse(folderConfig.Host)
+	require.NoError(t, err)
+	var folderReads atomic.Int32
+	folderProxy := &httputil.ReverseProxy{Rewrite: func(pr *httputil.ProxyRequest) {
+		pr.SetURL(folderURL)
+		pr.Out.Header.Del("X-Access-Token")
+		pr.Out.SetBasicAuth(folderConfig.Username, folderConfig.Password)
+	}}
+	folderServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("X-Access-Token") != "Bearer "+token {
+			http.Error(w, "missing caller credentials", http.StatusUnauthorized)
+			return
+		}
+		folderReads.Add(1)
+		folderProxy.ServeHTTP(w, r)
+	}))
+	t.Cleanup(folderServer.Close)
+	folderBackend, err := router.NewForwardBackend(metav1.APIGroup{Name: "folder.grafana.app"}, v1alpha2.RouteBackendSpec{
+		Mode:    v1alpha2.RouteBackendSpecModeForward,
+		Forward: &v1alpha2.RouteBackendCommonBackendConfig{Url: folderServer.URL},
+	}, "folder", folderServer.Client().Transport.(*http.Transport))
+	require.NoError(t, err)
+	routerHandler := http.NewServeMux()
 	cfg := setting.NewCfg()
 	cfg.ExtJWTAuth.JWKSUrl = manifests.URL + "/jwks"
 	cfg.ExtJWTAuth.Audiences = []string{audience}
 	cfg.SectionWithEnvOverrides("cloud_router").Key("plugins_url").SetValue(manifests.URL + "/plugins")
 	loader, err := router.ProvideRoutesLoader(cfg, router.PluginLoaderDependencies{
-		PluginDependencies: router.PluginDependencies{Cfg: cfg, Unified: helper.GetEnv().ResourceClient},
+		PluginDependencies: router.PluginDependencies{Cfg: cfg, Unified: helper.GetEnv().ResourceClient,
+			RESTConfigProvider: router.NewLoopbackRestConfigProvider(routerHandler)},
 	})
 	require.NoError(t, err)
 	lifecycle, ok := loader.(services.Service)
@@ -106,11 +141,12 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 	t.Cleanup(cancel)
 	require.NoError(t, services.StartAndAwaitRunning(ctx, lifecycle))
 	t.Cleanup(func() { require.NoError(t, services.StopAndAwaitTerminated(context.Background(), lifecycle)) })
-	apiRouter := router.NewGrafanaRouter(loader)
+	apiRouter := router.NewGrafanaRouter(folderRoutesLoader{RoutesLoader: loader, folder: folderBackend})
 	require.NoError(t, apiRouter.Run(ctx))
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	routerHandler.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		apiRouter.HandleFunc(w, r, http.NotFoundHandler())
 	}))
+	server := httptest.NewServer(routerHandler)
 	t.Cleanup(server.Close)
 	newClient := func(token string) dynamic.Interface {
 		t.Helper()
@@ -133,12 +169,32 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 				assert.NoError(c, err, "%#v", err)
 			}, 30*time.Second, 100*time.Millisecond, "router should load the polled manifest")
 
-			created, err := resource.Create(ctx, &unstructured.Unstructured{Object: map[string]any{
+			ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+			defer cancel()
+
+			object := &unstructured.Unstructured{Object: map[string]any{
 				"apiVersion": group + "/v1", "kind": kind.name,
 				"metadata": map[string]any{"name": "example"},
 				"spec":     map[string]any{"value": "initial"},
-			}}, metav1.CreateOptions{})
+			}}
+			if kind.name == "Widget" {
+				_, err := resource.Create(ctx, object.DeepCopy(), metav1.CreateOptions{})
+				require.True(t, apierrors.IsInvalid(err), "%v", err)
+				object.SetAnnotations(map[string]string{utils.AnnoKeyFolder: "missing-folder"})
+				_, err = resource.Create(ctx, object.DeepCopy(), metav1.CreateOptions{})
+				require.ErrorContains(t, err, "failed to read folder missing-folder")
+				object.SetName("")
+				object.SetGenerateName("widget-")
+				object.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
+			}
+			readsBefore := folderReads.Load()
+			created, err := resource.Create(ctx, object, metav1.CreateOptions{})
 			require.NoError(t, err)
+			if kind.name == "Widget" {
+				require.Greater(t, folderReads.Load(), readsBefore)
+				require.Equal(t, folderUID, created.GetAnnotations()[utils.AnnoKeyFolder])
+				require.NotEmpty(t, created.GetName())
+			}
 			require.NotEmpty(t, created.GetUID())
 			require.NotEmpty(t, created.GetResourceVersion())
 
@@ -154,6 +210,9 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 			got, err = resource.Get(ctx, created.GetName(), metav1.GetOptions{})
 			require.NoError(t, err)
 			require.Equal(t, "updated", got.Object["spec"].(map[string]any)["value"])
+			if kind.name == "Widget" {
+				require.Equal(t, folderUID, got.GetAnnotations()[utils.AnnoKeyFolder])
+			}
 
 			list, err := resource.List(ctx, metav1.ListOptions{})
 			require.NoError(t, err)
@@ -208,4 +267,18 @@ func (t pluginRouterTokenTransport) RoundTrip(req *http.Request) (*http.Response
 		req.Header.Set("X-Access-Token", t.token)
 	}
 	return t.next.RoundTrip(req)
+}
+
+// folderRoutesLoader combines the polled plugin with a real folder API backend.
+type folderRoutesLoader struct {
+	router.RoutesLoader
+	folder router.Backend
+}
+
+func (l folderRoutesLoader) Load(ctx context.Context) ([]router.Backend, error) {
+	backends, err := l.RoutesLoader.Load(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return append(backends, l.folder), nil
 }

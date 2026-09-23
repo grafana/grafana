@@ -127,7 +127,6 @@ func ProvidePluginLoaderDependenciesWithClients(
 	reg prometheus.Registerer,
 	builderMetrics *builder.BuilderMetrics,
 	clients RoutesLoaderClients,
-	restConfigProvider restcfg.RestConfigProvider,
 ) PluginLoaderDependencies {
 	return ProvidePluginLoaderDependencies(
 		pluginClient,
@@ -147,7 +146,7 @@ func ProvidePluginLoaderDependenciesWithClients(
 		clients.SecureValues,
 		reg,
 		builderMetrics,
-		restConfigProvider,
+		clients.RESTConfigProvider,
 	)
 }
 
