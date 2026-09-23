@@ -567,7 +567,9 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
 setPanelInspectorOpener(async (panel, tab) => {
   const dashboard = getDashboardSceneFor(panel);
   await dashboard.showModalAsync(async () => {
-    const { PanelInspectDrawer } = await import(/* webpackChunkName: "panel-inspect" */ '../inspect/PanelInspectDrawer');
+    const { PanelInspectDrawer } = await import(
+      /* webpackChunkName: "panel-inspect" */ '../inspect/PanelInspectDrawer'
+    );
     return new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: tab });
   });
 });
