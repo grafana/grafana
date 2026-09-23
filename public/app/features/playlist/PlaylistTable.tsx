@@ -41,7 +41,7 @@ export const PlaylistTable = ({
           <Text variant="bodySmall" color="secondary">
             {t(
               'playlist-edit.form.table-item-settings-help',
-              'Use Settings to configure a custom dashboard view or interval for each playlist item.'
+              'Use Settings to configure playback options for each playlist item.'
             )}
           </Text>
         </Box>

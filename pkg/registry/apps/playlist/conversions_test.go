@@ -1,6 +1,7 @@
 package playlist
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -36,16 +37,17 @@ func TestPreserveLegacyPlaylistItemOptions(t *testing.T) {
 			},
 		},
 	}}
-	obj := LegacyUpdateCommandToUnstructured(UpdatePlaylistCommand{
+	cmd := UpdatePlaylistCommand{
 		Name:     "playlist",
 		Interval: "5m",
 		Items: []PlaylistItem{
 			{Type: "dashboard_by_uid", Value: "dashboard"},
 			{Type: "dashboard_by_uid", Value: "dashboard"},
 		},
-	})
+	}
+	obj := LegacyUpdateCommandToUnstructured(cmd)
 
-	PreserveLegacyPlaylistItemOptions(&obj, &existing)
+	PreserveLegacyPlaylistItemOptions(&obj, &existing, cmd.Items)
 
 	items, found, err := unstructured.NestedSlice(obj.Object, "spec", "items")
 	require.NoError(t, err)
@@ -68,7 +70,7 @@ func TestPreserveLegacyPlaylistItemOptionsRespectsSuppliedValues(t *testing.T) {
 	interval := "10s"
 	empty := ""
 	replacementView := &DashboardView{QueryString: "var-host=canary"}
-	obj := LegacyUpdateCommandToUnstructured(UpdatePlaylistCommand{
+	cmd := UpdatePlaylistCommand{
 		Name:     "playlist",
 		Interval: "5m",
 		Items: []PlaylistItem{
@@ -81,9 +83,10 @@ func TestPreserveLegacyPlaylistItemOptionsRespectsSuppliedValues(t *testing.T) {
 			},
 			{Type: "dashboard_by_uid", Value: "new-dashboard"},
 		},
-	})
+	}
+	obj := LegacyUpdateCommandToUnstructured(cmd)
 
-	PreserveLegacyPlaylistItemOptions(&obj, &existing)
+	PreserveLegacyPlaylistItemOptions(&obj, &existing, cmd.Items)
 
 	items, found, err := unstructured.NestedSlice(obj.Object, "spec", "items")
 	require.NoError(t, err)
@@ -94,4 +97,36 @@ func TestPreserveLegacyPlaylistItemOptionsRespectsSuppliedValues(t *testing.T) {
 	require.Equal(t, map[string]any{"queryString": "var-host=canary"}, items[1].(map[string]any)["dashboardView"])
 	require.NotContains(t, items[2].(map[string]any), "interval")
 	require.NotContains(t, items[2].(map[string]any), "dashboardView")
+}
+
+func TestPreserveLegacyPlaylistItemOptionsClearsExplicitNullDashboardView(t *testing.T) {
+	existing := unstructured.Unstructured{Object: map[string]any{
+		"spec": map[string]any{
+			"items": []any{
+				map[string]any{
+					"type":          "dashboard_by_uid",
+					"value":         "dashboard",
+					"dashboardView": map[string]any{"queryString": "var-host=prod"},
+				},
+			},
+		},
+	}}
+	var cmd UpdatePlaylistCommand
+	require.NoError(t, json.Unmarshal([]byte(`{
+		"name": "playlist",
+		"interval": "5m",
+		"items": [{
+			"type": "dashboard_by_uid",
+			"value": "dashboard",
+			"dashboardView": null
+		}]
+	}`), &cmd))
+	obj := LegacyUpdateCommandToUnstructured(cmd)
+
+	PreserveLegacyPlaylistItemOptions(&obj, &existing, cmd.Items)
+
+	items, found, err := unstructured.NestedSlice(obj.Object, "spec", "items")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.NotContains(t, items[0].(map[string]any), "dashboardView")
 }

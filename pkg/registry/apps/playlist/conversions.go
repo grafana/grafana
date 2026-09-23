@@ -42,7 +42,11 @@ func LegacyUpdateCommandToUnstructured(cmd UpdatePlaylistCommand) unstructured.U
 
 // PreserveLegacyPlaylistItemOptions keeps per-item fields when an older client updates a playlist
 // without knowing about them. Duplicate dashboard entries are matched in their existing order.
-func PreserveLegacyPlaylistItemOptions(obj *unstructured.Unstructured, existing *unstructured.Unstructured) {
+func PreserveLegacyPlaylistItemOptions(
+	obj *unstructured.Unstructured,
+	existing *unstructured.Unstructured,
+	suppliedItems []PlaylistItem,
+) {
 	items, found, err := unstructured.NestedSlice(obj.Object, "spec", "items")
 	if err != nil || !found {
 		return
@@ -53,7 +57,7 @@ func PreserveLegacyPlaylistItemOptions(obj *unstructured.Unstructured, existing 
 	}
 
 	used := make([]bool, len(existingItems))
-	for _, item := range items {
+	for itemIndex, item := range items {
 		itemMap, ok := item.(map[string]any)
 		if !ok {
 			continue
@@ -69,6 +73,9 @@ func PreserveLegacyPlaylistItemOptions(obj *unstructured.Unstructured, existing 
 			used[i] = true
 			for _, field := range []string{"interval", "dashboardView"} {
 				if _, supplied := itemMap[field]; supplied {
+					continue
+				}
+				if field == "dashboardView" && itemIndex < len(suppliedItems) && suppliedItems[itemIndex].dashboardViewSet {
 					continue
 				}
 				if value, exists := existingMap[field]; exists {

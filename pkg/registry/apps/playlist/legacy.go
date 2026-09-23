@@ -1,5 +1,7 @@
 package playlist
 
+import "encoding/json"
+
 // Playlist model
 type Playlist struct {
 	Id       int64  `json:"id,omitempty" db:"id"`
@@ -80,6 +82,24 @@ type PlaylistItem struct {
 	Title         string         `json:"title" db:"title"`
 	Interval      *string        `json:"interval,omitempty" db:"-" xorm:"-"`
 	DashboardView *DashboardView `json:"dashboardView,omitempty" db:"-" xorm:"-"`
+	// Distinguishes an omitted field from an explicit null in legacy update payloads.
+	dashboardViewSet bool
+}
+
+func (item *PlaylistItem) UnmarshalJSON(data []byte) error {
+	type playlistItem PlaylistItem
+	var decoded playlistItem
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		return err
+	}
+	*item = PlaylistItem(decoded)
+
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(data, &fields); err != nil {
+		return err
+	}
+	_, item.dashboardViewSet = fields["dashboardView"]
+	return nil
 }
 
 type Playlists []*Playlist
