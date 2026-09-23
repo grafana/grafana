@@ -78,6 +78,17 @@ func (s *server) logIfServerError(ctx context.Context, op string, key *resourcep
 // to Watch clients that have AllowWatchBookmarks enabled.
 const defaultBookmarkFrequency = 10 * time.Second
 
+const natsWatchMaxAgeJitterFraction = 0.2
+
+func jitteredWatchMaxAge(ctx context.Context, base time.Duration) time.Duration {
+	bo := backoff.New(ctx, backoff.Config{
+		MinBackoff: time.Duration(float64(base) * (1 - natsWatchMaxAgeJitterFraction)),
+		MaxBackoff: time.Duration(float64(base) * (1 + natsWatchMaxAgeJitterFraction)),
+		MaxRetries: 1,
+	})
+	return bo.NextDelay()
+}
+
 // filteredBookmarkDelay leaves a recovery window for late writes without
 // delaying progress from objects already sent to the client.
 const filteredBookmarkDelay = time.Minute
@@ -443,6 +454,10 @@ type ResourceServerOptions struct {
 	// Watch clients that set AllowWatchBookmarks. Zero defaults to defaultBookmarkFrequency.
 	BookmarkFrequency time.Duration
 
+	// NatsWatchMaxAge forces NATS-backed watch clients to re-list periodically.
+	// Zero disables expiry.
+	NatsWatchMaxAge time.Duration
+
 	// VectorBackend is the optional pgvector-backed store for semantic search.
 	// nil when the [unified_storage] vector_backend flag is off. When present,
 	// the resource and search servers hold a reference for use by future
@@ -620,6 +635,7 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		manifestSearchFields:           opts.Search.SearchFields,
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 		bookmarkFrequency:              opts.BookmarkFrequency,
+		natsWatchMaxAge:                opts.NatsWatchMaxAge,
 		vectorWriteReconciler:          opts.VectorReconciler,
 		embeddingBuilders:              opts.Search.EmbeddingBuilders,
 	}
@@ -750,6 +766,8 @@ type server struct {
 	storageEnabled                 bool
 
 	bookmarkFrequency time.Duration
+
+	natsWatchMaxAge time.Duration
 
 	// Vector reconciler (which owns the backfiller). Started in Init,
 	// joined in Stop via indexersWG.
@@ -2178,10 +2196,25 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		bookmarkC = ticker.C
 	}
 
+	// Expiry forces a fresh LIST after a missed NATS loss signal. Jitter spreads
+	// the resulting LIST load.
+	var watchMaxAgeC <-chan time.Time
+	if s.natsWatchMaxAge > 0 {
+		timer := time.NewTimer(jitteredWatchMaxAge(ctx, s.natsWatchMaxAge))
+		defer timer.Stop()
+		watchMaxAgeC = timer.C
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
+
+		case <-watchMaxAgeC:
+			// Unlike EOF, Expired forces clients to re-list.
+			s.log.Debug("watch: expiring stream to bound stale-state duration",
+				"group", key.Group, "resource", key.Resource, "namespace", key.Namespace, "since", since)
+			return NewResourceVersionExpiredError(since)
 
 		case <-bookmarkC:
 			cutoff := time.Now().Add(-filteredBookmarkDelay)
