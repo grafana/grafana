@@ -11,6 +11,7 @@ import {
 import { TracingInstrumentation } from '@grafana/faro-web-tracing';
 import { type EchoBackend, type EchoEvent, EchoEventType } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { addPluginChunkErrorContext } from 'app/features/plugins/loader/pluginChunkErrorContext';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
 import { beforeSendHandler } from './beforeSendHandler';
@@ -112,7 +113,10 @@ export class GrafanaJavascriptAgentBackend
         sendTimeout: 2000,
         itemLimit: 250,
       },
-      beforeSend: (item) => beforeSendHandler(options.botFilterEnabled, item),
+      beforeSend: (item) => {
+        const filteredItem = beforeSendHandler(options.botFilterEnabled, item);
+        return filteredItem && addPluginChunkErrorContext(filteredItem);
+      },
       internalLoggerLevel: options.internalLoggerLevel ?? defaultInternalLoggerLevel,
     };
 

@@ -23,7 +23,7 @@ export interface PluginLoadErrorInfo {
 const SCRIPT_LOAD_ERROR_REGEX = /^Error loading (\S+?)(?: from \S+)? \(SystemJS Error#3 /;
 const FETCH_STATUS_ERROR_REGEX = /^(\d{3}) [^,]*, loading (\S+?)(?: from \S+)? \(SystemJS Error#7 /;
 const CONTENT_TYPE_ERROR_REGEX = /^Unknown Content-Type .*, loading (\S+?)(?: from \S+)? \(SystemJS Error#4 /;
-const CHUNK_LOAD_ERROR_URL_REGEX = /\((?:error|missing|timeout): (\S+)\)/;
+const CHUNK_LOAD_ERROR_MESSAGE_REGEX = /\((error|missing|timeout): (\S+)\)/;
 
 export class PluginAssetFetchError extends Error {
   url: string;
@@ -89,8 +89,13 @@ export function isChunkLoadError(error: unknown): error is Error & { type?: stri
   return error instanceof Error && error.name === 'ChunkLoadError';
 }
 
-export function getChunkLoadErrorUrl(message: string): string | undefined {
-  return message.match(CHUNK_LOAD_ERROR_URL_REGEX)?.[1];
+export function parseChunkLoadErrorMessage(message: string): { chunkErrorType: string; url: string } | undefined {
+  const match = message.match(CHUNK_LOAD_ERROR_MESSAGE_REGEX);
+  if (!match) {
+    return undefined;
+  }
+
+  return { chunkErrorType: match[1], url: match[2] };
 }
 
 export function classifyPluginLoadError(error: unknown): PluginLoadErrorInfo {
@@ -138,7 +143,7 @@ export function classifyPluginLoadError(error: unknown): PluginLoadErrorInfo {
 }
 
 function classifyChunkLoadError(error: Error & { type?: string; request?: string }): PluginLoadErrorInfo {
-  const failedUrl = error.request ?? getChunkLoadErrorUrl(error.message);
+  const failedUrl = error.request ?? parseChunkLoadErrorMessage(error.message)?.url;
   const httpStatus = failedUrl ? getResourceStatus(failedUrl) : undefined;
 
   return {
