@@ -1,12 +1,15 @@
 import { css, cx } from '@emotion/css';
+import { uniqBy } from 'lodash';
 import { useState } from 'react';
+import { useLocalStorage } from 'react-use';
 
-import { type GrafanaTheme2, rangeUtil } from '@grafana/data';
+import { isDateTime, type GrafanaTheme2, rangeUtil, type TimeOption, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { sceneGraph } from '@grafana/scenes';
 import { Box, Button, IconButton, Stack, Switch, TimeRangePicker, Toggletip, useStyles2 } from '@grafana/ui';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 
+import { isNotebookScene } from '../../isNotebookScene';
 import { type NotebookCellItem } from '../NotebookCellItem';
 import { buildCellTimeRangeSpec, buildDraftTimeRangeHost, type CellTimeRangeSpec } from '../cellTimeRange';
 
@@ -30,9 +33,13 @@ export function NotebookCellTimeRangeControl({ cell }: Props) {
     >
       {$timeRange ? (
         <Button fill="solid" size="sm" icon="lock" variant="secondary">
-          {t('notebook.cell.time-range.locked', 'Locked: {{from}} → {{to}}', {
-            from: $timeRange.state.from,
-            to: $timeRange.state.to,
+          {t('notebook.cell.time-range.locked', 'Locked: {{range}}', {
+            range: rangeUtil.describeTimeRange(
+              { from: $timeRange.state.from, to: $timeRange.state.to },
+              getAncestorTimeZone(cell),
+              getQuickRanges(cell)
+            ),
+            interpolation: { escapeValue: false },
           })}
         </Button>
       ) : (
@@ -52,12 +59,17 @@ function NotebookCellTimeRangePopoverContent({ cell, onClose }: { cell: Notebook
   const styles = useStyles2(getStyles);
   // Timezone always follows the notebook, never the cell — same convention as a dashboard panel's
   // own time override (PanelTimeRange), which never owns its timezone either.
-  const ancestorTimeZone = sceneGraph.getTimeRange(cell.parent ?? cell).getTimeZone();
+  const ancestorTimeZone = getAncestorTimeZone(cell);
   const committed = cell.state.$timeRange ? buildCellTimeRangeSpec(cell.state.$timeRange) : seedFromAncestor(cell);
 
   const [host] = useState(() => buildDraftTimeRangeHost(committed.from, committed.to, ancestorTimeZone));
   const { value } = host.state.$timeRange.useState();
   const [useNotebookTime, setUseNotebookTime] = useState(cell.state.$timeRange === undefined);
+  const [history, setHistory] = useLocalStorage<TimeRange[]>(TIME_RANGE_HISTORY_KEY, [], {
+    raw: false,
+    serializer: serializeTimeRangeHistory,
+    deserializer: deserializeTimeRangeHistory,
+  });
 
   const onReset = () => {
     const range = rangeUtil.convertRawToRange({ from: committed.from, to: committed.to }, ancestorTimeZone);
@@ -92,7 +104,13 @@ function NotebookCellTimeRangePopoverContent({ cell, onClose }: { cell: Notebook
         <TimeRangePicker
           isOnCanvas
           value={value}
-          onChange={(range) => host.state.$timeRange.onTimeRangeChange(range)}
+          history={history}
+          onChange={(range) => {
+            if (isDateTime(range.raw.from) || isDateTime(range.raw.to)) {
+              setHistory([range, ...(history ?? [])]);
+            }
+            host.state.$timeRange.onTimeRangeChange(range);
+          }}
           onChangeTimeZone={() => {}}
           onMoveBackward={() => host.state.timePicker.onMoveBackward()}
           onMoveForward={() => host.state.timePicker.onMoveForward()}
@@ -119,6 +137,47 @@ function NotebookCellTimeRangePopoverContent({ cell, onClose }: { cell: Notebook
 function seedFromAncestor(cell: NotebookCellItem): CellTimeRangeSpec {
   const { from, to } = sceneGraph.getTimeRange(cell.parent ?? cell).state;
   return { from, to };
+}
+
+// As seedFromAncestor: starts from the cell's parent so a still-set override on the cell itself
+// isn't picked up in its place.
+function getAncestorTimeZone(cell: NotebookCellItem): string {
+  return sceneGraph.getTimeRange(cell.parent ?? cell).getTimeZone();
+}
+
+function getQuickRanges(cell: NotebookCellItem): TimeOption[] | undefined {
+  let parent = cell.parent;
+
+  while (parent) {
+    if (isNotebookScene(parent)) {
+      const { quickRanges, defaultQuickRanges } = parent.state.timePicker.state;
+      return quickRanges ?? defaultQuickRanges;
+    }
+    parent = parent.parent;
+  }
+
+  return undefined;
+}
+
+// Same key and wire format as @grafana/scenes' own SceneTimePicker (the notebook's top-level
+// picker), so both read and write one shared "recently used absolute ranges" list.
+const TIME_RANGE_HISTORY_KEY = 'grafana.dashboard.timepicker.history';
+
+function deserializeTimeRangeHistory(value: string): TimeRange[] {
+  const values: Array<{ from: string; to: string }> = JSON.parse(value);
+  return values.map((item) => rangeUtil.convertRawToRange(item, 'utc', undefined, 'YYYY-MM-DD HH:mm:ss'));
+}
+
+function serializeTimeRangeHistory(values: TimeRange[]): string {
+  return JSON.stringify(
+    uniqBy(
+      values.map((v) => ({
+        from: typeof v.raw.from === 'string' ? v.raw.from : v.raw.from.toISOString(),
+        to: typeof v.raw.to === 'string' ? v.raw.to : v.raw.to.toISOString(),
+      })),
+      (v) => v.from + v.to
+    ).slice(0, 4)
+  );
 }
 
 const getStyles = (_theme: GrafanaTheme2) => ({

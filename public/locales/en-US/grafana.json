@@ -13155,7 +13155,7 @@
       },
       "time-range": {
         "button": "Update time range",
-        "locked": "Locked: {{from}} → {{to}}",
+        "locked": "Locked: {{range}}",
         "reset": "Reset",
         "tooltip-default": "Uses the notebook's time range",
         "use-notebook-time": "Use notebook time range"
