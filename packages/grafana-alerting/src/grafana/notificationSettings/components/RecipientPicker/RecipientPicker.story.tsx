@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import type { Meta, StoryFn, StoryObj } from '@storybook/react';
 import { useState } from 'react';
-import { fn } from 'storybook/test';
 
 import { type AlertRuleNotificationSettings } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -22,10 +21,10 @@ const meta: Meta<typeof RecipientPicker> = {
   decorators: defaultDecorators,
   // onValidityChange fires from a useEffect on mount, not from a user interaction — Storybook's
   // implicit-action auto-mock only supports actions triggered by real interactions, and errors
-  // (not just warns) if an unmocked callback-shaped prop fires during render. Provide an explicit
-  // spy so both stories mount cleanly.
+  // (not just warns) if an unmocked callback-shaped prop fires during render. Provide a defined
+  // no-op so both stories mount cleanly.
   args: {
-    onValidityChange: fn(),
+    onValidityChange: () => {},
   },
   parameters: {
     msw: {
