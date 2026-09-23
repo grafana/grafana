@@ -5,6 +5,7 @@ import { type DataFrame, transformDataFrame } from '@grafana/data';
 
 import { makeFrames, makeTransformation } from './testUtils';
 import { usePreviousTransformationOutput } from './usePreviousTransformationOutput';
+import { NO_CONFIGS } from './useTransformedFrames';
 
 jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),
@@ -39,6 +40,7 @@ describe('usePreviousTransformationOutput', () => {
       usePreviousTransformationOutput({
         selectedTransformation: transformations[0],
         transformations,
+        systemTransformations: NO_CONFIGS,
         queryData,
       })
     );
@@ -47,7 +49,7 @@ describe('usePreviousTransformationOutput', () => {
     expect(mockTransformDataFrame).not.toHaveBeenCalled();
   });
 
-  it('runs every transformation preceding the selected one', () => {
+  it('runs every user transformation preceding the selected one', () => {
     const transformations = [
       makeTransformation('joinByField'),
       makeTransformation('organize'),
@@ -58,6 +60,7 @@ describe('usePreviousTransformationOutput', () => {
       usePreviousTransformationOutput({
         selectedTransformation: transformations[2],
         transformations,
+        systemTransformations: NO_CONFIGS,
         queryData,
       })
     );
@@ -82,6 +85,7 @@ describe('usePreviousTransformationOutput', () => {
       usePreviousTransformationOutput({
         selectedTransformation: transformations[0],
         transformations,
+        systemTransformations: NO_CONFIGS,
         queryData: returnedFrames,
         queryTargets,
       })
@@ -104,12 +108,37 @@ describe('usePreviousTransformationOutput', () => {
       usePreviousTransformationOutput({
         selectedTransformation: makeTransformation('removed'),
         transformations,
+        systemTransformations: NO_CONFIGS,
         queryData,
       })
     );
 
     expect(result.current).toEqual([]);
     expect(mockTransformDataFrame).not.toHaveBeenCalled();
+  });
+
+  it('runs the plugin-registered transformations ahead of the preceding user ones', () => {
+    // The filter matcher runs against the frames the pipeline actually produces. These run ahead of
+    // every user transformation, so a picker built without them lists frames that no longer exist by
+    // the time the filter is applied. Which configs precede which is `precedingTransformations`'
+    // own concern; this only pins that they reach it.
+    const systemTransformations = [jest.fn()];
+    const transformations = [makeTransformation('joinByField'), makeTransformation('organize')];
+
+    renderHook(() =>
+      usePreviousTransformationOutput({
+        selectedTransformation: transformations[1],
+        transformations,
+        systemTransformations,
+        queryData,
+      })
+    );
+
+    expect(mockTransformDataFrame).toHaveBeenCalledWith(
+      [...systemTransformations, transformations[0].transformConfig],
+      queryData,
+      expect.any(Object)
+    );
   });
 
   it('cleans up the subscription when the component unmounts', () => {
@@ -127,6 +156,7 @@ describe('usePreviousTransformationOutput', () => {
       usePreviousTransformationOutput({
         selectedTransformation: transformations[1],
         transformations,
+        systemTransformations: NO_CONFIGS,
         queryData,
       })
     );

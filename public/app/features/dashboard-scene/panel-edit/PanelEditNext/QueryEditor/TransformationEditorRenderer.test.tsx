@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { type DataTransformerInfo, type TransformerRegistryItem } from '@grafana/data';
 
 import { TransformationEditorPanel, TransformationEditorRenderer } from './TransformationEditorRenderer';
+import { NO_CONFIGS } from './hooks/useTransformedFrames';
 import { renderWithQueryEditorProvider } from './testUtils';
 import { type Transformation } from './types';
 
@@ -80,6 +81,7 @@ function panel(transformation: Transformation) {
     <TransformationEditorPanel
       transformation={transformation}
       transformations={[transformation]}
+      systemTransformations={NO_CONFIGS}
       updateTransformation={jest.fn()}
       showSupplementalDisplays
     />
