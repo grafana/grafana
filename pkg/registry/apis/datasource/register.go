@@ -296,6 +296,9 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 			// Keep them for now, but we should get rid of them when possible
 			DeprecatedInternalID: apistore.DeprecatedID_Required,
+
+			// Avoid using the codec serializer -- we have multiple GVKs registered to the same go type
+			Serializer: apistore.JSONSerializer(),
 		})
 		// NOTE! there is currently NO PATH that is using unified storage to read!
 		unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, ds, optsGetter)

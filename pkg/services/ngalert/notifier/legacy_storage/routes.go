@@ -35,9 +35,9 @@ func GeneratedSubRoute(r *v1.ManagedRoute) *v1.Route {
 		ri := model.Duration(defaultOpts.RepeatInterval)
 		amRoute.RepeatInterval = &ri
 	}
-	if !models.IsDefaultRoutingTreeName(r.Name) {
+	if !models.IsDefaultRoutingTreeName(r.GetUID()) {
 		// Set label matcher.
-		amRoute.ObjectMatchers = v1.ObjectMatchers{managedRouteMatcher(r.Name)}
+		amRoute.ObjectMatchers = v1.ObjectMatchers{managedRouteMatcher(r.GetUID())}
 	}
 	return &amRoute
 }

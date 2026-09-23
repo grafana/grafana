@@ -6,14 +6,15 @@ import { getAppEvents } from '../services/appEvents';
  * Possible values of the `grafana.frontendLegacyFeatureToggleHandling` feature flag.
  *
  * - `off`: reads of the legacy `config.featureToggles` map are left untouched
- * - `log`: reads resolve normally, but each toggle is reported once
- * - `block`: reads resolve to undefined, and each toggle is reported once
+ * - `log`: reads resolve normally, and each toggle is warned about in the console once
+ * - `alert`: as `log`, and each toggle also raises a warning alert once
+ * - `block`: as `log`, and reads resolve to undefined
  */
-export type LegacyFeatureToggleMode = 'off' | 'log' | 'block';
+export type LegacyFeatureToggleMode = 'off' | 'log' | 'alert' | 'block';
 
 export function getLegacyFeatureToggleMode(): LegacyFeatureToggleMode {
   const mode = window.__grafanaLegacyFeatureToggleMode;
-  if (mode === 'log' || mode === 'block') {
+  if (mode === 'log' || mode === 'alert' || mode === 'block') {
     return mode;
   }
 
@@ -22,17 +23,7 @@ export function getLegacyFeatureToggleMode(): LegacyFeatureToggleMode {
 
 const MIGRATION_GUIDANCE = 'Use OpenFeature instead, or remove the legacy toggle entirely.';
 
-function legacyFeatureToggleAlert(property: string, blocking: boolean) {
-  if (blocking) {
-    return {
-      type: AppEvents.alertError.name,
-      payload: [
-        `Legacy feature toggle blocked: "${property}"`,
-        `The read was blocked and resolved to undefined. ${MIGRATION_GUIDANCE}`,
-      ],
-    };
-  }
-
+function legacyFeatureToggleAlert(property: string) {
   return {
     type: AppEvents.alertWarning.name,
     payload: [`Legacy feature toggle read: "${property}"`, MIGRATION_GUIDANCE],
@@ -41,8 +32,9 @@ function legacyFeatureToggleAlert(property: string, blocking: boolean) {
 
 /**
  * Returns a proxy over the legacy feature toggle map which, once per toggle accessed, logs a
- * warning and raises an alert — a warning in `log` mode, and an error in `block` mode, where the
- * read also resolves to undefined.
+ * console warning. `alert` mode also raises a warning alert, and `block` mode resolves the read to
+ * undefined. Blocking deliberately stays console-only: it breaks enough at once that a toast per
+ * toggle would bury the app.
  */
 export function reportOrBlockLegacyFeatureToggles(
   featureToggles: FeatureToggles,
@@ -50,6 +42,7 @@ export function reportOrBlockLegacyFeatureToggles(
 ): FeatureToggles {
   const reportedFeatureToggles = new Set<string>();
   const blocking = mode === 'block';
+  const alerting = mode === 'alert';
 
   return new Proxy(featureToggles, {
     get(target, property, receiver) {
@@ -70,9 +63,11 @@ export function reportOrBlockLegacyFeatureToggles(
 
         // Reads that happen before the app event bus is wired up have nowhere to publish, and must
         // not throw from inside a get trap — the console warning above covers that case.
-        try {
-          getAppEvents().publish(legacyFeatureToggleAlert(property, blocking));
-        } catch {}
+        if (alerting) {
+          try {
+            getAppEvents().publish(legacyFeatureToggleAlert(property));
+          } catch {}
+        }
       }
 
       if (blocking) {

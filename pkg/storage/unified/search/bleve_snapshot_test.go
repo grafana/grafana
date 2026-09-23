@@ -41,9 +41,15 @@ func writeFakeSnapshot(dir string, meta *IndexMeta) error {
 	if err := setRV(idx, meta.LatestResourceVersion); err != nil {
 		return err
 	}
+	features := meta.Features
+	if features == nil {
+		// Otherwise the index is rejected after download for missing a required feature.
+		features = resource.CurrentIndexFeatures()
+	}
 	bi, err := json.Marshal(buildInfo{
 		BuildTime:          meta.UploadTimestamp.Unix(),
 		BuildVersion:       meta.BuildVersion,
+		Features:           features,
 		ReaderRequirements: meta.ReaderRequirements,
 	})
 	if err != nil {

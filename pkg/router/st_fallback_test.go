@@ -13,6 +13,7 @@ import (
 	"testing/synctest"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -500,6 +501,74 @@ func TestSingleTenantFallbackRefreshAfterStackChanges(t *testing.T) {
 					require.Empty(t, destinations)
 				}
 			})
+		})
+	}
+}
+
+func TestNewGComURLResolver(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		basePath string
+		wantPath string
+		status   int
+		body     string
+		wantURL  string
+		wantErr  string
+	}{
+		{
+			name: "base URL without trailing slash", wantPath: "/instances/123",
+			status: http.StatusOK, body: `{"id":123,"url":"https://stack.grafana.net"}`,
+			wantURL: "https://stack.grafana.net",
+		},
+		{
+			name: "base URL with trailing slash", basePath: "/", wantPath: "/instances/123",
+			status: http.StatusOK, body: `{"id":123,"url":"https://stack.grafana.net"}`,
+			wantURL: "https://stack.grafana.net",
+		},
+		{
+			name: "base path without trailing slash", basePath: "/api", wantPath: "/api/instances/123",
+			status: http.StatusOK, body: `{"id":123,"url":"https://stack.grafana.net"}`,
+			wantURL: "https://stack.grafana.net",
+		},
+		{
+			name: "base path with trailing slash", basePath: "/api/", wantPath: "/api/instances/123",
+			status: http.StatusOK, body: `{"id":123,"url":"https://stack.grafana.net"}`,
+			wantURL: "https://stack.grafana.net",
+		},
+		{
+			name: "not found", wantPath: "/instances/123",
+			status: http.StatusNotFound, body: "not found",
+		},
+		{
+			name: "server error", wantPath: "/instances/123",
+			status: http.StatusInternalServerError, body: "unavailable",
+			wantErr: "fetching gcom instance: unexpected status code 500",
+		},
+		{
+			name: "invalid JSON", wantPath: "/instances/123",
+			status: http.StatusOK, body: "invalid JSON",
+			wantErr: "decoding gcom instance",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, http.MethodGet, r.Method)
+				assert.Equal(t, tc.wantPath, r.URL.Path)
+				assert.Equal(t, "Bearer test-token", r.Header.Get("Authorization"))
+				w.WriteHeader(tc.status)
+				_, err := io.WriteString(w, tc.body)
+				assert.NoError(t, err)
+			}))
+			t.Cleanup(server.Close)
+
+			resolve := newGComURLResolver(server.URL+tc.basePath, "test-token")
+			host, err := resolve(t.Context(), 123)
+			if tc.wantErr != "" {
+				require.ErrorContains(t, err, tc.wantErr)
+			} else {
+				require.NoError(t, err)
+			}
+			require.Equal(t, tc.wantURL, host)
 		})
 	}
 }

@@ -24,6 +24,7 @@ func TestShouldUseSearchForList(t *testing.T) {
 	tests := map[string]struct {
 		disableSearch   bool
 		allowlist       []string
+		noRegistry      bool
 		req             *resourcepb.ListRequest
 		expectedAllowed bool
 	}{
@@ -155,7 +156,7 @@ func TestShouldUseSearchForList(t *testing.T) {
 			req: &resourcepb.ListRequest{
 				Source: resourcepb.ListRequest_STORE,
 				Options: &resourcepb.ListOptions{
-					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app"},
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
 					Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
 				},
 			},
@@ -236,6 +237,50 @@ func TestShouldUseSearchForList(t *testing.T) {
 			},
 			expectedAllowed: true,
 		},
+		"true when a kind outside the compiled-in manifests declares the field": {
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "mobile.ext.grafana.app", Resource: "mobileverificationtokens"},
+					Fields: []*resourcepb.Requirement{{Key: "spec.token", Operator: "=", Values: []string{"t1"}}},
+				},
+			},
+			expectedAllowed: true,
+		},
+		"false when the kind declares no such field": {
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+					Fields: []*resourcepb.Requirement{{Key: "spec.undeclared", Operator: "=", Values: []string{"x"}}},
+				},
+			},
+			expectedAllowed: false,
+		},
+		"false when one of several fields is undeclared": {
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+					Fields: []*resourcepb.Requirement{
+						{Key: "spec.foo", Operator: "=", Values: []string{"bar"}},
+						{Key: "spec.undeclared", Operator: "=", Values: []string{"x"}},
+					},
+				},
+			},
+			expectedAllowed: false,
+		},
+		"false when no declarations are available": {
+			noRegistry: true,
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+					Fields: []*resourcepb.Requirement{{Key: "spec.foo", Operator: "=", Values: []string{"bar"}}},
+				},
+			},
+			expectedAllowed: false,
+		},
 	}
 
 	for name, tc := range tests {
@@ -249,6 +294,14 @@ func TestShouldUseSearchForList(t *testing.T) {
 				allowed[resource] = true
 			}
 			s.searchBackedListResources = SearchBackedListConfig{AllowedResources: allowed}
+			if !tc.noRegistry {
+				// Stands in for what a manifest watcher would load, including a kind this
+				// binary was not compiled with.
+				s.manifestSearchFields = NewSearchFieldsRegistry(map[LowerGroupResource][]string{
+					NewLowerGroupResource("advisor.grafana.app", "advisors"):                    {"spec.foo"},
+					NewLowerGroupResource("mobile.ext.grafana.app", "mobileverificationtokens"): {"spec.token"},
+				}, nil, nil)
+			}
 
 			require.Equal(t, tc.expectedAllowed, s.shouldUseSearchForList(tc.req))
 		})
@@ -456,6 +509,46 @@ func TestListWithSelectors(t *testing.T) {
 		require.NotNil(t, resp.Error)
 		require.Equal(t, int32(http.StatusBadRequest), resp.Error.Code)
 		require.Equal(t, "search failed", resp.Error.Message)
+	})
+
+	t.Run("asks for the store scan when the index lacks a requested field", func(t *testing.T) {
+		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+		searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
+			Error: NewSelectableFieldNotIndexedError([]string{SEARCH_SELECTABLE_FIELDS_PREFIX + "spec.foo"}),
+		}}
+		s := createTestServer(searchClient, 1024)
+		req := &resourcepb.ListRequest{
+			Limit: 10,
+			Options: &resourcepb.ListOptions{
+				Key:    &resourcepb.ResourceKey{Namespace: "nsx"},
+				Fields: []*resourcepb.Requirement{{Key: "spec.foo", Operator: "=", Values: []string{"bar"}}},
+			},
+		}
+
+		resp, err := s.listWithSelectors(ctx, req)
+		require.ErrorIs(t, err, errSearchCannotAnswerList)
+		require.Nil(t, resp)
+	})
+
+	t.Run("keeps the error mid-pagination, where the store scan cannot resume", func(t *testing.T) {
+		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+		searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
+			Error: NewSelectableFieldNotIndexedError([]string{SEARCH_SELECTABLE_FIELDS_PREFIX + "spec.foo"}),
+		}}
+		s := createTestServer(searchClient, 1024)
+		req := &resourcepb.ListRequest{
+			Limit:         10,
+			NextPageToken: ContinueToken{SearchAfter: []string{"s1"}, ResourceVersion: searchServerRv}.String(),
+			Options: &resourcepb.ListOptions{
+				Key:    &resourcepb.ResourceKey{Namespace: "nsx"},
+				Fields: []*resourcepb.Requirement{{Key: "spec.foo", Operator: "=", Values: []string{"bar"}}},
+			},
+		}
+
+		resp, err := s.listWithSelectors(ctx, req)
+		require.NoError(t, err)
+		require.NotNil(t, resp.Error)
+		require.True(t, IsSelectableFieldNotIndexed(resp.Error))
 	})
 
 	t.Run("returns transport errors directly", func(t *testing.T) {
@@ -857,6 +950,38 @@ func TestListWithSelectors(t *testing.T) {
 		require.Empty(t, resp.Items)
 		require.Equal(t, searchServerRv, resp.ResourceVersion)
 	})
+}
+
+// countingListBackend records how often the store scan was used.
+type countingListBackend struct {
+	*fakeBackend
+	listCalls int
+}
+
+func (b *countingListBackend) ListIterator(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error) {
+	b.listCalls++
+	return 1, nil
+}
+
+func TestListFallsBackToStoreWhenIndexLacksField(t *testing.T) {
+	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+	backend := &countingListBackend{fakeBackend: &fakeBackend{}}
+	s := createTestServer(&stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
+		Error: NewSelectableFieldNotIndexedError([]string{SEARCH_SELECTABLE_FIELDS_PREFIX + "spec.foo"}),
+	}}, 1024)
+	s.backend = backend
+
+	resp, err := s.List(ctx, &resourcepb.ListRequest{
+		Source: resourcepb.ListRequest_STORE,
+		Limit:  10,
+		Options: &resourcepb.ListOptions{
+			Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+			Fields: []*resourcepb.Requirement{{Key: "spec.foo", Operator: "=", Values: []string{"bar"}}},
+		},
+	})
+	require.NoError(t, err)
+	require.Nil(t, resp.Error)
+	require.Equal(t, 1, backend.listCalls, "the store scan must serve the request the index refused")
 }
 
 func TestListWithSelectorsUsesBatchReadsAndAuthorization(t *testing.T) {

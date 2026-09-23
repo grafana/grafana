@@ -9,6 +9,8 @@ import {
   FIRST_COLUMN_CLASS,
   FIRST_COLUMN_EXTRA_PADDING,
   LAST_COLUMN_CLASS,
+  NESTED_LAST_ROW_CLASS,
+  OVERFLOW_CELL_CLASS,
   NESTED_ROW_CLASS,
   getPaginationChromeHeight,
   PAGINATION_MARGIN,
@@ -53,6 +55,19 @@ export const isTableCellStylesKeyEqual = (cacheKey: Key, key: RawKey): boolean =
   cacheKey[1].textAlign === key[1].textAlign &&
   cacheKey[1].textWrap === key[1].textWrap;
 
+// Geometry shared by the two header corner masks (see their use in `getGridStyles`). react-data-grid
+// gives every cell `position: relative`, so the pseudo-element anchors to the header cell itself, and
+// `::after` is free — rdg only takes `::before`, on the grid root, for its Firefox scrollbar fix.
+const headerCornerMask = (radius: string) =>
+  ({
+    content: '""',
+    position: 'absolute',
+    insetBlockStart: 0,
+    inlineSize: radius,
+    blockSize: radius,
+    pointerEvents: 'none',
+  }) as const;
+
 export const getGridStyles = memoize(
   (
     theme: GrafanaTheme2,
@@ -69,16 +84,48 @@ export const getGridStyles = memoize(
         : theme.colors.background.canvas
       : theme.components.panel.background;
     const headerBackgroundColor = tableRefreshEnabled ? table.headerBackground : bgColor;
+    const nestedBorderColor = theme.isDark && !transparent ? theme.colors.border.medium : table.border;
+    const cornerRadius = theme.shape.radius.default;
     const headerBorderColor = colorManipulator
       .onBackground(theme.colors.secondary.shade, headerBackgroundColor)
       .toHexString();
 
-    // The expander column is the outer table's first column (see markEdgeColumns), so under
-    // `noPanelPadding` it picks up the same `FIRST_COLUMN_EXTRA_PADDING` inline-start bump as any
-    // other first column — `gridNested` below has to know about it to stay flush with that column.
-    const nestedGridExpanderPaddingOffset = noPanelPadding ? FIRST_COLUMN_EXTRA_PADDING : 0;
-
     return {
+      gridFrame: css({
+        // This wrapper can be a flex item alongside controls such as the multi-frame picker. Its
+        // automatic minimum is the grid's content height, which prevents it from yielding the space
+        // reserved for those controls.
+        minBlockSize: 0,
+        // Give pagination controls their room back, so the frame and pager together still fit the
+        // panel (see getPaginationChromeHeight).
+        blockSize: enablePagination ? `calc(100% - ${getPaginationChromeHeight(noPanelPadding)}px)` : '100%',
+        boxSizing: 'border-box',
+        ...(tableRefreshEnabled &&
+          !noPanelPadding && {
+            // Reserve the same space as the visible frame without putting that frame underneath the
+            // grid. Native scrollbars paint over an ancestor's ordinary border at their bottom corner.
+            border: `${TABLE.FRAME_BORDER_WIDTH}px solid transparent`,
+            borderEndStartRadius: cornerRadius,
+            borderEndEndRadius: cornerRadius,
+            borderStartStartRadius: cornerRadius,
+            borderStartEndRadius: cornerRadius,
+            overflow: 'hidden',
+            // Paint the frame after the scrolling grid so the native scrollbar corner cannot cover it.
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              inset: 0,
+              pointerEvents: 'none',
+              zIndex: 1,
+              border: `${TABLE.FRAME_BORDER_WIDTH}px solid ${table.border}`,
+              borderEndStartRadius: cornerRadius,
+              borderEndEndRadius: cornerRadius,
+              borderStartStartRadius: cornerRadius,
+              borderStartEndRadius: cornerRadius,
+            },
+          }),
+        position: 'relative',
+      }),
       grid: css({
         '--rdg-background-color': bgColor,
         // `table.refresh` gives the header its own surface distinct from the body rows.
@@ -89,7 +136,7 @@ export const getGridStyles = memoize(
         '--rdg-summary-border-width': '1px',
 
         '--rdg-selection-color': theme.colors.action.selectedBorder,
-
+        '--rdg-selection-width': '0.5px',
         // note: this cannot have any transparency since default cells that
         // overlay/overflow on hover inherit this background and need to occlude cells below
         '--rdg-row-background-color': bgColor,
@@ -114,15 +161,43 @@ export const getGridStyles = memoize(
           },
         },
 
-        // add a box shadow on hover and selection for all body cells
+        ...(tableRefreshEnabled &&
+          !noPanelPadding && {
+            // The frame is painted above the grid so native scrollbars cannot erase its
+            // corners. Repaint the selected edge just inside that frame so it cannot cover the cell's
+            // outermost selection outline.
+            [`.rdg-cell.${FIRST_COLUMN_CLASS}[role="gridcell"][aria-selected="true"]:focus-within::before`]: {
+              content: '""',
+              position: 'absolute',
+              insetBlock: 0,
+              insetInlineStart: '1px',
+              inlineSize: 'var(--rdg-selection-width)',
+              backgroundColor: 'var(--rdg-selection-color)',
+              pointerEvents: 'none',
+              zIndex: 1,
+            },
+            [`.rdg-cell.${LAST_COLUMN_CLASS}[role="gridcell"][aria-selected="true"]:focus-within::after`]: {
+              content: '""',
+              position: 'absolute',
+              insetBlock: 0,
+              insetInlineEnd: '1px',
+              inlineSize: 'var(--rdg-selection-width)',
+              backgroundColor: 'var(--rdg-selection-color)',
+              pointerEvents: 'none',
+              zIndex: 1,
+            },
+          }),
+
         '& > :not(.rdg-summary-row, .rdg-header-row) > .rdg-cell': {
-          [getActiveCellSelector()]: { boxShadow: theme.shadows.z2 },
+          [`&.${OVERFLOW_CELL_CLASS}`]: {
+            [getActiveCellSelector()]: { boxShadow: tableRefreshEnabled ? 'none' : theme.shadows.z2 },
+            ...(!IS_SAFARI_26 && { '&:hover': { zIndex: theme.zIndex.tooltip - 6 } }),
+          },
           // A selected cell sits below a hovered one, so that hovering a neighbor of the selected
           // cell lifts its overflow clear rather than tucking it behind. The two selectors carry the
           // same specificity, so the hover rule has to come last for a cell that is both to land on
           // the hover value.
           [SELECTED_CELL_SELECTOR]: { zIndex: theme.zIndex.tooltip - 7 },
-          ...(!IS_SAFARI_26 && { '&:hover': { zIndex: theme.zIndex.tooltip - 6 } }),
           // react-data-grid rings the selected cell in the selection color. Once focus is gone that
           // ring marks a cell the user can no longer see they are on, so leave the cell bare.
           [`${SELECTED_CELL_SELECTOR}:not(:focus-within)`]: { outline: 'none' },
@@ -132,7 +207,9 @@ export const getGridStyles = memoize(
           backgroundColor: 'var(--rdg-row-background-color)',
           zIndex: theme.zIndex.tooltip - 4,
           [SELECTED_CELL_SELECTOR]: { zIndex: theme.zIndex.tooltip - 3 },
-          ...(!IS_SAFARI_26 && { '&:hover': { zIndex: theme.zIndex.tooltip - 2 } }),
+          ...(!IS_SAFARI_26 && {
+            [`&.${OVERFLOW_CELL_CLASS}:hover`]: { zIndex: theme.zIndex.tooltip - 2 },
+          }),
         },
 
         // have to override styles for row selection to workaround safari styles workaround
@@ -192,18 +269,20 @@ export const getGridStyles = memoize(
             height: '100%',
             minHeight: 'fit-content',
             overflowY: 'visible',
-            boxShadow: theme.shadows.z2,
+            boxShadow: tableRefreshEnabled ? 'none' : theme.shadows.z2,
           },
         },
 
+        ...(tableRefreshEnabled && {
+          // The footer's top border separates it from the rows. Its bottom border would duplicate
+          // the grid frame, or leave an extra line along a refreshed borderless table.
+          '.rdg-bottom-summary-row > .rdg-cell': {
+            borderBlockEnd: 'none',
+          },
+        }),
+
         // `table.refresh` rounds the table's top corners, matching the header's own surface.
         ...(tableRefreshEnabled && {
-          // The header cells' own rounded corners (below) leave the area outside the radius
-          // transparent, so a row scrolling under the sticky header painted straight through it.
-          // This grid is the scroll container, so rounding it clips everything it scrolls — the rows
-          // included — and the panel shows through the corner instead of a row's background.
-          borderStartStartRadius: theme.shape.radius.default,
-          borderStartEndRadius: theme.shape.radius.default,
           '.rdg-header-row > .rdg-cell': {
             // Sub-pixel scroll offsets can leave a hairline gap above the sticky header where the
             // row scrolled underneath it shows through — invisible before this commit, since the
@@ -221,34 +300,30 @@ export const getGridStyles = memoize(
           '.rdg-header-row > .rdg-cell.rdg-cell-frozen': {
             backgroundColor: 'var(--rdg-header-background-color)',
           },
-          [`.rdg-header-row > .rdg-cell.${FIRST_COLUMN_CLASS}`]: {
-            borderStartStartRadius: theme.shape.radius.default,
-            overflow: 'hidden',
+          // The header's corners are painted rather than clipped. A corner made by transparency needs
+          // an ancestor clipping at that exact offset: the grid's own radius above is that ancestor
+          // only while the columns reach the panel edge. When every column has a configured width
+          // they can stop short of it (nothing stretches to fill), and the table's real trailing
+          // corner then sits mid-panel with a body cell scrolling under the sticky header behind it.
+          // Filling everything outside the arc with the table's own background — the same colour as
+          // the gap beside the table, and as whatever the table sits on — makes the corner opaque, so
+          // there is nothing left to show through wherever it lands.
+          [`.rdg-header-row > .rdg-cell.${FIRST_COLUMN_CLASS}::after`]: {
+            ...headerCornerMask(cornerRadius),
+            insetInlineStart: 0,
+            background: `radial-gradient(circle at 100% 100%, transparent calc(${cornerRadius} - 0.5px), var(--rdg-background-color) ${cornerRadius})`,
           },
-          [`.rdg-header-row > .rdg-cell.${LAST_COLUMN_CLASS}`]: {
-            borderStartEndRadius: theme.shape.radius.default,
-            overflow: 'hidden',
-          },
-          // The footer is the last row in the grid, so react-data-grid's per-cell bottom border
-          // draws a hairline along the table's own bottom edge with nothing below it to divide.
-          // Its top border (`--rdg-summary-border-*`) still separates it from the rows above.
-          '.rdg-bottom-summary-row > .rdg-cell': {
-            borderBlockEnd: 'none',
+          [`.rdg-header-row > .rdg-cell.${LAST_COLUMN_CLASS}::after`]: {
+            ...headerCornerMask(cornerRadius),
+            insetInlineEnd: 0,
+            background: `radial-gradient(circle at 0 100%, transparent calc(${cornerRadius} - 0.5px), var(--rdg-background-color) ${cornerRadius})`,
           },
         }),
       }),
-      // Wraps the grid so the scroll shadows have something to position against. It carries the
-      // grid's own sizing, and the grid fills it, so the shadows span exactly the scroll viewport.
+      // Keep shadow pseudo-elements separate from the frame overlay, inside its border.
       gridWrapper: css({
         position: 'relative',
-        // give the pagination controls their room back, so the grid and the pager together still fit
-        // the panel (see getPaginationChromeHeight)
-        blockSize: enablePagination ? `calc(100% - ${getPaginationChromeHeight(noPanelPadding)}px)` : '100%',
-        // Panels that stack something under the table — the multi-frame frame picker — lay it out in
-        // a flex column, where this wrapper is the flex item the grid used to be. The grid could
-        // always shrink below its content because it scrolls (`overflow: auto` zeroes a flex item's
-        // automatic minimum size); this wrapper doesn't scroll, so without this its minimum size is
-        // the grid's whole content height and it pushes everything below it out of the panel.
+        blockSize: '100%',
         minBlockSize: 0,
       }),
       // The panel around the table drops its own padding so the header surface can bleed to the
@@ -260,20 +335,47 @@ export const getGridStyles = memoize(
           paddingInlineStart: TABLE.CELL_PADDING + FIRST_COLUMN_EXTRA_PADDING,
         },
       }),
+      lastColumnInset: css({
+        [`& > * > .rdg-cell.${LAST_COLUMN_CLASS}`]: {
+          paddingInlineEnd: TABLE.CELL_PADDING * 2,
+        },
+      }),
+      lastRowWithoutBorder: css({
+        '& > .rdg-cell': { borderBlockEnd: 'none' },
+      }),
       gridNested: css({
         // react-data-grid's root sets `content-visibility: auto`. The nested grid's wrapper has no
         // definite height, so its skipped-contents size is 0, and in Firefox a zero-size element never
         // intersects the viewport, never becomes relevant, and stays collapsed forever.
         contentVisibility: 'visible',
         height: '100%',
-        // The expander column is tagged `FIRST_COLUMN_CLASS` (see markEdgeColumns), so under
-        // `noPanelPadding` its own paddingInlineStart grows by `FIRST_COLUMN_EXTRA_PADDING` too —
-        // subtract it back out here so this nested grid still starts flush with the expander
-        // column's edge instead of drifting right by that same amount.
-        width: `calc(100% - ${COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING * 2 - nestedGridExpanderPaddingOffset - 1}px)`,
-        overflowX: 'scroll',
+        overflowX: tableRefreshEnabled ? 'auto' : 'scroll',
         overflowY: 'hidden',
-        marginLeft: COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING - nestedGridExpanderPaddingOffset - 1,
+        scrollbarColor: `${theme.colors.scrollbar} transparent`,
+        ...(tableRefreshEnabled && {
+          borderInline: `1px solid ${nestedBorderColor}`,
+          borderStartStartRadius: theme.shape.radius.default,
+          borderStartEndRadius: theme.shape.radius.default,
+          borderEndStartRadius: theme.shape.radius.default,
+          borderEndEndRadius: theme.shape.radius.default,
+          // The nested grid owns its bottom edge. Refreshed outer tables drop the summary cells'
+          // bottom border because PanelChrome supplies that edge, but a nested grid has no wrapper
+          // border there.
+          '.rdg-bottom-summary-row > .rdg-cell': {
+            borderBlockEnd: `1px solid ${nestedBorderColor}`,
+          },
+          [`.${NESTED_LAST_ROW_CLASS} > .rdg-cell.${FIRST_COLUMN_CLASS}, .rdg-bottom-summary-row > .rdg-cell.${FIRST_COLUMN_CLASS}`]:
+            {
+              borderEndStartRadius: theme.shape.radius.default,
+              overflow: 'hidden',
+            },
+          [`.${NESTED_LAST_ROW_CLASS} > .rdg-cell.${LAST_COLUMN_CLASS}, .rdg-bottom-summary-row > .rdg-cell.${LAST_COLUMN_CLASS}`]:
+            {
+              borderEndEndRadius: theme.shape.radius.default,
+              overflow: 'hidden',
+            },
+        }),
+        marginLeft: COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING - 1,
         marginBlock: TABLE.CELL_PADDING,
         // usually row height will be set to 0 when not expanded, but auto cell height may lead to some rendering errors.
         '&[aria-expanded="false"]': {
@@ -453,15 +555,15 @@ const SELECTED_CELL_SELECTOR = '&[aria-selected=true]';
 
 const ACTIVE_CELL_SELECTORS = {
   hover: {
-    nested: '.rdg-cell:hover &',
-    normal: '&:hover',
+    nested: `.rdg-cell.${OVERFLOW_CELL_CLASS}:hover &`,
+    normal: `&.${OVERFLOW_CELL_CLASS}:hover`,
   },
   // react-data-grid keeps a cell selected after the grid loses focus, and offers no API to clear it
   // (`selectCell` rejects any out-of-bounds position), so gate on `:focus-within` to release the
   // expanded state when the user clicks away from the table.
   selected: {
-    nested: '[aria-selected=true]:focus-within &',
-    normal: `${SELECTED_CELL_SELECTOR}:focus-within`,
+    nested: `.rdg-cell.${OVERFLOW_CELL_CLASS}[aria-selected=true]:focus-within &`,
+    normal: `&.${OVERFLOW_CELL_CLASS}[aria-selected=true]:focus-within`,
   },
 } as const;
 
@@ -478,7 +580,7 @@ const getHoverOnlyCellSelector = memoize((isNested?: boolean) => {
   if (IS_SAFARI_26) {
     return '';
   }
-  return ACTIVE_CELL_SELECTORS.hover[isNested ? 'nested' : 'normal'];
+  return isNested ? '.rdg-cell:hover &' : '&:hover';
 });
 
 export const getScrollShadowOffsetStyles = (_theme: GrafanaTheme2, top: number, bottom: number) =>

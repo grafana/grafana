@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/backfill"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/enrollment"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/reconciler"
 	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
@@ -78,10 +79,10 @@ func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer
 		withEmbedder,
 		withReranker,
 		withVectorMetrics,
-		withVectorIndexers,
 		withQOSQueue,
 		withOverridesService,
 		withSearch,
+		withVectorIndexers,
 		withSearchClient,
 		withQuotaConfig,
 		withSearchBackedListConfig,
@@ -242,12 +243,11 @@ func withReranker(opts *ServerOptions, resourceOpts *resource.ResourceServerOpti
 	return nil
 }
 
-// withVectorIndexers builds the optional vector backfiller and
-// reconciler. Both providers return (nil, nil) when their feature is
-// off, so nil is normal and propagates through to the resource server
-// which simply doesn't start the goroutine.
+// withVectorIndexers runs after withSearch so generation and queries share the
+// same enrollment provider. Workers snapshot it after initial manifests load.
 func withVectorIndexers(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	if !opts.Cfg.VectorIndexingEnabled ||
+		len(opts.Cfg.VectorAllowedInternalCollections) == 0 ||
 		opts.Cfg.EmbeddingProvider == "" ||
 		opts.Backend == nil ||
 		opts.VectorBackend == nil ||
@@ -255,28 +255,27 @@ func withVectorIndexers(opts *ServerOptions, resourceOpts *resource.ResourceServ
 		return nil
 	}
 	batchEmbedder := embedder.NewBatchEmbedder(*opts.Embedder)
-	builders := []embed.Builder{dashboard.New()}
 
 	backfiller, err := backfill.NewVectorBackfiller(backfill.Options{
-		Storage:        opts.Backend,
-		VectorBackend:  opts.VectorBackend,
-		BatchEmbedder:  batchEmbedder,
-		Builders:       builders,
-		DashboardStats: opts.DashboardStats,
-		Metrics:        resourceOpts.VectorMetrics,
+		Storage:         opts.Backend,
+		VectorBackend:   opts.VectorBackend,
+		BatchEmbedder:   batchEmbedder,
+		BuilderProvider: resourceOpts.Search.EmbeddingBuilders,
+		DashboardStats:  opts.DashboardStats,
+		Metrics:         resourceOpts.VectorMetrics,
 	})
 	if err != nil {
 		return fmt.Errorf("create vector backfiller: %w", err)
 	}
 
 	resourceOpts.VectorReconciler, err = reconciler.New(reconciler.Options{
-		Storage:       opts.Backend,
-		VectorBackend: opts.VectorBackend,
-		BatchEmbedder: batchEmbedder,
-		Builders:      builders,
-		Backfiller:    backfiller,
-		Interval:      opts.Cfg.VectorReconcilerInterval,
-		Metrics:       resourceOpts.VectorMetrics,
+		Storage:         opts.Backend,
+		VectorBackend:   opts.VectorBackend,
+		BatchEmbedder:   batchEmbedder,
+		BuilderProvider: resourceOpts.Search.EmbeddingBuilders,
+		Backfiller:      backfiller,
+		Interval:        opts.Cfg.VectorReconcilerInterval,
+		Metrics:         resourceOpts.VectorMetrics,
 
 		EmbeddingCountInterval: opts.Cfg.VectorEmbeddingCountInterval,
 	})
@@ -299,6 +298,22 @@ func withSearch(opts *ServerOptions, resourceOpts *resource.ResourceServerOption
 	if opts.VectorBackend != nil {
 		resourceOpts.Search.AllowedInternalCollections = opts.Cfg.VectorAllowedInternalCollections
 		resourceOpts.Search.AllowedExternalCollections = opts.Cfg.VectorAllowedExternalCollections
+		if resourceOpts.Search.EmbeddingBuilders == nil && (opts.Cfg.EnableSearch || opts.Cfg.VectorIndexingEnabled) {
+			configs := resourceOpts.Search.EmbeddingConfig
+			if configs == nil {
+				configs = resource.NewEmbeddingConfigRegistry(resource.AppManifests())
+				resourceOpts.Search.EmbeddingConfig = configs
+			}
+			var skipped *prometheus.CounterVec
+			if resourceOpts.VectorMetrics != nil {
+				skipped = resourceOpts.VectorMetrics.EmbedSkippedVersionsTotal
+			}
+			registry, err := enrollment.New(configs, opts.Cfg.VectorAllowedInternalCollections, []embed.Builder{dashboard.New()}, skipped)
+			if err != nil {
+				return fmt.Errorf("embedding enrollment: %w", err)
+			}
+			resourceOpts.Search.EmbeddingBuilders = registry
+		}
 		if opts.Cfg.VectorQueryCacheEnabled {
 			if cache, ok := opts.VectorBackend.(vector.QueryEmbeddingCache); ok {
 				resourceOpts.Search.QueryCache = cache
