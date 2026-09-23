@@ -106,7 +106,7 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
       {!isEmbedded && (
         <ToolbarButton
           variant="canvas"
-          icon="link"
+          icon="share-alt"
           tooltip={t('notebooks.view.copy-link', 'Copy link')}
           onClick={onCopyLink}
         />
