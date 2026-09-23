@@ -34,10 +34,10 @@ Grafana recommends that you remove all permissions for roles and teams that don'
 
 ### Configure a new Prometheus data source on Grafana Cloud
 
-1. Access Prometheus data source details for your stack through grafana.com.
+1. Access Prometheus data source details for your stack in Grafana Cloud.
 1. Copy Prometheus details and create a CAP.
    - Copy the details of your Prometheus setup.
-   - Create a Cloud Access Policy (CAP) for the Prometheus data source in grafana.com.
+   - Create a Cloud Access Policy (CAP) for the Prometheus data source in Grafana Cloud.
    - Ensure the CAP includes `metrics:read` permissions.
    - Ensure the CAP doesn't include `labels` rules.
 1. Create a new Prometheus data source.
