@@ -407,7 +407,6 @@ func (b *bleveIndex) runPostFilterAuthz(
 		attribute.Int64("search.candidates", candidates),
 		attribute.Int64("search.authorized", authorized),
 	)
-	response.NextSearchAfter = postFilterContinuation(page, firstReq.Sort, limit, exhausted, reverseSort)
 	if wantFacets {
 		// The independent facet scan defines exactness, but a returned page may
 		// observe more authorized hits than a capped top sample.
@@ -416,22 +415,6 @@ func (b *bleveIndex) runPostFilterAuthz(
 	}
 	return response, b.finalizePostFilter(ctx, response, page, selectFields, fieldValueSchema, firstReq.Sort, req, firstRes,
 		authorized, exhausted, reverseSort, wantFacets, trashAuthz != nil, agg, stats)
-}
-
-func postFilterContinuation(page search.DocumentMatchCollection, sort search.SortOrder, limit int, exhausted, reverseSort bool) []string {
-	// SearchBefore scans in reverse; its scan position is not a forward cursor.
-	// Count-only requests have no result page to continue.
-	if limit <= 0 || reverseSort || len(page) == 0 {
-		return nil
-	}
-	if len(page) == limit || !exhausted {
-		// Authorization batches and trash totals can examine authorized hits
-		// beyond the page. Advancing past them would skip unreturned results.
-		// Denied candidates must not supply a cursor: sort values expose their
-		// titles and identities even when their result rows are withheld.
-		return hitSortFields(page[len(page)-1], sort)
-	}
-	return nil
 }
 
 // authorizeHits filters ranked hits by the trash rule when trashAuthz is set,
