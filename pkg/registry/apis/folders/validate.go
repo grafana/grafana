@@ -500,7 +500,6 @@ func checkSubtreeDepthBatched(ctx context.Context, searcher resourcepb.ResourceI
 		var children []string
 		children, hasMore, err = getChildrenBatch(ctx, searcher, namespace, parentUIDs, pageSize, offset)
 		if err != nil {
-			logging.FromContext(ctx).Error("Failed to get children for subtree depth check", "namespace", namespace, "parents", parentUIDs, "error", err)
 			return err
 		}
 
