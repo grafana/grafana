@@ -43,14 +43,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "featureHighlights",
-			Description: "Highlight Grafana Enterprise features",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaOperatorExperienceSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "canvasPanelNesting",
 			Description: "Allow elements nesting",
 			Stage:       FeatureStageExperimental,

@@ -39,6 +39,15 @@ func (f *identitiesFake) GetUserInternalID(_ context.Context, _ claims.Namespace
 	return &legacy.GetUserInternalIDResult{ID: id}, nil
 }
 
+func (f *identitiesFake) GetUserUIDByID(_ context.Context, _ claims.NamespaceInfo, query legacy.GetUserUIDByIDQuery) (*legacy.GetUserUIDByIDResult, error) {
+	for uid, id := range f.users {
+		if id == query.ID {
+			return &legacy.GetUserUIDByIDResult{UID: uid}, nil
+		}
+	}
+	return nil, user.ErrUserNotFound
+}
+
 func testCtx() context.Context {
 	return genericapirequest.WithNamespace(context.Background(), "default")
 }
@@ -265,13 +274,86 @@ func TestLegacyStore_List(t *testing.T) {
 	identities := &identitiesFake{users: map[string]int64{"user-uid": 1}}
 	created := time.Unix(1000, 0).UTC()
 
-	t.Run("requires the userRef.name field selector", func(t *testing.T) {
+	t.Run("requires the userRef.name or authID field selector", func(t *testing.T) {
 		authInfoStore := authinfotest.NewMockAuthInfoStore(t)
 		store := NewLegacyStore(identities, authInfoStore, noop.NewTracerProvider().Tracer("test"), remotecache.NewFakeCacheStorage())
 
 		_, err := store.List(testCtx(), &internalversion.ListOptions{})
 		require.Error(t, err)
 		require.True(t, apierrors.IsBadRequest(err))
+	})
+
+	t.Run("finds by authID alone, without knowing the user", func(t *testing.T) {
+		authInfoStore := authinfotest.NewMockAuthInfoStore(t)
+		authInfoStore.On("GetAuthInfo", mock.Anything, &login.GetAuthInfoQuery{AuthId: "gh-123"}).
+			Return(&login.UserAuth{UserId: 1, UserUID: "user-uid", AuthModule: "oauth_github", AuthId: "gh-123", Created: created}, nil)
+
+		store := NewLegacyStore(identities, authInfoStore, noop.NewTracerProvider().Tracer("test"))
+
+		obj, err := store.List(testCtx(), &internalversion.ListOptions{
+			FieldSelector: fields.OneTermEqualSelector("spec.authID", "gh-123"),
+		})
+		require.NoError(t, err)
+
+		list, ok := obj.(*iamv0alpha1.AuthInfoList)
+		require.True(t, ok)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, "user-uid.oauth-github", list.Items[0].Name)
+	})
+
+	t.Run("combines authID and authModule filters", func(t *testing.T) {
+		authInfoStore := authinfotest.NewMockAuthInfoStore(t)
+		authInfoStore.On("GetAuthInfo", mock.Anything, &login.GetAuthInfoQuery{AuthId: "gh-123", AuthModule: "oauth_github"}).
+			Return(&login.UserAuth{UserId: 1, UserUID: "user-uid", AuthModule: "oauth_github", AuthId: "gh-123", Created: created}, nil)
+
+		store := NewLegacyStore(identities, authInfoStore, noop.NewTracerProvider().Tracer("test"))
+
+		obj, err := store.List(testCtx(), &internalversion.ListOptions{
+			FieldSelector: fields.AndSelectors(
+				fields.OneTermEqualSelector("spec.authID", "gh-123"),
+				fields.OneTermEqualSelector("spec.authModule", "oauth_github"),
+			),
+		})
+		require.NoError(t, err)
+
+		list, ok := obj.(*iamv0alpha1.AuthInfoList)
+		require.True(t, ok)
+		require.Len(t, list.Items, 1)
+	})
+
+	t.Run("returns an empty list when no authinfo matches authID", func(t *testing.T) {
+		authInfoStore := authinfotest.NewMockAuthInfoStore(t)
+		authInfoStore.On("GetAuthInfo", mock.Anything, &login.GetAuthInfoQuery{AuthId: "no-such-id"}).
+			Return(nil, user.ErrUserNotFound)
+
+		store := NewLegacyStore(identities, authInfoStore, noop.NewTracerProvider().Tracer("test"))
+
+		obj, err := store.List(testCtx(), &internalversion.ListOptions{
+			FieldSelector: fields.OneTermEqualSelector("spec.authID", "no-such-id"),
+		})
+		require.NoError(t, err)
+
+		list, ok := obj.(*iamv0alpha1.AuthInfoList)
+		require.True(t, ok)
+		require.Empty(t, list.Items)
+	})
+
+	t.Run("returns an empty list, not an error, for a stale or cross-org user_auth row", func(t *testing.T) {
+		authInfoStore := authinfotest.NewMockAuthInfoStore(t)
+		// UserId 999 has no entry in identities.users.
+		authInfoStore.On("GetAuthInfo", mock.Anything, &login.GetAuthInfoQuery{AuthId: "orphaned-id"}).
+			Return(&login.UserAuth{UserId: 999, AuthModule: "ldap", AuthId: "orphaned-id", Created: created}, nil)
+
+		store := NewLegacyStore(identities, authInfoStore, noop.NewTracerProvider().Tracer("test"))
+
+		obj, err := store.List(testCtx(), &internalversion.ListOptions{
+			FieldSelector: fields.OneTermEqualSelector("spec.authID", "orphaned-id"),
+		})
+		require.NoError(t, err)
+
+		list, ok := obj.(*iamv0alpha1.AuthInfoList)
+		require.True(t, ok)
+		require.Empty(t, list.Items)
 	})
 
 	t.Run("lists every module for the selected user", func(t *testing.T) {

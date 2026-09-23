@@ -63,6 +63,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
+	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl"
 	teamservice "github.com/grafana/grafana/pkg/services/team"
 	legacyuser "github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -269,6 +270,8 @@ func NewAPIService(
 		apiConfig:                  Config{SingleOrganization: true},
 		teamLBACApiInstaller:       teamLBACApiInstaller,
 		settingService:             settingService,
+		// Serve the SSOSetting kind read-only in standalone, gated by kubernetesSsoSettingsApi.
+		ssoLegacyStore: sso.NewLegacyStore(ssosettingsimpl.ProvideReadOnlyDBService(dbProvider), tracingService),
 		authorizer: authorizer.AuthorizerFunc(
 			func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 				user, ok := types.AuthInfoFrom(ctx)
@@ -330,6 +333,15 @@ func NewAPIService(
 						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
 					}
 					return serviceAccountAuthorizer.Authorize(ctx, a)
+				}
+
+				if a.GetResource() == legacyiamv0.SSOSettingResourceInfo.GetName() {
+					// Interim parity with the in-process authorizer: allow any
+					// authenticated identity (real settings RBAC is a follow-up).
+					if user.GetIdentityType() == types.TypeAnonymous {
+						return authorizer.DecisionDeny, "anonymous identities cannot access ssosettings", nil
+					}
+					return authorizer.DecisionAllow, "", nil
 				}
 
 				return authorizer.DecisionDeny, "access denied", nil
