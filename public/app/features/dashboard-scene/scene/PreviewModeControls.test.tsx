@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
@@ -54,6 +54,44 @@ describe('PreviewModeControls', () => {
     return { dashboard, user: userEvent.setup() };
   }
 
+  function pressPreviewShortcut(target: Document | HTMLElement = document) {
+    fireEvent.keyDown(target, { key: 'd', keyCode: 68, which: 68 });
+    fireEvent.keyUp(target, { key: 'd', keyCode: 68, which: 68 });
+    fireEvent.keyDown(target, { key: 'p', keyCode: 80, which: 80 });
+    fireEvent.keyUp(target, { key: 'p', keyCode: 80, which: 80 });
+  }
+
+  it('shows the Preview shortcut tooltip when hovering the label', async () => {
+    const { user } = setup();
+
+    await user.hover(screen.getByText('Preview'));
+
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Toggle Preview (D then P)');
+  });
+
+  it('toggles Preview with D then P and keeps the keyboard opt-out for Assistant edits', () => {
+    const { dashboard } = setup();
+    pressPreviewShortcut();
+    expect(screen.getByRole('switch', { name: 'Preview' })).toBeChecked();
+    pressPreviewShortcut();
+    expect(screen.getByRole('switch', { name: 'Preview' })).not.toBeChecked();
+    act(() => dashboard.onEnterEditMode('assistant'));
+    expect(screen.getByRole('switch', { name: 'Preview' })).not.toBeChecked();
+  });
+
+  it('ignores the Preview shortcut while typing or while a save drawer is open', async () => {
+    const { dashboard } = setup();
+    render(<input aria-label="Title input" />);
+    const input = screen.getByRole('textbox', { name: 'Title input' });
+    input.focus();
+    pressPreviewShortcut(input);
+    expect(screen.getByRole('switch', { name: 'Preview' })).not.toBeChecked();
+    input.blur();
+    await act(() => dashboard.openSaveDrawer({}));
+    pressPreviewShortcut();
+    expect(screen.getByRole('switch', { name: 'Preview' })).not.toBeChecked();
+  });
+
   it.each([
     { isNew: false, name: 'saved' },
     { isNew: true, name: 'new unsaved' },
@@ -97,7 +135,7 @@ describe('PreviewModeControls', () => {
 
   it('opens Changes in the existing save drawer without dropping save options', async () => {
     const { dashboard, user } = setup();
-    act(() => dashboard.openSaveDrawer({ saveAsCopy: true }));
+    await act(() => dashboard.openSaveDrawer({ saveAsCopy: true }));
     const drawer = dashboard.state.overlay;
     if (!(drawer instanceof SaveDashboardDrawer)) {
       throw new Error('Expected a save drawer');

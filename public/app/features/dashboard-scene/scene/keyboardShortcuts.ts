@@ -9,7 +9,7 @@ import { notifyApp } from 'app/core/reducers/appNotification';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
-import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
+import { isFullDashboardEditing, isDashboardReviewing } from 'app/features/dashboard-scene/scene/types/dashboard';
 import { InspectTab } from 'app/features/inspector/types';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -237,6 +237,17 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   });
 
   if (canEdit) {
+    keybindings.addBinding({
+      key: 'd p',
+      onTrigger: () => {
+        const { isEditing, editPanel, editview, viewPanel, overlay } = scene.state;
+        if (!isEditing || editPanel || editview || viewPanel || overlay) {
+          return;
+        }
+        scene.setEditPresentation(isDashboardReviewing(scene.state) ? 'full' : 'preview');
+      },
+    });
+
     // Panel edit
     keybindings.addBinding({
       key: 'e',

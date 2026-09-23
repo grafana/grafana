@@ -1,6 +1,6 @@
 import { t } from '@grafana/i18n';
 import { useFlagGrafanaDashboardPreviewMode } from '@grafana/runtime/internal';
-import { InlineSwitch } from '@grafana/ui';
+import { InlineSwitch, Tooltip } from '@grafana/ui';
 
 import { type DashboardScene } from './DashboardScene';
 import { isDashboardReviewing } from './types/dashboard';
@@ -19,11 +19,15 @@ export function PreviewModeControls({ dashboard }: Props) {
   }
 
   return (
-    <InlineSwitch
-      label={t('dashboard.preview.toggle', 'Preview')}
-      showLabel
-      value={reviewing}
-      onChange={() => dashboard.setEditPresentation(reviewing ? 'full' : 'preview')}
-    />
+    <Tooltip content={t('dashboard.preview.shortcut-tooltip', 'Toggle Preview (D then P)')}>
+      <div>
+        <InlineSwitch
+          label={t('dashboard.preview.toggle', 'Preview')}
+          showLabel
+          value={reviewing}
+          onChange={() => dashboard.setEditPresentation(reviewing ? 'full' : 'preview')}
+        />
+      </div>
+    </Tooltip>
   );
 }
