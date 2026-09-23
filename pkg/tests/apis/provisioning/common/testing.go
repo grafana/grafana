@@ -68,6 +68,16 @@ const (
 	// initial delete call.
 	waitTimeoutCleanup = 2 * WaitTimeoutDefault
 
+	// waitTimeoutPathConflict is used for PathConflict condition checks.
+	// RepositoryPathConflictChecker reads repositories through the same
+	// informer.RepositoryGetter.List used for the quota count, which is
+	// documented to tolerate staleness up to the controller's informer resync
+	// interval (setting.ProvisioningControllerResyncIntervalDefault, currently
+	// 60s - same as WaitTimeoutDefault). A missed watch event only self-heals
+	// on the next resync, so this leaves a full resync cycle of margin instead
+	// of racing the two 60s values against each other with no slack.
+	waitTimeoutPathConflict = 2 * WaitTimeoutDefault
+
 	// waitTimeoutFolderCleanup is the budget for the folders step in
 	// CleanupAllResources. Folders are force-deleted, so this is no longer
 	// gated on the eventually-consistent empty-folder check; the larger budget
@@ -1311,7 +1321,7 @@ func (h *ProvisioningTestHelper) WaitForRepositoryPathConflictMessageContains(t 
 			"repository %s PathConflict condition should be False (conflict present)", name)
 		assert.Contains(collect, cond.Message, substr,
 			"repository %s PathConflict message %q should contain %q", name, cond.Message, substr)
-	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s should report a path conflict containing %q", name, substr)
+	}, waitTimeoutPathConflict, WaitIntervalDefault, "repository %s should report a path conflict containing %q", name, substr)
 }
 
 // WaitForHealthyConnection polls until the connection controller has reconciled

@@ -2,7 +2,10 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"slices"
+	"strings"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -43,21 +46,48 @@ func (c *RepositoryPathConflictChecker) RepositoryPathConflictCondition(
 		return metav1.Condition{}, err
 	}
 
+	// cfg can conflict with more than one repository at once (e.g. an exact duplicate and
+	// one or more ancestor/descendant paths). Report all of them rather than the first one
+	// found - all is informer-ordered, not sorted, so a single "first match" would make the
+	// reported conflict depend on iteration order. Group by conflict kind and sort names
+	// within each group so the message is deterministic regardless of that order.
+	var duplicates, overlaps []string
 	for _, v := range all {
-		if conflictErr, isConflict := repository.PathConflict(cfg, v); isConflict {
-			return metav1.Condition{
-				Type:    provisioning.ConditionTypePathConflict,
-				Status:  metav1.ConditionFalse,
-				Reason:  provisioning.ReasonPathConflict,
-				Message: fmt.Sprintf("%s: %s", conflictErr.Error(), v.Name),
-			}, nil
+		conflictErr, isConflict := repository.PathConflict(cfg, v)
+		if !isConflict {
+			continue
 		}
+		if errors.Is(conflictErr, repository.ErrRepositoryDuplicatePath) {
+			duplicates = append(duplicates, v.Name)
+		} else {
+			overlaps = append(overlaps, v.Name)
+		}
+	}
+
+	if len(duplicates) == 0 && len(overlaps) == 0 {
+		return metav1.Condition{
+			Type:    provisioning.ConditionTypePathConflict,
+			Status:  metav1.ConditionTrue,
+			Reason:  provisioning.ReasonNoPathConflict,
+			Message: noPathConflictMsg,
+		}, nil
+	}
+
+	slices.Sort(duplicates)
+	slices.Sort(overlaps)
+
+	var parts []string
+	if len(duplicates) > 0 {
+		parts = append(parts, fmt.Sprintf("%s: %s", repository.ErrRepositoryDuplicatePath.Error(), strings.Join(duplicates, ", ")))
+	}
+	if len(overlaps) > 0 {
+		parts = append(parts, fmt.Sprintf("%s: %s", repository.ErrRepositoryParentFolderConflict.Error(), strings.Join(overlaps, ", ")))
 	}
 
 	return metav1.Condition{
 		Type:    provisioning.ConditionTypePathConflict,
-		Status:  metav1.ConditionTrue,
-		Reason:  provisioning.ReasonNoPathConflict,
-		Message: noPathConflictMsg,
+		Status:  metav1.ConditionFalse,
+		Reason:  provisioning.ReasonPathConflict,
+		Message: strings.Join(parts, "; "),
 	}, nil
 }

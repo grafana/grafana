@@ -1067,6 +1067,32 @@ func (c *capturePatcher) Patch(_ context.Context, _ *provisioning.Repository, pa
 	return c.err
 }
 
+// findConditionOp scans every captured op that touches /status/conditions - a whole-array
+// replace (path "/status/conditions", value []metav1.Condition) or a per-condition op
+// (path "/status/conditions/-" or "/status/conditions/<index>", value metav1.Condition) -
+// and returns the condition of conditionType, if any op set one.
+func (c *capturePatcher) findConditionOp(conditionType string) (metav1.Condition, bool) {
+	for _, op := range c.ops {
+		path, ok := op["path"].(string)
+		if !ok || (path != "/status/conditions" && !strings.HasPrefix(path, "/status/conditions/")) {
+			continue
+		}
+		switch v := op["value"].(type) {
+		case []metav1.Condition:
+			for _, cond := range v {
+				if cond.Type == conditionType {
+					return cond, true
+				}
+			}
+		case metav1.Condition:
+			if v.Type == conditionType {
+				return v, true
+			}
+		}
+	}
+	return metav1.Condition{}, false
+}
+
 // findPatchOp returns the last captured op for path, matching JSON Patch's
 // sequential-apply semantics
 func (c *capturePatcher) findPatchOp(path string) (map[string]interface{}, bool) {
@@ -1456,6 +1482,16 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 						Checked: time.Now().UnixMilli(),
 					},
 					Quota: tc.oldQuota,
+					// Pre-populate a settled PathConflict condition so an unrelated quota
+					// test isn't spuriously triggered by ConditionChanged seeing no existing
+					// condition to compare against (see RepositoryController.process).
+					Conditions: []metav1.Condition{{
+						Type:               provisioning.ConditionTypePathConflict,
+						Status:             metav1.ConditionTrue,
+						Reason:             provisioning.ReasonNoPathConflict,
+						Message:            noPathConflictMsg,
+						ObservedGeneration: 1,
+					}},
 				},
 			}
 
@@ -1529,24 +1565,8 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 					assert.NotZero(t, patchedQuota.UpdatedAt)
 				}
 
-				condOp, found := patcher.findPatchOp("/status/conditions")
-				assert.True(t, found,
-					"expected /status/conditions patch operation for quota condition update")
-				if found {
-					conditions, ok := condOp["value"].([]metav1.Condition)
-					assert.True(t, ok, "conditions value should be []metav1.Condition")
-					if ok {
-						var quotaCond *metav1.Condition
-						for i := range conditions {
-							if conditions[i].Type == provisioning.ConditionTypeNamespaceQuota {
-								quotaCond = &conditions[i]
-								break
-							}
-						}
-						assert.NotNil(t, quotaCond,
-							"expected NamespaceQuota condition to be present")
-					}
-				}
+				_, found = patcher.findConditionOp(provisioning.ConditionTypeNamespaceQuota)
+				assert.True(t, found, "expected NamespaceQuota condition to be present in a /status/conditions patch operation")
 			}
 		})
 	}
@@ -2185,6 +2205,16 @@ func TestRepositoryController_process_QuotaTimestampOnlyDoesNotForceStatusPatch(
 						MaxResourcesPerRepository: 100,
 						UpdatedAt:                 updatedAt,
 					},
+					// Pre-populate a settled PathConflict condition so this quota-focused
+					// test isn't spuriously triggered by ConditionChanged seeing no existing
+					// condition to compare against (see RepositoryController.process).
+					Conditions: []metav1.Condition{{
+						Type:               provisioning.ConditionTypePathConflict,
+						Status:             metav1.ConditionTrue,
+						Reason:             provisioning.ReasonNoPathConflict,
+						Message:            noPathConflictMsg,
+						ObservedGeneration: 1,
+					}},
 				},
 			}
 

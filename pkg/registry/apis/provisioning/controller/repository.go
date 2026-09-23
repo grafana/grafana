@@ -1038,6 +1038,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	if err != nil {
 		return repoType, fmt.Errorf("check repository path conflict: %w", err)
 	}
+	hasPathConflictChanged := ConditionChanged(obj.Status.Conditions, pathConflictCondition)
 
 	// Blocked repos MUST process to check if they can unblock
 	forceProcessForUnblock := isCurrentlyBlocked && !isOverQuota
@@ -1121,6 +1122,9 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		logger.Info("repository token needs to be generated", "connection", obj.Spec.Connection.Name)
 	case hasQuotaChanged:
 		reason = "quota_changed"
+	case hasPathConflictChanged:
+		reason = "path_conflict_changed"
+		logger.Info("path conflict condition changed", "path_conflict_status", pathConflictCondition.Status)
 	case len(obj.Spec.Workflows) > 0 && repository.GetID(obj.Status.Webhook).IsEmpty():
 		reason = "webhook_missing"
 		logger.Info("webhook missing, reconciling")
