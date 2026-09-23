@@ -124,12 +124,16 @@ export const AnnotationsPlugin = ({
 
   const xAxisRef = useRef<HTMLDivElement | undefined>(undefined);
 
+  // Latest-value ref so uPlot hook closures don't capture a stale `annotations`.
+  const annotationsRef = useRef(annotations);
+  annotationsRef.current = annotations;
+
   useLayoutEffect(() => {
     config.addHook('ready', (u) => {
       xAxisRef.current = u.root.querySelector<HTMLDivElement>('.u-axis')!;
       plotRef.current = u;
       // If annos were defined before uPlot ready is called, we need to force the component to re-render annos now that uplot is available
-      if (annotations?.length) {
+      if (annotationsRef.current?.length) {
         forceUpdate();
       }
     });
@@ -141,7 +145,7 @@ export const AnnotationsPlugin = ({
       // If time range changed after the annotations were already rendered (since the panel query updates plot time range unlike annotation queries), we need to force react update to render updated marker locations
       if (plotRangeRef.current?.from !== newFrom || plotRangeRef.current?.to !== newTo) {
         plotRangeRef.current = { from: newFrom, to: newTo };
-        if (annotations?.length) {
+        if (annotationsRef.current?.length) {
           forceUpdate();
         }
       }
@@ -255,8 +259,15 @@ export const AnnotationsPlugin = ({
     options?.clustering,
     options?.lines?.width,
     options?.regions?.opacity,
-    annotations?.length,
   ]);
+
+  // Recover when annotations arrive after uPlot's `ready` already fired.
+  useEffect(() => {
+    if (plotRef.current && annotations?.length) {
+      plotRef.current.redraw(false, true);
+      forceUpdate();
+    }
+  }, [annotations]);
 
   // ensure clusteredAnnos are re-drawn whenever they change
   useEffect(() => {
