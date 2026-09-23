@@ -17,7 +17,8 @@ import cx from 'clsx';
 import { useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { Button, type IconName, Tooltip, useStyles2 } from '@grafana/ui';
+import { logError } from '@grafana/runtime';
+import { Button, copyTextToClipboard, type IconName, Tooltip, useStyles2 } from '@grafana/ui';
 
 const getStyles = () => ({
   CopyIcon: css({
@@ -44,9 +45,13 @@ export default function CopyIcon({ className, copyText, icon = 'copy', tooltipTi
 
   const [hasCopied, setHasCopied] = useState(false);
 
-  const handleClick = () => {
-    navigator.clipboard.writeText(copyText);
-    setHasCopied(true);
+  const handleClick = async () => {
+    try {
+      await copyTextToClipboard(copyText);
+      setHasCopied(true);
+    } catch (error) {
+      logError(error instanceof Error ? error : new Error(String(error)));
+    }
   };
 
   return (

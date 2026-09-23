@@ -43,14 +43,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "featureHighlights",
-			Description: "Highlight Grafana Enterprise features",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaOperatorExperienceSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "canvasPanelNesting",
 			Description: "Allow elements nesting",
 			Stage:       FeatureStageExperimental,
@@ -289,7 +281,7 @@ var (
 		},
 		{
 			Name:         "grafana.frontendLegacyFeatureToggleHandling",
-			Description:  `Controls how the frontend handles reads of the legacy config.featureToggles map. One of "off", "log" (report each toggle once) or "block" (report, and resolve every toggle to undefined).`,
+			Description:  `Controls how the frontend handles reads of the legacy config.featureToggles map. One of "off", "log" (warn in the console once per toggle), "alert" (also raise a warning alert) or "block" (console only, and resolve every toggle to undefined).`,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
@@ -1923,15 +1915,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "alertingDisableDMAinUI",
-			Description:  "Disables the DMA feature in the UI",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "preferLibraryPanelTitle",
 			Description: "Prefer library panel title over viz panel title.",
 			Stage:       FeatureStagePrivatePreview,
@@ -2596,14 +2579,6 @@ var (
 			RequiresRestart: true,
 			Expression:      "false",
 			Generate:        Generate{LegacyGo: true},
-		},
-		{
-			Name:        "react19",
-			Description: "Whether to use the new React 19 runtime",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "true",
 		},
 		{
 			Name:         "managedPluginsV2",

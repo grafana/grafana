@@ -27,7 +27,7 @@ func TestAggregateTarget_DiscoversAndFiltersGroups(t *testing.T) {
 		Name:          "baas_apiserver",
 		URL:           srv.URL,
 		GroupPatterns: []string{"*.grafana.app"},
-	}, srv.Client())
+	}, srv.Client(), srv.Client().Transport)
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(t.Context())
@@ -66,7 +66,7 @@ func TestAggregateTarget_CooldownLimitsRequestsWhileDown(t *testing.T) {
 	target, err := newAggregateTarget(aggregateTargetConfig{
 		Name: "baas_apiserver",
 		URL:  srv.URL,
-	}, srv.Client())
+	}, srv.Client(), srv.Client().Transport)
 	require.NoError(t, err)
 	target.cooldown = newCooldown(10*time.Millisecond, 200*time.Millisecond, time.Second)
 
@@ -111,7 +111,7 @@ func TestAggregateTarget_BackoffLadderDrivesRetries(t *testing.T) {
 	target, err := newAggregateTarget(aggregateTargetConfig{
 		Name: "baas_apiserver",
 		URL:  srv.URL,
-	}, srv.Client())
+	}, srv.Client(), srv.Client().Transport)
 	require.NoError(t, err)
 	target.cooldown = newCooldown(time.Second, 10*time.Millisecond, 40*time.Millisecond)
 
@@ -145,7 +145,7 @@ func TestAggregateTarget_SignalsDirtyOnlyOnKeySetChange(t *testing.T) {
 		Name:          "baas_apiserver",
 		URL:           srv.URL,
 		GroupPatterns: []string{"*.grafana.app"},
-	}, srv.Client())
+	}, srv.Client(), srv.Client().Transport)
 	require.NoError(t, err)
 
 	ctx := t.Context()
@@ -172,6 +172,55 @@ func TestAggregateTarget_SignalsDirtyOnlyOnKeySetChange(t *testing.T) {
 	}
 }
 
+// taggedTransport counts calls to distinguish discovery from resource traffic.
+type taggedTransport struct {
+	http.RoundTripper
+	calls int
+}
+
+func (t *taggedTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	t.calls++
+	return t.RoundTripper.RoundTrip(req)
+}
+
+// TestAggregateTarget_PollUsesDedicatedProxyTransportNotDiscoveryClient pins
+// the fix for aggregate targets signing real proxied resource requests with
+// the router's own CAP-token-derived credentials: the discovery client's
+// transport (CAP-token-wrapped, used only for the router's own /apis poll)
+// must never end up as the aggregateBackend's proxy transport (which carries
+// real caller traffic and must forward the caller's own credentials
+// transparently, same as forwardBackend).
+func TestAggregateTarget_PollUsesDedicatedProxyTransportNotDiscoveryClient(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		list := metav1.APIGroupList{Groups: []metav1.APIGroup{
+			{Name: "dashboard.grafana.app"},
+		}}
+		_ = json.NewEncoder(w).Encode(list)
+	}))
+	defer srv.Close()
+
+	discoveryTransport := &taggedTransport{RoundTripper: http.DefaultTransport}
+	proxyTransport := &taggedTransport{RoundTripper: http.DefaultTransport}
+	discoveryClient := &http.Client{Transport: discoveryTransport}
+
+	target, err := newAggregateTarget(aggregateTargetConfig{
+		Name: "baas_apiserver",
+		URL:  srv.URL,
+	}, discoveryClient, proxyTransport)
+	require.NoError(t, err)
+
+	target.poll(t.Context(), make(chan struct{}, 1))
+
+	backends := target.Backends()
+	require.Len(t, backends, 1)
+	ab, ok := backends[0].(*aggregateBackend)
+	require.True(t, ok)
+	discoveryCalls := discoveryTransport.calls
+	ab.proxy.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1", nil))
+	require.Equal(t, 1, proxyTransport.calls, "resource requests must use the dedicated proxy transport")
+	require.Equal(t, discoveryCalls, discoveryTransport.calls, "resource requests must not use the discovery credentials")
+}
+
 // TestNewAggregateTarget_RejectsNonAbsoluteURL pins the construction-time URL
 // check: url.Parse accepts all of these, so without the explicit scheme/host
 // rejection a misconfigured target would be built and its breakage would show
@@ -182,7 +231,7 @@ func TestNewAggregateTarget_RejectsNonAbsoluteURL(t *testing.T) {
 			_, err := newAggregateTarget(aggregateTargetConfig{
 				Name: "baas_apiserver",
 				URL:  badURL,
-			}, http.DefaultClient)
+			}, http.DefaultClient, http.DefaultTransport)
 			require.ErrorContains(t, err, "must be absolute")
 		})
 	}
@@ -192,7 +241,7 @@ func TestNewAggregateTarget_NormalizesTrailingSlash(t *testing.T) {
 	target, err := newAggregateTarget(aggregateTargetConfig{
 		Name: "baas_apiserver",
 		URL:  "https://baas.example.invalid/",
-	}, http.DefaultClient)
+	}, http.DefaultClient, http.DefaultTransport)
 	require.NoError(t, err)
 	require.Equal(t, "https://baas.example.invalid", target.base.String())
 }

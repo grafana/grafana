@@ -17,6 +17,7 @@ import { BarGaugeCell } from './BarGaugeCell';
 import { DataLinksCell, getStyles as getDataLinksStyles } from './DataLinksCell';
 import { GeoCell, getStyles as getGeoCellStyles } from './GeoCell';
 import { ImageCell, getStyles as getImageStyles } from './ImageCell';
+import { JsonCell } from './JsonCell';
 import { MarkdownCell, getStyles as getMarkdownCellStyles } from './MarkdownCell';
 import { PillCell, getStyles as getPillStyles } from './PillCell';
 import { SparklineCell, getStyles as getSparklineCellStyles } from './SparklineCell';
@@ -56,7 +57,7 @@ const CELL_REGISTRY: Record<TableCellOptions['type'], CellRegistryEntry> = {
     getStyles: getAutoCellStyles,
   },
   [TableCellDisplayMode.JSONView]: {
-    renderer: AutoCellRenderer,
+    renderer: wrapComponentInMemo(JsonCell, 'JsonCellRenderer'),
     getStyles: getJsonCellStyles,
   },
   [TableCellDisplayMode.Actions]: {

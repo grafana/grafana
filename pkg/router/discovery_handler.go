@@ -85,7 +85,7 @@ func (cr *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *ht
 
 func backendDiscovery(req *http.Request, name string, entry servingEntry) apidiscoveryv2.APIGroupDiscovery {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		serveThroughBreaker(entry.breaker, entry.handler, w, r)
+		serveThroughBreaker(entry.breaker, name, entry.handler, w, r)
 	})
 	var list apidiscoveryv2.APIGroupDiscoveryList
 	status, err := readDiscovery(req, handler, apisPrefix, aggregatedDiscoveryJSON, &list)
