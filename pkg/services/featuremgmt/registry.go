@@ -2590,14 +2590,6 @@ var (
 			Generate:        Generate{LegacyGo: true},
 		},
 		{
-			Name:        "react19",
-			Description: "Whether to use the new React 19 runtime",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "true",
-		},
-		{
 			Name:         "managedPluginsV2",
 			Description:  "Enables managed plugins v2 (expanded rollout, community plugin coverage)",
 			Stage:        FeatureStageExperimental,

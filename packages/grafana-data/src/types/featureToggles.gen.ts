@@ -1257,11 +1257,6 @@ export interface FeatureToggles {
   */
   alertingNotificationHistoryDetail?: boolean;
   /**
-  * Whether to use the new React 19 runtime
-  * @default true
-  */
-  react19?: boolean;
-  /**
   * Enables managed plugins v2 (expanded rollout, community plugin coverage)
   * @default false
   */
