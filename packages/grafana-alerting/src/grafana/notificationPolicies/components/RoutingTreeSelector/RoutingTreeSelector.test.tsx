@@ -1,3 +1,5 @@
+import { type ThunkDispatch, type UnknownAction } from '@reduxjs/toolkit';
+
 import { generatedAPI as notificationsAPIv1beta1 } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { setupMockServer } from '@grafana/test-utils/server';
@@ -230,13 +232,16 @@ describe('a refetch that fails after a successful load', () => {
   // and the user's visible selection, so the list has to survive a failed refetch.
   it('keeps showing the list instead of swapping in the error alert', async () => {
     const { store } = render(<RoutingTreeSelector value="team-platform" onChange={jest.fn()} />);
+    // The shared test store is typed without its thunk middleware (the full type cannot be written out),
+    // so tell TypeScript that dispatch accepts the thunk returned by `initiate`.
+    const dispatch = store.dispatch as ThunkDispatch<unknown, unknown, UnknownAction>;
 
     expect(await screen.findByDisplayValue('team-platform')).toBeInTheDocument();
 
     // Now the endpoint starts failing, and something refetches the entry we're subscribed to.
     server.use(...routingTreeWithErrorScenario);
     await act(async () => {
-      await store.dispatch(notificationsAPIv1beta1.endpoints.listRoutingTree.initiate({}, { forceRefetch: true }));
+      await dispatch(notificationsAPIv1beta1.endpoints.listRoutingTree.initiate({}, { forceRefetch: true }));
     });
 
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
