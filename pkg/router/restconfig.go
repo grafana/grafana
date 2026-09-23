@@ -22,6 +22,7 @@ type loopbackRestConfigProvider struct {
 }
 
 func (p *loopbackRestConfigProvider) GetRestConfig(context.Context) (*clientrest.Config, error) {
+	// Host is a placeholder - requests forward directly to the provided handler.
 	return &clientrest.Config{Host: "http://router", Transport: p}, nil
 }
 
