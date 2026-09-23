@@ -615,6 +615,7 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		searchClient:                   opts.SearchClient,
 		quotasConfig:                   opts.QuotasConfig,
 		searchBackedListResources:      opts.SearchBackedListConfig,
+		manifestSearchFields:           opts.Search.SearchFields,
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 		bookmarkFrequency:              opts.BookmarkFrequency,
 		vectorWriteReconciler:          opts.VectorReconciler,
@@ -713,6 +714,10 @@ type server struct {
 	overridesService          *OverridesService
 	quotasConfig              QuotasConfig
 	searchBackedListResources SearchBackedListConfig
+	// Kind declarations from the manifests, refreshed by the manifest watcher. List
+	// reads the selectable fields from it before asking an index about a selector.
+	// May be nil.
+	manifestSearchFields *SearchFieldsRegistry
 
 	// Background watch task -- this has permissions for everything
 	ctx         context.Context

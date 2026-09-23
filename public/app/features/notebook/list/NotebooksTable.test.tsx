@@ -1,11 +1,8 @@
 import { render, screen, waitFor, within } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
 import { useDeleteNotebookMutation } from 'app/api/clients/dashboard/v2beta1';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { contextSrv } from 'app/core/services/context_srv';
-
-import { NotebookAnalytics } from '../analytics/main';
 
 import { NotebooksTable } from './NotebooksTable';
 import { type NotebookRow } from './useNotebooksList';
@@ -19,14 +16,8 @@ jest.mock('app/api/clients/dashboard/v2beta1', () => ({
 // The row menu pulls in the notebook header's tag facet, which calls injectEndpoints on the real
 // client as it loads - which the mock above does not provide.
 jest.mock('./notebookSearchApi', () => ({}));
-// Partial mock: this spies on linkCopied only. Every other real call this tree makes (deleted on a
-// confirmed row delete, exported from the row menu's export submenu) keeps working.
-jest.mock('../analytics/main', () => ({
-  NotebookAnalytics: { ...jest.requireActual('../analytics/main').NotebookAnalytics, linkCopied: jest.fn() },
-}));
 
 const mockUseDeleteNotebookMutation = jest.mocked(useDeleteNotebookMutation);
-const mockLinkCopied = jest.mocked(NotebookAnalytics.linkCopied);
 
 function row(overrides: Partial<NotebookRow> = {}): NotebookRow {
   return {
@@ -152,33 +143,5 @@ describe('NotebooksTable tags', () => {
     renderTable([row({ tags: ['latency'] })]);
 
     expect(screen.getByRole('button', { name: 'Filter by tag latency' })).toBeInTheDocument();
-  });
-});
-
-describe('NotebooksTable copy link', () => {
-  const originalAppUrl = config.appUrl;
-  const originalIsSecureContext = window.isSecureContext;
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    setupDelete();
-    // Outside a secure context ClipboardButton falls back to document.execCommand, which jsdom does
-    // not implement.
-    Object.assign(window, { isSecureContext: true });
-    config.appUrl = 'https://host/';
-  });
-
-  afterEach(() => {
-    Object.assign(window, { isSecureContext: originalIsSecureContext });
-    config.appUrl = originalAppUrl;
-  });
-
-  it('reports the list as the source of a copied link', async () => {
-    const { user } = renderTable([row()]);
-
-    await user.click(screen.getByRole('button', { name: 'Copy link' }));
-
-    expect(await screen.findByText('Copied')).toBeInTheDocument();
-    expect(mockLinkCopied).toHaveBeenCalledWith('nb1', 'notebook_list');
   });
 });

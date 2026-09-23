@@ -209,13 +209,22 @@ const getStyles = (
       maxHeight: '50vh',
       overflowY: 'auto',
     }),
-    close: css({
-      position: 'relative',
-      color: theme.colors.text.secondary,
-      background: 'none',
-      display: 'flex',
-      top: '-6px',
-      right: '-14px',
-    }),
+    close: css(
+      {
+        position: 'relative',
+        color: theme.colors.text.secondary,
+        background: 'none',
+        display: 'flex',
+        top: '-6px',
+        right: '-14px',
+      },
+      visualRefreshEnabled && {
+        button: {
+          '&:hover, &:focus': {
+            backgroundColor: `color-mix(in srgb, ${color.subtleBackground} 94%, ${iconColor} 6%)`,
+          },
+        },
+      }
+    ),
   };
 };

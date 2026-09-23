@@ -25,6 +25,9 @@ type Metrics struct {
 
 	TagCacheHits   prometheus.Counter
 	TagCacheMisses prometheus.Counter
+
+	FolderCacheHits   prometheus.Counter
+	FolderCacheMisses prometheus.Counter
 }
 
 // ProvideMetrics builds and registers the metrics collectors
@@ -87,6 +90,18 @@ func ProvideMetrics(reg prometheus.Registerer) *Metrics {
 			Subsystem: metricsSubsystem,
 			Name:      "tag_cache_misses_total",
 			Help:      "Cumulative number of tag cache misses in the postgres backend.",
+		}),
+		FolderCacheHits: f.NewCounter(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      "folder_cache_hits_total",
+			Help:      "Cumulative number of dashboard folder resolver cache hits.",
+		}),
+		FolderCacheMisses: f.NewCounter(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      "folder_cache_misses_total",
+			Help:      "Cumulative number of dashboard folder resolver cache misses.",
 		}),
 	}
 }

@@ -286,6 +286,7 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     bodyWrapperKiosk: css({
+      flex: 1,
       padding: theme.spacing(0, 2, 2, 2),
     }),
     scrollContainer: css({
