@@ -28,7 +28,7 @@ require (
 	github.com/PaesslerAG/jsonpath v0.1.1 // @grafana/grafana-search-and-storage
 	github.com/VividCortex/mysqlerr v1.0.0 // @grafana/grafana-backend-group
 	github.com/alicebob/miniredis/v2 v2.38.0 // @grafana/alerting-backend
-	github.com/andybalholm/brotli v1.2.1 // @grafana/data-sources-plugins
+	github.com/andybalholm/brotli v1.2.2 // @grafana/data-sources-plugins
 	github.com/apache/arrow-go/v18 v18.6.0 // @grafana/grafana-catalog
 	github.com/armon/go-radix v1.0.0 // @grafana/grafana-app-platform-squad
 	github.com/aws/aws-sdk-go v1.55.8 // indirect; @grafana/data-sources-plugins
@@ -143,7 +143,7 @@ require (
 	github.com/lib/pq v1.12.3 // @grafana/grafana-backend-group
 	github.com/m3db/prometheus_remote_client_golang v0.4.4 // @grafana/grafana-backend-group
 	github.com/madflojo/testcerts v1.5.0 // @grafana/alerting-backend
-	github.com/mattn/go-isatty v0.0.22 // @grafana/grafana-backend-group
+	github.com/mattn/go-isatty v0.0.23 // @grafana/grafana-backend-group
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // @grafana/alerting-backend
 	github.com/microsoft/go-mssqldb v1.10.0 // @grafana/data-sources-plugins
 	github.com/migueleliasweb/go-github-mock v1.5.0 // @grafana/grafana-git-ui-sync-team
@@ -151,21 +151,21 @@ require (
 	github.com/mocktools/go-smtp-mock/v2 v2.5.4 // @grafana/grafana-backend-group
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // @grafana/alerting-backend
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // @grafana/grafana-operator-experience-squad
-	github.com/oklog/ulid/v2 v2.1.1 // @grafana/grafana-search-and-storage
+	github.com/oklog/ulid/v2 v2.1.2 // @grafana/grafana-search-and-storage
 	github.com/olekukonko/tablewriter v1.1.4 // @grafana/grafana-backend-group
 	github.com/open-feature/go-sdk v1.17.2 // @grafana/grafana-backend-group
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.7 // @grafana/grafana-backend-group
 	github.com/openai/openai-go/v3 v3.16.0 // @grafana/grafana-search-and-storage
 	github.com/openfga/api/proto v0.0.0-20260319214821-f153694bfc20 // @grafana/identity-access-team
-	github.com/openfga/language/pkg/go v0.2.1 // @grafana/identity-access-team
-	github.com/openfga/openfga v1.18.0 // @grafana/identity-access-team
+	github.com/openfga/language/pkg/go v0.3.2-0.20260730144454-83fedf8a4e70 // @grafana/identity-access-team
+	github.com/openfga/openfga v1.18.3 // @grafana/identity-access-team
 	github.com/patrickmn/go-cache v2.1.0+incompatible // @grafana/alerting-backend
 	github.com/pgvector/pgvector-go v0.3.0 // @grafana/grafana-search-and-storage
-	github.com/pressly/goose/v3 v3.27.1 // @grafana/identity-access-team
+	github.com/pressly/goose/v3 v3.27.3 // @grafana/identity-access-team
 	github.com/prometheus/alertmanager v0.32.1 // @grafana/alerting-backend
-	github.com/prometheus/client_golang v1.23.2 // @grafana/alerting-backend
+	github.com/prometheus/client_golang v1.24.0 // @grafana/alerting-backend
 	github.com/prometheus/client_model v0.6.2 // @grafana/grafana-backend-group
-	github.com/prometheus/common v0.68.1 // @grafana/alerting-backend
+	github.com/prometheus/common v0.70.0 // @grafana/alerting-backend
 	github.com/prometheus/prometheus v0.312.0 // @grafana/alerting-backend
 	github.com/prometheus/sigv4 v0.4.1 // @grafana/alerting-backend
 	github.com/puzpuzpuz/xsync/v4 v4.5.0 // @grafana/grafana-backend-group
@@ -438,7 +438,7 @@ require (
 	github.com/envoyproxy/protoc-gen-validate v1.3.3 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
 	github.com/facette/natsort v0.0.0-20181210072756-2cd4dd1e2dcb // indirect
-	github.com/felixge/httpsnoop v1.0.4 // indirect
+	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
 	github.com/gammazero/deque v0.2.1 // indirect
 	github.com/go-asn1-ber/asn1-ber v1.5.4 // indirect
@@ -529,7 +529,7 @@ require (
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/jszwedko/go-datemath v0.1.1-0.20230526204004-640a500621d6 // indirect
 	github.com/jtolds/gls v4.20.0+incompatible // indirect
-	github.com/klauspost/compress v1.18.7 // indirect
+	github.com/klauspost/compress v1.19.1 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
@@ -563,8 +563,8 @@ require (
 	github.com/mithrandie/ternary v1.1.1 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/go-archive v0.3.3 // indirect
-	github.com/moby/moby/api v1.54.2 // indirect
-	github.com/moby/moby/client v0.4.1 // indirect
+	github.com/moby/moby/api v1.55.0 // indirect
+	github.com/moby/moby/client v0.5.0 // indirect
 	github.com/moby/patternmatcher v0.6.1 // indirect
 	github.com/moby/spdystream v0.5.1 // indirect
 	github.com/moby/sys/sequential v0.7.0 // indirect
@@ -602,7 +602,7 @@ require (
 	github.com/pb33f/ordered-map/v2 v2.3.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/phpdave11/gofpdi v1.0.14 // indirect
-	github.com/pierrec/lz4/v4 v4.1.26 // indirect
+	github.com/pierrec/lz4/v4 v4.1.27 // indirect
 	github.com/pires/go-proxyproto v0.11.0 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pkg/errors v0.9.1 // indirect
@@ -613,7 +613,7 @@ require (
 	github.com/prometheus/common/sigv4 v0.1.0 // indirect
 	github.com/prometheus/exporter-toolkit v0.16.0 // indirect
 	github.com/prometheus/otlptranslator v1.0.0 // indirect
-	github.com/prometheus/procfs v0.20.1 // indirect
+	github.com/prometheus/procfs v0.21.1 // indirect
 	github.com/puzpuzpuz/xsync/v2 v2.5.1 // indirect
 	github.com/quagmt/udecimal v1.9.0 // indirect
 	github.com/redis/go-redis/extra/rediscmd/v9 v9.19.0 // indirect
@@ -629,7 +629,7 @@ require (
 	github.com/segmentio/encoding v0.5.3 // indirect
 	github.com/sercand/kuberesolver/v6 v6.0.1 // indirect
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
-	github.com/sethvargo/go-retry v0.3.0 // indirect
+	github.com/sethvargo/go-retry v0.4.0 // indirect
 	github.com/shadowspore/fossil-delta v0.0.0-20241213113458-1d797d70cbe3 // indirect
 	github.com/shirou/gopsutil/v4 v4.26.3 // indirect
 	github.com/shurcooL/httpfs v0.0.0-20230704072500-f1e31cf0ba5c // indirect
@@ -693,7 +693,7 @@ require (
 	go.yaml.in/yaml/v4 v4.0.0-rc.4 // indirect
 	go4.org/netipx v0.0.0-20230125063823-8449b0a6169f // indirect
 	golang.org/x/crypto v0.56.0 // indirect
-	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f // indirect
+	golang.org/x/exp v0.0.0-20260718201538-764159d718ef // indirect
 	golang.org/x/mod v0.38.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/telemetry v0.0.0-20260708182218-49f421fb7959 // indirect
@@ -712,10 +712,10 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/kms v0.36.0 // indirect
 	k8s.io/streaming v0.36.1 // indirect
-	modernc.org/libc v1.72.3 // indirect
+	modernc.org/libc v1.74.3 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
-	modernc.org/sqlite v1.52.0 // indirect
+	modernc.org/sqlite v1.54.0 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.34.0 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
