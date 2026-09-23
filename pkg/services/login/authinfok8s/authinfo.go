@@ -13,6 +13,7 @@ import (
 	"golang.org/x/oauth2"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -86,13 +87,27 @@ func (s *Store) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) 
 	ctx, span := s.tracer.Start(ctx, "authinfo.k8s.GetAuthInfo")
 	defer span.End()
 
-	if query.UserId == 0 {
-		return nil, errors.New("authinfok8s: GetAuthInfo requires a non-zero UserId")
-	}
-
 	authClient, userClient, namespace, err := s.clients(ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	if query.UserId == 0 {
+		if query.AuthId == "" {
+			return nil, errors.New("authinfok8s: GetAuthInfo requires UserId or AuthId")
+		}
+
+		item, err := s.findByAuthID(ctx, authClient, namespace, query.AuthModule, query.AuthId)
+		if err != nil {
+			return nil, err
+		}
+
+		userID, err := s.legacyUserID(ctx, userClient, namespace, item.Spec.UserRef.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		return toUserAuth(userID, item), nil
 	}
 
 	userUID, err := s.userUID(ctx, userClient, namespace, query.UserId)
@@ -345,6 +360,48 @@ func (s *Store) orgID(ctx context.Context) (int64, error) {
 	}
 
 	return 0, errors.New("authinfok8s: no org ID available in context")
+}
+
+// legacyUserID resolves a User resource's UID back to its legacy internal user ID.
+func (s *Store) legacyUserID(ctx context.Context, client *iamv0alpha1.UserClient, namespace, userUID string) (int64, error) {
+	u, err := client.Get(ctx, resource.Identifier{Namespace: namespace, Name: userUID})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return 0, user.ErrUserNotFound
+		}
+		return 0, err
+	}
+
+	meta, err := utils.MetaAccessor(u)
+	if err != nil {
+		return 0, err
+	}
+
+	return meta.GetDeprecatedInternalID(), nil // nolint:staticcheck
+}
+
+// findByAuthID looks up the most-recently-created AuthInfo object matching
+// authModule + authID, across all users.
+func (s *Store) findByAuthID(ctx context.Context, client *iamv0alpha1.AuthInfoClient, namespace, authModule, authID string) (iamv0alpha1.AuthInfo, error) {
+	selectors := []string{"spec.authID=" + fields.EscapeValue(authID)}
+	if authModule != "" {
+		selectors = append(selectors, "spec.authModule="+fields.EscapeValue(authModule))
+	}
+
+	list, err := client.ListAll(ctx, namespace, resource.ListOptions{FieldSelectors: selectors})
+	if err != nil {
+		return iamv0alpha1.AuthInfo{}, err
+	}
+	if len(list.Items) == 0 {
+		return iamv0alpha1.AuthInfo{}, user.ErrUserNotFound
+	}
+
+	items := list.Items
+	sort.SliceStable(items, func(i, j int) bool {
+		return created(items[i]).After(created(items[j]))
+	})
+
+	return items[0], nil
 }
 
 // userUID resolves a legacy internal user ID to the User resource's UID
