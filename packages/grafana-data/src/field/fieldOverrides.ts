@@ -9,6 +9,7 @@ import { compareArrayValues, compareDataFrameStructures } from '../dataframe/fra
 import { guessFieldTypeForField } from '../dataframe/guessFieldType';
 import { createDataFrame } from '../dataframe/processDataFrame';
 import { type PanelPlugin } from '../panel/PanelPlugin';
+import { isVarMappingProp, unwrapVarMappingPropId } from '../panel/getPanelOptionsWithDefaults';
 import { asHexString } from '../themes/colorManipulator';
 import { type GrafanaTheme2 } from '../themes/types';
 import { fieldMatchers } from '../transformations/matchers';
@@ -28,6 +29,7 @@ import {
   type DynamicConfigValue,
   type ApplyFieldOverrideOptions,
   type FieldOverrideContext,
+  type FieldConfigPropertyItem,
   type DataLinkPostProcessor,
   type FieldConfigSource,
 } from '../types/fieldOverrides';
@@ -40,6 +42,7 @@ import { locationUtil } from '../utils/location';
 
 import { type FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
+import { numberOverrideProcessor, resolveVarMapping } from './overrides/processors';
 import { getMinMaxAndDelta } from './scale';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 
@@ -183,6 +186,11 @@ export function applyFieldOverrides(
         dataFrameIndex: index,
         replaceVariables: options.replaceVariables,
         fieldConfigRegistry: fieldConfigRegistry,
+        // Working map of field-config property id -> variable expression. Seeded from defaults
+        // and augmented below with synthetic `varMappings.<id>` override entries as rules run,
+        // so a later rule's mapping for one property never disturbs an earlier rule's (or the
+        // defaults') mapping for a different property.
+        varMappings: { ...source.defaults.varMappings },
       };
 
       // Anything in the field config that's not set by the datasource
@@ -192,7 +200,18 @@ export function applyFieldOverrides(
       // Find any matching rules and then override
       for (const rule of override) {
         if (rule.match(field, newFrame, data)) {
+          // Two sub-passes so entry order within a rule doesn't matter: first collect any
+          // synthetic `varMappings.<id>` entries into context.varMappings, then apply the real
+          // properties (which may now consult the just-updated varMappings for their own id).
           for (const prop of rule.properties) {
+            if (isVarMappingProp(prop) && typeof prop.value === 'string') {
+              context.varMappings[unwrapVarMappingPropId(prop.id)] = prop.value;
+            }
+          }
+          for (const prop of rule.properties) {
+            if (isVarMappingProp(prop)) {
+              continue;
+            }
             // config.scopedVars is set already here
             setDynamicConfigValue(config, prop, context);
           }
@@ -387,6 +406,32 @@ export interface FieldOverrideEnv extends FieldOverrideContext {
   fieldConfigRegistry: FieldConfigOptionsRegistry;
 }
 
+/**
+ * Consults `context.varMappings` for a property registered with `numberOverrideProcessor`
+ * (and not opted out via `allowVariables: false`) and, if a mapping is present and resolves to a
+ * finite number, returns that number in place of `rawValue`. Otherwise returns `rawValue`
+ * unchanged — a failed resolution is indistinguishable from "no expression was set", which is
+ * exactly the fallback-to-stored-value semantics `valueExpr` established for thresholds.
+ */
+function resolveVarMappingInput(
+  item: FieldConfigPropertyItem,
+  varMappingId: string,
+  rawValue: unknown,
+  context: FieldOverrideEnv
+): unknown {
+  if (item.process !== numberOverrideProcessor || item.allowVariables === false) {
+    return rawValue;
+  }
+
+  const expr = context.varMappings?.[varMappingId];
+  if (typeof expr !== 'string') {
+    return rawValue;
+  }
+
+  const resolved = resolveVarMapping(expr, context);
+  return resolved !== undefined ? resolved : rawValue;
+}
+
 export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, context: FieldOverrideEnv) {
   const reg = context.fieldConfigRegistry;
   const item = reg.getIfExists(value.id);
@@ -395,7 +440,7 @@ export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigV
     return;
   }
 
-  let val = item.process(value.value, context, item.settings);
+  let val = item.process(resolveVarMappingInput(item, value.id, value.value, context), context, item.settings);
 
   const remove = val === undefined || val === null;
 
@@ -470,7 +515,8 @@ export function setFieldConfigDefaults(config: FieldConfig, defaults: FieldConfi
       }
 
       if (item.shouldApply(context.field!)) {
-        const val = item.process(get(source, item.path), context, item.settings);
+        const rawValue = resolveVarMappingInput(item, item.id, get(source, item.path), context);
+        const val = item.process(rawValue, context, item.settings);
         if (val != null) {
           set(destination, item.path, val);
         }

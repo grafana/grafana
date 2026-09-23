@@ -2,7 +2,7 @@ import { type FieldOverrideContext } from '../../types/fieldOverrides';
 import { type InterpolateFunction } from '../../types/panel';
 import { ThresholdsMode } from '../../types/thresholds';
 
-import { thresholdsOverrideProcessor } from './processors';
+import { resolveVarMapping, thresholdsOverrideProcessor } from './processors';
 
 /**
  * Emulates the function-format calling convention shared by sceneGraph.interpolate and
@@ -211,5 +211,43 @@ describe('thresholdsOverrideProcessor', () => {
     thresholdsOverrideProcessor(value, makeContext({ t: '5' }));
 
     expect(value.steps).toEqual(stepsCopy);
+  });
+});
+
+describe('resolveVarMapping', () => {
+  it('resolves a single-value variable to a number', () => {
+    expect(resolveVarMapping('$t', makeContext({ t: '50' }))).toBe(50);
+  });
+
+  it('resolves ${var} syntax and numbers passed as raw values', () => {
+    expect(resolveVarMapping('${t}', makeContext({ t: 50 }))).toBe(50);
+  });
+
+  it('accepts a multi-value variable with exactly one selected value', () => {
+    expect(resolveVarMapping('$multi', makeContext({ multi: ['42'] }))).toBe(42);
+  });
+
+  it('falls back (returns undefined) for a multi-value variable with more than one selected value', () => {
+    expect(resolveVarMapping('$multi', makeContext({ multi: ['25', '75'] }))).toBeUndefined();
+  });
+
+  it('falls back for an unknown variable', () => {
+    expect(resolveVarMapping('$nope', makeContext({}))).toBeUndefined();
+  });
+
+  it('parses strictly: values like "80ms" fall back instead of parsing as 80', () => {
+    expect(resolveVarMapping('$latency', makeContext({ latency: '80ms' }))).toBeUndefined();
+  });
+
+  it('falls back when the expression resolves to an empty string', () => {
+    expect(resolveVarMapping('$empty', makeContext({ empty: '  ' }))).toBeUndefined();
+  });
+
+  it('accepts numeric values with surrounding whitespace', () => {
+    expect(resolveVarMapping('$padded', makeContext({ padded: ' 42 ' }))).toBe(42);
+  });
+
+  it('falls back when context.replaceVariables is missing', () => {
+    expect(resolveVarMapping('$t', makeContext())).toBeUndefined();
   });
 });

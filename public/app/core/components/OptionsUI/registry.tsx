@@ -349,6 +349,7 @@ export const getAllStandardFieldConfigs = () => {
     editor: standardEditorsRegistry.get('number').editor,
     override: standardEditorsRegistry.get('number').editor,
     process: numberOverrideProcessor,
+    allowVariables: true,
 
     settings: {
       placeholder: t('options-ui.registry.standard-field-configs.placeholder-min', 'auto'),
@@ -369,6 +370,7 @@ export const getAllStandardFieldConfigs = () => {
     editor: standardEditorsRegistry.get('number').editor,
     override: standardEditorsRegistry.get('number').editor,
     process: numberOverrideProcessor,
+    allowVariables: true,
 
     settings: {
       placeholder: t('options-ui.registry.standard-field-configs.placeholder-max', 'auto'),
@@ -386,6 +388,7 @@ export const getAllStandardFieldConfigs = () => {
     editor: standardEditorsRegistry.get('number').editor,
     override: standardEditorsRegistry.get('number').editor,
     process: numberOverrideProcessor,
+    allowVariables: true,
 
     settings: {
       placeholder: t('options-ui.registry.standard-field-configs.placeholder-decimals', 'auto'),

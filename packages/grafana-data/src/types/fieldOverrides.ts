@@ -66,6 +66,13 @@ export interface FieldConfigSource<TOptions = any> {
 export interface FieldOverrideContext extends StandardEditorContext<any> {
   field?: Field;
   dataFrameIndex?: number; // The index for the selected field frame
+  /**
+   * Per-field working map of field-config property id -> variable expression, seeded from
+   * `defaults.varMappings` and augmented with synthetic `varMappings.<id>` override entries as
+   * the override-rule loop runs. Consulted by the resolution pre-pass in `fieldOverrides.ts`
+   * before a `numberOverrideProcessor`-backed property is processed.
+   */
+  varMappings?: Record<string, string>;
 }
 
 /** @deprecated Use StandardEditorProps instead */
@@ -87,6 +94,14 @@ export interface FieldConfigEditorConfig<TOptions, TSettings = any, TValue = any
 
   /** Indicates that option should not be available for the overrides */
   hideFromOverrides?: boolean;
+
+  /**
+   * Opt-in flag for `varMappings` expression support on `addNumberInput`/`addSliderInput` custom
+   * options. Only meaningful for those two builders (both register `numberOverrideProcessor`);
+   * ignored by every other builder. Defaults to `false`, so existing plugin custom options are
+   * unaffected unless the plugin explicitly opts in.
+   */
+  allowVariables?: boolean;
 
   /**
    * Controls whether this option is offered in the "Add override property" picker, based on the
@@ -155,6 +170,15 @@ export interface FieldConfigPropertyItem<
 
   /** Checks if field should be processed */
   shouldApply: (field: Field) => boolean;
+
+  /**
+   * Opt-in flag for `varMappings` expression support. Only meaningful for properties registered
+   * with `numberOverrideProcessor`; ignored otherwise. Standard numeric properties (`min`, `max`,
+   * `decimals`) set this to `true`. Plugin custom options built with `addNumberInput`/
+   * `addSliderInput` default to `false` (see `FieldConfigEditorConfig.allowVariables`) so existing
+   * plugins are unaffected unless they opt in.
+   */
+  allowVariables?: boolean;
 }
 
 export type DataLinkPostProcessorOptions = {

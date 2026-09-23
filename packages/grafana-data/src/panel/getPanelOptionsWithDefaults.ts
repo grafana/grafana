@@ -75,8 +75,13 @@ function applyFieldConfigDefaults(existingFieldConfig: FieldConfigSource, plugin
     fixThresholds(result.defaults.thresholds);
   }
 
-  // Filter out overrides for properties that cannot be found in registry
+  // Filter out overrides for properties that cannot be found in registry. varMappings.<id>
+  // synthetic entries are never themselves registered (see setDynamicConfigValue/varMappings
+  // pre-pass in fieldOverrides.ts) - check the wrapped property id instead.
   result.overrides = filterFieldConfigOverrides(result.overrides, (prop) => {
+    if (isVarMappingProp(prop)) {
+      return plugin.fieldConfigRegistry.getIfExists(unwrapVarMappingPropId(prop.id)) !== undefined;
+    }
     return plugin.fieldConfigRegistry.getIfExists(prop.id) !== undefined;
   });
 
@@ -113,6 +118,14 @@ function cleanProperties(obj: object, parentPath: string, fieldConfigRegistry: F
   let found = false;
 
   for (const [propName, value] of Object.entries(obj)) {
+    // varMappings is a flat property-id -> expression sidecar map, not itself a registered
+    // field-config property (and its keys, e.g. 'min' or 'custom.lineWidth', aren't paths within
+    // it in the registry sense) - always keep it rather than pruning "unknown" keys out of it.
+    if (parentPath === '' && propName === 'varMappings') {
+      found = true;
+      continue;
+    }
+
     const fullPath = `${parentPath}${propName}`;
     const existsInRegistry = !!fieldConfigRegistry.getIfExists(fullPath);
 
@@ -242,4 +255,28 @@ export function isCustomFieldProp(prop: DynamicConfigValue): boolean {
  */
 export function isStandardFieldProp(prop: DynamicConfigValue): boolean {
   return !isCustomFieldProp(prop);
+}
+
+const VAR_MAPPING_PROP_PREFIX = 'varMappings.';
+
+/**
+ * True for a synthetic `varMappings.<id>` override entry (e.g. `varMappings.min`,
+ * `varMappings.custom.lineWidth`) added alongside a property's normal override entry to put it
+ * into expression mode. See the "Overrides: synthetic per-property ids" section of the
+ * vars-in-panel-field-config-varmappings spec.
+ * Used internally, not intended for external use.
+ * @internal
+ */
+export function isVarMappingProp(prop: DynamicConfigValue): boolean {
+  return prop.id.startsWith(VAR_MAPPING_PROP_PREFIX);
+}
+
+/**
+ * Strips the `varMappings.` prefix off a synthetic override entry id, returning the wrapped
+ * property's own id (e.g. `varMappings.custom.lineWidth` -> `custom.lineWidth`).
+ * Used internally, not intended for external use.
+ * @internal
+ */
+export function unwrapVarMappingPropId(id: string): string {
+  return id.slice(VAR_MAPPING_PROP_PREFIX.length);
 }

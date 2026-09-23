@@ -50,6 +50,8 @@ export class FieldConfigEditorBuilder<TOptions, TContextOptions = unknown> exten
       process: numberOverrideProcessor,
       shouldApply: config.shouldApply ?? (() => true),
       settings: config.settings || {},
+      // Explicit `false` (not left `undefined`) so plugins that don't opt in are unambiguously excluded
+      allowVariables: config.allowVariables ?? false,
     });
   }
 
@@ -64,6 +66,8 @@ export class FieldConfigEditorBuilder<TOptions, TContextOptions = unknown> exten
       process: numberOverrideProcessor,
       shouldApply: config.shouldApply ?? (() => true),
       settings: config.settings || {},
+      // Explicit `false` (not left `undefined`) so plugins that don't opt in are unambiguously excluded
+      allowVariables: config.allowVariables ?? false,
     });
   }
 

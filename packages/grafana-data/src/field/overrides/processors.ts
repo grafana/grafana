@@ -124,6 +124,41 @@ export const stringOverrideProcessor = (
   return `${value}`;
 };
 
+/**
+ * Resolves a `varMappings` variable expression (e.g. `$myVar`) against the current variable
+ * values, for use as the input to a `numberOverrideProcessor`-backed field-config property.
+ * Returns `undefined` (never a broken/NaN value) when the expression is missing a
+ * `replaceVariables` context, resolves to something non-numeric, or the referenced variable
+ * currently has more than one value selected — callers fall back to the property's stored value.
+ */
+export function resolveVarMapping(expr: string, context: FieldOverrideContext): number | undefined {
+  if (!context.replaceVariables) {
+    return undefined;
+  }
+
+  // The function format exposes raw variable values at interpolation time:
+  // multi-value selections arrive as arrays and are only valid with exactly one value selected
+  let multiInvalid = false;
+  const text = context
+    .replaceVariables(expr, context.field?.state?.scopedVars, (v: unknown) => {
+      if (Array.isArray(v)) {
+        if (v.length > 1) {
+          multiInvalid = true;
+          return '';
+        }
+        return String(v[0]);
+      }
+      return String(v);
+    })
+    .trim();
+
+  // Strict parsing: Number() rejects partial-numeric strings like '80ms';
+  // unknown variables are left uninterpolated and fail parsing the same way
+  const num = text === '' ? NaN : Number(text);
+
+  return multiInvalid || !Number.isFinite(num) ? undefined : num;
+}
+
 export interface ThresholdsFieldConfigSettings {
   // Anything?
 }
