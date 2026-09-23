@@ -19,10 +19,13 @@ import { useDragAndDrop } from '@grafana/ui/internal';
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
-import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
+import { getLayoutOrchestratorFor, useDashboardState, useInterpolatedTitle } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { SectionVariableControls } from '../VariableControls';
 import { LayoutModeIndicator } from '../layouts-shared/LayoutModeIndicator';
+import { isDndEngineEnabled } from '../layouts-shared/isDndEngineEnabled';
+import { LIST_ITEM_KEY_ATTR } from '../layouts-shared/list-dnd/attributes';
+import { isInteractiveTarget, useIsListItemDragging } from '../layouts-shared/list-dnd/useListDragPreview';
 import { mapIdToGridLayoutType } from '../layouts-shared/utils';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
@@ -69,7 +72,10 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const layoutType = mapIdToGridLayoutType(layout.descriptor.id);
 
   const isDraggable = !isClone && isEditing;
-  const { Draggable } = useDragAndDrop(isDraggable);
+  const isEngine = isDndEngineEnabled();
+  const { Draggable } = useDragAndDrop(isDraggable && !isEngine);
+  const orchestrator = getLayoutOrchestratorFor(model);
+  const isListDragging = useIsListItemDragging(isEngine ? orchestrator : undefined, key);
 
   if (isHidden) {
     return null;
@@ -112,11 +118,13 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
             model.containerRef.current = ref;
           }}
           {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: isDashboardLayoutGrid(layout) ? model.state.key : undefined }}
+          {...{ [LIST_ITEM_KEY_ATTR]: isClone ? undefined : key }}
           className={cx(
             styles.wrapper,
             'dashboard-row-wrapper',
             !isCollapsed && styles.wrapperNotCollapsed,
             dragSnapshot.isDragging && styles.dragging,
+            isListDragging && styles.listDragging,
             isCollapsed && styles.wrapperCollapsed,
             shouldGrow && styles.wrapperGrow,
             conditionalRenderingClass,
@@ -152,6 +160,15 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
               onMouseLeave={isSelectable ? onHeaderLeave : undefined}
               data-dashboard-element-key={key}
               data-dashboard-element-type="row"
+              onPointerDown={
+                isEngine && isDraggable
+                  ? (evt) => {
+                      if (!isInteractiveTarget(evt.target)) {
+                        orchestrator?.startListDrag(evt, model);
+                      }
+                    }
+                  : undefined
+              }
               {...dragProvided.dragHandleProps}
             >
               <button
@@ -330,6 +347,11 @@ function getStyles(theme: GrafanaTheme2) {
     dragging: css({
       cursor: 'move',
       backgroundColor: theme.colors.background.canvas,
+    }),
+    listDragging: css({
+      opacity: 0.5,
+      outline: `1px dashed ${theme.colors.primary.border}`,
+      borderRadius: theme.shape.radius.default,
     }),
     wrapperGrow: css({
       flexGrow: 1,

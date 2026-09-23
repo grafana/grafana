@@ -48,6 +48,7 @@ import { getGridItemKeyForPanelId, getPanelIdForVizPanel, getVizPanelKeyForPanel
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { canGroupSelection } from '../layouts-shared/groupLayout';
+import { isDndEngineEnabled } from '../layouts-shared/isDndEngineEnabled';
 import { clearClipboard, getDashboardGridItemFromClipboard } from '../layouts-shared/paste';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 import { type DashboardDropTarget } from '../types/DashboardDropTarget';
@@ -59,7 +60,6 @@ import { DashboardGridItem } from './DashboardGridItem';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 import { CustomGridController, type GridItemDragInfo, type LayoutSnapshot } from './custom-grid/CustomGridController';
 import { CustomGridRenderer } from './custom-grid/CustomGridRenderer';
-import { isCustomGridEngineEnabled } from './custom-grid/isCustomGridEngineEnabled';
 import { findSpaceForNewPanel } from './findSpaceForNewPanel';
 import { RowActions } from './row-actions/RowActions';
 
@@ -80,7 +80,7 @@ export class DefaultGridLayoutManager
    * parent row or tab, which appends the item to this grid.
    */
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  public readonly isDashboardDropTarget = isCustomGridEngineEnabled() as true;
+  public readonly isDashboardDropTarget = isDndEngineEnabled() as true;
 
   private _controller: CustomGridController | undefined;
 

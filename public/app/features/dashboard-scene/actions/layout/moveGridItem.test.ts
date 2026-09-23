@@ -8,6 +8,7 @@ import { AutoGridLayout } from '../../scene/layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
+import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { activateFullSceneTree } from '../../utils/test-utils';
@@ -137,6 +138,29 @@ describe('moveGridItem', () => {
       expect(source.state.grid.state.children).toHaveLength(0);
       expect(destination.state.layout.state.children).toHaveLength(1);
       expect(destination.state.layout.state.children[0].state.body).toBe(panel);
+    });
+  });
+
+  describe('when dropping onto an empty rows layout', () => {
+    test('the panel gets a row of its own, and undo takes both back out', () => {
+      const { dashboard, source, gridItem, panel } = buildTestScene();
+      const rows = new RowsLayoutManager({ key: 'empty-rows', rows: [] });
+      const tabs = dashboard.state.body as TabsLayoutManager;
+      tabs.state.tabs[1].setState({ layout: rows });
+      deactivate = activateFullSceneTree(dashboard);
+
+      moveGridItem({ source, destination: rows, gridItem, originalIndex: 0 });
+      expect(rows.state.rows).toHaveLength(1);
+      expect(rows.state.rows[0].getLayout().getVizPanels()[0]).toBe(panel);
+
+      dashboard.state.sidebar.undoAction();
+      expect(rows.state.rows).toHaveLength(0);
+      expect(source.state.layout.state.children).toHaveLength(1);
+      expect(source.state.layout.state.children[0].state.body).toBe(panel);
+
+      dashboard.state.sidebar.redoAction();
+      expect(rows.state.rows[0].getLayout().getVizPanels()[0]).toBe(panel);
+      expect(source.state.layout.state.children).toHaveLength(0);
     });
   });
 });

@@ -313,9 +313,9 @@ export class CustomGridController {
   public endItemDrag = () => {
     // Keep the snapshot around, the orchestrator may read it after the drag ended
     this._lastSourceSnapshot = this.getSourceSnapshot();
-    const itemEl = this._ownDrag ? this._getItemElementByKey(this._ownDrag.gridItemKey) : null;
-    itemEl?.style.removeProperty(DRAG_LEFT_VAR);
-    itemEl?.style.removeProperty(DRAG_TOP_VAR);
+    // The drag position variables are left on the item on purpose: the item still references them
+    // until React re-renders it at its slot, and removing them first makes it jump to the grid's
+    // origin and animate in from there. Left in place, it animates from where it was dropped.
     this._ownDrag = null;
     document.body.classList.remove('dashboard-draggable-transparent-selection', 'dragging-active');
     this._setView({ preview: null, draggingKey: null, draggingSize: null, placeholderKey: null });
@@ -443,9 +443,8 @@ export class CustomGridController {
 
     const resize = this._resize;
     const preview = this._view.preview;
-    const itemEl = resize ? this._getItemElementByKey(resize.gridItemKey) : null;
-    itemEl?.style.removeProperty(RESIZE_WIDTH_VAR);
-    itemEl?.style.removeProperty(RESIZE_HEIGHT_VAR);
+    // Like the drag position, the resize size variables stay until the next resize overwrites them,
+    // so the item animates from its resized size to its slot instead of collapsing first
     this._resize = null;
     this._setView({ preview: null, resizingKey: null, placeholderKey: null });
 

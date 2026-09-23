@@ -13,9 +13,17 @@ import { useDragAndDrop } from '@grafana/ui/internal';
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
-import { getDashboardSceneFor, interpolateSectionTitle, useDashboardState } from '../../utils/utils';
+import {
+  getDashboardSceneFor,
+  getLayoutOrchestratorFor,
+  interpolateSectionTitle,
+  useDashboardState,
+} from '../../utils/utils';
 import { SectionVariableControls } from '../VariableControls';
 import { LayoutModeIndicator } from '../layouts-shared/LayoutModeIndicator';
+import { isDndEngineEnabled } from '../layouts-shared/isDndEngineEnabled';
+import { LIST_ITEM_KEY_ATTR } from '../layouts-shared/list-dnd/attributes';
+import { useIsGroupDropTarget, useIsListItemDragging } from '../layouts-shared/list-dnd/useListDragPreview';
 import { mapIdToGridLayoutType } from '../layouts-shared/utils';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
@@ -43,7 +51,10 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const soloPanelContext = useSoloPanelContext();
 
   const isDraggable = !isClone && isEditing;
-  const { Draggable } = useDragAndDrop(isDraggable);
+  const isEngine = isDndEngineEnabled();
+  const { Draggable } = useDragAndDrop(isDraggable && !isEngine);
+  const orchestrator = getLayoutOrchestratorFor(model);
+  const isListDragging = useIsListItemDragging(isEngine ? orchestrator : undefined, key);
   const showLayoutIndicator = isEditing && isActive;
   const layoutMode = mapIdToGridLayoutType(layout.descriptor.id);
 
@@ -87,7 +98,10 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
             dragProvided.innerRef(ref);
             model.containerRef.current = ref;
           }}
-          className={cx(dragSnapshot.isDragging && styles.dragging)}
+          className={cx(dragSnapshot.isDragging && styles.dragging, isListDragging && styles.listDragging)}
+          {...{ [LIST_ITEM_KEY_ATTR]: isClone ? undefined : key }}
+          // Tabs are links, keep the browser from starting a native link drag
+          onDragStart={isEngine ? (evt) => evt.preventDefault() : undefined}
           {...dragProvided.draggableProps}
           {...dragProvided.dragHandleProps}
           style={getDraggableStyle(dragProvided.draggableProps.style, dragSnapshot)}
@@ -130,6 +144,9 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
             onPointerDown={(evt) => {
               evt.stopPropagation();
               pointerDistance.set(evt);
+              if (isEngine && isDraggable) {
+                orchestrator?.startListDrag(evt, model);
+              }
             }}
             onPointerUp={(evt) => {
               evt.stopPropagation();
@@ -172,10 +189,15 @@ export function TabItemLayoutRenderer({ tab, isEditing }: TabItemLayoutRendererP
     tab.state.conditionalRendering
   );
   const tabVariablesSet = tab.state.$variables;
+  const isGroupDropTarget = useIsGroupDropTarget(isDndEngineEnabled() ? getLayoutOrchestratorFor(tab) : undefined, key);
 
   return (
     <TabContent
-      className={cx(styles.tabContentContainer, isEditing && conditionalRenderingClass)}
+      className={cx(
+        styles.tabContentContainer,
+        isEditing && conditionalRenderingClass,
+        isGroupDropTarget && 'dashboard-drop-target'
+      )}
       {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: key }}
     >
       {tabVariablesSet && <SectionVariableControls variableSet={tabVariablesSet} />}
@@ -202,6 +224,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   dragging: css({
     cursor: 'move',
+  }),
+  listDragging: css({
+    opacity: 0.5,
   }),
   hidden: css({
     opacity: 0.4,

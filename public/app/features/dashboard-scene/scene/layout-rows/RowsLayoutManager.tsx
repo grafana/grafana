@@ -120,21 +120,34 @@ export class RowsLayoutManager
       collapse: false,
     });
 
-    // Convert AutoGridItem to DashboardGridItem if needed
-    if (gridItem instanceof AutoGridItem) {
-      const vizPanel = gridItem.state.body;
-      const newGridItem = new DashboardGridItem({
-        body: vizPanel.clone(),
-        width: 12,
-        height: 8,
-      });
-      newLayout.addGridItem(newGridItem);
-    } else if (gridItem instanceof DashboardGridItem) {
+    // Moves the panel itself (converting an AutoGridItem wrapper if needed) rather than a clone, so
+    // undo can move the very same panel back
+    if (gridItem instanceof AutoGridItem || gridItem instanceof DashboardGridItem) {
       newLayout.addGridItem(gridItem);
     }
 
     // Add the row to this layout
     this.setState({ rows: [...this.state.rows, newRow], isDropTarget: false });
+  }
+
+  /** Undoes draggedGridItemInside: takes the item out again, along with the row created for it */
+  public draggedGridItemOutside(gridItem: SceneGridItemLike): void {
+    const row = this.state.rows.find((r) =>
+      r
+        .getLayout()
+        .getVizPanels()
+        .some((panel) => panel.parent === gridItem)
+    );
+    const layout = row?.getLayout();
+    if (!row || !(layout instanceof DefaultGridLayoutManager || layout instanceof AutoGridLayoutManager)) {
+      return;
+    }
+
+    layout.draggedGridItemOutside(gridItem);
+    if (layout.getVizPanels().length === 0) {
+      this.setState({ rows: this.state.rows.filter((r) => r !== row) });
+    }
+    this.setState({ isDropTarget: false });
   }
 
   public getVizPanels(): VizPanel[] {

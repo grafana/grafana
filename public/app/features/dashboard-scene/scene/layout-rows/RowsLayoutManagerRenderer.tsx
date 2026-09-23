@@ -12,6 +12,9 @@ import { useDragAndDrop } from '@grafana/ui/internal';
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState, getLayoutOrchestratorFor } from '../../utils/utils';
+import { isDndEngineEnabled } from '../layouts-shared/isDndEngineEnabled';
+import { LIST_DROP_KEY_ATTR } from '../layouts-shared/list-dnd/attributes';
+import { useListDragPreview } from '../layouts-shared/list-dnd/useListDragPreview';
 import { getLayoutControlsStyles } from '../layouts-shared/styles';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
 import { useIsMultiSelection } from '../layouts-shared/useIsMultiSelection';
@@ -30,7 +33,9 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
   const soloPanelContext = useSoloPanelContext();
   const orchestrator = getLayoutOrchestratorFor(model);
   const isMultiSelection = useIsMultiSelection();
-  const { DragDropContext, Droppable } = useDragAndDrop(isEditing && !soloPanelContext);
+  const isEngine = isDndEngineEnabled();
+  const { DragDropContext, Droppable } = useDragAndDrop(isEditing && !soloPanelContext && !isEngine);
+  const listPreview = useListDragPreview(isEngine ? orchestrator : undefined, key, rows);
 
   // Only act as a drop target when empty (no rows)
   const showAsDropTarget = rows.length === 0;
@@ -69,6 +74,19 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
 
   const isClone = isRepeatCloneOrChildOf(model);
 
+  const rowElements = listPreview.items.map((row) => <RowWrapper row={row} manager={model} key={row.state.key!} />);
+  if (listPreview.placeholderIndex !== null) {
+    rowElements.splice(
+      listPreview.placeholderIndex,
+      0,
+      <div
+        key="list-drop-placeholder"
+        className={styles.dropPlaceholder}
+        style={{ height: listPreview.placeholderSize?.height }}
+      />
+    );
+  }
+
   return (
     <DragDropContext
       onBeforeCapture={handleBeforeCapture}
@@ -82,10 +100,9 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
             ref={dropProvided.innerRef}
             {...dropProvided.droppableProps}
             {...(showAsDropTarget ? { [DASHBOARD_DROP_TARGET_KEY_ATTR]: key } : {})}
+            {...(isEngine && isEditing && !isClone ? { [LIST_DROP_KEY_ATTR]: key } : {})}
           >
-            {rows.map((row) => (
-              <RowWrapper row={row} manager={model} key={row.state.key!} />
-            ))}
+            {rowElements}
             {dropProvided.placeholder}
             {isEditing && !isClone && (
               <div
@@ -167,6 +184,12 @@ function getStyles(theme: GrafanaTheme2) {
       '&:hover > .dashboard-canvas-controls': {
         opacity: 1,
       },
+    }),
+    dropPlaceholder: css({
+      flexShrink: 0,
+      borderRadius: theme.shape.radius.default,
+      border: `1px dashed ${theme.colors.primary.border}`,
+      background: theme.colors.primary.transparent,
     }),
   };
 }

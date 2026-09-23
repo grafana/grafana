@@ -18,6 +18,7 @@ import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
 import { moveElement } from '../actions/element/moveElement';
 import { moveGridItem } from '../actions/layout/moveGridItem';
+import { groupRowIntoTab, moveListItem } from '../actions/layout/moveListItem';
 import { reorderAutoGridItems } from '../actions/layout/reorderAutoGridItems';
 import { ObjectsReorderedOnCanvasEvent, DashboardStateChangedEvent } from '../sidebar/events';
 import { DashboardInteractions } from '../utils/interactions';
@@ -30,11 +31,23 @@ import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { type DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { type GridItemDragInfo, type LayoutSnapshot } from './layout-default/custom-grid/CustomGridController';
 import { autoGridItemSizeToGridSize } from './layout-default/custom-grid/gridMath';
-import { isCustomGridEngineEnabled } from './layout-default/custom-grid/isCustomGridEngineEnabled';
-import { type RowItem } from './layout-rows/RowItem';
+import { RowItem } from './layout-rows/RowItem';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabItem } from './layout-tabs/TabItem';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
+import { isDndEngineEnabled } from './layouts-shared/isDndEngineEnabled';
+import { LIST_DROP_KEY_ATTR, LIST_ITEM_KEY_ATTR } from './layouts-shared/list-dnd/attributes';
+import {
+  canDropInto,
+  canGroupIntoTab,
+  getInsertIndex,
+  getListItemElements,
+  getListOf,
+  type ListDragState,
+  type ListDropTarget,
+  type ListItem,
+  type ListLayout,
+} from './layouts-shared/list-dnd/listDnd';
 import {
   AUTO_GRID_ITEM_DROP_TARGET_ATTR,
   DASHBOARD_DROP_TARGET_KEY_ATTR,
@@ -43,6 +56,9 @@ import {
 } from './types/DashboardDropTarget';
 
 const TAB_ACTIVATION_DELAY_MS = 600;
+const LIST_DRAG_THRESHOLD_PX = 4;
+/** Rows can be very tall, their drag preview and placeholders only stand in for the header */
+const ROW_DRAG_PREVIEW_HEIGHT = 40;
 
 interface DashboardLayoutOrchestratorState extends SceneObjectState {
   /** Grid item currently being dragged */
@@ -63,8 +79,16 @@ interface DashboardLayoutOrchestratorState extends SceneObjectState {
     offsetX: number;
     offsetY: number;
     label: string;
-    type: 'panel' | 'row';
+    type: 'panel' | 'row' | 'tab';
   };
+}
+
+interface ListDragSession {
+  item: ListItem;
+  sourceList: ListLayout;
+  startX: number;
+  startY: number;
+  isActive: boolean;
 }
 
 export type TabDragState = {
@@ -93,7 +117,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   /** Cached label for the preview */
   private _previewLabel = '';
   /** Cached type for the preview */
-  private _previewType: 'panel' | 'row' = 'panel';
+  private _previewType: 'panel' | 'row' | 'tab' = 'panel';
   /** Cached dimensions for the preview */
   private _previewWidth = 0;
   private _previewHeight = 0;
@@ -120,6 +144,10 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   private _dragCallbacks: GridItemDragCallbacks | null = null;
   /** Grab offset and custom grid size of the dragged grid item, for targets that preview the drop */
   private _dragInfo: GridItemDragInfo | null = null;
+  /** Row or tab drag in progress (unified engine) */
+  private _listDrag: ListDragSession | null = null;
+  private _listDragState: ListDragState | null = null;
+  private _listDragListeners = new Set<() => void>();
 
   public constructor() {
     super({});
@@ -141,11 +169,173 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       document.body.removeEventListener('pointerup', this._stopDraggingSync, true);
       document.body.removeEventListener('pointerup', this._onRowDragPointerUp, true);
       document.body.removeEventListener('pointerup', this._onTabDragPointerUp, true);
+      this._endListDrag();
       this._clearTabActivationTimer();
       this._clearDragPreview();
       this._cleanupDragState();
       this._dragCallbacks = null;
     };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Row and tab drags (unified engine)
+  // ---------------------------------------------------------------------------
+
+  /** For list renderers: they re-render only when the drop target changes, not on every pointer move */
+  public subscribeToListDrag = (listener: () => void) => {
+    this._listDragListeners.add(listener);
+    return () => this._listDragListeners.delete(listener);
+  };
+
+  public getListDragState = () => this._listDragState;
+
+  private _setListDragState(state: ListDragState | null) {
+    this._listDragState = state;
+    this._listDragListeners.forEach((listener) => listener());
+  }
+
+  public startListDrag(evt: ReactPointerEvent, item: ListItem): void {
+    const sourceList = getListOf(item);
+    if (!sourceList || evt.button !== 0 || this._listDrag) {
+      return;
+    }
+
+    this._listDrag = { item, sourceList, startX: evt.clientX, startY: evt.clientY, isActive: false };
+    document.body.addEventListener('pointermove', this._onListDragPointerMove);
+    // Capture phase, tab headers stop propagation of pointerup
+    document.body.addEventListener('pointerup', this._onListDragPointerUp, true);
+    window.addEventListener('keydown', this._onListDragKeyDown, true);
+  }
+
+  private _onListDragPointerMove = (evt: PointerEvent) => {
+    const drag = this._listDrag;
+    if (!drag) {
+      return;
+    }
+
+    if (!drag.isActive) {
+      if (Math.hypot(evt.clientX - drag.startX, evt.clientY - drag.startY) < LIST_DRAG_THRESHOLD_PX) {
+        return;
+      }
+      drag.isActive = true;
+      this._activateListDrag(drag, evt);
+    }
+
+    this._updateDragPreview(evt.clientX, evt.clientY);
+
+    // Hovering a tab header switches to that tab so rows can be moved into it. Tabs are reordered by
+    // hovering other tab headers, so that must not switch tabs.
+    if (drag.item instanceof RowItem) {
+      this._checkTabHover(evt.clientX, evt.clientY);
+    }
+
+    const target = this._getListDropTarget(evt, drag.item);
+    const current = this._listDragState;
+    if (current && !isSameListTarget(current.target, target)) {
+      this._setListDragState({ ...current, target });
+    }
+  };
+
+  private _activateListDrag(drag: ListDragSession, evt: PointerEvent) {
+    const rect = drag.item.containerRef.current?.getBoundingClientRect();
+    const isRow = drag.item instanceof RowItem;
+    const width = rect?.width ?? 200;
+    const height = isRow ? ROW_DRAG_PREVIEW_HEIGHT : (rect?.height ?? 32);
+
+    this._previewLabel = drag.item.state.title || (isRow ? 'Row' : 'Tab');
+    this._previewType = isRow ? 'row' : 'tab';
+    this._previewWidth = width;
+    this._previewHeight = height;
+    this._dragOffsetX = rect ? Math.min(evt.clientX - rect.left, width) : 20;
+    this._dragOffsetY = rect ? Math.min(evt.clientY - rect.top, height) : 20;
+    this._lastCursorX = evt.clientX;
+    this._lastCursorY = evt.clientY;
+    this._showDragPreview();
+
+    this._setListDragState({
+      itemKey: drag.item.state.key!,
+      sourceListKey: drag.sourceList.state.key!,
+      target: null,
+      placeholderSize: { width, height },
+    });
+  }
+
+  private _getListDropTarget(evt: PointerEvent, item: ListItem): ListDropTarget | null {
+    const dashboard = this._getDashboard();
+
+    // Innermost list first, so a row can go into nested rows unless nesting rules say no
+    for (const el of document.elementsFromPoint(evt.clientX, evt.clientY)) {
+      // The content of a tab that isn't rows yet: dropping a row there groups the content into rows
+      const tabKey = el.getAttribute(DASHBOARD_DROP_TARGET_KEY_ATTR);
+      if (tabKey && item instanceof RowItem) {
+        const tab = sceneGraph.findByKey(dashboard, tabKey);
+        if (tab instanceof TabItem && canGroupIntoTab(item, tab)) {
+          return { kind: 'group', tab };
+        }
+      }
+
+      const key = el.getAttribute(LIST_DROP_KEY_ATTR);
+      if (!key) {
+        continue;
+      }
+
+      const list = sceneGraph.findByKey(dashboard, key);
+      if (!(list instanceof RowsLayoutManager || list instanceof TabsLayoutManager) || !canDropInto(item, list)) {
+        continue;
+      }
+
+      const isHorizontal = list instanceof TabsLayoutManager;
+      const spans = getListItemElements(el)
+        .filter((itemEl) => itemEl.getAttribute(LIST_ITEM_KEY_ATTR) !== item.state.key)
+        .map((itemEl) => {
+          const rect = itemEl.getBoundingClientRect();
+          return isHorizontal ? { start: rect.left, end: rect.right } : { start: rect.top, end: rect.bottom };
+        });
+
+      return { kind: 'list', list, index: getInsertIndex(spans, isHorizontal ? evt.clientX : evt.clientY) };
+    }
+
+    return null;
+  }
+
+  private _onListDragPointerUp = () => {
+    const drag = this._listDrag;
+    const target = this._listDragState?.target;
+    this._endListDrag();
+
+    if (!drag?.isActive || !target) {
+      return;
+    }
+
+    if (target.kind === 'list') {
+      moveListItem({ item: drag.item, source: drag.sourceList, destination: target.list, index: target.index });
+    } else if (drag.item instanceof RowItem && drag.sourceList instanceof RowsLayoutManager) {
+      groupRowIntoTab({ row: drag.item, source: drag.sourceList, tab: target.tab });
+    }
+  };
+
+  private _onListDragKeyDown = (evt: KeyboardEvent) => {
+    if (evt.key === 'Escape' && this._listDrag) {
+      evt.stopPropagation();
+      this._endListDrag();
+    }
+  };
+
+  private _endListDrag() {
+    document.body.removeEventListener('pointermove', this._onListDragPointerMove);
+    document.body.removeEventListener('pointerup', this._onListDragPointerUp, true);
+    window.removeEventListener('keydown', this._onListDragKeyDown, true);
+    if (!this._listDrag) {
+      return;
+    }
+    this._listDrag = null;
+    this._clearTabActivationTimer();
+    this._lastHoveredTabKey = null;
+    this._clearDragPreview();
+    this._setListDragState(null);
+    if (this.state.hoverTabKey) {
+      this.setState({ hoverTabKey: undefined });
+    }
   }
 
   public startDraggingSync(
@@ -231,7 +421,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
           layoutSnapshots,
         });
 
-      if (isCustomGridEngineEnabled()) {
+      if (isDndEngineEnabled()) {
         // Moving before the source resets its drag state means the item never flashes back into
         // its old spot, and the destination swaps its placeholder for the real item in one go.
         move();
@@ -1101,6 +1291,16 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
     return sceneObject;
   }
+}
+
+function isSameListTarget(a: ListDropTarget | null, b: ListDropTarget | null): boolean {
+  if (!a || !b) {
+    return a === b;
+  }
+  if (a.kind === 'list' && b.kind === 'list') {
+    return a.list === b.list && a.index === b.index;
+  }
+  return a.kind === 'group' && b.kind === 'group' && a.tab === b.tab;
 }
 
 /**

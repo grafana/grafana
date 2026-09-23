@@ -12,6 +12,9 @@ import { useDragAndDrop } from '@grafana/ui/internal';
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getDashboardSceneFor, getLayoutOrchestratorFor } from '../../utils/utils';
+import { isDndEngineEnabled } from '../layouts-shared/isDndEngineEnabled';
+import { LIST_DROP_KEY_ATTR } from '../layouts-shared/list-dnd/attributes';
+import { useListDragPreview } from '../layouts-shared/list-dnd/useListDragPreview';
 import { dashboardCanvasAddButtonHoverStyles, getLayoutControlsStyles } from '../layouts-shared/styles';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
 import { useIsMultiSelection } from '../layouts-shared/useIsMultiSelection';
@@ -35,7 +38,9 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   const isNestedInTab = useMemo(() => model.parent instanceof TabItem, [model.parent]);
   const soloPanelContext = useSoloPanelContext();
   const isMultiSelection = useIsMultiSelection();
-  const { DragDropContext, Droppable } = useDragAndDrop(isEditing && !soloPanelContext);
+  const isEngine = isDndEngineEnabled();
+  const { DragDropContext, Droppable } = useDragAndDrop(isEditing && !soloPanelContext && !isEngine);
+  const listPreview = useListDragPreview(isEngine ? orchestrator : undefined, key, tabs);
 
   const { scrollRef, scrollEl, canScrollLeft, canScrollRight, scrollBy } = useHorizontalOverflow();
 
@@ -89,9 +94,17 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
 
   let placeholderComponent: React.ReactNode | null = null;
 
-  const children: React.ReactNode[] = tabs.map((tab) => <TabWrapper tab={tab} manager={model} key={tab.state.key!} />);
+  const children: React.ReactNode[] = listPreview.items.map((tab) => (
+    <TabWrapper tab={tab} manager={model} key={tab.state.key!} />
+  ));
 
-  if (isDropTarget && placeholder) {
+  if (listPreview.placeholderIndex !== null && listPreview.placeholderSize) {
+    children.splice(
+      listPreview.placeholderIndex,
+      0,
+      <div key="list-drop-placeholder" className={styles.dropPlaceholder} style={listPreview.placeholderSize} />
+    );
+  } else if (isDropTarget && placeholder) {
     placeholderComponent = (
       <div key="placeholder" style={{ width: placeholder.width, height: placeholder.height }}></div>
     );
@@ -102,7 +115,11 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
     <div className={cx(styles.tabLayoutContainer, { [styles.nestedTabsMargin]: isNestedInTab })}>
       <TabsBar className={styles.tabsBar}>
         <DragDropContext onBeforeDragStart={onBeforeDragStart} onDragEnd={onDragEnd}>
-          <div className={styles.tabsRow} {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: key }}>
+          <div
+            className={styles.tabsRow}
+            {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: key }}
+            {...(isEngine && isEditing && !isClone ? { [LIST_DROP_KEY_ATTR]: key } : {})}
+          >
             <div className={styles.tabsScrollArea}>
               <Droppable droppableId={key!} direction="horizontal">
                 {(dropProvided) => (
@@ -290,6 +307,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     nestedTabsMargin: css({
       marginLeft: theme.spacing(2),
+    }),
+    dropPlaceholder: css({
+      flexShrink: 0,
+      borderRadius: theme.shape.radius.default,
+      border: `1px dashed ${theme.colors.primary.border}`,
+      background: theme.colors.primary.transparent,
     }),
   };
 };
