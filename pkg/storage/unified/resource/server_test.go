@@ -1345,8 +1345,9 @@ func TestGracefulShutdown(t *testing.T) {
 // mockWatchServer implements resourcepb.ResourceStore_WatchServer for testing.
 type mockWatchServer struct {
 	grpc.ServerStream
-	ctx    context.Context
-	events chan *resourcepb.WatchEvent
+	ctx       context.Context
+	events    chan *resourcepb.WatchEvent
+	sendDelay time.Duration
 }
 
 func newMockWatchServer(ctx context.Context) *mockWatchServer {
@@ -1357,6 +1358,13 @@ func newMockWatchServer(ctx context.Context) *mockWatchServer {
 }
 
 func (m *mockWatchServer) Send(evt *resourcepb.WatchEvent) error {
+	if m.sendDelay > 0 {
+		select {
+		case <-m.ctx.Done():
+			return m.ctx.Err()
+		case <-time.After(m.sendDelay):
+		}
+	}
 	select {
 	case <-m.ctx.Done():
 		return m.ctx.Err()
@@ -2187,8 +2195,11 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 	// populated by the time we subscribe.
 	requireMetricEventually(t, metrics.Broadcaster.EventsReceivedTotal.WithLabelValues(watchTestResource), 2)
 
-	// Start a watch with a tiny Since RV.
+	// Start a watch with a tiny Since RV. Delay each Send so the component
+	// metrics can prove that transport scheduling time is separated from the
+	// upstream commit-to-send-start latency.
 	mock := newMockWatchServer(ctx)
+	mock.sendDelay = 20 * time.Millisecond
 	var eg errgroup.Group
 	eg.Go(func() error {
 		return srv.Watch(&resourcepb.WatchRequest{
@@ -2228,12 +2239,30 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 	// observing them inflates the histogram with the time elapsed since they
 	// were originally written, not the actual reaction time of this watcher.
 	// Only the post-subscription event should be counted.
-	obs, err := metrics.WatchEventLatency.GetMetricWithLabelValues(watchTestGroup, watchTestResource)
+	readHistogram := func(observer prometheus.Observer) *dto.Histogram {
+		t.Helper()
+		m := &dto.Metric{}
+		require.NoError(t, observer.(prometheus.Metric).Write(m))
+		return m.Histogram
+	}
+	watchLatency, err := metrics.WatchEventLatency.GetMetricWithLabelValues(watchTestGroup, watchTestResource)
 	require.NoError(t, err)
-	m := &dto.Metric{}
-	require.NoError(t, obs.(prometheus.Metric).Write(m))
-	require.Equal(t, uint64(1), m.Histogram.GetSampleCount(),
-		"WatchEventLatency should only observe events that arrived after the subscription started")
+	readyLatency, err := metrics.WatchEventReadyLatency.GetMetricWithLabelValues(watchTestGroup, watchTestResource)
+	require.NoError(t, err)
+	sendDuration, err := metrics.WatchEventSendDuration.GetMetricWithLabelValues(watchTestGroup, watchTestResource)
+	require.NoError(t, err)
+
+	total := readHistogram(watchLatency)
+	ready := readHistogram(readyLatency)
+	send := readHistogram(sendDuration)
+	for name, histogram := range map[string]*dto.Histogram{"total": total, "ready": ready, "send": send} {
+		require.Equal(t, uint64(1), histogram.GetSampleCount(),
+			"%s metric should only observe events that arrived after the subscription started", name)
+	}
+	assert.GreaterOrEqual(t, send.GetSampleSum(), 15*time.Millisecond.Seconds(),
+		"send duration must capture transport scheduling time")
+	assert.InDelta(t, total.GetSampleSum(), ready.GetSampleSum()+send.GetSampleSum(), 0.01,
+		"total watch latency should comprise upstream ready latency plus send duration")
 }
 
 // TestWatchInitialEventsRespectsItemChecker tests that checker is used for

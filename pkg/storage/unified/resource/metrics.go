@@ -10,6 +10,8 @@ import (
 
 type StorageMetrics struct {
 	WatchEventLatency      *prometheus.HistogramVec
+	WatchEventReadyLatency *prometheus.HistogramVec
+	WatchEventSendDuration *prometheus.HistogramVec
 	PollerLatency          prometheus.Histogram
 	ListWithFieldSelectors *prometheus.CounterVec
 	RequestDuration        *prometheus.HistogramVec
@@ -21,9 +23,25 @@ func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 	return &StorageMetrics{
 		WatchEventLatency: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "storage_server_watch_event_latency_seconds",
-			Help:                            "Time (in seconds) from resource commit to the watch event being sent to the client",
+			Help:                            "Time (in seconds) from resource commit to the watch event being scheduled with the gRPC transport",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1, // enable native histograms
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{"group", "resource"}),
+		WatchEventReadyLatency: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Name:                            "storage_server_watch_event_ready_latency_seconds",
+			Help:                            "Time (in seconds) from resource commit until the watch event is ready to be sent over gRPC",
+			Buckets:                         instrument.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{"group", "resource"}),
+		WatchEventSendDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Name:                            "storage_server_watch_event_send_duration_seconds",
+			Help:                            "Time (in seconds) spent scheduling a watch event with the gRPC transport, including flow-control wait",
+			Buckets:                         instrument.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"group", "resource"}),

@@ -2240,18 +2240,29 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 					}
 				}
 				s.log.Debug("Server Broadcasting", "type", event.Type, "rv", event.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "resource", event.Key.Resource, "name", event.Key.Name)
+				sendStartedAt := time.Now()
 				if err := srv.Send(resp); err != nil {
 					return watchSendError(err)
 				}
+				sentAt := time.Now()
 				lastObjectRV = max(lastObjectRV, event.ResourceVersion)
 
 				if s.storageMetrics != nil && event.ResourceVersion > mostRecentRV {
-					// record latency - resource version can be either a unix microsecond timestamp (SQL backend)
-					// or a snowflake ID (KV backend), so we use ResourceVersionTime to handle both formats.
-					latencySeconds := time.Since(ResourceVersionTime(event.ResourceVersion)).Seconds()
-					if latencySeconds > 0 {
-						s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Group, event.Key.Resource).Observe(latencySeconds)
+					// Resource versions can be either Unix microsecond timestamps (SQL backend)
+					// or snowflake IDs (KV backend). Split the total at Send so upstream
+					// delivery and gRPC transport flow-control wait can be diagnosed separately.
+					committedAt := ResourceVersionTime(event.ResourceVersion)
+					totalSeconds := sentAt.Sub(committedAt).Seconds()
+					readySeconds := sendStartedAt.Sub(committedAt).Seconds()
+					sendSeconds := sentAt.Sub(sendStartedAt).Seconds()
+					labels := []string{event.Key.Group, event.Key.Resource}
+					if totalSeconds > 0 {
+						s.storageMetrics.WatchEventLatency.WithLabelValues(labels...).Observe(totalSeconds)
 					}
+					if readySeconds >= 0 {
+						s.storageMetrics.WatchEventReadyLatency.WithLabelValues(labels...).Observe(readySeconds)
+					}
+					s.storageMetrics.WatchEventSendDuration.WithLabelValues(labels...).Observe(sendSeconds)
 				}
 			}
 			// Progress is not a delivery cutoff: keep using the fixed starting since.
