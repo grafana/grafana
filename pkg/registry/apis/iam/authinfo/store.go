@@ -122,7 +122,9 @@ func (l *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 
 // List implements rest.Lister.
 //
-// Listing is scoped to one user via the spec.userRef.name field selector.
+// Listing is scoped to one user via the spec.userRef.name field selector, or to one
+// (authModule, authID) pair via the spec.authID field selector (with an optional
+// spec.authModule) when the caller doesn't know the user yet.
 func (l *LegacyStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	ctx, span := l.tracer.Start(ctx, "authinfo.list")
 	defer span.End()
@@ -133,18 +135,37 @@ func (l *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 	}
 
 	var userUID string
+	var hasUserRef bool
 	var authModuleFilter string
 	var authIDFilter string
+	var hasAuthID bool
 	if options.FieldSelector != nil {
-		var ok bool
-		userUID, ok = options.FieldSelector.RequiresExactMatch("spec.userRef.name")
-		if !ok {
-			return nil, apierrors.NewBadRequest("listing authinfo requires a spec.userRef.name field selector")
-		}
+		userUID, hasUserRef = options.FieldSelector.RequiresExactMatch("spec.userRef.name")
 		authModuleFilter, _ = options.FieldSelector.RequiresExactMatch("spec.authModule")
-		authIDFilter, _ = options.FieldSelector.RequiresExactMatch("spec.authID")
-	} else {
-		return nil, apierrors.NewBadRequest("listing authinfo requires a spec.userRef.name field selector")
+		authIDFilter, hasAuthID = options.FieldSelector.RequiresExactMatch("spec.authID")
+	}
+	if !hasUserRef && !hasAuthID {
+		return nil, apierrors.NewBadRequest("listing authinfo requires a spec.userRef.name or spec.authID field selector")
+	}
+
+	if !hasUserRef {
+		authInfo, err := l.authInfoStore.GetAuthInfo(ctx, &login.GetAuthInfoQuery{AuthModule: authModuleFilter, AuthId: authIDFilter})
+		if err != nil {
+			if errors.Is(err, user.ErrUserNotFound) {
+				return &iamv0alpha1.AuthInfoList{}, nil
+			}
+			return nil, err
+		}
+
+		uidRes, err := l.identities.GetUserUIDByID(ctx, ns, legacy.GetUserUIDByIDQuery{ID: authInfo.UserId})
+		if err != nil {
+			if errors.Is(err, user.ErrUserNotFound) {
+				return &iamv0alpha1.AuthInfoList{}, nil
+			}
+			return nil, err
+		}
+
+		return &iamv0alpha1.AuthInfoList{Items: []iamv0alpha1.AuthInfo{mapToAuthInfoObject(ns, uidRes.UID, authInfo)}}, nil
 	}
 
 	userRes, err := l.identities.GetUserInternalID(ctx, ns, legacy.GetUserInternalIDQuery{UID: userUID})
