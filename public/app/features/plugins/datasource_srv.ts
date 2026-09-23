@@ -26,6 +26,7 @@ import {
   logPluginMetaWarning,
   refetchDatasourcePluginMetas,
   syncDataSourceInstanceSettings,
+  syncRuntimeDataSourceInstance,
   UserStorage,
 } from '@grafana/runtime/internal';
 import { type DataQuery, type DataSourceJsonData } from '@grafana/schema';
@@ -94,6 +95,7 @@ export class DatasourceSrv implements DataSourceService {
       throw new Error(`A data source with uid ${entry.dataSource.uid} has already been registered`);
     }
 
+    syncRuntimeDataSourceInstance(entry);
     this.runtimeDataSources[entry.dataSource.uid] = entry.dataSource;
     this.datasources[entry.dataSource.uid] = entry.dataSource;
     this.settingsMapByUid[entry.dataSource.uid] = entry.dataSource.instanceSettings;

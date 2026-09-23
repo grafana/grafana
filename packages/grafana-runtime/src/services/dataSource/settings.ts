@@ -17,7 +17,7 @@ import { notifyDataSourceCacheChanged } from './cacheGeneration';
 import { FALLBACK_TO_LEGACY_LIST_WARNING, FALLBACK_TO_LEGACY_SETTINGS_WARNING } from './constants';
 import { getExpressionDataSourceSettings, _resetForTests as resetExpressionDs } from './expressionDs';
 import { describeRef, logDataSourceWarning } from './logging';
-import { clearPluginCache } from './pluginCache';
+import { clearPluginCache, _resetForTests as resetPluginCache } from './pluginCache';
 
 let byName: Record<string, DataSourceInstanceSettings> = {};
 let byUid: Record<string, DataSourceInstanceSettings> = {};
@@ -88,6 +88,7 @@ export function setDataSourceInstanceSettings(
   }
 
   _resetForTests();
+  resetPluginCache();
   replaceInstanceSettings(
     structuredClone(settings),
     defaultDatasourceName ?? Object.values(settings).find((ds) => ds.isDefault)?.name ?? ''
@@ -265,6 +266,11 @@ export function upsertRuntimeDataSourceInstanceSettings(settings: DataSourceInst
   if (runtimeByUid[settings.uid] || byUid[settings.uid]) {
     throw new Error(`A data source with uid ${settings.uid} has already been registered`);
   }
+  syncRuntimeDataSourceInstanceSettings(settings);
+}
+
+/** @internal Mirrors an accepted legacy registration, including async-only UID conflicts. */
+export function syncRuntimeDataSourceInstanceSettings(settings: DataSourceInstanceSettings): void {
   runtimeByUid[settings.uid] = settings;
   byUid[settings.uid] = settings;
 }
