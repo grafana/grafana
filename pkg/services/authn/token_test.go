@@ -83,22 +83,24 @@ func TestGrafanaTokenAuthenticator(t *testing.T) {
 			Rest:   authnlib.AccessTokenClaims{Namespace: "stacks-5457", Permissions: []string{"plugins.grafana.app:*"}, DelegatedPermissions: []string{"plugins.grafana.app/plugins:get"}, ServiceIdentity: "edge"},
 		}
 	}
-	t.Run("access policy", func(t *testing.T) {
-		token := sign(validClaims(), key, authnlib.TokenTypeAccess)
-		requester, err := authenticator.AuthenticateToken(t.Context(), token)
-		require.NoError(t, err)
-		require.Equal(t, "access-policy:policy-1", requester.GetUID())
-		require.Equal(t, "stacks-5457", requester.GetNamespace())
-		require.Equal(t, int64(1), requester.GetOrgID())
-		require.Equal(t, []string{"grafana"}, requester.GetAudience())
-		require.Equal(t, validClaims().Rest.Permissions, requester.GetTokenPermissions())
-		require.Equal(t, token, requester.GetAccessToken())
-		require.False(t, requester.GetIsGrafanaAdmin())
-		require.Equal(t, map[string][]string{
-			authnlib.ServiceIdentityKey:          {"edge"},
-			authnlib.InnermostServiceIdentityKey: {"edge"},
-		}, requester.GetExtra())
-	})
+	for _, prefix := range []string{"", "Bearer "} {
+		t.Run("access policy/"+prefix, func(t *testing.T) {
+			token := sign(validClaims(), key, authnlib.TokenTypeAccess)
+			requester, err := authenticator.AuthenticateToken(t.Context(), prefix+token)
+			require.NoError(t, err)
+			require.Equal(t, "access-policy:policy-1", requester.GetUID())
+			require.Equal(t, "stacks-5457", requester.GetNamespace())
+			require.Equal(t, int64(1), requester.GetOrgID())
+			require.Equal(t, []string{"grafana"}, requester.GetAudience())
+			require.Equal(t, validClaims().Rest.Permissions, requester.GetTokenPermissions())
+			require.Equal(t, token, requester.GetAccessToken())
+			require.False(t, requester.GetIsGrafanaAdmin())
+			require.Equal(t, map[string][]string{
+				authnlib.ServiceIdentityKey:          {"edge"},
+				authnlib.InnermostServiceIdentityKey: {"edge"},
+			}, requester.GetExtra())
+		})
+	}
 	for namespace, orgID := range map[string]int64{"default": 1, "org-12": 12, "*": 0} {
 		t.Run(namespace, func(t *testing.T) {
 			claims := validClaims()
@@ -172,8 +174,11 @@ func TestGrafanaTokenAuthenticator(t *testing.T) {
 	require.NoError(t, err)
 	for name, token := range map[string]string{
 		"empty": "", "malformed": "not-a-token",
-		"invalid signature": sign(validClaims(), otherKey, authnlib.TokenTypeAccess),
-		"ID token":          sign(validClaims(), key, authnlib.TokenTypeID),
+		"empty bearer":             "Bearer ",
+		"malformed bearer":         "Bearer not-a-token",
+		"bearer invalid signature": "Bearer " + sign(validClaims(), otherKey, authnlib.TokenTypeAccess),
+		"invalid signature":        sign(validClaims(), otherKey, authnlib.TokenTypeAccess),
+		"ID token":                 sign(validClaims(), key, authnlib.TokenTypeID),
 	} {
 		t.Run(name, func(t *testing.T) {
 			requester, err := authenticator.AuthenticateToken(t.Context(), token)

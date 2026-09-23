@@ -3,6 +3,7 @@ package authn
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
@@ -40,6 +41,7 @@ func NewGrafanaTokenAuthenticator(cfg *setting.Cfg) (*GrafanaTokenAuthenticator,
 }
 
 func (t *GrafanaTokenAuthenticator) AuthenticateToken(ctx context.Context, token string) (identity.Requester, error) {
+	token = strings.TrimPrefix(token, "Bearer ")
 	if token == "" {
 		return nil, apierrors.NewUnauthorized("empty token")
 	}
