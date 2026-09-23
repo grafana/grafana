@@ -34,10 +34,10 @@ Grafana recommends that you remove all permissions for roles and teams that don'
 
 ### Configure a new Loki data source on Grafana Cloud
 
-1. Access Loki data source details for your stack through grafana.com.
+1. Access Loki data source details for your stack in Grafana Cloud.
 1. Copy Loki details and create a CAP.
    - Copy the details of your Loki setup.
-   - Create a Cloud Access Policy (CAP) for the Loki data source in grafana.com.
+   - Create a Cloud Access Policy (CAP) for the Loki data source in Grafana Cloud.
    - Ensure the CAP includes `logs:read` permissions.
    - Ensure the CAP doesn't include `labels` rules.
 1. Create a new Loki data source.
