@@ -22,6 +22,10 @@ const viewStateKeys = {
 
 type ViewStateKey = keyof typeof viewStateKeys;
 
+// Object.keys loses the keys of this closed, compiler-checked registry.
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+const viewStateKeyList = Object.keys(viewStateKeys) as ViewStateKey[];
+
 type ViewRequest<K extends ViewStateKey> = {
   key: K;
   load: () => Promise<DashboardViewState[K]>;
@@ -85,7 +89,5 @@ export const dashboardViews = {
 };
 
 export function dashboardViewChanged(state: DashboardSceneState, previous: DashboardSceneState) {
-  // Object.keys loses the keys of this closed, compiler-checked registry.
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return (Object.keys(viewStateKeys) as ViewStateKey[]).some((key) => state[key] !== previous[key]);
+  return viewStateKeyList.some((key) => state[key] !== previous[key]);
 }
