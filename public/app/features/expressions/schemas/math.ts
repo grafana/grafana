@@ -14,13 +14,13 @@ const shape = {
   expression: z.string(),
 };
 
-export const mathWireSchema = z.looseObject({
+const mathWireSchema = z.looseObject({
   ...queryBaseWire,
   ...shape,
   expression: z.string().catch(''),
 });
 
-export const mathMemorySchema = z.looseObject({
+const mathMemorySchema = z.looseObject({
   ...queryBaseMemory,
   ...shape,
 });

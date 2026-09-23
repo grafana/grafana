@@ -14,7 +14,7 @@ import { type KnownFields, queryBaseMemory, queryBaseWire } from './common';
  * needs. Any other value (including an empty one) returns a table instead. The backend accepts any
  * string here, but only `alerting` means anything.
  */
-export const SQL_FORMAT_ALERTING = 'alerting';
+const SQL_FORMAT_ALERTING = 'alerting';
 
 const shape = {
   type: z.literal(ExpressionQueryType.sql),
@@ -22,7 +22,7 @@ const shape = {
   format: z.literal(SQL_FORMAT_ALERTING).optional(),
 };
 
-export const sqlWireSchema = z.looseObject({
+const sqlWireSchema = z.looseObject({
   ...queryBaseWire,
   ...shape,
   expression: z.string().catch(''),
@@ -30,7 +30,7 @@ export const sqlWireSchema = z.looseObject({
   format: z.literal(SQL_FORMAT_ALERTING).optional().catch(undefined),
 });
 
-export const sqlMemorySchema = z.looseObject({
+const sqlMemorySchema = z.looseObject({
   ...queryBaseMemory,
   ...shape,
 });

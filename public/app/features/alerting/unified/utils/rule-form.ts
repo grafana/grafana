@@ -519,7 +519,7 @@ export function fixMissingRefIdsInExpressionModel<T extends RulerRuleDTO>(rule: 
  * An expression we cannot read is left exactly as it was - `setQueryEditorSettings` already deals
  * with those, including sorting out which query is the condition.
  */
-export function parseExpressionModels<T extends RulerRuleDTO>(rule: T): T {
+function parseExpressionModels<T extends RulerRuleDTO>(rule: T): T {
   if (!rulerRuleType.grafana.rule(rule)) {
     return rule;
   }

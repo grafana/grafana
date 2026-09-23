@@ -84,14 +84,6 @@ export function validateExpressionQuery(query: ExpressionQuery) {
   return saveRulesByType[query.type].safeParse(query);
 }
 
-export function isMathExpression(query: ExpressionQuery): query is MathExpressionQuery {
-  return query.type === ExpressionQueryType.math;
-}
-
-export function isReduceExpression(query: ExpressionQuery): query is ReduceExpressionQuery {
-  return query.type === ExpressionQueryType.reduce;
-}
-
 export function isResampleExpression(query: ExpressionQuery): query is ResampleExpressionQuery {
   return query.type === ExpressionQueryType.resample;
 }
@@ -102,8 +94,4 @@ export function isThresholdExpression(query: ExpressionQuery): query is Threshol
 
 export function isClassicExpression(query: ExpressionQuery): query is ClassicExpressionQuery {
   return query.type === ExpressionQueryType.classic;
-}
-
-export function isSqlExpression(query: ExpressionQuery): query is SqlExpressionQuery {
-  return query.type === ExpressionQueryType.sql;
 }

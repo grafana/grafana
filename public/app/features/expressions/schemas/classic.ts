@@ -26,7 +26,7 @@ import {
  * - `no_value` only works here
  */
 
-export const CLASSIC_OPERATORS = ['and', 'or', 'logic-or'] as const;
+const CLASSIC_OPERATORS = ['and', 'or', 'logic-or'] as const;
 export type ClassicOperator = (typeof CLASSIC_OPERATORS)[number];
 
 const DEFAULT_CLASSIC_REDUCER: ClassicReducerId = 'avg';
@@ -82,14 +82,14 @@ export const defaultClassicCondition: ClassicCondition = {
   evaluator: { params: [0, 0], type: EvalFunction.IsAbove },
 };
 
-export const classicWireSchema = z.looseObject({
+const classicWireSchema = z.looseObject({
   ...queryBaseWire,
   type: z.literal(ExpressionQueryType.classic),
   // The backend is happy with a missing or null list, so we have to be too.
   conditions: z.array(conditionWireSchema).catch([]),
 });
 
-export const classicMemorySchema = z.looseObject({
+const classicMemorySchema = z.looseObject({
   ...queryBaseMemory,
   type: z.literal(ExpressionQueryType.classic),
   conditions: z.array(conditionMemorySchema),

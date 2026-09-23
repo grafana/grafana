@@ -61,14 +61,14 @@ export const defaultThresholdCondition: ThresholdCondition = {
   evaluator: { type: EvalFunction.IsAbove, params: [0] },
 };
 
-export const thresholdWireSchema = z.looseObject({
+const thresholdWireSchema = z.looseObject({
   ...queryBaseWire,
   type: z.literal(ExpressionQueryType.threshold),
   expression: z.string().catch(''),
   conditions: z.array(conditionWireSchema).catch([]),
 });
 
-export const thresholdMemorySchema = z.looseObject({
+const thresholdMemorySchema = z.looseObject({
   ...queryBaseMemory,
   type: z.literal(ExpressionQueryType.threshold),
   expression: z.string(),

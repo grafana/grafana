@@ -31,7 +31,7 @@ export function toUpsamplerId(value: unknown): UpsamplerId {
   return UPSAMPLER_IDS.find((id) => id === value) ?? DEFAULT_UPSAMPLER;
 }
 
-export const resampleWireSchema = z.looseObject({
+const resampleWireSchema = z.looseObject({
   ...queryBaseWire,
   type: z.literal(ExpressionQueryType.resample),
   expression: z.string().catch(''),
@@ -41,7 +41,7 @@ export const resampleWireSchema = z.looseObject({
   upsampler: z.unknown().optional(),
 });
 
-export const resampleMemorySchema = z.looseObject({
+const resampleMemorySchema = z.looseObject({
   ...queryBaseMemory,
   type: z.literal(ExpressionQueryType.resample),
   expression: z.string(),

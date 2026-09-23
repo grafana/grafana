@@ -31,7 +31,7 @@ const settingsMemorySchema = z.looseObject({
 
 export type ExpressionQuerySettings = KnownFields<z.infer<typeof settingsMemorySchema>>;
 
-export const reduceWireSchema = z.looseObject({
+const reduceWireSchema = z.looseObject({
   ...queryBaseWire,
   type: z.literal(ExpressionQueryType.reduce),
   expression: z.string().catch(''),
@@ -48,7 +48,7 @@ export const reduceWireSchema = z.looseObject({
     .catch(undefined),
 });
 
-export const reduceMemorySchema = z.looseObject({
+const reduceMemorySchema = z.looseObject({
   ...queryBaseMemory,
   type: z.literal(ExpressionQueryType.reduce),
   expression: z.string(),

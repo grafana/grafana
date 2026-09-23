@@ -100,7 +100,7 @@ export type ThresholdEvalFunction = (typeof THRESHOLD_EVAL_FUNCTIONS)[number];
 export const CLASSIC_EVAL_FUNCTIONS = [...THRESHOLD_EVAL_FUNCTIONS, EvalFunction.HasNoValue] as const;
 
 /** Evaluators that need two parameters rather than one. */
-export const RANGE_EVAL_FUNCTIONS: readonly EvalFunction[] = [
+const RANGE_EVAL_FUNCTIONS: readonly EvalFunction[] = [
   EvalFunction.IsWithinRange,
   EvalFunction.IsOutsideRange,
   EvalFunction.IsWithinRangeIncluded,
