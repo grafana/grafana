@@ -1,9 +1,13 @@
 import { waitFor } from '@testing-library/react';
 
 import { locationService } from '@grafana/runtime';
-import { NewSceneObjectAddedEvent, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { NewSceneObjectAddedEvent, SceneObjectBase, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+
+import { type ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
+import * as shareDrawerLoader from '../sharing/ShareDrawer/openShareDrawer';
 
 import { DashboardScene } from './DashboardScene';
+import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowItem } from './layout-rows/RowItem';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
@@ -298,6 +302,325 @@ describe('DashboardSceneUrlSync', () => {
       onDismiss: jest.fn(),
     };
 
+    describe('pending URL loads', () => {
+      let scene: DashboardScene;
+
+      beforeEach(() => {
+        jest.useFakeTimers();
+        scene = buildTestScene();
+      });
+      afterEach(() => {
+        scene.pauseTrackingChanges();
+        scene.urlSync!.updateFromUrl({ editview: null, shareView: null, editPanel: null });
+        jest.clearAllTimers();
+        jest.restoreAllMocks();
+        jest.useRealTimers();
+      });
+
+      // Settle imports and the zero-delay edit-mode callback without draining recurring dependency timers.
+      const settleUrlLoad = () => jest.advanceTimersByTimeAsync(0);
+
+      describe.each([
+        { key: 'editview', value: 'settings' },
+        { key: 'shareView', value: 'snapshot' },
+        { key: 'editPanel', value: '1' },
+      ] as const)('$key', ({ key, value }) => {
+        function startLoad() {
+          scene.setState({ editable: true, isEditing: true, meta: { ...scene.state.meta, canEdit: true } });
+          scene.urlSync!.updateFromUrl({ [key]: value });
+          expect(scene.urlSync!.getUrlState()[key]).toBe(value);
+          expect(scene.state[key]).toBeUndefined();
+        }
+
+        it('keeps the URL held until the lazy view opens', async () => {
+          startLoad();
+
+          await settleUrlLoad();
+
+          expect(scene.urlSync!.getUrlState()[key]).toBe(value);
+          if (key === 'shareView') {
+            expect(scene.state.overlay?.state).toMatchObject({ shareView: 'snapshot' });
+            expect(scene.state.shareView).toBe('snapshot');
+          } else {
+            expect(scene.state[key]?.getUrlKey()).toBe(value);
+          }
+        });
+
+        it('does not reopen a lazy view after its URL parameter is cleared', async () => {
+          startLoad();
+          scene.urlSync!.updateFromUrl({ [key]: null });
+
+          await settleUrlLoad();
+
+          expect(scene.urlSync!.getUrlState()[key]).toBeUndefined();
+          expect(scene.state[key]).toBeUndefined();
+          expect(scene.state.overlay).toBeUndefined();
+        });
+
+        it.each([false, true])('refuses a pending import when planning starts (resync: %s)', async (resync) => {
+          startLoad();
+          scene.setState({ planning });
+          if (resync) {
+            scene.urlSync!.updateFromUrl({ [key]: value });
+            expect(scene.urlSync!.getUrlState()[key]).toBeUndefined();
+            // A refused request stays cancelled even if planning ends before the import resolves.
+            scene.setState({ planning: undefined });
+          }
+
+          await settleUrlLoad();
+
+          expect(scene.urlSync!.getUrlState()[key]).toBeUndefined();
+          expect(scene.state[key]).toBeUndefined();
+          expect(scene.state.overlay).toBeUndefined();
+        });
+      });
+
+      it.each(['settings', 'unknown-view'])(
+        'enters edit mode when %s loads as settings before the edit-mode timer',
+        async (editview) => {
+          scene.setState({ editable: true, isEditing: false, meta: { ...scene.state.meta, canEdit: true } });
+          const onEnterEditMode = jest.spyOn(scene, 'onEnterEditMode');
+          const editviewLoaded = new Promise<void>((resolve) => {
+            const subscription = scene.subscribeToState((state) => {
+              if (state.editview) {
+                subscription.unsubscribe();
+                resolve();
+              }
+            });
+          });
+
+          scene.urlSync!.updateFromUrl({ editview });
+          expect(scene.urlSync!.getUrlState().editview).toBe(editview);
+          expect(scene.state.isEditing).toBe(false);
+
+          await editviewLoaded;
+
+          expect(scene.state.editview?.getUrlKey()).toBe('settings');
+          expect(scene.urlSync!.getUrlState().editview).toBe('settings');
+          expect(scene.state.isEditing).toBe(false);
+          expect(onEnterEditMode).not.toHaveBeenCalled();
+
+          await settleUrlLoad();
+
+          expect(scene.state.isEditing).toBe(true);
+          expect(scene.state.editview?.getUrlKey()).toBe('settings');
+          expect(onEnterEditMode).toHaveBeenCalledTimes(1);
+        }
+      );
+
+      it.each(['planning', 'cancel'] as const)(
+        'does not enter edit mode after deferred settings entry is superseded by %s',
+        async (action) => {
+          scene.setState({ editable: true, isEditing: false, meta: { ...scene.state.meta, canEdit: true } });
+          const onEnterEditMode = jest.spyOn(scene, 'onEnterEditMode');
+          scene.urlSync!.updateFromUrl({ editview: 'settings' });
+          expect(scene.urlSync!.getUrlState().editview).toBe('settings');
+
+          if (action === 'planning') {
+            scene.setState({ planning });
+          } else {
+            scene.urlSync!.updateFromUrl({ editview: null });
+          }
+          await settleUrlLoad();
+
+          expect(scene.state.isEditing).toBe(false);
+          expect(onEnterEditMode).not.toHaveBeenCalled();
+          expect(scene.state.editview).toBeUndefined();
+          expect(scene.urlSync!.getUrlState().editview).toBeUndefined();
+        }
+      );
+
+      it.each(['resolve', 'reject'] as const)(
+        'opens the newer same-key settings view when the cancelled request settles with %s',
+        async (outcome) => {
+          const settingsFactory = await import('../settings/createDashboardEditViewFor');
+          const viewA = settingsFactory.createDashboardEditViewFor('settings');
+          const viewB = settingsFactory.createDashboardEditViewFor('settings');
+          const createDashboardEditViewFor = jest
+            .spyOn(settingsFactory, 'createDashboardEditViewFor')
+            .mockImplementationOnce(() => {
+              if (outcome === 'reject') {
+                throw new Error('Cancelled settings view creation failed');
+              }
+              return viewA;
+            })
+            .mockReturnValueOnce(viewB);
+          const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+          scene.setState({ editable: true, isEditing: true, meta: { ...scene.state.meta, canEdit: true } });
+
+          scene.urlSync!.updateFromUrl({ editview: 'settings' });
+          expect(scene.urlSync!.getUrlState().editview).toBe('settings');
+          expect(scene.state.editview).toBeUndefined();
+
+          scene.urlSync!.updateFromUrl({ editview: null });
+          expect(scene.urlSync!.getUrlState().editview).toBeUndefined();
+
+          scene.urlSync!.updateFromUrl({ editview: 'settings' });
+          expect(scene.urlSync!.getUrlState().editview).toBe('settings');
+          expect(scene.state.editview).toBeUndefined();
+
+          await settleUrlLoad();
+
+          expect(createDashboardEditViewFor).toHaveBeenCalledTimes(2);
+          expect(createDashboardEditViewFor).toHaveBeenNthCalledWith(1, 'settings');
+          expect(createDashboardEditViewFor).toHaveBeenNthCalledWith(2, 'settings');
+          expect(scene.state.editview).toBe(viewB);
+          expect(scene.urlSync!.getUrlState().editview).toBe('settings');
+          expect(consoleError).not.toHaveBeenCalled();
+        }
+      );
+
+      describe('share loader requests', () => {
+        it('clears the held URL and state and logs the current loader error exactly once', async () => {
+          const request = deferred<ShareDrawer>();
+          const loadShareDrawer = jest.spyOn(shareDrawerLoader, 'loadShareDrawer').mockReturnValueOnce(request.promise);
+          const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+          const error = new Error('Share drawer import failed');
+
+          scene.urlSync!.updateFromUrl({ shareView: 'snapshot' });
+          expect(loadShareDrawer).toHaveBeenCalledTimes(1);
+          expect(loadShareDrawer).toHaveBeenCalledWith({ shareView: 'snapshot' });
+          expect(scene.urlSync!.getUrlState().shareView).toBe('snapshot');
+          expect(scene.state.shareView).toBeUndefined();
+
+          request.reject(error);
+          await settleUrlLoad();
+
+          expect(scene.urlSync!.getUrlState().shareView).toBeUndefined();
+          expect(scene.state.shareView).toBeUndefined();
+          expect(scene.state.overlay).toBeUndefined();
+          expect(consoleError).toHaveBeenCalledTimes(1);
+          expect(consoleError).toHaveBeenCalledWith('Failed to load share drawer', error);
+        });
+
+        it('preserves an unrelated overlay when shareView is cleared', () => {
+          const overlay = new SceneObjectBase({});
+          scene.showModal(overlay);
+
+          scene.urlSync!.updateFromUrl({ shareView: null });
+
+          expect(scene.state.overlay).toBe(overlay);
+          expect(scene.state.shareView).toBeUndefined();
+          expect(scene.urlSync!.getUrlState().shareView).toBeUndefined();
+        });
+
+        describe.each(['resolve', 'reject'] as const)('when a superseded share load settles with %s', (outcome) => {
+          it.each(['left open', 'URL cancelled', 'opened then closed'] as const)(
+            'preserves the newer overlay state: %s',
+            async (action) => {
+              const { ShareDrawer } = await import('../sharing/ShareDrawer/ShareDrawer');
+              const request = deferred<ShareDrawer>();
+              jest.spyOn(shareDrawerLoader, 'loadShareDrawer').mockReturnValueOnce(request.promise);
+              const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+              const overlay = new SceneObjectBase({});
+
+              scene.urlSync!.updateFromUrl({ shareView: 'snapshot' });
+              expect(scene.urlSync!.getUrlState().shareView).toBe('snapshot');
+              expect(scene.state.shareView).toBeUndefined();
+              expect(scene.state.overlay).toBeUndefined();
+
+              scene.showModal(overlay);
+              expect(scene.state.overlay).toBe(overlay);
+              expect(scene.urlSync!.getUrlState().shareView).toBeUndefined();
+
+              if (action === 'URL cancelled') {
+                scene.urlSync!.updateFromUrl({ shareView: null });
+              } else if (action === 'opened then closed') {
+                scene.closeModal();
+              }
+
+              if (outcome === 'resolve') {
+                request.resolve(new ShareDrawer({ shareView: 'snapshot' }));
+              } else {
+                request.reject(new Error('Superseded share drawer import failed'));
+              }
+              await settleUrlLoad();
+
+              expect(scene.state.overlay).toBe(action === 'opened then closed' ? undefined : overlay);
+              expect(scene.state.shareView).toBeUndefined();
+              expect(scene.urlSync!.getUrlState().shareView).toBeUndefined();
+              expect(consoleError).not.toHaveBeenCalled();
+            }
+          );
+        });
+
+        it.each(['resolve', 'reject'] as const)(
+          'keeps a newer same-key share request pending when the cancelled request settles with %s',
+          async (outcome) => {
+            const { ShareDrawer } = await import('../sharing/ShareDrawer/ShareDrawer');
+            const requestA = deferred<ShareDrawer>();
+            const requestB = deferred<ShareDrawer>();
+            const drawerA = new ShareDrawer({ shareView: 'snapshot' });
+            const drawerB = new ShareDrawer({ shareView: 'snapshot' });
+            const loadShareDrawer = jest
+              .spyOn(shareDrawerLoader, 'loadShareDrawer')
+              .mockReturnValueOnce(requestA.promise)
+              .mockReturnValueOnce(requestB.promise);
+            const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+            scene.urlSync!.updateFromUrl({ shareView: 'snapshot' });
+            expect(scene.urlSync!.getUrlState().shareView).toBe('snapshot');
+            expect(scene.state.shareView).toBeUndefined();
+
+            scene.urlSync!.updateFromUrl({ shareView: null });
+            expect(scene.urlSync!.getUrlState().shareView).toBeUndefined();
+
+            scene.urlSync!.updateFromUrl({ shareView: 'snapshot' });
+            expect(loadShareDrawer).toHaveBeenCalledTimes(2);
+            expect(loadShareDrawer).toHaveBeenNthCalledWith(1, { shareView: 'snapshot' });
+            expect(loadShareDrawer).toHaveBeenNthCalledWith(2, { shareView: 'snapshot' });
+            expect(scene.urlSync!.getUrlState().shareView).toBe('snapshot');
+            expect(scene.state.shareView).toBeUndefined();
+            expect(scene.state.overlay).toBeUndefined();
+
+            if (outcome === 'resolve') {
+              requestA.resolve(drawerA);
+            } else {
+              requestA.reject(new Error('Cancelled share drawer import failed'));
+            }
+            await settleUrlLoad();
+
+            expect(scene.urlSync!.getUrlState().shareView).toBe('snapshot');
+            expect(scene.state.shareView).toBeUndefined();
+            expect(scene.state.overlay).toBeUndefined();
+            expect(consoleError).not.toHaveBeenCalled();
+
+            requestB.resolve(drawerB);
+            await settleUrlLoad();
+
+            expect(scene.state.overlay).toBe(drawerB);
+            expect(scene.state.shareView).toBe('snapshot');
+            expect(scene.urlSync!.getUrlState().shareView).toBe('snapshot');
+            expect(consoleError).not.toHaveBeenCalled();
+          }
+        );
+      });
+
+      it.each([false, true])('refuses a pending library panel when planning starts (resync: %s)', async (resync) => {
+        const libPanel = new LibraryPanelBehavior({ name: 'Library panel', uid: 'lib-1' });
+        scene.setState({
+          isEditing: true,
+          body: DefaultGridLayoutManager.fromVizPanels([
+            new VizPanel({ key: 'panel-1', pluginId: 'table', $behaviors: [libPanel] }),
+          ]),
+        });
+        scene.urlSync!.updateFromUrl({ editPanel: '1' });
+        expect(scene.urlSync!.getUrlState().editPanel).toBe('1');
+
+        scene.setState({ planning });
+        if (resync) {
+          scene.urlSync!.updateFromUrl({ editPanel: '1' });
+          expect(scene.urlSync!.getUrlState().editPanel).toBeUndefined();
+          scene.setState({ planning: undefined });
+        }
+        libPanel.setState({ isLoaded: true });
+        await settleUrlLoad();
+
+        expect(scene.state.editPanel).toBeUndefined();
+        expect(scene.urlSync!.getUrlState().editPanel).toBeUndefined();
+      });
+    });
+
     it('does not open dashboard settings from an editview url param, and does not enter edit mode', () => {
       const scene = buildTestScene();
       scene.setState({ isEditing: false, planning });
@@ -349,6 +672,16 @@ describe('DashboardSceneUrlSync', () => {
     });
   });
 });
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (error: Error) => void;
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, resolve, reject };
+}
 
 function buildTestSceneWithRow(title: string, { collapse }: { collapse?: boolean } = {}) {
   const row = new RowItem({ title, collapse });
