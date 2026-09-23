@@ -183,6 +183,7 @@ function PlaylistTableRow({
   currentIndex.current = index;
   const optionsId = useId();
   const dashboardLinkEditorId = useId();
+  const isTagItem = item.type === 'dashboard_by_tag';
   const optionSummary = [
     item.dashboardView ? t('playlist.playlist-table-rows.dashboard-state-summary', 'Custom view') : undefined,
     item.interval
@@ -359,7 +360,19 @@ function PlaylistTableRow({
               />
             </div>
           </div>
-          {optionsOpen && (
+          {optionsOpen && isTagItem && (
+            <div className={styles.tagOptions} id={optionsId}>
+              <TagStackSettings
+                item={item}
+                intervalPlaceholder={intervalPlaceholder}
+                intervalError={intervalError}
+                onUpdateInterval={(interval) => onUpdateInterval?.(currentIndex.current, interval)}
+                onClearDashboardView={() => onUpdateDashboardView?.(currentIndex.current, '')}
+                styles={styles}
+              />
+            </div>
+          )}
+          {optionsOpen && !isTagItem && (
             <div className={styles.options} id={optionsId}>
               <Field
                 noMargin
@@ -569,6 +582,120 @@ function PlaylistTableRow({
   );
 }
 
+interface TagStackSettingsProps {
+  item: PlaylistItemUI;
+  intervalPlaceholder?: string;
+  intervalError?: string;
+  onUpdateInterval: (interval: string) => void;
+  onClearDashboardView: () => void;
+  styles: ReturnType<typeof getStyles>;
+}
+
+function TagStackSettings({
+  item,
+  intervalPlaceholder,
+  intervalError,
+  onUpdateInterval,
+  onClearDashboardView,
+  styles,
+}: TagStackSettingsProps) {
+  const dashboards = item.dashboards ?? [];
+
+  return (
+    <>
+      <div className={styles.tagStackDetails}>
+        {item.dashboardView && (
+          <div className={styles.tagCustomViewNotice}>
+            <Icon name="info-circle" />
+            <div>
+              <Text variant="bodySmall" weight="medium">
+                <Trans i18nKey="playlist.playlist-table-rows.tag-stack-shared-view-title">Shared custom view</Trans>
+              </Text>
+              <Text variant="bodySmall" color="secondary">
+                <Trans i18nKey="playlist.playlist-table-rows.tag-stack-shared-view-description">
+                  This existing view applies to every dashboard in the group.
+                </Trans>
+              </Text>
+            </div>
+            <Button fill="text" size="sm" onClick={onClearDashboardView}>
+              <Trans i18nKey="playlist.playlist-table-rows.tag-stack-clear-shared-view">Clear custom view</Trans>
+            </Button>
+          </div>
+        )}
+        <div className={styles.tagStackHeading}>
+          <div>
+            <Text variant="bodySmall" weight="medium">
+              <Trans
+                i18nKey="playlist.playlist-table-rows.tag-stack-title"
+                count={dashboards.length}
+                tOptions={{
+                  defaultValue_one: '{{count}} dashboard currently matches',
+                  defaultValue_other: '{{count}} dashboards currently match',
+                }}
+              >
+                {'{{count}}'} dashboards currently match
+              </Trans>
+            </Text>
+            <Text variant="bodySmall" color="secondary">
+              <Trans i18nKey="playlist.playlist-table-rows.tag-stack-description">
+                This group updates automatically as dashboards gain or lose the tag.
+              </Trans>
+            </Text>
+          </div>
+          <Text variant="bodySmall" color="secondary">
+            <Trans i18nKey="playlist.playlist-table-rows.tag-stack-interval-help">
+              The interval applies to each dashboard in the group.
+            </Trans>
+          </Text>
+        </div>
+        {dashboards.length ? (
+          <ol
+            className={styles.tagDashboardList}
+            aria-label={t('playlist.playlist-table-rows.tag-stack-dashboard-list', 'Dashboards in this tag group')}
+          >
+            {dashboards.map((dashboard, dashboardIndex) => (
+              <li className={styles.tagDashboard} key={`${dashboard.url}/${dashboardIndex}`}>
+                <span className={styles.tagDashboardIndex}>{dashboardIndex + 1}</span>
+                <TextLink href={dashboard.url} external inline={false}>
+                  <Text element="span" truncate>
+                    {dashboard.name ?? dashboard.url}
+                  </Text>
+                </TextLink>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <Text variant="bodySmall" color="secondary">
+            <Trans i18nKey="playlist.playlist-table-rows.tag-stack-empty">
+              No dashboards currently match this tag.
+            </Trans>
+          </Text>
+        )}
+      </div>
+      <Field
+        noMargin
+        label={t('playlist.playlist-table-rows.tag-stack-interval-label', 'Interval per dashboard')}
+        invalid={!!intervalError}
+        error={intervalError}
+      >
+        <Input
+          type="text"
+          value={item.interval ?? ''}
+          placeholder={intervalPlaceholder}
+          invalid={!!intervalError}
+          title={intervalError}
+          aria-label={t(
+            'playlist.playlist-table-rows.aria-label-tag-stack-interval',
+            'Interval for dashboards tagged {{itemValue}}',
+            { itemValue: item.value }
+          )}
+          onChange={(event) => onUpdateInterval(event.currentTarget.value.trim())}
+        />
+      </Field>
+    </>
+  );
+}
+
 interface CustomViewTooltipContentProps {
   queryString: string;
   styles: ReturnType<typeof getStyles>;
@@ -717,6 +844,9 @@ function getStyles(theme: GrafanaTheme2) {
       '&:hover': {
         border: `1px solid ${theme.colors.border.strong}`,
       },
+      [theme.breakpoints.down('sm')]: {
+        gridTemplateColumns: 'minmax(0, 1fr)',
+      },
     }),
     rightMargin: css({
       marginRight: '5px',
@@ -751,6 +881,9 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
       display: 'flex',
       gap: theme.spacing(0.5),
+      [theme.breakpoints.down('sm')]: {
+        justifyContent: 'flex-end',
+      },
     }),
     optionSummary: css({
       display: 'inline-block',
@@ -875,6 +1008,89 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     customViewTooltipLabel: css({
       color: theme.colors.text.secondary,
+    }),
+    tagOptions: css({
+      display: 'grid',
+      gridColumn: '1 / -1',
+      gridTemplateColumns: 'minmax(0, 1fr) minmax(160px, 200px)',
+      gap: theme.spacing(2),
+      marginTop: theme.spacing(1.5),
+      [theme.breakpoints.down('sm')]: {
+        gridTemplateColumns: 'minmax(0, 1fr)',
+      },
+    }),
+    tagStackDetails: css({
+      display: 'grid',
+      gap: theme.spacing(1),
+      minWidth: 0,
+    }),
+    tagCustomViewNotice: css({
+      alignItems: 'center',
+      background: theme.colors.background.primary,
+      borderRadius: theme.shape.radius.default,
+      display: 'grid',
+      gap: theme.spacing(1),
+      gridTemplateColumns: 'auto minmax(0, 1fr) auto',
+      padding: theme.spacing(0.5, 1),
+      '& > div': {
+        display: 'grid',
+      },
+      [theme.breakpoints.down('sm')]: {
+        alignItems: 'start',
+        gridTemplateColumns: 'auto minmax(0, 1fr)',
+        '& > button': {
+          gridColumn: '2',
+          justifySelf: 'start',
+        },
+      },
+    }),
+    tagStackHeading: css({
+      alignItems: 'end',
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: theme.spacing(2),
+      justifyContent: 'space-between',
+      '& > div': {
+        display: 'grid',
+      },
+      [theme.breakpoints.down('sm')]: {
+        alignItems: 'start',
+        flexDirection: 'column',
+        gap: theme.spacing(0.5),
+      },
+    }),
+    tagDashboardList: css({
+      display: 'grid',
+      gap: theme.spacing(0.25),
+      listStyle: 'none',
+      margin: 0,
+      maxHeight: 176,
+      overflowY: 'auto',
+      padding: 0,
+    }),
+    tagDashboard: css({
+      alignItems: 'center',
+      background: theme.colors.background.primary,
+      borderRadius: theme.shape.radius.default,
+      display: 'grid',
+      gap: theme.spacing(1),
+      gridTemplateColumns: '24px minmax(0, 1fr)',
+      minHeight: theme.spacing(4),
+      padding: theme.spacing(0.5, 1),
+      '& > a': {
+        alignItems: 'baseline',
+        display: 'flex',
+        minWidth: 0,
+        width: 'fit-content',
+      },
+      '& > a > span': {
+        minWidth: 0,
+      },
+    }),
+    tagDashboardIndex: css({
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
+      textAlign: 'right',
     }),
     options: css({
       display: 'grid',

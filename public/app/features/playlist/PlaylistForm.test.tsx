@@ -126,8 +126,12 @@ async function openDashboardLinkPaste(itemValue: string) {
 }
 
 function rowForItem(itemValue: string) {
+  return rowForTypedItem('dashboard_by_uid', itemValue);
+}
+
+function rowForTypedItem(type: 'dashboard_by_uid' | 'dashboard_by_tag', itemValue: string) {
   const cell = screen.getByRole('cell', {
-    name: `Playlist item, dashboard_by_uid, ${itemValue}`,
+    name: `Playlist item, ${type}, ${itemValue}`,
   });
   const row = cell.closest('[role="row"]');
 
@@ -487,6 +491,53 @@ describe('PlaylistForm', () => {
           }),
         })
       );
+    });
+
+    it('treats an item added by tag as a dynamic stack with one interval per dashboard', async () => {
+      const taggedPlaylist: Playlist = {
+        ...mockPlaylist,
+        spec: {
+          ...mockPlaylist.spec!,
+          items: [
+            {
+              type: 'dashboard_by_tag',
+              value: 'operations',
+              dashboardView: { queryString: 'var-environment=prod' },
+            },
+          ],
+        },
+      };
+      const { onSubmitMock } = getTestContext(taggedPlaylist, [
+        {
+          name: 'operations-overview',
+          resource: 'dashboards',
+          title: 'Operations overview',
+          tags: ['operations'],
+        },
+        { name: 'service-health', resource: 'dashboards', title: 'Service health', tags: ['operations'] },
+      ]);
+      const tagRow = rowForTypedItem('dashboard_by_tag', 'operations');
+
+      await userEvent.click(within(tagRow).getByRole('button', { name: 'Settings' }));
+
+      expect(await within(tagRow).findByText('2 dashboards currently match')).toBeInTheDocument();
+      expect(within(tagRow).getByText(/updates automatically/i)).toBeInTheDocument();
+      expect(within(tagRow).getByRole('link', { name: 'Operations overview' })).toBeInTheDocument();
+      expect(within(tagRow).getByRole('link', { name: 'Service health' })).toBeInTheDocument();
+      expect(within(tagRow).queryByRole('link', { name: 'Configure' })).not.toBeInTheDocument();
+      expect(within(tagRow).queryByRole('button', { name: /paste a link/i })).not.toBeInTheDocument();
+      expect(within(tagRow).getByText('Shared custom view')).toBeInTheDocument();
+      await userEvent.click(within(tagRow).getByRole('button', { name: 'Clear custom view' }));
+
+      await userEvent.type(
+        within(tagRow).getByRole('textbox', { name: 'Interval for dashboards tagged operations' }),
+        '45s'
+      );
+      await userEvent.click(screen.getByRole('button', { name: /save/i }));
+
+      expect(onSubmitMock.mock.calls[0][0].spec.items).toEqual([
+        { type: 'dashboard_by_tag', value: 'operations', interval: '45s' },
+      ]);
     });
   });
 
