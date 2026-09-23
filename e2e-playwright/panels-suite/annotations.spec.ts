@@ -6,8 +6,8 @@ const DASHBOARD_UID = 'ad7p5pj';
 
 test.use({ viewport: { width: 1000, height: 1440 } });
 
-test.describe('Panels test: Annotations', { tag: ['@panels', '@annotations'] }, () => {
-  test.skip('Annotations should split into multiple rows if multi-lane panel option is set', async ({
+test.describe.only('Panels test: Annotations', { tag: ['@panels', '@annotations'] }, () => {
+  test('Annotations should split into multiple rows if multi-lane panel option is set', async ({
     gotoDashboardPage,
     selectors,
   }) => {
