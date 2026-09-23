@@ -6,6 +6,7 @@ import { Echo } from 'app/core/services/echo/Echo';
 import { NotebookScene } from '../scene/NotebookScene';
 import { NotebookCellItem } from '../scene/layout-notebook/NotebookCellItem';
 import { NotebookLayoutManager } from '../scene/layout-notebook/NotebookLayoutManager';
+import { defaultVisualizationPanelKind } from '../types';
 
 import { NotebookAnalytics } from './main';
 
@@ -82,5 +83,99 @@ describe('NotebookAnalytics.loaded', () => {
     NotebookAnalytics.loaded(scene, true);
 
     expect(modes).toEqual(['view']);
+  });
+});
+
+/** The wrapper reads the panel properties, so this asserts the payload that goes out. */
+describe('NotebookAnalytics.cellAddedFromAddToNotebook', () => {
+  let events: Array<Record<string, unknown>>;
+  let unsubscribe: () => void;
+
+  beforeEach(() => {
+    setEchoSrv(new Echo());
+    events = [];
+    unsubscribe = onInteraction('grafana_notebook_cell_added_from_add_to_notebook', (properties) =>
+      events.push(properties)
+    );
+  });
+
+  afterEach(() => unsubscribe());
+
+  it('sends the shape of the added panel next to the notebook and the position', () => {
+    NotebookAnalytics.cellAddedFromAddToNotebook('nb-1', 'explore', 2, {
+      panel: defaultVisualizationPanelKind(),
+      isLibraryPanel: false,
+    });
+
+    expect(events).toEqual([
+      {
+        notebookUid: 'nb-1',
+        source: 'explore',
+        position: 2,
+        panelType: 'timeseries',
+        datasourceTypes: [],
+        queryCount: 0,
+        isLibraryPanel: false,
+      },
+    ]);
+  });
+
+  /**
+   * A library panel arrives inlined, as an ordinary Panel element. Reading the flag off that element
+   * reported every library panel as not one. So the flag comes from the caller.
+   */
+  it('reports a library panel as one even though it arrives inlined', () => {
+    NotebookAnalytics.cellAddedFromAddToNotebook('nb-1', 'dashboard_panel', 0, {
+      panel: defaultVisualizationPanelKind(),
+      isLibraryPanel: true,
+    });
+
+    expect(events).toEqual([
+      expect.objectContaining({ isLibraryPanel: true, panelType: 'timeseries', source: 'dashboard_panel' }),
+    ]);
+  });
+});
+
+/**
+ * Carries the same panel properties as the add event. A create from "Add to notebook" is the other
+ * half of the same action.
+ */
+describe('NotebookAnalytics.created', () => {
+  let events: Array<Record<string, unknown>>;
+  let unsubscribe: () => void;
+
+  beforeEach(() => {
+    setEchoSrv(new Echo());
+    events = [];
+    unsubscribe = onInteraction('grafana_notebook_created', (properties) => events.push(properties));
+  });
+
+  afterEach(() => unsubscribe());
+
+  it('describes the panel the notebook was created around', () => {
+    NotebookAnalytics.created('nb-1', 'dashboard_panel', 1, {
+      panel: defaultVisualizationPanelKind(),
+      isLibraryPanel: true,
+    });
+
+    expect(events).toEqual([
+      {
+        notebookUid: 'nb-1',
+        source: 'dashboard_panel',
+        cellCount: 1,
+        panelType: 'timeseries',
+        datasourceTypes: [],
+        queryCount: 0,
+        isLibraryPanel: true,
+      },
+    ]);
+  });
+
+  // The blank notebook route creates from whatever cells exist by the first save. There is no one
+  // panel to describe, so the four properties are left off rather than sent empty.
+  it('sends no panel properties for a create that came with no panel', () => {
+    NotebookAnalytics.created('nb-2', 'notebook_list', 3);
+
+    expect(events).toEqual([{ notebookUid: 'nb-2', source: 'notebook_list', cellCount: 3 }]);
   });
 });

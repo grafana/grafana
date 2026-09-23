@@ -61,3 +61,31 @@ func bulkFlagEvalFilteringEnabled(ctx context.Context, logger log.Logger) bool {
 
 	return details.Value
 }
+
+func (b *APIBuilder) bypassEnabled(ctx context.Context, logger log.Logger) bool {
+	if b.goffURL == nil {
+		return false
+	}
+
+	evalCtx := openfeature.TransactionContext(ctx)
+
+	details, err := openfeature.NewDefaultClient().BooleanValueDetails(
+		ctx,
+		featuremgmt.FlagFeaturesLegacyOverrideLookupBypass,
+		false,
+		evalCtx,
+	)
+
+	logger.Debug("legacyOverrideLookupBypass evaluation result",
+		"value", details.Value,
+		"variant", details.Variant,
+		"reason", details.Reason,
+		"errorCode", details.ErrorCode,
+		"errorMessage", details.ErrorMessage,
+		"targetingKey", evalCtx.TargetingKey(),
+		"attributes", evalCtx.Attributes(),
+		"err", err,
+	)
+
+	return details.Value
+}

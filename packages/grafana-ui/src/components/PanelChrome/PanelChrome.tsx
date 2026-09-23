@@ -56,7 +56,9 @@ interface BaseProps {
    */
   statusItems?: PanelStatusItem[];
   /**
-   * Handle opening error details view (like inspect / error tab)
+   * Fired when the user clicks the status message/popover, alongside PanelContext's
+   * `onOpenInspector` which actually opens the error details view. Use for host-side side
+   * effects (e.g. telemetry).
    */
   statusMessageOnClick?: (e: React.SyntheticEvent) => void;
   /**

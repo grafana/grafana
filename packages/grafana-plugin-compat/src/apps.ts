@@ -5,7 +5,7 @@ import {
   updateAppPluginSettings as runtimeUpdateAppPluginSettings,
 } from '@grafana/runtime/unstable';
 
-export function getPluginSettings(pluginId: string, showErrorAlert = false): Promise<PluginMeta> {
+export async function getPluginSettings(pluginId: string, showErrorAlert = false): Promise<PluginMeta> {
   if (typeof runtimeGetPluginSettings === 'function') {
     return runtimeGetPluginSettings(pluginId, showErrorAlert);
   }
@@ -13,14 +13,14 @@ export function getPluginSettings(pluginId: string, showErrorAlert = false): Pro
   return backwardsCompatibleGetPluginSettings(pluginId, showErrorAlert);
 }
 
-function backwardsCompatibleGetPluginSettings(pluginId: string, showErrorAlert = false): Promise<PluginMeta> {
+async function backwardsCompatibleGetPluginSettings(pluginId: string, showErrorAlert = false): Promise<PluginMeta> {
   return getBackendSrv().get(`/api/plugins/${pluginId}/settings`, undefined, undefined, {
     showErrorAlert,
     validatePath: true,
   });
 }
 
-export function updateAppPluginSettings(pluginId: string, data: Partial<PluginMeta>): Promise<PluginMeta> {
+export async function updateAppPluginSettings(pluginId: string, data: Partial<PluginMeta>): Promise<PluginMeta> {
   if (typeof runtimeUpdateAppPluginSettings === 'function') {
     return runtimeUpdateAppPluginSettings(pluginId, data);
   }

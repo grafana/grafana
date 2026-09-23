@@ -420,14 +420,60 @@ func newAlertRuleTranslation() translation {
 	return t
 }
 
+// newSilenceTranslation maps silences to the alert.silences:* actions.
+//
+// Silences have no App Platform kind of their own — they are still served by the
+// legacy Alertmanager API — but their permissions are folder-scoped exactly like
+// alert rules, so folder-scoped capability questions ("can this user create a
+// silence in folder F?") need a translation to resolve. The resource is
+// "alert.silences" for the same reason newAlertRuleTranslation uses
+// "alert.rules": the direct-scope check builds Scope(name) from the request's
+// object name, and alert.silences:uid:<name> is a scope no grant ever has, so
+// that check is a guaranteed no-op and folder inheritance decides access.
+//
+// There is no alert.silences:delete action; expiring a silence is a write.
+func newSilenceTranslation() translation {
+	t := translation{
+		resource:  "alert.silences",
+		attribute: "uid",
+		verbMapping: map[string]string{
+			utils.VerbGet:              accesscontrol.ActionAlertingSilencesRead,
+			utils.VerbList:             accesscontrol.ActionAlertingSilencesRead,
+			utils.VerbWatch:            accesscontrol.ActionAlertingSilencesRead,
+			utils.VerbCreate:           accesscontrol.ActionAlertingSilencesCreate,
+			utils.VerbUpdate:           accesscontrol.ActionAlertingSilencesWrite,
+			utils.VerbPatch:            accesscontrol.ActionAlertingSilencesWrite,
+			utils.VerbDelete:           accesscontrol.ActionAlertingSilencesWrite,
+			utils.VerbDeleteCollection: accesscontrol.ActionAlertingSilencesWrite,
+		},
+		folderSupport: true,
+	}
+
+	return withFolderActionSets(t)
+}
+
 // newVariableTranslation maps dashboard.grafana.app/variables to variables:*
 // and to the folder view/edit/admin action sets. Managed folder roles only
 // persist those action-set tokens when onlyStoreActionSets is on, so without
 // this mapping an Editor with folder Edit cannot create/update/delete
 // folder-scoped variables even though FolderEditActions includes variables:*.
 func newVariableTranslation() translation {
-	t := newResourceTranslation("variables", "uid", true, nil)
+	return withFolderActionSets(newResourceTranslation("variables", "uid", true, nil))
+}
 
+// newLibraryPanelTranslation maps dashboard.grafana.app/librarypanels to
+// library.panels:* and to the folder view/edit/admin action sets. Library panels
+// have no action sets of their own — they are only granted through folder
+// permissions — so without this mapping a user holding folder Edit via a managed
+// role cannot be seen to create/update/delete library panels in that folder.
+func newLibraryPanelTranslation() translation {
+	return withFolderActionSets(newResourceTranslation("library.panels", "uid", true, nil))
+}
+
+// withFolderActionSets attaches the folder view/edit/admin action sets to every
+// verb whose action belongs to the corresponding folder bundle. Use it for
+// resources that are granted purely through folder permissions.
+func withFolderActionSets(t translation) translation {
 	actionSetMapping := make(map[string][]string)
 	for verb, rbacAction := range t.verbMapping {
 		var actionSets []string
@@ -487,6 +533,9 @@ func NewMapperRegistry() MapperRegistry {
 		"notifications.alerting.grafana.app": {
 			"routingtrees":        newRoutingTreeTranslation(),
 			"alertmanagerimports": newAlertmanagerImportsTranslation(),
+			// No silence kind is served here yet; the translation exists so folder-scoped
+			// silence capability checks resolve. See newSilenceTranslation.
+			"silences": newSilenceTranslation(),
 		},
 		"rules.alerting.grafana.app": {
 			// All rule resources share the folder-scoped alert.rules:* actions.
@@ -501,7 +550,7 @@ func NewMapperRegistry() MapperRegistry {
 		"dashboard.grafana.app": {
 			"dashboards":    newDashboardTranslation(),
 			"notebooks":     newNotebookTranslation(),
-			"librarypanels": newResourceTranslation("library.panels", "uid", true, nil),
+			"librarypanels": newLibraryPanelTranslation(),
 			"variables":     newVariableTranslation(),
 			// Annotations subresource for dashboards
 			// Uses dashboard scope (dashboards:uid:...) but annotation actions

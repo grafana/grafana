@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/utils/ptr"
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -54,7 +53,7 @@ func newAnonymousReqContext(orgID int64) *contextmodel.ReqContext {
 func TestK8sHandler_GetPreferences(t *testing.T) {
 	t.Run("returns spec on success", func(t *testing.T) {
 		client := NewMockK8sClient(t)
-		spec := &preferences.PreferencesSpec{Theme: ptr.To("dark")}
+		spec := &preferences.PreferencesSpec{Theme: new("dark")}
 		client.EXPECT().Get(mock.Anything, prefutils.OwnerReference{Owner: prefutils.UserResourceOwner, Identifier: "u1"}).Return(spec, nil)
 
 		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t), preferences.PreferencesSpec{})
@@ -141,7 +140,7 @@ func TestK8sHandler_UpdatePreferences(t *testing.T) {
 		ds := dashboards.NewFakeDashboardService(t) // no expectations — must not be called
 		h := NewK8sHandler(client, ds, preferences.PreferencesSpec{})
 		resp := h.UpdatePreferences(newReqContext(1, "u1"), prefutils.UserOwner("u1"), &dtos.UpdatePrefsCmd{
-			HomeDashboardUID: ptr.To("supplied"),
+			HomeDashboardUID: new("supplied"),
 			HomeDashboardID:  42,
 		})
 
@@ -172,7 +171,7 @@ func TestK8sHandler_PatchPreferences(t *testing.T) {
 
 		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t), preferences.PreferencesSpec{})
 		resp := h.PatchPreferences(newReqContext(1, "u1"), prefutils.UserOwner("u1"), &dtos.PatchPrefsCmd{
-			Theme: ptr.To("light"),
+			Theme: new("light"),
 		})
 
 		require.Equal(t, http.StatusOK, resp.Status())
@@ -189,7 +188,7 @@ func TestK8sHandler_PatchPreferences(t *testing.T) {
 
 		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t), preferences.PreferencesSpec{})
 		resp := h.PatchPreferences(newReqContext(1, "u1"), prefutils.UserOwner("u1"), &dtos.PatchPrefsCmd{
-			Theme: ptr.To("light"),
+			Theme: new("light"),
 		})
 
 		assert.Equal(t, http.StatusOK, resp.Status())
@@ -211,12 +210,12 @@ func TestK8sHandler_GetPreferencesWithDefaults(t *testing.T) {
 	t.Run("maps the merged spec onto the legacy model", func(t *testing.T) {
 		client := NewMockK8sClient(t)
 		client.EXPECT().GetMerged(mock.Anything).Return(&preferences.PreferencesSpec{
-			Theme:            ptr.To("dark"),
-			Timezone:         ptr.To("Europe/London"),
-			WeekStart:        ptr.To("monday"),
-			Language:         ptr.To("en-GB"),
-			HomeDashboardUID: ptr.To("abc123"),
-			QueryHistory:     &preferences.PreferencesQueryHistoryPreference{HomeTab: ptr.To("starred")},
+			Theme:            new("dark"),
+			Timezone:         new("Europe/London"),
+			WeekStart:        new("monday"),
+			Language:         new("en-GB"),
+			HomeDashboardUID: new("abc123"),
+			QueryHistory:     &preferences.PreferencesQueryHistoryPreference{HomeTab: new("starred")},
 			Navbar:           &preferences.PreferencesNavbarPreference{BookmarkUrls: []string{"/dashboards"}},
 		}, nil)
 
@@ -266,8 +265,8 @@ func TestK8sHandler_GetPreferencesWithDefaults(t *testing.T) {
 		// no expectations on the mock — a GetMerged call would fail the test
 		client := NewMockK8sClient(t)
 		defaults := preferences.PreferencesSpec{
-			Theme:    ptr.To("system"),
-			Timezone: ptr.To("browser"),
+			Theme:    new("system"),
+			Timezone: new("browser"),
 		}
 
 		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t), defaults)
@@ -282,7 +281,7 @@ func TestK8sHandler_GetPreferencesWithDefaults(t *testing.T) {
 	t.Run("anonymous request goes through the merged API", func(t *testing.T) {
 		client := NewMockK8sClient(t)
 		client.EXPECT().GetMerged(mock.Anything).Return(&preferences.PreferencesSpec{
-			Theme: ptr.To("dark"),
+			Theme: new("dark"),
 		}, nil)
 
 		h := NewK8sHandler(client, dashboards.NewFakeDashboardService(t), preferences.PreferencesSpec{})

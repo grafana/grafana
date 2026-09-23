@@ -5,11 +5,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 
 	"github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -267,6 +269,40 @@ func TestValidateOnCreate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestValidateEmailFieldValueResults(t *testing.T) {
+	var request *resourcepb.ResourceSearchRequest
+	client := &FakeUserLegacySearchClient{SearchFunc: func(_ context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+		request = req
+		return &resourcepb.ResourceSearchResponse{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			TotalHits:    1,
+			Rows: []*resourcepb.ResourceSearchRow{{
+				Key: &resourcepb.ResourceKey{Name: "user-1"},
+			}},
+		}, nil
+	}}
+
+	require.NoError(t, validateEmail(t.Context(), client, "stacks-1", "user-1", "user@example.com"))
+	require.NotNil(t, request)
+	require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, request.ResultFormat)
+	require.Equal(t, []string{resource.SEARCH_FIELD_NAME}, request.Fields)
+}
+
+func TestValidateLoginFieldValueResults(t *testing.T) {
+	client := &FakeUserLegacySearchClient{SearchFunc: func(_ context.Context, _ *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+		return &resourcepb.ResourceSearchResponse{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			TotalHits:    1,
+			Rows: []*resourcepb.ResourceSearchRow{{
+				Key: &resourcepb.ResourceKey{Name: "another-user"},
+			}},
+		}, nil
+	}}
+
+	err := validateLogin(t.Context(), client, "stacks-1", "user-1", "taken")
+	require.ErrorContains(t, err, "login 'taken' is already taken")
 }
 
 func TestValidateOnUpdate(t *testing.T) {

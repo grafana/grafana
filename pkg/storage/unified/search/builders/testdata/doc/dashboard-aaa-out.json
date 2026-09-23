@@ -7,6 +7,7 @@
   },
   "name": "aaa",
   "rv": 1234,
+  "_rv": "1234",
   "title": "Test title",
   "title_ngram": "Test title",
   "title_phrase": "test title",

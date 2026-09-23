@@ -1,7 +1,6 @@
 import yaml from 'js-yaml';
 
 import { t } from '@grafana/i18n';
-import { sceneUtils } from '@grafana/scenes';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
@@ -10,13 +9,10 @@ import { type DashboardDataDTO } from 'app/types/dashboard';
 import { ensureV2Response } from '../../dashboard/api/ResponseTransformers';
 import { isDashboardV2Spec } from '../../dashboard/api/utils';
 import { getK8sV2DashboardApiConfig } from '../../dashboard/api/v2';
+import { applyDashboardSpec } from '../actions/dashboard/applyDashboardSpec';
 import { type DashboardScene } from '../scene/DashboardScene';
-import { buildDashboardWithAccessInfoFromScene } from '../serialization/buildDashboardWithAccessInfoFromScene';
-import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 import { type SchemaEditorFormat } from '../v2schema/DashboardSchemaEditor';
-
-import { DashboardEditActionEvent, DashboardStateChangedEvent } from './events';
 
 const NEW_DASHBOARD_NAME_PLACEHOLDER = '<dashboard-uid>';
 
@@ -175,31 +171,15 @@ export function applyJsonToDashboard(
       return validation;
     }
 
-    const dto = buildDashboardWithAccessInfoFromScene(dashboard, spec);
-
-    const previousState = sceneUtils.cloneSceneObjectState(dashboard.state);
-    const newDashboardScene = transformSaveModelSchemaV2ToScene(dto);
-    const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state, { key: dashboard.state.key });
-
     if (!dashboard.state.isEditing) {
       dashboard.onEnterEditMode();
     }
 
-    dashboard.setState({ ...newState, isDirty: true });
-    // Dashboard state is replaced in place losing all edit-only properties.
-    // Calling editModeChange rehydrates the panel's edit state (for example isDraggable state)
-    dashboard.state.body.editModeChanged?.(true);
-
-    dashboard.publishEvent(
-      new DashboardEditActionEvent({
-        source: dashboard,
-        description: t('dashboard.sidebar.edit-schema.undo-title', 'Schema edit'),
-        perform: () => dashboard.setState(newState),
-        undo: () => dashboard.setState(previousState),
-      }),
-      true
-    );
-    dashboard.publishEvent(new DashboardStateChangedEvent({ source: dashboard }), true);
+    applyDashboardSpec({
+      scene: dashboard,
+      spec,
+      description: t('dashboard.sidebar.edit-schema.undo-title', 'Schema edit'),
+    });
 
     return { success: true };
   } catch (error) {

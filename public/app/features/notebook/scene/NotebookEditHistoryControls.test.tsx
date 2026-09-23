@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from 'test/test-utils';
 
-import { NotebookEditHistory } from './NotebookEditHistory';
+import { NOTEBOOK_EDIT_KIND, NotebookEditHistory } from './NotebookEditHistory';
 import { NotebookEditHistoryControls } from './NotebookEditHistoryControls';
 
 describe('NotebookEditHistoryControls', () => {
@@ -18,6 +18,7 @@ describe('NotebookEditHistoryControls', () => {
     act(() => {
       history.execute({
         label: 'Edit block',
+        kind: NOTEBOOK_EDIT_KIND.EDIT,
         perform: () => {
           value.current = 1;
         },

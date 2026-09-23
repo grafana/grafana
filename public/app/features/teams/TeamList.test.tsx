@@ -52,6 +52,7 @@ describe('TeamList', () => {
     it('should enable the new team button', async () => {
       render(<TeamList />);
 
+      expect(await screen.findByText(MOCK_TEAMS[0].spec.title)).toBeInTheDocument();
       expect(await screen.findByRole('link', { name: /new team/i })).not.toHaveStyle('pointer-events: none');
     });
   });
@@ -61,6 +62,7 @@ describe('TeamList', () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
       render(<TeamList />);
 
+      expect(await screen.findByText(MOCK_TEAMS[0].spec.title)).toBeInTheDocument();
       expect(await screen.findByRole('link', { name: /new team/i })).toHaveStyle('pointer-events: none');
     });
   });
@@ -85,6 +87,7 @@ describe('TeamList', () => {
       );
 
       const { user } = render(<TeamList />);
+      await screen.findByText(MOCK_TEAMS[0].spec.title);
       const input = await screen.findByPlaceholderText('Search teams');
       // Regex-special characters like the hyphen must reach the backend unescaped (not "k8s\-test").
       await user.click(input);
@@ -109,6 +112,7 @@ describe('TeamList', () => {
       );
 
       const { user } = render(<TeamList />);
+      await screen.findByText('production');
       const input = await screen.findByPlaceholderText('Search teams');
       await user.click(input);
       await user.paste('k8s-test');

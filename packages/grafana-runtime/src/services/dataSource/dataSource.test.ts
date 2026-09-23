@@ -211,6 +211,28 @@ describe('plugin', () => {
       expect(result).toBe(instance);
     });
 
+    it('resolves a template variable that interpolates to a numeric datasource id', async () => {
+      // ds() carries id: 1. Legacy DatasourceSrv.get() reaches the id map because it interpolates
+      // itself and then re-enters getInstanceSettings through its plain branch; the new path
+      // resolves settings once and must find it on the first attempt.
+      const settings = ds();
+      setDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
+      setTemplateSrv({
+        getVariables: () => [],
+        replace: (v?: string) => (v === '${dsById}' ? String(settings.id) : (v ?? '')),
+      } as unknown as TemplateSrv);
+
+      const instance = Object.create(DataSourceApi.prototype) as DataSourceApi;
+      setDataSourcePluginImporter(
+        jest.fn().mockResolvedValue({ DataSourceClass: jest.fn().mockReturnValue(instance), components: {} })
+      );
+
+      const result = await getDataSourceInstance('${dsById}');
+
+      expect(result).toBe(instance);
+      expect(logWarning).not.toHaveBeenCalledWith(FALLBACK_TO_LEGACY_INSTANCE_WARNING, expect.anything());
+    });
+
     it('resolves a template variable that is not at the start of the ref', async () => {
       const settings = ds();
       setDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
