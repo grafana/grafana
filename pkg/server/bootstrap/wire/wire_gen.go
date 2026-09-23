@@ -2216,7 +2216,7 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 		return nil, err
 	}
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
-	pluginLoaderDependencies := router.ProvidePluginLoaderDependenciesWithClients(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, decryptService, tracingService, featureToggles, cfg, registerer, builderMetrics, clients, eventualRestConfigProvider)
+	pluginLoaderDependencies := router.ProvidePluginLoaderDependenciesWithClients(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, decryptService, tracingService, featureToggles, cfg, registerer, builderMetrics, clients)
 	routesLoader, err := router.ProvideRoutesLoader(cfg, pluginLoaderDependencies)
 	if err != nil {
 		return nil, err
