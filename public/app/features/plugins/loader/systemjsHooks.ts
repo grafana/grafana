@@ -6,6 +6,7 @@ import { transformPluginSourceForCDN } from '../cdn/utils';
 
 import { LOAD_PLUGIN_CSS_REGEX, JS_CONTENT_TYPE_REGEX, SHARED_DEPENDENCY_PREFIX } from './constants';
 import { extractCacheKeyFromPath, getPluginInfoFromCache, resolvePluginUrlWithCache } from './pluginInfoCache';
+import { PluginAssetFetchError } from './pluginLoadError';
 // SystemJS has to be imported before the sharedDependenciesMap
 import { SystemJS } from './systemjs';
 // eslint-disable-next-line import/order
@@ -155,7 +156,18 @@ export async function decorateSystemJSFetch(
   url: string,
   options?: Record<string, unknown>
 ) {
-  const res = await systemJSFetch(url, options);
+  let res: Response;
+  try {
+    res = await systemJSFetch(url, options);
+  } catch (error) {
+    throw new PluginAssetFetchError(url, undefined, undefined, { cause: error });
+  }
+
+  // Must run before the JS branch below, which rebuilds the response and would replace an error status with 200.
+  if (!res.ok) {
+    throw new PluginAssetFetchError(url, res.status, res.statusText);
+  }
+
   const contentType = res.headers.get('content-type') || '';
 
   if (JS_CONTENT_TYPE_REGEX.test(contentType)) {

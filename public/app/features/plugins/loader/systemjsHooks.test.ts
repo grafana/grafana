@@ -5,6 +5,8 @@ jest.mock('@grafana/runtime/unstable', () => ({
   getLogger: () => ({ logInfo: mockLogInfo }),
 }));
 
+import { http, HttpResponse } from 'msw';
+
 import { config } from '@grafana/runtime';
 
 jest.mock('./pluginInfoCache', () => ({
@@ -12,6 +14,7 @@ jest.mock('./pluginInfoCache', () => ({
   resolvePluginUrlWithCache: (url: string) => `${url}?_cache=1234`,
 }));
 
+import { PluginAssetFetchError } from './pluginLoadError';
 import { server } from './pluginLoader.mock';
 import { SystemJS } from './systemjs';
 import {
@@ -55,6 +58,34 @@ describe('SystemJS Loader Hooks', () => {
       const result = await decorateSystemJSFetch(systemJSPrototype.fetch, url, {});
       const source = await result.text();
       expect(source).toContain('var pluginPath = "/public/plugins/";');
+    });
+
+    it.each`
+      status | contentType
+      ${404} | ${'text/javascript'}
+      ${404} | ${'application/json'}
+      ${500} | ${'text/javascript'}
+    `(
+      'throws a PluginAssetFetchError for a $status response with $contentType body',
+      async ({ status, contentType }) => {
+        const url = '/public/plugins/missing-plugin/module.js';
+        server.use(http.get(url, () => new HttpResponse('{}', { status, headers: { 'Content-Type': contentType } })));
+
+        const result = decorateSystemJSFetch(systemJSPrototype.fetch, url, {});
+
+        await expect(result).rejects.toBeInstanceOf(PluginAssetFetchError);
+        await expect(result).rejects.toMatchObject({ url, status });
+      }
+    );
+
+    it('throws a PluginAssetFetchError without a status when the request fails', async () => {
+      const url = '/public/plugins/unreachable-plugin/module.js';
+      server.use(http.get(url, () => HttpResponse.error()));
+
+      const result = decorateSystemJSFetch(systemJSPrototype.fetch, url, {});
+
+      await expect(result).rejects.toBeInstanceOf(PluginAssetFetchError);
+      await expect(result).rejects.toMatchObject({ url, status: undefined, cause: expect.any(TypeError) });
     });
   });
 
