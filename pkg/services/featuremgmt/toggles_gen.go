@@ -935,7 +935,7 @@ const (
 	FlagPluginsMarketplaceLicensing = "plugins.marketplaceLicensing"
 
 	// FlagAlertingSyncExternalAlertmanager
-	// Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana
+	// Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source
 	FlagAlertingSyncExternalAlertmanager = "alerting.syncExternalAlertmanager"
 
 	// FlagFrontendServiceReducedBootDataAPI
