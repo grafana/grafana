@@ -129,6 +129,33 @@ describe('useExtractFields', () => {
     expect(result.current.extractedFrame).toBeNull();
   });
 
+  test('passes the frame straight through when extraction already ran upstream', async () => {
+    const { result } = renderHook(() =>
+      useExtractFields({
+        rawTableFrame: testLogsDataFrame[0],
+        timeZone: 'utc',
+        loadingState: LoadingState.Done,
+        enabled: false,
+        fieldConfig: {
+          defaults: {},
+          overrides: [],
+        },
+      })
+    );
+
+    // Same object, not a re-extracted copy: the panel-registered transformation has already added
+    // the label columns and applyFieldOverrides has already run over them.
+    expect(result.current.extractedFrame).toBe(testLogsDataFrame[0]);
+
+    // Give a stray async extraction a chance to land before asserting no columns were appended.
+    await Promise.resolve();
+    expect(result.current.extractedFrame?.fields.map((field) => field.name)).toEqual([
+      LOGS_DATAPLANE_TIMESTAMP_NAME,
+      LOGS_DATAPLANE_BODY_NAME,
+      'labels',
+    ]);
+  });
+
   test('re-extracts when a new frame arrives after loading completes', async () => {
     const props = {
       rawTableFrame: testLogsDataFrame[0],
