@@ -28,13 +28,20 @@ const LEGACY_STATUS_KINDS: Record<string, SaveDashboardErrorKind> = {
   'plugin-dashboard': 'plugin-dashboard',
 };
 
-// Deliberately no entry for `Conflict`: the apiserver reports it for a deleted object or a
-// deprecatedInternalID collision, never for a concurrent edit, because the client strips
-// metadata.resourceVersion before writing so that precondition never runs. Such a conflict falls
-// through to `unknown`, which shows the server's reason and a plain retry rather than the
-// "someone else edited this, save and overwrite" prompt — overwrite resends the same request.
+// `Conflict` and `AlreadyExists` are deliberately absent: both fall through to `unknown`, which
+// shows the server's reason and leaves the save actions in place. Neither of the specialised
+// recovery alerts describes what the apiserver actually reported, and each replaces the footer,
+// so routing these reasons there hid the real message and removed the only way to retry.
+//
+// Conflict means a deleted object or a deprecatedInternalID collision, never a concurrent edit —
+// the client strips metadata.resourceVersion before writing, so that precondition never runs, and
+// the v2 client ignores `overwrite`, so "save and overwrite" resends the identical request.
+//
+// AlreadyExists is a uid collision rather than a title clash, so advising a different name or
+// folder is wrong even in Save As, where those fields exist.
+//
+// The legacy statuses keep their mappings: `name-exists` really is a title collision.
 const API_MACHINERY_REASON_KINDS: Record<string, SaveDashboardErrorKind> = {
-  AlreadyExists: 'already-exists',
   Forbidden: 'forbidden',
   Invalid: 'invalid',
 };

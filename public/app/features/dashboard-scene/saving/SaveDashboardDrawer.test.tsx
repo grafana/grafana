@@ -480,6 +480,26 @@ describe('SaveDashboardDrawer', () => {
       expect(await screen.findByText('dashboard quota reached')).toBeInTheDocument();
     });
 
+    it('Shows the server message for an apiserver AlreadyExists rather than the title-collision alert', async () => {
+      const { openAndRender } = setup();
+      await openAndRender({ saveAsCopy: true });
+
+      expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
+
+      mockSaveDashboard({
+        rawError: k8sStatusError(409, { reason: 'AlreadyExists', message: 'the resource already exists' }),
+      });
+
+      await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+      // AlreadyExists is a uid collision, so advising a different name or folder is wrong even
+      // though this form has both fields, and that alert replaces the footer.
+      expect(await screen.findByText('the resource already exists')).toBeInTheDocument();
+      expect(screen.queryByText('Dashboard name already exists')).not.toBeInTheDocument();
+      expect(screen.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
+    });
+
     it('Shows save failures when the copy title has surrounding whitespace', async () => {
       const { openAndRender } = setup();
       await openAndRender({ saveAsCopy: true });

@@ -36,12 +36,15 @@ describe('getSaveDashboardErrorInfo', () => {
       expect(info?.message).toBe('the object was deleted');
     });
 
-    it('classifies reason AlreadyExists as already-exists', () => {
+    // AlreadyExists is a uid collision, not a title clash, so it must not reach the alert that
+    // tells the user to pick a different name or folder.
+    it('does not treat an apiserver AlreadyExists as a name collision', () => {
       const info = getSaveDashboardErrorInfo(
         k8sError({ reason: 'AlreadyExists', message: 'the resource already exists' }, 409)
       );
 
-      expect(info?.kind).toBe('already-exists');
+      expect(info?.kind).toBe('unknown');
+      expect(info?.message).toBe('the resource already exists');
     });
 
     it('classifies reason Forbidden as forbidden and keeps the server message', () => {
