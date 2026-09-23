@@ -10873,6 +10873,7 @@
       "placeholder": "Choose"
     },
     "table": {
+      "add-to-assistant": "Add to Assistant",
       "cell-actions": "Cell actions",
       "cell-filter-on": "Filter for value",
       "cell-filter-out": "Filter out value",
