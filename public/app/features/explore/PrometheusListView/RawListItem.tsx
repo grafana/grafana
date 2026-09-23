@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
-import { useCopyToClipboard } from 'react-use';
 
 import { type Field, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { isValidLegacyName, utf8Support } from '@grafana/prometheus';
 import { reportInteraction } from '@grafana/runtime';
-import { IconButton, useStyles2 } from '@grafana/ui';
+import { IconButton, copyTextToClipboard, useStyles2 } from '@grafana/ui';
 
 import { ItemLabels } from './ItemLabels';
 import { ItemValues } from './ItemValues';
@@ -22,8 +21,12 @@ export interface RawListProps {
 
 export type RawListValue = { key: string; value: string };
 const rawListExtraSpaceAtEndOfLine = '20px';
-export const rawListItemColumnWidth = '80px';
+const rawListItemColumnWidth = '80px';
+const RAW_LIST_ITEM_SINGLE_VALUE_COLUMN_WIDTH = '128px';
 export const rawListPaddingToHoldSpaceForCopyIcon = '25px';
+
+export const getRawListItemColumnWidth = (totalNumberOfValues: number): string =>
+  totalNumberOfValues === 1 ? RAW_LIST_ITEM_SINGLE_VALUE_COLUMN_WIDTH : rawListItemColumnWidth;
 
 const getStyles = (theme: GrafanaTheme2, totalNumberOfValues: number, isExpandedView: boolean) => ({
   rowWrapper: css({
@@ -46,7 +49,7 @@ const getStyles = (theme: GrafanaTheme2, totalNumberOfValues: number, isExpanded
   }),
   rowLabelWrapWrap: css({
     position: 'relative',
-    width: `calc(100% - (${totalNumberOfValues} * ${rawListItemColumnWidth}) - ${rawListPaddingToHoldSpaceForCopyIcon})`,
+    width: `calc(100% - (${totalNumberOfValues} * ${getRawListItemColumnWidth(totalNumberOfValues)}) - ${rawListPaddingToHoldSpaceForCopyIcon})`,
   }),
   rowLabelWrap: css({
     whiteSpace: 'nowrap',
@@ -98,7 +101,6 @@ const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, 
   const { __name__, ...allLabels } = listItemData;
   // We must know whether it is a utf8 metric name or not
   const isLegacyMetric = isValidLegacyName(__name__ ?? '');
-  const [_, copyToClipboard] = useCopyToClipboard();
   const displayLength = valueLabels?.length ?? totalNumberOfValues;
   const styles = useStyles2(getStyles, displayLength, isExpandedView);
 
@@ -135,7 +137,7 @@ const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, 
             tooltip={t('explore.raw-list-item.tooltip-copy-to-clipboard', 'Copy to clipboard')}
             onClick={() => {
               reportInteraction('grafana_explore_prometheus_instant_query_ui_raw_toggle_expand');
-              copyToClipboard(stringRep);
+              copyTextToClipboard(stringRep).catch();
             }}
             name="copy"
           />

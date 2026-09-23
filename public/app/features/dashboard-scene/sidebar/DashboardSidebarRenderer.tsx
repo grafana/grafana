@@ -5,7 +5,11 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { useFlagGlobalDashboardVariables, useFlagGrafanaViewPanelPane } from '@grafana/runtime/internal';
+import {
+  useFlagGrafanaDashboardGlobalVariables,
+  useFlagGrafanaViewPanelPane,
+  useFlagFeedbackButton,
+} from '@grafana/runtime/internal';
 import { sceneGraph, type SceneVariable, useSceneObjectState } from '@grafana/scenes';
 import { Sidebar, useStyles2, useSidebarContext } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -22,7 +26,7 @@ import { DashboardCodePane } from './DashboardCodePane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardSidebarExtensionPoint } from './DashboardSidebarExtensionPoint';
 import { AddNewPane } from './add-new/AddNewPane';
-import { DashboardPredefinedVariablesPane } from './dashboard/DashboardPredefinedVariablesPane';
+import { DashboardCrossDashboardVariablesPane } from './dashboard/DashboardCrossDashboardVariablesPane';
 import { ToggleViewPanePaneEvent } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
 import { type DashboardSidebarLike, type DashboardSidebarPane } from './types';
@@ -46,7 +50,9 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
   const selectedObject = sidebar.getSelectedObject();
   const sidebarContext = useSidebarContext();
   const viewPanelPane = useFlagGrafanaViewPanelPane();
-  const globalDashboardVariablesEnabled = useFlagGlobalDashboardVariables();
+  const globalDashboardVariablesEnabled = useFlagGrafanaDashboardGlobalVariables();
+  const feedbackButton = useFlagFeedbackButton();
+
   const onClickHideSidebar: React.MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
       sidebar.closePane();
@@ -93,7 +99,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
               data-testid={selectors.pages.Dashboard.Sidebar.optionsButton}
               active={selectedObject === dashboard && openPane?.getId() === 'element' ? true : false}
             />
-            {config.featureToggles.feedbackButton && (
+            {feedbackButton && (
               <Sidebar.Button
                 style={{ color: '#ff671d' }}
                 icon="comment-alt-message"
@@ -117,14 +123,11 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
             />
             {globalDashboardVariablesEnabled && (
               <Sidebar.Button
-                icon="dollar-alt"
-                onClick={() => sidebar.openPane(new DashboardPredefinedVariablesPane({}))}
-                title={t('dashboard.sidebar.predefined-variables.title', 'Predefined variables')}
-                tooltip={t(
-                  'dashboard.sidebar.predefined-variables.tooltip',
-                  'Choose which global and folder variables this dashboard receives'
-                )}
-                active={openPane?.getId() === 'predefined-variables'}
+                icon="gf-variable"
+                onClick={() => sidebar.openPane(new DashboardCrossDashboardVariablesPane({}))}
+                title={t('dashboard.sidebar.cross-dashboard-variables.title', 'Cross-dashboard')}
+                tooltip={t('dashboard.sidebar.cross-dashboard-variables.tooltip', 'Choose global and folder variables')}
+                active={openPane instanceof DashboardCrossDashboardVariablesPane}
               />
             )}
             {config.featureToggles.dashboardUndoRedo && (

@@ -2,11 +2,18 @@ import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import React, { useCallback, useEffect } from 'react';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
 
 import { mockBoundingClientRect } from '@grafana/test-utils';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { grantUserPermissions, mockDataSource } from 'app/features/alerting/unified/mocks';
+import { grantUserPermissions, grantUserRole, mockDataSource } from 'app/features/alerting/unified/mocks';
+import { setupAlertmanagersStatus } from 'app/features/alerting/unified/mocks/server/configure/alertmanagers';
+import { setupDatasourcesEndpoint } from 'app/features/alerting/unified/mocks/server/configure/datasources';
+import {
+  setupAutoSyncConfig,
+  setupAutoSyncConfigAbsent,
+} from 'app/features/alerting/unified/mocks/server/handlers/k8s/config.k8s';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { type SupportedRulesSourceType } from 'app/features/alerting/unified/utils/datasource';
 import {
@@ -21,6 +28,11 @@ import { useDryRunNotifications } from '../useImport';
 import { Step1Content, useStep1Validation } from './Step1AlertmanagerResources';
 
 const server = setupMswServer();
+
+// Toasts are reported through app notifications, so that is where drop-confirmation text has to be
+// asserted — it never reaches the DOM from here.
+jest.mock('app/core/copy/appNotification');
+const notifySuccess = jest.fn();
 
 // Wrapper to provide react-hook-form context
 function TestWrapper({
@@ -112,15 +124,25 @@ describe('Step1AlertmanagerResources', () => {
   beforeEach(() => {
     setupDataSources(alertmanagerDataSource);
     grantUserPermissions([AccessControlAction.AlertingNotificationsWrite]);
+    notifySuccess.mockClear();
+    jest.mocked(useAppNotification).mockReturnValue({
+      success: notifySuccess,
+      error: jest.fn(),
+      warning: jest.fn(),
+      info: jest.fn(),
+    });
   });
 
   describe('Step1Content rendering', () => {
-    it('should render permission warning when canImport=false', () => {
+    it('should render permission warning when canImport=false', async () => {
       render(
         <TestWrapper>
           <Step1Content {...defaultStep1Props} canImport={false} />
         </TestWrapper>
       );
+
+      // The YAML source mounts a lazy template dropzone even without import permission.
+      expect(await screen.findByText(/drop template files here or click to upload/i)).toBeInTheDocument();
 
       expect(screen.getByText(/you do not have permission to import notification resources/i)).toBeInTheDocument();
       expect(screen.getByText(/insufficient permissions/i)).toBeInTheDocument();
@@ -155,7 +177,7 @@ describe('Step1AlertmanagerResources', () => {
       expect(datasourceRadio).not.toBeChecked();
     });
 
-    it('should render YAML file upload field when YAML source selected', () => {
+    it('should render YAML file upload field when YAML source selected', async () => {
       render(
         <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
           <Step1Content {...defaultStep1Props} />
@@ -163,7 +185,97 @@ describe('Step1AlertmanagerResources', () => {
       );
 
       expect(screen.getByText(/alertmanager config yaml/i)).toBeInTheDocument();
-      expect(screen.getByText(/upload yaml file/i)).toBeInTheDocument();
+      // FileDropzone's own hidden <small> caption carries the same text, so target the visible one.
+      expect(screen.getByText(/accepted file types: \.yaml, \.yml/i, { selector: ':not(small)' })).toBeInTheDocument();
+      // FileDropzone is lazy-loaded (React.lazy/Suspense) — wait for it to mount.
+      expect(await screen.findByText(/drop yaml file here or click to upload/i)).toBeInTheDocument();
+    });
+
+    it('accepts a YAML file upload and displays it as a removable row', async () => {
+      const { user } = render(
+        <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      const input = await screen.findByLabelText(/alertmanager config yaml/i);
+      await user.upload(input, new File(['route:\n  receiver: default\n'], 'am.yaml', { type: 'application/yaml' }));
+
+      expect(await screen.findByText('am.yaml')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /remove am\.yaml/i })).toBeInTheDocument();
+      // The dropzone itself stays put, so a new drop can still replace the file.
+      expect(screen.getByText(/drop yaml file here or click to upload/i)).toBeInTheDocument();
+    });
+
+    it('rejects a file with a non-YAML extension', async () => {
+      // Real drag-and-drop bypasses the OS dialog's accept filter that userEvent.upload mimics by default.
+      const user = userEvent.setup({ applyAccept: false });
+      render(
+        <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      const input = await screen.findByLabelText(/alertmanager config yaml/i);
+      await user.upload(input, new File(['{}'], 'config.json', { type: 'application/json' }));
+
+      expect(await screen.findByText(/upload failed/i)).toBeInTheDocument();
+      expect(screen.queryByText('config.json')).not.toBeInTheDocument();
+      expect(screen.getByText(/drop yaml file here or click to upload/i)).toBeInTheDocument();
+      expect(notifySuccess).not.toHaveBeenCalled();
+    });
+
+    it('rejects a .txt file even though its MIME type collides with the accepted .yml bucket', async () => {
+      // Real drag-and-drop bypasses the OS dialog's accept filter that userEvent.upload mimics by default.
+      const user = userEvent.setup({ applyAccept: false });
+      render(
+        <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      const input = await screen.findByLabelText(/alertmanager config yaml/i);
+      await user.upload(input, new File(['hello'], 'notes.txt', { type: 'text/plain' }));
+
+      expect(await screen.findByText(/upload failed/i)).toBeInTheDocument();
+      expect(screen.queryByText('notes.txt')).not.toBeInTheDocument();
+      expect(screen.getByText(/drop yaml file here or click to upload/i)).toBeInTheDocument();
+      expect(notifySuccess).not.toHaveBeenCalled();
+    });
+
+    it('removes the YAML file when its remove button is clicked', async () => {
+      const { user } = render(
+        <TestWrapper
+          defaultValues={{
+            notificationsSource: 'yaml',
+            notificationsYamlFile: new File(['route:\n  receiver: default\n'], 'am.yaml', {
+              type: 'application/yaml',
+            }),
+          }}
+        >
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      expect(screen.getByText('am.yaml')).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /remove am\.yaml/i }));
+
+      expect(screen.queryByText('am.yaml')).not.toBeInTheDocument();
+    });
+
+    it('shows a success toast when the YAML file is dropped', async () => {
+      const { user } = render(
+        <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      const input = await screen.findByLabelText(/alertmanager config yaml/i);
+      await user.upload(input, new File(['route:\n  receiver: default\n'], 'am.yaml', { type: 'application/yaml' }));
+
+      expect(await screen.findByText('am.yaml')).toBeInTheDocument();
+      expect(notifySuccess).toHaveBeenCalledWith('Configuration file uploaded', 'am.yaml');
     });
 
     it('should render datasource picker when datasource source selected', () => {
@@ -179,7 +291,7 @@ describe('Step1AlertmanagerResources', () => {
       expect(screen.getByText(/select data source/i)).toBeInTheDocument();
     });
 
-    it('should render the notification templates uploader for the YAML source', () => {
+    it('should render the notification templates uploader for the YAML source', async () => {
       render(
         <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
           <Step1Content {...defaultStep1Props} />
@@ -187,7 +299,7 @@ describe('Step1AlertmanagerResources', () => {
       );
 
       expect(screen.getByText(/notification templates/i)).toBeInTheDocument();
-      expect(screen.getByText(/drop template files here or click to upload/i)).toBeInTheDocument();
+      expect(await screen.findByText(/drop template files here or click to upload/i)).toBeInTheDocument();
     });
 
     it('should NOT render the templates uploader for the datasource source', () => {
@@ -200,6 +312,66 @@ describe('Step1AlertmanagerResources', () => {
       expect(screen.queryByText(/drop template files here or click to upload/i)).not.toBeInTheDocument();
     });
 
+    it('shows a success toast when a single template file is dropped', async () => {
+      const { user } = render(
+        <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      const input = await screen.findByLabelText(/notification templates/i);
+      await user.upload(input, new File(['a'], 'email.tmpl', { type: 'text/plain' }));
+
+      expect(await screen.findByText('email.tmpl')).toBeInTheDocument();
+      expect(notifySuccess).toHaveBeenCalledWith('Template file added', 'email.tmpl');
+    });
+
+    it('shows a single pluralized toast when multiple template files are dropped in one gesture', async () => {
+      const { user } = render(
+        <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      const input = await screen.findByLabelText(/notification templates/i);
+      await user.upload(input, [
+        new File(['a'], 'email.tmpl', { type: 'text/plain' }),
+        new File(['b'], 'slack.tmpl', { type: 'text/plain' }),
+      ]);
+
+      expect(await screen.findByText('email.tmpl')).toBeInTheDocument();
+      expect(notifySuccess).toHaveBeenCalledTimes(1);
+      expect(notifySuccess).toHaveBeenCalledWith('Template files added', 'email.tmpl, slack.tmpl');
+    });
+
+    it('shows the toast for a template drop even while the dry-run banner reports an error for the config', async () => {
+      const { user } = render(
+        <TestWrapper
+          defaultValues={{
+            notificationsSource: 'yaml',
+            policyTreeName: 'prometheus-prod',
+            notificationsYamlFile: new File(['not valid yaml'], 'am.yaml', { type: 'application/yaml' }),
+          }}
+        >
+          <Step1Content
+            {...defaultStep1Props}
+            dryRunState="error"
+            dryRunResult={{ valid: false, error: 'invalid config', renamedReceivers: [], renamedTimeIntervals: [] }}
+          />
+        </TestWrapper>
+      );
+
+      expect(screen.getByText(/validation failed/i)).toBeInTheDocument();
+
+      const input = await screen.findByLabelText(/notification templates/i);
+      await user.upload(input, new File(['a'], 'email.tmpl', { type: 'text/plain' }));
+
+      expect(await screen.findByText('email.tmpl')).toBeInTheDocument();
+      // The dry-run error banner is unrelated to (and unaffected by) the template drop.
+      expect(screen.getByText(/validation failed/i)).toBeInTheDocument();
+      expect(notifySuccess).toHaveBeenCalledWith('Template file added', 'email.tmpl');
+    });
+
     it('should list uploaded template files and show a duplicate-name error', async () => {
       const user = userEvent.setup();
       render(
@@ -209,7 +381,7 @@ describe('Step1AlertmanagerResources', () => {
       );
 
       // The dropzone's file input inherits the Field id, so its label resolves to it
-      const input = screen.getByLabelText(/notification templates/i);
+      const input = await screen.findByLabelText(/notification templates/i);
 
       await user.upload(input, [
         new File(['a'], 'dupe.tmpl', { type: 'text/plain' }),
@@ -471,6 +643,336 @@ describe('Step1AlertmanagerResources', () => {
 
       const policyTreeInput = screen.getByPlaceholderText(/prometheus-prod/i);
       expect(policyTreeInput).toHaveValue('my-alertmanager-production');
+    });
+  });
+
+  describe('Auto-sync checkbox', () => {
+    const MIMIR_DS = {
+      id: 10,
+      uid: 'mimir-uid',
+      orgId: 1,
+      name: 'Mimir Alertmanager',
+      type: 'alertmanager',
+      url: 'http://localhost:9009',
+      jsonData: { implementation: 'mimir' },
+    };
+    const MIMIR_DS_2 = {
+      id: 11,
+      uid: 'mimir-uid-2',
+      orgId: 1,
+      name: 'Mimir Alertmanager 2',
+      type: 'alertmanager',
+      url: 'http://localhost:9010',
+      jsonData: { implementation: 'mimir' },
+    };
+
+    // Mirrors MIMIR_DS/MIMIR_DS_2 in the frontend datasource list, so the same datasource is both
+    // selectable in the picker and recognized as Auto-sync-capable via the backend-sourced list.
+    const mimirDataSource = mockDataSource<AlertManagerDataSourceJsonData>({
+      name: MIMIR_DS.name,
+      uid: MIMIR_DS.uid,
+      type: 'alertmanager' as SupportedRulesSourceType,
+      jsonData: { implementation: AlertManagerImplementation.mimir, handleGrafanaManagedAlerts: true },
+    });
+    const mimirDataSource2 = mockDataSource<AlertManagerDataSourceJsonData>({
+      name: MIMIR_DS_2.name,
+      uid: MIMIR_DS_2.uid,
+      type: 'alertmanager' as SupportedRulesSourceType,
+      jsonData: { implementation: AlertManagerImplementation.mimir, handleGrafanaManagedAlerts: true },
+    });
+
+    beforeEach(() => {
+      setupAlertmanagersStatus(server);
+    });
+
+    it('is not rendered without the feature toggle, even for admins', () => {
+      grantUserRole('Admin');
+      render(
+        <TestWrapper defaultValues={{ notificationsSource: 'datasource' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      expect(screen.queryByRole('switch', { name: /auto-sync/i })).not.toBeInTheDocument();
+    });
+
+    describe('with the feature toggle on', () => {
+      testWithFeatureToggles({ enable: ['alerting.syncExternalAlertmanager'] });
+
+      beforeEach(() => {
+        setupDataSources(alertmanagerDataSource, mimirDataSource);
+        // useAutoSyncConfiguration gates its Config and datasources queries on
+        // ActionAlertingNotificationsConfigRead, which grantUserRole('Admin') alone doesn't imply
+        // here since roles and permissions are mocked independently. Also repeats the outer
+        // beforeEach's Write grant, since grantUserPermissions replaces rather than extends it.
+        grantUserPermissions([
+          AccessControlAction.AlertingNotificationsWrite,
+          AccessControlAction.ActionAlertingNotificationsConfigRead,
+        ]);
+        // Step1Content calls useAutoSyncConfiguration() unconditionally, so every admin+toggle-on
+        // render below fires these two queries regardless of what the test exercises — mock them
+        // by default for the whole block rather than per test.
+        setupAutoSyncConfig(server);
+        setupDatasourcesEndpoint(server, [MIMIR_DS]);
+      });
+
+      it('is not rendered for non-admins', () => {
+        grantUserRole('Editor');
+        render(
+          <TestWrapper defaultValues={{ notificationsSource: 'datasource' }}>
+            <Step1Content {...defaultStep1Props} />
+          </TestWrapper>
+        );
+
+        expect(screen.queryByRole('switch', { name: /auto-sync/i })).not.toBeInTheDocument();
+      });
+
+      it('is not rendered for the YAML source', () => {
+        grantUserRole('Admin');
+        render(
+          <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
+            <Step1Content {...defaultStep1Props} />
+          </TestWrapper>
+        );
+
+        expect(screen.queryByRole('switch', { name: /auto-sync/i })).not.toBeInTheDocument();
+      });
+
+      it('is rendered for admins on the datasource source', () => {
+        grantUserRole('Admin');
+        render(
+          <TestWrapper defaultValues={{ notificationsSource: 'datasource' }}>
+            <Step1Content {...defaultStep1Props} />
+          </TestWrapper>
+        );
+
+        expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeInTheDocument();
+      });
+
+      it('disables Policy Tree Name and skips the dry-run once checked', async () => {
+        grantUserRole('Admin');
+        const user = userEvent.setup();
+        const onTriggerDryRun = jest.fn();
+
+        render(
+          <TestWrapper defaultValues={{ notificationsSource: 'datasource', notificationsDatasourceUID: MIMIR_DS.uid }}>
+            <Step1Content {...defaultStep1Props} onTriggerDryRun={onTriggerDryRun} />
+          </TestWrapper>
+        );
+
+        await waitFor(() => expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeEnabled());
+        onTriggerDryRun.mockClear();
+        await user.click(screen.getByRole('switch', { name: /auto-sync/i }));
+
+        expect(screen.getByPlaceholderText(/prometheus-prod/i)).toBeDisabled();
+        expect(onTriggerDryRun).not.toHaveBeenCalled();
+      });
+
+      it('always lists every Alertmanager datasource regardless of auto-sync checked state', async () => {
+        grantUserRole('Admin');
+        const user = userEvent.setup();
+
+        render(
+          <TestWrapper defaultValues={{ notificationsSource: 'datasource', notificationsDatasourceUID: MIMIR_DS.uid }}>
+            <Step1Content {...defaultStep1Props} />
+          </TestWrapper>
+        );
+
+        await waitFor(() => expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeEnabled());
+        await user.click(screen.getByRole('switch', { name: /auto-sync/i }));
+        expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeChecked();
+
+        await user.click(screen.getByRole('combobox'));
+        expect(await screen.findByText('Alertmanager')).toBeInTheDocument();
+        // role="option" excludes the current-value display shown outside the menu, and the prefix
+        // match tolerates the badge/URL text also picked up in the option's accessible name.
+        expect(screen.getByRole('option', { name: /^Mimir Alertmanager/ })).toBeInTheDocument();
+      });
+
+      it('keeps the auto-sync switch disabled and the datasource options unbadged while the auto-sync capability query is loading, even for a Mimir datasource', async () => {
+        grantUserRole('Admin');
+        let resolveDatasources = (_response: unknown) => {};
+        const datasourcesResponse = new Promise((resolve) => {
+          resolveDatasources = resolve;
+        });
+        server.use(
+          http.get('/api/datasources', async () => {
+            await datasourcesResponse;
+            return HttpResponse.json([MIMIR_DS]);
+          })
+        );
+        const user = userEvent.setup();
+
+        render(
+          <TestWrapper defaultValues={{ notificationsSource: 'datasource', notificationsDatasourceUID: MIMIR_DS.uid }}>
+            <Step1Content {...defaultStep1Props} />
+          </TestWrapper>
+        );
+
+        expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeDisabled();
+
+        await user.click(screen.getByRole('combobox'));
+        const mimirOption = await screen.findByRole('option', { name: /^Mimir Alertmanager/ });
+        // Scope to the option itself — "Auto-sync" is also the checkbox's own (unconditional) label.
+        expect(within(mimirOption).queryByText('Auto-sync')).not.toBeInTheDocument();
+
+        resolveDatasources(undefined);
+
+        await waitFor(() => expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeEnabled());
+        const mimirOptionAfterLoad = await screen.findByRole('option', { name: /^Mimir Alertmanager/ });
+        expect(within(mimirOptionAfterLoad).getByText('Auto-sync')).toBeInTheDocument();
+      });
+
+      it('does not uncheck an already-enabled Auto-sync while the capability query is still loading', async () => {
+        grantUserRole('Admin');
+        let resolveDatasources = (_response: unknown) => {};
+        const datasourcesResponse = new Promise((resolve) => {
+          resolveDatasources = resolve;
+        });
+        server.use(
+          http.get('/api/datasources', async () => {
+            await datasourcesResponse;
+            return HttpResponse.json([MIMIR_DS]);
+          })
+        );
+
+        render(
+          <TestWrapper
+            defaultValues={{
+              notificationsSource: 'datasource',
+              notificationsDatasourceUID: MIMIR_DS.uid,
+              autoSyncNotificationsEnabled: true,
+            }}
+          >
+            <Step1Content {...defaultStep1Props} />
+          </TestWrapper>
+        );
+
+        // The reset effect must not race ahead and clear a persisted, still-valid selection just
+        // because the query hasn't resolved yet.
+        expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeChecked();
+
+        resolveDatasources(undefined);
+
+        await waitFor(() => expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeEnabled());
+        expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeChecked();
+      });
+
+      it('disables the auto-sync switch when a non-Mimir/Cortex datasource is selected', async () => {
+        grantUserRole('Admin');
+
+        render(
+          <TestWrapper
+            defaultValues={{
+              notificationsSource: 'datasource',
+              notificationsDatasourceUID: alertmanagerDataSource.uid,
+            }}
+          >
+            <Step1Content {...defaultStep1Props} />
+          </TestWrapper>
+        );
+
+        await waitFor(() => expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeDisabled());
+      });
+
+      it('disables the auto-sync switch when the Config singleton has not been seeded yet', async () => {
+        grantUserRole('Admin');
+        setupAutoSyncConfigAbsent(server);
+        const user = userEvent.setup();
+
+        render(
+          <TestWrapper defaultValues={{ notificationsSource: 'datasource', notificationsDatasourceUID: MIMIR_DS.uid }}>
+            <Step1Content {...defaultStep1Props} />
+          </TestWrapper>
+        );
+
+        // Wait for the (Config-independent) datasource-capability query to settle and recognize
+        // MIMIR_DS as eligible, so a still-loading disable isn't mistaken for the readiness gate.
+        await user.click(screen.getByRole('combobox'));
+        const mimirOption = await screen.findByRole('option', { name: /^Mimir Alertmanager/ });
+        expect(within(mimirOption).getByText('Auto-sync')).toBeInTheDocument();
+
+        expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeDisabled();
+      });
+
+      it('enables the auto-sync switch when a Mimir/Cortex datasource is selected', async () => {
+        grantUserRole('Admin');
+
+        render(
+          <TestWrapper defaultValues={{ notificationsSource: 'datasource', notificationsDatasourceUID: MIMIR_DS.uid }}>
+            <Step1Content {...defaultStep1Props} />
+          </TestWrapper>
+        );
+
+        await waitFor(() => expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeEnabled());
+      });
+
+      it('unchecks and disables auto-sync when switching to a datasource that does not support it', async () => {
+        grantUserRole('Admin');
+        const user = userEvent.setup();
+
+        render(
+          <TestWrapper defaultValues={{ notificationsSource: 'datasource', notificationsDatasourceUID: MIMIR_DS.uid }}>
+            <Step1Content {...defaultStep1Props} />
+          </TestWrapper>
+        );
+
+        await waitFor(() => expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeEnabled());
+        await user.click(screen.getByRole('switch', { name: /auto-sync/i }));
+        expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeChecked();
+
+        await user.click(screen.getByRole('combobox'));
+        await user.click(screen.getByText('Alertmanager'));
+
+        await waitFor(() => expect(screen.getByRole('switch', { name: /auto-sync/i })).not.toBeChecked());
+        expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeDisabled();
+      });
+
+      it('keeps auto-sync checked when switching between two Mimir/Cortex datasources', async () => {
+        grantUserRole('Admin');
+        setupDataSources(alertmanagerDataSource, mimirDataSource, mimirDataSource2);
+        setupDatasourcesEndpoint(server, [MIMIR_DS, MIMIR_DS_2]);
+        const user = userEvent.setup();
+
+        render(
+          <TestWrapper defaultValues={{ notificationsSource: 'datasource', notificationsDatasourceUID: MIMIR_DS.uid }}>
+            <Step1Content {...defaultStep1Props} />
+          </TestWrapper>
+        );
+
+        await waitFor(() => expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeEnabled());
+        await user.click(screen.getByRole('switch', { name: /auto-sync/i }));
+        expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeChecked();
+
+        await user.click(screen.getByRole('combobox'));
+        await user.click(screen.getByText('Mimir Alertmanager 2'));
+
+        // Give any (incorrect) reset effect a chance to fire before asserting it didn't.
+        await waitFor(() =>
+          expect(screen.getByPlaceholderText(/prometheus-prod/i)).toHaveValue('mimir-alertmanager-2')
+        );
+        expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeChecked();
+        expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeEnabled();
+      });
+
+      it('labels each datasource option with its auto-sync support', async () => {
+        grantUserRole('Admin');
+        const user = userEvent.setup();
+
+        render(
+          <TestWrapper defaultValues={{ notificationsSource: 'datasource' }}>
+            <Step1Content {...defaultStep1Props} />
+          </TestWrapper>
+        );
+
+        await user.click(screen.getByRole('combobox'));
+
+        const mimirOption = await screen.findByRole('option', { name: /Mimir Alertmanager/i });
+        expect(within(mimirOption).getByText('Auto-sync')).toBeInTheDocument();
+
+        const plainOption = screen.getByRole('option', { name: /^Alertmanager/i });
+        expect(within(plainOption).queryByText('Auto-sync')).not.toBeInTheDocument();
+      });
     });
   });
 });

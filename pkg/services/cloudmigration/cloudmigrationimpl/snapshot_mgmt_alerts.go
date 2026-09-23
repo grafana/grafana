@@ -37,9 +37,9 @@ func (s *Service) getAlertMuteTimings(ctx context.Context, signedInUser *user.Si
 
 	for _, muteTiming := range muteTimings {
 		muteTimeIntervals = append(muteTimeIntervals, muteTimeInterval{
-			UID: muteTiming.UID,
+			UID: string(muteTiming.UID),
 			MuteTimeInterval: config.MuteTimeInterval{
-				Name:          muteTiming.Name,
+				Name:          muteTiming.Title,
 				TimeIntervals: muteTiming.TimeIntervals,
 			},
 		})

@@ -1,4 +1,4 @@
-import { type EditorState } from '@codemirror/state';
+import { type ChangeSpec, type EditorState, type Line } from '@codemirror/state';
 import { type EditorView } from '@codemirror/view';
 
 /** Whether `before`/`after` sit immediately outside the range. */
@@ -81,33 +81,83 @@ function matchMarker(text: string) {
   return undefined;
 }
 
-/** Prefixes every line the selection touches, replacing any other marker or clearing its own. */
-export function toggleLinePrefix(view: EditorView, prefix: string) {
-  const { state } = view;
-  const range = state.selection.main;
-  const startLine = state.doc.lineAt(range.from).number;
+/** The range a line's existing marker occupies, empty when it has none. */
+function markerRange(line: Line) {
+  return { from: line.from, to: line.from + (matchMarker(line.text)?.length ?? 0) };
+}
+
+function selectedLines(state: EditorState) {
+  const { from, to, empty } = state.selection.main;
   // A selection ending exactly at a line start (Shift+Down, or dragging through a
   // trailing newline) does not touch that line, so it must not be prefixed.
-  const endPos = !range.empty && range.to === state.doc.lineAt(range.to).from ? range.to - 1 : range.to;
-  const endLine = state.doc.lineAt(endPos).number;
+  const end = !empty && to === state.doc.lineAt(to).from ? to - 1 : to;
 
   const lines = [];
-  for (let n = startLine; n <= endLine; n++) {
+  for (let n = state.doc.lineAt(from).number; n <= state.doc.lineAt(end).number; n++) {
     lines.push(state.doc.line(n));
   }
+  return lines;
+}
 
-  const target = matchMarker(prefix);
-  const markers = lines.map((line) => matchMarker(line.text));
-
-  // A partially prefixed selection is completed, not half-cleared.
-  const allPrefixed = target !== undefined && markers.every((marker) => marker?.kind === target.kind);
-  const changes = lines.map((line, i) => {
-    const markerEnd = line.from + (markers[i]?.length ?? 0);
-    return allPrefixed ? { from: line.from, to: markerEnd } : { from: line.from, to: markerEnd, insert: prefix };
-  });
-
+function applyLineChanges(view: EditorView, changes: ChangeSpec[]) {
+  const { state } = view;
   // Mapping rightward keeps the caret after an inserted prefix.
   const changeSet = state.changes(changes);
   view.dispatch({ changes: changeSet, selection: state.selection.map(changeSet, 1) });
   view.focus();
+}
+
+/** Prefixes every line the selection touches, replacing any other marker or clearing its own. */
+export function toggleLinePrefix(view: EditorView, prefix: string) {
+  const lines = selectedLines(view.state);
+  const target = matchMarker(prefix);
+
+  // A partially prefixed selection is completed, not half-cleared.
+  const allPrefixed = target !== undefined && lines.every((line) => matchMarker(line.text)?.kind === target.kind);
+
+  applyLineChanges(
+    view,
+    lines.map((line) => (allPrefixed ? markerRange(line) : { ...markerRange(line), insert: prefix }))
+  );
+}
+
+/**
+ * Numbers every line the selection touches, or clears them when all are already numbered.
+ *
+ * Items adjoining the selection are renumbered too: `marked` takes a list's start from its
+ * first item and counts up on its own, so only a sequential run reads the way it renders.
+ */
+export function toggleOrderedList(view: EditorView) {
+  const { state } = view;
+  const { doc } = state;
+  const lines = selectedLines(state);
+  const isNumbered = (text: string) => matchMarker(text)?.kind === 'numbered';
+
+  if (lines.every((line) => isNumbered(line.text))) {
+    applyLineChanges(view, lines.map(markerRange));
+    return;
+  }
+
+  // The list the selection joins reaches through the numbered lines on either side of it.
+  let runStart = lines[0].number;
+  while (runStart > 1 && isNumbered(doc.line(runStart - 1).text)) {
+    runStart--;
+  }
+  let runEnd = lines[lines.length - 1].number;
+  while (runEnd < doc.lines && isNumbered(doc.line(runEnd + 1).text)) {
+    runEnd++;
+  }
+
+  // An item already above the selection owns the list's start; otherwise it restarts at 1.
+  const start = runStart < lines[0].number ? parseInt(doc.line(runStart).text, 10) : 1;
+
+  const changes: ChangeSpec[] = [];
+  for (let n = runStart; n <= runEnd; n++) {
+    const range = markerRange(doc.line(n));
+    const insert = `${start + n - runStart}. `;
+    if (state.sliceDoc(range.from, range.to) !== insert) {
+      changes.push({ ...range, insert });
+    }
+  }
+  applyLineChanges(view, changes);
 }

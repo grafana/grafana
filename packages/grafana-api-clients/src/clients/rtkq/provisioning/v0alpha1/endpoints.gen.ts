@@ -120,6 +120,10 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Connection'],
       }),
+      createConnectionAuthorize: build.mutation<CreateConnectionAuthorizeApiResponse, CreateConnectionAuthorizeApiArg>({
+        query: (queryArg) => ({ url: `/connections/${queryArg.name}/authorize`, method: 'POST', body: queryArg.body }),
+        invalidatesTags: ['Connection'],
+      }),
       getConnectionRepositories: build.query<GetConnectionRepositoriesApiResponse, GetConnectionRepositoriesApiArg>({
         query: (queryArg) => ({ url: `/connections/${queryArg.name}/repositories` }),
         providesTags: ['Connection'],
@@ -722,6 +726,20 @@ export type UpdateConnectionApiArg = {
   /** Force is going to "force" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests. */
   force?: boolean;
   patch: Patch;
+};
+export type CreateConnectionAuthorizeApiResponse = /** status 200 OK */ ConnectionAuthorizeRequest;
+export type CreateConnectionAuthorizeApiArg = {
+  /** name of the ConnectionAuthorizeRequest */
+  name: string;
+  body: {
+    /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+    apiVersion?: string;
+    /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+    kind?: string;
+    metadata?: any;
+    spec: any;
+    status?: any;
+  };
 };
 export type GetConnectionRepositoriesApiResponse = /** status 200 OK */ {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1472,6 +1490,10 @@ export type GitHubEnterpriseConnectionConfig = {
   /** The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`). */
   serverUrl: string;
 };
+export type GitHubEnterpriseOAuthConnectionConfig = {
+  /** The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`). */
+  serverUrl: string;
+};
 export type ConnectionOAuthConfig = {
   /** The OAuth app client ID */
   clientID: string;
@@ -1481,7 +1503,7 @@ export type ConnectionWebhookConfig = {
   disabled?: boolean;
 };
 export type ConnectionSpec = {
-  /** Bitbucket connection configuration Only applicable when provider is "bitbucket" */
+  /** Bitbucket connection configuration Only applicable when provider is "bitbucketOAuth" */
   bitbucket?: BitbucketConnectionConfig;
   /** The connection description */
   description?: string;
@@ -1489,6 +1511,8 @@ export type ConnectionSpec = {
   github?: GitHubConnectionConfig;
   /** GitHub Enterprise Server connection configuration Only applicable when provider is "githubEnterprise" */
   githubEnterprise?: GitHubEnterpriseConnectionConfig;
+  /** GitHub Enterprise Server OAuth app connection configuration Only applicable when provider is "githubEnterpriseOAuth" */
+  githubEnterpriseOAuth?: GitHubEnterpriseOAuthConnectionConfig;
   /** OAuth app configuration shared by all OAuth app providers */
   oauth?: ConnectionOAuthConfig;
   /** The connection display name (shown in the UI) */
@@ -1496,11 +1520,13 @@ export type ConnectionSpec = {
   /** The connection provider type
     
     Possible enum values:
-     - `"bitbucket"`
+     - `"bitbucketOAuth"`
      - `"github"`
      - `"githubEnterprise"`
-     - `"gitlab"` */
-  type: 'bitbucket' | 'github' | 'githubEnterprise' | 'gitlab';
+     - `"githubEnterpriseOAuth"`
+     - `"githubOAuth"`
+     - `"gitlabOAuth"` */
+  type: 'bitbucketOAuth' | 'github' | 'githubEnterprise' | 'githubEnterpriseOAuth' | 'githubOAuth' | 'gitlabOAuth';
   /** The connection URL */
   url?: string;
   /** Webhook configuration for this connection */
@@ -1635,7 +1661,26 @@ export type Status = {
   status?: string;
 };
 export type Patch = object;
-export type ResourceRef = {
+export type ConnectionAuthorizeRequestSpec = {
+  /** The authorization code returned by the provider */
+  code: string;
+  /** The redirect URI used in the authorization request */
+  redirectURI?: string;
+};
+export type ConnectionAuthorizeRequestStatus = {
+  /** Whether the connection has been authorized */
+  authorized: boolean;
+};
+export type ConnectionAuthorizeRequest = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata?: ObjectMeta;
+  spec: ConnectionAuthorizeRequestSpec;
+  status?: ConnectionAuthorizeRequestStatus;
+};
+export type ProvisioningResourceRef = {
   /** Group is the group of the resource, such as "dashboard.grafana.app". */
   group?: string;
   /** Kind is the type of resource, for example, "Dashboard". */
@@ -1649,7 +1694,7 @@ export type DeleteJobOptions = {
   /** Ref to the branch or commit hash to delete from */
   ref?: string;
   /** Resources to delete This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths. */
-  resources?: ResourceRef[];
+  resources?: ProvisioningResourceRef[];
 };
 export type FixFolderMetadataJobOptions = {
   /** Ref to the branch to create the commit on (uses repository's default branch if not specified) */
@@ -1663,7 +1708,7 @@ export type MigrateJobOptions = {
   /** Message to use when committing the changes in a single commit. Deprecated: set JobSpec.Message instead. This field is kept for backwards compatibility and is only used when JobSpec.Message is empty. */
   message?: string;
   /** Resources to migrate. When empty, every unmanaged resource in the namespace is migrated (legacy behavior). When non-empty, only the listed resources are exported to the repository — the folder hierarchy is still emitted so parent paths resolve, and the subsequent pull phase only takes ownership of those resources. Currently only unmanaged Dashboards are supported. */
-  resources?: ResourceRef[];
+  resources?: ProvisioningResourceRef[];
   /** SkipResourceDeletion keeps the migrated resources on the instance instead of removing them. By default a migration deletes the resources it moved (the whole namespace for an instance target, or the exported resources for a branch migration); when true, no deletion happens and the resources are left in place. */
   skipResourceDeletion?: boolean;
 };
@@ -1673,13 +1718,17 @@ export type MoveJobOptions = {
   /** Ref to the branch or commit hash that should move */
   ref?: string;
   /** Resources to move This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths. */
-  resources?: ResourceRef[];
+  resources?: ProvisioningResourceRef[];
   /** Destination path for the move (e.g. "new-location/") */
   targetPath?: string;
 };
 export type PullRequestJobOptions = {
+  /** URL of the head repository for a pull request from a fork, when available. */
+  forkURL?: string;
   /** The specific commit hash that triggered this notice */
   hash?: string;
+  /** Whether the pull request's head repository differs from its base repository. Omitted when repository identities were unavailable, including older jobs. */
+  isFork?: boolean;
   /** Pull request number (when appropriate) */
   pr?: number;
   /** The branch of commit hash */
@@ -1703,7 +1752,7 @@ export type ExportJobOptions = {
   /** FIXME: we should validate this in admission hooks Prefix in target file system */
   path?: string;
   /** Resources to export. When empty, every unmanaged resource in the namespace is exported (legacy behavior). When non-empty, only the listed resources are exported — the folder hierarchy is still emitted so parent paths resolve. Currently only unmanaged Dashboards are supported. */
-  resources?: ResourceRef[];
+  resources?: ProvisioningResourceRef[];
 };
 export type Duration = string;
 export type TestJobOptions = {
@@ -1854,6 +1903,10 @@ export type BranchOptions = {
   nameTemplate?: string;
 };
 export type CommitOptions = {
+  /** Email used as the commit author instead of the user who triggered the commit. Only valid when signingMethod is unset. */
+  authorEmail?: string;
+  /** Name used as the commit author instead of the user who triggered the commit. Only valid when signingMethod is unset. */
+  authorName?: string;
   /** When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only. */
   enforceTemplate?: boolean;
   /** Email used as the commit signer. Must match the signing key's identity and a verified email on the account where the matching public key is registered. When empty, defaults to "noreply@grafana.com". */
@@ -1918,6 +1971,8 @@ export type GitLabRepositoryConfig = {
     
     When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
   path?: string;
+  /** RepoID is the GitLab project's immutable numeric ID. Resolved and set automatically whenever URL is set or changed; it survives a project transfer/move even if the project's path changes. Read-only: it is always system-derived and never taken from client-supplied input. */
+  repoID?: string;
   /** The repository URL (e.g. `https://gitlab.com/example/test`). */
   url?: string;
 };
@@ -1993,11 +2048,24 @@ export type RepositorySpec = {
   /** UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly) */
   workflows: ('branch' | 'write')[];
 };
+export type DeletionStatus = {
+  /** Finalizer names the finalizer whose teardown is blocking deletion, i.e. which deletion step failed. A client force-removing deletion removes exactly this finalizer. */
+  finalizer?: string;
+  /** Message is a human-readable explanation of what went wrong, suitable for showing to users. */
+  message?: string;
+  /** State is the phase of the deletion.
+    
+    Possible enum values:
+     - `"Blocked"` indicates the latest finalizer pass failed and deletion did not complete. The controller keeps retrying, so a transient failure (a brief outage, an API conflict) may still clear on its own; a persistent one (credentials expired, a webhook that cannot be removed) needs the user to force-remove the blocking finalizer. Finalizer is the finalizer that failed on that pass. This is the only state the controller emits: status.deletion is written only when a pass fails. While finalizers are still running, status.deletion is absent, which (together with a set deletionTimestamp) is itself the "in progress" signal — so no separate Working state is needed. */
+  state?: 'Blocked';
+};
 export type QuotaStatus = {
   /** MaxRepositories is the maximum number of repositories allowed. 0 means unlimited. */
   maxRepositories?: number;
   /** MaxResourcesPerRepository is the maximum number of resources allowed per repository. 0 means unlimited. */
   maxResourcesPerRepository?: number;
+  /** UpdatedAt is when the controller last successfully refreshed these quota limits. It is expressed as Unix milliseconds. 0 means the quota limits have not been refreshed yet. */
+  updatedAt?: number;
 };
 export type ResourceCount = {
   count: number;
@@ -2040,8 +2108,10 @@ export type WebhookStatus = {
 export type RepositoryStatus = {
   /** Conditions represent the latest available observations of the repository's state. */
   conditions?: Condition[];
-  /** Error information during repository deletion (if any) */
+  /** Error information during repository deletion (if any). Deprecated: prefer the structured Deletion field. Retained for backwards compatibility with clients that read the concise string. */
   deleteError?: string;
+  /** Deletion reports the progress of an in-progress deletion and the problem blocking it, so a client can explain the holdup and force-remove the blocking finalizer. Populated only while the repository is Terminating. */
+  deletion?: DeletionStatus;
   /** FieldErrors are errors that occurred during validation of the repository spec. These errors are intended to help users identify and fix issues in the spec. */
   fieldErrors?: ErrorDetails[];
   /** This will get updated with the current health status (and updated periodically) */
@@ -2249,6 +2319,15 @@ export type RepositoryViewList = {
   allowedTargets?: ('folder' | 'folderless' | 'instance')[];
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
+  /** AvailableConnectionTypes is the list of connection types supported in this instance */
+  availableConnectionTypes?: (
+    | 'bitbucketOAuth'
+    | 'github'
+    | 'githubEnterprise'
+    | 'githubEnterpriseOAuth'
+    | 'githubOAuth'
+    | 'gitlabOAuth'
+  )[];
   /** AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc) */
   availableRepositoryTypes?: ('bitbucket' | 'git' | 'github' | 'githubEnterprise' | 'gitlab' | 'local')[];
   /** AvailableResources is the list of resource types declared for provisioning in this instance, including disabled ones (see SupportedResource.Disabled). */
@@ -2292,6 +2371,7 @@ export const {
   useReplaceConnectionMutation,
   useDeleteConnectionMutation,
   useUpdateConnectionMutation,
+  useCreateConnectionAuthorizeMutation,
   useGetConnectionRepositoriesQuery,
   useLazyGetConnectionRepositoriesQuery,
   useGetConnectionStatusQuery,

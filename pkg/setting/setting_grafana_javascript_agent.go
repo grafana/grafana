@@ -14,6 +14,7 @@ type GrafanaJavascriptAgent struct {
 	CSPInstrumentalizationEnabled         bool   `json:"cspInstrumentalizationEnabled"`
 	TracingInstrumentalizationEnabled     bool   `json:"tracingInstrumentalizationEnabled"`
 	BotFilterEnabled                      bool   `json:"botFilterEnabled"`
+	TrackResources                        *bool  `json:"trackResources,omitempty"`
 }
 
 func (cfg *Cfg) readGrafanaJavascriptAgentConfig() {
@@ -32,5 +33,13 @@ func (cfg *Cfg) readGrafanaJavascriptAgentConfig() {
 		CSPInstrumentalizationEnabled:         raw.Key("instrumentations_csp_enabled").MustBool(true),
 		TracingInstrumentalizationEnabled:     raw.Key("instrumentations_tracing_enabled").MustBool(true),
 		BotFilterEnabled:                      raw.Key("bot_filter_enabled").MustBool(false),
+	}
+
+	// Faro treats trackResources as tri-state: unset tracks fetch/xhr timings only,
+	// true tracks all resources, false tracks none. Leave it nil unless explicitly
+	// set so Faro applies its own default.
+	if raw.Key("track_resources").String() != "" {
+		trackResources := raw.Key("track_resources").MustBool(false)
+		cfg.GrafanaJavascriptAgent.TrackResources = &trackResources
 	}
 }

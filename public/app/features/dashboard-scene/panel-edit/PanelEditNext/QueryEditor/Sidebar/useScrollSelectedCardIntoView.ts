@@ -11,7 +11,10 @@ import { SIDEBAR_CARD_DATA_ATTR } from '../../constants';
  * Runs in a layout effect so the scroll is applied before paint, in the same frame as the selection
  * highlight — otherwise the card would flash briefly out of view.
  */
-export function useScrollSelectedCardIntoView(containerRef: RefObject<HTMLElement>, selectedId: string | null): void {
+export function useScrollSelectedCardIntoView(
+  containerRef: RefObject<HTMLElement | null>,
+  selectedId: string | null
+): void {
   useLayoutEffect(() => {
     if (!selectedId) {
       return;

@@ -15,10 +15,9 @@
 import { css, cx } from '@emotion/css';
 import { SpanStatusCode } from '@opentelemetry/api';
 import React, { useCallback, useMemo } from 'react';
-import useMeasure from 'react-use/lib/useMeasure';
 
 import {
-  type CoreApp,
+  CoreApp,
   type DataFrame,
   dateTimeFormat,
   type GrafanaTheme2,
@@ -51,8 +50,11 @@ import AccordionKeyValues from './AccordionKeyValues';
 import AccordionLogs from './AccordionLogs';
 import AccordionReferences from './AccordionReferences';
 import type DetailState from './DetailState';
+import { isDrilldownContext } from './LogsLink';
 import { SpanDetailLinkButtons } from './SpanDetailLinkButtons';
 import SpanFlameGraph from './SpanFlameGraph';
+import SpanExceptionDetails from './exceptions/SpanExceptionDetails';
+import { getSpanException } from './exceptions/span-exception';
 import { useAttributePluginPromoGetter } from './pluginPromo/attributePluginPromos';
 
 const useResourceAttributesExtensionLinks = ({
@@ -110,14 +112,14 @@ const useResourceAttributesExtensionLinks = ({
 
   const { links } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.TraceViewResourceAttributes,
-    limitPerPlugin: 10,
+    limitPerPlugin: 15,
     context,
   });
 
   const resourceLinksGetter = useCallback(
     (pairs: TraceKeyValuePair[], index: number) => {
       const { key } = pairs[index] ?? {};
-      return links.filter((link) => link.category === key);
+      return links.filter((link) => (link.group?.name ?? link.category) === key);
     },
     [links]
   );
@@ -137,6 +139,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.radius.md,
       margin: '6px',
       padding: '5px',
+      minWidth: 0,
     }),
     header: css({
       label: 'SpanDetailHeader',
@@ -150,6 +153,16 @@ const getStyles = (theme: GrafanaTheme2) => {
     content: css({
       label: 'SpanDetailContent',
       fontSize: theme.typography.bodySmall.fontSize,
+    }),
+    cards: css({
+      label: 'SpanDetailCards',
+      display: 'grid',
+      gridTemplateColumns: 'minmax(0, 1fr)',
+      alignItems: 'start',
+      // Side-by-side when the span detail container is wide enough; otherwise stack.
+      [theme.breakpoints.container.up(1000)]: {
+        gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
+      },
     }),
     listWrapper: css({
       label: 'SpanDetailListWrapper',
@@ -165,6 +178,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'SpanDetailComponent',
       display: 'flex',
       flexDirection: 'column', // On bigger screens display attributes below service name
+      containerType: 'inline-size',
     }),
     serviceNameAndLinks: css({
       label: 'ServiceNameAndLinks',
@@ -230,13 +244,16 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: '10px',
       marginBottom: theme.spacing(2),
     }),
+    exceptionBox: css({
+      label: 'SpanDetailExceptionBox',
+      margin: theme.spacing(0.75),
+    }),
     debugInfo: css({
       label: 'debugInfo',
       display: 'block',
       letterSpacing: '0.25px',
       margin: '0.5em 0 -0.75em',
       textAlign: 'right',
-      clear: 'both',
     }),
     debugLabel: css({
       label: 'debugLabel',
@@ -286,7 +303,7 @@ export type SpanDetailProps = {
   setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
   setRedrawListView: (redraw: {}) => void;
   timeRange: TimeRange;
-  app: CoreApp;
+  app: CoreApp | string;
 };
 
 export default function SpanDetail(props: SpanDetailProps) {
@@ -398,8 +415,6 @@ export default function SpanDetail(props: SpanDetailProps) {
       : []),
   ];
 
-  const [mainContainerRef, { width: mainContainerWidth }] = useMeasure<HTMLDivElement>();
-
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   if (span.kind) {
@@ -445,6 +460,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     });
   }
 
+  const spanException = getSpanException(span);
   const { interpolatedParams, ...focusSpanLink } = createFocusSpanLink(traceID, spanID);
   const resourceLinksGetter = useResourceAttributesExtensionLinks({
     process,
@@ -456,7 +472,13 @@ export default function SpanDetail(props: SpanDetailProps) {
     spanID,
     spanStartTime: startTime,
   });
-  const promoGetter = useAttributePluginPromoGetter();
+  const promoAttributeKeys = useMemo(
+    () => [...tags.map((tag) => tag.key), ...(process.tags ?? []).map((tag) => tag.key)],
+    [tags, process.tags]
+  );
+  const promoGetter = useAttributePluginPromoGetter(promoAttributeKeys);
+  // Explore, Traces Drilldown, and embedded drilldown (Unknown). Dashboard panels stay new-tab.
+  const openLinksInSameTab = app === CoreApp.Explore || isDrilldownContext(app);
 
   const listOfContentCards = [];
 
@@ -469,6 +491,8 @@ export default function SpanDetail(props: SpanDetailProps) {
         linksGetter={resourceLinksGetter}
         onToggle={() => summaryAttributesToggle(spanID)}
         promoGetter={promoGetter}
+        datasourceType={datasourceType}
+        openLinksInSameTab={openLinksInSameTab}
       />
     );
   }
@@ -482,33 +506,35 @@ export default function SpanDetail(props: SpanDetailProps) {
       linksGetter={resourceLinksGetter}
       onToggle={() => tagsToggle(spanID)}
       promoGetter={promoGetter}
+      datasourceType={datasourceType}
+      openLinksInSameTab={openLinksInSameTab}
     />
   );
 
-  if (process.tags) {
-    listOfContentCards.push(
-      <AccordionCategorizedKeyValues
-        data={process.tags}
-        sectionType="resource"
-        label={
-          isSummarySpan ? (
-            <>
-              {t('explore.span-detail.label-resource-attributes', 'Resource attributes')}{' '}
-              <span className={styles.inheritedNote}>
-                {t('explore.span-detail.resource-attributes-inherited', '(inherited from slowest span)')}
-              </span>
-            </>
-          ) : (
-            t('explore.span-detail.label-resource-attributes', 'Resource attributes')
-          )
-        }
-        linksGetter={resourceLinksGetter}
-        isOpen={isProcessOpen}
-        onToggle={() => processToggle(spanID)}
-        promoGetter={promoGetter}
-      />
-    );
-  }
+  listOfContentCards.push(
+    <AccordionCategorizedKeyValues
+      data={process.tags ?? []}
+      sectionType="resource"
+      label={
+        isSummarySpan ? (
+          <>
+            {t('explore.span-detail.label-resource-attributes', 'Resource attributes')}{' '}
+            <span className={styles.inheritedNote}>
+              {t('explore.span-detail.resource-attributes-inherited', '(inherited from slowest span)')}
+            </span>
+          </>
+        ) : (
+          t('explore.span-detail.label-resource-attributes', 'Resource attributes')
+        )
+      }
+      linksGetter={resourceLinksGetter}
+      isOpen={isProcessOpen}
+      onToggle={() => processToggle(spanID)}
+      promoGetter={promoGetter}
+      datasourceType={datasourceType}
+      openLinksInSameTab={openLinksInSameTab}
+    />
+  );
 
   if (logs && logs.length > 0) {
     listOfContentCards.push(
@@ -588,7 +614,7 @@ export default function SpanDetail(props: SpanDetailProps) {
   }
 
   return (
-    <div data-testid="span-detail-component" ref={mainContainerRef} className={styles.spanDetailComponent}>
+    <div data-testid="span-detail-component" className={styles.spanDetailComponent}>
       <div className={styles.header}>
         <div className={styles.serviceNameAndLinks}>
           <h6 className={styles.operationName} title={operationName}>
@@ -628,7 +654,12 @@ export default function SpanDetail(props: SpanDetailProps) {
         </div>
       </div>
       <div className={styles.content}>
-        <CardsContainer listOfContentCards={listOfContentCards} containerWidth={mainContainerWidth} />
+        {spanException && (
+          <div className={styles.exceptionBox}>
+            <SpanExceptionDetails exception={spanException} />
+          </div>
+        )}
+        <CardsContainer listOfContentCards={listOfContentCards} />
 
         <small className={styles.debugInfo}>
           {/* TODO: fix keyboard a11y */}
@@ -665,45 +696,11 @@ export const getAbsoluteTime = (startTime: number, timeZone: TimeZone) => {
   return ` (${absoluteTime})`;
 };
 
-const CardsContainer = ({
-  listOfContentCards,
-  containerWidth,
-}: {
-  listOfContentCards: React.ReactNode[];
-  containerWidth: number;
-}) => {
+const CardsContainer = ({ listOfContentCards }: { listOfContentCards: React.ReactNode[] }) => {
   const styles = useStyles2(getStyles);
 
-  const useTwoColumns = containerWidth > 1000;
-
-  if (useTwoColumns) {
-    return (
-      <>
-        <div data-testid="span-detail-cards-column" className={css({ float: 'left', width: '50%' })}>
-          {listOfContentCards.map((card, index) =>
-            index % 2 === 0 ? (
-              <div className={styles.card} key={index}>
-                {card}
-              </div>
-            ) : null
-          )}
-        </div>
-
-        <div data-testid="span-detail-cards-column" className={css({ float: 'right', width: '50%' })}>
-          {listOfContentCards.map((card, index) =>
-            index % 2 === 1 ? (
-              <div className={styles.card} key={index}>
-                {card}
-              </div>
-            ) : null
-          )}
-        </div>
-      </>
-    );
-  }
-
   return (
-    <div data-testid="span-detail-cards-column" className={css({ clear: 'both', width: '100%' })}>
+    <div data-testid="span-detail-cards-column" className={styles.cards}>
       {listOfContentCards.map((card, index) => (
         <div className={styles.card} key={index}>
           {card}

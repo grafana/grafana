@@ -247,7 +247,6 @@ type (
 	ObjectMatchers            = definition.ObjectMatchers
 	PostableApiReceiver       = definition.PostableApiReceiver
 	PostableGrafanaReceivers  = definition.PostableGrafanaReceivers
-	Receiver                  = definition.Receiver
 	Regexp                    = config.Regexp
 	Matchers                  = config.Matchers
 	MatchRegexps              = config.MatchRegexps
@@ -395,31 +394,15 @@ func (s *GettableStatus) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	c := config.Config{}
-	if err := yaml.Unmarshal([]byte(*amStatus.Config.Original), &c); err != nil {
+	var cfg PostableApiAlertingConfig
+	if err := yaml.Unmarshal([]byte(*amStatus.Config.Original), &cfg); err != nil {
 		return err
 	}
 
 	s.Cluster = amStatus.Cluster
-	s.Config = &PostableApiAlertingConfig{Config: Config{
-		Global:            c.Global,
-		Route:             AsGrafanaRoute(c.Route),
-		InhibitRules:      c.InhibitRules,
-		Templates:         c.Templates,
-		MuteTimeIntervals: c.MuteTimeIntervals,
-		TimeIntervals:     c.TimeIntervals,
-	}}
+	s.Config = &cfg
 	s.Uptime = amStatus.Uptime
 	s.VersionInfo = amStatus.VersionInfo
-
-	type overrides struct {
-		Receivers *[]*PostableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
-	}
-
-	if err := yaml.Unmarshal([]byte(*amStatus.Config.Original), &overrides{Receivers: &s.Config.Receivers}); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -597,6 +580,9 @@ type ExtraConfiguration struct {
 	Identifier         string            `yaml:"identifier" json:"identifier"`
 	TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
 	AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
+	// ManagedBy is "manual" or "auto-sync", computed server-side so callers don't need configs:get
+	// to tell the two apart.
+	ManagedBy string `yaml:"managed_by" json:"managed_by"`
 }
 
 func (c *ExtraConfiguration) parsePrometheusConfig() (config.Config, error) {

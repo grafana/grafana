@@ -3,7 +3,7 @@ import { type FormEvent } from 'react';
 import { type CustomVariableModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { FieldValidationMessage, Icon, RadioButtonGroup, Stack, TextLink, Tooltip } from '@grafana/ui';
+import { FieldSet, FieldValidationMessage, Icon, RadioButtonGroup, Stack, TextLink, Tooltip } from '@grafana/ui';
 
 import { SelectionOptionsForm } from './SelectionOptionsForm';
 import { VariableLegend } from './VariableLegend';
@@ -44,46 +44,50 @@ export function CustomVariableForm({
 }: CustomVariableFormProps) {
   return (
     <>
-      <VariableLegend>
-        <Trans i18nKey="dashboard-scene.custom-variable-form.custom-options">Custom options</Trans>
-      </VariableLegend>
+      <FieldSet>
+        <VariableLegend>
+          <Trans i18nKey="dashboard-scene.custom-variable-form.custom-options">Custom options</Trans>
+        </VariableLegend>
 
-      <ValuesFormatSelector valuesFormat={valuesFormat} onValuesFormatChange={onValuesFormatChange} />
+        <ValuesFormatSelector valuesFormat={valuesFormat} onValuesFormatChange={onValuesFormatChange} />
 
-      <VariableTextAreaField
-        // we don't use a controlled component so we make sure the textarea content is cleared when changing format by providing a key
-        key={valuesFormat}
-        name=""
-        placeholder={
-          valuesFormat === 'json'
-            ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-              '[{ "text":"text1", "value":"val1", "propA":"a1", "propB":"b1" },\n{ "text":"text2", "value":"val2", "propA":"a2", "propB":"b2" }]'
-            : // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-              '1, 10, mykey : myvalue, myvalue, escaped\,value'
-        }
-        defaultValue={query}
-        onBlur={onQueryChange}
-        required
-        width={52}
-        testId={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.customValueInput}
-      />
-      {queryValidationError && <FieldValidationMessage>{queryValidationError.message}</FieldValidationMessage>}
+        <VariableTextAreaField
+          // we don't use a controlled component so we make sure the textarea content is cleared when changing format by providing a key
+          key={valuesFormat}
+          name=""
+          placeholder={
+            valuesFormat === 'json'
+              ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+                '[{ "text":"text1", "value":"val1", "propA":"a1", "propB":"b1" },\n{ "text":"text2", "value":"val2", "propA":"a2", "propB":"b2" }]'
+              : // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+                '1, 10, mykey : myvalue, myvalue, escaped\,value'
+          }
+          defaultValue={query}
+          onBlur={onQueryChange}
+          required
+          width={52}
+          testId={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.customValueInput}
+        />
+        {queryValidationError && <FieldValidationMessage>{queryValidationError.message}</FieldValidationMessage>}
+      </FieldSet>
 
-      <VariableLegend>
-        <Trans i18nKey="dashboard-scene.custom-variable-form.selection-options">Selection options</Trans>
-      </VariableLegend>
-      <SelectionOptionsForm
-        multi={multi}
-        includeAll={includeAll}
-        allValue={allValue}
-        allowCustomValue={allowCustomValue}
-        disableAllowCustomValue={valuesFormat === 'json'}
-        disableCustomAllValue={valuesFormat === 'json'}
-        onMultiChange={onMultiChange}
-        onIncludeAllChange={onIncludeAllChange}
-        onAllValueChange={onAllValueChange}
-        onAllowCustomValueChange={onAllowCustomValueChange}
-      />
+      <FieldSet>
+        <VariableLegend>
+          <Trans i18nKey="dashboard-scene.custom-variable-form.selection-options">Selection options</Trans>
+        </VariableLegend>
+        <SelectionOptionsForm
+          multi={multi}
+          includeAll={includeAll}
+          allValue={allValue}
+          allowCustomValue={allowCustomValue}
+          disableAllowCustomValue={valuesFormat === 'json'}
+          disableCustomAllValue={valuesFormat === 'json'}
+          onMultiChange={onMultiChange}
+          onIncludeAllChange={onIncludeAllChange}
+          onAllValueChange={onAllValueChange}
+          onAllowCustomValueChange={onAllowCustomValueChange}
+        />
+      </FieldSet>
     </>
   );
 }

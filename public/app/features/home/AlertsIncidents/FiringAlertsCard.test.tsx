@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { render, screen } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { config, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
@@ -13,6 +13,7 @@ import { ctaClicked } from '../analytics/main';
 
 import { FiringAlertsCard } from './FiringAlertsCard';
 import { HOME_CARD_MAX_ITEMS } from './constants';
+import { useFiringAlerts } from './useFiringAlerts';
 
 jest.mock('../analytics/main', () => ({
   ctaClicked: jest.fn(),
@@ -64,6 +65,8 @@ beforeEach(() => {
   jest
     .spyOn(contextSrv, 'hasPermission')
     .mockImplementation((action: string) => action === AccessControlAction.AlertingInstanceRead);
+  jest.replaceProperty(contextSrv, 'isSignedIn', true);
+
   mockTeams([]);
   mockAlerts([]);
 });
@@ -73,19 +76,24 @@ afterEach(() => {
   config.appSubUrl = '';
 });
 
+function FiringAlertsCardWithData() {
+  const data = useFiringAlerts();
+  return data.enabled ? <FiringAlertsCard data={data} /> : null;
+}
+
 describe('FiringAlertsCard', () => {
-  it('renders null when user lacks AlertingInstanceRead permission', () => {
+  it('renders null when user lacks AlertingInstanceRead permission', async () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
-    const { container } = render(<FiringAlertsCard />);
-    expect(container).toBeEmptyDOMElement();
+    const { container } = render(<FiringAlertsCardWithData />);
+    await waitFor(() => expect(container).toBeEmptyDOMElement());
   });
 
   it('renders alerts sorted by severity', async () => {
     mockTeams([]);
     mockAlerts([warningAlert, criticalAlert, highAlert]);
 
-    render(<FiringAlertsCard />);
+    render(<FiringAlertsCardWithData />);
 
     expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
 
@@ -101,7 +109,7 @@ describe('FiringAlertsCard', () => {
     mockTeams([]);
     mockAlerts([criticalAlert, highAlert]);
 
-    render(<FiringAlertsCard />);
+    render(<FiringAlertsCardWithData />);
 
     expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
 
@@ -117,7 +125,7 @@ describe('FiringAlertsCard', () => {
     mockTeams([]);
     mockAlerts([linkedAlert]);
 
-    render(<FiringAlertsCard />);
+    render(<FiringAlertsCardWithData />);
 
     expect(await screen.findByRole('link', { name: /^Linked alert/ })).toHaveAttribute(
       'href',
@@ -129,7 +137,7 @@ describe('FiringAlertsCard', () => {
     mockTeams([]);
     mockAlerts([critAliasAlert, sev2Alert]);
 
-    render(<FiringAlertsCard />);
+    render(<FiringAlertsCardWithData />);
 
     expect(await screen.findByText('Crit Alias')).toBeInTheDocument();
 
@@ -143,7 +151,7 @@ describe('FiringAlertsCard', () => {
     mockTeams([]);
     mockAlerts([noSeverityAlert]);
 
-    render(<FiringAlertsCard />);
+    render(<FiringAlertsCardWithData />);
 
     expect(await screen.findByText('No Severity')).toBeInTheDocument();
     expect(await screen.findByText('Unknown')).toBeInTheDocument();
@@ -164,7 +172,7 @@ describe('FiringAlertsCard', () => {
       })
     );
 
-    render(<FiringAlertsCard />);
+    render(<FiringAlertsCardWithData />);
 
     expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
 
@@ -188,7 +196,7 @@ describe('FiringAlertsCard', () => {
       })
     );
 
-    render(<FiringAlertsCard />);
+    render(<FiringAlertsCardWithData />);
 
     expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
 
@@ -203,10 +211,9 @@ describe('FiringAlertsCard', () => {
     mockTeams([{ name: 'empty-team' }]);
     mockAlerts([]);
 
-    render(<FiringAlertsCard />);
+    render(<FiringAlertsCardWithData />);
 
     expect(await screen.findByText('No firing alerts for your teams.')).toBeInTheDocument();
-
     expect(screen.queryByText('Show all firing alerts')).not.toBeInTheDocument();
   });
 
@@ -214,7 +221,7 @@ describe('FiringAlertsCard', () => {
     mockTeams([]);
     mockAlerts([]);
 
-    render(<FiringAlertsCard />);
+    render(<FiringAlertsCardWithData />);
 
     expect(await screen.findByText('You have no firing alerts.')).toBeInTheDocument();
   });
@@ -231,7 +238,7 @@ describe('FiringAlertsCard', () => {
     );
     mockAlerts(many);
 
-    render(<FiringAlertsCard />);
+    render(<FiringAlertsCardWithData />);
 
     expect(await screen.findByText('Alert 0')).toBeInTheDocument();
     // Render is capped even though one more alert is firing...
@@ -250,7 +257,7 @@ describe('FiringAlertsCard', () => {
     mockTeams([]);
     mockAlerts([criticalAlert]);
 
-    render(<FiringAlertsCard />);
+    render(<FiringAlertsCardWithData />);
 
     expect(await screen.findByRole('link', { name: /create an alert rule/i })).toHaveAttribute(
       'href',
@@ -269,7 +276,7 @@ describe('FiringAlertsCard', () => {
     mockTeams([]);
     mockAlerts([]);
 
-    render(<FiringAlertsCard />);
+    render(<FiringAlertsCardWithData />);
 
     expect(await screen.findByRole('link', { name: /create an alert rule/i })).toHaveAttribute(
       'href',
@@ -283,7 +290,7 @@ describe('FiringAlertsCard', () => {
     mockTeams([]);
     mockAlerts([criticalAlert]);
 
-    render(<FiringAlertsCard />);
+    render(<FiringAlertsCardWithData />);
 
     expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /create an alert rule/i })).not.toBeInTheDocument();
@@ -300,7 +307,7 @@ describe('FiringAlertsCard', () => {
     mockTeams([]);
     mockAlerts([criticalAlert]);
 
-    render(<FiringAlertsCard />);
+    render(<FiringAlertsCardWithData />);
 
     expect(await screen.findByRole('link', { name: /create an alert rule/i })).toHaveAttribute(
       'href',
@@ -323,7 +330,7 @@ describe('FiringAlertsCard', () => {
     mockTeams([]);
     mockAlerts([]);
 
-    render(<FiringAlertsCard />);
+    render(<FiringAlertsCardWithData />);
 
     expect(await screen.findByRole('link', { name: /create an alert rule/i })).toHaveAttribute(
       'href',
@@ -356,7 +363,7 @@ describe('FiringAlertsCard', () => {
       mockTeams([]);
       mockAlerts([linkedAlert]);
 
-      const { user } = render(<FiringAlertsCard />);
+      const { user } = render(<FiringAlertsCardWithData />);
 
       await user.click(await screen.findByRole('link', { name: /^Linked alert/ }));
 
@@ -377,7 +384,7 @@ describe('FiringAlertsCard', () => {
       mockTeams([]);
       mockAlerts([]);
 
-      const { user } = render(<FiringAlertsCard />);
+      const { user } = render(<FiringAlertsCardWithData />);
 
       await user.click(await screen.findByRole('link', { name: /create an alert rule/i }));
 
@@ -398,7 +405,7 @@ describe('FiringAlertsCard', () => {
       mockTeams([]);
       mockAlerts([criticalAlert]);
 
-      const { user } = render(<FiringAlertsCard />);
+      const { user } = render(<FiringAlertsCardWithData />);
 
       await user.click(await screen.findByRole('link', { name: /create an alert rule/i }));
       expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
@@ -419,7 +426,7 @@ describe('FiringAlertsCard', () => {
       mockTeams([]);
       mockAlerts([]);
 
-      const { user } = render(<FiringAlertsCard />);
+      const { user } = render(<FiringAlertsCardWithData />);
 
       await user.click(await screen.findByRole('link', { name: /view all alert rules/i }));
 

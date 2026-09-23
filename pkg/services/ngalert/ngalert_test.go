@@ -337,48 +337,11 @@ func TestInitInstanceStore(t *testing.T) {
 	sqlStore := &mockDB{}
 	logger := log.New()
 
-	tests := []struct {
-		name                      string
-		ft                        featuremgmt.FeatureToggles
-		expectedInstanceStoreType interface{}
-	}{
-		{
-			name: "Compressed flag enabled, no periodic flag",
-			ft: featuremgmt.WithFeatures(
-				featuremgmt.FlagAlertingSaveStateCompressed,
-			),
-			expectedInstanceStoreType: store.ProtoInstanceDBStore{},
-		},
-		{
-			name: "Compressed flag enabled with periodic flag",
-			ft: featuremgmt.WithFeatures(
-				featuremgmt.FlagAlertingSaveStateCompressed,
-				featuremgmt.FlagAlertingSaveStatePeriodic,
-			),
-			expectedInstanceStoreType: store.ProtoInstanceDBStore{},
-		},
-		{
-			name:                      "Compressed flag disabled",
-			ft:                        featuremgmt.WithFeatures(),
-			expectedInstanceStoreType: store.InstanceDBStore{},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			instanceStore, instanceReader := initInstanceStore(sqlStore, logger, tt.ft)
-			assert.IsType(t, tt.expectedInstanceStoreType, instanceStore)
-			assert.IsType(t, &state.MultiInstanceReader{}, instanceReader)
-			assert.IsType(t, store.ProtoInstanceDBStore{}, instanceReader.(*state.MultiInstanceReader).ProtoDBReader)
-			assert.IsType(t, store.InstanceDBStore{}, instanceReader.(*state.MultiInstanceReader).DBReader)
-		})
-	}
+	instanceStore := initInstanceStore(sqlStore, logger, featuremgmt.WithFeatures())
+	assert.IsType(t, store.ProtoInstanceDBStore{}, instanceStore)
 }
 
 func TestInitStatePersister(t *testing.T) {
-	ua := setting.UnifiedAlertingSettings{
-		StatePeriodicSaveInterval: 1 * time.Minute,
-	}
 	cfg := state.ManagerCfg{
 		StatePeriodicSaveInterval: 1 * time.Minute,
 	}
@@ -389,28 +352,13 @@ func TestInitStatePersister(t *testing.T) {
 		expectedStatePersisterType state.StatePersister
 	}{
 		{
-			name: "Compressed flag enabled",
-			ft: featuremgmt.WithFeatures(
-				featuremgmt.FlagAlertingSaveStateCompressed,
-			),
+			name:                       "No periodic flag",
+			ft:                         featuremgmt.WithFeatures(),
 			expectedStatePersisterType: &state.SyncRuleStatePersister{},
 		},
 		{
 			name: "Periodic flag enabled",
 			ft: featuremgmt.WithFeatures(
-				featuremgmt.FlagAlertingSaveStatePeriodic,
-			),
-			expectedStatePersisterType: &state.AsyncStatePersister{},
-		},
-		{
-			name:                       "No flags enabled",
-			ft:                         featuremgmt.WithFeatures(),
-			expectedStatePersisterType: &state.SyncStatePersister{},
-		},
-		{
-			name: "Both flags enabled - compressed takes precedence",
-			ft: featuremgmt.WithFeatures(
-				featuremgmt.FlagAlertingSaveStateCompressed,
 				featuremgmt.FlagAlertingSaveStatePeriodic,
 			),
 			expectedStatePersisterType: &state.AsyncRuleStatePersister{},
@@ -419,7 +367,7 @@ func TestInitStatePersister(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			statePersister := initStatePersister(ua, cfg, tt.ft)
+			statePersister := initStatePersister(cfg, tt.ft)
 			assert.IsType(t, tt.expectedStatePersisterType, statePersister)
 		})
 	}

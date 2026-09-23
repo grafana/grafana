@@ -1,6 +1,5 @@
 import { isNumber } from 'lodash';
 import Feature, { type FeatureLike } from 'ol/Feature';
-import type OpenLayersMap from 'ol/Map';
 import { type Geometry, LineString, type Point, SimpleGeometry } from 'ol/geom';
 import VectorImage from 'ol/layer/VectorImage';
 import { Fill, Stroke, Style, Text } from 'ol/style';
@@ -9,15 +8,7 @@ import { type ReactNode } from 'react';
 import { ReplaySubject } from 'rxjs';
 import tinycolor from 'tinycolor2';
 
-import {
-  type MapLayerRegistryItem,
-  type MapLayerOptions,
-  type PanelData,
-  type GrafanaTheme2,
-  type EventBus,
-  type DataFrame,
-  type Field,
-} from '@grafana/data';
+import { type MapLayerRegistryItem, type PanelData, type DataFrame, type Field } from '@grafana/data';
 import { TextDimensionMode } from '@grafana/schema';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
@@ -64,12 +55,7 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
    * @param options
    * @param theme
    */
-  create: async (
-    map: OpenLayersMap,
-    options: MapLayerOptions<NetworkConfig>,
-    eventBus: EventBus,
-    theme: GrafanaTheme2
-  ) => {
+  create: async (_map, options, _eventBus, theme) => {
     // Assert default values
     const config = {
       ...defaultOptions,

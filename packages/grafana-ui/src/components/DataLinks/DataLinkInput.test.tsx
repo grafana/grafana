@@ -31,6 +31,19 @@ const mockSuggestions: VariableSuggestion[] = [
 describe('DataLinkInput', () => {
   const theme = createTheme();
 
+  it('renders an input fallback while the editor chunk loads', async () => {
+    const { container } = render(
+      <DataLinkInput value="https://grafana.com" onChange={jest.fn()} suggestions={mockSuggestions} />
+    );
+
+    const fallback = container.querySelector('#data-link-input-loading[aria-hidden="true"]');
+    expect(fallback).toHaveValue('https://grafana.com');
+    expect(fallback).toHaveAttribute('readonly');
+
+    // Let the suspended implementation resolve inside Testing Library's act wrapper.
+    await screen.findByRole('textbox');
+  });
+
   it('renders with initial value displayed in editor', async () => {
     render(<DataLinkInput value="https://grafana.com" onChange={jest.fn()} suggestions={mockSuggestions} />);
     await waitFor(() => {

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/simple"
+
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 )
 
@@ -46,4 +48,14 @@ type RuntimeConfig struct {
 	// watches all namespaces (on-prem default); in cloud it must be the stack
 	// namespace, else the all-namespace watch is rejected as a mismatch.
 	WatchNamespace string
+	// The search handlers are built by the registry with access to the alerting
+	// services. The cross-kind handler preserves the original /searchRules
+	// contract; the other two back the per-kind compatibility routes.
+	SearchRulesHandler          simple.AppCustomRouteHandler
+	SearchAlertRulesHandler     simple.AppCustomRouteHandler
+	SearchRecordingRulesHandler simple.AppCustomRouteHandler
+	// CheckExternalRulerSyncDatasource validates that uid is usable as an
+	// external ruler sync source, returning a non-nil error if not. Nil
+	// disables the check (returns no error).
+	CheckExternalRulerSyncDatasource func(ctx context.Context, uid string) error
 }

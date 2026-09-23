@@ -52,6 +52,15 @@ type WatchOptions struct {
 	BufferSize  int           // How many events to buffer
 	MinBackoff  time.Duration // Minimum interval between polling requests
 	MaxBackoff  time.Duration // Maximum interval between polling requests
+
+	// captureReady is a buffered, one-shot startup acknowledgment, not a timer.
+	captureReady chan<- error
+}
+
+func (opts WatchOptions) captured(err error) {
+	if opts.captureReady != nil {
+		opts.captureReady <- err
+	}
 }
 
 func (opts WatchOptions) normalize() WatchOptions {
@@ -112,6 +121,7 @@ func (cn *channelNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan 
 	cn.mu.Lock()
 	cn.subscribers[raw] = struct{}{}
 	cn.mu.Unlock()
+	opts.captured(nil)
 
 	// Output channel with settled, sorted events, returned to the watcher.
 	out := make(chan Event, opts.BufferSize)
@@ -211,7 +221,13 @@ func (n *pollingNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan E
 		lastEmittedRV = 0 // No events yet, start from the beginning
 	} else if err != nil {
 		n.log.Error("Failed to get last event resource version", "error", err)
+		if opts.captureReady != nil {
+			opts.captured(err)
+			close(events)
+			return events
+		}
 	}
+	opts.captured(nil)
 
 	go func() {
 		defer close(events)
@@ -239,10 +255,12 @@ func (n *pollingNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan E
 			case <-time.After(currentInterval):
 				// Poll for new events since lastEmittedRV.
 				// ListSince is inclusive, so skip events at or below lastEmittedRV.
-				for evt, err := range n.eventStore.ListSince(ctx, lastEmittedRV, SortOrderAsc) {
+				listFailed := false
+				for evt, err := range n.eventStore.ListSince(ctx, lastEmittedRV) {
 					if err != nil {
 						n.log.Error("Failed to list events since", "error", err)
-						continue
+						listFailed = true
+						break
 					}
 					if evt.ResourceVersion <= lastEmittedRV {
 						continue
@@ -253,6 +271,13 @@ func (n *pollingNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan E
 					}
 					seen[key] = true
 					buffer = append(buffer, evt)
+				}
+
+				// A partial scan may end within a shared RV. Retain the buffer, but
+				// do not advance lastEmittedRV past unread events until a scan succeeds.
+				if listFailed {
+					currentInterval = bo.NextDelay()
+					continue
 				}
 
 				// Sort buffer by RV

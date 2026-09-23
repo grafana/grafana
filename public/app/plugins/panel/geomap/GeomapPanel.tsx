@@ -35,6 +35,7 @@ import { DEFAULT_BASEMAP_CONFIG } from './layers/registry';
 import { type Options, type MapViewConfig, TooltipMode } from './panelcfg.gen';
 import { type ControlsOptions, type MapLayerState } from './types';
 import { getActions } from './utils/actions';
+import { updateAttributionVisibility } from './utils/attribution';
 import { getLayersExtent } from './utils/getLayersExtent';
 import { applyLayerFilter, initLayer } from './utils/layers';
 import { pointerClickListener, pointerMoveListener, setTooltipListeners } from './utils/tooltip';
@@ -239,6 +240,7 @@ export class GeomapPanel extends Component<Props, State> {
     // Handle controls changes
     if (newOptions.controls !== oldOptions.controls) {
       this.initControls(newOptions.controls ?? { showZoom: true, showAttribution: true });
+      updateAttributionVisibility(this.layers, newOptions.controls);
     }
   }
 
@@ -475,9 +477,8 @@ export class GeomapPanel extends Component<Props, State> {
 
     this.mouseWheelZoom?.setActive(Boolean(options.mouseWheelZoom));
 
-    if (options.showAttribution) {
-      this.map.addControl(new Attribution({ collapsed: true, collapsible: true }));
-    }
+    // Attribution visibility is handled per layer, and the control hides itself when no layer supplies any
+    this.map.addControl(new Attribution({ collapsed: true, collapsible: true }));
 
     // Update the react overlays
     let topRight1: ReactNode[] = [];

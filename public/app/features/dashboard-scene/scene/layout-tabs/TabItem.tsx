@@ -18,11 +18,11 @@ import { appEvents } from 'app/core/app_events';
 import { LS_TAB_COPY_KEY } from 'app/core/constants';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { edit } from '../../actions/utils/edit';
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { serializeTab } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { SectionFiltersSet } from '../../settings/variables/SectionFiltersSet';
-import { dashboardEditActions } from '../../sidebar/shared';
 import { cloneSectionVariableSet, removeRepeatLocalVariableFromSet } from '../../utils/clone';
 import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';
@@ -139,16 +139,23 @@ export class TabItem
     return parentLayout.state.currentTabSlug === this.getSlug();
   }
 
-  public switchLayout(layout: DashboardLayoutManager) {
+  public switchLayout(layout: DashboardLayoutManager, skipUndo?: boolean) {
     const currentLayout = this.state.layout;
 
-    dashboardEditActions.edit({
+    const perform = () => {
+      this.setState({ layout });
+      this.publishEvent(new NewSceneObjectAddedEvent(this), true);
+    };
+
+    if (skipUndo) {
+      perform();
+      return;
+    }
+
+    edit({
       description: t('dashboard.edit-actions.switch-layout-tab', 'Switch layout'),
       source: this,
-      perform: () => {
-        this.setState({ layout });
-        this.publishEvent(new NewSceneObjectAddedEvent(this), true);
-      },
+      perform,
       undo: () => {
         this.setState({ layout: currentLayout });
         this.publishEvent(new NewSceneObjectAddedEvent(this), true);
@@ -195,7 +202,10 @@ export class TabItem
   }
 
   public createMultiSelectedElement(items: SceneObject[]): TabItems {
-    return new TabItems(items.filter((item) => item instanceof TabItem));
+    return new TabItems(
+      items.filter((item) => item instanceof TabItem),
+      getDashboardSceneFor(this)
+    );
   }
 
   public onDuplicate(): void {
@@ -314,7 +324,7 @@ export class TabItem
       } else {
         // Convert existing layout and add the dropped row
         // Use direct state update instead of addNewRow because the rowsLayout
-        // isn't connected to the scene yet, so dashboardEditActions won't work
+        // isn't connected to the scene yet, so the dashboard edit actions won't work
         rowsLayout = RowsLayoutManager.createFromLayout(currentLayout);
         rowsLayout.setState({ rows: [...rowsLayout.state.rows, row] });
       }

@@ -79,9 +79,9 @@
       "label-enable-basic-logs": "Alapvető naplók engedélyezése"
     },
     "batch-api-toggle": {
-      "aria-label-enable-batch-api": "",
-      "description-batch-api": "",
-      "label-enable-batch-api": ""
+      "aria-label-enable-batch-api": "Köteg-API",
+      "description-batch-api": "Több erőforrást kérdez le egyetlen kérésben, javítva a nagy irányítópultok teljesítményét. Szükséges hozzá a <2>Monitoring Reader</2> (Monitorozási olvasó) szerepkör az előfizetési hatókörben a <6>metrics.monitor.azure.com</6> oldalon. Az ingyenes szinten túl további <9>költségek merülhetnek fel</9>.",
+      "label-enable-batch-api": "Köteg-API engedélyezése"
     },
     "config-editor": {
       "description-additional-settings": "A további beállítások olyan opcionális beállítások, amelyek konfigurálhatók az adatforrás nagyobb mértékű ellenőrzése érdekében. Idetartozik a Secure Socks Proxy, a lekérdezési időtúllépés és a továbbított cookie-k.",
@@ -105,7 +105,11 @@
       "load-subscriptions": "Előfizetések betöltése"
     },
     "dimension-fields": {
-      "aria-label-remove": "Eltávolítás",
+      "aria-label-field": "",
+      "aria-label-operator": "",
+      "aria-label-remove": "",
+      "aria-label-value": "",
+      "aria-label-values": "",
       "label-dimensions": "Dimenziók",
       "placeholder-field": "Mező",
       "placeholder-operation": "Művelet",
@@ -199,11 +203,11 @@
       "label-metric-namespace": "Metrika névtere"
     },
     "metrics-query-editor": {
-      "selection-notice-batch": "",
-      "selection-notice-standard": ""
+      "selection-notice-batch": "Kiválaszthatja az azonos erőforrástípusú elemeket az előfizetések és a régiók között. A különböző előfizetésekben vagy régiókban lévő erőforrások lekérdezése külön kérésekben történik, és egymástól függetlenül sikertelenek lehetnek. Egy másik erőforrástípushoz tartozó erőforrások kiválasztásához először törölje az aktuális kijelölést.",
+      "selection-notice-standard": "Kiválaszthatja az azonos erőforrástípusú és -helyű elemeket. Egy másik erőforrástípushoz vagy -helyhez tartozó erőforrások kiválasztásához először törölje az aktuális kijelölést."
     },
     "monitor-config": {
-      "title-features": ""
+      "title-features": "Funkciók"
     },
     "nested-row": {
       "text-loading": "Betöltés…"
@@ -218,8 +222,8 @@
       "tooltip-order-by": "Az eredmények rendezése egy vagy több oszlop alapján növekvő vagy csökkenő sorrendben."
     },
     "pagination": {
-      "results-truncated-message": "",
-      "results-truncated-title": ""
+      "results-truncated-message": "A betöltés {{maxPages}} oldal után leállt; néhány eredmény kimaradhat.",
+      "results-truncated-title": "Azure Monitor"
     },
     "query-editor": {
       "alert-error-occurred": "Hiba történt a metaadatok Azure Monitor szolgáltatásból történő lekérése során"

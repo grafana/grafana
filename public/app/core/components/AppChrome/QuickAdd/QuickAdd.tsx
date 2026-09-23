@@ -6,7 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
-import { Menu, Dropdown, ToolbarButton, useTheme2 } from '@grafana/ui';
+import { Dropdown, Menu, ToolbarButton, useTheme2 } from '@grafana/ui';
 import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
@@ -19,8 +19,8 @@ import {
   ALERTING_GROUP_COLOR_DARK_NAME,
   ALERTING_GROUP_COLOR_LIGHT_NAME,
   DASHBOARD_GROUP_COLOR_NAME,
-  ITEM_ICONS,
   findCreateActionGroups,
+  ITEM_ICONS,
 } from './utils';
 
 export interface Props {}

@@ -3,11 +3,15 @@ package rules
 import (
 	"context"
 	"errors"
+	"fmt"
+	"io"
 
 	restclient "k8s.io/client-go/rest"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
@@ -23,21 +27,31 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/config"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/rulesequence"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/search"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
+	searchauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	reqns "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/rulesync"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	apistore "github.com/grafana/grafana/pkg/storage/unified/apistore"
+	unifiedresource "github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 var (
 	_ appsdkapiserver.AppInstaller        = (*AppInstaller)(nil)
 	_ appinstaller.AuthorizerProvider     = (*AppInstaller)(nil)
 	_ appinstaller.LegacyStorageProvider  = (*AppInstaller)(nil)
+	_ appinstaller.LegacyStatusProvider   = (*AppInstaller)(nil)
 	_ appinstaller.StorageOptionsProvider = (*AppInstaller)(nil)
 )
 
@@ -50,6 +64,8 @@ type AppInstaller struct {
 func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	ng *ngalert.AlertNG,
+	unifiedClient unifiedresource.ResourceClient,
+	dual dualwrite.Service,
 	_ resource.ClientGenerator, // retained for Wire compatibility; membership resolution now uses a watch-backed index
 ) (*AppInstaller, error) {
 	if ng.IsDisabled() {
@@ -64,14 +80,27 @@ func RegisterAppInstaller(
 
 	membershipIndex := rulesequence_app.NewMembershipIndex()
 
+	// Search routes through a dual-writer-aware client per kind: the legacy
+	// backend (provisioning service) serves modes 0-3, the unified client 4+.
+	legacySearch := search.NewLegacyClient(*ng.Api.AlertRules)
+	searchAdapter := dualwrite.NewSearchAdapter(dual)
+	searchHandler := search.NewHandler(
+		unifiedresource.NewSearchClient(searchAdapter, alertrule.ResourceInfo.GroupResource(), unifiedClient, legacySearch),
+		unifiedresource.NewSearchClient(searchAdapter, recordingrule.ResourceInfo.GroupResource(), unifiedClient, legacySearch),
+	)
+
 	appSpecificConfig := rulesAppConfig.RuntimeConfig{
-		FolderValidator:               newFolderValidator(ng),
-		BaseEvaluationInterval:        ng.Cfg.UnifiedAlerting.BaseInterval,
-		ReservedLabelKeys:             ngmodels.LabelsUserCannotSpecify,
-		ResolveRuleRef:                newRuleRefResolver(ng),
-		MembershipResolver:            membershipIndex,
-		NotificationSettingsValidator: newNotificationSettingsValidator(ng),
-		WatchNamespace:                watchNamespace(cfg),
+		FolderValidator:                  newFolderValidator(ng),
+		BaseEvaluationInterval:           ng.Cfg.UnifiedAlerting.BaseInterval,
+		ReservedLabelKeys:                ngmodels.LabelsUserCannotSpecify,
+		ResolveRuleRef:                   newRuleRefResolver(ng),
+		MembershipResolver:               membershipIndex,
+		NotificationSettingsValidator:    newNotificationSettingsValidator(ng),
+		WatchNamespace:                   watchNamespace(cfg),
+		SearchRulesHandler:               search.WithAPIStatusErrorResponse(searchHandler.SearchRules),
+		SearchAlertRulesHandler:          search.WithAPIStatusErrorResponse(searchHandler.SearchAlertRules),
+		SearchRecordingRulesHandler:      search.WithAPIStatusErrorResponse(searchHandler.SearchRecordingRules),
+		CheckExternalRulerSyncDatasource: newExternalRulerSyncDatasourceChecker(cfg, ng.DataSourceService, ng.Api.AccessControl),
 	}
 
 	provider := simple.NewAppProvider(rulesManifest.LocalManifest(), appSpecificConfig, rulesApp.New)
@@ -88,6 +117,55 @@ func RegisterAppInstaller(
 	}
 	installer.AppInstaller = i
 	return installer, nil
+}
+
+// Rejects writes while the operator ini override is set, then verifies both
+// that the caller can read the datasource and that it's statically eligible
+// (rulesync.IsRulerCandidate) as an external ruler sync source. Deliberately
+// does NOT probe the ruler config API: that's a network call, expensive to
+// run on every admission request, and -- combined with a missing access
+// check -- was exploitable as a way to probe for datasources the caller
+// can't see. Whether the ruler config API is actually reachable is verified
+// by the sync loop instead and reflected in Config.status (see SyncOrg).
+func newExternalRulerSyncDatasourceChecker(cfg *setting.Cfg, ds datasources.DataSourceService, ac accesscontrol.AccessControl) func(ctx context.Context, uid string) error {
+	return func(ctx context.Context, uid string) error {
+		if cfg == nil {
+			return fmt.Errorf("server configuration unavailable; cannot verify operator override")
+		}
+		if cfg.UnifiedAlerting.ExternalRulerUID != "" {
+			return fmt.Errorf("external ruler UID is managed by the operator (unified_alerting.external_ruler_uid); cannot be changed via API")
+		}
+
+		ns, err := reqns.NamespaceInfoFrom(ctx, true)
+		if err != nil {
+			return fmt.Errorf("resolve org from request namespace: %w", err)
+		}
+
+		user, err := identity.GetRequester(ctx)
+		if err != nil {
+			return fmt.Errorf("resolve requester: %w", err)
+		}
+		// Checked before GetDataSource, and denial is reported identically to
+		// not-found below, so this can't be used to probe for the existence of a
+		// datasource the caller has no access to.
+		scope := datasources.ScopeProvider.GetResourceScopeUID(uid)
+		hasAccess, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(datasources.ActionRead, scope))
+		if err != nil {
+			return fmt.Errorf("check datasource access: %w", err)
+		}
+		if !hasAccess {
+			return fmt.Errorf("datasource not found")
+		}
+
+		got, err := ds.GetDataSource(ctx, &datasources.GetDataSourceQuery{UID: uid, OrgID: ns.OrgID})
+		if err != nil {
+			if errors.Is(err, datasources.ErrDataSourceNotFound) {
+				return fmt.Errorf("datasource not found")
+			}
+			return fmt.Errorf("look up datasource: %w", err)
+		}
+		return rulesync.IsRulerCandidate(got)
+	}
 }
 
 // watchNamespace returns the namespace the RuleSequence informer should watch.
@@ -115,7 +193,7 @@ func resolveOrgID(ctx context.Context) int64 {
 // newFolderValidator returns a callback that validates folder existence using the folder service.
 func newFolderValidator(ng *ngalert.AlertNG) func(ctx context.Context, folderUID string) (bool, error) {
 	return func(ctx context.Context, folderUID string) (bool, error) {
-		if folderUID == "" {
+		if folder.IsRootFolderUID(folderUID) {
 			return false, nil
 		}
 		orgID := resolveOrgID(ctx)
@@ -203,27 +281,83 @@ func validateNotificationSettingsFields(ns alertingv0alpha1.AlertRuleNotificatio
 func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	authz := a.ng.Api.AccessControl
 	return authorizer.AuthorizerFunc(
-		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
-			switch a.GetResource() {
+		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+			attr = ruleSearchReadAttributes(attr)
+			switch attr.GetResource() {
 			case recordingrule.ResourceInfo.GroupResource().Resource:
-				return recordingrule.Authorize(ctx, authz, a)
+				return recordingrule.Authorize(ctx, authz, attr)
 			case alertrule.ResourceInfo.GroupResource().Resource:
-				return alertrule.Authorize(ctx, authz, a)
+				return alertrule.Authorize(ctx, authz, attr)
 			case rulesequence.ResourceInfo.GroupResource().Resource:
-				return rulesequence.Authorize(ctx, authz, a)
+				return rulesequence.Authorize(ctx, authz, attr)
+			case search.RouteResource:
+				return search.Authorize(ctx, authz, attr)
+			case config.ResourceInfo.GroupResource().Resource:
+				return config.Authorize(ctx, authz, attr)
 			}
 			return authorizer.DecisionNoOpinion, "", nil
 		},
 	)
 }
 
-func (a *AppInstaller) GetStorageOptions(gr schema.GroupResource) *apistore.StorageOptions {
-	if gr == rulesequence.ResourceInfo.GroupResource() {
-		return &apistore.StorageOptions{
-			EnableFolderSupport: true,
-		}
+// ruleSearchReadAttributes restates the compatibility POST as the list it
+// performs. Kubernetes parses /{resource}/searchRules as a create of an object
+// named searchRules, which would otherwise require rule-create permission.
+func ruleSearchReadAttributes(attr authorizer.Attributes) authorizer.Attributes {
+	resourceName := attr.GetResource()
+	isRule := resourceName == alertrule.ResourceInfo.GroupResource().Resource || resourceName == recordingrule.ResourceInfo.GroupResource().Resource
+	if isRule && attr.IsResourceRequest() && attr.GetVerb() == "create" && attr.GetName() == search.RouteResource && attr.GetSubresource() == "" {
+		return searchauthorizer.AsReadAttributes(attr)
 	}
-	return nil
+	return attr
+}
+
+func (a *AppInstaller) AdmissionPlugin() admission.Factory {
+	inner := a.AppInstaller.AdmissionPlugin()
+	if inner == nil {
+		return nil
+	}
+
+	return func(r io.Reader) (admission.Interface, error) {
+		plugin, err := inner(r)
+		if err != nil {
+			return nil, err
+		}
+
+		return resourceOnlyAdmissionHook{plugin}, nil
+	}
+}
+
+type resourceOnlyAdmissionHook struct{ admission.Interface }
+
+func (s resourceOnlyAdmissionHook) Admit(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	m, ok := s.Interface.(admission.MutationInterface)
+	if !ok || a.GetSubresource() != "" {
+		return nil
+	}
+
+	return m.Admit(ctx, a, o)
+}
+
+func (s resourceOnlyAdmissionHook) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	m, ok := s.Interface.(admission.ValidationInterface)
+	if !ok || a.GetSubresource() != "" {
+		return nil
+	}
+
+	return m.Validate(ctx, a, o)
+}
+
+func (a *AppInstaller) GetStorageOptions(gr schema.GroupResource) *apistore.StorageOptions {
+	// Config is a per-org singleton with no folder concept; the rules-app
+	// group's other kinds (AlertRule, RecordingRule, RuleSequence) all live in
+	// folders, so this must be scoped per-kind rather than blanket-true.
+	if gr == config.ResourceInfo.GroupResource() {
+		return &apistore.StorageOptions{}
+	}
+	return &apistore.StorageOptions{
+		EnableFolderSupport: true,
+	}
 }
 
 func (a *AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanarest.Storage {
@@ -235,7 +369,27 @@ func (a *AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafana
 		return alertrule.NewStorage(*a.ng.Api.AlertRules, namespacer)
 	case rulesequence.ResourceInfo.GroupVersionResource():
 		return nil
+	case config.ResourceInfo.GroupVersionResource():
+		// Config has no legacy backend — returning nil makes the apiserver serve
+		// it directly from unified storage (no dual writer).
+		return nil
 	default:
 		panic("unknown legacy storage requested: " + gvr.String())
+	}
+}
+
+// GetLegacyStatus wires the /status subresource for the legacy-storage-backed rule
+// kinds. Without this, the app-sdk-generated StatusREST is silently dropped for
+// legacy/dual-write parents. The rule status is persisted to alert_rule.k8s_status
+// via the shared rule store.
+func (a *AppInstaller) GetLegacyStatus(gvr schema.GroupVersionResource, unified *appsdkapiserver.StatusREST) rest.Storage {
+	namespacer := reqns.GetNamespaceMapper(a.cfg)
+	switch gvr {
+	case recordingrule.ResourceInfo.GroupVersionResource():
+		return recordingrule.NewStatusStorage(*a.ng.Api.AlertRules, namespacer, a.ng.Api.RuleStore, unified)
+	case alertrule.ResourceInfo.GroupVersionResource():
+		return alertrule.NewStatusStorage(*a.ng.Api.AlertRules, namespacer, a.ng.Api.RuleStore, unified)
+	default:
+		return nil
 	}
 }

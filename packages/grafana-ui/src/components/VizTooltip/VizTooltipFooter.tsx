@@ -130,7 +130,7 @@ export const VizTooltipFooter = ({
           {adHocFilters.map((item, index) => (
             <Button key={index} icon="filter" variant="secondary" size="sm" onClick={item.onClick}>
               <Trans i18nKey="grafana-ui.viz-tooltip.footer-filter-for-value">
-                Filter for '{{ value: item.value }}'
+                Filter for &apos;{{ value: item.value }}&apos;
               </Trans>
             </Button>
           ))}

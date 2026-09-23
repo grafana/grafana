@@ -9,12 +9,15 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/folder"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngalertstore "github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -28,7 +31,7 @@ func TestMain(m *testing.M) {
 func TestIntegrationDirectSQLStats(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	db, _ := db.InitTestDBWithCfg(t)
+	db, _ := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	ctx := context.Background()
 
 	tempUser := &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{}}
@@ -95,6 +98,10 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 			},
 			{
 				"group": "sql-fallback",
+				"resource": "recordingrules"
+			},
+			{
+				"group": "sql-fallback",
 				"resource": "library_elements"
 			}
 		]`, string(jj))
@@ -116,6 +123,10 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 				"group": "sql-fallback",
 				"resource": "alertrules",
 				"count": 1
+			},
+			{
+				"group": "sql-fallback",
+				"resource": "recordingrules"
 			},
 			{
 				"group": "sql-fallback",
@@ -147,8 +158,185 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 			},
 			{
 				"group": "sql-fallback",
+				"resource": "recordingrules"
+			},
+			{
+				"group": "sql-fallback",
 				"resource": "library_elements"
 			}
 		]`, string(jj))
+	})
+}
+
+// Alert rules and recording rules live in the same table and are told apart by the
+// `record` column, so the fallback has to report them under separate resources. If it
+// lumped both into "alertrules", callers that read both kinds would count every
+// recording rule twice.
+func TestIntegrationDirectSQLStatsSplitsRecordingRules(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	db, _ := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	ctx := request.WithNamespace(context.Background(), "default")
+
+	tempUser := &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{}}
+	ruleStore := ngalertstore.SetupStoreForTesting(t, db)
+
+	insert := func(t *testing.T, uid, folderUID string, record *ngmodels.Record) {
+		t.Helper()
+		_, err := ruleStore.InsertAlertRules(context.Background(), ngmodels.NewUserUID(tempUser), []ngmodels.InsertRule{{
+			AlertRule: ngmodels.AlertRule{
+				UID:   uid,
+				Title: uid,
+				OrgID: 1,
+				Data: []ngmodels.AlertQuery{{
+					RefID:             "A",
+					Model:             json.RawMessage("{}"),
+					DatasourceUID:     expr.DatasourceUID,
+					RelativeTimeRange: ngmodels.RelativeTimeRange{From: ngmodels.Duration(60), To: ngmodels.Duration(0)},
+				}},
+				Condition:       "A",
+				Updated:         time.Now(),
+				NamespaceUID:    folderUID,
+				ExecErrState:    ngmodels.ExecutionErrorState(ngmodels.Alerting),
+				NoDataState:     ngmodels.Alerting,
+				IntervalSeconds: 60,
+				Record:          record,
+			}}})
+		require.NoError(t, err)
+	}
+
+	rec := func(metric string) *ngmodels.Record {
+		return &ngmodels.Record{Metric: metric, From: "A", TargetDatasourceUID: "some-ds"}
+	}
+
+	// recording rules only -- the case the folder counts previously got wrong
+	insert(t, "rec-1", "folder-rec", rec("m1"))
+	insert(t, "rec-2", "folder-rec", rec("m2"))
+	// a mix of both kinds
+	insert(t, "mix-alert", "folder-mix", nil)
+	insert(t, "mix-rec", "folder-mix", rec("m3"))
+
+	store := &LegacyStatsGetter{SQL: legacysql.NewDatabaseProvider(db)}
+
+	counts := func(t *testing.T, folderUID string) map[string]int64 {
+		t.Helper()
+		stats, err := store.GetStats(ctx, &resourcepb.ResourceStatsRequest{
+			Namespace: "default",
+			Folder:    []string{folderUID},
+		})
+		require.NoError(t, err)
+		out := map[string]int64{}
+		for _, s := range stats.Stats {
+			require.Equal(t, "sql-fallback", s.Group)
+			out[s.Resource] = s.Count
+		}
+		return out
+	}
+
+	t.Run("folder with only recording rules", func(t *testing.T) {
+		got := counts(t, "folder-rec")
+		require.Equal(t, int64(0), got["alertrules"])
+		require.Equal(t, int64(2), got["recordingrules"])
+	})
+
+	t.Run("folder with both kinds", func(t *testing.T) {
+		got := counts(t, "folder-mix")
+		require.Equal(t, int64(1), got["alertrules"])
+		require.Equal(t, int64(1), got["recordingrules"])
+	})
+
+	// The two predicates must partition the table: every row lands in exactly one
+	// count. If a row fell through both, a folder that still holds rules would look
+	// empty and the delete-safety check would let it be deleted.
+	t.Run("every rule is counted exactly once", func(t *testing.T) {
+		for folderUID, total := range map[string]int64{"folder-rec": 2, "folder-mix": 2} {
+			got := counts(t, folderUID)
+			require.Equal(t, total, got["alertrules"]+got["recordingrules"],
+				"alertrules+recordingrules must equal the number of rules in %s", folderUID)
+		}
+	})
+}
+
+func TestIntegrationLegacyTableIsStale(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	cfgWithMode := func(resource string, mode grafanarest.DualWriterMode) *setting.Cfg {
+		return &setting.Cfg{UnifiedStorage: map[string]setting.UnifiedStorageConfig{
+			resource: {DualWriterMode: mode},
+		}}
+	}
+
+	// legacyTableIsStale queries kv_store when Cfg is nil, so every case needs a real
+	// session/helper, even the ones exercising the config-based fast path.
+	// The check itself must run inside the WithDbSession callback -- the session isn't
+	// valid once that callback returns.
+	withSession := func(t *testing.T, check func(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper)) {
+		t.Helper()
+		testDB, _ := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+		provider := legacysql.NewDatabaseProvider(testDB)
+		helper, err := provider(context.Background())
+		require.NoError(t, err)
+		require.NoError(t, helper.DB.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			check(sess, helper)
+			return nil
+		}))
+	}
+
+	t.Run("no config means the legacy table is still the source of truth", func(t *testing.T) {
+		s := &LegacyStatsGetter{}
+		withSession(t, func(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper) {
+			stale, err := s.legacyTableIsStale(sess, helper, alertRuleResource)
+			require.NoError(t, err)
+			require.False(t, stale)
+		})
+	})
+
+	t.Run("unconfigured resource is still the source of truth", func(t *testing.T) {
+		s := &LegacyStatsGetter{Cfg: cfgWithMode(libraryPanelResource, grafanarest.Mode5)}
+		withSession(t, func(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper) {
+			stale, err := s.legacyTableIsStale(sess, helper, alertRuleResource)
+			require.NoError(t, err)
+			require.False(t, stale)
+		})
+	})
+
+	t.Run("dual write modes keep the legacy table", func(t *testing.T) {
+		for _, mode := range []grafanarest.DualWriterMode{grafanarest.Mode0, grafanarest.Mode1, grafanarest.Mode2, grafanarest.Mode3} {
+			s := &LegacyStatsGetter{Cfg: cfgWithMode(alertRuleResource, mode)}
+			withSession(t, func(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper) {
+				stale, err := s.legacyTableIsStale(sess, helper, alertRuleResource)
+				require.NoError(t, err)
+				require.False(t, stale, "mode %d", mode)
+			})
+		}
+	})
+
+	t.Run("unified storage modes drop the legacy table", func(t *testing.T) {
+		for _, mode := range []grafanarest.DualWriterMode{grafanarest.Mode4, grafanarest.Mode5} {
+			s := &LegacyStatsGetter{Cfg: cfgWithMode(alertRuleResource, mode)}
+			withSession(t, func(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper) {
+				stale, err := s.legacyTableIsStale(sess, helper, alertRuleResource)
+				require.NoError(t, err)
+				require.True(t, stale, "mode %d", mode)
+			})
+		}
+	})
+
+	t.Run("nil Cfg falls back to the per-stack kv_store marker", func(t *testing.T) {
+		s := &LegacyStatsGetter{}
+		withSession(t, func(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper) {
+			_, err := sess.Exec("INSERT INTO "+helper.Table("kv_store")+" (org_id, namespace, "+helper.DB.Quote("key")+", value, created, updated) VALUES (0, ?, ?, ?, ?, ?)",
+				migratedKVNamespace, alertRuleResource, migratedKVValue, time.Now(), time.Now())
+			require.NoError(t, err)
+
+			stale, err := s.legacyTableIsStale(sess, helper, alertRuleResource)
+			require.NoError(t, err)
+			require.True(t, stale)
+
+			// A different resource's key must not be affected.
+			stale, err = s.legacyTableIsStale(sess, helper, recordingRuleResource)
+			require.NoError(t, err)
+			require.False(t, stale)
+		})
 	})
 }

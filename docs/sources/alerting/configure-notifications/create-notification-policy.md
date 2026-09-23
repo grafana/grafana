@@ -60,6 +60,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/group-alert-notifications/#timing-options
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/group-alert-notifications/#timing-options
+  terraform-multiple-notification-policy-trees:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/terraform-provisioning/#enable-multiple-notification-policy-trees
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/terraform-provisioning/#enable-multiple-notification-policy-trees
 ---
 
 # Configure notification policies
@@ -146,13 +151,15 @@ It is important to note that all matched policies are **exact** matches. Grafana
 
 Mute timings are not inherited from a parent notification policy, and they have to be configured on each level. For instructions, refer to [Configure mute timings](ref:configure-mute-timings).
 
-## Manage multiple notification policies
+## Manage multiple notification policy trees
 
-By default, Grafana uses a single notification policy tree for all alert routing. As organizations grow in size and complexity, managing a single global tree can become difficult. Multiple notification policies allow you to split routing logic into separate, independently managed routing trees.
+By default, Grafana uses a single notification policy tree for all alert routing. As organizations grow in size and complexity, managing a single global tree can become difficult. Multiple notification policy trees allow you to split routing logic into separate, independently managed routing trees.
 
-Each notification policy contains a routing tree with its own name, root policy, and child policies which function similar to the default policy. You can create additional routing trees to organize routing logic by team, service, or domain.
+Each notification policy tree has its own name, root policy, and child policies which function similar to the default policy tree. You can create additional routing trees to organize routing logic by team, service, or domain.
 
 The Default Policy can't be deleted. You can, however, reset the policy to clear it.
+
+For provisioning instructions, refer to [Enable multiple notification policy trees via Terraform](ref:terraform-multiple-notification-policy-trees).
 
 ## Example
 

@@ -54,6 +54,22 @@ func testLastImportStore(t *testing.T, kv kv.KV, allowDuplicateNamespaceGroupRes
 	require.NoError(t, store.Save(t.Context(), ResourceLastImportTime{NamespacedResource: onsr, LastImportTime: now.Add(1 * time.Minute)}))
 	require.NoError(t, store.Save(t.Context(), ResourceLastImportTime{NamespacedResource: o1nsr, LastImportTime: now.Add(1 * time.Minute)}))
 
+	lastImportTime, err := store.GetLastImportTime(t.Context(), dnsr, maxLastImportTimeAge)
+	require.NoError(t, err)
+	require.Equal(t, now.Add(2*time.Minute), lastImportTime)
+
+	lastImportTime, err = store.GetLastImportTime(t.Context(), pnsr, maxLastImportTimeAge)
+	require.NoError(t, err)
+	require.True(t, lastImportTime.IsZero())
+
+	lastImportTime, err = store.GetLastImportTime(t.Context(), NamespacedResource{
+		Namespace: "namespace",
+		Group:     "unknown",
+		Resource:  "unknown",
+	}, maxLastImportTimeAge)
+	require.NoError(t, err)
+	require.True(t, lastImportTime.IsZero())
+
 	// Keys are returned in byte-wise order of the full composite key, so
 	// "org1~..." precedes "org~...".
 	// SQLKV only stores a single import time per namespace/group/resource.

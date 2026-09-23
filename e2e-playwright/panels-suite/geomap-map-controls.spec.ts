@@ -31,7 +31,7 @@ test.describe(
       await zoomCheckbox.check({ force: true });
       await expect(zoomCheckbox).toBeChecked();
 
-      // Show attribution
+      // Show optional attribution
       const showAttributionField = dashboardPage.getByGrafanaSelector(
         selectors.components.PanelEditor.showAttributionField
       );

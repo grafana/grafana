@@ -1,5 +1,5 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { renderHook } from '@testing-library/react';
+import { cleanup, renderHook } from '@testing-library/react';
 import { type PropsWithChildren } from 'react';
 
 import {
@@ -66,14 +66,6 @@ function wrapperWith(context: PanelContext) {
 
 beforeEach(() => {
   jest.clearAllMocks();
-});
-
-beforeAll(() => {
-  setTestFlags({ [FlagKeys.TableRefactorNested]: false });
-});
-
-afterAll(() => {
-  setTestFlags({});
 });
 
 describe('useCacheFieldDisplayNames', () => {
@@ -179,6 +171,10 @@ describe('useTableSharedCrosshair', () => {
 });
 
 describe('useCommonTableProps', () => {
+  afterEach(() => {
+    cleanup();
+    setTestFlags({});
+  });
   const fieldConfig: FieldConfigSource = { defaults: { noValue: 'n/a' }, overrides: [] };
   const options = {
     showHeader: false,
@@ -189,6 +185,7 @@ describe('useCommonTableProps', () => {
     cellHeight: undefined,
     maxRowHeight: 100,
     disableKeyboardEvents: true,
+    hoverOverflow: false,
     frameIndex: 0,
   };
 
@@ -206,16 +203,78 @@ describe('useCommonTableProps', () => {
       cellHeight: undefined,
       maxRowHeight: 100,
       disableKeyboardEvents: true,
+      hoverOverflow: false,
       disableSanitizeHtml: false,
-      nestedRefactorEnabled: false,
+      contentAwareWidthsEnabled: false,
+      tableRefreshEnabled: false,
+      jsonSyntaxHighlightingEnabled: false,
+      zebraStriping: false,
     });
   });
 
-  it('reflects the nested-refactor feature flag', () => {
-    setTestFlags({ [FlagKeys.TableRefactorNested]: true });
+  it('passes the table-refresh flag through', () => {
+    setTestFlags({ [FlagKeys.TableRefresh]: true });
     const { result } = renderHook(() => useCommonTableProps(options, fieldConfig), { wrapper: FeatureFlagsProvider });
 
-    expect(result.current.nestedRefactorEnabled).toBe(true);
+    expect(result.current.tableRefreshEnabled).toBe(true);
+  });
+
+  it.each([
+    [false, false],
+    [true, false],
+    [false, true],
+    [true, true],
+  ])('gates JSON highlighting with table.refresh=%s and new features=%s', (refresh, newFeatures) => {
+    setTestFlags({ [FlagKeys.TableRefresh]: refresh, [FlagKeys.TableRefreshNewFeatures]: newFeatures });
+    const { result } = renderHook(() => useCommonTableProps(options, fieldConfig), {
+      wrapper: FeatureFlagsProvider,
+    });
+    expect(result.current.jsonSyntaxHighlightingEnabled).toBe(newFeatures);
+  });
+
+  it('enables hover overflow when the option is undefined', () => {
+    const { result } = renderHook(() => useCommonTableProps({ ...options, hoverOverflow: undefined }, fieldConfig), {
+      wrapper: FeatureFlagsProvider,
+    });
+
+    expect(result.current.hoverOverflow).toBe(true);
+  });
+
+  // A dashboard can carry the zebra striping option in from an instance that has the toggle on, so
+  // the option alone must not be enough to stripe.
+  it('ignores the zebra striping option with the refresh-new-features flag off', () => {
+    const { result } = renderHook(() => useCommonTableProps({ ...options, zebraStriping: true }, fieldConfig), {
+      wrapper: FeatureFlagsProvider,
+    });
+
+    expect(result.current.zebraStriping).toBe(false);
+  });
+
+  it('honours the zebra striping option with the refresh-new-features flag on', () => {
+    setTestFlags({ [FlagKeys.TableRefreshNewFeatures]: true });
+    const { result } = renderHook(() => useCommonTableProps({ ...options, zebraStriping: true }, fieldConfig), {
+      wrapper: FeatureFlagsProvider,
+    });
+
+    expect(result.current.zebraStriping).toBe(true);
+  });
+
+  it('passes pageSize through when the pagination-page-size flag is on', () => {
+    setTestFlags({ [FlagKeys.TablePaginationPageSize]: true });
+    const { result } = renderHook(() => useCommonTableProps({ ...options, pageSize: 25 }, fieldConfig), {
+      wrapper: FeatureFlagsProvider,
+    });
+
+    expect(result.current.pageSize).toBe(25);
+  });
+
+  it('drops pageSize when the pagination-page-size flag is off', () => {
+    setTestFlags({ [FlagKeys.TablePaginationPageSize]: false });
+    const { result } = renderHook(() => useCommonTableProps({ ...options, pageSize: 25 }, fieldConfig), {
+      wrapper: FeatureFlagsProvider,
+    });
+
+    expect(result.current.pageSize).toBeUndefined();
   });
 
   it('returns a stable reference when inputs do not change', () => {

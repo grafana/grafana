@@ -271,7 +271,7 @@ func (s *Store) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoCom
 			Where("user_id = ? AND auth_module = ?", cmd.UserId, cmd.AuthModule).
 			Update(authUser)
 
-		s.logger.Debug("Updated user_auth", "user_id", cmd.UserId, "auth_id", cmd.AuthId, "auth_module", cmd.AuthModule, "rows", upd)
+		s.logger.FromContext(ctx).Debug("Updated user_auth", "user_id", cmd.UserId, "auth_id", cmd.AuthId, "auth_module", cmd.AuthModule, "rows", upd)
 
 		// Clean up duplicated entries
 		if upd > 1 {
@@ -339,6 +339,38 @@ func (s *Store) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
 			UserID:        userID,
 		}
 		querySQL, err := sqltemplate.Execute(deleteUserAuthTemplate, query)
+		if err != nil {
+			return err
+		}
+
+		_, err = sess.Exec(append([]any{querySQL}, query.GetArgs()...)...)
+		return err
+	})
+}
+
+type deleteAuthInfoQuery struct {
+	sqltemplate.SQLTemplate
+	UserAuthTable string
+	UserID        int64
+	AuthModule    string
+}
+
+func (q deleteAuthInfoQuery) Validate() error { return nil }
+
+func (s *Store) DeleteAuthInfo(ctx context.Context, cmd *login.DeleteAuthInfoCommand) error {
+	dbHelper, err := s.sql(ctx)
+	if err != nil {
+		return fmt.Errorf("get legacy DB: %w", err)
+	}
+
+	return dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		query := deleteAuthInfoQuery{
+			SQLTemplate:   sqltemplate.New(dbHelper.DialectForDriver()),
+			UserAuthTable: dbHelper.Table("user_auth"),
+			UserID:        cmd.UserAuth.UserId,
+			AuthModule:    cmd.UserAuth.AuthModule,
+		}
+		querySQL, err := sqltemplate.Execute(deleteAuthInfoTemplate, query)
 		if err != nil {
 			return err
 		}

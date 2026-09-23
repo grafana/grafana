@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -29,7 +30,15 @@ var (
 	errSyncPermissionsForbidden = errutil.Forbidden("permissions.sync.forbidden")
 )
 
-func ProvideRBACSync(cfg *setting.Cfg, acService accesscontrol.Service, tracer tracing.Tracer, permRegistry permreg.PermissionRegistry, features featuremgmt.FeatureToggles) *RBACSync {
+// cloudRBACRolesEnabled checks whether support-ticket roles should be
+// included in cloud role sync.
+func cloudRBACRolesEnabled(ctx context.Context) bool {
+	return openfeature.NewDefaultClient().Boolean(
+		ctx, featuremgmt.FlagCloudRBACRoles, false, openfeature.TransactionContext(ctx),
+	)
+}
+
+func ProvideRBACSync(cfg *setting.Cfg, acService accesscontrol.Service, tracer tracing.Tracer, permRegistry permreg.PermissionRegistry) *RBACSync {
 	return &RBACSync{
 		cfg:          cfg,
 		ac:           acService,
@@ -37,7 +46,6 @@ func ProvideRBACSync(cfg *setting.Cfg, acService accesscontrol.Service, tracer t
 		permRegistry: permRegistry,
 		tracer:       tracer,
 		mapper:       rbac.NewMapperRegistry(),
-		features:     features,
 	}
 }
 
@@ -48,7 +56,6 @@ type RBACSync struct {
 	log          log.Logger
 	tracer       tracing.Tracer
 	mapper       rbac.MapperRegistry
-	features     featuremgmt.FeatureToggles
 }
 
 func (s *RBACSync) SyncPermissionsHook(ctx context.Context, ident *authn.Identity, _ *authn.Request) error {
@@ -135,6 +142,14 @@ func (s *RBACSync) fetchPermissions(ctx context.Context, ident *authn.Identity) 
 		// Add K8s permissions
 		k8sPermissions := s.translateK8sPermissions(ctx, k8s)
 		permissions = append(permissions, k8sPermissions...)
+		return permissions, nil
+	}
+
+	// Access policy subjects derive permissions entirely from their token claims.
+	// When the token carried no permissions, the identity simply has none —
+	// falling through to GetUserPermissions would fail because access policies
+	// have no corresponding Grafana user in the database.
+	if ident.IsIdentityType(claims.TypeAccessPolicy) {
 		return permissions, nil
 	}
 
@@ -228,7 +243,7 @@ func (s *RBACSync) translateK8sPermissions(_ context.Context, k8sPerms []string)
 	return permissions
 }
 
-func (s *RBACSync) cloudRolesToAddAndRemove(ident *authn.Identity) ([]string, []string, error) {
+func (s *RBACSync) cloudRolesToAddAndRemove(ctx context.Context, ident *authn.Identity) ([]string, []string, error) {
 	// Since Cloud Admin/Editor/Viewer roles are not yet implemented one-to-one in the Grafana, it becomes a confusing experience for users,
 	// therefore we are doing granular mapping of all available functionality in the Grafana temporary.
 	var fixedCloudRoles = map[org.RoleType][]string{
@@ -242,10 +257,9 @@ func (s *RBACSync) cloudRolesToAddAndRemove(ident *authn.Identity) ([]string, []
 	}
 
 	// The support-ticket roles remain gated behind the cloudRBACRoles feature
-	// toggle. When disabled, they are left out of both the add and remove sets
+	// flag. When disabled, they are left out of both the add and remove sets
 	// so any pre-existing assignments are not touched.
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if s.features.IsEnabledGlobally(featuremgmt.FlagCloudRBACRoles) {
+	if cloudRBACRolesEnabled(ctx) {
 		fixedCloudRoles[org.RoleViewer] = append(fixedCloudRoles[org.RoleViewer], accesscontrol.FixedCloudSupportTicketReader)
 		fixedCloudRoles[org.RoleEditor] = append(fixedCloudRoles[org.RoleEditor], accesscontrol.FixedCloudSupportTicketAdmin)
 		fixedCloudRoles[org.RoleAdmin] = append(fixedCloudRoles[org.RoleAdmin], accesscontrol.FixedCloudSupportTicketAdmin)
@@ -305,7 +319,7 @@ func (s *RBACSync) SyncCloudRoles(ctx context.Context, ident *authn.Identity, r 
 		return err
 	}
 
-	rolesToAdd, rolesToRemove, err := s.cloudRolesToAddAndRemove(ident)
+	rolesToAdd, rolesToRemove, err := s.cloudRolesToAddAndRemove(ctx, ident)
 	if errors.Is(err, errInvalidCloudRole) {
 		// We have no cloud-role mapping for this org role (e.g. a newly
 		// introduced basic role). Skip syncing rather than blocking login; the
@@ -339,7 +353,7 @@ func (s *RBACSync) ClearUserPermissionCacheHook(ctx context.Context, ident *auth
 	ctx, span := s.tracer.Start(ctx, "rbac.sync.ClearUserPermissionCacheHook")
 	defer span.End()
 
-	if err != nil {
+	if err != nil || ident == nil {
 		return
 	}
 

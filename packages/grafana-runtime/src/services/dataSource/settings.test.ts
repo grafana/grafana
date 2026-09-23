@@ -1,4 +1,4 @@
-import { type DataSourceApi, type DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceApi, type DataSourceInstanceListItem, type DataSourceInstanceSettings } from '@grafana/data';
 
 import { setBackendSrv } from '../backendSrv';
 import { type DataSourceSrv, setDataSourceSrv } from '../dataSourceSrv';
@@ -11,8 +11,11 @@ import {
   _resetForTests,
   getDataSourceInstanceList,
   getDataSourceInstanceSettings,
+  getDefaultDataSourceInstanceListItem,
+  hasDataSourceInstance,
   initDataSourceInstanceSettings,
   reloadDataSourceInstanceSettings,
+  setDataSourceInstanceSettings,
   syncDataSourceInstanceSettings,
   upsertRuntimeDataSourceInstanceSettings,
 } from './settings';
@@ -107,6 +110,10 @@ const templateSrv: TemplateSrv = {
     }
     if (value === '${missing}') {
       return 'Nonexistent';
+    }
+    // Charlie's numeric id. Reachable only through the id map: '3' is neither a uid nor a name.
+    if (value === '${dsById}') {
+      return '3';
     }
     return value ?? '';
   },
@@ -221,6 +228,15 @@ describe('instanceSettings', () => {
       expect(result?.name).toBe('Charlie');
     });
 
+    it('resolves a template variable that interpolates to a numeric datasource id', async () => {
+      initDataSourceInstanceSettings(fixtures, 'Bravo');
+      const result = await getDataSourceInstanceSettings('${dsById}');
+
+      expect(result?.rawRef).toEqual({ type: 'test-db', uid: 'uid-charlie' });
+      expect(result?.name).toBe('${dsById}');
+      expect(result?.uid).toBe('${dsById}');
+    });
+
     it('returns undefined when a template variable resolves to a missing datasource', async () => {
       initDataSourceInstanceSettings(fixtures, 'Bravo');
       const result = await getDataSourceInstanceSettings('${missing}');
@@ -262,6 +278,13 @@ describe('instanceSettings', () => {
         const result = await getDataSourceInstanceSettings({ type: '-100' });
         expect(result?.uid).toBe('__expr__');
       });
+
+      it('resolves a DataSourceRef with the expression uid but no type', async () => {
+        initDataSourceInstanceSettings(fixtures, 'Bravo');
+        setExpressionDataSourceInstance(expressionInstance(fixtures.Expression));
+        const result = await getDataSourceInstanceSettings({ uid: '__expr__' });
+        expect(result?.uid).toBe('__expr__');
+      });
     });
 
     describe('template variables', () => {
@@ -291,6 +314,33 @@ describe('instanceSettings', () => {
         initDataSourceInstanceSettings(fixtures, 'Bravo');
 
         const result = await getDataSourceInstanceSettings('${multi}');
+        expect(result?.rawRef).toEqual({ type: 'test-db', uid: 'uid-alpha' });
+
+        setTemplateSrv(templateSrv);
+      });
+
+      it('resolves a name that contains $ but is not a variable through the plain lookup', async () => {
+        // The shared templateSrv mock returns unknown values unchanged, so
+        // interpolation is a no-op and the lookup must fall through. The variable
+        // wrapper would carry the ref string as uid and a rawRef; the genuine
+        // settings carry neither.
+        const dollar = ds({ id: 9, uid: 'uid-dollar', name: 'cost$db' });
+        initDataSourceInstanceSettings({ ...fixtures, [dollar.name]: dollar }, 'Bravo');
+
+        const result = await getDataSourceInstanceSettings('cost$db');
+        expect(result?.uid).toBe('uid-dollar');
+        expect(result?.rawRef).toBeUndefined();
+      });
+
+      it('interpolates a variable that is not at the start of the ref', async () => {
+        setTemplateSrv({
+          ...templateSrv,
+          replace: (value?: string) => (value === 'logs-${stage}-loki' ? 'Alpha' : (value ?? '')),
+        } as unknown as TemplateSrv);
+        initDataSourceInstanceSettings(fixtures, 'Bravo');
+
+        const result = await getDataSourceInstanceSettings('logs-${stage}-loki');
+        expect(result?.uid).toBe('logs-${stage}-loki');
         expect(result?.rawRef).toEqual({ type: 'test-db', uid: 'uid-alpha' });
 
         setTemplateSrv(templateSrv);
@@ -622,6 +672,124 @@ describe('instanceSettings', () => {
     });
   });
 
+  describe('getDefaultDataSourceInstanceListItem', () => {
+    function listItem(overrides: Partial<DataSourceInstanceListItem>): DataSourceInstanceListItem {
+      return { uid: 'uid', type: 'test-db', name: 'name', meta: ds({}).meta, isDefault: false, ...overrides };
+    }
+
+    it('returns the flagged item', async () => {
+      const items = [
+        listItem({ uid: 'uid-alpha', name: 'Alpha' }),
+        listItem({ uid: 'uid-bravo', name: 'Bravo', isDefault: true }),
+      ];
+
+      expect((await getDefaultDataSourceInstanceListItem(items))?.name).toBe('Bravo');
+    });
+
+    it('returns undefined when no item is flagged', async () => {
+      const items = [listItem({ uid: 'uid-alpha', name: 'Alpha' }), listItem({ uid: 'uid-charlie', name: 'Charlie' })];
+
+      expect(await getDefaultDataSourceInstanceListItem(items)).toBeUndefined();
+    });
+
+    it('returns the first flagged item when more than one is flagged', async () => {
+      const items = [
+        listItem({ uid: 'uid-alpha', name: 'Alpha' }),
+        listItem({ uid: 'uid-bravo', name: 'Bravo', isDefault: true }),
+        listItem({ uid: 'uid-charlie', name: 'Charlie', isDefault: true }),
+      ];
+
+      expect((await getDefaultDataSourceInstanceListItem(items))?.name).toBe('Bravo');
+    });
+
+    it('returns undefined for an empty list', async () => {
+      expect(await getDefaultDataSourceInstanceListItem([])).toBeUndefined();
+    });
+
+    it('resolves the org default from an unfiltered list', async () => {
+      initDataSourceInstanceSettings(fixtures, 'Bravo');
+
+      const items = await getDataSourceInstanceList();
+
+      expect((await getDefaultDataSourceInstanceListItem(items))?.name).toBe('Bravo');
+    });
+
+    it('returns undefined when the instance carrying the org default is filtered out', async () => {
+      initDataSourceInstanceSettings(fixtures, 'Bravo');
+
+      // Only Charlie is a tracing source, so the flagged Bravo is not part of the list.
+      const items = await getDataSourceInstanceList({ tracing: true });
+
+      expect(items.map((x) => x.name)).toEqual(['Charlie']);
+      expect(await getDefaultDataSourceInstanceListItem(items)).toBeUndefined();
+    });
+
+    it('never returns an appended built-in', async () => {
+      initDataSourceInstanceSettings(fixtures, 'Bravo');
+
+      const items = await getDataSourceInstanceList({ type: 'nonexistent', all: true, mixed: true, dashboard: true });
+
+      expect(items.map((x) => x.name)).toEqual(['-- Mixed --', '-- Dashboard --', '-- Grafana --']);
+      expect(await getDefaultDataSourceInstanceListItem(items)).toBeUndefined();
+    });
+
+    it('finds the flagged instance in a list that also carries built-ins', async () => {
+      initDataSourceInstanceSettings(fixtures, 'Bravo');
+
+      const items = await getDataSourceInstanceList({ type: 'test-db', all: true, mixed: true });
+
+      expect((await getDefaultDataSourceInstanceListItem(items))?.name).toBe('Bravo');
+    });
+  });
+
+  describe('hasDataSourceInstance', () => {
+    it('returns true when at least one instance of the type exists', async () => {
+      initDataSourceInstanceSettings(fixtures, 'Bravo');
+      expect(await hasDataSourceInstance('test-db')).toBe(true);
+    });
+
+    it('returns false for an unknown type (the appended -- Grafana -- does not count)', async () => {
+      initDataSourceInstanceSettings(fixtures, 'Bravo');
+      expect(await hasDataSourceInstance('nonexistent')).toBe(false);
+    });
+
+    it('returns true for a capability-less type (all: true)', async () => {
+      const noCapability: Record<string, DataSourceInstanceSettings> = {
+        NoOp: ds({
+          id: 10,
+          uid: 'uid-noop',
+          name: 'NoOp',
+          type: 'noop',
+          meta: {
+            ...ds({}).meta,
+            id: 'noop',
+            metrics: false,
+            annotations: false,
+            tracing: false,
+            logs: false,
+            alerting: false,
+          },
+        }),
+      };
+      initDataSourceInstanceSettings(noCapability, 'NoOp');
+      expect(await hasDataSourceInstance('noop')).toBe(true);
+    });
+
+    it('resolves the type via meta.aliasIDs', async () => {
+      const withAlias: Record<string, DataSourceInstanceSettings> = {
+        Real: ds({
+          id: 21,
+          uid: 'uid-real',
+          name: 'Real',
+          type: 'real-type',
+          meta: { ...ds({}).meta, id: 'real', aliasIDs: ['legacy-type'], metrics: true },
+        }),
+      };
+      initDataSourceInstanceSettings(withAlias, 'Real');
+      expect(await hasDataSourceInstance('legacy-type')).toBe(true);
+    });
+  });
+
   describe('reload', () => {
     it('invalidates the cache and refetches', async () => {
       initDataSourceInstanceSettings(fixtures, 'Bravo');
@@ -699,6 +867,71 @@ describe('instanceSettings', () => {
       syncDataSourceInstanceSettings({ datasources: { Alpha: fixtures.Alpha }, defaultDatasource: 'Alpha' });
 
       expect((await getDataSourceInstanceSettings('runtime-ds'))?.name).toBe('Runtime');
+    });
+  });
+
+  describe('setDataSourceInstanceSettings', () => {
+    it('populates the cache so lookups by uid, name and id resolve', async () => {
+      setDataSourceInstanceSettings(fixtures, 'Bravo');
+
+      expect((await getDataSourceInstanceSettings('uid-alpha'))?.name).toBe('Alpha');
+      expect((await getDataSourceInstanceSettings('Charlie'))?.uid).toBe('uid-charlie');
+      expect((await getDataSourceInstanceSettings('3'))?.name).toBe('Charlie');
+      expect((await getDataSourceInstanceSettings(null))?.name).toBe('Bravo');
+      expect(backendGet).not.toHaveBeenCalled();
+    });
+
+    it('derives the default from isDefault when defaultDatasourceName is omitted', async () => {
+      setDataSourceInstanceSettings(fixtures);
+      expect((await getDataSourceInstanceSettings(null))?.name).toBe('Bravo');
+    });
+
+    it('leaves the default unset when omitted and nothing is flagged as default', async () => {
+      setDataSourceInstanceSettings({ Alpha: fixtures.Alpha });
+      expect(await getDataSourceInstanceSettings(null)).toBeUndefined();
+    });
+
+    it('fully resets prior state, including runtime and expression data sources', async () => {
+      initDataSourceInstanceSettings(fixtures, 'Bravo');
+      upsertRuntimeDataSourceInstanceSettings(ds({ uid: 'runtime-ds', name: 'Runtime', type: 'runtime' }));
+      setExpressionDataSourceInstance(expressionInstance(fixtures.Expression));
+
+      setDataSourceInstanceSettings({ Alpha: fixtures.Alpha }, 'Alpha');
+
+      expect(await getDataSourceInstanceSettings('runtime-ds')).toBeUndefined();
+      expect(await getDataSourceInstanceSettings('__expr__')).toBeUndefined();
+      expect(await getDataSourceInstanceSettings('uid-bravo')).toBeUndefined();
+      expect((await getDataSourceInstanceSettings('uid-alpha'))?.name).toBe('Alpha');
+    });
+
+    it('does not mutate the passed fixtures', async () => {
+      // populateMaps normalizes a missing uid to the name; that must happen on a
+      // clone, not on the caller's fixture object.
+      const noUid = ds({ id: 7, name: 'NoUid', type: 'test-db' });
+      // @ts-expect-error - simulating boot data entries without a uid
+      noUid.uid = undefined;
+
+      setDataSourceInstanceSettings({ NoUid: noUid }, 'NoUid');
+
+      expect(noUid.uid).toBeUndefined();
+      expect((await getDataSourceInstanceSettings('NoUid'))?.uid).toBe('NoUid');
+    });
+
+    describe('when process is under development', () => {
+      let originalNodeEnv = process.env.NODE_ENV;
+      beforeEach(() => {
+        process.env.NODE_ENV = 'development';
+      });
+
+      afterEach(() => {
+        process.env.NODE_ENV = originalNodeEnv;
+      });
+
+      it('setDataSourceInstanceSettings should throw', () => {
+        expect(() => setDataSourceInstanceSettings(fixtures, 'Bravo')).toThrow(
+          new Error('setDataSourceInstanceSettings() function can only be called from tests.')
+        );
+      });
     });
   });
 
@@ -851,7 +1084,6 @@ describe('instanceSettings', () => {
             apiVersion: fixtures.Alpha.apiVersion,
             name: fixtures.Alpha.name,
             meta: fixtures.Alpha.meta,
-            readOnly: fixtures.Alpha.readOnly,
             isDefault: fixtures.Alpha.isDefault ?? false,
           },
         ]);

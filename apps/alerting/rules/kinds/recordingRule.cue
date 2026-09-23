@@ -11,7 +11,8 @@ recordingRuleKind: {
 
 recordingRulev0alpha1: recordingRuleKind & {
 	schema: {
-		spec: v0alpha1.#RecordingRuleSpec
+		spec:   v0alpha1.#RecordingRuleSpec
+		status: v0alpha1.#RecordingRuleStatus
 	}
 	validation: {
 		operations: [
@@ -39,6 +40,34 @@ recordingRulev0alpha1: recordingRuleKind & {
 	// have metric and targetDatasourceUID instead of the alerting-only fields
 	// and share the computed type / labels / datasourceUIDs handling.
 	searchFields: [
+		{
+			name: "health"
+			path: "status.health"
+			type: "string"
+			capabilities: ["retrieve"]
+			description: "The health of the rule"
+		},
+		{
+			name: "lastEvaluationTime"
+			path: "status.lastEvaluationTime"
+			type: "string"
+			capabilities: ["retrieve"]
+			description: "The time of the last rule evaluation"
+		},
+		{
+			name: "evaluationDuration"
+			path: "status.evaluationDuration"
+			type: "double"
+			capabilities: ["retrieve"]
+			description: "The duration of the last rule evaluation in seconds"
+		},
+		{
+			name: "lastError"
+			path: "status.lastError"
+			type: "string"
+			capabilities: ["retrieve"]
+			description: "The error from the last rule evaluation"
+		},
 		{
 			name: "type"
 			type: "string"

@@ -16,6 +16,7 @@ import (
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
@@ -30,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/setting/settingtest"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -342,7 +344,6 @@ func TestService_GetForProvider(t *testing.T) {
 	for _, tc := range testCases {
 		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
 		// otherwise it would be like a moving pointer while tests run in parallel
-		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -459,7 +460,6 @@ func TestService_GetForProvider_StorageReadMode(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -588,7 +588,6 @@ func TestService_GetForProviderFromCache(t *testing.T) {
 	for _, tc := range testCases {
 		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
 		// otherwise it would be like a moving pointer while tests run in parallel
-		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -688,7 +687,6 @@ func TestService_GetForProviderFromCache(t *testing.T) {
 	for _, tc := range testCasesUpsert {
 		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
 		// otherwise it would be like a moving pointer while tests run in parallel
-		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -899,7 +897,6 @@ func TestService_GetForProviderWithRedactedSecrets(t *testing.T) {
 	for _, tc := range testCases {
 		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
 		// otherwise it would be like a moving pointer while tests run in parallel
-		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -1055,7 +1052,6 @@ func TestService_List(t *testing.T) {
 	for _, tc := range testCases {
 		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
 		// otherwise it would be like a moving pointer while tests run in parallel
-		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -1076,6 +1072,55 @@ func TestService_List(t *testing.T) {
 			require.ElementsMatch(t, tc.want, actual)
 		})
 	}
+}
+
+func TestService_ListStored(t *testing.T) {
+	t.Parallel()
+
+	env := setupTestEnv(t, false, false, false)
+	env.store.ExpectedSSOSettings = []*models.SSOSettings{
+		{
+			Provider: "github",
+			Settings: map[string]any{
+				"enabled":       true,
+				"client_secret": base64.RawStdEncoding.EncodeToString([]byte("client_secret")),
+			},
+			Source: models.DB,
+		},
+		{
+			Provider: "okta",
+			Settings: map[string]any{
+				"enabled":      false,
+				"other_secret": base64.RawStdEncoding.EncodeToString([]byte("other_secret")),
+			},
+			Source: models.DB,
+		},
+	}
+	env.secrets.On("Decrypt", mock.Anything, []byte("client_secret"), mock.Anything).Return([]byte("decrypted-client-secret"), nil).Once()
+	env.secrets.On("Decrypt", mock.Anything, []byte("other_secret"), mock.Anything).Return([]byte("decrypted-other-secret"), nil).Once()
+
+	actual, err := env.service.ListStored(context.Background())
+
+	require.NoError(t, err)
+	// Only the stored providers, decrypted, with no system defaults merged in.
+	require.ElementsMatch(t, []*models.SSOSettings{
+		{
+			Provider: "github",
+			Settings: map[string]any{
+				"enabled":       true,
+				"client_secret": "decrypted-client-secret",
+			},
+			Source: models.DB,
+		},
+		{
+			Provider: "okta",
+			Settings: map[string]any{
+				"enabled":      false,
+				"other_secret": "decrypted-other-secret",
+			},
+			Source: models.DB,
+		},
+	}, actual)
 }
 
 func TestService_ListWithRedactedSecrets(t *testing.T) {
@@ -1367,7 +1412,6 @@ func TestService_ListWithRedactedSecrets(t *testing.T) {
 	for _, tc := range testCases {
 		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
 		// otherwise it would be like a moving pointer while tests run in parallel
-		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -1691,9 +1735,7 @@ func TestService_Upsert(t *testing.T) {
 
 		expected := settings
 		expected.Settings = make(map[string]any)
-		for key, value := range settings.Settings {
-			expected.Settings[key] = value
-		}
+		maps.Copy(expected.Settings, settings.Settings)
 		expected.Settings["client_secret"] = "encrypted-client-secret"
 
 		reloadable := ssosettingstests.NewMockReloadable(t)
@@ -1737,9 +1779,7 @@ func TestService_Upsert(t *testing.T) {
 
 		expected := settings
 		expected.Settings = make(map[string]any)
-		for key, value := range settings.Settings {
-			expected.Settings[key] = value
-		}
+		maps.Copy(expected.Settings, settings.Settings)
 		expected.Settings["client_secret"] = "current-client-secret"
 		expected.Settings["private_key"] = "current-private-key"
 
@@ -2477,7 +2517,6 @@ func TestService_decryptSecrets(t *testing.T) {
 	for _, tc := range testCases {
 		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
 		// otherwise it would be like a moving pointer while tests run in parallel
-		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -2555,7 +2594,6 @@ func Test_ProviderService(t *testing.T) {
 		},
 	}
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -2610,7 +2648,8 @@ func setupTestEnv(t *testing.T, isLicensingEnabled, keepFallbackStratergies bool
 
 	svc := ProvideService(
 		cfg,
-		&dbtest.FakeDB{},
+		mustConfigProvider(t, cfg),
+		legacysql.NewDatabaseProvider(&dbtest.FakeDB{}),
 		accessControl,
 		routing.NewRouteRegister(),
 		featureManager,
@@ -2642,6 +2681,13 @@ func setupTestEnv(t *testing.T, isLicensingEnabled, keepFallbackStratergies bool
 	}
 }
 
+func mustConfigProvider(t *testing.T, cfg *setting.Cfg) configprovider.ConfigProvider {
+	t.Helper()
+	provider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	return provider
+}
+
 type testEnv struct {
 	cfg              *setting.Cfg
 	service          *Service
@@ -2650,4 +2696,28 @@ type testEnv struct {
 	fallbackStrategy *ssosettingstests.FakeFallbackStrategy
 	secrets          *secretsFakes.MockService
 	reloadables      map[string]ssosettings.Reloadable
+}
+
+type reloadableWithDefaults struct {
+	*ssosettingstests.MockReloadable
+	*ssosettingstests.MockDefaultsProvider
+}
+
+func TestService_RegisterReloadable_DefaultsProvider(t *testing.T) {
+	env := setupTestEnv(t, true, true, false)
+
+	defaultsMock := ssosettingstests.NewMockDefaultsProvider(t)
+	defaults := map[string]any{"setting_1": "value_1"}
+	defaultsMock.On("Defaults").Return(defaults)
+	reloadable := &reloadableWithDefaults{
+		MockReloadable:       ssosettingstests.NewMockReloadable(t),
+		MockDefaultsProvider: defaultsMock,
+	}
+	env.service.RegisterReloadable("providerWithDefaults", reloadable)
+	require.Equal(t, defaults, env.service.GetDefaults("providerWithDefaults"))
+
+	env.service.RegisterReloadable("providerWithoutDefaults", ssosettingstests.NewMockReloadable(t))
+	require.Nil(t, env.service.GetDefaults("providerWithoutDefaults"))
+
+	require.Nil(t, env.service.GetDefaults("providerNotRegistered"))
 }

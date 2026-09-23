@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { useState, type Ref } from 'react';
+import { act, render, screen, waitFor, within } from 'test/test-utils';
 
 import { PluginIncludeType, type PluginMeta } from '@grafana/data';
 import { config, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
@@ -20,13 +21,36 @@ import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridg
 import { AlertState, type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { AlertIncidentTabs } from './AlertIncidentTabs';
+import {
+  ALERTS_TAB_ID,
+  AlertIncidentTabs,
+  INCIDENTS_TAB_ID,
+  type AlertIncidentSwitchHandle,
+} from './AlertIncidentTabs';
+import {
+  ACTIVE_INCIDENTS_QUERY,
+  GET_FIELDS_PATH,
+  mockIncidentTeamField,
+  mockIncidents,
+  mockNoIncidentFields,
+} from './mockIncidentsApi';
+import { type TeamSelection } from './teamFilter';
+import { useFiringAlerts } from './useFiringAlerts';
+import { useIncidents } from './useIncidents';
 
 jest.mock('../analytics/main', () => ({
   ctaClicked: jest.fn(),
   tabChanged: jest.fn(),
   clearHistoryClicked: jest.fn(),
   homepageViewed: jest.fn(),
+}));
+
+jest.mock('app/core/services/context_srv', () => ({
+  contextSrv: {
+    ...jest.requireActual('app/core/services/context_srv').contextSrv,
+    hasPermission: jest.fn(),
+    isSignedIn: true,
+  },
 }));
 
 // The team dropdown loads its options from the `team` label values on alerts,
@@ -104,14 +128,6 @@ function mockIrmPlugin(settings?: Partial<PluginMeta>) {
   );
 }
 
-function mockIncidents(incidents: IncidentPreview[], { hasMore = false } = {}) {
-  server.use(
-    http.post('/api/plugins/:pluginId/resources/api/v1/IncidentsService.QueryIncidentPreviews', () =>
-      HttpResponse.json({ incidentPreviews: incidents, cursor: { hasMore, nextValue: hasMore ? 'next' : '' } })
-    )
-  );
-}
-
 /**
  * Wire form of useFiringAlerts' tolerant own-teams pattern for one team name:
  * its letter/digit runs joined by separator gaps. quoteWithEscape doubles the
@@ -137,6 +153,7 @@ beforeEach(async () => {
   jest
     .spyOn(contextSrv, 'hasPermission')
     .mockImplementation((action: string) => action === AccessControlAction.AlertingInstanceRead);
+
   // The team dropdown only renders when the state-history Prometheus datasource is configured.
   config.unifiedAlerting.stateHistory = {
     ...originalStateHistory,
@@ -148,6 +165,8 @@ beforeEach(async () => {
   // The component probes the IRM plugin settings; absent by default.
   // Tests that need the incidents tab layer mockIrmPlugin() on top.
   mockNoIrmPlugin();
+  // No `team` custom field by default, so the incidents dropdown stays hidden.
+  mockNoIncidentFields();
   // AlertIncidentTabs only ships in the growth-homepage redesign, which is flag-gated,
   // so exercise it in the same flag state it renders in production.
   await act(async () => {
@@ -167,11 +186,29 @@ afterEach(async () => {
   invalidateCachedPromisesCache();
 });
 
+function AlertIncidentTabsWithData({ switchRef }: { switchRef?: Ref<AlertIncidentSwitchHandle> } = {}) {
+  const [alertsTeam, setAlertsTeam] = useState<TeamSelection>('');
+  const [incidentsTeam, setIncidentsTeam] = useState<TeamSelection>('');
+  const alertsData = useFiringAlerts(alertsTeam);
+  const incidentsData = useIncidents(incidentsTeam);
+  return (
+    <AlertIncidentTabs
+      alertsData={alertsData}
+      incidentsData={incidentsData}
+      alertsTeam={alertsTeam}
+      onAlertsTeamChange={setAlertsTeam}
+      incidentsTeam={incidentsTeam}
+      onIncidentsTeamChange={setIncidentsTeam}
+      switchRef={switchRef}
+    />
+  );
+}
+
 describe('AlertIncidentTabs', () => {
   it('renders nothing when the user lacks AlertingInstanceRead permission', async () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
-    const { container } = render(<AlertIncidentTabs />);
+    const { container } = render(<AlertIncidentTabsWithData />);
     // the plugin bridge settles asynchronously, so let it before asserting nothing appeared
     await waitFor(() => expect(container).toBeEmptyDOMElement());
   });
@@ -179,7 +216,7 @@ describe('AlertIncidentTabs', () => {
   it('renders a single Firing alerts heading and tab when permitted', async () => {
     mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
 
-    render(<AlertIncidentTabs />);
+    render(<AlertIncidentTabsWithData />);
 
     // Wait for the alert to load so the card content is rendered.
     expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
@@ -197,7 +234,7 @@ describe('AlertIncidentTabs', () => {
       makeAlert({ labels: { alertname: 'Memory High', severity: 'high' } }),
     ]);
 
-    render(<AlertIncidentTabs />);
+    render(<AlertIncidentTabsWithData />);
 
     // Counter is undefined while loading, so wait until it reflects the loaded count.
     const tab = await screen.findByRole('tab', { name: /firing alerts/i });
@@ -215,7 +252,7 @@ describe('AlertIncidentTabs', () => {
     }));
     mockIncidents(fullPage, { hasMore: true });
 
-    render(<AlertIncidentTabs />);
+    render(<AlertIncidentTabsWithData />);
 
     const tab = await screen.findByRole('tab', { name: /incidents/i });
     await waitFor(() => expect(tab).toHaveTextContent(`${ACTIVE_INCIDENTS_QUERY_LIMIT}+`));
@@ -232,7 +269,7 @@ describe('AlertIncidentTabs', () => {
     }));
     mockIncidents(fullPage, { hasMore: false });
 
-    render(<AlertIncidentTabs />);
+    render(<AlertIncidentTabsWithData />);
 
     const tab = await screen.findByRole('tab', { name: /incidents/i });
     await waitFor(() => expect(tab).toHaveTextContent(String(ACTIVE_INCIDENTS_QUERY_LIMIT)));
@@ -244,7 +281,7 @@ describe('AlertIncidentTabs', () => {
     mockIrmPlugin();
     mockIncidents([activeIncident]);
 
-    render(<AlertIncidentTabs />);
+    render(<AlertIncidentTabsWithData />);
 
     expect(await screen.findByText('Database outage')).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /incidents/i })).toHaveAttribute('aria-selected', 'true');
@@ -257,7 +294,7 @@ describe('AlertIncidentTabs', () => {
     mockIrmPlugin();
     mockIncidents([activeIncident]);
 
-    const { user } = render(<AlertIncidentTabs />);
+    const { user } = render(<AlertIncidentTabsWithData />);
 
     // Alerts tab is active by default.
     expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
@@ -269,13 +306,88 @@ describe('AlertIncidentTabs', () => {
     expect(screen.queryByText('CPU Critical')).not.toBeInTheDocument();
   });
 
+  it('switchRef handle switches tabs imperatively', async () => {
+    mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
+    mockIrmPlugin();
+    mockIncidents([activeIncident]);
+    let handle: AlertIncidentSwitchHandle | null = null;
+
+    render(
+      <AlertIncidentTabsWithData
+        switchRef={(instance) => {
+          handle = instance;
+        }}
+      />
+    );
+
+    expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+    expect(handle).not.toBeNull();
+
+    await act(async () => {
+      handle?.switch(INCIDENTS_TAB_ID, false);
+    });
+
+    expect(await screen.findByText('Database outage')).toBeInTheDocument();
+    expect(screen.queryByText('CPU Critical')).not.toBeInTheDocument();
+
+    await act(async () => {
+      handle?.switch(ALERTS_TAB_ID, false);
+    });
+
+    expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+    expect(screen.queryByText('Database outage')).not.toBeInTheDocument();
+  });
+
+  it('switchRef handle scrolls by default and skips scrolling when requested', async () => {
+    mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
+    mockIrmPlugin();
+    mockIncidents([activeIncident]);
+    let handle: AlertIncidentSwitchHandle | null = null;
+    const scrollIntoView = jest.fn();
+    // Patch HTMLElement.prototype (not Element.prototype) to match the rest of the codebase's convention
+    // and the shared jest-setup.ts default it shadows - Element.prototype sits further up the prototype
+    // chain, so a real DOM node would resolve scrollIntoView via HTMLElement.prototype first regardless.
+    const originalScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
+    window.HTMLElement.prototype.scrollIntoView = scrollIntoView;
+
+    try {
+      render(
+        <AlertIncidentTabsWithData
+          switchRef={(instance) => {
+            handle = instance;
+          }}
+        />
+      );
+
+      expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+
+      await act(async () => {
+        handle?.switch(INCIDENTS_TAB_ID);
+      });
+
+      expect(await screen.findByText('Database outage')).toBeInTheDocument();
+      expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth' });
+
+      scrollIntoView.mockClear();
+
+      await act(async () => {
+        handle?.switch(ALERTS_TAB_ID, false);
+      });
+
+      expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+      expect(scrollIntoView).not.toHaveBeenCalled();
+    } finally {
+      window.HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    }
+  });
+
   it('shows the incidents footer actions when the user can declare and access incidents', async () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
     // No page includes to gate on, so canDeclare/canAccess both resolve to true.
     mockIrmPlugin({ includes: [] });
     mockIncidents([activeIncident]);
 
-    render(<AlertIncidentTabs />);
+    render(<AlertIncidentTabsWithData />);
 
     expect(await screen.findByText('Database outage')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /declare an incident/i })).toBeInTheDocument();
@@ -302,7 +414,7 @@ describe('AlertIncidentTabs', () => {
     });
     mockIncidents([activeIncident]);
 
-    render(<AlertIncidentTabs />);
+    render(<AlertIncidentTabsWithData />);
 
     expect(await screen.findByText('Database outage')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /declare an incident/i })).not.toBeInTheDocument();
@@ -310,28 +422,48 @@ describe('AlertIncidentTabs', () => {
   });
 
   describe('team filter dropdown', () => {
-    it('shows the dropdown on the Alerts tab and hides it on the Incidents tab', async () => {
+    it('fetches the alert team label values once across tab switches', async () => {
       mockTeamLabelValues(['Team A']);
       mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
       mockIrmPlugin();
       mockIncidents([activeIncident]);
 
-      const { user } = render(<AlertIncidentTabs />);
+      const { user } = render(<AlertIncidentTabsWithData />);
 
       expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
       expect(await screen.findByRole('combobox', { name: /filter alerts by team/i })).toBeInTheDocument();
 
       await user.click(screen.getByRole('tab', { name: /incidents/i }));
-
-      // Hidden from the accessibility tree, but kept mounted so its fetched values survive.
       expect(await screen.findByText('Database outage')).toBeInTheDocument();
       expect(screen.queryByRole('combobox', { name: /filter alerts by team/i })).not.toBeInTheDocument();
 
-      // Switching back shows the dropdown again without refetching the team values.
+      // The values live in the tabs component, so switching back doesn't refetch them.
       await user.click(screen.getByRole('tab', { name: /firing alerts/i }));
 
       expect(await screen.findByRole('combobox', { name: /filter alerts by team/i })).toBeInTheDocument();
       expect(fetchTagValues).toHaveBeenCalledTimes(1);
+    });
+
+    it('puts each tab team filter inside the panel named after that tab', async () => {
+      mockTeamLabelValues(['Team A']);
+      mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
+      mockIrmPlugin();
+      mockIncidentTeamField(['Team A', 'Team B']);
+      mockIncidents([activeIncident]);
+
+      const { user } = render(<AlertIncidentTabsWithData />);
+
+      // The panel takes its name from the active tab, so the filter it contains
+      // can only be read as scoped to that tab.
+      const alertsPanel = await screen.findByRole('tabpanel', { name: /firing alerts/i });
+      expect(await within(alertsPanel).findByRole('combobox', { name: /filter alerts by team/i })).toBeInTheDocument();
+
+      await user.click(screen.getByRole('tab', { name: /incidents/i }));
+
+      const incidentsPanel = await screen.findByRole('tabpanel', { name: /incidents/i });
+      expect(
+        await within(incidentsPanel).findByRole('combobox', { name: /filter incidents by team/i })
+      ).toBeInTheDocument();
     });
 
     it('refetches alerts filtered to only the selected team', async () => {
@@ -339,7 +471,7 @@ describe('AlertIncidentTabs', () => {
       mockTeamLabelValues(['Team A', 'Team B', 'Team C']);
       const requests = mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
 
-      const { user } = render(<AlertIncidentTabs />);
+      const { user } = render(<AlertIncidentTabsWithData />);
 
       // Initial request is filtered to the user's own teams, matched tolerantly
       // ((?i) + separator gaps) since the free-form `team` label usually carries
@@ -378,7 +510,7 @@ describe('AlertIncidentTabs', () => {
         })
       );
 
-      const { user } = render(<AlertIncidentTabs />);
+      const { user } = render(<AlertIncidentTabsWithData />);
 
       expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
       const combobox = await screen.findByRole('combobox', { name: /filter alerts by team/i });
@@ -417,7 +549,7 @@ describe('AlertIncidentTabs', () => {
         })
       );
 
-      const { user } = render(<AlertIncidentTabs />);
+      const { user } = render(<AlertIncidentTabsWithData />);
 
       expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
       const combobox = await screen.findByRole('combobox', { name: /filter alerts by team/i });
@@ -452,7 +584,7 @@ describe('AlertIncidentTabs', () => {
         })
       );
 
-      const { user } = render(<AlertIncidentTabs />);
+      const { user } = render(<AlertIncidentTabsWithData />);
 
       expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
       await user.click(await screen.findByRole('combobox', { name: /filter alerts by team/i }));
@@ -468,7 +600,7 @@ describe('AlertIncidentTabs', () => {
       mockTeamLabelValues(['Team A', 'Team C']);
       const requests = mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
 
-      const { user } = render(<AlertIncidentTabs />);
+      const { user } = render(<AlertIncidentTabsWithData />);
 
       const ownTeamsFilter = `team=~"(?i)${wireTolerantPattern('Team', 'A')}"`;
 
@@ -512,7 +644,7 @@ describe('AlertIncidentTabs', () => {
         })
       );
 
-      const { user } = render(<AlertIncidentTabs />);
+      const { user } = render(<AlertIncidentTabsWithData />);
 
       expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
       expect(screen.queryByTestId('summary-card-skeleton')).not.toBeInTheDocument();
@@ -535,7 +667,7 @@ describe('AlertIncidentTabs', () => {
       mockTeamLabelValues(['Team A', 'Team C']);
       const requests = mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
 
-      const { user } = render(<AlertIncidentTabs />);
+      const { user } = render(<AlertIncidentTabsWithData />);
 
       expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
       const combobox = await screen.findByRole('combobox', { name: /filter alerts by team/i });
@@ -566,7 +698,7 @@ describe('AlertIncidentTabs', () => {
         })
       );
 
-      const { user } = render(<AlertIncidentTabs />);
+      const { user } = render(<AlertIncidentTabsWithData />);
 
       expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
       await user.click(await screen.findByRole('combobox', { name: /filter alerts by team/i }));
@@ -581,7 +713,7 @@ describe('AlertIncidentTabs', () => {
       mockTeamLabelValues(['Team Alpha', 'Team Beta', 'Zebra Squad']);
       mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
 
-      const { user } = render(<AlertIncidentTabs />);
+      const { user } = render(<AlertIncidentTabsWithData />);
 
       expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
       const combobox = await screen.findByRole('combobox', { name: /filter alerts by team/i });
@@ -612,7 +744,7 @@ describe('AlertIncidentTabs', () => {
       mockTeamLabelValues(['Team A']);
       mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
 
-      render(<AlertIncidentTabs />);
+      render(<AlertIncidentTabsWithData />);
 
       expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
       expect(screen.queryByRole('combobox', { name: /filter alerts by team/i })).not.toBeInTheDocument();
@@ -623,7 +755,7 @@ describe('AlertIncidentTabs', () => {
       // No alerts carry the selected team label, so the team-scoped empty copy shows.
       const requests = mockAlerts([]);
 
-      const { user } = render(<AlertIncidentTabs />);
+      const { user } = render(<AlertIncidentTabsWithData />);
 
       await user.click(await screen.findByRole('combobox', { name: /filter alerts by team/i }));
       await user.click(await screen.findByRole('option', { name: 'platform-monitoring' }));
@@ -631,6 +763,116 @@ describe('AlertIncidentTabs', () => {
       // The selected value is a real label value, so the matcher carries it verbatim.
       await waitFor(() => expect(requests).toContainEqual(['team=~"platform-monitoring"']));
       expect(await screen.findByText('No firing alerts for platform-monitoring.')).toBeInTheDocument();
+    });
+  });
+
+  describe('incidents team filter dropdown', () => {
+    it("offers the org's team field values and filters incidents to the picked team", async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      mockIrmPlugin();
+      mockIncidentTeamField(['Team B', 'Team A']);
+      const queries = mockIncidents([activeIncident]);
+
+      const { user } = render(<AlertIncidentTabsWithData />);
+
+      expect(await screen.findByText('Database outage')).toBeInTheDocument();
+      expect(queries).toEqual([ACTIVE_INCIDENTS_QUERY]);
+
+      const combobox = await screen.findByRole('combobox', { name: /filter incidents by team/i });
+      expect(combobox).toHaveDisplayValue('All teams');
+      await user.click(combobox);
+
+      // Incidents have no "your teams" scope, so "All teams" is the only default option,
+      // followed by the non-blank field values sorted by name.
+      const options = await screen.findAllByRole('option');
+      expect(options.map((option) => option.textContent)).toEqual(['All teams', 'Team A', 'Team B']);
+      await user.click(screen.getByRole('option', { name: 'Team B' }));
+
+      // The pick becomes a custom-field clause on the incident query.
+      await waitFor(() => expect(queries).toHaveLength(2));
+      expect(queries[1]).toBe(`${ACTIVE_INCIDENTS_QUERY} field:team:"Team B"`);
+      expect(combobox).toHaveDisplayValue('Team B');
+    });
+
+    it('keeps the Alerts and Incidents team selections independent', async () => {
+      mockTeams([{ name: 'Team A' }]);
+      mockTeamLabelValues(['Team A', 'Team C']);
+      const alertRequests = mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
+      mockIrmPlugin();
+      // Team C exists only as an alert label, not as an incident field value.
+      mockIncidentTeamField(['Team A', 'Team B']);
+      const queries = mockIncidents([activeIncident]);
+
+      const { user } = render(<AlertIncidentTabsWithData />);
+
+      expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+      await user.click(await screen.findByRole('combobox', { name: /filter alerts by team/i }));
+      await user.click(await screen.findByRole('option', { name: 'Team C' }));
+      await waitFor(() => expect(alertRequests).toHaveLength(2));
+      expect(alertRequests[1]).toEqual(['team=~"Team C"']);
+
+      await user.click(screen.getByRole('tab', { name: /incidents/i }));
+
+      // The alerts pick doesn't leak into incidents, which can't hold that value anyway.
+      const incidentsCombobox = await screen.findByRole('combobox', { name: /filter incidents by team/i });
+      expect(incidentsCombobox).toHaveDisplayValue('All teams');
+      expect(queries).toEqual([ACTIVE_INCIDENTS_QUERY]);
+
+      await user.click(incidentsCombobox);
+      await user.click(await screen.findByRole('option', { name: 'Team B' }));
+      await waitFor(() => expect(queries.at(-1)).toBe(`${ACTIVE_INCIDENTS_QUERY} field:team:"Team B"`));
+
+      await user.click(screen.getByRole('tab', { name: /firing alerts/i }));
+
+      // And the incidents pick doesn't disturb the alerts scope.
+      expect(await screen.findByRole('combobox', { name: /filter alerts by team/i })).toHaveDisplayValue('Team C');
+      expect(alertRequests).toHaveLength(2);
+    });
+
+    it('shows a team-scoped empty message when the selected team has no incidents', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      mockIrmPlugin();
+      mockIncidentTeamField(['Team A', 'Team B']);
+      mockIncidents((queryString) => (queryString.includes('field:team:"Team B"') ? [] : [activeIncident]));
+
+      const { user } = render(<AlertIncidentTabsWithData />);
+
+      expect(await screen.findByText('Database outage')).toBeInTheDocument();
+      await user.click(await screen.findByRole('combobox', { name: /filter incidents by team/i }));
+      await user.click(await screen.findByRole('option', { name: 'Team B' }));
+
+      expect(await screen.findByText('No active incidents for Team B.')).toBeInTheDocument();
+      expect(screen.queryByText('Database outage')).not.toBeInTheDocument();
+    });
+
+    it('hides the dropdown when the org has no team custom field', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      mockIrmPlugin();
+      // Only unrelated fields; the default handler's empty list is the other shape of "no team field".
+      server.use(
+        http.post(GET_FIELDS_PATH, () =>
+          HttpResponse.json({ fields: [{ slug: 'severity', selectoptions: [{ value: 'Critical' }] }] })
+        )
+      );
+      mockIncidents([activeIncident]);
+
+      render(<AlertIncidentTabsWithData />);
+
+      expect(await screen.findByText('Database outage')).toBeInTheDocument();
+      expect(screen.queryByRole('combobox', { name: /filter incidents by team/i })).not.toBeInTheDocument();
+    });
+
+    it('hides the dropdown but still lists incidents when the fields request fails', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      mockIrmPlugin();
+      server.use(http.post(GET_FIELDS_PATH, () => new HttpResponse(null, { status: 404 })));
+      mockIncidents([activeIncident]);
+
+      render(<AlertIncidentTabsWithData />);
+
+      expect(await screen.findByText('Database outage')).toBeInTheDocument();
+      expect(screen.queryByRole('combobox', { name: /filter incidents by team/i })).not.toBeInTheDocument();
+      expect(screen.queryByText('Could not load active incidents')).not.toBeInTheDocument();
     });
   });
 });
