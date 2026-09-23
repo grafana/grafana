@@ -3,30 +3,31 @@ import { useCallback, useMemo } from 'react';
 import { t } from '@grafana/i18n';
 import { Combobox, type ComboboxOption } from '@grafana/ui';
 
-import { ALL_TEAMS, type TeamSelection, resolveTeamScope } from './teamFilter';
+import { ALL_TEAMS, resolveTeamScope } from './teamFilter';
 
 const collator = new Intl.Collator();
 
 /** A pickable value; `group` renders as a header above the options sharing it. */
-export interface TeamFilterOption {
+export interface FilterOption {
   label: string;
   value: string;
   group?: string;
 }
 
-// '' is the default scope of TeamSelection, so the option value is the selection itself.
-const getYourTeamsOption = (): ComboboxOption<TeamSelection> => ({
+// '' is the default scope of every selection, so the option value is the selection itself.
+const getYourTeamsOption = (): ComboboxOption<string> => ({
   label: t('home.alerts-incidents.team-filter-your-teams', 'Your teams'),
   value: '',
 });
 
-const getAllOption = (label: string, value: TeamSelection): ComboboxOption<TeamSelection> => ({ label, value });
+const getAllOption = (label: string, value: string): ComboboxOption<string> => ({ label, value });
 
 interface Props {
   /** Options to offer; the caller hides the dropdown when there are none. */
-  options: TeamFilterOption[];
-  selected: TeamSelection;
-  onChange: (selection: TeamSelection) => void;
+  options: FilterOption[];
+  /** Opaque to this component: '' is the default scope, ALL_TEAMS the org-wide pick, anything else an option value. */
+  selected: string;
+  onChange: (selection: string) => void;
   /**
    * Whether the default scope is the user's own teams (alerts, for team members). Adds a
    * "Your teams" default plus an explicit escape hatch to everything; otherwise the default
@@ -40,7 +41,7 @@ interface Props {
    * field was archived). Only needed when the selection isn't already the display label:
    * alerts store the team name itself, incidents store an encoded `slug:value`.
    */
-  formatStaleSelection?: (selection: TeamSelection) => string;
+  formatStaleSelection?: (selection: string) => string;
   ariaLabel: string;
 }
 
@@ -48,7 +49,7 @@ interface Props {
  * Dropdown to filter a homepage view. Presentational: the caller supplies the options
  * (alert team label values or incident custom-field values) and owns the selection.
  */
-export function TeamFilterCombobox({
+export function FilterCombobox({
   options,
   selected,
   onChange,
@@ -66,7 +67,7 @@ export function TeamFilterCombobox({
   );
 
   // Only a "your teams" default needs a distinct sentinel for org-wide; otherwise '' already means all.
-  const allValue: TeamSelection = offersYourTeams ? ALL_TEAMS : '';
+  const allValue = offersYourTeams ? ALL_TEAMS : '';
 
   // Async Combobox needs the full option (not just the value) to show a label.
   // Must be memoized: a new object every render makes downshift think the
@@ -91,7 +92,7 @@ export function TeamFilterCombobox({
   }, [selected, offersYourTeams, allOptionLabel, allValue, sortedOptions, formatStaleSelection]);
 
   const loadOptions = useCallback(
-    async (inputValue: string): Promise<Array<ComboboxOption<TeamSelection>>> => {
+    async (inputValue: string): Promise<Array<ComboboxOption<string>>> => {
       const query = inputValue.toLowerCase();
       // Typing a field name (the group header) lists everything under it.
       const matching = sortedOptions.filter(

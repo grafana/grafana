@@ -27,6 +27,7 @@ import {
   INCIDENTS_TAB_ID,
   type AlertIncidentSwitchHandle,
 } from './AlertIncidentTabs';
+import { type IncidentFilterSelection } from './incidentFilter';
 import {
   ACTIVE_INCIDENTS_QUERY,
   GET_FIELDS_PATH,
@@ -35,7 +36,7 @@ import {
   mockIncidents,
   mockNoIncidentFields,
 } from './mockIncidentsApi';
-import { type IncidentFilterSelection, type TeamSelection } from './teamFilter';
+import { type TeamSelection } from './teamFilter';
 import { useFiringAlerts } from './useFiringAlerts';
 import { useIncidents } from './useIncidents';
 
@@ -190,9 +191,19 @@ afterEach(async () => {
 function AlertIncidentTabsWithData({
   switchRef,
   initialIncidentsFilter = '',
-}: { switchRef?: Ref<AlertIncidentSwitchHandle>; initialIncidentsFilter?: IncidentFilterSelection } = {}) {
+  onIncidentsFilterChange,
+}: {
+  switchRef?: Ref<AlertIncidentSwitchHandle>;
+  initialIncidentsFilter?: IncidentFilterSelection;
+  /** Observes every incidents selection change on top of the wrapper's own state. */
+  onIncidentsFilterChange?: (filter: IncidentFilterSelection) => void;
+} = {}) {
   const [alertsTeam, setAlertsTeam] = useState<TeamSelection>('');
-  const [incidentsFilter, setIncidentsFilter] = useState<IncidentFilterSelection>(initialIncidentsFilter);
+  const [incidentsFilter, setIncidentsFilterState] = useState<IncidentFilterSelection>(initialIncidentsFilter);
+  const setIncidentsFilter = (filter: IncidentFilterSelection) => {
+    onIncidentsFilterChange?.(filter);
+    setIncidentsFilterState(filter);
+  };
   const alertsData = useFiringAlerts(alertsTeam);
   const incidentsData = useIncidents(incidentsFilter);
   return (
@@ -871,6 +882,29 @@ describe('AlertIncidentTabs', () => {
       await waitFor(() => expect(queries).toEqual([`${ACTIVE_INCIDENTS_QUERY} field:squad:"Frontend"`]));
       const combobox = await screen.findByRole('combobox', { name: /filter incidents by label/i });
       expect(combobox).toHaveDisplayValue('Frontend');
+    });
+
+    it('treats a legacy bare team selection as its live team option', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      mockIrmPlugin();
+      mockIncidentTeamField(['Team A', 'Team B']);
+      const queries = mockIncidents([activeIncident]);
+
+      // Stored before the selection carried a field slug.
+      const onChange = jest.fn();
+      const { user } = render(
+        <AlertIncidentTabsWithData initialIncidentsFilter="Team A" onIncidentsFilterChange={onChange} />
+      );
+
+      await waitFor(() => expect(queries).toEqual([`${ACTIVE_INCIDENTS_QUERY} field:team:"Team A"`]));
+      const combobox = await screen.findByRole('combobox', { name: /filter incidents by label/i });
+      expect(combobox).toHaveDisplayValue('Team A');
+
+      // The bare value resolves to the `team:Team A` option, so re-picking it is the usual
+      // same-value no-op rather than a "new" selection.
+      await user.click(combobox);
+      await user.click(await screen.findByRole('option', { name: 'Team A' }));
+      expect(onChange).not.toHaveBeenCalled();
     });
 
     it('keeps the Alerts and Incidents team selections independent', async () => {

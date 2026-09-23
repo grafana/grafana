@@ -8,7 +8,7 @@ import { canAccessPluginPage, usePluginBridge } from 'app/features/alerting/unif
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
 import { HOME_CARD_MAX_ITEMS } from './constants';
-import { type IncidentFilterSelection, decodeIncidentFilter } from './teamFilter';
+import { type IncidentFilterSelection, decodeIncidentFilter } from './incidentFilter';
 
 export type IncidentsData = ReturnType<typeof useIncidents>;
 

@@ -11,8 +11,8 @@ import { ctaClicked } from '../analytics/main';
 
 import { DeclareAndViewIncidentsButtons } from './DeclareAndViewIncidentsButtons';
 import { SummaryCard, SummaryCardAge, SummaryCardPrefix } from './SummaryCard';
+import { type IncidentFilterValue } from './incidentFilter';
 import { severityLevelColor } from './severity';
-import { type IncidentFilterValue } from './teamFilter';
 import { type IncidentsData } from './useIncidents';
 
 /** Empty-state copy names the filtered value; the unfiltered scope uses the generic line. */
