@@ -137,14 +137,12 @@ export const navIndexReducer = (state: NavIndex = initialState, action: AnyActio
   } else if (removeNavIndex.match(action)) {
     delete state[action.payload];
   } else if (pluginNavLoaded.match(action)) {
-    // App plugin routes are derived from this index (getAppPluginRoutes reads
-    // it), so without the merged apps here they get no routes at all and their
-    // pages 404. Breadcrumbs for those pages come from the same entries.
+    // getAppPluginRoutes builds the app plugin routes from this index, so the
+    // merged apps have to reach it or their pages 404.
     //
-    // The rebuilt entries are laid over the existing state rather than
-    // replacing it, so entries pages registered via updateNavIndex survive
-    // while every merged node and its parent chain is refreshed. The new state
-    // object also busts getNavModel's memoization.
+    // Laid over the existing state rather than replacing it, so entries a page
+    // registered via updateNavIndex survive. The new object also busts
+    // getNavModel's memoization.
     const rootNodes = cloneDeep(action.payload.tree);
     const homeNav = rootNodes.find((node) => node.id === HOME_NAV_ID);
     const otherRootNodes = rootNodes.filter((node) => node.id !== HOME_NAV_ID);
