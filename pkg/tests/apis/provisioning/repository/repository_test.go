@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -605,7 +604,9 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		})
 	}
 
-	// Test Git repository path validation - ensure child paths are rejected when sync is enabled
+	// Test Git repository path validation - overlapping paths are allowed to be created, but
+	// surfaced as an unhealthy path-conflict warning during reconciliation instead of being
+	// rejected outright (see repository.PathConflict's doc comment).
 	t.Run("Git repository path validation with sync enabled", func(t *testing.T) {
 		baseURL := "https://github.com/grafana/test-repo-path-validation"
 
@@ -620,22 +621,22 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 				expectError: nil,
 			},
 			{
-				name:        "second repo with child path 'demo/nested/again' should fail",
+				name:        "second repo with child path 'demo/nested/again' should conflict",
 				path:        "demo/nested/again",
 				expectError: provisioningAPIServer.ErrRepositoryParentFolderConflict,
 			},
 			{
-				name:        "third repo with parent path 'demo' should fail",
+				name:        "third repo with parent path 'demo' should conflict",
 				path:        "demo",
 				expectError: provisioningAPIServer.ErrRepositoryParentFolderConflict,
 			},
 			{
-				name:        "fourth repo with nested child path 'demo/nested/nested-second' should fail",
+				name:        "fourth repo with nested child path 'demo/nested/nested-second' should conflict",
 				path:        "demo/nested/again/two",
 				expectError: provisioningAPIServer.ErrRepositoryParentFolderConflict,
 			},
 			{
-				name:        "fifth repo with duplicate path 'demo/nested' should fail",
+				name:        "fifth repo with duplicate path 'demo/nested' should conflict",
 				path:        "demo/nested",
 				expectError: provisioningAPIServer.ErrRepositoryDuplicatePath,
 			},
@@ -654,16 +655,10 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 				})
 
 				_, err := helper.Repositories.Resource.Create(t.Context(), gitRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+				require.NoError(t, err, "creation should always succeed for path: %s", test.path)
 
 				if test.expectError != nil {
-					require.Error(t, err, "Expected error for repository with path: %s", test.path)
-					require.ErrorContains(t, err, test.expectError.Error(), "Error should contain expected message for path: %s", test.path)
-					if statusError, ok := errors.AsType[*apierrors.StatusError](err); ok {
-						require.Equal(t, metav1.StatusReasonInvalid, statusError.ErrStatus.Reason, "Should be a validation error")
-						require.Equal(t, http.StatusUnprocessableEntity, int(statusError.ErrStatus.Code), "Should return 422 status code")
-					}
-				} else {
-					require.NoError(t, err, "Expected success for repository with path: %s", test.path)
+					helper.WaitForRepositoryPathConflictMessageContains(t, repoName, test.expectError.Error())
 				}
 			})
 		}
@@ -784,19 +779,19 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 				expectError: nil,
 			},
 			{
-				name:        "third repo with branch main and duplicate path grafana should fail",
+				name:        "third repo with branch main and duplicate path grafana should conflict",
 				branch:      "main",
 				path:        "grafana/",
 				expectError: provisioningAPIServer.ErrRepositoryDuplicatePath,
 			},
 			{
-				name:        "fourth repo with branch develop and child path should fail",
+				name:        "fourth repo with branch develop and child path should conflict",
 				branch:      "develop",
 				path:        "grafana/dashboards/",
 				expectError: provisioningAPIServer.ErrRepositoryParentFolderConflict,
 			},
 			{
-				name:        "fifth repo with branch main and child path should fail",
+				name:        "fifth repo with branch main and child path should conflict",
 				branch:      "main",
 				path:        "grafana/dashboards/",
 				expectError: provisioningAPIServer.ErrRepositoryParentFolderConflict,
@@ -817,22 +812,16 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 				})
 
 				_, err := helper.Repositories.Resource.Create(t.Context(), gitRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+				require.NoError(t, err, "creation should always succeed for repo branch=%s path=%s", test.branch, test.path)
 
 				if test.expectError != nil {
-					require.Error(t, err, "Expected error for repo branch=%s path=%s", test.branch, test.path)
-					require.ErrorContains(t, err, test.expectError.Error(), "Error should contain expected message for branch=%s path=%s", test.branch, test.path)
-					if statusError, ok := errors.AsType[*apierrors.StatusError](err); ok {
-						require.Equal(t, metav1.StatusReasonInvalid, statusError.ErrStatus.Reason, "Should be a validation error")
-						require.Equal(t, http.StatusUnprocessableEntity, int(statusError.ErrStatus.Code), "Should return 422 status code")
-					}
-				} else {
-					require.NoError(t, err, "Expected success for repo branch=%s path=%s", test.branch, test.path)
+					helper.WaitForRepositoryPathConflictMessageContains(t, repoName, test.expectError.Error())
 				}
 			})
 		}
 	})
 
-	t.Run("Git repository rejects duplicate empty paths on same branch when sync is enabled", func(t *testing.T) {
+	t.Run("Git repository surfaces duplicate empty paths on same branch as a path-conflict warning when sync is enabled", func(t *testing.T) {
 		baseURL := "https://github.com/grafana/test-repo-empty-path-branch"
 
 		firstRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
@@ -857,12 +846,8 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 			"WorkflowsJSON": `[]`,
 		})
 		_, err = helper.Repositories.Resource.Create(t.Context(), secondRepo, metav1.CreateOptions{FieldValidation: "Strict"})
-		require.Error(t, err, "Second repository with same URL, branch, and empty path should fail")
-		require.ErrorContains(t, err, provisioningAPIServer.ErrRepositoryDuplicatePath.Error())
-		if statusError, ok := errors.AsType[*apierrors.StatusError](err); ok {
-			require.Equal(t, metav1.StatusReasonInvalid, statusError.ErrStatus.Reason, "Should be a validation error")
-			require.Equal(t, http.StatusUnprocessableEntity, int(statusError.ErrStatus.Code), "Should return 422 status code")
-		}
+		require.NoError(t, err, "Second repository with same URL, branch, and empty path should succeed - the conflict is only a warning now")
+		helper.WaitForRepositoryPathConflictMessageContains(t, "git-empty-branch-2", provisioningAPIServer.ErrRepositoryDuplicatePath.Error())
 
 		thirdRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
 			"Name":          "git-empty-branch-3",
@@ -2061,7 +2046,7 @@ func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
 		helper.WaitForRepositoryDeleted(t, repo)
 	})
 
-	t.Run("multiple repositories with empty path - duplicate sync-enabled root path is rejected", func(t *testing.T) {
+	t.Run("multiple repositories with empty path - duplicate sync-enabled root path is surfaced as a path-conflict warning", func(t *testing.T) {
 		const repo1 = "empty-path-repo-1"
 		const repo2 = "empty-path-repo-2"
 
@@ -2077,8 +2062,10 @@ func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
 		helper.RequireRepoDashboardCount(t, repo1, 3)
 		helper.RequireRepoFolderCount(t, repo1, 6)
 
-		// Step 2: Create second repository with same URL, branch, and empty path.
-		// Empty path represents the repository root, so this is a duplicate path.
+		// Step 2: Create second repository with same URL, branch, and empty path. Empty path
+		// represents the repository root, so this is a duplicate path - creation still succeeds,
+		// and the second repository only gets a non-blocking path-conflict warning rather than
+		// being rejected outright.
 		secondRepo := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
 			"Name":          repo2,
 			"SyncEnabled":   true,
@@ -2086,16 +2073,20 @@ func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
 			"WorkflowsJSON": `[]`,
 		})
 		_, err := helper.Repositories.Resource.Create(t.Context(), secondRepo, metav1.CreateOptions{})
-		require.Error(t, err, "Second repository with same URL, branch, and empty path should fail")
-		require.ErrorContains(t, err, provisioningAPIServer.ErrRepositoryDuplicatePath.Error())
+		require.NoError(t, err, "Second repository with same URL, branch, and empty path should still be created")
+		helper.WaitForRepositoryPathConflictMessageContains(t, repo2, provisioningAPIServer.ErrRepositoryDuplicatePath.Error())
 
-		// Verify first repository has empty path
+		// Verify first repository has empty path and remains healthy
 		repo1Obj, err := helper.Repositories.Resource.Get(t.Context(), repo1, metav1.GetOptions{})
 		require.NoError(t, err)
 		path1, _, _ := unstructured.NestedString(repo1Obj.Object, "spec", "github", "path")
 		require.Equal(t, "", path1, "repo1 should have empty path")
 
 		// Clean up
+		err = helper.Repositories.Resource.Delete(t.Context(), repo2, metav1.DeleteOptions{})
+		require.NoError(t, err)
+		helper.WaitForRepositoryDeleted(t, repo2)
+
 		err = helper.Repositories.Resource.Delete(t.Context(), repo1, metav1.DeleteOptions{})
 		require.NoError(t, err)
 		helper.WaitForRepositoryDeleted(t, repo1)
