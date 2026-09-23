@@ -30,7 +30,7 @@ export function useIncidents(selectedFilter: IncidentFilterSelection = '') {
   // /incidents?declare=new (IRM's declare flow), and canAccessPluginPage ignores the query string.
   const canDeclare = settings ? canAccessPluginPage(settings, createBridgeURL(pluginId, '/incidents/declare')) : false;
 
-  const filter = useMemo(() => decodeIncidentFilter(selectedFilter), [selectedFilter]);
+  const filter = decodeIncidentFilter(selectedFilter);
 
   // Skipped until the plugin probe confirms availability, so the hook can run unconditionally
   // in callers that render even when incidents are unavailable.

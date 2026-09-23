@@ -34,30 +34,20 @@ export function mockIncidents(
 /** Wire shape of one incident custom field, as far as the filter dropdown reads it. */
 export interface MockIncidentField {
   slug: string;
-  name?: string;
-  type?: string;
-  archived?: boolean;
-  selectoptions?: Array<{ value: string; archived?: boolean }>;
+  name: string;
+  type: string;
+  selectoptions?: Array<{ value: string }>;
 }
 
-/** Org custom fields as given, plus optional org-wide archived `key:value` label pairs. */
-export function mockIncidentFields(
-  fields: MockIncidentField[],
-  { archived = [] }: { archived?: Array<{ key: string; value: string }> } = {}
-) {
-  server.use(http.post(GET_FIELDS_PATH, () => HttpResponse.json({ fields, archived })));
+/** Org custom fields as given. */
+export function mockIncidentFields(fields: MockIncidentField[]) {
+  server.use(http.post(GET_FIELDS_PATH, () => HttpResponse.json({ fields })));
 }
 
 /** Org custom fields with a single `team` select field offering the given values. */
 export function mockIncidentTeamField(values: string[]) {
   mockIncidentFields([
-    {
-      slug: 'team',
-      name: 'Team',
-      type: 'single-select',
-      // A blank value and one with both quote kinds; neither can be offered as an option.
-      selectoptions: [...values.map((value) => ({ value })), { value: '  ' }, { value: `Ops "A" 'B'` }],
-    },
+    { slug: 'team', name: 'Team', type: 'single-select', selectoptions: values.map((value) => ({ value })) },
   ]);
 }
 

@@ -37,7 +37,8 @@ interface Props {
   allOptionLabel: string;
   /**
    * Display label for a stored selection that none of the options carry anymore (e.g. its
-   * field was archived). Defaults to the selection itself.
+   * field was archived). Only needed when the selection isn't already the display label:
+   * alerts store the team name itself, incidents store an encoded `slug:value`.
    */
   formatStaleSelection?: (selection: TeamSelection) => string;
   ariaLabel: string;

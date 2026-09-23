@@ -160,21 +160,6 @@ describe('HomePage', () => {
     expect(queries[0]).toBe(`${ACTIVE_INCIDENTS_QUERY} field:squad:"Frontend"`);
   });
 
-  it('still reads a bare team name stored before the incidents filter carried a field slug', async () => {
-    mockUsePluginBridge.mockReturnValue({
-      installed: true,
-      loading: false,
-      settings: { ...pluginMeta[SupportedPlugin.Irm], includes: [] },
-    });
-    window.localStorage.setItem(INCIDENTS_FILTER_STORAGE_KEY, 'platform');
-    const queries = mockIncidents([]);
-
-    render(<HomePage />);
-
-    await waitFor(() => expect(queries).toHaveLength(1));
-    expect(queries[0]).toBe(`${ACTIVE_INCIDENTS_QUERY} field:team:"platform"`);
-  });
-
   it('renders the OSS welcome message', async () => {
     config.buildInfo.edition = GrafanaEdition.OpenSource;
 

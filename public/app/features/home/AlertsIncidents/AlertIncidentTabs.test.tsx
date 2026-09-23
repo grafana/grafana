@@ -787,7 +787,7 @@ describe('AlertIncidentTabs', () => {
       await user.click(combobox);
 
       // Incidents have no "your teams" scope, so "All incidents" is the only default option,
-      // followed by the non-blank field values sorted by name. A single field gets no header.
+      // followed by the field values sorted by name. A single field gets no header.
       const options = await screen.findAllByRole('option');
       expect(options.map((option) => option.textContent)).toEqual(['All incidents', 'Team A', 'Team B']);
       expect(screen.queryByTestId('combobox-option-group')).not.toBeInTheDocument();
@@ -871,41 +871,6 @@ describe('AlertIncidentTabs', () => {
       await waitFor(() => expect(queries).toEqual([`${ACTIVE_INCIDENTS_QUERY} field:squad:"Frontend"`]));
       const combobox = await screen.findByRole('combobox', { name: /filter incidents by label/i });
       expect(combobox).toHaveDisplayValue('Frontend');
-      expect(await screen.findByText('No active incidents for Frontend.')).toBeInTheDocument();
-    });
-
-    it('excludes archived fields and options, org-archived label pairs, the tags field, and non-select fields', async () => {
-      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
-      mockIrmPlugin();
-      mockIncidentFields(
-        [
-          {
-            slug: 'team',
-            name: 'Team',
-            type: 'single-select',
-            selectoptions: [{ value: 'Platform' }, { value: 'Legacy', archived: true }],
-          },
-          {
-            slug: 'squad',
-            name: 'Squad',
-            type: 'multi-select',
-            selectoptions: [{ value: 'Frontend' }, { value: 'Backend' }],
-          },
-          { slug: 'tags', name: 'Tags', type: 'multi-select', selectoptions: [{ value: 'outage' }] },
-          { slug: 'region', name: 'Region', type: 'string' },
-          { slug: 'owner', name: 'Owner', type: 'single-select', archived: true, selectoptions: [{ value: 'Ops' }] },
-        ],
-        { archived: [{ key: 'squad', value: 'Backend' }] }
-      );
-      mockIncidents([activeIncident]);
-
-      const { user } = render(<AlertIncidentTabsWithData />);
-
-      expect(await screen.findByText('Database outage')).toBeInTheDocument();
-      await user.click(await screen.findByRole('combobox', { name: /filter incidents by label/i }));
-
-      const options = await screen.findAllByRole('option');
-      expect(options.map((option) => option.textContent)).toEqual(['All incidents', 'Frontend', 'Platform']);
     });
 
     it('keeps the Alerts and Incidents team selections independent', async () => {

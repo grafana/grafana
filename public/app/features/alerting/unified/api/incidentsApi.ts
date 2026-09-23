@@ -46,7 +46,7 @@ interface GetFieldsResponse {
 
 /** One value of a select-type incident custom field, offered as a filter option. */
 export interface IncidentFilterOption {
-  fieldSlug: string;
+  slug: string;
   fieldName: string;
   value: string;
 }
@@ -58,9 +58,6 @@ interface IncidentFieldFilter {
 }
 
 const ACTIVE_INCIDENTS_QUERY = 'isdrill:false status:active';
-
-// The free-form `tags` field isn't a select, and its values aren't curated like the other labels.
-const EXCLUDED_FIELD_SLUGS = new Set(['tags']);
 
 // No escape form in the Incident lexer, so use the quote the value lacks.
 function quoteQueryValue(value: string) {
@@ -74,11 +71,9 @@ function isFilterableValue(value: string) {
 }
 
 function isSelectField(field: IncidentFieldDto) {
-  return (
-    !field.archived &&
-    (field.type === 'single-select' || field.type === 'multi-select') &&
-    !EXCLUDED_FIELD_SLUGS.has(field.slug.toLowerCase())
-  );
+  // The free-form `tags` field isn't curated like the other labels, so its values aren't offered.
+  const isTags = field.slug.toLowerCase() === 'tags';
+  return !field.archived && !isTags && (field.type === 'single-select' || field.type === 'multi-select');
 }
 
 function buildActiveIncidentsQuery(filter?: IncidentFieldFilter) {
@@ -99,12 +94,13 @@ function getFieldFilterOptions(field: IncidentFieldDto, archivedPairs: Set<strin
     if (archivedPairs.has(labelPairKey(field.slug, option.value))) {
       continue;
     }
-    options.push({ fieldSlug: field.slug, fieldName: field.name || field.slug, value: option.value });
+    options.push({ slug: field.slug, fieldName: field.name || field.slug, value: option.value });
   }
   return options;
 }
 
-function getIncidentFilterOptions(response: GetFieldsResponse): IncidentFilterOption[] {
+/** Exported for unit tests; consumers go through the `getIncidentFilterOptions` query. */
+export function getIncidentFilterOptions(response: GetFieldsResponse): IncidentFilterOption[] {
   const archivedPairs = new Set((response.archived ?? []).map(({ key, value }) => labelPairKey(key, value)));
   const selectFields = (response.fields ?? []).filter(isSelectField);
   return selectFields.flatMap((field) => getFieldFilterOptions(field, archivedPairs));

@@ -85,11 +85,11 @@ export function AlertIncidentTabs({
   // Grouped by field so a value shared across fields (e.g. "Frontend" as both team and squad) reads
   // unambiguously. A single field needs no header: most orgs only have `team`, and a lone header is noise.
   const incidentOptions = useMemo<TeamFilterOption[]>(() => {
-    const fieldCount = new Set(incidentFilterOptions.map((option) => option.fieldSlug)).size;
-    return incidentFilterOptions.map(({ fieldSlug, fieldName, value }) => ({
-      label: value,
-      value: encodeIncidentFilter({ slug: fieldSlug, value }),
-      group: fieldCount > 1 ? fieldName : undefined,
+    const fieldCount = new Set(incidentFilterOptions.map((option) => option.slug)).size;
+    return incidentFilterOptions.map((option) => ({
+      label: option.value,
+      value: encodeIncidentFilter(option),
+      group: fieldCount > 1 ? option.fieldName : undefined,
     }));
   }, [incidentFilterOptions]);
 
