@@ -50,12 +50,16 @@ import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { canGroupSelection } from '../layouts-shared/groupLayout';
 import { clearClipboard, getDashboardGridItemFromClipboard } from '../layouts-shared/paste';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
+import { type DashboardDropTarget } from '../types/DashboardDropTarget';
 import { type DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { type DashboardLayoutManager, type GroupTarget, type GroupingResult } from '../types/DashboardLayoutManager';
 import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { DashboardGridItem } from './DashboardGridItem';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
+import { CustomGridController, type GridItemDragInfo, type LayoutSnapshot } from './custom-grid/CustomGridController';
+import { CustomGridRenderer } from './custom-grid/CustomGridRenderer';
+import { isCustomGridEngineEnabled } from './custom-grid/isCustomGridEngineEnabled';
 import { findSpaceForNewPanel } from './findSpaceForNewPanel';
 import { RowActions } from './row-actions/RowActions';
 
@@ -65,11 +69,27 @@ interface DefaultGridLayoutManagerState extends SceneObjectState {
 
 export class DefaultGridLayoutManager
   extends SceneObjectBase<DefaultGridLayoutManagerState>
-  implements DashboardLayoutGrid
+  implements DashboardLayoutGrid, DashboardDropTarget
 {
   public static Component = DefaultGridLayoutManagerRenderer;
 
   public readonly isDashboardLayoutManager = true;
+
+  /**
+   * Only the new grid engine accepts drops directly. With the legacy grid, drops are handled by the
+   * parent row or tab, which appends the item to this grid.
+   */
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  public readonly isDashboardDropTarget = isCustomGridEngineEnabled() as true;
+
+  private _controller: CustomGridController | undefined;
+
+  public get controller(): CustomGridController {
+    if (!this._controller) {
+      this._controller = new CustomGridController(this.state.grid, this);
+    }
+    return this._controller;
+  }
 
   public static readonly descriptor: LayoutRegistryItem = {
     get name() {
@@ -133,12 +153,35 @@ export class DefaultGridLayoutManager
       this._subs.add(
         this.subscribeToEvent(SceneGridLayoutDragStartEvent, ({ payload: { evt, panel } }) => {
           const gridItem = panel.parent;
-          if (gridItem instanceof DashboardGridItem) {
-            getLayoutOrchestratorFor(this)?.startDraggingSync(evt, gridItem);
+          if (!(gridItem instanceof DashboardGridItem)) {
+            return;
           }
+
+          const orchestrator = getLayoutOrchestratorFor(this);
+          if (!orchestrator) {
+            return;
+          }
+
+          if (!this.isDashboardDropTarget) {
+            orchestrator.startDraggingSync(evt, gridItem);
+            return;
+          }
+
+          // Events from nested grids bubble through here, only handle our own items
+          if (gridItem.parent !== this.state.grid) {
+            return;
+          }
+
+          this.controller.startItemDrag(evt, gridItem);
+          orchestrator.startDraggingSync(evt, gridItem, {
+            onDrag: this.controller.onItemDrag,
+            onDragEnd: this.controller.endItemDrag,
+          });
         })
       );
     }
+
+    this._subs.add(() => this._controller?.deactivate());
 
     this._subs.add(
       this.state.grid.subscribeToState(({ children: newChildren }, { children: prevChildren }) => {
@@ -539,6 +582,38 @@ export class DefaultGridLayoutManager
     });
   }
 
+  public setIsDropTarget(isDropTarget: boolean) {
+    this.controller.setIsDropTarget(isDropTarget);
+  }
+
+  public onExternalDragOver(gridItem: SceneGridItemLike, evt: PointerEvent, info: GridItemDragInfo) {
+    this.controller.onForeignDrag(gridItem, evt, info);
+  }
+
+  public onExternalDragLeave() {
+    this.controller.clearForeignDrag();
+  }
+
+  public commitDragWithin() {
+    this.controller.commitDragWithin();
+  }
+
+  public getLayoutSnapshot(role: 'source' | 'destination'): LayoutSnapshot | null {
+    return role === 'source' ? this.controller.getSourceSnapshot() : this.controller.getDestinationSnapshot();
+  }
+
+  public draggedGridItemOutside(gridItem: SceneGridItemLike): void {
+    this.state.grid.setState({ children: this.state.grid.state.children.filter((child) => child !== gridItem) });
+    this.controller.setIsDropTarget(false);
+  }
+
+  public draggedGridItemInside(gridItem: SceneGridItemLike): void {
+    // The final position comes from the layout snapshot the move applies right after this
+    this.addGridItem(gridItem);
+    this.controller.clearForeignDrag();
+    this.controller.setIsDropTarget(false);
+  }
+
   public addGridItem(gridItem: SceneGridItemLike): void {
     if (!(gridItem instanceof DashboardGridItem)) {
       // If it's an AutoGridItem, convert it to DashboardGridItem
@@ -688,13 +763,17 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
       className={cx(styles.container, isEditing && styles.containerEditing)}
       data-testid={selectors.components.LayoutContainer(getTestIdForLayout(model))}
     >
-      {model.state.grid.Component && (
-        // #123563: Workaround, needs proper fixing downstream
-        // Force-remount when toggling between empty and populated. react-grid-layout caches its
-        // computed container height in internal state; without a fresh mount it stays sized to
-        // the last panel and overflows on top of the Add panel button below. Needs further investigation
-        // as part of #123563.
-        <model.state.grid.Component model={model.state.grid} key={children.length === 0 ? 'empty' : 'populated'} />
+      {model.isDashboardDropTarget ? (
+        <CustomGridRenderer grid={model.state.grid} controller={model.controller} dropTargetKey={model.state.key} />
+      ) : (
+        model.state.grid.Component && (
+          // #123563: Workaround, needs proper fixing downstream
+          // Force-remount when toggling between empty and populated. react-grid-layout caches its
+          // computed container height in internal state; without a fresh mount it stays sized to
+          // the last panel and overflows on top of the Add panel button below. Needs further investigation
+          // as part of #123563.
+          <model.state.grid.Component model={model.state.grid} key={children.length === 0 ? 'empty' : 'populated'} />
+        )
       )}
       {showCanvasActions && (
         <div className={styles.actionsWrapper}>

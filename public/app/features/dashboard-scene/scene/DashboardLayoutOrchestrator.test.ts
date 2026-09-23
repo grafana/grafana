@@ -122,6 +122,7 @@ describe('DashboardLayoutOrchestrator', () => {
           gridItem,
           originalIndex: 0,
           destinationIndex: 2,
+          layoutSnapshots: [],
         });
         expect(reorderAutoGridItemsMock).not.toHaveBeenCalled();
       } finally {

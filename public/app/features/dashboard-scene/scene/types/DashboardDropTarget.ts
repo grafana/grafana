@@ -1,5 +1,7 @@
 import { type SceneObject, type SceneGridItemLike } from '@grafana/scenes';
 
+import { type GridItemDragInfo, type LayoutSnapshot } from '../layout-default/custom-grid/CustomGridController';
+
 /** Data attribute used to identify auto grid items as drop targets */
 export const AUTO_GRID_ITEM_DROP_TARGET_ATTR = 'data-auto-grid-item-drop-target';
 
@@ -13,6 +15,17 @@ export interface DashboardDropTarget extends SceneObject {
   draggedGridItemInside?(gridItem: SceneGridItemLike, position?: number): void;
   /** Set the position where a placeholder should be shown for external drops */
   setDropPosition?(position: number | null): void;
+  /** Called on every pointer move while a grid item from another layout is dragged over this target */
+  onExternalDragOver?(gridItem: SceneGridItemLike, evt: PointerEvent, info: GridItemDragInfo): void;
+  /** Called when a grid item from another layout is no longer dragged over this target */
+  onExternalDragLeave?(): void;
+  /** Commits a drag that started and ended in this target */
+  commitDragWithin?(gridItem: SceneGridItemLike): void;
+  /**
+   * Positions of this target's items before and after a cross-layout move, applied on top of the
+   * move itself so the drop lands exactly where it was previewed and undo restores the old layout.
+   */
+  getLayoutSnapshot?(role: 'source' | 'destination'): LayoutSnapshot | null;
 }
 
 export function isDashboardDropTarget(scene: SceneObject): scene is DashboardDropTarget {

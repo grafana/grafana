@@ -26,7 +26,11 @@ import { getDefaultVizPanel, getLayoutForObject } from '../utils/utils';
 import { DashboardScene } from './DashboardScene';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
+import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { type DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { type GridItemDragInfo, type LayoutSnapshot } from './layout-default/custom-grid/CustomGridController';
+import { autoGridItemSizeToGridSize } from './layout-default/custom-grid/gridMath';
+import { isCustomGridEngineEnabled } from './layout-default/custom-grid/isCustomGridEngineEnabled';
 import { type RowItem } from './layout-rows/RowItem';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabItem } from './layout-tabs/TabItem';
@@ -114,6 +118,8 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   private _dropNewItemPointerUpHandler: ((evt: PointerEvent) => void) | null = null;
   /** Layout-supplied callbacks for the grid item drag currently in progress, if any */
   private _dragCallbacks: GridItemDragCallbacks | null = null;
+  /** Grab offset and custom grid size of the dragged grid item, for targets that preview the drop */
+  private _dragInfo: GridItemDragInfo | null = null;
 
   public constructor() {
     super({});
@@ -160,6 +166,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
     // Capture the offset from cursor to item's top-left corner
     this._captureDragOffset(evt.clientX, evt.clientY, gridItem);
+    this._dragInfo = this._captureDragInfo(gridItem);
 
     document.body.addEventListener('pointermove', this._onPointerMove);
     // Use capture phase to ensure we receive the event even if something calls stopPropagation
@@ -209,16 +216,29 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       // position (no-op for non-AutoGrid sources).
       this._commitSameLayoutReorder(sourceDropTarget, gridItem);
     } else if (gridItem && sourceDropTarget && effectiveDropTarget && sourceDropTarget !== effectiveDropTarget) {
-      // Defer is needed so the legacy grid's own native drag-stop handling finishes first.
-      setTimeout(() => {
+      const layoutSnapshots = [
+        sourceDropTarget.getLayoutSnapshot?.('source'),
+        effectiveDropTarget.getLayoutSnapshot?.('destination'),
+      ].filter((snapshot): snapshot is LayoutSnapshot => !!snapshot);
+
+      const move = () =>
         moveGridItem({
           source: sourceDropTarget,
           destination: effectiveDropTarget,
           gridItem,
           originalIndex: sourceOriginalIndex,
           destinationIndex: dropPosition ?? undefined,
+          layoutSnapshots,
         });
-      });
+
+      if (isCustomGridEngineEnabled()) {
+        // Moving before the source resets its drag state means the item never flashes back into
+        // its old spot, and the destination swaps its placeholder for the real item in one go.
+        move();
+      } else {
+        // Defer is needed so the legacy grid's own native drag-stop handling finishes first.
+        setTimeout(move);
+      }
     } else if (!gridItem) {
       const warningMessage = 'No grid item to drag';
       console.warn(warningMessage);
@@ -234,6 +254,9 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     const dragCallbacks = this._dragCallbacks;
     this._dragCallbacks = null;
     dragCallbacks?.onDragEnd?.();
+    const dropTargets: Array<DashboardDropTarget | null> = [lastDropTarget, effectiveDropTarget];
+    new Set(dropTargets).forEach((target) => target?.onExternalDragLeave?.());
+    this._dragInfo = null;
 
     document.body.removeEventListener('pointermove', this._onPointerMove);
     document.body.removeEventListener('pointerup', this._stopDraggingSync, true);
@@ -261,6 +284,11 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     sourceDropTarget: DashboardDropTarget | null,
     gridItem: SceneGridItemLike | undefined
   ): void {
+    if (gridItem && sourceDropTarget?.commitDragWithin) {
+      sourceDropTarget.commitDragWithin(gridItem);
+      return;
+    }
+
     if (!(sourceDropTarget instanceof AutoGridLayoutManager) || !gridItem || !(gridItem instanceof AutoGridItem)) {
       return;
     }
@@ -917,6 +945,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       // Clear drop position from previous target
       this._clearDropPosition();
       this._lastDropTarget?.setIsDropTarget?.(false);
+      this._lastDropTarget?.onExternalDragLeave?.();
       this._lastDropTarget = dropTarget;
 
       if (dropTarget !== this._sourceDropTarget) {
@@ -924,8 +953,36 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       }
     }
 
+    // Targets that preview the drop themselves (the custom grid) get the raw pointer position
+    const gridItem = this.state.draggingGridItem?.resolve();
+    if (dropTarget !== this._sourceDropTarget && gridItem && this._dragInfo && dropTarget.onExternalDragOver) {
+      dropTarget.onExternalDragOver(gridItem, evt, this._dragInfo);
+    }
+
     // Update drop position for AutoGrid targets
     this._updateDropPosition(evt.clientX, evt.clientY, dropTarget);
+  }
+
+  private _captureDragInfo(gridItem: SceneGridItemLike): GridItemDragInfo {
+    const offset = { offsetX: this._dragOffsetX, offsetY: this._dragOffsetY };
+
+    if (gridItem instanceof DashboardGridItem) {
+      return { ...offset, gridSize: { w: gridItem.state.width ?? 12, h: gridItem.state.height ?? 8 } };
+    }
+
+    // Approximate the custom grid size from how the item is currently displayed in its auto grid
+    const itemEl = gridItem instanceof AutoGridItem ? gridItem.containerRef.current : null;
+    const autoGridEl = itemEl?.closest<HTMLElement>(`[${DASHBOARD_DROP_TARGET_KEY_ATTR}]`);
+    if (itemEl && autoGridEl) {
+      const itemRect = itemEl.getBoundingClientRect();
+      const columnGap = parseFloat(getComputedStyle(autoGridEl).columnGap) || 0;
+      return {
+        ...offset,
+        gridSize: autoGridItemSizeToGridSize(itemRect, { width: autoGridEl.clientWidth, columnGap }),
+      };
+    }
+
+    return { ...offset, gridSize: { w: 12, h: 8 } };
   }
 
   private _updateDropPosition(clientX: number, clientY: number, dropTarget: DashboardDropTarget): void {
@@ -1025,7 +1082,14 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       return null;
     }
 
-    return this._findDropTargetByKey(key);
+    const dropTarget = this._findDropTargetByKey(key);
+
+    // The row or tab around the source grid (e.g. its header) is not a different drop target
+    if (dropTarget && 'layout' in dropTarget.state && dropTarget.state.layout === this._sourceDropTarget) {
+      return null;
+    }
+
+    return dropTarget;
   }
 
   private _findDropTargetByKey(key: string): DashboardDropTarget | null {

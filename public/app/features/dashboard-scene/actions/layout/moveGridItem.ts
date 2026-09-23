@@ -2,6 +2,7 @@ import { type SceneGridItemLike, VizPanel } from '@grafana/scenes';
 
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
+import { type LayoutSnapshot } from '../../scene/layout-default/custom-grid/CustomGridController';
 import { type DashboardDropTarget } from '../../scene/types/DashboardDropTarget';
 import { moveElement } from '../element/moveElement';
 
@@ -11,6 +12,8 @@ interface MoveGridItemProps {
   gridItem: SceneGridItemLike;
   originalIndex: number | null;
   destinationIndex?: number;
+  /** Positions to apply on top of the move, so custom grids land exactly where the drop was previewed */
+  layoutSnapshots?: LayoutSnapshot[];
 }
 
 /**
@@ -22,6 +25,7 @@ export function moveGridItem({
   gridItem,
   originalIndex,
   destinationIndex,
+  layoutSnapshots = [],
 }: MoveGridItemProps): void {
   if (!(gridItem instanceof AutoGridItem || gridItem instanceof DashboardGridItem)) {
     return;
@@ -44,6 +48,7 @@ export function moveGridItem({
       }
       source.draggedGridItemOutside?.(currentWrapper);
       destination.draggedGridItemInside?.(currentWrapper, destinationIndex);
+      layoutSnapshots.forEach(({ target, after }) => target.applyLayout(after));
     },
     undo: () => {
       const currentWrapper = panel.parent;
@@ -52,6 +57,7 @@ export function moveGridItem({
       }
       destination.draggedGridItemOutside?.(currentWrapper);
       source.draggedGridItemInside?.(currentWrapper, originalIndex ?? undefined);
+      layoutSnapshots.forEach(({ target, before }) => target.applyLayout(before));
     },
   });
 }

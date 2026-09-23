@@ -398,6 +398,7 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-draggable": "4.5.0",
+    "react-grid-layout-v2": "npm:react-grid-layout@2.2.4",
     "react-highlight-words": "0.21.0",
     "react-hook-form": "^7.49.2",
     "react-i18next": "^17.0.9",
