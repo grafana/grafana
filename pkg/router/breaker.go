@@ -91,6 +91,11 @@ func breakerOutcome(req *http.Request, status int) error {
 // trial cap) skips h entirely and fails fast with a local 503 -- no dial
 // attempted.
 func serveThroughBreaker(cb *gobreaker.CircuitBreaker[struct{}], h http.Handler, w http.ResponseWriter, req *http.Request) {
+	// A handler spanning multiple destinations must not also share a group-wide breaker.
+	if _, ownsBreakers := h.(interface{ managesCircuitBreaking() }); ownsBreakers {
+		h.ServeHTTP(w, req)
+		return
+	}
 	_, err := cb.Execute(func() (struct{}, error) {
 		rec := newStatusRecorder(w)
 		h.ServeHTTP(rec, req)

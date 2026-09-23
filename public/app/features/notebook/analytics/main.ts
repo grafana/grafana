@@ -21,6 +21,14 @@ import {
   type NotebookEditSessionSource,
   type NotebookEditSessionStartedProperties,
   type NotebookEntryPoint,
+  type NotebookExportedProperties,
+  type NotebookExportDestination,
+  type NotebookExportSource,
+  type NotebookLinkCopiedProperties,
+  type NotebookLinkCopySource,
+  type NotebookListFilteredProperties,
+  type NotebookListFilterState,
+  type NotebookListFilterType,
   type NotebookLoadedProperties,
   type NotebookNewStartedProperties,
 } from './types';
@@ -60,6 +68,15 @@ const createCellAddedFromAddToNotebookEvent = createNotebookEvent<NotebookCellAd
 
 /** Fired on each autosave error, never on success. A save still in flight has no outcome to report. */
 const createAutosaveFailedEvent = createNotebookEvent<NotebookAutosaveFailedProperties>('autosave_failed');
+
+/** Fired once an export action actually completed: a copy that landed, or a download. */
+const createExportedEvent = createNotebookEvent<NotebookExportedProperties>('exported');
+
+/** Fired once a copy-link click actually put the link on the clipboard. */
+const createLinkCopiedEvent = createNotebookEvent<NotebookLinkCopiedProperties>('link_copied');
+
+/** Fired once per committed filter change on the notebooks list, as the change commits. */
+const createListFilteredEvent = createNotebookEvent<NotebookListFilteredProperties>('list_filtered');
 
 /**
  * Fired when an "Add to notebook" submit fails. Nothing was added and nothing was created.
@@ -137,6 +154,18 @@ export const NotebookAnalytics = {
 
   autosaveFailed(notebookUid: string, reason: NotebookAutosaveFailedReason, attempt: number): void {
     createAutosaveFailedEvent({ notebookUid, reason, attempt });
+  },
+
+  exported(notebookUid: string, destination: NotebookExportDestination, source: NotebookExportSource): void {
+    createExportedEvent({ notebookUid, destination, source });
+  },
+
+  linkCopied(notebookUid: string, source: NotebookLinkCopySource): void {
+    createLinkCopiedEvent({ notebookUid, source });
+  },
+
+  listFiltered(filterType: NotebookListFilterType, filters: NotebookListFilterState): void {
+    createListFilteredEvent({ filterType, ...filters });
   },
 
   cellAddedFromAddToNotebook(

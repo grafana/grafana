@@ -141,6 +141,16 @@ describe('NotebookDocumentHeader', () => {
     expect(onTagsChange).toHaveBeenCalledWith(['slo']);
   });
 
+  // react-select reports the last removal as `null` rather than an empty array; SelectBase normalizes
+  // that to [] for a multi-select before it ever reaches TagFilter, so this must not throw.
+  it('removes the only remaining tag without throwing', async () => {
+    const { user, onTagsChange } = setup({ isEditing: true, tags: ['latency'] });
+
+    await user.click(screen.getByRole('button', { name: 'Remove latency' }));
+
+    expect(onTagsChange).toHaveBeenCalledWith([]);
+  });
+
   // Left exactly as typed, as TagsInput leaves a dashboard's tags: no trim, no case folding. A tag is
   // the string the user chose, and rewriting it here would also rewrite the ones already on the
   // notebook, which arrive through this same callback.

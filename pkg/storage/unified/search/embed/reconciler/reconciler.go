@@ -1,5 +1,5 @@
 // Package reconciler keeps the vector index in sync with ongoing
-// dashboard writes. Each cycle drains an in-memory dedup map of watch
+// resource writes. Each cycle drains an in-memory dedup map of watch
 // events keyed by (group, resource, namespace, name) — enqueue keeps only
 // the highest RV per resource, so a replayed older event can't overwrite
 // a newer one before it's processed — and then sweeps everything written
@@ -22,6 +22,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
@@ -85,18 +86,14 @@ func pendingKey(group, resource, namespace, name string) string {
 	return group + "/" + resource + "/" + namespace + "/" + name
 }
 
-// builderKey identifies a builder by both group and resource so the
-// reconciler supports multiple builders sharing a group (or, in
-// principle, the same resource name under different groups).
-func builderKey(group, resource string) string {
-	return group + "/" + resource
-}
-
 type Options struct {
-	Storage           resource.StorageBackend
-	VectorBackend     vector.VectorBackend
-	BatchEmbedder     *embedder.BatchEmbedder
-	Builders          []embed.Builder
+	Storage       resource.StorageBackend
+	VectorBackend vector.VectorBackend
+	BatchEmbedder *embedder.BatchEmbedder
+	Builders      []embed.Builder
+	// BuilderProvider takes precedence over Builders and is read only at runtime,
+	// after the initial manifests have loaded.
+	BuilderProvider   embed.BuilderProvider
 	Backfiller        Backfiller
 	Interval          time.Duration
 	LockRetryInterval time.Duration
@@ -118,7 +115,8 @@ type Reconciler struct {
 	storage                resource.StorageBackend
 	vectorBackend          vector.VectorBackend
 	batchEmbedder          *embedder.BatchEmbedder
-	builders               map[string]embed.Builder
+	builders               embed.BuilderSnapshot
+	builderProvider        embed.BuilderProvider
 	backfiller             Backfiller
 	interval               time.Duration
 	lockRetryInterval      time.Duration
@@ -136,8 +134,9 @@ type Reconciler struct {
 	pending   map[string]*pendingEvent
 
 	// Only ever touched from the sweep, which runs on Run's goroutine.
-	lastSweepSinceRv int64
-	lastSweepAt      time.Time
+	lastSweepSinceRv  int64
+	lastSweepAt       time.Time
+	lastSweepBuilders embed.BuilderSnapshot
 
 	// Shared provider failures pause both watch processing and sweeps so
 	// a backlog cannot turn a quota rejection into a burst of retries.
@@ -152,8 +151,8 @@ type Reconciler struct {
 	exhaustedMu sync.Mutex
 	exhausted   map[string]exhaustedEvent
 
-	// ensuredResources tracks provisioned resources (have partition leaf and backfill job)
-	ensuredResources map[string]struct{}
+	// Keep the catalog partition key: it need not match the logical resource name.
+	ensuredResources map[schema.GroupResource]string
 }
 
 // New constructs the embedding reconciler.
@@ -162,16 +161,16 @@ type Reconciler struct {
 // that has never checkpointed stays inert: the cursor is seeded from the first
 // delivered write, and the sweep does nothing until it is.
 func New(opts Options) (*Reconciler, error) {
-	builders := make(map[string]embed.Builder, len(opts.Builders))
-	if len(opts.Builders) == 0 {
+	builders := make(map[schema.GroupResource]struct{}, len(opts.Builders))
+	if len(opts.Builders) == 0 && opts.BuilderProvider == nil {
 		return nil, fmt.Errorf("reconciler: no builders")
 	}
 	for _, b := range opts.Builders {
-		k := builderKey(b.Group(), b.Resource())
+		k := schema.GroupResource{Group: b.Group(), Resource: b.Resource()}
 		if _, dup := builders[k]; dup {
 			return nil, fmt.Errorf("reconciler: duplicate builder for %s", k)
 		}
-		builders[k] = b
+		builders[k] = struct{}{}
 	}
 	if opts.Interval <= 0 {
 		opts.Interval = DefaultInterval
@@ -183,7 +182,8 @@ func New(opts Options) (*Reconciler, error) {
 		storage:                opts.Storage,
 		vectorBackend:          opts.VectorBackend,
 		batchEmbedder:          opts.BatchEmbedder,
-		builders:               builders,
+		builders:               embed.NewBuilderSnapshot(opts.Builders),
+		builderProvider:        opts.BuilderProvider,
 		backfiller:             opts.Backfiller,
 		interval:               opts.Interval,
 		lockRetryInterval:      opts.LockRetryInterval,
@@ -192,9 +192,23 @@ func New(opts Options) (*Reconciler, error) {
 		metrics:                opts.Metrics,
 		pending:                make(map[string]*pendingEvent),
 		exhausted:              make(map[string]exhaustedEvent),
-		ensuredResources:       make(map[string]struct{}),
+		ensuredResources:       make(map[schema.GroupResource]string),
 		folderTitleResolver:    foldertitle.NewResolver(opts.Storage),
 	}, nil
+}
+
+func (s *Reconciler) builderSnapshot() embed.BuilderSnapshot {
+	if s.builderProvider != nil {
+		return s.builderProvider.Snapshot()
+	}
+	return s.builders
+}
+
+func (s *Reconciler) hasBuilder(group, resource string) bool {
+	if s.builderProvider != nil {
+		return s.builderProvider.Has(group, resource)
+	}
+	return s.builders.Has(group, resource)
 }
 
 func (s *Reconciler) UseBroadcaster(b resource.Broadcaster[*resource.WrittenEvent]) {
@@ -207,7 +221,7 @@ func (s *Reconciler) enqueue(ev *pendingEvent) {
 	if ev == nil || ev.namespace == "" {
 		return
 	}
-	if _, ok := s.builders[builderKey(ev.group, ev.resource)]; !ok {
+	if !s.hasBuilder(ev.group, ev.resource) {
 		return
 	}
 	k := pendingKey(ev.group, ev.resource, ev.namespace, ev.name)
@@ -246,9 +260,10 @@ func (s *Reconciler) pendingLen() int {
 }
 
 func (s *Reconciler) Run(ctx context.Context) error {
-	resources := make([]string, 0, len(s.builders))
-	for r := range s.builders {
-		resources = append(resources, r)
+	builders := s.builderSnapshot().Builders()
+	resources := make([]string, 0, len(builders))
+	for _, b := range builders {
+		resources = append(resources, b.Group()+"/"+b.Resource())
 	}
 	s.log.Info("reconciler: starting",
 		"model", s.batchEmbedder.Model(),
@@ -415,21 +430,22 @@ func (s *Reconciler) consumeWatchEvents(ctx context.Context, ch <-chan *resource
 // job on its first write event, once per process (idempotent via
 // ensuredResources and the DB row). stoppingRV is the event's RV, bounding the
 // backfill of pre-existing rows for that resource.
-func (s *Reconciler) ensureResourceInitialized(ctx context.Context, b embed.Builder, stoppingRV int64) error {
-	r := b.Resource()
-	if _, ok := s.ensuredResources[r]; ok {
-		return nil
+func (s *Reconciler) ensureResourceInitialized(ctx context.Context, b embed.Builder, stoppingRV int64) (string, error) {
+	gr := schema.GroupResource{Group: b.Group(), Resource: b.Resource()}
+	if partition, ok := s.ensuredResources[gr]; ok {
+		return partition, nil
 	}
 
-	if err := s.vectorBackend.EnsureResourcePartition(ctx, r); err != nil {
-		return fmt.Errorf("ensure partition for %q: %w", r, err)
+	collection, err := s.vectorBackend.EnsureCollection(ctx, gr.Group, gr.Resource, false)
+	if err != nil {
+		return "", fmt.Errorf("ensure collection for %q: %w", gr, err)
 	}
 
-	if err := s.vectorBackend.CreateBackfillJob(ctx, s.batchEmbedder.Model(), r, stoppingRV, b.Version()); err != nil {
-		return fmt.Errorf("create backfill job for %q: %w", r, err)
+	if err := s.vectorBackend.CreateBackfillJob(ctx, s.batchEmbedder.Model(), collection.PartitionKey, stoppingRV, b.Version()); err != nil {
+		return "", fmt.Errorf("create backfill job for %q: %w", gr, err)
 	}
-	s.ensuredResources[r] = struct{}{}
-	return nil
+	s.ensuredResources[gr] = collection.PartitionKey
+	return collection.PartitionKey, nil
 }
 
 // checkpointRV canonicalizes the persisted checkpoint to snowflake so it
@@ -450,6 +466,12 @@ func (s *Reconciler) sweep(ctx context.Context) {
 	if time.Now().Before(s.embedRetryAt) {
 		return
 	}
+	snapshot := s.builderSnapshot()
+	builders := snapshot.Builders()
+	if len(builders) == 0 {
+		s.lastSweepBuilders = snapshot
+		return
+	}
 	sinceRv, err := s.checkpointRV(ctx)
 	if err != nil {
 		s.log.Error("reconciler: sweep read checkpoint", "err", err)
@@ -465,22 +487,22 @@ func (s *Reconciler) sweep(ctx context.Context) {
 		return
 	}
 
-	// A repeat sweep at an unchanged cursor lets the backend skip its
-	// lookback window: writes in flight at sinceRv have committed by now.
-	var calledAt *time.Time
-	if s.lastSweepSinceRv == sinceRv && !s.lastSweepAt.IsZero() {
-		calledAt = new(s.lastSweepAt)
-	}
 	startedAt := time.Now()
 
 	// One cursor for every builder, so it can only move to the lowest RV
 	// all of them proved.
 	target := int64(math.MaxInt64)
-	for _, b := range s.builders {
+	for _, b := range builders {
 		if ctx.Err() != nil {
 			return
 		}
-		proven, complete := s.reconcileSince(ctx, b, sinceRv, calledAt)
+		// Only skip the lookback if this resource participated in the previous
+		// completed sweep; a newly enrolled resource has not covered it yet.
+		var calledAt *time.Time
+		if s.lastSweepSinceRv == sinceRv && !s.lastSweepAt.IsZero() && s.lastSweepBuilders.Has(b.Group(), b.Resource()) {
+			calledAt = new(s.lastSweepAt)
+		}
+		proven, complete := s.reconcileSince(ctx, b, snapshot, sinceRv, calledAt)
 		if !complete {
 			return
 		}
@@ -490,6 +512,7 @@ func (s *Reconciler) sweep(ctx context.Context) {
 	}
 	s.lastSweepSinceRv = sinceRv
 	s.lastSweepAt = startedAt
+	s.lastSweepBuilders = snapshot
 	if target > sinceRv {
 		if err := s.vectorBackend.SetLatestRV(ctx, target); err != nil {
 			s.log.Error("reconciler: sweep advance checkpoint",
@@ -511,7 +534,7 @@ func (s *Reconciler) sweep(ctx context.Context) {
 // RVs than rows already seen: advancing to the highest RV seen so far
 // would claim rows the walk has not reached, and an interrupted walk
 // would leave them un-embedded with the cursor already past them.
-func (s *Reconciler) reconcileSince(ctx context.Context, builder embed.Builder, sinceRv int64, lastCalledAt *time.Time) (int64, bool) {
+func (s *Reconciler) reconcileSince(ctx context.Context, builder embed.Builder, snapshot embed.BuilderSnapshot, sinceRv int64, lastCalledAt *time.Time) (int64, bool) {
 	logger := s.log.FromContext(ctx)
 	key := resource.NamespacedResource{
 		Group:    builder.Group(),
@@ -542,7 +565,7 @@ func (s *Reconciler) reconcileSince(ctx context.Context, builder embed.Builder, 
 	}()
 
 	flush := func(batch []*pendingEvent) bool {
-		batchLowestFailed, batchFailed, batchSuccess, abort := s.processEvents(ctx, batch)
+		batchLowestFailed, batchFailed, batchSuccess, abort := s.processEvents(ctx, batch, snapshot)
 		failed = append(failed, batchFailed...)
 		if abort {
 			return false
@@ -655,6 +678,17 @@ func (s *Reconciler) processBatch(ctx context.Context, batch []*pendingEvent) {
 	if len(batch) == 0 {
 		return
 	}
+	snapshot := s.builderSnapshot()
+	selected := batch[:0]
+	for _, ev := range batch {
+		if snapshot.Has(ev.group, ev.resource) {
+			selected = append(selected, ev)
+		}
+	}
+	batch = selected
+	if len(batch) == 0 {
+		return
+	}
 	logger := s.log.FromContext(ctx)
 
 	sinceRv, err := s.checkpointRV(ctx)
@@ -684,7 +718,7 @@ func (s *Reconciler) processBatch(ctx context.Context, batch []*pendingEvent) {
 		return
 	}
 
-	_, failed, successes, abort := s.processEvents(ctx, batch)
+	_, failed, successes, abort := s.processEvents(ctx, batch, snapshot)
 	for _, ev := range failed {
 		s.enqueue(ev)
 	}
@@ -731,7 +765,7 @@ func (s *Reconciler) seedCheckpoint(ctx context.Context, batch []*pendingEvent) 
 // failed then includes the unprocessed remainder, and the caller must
 // enqueue it and leave the checkpoint unchanged.
 // For new resources, it ensures a partition and backfill job is created
-func (s *Reconciler) processEvents(ctx context.Context, batch []*pendingEvent) (lowestFailedRv int64, failed, successes []*pendingEvent, abort bool) {
+func (s *Reconciler) processEvents(ctx context.Context, batch []*pendingEvent, snapshot embed.BuilderSnapshot) (lowestFailedRv int64, failed, successes []*pendingEvent, abort bool) {
 	logger := s.log.FromContext(ctx)
 	lowestFailedRv = math.MaxInt64
 	unfinished := func(start int) []*pendingEvent {
@@ -746,7 +780,7 @@ func (s *Reconciler) processEvents(ctx context.Context, batch []*pendingEvent) (
 		if ctx.Err() != nil {
 			return lowestFailedRv, unfinished(i), successes, true
 		}
-		builder, ok := s.builders[builderKey(ev.group, ev.resource)]
+		builder, ok := snapshot.Get(ev.group, ev.resource)
 		if !ok {
 			continue
 		}
@@ -756,20 +790,20 @@ func (s *Reconciler) processEvents(ctx context.Context, batch []*pendingEvent) (
 		ev.attempts++
 
 		// Ensure partition + backfill job before processing the event.
-		if err := s.ensureResourceInitialized(ctx, builder, ev.rv); err != nil {
+		partition, err := s.ensureResourceInitialized(ctx, builder, ev.rv)
+		if err != nil {
 			logger.Error("reconciler: ensure resource for event",
 				"group", ev.group, "resource", ev.resource, "err", err)
 			lowestFailedRv = s.recordFailure(ev, &failed, lowestFailedRv, logger)
 			continue
 		}
 
-		if err := s.processEvent(ctx, builder, ev); err != nil {
+		if err := s.processEvent(ctx, builder, partition, ev); err != nil {
 			if ctx.Err() != nil {
 				ev.attempts--
 				return lowestFailedRv, unfinished(i), successes, true
 			}
-			var retryErr *embedder.RetryableError
-			if errors.As(err, &retryErr) {
+			if retryErr, ok := errors.AsType[*embedder.RetryableError](err); ok {
 				s.backoffEmbedding(ctx, ev, retryErr)
 				lowestFailedRv = s.recordFailure(ev, &failed, lowestFailedRv, logger)
 				return lowestFailedRv, unfinished(i + 1), successes, true
@@ -798,7 +832,7 @@ func (s *Reconciler) processEvents(ctx context.Context, batch []*pendingEvent) (
 //
 // On a write, only panels whose content changed are re-embedded;
 // unchanged panels stay and stale ones are deleted.
-func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev *pendingEvent) (retErr error) {
+func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, partition string, ev *pendingEvent) (retErr error) {
 	ctx, span := tracer.Start(ctx, "unified.reconciler.processEvent")
 	defer span.End()
 	span.SetAttributes(
@@ -826,7 +860,7 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 
 	switch ev.action {
 	case resourcepb.WatchEvent_DELETED:
-		if _, _, err := s.vectorBackend.DeleteRows(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), vector.DeleteSelector{UIDs: []string{ev.name}}); err != nil {
+		if _, _, err := s.vectorBackend.DeleteRows(ctx, ev.namespace, s.batchEmbedder.Model(), partition, vector.DeleteSelector{UIDs: []string{ev.name}}); err != nil {
 			statusLabel = "delete_error"
 			return err
 		}
@@ -860,6 +894,15 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 	}
 
 	items, err := builder.Extract(ctx, key, ev.value, folderTitle)
+	if errors.Is(err, embed.ErrSkip) {
+		// Preserved vectors must use the current folder for search authorization.
+		if err := s.vectorBackend.UpdateFolder(ctx, ev.namespace, s.batchEmbedder.Model(), partition, ev.name, embed.FolderUIDFromValue(ev.value)); err != nil {
+			statusLabel = "update_folder_error"
+			return fmt.Errorf("update skipped resource folder: %w", err)
+		}
+		statusLabel = "skipped_extract"
+		return nil
+	}
 	if err != nil {
 		statusLabel = "extract_error"
 		return fmt.Errorf("extract: %w", err)
@@ -874,7 +917,7 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 	// drop everything stored under this UID rather than leaving orphans.
 	if len(items) == 0 {
 		s.log.Info("skipping empty extract", "namespace", ev.namespace, "group", ev.group, "resource", ev.resource, "name", ev.name)
-		if _, _, err := s.vectorBackend.DeleteRows(ctx, ev.namespace, model, builder.Resource(), vector.DeleteSelector{UIDs: []string{ev.name}}); err != nil {
+		if _, _, err := s.vectorBackend.DeleteRows(ctx, ev.namespace, model, partition, vector.DeleteSelector{UIDs: []string{ev.name}}); err != nil {
 			statusLabel = "delete_error"
 			return err
 		}
@@ -883,7 +926,7 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 
 	uid := items[0].UID
 
-	stored, storedFolder, err := s.vectorBackend.GetSubresourceContent(ctx, ev.namespace, model, builder.Resource(), uid)
+	stored, storedFolder, err := s.vectorBackend.GetSubresourceContent(ctx, ev.namespace, model, partition, uid)
 	if err != nil {
 		statusLabel = "get_content_error"
 		return fmt.Errorf("get stored content: %w", err)
@@ -929,7 +972,7 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 
 	var changed []vector.Vector
 	if len(toEmbed) > 0 {
-		changed, err = s.batchEmbedder.Embed(ctx, ev.namespace, builder.Resource(), ev.rv, builder.Version(), toEmbed)
+		changed, err = s.batchEmbedder.Embed(ctx, ev.namespace, partition, ev.rv, builder.Version(), toEmbed)
 		if err != nil {
 			statusLabel = "embed_error"
 			return fmt.Errorf("embed: %w", err)
@@ -939,7 +982,7 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 	// UpsertReplaceSubresources commits the stale-delete and the new
 	// inserts atomically — a failure mid-way leaves the dashboard in
 	// its previous self-consistent state.
-	if err := s.vectorBackend.UpsertReplaceSubresources(ctx, ev.namespace, model, builder.Resource(), uid, changed, nil, desired); err != nil {
+	if err := s.vectorBackend.UpsertReplaceSubresources(ctx, ev.namespace, model, partition, uid, changed, nil, desired); err != nil {
 		statusLabel = "upsert_error"
 		return fmt.Errorf("upsert: %w", err)
 	}

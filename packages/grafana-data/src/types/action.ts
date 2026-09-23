@@ -68,7 +68,7 @@ export const httpMethodOptions: SelectableValue[] = [
   { label: HttpRequestMethod.GET, value: HttpRequestMethod.GET },
 ];
 
-export const contentTypeOptions: SelectableValue[] = [
+export const contentTypeOptions: Array<SelectableValue<string>> = [
   { label: 'application/json', value: 'application/json' },
   { label: 'text/plain', value: 'text/plain' },
   { label: 'application/xml', value: 'application/xml' },

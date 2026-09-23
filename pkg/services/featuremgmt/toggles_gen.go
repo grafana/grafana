@@ -19,10 +19,6 @@ const (
 	// Support new streaming approach for loki (prototype, needs special loki build)
 	FlagLokiExperimentalStreaming = "lokiExperimentalStreaming"
 
-	// FlagFeatureHighlights
-	// Highlight Grafana Enterprise features
-	FlagFeatureHighlights = "featureHighlights"
-
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
@@ -102,6 +98,10 @@ const (
 	// FlagProvisioningUserAttribution
 	// Author Git Sync commits as the acting Grafana user
 	FlagProvisioningUserAttribution = "provisioning.userAttribution"
+
+	// FlagGrafanaFrontendLegacyFeatureToggleHandling
+	// Controls how the frontend handles reads of the legacy config.featureToggles map. One of "off", "log" (warn in the console once per toggle), "alert" (also raise a warning alert) or "block" (console only, and resolve every toggle to undefined).
+	FlagGrafanaFrontendLegacyFeatureToggleHandling = "grafana.frontendLegacyFeatureToggleHandling"
 
 	// FlagProvisioningPerformance
 	// Enables the synthetic 'test' provisioning job type for load and performance testing of the job queue and controllers
@@ -818,6 +818,10 @@ const (
 	// Load app manifest when loading plugin definitions
 	FlagApppluginsLoadAppManifest = "appplugins.loadAppManifest"
 
+	// FlagApppluginsLoadAppManifestAndKeepSettings
+	// Continue to expose settings when a manifest exists
+	FlagApppluginsLoadAppManifestAndKeepSettings = "appplugins.loadAppManifestAndKeepSettings"
+
 	// FlagApppluginsRegisterAPIServer
 	// Registers an API server for each backend app plugin exposing a settings endpoint
 	FlagApppluginsRegisterAPIServer = "appplugins.registerAPIServer"
@@ -881,10 +885,6 @@ const (
 	// FlagLokiAlignedQuerySplitting
 	// Aligns query splitting chunks with UTC midnight
 	FlagLokiAlignedQuerySplitting = "lokiAlignedQuerySplitting"
-
-	// FlagQueryFetchConfigFromSettingsService
-	// Enables the query service to fetch the configuration from the settings service
-	FlagQueryFetchConfigFromSettingsService = "queryFetchConfigFromSettingsService"
 
 	// FlagProfilesHeatmap
 	// Enables heatmap visualization support for Pyroscope profiles
@@ -982,6 +982,10 @@ const (
 	// Add support for Kubernetes reporting new APIs
 	FlagKubernetesReporting = "kubernetesReporting"
 
+	// FlagReportingLegacyServiceUsesK8SClient
+	// Redirect legacy report service to use the Kubernetes client wrapper
+	FlagReportingLegacyServiceUsesK8SClient = "reporting.legacyServiceUsesK8SClient"
+
 	// FlagReportingRedirectReportsToK8SApi
 	// Redirect legacy report CRUD API endpoints to the Kubernetes reporting API
 	FlagReportingRedirectReportsToK8SApi = "reporting.redirectReportsToK8SApi"
@@ -995,7 +999,7 @@ const (
 	FlagGrafanaOnDemandDiagnostics = "grafana.onDemandDiagnostics"
 
 	// FlagGrafanaFrontendLegacyAPIHandling
-	// Controls whether the frontend blocks calls to legacy /api/ endpoints
+	// Controls how the frontend handles calls to legacy /api/ endpoints. One of "off", "log" (warn on each call) or "block" (reject before sending).
 	FlagGrafanaFrontendLegacyAPIHandling = "grafana.frontendLegacyAPIHandling"
 
 	// FlagGrafanaOfrepRootUrl
@@ -1005,6 +1009,10 @@ const (
 	// FlagFeaturesBulkFlagEvalFiltering
 	// Filters bulk OFREP flag evaluations to public-metadata flags only
 	FlagFeaturesBulkFlagEvalFiltering = "features.bulkFlagEvalFiltering"
+
+	// FlagFeaturesLegacyOverrideLookupBypass
+	// Skips checking for flag overrides.
+	FlagFeaturesLegacyOverrideLookupBypass = "features.legacyOverrideLookupBypass"
 
 	// FlagGrafanaMultiTenantNavTree
 	// Builds the navigation tree client-side instead of reading it from /bootdata
@@ -1049,4 +1057,8 @@ const (
 	// FlagAlertingFolderHasRulesLabel
 	// Maintain the alerting.grafana.app/has-rules label on folders that contain Grafana-managed alert or recording rules, so folders holding rules can be queried by label selector
 	FlagAlertingFolderHasRulesLabel = "alerting.folderHasRulesLabel"
+
+	// FlagUnifiedStorageClientRequireCallerIdentity
+	// Fail unified storage calls that cannot carry the calling user's identity, instead of silently downgrading them to the service identity
+	FlagUnifiedStorageClientRequireCallerIdentity = "unifiedStorageClient.requireCallerIdentity"
 )

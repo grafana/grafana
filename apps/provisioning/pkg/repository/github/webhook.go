@@ -109,7 +109,7 @@ func (r *githubWebhookRepository) ProcessRequest(ctx context.Context, req *repos
 		var isFork *bool
 		var forkURL string
 		if headID, baseID := pr.GetHead().GetRepo().GetID(), pr.GetBase().GetRepo().GetID(); headID != 0 && baseID != 0 {
-			isFork = github.Ptr(headID != baseID)
+			isFork = new(headID != baseID)
 			if *isFork {
 				forkURL = pr.GetHead().GetRepo().GetHTMLURL()
 			}

@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/storage/unified/fieldpath"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -390,7 +391,7 @@ func (s *standardDocumentBuilder) extractDeclaredFields(provider SearchFieldsPro
 		if def.Path == "" {
 			continue
 		}
-		raw, err := extractPath(tmp.Object, def.Path)
+		raw, err := fieldpath.Extract(tmp.Object, def.Path)
 		if err != nil {
 			s.log.Warn("declared search field path failed to evaluate",
 				"group", gvr.Group, "version", gvr.Version, "resource", gvr.Resource,
@@ -474,8 +475,8 @@ func apiVersionOf(tmp *unstructured.Unstructured) string {
 	// apiVersion is "<group>/<version>" for non-core resources and just
 	// "<version>" for core. The Group is authoritative from the key; we
 	// only need the version segment.
-	if i := strings.IndexByte(av, '/'); i >= 0 {
-		return av[i+1:]
+	if _, after, ok := strings.Cut(av, "/"); ok {
+		return after
 	}
 	return av
 }
@@ -593,13 +594,23 @@ const (
 	SEARCH_FIELD_DELETED_RV    = "deleted_rv"
 )
 
-// Range operators for Requirement.Operator, which otherwise carries a k8s
-// selection operator. That set names only gt and lt. Sending these as operator
-// strings is what makes an older search server answer with a bad request rather
-// than drop the bound.
+// Non-standard operators for Requirement.Operator, which otherwise carries a
+// k8s selection operator. Sending these as operator strings is what makes an
+// older search server answer with a bad request rather than drop the query.
+//
+// Regex operators match whole values on filterable, case-preserving keyword fields.
+// Supported operations are literals, character classes, grouping, alternation,
+// and greedy repetition. Equivalent spellings, including hex escapes and POSIX
+// classes, are accepted. Successive quantifiers are unsupported.
+// A leading (?i) folds value case; dot matches newlines. Missing fields or labels
+// are evaluated as empty values. Flattened labels split literal-key=value at the
+// first "=", keeping the key case-sensitive; keys containing "=" are ambiguous.
+// Each dictionary expansion permits 10,000 inspected terms and 10,000 matches.
 const (
 	OperatorGreaterThanOrEqual selection.Operator = "gte"
 	OperatorLessThanOrEqual    selection.Operator = "lte"
+	OperatorRegex              selection.Operator = "regex"
+	OperatorNotRegex           selection.Operator = "notregex"
 )
 
 var standardSearchFieldsInit sync.Once

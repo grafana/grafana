@@ -345,6 +345,8 @@ func TestValidateOnDelete(t *testing.T) {
 		require.NoError(t, ValidateOnDelete(t.Context(), searcher, team))
 		require.NotNil(t, searcher.request)
 		assert.Equal(t, int64(1), searcher.request.Limit)
+		assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, searcher.request.ResultFormat)
+		assert.Equal(t, []string{resource.SEARCH_FIELD_NAME}, searcher.request.Fields)
 		assert.Equal(t, &resourcepb.ResourceKey{
 			Namespace: team.Namespace,
 			Group:     foldersv1.FolderResourceInfo.GroupResource().Group,
@@ -373,9 +375,21 @@ func TestValidateOnDelete(t *testing.T) {
 		assert.ErrorContains(t, err, "remove folder ownership before deleting the team")
 	})
 
-	t.Run("blocks when the search backend returns a row without total hits", func(t *testing.T) {
+	t.Run("blocks when the search backend returns a table row without total hits", func(t *testing.T) {
 		searcher := &deleteValidationSearchClient{response: &resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{Rows: []*resourcepb.ResourceTableRow{{}}},
+		}}
+
+		err := ValidateOnDelete(t.Context(), searcher, team)
+
+		require.Error(t, err)
+		assert.True(t, apierrors.IsConflict(err))
+	})
+
+	t.Run("blocks when the search backend returns a field-value row without total hits", func(t *testing.T) {
+		searcher := &deleteValidationSearchClient{response: &resourcepb.ResourceSearchResponse{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Rows:         []*resourcepb.ResourceSearchRow{{Key: &resourcepb.ResourceKey{Name: "folder-1"}}},
 		}}
 
 		err := ValidateOnDelete(t.Context(), searcher, team)
@@ -533,6 +547,21 @@ func TestValidateOnCreate_TitleUniqueness(t *testing.T) {
 		assert.True(t, apierrors.IsConflict(err), "expected a Conflict error, got %v", err)
 	})
 
+	t.Run("existing team returned as field values is rejected as conflict", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), requester)
+		client := &fakeTeamSearchClient{searchFunc: func(*resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+			return &resourcepb.ResourceSearchResponse{
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Rows: []*resourcepb.ResourceSearchRow{{
+					Key: &resourcepb.ResourceKey{Name: "other-uid"},
+				}},
+			}, nil
+		}}
+		err := ValidateOnCreate(ctx, client, newTeam, legacy.NoopExternalGroupReconciler{})
+		require.Error(t, err)
+		assert.True(t, apierrors.IsConflict(err), "expected a Conflict error, got %v", err)
+	})
+
 	t.Run("only self-match is not a conflict", func(t *testing.T) {
 		ctx := identity.WithRequester(context.Background(), requester)
 		// Dual-write can index the same team from both stores under its own name.
@@ -577,7 +606,8 @@ func TestValidateOnCreate_TitleUniqueness(t *testing.T) {
 		require.Len(t, client.lastReq.Options.Fields, 1)
 		assert.Equal(t, resource.SEARCH_FIELD_TITLE, client.lastReq.Options.Fields[0].Key)
 		assert.Equal(t, string(selection.DoubleEquals), client.lastReq.Options.Fields[0].Operator)
-		assert.Equal(t, []string{resource.SEARCH_FIELD_TITLE}, client.lastReq.Fields)
+		assert.Equal(t, []string{resource.SEARCH_FIELD_NAME}, client.lastReq.Fields)
+		assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, client.lastReq.ResultFormat)
 	})
 
 	t.Run("unparseable requester namespace is an internal error", func(t *testing.T) {

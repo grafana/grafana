@@ -177,6 +177,206 @@
         }
       }
     },
+    "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/globalrolebindings/search": {
+      "post": {
+        "tags": [
+          "Search"
+        ],
+        "description": "Search GlobalRoleBinding resources in a namespace.",
+        "operationId": "listGlobalRoleBindingSearchV0alpha1",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "workspace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "default"
+          }
+        ],
+        "requestBody": {
+          "description": "A SearchQuery describing what to match, sort and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A SearchResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.SearchResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/resourcepermissions/search": {
+      "post": {
+        "tags": [
+          "Search"
+        ],
+        "description": "Search ResourcePermission resources in a namespace.",
+        "operationId": "listResourcePermissionSearchV0alpha1",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "workspace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "default"
+          }
+        ],
+        "requestBody": {
+          "description": "A SearchQuery describing what to match, sort and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A SearchResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.SearchResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/rolebindings/search": {
+      "post": {
+        "tags": [
+          "Search"
+        ],
+        "description": "Search RoleBinding resources in a namespace.",
+        "operationId": "listRoleBindingSearchV0alpha1",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "workspace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "default"
+          }
+        ],
+        "requestBody": {
+          "description": "A SearchQuery describing what to match, sort and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A SearchResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.SearchResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/roles/search": {
+      "post": {
+        "tags": [
+          "Search"
+        ],
+        "description": "Search Role resources in a namespace.",
+        "operationId": "listRoleSearchV0alpha1",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "workspace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "default"
+          }
+        ],
+        "requestBody": {
+          "description": "A SearchQuery describing what to match, sort and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A SearchResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.SearchResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/searchExternalGroupMappings": {
       "post": {
         "tags": [
@@ -747,6 +947,56 @@
         }
       ]
     },
+    "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/serviceaccounts/search": {
+      "post": {
+        "tags": [
+          "Search"
+        ],
+        "description": "Search ServiceAccount resources in a namespace.",
+        "operationId": "listServiceAccountSearchV0alpha1",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "workspace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "default"
+          }
+        ],
+        "requestBody": {
+          "description": "A SearchQuery describing what to match, sort and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A SearchResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.SearchResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/serviceaccounts/{name}": {
       "get": {
         "tags": [
@@ -1292,6 +1542,56 @@
         ],
         "description": "Search TeamBinding resources in a namespace.",
         "operationId": "listTeamBindingSearchV0alpha1",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "workspace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "default"
+          }
+        ],
+        "requestBody": {
+          "description": "A SearchQuery describing what to match, sort and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.SearchQuery"
+              },
+              "example": {
+                "kind": "SearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "facetLimit": 0,
+                "limit": 10
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A SearchResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.SearchResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/teamlbacrules/search": {
+      "post": {
+        "tags": [
+          "Search"
+        ],
+        "description": "Search TeamLBACRule resources in a namespace.",
+        "operationId": "listTeamLBACRuleSearchV0alpha1",
         "parameters": [
           {
             "name": "namespace",
@@ -5955,6 +6255,28 @@
           }
         }
       },
+      "com.github.grafana.grafana.pkg.apis.search.v0alpha1.RegexPredicate": {
+        "description": "RegexPredicate matches a single field against a regular expression, one pattern per leaf the way a single Prometheus matcher works. Negate turns the leaf from =~ into !~.\n\nMatching is against the whole indexed term and is case-sensitive, so it is restricted to filterable keyword string fields that keep their original case. The pattern is a portable RE2 subset: literals, character classes, grouping, alternation, and greedy repetition. The backend is the source of truth for what the subset admits; it rejects unsupported syntax, fields that do not preserve case, and patterns that expand to too many terms with a 400.",
+        "type": "object",
+        "required": [
+          "field",
+          "pattern"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "default": ""
+          },
+          "negate": {
+            "description": "Negate inverts the match: the field must not match the pattern.",
+            "type": "boolean"
+          },
+          "pattern": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
       "com.github.grafana.grafana.pkg.apis.search.v0alpha1.ResourceRef": {
         "description": "ResourceRef is the full identity of a returned item. Namespace is implicit from the URL and omitted.",
         "type": "object",
@@ -6162,7 +6484,7 @@
         }
       },
       "com.github.grafana.grafana.pkg.apis.search.v0alpha1.WhereNode": {
-        "description": "WhereNode is a single node of the where tree. Exactly one field must be set; the set field names the node's type. Combinators (and/or/not) compose other nodes, leaves (text/filter/range/exists) are terminal predicates.\n\nAll node types are modelled so the schema is future-proof, but v1 only accepts a narrow subset (top-level single leaf or a single and of leaves; text, filter and range leaves; In/NotIn/All filter operators). Everything else is rejected with 422 Unprocessable Entity by the validation layer. exists is sketched for a future version and always rejected today.",
+        "description": "WhereNode is a single node of the where tree. Exactly one field must be set; the set field names the node's type. Combinators (and/or/not) compose other nodes, leaves (text/filter/range/regex/exists) are terminal predicates.\n\nAll node types are modelled so the schema is future-proof, but v1 only accepts a narrow subset (top-level single leaf or a single and of leaves; text, filter, range and regex leaves; In/NotIn/All filter operators). Everything else is rejected with 422 Unprocessable Entity by the validation layer. exists is sketched for a future version and always rejected today.",
         "type": "object",
         "properties": {
           "and": {
@@ -6189,6 +6511,9 @@
           },
           "range": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.RangePredicate"
+          },
+          "regex": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.RegexPredicate"
           },
           "text": {
             "description": "Leaves.",

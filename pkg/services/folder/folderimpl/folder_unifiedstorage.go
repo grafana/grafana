@@ -210,8 +210,9 @@ func (s *Service) SearchFolders(ctx context.Context, query folder.SearchFoldersQ
 			request.Query = query.Title
 		}
 
-		// if using query, you need to specify the fields you want
-		request.Fields = dashboardsearch.IncludeFields
+		// if using query, you need to specify the fields you want. This request asks for
+		// FIELD_VALUES results, which reject response fields with no typed definition.
+		request.Fields = dashboardsearch.FieldValueIncludeFields
 	}
 
 	if query.Limit > 0 {

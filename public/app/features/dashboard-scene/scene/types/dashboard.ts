@@ -73,6 +73,24 @@ export interface DashboardSceneState extends SceneObjectState {
   defaultVariablesLoading?: boolean;
   /** True while default links from datasources are being loaded */
   defaultLinksLoading?: boolean;
+  /**
+   * Set while a dashboard plan is being previewed: panels stay query-less placeholders and the
+   * toolbar shows only the plan banner (Build/Dismiss) in place of the normal actions.
+   */
+  planning?: DashboardPlanningState;
+}
+
+export interface DashboardPlanningState {
+  /** Identifies the plan being previewed, so a stale request against a superseded plan can be refused. */
+  planId: string;
+  /** Title of the plan being previewed, shown in the banner. */
+  planTitle: string;
+  /** How many panels the plan proposes, shown in the banner. */
+  panelCount: number;
+  /** Build the plan: attach real queries to the scaffolded panels. */
+  onBuild: () => void;
+  /** Discard the plan and remove its scaffolded panels. */
+  onDismiss: () => void;
 }
 
 interface DashboardScenePreferences {
@@ -87,7 +105,7 @@ export interface DashboardSceneLike extends SceneObject<DashboardSceneState>, La
   getDefaultLayout(): DashboardLayoutManager | undefined;
 }
 
-function isDashboardSceneLike(obj: SceneObject): obj is DashboardSceneLike {
+export function isDashboardSceneLike(obj: SceneObject): obj is DashboardSceneLike {
   return 'isDashboardScene' in obj;
 }
 

@@ -722,7 +722,6 @@ func TestIsFolderValidationAPIError(t *testing.T) {
 	t.Run("matches every entry in the allow-list", func(t *testing.T) {
 		// Guards drift between folderValidationMessageIDs and the matcher.
 		for id := range folderValidationMessageIDs {
-			id := id
 			t.Run(id, func(t *testing.T) {
 				statusErr := &apierrors.StatusError{
 					ErrStatus: metav1.Status{

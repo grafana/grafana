@@ -72,6 +72,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     indentSpacer: css({
       label: 'indentSpacer',
       flex: 'none',
+      display: 'flex',
+      alignItems: 'stretch',
     }),
     detailWrapper: css({
       label: 'detailWrapper',

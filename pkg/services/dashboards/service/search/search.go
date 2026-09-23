@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"slices"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -56,6 +57,20 @@ var (
 		resource.SEARCH_FIELD_LEGACY_ID,
 		resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
 	}
+
+	// tableOnlyFields have no typed field-value definition. The table result format silently
+	// skips unknown response fields, but the FIELD_VALUES format rejects them, so requests
+	// using that format must leave these out.
+	tableOnlyFields = []string{
+		resource.SEARCH_FIELD_LABELS,
+		resource.SEARCH_FIELD_UPDATED_BY,
+	}
+
+	// FieldValueIncludeFields is IncludeFields reduced to what the FIELD_VALUES result format
+	// accepts. Note the per-label "labels.<key>" entries stay: only the bare "labels" is untyped.
+	FieldValueIncludeFields = slices.DeleteFunc(slices.Clone(IncludeFields), func(field string) bool {
+		return slices.Contains(tableOnlyFields, field)
+	})
 )
 
 type SearchFunc func(ctx context.Context, orgID int64, request *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error)

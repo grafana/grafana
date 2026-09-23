@@ -24,4 +24,14 @@ describe('HomePageSkeleton', () => {
     render(<HomePageSkeleton showExtra />);
     expect(screen.getByTestId('home-page-skeleton-extra')).toBeInTheDocument();
   });
+
+  it('does not reserve the solutions block on the redesign without showSolutions', () => {
+    render(<HomePageSkeleton redesignEnabled />);
+    expect(screen.queryByTestId('home-page-skeleton-solutions')).not.toBeInTheDocument();
+  });
+
+  it('reserves the solutions block on the redesign when showSolutions is set', () => {
+    render(<HomePageSkeleton redesignEnabled showSolutions />);
+    expect(screen.getByTestId('home-page-skeleton-solutions')).toBeInTheDocument();
+  });
 });

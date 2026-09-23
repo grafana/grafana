@@ -182,7 +182,9 @@ export function deserializeAutoGridLayout(
         rowHeightCombined ?? AUTO_GRID_DEFAULT_ROW_HEIGHT,
         fillScreenResolved,
         // Rows must be able to grow if the layout default OR any panel opts into fit-content.
-        isAutoHeightPanelsEnabled() && (fitContentResolved || children.some((child) => child.state.fitContent === true))
+        isAutoHeightPanelsEnabled() &&
+          (fitContentResolved || children.some((child) => child.state.fitContent === true)),
+        minHeightCombined
       ),
       children,
     }),

@@ -70,10 +70,10 @@ func githubHealthCheckMocks() []ghmock.MockBackendOption {
 // repository's finalizer stuck and CleanupAllResources timing out.
 func webhookCreationMocks(hookID int64, webhookURL string) []ghmock.MockBackendOption {
 	hook := &github.Hook{
-		ID:     github.Ptr(hookID),
-		Active: github.Ptr(true),
+		ID:     new(hookID),
+		Active: new(true),
 		Events: []string{"pull_request", "push"}, // == subscribedEvents
-		Config: &github.HookConfig{URL: github.Ptr(webhookURL)},
+		Config: &github.HookConfig{URL: new(webhookURL)},
 	}
 	encode := func(v any) http.HandlerFunc {
 		return func(w http.ResponseWriter, _ *http.Request) {
@@ -204,6 +204,70 @@ func TestIntegrationProvisioning_GithubRepoWebhookCreated(t *testing.T) {
 	waitForWebhook(t, helper, repoName, 456)
 }
 
+// TestIntegrationProvisioning_GithubRepoForceDeleteSkipsWebhook proves the
+// force-delete escape hatch: removing the cleanup finalizer lets a repository be
+// deleted without contacting the provider, so the webhook DELETE is never
+// attempted. This is what makes an unhealthy repository (e.g. expired
+// credentials that would fail the webhook deletion) deletable — the client
+// drops the cleanup finalizer rather than the server swallowing the error.
+func TestIntegrationProvisioning_GithubRepoForceDeleteSkipsWebhook(t *testing.T) {
+	helper := sharedGitHelper(t)
+
+	const repoName = "github-webhook-force-delete"
+	const hookID = int64(456)
+	webhookURL := expectedWebhookURL(webhookBaseURL, helper.Namespace, repoName)
+
+	// Serve webhook create/list/get, and count any DELETE so the test can prove
+	// it is never attempted once the cleanup finalizer is removed.
+	hook := &github.Hook{
+		ID:     new(hookID),
+		Active: new(true),
+		Events: []string{"pull_request", "push"},
+		Config: &github.HookConfig{URL: new(webhookURL)},
+	}
+	encode := func(v any) http.HandlerFunc {
+		return func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(v)
+		}
+	}
+
+	var deleteCalls atomic.Int32
+	mockOpts := append(githubHealthCheckMocks(),
+		ghmock.WithRequestMatchHandler(ghmock.GetReposHooksByOwnerByRepo, encode([]*github.Hook{hook})),
+		ghmock.WithRequestMatchHandler(ghmock.PostReposHooksByOwnerByRepo, encode(hook)),
+		ghmock.WithRequestMatchHandler(ghmock.GetReposHooksByOwnerByRepoByHookId, encode(hook)),
+		ghmock.WithRequestMatchHandler(
+			ghmock.DeleteReposHooksByOwnerByRepoByHookId,
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				deleteCalls.Add(1)
+				w.WriteHeader(http.StatusNoContent)
+			}),
+		),
+	)
+	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient(mockOpts...)
+
+	helper.CreateGithubRepo(t, repoName, map[string][]byte{
+		"dashboard.json": common.DashboardJSON("gh-force-del-dash", "GitHub Force Delete Dashboard", 1),
+	}, webhookBaseURL, "write")
+	waitForWebhook(t, helper, repoName, hookID)
+
+	// Force delete: drop the cleanup finalizer, keeping the Grafana-side
+	// finalizers so the repository still tears down. Retry to absorb a
+	// concurrent reconcile bumping the resourceVersion between read and write.
+	patch := []byte(`{"metadata":{"finalizers":["remove-orphan-resources","remove-pending-jobs"]}}`)
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		_, err := helper.Repositories.Resource.Patch(t.Context(), repoName, types.MergePatchType, patch, metav1.PatchOptions{})
+		assert.NoError(collect, err)
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "remove cleanup finalizer")
+
+	require.NoError(t, helper.Repositories.Resource.Delete(t.Context(), repoName, metav1.DeleteOptions{}), "repository delete request should be accepted")
+
+	helper.WaitForRepositoryDeleted(t, repoName)
+
+	require.Zero(t, deleteCalls.Load(), "webhook delete must not be attempted once the cleanup finalizer is removed")
+}
+
 // TestIntegrationProvisioning_WebhookFailureDoesNotRetryImmediately verifies
 // that when webhook creation fails, the repository records a HealthFailureHook
 // (not a controller error) and the hook-failure cooldown suppresses an
@@ -325,8 +389,8 @@ func TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment(t *testing
 					w.Header().Set("Content-Type", "application/json")
 					w.WriteHeader(http.StatusCreated)
 					_ = json.NewEncoder(w).Encode(&github.IssueComment{
-						ID:   github.Ptr(int64(1)),
-						Body: github.Ptr(comment.GetBody()),
+						ID:   new(int64(1)),
+						Body: new(comment.GetBody()),
 					})
 				}),
 			))
@@ -474,7 +538,7 @@ func TestIntegrationProvisioning_GithubPullRequestWebhookMissingRefCompletesWith
 			commentCalls.Add(1)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusCreated)
-			_ = json.NewEncoder(w).Encode(&github.IssueComment{ID: github.Ptr(int64(1))})
+			_ = json.NewEncoder(w).Encode(&github.IssueComment{ID: new(int64(1))})
 		}),
 	))
 	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient(mockOpts...)
@@ -611,9 +675,9 @@ func TestIntegrationProvisioning_WebhookSecretRotatedWhenExpired(t *testing.T) {
 			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				_ = json.NewEncoder(w).Encode(&github.Hook{
-					ID:     github.Ptr(int64(200)),
+					ID:     new(int64(200)),
 					Events: []string{"pull_request", "push"},
-					Config: &github.HookConfig{URL: github.Ptr(webhookURL)},
+					Config: &github.HookConfig{URL: new(webhookURL)},
 				})
 			}),
 		),
