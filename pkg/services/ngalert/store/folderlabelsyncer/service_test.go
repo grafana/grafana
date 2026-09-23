@@ -193,7 +193,7 @@ func TestMarkDirty(t *testing.T) {
 
 		done := make(chan struct{})
 		go func() {
-			for i := 0; i < 100; i++ {
+			for range 100 {
 				s.markDirty([]models.FolderKey{{OrgID: 1, UID: "a"}})
 			}
 			close(done)

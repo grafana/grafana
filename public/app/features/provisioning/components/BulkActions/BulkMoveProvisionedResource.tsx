@@ -10,8 +10,7 @@ import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView, type Job } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { AffectedFolderContents } from 'app/features/browse-dashboards/components/BrowseActions/AffectedFolderContents';
-import { getSelectedFolderUIDs } from 'app/features/browse-dashboards/components/BrowseActions/utils';
-import { collectSelectedItems } from 'app/features/browse-dashboards/utils/dashboards';
+import { collectSelectedItems, getSelectedUIDs } from 'app/features/browse-dashboards/utils/dashboards';
 import { getCanPushToConfiguredBranch } from 'app/features/provisioning/components/defaults';
 import {
   RepoViewStatus,
@@ -190,7 +189,7 @@ function FormContent({
               <AffectedFolderContents
                 selectedItems={selectedItems}
                 nonEmptyMessage={t('browse-dashboards.bulk-move-resources-form.folder-not-empty', '', {
-                  count: getSelectedFolderUIDs(selectedItems).length,
+                  count: getSelectedUIDs(selectedItems, 'folder').length,
                   defaultValue_one: 'Selected folder contains resources that will be moved with it',
                   defaultValue_other: 'Selected folders contain resources that will be moved with them',
                 })}
@@ -211,7 +210,7 @@ function FormContent({
                   repositoryName={repository.name}
                   // selectedItems.folder contains false entries from deselect ancestor propagation
                   // in setItemSelectionState reducer - filter to only truly-selected UIDs
-                  excludeUIDs={getSelectedFolderUIDs(selectedItems)}
+                  excludeUIDs={getSelectedUIDs(selectedItems, 'folder')}
                 />
               </Field>
               <ResourceEditFormSharedFields

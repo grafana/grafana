@@ -80,8 +80,8 @@ function ControlledEditor({
   const [mode, setMode] = useState(initialMode);
   const [codeLanguage, setCodeLanguage] = useState(initialLanguage);
   const [showLineNumbers, setShowLineNumbers] = useState(initialShowLineNumbers);
-  // The panel owns this in production; mirror that here so the view radios work.
-  const [view, setView] = useState<ViewMode>(() => (initialValue.trim().length === 0 ? 'write' : 'preview'));
+  // The panel owns the default in production; these cases select the view they need.
+  const [view, setView] = useState<ViewMode>('preview');
   return (
     <TextNGEditor
       content={value}
@@ -130,6 +130,8 @@ const setup = (
 };
 
 const enterWriteMode = () => userEvent.click(screen.getByRole('radio', { name: 'Write' }));
+const enterSplitMode = () => userEvent.click(screen.getByRole('radio', { name: 'Split' }));
+const enterPreviewMode = () => userEvent.click(screen.getByRole('radio', { name: 'Preview' }));
 
 const openModeMenu = () => userEvent.click(screen.getByRole('button', { name: /^Text mode/ }));
 
@@ -145,31 +147,6 @@ const selectLanguage = async (name: string) => {
 };
 
 describe('TextNGEditor', () => {
-  describe('default (view-first) state', () => {
-    it('lands on the rendered preview, not the editor', () => {
-      setup('# Hello', TextMode.Markdown);
-
-      expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML).toContain('<h1');
-      expect(screen.getByRole('radio', { name: 'Preview' })).toBeChecked();
-      expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
-    });
-
-    it('opens straight into the editor when content is empty', () => {
-      setup('', TextMode.Markdown);
-
-      expect(screen.getByRole('textbox')).toBeInTheDocument();
-      expect(screen.getByRole('radio', { name: 'Write' })).toBeChecked();
-    });
-
-    it('reveals the editor after selecting Write', async () => {
-      setup('# Hello', TextMode.Markdown);
-
-      await enterWriteMode();
-      expect(screen.getByRole('textbox')).toHaveValue('# Hello');
-      expect(screen.queryByTestId(PREVIEW_TEST_ID)).not.toBeInTheDocument();
-    });
-  });
-
   describe('views', () => {
     it('shows only the rendered preview in Preview view', () => {
       setup('# Hello', TextMode.Markdown);
@@ -178,10 +155,19 @@ describe('TextNGEditor', () => {
       expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML).toContain('<h1');
     });
 
+    it('shows only the editor in Write view', async () => {
+      setup('# Hello', TextMode.Markdown);
+
+      await enterWriteMode();
+
+      expect(screen.getByRole('textbox')).toHaveValue('# Hello');
+      expect(screen.queryByTestId(PREVIEW_TEST_ID)).not.toBeInTheDocument();
+    });
+
     it('shows editor and preview side by side in Split view', async () => {
       setup('# Hello', TextMode.Markdown);
 
-      await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
+      await enterSplitMode();
 
       expect(screen.getByRole('textbox')).toBeInTheDocument();
       expect(screen.getByTestId(PREVIEW_TEST_ID)).toBeInTheDocument();
@@ -230,7 +216,7 @@ describe('TextNGEditor', () => {
 
       expect(screen.getByTestId(PREVIEW_TEST_ID)).toHaveTextContent('Data center = A, B, C');
 
-      await userEvent.click(screen.getByRole('radio', { name: 'Write' }));
+      await enterWriteMode();
       expect(screen.getByRole('textbox')).toHaveValue('# Data center = $datacenter');
     });
 
@@ -313,7 +299,7 @@ describe('TextNGEditor', () => {
       'renders the empty space fallback in the preview for %j',
       async (content) => {
         setup('# Hello', TextMode.Markdown);
-        await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
+        await enterSplitMode();
 
         // fireEvent, because userEvent.type() does not reproduce a value that is
         // only whitespace. A throw here fails the test.
@@ -328,7 +314,7 @@ describe('TextNGEditor', () => {
   describe('preview updates', () => {
     it('re-renders the preview once typing settles', async () => {
       setup('# Hello', TextMode.Markdown);
-      await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
+      await enterSplitMode();
 
       fireEvent.change(screen.getByRole('textbox'), { target: { value: '## Updated' } });
 
@@ -342,7 +328,7 @@ describe('TextNGEditor', () => {
       await enterWriteMode();
 
       fireEvent.change(screen.getByRole('textbox'), { target: { value: '## Updated' } });
-      await userEvent.click(screen.getByRole('radio', { name: 'Preview' }));
+      await enterPreviewMode();
 
       expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML).toContain('<h2');
     });
@@ -387,7 +373,7 @@ describe('TextNGEditor', () => {
     it('renders in Split view', async () => {
       setup('hello', TextMode.Markdown);
 
-      await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
+      await enterSplitMode();
 
       expect(screen.getByTestId(FORMAT_TOOLBAR_TEST_ID)).toBeInTheDocument();
     });
@@ -412,7 +398,7 @@ describe('TextNGEditor', () => {
 
       expect(screen.getByRole('button', { name: 'Text mode: HTML' })).toBeInTheDocument();
 
-      await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
+      await enterSplitMode();
       expect(screen.getByRole('button', { name: 'Text mode: HTML' })).toBeInTheDocument();
 
       await enterWriteMode();

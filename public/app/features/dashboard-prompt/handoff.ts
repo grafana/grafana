@@ -1,8 +1,7 @@
-import { createAssistantContextItem, openAssistant } from '@grafana/assistant';
-import { locationService } from '@grafana/runtime';
+import { createAssistantContextItem, type ChatContextItem, openAssistant } from '@grafana/assistant';
 
-import { PROMPT_ORIGIN, MAX_LISTED_DATASOURCES, formatDatasources } from './prompts';
-import { type PromptDatasource } from './types';
+import { PROMPT_ORIGIN, MAX_LISTED_DATASOURCES, formatDashboardRefs, formatDatasources } from './prompts';
+import { type PromptDashboardRef, type PromptDatasource } from './types';
 
 /**
  * The title of the hidden context item that carries the planning
@@ -12,47 +11,28 @@ import { type PromptDatasource } from './types';
  */
 const PLANNING_INSTRUCTIONS_TITLE = 'Dashboard planning instructions';
 
-/** Where the plan (and later the build) plays out. */
-const NEW_DASHBOARD_PATH = '/dashboard/new';
-
 interface StartPlanningArgs {
-  /** The user's free text plus any entry-point hint (see composeRequest in the modal). */
+  /** The user's dashboard request. */
   request: string;
   /** The request as the user typed it — shown as their message in the conversation. */
   displayPrompt: string;
-  /** Datasources already scoped to the seed. */
+  /** Datasources selected on the landing prompt, or all available datasources. */
   datasources: PromptDatasource[];
-  /** Folder the draft should land in, when the entry point knows one. */
-  folderUid?: string;
+  /** Original context items selected in the landing prompt. */
+  context?: ChatContextItem[];
+  /** Dashboards the user attached as context on the landing prompt. */
+  dashboards?: PromptDashboardRef[];
 }
 
 /**
  * Hands the user’s prompt to the assistant sidebar for planning:
- * lands the user in the new-dashboard editor and opens a dashboarding-mode
- * conversation seeded with their own words plus a hidden instruction item.
+ * opens a dashboarding-mode conversation seeded with their own words
+ * plus a hidden instruction item.
  * The assistant grounds a plan with its own datasource tools, asks clarifying
  * questions in the chat, renders the plan as a card with a "Build it" button,
  * and builds in the same conversation once the plan is accepted.
- *
- * Returns false when the navigation was refused and nothing was started, so the
- * caller can keep the user's prompt on screen instead of losing it.
  */
-export function startPlanningInAssistant(args: StartPlanningArgs): boolean {
-  // Land in the new-dashboard editor first so the plan (and later the build)
-  // plays out next to the dashboard it will produce.
-  locationService.push(
-    args.folderUid ? `${NEW_DASHBOARD_PATH}?folderUid=${encodeURIComponent(args.folderUid)}` : NEW_DASHBOARD_PATH
-  );
-
-  // An unsaved dashboard blocks navigation (dashboard-scene's DashboardPrompt
-  // installs a history blocker and shows its own modal instead). That runs
-  // synchronously, so a pathname that hasn't moved means we never left: opening
-  // a dashboarding conversation now would point the assistant at the dashboard
-  // the user is still sitting on, and tell it a blank one is open.
-  if (locationService.getLocation().pathname !== NEW_DASHBOARD_PATH) {
-    return false;
-  }
-
+export function startPlanningInAssistant(args: StartPlanningArgs): void {
   const planningItem = createAssistantContextItem('structured', {
     title: PLANNING_INSTRUCTIONS_TITLE,
     hidden: true,
@@ -65,17 +45,14 @@ export function startPlanningInAssistant(args: StartPlanningArgs): boolean {
     mode: 'dashboarding',
     autoSend: true,
     prompt: args.displayPrompt,
-    context: [planningItem],
+    context: [planningItem, ...(args.context ?? [])],
   });
-
-  return true;
 }
 
 /**
  * The hidden instruction block that puts the conversation into the
- * plan-first flow. It carries what the modal knows and the sidebar cannot
- * discover on its own: the composed request (with the entry point's hint)
- * and the datasource scope the user arrived with.
+ * plan-first flow. It carries the user's request and datasource scope
+ * from the landing prompt.
  */
 export function buildPlanningInstructions(args: StartPlanningArgs): string {
   // Only a complete list can back a "no others exist" claim. Once truncated,
@@ -88,10 +65,14 @@ export function buildPlanningInstructions(args: StartPlanningArgs): string {
     : `The available datasources (query them by these exact uids — no others exist):\n${formatDatasources(args.datasources)}`;
 
   const parts: string[] = [
-    'The user clicked "Generate dashboard" and is starting from a brand-new dashboard (the new-dashboard editor is open). Follow your plan-first workflow: ground the plan in verified data with your datasource tools, ask at most one round of clarifying questions, present the plan with propose_dashboard_plan, and only build after the plan is accepted.',
+    'The user is starting from a brand-new dashboard (the new-dashboard editor is open). Follow your plan-first workflow: ground the plan in verified data with your datasource tools, ask at most one round of clarifying questions, present the plan with propose_dashboard_plan, and only build after the plan is accepted.',
     `The user's full request:\n${args.request}`,
     datasourceScopeInstruction,
   ];
+
+  if (args.dashboards && args.dashboards.length > 0) {
+    parts.push(`Dashboards the user attached as context:\n${formatDashboardRefs(args.dashboards)}`);
+  }
 
   parts.push(
     `Planning and build requirements:

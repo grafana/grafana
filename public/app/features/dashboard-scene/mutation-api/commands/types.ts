@@ -56,6 +56,14 @@ export interface MutationCommand<T = unknown, TScene = DashboardScene> {
   handler: (payload: T, context: MutationContext<TScene>) => Promise<MutationResult>;
 }
 
+export interface LazyMutationCommand<TScene = DashboardScene> {
+  name: string;
+  /** Mirrors the loaded command so guards can inspect it without loading its implementation. */
+  readOnly?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- payload types vary by lazily loaded command
+  load: () => Promise<MutationCommand<any, TScene>>;
+}
+
 /**
  * Requires edit permissions on the dashboard (pure check, no side effects).
  */
@@ -113,6 +121,7 @@ export function enterEditModeIfNeeded(scene: DashboardScene): void {
     scene.onEnterEditMode('assistant');
   }
   // New-layout mutations only run while the sidebar is active, and it may not be mounted here.
+  // Independent of edit mode: addElement-based undo/redo tracking needs this regardless.
   scene.activateSidebar();
 }
 

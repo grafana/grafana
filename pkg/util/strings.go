@@ -196,11 +196,11 @@ func TruncateUTF8(s string, n int) string {
 	return s[:n]
 }
 
-// SanitizeControlChars strips ASCII control characters (including CRLF) and
+// SanitizeControlChars strips control characters (including CRLF) and
 // truncates to maxBytes via TruncateUTF8.
 func SanitizeControlChars(s string, maxBytes int) string {
 	s = strings.Map(func(r rune) rune {
-		if r < 0x20 || r == 0x7f {
+		if unicode.IsControl(r) {
 			return -1
 		}
 		return r
@@ -278,8 +278,8 @@ func stripBOMReflect(v reflect.Value) {
 
 	case reflect.Struct:
 		// Recurse into all struct fields
-		for i := 0; i < v.NumField(); i++ {
-			field := v.Field(i)
+		for _, field := range v.Fields() {
+			field := field
 			if field.CanInterface() {
 				stripBOMReflect(field)
 			}

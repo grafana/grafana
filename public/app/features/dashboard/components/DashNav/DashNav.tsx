@@ -21,7 +21,6 @@ import config from 'app/core/config';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useBusEvent } from 'app/core/hooks/useBusEvent';
 import AddPanelButton from 'app/features/dashboard/components/AddPanelButton/AddPanelButton';
-import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PublicDashboardBadgeLegacy } from 'app/features/dashboard-scene/scene/new-toolbar/actions/PublicDashboardBadge';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
@@ -238,7 +237,10 @@ const DashNav = memo<Props>((props) => {
             <ToolbarButton
               tooltip={t('dashboard.toolbar.save', 'Save dashboard')}
               icon="save"
-              onClick={() => {
+              onClick={async () => {
+                const { SaveDashboardDrawer } = await import(
+                  /* webpackChunkName: "save-dashboard-drawer" */ 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer'
+                );
                 showModal(SaveDashboardDrawer, {
                   dashboard,
                   onDismiss: hideModal,

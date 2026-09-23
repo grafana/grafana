@@ -332,6 +332,8 @@
         window.__grafanaOFREPRootUrlEnabled = true;
       [[end]]
 
+      window.__grafanaLegacyFeatureToggleMode = [[.LegacyFeatureToggleMode]];
+
       // FEMT index.html uses this, and we want to keep the index.ts the same for both
       window.__grafana_boot_data_promise = Promise.resolve();
 

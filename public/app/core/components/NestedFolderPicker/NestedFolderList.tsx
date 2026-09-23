@@ -211,10 +211,9 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
     ) : null;
   }
 
-  // We don't have a direct value of whether things are coming from user searching but this seems to be a good
-  // approximation as when searching all items will be at top level, while things that are actually in the top level
-  // when just looking at a folders tree should not have parent.
-  const isSearchItem = level === 0 && item.parentUID !== undefined;
+  const isSearchItem = !foldersAreOpenable;
+  // Search results are flat, so nested matches need their own badge; browse rows inherit it from their visible root.
+  const showRepoBadge = isSearchItem || !item.parentUID;
   const teamOwner = teamFolderOwnersByUid?.[item.uid];
 
   return (
@@ -265,7 +264,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
 
         <label className={styles.label} id={labelId}>
           <Text truncate>{item.title}</Text>
-          <FolderRepo folder={item} canEdit={canEdit} />
+          {showRepoBadge && <FolderRepo folder={item} canEdit={canEdit} />}
         </label>
         {teamOwner && (
           <div className={styles.teamOwner}>

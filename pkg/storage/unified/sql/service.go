@@ -408,13 +408,13 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 	}
 
 	// When configured, run the manifest watcher as a subservice. It reloads into
-	// the search registry that NewSearchOptions just created; registerServer runs
+	// the registries that NewSearchOptions just created; registerServer runs
 	// before initializeSubservicesManager, so the watcher joins the manager and
 	// its initial poll completes before the index is built.
-	if registry := searchOptions.SearchFields; registry != nil {
+	if searchOptions.SearchFields != nil || searchOptions.EmbeddingConfig != nil {
 		if mwCfg := resource.NewManifestWatcherConfig(s.cfg); mwCfg != nil {
 			watcher, err := resource.NewManifestWatcher(*mwCfg, s.reg, func(live []*appsdk.ManifestData) {
-				if err := resource.ApplyManifests(registry, resource.AppManifests(), live); err != nil {
+				if err := searchOptions.ReloadManifests(resource.AppManifests(), live); err != nil {
 					s.log.Error("manifest reload failed, keeping current search fields", "error", err)
 					return
 				}

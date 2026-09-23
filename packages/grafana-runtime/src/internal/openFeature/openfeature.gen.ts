@@ -7,17 +7,20 @@
  */
 
 import {
+  type JsonValue,
   type ReactFlagEvaluationOptions,
   useFlag,
 } from "@openfeature/react-sdk";
 
 // Flag key constants for programmatic access
 export const FlagKeys = {
+  /** Hand data source managed alerting URLs over to the grafana-prometheusalerting-app plugin */
+  AlertingDataSourceManagedRouteProxy: "alerting.dataSourceManagedRouteProxy",
   /** Enable manually starting an Assistant investigation from the alert instance drawer. */
   AlertingManualAssistantInvestigation: "alerting.manualAssistantInvestigation",
   /** Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them. */
   AlertingRuleQuality: "alerting.ruleQuality",
-  /** Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana */
+  /** Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source */
   AlertingSyncExternalAlertmanager: "alerting.syncExternalAlertmanager",
   /** Enables new analytics framework */
   AnalyticsFramework: "analyticsFramework",
@@ -61,6 +64,8 @@ export const FlagKeys = {
   FeedbackButton: "feedbackButton",
   /** Renders the flame graph's top table using TableNG instead of the legacy Table */
   FlameGraphTableNg: "flameGraph.tableNg",
+  /** Enables use of app platform API for folders */
+  FoldersAppPlatformAPI: "foldersAppPlatformAPI",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GlobalDashboardVariables: "globalDashboardVariables",
   /** Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette */
@@ -89,8 +94,12 @@ export const FlagKeys = {
   GrafanaGrowthHomepage: "grafana.growthHomepage",
   /** Enables usage of the new annotations API client */
   GrafanaKubernetesAnnotationsClient: "grafana.kubernetesAnnotationsClient",
+  /** Deprecated: Toggle displayed fields from Log Details */
+  GrafanaLogDetailsDisplayedFieldControls: "grafana.logDetailsDisplayedFieldControls",
   /** Enables log level inference from log line contents when level is not defined as a field or a label */
   GrafanaLogLevelInference: "grafana.logLevelInference",
+  /** Enables multi-tenant fallback behavior */
+  GrafanaMtFallback: "grafana.mtFallback",
   /** Builds the navigation tree client-side instead of reading it from /bootdata */
   GrafanaMultiTenantNavTree: "grafana.multiTenantNavTree",
   /** Read the current user's permissions from the IAM app platform API instead of /api/access-control/user/actions */
@@ -149,6 +158,8 @@ export const FlagKeys = {
   OtelLogsFormatting: "otelLogsFormatting",
   /** Shows text labels on the add and stacked view buttons in PanelEditNext */
   PaneleditButtonLabels: "paneledit.buttonLabels",
+  /** Enables viewing non-applicable drilldowns on a panel level */
+  PerPanelNonApplicableDrilldowns: "perPanelNonApplicableDrilldowns",
   /** Enables RBAC for playlists */
   PlaylistsRBAC: "playlistsRBAC",
   /** Initializes data source instance settings asynchronously from the API instead of synchronously from boot data */
@@ -214,6 +225,17 @@ export const FlagKeys = {
 } as const;
 
 /**
+ * Hand data source managed alerting URLs over to the grafana-prometheusalerting-app plugin
+ *
+ * **Details:**
+ * - flag key: `alerting.dataSourceManagedRouteProxy`
+ * - default value: `false`
+ */
+export const useFlagAlertingDataSourceManagedRouteProxy = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alerting.dataSourceManagedRouteProxy", false, options).value;
+};
+
+/**
  * Enable manually starting an Assistant investigation from the alert instance drawer.
  *
  * **Details:**
@@ -236,7 +258,7 @@ export const useFlagAlertingRuleQuality = (options?: ReactFlagEvaluationOptions)
 };
 
 /**
- * Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana
+ * Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source
  *
  * **Details:**
  * - flag key: `alerting.syncExternalAlertmanager`
@@ -478,6 +500,17 @@ export const useFlagFlameGraphTableNg = (options?: ReactFlagEvaluationOptions): 
 };
 
 /**
+ * Enables use of app platform API for folders
+ *
+ * **Details:**
+ * - flag key: `foldersAppPlatformAPI`
+ * - default value: `true`
+ */
+export const useFlagFoldersAppPlatformAPI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("foldersAppPlatformAPI", true, options).value;
+};
+
+/**
  * Enables global and folder-scoped dashboard variables via dashboard.grafana.app
  *
  * **Details:**
@@ -632,6 +665,17 @@ export const useFlagGrafanaKubernetesAnnotationsClient = (options?: ReactFlagEva
 };
 
 /**
+ * Deprecated: Toggle displayed fields from Log Details
+ *
+ * **Details:**
+ * - flag key: `grafana.logDetailsDisplayedFieldControls`
+ * - default value: `false`
+ */
+export const useFlagGrafanaLogDetailsDisplayedFieldControls = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.logDetailsDisplayedFieldControls", false, options).value;
+};
+
+/**
  * Enables log level inference from log line contents when level is not defined as a field or a label
  *
  * **Details:**
@@ -640,6 +684,17 @@ export const useFlagGrafanaKubernetesAnnotationsClient = (options?: ReactFlagEva
  */
 export const useFlagGrafanaLogLevelInference = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.logLevelInference", false, options).value;
+};
+
+/**
+ * Enables multi-tenant fallback behavior
+ *
+ * **Details:**
+ * - flag key: `grafana.mtFallback`
+ * - default value: `{}`
+ */
+export const useFlagGrafanaMtFallback = (options?: ReactFlagEvaluationOptions): JsonValue => {
+  return useFlag("grafana.mtFallback", {}, options).value;
 };
 
 /**
@@ -959,6 +1014,17 @@ export const useFlagOtelLogsFormatting = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagPaneleditButtonLabels = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("paneledit.buttonLabels", false, options).value;
+};
+
+/**
+ * Enables viewing non-applicable drilldowns on a panel level
+ *
+ * **Details:**
+ * - flag key: `perPanelNonApplicableDrilldowns`
+ * - default value: `false`
+ */
+export const useFlagPerPanelNonApplicableDrilldowns = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("perPanelNonApplicableDrilldowns", false, options).value;
 };
 
 /**

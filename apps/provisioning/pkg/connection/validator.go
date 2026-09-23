@@ -40,6 +40,10 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		return nil
 	}
 
+	if a.GetSubresource() != "" && !provisioningadmission.SpecAndSecureChanged(a) {
+		return nil // pure status patch: spec/secure untouched, nothing to (re)validate
+	}
+
 	obj := a.GetObject()
 	if obj == nil {
 		return nil

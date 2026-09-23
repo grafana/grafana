@@ -82,10 +82,10 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
-const copyStringToClipboard = jest.fn();
-jest.mock('app/core/utils/explore', () => ({
-  ...jest.requireActual('app/core/utils/explore'),
-  copyStringToClipboard: (str: string) => copyStringToClipboard(str),
+const copyTextToClipboard = jest.fn();
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
+  copyTextToClipboard: (str: string) => copyTextToClipboard(str),
 }));
 
 interface MockQuery extends DataQuery {
@@ -215,8 +215,8 @@ describe('RichHistoryCard', () => {
       const copyQueriesButton = await screen.findByRole('button', { name: 'Copy query to clipboard' });
       expect(copyQueriesButton).toBeInTheDocument();
       await userEvent.click(copyQueriesButton);
-      expect(copyStringToClipboard).toHaveBeenCalledTimes(1);
-      expect(copyStringToClipboard).toHaveBeenCalledWith(JSON.stringify({ query: 'query1' }));
+      expect(copyTextToClipboard).toHaveBeenCalledTimes(1);
+      expect(copyTextToClipboard).toHaveBeenCalledWith(JSON.stringify({ query: 'query1' }));
     });
 
     it('should copy query model to clipboard when copying a query from a datasource that does not implement getQueryDisplayText', async () => {
@@ -234,8 +234,8 @@ describe('RichHistoryCard', () => {
       const copyQueriesButton = await screen.findByRole('button', { name: 'Copy query to clipboard' });
       expect(copyQueriesButton).toBeInTheDocument();
       await userEvent.click(copyQueriesButton);
-      expect(copyStringToClipboard).toHaveBeenCalledTimes(1);
-      expect(copyStringToClipboard).toHaveBeenCalledWith(JSON.stringify({ query: 'query1' }));
+      expect(copyTextToClipboard).toHaveBeenCalledTimes(1);
+      expect(copyTextToClipboard).toHaveBeenCalledWith(JSON.stringify({ query: 'query1' }));
     });
 
     it('should copy query text to clipboard when copying a query from a datasource that implements getQueryDisplayText', async () => {
@@ -256,8 +256,8 @@ describe('RichHistoryCard', () => {
       const copyQueriesButton = await screen.findByRole('button', { name: 'Copy query to clipboard' });
       expect(copyQueriesButton).toBeInTheDocument();
       await userEvent.click(copyQueriesButton);
-      expect(copyStringToClipboard).toHaveBeenCalledTimes(1);
-      expect(copyStringToClipboard).toHaveBeenCalledWith('query1');
+      expect(copyTextToClipboard).toHaveBeenCalledTimes(1);
+      expect(copyTextToClipboard).toHaveBeenCalledWith('query1');
     });
 
     it('should use each datasource getQueryDisplayText when copying queries', async () => {
@@ -279,8 +279,8 @@ describe('RichHistoryCard', () => {
       const copyQueriesButton = await screen.findByRole('button', { name: 'Copy query to clipboard' });
       expect(copyQueriesButton).toBeInTheDocument();
       await userEvent.click(copyQueriesButton);
-      expect(copyStringToClipboard).toHaveBeenCalledTimes(1);
-      expect(copyStringToClipboard).toHaveBeenCalledWith(`query1\n${JSON.stringify({ query: 'query2' })}`);
+      expect(copyTextToClipboard).toHaveBeenCalledTimes(1);
+      expect(copyTextToClipboard).toHaveBeenCalledWith(`query1\n${JSON.stringify({ query: 'query2' })}`);
     });
   });
 

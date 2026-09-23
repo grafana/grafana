@@ -65,3 +65,13 @@ describe('Apending DataFrame', () => {
     expect(copy.length).toEqual(frame.length);
   });
 });
+
+describe('Cloning DataFrame', () => {
+  it('accepts a write to the derived length so generic object copiers do not throw', () => {
+    const clone = Object.create(MutableDataFrame.prototype);
+
+    expect(() => {
+      clone.length = 3;
+    }).not.toThrow();
+  });
+});

@@ -7,7 +7,7 @@ import { STARRED_FOLDERS_UID, TEAM_FOLDERS_UID } from 'app/features/search/const
 import { type DashboardTreeSelection, type DashboardViewItemWithUIItems } from '../types';
 
 export function makeRowID(baseId: string, item: DashboardViewItemWithUIItems) {
-  return baseId + item.uid;
+  return `${baseId}${item.kind}-${item.uid}`;
 }
 
 export function isSharedWithMe(uid: string) {
@@ -68,12 +68,12 @@ export function isNonSelectableVirtualFolder(uid: string): boolean {
   );
 }
 
-// Single gate for the starred-folders feature: the OpenFeature flag and the app-platform folder API
-// (`foldersAppPlatformAPI`), which renders the virtual root in the browse list.
+// Single gate for the starred-folders feature: its own flag and the app-platform folder API, which
+// renders the virtual root in the browse list.
 export function starredFoldersEnabled(): boolean {
   return (
     getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaStarredFolders, false) &&
-    Boolean(config.featureToggles.foldersAppPlatformAPI)
+    getFeatureFlagClient().getBooleanValue(FlagKeys.FoldersAppPlatformAPI, true)
   );
 }
 
@@ -108,24 +108,32 @@ export function parseOwnerRef(ref: string): { kind: string; uid: string } | unde
   return { kind: parts[1], uid: parts[2] };
 }
 
-// Collect selected dashboard and folder from the DashboardTreeSelection
-// This is used to prepare the items for bulk delete operation.
-export function collectSelectedItems(selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>) {
-  const resources: ResourceRef[] = [];
+export type SelectedItemRef = { kind: 'folder' | 'dashboard'; uid: string };
 
-  // folders
-  for (const [uid, selected] of Object.entries(selectedItems.folder)) {
-    if (selected) {
-      resources.push({ name: uid, group: 'folder.grafana.app', kind: 'Folder' });
-    }
-  }
+/** UIDs of the selected items of one kind. */
+export function getSelectedUIDs(
+  selectedItems: Pick<DashboardTreeSelection, 'folder' | 'dashboard'>,
+  kind: SelectedItemRef['kind']
+): string[] {
+  const selection = selectedItems[kind];
+  return Object.keys(selection).filter((uid) => selection[uid]);
+}
 
-  // dashboards
-  for (const [uid, selected] of Object.entries(selectedItems.dashboard)) {
-    if (selected) {
-      resources.push({ name: uid, group: 'dashboard.grafana.app', kind: 'Dashboard' });
-    }
-  }
+/** Selected folders and dashboards as (kind, uid) pairs, folders first. */
+export function getSelectedItemRefs(
+  selectedItems: Pick<DashboardTreeSelection, 'folder' | 'dashboard'>
+): SelectedItemRef[] {
+  return (['folder', 'dashboard'] as const).flatMap((kind) =>
+    getSelectedUIDs(selectedItems, kind).map((uid) => ({ kind, uid }))
+  );
+}
 
-  return resources;
+const RESOURCE_REF = {
+  folder: { group: 'folder.grafana.app', kind: 'Folder' },
+  dashboard: { group: 'dashboard.grafana.app', kind: 'Dashboard' },
+} as const;
+
+/** Selected folders and dashboards as k8s resource refs for bulk provisioning jobs. */
+export function collectSelectedItems(selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>): ResourceRef[] {
+  return getSelectedItemRefs(selectedItems).map(({ kind, uid }) => ({ name: uid, ...RESOURCE_REF[kind] }));
 }

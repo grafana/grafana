@@ -181,7 +181,7 @@ func TestGetResponseCode(t *testing.T) {
 			},
 		}
 
-		for i := 0; i < 100; i++ {
+		for i := range 100 {
 			require.Equal(t, 500, datasourceV0.GetResponseCode(rsp), "iteration %d", i)
 		}
 	})
@@ -201,7 +201,7 @@ func TestGetResponseCode(t *testing.T) {
 			},
 		}
 
-		for i := 0; i < 100; i++ {
+		for i := range 100 {
 			require.Equal(t, 401, datasourceV0.GetResponseCode(rsp), "iteration %d", i)
 		}
 	})
