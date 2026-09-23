@@ -17,16 +17,17 @@ import { NavID, type NavId } from './constants';
  * server-built tree as a fallback throughout the static-only phase.
  *
  * Known gap (fix parked): nothing guarantees the client reaches the same
- * verdict the server did. app.ts skips OpenFeature init for signed-out and
- * anonymous sessions, and for signed-in sessions a failed or slow OFREP fetch
- * resolves against NOOP_PROVIDER, which silently returns the `false` default.
- * getInitialNavTree then falls back to the bootdata tree. During the
- * static-only phase that tree is a real server-built one (harmless), but once
- * plugins.useMTPlugins is also on the server stops building it and ships an
- * empty tree — then the menu is empty AND navIndex is {}, making every <Page>
- * render a not-found header. The fix is to have the server publish its
- * decision at boot time (a bootdata boolean alongside the tree) and key off
- * that, rather than re-evaluating the flag here.
+ * verdict the server did. A failed or slow OFREP fetch resolves against
+ * NOOP_PROVIDER, which silently returns the `false` default, and
+ * getInitialNavTree then falls back to the bootdata tree.
+ *
+ * That only bites when both flags are on server-side: the bootdata tree is a
+ * real server-built one until then, so falling back to it is harmless. Once
+ * plugins.useMTPlugins is on the server ships an empty tree instead, and the
+ * menu is empty AND navIndex is {}, making every <Page> render a not-found
+ * header. The fix is to have the server publish its decision at boot time (a
+ * bootdata boolean alongside the tree) and key off that, rather than
+ * re-evaluating the flag here.
  */
 export function isClientNavTreeEnabled(): boolean {
   return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantNavTree, false);
