@@ -10677,6 +10677,7 @@
       "aria-label-sort-column": "Sort column {{columnName}}",
       "expand-row-header": "Row expander",
       "expand-row-tooltip": "Toggle row expanded",
+      "loading": "Loading table",
       "tooltip-collapse-all": "Collapse all rows",
       "tooltip-expand-all": "Expand all rows"
     },
@@ -10771,6 +10772,9 @@
     "password-field": {
       "tooltip-hide": "Hide password",
       "tooltip-show": "Show password"
+    },
+    "query-field": {
+      "loading": "Loading editor"
     },
     "query-input": {
       "loading": "Loading editor"
@@ -10881,6 +10885,7 @@
         }
       },
       "inspect-drawer-title": "Inspect value",
+      "loading": "Loading table",
       "nested-table": {
         "expander-column-name": "Expand nested rows",
         "no-data": "No data"
