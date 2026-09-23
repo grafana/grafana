@@ -34,11 +34,6 @@ export interface FeatureToggles {
   */
   lokiExperimentalStreaming?: boolean;
   /**
-  * Highlight Grafana Enterprise features
-  * @default false
-  */
-  featureHighlights?: boolean;
-  /**
   * Allow elements nesting
   * @default false
   */

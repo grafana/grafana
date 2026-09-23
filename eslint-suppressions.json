@@ -969,11 +969,6 @@
       "count": 5
     }
   },
-  "public/app/features/admin/utils.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/routes.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 5
@@ -2374,9 +2369,6 @@
     }
   },
   "public/app/features/datasources/state/navModel.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    },
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
     },
@@ -2695,11 +2687,6 @@
       "count": 1
     }
   },
-  "public/app/features/plugins/admin/components/GetStartedWithPlugin/GetStartedWithDataSource.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/features/plugins/admin/components/PluginDetailsBody.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 2
@@ -2897,16 +2884,6 @@
     }
   },
   "public/app/features/table/hooks.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
-  "public/app/features/teams/TeamPages.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
-  "public/app/features/teams/state/navModel.ts": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
     }

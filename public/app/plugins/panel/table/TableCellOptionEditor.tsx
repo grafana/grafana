@@ -2,8 +2,9 @@ import { merge } from 'lodash';
 import { useState } from 'react';
 
 import { t } from '@grafana/i18n';
+import { useFlagTableRefreshNewFeatures } from '@grafana/runtime/internal';
 import { type TableCellOptions } from '@grafana/schema';
-import { Combobox, type ComboboxOption, Field, Stack, TableCellDisplayMode } from '@grafana/ui';
+import { Combobox, type ComboboxOption, Field, Stack, Switch, TableCellDisplayMode } from '@grafana/ui';
 
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
 import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';
@@ -26,6 +27,7 @@ interface Props {
 }
 
 export const TableCellOptionEditor = ({ value, onChange, id }: Props) => {
+  const jsonSyntaxHighlightingEnabled = useFlagTableRefreshNewFeatures();
   const cellType = value.type;
   const cellDisplayModeOptions: Array<ComboboxOption<TableCellOptions['type']>> = [
     { value: TableCellDisplayMode.Auto, label: t('table.cell-types.auto', 'Auto') },
@@ -92,6 +94,20 @@ export const TableCellOptionEditor = ({ value, onChange, id }: Props) => {
       )}
       {cellType === TableCellDisplayMode.Markdown && (
         <MarkdownCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
+      )}
+      {value.type === TableCellDisplayMode.JSONView && jsonSyntaxHighlightingEnabled && (
+        <Field noMargin label={t('table.json-cell-options.syntax-highlighting', 'Syntax highlighting')}>
+          <Switch
+            value={value.syntaxHighlighting !== false}
+            onChange={(event) =>
+              onCellOptionsChange({
+                ...value,
+                type: TableCellDisplayMode.JSONView,
+                syntaxHighlighting: event.currentTarget.checked,
+              })
+            }
+          />
+        </Field>
       )}
     </Stack>
   );

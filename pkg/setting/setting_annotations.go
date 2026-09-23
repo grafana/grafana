@@ -35,6 +35,11 @@ type AnnotationAppPlatformSettings struct {
 	// rejected at load time. Default 5.
 	MaxScopeCount int
 
+	// FolderCacheEnabled controls whether resolved dashboard->folder mappings are cached.
+	FolderCacheEnabled bool
+	// FolderCacheTTL is how long a resolved dashboard->folder mapping is cached.
+	FolderCacheTTL time.Duration
+
 	// APIMigrationPhase controls legacy API proxy behavior.
 	// Values: "off" (default), "proxy-writes", "proxy-all".
 	APIMigrationPhase string
@@ -65,14 +70,16 @@ func loadAnnotationAppPlatformSettings(cfg *Cfg) (AnnotationAppPlatformSettings,
 	appPlatformSection := cfg.Raw.Section("annotations.app_platform")
 
 	settings := AnnotationAppPlatformSettings{
-		Enabled:           appPlatformSection.Key("enabled").MustBool(false),
-		StoreBackend:      appPlatformSection.Key("store_backend").MustString("legacy-sql"),
-		RetentionTTL:      appPlatformSection.Key("retention_ttl").MustDuration(0),
-		EnableLegacyID:    appPlatformSection.Key("enable_legacy_id").MustBool(false),
-		MaxScopeCount:     appPlatformSection.Key("max_scope_count").MustInt(5),
-		APIMigrationPhase: appPlatformSection.Key("api_migration_phase").MustString(AnnotationAPIMigrationPhaseOff),
-		APIServerURL:      appPlatformSection.Key("api_server_url").MustString(""),
-		TLSClientConfig:   loadTLSClientConfig(cfg),
+		Enabled:            appPlatformSection.Key("enabled").MustBool(false),
+		StoreBackend:       appPlatformSection.Key("store_backend").MustString("legacy-sql"),
+		RetentionTTL:       appPlatformSection.Key("retention_ttl").MustDuration(0),
+		EnableLegacyID:     appPlatformSection.Key("enable_legacy_id").MustBool(false),
+		MaxScopeCount:      appPlatformSection.Key("max_scope_count").MustInt(5),
+		FolderCacheEnabled: appPlatformSection.Key("folder_cache_enabled").MustBool(true),
+		FolderCacheTTL:     appPlatformSection.Key("folder_cache_ttl").MustDuration(30 * time.Second),
+		APIMigrationPhase:  appPlatformSection.Key("api_migration_phase").MustString(AnnotationAPIMigrationPhaseOff),
+		APIServerURL:       appPlatformSection.Key("api_server_url").MustString(""),
+		TLSClientConfig:    loadTLSClientConfig(cfg),
 
 		GRPCAddress:       appPlatformSection.Key("grpc_address").MustString("localhost:9090"),
 		GRPCUseTLS:        appPlatformSection.Key("grpc_use_tls").MustBool(false),
@@ -90,6 +97,10 @@ func loadAnnotationAppPlatformSettings(cfg *Cfg) (AnnotationAppPlatformSettings,
 
 	if settings.MaxScopeCount < 0 {
 		return AnnotationAppPlatformSettings{}, fmt.Errorf("[annotations.app_platform.max_scope_count] must not be negative")
+	}
+
+	if settings.FolderCacheEnabled && settings.FolderCacheTTL <= 0 {
+		return AnnotationAppPlatformSettings{}, fmt.Errorf("[annotations.app_platform.folder_cache_ttl] must be positive when folder_cache_enabled is true")
 	}
 
 	if settings.RetentionTTL < 0 {
