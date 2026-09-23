@@ -352,6 +352,10 @@ func (s *service) OwnsIndex(key resource.NamespacedResource) (bool, error) {
 }
 
 func (s *service) starting(ctx context.Context) error {
+	if s.cfg.UnifiedStorageClusterName != "" {
+		s.log.Info("Unified storage cluster configured", "cluster", s.cfg.UnifiedStorageClusterName)
+	}
+
 	if s.subservicesMngr != nil {
 		s.subservicesWatcher.WatchManager(s.subservicesMngr)
 		if err := services.StartManagerAndAwaitHealthy(ctx, s.subservicesMngr); err != nil {

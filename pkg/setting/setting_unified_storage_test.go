@@ -1,13 +1,80 @@
 package setting
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func TestUnifiedStorageClusterName(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		ini      string
+		args     []string
+		env      string
+		expected string
+	}{
+		{
+			name: "defaults to empty",
+		},
+		{
+			name:     "reads and trims custom INI value",
+			ini:      "[unified_storage]\ncluster_name = \" prod-us-central-0 \"\n",
+			expected: "prod-us-central-0",
+		},
+		{
+			name:     "command line overrides custom INI value",
+			ini:      "[unified_storage]\ncluster_name = prod-us-central-0\n",
+			args:     []string{"cfg:unified_storage.cluster_name= prod-us-east-0 "},
+			expected: "prod-us-east-0",
+		},
+		{
+			name:     "reads environment variable without custom INI",
+			env:      "prod-us-central-0",
+			expected: "prod-us-central-0",
+		},
+		{
+			name:     "environment overrides custom INI and trims whitespace",
+			ini:      "[unified_storage]\ncluster_name = prod-us-central-0\n",
+			env:      " \tprod-us-east-0\n",
+			expected: "prod-us-east-0",
+		},
+		{
+			name: "whitespace-only environment value becomes empty",
+			ini:  "[unified_storage]\ncluster_name = prod-us-central-0\n",
+			env:  " \t\n",
+		},
+		{
+			name:     "empty environment value preserves custom INI value",
+			ini:      "[unified_storage]\ncluster_name = prod-us-central-0\n",
+			expected: "prod-us-central-0",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("GF_UNIFIED_STORAGE_CLUSTER_NAME", tc.env)
+			configPath := "../../conf/defaults.ini"
+			if tc.ini != "" {
+				configPath = filepath.Join(t.TempDir(), "custom.ini")
+				require.NoError(t, os.WriteFile(configPath, []byte(tc.ini), 0600))
+			}
+
+			cfg := NewCfg()
+			require.NoError(t, cfg.Load(CommandLineArgs{
+				HomePath: "../../",
+				Config:   configPath,
+				Args:     tc.args,
+			}))
+
+			assert.Equal(t, tc.expected, cfg.UnifiedStorageClusterName)
+		})
+	}
+}
 
 func TestKVLeaseTTLBounds(t *testing.T) {
 	for _, tc := range []struct {

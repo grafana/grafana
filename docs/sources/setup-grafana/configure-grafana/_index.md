@@ -2981,6 +2981,18 @@ Sustained requests per second that the webhook endpoint allows per client before
 
 <hr>
 
+### `[unified_storage]`
+
+This section configures unified storage.
+
+#### `cluster_name`
+
+Name of the cluster hosting the unified storage service. Defaults to empty, which means the cluster is unknown. Grafana strips leading and trailing whitespace from the value.
+
+To override this setting with an environment variable, set `GF_UNIFIED_STORAGE_CLUSTER_NAME`. When the cluster name is nonempty, the unified storage service logs it at startup.
+
+<hr>
+
 ### `[plugin.plugin_id]`
 
 This section can be used to configure plugin-specific settings. Replace the `plugin_id` attribute with the plugin ID present in `plugin.json`.
