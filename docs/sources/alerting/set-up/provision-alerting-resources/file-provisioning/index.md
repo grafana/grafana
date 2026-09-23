@@ -96,7 +96,7 @@ groups:
     name: my_rule_group
     # <string, required> name of the folder the rule group will be stored in
     folder: my_first_folder
-    # <duration, required> interval that the rule group should evaluated at
+    # <duration, required> interval that the rule group should be evaluated at
     interval: 60s
     # <list, required> list of rules that are part of the rule group
     rules:

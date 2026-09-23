@@ -69,7 +69,7 @@ refs:
 
 # Notification template examples
 
-Notification templates allows you to change the default notification messages.
+Notification templates allow you to change the default notification messages.
 
 You can modify the content and format of notification messages. For example, you can customize the content to show only specific information or adjust the format to suit a particular contact point, such as Slack or Email.
 
