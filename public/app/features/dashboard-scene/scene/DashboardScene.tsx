@@ -190,7 +190,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   private _changeTracker: DashboardSceneChangeTracker;
 
   private _sidebarActivation?: CancelActivationHandler;
-  private _modalRequestId = 0;
+  private _modalRequest?: AbortController;
 
   /**
    * Remember scroll position when going into panel edit
@@ -295,7 +295,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const destroyMutationClient = createMutationClient(this, 'dashboard');
 
     return () => {
-      this._modalRequestId++;
+      this.beginViewTransition();
       // A plan preview that's still showing when the scene deactivates (navigated away, tab
       // closed) never got a Build or Dismiss decision — report that honestly as 'closed' rather
       // than leaving the caller holding a stale reference to a preview nothing is showing.
@@ -465,7 +465,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this._initialUrlState = locationService.getLocation();
 
     // Switch to edit mode
-    this.setState({ isEditing: true, editable: true });
+    this.updateView({ isEditing: true, editable: true });
 
     // Propagate change edit mode change to children
     this.state.body.editModeChanged?.(true);
@@ -513,7 +513,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // Save As / first save mint a new uid; skip the refresh await below so redirect isn't delayed.
     const isNewResource = result.uid !== this.state.uid;
 
-    this.setState({
+    this.updateView({
       version: result.version,
       isDirty: false,
       uid: result.uid,
@@ -628,13 +628,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     if (restoreInitialState) {
       // Restore initial state and disable editing
-      this.setState({ ...this._initialState, isEditing: false });
+      this.updateView({ ...this._initialState, isEditing: false });
       this.restoreSerializerAnnotationsFromInitialState();
       appEvents.publish(new DashboardDiscardedEvent());
       DashboardInteractions.dashboardEditDiscarded();
     } else {
       // Do not restore
-      this.setState({ isEditing: false });
+      this.updateView({ isEditing: false });
     }
 
     // if we are in edit panel, we need to onDiscard()
@@ -675,7 +675,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // Ensure the restored layout stays editable.
     restoredState.body.editModeChanged?.(true);
 
-    this.setState({
+    this.updateView({
       ...restoredState,
       isEditing: true,
       editable: true,
@@ -765,7 +765,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const newState = sceneUtils.cloneSceneObjectState(dashScene.state);
     newState.version = versionRsp.version;
 
-    this.setState(newState);
+    this.updateView(newState);
     this.exitEditMode({ skipConfirm: true, restoreInitialState: false });
 
     return true;
@@ -1191,11 +1191,23 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     console.error('Trying to unlink a lib panel in a layout that is not DashboardGridItem or AutoGridItem');
   }
 
+  /** Cancel pending drawers at navigation intent, including before an asynchronous view loads. */
+  public beginViewTransition() {
+    this._modalRequest?.abort();
+  }
+
+  /** Use for view transitions and content replacement; ordinary data edits should use setState. */
+  public updateView(state: Partial<DashboardSceneState>) {
+    this.beginViewTransition();
+    this.setState(state);
+  }
+
   public async showModalAsync(load: () => Promise<SceneObject | undefined>) {
-    const requestId = ++this._modalRequestId;
+    this.beginViewTransition();
+    const request = new AbortController();
+    this._modalRequest = request;
     const location = locationService.getLocation();
     const search = new URLSearchParams(location.search);
-    let invalidated = false;
     // Time range and variable URL updates do not supersede a drawer request.
     const unlisten = locationService.getHistory().listen((nextLocation) => {
       const nextSearch = new URLSearchParams(nextLocation.search);
@@ -1205,42 +1217,28 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
           (key) => nextSearch.get(key) !== search.get(key)
         )
       ) {
-        invalidated = true;
+        request.abort();
       }
     });
-    // Some overlays and editor transitions are applied directly through setState.
-    const sub = this.subscribeToState((state, prevState) => {
-      if (
-        state.overlay !== prevState.overlay ||
-        state.isEditing !== prevState.isEditing ||
-        state.editPanel !== prevState.editPanel ||
-        state.editview !== prevState.editview ||
-        state.viewPanel !== prevState.viewPanel ||
-        state.body !== prevState.body
-      ) {
-        invalidated = true;
-      }
-    });
-
     try {
       const modal = await load();
-      if (modal && !invalidated && requestId === this._modalRequestId) {
+      if (modal && !request.signal.aborted) {
         this.showModal(modal);
       }
     } finally {
-      sub.unsubscribe();
       unlisten();
+      if (this._modalRequest === request) {
+        this._modalRequest = undefined;
+      }
     }
   }
 
   public showModal(modal: SceneObject) {
-    this._modalRequestId++;
-    this.setState({ overlay: modal });
+    this.updateView({ overlay: modal });
   }
 
   public closeModal() {
-    this._modalRequestId++;
-    this.setState({ overlay: undefined });
+    this.updateView({ overlay: undefined });
   }
 
   /**
@@ -1258,9 +1256,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   };
 
   public onShowAddLibraryPanelDrawer(panelToReplaceRef?: SceneObjectRef<VizPanel>) {
-    this.setState({
-      overlay: new AddLibraryPanelDrawer({ panelToReplaceRef }),
-    });
+    this.showModal(new AddLibraryPanelDrawer({ panelToReplaceRef }));
   }
 
   public onCreateNewRow() {
@@ -1278,8 +1274,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public switchLayout(layout: DashboardLayoutManager, skipUndo?: boolean) {
     const currentLayout = this.state.body;
-    const perform = () => this.setState({ body: layout });
-    const undo = () => this.setState({ body: currentLayout });
+    const perform = () => this.updateView({ body: layout });
+    const undo = () => this.updateView({ body: currentLayout });
     if (skipUndo) {
       perform();
     } else {

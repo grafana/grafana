@@ -28,7 +28,7 @@ export const endPlanningCommand: MutationCommand<EndPlanningPayload> = {
       return { success: false, error: 'The preview dashboard is no longer open.', changes: [] };
     }
 
-    scene.setState({
+    scene.updateView({
       body: DefaultGridLayoutManager.createEmpty(),
       $variables: new SceneVariableSet({ variables: [] }),
       planning: undefined,

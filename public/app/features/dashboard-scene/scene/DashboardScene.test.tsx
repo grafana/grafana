@@ -40,6 +40,7 @@ import { VariablesChanged } from 'app/features/variables/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { openPanelEditor } from '../panel-edit/openPanelEditor';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { createWorker } from '../saving/createDetectChangesWorker';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
@@ -2057,10 +2058,14 @@ describe('DashboardScene', () => {
 
     it.each([
       'close',
-      'direct overlay replacement',
+      'overlay replacement',
       'navigation away and back',
       'editor URL change',
       'edit mode change',
+      'layout replacement',
+      'save drawer close',
+      'settings URL sync',
+      'unchanged view transition',
       'deactivation and reactivation',
     ])('discards a pending overlay after %s', async (action) => {
       const scene = buildTestScene();
@@ -2074,9 +2079,9 @@ describe('DashboardScene', () => {
         case 'close':
           scene.closeModal();
           break;
-        case 'direct overlay replacement':
-          scene.setState({ overlay: new SceneGridLayout({ children: [] }) });
-          scene.setState({ overlay: undefined });
+        case 'overlay replacement':
+          scene.showModal(new SceneGridLayout({ children: [] }));
+          scene.closeModal();
           break;
         case 'navigation away and back':
           locationService.push('/dashboards');
@@ -2086,8 +2091,20 @@ describe('DashboardScene', () => {
           locationService.partial({ inspect: 'panel-1' });
           break;
         case 'edit mode change':
-          scene.setState({ isEditing: true });
-          scene.setState({ isEditing: false });
+          scene.onEnterEditMode();
+          scene.exitEditMode({ skipConfirm: true });
+          break;
+        case 'layout replacement':
+          scene.switchLayout(DefaultGridLayoutManager.createEmpty(), true);
+          break;
+        case 'save drawer close':
+          new SaveDashboardDrawer({ dashboardRef: scene.getRef() }).onClose();
+          break;
+        case 'settings URL sync':
+          scene.urlSync?.updateFromUrl({ editview: null });
+          break;
+        case 'unchanged view transition':
+          scene.updateView({ viewPanel: undefined });
           break;
         case 'deactivation and reactivation':
           deactivate();
@@ -2119,6 +2136,64 @@ describe('DashboardScene', () => {
       resolveLoad(modal);
       await opening;
       expect(scene.state.overlay).toBe(modal);
+    });
+
+    it('does not overwrite an explicitly opened library panel drawer', async () => {
+      const scene = buildTestScene();
+      const opening = scene.showModalAsync(async () => new SceneGridLayout({ children: [] }));
+
+      scene.onShowAddLibraryPanelDrawer();
+      const drawer = scene.state.overlay;
+      expect(drawer).toBeDefined();
+      await opening;
+      expect(scene.state.overlay).toBe(drawer);
+    });
+
+    it('allows ordinary dashboard data updates while loading', async () => {
+      const scene = buildTestScene();
+      const modal = new SceneGridLayout({ children: [] });
+      let resolveLoad!: (modal: SceneObject) => void;
+      const opening = scene.showModalAsync(() => new Promise((resolve) => (resolveLoad = resolve)));
+
+      scene.setState({ title: 'Updated title', isDirty: true });
+      resolveLoad(modal);
+      await opening;
+
+      expect(scene.state.overlay).toBe(modal);
+      expect(scene.state.title).toBe('Updated title');
+    });
+
+    it('keeps a newer pending request cancellable after an older request finishes', async () => {
+      const scene = buildTestScene();
+      const modal = new SceneGridLayout({ children: [] });
+      let resolveOlder!: (modal: SceneObject) => void;
+      let resolveNewer!: (modal: SceneObject) => void;
+      const first = scene.showModalAsync(() => new Promise((resolve) => (resolveOlder = resolve)));
+      const second = scene.showModalAsync(() => new Promise((resolve) => (resolveNewer = resolve)));
+
+      resolveOlder(modal);
+      await first;
+      scene.closeModal();
+      resolveNewer(modal);
+      await second;
+
+      expect(scene.state.overlay).toBeUndefined();
+      await scene.showModalAsync(async () => modal);
+      expect(scene.state.overlay).toBe(modal);
+    });
+
+    it('cancels a pending drawer before the panel editor import completes', async () => {
+      const scene = buildTestScene();
+      const modal = new SceneGridLayout({ children: [] });
+      const panel = findVizPanelByKey(scene, 'panel-1')!;
+      // This continuation runs before the panel editor's dynamic import resolves.
+      const opening = scene.showModalAsync(async () => modal);
+      const editing = openPanelEditor(scene, panel);
+
+      await opening;
+      expect(scene.state.overlay === modal).toBe(false);
+      await editing;
+      expect(scene.state.editPanel).toBeDefined();
     });
 
     it('propagates a load failure and allows a later request', async () => {

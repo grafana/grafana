@@ -114,7 +114,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         const wasHeld = this._heldEditPanelId !== undefined;
         this._releaseEditPanel();
         if (wasHeld) {
-          this._scene.setState({ editPanel: undefined });
+          this._scene.updateView({ editPanel: undefined });
         }
         return;
       }
@@ -174,7 +174,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     }
 
     if (Object.keys(update).length > 0) {
-      this._scene.setState(update);
+      this._scene.updateView(update);
     }
 
     if (typeof values.drow === 'string') {
