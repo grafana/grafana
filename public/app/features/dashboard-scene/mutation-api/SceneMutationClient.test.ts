@@ -69,6 +69,76 @@ describe('SceneMutationClient', () => {
       expect(load).toHaveBeenCalledTimes(1);
     });
 
+    it('shares an in-flight lazy load and caches the successful registration', async () => {
+      let resolveLoad!: () => void;
+      const pendingLoad = new Promise<void>((resolve) => {
+        resolveLoad = resolve;
+      });
+      const handler = jest.fn(async () => ({ success: true, changes: [] }));
+      const load = jest.fn(async () => {
+        await pendingLoad;
+        return command({ name: 'LAZY_COMMAND', handler });
+      });
+      const client = new SceneMutationClient(scene(), [{ name: 'LAZY_COMMAND', load }]);
+
+      const first = client.execute({ type: 'LAZY_COMMAND', payload: {} });
+      const second = client.execute({ type: 'LAZY_COMMAND', payload: {} });
+
+      expect(load).toHaveBeenCalledTimes(1);
+      expect(handler).not.toHaveBeenCalled();
+
+      resolveLoad();
+      expect(await Promise.all([first, second])).toEqual([
+        { success: true, changes: [] },
+        { success: true, changes: [] },
+      ]);
+      expect(await client.execute({ type: 'LAZY_COMMAND', payload: {} })).toEqual({ success: true, changes: [] });
+      expect(load).toHaveBeenCalledTimes(1);
+      expect(handler).toHaveBeenCalledTimes(3);
+    });
+
+    it.each([
+      { name: 'Error', error: new Error('Failed to load command') },
+      { name: 'non-Error', error: 'Failed to load command' },
+    ])('retries a shared lazy load after a $name rejection and caches success', async ({ error }) => {
+      let rejectLoad!: (reason: unknown) => void;
+      const pendingLoad = new Promise<never>((_resolve, reject) => {
+        rejectLoad = reject;
+      });
+      const handler = jest.fn(async () => ({ success: true, changes: [] }));
+      const load = jest
+        .fn(async () => command({ name: 'LAZY_COMMAND', handler }))
+        .mockImplementationOnce(() => pendingLoad);
+      const target = scene();
+      const client = new SceneMutationClient(target, [{ name: 'LAZY_COMMAND', load }]);
+
+      const first = client.execute({ type: 'LAZY_COMMAND', payload: {} });
+      const second = client.execute({ type: 'LAZY_COMMAND', payload: {} });
+      expect(load).toHaveBeenCalledTimes(1);
+
+      rejectLoad(error);
+      expect(await Promise.all([first, second])).toEqual([
+        { success: false, error: 'Failed to load command', changes: [] },
+        { success: false, error: 'Failed to load command', changes: [] },
+      ]);
+      expect(handler).not.toHaveBeenCalled();
+      expect(target.forceRender).not.toHaveBeenCalled();
+
+      expect(
+        await Promise.all([
+          client.execute({ type: 'LAZY_COMMAND', payload: {} }),
+          client.execute({ type: 'LAZY_COMMAND', payload: {} }),
+        ])
+      ).toEqual([
+        { success: true, changes: [] },
+        { success: true, changes: [] },
+      ]);
+      expect(await client.execute({ type: 'LAZY_COMMAND', payload: {} })).toEqual({ success: true, changes: [] });
+      expect(load).toHaveBeenCalledTimes(2);
+      expect(handler).toHaveBeenCalledTimes(3);
+      expect(target.forceRender).toHaveBeenCalledTimes(3);
+    });
+
     it('names the commands that do exist when asked for one that does not', async () => {
       const client = new SceneMutationClient(scene(), [command({ name: 'FIRST' }), command({ name: 'SECOND' })]);
 

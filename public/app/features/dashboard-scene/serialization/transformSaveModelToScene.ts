@@ -565,9 +565,11 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
 // setDashboardPanelContext) so the heavy PanelInspectDrawer isn't imported by low-level panel
 // setup, which would introduce a circular dependency.
 setPanelInspectorOpener(async (panel, tab) => {
-  const { PanelInspectDrawer } = await import(/* webpackChunkName: "panel-inspect" */ '../inspect/PanelInspectDrawer');
-
-  getDashboardSceneFor(panel).showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: tab }));
+  const dashboard = getDashboardSceneFor(panel);
+  await dashboard.showModalAsync(async () => {
+    const { PanelInspectDrawer } = await import(/* webpackChunkName: "panel-inspect" */ '../inspect/PanelInspectDrawer');
+    return new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: tab });
+  });
 });
 
 export function registerPanelInteractionsReporter(scene: DashboardScene) {

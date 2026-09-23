@@ -190,6 +190,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   private _changeTracker: DashboardSceneChangeTracker;
 
   private _sidebarActivation?: CancelActivationHandler;
+  private _modalRequestId = 0;
 
   /**
    * Remember scroll position when going into panel edit
@@ -294,6 +295,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const destroyMutationClient = createMutationClient(this, 'dashboard');
 
     return () => {
+      this._modalRequestId++;
       // A plan preview that's still showing when the scene deactivates (navigated away, tab
       // closed) never got a Build or Dismiss decision — report that honestly as 'closed' rather
       // than leaving the caller holding a stale reference to a preview nothing is showing.
@@ -782,16 +784,16 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
-    const { SaveDashboardDrawer } = await import(
-      /* webpackChunkName: "save-dashboard-drawer" */ '../saving/SaveDashboardDrawer'
-    );
+    await this.showModalAsync(async () => {
+      const { SaveDashboardDrawer } = await import(
+        /* webpackChunkName: "save-dashboard-drawer" */ '../saving/SaveDashboardDrawer'
+      );
 
-    if (!this.state.isEditing) {
-      return;
-    }
+      if (!this.state.isEditing) {
+        return;
+      }
 
-    this.setState({
-      overlay: new SaveDashboardDrawer({
+      return new SaveDashboardDrawer({
         dashboardRef: this.getRef(),
         saveAsCopy,
         saveAsDashboardTemplate,
@@ -799,7 +801,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         onSaveSuccess,
         recoverToNewBranch,
         showVariablesWarning: this.hasVariableErrors(),
-      }),
+      });
     });
   }
 
@@ -1185,11 +1187,55 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     console.error('Trying to unlink a lib panel in a layout that is not DashboardGridItem or AutoGridItem');
   }
 
+  public async showModalAsync(load: () => Promise<SceneObject | undefined>) {
+    const requestId = ++this._modalRequestId;
+    const location = locationService.getLocation();
+    const search = new URLSearchParams(location.search);
+    let invalidated = false;
+    // Time range and variable URL updates do not supersede a drawer request.
+    const unlisten = locationService.getHistory().listen((nextLocation) => {
+      const nextSearch = new URLSearchParams(nextLocation.search);
+      if (
+        nextLocation.pathname !== location.pathname ||
+        ['orgId', 'editPanel', 'viewPanel', 'editview', 'inspect', 'shareView'].some(
+          (key) => nextSearch.get(key) !== search.get(key)
+        )
+      ) {
+        invalidated = true;
+      }
+    });
+    // Some overlays and editor transitions are applied directly through setState.
+    const sub = this.subscribeToState((state, prevState) => {
+      if (
+        state.overlay !== prevState.overlay ||
+        state.isEditing !== prevState.isEditing ||
+        state.editPanel !== prevState.editPanel ||
+        state.editview !== prevState.editview ||
+        state.viewPanel !== prevState.viewPanel ||
+        state.body !== prevState.body
+      ) {
+        invalidated = true;
+      }
+    });
+
+    try {
+      const modal = await load();
+      if (modal && !invalidated && requestId === this._modalRequestId) {
+        this.showModal(modal);
+      }
+    } finally {
+      sub.unsubscribe();
+      unlisten();
+    }
+  }
+
   public showModal(modal: SceneObject) {
+    this._modalRequestId++;
     this.setState({ overlay: modal });
   }
 
   public closeModal() {
+    this._modalRequestId++;
     this.setState({ overlay: undefined });
   }
 

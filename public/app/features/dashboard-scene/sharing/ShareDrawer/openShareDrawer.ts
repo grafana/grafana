@@ -10,5 +10,5 @@ async function loadShareDrawer(options: ShareDrawerOptions) {
 }
 
 export async function openShareDrawer(dashboard: DashboardScene, options: ShareDrawerOptions) {
-  dashboard.showModal(await loadShareDrawer(options));
+  await dashboard.showModalAsync(() => loadShareDrawer(options));
 }
