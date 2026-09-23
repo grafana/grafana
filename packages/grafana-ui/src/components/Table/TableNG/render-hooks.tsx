@@ -177,6 +177,7 @@ export interface ColumnBuildConfig {
   setInspectCell: Dispatch<SetStateAction<InspectCellProps | null>>;
   showTypeIcons?: boolean;
   tableRefreshEnabled?: boolean;
+  jsonSyntaxHighlightingEnabled?: boolean;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
   typographyCtx: TypographyCtx;
@@ -268,6 +269,7 @@ function buildColumnsFromFields(
     disableSanitizeHtml,
     showTypeIcons,
     tableRefreshEnabled,
+    jsonSyntaxHighlightingEnabled,
     timeRange,
     firstColumnExtraPadding = 0,
     lastColumnExtraPadding = 0,
@@ -468,6 +470,7 @@ function buildColumnsFromFields(
             showFilters={showFilters}
             getActions={getCellActions}
             disableSanitizeHtml={disableSanitizeHtml}
+            jsonSyntaxHighlightingEnabled={jsonSyntaxHighlightingEnabled}
             getTextColorForBackground={getTextColorForBackground}
           />
           {showActions && (
@@ -543,6 +546,7 @@ function buildColumnsFromFields(
           ),
           data: frame,
           disableSanitizeHtml,
+          jsonSyntaxHighlightingEnabled,
           field: tooltipField,
           getActions: getCellActions,
           getTextColorForBackground,

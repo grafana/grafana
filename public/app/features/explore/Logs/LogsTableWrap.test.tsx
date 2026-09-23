@@ -90,6 +90,7 @@ describe('LogsTableWrap', () => {
 
     expect.assertions(3);
 
+    await screen.findByRole('columnheader', { name: /Time/ });
     expect(screen.getByLabelText('app')).toBeInTheDocument();
 
     // Add a new column
@@ -129,6 +130,8 @@ describe('LogsTableWrap', () => {
       },
       updatePanelState: updatePanelState,
     });
+
+    expect(await screen.findByRole('columnheader', { name: /Time/ })).toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByLabelText('app')).toBeInTheDocument();
@@ -174,6 +177,8 @@ describe('LogsTableWrap', () => {
       updatePanelState: updatePanelState,
       logsFrames: [getMockLokiFrameDataPlane()],
     });
+
+    expect(await screen.findByRole('columnheader', { name: /timestamp/ })).toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByLabelText('app')).toBeInTheDocument();

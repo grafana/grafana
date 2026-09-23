@@ -125,17 +125,15 @@ type IndexFeature string
 
 // IndexFeatureTrashFields means the index maps TrashSearchFieldDefinitions. An
 // index without them drops the values, so trash would come back missing the
-// deleter and in arbitrary order. Checked by writers alongside
-// IndexFeatureDeletedMarker, so an older index keeps no deleted documents until it
-// rebuilds.
+// deleter and in arbitrary order. Required, so such an index is rebuilt before it
+// serves anything.
 const IndexFeatureTrashFields IndexFeature = "trash-fields"
 
 // IndexFeatureDeletedMarker means the index maps the markers on deleted
 // documents, SEARCH_FIELD_IS_DELETED and SEARCH_FIELD_IS_PROVISIONED. An index
 // without them drops the values, so a deleted document indexed there would look
-// live, and a provisioned one would show up in trash. Recorded but not required:
-// rather than reindex every existing index to add the mapping, writers check for
-// this feature before keeping a deleted document.
+// live, and a provisioned one would show up in trash. Required too: both mappings
+// arrived together, so an index has either both or neither.
 const IndexFeatureDeletedMarker IndexFeature = "deleted-marker"
 
 // IndexFeatureStoredFacets means every facet-capable field is stored, so the
@@ -153,13 +151,15 @@ const IndexFeatureStoredFacets IndexFeature = "facets-are-stored"
 const IndexFeatureStoredResourceVersion IndexFeature = "resource-version-stored"
 
 // IndexFeatureHoldsDeletedDocuments means the index keeps deleted documents, so a
-// reader that does not exclude them returns deleted resources as live. Describes
-// what the index holds, not what it maps.
+// reader that does not exclude them returns deleted resources as live. It says what
+// the index holds, not what it maps, and every index built now holds them. Older
+// indexes hold none, and nothing in their mapping says so, which is why this is
+// written down instead of assumed.
 const IndexFeatureHoldsDeletedDocuments IndexFeature = "holds-deleted-documents"
 
 // TrashIndexFeatures are the features an index needs before a deleted document may
-// be kept in it. Both writers read this one list, so the producer and the
-// BulkIndex backstop cannot disagree about what makes an index usable for trash.
+// be kept in it. Read by the writers and by requiredIndexFeatures, so nothing can
+// disagree about what makes an index usable for trash.
 func TrashIndexFeatures() []IndexFeature {
 	return []IndexFeature{IndexFeatureDeletedMarker, IndexFeatureTrashFields}
 }
@@ -167,11 +167,12 @@ func TrashIndexFeatures() []IndexFeature {
 // currentIndexFeatures is recorded in every index this binary builds.
 //
 // A feature that changes which documents the index holds, not just how they are
-// mapped, belongs in readerRequiredFeatures too, and must not be enabled here
+// mapped, belongs in IndexReaderRequirements too, and must not be enabled here
 // until that check has shipped for longer than the compatibility window —
 // instances without the check ignore the requirement and read the index anyway.
 var currentIndexFeatures = []IndexFeature{
 	IndexFeatureDeletedMarker,
+	IndexFeatureHoldsDeletedDocuments,
 	IndexFeatureStoredFacets,
 	IndexFeatureStoredResourceVersion,
 	IndexFeatureTrashFields,
@@ -182,10 +183,10 @@ var currentIndexFeatures = []IndexFeature{
 // with it yet. Only ever grows.
 var knownIndexFeatures = []IndexFeature{
 	IndexFeatureDeletedMarker,
+	IndexFeatureHoldsDeletedDocuments,
 	IndexFeatureStoredFacets,
 	IndexFeatureStoredResourceVersion,
 	IndexFeatureTrashFields,
-	IndexFeatureHoldsDeletedDocuments,
 }
 
 // requiredIndexFeatures is the subset an index must already have to be used. An
@@ -196,23 +197,15 @@ var knownIndexFeatures = []IndexFeature{
 //
 // Every required feature must also be current, otherwise indexes rebuild forever
 // (TestRequiredIndexFeaturesAreCurrent).
-var requiredIndexFeatures = []IndexFeature{}
+//
+// Without the trash features the writers drop deleted documents, so trash comes
+// back empty, which reads as "nothing was deleted".
+var requiredIndexFeatures = TrashIndexFeatures()
 
 // CurrentIndexFeatures returns the features sorted, so declaration order cannot
 // change what an index records.
 func CurrentIndexFeatures() []IndexFeature {
 	return slices.Sorted(slices.Values(currentIndexFeatures))
-}
-
-// IndexFeaturesForNewIndex returns what an index built now records. Whether it
-// keeps deleted documents is decided at creation, so it belongs with the rest
-// rather than in a field of its own.
-func IndexFeaturesForNewIndex(keepsDeletedDocuments bool) []IndexFeature {
-	features := currentIndexFeatures
-	if keepsDeletedDocuments {
-		features = append(slices.Clone(features), IndexFeatureHoldsDeletedDocuments)
-	}
-	return slices.Sorted(slices.Values(features))
 }
 
 // RequiredIndexFeatures returns the features an index must have to be used.
@@ -246,13 +239,16 @@ func MissingFeatures(have, requiredFeatures []IndexFeature) []IndexFeature {
 	return missing
 }
 
-// IndexReaderRequirements returns what an index must have its reader understand.
-// Derived from what the index holds, not what it maps: one keeping no deleted
-// documents is safe for any reader, whatever its mapping.
-func IndexReaderRequirements(keepsDeletedDocuments bool) []IndexFeature {
-	if !keepsDeletedDocuments {
-		return nil
-	}
+// IndexReaderRequirements returns the features a reader has to understand before it
+// may use an index built now. An instance old enough not to know that an index can
+// hold deleted documents would return them as live search results, so it refuses
+// the index instead (see UnknownIndexRequirements).
+//
+// This does not work the other way round: an existing index that holds no deleted
+// documents is not rebuilt for it, because the feature is recorded rather than
+// required. Such an index keeps serving live searches, and trash stays unavailable
+// for it until it is rebuilt for some other reason.
+func IndexReaderRequirements() []IndexFeature {
 	return []IndexFeature{IndexFeatureHoldsDeletedDocuments}
 }
 

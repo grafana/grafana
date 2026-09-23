@@ -1,6 +1,6 @@
 import { type TraceSpan } from '../../types/trace';
 
-import { findTraceBanner, getSpanTracePercent, getTraceBannerOperationLabel } from './findTraceBanner';
+import { findTraceBanner, getSpanTracePercentLabel, getTraceBannerOperationLabel } from './findTraceBanner';
 
 function createSpan(overrides: Partial<TraceSpan> = {}): TraceSpan {
   return {
@@ -143,21 +143,33 @@ describe('findTraceBanner', () => {
     });
   });
 
-  describe('getSpanTracePercent', () => {
+  describe('getSpanTracePercentLabel', () => {
     it('rounds the span share of the trace duration to one decimal place', () => {
-      expect(getSpanTracePercent(1_420_000, 2_410_000)).toBe(58.9);
+      expect(getSpanTracePercentLabel(1_420_000, 2_410_000)).toBe('58.9');
     });
 
     it('does not round a near-full child span up to 100', () => {
-      expect(getSpanTracePercent(14_740_000, 14_760_000)).toBe(99.9);
+      expect(getSpanTracePercentLabel(14_740_000, 14_760_000)).toBe('99.9');
     });
 
     it('returns 0 when the trace duration is not positive', () => {
-      expect(getSpanTracePercent(100, 0)).toBe(0);
+      expect(getSpanTracePercentLabel(100, 0)).toBe('0');
     });
 
     it('clamps values above 100 when a span is longer than the trace', () => {
-      expect(getSpanTracePercent(300, 100)).toBe(100);
+      expect(getSpanTracePercentLabel(300, 100)).toBe('100');
+    });
+
+    it('reports a span too short to round to 0.1 as less than 0.1 rather than 0', () => {
+      expect(getSpanTracePercentLabel(811.92, 5_000_000)).toBe('<0.1');
+    });
+
+    it('still reports a zero-duration span as 0', () => {
+      expect(getSpanTracePercentLabel(0, 5_000_000)).toBe('0');
+    });
+
+    it('keeps a share that rounds to 0.1 as a real value', () => {
+      expect(getSpanTracePercentLabel(1_000, 1_000_000)).toBe('0.1');
     });
   });
 });

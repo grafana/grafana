@@ -417,7 +417,7 @@ func TestBuildSearchRequest_filterLeafValidation(t *testing.T) {
 // a single rule.
 func legacyResponse(t *testing.T, rule *ngmodels.AlertRule) *resourcepb.ResourceSearchResponse {
 	t.Helper()
-	cells, err := ruleCells(rule)
+	cells, err := ruleCells(ruleColumnValues(rule))
 	require.NoError(t, err)
 	return &resourcepb.ResourceSearchResponse{
 		TotalHits: 1,
