@@ -101,7 +101,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'inline-flex',
     alignItems: 'center',
     background: theme.colors.background.secondary,
-    borderRadius: theme.shape.borderRadius(8),
+    borderRadius: theme.shape.radius.sm,
     padding: theme.spacing(0.5, 1),
     fontSize: theme.typography.bodySmall.fontSize,
     fontWeight: theme.typography.fontWeightMedium,
