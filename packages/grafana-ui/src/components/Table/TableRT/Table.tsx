@@ -128,6 +128,11 @@ export const Table = memo((props: Props) => {
   const tableHasGeoCell = useMemo(() => hasGeoCell(data), [data]);
   const initialState = useMemo(() => getInitialState(initialSortBy, memoizedColumns), [initialSortBy, memoizedColumns]);
   const [sorting, setSorting] = useState<SortingState>(initialState.sorting ?? []);
+  // TanStack Table console.errors when sorting references a column id that is not in the
+  // current column set. Column ids are field indices, so they go stale whenever fields are
+  // added, removed, or reordered without remounting the table.
+  const columnIds = useMemo(() => new Set(memoizedColumns.map((column) => column.id)), [memoizedColumns]);
+  const tableSorting = useMemo(() => sorting.filter((sort) => columnIds.has(sort.id)), [sorting, columnIds]);
   const previousSorting = useRef(sorting);
   const [expanded, setExpanded] = useState<ExpandedState>({});
   const previousExpanded = useRef(expanded);
@@ -146,7 +151,7 @@ export const Table = memo((props: Props) => {
   const tableInstance = useReactTable<unknown>({
     columns: memoizedColumns,
     data: memoizedData,
-    state: { sorting, expanded, columnSizing, columnSizingInfo },
+    state: { sorting: tableSorting, expanded, columnSizing, columnSizingInfo },
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -163,7 +168,8 @@ export const Table = memo((props: Props) => {
     getRowId: hasUniqueId
       ? (_row, relativeIndex) => getRowUniqueId(data, relativeIndex) ?? String(relativeIndex)
       : undefined,
-    onSortingChange: (updater) => setSorting((current) => functionalUpdate(updater, current)),
+    onSortingChange: (updater) =>
+      setSorting((current) => functionalUpdate(updater, current.filter((sort) => columnIds.has(sort.id)))),
     onExpandedChange: (updater) => setExpanded((current) => functionalUpdate(updater, current)),
     onColumnSizingChange: setColumnSizing,
     onColumnSizingInfoChange: setColumnSizingInfo,

@@ -271,6 +271,45 @@ describe('Table', () => {
       expect(onSortByChange).toHaveBeenCalledTimes(1);
       expect(onSortByChange).toHaveBeenCalledWith([{ displayName: 'temperature', desc: false }]);
     });
+
+    it('does not error when data fields change and a previous sort column id is gone', () => {
+      const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const { rerender } = getTestContext({
+        initialSortBy: [{ displayName: 'temperature', desc: true }],
+      });
+
+      expect(getColumnHeader(/temperature/)).toBeInTheDocument();
+
+      // Column ids are field indices. Dropping fields so index "1" (temperature) no longer exists
+      // while the table instance keeps its previous sorting state must not console.error.
+      const reducedFrame = getDataFrame(
+        toDataFrame({
+          name: 'A',
+          fields: [
+            {
+              name: 'time',
+              type: FieldType.time,
+              values: [1609459200000, 1609470000000],
+              config: { custom: { filterable: false } },
+            },
+          ],
+        })
+      );
+
+      rerender(
+        <Table
+          ariaLabel="aria-label"
+          data={reducedFrame}
+          height={600}
+          width={800}
+          initialSortBy={[{ displayName: 'temperature', desc: true }]}
+        />
+      );
+
+      expect(getColumnHeader(/time/)).toBeInTheDocument();
+      expect(consoleError).not.toHaveBeenCalledWith(expect.stringContaining("Column with id '1' does not exist"));
+      consoleError.mockRestore();
+    });
   });
 
   describe('custom header', () => {
