@@ -31,6 +31,7 @@ import {
   getDataSourceConnectionsUrl,
   getDataSourceSettingsUrl,
 } from './api';
+import { notifyDataSourceCacheChanged } from './cacheGeneration';
 import {
   DATASOURCE_CONNECTION_MISSING_PLUGIN_WARNING,
   FALLBACK_TO_BOOTDATA_LIST_WARNING,
@@ -154,6 +155,7 @@ export function initDataSourceInstanceSettings(
   if (!asyncInitializationEnabled) {
     populateMaps(structuredClone(settings));
     populateListFromSettings(settings);
+    notifyDataSourceCacheChanged();
     return;
   }
 
@@ -238,6 +240,7 @@ async function loadAndCommitConnections(operation: 'startup' | 'reload'): Promis
 
     commitList(items, connections);
     initializedFromApi = true;
+    notifyDataSourceCacheChanged();
   } catch (error) {
     commitBootFallback(generation, operation, getOriginMessage(error) || 'request-failed', error);
   }
@@ -257,6 +260,7 @@ function commitBootFallback(
     populateListFromSettings(bootByName);
     populateMaps(structuredClone(bootByName));
   }
+  notifyDataSourceCacheChanged();
 
   logDataSourceWarning(FALLBACK_TO_BOOTDATA_LIST_WARNING, {
     operation,
@@ -316,6 +320,7 @@ export function setDataSourceInstanceSettings(
   populateMaps(structuredClone(settings));
   populateListFromSettings(settings);
   defaultName = defaultDatasourceName ?? Object.values(settings).find((ds) => ds.isDefault)?.name ?? '';
+  notifyDataSourceCacheChanged();
 }
 
 /**
@@ -330,6 +335,7 @@ async function fetchAndPopulate(): Promise<void> {
   populateBootMaps(settings.datasources);
   populateListFromSettings(settings.datasources);
   defaultName = settings.defaultDatasource;
+  notifyDataSourceCacheChanged();
 }
 
 async function refreshAsyncDataSourceCaches(): Promise<void> {
@@ -396,6 +402,7 @@ export function syncDataSourceInstanceSettings(settings: SyncDataSourceSettings)
   populateBootMaps(settings.datasources);
   populateListFromSettings(settings.datasources);
   defaultName = settings.defaultDatasource;
+  notifyDataSourceCacheChanged();
 }
 
 /**

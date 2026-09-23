@@ -9,6 +9,7 @@ import { setLogger } from '../logging/registry';
 import { setDatasourcePluginMetas } from '../pluginMeta/datasources';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
+import { getDataSourceCacheGeneration, subscribeToDataSourceCache } from './cacheGeneration';
 import {
   DATASOURCE_CONNECTION_MISSING_PLUGIN_WARNING,
   FALLBACK_TO_BOOTDATA_LIST_WARNING,
@@ -844,6 +845,60 @@ describe('instanceSettings', () => {
 
       expect(reload).toHaveBeenCalledTimes(2);
     });
+
+    it('notifies subscribers once after a successful cache refresh', async () => {
+      initDataSourceInstanceSettings(fixtures, 'Bravo');
+      const generationBeforeReload = getDataSourceCacheGeneration();
+      const listener = jest.fn();
+      const unsubscribe = subscribeToDataSourceCache(listener);
+      backendGet.mockResolvedValue({
+        datasources: { Alpha: fixtures.Alpha },
+        defaultDatasource: 'Alpha',
+      });
+
+      await reloadDataSourceInstanceSettings();
+
+      expect(getDataSourceCacheGeneration()).toBe(generationBeforeReload + 1);
+      expect(listener).toHaveBeenCalledTimes(1);
+      unsubscribe();
+    });
+
+    it('does not notify subscribers when the cache refresh fails', async () => {
+      initDataSourceInstanceSettings(fixtures, 'Bravo');
+      const generationBeforeReload = getDataSourceCacheGeneration();
+      const listener = jest.fn();
+      const unsubscribe = subscribeToDataSourceCache(listener);
+      backendGet.mockRejectedValue(new Error('reload failed'));
+
+      await expect(reloadDataSourceInstanceSettings()).rejects.toThrow('reload failed');
+
+      expect(getDataSourceCacheGeneration()).toBe(generationBeforeReload);
+      expect(listener).not.toHaveBeenCalled();
+      unsubscribe();
+    });
+
+    it('notifies subscribers once when concurrent reloads share a cache refresh', async () => {
+      initDataSourceInstanceSettings(fixtures, 'Bravo');
+      const generationBeforeReload = getDataSourceCacheGeneration();
+      const listener = jest.fn();
+      const unsubscribe = subscribeToDataSourceCache(listener);
+      let resolveBackend!: (value: { datasources: typeof fixtures; defaultDatasource: string }) => void;
+      backendGet.mockReturnValue(
+        new Promise((resolve) => {
+          resolveBackend = resolve;
+        })
+      );
+
+      const firstReload = reloadDataSourceInstanceSettings();
+      const secondReload = reloadDataSourceInstanceSettings();
+      resolveBackend({ datasources: fixtures, defaultDatasource: 'Bravo' });
+      await Promise.all([firstReload, secondReload]);
+
+      expect(getDataSourceCacheGeneration()).toBe(generationBeforeReload + 1);
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(backendGet).toHaveBeenCalledTimes(1);
+      unsubscribe();
+    });
   });
 
   describe('syncDataSourceInstanceSettings', () => {
@@ -877,6 +932,18 @@ describe('instanceSettings', () => {
       syncDataSourceInstanceSettings({ datasources: { Alpha: fixtures.Alpha }, defaultDatasource: 'Alpha' });
 
       expect((await getDataSourceInstanceSettings('runtime-ds'))?.name).toBe('Runtime');
+    });
+
+    it('does not notify a subscriber after it unsubscribes', async () => {
+      initDataSourceInstanceSettings(fixtures, 'Bravo');
+      const listener = jest.fn();
+      const unsubscribe = subscribeToDataSourceCache(listener);
+      unsubscribe();
+
+      syncDataSourceInstanceSettings({ datasources: { Alpha: fixtures.Alpha }, defaultDatasource: 'Alpha' });
+
+      expect((await getDataSourceInstanceSettings(null))?.name).toBe('Alpha');
+      expect(listener).not.toHaveBeenCalled();
     });
   });
 
