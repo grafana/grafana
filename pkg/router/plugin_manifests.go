@@ -199,17 +199,17 @@ func (t *pluginManifestsTarget) pluginClients(host string) (plugins.Client, v3.C
 	}
 	// NOTE: ClientV2 is missing ALL the middleware...
 	return &backendgrpcplugin.ClientV2{
-		DiagnosticsClient: pluginv2.NewDiagnosticsClient(conn),
-		ResourceClient:    pluginv2.NewResourceClient(conn),
-		DataClient:        pluginv2.NewDataClient(conn),
-		StreamClient:      pluginv2.NewStreamClient(conn),
-		AdmissionClient:   pluginv2.NewAdmissionControlClient(conn),
-		ConversionClient:  pluginv2.NewResourceConversionClient(conn),
-	}, &grpcplugin.ClientV3{
-		AdmissionServiceClient:  pluginv3.NewAdmissionServiceClient(conn),
-		ConversionServiceClient: pluginv3.NewConversionServiceClient(conn),
-		RouteServiceClient:      pluginv3.NewRouteServiceClient(conn),
-	}, nil
+			DiagnosticsClient: pluginv2.NewDiagnosticsClient(conn),
+			ResourceClient:    pluginv2.NewResourceClient(conn),
+			DataClient:        pluginv2.NewDataClient(conn),
+			StreamClient:      pluginv2.NewStreamClient(conn),
+			AdmissionClient:   pluginv2.NewAdmissionControlClient(conn),
+			ConversionClient:  pluginv2.NewResourceConversionClient(conn),
+		}, &grpcplugin.ClientV3{
+			AdmissionServiceClient:  pluginv3.NewAdmissionServiceClient(conn),
+			ConversionServiceClient: pluginv3.NewConversionServiceClient(conn),
+			RouteServiceClient:      pluginv3.NewRouteServiceClient(conn),
+		}, nil
 }
 
 func (t *pluginManifestsTarget) closeConnections() {
