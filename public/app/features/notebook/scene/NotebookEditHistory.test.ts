@@ -1,4 +1,4 @@
-import { NotebookEditHistory } from './NotebookEditHistory';
+import { NOTEBOOK_EDIT_KIND, NotebookEditHistory } from './NotebookEditHistory';
 
 describe('NotebookEditHistory', () => {
   it('executes, undoes, and redoes an action', () => {
@@ -7,6 +7,7 @@ describe('NotebookEditHistory', () => {
 
     history.execute({
       label: 'change value',
+      kind: NOTEBOOK_EDIT_KIND.EDIT,
       perform: () => {
         value = 1;
       },
@@ -32,7 +33,7 @@ describe('NotebookEditHistory', () => {
     const perform = jest.fn();
     const undo = jest.fn();
 
-    history.record({ label: 'edit code', perform, undo });
+    history.record({ label: 'edit code', kind: NOTEBOOK_EDIT_KIND.EDIT, perform, undo });
 
     expect(perform).not.toHaveBeenCalled();
     history.undo();
@@ -43,7 +44,7 @@ describe('NotebookEditHistory', () => {
 
   it('clears redo history when a new edit is recorded', () => {
     const history = new NotebookEditHistory();
-    const action = (label: string) => ({ label, perform: jest.fn(), undo: jest.fn() });
+    const action = (label: string) => ({ label, kind: NOTEBOOK_EDIT_KIND.EDIT, perform: jest.fn(), undo: jest.fn() });
 
     history.execute(action('first'));
     history.undo();
@@ -55,7 +56,7 @@ describe('NotebookEditHistory', () => {
 
   it('discards a live transaction that returned to its starting value', () => {
     const history = new NotebookEditHistory();
-    const action = { label: 'edit code', perform: jest.fn(), undo: jest.fn() };
+    const action = { label: 'edit code', kind: NOTEBOOK_EDIT_KIND.EDIT, perform: jest.fn(), undo: jest.fn() };
 
     history.record(action);
     history.discard(action);
@@ -66,8 +67,8 @@ describe('NotebookEditHistory', () => {
 
   it('restores redo history when a live transaction is discarded', () => {
     const history = new NotebookEditHistory();
-    const original = { label: 'add block', perform: jest.fn(), undo: jest.fn() };
-    const transient = { label: 'edit code', perform: jest.fn(), undo: jest.fn() };
+    const original = { label: 'add block', kind: NOTEBOOK_EDIT_KIND.ADD_CELL, perform: jest.fn(), undo: jest.fn() };
+    const transient = { label: 'edit code', kind: NOTEBOOK_EDIT_KIND.EDIT, perform: jest.fn(), undo: jest.fn() };
 
     history.execute(original);
     history.undo();
@@ -83,6 +84,7 @@ describe('NotebookEditHistory', () => {
     const history = new NotebookEditHistory();
     history.execute({
       label: 'failing edit',
+      kind: NOTEBOOK_EDIT_KIND.EDIT,
       perform: jest.fn(),
       undo: () => {
         throw new Error('undo failed');
@@ -98,7 +100,12 @@ describe('NotebookEditHistory', () => {
     const undone: number[] = [];
 
     for (let index = 0; index < 101; index++) {
-      history.execute({ label: String(index), perform: jest.fn(), undo: () => undone.push(index) });
+      history.execute({
+        label: String(index),
+        kind: NOTEBOOK_EDIT_KIND.EDIT,
+        perform: jest.fn(),
+        undo: () => undone.push(index),
+      });
     }
 
     while (history.undo()) {}

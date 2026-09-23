@@ -48,6 +48,29 @@ func NewSearchOptions(
 	ownsIndexFn func(key resource.NamespacedResource) (bool, error),
 	snapshotStore RemoteIndexStore,
 ) (resource.SearchOptions, error) {
+	var embeddingConfig *resource.EmbeddingConfigRegistry
+	if cfg.EnableSearch || cfg.VectorIndexingEnabled {
+		embeddingConfig = resource.NewEmbeddingConfigRegistry(resource.AppManifests())
+	}
+
+	// Built here rather than inside the search branch below, because a server that
+	// delegates search to another process still decides which selectors it can push
+	// into an index, and that decision reads these declarations.
+	manifests := resource.MergeManifestsByKind(resource.AppManifests())
+	selectableFields, searchFieldsHashes, searchFieldsProviders, err := resource.SearchFieldsForManifests(manifests...)
+	if err != nil {
+		return resource.SearchOptions{}, err
+	}
+	// Without a document supplier (some tests) the index has nothing to map, so
+	// leave out the mappings and their hashes; the selectable fields stay.
+	if docs == nil {
+		searchFieldsHashes, searchFieldsProviders = nil, nil
+	}
+	// One registry holds selectable fields, hashes, and providers, shared by the
+	// index backend and the search server so a future live-manifest source can
+	// swap them consistently.
+	searchFields := resource.NewSearchFieldsRegistry(selectableFields, searchFieldsHashes, searchFieldsProviders)
+
 	if cfg.EnableSearch {
 		root := cfg.IndexPath
 		if root == "" {
@@ -83,25 +106,6 @@ func NewSearchOptions(
 			return resource.SearchOptions{}, err
 		}
 
-		// MergeManifestsByKind is the single point a future live-manifest source will
-		// be added to; the built-in manifests are the only source today.
-		manifests := resource.MergeManifestsByKind(resource.AppManifests())
-		selectableFields, searchFieldsHashes, searchFieldsProviders, err := resource.SearchFieldsForManifests(manifests...)
-		if err != nil {
-			return resource.SearchOptions{}, err
-		}
-
-		// Without a document supplier (some tests) the index has nothing to map, so
-		// leave out the mappings and their hashes; the selectable fields stay.
-		if docs == nil {
-			searchFieldsHashes, searchFieldsProviders = nil, nil
-		}
-
-		// One registry holds selectable fields, hashes, and providers, shared by the
-		// index backend and the search server so a future live-manifest source can
-		// swap them consistently.
-		searchFields := resource.NewSearchFieldsRegistry(selectableFields, searchFieldsHashes, searchFieldsProviders)
-
 		bleve, err := NewBleveBackend(BleveOptions{
 			Root:                           root,
 			FileThreshold:                  int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
@@ -116,7 +120,6 @@ func NewSearchOptions(
 			DiskCleanupUnopenedGracePeriod: cfg.DiskIndexCleanupUnopenedGracePeriod,
 			PostRankAuthzEnabled:           cfg.SearchPostRankAuthz,
 			EnforceSortCapability:          cfg.SearchEnforceSortCapability,
-			IndexDeletedDocuments:          cfg.IndexDeletedDocuments,
 			PostRankAuthz: PostRankAuthzConfig{
 				OverFetchFactor: cfg.SearchPostRankAuthzOverFetchFactor,
 				MaxWindow:       cfg.SearchPostRankAuthzMaxWindow,
@@ -163,9 +166,12 @@ func NewSearchOptions(
 			IndexSnapshotCleanupInterval:    DefaultSnapshotCleanupInterval,
 			IndexSnapshotCleanupGracePeriod: cleanupGracePeriodOrDefault(cfg.IndexSnapshotCleanupGracePeriod),
 			SearchFields:                    searchFields,
+			EmbeddingConfig:                 embeddingConfig,
 		}, nil
 	}
 	return resource.SearchOptions{
+		EmbeddingConfig: embeddingConfig,
+		SearchFields:    searchFields,
 		// it is used for search after write and throttles index updates
 		IndexMinUpdateInterval:    cfg.IndexMinUpdateInterval,
 		IndexModificationCacheTTL: cfg.IndexModificationCacheTTL,

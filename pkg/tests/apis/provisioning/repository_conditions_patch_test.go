@@ -1,7 +1,6 @@
 package provisioning
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"sync"
@@ -59,12 +58,13 @@ func TestIntegrationProvisioning_ConditionsPatch_AppendDoesNotClobber(t *testing
 	// a stable snapshot and so the informer cache has caught up enough that
 	// subsequent reconciles use per-condition ops (not the empty-array
 	// fallback that would whole-array replace).
-	waitForConditionTypes(t, helper, repoName,
+	waitForConditionTypes(t, helper.Repositories, repoName, repositoryConditions,
 		provisioning.ConditionTypeReady,
 		provisioning.ConditionTypeNamespaceQuota,
 	)
 
-	before := getRepositoryConditions(t, helper, repoName)
+	before, err := readConditions(t.Context(), helper.Repositories, repoName, repositoryConditions)
+	require.NoError(t, err, "failed to get repository %q", repoName)
 	existingTypes := conditionTypeSet(before)
 	require.Contains(t, existingTypes, provisioning.ConditionTypeReady, "Ready must be present after waitForConditionTypes")
 	require.NotContains(t, existingTypes, provisioning.ConditionTypePullStatus, "PullStatus should not yet exist; the sync worker writes it")
@@ -84,7 +84,7 @@ func TestIntegrationProvisioning_ConditionsPatch_AppendDoesNotClobber(t *testing
 	// Idempotent apply-and-verify: if the narrow empty-cache race does
 	// clobber our append, the next iteration re-adds PullStatus and re-checks.
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		cur, err := readRepositoryConditions(t.Context(), helper, repoName)
+		cur, err := readConditions(t.Context(), helper.Repositories, repoName, repositoryConditions)
 		if !assert.NoError(c, err) {
 			return
 		}
@@ -125,7 +125,7 @@ func TestIntegrationProvisioning_ConditionsPatch_ReplaceByIndex(t *testing.T) {
 	// a stable snapshot and so the informer cache has caught up enough that
 	// subsequent reconciles use per-condition ops (not the empty-array
 	// fallback that would whole-array replace).
-	waitForConditionTypes(t, helper, repoName,
+	waitForConditionTypes(t, helper.Repositories, repoName, repositoryConditions,
 		provisioning.ConditionTypeReady,
 		provisioning.ConditionTypeNamespaceQuota,
 	)
@@ -156,7 +156,7 @@ func TestIntegrationProvisioning_ConditionsPatch_ReplaceByIndex(t *testing.T) {
 	// Everything is re-read fresh from the apiserver each iteration so a
 	// shift in the array between reads is self-healing.
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		cur, err := readRepositoryConditions(t.Context(), helper, repoName)
+		cur, err := readConditions(t.Context(), helper.Repositories, repoName, repositoryConditions)
 		if !assert.NoError(c, err) {
 			return
 		}
@@ -183,7 +183,7 @@ func TestIntegrationProvisioning_ConditionsPatch_ReplaceByIndex(t *testing.T) {
 			return
 		}
 
-		after, err := readRepositoryConditions(t.Context(), helper, repoName)
+		after, err := readConditions(t.Context(), helper.Repositories, repoName, repositoryConditions)
 		if !assert.NoError(c, err) {
 			return
 		}
@@ -232,7 +232,7 @@ func TestIntegrationProvisioning_ConditionsPatch_ConcurrentAdds(t *testing.T) {
 	// a stable snapshot and so the informer cache has caught up enough that
 	// subsequent reconciles use per-condition ops (not the empty-array
 	// fallback that would whole-array replace).
-	waitForConditionTypes(t, helper, repoName,
+	waitForConditionTypes(t, helper.Repositories, repoName, repositoryConditions,
 		provisioning.ConditionTypeReady,
 		provisioning.ConditionTypeNamespaceQuota,
 	)
@@ -273,7 +273,7 @@ func TestIntegrationProvisioning_ConditionsPatch_ConcurrentAdds(t *testing.T) {
 	ensurePresent := func(patch []byte, conditionType string) {
 		defer wg.Done()
 		for time.Now().Before(deadline) {
-			cur, err := readRepositoryConditions(t.Context(), helper, repoName)
+			cur, err := readConditions(t.Context(), helper.Repositories, repoName, repositoryConditions)
 			if err == nil && indexOfConditionType(cur, conditionType) >= 0 {
 				errs <- nil
 				return
@@ -298,7 +298,7 @@ func TestIntegrationProvisioning_ConditionsPatch_ConcurrentAdds(t *testing.T) {
 	// Final steady-state check: both neutral conditions must be present
 	// simultaneously (not just individually-eventually).
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		cur, err := readRepositoryConditions(t.Context(), helper, repoName)
+		cur, err := readConditions(t.Context(), helper.Repositories, repoName, repositoryConditions)
 		if !assert.NoError(c, err) {
 			return
 		}
@@ -307,48 +307,6 @@ func TestIntegrationProvisioning_ConditionsPatch_ConcurrentAdds(t *testing.T) {
 		assert.Contains(c, types, condB.Type, "actor B's condition missing; a concurrent writer clobbered it")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
 		"both neutral conditions must coexist in the conditions array")
-}
-
-// waitForConditionTypes blocks until every named condition type is present on
-// the repository. Used to make sure the controller has written its initial
-// batch (Ready + Quota) and the informer cache has caught up before the test
-// starts mutating /status/conditions.
-func waitForConditionTypes(t *testing.T, helper *common.ProvisioningTestHelper, name string, conditionTypes ...string) {
-	t.Helper()
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		cur, err := readRepositoryConditions(t.Context(), helper, name)
-		if !assert.NoError(c, err) {
-			return
-		}
-		have := conditionTypeSet(cur)
-		for _, typ := range conditionTypes {
-			assert.Contains(c, have, typ, "repository %q still missing condition %q", name, typ)
-		}
-	}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
-		"repository %q should have conditions %v", name, conditionTypes)
-}
-
-// getRepositoryConditions is a require-based helper intended for the test
-// goroutine only. Inside retry callbacks and worker goroutines, use
-// readRepositoryConditions instead — it returns errors without calling
-// t.FailNow, which is illegal off the test goroutine.
-func getRepositoryConditions(t *testing.T, helper *common.ProvisioningTestHelper, name string) []metav1.Condition {
-	t.Helper()
-	cur, err := readRepositoryConditions(t.Context(), helper, name)
-	require.NoError(t, err, "failed to get repository %q", name)
-	return cur
-}
-
-func readRepositoryConditions(ctx context.Context, helper *common.ProvisioningTestHelper, name string) ([]metav1.Condition, error) {
-	obj, err := helper.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-	repo, err := common.FromUnstructured[provisioning.Repository](obj)
-	if err != nil {
-		return nil, err
-	}
-	return repo.Status.Conditions, nil
 }
 
 func conditionTypeSet(conditions []metav1.Condition) map[string]struct{} {

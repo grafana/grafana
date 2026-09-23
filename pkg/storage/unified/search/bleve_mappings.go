@@ -601,6 +601,7 @@ func getBleveDocMappings(provider resource.SearchFieldsProvider, group, kindReso
 
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_IS_DELETED, internalBoolField())
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_IS_PROVISIONED, internalBoolField())
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_RV_STRING, internalStoredStringField())
 
 	// Trash fields sit at the top level next to the standard ones, so /trash reads
 	// them by the names the API layer already uses.
@@ -668,6 +669,20 @@ func internalBoolField() *mapping.FieldMapping {
 	m := bleve.NewBooleanFieldMapping()
 	m.Store = false
 	m.Index = true
+	m.DocValues = false
+	m.IncludeInAll = false
+	m.IncludeTermVectors = false
+	m.SkipFreqNorm = true
+	return m
+}
+
+// internalStoredStringField maps a value that search results return but nothing
+// queries, so it is stored without being indexed. Mapped here rather than
+// declared as a SearchFieldDefinition for the same reasons as internalBoolField.
+func internalStoredStringField() *mapping.FieldMapping {
+	m := bleve.NewKeywordFieldMapping()
+	m.Store = true
+	m.Index = false
 	m.DocValues = false
 	m.IncludeInAll = false
 	m.IncludeTermVectors = false

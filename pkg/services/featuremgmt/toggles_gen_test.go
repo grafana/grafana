@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	featuretoggleapi "github.com/grafana/grafana/pkg/services/featuremgmt/feature_toggle_api"
 	"github.com/grafana/grafana/pkg/services/featuremgmt/strcase"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestFeatureToggleFiles(t *testing.T) {
@@ -72,7 +73,7 @@ func TestFeatureToggleFiles(t *testing.T) {
 		t.Run("react openfeature typings", func(t *testing.T) {
 			verifyAndGenerateFile(t,
 				"../../../packages/grafana-runtime/src/internal/openFeature/openfeature-types.gen.d.ts",
-				generateOpenFeatureReactTypings(),
+				generateOpenFeatureReactTypings(t),
 			)
 		})
 	})
@@ -549,35 +550,70 @@ func writeToggleDocsTable(include func(FeatureFlag) bool, showEnableByDefault bo
 	return strings.ReplaceAll(v, "--|", "- |")
 }
 
+// openFeatureReactFlag is the generated frontend API for one OpenFeature flag.
+type openFeatureReactFlag struct {
+	Key          string
+	Description  string
+	Type         string
+	DefaultValue any
+}
+
+type openFeatureReactFlagset struct {
+	Flags     []openFeatureReactFlag
+	HasObject bool
+}
+
+type openFeatureReactTemplateData struct {
+	Flagset openFeatureReactFlagset
+}
+
+func getOpenFeatureReactFlag(t *testing.T, flag FeatureFlag) openFeatureReactFlag {
+	t.Helper()
+
+	inMemoryFlag, err := setting.ParseFlag(flag.Name, flag.Expression)
+	require.NoError(t, err)
+
+	typedFlag := TypedFlag(inMemoryFlag)
+	reactFlag := openFeatureReactFlag{
+		Key:          flag.Name,
+		Description:  flag.Description,
+		DefaultValue: inMemoryFlag.Variants[inMemoryFlag.DefaultVariant],
+	}
+
+	switch typedFlag.GetFlagType() {
+	case FlagTypeBoolean:
+		reactFlag.Type = "boolean"
+	case FlagTypeInteger, FlagTypeFloat:
+		reactFlag.Type = "number"
+	case FlagTypeString:
+		reactFlag.Type = "string"
+	case FlagTypeObject:
+		reactFlag.Type = "object"
+	default:
+		t.Fatalf("unsupported OpenFeature flag type for %q", flag.Name)
+	}
+
+	return reactFlag
+}
+
 // Generates and returns an OpenFeature React SDK file content by executing
 // the openfeature_react.tmpl template directly with the feature flags data.
 func generateOpenFeatureReact(t *testing.T) string {
+	return generateOpenFeatureReactForFlags(t, standardFeatureFlags)
+}
+
+func generateOpenFeatureReactForFlags(t *testing.T, featureFlags []FeatureFlag) string {
 	t.Helper()
 
-	type ofFlag struct {
-		Key          string
-		Description  string
-		Type         string
-		DefaultValue any
-	}
-	type ofFlagset struct {
-		Flags []ofFlag
-	}
-	type templateData struct {
-		Flagset ofFlagset
-	}
-
-	flags := make([]ofFlag, 0, len(standardFeatureFlags))
-	for _, flag := range standardFeatureFlags {
+	flags := make([]openFeatureReactFlag, 0, len(featureFlags))
+	hasObject := false
+	for _, flag := range featureFlags {
 		if !flag.Generate.React {
 			continue
 		}
-		flags = append(flags, ofFlag{
-			Key:          flag.Name,
-			Description:  flag.Description,
-			Type:         "boolean",
-			DefaultValue: flag.Expression == "true",
-		})
+		reactFlag := getOpenFeatureReactFlag(t, flag)
+		flags = append(flags, reactFlag)
+		hasObject = hasObject || reactFlag.Type == "object"
 	}
 
 	sort.Slice(flags, func(i, j int) bool {
@@ -597,7 +633,8 @@ func generateOpenFeatureReact(t *testing.T) string {
 				}
 				return "false"
 			case string:
-				return `"` + val + `"`
+				b, _ := json.Marshal(val)
+				return string(b)
 			default:
 				return fmt.Sprintf("%v", v)
 			}
@@ -616,8 +653,8 @@ func generateOpenFeatureReact(t *testing.T) string {
 	require.NoError(t, err, "failed to parse openfeature_react.tmpl")
 
 	var buf bytes.Buffer
-	require.NoError(t, tmpl.Execute(&buf, templateData{
-		Flagset: ofFlagset{Flags: flags},
+	require.NoError(t, tmpl.Execute(&buf, openFeatureReactTemplateData{
+		Flagset: openFeatureReactFlagset{Flags: flags, HasObject: hasObject},
 	}), "failed to execute openfeature template")
 
 	return buf.String()
@@ -637,7 +674,13 @@ func getReactTypingsKeys(keys []string) string {
 	return s.String()
 }
 
-func generateOpenFeatureReactTypings() string {
+func generateOpenFeatureReactTypings(t *testing.T) string {
+	return generateOpenFeatureReactTypingsForFlags(t, standardFeatureFlags)
+}
+
+func generateOpenFeatureReactTypingsForFlags(t *testing.T, featureFlags []FeatureFlag) string {
+	t.Helper()
+
 	type ofFlagset struct {
 		Boolean []string
 		Number  []string
@@ -646,11 +689,21 @@ func generateOpenFeatureReactTypings() string {
 	}
 
 	flagSet := ofFlagset{}
-	for _, flag := range standardFeatureFlags {
+	for _, flag := range featureFlags {
 		if !flag.Generate.React {
 			continue
 		}
-		flagSet.Boolean = append(flagSet.Boolean, flag.Name)
+
+		switch getOpenFeatureReactFlag(t, flag).Type {
+		case "boolean":
+			flagSet.Boolean = append(flagSet.Boolean, flag.Name)
+		case "number":
+			flagSet.Number = append(flagSet.Number, flag.Name)
+		case "string":
+			flagSet.String = append(flagSet.String, flag.Name)
+		case "object":
+			flagSet.Object = append(flagSet.Object, flag.Name)
+		}
 	}
 
 	return fmt.Sprintf(`/**
@@ -670,4 +723,40 @@ declare module "@openfeature/core" {
   export type ObjectFlagKey =%s;
 }
 `, getReactTypingsKeys(flagSet.Boolean), getReactTypingsKeys(flagSet.Number), getReactTypingsKeys(flagSet.String), getReactTypingsKeys(flagSet.Object))
+}
+
+func TestGenerateOpenFeatureReactForFlags(t *testing.T) {
+	flags := []FeatureFlag{
+		{Name: "test.enabled", Expression: "true", Generate: Generate{React: true}},
+		{Name: "test.limit", Expression: "42", Generate: Generate{React: true}},
+		{Name: "test.mode", Expression: "experimental", Generate: Generate{React: true}},
+		{Name: "test.escapedString", Expression: "quote \" backslash \\ newline\n", Generate: Generate{React: true}},
+		{Name: "test.settings", Expression: `{"allowList":[]}`, Generate: Generate{React: true}},
+	}
+
+	source := generateOpenFeatureReactForFlags(t, flags)
+	require.Contains(t, source, `  type JsonValue,`)
+	require.Contains(t, source, `export const useFlagTestLimit = (options?: ReactFlagEvaluationOptions): number => {
+  return useFlag("test.limit", 42, options).value;
+};`)
+	require.Contains(t, source, `export const useFlagTestMode = (options?: ReactFlagEvaluationOptions): string => {
+  return useFlag("test.mode", "experimental", options).value;
+};`)
+	require.Contains(t, source, `export const useFlagTestEscapedString = (options?: ReactFlagEvaluationOptions): string => {
+  return useFlag("test.escapedString", "quote \" backslash \\ newline\n", options).value;
+};`)
+	require.Contains(t, source, `export const useFlagTestSettings = (options?: ReactFlagEvaluationOptions): JsonValue => {
+  return useFlag("test.settings", {"allowList":[]}, options).value;
+};`)
+
+	typings := generateOpenFeatureReactTypingsForFlags(t, flags)
+	require.Contains(t, typings, `export type BooleanFlagKey =
+    | "test.enabled";`)
+	require.Contains(t, typings, `export type NumberFlagKey =
+    | "test.limit";`)
+	require.Contains(t, typings, `export type StringFlagKey =
+    | "test.mode"
+    | "test.escapedString";`)
+	require.Contains(t, typings, `export type ObjectFlagKey =
+    | "test.settings";`)
 }

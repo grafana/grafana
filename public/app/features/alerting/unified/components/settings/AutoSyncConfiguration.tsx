@@ -5,7 +5,7 @@ import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Card, ConfirmModal, Field, LinkButton, Select, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { hasConfiguredUid, isOperatorManaged } from '../../utils/autoSync';
+import { describeSyncHealth, hasAutoSyncSource, isOperatorManaged } from '../../utils/autoSync';
 
 import { AutoSyncStatusBadge } from './AutoSyncStatusBadge';
 import { useAutoSyncConfiguration } from './useAutoSyncConfiguration';
@@ -19,6 +19,7 @@ export function AutoSyncConfiguration({ stagedConfigIdentifier }: AutoSyncConfig
   const styles = useStyles2(getStyles);
   const {
     state,
+    syncHealth,
     autoSyncEligibleAlertmanagers,
     selectedUid,
     setSelectedUid,
@@ -42,9 +43,13 @@ export function AutoSyncConfiguration({ stagedConfigIdentifier }: AutoSyncConfig
   );
 
   const operatorManaged = isOperatorManaged(state);
+  // Health only means something once a UID is configured — including an operator-managed one: the
+  // admin cannot change that UID from here, but a stopped or failing sync is still theirs to know
+  // about, and the badge is spent on saying who owns the setting.
+  const showsSyncHealth = hasAutoSyncSource(state);
   const showDisableSync = state.kind === 'configured' || state.kind === 'orphan-uid';
   const showSave = state.kind === 'unconfigured' || state.kind === 'orphan-uid';
-  const savedUid = hasConfiguredUid(state) ? state.uid : '';
+  const savedUid = hasAutoSyncSource(state) ? state.uid : '';
 
   // A sync tick writes its datasource UID into the single extra_config slot without replacing what is
   // already there, so it fails server-side unless the slot is empty or holds that same UID.
@@ -70,7 +75,7 @@ export function AutoSyncConfiguration({ stagedConfigIdentifier }: AutoSyncConfig
       <Card.Heading>
         <Stack alignItems="center" gap={1}>
           <Trans i18nKey="alerting.settings.auto-sync.title">Auto-sync configuration</Trans>
-          <AutoSyncStatusBadge state={state} />
+          <AutoSyncStatusBadge state={state} syncHealth={syncHealth} />
         </Stack>
       </Card.Heading>
       <Card.Description>
@@ -88,6 +93,29 @@ export function AutoSyncConfiguration({ stagedConfigIdentifier }: AutoSyncConfig
               <Trans i18nKey="alerting.settings.auto-sync.orphan-warning" values={{ uid: state.uid }}>
                 The configured datasource UID {'{{uid}}'} is not available. Disable sync or restore the datasource to
                 continue.
+              </Trans>
+            </Alert>
+          )}
+          {/* The badge only summarises the failure; the reason itself must not live in a hover-only
+              tooltip, so it gets the same callout treatment as a missing datasource. */}
+          {showsSyncHealth && syncHealth.kind === 'failing' && (
+            <Alert
+              severity="error"
+              title={t('alerting.settings.auto-sync.sync-failed-title', 'Last sync attempt failed')}
+            >
+              {describeSyncHealth(syncHealth)}
+            </Alert>
+          )}
+          {/* The merge is terminal and the badge only labels it, so the explanation of why nothing is
+              syncing any more gets its own callout rather than a hover-only tooltip. */}
+          {showsSyncHealth && syncHealth.kind === 'merge-committed' && (
+            <Alert
+              severity="info"
+              title={t('alerting.settings.auto-sync.merge-committed-title', 'Configuration merged into Grafana')}
+            >
+              <Trans i18nKey="alerting.settings.auto-sync.merge-committed-info">
+                The external Alertmanager configuration has been merged into Grafana. Automatic sync from this
+                datasource has stopped.
               </Trans>
             </Alert>
           )}
@@ -186,7 +214,7 @@ export function AutoSyncConfiguration({ stagedConfigIdentifier }: AutoSyncConfig
         isOpen={showDisableConfirm}
         title={t('alerting.settings.auto-sync.disable-confirm-title', 'Disable Mimir Alertmanager auto-sync?')}
         body={
-          hasConfiguredUid(state)
+          hasAutoSyncSource(state)
             ? t(
                 'alerting.settings.auto-sync.disable-confirm-body',
                 'Disabling will stop continuous sync from datasource {{uid}}. You can re-enable it later by selecting a datasource again.',

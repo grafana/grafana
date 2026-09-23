@@ -191,7 +191,8 @@ func TestDatasourceWriter(t *testing.T) {
 
 		err := writer.WriteDatasource(context.Background(), "loki-1", "metric", time.Now(), frames, 1, map[string]string{})
 		require.Error(t, err)
-		require.EqualError(t, err, "can only write to data sources of type prometheus")
+		require.Contains(t, err.Error(), "can only write to data sources of type prometheus")
+		require.Contains(t, err.Error(), datasources.DS_LOKI)
 	})
 
 	t.Run("when writing with an empty datasource uid then the default is written", func(t *testing.T) {
@@ -433,6 +434,24 @@ func TestDatasourceWriterGetRemoteWriteURL(t *testing.T) {
 			},
 			"http://example.com/api/v1/push",
 		},
+		{
+			"amazon managed prometheus workspace URL",
+			datasources.DataSource{
+				Type:     datasources.DS_AMAZON_PROMETHEUS,
+				JsonData: simplejson.MustJson([]byte(`{}`)),
+				URL:      "https://aps-workspaces.us-west-2.amazonaws.com/workspaces/ws-abc123",
+			},
+			"https://aps-workspaces.us-west-2.amazonaws.com/workspaces/ws-abc123/api/v1/remote_write",
+		},
+		{
+			"amazon managed prometheus workspace URL with trailing slash",
+			datasources.DataSource{
+				Type:     datasources.DS_AMAZON_PROMETHEUS,
+				JsonData: simplejson.MustJson([]byte(`{}`)),
+				URL:      "https://aps-workspaces.us-west-2.amazonaws.com/workspaces/ws-abc123/",
+			},
+			"https://aps-workspaces.us-west-2.amazonaws.com/workspaces/ws-abc123/api/v1/remote_write",
+		},
 	}
 
 	for _, tt := range tc {
@@ -442,4 +461,101 @@ func TestDatasourceWriterGetRemoteWriteURL(t *testing.T) {
 			require.Equal(t, tt.url, res.String())
 		})
 	}
+}
+
+func TestDatasourceWriterManagedPrometheus(t *testing.T) {
+	series := []map[string]string{{"foo": "1"}, {"foo": "2"}, {"foo": "3"}, {"foo": "4"}}
+	frames := frameGenFromLabels(t, data.FrameTypeNumericWide, series)
+
+	t.Run("when writing an Amazon Prometheus datasource then it succeeds and uses the amazon-prometheus backend", func(t *testing.T) {
+		testDS := setupDataSources(t)
+		testDS.Reset()
+
+		ampDS, _ := testDS.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			Name:     "amp-1",
+			UID:      "amp-1",
+			Type:     datasources.DS_AMAZON_PROMETHEUS,
+			JsonData: simplejson.MustJson([]byte(`{}`)),
+		})
+		ampDS.URL = testDS.prom1.srv.URL
+		testDS.prom1.ExpectedPath = amazonPrometheusRemoteWritePath
+
+		cfg := DatasourceWriterConfig{Timeout: time.Second * 5}
+		reg := prometheus.NewRegistry()
+		met := metrics.NewRemoteWriterMetrics(reg)
+		writer := NewDatasourceWriter(cfg, testDS, httpclient.NewProvider(), &mockPluginContextProvider{}, clock.New(), log.New("test"), met)
+
+		err := writer.WriteDatasource(context.Background(), "amp-1", "metric", time.Now(), frames, 1, map[string]string{})
+		require.NoError(t, err)
+		assert.Equal(t, 1, testDS.prom1.RequestsCount)
+
+		expectedMetric := fmt.Sprintf(`
+			# HELP grafana_alerting_remote_writer_writes_total The total number of remote writes attempted.
+			# TYPE grafana_alerting_remote_writer_writes_total counter
+			grafana_alerting_remote_writer_writes_total{backend="%s",org="1",status_code="200"} 1
+		`, string(amazonPrometheusType))
+		require.NoError(t, testutil.CollectAndCompare(met.WritesTotal,
+			strings.NewReader(expectedMetric),
+			"grafana_alerting_remote_writer_writes_total"))
+	})
+
+	t.Run("when writing an Amazon Prometheus datasource then HTTP client options are constructed", func(t *testing.T) {
+		testDS := setupDataSources(t)
+		testDS.Reset()
+
+		mockProvider := newMockHTTPClientProvider()
+
+		ampDS, _ := testDS.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			Name:     "amp-sigv4",
+			UID:      "amp-sigv4",
+			Type:     datasources.DS_AMAZON_PROMETHEUS,
+			JsonData: simplejson.MustJson([]byte(`{}`)),
+		})
+		ampDS.URL = testDS.prom1.srv.URL
+		testDS.prom1.ExpectedPath = amazonPrometheusRemoteWritePath
+
+		cfg := DatasourceWriterConfig{Timeout: time.Second * 5}
+		met := metrics.NewRemoteWriterMetrics(prometheus.NewRegistry())
+		writer := NewDatasourceWriter(cfg, testDS, mockProvider, &mockPluginContextProvider{}, clock.New(), log.New("test"), met)
+
+		err := writer.WriteDatasource(context.Background(), "amp-sigv4", "metric", time.Now(), frames, 1, map[string]string{})
+		require.NoError(t, err)
+
+		// The AMP type is accepted and a client is constructed from the datasource's
+		// HTTP options. Full SigV4 signing verification requires an integration test
+		// with real credentials; here we confirm the code path builds the client.
+		require.Equal(t, 1, mockProvider.callCount)
+		require.NotNil(t, mockProvider.lastOptions)
+	})
+
+	t.Run("when writing an Amazon Prometheus datasource with SigV4 then the aps service namespace is set", func(t *testing.T) {
+		testDS := setupDataSources(t)
+		testDS.Reset()
+
+		mockProvider := newMockHTTPClientProvider()
+
+		ampDS, _ := testDS.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			Name:     "amp-sigv4-service",
+			UID:      "amp-sigv4-service",
+			Type:     datasources.DS_AMAZON_PROMETHEUS,
+			JsonData: simplejson.MustJson([]byte(`{"sigV4Auth": true, "sigV4Region": "us-west-2"}`)),
+		})
+		ampDS.URL = testDS.prom1.srv.URL
+		testDS.prom1.ExpectedPath = amazonPrometheusRemoteWritePath
+
+		cfg := DatasourceWriterConfig{Timeout: time.Second * 5}
+		met := metrics.NewRemoteWriterMetrics(prometheus.NewRegistry())
+		writer := NewDatasourceWriter(cfg, testDS, mockProvider, &mockPluginContextProvider{}, clock.New(), log.New("test"), met)
+
+		err := writer.WriteDatasource(context.Background(), "amp-sigv4-service", "metric", time.Now(), frames, 1, map[string]string{})
+		require.NoError(t, err)
+
+		// The SDK's HTTPClientOptions leaves SigV4.Service empty, and the AWS signer
+		// uses it verbatim with no default, so an empty value would be signed as an
+		// empty service name and rejected with 403. It must be set to "aps".
+		require.NotNil(t, mockProvider.lastOptions)
+		require.NotNil(t, mockProvider.lastOptions.SigV4)
+		require.Equal(t, amazonPrometheusSigV4Service, mockProvider.lastOptions.SigV4.Service)
+		require.Equal(t, "us-west-2", mockProvider.lastOptions.SigV4.Region)
+	})
 }

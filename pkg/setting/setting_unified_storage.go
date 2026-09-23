@@ -28,6 +28,8 @@ const (
 	PreferencesResource      = "preferences.preferences.grafana.app"
 	DataSourceResources      = "datasources.datasource.grafana.app" // All datasources
 	QueryCacheConfigResource = "querycacheconfigs.querycaching.grafana.app"
+	minimumKVLeaseTTL        = 10 * time.Second
+	maximumKVLeaseTTL        = 10 * time.Minute
 )
 
 // MigratedUnifiedResources maps resources to a boolean indicating if migration is enabled by default
@@ -75,12 +77,12 @@ func (cfg *Cfg) applyUnifiedStorageEnvOverrides() {
 		if !strings.HasPrefix(env, envPrefix) {
 			continue
 		}
-		eqIdx := strings.IndexByte(env, '=')
-		if eqIdx < 0 {
+		before, after, ok := strings.Cut(env, "=")
+		if !ok {
 			continue
 		}
-		envKey := env[:eqIdx]
-		envValue := env[eqIdx+1:]
+		envKey := before
+		envValue := after
 		if envValue == "" {
 			continue
 		}
@@ -227,10 +229,6 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.IndexCacheTTL = section.Key("index_cache_ttl").MustDuration(10 * time.Minute)
 	cfg.IndexMinUpdateInterval = section.Key("index_min_update_interval").MustDuration(0)
 	cfg.IndexModificationCacheTTL = section.Key("index_modification_cache_ttl").MustDuration(0)
-	// Off by default: switching this on makes the next rebuild of every index pull
-	// in all trash the storage still holds, which is unbounded where garbage
-	// collection is disabled.
-	cfg.IndexDeletedDocuments = section.Key("index_deleted_documents").MustBool(false)
 	cfg.SprinklesApiServer = section.Key("sprinkles_api_server").String()
 	cfg.SprinklesApiServerPageLimit = section.Key("sprinkles_api_server_page_limit").MustInt(10000)
 	cfg.CACertPath = section.Key("ca_cert_path").String()
@@ -241,6 +239,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.OverridesFilePath = section.Key("overrides_path").String()
 	cfg.OverridesReloadInterval = section.Key("overrides_reload_period").MustDuration(30 * time.Second)
 	cfg.EnforcedQuotaResources = parseCommaSeparatedList(section.Key("enforce_quotas_resources").MustString(""))
+	cfg.SearchBackedListResources = parseCommaSeparatedList(section.Key("search_backed_list_resources").MustString(""))
 	cfg.QuotasErrorMessageSupportInfo = section.Key("quotas_error_message_support_info").MustString("Please contact your administrator to increase it.")
 
 	// tenant watcher
@@ -262,12 +261,12 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.TenantDeleterInterval = section.Key("tenant_deleter_interval").MustDuration(1 * time.Hour)
 
 	// garbage collection
-	cfg.EnableGarbageCollection = section.Key("garbage_collection_enabled").MustBool(false)
+	cfg.EnableGarbageCollection = section.Key("garbage_collection_enabled").MustBool(true)
 	cfg.GarbageCollectionDryRun = section.Key("garbage_collection_dry_run").MustBool(false)
 	cfg.GarbageCollectionInterval = section.Key("garbage_collection_interval").MustDuration(15 * time.Minute)
 	cfg.GarbageCollectionBatchSize = section.Key("garbage_collection_batch_size").MustInt(100)
 	cfg.GarbageCollectionBatchWait = section.Key("garbage_collection_batch_wait").MustDuration(1 * time.Second)
-	cfg.GarbageCollectionMaxAge = section.Key("garbage_collection_max_age").MustDuration(24 * time.Hour)
+	cfg.GarbageCollectionMaxAge = section.Key("garbage_collection_max_age").MustDuration(7 * 24 * time.Hour)
 	cfg.DashboardsGarbageCollectionMaxAge = section.Key("dashboards_garbage_collection_max_age").MustDuration(365 * 24 * time.Hour)
 
 	cfg.EventRetentionPeriod = section.Key("event_retention_period").MustDuration(1 * time.Hour)
@@ -287,13 +286,15 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// (temporary smoke-test instrumentation; default off)
 	// TODO: remove this when sql/backend backwards compatibility is no longer needed.
 	cfg.LogSQLBackendCalls = section.Key("log_sql_backend_calls").MustBool(false)
-	// enable per-resource leases in the KV backend;
-	cfg.EnableKVLeases = section.Key("enable_kv_leases").MustBool(false)
 	// TTL for per-resource write leases; 0 uses the backend default (10s).
 	cfg.KVLeaseTTL = section.Key("kv_lease_ttl").MustDuration(0)
-	// auto-renew write leases in the background so they are not lost while a
-	// slow write is still in flight.
-	cfg.KVLeaseAutoRenew = section.Key("kv_lease_auto_renew").MustBool(false)
+	if cfg.KVLeaseTTL > 0 && cfg.KVLeaseTTL < minimumKVLeaseTTL {
+		cfg.Logger.Warn("kv_lease_ttl is below the minimum, overriding", "configured", cfg.KVLeaseTTL, "minimum", minimumKVLeaseTTL)
+		cfg.KVLeaseTTL = minimumKVLeaseTTL
+	} else if cfg.KVLeaseTTL > maximumKVLeaseTTL {
+		cfg.Logger.Warn("kv_lease_ttl is above the maximum, overriding", "configured", cfg.KVLeaseTTL, "maximum", maximumKVLeaseTTL)
+		cfg.KVLeaseTTL = maximumKVLeaseTTL
+	}
 
 	cfg.MaxFileIndexAge = section.Key("max_file_index_age").MustDuration(0)
 	cfg.MinFileIndexBuildVersion = section.Key("min_file_index_build_version").MustString("")

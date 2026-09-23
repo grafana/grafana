@@ -10,6 +10,7 @@ import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { NotebookAnalytics } from '../analytics/main';
 import { ROWS_PER_PAGE } from '../list/NotebooksTable';
 import {
   useLazyNotebookFieldFacetQuery,
@@ -44,10 +45,16 @@ jest.mock('../list/notebookSearchApi', () => ({
   useLazyNotebookFieldFacetQuery: jest.fn(),
 }));
 
+// Partial mock: this spies on listFiltered only. Any other real call this page makes keeps working.
+jest.mock('../analytics/main', () => ({
+  NotebookAnalytics: { ...jest.requireActual('../analytics/main').NotebookAnalytics, listFiltered: jest.fn() },
+}));
+
 const mockUseSearchNotebooksQuery = jest.mocked(useSearchNotebooksInfiniteQuery);
 const mockUseLazyNotebookFieldFacetQuery = jest.mocked(useLazyNotebookFieldFacetQuery);
 const mockUseListNotebookQuery = jest.mocked(useListNotebookQuery);
 const mockUseGetDisplayMappingQuery = jest.mocked(useGetDisplayMappingQuery);
+const mockListFiltered = jest.mocked(NotebookAnalytics.listFiltered);
 
 function makeHit(name: string, title: string, tags: string[] = [], createdBy = 'user:abc'): ResultItem {
   return {
@@ -250,11 +257,11 @@ describe('NotebooksListPage', () => {
     expect(await screen.findByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/notebooks/nb1?edit=true');
   });
 
-  it('hides the Edit action from a user who cannot edit dashboards', async () => {
+  it('hides the Edit action from a user who cannot edit notebooks', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
     jest
       .spyOn(contextSrv, 'hasPermission')
-      .mockImplementation((action) => action !== AccessControlAction.DashboardsWrite);
+      .mockImplementation((action) => action !== AccessControlAction.NotebooksWrite);
     setNotebooks([makeHit('nb1', 'Checkout error spike')]);
 
     render(<NotebooksListPage />);
@@ -286,6 +293,7 @@ describe('NotebooksListPage', () => {
 
     await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
 
+    await screen.findByText('Q2 latency regression');
     await waitFor(() => {
       expect(screen.queryByText('Checkout error spike')).not.toBeInTheDocument();
     });
@@ -307,6 +315,7 @@ describe('NotebooksListPage', () => {
 
       await userEvent.click(await screen.findByLabelText('Created by me'));
 
+      await screen.findByText('Mine');
       await waitFor(() => {
         expect(screen.queryByText('Theirs')).not.toBeInTheDocument();
       });
@@ -332,6 +341,7 @@ describe('NotebooksListPage', () => {
     await within(await screen.findByRole('listbox')).findByText('latency');
     await selectOptionInTest(screen.getByLabelText('Tag filter'), /^latency/);
 
+    await screen.findByText('Q2 latency regression');
     await waitFor(() => {
       expect(screen.queryByText('Checkout error spike')).not.toBeInTheDocument();
     });
@@ -379,6 +389,7 @@ describe('NotebooksListPage', () => {
     const listbox = await screen.findByRole('listbox');
     await userEvent.click(await within(listbox).findByText('latency'));
 
+    await screen.findByText('Q2 latency regression');
     await waitFor(() => {
       expect(screen.queryByText('Checkout error spike')).not.toBeInTheDocument();
     });
@@ -403,6 +414,8 @@ describe('NotebooksListPage', () => {
 
     render(<NotebooksListPage />);
 
+    expect(await screen.findByRole('link', { name: 'Checkout error spike' })).toBeInTheDocument();
+
     await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'zzz');
 
     // Not the create call-to-action: notebooks exist, they just did not match.
@@ -417,6 +430,20 @@ describe('NotebooksListPage', () => {
 
     expect(await screen.findByText("You haven't created any notebooks yet")).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'New notebook' })).toBeInTheDocument();
+  });
+
+  // Create is its own action, so a writer who cannot create gets the read-only empty state rather
+  // than an invitation to make a notebook the backend would refuse.
+  it('offers no create affordance to a writer who cannot create', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    jest
+      .spyOn(contextSrv, 'hasPermission')
+      .mockImplementation((action) => action !== AccessControlAction.NotebooksCreate);
+
+    render(<NotebooksListPage />);
+
+    expect(await screen.findByText('No notebooks available to you')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'New notebook' })).not.toBeInTheDocument();
   });
 
   it('shows only the error alert when the list fails to load', async () => {
@@ -479,6 +506,7 @@ describe('NotebooksListPage', () => {
 
     render(<NotebooksListPage />);
 
+    expect(await screen.findByRole('table')).toBeInTheDocument();
     expect(await screen.findByText(`Showing ${NOTEBOOKS_PAGE_LIMIT} of 870`)).toBeInTheDocument();
   });
 
@@ -493,7 +521,7 @@ describe('NotebooksListPage', () => {
 
     expect(await screen.findByText(`${NOTEBOOKS_PAGE_LIMIT} notebooks`)).toBeInTheDocument();
     // One header row plus a page of notebooks.
-    expect(screen.getAllByRole('row')).toHaveLength(ROWS_PER_PAGE + 1);
+    expect(await screen.findAllByRole('row')).toHaveLength(ROWS_PER_PAGE + 1);
   });
 
   // Filtering replaces the table's data. A page index kept across that change lands past the end of
@@ -501,7 +529,7 @@ describe('NotebooksListPage', () => {
   // corner would say one thing and the rows another.
   it('returns to the first page when a filter narrows the set', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
-    // Three pages, with the only match for "needle" outside the last one.
+    // Three pages, with only one match for "needle".
     setNotebooks(
       Array.from({ length: ROWS_PER_PAGE * 3 }, (_, i) => makeHit(`nb${i}`, i === 0 ? 'needle' : `Filler ${i}`))
     );
@@ -509,7 +537,7 @@ describe('NotebooksListPage', () => {
     render(<NotebooksListPage />);
 
     expect(await screen.findByText(`${ROWS_PER_PAGE * 3} notebooks`)).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: '3' }));
+    await userEvent.click(await screen.findByRole('button', { name: '3' }));
 
     await userEvent.type(screen.getByPlaceholderText('Search notebooks by title...'), 'needle');
 
@@ -530,6 +558,7 @@ describe('NotebooksListPage', () => {
 
     const { rerender } = render(<NotebooksListPage />);
 
+    expect(await screen.findByRole('table')).toBeInTheDocument();
     expect(await screen.findByText(`${ROWS_PER_PAGE * 2} notebooks`)).toBeInTheDocument();
     const firstPage = titlesOnScreen();
     await userEvent.click(screen.getByRole('button', { name: '2' }));
@@ -559,7 +588,7 @@ describe('NotebooksListPage', () => {
     render(<NotebooksListPage />);
 
     expect(await screen.findByText('Some notebooks could not be loaded')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Checkout error spike' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Checkout error spike' })).toBeInTheDocument();
     // The filters stay usable, and the fatal alert does not appear.
     expect(screen.getByPlaceholderText('Search notebooks by title...')).toBeInTheDocument();
     expect(screen.queryByText('Failed to load notebooks')).not.toBeInTheDocument();
@@ -591,6 +620,7 @@ describe('NotebooksListPage', () => {
     setNotebooks([makeHit('nb1', 'Checkout error spike')]);
 
     const { rerender } = render(<NotebooksListPage />);
+    expect(await screen.findByRole('link', { name: 'Checkout error spike' })).toBeInTheDocument();
     expect(await screen.findByText('1 notebook')).toBeInTheDocument();
 
     setNotebooks([makeHit('nb1', 'Checkout error spike')], { isReloading: true });
@@ -629,6 +659,8 @@ describe('NotebooksListPage', () => {
 
     await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
 
+    expect(await screen.findByRole('link', { name: 'Q2 latency regression' })).toBeInTheDocument();
+
     // The debounce has to elapse before the client-side filter narrows anything.
     expect(await screen.findByText('1 notebook')).toBeInTheDocument();
     expect(screen.getByText('First 2 notebooks loaded')).toBeInTheDocument();
@@ -642,6 +674,7 @@ describe('NotebooksListPage', () => {
 
     render(<NotebooksListPage />);
 
+    expect(await screen.findByRole('table')).toBeInTheDocument();
     expect(await screen.findByText(`Showing ${NOTEBOOKS_PAGE_LIMIT} of up to 870`)).toBeInTheDocument();
   });
 
@@ -653,13 +686,15 @@ describe('NotebooksListPage', () => {
 
     await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
 
+    expect(await screen.findByRole('link', { name: 'Q2 latency regression' })).toBeInTheDocument();
+
     // The server counts the filtered set, so there is one number rather than two.
     await waitFor(() => {
       expect(screen.getByText('1 notebook')).toBeInTheDocument();
     });
   });
 
-  it('hides the create button without dashboards:create', async () => {
+  it('hides the create button without notebooks:create', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
     setNotebooks([makeHit('nb1', 'Checkout error spike')]);
@@ -680,12 +715,244 @@ describe('NotebooksListPage', () => {
 
     render(<NotebooksListPage />);
 
+    expect(await screen.findByRole('link', { name: 'Checkout error spike' })).toBeInTheDocument();
+
     await userEvent.click(await screen.findByRole('button', { name: 'New notebook' }));
 
     // Edit mode, because a blank notebook exists only to be written into.
     await waitFor(() => {
       expect(locationService.getLocation().pathname).toBe('/notebooks/new');
       expect(locationService.getLocation().search).toBe('?edit=true');
+    });
+  });
+
+  describe('list_filtered', () => {
+    function twoNotebooks() {
+      return [makeHit('nb1', 'Checkout error spike', ['errors']), makeHit('nb2', 'Q2 latency regression', ['latency'])];
+    }
+
+    // One event for a search somebody finished, not one per keystroke. Seven characters going out
+    // as seven events is the failure this guards.
+    it('reports a committed search once', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      setNotebooks(twoNotebooks());
+
+      render(<NotebooksListPage />);
+
+      await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
+
+      await waitFor(() =>
+        expect(mockListFiltered).toHaveBeenCalledWith('search', { queryLength: 7, tagCount: 0, createdByMe: false })
+      );
+      expect(mockListFiltered).toHaveBeenCalledTimes(1);
+    });
+
+    it('reports a tag chosen in the picker', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      setTags(['errors', 'latency']);
+      setNotebooks(twoNotebooks());
+
+      render(<NotebooksListPage />);
+
+      // The picker loads its options on focus, so this waits for them before picking one. Scoped
+      // to the menu because the rows show pills with the same text.
+      await userEvent.click(await screen.findByLabelText('Tag filter'));
+      await within(await screen.findByRole('listbox')).findByText('latency');
+      await selectOptionInTest(screen.getByLabelText('Tag filter'), /^latency/);
+
+      await waitFor(() =>
+        expect(mockListFiltered).toHaveBeenCalledWith('tag', { queryLength: 0, tagCount: 1, createdByMe: false })
+      );
+      expect(mockListFiltered).toHaveBeenCalledTimes(1);
+    });
+
+    it('reports a tag clicked in a row as a tag filter', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      setNotebooks(twoNotebooks());
+
+      render(<NotebooksListPage />);
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Filter by tag latency' }));
+
+      await waitFor(() =>
+        expect(mockListFiltered).toHaveBeenCalledWith('tag', { queryLength: 0, tagCount: 1, createdByMe: false })
+      );
+    });
+
+    // Clicking a tag already in the filter narrows nothing, so there is nothing to report. The hook
+    // hands the same array back for that click, which is what the identity check in the page reads.
+    it('reports nothing when a tag clicked in a row is already filtered', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      setNotebooks(twoNotebooks());
+
+      render(<NotebooksListPage />);
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Filter by tag latency' }));
+      await waitFor(() => expect(mockListFiltered).toHaveBeenCalledTimes(1));
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Filter by tag latency' }));
+
+      // A change that does report, so the silence above has something arriving to measure it
+      // against rather than a wait that was already over.
+      await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
+
+      await waitFor(() =>
+        expect(mockListFiltered).toHaveBeenCalledWith('search', {
+          queryLength: 7,
+          tagCount: 1,
+          createdByMe: false,
+        })
+      );
+      expect(mockListFiltered.mock.calls).toEqual([
+        ['tag', { queryLength: 0, tagCount: 1, createdByMe: false }],
+        // The tag is still on, which is the point of sending the whole set rather than the change.
+        ['search', { queryLength: 7, tagCount: 1, createdByMe: false }],
+      ]);
+    });
+
+    it('reports the created-by-me checkbox', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      const originalUser = contextSrv.user;
+      contextSrv.user = { ...originalUser, uid: 'me' };
+      setNotebooks([makeHit('nb1', 'Mine', [], 'user:me'), makeHit('nb2', 'Theirs', [], 'user:other')]);
+
+      try {
+        render(<NotebooksListPage />);
+
+        await userEvent.click(await screen.findByLabelText('Created by me'));
+
+        await waitFor(() =>
+          expect(mockListFiltered).toHaveBeenCalledWith('created_by_me', {
+            queryLength: 0,
+            tagCount: 0,
+            createdByMe: true,
+          })
+        );
+      } finally {
+        contextSrv.user = originalUser;
+      }
+    });
+
+    // Both directions report. The state is what separates them, so turning a filter on and then off
+    // again sends two events that read differently.
+    it('reports the box going off as well as going on', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      const originalUser = contextSrv.user;
+      contextSrv.user = { ...originalUser, uid: 'me' };
+      setNotebooks([makeHit('nb1', 'Mine', [], 'user:me'), makeHit('nb2', 'Also mine', [], 'user:me')]);
+
+      try {
+        render(<NotebooksListPage />);
+
+        const checkbox = await screen.findByLabelText('Created by me');
+        await userEvent.click(checkbox);
+        await waitFor(() =>
+          expect(mockListFiltered).toHaveBeenCalledWith('created_by_me', {
+            queryLength: 0,
+            tagCount: 0,
+            createdByMe: true,
+          })
+        );
+
+        await userEvent.click(checkbox);
+
+        await waitFor(() =>
+          expect(mockListFiltered).toHaveBeenCalledWith('created_by_me', {
+            queryLength: 0,
+            tagCount: 0,
+            createdByMe: false,
+          })
+        );
+        expect(mockListFiltered.mock.calls).toEqual([
+          ['created_by_me', { queryLength: 0, tagCount: 0, createdByMe: true }],
+          ['created_by_me', { queryLength: 0, tagCount: 0, createdByMe: false }],
+        ]);
+      } finally {
+        contextSrv.user = originalUser;
+      }
+    });
+
+    // Everything else reads the committed search trimmed, so a space on its own moves no filter.
+    it('reports nothing when only whitespace changes', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      setNotebooks(twoNotebooks());
+
+      render(<NotebooksListPage />);
+
+      const searchBox = await screen.findByPlaceholderText('Search notebooks by title...');
+      await userEvent.type(searchBox, 'latency');
+      await waitFor(() => expect(mockListFiltered).toHaveBeenCalledTimes(1));
+
+      await userEvent.type(searchBox, ' ');
+      // A space changes nothing the page shows, on purpose, so there is no state to wait for.
+      // Waiting out the 300ms debounce is what reaches the point where a raw comparison fires.
+      // Inside act() because the debounce sets state when it lands.
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 600));
+      });
+
+      expect(mockListFiltered).toHaveBeenCalledTimes(1);
+    });
+
+    it('reports an emptied search box as a zero-length query', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      setNotebooks(twoNotebooks());
+
+      render(<NotebooksListPage />);
+
+      const searchBox = await screen.findByPlaceholderText('Search notebooks by title...');
+      await userEvent.type(searchBox, 'latency');
+      await waitFor(() =>
+        expect(mockListFiltered).toHaveBeenCalledWith('search', { queryLength: 7, tagCount: 0, createdByMe: false })
+      );
+
+      await userEvent.clear(searchBox);
+
+      await waitFor(() =>
+        expect(mockListFiltered).toHaveBeenCalledWith('search', { queryLength: 0, tagCount: 0, createdByMe: false })
+      );
+    });
+
+    // The event says somebody searched, so it goes out with the search rather than waiting for the
+    // results. Holding it until the results land would lose any search the reader filters again on
+    // top of before that happens.
+    it('reports as the filter commits, without waiting for the results', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      setNotebooks(twoNotebooks());
+
+      render(<NotebooksListPage />);
+      expect(await screen.findByText('Checkout error spike')).toBeInTheDocument();
+
+      // Nothing lands for the new filters from here on.
+      setNotebooks(twoNotebooks(), { isReloading: true });
+      await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
+
+      // The request carrying the new text is what says the debounce committed. The skeleton alone
+      // would not: it appears on the first keystroke, before the debounce fires.
+      await waitFor(() =>
+        expect(mockUseSearchNotebooksQuery).toHaveBeenLastCalledWith(
+          expect.objectContaining({ where: { text: { value: 'latency' } } })
+        )
+      );
+
+      // Nothing has landed for that request, and the event has already gone out.
+      expect(await screen.findByRole('status', { name: 'Loading notebooks' })).toBeInTheDocument();
+      expect(mockListFiltered).toHaveBeenCalledWith('search', { queryLength: 7, tagCount: 0, createdByMe: false });
+      expect(mockListFiltered).toHaveBeenCalledTimes(1);
+    });
+
+    // The reader searched. A request that then failed does not make that less true, and the event
+    // carries nothing about the outcome that the failure could contradict.
+    it('reports a search whose request failed', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      setNotebooks(twoNotebooks(), { errorWhenFiltered: { status: 500, data: { message: 'search exploded' } } });
+
+      render(<NotebooksListPage />);
+
+      await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
+
+      expect(await screen.findByText('Failed to load notebooks')).toBeInTheDocument();
+      expect(mockListFiltered).toHaveBeenCalledWith('search', { queryLength: 7, tagCount: 0, createdByMe: false });
     });
   });
 });

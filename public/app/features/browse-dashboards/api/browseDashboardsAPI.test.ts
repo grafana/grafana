@@ -9,7 +9,7 @@ import { config, setBackendSrv } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { customFolderCountsHandler } from '@grafana/test-utils/unstable';
+import { customFolderCountsHandler, setTestFlags } from '@grafana/test-utils/unstable';
 import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
 import { legacyAPI } from 'app/api/clients/legacy';
 import { setStarred, updateDashboardName } from 'app/core/reducers/navBarTree';
@@ -19,6 +19,7 @@ import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { deletedDashboardsCache } from 'app/features/search/service/deletedDashboardsCache';
+import * as variablesManagementCache from 'app/features/variables-management/cache';
 import { setStore } from 'app/store/store';
 import { type FolderDTO } from 'app/types/folders';
 import { type ThunkDispatch } from 'app/types/store';
@@ -114,11 +115,16 @@ describe('browseDashboardsAPI', () => {
     config.provisioningEnabled = false;
     getDashboardAPIMock.mockReset();
     folderAPIVersionResolver.set('v1beta1');
+    // foldersAppPlatformAPI defaults to on, but these tests assert against the legacy endpoints.
+    // TODO: add app platform folder fixtures and drop this pin, so these tests cover the API
+    // that production actually uses.
+    setTestFlags({ foldersAppPlatformAPI: false });
     server.use(http.get('/api/access-control/user/actions', () => HttpResponse.json({})));
   });
 
   afterEach(() => {
     config.provisioningEnabled = originalProvisioningEnabled;
+    setTestFlags({});
   });
 
   const createMockDashboardAPI = (saveDashboard: jest.Mock) =>
@@ -266,6 +272,48 @@ describe('browseDashboardsAPI', () => {
     });
   });
 
+  it('invalidates the variables list after deleting a folder', async () => {
+    const store = createTestStore();
+    const invalidateVariablesSpy = jest.spyOn(variablesManagementCache, 'invalidateVariablesAfterFolderDelete');
+
+    try {
+      server.use(http.delete('/api/folders/folder-1', () => HttpResponse.json({})));
+
+      await store.dispatch(
+        browseDashboardsAPI.endpoints.deleteFolder.initiate({ uid: 'folder-1', parentUid: undefined } as FolderDTO)
+      );
+
+      await waitFor(() => {
+        expect(invalidateVariablesSpy).toHaveBeenCalledTimes(1);
+      });
+    } finally {
+      invalidateVariablesSpy.mockRestore();
+    }
+  });
+
+  it('invalidates the variables list even when deleting a folder fails', async () => {
+    const store = createTestStore();
+    const invalidateVariablesSpy = jest.spyOn(variablesManagementCache, 'invalidateVariablesAfterFolderDelete');
+
+    try {
+      server.use(
+        http.delete('/api/folders/folder-1', () =>
+          HttpResponse.json({ message: 'folder delete failed' }, { status: 500 })
+        )
+      );
+
+      await store.dispatch(
+        browseDashboardsAPI.endpoints.deleteFolder.initiate({ uid: 'folder-1', parentUid: undefined } as FolderDTO)
+      );
+
+      await waitFor(() => {
+        expect(invalidateVariablesSpy).toHaveBeenCalledTimes(1);
+      });
+    } finally {
+      invalidateVariablesSpy.mockRestore();
+    }
+  });
+
   describe('getAffectedItems', () => {
     it('aggregates plural descendant count keys', async () => {
       const store = createTestStore();
@@ -280,6 +328,7 @@ describe('browseDashboardsAPI', () => {
                   library_elements: 4,
                   alertrules: 5,
                   recordingrules: 6,
+                  variables: 2,
                 }
               : {
                   folders: 1,
@@ -287,6 +336,7 @@ describe('browseDashboardsAPI', () => {
                   library_elements: 3,
                   alertrules: 4,
                   recordingrules: 1,
+                  variables: 3,
                 }
           )
         )
@@ -305,6 +355,7 @@ describe('browseDashboardsAPI', () => {
         librarypanels: 7,
         alertrules: 9,
         recordingrules: 7,
+        variables: 5,
       });
     });
 
@@ -335,6 +386,7 @@ describe('browseDashboardsAPI', () => {
         librarypanels: 4,
         alertrules: 5,
         recordingrules: 0,
+        variables: 0,
       });
     });
 
@@ -360,6 +412,7 @@ describe('browseDashboardsAPI', () => {
         librarypanels: 3,
         alertrules: 4,
         recordingrules: 5,
+        variables: 0,
       });
     });
 
@@ -381,8 +434,42 @@ describe('browseDashboardsAPI', () => {
         librarypanels: 0,
         alertrules: 0,
         recordingrules: 0,
+        variables: 0,
       });
       expect(result.data && Object.values(result.data).every(Number.isFinite)).toBe(true);
+    });
+
+    it('includes variable counts', async () => {
+      const store = createTestStore();
+
+      server.use(
+        customFolderCountsHandler(() =>
+          HttpResponse.json({
+            folders: 0,
+            dashboards: 0,
+            library_elements: 0,
+            alertrules: 0,
+            recordingrules: 0,
+            variables: 4,
+          })
+        )
+      );
+
+      const result = await store.dispatch(
+        browseDashboardsAPI.endpoints.getAffectedItems.initiate({
+          folderUIDs: ['folder-1'],
+          dashboardUIDs: [],
+        })
+      );
+
+      expect(result.data).toEqual({
+        folders: 1,
+        dashboards: 0,
+        librarypanels: 0,
+        alertrules: 0,
+        recordingrules: 0,
+        variables: 4,
+      });
     });
   });
 
@@ -522,6 +609,83 @@ describe('browseDashboardsAPI', () => {
       await store.dispatch(browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1'] }));
 
       expect(deleteSpy).not.toHaveBeenCalled();
+    });
+
+    it('invalidates the variables list after bulk-deleting folders', async () => {
+      const store = createTestStore();
+      const invalidateVariablesSpy = jest.spyOn(variablesManagementCache, 'invalidateVariablesAfterFolderDelete');
+
+      try {
+        server.use(http.delete('/api/folders/:uid', () => HttpResponse.json({})));
+
+        await store.dispatch(
+          browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1', 'folder-2'] })
+        );
+
+        await waitFor(() => {
+          expect(invalidateVariablesSpy).toHaveBeenCalledTimes(1);
+        });
+      } finally {
+        invalidateVariablesSpy.mockRestore();
+      }
+    });
+
+    it('invalidates the variables list when bulk delete yields no successes', async () => {
+      const store = createTestStore();
+      const invalidateVariablesSpy = jest.spyOn(variablesManagementCache, 'invalidateVariablesAfterFolderDelete');
+
+      try {
+        server.use(
+          http.delete('/api/folders/folder-1', () =>
+            HttpResponse.json({ message: 'Folder not found' }, { status: 404 })
+          ),
+          http.delete('/api/folders/folder-2', () =>
+            HttpResponse.json({ message: 'Folder not found' }, { status: 404 })
+          )
+        );
+
+        await store.dispatch(
+          browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1', 'folder-2'] })
+        );
+
+        await waitFor(() => {
+          expect(invalidateVariablesSpy).toHaveBeenCalledTimes(1);
+        });
+      } finally {
+        invalidateVariablesSpy.mockRestore();
+      }
+    });
+
+    it('does not invalidate the variables list when bulk delete skips every folder as provisioned', async () => {
+      const store = createTestStore();
+      config.provisioningEnabled = true;
+      const invalidateVariablesSpy = jest.spyOn(variablesManagementCache, 'invalidateVariablesAfterFolderDelete');
+
+      try {
+        server.use(
+          http.get('/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:uid', () =>
+            HttpResponse.json({
+              apiVersion: 'folder.grafana.app/v1beta1',
+              kind: 'Folder',
+              metadata: {
+                name: 'folder-1',
+                namespace: 'default',
+                annotations: {
+                  [AnnoKeyManagerKind]: ManagerKind.Repo,
+                },
+              },
+              spec: { title: 'Folder 1' },
+            })
+          ),
+          http.delete('/api/folders/:uid', () => HttpResponse.json({}))
+        );
+
+        await store.dispatch(browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1'] }));
+
+        expect(invalidateVariablesSpy).not.toHaveBeenCalled();
+      } finally {
+        invalidateVariablesSpy.mockRestore();
+      }
     });
 
     it('removes each bulk-deleted folder from the nav starred section', async () => {

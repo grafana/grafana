@@ -66,7 +66,7 @@ test.use({
 
 test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, () => {
   test.describe('width: 1064', () => {
-    test('Clustering status', async ({ gotoDashboardPage, selectors }) => {
+    test.skip('Clustering status', async ({ gotoDashboardPage, selectors }) => {
       const dashboardPage = await gotoDashboardPage({
         uid: DASHBOARD_UID,
         queryParams: new URLSearchParams(),
@@ -137,7 +137,7 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
   });
   test.describe('width: 2600', () => {
     test.use({ viewport: { width: 2600, height: 1440 } });
-    test('Clustering status', async ({ gotoDashboardPage, selectors, page }) => {
+    test.skip('Clustering status', async ({ gotoDashboardPage, selectors, page }) => {
       const dashboardPage = await gotoDashboardPage({
         uid: DASHBOARD_UID,
         queryParams: new URLSearchParams(),

@@ -147,10 +147,12 @@ type fakeCascadeSearcher struct {
 	dashboardsByFolder map[string][]string
 	variablesByFolder  map[string][]string
 	searchCtx          context.Context
+	requests           []*resourcepb.ResourceSearchRequest
 }
 
 func (s *fakeCascadeSearcher) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	s.searchCtx = ctx
+	s.requests = append(s.requests, req)
 	var names []string
 	for _, uid := range folderFilterValues(req) {
 		switch req.Options.Key.Resource {
@@ -247,6 +249,10 @@ func TestCascadeDelete_DeletesSubtreeDepthFirst(t *testing.T) {
 
 	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
 	require.NoError(t, err)
+	for _, request := range searcher.requests {
+		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, request.ResultFormat)
+		require.Equal(t, []string{resource.SEARCH_FIELD_NAME}, request.Fields)
+	}
 
 	// Leaves are deleted before their parents, and every folder in the subtree is stamped.
 	require.Equal(t, []string{"leaf", "child", "root"}, store.deleted)
@@ -336,6 +342,10 @@ func TestCascadeDelete_DeletesAllVariablesInFolder(t *testing.T) {
 
 	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
 	require.NoError(t, err)
+	for _, request := range searcher.requests {
+		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, request.ResultFormat)
+		require.Equal(t, []string{resource.SEARCH_FIELD_NAME}, request.Fields)
+	}
 
 	gvr := dashv2beta1.VariableResourceInfo.GroupVersionResource()
 	for _, name := range []string{"var-1", "var-2"} {

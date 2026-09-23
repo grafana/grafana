@@ -62,8 +62,8 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
   // min-height floor is applied to the panel chrome (via the fit context) so
   // the chrome itself fills it — a min-height on this cell would leave the
   // chrome floating at the top.
-  // Non-fit panels stay at the row height; when row heights aren't matched they
-  // must pin to it explicitly so a tall fit sibling doesn't stretch them.
+  // Non-fit panels keep the row height as their floor. When row heights aren't
+  // matched they pin to it explicitly so a tall fit sibling doesn't stretch them.
   // When a max height bounds the cell, the cap is applied to the panel chrome
   // and the scroll lives on the chrome's content area — not on this cell — so
   // the panel header stays fixed while the body scrolls (see
@@ -75,7 +75,9 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
       ? { '--auto-grid-item-max-height': maxHeightCss }
       : undefined
     : matchRowHeightsOn
-      ? undefined
+      ? autoHeightPanelsEnabled
+        ? { minHeight: rowHeightPx }
+        : undefined
       : { height: rowHeightPx };
 
   const Wrapper = useMemo(
