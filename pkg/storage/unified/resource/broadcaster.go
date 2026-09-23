@@ -312,13 +312,7 @@ func (b *broadcaster[T]) finishInitialization(attempt *initializationAttempt, er
 }
 
 func (b *broadcaster[T]) installSeed(seed cacheSeed[T]) error {
-	if err := b.cache.seed(seed); err != nil {
-		return err
-	}
-	for _, item := range seed.items {
-		b.metrics.EventsReceivedTotal.WithLabelValues(b.eventResource(item)).Inc()
-	}
-	return nil
+	return b.cache.seed(seed)
 }
 
 func (b *broadcaster[T]) Unsubscribe(sub <-chan T) {
