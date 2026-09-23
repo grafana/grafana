@@ -454,6 +454,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   public onEnterEditMode = (source: 'user' | 'assistant' = 'user') => {
     const wasEditing = this.state.isEditing;
 
+    if (!wasEditing) {
+      this.state.sidebar.setState({ undoStack: [], redoStack: [] });
+    }
+
     this._editSessionSource = source;
 
     // Save this state

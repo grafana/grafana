@@ -593,7 +593,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, err := s.client.Search(ctx, searchRequest)
-	if err != nil {
+	if err := resource.StatusErrorFromResponse(result.GetError(), err); err != nil {
 		errhttp.Write(ctx, err, w)
 		return
 	}
@@ -1155,7 +1155,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	}
 	// get all dashboards user has access to, along with their parent folder uid
 	dashboardResult, err := s.client.Search(ctx, dashboardSearchRequest)
-	if err != nil {
+	if err := resource.StatusErrorFromResponse(dashboardResult.GetError(), err); err != nil {
 		return sharedDashboards, err
 	}
 
@@ -1193,7 +1193,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	}
 	// only folders the user has access to will be returned here
 	foldersResult, err := s.client.Search(ctx, folderSearchRequest)
-	if err != nil {
+	if err := resource.StatusErrorFromResponse(foldersResult.GetError(), err); err != nil {
 		return sharedDashboards, err
 	}
 
