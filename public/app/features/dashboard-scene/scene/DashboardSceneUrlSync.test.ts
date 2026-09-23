@@ -1,7 +1,7 @@
 import { waitFor } from '@testing-library/react';
 
 import { locationService } from '@grafana/runtime';
-import { NewSceneObjectAddedEvent, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { NewSceneObjectAddedEvent, SceneQueryRunner, UrlSyncManager, VizPanel } from '@grafana/scenes';
 
 import * as panelEditor from '../panel-edit/openPanelEditor';
 
@@ -263,6 +263,19 @@ describe('DashboardSceneUrlSync', () => {
   });
 
   describe('entering edit mode', () => {
+    it('preserves a deep-linked panel editor while entering dashboard edit mode', async () => {
+      locationService.push('/d/test/test?editPanel=1');
+      const scene = buildTestScene();
+      const urlSync = new UrlSyncManager();
+      try {
+        urlSync.initSync(scene);
+        expect(locationService.getSearchObject().editPanel).toBe('1');
+        await waitFor(() => expect(scene.state.editPanel?.getUrlKey()).toBe('1'));
+      } finally {
+        urlSync.cleanUp(scene);
+      }
+    });
+
     it('keeps the URL and selected edit view in sync after successive updates', async () => {
       const scene = buildTestScene();
       scene.updateView({

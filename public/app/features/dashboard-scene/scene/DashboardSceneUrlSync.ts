@@ -130,6 +130,8 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
       // If we are not in editing (for example after full page reload)
       if (!isEditing) {
+        // Entering edit mode publishes state before the editor exists; keep its URL through that update.
+        this._heldEditPanelId = values.editPanel;
         this._scene.onEnterEditMode();
       }
 

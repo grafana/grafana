@@ -12,7 +12,7 @@ import { type DashboardLayoutOrchestrator } from '../DashboardLayoutOrchestrator
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './DashboardLayoutManager';
 import { type LayoutParent } from './LayoutParent';
 
-export interface DashboardViewState {
+interface DashboardViewState {
   /**
    * Any dashboard/notebook layout. Replacement must cancel requests targeting the old content.
    */
