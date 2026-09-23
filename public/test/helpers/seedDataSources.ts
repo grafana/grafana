@@ -9,6 +9,7 @@ import {
 import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import {
   FALLBACK_TO_LEGACY_INSTANCE_WARNING,
+  FALLBACK_TO_LEGACY_LIST_ITEM_WARNING,
   FALLBACK_TO_LEGACY_LIST_WARNING,
   FALLBACK_TO_LEGACY_SETTINGS_WARNING,
   getPluginIdFromDatasourceInstanceType,
@@ -145,6 +146,9 @@ function createLegacyDataSourceSrvMock(fixtures: DataSourceFixture[], defaultDat
     getInstanceSettings(ref) {
       return find(ref)?.settings;
     },
+    getDataSourceSettingsByUid(uid) {
+      return byUid[uid]?.settings;
+    },
     getList() {
       return fixtures.map((fixture) => fixture.settings);
     },
@@ -159,6 +163,7 @@ const FALLBACK_WARNINGS = {
   instance: FALLBACK_TO_LEGACY_INSTANCE_WARNING,
   settings: FALLBACK_TO_LEGACY_SETTINGS_WARNING,
   list: FALLBACK_TO_LEGACY_LIST_WARNING,
+  listItem: FALLBACK_TO_LEGACY_LIST_ITEM_WARNING,
 } as const;
 
 type DataSourceFallbackKind = keyof typeof FALLBACK_WARNINGS;

@@ -1,7 +1,10 @@
 import { type DataSourceInstanceListItem, type DataSourceRef } from '@grafana/data';
 
+import { getDataSourceSrv } from '../dataSourceSrv';
 import { getDatasourcePluginMeta, getPluginIdFromDatasourceInstanceType } from '../pluginMeta/datasources';
 
+import { FALLBACK_TO_LEGACY_LIST_ITEM_WARNING } from './constants';
+import { logDataSourceWarning } from './logging';
 import { lookupByUid, toListItem } from './settings';
 
 /**
@@ -31,7 +34,14 @@ export async function getDataSourceInstanceListItem(
     return undefined;
   }
 
-  const settings = lookupByUid(uid);
+  let settings = lookupByUid(uid);
+  if (!settings) {
+    // Keep this fallback UID-only; getInstanceSettings would also resolve names and variables.
+    settings = getDataSourceSrv()?.getDataSourceSettingsByUid?.(uid);
+    if (settings) {
+      logDataSourceWarning(FALLBACK_TO_LEGACY_LIST_ITEM_WARNING, { ref: uid });
+    }
+  }
   if (!settings) {
     return undefined;
   }

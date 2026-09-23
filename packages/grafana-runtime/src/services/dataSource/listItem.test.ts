@@ -5,9 +5,12 @@ import {
   PluginType,
 } from '@grafana/data';
 
+import { type DataSourceSrv, setDataSourceSrv } from '../dataSourceSrv';
+import { setLogger } from '../logging/registry';
 import { setDatasourcePluginMetas } from '../pluginMeta/datasources';
 import { type DatasourcePluginMetas } from '../pluginMeta/types';
 
+import { FALLBACK_TO_LEGACY_LIST_ITEM_WARNING } from './constants';
 import { setExpressionDataSourceInstance } from './expressionDs';
 import { getDataSourceInstanceListItem } from './listItem';
 import { setDataSourceInstanceSettings, upsertRuntimeDataSourceInstanceSettings } from './settings';
@@ -72,9 +75,20 @@ const metas: DatasourcePluginMetas = {
   mixed: pluginMeta('mixed'),
 };
 
+const logWarning = jest.fn();
+
 beforeEach(() => {
   setDataSourceInstanceSettings(instances, 'Bravo');
   setDatasourcePluginMetas(metas);
+  setDataSourceSrv(undefined as unknown as DataSourceSrv);
+  logWarning.mockClear();
+  setLogger('grafana/runtime.plugins.datasource', {
+    logDebug: jest.fn(),
+    logInfo: jest.fn(),
+    logError: jest.fn(),
+    logMeasurement: jest.fn(),
+    logWarning,
+  });
 });
 
 describe('getDataSourceInstanceListItem', () => {
@@ -152,6 +166,66 @@ describe('getDataSourceInstanceListItem', () => {
     setExpressionDataSourceInstance({ instanceSettings: expressionSettings } as unknown as DataSourceApi);
 
     expect((await getDataSourceInstanceListItem(uid))?.name).toBe('Expression');
+  });
+
+  describe('legacy UID-only fallback', () => {
+    const legacySettings = ds({ uid: 'legacy-uid', name: 'Legacy', id: 42 });
+    const getDataSourceSettingsByUid = jest.fn();
+    const getInstanceSettings = jest.fn();
+
+    beforeEach(() => {
+      getDataSourceSettingsByUid
+        .mockReset()
+        .mockImplementation((uid: string) => (uid === 'legacy-uid' ? legacySettings : undefined));
+      getInstanceSettings.mockReset().mockReturnValue(legacySettings);
+      setDataSourceSrv({ getDataSourceSettingsByUid, getInstanceSettings } as unknown as DataSourceSrv);
+    });
+
+    it('logs a legacy UID hit and enriches it with cached plugin metadata', async () => {
+      expect(await getDataSourceInstanceListItem({ uid: 'legacy-uid' })).toEqual({
+        uid: 'legacy-uid',
+        type: 'test-db',
+        name: 'Legacy',
+        apiVersion: undefined,
+        isDefault: false,
+        meta: metas['test-db'],
+      });
+      expect(getDataSourceSettingsByUid).toHaveBeenCalledWith('legacy-uid');
+      expect(logWarning).toHaveBeenCalledWith(FALLBACK_TO_LEGACY_LIST_ITEM_WARNING, { ref: 'legacy-uid' });
+    });
+
+    it('returns an async cache hit without consulting the legacy service', async () => {
+      expect((await getDataSourceInstanceListItem('uid-alpha'))?.uid).toBe('uid-alpha');
+      expect(getDataSourceSettingsByUid).not.toHaveBeenCalled();
+      expect(logWarning).not.toHaveBeenCalled();
+    });
+
+    it.each(['Legacy', '42', 'default', '[[ds]]', '${ds}', 'missing-uid'])(
+      'does not coerce or warn for legacy UID miss %s',
+      async (ref) => {
+        expect(await getDataSourceInstanceListItem(ref)).toBeUndefined();
+        expect(getDataSourceSettingsByUid).toHaveBeenCalledWith(ref);
+        expect(getInstanceSettings).not.toHaveBeenCalled();
+        expect(logWarning).not.toHaveBeenCalled();
+      }
+    );
+
+    it('keeps missing and type-only refs unresolved without consulting the legacy service', async () => {
+      expect(await getDataSourceInstanceListItem({ type: 'test-db' })).toBeUndefined();
+      expect(await getDataSourceInstanceListItem()).toBeUndefined();
+      expect(await getDataSourceInstanceListItem('uid-alpha')).toMatchObject({ uid: 'uid-alpha' });
+      expect(getDataSourceSettingsByUid).not.toHaveBeenCalled();
+      expect(getInstanceSettings).not.toHaveBeenCalled();
+    });
+
+    it('tolerates a legacy service without the optional UID-only method', async () => {
+      setDataSourceSrv({ getInstanceSettings } as unknown as DataSourceSrv);
+
+      expect(await getDataSourceInstanceListItem('legacy-uid')).toBeUndefined();
+      expect(await getDataSourceInstanceListItem('uid-alpha')).toMatchObject({ uid: 'uid-alpha' });
+      expect(getInstanceSettings).not.toHaveBeenCalled();
+      expect(logWarning).not.toHaveBeenCalled();
+    });
   });
 
   describe('does not inherit the coercions of getDataSourceInstanceSettings', () => {

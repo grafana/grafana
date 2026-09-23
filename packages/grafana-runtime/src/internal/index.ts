@@ -91,6 +91,7 @@ export { setDataSourcePluginImporter, syncRuntimeDataSourceInstance } from '../s
 export {
   FALLBACK_TO_LEGACY_INSTANCE_WARNING,
   FALLBACK_TO_LEGACY_LIST_WARNING,
+  FALLBACK_TO_LEGACY_LIST_ITEM_WARNING,
   FALLBACK_TO_LEGACY_SETTINGS_WARNING,
 } from '../services/dataSource/constants';
 export { setExpressionDataSourceInstance } from '../services/dataSource/expressionDs';

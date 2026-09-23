@@ -91,7 +91,7 @@ afterEach(() => {
   dataSourceFallbacks = undefined;
   // Every kind, not just instance resolution: these suites resolve settings and lists through the
   // new APIs too, so there is nothing to concede.
-  fallbacks?.expectNoFallbacks(['instance', 'settings', 'list']);
+  fallbacks?.expectNoFallbacks(['instance', 'settings', 'list', 'listItem']);
 });
 
 export function setupExplore(options?: SetupOptions): {

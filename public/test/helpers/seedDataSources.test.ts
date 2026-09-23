@@ -3,8 +3,12 @@ import { type DataSourceApi, type DataSourceInstanceSettings, type DataSourcePlu
 // so reading it back is the only way to assert that half. Delete with the legacySrv option.
 // eslint-disable-next-line @grafana/no-get-data-source-srv
 import { getDataSourceSrv, setDataSourceSrv, type DataSourceSrv } from '@grafana/runtime';
-import { getDatasourcePluginMeta } from '@grafana/runtime/internal';
-import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { getDatasourcePluginMeta, setDatasourcePluginMetas } from '@grafana/runtime/internal';
+import {
+  getDataSourceInstance,
+  getDataSourceInstanceListItem,
+  getDataSourceInstanceSettings,
+} from '@grafana/runtime/unstable';
 
 import { seedDataSources, watchDataSourceFallbacks } from './seedDataSources';
 
@@ -90,6 +94,15 @@ describe('seedDataSources', () => {
     expect(getDataSourceSrv().getInstanceSettings('loki')).toBe(loki.settings);
   });
 
+  it('keeps the legacy UID-only lookup distinct from the settings lookup', () => {
+    const loki = makeFixture('loki', 'loki-uid');
+    seedDataSources([loki], { legacySrv: 'mock' });
+
+    expect(getDataSourceSrv().getDataSourceSettingsByUid?.('loki-uid')).toBe(loki.settings);
+    expect(getDataSourceSrv().getDataSourceSettingsByUid?.('loki')).toBeUndefined();
+    expect(getDataSourceSrv().getDataSourceSettingsByUid?.('default')).toBeUndefined();
+  });
+
   it('keeps the fixture components on the constructed instance', async () => {
     const components = { QueryEditor: () => null };
     const loki = makeFixture('loki', 'loki-uid', { components });
@@ -129,6 +142,20 @@ describe('seedDataSources', () => {
 });
 
 describe('watchDataSourceFallbacks', () => {
+  it('reports a list-item lookup that only the legacy UID cache could resolve', async () => {
+    const loki = makeFixture('loki', 'loki-uid');
+    seedDataSources([], { legacySrv: 'mock' });
+    setDatasourcePluginMetas({ loki: loki.settings.meta });
+    setDataSourceSrv({
+      ...getDataSourceSrv(),
+      getDataSourceSettingsByUid: (uid) => (uid === 'loki-uid' ? loki.settings : undefined),
+    });
+    const fallbacks = watchDataSourceFallbacks();
+
+    expect(await getDataSourceInstanceListItem('loki-uid')).toMatchObject({ uid: 'loki-uid', name: 'loki' });
+    expect(() => fallbacks.expectNoFallbacks(['listItem'])).toThrow(/getDataSourceInstanceListItem/);
+  });
+
   it('reports a lookup that only the legacy service could resolve', async () => {
     const loki = makeFixture('loki', 'loki-uid');
     const legacyOnly: DataSourceSrv = {

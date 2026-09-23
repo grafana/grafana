@@ -373,6 +373,28 @@ describe('plugin', () => {
         expect(result.getRef()).toEqual({ type: settings.type, uid: settings.uid });
       });
 
+      it.each(['[[ds]]', { uid: '[[ds]]' }])(
+        'constructs and caches the concrete instance for bracket ref %p',
+        async (ref) => {
+          const settings = ds();
+          setDataSourceInstanceSettings({ [settings.name]: settings });
+          const replace = jest.fn().mockReturnValue('uid-alpha');
+          setTemplateSrv({ getVariables: () => [], replace } as unknown as TemplateSrv);
+          const importer = jest.fn().mockResolvedValue({ DataSourceClass: CapturingDataSource, components: {} });
+          setDataSourcePluginImporter(importer);
+          const scopedVars = { ds: { text: 'Alpha', value: 'uid-alpha' } };
+
+          const result = await getDataSourceInstance(ref, scopedVars);
+
+          expect(result.getRef()).toEqual({ type: 'test-db', uid: 'uid-alpha' });
+          expect(result.name).toBe('Alpha');
+          expect(await getDataSourceInstance('uid-alpha')).toBe(result);
+          expect(importer).toHaveBeenCalledTimes(1);
+          expect(replace).toHaveBeenCalledWith('[[ds]]', scopedVars, expect.any(Function));
+          expect(logWarning).not.toHaveBeenCalled();
+        }
+      );
+
       it('constructs the concrete default instance when the variable interpolates to "default"', async () => {
         const settings = ds();
         setDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);

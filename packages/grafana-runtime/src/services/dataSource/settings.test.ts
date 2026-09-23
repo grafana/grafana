@@ -127,7 +127,6 @@ const backendGet = jest.fn();
 const logWarning = jest.fn();
 
 beforeAll(() => {
-  setTemplateSrv(templateSrv);
   setBackendSrv({
     get: backendGet,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -136,6 +135,7 @@ beforeAll(() => {
 
 beforeEach(() => {
   _resetForTests();
+  setTemplateSrv(templateSrv);
   backendGet.mockReset();
   logWarning.mockClear();
   setLogger('grafana/runtime.plugins.datasource', {
@@ -289,6 +289,41 @@ describe('instanceSettings', () => {
     });
 
     describe('template variables', () => {
+      it.each([
+        { value: 'uid-alpha', uid: 'uid-alpha' },
+        { value: '3', uid: 'uid-charlie' },
+        { value: 'default', uid: 'uid-bravo' },
+      ])('resolves bracket variables interpolating to $value and preserves the raw ref', async ({ value, uid }) => {
+        const replace = jest.fn().mockReturnValue(value);
+        setTemplateSrv({ ...templateSrv, replace });
+        initDataSourceInstanceSettings(fixtures, 'Bravo');
+        const scopedVars = { ds: { text: value, value } };
+
+        expect(await getDataSourceInstanceSettings('[[ds]]', scopedVars)).toMatchObject({
+          uid: '[[ds]]',
+          name: '[[ds]]',
+          isDefault: false,
+          rawRef: { type: 'test-db', uid },
+        });
+        expect(replace).toHaveBeenCalledWith('[[ds]]', scopedVars, expect.any(Function));
+      });
+
+      it('does not resolve the original name when a bracket variable changes to a missing target', async () => {
+        const literal = ds({ uid: 'literal-uid', name: '[[missing]]' });
+        initDataSourceInstanceSettings({ ...fixtures, [literal.name]: literal }, 'Bravo');
+        setTemplateSrv({ ...templateSrv, replace: jest.fn().mockReturnValue('missing-target') });
+
+        expect(await getDataSourceInstanceSettings('literal-uid')).toBe(literal);
+        expect(await getDataSourceInstanceSettings('[[missing]]')).toBeUndefined();
+      });
+
+      it('resolves a literal bracket name when interpolation leaves it unchanged', async () => {
+        const literal = ds({ uid: 'literal-uid', name: 'logs[[literal]]' });
+        initDataSourceInstanceSettings({ ...fixtures, [literal.name]: literal }, 'Bravo');
+
+        expect(await getDataSourceInstanceSettings('logs[[literal]]')).toBe(literal);
+      });
+
       it('resolves a variable that interpolates to "default"', async () => {
         setTemplateSrv({
           ...templateSrv,
