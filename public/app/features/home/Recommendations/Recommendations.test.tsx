@@ -4,6 +4,7 @@ import { type DataSourceInstanceListItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 import { contextSrv } from 'app/core/services/context_srv';
+import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { type LocalPlugin } from 'app/features/plugins/admin/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -33,7 +34,11 @@ const DEFAULT_STATE: SolutionState = {
   kubernetes: 'inactive',
   spanMetrics: 'inactive',
   synthetics: 'inactive',
+  irm: 'inactive',
 };
+
+// Kubernetes gives IRM its use case; the Synthetic Monitoring card it also selects stays out of the inventory.
+const KUBERNETES_STATE: SolutionState = { ...DEFAULT_STATE, kubernetes: 'active' };
 
 function plugin(id: string, enabled = false, canWrite = true, canAccess = true): LocalPlugin {
   return {
@@ -355,6 +360,23 @@ describe('Recommendations', () => {
       recommendation_id: 'kubernetes-monitoring',
       starting_state: 'ml_no_traces',
     });
+  });
+
+  it('offers to enable a disabled IRM plugin on a Kubernetes stack', async () => {
+    mockGet.mockResolvedValue([plugin(SupportedPlugin.Irm)]);
+    render(<Recommendations solutions={homepageSolutions(KUBERNETES_STATE)} />);
+
+    const link = await screen.findByRole('link', { name: /Enable IRM/ });
+    expect(link).toHaveAttribute('href', '/plugins/grafana-irm-app/');
+    expect(screen.getByRole('heading', { name: 'Get paged when it matters' })).toBeInTheDocument();
+  });
+
+  it('sends an enabled but unconnected IRM to its home page', async () => {
+    mockGet.mockResolvedValue([plugin(SupportedPlugin.Irm, true)]);
+    render(<Recommendations solutions={homepageSolutions(KUBERNETES_STATE)} />);
+
+    const link = await screen.findByRole('link', { name: 'Set up IRM' });
+    expect(link).toHaveAttribute('href', '/a/grafana-irm-app');
   });
 
   it('does not invent install actions for plugins missing from the inventory', async () => {

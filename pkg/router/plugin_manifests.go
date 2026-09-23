@@ -175,13 +175,14 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 }
 
 func (t *pluginManifestsTarget) pluginClients(host string) (plugins.Client, v3.ClientV3, error) {
+	if host == "" {
+		return nil, nil, nil // no client exists
+	}
+
 	t.connectionsMu.Lock()
 	defer t.connectionsMu.Unlock()
 	if t.closed {
 		return nil, nil, fmt.Errorf("router: plugin manifests target is closed")
-	}
-	if host == "" {
-		return nil, nil, fmt.Errorf("router: plugin deployment host is empty")
 	}
 	conn := t.connections[host]
 	if conn == nil {
@@ -198,17 +199,17 @@ func (t *pluginManifestsTarget) pluginClients(host string) (plugins.Client, v3.C
 	}
 	// NOTE: ClientV2 is missing ALL the middleware...
 	return &backendgrpcplugin.ClientV2{
-			DiagnosticsClient: pluginv2.NewDiagnosticsClient(conn),
-			ResourceClient:    pluginv2.NewResourceClient(conn),
-			DataClient:        pluginv2.NewDataClient(conn),
-			StreamClient:      pluginv2.NewStreamClient(conn),
-			AdmissionClient:   pluginv2.NewAdmissionControlClient(conn),
-			ConversionClient:  pluginv2.NewResourceConversionClient(conn),
-		}, &grpcplugin.ClientV3{
-			AdmissionServiceClient:  pluginv3.NewAdmissionServiceClient(conn),
-			ConversionServiceClient: pluginv3.NewConversionServiceClient(conn),
-			RouteServiceClient:      pluginv3.NewRouteServiceClient(conn),
-		}, nil
+		DiagnosticsClient: pluginv2.NewDiagnosticsClient(conn),
+		ResourceClient:    pluginv2.NewResourceClient(conn),
+		DataClient:        pluginv2.NewDataClient(conn),
+		StreamClient:      pluginv2.NewStreamClient(conn),
+		AdmissionClient:   pluginv2.NewAdmissionControlClient(conn),
+		ConversionClient:  pluginv2.NewResourceConversionClient(conn),
+	}, &grpcplugin.ClientV3{
+		AdmissionServiceClient:  pluginv3.NewAdmissionServiceClient(conn),
+		ConversionServiceClient: pluginv3.NewConversionServiceClient(conn),
+		RouteServiceClient:      pluginv3.NewRouteServiceClient(conn),
+	}, nil
 }
 
 func (t *pluginManifestsTarget) closeConnections() {
