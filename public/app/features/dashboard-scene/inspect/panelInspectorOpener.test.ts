@@ -1,4 +1,4 @@
-import { SceneGridLayout } from '@grafana/scenes';
+
 import { defaultDashboard } from '@grafana/schema';
 import { defaultPanelKind, defaultSpec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { InspectTab } from 'app/features/inspector/types';
@@ -7,17 +7,22 @@ import { type PanelInspectDrawer } from './PanelInspectDrawer';
 
 describe('panel inspector registration', () => {
   it('does not replace a newer overlay after loading the inspector', async () => {
-    const { openPanelInspector } = await import('./panelInspectorOpener');
-    const dashboard = await createDashboard('legacy');
-    const [panel] = dashboard.state.body.getVizPanels();
+    // Keep API registration inside isolation, just like the transformation tests below.
+    await jest.isolateModulesAsync(async () => {
+      const { SceneGridLayout } = await import('@grafana/scenes');
+      const { openPanelInspector } = await import('./panelInspectorOpener');
+      const dashboard = await createDashboard('legacy');
+      const [panel] = dashboard.state.body.getVizPanels();
 
-    const opening = openPanelInspector(panel, InspectTab.Data);
-    const modal = new SceneGridLayout({ children: [] });
-    dashboard.showModal(modal);
-    await opening;
+      const opening = openPanelInspector(panel, InspectTab.Data);
+      const modal = new SceneGridLayout({ children: [] });
+      dashboard.showModal(modal);
+      await opening;
 
-    expect(dashboard.state.overlay).toBe(modal);
+      expect(dashboard.state.overlay).toBe(modal);
+    });
   });
+
   it.each([
     { version: 'legacy' as const, tab: InspectTab.Data },
     { version: 'V2' as const, tab: InspectTab.Query },
