@@ -22,6 +22,6 @@ export function checkDashboardStateWriters(scene: DashboardScene, snapshot: Dash
   scene.loadView({ key: 'editPanel', load: async () => 'not a panel editor' });
   // @ts-expect-error Registered loaders retain their argument types.
   dashboardViews.editPanel('not a panel');
-  // @ts-expect-error Synchronous state keys are not callable loaders.
+  // @ts-expect-error Synchronous state keys are not exposed as loaders.
   dashboardViews.body();
 }

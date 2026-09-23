@@ -6,38 +6,43 @@ import { type ShareDrawerState } from '../sharing/ShareDrawer/ShareDrawer';
 import { type DashboardScene } from './DashboardScene';
 import { type DashboardSceneState, type DashboardViewState } from './types/dashboard';
 
-type ViewRequest<K extends keyof DashboardViewState> = {
-  key: K;
-  load: () => Promise<DashboardViewState[K]>;
-};
-
-export type DashboardViewRequest = {
-  [K in keyof DashboardViewState]-?: ViewRequest<K>;
-}[keyof DashboardViewState];
-
-type ViewLoader<K extends keyof DashboardViewState> = (...args: never[]) => ViewRequest<K>;
-
-function loader<K extends keyof DashboardViewState, Args extends unknown[]>(
-  key: K,
-  load: (...args: Args) => Promise<DashboardViewState[K]>
-) {
-  return (...args: Args): ViewRequest<K> => ({ key, load: () => load(...args) });
-}
-
 // Every field that replaces or dismisses a pending view belongs in DashboardViewState and here.
-// Register lazy loaders here too, so their target and result types share the cancellation contract.
 // Ordinary data edits and loading bookkeeping must not cancel requests. Subscriptions cannot see
 // intent before state changes: new requests and explicit close actions must also cancel old work.
-export const dashboardViews = {
+const viewStateKeys = {
   body: true,
   isEditing: true,
   inspectPanelKey: true,
   viewPanel: true,
   editview: true,
   shareView: true,
-  editPanel: loader('editPanel', async (panel: VizPanel, isNewPanel = false) => {
+  editPanel: true,
+  overlay: true,
+} satisfies Record<keyof DashboardViewState, true>;
+
+type ViewStateKey = keyof typeof viewStateKeys;
+
+type ViewRequest<K extends ViewStateKey> = {
+  key: K;
+  load: () => Promise<DashboardViewState[K]>;
+};
+
+export type DashboardViewRequest = {
+  [K in ViewStateKey]: ViewRequest<K>;
+}[ViewStateKey];
+
+function loader<K extends ViewStateKey, Args extends unknown[]>(
+  key: K,
+  load: (...args: Args) => Promise<DashboardViewState[K]>
+) {
+  return (...args: Args): ViewRequest<K> => ({ key, load: () => load(...args) });
+}
+
+// The helper ties each loader's result to a state key observed by cancellation.
+export const dashboardViews = {
+  editPanel: loader('editPanel', async (panel: VizPanel, isNewPanel?: boolean) => {
     const { buildPanelEditScene } = await import(/* webpackChunkName: "panel-edit" */ '../panel-edit/PanelEditor');
-    return buildPanelEditScene(panel, isNewPanel);
+    return buildPanelEditScene(panel, isNewPanel ?? false);
   }),
   overlay: {
     save: loader(
@@ -77,12 +82,10 @@ export const dashboardViews = {
       return new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: tab });
     }),
   },
-} satisfies {
-  [K in keyof DashboardViewState]-?: true | ViewLoader<K> | Record<string, ViewLoader<K>>;
 };
 
 export function dashboardViewChanged(state: DashboardSceneState, previous: DashboardSceneState) {
   // Object.keys loses the keys of this closed, compiler-checked registry.
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return (Object.keys(dashboardViews) as Array<keyof DashboardViewState>).some((key) => state[key] !== previous[key]);
+  return (Object.keys(viewStateKeys) as ViewStateKey[]).some((key) => state[key] !== previous[key]);
 }
