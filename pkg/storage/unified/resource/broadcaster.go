@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"log/slog"
+	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -55,18 +56,25 @@ func newBroadcasterMetrics(reg prometheus.Registerer) *BroadcasterMetrics {
 //
 // eventResourceFn extracts a resource label for an event entering the broadcaster.
 func NewBroadcaster[T any](ctx context.Context, input <-chan T, metrics *BroadcasterMetrics, eventResourceFn func(T) string) Broadcaster[T] {
-	return newBroadcasterWithSizes[T](ctx, input, watchChanSize, defaultOverflowCap, metrics, eventResourceFn)
+	return newBroadcasterWithSizes[T](ctx, input, watchChanSize, defaultOverflowCap, metrics, eventResourceFn, nil, nil)
 }
 
+// Initialization runs asynchronously before the event loop. It must establish
+// capture without depending on the broadcaster consuming input.
+type cacheInitializer[T any] func(context.Context) (cacheSeed[T], error)
+
 // newBroadcasterWithSizes creates a broadcaster with configurable buffer sizes for testing.
-func newBroadcasterWithSizes[T any](ctx context.Context, input <-chan T, subBufSize, ovfCap int, metrics *BroadcasterMetrics, eventResourceFn func(T) string) *broadcaster[T] {
+func newBroadcasterWithSizes[T any](ctx context.Context, input <-chan T, subBufSize, ovfCap int, metrics *BroadcasterMetrics, eventResourceFn func(T) string, identity eventIdentity[T], initialize cacheInitializer[T]) *broadcaster[T] {
 	if metrics == nil {
 		metrics = newBroadcasterMetrics(nil)
 	}
 	b := &broadcaster[T]{
-		shouldTerminate: ctx.Done(),
-		cache:           newRingBuffer[T](defaultCacheSize),
-		subscribe:       make(chan *subscription[T], internalChanSize),
+		ctx:             ctx,
+		initialize:      initialize,
+		initializeNext:  make(chan struct{}, 1),
+		initAttempt:     &initializationAttempt{done: make(chan struct{})},
+		cache:           newWatchCache(defaultCacheSize, identity),
+		subscribe:       make(chan *subscribeRequest[T], internalChanSize),
 		unsubscribe:     make(chan (<-chan T), internalChanSize),
 		subs:            make(map[<-chan T]*subscription[T]),
 		terminated:      make(chan struct{}),
@@ -74,6 +82,9 @@ func newBroadcasterWithSizes[T any](ctx context.Context, input <-chan T, subBufS
 		eventResourceFn: eventResourceFn,
 		watchBufSize:    subBufSize,
 		overflowCap:     ovfCap,
+	}
+	if initialize == nil {
+		close(b.initAttempt.done)
 	}
 
 	go b.stream(input)
@@ -88,20 +99,38 @@ type subscription[T any] struct {
 	overflow []T // pending items when channel is full, nil when not overflowing
 }
 
+type subscribeRequest[T any] struct {
+	sub    *subscription[T]
+	ctx    context.Context
+	resume *watchResume
+	ack    chan error
+}
+
+type initializationAttempt struct {
+	done  chan struct{}
+	err   error
+	fatal bool
+}
+
 type broadcaster[T any] struct {
 	// lifecycle management
 
-	terminated      chan struct{}
-	shouldTerminate <-chan struct{}
+	ctx            context.Context
+	terminated     chan struct{}
+	initialize     cacheInitializer[T]
+	initializeNext chan struct{}
+	initMu         sync.Mutex
+	initAttempt    *initializationAttempt
 
 	// subscription management
 
-	cache           ringBuffer[T]
-	subscribe       chan *subscription[T]
+	cache           watchCache[T]
+	subscribe       chan *subscribeRequest[T]
 	unsubscribe     chan (<-chan T)
 	subs            map[<-chan T]*subscription[T]
 	metrics         *BroadcasterMetrics
 	eventResourceFn func(T) string
+	submissionMu    sync.RWMutex // serializes enqueueing with shutdown's pending-subscription cleanup
 
 	// configuration
 
@@ -123,6 +152,7 @@ const (
 	subscriptionResultCtxCanceled  = "ctx_canceled"
 	subscriptionResultTerminated   = "terminated"
 	subscriptionResultReplayFailed = "replay_failed"
+	subscriptionResultExpired      = "expired"
 
 	unsubscriptionReasonClient      = "client"
 	unsubscriptionReasonOverflowCap = "overflow_cap"
@@ -155,17 +185,134 @@ const (
 
 func (b *broadcaster[T]) Subscribe(ctx context.Context, name, resource string) (<-chan T, error) {
 	sub := &subscription[T]{name: name, resource: resource, ch: make(chan T, b.watchBufSize)}
+	// Generic subscriptions remain asynchronous; ctx only bounds enqueueing.
+	if err := b.submit(ctx, &subscribeRequest[T]{sub: sub}); err != nil {
+		return nil, err
+	}
+	return sub.ch, nil
+}
 
+func (b *broadcaster[T]) submit(ctx context.Context, req *subscribeRequest[T]) error {
+	sub := req.sub
+	b.submissionMu.RLock()
+	defer b.submissionMu.RUnlock()
+	// A select alone could enqueue after shutdown has drained the queue.
 	select {
-	case <-ctx.Done(): // client canceled
-		b.metrics.SubscriptionsTotal.WithLabelValues(resource, subscriptionResultCtxCanceled).Inc()
+	case <-b.terminated:
+		b.metrics.SubscriptionsTotal.WithLabelValues(sub.resource, subscriptionResultTerminated).Inc()
+		return io.EOF
+	default:
+	}
+	select {
+	case <-ctx.Done():
+		b.metrics.SubscriptionsTotal.WithLabelValues(sub.resource, subscriptionResultCtxCanceled).Inc()
+		return ctx.Err()
+	case <-b.terminated:
+		b.metrics.SubscriptionsTotal.WithLabelValues(sub.resource, subscriptionResultTerminated).Inc()
+		return io.EOF
+	case b.subscribe <- req:
+		return nil
+	}
+}
+
+// subscribeWatch acknowledges replay capture and live registration in the same
+// operation as floor validation. Generic subscribers retain their existing API.
+func (b *broadcaster[T]) subscribeWatch(ctx context.Context, name, resource string, resume *watchResume) (<-chan T, error) {
+	if err := b.ensureReady(ctx); err != nil {
+		return nil, err
+	}
+	sub := &subscription[T]{name: name, resource: resource, ch: make(chan T, b.watchBufSize)}
+	req := &subscribeRequest[T]{sub: sub, ctx: ctx, resume: resume, ack: make(chan error, 1)}
+	if err := b.submit(ctx, req); err != nil {
+		return nil, err
+	}
+	select {
+	case <-ctx.Done():
+		// Unsubscribe drains queued admissions before removing the subscriber,
+		// including when cancellation wins the race with the acknowledgment.
+		b.Unsubscribe(sub.ch)
 		return nil, ctx.Err()
-	case <-b.terminated: // no more data
-		b.metrics.SubscriptionsTotal.WithLabelValues(resource, subscriptionResultTerminated).Inc()
+	case <-b.terminated:
 		return nil, io.EOF
-	case b.subscribe <- sub: // success submitting subscription
+	case err := <-req.ack:
+		if err != nil {
+			return nil, err
+		}
+		if err := ctx.Err(); err != nil {
+			b.Unsubscribe(sub.ch)
+			return nil, err
+		}
 		return sub.ch, nil
 	}
+}
+
+// ensureReady starts a new initialization attempt after a retryable failure.
+// Concurrent callers share the same attempt, and canceling one caller does not
+// cancel initialization for the others.
+func (b *broadcaster[T]) ensureReady(ctx context.Context) error {
+	b.initMu.Lock()
+	attempt := b.initAttempt
+	start := false
+	select {
+	case <-attempt.done:
+		if attempt.err == nil || attempt.fatal {
+			err := attempt.err
+			b.initMu.Unlock()
+			return err
+		}
+		start = true
+	default:
+	}
+	if err := b.ctx.Err(); err != nil {
+		b.initMu.Unlock()
+		return err
+	}
+	if start {
+		attempt = &initializationAttempt{done: make(chan struct{})}
+		b.initAttempt = attempt
+	}
+	b.initMu.Unlock()
+
+	if start {
+		select {
+		case b.initializeNext <- struct{}{}:
+		case <-b.terminated:
+			return io.EOF
+		}
+	}
+	return b.waitForInitialization(ctx, attempt)
+}
+
+func (b *broadcaster[T]) waitForInitialization(ctx context.Context, attempt *initializationAttempt) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-b.terminated:
+		b.initMu.Lock()
+		err := attempt.err
+		b.initMu.Unlock()
+		if err != nil {
+			return err
+		}
+		return io.EOF
+	case <-attempt.done:
+		b.initMu.Lock()
+		err := attempt.err
+		b.initMu.Unlock()
+		return err
+	}
+}
+
+func (b *broadcaster[T]) finishInitialization(attempt *initializationAttempt, err error, fatal bool) {
+	b.initMu.Lock()
+	attempt.err = err
+	attempt.fatal = fatal
+	close(attempt.done)
+	b.initMu.Unlock()
+}
+
+func (b *broadcaster[T]) installSeed(seed cacheSeed[T]) error {
+	return b.cache.seed(seed)
 }
 
 func (b *broadcaster[T]) Unsubscribe(sub <-chan T) {
@@ -206,46 +353,73 @@ func (b *broadcaster[T]) drainOverflow(sub *subscription[T]) {
 // (as with any other channel) will always be of the sending side. Hence, the
 // watch implementation should do it.
 func (b *broadcaster[T]) stream(input <-chan T) {
-	drainTicker := time.NewTicker(drainInterval)
-	defer drainTicker.Stop()
-
 	// make sure we unconditionally cleanup upon return
 	defer func() {
 		// prevent new subscriptions and make sure to discard unsubscriptions
 		close(b.terminated)
+		// Generic subscribers may have received their channels while startup
+		// was still pending. Close those too, including on initialization failure.
+		b.submissionMu.Lock()
+		for len(b.subscribe) > 0 {
+			req := <-b.subscribe
+			close(req.sub.ch)
+			b.metrics.SubscriptionsTotal.WithLabelValues(req.sub.resource, subscriptionResultTerminated).Inc()
+		}
+		b.submissionMu.Unlock()
 		// terminate all subscriptions
 		for recv := range b.subs {
 			b.removeSubscriber(recv, unsubscriptionReasonShutdown)
 		}
 	}()
 
-	addSubscriber := func(sub *subscription[T]) {
-		// send initial batch of cached items
-		if !b.cache.readInto(sub.ch) {
-			b.metrics.SubscriptionsTotal.WithLabelValues(sub.resource, subscriptionResultReplayFailed).Inc()
-			close(sub.ch)
-			return
+	if b.initialize != nil {
+		ctx, cancel := context.WithCancel(b.ctx)
+		defer cancel()
+		attempt := b.initAttempt
+		for {
+			seed, err := b.initialize(ctx)
+			fatal := false
+			if err == nil {
+				err = b.installSeed(seed)
+				fatal = err != nil
+			}
+			b.finishInitialization(attempt, err, fatal)
+			if err == nil {
+				break
+			}
+			if fatal {
+				return
+			}
+
+			select {
+			case <-ctx.Done():
+				return
+			case <-b.initializeNext:
+				b.initMu.Lock()
+				attempt = b.initAttempt
+				b.initMu.Unlock()
+			}
 		}
-		b.subs[sub.ch] = sub
-		b.metrics.SubscriptionsTotal.WithLabelValues(sub.resource, subscriptionResultOK).Inc()
-		b.metrics.Subscribers.WithLabelValues(sub.resource).Inc()
 	}
+
+	drainTicker := time.NewTicker(drainInterval)
+	defer drainTicker.Stop()
 
 	for {
 		select {
-		case <-b.shouldTerminate: // service context cancelled
+		case <-b.ctx.Done(): // service context cancelled
 			return
 
-		case sub := <-b.subscribe: // subscribe
-			addSubscriber(sub)
+		case req := <-b.subscribe: // subscribe
+			b.addSubscriber(req)
 
 		case recv := <-b.unsubscribe: // unsubscribe
 			// Drain pending subscribes so we don't miss one that was
 			// buffered before this unsubscribe.
 			for drained := false; !drained; {
 				select {
-				case sub := <-b.subscribe:
-					addSubscriber(sub)
+				case req := <-b.subscribe:
+					b.addSubscriber(req)
 				default:
 					drained = true
 				}
@@ -310,6 +484,44 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 	}
 }
 
+// addSubscriber runs only on the stream goroutine so floor validation, replay,
+// and registration remain atomic with respect to cache eviction.
+func (b *broadcaster[T]) addSubscriber(req *subscribeRequest[T]) {
+	sub := req.sub
+	reject := func(err error, result string) {
+		b.metrics.SubscriptionsTotal.WithLabelValues(sub.resource, result).Inc()
+		close(sub.ch)
+		if req.ack != nil {
+			req.ack <- err
+		}
+	}
+	if req.ctx != nil && req.ctx.Err() != nil {
+		reject(req.ctx.Err(), subscriptionResultCtxCanceled)
+		return
+	}
+	if req.resume != nil {
+		if err := b.cache.validateResume(*req.resume); err != nil {
+			result := subscriptionResultReplayFailed
+			if IsResourceVersionExpired(err) {
+				result = subscriptionResultExpired
+			}
+			reject(err, result)
+			return
+		}
+	}
+	// send initial batch of cached items
+	if err := b.cache.replay(sub.ch); err != nil {
+		reject(err, subscriptionResultReplayFailed)
+		return
+	}
+	b.subs[sub.ch] = sub
+	b.metrics.SubscriptionsTotal.WithLabelValues(sub.resource, subscriptionResultOK).Inc()
+	b.metrics.Subscribers.WithLabelValues(sub.resource).Inc()
+	if req.ack != nil {
+		req.ack <- nil
+	}
+}
+
 func (b *broadcaster[T]) removeSubscriber(recv <-chan T, reason string) {
 	sub, ok := b.subs[recv]
 	if !ok {
@@ -339,19 +551,23 @@ func newRingBuffer[T any](size int) ringBuffer[T] {
 	}
 }
 
-func (r *ringBuffer[T]) add(item T) {
+func (r *ringBuffer[T]) add(item T) (evicted T, ok bool) {
 	i := (r.zero + r.len) % len(r.buf)
+	if r.len == len(r.buf) {
+		evicted, ok = r.buf[i], true
+	}
 	r.buf[i] = item
 	if r.len < len(r.buf) {
 		r.len++
 	} else {
 		r.zero = (r.zero + 1) % len(r.buf)
 	}
+	return evicted, ok
 }
 
 // readInto sends all cached items to dst without blocking. Returns true if all
 // items were sent, false if dst's buffer was full (slow consumer).
-func (r *ringBuffer[T]) readInto(dst chan T) bool {
+func (r *ringBuffer[T]) readInto(dst chan<- T) bool {
 	for i := 0; i < r.len; i++ {
 		select {
 		case dst <- r.buf[(r.zero+i)%len(r.buf)]:
