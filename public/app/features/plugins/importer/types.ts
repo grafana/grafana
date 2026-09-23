@@ -6,6 +6,7 @@ import {
   type PanelPluginMeta,
   type PluginLoadingStrategy,
   type PluginMeta,
+  type PluginType,
 } from '@grafana/data';
 import { type GenericDataSourcePlugin } from 'app/features/datasources/types';
 
@@ -39,6 +40,7 @@ export interface PluginImporter {
 export interface PluginImportInfo {
   path: string;
   pluginId: string;
+  pluginType: PluginType;
   loadingStrategy: PluginLoadingStrategy;
   pluginName: string;
   version?: string;
