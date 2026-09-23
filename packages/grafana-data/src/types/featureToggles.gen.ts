@@ -169,11 +169,6 @@ export interface FeatureToggles {
   */
   externalSnapshotsSupportLegacyAPI?: boolean;
   /**
-  * Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
-  * @default true
-  */
-  useKubernetesShortURLsAPI?: boolean;
-  /**
   * Adds support for Kubernetes correlations
   * @default false
   */

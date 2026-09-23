@@ -48,7 +48,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,kubernetesFolderCountsLegacyStorage,experimental,@grafana/search-and-storage,false,true,false
 2026-09-16,grafana.kubernetesAnnotationsClient,experimental,@grafana/dashboards-squad,false,false,true
 2026-09-16,grafana.newPanelQueryErrorsUI,experimental,@grafana/dashboards-squad,false,false,true
-2025-08-29,useKubernetesShortURLsAPI,GA,@grafana/sharing-squad,false,false,true
 2025-08-29,kubernetesCorrelations,experimental,@grafana/datapro,false,true,false
 2025-10-16,kubernetesLogsDrilldown,experimental,@grafana/observability-logs,false,true,false
 2025-10-20,kubernetesQueryCaching,experimental,@grafana/grafana-operator-experience-squad,false,true,false

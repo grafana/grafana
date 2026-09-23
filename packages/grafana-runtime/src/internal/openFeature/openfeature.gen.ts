@@ -220,8 +220,6 @@ export const FlagKeys = {
   TableRefreshNewFeatures: "table.refreshNewFeatures",
   /** Enables the new features in text panel */
   TextNewFeatures: "text.newFeatures",
-  /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
-  UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
 } as const;
 
 /**
@@ -1355,16 +1353,5 @@ export const useFlagTableRefreshNewFeatures = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagTextNewFeatures = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("text.newFeatures", false, options).value;
-};
-
-/**
- * Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
- *
- * **Details:**
- * - flag key: `useKubernetesShortURLsAPI`
- * - default value: `true`
- */
-export const useFlagUseKubernetesShortURLsAPI = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("useKubernetesShortURLsAPI", true, options).value;
 };
 
