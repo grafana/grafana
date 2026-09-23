@@ -28,13 +28,6 @@ function buildCell(timeRange?: SceneTimeRange) {
 }
 
 describe('NotebookCellTimeRangeControl', () => {
-  beforeEach(() => {
-    // TimePickerFooter (timezone tab) only renders in TimeRangePicker's "fullscreen" layout, which is
-    // keyed off window width against the theme's `lg` breakpoint (992px) — jsdom defaults to 1024,
-    // just under some themes' breakpoint, so this pins it well above any of them.
-    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1200 });
-  });
-
   it('reverts a timezone change made since opening the popover, on Reset', async () => {
     const cell = buildCell(new SceneTimeRange({ from: 'now-24h', to: 'now', timeZone: 'America/Chicago' }));
     const { user } = render(<NotebookCellTimeRangeControl cell={cell} variant="button" />);
