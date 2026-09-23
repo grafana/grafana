@@ -17,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	types "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/admission"
+	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -402,12 +403,25 @@ func TestDashboardAPIBuilder_EmbeddedLibraryPanelFinalStorageKeepsAccessBoundary
 	}
 }
 
-func TestDashboardAPIBuilder_LibraryPanelFolderValidationAllowsProvisioningIdentity(t *testing.T) {
+func TestDashboardAPIBuilder_LibraryPanelFolderValidationForProvisioningIdentity(t *testing.T) {
 	ctx, _, err := identity.WithProvisioningIdentity(t.Context(), "stacks-1")
 	require.NoError(t, err)
+	ctx = k8srequest.WithNamespace(ctx, "stacks-1")
 
-	builder := &DashboardsAPIBuilder{}
-	require.NoError(t, builder.validateLibraryPanelFolder(ctx, testLibraryPanel("panel-a", "provisioned-folder")))
+	t.Run("allows an existing folder", func(t *testing.T) {
+		builder := &DashboardsAPIBuilder{
+			folderClientProvider: &staticHandlerProvider{handler: &variableFolderAccessHandler{}},
+		}
+		require.NoError(t, builder.validateLibraryPanelFolder(ctx, testLibraryPanel("panel-a", "provisioned-folder")))
+	})
+
+	t.Run("rejects a missing folder", func(t *testing.T) {
+		builder := &DashboardsAPIBuilder{
+			folderClientProvider: &staticHandlerProvider{handler: &variableFolderAccessHandler{notFoundAccessSubresource: true}},
+		}
+		err := builder.validateLibraryPanelFolder(ctx, testLibraryPanel("panel-a", "missing-folder"))
+		require.True(t, apierrors.IsNotFound(err))
+	})
 }
 
 func TestDashboardAPIBuilder_StandaloneLibraryPanelMoveRequiresSourceAndDestinationAccess(t *testing.T) {
