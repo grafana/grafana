@@ -461,7 +461,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards-suite/dashboard-export-image.spec.ts @grafana/sharing-squad
 /e2e-playwright/dashboards-suite/dashboard-export-json.spec.ts @grafana/sharing-squad
 /e2e-playwright/dashboards-suite/dashboard-keybindings.spec.ts @grafana/dashboards-squad
-/e2e-playwright/dashboards-suite/dashboard-lazy-loading-indicators.spec.ts @grafana/dashboards-squad @grafana/sharing-squad
 /e2e-playwright/dashboards-suite/dashboard-links-without-slug.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/dashboard-live-streaming.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/dashboard-restore-permissions.spec.ts @grafana/grafana-frontend-navigation
