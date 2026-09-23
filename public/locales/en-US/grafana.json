@@ -5764,6 +5764,7 @@
     "edit-actions": {
       "add": "Add {{typeName}}",
       "add-conditional-rule": "Add {{ruleDescription}} rule",
+      "collapse-all-rows": "Collapse all rows",
       "dashboard-description": "Change dashboard description",
       "dashboard-title": "Change dashboard title",
       "duplicate": "Duplicate {{typeName}}",
@@ -5771,6 +5772,7 @@
       "edit-query-result-rule": "Change query result rule",
       "edit-template-variable-rule": "Change template variable rule",
       "edit-time-range-rule": "Change time range rule",
+      "expand-all-rows": "Expand all rows",
       "group-into-row": "Group into row",
       "group-into-tab": "Group into tab",
       "move": "Move {{typeName}}",
