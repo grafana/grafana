@@ -28,6 +28,10 @@ func TestIntegrationGit_FixFolderMetadata_Branch(t *testing.T) {
 		"parent/child/dashboard.json": common.DashboardJSON("git-meta-dash", "Git Meta Dashboard", 1),
 	}, "write", "branch")
 
+	// Branch metadata previews need a real ancestor from the configured branch.
+	helper.SyncAndWait(t, repoName)
+	helper.RequireRepoFolderCount(t, repoName, 2)
+
 	// Run the fix-folder-metadata job targeting a new feature branch.
 	// The job creates the branch from main and commits _folder.json files there.
 	expectedCommitMsg := "fix folder metadata"
@@ -72,6 +76,10 @@ func TestIntegrationGit_FixFolderMetadata_ExistingBranch(t *testing.T) {
 	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 		"parent/child/dashboard.json": common.DashboardJSON("git-meta-existing", "Git Meta Existing", 1),
 	}, "write", "branch")
+
+	// Branch metadata previews need a real ancestor from the configured branch.
+	helper.SyncAndWait(t, repoName)
+	helper.RequireRepoFolderCount(t, repoName, 2)
 
 	// Pre-create the branch on the remote so that ensureBranchExists takes the
 	// "branch already exists" path instead of creating a new one.
@@ -156,6 +164,10 @@ func TestIntegrationGit_FixFolderMetadata_ReadOnlyDefaultBranch_WithRef(t *testi
 	helper.CreateGitRepo(t, repoName, map[string][]byte{
 		"parent/child/dashboard.json": common.DashboardJSON("git-ro-branch-dash", "Git ReadOnly Branch Dashboard", 1),
 	}, "branch")
+
+	// Branch metadata previews need a real ancestor from the configured branch.
+	helper.SyncAndWait(t, repoName)
+	helper.RequireRepoFolderCount(t, repoName, 2)
 
 	job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action: provisioning.JobActionFixFolderMetadata,
