@@ -1,6 +1,7 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { render, screen } from 'test/test-utils';
 
-import { type Repository, type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
+import { type Condition, type Repository, type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepositoryOverview } from './RepositoryOverview';
 
@@ -8,6 +9,8 @@ jest.mock('@openfeature/react-sdk', () => ({
   ...jest.requireActual('@openfeature/react-sdk'),
   useBooleanFlagValue: jest.fn().mockReturnValue(false),
 }));
+
+const mockUseBooleanFlagValue = useBooleanFlagValue as jest.MockedFunction<typeof useBooleanFlagValue>;
 
 jest.mock('../Job/RecentJobs', () => ({
   RecentJobs: () => null,
@@ -23,7 +26,8 @@ jest.mock('./RepositoryPullStatusCard', () => ({
 
 const createMockRepository = (
   spec: Partial<RepositorySpec>,
-  webhook: NonNullable<Repository['status']>['webhook'] = { id: 42, url: 'https://grafana.example/webhook' }
+  webhook: NonNullable<Repository['status']>['webhook'] = { id: 42, url: 'https://grafana.example/webhook' },
+  conditions?: Condition[]
 ): Repository => ({
   metadata: { name: 'test-repo' },
   spec: {
@@ -38,6 +42,7 @@ const createMockRepository = (
     sync: { state: 'success', message: [] },
     observedGeneration: 1,
     webhook,
+    conditions,
   },
 });
 
@@ -116,6 +121,79 @@ describe('RepositoryOverview', () => {
       render(<RepositoryOverview repo={repo} />);
 
       expect(screen.queryByRole('link', { name: 'View Webhook' })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('path conflict warning', () => {
+    const pathConflictCondition: Condition = {
+      type: 'PathConflict',
+      status: 'False',
+      reason: 'PathConflict',
+      message: 'repository path conflicts with existing repository: other-repo',
+      lastTransitionTime: '2024-01-01T00:00:00Z',
+    };
+    const noPathConflictCondition: Condition = {
+      type: 'PathConflict',
+      status: 'True',
+      reason: 'NoPathConflict',
+      message: 'no other repository shares this URL, branch, and path',
+      lastTransitionTime: '2024-01-01T00:00:00Z',
+    };
+
+    it('should render the banner when the repository has a PathConflict condition', () => {
+      const repo = createMockRepository({}, undefined, [pathConflictCondition]);
+      render(<RepositoryOverview repo={repo} />);
+
+      expect(
+        screen.getByText(
+          'This repository shares a url, branch, and path combination with another repository. There will be sync errors because resources can only be managed by 1 repository.'
+        )
+      ).toBeInTheDocument();
+      expect(screen.getByText('repository path conflicts with existing repository: other-repo')).toBeInTheDocument();
+    });
+
+    it('should not render the banner when there is no conflict', () => {
+      const repo = createMockRepository({}, undefined, [noPathConflictCondition]);
+      render(<RepositoryOverview repo={repo} />);
+
+      expect(
+        screen.queryByText(
+          'This repository shares a url, branch, and path combination with another repository. There will be sync errors because resources can only be managed by 1 repository.'
+        )
+      ).not.toBeInTheDocument();
+    });
+
+    it('should not render the banner when the repository has no conditions', () => {
+      const repo = createMockRepository({}, undefined, undefined);
+      render(<RepositoryOverview repo={repo} />);
+
+      expect(
+        screen.queryByText(
+          'This repository shares a url, branch, and path combination with another repository. There will be sync errors because resources can only be managed by 1 repository.'
+        )
+      ).not.toBeInTheDocument();
+    });
+
+    it('should render alongside the missing-folder-metadata banner - neither replaces the other', () => {
+      mockUseBooleanFlagValue.mockReturnValue(true);
+      const repo = createMockRepository({}, undefined, [
+        pathConflictCondition,
+        {
+          type: 'PullStatus',
+          status: 'False',
+          reason: 'MissingFolderMetadata',
+          message: 'missing folder metadata',
+          lastTransitionTime: '2024-01-01T00:00:00Z',
+        },
+      ]);
+      render(<RepositoryOverview repo={repo} />);
+
+      expect(
+        screen.getByText(
+          'This repository shares a url, branch, and path combination with another repository. There will be sync errors because resources can only be managed by 1 repository.'
+        )
+      ).toBeInTheDocument();
+      expect(screen.getByText('Some folders are missing metadata in this repository.')).toBeInTheDocument();
     });
   });
 });
