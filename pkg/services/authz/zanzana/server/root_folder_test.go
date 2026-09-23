@@ -75,6 +75,5 @@ func TestIntegrationRootFolderPermissions(t *testing.T) {
 				require.NotContains(t, res.GetFolders(), "", "other resource types must not inherit root grants through the empty parent")
 			})
 		}
-
 	}
 }

@@ -1063,8 +1063,8 @@ func (s *Service) checkPermissionWithMapping(ctx context.Context, scopeMap map[s
 // permission" model for K8s-native (mapper-miss) resources.
 // Apiextensions configures storage to check folder-scoped objects carry a non-root folder
 // annotation (see apistore.StorageOptions.RequireFolder), so the check here
-// reduces to presence-driven logic — no HasFolderSupport gate, no
-// GeneralFolderUID default.
+// treats both root representations as no parent, without a HasFolderSupport
+// gate or a General-folder permission default.
 //
 // Stack-role interpretation:
 //
@@ -1073,7 +1073,7 @@ func (s *Service) checkPermissionWithMapping(ctx context.Context, scopeMap map[s
 // scopeMap[""]. In the folder-authz model both signal the same thing — "the
 // user holds the stack role for this action" — and neither is allowed to
 // auto-allow when the request targets an object in a folder. The folder
-// branch is always consulted whenever req.ParentFolder is set.
+// branch is always consulted whenever req.ParentFolder identifies a real folder.
 //
 // Service identities / true admins bypass this function entirely via the
 // authz client's identity-type guard, so removing the wildcard auto-allow
@@ -1092,18 +1092,14 @@ func (s *Service) checkPermissionWithFolderAuthz(ctx context.Context, scopeMap m
 	// Capabilities check: no specific object named and no folder context, so the
 	// caller is only asking whether the user could ever perform this action. The
 	// stack role alone answers that.
-	if req.ParentFolder == "" && req.Name == "" {
+	if folder.IsRootFolderUID(req.ParentFolder) && req.Name == "" {
 		ctxLogger.Debug("folderAuthz: no parent folder provided, capabilities check")
 		return true, nil
 	}
 
-	// Named object with no parent folder. Storage enforces that folder-scoped
-	// kinds always carry a non-root folder (apistore RequireFolder), and that
-	// non-folder-scoped kinds can never carry one (EnableFolderSupport=false).
-	// An empty parent folder on a named check therefore means the kind does not
-	// live in folders, and the stack role alone decides.
-	// Source: pkg/storage/unified/apistore/prepare.go (fn verifyFolder)
-	if req.ParentFolder == "" {
+	// Both root representations mean no real parent. Match the empty-parent
+	// stack-role decision even when a caller supplies the canonical sentinel.
+	if folder.IsRootFolderUID(req.ParentFolder) {
 		ctxLogger.Debug("folderAuthz: named object without parent folder, stack role decides")
 		return true, nil
 	}

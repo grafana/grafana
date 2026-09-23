@@ -2856,6 +2856,27 @@ func TestService_checkPermissionWithFolderAuthz(t *testing.T) {
 		},
 	}
 
+	for _, parent := range []string{"", accesscontrol.GeneralFolderUID} {
+		for _, name := range []string{"", "w1"} {
+			for _, verb := range []string{utils.VerbCreate, utils.VerbGet, utils.VerbUpdate, utils.VerbDelete} {
+				for _, hasStackRole := range []bool{false, true} {
+					var permissions []accesscontrol.Permission
+					if hasStackRole {
+						permissions = []accesscontrol.Permission{stackRole(group + "/widgets:" + verb)}
+					} else {
+						permissions = []accesscontrol.Permission{folderPerm("folders:read", accesscontrol.GeneralFolderUID), folderPerm("folders:write", accesscontrol.GeneralFolderUID)}
+					}
+					testCases = append(testCases, testCase{
+						name:        fmt.Sprintf("root parent=%q name=%q verb=%s stackRole=%t", parent, name, verb, hasStackRole),
+						permissions: permissions,
+						req:         &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: verb, Name: name, Folder: parent},
+						expected:    hasStackRole,
+					})
+				}
+			}
+		}
+	}
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			s := setupService()
