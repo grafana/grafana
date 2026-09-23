@@ -91,8 +91,10 @@ export interface DashboardSceneState extends SceneObjectState, DashboardViewStat
 // Without exactOptionalPropertyTypes, explicit undefined remains allowed.
 type WithoutStateKeys<T, K extends keyof T> = Partial<Omit<T, K>> & { [P in K]?: never };
 
-// Keep snapshot writes compatible until enterprise restore callers migrate to updateView.
-export type DashboardStateUpdate = Partial<DashboardSceneState>;
+export type DashboardStateUpdate = WithoutStateKeys<
+  DashboardSceneState,
+  keyof DashboardViewState | keyof DashboardLoadingState
+>;
 export type DashboardViewUpdate = WithoutStateKeys<DashboardSceneState, keyof DashboardLoadingState>;
 
 export interface DashboardPlanningState {
