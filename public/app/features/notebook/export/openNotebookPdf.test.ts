@@ -1,6 +1,8 @@
+import { type GrafanaConfig, locationUtil } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { navigateToNotebookPdf, openBlankNotebookPdfTab } from './openNotebookPdf';
+import { canExportNotebookPdf, navigateToNotebookPdf, openBlankNotebookPdfTab } from './openNotebookPdf';
 
 const TIME_RANGE = { from: 'now-6h', to: 'now', timezone: 'America/New_York' };
 
@@ -36,6 +38,54 @@ describe('openBlankNotebookPdfTab', () => {
   });
 });
 
+describe('canExportNotebookPdf', () => {
+  const originalAvailable = config.rendererAvailable;
+  const originalVersion = config.rendererVersion;
+
+  afterEach(() => {
+    config.rendererAvailable = originalAvailable;
+    config.rendererVersion = originalVersion;
+  });
+
+  it('says no when no renderer is configured at all', () => {
+    config.rendererAvailable = false;
+    config.rendererVersion = '3.11.0';
+
+    expect(canExportNotebookPdf()).toBe(false);
+  });
+
+  // The backend rejects encoding=pdf below this version, so offering the action would only ever
+  // produce a render error.
+  it.each([
+    ['3.9.0', false],
+    ['3.10.0', true],
+    ['3.11.2', true],
+    ['4.0.0', true],
+  ])('reads renderer version %s as PDF-capable: %s', (version, expected) => {
+    config.rendererAvailable = true;
+    config.rendererVersion = version;
+
+    expect(canExportNotebookPdf()).toBe(expected);
+  });
+
+  // Same leniency as the backend's own semver parse.
+  it.each(['v3.10.0', '3.10'])('accepts the loosely written version %s', (version) => {
+    config.rendererAvailable = true;
+    config.rendererVersion = version;
+
+    expect(canExportNotebookPdf()).toBe(true);
+  });
+
+  // Grafana fetches the version from the renderer asynchronously and retries, so an available
+  // renderer can still report no version. Fails closed, like the backend does.
+  it.each(['', 'not-a-version'])('says no for the unreadable version "%s"', (version) => {
+    config.rendererAvailable = true;
+    config.rendererVersion = version;
+
+    expect(canExportNotebookPdf()).toBe(false);
+  });
+});
+
 describe('navigateToNotebookPdf', () => {
   const originalOrgId = contextSrv.user.orgId;
   const originalIntl = window.Intl;
@@ -47,6 +97,14 @@ describe('navigateToNotebookPdf', () => {
   afterEach(() => {
     contextSrv.user.orgId = originalOrgId;
     Object.defineProperty(window, 'Intl', { value: originalIntl, configurable: true, writable: true });
+    // locationUtil holds the sub-path in module state, so the one test that sets it has to hand
+    // the rest of the file back a Grafana served from the root.
+    locationUtil.initialize({
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only appSubUrl is read
+      config: { appSubUrl: '' } as GrafanaConfig,
+      getVariablesUrlParams: jest.fn(),
+      getTimeRangeForUrl: jest.fn(),
+    });
   });
 
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only .href is read
@@ -60,7 +118,7 @@ describe('navigateToNotebookPdf', () => {
     navigateToNotebookPdf(tab, 'nb1', TIME_RANGE);
 
     // The notebook's own chromeless render route, not the page a reader opens.
-    expect(tab.location.href).toMatch(/^render\/notebooks\/nb1\/render\?/);
+    expect(tab.location.href).toMatch(/^\/render\/notebooks\/nb1\/render\?/);
     // For the transport, to pick a PDF over a PNG.
     expect(tab.location.href).toContain('encoding=pdf');
     expect(tab.location.href).toContain('orgId=7');
@@ -71,14 +129,20 @@ describe('navigateToNotebookPdf', () => {
     expect(tab.location.href).not.toContain('pdfLayout');
   });
 
-  // No leading slash: a leading slash would resolve against the domain root regardless of
-  // Grafana's own `<base href>` tag, dropping any sub-path Grafana is served under.
-  it('builds a relative url, not a root-relative one, so a sub-path deployment still resolves', () => {
+  // The tab being navigated is `about:blank` and carries no `<base href>` of its own, so the
+  // sub-path is spelled out rather than left to whatever base url a browser resolves against.
+  it('spells out the sub-path Grafana is served under', () => {
+    locationUtil.initialize({
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only appSubUrl is read
+      config: { appSubUrl: '/grafana' } as GrafanaConfig,
+      getVariablesUrlParams: jest.fn(),
+      getTimeRangeForUrl: jest.fn(),
+    });
     const tab = fakeTab();
 
     navigateToNotebookPdf(tab, 'nb1', TIME_RANGE);
 
-    expect(tab.location.href.startsWith('/')).toBe(false);
+    expect(tab.location.href).toMatch(/^\/grafana\/render\/notebooks\/nb1\/render\?/);
   });
 
   it('carries the current time range, so the render reflects what is on screen rather than the saved range', () => {

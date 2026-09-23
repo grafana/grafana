@@ -1,4 +1,7 @@
-import { dateTime, urlUtil } from '@grafana/data';
+import { coerce, gte } from 'semver';
+
+import { dateTime, locationUtil, urlUtil } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { notebookRenderUrl } from '../urls';
@@ -8,6 +11,35 @@ interface NotebookPdfTimeRange {
   from: string;
   to: string;
   timezone?: string;
+}
+
+/**
+ * The image-renderer version PDF output arrived in. Kept in step with the `PdfRendering` capability
+ * the backend declares in pkg/services/rendering/rendering.go — there is no bootdata field for the
+ * capability itself, only the renderer's version.
+ */
+const PDF_RENDERING_MIN_VERSION = '3.10.0';
+
+/**
+ * Whether the configured image renderer can produce a PDF at all, which is a narrower question than
+ * whether one is configured: `/render` rejects `encoding=pdf` unless the renderer satisfies the
+ * `PdfRendering` capability. Without checking here, an install on an older renderer would be offered
+ * an export that can only ever come back a render error.
+ *
+ * Fails closed on a version that cannot be read, which covers a renderer whose version Grafana has
+ * not managed to fetch yet — the backend's own semver parse rejects that case too.
+ *
+ * `coerce` rather than `valid` to match the leniency of that parse, which accepts a partial or
+ * `v`-prefixed version.
+ */
+export function canExportNotebookPdf(): boolean {
+  if (!config.rendererAvailable) {
+    return false;
+  }
+
+  const version = coerce(config.rendererVersion);
+
+  return version !== null && gte(version, PDF_RENDERING_MIN_VERSION);
 }
 
 /**
@@ -45,15 +77,18 @@ function buildRenderUrl(uid: string, timeRange: NotebookPdfTimeRange): string {
   // concrete zone before either leg of the trip.
   const timezone = timeRange.timezone && resolveRenderTimeZone(timeRange.timezone);
 
-  // No leading slash: this has to resolve the same way `backendSrv.fetch` resolves a relative url —
-  // against Grafana's own `<base href>` tag — or a `window.open` navigation loses the sub-path
-  // Grafana might be served under. `notebookRenderUrl` returns a leading slash for react-router's
-  // sake, so this only ever strips the one between "render" and it, not the notebook path itself.
+  // Root-relative and run through `assureBaseUrl`, which prefixes whatever sub-path Grafana is
+  // served under — the same way every other internal `window.open`/`href` in Grafana builds one.
+  // A relative url would work too, but only by way of the base url a browser picks for the
+  // `about:blank` tab this navigates, which has no `<base href>` of its own; spelling the sub-path
+  // out leaves nothing resting on that.
   //
   // The path is the notebook's chromeless render route, which is what makes this a document: no app
   // chrome, no toolbar, no controls row, and page geometry of its own. Nothing here has to ask for
   // that — `kiosk`/`hideNav` used to, back when this pointed at the ordinary notebook page.
-  return urlUtil.renderUrl(`render${notebookRenderUrl(uid)}`, {
+  const path = locationUtil.assureBaseUrl(`/render${notebookRenderUrl(uid)}`);
+
+  return urlUtil.renderUrl(path, {
     // For the render pipeline, not the page: read server-side to pick a PDF over a PNG (see
     // pkg/api/render.go).
     encoding: 'pdf',
