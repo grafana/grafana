@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	apiserverauthenticator "github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
-	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -88,8 +87,10 @@ func TestPluginManifestsTarget_PollsFiltersAndSkipsEntriesWithoutManifest(t *tes
 	}))
 	defer srv.Close()
 
-	authenticator := &authn.GrafanaTokenAuthorizer{Dummy: &identity.StaticRequester{UserUID: "test-user"}}
-	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{}, authenticator)
+	authenticator := manifestTokenAuthenticatorFunc(func(context.Context, string) (identity.Requester, error) {
+		return &identity.StaticRequester{UserUID: "test-user"}, nil
+	})
+	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{}, &authenticator)
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(t.Context())
@@ -104,7 +105,7 @@ func TestPluginManifestsTarget_PollsFiltersAndSkipsEntriesWithoutManifest(t *tes
 	backends := target.Backends()
 	require.Equal(t, "appsdktest.ext.grafana.app", backends[0].Group().Name)
 	require.Contains(t, backends[0].Key(), "managed:grafana-appsdktest-app:")
-	require.Same(t, authenticator, backends[0].(*pluginDeploymentBackend).authn)
+	require.Same(t, &authenticator, backends[0].(*pluginDeploymentBackend).authn)
 }
 
 type manifestTokenAuthenticatorFunc func(context.Context, string) (identity.Requester, error)
@@ -218,7 +219,9 @@ func TestPluginDeploymentBackendLoadErrors(t *testing.T) {
 	backend := &pluginDeploymentBackend{}
 	_, err := backend.Load(t.Context())
 	require.ErrorContains(t, err, "requires a token authenticator")
-	backend.authn = &authn.GrafanaTokenAuthorizer{}
+	backend.authn = manifestTokenAuthenticatorFunc(func(context.Context, string) (identity.Requester, error) {
+		return nil, apierrors.NewUnauthorized("invalid token")
+	})
 	backend.Backend = failingBackend{}
 	_, err = backend.Load(t.Context())
 	require.ErrorContains(t, err, "load failed")
