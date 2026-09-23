@@ -91,10 +91,6 @@ function NotebookCellTimeRangePopoverContent({ cell, onClose }: { cell: Notebook
   };
 
   return (
-    // No fixed width: an absolute time range's "YYYY-MM-DD HH:mm:ss to YYYY-MM-DD HH:mm:ss" label is
-    // wider than a short relative one, and TimeRangePicker's own row won't shrink below its content
-    // (flex min-width defaults to auto) — a fixed width here just gets overflowed instead of respected.
-    // Toggletip's own container still caps this at 400px.
     <Stack direction="column" gap={2}>
       <Box display="flex" alignItems="center" justifyContent="flex-end" gap={1}>
         <span>{t('notebook.cell.time-range.use-notebook-time', 'Use notebook time range')}</span>
@@ -117,9 +113,6 @@ function NotebookCellTimeRangePopoverContent({ cell, onClose }: { cell: Notebook
   );
 }
 
-// The range this cell would use with no override of its own. Starts from the cell's *parent*, since
-// sceneGraph.getTimeRange checks the object it's given first — starting at the cell would just
-// return its own still-set `$timeRange` instead of skipping to the notebook's ambient range.
 function seedFromAncestor(cell: NotebookCellItem): NotebookCellTimeRangeSpec {
   const { from, to, timeZone, fiscalYearStartMonth } = sceneGraph.getTimeRange(cell.parent ?? cell).state;
   return { from, to, timezone: timeZone, fiscalYearStartMonth };

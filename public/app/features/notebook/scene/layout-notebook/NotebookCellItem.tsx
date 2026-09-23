@@ -66,7 +66,6 @@ export class NotebookCellItem extends SceneObjectBase<NotebookCellItemState> imp
     this.getParentLayout().runQueryEdit(this, label, queries);
   }
 
-  /** Sets or clears this cell's own time range — see NotebookLayoutManager.setCellTimeRange. */
   public onTimeRangeChange(spec: NotebookCellTimeRangeSpec | undefined): void {
     this.getParentLayout().setCellTimeRange(this, spec);
   }

@@ -9,8 +9,6 @@ import {
 import { type NotebookCellTimeRangeSpec } from '../../types';
 
 class NotebookCellTimeRange extends SceneTimeRange {
-  // Typed to match the inherited getter, not narrowed to `undefined` alone — narrowing it breaks
-  // structural compatibility with SceneTimeRange.
   public get urlSync(): SceneObjectUrlSyncHandler | undefined {
     return undefined;
   }
