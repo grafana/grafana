@@ -28,8 +28,8 @@ import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { type DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
+import { findVizPanelByKey } from '../utils/findVizPanel';
 import { activateFullSceneTree } from '../utils/test-utils';
-import { findVizPanelByKey } from '../utils/utils';
 
 import { InspectJsonTab } from './InspectJsonTab';
 

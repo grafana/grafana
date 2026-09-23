@@ -34,11 +34,6 @@ export interface FeatureToggles {
   */
   lokiExperimentalStreaming?: boolean;
   /**
-  * Highlight Grafana Enterprise features
-  * @default false
-  */
-  featureHighlights?: boolean;
-  /**
   * Allow elements nesting
   * @default false
   */
@@ -966,11 +961,6 @@ export interface FeatureToggles {
   */
   alertingImportAlertmanagerAPI?: boolean;
   /**
-  * Disables the DMA feature in the UI
-  * @default false
-  */
-  alertingDisableDMAinUI?: boolean;
-  /**
   * Prefer library panel title over viz panel title.
   * @default false
   */
@@ -1262,11 +1252,6 @@ export interface FeatureToggles {
   */
   alertingNotificationHistoryDetail?: boolean;
   /**
-  * Whether to use the new React 19 runtime
-  * @default true
-  */
-  react19?: boolean;
-  /**
   * Enables managed plugins v2 (expanded rollout, community plugin coverage)
   * @default false
   */
@@ -1362,7 +1347,7 @@ export interface FeatureToggles {
   */
   ['alerting.notificationsAPIV1Beta1']?: boolean;
   /**
-  * Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana
+  * Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source
   * @default false
   */
   ['alerting.syncExternalAlertmanager']?: boolean;

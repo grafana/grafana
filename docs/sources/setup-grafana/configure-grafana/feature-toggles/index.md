@@ -26,7 +26,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 
 | Feature toggle name                          | Description                                                                                                                         | Enabled by default |
 | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| `featureHighlights`                          | Highlight Grafana Enterprise features                                                                                               |                    |
 | `cloudWatchCrossAccountQuerying`             | Enables cross-account querying in CloudWatch datasources                                                                            | Yes                |
 | `lokiQuerySplitting`                         | Split large interval queries into subqueries with smaller time intervals                                                            | Yes                |
 | `renderAuthJWT`                              | Uses JWT-based auth for rendering instead of relying on remote cache                                                                | Yes                |
@@ -71,7 +70,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingNotificationHistoryGlobal`          | Enables the notification history global menu item viewer                                                                            | Yes                |
 | `alertingNotificationHistoryTriage`          | Enables the notification history timeline in the triage instance details drawer                                                     | Yes                |
 | `alertingNotificationHistoryDetail`          | Enables the notification history detail page                                                                                        | Yes                |
-| `react19`                                    | Whether to use the new React 19 runtime                                                                                             | Yes                |
 | `datasources.useNewStackInfoToSettingsCache` | Use the new cache for datasource.StackInfoToSettings, backend flag                                                                  |                    |
 | `grafana.queryVarEditorRedesign`             | Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options                    | Yes                |
 | `grafana.dashboardSettingsRedesign`          | Redesigns dashboard settings page into Advanced Settings in a modal window                                                          | Yes                |
