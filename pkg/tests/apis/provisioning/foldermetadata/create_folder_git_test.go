@@ -19,7 +19,10 @@ func TestIntegrationGitFiles_CreateFolderWithFolderMetadata(t *testing.T) {
 	helper := sharedGitHelper(t)
 
 	repoName := "test-folder-metadata-files"
-	_, _ = helper.CreateGitRepo(t, repoName, nil, "write", "branch")
+	_, _ = helper.CreateFolderTargetGitRepo(t, repoName, nil, "write", "branch")
+	// Keep newly created folders unsynced, with a real repository root for preview authorization.
+	helper.SyncAndWait(t, repoName)
+	helper.RequireFolders(t, repoName)
 
 	t.Run("create folder on default branch writes _folder.json", func(t *testing.T) {
 		resp := postFolderViaFilesAPI(t, helper, repoName, "meta-folder/", "", "Create folder with metadata")
