@@ -2878,11 +2878,10 @@ var (
 		},
 		{
 			Name:            "alerting.syncExternalAlertmanager",
-			Description:     "Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana",
-			Stage:           FeatureStageExperimental,
+			Description:     "Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source",
+			Stage:           FeatureStagePrivatePreview,
 			Generate:        Generate{Go: true, React: true, LegacyFrontend: true},
 			Owner:           grafanaAlertingSquad,
-			HideFromDocs:    true,
 			RequiresRestart: true,
 			Expression:      "false",
 		},

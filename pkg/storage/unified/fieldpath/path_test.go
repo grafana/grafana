@@ -182,13 +182,38 @@ func TestExtractPath_Nulls(t *testing.T) {
 func TestExtractPath_NonObjectParentIsAnError(t *testing.T) {
 	obj := map[string]any{
 		"profile": "not an object",
+	}
+	_, err := Extract(obj, "profile.name")
+	require.Error(t, err)
+}
+
+func TestExtractPath_MalformedElementsContributeNil(t *testing.T) {
+	obj := map[string]any{
 		"members": []any{map[string]any{"profile": "not an object"}},
 		"groups":  []any{map[string]any{"members": "not an array"}},
 	}
-	for _, path := range []string{"profile.name", "members[*].profile.name", "groups[*].members[*].name"} {
+	for _, path := range []string{"members[*].profile.name", "groups[*].members[*].name"} {
 		t.Run(path, func(t *testing.T) {
-			_, err := Extract(obj, path)
-			require.Error(t, err)
+			value, err := Extract(obj, path)
+			require.NoError(t, err)
+			require.Equal(t, []any{nil}, value)
 		})
 	}
+}
+
+func TestExtractPath_ArrayProjectionWithMixedNestedShapes(t *testing.T) {
+	obj := map[string]any{
+		"spec": map[string]any{
+			"targets": []any{
+				map[string]any{"properties": map[string]any{"datasource": map[string]any{"type": "prometheus"}}},
+				map[string]any{"properties": map[string]any{"datasource": "legacy-uid"}},
+				map[string]any{"properties": map[string]any{"datasource": nil}},
+				map[string]any{"properties": map[string]any{}},
+				map[string]any{"properties": map[string]any{"datasource": map[string]any{"type": "loki"}}},
+			},
+		},
+	}
+	value, err := Extract(obj, "spec.targets[*].properties.datasource.type")
+	require.NoError(t, err)
+	require.Equal(t, []any{"prometheus", nil, nil, nil, "loki"}, value)
 }
