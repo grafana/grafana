@@ -496,6 +496,26 @@ describe('TooltipPlugin2', () => {
       view.unmount();
     });
 
+    it('should not throw on window scroll/resize before the plot instance is attached', async () => {
+      // errors thrown from event listeners are reported by jsdom as window error events
+      const onWindowError = jest.fn();
+      window.addEventListener('error', onWindowError);
+
+      const { view } = setUp();
+
+      // no init/ready hook has run yet, so the plugin has no uPlot instance
+      await act(async () => {
+        window.dispatchEvent(new Event('scroll'));
+        window.dispatchEvent(new Event('resize'));
+      });
+
+      expect(onWindowError).not.toHaveBeenCalled();
+      expect(screen.queryByText('Tooltip content')).not.toBeInTheDocument();
+
+      window.removeEventListener('error', onWindowError);
+      view.unmount();
+    });
+
     it('should clean up mouseup listener (onUp)', () => {
       const docAddSpy = jest.spyOn(document, 'addEventListener');
       const docRemoveSpy = jest.spyOn(document, 'removeEventListener');

@@ -256,11 +256,18 @@ export const TooltipPlugin2 = ({
     const _render = () => {
       pendingRender = false;
 
+      // this is deferred (timer/microtask), so the plot may not exist (yet) when it runs
+      const plot = _plot;
+
+      if (plot == null) {
+        return;
+      }
+
       if (pendingPinned) {
         _style = { pointerEvents: _isPinned ? 'all' : 'none' };
 
         // @ts-ignore
-        _plot!.cursor._lock = _isPinned;
+        plot.cursor._lock = _isPinned;
 
         if (_isPinned) {
           document.addEventListener('mousedown', downEventOutside, true);
@@ -280,7 +287,7 @@ export const TooltipPlugin2 = ({
         contents:
           _isHovering || selectedRange != null
             ? renderRef.current(
-                _plot!,
+                plot,
                 seriesIdxs,
                 closestSeriesIdx,
                 _isPinned,
@@ -306,7 +313,7 @@ export const TooltipPlugin2 = ({
       let prevIsPinned = _isPinned;
       _isPinned = false;
       _isHovering = false;
-      _plot!.setCursor({ left: -10, top: -10 });
+      _plot?.setCursor({ left: -10, top: -10 });
       dataLinks = [];
       adHocFilters = [];
 
@@ -608,8 +615,14 @@ export const TooltipPlugin2 = ({
     };
 
     const updatePlotVisible = () => {
-      plotVisible =
-        _plot!.rect.bottom <= winHgt && _plot!.rect.top >= 0 && _plot!.rect.left >= 0 && _plot!.rect.right <= winWid;
+      const rect = _plot?.rect;
+
+      // this runs from window listeners, so the plot may not exist (yet)
+      if (rect == null) {
+        return;
+      }
+
+      plotVisible = rect.bottom <= winHgt && rect.top >= 0 && rect.left >= 0 && rect.right <= winWid;
     };
 
     updateWinSize();
@@ -682,7 +695,10 @@ export const TooltipPlugin2 = ({
 
     const onscroll = (e: Event) => {
       updatePlotVisible();
-      _isHovering && e.target instanceof Node && e.target.contains(_plot!.root) && dismiss();
+
+      const root = _plot?.root;
+
+      _isHovering && root != null && e.target instanceof Node && e.target.contains(root) && dismiss();
     };
 
     window.addEventListener('resize', updateWinSize);
