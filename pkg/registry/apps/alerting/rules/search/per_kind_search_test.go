@@ -20,11 +20,16 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
 
+	rulesmanifest "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/manifestdata"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	unifiedresource "github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	unifiedsearch "github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
 // fakeIndex serves a canned response and records the request it was given, so a
@@ -62,6 +67,50 @@ func legacyRows(t *testing.T, rules ...*ngmodels.AlertRule) *resourcepb.Resource
 		TotalHits:      int64(len(rules)),
 		TotalHitsExact: true,
 	}
+}
+
+func fieldValueRows(key *resourcepb.ResourceKey, fields []*resourcepb.ResourceSearchField, values ...*resourcepb.ResourceSearchValue) *resourcepb.ResourceSearchResponse {
+	return &resourcepb.ResourceSearchResponse{
+		ResultFormat:   resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields:         fields,
+		Rows:           []*resourcepb.ResourceSearchRow{{Key: key, Values: values}},
+		TotalHits:      1,
+		TotalHitsExact: true,
+	}
+}
+
+func realRuleIndex(t *testing.T, key *resourcepb.ResourceKey, value string, getBuilder func(*unifiedresource.SearchFieldsRegistry) (unifiedresource.DocumentBuilderInfo, error)) unifiedresource.ResourceIndex {
+	t.Helper()
+	selectable, hashes, providers, err := unifiedresource.SearchFieldsForManifests(rulesmanifest.LocalManifest().ManifestData)
+	require.NoError(t, err)
+	registry := unifiedresource.NewSearchFieldsRegistry(selectable, hashes, providers)
+
+	info, err := getBuilder(registry)
+	require.NoError(t, err)
+	ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: key.Namespace})
+	doc, err := info.Builder.BuildDocument(ctx, key, 1, []byte(value))
+	require.NoError(t, err)
+
+	backend, err := unifiedsearch.NewBleveBackend(unifiedsearch.BleveOptions{
+		Root:          t.TempDir(),
+		FileThreshold: 9999,
+		SearchFields:  registry,
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
+
+	index, err := backend.BuildIndex(ctx, unifiedresource.NamespacedResource{
+		Namespace: key.Namespace,
+		Group:     key.Group,
+		Resource:  key.Resource,
+	}, 1, "test", func(index unifiedresource.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&unifiedresource.BulkIndexRequest{Items: []*unifiedresource.BulkIndexItem{{
+			Action: unifiedresource.ActionIndex,
+			Doc:    doc,
+		}}})
+	}, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+	return index
 }
 
 // callWithBody drives one search request end to end and returns the recorder plus
@@ -247,7 +296,8 @@ func TestPerKindSearch_backendErrorInPayload(t *testing.T) {
 // search group, not the alerting group serving it, so the wire response does not
 // change when the generic endpoint takes these routes over.
 func TestPerKindSearch_responseEnvelope(t *testing.T) {
-	rec, _ := callWithBody(t, validBody, legacyRows(t, testAlertRule()))
+	rec, index := callWithBody(t, validBody, legacyRows(t, testAlertRule()))
+	require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, index.got.ResultFormat)
 	out := decodeResults(t, rec)
 
 	assert.Equal(t, searchv0.APIVERSION, out.APIVersion)
@@ -263,6 +313,123 @@ func TestPerKindSearch_responseEnvelope(t *testing.T) {
 	assert.Equal(t, "alertrules", item.Resource.Resource)
 	assert.Equal(t, "rules.alerting.grafana.app", item.Resource.Group)
 	assert.Nil(t, item.Score)
+}
+
+func TestPerKindSearch_fieldValueResults(t *testing.T) {
+	resp := fieldValueRows(
+		&resourcepb.ResourceKey{Name: "uid1", Namespace: "default", Group: "rules.alerting.grafana.app", Resource: "alertrules"},
+		[]*resourcepb.ResourceSearchField{
+			{Name: fieldTitle, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: fieldPaused, Type: resourcepb.ResourceSearchField_BOOLEAN},
+			{Name: fieldLabels, Type: resourcepb.ResourceSearchField_STRING, IsArray: true},
+		},
+		&resourcepb.ResourceSearchValue{FieldIndex: 0, StringValues: []string{"cpu high"}},
+		&resourcepb.ResourceSearchValue{FieldIndex: 1, BooleanValues: []bool{true}},
+		&resourcepb.ResourceSearchValue{FieldIndex: 2, StringValues: []string{"team", "team=a"}},
+	)
+	resp.TotalHits = 5
+	score := 2.5
+	resp.Rows[0].Score = &score
+
+	rec, index := callWithBody(t, projection(fieldTitle, fieldPaused, fieldLabels), resp)
+	require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, index.got.ResultFormat)
+
+	out := decodeResults(t, rec)
+	require.Len(t, out.Items, 1)
+	item := out.Items[0]
+	assert.Equal(t, "uid1", item.Resource.Name)
+	assert.Equal(t, map[string]any{
+		fieldTitle:  "cpu high",
+		fieldPaused: true,
+		fieldLabels: []any{"team", "team=a"},
+	}, item.Fields.Object)
+	assert.Nil(t, item.Score)
+
+	offset, err := decodeCursor(out.Metadata.Continue)
+	require.NoError(t, err)
+	assert.EqualValues(t, 1, offset)
+}
+
+func TestPerKindSearch_fieldValuesFromRealIndex(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		key        *resourcepb.ResourceKey
+		value      string
+		getBuilder func(*unifiedresource.SearchFieldsRegistry) (unifiedresource.DocumentBuilderInfo, error)
+		kind       func(*testing.T) perKind
+		fields     []string
+		want       map[string]any
+	}{
+		{
+			name: "alert rule",
+			key:  &resourcepb.ResourceKey{Name: "alert-1", Namespace: "default", Group: "rules.alerting.grafana.app", Resource: "alertrules"},
+			value: `{
+				"apiVersion":"rules.alerting.grafana.app/v0alpha1",
+				"kind":"AlertRule",
+				"metadata":{"name":"alert-1"},
+				"spec":{
+					"title":"cpu high",
+					"trigger":{"interval":"1m"},
+					"paused":true,
+					"panelRef":{"dashboardUID":"dash-1","panelID":42},
+					"labels":{"team":"obs"},
+					"expressions":{}
+				}
+			}`,
+			getBuilder: builders.GetAlertRuleSearchBuilder,
+			kind:       alertRuleKind,
+			fields:     []string{fieldTitle, fieldPaused, fieldPanelID, fieldLabels},
+			want: map[string]any{
+				fieldTitle:   "cpu high",
+				fieldPaused:  true,
+				fieldPanelID: int64(42),
+				fieldLabels:  []string{"team", "team=obs"},
+			},
+		},
+		{
+			name: "recording rule",
+			key:  &resourcepb.ResourceKey{Name: "recording-1", Namespace: "default", Group: "rules.alerting.grafana.app", Resource: "recordingrules"},
+			value: `{
+				"apiVersion":"rules.alerting.grafana.app/v0alpha1",
+				"kind":"RecordingRule",
+				"metadata":{"name":"recording-1"},
+				"spec":{
+					"title":"cpu recording",
+					"trigger":{"interval":"30s"},
+					"paused":false,
+					"metric":"cpu_total",
+					"targetDatasourceUID":"ds-target",
+					"expressions":{}
+				}
+			}`,
+			getBuilder: builders.GetRecordingRuleSearchBuilder,
+			kind:       recordingRuleKind,
+			fields:     []string{fieldTitle, fieldPaused, fieldMetric, fieldTargetDatasourceUID},
+			want: map[string]any{
+				fieldTitle:               "cpu recording",
+				fieldPaused:              false,
+				fieldMetric:              "cpu_total",
+				fieldTargetDatasourceUID: "ds-target",
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			index := realRuleIndex(t, tc.key, tc.value, tc.getBuilder)
+			kind := tc.kind(t)
+			translated := buildPerKindSearchRequest(&searchv0.SearchQuery{Fields: tc.fields}, nil, tc.key.Namespace, kind)
+
+			resp, err := index.Search(t.Context(), nil, translated.req, nil, nil)
+			require.NoError(t, err)
+			require.Nil(t, resp.Error)
+			require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, resp.ResultFormat)
+
+			items, err := NewHandler(nil, nil).resultItems(t.Context(), tc.key.Namespace, resp, tc.fields, kind)
+			require.NoError(t, err)
+			require.Len(t, items, 1)
+			assert.Equal(t, tc.key.Name, items[0].Resource.Name)
+			assert.Equal(t, tc.want, items[0].Fields.Object)
+		})
+	}
 }
 
 func TestPerKindSearch_omitsBackendScore(t *testing.T) {
@@ -354,22 +521,33 @@ func TestPerKindSearch_projection(t *testing.T) {
 // rule identity and reads through the recording rule client, so the two endpoints
 // cannot be crossed.
 func TestPerKindSearch_recordingRuleEndpoint(t *testing.T) {
-	alerts, recordings := &fakeIndex{}, &fakeIndex{resp: legacyRows(t, testRecordingRule())}
+	resp := fieldValueRows(
+		&resourcepb.ResourceKey{Name: "rec1", Namespace: "default", Group: "rules.alerting.grafana.app", Resource: "recordingrules"},
+		[]*resourcepb.ResourceSearchField{
+			{Name: fieldMetric, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: fieldTargetDatasourceUID, Type: resourcepb.ResourceSearchField_STRING},
+		},
+		&resourcepb.ResourceSearchValue{FieldIndex: 0, StringValues: []string{"cpu_total"}},
+		&resourcepb.ResourceSearchValue{FieldIndex: 1, StringValues: []string{"ds-target"}},
+	)
+	alerts, recordings := &fakeIndex{}, &fakeIndex{resp: resp}
 	h := NewHandler(alerts, recordings)
 
 	rec := httptest.NewRecorder()
 	require.NoError(t, h.SearchRecordingRules(context.Background(), rec, &app.CustomRouteRequest{
 		ResourceIdentifier: resource.FullIdentifier{Namespace: "default"},
-		Body:               readCloser(validBody),
+		Body:               readCloser(projection(fieldMetric, fieldTargetDatasourceUID)),
 	}))
 
 	out := decodeResults(t, rec)
 	require.Len(t, out.Items, 1)
 	assert.Equal(t, "RecordingRule", out.Items[0].Resource.Kind)
 	assert.Equal(t, "recordingrules", out.Items[0].Resource.Resource)
+	assert.Equal(t, map[string]any{fieldMetric: "cpu_total", fieldTargetDatasourceUID: "ds-target"}, out.Items[0].Fields.Object)
 
 	require.NotNil(t, recordings.got, "must read through the recording rule client")
 	assert.Equal(t, "recordingrules", recordings.got.Options.Key.Resource)
+	assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, recordings.got.ResultFormat)
 	assert.Nil(t, alerts.got, "must not touch the alert rule client")
 }
 
@@ -440,16 +618,5 @@ func minimalAlertRule() *ngmodels.AlertRule {
 		Title:           "bare",
 		NamespaceUID:    "folder1",
 		IntervalSeconds: 60,
-	}
-}
-
-func testRecordingRule() *ngmodels.AlertRule {
-	return &ngmodels.AlertRule{
-		UID:             "rec1",
-		Title:           "cpu recording",
-		NamespaceUID:    "folder1",
-		IntervalSeconds: 60,
-		Record:          &ngmodels.Record{Metric: "cpu_total", TargetDatasourceUID: "ds-target"},
-		Data:            []ngmodels.AlertQuery{{DatasourceUID: "ds1"}},
 	}
 }
