@@ -73,3 +73,16 @@ func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 		Broadcaster: newBroadcasterMetrics(reg),
 	}
 }
+
+func (m *StorageMetrics) observeWatchEvent(group, resource string, committedAt, sendStartedAt, sentAt time.Time) {
+	readySeconds := sendStartedAt.Sub(committedAt).Seconds()
+	sendSeconds := sentAt.Sub(sendStartedAt).Seconds()
+	if readySeconds < 0 || sendSeconds < 0 {
+		return
+	}
+
+	labels := []string{group, resource}
+	m.WatchEventLatency.WithLabelValues(labels...).Observe(readySeconds + sendSeconds)
+	m.WatchEventReadyLatency.WithLabelValues(labels...).Observe(readySeconds)
+	m.WatchEventSendDuration.WithLabelValues(labels...).Observe(sendSeconds)
+}

@@ -2265,6 +2265,34 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 		"total watch latency should comprise upstream ready latency plus send duration")
 }
 
+func TestWatchEventMetricsDropClockSkewedSample(t *testing.T) {
+	metrics := ProvideStorageMetrics(prometheus.NewPedanticRegistry())
+	sendStartedAt := time.Now()
+
+	// The commit timestamp is ahead of send start, but the delayed send ends after
+	// it. Recording total and send while dropping ready would give the three
+	// histograms different event populations.
+	metrics.observeWatchEvent(
+		watchTestGroup,
+		watchTestResource,
+		sendStartedAt.Add(5*time.Millisecond),
+		sendStartedAt,
+		sendStartedAt.Add(10*time.Millisecond),
+	)
+
+	for name, collector := range map[string]*prometheus.HistogramVec{
+		"total": metrics.WatchEventLatency,
+		"ready": metrics.WatchEventReadyLatency,
+		"send":  metrics.WatchEventSendDuration,
+	} {
+		observer, err := collector.GetMetricWithLabelValues(watchTestGroup, watchTestResource)
+		require.NoError(t, err)
+		metric := &dto.Metric{}
+		require.NoError(t, observer.(prometheus.Metric).Write(metric))
+		assert.Zero(t, metric.GetHistogram().GetSampleCount(), "%s must drop the clock-skewed event", name)
+	}
+}
+
 // TestWatchInitialEventsRespectsItemChecker tests that checker is used for
 // initial-events when SendInitialEvents=true.
 func TestWatchInitialEventsRespectsItemChecker(t *testing.T) {

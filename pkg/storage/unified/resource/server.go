@@ -2251,18 +2251,13 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 					// Resource versions can be either Unix microsecond timestamps (SQL backend)
 					// or snowflake IDs (KV backend). Split the total at Send so upstream
 					// delivery and gRPC transport flow-control wait can be diagnosed separately.
-					committedAt := ResourceVersionTime(event.ResourceVersion)
-					totalSeconds := sentAt.Sub(committedAt).Seconds()
-					readySeconds := sendStartedAt.Sub(committedAt).Seconds()
-					sendSeconds := sentAt.Sub(sendStartedAt).Seconds()
-					labels := []string{event.Key.Group, event.Key.Resource}
-					if totalSeconds > 0 {
-						s.storageMetrics.WatchEventLatency.WithLabelValues(labels...).Observe(totalSeconds)
-					}
-					if readySeconds >= 0 {
-						s.storageMetrics.WatchEventReadyLatency.WithLabelValues(labels...).Observe(readySeconds)
-					}
-					s.storageMetrics.WatchEventSendDuration.WithLabelValues(labels...).Observe(sendSeconds)
+					s.storageMetrics.observeWatchEvent(
+						event.Key.Group,
+						event.Key.Resource,
+						ResourceVersionTime(event.ResourceVersion),
+						sendStartedAt,
+						sentAt,
+					)
 				}
 			}
 			// Progress is not a delivery cutoff: keep using the fixed starting since.
