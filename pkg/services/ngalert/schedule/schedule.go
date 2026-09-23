@@ -41,12 +41,6 @@ type AlertsSender interface {
 	Send(ctx context.Context, key ngmodels.AlertRuleKey, alerts definitions.PostableAlerts)
 }
 
-// RulesStore is a store that provides alert rules for scheduling.
-// The method set is exactly the rule store's scheduling segment.
-type RulesStore interface {
-	rulestore.SchedulableRuleReader
-}
-
 type RecordingWriter interface {
 	WriteDatasource(ctx context.Context, dsUID string, name string, t time.Time, frames data.Frames, orgID int64, extraLabels map[string]string) error
 }
@@ -87,7 +81,7 @@ type schedule struct {
 
 	evaluatorFactory eval.EvaluatorFactory
 
-	ruleStore         RulesStore
+	ruleStore         rulestore.SchedulableRuleReader
 	ruleSequenceStore RuleSequenceStore
 
 	stateManager *state.Manager
@@ -132,7 +126,7 @@ type SchedulerCfg struct {
 	AppURL                 *url.URL
 	JitterEvaluations      JitterStrategy
 	EvaluatorFactory       eval.EvaluatorFactory
-	RuleStore              RulesStore
+	RuleStore              rulestore.SchedulableRuleReader
 	RuleSequenceStore      RuleSequenceStore
 	Metrics                *metrics.Scheduler
 	AlertSender            AlertsSender

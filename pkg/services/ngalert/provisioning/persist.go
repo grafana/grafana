@@ -48,9 +48,6 @@ type TransactionManager interface {
 }
 
 // RuleStore represents the ability to persist and query alert rules.
-//
-// Composed from the rule store's own segments rather than restating each method. The segments
-// compose to exactly the methods provisioning calls — nothing wider.
 type RuleStore interface {
 	rulestore.RuleReader
 	rulestore.RulePageReader

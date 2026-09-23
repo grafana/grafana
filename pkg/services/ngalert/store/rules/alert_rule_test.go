@@ -1133,7 +1133,7 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 	b := &fakeBus{}
 	logger := log.New("test-dbstore")
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
-	// Provenance writes live in the provenance store now; the rule store only reads them.
+	// The rule store only reads provenance, so writing it needs the provenance store.
 	provStore := provenance.ProvideProvenanceStore(featuremgmt.WithFeatures(), sqlStore)
 
 	receiverName := "receiver\"-" + uuid.NewV4().String()
@@ -4087,10 +4087,8 @@ func TestIntegration_CleanUpDeletedAlertRules(t *testing.T) {
 	}
 }
 
-// createTestStore builds a RuleStore over sqlStore. The bus argument is retained for call-site
-// compatibility but is unused: rule writes publish RuleChangeEvents through
-// DBSession.PublishAfterCommit, which dispatches on the SQLStore's own bus (see
-// captureRuleChangeEvents), so RuleStore never needed a bus of its own.
+// createTestStore builds a RuleStore over sqlStore. The bus argument is ignored: rule writes
+// publish through DBSession.PublishAfterCommit, which dispatches on the SQLStore's own bus.
 func createTestStore(
 	sqlStore db.DB,
 	folderService folder.Service,
@@ -4209,9 +4207,8 @@ func Test_collectNamespaceUIDsByOrg(t *testing.T) {
 	})
 }
 
-// ruleChangeCapture observes RuleChangeEvents on the SQLStore's own bus. Rule writes publish via
-// DBSession.PublishAfterCommit, which dispatches through the bus the SQLStore was built with, which
-// is why RuleStore holds no bus of its own and a fake bus handed to the store sees nothing.
+// ruleChangeCapture observes RuleChangeEvents on the SQLStore's own bus, which is where
+// DBSession.PublishAfterCommit dispatches them.
 type ruleChangeCapture struct {
 	fn func(*RuleChangeEvent)
 }

@@ -57,8 +57,8 @@ func WithFeatureToggles(toggles featuremgmt.FeatureToggles) TestEnvOption {
 	}
 }
 
-// SetupTestEnv initializes the stores used by the tests. The Alertmanager/instance/image store and
-// the rule store are separate types since the rule store was split out, so both are returned.
+// SetupTestEnv initializes the stores used by the tests, returning both the
+// Alertmanager/instance/image store and the rule store.
 func SetupTestEnv(tb testing.TB, baseInterval time.Duration, opts ...TestEnvOption) (*ngalert.AlertNG, *store.DBstore, *rulestore.RuleStore) {
 	tb.Helper()
 

@@ -23,8 +23,7 @@ func SetupStoreForTesting(t *testing.T, db db.DB) *RuleStore {
 		SQLStore:       db,
 		Logger:         &logtest.Fake{},
 		FolderService:  foldertest.NewFakeService(),
-		// The real provenance store over the same DB: the receiver and time-interval rename tests
-		// exercise provenance filtering end to end, so a fake would not cover them.
+		// Real, not a fake: the rename tests exercise provenance filtering end to end.
 		Provenance: provenance.SetupStoreForTesting(t, db),
 	}
 	return store

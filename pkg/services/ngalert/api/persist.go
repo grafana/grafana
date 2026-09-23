@@ -5,12 +5,6 @@ import (
 )
 
 // RuleStore is the interface for persisting alert rules and instances.
-//
-// Composed from the rule store's own segments rather than restating each method, so that adding a
-// method there cannot leave a stale copy here. It is still declared in this package, because what
-// the API layer depends on is this package's concern.
-//
-// The segments compose to exactly the methods the API layer calls — nothing wider.
 type RuleStore interface {
 	// TODO after deprecating namespace_id field in GettableGrafanaRule we can simplify this
 	// interface by returning map[string]struct{} instead of map[string]*folder.FolderReference

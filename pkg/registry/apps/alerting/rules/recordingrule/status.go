@@ -20,7 +20,6 @@ import (
 )
 
 // ruleStatusWriter persists the serialized status subresource for a single rule.
-// Satisfied by *rules.RuleStore (SaveAlertRuleStatus).
 type ruleStatusWriter interface {
 	SaveAlertRuleStatus(ctx context.Context, orgID int64, ruleUID string, data []byte) error
 }

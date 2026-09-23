@@ -44,7 +44,7 @@ const (
 
 type RuleStoreReader interface {
 	GetUserVisibleNamespaces(context.Context, int64, identity.Requester) (map[string]*folder.Folder, error)
-	ListAlertRulesStoreV2
+	rulestore.RuleGroupReader
 }
 
 type RuleGroupAccessControlService interface {
@@ -280,14 +280,6 @@ type RuleGroupStatusesOptions struct {
 	AllowedNamespaces map[string]string
 	SortByFullpath    bool
 	StatusPreparer    StatusPreparer
-}
-
-type ListAlertRulesStore interface {
-	rulestore.RuleLister
-}
-
-type ListAlertRulesStoreV2 interface {
-	rulestore.RuleGroupReader
 }
 
 func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) response.Response {
@@ -541,7 +533,7 @@ func accumulateTotals(dest, source map[string]int64) {
 }
 
 // fetchAndFilterPage fetches one page from the store and applies filters
-func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlertRulesStoreV2, span trace.Span, token string, remainingGroups, remainingRules int64) (pageResult, error) {
+func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store rulestore.RuleGroupReader, span trace.Span, token string, remainingGroups, remainingRules int64) (pageResult, error) {
 	// Split matchers: only equality/inequality are supported by the store
 	storeMatchers := filterOutRegexMatchers(ctx.ruleLabelMatchers)
 
@@ -672,7 +664,7 @@ func filterOutRegexMatchers(matchers labels.Matchers) labels.Matchers {
 }
 
 // paginateRuleGroups fetches pages until limits are satisfied applying filters at each step
-func paginateRuleGroups(log log.Logger, store ListAlertRulesStoreV2, ctx *paginationContext, span trace.Span, maxGroups, maxRules int64, startToken string) ([]apimodels.RuleGroup, map[string]int64, string, error) {
+func paginateRuleGroups(log log.Logger, store rulestore.RuleGroupReader, ctx *paginationContext, span trace.Span, maxGroups, maxRules int64, startToken string) ([]apimodels.RuleGroup, map[string]int64, string, error) {
 	allGroups := []apimodels.RuleGroup{}
 	rulesTotals := make(map[string]int64)
 
@@ -731,7 +723,7 @@ func paginateRuleGroups(log log.Logger, store ListAlertRulesStoreV2, ctx *pagina
 }
 
 // nolint:gocyclo
-func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opts RuleGroupStatusesOptions, ruleMutator RuleMutator, provenanceStore ProvenanceStore) apimodels.RuleResponse {
+func PrepareRuleGroupStatusesV2(log log.Logger, store rulestore.RuleGroupReader, opts RuleGroupStatusesOptions, ruleMutator RuleMutator, provenanceStore ProvenanceStore) apimodels.RuleResponse {
 	ctx, span := tracer.Start(opts.Ctx, "api.prometheus.PrepareRuleGroupStatusesV2")
 	defer span.End()
 	opts.Ctx = ctx
@@ -980,7 +972,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 }
 
 // nolint:gocyclo
-func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts RuleGroupStatusesOptions, ruleMutator RuleMutator, provenanceRecords map[string]ngmodels.Provenance) apimodels.RuleResponse {
+func PrepareRuleGroupStatuses(log log.Logger, store rulestore.RuleLister, opts RuleGroupStatusesOptions, ruleMutator RuleMutator, provenanceRecords map[string]ngmodels.Provenance) apimodels.RuleResponse {
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
 			Status: "success",

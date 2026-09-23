@@ -16,11 +16,10 @@ type RuleStore struct {
 	FeatureToggles featuremgmt.FeatureToggles
 	SQLStore       db.DB
 	Logger         log.Logger
-	// FolderService is read by test helpers as well as by this package.
-	FolderService folder.Service
-	AccessControl accesscontrol.AccessControl
-	// Provenance lets rule writes honour provisioning ownership when renaming receivers and time
-	// intervals. This is the only place the rule store reaches into another store's table.
+	FolderService  folder.Service
+	AccessControl  accesscontrol.AccessControl
+	// Provenance is read when renaming receivers and time intervals, to honour provisioning
+	// ownership. It is the only store the rule store depends on.
 	Provenance ProvenanceReader
 }
 

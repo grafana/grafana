@@ -70,8 +70,7 @@ func (c *GroupDelta) NewOrUpdatedNotificationSettings() []models.NotificationSet
 	return settings
 }
 
-// deltaRuleReader is the narrow read surface the delta calculations need. Callers pass a concrete
-// store, so this never appears in an exported signature.
+// deltaRuleReader is the read surface the delta calculations need.
 type deltaRuleReader interface {
 	ListAlertRules(ctx context.Context, query *models.ListAlertRulesQuery) (models.RulesGroup, error)
 	GetAlertRulesGroupByRuleUID(ctx context.Context, query *models.GetAlertRulesGroupByRuleUIDQuery) ([]*models.AlertRule, error)

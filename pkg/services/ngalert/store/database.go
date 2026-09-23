@@ -25,15 +25,11 @@ type AlertingStore interface {
 	GetHistoricalConfiguration(ctx context.Context, orgID int64, id int64) (*models.HistoricAlertConfiguration, error)
 }
 
-// DBstore stores the Alertmanager configuration, admin configuration, alert instances and images
-// in the database. Alert rules live in ngalert/store/rules and provisioning provenance lives in
-// ngalert/store/provenance; neither is re-exported here on purpose, so that every caller names the
-// store it actually depends on.
+// DBstore stores the Alertmanager configuration, admin configuration, alert instances and images.
+// Rules and provenance have their own stores and are deliberately not re-exported here.
 type DBstore struct {
-	// FeatureToggles has no use inside this package, but is read by callers that only hold a
-	// DBstore.
-	// TODO(rule-store-split): inject featuremgmt.FeatureToggles into
-	// pkg/services/provisioning.ProvisioningServiceImpl directly and drop this field.
+	// Unused here; read by callers that only hold a DBstore.
+	// TODO: inject featuremgmt.FeatureToggles into ProvisioningServiceImpl and drop this.
 	FeatureToggles featuremgmt.FeatureToggles
 	SQLStore       db.DB
 	Logger         log.Logger

@@ -9,8 +9,6 @@ import (
 )
 
 // alertRuleStore is the subset of the rule store used by the consumer.
-//
-// Source: pkg/services/ngalert/store/rules/persist.go (RuleQuerier, RuleWriter)
 type alertRuleStore interface {
 	ListAlertRules(ctx context.Context, q *models.ListAlertRulesQuery) (models.RulesGroup, error)
 	DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *models.UserUID, permanently bool, ruleUID ...string) error

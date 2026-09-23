@@ -43,10 +43,8 @@ const HasRulesLabel = "alerting.grafana.app/has-rules"
 // started together drift apart rather than all walking every folder at the same moment.
 const fullSyncJitterFactor = 0.1
 
-// syncerOrgStore lists orgs to walk during a full sync. Separate from syncerStore because orgs are
-// still owned by *store.DBstore, not by the rule store.
-//
-// Source: pkg/services/ngalert/store/org.go (OrgStore)
+// syncerOrgStore lists orgs to walk during a full sync. Separate from the rule-side dependency
+// because orgs are still owned by *store.DBstore.
 type syncerOrgStore interface {
 	FetchOrgIds(ctx context.Context) ([]int64, error)
 }
