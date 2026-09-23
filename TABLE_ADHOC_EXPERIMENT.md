@@ -75,10 +75,12 @@ preview. Date filters use the shared dashboard time-range inputs and adjacent
 calendar, interpreted in the host timezone with millisecond precision. Both use
 Apply/Cancel and store only their applied predicate in the transform.
 
-The development dashboard **Panel Tests - Table - Ad-hoc filters and sorting**
-(`table-adhoc-filter-sort`) exercises these controls. Duration bounds 50–200 match
-60 of 126 rows. Observed-at bounds `2026-09-17 12:00`–`2026-09-17 12:30` in
-America/New_York match 31 rows. Development servers remain stopped.
+The E2Es reuse the existing **Table - Kitchen Sink** dashboard. Its fixed-data
+**Apply to row - gradient** panel provides numeric and date filtering coverage:
+A bounds 90–91 match 4 of 10 rows; Time bounds `2025-08-07 11:00`–`2025-08-07 12:30`
+in America/New_York match 3 rows. The timezone is set only for the test.
+Column tests reuse its mixed-color, multi-frame, and saved-transformation panels;
+the initially open sidebar is configured in the editor without saving the dashboard.
 
 Relative dates, nonlinear histogram bins, and URL persistence remain future work.
 

@@ -13,40 +13,49 @@ test.describe('Panels test: Table - ad-hoc typed filters', { tag: ['@panels', '@
     page,
     selectors,
   }) => {
-    const dashboard = await gotoDashboardPage({ uid: 'table-adhoc-filter-sort' });
-    const panel = dashboard.getByGrafanaSelector(selectors.components.Panels.Panel.title('Latency distribution'));
+    const dashboard = await gotoDashboardPage({
+      uid: 'dcb9f5e9-8066-4397-889e-864b99555dbb',
+      queryParams: new URLSearchParams({ viewPanel: 'panel-5', timezone: 'America/New_York' }),
+    });
+    await dashboard.getByGrafanaSelector(selectors.components.Sidebar.closePane).click();
+    const panel = dashboard.getByGrafanaSelector(selectors.components.Panels.Panel.title('Apply to row - gradient'));
     const table = selectors.components.Panels.Visualization.TableNG;
     const range = table.Filters.Range;
     await waitForTableLoad(panel);
-    await expect(panel.getByText(/^\d+ - \d+ of 126 rows$/)).toBeVisible();
-    await panel.getByRole('button', { name: 'Column options for duration' }).click();
+    await expect(panel.getByRole('row')).toHaveCount(11);
+    await panel.getByRole('button', { name: 'Column options for A' }).click();
     await page.getByTestId(table.headerColumnMenu.filterItem).click();
     await expect(page.getByTestId(range.histogram)).toBeVisible();
-    await page.getByTestId(range.minimum).fill('50');
-    await page.getByTestId(range.maximum).fill('200');
-    await expect(page.getByRole('status')).toHaveText('60 of 126 rows match');
-    await expect(panel.getByText(/^\d+ - \d+ of 126 rows$/)).toBeVisible();
+    await page.getByTestId(range.minimum).fill('90');
+    await page.getByTestId(range.maximum).fill('91');
+    await expect(page.getByRole('status')).toHaveText('4 of 10 rows match');
+    await expect(panel.getByRole('row')).toHaveCount(11);
     await page.getByTestId(range.apply).click();
-    await expect(panel.getByText(/^\d+ - \d+ of 60 rows$/)).toBeVisible();
+    await expect(panel.getByRole('row')).toHaveCount(5);
+    // The raw-frame scenario refreshes in the browser without a datasource request.
     await page.getByRole('button', { name: 'Refresh', exact: true }).click();
     await expect(panel.getByTestId(table.Filters.clearAll)).toHaveText('Clear filters (1)');
-    await panel.getByRole('button', { name: 'Column options for duration' }).click();
+    await panel.getByRole('button', { name: 'Column options for A' }).click();
     await page.getByTestId(table.headerColumnMenu.hideItem).click();
-    await expect(panel.getByRole('button', { name: 'Column options for duration' })).toBeHidden();
-    await expect(panel.getByText(/^\d+ - \d+ of 60 rows$/)).toBeVisible();
+    await expect(panel.getByRole('button', { name: 'Column options for A' })).toBeHidden();
+    await expect(panel.getByRole('row')).toHaveCount(5);
     await panel.getByTestId(table.Filters.clearAll).click();
-    await expect(panel.getByText(/^\d+ - \d+ of 126 rows$/)).toBeVisible();
+    await expect(panel.getByRole('row')).toHaveCount(11);
   });
 
   test(
     'supports keyboard range editing with an accessible popup',
     { tag: ['@a11y'] },
     async ({ gotoDashboardPage, page, selectors, scanForA11yViolations }) => {
-      const dashboard = await gotoDashboardPage({ uid: 'table-adhoc-filter-sort' });
-      const panel = dashboard.getByGrafanaSelector(selectors.components.Panels.Panel.title('Latency distribution'));
+      const dashboard = await gotoDashboardPage({
+        uid: 'dcb9f5e9-8066-4397-889e-864b99555dbb',
+        queryParams: new URLSearchParams({ viewPanel: 'panel-5', timezone: 'America/New_York' }),
+      });
+      await dashboard.getByGrafanaSelector(selectors.components.Sidebar.closePane).click();
+      const panel = dashboard.getByGrafanaSelector(selectors.components.Panels.Panel.title('Apply to row - gradient'));
       const table = selectors.components.Panels.Visualization.TableNG;
       await waitForTableLoad(panel);
-      await panel.getByRole('button', { name: 'Column options for duration' }).click();
+      await panel.getByRole('button', { name: 'Column options for A' }).click();
       await page.getByTestId(table.headerColumnMenu.filterItem).click();
       await expect(page.getByTestId(table.Filters.Range.minimum)).toBeFocused();
       await page.getByRole('slider', { name: 'Minimum', exact: true }).press('ArrowRight');
@@ -57,21 +66,25 @@ test.describe('Panels test: Table - ad-hoc typed filters', { tag: ['@panels', '@
       });
       expect(report.violations).toEqual([]);
       await page.keyboard.press('Escape');
-      await expect(panel.getByRole('button', { name: 'Column options for duration' })).toBeFocused();
+      await expect(panel.getByRole('button', { name: 'Column options for A' })).toBeFocused();
     }
   );
   test('applies absolute date bounds in the dashboard timezone', async ({ gotoDashboardPage, page, selectors }) => {
-    const dashboard = await gotoDashboardPage({ uid: 'table-adhoc-filter-sort' });
-    const panel = dashboard.getByGrafanaSelector(selectors.components.Panels.Panel.title('Latency distribution'));
+    const dashboard = await gotoDashboardPage({
+      uid: 'dcb9f5e9-8066-4397-889e-864b99555dbb',
+      queryParams: new URLSearchParams({ viewPanel: 'panel-5', timezone: 'America/New_York' }),
+    });
+    await dashboard.getByGrafanaSelector(selectors.components.Sidebar.closePane).click();
+    const panel = dashboard.getByGrafanaSelector(selectors.components.Panels.Panel.title('Apply to row - gradient'));
     const table = selectors.components.Panels.Visualization.TableNG;
     await waitForTableLoad(panel);
-    await panel.getByRole('button', { name: 'Column options for observed_at' }).click();
+    await panel.getByRole('button', { name: 'Column options for Time' }).click();
     await page.getByTestId(table.headerColumnMenu.filterItem).click();
     await expect(page.getByText('Timezone: America/New_York')).toBeVisible();
-    await page.getByTestId(table.Filters.Range.minimum).fill('2026-09-17 12:00:00.000');
-    await page.getByTestId(table.Filters.Range.maximum).fill('2026-09-17 12:30:00.000');
-    await expect(page.getByRole('status')).toHaveText('31 of 126 rows match');
+    await page.getByTestId(table.Filters.Range.minimum).fill('2025-08-07 11:00:00.000');
+    await page.getByTestId(table.Filters.Range.maximum).fill('2025-08-07 12:30:00.000');
+    await expect(page.getByRole('status')).toHaveText('3 of 10 rows match');
     await page.getByTestId(table.Filters.Range.apply).click();
-    await expect(panel.getByText(/^\d+ - \d+ of 31 rows$/)).toBeVisible();
+    await expect(panel.getByRole('row')).toHaveCount(4);
   });
 });

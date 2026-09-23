@@ -11,7 +11,7 @@ import { useTableRefreshNewFeatures } from './hooks';
 
 export type CommonTableNGProps = Omit<
   ComponentProps<typeof TableNG>,
-  'tableRefreshEnabled' | 'tableRefreshNewFeaturesEnabled' | 'contentAwareWidthsEnabled' | 'jsonSyntaxHighlightingEnabled'
+  'tableRefreshEnabled' | 'rowTransformationsEnabled' | 'contentAwareWidthsEnabled' | 'jsonSyntaxHighlightingEnabled'
 >;
 
 /**
