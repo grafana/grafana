@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sync/singleflight"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	types "k8s.io/apimachinery/pkg/types"
@@ -1068,6 +1069,120 @@ func TestUserSync_FetchSyncedUserHook(t *testing.T) {
 			require.ErrorIs(t, err, tt.expectedErr)
 		})
 	}
+}
+
+func TestUserSync_resolveUserID(t *testing.T) {
+	t.Run("numeric subject uses fast path without a UID lookup", func(t *testing.T) {
+		userSrv := usertest.NewMockService(t)
+		s := &UserSync{userService: userSrv}
+
+		userID, err := s.resolveUserID(context.Background(), &authn.Identity{ID: "2", Type: claims.TypeUser})
+		require.NoError(t, err)
+		require.Equal(t, int64(2), userID)
+		userSrv.AssertNotCalled(t, "GetByUID", mock.Anything, mock.Anything)
+	})
+
+	t.Run("UID subject is resolved to the numeric ID", func(t *testing.T) {
+		userSrv := usertest.NewMockService(t)
+		userSrv.On("GetByUID", mock.Anything, &user.GetUserByUIDQuery{UID: "u000000002"}).
+			Return(&user.User{ID: 2, UID: "u000000002"}, nil).Once()
+		s := &UserSync{userService: userSrv}
+
+		userID, err := s.resolveUserID(context.Background(), &authn.Identity{ID: "u000000002", Type: claims.TypeUser})
+		require.NoError(t, err)
+		require.Equal(t, int64(2), userID)
+	})
+
+	t.Run("service account UID subject is resolved to the numeric ID", func(t *testing.T) {
+		userSrv := usertest.NewMockService(t)
+		userSrv.On("GetByUID", mock.Anything, &user.GetUserByUIDQuery{UID: "u000000005"}).
+			Return(&user.User{ID: 5, UID: "u000000005"}, nil).Once()
+		s := &UserSync{userService: userSrv}
+
+		userID, err := s.resolveUserID(context.Background(), &authn.Identity{ID: "u000000005", Type: claims.TypeServiceAccount})
+		require.NoError(t, err)
+		require.Equal(t, int64(5), userID)
+	})
+
+	t.Run("propagates error when the UID cannot be resolved", func(t *testing.T) {
+		userSrv := usertest.NewMockService(t)
+		userSrv.On("GetByUID", mock.Anything, &user.GetUserByUIDQuery{UID: "missing"}).
+			Return(nil, user.ErrUserNotFound).Once()
+		s := &UserSync{userService: userSrv}
+
+		_, err := s.resolveUserID(context.Background(), &authn.Identity{ID: "missing", Type: claims.TypeUser})
+		require.ErrorIs(t, err, user.ErrUserNotFound)
+	})
+
+	t.Run("does not attempt a lookup when there is no identifier", func(t *testing.T) {
+		userSrv := usertest.NewMockService(t)
+		s := &UserSync{userService: userSrv}
+
+		_, err := s.resolveUserID(context.Background(), &authn.Identity{ID: "", Type: claims.TypeUser})
+		require.Error(t, err)
+		userSrv.AssertNotCalled(t, "GetByUID", mock.Anything, mock.Anything)
+	})
+}
+
+func TestUserSync_FetchSyncedUserHook_ResolvesUIDSubject(t *testing.T) {
+	userSrv := usertest.NewMockService(t)
+	userSrv.On("GetByUID", mock.Anything, &user.GetUserByUIDQuery{UID: "u000000002"}).
+		Return(&user.User{ID: 2, UID: "u000000002"}, nil).Once()
+	userSrv.On("GetSignedInUser", mock.Anything, &user.GetSignedInUserQuery{UserID: 2, OrgID: 1}).
+		Return(&user.SignedInUser{UserID: 2, UserUID: "u000000002", OrgID: 1}, nil).Once()
+
+	s := &UserSync{userService: userSrv, tracer: tracing.InitializeTracerForTest()}
+
+	id := &authn.Identity{
+		ID:           "u000000002",
+		Type:         claims.TypeUser,
+		ClientParams: authn.ClientParams{FetchSyncedUser: true},
+	}
+	err := s.FetchSyncedUserHook(context.Background(), id, &authn.Request{OrgID: 1})
+	require.NoError(t, err)
+	require.Equal(t, "u000000002", id.UID)
+	require.Equal(t, "2", id.ID)
+}
+
+func TestUserSync_SyncLastSeenHook_ResolvesUIDSubject(t *testing.T) {
+	userSrv := usertest.NewMockService(t)
+	userSrv.On("GetByUID", mock.Anything, &user.GetUserByUIDQuery{UID: "u000000002"}).
+		Return(&user.User{ID: 2, UID: "u000000002"}, nil).Once()
+	userSrv.On("UpdateLastSeenAt", mock.Anything, &user.UpdateUserLastSeenAtCommand{UserID: 2, OrgID: 1}).
+		Return(nil).Once()
+
+	s := &UserSync{
+		userService: userSrv,
+		tracer:      tracing.InitializeTracerForTest(),
+		lastSeenSF:  &singleflight.Group{},
+	}
+
+	id := &authn.Identity{
+		ID:    "u000000002",
+		Type:  claims.TypeUser,
+		OrgID: 1,
+	}
+	err := s.SyncLastSeenHook(context.Background(), id, &authn.Request{OrgID: 1})
+	require.NoError(t, err)
+}
+
+func TestUserSync_EnableUserHook_ResolvesUIDSubject(t *testing.T) {
+	userSrv := usertest.NewMockService(t)
+	userSrv.On("GetByUID", mock.Anything, &user.GetUserByUIDQuery{UID: "u000000002"}).
+		Return(&user.User{ID: 2, UID: "u000000002"}, nil).Once()
+	isDisabled := false
+	userSrv.On("Update", mock.Anything, &user.UpdateUserCommand{UserID: 2, IsDisabled: &isDisabled}).
+		Return(nil).Once()
+
+	s := &UserSync{userService: userSrv, tracer: tracing.InitializeTracerForTest()}
+
+	id := &authn.Identity{
+		ID:           "u000000002",
+		Type:         claims.TypeUser,
+		ClientParams: authn.ClientParams{EnableUser: true},
+	}
+	err := s.EnableUserHook(context.Background(), id, &authn.Request{})
+	require.NoError(t, err)
 }
 
 func TestUserSync_CatalogLoginHook(t *testing.T) {
@@ -2581,6 +2696,7 @@ func TestSyncSignedInUserToIdentity_GroupsContract(t *testing.T) {
 
 	syncSignedInUserToIdentity(usr, id)
 
+	assert.Equal(t, "42", id.ID, "id.ID must be normalized to the numeric internal ID")
 	assert.Equal(t, []string{"team-uid-1", "team-uid-2"}, id.Groups,
 		"Groups must be populated from usr.TeamUIDs")
 	assert.Equal(t, []string{"ldap-admins", "ldap-devs"}, id.ExternalGroups,
