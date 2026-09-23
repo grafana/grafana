@@ -80,12 +80,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
           alignItems="stretch"
           boxShadow={elevated ? 'z3' : undefined}
         >
-          <Box
-            display="flex"
-            paddingTop={visualRefreshEnabled ? 0.5 : 1}
-            paddingBottom={visualRefreshEnabled ? 0.5 : 0}
-            paddingRight={2}
-          >
+          <Box display="flex" paddingY={0.5} paddingRight={2}>
             <div className={styles.iconBox}>
               <Icon
                 size={visualRefreshEnabled ? 'lg' : 'xl'}
