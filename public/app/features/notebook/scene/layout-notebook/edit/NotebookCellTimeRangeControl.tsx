@@ -12,12 +12,9 @@ import { buildCellTimeRangeSpec, buildDraftTimeRangeHost, type CellTimeRangeSpec
 
 interface Props {
   cell: NotebookCellItem;
-  /** 'button': plain clock icon. 'label': descriptive "Locked: from → to" — callers only use this
-   * once the cell actually has its own time range; PanelCell hides the trigger entirely otherwise. */
-  variant: 'button' | 'label';
 }
 
-export function NotebookCellTimeRangeControl({ cell, variant }: Props) {
+export function NotebookCellTimeRangeControl({ cell }: Props) {
   const { $timeRange } = cell.useState();
   const [open, setOpen] = useState(false);
 
@@ -31,7 +28,7 @@ export function NotebookCellTimeRangeControl({ cell, variant }: Props) {
       fitContent
       content={<NotebookCellTimeRangePopoverContent cell={cell} onClose={() => setOpen(false)} />}
     >
-      {variant === 'label' && $timeRange ? (
+      {$timeRange ? (
         <Button fill="solid" size="sm" icon="lock" variant="secondary">
           {t('notebook.cell.time-range.locked', 'Locked: {{from}} → {{to}}', {
             from: $timeRange.state.from,
@@ -42,12 +39,8 @@ export function NotebookCellTimeRangeControl({ cell, variant }: Props) {
         <IconButton
           name="clock-nine"
           size="sm"
-          variant={$timeRange ? 'primary' : 'secondary'}
-          tooltip={
-            $timeRange
-              ? t('notebook.cell.time-range.tooltip-override', 'Has its own time range')
-              : t('notebook.cell.time-range.tooltip-default', "Uses the notebook's time range")
-          }
+          variant="secondary"
+          tooltip={t('notebook.cell.time-range.tooltip-default', "Uses the notebook's time range")}
           aria-label={t('notebook.cell.time-range.button', 'Update time range')}
         />
       )}

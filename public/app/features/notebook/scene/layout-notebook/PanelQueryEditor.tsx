@@ -64,7 +64,7 @@ export function PanelQueryEditor({ panel, cell, autoFocus }: Props) {
   return (
     <Stack direction="column" gap={1}>
       <Stack justifyContent="flex-end">
-        {cell && <NotebookCellTimeRangeControl cell={cell} variant="button" />}
+        {cell && <NotebookCellTimeRangeControl cell={cell} />}
         <Button
           icon="plus"
           variant="secondary"

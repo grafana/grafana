@@ -29,7 +29,7 @@ function buildCell(timeRange?: SceneTimeRange) {
 describe('NotebookCellTimeRangeControl', () => {
   it('reverts a from/to change made since opening the popover, on Reset', async () => {
     const cell = buildCell(new SceneTimeRange({ from: 'now-24h', to: 'now' }));
-    const { user } = render(<NotebookCellTimeRangeControl cell={cell} variant="button" />);
+    const { user } = render(<NotebookCellTimeRangeControl cell={cell} />);
 
     await user.click(screen.getByRole('button'));
     await user.click(screen.getByRole('button', { name: 'Move time range backwards' }));

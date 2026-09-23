@@ -109,7 +109,7 @@ function PanelCell({
       {isEditing && isEditableQueryPanel(panel) && <PanelQueryEditor cell={cell} panel={panel} autoFocus={autoFocus} />}
       {showStandaloneClock && (
         <Box display="flex" justifyContent="flex-end">
-          <NotebookCellTimeRangeControl cell={cell} variant={isEditing ? 'button' : 'label'} />
+          <NotebookCellTimeRangeControl cell={cell} />
         </Box>
       )}
       <div className={styles.panel}>

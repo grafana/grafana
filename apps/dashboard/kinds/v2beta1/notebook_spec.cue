@@ -61,9 +61,7 @@ NotebookLayoutItemKind: {
 
 // One ordered item in a notebook layout. `element` references either a CellKind
 // (markdown/code content) or a V2PanelKind in the notebook's elements map. `source`
-// records who authored the cell; `collapsed` hides the body in the UI. A panel-kind element's
-// own per-cell time window override, when it has one, lives on that element's own
-// QueryOptionsSpec (`timeFrom`/`timeTo`) rather than here.
+// records who authored the cell; `collapsed` hides the body in the UI.
 NotebookLayoutItemSpec: {
 	element:    ElementReference
 	source:     "assistant" | "user"
