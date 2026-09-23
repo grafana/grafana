@@ -16521,7 +16521,9 @@
     }
   },
   "swagger": {
-    "login": "Login"
+    "login": "Login",
+    "namespace-unavailable": "Check the namespace before sending requests, or reload the page to try again.",
+    "namespace-unavailable-title": "Unable to load namespace"
   },
   "table": {
     "bar-gauge-cell-options-editor": {
