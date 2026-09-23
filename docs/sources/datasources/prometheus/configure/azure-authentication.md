@@ -137,7 +137,6 @@ The following sections cover common issues you may encounter during or after the
 **Solution for self-managed Grafana:**
 
 1. Set the options required by your authentication method in the `[azure]` section of your `.ini` configuration file. For a full description of each option, refer to the [`[azure]` configuration reference](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#azure).
-
    - **Managed Identity:** Set `managed_identity_enabled = true`. For a user-assigned identity, also set `managed_identity_client_id` to the identity's client ID. Leave it empty for a system-assigned identity.
    - **Workload Identity:** Set `workload_identity_enabled = true`.
    - **Current User:** Set `user_identity_enabled = true`.
