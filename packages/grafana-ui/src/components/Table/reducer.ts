@@ -18,5 +18,23 @@ export function getInitialState(
     }
   }
 
+  // #region agent log
+  require('fs').appendFileSync(
+    '/opt/cursor/logs/debug.log',
+    JSON.stringify({
+      location: 'Table/reducer.ts:getInitialState',
+      message: 'computed initial sorting from columns',
+      data: {
+        initialSortBy,
+        columnIds: columns.map((c) => c.id),
+        columnHeaders: columns.map((c) => c.header),
+        sorting: state.sorting ?? [],
+      },
+      timestamp: Date.now(),
+      hypothesisId: 'C,E',
+    }) + '\n'
+  );
+  // #endregion
+
   return state;
 }

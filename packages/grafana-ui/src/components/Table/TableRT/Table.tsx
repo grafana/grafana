@@ -128,6 +128,46 @@ export const Table = memo((props: Props) => {
   const tableHasGeoCell = useMemo(() => hasGeoCell(data), [data]);
   const initialState = useMemo(() => getInitialState(initialSortBy, memoizedColumns), [initialSortBy, memoizedColumns]);
   const [sorting, setSorting] = useState<SortingState>(initialState.sorting ?? []);
+  // TanStack Table console.errors when sorting references a column id that is not in the
+  // current column set. Column ids are field indices, so they go stale whenever fields are
+  // added, removed, or reordered without remounting the table.
+  const columnIds = useMemo(() => new Set(memoizedColumns.map((column) => column.id)), [memoizedColumns]);
+  const tableSorting = useMemo(() => sorting.filter((sort) => columnIds.has(sort.id)), [sorting, columnIds]);
+  // #region agent log
+  {
+    const colIds = memoizedColumns.map((c) => c.id);
+    const fieldInfo = data.fields.map((f, i) => ({
+      i,
+      name: f.name,
+      type: f.type,
+      hidden: Boolean(f.config?.custom?.hideFrom?.viz || f.config?.custom?.hidden),
+    }));
+    const missingSortIds = sorting.map((s) => s.id).filter((id) => !colIds.includes(id));
+    const staleVsInitial =
+      JSON.stringify(sorting) !== JSON.stringify(initialState.sorting ?? []);
+    require('fs').appendFileSync(
+      '/opt/cursor/logs/debug.log',
+      JSON.stringify({
+        location: 'TableRT/Table.tsx:pre-useReactTable',
+        message: 'sorting vs columns before getPrePaginationRowModel',
+        data: {
+          colIds,
+          sorting,
+          tableSorting,
+          initialSorting: initialState.sorting ?? [],
+          staleVsInitial,
+          missingSortIds,
+          fieldInfo,
+          initialSortBy,
+          footerItemsLen: footerItems?.length ?? null,
+          runId: 'post-fix',
+        },
+        timestamp: Date.now(),
+        hypothesisId: missingSortIds.length ? 'A,B,C' : 'D,E',
+      }) + '\n'
+    );
+  }
+  // #endregion
   const previousSorting = useRef(sorting);
   const [expanded, setExpanded] = useState<ExpandedState>({});
   const previousExpanded = useRef(expanded);
@@ -146,7 +186,7 @@ export const Table = memo((props: Props) => {
   const tableInstance = useReactTable<unknown>({
     columns: memoizedColumns,
     data: memoizedData,
-    state: { sorting, expanded, columnSizing, columnSizingInfo },
+    state: { sorting: tableSorting, expanded, columnSizing, columnSizingInfo },
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -163,7 +203,8 @@ export const Table = memo((props: Props) => {
     getRowId: hasUniqueId
       ? (_row, relativeIndex) => getRowUniqueId(data, relativeIndex) ?? String(relativeIndex)
       : undefined,
-    onSortingChange: (updater) => setSorting((current) => functionalUpdate(updater, current)),
+    onSortingChange: (updater) =>
+      setSorting((current) => functionalUpdate(updater, current.filter((sort) => columnIds.has(sort.id)))),
     onExpandedChange: (updater) => setExpanded((current) => functionalUpdate(updater, current)),
     onColumnSizingChange: setColumnSizing,
     onColumnSizingInfoChange: setColumnSizingInfo,
@@ -171,6 +212,28 @@ export const Table = memo((props: Props) => {
 
   const headerGroups = tableInstance.getHeaderGroups();
   const footerGroups = tableInstance.getFooterGroups();
+  // #region agent log
+  {
+    const liveColIds = tableInstance.getAllLeafColumns().map((c) => c.id);
+    const sortIds = sorting.map((s) => s.id);
+    const tableSortIds = tableSorting.map((s) => s.id);
+    const missing = sortIds.filter((id) => !liveColIds.includes(id));
+    const missingInTableSorting = tableSortIds.filter((id) => !liveColIds.includes(id));
+    require('fs').appendFileSync(
+      '/opt/cursor/logs/debug.log',
+      JSON.stringify({
+        location: 'TableRT/Table.tsx:before-getPrePaginationRowModel',
+        message: missingInTableSorting.length
+          ? 'MISSING sort column ids in tableSorting — error imminent'
+          : 'tableSorting sanitized for getPrePaginationRowModel',
+        data: { liveColIds, sortIds, tableSortIds, missing, missingInTableSorting },
+        timestamp: Date.now(),
+        hypothesisId: 'A,B',
+        runId: 'post-fix',
+      }) + '\n'
+    );
+  }
+  // #endregion
   const rows = tableInstance.getPrePaginationRowModel().rows;
   const page = tableInstance.getRowModel().rows;
   const state = tableInstance.getState();

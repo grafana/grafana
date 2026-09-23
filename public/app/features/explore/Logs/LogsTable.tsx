@@ -295,6 +295,30 @@ export function LogsTable(props: Props) {
       if (transformations.length > 0) {
         const transformedDataFrame = await lastValueFrom(transformDataFrame(transformations, [dataFrame]));
         const tableFrame = prepareTableFrame(transformedDataFrame[0]);
+        // #region agent log
+        require('fs').appendFileSync(
+          '/opt/cursor/logs/debug.log',
+          JSON.stringify({
+            location: 'LogsTable.tsx:prepare',
+            message: 'tableFrame fields after transform',
+            data: {
+              fields: tableFrame.fields.map((f, i) => ({
+                i,
+                name: f.name,
+                type: f.type,
+                hideFromViz: Boolean(f.config?.custom?.hideFrom?.viz),
+              })),
+              activeColumns: Object.keys(columnsWithMeta)
+                .filter((k) => columnsWithMeta[k].active)
+                .map((k) => ({ name: k, index: columnsWithMeta[k].index })),
+              labelFilters,
+              initialSortByName: logsFrame?.timeField.name,
+            },
+            timestamp: Date.now(),
+            hypothesisId: 'A,B',
+          }) + '\n'
+        );
+        // #endregion
         setTableFrame(tableFrame);
       } else {
         setTableFrame(prepareTableFrame(dataFrame));
