@@ -8,9 +8,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/app"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/generic"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector/filter"
 )
@@ -67,11 +71,13 @@ type fakeStorage struct {
 	// listCalls records each ListIterator invocation's NextPageToken so
 	// tests can assert the backfiller actually paginated rather than
 	// pulling everything in a single call.
-	listCalls []string
-	listKeys  []resource.NamespacedResource
+	listCalls  []string
+	listLimits []int64
+	listKeys   []resource.NamespacedResource
 }
 
 type listItem struct {
+	Group, Resource         string
 	Namespace, Name, Folder string
 	Value                   []byte
 	RV                      int64
@@ -80,6 +86,20 @@ type listItem struct {
 type storedResource struct {
 	Value []byte
 	RV    int64
+}
+
+func newFolderBuilder() *generic.Builder {
+	return generic.New(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"},
+		app.ManifestResourceEmbed{ReembedVersion: 2},
+		map[string][]app.ManifestVersionKindEmbedField{"v1": {{Name: "title", Path: "spec.title"}}}, nil)
+}
+
+func makeFolderListItem(ns, name string, rv int64) listItem {
+	value, _ := json.Marshal(map[string]any{
+		"apiVersion": "folder.grafana.app/v1",
+		"spec":       map[string]any{"title": name + "-title"},
+	})
+	return listItem{Group: "folder.grafana.app", Resource: "folders", Namespace: ns, Name: name, RV: rv, Value: value}
 }
 
 func newFakeStorage() *fakeStorage {
@@ -122,7 +142,11 @@ func (f *fakeStorage) ReadResource(_ context.Context, req *resourcepb.ReadReques
 	// One storage: reads agree with the list feed unless a test overrides
 	// via resources (different RV) or notFound (deleted).
 	for _, it := range f.listItems {
-		if it.Namespace == req.Key.Namespace && it.Name == req.Key.Name && req.Key.Resource == "dashboards" {
+		group, res := it.Group, it.Resource
+		if group == "" && res == "" {
+			group, res = "dashboard.grafana.app", "dashboards"
+		}
+		if it.Namespace == req.Key.Namespace && it.Name == req.Key.Name && group == req.Key.Group && res == req.Key.Resource {
 			return &resource.BackendReadResponse{Key: req.Key, Value: it.Value, ResourceVersion: it.RV}
 		}
 	}
@@ -142,6 +166,7 @@ func (f *fakeStorage) WriteEvent(context.Context, resource.WriteEvent) (int64, e
 func (f *fakeStorage) ListIterator(_ context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	f.mu.Lock()
 	f.listCalls = append(f.listCalls, req.NextPageToken)
+	f.listLimits = append(f.listLimits, req.Limit)
 	f.listKeys = append(f.listKeys, resource.NamespacedResource{
 		Namespace: req.Options.Key.Namespace,
 		Group:     req.Options.Key.Group,
