@@ -229,16 +229,17 @@ func TestDiscoveryBackendTracing(t *testing.T) {
 			defer parent.End()
 			const group = "test.grafana.app"
 			router := discoveryRouter(t, group, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-				if mode == "unavailable" {
+				switch mode {
+				case "unavailable":
 					w.WriteHeader(http.StatusServiceUnavailable)
-				} else if mode == "legacy" {
+				case "legacy":
 					if req.URL.Path == "/apis" {
 						http.NotFound(w, req)
 						return
 					}
 					require.Equal(t, "/apis/"+group+"/v1", req.URL.Path)
 					require.NoError(t, json.NewEncoder(w).Encode(metav1.APIResourceList{TypeMeta: metav1.TypeMeta{Kind: "APIResourceList"}}))
-				} else {
+				default:
 					require.Equal(t, "/apis", req.URL.Path)
 					require.NoError(t, json.NewEncoder(w).Encode(apidiscoveryv2.APIGroupDiscoveryList{
 						TypeMeta: metav1.TypeMeta{Kind: "APIGroupDiscoveryList", APIVersion: "apidiscovery.k8s.io/v2"},
