@@ -122,7 +122,7 @@ func TestProcessQuery(t *testing.T) {
 					"target": "target A",
 					"tags": { "fooTag": "fooValue", "barTag": "barValue", "int": 100, "float": 3.14 },
 					"datapoints": [[50, 1], [null, 2], [100, 3]]
-				}	
+				}
 			]`))
 			require.NoError(t, err)
 		}))
@@ -376,6 +376,8 @@ func TestRunQueryE2E(t *testing.T) {
 		refIdTargetMap  map[string]string
 		expectError     bool
 		errorContains   string
+		expectStatus    backend.Status
+		expectSource    backend.ErrorSource
 		multipleTargets map[string]string
 	}{
 		{
@@ -577,6 +579,58 @@ func TestRunQueryE2E(t *testing.T) {
 			},
 			expectError:   true,
 			errorContains: "request failed with error",
+			expectStatus:  backend.StatusInternal,
+			expectSource:  backend.ErrorSourceDownstream,
+		},
+		{
+			name:         "not implemented response",
+			serverStatus: 501,
+			serverResponse: `{
+						"status": "error",
+						"error": "not implemented"
+					}`,
+			queries: []backend.DataQuery{
+				{
+					RefID: "A",
+					TimeRange: backend.TimeRange{
+						From: time.Unix(1609459200, 0),
+						To:   time.Unix(1609459260, 0),
+					},
+					MaxDataPoints: 1000,
+					JSON: []byte(`{
+								"target": "stats.counters.web.hits"
+							}`),
+				},
+			},
+			expectError:   true,
+			errorContains: "request failed with error",
+			expectStatus:  backend.StatusNotImplemented,
+			expectSource:  backend.ErrorSourcePlugin,
+		},
+		{
+			name:         "authentication error response",
+			serverStatus: 401,
+			serverResponse: `{
+						"status": "error",
+						"error": "authentication error: invalid authentication credentials"
+					}`,
+			queries: []backend.DataQuery{
+				{
+					RefID: "A",
+					TimeRange: backend.TimeRange{
+						From: time.Unix(1609459200, 0),
+						To:   time.Unix(1609459260, 0),
+					},
+					MaxDataPoints: 1000,
+					JSON: []byte(`{
+								"target": "stats.counters.web.hits"
+							}`),
+				},
+			},
+			expectError:   true,
+			errorContains: "request failed with error",
+			expectStatus:  backend.StatusUnauthorized,
+			expectSource:  backend.ErrorSourceDownstream,
 		},
 		{
 			name:         "server error response with HTML content",
@@ -602,6 +656,7 @@ func TestRunQueryE2E(t *testing.T) {
 			},
 			expectError:   true,
 			errorContains: "Error: Target not found", // Should parse HTML and extract the last meaningful line
+			expectSource:  backend.ErrorSourceDownstream,
 		},
 		{
 			name:           "malformed JSON response",
@@ -620,7 +675,8 @@ func TestRunQueryE2E(t *testing.T) {
 							}`),
 				},
 			},
-			expectError: true,
+			expectError:  true,
+			expectSource: backend.ErrorSourcePlugin,
 		},
 		{
 			name:           "invalid query JSON",
@@ -639,6 +695,7 @@ func TestRunQueryE2E(t *testing.T) {
 			},
 			expectError:   true,
 			errorContains: "failed to decode the Graphite query",
+			expectSource:  backend.ErrorSourcePlugin,
 		},
 		{
 			name:         "interval format transformation",
@@ -729,6 +786,12 @@ func TestRunQueryE2E(t *testing.T) {
 							found = true
 							if tt.errorContains != "" {
 								assert.Contains(t, resp.Error.Error(), tt.errorContains)
+							}
+							if tt.expectStatus != 0 {
+								assert.Equal(t, tt.expectStatus, resp.Status)
+							}
+							if tt.expectSource != "" {
+								assert.Equal(t, tt.expectSource, resp.ErrorSource)
 							}
 							break
 						}
