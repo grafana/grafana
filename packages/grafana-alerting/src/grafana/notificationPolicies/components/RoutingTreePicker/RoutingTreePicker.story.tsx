@@ -7,16 +7,12 @@ import { defaultDecorators } from '../../../../../tests/story-utils';
 import { simpleRoutingTreesListScenario } from '../RoutingTreeSelector/RoutingTreeSelector.scenario';
 
 import { RoutingTreePicker, type RoutingTreePickerProps } from './RoutingTreePicker';
-import mdx from './RoutingTreePicker.mdx';
 
 const meta: Meta<typeof RoutingTreePicker> = {
   component: RoutingTreePicker,
   title: 'Notification Policies/RoutingTreePicker',
   decorators: defaultDecorators,
   parameters: {
-    docs: {
-      page: mdx,
-    },
     msw: {
       handlers: simpleRoutingTreesListScenario,
     },
