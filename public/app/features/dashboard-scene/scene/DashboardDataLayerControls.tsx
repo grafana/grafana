@@ -48,7 +48,7 @@ export function DataLayerControlEditWrapper({ layer, inMenu }: { layer: SceneDat
 
   const onClickEditLayer = useCallback(() => {
     const dashboard = sceneGraph.getAncestor(layer, DashboardScene);
-    dashboard.state.sidebar.selectObject(layer);
+    dashboard.state.sidebar.openElementSettings(layer);
   }, [layer]);
 
   const onClickEditLayerQuery = useCallback(() => {

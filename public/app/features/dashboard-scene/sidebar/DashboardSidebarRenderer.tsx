@@ -93,7 +93,13 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
             />
             <Sidebar.Button
               icon="cog"
-              onClick={() => sidebar.selectObject(dashboard)}
+              onClick={() => {
+                if (selectedObject === dashboard && openPane?.getId() === 'element') {
+                  sidebar.closePane();
+                } else {
+                  sidebar.openElementSettings(dashboard);
+                }
+              }}
               title={t('dashboard.sidebar.dashboard-options.title', 'Options')}
               tooltip={t('dashboard.sidebar.dashboard-options.tooltip', 'Dashboard options')}
               data-testid={selectors.pages.Dashboard.Sidebar.optionsButton}
