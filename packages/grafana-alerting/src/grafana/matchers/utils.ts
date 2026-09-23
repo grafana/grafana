@@ -1,3 +1,5 @@
+import memoize from 'micro-memoize';
+
 import { parseFlags } from '@grafana/data';
 
 import { type Label, type LabelMatcher } from './types';
@@ -166,38 +168,27 @@ function isLabelMatchInSet(matcher: LabelMatcher, indexedLabels: IndexedLabels):
 
 // Compiling a regular expression is by far the most expensive thing in here, and route matching
 // asks for the same matcher value over and over, so hold on to the compiled ones.
-const compiledRegexes = new Map<string, RegExp>();
-
+//
 // Matcher values come from user input, and something like a label filter box will call in here on
 // every keystroke, so cap the cache instead of letting it grow for the life of the page.
-const MAX_COMPILED_REGEXES = 500;
+//
+// Values that don't compile throw and are not cached. Callers above decide what to do with that,
+// and recompiling a broken value is the rare path.
+const compileAnchoredRegex = memoize(
+  (matcherValue: string): RegExp => {
+    // At the time of writing, Alertmanager compiles to another (anchored) Regular Expression,
+    // so we should also anchor our UI matches for consistency with this behaviour
+    // https://github.com/prometheus/alertmanager/blob/fd37ce9c95898ca68be1ab4d4529517174b73c33/pkg/labels/matcher.go#L69
+    const valueWithFlagsParsed = parseFlags(`^(?:${matcherValue})$`);
+    return new RegExp(valueWithFlagsParsed.cleaned, valueWithFlagsParsed.flags);
+  },
+  { maxSize: 500 }
+);
 
 function getAnchoredRegex(matcherValue: string): RegExp {
-  const cached = compiledRegexes.get(matcherValue);
-  if (cached) {
-    // A regex carrying the "g" flag remembers where the last match stopped, so rewind it first.
-    cached.lastIndex = 0;
-    return cached;
-  }
-
-  // At the time of writing, Alertmanager compiles to another (anchored) Regular Expression,
-  // so we should also anchor our UI matches for consistency with this behaviour
-  // https://github.com/prometheus/alertmanager/blob/fd37ce9c95898ca68be1ab4d4529517174b73c33/pkg/labels/matcher.go#L69
-  //
-  // Values that don't compile are deliberately left out of the cache. They throw, callers above
-  // decide what to do with that, and recompiling a broken value is the rare path.
-  const valueWithFlagsParsed = parseFlags(`^(?:${matcherValue})$`);
-  const regex = new RegExp(valueWithFlagsParsed.cleaned, valueWithFlagsParsed.flags);
-
-  if (compiledRegexes.size >= MAX_COMPILED_REGEXES) {
-    // Maps iterate in insertion order, so this drops the value we compiled longest ago.
-    const oldest = compiledRegexes.keys().next().value;
-    if (oldest !== undefined) {
-      compiledRegexes.delete(oldest);
-    }
-  }
-  compiledRegexes.set(matcherValue, regex);
-
+  const regex = compileAnchoredRegex(matcherValue);
+  // A regex carrying the "g" flag remembers where the last match stopped, so rewind it first.
+  regex.lastIndex = 0;
   return regex;
 }
 
