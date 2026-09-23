@@ -7,7 +7,6 @@ import { locationService } from '@grafana/runtime';
 import { useFlagGrafanaQueryVarEditorRedesign } from '@grafana/runtime/internal';
 import {
   LocalValueVariable,
-  MultiValueVariable,
   QueryVariable,
   type SceneObject,
   type SceneVariable,

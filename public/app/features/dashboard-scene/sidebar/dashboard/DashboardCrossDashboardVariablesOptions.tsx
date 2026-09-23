@@ -87,8 +87,7 @@ export function setShownScopeNames(
         names.push(name);
       }
     }
-    const coversScope =
-      allNamesInScope.length > 0 && allNamesInScope.every((name) => names.includes(name));
+    const coversScope = allNamesInScope.length > 0 && allNamesInScope.every((name) => names.includes(name));
     return {
       ...selection,
       [scope]: coversScope ? 'all' : names.length === 0 ? 'none' : names,
