@@ -200,10 +200,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.VectorAllowedExternalCollections = section.Key("vector_allowed_external_collections").Strings(",")
 	cfg.VectorAllowedWriteServices = section.Key("vector_allowed_write_services").Strings(",")
 	cfg.VectorIndexingEnabled = section.Key("vector_indexing_enabled").MustBool(false)
-	cfg.VectorBackfillPageSize = section.Key("vector_backfill_page_size").MustInt(50)
-	if cfg.VectorBackfillPageSize <= 0 {
-		cfg.VectorBackfillPageSize = 50
-	}
+	cfg.VectorBackfillPageSize = section.Key("vector_backfill_page_size").MustInt(0)
 	cfg.VectorReconcilerInterval = section.Key("vector_reconciler_interval").MustDuration(time.Minute)
 	// Full aggregate scan of the embeddings table; hourly by default, zero disables.
 	cfg.VectorEmbeddingCountInterval = section.Key("vector_embedding_count_interval").MustDuration(time.Hour)

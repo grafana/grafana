@@ -334,7 +334,7 @@ func hasBuilderForPartition(builders []collectionBuilder, partitionKey string) b
 
 // runBackfillPage processes one page of items. Returns the
 // next-page token; empty when the iterator exhausted (no more pages).
-func (b *VectorBackfiller) runBackfillPage(ctx context.Context, job vector.BackfillJob, builder collectionBuilder, pageToken string) (_ string, retErr error) {
+func (b *VectorBackfiller) runBackfillPage(ctx context.Context, job vector.BackfillJob, builder collectionBuilder, pageToken string) (string, error) {
 	pageSize := b.pageSize
 	if builder.Group() == dashboardGroup && builder.Resource() == dashboardResource {
 		// A dashboard already produces a batch of panel texts.
@@ -357,7 +357,11 @@ func (b *VectorBackfiller) runBackfillPage(ctx context.Context, job vector.Backf
 	completed := 0
 	defer func() {
 		for _, item := range page[completed:] {
-			b.observeBackfillItem(item, retErr)
+			// A failure elsewhere leaves pending writes aborted, not failed.
+			if item.err == nil && item.action != backfillSkip {
+				item.status = "aborted"
+			}
+			b.observeBackfillItem(item)
 		}
 	}()
 	var pendingTok, nextToken string
@@ -382,6 +386,7 @@ func (b *VectorBackfiller) runBackfillPage(ctx context.Context, job vector.Backf
 			item, err := b.prepareBackfillItem(ctx, job, builder, iter)
 			page = append(page, item)
 			if err != nil {
+				item.err = err
 				return err
 			}
 			pendingTok = iter.ContinueToken()
@@ -403,6 +408,11 @@ func (b *VectorBackfiller) runBackfillPage(ctx context.Context, job vector.Backf
 	}
 	vectors, err := b.batchEmbedder.EmbedResources(ctx, builder.partitionKey, builder.Version(), inputs)
 	if err != nil {
+		for _, item := range page {
+			if item.action == backfillEmbed {
+				item.err = err
+			}
+		}
 		return "", err
 	}
 	for i, item := range page {
@@ -410,9 +420,10 @@ func (b *VectorBackfiller) runBackfillPage(ctx context.Context, job vector.Backf
 			return "", err
 		}
 		if err := b.writeBackfillItem(job, builder, item, vectors[i]); err != nil {
+			item.err = err
 			return "", err
 		}
-		b.observeBackfillItem(item, nil)
+		b.observeBackfillItem(item)
 		completed++
 		// Advance only over completed objects. A later write failure must
 		// leave the failed object and the rest of the page reachable.
@@ -468,6 +479,7 @@ type preparedBackfillItem struct {
 	action       backfillAction
 	nextToken    string
 	status       string
+	err          error
 	ctx          context.Context
 	span         trace.Span
 	start        time.Time
@@ -584,15 +596,12 @@ func (b *VectorBackfiller) prepareBackfillItem(ctx context.Context, job vector.B
 	return item, nil
 }
 
-func (b *VectorBackfiller) observeBackfillItem(item *preparedBackfillItem, err error) {
+func (b *VectorBackfiller) observeBackfillItem(item *preparedBackfillItem) {
 	defer item.span.End()
-	if err != nil {
-		// A failure elsewhere in the page does not change an already-known skip.
-		if item.action != backfillSkip || item.status == "" {
-			item.status = "error"
-		}
-		item.span.RecordError(err)
-		item.span.SetStatus(codes.Error, err.Error())
+	if item.err != nil {
+		item.status = "error"
+		item.span.RecordError(item.err)
+		item.span.SetStatus(codes.Error, item.err.Error())
 	}
 	if b.metrics != nil {
 		metricutil.ObserveWithExemplar(item.ctx,

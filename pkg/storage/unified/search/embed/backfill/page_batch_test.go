@@ -6,8 +6,13 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
+	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/codes"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -33,6 +38,50 @@ func numberedEmbeddings(input embedder.EmbedTextInput) embedder.EmbedTextOutput 
 		out.Embeddings[i].Dense = []float32{float32(i + 1)}
 	}
 	return out
+}
+
+func recordPageOutcomes(t *testing.T, b *VectorBackfiller) func(map[string]string) {
+	t.Helper()
+	recorder := tracetest.NewSpanRecorder()
+	provider := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(recorder))
+	previousTracer := tracer
+	tracer = provider.Tracer("backfill-test")
+	t.Cleanup(func() {
+		tracer = previousTracer
+		require.NoError(t, provider.Shutdown(context.Background()))
+	})
+	b.metrics = resource.ProvideVectorMetrics(prometheus.NewRegistry())
+	return func(want map[string]string) {
+		t.Helper()
+		spans := recorder.Ended()
+		require.Len(t, spans, len(want))
+		for _, span := range spans {
+			var uid string
+			for _, attr := range span.Attributes() {
+				if attr.Key == "uid" {
+					uid = attr.Value.AsString()
+				}
+			}
+			require.Contains(t, want, uid)
+			if want[uid] == "error" {
+				assert.Equal(t, codes.Error, span.Status().Code, uid)
+				assert.NotEmpty(t, span.Events(), uid)
+			} else {
+				assert.Equal(t, codes.Unset, span.Status().Code, uid)
+				assert.Empty(t, span.Events(), uid)
+			}
+		}
+		counts := map[string]uint64{"error": 0, "aborted": 0}
+		for _, status := range want {
+			counts[status]++
+		}
+		for status, count := range counts {
+			var observed dto.Metric
+			metric := b.metrics.BackfillItemDuration.WithLabelValues("folder.grafana.app", "folders", status)
+			require.NoError(t, metric.(prometheus.Metric).Write(&observed))
+			assert.Equal(t, count, observed.GetHistogram().GetSampleCount(), status)
+		}
+	}
 }
 
 func TestRunBackfillPage_BatchesObjectsAndPreservesIdentity(t *testing.T) {
@@ -109,11 +158,16 @@ func TestRunBackfillPage_ProviderFailureLeavesWholePageRetryable(t *testing.T) {
 		{Group: "folder.grafana.app", Resource: "folders", Namespace: "ns", Name: "empty", RV: 1, Value: []byte(`{"apiVersion":"folder.grafana.app/v1","spec":{}}`)},
 		makeFolderListItem("ns", "a", 2),
 		makeFolderListItem("ns", "b", 3),
+		makeFolderListItem("ns", "current", 4),
+		{Group: "folder.grafana.app", Resource: "folders", Namespace: "ns", Name: "unsupported", RV: 5, Value: []byte(`{"apiVersion":"folder.grafana.app/v2","spec":{"title":"Unsupported version"}}`)},
 	}
 	vec := newFakeVector()
 	builder := collectionBuilder{Builder: newFolderBuilder(), partitionKey: "folders"}
 	b, text := newBackfillerWithEmbedder(t, storage, vec, builder.Builder)
+	assertOutcomes := recordPageOutcomes(t, b)
 	vec.seedEmbeddedRows("ns", "test-model", "folders", "empty", builder.Version()-1, "")
+	vec.seedEmbeddedRows("ns", "test-model", "folders", "current", builder.Version(), "")
+	vec.seedEmbeddedRows("ns", "test-model", "folders", "unsupported", builder.Version()-1, "")
 	providerErr := errors.New("provider unavailable")
 	text.err = providerErr
 
@@ -124,6 +178,10 @@ func TestRunBackfillPage_ProviderFailureLeavesWholePageRetryable(t *testing.T) {
 	assert.Empty(t, vec.replaceCalls)
 	assert.Empty(t, vec.deletes, "even non-embedding mutations wait until the page's provider call succeeds")
 	assert.Empty(t, vec.checkpoints)
+	assertOutcomes(map[string]string{
+		"empty": "aborted", "a": "error", "b": "error",
+		"current": "skipped_already_embedded", "unsupported": "aborted",
+	})
 }
 
 type pageWriteFailure struct {
@@ -145,6 +203,7 @@ func TestRunBackfillPage_WriteFailureResumesAfterSuccessfulPrefix(t *testing.T) 
 	vec := newFakeVector()
 	builder := newFolderBuilder()
 	b, text := newBackfillerWithEmbedder(t, storage, vec, builder)
+	assertOutcomes := recordPageOutcomes(t, b)
 	writeErr := errors.New("database unavailable")
 	failing := &pageWriteFailure{fakeVector: vec, failUID: "b", err: writeErr}
 	b.vectorBackend = failing
@@ -159,6 +218,7 @@ func TestRunBackfillPage_WriteFailureResumesAfterSuccessfulPrefix(t *testing.T) 
 	assert.Equal(t, "a", vec.replaceCalls[0].UID)
 	require.Len(t, vec.checkpoints, 1)
 	assert.Equal(t, encodeCursor("folders", "tok-1"), vec.checkpoints[0].LastSeenKey)
+	assertOutcomes(map[string]string{"a": "embedded", "b": "error", "c": "aborted"})
 
 	job.LastSeenKey = vec.checkpoints[0].LastSeenKey
 	b, err = NewVectorBackfiller(Options{
@@ -182,6 +242,7 @@ func TestRunBackfillPage_CanceledAfterEmbeddingDoesNotWriteOrCheckpoint(t *testi
 	vec := newFakeVector()
 	builder := collectionBuilder{Builder: newFolderBuilder(), partitionKey: "folders"}
 	b := newBackfillerWithBuilders(t, storage, vec, builder.Builder)
+	assertOutcomes := recordPageOutcomes(t, b)
 	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 	setPageTextEmbedder(b, func(_ context.Context, input embedder.EmbedTextInput) (embedder.EmbedTextOutput, error) {
@@ -194,6 +255,7 @@ func TestRunBackfillPage_CanceledAfterEmbeddingDoesNotWriteOrCheckpoint(t *testi
 	require.ErrorIs(t, err, context.Canceled)
 	assert.Empty(t, vec.replaceCalls)
 	assert.Empty(t, vec.checkpoints)
+	assertOutcomes(map[string]string{"a": "aborted", "b": "aborted"})
 }
 
 type pageIteratorError struct {
