@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"io"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -18,6 +19,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
@@ -213,8 +215,14 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 		objects = res.GetObjects()
 	}
 
+	folderUIDs := folderObject(folders)
+	// Stored root objects can still have an empty parent until they are rewritten.
+	if resource.UsesRootFolderPermissions() && slices.Contains(folderUIDs, accesscontrol.GeneralFolderUID) {
+		folderUIDs = append(folderUIDs, "")
+	}
+
 	return &authzv1.ListResponse{
-		Folders: folderObject(folders),
+		Folders: folderUIDs,
 		Items:   genericObjects(resource.GroupResource(), objects),
 	}, nil
 }

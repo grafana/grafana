@@ -175,15 +175,21 @@ func TestRootFolderSentinels(t *testing.T) {
 
 func TestRootScopedResourcesPreserveFolderPermissionTarget(t *testing.T) {
 	for _, resource := range []string{"variables", "librarypanels"} {
-		for _, verb := range []string{utils.VerbGet, utils.VerbUpdate, utils.VerbDelete} {
-			t.Run(resource+"/"+verb, func(t *testing.T) {
-				info := NewResourceInfoFromCheck(&authzv1.CheckRequest{Group: "dashboard.grafana.app", Resource: resource, Name: "resource", Verb: verb, Folder: "general"})
-				require.Equal(t, NewFolderIdent("general"), info.FolderIdent())
-				batch := NewResourceInfoFromBatchCheckItem(&authzv1.BatchCheckItem{Group: "dashboard.grafana.app", Resource: resource, Name: "resource", Verb: verb, Folder: "general"})
-				require.Equal(t, info, batch)
-				list := NewResourceInfoFromList(&authzv1.ListRequest{Group: "dashboard.grafana.app", Resource: resource})
-				require.Empty(t, list.FolderIdent())
-			})
+		for _, verb := range []string{utils.VerbCreate, utils.VerbGet, utils.VerbUpdate, utils.VerbDelete} {
+			for _, parent := range []string{"", "general", "parent"} {
+				t.Run(resource+"/"+verb+"/"+parent, func(t *testing.T) {
+					expected := parent
+					if expected == "" {
+						expected = "general"
+					}
+					info := NewResourceInfoFromCheck(&authzv1.CheckRequest{Group: "dashboard.grafana.app", Resource: resource, Name: "resource", Verb: verb, Folder: parent})
+					require.Equal(t, NewFolderIdent(expected), info.FolderIdent())
+					batch := NewResourceInfoFromBatchCheckItem(&authzv1.BatchCheckItem{Group: "dashboard.grafana.app", Resource: resource, Name: "resource", Verb: verb, Folder: parent})
+					require.Equal(t, info, batch)
+					list := NewResourceInfoFromList(&authzv1.ListRequest{Group: "dashboard.grafana.app", Resource: resource})
+					require.Empty(t, list.FolderIdent())
+				})
+			}
 		}
 	}
 }

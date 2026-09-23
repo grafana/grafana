@@ -59,6 +59,10 @@ func NewResourceInfoFromCheck(r *authzv1.CheckRequest) ResourceInfo {
 		relations,
 	)
 
+	if resource.UsesRootFolderPermissions() && resource.folder == "" {
+		resource.folder = accesscontrol.GeneralFolderUID
+	}
+
 	// Special case for creating folders and resources in the root folder
 	if r.GetVerb() == utils.VerbCreate {
 		if resource.IsFolderResource() && resource.name == "" {
@@ -105,6 +109,10 @@ func NewResourceInfoFromBatchCheckItem(item *authzv1.BatchCheckItem) ResourceInf
 		item.GetSubresource(),
 		relations,
 	)
+
+	if resource.UsesRootFolderPermissions() && resource.folder == "" {
+		resource.folder = accesscontrol.GeneralFolderUID
+	}
 
 	// Special case for creating folders and resources in the root folder
 	if item.GetVerb() == utils.VerbCreate {
@@ -158,6 +166,11 @@ type ResourceInfo struct {
 	folder      string
 	subresource string
 	relations   []string
+}
+
+// UsesRootFolderPermissions identifies resources whose root objects use General-folder grants.
+func (r ResourceInfo) UsesRootFolderPermissions() bool {
+	return r.group == "dashboard.grafana.app" && (r.resource == "variables" || r.resource == "librarypanels")
 }
 
 func (r ResourceInfo) GroupResource() string {
