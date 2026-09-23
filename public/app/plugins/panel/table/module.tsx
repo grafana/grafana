@@ -160,6 +160,17 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           return panel;
         },
       },
+      {
+        id: 1,
+        name: 'renameColumn',
+        description: 'Rename a column',
+        mutates: 'TRANSFORMATION',
+        settings: ['columnName', 'newColumnName'],
+        promotionPath: (panel, settings) => {
+          // add or edit existing organize fields transformation to rename the column
+          return panel;
+        },
+      },
     ],
   });
 

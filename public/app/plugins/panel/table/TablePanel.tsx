@@ -61,8 +61,12 @@ export function TablePanel(props: Props) {
   const currentIndex = getCurrentFrameIndex(frames, options);
   const main = frames[currentIndex];
 
+  // move this part to a separate function - only run in dashboard mode, not edit
   const interactions = syncGetPanelPlugin('table')?.panelInteractions?.interactions;
-  const fakeURLData = [{ id: 0, settings: ['apple'] }];
+  const fakeURLData = [
+    { id: 0, settings: ['apple'] },
+    { id: 1, settings: ['flavor', 'what it tastes like'] },
+  ];
 
   fakeURLData.forEach((adhocTransform) => {
     const interaction = interactions?.find((i) => i.id === adhocTransform.id);
@@ -72,6 +76,12 @@ export function TablePanel(props: Props) {
         const field = data.series[0].fields.find((f) => f.name === adhocTransform.settings[0]);
         if (field !== undefined) {
           field.config.custom.hideFrom = { viz: true };
+        }
+      } else if (interaction.name === 'renameColumn') {
+        const field = data.series[0].fields.find((f) => f.name === adhocTransform.settings[0]);
+        if (field !== undefined) {
+          field.config.displayName = adhocTransform.settings[1];
+          //field.state.displayName = adhocTransform.settings[1];
         }
       }
     }
