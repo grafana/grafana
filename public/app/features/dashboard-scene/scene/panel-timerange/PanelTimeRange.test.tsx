@@ -326,6 +326,17 @@ describe('PanelTimeRange', () => {
     });
   });
 
+  describe('onOpenSettings', () => {
+    // getDashboardSceneFor throws for any non-DashboardScene root — a library panel referenced from
+    // a Notebook is exactly that case, since a NotebookScene isn't one.
+    it('does not throw when the scene root is not a DashboardScene', () => {
+      const panelTime = new PanelTimeRange({ timeFrom: '2h' });
+      buildAndActivateSceneFor(panelTime);
+
+      expect(() => panelTime.onOpenSettings()).not.toThrow();
+    });
+  });
+
   describe('onTimeRangeChange', () => {
     it('should reverse timeShift when updating time range', () => {
       const oneHourShift = '1h';

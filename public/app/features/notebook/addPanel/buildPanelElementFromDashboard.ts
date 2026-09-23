@@ -3,7 +3,6 @@ import { sceneGraph, type VizPanel } from '@grafana/scenes';
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { vizPanelToSchemaV2 } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
-import { getLibraryPanelBehavior } from 'app/features/dashboard-scene/utils/utils';
 
 import { type PanelElement } from '../types';
 
@@ -16,6 +15,10 @@ import { type PanelElement } from '../types';
  *
  * Two things are not frozen along with the rest. The Grafana time macros stay dynamic (see
  * preserveTimeMacros), and the datasource is resolved rather than kept as written.
+ *
+ * A library panel is a third exception, of a different kind: vizPanelToSchemaV2 emits a `{ uid,
+ * name }` reference for it rather than a frozen copy, so the interpolation above happens (and is
+ * discarded) for nothing in that case — a real reference has no queries/title of its own to store.
  */
 export async function buildPanelElementFromDashboard(vizPanel: VizPanel): Promise<PanelElement> {
   const queryRunner = getQueryRunnerFor(vizPanel);
@@ -64,32 +67,14 @@ export async function buildPanelElementFromDashboard(vizPanel: VizPanel): Promis
     });
   }
 
-  inlineLibraryPanel(vizPanel, captured);
+  // `captured` still carries its LibraryPanelBehavior (clone() copies $behaviors too), so if the
+  // source panel is a library panel, vizPanelToSchemaV2 emits a real `{ uid, name }` reference below
+  // instead of a full spec — the notebook stays linked to the shared panel rather than copying it.
 
   // Both optional args stay omitted. A dsReferencesMapping would write back the dashboard's
   // unresolved default datasource, and the notebook should carry the datasource the panel actually
   // queried rather than inherit whatever default the dashboard had.
   return vizPanelToSchemaV2(captured);
-}
-
-/**
- * Detaches the library panel behavior from the clone, so it serializes as an ordinary panel.
- *
- * vizPanelToSchemaV2 emits a bare `{ uid, name }` reference for anything still carrying it, throwing
- * away every rewrite above. The behavior has already written the library panel's whole model onto
- * this VizPanel, so the clone only has to stop advertising where it came from — at the cost of no
- * longer following later library edits.
- *
- * A behavior still loading has not written that model yet, so that case keeps the reference rather
- * than storing an empty panel.
- */
-function inlineLibraryPanel(source: VizPanel, captured: VizPanel): void {
-  if (!getLibraryPanelBehavior(source)?.state.isLoaded) {
-    return;
-  }
-
-  const behavior = getLibraryPanelBehavior(captured);
-  captured.setState({ $behaviors: captured.state.$behaviors?.filter((candidate) => candidate !== behavior) });
 }
 
 /**

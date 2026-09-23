@@ -321,17 +321,22 @@ describe('buildPanelElementFromDashboard', () => {
       });
     }
 
-    it('are inlined, so the interpolation is not thrown away', async () => {
+    // vizPanelToSchemaV2 emits a real `{ uid, name }` reference for any VizPanel still carrying a
+    // LibraryPanelBehavior — clone() carries the behavior over, so the notebook stays linked to the
+    // shared panel instead of storing a frozen copy of it.
+    it('are kept as a reference to the shared panel, not inlined as a copy', async () => {
       const element = await buildPanelElementFromDashboard(libraryPanel(true));
 
-      expect(element.kind).toBe('Panel');
-      expect(element.kind === 'Panel' && element.spec.data.spec.queries[0].spec.query.spec).toMatchObject({
-        expr: 'up{job="checkout"}',
+      expect(element.kind).toBe('LibraryPanel');
+      expect(element.kind === 'LibraryPanel' && element.spec.libraryPanel).toEqual({
+        uid: 'lp-1',
+        name: 'shared-cpu',
       });
     });
 
-    // Nothing has written the library panel's model on yet, so inlining would store an empty panel.
-    it('keep the reference while the library panel is still loading', async () => {
+    // Unlike the inlining this replaced, nothing here depends on whether the behavior has already
+    // resolved the shared panel's model — a reference is a reference either way.
+    it('are kept as a reference before the library panel has finished loading too', async () => {
       const element = await buildPanelElementFromDashboard(libraryPanel(false));
 
       expect(element.kind).toBe('LibraryPanel');

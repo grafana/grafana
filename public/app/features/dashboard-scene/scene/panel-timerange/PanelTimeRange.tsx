@@ -25,6 +25,7 @@ import { Icon, PanelChrome, Stack, TimePickerTooltip, Tooltip, useStyles2 } from
 import { type TimeOverrideResult } from 'app/features/dashboard/utils/panel';
 
 import { getDashboardSceneFor } from '../../utils/utils';
+import { type DashboardScene } from '../DashboardScene';
 
 import { PanelTimeRangeDrawer, type PanelTimeRangeZoomBehavior } from './PanelTimeRangeDrawer';
 import { getCompareExtraQueries, shouldRerunCompare } from './timeCompare/getCompareExtraQueries';
@@ -232,7 +233,14 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
 
   public onOpenSettings = () => {
     const panel = this.parent;
-    const dashboard = getDashboardSceneFor(this);
+    let dashboard: DashboardScene;
+    try {
+      // Same object elsewhere (e.g. a library panel referenced from a Notebook) can have a non-
+      // DashboardScene root, which this call would otherwise throw for.
+      dashboard = getDashboardSceneFor(this);
+    } catch {
+      return;
+    }
     if (panel instanceof VizPanel) {
       dashboard.showModal(new PanelTimeRangeDrawer({ panelRef: panel.getRef() }));
     }

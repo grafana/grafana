@@ -1,3 +1,8 @@
+import { getPanelPlugin } from '@grafana/data/test';
+import { setPluginImportUtils } from '@grafana/runtime';
+import { LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
+import { activateFullSceneTree } from 'app/features/dashboard-scene/utils/test-utils';
+import * as libraryPanelsApi from 'app/features/library-panels/state/api';
 import {
   type CellKind,
   defaultLibraryPanelKind,
@@ -7,6 +12,11 @@ import {
 } from 'app/features/notebook/types';
 
 import { deserializeNotebookLayout } from './deserializeNotebookLayout';
+
+setPluginImportUtils({
+  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({ id })),
+  getPanelPluginFromCache: () => undefined,
+});
 
 function markdownCell(text: string): CellKind {
   return { kind: 'Cell', spec: { content: { kind: 'Markdown', spec: { text } } } };
@@ -55,6 +65,39 @@ describe('deserializeNotebookLayout', () => {
     // 4 cells in; the panel and library-panel are viz panels, markdown/code are narrative.
     expect(manager.state.cells).toHaveLength(4);
     expect(manager.getVizPanels()).toHaveLength(2);
+  });
+
+  // buildLibraryPanelState attaches a real LibraryPanelBehavior, the same core builder a dashboard
+  // uses — this exercises the whole thing end to end (activate → fetch → resolved viz panel) rather
+  // than just checking the shape it was built with.
+  it("resolves a library-panel cell's real content on activation", async () => {
+    const { layout, elements } = fixture();
+    elements.lib1 = {
+      kind: 'LibraryPanel',
+      spec: { id: 9, title: 'Shared CPU', libraryPanel: { uid: 'lp-1', name: 'shared-cpu' } },
+    };
+
+    jest.spyOn(libraryPanelsApi, 'getLibraryPanel').mockResolvedValue({
+      uid: 'lp-1',
+      name: 'shared-cpu',
+      version: 1,
+      model: { type: 'timeseries' },
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only the fields above are read
+    } as never);
+
+    const manager = deserializeNotebookLayout(layout, elements);
+    const libraryVizPanel = manager
+      .getVizPanels()
+      .find((panel) => panel.state.pluginId === LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID);
+    expect(libraryVizPanel).toBeDefined();
+
+    // Just this panel, not the whole manager: the fixture's other panel would also activate its own
+    // (unrelated, unmocked) query runner and try to run a real query.
+    const deactivate = activateFullSceneTree(libraryVizPanel!);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(libraryVizPanel!.state.pluginId).toBe('timeseries');
+    deactivate();
   });
 
   it('skips a cell named after an inherited member instead of throwing', () => {
