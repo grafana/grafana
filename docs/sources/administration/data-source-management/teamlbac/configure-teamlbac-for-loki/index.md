@@ -130,3 +130,8 @@ Use the `!=` operator to exclude log lines that carry a specific label value. Th
 ### User on multiple teams
 
 Users on multiple teams receive access based on all the combined rules assigned to each team, combined with `OR`. For example, if Team A has `{namespace="dev"}` and Team B has `{namespace="prod"}`, a user on both teams can access log lines that match `namespace="dev"` or `namespace="prod"`.
+
+## Related resources
+
+- [LBAC for data sources overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/) explains how LBAC works, which data sources are supported, and current limitations.
+- [Create LBAC for data sources rules for a supported data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/create-teamlbac-rules/) explains how to define and manage rules.
