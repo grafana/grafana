@@ -135,22 +135,28 @@ describe('Tooltip', () => {
     expect(await screen.findByText('Tooltip content')).toBeInTheDocument();
   });
 
-  it('surfaces the current node to a swapped object ref', () => {
+  it('surfaces the current node to a swapped object ref and clears the replaced one', () => {
     const firstRef: MutableRefObject<HTMLElement | null> = { current: null };
     const secondRef: MutableRefObject<HTMLElement | null> = { current: null };
 
-    const { rerender } = render(
+    const { rerender, unmount } = render(
       <Tooltip content="Tooltip content" ref={firstRef}>
         <span>On the page</span>
       </Tooltip>
     );
-    expect(firstRef.current).not.toBeNull();
+    const node = firstRef.current;
+    expect(node).not.toBeNull();
 
     rerender(
       <Tooltip content="Tooltip content" ref={secondRef}>
         <span>On the page</span>
       </Tooltip>
     );
-    expect(secondRef.current).toBe(firstRef.current);
+    expect(secondRef.current).toBe(node);
+    // the replaced ref must not keep pointing at the node (React's swap semantics)
+    expect(firstRef.current).toBeNull();
+
+    unmount();
+    expect(secondRef.current).toBeNull();
   });
 });

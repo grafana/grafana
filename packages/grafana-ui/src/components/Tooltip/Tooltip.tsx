@@ -98,13 +98,21 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
     const nodeRef = useRef<HTMLElement | null>(null);
     const forwardedRefRef = useRef(forwardedRef);
     useLayoutEffect(() => {
+      const previousRef = forwardedRefRef.current;
       forwardedRefRef.current = forwardedRef;
+      if (previousRef === forwardedRef) {
+        return;
+      }
       // React will not re-invoke the stable callback ref when the forwarded ref
-      // changes, so surface the current node to a swapped object ref here.
-      // Function refs are deliberately not re-invoked for an unchanged node:
-      // re-calling unstable function refs on every render is exactly the churn
-      // this guards against.
+      // changes, so mirror React's swap semantics for object refs here: clear
+      // the ref that is no longer passed and surface the current node to the
+      // newly passed one. Function refs are deliberately not re-invoked for an
+      // unchanged node: re-calling unstable function refs on every render is
+      // exactly the churn this guards against.
       const node = nodeRef.current;
+      if (previousRef && typeof previousRef !== 'function') {
+        previousRef.current = null;
+      }
       if (forwardedRef && typeof forwardedRef !== 'function' && node != null) {
         forwardedRef.current = node;
       }
