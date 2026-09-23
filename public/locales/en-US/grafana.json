@@ -16587,6 +16587,9 @@
       "label-alt-text": "Alt text",
       "label-title-text": "Title text"
     },
+    "json-cell-options": {
+      "syntax-highlighting": "Syntax highlighting"
+    },
     "link-wrapper": {
       "menu": "view data links and actions"
     },

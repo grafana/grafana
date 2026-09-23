@@ -52,6 +52,7 @@ func TestIntegrationAuthInfo(t *testing.T) {
 			doAuthInfoCRUDTestsUsingTheNewAPIs(t, helper)
 			doAuthInfoAuthzTests(t, helper)
 			doAuthInfoListRequiresFieldSelectorTest(t, helper)
+			doAuthInfoListByAuthIDTest(t, helper)
 			doAuthInfoDeleteTests(t, helper)
 			doAuthInfoUserDeleteCascadeTest(t, helper)
 		})
@@ -203,6 +204,45 @@ func doAuthInfoListRequiresFieldSelectorTest(t *testing.T, helper *apis.K8sTestH
 		require.ErrorAs(t, err, &statusErr)
 		require.Equal(t, int32(400), statusErr.ErrStatus.Code)
 		require.Contains(t, statusErr.ErrStatus.Message, "spec.userRef.name")
+	})
+}
+
+// doAuthInfoListByAuthIDTest verifies that AuthInfo can be looked up by
+// spec.authID (with an optional spec.authModule) without a spec.userRef.name.
+func doAuthInfoListByAuthIDTest(t *testing.T, helper *apis.K8sTestHelper) {
+	t.Run("should list by authID alone, without knowing the user", func(t *testing.T) {
+		ctx := context.Background()
+		userUID := createTestUser(t, helper, "authinfo-by-authid-user", "authinfo-by-authid-user@example.com")
+		authInfoClient := authInfoResourceClient(helper, helper.Org1.Admin)
+
+		authID := "by-authid-" + userUID
+		created, err := authInfoClient.Resource.Create(ctx, createAuthInfoObject(helper, userUID, "ldap", authID), metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		list, err := authInfoClient.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: fmt.Sprintf("spec.authID=%s", authID),
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, created.GetName(), list.Items[0].GetName())
+
+		list, err = authInfoClient.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: fmt.Sprintf("spec.authID=%s,spec.authModule=ldap", authID),
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, created.GetName(), list.Items[0].GetName())
+	})
+
+	t.Run("should return an empty list for an authID with no match", func(t *testing.T) {
+		ctx := context.Background()
+		authInfoClient := authInfoResourceClient(helper, helper.Org1.Admin)
+
+		list, err := authInfoClient.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: "spec.authID=no-such-auth-id",
+		})
+		require.NoError(t, err)
+		require.Empty(t, list.Items)
 	})
 }
 
