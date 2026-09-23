@@ -24,6 +24,7 @@ func TestShouldUseSearchForList(t *testing.T) {
 	tests := map[string]struct {
 		disableSearch   bool
 		allowlist       []string
+		noRegistry      bool
 		req             *resourcepb.ListRequest
 		expectedAllowed bool
 	}{
@@ -155,7 +156,7 @@ func TestShouldUseSearchForList(t *testing.T) {
 			req: &resourcepb.ListRequest{
 				Source: resourcepb.ListRequest_STORE,
 				Options: &resourcepb.ListOptions{
-					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app"},
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
 					Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
 				},
 			},
@@ -236,6 +237,50 @@ func TestShouldUseSearchForList(t *testing.T) {
 			},
 			expectedAllowed: true,
 		},
+		"true when a kind outside the compiled-in manifests declares the field": {
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "mobile.ext.grafana.app", Resource: "mobileverificationtokens"},
+					Fields: []*resourcepb.Requirement{{Key: "spec.token", Operator: "=", Values: []string{"t1"}}},
+				},
+			},
+			expectedAllowed: true,
+		},
+		"false when the kind declares no such field": {
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+					Fields: []*resourcepb.Requirement{{Key: "spec.undeclared", Operator: "=", Values: []string{"x"}}},
+				},
+			},
+			expectedAllowed: false,
+		},
+		"false when one of several fields is undeclared": {
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+					Fields: []*resourcepb.Requirement{
+						{Key: "spec.foo", Operator: "=", Values: []string{"bar"}},
+						{Key: "spec.undeclared", Operator: "=", Values: []string{"x"}},
+					},
+				},
+			},
+			expectedAllowed: false,
+		},
+		"false when no declarations are available": {
+			noRegistry: true,
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+					Fields: []*resourcepb.Requirement{{Key: "spec.foo", Operator: "=", Values: []string{"bar"}}},
+				},
+			},
+			expectedAllowed: false,
+		},
 	}
 
 	for name, tc := range tests {
@@ -249,6 +294,14 @@ func TestShouldUseSearchForList(t *testing.T) {
 				allowed[resource] = true
 			}
 			s.searchBackedListResources = SearchBackedListConfig{AllowedResources: allowed}
+			if !tc.noRegistry {
+				// Stands in for what a manifest watcher would load, including a kind this
+				// binary was not compiled with.
+				s.manifestSearchFields = NewSearchFieldsRegistry(map[LowerGroupResource][]string{
+					NewLowerGroupResource("advisor.grafana.app", "advisors"):                    {"spec.foo"},
+					NewLowerGroupResource("mobile.ext.grafana.app", "mobileverificationtokens"): {"spec.token"},
+				}, nil, nil)
+			}
 
 			require.Equal(t, tc.expectedAllowed, s.shouldUseSearchForList(tc.req))
 		})

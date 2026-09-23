@@ -125,17 +125,15 @@ type IndexFeature string
 
 // IndexFeatureTrashFields means the index maps TrashSearchFieldDefinitions. An
 // index without them drops the values, so trash would come back missing the
-// deleter and in arbitrary order. Checked by writers alongside
-// IndexFeatureDeletedMarker, so an older index keeps no deleted documents until it
-// rebuilds.
+// deleter and in arbitrary order. Required, so such an index is rebuilt before it
+// serves anything.
 const IndexFeatureTrashFields IndexFeature = "trash-fields"
 
 // IndexFeatureDeletedMarker means the index maps the markers on deleted
 // documents, SEARCH_FIELD_IS_DELETED and SEARCH_FIELD_IS_PROVISIONED. An index
 // without them drops the values, so a deleted document indexed there would look
-// live, and a provisioned one would show up in trash. Recorded but not required:
-// rather than reindex every existing index to add the mapping, writers check for
-// this feature before keeping a deleted document.
+// live, and a provisioned one would show up in trash. Required too: both mappings
+// arrived together, so an index has either both or neither.
 const IndexFeatureDeletedMarker IndexFeature = "deleted-marker"
 
 // IndexFeatureStoredFacets means every facet-capable field is stored, so the
@@ -158,8 +156,8 @@ const IndexFeatureStoredResourceVersion IndexFeature = "resource-version-stored"
 const IndexFeatureHoldsDeletedDocuments IndexFeature = "holds-deleted-documents"
 
 // TrashIndexFeatures are the features an index needs before a deleted document may
-// be kept in it. Both writers read this one list, so the producer and the
-// BulkIndex backstop cannot disagree about what makes an index usable for trash.
+// be kept in it. Read by the writers and by requiredIndexFeatures, so nothing can
+// disagree about what makes an index usable for trash.
 func TrashIndexFeatures() []IndexFeature {
 	return []IndexFeature{IndexFeatureDeletedMarker, IndexFeatureTrashFields}
 }
@@ -196,7 +194,10 @@ var knownIndexFeatures = []IndexFeature{
 //
 // Every required feature must also be current, otherwise indexes rebuild forever
 // (TestRequiredIndexFeaturesAreCurrent).
-var requiredIndexFeatures = []IndexFeature{}
+//
+// Without the trash features the writers drop deleted documents, so trash comes
+// back empty, which reads as "nothing was deleted".
+var requiredIndexFeatures = TrashIndexFeatures()
 
 // CurrentIndexFeatures returns the features sorted, so declaration order cannot
 // change what an index records.
