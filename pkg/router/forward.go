@@ -7,6 +7,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
@@ -55,7 +56,7 @@ func NewForwardBackend(group metav1.APIGroup, routeBackend v1alpha2.RouteBackend
 		key:          key,
 		proxy: &httputil.ReverseProxy{
 			Rewrite:        func(pr *httputil.ProxyRequest) { pr.SetURL(u) },
-			Transport:      transport,
+			Transport:      otelhttp.NewTransport(transport),
 			ModifyResponse: rejectBackendRedirects,
 		},
 	}, nil

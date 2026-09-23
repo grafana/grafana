@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"strings"
 
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -133,7 +134,7 @@ func newAggregateBackend(targetName string, group metav1.APIGroup, base *url.URL
 		key:        key,
 		proxy: &httputil.ReverseProxy{
 			Rewrite:        func(pr *httputil.ProxyRequest) { pr.SetURL(&target) },
-			Transport:      transport,
+			Transport:      otelhttp.NewTransport(transport),
 			ModifyResponse: rejectBackendRedirects,
 		},
 	}, nil

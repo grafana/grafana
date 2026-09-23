@@ -289,20 +289,31 @@ type authenticatingWrapper struct {
 }
 
 func (a *authenticatingWrapper) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	info := a.authenticate(w, req)
+	if info == nil {
+		return
+	}
+	ctx := identity.WithRequester(req.Context(), info)
+	a.Handler.ServeHTTP(w, req.WithContext(ctx))
+}
+
+func (a *authenticatingWrapper) authenticate(w http.ResponseWriter, req *http.Request) identity.Requester {
+	rec, req, endSpan := traceRouterRequest(w, req, "router.plugin.authenticate")
+	defer endSpan()
+	w = rec
 	ctx := req.Context()
 
 	token := req.Header.Get("X-Access-Token")
 	if token == "" {
 		_ = errhttp.Write(ctx, apierrors.NewUnauthorized("missing access token header"), w)
-		return
+		return nil
 	}
 
 	info, err := a.authn.AuthenticateToken(ctx, token)
 	if err != nil {
 		_ = errhttp.Write(ctx, err, w)
-		return
+		return nil
 	}
 
-	ctx = identity.WithRequester(ctx, info)
-	a.Handler.ServeHTTP(w, req.WithContext(ctx))
+	return info
 }

@@ -96,8 +96,10 @@ func serveThroughBreaker(cb *gobreaker.CircuitBreaker[struct{}], h http.Handler,
 		h.ServeHTTP(w, req)
 		return
 	}
+	rec, req, endSpan := traceBackendRequest(w, req)
+	defer endSpan()
+	w = rec
 	_, err := cb.Execute(func() (struct{}, error) {
-		rec := newStatusRecorder(w)
 		h.ServeHTTP(rec, req)
 		return struct{}{}, breakerOutcome(req, rec.status)
 	})
