@@ -13,6 +13,10 @@
  * Only failure is reported. A successful render needs no message on the polling path, and reporting
  * one properly means waiting for every panel's queries to settle — see the note in
  * NotebookRenderPage about what that would take and when it becomes worth it.
+ *
+ * The renderer does not read the message, only notice that one arrived, so the `success: false`
+ * below is discarded and this amounts to "stop waiting". That is what makes it useful on the
+ * binding path, and what makes sending one early actively worse than sending none.
  */
 export function reportRenderFailed(): void {
   window.__grafanaImageRendererMessageChannel?.(

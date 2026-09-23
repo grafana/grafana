@@ -51,11 +51,16 @@ export function NotebookRenderPage() {
   // returns below because hooks run in the same order every render.
   //
   // Only the failure. A successful capture is detected by the renderer polling for the page to
-  // settle, which needs nothing from us — signalling success properly would mean waiting for every
-  // panel's queries to go idle, and that only pays off under the `reportRenderBinding` toggle
-  // (experimental, off by default), where the renderer waits for a message instead of polling. With
-  // that toggle on, a successful notebook export currently waits out the renderer's timeout; worth
-  // fixing against a real renderer if the toggle heads for GA.
+  // settle, which needs nothing from us. Under the `reportRenderBinding` toggle (experimental, off
+  // by default) the renderer waits for a message instead and never falls back to polling, so a
+  // successful notebook export waits out its readiness timeout — worth fixing if that toggle heads
+  // for GA.
+  //
+  // That fix has to wait for every panel's queries to go idle rather than fire on mount, because
+  // the renderer ends its wait on any call to the binding without reading the message at all: a
+  // signal sent early would have it capture a half-drawn notebook and report that as a success.
+  // The same indifference is why reporting a failure works — it ends the wait, and the payload
+  // saying the render failed is discarded.
   useEffect(() => {
     if (loadError) {
       reportRenderFailed();
@@ -66,10 +71,10 @@ export function NotebookRenderPage() {
     return <PageNotFound />;
   }
 
-  // Shown rather than swallowed: the renderer polls as well as listening, so a page left blank can
-  // be captured as a blank PDF once the failed request settles. An error on the sheet is at least
-  // diagnosable, and is what the dashboard report page does too. No Page shell — this route has
-  // none by design.
+  // Shown rather than swallowed: the renderer captures the page either way — by polling, or, with
+  // the toggle above on, because the failure reported there ended its wait — so a page left blank
+  // is captured as a blank PDF. An error on the sheet is at least diagnosable, and is what the
+  // dashboard report page does too. No Page shell — this route has none by design.
   if (loadError) {
     return (
       <Alert title={t('notebook.errors.failed-to-load', 'Failed to load notebook')} severity="error">
