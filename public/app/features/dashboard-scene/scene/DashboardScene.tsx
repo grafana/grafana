@@ -195,7 +195,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   private _changeTracker: DashboardSceneChangeTracker;
 
   private _sidebarActivation?: CancelActivationHandler;
-  private _modalRequest?: AbortController;
+  private _viewRequest?: AbortController;
 
   /**
    * Remember scroll position when going into panel edit
@@ -1199,9 +1199,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     console.error('Trying to unlink a lib panel in a layout that is not DashboardGridItem or AutoGridItem');
   }
 
-  /** Cancel pending drawers and sidebar panes before an asynchronous view transition starts. */
+  /** Cancel pending views and sidebar panes before a view transition starts. */
   public beginViewTransition() {
-    this._modalRequest?.abort();
+    this._viewRequest?.abort();
     this.state.sidebar.cancelPaneRequest();
   }
 
@@ -1223,14 +1223,22 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public async showModalAsync(load: () => Promise<SceneObject | undefined>) {
+    await this.updateViewAsync(async () => {
+      this.setModalLoading(true);
+      const overlay = await load();
+      return overlay ? { overlay } : undefined;
+    });
+  }
+
+  /** Apply a lazy view only if no newer transition superseded it while loading. */
+  public async updateViewAsync(load: () => Promise<DashboardViewUpdate | undefined>) {
     this.beginViewTransition();
     const request = new AbortController();
-    this._modalRequest = request;
+    this._viewRequest = request;
     request.signal.addEventListener('abort', () => this.setModalLoading(false), { once: true });
-    this.setModalLoading(true);
     const location = locationService.getLocation();
     const search = new URLSearchParams(location.search);
-    // Time range and variable URL updates do not supersede a drawer request.
+    // Time range and variable URL updates do not supersede a view request.
     const unlisten = locationService.getHistory().listen((nextLocation) => {
       const nextSearch = new URLSearchParams(nextLocation.search);
       if (
@@ -1243,15 +1251,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       }
     });
     try {
-      const modal = await load();
-      if (modal && !request.signal.aborted) {
-        this.showModal(modal);
+      const update = await load();
+      if (update && !request.signal.aborted) {
+        this.updateView(update);
       }
     } finally {
       unlisten();
-      if (this._modalRequest === request) {
+      if (this._viewRequest === request) {
         request.abort();
-        this._modalRequest = undefined;
+        this._viewRequest = undefined;
       }
     }
   }

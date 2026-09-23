@@ -2106,7 +2106,7 @@ describe('DashboardScene', () => {
         name: 'save drawer close',
         run: (scene) => new SaveDashboardDrawer({ dashboardRef: scene.getRef() }).onClose(),
       },
-      { name: 'settings URL sync', run: (scene) => scene.urlSync?.updateFromUrl({ editview: null }) },
+      { name: 'panel view URL sync', run: (scene) => scene.urlSync?.updateFromUrl({ viewPanel: 'panel-1' }) },
       { name: 'unchanged view transition', run: (scene) => scene.updateView({ viewPanel: undefined }) },
       {
         name: 'deactivation and reactivation',
@@ -2208,7 +2208,23 @@ describe('DashboardScene', () => {
       await opening;
       expect(scene.state.overlay === modal).toBe(false);
       await editing;
-      expect(scene.state.editPanel).toBeDefined();
+      expect(scene.state.editPanel?.state.panelRef.resolve()).toBe(panel);
+      deactivateSidebar();
+    });
+
+    it('preserves pending drawer and sidebar loads when URL sync clears already-closed settings', async () => {
+      const scene = buildTestScene();
+      const deactivateSidebar = scene.state.sidebar.activate();
+      const modal = new SceneGridLayout({ children: [] });
+      const opening = scene.showModalAsync(async () => modal);
+      const paneRequest = scene.state.sidebar.beginPaneRequest();
+
+      scene.urlSync?.updateFromUrl({ editview: null });
+
+      expect(scene.state.isModalLoading).toBe(true);
+      expect(paneRequest.aborted).toBe(false);
+      await opening;
+      expect(scene.state.overlay).toBe(modal);
       deactivateSidebar();
     });
 
@@ -2234,6 +2250,96 @@ describe('DashboardScene', () => {
 
       await opening;
       expect(scene.state.overlay).toBe(modal);
+    });
+  });
+
+  describe('lazy panel editor', () => {
+    beforeEach(() => {
+      locationService.push('/d/dash-1/test?editPanel=panel-1');
+    });
+
+    it.each<{
+      name: string;
+      run: (scene: DashboardScene, deactivate: () => void) => void;
+    }>([
+      { name: 'close', run: (scene) => scene.updateView({ editPanel: undefined }) },
+      { name: 'editor URL removal', run: () => locationService.partial({ editPanel: null }) },
+      {
+        name: 'navigation away and back',
+        run: () => {
+          locationService.push('/dashboards');
+          locationService.push('/d/dash-1/test?editPanel=panel-1');
+        },
+      },
+      { name: 'rebuild', run: (scene) => scene.switchLayout(DefaultGridLayoutManager.createEmpty(), true) },
+      { name: 'deactivation', run: (_scene, deactivate) => deactivate() },
+    ])('does not reopen the editor after $name while its chunk loads', async ({ run }) => {
+      const scene = buildTestScene({ isEditing: true });
+      const deactivate = scene.activate();
+      const panel = findVizPanelByKey(scene, 'panel-1')!;
+      const editing = openPanelEditor(scene, panel);
+
+      run(scene, deactivate);
+      await editing;
+
+      expect(scene.state.editPanel).toBeUndefined();
+      const modal = new SceneGridLayout({ children: [] });
+      await scene.showModalAsync(async () => modal);
+      expect(scene.state.overlay).toBe(modal);
+      if (scene.isActive) {
+        deactivate();
+      }
+    });
+
+    it('does not cancel a newer pending drawer when the editor chunk arrives', async () => {
+      const scene = buildTestScene();
+      const panel = findVizPanelByKey(scene, 'panel-1')!;
+      const editing = openPanelEditor(scene, panel);
+      const pending = createDeferred<SceneObject>();
+      const opening = scene.showModalAsync(() => pending.promise);
+
+      await editing;
+
+      expect(scene.state.isModalLoading).toBe(true);
+      expect(scene.state.editPanel).toBeUndefined();
+      const modal = new SceneGridLayout({ children: [] });
+      pending.resolve(modal);
+      await opening;
+      expect(scene.state.overlay).toBe(modal);
+    });
+
+    it('opens only the most recently requested panel and preserves new-panel state', async () => {
+      const scene = buildTestScene();
+      const firstPanel = findVizPanelByKey(scene, 'panel-1')!;
+      const secondPanel = findVizPanelByKey(scene, 'panel-2')!;
+      const openedPanels: string[] = [];
+      const subscription = scene.subscribeToState(({ editPanel }, previous) => {
+        if (editPanel && editPanel !== previous.editPanel) {
+          openedPanels.push(editPanel.getUrlKey());
+        }
+      });
+      const first = openPanelEditor(scene, firstPanel);
+      const second = openPanelEditor(scene, secondPanel, true);
+
+      await Promise.all([first, second]);
+      subscription.unsubscribe();
+
+      expect(openedPanels).toEqual(['2']);
+      expect(scene.state.editPanel?.state.panelRef.resolve()).toBe(secondPanel);
+      expect(scene.state.editPanel?.state.isNewPanel).toBe(true);
+    });
+
+    it('allows data-only edits and time-range URL changes while the editor loads', async () => {
+      const scene = buildTestScene();
+      const panel = findVizPanelByKey(scene, 'panel-1')!;
+      const editing = openPanelEditor(scene, panel);
+      scene.setState({ title: 'Updated title' });
+      locationService.partial({ from: 'now-6h', to: 'now', 'var-server': 'server-b' });
+
+      await editing;
+
+      expect(scene.state.editPanel?.state.panelRef.resolve()).toBe(panel);
+      expect(scene.state.title).toBe('Updated title');
     });
   });
 
