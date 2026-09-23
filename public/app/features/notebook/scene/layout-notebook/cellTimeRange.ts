@@ -19,16 +19,26 @@ class NotebookCellTimeRange extends SceneTimeRange {
 /**
  * spec → scene. Deliberately not `buildSceneTimeRange` (dashboard-scene/serialization/shared/
  * timeSettings) — that builder's signature requires the full `TimeSettingsSpec` shape
- * (fiscalYearStartMonth, weekStart, nowDelay…), none of which a per-cell override carries.
+ * (autoRefresh, quickRanges, hideTimepicker…), most of which a per-cell override has no use for.
  */
 export function buildCellSceneTimeRange(spec: NotebookCellTimeRangeSpec): SceneTimeRange {
-  return new NotebookCellTimeRange({ from: spec.from, to: spec.to, timeZone: spec.timezone });
+  return new NotebookCellTimeRange({
+    from: spec.from,
+    to: spec.to,
+    timeZone: spec.timezone,
+    fiscalYearStartMonth: spec.fiscalYearStartMonth,
+  });
 }
 
 /** scene → spec. */
 export function buildCellTimeRangeSpec(timeRange: SceneTimeRange): NotebookCellTimeRangeSpec {
-  const { from, to, timeZone } = timeRange.state;
-  return { from, to, ...(timeZone ? { timezone: timeZone } : {}) };
+  const { from, to, timeZone, fiscalYearStartMonth } = timeRange.state;
+  return {
+    from,
+    to,
+    ...(timeZone ? { timezone: timeZone } : {}),
+    ...(fiscalYearStartMonth !== undefined ? { fiscalYearStartMonth } : {}),
+  };
 }
 
 interface DraftTimeRangeHostState extends SceneObjectState {

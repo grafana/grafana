@@ -80,6 +80,7 @@ const notebookCellTimeRangeSpecSchema = z.object({
   from: z.string(),
   to: z.string(),
   timezone: z.string().optional(),
+  fiscalYearStartMonth: z.number().optional(),
 }) satisfies z.ZodType<NotebookCellTimeRangeSpec>;
 
 const notebookLayoutItemKindSchema = z.object({

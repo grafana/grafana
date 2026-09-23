@@ -873,6 +873,9 @@ export interface NotebookCellTimeRangeSpec {
 	// Timezone for this cell. Accepted values are IANA TZDB zone ID or "browser" or "utc".
 	// Falls back to the notebook's own timezone when omitted.
 	timezone?: string;
+	// The month this cell's fiscal year starts on. 0 = January, 11 = December.
+	// Falls back to the notebook's own fiscal year start when omitted.
+	fiscalYearStartMonth?: number;
 }
 
 export const defaultNotebookCellTimeRangeSpec = (): NotebookCellTimeRangeSpec => ({

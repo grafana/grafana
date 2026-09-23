@@ -33,6 +33,7 @@ export function NotebookCellTimeRangeControl({ cell, variant }: Props) {
       onClose={() => setOpen(false)}
       closeButton={false}
       placement="bottom-end"
+      fitContent
       content={<NotebookCellTimeRangePopoverContent cell={cell} onClose={() => setOpen(false)} />}
     >
       {variant === 'button' ? (
@@ -67,6 +68,7 @@ function NotebookCellTimeRangePopoverContent({ cell, onClose }: { cell: Notebook
   const [useNotebookTime, setUseNotebookTime] = useState(cell.state.$timeRange === undefined);
 
   const onReset = () => {
+    host.state.$timeRange.setState({ fiscalYearStartMonth: committed.fiscalYearStartMonth });
     const range = rangeUtil.convertRawToRange({ from: committed.from, to: committed.to }, committed.timezone);
     host.state.$timeRange.onTimeRangeChange(range);
     setUseNotebookTime(cell.state.$timeRange === undefined);
@@ -82,6 +84,7 @@ function NotebookCellTimeRangePopoverContent({ cell, onClose }: { cell: Notebook
     setUseNotebookTime(checked);
     if (checked) {
       const ancestor = seedFromAncestor(cell);
+      host.state.$timeRange.setState({ fiscalYearStartMonth: ancestor.fiscalYearStartMonth });
       const range = rangeUtil.convertRawToRange({ from: ancestor.from, to: ancestor.to }, ancestor.timezone);
       host.state.$timeRange.onTimeRangeChange(range);
     }
@@ -118,8 +121,8 @@ function NotebookCellTimeRangePopoverContent({ cell, onClose }: { cell: Notebook
 // sceneGraph.getTimeRange checks the object it's given first — starting at the cell would just
 // return its own still-set `$timeRange` instead of skipping to the notebook's ambient range.
 function seedFromAncestor(cell: NotebookCellItem): NotebookCellTimeRangeSpec {
-  const { from, to, timeZone } = sceneGraph.getTimeRange(cell.parent ?? cell).state;
-  return { from, to, timezone: timeZone };
+  const { from, to, timeZone, fiscalYearStartMonth } = sceneGraph.getTimeRange(cell.parent ?? cell).state;
+  return { from, to, timezone: timeZone, fiscalYearStartMonth };
 }
 
 const getStyles = (_theme: GrafanaTheme2) => ({

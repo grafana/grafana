@@ -1279,6 +1279,9 @@ type NotebookNotebookCellTimeRangeSpec struct {
 	// Timezone for this cell. Accepted values are IANA TZDB zone ID or "browser" or "utc".
 	// Falls back to the notebook's own timezone when omitted.
 	Timezone *string `json:"timezone,omitempty"`
+	// The month this cell's fiscal year starts on. 0 = January, 11 = December.
+	// Falls back to the notebook's own fiscal year start when omitted.
+	FiscalYearStartMonth *int64 `json:"fiscalYearStartMonth,omitempty"`
 }
 
 // NewNotebookNotebookCellTimeRangeSpec creates a new NotebookNotebookCellTimeRangeSpec object.
