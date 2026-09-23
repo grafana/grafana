@@ -164,6 +164,34 @@ func (f *RuleStore) GetAlertRuleByUID(_ context.Context, q *models.GetAlertRuleB
 	return nil, models.ErrAlertRuleNotFound
 }
 
+func (f *RuleStore) GetRuleByID(_ context.Context, q models.GetAlertRuleByIDQuery) (*models.AlertRule, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	f.RecordedOps = append(f.RecordedOps, q)
+	if err := f.Hook(q); err != nil {
+		return nil, err
+	}
+	for _, rule := range f.Rules[q.OrgID] {
+		if rule.ID == q.ID {
+			return rule, nil
+		}
+	}
+	return nil, models.ErrAlertRuleNotFound
+}
+
+func (f *RuleStore) Count(_ context.Context, orgID int64) (int64, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	if orgID != 0 {
+		return int64(len(f.Rules[orgID])), nil
+	}
+	var total int64
+	for _, rules := range f.Rules {
+		total += int64(len(rules))
+	}
+	return total, nil
+}
+
 func (f *RuleStore) GetAlertRulesGroupByRuleUID(_ context.Context, q *models.GetAlertRulesGroupByRuleUIDQuery) ([]*models.AlertRule, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()

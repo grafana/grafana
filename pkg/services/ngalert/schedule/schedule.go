@@ -20,6 +20,7 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule/ticker"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -40,10 +41,10 @@ type AlertsSender interface {
 	Send(ctx context.Context, key ngmodels.AlertRuleKey, alerts definitions.PostableAlerts)
 }
 
-// RulesStore is a store that provides alert rules for scheduling
+// RulesStore is a store that provides alert rules for scheduling.
+// The method set is exactly the rule store's scheduling segment.
 type RulesStore interface {
-	GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodels.AlertRuleKeyWithVersion, error)
-	GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error
+	rulestore.SchedulableRuleReader
 }
 
 type RecordingWriter interface {

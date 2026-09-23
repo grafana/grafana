@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/quota"
 )
 
@@ -47,17 +48,14 @@ type TransactionManager interface {
 }
 
 // RuleStore represents the ability to persist and query alert rules.
+//
+// Composed from the rule store's own segments rather than restating each method. As with the API
+// layer's RuleStore, taking whole segments makes this wider than what provisioning actually calls,
+// in exchange for not keeping a second copy of the signatures in sync.
 type RuleStore interface {
-	GetAlertRuleByUID(ctx context.Context, query *models.GetAlertRuleByUIDQuery) (*models.AlertRule, error)
-	ListAlertRules(ctx context.Context, query *models.ListAlertRulesQuery) (models.RulesGroup, error)
-	ListAlertRulesPaginated(ctx context.Context, query *models.ListAlertRulesExtendedQuery) (models.RulesGroup, string, error)
-	GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error)
-	InsertAlertRules(ctx context.Context, user *models.UserUID, rule []models.InsertRule) ([]models.AlertRuleKeyWithId, error)
-	UpdateAlertRules(ctx context.Context, user *models.UserUID, rule []models.UpdateRule) error
-	DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *models.UserUID, permanently bool, ruleUID ...string) error
-	GetAlertRulesGroupByRuleUID(ctx context.Context, query *models.GetAlertRulesGroupByRuleUIDQuery) ([]*models.AlertRule, error)
-	GetAlertRuleVersions(ctx context.Context, orgID int64, guid string) ([]*models.AlertRuleVersion, error)
-	ListDeletedRules(ctx context.Context, orgID int64) ([]*models.AlertRule, error)
+	rulestore.RuleReader
+	rulestore.RuleWriter
+	rulestore.RuleVersionReader
 }
 
 // QuotaChecker represents the ability to evaluate whether quotas are met.

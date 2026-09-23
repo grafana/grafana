@@ -1,43 +1,24 @@
 package api
 
 import (
-	"context"
-
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 )
 
-// RuleStore is the interface for persisting alert rules and instances
+// RuleStore is the interface for persisting alert rules and instances.
+//
+// Composed from the rule store's own segments rather than restating each method, so that adding a
+// method there cannot leave a stale copy here. It is still declared in this package, because what
+// the API layer depends on is this package's concern.
+//
+// Composing whole segments means this is slightly wider than the set the API layer actually calls:
+// it also pulls in GetRuleByID, ListAlertRulesPaginated, GetRuleGroupInterval, Count and
+// GetAlertRuleVersionFolders. That is the trade for not duplicating twenty signatures.
 type RuleStore interface {
-	// TODO after deprecating namespace_id field in GettableGrafanaRule we can simplify this interface
-	// by returning map[string]struct{} instead of map[string]*folder.FolderReference
-	GetUserVisibleNamespaces(context.Context, int64, identity.Requester) (map[string]*folder.Folder, error)
-	GetNamespaceByUID(ctx context.Context, uid string, orgID int64, user identity.Requester) (*folder.Folder, error)
-	GetNamespaceByTitle(ctx context.Context, fullpath string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, error)
-	GetOrCreateNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, bool, error)
-	// GetNamespaceChildren returns all children (first level) of the namespace with the given id.
-	GetNamespaceChildren(ctx context.Context, uid string, orgID int64, user identity.Requester) ([]*folder.FolderReference, error)
-
-	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) (*ngmodels.AlertRule, error)
-	GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmodels.GetAlertRulesGroupByRuleUIDQuery) ([]*ngmodels.AlertRule, error)
-	ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (ngmodels.RulesGroup, error)
-	ListAlertRulesByGroup(ctx context.Context, query *ngmodels.ListAlertRulesExtendedQuery) (ngmodels.RulesGroup, string, error)
-	ListDeletedRules(ctx context.Context, orgID int64) ([]*ngmodels.AlertRule, error)
-
-	// InsertAlertRules will insert all alert rules passed into the function
-	// and return the map of uuid to id.
-	InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, rules []ngmodels.InsertRule) ([]ngmodels.AlertRuleKeyWithId, error)
-	UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, rules []ngmodels.UpdateRule) error
-	DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *ngmodels.UserUID, permanently bool, ruleUID ...string) error
-	DeleteRuleFromTrashByGUID(ctx context.Context, orgID int64, ruleGUID string) (int64, error)
-
-	// IncreaseVersionForAllRulesInNamespaces Increases version for all rules that have specified namespace uids
-	IncreaseVersionForAllRulesInNamespaces(ctx context.Context, orgID int64, namespaceUIDs []string) ([]ngmodels.AlertRuleKeyWithVersion, error)
-	// UpdateFolderFullpathsForFolders updates the folder_fullpath column for all alert rules in the specified folders
-	UpdateFolderFullpathsForFolders(ctx context.Context, orgID int64, folderUIDs []string) error
-	GetAlertRuleVersions(ctx context.Context, orgID int64, guid string) ([]*ngmodels.AlertRuleVersion, error)
-	SaveAlertRuleStatus(ctx context.Context, orgID int64, ruleUID string, data []byte) error
-	accesscontrol.RuleUIDToNamespaceStore
+	// TODO after deprecating namespace_id field in GettableGrafanaRule we can simplify this
+	// interface by returning map[string]struct{} instead of map[string]*folder.FolderReference
+	rulestore.NamespaceStore
+	rulestore.RuleReader
+	rulestore.RuleWriter
+	rulestore.RuleVersionReader
+	rulestore.StatusWriter
 }
