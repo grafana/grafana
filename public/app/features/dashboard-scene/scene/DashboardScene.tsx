@@ -190,6 +190,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   private _changeTracker: DashboardSceneChangeTracker;
 
   private _sidebarActivation?: CancelActivationHandler;
+  private _modalRequest?: AbortController;
 
   /**
    * Remember scroll position when going into panel edit
@@ -294,6 +295,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const destroyMutationClient = createMutationClient(this, 'dashboard');
 
     return () => {
+      this._modalRequest?.abort();
       // A plan preview that's still showing when the scene deactivates (navigated away, tab
       // closed) never got a Build or Dismiss decision — report that honestly as 'closed' rather
       // than leaving the caller holding a stale reference to a preview nothing is showing.
@@ -507,6 +509,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // Save As / first save mint a new uid; skip the refresh await below so redirect isn't delayed.
     const isNewResource = result.uid !== this.state.uid;
 
+    this._modalRequest?.abort();
     this.setState({
       version: result.version,
       isDirty: false,
@@ -596,6 +599,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   private exitEditModeConfirmed(restoreInitialState = true) {
+    this._modalRequest?.abort();
     // No need to listen to changes anymore
     this._changeTracker.stopTrackingChanges();
 
@@ -782,16 +786,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
-    const { SaveDashboardDrawer } = await import(
-      /* webpackChunkName: "save-dashboard-drawer" */ '../saving/SaveDashboardDrawer'
-    );
+    await this.showModal(async () => {
+      const { SaveDashboardDrawer } = await import(
+        /* webpackChunkName: "save-dashboard-drawer" */ '../saving/SaveDashboardDrawer'
+      );
 
-    if (!this.state.isEditing) {
-      return;
-    }
-
-    this.setState({
-      overlay: new SaveDashboardDrawer({
+      return new SaveDashboardDrawer({
         dashboardRef: this.getRef(),
         saveAsCopy,
         saveAsDashboardTemplate,
@@ -799,7 +799,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         onSaveSuccess,
         recoverToNewBranch,
         showVariablesWarning: this.hasVariableErrors(),
-      }),
+      });
     });
   }
 
@@ -1185,11 +1185,18 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     console.error('Trying to unlink a lib panel in a layout that is not DashboardGridItem or AutoGridItem');
   }
 
-  public showModal(modal: SceneObject) {
-    this.setState({ overlay: modal });
+  public async showModal(modal: SceneObject | (() => Promise<SceneObject>)) {
+    // Start lazy loading here so competing requests are ordered by selection, not completion.
+    this._modalRequest?.abort();
+    const request = (this._modalRequest = new AbortController());
+    const overlay = typeof modal === 'function' ? await modal() : modal;
+    if (!request.signal.aborted) {
+      this.setState({ overlay });
+    }
   }
 
   public closeModal() {
+    this._modalRequest?.abort();
     this.setState({ overlay: undefined });
   }
 
@@ -1208,9 +1215,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   };
 
   public onShowAddLibraryPanelDrawer(panelToReplaceRef?: SceneObjectRef<VizPanel>) {
-    this.setState({
-      overlay: new AddLibraryPanelDrawer({ panelToReplaceRef }),
-    });
+    this.showModal(new AddLibraryPanelDrawer({ panelToReplaceRef }));
   }
 
   public onCreateNewRow() {

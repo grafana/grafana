@@ -2002,7 +2002,65 @@ describe('DashboardScene', () => {
     });
   });
 
+  describe('lazy modals', () => {
+    it.each([true, false])('keeps the latest request when older load finishes first=%s', async (olderFirst) => {
+      const scene = buildTestScene();
+      const older = Promise.withResolvers<SaveDashboardDrawer>();
+      const newer = Promise.withResolvers<SaveDashboardDrawer>();
+      const olderOpen = scene.showModal(() => older.promise);
+      const newerOpen = scene.showModal(() => newer.promise);
+      const latest = new SaveDashboardDrawer({ dashboardRef: scene.getRef(), saveAsCopy: true });
+      const resolveOlder = async () => {
+        older.resolve(new SaveDashboardDrawer({ dashboardRef: scene.getRef() }));
+        await olderOpen;
+      };
+      if (olderFirst) {
+        await resolveOlder();
+      }
+      newer.resolve(latest);
+      await newerOpen;
+      if (!olderFirst) {
+        await resolveOlder();
+      }
+      expect(scene.state.overlay).toBe(latest);
+    });
+
+    it.each(['close', 'exit edit mode', 'deactivate'] as const)('cancels pending modals on %s', async (action) => {
+      const scene = buildTestScene();
+      const deactivate = scene.activate();
+      scene.onEnterEditMode();
+      const pending = Promise.withResolvers<SaveDashboardDrawer>();
+      const opening = scene.showModal(() => pending.promise);
+      if (action === 'close') {
+        scene.closeModal();
+      } else if (action === 'exit edit mode') {
+        scene.exitEditMode({ skipConfirm: true });
+      } else {
+        deactivate();
+      }
+      pending.resolve(new SaveDashboardDrawer({ dashboardRef: scene.getRef() }));
+      await opening;
+      expect(scene.state.overlay).toBeUndefined();
+      const next = new SaveDashboardDrawer({ dashboardRef: scene.getRef(), saveAsCopy: true });
+      await scene.showModal(next);
+      expect(scene.state.overlay).toBe(next);
+      if (action !== 'deactivate') {
+        deactivate();
+      }
+    });
+  });
+
   describe('openSaveDrawer with template flags', () => {
+    it('does not replace a newer modal after the save drawer loads', async () => {
+      const scene = buildTestScene();
+      scene.onEnterEditMode();
+      const saving = scene.openSaveDrawer({});
+      const newer = new SaveDashboardDrawer({ dashboardRef: scene.getRef(), saveAsCopy: true });
+      await scene.showModal(newer);
+      await saving;
+      expect(scene.state.overlay).toBe(newer);
+    });
+
     it('opens the drawer in saveAsDashboardTemplate mode', async () => {
       const scene = buildTestScene();
       scene.onEnterEditMode();

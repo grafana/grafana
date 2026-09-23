@@ -16,10 +16,12 @@ export function DashboardFiltersOverviewPaneToggle({ dashboard }: Props) {
 
   const onClick = async () => {
     reportFiltersOverviewInteraction('opened');
-    const { DashboardFiltersOverviewDrawer } = await import(
-      /* webpackChunkName: "dashboard-filters-overview" */ './DashboardFiltersOverviewDrawer'
-    );
-    dashboard.showModal(new DashboardFiltersOverviewDrawer({}));
+    await dashboard.showModal(async () => {
+      const { DashboardFiltersOverviewDrawer } = await import(
+        /* webpackChunkName: "dashboard-filters-overview" */ './DashboardFiltersOverviewDrawer'
+      );
+      return new DashboardFiltersOverviewDrawer({});
+    });
   };
 
   const adHocVar = variables.find((v) => sceneUtils.isAdHocVariable(v));

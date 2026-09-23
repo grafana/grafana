@@ -44,7 +44,13 @@ export class SceneMutationClient<TScene extends MutationTargetScene> implements 
         this.commands.set(cmd.name, {
           readOnly: cmd.readOnly ?? false,
           load: () => {
-            registration ??= cmd.load().then(createCommandRegistration);
+            registration ??= cmd
+              .load()
+              .then(createCommandRegistration)
+              .catch((error) => {
+                registration = undefined;
+                throw error;
+              });
             return registration;
           },
         });

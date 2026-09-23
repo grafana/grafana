@@ -211,7 +211,7 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
       const drawer = new SaveDashboardDrawer({
         dashboardRef: new SceneObjectRef(dashboard),
       });
-      dashboard.setState({ overlay: drawer });
+      dashboard.showModal(drawer);
       return;
     }
 

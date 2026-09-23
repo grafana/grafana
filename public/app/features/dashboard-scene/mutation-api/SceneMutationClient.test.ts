@@ -33,6 +33,25 @@ function command<T = any>(overrides: TestCommandOverrides<T> = {}): MutationComm
 
 describe('SceneMutationClient', () => {
   describe('command lookup', () => {
+    it('retries a failed lazy load while sharing pending and successful loads', async () => {
+      const pending = Promise.withResolvers<MutationCommand<unknown, MutationTargetScene>>();
+      const load = jest.fn().mockReturnValueOnce(pending.promise).mockResolvedValue(command());
+      const target = scene();
+      const client = new SceneMutationClient(target, [{ name: 'TEST_COMMAND', load }]);
+      const request = { type: 'TEST_COMMAND', payload: {} };
+      const first = client.execute(request);
+      const concurrent = client.execute(request);
+      expect(load).toHaveBeenCalledTimes(1);
+
+      pending.reject(new Error('Chunk load failed'));
+      expect(await first).toEqual({ success: false, error: 'Chunk load failed', changes: [] });
+      expect(await concurrent).toEqual({ success: false, error: 'Chunk load failed', changes: [] });
+      expect(await client.execute(request)).toEqual({ success: true, changes: [] });
+      expect(await client.execute(request)).toEqual({ success: true, changes: [] });
+      expect(load).toHaveBeenCalledTimes(2);
+      expect(target.forceRender).toHaveBeenCalledTimes(2);
+    });
+
     it.each([true, false])('reports readOnly=%s without loading lazy commands', (readOnly) => {
       class InspectableClient extends SceneMutationClient<MutationTargetScene> {
         public isReadOnly(type: string) {
