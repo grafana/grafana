@@ -4210,8 +4210,8 @@ func Test_collectNamespaceUIDsByOrg(t *testing.T) {
 }
 
 // ruleChangeCapture observes RuleChangeEvents on the SQLStore's own bus. Rule writes publish via
-// DBSession.PublishAfterCommit, which dispatches through the bus the SQLStore was built with — not
-// DBstore.Bus — so a fakeBus injected into DBstore never sees these events.
+// DBSession.PublishAfterCommit, which dispatches through the bus the SQLStore was built with, which
+// is why RuleStore holds no bus of its own and a fake bus handed to the store sees nothing.
 type ruleChangeCapture struct {
 	fn func(*RuleChangeEvent)
 }
