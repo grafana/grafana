@@ -1,6 +1,6 @@
 import { t } from '@grafana/i18n';
 import { type SceneComponentProps, SceneObjectBase, type SceneObjectState, type SceneObjectRef } from '@grafana/scenes';
-import { Drawer, EmptyState, Spinner, Stack, Tab, TabsBar } from '@grafana/ui';
+import { Box, Drawer, EmptyState, ScrollContainer, Spinner, Stack, Tab, TabsBar } from '@grafana/ui';
 import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
 import { FolderDeadEndAlert } from 'app/features/provisioning/components/Dashboards/FolderDeadEndAlert';
@@ -198,22 +198,31 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
   };
 
   return (
-    <Drawer title={title} subtitle={dashboard.state.title} onClose={model.onClose} tabs={tabs}>
+    <Drawer
+      title={title}
+      subtitle={dashboard.state.title}
+      onClose={model.onClose}
+      tabs={tabs}
+      scrollableContent={false}
+    >
       {/* The form stays mounted (hidden) while the Changes tab is open so its field state survives tab switches */}
-      <div style={{ display: showDiff ? 'none' : 'contents' }}>
-        <Stack direction="column" gap={2}>
-          {isNewSave && <FolderDeadEndAlert {...view.lookup} />}
-          {renderForm()}
-          {canChooseTarget && (
-            <SaveTargetSwitch target={target} onChange={(saveTarget) => model.setState({ saveTarget })} />
-          )}
-        </Stack>
-      </div>
+      <Box display={showDiff ? 'none' : 'flex'} direction="column" height="100%">
+        <ScrollContainer showScrollIndicators>
+          <Stack direction="column" gap={2}>
+            {isNewSave && <FolderDeadEndAlert {...view.lookup} />}
+            {renderForm()}
+            {canChooseTarget && (
+              <SaveTargetSwitch target={target} onChange={(saveTarget) => model.setState({ saveTarget })} />
+            )}
+          </Stack>
+        </ScrollContainer>
+      </Box>
       {showDiff && changesCount === 0 && (
         <EmptyState variant="completed" message={t('dashboard.review.no-changes', 'No changes to save')} />
       )}
       {showDiff && changesCount > 0 && (
         <SaveDashboardDiff
+          fillHeight
           diff={diffs}
           oldValue={initialSaveModel}
           newValue={changedSaveModel}
