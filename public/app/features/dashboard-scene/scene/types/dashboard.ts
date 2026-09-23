@@ -85,8 +85,6 @@ export interface DashboardPlanningState {
   planId: string;
   /** Title of the plan being previewed, shown in the banner. */
   planTitle: string;
-  /** How many panels the plan proposes, shown in the banner. */
-  panelCount: number;
   /** Build the plan: attach real queries to the scaffolded panels. */
   onBuild: () => void;
   /** Discard the plan and remove its scaffolded panels. */

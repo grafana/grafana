@@ -37,6 +37,7 @@ import (
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/usagestats"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
@@ -181,9 +182,11 @@ type StorageBackend interface {
 	// Read a resource from storage optionally at an explicit version
 	ReadResource(context.Context, *resourcepb.ReadRequest) *BackendReadResponse
 
-	// BatchReadResource reads several resources at once, one response per request
-	// in order, or returns ErrBatchReadUnsupported.
-	BatchReadResource(context.Context, []*resourcepb.ReadRequest) ([]*BackendReadResponse, error)
+	// BatchReadResource lazily reads several resources, yielding one response per
+	// request in order. Body reads stop when the consumer stops. The up-front error
+	// reports failures that happen before iteration; per-request failures are set
+	// on BackendReadResponse.Error.
+	BatchReadResource(context.Context, []*resourcepb.ReadRequest) (iter.Seq[*BackendReadResponse], error)
 
 	// When the ResourceServer executes a List request, this iterator will
 	// query the backend for potential results.  All results will be
@@ -335,6 +338,10 @@ type SearchOptions struct {
 	// EmbeddingConfig is shared with the manifest watcher; consumers must read
 	// it after the initial poll and retain the registry to observe later reloads.
 	EmbeddingConfig *EmbeddingConfigRegistry
+
+	// EmbeddingBuilders is evaluated after the initial manifest load and again
+	// for queries, so a catalog row alone cannot enroll an internal collection.
+	EmbeddingBuilders embed.BuilderProvider
 
 	// Index snapshot settings — enable downloading pre-built search indexes from object storage on startup.
 	// IndexSnapshotEnabled gates the entire snapshot feature.
@@ -610,9 +617,11 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		searchClient:                   opts.SearchClient,
 		quotasConfig:                   opts.QuotasConfig,
 		searchBackedListResources:      opts.SearchBackedListConfig,
+		manifestSearchFields:           opts.Search.SearchFields,
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 		bookmarkFrequency:              opts.BookmarkFrequency,
 		vectorWriteReconciler:          opts.VectorReconciler,
+		embeddingBuilders:              opts.Search.EmbeddingBuilders,
 	}
 
 	if opts.Search.Resources != nil {
@@ -707,6 +716,10 @@ type server struct {
 	overridesService          *OverridesService
 	quotasConfig              QuotasConfig
 	searchBackedListResources SearchBackedListConfig
+	// Kind declarations from the manifests, refreshed by the manifest watcher. List
+	// reads the selectable fields from it before asking an index about a selector.
+	// May be nil.
+	manifestSearchFields *SearchFieldsRegistry
 
 	// Background watch task -- this has permissions for everything
 	ctx         context.Context
@@ -741,6 +754,7 @@ type server struct {
 	// Vector reconciler (which owns the backfiller). Started in Init,
 	// joined in Stop via indexersWG.
 	vectorWriteReconciler BroadcasterConsumer
+	embeddingBuilders     embed.BuilderProvider
 	indexersWG            sync.WaitGroup
 
 	// statsIngester buffers and flushes usage stats events. nil when the
@@ -759,6 +773,11 @@ func (s *server) Init(ctx context.Context) error {
 		// initialize the search index
 		if s.initErr == nil && s.search != nil {
 			s.initErr = s.search.init(ctx)
+		} else if s.initErr == nil && s.embeddingBuilders != nil {
+			// Storage-only servers also validate after the initial manifest poll.
+			if err := s.embeddingBuilders.Validate(); err != nil {
+				s.initErr = fmt.Errorf("embedding enrollment: %w", err)
+			}
 		}
 
 		// Start watching for changes
@@ -2223,18 +2242,24 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 					}
 				}
 				s.log.Debug("Server Broadcasting", "type", event.Type, "rv", event.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "resource", event.Key.Resource, "name", event.Key.Name)
+				sendStartedAt := time.Now()
 				if err := srv.Send(resp); err != nil {
 					return watchSendError(err)
 				}
+				sentAt := time.Now()
 				lastObjectRV = max(lastObjectRV, event.ResourceVersion)
 
 				if s.storageMetrics != nil && event.ResourceVersion > mostRecentRV {
-					// record latency - resource version can be either a unix microsecond timestamp (SQL backend)
-					// or a snowflake ID (KV backend), so we use ResourceVersionTime to handle both formats.
-					latencySeconds := time.Since(ResourceVersionTime(event.ResourceVersion)).Seconds()
-					if latencySeconds > 0 {
-						s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Group, event.Key.Resource).Observe(latencySeconds)
-					}
+					// Resource versions can be either Unix microsecond timestamps (SQL backend)
+					// or snowflake IDs (KV backend). Split the total at Send so upstream
+					// delivery and gRPC transport flow-control wait can be diagnosed separately.
+					s.storageMetrics.observeWatchEvent(
+						event.Key.Group,
+						event.Key.Resource,
+						ResourceVersionTime(event.ResourceVersion),
+						sendStartedAt,
+						sentAt,
+					)
 				}
 			}
 			// Progress is not a delivery cutoff: keep using the fixed starting since.

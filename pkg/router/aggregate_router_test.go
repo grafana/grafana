@@ -62,7 +62,7 @@ func TestGrafanaRouter_AggregatedGroupIsServedAndFiltered(t *testing.T) {
 		Name:          "baas_apiserver",
 		URL:           upstream.URL,
 		GroupPatterns: []string{"*.grafana.app"},
-	}, upstream.Client())
+	}, upstream.Client(), upstream.Client().Transport)
 	require.NoError(t, err)
 	// The cooldown is the poll loop's only pacing source, so shortening it is
 	// what makes this test fast.

@@ -127,7 +127,6 @@ func ProvidePluginLoaderDependenciesWithClients(
 	reg prometheus.Registerer,
 	builderMetrics *builder.BuilderMetrics,
 	clients RoutesLoaderClients,
-	restConfigProvider restcfg.RestConfigProvider,
 ) PluginLoaderDependencies {
 	return ProvidePluginLoaderDependencies(
 		pluginClient,
@@ -147,7 +146,7 @@ func ProvidePluginLoaderDependenciesWithClients(
 		clients.SecureValues,
 		reg,
 		builderMetrics,
-		restConfigProvider,
+		clients.RESTConfigProvider,
 	)
 }
 
@@ -217,7 +216,7 @@ func NewPluginBackend(plugin definition.PluginDefinition, client PluginClientPro
 	sum := sha256.Sum256(b)
 
 	return &PluginBackend{
-		key:    hex.EncodeToString(sum[:]),
+		key:    "p:" + hex.EncodeToString(sum[:]),
 		group:  group,
 		plugin: plugin,
 		client: client,

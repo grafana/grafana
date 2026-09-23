@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/authinfo"
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
@@ -62,6 +63,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
+	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl"
 	teamservice "github.com/grafana/grafana/pkg/services/team"
 	legacyuser "github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -100,6 +102,7 @@ func RegisterAPIService(
 	restConfig apiserver.RestConfigProvider,
 	mappers *resourcepermission.MappersRegistry,
 	authInfoStore login.Store,
+	remoteCache remotecache.CacheStorage,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	dbProvider := legacysql.NewDatabaseProvider(sql)
 	store := legacy.NewLegacySQLStores(dbProvider)
@@ -155,7 +158,7 @@ func RegisterAPIService(
 		legacyTeamStore:                   team.NewLegacyStore(store, accessClient, tracing, externalGroupReconciler),
 		externalGroupReconciler:           externalGroupReconciler,
 		teamBindingLegacyStore:            teambinding.NewLegacyBindingStore(store, tracing),
-		authInfoLegacyStore:               authinfo.NewLegacyStore(store, authInfoStore, tracing),
+		authInfoLegacyStore:               authinfo.NewLegacyStore(store, authInfoStore, tracing, remoteCache),
 		ssoLegacyStore:                    sso.NewLegacyStore(ssoService, tracing),
 		ssoSettingsClient:                 ssoSettingsClient,
 		roleApiInstaller:                  roleApiInstaller,
@@ -267,6 +270,8 @@ func NewAPIService(
 		apiConfig:                  Config{SingleOrganization: true},
 		teamLBACApiInstaller:       teamLBACApiInstaller,
 		settingService:             settingService,
+		// Serve the SSOSetting kind read-only in standalone, gated by kubernetesSsoSettingsApi.
+		ssoLegacyStore: sso.NewLegacyStore(ssosettingsimpl.ProvideReadOnlyDBService(dbProvider), tracingService),
 		authorizer: authorizer.AuthorizerFunc(
 			func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 				user, ok := types.AuthInfoFrom(ctx)
@@ -328,6 +333,15 @@ func NewAPIService(
 						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
 					}
 					return serviceAccountAuthorizer.Authorize(ctx, a)
+				}
+
+				if a.GetResource() == legacyiamv0.SSOSettingResourceInfo.GetName() {
+					// Interim parity with the in-process authorizer: allow any
+					// authenticated identity (real settings RBAC is a follow-up).
+					if user.GetIdentityType() == types.TypeAnonymous {
+						return authorizer.DecisionDeny, "anonymous identities cannot access ssosettings", nil
+					}
+					return authorizer.DecisionAllow, "", nil
 				}
 
 				return authorizer.DecisionDeny, "access denied", nil
@@ -433,6 +447,10 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		Index:                b.unified,
 		DeprecatedInternalID: apistore.DeprecatedID_Required,
 	})
+	opts.StorageOptsRegister(iamv0.AuthInfoResourceInfo.GroupResource(), apistore.StorageOptions{
+		Index:                b.unified,
+		DeprecatedInternalID: apistore.DeprecatedID_Required,
+	})
 	// Cap the apiserver name at 253 characters so callers get a clear
 	// validation error instead of a silent truncation/error at the storage
 	// layer. 253 is the Kubernetes DNS-1123 subdomain limit for metadata.name
@@ -453,7 +471,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	}
 
 	if enableUserApi {
-		if err := b.UpdateUsersAPIGroup(opts, storage, enableZanzanaSync); err != nil {
+		if err := b.UpdateUsersAPIGroup(opts, storage, enableZanzanaSync, enableTeamsApi); err != nil {
 			return err
 		}
 	}
@@ -630,11 +648,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 		}
 	}
 
-	if b.features != nil {
-		storage[teamResource.StoragePath("members")] = team.NewTeamMembersRESTWithFeature(b.teamGetter, b.tracing, b.features.TeamsAPI)
-	} else {
-		storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(b.teamGetter, b.tracing)
-	}
+	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(b.teamGetter, b.tracing)
 
 	if b.teamSearchHandler != nil {
 		b.teamSearchHandler.SetTeamGetter(b.teamGetter)
@@ -717,7 +731,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAuthInfoAPIGroup(opts builder
 	return nil
 }
 
-func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableZanzanaSync bool) error {
+func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableZanzanaSync, enableTeamsAPI bool) error {
 	userResource := iamv0.UserResourceInfo
 
 	userSelectableFieldsOpts := grafanaregistry.SelectableFieldsOptions{
@@ -779,9 +793,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 				b.store,
 			)
 		}
-		if b.features != nil {
-			storage[userResource.StoragePath("teams")] = user.NewUserTeamRESTWithFeature(teamSearchClient, b.teamGetter, b.tracing, b.features.TeamsAPI)
-		} else {
+		if enableTeamsAPI {
 			storage[userResource.StoragePath("teams")] = user.NewUserTeamREST(teamSearchClient, b.teamGetter, b.tracing)
 		}
 	}
