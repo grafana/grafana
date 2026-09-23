@@ -391,18 +391,21 @@ describe('FolderReadmePanel', () => {
       expect(requests).toHaveBeenCalledTimes(1);
     });
 
-    it('reuses individual cached paths when a different document links the same resource', async () => {
-      const { batches } = setResources([dashboardItem, memoryItem]);
-      setReadmeResult({ markdownContent: '[CPU](cpu.json) [Memory](memory.json)' });
-      const { user, rerender } = setup();
-      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
-      await waitFor(() => expect(cachedResult('dashboards/team-a/memory.json').isSuccess).toBe(true));
-      setReadmeResult({ markdownContent: 'A different document: [Memory](memory.json)' });
-      rerender(<FolderReadmePanel folderUID="test-folder" />);
-      await user.click(screen.getByRole('link', { name: 'Memory' }));
-      expect(pushSpy).toHaveBeenCalledWith('/d/memory');
-      expect(batches.mock.calls).toEqual([[['dashboards/team-a/cpu.json', 'dashboards/team-a/memory.json']]]);
-    });
+    it.each([undefined, 1])(
+      'reuses individual cached paths across documents with syncFinished=%s',
+      async (syncFinished) => {
+        const { batches } = setResources([dashboardItem, memoryItem]);
+        setReadmeResult({ markdownContent: '[CPU](cpu.json) [Memory](memory.json)', syncFinished });
+        const { user, rerender } = setup();
+        const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
+        await waitFor(() => expect(cachedResult('dashboards/team-a/memory.json').isSuccess).toBe(true));
+        setReadmeResult({ markdownContent: 'A different document: [Memory](memory.json)', syncFinished });
+        rerender(<FolderReadmePanel folderUID="test-folder" />);
+        await user.click(screen.getByRole('link', { name: 'Memory' }));
+        expect(pushSpy).toHaveBeenCalledWith('/d/memory');
+        expect(batches.mock.calls).toEqual([[['dashboards/team-a/cpu.json', 'dashboards/team-a/memory.json']]]);
+      }
+    );
 
     it('refreshes only the clicked path when the prefetched result is older than a minute', async () => {
       const { batches } = setResources([dashboardItem, memoryItem]);
@@ -423,15 +426,19 @@ describe('FolderReadmePanel', () => {
       }
     });
 
-    it('prefetches displayed links again after a sync completes', async () => {
+    it('reuses freshly prefetched links after a sync completes', async () => {
       const { batches } = setResources([dashboardItem, memoryItem]);
       const markdownContent = '[CPU](cpu.json) [Memory](memory.json)';
       setReadmeResult({ markdownContent, syncFinished: 1 });
-      const { rerender } = setup();
+      const { user, rerender } = setup();
+      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
       await waitFor(() => expect(cachedResult('dashboards/team-a/memory.json').isSuccess).toBe(true));
       setReadmeResult({ markdownContent, syncFinished: 2 });
       rerender(<FolderReadmePanel folderUID="test-folder" />);
       await waitFor(() => expect(batches).toHaveBeenCalledTimes(2));
+      await waitFor(() => expect(cachedResult('dashboards/team-a/memory.json').isSuccess).toBe(true));
+      await user.click(screen.getByRole('link', { name: 'Memory' }));
+      expect(pushSpy).toHaveBeenCalledWith('/d/memory');
       expect(batches.mock.calls).toEqual([
         [['dashboards/team-a/cpu.json', 'dashboards/team-a/memory.json']],
         [['dashboards/team-a/cpu.json', 'dashboards/team-a/memory.json']],
