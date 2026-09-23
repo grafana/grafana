@@ -22,7 +22,8 @@ type loopbackRestConfigProvider struct {
 }
 
 func (p *loopbackRestConfigProvider) GetRestConfig(context.Context) (*clientrest.Config, error) {
-	return &clientrest.Config{Host: "http://router", Transport: p}, nil
+	// Folder checks share this client; the default 5 QPS limiter can exhaust write deadlines.
+	return &clientrest.Config{Host: "http://router", Transport: p, QPS: -1}, nil
 }
 
 func (p *loopbackRestConfigProvider) RoundTrip(req *http.Request) (*http.Response, error) {

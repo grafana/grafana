@@ -12,6 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
@@ -36,6 +37,9 @@ func TestLoopbackRestConfigProvider(t *testing.T) {
 	}))
 	cfg, err := provider.GetRestConfig(t.Context())
 	require.NoError(t, err)
+	restClient, err := clientrest.UnversionedRESTClientFor(dynamic.ConfigFor(cfg))
+	require.NoError(t, err)
+	require.Nil(t, restClient.GetRateLimiter(), "folder lookups must not share a client-side rate limiter")
 	client, err := dynamic.NewForConfig(cfg)
 	require.NoError(t, err)
 	folders := client.Resource(schema.GroupVersionResource{Group: "folder.grafana.app", Version: "v1", Resource: "folders"}).Namespace("stacks-5457")
