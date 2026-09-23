@@ -49,7 +49,7 @@ export function decodeIncidentFilter(selection: IncidentFilterSelection): Incide
   return { slug: selection.slice(0, separatorIndex), value: selection.slice(separatorIndex + 1) };
 }
 
-export type TeamScope = { kind: 'default' } | { kind: 'all' } | { kind: 'team'; team: string };
+type TeamScope = { kind: 'default' } | { kind: 'all' } | { kind: 'team'; team: string };
 
 export function resolveTeamScope(selection: TeamSelection): TeamScope {
   if (selection === ALL_TEAMS) {
@@ -59,10 +59,4 @@ export function resolveTeamScope(selection: TeamSelection): TeamScope {
     return { kind: 'team', team: selection };
   }
   return { kind: 'default' };
-}
-
-/** The team the user explicitly picked, or undefined for the default and "All teams" scopes. */
-export function explicitTeam(selection: TeamSelection): string | undefined {
-  const scope = resolveTeamScope(selection);
-  return scope.kind === 'team' ? scope.team : undefined;
 }

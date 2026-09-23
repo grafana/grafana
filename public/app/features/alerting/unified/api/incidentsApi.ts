@@ -87,18 +87,27 @@ function buildActiveIncidentsQuery(filter?: IncidentFieldFilter) {
     : ACTIVE_INCIDENTS_QUERY;
 }
 
+const labelPairKey = (slug: string, value: string) => `${slug}:${value}`;
+
+// Options that can be offered for one field: live, quotable, and not archived org-wide.
+function getFieldFilterOptions(field: IncidentFieldDto, archivedPairs: Set<string>): IncidentFilterOption[] {
+  const options: IncidentFilterOption[] = [];
+  for (const option of field.selectoptions ?? []) {
+    if (option.archived || !isFilterableValue(option.value)) {
+      continue;
+    }
+    if (archivedPairs.has(labelPairKey(field.slug, option.value))) {
+      continue;
+    }
+    options.push({ fieldSlug: field.slug, fieldName: field.name || field.slug, value: option.value });
+  }
+  return options;
+}
+
 function getIncidentFilterOptions(response: GetFieldsResponse): IncidentFilterOption[] {
-  const archivedPairs = new Set((response.archived ?? []).map(({ key, value }) => `${key}:${value}`));
-  return (response.fields ?? [])
-    .filter(isSelectField)
-    .flatMap((field) =>
-      (field.selectoptions ?? [])
-        .filter(
-          (option) =>
-            !option.archived && isFilterableValue(option.value) && !archivedPairs.has(`${field.slug}:${option.value}`)
-        )
-        .map((option) => ({ fieldSlug: field.slug, fieldName: field.name || field.slug, value: option.value }))
-    );
+  const archivedPairs = new Set((response.archived ?? []).map(({ key, value }) => labelPairKey(key, value)));
+  const selectFields = (response.fields ?? []).filter(isSelectField);
+  return selectFields.flatMap((field) => getFieldFilterOptions(field, archivedPairs));
 }
 
 const getProxyApiUrl = (path: string, pluginId: string) => `/api/plugins/${pluginId}/resources${path}`;
