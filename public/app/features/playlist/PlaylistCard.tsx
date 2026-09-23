@@ -46,6 +46,24 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
         <Button variant="accent" icon="play" onClick={() => setStartPlaylist(playlist)} fill="outline" size="sm">
           <Trans i18nKey="playlist-page.card.start">Start</Trans>
         </Button>
+        <ModalsController key="button-share">
+          {({ showModal, hideModal }) => (
+            <Button
+              tooltip={t('playlist-page.card.tooltip', 'Share')}
+              icon="share-alt"
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                showModal(ShareModal, {
+                  playlistUid: playlist.metadata?.name ?? '',
+                  onDismiss: hideModal,
+                });
+              }}
+            >
+              <Trans i18nKey="playlist-page.card.share">Share</Trans>
+            </Button>
+          )}
+        </ModalsController>
         {canWrite && (
           <LinkButton
             key="edit"
@@ -69,23 +87,6 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
           </Button>
         )}
       </Card.Actions>
-      <Card.SecondaryActions>
-        <ModalsController key="button-share">
-          {({ showModal, hideModal }) => (
-            <DashNavButton
-              tooltip={t('playlist-page.card.tooltip', 'Share playlist')}
-              icon="share-alt"
-              iconSize="lg"
-              onClick={() => {
-                showModal(ShareModal, {
-                  playlistUid: playlist.metadata?.name ?? '',
-                  onDismiss: hideModal,
-                });
-              }}
-            />
-          )}
-        </ModalsController>
-      </Card.SecondaryActions>
     </Card>
   );
 };

@@ -13668,8 +13668,9 @@
     "card": {
       "delete": "Delete",
       "edit": "Edit",
+      "share": "Share",
       "start": "Start",
-      "tooltip": "Share playlist"
+      "tooltip": "Share"
     },
     "create-button": {
       "title": "New playlist"
