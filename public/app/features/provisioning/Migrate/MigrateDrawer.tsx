@@ -268,11 +268,8 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
           {stepStatusInfo.status === 'error' && (
             <ProvisioningAlert error={stepStatusInfo.error} action={stepStatusInfo.action} />
           )}
-          {'warning' in stepStatusInfo && stepStatusInfo.warning && (
-            <ProvisioningAlert
-              warning={stepStatusInfo.warning}
-              action={stepStatusInfo.status === 'warning' ? stepStatusInfo.action : undefined}
-            />
+          {'warning' in stepStatusInfo && stepStatusInfo.warning && stepStatusInfo.warning.length > 0 && (
+            <ProvisioningAlert warning={stepStatusInfo.warning} />
           )}
           <JobStatus watch={job} jobType="sync" onStatusChange={handleStatusChange} onRetry={retryMigration} />
         </Stack>

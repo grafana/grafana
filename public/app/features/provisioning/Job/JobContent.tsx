@@ -43,10 +43,12 @@ export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange
           const messages = getJobMessages(job?.status ?? {});
           onStatusChange?.({
             status: 'warning',
-            warning: {
-              title: t('provisioning.job-status.status.title-warning-running-job', 'Job completed with warnings'),
-              message: messages.warning,
-            },
+            warning: [
+              {
+                title: t('provisioning.job-status.status.title-warning-running-job', 'Job completed with warnings'),
+                message: messages.warning,
+              },
+            ],
           });
           errorSetRef.current = true;
         }
@@ -56,10 +58,12 @@ export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange
         if (!errorSetRef.current) {
           const messages = getJobMessages(job?.status ?? {});
           const warningInfo = messages.warning
-            ? {
-                title: t('provisioning.job-status.status.title-warning-running-job', 'Job completed with warnings'),
-                message: messages.warning,
-              }
+            ? [
+                {
+                  title: t('provisioning.job-status.status.title-warning-running-job', 'Job completed with warnings'),
+                  message: messages.warning,
+                },
+              ]
             : undefined;
           onStatusChange?.({
             status: 'error',

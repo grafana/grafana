@@ -138,7 +138,7 @@ describe('OrphanedResourceBanner', () => {
         status === 'success'
           ? { status: 'success' }
           : status === 'warning'
-            ? { status: 'warning', warning: 'partial' }
+            ? { status: 'warning', warning: ['partial'] }
             : { status: 'error', error: 'something failed' };
       act(() => {
         onStatusChange(statusInfo);

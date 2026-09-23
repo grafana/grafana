@@ -10,6 +10,7 @@ import { type RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 import { generateRepositoryTitle } from 'app/features/provisioning/utils/data';
 
+import { type WarningInfo } from '../Shared/ProvisioningAlert';
 import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
 import { CONFIGURE_GRAFANA_DOCS_URL, UPGRADE_URL } from '../constants';
 import { getPathConflictCondition, getPathConflictWarningTitle } from '../utils/pathConflict';
@@ -100,32 +101,33 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
           onClick: retryRepositoryStatus,
         },
       });
-    } else if (!isLoading && pathConflict) {
-      setStepStatusInfo({
-        status: 'warning',
-        warning: {
-          title: getPathConflictWarningTitle(),
-          message: pathConflict.message,
-        },
+      return;
+    }
+
+    const warnings: WarningInfo[] = [];
+
+    if (!isLoading && pathConflict) {
+      warnings.push({
+        title: getPathConflictWarningTitle(),
+        message: pathConflict.message,
       });
-    } else if (isQuotaWarning) {
+    }
+
+    if (isQuotaWarning) {
       const onPrem = isOnPrem();
-      setStepStatusInfo({
-        status: 'warning',
-        warning: {
-          title: t('provisioning.bootstrap-step.warning-quota-may-exceed-title', 'Resource limit may be exceeded'),
-          message: onPrem
-            ? t(
-                'provisioning.bootstrap-step.warning-quota-may-exceed-message-onprem',
-                'This repository folder contains approximately {{fileCount}} resources, which may exceed your instance limit of {{limit}}. If the limit is reached during sync, some resources will be skipped. You can continue and adjust later, or update your Grafana configuration.',
-                { fileCount, limit: maxResourcesPerRepository }
-              )
-            : t(
-                'provisioning.bootstrap-step.warning-quota-may-exceed-message',
-                'This repository folder contains approximately {{fileCount}} resources, which may exceed your account limit of {{limit}}. If the limit is reached during sync, some resources will be skipped. You can continue and adjust later, or upgrade your account.',
-                { fileCount, limit: maxResourcesPerRepository }
-              ),
-        },
+      warnings.push({
+        title: t('provisioning.bootstrap-step.warning-quota-may-exceed-title', 'Resource limit may be exceeded'),
+        message: onPrem
+          ? t(
+              'provisioning.bootstrap-step.warning-quota-may-exceed-message-onprem',
+              'This repository folder contains approximately {{fileCount}} resources, which may exceed your instance limit of {{limit}}. If the limit is reached during sync, some resources will be skipped. You can continue and adjust later, or update your Grafana configuration.',
+              { fileCount, limit: maxResourcesPerRepository }
+            )
+          : t(
+              'provisioning.bootstrap-step.warning-quota-may-exceed-message',
+              'This repository folder contains approximately {{fileCount}} resources, which may exceed your account limit of {{limit}}. If the limit is reached during sync, some resources will be skipped. You can continue and adjust later, or upgrade your account.',
+              { fileCount, limit: maxResourcesPerRepository }
+            ),
         action: onPrem
           ? {
               label: t('provisioning.bootstrap-step.update-configuration-action', 'View configuration docs'),
@@ -138,6 +140,10 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
               external: true,
             },
       });
+    }
+
+    if (warnings.length > 0) {
+      setStepStatusInfo({ status: 'warning', warning: warnings });
     } else {
       setStepStatusInfo({ status: isLoading ? 'running' : 'idle' });
     }

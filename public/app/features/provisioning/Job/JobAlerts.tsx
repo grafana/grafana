@@ -16,7 +16,7 @@ export function JobAlerts({ status }: { status: JobStatus }) {
     return (
       <>
         {messages.error && <ProvisioningAlert error={{ message: messages.error }} />}
-        {messages.warning && <ProvisioningAlert warning={{ message: messages.warning }} />}
+        {messages.warning && <ProvisioningAlert warning={[{ message: messages.warning }]} />}
       </>
     );
   }
