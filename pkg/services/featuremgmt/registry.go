@@ -1647,14 +1647,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "alertingImportYAMLUI",
-			Description: "Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules",
-			Generate:    Generate{LegacyFrontend: true},
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAlertingSquad,
-			Expression:  "true",
-		},
-		{
 			Name:        "alertingMigrationWizardUI",
 			Description: "Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting",
 			Generate:    Generate{LegacyFrontend: true},
