@@ -132,7 +132,11 @@ function savedTexts() {
 
 /** The first cell's own time range in each write, so a test can say what was actually sent. */
 function savedCellTimeRanges() {
-  return jest.mocked(updateNotebook).mock.calls.map(([, spec]) => spec.layout.spec.cells[0]?.spec.timeRange);
+  return jest.mocked(updateNotebook).mock.calls.map(([, spec]) => {
+    const element = spec.elements.panel1;
+    const { timeFrom, timeTo } = element.kind === 'Panel' ? element.spec.data.spec.queryOptions : {};
+    return timeFrom && timeTo ? { from: timeFrom, to: timeTo } : undefined;
+  });
 }
 
 describe('NotebookAutosave', () => {
@@ -422,10 +426,7 @@ describe('NotebookAutosave', () => {
       const { scene, cell } = buildSceneWithPanel();
       deactivate = scene.activate();
 
-      cell.setState({
-        $timeRange: new SceneTimeRange({ from: 'now-24h', to: 'now' }),
-        timePicker: new SceneTimePicker({}),
-      });
+      cell.setState({ $timeRange: new SceneTimeRange({ from: 'now-24h', to: 'now' }) });
       await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
 
       expect(updateNotebook).not.toHaveBeenCalled();
@@ -435,10 +436,7 @@ describe('NotebookAutosave', () => {
       const { scene, cell } = buildSceneWithPanel();
       deactivate = scene.activate();
 
-      cell.setState({
-        $timeRange: new SceneTimeRange({ from: 'now-24h', to: 'now' }),
-        timePicker: new SceneTimePicker({}),
-      });
+      cell.setState({ $timeRange: new SceneTimeRange({ from: 'now-24h', to: 'now' }) });
       scene.onEnterEditMode();
       scene.onTitleChange('Renamed while editing');
       await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
@@ -451,10 +449,7 @@ describe('NotebookAutosave', () => {
       const { scene, cell } = buildSceneWithPanel();
       deactivate = scene.activate();
 
-      cell.setState({
-        $timeRange: new SceneTimeRange({ from: 'now-24h', to: 'now' }),
-        timePicker: new SceneTimePicker({}),
-      });
+      cell.setState({ $timeRange: new SceneTimeRange({ from: 'now-24h', to: 'now' }) });
       scene.onEnterEditMode();
       scene.onTitleChange('First edit');
       await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
@@ -470,10 +465,7 @@ describe('NotebookAutosave', () => {
       const { scene, cell } = buildSceneWithPanel();
       deactivate = scene.activate();
 
-      cell.setState({
-        $timeRange: new SceneTimeRange({ from: 'now-24h', to: 'now' }),
-        timePicker: new SceneTimePicker({}),
-      });
+      cell.setState({ $timeRange: new SceneTimeRange({ from: 'now-24h', to: 'now' }) });
       deactivate();
       deactivate = scene.activate();
       await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);

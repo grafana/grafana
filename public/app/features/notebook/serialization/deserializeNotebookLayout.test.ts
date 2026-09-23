@@ -78,19 +78,37 @@ describe('deserializeNotebookLayout', () => {
     expect(roundTripped).toEqual(layout);
   });
 
-  it("round-trips a panel cell's own time range", () => {
+  it("reads a panel cell's own time range off its queryOptions, and leaves the layout untouched", () => {
     const { layout, elements } = fixture();
-    const panelItem = layout.spec.cells[0];
-    panelItem.spec.timeRange = { from: 'now-24h', to: 'now', timezone: 'utc' };
+    const panelElement = elements.panel1;
+    if (panelElement.kind === 'Panel') {
+      panelElement.spec.data.spec.queryOptions = { timeFrom: 'now-24h', timeTo: 'now' };
+    }
 
     const manager = deserializeNotebookLayout(layout, elements);
     const panelCell = manager.state.cells[0];
 
     expect(panelCell.state.$timeRange?.state.from).toBe('now-24h');
     expect(panelCell.state.$timeRange?.state.to).toBe('now');
-    expect(panelCell.state.$timeRange?.state.timeZone).toBe('utc');
-    expect(panelCell.state.timePicker).toBeDefined();
+    // The layout item itself never carries this — see transformNotebook.test.ts for the actual
+    // round-trip through queryOptions.timeFrom/.timeTo on the panel element.
     expect(manager.serialize()).toEqual(layout);
+  });
+
+  // Confirms timeFrom/timeTo are stripped before buildVizPanelState runs: otherwise it would
+  // auto-attach its own PanelTimeRange here, which would shadow this cell-level override via
+  // sceneGraph.getTimeRange's check-self-before-parent resolution order.
+  it('does not let buildVizPanelState attach its own PanelTimeRange from the same fields', () => {
+    const { layout, elements } = fixture();
+    const panelElement = elements.panel1;
+    if (panelElement.kind === 'Panel') {
+      panelElement.spec.data.spec.queryOptions = { timeFrom: 'now-24h', timeTo: 'now' };
+    }
+
+    const manager = deserializeNotebookLayout(layout, elements);
+    const panelCell = manager.state.cells[0];
+
+    expect(panelCell.state.body?.state.$timeRange).toBeUndefined();
   });
 
   it('leaves a panel cell with no saved time range without one', () => {
@@ -100,7 +118,6 @@ describe('deserializeNotebookLayout', () => {
     const panelCell = manager.state.cells[0];
 
     expect(panelCell.state.$timeRange).toBeUndefined();
-    expect(panelCell.state.timePicker).toBeUndefined();
   });
 
   it('surfaces the notebook title and tags on the layout manager for the document header', () => {

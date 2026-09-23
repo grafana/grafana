@@ -1,15 +1,10 @@
-import {
-  type SceneObjectState,
-  SceneObjectBase,
-  type SceneTimePicker,
-  type SceneTimeRange,
-  type VizPanel,
-} from '@grafana/scenes';
+import { type SceneObjectState, SceneObjectBase, type SceneTimeRange, type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { type DashboardLayoutItem } from 'app/features/dashboard-scene/scene/types/DashboardLayoutItem';
 
-import { type CellContentKind, type NotebookCellTimeRangeSpec } from '../../types';
+import { type CellContentKind } from '../../types';
 
+import { type CellTimeRangeSpec } from './cellTimeRange';
 import { type NotebookLayoutManager } from './NotebookLayoutManager';
 import { type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
 import { isNotebookLayoutManager } from './isNotebookLayoutManager';
@@ -26,10 +21,8 @@ export interface NotebookCellItemState extends SceneObjectState {
   body?: VizPanel;
   content?: CellContentKind;
   // Absent means sceneGraph.getTimeRange() resolves up to the notebook's own range, same as no
-  // override at all. `timePicker` is paired with it so the override UI can render a real
-  // SceneTimePicker, which needs a scene-graph parent to resolve its time range from.
+  // override at all.
   $timeRange?: SceneTimeRange;
-  timePicker?: SceneTimePicker;
 }
 
 export class NotebookCellItem extends SceneObjectBase<NotebookCellItemState> implements DashboardLayoutItem {
@@ -66,7 +59,7 @@ export class NotebookCellItem extends SceneObjectBase<NotebookCellItemState> imp
     this.getParentLayout().runQueryEdit(this, label, queries);
   }
 
-  public onTimeRangeChange(spec: NotebookCellTimeRangeSpec | undefined): void {
+  public onTimeRangeChange(spec: CellTimeRangeSpec | undefined): void {
     this.getParentLayout().setCellTimeRange(this, spec);
   }
 

@@ -1,6 +1,5 @@
 import { render, screen } from 'test/test-utils';
 
-import { selectors } from '@grafana/e2e-selectors';
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { defaultVisualizationPanelKind } from 'app/features/notebook/types';
@@ -28,21 +27,19 @@ function buildCell(timeRange?: SceneTimeRange) {
 }
 
 describe('NotebookCellTimeRangeControl', () => {
-  it('reverts a timezone change made since opening the popover, on Reset', async () => {
-    const cell = buildCell(new SceneTimeRange({ from: 'now-24h', to: 'now', timeZone: 'America/Chicago' }));
+  it('reverts a from/to change made since opening the popover, on Reset', async () => {
+    const cell = buildCell(new SceneTimeRange({ from: 'now-24h', to: 'now' }));
     const { user } = render(<NotebookCellTimeRangeControl cell={cell} variant="button" />);
 
     await user.click(screen.getByRole('button'));
-    await user.click(screen.getByTestId(selectors.components.TimePicker.openButton));
-    await user.click(screen.getByTestId(selectors.components.TimeZonePicker.changeTimeSettingsButton));
-    await user.click(screen.getByRole('combobox'));
-    await user.click(await screen.findByText('Stockholm'));
+    await user.click(screen.getByRole('button', { name: 'Move time range backwards' }));
 
     await user.click(screen.getByRole('button', { name: 'Reset' }));
     await user.click(screen.getByRole('button', { name: 'Apply' }));
 
-    // The real assertion that matters: Reset discarded the mid-session timezone edit, so Apply
-    // persists the committed timezone, not the one picked from the footer before Reset.
-    expect(cell.state.$timeRange?.state.timeZone).toBe('America/Chicago');
+    // The real assertion that matters: Reset discarded the mid-session move, so Apply persists the
+    // committed range, not the shifted one.
+    expect(cell.state.$timeRange?.state.from).toBe('now-24h');
+    expect(cell.state.$timeRange?.state.to).toBe('now');
   });
 });

@@ -13,14 +13,10 @@ import { NotebookAnalytics } from '../analytics/main';
 import { NOTEBOOK_AUTOSAVE_FAILED_REASON, NOTEBOOK_ENTRY_POINT } from '../analytics/types';
 import { createNotebook, updateNotebook } from '../api/notebookResource';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
-import {
-  type NotebookCellTimeRangeSpec,
-  type NotebookElement,
-  type PanelKind,
-  type Spec as NotebookSpec,
-} from '../types';
+import { type NotebookElement, type PanelKind, type Spec as NotebookSpec } from '../types';
 
 import { type NotebookScene } from './NotebookScene';
+import { type CellTimeRangeSpec, withQueryOptionsTimeRange } from './layout-notebook/cellTimeRange';
 import { type NotebookCellItem } from './layout-notebook/NotebookCellItem';
 
 type PanelVizConfigState = Pick<VizPanel['state'], 'pluginId' | 'pluginVersion' | 'options' | 'fieldConfig'>;
@@ -71,7 +67,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   /** The panels whose viz config was edited this session, by element name. As `timeSettingsEdited`. */
   private vizConfigsEdited = new Set<string>();
   /** Each cell's own time range in `baseline`, by cell identity. As `savedVizConfigs`. */
-  private savedCellTimeRanges = new Map<NotebookCellItem, NotebookCellTimeRangeSpec | undefined>();
+  private savedCellTimeRanges = new Map<NotebookCellItem, CellTimeRangeSpec | undefined>();
   /** The cells whose own time range was edited this session, by cell identity. As `vizConfigsEdited`. */
   private cellTimeRangesEdited = new Set<NotebookCellItem>();
   /** The panels a reader changed, by element name, waiting on the prompt edit mode opens with. */
@@ -438,44 +434,39 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     return {
       ...spec,
       timeSettings,
-      elements: this.withSavedVizConfigs(spec.elements, vizConfigsEdited),
-      layout: this.withSavedCellTimeRanges(spec.layout, cellTimeRangesEdited),
+      elements: this.withSavedCellTimeRanges(
+        this.withSavedVizConfigs(spec.elements, vizConfigsEdited),
+        cellTimeRangesEdited
+      ),
     };
   }
 
   /**
-   * Puts the saved time range back on the cells nobody edited this session — as `withSavedVizConfigs`.
-   * Walked in lockstep with `contentCells()`, the same cells/order `serialize()` derives `cells` from.
+   * Puts the saved time range back on the panels nobody edited this session — as `withSavedVizConfigs`,
+   * which this runs after (they touch disjoint sub-paths — `vizConfig` vs. `data.spec.queryOptions` —
+   * so the order between them doesn't matter).
    */
   private withSavedCellTimeRanges(
-    layout: NotebookSpec['layout'],
+    elements: NotebookSpec['elements'],
     cellTimeRangesEdited: ReadonlySet<NotebookCellItem>
-  ): NotebookSpec['layout'] {
+  ): NotebookSpec['elements'] {
     const saved = this.savedCellTimeRanges;
     if (!saved.size) {
-      return layout;
+      return elements;
     }
 
-    const cells = this.scene.state.body.contentCells();
-    const items = layout.spec.cells.map((item, index) => {
-      const cell = cells[index];
-      if (!cell || cellTimeRangesEdited.has(cell) || !saved.has(cell)) {
-        return item;
+    const result: Record<string, NotebookElement> = { ...elements };
+    for (const [cell, savedTimeRange] of saved) {
+      if (cellTimeRangesEdited.has(cell)) {
+        continue;
       }
+      const element = result[cell.state.elementName];
+      if (element?.kind === 'Panel') {
+        result[cell.state.elementName] = withQueryOptionsTimeRange(element, savedTimeRange);
+      }
+    }
 
-      const savedTimeRange = saved.get(cell);
-      if (savedTimeRange) {
-        return { ...item, spec: { ...item.spec, timeRange: savedTimeRange } };
-      }
-      if (item.spec.timeRange === undefined) {
-        return item;
-      }
-      const spec = { ...item.spec };
-      delete spec.timeRange;
-      return { ...item, spec };
-    });
-
-    return { ...layout, spec: { ...layout.spec, cells: items } };
+    return result;
   }
 
   /**
@@ -723,21 +714,24 @@ function collectVizPanels(scene: NotebookScene): Map<string, VizPanel> {
  * Each cell's own time range as it was actually sent, by cell identity — snapshotted from `spec`
  * (what landed), not from the live scene, which can already differ by the time a save resolves
  * (e.g. a reader's edit that `withSavedCellTimeRanges` deliberately left out of `spec`). `cells`
- * must be `contentCells()` captured at the same time `spec` was built, for the same positional
- * pairing `withSavedCellTimeRanges` relies on.
+ * must be `contentCells()` captured at the same time `spec` was built.
  */
 function collectCellTimeRangesFromSpec(
   spec: NotebookSpec,
   cells: NotebookCellItem[]
-): Map<NotebookCellItem, NotebookCellTimeRangeSpec | undefined> {
-  const ranges = new Map<NotebookCellItem, NotebookCellTimeRangeSpec | undefined>();
+): Map<NotebookCellItem, CellTimeRangeSpec | undefined> {
+  const ranges = new Map<NotebookCellItem, CellTimeRangeSpec | undefined>();
 
-  spec.layout.spec.cells.forEach((item, index) => {
-    const cell = cells[index];
-    if (cell) {
-      ranges.set(cell, item.spec.timeRange);
-    }
-  });
+  for (const cell of cells) {
+    const element = spec.elements[cell.state.elementName];
+    const queryOptions = element?.kind === 'Panel' ? element.spec.data.spec.queryOptions : undefined;
+    ranges.set(
+      cell,
+      queryOptions?.timeFrom && queryOptions?.timeTo
+        ? { from: queryOptions.timeFrom, to: queryOptions.timeTo }
+        : undefined
+    );
+  }
 
   return ranges;
 }
@@ -753,7 +747,7 @@ export function changedCellTimeRange(
   const { changedObject, partialUpdate } = payload;
 
   for (const cell of scene.state.body.state.cells) {
-    if (changedObject === cell && ('$timeRange' in partialUpdate || 'timePicker' in partialUpdate)) {
+    if (changedObject === cell && '$timeRange' in partialUpdate) {
       return cell;
     }
     if (cell.state.$timeRange && changedObject === cell.state.$timeRange) {

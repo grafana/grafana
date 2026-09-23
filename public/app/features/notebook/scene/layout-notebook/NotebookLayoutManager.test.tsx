@@ -521,10 +521,7 @@ describe('NotebookLayoutManager', () => {
 
     it("clones a cell's own time range independently", () => {
       const { cell } = panelCell('latency');
-      cell.setState({
-        $timeRange: new SceneTimeRange({ from: 'now-24h', to: 'now' }),
-        timePicker: new SceneTimePicker({}),
-      });
+      cell.setState({ $timeRange: new SceneTimeRange({ from: 'now-24h', to: 'now' }) });
       const manager = buildManager([cell]);
 
       manager.duplicateCell(manager.state.cells[0]);
@@ -532,7 +529,6 @@ describe('NotebookLayoutManager', () => {
       const [original, copy] = manager.state.cells;
       expect(copy.state.$timeRange?.state.from).toBe('now-24h');
       expect(copy.state.$timeRange).not.toBe(original.state.$timeRange);
-      expect(copy.state.timePicker).not.toBe(original.state.timePicker);
 
       copy.state.$timeRange?.setState({ from: 'now-1h' });
       expect(original.state.$timeRange?.state.from).toBe('now-24h');
@@ -1281,7 +1277,6 @@ describe('NotebookLayoutManager', () => {
       manager.setCellTimeRange(cell, { from: 'now-24h', to: 'now' });
 
       expect(cell.state.$timeRange?.state.from).toBe('now-24h');
-      expect(cell.state.timePicker).toBeDefined();
       expect(history.state.canUndo).toBe(false);
     });
 
@@ -1308,10 +1303,7 @@ describe('NotebookLayoutManager', () => {
 
     it('clears the override, labeled as reverting to the notebook time, while editing', () => {
       const { cell } = panelCell('latency');
-      cell.setState({
-        $timeRange: new SceneTimeRange({ from: 'now-24h', to: 'now' }),
-        timePicker: new SceneTimePicker({}),
-      });
+      cell.setState({ $timeRange: new SceneTimeRange({ from: 'now-24h', to: 'now' }) });
       const manager = new NotebookLayoutManager({ cells: [cell], isEditing: true });
       const history = attachHistory(manager);
 
@@ -1655,10 +1647,7 @@ describe('NotebookLayoutManager', () => {
 
     it("clones each cell's own time range independently", () => {
       const manager = buildManager();
-      manager.state.cells[1].setState({
-        $timeRange: new SceneTimeRange({ from: 'now-24h', to: 'now' }),
-        timePicker: new SceneTimePicker({}),
-      });
+      manager.state.cells[1].setState({ $timeRange: new SceneTimeRange({ from: 'now-24h', to: 'now' }) });
 
       const clone = manager.duplicate();
 

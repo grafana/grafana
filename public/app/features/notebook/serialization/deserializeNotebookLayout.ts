@@ -1,4 +1,4 @@
-import { SceneTimePicker, VizPanel } from '@grafana/scenes';
+import { VizPanel } from '@grafana/scenes';
 import {
   buildLibraryPanelState,
   buildVizPanelState,
@@ -7,7 +7,7 @@ import { type PanelIdGenerator } from 'app/features/dashboard-scene/utils/dashbo
 
 import { NotebookCellItem } from '../scene/layout-notebook/NotebookCellItem';
 import { NotebookLayoutManager } from '../scene/layout-notebook/NotebookLayoutManager';
-import { buildCellSceneTimeRange } from '../scene/layout-notebook/cellTimeRange';
+import { buildCellSceneTimeRange, withQueryOptionsTimeRange } from '../scene/layout-notebook/cellTimeRange';
 import { type NotebookElement, type NotebookLayoutKind } from '../types';
 
 interface NotebookHeader {
@@ -52,27 +52,27 @@ export function deserializeNotebookLayout(
       collapsed: item.spec.collapsed,
     };
 
-    // Only a panel-bearing cell can carry its own time range.
-    const timeRangeSpec = item.spec.timeRange;
-    const cellTimeRange = timeRangeSpec
-      ? { $timeRange: buildCellSceneTimeRange(timeRangeSpec), timePicker: new SceneTimePicker({}) }
-      : {};
-
     if (element.kind === 'Panel') {
+      const { timeFrom, timeTo } = element.spec.data.spec.queryOptions;
+      const cellTimeRange = timeFrom && timeTo ? { $timeRange: buildCellSceneTimeRange(timeFrom, timeTo) } : {};
+      // Stripped before buildVizPanelState runs: it auto-attaches its own PanelTimeRange straight
+      // onto the VizPanel whenever timeFrom is truthy, which would shadow this cell-level override
+      // — sceneGraph.getTimeRange checks a panel's own $timeRange before ever reaching its parent.
+      const panelElement = timeFrom || timeTo ? withQueryOptionsTimeRange(element, undefined) : element;
+
       // buildVizPanelState is dashboard-typed and takes this directly: the notebook panel chain
       // carries the dashboard v2 shape, so the two generated types are structurally identical.
       cells.push(
         new NotebookCellItem({
           ...base,
           ...cellTimeRange,
-          body: new VizPanel(buildVizPanelState(element, panelIdGenerator?.())),
+          body: new VizPanel(buildVizPanelState(panelElement, panelIdGenerator?.())),
         })
       );
     } else if (element.kind === 'LibraryPanel') {
       cells.push(
         new NotebookCellItem({
           ...base,
-          ...cellTimeRange,
           body: new VizPanel(buildLibraryPanelState(element, panelIdGenerator?.())),
         })
       );

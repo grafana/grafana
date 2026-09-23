@@ -61,31 +61,13 @@ NotebookLayoutItemKind: {
 
 // One ordered item in a notebook layout. `element` references either a CellKind
 // (markdown/code content) or a V2PanelKind in the notebook's elements map. `source`
-// records who authored the cell; `collapsed` hides the body in the UI; `timeRange`, when
-// present, makes this cell's panel query and render against its own time window instead of
-// the notebook's.
+// records who authored the cell; `collapsed` hides the body in the UI. A panel-kind element's
+// own per-cell time window override, when it has one, lives on that element's own
+// QueryOptionsSpec (`timeFrom`/`timeTo`) rather than here.
 NotebookLayoutItemSpec: {
 	element:    ElementReference
 	source:     "assistant" | "user"
 	collapsed?: bool
-	timeRange?: NotebookCellTimeRangeSpec
-}
-
-// A per-cell time window override, present only when this cell diverges from the notebook's
-// own time range. Only meaningful on a layout item whose element is a Panel or LibraryPanel.
-NotebookCellTimeRangeSpec: {
-	// Accepted values are relative time strings like "now-6h" or absolute time strings like
-	// "2020-07-10T08:00:00.000Z".
-	from: string
-	// Accepted values are relative time strings like "now-6h" or absolute time strings like
-	// "2020-07-10T08:00:00.000Z".
-	to: string
-	// Timezone for this cell. Accepted values are IANA TZDB zone ID or "browser" or "utc".
-	// Falls back to the notebook's own timezone when omitted.
-	timezone?: string
-	// The month this cell's fiscal year starts on. 0 = January, 11 = December.
-	// Falls back to the notebook's own fiscal year start when omitted.
-	fiscalYearStartMonth?: int
 }
 
 // The notebook's own panel chain. It is a copy of the dashboard one down to the transformation,

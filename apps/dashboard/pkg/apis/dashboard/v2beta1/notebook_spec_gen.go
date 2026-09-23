@@ -1225,15 +1225,14 @@ func (NotebookNotebookLayoutItemKind) OpenAPIModelName() string {
 
 // One ordered item in a notebook layout. `element` references either a CellKind
 // (markdown/code content) or a V2PanelKind in the notebook's elements map. `source`
-// records who authored the cell; `collapsed` hides the body in the UI; `timeRange`, when
-// present, makes this cell's panel query and render against its own time window instead of
-// the notebook's.
+// records who authored the cell; `collapsed` hides the body in the UI. A panel-kind element's
+// own per-cell time window override, when it has one, lives on that element's own
+// QueryOptionsSpec (`timeFrom`/`timeTo`) rather than here.
 // +k8s:openapi-gen=true
 type NotebookNotebookLayoutItemSpec struct {
 	Element   NotebookElementReference             `json:"element"`
 	Source    NotebookNotebookLayoutItemSpecSource `json:"source"`
 	Collapsed *bool                                `json:"collapsed,omitempty"`
-	TimeRange *NotebookNotebookCellTimeRangeSpec   `json:"timeRange,omitempty"`
 }
 
 // NewNotebookNotebookLayoutItemSpec creates a new NotebookNotebookLayoutItemSpec object.
@@ -1264,34 +1263,6 @@ func NewNotebookElementReference() *NotebookElementReference {
 // OpenAPIModelName returns the OpenAPI model name for NotebookElementReference.
 func (NotebookElementReference) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookElementReference"
-}
-
-// A per-cell time window override, present only when this cell diverges from the notebook's
-// own time range. Only meaningful on a layout item whose element is a Panel or LibraryPanel.
-// +k8s:openapi-gen=true
-type NotebookNotebookCellTimeRangeSpec struct {
-	// Accepted values are relative time strings like "now-6h" or absolute time strings like
-	// "2020-07-10T08:00:00.000Z".
-	From string `json:"from"`
-	// Accepted values are relative time strings like "now-6h" or absolute time strings like
-	// "2020-07-10T08:00:00.000Z".
-	To string `json:"to"`
-	// Timezone for this cell. Accepted values are IANA TZDB zone ID or "browser" or "utc".
-	// Falls back to the notebook's own timezone when omitted.
-	Timezone *string `json:"timezone,omitempty"`
-	// The month this cell's fiscal year starts on. 0 = January, 11 = December.
-	// Falls back to the notebook's own fiscal year start when omitted.
-	FiscalYearStartMonth *int64 `json:"fiscalYearStartMonth,omitempty"`
-}
-
-// NewNotebookNotebookCellTimeRangeSpec creates a new NotebookNotebookCellTimeRangeSpec object.
-func NewNotebookNotebookCellTimeRangeSpec() *NotebookNotebookCellTimeRangeSpec {
-	return &NotebookNotebookCellTimeRangeSpec{}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for NotebookNotebookCellTimeRangeSpec.
-func (NotebookNotebookCellTimeRangeSpec) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookNotebookCellTimeRangeSpec"
 }
 
 // +k8s:openapi-gen=true
