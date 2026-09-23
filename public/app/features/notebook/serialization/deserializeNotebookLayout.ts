@@ -5,9 +5,9 @@ import {
 } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { type PanelIdGenerator } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
 
-import { buildCellSceneTimeRange } from '../scene/layout-notebook/cellTimeRange';
 import { NotebookCellItem } from '../scene/layout-notebook/NotebookCellItem';
 import { NotebookLayoutManager } from '../scene/layout-notebook/NotebookLayoutManager';
+import { buildCellSceneTimeRange } from '../scene/layout-notebook/cellTimeRange';
 import { type NotebookElement, type NotebookLayoutKind } from '../types';
 
 interface NotebookHeader {
