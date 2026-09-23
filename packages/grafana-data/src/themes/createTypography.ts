@@ -115,28 +115,28 @@ export function createTypography(colors: ThemeColors, typographyInput: ThemeTypo
   const pxToRem = (size: number) => `${(size / htmlFontSize) * coef}rem`;
   const buildVariant = (
     overrides: ThemeTypographyVariantInput | undefined,
-    defaultFontFamily: string,
-    defaultFontWeight: number,
-    defaultSize: number,
-    defaultLineHeight: number,
-    defaultLetterSpacing: number
+    fontFamilyArg: string,
+    fontWeightArg: number,
+    fontSizeArg: number,
+    lineHeightArg: number,
+    letterSpacingArg: number
   ): ThemeTypographyVariant => {
-    const fontFamily = overrides?.fontFamily ?? defaultFontFamily;
-    const fontWeight = overrides?.fontWeight ?? defaultFontWeight;
-    const size = overrides?.fontSize ?? defaultSize;
-    const lineHeight = overrides?.lineHeight ?? defaultLineHeight;
-    const letterSpacing = overrides?.letterSpacing ?? defaultLetterSpacing;
+    const fontFamily = overrides?.fontFamily ?? fontFamilyArg;
+    const fontWeight = overrides?.fontWeight ?? fontWeightArg;
+    const fontSize = overrides?.fontSize ?? fontSizeArg;
+    const lineHeight = overrides?.lineHeight ?? lineHeightArg;
+    const letterSpacing = overrides?.letterSpacing ?? letterSpacingArg;
 
-    if (lineHeight % 2 !== 0 || size % 2 !== 0) {
+    if (lineHeight % 2 !== 0 || fontSize % 2 !== 0) {
       throw new Error('Font size and line height should be integer multiples of 2 to prevent issues with alignment');
     }
 
     return {
       fontFamily,
       fontWeight,
-      fontSize: pxToRem(size),
-      lineHeight: lineHeight / size,
-      ...(fontFamily === defaultFontFamily ? { letterSpacing: `${round(letterSpacing / size)}em` } : {}),
+      fontSize: pxToRem(fontSize),
+      lineHeight: lineHeight / fontSize,
+      letterSpacing: `${round(letterSpacing / fontSize)}em`,
     };
   };
 
