@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import { type ColumnDef, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { useEffect, useMemo, useRef, useCallback, useState, type CSSProperties } from 'react';
 import * as React from 'react';
 import { FixedSizeList } from 'react-window';
@@ -20,7 +20,7 @@ import { useSearchKeyboardNavigation } from '../../hooks/useSearchKeyboardSelect
 import { type QueryResponse } from '../../service/types';
 import { type SelectionChecker, type SelectionToggle } from '../selection';
 
-import { generateColumns } from './columns';
+import { generateColumns, type TableColumn } from './columns';
 
 export type SearchResultsProps = {
   response: QueryResponse;
@@ -92,7 +92,7 @@ export const SearchResultsTable = React.memo(
         onDatasourceChange,
         response.view?.length >= response.totalRows,
         panelPluginMetas
-      );
+      ).map(toTanStackColumn);
     }, [
       response,
       width,
@@ -269,6 +269,15 @@ export const SearchResultsTable = React.memo(
   }
 );
 SearchResultsTable.displayName = 'SearchResultsTable';
+
+function toTanStackColumn({ Header, Cell, width, field, ...column }: TableColumn): ColumnDef<number> {
+  return {
+    ...column,
+    header: typeof Header === 'function' ? Header : () => Header,
+    size: width,
+    meta: { field, cellComponent: Cell },
+  };
+}
 
 const getStyles = (theme: GrafanaTheme2) => {
   const rowHoverBg = theme.colors.action.hover;

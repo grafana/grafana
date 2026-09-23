@@ -15,7 +15,7 @@ import { type CellProps, type Column, type SortType } from './types';
 
 export const EXPANDER_CELL_ID = '__expander' as const;
 
-export type InternalColumn<T extends object> = ColumnDef<T> & {
+type InternalColumn<T extends object> = ColumnDef<T> & {
   id: string;
 };
 
