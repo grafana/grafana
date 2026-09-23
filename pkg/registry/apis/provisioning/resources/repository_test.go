@@ -49,7 +49,9 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 						"name":      "test-dashboard",
 						"namespace": "test-namespace",
 						"annotations": map[string]interface{}{
-							utils.AnnoKeySourcePath: "dashboards/test-dashboard.json",
+							utils.AnnoKeySourcePath:      "dashboards/test-dashboard.json",
+							utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+							utils.AnnoKeyManagerIdentity: "test-repo",
 						},
 					},
 				},
@@ -74,12 +76,42 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 						"name":      "test-folder",
 						"namespace": "test-namespace",
 						"annotations": map[string]interface{}{
-							utils.AnnoKeySourcePath: "folders/test-folder",
+							utils.AnnoKeySourcePath:      "folders/test-folder",
+							utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+							utils.AnnoKeyManagerIdentity: "test-repo",
 						},
 					},
 				},
 			},
 			expectedPath: "folders/test-folder/", // Trailing slash added for folder resources
+		},
+		{
+			name:         "resource managed by a different repository is not found",
+			resourceName: "test-dashboard",
+			gvk: schema.GroupVersionKind{
+				Group: "dashboard.grafana.app",
+				Kind:  "Dashboard",
+			},
+			expectedGVR: schema.GroupVersionResource{
+				Group:    "dashboard.grafana.app",
+				Version:  "v0alpha1",
+				Resource: "dashboards",
+			},
+			resourceObj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"name":      "test-dashboard",
+						"namespace": "test-namespace",
+						"annotations": map[string]interface{}{
+							utils.AnnoKeySourcePath:      "dashboards/test-dashboard.json",
+							utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+							utils.AnnoKeyManagerIdentity: "some-other-repo",
+						},
+					},
+				},
+			},
+			expectedError:    "resource not found: dashboard.grafana.app/dashboards/test-dashboard",
+			expectedSentinel: ErrResourceNotFound,
 		},
 		{
 			name:         "ForKind fails",
@@ -139,11 +171,14 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 					"metadata": map[string]interface{}{
 						"name":      "test-dashboard",
 						"namespace": "test-namespace",
-						// No annotations
+						// No annotations - can't be verified as managed by this
+						// repository, so this is not found rather than a data
+						// integrity error.
 					},
 				},
 			},
-			expectedError: "resource dashboard.grafana.app/dashboards/test-dashboard has no annotations",
+			expectedError:    "resource not found: dashboard.grafana.app/dashboards/test-dashboard",
+			expectedSentinel: ErrResourceNotFound,
 		},
 		{
 			name:         "resource has empty annotations",
@@ -166,7 +201,8 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 					},
 				},
 			},
-			expectedError: "resource dashboard.grafana.app/dashboards/test-dashboard has no source path annotation",
+			expectedError:    "resource not found: dashboard.grafana.app/dashboards/test-dashboard",
+			expectedSentinel: ErrResourceNotFound,
 		},
 		{
 			name:         "resource has empty source path annotation",
@@ -186,7 +222,9 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 						"name":      "test-dashboard",
 						"namespace": "test-namespace",
 						"annotations": map[string]interface{}{
-							utils.AnnoKeySourcePath: "", // Empty path
+							utils.AnnoKeySourcePath:      "", // Empty path
+							utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+							utils.AnnoKeyManagerIdentity: "test-repo",
 						},
 					},
 				},
@@ -211,7 +249,9 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 						"name":      "nested-dashboard",
 						"namespace": "test-namespace",
 						"annotations": map[string]interface{}{
-							utils.AnnoKeySourcePath: "team-a/subfolder/nested-dashboard.json",
+							utils.AnnoKeySourcePath:      "team-a/subfolder/nested-dashboard.json",
+							utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+							utils.AnnoKeyManagerIdentity: "test-repo",
 						},
 					},
 				},
@@ -236,7 +276,9 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 						"name":      "test-folder",
 						"namespace": "test-namespace",
 						"annotations": map[string]interface{}{
-							utils.AnnoKeySourcePath: "folders/test-folder", // No trailing slash
+							utils.AnnoKeySourcePath:      "folders/test-folder", // No trailing slash
+							utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+							utils.AnnoKeyManagerIdentity: "test-repo",
 						},
 					},
 				},
@@ -261,7 +303,9 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 						"name":      "test-folder-2",
 						"namespace": "test-namespace",
 						"annotations": map[string]interface{}{
-							utils.AnnoKeySourcePath: "folders/test-folder-2/", // Already has trailing slash
+							utils.AnnoKeySourcePath:      "folders/test-folder-2/", // Already has trailing slash
+							utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+							utils.AnnoKeyManagerIdentity: "test-repo",
 						},
 					},
 				},
@@ -286,7 +330,9 @@ func TestRepositoryResources_FindResourcePath(t *testing.T) {
 						"name":      "test-dashboard",
 						"namespace": "test-namespace",
 						"annotations": map[string]interface{}{
-							utils.AnnoKeySourcePath: "dashboards/test-dashboard", // No trailing slash
+							utils.AnnoKeySourcePath:      "dashboards/test-dashboard", // No trailing slash
+							utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+							utils.AnnoKeyManagerIdentity: "test-repo",
 						},
 					},
 				},
