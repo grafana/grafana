@@ -26,12 +26,7 @@ describe('FilterByNameTransformerEditor', () => {
     expect(pillStates()).toEqual(['x:true', 'y:true']);
   });
 
-  // Known bug: field names are derived during render but the selection is re-seeded in a passive effect, so
-  // the commit after new input frames arrive shows the new fields against the old selection. The class kept
-  // both in state and updated them together, so no commit mixed them. With "all fields" selected, new
-  // fields flash as unselected, and a click in that frame toggles against the stale selection.
-  // Change to `it` once fixed.
-  it.failing('never commits new field names against the previous selection', () => {
+  it('never commits new field names against the previous selection', () => {
     const committed: string[][] = [];
     function CommitRecorder() {
       useLayoutEffect(() => {
