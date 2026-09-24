@@ -19,7 +19,8 @@ import { buildPanelEditScene } from '../../panel-edit/PanelEditor';
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { type DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
-import { findVizPanelByKey, getLibraryPanelBehavior } from '../../utils/utils';
+import { findVizPanelByKey } from '../../utils/findVizPanel';
+import { getLibraryPanelBehavior } from '../../utils/utils';
 
 import { applySpecCommand } from './applySpec';
 import { getSpecCommand } from './getSpec';
