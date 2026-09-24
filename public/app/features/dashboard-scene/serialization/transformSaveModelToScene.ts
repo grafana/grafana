@@ -34,7 +34,6 @@ import { type DashboardDTO, type DashboardDataDTO } from 'app/types/dashboard';
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
 import { DefaultControlsBehavior } from '../behaviors/DefaultControlsBehavior';
-import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { setPanelInspectorOpener } from '../inspect/panelInspectorOpener';
 import { type LoadDashboardOptions } from '../pages/DashboardScenePageStateManager';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
@@ -59,6 +58,7 @@ import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { getIsLazy } from '../scene/layouts-shared/utils';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
+import { pluginTransformationsEnabled } from '../scene/systemTransformations';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { DashboardInteractions } from '../utils/interactions';
@@ -485,6 +485,8 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
   const timeOverrideShown = (panel.timeFrom || panel.timeShift || panel.timeCompare) && !panel.hideTimeOverride;
 
   const vizPanelState: VizPanelState = {
+    // Runtime only, from the rollout flag - it is deliberately not part of the save model.
+    applyPluginTransformations: pluginTransformationsEnabled(),
     key: getVizPanelKeyForPanelId(panel.id),
     title: panel.title?.substring(0, 5000),
     description: panel.description,
@@ -502,9 +504,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     headerActions: new VizPanelHeaderActions({
       hideGroupByAction: !config.featureToggles.dashboardUnifiedDrilldownControls,
     }),
-    subHeader: new VizPanelSubHeader({
-      hideNonApplicableDrilldowns: !config.featureToggles.perPanelNonApplicableDrilldowns,
-    }),
+    subHeader: new VizPanelSubHeader({}),
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
@@ -567,8 +567,14 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
 // Register how the panel status popover opens the inspector. Done here (rather than in
 // setDashboardPanelContext) so the heavy PanelInspectDrawer isn't imported by low-level panel
 // setup, which would introduce a circular dependency.
-setPanelInspectorOpener((panel, tab) => {
-  getDashboardSceneFor(panel).showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: tab }));
+setPanelInspectorOpener(async (panel, tab) => {
+  const dashboard = getDashboardSceneFor(panel);
+  await dashboard.showModalAsync(async () => {
+    const { PanelInspectDrawer } = await import(
+      /* webpackChunkName: "panel-inspect" */ '../inspect/PanelInspectDrawer'
+    );
+    return new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: tab });
+  });
 });
 
 export function registerPanelInteractionsReporter(scene: DashboardScene) {

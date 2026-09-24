@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type RefObject, useMemo, useRef } from 'react';
+import { type RefObject, useCallback, useMemo, useRef } from 'react';
 
 import { type DataSourceInstanceSettings, type GrafanaTheme2, type ScopedVars } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -12,6 +12,7 @@ import { type ExpressionQuery } from 'app/features/expressions/types';
 import { getQueryEditorTypeConfig, type QueryEditorTypeConfig, QueryEditorType } from '../../constants';
 import {
   useActionsContext,
+  usePanelContext,
   useQueryEditorUIContext,
   useQueryRunnerContext,
   useQueryEditorTypeConfig,
@@ -22,6 +23,7 @@ import { getEditorBorderColor, getExpressionSectionLabel } from '../utils';
 
 import { EditableQueryName } from './EditableQueryName';
 import { HeaderActions } from './HeaderActions';
+import { TransformationIdentifier } from './TransformationIdentifier';
 
 interface DatasourceSectionProps {
   selectedQuery: DataQuery;
@@ -107,6 +109,11 @@ interface ContentHeaderProps {
    */
   renderHeaderExtras?: () => React.ReactNode;
   /**
+   * Renders the selected transformation's name. Supplied by the Scene wrapper, which can reach the
+   * pipeline state the editable name needs; without it the registry name is shown as plain text.
+   */
+  renderTransformationName?: (transformation: Transformation) => React.ReactNode;
+  /**
    * Optional ref to the container div.
    * Used downstream for saved queries positioning.
    */
@@ -140,6 +147,7 @@ export function ContentHeader({
   onChangeDataSource,
   onUpdateQuery,
   renderHeaderExtras,
+  renderTransformationName,
   containerRef: externalContainerRef,
   typeConfig: typeConfigProp,
   currentDatasource,
@@ -228,9 +236,13 @@ export function ContentHeader({
               <Trans i18nKey="query-editor-next.header.transformation">Transformation</Trans>
             </Text>
             <NavToolbarSeparator />
-            <Text weight="light" variant="body" color="primary">
-              {selectedTransformation.registryItem?.name || selectedTransformation.transformConfig.id}
-            </Text>
+            {renderTransformationName ? (
+              renderTransformationName(selectedTransformation)
+            ) : (
+              <Text weight="light" variant="body" color="primary">
+                {selectedTransformation.registryItem?.name || selectedTransformation.transformConfig.id}
+              </Text>
+            )}
           </>
         )}
 
@@ -275,13 +287,28 @@ export function ContentHeaderSceneWrapper({
     setPendingTransformation,
     selectedQueryDsData,
   } = useQueryEditorUIContext();
-  const { queries } = useQueryRunnerContext();
-  const { changeDataSource, updateSelectedQuery } = useActionsContext();
+  const { queries, data } = useQueryRunnerContext();
+  const { transformations } = usePanelContext();
+  const { changeDataSource, updateSelectedQuery, updateTransformation } = useActionsContext();
   const typeConfig = useQueryEditorTypeConfig();
   const scopedVars = usePanelScopedVars();
 
+  const renderTransformationName = useCallback(
+    (transformation: Transformation) => (
+      <TransformationIdentifier
+        transformation={transformation}
+        transformations={transformations}
+        data={data}
+        fallbackName={transformation.registryItem?.name || transformation.transformConfig.id}
+        onUpdate={updateTransformation}
+      />
+    ),
+    [transformations, data, updateTransformation]
+  );
+
   return (
     <ContentHeader
+      renderTransformationName={renderTransformationName}
       selectedAlert={selectedAlert}
       selectedQuery={selectedQuery}
       selectedTransformation={selectedTransformation}

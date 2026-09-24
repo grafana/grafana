@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { type StoryFn, type Meta } from '@storybook/react-webpack5';
+import { type StoryFn, type Meta } from '@storybook/react';
 
 import { InlineList } from './InlineList';
 import { List } from './List';

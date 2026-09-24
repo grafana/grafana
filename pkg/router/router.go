@@ -12,6 +12,7 @@ import (
 	"sync/atomic"
 
 	"github.com/sony/gobreaker/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -45,6 +46,7 @@ type handlerEntry struct {
 // per-group-version openapi cache; served (reconcile-goroutine-owned) isn't
 // safe to read from serving goroutines, so it is duplicated here.
 type servingEntry struct {
+	group   metav1.APIGroup
 	handler http.Handler
 	key     string
 	breaker *gobreaker.CircuitBreaker[struct{}]
@@ -105,6 +107,9 @@ type GrafanaRouter struct {
 	// so it's a sync.Map rather than an atomic.Pointer swap. A stale key is
 	// simply overwritten on next fetch, not actively evicted.
 	openapiDocs sync.Map
+
+	// Set before serving by the standalone target; middleware keeps its delegate.
+	unregisteredGroupHandler http.Handler
 }
 
 func NewGrafanaRouter(loader RoutesLoader) *GrafanaRouter {
@@ -144,7 +149,7 @@ func (cr *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, ne
 	// Root discovery (APIGroupList) is the only path that needs a union
 	// across every group; synthesize it router-side.
 	if path == apisPrefix || path == apisPrefix+"/" {
-		cr.serveAPIGroupList(w, req)
+		cr.serveAPIGroupList(w, req, next)
 		return
 	}
 
@@ -152,14 +157,20 @@ func (cr *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, ne
 	handlers := *cr.snapshot.Load()
 	entry, ok := handlers[group]
 	if !ok {
-		// A group we don't serve. Fall through rather than 404 so a caller
-		// mounted ahead of us keeps its own routes.
-		next.ServeHTTP(w, req)
+		cr.serveUnregisteredGroup(w, req, next, group)
 		return
 	}
 	// /apis/<group> group discovery and /apis/<group>/... both proxy to the
 	// single owning backend (one backend owns all versions of a group).
-	serveThroughBreaker(entry.breaker, entry.handler, w, req)
+	serveThroughBreaker(entry.breaker, group, entry.handler, w, req)
+}
+
+func (cr *GrafanaRouter) serveUnregisteredGroup(w http.ResponseWriter, req *http.Request, next http.Handler, group string) {
+	if group != "" && cr.unregisteredGroupHandler != nil {
+		cr.unregisteredGroupHandler.ServeHTTP(w, req)
+		return
+	}
+	next.ServeHTTP(w, req)
 }
 
 // groupFromPath returns the group segment of an /apis/<group>[/...] path.
@@ -194,12 +205,6 @@ func (cr *GrafanaRouter) KnownGroup(group string) bool {
 	return ok
 }
 
-// serveAPIGroupList synthesizes the /apis root (APIGroupList) from the current
-// group snapshot.
-func (cr *GrafanaRouter) serveAPIGroupList(w http.ResponseWriter, req *http.Request) {
-	serveCachedDoc(w, req, cr.apiGroupList.Load())
-}
-
 // serveCachedDoc writes a synthesized document, honoring conditional GET via
 // If-None-Match against the document's key-derived ETag. Shared by
 // serveAPIGroupList and the /openapi/v3 root doc.
@@ -218,8 +223,8 @@ func serveCachedDoc(w http.ResponseWriter, req *http.Request, doc *cachedDoc) {
 // HandleFunc; not exported, so /openapi/v3 always flows through the one serving
 // entry point.
 func (cr *GrafanaRouter) serveOpenAPIV3(w http.ResponseWriter, req *http.Request, next http.Handler) {
-	if req.URL.Path == openapiV3Prefix {
-		serveCachedDoc(w, req, cr.openapiIndex.Load())
+	if req.URL.Path == openapiV3Prefix || req.URL.Path == openapiV3Prefix+"/" {
+		cr.serveOpenAPIIndex(w, req, next)
 		return
 	}
 	group, version, ok := parseOpenAPIGroupVersionPath(req.URL.Path)
@@ -238,23 +243,21 @@ func (cr *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *ht
 	handlers := *cr.snapshot.Load()
 	entry, ok := handlers[group]
 	if !ok {
-		next.ServeHTTP(w, req)
-		return
-	}
-
-	etag := quoteETag(entry.key)
-	if req.Header.Get("If-None-Match") == etag {
-		w.Header().Set("ETag", etag)
-		w.WriteHeader(http.StatusNotModified)
+		cr.serveUnregisteredGroup(w, req, next, group)
 		return
 	}
 
 	cacheKey := group + "/" + version
-	if cached, ok := cr.openapiDocs.Load(cacheKey); ok {
+	cacheableRequest := req.Method == http.MethodGet && req.Header.Get("Range") == ""
+	if cached, ok := cr.openapiDocs.Load(cacheKey); ok && cacheableRequest {
 		c := cached.(openapiCacheEntry)
-		if c.key == entry.key {
-			w.Header().Set("Content-Type", "application/json")
+		if c.key == entry.key && c.accept == req.Header.Get("Accept") && c.encoding == req.Header.Get("Accept-Encoding") {
+			maps.Copy(w.Header(), c.header.Clone())
 			w.Header().Set("ETag", c.etag)
+			if req.Header.Get("If-None-Match") == c.etag {
+				w.WriteHeader(http.StatusNotModified)
+				return
+			}
 			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write(c.body)
 			return
@@ -264,24 +267,23 @@ func (cr *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *ht
 	// Cache miss or stale key: proxy through, capturing the response so it can
 	// be cached on success. Strip conditional headers first — see
 	// stripConditionalHeaders' doc comment for why. Gated by the same
-	// per-group breaker as the main dispatch — this is still a real proxy
+	// breaker selection as the main dispatch — this is still a real proxy
 	// call to the backend, so an outage must fail fast here too.
 	proxyReq := req.Clone(req.Context())
 	stripConditionalHeaders(proxyReq)
 	stripHashQueryParam(proxyReq)
 	rec := newCaptureWriter()
-	_, err := entry.breaker.Execute(func() (struct{}, error) {
-		entry.handler.ServeHTTP(rec, proxyReq)
-		return struct{}{}, breakerOutcome(proxyReq, rec.statusCode)
-	})
-	if errors.Is(err, gobreaker.ErrOpenState) || errors.Is(err, gobreaker.ErrTooManyRequests) {
-		http.Error(w, "backend unavailable", http.StatusServiceUnavailable)
-		return
-	}
+	serveThroughBreaker(entry.breaker, group, entry.handler, rec, proxyReq)
 
 	maps.Copy(w.Header(), rec.header)
-	if rec.statusCode == http.StatusOK {
-		cr.openapiDocs.Store(cacheKey, openapiCacheEntry{key: entry.key, etag: etag, body: rec.body.Bytes()})
+	// Private schemas pass through authorization on every request. Honor their
+	// private/no-cache responses instead of bypassing that check on a cache hit.
+	if rec.statusCode == http.StatusOK && cacheableRequest && cacheableOpenAPIResponse(rec.header) {
+		etag := quoteETag(hashHex(entry.key + "\x00" + rec.body.String()))
+		cr.openapiDocs.Store(cacheKey, openapiCacheEntry{
+			key: entry.key, etag: etag, body: rec.body.Bytes(), header: openAPICacheHeaders(rec.header),
+			accept: req.Header.Get("Accept"), encoding: req.Header.Get("Accept-Encoding"),
+		})
 		w.Header().Set("ETag", etag)
 	}
 	w.WriteHeader(rec.statusCode)
@@ -483,10 +485,12 @@ func (r *GrafanaRouter) publish() {
 	snap := make(map[string]servingEntry, len(r.served))
 	backends := make([]Backend, 0, len(r.served))
 	for group, e := range r.served {
-		snap[group] = servingEntry{handler: e.handler, key: e.lastKey, breaker: e.breaker}
+		entry := servingEntry{handler: e.handler, key: e.lastKey, breaker: e.breaker}
 		if e.backend != nil {
+			entry.group = e.backend.Group()
 			backends = append(backends, e.backend)
 		}
+		snap[group] = entry
 	}
 	r.snapshot.Store(&snap)
 

@@ -51,6 +51,7 @@ function getParentSubtrees(roots: LevelItem[]) {
 
       if (args.child) {
         newNode.value = args.child.value;
+        newNode.valueRight = args.child.valueRight;
         args.child.parents = [newNode];
       }
 
@@ -83,9 +84,13 @@ export function mergeSubtrees(
   while (stack.length) {
     const args = stack.shift()!;
     const indexes = args.items.flatMap((i) => i.itemIndexes);
+    const isDiff = args.items.some((i) => i.valueRight !== undefined);
     const newItem: LevelItem = {
       // We use the items value instead of value from the data frame, cause we could have changed it in the process
       value: args.items.reduce((acc, i) => acc + i.value, 0),
+      // For diff flame graphs we also need to merge the comparison-side value, otherwise merged sandwich nodes
+      // are left with valueRight === undefined and the diff tooltip renders NaN/undefined.
+      valueRight: isDiff ? args.items.reduce((acc, i) => acc + (i.valueRight ?? 0), 0) : undefined,
       itemIndexes: indexes,
       // these will change later
       children: [],

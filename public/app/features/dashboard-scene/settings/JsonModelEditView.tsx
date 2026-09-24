@@ -8,7 +8,8 @@ import { useFlagGrafanaDashboardSettingsRedesign } from '@grafana/runtime/intern
 import { type SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, sceneUtils } from '@grafana/scenes';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { Alert, Box, Button, CodeEditor, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Box, Button, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { Page } from 'app/core/components/Page/Page';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
@@ -18,12 +19,8 @@ import { RepoViewStatus } from 'app/features/provisioning/hooks/useGetResourceRe
 import { type DashboardDataDTO, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
-import {
-  NameAlreadyExistsError,
-  isNameExistsError,
-  isPluginDashboardError,
-  isVersionMismatchError,
-} from '../saving/shared';
+import { getSaveDashboardErrorInfo } from '../saving/saveErrors';
+import { SaveDashboardErrorAlert } from '../saving/shared';
 import { useSaveDashboard } from '../saving/useSaveDashboard';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
@@ -269,8 +266,10 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
   const styles = useStyles2(getStyles);
 
   function renderSaveButtonAndError(error?: Error, disabled = false) {
-    if (error && isSaving) {
-      if (isVersionMismatchError(error)) {
+    const errorInfo = isSaving ? getSaveDashboardErrorInfo(error) : undefined;
+
+    if (errorInfo) {
+      if (errorInfo.kind === 'version-mismatch') {
         return (
           <Alert
             title={t(
@@ -294,11 +293,7 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
         );
       }
 
-      if (isNameExistsError(error)) {
-        return <NameAlreadyExistsError />;
-      }
-
-      if (isPluginDashboardError(error)) {
+      if (errorInfo.kind === 'plugin-dashboard') {
         return (
           <Alert
             title={t(
@@ -321,19 +316,12 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
       }
     }
 
+    // Everything else, `already-exists` included, keeps the save button. The identifier can't be
+    // changed from this editor, so the "pick a different name or folder" alert would be
+    // unactionable advice that also removed the only way to retry.
     return (
       <>
-        {error && isSaving && (
-          <Alert
-            title={t(
-              'dashboard-scene.json-model-edit-view.render-save-button-and-error.title-failed-to-save-dashboard',
-              'Failed to save dashboard'
-            )}
-            severity="error"
-          >
-            <p>{error.message}</p>
-          </Alert>
-        )}
+        {errorInfo && <SaveDashboardErrorAlert info={errorInfo} />}
         <Stack alignItems="center">{saveButton(false, disabled)}</Stack>
       </>
     );
@@ -379,15 +367,16 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
               showFormatToggle={true}
             />
           ) : (
-            <CodeEditor
-              width="100%"
-              value={jsonText}
-              language="json"
-              showLineNumbers={true}
-              showMiniMap={true}
-              containerStyles={styles.codeEditor}
-              onBlur={model.onCodeEditorBlur}
-            />
+            <div className={styles.codeEditor}>
+              <CodeMirrorEditor
+                value={jsonText}
+                language="json"
+                height="100%"
+                aria-label={t('dashboard-settings.json-editor.aria-label', 'Dashboard JSON model')}
+                onChange={() => {}}
+                onBlur={model.onCodeEditorBlur}
+              />
+            </div>
           )}
         </div>
         {resourceError && (

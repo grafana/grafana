@@ -59,7 +59,7 @@ type Service struct {
 	cancelMutex sync.Mutex
 	cancelFunc  context.CancelFunc
 
-	isSyncSnapshotStatusFromGMSRunning int32
+	isSyncSnapshotStatusFromGMSRunning atomic.Int32
 
 	gmsClient     gmsclient.Client
 	objectStorage objectstorage.ObjectStorage
@@ -648,11 +648,11 @@ func (s *Service) syncSnapshotStatusFromGMSUntilDone(ctx context.Context, sessio
 	defer span.End()
 
 	// Ensure only one in-flight sync running
-	if !atomic.CompareAndSwapInt32(&s.isSyncSnapshotStatusFromGMSRunning, 0, 1) {
+	if !s.isSyncSnapshotStatusFromGMSRunning.CompareAndSwap(0, 1) {
 		s.log.Info("synchronize snapshot status already running", "sessionUID", session.UID, "snapshotUID", snapshot.UID)
 		return
 	}
-	defer atomic.StoreInt32(&s.isSyncSnapshotStatusFromGMSRunning, 0)
+	defer s.isSyncSnapshotStatusFromGMSRunning.Store(0)
 
 	if !snapshot.ShouldQueryGMS() {
 		return

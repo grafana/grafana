@@ -1,25 +1,28 @@
+import { useEffect, useRef } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
+import { FeatureState } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
-import { Alert, Box, Button, Checkbox, EmptyState, FilterInput, Stack, Text } from '@grafana/ui';
+import { Alert, Box, Button, Checkbox, EmptyState, FeatureBadge, FilterInput, Stack, Text } from '@grafana/ui';
 import { extractErrorMessage } from 'app/api/utils';
 import { Page } from 'app/core/components/Page/Page';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types/accessControl';
 
 import { NotebookTagsField } from '../NotebookTagsField';
+import { NotebookAnalytics } from '../analytics/main';
+import { NOTEBOOK_LIST_FILTER_TYPE } from '../analytics/types';
 import { NotebooksTable, NotebooksTableSkeleton } from '../list/NotebooksTable';
 import { useNotebooksList } from '../list/useNotebooksList';
+import { canCreateNotebooks } from '../permissions';
 import { notebookNewEditUrl } from '../urls';
 
 export function NotebooksListPage() {
   // The route is registered unconditionally (getAppRoutes is not a React component), so the
   // feature flag is enforced here. When it is off this is not a real route, so render not-found.
   const notebooksEnabled = useFlagDashboardNotebooks();
-  const canCreate = contextSrv.hasPermission(AccessControlAction.DashboardsCreate);
+  const canCreate = canCreateNotebooks();
   const navigate = useNavigate();
 
   const {
@@ -32,6 +35,7 @@ export function NotebooksListPage() {
     isFiltered,
     searchQuery,
     setSearchQuery,
+    debouncedSearch,
     createdByMe,
     setCreatedByMe,
     canFilterByMe,
@@ -44,6 +48,35 @@ export function NotebooksListPage() {
     filterKey,
     error,
   } = useNotebooksList({ enabled: notebooksEnabled });
+
+  /**
+   * The filters the last report went out for, seeded so arriving at the page reports nothing.
+   * The diff checks tagFilter by identity on purpose: addTagFilter returns the same array when it
+   * dedupes, so re-clicking a tag already filtered reports nothing.
+   */
+  const previousFilters = useRef({ search: debouncedSearch.trim(), createdByMe, tagFilter });
+
+  useEffect(() => {
+    // Trimmed, as the request, isFiltered and filterKey all read it. Typing a space alone leaves
+    // the filter where it was, so it is not a change to report.
+    const search = debouncedSearch.trim();
+    const previous = previousFilters.current;
+    previousFilters.current = { search, createdByMe, tagFilter };
+
+    // The whole filter set, not only the control that changed, so one event says which filters the
+    // reader had on at once. A zero here also says which way the change went.
+    const filters = { queryLength: search.length, tagCount: tagFilter.length, createdByMe };
+
+    // As the filter commits, without waiting for its results. The event says that somebody
+    // filtered, and a failed request does not make that less true.
+    if (search !== previous.search) {
+      NotebookAnalytics.listFiltered(NOTEBOOK_LIST_FILTER_TYPE.SEARCH, filters);
+    } else if (tagFilter !== previous.tagFilter) {
+      NotebookAnalytics.listFiltered(NOTEBOOK_LIST_FILTER_TYPE.TAG, filters);
+    } else if (createdByMe !== previous.createdByMe) {
+      NotebookAnalytics.listFiltered(NOTEBOOK_LIST_FILTER_TYPE.CREATED_BY_ME, filters);
+    }
+  }, [debouncedSearch, tagFilter, createdByMe]);
 
   if (!notebooksEnabled) {
     return <PageNotFound />;
@@ -81,7 +114,16 @@ export function NotebooksListPage() {
 
   return (
     // When nothing exists the empty state carries the create button, so drop it from the header.
-    <Page navId="notebooks" actions={hasNoNotebooks ? undefined : createButton}>
+    <Page
+      navId="notebooks"
+      renderTitle={(title) => (
+        <Stack alignItems="center">
+          <Text element="h1">{title}</Text>
+          <FeatureBadge featureState={FeatureState.preview} />
+        </Stack>
+      )}
+      actions={hasNoNotebooks ? undefined : createButton}
+    >
       <Page.Contents isLoading={isLoading}>
         <Stack direction="column" gap={2}>
           {/* With nothing loaded and nothing filtered the alert is the whole story — filters over
@@ -127,47 +169,48 @@ export function NotebooksListPage() {
                   {extractErrorMessage(error)}
                 </Alert>
               )}
-              <Stack justifyContent="space-between" alignItems="center" gap={2} wrap="wrap">
-                <Stack alignItems="center" gap={1} wrap="wrap">
-                  <FilterInput
-                    width={40}
-                    value={searchQuery}
-                    onChange={setSearchQuery}
-                    escapeRegex={false}
-                    placeholder={t('notebooks.list.search-placeholder', 'Search notebooks by title...')}
-                  />
-                  <NotebookTagsField
-                    value={tagFilter}
-                    onChange={setTagFilter}
-                    // Where the search route is not served the facet cannot answer, and these are
-                    // the only tags there are to offer.
-                    fallbackTags={loadedTags}
-                    placeholder={t('notebooks.list.tag-filter-placeholder', 'Filter by tag')}
-                  />
-                  {canFilterByMe && (
-                    <Checkbox
-                      id="notebooks-created-by-me"
-                      value={createdByMe}
-                      onChange={(event) => setCreatedByMe(event.currentTarget.checked)}
-                      label={t('notebooks.list.created-by-me', 'Created by me')}
+              <Stack direction="column" gap={1}>
+                <FilterInput
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  escapeRegex={false}
+                  placeholder={t('notebooks.list.search-placeholder', 'Search notebooks by title...')}
+                />
+                <Stack justifyContent="space-between" alignItems="center" gap={2} wrap="wrap">
+                  <Stack alignItems="center" gap={1} wrap="wrap">
+                    <NotebookTagsField
+                      value={tagFilter}
+                      onChange={setTagFilter}
+                      // Where the search route is not served the facet cannot answer, and these are
+                      // the only tags there are to offer.
+                      fallbackTags={loadedTags}
+                      placeholder={t('notebooks.list.tag-filter-placeholder', 'Filter by tag')}
                     />
-                  )}
-                </Stack>
-                <Stack alignItems="center" gap={1}>
-                  {/* Nothing is held for these filters yet, so every number here would be zero —
-                      "0 notebooks" beside a loading table claims a result we do not have. */}
-                  {isReloading ? (
-                    <Skeleton width={COUNT_SKELETON_WIDTH} />
-                  ) : (
-                    <CountSummary
-                      shown={rows.length}
-                      loadedCount={loadedCount}
-                      totalCount={totalCount}
-                      isTotalExact={isTotalExact}
-                      isTruncated={isTruncated}
-                      isLoadingMore={isLoadingMore}
-                    />
-                  )}
+                    {canFilterByMe && (
+                      <Checkbox
+                        id="notebooks-created-by-me"
+                        value={createdByMe}
+                        onChange={(event) => setCreatedByMe(event.currentTarget.checked)}
+                        label={t('notebooks.list.created-by-me', 'Created by me')}
+                      />
+                    )}
+                  </Stack>
+                  <Stack alignItems="center" gap={1}>
+                    {/* Nothing is held for these filters yet, so every number here would be zero —
+                        "0 notebooks" beside a loading table claims a result we do not have. */}
+                    {isReloading ? (
+                      <Skeleton width={COUNT_SKELETON_WIDTH} />
+                    ) : (
+                      <CountSummary
+                        shown={rows.length}
+                        loadedCount={loadedCount}
+                        totalCount={totalCount}
+                        isTotalExact={isTotalExact}
+                        isTruncated={isTruncated}
+                        isLoadingMore={isLoadingMore}
+                      />
+                    )}
+                  </Stack>
                 </Stack>
               </Stack>
 

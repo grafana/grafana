@@ -139,10 +139,7 @@ func (c *client) checkTokens(ctx context.Context, keyHashes []string) ([]Token, 
 
 func batch(count, size int, eachFn func(start, end int) error) error {
 	for i := 0; i < count; {
-		end := i + size
-		if end > count {
-			end = count
-		}
+		end := min(i+size, count)
 
 		if err := eachFn(i, end); err != nil {
 			return err

@@ -2,30 +2,67 @@
 
 Guidance for AI agents working on the Grafana Router. This is a generic internal reverse-proxy
 router: microservice (m2m) and user-facing API traffic can be routed through it. Routes are supplied
-by a `RoutesLoader` (the concrete loader lives in the enterprise package) as `[]*RouteConfig`, and
-change infrequently (roughly weekly) as plugins/apps are introduced via GitOps, plus new versions
-over time.
+by a `RoutesLoader` as `[]Backend`, and change infrequently (roughly weekly) as plugins/apps are
+introduced via GitOps, plus new versions over time.
 
-## Package layout (OSS vs enterprise split)
+## Package layout
 
-The generic router lives here in OSS; only the loader (which knows the deployment-specific kinds) is
-enterprise.
+Everything lives here in OSS.
 
-- **this package (`pkg/router`, OSS)** — the generic machinery: `GrafanaRouter` (`router.go`: the
-  reconcile engine — `Run` drives the reconcile loop only; `HandleFunc` is the serving handler),
-  `forwardBackend` (the per-group `Backend`), and the `RoutesLoader` / `Router` / `Backend`
-  contracts (`types.go`). It is a pure reverse proxy to the backing API servers. **Serving (the
-  `http.Server`, listener TLS, graceful shutdown) is NOT here** — it is a factory concern in the
-  enterprise `router` command; see Lifecycle below.
-- **`.../appmanifest/pkg/app/router` (enterprise)** — only `Loader` (`routes_loader.go`): the
-  `RoutesLoader` implementation that produces `[]*RouteConfig` from the control plane. How it
-  sources and watches the underlying custom resources is its own concern (see that package's
-  AGENTS.md). There is no separate router implementation in enterprise; the loader is the
-  enterprise-specific piece.
+- `GrafanaRouter` (`router.go`: the reconcile engine — `Run` drives the reconcile loop only;
+  `HandleFunc` is the serving handler), `forwardBackend` (the per-group `Backend`, `forward.go`), and
+  the `RoutesLoader` / `Router` / `Backend` contracts (`types.go`). It is a pure reverse proxy to the
+  backing API servers. **Serving (the `http.Server`, listener TLS, graceful shutdown) is NOT here**
+  — see Lifecycle below.
+- `dummyRoutesLoader` (`dummy.go`) — the OSS default: two static dummy API groups.
+- `cloudLoader`/`ProvideCloudRoutesLoaderFactory` (`cloud_router.go`) — the concrete `RoutesLoader`
+  that reads RouteBackend/AppManifest custom resources off a remote control-plane apiserver, serves
+  the two fixed aggregate targets, **and** polls a plugin-manifests operator via `plugins_url`
+  (`plugin_manifests.go`). Activates when **any** of `[cloud_router].appmanifest_apiserver_url`,
+  `baas_apiserver.url`, `cloud_app_platform_apiserver.url`, or `plugins_url` is configured (see
+  Settings below); with none of them set, `ProvideRoutesLoader` (`loader_factory.go`) falls back to
+  the dummy loader. This file, together with the `aggregate_*.go` and `plugin_manifests.go` files, is
+  where deployment-specific knowledge lives — the `v1alpha2.RouteBackend`/`AppManifest` kinds here,
+  the two fixed aggregate-target names in `aggregate_config.go`, and the plugin-manifests wire format
+  in `plugin_manifests.go`. Keep that knowledge contained in these files, out of
+  `router.go`/`types.go`.
 
-This doc stays generic: it must not encode which custom resources the loader watches or how it
-triggers — the router only knows the `RoutesLoader` contract. File references below are in this
-package unless noted.
+## `cloud_router`: source resources & correlation
+
+`cloudLoader.Load` (`cloud_router.go`) lists two kinds and joins them in `combineByName`:
+
+- **`RouteBackend`** (v1alpha2) — the primary driver: one backend per group, its target URL, TLS,
+  and mode (Forward / Operator / Plugin).
+- **`AppManifest`** (v1alpha2) — provides group + manifest spec, needed only for Operator/Plugin
+  modes.
+
+Join: index manifests by `AppName`, correlate with backends by `Name`. The route's `Key()` is the
+backend's resource version for Forward mode, or `backendRV-manifestRV` for Operator/Plugin (so a
+change to either object changes the key). One backend owns all versions of a group; the router
+relies on this (it keys by group).
+
+**Core groups without an AppManifest CR.** Some groups (folder, dashboard, secret, and other core
+apps built into Grafana) have a `RouteBackend` but no `AppManifest` CR registered in the apiserver —
+they aren't managed through the App Platform's manifest-CR flow. `combineByName` falls back to
+`l.coreGroupsWithoutManifests`, built once at construction by
+`getAPIGroupsForCoreGroupsWithoutManifests()` from `pkg/storage/unified/resource.AppManifests()` —
+the same embedded `ManifestData` compiled into this binary that the apiserver itself uses, indexed
+by `AppName`. The fallback's fingerprint component is the constant `embeddedManifestKey`
+("embedded"), since there's no CR to version — it only changes on redeploy. CR-sourced manifests are
+always tried first; a backend is skipped with a warning only when **both** lookups miss.
+
+**Firing on both kinds via `Watcher()`.** `Watcher()` returns a `SimpleWatcher` whose
+Add/Update/Delete all push a pure edge to the buffered-1 `dirty` channel (coalesces bursts).
+`cloudLoader.starting` builds one informer per source kind and attaches this same watcher to each
+via `AddEventHandler`, so both `RouteBackend` and `AppManifest` (both v1alpha2, what `Load` reads)
+wake the router. The informers exist only as change-detectors — the payload is irrelevant; they just
+fire the edge and `Load` re-reads full state. The signal carries no resource version: resource
+versions across kinds are not comparable, and the per-group `Key()` is derived only after
+`combineByName` correlates the two objects, so the edge is information-free by design.
+
+**Startup.** Don't depend on the informer's start-up replay (OpinionatedWatcher-style Add replay) as
+the trigger for the first build — `Run` does an explicit initial `Load` before waiting on `Notify`;
+if replay also fires, it coalesces into one extra, idempotent reconcile. Correct either way.
 
 ## Rule: never delete interfaces in `types.go` without human sign-off
 
@@ -55,8 +92,14 @@ next)` is the single serving handler. **There is no `http.Server` in this packag
 
 The dskit `router` target runs through `Service` (`service.go`). It mounts `gr.HandleFunc` on the
 module server's instrumentation listener, alongside `/metrics`, `/livez`, and `/readyz`; readiness
-is reflected through the shared health notifier. The legacy enterprise `router` command still owns
-its separate listener and TLS configuration.
+is reflected through the shared health notifier. There is no separate listener/TLS configuration
+anywhere else — see Lifecycle / ownership below.
+
+`Service.HandleFunc` instruments every request through `routerMetrics` (`metrics.go`: an in-flight
+gauge plus a duration histogram labeled by group/status, registered on the caller's own
+`prometheus.Registerer` — the module server's shared one in production, a fresh `prometheus.NewRegistry()`
+in tests) and logs the outcome (`logging.go`). `ProvideService` takes a `reg` param for this; there
+is no private registry the way the old standalone `grafana router` process had one.
 
 `HandleFunc` is the one serving entry point: it covers `/apis` (by group) **and** `/openapi/v3`
 (there is no exported OpenAPI handler — `serveOpenAPIV3` is private, reached only through
@@ -110,13 +153,11 @@ is the immutable-snapshot-swapped-atomically concurrency model, which the group-
 
 - Duplicate group in a single `Load` **overwrites and warns, does not panic** — routes are dynamic
   (GitOps) config, not static code, so a bad duplicate must not crash the router.
-- `pkg/router` does depend on `k8s.io/apimachinery` (`metav1.APIGroupList` etc.) and
-  `k8s.io/kube-openapi/pkg/handler3` (`OpenAPIV3Discovery`) for the synthesized discovery documents
-  — see Discovery endpoints below. These are real k8s wire types reused for exact client-go/kubectl
-  compatibility, not the aggregator/apiserver machinery (`PathRecorderMux`, `UpgradeAwareHandler`,
-  admission, etc.) — that machinery is still deliberately not pulled in (see Scope above).
+- `pkg/router` uses Kubernetes discovery types, content negotiation, and resource-discovery
+  conversion helpers for client-go/kubectl compatibility. Plugin API server construction and
+  admission remain in `pkg/services/pluginsintegration/pluginroute`.
 
-## Transports (`router.go`, `transportFor`)
+## Transports (`cloud_router.go`, `transportFor`)
 
 One `*http.Transport` is built and cached per `tlsCacheKey` (CA data / skip-verify), so backends
 with the same TLS settings share a transport and its pool. `MinVersion` is TLS 1.2; a valid
@@ -124,6 +165,20 @@ with the same TLS settings share a transport and its pool. `MinVersion` is TLS 1
 `InsecureSkipVerify` — an intentional, spec-gated escape hatch for trusted internal links, with a
 targeted `nosemgrep`/`#nosec` justification. Only enable it for backends whose link is actually
 trusted.
+
+Aggregate targets do not go through `transportFor` (they have no `RouteBackend` spec and so no TLS
+settings to key on), but they follow the same intent: `newAggregateBaseTransport` clones
+`http.DefaultTransport` **once per target** so each target owns its connection pool instead of
+sharing the process-global default's (`MaxIdleConnsPerHost` 2, shared with every other
+`DefaultTransport` user in the process).
+
+**Two separate transports per target.** `ProvideCloudRoutesLoaderFactory` builds two
+`newAggregateBaseTransport` clones: one becomes `rest.Config.Transport`, wrapped via
+`WrapTransport`/`aggregateTokenWrapper` into the CAP-token-exchanging `httpClient` used only for the
+router's own discovery poll (`discoverGroups`, learning which groups the target serves). The other,
+plain and unwrapped, is `proxyTransport`, passed to `newAggregateTarget` and from there into every
+`aggregateBackend.proxy.Transport` (`aggregate_poller.go`'s `poll`) — it forwards the caller's own
+credentials transparently, same contract as `forwardBackend`'s `transportFor` transport.
 
 ## Path model
 
@@ -151,7 +206,7 @@ TBD. Possibly inspect a manifest. Use a gRPC client to translate http calls via 
 | ---------------------------------------------- | -------------- | --------------------------------------------- |
 | `/apis/{group}/{version}`                      | single backend | proxy to the owning backend                   |
 | `/apis/{group}`                                | single backend | proxy to the owning backend (see decision)    |
-| `/apis`                                        | router         | **synthesized** `metav1.APIGroupList`         |
+| `/apis`                                        | router         | negotiated `APIGroupList` or `APIGroupDiscoveryList` |
 | `/openapi/v3`                                  | router         | **synthesized** `handler3.OpenAPIV3Discovery` |
 | `/openapi/v3/apis/{group}/{version}`           | single backend | proxy, cached and key-busted (see below)      |
 
@@ -165,10 +220,22 @@ synthesized from `served`, so it never advertises both). Consequences:
   path→hash discovery index, **never** a merged OpenAPI schema) both require router-side synthesis
   from each backend's `Group()`, done once per `reconcile()` cycle and stored via `atomic.Pointer`
   alongside `snapshot` (`buildAPIGroupList`/`buildOpenAPIV3Index` in `discovery.go`).
+  When mounted as middleware, `discovery_handler.go` merges these with the embedded server's
+  discovery through `next`. A routed group replaces all fallback versions of that group.
+  The merged response's ETag includes fallback content, so changes there invalidate it too.
+- Aggregated discovery requests to `/apis` use Kubernetes content negotiation. The router reads
+  each backend's aggregated discovery with the caller's context and credentials, keeping only
+  the group that backend owns. Older backends fall back to per-version resource discovery;
+  unavailable versions remain advertised with `freshness: Stale`. Responses are not cached across
+  callers, since backend discovery may depend on their credentials. Embedded groups from `next`
+  are included in the aggregate as well.
 - `/openapi/v3/apis/{group}/{version}` (the actual heavy per-group document) is a pure proxy to the
   owning backend, same as `/apis/{group}/{version}` — fronted by a key-validated `sync.Map` cache
-  (`openapiDocs` in `router.go`) so repeat requests between manifest changes skip the backend
-  round-trip. Cache-miss proxy requests strip `If-None-Match`/`If-Modified-Since` before forwarding,
+  (`openapiDocs` in `router.go`) for reusable responses. Private, no-cache, and no-store responses
+  are never shared: backends must authorize each request. Cache hits require matching
+  Accept and Accept-Encoding headers and preserve representation metadata. Only a cached response
+  can produce a router-generated 304. Cache-miss proxy requests strip
+  `If-None-Match`/`If-Modified-Since` before forwarding,
   so an unrelated backend ETag scheme can't produce a bodyless 304 the router would otherwise have
   no way to distinguish from "unchanged" (see `stripConditionalHeaders` in `openapi_cache.go`). A
   matching `If-None-Match` on this path must set the `ETag` header before writing 304, same as the
@@ -195,8 +262,9 @@ public LB). The router's synthesized `/apis` does **not** populate it:
   with the field unset; only the root aggregator (`rootAPIsHandler`) patches it per-request. So a
   backend built on `k8s.io/apiserver` needs no extra work here regardless of this decision.
 - Deployment-specific reasoning for why this wouldn't help in a given topology (reachable addresses,
-  edge LB behavior, etc.) belongs with the deployment, not here — see the enterprise router factory's
-  AGENTS.md (`pkg/extensions/router`) for that reasoning.
+  edge LB behavior, etc.) belongs with the deployment. The `cloud_router` loader's router has no
+  public IP; external callers only ever reach it via an edge LB/gateway doing an unmodified
+  pass-through proxy on `/openapi` and discovery, so there's no second, cheaper address to offer.
 
 Revisit only if a concrete client is confirmed to read the field.
 
@@ -285,47 +353,142 @@ writeup:
   same 502 as a real transport failure, so without the exclusion a few abandoned client requests trip
   the breaker for every other caller on that group.
 
+### Active discovery is a different concern from passive health
+
+The decision above is about *health* — whether a group's backend is serving well right now, and
+whether that should gate `/apis`/`/openapi/v3`. It says nothing about *discovery* — learning which
+groups exist in the first place. `forward` backends (RouteBackend CRs) get discovery for free from the
+CR; the two fixed aggregate targets (`baas_apiserver`, `cloud_app_platform_apiserver`, implemented in
+`aggregate_*.go` files) have no CR, so the router polls their `/apis` endpoint on a cooldown-paced
+background loop to learn their group list. That poll result only ever changes *which groups are
+installed* — the same `r.served`-sourced discovery synthesis and the same per-group `gobreaker`
+breaker apply to an aggregate-discovered group exactly as they do to a forward one; nothing here
+reintroduces kube-aggregator's `AvailabilityController`-style active health gating that the section
+above rejects.
+
+**A failed poll changes nothing** — it leaves the previous snapshot untouched, so a down target's
+already-discovered groups stay in `/apis` and stay serving on last-known-good. This is the invariant
+the whole feature's health story rests on: discovery only ever learns *which groups exist*, and a
+target being unreachable is a health fact, handled by the per-group breaker on real request outcomes.
+
+**The cooldown is the poll loop's only pacing source.** `aggregateTarget.run` resets a single
+`time.Timer` from `cooldown.Until` after every attempt; there is deliberately no second
+fixed-interval ticker (nor is there a `Ready()` predicate left on `cooldown` to gate one with —
+`Until` is the whole API). A previous version had both, skipping any tick the cooldown wasn't
+ready for: since
+the ticker interval and the cooldown's steady interval are the same 30s, the two raced (an early tick
+was silently dropped, pushing the real cadence out by a whole interval) and the 5s/10s/20s… backoff
+ladder was masked entirely, because a retry scheduled 5s out could not run until the outer ticker
+next fired. Don't reintroduce a second timing source.
+
+### `plugins_url`: a third, differently-shaped source
+
+`pluginManifestsTarget` (`plugin_manifests.go`) reuses `aggregateTarget`'s cooldown/dirty-signal poll
+loop shape (same constants, same `run`/`poll` split, same last-known-good-on-failure invariant) for
+consistency, but its wire format and backend are unrelated:
+
+- It polls `plugins_url` directly (the configured value is the full endpoint, e.g.
+  `http://host:10001/plugins` — not a base to join `/apis` onto like the aggregate targets).
+- The response decodes straight into `definition.PluginDeployments` — the
+  `{"key","plugins":[{"definition":{"jsonData","manifest"},"host"}]}` envelope that type already
+  describes, confirmed against a live plugin-manifests operator deployment.
+- Each `PluginDeployment` with a non-nil `Definition.Manifest` becomes one `pluginManifestBackend`, fingerprinted and tagged
+  `plugins_url:<pluginId>:<hash>` (same tagging-at-the-backend-key idea as `aggregateBackend`'s
+  `"aggregate:<name>:..."` prefix — a plain string tag, not a new method on `Backend`). Entries with no
+  manifest are skipped.
+- `pluginManifestBackend.Load`/`ServeHTTP` are a placeholder that echoes the manifest entry —
+  routing real traffic to `entry.Host` (the plugin's gRPC backend) is the "Backend Mode: Plugin" work
+  the Path model section above marks TBD, not implemented by adding this third discovery source.
+- No CAP token / audience: `plugins_url` is an unauthenticated in-cluster endpoint, unlike the
+  appmanifest apiserver and the two aggregate targets. `ProvideCloudRoutesLoaderFactory` gates
+  `cap_token`/`token_exchange_url` on those two sources only — `plugins_url` alone must activate the
+  loader without either set.
+
+## Settings (`[cloud_router]`, `cloud_router.go`)
+
+Not documented in OSS `conf/defaults.ini` -- read directly via
+`cfg.SectionWithEnvOverrides("cloud_router")`, no `pkg/setting` struct field, since this is an
+optional, deployment-specific loader rather than a core Grafana concept. An ini section is never
+truly absent (`SectionWithEnvOverrides` always returns a valid, empty section), so what actually gates
+activation is the presence of at least one upstream apiserver URL — **any** of
+`appmanifest_apiserver_url`, `baas_apiserver.url`, or `cloud_app_platform_apiserver.url` — not the
+section's existence. Keys:
+
+| Key                   | Required             | Meaning                                                                 |
+| --------------------- | --------------------- | ------------------------------------------------------------------------ |
+| `appmanifest_apiserver_url`       | gates AppManifest CR loader      | Base URL of the remote apiserver serving `apps.grafana.app` RouteBackend/AppManifest CRs. Empty → CRD-backed loader is disabled, but aggregate targets may still be active. |
+| `cap_token`           | yes, if any apiserver_url is set | Grafana Cloud Access Policy token exchanged for a signed access token per request; shared across appmanifest and aggregate targets. |
+| `token_exchange_url`  | yes, if any apiserver_url is set | URL of the token exchange service used to sign `cap_token` per request; shared across appmanifest and aggregate targets. |
+| `apiserver_ca_file`   | no                    | CA bundle file used to verify `appmanifest_apiserver_url`'s TLS cert. Does **not** apply to aggregate targets. |
+| `apiserver_insecure`  | no                    | Skip TLS verification of `appmanifest_apiserver_url`. Dev only. Does **not** apply to aggregate targets. |
+| `baas_apiserver.url`  | no                    | Base URL of the BaaS apiserver. If unset, BaaS group discovery is skipped. |
+| `baas_apiserver.audience` | yes, if `baas_apiserver.url` is set | OIDC audience string to request when exchanging the CAP token for this target's access token. |
+| `baas_apiserver.group_regex` | no                | Comma-separated glob patterns (e.g., `*.grafana.app,*.internal`) to filter discovered groups. Unset means accept all groups discovered from this target. |
+| `cloud_app_platform_apiserver.url` | no          | Base URL of the Cloud App Platform apiserver. If unset, CAP group discovery is skipped. |
+| `cloud_app_platform_apiserver.audience` | yes, if `cloud_app_platform_apiserver.url` is set | OIDC audience string for this target. |
+| `cloud_app_platform_apiserver.group_regex` | no | Comma-separated glob patterns to filter CAP-discovered groups; same semantics as baas_apiserver. |
+| `plugins_url`         | no                    | Full URL of a plugin-manifests operator's `/plugins` endpoint (e.g. `http://host:10001/plugins`). If set, the router polls it as a third, independent source — see "`plugins_url`: a third, differently-shaped source" above. |
+| `plugins_group_regex` | no                    | Comma-separated glob patterns to filter plugin-discovered groups by their manifest's `group`; same semantics as `baas_apiserver.group_regex`. |
+
+Any combination of `appmanifest_apiserver_url`, `baas_apiserver.url`, `cloud_app_platform_apiserver.url`, and
+`plugins_url` may be set independently. `cap_token` and `token_exchange_url` are required only if **any** of
+`appmanifest_apiserver_url`/`baas_apiserver.url`/`cloud_app_platform_apiserver.url` is set — `plugins_url` alone never
+requires them (its operator is unauthenticated and in-cluster). Aggregate targets, the AppManifest loader, and
+`plugins_url` all activate independently of one another.
+
+**Every `*.url` value must be absolute** (scheme + host). `url.Parse` accepts `""` and relative
+values without error, so `newAggregateTarget` rejects them explicitly, same as `NewForwardBackend`
+does — otherwise a typo'd target polls a URL it can never reach and the only symptom is a recurring
+background `WARN`. A trailing slash is tolerated (normalized away) rather than producing `//apis`.
+
+**Legacy key: `apiserver_url` is a hard error.** It was renamed to `appmanifest_apiserver_url`.
+`ProvideCloudRoutesLoaderFactory` still reads the old name and fails loudly if it is set while the new
+one is not — without that, a deployment left on the old key looks like "nothing configured", falls
+through to the dummy loader, and the router reports itself ready while serving an empty route set.
+Setting both is fine (the new key wins, the old one is ignored).
+
+`group_regex` patterns are **globs, not regexes**: `*` is the only special character and everything
+else is passed through `regexp.QuoteMeta`, so `+`, `(`, `[` etc. match literally. `group_regex` is a
+narrowing allowlist, so a live metacharacter would widen the shortlist — the wrong failure direction.
+A side effect: glob compilation can never fail, so there is no "invalid pattern" error to handle.
+
 ## Lifecycle / ownership
 
-`GrafanaRouter` can run as the dskit `router` target or through the legacy enterprise `grafana
-router` command. It also runs as a background service in the full Grafana server when the router
-middleware feature is enabled; the embedded API server invokes it after Grafana authentication and
-identity setup, with the regular Kubernetes API server handler as its fallback. The dskit target
-gets its edition-specific `RoutesLoader` from a Wire sub-injector. OSS uses the same full dependency
-graph as app-plugin API registration; enterprise receives the configured module storage/search and
-authlib clients explicitly.
+`GrafanaRouter` runs as the dskit `router` target (`Service` in `service.go`), or as a background
+service in the full Grafana server when the router middleware feature is enabled — the embedded API
+server invokes it after Grafana authentication and identity setup, with the regular Kubernetes API
+server handler as its fallback. There is no standalone `grafana router` process anymore (the old
+`RouterFactory`/CLI-command seam was removed once the dskit target could own the loader's lifecycle
+directly); the module server's HTTP listener, `/metrics`, `/livez`, `/readyz` are what front it now.
 
-Wiring keeps the standalone command factory separate from the dskit loader provider:
+The dskit target gets its `RoutesLoader` from a Wire sub-injector (`server.InitializeRoutesLoader`).
+`ProvideRoutesLoader` (`loader_factory.go`) takes the config and injected
+`PluginLoaderDependencies`, then selects cloud routes, local plugins, or dummy groups.
+`ProvidePluginLoaderDependencies` (`plugin.go`) assembles the embedded server's dependencies;
+`ProvidePluginLoaderDependenciesWithClients` uses the router module's existing clients so the
+module does not construct another resource client or initialize local storage migrations.
 
-- **OSS (`pkg/router`)** — `ProvideRoutesLoader` currently returns two dummy API groups so the
-  dskit router target can be exercised end to end. Its dependencies intentionally mirror
-  `appplugin.RegisterAPIService` except for `builder.APIRegistrar`, plus the authlib access client.
-  A later iteration will replace the dummy backends with manifests from installed plugins. The older
-  `RouterFactory` remains a no-op, so the legacy top-level command is still hidden in OSS builds.
-- **enterprise (`pkg/extensions/router`)** — the real factory (`cli.go`): a urfave `router` command
-  whose flags drive runtime config. Its `run` builds one `rest.Config` for the whole apps group,
-  a `k8s.ClientRegistry`, the enterprise `Loader`, two informers (RouteBackend + AppManifest,
-  v1alpha2) wired to `loader.Watcher()` as change-detectors, the `GrafanaRouter` engine, **and the
-  `http.Server` that serves `gr.HandleFunc`** — then runs informers, the reconcile loop, the
-  listener, and graceful shutdown as `g.Go`s under a single errgroup. The listener config
-  (addr/TLS/timeouts) is a factory concern, not part of `pkg/router`.
-- **dskit target binding** — OSS constructs the dummy loader from the bootstrap CLI/server
-  graph; enterprise wires its provider from the module's configured unified-storage and authlib
-  clients. Both use the generic `Service`.
-- **binding** — `server.InitializeRouterFactory()` (wire) returns the no-op in OSS
-  (`wire_gen.go`) and the enterprise factory in enterprise/pro (`enterprise_wire_gen.go`);
-  `cmd/grafana/main.go` appends the command when non-nil. Keep the wire source
-  (`wire.go` + `wireexts_{oss,enterprise}.go`, set `wireExtsRouterFactorySet`) in sync with the
-  generated files so `make gen-go` reproduces them.
+- `ProvideCloudRoutesLoaderFactory(cfg)` builds one `rest.Config` for the whole apps group (CAP token
+  exchanged for a signed access token per request) and a `k8s.ClientRegistry` from grafana.ini (see
+  Settings above), then constructs `cloudLoader`. `cloudLoader` itself implements
+  `LifecycleRoutesLoader` (`RoutesLoader` + `services.Service`): its `starting`/`running` build and
+  drive the RouteBackend + AppManifest informers (v1alpha2) wired to `Watcher()` as change-detectors.
+- **dskit target binding** — `pkg/server`'s `initRouterModule` builds the loader, then the router
+  `Service` around it; if the loader also implements `LifecycleRoutesLoader`, it's run alongside the
+  router `Service` under one composite `services.Service` (`newCompositeService`), so both start and
+  stop together as the one `router` module instead of the loader needing its own process to drive its
+  informers.
+- **binding** — kept via Wire: `wire.go`'s `InitializeRoutesLoader` plus each edition's
+  `wireExts{OSS,Enterprise}.go` `wireExtsRoutesLoaderSet`. Keep those in sync with the generated
+  `wire_gen.go`/`enterprise_wire_gen.go` so `make gen-go` reproduces them.
 
 `GrafanaRouter.Run` drives only the reconcile loop (its own goroutine; status via `Ready`/`Alive`).
-The listener runs alongside it as separate `g.Go`s in the factory's errgroup. If any leg errors, the
-errgroup cancels the rest and the process exits.
+The listener is the module server's, not this package's or the loader's.
 
 ## Security
 
 Per repo policy, scan generated code with semgrep before landing. The group-keyed dispatch has no
 injection sinks (the group is used only as a map key; no filesystem, shell, SQL, or template).
 The sensitive surface is: proxy code that forwards headers / injects m2m identity/tokens / resolves
-target URLs, `transportFor`'s TLS handling (esp. the spec-gated `InsecureSkipVerify` path), and the
-standalone proxy port that runs outside the k8s handler chain. Scan and review those specifically.
+target URLs, `transportFor`'s TLS handling (esp. the spec-gated `InsecureSkipVerify` path), and
+`cloud_router.go`'s client construction / CAP-token exchange / credential handling.

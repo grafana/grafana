@@ -4,7 +4,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { type Field } from '@grafana/data';
 import { type DataGridHandle, type DataGridProps } from '@grafana/react-data-grid';
 
-import { useTheme2 } from '../../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { getTextColorForBackground as _getTextColorForBackground } from '../../../utils/colors';
 import { usePanelContext } from '../../PanelChrome';
 import { type DataLinksActionsTooltipState } from '../cellUtils';
@@ -19,11 +19,13 @@ import {
   useFilteredRows,
   useHeaderHeight,
   useManagedSort,
+  useNotifyDisplayedRowIndices,
   usePaginatedRows,
   useScrollbarWidth,
   useSortedRows,
   useRowCompiler,
   useTypographyCtx,
+  useHeaderTypographyCtx,
 } from './hooks';
 import {
   type ColumnBuildConfig,
@@ -31,6 +33,7 @@ import {
   useColumnBuilderFromFields,
   useDataGridRows,
 } from './render-hooks';
+import { getGridStyles } from './styles';
 import {
   type CellRootRenderer,
   type InspectCellProps,
@@ -45,6 +48,7 @@ import {
   getCellLinks,
   getDefaultRowHeight,
   getVisibleFields,
+  makeStripedRowClass,
   markEdgeColumns,
 } from './utils';
 
@@ -60,7 +64,9 @@ export function TableFlat(props: TableNGProps) {
     cellHeight,
     data,
     disableKeyboardEvents,
+    hoverOverflow,
     disableSanitizeHtml,
+    jsonSyntaxHighlightingEnabled,
     enablePagination = false,
     enableSharedCrosshair = false,
     enableVirtualization,
@@ -73,6 +79,7 @@ export function TableFlat(props: TableNGProps) {
     noValue,
     onCellFilterAdded,
     onColumnResize,
+    onDisplayedRowIndicesChange,
     onSortByChange,
     showTypeIcons,
     structureRev,
@@ -85,6 +92,8 @@ export function TableFlat(props: TableNGProps) {
     sortByBehavior = 'initial',
     contentAwareWidthsEnabled = false,
     tableRefreshEnabled = false,
+    preventHorizontalOverflow = false,
+    zebraStriping = false,
   } = props;
 
   const theme = useTheme2();
@@ -131,6 +140,7 @@ export function TableFlat(props: TableNGProps) {
   } = useSortedRows(filteredRows, data.fields, [], { initialSortBy: sortBy });
 
   useManagedSort({ sortByBehavior, setSortColumns, sortBy });
+  useNotifyDisplayedRowIndices(sortedRows, onDisplayedRowIndicesChange);
 
   const [inspectCell, setInspectCell] = useState<InspectCellProps | null>(null);
   const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();
@@ -154,13 +164,18 @@ export function TableFlat(props: TableNGProps) {
 
   const gridRef = useRef<DataGridHandle>(null);
   const scrollbarWidth = useScrollbarWidth(gridRef, height);
-  // A scrollbar appearing/disappearing changes how much room the columns have, so factor it out.
-  const availableWidth = useMemo(() => width - scrollbarWidth, [width, scrollbarWidth]);
+  // A scrollbar appearing/disappearing changes how much room the columns have. An inset table's
+  // frame also lives inside `width`, so its two borders are not available to the columns.
+  const availableWidth = useMemo(
+    () => width - scrollbarWidth - (tableRefreshEnabled && !noPanelPadding ? TABLE.FRAME_BORDER_WIDTH * 2 : 0),
+    [width, scrollbarWidth, tableRefreshEnabled, noPanelPadding]
+  );
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
   const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
 
   const typographyCtx = useTypographyCtx(theme);
+  const headerTypographyCtx = useHeaderTypographyCtx(theme);
 
   const frozenColumns = _frozenColumns;
 
@@ -182,10 +197,12 @@ export function TableFlat(props: TableNGProps) {
     enabled: contentAwareWidthsEnabled,
     typographyCtx,
     showTypeIcons,
+    hasHeader,
     getActions: getCellActions,
     tableRefreshEnabled,
     filter,
     noPanelPadding,
+    preventHorizontalOverflow,
   });
 
   const [widths, numFrozenColsFullyInView] = useColWidths(
@@ -201,8 +218,10 @@ export function TableFlat(props: TableNGProps) {
     fields: visibleFields,
     enabled: hasHeader,
     showTypeIcons: showTypeIcons ?? false,
-    typographyCtx,
+    typographyCtx: headerTypographyCtx,
     noPanelPadding,
+    tableRefreshEnabled,
+    filter,
   });
   const maxRowHeight = _maxRowHeight != null ? Math.max(TABLE.LINE_HEIGHT, _maxRowHeight) : undefined;
 
@@ -238,7 +257,10 @@ export function TableFlat(props: TableNGProps) {
     rowHeight,
     pageSize,
     noPanelPadding,
+    tableRefreshEnabled,
   });
+  const showPagination = enablePagination && numRows > 0;
+  const styles = useStyles2(getGridStyles, showPagination, transparent, tableRefreshEnabled, noPanelPadding);
 
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {
     if (typeof rowHeight === 'function') {
@@ -276,10 +298,13 @@ export function TableFlat(props: TableNGProps) {
       numFrozenColsFullyInView,
       maxRowHeight,
       disableKeyboardEvents,
+      hoverOverflow,
       disableSanitizeHtml,
+      jsonSyntaxHighlightingEnabled,
       showTypeIcons,
       timeRange,
       tableRefreshEnabled,
+      typographyCtx,
       // the first column here is a field column, so it's the one carrying the panel-edge inset
       firstColumnExtraPadding: noPanelPadding ? FIRST_COLUMN_EXTRA_PADDING : 0,
     }),
@@ -296,11 +321,14 @@ export function TableFlat(props: TableNGProps) {
       numFrozenColsFullyInView,
       maxRowHeight,
       disableKeyboardEvents,
+      hoverOverflow,
       disableSanitizeHtml,
+      jsonSyntaxHighlightingEnabled,
       setFilter,
       showTypeIcons,
       timeRange,
       tableRefreshEnabled,
+      typographyCtx,
       noPanelPadding,
     ]
   );
@@ -321,18 +349,27 @@ export function TableFlat(props: TableNGProps) {
     [cellRootRenderers]
   );
 
+  // Striping is applied through `rowClass` rather than react-data-grid's own row parity - see
+  // `makeStripedRowClass`.
+  const rowClass = useMemo(
+    () => (zebraStriping ? makeStripedRowClass(paginatedRows) : undefined),
+    [zebraStriping, paginatedRows]
+  );
+
   return (
     <TableDataGrid
       role="grid"
       gridRef={gridRef}
       columns={structureRevColumns}
       rows={paginatedRows}
+      rowClass={rowClass}
       noValue={noValue}
       renderers={{ renderRow, renderCell: renderCellRoot }}
       columnWidths={resetColumnWidths}
       onColumnWidthsChange={resetColumnWidths != null ? () => {} : undefined}
       onColumnResize={resizeHandler}
       onCellClick={onCellClick}
+      className={noPanelPadding ? styles.firstColumnInset : undefined}
       onCellKeyDown={({ column, row }, event) => {
         if (column.key === columns[0].key && row.__index === 0 && event.shiftKey && event.key === 'Tab') {
           event.preventGridDefault();
@@ -347,6 +384,8 @@ export function TableFlat(props: TableNGProps) {
       setSortColumns={setSortColumns}
       onSortByChange={onSortByChange}
       rowHeight={rowHeight}
+      getRowHeight={rowHeightFn}
+      height={height}
       enableVirtualization={enableVirtualization}
       hasFooter={hasFooter}
       footerHeight={footerHeight}
@@ -354,6 +393,7 @@ export function TableFlat(props: TableNGProps) {
       headerHeight={headerHeight}
       transparent={transparent}
       tableRefreshEnabled={tableRefreshEnabled}
+      zebraStriping={zebraStriping}
       noPanelPadding={noPanelPadding}
       initialRowIndex={initialRowIndex}
       sortedRows={sortedRows}

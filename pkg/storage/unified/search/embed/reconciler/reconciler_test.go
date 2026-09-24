@@ -8,17 +8,21 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	foldermanifest "github.com/grafana/grafana/apps/folder/pkg/apis/manifestdata"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/enrollment"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
 
@@ -85,6 +89,15 @@ func newReconcilerWithBuilders(t *testing.T, st *fakeStorage, vec *fakeVector, b
 	})
 	require.NoError(t, err)
 	return s
+}
+
+type skippingBuilder struct{ embed.Builder }
+
+func (b skippingBuilder) Extract(ctx context.Context, key *resourcepb.ResourceKey, value []byte, folderTitle string) ([]embed.Item, error) {
+	if key.Name == "skip" {
+		return nil, fmt.Errorf("unsupported stored API version: %w", embed.ErrSkip)
+	}
+	return b.Builder.Extract(ctx, key, value, folderTitle)
 }
 
 // dashEvent builds a pendingEvent with the dashboard group/resource pre-filled.
@@ -272,6 +285,88 @@ func TestReconciler_DeleteEvent_CallsVectorDelete(t *testing.T) {
 	require.Len(t, vec.deletes, 1)
 	assert.Equal(t, deleteCall{Namespace: "ns", Model: testModel, Resource: dashRes, UID: "dash-x"}, vec.deletes[0])
 	assert.Equal(t, 0, text.calls, "delete does not call the embedder")
+}
+
+func TestReconciler_SkipExtract_PreservesVectorsAndAdvancesCursor(t *testing.T) {
+	st := &fakeStorage{changes: []*resource.ModifiedResource{
+		dashChange(resourcepb.WatchEvent_MODIFIED, "ns", "skip", snowflakeRV(100), dashboardInFolder("skip", "Skip", "folder-b")),
+		dashChange(resourcepb.WatchEvent_ADDED, "ns", "good", snowflakeRV(200), minimalDashboard("good", "Good")),
+	}}
+	vec := newFakeVector()
+	vec.latestRV = snowflakeRV(50)
+	vec.storedSubs[subsKey("ns", testModel, dashRes, "skip")] = map[string]string{"panel/1": "existing content"}
+	vec.storedFolder[subsKey("ns", testModel, dashRes, "skip")] = "folder-a"
+	text := &fakeText{dim: 4}
+	s, err := New(Options{
+		Storage:       st,
+		VectorBackend: vec,
+		BatchEmbedder: embedder.NewBatchEmbedder(*newFakeEmbedder(text)),
+		Builders:      []embed.Builder{skippingBuilder{dashboard.New()}},
+		Interval:      time.Hour,
+	})
+	require.NoError(t, err)
+
+	s.sweep(t.Context())
+
+	assert.Equal(t, map[string]string{"panel/1": "existing content"}, vec.storedContentFor("ns", dashRes, "skip"))
+	assert.Equal(t, "folder-b", vec.storedFolder[subsKey("ns", testModel, dashRes, "skip")])
+	assert.Empty(t, vec.deletes)
+	assert.Empty(t, vec.delsubs)
+	require.Len(t, vec.upserts, 1)
+	require.NotEmpty(t, vec.upserts[0])
+	assert.Equal(t, "good", vec.upserts[0][0].UID)
+	assert.Equal(t, 1, text.calls, "only the supported resource reaches the provider")
+	assert.Equal(t, snowflakeRV(200), vec.latestRV)
+	assert.Zero(t, s.pendingLen(), "skipped resources are not retried")
+}
+
+func TestReconciler_SkipExtract_FolderUpdateErrorRetries(t *testing.T) {
+	st := &fakeStorage{changes: []*resource.ModifiedResource{
+		dashChange(resourcepb.WatchEvent_MODIFIED, "ns", "skip", snowflakeRV(100), minimalDashboard("skip", "Skip")),
+	}}
+	vec := newFakeVector()
+	vec.latestRV = snowflakeRV(50)
+	key := subsKey("ns", testModel, dashRes, "skip")
+	vec.storedSubs[key] = map[string]string{"panel/1": "existing content"}
+	vec.storedFolder[key] = "folder-a"
+	vec.updateFolderErr = errors.New("folder update failed")
+	text := &fakeText{dim: 4}
+	s, err := New(Options{
+		Storage: st, VectorBackend: vec,
+		BatchEmbedder: embedder.NewBatchEmbedder(*newFakeEmbedder(text)),
+		Builders:      []embed.Builder{skippingBuilder{dashboard.New()}},
+		Interval:      time.Hour,
+	})
+	require.NoError(t, err)
+
+	s.sweep(t.Context())
+
+	assert.Less(t, vec.latestRV, snowflakeRV(100), "the checkpoint cannot pass the failed folder update")
+	assert.Equal(t, "folder-a", vec.storedFolder[key])
+	assert.Equal(t, 1, s.pendingLen())
+	assert.Zero(t, text.calls)
+
+	vec.updateFolderErr = nil
+	s.sweep(t.Context())
+
+	assert.Equal(t, snowflakeRV(100), vec.latestRV)
+	assert.Empty(t, vec.storedFolder[key], "moving to the root also refreshes authorization")
+	assert.Equal(t, map[string]string{"panel/1": "existing content"}, vec.storedContentFor("ns", dashRes, "skip"))
+	assert.Zero(t, s.pendingLen())
+}
+
+func TestReconciler_EmptyExtract_DeletesOldVectors(t *testing.T) {
+	vec := newFakeVector()
+	vec.storedSubs[subsKey("ns", testModel, dashRes, "empty")] = map[string]string{"panel/1": "existing content"}
+	s, text := newReconciler(t, &fakeStorage{}, vec)
+	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "empty", 100, []byte(`{"uid":"empty","title":"No panels"}`)))
+
+	s.processPending(t.Context())
+
+	require.Equal(t, []deleteCall{{Namespace: "ns", Model: testModel, Resource: dashRes, UID: "empty"}}, vec.deletes)
+	assert.Empty(t, vec.storedContentFor("ns", dashRes, "empty"))
+	assert.Empty(t, vec.upserts)
+	assert.Zero(t, text.calls)
 }
 
 func TestReconciler_StaleSubresources_AreDeletedBeforeUpsert(t *testing.T) {
@@ -593,8 +688,7 @@ func TestReconciler_WatchConsumer_IgnoresUnrelatedResources(t *testing.T) {
 	vec := newFakeVector()
 	s, _ := newReconciler(t, st, vec)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	ch, err := st.WatchWriteEvents(ctx)
 	require.NoError(t, err)
 	go s.consumeWatchEvents(ctx, ch)
@@ -750,8 +844,7 @@ func TestReconciler_AcquireLockBlocking_BlocksUntilAvailable(t *testing.T) {
 	s, _ := newReconciler(t, &fakeStorage{}, vec)
 	s.lockRetryInterval = 10 * time.Millisecond
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	type result struct {
 		release func()
@@ -946,7 +1039,7 @@ func TestReconciler_EmbeddedValueReleasedAndReplaysAsNoOp(t *testing.T) {
 	s, text := newReconciler(t, &fakeStorage{}, vec)
 	ev := dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-0", snowflakeRV(100), minimalDashboard("dash-0", "Dash 0"))
 
-	_, failed, successes, abort := s.processEvents(t.Context(), []*pendingEvent{ev})
+	_, failed, successes, abort := s.processEvents(t.Context(), []*pendingEvent{ev}, s.builderSnapshot())
 	require.False(t, abort)
 	require.Empty(t, failed)
 	require.Len(t, successes, 1)
@@ -1422,7 +1515,9 @@ func TestReconciler_EnsureResourceInitialized_UsesEventRV(t *testing.T) {
 	s, _ := newReconciler(t, &fakeStorage{}, vec)
 	b := dashboard.New()
 
-	require.NoError(t, s.ensureResourceInitialized(context.Background(), b, snowflakeRV(777)))
+	partition, err := s.ensureResourceInitialized(context.Background(), b, snowflakeRV(777))
+	require.NoError(t, err)
+	assert.Equal(t, dashRes, partition)
 
 	assert.Equal(t, []string{dashRes}, vec.ensuredPartitions)
 	require.Len(t, vec.backfillJobs, 1)
@@ -1432,7 +1527,9 @@ func TestReconciler_EnsureResourceInitialized_UsesEventRV(t *testing.T) {
 	assert.Equal(t, b.Version(), vec.backfillJobs[0].ContentVersion, "job is stamped with the builder's content version")
 
 	// Second event for the same resource: no-op (no new partition or job).
-	require.NoError(t, s.ensureResourceInitialized(context.Background(), b, snowflakeRV(999)))
+	partition, err = s.ensureResourceInitialized(context.Background(), b, snowflakeRV(999))
+	require.NoError(t, err)
+	assert.Equal(t, dashRes, partition)
 	assert.Len(t, vec.ensuredPartitions, 1)
 	assert.Len(t, vec.backfillJobs, 1)
 	assert.Equal(t, snowflakeRV(777), vec.backfillJobs[0].StoppingRV)
@@ -1445,7 +1542,7 @@ func TestReconciler_EnsureResourceInitialized_CreateError(t *testing.T) {
 	vec.createBackfillErr = errors.New("db unavailable")
 	s, _ := newReconciler(t, &fakeStorage{}, vec)
 
-	err := s.ensureResourceInitialized(context.Background(), dashboard.New(), snowflakeRV(1))
+	_, err := s.ensureResourceInitialized(context.Background(), dashboard.New(), snowflakeRV(1))
 	require.Error(t, err)
 	assert.Empty(t, vec.backfillJobs)
 }
@@ -1829,4 +1926,401 @@ func TestReconciler_ExhaustedRecord_SurvivesLookbackRelist(t *testing.T) {
 
 	s.forgetExhaustedBelow(past)
 	assert.Empty(t, s.exhausted, "dropped once a sweep no longer lists it")
+}
+
+func setupEmbeddingRetry(t *testing.T, cursor int64) (*Reconciler, *fakeStorage, *fakeVector, *fakeText) {
+	t.Helper()
+	st := &fakeStorage{changes: []*resource.ModifiedResource{
+		dashChange(resourcepb.WatchEvent_ADDED, "ns", "dash", snowflakeRV(100), minimalDashboard("dash", "Dash")),
+	}}
+	vec := newFakeVector()
+	vec.latestRV = cursor
+	s, text := newReconciler(t, st, vec)
+	return s, st, vec, text
+}
+
+func TestReconciler_EmbeddingBackoff(t *testing.T) {
+	for _, hint := range []time.Duration{0, time.Second, 10 * time.Minute} {
+		t.Run(hint.String(), func(t *testing.T) {
+			s, st, vec, text := setupEmbeddingRetry(t, snowflakeRV(50))
+			s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash", snowflakeRV(100), st.changes[0].Value))
+			for attempt := range maxEventAttempts - 1 {
+				s.embedRetryAt = time.Time{}
+				text.failNext = &embedder.RetryableError{Err: errBoom, RetryAfter: hint}
+				before := time.Now()
+				s.reconcileCycle(t.Context())
+				require.Equal(t, attempt+1, text.calls)
+				require.Equal(t, snowflakeRV(50), vec.latestRV)
+				require.Equal(t, 1, s.pendingLen())
+				require.Empty(t, s.exhausted)
+				require.Equal(t, attempt+1, s.embedBackoff.NumRetries())
+				assert.False(t, s.embedRetryAt.Before(before.Add(min(5*time.Minute, max(hint, time.Minute)))))
+				assert.True(t, s.embedRetryAt.Before(time.Now().Add(5*time.Minute)), "provider hints cannot exceed the hard cap")
+				s.reconcileCycle(t.Context())
+				require.Equal(t, attempt+1, text.calls, "cooldown suppresses calls")
+				require.Empty(t, st.lastCalledWith, "cooldown suppresses scans")
+			}
+			s.embedRetryAt = time.Time{}
+			s.reconcileCycle(t.Context())
+			assert.Equal(t, snowflakeRV(100), vec.latestRV)
+			assert.Zero(t, s.pendingLen())
+			assert.Nil(t, s.embedBackoff, "recovery resets backoff")
+			assert.Len(t, vec.upserts, 1)
+		})
+	}
+}
+
+func TestReconciler_EmbeddingSweepRecovery(t *testing.T) {
+	for _, tt := range []struct {
+		name               string
+		batchSize          int
+		upsertErr          error
+		failFirst, restart bool
+		pending            []string
+	}{
+		{"unprocessed remainder", 1000, nil, false, false, []string{"b", "c"}},
+		{"earlier batch failure", 1, errBoom, false, false, []string{"a", "b"}},
+		{"same batch failure", 1000, errBoom, false, false, []string{"a", "b", "c"}},
+		{"failed lookback write", 1000, nil, true, false, []string{"a", "b", "c"}},
+		{"restart after partial sweep", 1, nil, false, true, []string{"b"}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			oldBatchSize := startupBatchSize
+			startupBatchSize = tt.batchSize
+			t.Cleanup(func() { startupBatchSize = oldBatchSize })
+			s, st, vec, text := setupEmbeddingRetry(t, snowflakeRV(100))
+			st.changes = nil
+			for i, name := range []string{"a", "b", "c"} {
+				rv := []int64{95, 110, 120}[i]
+				st.changes = append(st.changes, dashChange(resourcepb.WatchEvent_ADDED, "ns", name, snowflakeRV(rv), minimalDashboard(name, name)))
+			}
+			st.lookback, st.latestRvOverride = 10, snowflakeRV(120)
+			yielded := 0
+			st.onYield = func() { yielded++ }
+			throttled := &embedder.RetryableError{Err: errBoom}
+			vec.upsertErrFn = func([]vector.Vector) error { text.failNext = throttled; return tt.upsertErr }
+			if tt.failFirst {
+				text.failNext = throttled
+			}
+			s.reconcileCycle(t.Context())
+			require.Equal(t, snowflakeRV(100), vec.latestRV, "interrupted sweep retains cursor")
+			require.Equal(t, len(tt.pending), s.pendingLen())
+			for _, name := range tt.pending {
+				assert.Contains(t, s.pending, pendingKey(dashGroup, dashRes, "ns", name))
+			}
+			indexed := len(vec.upserts)
+			if indexed > 0 {
+				assert.NotContains(t, s.pending, pendingKey(dashGroup, dashRes, "ns", "a"), "known success is not queued")
+			}
+			vec.upsertErrFn, st.onYield = nil, nil
+			if tt.restart {
+				s, text = newReconciler(t, st, vec)
+			} else {
+				// Only unlisted rows remain: queued lookback writes must survive independently.
+				st.changes = st.changes[yielded:]
+			}
+			callsBefore := text.calls
+			s.embedRetryAt = time.Time{}
+			s.reconcileCycle(t.Context())
+			assert.Equal(t, 3-indexed, text.calls-callsBefore, "successful content is not re-embedded")
+			assert.Len(t, vec.upserts, 3)
+			assert.Zero(t, s.pendingLen())
+			assert.Equal(t, snowflakeRV(120), vec.latestRV)
+		})
+	}
+}
+
+func TestReconciler_EmbeddingLiveRecovery(t *testing.T) {
+	for _, tt := range []struct {
+		name    string
+		cursor  int64
+		restart bool
+	}{
+		{"initial seed survives restart", 0, true},
+		{"newer delete supersedes retry", snowflakeRV(50), false},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			s, st, vec, text := setupEmbeddingRetry(t, tt.cursor)
+			text.failNext = &embedder.RetryableError{Err: errBoom}
+			s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash", snowflakeRV(100), st.changes[0].Value))
+			s.reconcileCycle(t.Context())
+			require.Equal(t, 1, s.pendingLen())
+			if tt.restart {
+				require.Equal(t, snowflakeRV(100)-1, vec.latestRV)
+				s, _ = newReconciler(t, st, vec)
+				s.reconcileCycle(t.Context())
+				assert.Equal(t, snowflakeRV(100), vec.latestRV)
+				assert.Len(t, vec.upserts, 1)
+			} else {
+				st.changes = nil
+				s.enqueue(dashEvent(resourcepb.WatchEvent_DELETED, "ns", "dash", snowflakeRV(200), nil))
+				s.reconcileCycle(t.Context())
+				assert.Empty(t, vec.deletes, "new events do not bypass cooldown")
+				s.embedRetryAt = time.Time{}
+				s.reconcileCycle(t.Context())
+				assert.Equal(t, 1, text.calls)
+				assert.Empty(t, vec.upserts)
+				assert.Len(t, vec.deletes, 1)
+			}
+			assert.Zero(t, s.pendingLen())
+		})
+	}
+}
+
+func TestReconciler_EmbeddingRetryCap(t *testing.T) {
+	for _, source := range []string{"watch", "sweep", "lookback"} {
+		t.Run(source, func(t *testing.T) {
+			cursor := snowflakeRV(50)
+			if source == "lookback" {
+				cursor = snowflakeRV(105)
+			}
+			s, st, vec, text := setupEmbeddingRetry(t, cursor)
+			if source == "watch" {
+				s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash", snowflakeRV(100), st.changes[0].Value))
+			}
+			st.lookback, st.latestRvOverride = 10, snowflakeRV(110)
+			s.metrics = resource.ProvideVectorMetrics(prometheus.NewPedanticRegistry())
+			for attempt := range maxEventAttempts {
+				s.embedRetryAt = time.Time{}
+				text.failNext = &embedder.RetryableError{Err: errBoom}
+				s.reconcileCycle(t.Context())
+				require.Equal(t, attempt+1, text.calls)
+				require.Equal(t, cursor, vec.latestRV, "a provider failure still aborts the sweep")
+				if attempt+1 < maxEventAttempts {
+					require.Equal(t, 1, s.pendingLen())
+					require.Equal(t, attempt+1, s.pending[pendingKey(dashGroup, dashRes, "ns", "dash")].attempts)
+				}
+			}
+			require.Zero(t, s.pendingLen(), "the exhausted event must not be requeued as unfinished")
+			require.True(t, s.isExhausted(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash", snowflakeRV(100), nil)))
+			assert.Equal(t, 1.0, testutil.ToFloat64(s.metrics.ReconcilerEventsDroppedTotal.WithLabelValues(dashGroup, dashRes, "retries_exhausted")))
+			s.reconcileCycle(t.Context())
+			require.Equal(t, maxEventAttempts, text.calls, "cooldown still applies after the final failure")
+			s.embedRetryAt = time.Time{}
+			s.reconcileCycle(t.Context())
+			assert.Equal(t, maxEventAttempts, text.calls, "re-listing must not reset the exhausted allowance")
+			assert.Equal(t, snowflakeRV(110), vec.latestRV, "cursor can pass the broken dashboard")
+		})
+	}
+}
+
+func TestReconciler_EmbeddingRetryCap_PreservesUnfinishedEvents(t *testing.T) {
+	s, _, vec, text := setupEmbeddingRetry(t, snowflakeRV(50))
+	broken := dashEvent(resourcepb.WatchEvent_ADDED, "ns", "broken", snowflakeRV(100), minimalDashboard("broken", "Broken"))
+	broken.attempts = maxEventAttempts - 1
+	next := dashEvent(resourcepb.WatchEvent_ADDED, "ns", "next", snowflakeRV(110), minimalDashboard("next", "Next"))
+	text.failNext = &embedder.RetryableError{Err: errBoom}
+	_, failed, successes, abort := s.processEvents(t.Context(), []*pendingEvent{broken, next}, s.builderSnapshot())
+	require.True(t, abort)
+	require.Empty(t, successes)
+	require.Equal(t, []*pendingEvent{next}, failed)
+	require.Zero(t, next.attempts, "unattempted events do not consume their allowance")
+	s.processBatch(t.Context(), failed)
+	require.Len(t, vec.upserts, 1)
+	assert.Equal(t, "next", vec.upserts[0][0].UID)
+}
+
+var folderGR = schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
+
+func folderEvent(t *testing.T, name, version, title, description, parent string, rv int64) *pendingEvent {
+	t.Helper()
+	value, err := json.Marshal(map[string]any{
+		"apiVersion": folderGR.Group + "/" + version,
+		"metadata":   map[string]any{"annotations": map[string]string{"grafana.app/folder": parent}},
+		"spec":       map[string]any{"title": title, "description": description},
+	})
+	require.NoError(t, err)
+	return &pendingEvent{
+		action: resourcepb.WatchEvent_MODIFIED,
+		group:  folderGR.Group, resource: folderGR.Resource,
+		namespace: "ns", name: name, rv: snowflakeRV(rv), value: value,
+	}
+}
+
+type runtimeReconcilerTest struct {
+	reconciler *Reconciler
+	storage    *fakeStorage
+	vectors    *fakeVector
+	configs    *resource.EmbeddingConfigRegistry
+	provider   *enrollment.Registry
+	metrics    *resource.VectorMetrics
+}
+
+func setupRuntimeReconciler(t *testing.T, customBuilders ...embed.Builder) *runtimeReconcilerTest {
+	t.Helper()
+	configs := resource.NewEmbeddingConfigRegistry()
+	metrics := resource.ProvideVectorMetrics(prometheus.NewRegistry())
+	allowed := make([]string, 0, len(customBuilders)+1)
+	for _, builder := range customBuilders {
+		allowed = append(allowed, builder.Group()+"/"+builder.Resource())
+	}
+	allowed = append(allowed, folderGR.Group+"/"+folderGR.Resource)
+	provider, err := enrollment.New(configs, allowed, customBuilders, metrics.EmbedSkippedVersionsTotal)
+	require.NoError(t, err)
+	storage := &fakeStorage{}
+	vectors := newFakeVector()
+	s, err := New(Options{
+		Storage: storage, VectorBackend: vectors,
+		BatchEmbedder:   embedder.NewBatchEmbedder(*newFakeEmbedder(&fakeText{dim: 4})),
+		BuilderProvider: provider,
+	})
+	require.NoError(t, err)
+	return &runtimeReconcilerTest{
+		reconciler: s, storage: storage, vectors: vectors,
+		configs: configs, provider: provider, metrics: metrics,
+	}
+}
+
+func TestReconciler_RuntimeFolderEnrollment(t *testing.T) {
+	env := setupRuntimeReconciler(t)
+	s, vec, configs := env.reconciler, env.vectors, env.configs
+	const partition = "folder_documents"
+	vec.collections = map[schema.GroupResource]vector.Collection{
+		folderGR: {Group: folderGR.Group, Resource: folderGR.Resource, PartitionKey: partition},
+	}
+
+	// Construction precedes the initial live manifest load.
+	s.enqueue(folderEvent(t, "folder", "v1", "Before loading", "", "", 100))
+	s.reconcileCycle(t.Context())
+	assert.Zero(t, s.pendingLen())
+	assert.Empty(t, vec.ensuredCollections)
+	assert.Zero(t, vec.setLatestRVCalls)
+
+	manifest := foldermanifest.LocalManifest().ManifestData
+	configs.Reload([]*app.ManifestData{manifest})
+	require.NoError(t, env.provider.Validate())
+	assert.Empty(t, vec.ensuredCollections, "loading declarations alone does not initialize a collection")
+	s.enqueue(folderEvent(t, "folder", "v1", "Operations", "Service dashboards", "", 200))
+	s.processPending(t.Context())
+
+	require.Len(t, vec.upserts, 1)
+	assert.Equal(t, partition, vec.upserts[0][0].Resource)
+	assert.Equal(t, "title: Operations\ndescription: Service dashboards", vec.upserts[0][0].Content)
+	assert.Equal(t, 1, vec.upserts[0][0].ContentVersion)
+	assert.Equal(t, []schema.GroupResource{folderGR}, vec.ensuredCollections)
+	require.Len(t, vec.backfillJobs, 1)
+	assert.Equal(t, partition, vec.backfillJobs[0].Resource)
+	assert.Equal(t, snowflakeRV(200), vec.backfillJobs[0].StoppingRV)
+	assert.Equal(t, 1, vec.backfillJobs[0].ContentVersion)
+
+	s.enqueue(folderEvent(t, "folder", "v1beta1", "Operations", "Service dashboards", "", 210))
+	s.processPending(t.Context())
+	assert.Len(t, vec.upserts, 1, "content lookup uses the catalog partition, so unchanged text is not re-embedded")
+
+	s.enqueue(folderEvent(t, "folder", "v1", "Queued before removal", "", "", 220))
+	configs.Reload()
+	checkpoint := vec.latestRV
+	checkpointWrites := vec.setLatestRVCalls
+	s.reconcileCycle(t.Context())
+	s.enqueue(folderEvent(t, "folder", "v1", "While removed", "", "", 230))
+	assert.Zero(t, s.pendingLen())
+	assert.Equal(t, checkpoint, vec.latestRV)
+	assert.Equal(t, checkpointWrites, vec.setLatestRVCalls, "empty enrollment must not advance the checkpoint")
+	assert.Len(t, vec.upserts, 1)
+	assert.Empty(t, vec.deletes)
+
+	configs.Reload([]*app.ManifestData{manifest})
+	s.enqueue(folderEvent(t, "folder", "v1beta1", "Restored", "New description", "", 240))
+	s.processPending(t.Context())
+	require.Len(t, vec.upserts, 2)
+	assert.Equal(t, "title: Restored\ndescription: New description", vec.upserts[1][0].Content)
+	assert.Len(t, vec.backfillJobs, 1, "restoring a declaration reuses its provisioned collection")
+
+	s.enqueue(folderEvent(t, "folder", "v2", "Unknown version", "", "parent", 250))
+	s.processPending(t.Context())
+	assert.Len(t, vec.upserts, 2)
+	assert.Empty(t, vec.deletes)
+	assert.Equal(t, "parent", vec.storedFolder[subsKey("ns", testModel, partition, "folder")])
+	assert.Equal(t, float64(1), testutil.ToFloat64(env.metrics.EmbedSkippedVersionsTotal.WithLabelValues(folderGR.Group, folderGR.Resource, "v2")))
+
+	deleted := folderEvent(t, "folder", "v1", "", "", "", 260)
+	deleted.action = resourcepb.WatchEvent_DELETED
+	s.enqueue(deleted)
+	s.processPending(t.Context())
+	assert.Equal(t, []deleteCall{{"ns", testModel, partition, "folder"}}, vec.deletes)
+	assert.Empty(t, vec.storedContentFor("ns", partition, "folder"))
+}
+
+func TestReconciler_SweepKeepsManifestSnapshotAcrossBatches(t *testing.T) {
+	oldBatchSize := startupBatchSize
+	startupBatchSize = 1
+	t.Cleanup(func() { startupBatchSize = oldBatchSize })
+
+	env := setupRuntimeReconciler(t)
+	s, vec, configs := env.reconciler, env.vectors, env.configs
+	configs.Reload([]*app.ManifestData{foldermanifest.LocalManifest().ManifestData})
+	first := folderEvent(t, "first", "v1", "First title", "First description", "", 100)
+	second := folderEvent(t, "second", "v1beta1", "Second title", "Second description", "", 200)
+	env.storage.changes = []*resource.ModifiedResource{
+		change(folderGR.Group, folderGR.Resource, "ns", first.name, first.rv, first.value),
+		change(folderGR.Group, folderGR.Resource, "ns", second.name, second.rv, second.value),
+	}
+	vec.latestRV = snowflakeRV(50)
+	vec.onUpsert = func() {
+		configs.Reload([]*app.ManifestData{{
+			Group: folderGR.Group,
+			Embed: map[string]app.ManifestResourceEmbed{folderGR.Resource: {ReembedVersion: 2}},
+			Versions: []app.ManifestVersion{{
+				Name: "v1beta1",
+				Kinds: []app.ManifestVersionKind{{
+					Kind: "Folder", Plural: folderGR.Resource,
+					Embed: &app.ManifestVersionKindEmbed{Fields: []app.ManifestVersionKindEmbedField{{Name: "description", Path: "spec.description"}}},
+				}},
+			}},
+		}})
+	}
+	s.sweep(t.Context())
+
+	require.Len(t, vec.upserts, 2)
+	for _, batch := range vec.upserts {
+		assert.Equal(t, 1, batch[0].ContentVersion)
+	}
+	assert.Equal(t, "title: Second title\ndescription: Second description", vec.upserts[1][0].Content)
+	assert.Equal(t, snowflakeRV(200), vec.latestRV)
+
+	s.enqueue(folderEvent(t, "second", "v1beta1", "Second title", "Updated description", "", 300))
+	s.processPending(t.Context())
+	require.Len(t, vec.upserts, 3)
+	assert.Equal(t, 2, vec.upserts[2][0].ContentVersion)
+	assert.Equal(t, "description: Updated description", vec.upserts[2][0].Content)
+}
+
+func TestReconciler_CollectionCacheUsesGroupAndResource(t *testing.T) {
+	vec := newFakeVector()
+	first := fakeBuilder{group: "first.example.test", resource: "documents"}
+	second := fakeBuilder{group: "second.example.test", resource: "documents"}
+	vec.collections = map[schema.GroupResource]vector.Collection{
+		{Group: first.Group(), Resource: first.Resource()}:   {PartitionKey: "first_documents"},
+		{Group: second.Group(), Resource: second.Resource()}: {PartitionKey: "second_documents"},
+	}
+	s := newReconcilerWithBuilders(t, &fakeStorage{}, vec, first, second)
+	for i, builder := range []embed.Builder{first, second} {
+		s.enqueue(&pendingEvent{
+			action: resourcepb.WatchEvent_ADDED, group: builder.Group(), resource: builder.Resource(),
+			namespace: "ns", name: "document", rv: snowflakeRV(int64(i + 100)), value: []byte(`{"spec":{}}`),
+		})
+	}
+	s.processPending(t.Context())
+	assert.ElementsMatch(t, []string{"first_documents", "second_documents"}, vec.ensuredPartitions)
+	assert.True(t, vec.hasUpsertFor("ns", "first_documents", "document"))
+	assert.True(t, vec.hasUpsertFor("ns", "second_documents", "document"))
+}
+
+func TestReconciler_NewlyEnrolledResourceKeepsSweepLookback(t *testing.T) {
+	env := setupRuntimeReconciler(t, fakeBuilder{group: dashGroup, resource: dashRes})
+	s, st, vec := env.reconciler, env.storage, env.vectors
+	folder := folderEvent(t, "folder", "v1", "Recently written", "", "", 95)
+	st.changes = []*resource.ModifiedResource{change(folder.group, folder.resource, folder.namespace, folder.name, folder.rv, folder.value)}
+	st.lookback = 10
+	st.latestRvOverride = snowflakeRV(100)
+	vec.latestRV = snowflakeRV(100)
+	s.sweep(t.Context())
+
+	env.configs.Reload([]*app.ManifestData{foldermanifest.LocalManifest().ManifestData})
+	s.sweep(t.Context())
+
+	require.Len(t, st.lastCalledWith, 3)
+	assert.NotNil(t, st.lastCalledWith[1], "the existing dashboard builder already covered this lookback")
+	assert.Nil(t, st.lastCalledWith[2], "the newly enrolled folder builder still needs the lookback")
+	assert.True(t, vec.hasUpsertFor("ns", folderGR.Resource, "folder"))
 }

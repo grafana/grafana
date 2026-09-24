@@ -198,6 +198,39 @@ func TestRecordResourceOperationBytes(t *testing.T) {
 	assert.Equal(t, uint64(1), deletedCount, "a delete with a byte count is still a real op and observed")
 }
 
+func TestRecordGitClientStats(t *testing.T) {
+	reg := testRegistry
+	m := testMetrics
+
+	// The registry is a binary-wide singleton, so measure the delta this test adds
+	// rather than absolute counts other tests may have contributed to.
+	const action = "gitstats-test-action"
+	count := func(variance string) uint64 {
+		metrics, err := reg.Gather()
+		require.NoError(t, err)
+		// A histogram with no observations yet is absent from Gather output, so a
+		// missing family reads as zero rather than a failure.
+		hist := findMetric(metrics, "grafana_provisioning_jobs_git_http_requests")
+		if hist == nil {
+			return 0
+		}
+		return histogramSampleCount(hist, map[string]string{"action": action, "variance": variance})
+	}
+
+	beforeFull := count("full")
+	beforeIncremental := count("incremental")
+	m.RecordGitClientStats(action, "full", 128)
+	m.RecordGitClientStats(action, "full", 256)
+	m.RecordGitClientStats(action, "incremental", 4)
+	assert.Equal(t, uint64(2), count("full")-beforeFull, "one observation per job completion, split by variance")
+	assert.Equal(t, uint64(1), count("incremental")-beforeIncremental)
+
+	t.Run("nil-safe", func(t *testing.T) {
+		var nilMetrics *JobMetrics
+		assert.NotPanics(t, func() { nilMetrics.RecordGitClientStats(action, "full", 1) })
+	})
+}
+
 func TestRecordJobThroughput(t *testing.T) {
 	reg := testRegistry
 	m := testMetrics

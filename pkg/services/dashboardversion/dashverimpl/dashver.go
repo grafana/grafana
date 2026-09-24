@@ -428,10 +428,7 @@ func UnstructuredToDashboardVersionSpec(obj *unstructured.Unstructured, dst *Das
 		}
 
 		version := meta.GetGeneration()
-		parentVersion := version - 1
-		if parentVersion < 0 {
-			parentVersion = 0
-		}
+		parentVersion := max(version-1, 0)
 
 		dst.UID = obj.GetName()
 		dst.Version = version
@@ -456,10 +453,7 @@ func UnstructuredToDashboardVersionSpec(obj *unstructured.Unstructured, dst *Das
 	spec["uid"] = uid
 
 	dashVersion := meta.GetGeneration()
-	parentVersion := dashVersion - 1
-	if parentVersion < 0 {
-		parentVersion = 0
-	}
+	parentVersion := max(dashVersion-1, 0)
 	if dashVersion > 0 {
 		spec["version"] = dashVersion
 	}

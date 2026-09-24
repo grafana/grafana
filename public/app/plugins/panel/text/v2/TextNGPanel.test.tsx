@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { CoreApp, type InterpolateFunction, toDataFrame } from '@grafana/data';
@@ -9,7 +9,9 @@ import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 
 import { CodeLanguage, RenderMode, TextMode } from '../panelcfg.gen';
 
+import { FOOTER_TEST_ID } from './TextNGFooter';
 import { type Props, TextNGPanel } from './TextNGPanel';
+import { PREVIEW_TEST_ID } from './editor/TextNGEditor';
 import { createData, createProps, renderPanel } from './test-utils';
 
 mockComboboxRect();
@@ -47,6 +49,19 @@ jest.mock('@grafana/ui/unstable', () => ({
       readOnly
     />
   ),
+}));
+
+const mermaidRender = jest
+  .fn()
+  .mockResolvedValue({ svg: '<svg xmlns="http://www.w3.org/2000/svg"><text>A</text></svg>' });
+
+jest.mock('mermaid', () => ({
+  __esModule: true,
+  default: {
+    initialize: jest.fn(),
+    parse: jest.fn().mockResolvedValue(true),
+    render: (...args: unknown[]) => mermaidRender(...args),
+  },
 }));
 
 const replaceVariablesMock = jest.fn();
@@ -246,6 +261,60 @@ describe('TextNGPanel', () => {
       expect(screen.queryByTestId('TextNGPanel-converted-content')).not.toBeInTheDocument();
     });
 
+    it('opens the editor on the split view', async () => {
+      replaceVariablesMock.mockImplementation((str: string) => str);
+      const props = Object.assign({}, defaultProps, {
+        options: { content: '# Hello', mode: TextMode.Markdown },
+      });
+
+      setup(props, CoreApp.PanelEditor);
+
+      expect(await screen.findByRole('radio', { name: 'Split' })).toBeChecked();
+      expect(screen.getByRole('textbox')).toHaveValue('# Hello');
+      expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML).toContain('<h1');
+    });
+
+    describe('view mode', () => {
+      const switchToWrite = async (props: Props) => {
+        replaceVariablesMock.mockImplementation((str: string) => str);
+        const { unmount } = renderPanel(props, CoreApp.PanelEditor);
+        await userEvent.click(await screen.findByRole('radio', { name: 'Write' }));
+        expect(screen.getByRole('radio', { name: 'Write' })).toBeChecked();
+        unmount();
+      };
+
+      // Table view swaps in a different VizPanel, which unmounts and remounts this
+      // component even though the user never actually left panel edit.
+      it('keeps the view mode across a remount that happens while still editing (e.g. table view)', async () => {
+        const props = createProps(replaceVariablesMock, { options: { content: 'hello', mode: TextMode.Markdown } });
+
+        await switchToWrite(props);
+
+        renderPanel(props, CoreApp.PanelEditor);
+        expect(await screen.findByRole('radio', { name: 'Write' })).toBeChecked();
+      });
+
+      it('resets to the split view once the panel is actually shown outside edit mode', async () => {
+        const props = createProps(replaceVariablesMock, { options: { content: 'hello', mode: TextMode.Markdown } });
+
+        await switchToWrite(props);
+        renderPanel(props, CoreApp.Dashboard).unmount();
+
+        renderPanel(props, CoreApp.PanelEditor);
+        expect(await screen.findByRole('radio', { name: 'Split' })).toBeChecked();
+      });
+
+      // Both panels carry the same id, as ids only ever have to be unique within a dashboard.
+      it('does not carry the view mode over to another panel', async () => {
+        const options = { content: 'hello', mode: TextMode.Markdown };
+
+        await switchToWrite(createProps(replaceVariablesMock, { options }));
+
+        renderPanel(createProps(replaceVariablesMock, { options }), CoreApp.PanelEditor);
+        expect(await screen.findByRole('radio', { name: 'Split' })).toBeChecked();
+      });
+    });
+
     it('merges a language change made in the editor into the existing code options', async () => {
       replaceVariablesMock.mockImplementation((str: string) => str);
       const onOptionsChange = jest.fn();
@@ -403,9 +472,133 @@ describe('TextNGPanel', () => {
     });
   });
 
+  describe('pagination', () => {
+    afterEach(() => {
+      setTestFlags({ [FlagKeys.TextNewFeatures]: true });
+    });
+
+    const reportRowIndex: InterpolateFunction = (target, scopedVars) => {
+      const rowIndex = scopedVars?.__dataContext?.value.rowIndex;
+      return rowIndex === undefined ? target : `row-${rowIndex}`;
+    };
+
+    function numberedFrame(rows: number) {
+      return toDataFrame({ fields: [{ name: 'n', values: Array.from({ length: rows }, (_, i) => i) }] });
+    }
+
+    /** Wide, so the row summary shows alongside the full control. */
+    function setupPaged(options: Partial<Props['options']> = {}, rows = 150, app = CoreApp.Dashboard) {
+      const props = createProps(reportRowIndex, {
+        width: 1000,
+        height: 400,
+        data: createData([numberedFrame(rows)]),
+        options: { content: 'row', mode: TextMode.Markdown, renderMode: RenderMode.PerRow, ...options },
+      });
+
+      setup(props, app);
+    }
+
+    function renderedRows() {
+      return screen.getByTestId('TextNGPanel-converted-content').innerHTML.match(/row-\d+/g) ?? [];
+    }
+
+    it('renders only the first page of a per-row render past 100 rows', () => {
+      setupPaged({ pageSize: 10 });
+      const rendered = renderedRows();
+
+      expect(rendered).toHaveLength(10);
+      expect([rendered[0], rendered[9]]).toEqual(['row-0', 'row-9']);
+      expect(screen.getByText('1 - 10 of 150 rows')).toBeInTheDocument();
+    });
+
+    it('renders the rows of the page the reader moves to', async () => {
+      setupPaged({ pageSize: 10 });
+
+      await userEvent.click(screen.getByRole('button', { name: '2' }));
+      const rendered = renderedRows();
+
+      expect(rendered).toHaveLength(10);
+      expect([rendered[0], rendered[9]]).toEqual(['row-10', 'row-19']);
+      expect(screen.getByText('11 - 20 of 150 rows')).toBeInTheDocument();
+    });
+
+    it('fits the page to the panel height when no page size is set', () => {
+      // 400px less the 38px the bar takes, over a 24px block, is 15 rows.
+      setupPaged();
+
+      expect(renderedRows()).toHaveLength(15);
+    });
+
+    it('renders every row in one pass at the threshold', () => {
+      setupPaged({}, 100);
+
+      expect(renderedRows()).toHaveLength(100);
+      expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+    });
+
+    it('pages the preview from the editor footer, which is the panel while editing', async () => {
+      setupPaged({ pageSize: 10 }, 150, CoreApp.PanelEditor);
+
+      const footer = await screen.findByTestId(FOOTER_TEST_ID);
+      expect(within(footer).getByText('1 - 10 of 150 rows')).toBeInTheDocument();
+
+      await userEvent.click(within(footer).getByRole('button', { name: '2' }));
+      const rendered = screen.getByTestId(PREVIEW_TEST_ID).innerHTML.match(/row-\d+/g) ?? [];
+
+      expect(rendered).toHaveLength(10);
+      expect([rendered[0], rendered[9]]).toEqual(['row-10', 'row-19']);
+    });
+
+    it('renders every row in one pass when the panel sizes to its content', () => {
+      const props = createProps(reportRowIndex, {
+        width: 1000,
+        height: 400,
+        fitContent: true,
+        data: createData([numberedFrame(150)]),
+        options: { content: 'row', mode: TextMode.Markdown, renderMode: RenderMode.PerRow },
+      });
+
+      setup(props, CoreApp.Dashboard);
+
+      expect(renderedRows()).toHaveLength(150);
+      expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+    });
+
+    it('renders a once template whole, having no per-row blocks to page', () => {
+      setupPaged({ renderMode: RenderMode.Once });
+
+      expect(screen.getByTestId('TextNGPanel-converted-content')).toHaveTextContent('row');
+      expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+    });
+
+    // A panel saved while the flag was on keeps its per-row mode, so the gate has to
+    // hold at render time and not only in the options pane.
+    it('renders a saved per-row panel once, unpaged, when the text.newFeatures flag is off', () => {
+      act(() => {
+        setTestFlags({ [FlagKeys.TextNewFeatures]: false });
+      });
+
+      setupPaged({ pageSize: 10 });
+
+      expect(screen.getByTestId('TextNGPanel-converted-content')).toHaveTextContent('row');
+      expect(renderedRows()).toEqual([]);
+      expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+      expect(screen.queryByTestId(FOOTER_TEST_ID)).not.toBeInTheDocument();
+    });
+  });
+
   describe('frame selector', () => {
+    afterEach(() => {
+      setTestFlags({ [FlagKeys.TextNewFeatures]: true });
+    });
+
     const frameA = toDataFrame({ name: 'Frame A', fields: [{ name: 'host', values: ['web-1'] }] });
     const frameB = toDataFrame({ name: 'Frame B', fields: [{ name: 'host', values: ['web-2'] }] });
+
+    // Reports how many frames the render pass was handed, so the flag-off case covers
+    // the selection itself and not only the missing picker.
+    const reportFrameCount: InterpolateFunction = (_target, scopedVars) =>
+      `${scopedVars?.__dataContext?.value.data.length} frames`;
 
     it('does not show a frame picker for a single frame', () => {
       setup(createProps(replaceVariablesMock, { data: createData([frameA]) }), CoreApp.Dashboard);
@@ -424,11 +617,63 @@ describe('TextNGPanel', () => {
 
       setup(props, CoreApp.Dashboard);
 
-      const picker = screen.getByRole('combobox');
-      await userEvent.click(picker);
+      await userEvent.click(screen.getByRole('combobox'));
       await userEvent.click(await screen.findByRole('option', { name: 'Frame B' }));
 
       expect(onOptionsChange).toHaveBeenCalledWith(expect.objectContaining({ frameIndex: 1 }));
+    });
+
+    it('renders the selector left of the pagination in a single panel footer', () => {
+      replaceVariablesMock.mockImplementation((str: string) => str);
+      const pagedFrame = toDataFrame({
+        name: 'Frame C',
+        fields: [{ name: 'n', values: Array.from({ length: 150 }, (_, i) => i) }],
+      });
+      const props = createProps(replaceVariablesMock, {
+        // Wide, so the pagination summary shows alongside the full control.
+        width: 1000,
+        height: 400,
+        data: createData([pagedFrame, frameB]),
+        options: { content: 'row', mode: TextMode.Markdown, renderMode: RenderMode.PerRow, pageSize: 10 },
+      });
+
+      setup(props, CoreApp.Dashboard);
+
+      const [left, center] = Array.from(
+        screen.getByTestId(FOOTER_TEST_ID).querySelectorAll<HTMLElement>(':scope > div')
+      );
+
+      expect(within(left).getByRole('combobox')).toHaveValue('Frame C');
+      expect(center).toHaveTextContent('1 - 10 of 150 rows');
+    });
+
+    it('hides the picker and ignores a saved frame index when the text.newFeatures flag is off', () => {
+      act(() => {
+        setTestFlags({ [FlagKeys.TextNewFeatures]: false });
+      });
+      const props = createProps(reportFrameCount, {
+        data: createData([frameA, frameB]),
+        options: { content: 'hello', mode: TextMode.Markdown, frameIndex: 1 },
+      });
+
+      setup(props, CoreApp.Dashboard);
+
+      expect(screen.getByTestId('TextNGPanel-converted-content')).toHaveTextContent('2 frames');
+      expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    });
+
+    it('holds the frame selector in the editor footer while editing, not in a row of its own', async () => {
+      replaceVariablesMock.mockImplementation((str: string) => str);
+      const props = createProps(replaceVariablesMock, {
+        data: createData([frameA, frameB]),
+        options: { content: 'hello', mode: TextMode.Markdown },
+      });
+
+      setup(props, CoreApp.PanelEditor);
+      const footers = await screen.findAllByTestId(FOOTER_TEST_ID);
+
+      expect(footers).toHaveLength(1);
+      expect(within(footers[0]).getByRole('combobox')).toHaveValue('Frame A');
     });
 
     it('does not make the rendered content a row flex item', () => {
@@ -582,6 +827,21 @@ describe('TextNGPanel', () => {
       expect(html()).not.toContain('web-1');
     });
 
+    // Auto-fit measures the blocks, so the box cannot be a debounce behind the template.
+    it('re-renders the content in the same pass when the template changes', () => {
+      const props = createProps((target) => target, {
+        options: { content: 'first', mode: TextMode.Markdown },
+      });
+
+      const { rerender } = render(viewing(props));
+      settle();
+      expect(html()).toContain('first');
+
+      rerender(viewing(Object.assign({}, props, { options: { ...props.options, content: 'second' } })));
+
+      expect(html()).toContain('second');
+    });
+
     it('re-renders the content when a referenced variable changes', () => {
       let value = 'first';
       const props = createProps((target) => target.replace('${host}', value), {
@@ -598,6 +858,45 @@ describe('TextNGPanel', () => {
 
       expect(html()).toContain('second');
       expect(html()).not.toContain('first');
+    });
+  });
+
+  describe('mermaid', () => {
+    const fence = '```mermaid\ngraph TD; A-->B;\n```';
+
+    afterEach(() => {
+      setTestFlags({ [FlagKeys.TextNewFeatures]: true });
+    });
+
+    it('renders a mermaid fence as a diagram', async () => {
+      replaceVariablesMock.mockImplementation((str: string) => str);
+      setup(
+        Object.assign({}, defaultProps, { options: { content: fence, mode: TextMode.Markdown } }),
+        CoreApp.Dashboard
+      );
+
+      const content = screen.getByTestId('TextNGPanel-converted-content');
+      await screen.findByText('A');
+      expect(content.querySelector('.mermaid-diagram svg')).not.toBeNull();
+      expect(content.querySelector('code.language-mermaid')).toBeNull();
+    });
+
+    it('leaves the fence as code when the text.newFeatures flag is off', async () => {
+      act(() => {
+        setTestFlags({ [FlagKeys.TextNewFeatures]: false });
+      });
+      replaceVariablesMock.mockImplementation((str: string) => str);
+      mermaidRender.mockClear();
+      setup(
+        Object.assign({}, defaultProps, { options: { content: fence, mode: TextMode.Markdown } }),
+        CoreApp.Dashboard
+      );
+
+      const content = screen.getByTestId('TextNGPanel-converted-content');
+      // Let any pending lazy import settle before asserting nothing rendered.
+      await act(async () => {});
+      expect(content.querySelector('code.language-mermaid')).not.toBeNull();
+      expect(mermaidRender).not.toHaveBeenCalled();
     });
   });
 

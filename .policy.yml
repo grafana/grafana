@@ -26,11 +26,11 @@ policy:
             - Workflow .github/workflows/lint-build-docs.yml succeeded or skipped
             - Workflow .github/workflows/modowners-reviewers.yml succeeded or skipped
             - Workflow .github/workflows/policybot.yml succeeded or skipped
+            - Workflow .github/workflows/pr-bot-update-go-workspace.yml succeeded or skipped
             - Workflow .github/workflows/pr-build-grafana.yml succeeded or skipped
             - Workflow .github/workflows/pr-bundle-size.yml succeeded or skipped
             - Workflow .github/workflows/pr-checks.yml succeeded or skipped
             - Workflow .github/workflows/pr-commands.yml succeeded or skipped
-            - Workflow .github/workflows/pr-dependabot-update-go-workspace.yml succeeded or skipped
             - Workflow .github/workflows/pr-e2e-tests.yml succeeded or skipped
             - Workflow .github/workflows/pr-endpoint-feature-toggle.yml succeeded or skipped
             - Workflow .github/workflows/pr-frontend-unit-tests.yml succeeded or skipped
@@ -38,6 +38,7 @@ policy:
             - Workflow .github/workflows/pr-k8s-codegen-check.yml succeeded or skipped
             - Workflow .github/workflows/pr-mt-service-compatibility.yml succeeded or skipped
             - Workflow .github/workflows/pr-patch-check.yml succeeded or skipped
+            - Workflow .github/workflows/pr-resource-search-result-format.yml succeeded or skipped
             - Workflow .github/workflows/pr-test-docker.yml succeeded or skipped
             - Workflow .github/workflows/pr-test-integration-pgvector.yml succeeded or skipped
             - Workflow .github/workflows/pr-test-integration.yml succeeded or skipped
@@ -178,7 +179,7 @@ approval_rules:
         paths:
           - ^\.github\/workflows\/create-security-patch-from-security-mirror\.yml$
       targets_branch:
-        pattern: (^main$|^v(?:[^/]*)\.(?:[^/]*)\.(?:[^/]*)$|^release-(?:[^/]*)\.(?:[^/]*)\.(?:[^/]*)$)
+        pattern: (^main$|^v(?:[^/]*)\.(?:[^/]*)\.(?:[^/]*)$|^release-(?:[^/]*)\.(?:[^/]*)\.(?:[^/]*)$|^(?:[^/]*)#vendor$)
     requires:
       conditions:
         has_workflow_result:
@@ -402,6 +403,31 @@ approval_rules:
             - success
           workflows:
             - .github/workflows/policybot.yml
+  - name: Workflow .github/workflows/pr-bot-update-go-workspace.yml succeeded or skipped
+    if:
+      changed_files:
+        paths:
+          - ^\.github\/workflows\/pr-bot-update-go-workspace\.yml$
+          - ^go\.mod$
+          - ^go\.sum$
+          - ^go\.work$
+          - ^go\.work\.sum$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.mod$
+          - ^(?:(?:[^/]*(?:/|$))*)go\.sum$
+          - ^(?:[^/]*)\.go$
+      file_not_deleted:
+        paths:
+          - ^\.github\/workflows\/pr-bot-update-go-workspace\.yml$
+      targets_branch:
+        pattern: (^main$)
+    requires:
+      conditions:
+        has_workflow_result:
+          conclusions:
+            - skipped
+            - success
+          workflows:
+            - .github/workflows/pr-bot-update-go-workspace.yml
   - name: Workflow .github/workflows/pr-build-grafana.yml succeeded or skipped
     if:
       file_not_deleted:
@@ -454,31 +480,6 @@ approval_rules:
             - success
           workflows:
             - .github/workflows/pr-commands.yml
-  - name: Workflow .github/workflows/pr-dependabot-update-go-workspace.yml succeeded or skipped
-    if:
-      changed_files:
-        paths:
-          - ^\.github\/workflows\/pr-dependabot-update-go-workspace\.yml$
-          - ^go\.mod$
-          - ^go\.sum$
-          - ^go\.work$
-          - ^go\.work\.sum$
-          - ^(?:(?:[^/]*(?:/|$))*)go\.mod$
-          - ^(?:(?:[^/]*(?:/|$))*)go\.sum$
-          - ^(?:[^/]*)\.go$
-      file_not_deleted:
-        paths:
-          - ^\.github\/workflows\/pr-dependabot-update-go-workspace\.yml$
-      targets_branch:
-        pattern: (^main$)
-    requires:
-      conditions:
-        has_workflow_result:
-          conclusions:
-            - skipped
-            - success
-          workflows:
-            - .github/workflows/pr-dependabot-update-go-workspace.yml
   - name: Workflow .github/workflows/pr-e2e-tests.yml succeeded or skipped
     if:
       file_not_deleted:
@@ -587,6 +588,24 @@ approval_rules:
             - success
           workflows:
             - .github/workflows/pr-patch-check.yml
+  - name: Workflow .github/workflows/pr-resource-search-result-format.yml succeeded or skipped
+    if:
+      changed_files:
+        paths:
+          - ^(?:(?:[^/]*(?:/|$))*)(?:[^/]*)\.go$
+          - ^pkg\/storage\/unified\/semgrep\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.github\/workflows\/pr-resource-search-result-format\.yml$
+      file_not_deleted:
+        paths:
+          - ^\.github\/workflows\/pr-resource-search-result-format\.yml$
+    requires:
+      conditions:
+        has_workflow_result:
+          conclusions:
+            - skipped
+            - success
+          workflows:
+            - .github/workflows/pr-resource-search-result-format.yml
   - name: Workflow .github/workflows/pr-test-docker.yml succeeded or skipped
     if:
       changed_files:

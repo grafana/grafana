@@ -283,9 +283,14 @@ func (s *ModuleServer) Run() error {
 		if err != nil {
 			return nil, err
 		}
+		// The Kubernetes readiness probe reads the aggregate health status. This is
+		// the only probe registered for this target, so it decides pod readiness.
 		s.grpcService.Health.Register(
 			grpcserver.HealthProbeFunc(func(ctx context.Context) (bool, error) {
-				return svc.State() == services.Running, nil
+				if svc.State() != services.Running {
+					return false, nil
+				}
+				return svc.CheckHealth(ctx)
 			}),
 			resourcepb.ResourceIndex_ServiceDesc.ServiceName,
 			resourcepb.ManagedObjectIndex_ServiceDesc.ServiceName,
@@ -324,7 +329,54 @@ func (s *ModuleServer) initRouterModule() (services.Service, error) {
 	if err != nil {
 		return nil, fmt.Errorf("creating routes loader: %w", err)
 	}
-	return grafanarouter.ProvideService(s.cfg, s.features, loader, s.httpServerRouter, s.healthNotifier)
+	routerSvc, err := grafanarouter.ProvideService(s.cfg, s.features, loader, s.registerer)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := routerSvc.RegisterTargetRoutes(s.httpServerRouter, s.healthNotifier); err != nil {
+		return nil, err
+	}
+
+	// Some editions' loaders own a background lifecycle of their own (e.g.
+	// informers watching a remote apiserver to feed Notify's wake signal).
+	// Run it alongside the router service under one module so it starts and
+	// stops with the router rather than leaking independently of it.
+	lifecycle, ok := loader.(services.Service)
+	if !ok {
+		return routerSvc, nil
+	}
+	return newCompositeService(routerSvc, lifecycle)
+}
+
+// newCompositeService runs several dskit services under one, so a module
+// that needs more than one background lifecycle can still register as a
+// single services.Service. A failure in any of them fails the composite;
+// starting awaits all healthy, stopping awaits all stopped.
+func newCompositeService(svcs ...services.Service) (services.Service, error) {
+	manager, err := services.NewManager(svcs...)
+	if err != nil {
+		return nil, fmt.Errorf("composing services: %w", err)
+	}
+	failureWatcher := services.NewFailureWatcher()
+	failureWatcher.WatchManager(manager)
+
+	return services.NewBasicService(
+		func(ctx context.Context) error {
+			return services.StartManagerAndAwaitHealthy(ctx, manager)
+		},
+		func(ctx context.Context) error {
+			select {
+			case <-ctx.Done():
+				return nil
+			case err := <-failureWatcher.Chan():
+				return err
+			}
+		},
+		func(_ error) error {
+			return services.StopManagerAndAwaitStopped(context.Background(), manager)
+		},
+	), nil
 }
 
 func (s *ModuleServer) initNATSModule() (services.Service, error) {
@@ -339,9 +391,9 @@ func (s *ModuleServer) initNATSModule() (services.Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	// The publisher connects lazily on first publish, so no server is started
-	// here; in external mode the embedded server is inert. Returning it as the
-	// module service drains the connection on shutdown.
+	// The publisher establishes its connection when this service starts; in
+	// external mode the embedded server is inert. Returning it as the module
+	// service also drains the connection on shutdown.
 	natsCfg := nats.ProvideNATSConfig(s.cfg, natsServer)
 	publisher := nats.ProvidePublisher(natsCfg, s.registerer)
 	s.natsPublisher = publisher
@@ -431,15 +483,11 @@ func (s *ModuleServer) initStorageServerModule() (services.Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	probe, ok := svc.(grpcserver.HealthProbe)
 	s.grpcService.Health.Register(grpcserver.HealthProbeFunc(func(ctx context.Context) (bool, error) {
 		if svc.State() != services.Running {
 			return false, nil
 		}
-		if ok {
-			return probe.CheckHealth(ctx)
-		}
-		return true, nil
+		return svc.CheckHealth(ctx)
 	}),
 		resourcepb.ResourceStore_ServiceDesc.ServiceName,
 		resourcepb.ResourceStats_ServiceDesc.ServiceName,
@@ -478,15 +526,11 @@ func (s *ModuleServer) initSearchServerModule() (services.Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	probe, ok := svc.(grpcserver.HealthProbe)
 	s.grpcService.Health.Register(grpcserver.HealthProbeFunc(func(ctx context.Context) (bool, error) {
 		if svc.State() != services.Running {
 			return false, nil
 		}
-		if ok {
-			return probe.CheckHealth(ctx)
-		}
-		return true, nil
+		return svc.CheckHealth(ctx)
 	}),
 		resourcepb.ResourceIndex_ServiceDesc.ServiceName,
 		resourcepb.ManagedObjectIndex_ServiceDesc.ServiceName,

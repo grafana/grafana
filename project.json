@@ -15,6 +15,7 @@
     },
     "start:rspack": {
       "dependsOn": [
+        "build:rspack:boot:dev",
         "check-frontend-dev",
         "themes-generate",
         {
@@ -26,6 +27,7 @@
     },
     "start:rspack:noHmr": {
       "dependsOn": [
+        "build:rspack:boot:dev",
         "check-frontend-dev",
         "themes-generate",
         {
@@ -59,6 +61,7 @@
     },
     "dev:rspack": {
       "dependsOn": [
+        "build:rspack:boot:dev",
         "themes-generate",
         "build:swagger",
         {
@@ -66,6 +69,9 @@
           "target": "build"
         }
       ],
+      "cache": false
+    },
+    "build:rspack:boot:dev": {
       "cache": false
     },
     "build:swagger": {

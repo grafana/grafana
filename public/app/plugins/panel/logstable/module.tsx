@@ -4,6 +4,7 @@ import { addTableCustomPanelOptions } from 'app/features/panel/table/addTableCus
 
 import { type FieldConfig as TableFieldConfig, type Options as TableOptions } from '../table/panelcfg.gen';
 
+import { HoverOverflowEditor } from './HoverOverflowEditor';
 import { LogsTable } from './LogsTable';
 import { logsTablePanelFieldConfig } from './logsTableFieldConfig';
 import { defaultOptions, type Options } from './panelcfg.gen';
@@ -31,6 +32,18 @@ export const plugin = new PanelPlugin<Options & TableOptions, TableFieldConfig>(
           'Enables/disables the log line link button in the first column of each row'
         ),
         defaultValue: defaultOptions.showCopyLogLink,
+      })
+      .addCustomEditor({
+        id: 'hoverOverflow',
+        path: 'hoverOverflow',
+        name: t('logstable.hover-overflow.name', 'Cell hover overflow'),
+        category: logsTableCategory,
+        description: t(
+          'logstable.hover-overflow.description',
+          'Expand overflowing cell content on hover. Selected cells always expand.'
+        ),
+        editor: HoverOverflowEditor,
+        defaultValue: false,
       })
       .addBooleanSwitch({
         path: 'showControls',

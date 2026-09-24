@@ -7,18 +7,29 @@
  */
 
 import {
+  type JsonValue,
   type ReactFlagEvaluationOptions,
   useFlag,
 } from "@openfeature/react-sdk";
 
 // Flag key constants for programmatic access
 export const FlagKeys = {
+  /** Enables the alert rule restore feature */
+  AlertRuleRestore: "alertRuleRestore",
+  /** Hand data source managed alerting URLs over to the grafana-prometheusalerting-app plugin */
+  AlertingDataSourceManagedRouteProxy: "alerting.dataSourceManagedRouteProxy",
   /** Enable manually starting an Assistant investigation from the alert instance drawer. */
   AlertingManualAssistantInvestigation: "alerting.manualAssistantInvestigation",
   /** Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them. */
   AlertingRuleQuality: "alerting.ruleQuality",
-  /** Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana */
+  /** Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source */
   AlertingSyncExternalAlertmanager: "alerting.syncExternalAlertmanager",
+  /** Enables the new Alerting navigation structure with improved menu grouping */
+  AlertingNavigationV2: "alertingNavigationV2",
+  /** Enables the UI functionality to recover and view deleted alert rules */
+  AlertingRuleRecoverDeleted: "alertingRuleRecoverDeleted",
+  /** Enables the alerting triage feature */
+  AlertingTriage: "alertingTriage",
   /** Enables new analytics framework */
   AnalyticsFramework: "analyticsFramework",
   /** Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built */
@@ -37,6 +48,8 @@ export const FlagKeys = {
   DashboardVectorSearch: "dashboard.vectorSearch",
   /** Enables the Assistant button in the dashboard templates card */
   DashboardTemplatesAssistantButton: "dashboardTemplatesAssistantButton",
+  /** Enables undo/redo in dynamic dashboards */
+  DashboardUndoRedo: "dashboardUndoRedo",
   /** Use the new datasource API groups for datasource resource requests, frontend flag */
   DatasourcesApiserverUseNewAPIsForDatasourceResources: "datasources.apiserver.useNewAPIsForDatasourceResources",
   /** Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request */
@@ -53,6 +66,8 @@ export const FlagKeys = {
   DatasourcesApiServerEnableHealthEndpointFrontend: "datasourcesApiServerEnableHealthEndpointFrontend",
   /** Enables additional experimental color schemes for visualizations. */
   DatavizExperimentalColorSchemes: "dataviz.experimentalColorSchemes",
+  /** Enables the extension admin page regardless of development mode */
+  EnableExtensionsAdminPage: "enableExtensionsAdminPage",
   /** A/A test for recently viewed dashboards feature */
   ExperimentRecentlyViewedDashboards: "experimentRecentlyViewedDashboards",
   /** Enable Faro session replay for Grafana */
@@ -61,6 +76,8 @@ export const FlagKeys = {
   FeedbackButton: "feedbackButton",
   /** Renders the flame graph's top table using TableNG instead of the legacy Table */
   FlameGraphTableNg: "flameGraph.tableNg",
+  /** Enables use of app platform API for folders */
+  FoldersAppPlatformAPI: "foldersAppPlatformAPI",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GlobalDashboardVariables: "globalDashboardVariables",
   /** Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette */
@@ -89,8 +106,12 @@ export const FlagKeys = {
   GrafanaGrowthHomepage: "grafana.growthHomepage",
   /** Enables usage of the new annotations API client */
   GrafanaKubernetesAnnotationsClient: "grafana.kubernetesAnnotationsClient",
+  /** Deprecated: Toggle displayed fields from Log Details */
+  GrafanaLogDetailsDisplayedFieldControls: "grafana.logDetailsDisplayedFieldControls",
   /** Enables log level inference from log line contents when level is not defined as a field or a label */
   GrafanaLogLevelInference: "grafana.logLevelInference",
+  /** Enables multi-tenant fallback behavior */
+  GrafanaMtFallback: "grafana.mtFallback",
   /** Builds the navigation tree client-side instead of reading it from /bootdata */
   GrafanaMultiTenantNavTree: "grafana.multiTenantNavTree",
   /** Read the current user's permissions from the IAM app platform API instead of /api/access-control/user/actions */
@@ -105,6 +126,8 @@ export const FlagKeys = {
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
   /** Let panel plugins register system transformations */
   GrafanaPanelPluginTransformations: "grafana.panelPluginTransformations",
+  /** Pass React elements in plugin extension props by reference */
+  GrafanaPluginExtensionReactElementProps: "grafana.pluginExtensionReactElementProps",
   /** Nest app plugin navigation items in the mega menu based on their URL path hierarchy */
   GrafanaPluginPathNesting: "grafana.pluginPathNesting",
   /** Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options */
@@ -147,6 +170,8 @@ export const FlagKeys = {
   OtelLogsFormatting: "otelLogsFormatting",
   /** Shows text labels on the add and stacked view buttons in PanelEditNext */
   PaneleditButtonLabels: "paneledit.buttonLabels",
+  /** Enables viewing non-applicable drilldowns on a panel level */
+  PerPanelNonApplicableDrilldowns: "perPanelNonApplicableDrilldowns",
   /** Enables RBAC for playlists */
   PlaylistsRBAC: "playlistsRBAC",
   /** Initializes data source instance settings asynchronously from the API instead of synchronously from boot data */
@@ -171,6 +196,8 @@ export const FlagKeys = {
   QueryHistoryLocalOnly: "queryHistory.localOnly",
   /** Replace the Query History drawer with a new Recent Queries modal UI */
   QueryHistoryRecentQueriesUI: "queryHistory.recentQueriesUI",
+  /** Enables Saved queries (query library) feature */
+  QueryLibrary: "queryLibrary",
   /** Enables AI-assisted coauthoring in code query editors */
   QueryeditorCoauthoringUi: "queryeditor.coauthoringUi",
   /** Renders the raw Prometheus query results table using TableNG instead of the legacy Table */
@@ -183,6 +210,10 @@ export const FlagKeys = {
   ReportingFooterSettings: "reportingFooterSettings",
   /** Enables configuration of PDF report settings */
   ReportingHeaderSettings: "reportingHeaderSettings",
+  /** Enables Saved queries (query library) RBAC permissions */
+  SavedQueriesRBAC: "savedQueriesRBAC",
+  /** Enable the secrets management app platform UI */
+  SecretsManagementAppPlatformUI: "secretsManagementAppPlatformUI",
   /** Routes snapshot requests from /api to the /apis endpoint */
   SnapshotsKubernetesSnapshots: "snapshots.kubernetesSnapshots",
   /** Enables the splash screen modal for introducing new Grafana features on first session */
@@ -203,11 +234,35 @@ export const FlagKeys = {
   TablePaginationPageSize: "table.paginationPageSize",
   /** Enables the refreshed table experience: reworked column headers and ad hoc column interactions */
   TableRefresh: "table.refresh",
+  /** Catch-all toggle for new features developed as part of the Q3 table panel refresh */
+  TableRefreshNewFeatures: "table.refreshNewFeatures",
   /** Enables the new features in text panel */
   TextNewFeatures: "text.newFeatures",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
 } as const;
+
+/**
+ * Enables the alert rule restore feature
+ *
+ * **Details:**
+ * - flag key: `alertRuleRestore`
+ * - default value: `true`
+ */
+export const useFlagAlertRuleRestore = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertRuleRestore", true, options).value;
+};
+
+/**
+ * Hand data source managed alerting URLs over to the grafana-prometheusalerting-app plugin
+ *
+ * **Details:**
+ * - flag key: `alerting.dataSourceManagedRouteProxy`
+ * - default value: `false`
+ */
+export const useFlagAlertingDataSourceManagedRouteProxy = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alerting.dataSourceManagedRouteProxy", false, options).value;
+};
 
 /**
  * Enable manually starting an Assistant investigation from the alert instance drawer.
@@ -232,7 +287,7 @@ export const useFlagAlertingRuleQuality = (options?: ReactFlagEvaluationOptions)
 };
 
 /**
- * Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana
+ * Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source
  *
  * **Details:**
  * - flag key: `alerting.syncExternalAlertmanager`
@@ -240,6 +295,39 @@ export const useFlagAlertingRuleQuality = (options?: ReactFlagEvaluationOptions)
  */
 export const useFlagAlertingSyncExternalAlertmanager = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alerting.syncExternalAlertmanager", false, options).value;
+};
+
+/**
+ * Enables the new Alerting navigation structure with improved menu grouping
+ *
+ * **Details:**
+ * - flag key: `alertingNavigationV2`
+ * - default value: `true`
+ */
+export const useFlagAlertingNavigationV2 = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingNavigationV2", true, options).value;
+};
+
+/**
+ * Enables the UI functionality to recover and view deleted alert rules
+ *
+ * **Details:**
+ * - flag key: `alertingRuleRecoverDeleted`
+ * - default value: `true`
+ */
+export const useFlagAlertingRuleRecoverDeleted = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingRuleRecoverDeleted", true, options).value;
+};
+
+/**
+ * Enables the alerting triage feature
+ *
+ * **Details:**
+ * - flag key: `alertingTriage`
+ * - default value: `false`
+ */
+export const useFlagAlertingTriage = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingTriage", false, options).value;
 };
 
 /**
@@ -342,6 +430,17 @@ export const useFlagDashboardTemplatesAssistantButton = (options?: ReactFlagEval
 };
 
 /**
+ * Enables undo/redo in dynamic dashboards
+ *
+ * **Details:**
+ * - flag key: `dashboardUndoRedo`
+ * - default value: `false`
+ */
+export const useFlagDashboardUndoRedo = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboardUndoRedo", false, options).value;
+};
+
+/**
  * Use the new datasource API groups for datasource resource requests, frontend flag
  *
  * **Details:**
@@ -430,6 +529,17 @@ export const useFlagDatavizExperimentalColorSchemes = (options?: ReactFlagEvalua
 };
 
 /**
+ * Enables the extension admin page regardless of development mode
+ *
+ * **Details:**
+ * - flag key: `enableExtensionsAdminPage`
+ * - default value: `false`
+ */
+export const useFlagEnableExtensionsAdminPage = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("enableExtensionsAdminPage", false, options).value;
+};
+
+/**
  * A/A test for recently viewed dashboards feature
  *
  * **Details:**
@@ -471,6 +581,17 @@ export const useFlagFeedbackButton = (options?: ReactFlagEvaluationOptions): boo
  */
 export const useFlagFlameGraphTableNg = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("flameGraph.tableNg", false, options).value;
+};
+
+/**
+ * Enables use of app platform API for folders
+ *
+ * **Details:**
+ * - flag key: `foldersAppPlatformAPI`
+ * - default value: `true`
+ */
+export const useFlagFoldersAppPlatformAPI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("foldersAppPlatformAPI", true, options).value;
 };
 
 /**
@@ -628,6 +749,17 @@ export const useFlagGrafanaKubernetesAnnotationsClient = (options?: ReactFlagEva
 };
 
 /**
+ * Deprecated: Toggle displayed fields from Log Details
+ *
+ * **Details:**
+ * - flag key: `grafana.logDetailsDisplayedFieldControls`
+ * - default value: `false`
+ */
+export const useFlagGrafanaLogDetailsDisplayedFieldControls = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.logDetailsDisplayedFieldControls", false, options).value;
+};
+
+/**
  * Enables log level inference from log line contents when level is not defined as a field or a label
  *
  * **Details:**
@@ -636,6 +768,17 @@ export const useFlagGrafanaKubernetesAnnotationsClient = (options?: ReactFlagEva
  */
 export const useFlagGrafanaLogLevelInference = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.logLevelInference", false, options).value;
+};
+
+/**
+ * Enables multi-tenant fallback behavior
+ *
+ * **Details:**
+ * - flag key: `grafana.mtFallback`
+ * - default value: `{}`
+ */
+export const useFlagGrafanaMtFallback = (options?: ReactFlagEvaluationOptions): JsonValue => {
+  return useFlag("grafana.mtFallback", {}, options).value;
 };
 
 /**
@@ -713,6 +856,17 @@ export const useFlagGrafanaPanelEditNextFeedbackEvent = (options?: ReactFlagEval
  */
 export const useFlagGrafanaPanelPluginTransformations = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.panelPluginTransformations", false, options).value;
+};
+
+/**
+ * Pass React elements in plugin extension props by reference
+ *
+ * **Details:**
+ * - flag key: `grafana.pluginExtensionReactElementProps`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPluginExtensionReactElementProps = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.pluginExtensionReactElementProps", false, options).value;
 };
 
 /**
@@ -885,10 +1039,10 @@ export const useFlagLibraryelementsKubernetesLibraryPanels = (options?: ReactFla
  *
  * **Details:**
  * - flag key: `logsTablePanelNG`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagLogsTablePanelNG = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("logsTablePanelNG", false, options).value;
+  return useFlag("logsTablePanelNG", true, options).value;
 };
 
 /**
@@ -944,6 +1098,17 @@ export const useFlagOtelLogsFormatting = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagPaneleditButtonLabels = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("paneledit.buttonLabels", false, options).value;
+};
+
+/**
+ * Enables viewing non-applicable drilldowns on a panel level
+ *
+ * **Details:**
+ * - flag key: `perPanelNonApplicableDrilldowns`
+ * - default value: `false`
+ */
+export const useFlagPerPanelNonApplicableDrilldowns = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("perPanelNonApplicableDrilldowns", false, options).value;
 };
 
 /**
@@ -1079,6 +1244,17 @@ export const useFlagQueryHistoryRecentQueriesUI = (options?: ReactFlagEvaluation
 };
 
 /**
+ * Enables Saved queries (query library) feature
+ *
+ * **Details:**
+ * - flag key: `queryLibrary`
+ * - default value: `true`
+ */
+export const useFlagQueryLibrary = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("queryLibrary", true, options).value;
+};
+
+/**
  * Enables AI-assisted coauthoring in code query editors
  *
  * **Details:**
@@ -1142,6 +1318,28 @@ export const useFlagReportingFooterSettings = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagReportingHeaderSettings = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("reportingHeaderSettings", false, options).value;
+};
+
+/**
+ * Enables Saved queries (query library) RBAC permissions
+ *
+ * **Details:**
+ * - flag key: `savedQueriesRBAC`
+ * - default value: `true`
+ */
+export const useFlagSavedQueriesRBAC = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("savedQueriesRBAC", true, options).value;
+};
+
+/**
+ * Enable the secrets management app platform UI
+ *
+ * **Details:**
+ * - flag key: `secretsManagementAppPlatformUI`
+ * - default value: `false`
+ */
+export const useFlagSecretsManagementAppPlatformUI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("secretsManagementAppPlatformUI", false, options).value;
 };
 
 /**
@@ -1252,6 +1450,17 @@ export const useFlagTablePaginationPageSize = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagTableRefresh = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("table.refresh", false, options).value;
+};
+
+/**
+ * Catch-all toggle for new features developed as part of the Q3 table panel refresh
+ *
+ * **Details:**
+ * - flag key: `table.refreshNewFeatures`
+ * - default value: `false`
+ */
+export const useFlagTableRefreshNewFeatures = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("table.refreshNewFeatures", false, options).value;
 };
 
 /**

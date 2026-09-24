@@ -37,7 +37,7 @@ func (srv *HistorySrv) RouteQueryStateHistory(c *contextmodel.ReqContext) respon
 
 	frame, err := srv.hist.Query(c.Req.Context(), query)
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, err.Error(), err)
 	}
 	return response.JSON(http.StatusOK, frame)
 }

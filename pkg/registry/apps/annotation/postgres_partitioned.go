@@ -190,7 +190,7 @@ func (s *PostgreSQLStore) Get(ctx context.Context, namespace, name string) (*ann
 // Create creates a new annotation
 func (s *PostgreSQLStore) Create(ctx context.Context, anno *annotationV0.Annotation) (*annotationV0.Annotation, error) {
 	// Ensure partition exists for this timestamp
-	if err := ensurePartition(ctx, s.pool, s.logger, anno.Spec.Time); err != nil {
+	if err := ensurePartition(ctx, s.pool, anno.Spec.Time); err != nil {
 		return nil, fmt.Errorf("failed to ensure partition: %w", err)
 	}
 

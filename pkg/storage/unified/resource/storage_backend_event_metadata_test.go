@@ -18,7 +18,6 @@ func TestKvStorageBackend_WriteEvent_PreviousRevision(t *testing.T) {
 		{name: "badger", setup: func(t *testing.T) *kvStorageBackend { return setupTestStorageBackend(t) }},
 		{name: "leases", setup: func(t *testing.T) *kvStorageBackend {
 			return setupTestStorageBackend(t, func(opts *KVBackendOptions) {
-				opts.EnableKVLeases = true
 				opts.Holder = "test-holder"
 			})
 		}},
@@ -122,8 +121,8 @@ func TestKvStorageBackend_WriteEvent_ReusesPreviousKey(t *testing.T) {
 	require.Equal(t, tripsBefore, tripsAfter, "enrichment must not read resource bodies")
 	require.Equal(t, readsBefore, readsAfter)
 	require.Equal(t, eventReadsBefore, kvStore.eventsRead(), "enrichment must not look up previous events")
-	// One key for the initial RV check, then two for optimistic concurrency control.
-	require.Equal(t, 3, kvStore.listed()-listedBefore)
+	// The write lease makes the initial RV check the only data-key listing needed.
+	require.Equal(t, 1, kvStore.listed()-listedBefore)
 
 	eventKey, err := backend.eventStore.LastEventKey(ctx)
 	require.NoError(t, err)

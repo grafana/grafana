@@ -1008,10 +1008,20 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
                 />
               )}
               {!willEnableAutoSync && willImportNotifications && (
-                <button type="button" className={styles.badgeWithIcon} onClick={handlePreviewNotifications}>
-                  {t('alerting.import-to-gma.review.will-import-config', 'Will import this configuration')}
-                  <Icon name="eye" size="sm" />
-                </button>
+                <Stack direction="row" gap={1} alignItems="center">
+                  <Text variant="bodySmall" color="secondary">
+                    {t('alerting.import-to-gma.review.will-import-config', 'Will import this configuration')}
+                  </Text>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    icon="eye"
+                    onClick={handlePreviewNotifications}
+                    aria-label={t('alerting.import-to-gma.review.preview-config-aria', 'Preview configuration')}
+                  >
+                    {t('alerting.import-to-gma.review.preview', 'Preview')}
+                  </Button>
+                </Stack>
               )}
               {formData.step1Skipped && (
                 <span className={styles.badgeSkipped}>{t('alerting.import-to-gma.review.skipped', 'Skipped')}</span>
@@ -1035,16 +1045,26 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
                 {t('alerting.import-to-gma.review.rules-title', 'Alert Rules')}
               </Text>
               {willImportRules && (
-                <button type="button" className={styles.badgeWithIcon} onClick={handlePreviewRules}>
-                  {rulesCount > 0
-                    ? t('alerting.import-to-gma.review.will-import-rules-count', '', {
-                        count: rulesCount,
-                        defaultValue_one: 'Will import {{count}} rules',
-                        defaultValue_other: 'Will import {{count}} rules',
-                      })
-                    : t('alerting.import-to-gma.review.will-import-rules', 'Will import rules')}
-                  <Icon name="eye" size="sm" />
-                </button>
+                <Stack direction="row" gap={1} alignItems="center">
+                  <Text variant="bodySmall" color="secondary">
+                    {rulesCount > 0
+                      ? t('alerting.import-to-gma.review.will-import-rules-count', '', {
+                          count: rulesCount,
+                          defaultValue_one: 'Will import {{count}} rules',
+                          defaultValue_other: 'Will import {{count}} rules',
+                        })
+                      : t('alerting.import-to-gma.review.will-import-rules', 'Will import rules')}
+                  </Text>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    icon="eye"
+                    onClick={handlePreviewRules}
+                    aria-label={t('alerting.import-to-gma.review.preview-rules-aria', 'Preview alert rules')}
+                  >
+                    {t('alerting.import-to-gma.review.preview', 'Preview')}
+                  </Button>
+                </Stack>
               )}
               {formData.step2Skipped && (
                 <span className={styles.badgeSkipped}>{t('alerting.import-to-gma.review.skipped', 'Skipped')}</span>
@@ -1380,22 +1400,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.warning.text,
     fontSize: theme.typography.bodySmall.fontSize,
     fontWeight: theme.typography.fontWeightMedium,
-  }),
-  badgeWithIcon: css({
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: theme.spacing(0.5),
-    padding: theme.spacing(0.5, 1),
-    borderRadius: theme.shape.radius.default,
-    backgroundColor: theme.colors.success.transparent,
-    color: theme.colors.success.text,
-    fontSize: theme.typography.bodySmall.fontSize,
-    fontWeight: theme.typography.fontWeightMedium,
-    border: 'none',
-    cursor: 'pointer',
-    '&:hover': {
-      backgroundColor: theme.colors.success.shade,
-    },
   }),
 });
 

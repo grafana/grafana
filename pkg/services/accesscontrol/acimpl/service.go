@@ -270,10 +270,13 @@ func (s *Service) getBasicRolePermissions(ctx context.Context, role string, orgI
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.getBasicRolePermissions")
 	defer span.End()
 
+	// Clone rather than alias: the returned slice is cached per org, and appending
+	// to a slice that still shares the basic role's backing array would let one
+	// org's managed permissions overwrite another's.
 	var permissions []accesscontrol.Permission
 	s.rolesMu.RLock()
 	if basicRole, ok := s.roles[role]; ok {
-		permissions = basicRole.Permissions
+		permissions = slices.Clone(basicRole.Permissions)
 	}
 	s.rolesMu.RUnlock()
 
