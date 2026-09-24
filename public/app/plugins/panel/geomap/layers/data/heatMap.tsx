@@ -1,5 +1,5 @@
 import { type Point } from 'ol/geom';
-import * as layer from 'ol/layer';
+import HeatmapLayer from 'ol/layer/Heatmap';
 
 import { FieldType, getFieldColorModeForField, type MapLayerRegistryItem, type PanelData } from '@grafana/data';
 import { type ScaleDimensionConfig } from '@grafana/schema';
@@ -50,7 +50,7 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
 
     // Create a new Heatmap layer
     // Weight function takes a feature as attribute and returns a normalized weight value
-    const vectorLayer = new layer.Heatmap({
+    const vectorLayer = new HeatmapLayer({
       source,
       blur: config.blur,
       radius: config.radius,
