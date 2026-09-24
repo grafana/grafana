@@ -154,7 +154,7 @@ require (
 	github.com/olekukonko/tablewriter v1.1.4 // @grafana/grafana-backend-group
 	github.com/open-feature/go-sdk v1.17.2 // @grafana/grafana-backend-services-squad
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.7 // @grafana/grafana-backend-services-squad
-	github.com/openai/openai-go/v3 v3.16.0 // @grafana/grafana-search-and-storage
+	github.com/openai/openai-go/v3 v3.59.0 // @grafana/grafana-search-and-storage
 	github.com/openfga/api/proto v0.0.0-20260319214821-f153694bfc20 // @grafana/identity-access-team
 	github.com/openfga/language/pkg/go v0.3.2-0.20260730144454-83fedf8a4e70 // @grafana/identity-access-team
 	github.com/openfga/openfga v1.18.3 // @grafana/identity-access-team
