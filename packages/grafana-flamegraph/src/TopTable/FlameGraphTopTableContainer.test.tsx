@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvents from '@testing-library/user-event';
 
 import { createDataFrame } from '@grafana/data';
@@ -92,7 +92,7 @@ describe('FlameGraphTopTableContainer', () => {
 });
 
 describe('FlameGraphTopTableContainer with useTableNG', () => {
-  const setup = (props?: { tableRefreshEnabled?: boolean }) => {
+  const setup = (props?: { tableRefreshEnabled?: boolean; rowTransformationsEnabled?: boolean }) => {
     const flameGraphData = createDataFrame(data);
     const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
     const onSearch = jest.fn();
@@ -107,11 +107,26 @@ describe('FlameGraphTopTableContainer with useTableNG', () => {
         colorScheme={ColorScheme.ValueBased}
         useTableNG={true}
         tableRefreshEnabled={props?.tableRefreshEnabled}
+        rowTransformationsEnabled={props?.rowTransformationsEnabled}
       />
     );
 
     return { renderResult, mocks: { onSearch, onSandwich } };
   };
+
+  it('filters the top table locally without losing symbol actions', async () => {
+    mockTableSize();
+    const { mocks } = setup({ rowTransformationsEnabled: true });
+    const user = userEvents.setup();
+    await user.click(screen.getByRole('button', { name: 'Filter Self' }));
+    expect(screen.getByRole('img', { name: /Value distribution/ })).toBeInTheDocument();
+    await user.type(screen.getByRole('textbox', { name: 'Minimum' }), '1');
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
+    expect(screen.getByText('net/http.HandlerFunc.ServeHTTP')).toBeInTheDocument();
+    const row = screen.getByText('net/http.HandlerFunc.ServeHTTP').closest<HTMLDivElement>('[role="row"]')!;
+    await user.click(within(row).getByRole('button', { name: /sandwich/i }));
+    expect(mocks.onSandwich).toHaveBeenCalledWith('net/http.HandlerFunc.ServeHTTP');
+  });
 
   it('should render correctly', async () => {
     mockTableSize();

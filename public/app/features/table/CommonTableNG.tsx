@@ -7,9 +7,11 @@ import {
 } from '@grafana/runtime/internal';
 import { TableNG } from '@grafana/ui/unstable';
 
+import { useTableRefreshNewFeatures } from './hooks';
+
 export type CommonTableNGProps = Omit<
   ComponentProps<typeof TableNG>,
-  'tableRefreshEnabled' | 'contentAwareWidthsEnabled' | 'jsonSyntaxHighlightingEnabled'
+  'tableRefreshEnabled' | 'rowTransformationsEnabled' | 'contentAwareWidthsEnabled' | 'jsonSyntaxHighlightingEnabled'
 >;
 
 /**
@@ -19,6 +21,7 @@ export type CommonTableNGProps = Omit<
  * feed it. This reads just the flags and needs nothing else.
  */
 export function CommonTableNG(props: CommonTableNGProps) {
+  const rowTransformationsEnabled = useTableRefreshNewFeatures();
   const tableRefreshEnabled = useFlagTableRefresh();
   const contentAwareWidthsEnabled = useFlagTableAutoColumnWidths();
   const jsonSyntaxHighlightingEnabled = useFlagTableRefreshNewFeatures();
@@ -26,6 +29,7 @@ export function CommonTableNG(props: CommonTableNGProps) {
   return (
     <TableNG
       {...props}
+      rowTransformationsEnabled={rowTransformationsEnabled}
       tableRefreshEnabled={tableRefreshEnabled}
       contentAwareWidthsEnabled={contentAwareWidthsEnabled}
       jsonSyntaxHighlightingEnabled={jsonSyntaxHighlightingEnabled}

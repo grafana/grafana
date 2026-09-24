@@ -17,6 +17,7 @@ import {
   GroupByVariable,
   SceneDataNode,
   sceneGraph,
+  SceneDataTransformer,
   SceneQueryRunner,
   SceneVariableSet,
   VizPanel,
@@ -121,6 +122,81 @@ beforeEach(() => {
 });
 
 describe('setDashboardPanelContext', () => {
+  describe('adHocTransformations', () => {
+    it('keeps each panel’s single view list and subscriptions independent', () => {
+      const first = buildTestScene({});
+      const second = buildTestScene({});
+      const firstApi = first.context.adHocTransformations!;
+      const secondApi = second.context.adHocTransformations!;
+      const firstChanged = jest.fn();
+      const secondChanged = jest.fn();
+      const unsubscribe = firstApi.subscribe('grafana:table-view', firstChanged);
+      const unsubscribeSecond = secondApi.subscribe('grafana:table-view', secondChanged);
+
+      firstApi.set('grafana:table-view', [{ id: 'organize', options: { excludeByName: { hidden: true } } }]);
+      secondApi.set('grafana:table-view', [{ id: 'limit', options: { limitField: 2 } }]);
+      firstApi.set('grafana:table-view', []);
+
+      expect(firstApi.get('grafana:table-view')).toEqual([]);
+      expect(secondApi.get('grafana:table-view')).toEqual([{ id: 'limit', options: { limitField: 2 } }]);
+      expect(firstChanged).toHaveBeenCalledTimes(2);
+      expect(secondChanged).toHaveBeenCalledTimes(1);
+      unsubscribe();
+      firstApi.set('grafana:table-view', [{ id: 'limit', options: { limitField: 1 } }]);
+      expect(firstChanged).toHaveBeenCalledTimes(2);
+      unsubscribeSecond();
+    });
+
+    it('replaces the entire view list with an immutable snapshot', () => {
+      const { context } = buildTestScene({});
+      const api = context.adHocTransformations!;
+      const configs = [{ id: 'limit', options: { limitField: 2 } }];
+      api.set('grafana:table-view', configs);
+      const snapshot = api.get('grafana:table-view');
+      configs[0].options.limitField = 99;
+
+      expect(api.get('grafana:table-view')).toBe(snapshot);
+      expect(api.get('grafana:table-view')).toEqual([{ id: 'limit', options: { limitField: 2 } }]);
+      expect(Object.isFrozen(snapshot[0].options)).toBe(true);
+      api.set('grafana:table-view', [{ id: 'organize', options: {} }]);
+      expect(api.get('grafana:table-view')).toEqual([{ id: 'organize', options: {} }]);
+    });
+
+    it('keeps field cleanup enabled when the view is changed, cleared, or the plugin changes', () => {
+      const { context, vizPanel } = buildTestScene({});
+      vizPanel.setState({ _UNSAFE_clearPreviousFieldValues: true });
+      const api = context.adHocTransformations!;
+      const changed = jest.fn();
+      const unsubscribe = api.subscribe('grafana:table-view', changed);
+
+      api.set('grafana:table-view', [{ id: 'organize', options: {} }]);
+      expect(vizPanel.state._UNSAFE_clearPreviousFieldValues).toBe(true);
+      api.set('grafana:table-view', []);
+      expect(vizPanel.state._UNSAFE_clearPreviousFieldValues).toBe(true);
+      api.set('grafana:table-view', [{ id: 'limit', options: { limitField: 2 } }]);
+      expect(vizPanel.state._UNSAFE_clearPreviousFieldValues).toBe(true);
+      vizPanel.setState({ pluginId: 'table' });
+      expect(api.get('grafana:table-view')).toEqual([]);
+      expect(vizPanel.state._UNSAFE_clearPreviousFieldValues).toBe(true);
+      expect(changed).toHaveBeenCalledTimes(4);
+      unsubscribe();
+    });
+
+    it('uses the panel runtime transformation controller across data replacements', () => {
+      const { context, vizPanel } = buildTestScene({ dashboardCanEdit: false });
+      const controller = vizPanel.getRuntimeTransformations();
+
+      expect(context.adHocTransformations).toBe(controller);
+      expect(context.adHocTransformations?.get('grafana:table-view')).toEqual([]);
+
+      controller.set('grafana:table-view', [{ id: 'organize', options: {} }]);
+      vizPanel.setState({ $data: new SceneDataTransformer({ transformations: [] }) });
+
+      expect(context.adHocTransformations).toBe(controller);
+      expect(context.adHocTransformations?.get('grafana:table-view')).toEqual([{ id: 'organize', options: {} }]);
+    });
+  });
+
   describe('app', () => {
     it('Is PanelEditor while the panel edit pane is open', () => {
       const { scene, vizPanel, context } = buildTestScene({});

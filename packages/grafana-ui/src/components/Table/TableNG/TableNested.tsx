@@ -307,8 +307,6 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx: headerTypographyCtx,
     tableRefreshEnabled,
-    // nested filter entries are keyed per parent but carry the column's display name, which is what
-    // the width path matches on — so the nested header reserves the active-filter icon the same way
     filter,
   });
 
@@ -615,7 +613,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     for (const row of rows) {
       if (row.__depth > 0) {
         const rowNestedFrame = nestedData[row.__index]!;
-        result[row.__index] = fromFields(
+        const built = fromFields(
           getVisibleFields(rowNestedFrame.fields),
           nestedFieldWidths,
           rowNestedFrame,
@@ -625,7 +623,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
         // Each nested table is its own grid with its own header row, so it needs its own edge
         // markers — the outer table's markers sit on the outer columns, the first of which is the
         // expander that this nested grid is rendered inside.
-        markEdgeColumns(result[row.__index]);
+        result[row.__index] = { ...built, columns: markEdgeColumns(built.columns) };
       }
     }
     return result;
@@ -635,8 +633,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     const result = fromFields(visibleFields, widths, data, rows, sortedRows, lastColumnExtraPadding);
 
     if (!firstRowNestedData) {
-      markEdgeColumns(result);
-      return result;
+      return { ...result, columns: markEdgeColumns(result.columns) };
     }
 
     const expanderCellRenderer: CellRootRenderer = (key, cellProps) => <Cell key={key} {...cellProps} />;
@@ -658,8 +655,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     );
 
     // after the expander column is in place, so it (not the first field) is tagged as the edge.
-    markEdgeColumns(result);
-    return result;
+    return { ...result, columns: markEdgeColumns(result.columns) };
   }, [
     buildNestedTableExpanderColumn,
     data,

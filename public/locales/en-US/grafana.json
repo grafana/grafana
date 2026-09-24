@@ -10871,9 +10871,16 @@
       "cell-filter-out": "Filter out value",
       "cell-inspect": "Inspect value",
       "cell-inspect-tooltip": "Inspect value",
+      "close-column-visibility": "Close column visibility panel",
       "column-menu-filter": "Filter values",
+      "column-menu-hide": "Hide column",
       "column-menu-label": "Column options for {{name}}",
+      "column-menu-manage-columns": "Manage columns",
+      "column-menu-pin": "Pin column left",
+      "column-menu-unpin": "Unpin column",
       "column-menu-update-filter": "Update filter",
+      "column-visibility": "Column visibility",
+      "columns": "Columns",
       "copy": "Copy to Clipboard",
       "csv-counts": "Rows:{{rows}}, Columns:{{columns}}",
       "csv-placeholder": "Enter CSV here...",
@@ -10882,6 +10889,8 @@
         "add-all": "Add all displayed values to the filter",
         "blanks": "(Blanks)",
         "button": "Filter {{name}}",
+        "cancel": "Cancel",
+        "clear": "Clear filter",
         "operator": {
           "contains": "Contains",
           "equals": "Equals",
@@ -10896,7 +10905,8 @@
         "remove-all": "Remove all displayed values from the filter",
         "select-all": "Select all",
         "selected": "{{ numSelected }} selected",
-        "selected-some-hidden": "{{ numSelected }} selected ({{ numHidden }} hidden)"
+        "selected-some-hidden": "{{ numSelected }} selected ({{ numHidden }} hidden)",
+        "unsupported": "This filter cannot be edited here. Clear it to create a new filter."
       },
       "filter-placeholder": "Filter values",
       "filter-popup-apply": "Ok",
@@ -10911,6 +10921,7 @@
           "count": "Count"
         }
       },
+      "hide-column-label": "Hide {{columnName}}",
       "inspect-drawer-title": "Inspect value",
       "loading": "Loading table",
       "nested-table": {
@@ -10920,6 +10931,27 @@
       "no-rows": "No rows",
       "no-values-label": "No values",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows",
+      "pin-column-label": "Pin {{columnName}}",
+      "range": {
+        "apply": "Apply",
+        "cancel": "Cancel",
+        "clear": "Clear",
+        "empty": "No finite values match the other filters.",
+        "end": "End",
+        "histogram": "Value distribution, {{amount}} finite values",
+        "invalid": "Enter valid bounds with minimum no greater than maximum.",
+        "label": "Filter {{field}}",
+        "matches": "{{amount}} of {{total}} rows match",
+        "maximum": "Maximum",
+        "minimum": "Minimum",
+        "missing": "Include missing / non-finite values ({{amount}})",
+        "start": "Start",
+        "timezone": "Timezone: {{timeZone}}",
+        "unbounded": "No limit",
+        "units": "Exact bounds use raw values (field unit: {{unit}})."
+      },
+      "reorder-column-label": "Reorder {{columnName}}",
+      "show-column-label": "Show {{columnName}}",
       "sort-by-column": "Sort by column {{column}}",
       "sort-by-column-ascending": "Sort by column {{column}}, ascending",
       "sort-by-column-descending": "Sort by column {{column}}, descending",
@@ -10929,6 +10961,12 @@
       },
       "tooltip": {
         "trigger": "Toggle tooltip"
+      },
+      "unpin-column-label": "Unpin {{columnName}}",
+      "view": {
+        "clear": "Clear filters ({{total}})",
+        "error": "Unable to apply this table view.",
+        "reset": "Reset view"
       }
     },
     "tags": {
@@ -16625,6 +16663,7 @@
     "description-frozen-columns": "Columns are frozen from the left side of the table",
     "description-min-column-width": "The minimum width for column auto resizing",
     "description-page-size": "Number of rows per page. When empty, the page size is based on the panel height.",
+    "description-show-columns-sidebar": "Open the column management sidebar with the panel, rather than from a column menu",
     "description-styling-from-field": "A field containing JSON objects with CSS properties",
     "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
     "description-zebra-striping": "Alternate the background color of every other row",
@@ -16663,6 +16702,7 @@
     "name-max-height": "Max row height",
     "name-min-column-width": "Minimum column width",
     "name-page-size": "Page size",
+    "name-show-columns-sidebar": "Show columns sidebar",
     "name-show-table-header": "Show table header",
     "name-styling-from-field": "Styling from field",
     "name-tooltip-from-field": "Tooltip from field",

@@ -1,23 +1,30 @@
 import { css } from '@emotion/css';
+import { useMemo } from 'react';
 
 import {
+  applyFieldOverrides,
   type DataFrame,
-  getFrameDisplayName,
   type GrafanaTheme2,
+  getFrameDisplayName,
   type PanelProps,
   type SelectableValue,
 } from '@grafana/data';
+import { tableFrameKey } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
-import { PanelDataErrorView } from '@grafana/runtime';
+import { getPluginImportUtils, PanelDataErrorView } from '@grafana/runtime';
 import { TableCellHeight, type TableOptions } from '@grafana/schema';
 import { Combobox, Field, Stack, usePanelContext, useStyles2, useTheme2 } from '@grafana/ui';
 import { TableNG } from '@grafana/ui/unstable';
 import {
+  TABLE_TRANSFORMATIONS_OWNER,
+  useAdHocColumnState,
   useCacheFieldDisplayNames,
   useCellActions,
   useCommonTableProps,
+  useTableRefreshNewFeatures,
   useTableSharedCrosshair,
 } from 'app/features/table/hooks';
+import { supportsColumnManagement, withRefreshedTableCapabilities } from 'app/features/table/tableCapabilities';
 import { getCurrentFrameIndex, onColumnResize, onSortByChange } from 'app/features/table/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
@@ -51,6 +58,7 @@ export function TablePanel(props: Props) {
   const getActions = useCellActions(replaceVariables);
   const commonTableProps = useCommonTableProps(options, fieldConfig);
   const noPanelPadding = commonTableProps.tableRefreshEnabled;
+  const tableRefreshNewFeaturesEnabled = useTableRefreshNewFeatures();
   const enableSharedCrosshair = useTableSharedCrosshair();
   const frames = hasDeprecatedParentRowIndex(data.series)
     ? migrateFromParentRowIndexToNestedFrames(data.series)
@@ -58,7 +66,32 @@ export function TablePanel(props: Props) {
   const count = frames?.length;
   const hasFields = frames.some((frame) => frame.fields.length > 0);
   const currentIndex = getCurrentFrameIndex(frames, options);
-  const main = frames[currentIndex];
+  const outputMain = frames[currentIndex];
+  const sourceMain = tableRefreshNewFeaturesEnabled
+    ? panelContext.adHocTransformations?.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER)[currentIndex]
+    : undefined;
+  // Rebuild display processors and link closures against original rows, before ad-hoc selection.
+  const rawMain = useMemo(
+    () =>
+      sourceMain
+        ? applyFieldOverrides({
+            data: [sourceMain],
+            fieldConfig,
+            fieldConfigRegistry: getPluginImportUtils().getPanelPluginFromCache('table')?.fieldConfigRegistry,
+            theme,
+            timeZone: props.timeZone,
+            replaceVariables,
+          })[0]
+        : outputMain,
+    [sourceMain, outputMain, fieldConfig, theme, props.timeZone, replaceVariables]
+  );
+  const columnManagementEnabled = tableRefreshNewFeaturesEnabled && supportsColumnManagement(rawMain);
+  const main = useMemo(
+    () => (tableRefreshNewFeaturesEnabled && rawMain ? withRefreshedTableCapabilities(rawMain) : rawMain),
+    [rawMain, tableRefreshNewFeaturesEnabled]
+  );
+
+  const adHocColumns = useAdHocColumnState(frames, currentIndex, columnManagementEnabled);
 
   // Fit-content: the panel has no fixed height, so self-size from the row count.
   // The cell's CSS min/max bounds (and scrolls) the result.
@@ -81,12 +114,28 @@ export function TablePanel(props: Props) {
   const tableElement = (
     <TableNG
       {...commonTableProps}
+      {...adHocColumns}
+      rowTransformationsEnabled={tableRefreshNewFeaturesEnabled}
+      rowTransformations={
+        tableRefreshNewFeaturesEnabled && panelContext.adHocTransformations
+          ? {
+              api: panelContext.adHocTransformations,
+              owner: TABLE_TRANSFORMATIONS_OWNER,
+              frameKey: tableFrameKey(
+                panelContext.adHocTransformations.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER),
+                currentIndex
+              ),
+            }
+          : undefined
+      }
+      timeZone={props.timeZone}
+      showColumnsSidebar={columnManagementEnabled && options.showColumnsSidebar}
       initialRowIndex={initialRowIndex}
       height={tableHeight}
       width={width}
       data={main}
       sortByBehavior={sortByBehavior}
-      onSortByChange={(sortBy) => onSortByChange(sortBy, props)}
+      onSortByChange={tableRefreshNewFeaturesEnabled ? undefined : (sortBy) => onSortByChange(sortBy, props)}
       onColumnResize={(displayName, resizedWidth, fieldScope) =>
         onColumnResize(displayName, resizedWidth, fieldScope, props)
       }

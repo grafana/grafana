@@ -702,8 +702,44 @@ export const versionedComponents = {
           activeFilterButton: {
             '13.3.0': 'data-testid tableng header active-filter-button',
           },
+          pinItem: {
+            '13.3.0': 'data-testid tableng header column-menu-pin-item',
+          },
+          hideItem: {
+            '13.3.0': 'data-testid tableng header column-menu-hide-item',
+          },
+          manageColumnsItem: {
+            '13.3.0': 'data-testid tableng header column-menu-manage-columns-item',
+          },
+        },
+        columnsSidebar: {
+          container: {
+            '13.3.0': 'data-testid tableng columns-sidebar',
+          },
+          closeButton: {
+            '13.3.0': 'data-testid tableng columns-sidebar close-button',
+          },
+          row: {
+            '13.3.0': (columnName: string) => `data-testid tableng columns-sidebar row ${columnName}`,
+          },
+          visibilityToggle: {
+            '13.3.0': (columnName: string) => `data-testid tableng columns-sidebar visibility-toggle ${columnName}`,
+          },
+          dragHandle: {
+            '13.3.0': (columnName: string) => `data-testid tableng columns-sidebar drag-handle ${columnName}`,
+          },
         },
         Filters: {
+          Range: {
+            minimum: { '13.3.0': 'data-testid tableng range minimum' },
+            maximum: { '13.3.0': 'data-testid tableng range maximum' },
+            includeMissing: { '13.3.0': 'data-testid tableng range includeMissing' },
+            apply: { '13.3.0': 'data-testid tableng range apply' },
+            cancel: { '13.3.0': 'data-testid tableng range cancel' },
+            clear: { '13.3.0': 'data-testid tableng range clear' },
+            histogram: { '13.3.0': 'data-testid tableng range histogram' },
+          },
+          clearAll: { '13.3.0': 'data-testid tableng clear filters' },
           HeaderButton: {
             '12.1.0': 'data-testid tableng header filter',
           },

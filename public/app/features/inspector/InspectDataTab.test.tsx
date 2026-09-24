@@ -4,10 +4,13 @@ import userEvent from '@testing-library/user-event';
 import { type ComponentProps } from 'react';
 import { type Props } from 'react-virtualized-auto-sizer';
 
-import { type DataFrame, FieldType } from '@grafana/data';
+import { type DataFrame, FieldType, EventBusSrv } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
-import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { mockClientSize } from '@grafana/test-utils';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
+import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 import { type TableNG } from '@grafana/ui/unstable';
 
 import { InspectDataTab } from './InspectDataTab';
@@ -250,6 +253,45 @@ describe('InspectDataTab', () => {
   describe('when useTableNG is true', () => {
     beforeEach(() => {
       dataArrivedWithCachedDisplayNames = undefined;
+    });
+
+    it('keeps numeric preview filters local even inside a dashboard context', async () => {
+      mockClientSize({ width: 800, height: 600 });
+      setTestFlags({ [FlagKeys.TableRefresh]: true, [FlagKeys.TableRefreshNewFeatures]: true });
+      const setTransformations = jest.fn();
+      const props = createProps({ useTableNG: true });
+      const context: PanelContext = {
+        eventsScope: 'test',
+        eventBus: new EventBusSrv(),
+        adHocTransformations: {
+          get: () => [],
+          set: setTransformations,
+          getSourceSeries: () => props.data ?? [],
+          subscribe: () => () => {},
+        },
+      };
+      const user = userEvent.setup();
+      const { unmount } = render(
+        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+          <PanelContextProvider value={context}>
+            <InspectDataTab {...props} />
+          </PanelContextProvider>
+        </OpenFeatureProvider>
+      );
+      try {
+        await user.click(screen.getByRole('button', { name: 'Column options for value' }));
+        await user.click(
+          screen.getByTestId(selectors.components.Panels.Visualization.TableNG.headerColumnMenu.filterItem)
+        );
+        await user.type(screen.getByRole('textbox', { name: 'Minimum' }), '2');
+        await user.click(screen.getByRole('button', { name: 'Apply' }));
+        expect(screen.getByRole('button', { name: 'Clear filters (1)' })).toBeInTheDocument();
+        expect(props.data?.[0].fields[2].values).toEqual([1, 2, 3]);
+        expect(setTransformations).not.toHaveBeenCalled();
+      } finally {
+        unmount();
+        setTestFlags({});
+      }
     });
 
     it('should render the data with TableNG instead of the legacy Table', () => {

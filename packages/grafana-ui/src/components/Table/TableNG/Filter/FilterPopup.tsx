@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
 import { type Dispatch, memo, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { type Field, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { FieldType, type Field, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 
@@ -16,9 +16,18 @@ import { type FilterOperator, type FilterType, type TableRow } from '../types';
 import { getDisplayName } from '../utils';
 
 import { FilterList } from './FilterList';
+import { RangeFilter } from './RangeFilter';
 import { calculateUniqueFieldValues, getFilteredOptions, operatorSelectableValues, valuesToOptions } from './utils';
 
 export interface FilterPopupProps {
+  typed?: boolean;
+  stateKey?: string;
+  unsupported?: boolean;
+  onApplyValues?: (values: SelectableValue[]) => void;
+  onApplyRange?: (range: { min?: number; max?: number; includeMissing: boolean }) => void;
+  onClear?: () => void;
+  timeZone?: string;
+  range?: { min?: number; max?: number; includeMissing: boolean };
   name: string;
   rows: TableRow[];
   filterValue?: Array<SelectableValue<unknown>>;
@@ -33,8 +42,17 @@ export interface FilterPopupProps {
   parentIndex?: number;
 }
 
-export const FilterPopup = memo(
+export const FilterPopup = memo((props: FilterPopupProps) => <FilterPopupEditor key={props.stateKey} {...props} />);
+
+const FilterPopupEditor = memo(
   ({
+    typed,
+    unsupported,
+    onApplyValues,
+    onApplyRange,
+    onClear,
+    range,
+    timeZone,
     name,
     rows,
     filterValue,
@@ -83,13 +101,22 @@ export const FilterPopup = memo(
     }, [onClose, buttonElement]);
 
     const onFilter = useCallback(() => {
-      if (values.length !== 0) {
+      if (onApplyValues) {
+        onApplyValues(values);
+      } else if (values.length !== 0) {
         // create a Set for faster filtering
         const filteredSet = new Set(values.map((item) => item.value));
 
         setFilter((filter: FilterType) => ({
           ...filter,
-          [filterKey]: { filtered: values, filteredSet, searchFilter, operator, displayName: name, parentIndex },
+          [filterKey]: {
+            filtered: values,
+            filteredSet,
+            searchFilter,
+            operator,
+            displayName: name,
+            parentIndex,
+          },
         }));
       } else {
         setFilter((filter: FilterType) => {
@@ -99,16 +126,20 @@ export const FilterPopup = memo(
         });
       }
       onClose();
-    }, [filterKey, operator, parentIndex, searchFilter, setFilter, values, name, onClose]);
+    }, [filterKey, operator, parentIndex, searchFilter, setFilter, values, name, onClose, onApplyValues]);
 
     const onClearFilter = useCallback(() => {
-      setFilter((filter: FilterType) => {
-        const newFilter = { ...filter };
-        delete newFilter[filterKey];
-        return newFilter;
-      });
+      if (onClear) {
+        onClear();
+      } else {
+        setFilter((filter: FilterType) => {
+          const newFilter = { ...filter };
+          delete newFilter[filterKey];
+          return newFilter;
+        });
+      }
       onClose();
-    }, [filterKey, setFilter, onClose]);
+    }, [filterKey, setFilter, onClose, onClear]);
 
     // we can't directly use ClickOutsideWrapper here because the click and keyup
     // events are complex and need to be handled with care to avoid conflicts
@@ -131,6 +162,51 @@ export const FilterPopup = memo(
     const filterInputPlaceholder = t('grafana-ui.table.filter-popup-input-placeholder', 'Filter values');
     const clearFilterVisible = useMemo(() => filterValue !== undefined, [filterValue]);
     const styles = useStyles2(getStyles);
+
+    if (unsupported) {
+      return (
+        <div className={styles.filterContainer} ref={containerRef}>
+          <div role="status">
+            {t(
+              'grafana-ui.table.filter.unsupported',
+              'This filter cannot be edited here. Clear it to create a new filter.'
+            )}
+          </div>
+          <Button onClick={onClearFilter}>{t('grafana-ui.table.filter.clear', 'Clear filter')}</Button>
+          <Button onClick={onClose}>{t('grafana-ui.table.filter.cancel', 'Cancel')}</Button>
+        </div>
+      );
+    }
+
+    if (typed && !filterValue && field && (field.type === FieldType.number || field.type === FieldType.time)) {
+      return (
+        <div
+          className={styles.filterContainer}
+          ref={containerRef}
+          data-testid={selectors.components.Panels.Visualization.TableNG.Filters.Container}
+        >
+          <RangeFilter
+            field={field}
+            rows={rows}
+            range={range}
+            timeZone={timeZone}
+            onCancel={() => {
+              onClose();
+              buttonElement?.focus();
+            }}
+            onClear={() => {
+              onClearFilter();
+              buttonElement?.focus();
+            }}
+            onApply={(next) => {
+              onApplyRange?.(next);
+              onClose();
+              buttonElement?.focus();
+            }}
+          />
+        </div>
+      );
+    }
 
     return (
       <div
@@ -200,6 +276,7 @@ export const FilterPopup = memo(
 );
 
 FilterPopup.displayName = 'FilterPopup';
+FilterPopupEditor.displayName = 'FilterPopupEditor';
 
 const getStyles = memoize((theme: GrafanaTheme2) => ({
   filterContainer: css({

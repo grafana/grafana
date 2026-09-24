@@ -1068,6 +1068,10 @@ export interface TableOptions {
    */
   pageSize?: number;
   /**
+   * Whether the column management sidebar starts open.
+   */
+  showColumnsSidebar?: boolean;
+  /**
    * Controls whether the panel should show the header
    */
   showHeader: boolean;
@@ -1116,8 +1120,16 @@ export interface TableFieldOptions extends HideableFieldConfig {
    * Hides any header for a column, useful for columns that show some static content or buttons.
    */
   hideHeader?: boolean;
+  /**
+   * Whether the column can be hidden from the table.
+   */
+  hideable?: boolean;
   inspect: boolean;
   minWidth?: number;
+  /**
+   * Whether the column can be reordered from the table.
+   */
+  reorderable?: boolean;
   /**
    * Controls whether the column can be sorted. Every column is sortable by default; set to false to disable sorting for this column.
    */

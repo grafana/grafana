@@ -125,7 +125,7 @@ function makeLazyRegistryItem<TOptions>(item: LazyRegistryItem<TOptions>): Trans
   return item;
 }
 
-function hiddenTransformer(id: DataTransformerID, transformer: DataTransformerInfo): TransformerRegistryItem {
+function hiddenTransformer(id: string, transformer: DataTransformerInfo): TransformerRegistryItem {
   return {
     id,
     transformation: () => Promise.resolve(transformer),

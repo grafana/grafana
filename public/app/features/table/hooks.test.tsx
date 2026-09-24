@@ -1,11 +1,12 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { cleanup, renderHook } from '@testing-library/react';
+import { act, cleanup, renderHook } from '@testing-library/react';
 import { type PropsWithChildren } from 'react';
 
 import {
   cacheFieldDisplayNames,
   DashboardCursorSync,
   type DataFrame,
+  type DataTransformerConfig,
   EventBusSrv,
   type FieldConfigSource,
   FieldType,
@@ -15,7 +16,14 @@ import { FlagKeys } from '@grafana/runtime/internal';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { type PanelContext, PanelContextProvider } from '@grafana/ui';
 
-import { useCacheFieldDisplayNames, useCellActions, useCommonTableProps, useTableSharedCrosshair } from './hooks';
+import {
+  useCacheFieldDisplayNames,
+  useAdHocColumnState,
+  useCellActions,
+  useCommonTableProps,
+  useTableRefreshNewFeatures,
+  useTableSharedCrosshair,
+} from './hooks';
 import { getCellActions } from './utils';
 
 jest.mock('@grafana/data', () => {
@@ -85,13 +93,52 @@ describe('useCacheFieldDisplayNames', () => {
 
     expect(cacheFieldDisplayNamesMock).toHaveBeenCalledTimes(1);
 
-    // same reference -> memoized, no extra call
     rerender({ s: series });
     expect(cacheFieldDisplayNamesMock).toHaveBeenCalledTimes(1);
 
-    // new reference -> recomputes
     rerender({ s: [makeFrame()] });
     expect(cacheFieldDisplayNamesMock).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('useAdHocColumnState', () => {
+  function contextWithSource(sourceSeries: DataFrame[]): PanelContext {
+    const transformations: readonly DataTransformerConfig[] = [];
+
+    return makeContext({
+      adHocTransformations: {
+        get: () => transformations,
+        set: jest.fn(),
+        getSourceSeries: () => sourceSeries,
+        subscribe: () => () => {},
+      },
+    });
+  }
+
+  it('calculates the catalog without mutating the source fields', () => {
+    const sourceFrame = makeFrame({
+      fields: [{ name: 'raw', type: FieldType.number, config: { displayName: 'Nice name' }, values: [1] }],
+    });
+
+    const { result } = renderHook(() => useAdHocColumnState([sourceFrame], 0, true), {
+      wrapper: wrapperWith(contextWithSource([sourceFrame])),
+    });
+
+    expect(result.current?.columnCatalog).toEqual(['Nice name']);
+    expect(sourceFrame.fields[0].state).toBeUndefined();
+  });
+
+  it('does not enable column management for a nested table', () => {
+    const sourceFrame = makeFrame({
+      fields: [{ name: 'nested', type: FieldType.nestedFrames, config: {}, values: [[]] }],
+    });
+
+    const { result } = renderHook(() => useAdHocColumnState([sourceFrame], 0, true), {
+      wrapper: wrapperWith(contextWithSource([sourceFrame])),
+    });
+
+    expect(result.current).toBeUndefined();
+    expect(cacheFieldDisplayNamesMock).not.toHaveBeenCalled();
   });
 });
 
@@ -165,6 +212,41 @@ describe('useTableSharedCrosshair', () => {
     const { result } = renderHook(() => useTableSharedCrosshair(), {
       wrapper: wrapperWith(makeContext({ sync: () => DashboardCursorSync.Crosshair })),
     });
+
+    expect(result.current).toBe(true);
+  });
+});
+
+describe('useTableRefreshNewFeatures', () => {
+  afterEach(() => {
+    act(() => {
+      setTestFlags({});
+    });
+  });
+
+  it('is off with neither flag', () => {
+    const { result } = renderHook(() => useTableRefreshNewFeatures(), { wrapper: FeatureFlagsProvider });
+
+    expect(result.current).toBe(false);
+  });
+
+  it('is off without table.refresh', () => {
+    setTestFlags({ [FlagKeys.TableRefreshNewFeatures]: true });
+    const { result } = renderHook(() => useTableRefreshNewFeatures(), { wrapper: FeatureFlagsProvider });
+
+    expect(result.current).toBe(false);
+  });
+
+  it('is off without table.refreshNewFeatures', () => {
+    setTestFlags({ [FlagKeys.TableRefresh]: true });
+    const { result } = renderHook(() => useTableRefreshNewFeatures(), { wrapper: FeatureFlagsProvider });
+
+    expect(result.current).toBe(false);
+  });
+
+  it('is on with both feature flags', () => {
+    setTestFlags({ [FlagKeys.TableRefresh]: true, [FlagKeys.TableRefreshNewFeatures]: true });
+    const { result } = renderHook(() => useTableRefreshNewFeatures(), { wrapper: FeatureFlagsProvider });
 
     expect(result.current).toBe(true);
   });

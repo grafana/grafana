@@ -1,7 +1,8 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
+import { type ComponentProps } from 'react';
 import * as uwrap from 'uwrap';
 
 import {
@@ -152,6 +153,69 @@ const createDisplayNameDataFrame = (displayName: string, values = ['A1', 'A2']):
           values,
           config: { ...stdCellConfig, displayName },
           display: displayString,
+          ...stdField,
+        },
+      ],
+    })
+  );
+
+const withColumnCapabilities = (frame: DataFrame, capabilities = {}): DataFrame => ({
+  ...frame,
+  fields: frame.fields.map((field) => ({
+    ...field,
+    config: {
+      ...field.config,
+      custom: { ...field.config.custom, filterable: true, reorderable: true, hideable: true, ...capabilities },
+    },
+  })),
+});
+
+const createSingleColumnDataFrame = (): DataFrame =>
+  withFieldOverrides(
+    toDataFrame({
+      name: 'TestData',
+      length: 3,
+      fields: [
+        {
+          name: 'Column A',
+          type: FieldType.string,
+          values: ['A1', 'A2', 'A3'],
+          config: stdCellConfig,
+          display: displayString,
+          ...stdField,
+        },
+      ],
+    })
+  );
+
+const createThreeColumnDataFrame = (): DataFrame =>
+  withFieldOverrides(
+    toDataFrame({
+      name: 'TestData',
+      length: 3,
+      fields: [
+        {
+          name: 'Column A',
+          type: FieldType.string,
+          values: ['A1', 'A2', 'A3'],
+          config: stdCellConfig,
+          display: displayString,
+          ...stdField,
+        },
+        {
+          name: 'Column B',
+          type: FieldType.number,
+          values: [1, 2, 3],
+          config: stdCellConfig,
+          display: displayNumber,
+          ...stdField,
+        },
+        {
+          name: 'Column C',
+          type: FieldType.number,
+          values: [4, 5, 6],
+          config: stdCellConfig,
+          display: displayNumber,
           ...stdField,
         },
       ],
@@ -1356,6 +1420,431 @@ describe('TableNG', () => {
     );
   });
 
+  describe('table.refreshNewFeatures column reordering', () => {
+    // jsdom does not implement DataTransfer.
+    function createDataTransfer() {
+      return {
+        dropEffect: '',
+        effectAllowed: '',
+        setDragImage: jest.fn(),
+        setData: jest.fn(),
+        getData: jest.fn(),
+      };
+    }
+
+    it('reorders columns by header drag', () => {
+      const { container } = render(
+        <TableNG
+          enableVirtualization={false}
+          data={withColumnCapabilities(createBasicDataFrame())}
+          width={800}
+          height={600}
+          tableRefreshEnabled
+        />
+      );
+
+      const headerText = () =>
+        Array.from(container.querySelectorAll('[role="columnheader"] button[title]')).map((el) => el.textContent);
+      expect(headerText()).toEqual(['Column A', 'Column B']);
+
+      const headers = container.querySelectorAll('[role="columnheader"]');
+      const dataTransfer = createDataTransfer();
+      fireEvent.dragStart(headers[0], { dataTransfer });
+      fireEvent.dragEnter(headers[1], { dataTransfer });
+      fireEvent.dragOver(headers[1], { dataTransfer });
+      fireEvent.drop(headers[1], { dataTransfer });
+
+      expect(headerText()).toEqual(['Column B', 'Column A']);
+    });
+
+    it('does not make columns draggable when the flag is off', () => {
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
+      );
+
+      const headers = container.querySelectorAll('[role="columnheader"]');
+      headers.forEach((header) => expect(header).not.toHaveAttribute('draggable', 'true'));
+
+      const headerText = () =>
+        Array.from(container.querySelectorAll('[role="columnheader"] button[title]')).map((el) => el.textContent);
+      const dataTransfer = createDataTransfer();
+      fireEvent.dragStart(headers[0], { dataTransfer });
+      fireEvent.dragEnter(headers[1], { dataTransfer });
+      fireEvent.dragOver(headers[1], { dataTransfer });
+      fireEvent.drop(headers[1], { dataTransfer });
+
+      expect(headerText()).toEqual(['Column A', 'Column B']);
+    });
+  });
+
+  describe('table.refreshNewFeatures column hide', () => {
+    const headerText = (container: HTMLElement) =>
+      Array.from(container.querySelectorAll('[role="columnheader"] button[title]')).map((el) => el.textContent);
+
+    it('disables hiding the last visible column', async () => {
+      const { container } = render(
+        <TableNG
+          enableVirtualization={false}
+          data={withColumnCapabilities(createThreeColumnDataFrame())}
+          width={800}
+          height={600}
+          tableRefreshEnabled
+        />
+      );
+      expect(headerText(container)).toEqual(['Column A', 'Column B', 'Column C']);
+
+      await userEvent.click(screen.getByLabelText('Column options for Column B'));
+      await userEvent.click(await screen.findByText('Hide column'));
+      expect(headerText(container)).toEqual(['Column A', 'Column C']);
+
+      await userEvent.click(screen.getByLabelText('Column options for Column C'));
+      await userEvent.click(await screen.findByText('Hide column'));
+      expect(headerText(container)).toEqual(['Column A']);
+
+      await userEvent.click(screen.getByLabelText('Column options for Column A'));
+      expect((await screen.findByText('Hide column')).closest('button')).toBeDisabled();
+    });
+
+    it('pins and unpins a column alongside the configured frozen columns', async () => {
+      const { container } = render(
+        <TableNG
+          enableVirtualization={false}
+          data={withColumnCapabilities(createThreeColumnDataFrame())}
+          width={800}
+          height={600}
+          frozenColumns={1}
+          tableRefreshEnabled
+        />
+      );
+
+      await userEvent.click(screen.getByLabelText('Column options for Column C'));
+      await screen.findByText('Hide column');
+
+      await userEvent.click(screen.getByText('Pin column left'));
+      expect(headerText(container)).toEqual(['Column A', 'Column C', 'Column B']);
+
+      const headers = container.querySelectorAll('[role="columnheader"]');
+      expect(headers[0]).toHaveClass('rdg-cell-frozen');
+      expect(headers[1]).toHaveClass('rdg-cell-frozen');
+      expect(headers[2]).not.toHaveClass('rdg-cell-frozen');
+      await userEvent.click(screen.getByLabelText('Column options for Column C'));
+      await userEvent.click(await screen.findByText('Unpin column'));
+      expect(headerText(container)).toEqual(['Column A', 'Column C', 'Column B']);
+      expect(container.querySelectorAll('[role="columnheader"]')[1]).not.toHaveClass('rdg-cell-frozen');
+    });
+  });
+
+  describe('mixed column capabilities', () => {
+    type Capabilities = { filterable?: boolean; reorderable?: boolean; hideable?: boolean };
+
+    const withCapabilitiesPerColumn = (perColumn: Record<string, Capabilities>): DataFrame => {
+      const frame = createThreeColumnDataFrame();
+      return {
+        ...frame,
+        fields: frame.fields.map((field) => ({
+          ...field,
+          config: { ...field.config, custom: { ...field.config.custom, ...(perColumn[field.name] ?? {}) } },
+        })),
+      };
+    };
+
+    const renderMixed = (perColumn: Record<string, Capabilities>, props = {}) =>
+      render(
+        <TableNG
+          enableVirtualization={false}
+          data={withCapabilitiesPerColumn(perColumn)}
+          width={900}
+          height={600}
+          tableRefreshEnabled
+          {...props}
+        />
+      );
+
+    const menuLabel = (column: string) => `Column options for ${column}`;
+
+    describe('reorderable', () => {
+      it('makes only the reorderable columns draggable', () => {
+        const { container } = renderMixed({ 'Column A': { reorderable: true } });
+
+        const draggable = Array.from(container.querySelectorAll('[role="columnheader"]')).map((header) =>
+          header.getAttribute('draggable')
+        );
+
+        expect(draggable).toEqual(['true', null, null]);
+      });
+
+      it('gives only the reorderable rows a drag handle in the sidebar', () => {
+        renderMixed(
+          { 'Column A': { reorderable: true }, 'Column C': { reorderable: true } },
+          {
+            showColumnsSidebar: true,
+          }
+        );
+
+        expect(screen.getByLabelText('Reorder Column A')).toBeInTheDocument();
+        expect(screen.queryByLabelText('Reorder Column B')).not.toBeInTheDocument();
+        expect(screen.getByLabelText('Reorder Column C')).toBeInTheDocument();
+      });
+
+      it('does not add a menu item for reordering', async () => {
+        renderMixed({ 'Column A': { reorderable: true } });
+
+        await userEvent.click(screen.getByLabelText(menuLabel('Column A')));
+
+        expect(await screen.findByText('Manage columns')).toBeInTheDocument();
+        expect(screen.queryByText('Hide column')).not.toBeInTheDocument();
+        expect(screen.queryByText('Filter values')).not.toBeInTheDocument();
+      });
+    });
+
+    describe('filterable', () => {
+      it('offers the filter item only in the filterable columns’ menus', async () => {
+        renderMixed({ 'Column B': { filterable: true } });
+
+        expect(screen.queryByLabelText(menuLabel('Column A'))).not.toBeInTheDocument();
+        expect(screen.queryByLabelText(menuLabel('Column C'))).not.toBeInTheDocument();
+
+        await userEvent.click(screen.getByLabelText(menuLabel('Column B')));
+
+        expect(await screen.findByText('Filter values')).toBeInTheDocument();
+        expect(screen.queryByText('Hide column')).not.toBeInTheDocument();
+      });
+
+      it('does not show the sidebar for filtering alone', () => {
+        renderMixed({ 'Column B': { filterable: true } }, { showColumnsSidebar: true });
+
+        expect(screen.queryByRole('group', { name: 'Column visibility' })).not.toBeInTheDocument();
+      });
+    });
+
+    describe('hideable', () => {
+      it('offers the hide item only in the hideable columns’ menus', async () => {
+        renderMixed({ 'Column A': { hideable: true }, 'Column B': { filterable: true } });
+
+        await userEvent.click(screen.getByLabelText(menuLabel('Column A')));
+        expect(await screen.findByText('Hide column')).toBeInTheDocument();
+        expect(screen.queryByText('Filter values')).not.toBeInTheDocument();
+        await userEvent.keyboard('{Escape}');
+
+        await userEvent.click(screen.getByLabelText(menuLabel('Column B')));
+        expect(await screen.findByText('Filter values')).toBeInTheDocument();
+        expect(screen.queryByText('Hide column')).not.toBeInTheDocument();
+      });
+
+      it('gives only the hideable rows a visibility checkbox in the sidebar', () => {
+        renderMixed(
+          { 'Column A': { hideable: true }, 'Column C': { hideable: true } },
+          {
+            showColumnsSidebar: true,
+          }
+        );
+
+        expect(screen.getByLabelText('Hide Column A')).toBeInTheDocument();
+        expect(screen.queryByLabelText('Hide Column B')).not.toBeInTheDocument();
+        expect(screen.getByLabelText('Hide Column C')).toBeInTheDocument();
+      });
+
+      it('hides only hideable columns', async () => {
+        const { container } = renderMixed({ 'Column A': { hideable: true } });
+
+        await userEvent.click(screen.getByLabelText(menuLabel('Column A')));
+        await userEvent.click(await screen.findByText('Hide column'));
+
+        expect(
+          Array.from(container.querySelectorAll('[role="columnheader"] button[title]')).map((el) => el.textContent)
+        ).toEqual(['Column B', 'Column C']);
+      });
+    });
+
+    describe('the column sidebar', () => {
+      it('lists every column when any column is manageable', () => {
+        renderMixed({ 'Column C': { hideable: true } }, { showColumnsSidebar: true });
+
+        const sidebar = screen.getByRole('group', { name: 'Column visibility' });
+
+        for (const column of ['Column A', 'Column B', 'Column C']) {
+          expect(sidebar).toHaveTextContent(column);
+        }
+      });
+
+      it('does not exist when no column is reorderable or hideable', () => {
+        renderMixed({ 'Column A': { filterable: true } }, { showColumnsSidebar: true });
+
+        expect(screen.queryByRole('group', { name: 'Column visibility' })).not.toBeInTheDocument();
+      });
+
+      it('shows Manage columns in every column menu', async () => {
+        renderMixed({ 'Column C': { hideable: true } });
+
+        await userEvent.click(screen.getByLabelText(menuLabel('Column A')));
+
+        expect(await screen.findByText('Manage columns')).toBeInTheDocument();
+        expect(screen.queryByText('Hide column')).not.toBeInTheDocument();
+        expect(screen.queryByText('Filter values')).not.toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('table.refreshNewFeatures controlled column state', () => {
+    const headerText = (container: HTMLElement) =>
+      Array.from(container.querySelectorAll('[role="columnheader"] button[title]')).map((el) => el.textContent);
+
+    function renderControlled(props: Partial<ComponentProps<typeof TableNG>> = {}) {
+      const onColumnOrderChange = jest.fn();
+      const onHiddenColumnsChange = jest.fn();
+
+      const view = render(
+        <TableNG
+          enableVirtualization={false}
+          data={withColumnCapabilities(createThreeColumnDataFrame())}
+          width={800}
+          height={600}
+          tableRefreshEnabled
+          columnCatalog={['Column A', 'Column B', 'Column C']}
+          hiddenColumns={new Set()}
+          onColumnOrderChange={onColumnOrderChange}
+          onHiddenColumnsChange={onHiddenColumnsChange}
+          {...props}
+        />
+      );
+
+      return { ...view, onColumnOrderChange, onHiddenColumnsChange };
+    }
+
+    it('renders the controlled column order', () => {
+      const { container } = renderControlled({ columnOrder: ['Column C', 'Column A', 'Column B'] });
+
+      expect(headerText(container)).toEqual(['Column C', 'Column A', 'Column B']);
+    });
+
+    it('reports the full order without reordering controlled data', () => {
+      const { container, onColumnOrderChange } = renderControlled();
+
+      const headers = container.querySelectorAll('[role="columnheader"]');
+      const dataTransfer = {
+        dropEffect: '',
+        effectAllowed: '',
+        setDragImage: jest.fn(),
+        setData: jest.fn(),
+        getData: jest.fn(),
+      };
+
+      fireEvent.dragStart(headers[0], { dataTransfer });
+      fireEvent.dragEnter(headers[2], { dataTransfer });
+      fireEvent.dragOver(headers[2], { dataTransfer });
+      fireEvent.drop(headers[2], { dataTransfer });
+
+      expect(onColumnOrderChange).toHaveBeenCalledWith(['Column B', 'Column C', 'Column A']);
+      expect(headerText(container)).toEqual(['Column A', 'Column B', 'Column C']);
+    });
+
+    it('reports hidden columns without filtering controlled data', async () => {
+      const { container, onHiddenColumnsChange } = renderControlled();
+
+      await userEvent.click(screen.getByLabelText('Column options for Column B'));
+      await userEvent.click(await screen.findByText('Hide column'));
+
+      expect(onHiddenColumnsChange).toHaveBeenCalledWith(new Set(['Column B']));
+      expect(headerText(container)).toEqual(['Column A', 'Column B', 'Column C']);
+    });
+
+    it('restores catalog columns missing from controlled data', async () => {
+      const { onHiddenColumnsChange } = renderControlled({
+        data: withColumnCapabilities(createBasicDataFrame()),
+        hiddenColumns: new Set(['Column C']),
+        showColumnsSidebar: true,
+      });
+
+      const sidebar = screen.getByRole('group', { name: 'Column visibility' });
+
+      expect(sidebar).toHaveTextContent('Column C');
+
+      await userEvent.click(screen.getByLabelText('Show Column C'));
+
+      expect(onHiddenColumnsChange).toHaveBeenCalledWith(new Set());
+    });
+
+    it('does not hide the last visible controlled column', async () => {
+      const { onHiddenColumnsChange } = renderControlled({
+        data: withColumnCapabilities(createSingleColumnDataFrame()),
+        columnCatalog: ['Column A'],
+      });
+
+      await userEvent.click(screen.getByLabelText('Column options for Column A'));
+
+      expect((await screen.findByText('Hide column')).closest('button')).toBeDisabled();
+      expect(onHiddenColumnsChange).not.toHaveBeenCalled();
+    });
+
+    it('retains controlled state across structure changes', () => {
+      const { container, rerender } = renderControlled({
+        columnOrder: ['Column C', 'Column A', 'Column B'],
+        structureRev: 1,
+      });
+
+      rerender(
+        <TableNG
+          enableVirtualization={false}
+          data={withColumnCapabilities(createThreeColumnDataFrame())}
+          width={800}
+          height={600}
+          tableRefreshEnabled
+          columnCatalog={['Column A', 'Column B', 'Column C']}
+          columnOrder={['Column C', 'Column A', 'Column B']}
+          hiddenColumns={new Set()}
+          onColumnOrderChange={jest.fn()}
+          onHiddenColumnsChange={jest.fn()}
+          structureRev={2}
+        />
+      );
+
+      expect(headerText(container)).toEqual(['Column C', 'Column A', 'Column B']);
+    });
+
+    it('resets local state across structure changes', () => {
+      const data = withColumnCapabilities(createThreeColumnDataFrame());
+      const { container, rerender } = render(
+        <TableNG
+          enableVirtualization={false}
+          data={data}
+          width={800}
+          height={600}
+          tableRefreshEnabled
+          structureRev={1}
+        />
+      );
+
+      const headers = container.querySelectorAll('[role="columnheader"]');
+      const dataTransfer = {
+        dropEffect: '',
+        effectAllowed: '',
+        setDragImage: jest.fn(),
+        setData: jest.fn(),
+        getData: jest.fn(),
+      };
+
+      fireEvent.dragStart(headers[0], { dataTransfer });
+      fireEvent.dragEnter(headers[1], { dataTransfer });
+      fireEvent.dragOver(headers[1], { dataTransfer });
+      fireEvent.drop(headers[1], { dataTransfer });
+
+      expect(headerText(container)).toEqual(['Column B', 'Column A', 'Column C']);
+
+      rerender(
+        <TableNG
+          enableVirtualization={false}
+          data={data}
+          width={800}
+          height={600}
+          tableRefreshEnabled
+          structureRev={2}
+        />
+      );
+
+      expect(headerText(container)).toEqual(['Column A', 'Column B', 'Column C']);
+    });
+  });
+
   describe('Footer options', () => {
     it('defaults to not showing footer', () => {
       const { container } = render(<TableNG data={createBasicDataFrame()} width={800} height={600} />);
@@ -1421,6 +1910,28 @@ describe('TableNG', () => {
   });
 
   describe('Pagination', () => {
+    it('stacks pagination below the grid when the column sidebar is open', async () => {
+      const user = userEvent.setup();
+      const { container } = render(
+        <TableNG
+          data={withColumnCapabilities(createBasicDataFrame())}
+          width={800}
+          height={300}
+          enablePagination
+          tableRefreshEnabled
+          showColumnsSidebar
+        />
+      );
+      const grid = screen.getByRole('grid');
+      const pager = container.querySelector('.table-ng-pagination')!.parentElement!;
+      const gridPane = grid.parentElement!.parentElement!.parentElement!;
+      expect(pager.parentElement).toBe(gridPane);
+      expect(window.getComputedStyle(gridPane).display).toBe('flex');
+      expect(window.getComputedStyle(gridPane).flexDirection).toBe('column');
+      await user.click(screen.getByRole('button', { name: 'Close column visibility panel' }));
+      expect(container.querySelector('.table-ng-pagination')).toBeInTheDocument();
+    });
+
     it('defaults to not showing pagination', () => {
       const { container } = render(<TableNG data={createBasicDataFrame()} width={800} height={600} />);
       expect(container.querySelector('.table-ng-pagination')).not.toBeInTheDocument();
@@ -3303,6 +3814,132 @@ describe('TableNG', () => {
         .split(' ')
         .map((w) => parseFloat(w));
       expect(metadataWidth).toBeGreaterThan(serviceWidth * 2);
+    });
+  });
+
+  describe('table.refreshNewFeatures columns sidebar option', () => {
+    const sidebarLabel = 'Column visibility';
+
+    it('initializes from showColumnsSidebar', () => {
+      const { unmount } = render(
+        <TableNG
+          enableVirtualization={false}
+          tableRefreshEnabled
+          data={withColumnCapabilities(createBasicDataFrame())}
+          width={800}
+          height={600}
+        />
+      );
+      expect(screen.queryByRole('group', { name: sidebarLabel })).not.toBeInTheDocument();
+      unmount();
+
+      render(
+        <TableNG
+          enableVirtualization={false}
+          tableRefreshEnabled
+          showColumnsSidebar
+          data={withColumnCapabilities(createBasicDataFrame())}
+          width={800}
+          height={600}
+        />
+      );
+      expect(screen.getByRole('group', { name: sidebarLabel })).toBeInTheDocument();
+    });
+
+    it('reserves the sidebar width after accounting for the splitter handle', () => {
+      render(
+        <TableNG
+          enableVirtualization={false}
+          tableRefreshEnabled
+          showColumnsSidebar
+          data={withColumnCapabilities(createBasicDataFrame())}
+          width={800}
+          height={600}
+        />
+      );
+
+      const sidebarPane = screen.getByRole('group', { name: sidebarLabel }).parentElement!;
+      expect(parseFloat(sidebarPane.style.flexGrow) * (800 - 8)).toBeCloseTo(220);
+    });
+
+    it('matches the sidebar header height to the table header', () => {
+      render(
+        <TableNG
+          enableVirtualization={false}
+          tableRefreshEnabled
+          showColumnsSidebar
+          data={withColumnCapabilities(createBasicDataFrame())}
+          width={800}
+          height={600}
+        />
+      );
+
+      const sidebarHeader = screen.getByText('Columns').parentElement!;
+      const table = screen.getByRole('grid');
+      const tableHeaderHeight = window.getComputedStyle(table).getPropertyValue('--rdg-header-row-height');
+
+      expect(window.getComputedStyle(sidebarHeader).height).toBe(tableHeaderHeight);
+    });
+
+    it('tracks changes to showColumnsSidebar', () => {
+      const data = withColumnCapabilities(createBasicDataFrame());
+      const { rerender } = render(
+        <TableNG enableVirtualization={false} tableRefreshEnabled data={data} width={800} height={600} />
+      );
+      expect(screen.queryByRole('group', { name: sidebarLabel })).not.toBeInTheDocument();
+
+      rerender(
+        <TableNG
+          enableVirtualization={false}
+          tableRefreshEnabled
+          showColumnsSidebar
+          data={data}
+          width={800}
+          height={600}
+        />
+      );
+      expect(screen.getByRole('group', { name: sidebarLabel })).toBeInTheDocument();
+
+      rerender(
+        <TableNG
+          enableVirtualization={false}
+          tableRefreshEnabled
+          showColumnsSidebar={false}
+          data={data}
+          width={800}
+          height={600}
+        />
+      );
+      expect(screen.queryByRole('group', { name: sidebarLabel })).not.toBeInTheDocument();
+    });
+
+    it('keeps local close state until the option changes', async () => {
+      const data = withColumnCapabilities(createBasicDataFrame());
+      const { rerender } = render(
+        <TableNG
+          enableVirtualization={false}
+          tableRefreshEnabled
+          showColumnsSidebar
+          data={data}
+          width={800}
+          height={600}
+        />
+      );
+
+      await userEvent.click(screen.getByRole('button', { name: 'Close column visibility panel' }));
+      expect(screen.queryByRole('group', { name: sidebarLabel })).not.toBeInTheDocument();
+
+      rerender(
+        <TableNG
+          enableVirtualization={false}
+          tableRefreshEnabled
+          showColumnsSidebar
+          data={data}
+          width={800}
+          height={601}
+        />
+      );
+      expect(screen.queryByRole('group', { name: sidebarLabel })).not.toBeInTheDocument();
     });
   });
 });

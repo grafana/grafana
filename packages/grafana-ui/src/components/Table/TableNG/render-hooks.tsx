@@ -48,6 +48,7 @@ import { TableCellTooltip } from './components/TableCellTooltip';
 import { CELL_HORIZONTAL_CHROME, OVERFLOW_CELL_CLASS } from './constants';
 import {
   getCellActionStyles,
+  getColumnSettleStyles,
   getDefaultCellStyles,
   getHeaderCellStyles,
   getLinkStyles,
@@ -86,6 +87,7 @@ import {
   rendersAsJson,
   shouldTextOverflow,
   shouldTextWrap,
+  isFieldReorderable,
 } from './utils';
 
 // -----------------------------------------------------------------------------
@@ -153,6 +155,7 @@ export interface ColumnBuildConfig {
   disableKeyboardEvents?: boolean;
   hoverOverflow?: boolean;
   disableSanitizeHtml?: boolean;
+  hasColumnSidebar?: boolean;
   filter: FilterType;
   /**
    * Inline-start padding the grid's first column takes on top of the usual cell padding (see the
@@ -171,10 +174,15 @@ export interface ColumnBuildConfig {
   maxRowHeight?: number;
   numFrozenColsFullyInView: number;
   onCellFilterAdded?: TableFilterActionCallback;
+  onHideColumn?: (displayName: string) => void;
+  onTogglePin?: (displayName: string) => void;
+  onOpenColumnPanel?: () => void;
+  pinnedColumns?: ReadonlySet<string>;
   rowHeight: NonNullable<CSSProperties['height']> | ((row: TableRow) => number);
   rowHeightFn: (row: TableRow) => number;
   setFilter: Dispatch<SetStateAction<FilterType>>;
   setInspectCell: Dispatch<SetStateAction<InspectCellProps | null>>;
+  settlingColumnKeys?: ReadonlySet<string>;
   showTypeIcons?: boolean;
   tableRefreshEnabled?: boolean;
   jsonSyntaxHighlightingEnabled?: boolean;
@@ -261,12 +269,18 @@ function buildColumnsFromFields(
     gridRef,
     getCellActions,
     onCellFilterAdded,
+    onHideColumn,
+    onTogglePin,
+    onOpenColumnPanel,
+    pinnedColumns,
     frozenColumns,
     numFrozenColsFullyInView,
     maxRowHeight,
     disableKeyboardEvents,
     hoverOverflow = true,
     disableSanitizeHtml,
+    hasColumnSidebar,
+    settlingColumnKeys,
     showTypeIcons,
     tableRefreshEnabled,
     jsonSyntaxHighlightingEnabled,
@@ -340,7 +354,10 @@ function buildColumnsFromFields(
     const textAlign = getAlignment(field);
     const justifyContent = getJustifyContent(textAlign);
     const displayName = getDisplayName(field);
-    const headerCellClass = getHeaderCellStyles(theme, tableRefreshEnabled ? 'flex-start' : justifyContent);
+    const headerCellClass = clsx(
+      getHeaderCellStyles(theme, tableRefreshEnabled ? 'flex-start' : justifyContent),
+      settlingColumnKeys?.has(displayName) && getColumnSettleStyles(theme, tableRefreshEnabled)
+    );
     const CellType = getCellRenderer(field, cellOptions);
 
     const cellInspect = isCellInspectEnabled(field);
@@ -589,6 +606,7 @@ function buildColumnsFromFields(
       frozen: Math.min(frozenColumns, numFrozenColsFullyInView) > i,
       resizable: field.config.custom?.resizable,
       sortable: isSortableField(field),
+      draggable: isFieldReorderable(field),
       renderCell: renderCellContent,
       renderHeaderCell: ({ column, sortDirection }) => (
         <HeaderCell
@@ -604,6 +622,12 @@ function buildColumnsFromFields(
           crossFilterRows={crossFilterRows}
           crossFilterTailRows={crossFilterTailRows}
           tableRefreshEnabled={tableRefreshEnabled}
+          hasColumnSidebar={hasColumnSidebar}
+          onHideColumn={onHideColumn ? () => onHideColumn(displayName) : undefined}
+          canHideColumn={fields.length > 1}
+          isPinned={pinnedColumns?.has(displayName)}
+          onTogglePin={onTogglePin ? () => onTogglePin(displayName) : undefined}
+          onOpenColumnPanel={onOpenColumnPanel}
           selectFirstCell={() => {
             gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
           }}

@@ -35,6 +35,7 @@ type FlameGraphPaneProps = {
   useTableNG?: boolean;
   // Feature-toggle values for the top table's TableNG, passed in by the host. See FlameGraphContainer's props.
   tableRefreshEnabled?: boolean;
+  rowTransformationsEnabled?: boolean;
   contentAwareWidthsEnabled?: boolean;
   // Set when the host bounds our height, so the table sizes to the pane instead of a fixed height.
   fillHeight?: boolean;
@@ -62,6 +63,7 @@ const FlameGraphPane = ({
   setSharedSandwichItem,
   useTableNG,
   tableRefreshEnabled,
+  rowTransformationsEnabled,
   contentAwareWidthsEnabled,
   fillHeight,
 }: FlameGraphPaneProps) => {
@@ -252,6 +254,7 @@ const FlameGraphPane = ({
             colorScheme={colorScheme}
             useTableNG={useTableNG}
             tableRefreshEnabled={tableRefreshEnabled}
+            rowTransformationsEnabled={rowTransformationsEnabled}
             contentAwareWidthsEnabled={contentAwareWidthsEnabled}
           />
         </div>
