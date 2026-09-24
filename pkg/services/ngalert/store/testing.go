@@ -5,15 +5,11 @@ import (
 	"strings"
 	"sync"
 	"testing"
-	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func NewFakeImageStore(t *testing.T, images ...*models.Image) *FakeImageStore {
@@ -138,17 +134,10 @@ func (f *FakeAdminConfigStore) UpdateAdminConfiguration(cmd UpdateAdminConfigura
 
 func SetupStoreForTesting(t *testing.T, db db.DB) *DBstore {
 	t.Helper()
-	cfg := setting.NewCfg()
-	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: 1 * time.Second}
-
-	service := foldertest.NewFakeService()
-
 	store := &DBstore{
-		SQLStore:      db,
-		Cfg:           cfg.UnifiedAlerting,
-		FolderService: service,
-		Logger:        &logtest.Fake{},
-		Bus:           bus.ProvideBus(tracing.InitializeTracerForTest()),
+		FeatureToggles: featuremgmt.WithFeatures(),
+		SQLStore:       db,
+		Logger:         &logtest.Fake{},
 	}
 	return store
 }

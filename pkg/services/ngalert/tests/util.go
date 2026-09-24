@@ -30,6 +30,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	ngalertfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
@@ -55,8 +57,9 @@ func WithFeatureToggles(toggles featuremgmt.FeatureToggles) TestEnvOption {
 	}
 }
 
-// SetupTestEnv initializes a store to used by the tests.
-func SetupTestEnv(tb testing.TB, baseInterval time.Duration, opts ...TestEnvOption) (*ngalert.AlertNG, *store.DBstore) {
+// SetupTestEnv initializes the stores used by the tests. The Alertmanager/instance/image store and
+// the rule store are separate types since the rule store was split out, so both are returned.
+func SetupTestEnv(tb testing.TB, baseInterval time.Duration, opts ...TestEnvOption) (*ngalert.AlertNG, *store.DBstore, *rulestore.RuleStore) {
 	tb.Helper()
 
 	options := TestEnvOptions{
@@ -85,36 +88,41 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration, opts ...TestEnvOpti
 	tracer := tracing.InitializeTracerForTest()
 	bus := bus.ProvideBus(tracer)
 	folderService := foldertest.NewFakeService()
-	dashboardService := dashboards.NewFakeDashboardService(tb)
-	ruleStore, err := store.ProvideDBStore(cfg, options.featureToggles, sqlStore, folderService, &dashboards.FakeDashboardService{}, ac, bus)
+	alertingStore, err := store.ProvideDBStore(options.featureToggles, sqlStore)
+	require.NoError(tb, err)
+	provenanceStore := provenance.ProvideProvenanceStore(options.featureToggles, sqlStore)
+	ruleStore, err := rulestore.ProvideRuleStore(cfg, options.featureToggles, sqlStore, folderService, ac, provenanceStore)
 	require.NoError(tb, err)
 	ng, err := ngalert.ProvideService(
 		cfg, options.featureToggles, nil, nil, routing.NewRouteRegister(), sqlStore, kvstore.NewFakeKVStore(), nil, nil, provisioning.NoopRuleMutationValidator{}, quotatest.New(false, nil),
 		secretsService, nil, m, folderService, ac, &dashboards.FakeDashboardService{}, nil, bus, ac,
-		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore, httpclient.NewProvider(), nil, ngalertfakes.NewFakeReceiverPermissionsService(), ngalertfakes.NewFakeRoutePermissionsService(), ngalertfakes.NewFakeFolderPermissionsService(), usertest.NewUserServiceFake(), orgtest.NewOrgServiceFake(),
+		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, alertingStore, ruleStore, provenanceStore, httpclient.NewProvider(), nil, ngalertfakes.NewFakeReceiverPermissionsService(), ngalertfakes.NewFakeRoutePermissionsService(), ngalertfakes.NewFakeFolderPermissionsService(), usertest.NewUserServiceFake(), orgtest.NewOrgServiceFake(),
 		nil, // clientGenerator
 	)
 	require.NoError(tb, err)
 
 	return ng, &store.DBstore{
-		FeatureToggles: options.featureToggles,
-		SQLStore:       ng.SQLStore,
-		Cfg: setting.UnifiedAlertingSettings{
-			BaseInterval: baseInterval * time.Second,
-		},
-		Logger:           log.New("ngalert-test"),
-		DashboardService: dashboardService,
-		FolderService:    folderService,
-		Bus:              bus,
-	}
+			FeatureToggles: options.featureToggles,
+			SQLStore:       ng.SQLStore,
+			Logger:         log.New("ngalert-test"),
+		}, &rulestore.RuleStore{
+			FeatureToggles: options.featureToggles,
+			SQLStore:       ng.SQLStore,
+			Cfg: setting.UnifiedAlertingSettings{
+				BaseInterval: baseInterval * time.Second,
+			},
+			Logger:        log.New("ngalert-test"),
+			FolderService: folderService,
+			Provenance:    provenanceStore,
+		}
 }
 
 // CreateTestAlertRule creates a dummy alert definition to be used by the tests.
-func CreateTestAlertRule(t testing.TB, ctx context.Context, dbstore *store.DBstore, intervalSeconds int64, orgID int64) *models.AlertRule {
+func CreateTestAlertRule(t testing.TB, ctx context.Context, dbstore *rulestore.RuleStore, intervalSeconds int64, orgID int64) *models.AlertRule {
 	return CreateTestAlertRuleWithLabels(t, ctx, dbstore, intervalSeconds, orgID, nil)
 }
 
-func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *store.DBstore, intervalSeconds int64, orgID int64, labels map[string]string) *models.AlertRule {
+func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *rulestore.RuleStore, intervalSeconds int64, orgID int64, labels map[string]string) *models.AlertRule {
 	ruleGroup := fmt.Sprintf("ruleGroup-%s", util.GenerateShortUID())
 	folderUID := "namespace"
 	user := &user.SignedInUser{

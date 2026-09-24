@@ -1,4 +1,4 @@
-package store
+package rules
 
 import (
 	"context"
@@ -25,6 +25,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
 	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -671,7 +673,7 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 	logger := log.New("test-dbstore")
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
-	protoInstanceStore := ProtoInstanceDBStore{
+	protoInstanceStore := ngstore.ProtoInstanceDBStore{
 		SQLStore:       sqlStore,
 		Logger:         logger,
 		FeatureToggles: featuremgmt.WithFeatures(),
@@ -1131,6 +1133,8 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 	b := &fakeBus{}
 	logger := log.New("test-dbstore")
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
+	// Provenance writes live in the provenance store now; the rule store only reads them.
+	provStore := provenance.ProvideProvenanceStore(featuremgmt.WithFeatures(), sqlStore)
 
 	receiverName := "receiver\"-" + uuid.NewString()
 	timeIntervalName := "time-" + util.GenerateShortUID()
@@ -1154,7 +1158,7 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 	for idx, rule := range append(timeIntervalRules, receiveRules...) {
 		p := models.KnownProvenances[idx%len(models.KnownProvenances)]
 		provenances[rule.GetKey()] = p
-		require.NoError(t, store.SetProvenance(context.Background(), rule, rule.OrgID, p))
+		require.NoError(t, provStore.SetProvenance(context.Background(), rule, rule.OrgID, p))
 	}
 
 	_, err := store.InsertAlertRules(context.Background(), &usr, toInsertRules(deref))
@@ -1983,7 +1987,7 @@ func TestIntegrationGetAlertRuleVersionFolders(t *testing.T) {
 
 // createAlertRule creates an alert rule in the database and returns it.
 // If a generator is not specified, uniqueness of primary key is not guaranteed.
-func createRule(tb testing.TB, store *DBstore, generator *models.AlertRuleGenerator) *models.AlertRule {
+func createRule(tb testing.TB, store *RuleStore, generator *models.AlertRuleGenerator) *models.AlertRule {
 	tb.Helper()
 	if generator == nil {
 		generator = models.RuleGen.With(models.RuleMuts.WithIntervalMatching(store.Cfg.BaseInterval))
@@ -4031,21 +4035,30 @@ func TestIntegration_CleanUpDeletedAlertRules(t *testing.T) {
 	}
 }
 
+// createTestStore builds a RuleStore over sqlStore. The bus argument is retained for call-site
+// compatibility but is unused: rule writes publish RuleChangeEvents through
+// DBSession.PublishAfterCommit, which dispatches on the SQLStore's own bus (see
+// captureRuleChangeEvents), so RuleStore never needed a bus of its own.
 func createTestStore(
 	sqlStore db.DB,
 	folderService folder.Service,
 	logger log.Logger,
 	cfg setting.UnifiedAlertingSettings,
-	bus bus.Bus,
+	_ bus.Bus,
 	features ...any,
-) *DBstore {
-	return &DBstore{
+) *RuleStore {
+	toggles := featuremgmt.WithFeatures(features...)
+	return &RuleStore{
 		SQLStore:       sqlStore,
 		FolderService:  folderService,
 		Logger:         logger,
 		Cfg:            cfg,
-		Bus:            bus,
-		FeatureToggles: featuremgmt.WithFeatures(features...),
+		FeatureToggles: toggles,
+		Provenance: &provenance.ProvenanceStore{
+			FeatureToggles: toggles,
+			SQLStore:       sqlStore,
+			Logger:         logger,
+		},
 	}
 }
 
@@ -4178,7 +4191,7 @@ func (f *fakeBus) Publish(ctx context.Context, msg bus.Msg) error {
 	return nil
 }
 
-func createManyRules(tb testing.TB, store *DBstore, ruleGen *models.AlertRuleGenerator, numFolders, numRules, rulesPerGroup int) ([]*models.AlertRule, []string) {
+func createManyRules(tb testing.TB, store *RuleStore, ruleGen *models.AlertRuleGenerator, numFolders, numRules, rulesPerGroup int) ([]*models.AlertRule, []string) {
 	tb.Helper()
 
 	require.Greater(tb, numRules, 0, "numRules must be greater than 0")

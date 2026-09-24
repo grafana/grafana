@@ -4,22 +4,14 @@ import (
 	"context"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // TimeNow makes it possible to test usage of time
 var TimeNow = time.Now
-
-// AlertDefinitionMaxTitleLength is the maximum length of the alert definition title
-const AlertDefinitionMaxTitleLength = 190
 
 // AlertingStore is the database interface used by the Alertmanager service.
 type AlertingStore interface {
@@ -33,49 +25,28 @@ type AlertingStore interface {
 	GetHistoricalConfiguration(ctx context.Context, orgID int64, id int64) (*models.HistoricAlertConfiguration, error)
 }
 
-// DBstore stores the alert definitions and instances in the database.
+// DBstore stores the Alertmanager configuration, admin configuration, alert instances and images
+// in the database. Alert rules live in ngalert/store/rules and provisioning provenance lives in
+// ngalert/store/provenance; neither is re-exported here on purpose, so that every caller names the
+// store it actually depends on.
 type DBstore struct {
-	Cfg              setting.UnifiedAlertingSettings
-	FeatureToggles   featuremgmt.FeatureToggles
-	SQLStore         db.DB
-	Logger           log.Logger
-	FolderService    folder.Service
-	DashboardService dashboards.DashboardService
-	AccessControl    accesscontrol.AccessControl
-	Bus              bus.Bus
+	// FeatureToggles has no use inside this package, but is read by callers that only hold a
+	// DBstore.
+	// TODO(rule-store-split): inject featuremgmt.FeatureToggles into
+	// pkg/services/provisioning.ProvisioningServiceImpl directly and drop this field.
+	FeatureToggles featuremgmt.FeatureToggles
+	SQLStore       db.DB
+	Logger         log.Logger
 }
 
 func ProvideDBStore(
-	cfg *setting.Cfg,
 	featureToggles featuremgmt.FeatureToggles,
 	sqlstore db.DB,
-	folderService folder.Service,
-	dashboards dashboards.DashboardService,
-	ac accesscontrol.AccessControl,
-	bus bus.Bus,
 ) (*DBstore, error) {
 	store := DBstore{
-		Cfg:              cfg.UnifiedAlerting,
-		FeatureToggles:   featureToggles,
-		SQLStore:         sqlstore,
-		Logger:           log.New("ngalert.dbstore"),
-		FolderService:    folderService,
-		DashboardService: dashboards,
-		AccessControl:    ac,
-		Bus:              bus,
-	}
-	if err := folderService.RegisterService(store); err != nil {
-		return nil, err
+		FeatureToggles: featureToggles,
+		SQLStore:       sqlstore,
+		Logger:         log.New("ngalert.dbstore"),
 	}
 	return &store, nil
-}
-
-// RuleChangeEvent is published via DBSession.PublishAfterCommit, so subscribers observe it only
-// once the rule write has committed and can safely read the new state back.
-type RuleChangeEvent struct {
-	RuleKeys []models.AlertRuleKey
-	// FolderKeys is the deduplicated set of folders affected by this change. For an update that
-	// moves a rule between folders it holds both the old and the new folder, so subscribers can
-	// re-evaluate each.
-	FolderKeys []models.FolderKey
 }

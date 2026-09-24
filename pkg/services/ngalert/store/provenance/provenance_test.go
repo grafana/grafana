@@ -1,4 +1,4 @@
-package store_test
+package provenance_test
 
 import (
 	"context"
@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -42,7 +43,7 @@ func TestIntegrationProvisioningStore(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ng, dbStore := tests.SetupTestEnv(t, testAlertingIntervalSeconds)
+			ng, dbStore, _ := tests.SetupTestEnv(t, testAlertingIntervalSeconds)
 			if tc.featureEnabled {
 				dbStore.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertingProvenanceLockWrites)
 			}
@@ -251,7 +252,7 @@ func TestIntegrationProvisioningStoreManagerProperties(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ng, dbStore := tests.SetupTestEnv(t, testAlertingIntervalSeconds)
+			ng, dbStore, _ := tests.SetupTestEnv(t, testAlertingIntervalSeconds)
 			if tc.featureEnabled {
 				dbStore.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertingProvenanceLockWrites)
 			}
@@ -395,7 +396,7 @@ func TestIntegrationSetProvenance_DeadlockScenarios(t *testing.T) {
 		t.Skip("DeadlockScenarios targets MySQL gap-lock semantics; skipped on SQLite")
 	}
 
-	ng, dbStore := tests.SetupTestEnv(t, testAlertingIntervalSeconds)
+	ng, dbStore, _ := tests.SetupTestEnv(t, testAlertingIntervalSeconds)
 	dbStore.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertingProvenanceLockWrites)
 	store := createProvisioningStoreSut(ng, dbStore)
 	concurrency := 20
@@ -457,5 +458,5 @@ func TestIntegrationSetProvenance_DeadlockScenarios(t *testing.T) {
 }
 
 func createProvisioningStoreSut(_ *ngalert.AlertNG, db *store.DBstore) provisioning.ProvisioningStore {
-	return db
+	return provenance.ProvideProvenanceStore(db.FeatureToggles, db.SQLStore)
 }

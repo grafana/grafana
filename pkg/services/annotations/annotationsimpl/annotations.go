@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl/loki"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	alertingStore "github.com/grafana/grafana/pkg/services/ngalert/store"
+	alertingStore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -41,7 +41,7 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	tagService tag.Service,
 	tracer tracing.Tracer,
-	ruleStore *alertingStore.DBstore,
+	ruleStore *alertingStore.RuleStore,
 	dashSvc dashboards.DashboardService,
 	reg prometheus.Registerer,
 ) *RepositoryImpl {

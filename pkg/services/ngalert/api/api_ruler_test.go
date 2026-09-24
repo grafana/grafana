@@ -31,7 +31,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -965,7 +965,7 @@ func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
 			affectedGroups[g] = rules
 		}
 	}
-	ch := &store.GroupDelta{
+	ch := &rulestore.GroupDelta{
 		GroupKey:       group,
 		AffectedGroups: affectedGroups,
 	}
@@ -1012,11 +1012,11 @@ func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
 
 func TestValidateQueries(t *testing.T) {
 	gen := models.RuleGen
-	delta := store.GroupDelta{
+	delta := rulestore.GroupDelta{
 		New: []*models.AlertRule{
 			gen.With(gen.WithCondition("New")).GenerateRef(),
 		},
-		Update: []store.RuleDelta{
+		Update: []rulestore.RuleDelta{
 			{
 				Existing: gen.With(gen.WithCondition("New")).GenerateRef(),
 				New:      gen.With(gen.WithCondition("Update_New")).GenerateRef(),

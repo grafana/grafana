@@ -46,7 +46,7 @@ func (r *evaluationRunner) startEvaluation(ctx context.Context) {
 
 	// Warm the state manager cache from the store before starting evaluation
 	// to ensure we have the latest alert rule state in memory.
-	r.ng.stateManager.Warm(ctx, r.ng.store, r.ng.store, r.ng.StartupInstanceReader)
+	r.ng.stateManager.Warm(ctx, r.ng.store, r.ng.ruleStore, r.ng.StartupInstanceReader)
 	if r.ng.schedule == nil {
 		r.ng.schedule = schedule.NewScheduler(r.ng.schedCfg, r.ng.stateManager)
 	}
