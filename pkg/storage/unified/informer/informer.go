@@ -132,10 +132,6 @@ type Informer struct {
 	// HasSynced) until it succeeds. See AllowDegradedStart.
 	degradedStart bool
 
-	// syncOnSubscribe lets Run report HasSynced as soon as the live subscription
-	// opens, instead of holding it for the initial list too. See AllowSyncOnSubscribe.
-	syncOnSubscribe bool
-
 	// jitterFactor randomizes each resync interval by up to this fraction to avoid
 	// a thundering herd; defaults to defaultResyncJitterFactor.
 	jitterFactor float64
@@ -228,22 +224,6 @@ func (n *Informer) HasSynced() bool { return n.synced.Load() }
 // live updates. Call before Run.
 func (n *Informer) AllowDegradedStart() { n.degradedStart = true }
 
-// AllowSyncOnSubscribe lets Run report HasSynced — and release
-// cache.WaitForCacheSync — as soon as the live subscription opens, instead of
-// also holding it for the initial list. The initial list still runs, retrying
-// on the same schedule as without this option, but in the background: it
-// keeps seeding Store and delivering pre-existing objects once it succeeds,
-// it just no longer gates readiness on doing so. Suited to a controller whose
-// reconcile always re-fetches the object it acts on rather than reading this
-// informer's Store, and whose only feed is this informer: without this
-// option, a list that cannot complete inside whatever bound its ListFunc
-// enforces would hold HasSynced false indefinitely, so the live events the
-// subscription is already delivering would queue behind
-// cache.WaitForCacheSync forever instead of being processed as they arrive.
-// Do not opt in if a handler or reader depends on Store holding every
-// existing object by the time HasSynced is true. Call before Run.
-func (n *Informer) AllowSyncOnSubscribe() { n.syncOnSubscribe = true }
-
 // SetMetrics registers the observer for delivered events and reconnects; a nil
 // observer (the default) disables observation. Call before Run.
 func (n *Informer) SetMetrics(m Metrics) { n.metrics = m }
@@ -284,9 +264,7 @@ func (c syncedChecker) Done() <-chan struct{} { return c.informer.syncedCh }
 // performs the initial list (marking HasSynced), then serves live notifications
 // and a periodic re-list. Subscribing before listing means it never lists — nor
 // reports HasSynced — while it still cannot watch the resource, unless
-// AllowDegradedStart opted into re-list-only operation for that window, or
-// AllowSyncOnSubscribe opted into reporting HasSynced as soon as the
-// subscription opens, without waiting on the initial list too.
+// AllowDegradedStart opted into re-list-only operation for that window.
 // Register handlers before calling Run.
 func (n *Informer) Run(stopCh <-chan struct{}) {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -319,7 +297,6 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 	// retrySubscribe opens the subscription in the background. A nil newObject or
 	// a disabled subscriber means the informer is re-list-only, so there is no
 	// subscription to wait for.
-	subscribed := false
 	if n.newObject != nil && nats.Enabled(n.subscriber) {
 		// The gauge covers only what this informer can see: no subscription yet
 		// (or degraded mode) vs an open one. A mid-run connection outage is
@@ -339,7 +316,6 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 		switch {
 		case err == nil:
 			sub = s
-			subscribed = true
 			n.observeLiveSubscription(true)
 			n.log.Debug("opened nats informer", "subject", subject, "gvr", n.gvr.String())
 		case n.degradedStart:
@@ -357,7 +333,6 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 				s, err = n.subscriber.Subscribe(ctx, subject, n.onNotification(), opts...)
 				if err == nil {
 					sub = s
-					subscribed = true
 					n.observeLiveSubscription(true)
 					n.log.Debug("opened nats informer", "subject", subject, "gvr", n.gvr.String())
 					break
@@ -366,29 +341,24 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 		}
 	}
 
-	if n.syncOnSubscribe && subscribed {
-		// The live subscription is already delivering, so release HasSynced now
-		// instead of holding it for the initial list too — see
-		// AllowSyncOnSubscribe. The initial list still runs; it just no longer
-		// blocks Run, so a list that never completes cannot starve the live
-		// events already queued behind cache.WaitForCacheSync.
-		n.synced.Store(true)
-		close(n.syncedCh)
-		go func() { _ = n.relistUntilSynced(ctx, true) }()
-	} else {
-		// Seed the initial reconcile and report HasSynced, retrying until the
-		// first list succeeds. HasSynced releases WaitForCacheSync, so marking it
-		// synced after a failed list would start the controllers against an
-		// empty snapshot — existing objects would go unreconciled and quota
-		// counts read as zero until the next successful resync. A transient API
-		// error must therefore hold HasSynced false and retry, mirroring a
-		// reflector's initial ListAndWatch.
-		if err := n.relistUntilSynced(ctx, true); err != nil {
-			return
+	// Seed the initial reconcile and report HasSynced, retrying until the first
+	// list succeeds. HasSynced releases WaitForCacheSync, so marking it synced
+	// after a failed list would start the controllers against an empty snapshot —
+	// existing objects would go unreconciled and quota counts read as zero until
+	// the next successful resync. A transient API error must therefore hold
+	// HasSynced false and retry, mirroring a reflector's initial ListAndWatch.
+	for {
+		if err := n.relist(ctx, true); err == nil {
+			break
 		}
-		n.synced.Store(true)
-		close(n.syncedCh)
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(n.retryInterval):
+		}
 	}
+	n.synced.Store(true)
+	close(n.syncedCh)
 
 	// Jitter each interval independently so informers that started together do not
 	// re-list in lockstep and stampede the API server. A fresh timer per pass
@@ -410,21 +380,6 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 		case <-n.reconnect:
 			n.log.Debug("nats reconnected; re-listing", "gvr", n.gvr.String())
 			_ = n.relist(ctx, false)
-		}
-	}
-}
-
-// relistUntilSynced calls relist(ctx, initial), retrying every retryInterval
-// until it succeeds, and returns nil. It returns ctx.Err() if ctx ends first.
-func (n *Informer) relistUntilSynced(ctx context.Context, initial bool) error {
-	for {
-		if err := n.relist(ctx, initial); err == nil {
-			return nil
-		}
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-time.After(n.retryInterval):
 		}
 	}
 }
