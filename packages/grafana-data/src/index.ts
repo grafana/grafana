@@ -284,6 +284,7 @@ export { generateUUID, isUUID } from './utils/uuid';
 
 // Transformations
 export { standardTransformers } from './transformations/transformers';
+export { getTransformationDynamicRefId, applyStaticRefId } from './transformations/transformers/utils';
 export {
   fieldMatchers,
   frameMatchers,
@@ -310,6 +311,7 @@ export {
   type TransformerUIProps,
   TransformerCategory,
   standardTransformersRegistry,
+  transformerUsesDynamicRefId,
 } from './transformations/standardTransformersRegistry';
 export {
   type RegexpOrNamesMatcherOptions,

@@ -1,68 +1,58 @@
-import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { type SceneComponentProps, sceneGraph, SceneObjectBase } from '@grafana/scenes';
-import { ScrollContainer, useStyles2, Box } from '@grafana/ui';
+import { type SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 
-import { DashboardSidebar } from './DashboardSidebar';
-import { ElementEditPaneHeader } from './ElementEditPaneHeader';
-import { getEditableElementForSelection } from './shared';
+import { type ElementEditPaneRenderer } from './ElementEditPaneRenderer';
+
+type Renderer = typeof ElementEditPaneRenderer;
+
+let loadedRenderer: Renderer | undefined;
+
+function LazyElementEditPaneRenderer(props: SceneComponentProps<ElementEditPane>) {
+  const [Renderer, setRenderer] = useState(() => loadedRenderer);
+  const [loadError, setLoadError] = useState<{ error: unknown }>();
+
+  useEffect(() => {
+    if (loadedRenderer) {
+      setRenderer(() => loadedRenderer);
+      return;
+    }
+
+    let cancelled = false;
+
+    // Keep the options forms lazy without Suspense, which triggers a drag-and-drop
+    // class lifecycle failure when opening Options in recorded session replays.
+    import(/* webpackChunkName: "dashboard-edit-actions" */ './ElementEditPaneRenderer').then(
+      (module) => {
+        loadedRenderer = module.ElementEditPaneRenderer;
+        if (!cancelled) {
+          setRenderer(() => module.ElementEditPaneRenderer);
+        }
+      },
+      (error: unknown) => {
+        if (!cancelled) {
+          setLoadError({ error });
+        }
+      }
+    );
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (loadError) {
+    throw loadError.error;
+  }
+
+  return Renderer ? <Renderer {...props} /> : null;
+}
 
 export class ElementEditPane extends SceneObjectBase {
-  public static Component = ElementEditPaneRenderer;
+  public static Component = LazyElementEditPaneRenderer;
   protected static _renderBeforeActivation = true;
 
   public getId() {
     return 'element' as const;
   }
-}
-
-function ElementEditPaneRenderer({ model }: SceneComponentProps<ElementEditPane>) {
-  const styles = useStyles2(getStyles);
-
-  const sidebar = sceneGraph.getAncestor(model, DashboardSidebar);
-  const selected = sidebar.state.selectionContext.selected;
-
-  const element = useMemo(() => {
-    return getEditableElementForSelection(sidebar, selected);
-  }, [sidebar, selected]);
-
-  const categories = element?.useSidebarOptions ? element.useSidebarOptions(sidebar.state.isNewElement) : [];
-
-  if (!element) {
-    return null;
-  }
-
-  return (
-    <div className={styles.wrapper}>
-      <ElementEditPaneHeader element={element} sidebar={sidebar} />
-      <ScrollContainer showScrollIndicators={true}>
-        <div className={styles.categories}>
-          {element.renderTopButton && (
-            <Box display="flex" alignItems={'center'} paddingTop={2} paddingLeft={2} paddingRight={2}>
-              {element.renderTopButton()}
-            </Box>
-          )}
-          {categories.map((cat) => cat.renderElement())}
-        </div>
-      </ScrollContainer>
-    </div>
-  );
-}
-
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    wrapper: css({
-      display: 'flex',
-      flexDirection: 'column',
-      flex: '1 1 0',
-      height: '100%',
-    }),
-    categories: css({
-      display: 'flex',
-      flexDirection: 'column',
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
-    }),
-  };
 }

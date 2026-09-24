@@ -200,7 +200,10 @@ export class RowItem
   }
 
   public createMultiSelectedElement(items: SceneObject[]): RowItems {
-    return new RowItems(items.filter((item) => item instanceof RowItem));
+    return new RowItems(
+      items.filter((item) => item instanceof RowItem),
+      getDashboardSceneFor(this)
+    );
   }
 
   public onDuplicate() {

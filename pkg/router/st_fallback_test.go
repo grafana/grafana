@@ -517,23 +517,23 @@ func TestNewGComURLResolver(t *testing.T) {
 	}{
 		{
 			name: "base URL without trailing slash", wantPath: "/instances/123",
-			status: http.StatusOK, body: `{"id":123,"url":"https://stack.grafana.net"}`,
-			wantURL: "https://stack.grafana.net",
+			status: http.StatusOK, body: `{"id":123,"slug":"stack"}`,
+			wantURL: "http://stack-grafana-http.hosted-grafana.svc.cluster.local.:80",
 		},
 		{
 			name: "base URL with trailing slash", basePath: "/", wantPath: "/instances/123",
-			status: http.StatusOK, body: `{"id":123,"url":"https://stack.grafana.net"}`,
-			wantURL: "https://stack.grafana.net",
+			status: http.StatusOK, body: `{"id":123,"slug":"stack"}`,
+			wantURL: "http://stack-grafana-http.hosted-grafana.svc.cluster.local.:80",
 		},
 		{
 			name: "base path without trailing slash", basePath: "/api", wantPath: "/api/instances/123",
-			status: http.StatusOK, body: `{"id":123,"url":"https://stack.grafana.net"}`,
-			wantURL: "https://stack.grafana.net",
+			status: http.StatusOK, body: `{"id":123,"slug":"stack"}`,
+			wantURL: "http://stack-grafana-http.hosted-grafana.svc.cluster.local.:80",
 		},
 		{
 			name: "base path with trailing slash", basePath: "/api/", wantPath: "/api/instances/123",
-			status: http.StatusOK, body: `{"id":123,"url":"https://stack.grafana.net"}`,
-			wantURL: "https://stack.grafana.net",
+			status: http.StatusOK, body: `{"id":123,"slug":"stack"}`,
+			wantURL: "http://stack-grafana-http.hosted-grafana.svc.cluster.local.:80",
 		},
 		{
 			name: "not found", wantPath: "/instances/123",

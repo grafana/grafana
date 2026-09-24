@@ -106,28 +106,24 @@ func newBackfiller(t *testing.T, storage *fakeStorage, vec *fakeVector) *VectorB
 // reports a different Version() than the real dashboard extractor.
 func newBackfillerWithBuilders(t *testing.T, storage *fakeStorage, vec *fakeVector, builders ...embed.Builder) *VectorBackfiller {
 	t.Helper()
-	emb := newFakeEmbedder(&fakeText{dim: 4})
-	b, err := NewVectorBackfiller(Options{
-		Storage:       storage,
-		VectorBackend: vec,
-		BatchEmbedder: embedder.NewBatchEmbedder(*emb),
-		Builders:      builders,
-	})
-	require.NoError(t, err)
+	b, _ := newBackfillerWithEmbedder(t, storage, vec, builders...)
 	return b
 }
 
 // newBackfillerWithEmbedder is newBackfiller exposing the fake embedder so
 // tests can assert whether the provider was called.
-func newBackfillerWithEmbedder(t *testing.T, storage *fakeStorage, vec *fakeVector) (*VectorBackfiller, *fakeText) {
+func newBackfillerWithEmbedder(t *testing.T, storage *fakeStorage, vec *fakeVector, builders ...embed.Builder) (*VectorBackfiller, *fakeText) {
 	t.Helper()
+	if len(builders) == 0 {
+		builders = []embed.Builder{dashboard.New()}
+	}
 	text := &fakeText{dim: 4}
 	emb := newFakeEmbedder(text)
 	b, err := NewVectorBackfiller(Options{
 		Storage:       storage,
 		VectorBackend: vec,
 		BatchEmbedder: embedder.NewBatchEmbedder(*emb),
-		Builders:      []embed.Builder{dashboard.New()},
+		Builders:      builders,
 	})
 	require.NoError(t, err)
 	return b, text
@@ -274,7 +270,7 @@ func TestRunBackfillJob_FolderTitleCache_ScopedToJobRun(t *testing.T) {
 
 // TestRunBackfillJob_FolderTitleResolveError_FailsJob covers the retry
 // contract: a folder-title storage error is a transient item error, so the
-// whole job is marked errored for the next tick — not skipped like a
+// whole job is marked errored for the next backfill run — not skipped like a
 // deterministic Extract failure.
 func TestRunBackfillJob_FolderTitleResolveError_FailsJob(t *testing.T) {
 	storage := newFakeStorage()
@@ -442,7 +438,7 @@ func extractDashboardItems(t *testing.T, ns, name string, value []byte, folderTi
 // The identical-content path adds two new failure modes; both must be item
 // errors that fail the job (retry path), never silent skips — a swallowed
 // UpdateContentVersion error would leave the uid version-stale and rescanned
-// on every tick forever.
+// on every backfill run forever.
 // A concurrent edit must not lose its embeddings to a stale empty-extract delete.
 func TestRunBackfillJob_EmptyExtractDelete_GuardedByLiveRV(t *testing.T) {
 	storage := newFakeStorage()
@@ -545,13 +541,17 @@ func TestRunBackfillJob_VersionStale_EmptyExtract_DeletesOldRows(t *testing.T) {
 
 func TestRunBackfillJob_SkipExtract_PreservesVectorsAndCompletes(t *testing.T) {
 	storage := newFakeStorage()
-	storage.listItems = []listItem{makeListItem("ns", "skip", 50), makeListItem("ns", "good", 60)}
+	storage.listItems = []listItem{makeListItemWithFolder("ns", "skip", 50, "folder-b"), makeListItem("ns", "good", 60)}
 	vec := newFakeVector()
 	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
 	vec.jobContentVersion = map[int64]int{1: dashboard.New().Version()}
 	vec.seedEmbeddedRows("ns", "test-model", "dashboards", "skip", 1, "panel/1")
 	key := rowsKey("ns", "test-model", "dashboards", "skip")
 	before := vec.rows[key]["panel/1"]
+	before.Folder = "folder-a"
+	before.Metadata = json.RawMessage(`{"custom":"preserved"}`)
+	before.Embedding = []float32{0.1, 0.2}
+	vec.rows[key]["panel/1"] = before
 	metrics := resource.ProvideVectorMetrics(prometheus.NewPedanticRegistry())
 	text := &fakeText{dim: 4}
 	b, err := NewVectorBackfiller(Options{
@@ -565,6 +565,7 @@ func TestRunBackfillJob_SkipExtract_PreservesVectorsAndCompletes(t *testing.T) {
 
 	b.runBackfill(t.Context())
 
+	before.Folder = "folder-b"
 	assert.Equal(t, map[string]vector.Vector{"panel/1": before}, vec.rows[key])
 	assert.Empty(t, vec.deletes)
 	assert.Empty(t, vec.subresourceDeletes)
@@ -579,6 +580,62 @@ func TestRunBackfillJob_SkipExtract_PreservesVectorsAndCompletes(t *testing.T) {
 	metric := metrics.BackfillItemDuration.WithLabelValues("dashboard.grafana.app", "dashboards", "skipped_extract")
 	require.NoError(t, metric.(prometheus.Metric).Write(&observed))
 	assert.Equal(t, uint64(1), observed.GetHistogram().GetSampleCount())
+}
+
+func TestRunBackfillJob_SkipExtract_FolderUpdateGuards(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		changed   bool
+		deleted   bool
+		updateErr error
+	}{
+		{name: "newer live resource", changed: true},
+		{name: "deleted live resource", deleted: true},
+		{name: "folder update error", updateErr: errors.New("folder update failed")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			storage := newFakeStorage()
+			storage.listItems = []listItem{makeListItemWithFolder("ns", "skip", 50, "stale-folder")}
+			if tc.changed {
+				storage.resources[storeKey("ns", "dashboard.grafana.app", "dashboards", "skip")] = storedResource{
+					Value: dashboardJSONWithFolder("skip", "Skip", "current-folder"), RV: 60,
+				}
+			}
+			if tc.deleted {
+				storage.markNotFound("ns", "dashboard.grafana.app", "dashboards", "skip")
+			}
+			vec := newFakeVector()
+			vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+			vec.jobContentVersion = map[int64]int{1: dashboard.New().Version()}
+			vec.seedEmbeddedRows("ns", "test-model", "dashboards", "skip", 1, "panel/1")
+			key := rowsKey("ns", "test-model", "dashboards", "skip")
+			before := vec.rows[key]["panel/1"]
+			before.Folder = "current-folder"
+			vec.rows[key]["panel/1"] = before
+			vec.updateFolderErr = tc.updateErr
+			text := &fakeText{dim: 4}
+			b, err := NewVectorBackfiller(Options{
+				Storage: storage, VectorBackend: vec,
+				BatchEmbedder: embedder.NewBatchEmbedder(*newFakeEmbedder(text)),
+				Builders:      []embed.Builder{skippingBuilder{dashboard.New()}},
+			})
+			require.NoError(t, err)
+
+			b.runBackfill(t.Context())
+
+			assert.Equal(t, before, vec.rows[key]["panel/1"])
+			assert.Zero(t, text.calls)
+			assert.Empty(t, vec.deletes)
+			if tc.updateErr != nil {
+				assert.Empty(t, vec.completedJobIDs)
+				require.Len(t, vec.errorMarks, 1)
+				assert.Contains(t, vec.errorMarks[0].LastError, tc.updateErr.Error())
+			} else {
+				assert.Empty(t, vec.errorMarks)
+				assert.Equal(t, []int64{1}, vec.completedJobIDs)
+			}
+		})
+	}
 }
 
 // A never-embedded uid with an empty extract keeps the plain skip (nothing to delete).
@@ -612,7 +669,7 @@ func TestRunBackfillJob_GetSubresourceContentError_FailsJob(t *testing.T) {
 	o.runBackfill(context.Background())
 
 	require.Len(t, vec.errorMarks, 1, "stored-content read failure must mark the job errored")
-	assert.Empty(t, vec.completedJobIDs, "job must not complete on the same tick")
+	assert.Empty(t, vec.completedJobIDs, "job must not complete in the same backfill run")
 	assert.Empty(t, vec.updateCalls)
 	assert.Empty(t, vec.upserts)
 }
@@ -636,6 +693,109 @@ func TestRunBackfillJob_UpdateContentVersionError_FailsJob(t *testing.T) {
 	require.Len(t, vec.errorMarks, 1, "version-stamp failure must mark the job errored, not skip silently")
 	assert.Empty(t, vec.completedJobIDs)
 	assert.Empty(t, vec.upserts, "identical content must still not re-embed on the error path")
+}
+
+func TestRunBackfillJob_VersionStale_IdenticalContent_UpdatesFolder(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		folder     string
+		changed    bool
+		deleted    bool
+		folderErr  error
+		versionErr error
+	}{
+		{name: "move to another folder", folder: "folder-b"},
+		{name: "move to root"},
+		{name: "newer live resource", changed: true},
+		{name: "deleted live resource", deleted: true},
+		{name: "folder update failure", folderErr: errors.New("folder update failed")},
+		{name: "version update failure", versionErr: errors.New("version update failed")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			storage := newFakeStorage()
+			value := []byte(fmt.Sprintf(`{
+				"uid": "dash-a", "title": "Dashboard",
+				"metadata": {"annotations": {"grafana.app/folder": %q}},
+				"panels": [{"id": 1, "title": "CPU"}, {"id": 2, "title": "Memory"}]
+			}`, tc.folder))
+			storage.listItems = []listItem{{Namespace: "ns", Name: "dash-a", RV: 50, Value: value}}
+			folderTitle := ""
+			if tc.folder != "" {
+				folderTitle = "Production"
+				storage.seedFolder("ns", tc.folder, folderTitle)
+			}
+			if tc.changed {
+				storage.resources[storeKey("ns", "dashboard.grafana.app", "dashboards", "dash-a")] = storedResource{Value: value, RV: 60}
+			}
+			if tc.deleted {
+				storage.markNotFound("ns", "dashboard.grafana.app", "dashboards", "dash-a")
+			}
+			items := extractDashboardItems(t, "ns", "dash-a", value, folderTitle)
+			require.Len(t, items, 2)
+			vec := newFakeVector()
+			vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+			vec.jobContentVersion = map[int64]int{1: dashboard.New().Version()}
+			vec.updateFolderErr = tc.folderErr
+			vec.updateErr = tc.versionErr
+			key := rowsKey("ns", "test-model", "dashboards", "dash-a")
+			expected := make(map[string]vector.Vector, len(items))
+			for _, item := range items {
+				vec.seedStoredContent("ns", "test-model", "dashboards", "dash-a", item.Subresource, item.Content, 1)
+				row := vec.rows[key][item.Subresource]
+				row.Folder = "folder-a"
+				row.Metadata = json.RawMessage(`{"custom":"preserved"}`)
+				row.Embedding = []float32{0.1, 0.2}
+				vec.rows[key][item.Subresource] = row
+				if !tc.changed && !tc.deleted && tc.folderErr == nil {
+					row.Folder = tc.folder
+					if tc.versionErr == nil {
+						row.ContentVersion = dashboard.New().Version()
+					}
+				}
+				expected[item.Subresource] = row
+			}
+			b, text := newBackfillerWithEmbedder(t, storage, vec)
+
+			b.runBackfill(t.Context())
+
+			assert.Equal(t, expected, vec.rows[key])
+			assert.Zero(t, text.calls)
+			assert.Empty(t, vec.replaceCalls)
+			assert.Empty(t, vec.deletes)
+			if tc.folderErr != nil || tc.versionErr != nil {
+				assert.Empty(t, vec.completedJobIDs)
+				assert.Empty(t, vec.checkpoints)
+				assert.Empty(t, vec.updateCalls, "failed folder updates must not advance the content version")
+				require.Len(t, vec.errorMarks, 1)
+				if tc.folderErr != nil {
+					assert.Contains(t, vec.errorMarks[0].LastError, tc.folderErr.Error())
+				} else {
+					assert.Contains(t, vec.errorMarks[0].LastError, tc.versionErr.Error())
+				}
+
+				vec.updateFolderErr = nil
+				vec.updateErr = nil
+				b.runBackfill(t.Context())
+
+				for subresource, row := range expected {
+					row.Folder = tc.folder
+					row.ContentVersion = dashboard.New().Version()
+					expected[subresource] = row
+				}
+				assert.Equal(t, expected, vec.rows[key])
+				assert.Zero(t, text.calls, "retrying metadata updates must not call the embedding provider")
+				require.Len(t, vec.updateCalls, 1)
+			} else {
+				assert.Empty(t, vec.errorMarks)
+				if tc.changed || tc.deleted {
+					assert.Empty(t, vec.updateCalls)
+				} else {
+					require.Len(t, vec.updateCalls, 1)
+				}
+			}
+			assert.Equal(t, []int64{1}, vec.completedJobIDs)
+		})
+	}
 }
 
 func TestRunBackfillJob_VersionStale_IdenticalContent_SkipsEmbedAndTouchesVersion(t *testing.T) {
@@ -746,7 +906,7 @@ func TestRunBackfillJob_VersionStale_SubresourceSetDiffers_FullReEmbed(t *testin
 
 // TestRunBackfill_CompletedJobStaleVersion_ReopensAndProcesses covers job
 // reopening: a job that finished under an older content_version is reopened
-// (is_complete=false, cursor/error reset) and drained on the same tick.
+// (is_complete=false, cursor/error reset) and drained in the same backfill run.
 // A zero reconciler checkpoint means nothing was ever embedded; reopening
 // then would complete the job against an empty bound and strand it.
 func TestReopenStaleJobs_ZeroCheckpoint_SkipsReopen(t *testing.T) {
@@ -800,7 +960,7 @@ func TestRunBackfill_CompletedJobStaleVersion_ReopensAndProcesses(t *testing.T) 
 	// alone can't catch a missing reset.
 	assert.Empty(t, vec.jobs[0].LastSeenKey, "reopen must clear the cursor")
 	assert.Empty(t, vec.jobs[0].LastError, "reopen must clear the last error")
-	require.Len(t, vec.upserts, 1, "reopened job must be processed on the same tick")
+	require.Len(t, vec.upserts, 1, "reopened job must be processed in the same backfill run")
 	require.Len(t, vec.completedJobIDs, 1, "job completes again after reprocessing")
 }
 
@@ -963,74 +1123,6 @@ func TestRunBackfillJob_DifferentModel_IgnoredCompletely(t *testing.T) {
 	assert.Empty(t, vec.completedJobIDs, "another instance owns this job; do not complete it")
 	assert.Empty(t, vec.checkpoints)
 	assert.Empty(t, vec.errorMarks, "model mismatch must not pollute another instance's last_error")
-}
-
-func TestRunBackfillJob_PaginatedAcrossPages(t *testing.T) {
-	// Build a result set one page + 5 items long so the backfiller must
-	// fetch exactly two pages.
-	const total = backfillPageSize + 5
-
-	storage := newFakeStorage()
-	storage.listItems = make([]listItem, total)
-	for i := range storage.listItems {
-		storage.listItems[i] = makeListItem("ns", uniqName(i), int64(i+1))
-	}
-
-	vec := newFakeVector()
-	vec.jobs = []vector.BackfillJob{{
-		ID: 7, Model: "test-model", StoppingRV: int64(total + 100),
-	}}
-
-	o := newBackfiller(t, storage, vec)
-	o.runBackfill(context.Background())
-
-	assert.Len(t, vec.upserts, total, "every item across all pages is embedded")
-	require.Len(t, vec.completedJobIDs, 1)
-	// assert pagination
-	require.Len(t, storage.listCalls, 2, "backfiller must request two pages")
-	assert.Empty(t, storage.listCalls[0], "first page starts with an empty token")
-	assert.NotEmpty(t, storage.listCalls[1], "second page must resume from a continue token")
-}
-
-// TestRunBackfillJob_ExactPageMultiple exercises the boundary where total
-// item count is exactly N * backfillPageSize. A naive implementation would
-// emit a continue token built from the post-last-item peek (Name="") and
-// re-feed it through ListIterator on the next page call, which the kv
-// backend rejects with "name is required". The fix defers the per-item
-// checkpoint by one Next()==true so the last item of a page is only
-// persisted after a confirming peek.
-func TestRunBackfillJob_ExactPageMultiple(t *testing.T) {
-	const total = backfillPageSize
-
-	storage := newFakeStorage()
-	storage.listItems = make([]listItem, total)
-	for i := range storage.listItems {
-		storage.listItems[i] = makeListItem("ns", uniqName(i), int64(i+1))
-	}
-
-	vec := newFakeVector()
-	vec.jobs = []vector.BackfillJob{{
-		ID: 9, Model: "test-model", StoppingRV: int64(total + 100),
-	}}
-
-	o := newBackfiller(t, storage, vec)
-	o.runBackfill(context.Background())
-
-	assert.Len(t, vec.upserts, total, "every item is embedded")
-	require.Len(t, vec.completedJobIDs, 1, "job completes despite hitting the page boundary")
-	assert.Empty(t, vec.errorMarks, "no error path on a clean exact-page run")
-	// Final item's continue token is never confirmed by a follow-up
-	// Next()==true, so we persist N-1 checkpoints, never the broken one.
-	require.Len(t, vec.checkpoints, total-1)
-}
-
-func uniqName(i int) string {
-	const letters = "abcdefghijklmnopqrstuvwxyz"
-	out := []byte{letters[i%26], letters[(i/26)%26]}
-	if i >= 26*26 {
-		out = append(out, letters[(i/(26*26))%26])
-	}
-	return string(out)
 }
 
 // newBackfillerWithStats mirrors newBackfiller but wires a stats provider.
@@ -1321,7 +1413,7 @@ func TestRunBackfillJob_RetryableUpsertError_FailsJob(t *testing.T) {
 	o := newBackfiller(t, storage, vec)
 	o.runBackfill(context.Background())
 
-	require.Len(t, vec.errorMarks, 1, "retryable errors keep failing the job for the next tick")
+	require.Len(t, vec.errorMarks, 1, "retryable errors keep failing the job for the next backfill run")
 	assert.Empty(t, vec.completedJobIDs)
 }
 

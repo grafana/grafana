@@ -15,6 +15,8 @@ import {
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 import { groupSelectionInto } from '../actions/layout/groupSelectionInto';
+import { endBatch, startBatch } from '../actions/utils/batch';
+import { edit } from '../actions/utils/edit';
 import { changeVariableName } from '../actions/variable/changeVariableName';
 import { changeVariableType } from '../actions/variable/changeVariableType';
 import { removeVariable } from '../actions/variable/removeVariable';
@@ -56,6 +58,78 @@ setPluginImportUtils({
 });
 
 describe('DashboardSidebar', () => {
+  describe('Pending pane requests', () => {
+    let dashboard: DashboardScene;
+    let sidebar: DashboardSidebarLike;
+    let deactivate: () => void;
+
+    beforeEach(() => {
+      dashboard = new DashboardScene({ isEditing: true });
+      sidebar = dashboard.state.sidebar;
+      deactivate = sidebar.activate();
+    });
+
+    afterEach(() => deactivate());
+
+    it('aborts the previous request when a new request starts', () => {
+      const older = sidebar.beginPaneRequest();
+      expect(older.aborted).toBe(false);
+      const newer = sidebar.beginPaneRequest();
+      expect(older.aborted).toBe(true);
+      expect(newer.aborted).toBe(false);
+    });
+
+    it.each(['select', 'open', 'close', 'clear', 'back', 'disable', 'leave edit mode', 'view panel'])(
+      'invalidates a pending request on %s',
+      (navigation) => {
+        const request = sidebar.beginPaneRequest();
+        switch (navigation) {
+          case 'select':
+            sidebar.selectObject(dashboard);
+            break;
+          case 'open':
+            sidebar.openPane(new DashboardOutline({}));
+            break;
+          case 'close':
+            sidebar.closePane();
+            break;
+          case 'clear':
+            sidebar.clearSelection();
+            break;
+          case 'back':
+            sidebar.goBackToPrevious();
+            break;
+          case 'disable':
+            sidebar.disableSelection();
+            break;
+          case 'leave edit mode':
+            dashboard.setState({ isEditing: false });
+            break;
+          case 'view panel':
+            dashboard.setState({ viewPanel: 'panel-1' });
+            break;
+        }
+        expect(request.aborted).toBe(true);
+      }
+    );
+
+    it('does not revive a request after deactivation and reactivation', () => {
+      const request = sidebar.beginPaneRequest();
+      deactivate();
+      deactivate = sidebar.activate();
+      expect(sidebar.isActive).toBe(true);
+      expect(request.aborted).toBe(true);
+    });
+
+    it('preserves requests across unrelated state changes', () => {
+      const request = sidebar.beginPaneRequest();
+      sidebar.setState({ isDocked: true });
+      dashboard.setState({ title: 'Renamed dashboard' });
+
+      expect(request.aborted).toBe(false);
+    });
+  });
+
   describe('Selection', () => {
     it('Can select dashboard', () => {
       const scene = buildTestScene();
@@ -264,6 +338,95 @@ describe('DashboardSidebar', () => {
 
     expect(cloned.state.redoStack).toHaveLength(0);
     expect(cloned.state.undoStack).toHaveLength(0);
+  });
+
+  describe('batching', () => {
+    function fakeAction(calls: string[], name: string) {
+      return {
+        perform: jest.fn(() => calls.push(`perform-${name}`)),
+        undo: jest.fn(() => calls.push(`undo-${name}`)),
+      };
+    }
+
+    it('aggregates edit actions performed between startBatch/endBatch into a single undo/redo entry', () => {
+      const scene = buildTestScene();
+      const sidebar = scene.state.sidebar;
+      const calls: string[] = [];
+      const action1 = fakeAction(calls, '1');
+      const action2 = fakeAction(calls, '2');
+
+      startBatch(scene, 'Remove things (2)');
+      edit({ source: scene, perform: action1.perform, undo: action1.undo });
+      edit({ source: scene, perform: action2.perform, undo: action2.undo });
+      endBatch(scene);
+
+      // Both actions are performed immediately as they're collected, in the order they came in.
+      expect(calls).toEqual(['perform-1', 'perform-2']);
+      // But they're aggregated into a single undo entry, not two.
+      expect(sidebar.state.undoStack).toHaveLength(1);
+      expect(sidebar.state.undoStack[0].source).toBe(scene);
+      expect(sidebar.state.undoStack[0].description).toBe('Remove things (2)');
+
+      calls.length = 0;
+      sidebar.undoAction();
+
+      // A single undo reverts both actions, last-performed first.
+      expect(calls).toEqual(['undo-2', 'undo-1']);
+      expect(sidebar.state.undoStack).toHaveLength(0);
+      expect(sidebar.state.redoStack).toHaveLength(1);
+
+      calls.length = 0;
+      sidebar.redoAction();
+
+      // A single redo replays both actions again, in their original order.
+      expect(calls).toEqual(['perform-1', 'perform-2']);
+      expect(sidebar.state.undoStack).toHaveLength(1);
+      expect(sidebar.state.redoStack).toHaveLength(0);
+    });
+
+    it('clears the redo stack when a batch starts, same as a regular action', () => {
+      const scene = buildTestScene();
+      const sidebar = scene.state.sidebar;
+
+      edit({ source: scene, perform: jest.fn(), undo: jest.fn() });
+      sidebar.undoAction();
+      expect(sidebar.state.redoStack).toHaveLength(1);
+
+      startBatch(scene, 'A batch');
+      expect(sidebar.state.redoStack).toHaveLength(0);
+
+      endBatch(scene);
+    });
+
+    it('does not push an undo entry for a batch with no actions', () => {
+      const scene = buildTestScene();
+      const sidebar = scene.state.sidebar;
+
+      startBatch(scene, 'Empty batch');
+      endBatch(scene);
+
+      expect(sidebar.state.undoStack).toHaveLength(0);
+    });
+
+    it('routes a multi-row delete through RowItems and batches it into a single undo entry', () => {
+      const { sidebar, row1, row2 } = setupWithTwoRows();
+
+      row1.createMultiSelectedElement([row1, row2]).onDelete();
+
+      // Two row deletions, aggregated into one undo entry, not two.
+      expect(sidebar.state.undoStack).toHaveLength(1);
+      expect(sidebar.state.undoStack[0].description).toBe('Remove rows (2)');
+    });
+
+    it('routes a multi-tab delete through TabItems and batches it into a single undo entry', () => {
+      const { sidebar, tab1, tab2 } = setupWithTwoTabs();
+
+      tab1.createMultiSelectedElement([tab1, tab2]).onDelete();
+
+      // Two tab deletions, aggregated into one undo entry, not two.
+      expect(sidebar.state.undoStack).toHaveLength(1);
+      expect(sidebar.state.undoStack[0].description).toBe('Remove tabs (2)');
+    });
   });
 
   it('clone should preserve the outline collapsed state', () => {

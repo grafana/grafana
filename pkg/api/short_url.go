@@ -16,14 +16,12 @@ import (
 
 	"github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1beta1"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/registry/apps/shorturl"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errhttp"
@@ -37,43 +35,6 @@ func (hs *HTTPServer) registerShortURLAPI(apiRoute routing.RouteRegister) {
 	apiRoute.Post("/api/short-urls", reqSignedIn, handler.createKubernetesShortURLsHandler)
 	apiRoute.Get("/api/short-urls/:uid", reqSignedIn, handler.getKubernetesShortURLsHandler)
 	apiRoute.Get("/goto/:uid", reqSignedIn, handler.getKubernetesRedirectFromShortURL, hs.Index)
-}
-
-// createShortURL handles requests to create short URLs.
-func (hs *HTTPServer) createShortURL(c *contextmodel.ReqContext) response.Response {
-	cmd := &dtos.CreateShortURLCmd{}
-	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Err(shorturls.ErrShortURLBadRequest.Errorf("bad request data: %w", err))
-	}
-	hs.log.Debug("Received request to create short URL", "path", cmd.Path)
-	shortURL, err := hs.ShortURLService.CreateShortURL(c.Req.Context(), c.SignedInUser, cmd)
-	if err != nil {
-		return response.Err(err)
-	}
-
-	shortURLDTO := hs.ShortURLService.ConvertShortURLToDTO(shortURL, hs.Cfg.AppURL)
-	c.Logger.Debug("Created short URL", "url", shortURLDTO.URL)
-
-	return response.JSON(http.StatusOK, shortURLDTO)
-}
-
-// getShortURL handles requests to get short URLs.
-func (hs *HTTPServer) getShortURL(c *contextmodel.ReqContext) response.Response {
-	shortURLUID := web.Params(c.Req)[":uid"]
-
-	if !util.IsValidShortUID(shortURLUID) {
-		return response.Err(shorturls.ErrShortURLBadRequest.Errorf("invalid uid"))
-	}
-
-	shortURL, err := hs.ShortURLService.GetShortURLByUID(c.Req.Context(), c.SignedInUser, shortURLUID)
-	if err != nil {
-		if shorturls.ErrShortURLNotFound.Is(err) {
-			return response.Err(shorturls.ErrShortURLNotFound.Errorf("shorturl not found: %w", err))
-		}
-		return response.Err(shorturls.ErrShortURLInternal.Errorf("failed to get short URL: %w", err))
-	}
-
-	return response.JSON(http.StatusOK, shortURL)
 }
 
 type shortURLK8sHandler struct {
