@@ -92,18 +92,12 @@ func (p *PublisherService) starting(ctx context.Context) error {
 }
 
 func (p *PublisherService) running(ctx context.Context) error {
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-ticker.C:
-			flushCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
-			p.flush(flushCtx)
-			cancel()
-		}
-	}
+	// Publish is fire-and-forget: nats.go's flusher pushes each message to the
+	// server, PingInterval detects a dead link, and the reconnect buffer replays
+	// automatically after a reconnect. Nothing for the loop to do but stay alive
+	// until shutdown.
+	<-ctx.Done()
+	return nil
 }
 
 func (p *PublisherService) stopping(_ error) error {
@@ -141,19 +135,4 @@ func (p *PublisherService) Publish(ctx context.Context, subject string, data []b
 	p.metrics.messagesAccepted.Inc()
 	p.log.Debug("accepted message for publish", "subject", subject, "bytes", len(data), "connected", nc.IsConnected())
 	return nil
-}
-
-// flush forces a server round-trip so buffered publishes are pushed out promptly
-// and a broken connection surfaces in the logs. Delivery is not acknowledged by
-// subscribers; this only confirms the server accepted the buffered data.
-func (p *PublisherService) flush(ctx context.Context) {
-	p.mu.Lock()
-	nc := p.conn
-	p.mu.Unlock()
-	if nc == nil || !nc.IsConnected() {
-		return
-	}
-	if err := nc.FlushWithContext(ctx); err != nil {
-		p.log.Warn("nats publisher flush failed", "err", err)
-	}
 }

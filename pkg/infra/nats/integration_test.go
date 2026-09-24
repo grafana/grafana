@@ -121,15 +121,12 @@ func testPublisherBufferOverflowRecovers(t *testing.T) {
 	require.NoError(t, err)
 	// Register recovery interest before the publisher reconnects and replays its buffer.
 	waitSubscriberReady(t, ctx, recovery)
-	// Once reconnected, force flushes so the replayed buffer reaches the server.
+	// nats.go replays the reconnect buffer automatically once it reconnects; just
+	// wait for that to happen.
 	require.Eventually(t, func() bool {
-		flushCtx, flushCancel := context.WithTimeout(ctx, time.Second)
-		pub.flush(flushCtx)
-		flushCancel()
 		pub.mu.Lock()
-		connected := pub.conn != nil && pub.conn.IsConnected()
-		pub.mu.Unlock()
-		return connected
+		defer pub.mu.Unlock()
+		return pub.conn != nil && pub.conn.IsConnected()
 	}, 10*time.Second, 50*time.Millisecond)
 
 	// Match only against the accepted set; never assert on the multi-KB payloads directly

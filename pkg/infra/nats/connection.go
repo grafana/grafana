@@ -2,7 +2,6 @@ package nats
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -43,9 +42,10 @@ type connection struct {
 	// reconnect handler can record how long the connection was down. Accessed only
 	// from the NATS callback goroutine, but kept atomic to stay race-free.
 	disconnectedAt atomic.Int64
-	// Each dial gets its own flag so replacement connections cannot inherit
-	// permission to buffer from a previously authenticated connection.
-	everConnected *atomic.Bool
+	// everConnected records whether the current connection has connected at least
+	// once. connect() resets it per dial so a replacement connection cannot
+	// inherit permission to buffer from a previously authenticated connection.
+	everConnected atomic.Bool
 
 	mu       sync.Mutex
 	conn     *natsclient.Conn
@@ -137,12 +137,13 @@ func (c *connection) connect(ctx context.Context) (*natsclient.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
-	everConnected := &atomic.Bool{}
-	c.everConnected = everConnected
+	// Reset before dialing: this connection must connect at least once before
+	// Publish is allowed to buffer into it.
+	c.everConnected.Store(false)
 	options = append(options, func(opts *natsclient.Options) error {
 		onConnect := opts.ConnectedCB
 		opts.ConnectedCB = func(nc *natsclient.Conn) {
-			everConnected.Store(true)
+			c.everConnected.Store(true)
 			if onConnect != nil {
 				onConnect(nc)
 			}
@@ -326,12 +327,10 @@ func (c *connection) canPublish(nc *natsclient.Conn) bool {
 }
 
 // close drains the connection and waits for the drain to complete so it does not
-// outlive the caller. Terminal: once closed, get() refuses to reopen.
+// outlive the caller. Terminal: once closed, get() refuses to reopen. The
+// connection is marked closed before draining, so a concurrent get()/Publish
+// observes ErrClosed immediately rather than blocking for the drain.
 func (c *connection) close() {
-	c.closeWithResult()
-}
-
-func (c *connection) closeWithResult() bool {
 	// Drain outside the lock: waiting for it can take up to drainTimeout, and
 	// holding c.mu that long would stall a concurrent Health().
 	c.mu.Lock()
@@ -340,28 +339,23 @@ func (c *connection) closeWithResult() bool {
 	c.closed = true
 	c.mu.Unlock()
 
-	if nc == nil {
-		return true
+	if nc == nil || nc.IsClosed() {
+		return
 	}
-	if nc.IsClosed() {
-		return false
-	}
-	initialErr := nc.LastError()
 
-	// A reconnecting client cannot flush its buffer: Drain would close the
-	// connection and silently discard the reconnect queue. Report an unclean
-	// close so the caller accounts for the dropped messages rather than assuming
-	// a successful server flush.
+	// A reconnecting client has nothing to flush: Drain would return
+	// ErrConnectionReconnecting and discard the reconnect queue anyway, so close
+	// directly and skip the misleading drain-failure warning below.
 	if !nc.IsConnected() {
 		nc.Close()
-		return false
+		return
 	}
 
 	// Drain closes the connection on a background goroutine; wait for it below.
 	if err := nc.Drain(); err != nil {
 		c.log.Warn("failed to drain nats connection", "role", c.role, "err", err)
 		nc.Close()
-		return false
+		return
 	}
 
 	// A broker that has gone away never closes, so force it at the deadline.
@@ -370,16 +364,10 @@ func (c *connection) closeWithResult() bool {
 		if time.Now().After(deadline) {
 			c.log.Warn("nats connection did not close within drain timeout; forcing close", "role", c.role)
 			nc.Close()
-			return false
+			return
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
-	// Drain reports completion asynchronously. NATS records an internal drain
-	// timeout as the connection closes, so IsClosed alone is not success.
-	if err := nc.LastError(); err != nil && !errors.Is(err, initialErr) {
-		return false
-	}
-	return true
 }
 
 func redactURL(raw string) string {
