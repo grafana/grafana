@@ -46,7 +46,6 @@ import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { type SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { scrollToRow } from 'app/features/dashboard-scene/scene/layout-rows/scrollToRow';
@@ -70,7 +69,6 @@ import {
 import { edit } from '../actions/utils/edit';
 import { createMutationClient } from '../mutation-api/clientBridge';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
-import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { type DashboardChangeInfo } from '../saving/shared';
 import {
   type DashboardSceneSerializerLike,
@@ -87,7 +85,6 @@ import {
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { normalizeTransformation } from '../serialization/transformationCompat';
-import { JsonModelEditView } from '../settings/JsonModelEditView';
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
 import { DashboardSidebar } from '../sidebar/DashboardSidebar';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
@@ -193,6 +190,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   private _changeTracker: DashboardSceneChangeTracker;
 
   private _sidebarActivation?: CancelActivationHandler;
+  private _modalRequestId = 0;
 
   /**
    * Remember scroll position when going into panel edit
@@ -297,6 +295,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const destroyMutationClient = createMutationClient(this, 'dashboard');
 
     return () => {
+      this._modalRequestId++;
       // A plan preview that's still showing when the scene deactivates (navigated away, tab
       // closed) never got a Build or Dismiss decision — report that honestly as 'closed' rather
       // than leaving the caller holding a stale reference to a preview nothing is showing.
@@ -454,6 +453,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public onEnterEditMode = (source: 'user' | 'assistant' = 'user') => {
     const wasEditing = this.state.isEditing;
+
+    if (!wasEditing) {
+      this.state.sidebar.setState({ undoStack: [], redoStack: [] });
+    }
 
     this._editSessionSource = source;
 
@@ -747,6 +750,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       const dto = await api.getDashboardDTO(version.uid);
       dashScene = transformSaveModelSchemaV2ToScene(dto);
     } else {
+      const { DashboardModel } = await import(
+        /* webpackChunkName: "dashboard-legacy-model" */ 'app/features/dashboard/state/DashboardModel'
+      );
       const dashboardDTO: DashboardDTO = {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- v1 restore path requires Dashboard type
         dashboard: new DashboardModel(version.data as Dashboard),
@@ -765,7 +771,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return true;
   };
 
-  public openSaveDrawer({
+  public async openSaveDrawer({
     saveAsCopy,
     saveDashboardTemplate,
     saveAsDashboardTemplate,
@@ -782,8 +788,16 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
-    this.setState({
-      overlay: new SaveDashboardDrawer({
+    await this.showModalAsync(async () => {
+      const { SaveDashboardDrawer } = await import(
+        /* webpackChunkName: "save-dashboard-drawer" */ '../saving/SaveDashboardDrawer'
+      );
+
+      if (!this.state.isEditing) {
+        return;
+      }
+
+      return new SaveDashboardDrawer({
         dashboardRef: this.getRef(),
         saveAsCopy,
         saveAsDashboardTemplate,
@@ -791,7 +805,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         onSaveSuccess,
         recoverToNewBranch,
         showVariablesWarning: this.hasVariableErrors(),
-      }),
+      });
     });
   }
 
@@ -1177,11 +1191,55 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     console.error('Trying to unlink a lib panel in a layout that is not DashboardGridItem or AutoGridItem');
   }
 
+  public async showModalAsync(load: () => Promise<SceneObject | undefined>) {
+    const requestId = ++this._modalRequestId;
+    const location = locationService.getLocation();
+    const search = new URLSearchParams(location.search);
+    let invalidated = false;
+    // Time range and variable URL updates do not supersede a drawer request.
+    const unlisten = locationService.getHistory().listen((nextLocation) => {
+      const nextSearch = new URLSearchParams(nextLocation.search);
+      if (
+        nextLocation.pathname !== location.pathname ||
+        ['orgId', 'editPanel', 'viewPanel', 'editview', 'inspect', 'shareView'].some(
+          (key) => nextSearch.get(key) !== search.get(key)
+        )
+      ) {
+        invalidated = true;
+      }
+    });
+    // Some overlays and editor transitions are applied directly through setState.
+    const sub = this.subscribeToState((state, prevState) => {
+      if (
+        state.overlay !== prevState.overlay ||
+        state.isEditing !== prevState.isEditing ||
+        state.editPanel !== prevState.editPanel ||
+        state.editview !== prevState.editview ||
+        state.viewPanel !== prevState.viewPanel ||
+        state.body !== prevState.body
+      ) {
+        invalidated = true;
+      }
+    });
+
+    try {
+      const modal = await load();
+      if (modal && !invalidated && requestId === this._modalRequestId) {
+        this.showModal(modal);
+      }
+    } finally {
+      sub.unsubscribe();
+      unlisten();
+    }
+  }
+
   public showModal(modal: SceneObject) {
+    this._modalRequestId++;
     this.setState({ overlay: modal });
   }
 
   public closeModal() {
+    this._modalRequestId++;
     this.setState({ overlay: undefined });
   }
 
@@ -1521,7 +1579,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   // Get raw JSON from JSON model editor if currently active
   // Returns undefined if not in JSON editor mode or if JSON is invalid
   getRawJsonFromEditor(): Dashboard | DashboardV2Spec | undefined {
-    if (this.state.editview instanceof JsonModelEditView) {
+    if (this.state.editview?.getEditedSaveModel) {
       try {
         // The v2 editor holds a full resource envelope; getEditedSaveModel unwraps it back to the bare spec.
         return this.state.editview.getEditedSaveModel();

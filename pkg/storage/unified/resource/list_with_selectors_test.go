@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 
@@ -993,8 +994,8 @@ func TestListWithSelectorsUsesBatchReadsAndAuthorization(t *testing.T) {
 			{Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "b"}, ResourceVersion: 2},
 		}},
 	}}
-	backend := &batchFakeBackend{fakeBackend: &fakeBackend{forbidden: map[string]struct{}{"b": {}}}}
-	access := claims.FixedAccessClient(true)
+	backend := &batchFakeBackend{fakeBackend: &fakeBackend{}}
+	access := denyByNameAccess{deny: map[string]struct{}{"b": {}}}
 	s := createTestServer(searchClient, 1024)
 	s.backend = backend
 	s.access = access
@@ -1040,8 +1041,7 @@ func TestListUsesSearchForAnAllowlistedResourceWithoutSelectors(t *testing.T) {
 func TestListWithSelectorsStopsReadingAtPageCutoff(t *testing.T) {
 	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
 
-	// A full search page of hits, far more than one read chunk.
-	rows := make([]*resourcepb.ResourceTableRow, 0, searchReadChunkSize*3)
+	rows := make([]*resourcepb.ResourceTableRow, 0, 30)
 	for i := 0; i < cap(rows); i++ {
 		rows = append(rows, &resourcepb.ResourceTableRow{
 			Key:        &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: fmt.Sprintf("item-%d", i)},
@@ -1054,9 +1054,8 @@ func TestListWithSelectorsStopsReadingAtPageCutoff(t *testing.T) {
 	}}
 	backend := &batchFakeBackend{fakeBackend: &fakeBackend{}}
 
-	// maxPageSizeBytes = 1 forces the byte cutoff after the first item, well
-	// before the item-count limit.
-	s := createTestServer(searchClient, 1)
+	// Each response is five bytes, so the byte cutoff is crossed by the third item.
+	s := createTestServer(searchClient, 11)
 	s.backend = backend
 
 	resp, err := s.listWithSelectors(ctx, &resourcepb.ListRequest{
@@ -1068,11 +1067,11 @@ func TestListWithSelectorsStopsReadingAtPageCutoff(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.Len(t, resp.Items, 1)
+	require.Len(t, resp.Items, 3)
 	require.NotEmpty(t, resp.NextPageToken, "a cut-off page must still page forward")
-	// Only the first chunk is read; the rest of the page is never fetched.
 	require.Equal(t, 1, backend.batchCalls)
 	require.Equal(t, searchReadChunkSize, backend.batchReqs)
+	require.Equal(t, []string{"item-0", "item-1", "item-2"}, backend.pulledNames)
 }
 
 // denyByNameAccess allows everything except names in deny.
@@ -1143,15 +1142,20 @@ func TestListWithSelectorsAuthorizesErroredRows(t *testing.T) {
 		}
 	}
 
-	t.Run("unauthorized errored row is skipped, not surfaced", func(t *testing.T) {
+	t.Run("runtime error on unauthorized row is logged and redacted", func(t *testing.T) {
+		logger := &logtest.Fake{}
 		s := createTestServer(newSearch(), 1024)
 		s.backend = &batchFakeBackend{fakeBackend: &fakeBackend{}, errored: map[string]struct{}{"b": {}}}
 		s.access = denyByNameAccess{deny: map[string]struct{}{"b": {}}}
+		s.log = logger
 
 		resp, err := s.listWithSelectors(ctx, req())
 		require.NoError(t, err)
-		require.Nil(t, resp.Error)
-		require.Len(t, resp.Items, 1) // only "a"; "b" errored but is unauthorized, so hidden
+		require.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
+		require.Equal(t, "failed to read resource", resp.Error.Message)
+		require.Empty(t, resp.Items)
+		require.Equal(t, 1, logger.ErrorLogs.Calls)
+		require.Equal(t, "Failed to read unauthorized search result", logger.ErrorLogs.Message)
 	})
 
 	t.Run("authorized errored row aborts the list", func(t *testing.T) {
@@ -1165,6 +1169,32 @@ func TestListWithSelectorsAuthorizesErroredRows(t *testing.T) {
 		require.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
 	})
 
+	t.Run("bad request aborts the list without returning partial items", func(t *testing.T) {
+		s := createTestServer(newSearch(), 1024)
+		s.backend = &batchFakeBackend{
+			fakeBackend: &fakeBackend{},
+			errors:      map[string]*resourcepb.ErrorResult{"b": NewBadRequestError("invalid request")},
+		}
+
+		resp, err := s.listWithSelectors(ctx, req())
+		require.NoError(t, err)
+		require.Equal(t, int32(http.StatusBadRequest), resp.Error.Code)
+		require.Empty(t, resp.Items)
+	})
+
+	t.Run("unrecognized error aborts the list without returning partial items", func(t *testing.T) {
+		s := createTestServer(newSearch(), 1024)
+		s.backend = &batchFakeBackend{
+			fakeBackend: &fakeBackend{},
+			errors:      map[string]*resourcepb.ErrorResult{"b": {Code: http.StatusConflict, Message: "conflict"}},
+		}
+
+		resp, err := s.listWithSelectors(ctx, req())
+		require.NoError(t, err)
+		require.Equal(t, int32(http.StatusConflict), resp.Error.Code)
+		require.Empty(t, resp.Items)
+	})
+
 	t.Run("not-found row surfaces without authorizing (not dropped on empty folder)", func(t *testing.T) {
 		s := createTestServer(newSearch(), 1024)
 		s.backend = &batchFakeBackend{fakeBackend: &fakeBackend{}, notFound: map[string]struct{}{"b": {}}}
@@ -1176,6 +1206,113 @@ func TestListWithSelectorsAuthorizesErroredRows(t *testing.T) {
 		require.NotNil(t, resp.Error)
 		require.Equal(t, int32(http.StatusNotFound), resp.Error.Code)
 	})
+}
+
+func TestListWithSelectorsSurfacesKVRuntimeFailuresBeforeAuthorization(t *testing.T) {
+	tests := []struct {
+		name string
+		wrap func(KV) KV
+	}{
+		{
+			name: "batch get",
+			wrap: func(store KV) KV {
+				return &failingBatchGetKV{KV: store, err: errors.New("storage is down")}
+			},
+		},
+		{
+			name: "body read",
+			wrap: func(store KV) KV {
+				return &unreadableValueKV{KV: store, nameMatch: "failed", err: errors.New("value is corrupt")}
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+				opts.KvStore = tc.wrap(opts.KvStore)
+			})
+			rv := seedResource(t, backend, t.Context(), "failed", "folder-a")
+			newServer := func() *server {
+				search := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
+					ResourceVersion: rv,
+					Results: &resourcepb.ResourceTable{Rows: []*resourcepb.ResourceTableRow{{
+						Key:             appsKey("failed"),
+						ResourceVersion: rv,
+						SortFields:      []string{"failed"},
+					}}},
+				}}
+				s := createTestServer(search, 1024)
+				s.backend = backend
+				return s
+			}
+			req := &resourcepb.ListRequest{
+				Limit: 1,
+				Options: &resourcepb.ListOptions{
+					Key:    appsKey(""),
+					Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+				},
+			}
+			ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+
+			unauthorized := newServer()
+			unauthorized.access = denyByNameAccess{deny: map[string]struct{}{"failed": {}}}
+			resp, err := unauthorized.listWithSelectors(ctx, req)
+			require.NoError(t, err)
+			require.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
+			require.Equal(t, "failed to read resource", resp.Error.Message)
+			require.Empty(t, resp.Items)
+
+			authorized := newServer()
+			resp, err = authorized.listWithSelectors(ctx, req)
+			require.NoError(t, err)
+			require.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
+		})
+	}
+}
+
+func TestListWithSelectorsStopsAfterRuntimeFailure(t *testing.T) {
+	var kvWrapper *failSecondBatchGetKV
+	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+		kvWrapper = &failSecondBatchGetKV{KV: opts.KvStore, err: errors.New("transient storage failure")}
+		opts.KvStore = kvWrapper
+	})
+
+	rows := make([]*resourcepb.ResourceTableRow, 0, searchReadChunkSize+1)
+	denied := make(map[string]struct{}, searchReadChunkSize)
+	var listRV int64
+	for i := range searchReadChunkSize + 1 {
+		name := fmt.Sprintf("cross-batch-%02d", i)
+		listRV = seedResource(t, backend, t.Context(), name, fmt.Sprintf("folder-%02d", i))
+		rows = append(rows, &resourcepb.ResourceTableRow{
+			Key:             appsKey(name),
+			ResourceVersion: listRV,
+			SortFields:      []string{name},
+		})
+		if i < searchReadChunkSize {
+			denied[name] = struct{}{}
+		}
+	}
+
+	s := createTestServer(&stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
+		ResourceVersion: listRV,
+		Results:         &resourcepb.ResourceTable{Rows: rows},
+	}}, 1024)
+	s.backend = backend
+	s.access = denyByNameAccess{deny: denied}
+	resp, err := s.listWithSelectors(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.ListRequest{
+		Limit: 1,
+		Options: &resourcepb.ListOptions{
+			Key:    appsKey(""),
+			Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+		},
+	})
+
+	require.NoError(t, err)
+	require.Empty(t, resp.Items)
+	require.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
+	require.Equal(t, "transient storage failure", resp.Error.Message)
+	require.Equal(t, 2, kvWrapper.dataCalls)
 }
 
 func createTestServer(searchClient resourcepb.ResourceIndexClient, maxPageSizeBytes int) *server {
@@ -1262,11 +1399,13 @@ func (*fakeBackend) GetResourceLastImportTime(context.Context, NamespacedResourc
 
 type batchFakeBackend struct {
 	*fakeBackend
-	errored    map[string]struct{}
-	notFound   map[string]struct{}
-	batchCalls int
-	batchReqs  int
-	readCalls  int
+	errored     map[string]struct{}
+	errors      map[string]*resourcepb.ErrorResult
+	notFound    map[string]struct{}
+	batchCalls  int
+	batchReqs   int
+	readCalls   int
+	pulledNames []string
 }
 
 func (b *batchFakeBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *BackendReadResponse {
@@ -1274,34 +1413,37 @@ func (b *batchFakeBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	return b.fakeBackend.ReadResource(ctx, req)
 }
 
-func (b *batchFakeBackend) BatchReadResource(_ context.Context, requests []*resourcepb.ReadRequest) ([]*BackendReadResponse, error) {
+func (b *batchFakeBackend) BatchReadResource(_ context.Context, requests []*resourcepb.ReadRequest) (iter.Seq[*BackendReadResponse], error) {
 	b.batchCalls++
 	b.batchReqs += len(requests)
-	responses := make([]*BackendReadResponse, len(requests))
-	for i, req := range requests {
-		if _, forbidden := b.forbidden[req.Key.Name]; forbidden {
-			responses[i] = &BackendReadResponse{
-				Key:   req.Key,
-				Error: &resourcepb.ErrorResult{Code: http.StatusForbidden},
+	return func(yield func(*BackendReadResponse) bool) {
+		for _, req := range requests {
+			b.pulledNames = append(b.pulledNames, req.Key.Name)
+			var response *BackendReadResponse
+			if _, forbidden := b.forbidden[req.Key.Name]; forbidden {
+				response = &BackendReadResponse{
+					Key:   req.Key,
+					Error: &resourcepb.ErrorResult{Code: http.StatusForbidden},
+				}
+			} else if errRes, exists := b.errors[req.Key.Name]; exists {
+				response = &BackendReadResponse{Key: req.Key, Error: errRes}
+			} else if _, errored := b.errored[req.Key.Name]; errored {
+				response = &BackendReadResponse{
+					Key:   req.Key,
+					Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "boom"},
+				}
+			} else if _, nf := b.notFound[req.Key.Name]; nf {
+				response = &BackendReadResponse{Key: req.Key, Error: NewNotFoundError(req.Key)}
+			} else {
+				response = &BackendReadResponse{
+					Key:             req.Key,
+					ResourceVersion: req.ResourceVersion,
+					Value:           []byte("value"),
+				}
 			}
-			continue
-		}
-		if _, errored := b.errored[req.Key.Name]; errored {
-			responses[i] = &BackendReadResponse{
-				Key:   req.Key,
-				Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "boom"},
+			if !yield(response) {
+				return
 			}
-			continue
 		}
-		if _, nf := b.notFound[req.Key.Name]; nf {
-			responses[i] = &BackendReadResponse{Key: req.Key, Error: NewNotFoundError(req.Key)}
-			continue
-		}
-		responses[i] = &BackendReadResponse{
-			Key:             req.Key,
-			ResourceVersion: req.ResourceVersion,
-			Value:           []byte("value"),
-		}
-	}
-	return responses, nil
+	}, nil
 }

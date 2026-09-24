@@ -14,7 +14,7 @@ import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { AddNewPane } from '../../sidebar/add-new/AddNewPane';
-import { findVizPanelByKey } from '../../utils/utils';
+import { findVizPanelByKey } from '../../utils/findVizPanel';
 
 import { applyDashboardSpec } from './applyDashboardSpec';
 
