@@ -110,7 +110,7 @@ export function createTypography(colors: ThemeColors, typographyInput: ThemeTypo
 
   // All our fonts/line heights should be integer multiples of 2 to prevent issues with alignment
   const variants = {
-    xxl: buildVariant(fontFamily, fontWeightBold, 24, 34, -0.3),
+    xxl: buildVariant(fontFamily, fontWeightBold, 24, 34, 0.3),
     xl: buildVariant(fontFamily, fontWeightBold, 22, 30, -0.2),
     lg: buildVariant(fontFamily, fontWeightMedium, 20, 26, 0),
     md: buildVariant(fontFamily, fontWeightMedium, 16, 22, 0),
@@ -119,7 +119,7 @@ export function createTypography(colors: ThemeColors, typographyInput: ThemeTypo
     code: buildVariant(fontFamilyMonospace, fontWeightRegular, 14, 16, 0.15),
 
     // Deprecated variants
-    h1: buildVariant(fontFamily, fontWeightRegular, 28, 32, 0.3),
+    h1: buildVariant(fontFamily, fontWeightRegular, 28, 32, -0.25),
     h2: buildVariant(fontFamily, fontWeightRegular, 24, 28, 0),
     h3: buildVariant(fontFamily, fontWeightRegular, 22, 24, 0),
     h4: buildVariant(fontFamily, fontWeightRegular, 18, 22, 0.25),
