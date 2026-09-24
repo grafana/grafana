@@ -72,7 +72,12 @@ func (h *HybridHandler) search(ctx context.Context, req *http.Request) (*resourc
 		limit = l
 	}
 	searchReq := &resourcepb.HybridSearchRequest{
-		Key:           resourceKey(namespace, alertrule.ResourceInfo.GroupResource()),
+		// Assistant embeddings use a separate collection from the native alert-rule resource.
+		Key: &resourcepb.ResourceKey{
+			Namespace: namespace,
+			Group:     "assistant.alertrules.ext.grafana.app",
+			Resource:  "alertrules",
+		},
 		Query:         query.Get("query"),
 		SemanticQuery: query.Get("semanticQuery"),
 		Limit:         limit,

@@ -62,7 +62,7 @@ func TestHybridSearch(t *testing.T) {
 	assert.Equal(t, "application/json", rec.Header().Get("Content-Type"))
 	require.Equal(t, 1, client.calls)
 	assert.Equal(t, &resourcepb.HybridSearchRequest{
-		Key:           &resourcepb.ResourceKey{Namespace: "stacks-123", Group: "rules.alerting.grafana.app", Resource: "alertrules"},
+		Key:           &resourcepb.ResourceKey{Namespace: "stacks-123", Group: "assistant.alertrules.ext.grafana.app", Resource: "alertrules"},
 		Query:         "cpu",
 		SemanticQuery: "cpu usage high",
 		Limit:         10,
