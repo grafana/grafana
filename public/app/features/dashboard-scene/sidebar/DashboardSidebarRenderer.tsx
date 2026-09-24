@@ -53,7 +53,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
   const feedbackButton = useFlagFeedbackButton();
   const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
   const dashboardUndoRedo = useFlagDashboardUndoRedo();
-  
+
   const onOpenAddPane = useCallback(async () => {
     const signal = sidebar.beginPaneRequest();
     const { AddNewPane } = await import(/* webpackChunkName: "dashboard-add-new-pane" */ './add-new/AddNewPane');
