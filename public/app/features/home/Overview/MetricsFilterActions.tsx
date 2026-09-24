@@ -20,14 +20,8 @@ const FILESYSTEM_LABELS = ['instance', 'job', 'mountpoint', 'device', 'fstype'].
 
 // Dimension names only; label names and patterns are customer data and never leave the browser.
 function customizedDimensions(scope: MetricsDiskScope): string {
-  const dimensions: string[] = [];
-  if (scope.excludes.some((row) => row.label.trim() !== '' && row.regex.trim() !== '')) {
-    dimensions.push('excludes');
-  }
-  if (scope.ratioExpr.trim() !== '') {
-    dimensions.push('expression');
-  }
-  return dimensions.join(',');
+  const hasRow = scope.excludes.some((row) => row.label.trim() && row.regex.trim());
+  return [hasRow && 'excludes', scope.ratioExpr.trim() && 'expression'].filter(Boolean).join(',');
 }
 
 const spec: SolutionFilterSpec<MetricsDiskScope> = {

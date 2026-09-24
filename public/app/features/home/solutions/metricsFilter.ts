@@ -81,9 +81,9 @@ export async function validateMetricsScope(
       'Every series the expression returns must carry an instance label.'
     );
   }
-  const outOfRange = (value: unknown) =>
-    typeof value === 'number' && Number.isFinite(value) && (value < 0 || value > 1);
-  if (fields.some((field) => field.values.some(outOfRange))) {
+  if (
+    fields.some((field) => field.values.some((v) => typeof v === 'number' && Number.isFinite(v) && (v < 0 || v > 1)))
+  ) {
     return t(
       'home.solutions.metrics.filter.expression-range',
       'The expression must return values between 0 (empty) and 1 (full).'

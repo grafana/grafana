@@ -85,10 +85,9 @@ export function metricsSolution(
   detect: () => Promise<SignalDetection> = metricsDetection()
 ): Solution {
   const datasource = async () => (await detect()).datasource;
-  const diskScope = (ds: DataSourceInstanceListItem): MetricsDiskScope | null => scopeFor(filter, ds);
 
-  const activity = datasourceFact(datasource, (ds) => fetchMetricsActivity(ds, diskScope(ds)));
-  const diskPressure = datasourceFact(datasource, (ds) => fetchMetricsDiskPressure(ds, diskScope(ds)));
+  const activity = datasourceFact(datasource, (ds) => fetchMetricsActivity(ds, scopeFor(filter, ds)));
+  const diskPressure = datasourceFact(datasource, (ds) => fetchMetricsDiskPressure(ds, scopeFor(filter, ds)));
   const diskHoursToFull = memoize(async () => {
     const ds = await datasource();
     const disk = await diskPressure();
@@ -210,7 +209,7 @@ export function metricsSolution(
       if (await needsAttention().catch(() => false)) {
         return {
           label: t('home.solutions.metrics.investigate-disk', 'Investigate disk usage in Explore'),
-          href: diskPressureExploreHref(ds, diskScope(ds)),
+          href: diskPressureExploreHref(ds, scopeFor(filter, ds)),
           action: 'view_alerts',
         };
       }

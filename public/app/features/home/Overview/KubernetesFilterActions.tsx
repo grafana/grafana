@@ -18,17 +18,9 @@ const NO_SCOPE: KubernetesScope = { cluster: '', namespaces: [], nodes: [] };
 
 /** Names of the dimensions a scope sets, for analytics; the values are customer data and never leave the browser. */
 function customizedDimensions(scope: KubernetesScope): string {
-  const dimensions: string[] = [];
-  if (scope.cluster !== '') {
-    dimensions.push('cluster');
-  }
-  if (scope.namespaces.length > 0) {
-    dimensions.push('namespaces');
-  }
-  if (scope.nodes.length > 0) {
-    dimensions.push('nodes');
-  }
-  return dimensions.join(',');
+  return [scope.cluster && 'cluster', scope.namespaces.length && 'namespaces', scope.nodes.length && 'nodes']
+    .filter(Boolean)
+    .join(',');
 }
 
 const spec: SolutionFilterSpec<KubernetesScope> = {
