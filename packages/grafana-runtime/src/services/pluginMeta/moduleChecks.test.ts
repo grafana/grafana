@@ -41,15 +41,16 @@ describe('isLoadableModule', () => {
 describe('hasModuleMetaAgreement', () => {
   it.each([
     ['modules match', CDN_MODULE, CDN_MODULE],
-    ['bootdata is undefined', CDN_MODULE, undefined],
-    ['bootdata is empty', CDN_MODULE, ''],
     ['both undefined', undefined, undefined],
+    ['both empty', '', ''],
   ])('returns true when %s', (_desc, metasModule, bootDataModule) => {
     expect(hasModuleMetaAgreement(metasModule, bootDataModule)).toBe(true);
   });
 
   it.each([
     ['modules differ (core vs cdn)', CORE_MODULE, CDN_MODULE],
+    ['metas has a value and bootdata is undefined', CDN_MODULE, undefined],
+    ['metas has a value and bootdata is empty', CDN_MODULE, ''],
     ['metas module is empty and bootdata has a value', '', CDN_MODULE],
     ['metas module is undefined and bootdata has a value', undefined, CDN_MODULE],
   ])('returns false when %s', (_desc, metasModule, bootDataModule) => {
@@ -182,10 +183,10 @@ describe('logMetasDisagreementsWithBootData', () => {
     expect(logWarning).not.toHaveBeenCalled();
   });
 
-  it('treats a plugin present only in metas (missing from bootdata) as agreement, not a disagreement', () => {
-    // Bootdata is treated as the authoritative loader manifest for module paths.
-    // A plugin appearing only in metas is a separate signal (e.g. catalog visibility)
-    // and is intentionally not surfaced by this disagreement check.
+  it('logs a disagreement when a plugin is present in metas but missing from bootdata', () => {
+    // A plugin the metas response advertises to the frontend but that bootdata
+    // has no record of is a divergence worth surfacing: it can indicate the
+    // frontend exposing plugins the backend does not consider installed.
     const logWarning = jest.fn();
 
     logMetasDisagreementsWithBootData(
@@ -197,6 +198,12 @@ describe('logMetasDisagreementsWithBootData', () => {
       logWarning
     );
 
-    expect(logWarning).not.toHaveBeenCalled();
+    expect(logWarning).toHaveBeenCalledTimes(1);
+    expect(logWarning).toHaveBeenCalledWith('PluginMeta: bootdata/metas module disagreements', {
+      pluginType: PluginType.panel,
+      count: '1',
+      total: '1',
+      pluginIds: 'canvas',
+    });
   });
 });

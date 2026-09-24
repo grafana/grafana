@@ -95,7 +95,8 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
       expect(result).toHaveLength(datasourceIdsFromApi.length);
       expect(result.map((m) => m.id).sort()).toEqual([...datasourceIdsFromApi].sort());
       expect(result.every((m) => m.type === PluginType.datasource)).toBe(true);
-      expect(logPluginMetaWarningMock).not.toHaveBeenCalled();
+      expect(logPluginMetaWarningMock).not.toHaveBeenCalledWith(FALLBACK_TO_BOOTDATA_WARNING, expect.anything());
+      expect(logPluginMetaWarningMock).not.toHaveBeenCalledWith(FALLBACK_TO_BOOTDATA_ERROR_WARNING, expect.anything());
     });
 
     it('getDatasourcePluginMeta should return the mapped meta for a known id', async () => {
@@ -194,7 +195,8 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
       expect(result).toHaveLength(datasourceIdsFromApi.length);
       expect(result.map((m) => m.id).sort()).toEqual([...datasourceIdsFromApi].sort());
       expect(result.every((m) => m.type === PluginType.datasource)).toBe(true);
-      expect(logPluginMetaWarningMock).not.toHaveBeenCalled();
+      expect(logPluginMetaWarningMock).not.toHaveBeenCalledWith(FALLBACK_TO_BOOTDATA_WARNING, expect.anything());
+      expect(logPluginMetaWarningMock).not.toHaveBeenCalledWith(FALLBACK_TO_BOOTDATA_ERROR_WARNING, expect.anything());
     });
   });
 

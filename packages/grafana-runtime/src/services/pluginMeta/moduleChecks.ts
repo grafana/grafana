@@ -17,7 +17,7 @@ export function isLoadableModule(module: string | undefined): module is string {
 }
 
 export function hasModuleMetaAgreement(metasModule: string | undefined, bootDataModule: string | undefined): boolean {
-  return !bootDataModule || bootDataModule === metasModule;
+  return bootDataModule === metasModule;
 }
 
 export function logUnloadableModules<T>(
