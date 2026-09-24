@@ -2,11 +2,11 @@ package nats
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/grafana/dskit/services"
-	natsclient "github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -112,16 +112,16 @@ func (p *PublisherService) Health(_ context.Context) error {
 }
 
 func (p *PublisherService) Publish(ctx context.Context, subject string, data []byte) error {
-	nc, err := p.get(ctx)
-	if err != nil {
+	if err := ctx.Err(); err != nil {
 		return err
 	}
-	// Reject until this connection has connected at least once: nats.go only
-	// buffers for replay after a first successful connect, so accepting earlier
-	// would silently drop the message.
-	if !p.canPublish(nc) {
+	nc, err := p.publishConn()
+	if err != nil {
+		if errors.Is(err, ErrDisabled) || errors.Is(err, ErrClosed) {
+			return err
+		}
 		p.metrics.publishErrors.Inc()
-		return fmt.Errorf("publish to %q: nats connection has not connected successfully: %w", subject, natsclient.ErrConnectionReconnecting)
+		return fmt.Errorf("publish to %q: %w", subject, err)
 	}
 	// nats.go is safe for concurrent Publish and owns the bounded reconnect
 	// buffer; a full buffer surfaces here as ErrReconnectBufExceeded.

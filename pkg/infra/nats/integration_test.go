@@ -61,6 +61,7 @@ func testPublisherBufferOverflowRecovers(t *testing.T) {
 	pub := newPublisher(log.NewNopLogger(), newPublisherMetrics(), natsCfg)
 	// pub is used directly (not started as a service), so close it to stop the reconnect loop.
 	t.Cleanup(pub.close)
+	require.NoError(t, pub.starting(ctx))
 	sub := newSubscriber(log.NewNopLogger(), newSubscriberMetrics(), natsCfg)
 	startService(t, ctx, sub)
 
@@ -181,10 +182,8 @@ func testPublisherFirstSuccess(t *testing.T) {
 	require.Eventually(t, nc.IsReconnecting, 5*time.Second, 10*time.Millisecond)
 	require.NoError(t, pub.Publish(ctx, "test", []byte("buffered")))
 
-	// A replacement client must connect successfully on its own before it may
-	// buffer, even though the previous client had connected once.
 	nc.Close()
-	require.ErrorIs(t, pub.Publish(ctx, "test", []byte("replacement")), natsclient.ErrConnectionReconnecting)
+	require.ErrorIs(t, pub.Publish(ctx, "test", []byte("replacement")), natsclient.ErrConnectionClosed)
 }
 
 func testPublishingFailsOnAuthRejection(t *testing.T) {

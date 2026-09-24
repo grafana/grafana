@@ -95,6 +95,7 @@ func TestPublisher(t *testing.T) {
 		}
 		p := newPublisher(log.NewNopLogger(), newPublisherMetrics(), newConfig(cfg, nil))
 		t.Cleanup(p.close)
+		require.NoError(t, p.starting(context.Background()))
 
 		err := p.Publish(context.Background(), "grafana.test.a", []byte("hello"))
 		require.ErrorIs(t, err, natsclient.ErrConnectionReconnecting)
@@ -119,8 +120,6 @@ func TestPublisher(t *testing.T) {
 	t.Run("publish honours a cancelled context", func(t *testing.T) {
 		p := newTestPublisher(t, startTestServer(t))
 
-		// Warm the connection so get() succeeds and the cancellation is observed by
-		// the explicit ctx.Err() check rather than during connect.
 		require.NoError(t, p.Publish(context.Background(), "grafana.test.a", []byte("hello")))
 
 		ctx, cancel := context.WithCancel(context.Background())

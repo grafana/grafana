@@ -137,9 +137,6 @@ func (c *connection) connect(ctx context.Context) (*natsclient.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Reset before dialing: this connection must connect at least once before
-	// Publish is allowed to buffer into it.
-	c.everConnected.Store(false)
 	options = append(options, func(opts *natsclient.Options) error {
 		onConnect := opts.ConnectedCB
 		opts.ConnectedCB = func(nc *natsclient.Conn) {
@@ -179,7 +176,9 @@ func (c *connection) connect(ctx context.Context) (*natsclient.Conn, error) {
 			c.metrics.connectionErrors.Inc()
 			return nil, fmt.Errorf("connect nats %s: %w", c.role, res.err)
 		}
-		if !res.conn.IsConnected() {
+		if res.conn.IsConnected() {
+			c.everConnected.Store(true)
+		} else {
 			c.metrics.connectionErrors.Inc()
 			c.log.Warn("nats initial connect did not complete; retrying in the background",
 				"role", c.role,
@@ -253,6 +252,10 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 		}),
 	}
 
+	if c.role == rolePublisher && c.config.AuthMode() == setting.NATSAuthModeTokenExchange {
+		options = append(options, natsclient.IgnoreAuthErrorAbort())
+	}
+
 	if tls := c.config.TLS(); tls.Enabled {
 		tc, err := buildTLSConfig(tls)
 		if err != nil {
@@ -314,16 +317,22 @@ func (c *connection) healthy() error {
 	return nil
 }
 
-func (c *connection) canPublish(nc *natsclient.Conn) bool {
+func (c *connection) publishConn() (*natsclient.Conn, error) {
+	if !c.Enabled() {
+		return nil, ErrDisabled
+	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if c.closed || c.conn != nc {
-		return false
+	if c.closed {
+		return nil, ErrClosed
 	}
-	if nc.IsConnected() {
-		c.everConnected.Store(true)
+	if c.conn == nil || c.conn.IsClosed() {
+		return nil, fmt.Errorf("nats %s connection is not established: %w", c.role, natsclient.ErrConnectionClosed)
 	}
-	return c.everConnected.Load()
+	if !c.everConnected.Load() {
+		return nil, fmt.Errorf("nats %s connection has not connected successfully (status=%s): %w", c.role, c.conn.Status(), natsclient.ErrConnectionReconnecting)
+	}
+	return c.conn, nil
 }
 
 // close drains the connection and waits for the drain to complete so it does not
