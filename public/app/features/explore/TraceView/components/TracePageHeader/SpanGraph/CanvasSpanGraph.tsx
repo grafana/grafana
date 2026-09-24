@@ -18,7 +18,6 @@ import { memo, useCallback, useEffect, useRef } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
-import { autoColor } from '../../Theme';
 import { getRgbColorByKey } from '../../utils/color-generator';
 
 import renderIntoCanvas, { type SpanGraphItem } from './render-into-canvas';
@@ -27,7 +26,8 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     CanvasSpanGraph: css({
       label: 'CanvasSpanGraph',
-      background: autoColor(theme, '#fafafa'),
+      background: theme.colors.background.primary,
+      borderRadius: theme.shape.radius.default,
       height: '60px',
       position: 'absolute',
       width: '100%',
@@ -52,7 +52,9 @@ export const CanvasSpanGraph = memo(function CanvasSpanGraph({
   const draw = useCallback(() => {
     if (canvasRef.current) {
       const getColor = (key: string) => getRgbColorByKey(key, theme);
-      renderIntoCanvas(canvasRef.current, items, totalValueWidth, getColor, autoColor(theme, '#fff'));
+      // The context is opaque (alpha: false), so the canvas has to paint the surface behind it.
+      // TraceView always sits inside a panel, so match that rather than a standalone colour.
+      renderIntoCanvas(canvasRef.current, items, totalValueWidth, getColor, theme.colors.background.primary);
     }
   }, [items, totalValueWidth, theme]);
 
