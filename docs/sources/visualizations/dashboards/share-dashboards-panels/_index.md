@@ -244,6 +244,9 @@ To publish a dashboard to the community catalog, follow these steps:
 1. Upload the Classic JSON file you exported from Grafana.
 1. Fill in the required metadata fields, then click **Save and Publish**.
 
+After you select **Save and Publish**, it might take several hours for the public dashboard page to become available.
+If it's still unavailable the following day, contact Grafana Support.
+
 ### Metadata updates for published dashboards
 
 After you've published a dashboard, the catalog shows a **Submit** button instead of **Save and Publish**.
