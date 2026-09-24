@@ -551,7 +551,7 @@ func TestIncrementalSync_ErrorHandling(t *testing.T) {
 					// error counting, which would make this failure invisible to the job.
 					return result.Action() == repository.FileActionCreated &&
 						result.Path() == "folder/Backend & UI.json" &&
-						errors.As(result.Error(), &unsupportedErr)
+						errors.As(result.Warning(), &unsupportedErr)
 				})).Return()
 
 				progress.On("TooManyErrors").Return(nil)
@@ -581,7 +581,7 @@ func TestIncrementalSync_ErrorHandling(t *testing.T) {
 					var unsupportedErr *resources.UnsupportedPathError
 					return result.Action() == repository.FileActionUpdated &&
 						result.Path() == "folder/Backend & UI.json" &&
-						errors.As(result.Error(), &unsupportedErr)
+						errors.As(result.Warning(), &unsupportedErr)
 				})).Return()
 
 				progress.On("TooManyErrors").Return(nil)
@@ -614,7 +614,7 @@ func TestIncrementalSync_ErrorHandling(t *testing.T) {
 					return result.Action() == repository.FileActionRenamed &&
 						result.Path() == "folder/Backend & UI.json" &&
 						result.PreviousPath() == "folder/backend-ui.json" &&
-						errors.As(result.Error(), &unsupportedErr)
+						errors.As(result.Warning(), &unsupportedErr)
 				})).Return()
 
 				progress.On("TooManyErrors").Return(nil)
@@ -741,7 +741,7 @@ func TestIncrementalSync_ErrorHandling(t *testing.T) {
 					var unsupportedErr *resources.UnsupportedPathError
 					return result.Action() == repository.FileActionCreated &&
 						result.Path() == "folder/../evil.json" &&
-						errors.As(result.Error(), &unsupportedErr)
+						errors.As(result.Warning(), &unsupportedErr)
 				})).Return()
 
 				progress.On("TooManyErrors").Return(nil)
