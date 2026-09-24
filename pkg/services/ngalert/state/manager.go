@@ -23,7 +23,7 @@ var (
 	ResendDelay = 30 * time.Second
 )
 
-type takeImageFn func(reason string) (*ngModels.Image, error)
+type takeImageFn func(reason string) *ngModels.Image
 
 // AlertInstanceManager defines the interface for querying the current alert instances.
 type AlertInstanceManager interface {
@@ -398,24 +398,22 @@ func (st *Manager) ProcessEvalResults(
 	{
 		var image *ngModels.Image
 		var imageTaken bool
-		var imageErr error
-		fn = func(reason string) (*ngModels.Image, error) {
+		fn = func(reason string) *ngModels.Image {
 			if imageTaken {
-				return image, imageErr
+				return image
 			}
 			logger.Debug("Taking image", "dashboard", alertRule.GetDashboardUID(), "panel", alertRule.GetPanelID(), "reason", reason)
 			img, err := takeImage(ctx, st.images, alertRule)
 			imageTaken = true
-			imageErr = err
 			if err != nil {
 				logger.Warn("Failed to take an image",
 					"dashboard", alertRule.GetDashboardUID(),
 					"panel", alertRule.GetPanelID(), "reason", reason,
 					"error", err)
-				return nil, err
+				return nil
 			}
 			image = img
-			return image, nil
+			return image
 		}
 	}
 
@@ -519,7 +517,7 @@ func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.
 			patch(newState, curState, result)
 		}
 		start := st.clock.Now()
-		s := newState.transition(alertRule, result, nil, logger, takeImageFn, st.clock.Now, st.ignorePendingForNoDataAndError)
+		s := newState.transition(alertRule, result, nil, logger, takeImageFn, st.ignorePendingForNoDataAndError)
 		if st.metrics != nil {
 			st.metrics.StateUpdateDuration.Observe(st.clock.Now().Sub(start).Seconds())
 		}
@@ -538,7 +536,7 @@ func (st *Manager) setNextStateForAll(alertRule *ngModels.AlertRule, result eval
 	for _, currentState := range currentStates {
 		start := st.clock.Now()
 		newState := currentState.Copy()
-		t := newState.transition(alertRule, result, extraAnnotations, logger, takeImageFn, st.clock.Now, st.ignorePendingForNoDataAndError)
+		t := newState.transition(alertRule, result, extraAnnotations, logger, takeImageFn, st.ignorePendingForNoDataAndError)
 		if st.metrics != nil {
 			st.metrics.StateUpdateDuration.Observe(st.clock.Now().Sub(start).Seconds())
 		}
@@ -605,7 +603,7 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 			// By setting 'ResolvedAt' we trigger the scheduler to send a 'resolved' alert to the Alertmanager.
 			if s.ShouldBeResolved(oldState) {
 				s.ResolvedAt = &evaluatedAt
-				s.Image, _ = takeImageFn("stale state") // Potentially nil; error already logged by takeImageFn
+				s.Image = takeImageFn("stale state") // Potentially nil
 			}
 
 			staleStates[s.CacheID] = struct{}{}

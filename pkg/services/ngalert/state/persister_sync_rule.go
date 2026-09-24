@@ -60,23 +60,21 @@ func (a *SyncRuleStatePersister) Sync(ctx context.Context, span trace.Span, rule
 			}
 		}
 		instance := models.AlertInstance{
-			AlertInstanceKey:                key,
-			Labels:                          models.InstanceLabels(s.Labels),
-			Annotations:                     s.Annotations,
-			CurrentState:                    models.InstanceStateType(s.State.State.String()),
-			CurrentReason:                   s.StateReason,
-			LastEvalTime:                    s.LastEvaluationTime,
-			CurrentStateSince:               s.StartsAt,
-			CurrentStateEnd:                 s.EndsAt,
-			FiredAt:                         s.FiredAt,
-			ResolvedAt:                      s.ResolvedAt,
-			LastSentAt:                      s.LastSentAt,
-			ResultFingerprint:               s.ResultFingerprint.String(),
-			EvaluationDuration:              s.EvaluationDuration,
-			LastError:                       lastError,
-			LastResult:                      lastResult,
-			ImageCaptureNextAttemptAt:       s.ImageCaptureNextAttemptAtPtr(),
-			ImageCaptureConsecutiveTimeouts: int32(s.ImageCaptureConsecutiveTimeouts),
+			AlertInstanceKey:   key,
+			Labels:             models.InstanceLabels(s.Labels),
+			Annotations:        s.Annotations,
+			CurrentState:       models.InstanceStateType(s.State.State.String()),
+			CurrentReason:      s.StateReason,
+			LastEvalTime:       s.LastEvaluationTime,
+			CurrentStateSince:  s.StartsAt,
+			CurrentStateEnd:    s.EndsAt,
+			FiredAt:            s.FiredAt,
+			ResolvedAt:         s.ResolvedAt,
+			LastSentAt:         s.LastSentAt,
+			ResultFingerprint:  s.ResultFingerprint.String(),
+			EvaluationDuration: s.EvaluationDuration,
+			LastError:          lastError,
+			LastResult:         lastResult,
 		}
 
 		instancesToSave = append(instancesToSave, instance)
