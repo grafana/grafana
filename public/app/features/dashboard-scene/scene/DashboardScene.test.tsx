@@ -59,6 +59,7 @@ import { DashboardControls } from './DashboardControls';
 import { DashboardScene } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { DashboardFiltersOverviewDrawer } from './dashboard-filters-overview/DashboardFiltersOverviewDrawer';
+import { dashboardViews } from './dashboardViewRegistry';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from './layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
@@ -67,7 +68,7 @@ import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutMana
 import { RowActions } from './layout-default/row-actions/RowActions';
 import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
 import { DashboardPlanningEvent } from './planningEvents';
-import { type DashboardSceneState } from './types/dashboard';
+import { type DashboardSceneLike, type DashboardSceneState } from './types/dashboard';
 
 const mockRestoreDashboardVersion = jest.fn();
 
@@ -3957,6 +3958,27 @@ function createV2DashboardWithTransformations(transformationIds: string[]): Dash
     },
   };
 }
+
+// Compiler-only assertions: invalid calls must be checked by TypeScript, never executed by Jest.
+void ((scene: DashboardScene, snapshot: DashboardSceneState, panel: VizPanel) => {
+  scene.setState(snapshot);
+  scene.setState({ title: 'Renamed', isEditing: true });
+  const consumer: DashboardSceneLike = scene;
+  consumer.setState(snapshot);
+
+  scene.loadView(dashboardViews.editPanel(panel, true));
+  scene.loadView(dashboardViews.overlay.filters());
+  // @ts-expect-error Unregistered fields cannot own a view request.
+  scene.loadView({ key: 'title', load: async () => 'Renamed' });
+  // @ts-expect-error Loading bookkeeping cannot own a view request.
+  scene.loadView({ key: 'isModalLoading', load: async () => true });
+  // @ts-expect-error The result must match the registered target field.
+  scene.loadView({ key: 'editPanel', load: async () => 'not a panel editor' });
+  // @ts-expect-error Registered loaders retain their argument types.
+  dashboardViews.editPanel('not a panel');
+  // @ts-expect-error Synchronous state keys are not exposed as loaders.
+  dashboardViews.body();
+});
 
 function buildTestScene(overrides?: Partial<DashboardSceneState>) {
   const scene = new DashboardScene({
