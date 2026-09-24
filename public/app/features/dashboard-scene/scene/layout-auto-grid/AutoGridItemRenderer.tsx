@@ -28,7 +28,7 @@ import { DRAGGED_ITEM_HEIGHT, DRAGGED_ITEM_LEFT, DRAGGED_ITEM_TOP, DRAGGED_ITEM_
 
 export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem>) {
   const { body, repeatedPanels = [], key, fitContent: itemFitContent } = model.useState();
-  const { draggingKey } = model.getParentGrid().useState();
+  const { draggingKey, isDraggedItemOutside } = model.getParentGrid().useState();
   const { isEditing, preload } = useDashboardState(model);
   const styles = useStyles2(getStyles);
   const soloPanelContext = useSoloPanelContext();
@@ -93,6 +93,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           isRepeat = false,
           isLastPanel = false,
           isSelected = false,
+          isOutside = false,
           extraStyle,
         }: {
           item: VizPanel;
@@ -103,6 +104,8 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           isRepeat?: boolean;
           isLastPanel?: boolean;
           isSelected?: boolean;
+          /** The dragged item is outside of the grid, so it should not take up a cell */
+          isOutside?: boolean;
           extraStyle?: React.CSSProperties;
         }) => {
           const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay, renderHidden] =
@@ -141,11 +144,13 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
               className={cx(
                 isConditionallyHidden && !isEditing && styles.hidden,
                 fitContentOn && styles.itemFitContent,
-                fitContentOn && isMaxHeightBounded && styles.itemMaxHeightClip
+                fitContentOn && isMaxHeightBounded && styles.itemMaxHeightClip,
+                isOutside && !isRepeat && styles.outOfFlow,
+                isOutside && isRepeat && styles.hidden
               )}
-              style={extraStyle}
+              style={isOutside ? undefined : extraStyle}
             >
-              {isDragged && <div className={styles.draggedPlaceholder} />}
+              {isDragged && !isOutside && <div className={styles.draggedPlaceholder} />}
               <PanelEditActionsWrapper panel={item}>
                 {
                   // The lazy loader causes issues when used with conditional rendering
@@ -186,6 +191,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
         isDragged={isDragged}
         showDropTarget={showDropTarget}
         isLastPanel={repeatedPanels.length === 0}
+        isOutside={isDragged && !!isDraggedItemOutside}
         extraStyle={itemStyle}
       />
       {repeatedPanels.map((item, idx) => (
@@ -199,6 +205,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           isRepeat={true}
           isLastPanel={idx === repeatedPanels.length - 1}
           isSelected={isSourceSelected}
+          isOutside={isDragged && !!isDraggedItemOutside}
           extraStyle={itemStyle}
         />
       ))}
@@ -223,6 +230,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   draggedRepeatWrapper: css({
     visibility: 'hidden',
+  }),
+  // Takes the dragged item's cell out of the grid so the other items close the gap. The floating
+  // panel inside keeps its position since this sits at the grid's origin, and it stays mounted.
+  outOfFlow: css({
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 0,
+    height: 0,
   }),
   draggedPlaceholder: css({
     width: '100%',

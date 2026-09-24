@@ -90,6 +90,31 @@ describe('DashboardLayoutOrchestrator', () => {
       expect(moveGridItemMock).not.toHaveBeenCalled();
     });
 
+    it('does not reorder when the item was released outside of its grid', () => {
+      const { orchestrator, manager, gridItem } = setup();
+      const panel2 = new VizPanel({ title: 'Panel B', key: 'panel-2', pluginId: 'table' });
+      const gridItem2 = new AutoGridItem({ key: 'grid-item-2', body: panel2 });
+      manager.state.layout.setState({
+        children: [gridItem, gridItem2],
+        draggedChildren: [gridItem2, gridItem],
+        isDraggedItemOutside: true,
+      });
+      orchestrator.setState({ draggingGridItem: gridItem.getRef() });
+
+      // @ts-expect-error - accessing private property for testing
+      orchestrator._sourceDropTarget = manager;
+      // @ts-expect-error - accessing private property for testing
+      orchestrator._lastDropTarget = manager;
+      // @ts-expect-error - accessing private method for testing
+      orchestrator._getDropTargetUnderMouse = jest.fn().mockReturnValue(null);
+
+      // @ts-expect-error - accessing private method for testing
+      orchestrator._stopDraggingSync({ clientX: 0, clientY: 0 } as PointerEvent);
+
+      expect(reorderAutoGridItemsMock).not.toHaveBeenCalled();
+      expect(moveGridItemMock).not.toHaveBeenCalled();
+    });
+
     it('moves the item when dropped onto a different layout', () => {
       jest.useFakeTimers();
       try {

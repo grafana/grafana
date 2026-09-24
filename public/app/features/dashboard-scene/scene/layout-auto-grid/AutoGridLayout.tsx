@@ -37,6 +37,9 @@ export interface AutoGridLayoutState extends SceneObjectState, AutoGridLayoutOpt
 
   /** The key of the item being dragged */
   draggingKey?: string;
+
+  /** True while the item being dragged is outside of this grid, which then closes the gap it left */
+  isDraggedItemOutside?: boolean;
 }
 
 interface AutoGridLayoutOptions {
@@ -193,7 +196,7 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
     this._lastDropTargetGridItemKey = null;
 
     this._resetPanelPositionAndSize();
-    this.setState({ draggingKey: undefined });
+    this.setState({ draggingKey: undefined, isDraggedItemOutside: undefined });
 
     document.body.classList.remove('dashboard-draggable-transparent-selection');
 
@@ -224,6 +227,17 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
       this._initialGridItemPosition.top + (evt.pageY - this._initialGridItemPosition.pageY) - containerShiftY,
       this._initialGridItemPosition.left + (evt.pageX - this._initialGridItemPosition.pageX) - containerShiftX
     );
+
+    const rect = this.containerRef.current?.getBoundingClientRect();
+    const isOutside =
+      !!rect &&
+      (evt.clientX < rect.left || evt.clientX > rect.right || evt.clientY < rect.top || evt.clientY > rect.bottom);
+    if (isOutside !== !!this.state.isDraggedItemOutside) {
+      this.setState({ isDraggedItemOutside: isOutside });
+    }
+    if (isOutside) {
+      return;
+    }
 
     const dropTargetGridItemKey = document
       .elementsFromPoint(evt.clientX, evt.clientY)

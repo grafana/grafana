@@ -484,6 +484,10 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     }
 
     const layout = sourceDropTarget.state.layout;
+    // Dropped outside of its grid: nothing to reorder, the item goes back to where it was
+    if (layout.state.isDraggedItemOutside) {
+      return;
+    }
     const children = layout.state.children;
     const finalOrder = layout.state.draggedChildren ?? children;
     const fromIndex = children.findIndex((child) => child === gridItem);
