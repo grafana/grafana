@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useMemo, useState, type FocusEvent, type FormEvent } from 'react';
+import { useMemo, useState, type FocusEvent, type FormEvent } from 'react';
 
 import {
   type DataFrame,
@@ -86,21 +86,16 @@ export function FilterByNameTransformerEditor({ input, options, onChange }: Filt
     []
   );
 
-  // Read at the point the effect below runs rather than subscribing to it: re-seeding whenever
-  // the options change would discard in-progress edits, such as a regex that is not yet valid.
-  const latestOptions = useEffectEvent(() => options);
-
-  // New input frames mean new field names, so the selection has to be derived again.
-  useEffect(() => {
-    const seedOptions = latestOptions();
-
-    setSelected(getSelectedNames(fieldNames, seedOptions));
-    setByVariable(seedOptions.byVariable || false);
-    setVariable(seedOptions.include?.variable);
-    setRegex(seedOptions.include?.pattern);
-    // eslint-plugin-react-hooks only recognises effect events from 7.1.1
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fieldNames]);
+  // Only field name changes reset the state: resetting on every options change would discard
+  // in-progress edits, such as a regex that is not yet valid.
+  const [prevFieldNames, setPrevFieldNames] = useState(fieldNames);
+  if (prevFieldNames !== fieldNames) {
+    setPrevFieldNames(fieldNames);
+    setSelected(getSelectedNames(fieldNames, options));
+    setByVariable(options.byVariable || false);
+    setVariable(options.include?.variable);
+    setRegex(options.include?.pattern);
+  }
 
   const onSelectionChange = (nextSelected: string[]) => {
     const nextOptions: FilterFieldsByNameTransformerOptions = {

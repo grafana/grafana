@@ -119,8 +119,8 @@ describe('browse-dashboards BrowseFolderVariablesPage', () => {
     expect(await screen.findByRole('tab', { name: /^Alert rules/ })).toBeInTheDocument();
     expect(await screen.findByRole('tab', { name: /^Alert rules/ })).toHaveAttribute('aria-selected', 'false');
 
-    expect(await screen.findByRole('tab', { name: 'Variables' })).toBeInTheDocument();
-    expect(await screen.findByRole('tab', { name: 'Variables' })).toHaveAttribute('aria-selected', 'true');
+    expect(await screen.findByRole('tab', { name: /^Variables/ })).toBeInTheDocument();
+    expect(await screen.findByRole('tab', { name: /^Variables/ })).toHaveAttribute('aria-selected', 'true');
   });
 
   it('displays folder-scoped variables returned by the API', async () => {

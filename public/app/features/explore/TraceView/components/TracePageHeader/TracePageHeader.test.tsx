@@ -116,7 +116,7 @@ const setup = (
     setShowSpanFilters: jest.fn(),
     spanFilterMatches: overrides.spanFilterMatches,
     setFocusedSpanIdForSearch: jest.fn(),
-    revealSpan: jest.fn(),
+    onGoToSpan: jest.fn(),
     datasourceType: 'tempo',
     setHeaderHeight: jest.fn(),
     data: new MutableDataFrame(),
@@ -134,7 +134,7 @@ const setup = (
     mockUsePluginLinks,
     mockUsePluginComponents,
     setFocusedSpanIdForSearch: defaultProps.setFocusedSpanIdForSearch,
-    revealSpan: defaultProps.revealSpan,
+    onGoToSpan: defaultProps.onGoToSpan,
     setSearch: defaultProps.setSearch,
   };
 };
@@ -369,7 +369,39 @@ describe('TracePageHeader test', () => {
     expect(within(banner).queryByText('checkout-service')).not.toBeInTheDocument();
   });
 
-  it('focuses the highlighted span on each Go to span click, including repeats', async () => {
+  it('shows a span too short to round to 0.1% as an unescaped "<0.1%"', () => {
+    const errorTraceId = 'tiny-span-trace-id';
+    const errorTrace = {
+      ...trace,
+      traceID: errorTraceId,
+      duration: 5_000_000,
+      spans: [
+        {
+          ...trace.spans[0],
+          traceID: errorTraceId,
+          spanID: 'root-error',
+          depth: 0,
+          duration: 5_000_000,
+          tags: [{ key: 'http.status_code', type: 'String', value: '500' }],
+        },
+        {
+          ...trace.spans[1],
+          traceID: errorTraceId,
+          spanID: 'tiny-error',
+          depth: 1,
+          duration: 811,
+          tags: [{ key: 'error', type: 'String', value: 'true' }],
+        },
+      ],
+    };
+
+    setup({ links: [], isLoading: false }, false, undefined, errorTrace);
+
+    const banner = screen.getByLabelText('Trace error banner');
+    expect(within(banner).getByText('811μs · <0.1% of trace')).toBeInTheDocument();
+  });
+
+  it('asks to go to the highlighted span and reports the click on every Go to span click, including repeats', async () => {
     const errorTraceId = 'go-to-span-trace-id';
     const errorTrace = {
       ...trace,
@@ -401,19 +433,14 @@ describe('TracePageHeader test', () => {
       ],
     };
 
-    const { setFocusedSpanIdForSearch, revealSpan } = setup(
-      { links: [], isLoading: false },
-      false,
-      undefined,
-      errorTrace
-    );
+    const { onGoToSpan } = setup({ links: [], isLoading: false }, false, undefined, errorTrace);
     const goToSpan = screen.getByRole('button', { name: 'Go to span' });
 
     await userEvent.click(goToSpan);
     await userEvent.click(goToSpan);
 
-    expect(revealSpan).toHaveBeenCalledWith(errorTrace.spans[1]);
-    expect(setFocusedSpanIdForSearch).toHaveBeenCalledWith('payment-error');
+    expect(onGoToSpan).toHaveBeenCalledTimes(2);
+    expect(onGoToSpan).toHaveBeenCalledWith('payment-error');
     expect(jest.mocked(reportInteraction)).toHaveBeenCalledTimes(2);
     expect(jest.mocked(reportInteraction)).toHaveBeenCalledWith('grafana_traces_trace_view_go_to_span_clicked', {
       app: CoreApp.Unknown,
@@ -421,94 +448,6 @@ describe('TracePageHeader test', () => {
       grafana_version: config.buildInfo.version,
       location: 'trace-banner',
     });
-  });
-
-  it('turns off matches-only when Go to span targets a hidden filtered span', async () => {
-    const errorTraceId = 'go-to-span-filtered-trace-id';
-    const errorTrace = {
-      ...trace,
-      traceID: errorTraceId,
-      duration: 2_410_000,
-      spans: [
-        {
-          ...trace.spans[0],
-          traceID: errorTraceId,
-          spanID: 'root-error',
-          depth: 0,
-          duration: 2_410_000,
-          tags: [{ key: 'http.status_code', type: 'String', value: '500' }],
-        },
-        {
-          ...trace.spans[1],
-          traceID: errorTraceId,
-          spanID: 'payment-error',
-          depth: 2,
-          duration: 1_420_000,
-          operationName: 'authorize',
-          process: { ...trace.spans[1].process, serviceName: 'payment-service' },
-          tags: [
-            { key: 'http.method', type: 'String', value: 'POST' },
-            { key: 'http.route', type: 'String', value: '/payments/authorize' },
-            { key: 'error', type: 'String', value: 'true' },
-          ],
-        },
-      ],
-    };
-
-    const { setSearch } = setup({ links: [], isLoading: false }, false, undefined, errorTrace, {
-      search: { ...DEFAULT_SPAN_FILTERS, matchesOnly: true, criticalPathOnly: true },
-      spanFilterMatches: new Set(['root-error']),
-    });
-
-    await userEvent.click(screen.getByRole('button', { name: 'Go to span' }));
-
-    expect(setSearch).toHaveBeenCalledWith({
-      ...DEFAULT_SPAN_FILTERS,
-      matchesOnly: false,
-      criticalPathOnly: true,
-    });
-  });
-
-  it('does not change search when Go to span target is already visible', async () => {
-    const errorTraceId = 'go-to-span-visible-trace-id';
-    const errorTrace = {
-      ...trace,
-      traceID: errorTraceId,
-      duration: 2_410_000,
-      spans: [
-        {
-          ...trace.spans[0],
-          traceID: errorTraceId,
-          spanID: 'root-error',
-          depth: 0,
-          duration: 2_410_000,
-          tags: [{ key: 'http.status_code', type: 'String', value: '500' }],
-        },
-        {
-          ...trace.spans[1],
-          traceID: errorTraceId,
-          spanID: 'payment-error',
-          depth: 2,
-          duration: 1_420_000,
-          operationName: 'authorize',
-          process: { ...trace.spans[1].process, serviceName: 'payment-service' },
-          tags: [
-            { key: 'http.method', type: 'String', value: 'POST' },
-            { key: 'http.route', type: 'String', value: '/payments/authorize' },
-            { key: 'error', type: 'String', value: 'true' },
-          ],
-        },
-      ],
-    };
-
-    const { setSearch } = setup({ links: [], isLoading: false }, false, undefined, errorTrace, {
-      search: { ...DEFAULT_SPAN_FILTERS, criticalPathOnly: true },
-      spanFilterMatches: new Set(['root-error']),
-    });
-
-    await userEvent.click(screen.getByRole('button', { name: 'Go to span' }));
-
-    expect(setSearch).not.toHaveBeenCalled();
   });
 
   it('should render the trace-level logs link when provided', () => {
