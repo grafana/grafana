@@ -30,6 +30,11 @@ import { type TraceSpan, type CriticalPathSection } from '../types/trace';
 import AccordionLogs from './SpanDetail/AccordionLogs';
 import { type ViewedBoundsFunctionType } from './utils';
 
+// The critical path is drawn on top of span bars that are coloured per service, so it has to
+// stay legible against arbitrary data colours rather than follow the theme surface.
+const CRITICAL_PATH_BACKGROUND = '#202226';
+const CRITICAL_PATH_EDGE = '#c7d0d9';
+
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css({
@@ -111,9 +116,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '11%',
       zIndex: 2,
       overflow: 'hidden',
-      background: theme.colors.text.secondary,
-      borderLeft: `1px solid ${theme.colors.text.primary}`,
-      borderRight: `1px solid ${theme.colors.text.primary}`,
+      background: CRITICAL_PATH_BACKGROUND,
+      borderLeft: `1px solid ${CRITICAL_PATH_EDGE}`,
+      borderRight: `1px solid ${CRITICAL_PATH_EDGE}`,
     }),
   };
 };
