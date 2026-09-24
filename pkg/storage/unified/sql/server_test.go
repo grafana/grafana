@@ -175,6 +175,14 @@ func TestWithAccessClientValidatesAuthzConfig(t *testing.T) {
 	}
 }
 
+func TestWithAuthorizeBeforeFetch(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.AuthorizeBeforeFetchEnabled = true
+	resourceOpts := &resource.ResourceServerOptions{}
+	require.NoError(t, withAuthorizeBeforeFetch(&ServerOptions{Cfg: cfg}, resourceOpts))
+	require.True(t, resourceOpts.AuthorizeBeforeFetchEnabled)
+}
+
 func TestWithNatsWatchMaxAge(t *testing.T) {
 	const maxAge = 5 * time.Minute
 

@@ -148,6 +148,32 @@ type ResourceServerStopper interface {
 	Stop(ctx context.Context) error
 }
 
+type BackendListKey struct {
+	Key             *resourcepb.ResourceKey
+	ResourceVersion int64
+	Folder          string
+	ContinueToken   string
+
+	// dataKey identifies the exact stored revision selected by ListKeys. It is
+	// intentionally private so callers cannot construct references to values that
+	// were not returned by the backend.
+	dataKey DataKey
+}
+
+type ListKeyIterator interface {
+	Next() bool
+	Error() error
+	Item() BackendListKey
+}
+
+// KeyListBackend is an optional capability for authorizing list metadata before
+// fetching values. Keep it separate from StorageBackend while the legacy SQL
+// backend remains supported.
+type KeyListBackend interface {
+	ListKeys(context.Context, *resourcepb.ListRequest, func(ListKeyIterator) error) (int64, error)
+	FetchValues(context.Context, []BackendListKey) (iter.Seq2[*BackendReadResponse, error], error)
+}
+
 type ListIterator interface {
 	// Next advances iterator and returns true if there is next value is available from the iterator.
 	// Error() should be checked after every call of Next(), even when Next() returns true.
@@ -462,6 +488,10 @@ type ResourceServerOptions struct {
 	// MaxPageSizeBytes is the maximum size of a page in bytes.
 	MaxPageSizeBytes int
 
+	// AuthorizeBeforeFetchEnabled authorizes list metadata before fetching resource values
+	// when the backend implements KeyListBackend.
+	AuthorizeBeforeFetchEnabled bool
+
 	// QOSQueue is the quality of service queue used to enqueue
 	QOSQueue  QOSEnqueuer
 	QOSConfig QueueConfig
@@ -651,6 +681,7 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		cancel:                         cancel,
 		storageMetrics:                 opts.StorageMetrics,
 		maxPageSizeBytes:               opts.MaxPageSizeBytes,
+		authorizeBeforeFetchEnabled:    opts.AuthorizeBeforeFetchEnabled,
 		reg:                            opts.Reg,
 		queue:                          opts.QOSQueue,
 		queueConfig:                    opts.QOSConfig,
@@ -784,10 +815,11 @@ type server struct {
 	once    sync.Once
 	initErr error
 
-	maxPageSizeBytes int
-	reg              prometheus.Registerer
-	queue            QOSEnqueuer
-	queueConfig      QueueConfig
+	maxPageSizeBytes            int
+	authorizeBeforeFetchEnabled bool
+	reg                         prometheus.Registerer
+	queue                       QOSEnqueuer
+	queueConfig                 QueueConfig
 
 	// This value is used by storage server to artificially delay returning response after successful
 	// write operations to make sure that subsequent search by the same client will return up-to-date results.
@@ -1773,6 +1805,11 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 
 	switch req.Source {
 	case resourcepb.ListRequest_STORE:
+		if s.authorizeBeforeFetchEnabled {
+			if backend, ok := s.backend.(KeyListBackend); ok {
+				return s.listAuthorizeBeforeFetch(ctx, req, backend)
+			}
+		}
 		return s.listAuthorized(ctx, req, s.backend.ListIterator)
 	case resourcepb.ListRequest_HISTORY:
 		return s.listAuthorized(ctx, req, s.backend.ListHistory)
@@ -1915,6 +1952,160 @@ func (s *server) listAuthorized(ctx context.Context, req *resourcepb.ListRequest
 		}
 
 		return iter.Error()
+	})
+
+	return s.finalizeListResponse(ctx, rsp, rv, err, nextToken, req.Options.Key)
+}
+
+func (s *server) listAuthorizeBeforeFetch(ctx context.Context, req *resourcepb.ListRequest, backend KeyListBackend) (*resourcepb.ListResponse, error) {
+	key := req.Options.Key
+	rsp := &resourcepb.ListResponse{}
+	var (
+		pageBytes int
+		nextToken string
+	)
+
+	rv, err := backend.ListKeys(ctx, req, func(keyIter ListKeyIterator) error {
+		candidates := func(yield func(BackendListKey) bool) {
+			for keyIter.Next() {
+				if keyIter.Error() != nil {
+					return
+				}
+				if !yield(keyIter.Item()) {
+					return
+				}
+			}
+		}
+
+		extractFn := func(item BackendListKey) authz.BatchCheckItem {
+			namespace := key.Namespace
+			if req.KeysOnly && namespace == "" {
+				namespace = item.Key.Namespace
+			}
+			return authz.BatchCheckItem{
+				Name:               item.Key.Name,
+				Folder:             item.Folder,
+				Verb:               utils.VerbGet,
+				Group:              key.Group,
+				Resource:           key.Resource,
+				Namespace:          namespace,
+				FreshnessTimestamp: ResourceVersionTime(item.ResourceVersion),
+			}
+		}
+
+		nextAuthorized, stop := iter.Pull2(authz.FilterAuthorized(ctx, s.access, candidates, extractFn, authz.WithTracer(tracer)))
+		defer stop()
+
+		if req.KeysOnly {
+			var lastContinueToken string
+			for {
+				item, authErr, ok := nextAuthorized()
+				if authErr != nil {
+					return authErr
+				}
+				if !ok {
+					return keyIter.Error()
+				}
+				if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= s.maxPageSizeBytes {
+					nextToken = lastContinueToken
+					if err := keyIter.Error(); err != nil {
+						return err
+					}
+					return nil
+				}
+
+				rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
+					ResourceVersion: item.ResourceVersion,
+					Namespace:       item.Key.Namespace,
+					Name:            item.Key.Name,
+					Folder:          item.Folder,
+				})
+				pageBytes += proto.Size(rsp.Items[len(rsp.Items)-1])
+				lastContinueToken = item.ContinueToken
+			}
+		}
+
+		for {
+			remaining := int(req.Limit) - len(rsp.Items)
+			if req.Limit > 0 && remaining <= 0 {
+				return fmt.Errorf("list page reached its item limit before fetching values")
+			}
+
+			batchSize := dataBatchSize
+			if req.Limit > 0 {
+				batchSize = min(batchSize, remaining)
+			}
+			batch := make([]BackendListKey, 0, batchSize)
+			noMoreAuthorizedItems := false
+			for len(batch) < batchSize {
+				item, authErr, ok := nextAuthorized()
+				if authErr != nil {
+					return authErr
+				}
+				if !ok {
+					noMoreAuthorizedItems = true
+					break
+				}
+				batch = append(batch, item)
+			}
+			if len(batch) == 0 {
+				return keyIter.Error()
+			}
+
+			values, err := backend.FetchValues(ctx, batch)
+			if err != nil {
+				return err
+			}
+
+			for value, err := range values {
+				if err != nil {
+					return err
+				}
+				if value == nil || value.Key == nil {
+					return fmt.Errorf("list value fetch returned an empty response")
+				}
+				rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
+					ResourceVersion: value.ResourceVersion,
+					Value:           value.Value,
+				})
+				pageBytes += len(value.Value)
+
+				if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= s.maxPageSizeBytes {
+					batchIndex := -1
+					for idx, item := range batch {
+						if item.ResourceVersion == value.ResourceVersion && proto.Equal(item.Key, value.Key) {
+							batchIndex = idx
+							break
+						}
+					}
+					if batchIndex < 0 {
+						return fmt.Errorf("list value fetch returned an unexpected resource")
+					}
+
+					hasMore := batchIndex+1 < len(batch)
+					if !hasMore && !noMoreAuthorizedItems {
+						_, authErr, ok := nextAuthorized()
+						if authErr != nil {
+							return authErr
+						}
+						hasMore = ok
+					}
+					if hasMore {
+						nextToken = batch[batchIndex].ContinueToken
+					}
+					if err := keyIter.Error(); err != nil {
+						return err
+					}
+					return nil
+				}
+			}
+			if noMoreAuthorizedItems {
+				if err := keyIter.Error(); err != nil {
+					return err
+				}
+				return nil
+			}
+		}
 	})
 
 	return s.finalizeListResponse(ctx, rsp, rv, err, nextToken, req.Options.Key)
