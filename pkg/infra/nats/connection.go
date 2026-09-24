@@ -162,16 +162,6 @@ func (c *connection) connect(ctx context.Context) (*natsclient.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
-	options = append(options, func(opts *natsclient.Options) error {
-		onConnect := opts.ConnectedCB
-		opts.ConnectedCB = func(nc *natsclient.Conn) {
-			c.everConnected.Store(true)
-			if onConnect != nil {
-				onConnect(nc)
-			}
-		}
-		return nil
-	})
 	options = append(options, c.config.DialOptions()...)
 
 	// nats.Connect blocks on the initial dial; honour ctx cancellation.
@@ -242,6 +232,7 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 		// fail-fast. The buffer is not durable and cannot recover a process crash.
 		natsclient.ReconnectBufSize(reconnectBufferSize(c.role)),
 		natsclient.ConnectHandler(func(nc *natsclient.Conn) {
+			c.everConnected.Store(true)
 			c.metrics.connectionStatus.Set(1)
 			c.log.Info("nats connected", "role", roleStr, "url", redactURL(nc.ConnectedUrl()))
 		}),
@@ -340,21 +331,14 @@ func (c *connection) healthy() error {
 }
 
 func (c *connection) publishConn() (*natsclient.Conn, error) {
-	if !c.Enabled() {
-		return nil, ErrDisabled
-	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.closed {
-		return nil, ErrClosed
-	}
-	if c.conn == nil || c.conn.IsClosed() {
-		return nil, fmt.Errorf("nats %s connection is not established: %w", c.role, natsclient.ErrConnectionClosed)
+	nc, err := c.get(context.Background())
+	if err != nil {
+		return nil, err
 	}
 	if !c.everConnected.Load() {
-		return nil, fmt.Errorf("nats %s connection has not connected successfully (status=%s): %w", c.role, c.conn.Status(), natsclient.ErrConnectionReconnecting)
+		return nil, fmt.Errorf("nats %s connection has not connected successfully (status=%s): %w", c.role, nc.Status(), natsclient.ErrConnectionReconnecting)
 	}
-	return c.conn, nil
+	return nc, nil
 }
 
 // close drains the connection and waits for the drain to complete so it does not
