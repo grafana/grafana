@@ -10867,6 +10867,7 @@
       "placeholder": "Choose"
     },
     "table": {
+      "cell-actions": "Cell actions",
       "cell-filter-on": "Filter for value",
       "cell-filter-out": "Filter out value",
       "cell-inspect": "Inspect value",
