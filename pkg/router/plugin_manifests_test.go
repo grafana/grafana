@@ -146,7 +146,7 @@ func TestPluginDeploymentBackendAuthentication(t *testing.T) {
 			authCalls++
 			require.Equal(t, 1, authCalls, "authentication must not recurse")
 			require.Equal(t, token, got)
-			require.Equal(t, req.Context(), ctx)
+			require.Equal(t, req.Context().Done(), ctx.Done(), "authentication must retain request cancellation")
 			return info, nil
 		}),
 	}
