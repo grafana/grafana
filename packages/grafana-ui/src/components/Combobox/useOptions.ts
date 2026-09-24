@@ -12,10 +12,7 @@ import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
 
 export type AsyncOptions<T extends string | number> =
   | Array<ComboboxOption<T>>
-  | ((
-      inputValue: string,
-      context: ComboboxAsyncOptionsContext<T>
-    ) => Promise<Array<ComboboxOption<T>> | void>);
+  | ((inputValue: string, context: ComboboxAsyncOptionsContext<T>) => Promise<Array<ComboboxOption<T>> | void>);
 
 const asyncNoop = () => Promise.resolve([]);
 
@@ -172,6 +169,7 @@ export function useOptions<T extends string | number>(
 
   const resetSearch = useCallback(() => {
     setUserTypedSearch('');
+    setAsyncLoading(false);
     requestIdRef.current += 1;
     abortRef.current?.abort();
     abortRef.current = null;

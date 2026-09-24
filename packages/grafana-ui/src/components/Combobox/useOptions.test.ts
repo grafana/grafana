@@ -146,6 +146,28 @@ describe('useOptions', () => {
     expect(result.current.options).toEqual([{ label: 'Carrot', value: 'carrot' }]);
   });
 
+  it('clears loading when the menu closes before the loader runs', () => {
+    jest.useFakeTimers();
+    const asyncOptions = jest.fn().mockResolvedValue([{ label: 'Async Option 1', value: '1' }]);
+    const { result } = renderHook(() => useOptions(asyncOptions, false));
+
+    act(() => {
+      result.current.updateOptions('Async');
+    });
+    expect(result.current.asyncLoading).toBe(true);
+
+    act(() => {
+      result.current.resetSearch();
+    });
+    act(() => {
+      jest.advanceTimersByTime(200);
+    });
+
+    expect(result.current.asyncLoading).toBe(false);
+    expect(asyncOptions).not.toHaveBeenCalled();
+    jest.useRealTimers();
+  });
+
   it('should handle errors in asynchronous options', async () => {
     jest.spyOn(console, 'error').mockImplementation();
 

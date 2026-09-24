@@ -52,10 +52,7 @@ interface ComboboxStaticProps<T extends string | number>
    */
   options:
     | Array<ComboboxOption<T>>
-    | ((
-        inputValue: string,
-        context: ComboboxAsyncOptionsContext<T>
-      ) => Promise<Array<ComboboxOption<T>> | void>);
+    | ((inputValue: string, context: ComboboxAsyncOptionsContext<T>) => Promise<Array<ComboboxOption<T>> | void>);
 
   /**
    * Current selected value. Most consumers should pass a scalar value (string | number). However, sometimes with Async
