@@ -14,6 +14,7 @@ import {
   isPredefinedNameSelected,
   parseUseCrossDashboardVariables,
   setScopeAll,
+  setShownScopeNames,
   toggleSelectionName,
   type PredefinedVariableScope,
   type UseCrossDashboardVariables,
@@ -65,41 +66,6 @@ export function updateDashboardScopeAll(
     [scope]: setScopeAll(checked),
   });
   DashboardInteractions.predefinedVariableToggled({ scope, checked });
-}
-
-/** Opt the shown names in or out without changing the rest of the scope. */
-function setShownScopeNames(
-  selection: UseCrossDashboardVariables,
-  scope: PredefinedVariableScope,
-  shownNames: string[],
-  allNamesInScope: string[],
-  checked: boolean
-): UseCrossDashboardVariables {
-  const current = selection[scope];
-
-  if (checked) {
-    if (current === 'all') {
-      return selection;
-    }
-    const names = current === 'none' ? [] : [...current];
-    for (const name of shownNames) {
-      if (!names.includes(name)) {
-        names.push(name);
-      }
-    }
-    const coversScope = allNamesInScope.length > 0 && allNamesInScope.every((name) => names.includes(name));
-    return {
-      ...selection,
-      [scope]: coversScope ? 'all' : names.length === 0 ? 'none' : names,
-    };
-  }
-
-  const names = current === 'all' ? allNamesInScope : current === 'none' ? [] : current;
-  const remaining = names.filter((name) => !shownNames.includes(name));
-  return {
-    ...selection,
-    [scope]: remaining.length === 0 ? 'none' : remaining,
-  };
 }
 
 interface Props {

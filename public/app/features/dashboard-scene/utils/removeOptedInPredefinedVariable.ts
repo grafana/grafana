@@ -1,8 +1,10 @@
 import { sceneGraph, type SceneVariable } from '@grafana/scenes';
+import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { updateDashboardScopeVariable } from '../sidebar/dashboard/DashboardCrossDashboardVariablesOptions';
 
-import { type PredefinedVariableScope } from './crossDashboardVariablesSelection';
+import { type PredefinedVariableScope, type ScopeSelection } from './crossDashboardVariablesSelection';
+import { parseUseCrossDashboardVariablesFromHost } from './persistUseCrossDashboardVariables';
 import { fetchPredefinedVariables, getPredefinedOrigin } from './predefinedVariables';
 import { getDashboardSceneFor } from './utils';
 
@@ -21,6 +23,30 @@ export function namesForPredefinedRemoval(fetchedNames: string[], name: string, 
   return [...new Set([...fetchedNames, ...present])];
 }
 
+/**
+ * Sibling names for opting one variable out.
+ *
+ * Returns undefined when the fetch failed, so the selection is left unchanged.
+ * A failed refresh keeps the variables on screen, and a written annotation would
+ * disagree with them. Also returns undefined when "all" is stored and this
+ * variable was not in the fetch: the names on the dashboard are not the scope,
+ * and expanding "all" to them drops variables that are still opted in.
+ */
+export function allNamesForPredefinedRemoval(
+  fetchedNames: string[] | null,
+  name: string,
+  namesOnDashboard: string[],
+  scopeSelection: ScopeSelection
+): string[] | undefined {
+  if (fetchedNames === null) {
+    return undefined;
+  }
+  if (scopeSelection === 'all' && !fetchedNames.includes(name)) {
+    return undefined;
+  }
+  return namesForPredefinedRemoval(fetchedNames, name, namesOnDashboard);
+}
+
 /** Opt a global or folder variable out of this dashboard. The variable definition is left in place. */
 export async function removeOptedInPredefinedVariable(variable: SceneVariable): Promise<void> {
   const origin = getPredefinedOrigin(variable.state.origin);
@@ -30,20 +56,23 @@ export async function removeOptedInPredefinedVariable(variable: SceneVariable): 
 
   const dashboard = getDashboardSceneFor(variable);
   const fetched = await fetchPredefinedVariables(dashboard.state.meta.folderUid);
-  const allNamesInScope = namesForPredefinedRemoval(
-    namesInScope(fetched, origin.type),
+  const fetchedNames = fetched === null ? null : namesInScope(fetched, origin.type);
+  const scopeSelection = parseUseCrossDashboardVariablesFromHost(dashboard)?.[origin.type] ?? 'none';
+  const allNamesInScope = allNamesForPredefinedRemoval(
+    fetchedNames,
     variable.state.name,
-    namesOnDashboard(dashboard, origin.type)
+    namesOnDashboard(dashboard, origin.type),
+    scopeSelection
   );
+  if (allNamesInScope === undefined) {
+    return;
+  }
 
   updateDashboardScopeVariable(dashboard, origin.type, variable.state.name, false, allNamesInScope);
 }
 
-function namesInScope(
-  fetched: Awaited<ReturnType<typeof fetchPredefinedVariables>>,
-  scope: PredefinedVariableScope
-): string[] {
-  return (fetched ?? [])
+function namesInScope(fetched: VariableKind[], scope: PredefinedVariableScope): string[] {
+  return fetched
     .filter((candidate) => getPredefinedOrigin(candidate.spec.origin)?.type === scope)
     .map((candidate) => candidate.spec.name);
 }

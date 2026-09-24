@@ -1,4 +1,5 @@
 import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { act, render } from 'test/test-utils';
 
 import { FlagKeys } from '@grafana/runtime/internal';
@@ -258,5 +259,41 @@ describe('DashboardCrossDashboardVariablesOptions', () => {
     expect(screen.getByRole('checkbox', { name: 'cluster' })).toBeInTheDocument();
     expect(screen.queryByRole('checkbox', { name: 'env' })).not.toBeInTheDocument();
     expect(screen.queryByRole('checkbox', { name: 'region' })).not.toBeInTheDocument();
+  });
+
+  it('keeps a stored all when unchecking All filters that are only part of the scope', async () => {
+    const dashboard = createDashboard({
+      [AnnoKeyUseCrossDashboardVariables]: '{"global":"all","folder":"none"}',
+    });
+    mockFetchPredefinedVariables.mockResolvedValue([
+      makeCandidate('env', 'global'),
+      makeCandidate('service', 'global', 'AdhocVariable'),
+    ]);
+
+    render(<DashboardCrossDashboardVariablesOptions dashboard={dashboard} filtersOnly />);
+
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('checkbox', { name: 'All global' }));
+
+    expect(dashboard.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables]).toBe(
+      '{"global":"all","folder":"none"}'
+    );
+  });
+
+  it('drops a same-named filter from the other scope when All filters is cleared', async () => {
+    const dashboard = createDashboard({
+      [AnnoKeyUseCrossDashboardVariables]: '{"global":["service"],"folder":["service"]}',
+    });
+    mockFetchPredefinedVariables.mockResolvedValue([
+      makeCandidate('service', 'global', 'AdhocVariable'),
+      makeCandidate('service', 'folder', 'AdhocVariable'),
+    ]);
+
+    render(<DashboardCrossDashboardVariablesOptions dashboard={dashboard} filtersOnly />);
+
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('checkbox', { name: 'All global' }));
+
+    expect(dashboard.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables]).toBeUndefined();
   });
 });

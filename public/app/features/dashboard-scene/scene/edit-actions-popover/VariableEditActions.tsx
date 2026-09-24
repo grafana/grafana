@@ -21,7 +21,7 @@ export function VariableEditActions({
   onClickEditQuery: () => void;
   onClickDuplicate: () => void;
   onClickDelete: () => void;
-  /** Global and folder variables can only be opted out of this dashboard. */
+  /** Global and folder variables can only be opted out (removed) of this dashboard. */
   removeOnly?: boolean;
 }) {
   const styles = useStyles2(getActionStyles);
