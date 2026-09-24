@@ -10,6 +10,7 @@ import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
+import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
 import { moveRowToTab } from './moveRowToTab';
@@ -35,16 +36,9 @@ describe('moveRowToTab', () => {
   });
 
   it('moves the last source row into an existing rows layout and restores both layouts on undo', () => {
-    const row = new RowItem({ title: 'New row', layout: AutoGridLayoutManager.createEmpty() });
-    const source = new RowsLayoutManager({ rows: [row] });
     const existingRow = new RowItem({ title: 'Existing row', layout: AutoGridLayoutManager.createEmpty() });
     const previousDestination = new RowsLayoutManager({ rows: [existingRow] });
-    const sourceTab = new TabItem({ title: 'Source', layout: source });
-    const destination = new TabItem({ title: 'Destination', layout: previousDestination });
-    const tabs = new TabsLayoutManager({ tabs: [sourceTab, destination], currentTabSlug: sourceTab.getSlug() });
-    const dashboard = new DashboardScene({ isEditing: true, body: tabs });
-    deactivate = activateFullSceneTree(dashboard);
-    const sidebar = dashboard.state.sidebar;
+    const { row, source, sourceTab, destination, tabs, sidebar } = setup(previousDestination);
 
     moveRowToTab({ row, source, destination });
     const movedLayout = destination.getLayout() as RowsLayoutManager;
@@ -71,15 +65,8 @@ describe('moveRowToTab', () => {
   });
 
   it('moves the last source row into an empty tab and restores its original layout on undo', () => {
-    const row = new RowItem({ title: 'New row', layout: AutoGridLayoutManager.createEmpty() });
-    const source = new RowsLayoutManager({ rows: [row] });
     const previousDestination = AutoGridLayoutManager.createEmpty();
-    const sourceTab = new TabItem({ title: 'Source', layout: source });
-    const destination = new TabItem({ title: 'Destination', layout: previousDestination });
-    const tabs = new TabsLayoutManager({ tabs: [sourceTab, destination], currentTabSlug: sourceTab.getSlug() });
-    const dashboard = new DashboardScene({ isEditing: true, body: tabs });
-    deactivate = activateFullSceneTree(dashboard);
-    const sidebar = dashboard.state.sidebar;
+    const { row, source, sourceTab, destination, tabs, sidebar } = setup(previousDestination);
 
     moveRowToTab({ row, source, destination });
     const movedLayout = destination.getLayout() as RowsLayoutManager;
@@ -106,19 +93,12 @@ describe('moveRowToTab', () => {
   });
 
   it('preserves existing panels when converting the destination to rows and restores the original layout on undo', () => {
-    const row = new RowItem({ title: 'New row', layout: AutoGridLayoutManager.createEmpty() });
-    const source = new RowsLayoutManager({ rows: [row] });
     const previousDestination = new AutoGridLayoutManager({
       layout: new AutoGridLayout({
         children: [new AutoGridItem({ body: new VizPanel({ title: 'Existing panel', pluginId: 'table' }) })],
       }),
     });
-    const sourceTab = new TabItem({ title: 'Source', layout: source });
-    const destination = new TabItem({ title: 'Destination', layout: previousDestination });
-    const tabs = new TabsLayoutManager({ tabs: [sourceTab, destination], currentTabSlug: sourceTab.getSlug() });
-    const dashboard = new DashboardScene({ isEditing: true, body: tabs });
-    deactivate = activateFullSceneTree(dashboard);
-    const sidebar = dashboard.state.sidebar;
+    const { row, source, sourceTab, destination, tabs, sidebar } = setup(previousDestination);
 
     moveRowToTab({ row, source, destination });
     const movedLayout = destination.getLayout() as RowsLayoutManager;
@@ -153,15 +133,8 @@ describe('moveRowToTab', () => {
   });
 
   it('reuses the converted destination layout through repeated undo and redo', () => {
-    const row = new RowItem({ title: 'New row', layout: AutoGridLayoutManager.createEmpty() });
-    const source = new RowsLayoutManager({ rows: [row] });
     const previousDestination = AutoGridLayoutManager.createEmpty();
-    const sourceTab = new TabItem({ title: 'Source', layout: source });
-    const destination = new TabItem({ title: 'Destination', layout: previousDestination });
-    const tabs = new TabsLayoutManager({ tabs: [sourceTab, destination], currentTabSlug: sourceTab.getSlug() });
-    const dashboard = new DashboardScene({ isEditing: true, body: tabs });
-    deactivate = activateFullSceneTree(dashboard);
-    const sidebar = dashboard.state.sidebar;
+    const { row, source, sourceTab, destination, sidebar } = setup(previousDestination);
 
     moveRowToTab({ row, source, destination });
     const movedLayout = destination.getLayout() as RowsLayoutManager;
@@ -216,4 +189,17 @@ describe('moveRowToTab', () => {
     expect(target.state.rows).toEqual([existing]);
     expect(row.state.title).toBe('Row');
   });
+
+  function setup(previousDestination: DashboardLayoutManager) {
+    const row = new RowItem({ title: 'New row', layout: AutoGridLayoutManager.createEmpty() });
+    const source = new RowsLayoutManager({ rows: [row] });
+    const sourceTab = new TabItem({ title: 'Source', layout: source });
+    const destination = new TabItem({ title: 'Destination', layout: previousDestination });
+    const tabs = new TabsLayoutManager({ tabs: [sourceTab, destination], currentTabSlug: sourceTab.getSlug() });
+    const dashboard = new DashboardScene({ isEditing: true, body: tabs });
+    deactivate = activateFullSceneTree(dashboard);
+    const sidebar = dashboard.state.sidebar;
+
+    return { row, source, sourceTab, destination, tabs, sidebar };
+  }
 });

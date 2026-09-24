@@ -404,18 +404,7 @@ describe('cross-tab row dragging', () => {
   afterEach(() => deactivate?.());
 
   it('keeps the row in its source until drop and records an undoable move', () => {
-    const row = new RowItem({ title: 'Dragged row', layout: AutoGridLayoutManager.createEmpty() });
-    const source = new RowsLayoutManager({ rows: [row] });
-    const sourceTab = new TabItem({ key: 'source-tab', title: 'Source', layout: source });
-    const destination = new TabItem({
-      key: 'destination-tab',
-      title: 'Destination',
-      layout: AutoGridLayoutManager.createEmpty(),
-    });
-    const tabs = new TabsLayoutManager({ tabs: [sourceTab, destination] });
-    const dashboard = new DashboardScene({ isEditing: true, body: tabs });
-    deactivate = activateFullSceneTree(dashboard);
-    const orchestrator = dashboard.state.layoutOrchestrator!;
+    const { row, source, sourceTab, destination, tabs, dashboard, orchestrator } = setupRowDrag();
 
     orchestrator.startRowDrag(row);
     // Exercise the hover timer's callback without relying on DOM hit testing.
@@ -440,18 +429,7 @@ describe('cross-tab row dragging', () => {
   });
 
   it('leaves the row in its source without recording a move when dropped back on the source tab', () => {
-    const row = new RowItem({ title: 'Dragged row', layout: AutoGridLayoutManager.createEmpty() });
-    const source = new RowsLayoutManager({ rows: [row] });
-    const sourceTab = new TabItem({ key: 'source-tab', title: 'Source', layout: source });
-    const destination = new TabItem({
-      key: 'destination-tab',
-      title: 'Destination',
-      layout: AutoGridLayoutManager.createEmpty(),
-    });
-    const tabs = new TabsLayoutManager({ tabs: [sourceTab, destination] });
-    const dashboard = new DashboardScene({ isEditing: true, body: tabs });
-    deactivate = activateFullSceneTree(dashboard);
-    const orchestrator = dashboard.state.layoutOrchestrator!;
+    const { row, source, sourceTab, destination, tabs, dashboard, orchestrator } = setupRowDrag();
 
     orchestrator.startRowDrag(row);
     // Exercise the hover timer's callback without relying on DOM hit testing.
@@ -473,4 +451,21 @@ describe('cross-tab row dragging', () => {
     expect(dashboard.state.sidebar.state.undoStack).toHaveLength(0);
     expect(orchestrator.state.draggingRow).toBeUndefined();
   });
+
+  function setupRowDrag() {
+    const row = new RowItem({ title: 'Dragged row', layout: AutoGridLayoutManager.createEmpty() });
+    const source = new RowsLayoutManager({ rows: [row] });
+    const sourceTab = new TabItem({ key: 'source-tab', title: 'Source', layout: source });
+    const destination = new TabItem({
+      key: 'destination-tab',
+      title: 'Destination',
+      layout: AutoGridLayoutManager.createEmpty(),
+    });
+    const tabs = new TabsLayoutManager({ tabs: [sourceTab, destination] });
+    const dashboard = new DashboardScene({ isEditing: true, body: tabs });
+    deactivate = activateFullSceneTree(dashboard);
+    const orchestrator = dashboard.state.layoutOrchestrator!;
+
+    return { row, source, sourceTab, destination, tabs, dashboard, orchestrator };
+  }
 });
