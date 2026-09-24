@@ -4405,6 +4405,7 @@
       "label-top": "Top"
     },
     "name-show-unfilled-area": "Show unfilled area",
+    "name-text-mode": "Text mode",
     "name-value-display": "Value display",
     "presets": {
       "basic": "Basic",
@@ -4423,6 +4424,13 @@
     "suggestions": {
       "basic": "Bar gauge",
       "lcd": "Bar gauge - LCD"
+    },
+    "text-mode-options": {
+      "label-auto": "Auto",
+      "label-name": "Name",
+      "label-none": "None",
+      "label-value": "Value",
+      "label-value-and-name": "Value and name"
     },
     "value-display-options": {
       "label-hidden": "Hidden",

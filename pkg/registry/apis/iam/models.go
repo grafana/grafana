@@ -87,7 +87,7 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	dual                              dualwrite.Service
 	unified                           resource.ResourceClient
-	userSearchClient                  resourcepb.ResourceIndexClient
+	userSearchClient                  *dualwrite.Selector[user.SearchBackend]
 	teamSearchClient                  resourcepb.ResourceIndexClient
 	userSearchHandler                 *user.SearchHandler
 	teamSearchHandler                 *team.SearchHandler
