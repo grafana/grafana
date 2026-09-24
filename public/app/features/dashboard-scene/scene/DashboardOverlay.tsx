@@ -3,21 +3,11 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Drawer, useStyles2 } from '@grafana/ui';
-import { DrawerFocusScope } from '@grafana/ui/internal';
 
 import { DashboardLoadingBar } from './DashboardLoadingBar';
 import { type DashboardScene } from './DashboardScene';
 
 export function DashboardOverlay({ dashboard }: { dashboard: DashboardScene }) {
-  const { overlay, isModalLoading } = dashboard.useState();
-  return overlay || isModalLoading ? (
-    <DrawerFocusScope>
-      <DashboardOverlayContent dashboard={dashboard} />
-    </DrawerFocusScope>
-  ) : null;
-}
-
-function DashboardOverlayContent({ dashboard }: { dashboard: DashboardScene }) {
   const { overlay, isModalLoading } = dashboard.useState();
   const styles = useStyles2(getStyles);
 

@@ -11,7 +11,6 @@
  */
 
 export { useDragAndDrop } from '../components/DragAndDrop/useDragAndDrop';
-export { DrawerFocusScope } from '../components/Drawer/DrawerFocusScope';
 export type { DragAndDropComponents, DragAndDropModule } from '../components/DragAndDrop/useDragAndDrop';
 
 export { UPlotChart } from '../components/uPlot/Plot';
