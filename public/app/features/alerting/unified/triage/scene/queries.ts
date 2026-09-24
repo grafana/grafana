@@ -109,6 +109,10 @@ function orSelectors(selectors: string[]): string {
   return `(${selectors.join(' or ')})`;
 }
 
+function withLastOverTime(selectors: string[], lookback: string): string[] {
+  return selectors.map((selector) => `last_over_time(${selector}[${lookback}])`);
+}
+
 /** Time series for the summary bar chart: count by alertstate */
 export function summaryChartQuery(filter: string): SceneDataQuery {
   return getDataQuery(`count by (alertstate) (${orSelectors(buildMetricSelectors(filter))})`, {
@@ -121,7 +125,7 @@ export function summaryChartQuery(filter: string): SceneDataQuery {
  * Query A's last_over_time wrapping matches alertRuleInstancesQuery — see its docstring.
  */
 export function getWorkbenchQueries(countBy: string, filter: string): [SceneDataQuery, SceneDataQuery] {
-  const lookbackSelectors = buildMetricSelectors(filter).map((selector) => `last_over_time(${selector}[$__interval])`);
+  const lookbackSelectors = withLastOverTime(buildMetricSelectors(filter), '$__interval');
 
   return [
     getDataQuery(`count by (${countBy}) (${orSelectors(lookbackSelectors)})`, {
@@ -162,7 +166,7 @@ export function alertRuleInstancesQuery(
     { name: 'grafana_rule_uid', operator: '=', value: ruleUID },
     ...groupMatchers,
   ]);
-  const lookbackSelectors = selectors.map((selector) => `last_over_time(${selector}[$__interval])`);
+  const lookbackSelectors = withLastOverTime(selectors, '$__interval');
 
   return getDataQuery(
     `count without (alertname, grafana_alertstate, grafana_folder, grafana_rule_uid) (${orSelectors(lookbackSelectors)})`,
@@ -182,8 +186,8 @@ export function alertRuleInstancesQuery(
 function uniqueAlertInstancesExpr(filter: string): string {
   const firingSelectors = buildMetricSelectors(filter, [{ name: 'alertstate', operator: '=', value: 'firing' }]);
   const pendingSelectors = buildMetricSelectors(filter, [{ name: 'alertstate', operator: '=', value: 'pending' }]);
-  const firingExpr = orSelectors(firingSelectors.map((selector) => `last_over_time(${selector}[$__range])`));
-  const pendingExpr = orSelectors(pendingSelectors.map((selector) => `last_over_time(${selector}[$__range])`));
+  const firingExpr = orSelectors(withLastOverTime(firingSelectors, '$__range'));
+  const pendingExpr = orSelectors(withLastOverTime(pendingSelectors, '$__range'));
 
   return (
     `${firingExpr} or ` + `(${pendingExpr} ` + `unless ignoring(alertstate, grafana_alertstate) ` + `${firingExpr})`
