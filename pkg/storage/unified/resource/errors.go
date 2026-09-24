@@ -118,16 +118,16 @@ func ErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
 	return GetError(respErr)
 }
 
-// StatusErrorFromResponse converts a unified storage failure to a Kubernetes
-// [apierrors.StatusError] for API-facing callers. The transport error takes
-// precedence over respErr; if both are nil, it returns nil. Context cancellation
-// and deadline errors map to HTTP 499 and 504, respectively.
+// StatusErrorFromResponse converts embedded results, gRPC errors and errors
+// implementing [apierrors.APIStatus] to a Kubernetes [apierrors.StatusError] for
+// API-facing callers. The transport error takes precedence over respErr; if both
+// are nil, it returns nil. Context cancellation and deadline errors map to HTTP
+// 499 and 504, respectively. Wrapped APIStatus and gRPC errors are recognized.
 //
-// Unlike [ErrorFromResponse], this replaces transport errors. Callers that need
+// Unrecognized errors are returned unchanged so response writers can apply their
+// own sanitization and logging rather than exposing internal error messages.
+// Unlike [ErrorFromResponse], recognized errors are replaced. Callers that need
 // the original error chain or gRPC retry classification must use that helper instead.
-//
-// Only errors coming from grpc should be passed to this function, other errors will lose
-// their chain through this.
 func StatusErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
 	if err == nil {
 		return GetError(respErr)
@@ -135,6 +135,10 @@ func StatusErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
 	// In-process calls can return context errors instead of gRPC statuses.
 	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 		err = grpcstatus.FromContextError(err).Err()
+	}
+	var apiStatus apierrors.APIStatus
+	if _, ok := grpcstatus.FromError(err); !ok && !errors.As(err, &apiStatus) {
+		return err
 	}
 	return GetError(AsErrorResult(err))
 }
