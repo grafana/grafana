@@ -437,7 +437,7 @@ func TestStatusErrorFromResponse_Passthroughs(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			require.ErrorIs(t, tc.err, StatusErrorFromResponse(nil, tc.err))
+			require.ErrorIs(t, StatusErrorFromResponse(nil, tc.err), tc.err)
 		})
 	}
 }
