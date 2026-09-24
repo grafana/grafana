@@ -461,6 +461,28 @@ describe('PanelQueryEditor', () => {
     await waitFor(() => expect(onSuggestionsChange).toHaveBeenLastCalledWith([]));
   });
 
+  // Regression: an explicit Run whose data has no matching suggestion at all used to leave
+  // pendingAutoApplyQuery armed, so a later *passive* data arrival for the same query (a time-range
+  // tick, not another Run click) would wrongly qualify as "this was an explicit Run" and silently
+  // change the panel's type the moment that data happened to score a real suggestion.
+  it('does not let a run with no suggestions leave a stale marker for a later passive data arrival', async () => {
+    const { panel, cell } = buildPanel();
+    const changePluginType = jest.spyOn(panel, 'changePluginType').mockResolvedValue(undefined);
+    getAllSuggestions.mockResolvedValue({ suggestions: [] });
+    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
+
+    await user.click(await screen.findByRole('button', { name: 'Run query' }));
+    completeData(panel);
+    await waitFor(() => expect(getAllSuggestions).toHaveBeenCalledTimes(1));
+
+    // Not a Run click — mirrors a time-range-triggered auto-run landing later with real data.
+    getAllSuggestions.mockResolvedValue({ suggestions: [{ pluginId: 'table', options: {} }] });
+    completeData(panel);
+
+    await waitFor(() => expect(getAllSuggestions).toHaveBeenCalledTimes(2));
+    expect(changePluginType).not.toHaveBeenCalled();
+  });
+
   it('still runs the query, and keeps working, when computing suggestions fails', async () => {
     const { panel, cell } = buildPanel();
     const runner = getQueryRunnerFor(panel)!;

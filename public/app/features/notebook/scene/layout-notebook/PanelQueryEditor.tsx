@@ -83,9 +83,11 @@ export function PanelQueryEditor({ panel, cell, autoFocus, onSuggestionsChange }
         onSuggestionsChange?.(topSuggestions);
         const pendingQuery = pendingAutoApplyQuery.current;
         const topSuggestion = topSuggestions[0];
+        // Consumed either way — a query with no matching suggestion at all must not leave this
+        // marker armed for some later, unrelated data arrival (e.g. a time-range tick) to pick up.
+        pendingAutoApplyQuery.current = undefined;
         if (pendingQuery && topSuggestion) {
           lastAutoAppliedQuery.current = pendingQuery;
-          pendingAutoApplyQuery.current = undefined;
           panel.changePluginType(topSuggestion.pluginId, topSuggestion.options, topSuggestion.fieldConfig);
         }
       })
