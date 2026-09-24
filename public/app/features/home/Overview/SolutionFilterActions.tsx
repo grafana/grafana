@@ -30,8 +30,6 @@ export interface SolutionFilterSpec<TScope extends object> {
 export interface CardFilterActionsProps {
   /** Datasource the card reads; a filter saved for another one is shown as not applied. */
   datasource: DataSourceInstanceListItem;
-  /** Whether the card's action is the attention one, so the applied gear takes the same text color. */
-  attention: boolean;
 }
 
 interface SolutionFilterActionsProps<TScope extends object> extends CardFilterActionsProps {
@@ -46,12 +44,11 @@ interface SolutionFilterActionsProps<TScope extends object> extends CardFilterAc
 export function SolutionFilterActions<TScope extends object>({
   spec,
   datasource,
-  attention,
   openLabel,
   title,
   children,
 }: SolutionFilterActionsProps<TScope>) {
-  const styles = useStyles2(getStyles, attention);
+  const styles = useStyles2(getStyles);
   const [raw] = useStoredString(solutionFilterStorageKey(spec.solution), '');
   const filter = useMemo(() => spec.parse(raw), [spec, raw]);
   const applied = scopeFor(filter, datasource);
@@ -191,12 +188,12 @@ function SolutionFilterModal<TScope extends object>({
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, attention: boolean) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   applied: css({
-    // The card's text-fill action is accent-colored, or warning-colored when it points at alerts;
-    // `&&` outranks IconButton's own color.
+    // An applied filter narrows what the card reports, alerts included, so the gear keeps the
+    // warning color whatever group the card sits in; `&&` outranks IconButton's own color.
     '&&': {
-      color: attention ? theme.colors.warning.text : theme.colors.accent.text,
+      color: theme.colors.warning.text,
     },
   }),
 });

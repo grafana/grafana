@@ -118,7 +118,7 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
 
       {FilterActions && datasource && (
         <Card.SecondaryActions>
-          <FilterActions datasource={datasource} attention={isAttentionCta} />
+          <FilterActions datasource={datasource} />
         </Card.SecondaryActions>
       )}
     </Card>

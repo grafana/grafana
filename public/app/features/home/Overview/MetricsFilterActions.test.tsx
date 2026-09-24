@@ -27,7 +27,7 @@ beforeEach(() => {
 
 describe('MetricsFilterActions', () => {
   it('saves an exclusion pattern on the default instance label', async () => {
-    const { user } = render(<MetricsFilterActions datasource={stubDatasource} attention={false} />);
+    const { user } = render(<MetricsFilterActions datasource={stubDatasource} />);
 
     await user.click(screen.getByRole('button', OPEN_GEAR));
     const dialog = await screen.findByRole('dialog', { name: 'Customize the disk alert' });
@@ -54,7 +54,7 @@ describe('MetricsFilterActions', () => {
   });
 
   it('keeps the dialog open and stores nothing when a typed-in label name is malformed', async () => {
-    const { user } = render(<MetricsFilterActions datasource={stubDatasource} attention={false} />);
+    const { user } = render(<MetricsFilterActions datasource={stubDatasource} />);
 
     await user.click(screen.getByRole('button', OPEN_GEAR));
     const dialog = await screen.findByRole('dialog');

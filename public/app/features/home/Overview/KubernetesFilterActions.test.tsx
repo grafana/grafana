@@ -52,7 +52,7 @@ describe('KubernetesFilterActions', () => {
     mockFetchLabelValues.mockImplementation((_uid, key) =>
       key === 'cluster' ? clusters.promise : Promise.resolve([])
     );
-    const { user } = render(<KubernetesFilterActions datasource={stubDatasource} attention={false} />);
+    const { user } = render(<KubernetesFilterActions datasource={stubDatasource} />);
 
     await user.click(screen.getByRole('button', OPEN_GEAR));
     const dialog = await screen.findByRole('dialog', { name: 'Filter Kubernetes Monitoring' });
@@ -95,7 +95,7 @@ describe('KubernetesFilterActions', () => {
   });
 
   it('reports the gear open but no change when the dialog is cancelled', async () => {
-    const { user } = render(<KubernetesFilterActions datasource={stubDatasource} attention={false} />);
+    const { user } = render(<KubernetesFilterActions datasource={stubDatasource} />);
 
     await user.click(screen.getByRole('button', OPEN_GEAR));
     await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Cancel' }));
@@ -112,7 +112,7 @@ describe('KubernetesFilterActions', () => {
       solutionFilterStorageKey('kubernetes'),
       JSON.stringify({ datasourceUid: 'other', datasourceName: 'Other', cluster: 'prod', namespaces: [], nodes: [] })
     );
-    const { user } = render(<KubernetesFilterActions datasource={stubDatasource} attention={false} />);
+    const { user } = render(<KubernetesFilterActions datasource={stubDatasource} />);
 
     expect(screen.getByText('Filters not applied')).toBeInTheDocument();
 
@@ -139,7 +139,7 @@ describe('KubernetesFilterActions', () => {
     jest.spyOn(store, 'setObject').mockImplementation(() => {
       throw new Error('quota');
     });
-    const { user } = render(<KubernetesFilterActions datasource={stubDatasource} attention={false} />);
+    const { user } = render(<KubernetesFilterActions datasource={stubDatasource} />);
 
     await user.click(screen.getByRole('button', OPEN_GEAR));
     const dialog = await screen.findByRole('dialog');

@@ -26,12 +26,11 @@ const spec: SolutionFilterSpec<MetricsDiskScope> = {
   validate: validateMetricsScope,
 };
 
-export function MetricsFilterActions({ datasource, attention }: CardFilterActionsProps) {
+export function MetricsFilterActions({ datasource }: CardFilterActionsProps) {
   return (
     <SolutionFilterActions
       spec={spec}
       datasource={datasource}
-      attention={attention}
       openLabel={t('home.solutions.metrics.filter.open', 'Exclude hosts or filesystems from the disk alert')}
       title={t('home.solutions.metrics.filter.title', 'Customize the disk alert')}
     >

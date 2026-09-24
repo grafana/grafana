@@ -32,12 +32,11 @@ const spec: SolutionFilterSpec<KubernetesScope> = {
   customized: customizedDimensions,
 };
 
-export function KubernetesFilterActions({ datasource, attention }: CardFilterActionsProps) {
+export function KubernetesFilterActions({ datasource }: CardFilterActionsProps) {
   return (
     <SolutionFilterActions
       spec={spec}
       datasource={datasource}
-      attention={attention}
       openLabel={t('home.solutions.kubernetes.filter.open', 'Filter by cluster, namespace, or node')}
       title={t('home.solutions.kubernetes.filter.title', 'Filter Kubernetes Monitoring')}
     >
