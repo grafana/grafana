@@ -207,7 +207,7 @@ func TestHTTPClientMiddleware(t *testing.T) {
 				require.Equal(t, forwardPluginRequestHTTPHeaders, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
 
 				reqClone := req.Clone(req.Context())
-				res, err := middlewares[0].CreateMiddleware(httpclient.Options{}, finalRoundTripper).RoundTrip(reqClone)
+				res, err := middlewares[0].CreateMiddleware(httpclient.Options{ForwardHTTPHeaders: true}, finalRoundTripper).RoundTrip(reqClone)
 				require.NoError(t, err)
 				require.NoError(t, res.Body.Close())
 				require.Len(t, reqClone.Header, 5)
@@ -235,7 +235,7 @@ func TestHTTPClientMiddleware(t *testing.T) {
 				require.Equal(t, forwardPluginRequestHTTPHeaders, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
 
 				reqClone := req.Clone(req.Context())
-				res, err := middlewares[0].CreateMiddleware(httpclient.Options{}, finalRoundTripper).RoundTrip(reqClone)
+				res, err := middlewares[0].CreateMiddleware(httpclient.Options{ForwardHTTPHeaders: true}, finalRoundTripper).RoundTrip(reqClone)
 				require.NoError(t, err)
 				require.NoError(t, res.Body.Close())
 				require.Len(t, reqClone.Header, 5)
@@ -260,7 +260,7 @@ func TestHTTPClientMiddleware(t *testing.T) {
 				require.Equal(t, forwardPluginRequestHTTPHeaders, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
 
 				reqClone := req.Clone(req.Context())
-				res, err := middlewares[0].CreateMiddleware(httpclient.Options{}, finalRoundTripper).RoundTrip(reqClone)
+				res, err := middlewares[0].CreateMiddleware(httpclient.Options{ForwardHTTPHeaders: true}, finalRoundTripper).RoundTrip(reqClone)
 				require.NoError(t, err)
 				require.NoError(t, res.Body.Close())
 				require.Len(t, reqClone.Header, 5)
@@ -288,7 +288,7 @@ func TestHTTPClientMiddleware(t *testing.T) {
 				require.Equal(t, forwardPluginRequestHTTPHeaders, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
 
 				reqClone := req.Clone(req.Context())
-				res, err := middlewares[0].CreateMiddleware(httpclient.Options{}, finalRoundTripper).RoundTrip(reqClone)
+				res, err := middlewares[0].CreateMiddleware(httpclient.Options{ForwardHTTPHeaders: true}, finalRoundTripper).RoundTrip(reqClone)
 				require.NoError(t, err)
 				require.NoError(t, res.Body.Close())
 				require.Len(t, reqClone.Header, 5)
@@ -318,7 +318,7 @@ func TestHTTPClientMiddleware(t *testing.T) {
 				reqClone := req.Clone(req.Context())
 				// Create a header on the request as if it had been set by some other logic e.g. preceding middleware
 				reqClone.Header.Set(backend.OAuthIdentityTokenHeaderName, "bearer test-token")
-				res, err := middlewares[0].CreateMiddleware(httpclient.Options{}, finalRoundTripper).RoundTrip(reqClone)
+				res, err := middlewares[0].CreateMiddleware(httpclient.Options{ForwardHTTPHeaders: true}, finalRoundTripper).RoundTrip(reqClone)
 				require.NoError(t, err)
 				require.NoError(t, res.Body.Close())
 				require.Len(t, reqClone.Header, 5)
@@ -330,6 +330,34 @@ func TestHTTPClientMiddleware(t *testing.T) {
 				require.Equal(t, "cookie1", reqClone.Cookies()[0].Name)
 				require.Equal(t, "cookie2", reqClone.Cookies()[1].Name)
 				require.Equal(t, "cookie3", reqClone.Cookies()[2].Name)
+			})
+
+			t.Run("Should forward headers when calling CheckHealth even if ForwardHTTPHeaders is not enabled", func(t *testing.T) {
+				// Grafana's own HTTPClientMiddleware forwards headers unconditionally, regardless of
+				// the SDK's httpclient.Options.ForwardHTTPHeaders value: that option only matters to
+				// externalized plugins constructing their own http.Client via httpclient.New(opts).
+				_, err = cdt.MiddlewareHandler.CheckHealth(req.Context(), &backend.CheckHealthRequest{
+					PluginContext: pluginCtx,
+					Headers:       headers,
+				})
+				require.NoError(t, err)
+				require.NotNil(t, cdt.CheckHealthReq)
+				require.Len(t, cdt.CheckHealthReq.Headers, 6)
+
+				middlewares := httpclient.ContextualMiddlewareFromContext(cdt.QueryDataCtx)
+				require.Len(t, middlewares, 1)
+				require.Equal(t, forwardPluginRequestHTTPHeaders, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
+
+				reqClone := req.Clone(req.Context())
+				res, err := middlewares[0].CreateMiddleware(httpclient.Options{ForwardHTTPHeaders: false}, finalRoundTripper).RoundTrip(reqClone)
+				require.NoError(t, err)
+				require.NoError(t, res.Body.Close())
+				require.Len(t, reqClone.Header, 5)
+				require.Equal(t, "true", reqClone.Header.Get(ngalertmodels.FromAlertHeaderName))
+				require.Equal(t, "bearer token", reqClone.Header.Get(backend.OAuthIdentityTokenHeaderName))
+				require.Equal(t, "id-token", reqClone.Header.Get(backend.OAuthIdentityIDTokenHeaderName))
+				require.Equal(t, "uname", reqClone.Header.Get(proxyutil.UserHeaderName))
+				require.Len(t, reqClone.Cookies(), 3)
 			})
 		})
 	})

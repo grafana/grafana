@@ -1,9 +1,12 @@
 package datasource
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -32,6 +35,36 @@ func TestSubQueryConnectWhenDatasourceNotFound(t *testing.T) {
 	var statusErr *k8serrors.StatusError
 	require.True(t, errors.As(err, &statusErr))
 	require.Equal(t, int32(404), statusErr.Status().Code)
+}
+
+func TestSubQueryConnectForwardsRequest(t *testing.T) {
+	lastCalledWithHeaders := &map[string]string{}
+	sqr := subQueryREST{
+		builder: &DataSourceAPIBuilder{
+			client: mockClient{
+				lastCalledWithHeaders: lastCalledWithHeaders,
+			},
+			datasources:     mockDatasources{},
+			contextProvider: mockContextProvider{},
+		},
+	}
+
+	handler, err := sqr.Connect(context.Background(), "dsname", nil, mockResponder{})
+	require.NoError(t, err)
+	require.NotNil(t, handler)
+
+	body := []byte(`{"queries":[{"refId":"A","datasource":{"uid":"dsname"}}]}`)
+	req := httptest.NewRequest(http.MethodPost, "http://localhost/apis/test.datasource.grafana.app/v0alpha1/namespaces/default/datasources/dsname/query", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Custom-Header", "custom-value")
+
+	recorder := httptest.NewRecorder()
+	handler.ServeHTTP(recorder, req)
+
+	// Headers on the incoming HTTP request are never copied onto the QueryDataRequest sent to
+	// the plugin client: header forwarding for queries happens later via contextual httpclient
+	// middleware (see clientmiddleware.NewHTTPClientMiddleware), not via this field.
+	require.Equal(t, map[string]string{}, *lastCalledWithHeaders)
 }
 
 type mockClient struct {

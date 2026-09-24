@@ -1,12 +1,14 @@
 package clientmiddleware
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/handlertest"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 )
@@ -99,7 +101,7 @@ func TestCookiesMiddleware(t *testing.T) {
 
 		cdt := handlertest.NewHandlerMiddlewareTest(t,
 			WithReqContext(req, &user.SignedInUser{}),
-			handlertest.WithMiddlewares(NewCookiesMiddleware([]string{"grafana_session"})),
+			handlertest.WithMiddlewares(NewCookiesMiddleware([]string{"grafana_session"}), NewHTTPClientMiddleware()),
 		)
 
 		jsonDataMap := map[string]any{
@@ -124,6 +126,7 @@ func TestCookiesMiddleware(t *testing.T) {
 			require.Len(t, cdt.QueryDataReq.Headers, 2)
 			require.Equal(t, "test", cdt.QueryDataReq.Headers[otherHeader])
 			require.EqualValues(t, "cookie2=", cdt.QueryDataReq.Headers[cookieHeaderName])
+			assertCookieForwardedOnWire(t, cdt.QueryDataCtx, req)
 		})
 
 		t.Run("Should forward cookies when calling QueryChunkedData", func(t *testing.T) {
@@ -136,6 +139,7 @@ func TestCookiesMiddleware(t *testing.T) {
 			require.Len(t, cdt.QueryChunkedDataReq.Headers, 2)
 			require.Equal(t, "test", cdt.QueryChunkedDataReq.Headers[otherHeader])
 			require.EqualValues(t, "cookie2=", cdt.QueryChunkedDataReq.Headers[cookieHeaderName])
+			assertCookieForwardedOnWire(t, cdt.QueryChunkedDataCtx, req)
 		})
 
 		t.Run("Should forward cookies when calling CallResource", func(t *testing.T) {
@@ -149,6 +153,7 @@ func TestCookiesMiddleware(t *testing.T) {
 			require.Equal(t, "test", cdt.CallResourceReq.Headers[otherHeader][0])
 			require.Len(t, cdt.CallResourceReq.Headers[cookieHeaderName], 1)
 			require.EqualValues(t, "cookie2=", cdt.CallResourceReq.Headers[cookieHeaderName][0])
+			assertCookieForwardedOnWire(t, cdt.CallResourceCtx, req)
 		})
 
 		t.Run("Should forward cookies when calling CheckHealth", func(t *testing.T) {
@@ -161,6 +166,7 @@ func TestCookiesMiddleware(t *testing.T) {
 			require.Len(t, cdt.CheckHealthReq.Headers, 2)
 			require.Equal(t, "test", cdt.CheckHealthReq.Headers[otherHeader])
 			require.EqualValues(t, "cookie2=", cdt.CheckHealthReq.Headers[cookieHeaderName])
+			assertCookieForwardedOnWire(t, cdt.CheckHealthCtx, req)
 		})
 	})
 
@@ -226,4 +232,22 @@ func TestCookiesMiddleware(t *testing.T) {
 			require.Equal(t, "test", cdt.CheckHealthReq.Headers[otherHeader])
 		})
 	})
+}
+
+// assertCookieForwardedOnWire verifies that the Cookie header set on the plugin request by
+// CookiesMiddleware actually reaches the outbound *http.Request, by running the contextual
+// middleware HTTPClientMiddleware registers through to a final round tripper.
+func assertCookieForwardedOnWire(t *testing.T, ctx context.Context, baseReq *http.Request) {
+	t.Helper()
+
+	middlewares := httpclient.ContextualMiddlewareFromContext(ctx)
+	require.Len(t, middlewares, 1)
+	require.Equal(t, forwardPluginRequestHTTPHeaders, middlewares[0].(httpclient.MiddlewareName).MiddlewareName())
+
+	reqClone := baseReq.Clone(baseReq.Context())
+	res, err := middlewares[0].CreateMiddleware(httpclient.Options{ForwardHTTPHeaders: true}, finalRoundTripper).RoundTrip(reqClone)
+	require.NoError(t, err)
+	require.NoError(t, res.Body.Close())
+	require.Len(t, reqClone.Cookies(), 1)
+	require.Equal(t, "cookie2", reqClone.Cookies()[0].Name)
 }
