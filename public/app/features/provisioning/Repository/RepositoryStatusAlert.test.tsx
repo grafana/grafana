@@ -143,7 +143,7 @@ describe('RepositoryStatusAlert', () => {
     // Force-removing this finalizer would leave folders annotated as managed by a
     // deleted repository, so releasing is offered instead.
     expect(screen.queryByRole('button', { name: /delete anyway/i })).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: /release resources instead/i }));
+    await user.click(screen.getByRole('button', { name: /release all resources/i }));
 
     const event = publishSpy.mock.calls.at(-1)![0] as ShowConfirmModalEvent;
     await act(async () => {
@@ -152,6 +152,6 @@ describe('RepositoryStatusAlert', () => {
 
     expect(jobAction).toBe('releaseResources');
     expect(screen.getByText(/releasing resources/i)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /release resources instead/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /release all resources/i })).not.toBeInTheDocument();
   });
 });

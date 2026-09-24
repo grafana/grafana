@@ -14886,11 +14886,11 @@
       "force-delete-confirm": "Delete anyway",
       "force-delete-title": "Delete repository anyway",
       "force-delete-warning": "This removes the repository without completing the blocking step, so anything it manages on the provider side (for example a webhook) is left in place. Only do this if the repository can no longer be reached — for example its credentials have expired or been revoked.",
-      "release-button": "Release resources instead",
-      "release-confirm": "Release resources",
+      "release-button": "Release all resources",
+      "release-confirm": "Release all resources",
       "release-in-progress": "Releasing resources. The repository is removed on the next cleanup attempt, which can take a minute.",
-      "release-title": "Release resources instead",
-      "release-warning": "The folders and resources this repository still manages are kept in Grafana and become editable again instead of being deleted. Resources that were not managed by this repository are not affected. The repository is removed once they are released."
+      "release-title": "Release all resources",
+      "release-warning": "Instead of deleting them, the remaining folders and resources managed by this repository are kept in Grafana and become editable again. Unmanaged resources are not affected. The repository is removed once they are released."
     },
     "repository-status-page": {
       "back-to-repositories": "Back to repositories",

@@ -88,12 +88,12 @@ export function RepositoryStatusAlert({ repository }: { repository: Repository }
   const releaseInstead = useCallback(() => {
     appEvents.publish(
       new ShowConfirmModalEvent({
-        title: t('provisioning.repository-status-alert.release-title', 'Release resources instead'),
+        title: t('provisioning.repository-status-alert.release-title', 'Release all resources'),
         text: t(
           'provisioning.repository-status-alert.release-warning',
-          'The folders and resources this repository still manages are kept in Grafana and become editable again instead of being deleted. Resources that were not managed by this repository are not affected. The repository is removed once they are released.'
+          'Instead of deleting them, the remaining folders and resources managed by this repository are kept in Grafana and become editable again. Unmanaged resources are not affected. The repository is removed once they are released.'
         ),
-        yesText: t('provisioning.repository-status-alert.release-confirm', 'Release resources'),
+        yesText: t('provisioning.repository-status-alert.release-confirm', 'Release all resources'),
         noText: t('provisioning.repository-status-alert.force-delete-cancel', 'Cancel'),
         yesButtonVariant: 'primary',
         onConfirm: async () => {
@@ -135,7 +135,7 @@ export function RepositoryStatusAlert({ repository }: { repository: Repository }
         {canReleaseInstead && !releaseRequested && (
           <div>
             <Button variant="primary" size="sm" onClick={releaseInstead} disabled={isReleasing}>
-              <Trans i18nKey="provisioning.repository-status-alert.release-button">Release resources instead</Trans>
+              <Trans i18nKey="provisioning.repository-status-alert.release-button">Release all resources</Trans>
             </Button>
           </div>
         )}
