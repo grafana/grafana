@@ -18065,7 +18065,6 @@
     "series-editor": {
       "add-series": "Add series",
       "aria-label-select-series": "Select series {{seriesNum}}",
-      "description-color-field": "Select a numeric field whose values control point colors. Use standard options or field overrides to configure the color scheme, thresholds, or value mappings.",
       "label-color-field": "Color field",
       "label-frame": "Frame",
       "label-size-field": "Size field",

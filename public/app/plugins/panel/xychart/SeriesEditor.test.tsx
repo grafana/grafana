@@ -171,11 +171,6 @@ describe('SeriesEditor', () => {
       expect(screen.getByText('Y field')).toBeVisible();
       expect(screen.getByText('Size field')).toBeVisible();
       expect(screen.getByText('Color field')).toBeVisible();
-      expect(
-        screen.getByText(
-          'Select a numeric field whose values control point colors. Use standard options or field overrides to configure the color scheme, thresholds, or value mappings.'
-        )
-      ).toBeVisible();
     });
 
     it('shows the series list and add button in manual mapping', () => {
