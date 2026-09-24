@@ -82,7 +82,7 @@ The notification message would look like this:
 
   Summary: The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes.
   Status: resolved
-  Description: This alert fires when a web server responds with more 5xx errors than is expected. This could be an issue with the web server or a backend service.
+  Description: This alert fires when a web server responds with more 5xx errors than expected. This could be an issue with the web server or a backend service.
 ```
 
 {{< admonition type="note" >}}

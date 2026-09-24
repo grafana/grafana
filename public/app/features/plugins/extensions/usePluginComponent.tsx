@@ -4,10 +4,11 @@ import { usePluginContext } from '@grafana/data';
 import { type UsePluginComponentResult } from '@grafana/runtime';
 
 import * as errors from './errors';
+import { isGrafanaDevMode } from './isGrafanaDevMode';
 import { log } from './logs/log';
 import { useExposedComponentRegistrySlice } from './registry/useRegistrySlice';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
-import { getExposedComponentPluginDependencies, isGrafanaDevMode, wrapWithPluginContext } from './utils';
+import { getExposedComponentPluginDependencies, wrapWithPluginContext } from './utils';
 import { isExposedComponentDependencyMissing } from './validators';
 
 // Returns a component exposed by a plugin.

@@ -175,6 +175,9 @@ interface BaseTableProps {
   preventHorizontalOverflow?: boolean;
   // temporary feature toggle to manage rollout of the refreshed table experience (table.refresh)
   tableRefreshEnabled?: boolean;
+  jsonSyntaxHighlightingEnabled?: boolean;
+  // alternates the background color of every other row (table.refreshNewFeatures)
+  zebraStriping?: boolean;
 }
 
 /* ---------------------------- Table cell props ---------------------------- */
@@ -183,6 +186,7 @@ export interface TableNGProps extends BaseTableProps {}
 export type TableCellRenderer = FC<TableCellRendererProps>;
 
 export interface TableCellRendererProps {
+  jsonSyntaxHighlightingEnabled?: boolean;
   rowIdx: number;
   frame: DataFrame;
   timeRange?: TimeRange;

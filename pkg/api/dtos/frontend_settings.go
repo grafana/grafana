@@ -208,6 +208,7 @@ type FrontendSettingsDTO struct {
 	RudderstackV3SdkUrl        string `json:"rudderstackV3SdkUrl"`
 	RudderstackConfigUrl       string `json:"rudderstackConfigUrl"`
 	RudderstackIntegrationsUrl string `json:"rudderstackIntegrationsUrl"`
+	RudderstackBatchInterval   int    `json:"rudderstackBatchInterval"`
 
 	PostHogToken string `json:"postHogToken"`
 	PostHogHost  string `json:"postHogHost"`

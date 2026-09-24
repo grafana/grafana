@@ -3,6 +3,7 @@ import { of } from 'rxjs';
 import { type DataQueryRequest, type DataSourceApi, LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import {
   AdHocFiltersVariable,
   GroupByVariable,
@@ -12,6 +13,7 @@ import {
   VizPanel,
   type VizPanelState,
 } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { activateFullSceneTree } from '../utils/test-utils';
 
@@ -49,6 +51,10 @@ setPluginImportUtils({
 });
 
 describe('VizPanelSubHeader', () => {
+  afterEach(() => {
+    setTestFlags();
+  });
+
   it('renders when the drilldown variables apply to the panel', async () => {
     const { subHeader } = await buildScene();
 
@@ -127,6 +133,8 @@ interface BuildSceneOptions {
 }
 
 async function buildScene(options?: BuildSceneOptions) {
+  setTestFlags({ [FlagKeys.PerPanelNonApplicableDrilldowns]: true });
+
   const subHeader = new VizPanelSubHeader({});
 
   const queryRunner = new SceneQueryRunner({

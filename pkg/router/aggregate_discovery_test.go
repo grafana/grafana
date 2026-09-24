@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -45,6 +46,35 @@ func TestDiscoverGroups_TrailingSlashBaseURL(t *testing.T) {
 	_, err := discoverGroups(t.Context(), srv.Client(), srv.URL+"/")
 	require.NoError(t, err)
 	require.Equal(t, "/apis", gotPath)
+}
+
+// TestDiscoverGroups_AggregatedFormat pins the fix for the standalone
+// apiextensions apiserver (baas_apiserver): its plain, no-Accept-header /apis
+// only ever lists apiextensions.k8s.io itself -- CRD-backed groups are only
+// ever present in the aggregated discovery document. discoverGroups must
+// request that format and decode it into the same []metav1.APIGroup shape.
+func TestDiscoverGroups_AggregatedFormat(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, "/apis", r.URL.Path)
+		require.Contains(t, r.Header.Get("Accept"), "apidiscovery.k8s.io")
+		list := apidiscoveryv2.APIGroupDiscoveryList{
+			Items: []apidiscoveryv2.APIGroupDiscovery{
+				{
+					ObjectMeta: metav1.ObjectMeta{Name: "kgatlas.ext.grafana.app"},
+					Versions:   []apidiscoveryv2.APIVersionDiscovery{{Version: "v1alpha1"}},
+				},
+			},
+		}
+		w.Header().Set("Content-Type", aggregatedDiscoveryJSON)
+		_ = json.NewEncoder(w).Encode(list)
+	}))
+	defer srv.Close()
+
+	groups, err := discoverGroups(t.Context(), srv.Client(), srv.URL)
+	require.NoError(t, err)
+	require.Len(t, groups, 1)
+	require.Equal(t, "kgatlas.ext.grafana.app", groups[0].Name)
+	require.Equal(t, "kgatlas.ext.grafana.app/v1alpha1", groups[0].PreferredVersion.GroupVersion)
 }
 
 func TestDiscoverGroups_NonOKStatus(t *testing.T) {

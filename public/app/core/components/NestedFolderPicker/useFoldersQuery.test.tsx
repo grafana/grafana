@@ -65,6 +65,7 @@ describe('useFoldersQuery', () => {
             rootFolderItem: getCustomRootFolderItem({
               title: 'Test Repo',
               managedBy: ManagerKind.Repo,
+              uid: '',
             }),
           }),
         { wrapper }
@@ -75,6 +76,7 @@ describe('useFoldersQuery', () => {
         getCustomRootFolderItem({
           title: 'Test Repo',
           managedBy: ManagerKind.Repo,
+          uid: '',
         })
       );
     });

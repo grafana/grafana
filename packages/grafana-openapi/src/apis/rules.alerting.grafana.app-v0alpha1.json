@@ -4456,6 +4456,10 @@
               "datasourceUid": {
                 "description": "datasourceUid is the UID of the Mimir/Cortex Prometheus datasource to\nsync alert rules from. Empty means no sync is configured for the current\norg. The operator ini setting `unified_alerting.external_ruler_uid`\noverrides this when set; see status.externalRulerSync.origin.",
                 "type": "string"
+              },
+              "pollInterval": {
+                "description": "pollInterval sets how often this org's rules are re-synced from\ndatasourceUid. Empty defaults to 5m; must be between 1m and 1h. The\nworker checks orgs against a short internal baseline and only does\nreal work for an org once its own pollInterval has elapsed, so this\nis a lower bound, not a guarantee — an org's actual sync can lag\nslightly past its configured interval. Has no effect on the operator\nini path, which always uses the 5m default.",
+                "type": "string"
               }
             },
             "additionalProperties": false
@@ -4483,6 +4487,10 @@
             "properties": {
               "datasourceUid": {
                 "description": "datasourceUid is the UID actually used on the last sync attempt; may lag\nspec until the next tick. When origin=ini, this is the ini override value.",
+                "type": "string"
+              },
+              "lastAppliedHash": {
+                "description": "lastAppliedHash is the upstream config hash from the last successful\nsync via this resource. The worker reads it back (API path only) to\nskip an unchanged re-apply across restarts and replicas, where an\nin-memory-only dedup cache would otherwise start empty. Internal\nbookkeeping; not user-facing.",
                 "type": "string"
               },
               "origin": {

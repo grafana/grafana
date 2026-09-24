@@ -14,11 +14,13 @@ import {
 
 // Flag key constants for programmatic access
 export const FlagKeys = {
+  /** Hand data source managed alerting URLs over to the grafana-prometheusalerting-app plugin */
+  AlertingDataSourceManagedRouteProxy: "alerting.dataSourceManagedRouteProxy",
   /** Enable manually starting an Assistant investigation from the alert instance drawer. */
   AlertingManualAssistantInvestigation: "alerting.manualAssistantInvestigation",
   /** Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them. */
   AlertingRuleQuality: "alerting.ruleQuality",
-  /** Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana */
+  /** Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source */
   AlertingSyncExternalAlertmanager: "alerting.syncExternalAlertmanager",
   /** Enables new analytics framework */
   AnalyticsFramework: "analyticsFramework",
@@ -156,6 +158,8 @@ export const FlagKeys = {
   OtelLogsFormatting: "otelLogsFormatting",
   /** Shows text labels on the add and stacked view buttons in PanelEditNext */
   PaneleditButtonLabels: "paneledit.buttonLabels",
+  /** Enables viewing non-applicable drilldowns on a panel level */
+  PerPanelNonApplicableDrilldowns: "perPanelNonApplicableDrilldowns",
   /** Enables RBAC for playlists */
   PlaylistsRBAC: "playlistsRBAC",
   /** Initializes data source instance settings asynchronously from the API instead of synchronously from boot data */
@@ -221,6 +225,17 @@ export const FlagKeys = {
 } as const;
 
 /**
+ * Hand data source managed alerting URLs over to the grafana-prometheusalerting-app plugin
+ *
+ * **Details:**
+ * - flag key: `alerting.dataSourceManagedRouteProxy`
+ * - default value: `false`
+ */
+export const useFlagAlertingDataSourceManagedRouteProxy = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alerting.dataSourceManagedRouteProxy", false, options).value;
+};
+
+/**
  * Enable manually starting an Assistant investigation from the alert instance drawer.
  *
  * **Details:**
@@ -243,7 +258,7 @@ export const useFlagAlertingRuleQuality = (options?: ReactFlagEvaluationOptions)
 };
 
 /**
- * Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana
+ * Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source
  *
  * **Details:**
  * - flag key: `alerting.syncExternalAlertmanager`
@@ -999,6 +1014,17 @@ export const useFlagOtelLogsFormatting = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagPaneleditButtonLabels = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("paneledit.buttonLabels", false, options).value;
+};
+
+/**
+ * Enables viewing non-applicable drilldowns on a panel level
+ *
+ * **Details:**
+ * - flag key: `perPanelNonApplicableDrilldowns`
+ * - default value: `false`
+ */
+export const useFlagPerPanelNonApplicableDrilldowns = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("perPanelNonApplicableDrilldowns", false, options).value;
 };
 
 /**
