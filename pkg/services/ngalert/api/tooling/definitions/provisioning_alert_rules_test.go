@@ -28,7 +28,7 @@ func TestStrfmtDuration(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.expected, func(t *testing.T) {
-			s := strfmtDuration(model.Duration(tc.in))
+			s := StrfmtDuration(model.Duration(tc.in))
 			require.Equal(t, tc.expected, s)
 
 			parsed, err := strfmt.ParseDuration(s)

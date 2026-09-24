@@ -206,14 +206,14 @@ func (r ProvisionedAlertRule) MarshalJSON() ([]byte, error) {
 		KeepFiringFor string `json:"keep_firing_for"`
 	}{
 		plain:         plain(r),
-		For:           strfmtDuration(r.For),
-		KeepFiringFor: strfmtDuration(r.KeepFiringFor),
+		For:           StrfmtDuration(r.For),
+		KeepFiringFor: StrfmtDuration(r.KeepFiringFor),
 	})
 }
 
-// strfmtDuration formats d like model.Duration.String, except that whole years are
+// StrfmtDuration formats d like model.Duration.String, except that whole years are
 // written as days.
-func strfmtDuration(d model.Duration) string {
+func StrfmtDuration(d model.Duration) string {
 	const day = model.Duration(24 * time.Hour)
 	if d == 0 || d%(365*day) != 0 {
 		return d.String()
