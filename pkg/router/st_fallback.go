@@ -3,6 +3,7 @@ package router
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httputil"
@@ -32,10 +33,26 @@ const (
 	singleTenantLookupTimeout = 5 * time.Second
 )
 
+// singleTenantStack is what a resolver reports for a stack; the zero value means not found.
+type singleTenantStack struct {
+	URL       string // where the router connects
+	PublicURL string // its host is sent as the Host header, when set
+	Slug      string // expected grafana-stack response header, when set
+}
+
+type singleTenantTarget struct {
+	url  *url.URL
+	host string
+	slug string
+}
+
 type singleTenantHost struct {
-	host      *url.URL
+	host      *singleTenantTarget
 	expiresAt time.Time
 }
+
+// errStackOriginMismatch means the response came from a different stack than the one resolved.
+var errStackOriginMismatch = errors.New("router: response came from an unexpected stack")
 
 // singleTenantFallback forwards requests without a matching multi-tenant route to
 // the single-tenant stack identified by the request namespace. Although this is
@@ -46,14 +63,14 @@ type singleTenantFallback struct {
 	breakerMu     sync.Mutex
 	breakers      *lru.Cache[string, *gobreaker.CircuitBreaker[struct{}]]
 	lookups       singleflight.Group
-	resolveHost   func(context.Context, int64) (string, error)
+	resolveHost   func(context.Context, int64) (singleTenantStack, error)
 	discoveryHost *url.URL
 	transport     *http.Transport
 }
 
 type singleTenantFallbackOptions struct {
 	cacheSize     int
-	resolveHost   func(context.Context, int64) (string, error)
+	resolveHost   func(context.Context, int64) (singleTenantStack, error)
 	discoveryHost *url.URL
 	transport     *http.Transport
 }
@@ -86,12 +103,12 @@ func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFal
 	}, nil
 }
 
-func (st *singleTenantFallback) cachedHost(stackID int64) (*url.URL, bool) {
+func (st *singleTenantFallback) cachedHost(stackID int64) (*singleTenantTarget, bool) {
 	entry, ok := st.cache.Get(stackID)
 	return entry.host, ok && time.Now().Before(entry.expiresAt)
 }
 
-func (st *singleTenantFallback) hostForNamespace(ctx context.Context, namespace string) (*url.URL, error) {
+func (st *singleTenantFallback) hostForNamespace(ctx context.Context, namespace string) (*singleTenantTarget, error) {
 	info, err := types.ParseNamespace(namespace)
 	if err != nil || info.StackID < 1 {
 		return nil, nil
@@ -113,11 +130,11 @@ func (st *singleTenantFallback) hostForNamespace(ctx context.Context, namespace 
 		if result.Err != nil {
 			return nil, result.Err
 		}
-		return result.Val.(*url.URL), nil
+		return result.Val.(*singleTenantTarget), nil
 	}
 }
 
-func (st *singleTenantFallback) lookupHost(ctx context.Context, stackID int64) (*url.URL, error) {
+func (st *singleTenantFallback) lookupHost(ctx context.Context, stackID int64) (*singleTenantTarget, error) {
 	if host, ok := st.cachedHost(stackID); ok {
 		return host, nil
 	}
@@ -128,14 +145,23 @@ func (st *singleTenantFallback) lookupHost(ctx context.Context, stackID int64) (
 	if err != nil {
 		return nil, err
 	}
-	var target *url.URL
-	if host != "" {
-		target, err = url.Parse(host)
+	var target *singleTenantTarget
+	if host.URL != "" {
+		u, err := url.Parse(host.URL)
 		if err != nil {
 			return nil, err
 		}
-		if (target.Scheme != "http" && target.Scheme != "https") || target.Host == "" {
-			return nil, fmt.Errorf("invalid stack host URL: %q", host)
+		if (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+			return nil, fmt.Errorf("invalid stack host URL: %q", host.URL)
+		}
+		target = &singleTenantTarget{url: u, slug: host.Slug}
+		// Stacks enforce their domain, redirecting any other Host to their public URL.
+		if host.PublicURL != "" {
+			public, err := url.Parse(host.PublicURL)
+			if err != nil {
+				return nil, fmt.Errorf("invalid stack public URL: %w", err)
+			}
+			target.host = public.Host
 		}
 	}
 	ttl := singleTenantCacheTTL
@@ -164,7 +190,7 @@ func (st *singleTenantFallback) ServeHTTP(w http.ResponseWriter, req *http.Reque
 	// The discovery host supplies metadata, never tenant resources or mutations.
 	if st.discoveryHost != nil && (req.Method == http.MethodGet || req.Method == http.MethodHead) && isSingleTenantDiscoveryPath(req.URL.Path) {
 		// Namespaced requests require a nonempty group, so discovery cannot collide with them.
-		st.forward(st.discoveryHost, "", w, req)
+		st.forward(&singleTenantTarget{url: st.discoveryHost}, "", w, req)
 		return
 	}
 	http.NotFound(w, req)
@@ -183,15 +209,36 @@ func isSingleTenantDiscoveryPath(path string) bool {
 	return ok
 }
 
-func (st *singleTenantFallback) forward(host *url.URL, group string, w http.ResponseWriter, req *http.Request) {
+func (st *singleTenantFallback) forward(host *singleTenantTarget, group string, w http.ResponseWriter, req *http.Request) {
 	proxy := &httputil.ReverseProxy{
 		Rewrite: func(pr *httputil.ProxyRequest) {
-			pr.SetURL(host)
+			pr.SetURL(host.url)
+			// SetURL clears Out.Host; an empty host keeps it that way, so the URL's host is sent.
+			pr.Out.Host = host.host
 		},
-		Transport:      newBackendTransport(st.transport),
-		ModifyResponse: rejectBackendRedirects,
+		Transport: newBackendTransport(st.transport),
+		ModifyResponse: func(resp *http.Response) error {
+			if err := checkStackOrigin(resp, host.slug); err != nil {
+				return err
+			}
+			return rejectBackendRedirects(resp)
+		},
 	}
-	serveThroughBreaker(st.breakerForDestination(host, group), group, proxy, w, req)
+	serveThroughBreaker(st.breakerForDestination(host.url, group), group, proxy, w, req)
+}
+
+// checkStackOrigin guards against the connection reaching the wrong stack (for
+// example a stale in-cluster DNS record).
+func checkStackOrigin(resp *http.Response, slug string) error {
+	if slug == "" {
+		return nil
+	}
+	origin := resp.Header.Get("grafana-stack")
+	resp.Header.Del("grafana-stack")
+	if origin != "" && origin != slug {
+		return fmt.Errorf("%w: expected %q, got %q", errStackOriginMismatch, slug, origin)
+	}
+	return nil
 }
 
 // ST groups span multiple hosts, so their handler isolates breakers by destination and group.
@@ -298,43 +345,48 @@ func (f *fallbackBackend) Load(context.Context) (http.Handler, error) {
 }
 
 // The results of this call are cached
-func newGComURLResolver(gcomBaseURL string, gcomToken string) func(context.Context, int64) (string, error) {
+func newGComURLResolver(gcomBaseURL string, gcomToken string) func(context.Context, int64) (singleTenantStack, error) {
 	// mirroring grafana's pkg/services/gcom
 	type instance struct {
 		ID   int    `json:"id"`
 		Slug string `json:"slug"`
+		URL  string `json:"url"`
 	}
 
-	return func(ctx context.Context, stackID int64) (string, error) {
+	return func(ctx context.Context, stackID int64) (singleTenantStack, error) {
 		url, err := url.JoinPath(gcomBaseURL, "instances", strconv.FormatInt(stackID, 10))
 		if err != nil {
-			return "", err
+			return singleTenantStack{}, err
 		}
 
 		// #nosec G704 -- the base URL is operator-controlled Grafana configuration and stackID is an integer.
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 		if err != nil {
-			return "", fmt.Errorf("creating gcom instance request: %w", err)
+			return singleTenantStack{}, fmt.Errorf("creating gcom instance request: %w", err)
 		}
 		req.Header.Set("Authorization", "Bearer "+gcomToken)
 		// #nosec G704 -- req targets the operator-controlled Grafana.com API URL constructed above.
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
-			return "", fmt.Errorf("fetching gcom instance: %w", err)
+			return singleTenantStack{}, fmt.Errorf("fetching gcom instance: %w", err)
 		}
 		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode == http.StatusNotFound {
-			return "", nil
+			return singleTenantStack{}, nil
 		}
 		if resp.StatusCode != http.StatusOK {
-			return "", fmt.Errorf("fetching gcom instance: unexpected status code %d", resp.StatusCode)
+			return singleTenantStack{}, fmt.Errorf("fetching gcom instance: unexpected status code %d", resp.StatusCode)
 		}
 
 		var result instance
 		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-			return "", fmt.Errorf("decoding gcom instance: %w", err)
+			return singleTenantStack{}, fmt.Errorf("decoding gcom instance: %w", err)
 		}
-		return fmt.Sprintf("http://%s-grafana-http.%s.svc.cluster.local.:80", result.Slug, "hosted-grafana"), nil
+		return singleTenantStack{
+			URL:       fmt.Sprintf("http://%s-grafana-http.%s.svc.cluster.local.:80", result.Slug, "hosted-grafana"),
+			PublicURL: result.URL,
+			Slug:      result.Slug,
+		}, nil
 	}
 }
