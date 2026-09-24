@@ -88,6 +88,7 @@ func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer
 		withSearchBackedListConfig,
 		withStorageMetrics,
 		withUsageStats,
+		withNatsWatchMaxAge,
 	)
 	if err != nil {
 		return nil, err
@@ -209,6 +210,14 @@ func withUsageStats(opts *ServerOptions, resourceOpts *resource.ResourceServerOp
 	return nil
 }
 
+func withNatsWatchMaxAge(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	if opts.Cfg == nil || !opts.Cfg.NATS.Enabled || !opts.Cfg.NATS.Notifier {
+		return nil
+	}
+	resourceOpts.NatsWatchMaxAge = opts.Cfg.NATS.NotifierWatchMaxAge
+	return nil
+}
+
 func withBackend(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	if opts.Backend == nil {
 		return fmt.Errorf("missing storage backend")
@@ -263,6 +272,7 @@ func withVectorIndexers(opts *ServerOptions, resourceOpts *resource.ResourceServ
 		BuilderProvider: resourceOpts.Search.EmbeddingBuilders,
 		DashboardStats:  opts.DashboardStats,
 		Metrics:         resourceOpts.VectorMetrics,
+		PageSize:        opts.Cfg.VectorBackfillPageSize,
 	})
 	if err != nil {
 		return fmt.Errorf("create vector backfiller: %w", err)
