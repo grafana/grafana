@@ -2454,7 +2454,7 @@ __metadata:
     lodash: "npm:^4.17.23"
     marked: "npm:^16.3.0"
     marked-mangle: "npm:^1.1.12"
-    moment-timezone: "npm:^0.5.47"
+    moment-timezone: "npm:^0.6.0"
     ol: "npm:^10.7.0"
     papaparse: "npm:^5.5.3"
     react: "npm:19.2.8"
@@ -25882,12 +25882,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"moment-timezone@npm:^0.5.47":
-  version: 0.5.47
-  resolution: "moment-timezone@npm:0.5.47"
+"moment-timezone@npm:^0.6.0":
+  version: 0.6.4
+  resolution: "moment-timezone@npm:0.6.4"
   dependencies:
     moment: "npm:^2.29.4"
-  checksum: 10/b2ad32e6b7ea4ce99756c9f571f8eb1bdd6592ecdc2bf3f7fb988ae980a49a7e87b986776090571b9608c8576205f839b736dc7589c180ce36c82fad4b8416c6
+  checksum: 10/efa60fc46c83278e01921a229399883ddb2128df078fe282384f929fec7ed71f6101e6e21a14cb36ba8d03febfd9a769dff9e7ed017245d8b65e042abb71de39
   languageName: node
   linkType: hard
 
