@@ -13,8 +13,13 @@ import (
 	"testing"
 	"time"
 
+	gokitlog "github.com/go-kit/log"
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/kv"
+	"github.com/grafana/dskit/ring"
+	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc"
@@ -22,8 +27,6 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/metadata"
 	"k8s.io/component-base/metrics/legacyregistry"
-
-	"github.com/grafana/dskit/services"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -42,6 +45,57 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
+
+func TestSearchDistributorReadinessFollowsRing(t *testing.T) {
+	memberlistPort := getRandomPort()
+	distributor := initDistributorServerForTest(t, memberlistPort)
+
+	prometheus.DefaultRegisterer = prometheus.NewRegistry()
+	runErr := make(chan error, 1)
+	go func() {
+		runErr <- distributor.server.Run()
+	}()
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.WithoutCancel(t.Context()), 10*time.Second)
+		defer cancel()
+		require.NoError(t, distributor.server.Shutdown(ctx, "test complete"))
+		select {
+		case err := <-runErr:
+			require.True(t, err == nil || errors.Is(err, context.Canceled), "unexpected server error: %v", err)
+		case <-ctx.Done():
+			t.Fatal("server failed to stop")
+		}
+	})
+
+	requireAggregateHealthStatus(t, distributor.healthClient, grpc_health_v1.HealthCheckResponse_NOT_SERVING)
+
+	ringStore, err := kv.NewClient(
+		distributor.server.MemberlistKVConfig,
+		ring.GetCodec(),
+		prometheus.NewRegistry(),
+		gokitlog.NewNopLogger(),
+	)
+	require.NoError(t, err)
+
+	desc := ring.NewDesc()
+	desc.AddIngester("search-server", "127.0.0.1:12345", "", []uint32{100}, ring.JOINING, time.Now(), false, time.Time{}, nil)
+	require.NoError(t, ringStore.CAS(t.Context(), resource.RingKey, func(interface{}) (interface{}, bool, error) {
+		return desc, false, nil
+	}))
+
+	requireAggregateHealthStatus(t, distributor.healthClient, grpc_health_v1.HealthCheckResponse_SERVING)
+}
+
+func requireAggregateHealthStatus(t *testing.T, client grpc_health_v1.HealthClient, expected grpc_health_v1.HealthCheckResponse_ServingStatus) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		response, err := client.Check(t.Context(), &grpc_health_v1.HealthCheckRequest{})
+		assert.NoError(c, err)
+		if err == nil {
+			assert.Equal(c, expected, response.Status)
+		}
+	}, 20*time.Second, 100*time.Millisecond)
+}
 
 var (
 	testIndexFileThreshold  = 200 // just needs to be bigger than max playlist number, so the indexer don't use the filesystem
@@ -78,14 +132,11 @@ func TestIntegrationDistributor(t *testing.T) {
 	testServers = append(testServers, createStorageServerApi(t, 1, dbType, db.ConnStr, memberlistPort))
 	testServers = append(testServers, createStorageServerApi(t, 2, dbType, db.ConnStr, memberlistPort))
 
-	for _, testServer := range testServers {
-		startServer(t, testServer)
-		waitHealthy(t, testServer)
-	}
+	startAndWaitHealthy(t, distributorServer)
 
-	// Distributor readiness requires at least one search server ring entry.
-	startServer(t, distributorServer)
-	waitHealthy(t, distributorServer)
+	for _, testServer := range testServers {
+		startAndWaitHealthy(t, testServer)
+	}
 
 	t.Run("should expose ring endpoint", func(t *testing.T) {
 		client := http.Client{}
@@ -248,7 +299,7 @@ func getDistributorResponse[Req any, Resp any](t *testing.T, req *Req, fn func(c
 	return res
 }
 
-func startServer(t *testing.T, testServer testModuleServer) {
+func startAndWaitHealthy(t *testing.T, testServer testModuleServer) {
 	go func() {
 		// this next line is to avoid double registration, as both InitializeSearchSupport as well as ProvideUnifiedStorageGrpcService
 		// are hard-coded to use prometheus.DefaultRegisterer
@@ -260,9 +311,7 @@ func startServer(t *testing.T, testServer testModuleServer) {
 			require.NoError(t, err)
 		}
 	}()
-}
 
-func waitHealthy(t *testing.T, testServer testModuleServer) {
 	deadline := time.Now().Add(20 * time.Second)
 	for {
 		res, err := testServer.healthClient.Check(context.Background(), &grpc_health_v1.HealthCheckRequest{})
