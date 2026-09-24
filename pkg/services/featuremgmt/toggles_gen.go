@@ -742,10 +742,6 @@ const (
 	// Enables the creation of keepers that manage secrets stored on AWS secrets manager
 	FlagSecretsManagementAppPlatformAwsKeeper = "secretsManagementAppPlatformAwsKeeper"
 
-	// FlagProfilesExemplars
-	// Enables profiles exemplars support in profiles drilldown
-	FlagProfilesExemplars = "profilesExemplars"
-
 	// FlagPyroscopeUTF8LabelNames
 	// Enables support for UTF-8 label names in Pyroscope label selectors
 	FlagPyroscopeUTF8LabelNames = "pyroscopeUTF8LabelNames"
@@ -935,7 +931,7 @@ const (
 	FlagPluginsMarketplaceLicensing = "plugins.marketplaceLicensing"
 
 	// FlagAlertingSyncExternalAlertmanager
-	// Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana
+	// Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source
 	FlagAlertingSyncExternalAlertmanager = "alerting.syncExternalAlertmanager"
 
 	// FlagFrontendServiceReducedBootDataAPI
