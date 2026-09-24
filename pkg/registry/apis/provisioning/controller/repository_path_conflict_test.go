@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -94,6 +95,27 @@ func TestRepositoryPathConflictCondition(t *testing.T) {
 				"zebra-duplicate", "apple-duplicate", "parent-overlap", "child-overlap",
 			},
 			notExpectedInMsg: []string{"unrelated"},
+		},
+		{
+			// 15 duplicates sort as dup-01..dup-15; the message should only name the first 10
+			// and say how many were left out, rather than growing unbounded.
+			name: "more than 10 conflicts - message is capped with a count of the rest",
+			cfg:  gitRepo("new-repo", "https://github.com/org/repo", "main", "grafana"),
+			others: func() []*provisioning.Repository {
+				repos := make([]*provisioning.Repository, 15)
+				for i := range repos {
+					repos[i] = gitRepo(fmt.Sprintf("dup-%02d", i+1), "https://github.com/org/repo", "main", "grafana")
+				}
+				return repos
+			}(),
+			expectedStatus: metav1.ConditionFalse,
+			expectedReason: provisioning.ReasonPathConflict,
+			expectedInMsg: []string{
+				"dup-01", "dup-02", "dup-03", "dup-04", "dup-05",
+				"dup-06", "dup-07", "dup-08", "dup-09", "dup-10",
+				"and 5 more",
+			},
+			notExpectedInMsg: []string{"dup-11", "dup-12", "dup-13", "dup-14", "dup-15"},
 		},
 	}
 

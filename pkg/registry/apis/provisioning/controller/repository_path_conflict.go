@@ -15,6 +15,7 @@ import (
 )
 
 const noPathConflictMsg = "no other repository shares this URL, branch, and path"
+const maxConflictNamesInMessage = 10
 
 // RepositoryPathConflictChecker checks whether a repository's URL/branch/path overlaps with
 // another repository in the same namespace.
@@ -35,7 +36,7 @@ func NewRepositoryPathConflictChecker(repos informer.RepositoryGetter) *Reposito
 }
 
 // RepositoryPathConflictCondition checks whether cfg's URL/branch/path overlaps with any other
-// repository in the namespace. It returns the condition based on the check result.
+// repository in the stack.
 func (c *RepositoryPathConflictChecker) RepositoryPathConflictCondition(
 	ctx context.Context,
 	cfg *provisioning.Repository,
@@ -46,19 +47,17 @@ func (c *RepositoryPathConflictChecker) RepositoryPathConflictCondition(
 	}
 
 	// cfg can conflict with more than one repository at once (e.g. an exact duplicate and
-	// one or more ancestor/descendant paths). Report all of them rather than the first one
-	// found - all is informer-ordered, not sorted, so a single "first match" would make the
-	// reported conflict depend on iteration order. Group by conflict kind and sort names
-	// within each group so the message is deterministic regardless of that order.
+	// one or more ancestor/descendant paths). Report and sort all errors for a deterministic error message
 	var duplicates, overlaps []string
 	for _, v := range all {
 		conflictErr, isConflict := repository.PathConflict(cfg, v)
 		if !isConflict {
 			continue
 		}
-		if errors.Is(conflictErr, repository.ErrRepositoryDuplicatePath) {
+		switch {
+		case errors.Is(conflictErr, repository.ErrRepositoryDuplicatePath):
 			duplicates = append(duplicates, v.Name)
-		} else {
+		case errors.Is(conflictErr, repository.ErrRepositoryParentFolderConflict):
 			overlaps = append(overlaps, v.Name)
 		}
 	}
@@ -76,11 +75,18 @@ func (c *RepositoryPathConflictChecker) RepositoryPathConflictCondition(
 	slices.Sort(overlaps)
 
 	var parts []string
+	joinConflictNames := func(names []string) string {
+		if len(names) <= maxConflictNamesInMessage {
+			return strings.Join(names, ", ")
+		}
+		return fmt.Sprintf("%s (and %d more)", strings.Join(names[:maxConflictNamesInMessage], ", "), len(names)-maxConflictNamesInMessage)
+	}
+
 	if len(duplicates) > 0 {
-		parts = append(parts, fmt.Sprintf("%s: %s", repository.ErrRepositoryDuplicatePath.Error(), strings.Join(duplicates, ", ")))
+		parts = append(parts, fmt.Sprintf("%s: %s", repository.ErrRepositoryDuplicatePath.Error(), joinConflictNames(duplicates)))
 	}
 	if len(overlaps) > 0 {
-		parts = append(parts, fmt.Sprintf("%s: %s", repository.ErrRepositoryParentFolderConflict.Error(), strings.Join(overlaps, ", ")))
+		parts = append(parts, fmt.Sprintf("%s: %s", repository.ErrRepositoryParentFolderConflict.Error(), joinConflictNames(overlaps)))
 	}
 
 	return metav1.Condition{

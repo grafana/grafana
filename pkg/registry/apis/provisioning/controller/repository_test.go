@@ -2220,8 +2220,8 @@ func TestRepositoryController_process_QuotaTimestampOnlyDoesNotForceStatusPatch(
 						UpdatedAt:                 updatedAt,
 					},
 					// Pre-populate a settled PathConflict condition so this quota-focused
-					// test isn't spuriously triggered by ConditionChanged seeing no existing
-					// condition to compare against (see RepositoryController.process).
+					// test isn't accidentally triggered by ConditionChanged seeing no existing
+					// condition to compare against.
 					Conditions: []metav1.Condition{{
 						Type:               provisioning.ConditionTypePathConflict,
 						Status:             metav1.ConditionTrue,

@@ -1027,11 +1027,8 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	isCurrentlyBlocked := isQuotaExceeded(obj.Status.Conditions)
 	isOverQuota := isQuotaExceeded([]v1.Condition{quotaCondition})
 
-	// Path conflicts are surfaced only as their own status condition (see
-	// RepositoryPathConflictChecker) - unlike quota, they never affect health or Ready,
-	// and so never block sync, the Files API, or manual job creation (all gated on
-	// health). The resource-level ManagerProperties identity check is what actually
-	// prevents two repositories from overwriting each other's synced resources.
+	// Path conflicts are surfaced only as warnings and do not block syncs.
+	// We rely on the `managerKind` and `managerID` annotations to ensure resources are managed by 1 source.
 	pathConflictCtx, pathConflictSpan := rc.tracer.Start(ctx, "provisioning.controller.check_path_conflict", repoSpanAttrs(obj))
 	pathConflictCondition, err := rc.pathConflictChecker.RepositoryPathConflictCondition(pathConflictCtx, obj)
 	pathConflictSpan.End()

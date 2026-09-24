@@ -9,16 +9,6 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
-// BuildConditionPatchOpsFromExisting creates condition patch operations for Repository or Connection resources.
-// Accepts one or more conditions. Returns nil if none of the conditions have changed to avoid unnecessary patches.
-//
-// Why per-condition ops instead of a single whole-array replace:
-// Multiple actors (the RepositoryController and the sync worker) concurrently patch
-// /status/conditions. A whole-array replace built from a stale view can silently
-// clobber conditions the caller does not know about (for example, a controller
-// reconcile running with a stale informer cache can overwrite the PullStatus the
-// sync worker just wrote). Emitting per-condition ops (`add /-` for new types,
-// `replace /<index>` for changed types) leaves unrelated conditions untouched.
 // ConditionChanged reports whether newCondition differs (by Status, Reason, or Message)
 // from the matching condition already stored in existingConditions. Used to trigger a
 // reconcile pass for a repository whose condition changed for a reason the trigger
@@ -35,6 +25,16 @@ func ConditionChanged(existingConditions []metav1.Condition, newCondition metav1
 		existing.Message != newCondition.Message
 }
 
+// BuildConditionPatchOpsFromExisting creates condition patch operations for Repository or Connection resources.
+// Accepts one or more conditions. Returns nil if none of the conditions have changed to avoid unnecessary patches.
+//
+// Why per-condition ops instead of a single whole-array replace:
+// Multiple actors (the RepositoryController and the sync worker) concurrently patch
+// /status/conditions. A whole-array replace built from a stale view can silently
+// clobber conditions the caller does not know about (for example, a controller
+// reconcile running with a stale informer cache can overwrite the PullStatus the
+// sync worker just wrote). Emitting per-condition ops (`add /-` for new types,
+// `replace /<index>` for changed types) leaves unrelated conditions untouched.
 func BuildConditionPatchOpsFromExisting(existingConditions []metav1.Condition, generation int64, newConditions ...metav1.Condition) []map[string]interface{} {
 	// When the conditions array has never been initialized, a single whole-array
 	// replace both creates the array and seeds it. JSON Patch `add /path/-` requires
