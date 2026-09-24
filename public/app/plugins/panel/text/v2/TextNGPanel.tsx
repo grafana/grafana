@@ -48,7 +48,12 @@ import { EMPTY_CONTENT, getCurrentFrameIndex, getInterpolateFormat, isTextNewFea
 
 const TextNGEditor = lazy(() => import('./editor/TextNGEditor').then((m) => ({ default: m.TextNGEditor })));
 
-// Keyed on the event bus: the only handle in PanelProps unique to a panel instance, as ids repeat across dashboards.
+// The view mode has to outlive the component, since the panel remounts while panel edit stays open
+// (toggling the table view is one way), but it must not be saved into the panel's options.
+// PanelContext.instanceState is meant for this, but writing it makes scenes spread the context,
+// which flattens the `app` getter the dashboard installs and leaves Text stuck in edit mode.
+// So keep it here until that is fixed in scenes, keyed on the event bus: the only handle in
+// PanelProps unique to a panel instance, as ids repeat across dashboards.
 const viewModeByPanel = new WeakMap<EventBus, ViewMode>();
 
 export interface Props extends PanelProps<Options> {}
