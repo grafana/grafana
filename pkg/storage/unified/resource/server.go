@@ -1957,158 +1957,214 @@ func (s *server) listAuthorized(ctx context.Context, req *resourcepb.ListRequest
 	return s.finalizeListResponse(ctx, rsp, rv, err, nextToken, req.Options.Key)
 }
 
+type authorizedListKeyPull func() (BackendListKey, error, bool)
+
 func (s *server) listAuthorizeBeforeFetch(ctx context.Context, req *resourcepb.ListRequest, backend KeyListBackend) (*resourcepb.ListResponse, error) {
-	key := req.Options.Key
 	rsp := &resourcepb.ListResponse{}
-	var (
-		pageBytes int
-		nextToken string
-	)
+	var nextToken string
 
 	rv, err := backend.ListKeys(ctx, req, func(keyIter ListKeyIterator) error {
-		candidates := func(yield func(BackendListKey) bool) {
-			for keyIter.Next() {
-				if keyIter.Error() != nil {
-					return
-				}
-				if !yield(keyIter.Item()) {
-					return
-				}
-			}
-		}
-
-		extractFn := func(item BackendListKey) authz.BatchCheckItem {
-			namespace := key.Namespace
-			if req.KeysOnly && namespace == "" {
-				namespace = item.Key.Namespace
-			}
-			return authz.BatchCheckItem{
-				Name:               item.Key.Name,
-				Folder:             item.Folder,
-				Verb:               utils.VerbGet,
-				Group:              key.Group,
-				Resource:           key.Resource,
-				Namespace:          namespace,
-				FreshnessTimestamp: ResourceVersionTime(item.ResourceVersion),
-			}
-		}
-
-		nextAuthorized, stop := iter.Pull2(authz.FilterAuthorized(ctx, s.access, candidates, extractFn, authz.WithTracer(tracer)))
+		nextAuthorized, stop := iter.Pull2(authz.FilterAuthorized(
+			ctx,
+			s.access,
+			listKeyCandidates(keyIter),
+			func(item BackendListKey) authz.BatchCheckItem {
+				return listKeyAuthorizationItem(req, item)
+			},
+			authz.WithTracer(tracer),
+		))
 		defer stop()
 
 		if req.KeysOnly {
-			var lastContinueToken string
-			for {
-				item, authErr, ok := nextAuthorized()
-				if authErr != nil {
-					return authErr
-				}
-				if !ok {
-					return keyIter.Error()
-				}
-				if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= s.maxPageSizeBytes {
-					nextToken = lastContinueToken
-					if err := keyIter.Error(); err != nil {
-						return err
-					}
-					return nil
-				}
-
-				rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
-					ResourceVersion: item.ResourceVersion,
-					Namespace:       item.Key.Namespace,
-					Name:            item.Key.Name,
-					Folder:          item.Folder,
-				})
-				pageBytes += proto.Size(rsp.Items[len(rsp.Items)-1])
-				lastContinueToken = item.ContinueToken
-			}
+			var err error
+			nextToken, err = s.listAuthorizedKeysOnlyPage(req, rsp, keyIter, nextAuthorized)
+			return err
 		}
 
-		for {
-			remaining := int(req.Limit) - len(rsp.Items)
-			if req.Limit > 0 && remaining <= 0 {
-				return fmt.Errorf("list page reached its item limit before fetching values")
-			}
-
-			batchSize := dataBatchSize
-			if req.Limit > 0 {
-				batchSize = min(batchSize, remaining)
-			}
-			batch := make([]BackendListKey, 0, batchSize)
-			noMoreAuthorizedItems := false
-			for len(batch) < batchSize {
-				item, authErr, ok := nextAuthorized()
-				if authErr != nil {
-					return authErr
-				}
-				if !ok {
-					noMoreAuthorizedItems = true
-					break
-				}
-				batch = append(batch, item)
-			}
-			if len(batch) == 0 {
-				return keyIter.Error()
-			}
-
-			values, err := backend.FetchValues(ctx, batch)
-			if err != nil {
-				return err
-			}
-
-			for value, err := range values {
-				if err != nil {
-					return err
-				}
-				if value == nil || value.Key == nil {
-					return fmt.Errorf("list value fetch returned an empty response")
-				}
-				rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
-					ResourceVersion: value.ResourceVersion,
-					Value:           value.Value,
-				})
-				pageBytes += len(value.Value)
-
-				if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= s.maxPageSizeBytes {
-					batchIndex := -1
-					for idx, item := range batch {
-						if item.ResourceVersion == value.ResourceVersion && proto.Equal(item.Key, value.Key) {
-							batchIndex = idx
-							break
-						}
-					}
-					if batchIndex < 0 {
-						return fmt.Errorf("list value fetch returned an unexpected resource")
-					}
-
-					hasMore := batchIndex+1 < len(batch)
-					if !hasMore && !noMoreAuthorizedItems {
-						_, authErr, ok := nextAuthorized()
-						if authErr != nil {
-							return authErr
-						}
-						hasMore = ok
-					}
-					if hasMore {
-						nextToken = batch[batchIndex].ContinueToken
-					}
-					if err := keyIter.Error(); err != nil {
-						return err
-					}
-					return nil
-				}
-			}
-			if noMoreAuthorizedItems {
-				if err := keyIter.Error(); err != nil {
-					return err
-				}
-				return nil
-			}
-		}
+		var err error
+		nextToken, err = s.listAuthorizedValuesPage(ctx, req, rsp, backend, keyIter, nextAuthorized)
+		return err
 	})
 
 	return s.finalizeListResponse(ctx, rsp, rv, err, nextToken, req.Options.Key)
+}
+
+func listKeyCandidates(keyIter ListKeyIterator) iter.Seq[BackendListKey] {
+	return func(yield func(BackendListKey) bool) {
+		for keyIter.Next() {
+			if keyIter.Error() != nil || !yield(keyIter.Item()) {
+				return
+			}
+		}
+	}
+}
+
+func listKeyAuthorizationItem(req *resourcepb.ListRequest, item BackendListKey) authz.BatchCheckItem {
+	key := req.Options.Key
+	namespace := key.Namespace
+	if req.KeysOnly && namespace == "" {
+		namespace = item.Key.Namespace
+	}
+	return authz.BatchCheckItem{
+		Name:               item.Key.Name,
+		Folder:             item.Folder,
+		Verb:               utils.VerbGet,
+		Group:              key.Group,
+		Resource:           key.Resource,
+		Namespace:          namespace,
+		FreshnessTimestamp: ResourceVersionTime(item.ResourceVersion),
+	}
+}
+
+func (s *server) listAuthorizedKeysOnlyPage(
+	req *resourcepb.ListRequest,
+	rsp *resourcepb.ListResponse,
+	keyIter ListKeyIterator,
+	nextAuthorized authorizedListKeyPull,
+) (string, error) {
+	var (
+		pageBytes         int
+		lastContinueToken string
+	)
+	for {
+		item, authErr, ok := nextAuthorized()
+		if authErr != nil {
+			return "", authErr
+		}
+		if !ok {
+			return "", keyIter.Error()
+		}
+		if s.listPageFull(req, rsp, pageBytes) {
+			if err := keyIter.Error(); err != nil {
+				return "", err
+			}
+			return lastContinueToken, nil
+		}
+
+		rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
+			ResourceVersion: item.ResourceVersion,
+			Namespace:       item.Key.Namespace,
+			Name:            item.Key.Name,
+			Folder:          item.Folder,
+		})
+		pageBytes += proto.Size(rsp.Items[len(rsp.Items)-1])
+		lastContinueToken = item.ContinueToken
+	}
+}
+
+func (s *server) listAuthorizedValuesPage(
+	ctx context.Context,
+	req *resourcepb.ListRequest,
+	rsp *resourcepb.ListResponse,
+	backend KeyListBackend,
+	keyIter ListKeyIterator,
+	nextAuthorized authorizedListKeyPull,
+) (string, error) {
+	pageBytes := 0
+	for {
+		remaining := int(req.Limit) - len(rsp.Items)
+		if req.Limit > 0 && remaining <= 0 {
+			return "", fmt.Errorf("list page reached its item limit before fetching values")
+		}
+
+		batchSize := dataBatchSize
+		if req.Limit > 0 {
+			batchSize = min(batchSize, remaining)
+		}
+		batch, noMoreAuthorizedItems, err := pullAuthorizedListKeyBatch(nextAuthorized, batchSize)
+		if err != nil {
+			return "", err
+		}
+		if len(batch) == 0 {
+			return "", keyIter.Error()
+		}
+
+		values, err := backend.FetchValues(ctx, batch)
+		if err != nil {
+			return "", err
+		}
+
+		for value, err := range values {
+			if err != nil {
+				return "", err
+			}
+			if value == nil || value.Key == nil {
+				return "", fmt.Errorf("list value fetch returned an empty response")
+			}
+			rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
+				ResourceVersion: value.ResourceVersion,
+				Value:           value.Value,
+			})
+			pageBytes += len(value.Value)
+
+			if s.listPageFull(req, rsp, pageBytes) {
+				nextToken, err := continueTokenAfterFetchedValue(batch, value, noMoreAuthorizedItems, nextAuthorized)
+				if err != nil {
+					return "", err
+				}
+				if err := keyIter.Error(); err != nil {
+					return "", err
+				}
+				return nextToken, nil
+			}
+		}
+		if noMoreAuthorizedItems {
+			if err := keyIter.Error(); err != nil {
+				return "", err
+			}
+			return "", nil
+		}
+	}
+}
+
+func pullAuthorizedListKeyBatch(nextAuthorized authorizedListKeyPull, batchSize int) ([]BackendListKey, bool, error) {
+	batch := make([]BackendListKey, 0, batchSize)
+	for len(batch) < batchSize {
+		item, authErr, ok := nextAuthorized()
+		if authErr != nil {
+			return nil, false, authErr
+		}
+		if !ok {
+			return batch, true, nil
+		}
+		batch = append(batch, item)
+	}
+	return batch, false, nil
+}
+
+func continueTokenAfterFetchedValue(
+	batch []BackendListKey,
+	value *BackendReadResponse,
+	noMoreAuthorizedItems bool,
+	nextAuthorized authorizedListKeyPull,
+) (string, error) {
+	batchIndex := -1
+	for idx, item := range batch {
+		if item.ResourceVersion == value.ResourceVersion && proto.Equal(item.Key, value.Key) {
+			batchIndex = idx
+			break
+		}
+	}
+	if batchIndex < 0 {
+		return "", fmt.Errorf("list value fetch returned an unexpected resource")
+	}
+
+	hasMore := batchIndex+1 < len(batch)
+	if !hasMore && !noMoreAuthorizedItems {
+		_, authErr, ok := nextAuthorized()
+		if authErr != nil {
+			return "", authErr
+		}
+		hasMore = ok
+	}
+	if hasMore {
+		return batch[batchIndex].ContinueToken, nil
+	}
+	return "", nil
+}
+
+func (s *server) listPageFull(req *resourcepb.ListRequest, rsp *resourcepb.ListResponse, pageBytes int) bool {
+	return (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= s.maxPageSizeBytes
 }
 
 // listFromTrash lists deleted resources. Trash uses a different authorization
