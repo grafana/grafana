@@ -11,7 +11,12 @@ import {
 import { Spinner } from '@grafana/ui';
 
 import { DashboardStateChangedEvent } from '../../sidebar/events';
-import { getCloneKey, getLocalVariableValueSet, getRepeatVariableValueSet } from '../../utils/clone';
+import {
+  cloneSectionDataLayerSet,
+  getCloneKey,
+  getLocalVariableValueSet,
+  getRepeatVariableValueSet,
+} from '../../utils/clone';
 import { getRepeatLocalVariableValue } from '../../utils/getRepeatLocalVariableValue';
 import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
 import { filterSectionRepeatLocalVariables, getSectionBaseVariables } from '../../variables/utils';
@@ -102,6 +107,7 @@ export function performRowRepeats(variable: MultiValueVariable, row: RowItem, co
   for (let rowIndex = 0; rowIndex < variableValues.length; rowIndex++) {
     const isSourceRow = rowIndex === 0;
     const rowCloneKey = getCloneKey(row.state.key!, rowIndex);
+    const clonedData = isSourceRow ? undefined : cloneSectionDataLayerSet(row.state.$data);
     const rowClone = isSourceRow
       ? row
       : row.clone({
@@ -110,6 +116,7 @@ export function performRowRepeats(variable: MultiValueVariable, row: RowItem, co
           repeatByVariable: undefined,
           repeatedRows: undefined,
           layout: undefined,
+          ...(clonedData ? { $data: clonedData } : {}),
         });
 
     const layout = isSourceRow ? row.getLayout() : row.getLayout().cloneLayout(rowCloneKey, false);

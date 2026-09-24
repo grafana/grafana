@@ -13,7 +13,12 @@ import {
 import { Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { DashboardStateChangedEvent } from '../../sidebar/events';
-import { getCloneKey, getLocalVariableValueSet, getRepeatVariableValueSet } from '../../utils/clone';
+import {
+  cloneSectionDataLayerSet,
+  getCloneKey,
+  getLocalVariableValueSet,
+  getRepeatVariableValueSet,
+} from '../../utils/clone';
 import { getRepeatLocalVariableValue } from '../../utils/getRepeatLocalVariableValue';
 import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
 import { filterSectionRepeatLocalVariables, getSectionBaseVariables } from '../../variables/utils';
@@ -150,6 +155,7 @@ function createTabRepeats({
   for (let tabIndex = 0; tabIndex < variableValues.length; tabIndex++) {
     const isSourceTab = tabIndex === 0;
     const tabCloneKey = getCloneKey(tab.state.key!, tabIndex);
+    const clonedData = isSourceTab ? undefined : cloneSectionDataLayerSet(tab.state.$data);
     const tabClone = isSourceTab
       ? tab
       : tab.clone({
@@ -158,6 +164,7 @@ function createTabRepeats({
           repeatByVariable: undefined,
           repeatedTabs: undefined,
           layout: undefined,
+          ...(clonedData ? { $data: clonedData } : {}),
         });
 
     const layout = isSourceTab ? tab.getLayout() : tab.getLayout().cloneLayout(tabCloneKey, false);

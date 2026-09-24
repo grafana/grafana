@@ -9,6 +9,7 @@ import {
   LocalValueVariable,
   type QueryVariable,
   sceneGraph,
+  type SceneDataLayerProvider,
   type SceneDataQuery,
   SceneDataTransformer,
   type SceneObject,
@@ -697,8 +698,15 @@ function getAnnotations(state: DashboardSceneState, dsReferencesMapping?: DSRefe
   if (!(data instanceof DashboardDataLayerSet)) {
     return [];
   }
+  return annotationLayersToSchemaV2(data.state.annotationLayers, dsReferencesMapping);
+}
+
+export function annotationLayersToSchemaV2(
+  layers: SceneDataLayerProvider[],
+  dsReferencesMapping?: DSReferencesMapping
+): AnnotationQueryKind[] {
   const annotations: AnnotationQueryKind[] = [];
-  for (const layer of data.state.annotationLayers) {
+  for (const layer of layers) {
     if (!(layer instanceof dataLayers.AnnotationsDataLayer)) {
       continue;
     }

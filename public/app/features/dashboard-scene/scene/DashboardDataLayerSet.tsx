@@ -5,11 +5,13 @@ import {
   type SceneDataLayerProvider,
   SceneDataLayerSetBase,
   type SceneComponentProps,
+  type SceneObject,
 } from '@grafana/scenes';
 
 import { type AlertStatesDataLayer } from './AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
 import { DataLayerControl } from './DataLayerControl';
+import { isRowItem, isTabItem } from './types/LayoutItemTypeGuards';
 
 export const NEW_ANNOTATION_NAME = 'New annotation';
 const NEW_ANNOTATION_COLOR = 'red';
@@ -38,17 +40,74 @@ export class DashboardDataLayerSet
   private _onActivate() {
     this._subs.add(
       this.subscribeToState((newState, oldState) => {
-        if (newState.annotationLayers !== oldState.annotationLayers) {
+        if (newState.annotationLayers !== oldState.annotationLayers && this._shouldRunLayers()) {
           this.querySub?.unsubscribe();
+          this.querySub = undefined;
           this.subscribeToAllLayers(this.getAllLayers());
         }
       })
     );
 
-    this.subscribeToAllLayers(this.getAllLayers());
+    // Tab and row headers activate every section, including inactive tabs and collapsed rows.
+    // Section layers subscribe only while that section is on screen. The pause is not written to query.enable.
+    this._syncSectionQueries();
+    const stopWatchingSection = this._watchSectionLiveness();
 
     return () => {
+      stopWatchingSection();
       this.querySub?.unsubscribe();
+      this.querySub = undefined;
+    };
+  }
+
+  private _shouldRunLayers(): boolean {
+    let current: SceneObject | undefined = this.parent;
+    while (current) {
+      if (isTabItem(current) && !tabIsCurrent(current)) {
+        return false;
+      }
+      if (isRowItem(current) && current.getCollapsedState()) {
+        return false;
+      }
+      current = current.parent;
+    }
+    return true;
+  }
+
+  private _syncSectionQueries() {
+    if (this._shouldRunLayers()) {
+      if (!this.querySub) {
+        this.subscribeToAllLayers(this.getAllLayers());
+      }
+      return;
+    }
+
+    if (this.querySub) {
+      this.cancelQuery();
+      this.querySub = undefined;
+    }
+  }
+
+  private _watchSectionLiveness(): () => void {
+    const unsubs: Array<() => void> = [];
+    let current: SceneObject | undefined = this.parent;
+
+    while (current) {
+      if (isTabItem(current) && current.parent) {
+        const sub = current.parent.subscribeToState(() => this._syncSectionQueries());
+        unsubs.push(() => sub.unsubscribe());
+      }
+      if (isRowItem(current)) {
+        const sub = current.subscribeToState(() => this._syncSectionQueries());
+        unsubs.push(() => sub.unsubscribe());
+      }
+      current = current.parent;
+    }
+
+    return () => {
+      for (const unsub of unsubs) {
+        unsub();
+      }
     };
   }
 
@@ -108,4 +167,11 @@ export function isDashboardDataLayerSetState(data: unknown): data is DashboardDa
 
 export function isDashboardDataLayerSet(obj: unknown): obj is DashboardDataLayerSet {
   return obj instanceof DashboardDataLayerSet;
+}
+
+function tabIsCurrent(tab: SceneObject): boolean {
+  if ('isCurrentTab' in tab && typeof tab.isCurrentTab === 'function') {
+    return Boolean(tab.isCurrentTab());
+  }
+  return true;
 }

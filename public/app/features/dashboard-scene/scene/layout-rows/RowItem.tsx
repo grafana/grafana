@@ -23,7 +23,7 @@ import { ConditionalRenderingGroup } from '../../conditional-rendering/group/Con
 import { serializeRow } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { SectionFiltersSet } from '../../settings/variables/SectionFiltersSet';
-import { cloneSectionVariableSet, removeRepeatLocalVariableFromSet } from '../../utils/clone';
+import { cloneSectionDataLayerSet, cloneSectionVariableSet, removeRepeatLocalVariableFromSet } from '../../utils/clone';
 import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';
 import { getDashboardSceneFor, getSlugForRowOrTab, interpolateSectionTitle } from '../../utils/utils';
@@ -213,10 +213,12 @@ export class RowItem
   // panelIdGenerator is a shared sequential counter created by the parent layout
   // we forward id to ensure sibling tabs never produce duplicate panel IDs
   public duplicate(panelIdGenerator?: PanelIdGenerator): RowItem {
+    const clonedData = cloneSectionDataLayerSet(this.state.$data);
     return this.clone({
       key: undefined,
       layout: this.getLayout().duplicate(panelIdGenerator),
       $variables: cloneSectionVariableSet(this.state.$variables),
+      ...(clonedData ? { $data: clonedData } : {}),
     });
   }
 

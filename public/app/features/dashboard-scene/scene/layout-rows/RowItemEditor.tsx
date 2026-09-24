@@ -14,6 +14,11 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 import { edit } from '../../actions/utils/edit';
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
 import {
+  AddSectionAnnotationButton,
+  useSectionAnnotationLayers,
+  SectionAnnotationsList,
+} from '../../sidebar/SectionAnnotationsList';
+import {
   getSectionFiltersCount,
   AddSectionFilterButton,
   SectionFiltersCategoryTitle,
@@ -86,6 +91,29 @@ export function useSidebarOptions(this: RowItem, isNewElement: boolean): Options
   );
 
   const layoutCategory = useLayoutCategory(layout);
+  const annotationLayers = useSectionAnnotationLayers(model);
+
+  const sectionAnnotationsCategory = useMemo(() => {
+    const category = new OptionsPaneCategoryDescriptor({
+      title: t('dashboard.rows-layout.row-options.section-annotations.title', 'Annotations'),
+      id: SidebarCategoryType.RowSectionAnnotations,
+      isOpenDefault: true,
+      isDashboardSidebar: true,
+      itemsCount: annotationLayers.length,
+      headerActions: <AddSectionAnnotationButton sectionOwner={model} />,
+    });
+
+    category.addItem(
+      new OptionsPaneItemDescriptor({
+        title: '',
+        id: SidebarCategoryType.RowSectionAnnotationsList,
+        skipField: true,
+        render: () => <SectionAnnotationsList sectionOwner={model} />,
+      })
+    );
+
+    return category;
+  }, [annotationLayers.length, model]);
 
   const sectionVariablesCategory = useMemo(() => {
     const category = new OptionsPaneCategoryDescriptor({
@@ -139,6 +167,7 @@ export function useSidebarOptions(this: RowItem, isNewElement: boolean): Options
     rowCategory,
     ...(config.featureToggles.dashboardUnifiedDrilldownControls ? [sectionFiltersCategory] : []),
     sectionVariablesCategory,
+    sectionAnnotationsCategory,
     ...layoutCategory,
     repeatCategory,
   ];

@@ -8,6 +8,8 @@ import {
   type VariableValueSingle,
 } from '@grafana/scenes';
 
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
+
 const CLONE_KEY = '-clone-';
 
 /**
@@ -92,6 +94,21 @@ export function getRepeatVariableValueSet(
  * Deep-clone a section-scoped variable set so duplicated rows/tabs get unique scene keys.
  * Without new keys, sidebar selection resolves to the first variable with a matching key.
  */
+/**
+ * Deep-clone a section annotation set so duplicated rows/tabs get their own layer objects.
+ * Scene clone keeps keys, and a shared key makes sidebar selection resolve to the first layer.
+ */
+export function cloneSectionDataLayerSet(data: SceneObject | undefined): DashboardDataLayerSet | undefined {
+  if (!(data instanceof DashboardDataLayerSet)) {
+    return undefined;
+  }
+
+  return data.clone({
+    key: undefined,
+    annotationLayers: data.state.annotationLayers.map((layer) => layer.clone({ key: undefined })),
+  });
+}
+
 export function cloneSectionVariableSet(variableSet: SceneVariables | undefined): SceneVariableSet | undefined {
   if (!(variableSet instanceof SceneVariableSet)) {
     return undefined;
