@@ -67,6 +67,7 @@ func classifyWarning(err error) (string, bool) {
 	var folderManagedByOtherErr *resources.FolderManagedByOtherError
 	var uidTooLongErr *resources.FolderUIDTooLongError
 	var folderValidationErr *resources.FolderValidationError
+	var unsupportedPathErr *resources.UnsupportedPathError
 
 	// Order matters: the more specific folder reasons must be checked
 	// before the generic FolderValidationError fallback so the user-facing
@@ -74,6 +75,8 @@ func classifyWarning(err error) (string, bool) {
 	switch {
 	case errors.As(err, &quotaExceededErr):
 		return provisioning.ReasonQuotaExceeded, true
+	case errors.As(err, &unsupportedPathErr):
+		return provisioning.ReasonUnsupportedPath, true
 	case apierrors.IsRequestEntityTooLargeError(err):
 		return provisioning.ReasonResourceTooLarge, true
 	case errors.As(err, &validationErr):

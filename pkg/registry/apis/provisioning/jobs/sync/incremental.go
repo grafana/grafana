@@ -204,9 +204,8 @@ func applyIncrementalChanges(
 			// ErrHiddenPath behind an earlier error.
 			if change.Action != repository.FileActionDeleted &&
 				!safepath.IsHidden(change.Path) && resources.HasResourceExtension(change.Path) {
-				// FileActionIgnored is explicitly excluded from error counting
-				// (see jobProgressRecorder.Record) -- using it here would make
-				// this failure invisible to the job's own pass/fail state.
+				// change.Action, not FileActionIgnored, so this still blocks
+				// parent-folder cleanup like any other failed update/rename.
 				progress.Record(ctx, jobs.NewPathOnlyResult(change.Path).
 					WithAction(change.Action).
 					WithPreviousPath(change.PreviousPath).
