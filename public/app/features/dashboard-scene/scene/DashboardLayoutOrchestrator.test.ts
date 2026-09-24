@@ -400,52 +400,77 @@ function setupWithTwoTabs() {
 }
 
 describe('cross-tab row dragging', () => {
-  it.each(['drop', 'return to source'] as const)(
-    'keeps the row in its source until %s and records only a completed move',
-    (finish) => {
-      const row = new RowItem({ title: 'Dragged row', layout: AutoGridLayoutManager.createEmpty() });
-      const source = new RowsLayoutManager({ rows: [row] });
-      const sourceTab = new TabItem({ key: 'source-tab', title: 'Source', layout: source });
-      const destination = new TabItem({
-        key: 'destination-tab',
-        title: 'Destination',
-        layout: AutoGridLayoutManager.createEmpty(),
-      });
-      const tabs = new TabsLayoutManager({ tabs: [sourceTab, destination] });
-      const dashboard = new DashboardScene({ isEditing: true, body: tabs });
-      const deactivate = activateFullSceneTree(dashboard);
-      const orchestrator = dashboard.state.layoutOrchestrator!;
-      try {
-        orchestrator.startRowDrag(row);
-        // Exercise the hover timer's callback without relying on DOM hit testing.
-        orchestrator['_activateTab'](destination.state.key!);
-        expect(tabs.getCurrentTab()).toBe(destination);
-        expect(source.state.rows).toEqual([row]);
-        expect(row.parent).toBe(source);
-        expect(dashboard.state.sidebar.state.undoStack).toHaveLength(0);
+  let deactivate: () => void;
+  afterEach(() => deactivate?.());
 
-        // Unmounting the source drag context must leave pointerup in charge of the move.
-        orchestrator.stopRowDrag();
-        if (finish === 'return to source') {
-          orchestrator['_activateTab'](sourceTab.state.key!);
-        }
-        document.body.dispatchEvent(new Event('pointerup', { bubbles: true }));
+  it('keeps the row in its source until drop and records an undoable move', () => {
+    const row = new RowItem({ title: 'Dragged row', layout: AutoGridLayoutManager.createEmpty() });
+    const source = new RowsLayoutManager({ rows: [row] });
+    const sourceTab = new TabItem({ key: 'source-tab', title: 'Source', layout: source });
+    const destination = new TabItem({
+      key: 'destination-tab',
+      title: 'Destination',
+      layout: AutoGridLayoutManager.createEmpty(),
+    });
+    const tabs = new TabsLayoutManager({ tabs: [sourceTab, destination] });
+    const dashboard = new DashboardScene({ isEditing: true, body: tabs });
+    deactivate = activateFullSceneTree(dashboard);
+    const orchestrator = dashboard.state.layoutOrchestrator!;
 
-        if (finish === 'drop') {
-          expect((destination.getLayout() as RowsLayoutManager).state.rows).toEqual([row]);
-          expect(dashboard.state.sidebar.state.undoStack).toHaveLength(1);
-          dashboard.state.sidebar.undoAction();
-          expect(sourceTab.getLayout()).toBe(source);
-          expect(source.state.rows).toEqual([row]);
-        } else {
-          expect(sourceTab.getLayout()).toBe(source);
-          expect(source.state.rows).toEqual([row]);
-          expect(dashboard.state.sidebar.state.undoStack).toHaveLength(0);
-        }
-        expect(orchestrator.state.draggingRow).toBeUndefined();
-      } finally {
-        deactivate();
-      }
-    }
-  );
+    orchestrator.startRowDrag(row);
+    // Exercise the hover timer's callback without relying on DOM hit testing.
+    orchestrator['_activateTab'](destination.state.key!);
+    expect(tabs.getCurrentTab()).toBe(destination);
+    expect(source.state.rows).toEqual([row]);
+    expect(row.parent).toBe(source);
+    expect(dashboard.state.sidebar.state.undoStack).toHaveLength(0);
+
+    // Unmounting the source drag context must leave pointerup in charge of the move.
+    orchestrator.stopRowDrag();
+    document.body.dispatchEvent(new Event('pointerup', { bubbles: true }));
+
+    expect((destination.getLayout() as RowsLayoutManager).state.rows).toEqual([row]);
+    expect(dashboard.state.sidebar.state.undoStack).toHaveLength(1);
+    expect(orchestrator.state.draggingRow).toBeUndefined();
+
+    dashboard.state.sidebar.undoAction();
+    expect(sourceTab.getLayout()).toBe(source);
+    expect(source.state.rows).toEqual([row]);
+    expect(tabs.getCurrentTab()).toBe(destination);
+  });
+
+  it('leaves the row in its source without recording a move when dropped back on the source tab', () => {
+    const row = new RowItem({ title: 'Dragged row', layout: AutoGridLayoutManager.createEmpty() });
+    const source = new RowsLayoutManager({ rows: [row] });
+    const sourceTab = new TabItem({ key: 'source-tab', title: 'Source', layout: source });
+    const destination = new TabItem({
+      key: 'destination-tab',
+      title: 'Destination',
+      layout: AutoGridLayoutManager.createEmpty(),
+    });
+    const tabs = new TabsLayoutManager({ tabs: [sourceTab, destination] });
+    const dashboard = new DashboardScene({ isEditing: true, body: tabs });
+    deactivate = activateFullSceneTree(dashboard);
+    const orchestrator = dashboard.state.layoutOrchestrator!;
+
+    orchestrator.startRowDrag(row);
+    // Exercise the hover timer's callback without relying on DOM hit testing.
+    orchestrator['_activateTab'](destination.state.key!);
+    expect(tabs.getCurrentTab()).toBe(destination);
+    expect(source.state.rows).toEqual([row]);
+    expect(row.parent).toBe(source);
+    expect(dashboard.state.sidebar.state.undoStack).toHaveLength(0);
+
+    // Unmounting the source drag context must leave pointerup in charge of the move.
+    orchestrator.stopRowDrag();
+    orchestrator['_activateTab'](sourceTab.state.key!);
+    document.body.dispatchEvent(new Event('pointerup', { bubbles: true }));
+
+    expect(sourceTab.getLayout()).toBe(source);
+    expect(source.state.rows).toEqual([row]);
+    expect(row.parent).toBe(source);
+    expect(tabs.getCurrentTab()).toBe(sourceTab);
+    expect(dashboard.state.sidebar.state.undoStack).toHaveLength(0);
+    expect(orchestrator.state.draggingRow).toBeUndefined();
+  });
 });

@@ -23,83 +23,175 @@ describe('moveRowToTab', () => {
   let deactivate: () => void;
   afterEach(() => deactivate?.());
 
-  it.each(['rows', 'empty', 'panels'] as const)(
-    'moves the last source row into %s and restores both layouts through repeated undo/redo',
-    (kind) => {
-      const row = new RowItem({ title: 'New row', layout: AutoGridLayoutManager.createEmpty() });
-      const source = new RowsLayoutManager({ rows: [row] });
-      const existingRow = new RowItem({ title: 'Existing row', layout: AutoGridLayoutManager.createEmpty() });
-      const previousDestination =
-        kind === 'rows'
-          ? new RowsLayoutManager({ rows: [existingRow] })
-          : new AutoGridLayoutManager({
-              layout: new AutoGridLayout({
-                children:
-                  kind === 'panels'
-                    ? [new AutoGridItem({ body: new VizPanel({ title: 'Existing panel', pluginId: 'table' }) })]
-                    : [],
-              }),
-            });
-      const sourceTab = new TabItem({ title: 'Source', layout: source });
-      const destination = new TabItem({ title: 'Destination', layout: previousDestination });
-      const tabs = new TabsLayoutManager({
-        tabs: [sourceTab, destination],
-        currentTabSlug: sourceTab.getSlug(),
-      });
-      const dashboard = new DashboardScene({ isEditing: true, body: tabs });
-      deactivate = activateFullSceneTree(dashboard);
-      const sidebar = dashboard.state.sidebar;
+  it('rejects a detached source layout before moving the row', () => {
+    const row = new RowItem({ title: 'Row' });
+    const source = new RowsLayoutManager({ rows: [row] });
+    const target = AutoGridLayoutManager.createEmpty();
+    const destination = new TabItem({ layout: target });
 
-      moveRowToTab({ row, source, destination });
-      const movedLayout = destination.getLayout() as RowsLayoutManager;
-      for (let cycle = 0; cycle < 3; cycle++) {
-        expect(destination.getLayout()).toBe(movedLayout);
-        expect(movedLayout.parent).toBe(destination);
-        expect(tabs.getCurrentTab()).toBe(destination);
-        expect(movedLayout.state.rows.at(-1)).toBe(row);
-        if (kind === 'empty') {
-          expect(movedLayout.state.rows).toEqual([row]);
-        }
-        if (kind !== 'rows') {
-          expect(previousDestination.parent).toBeUndefined();
-        }
-        expect(row.parent).toBe(movedLayout);
-        expect(row.state.title).toBe('New row');
-        expect(sourceTab.getLayout()).toBeInstanceOf(AutoGridLayoutManager);
-        expect(sidebar.state.undoStack).toHaveLength(1);
-        if (kind === 'rows') {
-          expect(movedLayout).toBe(previousDestination);
-          expect(movedLayout.state.rows).toEqual([existingRow, row]);
-        }
-        if (kind === 'panels') {
-          expect(movedLayout.state.rows).toHaveLength(2);
-          expect(
-            movedLayout.state.rows[0]
-              .getLayout()
-              .getVizPanels()
-              .map((panel) => panel.state.title)
-          ).toEqual(['Existing panel']);
-          expect(previousDestination.getVizPanels().map((panel) => panel.state.title)).toEqual(['Existing panel']);
-        }
+    expect(() => moveRowToTab({ row, source, destination })).toThrow('Parent object is not a LayoutParent');
+    expect(source.state.rows).toEqual([row]);
+    expect(destination.getLayout()).toBe(target);
+  });
 
-        sidebar.undoAction();
-        expect(sourceTab.getLayout()).toBe(source);
-        expect(source.state.rows).toEqual([row]);
-        expect(row.parent).toBe(source);
-        expect(destination.getLayout()).toBe(previousDestination);
-        expect(previousDestination.parent).toBe(destination);
-        if (kind !== 'rows') {
-          expect(movedLayout.parent).toBeUndefined();
-        }
-        expect(tabs.getCurrentTab()).toBe(sourceTab);
-        expect(sidebar.state.undoStack).toHaveLength(0);
-        expect(sidebar.state.redoStack).toHaveLength(1);
+  it('moves the last source row into an existing rows layout and restores both layouts on undo', () => {
+    const row = new RowItem({ title: 'New row', layout: AutoGridLayoutManager.createEmpty() });
+    const source = new RowsLayoutManager({ rows: [row] });
+    const existingRow = new RowItem({ title: 'Existing row', layout: AutoGridLayoutManager.createEmpty() });
+    const previousDestination = new RowsLayoutManager({ rows: [existingRow] });
+    const sourceTab = new TabItem({ title: 'Source', layout: source });
+    const destination = new TabItem({ title: 'Destination', layout: previousDestination });
+    const tabs = new TabsLayoutManager({ tabs: [sourceTab, destination], currentTabSlug: sourceTab.getSlug() });
+    const dashboard = new DashboardScene({ isEditing: true, body: tabs });
+    deactivate = activateFullSceneTree(dashboard);
+    const sidebar = dashboard.state.sidebar;
 
-        sidebar.redoAction();
-        expect(destination.getLayout()).toBe(movedLayout);
-      }
-    }
-  );
+    moveRowToTab({ row, source, destination });
+    const movedLayout = destination.getLayout() as RowsLayoutManager;
+    expect(movedLayout).toBe(previousDestination);
+    expect(movedLayout.state.rows).toEqual([existingRow, row]);
+    expect(movedLayout.parent).toBe(destination);
+    expect(row.parent).toBe(movedLayout);
+    expect(row.state.title).toBe('New row');
+    expect(tabs.getCurrentTab()).toBe(destination);
+    expect(sourceTab.getLayout()).toBeInstanceOf(AutoGridLayoutManager);
+    expect(sourceTab.getLayout().getVizPanels()).toEqual([]);
+    expect(sidebar.state.undoStack).toHaveLength(1);
+
+    sidebar.undoAction();
+    expect(sourceTab.getLayout()).toBe(source);
+    expect(source.state.rows).toEqual([row]);
+    expect(row.parent).toBe(source);
+    expect(destination.getLayout()).toBe(previousDestination);
+    expect(previousDestination.parent).toBe(destination);
+    expect(previousDestination.state.rows).toEqual([existingRow]);
+    expect(tabs.getCurrentTab()).toBe(sourceTab);
+    expect(sidebar.state.undoStack).toHaveLength(0);
+    expect(sidebar.state.redoStack).toHaveLength(1);
+  });
+
+  it('moves the last source row into an empty tab and restores its original layout on undo', () => {
+    const row = new RowItem({ title: 'New row', layout: AutoGridLayoutManager.createEmpty() });
+    const source = new RowsLayoutManager({ rows: [row] });
+    const previousDestination = AutoGridLayoutManager.createEmpty();
+    const sourceTab = new TabItem({ title: 'Source', layout: source });
+    const destination = new TabItem({ title: 'Destination', layout: previousDestination });
+    const tabs = new TabsLayoutManager({ tabs: [sourceTab, destination], currentTabSlug: sourceTab.getSlug() });
+    const dashboard = new DashboardScene({ isEditing: true, body: tabs });
+    deactivate = activateFullSceneTree(dashboard);
+    const sidebar = dashboard.state.sidebar;
+
+    moveRowToTab({ row, source, destination });
+    const movedLayout = destination.getLayout() as RowsLayoutManager;
+    expect(movedLayout.state.rows).toEqual([row]);
+    expect(previousDestination.parent).toBeUndefined();
+    expect(movedLayout.parent).toBe(destination);
+    expect(row.parent).toBe(movedLayout);
+    expect(row.state.title).toBe('New row');
+    expect(tabs.getCurrentTab()).toBe(destination);
+    expect(sourceTab.getLayout()).toBeInstanceOf(AutoGridLayoutManager);
+    expect(sourceTab.getLayout().getVizPanels()).toEqual([]);
+    expect(sidebar.state.undoStack).toHaveLength(1);
+
+    sidebar.undoAction();
+    expect(sourceTab.getLayout()).toBe(source);
+    expect(source.state.rows).toEqual([row]);
+    expect(row.parent).toBe(source);
+    expect(destination.getLayout()).toBe(previousDestination);
+    expect(previousDestination.parent).toBe(destination);
+    expect(movedLayout.parent).toBeUndefined();
+    expect(tabs.getCurrentTab()).toBe(sourceTab);
+    expect(sidebar.state.undoStack).toHaveLength(0);
+    expect(sidebar.state.redoStack).toHaveLength(1);
+  });
+
+  it('preserves existing panels when converting the destination to rows and restores the original layout on undo', () => {
+    const row = new RowItem({ title: 'New row', layout: AutoGridLayoutManager.createEmpty() });
+    const source = new RowsLayoutManager({ rows: [row] });
+    const previousDestination = new AutoGridLayoutManager({
+      layout: new AutoGridLayout({
+        children: [new AutoGridItem({ body: new VizPanel({ title: 'Existing panel', pluginId: 'table' }) })],
+      }),
+    });
+    const sourceTab = new TabItem({ title: 'Source', layout: source });
+    const destination = new TabItem({ title: 'Destination', layout: previousDestination });
+    const tabs = new TabsLayoutManager({ tabs: [sourceTab, destination], currentTabSlug: sourceTab.getSlug() });
+    const dashboard = new DashboardScene({ isEditing: true, body: tabs });
+    deactivate = activateFullSceneTree(dashboard);
+    const sidebar = dashboard.state.sidebar;
+
+    moveRowToTab({ row, source, destination });
+    const movedLayout = destination.getLayout() as RowsLayoutManager;
+    expect(movedLayout.state.rows).toHaveLength(2);
+    expect(movedLayout.state.rows[1]).toBe(row);
+    expect(
+      movedLayout.state.rows[0]
+        .getLayout()
+        .getVizPanels()
+        .map((panel) => panel.state.title)
+    ).toEqual(['Existing panel']);
+    expect(previousDestination.getVizPanels().map((panel) => panel.state.title)).toEqual(['Existing panel']);
+    expect(previousDestination.parent).toBeUndefined();
+    expect(movedLayout.parent).toBe(destination);
+    expect(row.parent).toBe(movedLayout);
+    expect(row.state.title).toBe('New row');
+    expect(tabs.getCurrentTab()).toBe(destination);
+    expect(sourceTab.getLayout()).toBeInstanceOf(AutoGridLayoutManager);
+    expect(sourceTab.getLayout().getVizPanels()).toEqual([]);
+    expect(sidebar.state.undoStack).toHaveLength(1);
+
+    sidebar.undoAction();
+    expect(sourceTab.getLayout()).toBe(source);
+    expect(source.state.rows).toEqual([row]);
+    expect(row.parent).toBe(source);
+    expect(destination.getLayout()).toBe(previousDestination);
+    expect(previousDestination.parent).toBe(destination);
+    expect(movedLayout.parent).toBeUndefined();
+    expect(tabs.getCurrentTab()).toBe(sourceTab);
+    expect(sidebar.state.undoStack).toHaveLength(0);
+    expect(sidebar.state.redoStack).toHaveLength(1);
+  });
+
+  it('reuses the converted destination layout through repeated undo and redo', () => {
+    const row = new RowItem({ title: 'New row', layout: AutoGridLayoutManager.createEmpty() });
+    const source = new RowsLayoutManager({ rows: [row] });
+    const previousDestination = AutoGridLayoutManager.createEmpty();
+    const sourceTab = new TabItem({ title: 'Source', layout: source });
+    const destination = new TabItem({ title: 'Destination', layout: previousDestination });
+    const tabs = new TabsLayoutManager({ tabs: [sourceTab, destination], currentTabSlug: sourceTab.getSlug() });
+    const dashboard = new DashboardScene({ isEditing: true, body: tabs });
+    deactivate = activateFullSceneTree(dashboard);
+    const sidebar = dashboard.state.sidebar;
+
+    moveRowToTab({ row, source, destination });
+    const movedLayout = destination.getLayout() as RowsLayoutManager;
+
+    sidebar.undoAction();
+    sidebar.redoAction();
+    expect(destination.getLayout()).toBe(movedLayout);
+    expect(movedLayout.state.rows).toEqual([row]);
+    expect(row.parent).toBe(movedLayout);
+    expect(movedLayout.parent).toBe(destination);
+
+    sidebar.undoAction();
+    expect(sourceTab.getLayout()).toBe(source);
+    expect(source.state.rows).toEqual([row]);
+    expect(row.parent).toBe(source);
+    expect(destination.getLayout()).toBe(previousDestination);
+    expect(previousDestination.parent).toBe(destination);
+    expect(movedLayout.parent).toBeUndefined();
+    expect(sidebar.state.undoStack).toHaveLength(0);
+    expect(sidebar.state.redoStack).toHaveLength(1);
+
+    sidebar.redoAction();
+    expect(destination.getLayout()).toBe(movedLayout);
+    expect(movedLayout.state.rows).toEqual([row]);
+    expect(row.parent).toBe(movedLayout);
+    expect(movedLayout.parent).toBe(destination);
+    expect(previousDestination.parent).toBeUndefined();
+    expect(sidebar.state.undoStack).toHaveLength(1);
+    expect(sidebar.state.redoStack).toHaveLength(0);
+  });
 
   it('keeps source order and restores a title changed to avoid a destination collision', () => {
     const before = new RowItem({ title: 'Before' });

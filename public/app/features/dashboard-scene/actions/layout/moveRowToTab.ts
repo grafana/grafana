@@ -22,8 +22,8 @@ export function moveRowToTab({
   if (destinationLayout === source) {
     return;
   }
-  const sourceParent = source.parent!;
-  if (!isLayoutParent(sourceParent)) {
+  const sourceParent = source.parent;
+  if (!sourceParent || !isLayoutParent(sourceParent)) {
     throw new Error('Parent object is not a LayoutParent');
   }
 
