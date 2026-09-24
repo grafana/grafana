@@ -235,6 +235,17 @@ describe('NotebooksListPage', () => {
     expect(await screen.findByText('Page not found')).toBeInTheDocument();
   });
 
+  it('marks the page as a preview feature', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setNotebooks([makeHit('nb1', 'Checkout error spike')]);
+
+    render(<NotebooksListPage />);
+
+    // The badge, not the heading: the nav index is not seeded here, so the title string the
+    // header renders is the fallback one rather than "Notebooks".
+    expect(await screen.findByText('Preview')).toBeInTheDocument();
+  });
+
   it('renders a row per notebook, linking the title to the notebook', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
     setNotebooks([makeHit('nb1', 'Checkout error spike', ['errors'])]);
