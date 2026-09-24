@@ -68,4 +68,10 @@ describe('getAnnotationTooltip', () => {
     onDelete!();
     expect(onAnnotationDelete).toHaveBeenCalledWith('aef3b1c2-d5e6');
   });
+
+  it('coerces a numeric legacy id to a string for onAnnotationDelete', () => {
+    const { onDelete } = getTooltip(makeAnnoVals(4683));
+    onDelete!();
+    expect(onAnnotationDelete).toHaveBeenCalledWith('4683');
+  });
 });
