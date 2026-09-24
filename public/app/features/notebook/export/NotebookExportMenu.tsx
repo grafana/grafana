@@ -1,11 +1,12 @@
 import { t } from '@grafana/i18n';
-import { Menu } from '@grafana/ui';
+import { Menu, copyTextToClipboard } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
+import { NotebookAnalytics } from '../analytics/main';
+import { NOTEBOOK_EXPORT_DESTINATION, type NotebookExportSource } from '../analytics/types';
 import { type Spec as NotebookSpec } from '../types';
 import { notebookShareUrl } from '../urls';
 
-import { copyToClipboard } from './copyToClipboard';
 import { downloadMarkdown } from './downloadMarkdown';
 import { notebookToMarkdown } from './notebookToMarkdown';
 
@@ -17,10 +18,12 @@ interface Props {
    * a list row fetches — and a list of fifty notebooks must not fetch fifty specs to render.
    */
   getSpec: () => Promise<NotebookSpec | undefined>;
+  /** Which surface holds this menu, for the exported event. */
+  source: NotebookExportSource;
 }
 
 /** The export actions, shared by the notebook page toolbar and the list page's row menu. */
-export function NotebookExportMenu({ uid, getSpec }: Props) {
+export function NotebookExportMenu({ uid, getSpec, source }: Props) {
   const notifyApp = useAppNotification();
 
   // Throws rather than reporting, so each action owns its own outcome: the copy cannot know whether
@@ -39,16 +42,17 @@ export function NotebookExportMenu({ uid, getSpec }: Props) {
 
   const onCopy = async () => {
     // Deliberately not awaited here. The clipboard write has to be issued inside the click, so the
-    // pending markdown is what gets handed to copyToClipboard — see the note there.
+    // pending markdown is what gets handed to copyTextToClipboard — see the note there.
     const markdown = loadSpec().then((spec) => notebookToMarkdown(spec, { url: notebookShareUrl(uid) }));
-    // A second handle, so a rejection always has a listener. copyToClipboard hands the pending
+    // A second handle, so a rejection always has a listener. copyTextToClipboard hands the pending
     // promise to ClipboardItem, which never consumes it if the clipboard write rejects first for its
     // own reason — leaving the original handle to surface as an unhandled rejection in the console.
-    // The error still reaches the catch below, because that awaits copyToClipboard rather than this.
+    // The error still reaches the catch below, because that awaits copyTextToClipboard rather than this.
     markdown.catch(() => {});
 
     try {
-      await copyToClipboard(markdown);
+      await copyTextToClipboard(markdown);
+      NotebookAnalytics.exported(uid, NOTEBOOK_EXPORT_DESTINATION.CLIPBOARD, source);
       notifyApp.success(t('notebooks.export.copied', 'Notebook copied as Markdown'));
     } catch (error) {
       reportFailure();
@@ -60,6 +64,7 @@ export function NotebookExportMenu({ uid, getSpec }: Props) {
       const spec = await loadSpec();
       // Title from the spec, so the filename always matches the document that was exported.
       downloadMarkdown(notebookToMarkdown(spec, { url: notebookShareUrl(uid) }), spec.title);
+      NotebookAnalytics.exported(uid, NOTEBOOK_EXPORT_DESTINATION.DOWNLOAD, source);
     } catch (error) {
       reportFailure();
     }

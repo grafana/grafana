@@ -10,8 +10,9 @@ import { type IconName } from '../../types/icon';
 import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
-import { Tooltip } from '../Tooltip/Tooltip';
+import { Toggletip } from '../Toggletip/Toggletip';
 
+import { usePanelContext } from './PanelContext';
 import { type PanelStatusItem, type PanelStatusSeverity } from './types';
 
 export interface Props {
@@ -19,7 +20,7 @@ export interface Props {
   message?: string;
   /** Structured list of errors and notices to show in the status popover. */
   items?: PanelStatusItem[];
-  /** Opens the inspector "Errors and notices" tab. */
+  /** Fired when the user clicks Inspect, alongside PanelContext's `onOpenInspector`. Use for host-side side effects (e.g. telemetry). */
   onClick?: (e: React.SyntheticEvent) => void;
   ariaLabel?: string;
 }
@@ -42,13 +43,28 @@ function getSeverityIcon(severity: PanelStatusSeverity): IconName {
 }
 
 export function PanelStatus({ message, items, onClick, ariaLabel = 'status' }: Props) {
+  const { onOpenInspector, onInvestigateErrors } = usePanelContext();
+  const canInspect = Boolean(onClick) || Boolean(onOpenInspector);
+
+  const handleInspectClick = (e: React.SyntheticEvent) => {
+    onClick?.(e);
+    onOpenInspector?.();
+  };
+
   if (items && items.length > 0) {
-    return <PanelStatusPopover items={items} onInspect={onClick} ariaLabel={ariaLabel} />;
+    return (
+      <PanelStatusPopover
+        items={items}
+        onInspect={canInspect ? handleInspectClick : undefined}
+        ariaLabel={ariaLabel}
+        onInvestigateErrors={onInvestigateErrors}
+      />
+    );
   }
 
   return (
     <Button
-      onClick={onClick}
+      onClick={handleInspectClick}
       variant={'destructive'}
       icon="exclamation-triangle"
       size="sm"
@@ -63,35 +79,54 @@ interface PanelStatusPopoverProps {
   items: PanelStatusItem[];
   onInspect?: (e: React.SyntheticEvent) => void;
   ariaLabel: string;
+  onInvestigateErrors?: () => void;
 }
 
-function PanelStatusPopover({ items, onInspect, ariaLabel }: PanelStatusPopoverProps) {
+function PanelStatusPopover({ items, onInspect, ariaLabel, onInvestigateErrors }: PanelStatusPopoverProps) {
   const styles = useStyles2(getStyles);
   const topSeverity = getTopSeverity(items);
   const sortedItems = [...items].sort((a, b) => SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity]);
 
   const content = (
-    <div className={styles.popover}>
-      <div className={styles.popoverHeader}>
-        <span className={styles.popoverTitle}>
-          {t('grafana-ui.panel-chrome.errors-and-notices', 'Errors and notices')}
-        </span>
-      </div>
-      <Stack direction="column" gap={1}>
-        {sortedItems.map((item, index) => (
-          <div key={`${item.severity}-${index}`} className={styles.item}>
-            <span className={styles.itemIcon}>
-              <Icon name={getSeverityIcon(item.severity)} className={styles[item.severity]} size="sm" />
-            </span>
-            <span className={styles.itemText}>{item.text}</span>
-          </div>
-        ))}
-      </Stack>
-    </div>
+    <Stack direction="column" gap={1}>
+      {sortedItems.map((item, index) => (
+        <div key={`${item.severity}-${index}`} className={styles.item}>
+          <span className={styles.itemIcon}>
+            <Icon name={getSeverityIcon(item.severity)} className={styles[item.severity]} size="sm" />
+          </span>
+          <span className={styles.itemText}>{item.text}</span>
+        </div>
+      ))}
+    </Stack>
+  );
+
+  // Assistant stays on the left, Inspect on the right, regardless of whether either action is
+  // shown — an empty placeholder keeps whichever one is present pinned to its side.
+  const footer = (
+    <Stack direction="row" justifyContent="space-between" alignItems="center" width="100%">
+      {onInvestigateErrors ? (
+        <Button size="sm" variant="secondary" fill="text" icon="ai-sparkle" onClick={onInvestigateErrors}>
+          {/* Nothing to fix when the panel only carries notices, so don't promise a fix — the
+              host asks the assistant to explain in that case. */}
+          {topSeverity === 'error'
+            ? t('grafana-ui.panel-chrome.fix-with-assistant', 'Fix with Assistant')
+            : t('grafana-ui.panel-chrome.explain-with-assistant', 'Explain with Assistant')}
+        </Button>
+      ) : (
+        <span />
+      )}
+      {onInspect ? (
+        <Button size="sm" variant="secondary" fill="text" icon="arrow-right" onClick={onInspect}>
+          {t('grafana-ui.panel-chrome.inspect', 'Inspect')}
+        </Button>
+      ) : (
+        <span />
+      )}
+    </Stack>
   );
 
   return (
-    <Tooltip content={content} placement="bottom-start" interactive>
+    <Toggletip content={content} footer={footer} placement="bottom-start">
       <Button
         variant={topSeverity === 'error' ? 'destructive' : 'secondary'}
         className={topSeverity !== 'error' ? styles[`${topSeverity}Button`] : undefined}
@@ -99,29 +134,12 @@ function PanelStatusPopover({ items, onInspect, ariaLabel }: PanelStatusPopoverP
         size="sm"
         aria-label={ariaLabel}
         data-testid={selectors.components.Panels.Panel.status(topSeverity)}
-        onClick={onInspect}
       />
-    </Tooltip>
+    </Toggletip>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  popover: css({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(1),
-    padding: theme.spacing(1, 1),
-  }),
-  popoverHeader: css({
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: theme.spacing(2),
-    width: '100%',
-  }),
-  popoverTitle: css({
-    color: theme.colors.text.secondary,
-  }),
   item: css({
     display: 'flex',
     alignItems: 'flex-start',

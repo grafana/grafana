@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/plugin-compat",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Compatibility shims that let Grafana plugins adopt new Grafana host APIs across a range of host versions",
   "keywords": [
@@ -17,18 +17,21 @@
     "url": "http://github.com/grafana/grafana.git",
     "directory": "packages/grafana-plugin-compat"
   },
+  "main": "./dist/cjs/datasources.cjs",
   "module": "./dist/esm/datasources.mjs",
   "exports": {
     "./package.json": "./package.json",
     "./datasources": {
       "@grafana-app/source": "./src/datasources.ts",
       "types": "./dist/types/datasources.d.ts",
-      "import": "./dist/esm/datasources.mjs"
+      "import": "./dist/esm/datasources.mjs",
+      "require": "./dist/cjs/datasources.cjs"
     },
     "./apps": {
       "@grafana-app/source": "./src/apps.ts",
       "types": "./dist/types/apps.d.ts",
-      "import": "./dist/esm/apps.mjs"
+      "import": "./dist/esm/apps.mjs",
+      "require": "./dist/cjs/apps.cjs"
     }
   },
   "publishConfig": {
@@ -50,7 +53,14 @@
   },
   "devDependencies": {
     "@grafana/data": "workspace:*",
+    "@grafana/runtime": "workspace:*",
+    "@grafana/schema": "workspace:*",
+    "@testing-library/dom": "10.4.1",
+    "@testing-library/react": "16.3.0",
+    "@types/react": "19.2.18",
     "@typescript/native": "npm:typescript@^7.0.2",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
     "rimraf": "^6.0.1",
     "rollup": "^4.60.1",
     "rollup-plugin-esbuild": "6.2.1",
@@ -58,6 +68,9 @@
     "typescript": "npm:@typescript/typescript6@^6.0.2"
   },
   "peerDependencies": {
-    "@grafana/runtime": "*"
+    "@grafana/data": ">=12.0.0",
+    "@grafana/runtime": ">=12.0.0",
+    "@grafana/schema": ">=12.0.0",
+    "react": ">=18"
   }
 }

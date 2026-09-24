@@ -38,6 +38,7 @@ export interface TextNGEditorProps {
   codeLanguage?: CodeLanguage;
   renderMode?: RenderMode;
   rowWindow?: RowWindow;
+  frameSelector?: ReactNode;
   pagination?: ReactNode;
   previewRef?: Ref<HTMLDivElement>;
   series?: DataFrame[];
@@ -75,6 +76,7 @@ export function TextNGEditor({
   codeLanguage,
   renderMode,
   rowWindow,
+  frameSelector,
   pagination,
   previewRef,
   series,
@@ -307,11 +309,12 @@ export function TextNGEditor({
         )}
       </div>
 
-      {(isCode || footerPagination) && (
+      {(isCode || frameSelector || footerPagination) && (
         <TextNGEditorFooter
           showLineNumbersSwitch={isCode}
           showLineNumbers={showLineNumbers}
           onShowLineNumbersChange={(next) => changeOption({ showLineNumbers: next })}
+          frameSelector={frameSelector}
           pagination={footerPagination}
         />
       )}

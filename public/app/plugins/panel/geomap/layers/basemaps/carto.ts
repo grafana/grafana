@@ -1,6 +1,7 @@
 import LayerGroup from 'ol/layer/Group';
 import Layer from 'ol/layer/Layer';
 import VectorLayer from 'ol/layer/Vector';
+import VectorTileLayer from 'ol/layer/VectorTile';
 import VectorSource from 'ol/source/Vector';
 import { apply } from 'ol-mapbox-style';
 
@@ -25,6 +26,21 @@ const defaultCartoConfig: CartoConfig = {
   theme: LayerTheme.Auto,
   showLabels: true,
 };
+
+/**
+ * CARTO's 512px tiles run out one level short of the view's own zoom 0, so further out every style
+ * rule falls below the style's first zoom stop and the basemap collapses to its background color.
+ * Styling those resolutions as if they were the widest tile keeps the world drawn, only smaller.
+ */
+function clampStyleToWidestTile(layer: VectorTileLayer) {
+  const tileGrid = layer.getSource()?.getTileGrid();
+  const styleFunction = layer.getStyleFunction();
+  if (!tileGrid || !styleFunction) {
+    return;
+  }
+  const widest = tileGrid.getResolution(tileGrid.getMinZoom());
+  layer.setStyle((feature, resolution) => styleFunction(feature, Math.min(resolution, widest)));
+}
 
 export const carto: MapLayerRegistryItem<CartoConfig> = {
   id: 'carto',
@@ -59,6 +75,9 @@ export const carto: MapLayerRegistryItem<CartoConfig> = {
             // The TileJSON credits the same two projects in its own words, so drop it and keep one
             if (child !== attribution && child instanceof Layer) {
               child.getSource()?.setAttributions(undefined);
+            }
+            if (child instanceof VectorTileLayer) {
+              clampStyleToWidestTile(child);
             }
           })
         )

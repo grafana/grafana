@@ -765,8 +765,7 @@ func newTestServerWithQueue(t *testing.T, maxSizePerTenant int, numWorkers int) 
 }
 
 func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	s := &server{
 		artificialSuccessfulWriteDelay: 1 * time.Millisecond,
 		log:                            log.NewNopLogger(),
@@ -1346,8 +1345,9 @@ func TestGracefulShutdown(t *testing.T) {
 // mockWatchServer implements resourcepb.ResourceStore_WatchServer for testing.
 type mockWatchServer struct {
 	grpc.ServerStream
-	ctx    context.Context
-	events chan *resourcepb.WatchEvent
+	ctx       context.Context
+	events    chan *resourcepb.WatchEvent
+	sendDelay time.Duration
 }
 
 func newMockWatchServer(ctx context.Context) *mockWatchServer {
@@ -1358,6 +1358,13 @@ func newMockWatchServer(ctx context.Context) *mockWatchServer {
 }
 
 func (m *mockWatchServer) Send(evt *resourcepb.WatchEvent) error {
+	if m.sendDelay > 0 {
+		select {
+		case <-m.ctx.Done():
+			return m.ctx.Err()
+		case <-time.After(m.sendDelay):
+		}
+	}
 	select {
 	case <-m.ctx.Done():
 		return m.ctx.Err()
@@ -1708,6 +1715,66 @@ func advanceBookmarkClock() time.Time {
 	return time.Now()
 }
 
+func TestWatchDeleteRetainsPreviousJobRevisionAfterPruning(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := t.Context()
+	ns := NamespacedResource{
+		Namespace: "test-namespace",
+		Group:     "provisioning.grafana.app",
+		Resource:  "jobs",
+	}
+	const name = "test-job"
+
+	previousRV, previous := addTestObject(t, backend, ctx, ns, name, "before-delete")
+	deletedRV := deleteTestObject(t, backend, ctx, previous, previousRV, ns, name)
+	recreatedRV, recreated := addTestObject(t, backend, ctx, ns, name, "recreated")
+	_ = updateTestObject(t, backend, ctx, recreated, recreatedRV, ns, name, "updated")
+
+	require.NoError(t, backend.pruneEvents(ctx, PruningKey{
+		Namespace: ns.Namespace,
+		Group:     ns.Group,
+		Resource:  ns.Resource,
+		Name:      name,
+	}))
+
+	synctest.Test(t, func(t *testing.T) {
+		key := &resourcepb.ResourceKey{
+			Namespace: ns.Namespace,
+			Group:     ns.Group,
+			Resource:  ns.Resource,
+			Name:      name,
+		}
+		events, stream, done := startBookmarkWatch(t, &resourcepb.WatchRequest{
+			Options: &resourcepb.ListOptions{Key: key},
+			Since:   previousRV,
+		}, func(srv *server, _ *bookmarkWatchServer) {
+			srv.backend = backend
+		})
+
+		events <- &WrittenEvent{
+			Key:             key,
+			Type:            resourcepb.WatchEvent_DELETED,
+			ResourceVersion: deletedRV,
+			PreviousRV:      previousRV,
+			Value:           objectToJSONBytes(t, previous),
+		}
+		synctest.Wait()
+
+		select {
+		case err := <-done:
+			require.NoError(t, err)
+		case event := <-stream.events:
+			require.Equal(t, resourcepb.WatchEvent_DELETED, event.Type)
+			require.Equal(t, deletedRV, event.Resource.Version)
+			require.Empty(t, event.Resource.Value)
+			require.NotNil(t, event.Previous)
+			require.Equal(t, previousRV, event.Previous.Version)
+		default:
+			t.Fatal("watch did not emit the delete event")
+		}
+	})
+}
+
 func TestIncrementalBookmarksProgressLag(t *testing.T) {
 	for _, backend := range []string{"legacy_sql", "kv"} {
 		t.Run(backend, func(t *testing.T) {
@@ -2037,14 +2104,9 @@ func (s *stubWatchServer) SetTrailer(metadata.MD)            {}
 func (s *stubWatchServer) SendMsg(any) error                 { return nil }
 func (s *stubWatchServer) RecvMsg(any) error                 { return nil }
 
-// TestWatchContextCancellation pins down how Watch translates errors that
-// surface during context cancellation. The watch loop has an explicit
-// `case <-ctx.Done(): return nil` branch, but `select` is nondeterministic, so
-// when the context is canceled we may instead run a Send/Read that returns
-// the context error. Watch must treat that as a clean shutdown, while still
-// surfacing unrelated errors and context errors that did not originate from
-// our own context.
-func TestWatchContextCancellation(t *testing.T) {
+// TestWatchTerminationErrors pins down which errors Watch treats as a clean
+// shutdown and which errors it propagates.
+func TestWatchTerminationErrors(t *testing.T) {
 	testUser := newWatchTestUser()
 
 	watchReq := &resourcepb.WatchRequest{
@@ -2088,6 +2150,17 @@ func TestWatchContextCancellation(t *testing.T) {
 		require.ErrorIs(t, err, sentinel)
 	})
 
+	t.Run("returns nil when the watch transport is unavailable", func(t *testing.T) {
+		srv := setup(t)
+		ctx := authlib.WithAuthInfo(t.Context(), testUser)
+		bookmarkReq := proto.Clone(watchReq).(*resourcepb.WatchRequest)
+		bookmarkReq.Options.Key.Name = "missing"
+		bookmarkReq.AllowWatchBookmarks = true
+
+		stub := &stubWatchServer{ctx: ctx, sendErr: status.Error(codes.Unavailable, "transport is closing")}
+		require.NoError(t, srv.Watch(bookmarkReq, stub))
+	})
+
 	t.Run("propagates context errors that did not come from our own context", func(t *testing.T) {
 		srv := setup(t)
 		// Own context is alive; a Send returning context.Canceled here must
@@ -2122,8 +2195,11 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 	// populated by the time we subscribe.
 	requireMetricEventually(t, metrics.Broadcaster.EventsReceivedTotal.WithLabelValues(watchTestResource), 2)
 
-	// Start a watch with a tiny Since RV.
+	// Start a watch with a tiny Since RV. Delay each Send so the component
+	// metrics can prove that transport scheduling time is separated from the
+	// upstream commit-to-send-start latency.
 	mock := newMockWatchServer(ctx)
+	mock.sendDelay = 20 * time.Millisecond
 	var eg errgroup.Group
 	eg.Go(func() error {
 		return srv.Watch(&resourcepb.WatchRequest{
@@ -2163,12 +2239,58 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 	// observing them inflates the histogram with the time elapsed since they
 	// were originally written, not the actual reaction time of this watcher.
 	// Only the post-subscription event should be counted.
-	obs, err := metrics.WatchEventLatency.GetMetricWithLabelValues(watchTestGroup, watchTestResource)
+	readHistogram := func(observer prometheus.Observer) *dto.Histogram {
+		t.Helper()
+		m := &dto.Metric{}
+		require.NoError(t, observer.(prometheus.Metric).Write(m))
+		return m.Histogram
+	}
+	watchLatency, err := metrics.WatchEventLatency.GetMetricWithLabelValues(watchTestGroup, watchTestResource)
 	require.NoError(t, err)
-	m := &dto.Metric{}
-	require.NoError(t, obs.(prometheus.Metric).Write(m))
-	require.Equal(t, uint64(1), m.Histogram.GetSampleCount(),
-		"WatchEventLatency should only observe events that arrived after the subscription started")
+	readyLatency, err := metrics.WatchEventReadyLatency.GetMetricWithLabelValues(watchTestGroup, watchTestResource)
+	require.NoError(t, err)
+	sendDuration, err := metrics.WatchEventSendDuration.GetMetricWithLabelValues(watchTestGroup, watchTestResource)
+	require.NoError(t, err)
+
+	total := readHistogram(watchLatency)
+	ready := readHistogram(readyLatency)
+	send := readHistogram(sendDuration)
+	for name, histogram := range map[string]*dto.Histogram{"total": total, "ready": ready, "send": send} {
+		require.Equal(t, uint64(1), histogram.GetSampleCount(),
+			"%s metric should only observe events that arrived after the subscription started", name)
+	}
+	assert.GreaterOrEqual(t, send.GetSampleSum(), 15*time.Millisecond.Seconds(),
+		"send duration must capture transport scheduling time")
+	assert.InDelta(t, total.GetSampleSum(), ready.GetSampleSum()+send.GetSampleSum(), 0.01,
+		"total watch latency should comprise upstream ready latency plus send duration")
+}
+
+func TestWatchEventMetricsDropClockSkewedSample(t *testing.T) {
+	metrics := ProvideStorageMetrics(prometheus.NewPedanticRegistry())
+	sendStartedAt := time.Now()
+
+	// The resource version timestamp is ahead of send start, but the delayed send
+	// ends after it. Recording total and send while dropping ready would give the three
+	// histograms different event populations.
+	metrics.observeWatchEvent(
+		watchTestGroup,
+		watchTestResource,
+		sendStartedAt.Add(5*time.Millisecond),
+		sendStartedAt,
+		sendStartedAt.Add(10*time.Millisecond),
+	)
+
+	for name, collector := range map[string]*prometheus.HistogramVec{
+		"total": metrics.WatchEventLatency,
+		"ready": metrics.WatchEventReadyLatency,
+		"send":  metrics.WatchEventSendDuration,
+	} {
+		observer, err := collector.GetMetricWithLabelValues(watchTestGroup, watchTestResource)
+		require.NoError(t, err)
+		metric := &dto.Metric{}
+		require.NoError(t, observer.(prometheus.Metric).Write(metric))
+		assert.Zero(t, metric.GetHistogram().GetSampleCount(), "%s must drop the clock-skewed event", name)
+	}
 }
 
 // TestWatchInitialEventsRespectsItemChecker tests that checker is used for
@@ -2623,7 +2745,7 @@ func TestStatsAccessChecks(t *testing.T) {
 		t.Cleanup(func() { _ = db.Close() })
 
 		kv := NewBadgerKV(db)
-		store, err := NewKVStorageBackend(KVBackendOptions{KvStore: kv, EnableKVLeases: true, Holder: "test"})
+		store, err := NewKVStorageBackend(KVBackendOptions{KvStore: kv, Holder: "test"})
 		require.NoError(t, err)
 
 		srv, err := NewResourceServer(ResourceServerOptions{
@@ -2735,7 +2857,7 @@ func TestGetResourceDailyStats(t *testing.T) {
 		t.Cleanup(func() { _ = db.Close() })
 
 		kv := NewBadgerKV(db)
-		store, err := NewKVStorageBackend(KVBackendOptions{KvStore: kv, EnableKVLeases: true, Holder: "test"})
+		store, err := NewKVStorageBackend(KVBackendOptions{KvStore: kv, Holder: "test"})
 		require.NoError(t, err)
 
 		srv, err := NewResourceServer(ResourceServerOptions{

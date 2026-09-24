@@ -970,6 +970,13 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		require.NoError(t, err)
 	}
 
+	if opts.EnableKeysAPI {
+		apiserverSection, err := getOrCreateSection("grafana-apiserver")
+		require.NoError(t, err)
+		_, err = apiserverSection.NewKey("enable_keys_api", "true")
+		require.NoError(t, err)
+	}
+
 	if opts.SecretsManagerEnableDBMigrations {
 		apiserverSection, err := getOrCreateSection("secrets_manager")
 		require.NoError(t, err)
@@ -1181,6 +1188,9 @@ type GrafanaOpts struct {
 	MigrationParquetBuffer      bool
 	MigrationChunkMaxBytes      int64
 	EnableSQLKVBackend          bool
+	// EnableKeysAPI turns on the per-resource list-keys endpoints, off by default.
+	EnableKeysAPI bool
+
 	// EnableSearchAPI turns on the per-resource /search endpoints, which are off
 	// by default.
 	EnableSearchAPI bool

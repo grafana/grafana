@@ -20,6 +20,7 @@ import type { DashboardScene } from 'app/features/dashboard-scene/scene/Dashboar
 import { NotebookMutationClient } from 'app/features/notebook/mutation-api/NotebookMutationClient';
 import type { NotebookScene } from 'app/features/notebook/scene/NotebookScene';
 
+import { DashboardPlanPreview } from './DashboardPlanPreview';
 import { allMutationCommands } from './commandRegistry';
 
 /**
@@ -56,6 +57,7 @@ provideMutationClientFactory((sceneObject, resource) => {
     const index = _clients.lastIndexOf(client);
     if (index !== -1) {
       _clients.splice(index, 1);
+      planPreview.onClientDeactivated(client);
     }
   };
 });
@@ -68,8 +70,20 @@ export function setDashboardMutationClientForTests(client: MutationClient | null
   }
 }
 
+// The API already owns the mounted client stack; its preview coordinator shares that lifecycle.
+const planPreview = new DashboardPlanPreview(() => {
+  const client = currentClient();
+  return client instanceof DashboardMutationClient ? client : null;
+});
+
 export const dashboardMutationApi: DashboardMutationAPI = {
   execute: (mutation: MutationRequest) => {
+    if (mutation.type.toUpperCase() === 'RENDER_PLAN') {
+      return planPreview.render(mutation.payload);
+    }
+    if (mutation.type.toUpperCase() === 'END_PLANNING') {
+      return planPreview.end(mutation.payload);
+    }
     const client = currentClient();
     if (!client) {
       return Promise.reject(new Error('Dashboard Mutation API is not available. No dashboard is currently loaded.'));
@@ -84,6 +98,6 @@ export const dashboardMutationApi: DashboardMutationAPI = {
     return cmd?.payloadSchema ?? null;
   },
   getAvailableCommands: () => {
-    return currentClient()?.getAvailableCommands() ?? [];
+    return [...new Set(['RENDER_PLAN', ...(currentClient()?.getAvailableCommands() ?? [])])];
   },
 };

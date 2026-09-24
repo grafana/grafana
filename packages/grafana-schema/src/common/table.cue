@@ -32,6 +32,8 @@ TableColorTextCellOptions: {
 // Json view cell options
 TableJsonViewCellOptions: {
 	type: TableCellDisplayMode & "json-view"
+	// Enables syntax highlighting. Defaults to true when omitted.
+	syntaxHighlighting?: bool
 } @cuetsy(kind="interface")
 
 // Json view cell options
@@ -134,6 +136,11 @@ TableOptions: {
 	}
 	// If true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
 	disableKeyboardEvents?: bool
+	// Controls whether cells overflow when hovered. Selected cells always overflow.
+	hoverOverflow?: bool | *true
+	// Alternates the background color of every other row. Only applies when the
+	// `table.refreshNewFeatures` feature toggle is enabled.
+	zebraStriping?: bool | *false
 } @cuetsy(kind="interface")
 
 // Field options for each field within a table (e.g 10, "The String", 64.20, etc.)

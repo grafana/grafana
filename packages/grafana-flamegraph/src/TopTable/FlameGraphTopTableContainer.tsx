@@ -65,7 +65,7 @@ const FlameGraphTopTableContainer = memo(
   }: Props) => {
     const table = useMemo(() => buildFilteredTable(data, matchedLabels), [data, matchedLabels]);
 
-    const styles = useStyles2(getStyles);
+    const styles = useStyles2(getStyles, Boolean(useTableNG), tableRefreshEnabled);
     const theme = useTheme2();
 
     const [sort, setSort] = useState<TableSortByFieldState[]>([{ displayName: 'Self', desc: true }]);
@@ -113,6 +113,11 @@ const FlameGraphTopTableContainer = memo(
                     height={height}
                     tableRefreshEnabled={tableRefreshEnabled}
                     contentAwareWidthsEnabled={contentAwareWidthsEnabled}
+                    // The pane's width is already divided up between the three fixed columns and
+                    // Symbol, so a horizontal scrollbar would hide columns rather than reveal them.
+                    // Symbol truncates to fit instead — its full value is a click away in the flame
+                    // graph, and in a narrow split pane it truncates either way.
+                    preventHorizontalOverflow
                   />
                 </div>
               );
@@ -194,12 +199,12 @@ function buildTableDataFrame(
     name: 'Symbol',
     values: [],
     config: {
-      // TableNG lays its columns out inside `width` minus its own vertical scrollbar, so spelling out
-      // a width here that fills `width` overflows by the scrollbar and leaves the grid scrolling
-      // sideways a few pixels. Leaving Symbol unsized instead makes it the one column TableNG hands
-      // the leftover space to, which is the same "fill whatever the fixed columns don't use" intent
-      // without having to know the scrollbar's width. The legacy table has no such notion, so it
-      // still gets told exactly how wide to make it.
+      // TableNG lays its columns out inside `width` minus its frame and vertical scrollbar, so
+      // spelling out a width here that fills `width` leaves the grid scrolling sideways. Leaving
+      // Symbol unsized instead makes it the one column TableNG sizes itself, which is the same "fill
+      // whatever the fixed columns don't use" intent without having to know those chrome widths —
+      // see `preventHorizontalOverflow` at the call site, which keeps Symbol inside the pane. The
+      // legacy table has no such notion, so it still gets told exactly how wide to make it.
       custom: useTableNG ? {} : { width: width - actionColumnWidth - TOP_TABLE_COLUMN_WIDTH * 2 },
       links: [
         {
@@ -342,6 +347,7 @@ function createActionField(
 
   const actionFieldTableConfig: TableFieldOptions = {
     filterable: false,
+    resizable: false,
     sortable: false,
     width: actionColumnWidth,
     hideHeader: true,
@@ -426,17 +432,19 @@ function ActionCell(props: ActionCellProps) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, useTableNG: boolean, tableRefreshEnabled?: boolean) => {
   return {
     topTableContainer: css({
       label: 'topTableContainer',
-      padding: theme.spacing(1),
-      backgroundColor: theme.colors.background.secondary,
+      padding: useTableNG ? 0 : theme.spacing(1),
+      backgroundColor: useTableNG ? 'transparent' : theme.colors.background.secondary,
       height: '100%',
 
       '& .rdg': {
         '--rdg-background-color': theme.colors.background.secondary,
-        '--rdg-header-background-color': theme.colors.background.secondary,
+        '--rdg-header-background-color': tableRefreshEnabled
+          ? theme.components.table.headerBackground
+          : theme.colors.background.secondary,
       },
     }),
   };

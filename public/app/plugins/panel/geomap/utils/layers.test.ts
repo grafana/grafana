@@ -4,6 +4,7 @@ jest.mock('ol-mapbox-style', () => ({}));
 jest.mock('geotiff', () => ({}));
 
 import type BaseLayer from 'ol/layer/Base';
+import LayerGroup from 'ol/layer/Group';
 import TileLayer from 'ol/layer/Tile';
 import { type Attribution } from 'ol/source/Source';
 import XYZ from 'ol/source/XYZ';
@@ -301,6 +302,29 @@ describe('initLayer', () => {
       await initLayer(createPanelWithoutAttribution(), {} as never, { type: 'osm-standard', name: 'x' }, true);
 
       expect(attributionOf(layer)).toEqual(['© Tiles']);
+    });
+
+    it('filters the attribution a layer group gains after it was initialized', async () => {
+      const group = new LayerGroup({ layers: [] });
+      getIfExists.mockReturnValue({
+        id: 'maplibre',
+        name: 'MapLibre layer',
+        requiresAttribution: true,
+        create: jest.fn().mockResolvedValue(makeHandler(group)),
+      });
+
+      await initLayer(createPanel(), {} as never, { type: 'maplibre', name: 'x' }, true);
+
+      // A remote style names the attribution of the layers it adds once it has loaded
+      const child = new TileLayer({
+        source: new XYZ({
+          url: 'http://x/{z}/{x}/{y}',
+          attributions: '<img src="x" onerror="window.__pwned = 1">',
+        }),
+      });
+      group.getLayers().push(child);
+
+      expect(attributionOf(child)).toEqual(['<img src="x">']);
     });
   });
 });

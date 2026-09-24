@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -176,7 +177,7 @@ func validateEmail(ctx context.Context, searchClient resourcepb.ResourceIndexCli
 			Operator: string(selection.Equals),
 			Values:   []string{email},
 		},
-	}, []string{fieldEmail, fieldLogin})
+	})
 
 	resp, err := searchClient.Search(ctx, req)
 	if err != nil {
@@ -188,8 +189,11 @@ func validateEmail(ctx context.Context, searchClient resourcepb.ResourceIndexCli
 	if resp.TotalHits > 0 {
 		// If the found user is the same as the one being created/updated, it's not a conflict.
 		// This is required for Mode 2 when the resource is written to LegacyStorage and UnifiedStorage.
-		rows := resp.Results.Rows
-		if len(rows) > 0 && rows[0].Key.Name == name {
+		resultName, found, err := firstUserSearchResultName(resp)
+		if err != nil {
+			return err
+		}
+		if found && resultName == name {
 			return nil
 		}
 		return apierrors.NewConflict(iamv0alpha1.UserResourceInfo.GroupResource(),
@@ -207,7 +211,7 @@ func validateLogin(ctx context.Context, searchClient resourcepb.ResourceIndexCli
 			Operator: string(selection.Equals),
 			Values:   []string{login},
 		},
-	}, []string{fieldEmail, fieldLogin})
+	})
 	resp, err := searchClient.Search(ctx, req)
 	if err != nil {
 		return err
@@ -218,8 +222,11 @@ func validateLogin(ctx context.Context, searchClient resourcepb.ResourceIndexCli
 	if resp.TotalHits > 0 {
 		// If the found user is the same as the one being created/updated, it's not a conflict.
 		// This is required for Mode 2 when the resource is written to LegacyStorage and UnifiedStorage.
-		rows := resp.Results.Rows
-		if len(rows) > 0 && rows[0].Key.Name == name {
+		resultName, found, err := firstUserSearchResultName(resp)
+		if err != nil {
+			return err
+		}
+		if found && resultName == name {
 			return nil
 		}
 		return apierrors.NewConflict(iamv0alpha1.UserResourceInfo.GroupResource(),
@@ -230,7 +237,26 @@ func validateLogin(ctx context.Context, searchClient resourcepb.ResourceIndexCli
 	return nil
 }
 
-func createUserSearchRequest(namespace string, requirements []*resourcepb.Requirement, fields []string) *resourcepb.ResourceSearchRequest {
+func firstUserSearchResultName(resp *resourcepb.ResourceSearchResponse) (string, bool, error) {
+	switch resp.GetResultFormat() {
+	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
+		rows := resp.GetResults().GetRows()
+		if len(rows) == 0 {
+			return "", false, nil
+		}
+		return rows[0].GetKey().GetName(), true, nil
+	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
+		rows := resp.GetRows()
+		if len(rows) == 0 {
+			return "", false, nil
+		}
+		return rows[0].GetKey().GetName(), true, nil
+	default:
+		return "", false, fmt.Errorf("unsupported search result format %d", resp.GetResultFormat())
+	}
+}
+
+func createUserSearchRequest(namespace string, requirements []*resourcepb.Requirement) *resourcepb.ResourceSearchRequest {
 	userGvr := iamv0alpha1.UserResourceInfo.GroupResource()
 	return &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{
@@ -241,6 +267,7 @@ func createUserSearchRequest(namespace string, requirements []*resourcepb.Requir
 			},
 			Fields: requirements,
 		},
-		Fields: fields,
+		Fields:       []string{resource.SEARCH_FIELD_NAME},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
 }

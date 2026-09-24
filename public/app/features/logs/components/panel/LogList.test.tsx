@@ -14,6 +14,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../../utils';
 import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
@@ -24,16 +25,22 @@ import { LogList, type Props } from './LogList';
 import { type TempoDatasource, createTempoDatasource } from './__mocks__/createTempoDatasource';
 
 const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+const useFlagMock = jest.fn((_: string, defaultValue: boolean) => ({ value: defaultValue }));
 
 const setBooleanFlags = (flags: Record<string, boolean>) => {
-  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => {
-    return Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
-  });
+  const getFlagValue = (flag: string, defaultValue: boolean) =>
+    Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
+
+  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => getFlagValue(flag, defaultValue));
+  useFlagMock.mockImplementation((flag: string, defaultValue: boolean) => ({
+    value: getFlagValue(flag, defaultValue),
+  }));
 };
 
 jest.mock('@openfeature/react-sdk', () => ({
   ...jest.requireActual('@openfeature/react-sdk'),
   useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
+  useFlag: (flag: string, defaultValue: boolean) => useFlagMock(flag, defaultValue),
 }));
 
 jest.mock('@grafana/assistant', () => ({
@@ -624,6 +631,7 @@ describe('LogList', () => {
 
   describe('Log details', () => {
     test('Supports showing log details', async () => {
+      setBooleanFlags({ otelLogsFormatting: true, [FlagKeys.GrafanaLogDetailsDisplayedFieldControls]: true });
       jest.spyOn(store, 'get').mockImplementation((option: string) => {
         if (option === 'storage-key.detailsMode') {
           return 'sidebar';
@@ -667,6 +675,7 @@ describe('LogList', () => {
     });
 
     test('Supports showing inline log details', async () => {
+      setBooleanFlags({ otelLogsFormatting: true, [FlagKeys.GrafanaLogDetailsDisplayedFieldControls]: true });
       jest.spyOn(store, 'get').mockImplementation((option: string) => {
         if (option === 'storage-key.detailsMode') {
           return 'inline';
@@ -730,6 +739,7 @@ describe('LogList', () => {
     });
 
     test('Renders multiple log details', async () => {
+      const user = userEvent.setup();
       const logs = [
         createLogLine({ uid: '1', logLevel: LogLevel.error, timeEpochMs: 1546297200000, entry: 'First log' }),
         createLogLine({ uid: '2', logLevel: LogLevel.error, timeEpochMs: 1546297200000, entry: 'Second log' }),
@@ -739,7 +749,9 @@ describe('LogList', () => {
 
       // Open details of 2 logs
       await userEvent.click(screen.getByText('First log'));
-      await userEvent.click(screen.getByText('Second log'));
+      await user.keyboard('{Control>}');
+      await user.click(screen.getByText('Second log'));
+      await user.keyboard('{/Control}');
 
       // 2 tabs
       expect(screen.queryAllByRole('tab')).toHaveLength(2);
@@ -762,6 +774,7 @@ describe('LogList', () => {
     });
 
     test('Changes details focus when logs are added and removed', async () => {
+      const user = userEvent.setup();
       const logs = [
         createLogLine({ uid: '1', logLevel: LogLevel.error, timeEpochMs: 1546297200000, entry: 'First log' }),
         createLogLine({ uid: '2', logLevel: LogLevel.error, timeEpochMs: 1546297200000, entry: 'Second log' }),
@@ -781,13 +794,17 @@ describe('LogList', () => {
       // No tabs, only one details displayed
       expect(screen.queryAllByRole('tab')).toHaveLength(0);
 
-      await userEvent.click(screen.getByText('Second log'));
+      await user.keyboard('{Control>}');
+      await user.click(screen.getByText('Second log'));
+      await user.keyboard('{/Control}');
 
       // 2 details displayed, Second log is the first tab
       expect(screen.queryAllByRole('tab')).toHaveLength(2);
       expect(screen.queryAllByRole('tab')[0]).toHaveTextContent('Second log');
 
-      await userEvent.click(screen.getByText('Third log'));
+      await user.keyboard('{Control>}');
+      await user.click(screen.getByText('Third log'));
+      await user.keyboard('{/Control}');
 
       // 3 details displayed, Second log is the first tab
       expect(screen.queryAllByRole('tab')).toHaveLength(3);

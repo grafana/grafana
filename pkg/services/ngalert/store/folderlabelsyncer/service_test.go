@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"testing"
 	"time"
 
@@ -120,9 +121,7 @@ func (f *fakeFolderClient) Update(_ context.Context, obj *folderv1.Folder, opts 
 	}
 	// Copied, since the caller mutates the object it read.
 	labels := make(map[string]string, len(obj.Labels))
-	for k, v := range obj.Labels {
-		labels[k] = v
-	}
+	maps.Copy(labels, obj.Labels)
 	f.updated = append(f.updated, labels)
 	return obj, nil
 }
@@ -194,7 +193,7 @@ func TestMarkDirty(t *testing.T) {
 
 		done := make(chan struct{})
 		go func() {
-			for i := 0; i < 100; i++ {
+			for range 100 {
 				s.markDirty([]models.FolderKey{{OrgID: 1, UID: "a"}})
 			}
 			close(done)

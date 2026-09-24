@@ -125,7 +125,7 @@ func TestIntegrationSQLStorageAndSQLKVCompatibilityTests(t *testing.T) {
 	t.Cleanup(db.CleanupTestDB)
 
 	newKvBackend := func(ctx context.Context) (resource.StorageBackend, sqldb.DB) {
-		return unitest.NewTestSqlKvBackend(t, ctx, unitest.SQLKVBackendModeRVManager)
+		return unitest.NewTestSqlKvBackend(t, ctx, true)
 	}
 
 	opts := &unitest.TestOptions{
@@ -206,6 +206,33 @@ func TestIntegrationSearchAndStorage(t *testing.T) {
 
 	// Run the shared storage and search tests
 	unitest.RunTestSearchAndStorage(t, ctx, storage, searchBackend)
+}
+
+// TestIntegrationSearchBackedList runs the search-backed LIST contract against
+// each backend. It uses an isolated backend + index per subtest (the runner
+// builds indexes over everything the backend holds, so it must hold only the
+// resources under test). Batch-read assertions apply only to KV backends; the
+// legacy SQL backend takes the per-resource fallback.
+func TestIntegrationSearchBackedList(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	newBleve := func(t *testing.T) resource.SearchBackend {
+		sb, err := search.NewBleveBackend(search.BleveOptions{FileThreshold: 0, Root: t.TempDir()}, nil)
+		require.NoError(t, err)
+		t.Cleanup(sb.Stop)
+		return sb
+	}
+
+	t.Run("kv backend (batched reads)", func(t *testing.T) {
+		ctx := context.Background()
+		backend, _ := unitest.NewTestSqlKvBackend(t, ctx, true)
+		unitest.RunTestSearchBackedList(t, ctx, backend, newBleve(t), unitest.SearchBackedListOptions{ExpectBatchReads: true})
+	})
+
+	t.Run("sql backend (per-resource fallback)", func(t *testing.T) {
+		ctx := context.Background()
+		unitest.RunTestSearchBackedList(t, ctx, newTestBackend(t, false, 0, 0), newBleve(t), unitest.SearchBackedListOptions{ExpectBatchReads: false})
+	})
 }
 
 func TestClientServer(t *testing.T) {
