@@ -68,12 +68,10 @@ export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusCha
 
       if (state === 'error') {
         const warningInfo = messages.warning
-          ? [
-              {
-                title: t('provisioning.job-status.status.title-warning-running-job', 'Job completed with warnings'),
-                message: messages.warning,
-              },
-            ]
+          ? {
+              title: t('provisioning.job-status.status.title-warning-running-job', 'Job completed with warnings'),
+              message: messages.warning,
+            }
           : undefined;
         onStatusChange?.({
           status: 'error',
@@ -97,12 +95,10 @@ export function FinishedJobStatus({ jobUid, repositoryName, jobType, onStatusCha
       } else if (state === 'warning') {
         onStatusChange?.({
           status: 'warning',
-          warning: [
-            {
-              title: t('provisioning.job-status.status.title-warning-running-job', 'Job completed with warnings'),
-              message: messages.warning,
-            },
-          ],
+          warning: {
+            title: t('provisioning.job-status.status.title-warning-running-job', 'Job completed with warnings'),
+            message: messages.warning,
+          },
         });
       }
     }

@@ -222,9 +222,13 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
             {hasStepError && 'error' in stepStatusInfo && (
               <ProvisioningAlert error={stepStatusInfo.error} action={stepStatusInfo.action} />
             )}
-            {'warning' in stepStatusInfo && stepStatusInfo.warning && stepStatusInfo.warning.length > 0 && (
-              // Each warning carries its own action (if any), so no top-level action here.
-              <ProvisioningAlert warning={stepStatusInfo.warning} />
+            {'warning' in stepStatusInfo && stepStatusInfo.warning && (
+              <ProvisioningAlert
+                warning={stepStatusInfo.warning}
+                // Only attach the action to standalone warnings; an 'error' status may also
+                // carry a warning + a retry action meant for the error alert, not this one.
+                action={stepStatusInfo.status === 'warning' ? stepStatusInfo.action : undefined}
+              />
             )}
             {isStepSuccess && 'success' in stepStatusInfo && <ProvisioningAlert success={stepStatusInfo.success} />}
 
