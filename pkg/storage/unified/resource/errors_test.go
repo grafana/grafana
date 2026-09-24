@@ -417,11 +417,9 @@ func TestStatusErrorFromResponse_MapsContextErrors(t *testing.T) {
 	}
 }
 
-func TestStatusErrorFromResponse_UnknownErrorBecomesInternalServerError(t *testing.T) {
-	err := StatusErrorFromResponse(nil, errors.New("unexpected failure"))
+func TestStatusErrorFromResponse_UnknownErrorIsPassedThrough(t *testing.T) {
+	baseErr := errors.New("unexpected failure")
+	err := StatusErrorFromResponse(nil, baseErr)
 
-	var apiStatus apierrors.APIStatus
-	require.ErrorAs(t, err, &apiStatus)
-	require.Equal(t, int32(http.StatusInternalServerError), apiStatus.Status().Code)
-	require.Equal(t, "unexpected failure", apiStatus.Status().Message)
+	require.Equal(t, baseErr.Error(), err.Error())
 }
