@@ -256,8 +256,15 @@ export interface MetricsDiskScope {
   excludes: Array<{ label: string; regex: string }>;
 }
 
+/** The rows that select something, trimmed; the dialog keeps half-filled rows around while the user types. */
+export function activeExcludes(scope: MetricsDiskScope): MetricsDiskScope['excludes'] {
+  return scope.excludes
+    .map((row) => ({ label: row.label.trim(), regex: row.regex.trim() }))
+    .filter((row) => row.label !== '' && row.regex !== '');
+}
+
 export function hasDiskSelection(scope: MetricsDiskScope): boolean {
-  return scope.excludes.some((row) => row.label.trim() && row.regex.trim());
+  return activeExcludes(scope).length > 0;
 }
 
 // Threshold and ETA clamp for the disk-pressure alert row (design/judgment constants).
@@ -269,7 +276,9 @@ const FS_EXCLUDE = 'fstype!~"tmpfs|overlay|squashfs|iso9660|ramfs"';
 
 /** Per-filesystem fill ratio (0..1) that the disk alert and the host count are built on. */
 export function diskRatioExpr(scope: MetricsDiskScope | null): string {
-  const excluded = (scope?.excludes ?? []).map(({ label, regex }) => `${label}!~${quotePromString(regex)}`);
+  const excluded = (scope ? activeExcludes(scope) : []).map(
+    ({ label, regex }) => `${label}!~${quotePromString(regex)}`
+  );
   const selector = `{${[FS_EXCLUDE, ...excluded].join(',')}}`;
   return `(1 - node_filesystem_avail_bytes${selector} / node_filesystem_size_bytes${selector})`;
 }

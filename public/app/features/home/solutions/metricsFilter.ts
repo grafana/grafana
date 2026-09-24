@@ -3,18 +3,20 @@ import * as z from 'zod';
 import { t } from '@grafana/i18n';
 
 import { DatasourceBoundFilterSchema, parseStoredFilter } from './solutionFilter';
-import { hasDiskSelection, type MetricsDiskScope } from './telemetryData';
+import { activeExcludes, hasDiskSelection, type MetricsDiskScope } from './telemetryData';
 
 // Anything else would break every query the label is spliced into.
 const LABEL_NAME = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
 
-const Excludes = z
-  .array(z.object({ label: z.string().trim(), regex: z.string().trim() }))
-  // The dialog allows half-filled rows while typing; they select nothing and are dropped.
-  .transform((rows) => rows.filter((row) => row.label !== '' && row.regex !== ''))
-  .refine((rows) => rows.every((row) => LABEL_NAME.test(row.label)));
+const ExcludesSchema = z
+  .array(z.object({ label: z.string(), regex: z.string() }))
+  .transform((rows) => activeExcludes({ excludes: rows }))
+  .refine((rows) => rows.every((row) => LABEL_NAME.test(row.label)), {
+    error: () =>
+      t('home.solutions.metrics.filter.invalid-label', 'Label names may only contain letters, digits and underscores.'),
+  });
 
-const MetricsFilterSchema = DatasourceBoundFilterSchema.extend({ excludes: Excludes });
+const MetricsFilterSchema = DatasourceBoundFilterSchema.extend({ excludes: ExcludesSchema });
 
 export type MetricsFilter = z.infer<typeof MetricsFilterSchema>;
 
@@ -31,9 +33,8 @@ export function summarizeMetricsFilter(filter: MetricsFilter): string {
   });
 }
 
-/** Message that blocks saving the scope, or null when it is usable. */
+/** Message that blocks saving the scope, or null when it is usable. The schema owns the rules. */
 export function validateMetricsScope(scope: MetricsDiskScope): string | null {
-  return scope.excludes.some((row) => row.label.trim() !== '' && !LABEL_NAME.test(row.label.trim()))
-    ? t('home.solutions.metrics.filter.invalid-label', 'Label names may only contain letters, digits and underscores.')
-    : null;
+  const result = ExcludesSchema.safeParse(scope.excludes);
+  return result.success ? null : result.error.issues[0].message;
 }

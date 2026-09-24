@@ -8,7 +8,7 @@ import { useStoredString } from 'app/core/hooks/useStored';
 
 import { ctaClicked, solutionFilterChanged } from '../analytics/main';
 import { type SolutionFilterChanged } from '../analytics/types';
-import { type DatasourceBoundFilter, solutionFilterStorageKey } from '../solutions/solutionFilter';
+import { type DatasourceBoundFilter, scopeFor, solutionFilterStorageKey } from '../solutions/solutionFilter';
 import { type SolutionId } from '../solutions/types';
 
 /** What a solution contributes to the shared filter dialog. The scope is its stored filter minus the datasource binding. */
@@ -54,7 +54,7 @@ export function SolutionFilterActions<TScope extends object>({
   const styles = useStyles2(getStyles, attention);
   const [raw] = useStoredString(solutionFilterStorageKey(spec.solution), '');
   const filter = useMemo(() => spec.parse(raw), [spec, raw]);
-  const applied = filter !== null && filter.datasourceUid === datasource.uid;
+  const applied = scopeFor(filter, datasource);
   const [open, setOpen] = useState(false);
 
   return (
@@ -77,7 +77,7 @@ export function SolutionFilterActions<TScope extends object>({
         tooltip={
           applied
             ? t('home.solutions.filter.edit', 'Edit filters ({{summary}})', {
-                summary: spec.summarize(filter),
+                summary: spec.summarize(applied),
                 interpolation: { escapeValue: false },
               })
             : openLabel

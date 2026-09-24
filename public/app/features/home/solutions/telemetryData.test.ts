@@ -523,6 +523,17 @@ describe('metrics telemetry', () => {
       expect(diskPressureQuery(scope)).toBe(`max by (instance) (${diskRatioExpr(scope)}) > 0.9`);
     });
 
+    it('trims rows and leaves half-filled ones out of the query, as a drafted scope carries them', () => {
+      const draft = {
+        excludes: [
+          { label: ' instance ', regex: ' cache-.* ' },
+          { label: 'job', regex: '' },
+        ],
+      };
+
+      expect(diskRatioExpr(draft)).toBe(diskRatioExpr({ excludes: [{ label: 'instance', regex: 'cache-.*' }] }));
+    });
+
     it('builds the disk pressure and host queries on the scoped ratio', async () => {
       await fetchMetricsDiskPressure(prom, scope);
 
