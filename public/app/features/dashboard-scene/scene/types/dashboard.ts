@@ -85,8 +85,6 @@ export interface DashboardPlanningState {
   planId: string;
   /** Title of the plan being previewed, shown in the banner. */
   planTitle: string;
-  /** How many panels the plan proposes, shown in the banner. */
-  panelCount: number;
   /** Build the plan: attach real queries to the scaffolded panels. */
   onBuild: () => void;
   /** Discard the plan and remove its scaffolded panels. */
@@ -105,8 +103,8 @@ export interface DashboardSceneLike extends SceneObject<DashboardSceneState>, La
   getDefaultLayout(): DashboardLayoutManager | undefined;
 }
 
-export function isDashboardSceneLike(obj: SceneObject): obj is DashboardSceneLike {
-  return 'isDashboardScene' in obj;
+export function isDashboardSceneLike(obj: unknown): obj is DashboardSceneLike {
+  return typeof obj === 'object' && obj !== null && 'isDashboardScene' in obj && obj.isDashboardScene === true;
 }
 
 export function getDashboardSceneLike(sceneObject: SceneObject): DashboardSceneLike {

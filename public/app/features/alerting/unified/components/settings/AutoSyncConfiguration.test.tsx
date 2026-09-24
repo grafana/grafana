@@ -33,8 +33,6 @@ const server = setupMswServer();
 const MIMIR_DS_UID = 'mimir-uid';
 const MIMIR_DS_NAME = 'Test Mimir Alertmanager';
 
-const SECOND_MIMIR_DS_UID = 'other-mimir-uid';
-const SECOND_MIMIR_DS_NAME = 'Other Mimir Alertmanager';
 // Configured UID with no matching datasource — puts the component in orphan-uid.
 const ORPHAN_DS_UID = 'missing-uid';
 
@@ -46,13 +44,6 @@ const MIMIR_DS_PAYLOAD = {
   type: 'alertmanager',
   url: 'http://localhost:9009',
   jsonData: { implementation: 'mimir' },
-};
-
-const SECOND_MIMIR_DS_PAYLOAD = {
-  ...MIMIR_DS_PAYLOAD,
-  id: 2,
-  uid: SECOND_MIMIR_DS_UID,
-  name: SECOND_MIMIR_DS_NAME,
 };
 
 /** A Config whose status confirms a successful sync of the configured UID. */
@@ -404,6 +395,7 @@ describe('AutoSyncConfiguration — staged configuration conflict', () => {
     expect(await ui.notConfiguredBadge.find()).toBeInTheDocument();
     expect(edgeUi.stagedConflictWarning.get()).toBeInTheDocument();
     expect(ui.saveButton.get()).toBeDisabled();
+    expect(ui.picker.get()).toBeDisabled();
   });
 
   it('reports that sync is not running when a foreign import outlives an enabled sync', async () => {
@@ -416,24 +408,19 @@ describe('AutoSyncConfiguration — staged configuration conflict', () => {
     expect(await edgeUi.stagedConflictActiveTitle.find()).toBeInTheDocument();
     // Disabling must stay reachable — never trap the user in the broken state.
     expect(ui.disableSyncButton.get()).toBeEnabled();
+    expect(ui.picker.get()).toBeDisabled();
   });
 
-  // Disabling sync leaves the staged config behind, so re-enabling the same datasource must not be blocked
-  // by the config the syncer itself wrote — it will simply overwrite its own entry.
-  it('allows re-enabling the datasource whose UID matches the staged identifier', async () => {
+  it('locks the datasource picker even when the staged identifier matches an available datasource', async () => {
     setupStatefulAutoSyncConfig(server);
     setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
     registerMimirDataSources();
 
-    const { user } = render(<AutoSyncConfiguration stagedConfigIdentifier={MIMIR_DS_UID} />);
+    render(<AutoSyncConfiguration stagedConfigIdentifier={MIMIR_DS_UID} />);
 
     expect(await ui.notConfiguredBadge.find()).toBeInTheDocument();
-
-    await user.click(ui.picker.get());
-    await user.click(await screen.findByText(MIMIR_DS_NAME));
-
-    await waitFor(() => expect(ui.saveButton.get()).toBeEnabled());
-    expect(edgeUi.stagedConflictWarning.query()).not.toBeInTheDocument();
+    expect(edgeUi.stagedConflictWarning.get()).toBeInTheDocument();
+    expect(ui.picker.get()).toBeDisabled();
   });
 
   // Recovering from orphan-uid means repointing at a live datasource, but the syncer's own leftover still
@@ -447,27 +434,13 @@ describe('AutoSyncConfiguration — staged configuration conflict', () => {
 
     expect(await edgeUi.orphanWarning.find()).toBeInTheDocument();
     expect(edgeUi.stagedConflictWarning.query()).not.toBeInTheDocument();
+    expect(ui.picker.get()).toBeEnabled();
 
     await user.click(ui.picker.get());
     await user.click(await screen.findByText(MIMIR_DS_NAME));
 
     await waitFor(() => expect(ui.saveButton.get()).toBeDisabled());
     expect(edgeUi.stagedConflictWarning.get()).toBeInTheDocument();
-  });
-
-  // The alert describes what the syncer writes today, not what the picker happens to show.
-  it('keeps reporting a broken sync when the picker moves to the staged identifier', async () => {
-    setupAutoSyncConfig(server, { specUid: MIMIR_DS_UID });
-    setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD, SECOND_MIMIR_DS_PAYLOAD]);
-    registerMimirDataSources([MIMIR_DS_PAYLOAD, SECOND_MIMIR_DS_PAYLOAD]);
-
-    const { user } = render(<AutoSyncConfiguration stagedConfigIdentifier={SECOND_MIMIR_DS_UID} />);
-
-    expect(await edgeUi.stagedConflictActiveTitle.find()).toBeInTheDocument();
-
-    await user.click(ui.picker.get());
-    await user.click(await screen.findByText(SECOND_MIMIR_DS_NAME));
-
-    expect(edgeUi.stagedConflictActiveTitle.get()).toBeInTheDocument();
+    expect(ui.picker.get()).toBeDisabled();
   });
 });

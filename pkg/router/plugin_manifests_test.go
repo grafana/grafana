@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"net"
@@ -16,13 +17,17 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	sdkbackend "github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/plugins/definition"
 	apiserverauthenticator "github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
-	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // pluginManifestsFixture is a minimal instance of the response shape a real
@@ -82,8 +87,10 @@ func TestPluginManifestsTarget_PollsFiltersAndSkipsEntriesWithoutManifest(t *tes
 	}))
 	defer srv.Close()
 
-	authenticator := &authn.GrafanaTokenAuthorizer{Dummy: &identity.StaticRequester{UserUID: "test-user"}}
-	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{}, authenticator)
+	authenticator := manifestTokenAuthenticatorFunc(func(context.Context, string) (identity.Requester, error) {
+		return &identity.StaticRequester{UserUID: "test-user"}, nil
+	})
+	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{}, &authenticator)
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(t.Context())
@@ -98,7 +105,7 @@ func TestPluginManifestsTarget_PollsFiltersAndSkipsEntriesWithoutManifest(t *tes
 	backends := target.Backends()
 	require.Equal(t, "appsdktest.ext.grafana.app", backends[0].Group().Name)
 	require.Contains(t, backends[0].Key(), "managed:grafana-appsdktest-app:")
-	require.Same(t, authenticator, backends[0].(*pluginDeploymentBackend).authn)
+	require.Same(t, &authenticator, backends[0].(*pluginDeploymentBackend).authn)
 }
 
 type manifestTokenAuthenticatorFunc func(context.Context, string) (identity.Requester, error)
@@ -139,7 +146,7 @@ func TestPluginDeploymentBackendAuthentication(t *testing.T) {
 			authCalls++
 			require.Equal(t, 1, authCalls, "authentication must not recurse")
 			require.Equal(t, token, got)
-			require.Equal(t, req.Context(), ctx)
+			require.Equal(t, req.Context().Done(), ctx.Done(), "authentication must retain request cancellation")
 			return info, nil
 		}),
 	}
@@ -212,7 +219,9 @@ func TestPluginDeploymentBackendLoadErrors(t *testing.T) {
 	backend := &pluginDeploymentBackend{}
 	_, err := backend.Load(t.Context())
 	require.ErrorContains(t, err, "requires a token authenticator")
-	backend.authn = &authn.GrafanaTokenAuthorizer{}
+	backend.authn = manifestTokenAuthenticatorFunc(func(context.Context, string) (identity.Requester, error) {
+		return nil, apierrors.NewUnauthorized("invalid token")
+	})
 	backend.Backend = failingBackend{}
 	_, err = backend.Load(t.Context())
 	require.ErrorContains(t, err, "load failed")
@@ -399,10 +408,12 @@ func TestPluginManifestsTargetRemoteClient(t *testing.T) {
 	require.ErrorContains(t, err, "closed")
 }
 
-func TestPluginManifestsTargetRejectsEmptyHost(t *testing.T) {
+func TestPluginManifestsTargetWithoutBackendClient(t *testing.T) {
 	target := &pluginManifestsTarget{}
-	_, _, err := target.pluginClients("")
-	require.ErrorContains(t, err, "host is empty")
+	clientV2, clientV3, err := target.pluginClients("")
+	require.NoError(t, err)
+	require.Nil(t, clientV2)
+	require.Nil(t, clientV3)
 	require.Empty(t, target.connections)
 }
 
@@ -445,4 +456,88 @@ func (s *manifestTestLegacyPluginServer) CallResource(req *pluginv2.CallResource
 		return err
 	}
 	return stream.Send(&pluginv2.CallResourceResponse{Body: req.Body})
+}
+
+func TestPluginManifestsTargetServesKindsWithoutBackendClient(t *testing.T) {
+	var deployment definition.PluginDeployments
+	require.NoError(t, json.Unmarshal([]byte(pluginManifestsFixture), &deployment))
+	entry := &deployment.Plugins[0]
+	entry.Host = ""
+	folderScoped := false
+	entry.Definition.Manifest.Versions[0].Kinds = []app.ManifestVersionKind{{
+		Kind: "Thing", Plural: "things", Scope: "Namespaced", FolderScoped: &folderScoped,
+	}}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.NoError(t, json.NewEncoder(w).Encode(deployment))
+	}))
+	defer srv.Close()
+	storage := &manifestKindResourceClient{}
+	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{Unified: storage},
+		manifestTokenAuthenticatorFunc(func(context.Context, string) (identity.Requester, error) {
+			return &identity.StaticRequester{Type: types.TypeUser, OrgID: 1, Namespace: "default"}, nil
+		}))
+	require.NoError(t, err)
+	target.poll(t.Context(), make(chan struct{}, 1))
+	require.Len(t, target.Backends(), 1)
+	handler, err := target.Backends()[0].Load(t.Context())
+	require.NoError(t, err)
+	t.Cleanup(handler.(*authenticatingWrapper).Handler.(interface{ Destroy() }).Destroy)
+	request := func(method, path, body string) *httptest.ResponseRecorder {
+		t.Helper()
+		req := httptest.NewRequest(method, path, strings.NewReader(body))
+		req.Header.Set("X-Access-Token", "test-token")
+		req.Header.Set("Content-Type", "application/json")
+		res := httptest.NewRecorder()
+		handler.ServeHTTP(res, req)
+		return res
+	}
+	root := "/apis/appsdktest.ext.grafana.app/v1alpha1"
+	res := request(http.MethodGet, root, "")
+	require.Equal(t, http.StatusOK, res.Code, res.Body.String())
+	var discovery metav1.APIResourceList
+	require.NoError(t, json.Unmarshal(res.Body.Bytes(), &discovery))
+	require.Len(t, discovery.APIResources, 1)
+	require.Equal(t, "Thing", discovery.APIResources[0].Kind)
+	require.Equal(t, "things", discovery.APIResources[0].Name)
+	root += "/namespaces/default/things"
+	res = request(http.MethodPost, root, `{"apiVersion":"appsdktest.ext.grafana.app/v1alpha1","kind":"Thing","metadata":{"name":"example"}}`)
+	require.Equal(t, http.StatusCreated, res.Code, res.Body.String())
+	require.NotNil(t, storage.created)
+	require.Equal(t, "things", storage.created.Key.Resource)
+	res = request(http.MethodGet, root+"/example", "")
+	require.Equal(t, http.StatusOK, res.Code, res.Body.String())
+	require.Contains(t, res.Body.String(), `"name":"example"`)
+	res = request(http.MethodGet, root+"/example/reload", "")
+	require.Equal(t, http.StatusNotFound, res.Code, res.Body.String())
+	require.Empty(t, target.connections)
+
+	for _, tc := range []struct {
+		name         string
+		capabilities *app.AdmissionCapabilities
+	}{
+		{"mutation", &app.AdmissionCapabilities{Mutation: &app.MutationCapability{Operations: []app.AdmissionOperation{app.AdmissionOperationCreate}}}},
+		{"validation", &app.AdmissionCapabilities{Validation: &app.ValidationCapability{Operations: []app.AdmissionOperation{app.AdmissionOperationCreate}}}},
+	} {
+		t.Run(tc.name+" requires a backend client", func(t *testing.T) {
+			entry.Definition.Manifest.Versions[0].Kinds[0].Admission = tc.capabilities
+			target.poll(t.Context(), make(chan struct{}, 1))
+			require.Len(t, target.Backends(), 1)
+			_, err := target.Backends()[0].Load(t.Context())
+			require.ErrorContains(t, err, "declares admission capabilities but has no plugin client")
+		})
+	}
+}
+
+type manifestKindResourceClient struct {
+	resource.ResourceClient
+	created *resourcepb.CreateRequest
+}
+
+func (c *manifestKindResourceClient) Create(_ context.Context, req *resourcepb.CreateRequest, _ ...grpc.CallOption) (*resourcepb.CreateResponse, error) {
+	c.created = req
+	return &resourcepb.CreateResponse{ResourceVersion: 1}, nil
+}
+
+func (c *manifestKindResourceClient) Read(_ context.Context, _ *resourcepb.ReadRequest, _ ...grpc.CallOption) (*resourcepb.ReadResponse, error) {
+	return &resourcepb.ReadResponse{ResourceVersion: 1, Value: c.created.Value}, nil
 }
