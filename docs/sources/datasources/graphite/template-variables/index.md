@@ -16,7 +16,7 @@ labels:
 menuTitle: Template variables
 title: Graphite template variables
 weight: 300
-review_date: 2026-08-11
+review_date: 2026-09-24
 ---
 
 # Graphite template variables
@@ -31,7 +31,9 @@ To view an example templated dashboard, refer to [Graphite Templated Nested dash
 
 ## Use query variables
 
-With Graphite data sources, you can only create query variables. In the variable editor, choose the query type from the **Select query type** drop-down and enter your query in the **Query** field. Grafana supports three query types for Graphite variables:
+Graphite populates **Query** variables. You can still use other variable types, such as **Custom**, **Interval**, and **Text box**, on a dashboard that queries Graphite. Those types don't send a query to Graphite.
+
+To create a Graphite query variable, choose the query type from the **Select query type** drop-down and enter your query in the **Query** field. Grafana supports three query types for Graphite variables:
 
 | Query type            | Description                                                                                                        | Example                                        |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------- |

@@ -18,7 +18,7 @@ labels:
 menuTitle: Query editor
 title: Graphite query editor
 weight: 200
-review_date: 2026-08-11
+review_date: 2026-09-24
 ---
 
 # Graphite query editor
@@ -198,4 +198,4 @@ For details on both modes, example queries, and how to create events in Graphite
 
 ## Integration with Loki
 
-When you change the data source to Loki in Explore, your Graphite queries are automatically converted to Loki queries. Loki label names and values are extracted based on the mapping information defined in your Graphite data source configuration. Grafana automatically transforms queries that use tags with `seriesByTags()` without requiring additional setup.
+When you change the data source to Loki in Explore, your Graphite queries are automatically converted to Loki queries. Loki label names and values are extracted based on the mapping information defined in your Graphite data source configuration. Grafana automatically transforms queries that use tags with `seriesByTag()` without requiring additional setup.

@@ -15,7 +15,7 @@ labels:
 menuTitle: Annotations
 title: Graphite annotations
 weight: 350
-review_date: 2026-08-11
+review_date: 2026-09-24
 ---
 
 # Graphite annotations
@@ -53,7 +53,7 @@ Graphite supports two ways to query annotations. You configure both in the annot
 | **Metric query** | **Graphite Query**       | Runs a standard Graphite metric query. Each returned data point with a non-zero value becomes an annotation, and the series name becomes the title. |
 | **Events query** | **Graphite events tags** | Queries the Graphite events API and filters by one or more event tags. Each matching event becomes an annotation.                                   |
 
-Use the metric query mode when an existing metric marks your events, for example a counter that increments on each deployment. Use the events query mode when you record discrete events in Graphite and tag them.
+Use the metric query mode when a metric is non-zero only at the moments you want to mark. A counter that stays above zero after the first event marks every interval, because Grafana creates an annotation for every non-zero point. Use the events query mode when you record discrete events in Graphite and tag them.
 
 ## Create an annotation query
 
@@ -99,41 +99,41 @@ The following examples show common ways to turn a metric into annotations.
 
 #### Deployment markers
 
-If you increment a counter each time a service deploys, query that counter to mark deployments:
+Record deployments as Graphite events and query them by tag. Refer to [Events query annotations](#events-query-annotations).
+
+If you only have a counter, query the increase between points. `nonNegativeDerivative()` is zero while the counter is flat and non-zero only when it goes up, so annotations appear at each deploy:
 
 ```text
-drawAsInfinite(deploys.myservice.count)
+nonNegativeDerivative(deploys.myservice.count)
 ```
-
-The `drawAsInfinite()` function is useful for event-style metrics because it renders each occurrence as a vertical marker, which maps cleanly to annotations.
 
 #### Service restarts
 
-Mark each time a process restarts by querying a restart counter:
+Use the same pattern for restarts. Query a metric that is non-zero only when a restart happens, or record restarts as events:
 
 ```text
-drawAsInfinite(stats.myservice.restart.count)
+nonNegativeDerivative(stats.myservice.restart.count)
 ```
 
 #### Error spikes above a threshold
 
-Because Grafana skips zero and `null` data points, use `removeBelowValue()` to annotate only the moments a metric crosses a threshold. The following query annotates every interval where the error count exceeds 100:
+Because Grafana skips zero and `null` data points, use `removeBelowValue()` to annotate only the moments a metric crosses a threshold. The following query annotates every interval where the error count is 100 or greater:
 
 ```text
 removeBelowValue(stats.myservice.errors.count, 100)
 ```
 
-Values at or below 100 become `null` and are skipped, so annotations appear only during error spikes.
+Values below 100 become `null` and are skipped, so annotations appear only during error spikes.
 
-#### Host up or down transitions
+#### Host down
 
-Annotate when a host reports as down by inverting an up metric so that a down state produces a non-zero value:
+Annotate while a host is down by inverting an up metric so that a down state produces a non-zero value:
 
 ```text
-drawAsInfinite(offset(scale(hosts.web01.up, -1), 1))
+offset(scale(hosts.web01.up, -1), 1)
 ```
 
-This query returns `1` when `up` is `0`, which marks the moments a host goes down.
+This query returns `1` when `up` is `0`. Grafana skips the zero points from when the host is up, and creates an annotation for each interval the host stays down.
 
 ## Events query annotations
 
@@ -143,14 +143,16 @@ In events query mode, Grafana queries the Graphite events API and filters events
 - The annotation title is the event's `what` value.
 - The tags you query with are attached to the annotation.
 
+Enter multiple tags separated by a space. Grafana sends those tags to the Graphite events API without `set=union`, so an event must include every tag.
+
 You can filter events in the following ways:
 
-| Value         | Result                                                           |
-| ------------- | ---------------------------------------------------------------- |
-| Empty         | Returns all events in the dashboard time range.                  |
-| A single tag  | Returns events that include that tag, for example `deploy`.      |
-| Multiple tags | Returns events that match the supplied tags.                     |
-| A wildcard    | Returns events whose tags match the pattern, for example `web*`. |
+| Value         | Result                                                                                     |
+| ------------- | ------------------------------------------------------------------------------------------ |
+| Empty         | Returns all events in the dashboard time range.                                            |
+| A single tag  | Returns events that include that tag, for example `deploy`.                                |
+| Multiple tags | Returns events that include every tag. `deploy myservice` matches events tagged with both. |
+| A wildcard    | Returns events whose tags match the pattern, for example `web*`.                           |
 
 ### Create events in Graphite
 
@@ -197,7 +199,7 @@ You can use template variables in both annotation query modes to filter annotati
 Metric query with a variable:
 
 ```text
-drawAsInfinite(deploys.$service.count)
+nonNegativeDerivative(deploys.$service.count)
 ```
 
 Events query with a variable:

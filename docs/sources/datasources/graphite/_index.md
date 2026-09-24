@@ -15,7 +15,7 @@ labels:
 menuTitle: Graphite
 title: Graphite data source
 weight: 600
-review_date: 2026-08-11
+review_date: 2026-09-24
 ---
 
 # Graphite data source
@@ -67,7 +67,7 @@ Grafana can report its own internal metrics to a Graphite backend. In the `[metr
 ## Graphite and Loki integration
 
 When you change the data source selection in [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/), Graphite queries are converted to Loki queries.
-Grafana extracts Loki label names and values from the Graphite queries according to mappings provided in the Graphite data source configuration. Grafana automatically transforms queries using tags with `seriesByTags()` without requiring additional setup.
+Grafana extracts Loki label names and values from the Graphite queries according to mappings provided in the Graphite data source configuration. Grafana automatically transforms queries using tags with `seriesByTag()` without requiring additional setup.
 
 ## Pre-built dashboards
 
