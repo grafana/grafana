@@ -315,6 +315,13 @@ export function getOutlineSettingsTarget(sceneObject: SceneObject): OutlineSetti
   }
 
   if (sceneObject instanceof DashboardDataLayerSet) {
+    const owner = sceneObject.parent;
+    if (owner instanceof RowItem) {
+      return { parent: owner, categoryId: SidebarCategoryType.RowSectionAnnotations };
+    }
+    if (owner instanceof TabItem) {
+      return { parent: owner, categoryId: SidebarCategoryType.TabSectionAnnotations };
+    }
     return { parent: getDashboardSceneFor(sceneObject), categoryId: SidebarCategoryType.DashboardAnnotations };
   }
 

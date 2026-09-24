@@ -95,6 +95,30 @@ describe('getOutlineSettingsTarget', () => {
       expect(getOutlineSettingsTarget(filtersSet)?.categoryId).toBe(SidebarCategoryType.TabSectionFilters);
       expect(getOutlineSettingsTarget(filtersSet)?.parent).toBe(tab);
     });
+
+    it('maps a tab annotation set to the tab section annotations category', () => {
+      const dataLayerSet = new DashboardDataLayerSet({ annotationLayers: [] });
+      const tab = new TabItem({
+        $data: dataLayerSet,
+        layout: AutoGridLayoutManager.createEmpty(),
+      });
+
+      expect(getOutlineSettingsTarget(dataLayerSet)?.categoryId).toBe(SidebarCategoryType.TabSectionAnnotations);
+      expect(getOutlineSettingsTarget(dataLayerSet)?.parent).toBe(tab);
+      expect(tab.getOutlineChildren(true)).toContain(dataLayerSet);
+    });
+
+    it('maps a row annotation set to the row section annotations category', () => {
+      const dataLayerSet = new DashboardDataLayerSet({ annotationLayers: [] });
+      const row = new RowItem({
+        $data: dataLayerSet,
+        layout: AutoGridLayoutManager.createEmpty(),
+      });
+
+      expect(getOutlineSettingsTarget(dataLayerSet)?.categoryId).toBe(SidebarCategoryType.RowSectionAnnotations);
+      expect(getOutlineSettingsTarget(dataLayerSet)?.parent).toBe(row);
+      expect(row.getOutlineChildren(true)).toContain(dataLayerSet);
+    });
   });
 
   describe('regular nodes', () => {

@@ -3,14 +3,14 @@ import { useCallback } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type SceneDataLayerProvider, type SceneObject, useSceneObjectState } from '@grafana/scenes';
-import { Button, Stack } from '@grafana/ui';
 
-import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
+import { type DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { annotationEditActions } from '../settings/annotations/actions';
+import { getTopPlacementLabel } from '../utils/getTopPlacementLabel';
 
+import { DashboardAnnotationsList } from './dashboard/DashboardAnnotationsList';
 import { SidebarAddButton } from './dashboard/SidebarAddButton';
-import { selectSidebarObject } from './dashboard/helpers';
 
 export function useSectionAnnotationLayers(sectionOwner: SceneObject): SceneDataLayerProvider[] {
   const { $data } = useSceneObjectState(sectionOwner, { shouldActivateOrKeepAlive: true });
@@ -29,29 +29,19 @@ export function useSectionAnnotationLayers(sectionOwner: SceneObject): SceneData
 }
 
 export function SectionAnnotationsList({ sectionOwner }: { sectionOwner: SceneObject }) {
-  const layers = useSectionAnnotationLayers(sectionOwner).filter(
-    (layer): layer is DashboardAnnotationsDataLayer => layer instanceof DashboardAnnotationsDataLayer
-  );
+  const layers = useSectionAnnotationLayers(sectionOwner);
+  const dataLayerSet = sectionOwner.state.$data;
 
-  if (layers.length === 0) {
+  if (!(dataLayerSet instanceof DashboardDataLayerSet) || layers.length === 0) {
     return null;
   }
 
   return (
-    <Stack direction="column" gap={0.5}>
-      {layers.map((layer) => (
-        <Button
-          key={layer.state.key}
-          variant="secondary"
-          fill="text"
-          size="sm"
-          onClick={() => selectSidebarObject(layer)}
-          data-testid={`section-annotation-${layer.state.name}`}
-        >
-          {layer.state.name}
-        </Button>
-      ))}
-    </Stack>
+    <DashboardAnnotationsList
+      dataLayerSet={dataLayerSet}
+      visibleTitle={getTopPlacementLabel(sectionOwner)}
+      hideControlsMenuList
+    />
   );
 }
 
@@ -70,9 +60,11 @@ export function AddSectionAnnotationButton({ sectionOwner }: { sectionOwner: Sce
 }
 
 export async function addSectionAnnotation(sectionOwner: SceneObject): Promise<DashboardAnnotationsDataLayer> {
-  let dataLayerSet = sectionOwner.state.$data;
-  if (!(dataLayerSet instanceof DashboardDataLayerSet)) {
-    dataLayerSet = new DashboardDataLayerSet({ annotationLayers: [] });
+  const current = sectionOwner.state.$data;
+  const dataLayerSet =
+    current instanceof DashboardDataLayerSet ? current : new DashboardDataLayerSet({ annotationLayers: [] });
+
+  if (!(current instanceof DashboardDataLayerSet)) {
     sectionOwner.setState({ $data: dataLayerSet });
   }
 

@@ -276,13 +276,7 @@ export function SectionVariableControls({ variableSet }: { variableSet: SceneVar
   }
 
   return (
-    // Prevent row selection on click (see RowItemRenderer onPointerUp)
-    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
-    <div
-      className={styles.sectionVariables}
-      onPointerDown={(e) => e.stopPropagation()}
-      onPointerUp={(e) => e.stopPropagation()}
-    >
+    <div className={styles.sectionVariables}>
       {visibleVariables.map((variable) => (
         <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
       ))}
@@ -290,13 +284,10 @@ export function SectionVariableControls({ variableSet }: { variableSet: SceneVar
   );
 }
 
-const getSectionVariableStyles = (theme: GrafanaTheme2) => ({
+const getSectionVariableStyles = (_theme: GrafanaTheme2) => ({
+  // Join the section controls row so variables and annotations share one wrapping line.
   sectionVariables: css({
-    display: 'flex',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing(1),
-    marginBottom: theme.spacing(1),
+    display: 'contents',
   }),
 });
 

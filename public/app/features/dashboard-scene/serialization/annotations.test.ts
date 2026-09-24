@@ -361,4 +361,27 @@ describe('V1<->V2 annotation convertions', () => {
     const resultV1: AnnotationQuery = transformV2ToV1AnnotationQuery(expectedV2);
     expect(resultV1).toEqual(annotationDefinition);
   });
+
+  test('label-hidden display round-trips through legacy options', () => {
+    const annotationDefinition = {
+      datasource: {
+        type: 'prometheus',
+        uid: 'uid',
+      },
+      enable: true,
+      hide: false,
+      iconColor: 'red',
+      name: 'Deploys',
+      hideLabel: true,
+    } as AnnotationQuery;
+
+    const resultV2 = transformV1ToV2AnnotationQuery(annotationDefinition, 'prometheus', 'uid');
+
+    expect(resultV2.spec.legacyOptions).toEqual({ hideLabel: true });
+    expect(resultV2.spec.hide).toBe(false);
+    expect(resultV2.spec.placement).toBeUndefined();
+
+    const resultV1 = transformV2ToV1AnnotationQuery(resultV2);
+    expect(resultV1).toMatchObject({ hide: false, hideLabel: true, name: 'Deploys' });
+  });
 });

@@ -27,6 +27,7 @@ import { cloneSectionDataLayerSet, cloneSectionVariableSet, removeRepeatLocalVar
 import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';
 import { getDashboardSceneFor, getSlugForRowOrTab, interpolateSectionTitle } from '../../utils/utils';
+import { DashboardDataLayerSet } from '../DashboardDataLayerSet';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
@@ -116,13 +117,21 @@ export class RowItem
 
   public getOutlineChildren(isEditing?: boolean): SceneObject[] {
     const layoutChildren = this.state.layout.getOutlineChildren();
+    const sectionAnnotations = this.state.$data instanceof DashboardDataLayerSet ? [this.state.$data] : [];
+
     if (isEditing && this.state.$variables) {
       return [
         ...(config.featureToggles.dashboardUnifiedDrilldownControls ? [this.getFiltersSet()] : []),
         this.state.$variables,
+        ...sectionAnnotations,
         ...layoutChildren,
       ];
     }
+
+    if (isEditing && sectionAnnotations.length > 0) {
+      return [...sectionAnnotations, ...layoutChildren];
+    }
+
     return layoutChildren;
   }
 

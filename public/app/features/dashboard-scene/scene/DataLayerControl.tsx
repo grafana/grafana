@@ -5,6 +5,8 @@ import { t } from '@grafana/i18n';
 import { ControlsLabel, dataLayers, type SceneDataLayerProvider } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
+import { isAnnotationLabelHidden } from '../settings/annotations/annotationDisplay';
+
 export type Props = {
   layer: SceneDataLayerProvider;
   inMenu?: boolean;
@@ -19,6 +21,7 @@ export function DataLayerControl({ layer, inMenu }: Props) {
   const styles = useStyles2(getStyles);
   const elementType = layer instanceof dataLayers.AnnotationsDataLayer ? 'annotation' : 'data-layer';
 
+  const hideLabel = layer instanceof dataLayers.AnnotationsDataLayer && isAnnotationLabelHidden(layer.state.query);
   const label: string =
     layer instanceof dataLayers.AnnotationsDataLayer && Boolean(layer.state.query.builtIn)
       ? t('dashboard-scene.annotation-settings-list.built-in', '{{annoName}} (Built-in)', {
@@ -41,16 +44,18 @@ export function DataLayerControl({ layer, inMenu }: Props) {
         <div className={styles.controlWrapper}>
           <layer.Component model={layer} />
         </div>
-        <ControlsLabel
-          htmlFor={isSelectable ? undefined : elementId}
-          isLoading={showLoading}
-          onCancel={() => layer.cancelQuery?.()}
-          label={label}
-          description={layer.state.description}
-          error={layer.state.data?.errors?.[0].message}
-          layout={'vertical'}
-          className={cx(styles.menuLabel, isSelectable && styles.labelSelectable)}
-        />
+        {!hideLabel && (
+          <ControlsLabel
+            htmlFor={isSelectable ? undefined : elementId}
+            isLoading={showLoading}
+            onCancel={() => layer.cancelQuery?.()}
+            label={label}
+            description={layer.state.description}
+            error={layer.state.data?.errors?.[0].message}
+            layout={'vertical'}
+            className={cx(styles.menuLabel, isSelectable && styles.labelSelectable)}
+          />
+        )}
       </div>
     );
   }
@@ -65,15 +70,17 @@ export function DataLayerControl({ layer, inMenu }: Props) {
       data-dashboard-element-key={layer.state.key}
       data-dashboard-element-type={elementType}
     >
-      <ControlsLabel
-        htmlFor={isSelectable ? undefined : elementId}
-        isLoading={showLoading}
-        onCancel={() => layer.cancelQuery?.()}
-        label={label}
-        description={layer.state.description}
-        error={layer.state.data?.errors?.[0].message}
-        className={cx(isSelectable && styles.labelSelectable)}
-      />
+      {!hideLabel && (
+        <ControlsLabel
+          htmlFor={isSelectable ? undefined : elementId}
+          isLoading={showLoading}
+          onCancel={() => layer.cancelQuery?.()}
+          label={label}
+          description={layer.state.description}
+          error={layer.state.data?.errors?.[0].message}
+          className={cx(isSelectable && styles.labelSelectable)}
+        />
+      )}
       <layer.Component model={layer} />
     </div>
   );
