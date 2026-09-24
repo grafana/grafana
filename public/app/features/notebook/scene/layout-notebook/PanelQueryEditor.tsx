@@ -1,15 +1,16 @@
 import { isEqual } from 'lodash';
-import { useRef } from 'react';
-import { useAsyncFn } from 'react-use';
+import { useEffect, useRef } from 'react';
 
-import { LoadingState } from '@grafana/data';
+import { LoadingState, type PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { sceneGraph, type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { Button, Stack } from '@grafana/ui';
 import { addQuery } from 'app/core/utils/query';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
-import { getVizSuggestionForQuery } from 'app/features/dashboard-scene/utils/getVizSuggestionForQuery';
+import { TOP_VIZ_SUGGESTION_COUNT } from 'app/features/dashboard-scene/utils/getVizSuggestionForQuery';
+import { getAllSuggestions } from 'app/features/panel/suggestions/getAllSuggestions';
+import { hasData } from 'app/features/panel/suggestions/utils';
 
 import { type NotebookCellItem } from './NotebookCellItem';
 import { PanelQueryEditorRow } from './PanelQueryEditorRow';
@@ -20,6 +21,8 @@ interface Props {
   cell?: NotebookCellItem;
   /** True right after this cell was inserted or converted — see NotebookCellRenderer's own doc comment. */
   autoFocus?: boolean;
+  /** Called with the top viz suggestions every time a run recomputes them, for NotebookVizSuggestionsPicker. */
+  onSuggestionsChange?: (suggestions: PanelPluginVisualizationSuggestion[]) => void;
 }
 
 /**
@@ -28,31 +31,69 @@ interface Props {
  * and re-runs on a time-range change the same way any dashboard panel does. This component only
  * reads and writes that runner's live state — one PanelQueryEditorRow per query.
  */
-export function PanelQueryEditor({ panel, cell, autoFocus }: Props) {
+export function PanelQueryEditor({ panel, cell, autoFocus, onSuggestionsChange }: Props) {
   const queryRunner = getQueryRunnerFor(panel);
   const { queries } = queryRunner?.useState() ?? { queries: [] };
   const { data } = sceneGraph.getData(panel).useState();
   const range = sceneGraph.getTimeRange(panel).useState().value;
-  // The last query we successfully fetched a viz suggestion for.
-  const lastSuggestedQuery = useRef<DataQuery | undefined>(undefined);
+  // The query an explicit "Run query" click was for, so the effect below knows to auto-apply that
+  // run's top suggestion once its data arrives. Unset otherwise — a time-range tick or the query
+  // runner's own auto-run on activation populates NotebookVizSuggestionsPicker's options the same
+  // way, but must never silently swap the panel's type out from under the reader.
+  const pendingAutoApplyQuery = useRef<DataQuery | undefined>(undefined);
+  // The query we've already auto-applied a suggestion for, so clicking "Run query" again for the
+  // same query doesn't clobber a suggestion the reader picked manually in between.
+  const lastAutoAppliedQuery = useRef<DataQuery | undefined>(undefined);
 
-  const [runState, runQuery] = useAsyncFn(async () => {
+  const runQuery = () => {
     if (!queryRunner || queries.length === 0) {
       return;
     }
-    if (!isEqual(lastSuggestedQuery.current, queries[0])) {
-      try {
-        const suggestion = await getVizSuggestionForQuery(queries[0], range);
-        lastSuggestedQuery.current = queries[0];
-        if (suggestion) {
-          await panel.changePluginType(suggestion.pluginId, suggestion.options, suggestion.fieldConfig);
-        }
-      } catch {
-        console.error('Failed to get viz suggestion for query', queries[0]);
-      }
+    if (!isEqual(lastAutoAppliedQuery.current, queries[0])) {
+      pendingAutoApplyQuery.current = queries[0];
     }
     queryRunner.runQueries();
-  }, [queries, range, panel, queryRunner]);
+  };
+
+  // The single source of both NotebookVizSuggestionsPicker's option list and (only right after an
+  // explicit Run, via pendingAutoApplyQuery) the panel's auto-applied type — computed from the same
+  // real data either way, so the two can never disagree the way two independent suggestion fetches
+  // (e.g. one probing the datasource on its own, hardcoded request params and all) once could.
+  useEffect(() => {
+    if (!data || data.state === LoadingState.Loading || data.state === LoadingState.NotStarted) {
+      // Mid-flight — leave whatever's already showing alone rather than blank it out for a moment.
+      return;
+    }
+    if (data.state === LoadingState.Error || !hasData(data)) {
+      // An empty result (e.g. a query nobody's filled in yet, or one that legitimately returns
+      // nothing) has no shape to suggest a visualization from — the picker must go back to
+      // disabled rather than keep showing suggestions computed for whatever ran before it, and this
+      // run's own pending auto-apply (if any) has nothing to apply either.
+      pendingAutoApplyQuery.current = undefined;
+      onSuggestionsChange?.([]);
+      return;
+    }
+    let cancelled = false;
+    getAllSuggestions(data.series)
+      .then(({ suggestions }) => {
+        if (cancelled) {
+          return;
+        }
+        const topSuggestions = suggestions.slice(0, TOP_VIZ_SUGGESTION_COUNT);
+        onSuggestionsChange?.(topSuggestions);
+        const pendingQuery = pendingAutoApplyQuery.current;
+        const topSuggestion = topSuggestions[0];
+        if (pendingQuery && topSuggestion) {
+          lastAutoAppliedQuery.current = pendingQuery;
+          pendingAutoApplyQuery.current = undefined;
+          panel.changePluginType(topSuggestion.pluginId, topSuggestion.options, topSuggestion.fieldConfig);
+        }
+      })
+      .catch(() => console.error('Failed to get viz suggestions for panel data', data));
+    return () => {
+      cancelled = true;
+    };
+  }, [data, panel, onSuggestionsChange]);
 
   if (!queryRunner || queries.length === 0) {
     return null;
@@ -82,7 +123,7 @@ export function PanelQueryEditor({ panel, cell, autoFocus }: Props) {
         >
           {t('notebook.cell.query.add', 'Add query')}
         </Button>
-        <Button icon="play" onClick={runQuery} disabled={runState.loading} size="sm">
+        <Button icon="play" onClick={runQuery} size="sm">
           {t('notebook.cell.query.run', 'Run query')}
         </Button>
       </Stack>

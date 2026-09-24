@@ -20,14 +20,14 @@ import { type DashboardScene } from '../scene/DashboardScene';
 
 const SUGGESTION_TIMEOUT_MS = 5_000;
 
-/**
- * Executes a saved query against its datasource and returns the top visualization suggestion
- * based on the resulting data shape.
- */
-export async function getVizSuggestionForQuery(
+/** How many best-first suggestions a user is offered to choose between, e.g. in NotebookVizSuggestionsPicker. */
+export const TOP_VIZ_SUGGESTION_COUNT = 3;
+
+/** Executes a saved query against its datasource and returns the resulting suggestions, best-first. */
+async function getVizSuggestionsForQuery(
   query: DataQuery,
-  timeRange: TimeRange = getDefaultTimeRange()
-): Promise<PanelPluginVisualizationSuggestion | undefined> {
+  timeRange: TimeRange
+): Promise<PanelPluginVisualizationSuggestion[]> {
   const datasource = await getDataSourceInstance(query.datasource ?? null);
 
   const request = {
@@ -53,6 +53,18 @@ export async function getVizSuggestionForQuery(
   const series: DataFrame[] = panelData.series ?? [];
   const { suggestions } = await getAllSuggestions(series);
 
+  return suggestions;
+}
+
+/**
+ * Executes a saved query against its datasource and returns the top visualization suggestion
+ * based on the resulting data shape.
+ */
+export async function getVizSuggestionForQuery(
+  query: DataQuery,
+  timeRange: TimeRange = getDefaultTimeRange()
+): Promise<PanelPluginVisualizationSuggestion | undefined> {
+  const suggestions = await getVizSuggestionsForQuery(query, timeRange);
   return suggestions[0];
 }
 

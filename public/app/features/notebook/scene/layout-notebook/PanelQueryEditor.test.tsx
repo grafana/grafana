@@ -1,8 +1,15 @@
 import { act } from 'react';
 import { render, screen, waitFor } from 'test/test-utils';
 
-import { type DataQuery, type DataSourceInstanceSettings, type DataSourceRef } from '@grafana/data';
-import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import {
+  getDefaultTimeRange,
+  LoadingState,
+  toDataFrame,
+  type DataQuery,
+  type DataSourceInstanceSettings,
+  type DataSourceRef,
+} from '@grafana/data';
+import { sceneGraph, SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { defaultVisualizationPanelKind } from 'app/features/notebook/types';
@@ -102,12 +109,11 @@ jest.mock('app/features/datasources/components/picker/DataSourcePicker', () => (
   ),
 }));
 
-// The suggestion pipeline (getVizSuggestionForQuery -> runRequest -> getAllSuggestions) runs a real
-// request against a real datasource — entirely out of scope for this file, which only cares that
-// PanelQueryEditor applies whatever it resolves to before running the query for real.
-const getVizSuggestionForQuery = jest.fn();
-jest.mock('app/features/dashboard-scene/utils/getVizSuggestionForQuery', () => ({
-  getVizSuggestionForQuery: (...args: unknown[]) => getVizSuggestionForQuery(...args),
+// The one suggestion source PanelQueryEditor reads: whatever the panel's own data resolves to.
+// Real plugin loading and scoring are entirely out of scope for this file.
+const getAllSuggestions = jest.fn();
+jest.mock('app/features/panel/suggestions/getAllSuggestions', () => ({
+  getAllSuggestions: (...args: unknown[]) => getAllSuggestions(...args),
 }));
 
 let resolvedSettings: { uid: string; type: string; name: string } | undefined = {
@@ -176,10 +182,30 @@ function buildPanel(queries?: Array<Record<string, unknown>>) {
 
 beforeEach(() => {
   resolvedSettings = { uid: 'default-uid', type: 'testdata', name: 'gdev-testdata' };
-  getVizSuggestionForQuery.mockReset().mockResolvedValue(undefined);
+  getAllSuggestions.mockReset().mockResolvedValue({ suggestions: [], hasErrors: false });
   defaultQueryForNewType = undefined;
   getDataSourceInstance.mockClear();
 });
+
+/** Simulates the query runner's own data resolving, exactly like a real run or activation would. */
+/** A minimal non-empty frame — hasData() requires at least one series with at least one row. */
+const oneRowFrame = () => [toDataFrame({ fields: [{ name: 'value', values: [1] }] })];
+
+function completeData(panel: VizPanel) {
+  act(() => {
+    sceneGraph
+      .getData(panel)
+      .setState({ data: { state: LoadingState.Done, series: oneRowFrame(), timeRange: getDefaultTimeRange() } });
+  });
+}
+
+function completeEmptyData(panel: VizPanel) {
+  act(() => {
+    sceneGraph
+      .getData(panel)
+      .setState({ data: { state: LoadingState.Done, series: [], timeRange: getDefaultTimeRange() } });
+  });
+}
 
 describe('PanelQueryEditor', () => {
   it('resolves the panel’s own query datasource', async () => {
@@ -352,89 +378,161 @@ describe('PanelQueryEditor', () => {
   // Real dashboards pick the panel's visualization from the query's own result shape (see
   // UnconfiguredPanel's "Use saved query" button) rather than assuming a fixed viz type — a query
   // returning tabular data (e.g. a CSV with no time field) would otherwise land on a timeseries panel
-  // that can only say "Data is missing a time field".
-  it('applies the suggested visualization before running the query', async () => {
+  // that can only say "Data is missing a time field". Suggestions come from the panel's own real
+  // data (via getAllSuggestions), not a second, separate probe fetch — a prior version of this
+  // computed the auto-applied type from an independent request with its own hardcoded params, which
+  // could (and did) disagree with what NotebookVizSuggestionsPicker showed for the same query.
+  it('applies the top suggestion for the run once its data arrives', async () => {
     const { panel, cell } = buildPanel();
-    const runner = getQueryRunnerFor(panel)!;
-    const runQueries = jest.spyOn(runner, 'runQueries');
     const changePluginType = jest.spyOn(panel, 'changePluginType').mockResolvedValue(undefined);
-    getVizSuggestionForQuery.mockResolvedValue({ pluginId: 'table', options: { showHeader: true } });
+    getAllSuggestions.mockResolvedValue({ suggestions: [{ pluginId: 'table', options: { showHeader: true } }] });
     const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
 
     await user.click(await screen.findByRole('button', { name: 'Run query' }));
+    completeData(panel);
 
-    await waitFor(() => expect(runQueries).toHaveBeenCalled());
-    expect(getVizSuggestionForQuery).toHaveBeenCalledWith(runner.state.queries[0], expect.anything());
-    expect(changePluginType).toHaveBeenCalledWith('table', { showHeader: true }, undefined);
-    // The real run must come after the plugin swap, not before — a viz change mid-flight after data
-    // has already arrived would otherwise briefly render the old plugin against new data.
-    expect(changePluginType.mock.invocationCallOrder[0]).toBeLessThan(runQueries.mock.invocationCallOrder[0]);
+    await waitFor(() => expect(changePluginType).toHaveBeenCalledWith('table', { showHeader: true }, undefined));
   });
 
-  it('still runs the query when the suggestion fails', async () => {
+  it('passes the full top-N suggestion list to onSuggestionsChange', async () => {
+    const { panel, cell } = buildPanel();
+    jest.spyOn(panel, 'changePluginType').mockResolvedValue(undefined);
+    const suggestions = [
+      { pluginId: 'table', hash: 'a', options: {} },
+      { pluginId: 'barchart', hash: 'b', options: {} },
+      { pluginId: 'piechart', hash: 'c', options: {} },
+    ];
+    getAllSuggestions.mockResolvedValue({ suggestions });
+    const onSuggestionsChange = jest.fn();
+    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} onSuggestionsChange={onSuggestionsChange} />);
+
+    await user.click(await screen.findByRole('button', { name: 'Run query' }));
+    completeData(panel);
+
+    await waitFor(() => expect(onSuggestionsChange).toHaveBeenCalledWith(suggestions));
+  });
+
+  // Regression: the query runner auto-runs on activation and on a time-range change regardless of
+  // whether the reader ever clicks "Run query" (e.g. reopening a notebook) — that must still surface
+  // options in the picker, but without silently swapping the panel's already-saved type out from
+  // under the reader the way an explicit Run's own auto-apply does.
+  it('populates suggestions once data arrives even without an explicit Run click', async () => {
+    const { panel, cell } = buildPanel();
+    const changePluginType = jest.spyOn(panel, 'changePluginType').mockResolvedValue(undefined);
+    const suggestions = [{ pluginId: 'table', hash: 'a', options: {} }];
+    getAllSuggestions.mockResolvedValue({ suggestions });
+    const onSuggestionsChange = jest.fn();
+    render(<PanelQueryEditor panel={panel} cell={cell} onSuggestionsChange={onSuggestionsChange} />);
+
+    completeData(panel);
+
+    await waitFor(() => expect(onSuggestionsChange).toHaveBeenCalledWith(suggestions));
+    expect(changePluginType).not.toHaveBeenCalled();
+  });
+
+  // Regression: an empty query (e.g. a fresh Prometheus panel nobody's typed into yet) resolves
+  // successfully with zero rows — there's no shape to suggest a visualization from, so the picker
+  // must go back to disabled rather than show a leftover or empty-data-heuristic suggestion.
+  it('clears suggestions instead of computing them for an empty result', async () => {
+    const { panel, cell } = buildPanel();
+    const changePluginType = jest.spyOn(panel, 'changePluginType').mockResolvedValue(undefined);
+    const onSuggestionsChange = jest.fn();
+    render(<PanelQueryEditor panel={panel} cell={cell} onSuggestionsChange={onSuggestionsChange} />);
+
+    completeEmptyData(panel);
+
+    await waitFor(() => expect(onSuggestionsChange).toHaveBeenCalledWith([]));
+    expect(getAllSuggestions).not.toHaveBeenCalled();
+    expect(changePluginType).not.toHaveBeenCalled();
+  });
+
+  it('clears a previously populated suggestion list once a later run comes back empty', async () => {
+    const { panel, cell } = buildPanel();
+    getAllSuggestions.mockResolvedValue({ suggestions: [{ pluginId: 'table', hash: 'a', options: {} }] });
+    const onSuggestionsChange = jest.fn();
+    render(<PanelQueryEditor panel={panel} cell={cell} onSuggestionsChange={onSuggestionsChange} />);
+    completeData(panel);
+    await waitFor(() =>
+      expect(onSuggestionsChange).toHaveBeenCalledWith([{ pluginId: 'table', hash: 'a', options: {} }])
+    );
+
+    completeEmptyData(panel);
+
+    await waitFor(() => expect(onSuggestionsChange).toHaveBeenLastCalledWith([]));
+  });
+
+  it('still runs the query, and keeps working, when computing suggestions fails', async () => {
     const { panel, cell } = buildPanel();
     const runner = getQueryRunnerFor(panel)!;
     const runQueries = jest.spyOn(runner, 'runQueries');
     // Expected and logged, not swallowed silently — see PanelQueryEditor's own catch block.
     jest.spyOn(console, 'error').mockImplementation(() => {});
-    getVizSuggestionForQuery.mockRejectedValue(new Error('datasource unreachable'));
+    getAllSuggestions.mockRejectedValue(new Error('failed to load suggestion plugins'));
     const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
 
     await user.click(await screen.findByRole('button', { name: 'Run query' }));
 
-    await waitFor(() => expect(runQueries).toHaveBeenCalled());
+    expect(runQueries).toHaveBeenCalled();
+    completeData(panel);
+    await waitFor(() => expect(getAllSuggestions).toHaveBeenCalled());
   });
 
-  it('does not re-fetch the suggestion on a repeat click with an unchanged query', async () => {
+  it('does not reapply a suggestion on a repeat click with an unchanged query, preserving a manual pick', async () => {
     const { panel, cell } = buildPanel();
-    const runner = getQueryRunnerFor(panel)!;
-    const runQueries = jest.spyOn(runner, 'runQueries');
+    const changePluginType = jest.spyOn(panel, 'changePluginType').mockResolvedValue(undefined);
+    getAllSuggestions.mockResolvedValue({ suggestions: [{ pluginId: 'table', options: {} }] });
     const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
     const runButton = await screen.findByRole('button', { name: 'Run query' });
 
     await user.click(runButton);
-    await waitFor(() => expect(runQueries).toHaveBeenCalledTimes(1));
+    completeData(panel);
+    await waitFor(() => expect(changePluginType).toHaveBeenCalledTimes(1));
 
+    // Same query, same suggestion available — a second run must not reapply it a second time, or it
+    // would clobber whatever viz type the reader may have since picked manually in between.
     await user.click(runButton);
-    await waitFor(() => expect(runQueries).toHaveBeenCalledTimes(2));
-
-    // The query itself hasn't changed between clicks, so the (query-running) suggestion fetch only
-    // has to happen once — the second "Run query" click should go straight to the real run.
-    expect(getVizSuggestionForQuery).toHaveBeenCalledTimes(1);
+    completeData(panel);
+    await waitFor(() => expect(getAllSuggestions).toHaveBeenCalledTimes(2));
+    expect(changePluginType).toHaveBeenCalledTimes(1);
   });
 
-  it('fetches a fresh suggestion after the query changes', async () => {
+  it('applies a fresh suggestion again once the query itself changes', async () => {
     const { panel, cell } = buildPanel();
-    const runner = getQueryRunnerFor(panel)!;
+    const changePluginType = jest.spyOn(panel, 'changePluginType').mockResolvedValue(undefined);
+    getAllSuggestions.mockResolvedValue({ suggestions: [{ pluginId: 'table', options: {} }] });
     const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
 
     await user.click(await screen.findByRole('button', { name: 'Run query' }));
-    await waitFor(() => expect(getVizSuggestionForQuery).toHaveBeenCalledTimes(1));
+    completeData(panel);
+    await waitFor(() => expect(changePluginType).toHaveBeenCalledTimes(1));
 
     await user.click(await screen.findByRole('button', { name: 'edit query A' }));
+    getAllSuggestions.mockResolvedValue({ suggestions: [{ pluginId: 'barchart', options: {} }] });
     await user.click(await screen.findByRole('button', { name: 'Run query' }));
+    completeData(panel);
 
-    await waitFor(() => expect(getVizSuggestionForQuery).toHaveBeenCalledTimes(2));
-    expect(getVizSuggestionForQuery).toHaveBeenNthCalledWith(2, runner.state.queries[0], expect.anything());
+    await waitFor(() => expect(changePluginType).toHaveBeenCalledTimes(2));
+    expect(changePluginType).toHaveBeenNthCalledWith(2, 'barchart', {}, undefined);
   });
 
-  it('retries the suggestion fetch after a previous attempt failed', async () => {
+  it('retries applying a suggestion after a previous attempt failed', async () => {
     const { panel, cell } = buildPanel();
-    const runner = getQueryRunnerFor(panel)!;
-    const runQueries = jest.spyOn(runner, 'runQueries');
+    const changePluginType = jest.spyOn(panel, 'changePluginType').mockResolvedValue(undefined);
     jest.spyOn(console, 'error').mockImplementation(() => {});
-    getVizSuggestionForQuery.mockRejectedValueOnce(new Error('datasource unreachable'));
+    getAllSuggestions.mockRejectedValueOnce(new Error('failed to load suggestion plugins'));
     const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
     const runButton = await screen.findByRole('button', { name: 'Run query' });
 
     await user.click(runButton);
-    await waitFor(() => expect(runQueries).toHaveBeenCalledTimes(1));
+    completeData(panel);
+    await waitFor(() => expect(getAllSuggestions).toHaveBeenCalledTimes(1));
 
+    // A failed attempt must not be treated as "already applied" — retried on the next click.
+    getAllSuggestions.mockResolvedValue({ suggestions: [{ pluginId: 'table', options: {} }] });
     await user.click(runButton);
-    await waitFor(() => expect(runQueries).toHaveBeenCalledTimes(2));
+    completeData(panel);
 
-    // A fetch that failed must not be cached as "already suggested" — it's retried on the next click.
-    expect(getVizSuggestionForQuery).toHaveBeenCalledTimes(2);
+    await waitFor(() => expect(changePluginType).toHaveBeenCalledWith('table', {}, undefined));
   });
 
   it('renders nothing for a panel with no query runner', () => {
