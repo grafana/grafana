@@ -76,7 +76,7 @@ func TestIntegrationProvisioning_RepositoryDeletionBlockedByUnmanagedResources(t
 			return
 		}
 		assert.Equal(collect, provisioning.DeletionStateBlocked, status.Deletion.State)
-		assert.Equal(collect, repository.CleanFinalizer, status.Deletion.Finalizer)
+		assert.Equal(collect, repository.RemoveOrphanResourcesFinalizer, status.Deletion.Finalizer)
 		assert.Contains(collect, status.Deletion.Message, `"`+folderTitle+`" (UID: `+folderUID+`)`)
 		assert.Contains(collect, status.Deletion.Message, "not managed by this repository")
 		assert.Equal(collect, status.Deletion.Message, status.DeleteError)

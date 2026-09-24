@@ -619,14 +619,14 @@ func TestRepositoryController_updateDeleteStatus_UsesNonEmptyFolderError(t *test
 			}),
 			mock.MatchedBy(func(op map[string]interface{}) bool {
 				ds, ok := op["value"].(*provisioning.DeletionStatus)
-				return ok && ds.Finalizer == repository.CleanFinalizer && ds.Message == folderErr.Error()
+				return ok && ds.Finalizer == repository.RemoveOrphanResourcesFinalizer && ds.Message == folderErr.Error()
 			}),
 		).
 		Once().
 		Return(nil)
 
 	c := &RepositoryController{statusPatcher: patcher}
-	wrapped := fmt.Errorf("remove finalizers: %w", &finalizerError{finalizer: repository.CleanFinalizer, err: folderErr})
+	wrapped := fmt.Errorf("remove finalizers: %w", &finalizerError{finalizer: repository.RemoveOrphanResourcesFinalizer, err: folderErr})
 	err := c.updateDeleteStatus(context.Background(), &provisioning.Repository{}, wrapped)
 	require.NoError(t, err)
 }
