@@ -119,7 +119,7 @@ export function createTypography(colors: ThemeColors, typographyInput: ThemeTypo
     code: buildVariant(fontFamilyMonospace, fontWeightRegular, 14, 16, 0.15),
 
     // Deprecated variants
-    h1: buildVariant(fontFamily, fontWeightRegular, 28, 32, -0.25),
+    h1: buildVariant(fontFamily, fontWeightRegular, 28, 32, 0.3),
     h2: buildVariant(fontFamily, fontWeightRegular, 24, 28, 0),
     h3: buildVariant(fontFamily, fontWeightRegular, 22, 24, 0),
     h4: buildVariant(fontFamily, fontWeightRegular, 18, 22, 0.25),
