@@ -17,6 +17,7 @@ import {
   type AzureMonitorDataSourceJsonData,
   type AzureMonitorDataSourceSecureJsonData,
 } from '../../public/app/plugins/datasource/azuremonitor/types/types';
+import { fillMonacoEditor } from '../utils/monaco';
 
 const provisioningPath = 'provisioning/datasources/azmonitor-ds.yaml';
 
@@ -166,9 +167,10 @@ test.describe(
       await resourceSearchInput.press('Enter');
       await expect(page.getByText(logAnalyticsName)).toBeVisible({ timeout: 30000 });
       await page.getByText(logAnalyticsName).click();
-      await applyButton.click();
-      let codeEditor = logsPanel.getByGrafanaSelector(selectors.components.CodeEditor.container).locator('textarea');
-      await codeEditor.fill('AzureDiagnostics', { force: true });
+      const codeEditor = logsPanel
+        .getByGrafanaSelector(selectors.components.CodeEditor.container)
+        .locator('.monaco-editor');
+      await fillMonacoEditor(codeEditor, 'AzureDiagnostics');
       const formatSelection = page
         .getByTestId(azMonSelectors.components.queryEditor.logsQueryEditor.formatSelection.input)
         .locator('input');
@@ -194,11 +196,11 @@ test.describe(
         .getByTestId(azMonSelectors.components.queryEditor.argsQueryEditor.subscriptions.input)
         .locator('input');
       await subscriptionsInput.fill('datasources');
-      await subscriptionsInput.press('Enter');
       codeEditor = resourceGraphPanel
         .getByGrafanaSelector(selectors.components.CodeEditor.container)
-        .locator('textarea');
-      await codeEditor.fill(
+        .locator('.monaco-editor');
+      await fillMonacoEditor(
+        codeEditor,
         "Resources | where resourceGroup == 'cloud-plugins-e2e-test-azmon' | project name, resourceGroup"
       );
 
