@@ -6,7 +6,7 @@ import { HttpResponse } from 'msw';
 import { act, render, screen } from 'test/test-utils';
 
 import { type NavModelItem } from '@grafana/data';
-import { setBackendSrv } from '@grafana/runtime';
+import { config, setBackendSrv } from '@grafana/runtime';
 import { invalidateCachedPromisesCache } from '@grafana/runtime/internal';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import {
@@ -110,6 +110,23 @@ describe('MegaMenu with the client-built nav tree (grafana.multiTenantNavTree)',
 
     expect(await screen.findByRole('link', { name: 'Dashboards' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Connections' })).not.toBeInTheDocument();
+  });
+
+  // mergePluginNavIntoTree returns sub-url relative urls and useNavTree applies
+  // the prefix, so a node the merge created must come out prefixed exactly once.
+  // The More apps section is such a node: the static tree above does not have it.
+  it('applies the app sub url once to the sections the merge creates', async () => {
+    const originalAppSubUrl = config.appSubUrl;
+    config.appSubUrl = '/grafana';
+    setMockPluginMetas([appMeta('some-app', 'Some App')]);
+
+    try {
+      renderMegaMenu();
+
+      expect(await screen.findByRole('link', { name: 'More apps' })).toHaveAttribute('href', '/grafana/apps');
+    } finally {
+      config.appSubUrl = originalAppSubUrl;
+    }
   });
 
   it('renders the static tree when the plugin nav fetch fails', async () => {
