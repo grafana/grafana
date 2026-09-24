@@ -69,6 +69,12 @@ type AlertInstance struct {
 	EvaluationDuration time.Duration `xorm:"evaluation_duration_ns"`
 	LastError          string        `xorm:"last_error"`
 	LastResult         LastResult    `xorm:"last_result"`
+
+	// ImageCaptureNextAttemptAt and ImageCaptureConsecutiveTimeouts persist the image-capture
+	// backoff (see state.State) so a restart or ownership handoff doesn't reset a still-firing
+	// alert's accumulated timeout backoff back to zero.
+	ImageCaptureNextAttemptAt       *time.Time
+	ImageCaptureConsecutiveTimeouts int32
 }
 
 type AlertInstanceKey struct {

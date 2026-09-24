@@ -1,5 +1,5 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { renderHook } from '@testing-library/react';
+import { cleanup, renderHook } from '@testing-library/react';
 import { type PropsWithChildren } from 'react';
 
 import {
@@ -171,6 +171,10 @@ describe('useTableSharedCrosshair', () => {
 });
 
 describe('useCommonTableProps', () => {
+  afterEach(() => {
+    cleanup();
+    setTestFlags({});
+  });
   const fieldConfig: FieldConfigSource = { defaults: { noValue: 'n/a' }, overrides: [] };
   const options = {
     showHeader: false,
@@ -203,6 +207,7 @@ describe('useCommonTableProps', () => {
       disableSanitizeHtml: false,
       contentAwareWidthsEnabled: false,
       tableRefreshEnabled: false,
+      jsonSyntaxHighlightingEnabled: false,
       zebraStriping: false,
     });
   });
@@ -212,6 +217,19 @@ describe('useCommonTableProps', () => {
     const { result } = renderHook(() => useCommonTableProps(options, fieldConfig), { wrapper: FeatureFlagsProvider });
 
     expect(result.current.tableRefreshEnabled).toBe(true);
+  });
+
+  it.each([
+    [false, false],
+    [true, false],
+    [false, true],
+    [true, true],
+  ])('gates JSON highlighting with table.refresh=%s and new features=%s', (refresh, newFeatures) => {
+    setTestFlags({ [FlagKeys.TableRefresh]: refresh, [FlagKeys.TableRefreshNewFeatures]: newFeatures });
+    const { result } = renderHook(() => useCommonTableProps(options, fieldConfig), {
+      wrapper: FeatureFlagsProvider,
+    });
+    expect(result.current.jsonSyntaxHighlightingEnabled).toBe(newFeatures);
   });
 
   it('enables hover overflow when the option is undefined', () => {

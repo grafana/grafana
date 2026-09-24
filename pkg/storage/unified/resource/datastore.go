@@ -68,6 +68,10 @@ type dataImportBatchWriter interface {
 }
 
 func newDataStore(kv KV, metrics *kvBackendMetrics) *dataStore {
+	// Recording sites should not have to check for nil.
+	if metrics == nil {
+		metrics = newKVBackendMetrics(nil)
+	}
 	ds := &dataStore{
 		kv:      kv,
 		cache:   gocache.New(time.Hour, 10*time.Minute), // 1 hour expiration, 10 minute cleanup

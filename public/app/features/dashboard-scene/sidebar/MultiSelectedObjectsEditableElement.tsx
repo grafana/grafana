@@ -3,6 +3,8 @@ import { appEvents } from 'app/core/app_events';
 import { type OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { endBatch, startBatch } from '../actions/utils/batch';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { type BulkActionElement } from '../scene/types/BulkActionElement';
 import {
   type EditableDashboardElement,
@@ -12,7 +14,10 @@ import {
 export class MultiSelectedObjectsEditableElement implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;
 
-  constructor(private _elements: BulkActionElement[]) {}
+  constructor(
+    private _elements: BulkActionElement[],
+    private _dashboard: DashboardScene
+  ) {}
 
   public useSidebarOptions(): OptionsPaneCategoryDescriptor[] {
     return [];
@@ -36,6 +41,16 @@ export class MultiSelectedObjectsEditableElement implements EditableDashboardEle
   }
 
   public onDelete() {
+    startBatch(
+      this._dashboard,
+      t('dashboard.edit-actions.remove-multiple', 'Remove {{typeName}} ({{num}})', {
+        num: this._elements.length,
+        typeName: this.getEditableElementInfo().typeName.toLowerCase(),
+      })
+    );
+
     this._elements.forEach((item) => item.onDelete());
+
+    endBatch(this._dashboard);
   }
 }

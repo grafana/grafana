@@ -7,12 +7,12 @@ import { IconButton, useStyles2 } from '@grafana/ui';
 interface Props {
   onDuplicate: () => void;
   onDelete: () => void;
-  /** The frame's hover class, so these reveal with the rest of the cell's affordances. */
+  /** The frame's hover class, so these reveal with the rest of the cell's controls. */
   className?: string;
 }
 
 /**
- * The per-cell actions, revealed with the rest of a cell's affordances on hover: a small elevated bar
+ * The per-cell actions, revealed with the rest of a cell's controls on hover: a small elevated bar
  * above the cell carrying duplicate and delete.
  */
 export function NotebookCellActions({ onDuplicate, onDelete, className }: Props) {

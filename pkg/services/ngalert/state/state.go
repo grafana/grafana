@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/screenshot"
 )
 
@@ -79,6 +80,13 @@ type State struct {
 	LastEvaluationString string
 	LastEvaluationTime   time.Time
 	EvaluationDuration   time.Duration
+
+	// ImageCaptureNextAttemptAt is the earliest time to retry image capture after a timeout.
+	// Zero means no backoff is in effect.
+	ImageCaptureNextAttemptAt time.Time
+	// ImageCaptureConsecutiveTimeouts counts consecutive image-capture timeouts, growing the
+	// backoff. Resets on any other outcome (success, or a non-timeout failure).
+	ImageCaptureConsecutiveTimeouts int
 }
 
 func newState(ctx context.Context, log log.Logger, alertRule *models.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL, maxLabelValueSize int, stateMetrics *ngmetrics.State) *State {
@@ -139,6 +147,9 @@ func (a *State) Copy() *State {
 		LastEvaluationString: a.LastEvaluationString,
 		LastEvaluationTime:   a.LastEvaluationTime,
 		EvaluationDuration:   a.EvaluationDuration,
+
+		ImageCaptureNextAttemptAt:       a.ImageCaptureNextAttemptAt,
+		ImageCaptureConsecutiveTimeouts: a.ImageCaptureConsecutiveTimeouts,
 	}
 }
 
@@ -708,13 +719,19 @@ func (a *State) ShouldBeResolved(oldState eval.State) bool {
 
 // shouldTakeImage determines whether a new image should be taken for a given transition. This should return true when
 // newly transitioning to an alerting state, when no valid image exists, or when the alert has been resolved.
-func shouldTakeImage(state, previousState eval.State, previousImage *models.Image, resolved bool) string {
+//
+// Only the repeating "no image"/"expired image" case is subject to the timeout backoff below;
+// "transition to alerting" and "resolved" each happen once per firing episode and are exempt.
+func shouldTakeImage(now time.Time, state, previousState eval.State, previousImage *models.Image, resolved bool, nextAttemptAt time.Time) string {
 	if resolved {
 		return "resolved"
 	}
 	if state == eval.Alerting {
 		if previousState != eval.Alerting {
 			return "transition to alerting"
+		}
+		if now.Before(nextAttemptAt) {
+			return ""
 		}
 		if previousImage == nil {
 			return "no image"
@@ -724,6 +741,70 @@ func shouldTakeImage(state, previousState eval.State, previousImage *models.Imag
 		}
 	}
 	return ""
+}
+
+const (
+	// imageCaptureBackoffBase is the backoff after the first consecutive image-capture timeout.
+	imageCaptureBackoffBase = 30 * time.Second
+	// imageCaptureBackoffMax caps how long an image capture backs off after repeated timeouts.
+	imageCaptureBackoffMax = 30 * time.Minute
+	// imageCaptureBackoffMaxShift bounds the exponent so a long-firing alert with many
+	// consecutive timeouts cannot shift imageCaptureBackoffBase into overflow or a negative
+	// duration; 2^10 * 30s already exceeds imageCaptureBackoffMax, so the cap below is reached
+	// well before this bound matters.
+	imageCaptureBackoffMaxShift = 10
+)
+
+// imageCaptureBackoffDuration returns how long to wait before the next image-capture attempt
+// after consecutiveTimeouts consecutive render timeouts, growing exponentially and capped at
+// imageCaptureBackoffMax. It returns 0 if there have been no timeouts yet.
+func imageCaptureBackoffDuration(consecutiveTimeouts int) time.Duration {
+	if consecutiveTimeouts <= 0 {
+		return 0
+	}
+	shift := consecutiveTimeouts - 1
+	if shift > imageCaptureBackoffMaxShift {
+		shift = imageCaptureBackoffMaxShift
+	}
+	d := imageCaptureBackoffBase << shift
+	if d <= 0 || d > imageCaptureBackoffMax {
+		return imageCaptureBackoffMax
+	}
+	return d
+}
+
+// isImageCaptureTimeout returns true if err indicates the render underlying an image capture
+// timed out, whether the failure surfaced as the client-side context deadline or as one of the
+// rendering service's own timeout errors.
+func isImageCaptureTimeout(err error) bool {
+	return errors.Is(err, context.DeadlineExceeded) ||
+		errors.Is(err, rendering.ErrServerTimeout) ||
+		errors.Is(err, rendering.ErrTimeout)
+}
+
+// recordImageCaptureOutcome updates the image-capture backoff bookkeeping based on the outcome
+// of the most recent takeImage attempt. A timeout grows the backoff; any other outcome (success,
+// or a non-timeout failure) resets it, since only timeouts cause the self-sustaining retry
+// storm this backoff guards against.
+func (a *State) recordImageCaptureOutcome(now time.Time, err error) {
+	if !isImageCaptureTimeout(err) {
+		a.ImageCaptureConsecutiveTimeouts = 0
+		a.ImageCaptureNextAttemptAt = time.Time{}
+		return
+	}
+	a.ImageCaptureConsecutiveTimeouts++
+	a.ImageCaptureNextAttemptAt = now.Add(imageCaptureBackoffDuration(a.ImageCaptureConsecutiveTimeouts))
+}
+
+// ImageCaptureNextAttemptAtPtr returns nil if there is no backoff in effect (the zero time),
+// otherwise a pointer to it -- the form the persisted AlertInstance model expects, so a state
+// that has never entered backoff round-trips as nil, not epoch zero.
+func (a *State) ImageCaptureNextAttemptAtPtr() *time.Time {
+	if a.ImageCaptureNextAttemptAt.IsZero() {
+		return nil
+	}
+	t := a.ImageCaptureNextAttemptAt
+	return &t
 }
 
 // takeImage takes an image for the alert rule. It returns nil if screenshots are disabled or
@@ -810,6 +891,8 @@ func patch(newState, existingState *State, result eval.Result) {
 	newState.FiredAt = existingState.FiredAt
 	newState.ResolvedAt = existingState.ResolvedAt
 	newState.LastSentAt = existingState.LastSentAt
+	newState.ImageCaptureNextAttemptAt = existingState.ImageCaptureNextAttemptAt
+	newState.ImageCaptureConsecutiveTimeouts = existingState.ImageCaptureConsecutiveTimeouts
 	// Annotations can change over time, however we also want to maintain
 	// certain annotations across evaluations
 	for key := range models.InternalAnnotationNameSet { // Changing in
@@ -825,7 +908,7 @@ func patch(newState, existingState *State, result eval.Result) {
 	}
 }
 
-func (a *State) transition(alertRule *models.AlertRule, result eval.Result, extraAnnotations data.Labels, logger log.Logger, takeImageFn takeImageFn, ignorePendingForNoDataAndError bool) StateTransition {
+func (a *State) transition(alertRule *models.AlertRule, result eval.Result, extraAnnotations data.Labels, logger log.Logger, takeImageFn takeImageFn, now func() time.Time, ignorePendingForNoDataAndError bool) StateTransition {
 	a.LastEvaluationTime = result.EvaluatedAt
 	a.EvaluationDuration = result.EvaluationDuration
 	a.SetNextValues(result)
@@ -879,8 +962,14 @@ func (a *State) transition(alertRule *models.AlertRule, result eval.Result, extr
 		a.ResolvedAt = nil
 	}
 
-	if reason := shouldTakeImage(a.State, oldState, a.Image, newlyResolved); reason != "" {
-		image := takeImageFn(reason)
+	// now() (not result.EvaluatedAt, the scheduled tick) anchors the backoff, since takeImageFn
+	// blocks synchronously for up to the render timeout: using the tick time for the recorded
+	// deadline would let a slow attempt's own duration eat into (or exceed) the backoff window
+	// before it's even set. Called again after the attempt completes so the window is measured
+	// from when it actually finished, not from when it started.
+	if reason := shouldTakeImage(now(), a.State, oldState, a.Image, newlyResolved, a.ImageCaptureNextAttemptAt); reason != "" {
+		image, err := takeImageFn(reason)
+		a.recordImageCaptureOutcome(now(), err)
 		if image != nil {
 			a.Image = image
 		}

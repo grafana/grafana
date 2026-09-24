@@ -497,7 +497,7 @@ func (s *stubReconciler) Validate(groups []string) error {
 // returns a fixed set of rows (or an error) with TotalHits derived from them,
 // regardless of the query, and records the last request. searchFunc, when set,
 // overrides the response so a test can decouple TotalHits from the rows (e.g. a
-// count-only response) — mirroring FakeUserLegacySearchClient's SearchFunc hook.
+// count-only response).
 type fakeTeamSearchClient struct {
 	resourcepb.ResourceIndexClient
 	rows          []*resourcepb.ResourceTableRow

@@ -72,6 +72,7 @@ func TestAlertInstanceModelToProto(t *testing.T) {
 	lastSentAt := currentStateSince.Add(-2 * time.Minute)
 	firedAt := currentStateSince.Add(-2 * time.Minute)
 	resolvedAt := currentStateSince.Add(-3 * time.Minute)
+	imageCaptureNextAttemptAt := currentStateSince.Add(time.Minute)
 	annotations := map[string]string{"summary": "value", "team": "alerting"}
 
 	tests := []struct {
@@ -89,31 +90,35 @@ func TestAlertInstanceModelToProto(t *testing.T) {
 					RuleOrgID:  1,
 					LabelsHash: "hash123",
 				},
-				CurrentState:       models.InstanceStateFiring,
-				CurrentStateSince:  currentStateSince,
-				CurrentStateEnd:    currentStateEnd,
-				CurrentReason:      "Some reason",
-				LastEvalTime:       lastEvalTime,
-				LastSentAt:         &lastSentAt,
-				FiredAt:            &firedAt,
-				ResolvedAt:         &resolvedAt,
-				ResultFingerprint:  "fingerprint",
-				EvaluationDuration: 500 * time.Millisecond,
+				CurrentState:                    models.InstanceStateFiring,
+				CurrentStateSince:               currentStateSince,
+				CurrentStateEnd:                 currentStateEnd,
+				CurrentReason:                   "Some reason",
+				LastEvalTime:                    lastEvalTime,
+				LastSentAt:                      &lastSentAt,
+				FiredAt:                         &firedAt,
+				ResolvedAt:                      &resolvedAt,
+				ResultFingerprint:               "fingerprint",
+				EvaluationDuration:              500 * time.Millisecond,
+				ImageCaptureNextAttemptAt:       &imageCaptureNextAttemptAt,
+				ImageCaptureConsecutiveTimeouts: 2,
 			},
 			expected: &pb.AlertInstance{
-				Labels:               map[string]string{"key": "value"},
-				Annotations:          annotations,
-				LabelsHash:           "hash123",
-				CurrentState:         "Alerting",
-				CurrentStateSince:    timestamppb.New(currentStateSince),
-				CurrentStateEnd:      timestamppb.New(currentStateEnd),
-				CurrentReason:        "Some reason",
-				LastEvalTime:         timestamppb.New(lastEvalTime),
-				LastSentAt:           toProtoTimestampPtr(&lastSentAt),
-				FiredAt:              toProtoTimestampPtr(&firedAt),
-				ResolvedAt:           toProtoTimestampPtr(&resolvedAt),
-				ResultFingerprint:    "fingerprint",
-				EvaluationDurationNs: int64(500 * time.Millisecond),
+				Labels:                          map[string]string{"key": "value"},
+				Annotations:                     annotations,
+				LabelsHash:                      "hash123",
+				CurrentState:                    "Alerting",
+				CurrentStateSince:               timestamppb.New(currentStateSince),
+				CurrentStateEnd:                 timestamppb.New(currentStateEnd),
+				CurrentReason:                   "Some reason",
+				LastEvalTime:                    timestamppb.New(lastEvalTime),
+				LastSentAt:                      toProtoTimestampPtr(&lastSentAt),
+				FiredAt:                         toProtoTimestampPtr(&firedAt),
+				ResolvedAt:                      toProtoTimestampPtr(&resolvedAt),
+				ResultFingerprint:               "fingerprint",
+				EvaluationDurationNs:            int64(500 * time.Millisecond),
+				ImageCaptureNextAttemptAt:       toProtoTimestampPtr(&imageCaptureNextAttemptAt),
+				ImageCaptureConsecutiveTimeouts: 2,
 			},
 		},
 		{
@@ -201,6 +206,7 @@ func TestAlertInstanceProtoToModel(t *testing.T) {
 	lastSentAt := currentStateSince.Add(-2 * time.Minute).UTC()
 	firedAt := currentStateSince.Add(-2 * time.Minute).UTC()
 	resolvedAt := currentStateSince.Add(-3 * time.Minute).UTC()
+	imageCaptureNextAttemptAt := currentStateSince.Add(time.Minute).UTC()
 	annotations := map[string]string{"summary": "value", "team": "alerting"}
 	ruleUID := "rule-uid-1"
 	orgID := int64(1)
@@ -213,18 +219,20 @@ func TestAlertInstanceProtoToModel(t *testing.T) {
 		{
 			name: "valid instance",
 			input: &pb.AlertInstance{
-				Labels:               map[string]string{"key": "value"},
-				Annotations:          annotations,
-				LabelsHash:           "hash123",
-				CurrentState:         "Alerting",
-				CurrentStateSince:    timestamppb.New(currentStateSince),
-				CurrentStateEnd:      timestamppb.New(currentStateEnd),
-				LastEvalTime:         timestamppb.New(lastEvalTime),
-				LastSentAt:           toProtoTimestampPtr(&lastSentAt),
-				FiredAt:              toProtoTimestampPtr(&firedAt),
-				ResolvedAt:           toProtoTimestampPtr(&resolvedAt),
-				ResultFingerprint:    "fingerprint",
-				EvaluationDurationNs: int64(500 * time.Millisecond),
+				Labels:                          map[string]string{"key": "value"},
+				Annotations:                     annotations,
+				LabelsHash:                      "hash123",
+				CurrentState:                    "Alerting",
+				CurrentStateSince:               timestamppb.New(currentStateSince),
+				CurrentStateEnd:                 timestamppb.New(currentStateEnd),
+				LastEvalTime:                    timestamppb.New(lastEvalTime),
+				LastSentAt:                      toProtoTimestampPtr(&lastSentAt),
+				FiredAt:                         toProtoTimestampPtr(&firedAt),
+				ResolvedAt:                      toProtoTimestampPtr(&resolvedAt),
+				ResultFingerprint:               "fingerprint",
+				EvaluationDurationNs:            int64(500 * time.Millisecond),
+				ImageCaptureNextAttemptAt:       toProtoTimestampPtr(&imageCaptureNextAttemptAt),
+				ImageCaptureConsecutiveTimeouts: 2,
 			},
 			expected: &models.AlertInstance{
 				Labels:      map[string]string{"key": "value"},
@@ -234,15 +242,17 @@ func TestAlertInstanceProtoToModel(t *testing.T) {
 					RuleOrgID:  orgID,
 					LabelsHash: "hash123",
 				},
-				CurrentState:       models.InstanceStateFiring,
-				CurrentStateSince:  currentStateSince,
-				CurrentStateEnd:    currentStateEnd,
-				LastEvalTime:       lastEvalTime,
-				LastSentAt:         &lastSentAt,
-				FiredAt:            &firedAt,
-				ResolvedAt:         &resolvedAt,
-				ResultFingerprint:  "fingerprint",
-				EvaluationDuration: 500 * time.Millisecond,
+				CurrentState:                    models.InstanceStateFiring,
+				CurrentStateSince:               currentStateSince,
+				CurrentStateEnd:                 currentStateEnd,
+				LastEvalTime:                    lastEvalTime,
+				LastSentAt:                      &lastSentAt,
+				FiredAt:                         &firedAt,
+				ResolvedAt:                      &resolvedAt,
+				ResultFingerprint:               "fingerprint",
+				EvaluationDuration:              500 * time.Millisecond,
+				ImageCaptureNextAttemptAt:       &imageCaptureNextAttemptAt,
+				ImageCaptureConsecutiveTimeouts: 2,
 			},
 		},
 		{
@@ -294,7 +304,7 @@ func TestModelAlertInstanceMatchesProtobuf(t *testing.T) {
 	// and update them accordingly.
 	t.Run("when AlertInstance model changes", func(t *testing.T) {
 		modelType := reflect.TypeFor[models.AlertInstance]()
-		require.Equal(t, 15, modelType.NumField(), "AlertInstance model has changed, update the protobuf")
+		require.Equal(t, 17, modelType.NumField(), "AlertInstance model has changed, update the protobuf")
 	})
 }
 
