@@ -25,7 +25,7 @@ export function RecommendationExisting({ onSelectionChange, solutions }: Recomme
       Promise.all(
         solutions.map(async (solution) => ({
           solution,
-          signal: await solution.signal(),
+          signal: await solution.signal().catch(() => 'unknown' as const),
         }))
       ),
     [solutions]

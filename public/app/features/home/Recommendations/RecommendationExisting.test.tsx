@@ -270,9 +270,11 @@ describe('RecommendationExisting', () => {
     expect(screen.getByText(description)).toBeInTheDocument();
   });
 
-  it('settles into the inconclusive state when the signal resolves unknown', async () => {
+  it('settles into the inconclusive state when required getters reject', async () => {
     const metrics = solution('metrics', {
-      signal: async () => 'unknown',
+      signal: async () => {
+        throw new Error('signal lookup failed');
+      },
     });
 
     render(<RecommendationExisting solutions={[metrics]} />);

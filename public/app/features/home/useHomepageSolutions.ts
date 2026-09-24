@@ -9,7 +9,7 @@ import { kubernetesFilterStorageKey, parseKubernetesFilter } from './solutions/k
 import { kubernetesDetection, kubernetesSolution } from './solutions/kubernetesSolution';
 import { logsSolution } from './solutions/logsSolution';
 import { metricsSolution } from './solutions/metricsSolution';
-import { detectSignal, type SolutionState } from './solutions/solutionState';
+import { detectSignal, settleSignals, type SolutionState } from './solutions/solutionState';
 import { probeSpanMetrics } from './solutions/spanMetricsSignal';
 import { syntheticsSolution } from './solutions/syntheticsSolution';
 import { tracesSolution } from './solutions/tracesSolution';
@@ -46,18 +46,16 @@ export function useHomepageSolutions(): HomepageSolutions {
 
     // Core signals come from their solutions; the Kubernetes one from the detection its solutions
     // share, so a filter change never re-probes and never restarts recommendation selection.
-    const signals = async (): Promise<SolutionState> => {
-      const [metrics, logs, traces, kubernetes, spanMetrics, synthetics, irm] = await Promise.all([
-        solutions.metrics.signal(),
-        solutions.logs.signal(),
-        solutions.traces.signal(),
-        detectKubernetes().then(({ status }) => status),
-        spanMetricsSignal().then(({ status }) => status),
-        solutions.synthetics.signal(),
-        irmSignal(),
-      ]);
-      return { metrics, logs, traces, kubernetes, spanMetrics, synthetics, irm };
-    };
+    const signals = (): Promise<SolutionState> =>
+      settleSignals({
+        metrics: solutions.metrics.signal(),
+        logs: solutions.logs.signal(),
+        traces: solutions.traces.signal(),
+        kubernetes: detectKubernetes().then(({ status }) => status),
+        spanMetrics: spanMetricsSignal().then(({ status }) => status),
+        synthetics: solutions.synthetics.signal(),
+        irm: irmSignal(),
+      });
 
     return { detectKubernetes, solutions, signals };
   }, []);
