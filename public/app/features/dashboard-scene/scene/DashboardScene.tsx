@@ -1217,6 +1217,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (view.key === 'overlay') {
       this.setOverlayLoading(true);
     }
+    // Some overlays and editor transitions are applied directly through setState.
     const subscription = this.subscribeToState((state, previous) => {
       if (dashboardViewChanged(state, previous)) {
         request.abort();
