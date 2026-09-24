@@ -18,10 +18,7 @@ import { TextNGEditorFooter } from './TextNGEditorFooter';
 import { TextNGFormatToolbar } from './TextNGFormatToolbar';
 import { getEditorLayoutStyles } from './editorLayout';
 import { variableCompletion } from './variableCompletion';
-
-export type ViewMode = 'write' | 'split' | 'preview';
-
-export const DEFAULT_VIEW_MODE: ViewMode = 'split';
+import { type ViewMode } from './viewMode';
 
 export const PREVIEW_TEST_ID = 'TextNGEditor-preview';
 

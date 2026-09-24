@@ -39,14 +39,16 @@ import {
 import { TextNGCodeView } from './TextNGCodeView';
 import { TextNGFooter } from './TextNGFooter';
 import { TextNGHtmlView } from './TextNGHtmlView';
-import { DEFAULT_VIEW_MODE, type TextNGEditorChange, type ViewMode } from './editor/TextNGEditor';
+import { type TextNGEditorChange } from './editor/TextNGEditor';
 import { getEditorLayoutStyles } from './editor/editorLayout';
+import { DEFAULT_VIEW_MODE, type ViewMode } from './editor/viewMode';
 import { usePagination } from './pagination';
 import { catchTemplateError, renderContent, type RenderedContent, type RowWindow } from './renderContent';
 import { EMPTY_CONTENT, getCurrentFrameIndex, getInterpolateFormat, isTextNewFeaturesEnabled } from './utils';
 
 const TextNGEditor = lazy(() => import('./editor/TextNGEditor').then((m) => ({ default: m.TextNGEditor })));
 
+// Keyed on the event bus: the only handle in PanelProps unique to a panel instance, as ids repeat across dashboards.
 const viewModeByPanel = new WeakMap<EventBus, ViewMode>();
 
 export interface Props extends PanelProps<Options> {}

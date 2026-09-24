@@ -303,6 +303,16 @@ describe('TextNGPanel', () => {
         renderPanel(props, CoreApp.PanelEditor);
         expect(await screen.findByRole('radio', { name: 'Split' })).toBeChecked();
       });
+
+      // Both panels carry the same id, as ids only ever have to be unique within a dashboard.
+      it('does not carry the view mode over to another panel', async () => {
+        const options = { content: 'hello', mode: TextMode.Markdown };
+
+        await switchToWrite(createProps(replaceVariablesMock, { options }));
+
+        renderPanel(createProps(replaceVariablesMock, { options }), CoreApp.PanelEditor);
+        expect(await screen.findByRole('radio', { name: 'Split' })).toBeChecked();
+      });
     });
 
     it('merges a language change made in the editor into the existing code options', async () => {
