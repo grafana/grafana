@@ -45,21 +45,7 @@ func TestIntegrationProvisioning_NoneCRUD(t *testing.T) {
 								}
 								u := pt.None(t, h, pt.Actions(actions...)...)
 								name := pt.Name()
-								var obj map[string]any
-								switch resource {
-								case "repositories":
-									path := filepath.Join(h.ProvisioningPath, name)
-									require.NoError(t, os.MkdirAll(path, 0750))
-									obj = pt.Repository(name, path, version)
-								case "connections":
-									obj = pt.Connection(name, version)
-								default:
-									kind := "Job"
-									if resource == "historicjobs" {
-										kind = "HistoricJob"
-									}
-									obj = map[string]any{"apiVersion": "provisioning.grafana.app/" + version, "kind": kind, "metadata": map[string]any{"name": name}, "spec": map[string]any{"repository": "fixture-repo", "action": "pull", "pull": map[string]any{}}, "status": map[string]any{"state": "success"}}
-								}
+								obj := crudFixture(t, resource, name, version, h.ProvisioningPath)
 								obj["metadata"].(map[string]any)["labels"] = map[string]any{"none-case": name}
 								path := resource + "/" + name
 								var before map[string]any
@@ -129,5 +115,23 @@ func TestIntegrationProvisioning_NoneCRUD(t *testing.T) {
 				}
 			})
 		}
+	}
+}
+
+func crudFixture(t *testing.T, resource, name, version, provisioningPath string) map[string]any {
+	t.Helper()
+	switch resource {
+	case "repositories":
+		path := filepath.Join(provisioningPath, name)
+		require.NoError(t, os.MkdirAll(path, 0750))
+		return pt.Repository(name, path, version)
+	case "connections":
+		return pt.Connection(name, version)
+	default:
+		kind := "Job"
+		if resource == "historicjobs" {
+			kind = "HistoricJob"
+		}
+		return map[string]any{"apiVersion": "provisioning.grafana.app/" + version, "kind": kind, "metadata": map[string]any{"name": name}, "spec": map[string]any{"repository": "fixture-repo", "action": "pull", "pull": map[string]any{}}, "status": map[string]any{"state": "success"}}
 	}
 }

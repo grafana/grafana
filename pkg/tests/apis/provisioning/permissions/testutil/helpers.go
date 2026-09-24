@@ -39,7 +39,7 @@ func Actions(actions ...string) []resourcepermissions.SetResourcePermissionComma
 		resource := strings.Split(action, ":")[0]
 		grouped[resource] = append(grouped[resource], action)
 	}
-	var grants []resourcepermissions.SetResourcePermissionCommand
+	grants := make([]resourcepermissions.SetResourcePermissionCommand, 0, len(grouped))
 	for resource, actions := range grouped {
 		grants = append(grants, Grant(resource, "*", actions...))
 	}

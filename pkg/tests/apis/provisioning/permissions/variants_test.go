@@ -35,7 +35,7 @@ func TestIntegrationProvisioning_NoneRender(t *testing.T) {
 			require.NoError(t, err)
 			res, err := http.DefaultClient.Do(req)
 			require.NoError(t, err)
-			defer res.Body.Close()
+			defer func() { require.NoError(t, res.Body.Close()) }()
 			data, err := io.ReadAll(res.Body)
 			require.NoError(t, err)
 			if version == "v0alpha1" {

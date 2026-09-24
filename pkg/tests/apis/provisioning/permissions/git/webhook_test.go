@@ -114,7 +114,7 @@ func TestIntegrationProvisioning_NoneWebhook(t *testing.T) {
 				}
 				res, err := http.DefaultClient.Do(req)
 				require.NoError(t, err)
-				defer res.Body.Close()
+				defer func() { require.NoError(t, res.Body.Close()) }()
 				data, err := io.ReadAll(res.Body)
 				require.NoError(t, err)
 				rsp := pt.Response{Code: res.StatusCode, Body: data}

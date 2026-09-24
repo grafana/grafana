@@ -83,7 +83,7 @@ func TestIntegrationProvisioning_NoneMigrateJob(t *testing.T) {
 						}
 						filtered := []string{}
 						for _, action := range actions {
-							if action != missing && !(missing == "jobs" && action == "provisioning.jobs:create") {
+							if action != missing && (missing != "jobs" || action != "provisioning.jobs:create") {
 								filtered = append(filtered, action)
 							}
 						}
@@ -137,10 +137,10 @@ func TestIntegrationProvisioning_NoneDeleteAndMoveJobs(t *testing.T) {
 						if kind == "directory" {
 							resource = "folders"
 						}
-						if kind == "resource" && (grant == "source" || grant == "all" || grant == "resources") {
-							actions = append(actions, "dashboards:read")
-						}
 						if grant == "source" || grant == "all" || grant == "resources" {
+							if kind == "resource" {
+								actions = append(actions, "dashboards:read")
+							}
 							verb := "write"
 							if action == "delete" {
 								verb = "delete"

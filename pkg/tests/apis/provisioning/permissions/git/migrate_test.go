@@ -39,7 +39,7 @@ func TestIntegrationProvisioning_NoneBranchMigrateJob(t *testing.T) {
 								actions := []string{"provisioning.jobs:create", "dashboards:read", "folders:read", "dashboards:create", "folders:create"}
 								filtered := []string{}
 								for _, action := range actions {
-									if action != missing && !(missing == "jobs" && action == "provisioning.jobs:create") {
+									if action != missing && (missing != "jobs" || action != "provisioning.jobs:create") {
 										filtered = append(filtered, action)
 									}
 								}
