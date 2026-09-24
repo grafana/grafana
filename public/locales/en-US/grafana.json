@@ -13318,7 +13318,7 @@
       "unknown-author": "Anonymous"
     },
     "new": {
-      "default-title": "Notebook {{date}}"
+      "default-title-with-date": "Notebook {{date}}"
     },
     "save-status": {
       "failed": "Save failed",

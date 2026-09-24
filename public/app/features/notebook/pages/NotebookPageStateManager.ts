@@ -168,7 +168,7 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
 
     const spec: NotebookSpec = {
       ...defaultNotebookSpec(),
-      title: t('notebooks.new.default-title', 'Notebook {{date}}', {
+      title: t('notebooks.new.default-title-with-date', 'Notebook {{date}}', {
         date: dateTimeFormat(Date.now(), { format: NEW_TITLE_DATE_FORMAT }),
       }),
     };
