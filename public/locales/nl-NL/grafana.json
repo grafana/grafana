@@ -5764,6 +5764,7 @@
     "edit-actions": {
       "add": "{{typeName}} toevoegen",
       "add-conditional-rule": "Regel {{ruleDescription}} toevoegen",
+      "collapse-all-rows": "",
       "dashboard-description": "Dashboardbeschrijving wijzigen",
       "dashboard-title": "Dashboardtitel wijzigen",
       "duplicate": "Dupliceer {{typeName}}",
@@ -5771,6 +5772,7 @@
       "edit-query-result-rule": "Regel voor queryresultaat wijzigen",
       "edit-template-variable-rule": "Regel voor sjabloonvariabele wijzigen",
       "edit-time-range-rule": "Regel voor tijdsbereik wijzigen",
+      "expand-all-rows": "",
       "group-into-row": "Groeperen in rij",
       "group-into-tab": "Groeperen in tabblad",
       "move": "{{typeName}} verplaatsen ",
@@ -5803,9 +5805,7 @@
       "add-library-panel-header": "Paneel importeren",
       "add-visualization-body": "Selecteer een gegevensbron en zoek en visualiseer je gegevens met grafieken, statistieken en tabellen of maak lijsten, prijsverlagingen en andere widgets.",
       "add-visualization-button": "Visualisatie toevoegen",
-      "add-visualization-description": "",
       "add-visualization-header": "Begin je nieuwe dashboard door een visualisatie toe te voegen",
-      "add-visualization-heading": "",
       "assistant-placeholder": "",
       "auto-grid": "Automatisch raster",
       "auto-grid-description": "Panelen verkleinen zodat ze passen en uniforme rasters vormen",
@@ -5813,9 +5813,6 @@
       "custom-grid": "Aangepast raster",
       "custom-grid-description": "Plaats en formatteer elk paneel afzonderlijk",
       "description": "Voeg een paneel toe om je gegevens te visualiseren",
-      "grid-auto": "",
-      "grid-custom": "",
-      "grid-label": "",
       "import-a-dashboard-body": "Importeer dashboards uit bestanden of <2>grafana.com</2>.",
       "import-a-dashboard-header": "Dashboard importeren",
       "import-dashboard-button": "Dashboard importeren",
@@ -6143,9 +6140,7 @@
     "planning-banner": {
       "build": "",
       "dismiss": "",
-      "plan-label": "",
-      "panel-count_one": "",
-      "panel-count_other": ""
+      "preview-label": ""
     },
     "public-dashboard-not-available": {
       "does-not-exist": "Het dashboard dat je probeert te openen bestaat niet",
@@ -9434,6 +9429,7 @@
     "flag-value": "Vlagwaarde",
     "menu": "Menu openen",
     "new-flag": "new-flag-override",
+    "ofrep-evaluation": "",
     "save-flag": "Opslaan",
     "title": "Functiebeheer"
   },
@@ -10681,6 +10677,7 @@
       "aria-label-sort-column": "Kolom {{columnName}} sorteren",
       "expand-row-header": "Rij-uitklapper",
       "expand-row-tooltip": "Rij in-/uitschakelen uitgevouwen",
+      "loading": "",
       "tooltip-collapse-all": "Alle rijen samenvouwen",
       "tooltip-expand-all": "Alle rijen uitvouwen"
     },
@@ -10775,6 +10772,9 @@
     "password-field": {
       "tooltip-hide": "Wachtwoord verbergen",
       "tooltip-show": "Wachtwoord weergeven"
+    },
+    "query-field": {
+      "loading": ""
     },
     "query-input": {
       "loading": "Editor word geladen"
@@ -10885,6 +10885,7 @@
         }
       },
       "inspect-drawer-title": "Waarde inspecteren",
+      "loading": "",
       "nested-table": {
         "expander-column-name": "Geneste rijen uitvouwen",
         "no-data": "Geen data"
@@ -13687,10 +13688,15 @@
   },
   "playlist-page": {
     "card": {
-      "delete": "Afspeellijst verwijderen",
-      "edit": "Afspeellijst bewerken",
-      "start": "Afspeellijst starten",
-      "tooltip": "Afspeellijst delen"
+      "delete": "",
+      "delete-label": "",
+      "edit": "",
+      "edit-label": "",
+      "share": "",
+      "share-label": "",
+      "start": "",
+      "start-label": "",
+      "tooltip": ""
     },
     "create-button": {
       "title": "Nieuwe afspeellijst"
@@ -14843,6 +14849,15 @@
     },
     "repository-status": {
       "error": "Kan repository niet laden"
+    },
+    "repository-status-alert": {
+      "deletion-title": "",
+      "error-title": "",
+      "force-delete-button": "",
+      "force-delete-cancel": "",
+      "force-delete-confirm": "",
+      "force-delete-title": "",
+      "force-delete-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "Terug naar repositories",
@@ -16520,7 +16535,9 @@
     }
   },
   "swagger": {
-    "login": "Inloggen"
+    "login": "Inloggen",
+    "namespace-unavailable": "",
+    "namespace-unavailable-title": ""
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -17743,6 +17760,7 @@
     },
     "series-to-fields-transformer-editor": {
       "label-field": "Veld",
+      "label-keep-unjoined": "",
       "label-mode": "Modus",
       "modes": {
         "description": {
@@ -17755,7 +17773,8 @@
           "outer-tabular": "Buitenste (tabelvormig)",
           "outer-time-series": "Buitenste (tijdreeks)"
         }
-      }
+      },
+      "tooltip-keep-unjoined": ""
     },
     "series-to-rows-transformer-editor": {
       "description": {

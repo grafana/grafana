@@ -40,6 +40,7 @@ func loadEmbeddedAppManifests(provisioningPath string) ([]*app.ManifestData, err
 			continue
 		}
 		path := filepath.Join(dir, entry.Name())
+		// #nosec G304 -- the operator controls the provisioning directory.
 		content, err := os.ReadFile(path)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("reading %s: %w", path, err))
