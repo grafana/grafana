@@ -65,6 +65,9 @@ func TestSearchDistributorReadinessFollowsRing(t *testing.T) {
 		case <-ctx.Done():
 			t.Fatal("server failed to stop")
 		}
+		for _, conn := range distributor.connections {
+			require.NoError(t, conn.Close())
+		}
 	})
 
 	requireAggregateHealthStatus(t, distributor.healthClient, grpc_health_v1.HealthCheckResponse_NOT_SERVING)
@@ -331,6 +334,7 @@ type testModuleServer struct {
 	server         *ModuleServer
 	healthClient   grpc_health_v1.HealthClient
 	resourceClient resource.ResourceClient
+	connections    []*grpc.ClientConn
 	id             string
 	grpcAddress    string
 	httpPort       string
@@ -343,10 +347,19 @@ func getRandomPort() int {
 }
 
 func initDistributorServerForTest(t *testing.T, memberlistPort int) testModuleServer {
+	httpPort := getRandomPort()
+	for httpPort == memberlistPort {
+		httpPort = getRandomPort()
+	}
+	grpcPort := getRandomPort()
+	for grpcPort == memberlistPort || grpcPort == httpPort {
+		grpcPort = getRandomPort()
+	}
+
 	cfg := setting.NewCfg()
-	cfg.HTTPPort = strconv.Itoa(getRandomPort())
+	cfg.HTTPPort = strconv.Itoa(httpPort)
 	cfg.GRPCServer.Network = "tcp"
-	cfg.GRPCServer.Address = "127.0.0.1:" + strconv.Itoa(getRandomPort())
+	cfg.GRPCServer.Address = "127.0.0.1:" + strconv.Itoa(grpcPort)
 	cfg.EnableSharding = true
 	cfg.MemberlistBindAddr = "127.0.0.1"
 	cfg.MemberlistJoinMember = "127.0.0.1:" + strconv.Itoa(memberlistPort)
@@ -366,6 +379,7 @@ func initDistributorServerForTest(t *testing.T, memberlistPort int) testModuleSe
 	server := initModuleServerForTest(t, cfg, Options{}, api.ServerOptions{})
 
 	server.resourceClient = client
+	server.connections = append(server.connections, conn)
 
 	return server
 }
@@ -429,7 +443,14 @@ func initModuleServerForTest(
 
 	healthClient := grpc_health_v1.NewHealthClient(conn)
 
-	return testModuleServer{server: ms, grpcAddress: cfg.GRPCServer.Address, httpPort: cfg.HTTPPort, healthClient: healthClient, id: cfg.InstanceID}
+	return testModuleServer{
+		server:       ms,
+		grpcAddress:  cfg.GRPCServer.Address,
+		httpPort:     cfg.HTTPPort,
+		healthClient: healthClient,
+		connections:  []*grpc.ClientConn{conn},
+		id:           cfg.InstanceID,
+	}
 }
 
 func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces []string) resource.ResourceServer {
