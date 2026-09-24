@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/screenshot"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -522,7 +523,7 @@ func TestNeedsSending(t *testing.T) {
 func TestTransitionSetsResolvedAt(t *testing.T) {
 	evaluatedAt := time.Now()
 	logger := log.NewNopLogger()
-	noImage := func(string) *ngmodels.Image { return nil }
+	noImage := func(string) (*ngmodels.Image, error) { return nil, nil }
 
 	baseRule := &ngmodels.AlertRule{
 		IntervalSeconds: 60,
@@ -601,6 +602,79 @@ func TestTransitionSetsResolvedAt(t *testing.T) {
 	}
 }
 
+func TestTransitionImageCaptureBackoff(t *testing.T) {
+	logger := log.NewNopLogger()
+	baseRule := &ngmodels.AlertRule{
+		IntervalSeconds: 10,
+		ExecErrState:    ngmodels.ErrorErrState,
+		NoDataState:     ngmodels.NoData,
+	}
+
+	newAlertingResult := func(at time.Time) eval.Result {
+		return eval.Result{State: eval.Alerting, EvaluatedAt: at}
+	}
+
+	t.Run("a render timeout on one cycle skips the retry on the very next cycle", func(t *testing.T) {
+		start := time.Now()
+		attempts := 0
+		timeoutOnce := func(string) (*ngmodels.Image, error) {
+			attempts++
+			return nil, rendering.ErrServerTimeout
+		}
+
+		s := &State{State: eval.Alerting, Annotations: make(data.Labels)}
+		s.transition(baseRule, newAlertingResult(start), nil, logger, timeoutOnce, false)
+		require.Equal(t, 1, attempts, "first cycle should attempt the capture")
+		require.Equal(t, 1, s.ImageCaptureConsecutiveTimeouts)
+
+		// Same alert, still Alerting, still no image, well within the backoff window opened by
+		// the timeout above: without backoff this would fire again on every cycle and re-run
+		// the same expensive render/query indefinitely.
+		nextCycle := start.Add(time.Duration(baseRule.IntervalSeconds) * time.Second)
+		require.True(t, nextCycle.Before(s.ImageCaptureNextAttemptAt), "test setup: the next cycle must land inside the backoff window")
+		s.transition(baseRule, newAlertingResult(nextCycle), nil, logger, timeoutOnce, false)
+		assert.Equal(t, 1, attempts, "the next cycle should be skipped while backing off")
+	})
+
+	t.Run("a retry is attempted again once the backoff window elapses", func(t *testing.T) {
+		start := time.Now()
+		attempts := 0
+		timeoutThenSucceed := func(string) (*ngmodels.Image, error) {
+			attempts++
+			if attempts == 1 {
+				return nil, rendering.ErrServerTimeout
+			}
+			return &ngmodels.Image{URL: "https://example.com/foo.png", ExpiresAt: start.Add(time.Hour)}, nil
+		}
+
+		s := &State{State: eval.Alerting, Annotations: make(data.Labels)}
+		s.transition(baseRule, newAlertingResult(start), nil, logger, timeoutThenSucceed, false)
+		require.Equal(t, 1, attempts)
+
+		afterBackoff := start.Add(imageCaptureBackoffDuration(1) + time.Second)
+		s.transition(baseRule, newAlertingResult(afterBackoff), nil, logger, timeoutThenSucceed, false)
+		assert.Equal(t, 2, attempts, "the retry should run again once the backoff window has elapsed")
+		require.NotNil(t, s.Image)
+		assert.Equal(t, 0, s.ImageCaptureConsecutiveTimeouts, "a successful capture resets the backoff")
+	})
+
+	t.Run("a non-timeout failure is retried on the very next cycle, unlike a timeout", func(t *testing.T) {
+		start := time.Now()
+		attempts := 0
+		nonTimeoutFailure := func(string) (*ngmodels.Image, error) {
+			attempts++
+			return nil, errors.New("dashboard not found")
+		}
+
+		s := &State{State: eval.Alerting, Annotations: make(data.Labels)}
+		s.transition(baseRule, newAlertingResult(start), nil, logger, nonTimeoutFailure, false)
+		require.Equal(t, 1, attempts)
+
+		s.transition(baseRule, newAlertingResult(start.Add(time.Duration(baseRule.IntervalSeconds)*time.Second)), nil, logger, nonTimeoutFailure, false)
+		assert.Equal(t, 2, attempts, "a non-timeout failure type is not subject to the timeout backoff")
+	})
+}
+
 func TestGetLastEvaluationValuesForCondition(t *testing.T) {
 	genState := func(latestResult *Evaluation) *State {
 		return &State{
@@ -659,12 +733,14 @@ func TestGetLastEvaluationValuesForCondition(t *testing.T) {
 }
 
 func TestShouldTakeImage(t *testing.T) {
+	now := time.Now()
 	tests := []struct {
 		name          string
 		state         eval.State
 		previousState eval.State
 		previousImage *ngmodels.Image
 		resolved      bool
+		nextAttemptAt time.Time
 		expected      bool
 	}{{
 		name:          "should take image for state that just transitioned to alerting",
@@ -701,13 +777,116 @@ func TestShouldTakeImage(t *testing.T) {
 		previousState: eval.Alerting,
 		previousImage: &ngmodels.Image{URL: "https://example.com/foo.png", ExpiresAt: time.Now().Add(-time.Hour)},
 		expected:      true,
+	}, {
+		name:          "should not take image for alerting state with no image while backing off after a timeout",
+		state:         eval.Alerting,
+		previousState: eval.Alerting,
+		nextAttemptAt: now.Add(time.Minute),
+		expected:      false,
+	}, {
+		name:          "should not take image for alerting state with expired image while backing off after a timeout",
+		state:         eval.Alerting,
+		previousState: eval.Alerting,
+		previousImage: &ngmodels.Image{URL: "https://example.com/foo.png", ExpiresAt: now.Add(-time.Hour)},
+		nextAttemptAt: now.Add(time.Minute),
+		expected:      false,
+	}, {
+		name:          "should take image for alerting state with no image once the backoff has elapsed",
+		state:         eval.Alerting,
+		previousState: eval.Alerting,
+		nextAttemptAt: now.Add(-time.Minute),
+		expected:      true,
+	}, {
+		name:          "should take image for a fresh transition to alerting even if a stale backoff is set",
+		state:         eval.Alerting,
+		previousState: eval.Pending,
+		nextAttemptAt: now.Add(time.Hour),
+		expected:      true,
+	}, {
+		name:          "should take image for a resolved state even if a stale backoff is set",
+		state:         eval.Normal,
+		previousState: eval.Alerting,
+		resolved:      true,
+		nextAttemptAt: now.Add(time.Hour),
+		expected:      true,
 	}}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, shouldTakeImage(test.state, test.previousState, test.previousImage, test.resolved) != "")
+			assert.Equal(t, test.expected, shouldTakeImage(now, test.state, test.previousState, test.previousImage, test.resolved, test.nextAttemptAt) != "")
 		})
 	}
+}
+
+func TestIsImageCaptureTimeout(t *testing.T) {
+	tests := []struct {
+		name     string
+		err      error
+		expected bool
+	}{
+		{name: "nil error is not a timeout", err: nil, expected: false},
+		{name: "unrelated error is not a timeout", err: errors.New("boom"), expected: false},
+		{name: "ErrScreenshotsUnavailable is not a timeout", err: screenshot.ErrScreenshotsUnavailable, expected: false},
+		{name: "context.DeadlineExceeded is a timeout", err: context.DeadlineExceeded, expected: true},
+		{name: "wrapped context.DeadlineExceeded is a timeout", err: fmt.Errorf("failed to take screenshot: %w", context.DeadlineExceeded), expected: true},
+		{name: "rendering.ErrServerTimeout is a timeout", err: rendering.ErrServerTimeout, expected: true},
+		{name: "rendering.ErrTimeout is a timeout", err: rendering.ErrTimeout, expected: true},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expected, isImageCaptureTimeout(test.err))
+		})
+	}
+}
+
+func TestImageCaptureBackoffDuration(t *testing.T) {
+	t.Run("no backoff before any timeout", func(t *testing.T) {
+		assert.Equal(t, time.Duration(0), imageCaptureBackoffDuration(0))
+		assert.Equal(t, time.Duration(0), imageCaptureBackoffDuration(-1))
+	})
+
+	t.Run("grows exponentially from the base", func(t *testing.T) {
+		assert.Equal(t, imageCaptureBackoffBase, imageCaptureBackoffDuration(1))
+		assert.Equal(t, 2*imageCaptureBackoffBase, imageCaptureBackoffDuration(2))
+		assert.Equal(t, 4*imageCaptureBackoffBase, imageCaptureBackoffDuration(3))
+	})
+
+	t.Run("caps at the max and the exponent guard prevents overflow for a long-firing alert", func(t *testing.T) {
+		// Enough consecutive timeouts that an unguarded shift would overflow (or go negative)
+		// long before this point; confirm the result is still the sane, capped value.
+		assert.Equal(t, imageCaptureBackoffMax, imageCaptureBackoffDuration(1_000_000))
+		assert.Equal(t, imageCaptureBackoffMax, imageCaptureBackoffDuration(imageCaptureBackoffMaxShift+2))
+	})
+}
+
+func TestRecordImageCaptureOutcome(t *testing.T) {
+	now := time.Now()
+
+	t.Run("a timeout grows the backoff", func(t *testing.T) {
+		s := &State{}
+		s.recordImageCaptureOutcome(now, rendering.ErrServerTimeout)
+		assert.Equal(t, 1, s.ImageCaptureConsecutiveTimeouts)
+		assert.Equal(t, now.Add(imageCaptureBackoffDuration(1)), s.ImageCaptureNextAttemptAt)
+
+		s.recordImageCaptureOutcome(now, context.DeadlineExceeded)
+		assert.Equal(t, 2, s.ImageCaptureConsecutiveTimeouts)
+		assert.Equal(t, now.Add(imageCaptureBackoffDuration(2)), s.ImageCaptureNextAttemptAt)
+	})
+
+	t.Run("success resets the backoff", func(t *testing.T) {
+		s := &State{ImageCaptureConsecutiveTimeouts: 3, ImageCaptureNextAttemptAt: now.Add(time.Hour)}
+		s.recordImageCaptureOutcome(now, nil)
+		assert.Equal(t, 0, s.ImageCaptureConsecutiveTimeouts)
+		assert.True(t, s.ImageCaptureNextAttemptAt.IsZero())
+	})
+
+	t.Run("a non-timeout failure resets the backoff", func(t *testing.T) {
+		s := &State{ImageCaptureConsecutiveTimeouts: 3, ImageCaptureNextAttemptAt: now.Add(time.Hour)}
+		s.recordImageCaptureOutcome(now, errors.New("boom"))
+		assert.Equal(t, 0, s.ImageCaptureConsecutiveTimeouts)
+		assert.True(t, s.ImageCaptureNextAttemptAt.IsZero())
+	})
 }
 
 func TestTakeImage(t *testing.T) {
