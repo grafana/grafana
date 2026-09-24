@@ -5721,6 +5721,7 @@
     "edit-actions": {
       "add": "新增 {{typeName}}",
       "add-conditional-rule": "新增「{{ruleDescription}}」規則",
+      "collapse-all-rows": "",
       "dashboard-description": "變更儀表板描述",
       "dashboard-title": "變更儀表板標題",
       "duplicate": "複製 {{typeName}}",
@@ -5728,6 +5729,7 @@
       "edit-query-result-rule": "變更查詢結果規則",
       "edit-template-variable-rule": "變更範本變數規則",
       "edit-time-range-rule": "變更時間範圍規則",
+      "expand-all-rows": "",
       "group-into-row": "將群組分成列",
       "group-into-tab": "將群組分成分頁",
       "move": "移動 {{typeName}}",
@@ -5760,9 +5762,7 @@
       "add-library-panel-header": "匯入面板",
       "add-visualization-body": "選取資料來源，然後使用圖表、統計資料及表格查詢並將資料可視化，或建立清單、標記及其他小工具。",
       "add-visualization-button": "新增可視化",
-      "add-visualization-description": "",
       "add-visualization-header": "透過新增可視化來啟動您的新儀表板",
-      "add-visualization-heading": "",
       "assistant-placeholder": "",
       "auto-grid": "自動網格",
       "auto-grid-description": "面板調整大小以調整並形成統一的網格",
@@ -5770,9 +5770,6 @@
       "custom-grid": "自訂網格",
       "custom-grid-description": "單獨設定每個面板的位置和大小",
       "description": "新增面板，將資料視覺化成呈現",
-      "grid-auto": "",
-      "grid-custom": "",
-      "grid-label": "",
       "import-a-dashboard-body": "從檔案或 <2>grafana.com</2> 匯入儀表板。",
       "import-a-dashboard-header": "匯入儀表板",
       "import-dashboard-button": "匯入儀表板",
@@ -6099,8 +6096,7 @@
     "planning-banner": {
       "build": "",
       "dismiss": "",
-      "plan-label": "",
-      "panel-count_other": ""
+      "preview-label": ""
     },
     "public-dashboard-not-available": {
       "does-not-exist": "您嘗試存取的儀表板不存在",
@@ -9379,6 +9375,7 @@
     "flag-value": "標記值",
     "menu": "開啟選單",
     "new-flag": "new-flag-override",
+    "ofrep-evaluation": "",
     "save-flag": "儲存",
     "title": "功能控制項"
   },
@@ -10616,6 +10613,7 @@
       "aria-label-sort-column": "排序欄位「{{columnName}}」",
       "expand-row-header": "列展開器",
       "expand-row-tooltip": "切換列展開",
+      "loading": "",
       "tooltip-collapse-all": "收闔所有列",
       "tooltip-expand-all": "展開所有列"
     },
@@ -10710,6 +10708,9 @@
     "password-field": {
       "tooltip-hide": "隱藏密碼",
       "tooltip-show": "顯示密碼"
+    },
+    "query-field": {
+      "loading": ""
     },
     "query-input": {
       "loading": "正在載入編輯器"
@@ -10820,6 +10821,7 @@
         }
       },
       "inspect-drawer-title": "檢查值",
+      "loading": "",
       "nested-table": {
         "expander-column-name": "展開巢狀列",
         "no-data": "無資料"
@@ -13593,10 +13595,15 @@
   },
   "playlist-page": {
     "card": {
-      "delete": "刪除播放清單",
-      "edit": "編輯播放清單",
-      "start": "開始播放清單",
-      "tooltip": "分享播放清單"
+      "delete": "",
+      "delete-label": "",
+      "edit": "",
+      "edit-label": "",
+      "share": "",
+      "share-label": "",
+      "start": "",
+      "start-label": "",
+      "tooltip": ""
     },
     "create-button": {
       "title": "新播放清單"
@@ -14731,6 +14738,15 @@
     },
     "repository-status": {
       "error": "無法載入儲存庫"
+    },
+    "repository-status-alert": {
+      "deletion-title": "",
+      "error-title": "",
+      "force-delete-button": "",
+      "force-delete-cancel": "",
+      "force-delete-confirm": "",
+      "force-delete-title": "",
+      "force-delete-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "返回至儲存庫",
@@ -16396,7 +16412,9 @@
     }
   },
   "swagger": {
-    "login": "登入"
+    "login": "登入",
+    "namespace-unavailable": "",
+    "namespace-unavailable-title": ""
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -17619,6 +17637,7 @@
     },
     "series-to-fields-transformer-editor": {
       "label-field": "欄位",
+      "label-keep-unjoined": "",
       "label-mode": "模式",
       "modes": {
         "description": {
@@ -17631,7 +17650,8 @@
           "outer-tabular": "外部（表格式）",
           "outer-time-series": "外部（時間序列）"
         }
-      }
+      },
+      "tooltip-keep-unjoined": ""
     },
     "series-to-rows-transformer-editor": {
       "description": {

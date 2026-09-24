@@ -681,7 +681,7 @@ var (
 			Name:        "dashboardUndoRedo",
 			Description: "Enables undo/redo in dynamic dashboards",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
 		},
@@ -2286,14 +2286,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:        grafanaOperatorExperienceSquad,
 			Expression:   "false",
-		},
-		{
-			Name:        "profilesExemplars",
-			Description: "Enables profiles exemplars support in profiles drilldown",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaObservabilityTracesAndProfilingSquad,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "pyroscopeUTF8LabelNames",
