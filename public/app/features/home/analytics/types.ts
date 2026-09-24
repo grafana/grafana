@@ -32,8 +32,8 @@ export interface SolutionFilterChanged extends EventProperty {
   change: 'saved' | 'cleared';
   /**
    * Comma-separated names of the scope dimensions set after the change, in the solution's own terms
-   * (Kubernetes: cluster, namespaces, nodes); empty when cleared. Names only: the values are
-   * customer data and are never reported.
+   * (Kubernetes: cluster, namespaces, nodes; metrics: excludes, expression); empty when cleared.
+   * Names only: the values are customer data and are never reported.
    */
   customized: string;
 }

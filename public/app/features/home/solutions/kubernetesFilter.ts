@@ -4,29 +4,16 @@ import { type MetricFindValue, rangeUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type PromQuery } from '@grafana/prometheus';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
-import { contextSrv } from 'app/core/services/context_srv';
 
 import { hasSelection } from './kubernetesData';
-
-/**
- * localStorage key of the current org's Kubernetes card scope (JSON of KubernetesFilter). Datasource
- * uids are unique per org, so the key carries the org id like Explore's last-used datasource does;
- * the browser profile is the user boundary, as for the sibling homepage filters.
- */
-export function kubernetesFilterStorageKey(): string {
-  return `grafana.home.kubernetes.filter.${contextSrv.user.orgId}`;
-}
+import { DatasourceBoundFilterSchema, parseStoredFilter } from './solutionFilter';
 
 // An empty regex alternative would match series that lack the label, so blank entries are dropped.
 const TrimmedValues = z
   .array(z.string())
   .transform((values) => values.map((value) => value.trim()).filter((value) => value !== ''));
 
-const KubernetesFilterSchema = z.object({
-  /** Datasource the values were picked from; the scope applies only while the card reads it. */
-  datasourceUid: z.string(),
-  /** For the "not applied" message when the card resolves another datasource. */
-  datasourceName: z.string(),
+const KubernetesFilterSchema = DatasourceBoundFilterSchema.extend({
   cluster: z.string().trim(),
   namespaces: TrimmedValues,
   nodes: TrimmedValues,
@@ -36,17 +23,7 @@ export type KubernetesFilter = z.infer<typeof KubernetesFilterSchema>;
 
 /** Stored JSON → filter. Null for a missing/malformed value or an empty selection: both mean fleet-wide. */
 export function parseKubernetesFilter(raw: string | undefined): KubernetesFilter | null {
-  if (!raw) {
-    return null;
-  }
-  let json: unknown;
-  try {
-    json = JSON.parse(raw);
-  } catch {
-    return null;
-  }
-  const result = KubernetesFilterSchema.safeParse(json);
-  return result.success && hasSelection(result.data) ? result.data : null;
+  return parseStoredFilter(raw, KubernetesFilterSchema, (filter) => !hasSelection(filter));
 }
 
 /** Human summary for tooltips: non-empty parts joined with ' · '. */

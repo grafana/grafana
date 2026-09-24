@@ -3,10 +3,10 @@ import { act, renderHook } from '@testing-library/react';
 import { type DataSourceInstanceListItem, store } from '@grafana/data';
 
 import { detectIrmSignal } from './solutions/irmSignal';
-import { kubernetesFilterStorageKey } from './solutions/kubernetesFilter';
 import { kubernetesDetection, kubernetesSolution } from './solutions/kubernetesSolution';
 import { logsSolution } from './solutions/logsSolution';
-import { metricsSolution } from './solutions/metricsSolution';
+import { metricsDetection, metricsSolution } from './solutions/metricsSolution';
+import { solutionFilterStorageKey } from './solutions/solutionFilter';
 import { probeSpanMetrics } from './solutions/spanMetricsSignal';
 import { syntheticsSolution } from './solutions/syntheticsSolution';
 import { tracesSolution } from './solutions/tracesSolution';
@@ -15,7 +15,7 @@ import { useHomepageSolutions } from './useHomepageSolutions';
 
 jest.mock('./solutions/kubernetesSolution', () => ({ kubernetesSolution: jest.fn(), kubernetesDetection: jest.fn() }));
 jest.mock('./solutions/logsSolution', () => ({ logsSolution: jest.fn() }));
-jest.mock('./solutions/metricsSolution', () => ({ metricsSolution: jest.fn() }));
+jest.mock('./solutions/metricsSolution', () => ({ metricsSolution: jest.fn(), metricsDetection: jest.fn() }));
 jest.mock('./solutions/tracesSolution', () => ({ tracesSolution: jest.fn() }));
 jest.mock('./solutions/syntheticsSolution', () => ({ syntheticsSolution: jest.fn() }));
 jest.mock('./solutions/spanMetricsSignal', () => ({ probeSpanMetrics: jest.fn() }));
@@ -39,8 +39,9 @@ const datasource: DataSourceInstanceListItem = {
   meta: { id: 'prometheus' } as DataSourceInstanceListItem['meta'],
   isDefault: true,
 };
-// The detection the owner hands to every Kubernetes solution it creates.
-const detect = jest.fn(async () => ({ status: 'active' as const, datasource }));
+// The detections the owner hands to every filtered solution it creates.
+const detectKubernetes = jest.fn(async () => ({ status: 'active' as const, datasource }));
+const detectMetrics = jest.fn(async () => ({ status: 'active' as const, datasource }));
 
 function solution(id: SolutionId, status: 'active' | 'inactive' | 'unknown' = 'inactive'): Solution {
   return {
@@ -73,8 +74,10 @@ beforeEach(() => {
   for (const id of Object.keys(mockFactories) as SolutionId[]) {
     mockFactories[id].mockReset().mockImplementation(() => fixtures[id]);
   }
-  detect.mockClear();
-  jest.mocked(kubernetesDetection).mockReset().mockReturnValue(detect);
+  detectKubernetes.mockClear();
+  detectMetrics.mockClear();
+  jest.mocked(kubernetesDetection).mockReset().mockReturnValue(detectKubernetes);
+  jest.mocked(metricsDetection).mockReset().mockReturnValue(detectMetrics);
   mockProbeSpanMetrics.mockReset().mockResolvedValue(datasource);
   mockDetectIrmSignal.mockReset().mockResolvedValue('inactive');
 });
@@ -101,7 +104,8 @@ describe('useHomepageSolutions', () => {
     }
     expect(mockProbeSpanMetrics).not.toHaveBeenCalled();
     expect(mockDetectIrmSignal).not.toHaveBeenCalled();
-    expect(detect).not.toHaveBeenCalled();
+    expect(detectKubernetes).not.toHaveBeenCalled();
+    expect(detectMetrics).not.toHaveBeenCalled();
   });
 
   it('returns solutions in display order', () => {
@@ -140,10 +144,13 @@ describe('useHomepageSolutions', () => {
       synthetics: 'inactive',
       irm: 'inactive',
     });
-    expect(fixtures.metrics.signal).toHaveBeenCalledTimes(1);
+    // The filtered solutions' signals come from the shared detections, not from a solution instance.
+    expect(detectMetrics).toHaveBeenCalledTimes(1);
+    expect(detectKubernetes).toHaveBeenCalledTimes(1);
+    expect(fixtures.metrics.signal).not.toHaveBeenCalled();
+    expect(fixtures.kubernetes.signal).not.toHaveBeenCalled();
     expect(fixtures.logs.signal).toHaveBeenCalledTimes(1);
     expect(fixtures.traces.signal).toHaveBeenCalledTimes(1);
-    expect(detect).toHaveBeenCalledTimes(1);
     expect(fixtures.synthetics.signal).toHaveBeenCalledTimes(1);
     expect(mockProbeSpanMetrics).toHaveBeenCalledTimes(1);
     expect(mockDetectIrmSignal).toHaveBeenCalledTimes(1);
@@ -181,7 +188,7 @@ describe('useHomepageSolutions', () => {
 
     act(() => {
       store.set(
-        kubernetesFilterStorageKey(),
+        solutionFilterStorageKey('kubernetes'),
         JSON.stringify({
           datasourceUid: 'prometheus',
           datasourceName: 'Prometheus',
@@ -193,13 +200,50 @@ describe('useHomepageSolutions', () => {
     });
 
     expect(mockFactories.kubernetes).toHaveBeenCalledTimes(2);
-    expect(mockFactories.kubernetes).toHaveBeenLastCalledWith(expect.objectContaining({ cluster: 'prod' }), detect);
+    expect(mockFactories.kubernetes).toHaveBeenLastCalledWith(
+      expect.objectContaining({ cluster: 'prod' }),
+      detectKubernetes
+    );
     expect(result.current.solutions[0]).not.toBe(first.solutions[0]);
     result.current.solutions.slice(1).forEach((current, index) => {
       expect(current).toBe(first.solutions[index + 1]);
     });
     expect(result.current.signals).toBe(first.signals);
     for (const id of ['traces', 'metrics', 'logs', 'synthetics'] as const) {
+      expect(mockFactories[id]).toHaveBeenCalledTimes(1);
+    }
+  });
+
+  it('recreates only the metrics solution when its filter changes', () => {
+    mockFactories.metrics.mockImplementation(() => solution('metrics', 'active'));
+    const { result } = renderHook(() => useHomepageSolutions());
+    const first = result.current;
+
+    act(() => {
+      store.set(
+        solutionFilterStorageKey('metrics'),
+        JSON.stringify({
+          datasourceUid: 'prometheus',
+          datasourceName: 'Prometheus',
+          excludes: [{ label: 'instance', regex: 'cache-.*' }],
+          ratioExpr: '',
+        })
+      );
+    });
+
+    expect(mockFactories.metrics).toHaveBeenCalledTimes(2);
+    expect(mockFactories.metrics).toHaveBeenLastCalledWith(
+      expect.objectContaining({ excludes: [{ label: 'instance', regex: 'cache-.*' }] }),
+      detectMetrics
+    );
+    expect(result.current.solutions[1]).not.toBe(first.solutions[1]);
+    result.current.solutions.forEach((current, index) => {
+      if (index !== 1) {
+        expect(current).toBe(first.solutions[index]);
+      }
+    });
+    expect(result.current.signals).toBe(first.signals);
+    for (const id of ['kubernetes', 'traces', 'logs', 'synthetics'] as const) {
       expect(mockFactories[id]).toHaveBeenCalledTimes(1);
     }
   });

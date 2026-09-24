@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { type ComponentType } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { useAsync } from 'react-use';
 
@@ -9,9 +10,17 @@ import { Badge, Card, Icon, LinkButton, Stack, Text, useStyles2 } from '@grafana
 import { ctaClicked } from '../analytics/main';
 import { LearnMoreLink } from '../solutions/LearnMoreLink';
 import { SolutionStatsRow } from '../solutions/SolutionStatsRow';
-import { type Solution, type SolutionOffer } from '../solutions/types';
+import { type Solution, type SolutionId, type SolutionOffer } from '../solutions/types';
 
 import { KubernetesFilterActions } from './KubernetesFilterActions';
+import { MetricsFilterActions } from './MetricsFilterActions';
+import { type CardFilterActionsProps } from './SolutionFilterActions';
+
+// Cards whose scope the user can narrow; the control binds the filter to the card's datasource.
+const FILTER_ACTIONS: Partial<Record<SolutionId, ComponentType<CardFilterActionsProps>>> = {
+  kubernetes: KubernetesFilterActions,
+  metrics: MetricsFilterActions,
+};
 
 interface SolutionCardProps {
   solution: Solution;
@@ -27,6 +36,7 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
   const { value: datasource = null } = useAsync(() => solution.datasource(), [solution]);
   const styles = useStyles2(getStyles, needsAttention);
   const isAttentionCta = cta?.action === 'view_alerts';
+  const FilterActions = FILTER_ACTIONS[solution.id];
   const status = needsAttention
     ? t('home.overview.status.attention', 'Needs attention')
     : t('home.overview.status.enabled', 'Enabled');
@@ -105,9 +115,10 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
           </LinkButton>
         ) : null}
       </Card.Actions>
-      {solution.id === 'kubernetes' && datasource && (
+
+      {FilterActions && datasource && (
         <Card.SecondaryActions>
-          <KubernetesFilterActions datasource={datasource} attention={isAttentionCta} />
+          <FilterActions datasource={datasource} attention={isAttentionCta} />
         </Card.SecondaryActions>
       )}
     </Card>

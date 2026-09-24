@@ -12,23 +12,29 @@ import { t } from '@grafana/i18n';
 
 import { METRICS_DRILLDOWN_APP_ID } from './appPluginIds';
 import { resolveKubernetesDatasource } from './kubernetesData';
+import { type MetricsFilter } from './metricsFilter';
 import { drilldownActiveCta } from './pluginPages';
 import { datasourceFact } from './probeUtils';
 import { CLOUD_UTILITY_PROM_DATASOURCE_UIDS, probeFound, prometheusHasRecentMetrics } from './solutionDataProbes';
+import { scopeFor } from './solutionFilter';
 import { solutionOffer } from './solutionOffer';
 import { detectSignal, type SignalDetection } from './solutionState';
 import {
+  diskPressureQuery,
   fetchMetricsActivity,
   fetchMetricsDiskHoursToFull,
   fetchMetricsDiskPressure,
-  METRICS_DISK_PRESSURE_QUERY,
+  type MetricsDiskScope,
 } from './telemetryData';
 import { getTelemetrySetupCta, getTelemetrySetupLearnMore } from './telemetrySetup';
 import { type Solution } from './types';
 
 const formatUsageNumber = getValueFormat('short');
 
-function diskPressureExploreHref(ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>): string {
+function diskPressureExploreHref(
+  ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>,
+  scope: MetricsDiskScope | null
+): string {
   return urlUtil.renderUrl(locationUtil.assureBaseUrl('/explore'), {
     left: serializeStateToUrlParam({
       datasource: ds.uid,
@@ -36,7 +42,7 @@ function diskPressureExploreHref(ds: Pick<DataSourceInstanceListItem, 'uid' | 't
         {
           refId: 'A',
           datasource: { uid: ds.uid, type: ds.type },
-          expr: `sort_desc(${METRICS_DISK_PRESSURE_QUERY})`,
+          expr: `sort_desc(${diskPressureQuery(scope)})`,
         },
       ],
       range: { from: 'now-6h', to: 'now' },
@@ -44,15 +50,17 @@ function diskPressureExploreHref(ds: Pick<DataSourceInstanceListItem, 'uid' | 't
   });
 }
 
-export function metricsSolution(): Solution {
+/** Shared metrics detection; solutions recreated for a new filter reuse it so no datasource is re-probed. */
+export function metricsDetection(): () => Promise<SignalDetection> {
   const prometheus = memoize(() =>
     detectSignal(() => probeFound('prometheus', prometheusHasRecentMetrics, CLOUD_UTILITY_PROM_DATASOURCE_UIDS))
   );
+
   // Kubernetes telemetry is Prometheus data, so it proves metrics too. Keep this as an independent
   // probe so the metrics solution does not depend on the Kubernetes card.
   const kubernetesPrometheus = memoize(() => detectSignal(resolveKubernetesDatasource));
 
-  const detect = memoize(async (): Promise<SignalDetection> => {
+  return memoize(async (): Promise<SignalDetection> => {
     const metricsPromise = prometheus();
     const kubernetesPromise = kubernetesPrometheus();
 
@@ -70,10 +78,17 @@ export function metricsSolution(): Solution {
       ? { status: 'unknown', datasource: null }
       : { status: 'inactive', datasource: null };
   });
-  const datasource = async () => (await detect()).datasource;
+}
 
-  const activity = datasourceFact(datasource, fetchMetricsActivity);
-  const diskPressure = datasourceFact(datasource, fetchMetricsDiskPressure);
+export function metricsSolution(
+  filter: MetricsFilter | null,
+  detect: () => Promise<SignalDetection> = metricsDetection()
+): Solution {
+  const datasource = async () => (await detect()).datasource;
+  const diskScope = (ds: DataSourceInstanceListItem): MetricsDiskScope | null => scopeFor(filter, ds);
+
+  const activity = datasourceFact(datasource, (ds) => fetchMetricsActivity(ds, diskScope(ds)));
+  const diskPressure = datasourceFact(datasource, (ds) => fetchMetricsDiskPressure(ds, diskScope(ds)));
   const diskHoursToFull = memoize(async () => {
     const ds = await datasource();
     const disk = await diskPressure();
@@ -195,7 +210,7 @@ export function metricsSolution(): Solution {
       if (await needsAttention().catch(() => false)) {
         return {
           label: t('home.solutions.metrics.investigate-disk', 'Investigate disk usage in Explore'),
-          href: diskPressureExploreHref(ds),
+          href: diskPressureExploreHref(ds, diskScope(ds)),
           action: 'view_alerts',
         };
       }

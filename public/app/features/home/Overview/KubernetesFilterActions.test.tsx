@@ -5,7 +5,8 @@ import { store } from '@grafana/data';
 import { mockComboboxRect } from '@grafana/test-utils';
 
 import { ctaClicked, solutionFilterChanged } from '../analytics/main';
-import { fetchKubernetesLabelValues, kubernetesFilterStorageKey } from '../solutions/kubernetesFilter';
+import { fetchKubernetesLabelValues } from '../solutions/kubernetesFilter';
+import { solutionFilterStorageKey } from '../solutions/solutionFilter';
 import { deferred, stubDatasource } from '../solutions/test-utils';
 
 import { KubernetesFilterActions } from './KubernetesFilterActions';
@@ -72,7 +73,7 @@ describe('KubernetesFilterActions', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Save' }));
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    expect(JSON.parse(window.localStorage.getItem(kubernetesFilterStorageKey()) ?? '')).toEqual({
+    expect(JSON.parse(window.localStorage.getItem(solutionFilterStorageKey('kubernetes')) ?? '')).toEqual({
       datasourceUid: 'prometheus',
       datasourceName: 'Prometheus',
       cluster: 'prod',
@@ -100,7 +101,7 @@ describe('KubernetesFilterActions', () => {
     await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Cancel' }));
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    expect(window.localStorage.getItem(kubernetesFilterStorageKey())).toBeNull();
+    expect(window.localStorage.getItem(solutionFilterStorageKey('kubernetes'))).toBeNull();
     expect(mockCtaClicked).toHaveBeenCalledTimes(1);
     expect(mockCtaClicked).toHaveBeenCalledWith(GEAR_OPENED);
     expect(mockFilterChanged).not.toHaveBeenCalled();
@@ -108,7 +109,7 @@ describe('KubernetesFilterActions', () => {
 
   it('shows a filter saved for another datasource as not applied and lets the user clear it', async () => {
     window.localStorage.setItem(
-      kubernetesFilterStorageKey(),
+      solutionFilterStorageKey('kubernetes'),
       JSON.stringify({ datasourceUid: 'other', datasourceName: 'Other', cluster: 'prod', namespaces: [], nodes: [] })
     );
     const { user } = render(<KubernetesFilterActions datasource={stubDatasource} attention={false} />);
@@ -123,7 +124,7 @@ describe('KubernetesFilterActions', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Clear filters' }));
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    expect(window.localStorage.getItem(kubernetesFilterStorageKey())).toBeNull();
+    expect(window.localStorage.getItem(solutionFilterStorageKey('kubernetes'))).toBeNull();
     expect(screen.queryByText('Filters not applied')).not.toBeInTheDocument();
     expect(mockFilterChanged).toHaveBeenCalledTimes(1);
     expect(mockFilterChanged).toHaveBeenCalledWith({
@@ -147,7 +148,7 @@ describe('KubernetesFilterActions', () => {
 
     expect(await within(dialog).findByText('Could not save to browser storage. Try again.')).toBeInTheDocument();
     expect(within(dialog).getByRole('combobox', { name: 'Cluster' })).toHaveDisplayValue('prod');
-    expect(window.localStorage.getItem(kubernetesFilterStorageKey())).toBeNull();
+    expect(window.localStorage.getItem(solutionFilterStorageKey('kubernetes'))).toBeNull();
     expect(mockFilterChanged).not.toHaveBeenCalled();
   });
 });

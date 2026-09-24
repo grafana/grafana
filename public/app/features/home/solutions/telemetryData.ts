@@ -11,7 +11,14 @@ import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { PromApplication } from 'app/types/unified-alerting-dto';
 
 import { probeProxyGet, resolveBackendInstance, withDeadline } from './probeUtils';
-import { readLabeledScalar, readScalar, readSeries, runInstantQueries, runRangeQuery } from './promQuery';
+import {
+  quotePromString,
+  readLabeledScalar,
+  readScalar,
+  readSeries,
+  runInstantQueries,
+  runRangeQuery,
+} from './promQuery';
 import { DATA_LOOKBACK_HOURS } from './solutionDataProbes';
 
 /** Stats window for the logs card (design-fixed), distinct from the 24h sparkline lookback. */
@@ -237,21 +244,57 @@ export interface MetricsActivity {
   count: MetricsCount | null;
   /** Ingest rate (stack-scoped usage metrics, else Prometheus self-monitoring). */
   dataPointsPerMinute: number | null;
-  /** node_exporter host count. */
+  /** Hosts reporting filesystem metrics under the disk scope, so the count matches the alert's population. */
   hosts: number | null;
   /** Active-series trend over the last 24h. */
   seriesSparkline: FieldSparkline | null;
+}
+
+/** What the disk alert is built on. A field left empty ('' / []) does not narrow. */
+export interface MetricsDiskScope {
+  /** Filesystems whose `label` matches `regex` (anchored, RE2) are left out of the default fill ratio. */
+  excludes: Array<{ label: string; regex: string }>;
+  /** Replaces the default fill-ratio formula whole; '' keeps the default. */
+  ratioExpr: string;
+}
+
+export function hasDiskSelection(scope: MetricsDiskScope): boolean {
+  return (
+    scope.ratioExpr.trim() !== '' || scope.excludes.some((row) => row.label.trim() !== '' && row.regex.trim() !== '')
+  );
 }
 
 // Threshold and ETA clamp for the disk-pressure alert row (design/judgment constants).
 const DISK_PRESSURE_RATIO = 0.9;
 const DISK_ETA_MAX_HOURS = 48;
 
+// Pseudo filesystems are always excluded; they read as full without being a problem.
 const FS_EXCLUDE = 'fstype!~"tmpfs|overlay|squashfs|iso9660|ramfs"';
-// Per-filesystem fill ratio; pseudo filesystems excluded.
-const FS_USED = `(1 - node_filesystem_avail_bytes{${FS_EXCLUDE}} / node_filesystem_size_bytes{${FS_EXCLUDE}})`;
-/** Counts hosts whose fullest real filesystem exceeds the card threshold. */
-export const METRICS_DISK_PRESSURE_QUERY = `max by (instance) (${FS_USED}) > ${DISK_PRESSURE_RATIO}`;
+
+function filesystemSelector(scope: MetricsDiskScope | null): string {
+  const matchers = [
+    FS_EXCLUDE,
+    ...(scope?.excludes ?? []).map(({ label, regex }) => `${label}!~${quotePromString(regex)}`),
+  ];
+  return `{${matchers.join(',')}}`;
+}
+
+/**
+ * Per-filesystem fill ratio (0..1) that the disk alert and the host count are built on. A custom
+ * expression replaces it whole, so the scope's exclusions only narrow the default formula.
+ */
+export function diskRatioExpr(scope: MetricsDiskScope | null): string {
+  if (scope?.ratioExpr) {
+    return `(${scope.ratioExpr})`;
+  }
+  const selector = filesystemSelector(scope);
+  return `(1 - node_filesystem_avail_bytes${selector} / node_filesystem_size_bytes${selector})`;
+}
+
+/** Hosts whose fullest real filesystem exceeds the card threshold. */
+export function diskPressureQuery(scope: MetricsDiskScope | null): string {
+  return `max by (instance) (${diskRatioExpr(scope)}) > ${DISK_PRESSURE_RATIO}`;
+}
 
 // 0, negatives and NaN read as absent: cards show a number or nothing, never "0".
 function positive(value: number | null | undefined): number | null {
@@ -290,8 +333,7 @@ export async function fetchMetricsDiskHoursToFull(
   mountpoint: string,
   ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>
 ): Promise<number | null> {
-  const esc = (v: string) => v.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-  const selector = `{instance="${esc(instanceLabel)}",mountpoint="${esc(mountpoint)}",${FS_EXCLUDE}}`;
+  const selector = `{instance=${quotePromString(instanceLabel)},mountpoint=${quotePromString(mountpoint)},${FS_EXCLUDE}}`;
   const hours = await runInstantQueries(
     {
       eta: `min((node_filesystem_avail_bytes${selector} / -deriv(node_filesystem_avail_bytes${selector}[6h])) > 0) / 3600`,
@@ -304,13 +346,15 @@ export async function fetchMetricsDiskHoursToFull(
   return hours != null && hours > 0 && hours <= DISK_ETA_MAX_HOURS ? hours : null;
 }
 
+/** Disk pressure across the fleet; `scope` null = every real filesystem. */
 export async function fetchMetricsDiskPressure(
-  ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>
+  ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>,
+  scope: MetricsDiskScope | null
 ): Promise<MetricsDiskPressure | null> {
   const frames = await runInstantQueries(
     {
-      diskHosts: `count(${METRICS_DISK_PRESSURE_QUERY})`,
-      diskWorst: `topk(1, ${FS_USED})`,
+      diskHosts: `count(${diskPressureQuery(scope)})`,
+      diskWorst: `topk(1, ${diskRatioExpr(scope)})`,
     },
     ds,
     { timeoutMs: DETAIL_QUERY_TIMEOUT_MS, partial: true }
@@ -410,12 +454,13 @@ function fetchUsageStats(usage: UsageQueries): Promise<UsageStats | null> {
 }
 
 /**
- * Active-series count (or the metric-name count when none resolves), node_exporter host count,
- * and the 24h active-series sparkline. Every field fails soft to null; the card drops when nothing
- * renderable remains. Never a matcher-less series query — cardinality on large tenants is prohibitive.
+ * Active-series count (or the metric-name count when none resolves), host count, and the 24h
+ * active-series sparkline. Every field fails soft to null; the card drops when nothing renderable
+ * remains. Never a matcher-less series query — cardinality on large tenants is prohibitive.
  */
 export async function fetchMetricsActivity(
-  ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>
+  ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>,
+  scope: MetricsDiskScope | null
 ): Promise<MetricsActivity> {
   const empty: MetricsActivity = { count: null, dataPointsPerMinute: null, hosts: null, seriesSparkline: null };
   const instance = await resolveBackendInstance(ds.uid);
@@ -438,8 +483,10 @@ export async function fetchMetricsActivity(
       const names = await fetchMetricNameCount(instance, start, end);
       return names != null ? { kind: 'names', value: names } : null;
     });
+  // Hosts are the distinct instances behind the disk alert's own ratio, so an excluded host or a
+  // custom formula moves both figures together.
   const fleet = runInstantQueries(
-    { ...(mimir ? {} : { dpm: PROM_DPM_QUERY }), hosts: 'count(node_uname_info)' },
+    { ...(mimir ? {} : { dpm: PROM_DPM_QUERY }), hosts: `count(count by (instance) (${diskRatioExpr(scope)}))` },
     ds,
     // partial: readers are null-safe; one failed query keeps the rest.
     { partial: true }
