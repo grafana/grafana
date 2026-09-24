@@ -9,7 +9,7 @@ import {
   getTagsSelectables,
   getTagValuesSelectables,
 } from '../state/providers';
-import { createStore } from '../state/store';
+import { createStore, type GraphiteQueryEditorState } from '../state/store';
 import { type GraphiteSegment } from '../types';
 
 const mockPublish = jest.fn();
@@ -147,6 +147,62 @@ describe('Graphite actions', () => {
 
     it('should add function and remove select metric link', () => {
       expect(ctx.state.segments.length).toBe(0);
+    });
+  });
+
+  describe('when queryChanged is dispatched before a slow init resolves', () => {
+    it('applies the query on top of the initialized state', async () => {
+      let resolveFuncDefs: (value: null) => void = () => {};
+      const funcDefsLoaded = new Promise<null>((resolve) => {
+        resolveFuncDefs = resolve;
+      });
+      ctx.datasource.waitForFuncDefsLoaded = jest.fn(() => funcDefsLoaded);
+
+      let state = {} as GraphiteQueryEditorState;
+      const dispatch = createStore((newState) => {
+        state = newState;
+      });
+
+      const initDone = dispatch(
+        actions.init({
+          datasource: ctx.datasource,
+          target: { refId: 'A', target: 'test.prod.*' },
+          refresh: jest.fn(),
+          queries: [],
+          //@ts-ignore
+          templateSrv: getTemplateSrv(),
+        })
+      );
+      const queryChangedDone = dispatch(actions.queryChanged({ refId: 'A', target: 'test.new.*' }));
+
+      resolveFuncDefs(null);
+
+      await expect(initDone).resolves.toBeUndefined();
+      await expect(queryChangedDone).resolves.toBeUndefined();
+      expect(state.target.target).toBe('test.new.*');
+    });
+
+    it('keeps processing actions after one fails', async () => {
+      let state = {} as GraphiteQueryEditorState;
+      const dispatch = createStore((newState) => {
+        state = newState;
+      });
+
+      // queryChanged on the empty initial state rejects because there is no target yet
+      await expect(dispatch(actions.queryChanged({ refId: 'A', target: 'test.new.*' }))).rejects.toThrow();
+
+      await dispatch(
+        actions.init({
+          datasource: ctx.datasource,
+          target: { refId: 'A', target: 'test.prod.*' },
+          refresh: jest.fn(),
+          queries: [],
+          //@ts-ignore
+          templateSrv: getTemplateSrv(),
+        })
+      );
+
+      expect(state.target.target).toBe('test.prod.*');
     });
   });
 

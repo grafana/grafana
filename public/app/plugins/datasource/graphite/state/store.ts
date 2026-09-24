@@ -190,9 +190,18 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
 export const createStore = (onChange: (state: GraphiteQueryEditorState) => void): Dispatch<AnyAction> => {
   let state = {} as GraphiteQueryEditorState;
 
-  const dispatch = async (action: AnyAction) => {
-    state = await reducer(action, state);
-    onChange(state);
+  // Actions are queued so each reducer run sees the state produced by the previous one.
+  // Without this, e.g. queryChanged could run on the empty initial state while init is still awaiting.
+  let queue: Promise<void> = Promise.resolve();
+
+  const dispatch = (action: AnyAction) => {
+    const result = queue.then(async () => {
+      state = await reducer(action, state);
+      onChange(state);
+    });
+    // A failed action must not block subsequent ones; the caller still receives the rejection via `result`.
+    queue = result.catch(() => {});
+    return result;
   };
 
   return dispatch as Dispatch<AnyAction>;
