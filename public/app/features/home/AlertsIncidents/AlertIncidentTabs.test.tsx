@@ -930,10 +930,8 @@ describe('AlertIncidentTabs', () => {
     it('hides the dropdown when the org has no label fields', async () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
       mockIrmPlugin();
-      // Only a non-label custom field; the default handler's empty list is the other shape of "nothing to pick".
-      mockIncidentFields([
-        { slug: 'region', name: 'Region', domainName: 'incident', selectoptions: [{ value: 'EU' }] },
-      ]);
+      // Which fields count as labels is the API module's call (see incidentsApi.test.ts); here it's just "nothing to pick".
+      mockNoIncidentFields();
       mockIncidents([activeIncident]);
 
       render(<AlertIncidentTabsWithData />);

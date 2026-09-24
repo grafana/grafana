@@ -15,11 +15,13 @@ const getYourTeamsOption = (): ComboboxOption<string> => ({
 
 const getAllOption = (label: string, value: string): ComboboxOption<string> => ({ label, value });
 
-// A lone header is noise: most orgs only have `team`, so headers only appear with several groups.
+// Single sort site for both tabs, so neither data hook has to. Grouped options stay
+// together under their header; ungrouped ones sort ahead of them.
 function sortOptions(options: Array<ComboboxOption<string>>): Array<ComboboxOption<string>> {
   const sorted = [...options].sort(
     (a, b) => collator.compare(a.group ?? '', b.group ?? '') || collator.compare(a.label ?? '', b.label ?? '')
   );
+  // A lone header is noise: most orgs only have `team`, so headers only appear with several groups.
   const singleGroup = new Set(sorted.map((option) => option.group)).size <= 1;
   return singleGroup ? sorted.map(({ group, ...option }) => option) : sorted;
 }
@@ -42,17 +44,16 @@ interface Props {
   /** Label of the unfiltered option, e.g. "All teams" or "All incidents". */
   allOptionLabel: string;
   /**
-   * Display label for a stored selection that none of the options carry anymore (e.g. its
-   * field was archived). Only needed when the selection isn't already the display label:
-   * alerts store the team name itself, incidents store an encoded `slug:value`.
+   * How to display a picked option value when it isn't its own label: alerts store the
+   * team name itself, incidents store an encoded `slug:value`.
    */
-  formatStaleSelection?: (selection: string) => string;
+  selectionLabel?: (selection: string) => string;
   ariaLabel: string;
 }
 
 /**
  * Dropdown to filter a homepage view. Presentational: the caller supplies the options
- * (alert team label values or incident custom-field values) and owns the selection.
+ * (alert team label values or incident label values) and owns the selection.
  */
 export function TeamFilterCombobox({
   options,
@@ -60,15 +61,16 @@ export function TeamFilterCombobox({
   onChange,
   offersYourTeams,
   allOptionLabel,
-  formatStaleSelection,
+  selectionLabel,
   ariaLabel,
 }: Props) {
-  // Single sort site for both tabs, so neither data hook has to. Grouped options stay
-  // together under their header; ungrouped ones sort ahead of them.
   const sortedOptions = useMemo(() => sortOptions(options), [options]);
 
   // Only a "your teams" default needs a distinct sentinel for org-wide; otherwise '' already means all.
-  const allValue = offersYourTeams ? ALL_TEAMS : '';
+  const allOption = useMemo(
+    () => getAllOption(allOptionLabel, offersYourTeams ? ALL_TEAMS : ''),
+    [allOptionLabel, offersYourTeams]
+  );
 
   // Async Combobox needs the full option (not just the value) to show a label.
   // Must be memoized: a new object every render makes downshift think the
@@ -77,20 +79,15 @@ export function TeamFilterCombobox({
     const scope = resolveTeamScope(selected);
     switch (scope.kind) {
       case 'all':
-        return getAllOption(allOptionLabel, allValue);
+        return allOption;
       case 'team':
-        // A stored selection may name a value no longer offered; still show it rather than blank.
-        return (
-          sortedOptions.find((option) => option.value === selected) ?? {
-            label: formatStaleSelection?.(scope.team) ?? scope.team,
-            value: scope.team,
-          }
-        );
+        // Built from the selection alone, so a pick whose option is gone (e.g. archived) still shows.
+        return { label: selectionLabel?.(scope.team) ?? scope.team, value: scope.team };
       case 'default':
         // Without a "your teams" scope the default already means everything, so show that.
-        return offersYourTeams ? getYourTeamsOption() : getAllOption(allOptionLabel, allValue);
+        return offersYourTeams ? getYourTeamsOption() : allOption;
     }
-  }, [selected, offersYourTeams, allOptionLabel, allValue, sortedOptions, formatStaleSelection]);
+  }, [selected, offersYourTeams, allOption, selectionLabel]);
 
   const loadOptions = useCallback(
     async (inputValue: string): Promise<Array<ComboboxOption<string>>> => {
@@ -100,12 +97,10 @@ export function TeamFilterCombobox({
         (option) => option.label?.toLowerCase().includes(query) || option.group?.toLowerCase().includes(query)
       );
       // The scope options only belong on the unfiltered default list.
-      const scopeOptions = offersYourTeams
-        ? [getYourTeamsOption(), getAllOption(allOptionLabel, allValue)]
-        : [getAllOption(allOptionLabel, allValue)];
+      const scopeOptions = offersYourTeams ? [getYourTeamsOption(), allOption] : [allOption];
       return inputValue ? matching : [...scopeOptions, ...matching];
     },
-    [sortedOptions, offersYourTeams, allOptionLabel, allValue]
+    [sortedOptions, offersYourTeams, allOption]
   );
 
   return (

@@ -101,7 +101,7 @@ export function AlertIncidentTabs({
         : t('home.alerts-incidents.title-alerts', 'Alerts');
 
   // Each tab keeps its own selection: alerts filter by the `team` label, incidents by any
-  // custom field, so a shared pick would often name a value the other tab can't hold.
+  // incident label, so a shared pick would often name a value the other tab can't hold.
   const tabs = [
     ...(canViewAlerts
       ? [
@@ -138,7 +138,7 @@ export function AlertIncidentTabs({
               // Incidents have no "your teams" scope: the unfiltered default is every active incident.
               offersYourTeams: false,
               allOptionLabel: t('home.alerts-incidents.incident-filter-all', 'All incidents'),
-              formatStaleSelection: incidentFilterLabel,
+              selectionLabel: incidentFilterLabel,
               ariaLabel: t('home.alerts-incidents.incident-filter-label', 'Filter incidents by label'),
             },
           },

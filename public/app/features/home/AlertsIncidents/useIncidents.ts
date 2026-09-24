@@ -16,8 +16,8 @@ export type IncidentsData = ReturnType<typeof useIncidents>;
  * All data fetching and derived state for the homepage Active incidents view,
  * shared between the old-layout card and the redesigned tabs.
  *
- * When `selectedFilter` names a custom-field value, incidents are filtered to
- * that value; the default scope fetches every active incident.
+ * When `selectedFilter` names a label value, incidents are filtered to that
+ * value; the default scope fetches every active incident.
  */
 export function useIncidents(selectedFilter: IncidentFilterSelection = '') {
   const { installed, loading: pluginLoading, settings } = usePluginBridge(SupportedPlugin.Irm);
@@ -73,7 +73,7 @@ export function useIncidents(selectedFilter: IncidentFilterSelection = '') {
     hasMore,
     hasIncidents,
     // Echoed back so the card can scope its empty message to the filtered value.
-    selectedFilter: filter,
+    filter,
     enabled: pluginLoading ? undefined : !!installed,
     loading,
     error: loadError,

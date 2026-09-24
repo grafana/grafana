@@ -4,7 +4,7 @@ export const INCIDENTS_FILTER_STORAGE_KEY = 'grafana.home.incidents.filter';
 
 /**
  * The homepage incidents filter selection: '' for every active incident, otherwise
- * `slug:value` naming one select-field value (e.g. `team:Platform`, `squad:Frontend`).
+ * `slug:value` naming one label value (e.g. `team:Platform`, `squad:Frontend`).
  * A plain string so localStorage and the Combobox can hold it as-is.
  */
 export type IncidentFilterSelection = string;
