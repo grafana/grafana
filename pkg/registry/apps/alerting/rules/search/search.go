@@ -123,7 +123,7 @@ func (h *Handler) run(ctx context.Context, body model.CreateSearchRulesRequestBo
 		return nil, "", err
 	}
 	if resp.Error != nil {
-		return nil, "", resource.GetError(resp.Error)
+		return nil, "", resource.StatusError(resp.Error)
 	}
 	// Offset paging rather than the generic search API's sort-value cursor,
 	// because rows from the legacy backend carry no sort values. Correct only

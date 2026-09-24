@@ -91,7 +91,7 @@ func TestSearchErrorStatus(t *testing.T) {
 			require.Equal(t, http.StatusTooManyRequests, recorder.Code)
 			var got metav1.Status
 			require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &got))
-			require.Equal(t, resource.GetError(failure).(apierrors.APIStatus).Status(), got)
+			require.Equal(t, resource.StatusError(failure).(apierrors.APIStatus).Status(), got)
 		})
 	}
 }

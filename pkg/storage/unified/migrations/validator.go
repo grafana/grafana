@@ -364,7 +364,7 @@ func (v *FolderTreeValidator) buildUnifiedFolderParentMap(ctx context.Context, n
 			return nil, fmt.Errorf("failed to search folders in unified storage (page %d): empty response", page)
 		}
 		if searchResp.GetError() != nil {
-			return nil, fmt.Errorf("failed to search folders in unified storage (page %d): %w", page, resource.GetError(searchResp.GetError()))
+			return nil, fmt.Errorf("failed to search folders in unified storage (page %d): %w", page, resource.StatusError(searchResp.GetError()))
 		}
 
 		rows, err := decodeFolderRows(searchResp)

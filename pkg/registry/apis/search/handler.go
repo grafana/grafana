@@ -159,7 +159,7 @@ func (h *Handler) handle(
 		}
 		// The backend reports failures in the payload, not as a transport error.
 		if res.GetError() != nil {
-			errhttp.Write(ctx, resource.GetError(res.GetError()), w)
+			errhttp.Write(ctx, resource.StatusError(res.GetError()), w)
 			return
 		}
 

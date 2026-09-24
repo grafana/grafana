@@ -148,7 +148,7 @@ func (c *renderConnector) Connect(
 			return
 		}
 		if rsp.Error != nil {
-			responder.Error(resource.GetError(rsp.Error))
+			responder.Error(resource.StatusError(rsp.Error))
 			return
 		}
 
