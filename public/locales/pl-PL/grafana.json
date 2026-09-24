@@ -5850,6 +5850,7 @@
     "edit-actions": {
       "add": "Dodaj: {{typeName}}",
       "add-conditional-rule": "Dodaj regułę {{ruleDescription}}",
+      "collapse-all-rows": "",
       "dashboard-description": "Zmień opis pulpitu",
       "dashboard-title": "Zmień tytuł pulpitu",
       "duplicate": "Duplikuj: {{typeName}}",
@@ -5857,6 +5858,7 @@
       "edit-query-result-rule": "Zmień regułę wyniku zapytania",
       "edit-template-variable-rule": "Zmień regułę zmiennej szablonu",
       "edit-time-range-rule": "Zmień regułę zakresu czasu",
+      "expand-all-rows": "",
       "group-into-row": "Grupuj w wierszu",
       "group-into-tab": "Grupuj na karcie",
       "move": "Przenieś {{typeName}}",
@@ -5889,9 +5891,7 @@
       "add-library-panel-header": "Importuj panel",
       "add-visualization-body": "Wybierz źródło danych, a następnie wyszukaj i zwizualizuj dane na wykresach, w statystykach i tabelach lub utwórz listy, korzystaj ze znaczników markdown i innych widżetów.",
       "add-visualization-button": "Dodaj wizualizację",
-      "add-visualization-description": "",
       "add-visualization-header": "Dodaj wizualizację, aby rozpocząć tworzenie nowego pulpitu",
-      "add-visualization-heading": "",
       "assistant-placeholder": "",
       "auto-grid": "Automatyczna siatka",
       "auto-grid-description": "Panele zmieniają rozmiar, aby pasowały i tworzyły jednolite siatki",
@@ -5899,9 +5899,6 @@
       "custom-grid": "Siatka niestandardowa",
       "custom-grid-description": "Umieść każdy panel osobno i zmień jego rozmiar",
       "description": "Dodaj panel, aby wizualizować dane",
-      "grid-auto": "",
-      "grid-custom": "",
-      "grid-label": "",
       "import-a-dashboard-body": "Zaimportuj pulpity z plików lub witryny <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importuj pulpit",
       "import-dashboard-button": "Importuj pulpit",
@@ -6231,11 +6228,7 @@
     "planning-banner": {
       "build": "",
       "dismiss": "",
-      "plan-label": "",
-      "panel-count_one": "",
-      "panel-count_few": "",
-      "panel-count_many": "",
-      "panel-count_other": ""
+      "preview-label": ""
     },
     "public-dashboard-not-available": {
       "does-not-exist": "Pulpit, do którego próbujesz uzyskać dostęp, nie istnieje",
@@ -9544,6 +9537,7 @@
     "flag-value": "Wartość flagi",
     "menu": "Otwórz menu",
     "new-flag": "new-flag-override",
+    "ofrep-evaluation": "",
     "save-flag": "Zapisz",
     "title": "Sterowanie funkcjami"
   },
@@ -10811,6 +10805,7 @@
       "aria-label-sort-column": "Sortuj kolumnę {{columnName}}",
       "expand-row-header": "Rozszerzanie wierszy",
       "expand-row-tooltip": "Przełącz rozwinięcie wiersza",
+      "loading": "",
       "tooltip-collapse-all": "Zwiń wszystkie wiersze",
       "tooltip-expand-all": "Rozwiń wszystkie wiersze"
     },
@@ -10905,6 +10900,9 @@
     "password-field": {
       "tooltip-hide": "Ukryj hasło",
       "tooltip-show": "Pokaż hasło"
+    },
+    "query-field": {
+      "loading": ""
     },
     "query-input": {
       "loading": "Ładowanie edytora"
@@ -11015,6 +11013,7 @@
         }
       },
       "inspect-drawer-title": "Sprawdź wartość",
+      "loading": "",
       "nested-table": {
         "expander-column-name": "Rozwiń zagnieżdżone wiersze",
         "no-data": "Brak danych"
@@ -13875,10 +13874,15 @@
   },
   "playlist-page": {
     "card": {
-      "delete": "Usuń listę autoodtwarzania",
-      "edit": "Edytuj listę autoodtwarzania",
-      "start": "Rozpocznij autoodtwarzanie",
-      "tooltip": "Udostępnij autoodtwarzanie"
+      "delete": "",
+      "delete-label": "",
+      "edit": "",
+      "edit-label": "",
+      "share": "",
+      "share-label": "",
+      "start": "",
+      "start-label": "",
+      "tooltip": ""
     },
     "create-button": {
       "title": "Nowe autoodtwarzanie"
@@ -15067,6 +15071,15 @@
     },
     "repository-status": {
       "error": "Nie udało się wczytać repozytorium"
+    },
+    "repository-status-alert": {
+      "deletion-title": "",
+      "error-title": "",
+      "force-delete-button": "",
+      "force-delete-cancel": "",
+      "force-delete-confirm": "",
+      "force-delete-title": "",
+      "force-delete-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "Wróć do repozytoriów",
@@ -16768,7 +16781,9 @@
     }
   },
   "swagger": {
-    "login": "Logowanie"
+    "login": "Logowanie",
+    "namespace-unavailable": "",
+    "namespace-unavailable-title": ""
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -17991,6 +18006,7 @@
     },
     "series-to-fields-transformer-editor": {
       "label-field": "Pole",
+      "label-keep-unjoined": "",
       "label-mode": "Tryb",
       "modes": {
         "description": {
@@ -18003,7 +18019,8 @@
           "outer-tabular": "Zewnętrzne (tabelaryczne)",
           "outer-time-series": "Zewnętrzne (szeregi czasowe)"
         }
-      }
+      },
+      "tooltip-keep-unjoined": ""
     },
     "series-to-rows-transformer-editor": {
       "description": {
