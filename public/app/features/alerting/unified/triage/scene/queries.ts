@@ -137,7 +137,17 @@ export function summaryInstanceCountQuery(filter: string): SceneDataQuery {
   return getDataQuery(getAlertsSummariesQuery('alertstate', filter), { instant: true, format: 'table' });
 }
 
-/** Instance timeseries for a specific alert rule, optionally scoped to parent group labels. */
+/**
+ * Instance timeseries for a specific alert rule, optionally scoped to parent group labels.
+ *
+ * Wraps each selector in `last_over_time(...[$__interval])` for the same reason
+ * `uniqueAlertInstancesExpr` below wraps its selectors in `last_over_time(...[$__range])`:
+ * a bare range-query selector only returns a point at a grid point if a raw sample falls
+ * within Prometheus's default 5m staleness window, so a short-lived instance can fall
+ * between grid points and vanish once the step exceeds ~5m. Using `$__interval` (one step
+ * width) rather than `$__range` closes that gap without widening a brief firing period
+ * beyond how it already renders at that resolution.
+ */
 export function alertRuleInstancesQuery(
   ruleUID: string,
   filter: string,
@@ -153,9 +163,10 @@ export function alertRuleInstancesQuery(
     { name: 'grafana_rule_uid', operator: '=', value: ruleUID },
     ...groupMatchers,
   ]);
+  const lookbackSelectors = selectors.map((selector) => `last_over_time(${selector}[$__interval])`);
 
   return getDataQuery(
-    `count without (alertname, grafana_alertstate, grafana_folder, grafana_rule_uid) (${orSelectors(selectors)})`,
+    `count without (alertname, grafana_alertstate, grafana_folder, grafana_rule_uid) (${orSelectors(lookbackSelectors)})`,
     { format: 'timeseries', legendFormat: '{{alertstate}}' }
   );
 }
