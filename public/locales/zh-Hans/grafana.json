@@ -5721,6 +5721,7 @@
     "edit-actions": {
       "add": "添加{{typeName}}",
       "add-conditional-rule": "添加 {{ruleDescription}} 规则",
+      "collapse-all-rows": "",
       "dashboard-description": "更改数据面板描述",
       "dashboard-title": "更改数据面板标题",
       "duplicate": "复制{{typeName}}",
@@ -5728,6 +5729,7 @@
       "edit-query-result-rule": "更改查询结果规则",
       "edit-template-variable-rule": "更改模板变量规则",
       "edit-time-range-rule": "更改时间范围规则",
+      "expand-all-rows": "",
       "group-into-row": "分组成行",
       "group-into-tab": "分组成选项卡",
       "move": "移动{{typeName}}",
@@ -5760,9 +5762,7 @@
       "add-library-panel-header": "导入面板",
       "add-visualization-body": "选择一个数据源，然后用图表、统计信息和表格查询您的数据以及将其可视化，或创建列表、Markdown 和其他小部件。",
       "add-visualization-button": "添加可视化",
-      "add-visualization-description": "",
       "add-visualization-header": "通过添加可视化开始您的新仪表板",
-      "add-visualization-heading": "",
       "assistant-placeholder": "",
       "auto-grid": "自动网格",
       "auto-grid-description": "调整面板大小以适应并形成统一的网格",
@@ -5770,9 +5770,6 @@
       "custom-grid": "自定义网格",
       "custom-grid-description": "单独放置每个面板并调整大小",
       "description": "添加面板以可视化您的数据",
-      "grid-auto": "",
-      "grid-custom": "",
-      "grid-label": "",
       "import-a-dashboard-body": "从文件或 <2>grafana.com</2> 导入数据面板。",
       "import-a-dashboard-header": "导入仪表板",
       "import-dashboard-button": "导入仪表板",
@@ -6099,8 +6096,7 @@
     "planning-banner": {
       "build": "",
       "dismiss": "",
-      "plan-label": "",
-      "panel-count_other": ""
+      "preview-label": ""
     },
     "public-dashboard-not-available": {
       "does-not-exist": "您尝试访问的数据面板不存在",
@@ -9379,6 +9375,7 @@
     "flag-value": "标志值",
     "menu": "打开菜单",
     "new-flag": "new-flag-override",
+    "ofrep-evaluation": "",
     "save-flag": "保存",
     "title": "功能控制"
   },
@@ -10616,6 +10613,7 @@
       "aria-label-sort-column": "对列 {{columnName}} 排序",
       "expand-row-header": "行展开器",
       "expand-row-tooltip": "切换行展开",
+      "loading": "",
       "tooltip-collapse-all": "折叠所有行",
       "tooltip-expand-all": "展开所有行"
     },
@@ -10710,6 +10708,9 @@
     "password-field": {
       "tooltip-hide": "隐藏密码",
       "tooltip-show": "显示密码"
+    },
+    "query-field": {
+      "loading": ""
     },
     "query-input": {
       "loading": "正在加载编辑器"
@@ -10820,6 +10821,7 @@
         }
       },
       "inspect-drawer-title": "检查值",
+      "loading": "",
       "nested-table": {
         "expander-column-name": "展开嵌套行",
         "no-data": "无数据"
@@ -13593,10 +13595,15 @@
   },
   "playlist-page": {
     "card": {
-      "delete": "删除播放列表",
-      "edit": "编辑播放列表",
-      "start": "启动播放列表",
-      "tooltip": "分享播放列表"
+      "delete": "",
+      "delete-label": "",
+      "edit": "",
+      "edit-label": "",
+      "share": "",
+      "share-label": "",
+      "start": "",
+      "start-label": "",
+      "tooltip": ""
     },
     "create-button": {
       "title": "新建播放列表"
@@ -14731,6 +14738,15 @@
     },
     "repository-status": {
       "error": "加载存储库失败"
+    },
+    "repository-status-alert": {
+      "deletion-title": "",
+      "error-title": "",
+      "force-delete-button": "",
+      "force-delete-cancel": "",
+      "force-delete-confirm": "",
+      "force-delete-title": "",
+      "force-delete-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "回到存储库",
@@ -16396,7 +16412,9 @@
     }
   },
   "swagger": {
-    "login": "登录"
+    "login": "登录",
+    "namespace-unavailable": "",
+    "namespace-unavailable-title": ""
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -17619,6 +17637,7 @@
     },
     "series-to-fields-transformer-editor": {
       "label-field": "字段",
+      "label-keep-unjoined": "",
       "label-mode": "模式",
       "modes": {
         "description": {
@@ -17631,7 +17650,8 @@
           "outer-tabular": "外（表格）",
           "outer-time-series": "外（时间序列）"
         }
-      }
+      },
+      "tooltip-keep-unjoined": ""
     },
     "series-to-rows-transformer-editor": {
       "description": {
