@@ -27,18 +27,23 @@ export function logUnloadableModules<T>(
   getModule: (entry: T) => string | undefined,
   logError: ErrorLogger = logPluginMetaError
 ): void {
+  const unloadable: string[] = [];
   for (const [pluginId, entry] of Object.entries(input)) {
-    const module = getModule(entry);
-    if (isLoadableModule(module)) {
+    if (isLoadableModule(getModule(entry))) {
       continue;
     }
-    logError('PluginMeta: unloadable module path', undefined, {
-      pluginId,
-      pluginType,
-      module: module ?? '',
-      source,
-    });
+    unloadable.push(pluginId);
   }
+  if (unloadable.length === 0) {
+    return;
+  }
+  logError('PluginMeta: unloadable module paths', undefined, {
+    pluginType,
+    source,
+    count: String(unloadable.length),
+    total: String(Object.keys(input).length),
+    pluginIds: unloadable.join(','),
+  });
 }
 
 export function logMetasDisagreementsWithBootData<T, U>(
@@ -49,6 +54,7 @@ export function logMetasDisagreementsWithBootData<T, U>(
   getBootDataModule: (entry: U) => string | undefined,
   logWarning: WarningLogger = logPluginMetaWarning
 ): void {
+  const disagreements: string[] = [];
   for (const [pluginId, entry] of Object.entries(metasInput)) {
     const metasModule = getMetasModule(entry);
     const bootDataEntry = bootDataInput[pluginId];
@@ -56,11 +62,15 @@ export function logMetasDisagreementsWithBootData<T, U>(
     if (hasModuleMetaAgreement(metasModule, bootDataModule)) {
       continue;
     }
-    logWarning('PluginMeta: bootdata/metas module disagreement', {
-      pluginId,
-      pluginType,
-      bootDataModule: bootDataModule ?? '',
-      metasModule: metasModule ?? '',
-    });
+    disagreements.push(pluginId);
   }
+  if (disagreements.length === 0) {
+    return;
+  }
+  logWarning('PluginMeta: bootdata/metas module disagreements', {
+    pluginType,
+    count: String(disagreements.length),
+    total: String(Object.keys(metasInput).length),
+    pluginIds: disagreements.join(','),
+  });
 }

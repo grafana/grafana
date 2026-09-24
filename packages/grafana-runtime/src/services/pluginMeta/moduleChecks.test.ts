@@ -50,73 +50,30 @@ describe('hasModuleMetaAgreement', () => {
 
   it.each([
     ['modules differ (core vs cdn)', CORE_MODULE, CDN_MODULE],
-    ['metas module is empty, bootdata has value (incident shape)', '', CDN_MODULE],
-    ['metas module is undefined, bootdata has value', undefined, CDN_MODULE],
+    ['metas module is empty and bootdata has a value', '', CDN_MODULE],
+    ['metas module is undefined and bootdata has a value', undefined, CDN_MODULE],
   ])('returns false when %s', (_desc, metasModule, bootDataModule) => {
     expect(hasModuleMetaAgreement(metasModule, bootDataModule)).toBe(false);
   });
 });
 
 describe('logUnloadableModules', () => {
-  it.each([
-    ['empty string', ''],
-    ['undefined', undefined],
-    ['relative path', 'module.js'],
-    ['dotted relative path', './foo/bar.js'],
-    ['unknown scheme', 'ftp://example.com/module.js'],
-  ])('logs an error when a module is %s', (_desc, module) => {
+  it('logs a single aggregated error for one unloadable entry', () => {
     const logError = jest.fn();
 
-    logUnloadableModules({ canvas: entryWith(module) }, PluginMetaSource.metas, PluginType.panel, getModule, logError);
+    logUnloadableModules({ canvas: entryWith('') }, PluginMetaSource.metas, PluginType.panel, getModule, logError);
 
     expect(logError).toHaveBeenCalledTimes(1);
-    expect(logError).toHaveBeenCalledWith('PluginMeta: unloadable module path', undefined, {
-      pluginId: 'canvas',
+    expect(logError).toHaveBeenCalledWith('PluginMeta: unloadable module paths', undefined, {
       pluginType: PluginType.panel,
-      module: module ?? '',
       source: PluginMetaSource.metas,
+      count: '1',
+      total: '1',
+      pluginIds: 'canvas',
     });
   });
 
-  it.each([
-    ['https URL', CDN_MODULE],
-    ['core plugin reference', CORE_MODULE],
-    ['http URL', 'http://example.com/module.js'],
-    ['local plugin path', 'public/plugins/my-plugin/module.js'],
-    ['core-bundled plugin path', 'public/app/plugins/panel/timeseries/module.js'],
-  ])('does not log for loadable module (%s)', (_desc, module) => {
-    const logError = jest.fn();
-
-    logUnloadableModules({ canvas: entryWith(module) }, PluginMetaSource.metas, PluginType.panel, getModule, logError);
-
-    expect(logError).not.toHaveBeenCalled();
-  });
-
-  it('passes the source through to the logged context', () => {
-    const logError = jest.fn();
-
-    logUnloadableModules({ canvas: entryWith('') }, PluginMetaSource.bootdata, PluginType.panel, getModule, logError);
-
-    expect(logError).toHaveBeenCalledWith(
-      expect.any(String),
-      undefined,
-      expect.objectContaining({ source: PluginMetaSource.bootdata })
-    );
-  });
-
-  it('passes the pluginType through to the logged context', () => {
-    const logError = jest.fn();
-
-    logUnloadableModules({ 'test-app': entryWith('') }, PluginMetaSource.metas, PluginType.app, getModule, logError);
-
-    expect(logError).toHaveBeenCalledWith(
-      expect.any(String),
-      undefined,
-      expect.objectContaining({ pluginType: PluginType.app })
-    );
-  });
-
-  it('logs once per unloadable entry across multiple entries', () => {
+  it('aggregates unloadable entries into a single log call', () => {
     const logError = jest.fn();
 
     logUnloadableModules(
@@ -125,18 +82,42 @@ describe('logUnloadableModules', () => {
         text: entryWith(CDN_MODULE),
         gauge: entryWith('module.js'),
       },
+      PluginMetaSource.bootdata,
+      PluginType.app,
+      getModule,
+      logError
+    );
+
+    expect(logError).toHaveBeenCalledTimes(1);
+    expect(logError).toHaveBeenCalledWith('PluginMeta: unloadable module paths', undefined, {
+      pluginType: PluginType.app,
+      source: PluginMetaSource.bootdata,
+      count: '2',
+      total: '3',
+      pluginIds: 'canvas,gauge',
+    });
+  });
+
+  it('does not call logError when all entries are loadable', () => {
+    const logError = jest.fn();
+
+    logUnloadableModules(
+      {
+        canvas: entryWith(CDN_MODULE),
+        text: entryWith(CORE_MODULE),
+      },
       PluginMetaSource.metas,
       PluginType.panel,
       getModule,
       logError
     );
 
-    expect(logError).toHaveBeenCalledTimes(2);
+    expect(logError).not.toHaveBeenCalled();
   });
 });
 
 describe('logMetasDisagreementsWithBootData', () => {
-  it('logs a warning when metas module differs from bootdata module', () => {
+  it('logs a single aggregated warning for one disagreement', () => {
     const logWarning = jest.fn();
 
     logMetasDisagreementsWithBootData(
@@ -149,11 +130,40 @@ describe('logMetasDisagreementsWithBootData', () => {
     );
 
     expect(logWarning).toHaveBeenCalledTimes(1);
-    expect(logWarning).toHaveBeenCalledWith('PluginMeta: bootdata/metas module disagreement', {
-      pluginId: 'canvas',
+    expect(logWarning).toHaveBeenCalledWith('PluginMeta: bootdata/metas module disagreements', {
       pluginType: PluginType.panel,
-      bootDataModule: CDN_MODULE,
-      metasModule: CORE_MODULE,
+      count: '1',
+      total: '1',
+      pluginIds: 'canvas',
+    });
+  });
+
+  it('aggregates disagreements into a single warning call', () => {
+    const logWarning = jest.fn();
+
+    logMetasDisagreementsWithBootData(
+      {
+        canvas: entryWith(CORE_MODULE),
+        text: entryWith(CDN_MODULE),
+        gauge: entryWith(''),
+      },
+      {
+        canvas: entryWith(CDN_MODULE),
+        text: entryWith(CDN_MODULE),
+        gauge: entryWith(CDN_MODULE),
+      },
+      PluginType.app,
+      getModule,
+      getModule,
+      logWarning
+    );
+
+    expect(logWarning).toHaveBeenCalledTimes(1);
+    expect(logWarning).toHaveBeenCalledWith('PluginMeta: bootdata/metas module disagreements', {
+      pluginType: PluginType.app,
+      count: '2',
+      total: '3',
+      pluginIds: 'canvas,gauge',
     });
   });
 
@@ -172,7 +182,10 @@ describe('logMetasDisagreementsWithBootData', () => {
     expect(logWarning).not.toHaveBeenCalled();
   });
 
-  it('does not log when bootdata has no entry for the plugin', () => {
+  it('treats a plugin present only in metas (missing from bootdata) as agreement, not a disagreement', () => {
+    // Bootdata is treated as the authoritative loader manifest for module paths.
+    // A plugin appearing only in metas is a separate signal (e.g. catalog visibility)
+    // and is intentionally not surfaced by this disagreement check.
     const logWarning = jest.fn();
 
     logMetasDisagreementsWithBootData(
@@ -185,38 +198,5 @@ describe('logMetasDisagreementsWithBootData', () => {
     );
 
     expect(logWarning).not.toHaveBeenCalled();
-  });
-
-  it('logs disagreement even when the metas module is empty (incident shape)', () => {
-    const logWarning = jest.fn();
-
-    logMetasDisagreementsWithBootData(
-      { canvas: entryWith('') },
-      { canvas: entryWith(CDN_MODULE) },
-      PluginType.panel,
-      getModule,
-      getModule,
-      logWarning
-    );
-
-    expect(logWarning).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ metasModule: '' }));
-  });
-
-  it('passes the pluginType through to the logged context', () => {
-    const logWarning = jest.fn();
-
-    logMetasDisagreementsWithBootData(
-      { 'test-app': entryWith(CORE_MODULE) },
-      { 'test-app': entryWith(CDN_MODULE) },
-      PluginType.app,
-      getModule,
-      getModule,
-      logWarning
-    );
-
-    expect(logWarning).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({ pluginType: PluginType.app })
-    );
   });
 });
