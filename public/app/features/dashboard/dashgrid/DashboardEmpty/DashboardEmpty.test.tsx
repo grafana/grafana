@@ -1,4 +1,4 @@
-import { act, fireEvent, screen } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
 import { locationService, reportInteraction } from '@grafana/runtime';
@@ -199,12 +199,12 @@ describe('new layouts empty state', () => {
     return dashboard;
   }
 
-  it('keeps the layout picker and opens the add pane when assistant dashboard planning is off', () => {
+  it('keeps the layout picker and opens the add pane when assistant dashboard planning is off', async () => {
     const dashboard = setupScene();
 
     expect(screen.getByText('Select layout')).toBeInTheDocument();
     expect(screen.queryByText('Or build it yourself')).not.toBeInTheDocument();
-    expect(dashboard.state.sidebar.state.openPane?.getId()).toBe('add');
+    await waitFor(() => expect(dashboard.state.sidebar.state.openPane?.getId()).toBe('add'));
   });
 
   it('shows a loading indicator and leaves the add pane closed while planning is resolving', () => {

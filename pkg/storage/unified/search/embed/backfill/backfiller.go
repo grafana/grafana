@@ -14,6 +14,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
@@ -28,10 +29,8 @@ import (
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/search/embed/backfill")
 
-const backfillPageSize = 100
+const defaultBackfillPageSize = 50
 
-// dashboardGroup / dashboardResource gate the views filter to dashboard
-// builders; the filter is a no-op for any other resource type.
 const (
 	dashboardGroup    = "dashboard.grafana.app"
 	dashboardResource = "dashboards"
@@ -56,6 +55,8 @@ type Options struct {
 	// Interval is how often Run re-scans for incomplete jobs (jobs are
 	// created lazily by the reconciler's write path). Defaults to 1m.
 	Interval time.Duration
+	// PageSize is the number of non-dashboard resources per page. Defaults to 50.
+	PageSize int
 }
 
 type VectorBackfiller struct {
@@ -68,6 +69,7 @@ type VectorBackfiller struct {
 	log             log.Logger
 	metrics         *resource.VectorMetrics
 	interval        time.Duration
+	pageSize        int
 
 	folderTitleResolver *foldertitle.Resolver
 	folderTitleCache    map[string]string
@@ -102,6 +104,10 @@ func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
 	if interval <= 0 {
 		interval = defaultBackfillInterval
 	}
+	pageSize := opts.PageSize
+	if pageSize <= 0 {
+		pageSize = defaultBackfillPageSize
+	}
 
 	return &VectorBackfiller{
 		storage:             opts.Storage,
@@ -113,6 +119,7 @@ func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
 		log:                 log.New("backfill"),
 		metrics:             opts.Metrics,
 		interval:            interval,
+		pageSize:            pageSize,
 		folderTitleResolver: foldertitle.NewResolver(opts.Storage),
 	}, nil
 }
@@ -325,11 +332,16 @@ func hasBuilderForPartition(builders []collectionBuilder, partitionKey string) b
 	})
 }
 
-// runBackfillPage processes up to backfillPageSize items. Returns the
+// runBackfillPage processes one page of items. Returns the
 // next-page token; empty when the iterator exhausted (no more pages).
 func (b *VectorBackfiller) runBackfillPage(ctx context.Context, job vector.BackfillJob, builder collectionBuilder, pageToken string) (string, error) {
+	pageSize := b.pageSize
+	if builder.Group() == dashboardGroup && builder.Resource() == dashboardResource {
+		// A dashboard already produces a batch of panel texts.
+		pageSize = 1
+	}
 	req := &resourcepb.ListRequest{
-		Limit:           backfillPageSize,
+		Limit:           int64(pageSize),
 		NextPageToken:   pageToken,
 		ResourceVersion: job.StoppingRV,
 		Options: &resourcepb.ListOptions{
@@ -341,12 +353,18 @@ func (b *VectorBackfiller) runBackfillPage(ctx context.Context, job vector.Backf
 		},
 	}
 
-	var (
-		processed  int
-		pendingTok string // continue token from prior processed item; peek not yet confirmed
-		nextToken  string // last confirmed-valid token
-		hasMore    bool   // set when a size+1 Next()==true confirms another page exists
-	)
+	page := make([]*preparedBackfillItem, 0, pageSize)
+	completed := 0
+	defer func() {
+		for _, item := range page[completed:] {
+			// A failure elsewhere leaves pending writes aborted, not failed.
+			if item.err == nil && item.action != backfillSkip {
+				item.status = "aborted"
+			}
+			b.observeBackfillItem(item)
+		}
+	}()
+	var pendingTok, nextToken string
 	_, err := b.storage.ListIterator(ctx, req, func(iter resource.ListIterator) error {
 		for iter.Next() {
 			if iterErr := iter.Error(); iterErr != nil {
@@ -355,35 +373,65 @@ func (b *VectorBackfiller) runBackfillPage(ctx context.Context, job vector.Backf
 			if ctx.Err() != nil {
 				return ctx.Err()
 			}
-			// Another Next()==true confirms the prior item's peek
-			// pointed at a real row. Promote pendingTok and persist it.
+			// ContinueToken peeks at the next row. Confirm that row exists
+			// before saving a token that could be used to resume the job.
 			if pendingTok != "" {
-				encoded := encodeCursor(builder.partitionKey, pendingTok)
-				if cerr := b.vectorBackend.UpdateBackfillJobCheckpoint(ctx, job.ID, encoded, ""); cerr != nil {
-					return fmt.Errorf("checkpoint: %w", cerr)
-				}
-				nextToken = pendingTok
+				page[len(page)-1].nextToken = pendingTok
 				pendingTok = ""
 			}
-			if processed == backfillPageSize {
-				// We took an extra Next()==true past the page; that's
-				// the proof there's another page worth requesting.
-				hasMore = true
+			if len(page) == pageSize {
+				nextToken = page[len(page)-1].nextToken
 				return nil
 			}
-			if err := b.processBackfillItem(ctx, job, builder, iter); err != nil {
+			item, err := b.prepareBackfillItem(ctx, job, builder, iter)
+			page = append(page, item)
+			if err != nil {
+				item.err = err
 				return err
 			}
-			processed++
 			pendingTok = iter.ContinueToken()
 		}
-		return nil
+		return iter.Error()
 	})
 	if err != nil {
 		return "", err
 	}
-	if !hasMore {
-		return "", nil
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
+
+	inputs := make([]embedder.ResourceInput, len(page))
+	for i, item := range page {
+		if item.action == backfillEmbed {
+			inputs[i] = embedder.ResourceInput{Namespace: item.key.Namespace, ResourceVersion: item.rv, Items: item.items}
+		}
+	}
+	vectors, err := b.batchEmbedder.EmbedResources(ctx, builder.partitionKey, builder.Version(), inputs)
+	if err != nil {
+		for _, item := range page {
+			if item.action == backfillEmbed {
+				item.err = err
+			}
+		}
+		return "", err
+	}
+	for i, item := range page {
+		if err := ctx.Err(); err != nil {
+			return "", err
+		}
+		if err := b.writeBackfillItem(job, builder, item, vectors[i]); err != nil {
+			item.err = err
+			return "", err
+		}
+		b.observeBackfillItem(item)
+		completed++
+		// Advance only over completed objects. A later write failure must
+		// leave the failed object and the rest of the page reachable.
+		if item.nextToken != "" {
+			if err := b.vectorBackend.UpdateBackfillJobCheckpoint(ctx, job.ID, encodeCursor(builder.partitionKey, item.nextToken), ""); err != nil {
+				return "", fmt.Errorf("checkpoint: %w", err)
+			}
+		}
 	}
 	return nextToken, nil
 }
@@ -412,18 +460,46 @@ func (b *VectorBackfiller) skipPermanentItem(stage, namespace, group, res, name 
 		"stage", stage, "namespace", namespace, "group", group, "resource", res, "name", name, "err", err)
 }
 
-// processBackfillItem runs the per-resource pipeline: skip if RV>stopping_rv
-// or already embedded, else extract → embed → upsert.
-//
-//nolint:gocyclo
-func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.BackfillJob, builder collectionBuilder, iter resource.ListIterator) (retErr error) {
-	ctx, span := tracer.Start(ctx, "unified.backfill.processBackfillItem")
-	defer span.End()
+type backfillAction int
 
+const (
+	backfillSkip backfillAction = iota
+	backfillEmbed
+	backfillUpdateFolder
+	backfillUpdateVersion
+	backfillDelete
+)
+
+type preparedBackfillItem struct {
+	key          *resourcepb.ResourceKey
+	rv           int64
+	items        []embed.Item
+	folder       string
+	updateFolder bool
+	action       backfillAction
+	nextToken    string
+	status       string
+	err          error
+	ctx          context.Context
+	span         trace.Span
+	start        time.Time
+}
+
+// Preparation only reads storage. Writes wait until the page's provider calls
+// succeed, then commit in scan order so a failed object remains retryable.
+func (b *VectorBackfiller) prepareBackfillItem(ctx context.Context, job vector.BackfillJob, builder collectionBuilder, iter resource.ListIterator) (*preparedBackfillItem, error) {
+	ctx, span := tracer.Start(ctx, "unified.backfill.processBackfillItem")
 	namespace := iter.Namespace()
 	name := iter.Name()
 	group := builder.Group()
 	res := builder.Resource()
+	item := &preparedBackfillItem{
+		key:   &resourcepb.ResourceKey{Group: group, Resource: res, Namespace: namespace, Name: name},
+		rv:    iter.ResourceVersion(),
+		ctx:   ctx,
+		span:  span,
+		start: time.Now(),
+	}
 	span.SetAttributes(
 		attribute.String("group", group),
 		attribute.String("resource", res),
@@ -431,171 +507,165 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		attribute.String("uid", name),
 	)
 
-	start := time.Now()
-	statusLabel := "embedded"
-	defer func() {
-		if retErr != nil {
-			statusLabel = "error"
-			span.RecordError(retErr)
-			span.SetStatus(codes.Error, retErr.Error())
-		}
-		if b.metrics != nil {
-			metricutil.ObserveWithExemplar(ctx,
-				b.metrics.BackfillItemDuration.WithLabelValues(group, res, statusLabel),
-				time.Since(start).Seconds(),
-			)
-		}
-	}()
-
-	rv := iter.ResourceVersion()
 	// Compare in snowflake space so the bound holds whether the item RV and
 	// the stored stopping_rv came from the kv (snowflake) or legacy sql
 	// (microsecond) backend — e.g. after a SQL<->KV backend swap.
-	if resource.ToSnowflakeRV(rv) > resource.ToSnowflakeRV(job.StoppingRV) {
-		statusLabel = "skipped_rv_past_stopping"
-		return nil
+	if resource.ToSnowflakeRV(item.rv) > resource.ToSnowflakeRV(job.StoppingRV) {
+		item.status = "skipped_rv_past_stopping"
+		return item, nil
 	}
 
 	// Same-or-newer stored version: nothing to do.
 	version, exists, err := b.vectorBackend.ContentVersion(ctx, namespace, job.Model, builder.partitionKey, name)
 	if err != nil {
-		return fmt.Errorf("content version check: %w", err)
+		return item, fmt.Errorf("content version check: %w", err)
 	}
 	if exists && version >= builder.Version() {
-		statusLabel = "skipped_already_embedded"
-		return nil
+		item.status = "skipped_already_embedded"
+		return item, nil
 	}
 	// Only version-stale uids get the identical-content check; new uids have nothing to compare.
 	isVersionStale := exists && version < builder.Version()
 
 	if embed.HasPendingDeleteLabel(iter.Value()) {
-		statusLabel = "skipped_pending_delete"
-		return nil
+		item.status = "skipped_pending_delete"
+		return item, nil
 	}
 
 	// Zero views only gates NEW embeds; already-embedded dashboards stay embedded and current.
 	if !exists && b.shouldSkipForZeroViews(ctx, builder, namespace, name) {
-		statusLabel = "skipped_zero_views"
-		return nil
-	}
-
-	key := &resourcepb.ResourceKey{
-		Group:     group,
-		Resource:  res,
-		Namespace: namespace,
-		Name:      name,
+		item.status = "skipped_zero_views"
+		return item, nil
 	}
 
 	// Storage errors fail the job so the next backfill run retries this item, unlike permanent Extract errors.
 	folderTitle, err := b.resolveFolderTitle(ctx, namespace, iter.Value())
 	if err != nil {
-		return fmt.Errorf("resolve folder title %s/%s: %w", namespace, name, err)
+		return item, fmt.Errorf("resolve folder title %s/%s: %w", namespace, name, err)
 	}
 
-	items, err := builder.Extract(ctx, key, iter.Value(), folderTitle)
+	items, err := builder.Extract(ctx, item.key, iter.Value(), folderTitle)
 	if errors.Is(err, embed.ErrSkip) {
 		if exists {
-			// Preserve content without letting a stale scan restore an old authorization folder.
-			if outcome, err := b.checkLiveRV(ctx, key, rv); err != nil {
-				return err
-			} else if outcome.skip {
-				statusLabel = outcome.status
-				return nil
-			}
-			if err := b.vectorBackend.UpdateFolder(ctx, namespace, job.Model, builder.partitionKey, name, embed.FolderUIDFromValue(iter.Value())); err != nil {
-				return fmt.Errorf("update skipped resource folder %s/%s: %w", namespace, name, err)
-			}
+			item.action = backfillUpdateFolder
+			item.folder = embed.FolderUIDFromValue(iter.Value())
 		}
-		statusLabel = "skipped_extract"
-		return nil
+		item.status = "skipped_extract"
+		return item, nil
 	}
 	if err != nil {
 		// Extract is deterministic over stored bytes; failures are permanent.
 		b.skipPermanentItem("extract", namespace, group, res, name, err)
-		statusLabel = "skipped_permanent_error"
-		return nil
+		item.status = "skipped_permanent_error"
+		return item, nil
 	}
 	if resCap := builder.MaxItemsPerResource(); resCap > 0 && len(items) > resCap {
 		items = items[:resCap]
 	}
+	item.items = items
 	if len(items) == 0 {
 		// A version-stale uid whose new extractor output is empty must shed its old rows, like the reconciler's empty-extract path.
 		if isVersionStale {
-			if outcome, err := b.checkLiveRV(ctx, key, rv); err != nil {
-				return err
-			} else if outcome.skip {
-				statusLabel = outcome.status
-				return nil
-			}
-			if _, _, err := b.vectorBackend.DeleteRows(ctx, namespace, job.Model, builder.partitionKey, vector.DeleteSelector{UIDs: []string{name}}); err != nil {
-				return fmt.Errorf("delete empty extract %s/%s: %w", namespace, name, err)
-			}
-			statusLabel = "deleted_empty_extract"
-			return nil
+			item.action = backfillDelete
+			item.status = "deleted_empty_extract"
+			return item, nil
 		}
-		statusLabel = "skipped_empty_extract"
+		item.status = "skipped_empty_extract"
 		// this shouldn't happen that often. If it does, use this to look up the dashboard json and understand why nothing was extracted.
 		b.log.Info("skipping empty extract", "namespace", namespace, "group", group, "resource", res, "name", name)
-		return nil
+		return item, nil
 	}
 
 	if isVersionStale {
 		stored, storedFolder, err := b.vectorBackend.GetSubresourceContent(ctx, namespace, job.Model, builder.partitionKey, name)
 		if err != nil {
-			return fmt.Errorf("get stored content %s/%s: %w", namespace, name, err)
+			return item, fmt.Errorf("get stored content %s/%s: %w", namespace, name, err)
 		}
 		if identicalContent(stored, items) {
-			if storedFolder != items[0].Folder {
-				if outcome, err := b.checkLiveRV(ctx, key, rv); err != nil {
-					return err
-				} else if outcome.skip {
-					statusLabel = outcome.status
-					return nil
-				}
-				// Save the folder before advancing the version so a failed move stays retryable.
-				if err := b.vectorBackend.UpdateFolder(ctx, namespace, job.Model, builder.partitionKey, name, items[0].Folder); err != nil {
-					return fmt.Errorf("update folder %s/%s: %w", namespace, name, err)
-				}
-			}
-			if err := b.vectorBackend.UpdateContentVersion(ctx, namespace, job.Model, builder.partitionKey, name, builder.Version()); err != nil {
-				return fmt.Errorf("update content version %s/%s: %w", namespace, name, err)
-			}
-			statusLabel = "skipped_identical_content"
-			return nil
+			item.action = backfillUpdateVersion
+			item.folder = items[0].Folder
+			item.updateFolder = storedFolder != item.folder
+			item.status = "skipped_identical_content"
+			return item, nil
 		}
 		// Not identical: re-embed everything. Per-panel diffing would strand unchanged rows at the old version and rescan them forever.
 	}
 
-	vectors, err := b.batchEmbedder.Embed(ctx, namespace, builder.partitionKey, rv, builder.Version(), items)
-	if err != nil {
-		return fmt.Errorf("embed %s/%s: %w", namespace, name, err)
-	}
+	item.action = backfillEmbed
+	item.status = "embedded"
+	return item, nil
+}
 
-	// The scanned value may be a minute old (pages process serially) and the
-	// reconciler may have embedded a newer revision meanwhile; re-check the
-	// live RV just before writing so we don't overwrite it with stale content.
-	// Not airtight (the write isn't RV-conditional) but shrinks the race
-	// window from the whole page scan to milliseconds.
-	if outcome, err := b.checkLiveRV(ctx, key, rv); err != nil {
-		return err
-	} else if outcome.skip {
-		statusLabel = outcome.status
-		return nil
+func (b *VectorBackfiller) observeBackfillItem(item *preparedBackfillItem) {
+	defer item.span.End()
+	if item.err != nil {
+		item.status = "error"
+		item.span.RecordError(item.err)
+		item.span.SetStatus(codes.Error, item.err.Error())
 	}
-
-	// Replace-with-desired sheds stored rows for panels the extractor no longer produces.
-	desired := make([]string, 0, len(items))
-	for _, it := range items {
-		desired = append(desired, it.Subresource)
+	if b.metrics != nil {
+		metricutil.ObserveWithExemplar(item.ctx,
+			b.metrics.BackfillItemDuration.WithLabelValues(item.key.Group, item.key.Resource, item.status),
+			time.Since(item.start).Seconds(),
+		)
 	}
+}
 
-	if err := b.vectorBackend.UpsertReplaceSubresources(ctx, namespace, job.Model, builder.partitionKey, name, vectors, nil, desired); err != nil {
-		if isPermanentItemError(err) {
-			b.skipPermanentItem("upsert", namespace, group, res, name, err)
-			statusLabel = "skipped_permanent_error"
+func (b *VectorBackfiller) writeBackfillItem(job vector.BackfillJob, builder collectionBuilder, item *preparedBackfillItem, vectors []vector.Vector) error {
+	ctx := item.ctx
+	namespace, name := item.key.Namespace, item.key.Name
+
+	// The reconciler may have handled a newer revision while this page was
+	// being embedded. If the resource has been modified since, then skip it
+	// for backfilling.
+	if item.action != backfillSkip {
+		if outcome, err := b.checkLiveRV(ctx, item.key, item.rv); err != nil {
+			return err
+		} else if outcome.skip {
+			item.status = outcome.status
 			return nil
 		}
-		return fmt.Errorf("upsert %s/%s: %w", namespace, name, err)
+	}
+
+	switch item.action {
+	case backfillSkip:
+		return nil
+	case backfillUpdateFolder:
+		if err := b.vectorBackend.UpdateFolder(ctx, namespace, job.Model, builder.partitionKey, name, item.folder); err != nil {
+			return fmt.Errorf("update skipped resource folder %s/%s: %w", namespace, name, err)
+		}
+		return nil
+	case backfillUpdateVersion:
+		if item.updateFolder {
+			// Save the folder before advancing the version so a failed move stays retryable.
+			if err := b.vectorBackend.UpdateFolder(ctx, namespace, job.Model, builder.partitionKey, name, item.folder); err != nil {
+				return fmt.Errorf("update folder %s/%s: %w", namespace, name, err)
+			}
+		}
+		if err := b.vectorBackend.UpdateContentVersion(ctx, namespace, job.Model, builder.partitionKey, name, builder.Version()); err != nil {
+			return fmt.Errorf("update content version %s/%s: %w", namespace, name, err)
+		}
+		return nil
+	case backfillDelete:
+		if _, _, err := b.vectorBackend.DeleteRows(ctx, namespace, job.Model, builder.partitionKey, vector.DeleteSelector{UIDs: []string{name}}); err != nil {
+			return fmt.Errorf("delete empty extract %s/%s: %w", namespace, name, err)
+		}
+		return nil
+	case backfillEmbed:
+		// Replace-with-desired sheds stored rows for panels the extractor no longer produces.
+		desired := make([]string, 0, len(item.items))
+		for _, it := range item.items {
+			desired = append(desired, it.Subresource)
+		}
+
+		if err := b.vectorBackend.UpsertReplaceSubresources(ctx, namespace, job.Model, builder.partitionKey, name, vectors, nil, desired); err != nil {
+			if isPermanentItemError(err) {
+				b.skipPermanentItem("upsert", namespace, item.key.Group, item.key.Resource, name, err)
+				item.status = "skipped_permanent_error"
+				return nil
+			}
+			return fmt.Errorf("upsert %s/%s: %w", namespace, name, err)
+		}
 	}
 	return nil
 }

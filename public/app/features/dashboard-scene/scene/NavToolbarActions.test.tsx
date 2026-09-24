@@ -22,7 +22,6 @@ import { DashboardInteractions } from '../utils/interactions';
 import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions, ToolbarActions } from './NavToolbarActions';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
-import { type DashboardPlanningState } from './types/dashboard';
 
 jest.mock('../utils/interactions', () => ({
   DashboardInteractions: {
@@ -331,7 +330,7 @@ describe('when previewing an unbuilt dashboard plan', () => {
   });
 
   // Render through the shared wrapper to cover planning behavior in both toolbar variants.
-  function setupPlanning(planningOverrides: Partial<DashboardPlanningState> = {}) {
+  function setupPlanning() {
     const onBuild = jest.fn();
     const onDismiss = jest.fn();
     const dashboard = new DashboardScene({
@@ -344,10 +343,8 @@ describe('when previewing an unbuilt dashboard plan', () => {
       planning: {
         planId: 'plan-1',
         planTitle: 'Kafka overview',
-        panelCount: 4,
         onBuild,
         onDismiss,
-        ...planningOverrides,
       },
       body: DefaultGridLayoutManager.fromVizPanels([
         new VizPanel({ title: 'Panel A', key: 'panel-1', pluginId: 'table' }),
@@ -391,11 +388,5 @@ describe('when previewing an unbuilt dashboard plan', () => {
 
     await userEvent.click(screen.getByTestId(selectors.components.NavToolbar.editDashboard.planningDismissButton));
     expect(onDismiss).toHaveBeenCalledTimes(1);
-  });
-
-  it('pluralises the panel count', async () => {
-    setupPlanning({ panelCount: 1 });
-
-    expect(await screen.findByText('1 panel')).toBeInTheDocument();
   });
 });

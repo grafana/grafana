@@ -55,9 +55,9 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/group-alert-notifications/
   multi-notification-policies:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/
-    - pattern: /docs/grafana-cloud/## Manage-multiple-notification-policies
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-notification-policy## Manage-multiple-notification-policies
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/#manage-multiple-notification-policy-trees
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-notification-policy/#manage-multiple-notification-policy-trees
 ---
 
 # Notification policies
@@ -80,7 +80,7 @@ Each policy consists of a set of label matchers (0 or more) that specify which a
 
 Use [labels](ref:shared-alert-labels) and label matchers to link alert rules to [notification policies](ref:shared-notification-policies) and [silences](ref:shared-silences). This allows for a flexible way to manage your alert instances, specify which policy should handle them, and which alerts to silence.
 
-A label matchers consists of 3 distinct parts, the **label**, the **value** and the **operator**.
+A label matcher consists of 3 distinct parts, the **label**, the **value** and the **operator**.
 
 - The **Label** field is the name of the label to match. It must exactly match the label name.
 
@@ -99,7 +99,7 @@ A label matchers consists of 3 distinct parts, the **label**, the **value** and 
 If you are using multiple label matchers, they are combined using the AND logical operator. This means that all matchers must match to link a rule to a policy.
 {{< /admonition >}}
 
-By default, Grafana uses a single notification policy tree for all alert routing. There is also the option to set up and configure multiple notification policies with the [multiple policy feature](ref:multi-notification-policies), which allows you to split routing logic into separate, independently managed routing trees.
+By default, Grafana uses a single notification policy tree for all alert routing. You can also create [multiple notification policy trees](ref:multi-notification-policies) to split routing logic into separate, independently managed trees.
 
 **Label matching example**
 
