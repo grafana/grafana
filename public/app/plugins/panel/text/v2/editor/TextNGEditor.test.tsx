@@ -11,6 +11,7 @@ import { CodeLanguage, RenderMode, TextMode } from '../../panelcfg.gen';
 import { FOOTER_TEST_ID } from '../TextNGFooter';
 
 import { PREVIEW_TEST_ID, TextNGEditor, type TextNGEditorChange, type ViewMode } from './TextNGEditor';
+import { FEEDBACK_BUTTON_TEST_ID } from './TextNGFeedbackButton';
 import { FORMAT_TOOLBAR_TEST_ID } from './TextNGFormatToolbar';
 
 beforeAll(() => {
@@ -389,6 +390,25 @@ describe('TextNGEditor', () => {
       await enterWriteMode();
 
       expect(screen.queryByTestId(FORMAT_TOOLBAR_TEST_ID)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('feedback button', () => {
+    // It sits in the toolbar row that holds the view switcher and mode picker,
+    // not in the formatting toolbar, so it survives the views that drop that.
+    it('stays in the toolbar in Preview view, where the formatting toolbar is gone', () => {
+      setup('hello', TextMode.Markdown);
+
+      expect(screen.queryByTestId(FORMAT_TOOLBAR_TEST_ID)).not.toBeInTheDocument();
+      expect(screen.getByTestId(FEEDBACK_BUTTON_TEST_ID)).toBeInTheDocument();
+    });
+
+    it('stays in the toolbar in Code mode, which has no formatting actions', async () => {
+      setup('const a = 1;', TextMode.Code, jest.fn(), false, CodeLanguage.Typescript);
+      await enterWriteMode();
+
+      expect(screen.queryByTestId(FORMAT_TOOLBAR_TEST_ID)).not.toBeInTheDocument();
+      expect(screen.getByTestId(FEEDBACK_BUTTON_TEST_ID)).toBeInTheDocument();
     });
   });
 

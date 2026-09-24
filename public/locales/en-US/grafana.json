@@ -16788,6 +16788,7 @@
     "editor": {
       "aria-label-content": "Text content",
       "aria-label-mode": "Text mode: {{mode}}",
+      "feedback": "Give feedback",
       "footer-line-numbers": "Line numbers",
       "format-bold": "B",
       "format-heading": "H",
