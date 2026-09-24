@@ -4679,8 +4679,8 @@ func TestKVStorageBackendDisableStorageServices(t *testing.T) {
 	})
 }
 
-// ListModifiedSince must release the key cursor before fetching values, even when
-// the SQL pool has only one connection available.
+// Concurrent ListModifiedSince requests must release their key cursors before
+// fetching values, even when the SQL pool has only one connection available.
 func TestListModifiedSinceSingleConnection(t *testing.T) {
 	for _, age := range []time.Duration{time.Minute, 2 * time.Hour} {
 		t.Run(age.String(), func(t *testing.T) {
@@ -4706,15 +4706,36 @@ func TestListModifiedSinceSingleConnection(t *testing.T) {
 
 			ctx, cancel := context.WithTimeout(t.Context(), 3*time.Second)
 			defer cancel()
-			rv, results := backend.ListModifiedSince(ctx, appsNamespace, since, nil)
-			require.Equal(t, since+count, rv)
-			actual := make(map[string]string, count)
-			for result, err := range results {
-				require.NoError(t, err)
-				require.NotContains(t, actual, result.Key.Name)
-				actual[result.Key.Name] = string(result.Value)
+			var requests [2]struct {
+				rv        int64
+				resources []*ModifiedResource
+				err       error
 			}
-			require.Equal(t, expected, actual)
+			var wg sync.WaitGroup
+			for i := range requests {
+				wg.Go(func() {
+					rv, results := backend.ListModifiedSince(ctx, appsNamespace, since, nil)
+					requests[i].rv = rv
+					for result, err := range results {
+						if err != nil {
+							requests[i].err = err
+							return
+						}
+						requests[i].resources = append(requests[i].resources, result)
+					}
+				})
+			}
+			wg.Wait()
+			for i, request := range requests {
+				require.NoError(t, request.err, "age %s, request %d", age, i)
+				require.Equal(t, since+count, request.rv)
+				actual := make(map[string]string, count)
+				for _, result := range request.resources {
+					require.NotContains(t, actual, result.Key.Name)
+					actual[result.Key.Name] = string(result.Value)
+				}
+				require.Equal(t, expected, actual)
+			}
 			require.Zero(t, pool.Stats().InUse)
 			require.NoError(t, pool.PingContext(ctx))
 		})
