@@ -538,7 +538,7 @@ func (dr *DashboardServiceImpl) GetDashboardsByLibraryPanelUID(ctx context.Conte
 
 func (dr *DashboardServiceImpl) CountDashboardsInOrg(ctx context.Context, orgID int64) (int64, error) {
 	resp, err := dr.k8sclient.GetStats(ctx, orgID)
-	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+	if err := resource.ErrorFromResponse(resp.GetError(), err); err != nil {
 		return 0, err
 	}
 
@@ -1670,7 +1670,7 @@ func (dr *DashboardServiceImpl) GetDashboardTags(ctx context.Context, query *das
 		Limit:        100000,
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
-	if err := resource.StatusErrorFromResponse(res.GetError(), err); err != nil {
+	if err := resource.ErrorFromResponse(res.GetError(), err); err != nil {
 		return nil, err
 	}
 	facet, ok := res.Facet["tags"]
@@ -2146,7 +2146,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	}
 
 	res, err := dr.k8sclient.Search(ctx, query.OrgId, request)
-	if err := resource.StatusErrorFromResponse(res.GetError(), err); err != nil {
+	if err := resource.ErrorFromResponse(res.GetError(), err); err != nil {
 		return dashboardv0.SearchResults{}, err
 	}
 

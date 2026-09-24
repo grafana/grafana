@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -189,8 +190,8 @@ func TestParseResults(t *testing.T) {
 
 		_, err := ParseResults(resSearchResp, 0)
 		require.Error(t, err)
-		// The 503 status must survive so retry classification can detect it.
 		require.True(t, apierrors.IsServiceUnavailable(err))
+		require.Equal(t, responsewriters.ErrorToAPIStatus(resource.GetError(resSearchResp.Error)), responsewriters.ErrorToAPIStatus(err))
 	})
 }
 
@@ -220,74 +221,43 @@ func makeResponse(names []string, totalHits int64) *resourcepb.ResourceSearchRes
 	}
 }
 
-func TestSearchAll_EmbeddedErrorOnFirstPage(t *testing.T) {
-	failure := dashboardSearchRateLimitResult()
-	calls := 0
-	searchFn := func(_ context.Context, _ int64, _ *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
-		calls++
-		return &resourcepb.ResourceSearchResponse{Error: failure}, nil
-	}
-	request := &resourcepb.ResourceSearchRequest{Limit: 1}
+func TestSearchAll_Errors(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		resp *resourcepb.ResourceSearchResponse
+		err  error
+	}{
+		{name: "embedded", resp: &resourcepb.ResourceSearchResponse{Error: dashboardSearchRateLimitResult()}},
+		{name: "grpc", err: wrappedDashboardSearchRateLimitGRPCError(t)},
+		{name: "canceled", err: context.Canceled},
+		{name: "wrapped canceled", err: fmt.Errorf("search: %w", context.Canceled)},
+		{name: "deadline exceeded", err: context.DeadlineExceeded},
+		{name: "other transport error", err: fmt.Errorf("connection refused")},
+	} {
+		for _, errorPage := range []int{1, 2} {
+			t.Run(fmt.Sprintf("%s/page %d", tc.name, errorPage), func(t *testing.T) {
+				calls := 0
+				searchFn := func(_ context.Context, _ int64, _ *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+					calls++
+					if calls < errorPage {
+						return makeResponse([]string{"dashboard-1"}, 2), nil
+					}
+					return tc.resp, tc.err
+				}
+				request := &resourcepb.ResourceSearchRequest{Limit: 1}
 
-	results, err := SearchAll(context.Background(), 1, request, searchFn)
+				results, err := SearchAll(context.Background(), 1, request, searchFn)
 
-	requireDashboardSearchRateLimitStatus(t, err)
-	require.Empty(t, results.Hits)
-	require.Equal(t, 1, calls)
-}
-
-func TestSearchAll_GRPCErrorOnFirstPage(t *testing.T) {
-	failure := wrappedDashboardSearchRateLimitGRPCError(t)
-	calls := 0
-	searchFn := func(_ context.Context, _ int64, _ *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
-		calls++
-		return nil, failure
-	}
-	request := &resourcepb.ResourceSearchRequest{Limit: 1}
-
-	results, err := SearchAll(context.Background(), 1, request, searchFn)
-
-	requireDashboardSearchRateLimitStatus(t, err)
-	require.Empty(t, results.Hits)
-	require.Equal(t, 1, calls)
-}
-
-func TestSearchAll_EmbeddedErrorOnSecondPage(t *testing.T) {
-	failure := dashboardSearchRateLimitResult()
-	calls := 0
-	searchFn := func(_ context.Context, _ int64, _ *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
-		calls++
-		if calls == 1 {
-			return makeResponse([]string{"dashboard-1"}, 2), nil
+				if tc.err != nil {
+					require.ErrorIs(t, err, tc.err, "transport errors must retain their original chain and gRPC status")
+				} else {
+					requireDashboardSearchRateLimitStatus(t, err)
+				}
+				require.Empty(t, results.Hits, "partial results must not be returned as a complete result")
+				require.Equal(t, errorPage, calls)
+			})
 		}
-		return &resourcepb.ResourceSearchResponse{Error: failure}, nil
 	}
-	request := &resourcepb.ResourceSearchRequest{Limit: 1}
-
-	results, err := SearchAll(context.Background(), 1, request, searchFn)
-
-	requireDashboardSearchRateLimitStatus(t, err)
-	require.Empty(t, results.Hits, "the first page must not be returned as a complete result")
-	require.Equal(t, 2, calls)
-}
-
-func TestSearchAll_GRPCErrorOnSecondPage(t *testing.T) {
-	failure := wrappedDashboardSearchRateLimitGRPCError(t)
-	calls := 0
-	searchFn := func(_ context.Context, _ int64, _ *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
-		calls++
-		if calls == 1 {
-			return makeResponse([]string{"dashboard-1"}, 2), nil
-		}
-		return nil, failure
-	}
-	request := &resourcepb.ResourceSearchRequest{Limit: 1}
-
-	results, err := SearchAll(context.Background(), 1, request, searchFn)
-
-	requireDashboardSearchRateLimitStatus(t, err)
-	require.Empty(t, results.Hits, "the first page must not be returned as a complete result")
-	require.Equal(t, 2, calls)
 }
 
 func dashboardSearchRateLimitResult() *resourcepb.ErrorResult {

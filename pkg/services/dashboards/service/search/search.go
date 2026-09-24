@@ -87,7 +87,7 @@ func SearchAll(ctx context.Context, orgID int64, request *resourcepb.ResourceSea
 	request.Offset = int64(0)
 
 	res, err := searchFn(ctx, orgID, request)
-	if err := resource.StatusErrorFromResponse(res.GetError(), err); err != nil {
+	if err := resource.ErrorFromResponse(res.GetError(), err); err != nil {
 		return v0alpha1.SearchResults{}, err
 	}
 	results, err := ParseResults(res, 0)
@@ -99,7 +99,7 @@ func SearchAll(ctx context.Context, orgID int64, request *resourcepb.ResourceSea
 	request.Page++
 	for request.Offset < res.TotalHits {
 		res, err = searchFn(ctx, orgID, request)
-		if err := resource.StatusErrorFromResponse(res.GetError(), err); err != nil {
+		if err := resource.ErrorFromResponse(res.GetError(), err); err != nil {
 			return v0alpha1.SearchResults{}, err
 		}
 
@@ -124,9 +124,9 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 	if result == nil {
 		return v0alpha1.SearchResults{}, nil
 	} else if result.Error != nil {
-		// Wrap via GetError so the status code/reason survives, letting callers
-		// classify transient search failures (e.g. 429/503) as retryable.
-		return v0alpha1.SearchResults{}, fmt.Errorf("error searching: %w", resource.GetError(result.Error))
+		// Return the status error directly because Kubernetes response writers
+		// do not unwrap errors when determining the HTTP status.
+		return v0alpha1.SearchResults{}, resource.GetError(result.Error)
 	}
 
 	switch result.ResultFormat {
