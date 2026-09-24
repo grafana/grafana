@@ -19,27 +19,25 @@ interface Props extends ShareModalTabProps {}
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.SnapshotScene;
 
-const getExpireOptions = (): Array<SelectableValue<number>> => [
-  {
-    label: t('share-modal.snapshot.expire-hour', `1 Hour`),
-    value: 60 * 60,
-  },
-  {
-    label: t('share-modal.snapshot.expire-day', `1 Day`),
-    value: 60 * 60 * 24,
-  },
-  {
-    label: t('share-modal.snapshot.expire-week', `1 Week`),
-    value: 60 * 60 * 24 * 7,
-  },
-  {
-    label: t('share-modal.snapshot.expire-never', `Never`),
-    value: 0,
-  },
-];
-
 export const ShareSnapshot = memo(({ dashboard, panel, onDismiss }: Props) => {
-  const expireOptions = getExpireOptions();
+  const expireOptions: Array<SelectableValue<number>> = [
+    {
+      label: t('share-modal.snapshot.expire-hour', `1 Hour`),
+      value: 60 * 60,
+    },
+    {
+      label: t('share-modal.snapshot.expire-day', `1 Day`),
+      value: 60 * 60 * 24,
+    },
+    {
+      label: t('share-modal.snapshot.expire-week', `1 Week`),
+      value: 60 * 60 * 24 * 7,
+    },
+    {
+      label: t('share-modal.snapshot.expire-never', `Never`),
+      value: 0,
+    },
+  ];
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1);
   const [selectedExpireOption, setSelectedExpireOption] = useState(expireOptions[2]);
