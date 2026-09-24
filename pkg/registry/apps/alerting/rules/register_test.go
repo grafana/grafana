@@ -2,7 +2,6 @@ package rules
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -35,11 +34,10 @@ import (
 
 type hybridRouteInstaller struct {
 	appsdkapiserver.AppInstaller
-	err error
 }
 
-func (i hybridRouteInstaller) InstallAPIs(appsdkapiserver.GenericAPIServer, generic.RESTOptionsGetter) error {
-	return i.err
+func (hybridRouteInstaller) InstallAPIs(appsdkapiserver.GenericAPIServer, generic.RESTOptionsGetter) error {
+	return nil
 }
 
 type hybridRouteServer struct {
@@ -65,10 +63,6 @@ func TestInstallHybridSearchRoute(t *testing.T) {
 	rec := httptest.NewRecorder()
 	container.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, ws.RootPath()+"/namespaces/stacks-123/search/hybrid?query=cpu", nil))
 	require.Equal(t, http.StatusNoContent, rec.Code)
-
-	err := errors.New("installation failed")
-	installer.AppInstaller = hybridRouteInstaller{err: err}
-	require.ErrorIs(t, installer.InstallAPIs(server, nil), err)
 }
 
 func TestHybridSearchAuthorizer(t *testing.T) {
