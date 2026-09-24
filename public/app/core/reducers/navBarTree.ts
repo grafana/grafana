@@ -3,6 +3,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { type IconName, type NavModelItem } from '@grafana/data';
 
 import { getInitialNavTree } from '../navtree/buildStaticNavTree';
+import { NavID } from '../navtree/constants';
 import { pluginNavLoaded } from '../navtree/state';
 import { getNavSubTitle, getNavTitle } from '../utils/navBarItem-translations';
 
@@ -36,6 +37,17 @@ const collator = new Intl.Collator();
 // Shared so setStarred (optimistic), setStarredItems (sync), and updateDashboardName (rename) never diverge and reorder the nav.
 const compareStarredChildren = (a: NavModelItem, b: NavModelItem): number =>
   (a.sortWeight ?? 0) - (b.sortWeight ?? 0) || collator.compare(a.text, b.text);
+
+// Apps in "More apps" all carry the same plugin sort weight, so the merge leaves
+// them in whatever order the metas API returned. Order them by the text the user
+// actually reads, which translateNav has just resolved — sorting earlier, in the
+// merge, would sort the untranslated names instead.
+const sortMoreApps = (tree: NavModelItem[]): NavModelItem[] =>
+  tree.map((node) =>
+    node.id === NavID.apps && node.children
+      ? { ...node, children: [...node.children].sort((a, b) => collator.compare(a.text, b.text)) }
+      : node
+  );
 
 const navTreeSlice = createSlice({
   name: 'navBarTree',
@@ -147,7 +159,7 @@ const navTreeSlice = createSlice({
   extraReducers: (builder) => {
     // Replace rather than merge: the payload is already a complete tree built
     // from scratch, so anything kept from the old state would be a duplicate.
-    builder.addCase(pluginNavLoaded, (_, action) => translateNav(action.payload.tree));
+    builder.addCase(pluginNavLoaded, (_, action) => sortMoreApps(translateNav(action.payload.tree)));
   },
 });
 

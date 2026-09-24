@@ -237,6 +237,63 @@ describe('navBarTree reducer', () => {
       expect(next.map((n) => n.id)).toEqual(['home', 'starred', 'apps']);
     });
 
+    it('orders the More apps children alphabetically', () => {
+      const merged: NavModelItem[] = [
+        {
+          id: 'apps',
+          text: 'More apps',
+          children: [
+            { id: 'plugin-page-c-app', text: 'Charlie' },
+            { id: 'plugin-page-a-app', text: 'Alpha' },
+            { id: 'plugin-page-b-app', text: 'Bravo' },
+          ],
+        },
+      ];
+
+      const next = navTreeReducer(buildState(), pluginNavLoaded({ tree: merged }));
+
+      const apps = next.find((n) => n.id === 'apps');
+      expect(apps?.children?.map((c) => c.text)).toEqual(['Alpha', 'Bravo', 'Charlie']);
+    });
+
+    // The point of sorting in the reducer rather than in the merge: these two ids
+    // are translated by nav id, and the translated order is the reverse of the raw one
+    it('orders on the translated text, not the text the merge produced', () => {
+      const merged: NavModelItem[] = [
+        {
+          id: 'apps',
+          text: 'More apps',
+          children: [
+            { id: 'plugin-page-grafana-k8s-app', text: 'zzz raw name' },
+            { id: 'plugin-page-grafana-slo-app', text: 'aaa raw name' },
+          ],
+        },
+      ];
+
+      const next = navTreeReducer(buildState(), pluginNavLoaded({ tree: merged }));
+
+      const apps = next.find((n) => n.id === 'apps');
+      expect(apps?.children?.map((c) => c.text)).toEqual(['Kubernetes', 'SLO']);
+    });
+
+    it('leaves other sections in the order the merge produced', () => {
+      const merged: NavModelItem[] = [
+        {
+          id: 'observability',
+          text: 'Observability',
+          children: [
+            { id: 'plugin-page-z-app', text: 'Zulu', sortWeight: 1 },
+            { id: 'plugin-page-a-app', text: 'Alpha', sortWeight: 2 },
+          ],
+        },
+      ];
+
+      const next = navTreeReducer(buildState(), pluginNavLoaded({ tree: merged }));
+
+      const section = next.find((n) => n.id === 'observability');
+      expect(section?.children?.map((c) => c.text)).toEqual(['Zulu', 'Alpha']);
+    });
+
     it('is idempotent when the same payload is dispatched twice (refetch)', () => {
       const merged: NavModelItem[] = [{ id: 'home', text: 'Home', url: '/' }];
       const once = navTreeReducer(buildState(), pluginNavLoaded({ tree: merged }));

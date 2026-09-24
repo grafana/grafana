@@ -558,7 +558,8 @@ describe('getInitialNavTree', () => {
   });
 
   it('returns the bootdata tree when the client build is off', () => {
-    setup({ config: { bootData: { navTree: [{ id: 'server-built', text: 'Server built' }] } } });
+    setup();
+    config.bootData = { ...config.bootData, navTree: [{ id: 'server-built', text: 'Server built' }] };
 
     expect(ids(getInitialNavTree())).toEqual(['server-built']);
   });
