@@ -8,6 +8,7 @@
   "name": "with-last-seen-at-and-role",
   "rv": 1234,
   "_rv": "1234",
+  "groupResource": "iam.grafana.app/users",
   "title": "with-last-seen-at-and-role",
   "title_ngram": "with-last-seen-at-and-role",
   "title_phrase": "with-last-seen-at-and-role",

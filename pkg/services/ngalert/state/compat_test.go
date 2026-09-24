@@ -397,6 +397,7 @@ func randomTransition(from, to eval.State) StateTransition {
 }
 
 func TestAlertInstanceToState(t *testing.T) {
+	nextAttemptAt := time.Now().Add(2 * time.Minute)
 	instance := ngModels.AlertInstanceGen(
 		ngModels.InstanceMuts.WithState(ngModels.InstanceStateFiring),
 		ngModels.InstanceMuts.WithResultFingerprint("deadbeef"),
@@ -405,6 +406,7 @@ func TestAlertInstanceToState(t *testing.T) {
 			Values:    map[string]float64{"A": 1.5},
 			Condition: "A",
 		}),
+		ngModels.InstanceMuts.WithImageCaptureBackoff(&nextAttemptAt, 3),
 	)
 
 	state := AlertInstanceToState(instance, log.NewNopLogger())
@@ -433,8 +435,27 @@ func TestAlertInstanceToState(t *testing.T) {
 			Values:          instance.LastResult.Values,
 			Condition:       instance.LastResult.Condition,
 		},
+		// A restart or ownership handoff reconstructs State from exactly this persisted
+		// AlertInstance -- these must survive that round trip or the timeout backoff resets
+		// to zero every time, which is the bug this pairing guards against.
+		ImageCaptureNextAttemptAt:       nextAttemptAt,
+		ImageCaptureConsecutiveTimeouts: 3,
 	}
 
 	require.Empty(t, cmp.Diff(expected, state, cmpopts.IgnoreFields(State{}, "Error")))
 	require.EqualError(t, state.Error, "some error")
+}
+
+func TestAlertInstanceToState_NoImageCaptureBackoff(t *testing.T) {
+	// A row written before this field existed, or one that has never entered backoff, has a
+	// nil ImageCaptureNextAttemptAt -- must map to State's own zero-means-no-backoff, not a
+	// nil-pointer dereference.
+	instance := ngModels.AlertInstanceGen(
+		ngModels.InstanceMuts.WithImageCaptureBackoff(nil, 0),
+	)
+
+	state := AlertInstanceToState(instance, log.NewNopLogger())
+
+	require.True(t, state.ImageCaptureNextAttemptAt.IsZero())
+	require.Equal(t, 0, state.ImageCaptureConsecutiveTimeouts)
 }

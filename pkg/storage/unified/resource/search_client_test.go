@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -19,11 +20,12 @@ import (
 // fakeDualWriter is a hand-written fake for the DualWriter interface.
 type fakeDualWriter struct {
 	readFromUnified bool
+	readErr         error
 	status          dualwrite.StorageStatus
 }
 
 func (f *fakeDualWriter) ReadFromUnified(_ context.Context, _ schema.GroupResource) (bool, error) {
-	return f.readFromUnified, nil
+	return f.readFromUnified, f.readErr
 }
 
 func (f *fakeDualWriter) Status(_ context.Context, _ schema.GroupResource) (dualwrite.StorageStatus, error) {
@@ -114,13 +116,9 @@ func setupTestSearchClient(t *testing.T) (schema.GroupResource, *fakeResourceInd
 
 func setupTestSearchWrapper(t *testing.T, dual *fakeDualWriter, unifiedClient, legacyClient *fakeResourceIndexClient, gr schema.GroupResource) *searchWrapper {
 	t.Helper()
-	return &searchWrapper{
-		dual:          dual,
-		groupResource: gr,
-		unifiedClient: unifiedClient,
-		legacyClient:  legacyClient,
-		logger:        log.NewNopLogger(),
-	}
+	wrapper := NewSearchClient(dual, gr, unifiedClient, legacyClient).(*searchWrapper)
+	wrapper.logger = log.NewNopLogger()
+	return wrapper
 }
 
 func TestSearchClient_NewSearchClient(t *testing.T) {
@@ -199,6 +197,65 @@ func TestSearchWrapper_Search(t *testing.T) {
 		// Do not expect background call to unified client
 		assert.Empty(t, unifiedClient.searchCalled, "unified Search should not have been called")
 	})
+}
+
+func TestSearchWrapper_SearchModeChanges(t *testing.T) {
+	gr, unifiedClient, legacyClient := setupTestSearchClient(t)
+	dual := &fakeDualWriter{}
+	wrapper := NewSearchClient(dual, gr, unifiedClient, legacyClient)
+	legacyClient.searchResponse = &resourcepb.ResourceSearchResponse{TotalHits: 1}
+	unifiedClient.searchResponse = &resourcepb.ResourceSearchResponse{TotalHits: 2}
+
+	for _, unified := range []bool{false, true, false} {
+		dual.readFromUnified = unified
+		selected, other := legacyClient, unifiedClient
+		if unified {
+			selected, other = unifiedClient, legacyClient
+		}
+
+		resp, err := wrapper.Search(t.Context(), &resourcepb.ResourceSearchRequest{})
+
+		require.NoError(t, err)
+		require.Same(t, selected.searchResponse, resp)
+		require.Len(t, selected.searchCalled, 1)
+		require.Empty(t, other.searchCalled)
+		<-selected.searchCalled
+	}
+}
+
+func TestSearchWrapper_SearchModeError(t *testing.T) {
+	gr, unifiedClient, legacyClient := setupTestSearchClient(t)
+	wantErr := errors.New("mode unavailable")
+	dual := &fakeDualWriter{readErr: wantErr}
+	wrapper := NewSearchClient(dual, gr, unifiedClient, legacyClient)
+
+	resp, err := wrapper.Search(t.Context(), &resourcepb.ResourceSearchRequest{})
+
+	require.ErrorIs(t, err, wantErr)
+	require.Nil(t, resp)
+	require.Empty(t, legacyClient.searchCalled)
+	require.Empty(t, unifiedClient.searchCalled)
+}
+
+func TestSearchWrapper_SearchDoesNotFallback(t *testing.T) {
+	for _, unified := range []bool{false, true} {
+		gr, unifiedClient, legacyClient := setupTestSearchClient(t)
+		dual := &fakeDualWriter{readFromUnified: unified}
+		wrapper := NewSearchClient(dual, gr, unifiedClient, legacyClient)
+		selected, other := legacyClient, unifiedClient
+		if unified {
+			selected, other = unifiedClient, legacyClient
+		}
+		wantErr := errors.New("search failed")
+		selected.searchErr = wantErr
+
+		resp, err := wrapper.Search(t.Context(), &resourcepb.ResourceSearchRequest{})
+
+		require.ErrorIs(t, err, wantErr)
+		require.Nil(t, resp)
+		require.Len(t, selected.searchCalled, 1)
+		require.Empty(t, other.searchCalled)
+	}
 }
 
 func TestSearchWrapper_GetStats(t *testing.T) {

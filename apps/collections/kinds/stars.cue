@@ -5,6 +5,11 @@ starsV1alpha1: {
 	pluralName: "Stars"
 	scope:      "Namespaced"
 
+	// Normal list reads are restricted to the caller's own stars.
+	search: {
+		endpoint: false
+	}
+
 	validation: {
 		operations: [
 			"CREATE",

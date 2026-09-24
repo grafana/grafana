@@ -6,13 +6,16 @@ import { type DataFrame, type Field } from '../../types/dataFrame';
 import { type DataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
+import { applyStaticRefId, getTransformationDynamicRefId } from './utils';
 
 interface ValuePointer {
   key: string;
   index: number;
 }
 
-export interface MergeTransformerOptions {}
+export interface MergeTransformerOptions {
+  refId?: string;
+}
 
 export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
   id: DataTransformerID.merge,
@@ -26,20 +29,20 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
     source.pipe(
       map((dataFrames) => {
         if (!Array.isArray(dataFrames) || dataFrames.length <= 1) {
-          return dataFrames;
+          return applyStaticRefId(dataFrames, options.refId);
         }
 
         const data = dataFrames.filter((frame) => frame.fields.length > 0);
 
         if (data.length === 0) {
-          return [dataFrames[0]];
+          return applyStaticRefId([dataFrames[0]], options.refId);
         }
 
         const fieldNames = new Set<string>();
         const fieldIndexByName: Record<string, Record<number, number>> = {};
         const fieldNamesForKey: string[] = [];
         const dataFrame = new MutableDataFrame({
-          refId: `${DataTransformerID.merge}-${data.map((frame) => frame.refId).join('-')}`,
+          refId: options.refId ?? getTransformationDynamicRefId(DataTransformerID.merge, data),
           fields: [],
         });
 
@@ -117,6 +120,7 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
         return [dataFrame];
       })
     ),
+  usesDynamicRefId: true,
 };
 
 const copyFieldStructure = (field: Field): Field => {

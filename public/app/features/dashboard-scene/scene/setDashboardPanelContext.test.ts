@@ -27,8 +27,8 @@ import { isAnnotationApiAvailable } from '../../annotations/isAnnotationApiAvail
 import { openPanelInspector } from '../inspect/panelInspectorOpener';
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { findVizPanelByKey } from '../utils/findVizPanel';
 import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
-import { findVizPanelByKey } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
@@ -385,7 +385,7 @@ describe('setDashboardPanelContext', () => {
         canDelete: true,
       });
       scene.setState({
-        planning: { planId: 'plan-1', planTitle: 'Plan', panelCount: 1, onBuild: () => {}, onDismiss: () => {} },
+        planning: { planId: 'plan-1', planTitle: 'Plan', onBuild: () => {}, onDismiss: () => {} },
       });
 
       await context.onAnnotationCreate!({ from: 100, to: 200, description: 'save it', tags: [] });
@@ -408,7 +408,7 @@ describe('setDashboardPanelContext', () => {
       );
       const { scene, context } = buildTestScene({ dashboardCanEdit: true });
       scene.setState({
-        planning: { planId: 'plan-1', planTitle: 'Plan', panelCount: 1, onBuild: () => {}, onDismiss: () => {} },
+        planning: { planId: 'plan-1', planTitle: 'Plan', onBuild: () => {}, onDismiss: () => {} },
       });
 
       expect(context.onOpenInspector).toBeDefined();

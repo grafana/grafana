@@ -58,6 +58,78 @@ setPluginImportUtils({
 });
 
 describe('DashboardSidebar', () => {
+  describe('Pending pane requests', () => {
+    let dashboard: DashboardScene;
+    let sidebar: DashboardSidebarLike;
+    let deactivate: () => void;
+
+    beforeEach(() => {
+      dashboard = new DashboardScene({ isEditing: true });
+      sidebar = dashboard.state.sidebar;
+      deactivate = sidebar.activate();
+    });
+
+    afterEach(() => deactivate());
+
+    it('aborts the previous request when a new request starts', () => {
+      const older = sidebar.beginPaneRequest();
+      expect(older.aborted).toBe(false);
+      const newer = sidebar.beginPaneRequest();
+      expect(older.aborted).toBe(true);
+      expect(newer.aborted).toBe(false);
+    });
+
+    it.each(['select', 'open', 'close', 'clear', 'back', 'disable', 'leave edit mode', 'view panel'])(
+      'invalidates a pending request on %s',
+      (navigation) => {
+        const request = sidebar.beginPaneRequest();
+        switch (navigation) {
+          case 'select':
+            sidebar.selectObject(dashboard);
+            break;
+          case 'open':
+            sidebar.openPane(new DashboardOutline({}));
+            break;
+          case 'close':
+            sidebar.closePane();
+            break;
+          case 'clear':
+            sidebar.clearSelection();
+            break;
+          case 'back':
+            sidebar.goBackToPrevious();
+            break;
+          case 'disable':
+            sidebar.disableSelection();
+            break;
+          case 'leave edit mode':
+            dashboard.setState({ isEditing: false });
+            break;
+          case 'view panel':
+            dashboard.setState({ viewPanel: 'panel-1' });
+            break;
+        }
+        expect(request.aborted).toBe(true);
+      }
+    );
+
+    it('does not revive a request after deactivation and reactivation', () => {
+      const request = sidebar.beginPaneRequest();
+      deactivate();
+      deactivate = sidebar.activate();
+      expect(sidebar.isActive).toBe(true);
+      expect(request.aborted).toBe(true);
+    });
+
+    it('preserves requests across unrelated state changes', () => {
+      const request = sidebar.beginPaneRequest();
+      sidebar.setState({ isDocked: true });
+      dashboard.setState({ title: 'Renamed dashboard' });
+
+      expect(request.aborted).toBe(false);
+    });
+  });
+
   describe('Selection', () => {
     it('Can select dashboard', () => {
       const scene = buildTestScene();

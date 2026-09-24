@@ -5764,6 +5764,7 @@
     "edit-actions": {
       "add": "Ajouter {{typeName}}",
       "add-conditional-rule": "Ajouter la règle {{ruleDescription}}",
+      "collapse-all-rows": "",
       "dashboard-description": "Modifiez la description du tableau de bord",
       "dashboard-title": "Modifiez le titre du tableau de bord",
       "duplicate": "Dupliquer {{typeName}}",
@@ -5771,6 +5772,7 @@
       "edit-query-result-rule": "Modifier la règle de résultat de requête",
       "edit-template-variable-rule": "Modifier la règle de variable de modèle",
       "edit-time-range-rule": "Modifier la règle d’intervalle de temps",
+      "expand-all-rows": "",
       "group-into-row": "Grouper par ligne",
       "group-into-tab": "Grouper par onglet",
       "move": "Déplacer {{typeName}}",
@@ -5803,9 +5805,7 @@
       "add-library-panel-header": "Importer un panneau",
       "add-visualization-body": "Sélectionnez une source de données, puis examinez et visualisez vos données avec des graphiques, des statistiques et des tableaux ou créez des listes, des markdowns et d'autres widgets.",
       "add-visualization-button": "Ajouter une visualisation",
-      "add-visualization-description": "",
       "add-visualization-header": "Commencez votre nouveau tableau de bord en ajoutant une visualisation",
-      "add-visualization-heading": "",
       "assistant-placeholder": "",
       "auto-grid": "Grille automatique",
       "auto-grid-description": "Les panneaux se redimensionnent pour s’adapter et former des grilles uniformes",
@@ -5813,9 +5813,6 @@
       "custom-grid": "Grille personnalisée",
       "custom-grid-description": "Positionner et dimensionner chaque panneau individuellement",
       "description": "Ajouter un panneau pour visualiser vos données",
-      "grid-auto": "",
-      "grid-custom": "",
-      "grid-label": "",
       "import-a-dashboard-body": "Importez des tableaux de bord à partir de fichiers ou du site <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importer un tableau de bord",
       "import-dashboard-button": "Importer un tableau de bord",
@@ -6143,9 +6140,7 @@
     "planning-banner": {
       "build": "",
       "dismiss": "",
-      "plan-label": "",
-      "panel-count_one": "",
-      "panel-count_other": ""
+      "preview-label": ""
     },
     "public-dashboard-not-available": {
       "does-not-exist": "Le tableau de bord auquel vous essayez d’accéder n’existe pas",
@@ -9434,6 +9429,7 @@
     "flag-value": "Valeur du flag",
     "menu": "Ouvrir le menu",
     "new-flag": "nouvelle-surcharge-de-flag",
+    "ofrep-evaluation": "",
     "save-flag": "Enregistrer",
     "title": "Contrôle des fonctionnalités"
   },
@@ -10681,6 +10677,7 @@
       "aria-label-sort-column": "Trier la colonne {{columnName}}",
       "expand-row-header": "Développeur de ligne",
       "expand-row-tooltip": "Basculer la ligne développée",
+      "loading": "",
       "tooltip-collapse-all": "Réduire toutes les lignes",
       "tooltip-expand-all": "Développer toutes les lignes"
     },
@@ -10775,6 +10772,9 @@
     "password-field": {
       "tooltip-hide": "Masquer le mot de passe",
       "tooltip-show": "Afficher le mot de passe"
+    },
+    "query-field": {
+      "loading": ""
     },
     "query-input": {
       "loading": "Chargement de l’éditeur"
@@ -10885,6 +10885,7 @@
         }
       },
       "inspect-drawer-title": "Inspecter la valeur",
+      "loading": "",
       "nested-table": {
         "expander-column-name": "Développer les lignes imbriquées",
         "no-data": "Aucune donnée disponible"
@@ -13687,10 +13688,15 @@
   },
   "playlist-page": {
     "card": {
-      "delete": "Supprimer la playlist",
-      "edit": "Modifier la playlist",
-      "start": "Lancer la playlist",
-      "tooltip": "Partager la playlist"
+      "delete": "",
+      "delete-label": "",
+      "edit": "",
+      "edit-label": "",
+      "share": "",
+      "share-label": "",
+      "start": "",
+      "start-label": "",
+      "tooltip": ""
     },
     "create-button": {
       "title": "Nouvelle playlist"
@@ -14843,6 +14849,15 @@
     },
     "repository-status": {
       "error": "Échec du chargement du référentiel"
+    },
+    "repository-status-alert": {
+      "deletion-title": "",
+      "error-title": "",
+      "force-delete-button": "",
+      "force-delete-cancel": "",
+      "force-delete-confirm": "",
+      "force-delete-title": "",
+      "force-delete-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "Retour aux référentiels",
@@ -16520,7 +16535,9 @@
     }
   },
   "swagger": {
-    "login": "Connecter"
+    "login": "Connecter",
+    "namespace-unavailable": "",
+    "namespace-unavailable-title": ""
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -17743,6 +17760,7 @@
     },
     "series-to-fields-transformer-editor": {
       "label-field": "Champ",
+      "label-keep-unjoined": "",
       "label-mode": "Mode",
       "modes": {
         "description": {
@@ -17755,7 +17773,8 @@
           "outer-tabular": "Externe (tabulaire)",
           "outer-time-series": "Externe (séries chronologiques)"
         }
-      }
+      },
+      "tooltip-keep-unjoined": ""
     },
     "series-to-rows-transformer-editor": {
       "description": {

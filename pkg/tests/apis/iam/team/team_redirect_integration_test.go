@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apiserverrest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -462,7 +463,7 @@ func TestIntegrationServiceIdentityFallbackToLegacy(t *testing.T) {
 	})
 
 	env := helper.GetEnv()
-	teamSvc, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(env.SQLStore), env.Cfg, tracing.NewNoopTracerService(), nil)
+	teamSvc, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(env.SQLStore), env.Cfg, tracing.NewNoopTracerService(), nil, iamapi.Features{UsersAPI: true})
 	require.NoError(t, err)
 
 	setTeamK8sFeatureToggle(t, true)

@@ -1,9 +1,10 @@
-import { createTheme } from '@grafana/data';
+import { createTheme, DataTopic, type DataTransformerConfig } from '@grafana/data';
+import { type CustomTransformOperator } from '@grafana/scenes';
 import type { ExpressionQuery } from 'app/features/expressions/schemas/expressionQuery';
 import { makeExpression } from 'app/features/expressions/schemas/factories';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
-import { getExpressionSectionLabel, getHiddenMaskStyles } from './utils';
+import { filterDataTransformerConfigs, getExpressionSectionLabel, getHiddenMaskStyles } from './utils';
 
 describe('getHiddenMaskStyles', () => {
   it('desaturates and applies a stronger dim in dark mode', () => {
@@ -39,5 +40,23 @@ describe('getExpressionSectionLabel', () => {
     const query = { refId: 'A', type: 'custom_thing' } as unknown as ExpressionQuery;
 
     expect(getExpressionSectionLabel(query)).toBe('Custom_thing Expression');
+  });
+});
+
+describe('filterDataTransformerConfigs', () => {
+  it('keeps a transformation config that carries a user-set refId', () => {
+    const named: DataTransformerConfig = { id: 'reduce', refId: 'T-A', options: {} };
+    const unnamed: DataTransformerConfig = { id: 'groupBy', options: {} };
+
+    expect(filterDataTransformerConfigs([named, unnamed])).toEqual([named, unnamed]);
+  });
+
+  it('drops the custom transformer definitions the UI cannot render', () => {
+    const operator: CustomTransformOperator = () => (source) => source;
+    const organize: DataTransformerConfig = { id: 'organize', options: {} };
+
+    expect(filterDataTransformerConfigs([operator, { operator, topic: DataTopic.Annotations }, organize])).toEqual([
+      organize,
+    ]);
   });
 });
