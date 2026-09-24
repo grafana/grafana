@@ -422,7 +422,7 @@
     "redux": "5.0.1",
     "redux-thunk": "3.1.0",
     "regenerator-runtime": "0.14.1",
-    "reselect": "5.1.1",
+    "reselect": "5.3.0",
     "rxjs": "7.8.2",
     "selecto": "1.26.3",
     "semver": "7.7.3",
