@@ -158,7 +158,7 @@ function mergeIterables(iterables: Array<AsyncIterableX<RuleWithOrigin>>): Async
  * Returns all external rules sources if no filter is provided.
  */
 function getRulesSourcesFromFilter(filter: RulesFilter): DataSourceRulesSourceIdentifier[] {
-  const allExternalSources = getExternalRulesSources();
+  const allExternalSources = getExternalRulesSources({ hasUrl: true });
 
   // If no filter is provided, return all external sources
   if (filter.dataSourceNames.length === 0) {

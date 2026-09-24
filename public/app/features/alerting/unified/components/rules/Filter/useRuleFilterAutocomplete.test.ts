@@ -76,9 +76,9 @@ function buildExternalGroups(count: number) {
   }));
 }
 
-function buildExternalDataSource(uid: string) {
+function buildExternalDataSource(uid: string, url = `/api/datasources/proxy/uid/${uid}`) {
   grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
-  return alertingFactory.dataSource.build({ name: uid, uid, jsonData: { manageAlerts: true } });
+  return alertingFactory.dataSource.build({ name: uid, uid, url, jsonData: { manageAlerts: true } });
 }
 
 describe('useNamespaceAndGroupOptions', () => {
@@ -224,6 +224,33 @@ describe('useNamespaceAndGroupOptions', () => {
       expect(options).toEqual([
         { label: 'shared-namespace', value: 'shared-namespace', description: 'Multiple data sources' },
       ]);
+    });
+
+    it('does not request namespaces from data sources with an empty URL', async () => {
+      setGrafanaPromRules([]);
+      const proxyDataSource = buildExternalDataSource('proxy');
+      const emptyDataSource = buildExternalDataSource('empty', '');
+      setPrometheusRules(proxyDataSource, [{ name: 'proxy-group', file: 'proxy-namespace', interval: 60, rules: [] }]);
+
+      let emptyDataSourceRequests = 0;
+      server.use(
+        http.get(`/api/prometheus/${emptyDataSource.uid}/api/v1/rules`, () => {
+          emptyDataSourceRequests++;
+          return HttpResponse.json({
+            status: 'success',
+            data: {
+              groups: [{ name: 'empty-group', file: 'empty-namespace', interval: 60, rules: [] }],
+            },
+          });
+        })
+      );
+
+      const { result } = renderHook(() => useNamespaceAndGroupOptions(), { wrapper });
+
+      const options = await resolveOptions(() => result.current.namespaceOptions(''));
+
+      expect(emptyDataSourceRequests).toBe(0);
+      expect(options).toEqual([{ label: 'proxy-namespace', value: 'proxy-namespace', description: 'proxy' }]);
     });
 
     it('truncates a long data source name in the description', async () => {

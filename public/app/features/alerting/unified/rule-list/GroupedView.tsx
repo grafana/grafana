@@ -5,7 +5,7 @@ import { Stack } from '@grafana/ui';
 import { type DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting';
 
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
-import { GrafanaRulesSource, getExternalRulesSources } from '../utils/datasource';
+import { GrafanaRulesSource, getExternalRulesSources, getRulesDataSourceByUID } from '../utils/datasource';
 
 import { PaginatedDataSourceLoader } from './PaginatedDataSourceLoader';
 import { PaginatedGrafanaLoader } from './PaginatedGrafanaLoader';
@@ -61,7 +61,21 @@ interface DataSourceLoaderProps {
   onLoadingStateChange?: (uid: string, state: DataSourceLoadState) => void;
 }
 
-function DataSourceLoader({
+function DataSourceLoader(props: DataSourceLoaderProps) {
+  const { uid, name } = props.rulesSourceIdentifier;
+  const dataSource = getRulesDataSourceByUID(uid);
+
+  if (!dataSource?.url) {
+    if (props.groupFilter || props.namespaceFilter) {
+      return null;
+    }
+    return <DataSourceSection error={new Error('The data source url cannot be empty.')} uid={uid} name={name} />;
+  }
+
+  return <ConfiguredDataSourceLoader {...props} />;
+}
+
+function ConfiguredDataSourceLoader({
   rulesSourceIdentifier,
   groupFilter,
   namespaceFilter,

@@ -66,6 +66,22 @@ describe('useRulesSourcesWithRuler — baseline (current behaviour)', () => {
     expect(result.current.rulesSourcesWithRuler[0].uid).toBe('mimir-1');
   });
 
+  it('does not discover features for data sources with an empty URL', async () => {
+    const dataSource = makeMimirDatasource('missing-url', 'Missing URL');
+    setupDataSources({ ...dataSource, url: '' });
+    const discoverFeatures = jest.spyOn(buildInfoModule, 'discoverFeaturesByUid');
+
+    const { result } = renderHook(() => useRulesSourcesWithRuler(), {
+      wrapper: getProviderWrapper(),
+    });
+
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.rulesSourcesWithRuler).toEqual([]);
+    expect(discoverFeatures).not.toHaveBeenCalled();
+
+    discoverFeatures.mockRestore();
+  });
+
   it('excludes datasources whose buildinfo indicates no ruler support (vanilla Prometheus)', async () => {
     setupDataSources(makeMimirDatasource('prom-1', 'Prometheus 1'));
 

@@ -1,9 +1,12 @@
 import { config } from '@grafana/runtime';
+import { AccessControlAction } from 'app/types/accessControl';
 
-import { mockDataSource } from '../mocks';
+import { grantUserPermissions, mockDataSource } from '../mocks';
+import { setupDataSources } from '../testSetup/datasources';
 
 import {
   SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES,
+  getRulesDataSources,
   isDataSourceManagingAlerts,
   isValidRecordingRulesTarget,
 } from './datasource';
@@ -57,6 +60,23 @@ describe('isDataSourceManagingAlerts', () => {
         )
       ).toBe(false);
     });
+  });
+});
+
+describe('getRulesDataSources', () => {
+  afterEach(() => {
+    grantUserPermissions([]);
+    setupDataSources();
+  });
+
+  it('optionally limits results to data sources with a URL', () => {
+    grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
+    const configured = mockDataSource({ name: 'configured', jsonData: { manageAlerts: true } });
+    const missingUrl = mockDataSource({ name: 'missing-url', url: '', jsonData: { manageAlerts: true } });
+    setupDataSources(configured, missingUrl);
+
+    expect(getRulesDataSources()).toEqual([configured, missingUrl]);
+    expect(getRulesDataSources({ hasUrl: true })).toEqual([configured]);
   });
 });
 
