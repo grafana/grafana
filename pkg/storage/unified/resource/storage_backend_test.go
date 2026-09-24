@@ -4678,3 +4678,45 @@ func TestKVStorageBackendDisableStorageServices(t *testing.T) {
 		require.IsType(t, &NoopPruner{}, backend.historyPruner)
 	})
 }
+
+// ListModifiedSince must release the key cursor before fetching values, even when
+// the SQL pool has only one connection available.
+func TestListModifiedSinceSingleConnection(t *testing.T) {
+	for _, age := range []time.Duration{time.Minute, 2 * time.Hour} {
+		t.Run(age.String(), func(t *testing.T) {
+			store, pool := setupSqlKVWithDB(t)
+			backend := &kvStorageBackend{
+				dataStore:  newDataStore(store, nil),
+				eventStore: newEventStore(store),
+				log:        log.NewNopLogger(),
+			}
+			since := snowflakeFromTime(time.Now().Add(-age))
+			// Cross a page boundary to exercise continuation in both scan directions.
+			const count = keyPageSize + 1
+			expected := make(map[string]string, count)
+			for i := range count {
+				key := DataKey{Namespace: "default", Group: "apps", Resource: "resource", Name: fmt.Sprintf("item-%03d", i), ResourceVersion: since + int64(i) + 1, Action: DataActionCreated}
+				expected[key.Name] = key.Name
+				require.NoError(t, backend.dataStore.Save(t.Context(), key, strings.NewReader(key.Name)))
+				require.NoError(t, backend.eventStore.Save(t.Context(), Event{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: key.Name, ResourceVersion: key.ResourceVersion, Action: key.Action}))
+			}
+			maxOpenConns := pool.Stats().MaxOpenConnections
+			t.Cleanup(func() { pool.SetMaxOpenConns(maxOpenConns) })
+			pool.SetMaxOpenConns(1)
+
+			ctx, cancel := context.WithTimeout(t.Context(), 3*time.Second)
+			defer cancel()
+			rv, results := backend.ListModifiedSince(ctx, appsNamespace, since, nil)
+			require.Equal(t, since+count, rv)
+			actual := make(map[string]string, count)
+			for result, err := range results {
+				require.NoError(t, err)
+				require.NotContains(t, actual, result.Key.Name)
+				actual[result.Key.Name] = string(result.Value)
+			}
+			require.Equal(t, expected, actual)
+			require.Zero(t, pool.Stats().InUse)
+			require.NoError(t, pool.PingContext(ctx))
+		})
+	}
+}
