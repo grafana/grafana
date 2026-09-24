@@ -646,7 +646,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	pluginInstaller := manager4.ProvideInstaller(pluginManagementCfg, inMemory, loaderLoader, repoManager, serviceregistrationService, acimplService)
 	ossProvider := guardian.ProvideGuardian()
 	cacheServiceImpl := service6.ProvideCacheService(cacheService, sqlStore, ossProvider)
-	shortURLService := shorturlimpl.ProvideService(sqlStore)
 	queryHistoryService := queryhistory.ProvideService(cfg, sqlStore, routeRegisterImpl, accessControl, featureToggles, eventualRestConfigProvider)
 	dashboardService := service7.ProvideDashboardService(featureToggles, dashboardServiceImpl)
 	dashverService := dashverimpl.ProvideService(cfg, sqlStore, dashboardService, featureToggles, k8sHandlerWithFallback)
@@ -659,7 +658,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	deleteExpiredService := image.ProvideDeleteExpiredService(dBstore)
 	tempuserService := tempuserimpl.ProvideService(sqlStore, cfg)
 	cleanupServiceImpl := annotationsimpl.ProvideCleanupService(sqlStore, cfg)
-	cleanUpService := cleanup.ProvideService(cfg, featureToggles, serverLockService, shortURLService, sqlStore, queryHistoryService, dashverService, serviceImpl, deleteExpiredService, tempuserService, tracingService, cleanupServiceImpl, dBstore, eventualRestConfigProvider, orgService, teamimplService, service13)
+	cleanUpService := cleanup.ProvideService(cfg, featureToggles, serverLockService, sqlStore, queryHistoryService, dashverService, serviceImpl, deleteExpiredService, tempuserService, tracingService, cleanupServiceImpl, dBstore, eventualRestConfigProvider, orgService, teamimplService, service13)
 	clientGenerator := apiserver.ProvideClientGenerator(eventualRestConfigProvider)
 	correlationsService, err := correlations.ProvideService(ctx, sqlStore, routeRegisterImpl, service13, accessControl, inProcBus, quotaService, cfg, clientGenerator, eventualRestConfigProvider, userimplService, resourceClient)
 	if err != nil {
@@ -783,7 +782,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	}
 	idimplService := idimpl.ProvideService(cfg, localSigner, remoteCache, authnService, registerer, tracer)
 	verifier := userimpl.ProvideVerifier(cfg, userimplService, tempuserService, notificationService, idimplService)
-	httpServer, err := api.ProvideHTTPServer(apiOpts, cfg, routeRegisterImpl, inProcBus, renderingService, ossLicensingService, hooksService, cacheService, sqlStore, ossDataSourceRequestValidator, pluginstoreService, service14, pluginstoreService, middlewareHandler, pluginerrsStore, pluginInstaller, ossImpl, cacheServiceImpl, userAuthTokenService, cleanUpService, shortURLService, queryHistoryService, correlationsService, remoteCache, provisioningServiceImpl, accessControl, dataSourceProxyService, searchService, grafanaLive, gateway, plugincontextProvider, contexthandlerContextHandler, logger, featureToggles, alertNG, libraryPanelService, libraryElementService, quotaService, socialService, tracingService, serviceService, grafanaService, pluginsService, ossService, service13, queryServiceImpl, filestoreService, serviceAccountsProxy, pluginassetsService, authinfoimplService, notificationService, dashboardService, dashboardProvisioningService, folderimplService, ossProvider, serviceImpl, service12, avatarCacheServer, prefService, k8sHandler, migrationProxy, folderPermissionsService, dashboardPermissionsService, dashverService, starService, csrfCSRF, managedpluginsNoop, apikeyService, kvStore, usageStats, secretsMigrator, secretsService, secretMigrationProviderImpl, secretsKVStore, v6, userimplService, tempuserService, loginattemptimplService, orgService, deletionService, teamimplService, acimplService, navtreeService, repositoryImpl, tagimplService, oauthtokenService, statsService, authnService, pluginscdnService, gatherer, apiAPI, registerer, anonDeviceService, eventualRestConfigProvider, clientGenerator, verifier, preinstallImpl, v4)
+	httpServer, err := api.ProvideHTTPServer(apiOpts, cfg, routeRegisterImpl, inProcBus, renderingService, ossLicensingService, hooksService, cacheService, sqlStore, ossDataSourceRequestValidator, pluginstoreService, service14, pluginstoreService, middlewareHandler, pluginerrsStore, pluginInstaller, ossImpl, cacheServiceImpl, userAuthTokenService, cleanUpService, queryHistoryService, correlationsService, remoteCache, provisioningServiceImpl, accessControl, dataSourceProxyService, searchService, grafanaLive, gateway, plugincontextProvider, contexthandlerContextHandler, logger, featureToggles, alertNG, libraryPanelService, libraryElementService, quotaService, socialService, tracingService, serviceService, grafanaService, pluginsService, ossService, service13, queryServiceImpl, filestoreService, serviceAccountsProxy, pluginassetsService, authinfoimplService, notificationService, dashboardService, dashboardProvisioningService, folderimplService, ossProvider, serviceImpl, service12, avatarCacheServer, prefService, k8sHandler, migrationProxy, folderPermissionsService, dashboardPermissionsService, dashverService, starService, csrfCSRF, managedpluginsNoop, apikeyService, kvStore, usageStats, secretsMigrator, secretsService, secretMigrationProviderImpl, secretsKVStore, v6, userimplService, tempuserService, loginattemptimplService, orgService, deletionService, teamimplService, acimplService, navtreeService, repositoryImpl, tagimplService, oauthtokenService, statsService, authnService, pluginscdnService, gatherer, apiAPI, registerer, anonDeviceService, eventualRestConfigProvider, clientGenerator, verifier, preinstallImpl, v4)
 	if err != nil {
 		return nil, err
 	}
@@ -824,6 +823,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
+	shortURLService := shorturlimpl.ProvideService(sqlStore)
 	shortURLAppInstaller, err := shorturl.RegisterAppInstaller(cfg, shortURLService)
 	if err != nil {
 		return nil, err
@@ -1413,7 +1413,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	shortURLService := shorturlimpl.ProvideService(sqlStore)
 	queryHistoryService := queryhistory.ProvideService(cfg, sqlStore, routeRegisterImpl, accessControl, featureToggles, eventualRestConfigProvider)
 	dashboardService := service7.ProvideDashboardService(featureToggles, dashboardServiceImpl)
 	dashverService := dashverimpl.ProvideService(cfg, sqlStore, dashboardService, featureToggles, k8sHandlerWithFallback)
@@ -1426,7 +1425,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	deleteExpiredService := image.ProvideDeleteExpiredService(dBstore)
 	tempuserService := tempuserimpl.ProvideService(sqlStore, cfg)
 	cleanupServiceImpl := annotationsimpl.ProvideCleanupService(sqlStore, cfg)
-	cleanUpService := cleanup.ProvideService(cfg, featureToggles, serverLockService, shortURLService, sqlStore, queryHistoryService, dashverService, serviceImpl, deleteExpiredService, tempuserService, tracingService, cleanupServiceImpl, dBstore, eventualRestConfigProvider, orgService, teamimplService, service13)
+	cleanUpService := cleanup.ProvideService(cfg, featureToggles, serverLockService, sqlStore, queryHistoryService, dashverService, serviceImpl, deleteExpiredService, tempuserService, tracingService, cleanupServiceImpl, dBstore, eventualRestConfigProvider, orgService, teamimplService, service13)
 	clientGenerator := apiserver.ProvideClientGenerator(eventualRestConfigProvider)
 	correlationsService, err := correlations.ProvideService(ctx, sqlStore, routeRegisterImpl, service13, accessControl, inProcBus, quotaService, cfg, clientGenerator, eventualRestConfigProvider, userimplService, resourceClient)
 	if err != nil {
@@ -1559,7 +1558,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	idimplService := idimpl.ProvideService(cfg, localSigner, remoteCache, authnService, registerer, tracer)
 	verifier := userimpl.ProvideVerifier(cfg, userimplService, tempuserService, notificationServiceMock, idimplService)
-	httpServer, err := api.ProvideHTTPServer(apiOpts, cfg, routeRegisterImpl, inProcBus, renderingService, ossLicensingService, hooksService, cacheService, sqlStore, ossDataSourceRequestValidator, pluginstoreService, service14, pluginstoreService, middlewareHandler, pluginerrsStore, pluginInstaller, ossImpl, cacheServiceImpl, userAuthTokenService, cleanUpService, shortURLService, queryHistoryService, correlationsService, remoteCache, provisioningServiceImpl, accessControl, dataSourceProxyService, searchService, grafanaLive, gateway, plugincontextProvider, contexthandlerContextHandler, logger, featureToggles, alertNG, libraryPanelService, libraryElementService, quotaService, socialService, tracingService, serviceService, grafanaService, pluginsService, ossService, service13, queryServiceImpl, filestoreService, serviceAccountsProxy, pluginassetsService, authinfoimplService, notificationServiceMock, dashboardService, dashboardProvisioningService, folderimplService, ossProvider, serviceImpl, service12, avatarCacheServer, prefService, k8sHandler, migrationProxy, folderPermissionsService, dashboardPermissionsService, dashverService, starService, csrfCSRF, managedpluginsNoop, apikeyService, kvStore, usageStats, secretsMigrator, secretsService, secretMigrationProviderImpl, secretsKVStore, v6, userimplService, tempuserService, loginattemptimplService, orgService, deletionService, teamimplService, acimplService, navtreeService, repositoryImpl, tagimplService, oauthtokentestService, statsService, authnService, pluginscdnService, gatherer, apiAPI, registerer, anonDeviceService, eventualRestConfigProvider, clientGenerator, verifier, preinstallImpl, v4)
+	httpServer, err := api.ProvideHTTPServer(apiOpts, cfg, routeRegisterImpl, inProcBus, renderingService, ossLicensingService, hooksService, cacheService, sqlStore, ossDataSourceRequestValidator, pluginstoreService, service14, pluginstoreService, middlewareHandler, pluginerrsStore, pluginInstaller, ossImpl, cacheServiceImpl, userAuthTokenService, cleanUpService, queryHistoryService, correlationsService, remoteCache, provisioningServiceImpl, accessControl, dataSourceProxyService, searchService, grafanaLive, gateway, plugincontextProvider, contexthandlerContextHandler, logger, featureToggles, alertNG, libraryPanelService, libraryElementService, quotaService, socialService, tracingService, serviceService, grafanaService, pluginsService, ossService, service13, queryServiceImpl, filestoreService, serviceAccountsProxy, pluginassetsService, authinfoimplService, notificationServiceMock, dashboardService, dashboardProvisioningService, folderimplService, ossProvider, serviceImpl, service12, avatarCacheServer, prefService, k8sHandler, migrationProxy, folderPermissionsService, dashboardPermissionsService, dashverService, starService, csrfCSRF, managedpluginsNoop, apikeyService, kvStore, usageStats, secretsMigrator, secretsService, secretMigrationProviderImpl, secretsKVStore, v6, userimplService, tempuserService, loginattemptimplService, orgService, deletionService, teamimplService, acimplService, navtreeService, repositoryImpl, tagimplService, oauthtokentestService, statsService, authnService, pluginscdnService, gatherer, apiAPI, registerer, anonDeviceService, eventualRestConfigProvider, clientGenerator, verifier, preinstallImpl, v4)
 	if err != nil {
 		return nil, err
 	}
@@ -1600,6 +1599,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
+	shortURLService := shorturlimpl.ProvideService(sqlStore)
 	shortURLAppInstaller, err := shorturl.RegisterAppInstaller(cfg, shortURLService)
 	if err != nil {
 		return nil, err
