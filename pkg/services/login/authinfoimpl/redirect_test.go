@@ -6,9 +6,11 @@ import (
 
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -105,11 +107,52 @@ func TestRedirectStore(t *testing.T) {
 	}
 }
 
+func TestRedirectStore_K8sCtx(t *testing.T) {
+	newStore := func() *redirectStore {
+		return newRedirectStoreForTest(authinfotest.NewMockAuthInfoStore(t), authinfotest.NewMockAuthInfoStore(t))
+	}
+
+	t.Run("bare context: injects a service identity using the default org", func(t *testing.T) {
+		s := newStore()
+
+		out := s.k8sCtx(context.Background())
+
+		requester, err := identity.GetRequester(out)
+		require.NoError(t, err)
+		assert.True(t, identity.IsServiceIdentity(out))
+		assert.Equal(t, s.cfg.DefaultOrgID(), requester.GetOrgID())
+	})
+
+	t.Run("org on ctx but no identity: the synthesized identity uses that org, not the default", func(t *testing.T) {
+		s := newStore()
+		const orgID int64 = 7
+		ctx := identity.WithOrgID(context.Background(), orgID)
+
+		out := s.k8sCtx(ctx)
+
+		requester, err := identity.GetRequester(out)
+		require.NoError(t, err)
+		assert.Equal(t, orgID, requester.GetOrgID())
+	})
+
+	t.Run("identity already present: ctx passes through unchanged", func(t *testing.T) {
+		s := newStore()
+		ctx, want := identity.WithServiceIdentity(context.Background(), 3)
+
+		out := s.k8sCtx(ctx)
+
+		got, err := identity.GetRequester(out)
+		require.NoError(t, err)
+		assert.Same(t, want, got)
+	})
+}
+
 func newRedirectStoreForTest(legacyStore, k8sStore login.Store) *redirectStore {
 	return &redirectStore{
 		legacyStore:       legacyStore,
 		k8sStore:          k8sStore,
 		openFeatureClient: openfeature.NewDefaultClient(),
+		cfg:               setting.NewCfg(),
 		logger:            log.New("test"),
 	}
 }

@@ -45,7 +45,7 @@ func ProvideStore(ctx context.Context, sql legacysql.LegacyDatabaseProvider,
 
 	k8sStore := authinfok8s.NewStore(log.New("login.authinfo.k8s"), cfg, configProvider, tracer)
 
-	return newRedirectStore(legacyStore, k8sStore), nil
+	return newRedirectStore(legacyStore, k8sStore, cfg), nil
 }
 
 // GetAuthInfo returns the auth info for a user
