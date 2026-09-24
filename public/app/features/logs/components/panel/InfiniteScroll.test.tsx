@@ -187,7 +187,8 @@ describe('InfiniteScroll', () => {
 
         expect(loadMoreMock).toHaveBeenCalledWith(
           {
-            from: logs[logs.length - 1].timeEpochMs,
+            // widened by 1ms so a row tied with the boundary at ms precision isn't dropped
+            from: logs[logs.length - 1].timeEpochMs - 1,
             to: absoluteRange.to,
           },
           order === LogsSortOrder.Descending ? -1 : 1
@@ -209,7 +210,8 @@ describe('InfiniteScroll', () => {
         expect(loadMoreMock).toHaveBeenCalledWith(
           {
             from: absoluteRange.from,
-            to: logs[0].timeEpochMs,
+            // widened by 1ms so a row tied with the boundary at ms precision isn't dropped
+            to: logs[0].timeEpochMs + 1,
           },
           order === LogsSortOrder.Ascending ? -1 : 1
         );

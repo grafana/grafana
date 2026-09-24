@@ -79,13 +79,14 @@ export function getVisibleRange(rows: LogRowModel[]) {
   return visibleRange;
 }
 
+// Widen by 1ms so ms-precision ties aren't dropped; logsModel.ts's dedup removes the overlap.
 function getPrevRange(visibleRange: AbsoluteTimeRange, currentRange: TimeRange) {
-  return { from: currentRange.from.valueOf(), to: visibleRange.from };
+  return { from: currentRange.from.valueOf(), to: visibleRange.from + 1 };
 }
 
 function getNextRange(visibleRange: AbsoluteTimeRange, currentRange: TimeRange, timeZone: TimeZone) {
   currentRange = updateCurrentRange(currentRange, timeZone);
-  return { from: visibleRange.to, to: currentRange.to.valueOf() };
+  return { from: visibleRange.to - 1, to: currentRange.to.valueOf() };
 }
 
 export function canScrollTop(
