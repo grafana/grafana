@@ -19,11 +19,10 @@ const noPathConflictMsg = "no other repository shares this URL, branch, and path
 // RepositoryPathConflictChecker checks whether a repository's URL/branch/path overlaps with
 // another repository in the same namespace.
 //
-// This surfaces as a warning during reconciliation - it never blocks repository creation or
-// update. Two repositories with overlapping paths can coexist; the resource-level
+// This is a warning during reconciliation. Two repositories with overlapping paths can coexist; the resource-level
 // ManagerProperties identity check (see pkg/storage/unified/apistore/managed.go) stops them
 // from actually overwriting each other's synced resources, so a repository-level admission
-// block is unnecessary. See repository.PathConflict's doc comment for the full reasoning.
+// block is unnecessary.
 type RepositoryPathConflictChecker struct {
 	repos informer.RepositoryGetter
 }

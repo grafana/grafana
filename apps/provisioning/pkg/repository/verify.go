@@ -24,12 +24,6 @@ var ErrRepositoryParentFolderConflict = fmt.Errorf("repository path conflicts wi
 // describing the conflict (ErrRepositoryDuplicatePath for an exact match,
 // ErrRepositoryParentFolderConflict for a parent/child overlap). It only compares two git
 // repositories with the same URL and branch; anything else is never a conflict.
-//
-// This used to gate repository creation/update directly (rejecting the write outright). It no
-// longer does: two repositories are allowed to have the same or overlapping paths - the
-// resource-level ManagerProperties identity check prevents them from actually overwriting each
-// other's synced resources (see pkg/storage/unified/apistore/managed.go). Callers now use this
-// to surface a warning (see controller.RepositoryPathConflictChecker) rather than to block.
 func PathConflict(cfg, v *provisioning.Repository) (error, bool) {
 	if !cfg.Spec.Type.IsGit() || !v.Spec.Type.IsGit() {
 		return nil, false
@@ -80,10 +74,6 @@ func NewVerifyAgainstExistingRepositoriesValidator(lister RepositoryLister, quot
 // - You can only create an instance sync repository if no other repositories exist in the namespace.
 // - You cannot create a non-instance (folder or folderless) sync repository if an instance repository already exists in the namespace.
 // - The total number of repositories in a single namespace cannot exceed the configured limit (default 10, 0 = unlimited).
-//
-// It no longer rejects repositories with duplicate/overlapping URL+branch+path - see
-// PathConflict's doc comment for why, and controller.RepositoryPathConflictChecker for the
-// warning that replaced it.
 func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Context, cfg *provisioning.Repository) field.ErrorList {
 	ctx, _, err := identity.WithProvisioningIdentity(ctx, cfg.Namespace)
 	if err != nil {
@@ -113,12 +103,6 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 			}
 		}
 	}
-
-	// Note: this validator used to reject a repository whose URL/branch/path overlapped with
-	// another repository's here, gated on cfg.Spec.Sync.Enabled. It no longer does - see
-	// PathConflict's doc comment for why blocking creation/update stopped being necessary. A
-	// conflict is now surfaced as a warning during reconciliation instead (see
-	// controller.RepositoryPathConflictChecker).
 
 	// Get quota status for the namespace
 	quotaStatus, err := v.quotaGetter.GetQuotaStatus(ctx, cfg.Namespace)
