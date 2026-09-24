@@ -5764,6 +5764,7 @@
     "edit-actions": {
       "add": "Aggiungi {{typeName}}",
       "add-conditional-rule": "Aggiungi regola {{ruleDescription}}",
+      "collapse-all-rows": "",
       "dashboard-description": "Modifica la descrizione della dashboard",
       "dashboard-title": "Modifica il titolo della dashboard",
       "duplicate": "Duplica {{typeName}}",
@@ -5771,6 +5772,7 @@
       "edit-query-result-rule": "Modifica regola del risultato della query",
       "edit-template-variable-rule": "Modifica la regola della variabile del modello",
       "edit-time-range-rule": "Modifica regola intervallo di tempo",
+      "expand-all-rows": "",
       "group-into-row": "Raggruppa in riga",
       "group-into-tab": "Raggruppa in scheda",
       "move": "Sposta {{typeName}}",
@@ -5803,9 +5805,7 @@
       "add-library-panel-header": "Importa pannello",
       "add-visualization-body": "Seleziona un'origine dati, quindi esegui query e visualizza i dati con grafici, statistiche e tabelle o crea elenchi, markdown e altri widget.",
       "add-visualization-button": "Aggiungi visualizzazione",
-      "add-visualization-description": "",
       "add-visualization-header": "Avvia il tuo nuovo dashboard aggiungendo una visualizzazione",
-      "add-visualization-heading": "",
       "assistant-placeholder": "",
       "auto-grid": "Griglia automatica",
       "auto-grid-description": "I pannelli si ridimensionano per adattarsi e formare griglie uniformi",
@@ -5813,9 +5813,6 @@
       "custom-grid": "Griglia personalizzata",
       "custom-grid-description": "Posiziona e ridimensiona ogni pannello singolarmente",
       "description": "Aggiungi un pannello per visualizzare i tuoi dati",
-      "grid-auto": "",
-      "grid-custom": "",
-      "grid-label": "",
       "import-a-dashboard-body": "Importa dashboard da file o <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importa un dashboard",
       "import-dashboard-button": "Importa dashboard",
@@ -6143,9 +6140,7 @@
     "planning-banner": {
       "build": "",
       "dismiss": "",
-      "plan-label": "",
-      "panel-count_one": "",
-      "panel-count_other": ""
+      "preview-label": ""
     },
     "public-dashboard-not-available": {
       "does-not-exist": "La dashboard a cui stai tentando di accedere non esiste",
@@ -9434,6 +9429,7 @@
     "flag-value": "Valore del flag",
     "menu": "Apri menu",
     "new-flag": "new-flag-override",
+    "ofrep-evaluation": "",
     "save-flag": "Salva",
     "title": "Controllo funzionalità"
   },
@@ -10681,6 +10677,7 @@
       "aria-label-sort-column": "Ordina colonna {{columnName}}",
       "expand-row-header": "Espandi riga",
       "expand-row-tooltip": "Attiva/disattiva riga espansa",
+      "loading": "",
       "tooltip-collapse-all": "Ridurre tutte le righe",
       "tooltip-expand-all": "Espandi tutte le righe"
     },
@@ -10775,6 +10772,9 @@
     "password-field": {
       "tooltip-hide": "Nascondi password",
       "tooltip-show": "Mostra password"
+    },
+    "query-field": {
+      "loading": ""
     },
     "query-input": {
       "loading": "Caricamento editor in corso"
@@ -10885,6 +10885,7 @@
         }
       },
       "inspect-drawer-title": "Ispeziona valore",
+      "loading": "",
       "nested-table": {
         "expander-column-name": "Espandi righe annidate",
         "no-data": "Nessun dato"
@@ -13687,10 +13688,15 @@
   },
   "playlist-page": {
     "card": {
-      "delete": "Elimina la playlist",
-      "edit": "Modifica la playlist",
-      "start": "Avvia playlist",
-      "tooltip": "Condividi playlist"
+      "delete": "",
+      "delete-label": "",
+      "edit": "",
+      "edit-label": "",
+      "share": "",
+      "share-label": "",
+      "start": "",
+      "start-label": "",
+      "tooltip": ""
     },
     "create-button": {
       "title": "Nuova playlist"
@@ -14843,6 +14849,15 @@
     },
     "repository-status": {
       "error": "Impossibile caricare il repository"
+    },
+    "repository-status-alert": {
+      "deletion-title": "",
+      "error-title": "",
+      "force-delete-button": "",
+      "force-delete-cancel": "",
+      "force-delete-confirm": "",
+      "force-delete-title": "",
+      "force-delete-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "Torna ai repository",
@@ -16520,7 +16535,9 @@
     }
   },
   "swagger": {
-    "login": "Accedi"
+    "login": "Accedi",
+    "namespace-unavailable": "",
+    "namespace-unavailable-title": ""
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -17743,6 +17760,7 @@
     },
     "series-to-fields-transformer-editor": {
       "label-field": "Campo",
+      "label-keep-unjoined": "",
       "label-mode": "Modalità",
       "modes": {
         "description": {
@@ -17755,7 +17773,8 @@
           "outer-tabular": "Esterno (tabulare)",
           "outer-time-series": "Esterno (serie temporali)"
         }
-      }
+      },
+      "tooltip-keep-unjoined": ""
     },
     "series-to-rows-transformer-editor": {
       "description": {
