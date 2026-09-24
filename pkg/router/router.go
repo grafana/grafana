@@ -162,7 +162,7 @@ func (cr *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, ne
 	}
 	// /apis/<group> group discovery and /apis/<group>/... both proxy to the
 	// single owning backend (one backend owns all versions of a group).
-	serveThroughBreaker(entry.breaker, entry.handler, w, req)
+	serveThroughBreaker(entry.breaker, group, entry.handler, w, req)
 }
 
 func (cr *GrafanaRouter) serveUnregisteredGroup(w http.ResponseWriter, req *http.Request, next http.Handler, group string) {
@@ -273,7 +273,7 @@ func (cr *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *ht
 	stripConditionalHeaders(proxyReq)
 	stripHashQueryParam(proxyReq)
 	rec := newCaptureWriter()
-	serveThroughBreaker(entry.breaker, entry.handler, rec, proxyReq)
+	serveThroughBreaker(entry.breaker, group, entry.handler, rec, proxyReq)
 
 	maps.Copy(w.Header(), rec.header)
 	// Private schemas pass through authorization on every request. Honor their

@@ -263,6 +263,7 @@ func withVectorIndexers(opts *ServerOptions, resourceOpts *resource.ResourceServ
 		BuilderProvider: resourceOpts.Search.EmbeddingBuilders,
 		DashboardStats:  opts.DashboardStats,
 		Metrics:         resourceOpts.VectorMetrics,
+		PageSize:        opts.Cfg.VectorBackfillPageSize,
 	})
 	if err != nil {
 		return fmt.Errorf("create vector backfiller: %w", err)
