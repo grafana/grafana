@@ -2207,9 +2207,6 @@
   "public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx": {
     "@grafana/require-no-margin": {
       "count": 4
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "public/app/features/dashboard/components/SubMenu/DashboardLinksDashboard.tsx": {
