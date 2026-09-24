@@ -402,14 +402,10 @@ func (st *Manager) ProcessEvalResults(
 			if imageTaken {
 				return image
 			}
-			logger.Debug("Taking image", "dashboard", alertRule.GetDashboardUID(), "panel", alertRule.GetPanelID(), "reason", reason)
-			img, err := takeImage(ctx, st.images, alertRule)
+			l := logger.New("dashboard", alertRule.GetDashboardUID(), "panel", alertRule.GetPanelID(), "reason", reason)
+			img, err := takeImage(ctx, st.images, alertRule, l)
 			imageTaken = true
 			if err != nil {
-				logger.Warn("Failed to take an image",
-					"dashboard", alertRule.GetDashboardUID(),
-					"panel", alertRule.GetPanelID(), "reason", reason,
-					"error", err)
 				return nil
 			}
 			image = newImageAttempt(img, nil)
