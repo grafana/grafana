@@ -15,17 +15,24 @@ type queueLagTracker struct {
 	inflight map[string]time.Time
 }
 
-// add stamps key's enqueue time, first-wins so a coalesced re-add keeps the
-// earliest timestamp.
+// add stamps key's enqueue time, first-wins: a coalesced re-add keeps the
+// earliest timestamp, and a re-add of a key still in flight (informer update,
+// AddAfter, or a retry) inherits its original enqueue time so lag keeps
+// measuring from the first enqueue rather than resetting.
 func (q *queueLagTracker) add(key string) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 	if q.waiting == nil {
 		q.waiting = make(map[string]time.Time)
 	}
-	if _, ok := q.waiting[key]; !ok {
-		q.waiting[key] = time.Now()
+	if _, ok := q.waiting[key]; ok {
+		return
 	}
+	if t, ok := q.inflight[key]; ok {
+		q.waiting[key] = t
+		return
+	}
+	q.waiting[key] = time.Now()
 }
 
 // get moves key from waiting to inflight, returning its enqueue

@@ -387,19 +387,22 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 
 	start := time.Now()
 	repoType, err := rc.processFn(key)
-	// Clear inflight before reading lag so queue_lag excludes the key just finished.
-	rc.queueLag.done(key)
-	logger = logger.With("duration", time.Since(start), "queue_lag", rc.queueLag.lag())
+	logger = logger.With("duration", time.Since(start))
 	if err == nil {
+		// Finished: drop from inflight before reading lag so queue_lag reflects
+		// the remaining backlog, not the key just completed.
+		rc.queueLag.done(key)
 		rc.queue.Forget(key)
-		logger.With("repositoryType", repoType).Info("RepositoryController finished processing key")
+		logger.With("repositoryType", repoType, "queue_lag", rc.queueLag.lag()).Info("RepositoryController finished processing key")
 		return true
 	}
 
 	// repoType is empty when process failed before resolving the object (bad key
 	// or not-found); the field is still emitted so type-scoped log filters match
-	// every failure/retry line for a resolvable repository.
-	logger = logger.With("repositoryType", repoType, "error", err, "attempts", attempts)
+	// every failure/retry line for a resolvable repository. On error the key stays
+	// in flight so a retry (below) inherits its original enqueue time; the deferred
+	// done clears it once this attempt ends.
+	logger = logger.With("repositoryType", repoType, "queue_lag", rc.queueLag.lag(), "error", err, "attempts", attempts)
 	logger.Error("RepositoryController failed to process key")
 
 	if attempts >= maxAttempts {

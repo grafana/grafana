@@ -75,6 +75,21 @@ func TestQueueLagTracker(t *testing.T) {
 		})
 	})
 
+	t.Run("re-add while in flight preserves the first-enqueue time", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			var q queueLagTracker
+			q.add("a") // first enqueue
+			_, ok := q.get("a")
+			require.True(t, ok)
+			time.Sleep(time.Minute)
+			q.add("a") // re-added while in flight (retry or informer update)
+			q.done("a")
+			time.Sleep(30 * time.Second)
+			// Lag must be measured from the first enqueue (90s), not the re-add (30s).
+			assert.Equal(t, 90*time.Second, q.lag())
+		})
+	})
+
 	t.Run("get on an untracked key reports no wait and no inflight", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			var q queueLagTracker

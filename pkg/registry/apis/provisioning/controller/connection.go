@@ -281,16 +281,19 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 
 	start := time.Now()
 	err := cc.processFn(ctx, key)
-	// Clear inflight before reading lag so queue_lag excludes the key just finished.
-	cc.queueLag.done(key)
-	logger = logger.With("duration", time.Since(start), "queue_lag", cc.queueLag.lag())
+	logger = logger.With("duration", time.Since(start))
 	if err == nil {
+		// Finished: drop from inflight before reading lag so queue_lag reflects
+		// the remaining backlog, not the key just completed.
+		cc.queueLag.done(key)
 		cc.queue.Forget(key)
-		logger.Info("ConnectionController finished processing key")
+		logger.With("queue_lag", cc.queueLag.lag()).Info("ConnectionController finished processing key")
 		return true
 	}
 
-	logger = logger.With("error", err, "attempts", attempts)
+	// On error the key stays in flight so a retry (below) inherits its original
+	// enqueue time; the deferred done clears it once this attempt ends.
+	logger = logger.With("queue_lag", cc.queueLag.lag(), "error", err, "attempts", attempts)
 	logger.Error("ConnectionController failed to process key")
 
 	if attempts >= connectionMaxAttempts {
