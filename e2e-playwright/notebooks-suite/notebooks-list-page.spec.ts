@@ -1,6 +1,14 @@
+import { type Download } from '@playwright/test';
+
 import { test, expect } from '@grafana/plugin-e2e';
 
 import { withRowMenuOpen } from './rowMenuRetry';
+
+// Mirrors ROWS_PER_PAGE from NotebooksTable.tsx - not imported directly, since that file (unlike
+// the bare-constants modules this suite does safely import from `app/`) pulls in `@grafana/data`'s
+// dateTimeFormat, which reaches the same moment/luxon `declare` field interop crash under
+// Playwright's Node-side loader that MARKDOWN_FORMAT_TOOLBAR_TEST_ID hit earlier in this suite.
+const ROWS_PER_PAGE = 20;
 
 // `page`/`request` fixtures using the current org's namespace, such as the `namespace` fixture, are
 // per-test and cannot be used in beforeAll/afterAll - hardcoded to match custom.ini's stack_id, the
@@ -60,36 +68,37 @@ test.describe('Notebooks list search and tag filter', () => {
 
     const rowA = page.getByTestId(selectors.pages.Notebooks.List.table.row(uidA));
     const rowB = page.getByTestId(selectors.pages.Notebooks.List.table.row(uidB));
+    // A search/tag change goes through an intermediate "nothing loaded yet" render before the
+    // real result lands. Asserting only rowA visible / rowB hidden can pass during that gap
+    // (both hidden) without ever checking what the server actually returned - the exact count
+    // forces waiting for the real, settled result instead.
+    const matchingRows = page.locator('[data-testid^="data-testid notebooks list row "]');
 
     // Scoped to "Filter" throughout rather than ever going fully unfiltered - other specs'
     // notebooks running concurrently against the same server can otherwise push these two past
     // the default page's row limit.
     const searchInput = page.getByTestId(selectors.pages.Notebooks.List.searchInput);
     await searchInput.fill('Filter');
+    await expect(matchingRows).toHaveCount(2);
     await expect(rowA).toBeVisible();
     await expect(rowB).toBeVisible();
 
     // Search narrows to the title that matches; the other notebook drops out of the list.
     await searchInput.fill('Alpha');
+    await expect(matchingRows).toHaveCount(1);
     await expect(rowA).toBeVisible();
-    await expect(rowB).toBeHidden();
 
     await searchInput.fill('Filter');
-    await expect(rowA).toBeVisible();
-    await expect(rowB).toBeVisible();
+    await expect(matchingRows).toHaveCount(2);
 
     // Clicking a notebook's own tag chip filters the list down to that tag.
     await page.getByRole('button', { name: `Filter by tag ${TAG_A}` }).click();
+    await expect(matchingRows).toHaveCount(1);
     await expect(rowA).toBeVisible();
-    await expect(rowB).toBeHidden();
   });
 });
 
 test.describe('Notebooks list row menu: copy link and export', () => {
-  // Chromium auto-grants clipboard-write for a user-gesture-triggered write in most setups, but
-  // granted explicitly here so the copy actions don't depend on that default.
-  test.use({ permissions: ['clipboard-read', 'clipboard-write'] });
-
   let uid: string;
   const title = `E2E Notebook Row Menu ${SUFFIX}`;
 
@@ -126,7 +135,7 @@ test.describe('Notebooks list row menu: copy link and export', () => {
     });
     await expect(page.getByText('Notebook copied as Markdown')).toBeVisible();
 
-    let download: Awaited<ReturnType<typeof page.waitForEvent<'download'>>> | undefined;
+    let download: Download | undefined;
     await withRowMenuOpen(rowMenuButton, async () => {
       await page.getByRole('menuitem', { name: 'Export' }).hover({ timeout: 5000 });
       const downloadPromise = page.waitForEvent('download', { timeout: 5000 });
@@ -139,9 +148,9 @@ test.describe('Notebooks list row menu: copy link and export', () => {
 
 test.describe('Notebooks list pagination', () => {
   const pagePrefix = `E2E Notebook Page ${SUFFIX}`;
-  // One more than a full page (ROWS_PER_PAGE = 20 in NotebooksTable.tsx), so exactly two pages
-  // render - page buttons "1" and "2" plus prev/next, nothing to condense.
-  const PAGE_TEST_NOTEBOOK_COUNT = 21;
+  // One more than a full page, so exactly two pages render - page buttons "1" and "2" plus
+  // prev/next, nothing to condense.
+  const PAGE_TEST_NOTEBOOK_COUNT = ROWS_PER_PAGE + 1;
   let uids: string[] = [];
 
   test.beforeAll(async ({ request }) => {
@@ -165,8 +174,10 @@ test.describe('Notebooks list pagination', () => {
     // Scoped to just this test's own rows - other specs' notebooks may exist in the list at the
     // same time, since Playwright runs spec files against the same server concurrently.
     await page.getByTestId(selectors.pages.Notebooks.List.searchInput).fill(pagePrefix);
-    await expect(page.getByTestId(selectors.pages.Notebooks.List.table.row(uids[0]))).toBeVisible();
 
+    // Not asserting any specific row here: sort is newest-updated-first, and all
+    // PAGE_TEST_NOTEBOOK_COUNT notebooks are created within the same second, so which one lands
+    // on page 2 isn't fixed. The page-2 button appearing is the actual point of this test.
     const pageTwoButton = page.getByRole('button', { name: '2', exact: true });
     await expect(pageTwoButton).toBeVisible();
 
@@ -175,5 +186,39 @@ test.describe('Notebooks list pagination', () => {
 
     await page.getByRole('button', { name: '1', exact: true }).click();
     await expect(page.getByRole('button', { name: '1', exact: true })).toHaveAttribute('aria-current', 'page');
+  });
+});
+
+test.describe('Notebooks list created-by-me filter', () => {
+  test('scopes the search request to the current user when checked', async ({ page, selectors }) => {
+    await page.goto('/notebooks');
+
+    // A single active filter flattens `where` to one leaf rather than wrapping it in `and`.
+    function hasCreatedByFilter(body: {
+      where?: { and?: Array<{ filter?: { field?: string } }> } & { filter?: { field?: string } };
+    }) {
+      const leaves = body.where?.and ?? (body.where ? [body.where] : []);
+      return leaves.some((leaf) => leaf.filter?.field === 'createdBy');
+    }
+
+    // Every notebook in this suite is created by the same admin user, so which rows are on
+    // screen can't tell "created by me" apart from "everyone" - checked at the request level
+    // instead, against the search API's own vocabulary for the filter. Matched on the actual
+    // `where` shape, not just timing or a raw string search: this list keeps paging through
+    // unrelated (unfiltered) requests in the background as long as more pages exist, and every
+    // request - filtered or not - always lists `createdBy` among the return `fields`, so a plain
+    // substring match on the body would catch those too.
+    const searchRequest = page.waitForRequest(
+      (request) =>
+        request.url().includes('/notebooks/search') &&
+        request.method() === 'POST' &&
+        hasCreatedByFilter(request.postDataJSON())
+    );
+    // grafana-ui's Checkbox renders its label text as a sibling span overlapping the input's own
+    // hit area (native <label> semantics still route the click correctly) - force is the
+    // established pattern for this component elsewhere in the suite, e.g. migrate-to-cloud.spec.ts.
+    await page.getByTestId(selectors.pages.Notebooks.List.createdByMeCheckbox).check({ force: true });
+    const body = (await searchRequest).postDataJSON();
+    expect(hasCreatedByFilter(body)).toBe(true);
   });
 });

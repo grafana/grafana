@@ -77,6 +77,18 @@ test.describe('Notebook create, rename, and delete', () => {
     await tagInput.press('Enter');
     await expect(page.getByText(tagName, { exact: true })).toBeVisible();
 
+    // The toolbar's own copy-link and kebab (export) are a second entry point to the same
+    // actions the list's row menu covers elsewhere in this suite - exercised here from the item
+    // page's toolbar instead.
+    await page.getByRole('button', { name: 'Copy link' }).click();
+    await expect(page.getByText('Link copied to clipboard')).toBeVisible();
+
+    // Unlike the list row menu (which nests these under an "Export" submenu), the toolbar's kebab
+    // menu flattens the export actions directly into itself - see NotebookToolbar.tsx.
+    await page.getByTestId(selectors.pages.Notebooks.Item.toolbarKebabButton).click();
+    await page.getByRole('menuitem', { name: 'Copy as Markdown' }).click();
+    await expect(page.getByText('Notebook copied as Markdown')).toBeVisible();
+
     // Flush the rename and the tag before navigating away - otherwise the debounced save can be
     // left in flight and the list below would still show the notebook's old title/tags.
     await editModeToggle.getByTestId(selectors.components.RadioButton.option('false')).click();
@@ -86,6 +98,9 @@ test.describe('Notebook create, rename, and delete', () => {
     await expect(page.getByText(tagName, { exact: true })).toBeVisible();
 
     await page.goto('/notebooks');
+    // Scoped by search rather than relying on this notebook being the newest - the pagination
+    // spec's 21 concurrent creates can otherwise push it past the default first page.
+    await page.getByTestId(selectors.pages.Notebooks.List.searchInput).fill(finalTitle);
     const row = page.getByTestId(selectors.pages.Notebooks.List.table.row(notebookUid!));
     await expect(row).toBeVisible();
 
