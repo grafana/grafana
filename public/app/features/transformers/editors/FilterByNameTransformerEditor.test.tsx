@@ -85,6 +85,27 @@ describe('FilterByNameTransformerEditor', () => {
     expect(getPill('B')).toHaveAttribute('aria-pressed', 'false');
   });
 
+  it('shows the new selection when the options are swapped for another transformation', () => {
+    const { rerender } = render(
+      <FilterByNameTransformerEditor
+        input={createInput(['A', 'B'])}
+        options={{ include: { names: ['A', 'B'] } }}
+        onChange={jest.fn()}
+      />
+    );
+
+    rerender(
+      <FilterByNameTransformerEditor
+        input={createInput(['A', 'B'])}
+        options={{ include: { names: ['A'] } }}
+        onChange={jest.fn()}
+      />
+    );
+
+    expect(getPill('A')).toHaveAttribute('aria-pressed', 'true');
+    expect(getPill('B')).toHaveAttribute('aria-pressed', 'false');
+  });
+
   it('selects every field again when the input brings a new field', async () => {
     const onChange = jest.fn();
     const { rerender } = render(

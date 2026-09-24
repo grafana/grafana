@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useMemo, useState, type FocusEvent, type FormEvent } from 'react';
+import { useEffect, useEffectEvent, useMemo, useRef, useState, type FocusEvent, type FormEvent } from 'react';
 
 import {
   type DataFrame,
@@ -86,26 +86,47 @@ export function FilterByNameTransformerEditor({ input, options, onChange }: Filt
     []
   );
 
-  // Read at the point the effect below runs rather than subscribing to it: re-seeding whenever
-  // the options change would discard in-progress edits, such as a regex that is not yet valid.
-  const latestSeed = useEffectEvent(() => ({ fieldNames, options }));
+  // The options this editor last sent. When they come back, local state already matches them, and
+  // re-seeding would turn "no fields selected" (saved as an empty include) back into "all fields selected".
+  const sentOptionsKey = useRef<string | undefined>(undefined);
+  const sendOptions = (nextOptions: FilterFieldsByNameTransformerOptions) => {
+    sentOptionsKey.current = JSON.stringify(nextOptions);
+    onChange(nextOptions);
+  };
+
+  // Read at the point the effects below run rather than subscribing to it: re-seeding on every render
+  // would discard in-progress edits, such as a regex that is not yet valid.
+  const reseed = useEffectEvent(() => {
+    setSelected(getSelectedNames(fieldNames, options));
+    setByVariable(options.byVariable || false);
+    setVariable(options.include?.variable);
+    setRegex(options.include?.pattern);
+  });
 
   // New field names mean the selection has to be derived again. Key on the names, not the input:
-  // upstream transformations send a new input array on every options change, and re-seeding then
-  // would turn "no fields selected" back into "all fields selected". Sorted so a reorder alone does
-  // not count as new names.
+  // upstream transformations send a new input array on every options change. Sorted so a reorder
+  // alone does not count as new names.
   const fieldNamesKey = JSON.stringify(fieldNames.map((n) => n.name).sort());
 
   useEffect(() => {
-    const { fieldNames: seedFieldNames, options: seedOptions } = latestSeed();
-
-    setSelected(getSelectedNames(seedFieldNames, seedOptions));
-    setByVariable(seedOptions.byVariable || false);
-    setVariable(seedOptions.include?.variable);
-    setRegex(seedOptions.include?.pattern);
+    reseed();
     // eslint-plugin-react-hooks only recognises effect events from 7.1.1
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fieldNamesKey]);
+
+  // Options this editor did not send, such as another transformation's after the list is reordered,
+  // replace the local state. The panel editor keys rows by position, so this instance stays mounted.
+  const optionsKey = JSON.stringify(options);
+
+  useEffect(() => {
+    const isEcho = optionsKey === sentOptionsKey.current;
+    sentOptionsKey.current = undefined;
+
+    if (!isEcho) {
+      reseed();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [optionsKey]);
 
   const onSelectionChange = (nextSelected: string[]) => {
     const nextOptions: FilterFieldsByNameTransformerOptions = {
@@ -119,7 +140,7 @@ export function FilterByNameTransformerEditor({ input, options, onChange }: Filt
     }
 
     setSelected(nextSelected);
-    onChange(nextOptions);
+    sendOptions(nextOptions);
   };
 
   // An empty include keeps every field, including ones that appear later, so both "Select all" and
@@ -129,7 +150,7 @@ export function FilterByNameTransformerEditor({ input, options, onChange }: Filt
     setRegex(undefined);
     setIsRegexValid(true);
     setSelected(nextSelected);
-    onChange({ ...options, include: { names: [] } });
+    sendOptions({ ...options, include: { names: [] } });
   };
 
   const onFieldToggle = (fieldName: string) => {
@@ -152,12 +173,12 @@ export function FilterByNameTransformerEditor({ input, options, onChange }: Filt
     }
 
     if (nextIsRegexValid) {
-      onChange({
+      sendOptions({
         ...options,
         include: { pattern: regex },
       });
     } else {
-      onChange({
+      sendOptions({
         ...options,
         include: { names: selected },
       });
@@ -167,7 +188,7 @@ export function FilterByNameTransformerEditor({ input, options, onChange }: Filt
   };
 
   const onVariableChange = (nextSelected: SelectableValue) => {
-    onChange({
+    sendOptions({
       ...options,
       include: { variable: nextSelected.value },
     });
@@ -177,7 +198,7 @@ export function FilterByNameTransformerEditor({ input, options, onChange }: Filt
 
   const onFromVariableChange = (e: FormEvent<HTMLInputElement>) => {
     const val = e.currentTarget.checked;
-    onChange({ ...options, byVariable: val });
+    sendOptions({ ...options, byVariable: val });
     setByVariable(val);
   };
 
