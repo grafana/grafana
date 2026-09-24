@@ -294,7 +294,6 @@ describe('DashboardSceneUrlSync', () => {
     const planning = {
       planId: 'plan-1',
       planTitle: 'Kafka overview',
-      panelCount: 4,
       onBuild: jest.fn(),
       onDismiss: jest.fn(),
     };

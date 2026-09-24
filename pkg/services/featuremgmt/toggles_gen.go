@@ -638,10 +638,6 @@ const (
 	// Enables the API to import Alertmanager configuration
 	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
 
-	// FlagAlertingDisableDMAinUI
-	// Disables the DMA feature in the UI
-	FlagAlertingDisableDMAinUI = "alertingDisableDMAinUI"
-
 	// FlagPreferLibraryPanelTitle
 	// Prefer library panel title over viz panel title.
 	FlagPreferLibraryPanelTitle = "preferLibraryPanelTitle"
@@ -745,10 +741,6 @@ const (
 	// FlagSecretsManagementAppPlatformAwsKeeper
 	// Enables the creation of keepers that manage secrets stored on AWS secrets manager
 	FlagSecretsManagementAppPlatformAwsKeeper = "secretsManagementAppPlatformAwsKeeper"
-
-	// FlagProfilesExemplars
-	// Enables profiles exemplars support in profiles drilldown
-	FlagProfilesExemplars = "profilesExemplars"
 
 	// FlagPyroscopeUTF8LabelNames
 	// Enables support for UTF-8 label names in Pyroscope label selectors
@@ -858,10 +850,6 @@ const (
 	// Repairs library_element rows whose folder_uid drifted from folder_id, once per org at startup
 	FlagLibraryElementFolderUIDRepair = "libraryElementFolderUIDRepair"
 
-	// FlagReact19
-	// Whether to use the new React 19 runtime
-	FlagReact19 = "react19"
-
 	// FlagManagedPluginsV2
 	// Enables managed plugins v2 (expanded rollout, community plugin coverage)
 	FlagManagedPluginsV2 = "managedPluginsV2"
@@ -943,7 +931,7 @@ const (
 	FlagPluginsMarketplaceLicensing = "plugins.marketplaceLicensing"
 
 	// FlagAlertingSyncExternalAlertmanager
-	// Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana
+	// Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source
 	FlagAlertingSyncExternalAlertmanager = "alerting.syncExternalAlertmanager"
 
 	// FlagFrontendServiceReducedBootDataAPI

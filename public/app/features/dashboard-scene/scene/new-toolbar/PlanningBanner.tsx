@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { Button, Icon, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
+import { Badge, Button, Icon, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 
 import { type DashboardPlanningState } from '../types/dashboard';
 
@@ -12,29 +12,19 @@ import { type DashboardPlanningState } from '../types/dashboard';
  * the proposal.
  */
 export function PlanningBanner({ planning }: { planning: DashboardPlanningState }) {
-  const { planTitle, panelCount, onBuild, onDismiss } = planning;
+  const { planTitle, onBuild, onDismiss } = planning;
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.banner}>
       <div className={styles.summary}>
         <Icon name="ai-sparkle" />
-        <span className={styles.planLabel}>
-          <Trans i18nKey="dashboard.planning-banner.plan-label">Plan</Trans>
-        </span>
+        <Badge
+          className={styles.planLabel}
+          color="blue"
+          text={<Trans i18nKey="dashboard.planning-banner.preview-label">Preview</Trans>}
+        />
         <span className={styles.planTitle}>{planTitle}</span>
-        <span className={styles.panelCount}>
-          <Trans
-            i18nKey="dashboard.planning-banner.panel-count"
-            count={panelCount}
-            tOptions={{
-              defaultValue_one: '{{count}} panel',
-              defaultValue_other: '{{count}} panels',
-            }}
-          >
-            {'{{count}}'} panels
-          </Trans>
-        </span>
       </div>
       <ToolbarButtonRow alignment="right">
         <Button
@@ -67,9 +57,10 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(2),
       margin: theme.spacing(1, 0),
       padding: theme.spacing(1.5, 2),
-      border: `2px solid ${theme.colors.info.borderEmphasis}`,
+      border: `2px solid ${theme.colors.info.subtleBorder}`,
       borderRadius: theme.shape.radius.default,
-      backgroundColor: theme.colors.info.background,
+      backgroundColor: theme.colors.info.subtleBackground,
+      color: theme.colors.text.primary,
     }),
     summary: css({
       display: 'flex',
@@ -82,21 +73,11 @@ function getStyles(theme: GrafanaTheme2) {
      */
     planLabel: css({
       flexShrink: 0,
-      padding: theme.spacing(0, 0.75),
-      borderRadius: theme.shape.radius.default,
-      backgroundColor: theme.colors.info.backgroundEmphasis,
-      color: theme.colors.info.text,
-      fontWeight: theme.typography.fontWeightMedium,
-      fontSize: theme.typography.bodySmall.fontSize,
     }),
     planTitle: css({
       fontWeight: theme.typography.fontWeightMedium,
       overflow: 'hidden',
       textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap',
-    }),
-    panelCount: css({
-      color: theme.colors.text.secondary,
       whiteSpace: 'nowrap',
     }),
   };
