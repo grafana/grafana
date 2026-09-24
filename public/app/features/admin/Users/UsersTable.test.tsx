@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 
 import { type UserDTO } from 'app/types/user';
@@ -25,14 +25,15 @@ const setup = (propOverrides?: object) => {
 };
 
 describe('Render', () => {
-  it('should render component', () => {
+  it('should render component', async () => {
     //Adding this due to React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7.
     jest.spyOn(console, 'warn').mockImplementation(() => {});
     expect(() => setup()).not.toThrow();
     jest.spyOn(console, 'warn').mockRestore();
+    expect(await screen.findByText('Login')).toBeInTheDocument();
   });
 
-  it('should render when user has licensed role None', () => {
+  it('should render when user has licensed role None', async () => {
     expect(() =>
       setup({
         users: [
@@ -49,9 +50,10 @@ describe('Render', () => {
         ],
       })
     ).not.toThrow();
+    expect(await screen.findByText('Not assigned')).toBeInTheDocument();
   });
 
-  it('should render when user belongs to org', () => {
+  it('should render when user belongs to org', async () => {
     expect(() =>
       setup({
         users: [
@@ -68,5 +70,6 @@ describe('Render', () => {
         ],
       })
     ).not.toThrow();
+    expect(await screen.findByText('test')).toBeInTheDocument();
   });
 });

@@ -10,13 +10,13 @@ import { DashboardInteractions } from '../../utils/interactions';
 
 import { AddButton } from './AddButton';
 
-export async function openAddFilterForm(dashboard: DashboardSceneLike, sectionOwner: SceneObject) {
+export async function openAddFilterForm(
+  dashboard: DashboardSceneLike,
+  sectionOwner: SceneObject,
+  signal: AbortSignal = dashboard.state.sidebar.beginPaneRequest()
+) {
   const existing = sectionOwner.state.$variables;
   const variablesSet = existing instanceof SceneVariableSet ? existing : new SceneVariableSet({ variables: [] });
-
-  if (!existing) {
-    sectionOwner.setState({ $variables: variablesSet });
-  }
 
   const type = 'adhoc';
   const name = getVariableNamePrefix(type);
@@ -24,6 +24,12 @@ export async function openAddFilterForm(dashboard: DashboardSceneLike, sectionOw
     name: getNextAvailableId(name, variablesSet.state.variables ?? []),
   });
 
+  if (signal.aborted) {
+    return;
+  }
+  if (!existing) {
+    sectionOwner.setState({ $variables: variablesSet });
+  }
   addVariable({ source: variablesSet, addedObject: newVar });
   dashboard.state.sidebar.selectObject(newVar, { force: true, multi: false });
 }

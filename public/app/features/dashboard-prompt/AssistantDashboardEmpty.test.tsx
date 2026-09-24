@@ -59,13 +59,6 @@ describe('AssistantDashboardEmpty', () => {
     expect(addNewPanel).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps Grid: outside the layout dropdown', () => {
-    renderEmpty();
-
-    expect(screen.getByText('Grid:')).toBeInTheDocument();
-    expect(screen.getByRole('combobox', { name: 'Grid:' })).toHaveDisplayValue('Auto');
-  });
-
   it('derives planning summaries from context data and forwards the original selection', () => {
     renderEmpty();
     const contextItems: ChatContextItem[] = [

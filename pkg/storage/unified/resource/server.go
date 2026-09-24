@@ -182,9 +182,11 @@ type StorageBackend interface {
 	// Read a resource from storage optionally at an explicit version
 	ReadResource(context.Context, *resourcepb.ReadRequest) *BackendReadResponse
 
-	// BatchReadResource reads several resources at once, one response per request
-	// in order, or returns ErrBatchReadUnsupported.
-	BatchReadResource(context.Context, []*resourcepb.ReadRequest) ([]*BackendReadResponse, error)
+	// BatchReadResource lazily reads several resources, yielding one response per
+	// request in order. Body reads stop when the consumer stops. The up-front error
+	// reports failures that happen before iteration; per-request failures are set
+	// on BackendReadResponse.Error.
+	BatchReadResource(context.Context, []*resourcepb.ReadRequest) (iter.Seq[*BackendReadResponse], error)
 
 	// When the ResourceServer executes a List request, this iterator will
 	// query the backend for potential results.  All results will be
@@ -2240,18 +2242,24 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 					}
 				}
 				s.log.Debug("Server Broadcasting", "type", event.Type, "rv", event.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "resource", event.Key.Resource, "name", event.Key.Name)
+				sendStartedAt := time.Now()
 				if err := srv.Send(resp); err != nil {
 					return watchSendError(err)
 				}
+				sentAt := time.Now()
 				lastObjectRV = max(lastObjectRV, event.ResourceVersion)
 
 				if s.storageMetrics != nil && event.ResourceVersion > mostRecentRV {
-					// record latency - resource version can be either a unix microsecond timestamp (SQL backend)
-					// or a snowflake ID (KV backend), so we use ResourceVersionTime to handle both formats.
-					latencySeconds := time.Since(ResourceVersionTime(event.ResourceVersion)).Seconds()
-					if latencySeconds > 0 {
-						s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Group, event.Key.Resource).Observe(latencySeconds)
-					}
+					// Resource versions can be either Unix microsecond timestamps (SQL backend)
+					// or snowflake IDs (KV backend). Split the total at Send so upstream
+					// delivery and gRPC transport flow-control wait can be diagnosed separately.
+					s.storageMetrics.observeWatchEvent(
+						event.Key.Group,
+						event.Key.Resource,
+						ResourceVersionTime(event.ResourceVersion),
+						sendStartedAt,
+						sentAt,
+					)
 				}
 			}
 			// Progress is not a delivery cutoff: keep using the fixed starting since.
