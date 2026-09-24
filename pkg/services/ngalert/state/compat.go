@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"path"
 	"strconv"
+	"time"
 
 	"github.com/benbjohnson/clock"
 	"github.com/go-openapi/strfmt"
@@ -224,26 +225,39 @@ func AlertInstanceToState(entry *ngModels.AlertInstance, logger log.Logger) *Sta
 	}
 
 	return &State{
-		AlertRuleUID:         entry.RuleUID,
-		OrgID:                entry.RuleOrgID,
-		CacheID:              cacheID,
-		Labels:               map[string]string(entry.Labels),
-		State:                translateInstanceState(entry.CurrentState),
-		StateReason:          entry.CurrentReason,
-		LastEvaluationString: "",
-		StartsAt:             entry.CurrentStateSince,
-		EndsAt:               entry.CurrentStateEnd,
-		FiredAt:              entry.FiredAt,
-		LastEvaluationTime:   entry.LastEvalTime,
-		EvaluationDuration:   entry.EvaluationDuration,
-		Annotations:          entry.Annotations,
-		ResultFingerprint:    resultFp,
-		ResolvedAt:           entry.ResolvedAt,
-		LastSentAt:           entry.LastSentAt,
-		Error:                stateError,
-		Values:               values,
-		LatestResult:         latestResult,
+		AlertRuleUID:                    entry.RuleUID,
+		OrgID:                           entry.RuleOrgID,
+		CacheID:                         cacheID,
+		Labels:                          map[string]string(entry.Labels),
+		State:                           translateInstanceState(entry.CurrentState),
+		StateReason:                     entry.CurrentReason,
+		LastEvaluationString:            "",
+		StartsAt:                        entry.CurrentStateSince,
+		EndsAt:                          entry.CurrentStateEnd,
+		FiredAt:                         entry.FiredAt,
+		LastEvaluationTime:              entry.LastEvalTime,
+		EvaluationDuration:              entry.EvaluationDuration,
+		Annotations:                     entry.Annotations,
+		ResultFingerprint:               resultFp,
+		ResolvedAt:                      entry.ResolvedAt,
+		LastSentAt:                      entry.LastSentAt,
+		Error:                           stateError,
+		Values:                          values,
+		LatestResult:                    latestResult,
+		ImageCaptureNextAttemptAt:       imageCaptureNextAttemptAt(entry.ImageCaptureNextAttemptAt),
+		ImageCaptureConsecutiveTimeouts: int(entry.ImageCaptureConsecutiveTimeouts),
 	}
+}
+
+// imageCaptureNextAttemptAt returns the zero time.Time if t is nil, matching State's own
+// zero-means-no-backoff convention; the persisted field is a pointer so a row written before
+// this field existed (or one that has never entered backoff) round-trips as nil rather than a
+// sentinel timestamp.
+func imageCaptureNextAttemptAt(t *time.Time) time.Time {
+	if t == nil {
+		return time.Time{}
+	}
+	return *t
 }
 
 // translateInstanceState converts InstanceStateType to eval.State.
