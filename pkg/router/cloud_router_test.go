@@ -508,7 +508,7 @@ func TestCloudLoaderSingleTenantFallback(t *testing.T) {
 			switch r.URL.Path {
 			case "/api/instances/35611":
 				w.Header().Set("Content-Type", "application/json")
-				_, _ = w.Write([]byte(`{"url":"https://play.grafana.org/"}`))
+				_, _ = w.Write([]byte(`{"slug":"play"}`))
 			case "/api/instances/123":
 				w.WriteHeader(http.StatusNotFound)
 			default:
@@ -527,7 +527,7 @@ func TestCloudLoaderSingleTenantFallback(t *testing.T) {
 		require.Same(t, cloud.singleTenantFallback, cloud.SingleTenantFallback())
 		host, err := cloud.singleTenantFallback.hostForNamespace(t.Context(), "stacks-35611")
 		require.NoError(t, err)
-		require.Equal(t, "https://play.grafana.org/", host.String())
+		require.Equal(t, "http://play-grafana-http.hosted-grafana.svc.cluster.local.:80", host.String())
 		host, err = cloud.singleTenantFallback.hostForNamespace(t.Context(), "stacks-123")
 		require.NoError(t, err)
 		require.Nil(t, host)

@@ -335,6 +335,6 @@ func newGComURLResolver(gcomBaseURL string, gcomToken string) func(context.Conte
 		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 			return "", fmt.Errorf("decoding gcom instance: %w", err)
 		}
-		return result.Slug + "-grafana.hosted-grafana.cluster.local", nil
+		return fmt.Sprintf("http://%s-grafana-http.%s.svc.cluster.local.:80", result.Slug, "hosted-grafana"), nil
 	}
 }
