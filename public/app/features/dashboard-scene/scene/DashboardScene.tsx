@@ -629,7 +629,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     if (restoreInitialState) {
       // Restore initial state and disable editing
-      const { isModalLoading, ...initialState } = this._initialState ?? {};
+      const { isOverlayLoading, ...initialState } = this._initialState ?? {};
       this.setState({ ...initialState, isEditing: false });
       this.restoreSerializerAnnotationsFromInitialState();
       appEvents.publish(new DashboardDiscardedEvent());
@@ -672,7 +672,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const hadProgrammaticSidebar = this._sidebarActivation !== undefined;
     this.deactivateSidebar();
 
-    const { isModalLoading, ...restoredState } = sceneUtils.cloneSceneObjectState(this._initialState!, {
+    const { isOverlayLoading, ...restoredState } = sceneUtils.cloneSceneObjectState(this._initialState!, {
       isDirty: false,
     });
 
@@ -766,7 +766,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       dashScene = transformSaveModelToScene(dashboardDTO);
     }
 
-    const { isModalLoading, ...newState } = sceneUtils.cloneSceneObjectState(dashScene.state);
+    const { isOverlayLoading, ...newState } = sceneUtils.cloneSceneObjectState(dashScene.state);
     newState.version = versionRsp.version;
 
     this.setState(newState);
@@ -1195,9 +1195,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.state.sidebar.cancelPaneRequest();
   }
 
-  private setModalLoading(isModalLoading: boolean) {
+  private setOverlayLoading(isOverlayLoading: boolean) {
     // Loading bookkeeping must not recursively cancel the request it belongs to.
-    super.setState(isModalLoading ? { isModalLoading, overlay: undefined } : { isModalLoading });
+    super.setState(isOverlayLoading ? { isOverlayLoading, overlay: undefined } : { isOverlayLoading });
   }
 
   public async openFiltersOverview() {
@@ -1213,9 +1213,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.cancelPendingViews();
     const request = new AbortController();
     this._viewRequest = request;
-    request.signal.addEventListener('abort', () => this.setModalLoading(false), { once: true });
+    request.signal.addEventListener('abort', () => this.setOverlayLoading(false), { once: true });
     if (view.key === 'overlay') {
-      this.setModalLoading(true);
+      this.setOverlayLoading(true);
     }
     const subscription = this.subscribeToState((state, previous) => {
       if (dashboardViewChanged(state, previous)) {

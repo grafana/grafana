@@ -12,9 +12,11 @@ import { type DashboardLayoutOrchestrator } from '../DashboardLayoutOrchestrator
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './DashboardLayoutManager';
 import { type LayoutParent } from './LayoutParent';
 
+/** Changes to any field cancel pending view loading. */
 export interface DashboardViewState {
   /**
-   * Any dashboard/notebook layout. Replacement must cancel requests targeting the old content.
+   * Layout of panels. Any kind, because a sibling resource's layout manager (the notebook) also
+   * rides this scene and serializes its own kind rather than a dashboard layout kind.
    */
   body: AnyDashboardLayoutManager;
   /** True when editing */
@@ -35,7 +37,7 @@ export interface DashboardViewState {
 
 interface DashboardLoadingState {
   /** A drawer's implementation is being loaded. */
-  isModalLoading?: boolean;
+  isOverlayLoading?: boolean;
 }
 
 export interface DashboardSceneState extends SceneObjectState, DashboardViewState, DashboardLoadingState {
