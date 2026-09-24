@@ -226,7 +226,6 @@ describe('useHomepageSolutions', () => {
           datasourceUid: 'prometheus',
           datasourceName: 'Prometheus',
           excludes: [{ label: 'instance', regex: 'cache-.*' }],
-          ratioExpr: '',
         })
       );
     });

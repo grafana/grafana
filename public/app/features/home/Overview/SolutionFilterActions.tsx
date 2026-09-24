@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
 
 import { type DataSourceInstanceListItem, type GrafanaTheme2, store } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -23,7 +23,7 @@ export interface SolutionFilterSpec<TScope extends object> {
   /** Names of the dimensions a scope sets, for analytics; the values are customer data and never leave the browser. */
   customized: (scope: TScope) => string;
   /** Runs before a save; a message keeps the dialog open and shows it instead of saving. */
-  validate?: (scope: TScope, datasource: DataSourceInstanceListItem) => Promise<string | null>;
+  validate?: (scope: TScope) => string | null;
 }
 
 /** Props every card filter control takes; the card renders it once the solution's datasource resolved. */
@@ -130,15 +130,6 @@ function SolutionFilterModal<TScope extends object>({
   // user can re-save it for this one or clear it. Its old binding rides along and is overwritten on save.
   const [draft, setDraft] = useState<TScope>(() => filter ?? spec.emptyScope);
   const [error, setError] = useState<string | null>(null);
-  const [validating, setValidating] = useState(false);
-  // A validation still running when the dialog is dismissed must not save or report afterwards.
-  const closed = useRef(false);
-  useEffect(
-    () => () => {
-      closed.current = true;
-    },
-    []
-  );
 
   const storageKey = solutionFilterStorageKey(spec.solution);
   // Persist, report, then close; a quota or access failure keeps the dialog and draft so the user
@@ -153,21 +144,11 @@ function SolutionFilterModal<TScope extends object>({
     solutionFilterChanged({ solution: spec.solution, change, customized: spec.customized(scope) });
     onClose();
   };
-  const save = async () => {
-    if (spec.validate) {
-      setError(null);
-      setValidating(true);
-      const message = await spec
-        .validate(draft, datasource)
-        .catch((reason: unknown) => (reason instanceof Error ? reason.message : String(reason)));
-      if (closed.current) {
-        return;
-      }
-      setValidating(false);
-      if (message) {
-        setError(message);
-        return;
-      }
+  const save = () => {
+    const message = spec.validate?.(draft) ?? null;
+    if (message) {
+      setError(message);
+      return;
     }
     persist(
       () => {
@@ -193,7 +174,7 @@ function SolutionFilterModal<TScope extends object>({
       <Modal.ButtonRow
         leftItems={
           filter && (
-            <Button variant="secondary" fill="outline" onClick={clear} disabled={validating}>
+            <Button variant="secondary" fill="outline" onClick={clear}>
               <Trans i18nKey="home.solutions.filter.clear">Clear filters</Trans>
             </Button>
           )
@@ -202,7 +183,7 @@ function SolutionFilterModal<TScope extends object>({
         <Button variant="secondary" onClick={onClose}>
           <Trans i18nKey="home.solutions.filter.cancel">Cancel</Trans>
         </Button>
-        <Button onClick={save} disabled={validating || !spec.hasSelection(draft)}>
+        <Button onClick={save} disabled={!spec.hasSelection(draft)}>
           <Trans i18nKey="home.solutions.filter.save">Save</Trans>
         </Button>
       </Modal.ButtonRow>

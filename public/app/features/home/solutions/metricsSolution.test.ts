@@ -133,7 +133,6 @@ describe('metricsSolution', () => {
       datasourceUid: 'prom-uid',
       datasourceName: 'prom-uid',
       excludes: [{ label: 'instance', regex: 'cache-.*' }],
-      ratioExpr: '',
     };
     mockFetchDiskPressure.mockResolvedValue({
       hostsAbove: 1,

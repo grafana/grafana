@@ -508,7 +508,6 @@ describe('metrics telemetry', () => {
         { label: 'instance', regex: 'cache-.*' },
         { label: 'mountpoint', regex: '/scratch' },
       ],
-      ratioExpr: '',
     };
     const fsExclude = 'fstype!~"tmpfs|overlay|squashfs|iso9660|ramfs"';
     const selector = `{${fsExclude},instance!~"cache-.*",mountpoint!~"/scratch"}`;
@@ -520,17 +519,8 @@ describe('metrics telemetry', () => {
       expect(diskRatioExpr(scope)).toBe(
         `(1 - node_filesystem_avail_bytes${selector} / node_filesystem_size_bytes${selector})`
       );
-      expect(diskRatioExpr({ excludes: [{ label: 'device', regex: 'a"b\\c' }], ratioExpr: '' })).toContain(
-        'device!~"a\\"b\\\\c"'
-      );
+      expect(diskRatioExpr({ excludes: [{ label: 'device', regex: 'a"b\\c' }] })).toContain('device!~"a\\"b\\\\c"');
       expect(diskPressureQuery(scope)).toBe(`max by (instance) (${diskRatioExpr(scope)}) > 0.9`);
-    });
-
-    it('lets a custom expression replace the fill ratio whole, exclusions included', () => {
-      const custom = { ...scope, ratioExpr: 'my_fill_ratio' };
-
-      expect(diskRatioExpr(custom)).toBe('(my_fill_ratio)');
-      expect(diskPressureQuery(custom)).toBe('max by (instance) ((my_fill_ratio)) > 0.9');
     });
 
     it('builds the disk pressure and host queries on the scoped ratio', async () => {

@@ -250,16 +250,14 @@ export interface MetricsActivity {
   seriesSparkline: FieldSparkline | null;
 }
 
-/** What the disk alert is built on. A field left empty ('' / []) does not narrow. */
+/** Label matchers narrowing the disk alert. An empty list does not narrow. */
 export interface MetricsDiskScope {
-  /** Filesystems whose `label` matches `regex` (anchored, RE2) are left out of the default fill ratio. */
+  /** Filesystems whose `label` matches `regex` (anchored, RE2) are left out of the fill ratio. */
   excludes: Array<{ label: string; regex: string }>;
-  /** Replaces the default fill-ratio formula whole; '' keeps the default. */
-  ratioExpr: string;
 }
 
 export function hasDiskSelection(scope: MetricsDiskScope): boolean {
-  return !!scope.ratioExpr.trim() || scope.excludes.some((row) => row.label.trim() && row.regex.trim());
+  return scope.excludes.some((row) => row.label.trim() && row.regex.trim());
 }
 
 // Threshold and ETA clamp for the disk-pressure alert row (design/judgment constants).
@@ -269,14 +267,8 @@ const DISK_ETA_MAX_HOURS = 48;
 // Pseudo filesystems are always excluded; they read as full without being a problem.
 const FS_EXCLUDE = 'fstype!~"tmpfs|overlay|squashfs|iso9660|ramfs"';
 
-/**
- * Per-filesystem fill ratio (0..1) that the disk alert and the host count are built on. A custom
- * expression replaces it whole, so the scope's exclusions only narrow the default formula.
- */
+/** Per-filesystem fill ratio (0..1) that the disk alert and the host count are built on. */
 export function diskRatioExpr(scope: MetricsDiskScope | null): string {
-  if (scope?.ratioExpr) {
-    return `(${scope.ratioExpr})`;
-  }
   const excluded = (scope?.excludes ?? []).map(({ label, regex }) => `${label}!~${quotePromString(regex)}`);
   const selector = `{${[FS_EXCLUDE, ...excluded].join(',')}}`;
   return `(1 - node_filesystem_avail_bytes${selector} / node_filesystem_size_bytes${selector})`;
