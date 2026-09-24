@@ -1,4 +1,4 @@
-import { firstValueFrom, timeout } from 'rxjs';
+import { firstValueFrom, NEVER, takeUntil, timeout } from 'rxjs';
 import { first } from 'rxjs/operators';
 
 import {
@@ -16,6 +16,21 @@ import {
 } from '@grafana/data';
 import { type PromQuery } from '@grafana/prometheus';
 import { createQueryRunner } from '@grafana/runtime';
+
+import { abortNotifier } from './probeUtils';
+
+export interface QueryRunOptions {
+  /** Rejects when the runner reaches no terminal state in time. Default 30s. */
+  timeoutMs?: number;
+  /** Keep the surviving targets' frames when some queries error; an error response with no frames still throws. */
+  partial?: boolean;
+  /**
+   * Tears the query down — queued entry dropped, dispatched request and pending datasource lookup
+   * cancelled — and rejects with an AbortError. An already-aborted signal rejects before any
+   * result is observed.
+   */
+  signal?: AbortSignal;
+}
 
 export function readScalar(frames: DataFrame[], refId: string): number | null {
   // '' is never a label key, so this shares readLabeledScalar's lookup with the label discarded.
@@ -67,8 +82,7 @@ async function runDatasourceQueries(
   queries: DataQuery[],
   range: TimeRange,
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>,
-  timeoutMs = 30_000,
-  partial = false
+  { timeoutMs = 30_000, partial = false, signal }: QueryRunOptions = {}
 ): Promise<DataFrame[]> {
   const runner = createQueryRunner();
   try {
@@ -81,11 +95,16 @@ async function runDatasourceQueries(
       minInterval: null,
     });
     // If the runner never emits a terminal state (e.g. its internal datasource lookup rejects),
-    // time out instead of leaving callers' useAsync in a permanent loading state.
+    // time out instead of leaving callers' useAsync in a permanent loading state. An abort rejects
+    // with an AbortError; destroy() in `finally` then unsubscribes the query, which tears down its
+    // BackendSrv fetch (queued entry dropped, dispatched request cancelled) and discards a
+    // datasource lookup still in progress. takeUntil subscribes its notifier before the source, so
+    // an already-aborted signal rejects before a synchronous result is observed.
     const data = await firstValueFrom(
       runner.get().pipe(
         first((d) => d.state === LoadingState.Done || d.state === LoadingState.Error),
-        timeout(timeoutMs)
+        timeout(timeoutMs),
+        takeUntil(signal ? abortNotifier(signal) : NEVER)
       )
     );
     // Errors reject by default — `?? 0` readers would render a dropped refId as a real zero.
@@ -100,14 +119,12 @@ async function runDatasourceQueries(
 
 /**
  * Run a batch of instant queries (refId -> PromQL) and return the response frames. The overview
- * cards read single-value scalars off the result via {@link readScalar}. Set `partial` to
- * tolerate individual query errors and keep the surviving frames.
+ * cards read single-value scalars off the result via {@link readScalar}.
  */
 export async function runInstantQueries(
   queries: Record<string, string>,
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>,
-  timeoutMs?: number,
-  partial = false
+  options?: QueryRunOptions
 ): Promise<DataFrame[]> {
   const targets: PromQuery[] = Object.entries(queries).map(([refId, expr]) => ({
     refId,
@@ -115,7 +132,7 @@ export async function runInstantQueries(
     instant: true,
     range: false,
   }));
-  return runDatasourceQueries(targets, getDefaultTimeRange(), ds, timeoutMs, partial);
+  return runDatasourceQueries(targets, getDefaultTimeRange(), ds, options);
 }
 
 /**

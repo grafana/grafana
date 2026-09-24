@@ -1,5 +1,5 @@
 import { test, expect } from '../fixtures';
-import { flows } from '../helpers';
+import { expectRowVisibility, expectTabVisibility, flows } from '../helpers';
 
 import dashboardEditMode from './fixtures/dashboard-edit-mode.json';
 import dashboardOnlyApplicableRulesJSON from './fixtures/dashboard-only-applicable-rules.json';
@@ -42,7 +42,7 @@ test.describe(
       await controls.enterEditMode();
       await panels.selectByTitle('Panel 1');
 
-      await conditionalRenderingOptions.addQueryResultRule('No data');
+      await conditionalRenderingOptions.queryResult.addRule('No data');
       await conditionalRenderingOptions.selectVisibility('hide');
 
       await flows.dashboards.saveDashboard(page, controls);
@@ -52,7 +52,7 @@ test.describe(
       await panels.selectByTitle('Panel 1');
 
       await expect(conditionalRenderingOptions.getVisibilityRadio('hide')).toBeChecked();
-      await expect(conditionalRenderingOptions.getQueryResultRuleSelect()).toHaveValue('No data');
+      await expect(conditionalRenderingOptions.queryResult.getRuleSelect()).toHaveValue('No data');
 
       await controls.exitEditMode();
 
@@ -88,7 +88,7 @@ test.describe(
       await panels.selectByTitle('Panel 2');
 
       await conditionalRenderingOptions.selectVisibility('hide');
-      await conditionalRenderingOptions.addVariableRule('letter', '=', 'beta');
+      await conditionalRenderingOptions.templateVariable.addRule('letter', '=', 'beta');
 
       await flows.dashboards.saveDashboard(page, controls);
 
@@ -97,9 +97,9 @@ test.describe(
       await panels.selectByTitle('Panel 2');
 
       await expect(conditionalRenderingOptions.getVisibilityRadio('hide')).toBeChecked();
-      await expect(conditionalRenderingOptions.getVariableRuleNameSelect()).toHaveValue('letter');
-      await expect(conditionalRenderingOptions.getVariableRuleOperatorSelect()).toHaveValue('=');
-      await expect(conditionalRenderingOptions.getVariableRuleValueInput()).toHaveValue('beta');
+      await expect(conditionalRenderingOptions.templateVariable.getRuleNameSelect()).toHaveValue('letter');
+      await expect(conditionalRenderingOptions.templateVariable.getRuleOperatorSelect()).toHaveValue('=');
+      await expect(conditionalRenderingOptions.templateVariable.getRuleValueInput()).toHaveValue('beta');
 
       await controls.exitEditMode();
 
@@ -137,7 +137,7 @@ test.describe(
       await rows.select('Row B');
 
       await conditionalRenderingOptions.selectVisibility('hide');
-      await conditionalRenderingOptions.addTimeRangeRule('5 minutes');
+      await conditionalRenderingOptions.timeRange.addRule('5 minutes');
 
       await flows.dashboards.saveDashboard(page, controls);
 
@@ -147,22 +147,18 @@ test.describe(
 
       await expect(conditionalRenderingOptions.getVisibilityRadio('hide')).toBeChecked();
       // the control is a Select, not a Combobox so we don't assert on the value, we assert on the text
-      await expect(conditionalRenderingOptions.getTimerangeRuleSelect()).toContainText('5 minutes');
+      await expect(conditionalRenderingOptions.timeRange.getRuleSelect()).toContainText('5 minutes');
 
       await controls.exitEditMode();
 
       // assert that the behavior works when the timerange changes
-      await expect(rows.getTitle('Row A')).toBeVisible();
-      await expect(rows.getContent('Row A')).toBeVisible();
-      await expect(rows.getTitle('Row B')).toBeVisible();
-      await expect(rows.getContent('Row B')).toBeVisible();
+      await expectRowVisibility('Row A', rows, 'visible');
+      await expectRowVisibility('Row B', rows, 'visible');
 
       await controls.timeRange.selectPreset('Last 5 minutes');
 
-      await expect(rows.getTitle('Row A')).toBeVisible();
-      await expect(rows.getContent('Row A')).toBeVisible();
-      await expect(rows.getTitle('Row B')).not.toBeVisible();
-      await expect(rows.getContent('Row B')).not.toBeVisible();
+      await expectRowVisibility('Row A', rows, 'visible');
+      await expectRowVisibility('Row B', rows, 'hidden');
     });
 
     test('Combine several rules on a tab and remove one', async ({ page, selectors, controls, tabs, sidebar }) => {
@@ -185,13 +181,13 @@ test.describe(
 
       // a single rule leaves no choice, so no match selector is shown
       await conditionalRenderingOptions.selectVisibility('hide');
-      await conditionalRenderingOptions.addVariableRule('letter', '=', 'beta');
+      await conditionalRenderingOptions.templateVariable.addRule('letter', '=', 'beta');
 
       await expect(conditionalRenderingOptions.getMatchTypeRadio('all')).not.toBeVisible();
       await expect(conditionalRenderingOptions.getMatchTypeRadio('any')).not.toBeVisible();
 
       // a second rule brings up the match selector
-      await conditionalRenderingOptions.addTimeRangeRule('30 minutes');
+      await conditionalRenderingOptions.timeRange.addRule('30 minutes');
 
       await expect(conditionalRenderingOptions.getMatchTypeRadio('all')).toBeVisible();
       await expect(conditionalRenderingOptions.getMatchTypeRadio('any')).toBeVisible();
@@ -220,9 +216,9 @@ test.describe(
       await tabs.select('Tab A');
 
       await expect(conditionalRenderingOptions.getVisibilityRadio('hide')).toBeChecked();
-      await expect(conditionalRenderingOptions.getVariableRuleNameSelect()).toHaveValue('letter');
-      await expect(conditionalRenderingOptions.getVariableRuleOperatorSelect()).toHaveValue('=');
-      await expect(conditionalRenderingOptions.getVariableRuleValueInput()).toHaveValue('beta');
+      await expect(conditionalRenderingOptions.templateVariable.getRuleNameSelect()).toHaveValue('letter');
+      await expect(conditionalRenderingOptions.templateVariable.getRuleOperatorSelect()).toHaveValue('=');
+      await expect(conditionalRenderingOptions.templateVariable.getRuleValueInput()).toHaveValue('beta');
       await expect(conditionalRenderingOptions.getRule('timeRangeSize')).not.toBeVisible();
 
       await controls.exitEditMode();
@@ -352,10 +348,9 @@ test.describe(
       await controls.enterEditMode();
 
       // the row is on the canvas and greyed
-      await expect(rows.getTitle('Row A')).toBeVisible();
-      await expect(rows.getContent('Row A')).toBeVisible();
+      const rowA = await expectRowVisibility('Row A', rows, 'visible');
 
-      const rowAHiddenWrapper = page.locator(HIDDEN_WRAPPER_SELECTOR).filter({ has: rows.getTitle('Row A') });
+      const rowAHiddenWrapper = page.locator(HIDDEN_WRAPPER_SELECTOR).filter({ has: rowA.title });
       await expect(rowAHiddenWrapper).toBeVisible();
 
       // the row is selectable
@@ -364,18 +359,14 @@ test.describe(
       await expect(sidebar.rowOptions.getTitleInput()).toHaveValue('Row A');
 
       // the tab is on the canvas, greyed, with the overlay tooltip on the title icon
-      const tabOneTitle = tabs.getTitle('Tab one');
-      const tabOneContent = tabs.getContent('Tab one');
+      const tabOne = await expectTabVisibility('Tab one', tabs, 'visible');
 
-      await expect(tabOneTitle).toBeVisible();
-      await expect(tabOneContent).toBeVisible();
-
-      const hiddenIcon = tabOneTitle.getByTestId(HIDDEN_ICON_TEST_ID);
+      const hiddenIcon = tabOne.title.getByTestId(HIDDEN_ICON_TEST_ID);
       await expect(hiddenIcon).toBeVisible();
       await hiddenIcon.hover();
       await expect(page.getByRole('tooltip', { name: 'Element is hidden by show/hide rules.' })).toBeVisible();
 
-      const tabOneHiddenWrapper = page.locator(HIDDEN_WRAPPER_SELECTOR).filter({ has: tabOneContent });
+      const tabOneHiddenWrapper = page.locator(HIDDEN_WRAPPER_SELECTOR).filter({ has: tabOne.content });
       await expect(tabOneHiddenWrapper).toBeVisible();
 
       // the tab is selectable
@@ -445,7 +436,7 @@ test.describe(
       await panels.selectByTitle('Panel alpha');
 
       await conditionalRenderingOptions.selectVisibility('hide');
-      await conditionalRenderingOptions.addVariableRule('letter', '=', 'beta');
+      await conditionalRenderingOptions.templateVariable.addRule('letter', '=', 'beta');
 
       // the repeated panel is on the canvas and greyed
       const panelBeta = panels.getPanel('Panel beta');
@@ -460,9 +451,9 @@ test.describe(
       await panels.selectByTitle('Panel alpha');
 
       await expect(conditionalRenderingOptions.getVisibilityRadio('hide')).toBeChecked();
-      await expect(conditionalRenderingOptions.getVariableRuleNameSelect()).toHaveValue('letter');
-      await expect(conditionalRenderingOptions.getVariableRuleOperatorSelect()).toHaveValue('=');
-      await expect(conditionalRenderingOptions.getVariableRuleValueInput()).toHaveValue('beta');
+      await expect(conditionalRenderingOptions.templateVariable.getRuleNameSelect()).toHaveValue('letter');
+      await expect(conditionalRenderingOptions.templateVariable.getRuleOperatorSelect()).toHaveValue('=');
+      await expect(conditionalRenderingOptions.templateVariable.getRuleValueInput()).toHaveValue('beta');
 
       await controls.exitEditMode();
 

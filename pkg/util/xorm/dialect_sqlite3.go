@@ -363,8 +363,8 @@ func (db *sqlite3) GetColumns(tableName string) ([]string, map[string]*core.Colu
 		if strings.HasPrefix(strings.TrimSpace(colStr), "PRIMARY KEY") {
 			parts := strings.Split(strings.TrimSpace(colStr), "(")
 			if len(parts) == 2 {
-				pkCols := strings.Split(strings.TrimRight(strings.TrimSpace(parts[1]), ")"), ",")
-				for _, pk := range pkCols {
+				pkCols := strings.SplitSeq(strings.TrimRight(strings.TrimSpace(parts[1]), ")"), ",")
+				for pk := range pkCols {
 					if col, ok := cols[strings.Trim(strings.TrimSpace(pk), "`")]; ok {
 						col.IsPrimaryKey = true
 					}

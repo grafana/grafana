@@ -57,6 +57,13 @@ const (
 	IndexPhasePromote = "promote"
 )
 
+// State of the documents counted by the indexed kinds metric. Deleted documents
+// are the ones an index keeps so they can be found in trash.
+const (
+	IndexedDocumentsLive    = "live"
+	IndexedDocumentsDeleted = "deleted"
+)
+
 // What was being done to the index, used as the path label. Trash is the pass
 // over deleted objects that a build makes when the index keeps them.
 const (
@@ -77,8 +84,8 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 		}),
 		IndexedKinds: promauto.With(reg).NewGaugeVec(prometheus.GaugeOpts{
 			Name: "index_server_indexed_kinds",
-			Help: "Number of indexed documents by kind",
-		}, []string{"kind"}),
+			Help: "Number of indexed documents by kind. Live documents and deleted ones the index keeps so they can be found in trash are reported separately.",
+		}, []string{"kind", "state"}), // state is either "live" or "deleted"
 		IndexCreationTime: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "index_server_index_build_time_seconds",
 			Help:                            "Time it takes to successfully build an index. Failed or skipped builds are not counted.",

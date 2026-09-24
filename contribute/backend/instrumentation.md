@@ -114,7 +114,9 @@ There are many possible types of metrics that can be tracked. One popular method
 
 ### Naming conventions
 
-Use the namespace `grafana` to prefix any defined metric names with `grafana_`. This prefix makes it clear for operators that any metric named `grafana_*` belongs to Grafana.
+Metric names are exposed with a `grafana_` prefix, so operators can tell that any `grafana_*` metric belongs to Grafana. You do not have to add the prefix yourself: the gatherer adds it when metrics are scraped, to every name that does not already start with `grafana_` or `go_` (see `addPrefixWrapper` in [pkg/infra/metrics/service.go](/pkg/infra/metrics/service.go)). A metric declared as `index_build_duration_seconds` is therefore scraped as `grafana_index_build_duration_seconds`.
+
+Even so, write the whole name out in the `Name` field, prefix included, rather than relying on the gatherer or splitting the name across `Namespace` and `Subsystem`. The prefix is not added twice, and a name written in one piece is one you can search the code base for after reading it on a dashboard. Metrics that do it the other way still work and do not need renaming.
 
 Use snake_case style when naming metrics; for example, `http_request_duration_seconds` instead of `httpRequestDurationSeconds`.
 

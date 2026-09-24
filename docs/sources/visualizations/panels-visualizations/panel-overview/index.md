@@ -66,7 +66,7 @@ If an option is only available in view mode or edit mode, that's indicated:
   - **Data**: Open the **Inspect** drawer in the **Data** tab.
   - **Query**: Open the **Inspect** drawer in the **Query** tab.
   - **Panel JSON**: Open the **Inspect** drawer in the **JSON** tab.
-- **Time settings**: Opens the **Panel time settings** drawer where you can set panel-specific time options. Public preview. For more information, refer to [Panel time settings](#panel-time-settings).
+- **Time settings**: Opens the **Panel time settings** drawer where you can set panel-specific time options. For more information, refer to [Panel time settings](#panel-time-settings).
 - **Styles**: Edit mode only. Copy and paste styles from one panel to another in the same dashboard. For more information, refer to [Copy and paste panel styles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-editor-overview/#copy-and-paste-panel-styles).
 - **Assistant**: View mode only. Access Grafana Assistant help options. This option is only available on Grafana Cloud.
 - **Metrics drilldown**: Open the panel in the **Drilldown > Metrics** feature for further exploration. For more information, refer to [Metrics drilldown](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/simplified-exploration/metrics/).
@@ -145,16 +145,15 @@ By hovering over a panel with the mouse you can use some shortcuts that target t
 
 ## Panel time settings
 
-{{< docs/public-preview product="Panel time settings" featureFlag="`panelTimeSettings`" >}}
-
 You can configure the following settings to control the time range for a panel:
 
-| Option                | Description                                                                                                                                                              |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Panel time range      | Overrides the dashboard time range. Use one of the preset values or enter a custom value like `5m` or `2h`.                                                              |
-| Time shift            | Adds a time shift relative to the dashboard or panel time range. Use one of the preset values or enter a custom value like `5m` or `2h`.                                 |
-| Time comparison       | <p>Compare data between two time ranges. Applied after **Time shift** when used together.</p><p>To try out this feature, enable the `timeComparison` feature toggle.</p> |
-| Hide panel time range | Don't show the panel time range in the panel header.                                                                                                                     |
+| Option                         | Description                                                                                                                                                                                                                                                     |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Panel time range               | Overrides the dashboard time range. Use one of the preset values or enter a custom value like `5m` or `2h`.                                                                                                                                                     |
+| Time shift                     | Adds a time shift relative to the dashboard or panel time range. Use one of the preset values or enter a custom value like `5m` or `2h`.                                                                                                                        |
+| Time comparison                | Compares data with an earlier time range, such as the day or week before. Applied after **Time shift** when used together.                                                                                                                                      |
+| Comparison tooltip delta color | Colors the change between the original and comparison values in the tooltip. An increase is green with **Standard**, red with **Inverted**, or the series color with **Same as value**. Only shown for time series visualizations with **Time comparison** set. |
+| Hide panel time range          | Don't show the panel time range in the panel header.                                                                                                                                                                                                            |
 
 ## Pan and zoom panel time range
 

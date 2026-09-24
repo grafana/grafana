@@ -2,39 +2,39 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 /**
- * Notebooks deliberately reuse dashboard RBAC rather than defining their own actions: the backend's
- * notebook authorizer only adds the feature-flag gate and otherwise defers to the same authorizer
- * every other dashboard resource uses.
+ * One action per verb, matching what the apiserver enforces: read/create/write/delete
+ * (pkg/registry/apis/folders/sub_access.go). The fixed reader and writer roles bundle them, so these
+ * only come apart for a custom role — where checking the wrong one both hides affordances a user is
+ * entitled to and offers ones the backend will deny.
  *
- * This is an org-level check, not a per-notebook one — the list response carries no per-resource
- * access info, so there is nothing to check a single notebook against. It mirrors how the list page
- * already gates creation on `dashboards:create`.
- *
- * Note this is not interchangeable with `DashboardScene.canEditDashboard()`, which also requires
- * `!isEmbedded`. Notebook scenes are always embedded, so that helper is false for every notebook.
+ * All org-level rather than per-notebook: the list response carries no per-resource access info, so
+ * there is nothing to check a single notebook against.
+ */
+
+/**
+ * Not interchangeable with `DashboardScene.canEditDashboard()`, which also requires `!isEmbedded`.
+ * Notebook scenes are always embedded, so that helper is false for every notebook.
  */
 export function canEditNotebooks(): boolean {
-  return contextSrv.hasPermission(AccessControlAction.DashboardsWrite);
-}
-
-/** Creating a notebook is its own action, and the picker offers it as a separate route. */
-export function canCreateNotebooks(): boolean {
-  return contextSrv.hasPermission(AccessControlAction.DashboardsCreate);
+  return contextSrv.hasPermission(AccessControlAction.NotebooksWrite);
 }
 
 /**
- * Delete is a separate action from write: a user who may edit a notebook is not automatically allowed
- * to remove it. Org-level for the same reason canEditNotebooks is — the list carries no per-resource
- * access info, so there is nothing to check a single notebook against.
+ * `notebooks:create` is granted on `folders:*` rather than `notebooks:*`, the create verb resolving
+ * root to the general folder. It still answers here, because hasPermission ignores scope.
  */
+export function canCreateNotebooks(): boolean {
+  return contextSrv.hasPermission(AccessControlAction.NotebooksCreate);
+}
+
+/** Separate from write: editing a notebook does not imply being allowed to remove it. */
 export function canDeleteNotebooks(): boolean {
-  return contextSrv.hasPermission(AccessControlAction.DashboardsDelete);
+  return contextSrv.hasPermission(AccessControlAction.NotebooksDelete);
 }
 
 /**
- * Either permission is enough to open the picker, because it offers two routes: adding to a notebook
- * that already exists needs write, and creating one needs create. The modal hides whichever tab the
- * user cannot use.
+ * Either is enough to open the picker, which offers two routes: adding to a notebook that already
+ * exists needs write, creating one needs create. The modal hides whichever tab the user cannot use.
  */
 export function canAddPanelToNotebook(): boolean {
   return canEditNotebooks() || canCreateNotebooks();

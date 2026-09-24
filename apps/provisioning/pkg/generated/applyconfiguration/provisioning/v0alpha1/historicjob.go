@@ -21,7 +21,7 @@ import (
 //
 // The repository name and type are stored as labels.
 type HistoricJobApplyConfiguration struct {
-	v1.TypeMetaApplyConfiguration    `json:",inline"`
+	v1.TypeMetaApplyConfiguration    `json:""`
 	*v1.ObjectMetaApplyConfiguration `json:"metadata,omitempty"`
 	Spec                             *JobSpecApplyConfiguration   `json:"spec,omitempty"`
 	Status                           *JobStatusApplyConfiguration `json:"status,omitempty"`

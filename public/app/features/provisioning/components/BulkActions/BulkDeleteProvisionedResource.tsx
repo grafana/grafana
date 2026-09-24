@@ -7,8 +7,7 @@ import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { Button, Stack } from '@grafana/ui';
 import { type Job, type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { AffectedFolderContents } from 'app/features/browse-dashboards/components/BrowseActions/AffectedFolderContents';
-import { getSelectedFolderUIDs } from 'app/features/browse-dashboards/components/BrowseActions/utils';
-import { collectSelectedItems } from 'app/features/browse-dashboards/utils/dashboards';
+import { collectSelectedItems, getSelectedUIDs } from 'app/features/browse-dashboards/utils/dashboards';
 import {
   RepoViewStatus,
   useGetResourceRepositoryView,
@@ -139,12 +138,12 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
                   </Trans>
                 }
                 emptyMessage={t('browse-dashboards.bulk-delete-resources-form.folder-empty', '', {
-                  count: getSelectedFolderUIDs(selectedItems).length,
+                  count: getSelectedUIDs(selectedItems, 'folder').length,
                   defaultValue_one: 'Selected folder is empty',
                   defaultValue_other: 'Selected folders are empty',
                 })}
                 nonEmptyMessage={t('browse-dashboards.bulk-delete-resources-form.folder-not-empty', '', {
-                  count: getSelectedFolderUIDs(selectedItems).length,
+                  count: getSelectedUIDs(selectedItems, 'folder').length,
                   defaultValue_one: 'Selected folder contains resources that will be deleted',
                   defaultValue_other: 'Selected folders contain resources that will be deleted',
                 })}

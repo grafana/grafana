@@ -30,6 +30,12 @@ For basic configuration provisioning refer to [Provision Grafana](https://grafan
 
 {{< /admonition >}}
 
+## Authentication settings stored in the database take precedence
+
+Grafana stores SAML, OAuth, and LDAP settings in its database when you configure them through the [SSO Settings API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/sso-settings/), the SAML or OAuth UI, Terraform, or [settings updates at runtime](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/settings-updates-at-runtime/). Stored values override this file, and nothing in the UI or the file says so, which most often surprises people during credential rotation.
+
+If a change to this file appears to have no effect, refer to [Check for stored settings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/settings-updates-at-runtime/#check-for-stored-settings).
+
 ## Configuration file location
 
 The default settings for a Grafana instance are stored in the `<WORKING DIRECTORY>/conf/defaults.ini` file.
@@ -787,6 +793,12 @@ When `false`, the HTTP header `X-Frame-Options: deny` is set in Grafana HTTP res
 The main goal is to mitigate the risk of [Clickjacking](https://owasp.org/www-community/attacks/Clickjacking).
 Default is `false`.
 
+#### `asset_sri_checks_enabled`
+
+Set to `true` to enable [Subresource Integrity (SRI)](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity) checks on Grafana's own JavaScript assets. This helps protect against tampered or poisoned JavaScript assets being served to your users. Default is `false`.
+
+Don't enable this setting if a reverse proxy, CDN, or other network intermediary rewrites the contents of JavaScript responses, because doing so causes the integrity checks to fail and Grafana to stop loading.
+
 #### `strict_transport_security`
 
 Set to `true` if you want to enable HTTP `Strict-Transport-Security` (HSTS) response header. Only use this when HTTPS is enabled in your configuration, or when there is another upstream system that ensures your application does HTTPS (like a frontend load balancer). HSTS tells browsers that the site should only be accessed using HTTPS.
@@ -915,10 +927,6 @@ The `preload` value given to newly created dashboards. When `true`, a new dashbo
 The value is written into the dashboard when it is created, so authors can change it in dashboard settings afterwards and their choice wins.
 
 This setting only applies to dashboards created after you set it. Existing dashboards keep whatever `preload` value they already have, so turning it on never changes how they behave. It applies to dashboards created in the UI; dashboards created through the API or provisioning use the `preload` value in the payload.
-
-#### `report_render_query_grace_period`
-
-How long the report render page (/d-report/) waits, after all panel queries appear to have settled, before telling the image renderer the dashboard is done. This guards against repeat panels that register their queries late (e.g. after a repeat variable's own query resolves), which can otherwise get captured blank. Only used when the feature flag `reportRenderQueryDebounce` is enabled. Default is `3s`.
 
 ### `[dashboard_cleanup]`
 
@@ -2837,6 +2845,14 @@ To prevent automatic updates for specific plugins, pin them to a specific versio
 
 Directory containing Marketplace license files for plugins. Name each file `license-<PLUGIN_ID>.jwt`.
 Defaults to the Grafana data path, alongside the default Enterprise `license.jwt` file.
+
+#### `renewal_enabled`
+
+Available in Grafana Enterprise and Grafana Pro.
+
+Controls periodic renewal of persisted Marketplace plugin licenses. The default is `true`.
+
+Set this option to `false` to disable automatic renewal network requests.
 
 <hr>
 

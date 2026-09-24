@@ -16,7 +16,7 @@ import { AddedLinksRegistry } from './AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './ExposedComponentsRegistry';
 import { type PluginExtensionRegistries } from './types';
 
-function initRegistries(apps: AppPluginConfig[]): PluginExtensionRegistries {
+export function initRegistries(apps: AppPluginConfig[]): PluginExtensionRegistries {
   const addedComponentsRegistry = new AddedComponentsRegistry(apps);
   const exposedComponentsRegistry = new ExposedComponentsRegistry(apps);
   const addedLinksRegistry = new AddedLinksRegistry(apps);

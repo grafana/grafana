@@ -5,6 +5,8 @@ import { pathToFileURL } from 'node:url';
 import open from 'open';
 import type { Compiler } from 'webpack';
 
+import { enhanceStatsViewer } from './statsViewerEnhancements.ts';
+
 const STATS_FILENAME = 'bundle-stats.html';
 const STATS_FILENAME_FILT = 'bundle-stats-filtered.html';
 const STATS_FILTER_FILENAME = 'statsFilter.ts';
@@ -64,14 +66,19 @@ export class StatsViewerPlugin {
 
 async function updateReport(statsPath: string, statsPathFilt: string) {
   try {
+    const originalHTML = fs.readFileSync(statsPath, 'utf8');
+    const statsHTML = enhanceStatsViewer(originalHTML);
+    if (statsHTML !== originalHTML) {
+      fs.writeFileSync(statsPath, statsHTML);
+    }
+
     if (!FILTER_STATS) {
-      fs.copyFileSync(statsPath, statsPathFilt);
+      fs.writeFileSync(statsPathFilt, statsHTML);
       return;
     }
 
     const { statsFilter } = await importStatsFilter();
     const includeFilenames = filenamesFromRequestUrls(statsFilter.requestUrls);
-    const statsHTML = fs.readFileSync(statsPath, 'utf8');
     const filteredStatsHTML = statsHTML.replace(/(window.chartData = )(\[.*?\])(;)/, (_, head, data, tail) => {
       const nodes: BundleNode[] = JSON.parse(data);
       const { exclude, minDominance } = statsFilter;
