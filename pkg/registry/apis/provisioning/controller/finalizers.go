@@ -222,7 +222,7 @@ func (e *nonEmptyFolderError) Error() string {
 		label = fmt.Sprintf("%q (UID: %s)", e.folder.Title, e.folder.Name)
 	}
 	return fmt.Sprintf(
-		"Repository deletion is blocked because folder %s contains resources not managed by this repository. Remove or move the remaining resources from this folder. Grafana will retry automatically.",
+		"Repository deletion is blocked by unmanaged resources in folder %s. Move or remove them, or release the repository's remaining resources. Grafana will retry automatically.",
 		label,
 	)
 }
