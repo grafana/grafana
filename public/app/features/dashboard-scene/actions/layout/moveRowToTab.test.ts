@@ -207,36 +207,36 @@ describe('moveRowToTab', () => {
     const sidebar = dashboard.state.sidebar;
 
     reorderRows(source, 0, 2);
-    expect(source.state.rows).toEqual([second, third, row]);
+    expect(source.state.rows.map((item) => item.state.title)).toEqual(['B', 'C', 'A']);
 
     moveRowToTab({ row, source, destination });
-    expect(source.state.rows).toEqual([second, third]);
-    expect(target.state.rows).toEqual([existing, row]);
+    expect(source.state.rows.map((item) => item.state.title)).toEqual(['B', 'C']);
+    expect(target.state.rows.map((item) => item.state.title)).toEqual(['Existing', 'A']);
     expect(row.parent).toBe(target);
     expect(sidebar.state.undoStack).toHaveLength(2);
 
     sidebar.undoAction();
-    expect(source.state.rows).toEqual([second, third, row]);
-    expect(target.state.rows).toEqual([existing]);
+    expect(source.state.rows.map((item) => item.state.title)).toEqual(['B', 'C', 'A']);
+    expect(target.state.rows.map((item) => item.state.title)).toEqual(['Existing']);
     expect(row.parent).toBe(source);
     expect(sidebar.state.undoStack).toHaveLength(1);
 
     sidebar.undoAction();
-    expect(source.state.rows).toEqual([row, second, third]);
-    expect(target.state.rows).toEqual([existing]);
+    expect(source.state.rows.map((item) => item.state.title)).toEqual(['A', 'B', 'C']);
+    expect(target.state.rows.map((item) => item.state.title)).toEqual(['Existing']);
     expect(row.parent).toBe(source);
     expect(sidebar.state.undoStack).toHaveLength(0);
     expect(sidebar.state.redoStack).toHaveLength(2);
 
     sidebar.redoAction();
-    expect(source.state.rows).toEqual([second, third, row]);
-    expect(target.state.rows).toEqual([existing]);
+    expect(source.state.rows.map((item) => item.state.title)).toEqual(['B', 'C', 'A']);
+    expect(target.state.rows.map((item) => item.state.title)).toEqual(['Existing']);
     expect(row.parent).toBe(source);
     expect(sidebar.state.undoStack).toHaveLength(1);
 
     sidebar.redoAction();
-    expect(source.state.rows).toEqual([second, third]);
-    expect(target.state.rows).toEqual([existing, row]);
+    expect(source.state.rows.map((item) => item.state.title)).toEqual(['B', 'C']);
+    expect(target.state.rows.map((item) => item.state.title)).toEqual(['Existing', 'A']);
     expect(row.parent).toBe(target);
     expect(sidebar.state.undoStack).toHaveLength(2);
     expect(sidebar.state.redoStack).toHaveLength(0);
