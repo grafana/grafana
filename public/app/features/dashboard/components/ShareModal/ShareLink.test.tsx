@@ -45,19 +45,10 @@ function mockLocationHref(href: string) {
 }
 
 const mockUid = 'abc123';
-jest.mock('@grafana/runtime', () => {
-  const original = jest.requireActual('@grafana/runtime');
-
-  return {
-    ...original,
-    getBackendSrv: () => ({
-      post: jest.fn().mockResolvedValue({
-        uid: mockUid,
-        url: `http://localhost:3000/goto/${mockUid}`,
-      }),
-    }),
-  };
-});
+jest.mock('app/store/store', () => ({
+  ...jest.requireActual('app/store/store'),
+  dispatch: jest.fn(() => Promise.resolve({ data: { metadata: { name: mockUid } } })),
+}));
 
 describe('ShareModal', () => {
   let templateSrv = initTemplateSrv('key', []);
@@ -81,6 +72,8 @@ describe('ShareModal', () => {
     mockLocationHref('http://server/#!/test');
     config.rendererAvailable = true;
     contextSrv.user.orgId = 1;
+    // Short URLs are built from `config.bootData.user.orgId` on on-prem instances
+    config.bootData.user.orgId = 1;
     props = {
       panel: new PanelModel({ id: 22, options: {}, fieldConfig: { defaults: {}, overrides: [] } }),
       dashboard: createDashboardModelFixture({
@@ -173,7 +166,7 @@ describe('ShareModal', () => {
       const linkUrl = await screen.findByRole('textbox', { name: 'Link URL' });
 
       await waitFor(() => {
-        expect(linkUrl).toHaveValue(`http://localhost:3000/goto/${mockUid}`);
+        expect(linkUrl).toHaveValue(`http://localhost/goto/${mockUid}?orgId=1`);
       });
     });
 
