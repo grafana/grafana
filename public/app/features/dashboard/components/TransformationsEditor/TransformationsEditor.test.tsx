@@ -137,6 +137,20 @@ describe('TransformationsEditor', () => {
 
         expect(screen.getByTestId(debuggerSelector)).toBeInTheDocument();
       });
+
+      it('offers distinct copy actions for the input and output data', async () => {
+        setup([
+          {
+            id: 'reduce',
+            options: {},
+          },
+        ]);
+
+        await userEvent.click(screen.getByTestId(selectors.components.QueryEditorRow.actionButton('Debug')));
+
+        expect(screen.getByRole('button', { name: 'Copy input data to clipboard' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Copy output data to clipboard' })).toBeInTheDocument();
+      });
     });
   });
 });

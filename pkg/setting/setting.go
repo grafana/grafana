@@ -736,7 +736,6 @@ type Cfg struct {
 	IndexCacheTTL                              time.Duration
 	IndexMinUpdateInterval                     time.Duration // Don't update index if it was updated less than this interval ago.
 	IndexModificationCacheTTL                  time.Duration // TTL for dedup cache used in ListModifiedSince. 0 disables the cache.
-	IndexDeletedDocuments                      bool          // Keep deleted objects in the search index, so trash searches can find them.
 	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will be rebuilt asynchronously.
 	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will be rebuilt asynchronously.
 	IndexSnapshotEnabled                       bool          // Enable remote index snapshots
@@ -806,7 +805,8 @@ type Cfg struct {
 	VectorDBUser                 string
 	VectorDBPassword             string
 	VectorDBSSLMode              string
-	VectorIndexingEnabled        bool          // run the embedding backfiller and reconciler
+	VectorIndexingEnabled        bool // run the embedding backfiller and reconciler
+	VectorBackfillPageSize       int
 	VectorReconcilerInterval     time.Duration // reconciler tick interval; default 60s
 	VectorEmbeddingCountInterval time.Duration // stored-embedding gauge sample interval; 0 disables
 	VectorPromotionThreshold     int           // row count per tenant to trigger promotion
@@ -2071,7 +2071,12 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.AssetSriChecksEnabled = security.Key("asset_sri_checks_enabled").MustBool(false)
 
 	cfg.ContentTypeProtectionHeader = security.Key("x_content_type_options").MustBool(true)
+
 	cfg.XSSProtectionHeader = security.Key("x_xss_protection").MustBool(true)
+	if cfg.XSSProtectionHeader {
+		cfg.Logger.Warn("Deprecation Notice: The [security]x_xss_protection setting is enabled, but it will be removed in a future major version. Support for it has been removed by browsers. Consider disabling it in the meantime and using [security]content_security_policy instead.")
+	}
+
 	cfg.ActionsAllowPostURL = security.Key("actions_allow_post_url").MustString("")
 	cfg.StrictTransportSecurity = security.Key("strict_transport_security").MustBool(false)
 	cfg.StrictTransportSecurityMaxAge = security.Key("strict_transport_security_max_age_seconds").MustInt(86400)

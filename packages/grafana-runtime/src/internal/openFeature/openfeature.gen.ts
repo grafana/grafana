@@ -20,7 +20,7 @@ export const FlagKeys = {
   AlertingManualAssistantInvestigation: "alerting.manualAssistantInvestigation",
   /** Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them. */
   AlertingRuleQuality: "alerting.ruleQuality",
-  /** Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana */
+  /** Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source */
   AlertingSyncExternalAlertmanager: "alerting.syncExternalAlertmanager",
   /** Enables new analytics framework */
   AnalyticsFramework: "analyticsFramework",
@@ -40,6 +40,8 @@ export const FlagKeys = {
   DashboardVectorSearch: "dashboard.vectorSearch",
   /** Enables the Assistant button in the dashboard templates card */
   DashboardTemplatesAssistantButton: "dashboardTemplatesAssistantButton",
+  /** Enables undo/redo in dynamic dashboards */
+  DashboardUndoRedo: "dashboardUndoRedo",
   /** Use the new datasource API groups for datasource resource requests, frontend flag */
   DatasourcesApiserverUseNewAPIsForDatasourceResources: "datasources.apiserver.useNewAPIsForDatasourceResources",
   /** Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request */
@@ -258,7 +260,7 @@ export const useFlagAlertingRuleQuality = (options?: ReactFlagEvaluationOptions)
 };
 
 /**
- * Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana
+ * Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source
  *
  * **Details:**
  * - flag key: `alerting.syncExternalAlertmanager`
@@ -365,6 +367,17 @@ export const useFlagDashboardVectorSearch = (options?: ReactFlagEvaluationOption
  */
 export const useFlagDashboardTemplatesAssistantButton = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dashboardTemplatesAssistantButton", false, options).value;
+};
+
+/**
+ * Enables undo/redo in dynamic dashboards
+ *
+ * **Details:**
+ * - flag key: `dashboardUndoRedo`
+ * - default value: `false`
+ */
+export const useFlagDashboardUndoRedo = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboardUndoRedo", false, options).value;
 };
 
 /**

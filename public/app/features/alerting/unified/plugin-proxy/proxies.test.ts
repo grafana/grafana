@@ -1,6 +1,9 @@
-import { mockDataSource } from '../mocks';
+import { AccessControlAction } from 'app/types/accessControl';
+
+import { grantUserPermissions, mockDataSource } from '../mocks';
 import { setupDataSources } from '../testSetup/datasources';
 import { SupportedPlugin } from '../types/pluginBridges';
+import { RuleFormType } from '../types/rule-form';
 
 import { routeProxies } from './proxies';
 import { buildProxyContext, resolveProxyTarget } from './resolve';
@@ -151,6 +154,68 @@ describe('rule pages', () => {
 
     it('leaves a clone of a Grafana-managed rule alone', async () => {
       expect(await resolve(path, '/alerting/new?copyFrom=some-rule-uid')).toBeUndefined();
+    });
+
+    describe('?defaults=', () => {
+      const withDefaults = (defaults: object | string) =>
+        `/alerting/new/alerting?defaults=${encodeURIComponent(typeof defaults === 'string' ? defaults : JSON.stringify(defaults))}`;
+
+      it('sends a prefilled data source managed alert rule to the plugin, keeping the prefill', async () => {
+        const defaults = { type: RuleFormType.cloudAlerting, name: 'high latency' };
+        const target = await resolve(path, withDefaults(defaults));
+        const params = new URLSearchParams(target?.split('?')[1]);
+
+        expect(target?.startsWith(`${PLUGIN_BASE}/rules/new?`)).toBe(true);
+        expect(params.get('type')).toBe('alerting');
+        expect(params.get('defaults')).toBe(JSON.stringify(defaults));
+      });
+
+      it('tells the plugin a prefilled data source managed recording rule is a recording rule', async () => {
+        const target = await resolve(path, withDefaults({ type: RuleFormType.cloudRecording }));
+
+        expect(new URLSearchParams(target?.split('?')[1]).get('type')).toBe('recording');
+      });
+
+      it.each([
+        ['a Grafana managed prefill', { type: RuleFormType.grafana }],
+        ['a prefill without a type', { name: 'high latency' }],
+        ['a prefill that is not JSON', 'not json'],
+      ])('leaves %s alone', (_name, defaults) => {
+        expect(matches(path, withDefaults(defaults))).toBe(false);
+      });
+    });
+
+    describe('for someone who can only create data source managed rules', () => {
+      beforeEach(() => {
+        grantUserPermissions([AccessControlAction.DataSourcesRead, AccessControlAction.AlertingRuleExternalWrite]);
+      });
+
+      it.each(['/alerting/new', '/alerting/new/alerting'])(
+        'sends %s to the plugin, since the Grafana form would only offer a data source managed rule',
+        (url) => {
+          expect(matches(path, url)).toBe(true);
+        }
+      );
+
+      it('leaves the Grafana recording rule form alone', () => {
+        expect(matches(path, '/alerting/new/grafana-recording')).toBe(false);
+      });
+
+      it('respects a prefill that asks for a Grafana managed rule', () => {
+        const defaults = encodeURIComponent(JSON.stringify({ type: RuleFormType.grafana }));
+        expect(matches(path, `/alerting/new?defaults=${defaults}`)).toBe(false);
+      });
+    });
+
+    it('leaves /alerting/new alone for someone who can create both kinds of rule', () => {
+      grantUserPermissions([
+        AccessControlAction.FoldersRead,
+        AccessControlAction.AlertingRuleCreate,
+        AccessControlAction.DataSourcesRead,
+        AccessControlAction.AlertingRuleExternalWrite,
+      ]);
+
+      expect(matches(path, '/alerting/new')).toBe(false);
     });
   });
 
