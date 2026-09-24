@@ -22,25 +22,25 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var _ SearchBackend = (*UserLegacySearchClient)(nil)
+var _ SearchBackend = (*legacySearchClient)(nil)
 
 var wildcardsMatcher = regexp.MustCompile(`[\*\?\\]`)
 
-type UserLegacySearchClient struct {
+type legacySearchClient struct {
 	orgService org.Service
 	tracer     trace.Tracer
 	cfg        *setting.Cfg
 }
 
-func NewUserLegacySearchClient(orgService org.Service, tracer trace.Tracer, cfg *setting.Cfg) *UserLegacySearchClient {
-	return &UserLegacySearchClient{
+func NewUserLegacySearchClient(orgService org.Service, tracer trace.Tracer, cfg *setting.Cfg) *legacySearchClient {
+	return &legacySearchClient{
 		orgService: orgService,
 		tracer:     tracer,
 		cfg:        cfg,
 	}
 }
 
-func (c *UserLegacySearchClient) Search(ctx context.Context, req SearchQuery) (*iamv0.GetSearchUsersResponse, error) {
+func (c *legacySearchClient) Search(ctx context.Context, req SearchQuery) (*iamv0.GetSearchUsersResponse, error) {
 	ctx, span := c.tracer.Start(ctx, "user.legacysearch")
 	defer span.End()
 
@@ -110,12 +110,22 @@ func (c *UserLegacySearchClient) Search(ctx context.Context, req SearchQuery) (*
 	return result, nil
 }
 
-func (c *UserLegacySearchClient) isHiddenUser(login string, signedInUser identity.Requester) bool {
+func (c *legacySearchClient) isHiddenUser(login string, signedInUser identity.Requester) bool {
 	if login == "" || signedInUser.GetIsGrafanaAdmin() || login == signedInUser.GetUsername() {
 		return false
 	}
 	_, hidden := c.cfg.HiddenUsers[login]
 	return hidden
+}
+
+// UserSortFieldMapping maps user-search sort fields to legacy SQL sort keys.
+func UserSortFieldMapping() map[string]string {
+	return map[string]string{
+		"lastSeenAt": "lastSeenAtAge",
+		"title":      "name",
+		"login":      "login",
+		"email":      "email",
+	}
 }
 
 func legacyUserSortOptions(sortBy []string) []model.SortOption {

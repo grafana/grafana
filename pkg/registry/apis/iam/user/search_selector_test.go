@@ -25,7 +25,7 @@ func TestUserSearchModeChanges(t *testing.T) {
 	cfg := &setting.Cfg{UnifiedStorage: map[string]setting.UnifiedStorageConfig{}}
 	var calls []string
 	backend := func(name string) SearchBackend {
-		return &FakeUserLegacySearchClient{SearchFunc: func(_ context.Context, query SearchQuery) (*iamv0.GetSearchUsersResponse, error) {
+		return &fakeSearchBackend{SearchFunc: func(_ context.Context, query SearchQuery) (*iamv0.GetSearchUsersResponse, error) {
 			calls = append(calls, name)
 			require.Equal(t, "stacks-1", query.Namespace)
 			require.Equal(t, "a*b", query.Query, "the handler must pass literal user input")
@@ -71,7 +71,7 @@ func TestUserSearchPagination(t *testing.T) {
 	} {
 		t.Run(tt.url, func(t *testing.T) {
 			var got SearchQuery
-			backend := &FakeUserLegacySearchClient{SearchFunc: func(_ context.Context, query SearchQuery) (*iamv0.GetSearchUsersResponse, error) {
+			backend := &fakeSearchBackend{SearchFunc: func(_ context.Context, query SearchQuery) (*iamv0.GetSearchUsersResponse, error) {
 				got = query
 				return iamv0.NewGetSearchUsersResponse(), nil
 			}}
@@ -96,7 +96,7 @@ func TestUserValidationModeChanges(t *testing.T) {
 	cfg := &setting.Cfg{UnifiedStorage: map[string]setting.UnifiedStorageConfig{}}
 	var calls []string
 	backend := func(name string) SearchBackend {
-		return &FakeUserLegacySearchClient{SearchFunc: func(_ context.Context, query SearchQuery) (*iamv0.GetSearchUsersResponse, error) {
+		return &fakeSearchBackend{SearchFunc: func(_ context.Context, query SearchQuery) (*iamv0.GetSearchUsersResponse, error) {
 			calls = append(calls, name)
 			require.Equal(t, "stacks-1", query.Namespace)
 			require.True(t, query.Email != nil || query.Login != nil)
@@ -127,7 +127,7 @@ func (f userReadModeFunc) ReadFromUnified(ctx context.Context, gr schema.GroupRe
 func TestUserSearchSelectionError(t *testing.T) {
 	wantErr := errors.New("mode unavailable")
 	reader := userReadModeFunc(func(context.Context, schema.GroupResource) (bool, error) { return false, wantErr })
-	backend := &FakeUserLegacySearchClient{SearchFunc: func(context.Context, SearchQuery) (*iamv0.GetSearchUsersResponse, error) {
+	backend := &fakeSearchBackend{SearchFunc: func(context.Context, SearchQuery) (*iamv0.GetSearchUsersResponse, error) {
 		t.Fatal("must not search after a selection error")
 		return nil, nil
 	}}
@@ -155,7 +155,7 @@ func TestUserSearchDoesNotFallback(t *testing.T) {
 		}}
 		var legacyCalls, unifiedCalls int
 		backend := func(calls *int) SearchBackend {
-			return &FakeUserLegacySearchClient{SearchFunc: func(context.Context, SearchQuery) (*iamv0.GetSearchUsersResponse, error) {
+			return &fakeSearchBackend{SearchFunc: func(context.Context, SearchQuery) (*iamv0.GetSearchUsersResponse, error) {
 				*calls++
 				return nil, errors.New("search unavailable")
 			}}

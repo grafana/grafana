@@ -22,13 +22,3 @@ type SearchQuery struct {
 	Email *string
 	Login *string
 }
-
-// UserSortFieldMapping maps user-search sort fields to legacy SQL sort keys.
-func UserSortFieldMapping() map[string]string {
-	return map[string]string{
-		"lastSeenAt": "lastSeenAtAge",
-		"title":      "name",
-		"login":      "login",
-		"email":      "email",
-	}
-}

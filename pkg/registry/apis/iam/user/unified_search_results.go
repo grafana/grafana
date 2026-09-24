@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func ParseResults(result *resourcepb.ResourceSearchResponse) (*iamv0.GetSearchUsersResponse, error) {
+func parseResults(result *resourcepb.ResourceSearchResponse) (*iamv0.GetSearchUsersResponse, error) {
 	if result == nil {
 		return iamv0.NewGetSearchUsersResponse(), nil
 	}
@@ -35,7 +35,7 @@ func ParseResults(result *resourcepb.ResourceSearchResponse) (*iamv0.GetSearchUs
 
 func parseTableResults(result *resourcepb.ResourceSearchResponse) (*iamv0.GetSearchUsersResponse, error) {
 	if result.Results == nil {
-		return iamv0.NewGetSearchUsersResponse(), nil
+		return newUserSearchResponse(result, 0), nil
 	}
 
 	colIdx := make(map[string]int, len(result.Results.Columns))

@@ -36,7 +36,7 @@ func TestValidateOnCreate(t *testing.T) {
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: true,
 			},
-			searchClient: &FakeUserLegacySearchClient{},
+			searchClient: &fakeSearchBackend{},
 			expectError:  false,
 		},
 		{
@@ -52,7 +52,7 @@ func TestValidateOnCreate(t *testing.T) {
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: true,
 			},
-			searchClient: &FakeUserLegacySearchClient{},
+			searchClient: &fakeSearchBackend{},
 			expectError:  false,
 		},
 		{
@@ -68,7 +68,7 @@ func TestValidateOnCreate(t *testing.T) {
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: false,
 			},
-			searchClient:  &FakeUserLegacySearchClient{},
+			searchClient:  &fakeSearchBackend{},
 			expectError:   true,
 			errorContains: "only grafana admins can create grafana admins",
 		},
@@ -83,7 +83,7 @@ func TestValidateOnCreate(t *testing.T) {
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: false,
 			},
-			searchClient:  &FakeUserLegacySearchClient{},
+			searchClient:  &fakeSearchBackend{},
 			expectError:   true,
 			errorContains: "user must have either login or email",
 		},
@@ -100,7 +100,7 @@ func TestValidateOnCreate(t *testing.T) {
 				IsGrafanaAdmin: false,
 				OrgRole:        "Viewer",
 			},
-			searchClient: &FakeUserLegacySearchClient{},
+			searchClient: &fakeSearchBackend{},
 			expectError:  false,
 		},
 		{
@@ -116,7 +116,7 @@ func TestValidateOnCreate(t *testing.T) {
 				IsGrafanaAdmin: false,
 				OrgRole:        "Viewer",
 			},
-			searchClient: &FakeUserLegacySearchClient{},
+			searchClient: &fakeSearchBackend{},
 			expectError:  false,
 		},
 		{
@@ -130,7 +130,7 @@ func TestValidateOnCreate(t *testing.T) {
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: false,
 			},
-			searchClient:  &FakeUserLegacySearchClient{},
+			searchClient:  &fakeSearchBackend{},
 			expectError:   true,
 			errorContains: "role is required",
 		},
@@ -146,7 +146,7 @@ func TestValidateOnCreate(t *testing.T) {
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: false,
 			},
-			searchClient:  &FakeUserLegacySearchClient{},
+			searchClient:  &fakeSearchBackend{},
 			expectError:   true,
 			errorContains: "invalid role 'InvalidRole'",
 		},
@@ -162,7 +162,7 @@ func TestValidateOnCreate(t *testing.T) {
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: true,
 			},
-			searchClient: &FakeUserLegacySearchClient{},
+			searchClient: &fakeSearchBackend{},
 			expectError:  false,
 		},
 		{
@@ -178,7 +178,7 @@ func TestValidateOnCreate(t *testing.T) {
 				IsGrafanaAdmin: false,
 				OrgRole:        "Editor",
 			},
-			searchClient:  &FakeUserLegacySearchClient{},
+			searchClient:  &fakeSearchBackend{},
 			expectError:   true,
 			errorContains: "cannot assign a role higher than user's role",
 		},
@@ -195,7 +195,7 @@ func TestValidateOnCreate(t *testing.T) {
 				IsGrafanaAdmin: false,
 				OrgRole:        "Editor",
 			},
-			searchClient: &FakeUserLegacySearchClient{},
+			searchClient: &fakeSearchBackend{},
 			expectError:  false,
 		},
 		{
@@ -214,7 +214,7 @@ func TestValidateOnCreate(t *testing.T) {
 				IsGrafanaAdmin: false,
 				OrgRole:        "Viewer",
 			},
-			searchClient: &FakeUserLegacySearchClient{
+			searchClient: &fakeSearchBackend{
 				Users: []*org.OrgUserDTO{
 					{Email: "existing@example"},
 				},
@@ -239,7 +239,7 @@ func TestValidateOnCreate(t *testing.T) {
 				IsGrafanaAdmin: false,
 				OrgRole:        "Viewer",
 			},
-			searchClient: &FakeUserLegacySearchClient{
+			searchClient: &fakeSearchBackend{
 				Users: []*org.OrgUserDTO{
 					{Login: "existinguser"},
 				},
@@ -392,7 +392,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			requester: &identity.StaticRequester{
 				Type: types.TypeAccessPolicy,
 			},
-			searchClient: &FakeUserLegacySearchClient{},
+			searchClient: &fakeSearchBackend{},
 			expectError:  false,
 		},
 		{
@@ -406,7 +406,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			requester: &identity.StaticRequester{
 				Type: types.TypeAccessPolicy,
 			},
-			searchClient: &FakeUserLegacySearchClient{},
+			searchClient: &fakeSearchBackend{},
 			expectError:  false,
 		},
 		{
@@ -631,7 +631,7 @@ func TestValidateOnUpdate(t *testing.T) {
 				Type:           types.TypeAccessPolicy,
 				IsGrafanaAdmin: true,
 			},
-			searchClient: &FakeUserLegacySearchClient{
+			searchClient: &fakeSearchBackend{
 				Users: []*org.OrgUserDTO{
 					{Email: "two@example"},
 				},
@@ -657,7 +657,7 @@ func TestValidateOnUpdate(t *testing.T) {
 				Type:           types.TypeAccessPolicy,
 				IsGrafanaAdmin: true,
 			},
-			searchClient: &FakeUserLegacySearchClient{
+			searchClient: &fakeSearchBackend{
 				Users: []*org.OrgUserDTO{
 					{Name: "other", UID: "uid456", Login: "two"},
 				},
@@ -677,7 +677,7 @@ func TestValidateOnUpdate(t *testing.T) {
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: true,
 			},
-			searchClient: &FakeUserLegacySearchClient{
+			searchClient: &fakeSearchBackend{
 				Users: []*org.OrgUserDTO{
 					{Login: "testuser", Email: "test@example"},
 				},

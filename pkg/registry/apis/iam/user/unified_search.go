@@ -103,13 +103,5 @@ func (c *unifiedSearchClient) Search(ctx context.Context, query SearchQuery) (*i
 	if err != nil {
 		return nil, err
 	}
-	result, err := ParseResults(resp)
-	if err != nil {
-		return nil, err
-	}
-	if lookup {
-		// A count without rows must still prevent a conflicting user from being saved.
-		result.TotalHits = resp.GetTotalHits()
-	}
-	return result, nil
+	return parseResults(resp)
 }

@@ -182,7 +182,7 @@ func TestUserSearchFieldsAcceptedByIndex(t *testing.T) {
 			require.Nil(t, response.GetError())
 			require.Equal(t, format, response.GetResultFormat())
 
-			parsed, err := ParseResults(response)
+			parsed, err := parseResults(response)
 			require.NoError(t, err)
 			require.Len(t, parsed.Hits, 1)
 			hit := parsed.Hits[0]
@@ -617,27 +617,41 @@ func TestParseResults(t *testing.T) {
 	lastSeen := time.Date(2025, 6, 1, 10, 0, 0, 0, time.UTC).Unix()
 
 	t.Run("nil response returns empty result", func(t *testing.T) {
-		sr, err := ParseResults(nil)
+		sr, err := parseResults(nil)
 		require.NoError(t, err)
 		assert.Empty(t, sr.Hits)
 		assert.Zero(t, sr.TotalHits)
 	})
 
 	t.Run("error in response is propagated", func(t *testing.T) {
-		_, err := ParseResults(&resourcepb.ResourceSearchResponse{
+		_, err := parseResults(&resourcepb.ResourceSearchResponse{
 			Error: &resourcepb.ErrorResult{Code: 500, Message: "boom"},
 		})
 		require.Error(t, err)
 	})
 
-	t.Run("nil results returns empty", func(t *testing.T) {
-		sr, err := ParseResults(&resourcepb.ResourceSearchResponse{TotalHits: 5})
-		require.NoError(t, err)
-		assert.Empty(t, sr.Hits)
+	t.Run("missing rows preserve totals and scores", func(t *testing.T) {
+		for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
+			resourcepb.ResourceSearchRequest_UNSPECIFIED,
+			resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+			resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		} {
+			t.Run(format.String(), func(t *testing.T) {
+				sr, err := parseResults(&resourcepb.ResourceSearchResponse{
+					ResultFormat: format, TotalHits: 5, QueryCost: 1.5, MaxScore: 2.5,
+				})
+				require.NoError(t, err)
+				assert.Empty(t, sr.Hits)
+				assert.NotNil(t, sr.Hits)
+				assert.Equal(t, int64(5), sr.TotalHits)
+				assert.Equal(t, 1.5, sr.QueryCost)
+				assert.Equal(t, 2.5, sr.MaxScore)
+			})
+		}
 	})
 
 	t.Run("column/cell count mismatch errors", func(t *testing.T) {
-		_, err := ParseResults(&resourcepb.ResourceSearchResponse{
+		_, err := parseResults(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: allColumns,
 				Rows: []*resourcepb.ResourceTableRow{
@@ -679,7 +693,7 @@ func TestParseResults(t *testing.T) {
 			},
 		}
 
-		sr, err := ParseResults(resp)
+		sr, err := parseResults(resp)
 		require.NoError(t, err)
 		require.Len(t, sr.Hits, 2)
 		assert.Equal(t, int64(2), sr.TotalHits)
@@ -746,7 +760,7 @@ func TestParseResults(t *testing.T) {
 			}},
 		}
 
-		sr, err := ParseResults(resp)
+		sr, err := parseResults(resp)
 		require.NoError(t, err)
 		require.Len(t, sr.Hits, 1)
 		assert.Equal(t, int64(1), sr.TotalHits)
@@ -768,7 +782,7 @@ func TestParseResults(t *testing.T) {
 	})
 
 	t.Run("only requested columns are populated", func(t *testing.T) {
-		sr, err := ParseResults(&resourcepb.ResourceSearchResponse{
+		sr, err := parseResults(&resourcepb.ResourceSearchResponse{
 			TotalHits: 1,
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: builders.USER_LOGIN}},
@@ -786,7 +800,7 @@ func TestParseResults(t *testing.T) {
 	})
 
 	t.Run("ignores lastSeenAt cell with unexpected length", func(t *testing.T) {
-		sr, err := ParseResults(&resourcepb.ResourceSearchResponse{
+		sr, err := parseResults(&resourcepb.ResourceSearchResponse{
 			TotalHits: 1,
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: builders.USER_LAST_SEEN_AT}},

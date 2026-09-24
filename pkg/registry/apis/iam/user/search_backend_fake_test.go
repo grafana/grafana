@@ -7,13 +7,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
-// FakeUserLegacySearchClient supports validation tests without an index client.
-type FakeUserLegacySearchClient struct {
+// fakeSearchBackend supports search and validation tests without an index client.
+type fakeSearchBackend struct {
 	SearchFunc func(context.Context, SearchQuery) (*iamv0.GetSearchUsersResponse, error)
 	Users      []*org.OrgUserDTO
 }
 
-func (c *FakeUserLegacySearchClient) Search(ctx context.Context, query SearchQuery) (*iamv0.GetSearchUsersResponse, error) {
+func (c *fakeSearchBackend) Search(ctx context.Context, query SearchQuery) (*iamv0.GetSearchUsersResponse, error) {
 	if c.SearchFunc != nil {
 		return c.SearchFunc(ctx, query)
 	}
