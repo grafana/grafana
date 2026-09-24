@@ -6,16 +6,14 @@ import (
 	"reflect"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
-func ValidateOnCreate(ctx context.Context, userSearchClient resourcepb.ResourceIndexClient, obj *iamv0alpha1.User) error {
+func ValidateOnCreate(ctx context.Context, search *dualwrite.Selector[SearchBackend], obj *iamv0alpha1.User) error {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewUnauthorized("no identity found")
@@ -36,6 +34,10 @@ func ValidateOnCreate(ctx context.Context, userSearchClient resourcepb.ResourceI
 		return err
 	}
 
+	userSearchClient, err := search.Resolve(ctx)
+	if err != nil {
+		return err
+	}
 	if err := validateEmail(ctx, userSearchClient, requester.GetNamespace(), obj.Name, obj.Spec.Email); err != nil {
 		return err
 	}
@@ -47,7 +49,7 @@ func ValidateOnCreate(ctx context.Context, userSearchClient resourcepb.ResourceI
 	return nil
 }
 
-func ValidateOnUpdate(ctx context.Context, userSearchClient resourcepb.ResourceIndexClient, oldObj, newObj *iamv0alpha1.User) error {
+func ValidateOnUpdate(ctx context.Context, search *dualwrite.Selector[SearchBackend], oldObj, newObj *iamv0alpha1.User) error {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewUnauthorized("no identity found")
@@ -111,6 +113,14 @@ func ValidateOnUpdate(ctx context.Context, userSearchClient resourcepb.ResourceI
 		return apierrors.NewBadRequest(fmt.Sprintf("invalid role '%s'", newObj.Spec.Role))
 	}
 
+	if newObj.Spec.Email == oldObj.Spec.Email && newObj.Spec.Login == oldObj.Spec.Login {
+		return nil
+	}
+	userSearchClient, err := search.Resolve(ctx)
+	if err != nil {
+		return err
+	}
+
 	if newObj.Spec.Email != oldObj.Spec.Email {
 		if err := validateEmail(ctx, userSearchClient, requester.GetNamespace(), newObj.Name, newObj.Spec.Email); err != nil {
 			return err
@@ -170,16 +180,8 @@ func validateRole(requester identity.Requester, obj *iamv0alpha1.User) error {
 	return nil
 }
 
-func validateEmail(ctx context.Context, searchClient resourcepb.ResourceIndexClient, namespace, name, email string) error {
-	req := createUserSearchRequest(namespace, []*resourcepb.Requirement{
-		{
-			Key:      fieldEmail,
-			Operator: string(selection.Equals),
-			Values:   []string{email},
-		},
-	})
-
-	resp, err := searchClient.Search(ctx, req)
+func validateEmail(ctx context.Context, searchClient SearchBackend, namespace, name, email string) error {
+	resp, err := searchClient.Search(ctx, SearchQuery{Namespace: namespace, Email: &email})
 	if err != nil {
 		return err
 	}
@@ -189,11 +191,7 @@ func validateEmail(ctx context.Context, searchClient resourcepb.ResourceIndexCli
 	if resp.TotalHits > 0 {
 		// If the found user is the same as the one being created/updated, it's not a conflict.
 		// This is required for Mode 2 when the resource is written to LegacyStorage and UnifiedStorage.
-		resultName, found, err := firstUserSearchResultName(resp)
-		if err != nil {
-			return err
-		}
-		if found && resultName == name {
+		if len(resp.Hits) > 0 && resp.Hits[0].Name == name {
 			return nil
 		}
 		return apierrors.NewConflict(iamv0alpha1.UserResourceInfo.GroupResource(),
@@ -204,15 +202,8 @@ func validateEmail(ctx context.Context, searchClient resourcepb.ResourceIndexCli
 	return nil
 }
 
-func validateLogin(ctx context.Context, searchClient resourcepb.ResourceIndexClient, namespace, name, login string) error {
-	req := createUserSearchRequest(namespace, []*resourcepb.Requirement{
-		{
-			Key:      fieldLogin,
-			Operator: string(selection.Equals),
-			Values:   []string{login},
-		},
-	})
-	resp, err := searchClient.Search(ctx, req)
+func validateLogin(ctx context.Context, searchClient SearchBackend, namespace, name, login string) error {
+	resp, err := searchClient.Search(ctx, SearchQuery{Namespace: namespace, Login: &login})
 	if err != nil {
 		return err
 	}
@@ -222,11 +213,7 @@ func validateLogin(ctx context.Context, searchClient resourcepb.ResourceIndexCli
 	if resp.TotalHits > 0 {
 		// If the found user is the same as the one being created/updated, it's not a conflict.
 		// This is required for Mode 2 when the resource is written to LegacyStorage and UnifiedStorage.
-		resultName, found, err := firstUserSearchResultName(resp)
-		if err != nil {
-			return err
-		}
-		if found && resultName == name {
+		if len(resp.Hits) > 0 && resp.Hits[0].Name == name {
 			return nil
 		}
 		return apierrors.NewConflict(iamv0alpha1.UserResourceInfo.GroupResource(),
@@ -235,39 +222,4 @@ func validateLogin(ctx context.Context, searchClient resourcepb.ResourceIndexCli
 	}
 
 	return nil
-}
-
-func firstUserSearchResultName(resp *resourcepb.ResourceSearchResponse) (string, bool, error) {
-	switch resp.GetResultFormat() {
-	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
-		rows := resp.GetResults().GetRows()
-		if len(rows) == 0 {
-			return "", false, nil
-		}
-		return rows[0].GetKey().GetName(), true, nil
-	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
-		rows := resp.GetRows()
-		if len(rows) == 0 {
-			return "", false, nil
-		}
-		return rows[0].GetKey().GetName(), true, nil
-	default:
-		return "", false, fmt.Errorf("unsupported search result format %d", resp.GetResultFormat())
-	}
-}
-
-func createUserSearchRequest(namespace string, requirements []*resourcepb.Requirement) *resourcepb.ResourceSearchRequest {
-	userGvr := iamv0alpha1.UserResourceInfo.GroupResource()
-	return &resourcepb.ResourceSearchRequest{
-		Options: &resourcepb.ListOptions{
-			Key: &resourcepb.ResourceKey{
-				Group:     userGvr.Group,
-				Resource:  userGvr.Resource,
-				Namespace: namespace,
-			},
-			Fields: requirements,
-		},
-		Fields:       []string{resource.SEARCH_FIELD_NAME},
-		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
-	}
 }
