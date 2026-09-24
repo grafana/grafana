@@ -130,11 +130,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
         color: theme.colors.success.contrastText,
         padding: `1px ${theme.spacing(0.5)}`,
         fontSize: '80%',
+        borderRadius: theme.shape.radius.md,
       },
       visualRefreshEnabled && {
-        borderRadius: theme.shape.radius.md,
         background: theme.colors.success.background,
-        color: theme.colors.success.text,
       }
     ),
   };

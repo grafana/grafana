@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"iter"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 
@@ -23,6 +25,7 @@ func TestShouldUseSearchForList(t *testing.T) {
 	tests := map[string]struct {
 		disableSearch   bool
 		allowlist       []string
+		noRegistry      bool
 		req             *resourcepb.ListRequest
 		expectedAllowed bool
 	}{
@@ -154,7 +157,7 @@ func TestShouldUseSearchForList(t *testing.T) {
 			req: &resourcepb.ListRequest{
 				Source: resourcepb.ListRequest_STORE,
 				Options: &resourcepb.ListOptions{
-					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app"},
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
 					Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
 				},
 			},
@@ -166,6 +169,115 @@ func TestShouldUseSearchForList(t *testing.T) {
 				Options: &resourcepb.ListOptions{
 					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "provisioning.grafana.app"},
 					Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+				},
+			},
+			expectedAllowed: false,
+		},
+		"false when fields are selected on a group with no manifest": {
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "mobile.ext.grafana.app", Resource: "mobileusersettings"},
+					Fields: []*resourcepb.Requirement{{Key: "spec.foo", Operator: "=", Values: []string{"bar"}}},
+				},
+			},
+			expectedAllowed: false,
+		},
+		"true when labels only on a group with no manifest": {
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "mobile.ext.grafana.app", Resource: "mobileusersettings"},
+					Labels: []*resourcepb.Requirement{{Key: "only", Operator: "=", Values: []string{"last"}}},
+				},
+			},
+			expectedAllowed: true,
+		},
+		"true when no selectors and an allowlisted resource has no manifest": {
+			allowlist: []string{"mobile.ext.grafana.app/mobileusersettings"},
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "mobile.ext.grafana.app", Resource: "mobileusersettings"},
+				},
+			},
+			expectedAllowed: true,
+		},
+		"false when continuing a list that started on the store scan": {
+			req: &resourcepb.ListRequest{
+				Source:        resourcepb.ListRequest_STORE,
+				NextPageToken: ContinueToken{Namespace: "nsx", Name: "item-42", ResourceVersion: 7}.String(),
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "mobile.ext.grafana.app", Resource: "mobileusersettings"},
+					Labels: []*resourcepb.Requirement{{Key: "only", Operator: "=", Values: []string{"last"}}},
+				},
+			},
+			expectedAllowed: false,
+		},
+		"false when continuing a list that started on the SQL store scan": {
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				// The SQL backend records a row offset, not a name, and under a key this
+				// package does not decode.
+				NextPageToken: base64.StdEncoding.EncodeToString([]byte(`{"o":500,"v":7}`)),
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "mobile.ext.grafana.app", Resource: "mobileusersettings"},
+					Labels: []*resourcepb.Requirement{{Key: "only", Operator: "=", Values: []string{"last"}}},
+				},
+			},
+			expectedAllowed: false,
+		},
+		"true when continuing a list that started on search": {
+			req: &resourcepb.ListRequest{
+				Source:        resourcepb.ListRequest_STORE,
+				NextPageToken: ContinueToken{SearchAfter: []string{"s1"}, ResourceVersion: 7}.String(),
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "mobile.ext.grafana.app", Resource: "mobileusersettings"},
+					Labels: []*resourcepb.Requirement{{Key: "only", Operator: "=", Values: []string{"last"}}},
+				},
+			},
+			expectedAllowed: true,
+		},
+		"true when a kind outside the compiled-in manifests declares the field": {
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "mobile.ext.grafana.app", Resource: "mobileverificationtokens"},
+					Fields: []*resourcepb.Requirement{{Key: "spec.token", Operator: "=", Values: []string{"t1"}}},
+				},
+			},
+			expectedAllowed: true,
+		},
+		"false when the kind declares no such field": {
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+					Fields: []*resourcepb.Requirement{{Key: "spec.undeclared", Operator: "=", Values: []string{"x"}}},
+				},
+			},
+			expectedAllowed: false,
+		},
+		"false when one of several fields is undeclared": {
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+					Fields: []*resourcepb.Requirement{
+						{Key: "spec.foo", Operator: "=", Values: []string{"bar"}},
+						{Key: "spec.undeclared", Operator: "=", Values: []string{"x"}},
+					},
+				},
+			},
+			expectedAllowed: false,
+		},
+		"false when no declarations are available": {
+			noRegistry: true,
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+					Fields: []*resourcepb.Requirement{{Key: "spec.foo", Operator: "=", Values: []string{"bar"}}},
 				},
 			},
 			expectedAllowed: false,
@@ -183,6 +295,14 @@ func TestShouldUseSearchForList(t *testing.T) {
 				allowed[resource] = true
 			}
 			s.searchBackedListResources = SearchBackedListConfig{AllowedResources: allowed}
+			if !tc.noRegistry {
+				// Stands in for what a manifest watcher would load, including a kind this
+				// binary was not compiled with.
+				s.manifestSearchFields = NewSearchFieldsRegistry(map[LowerGroupResource][]string{
+					NewLowerGroupResource("advisor.grafana.app", "advisors"):                    {"spec.foo"},
+					NewLowerGroupResource("mobile.ext.grafana.app", "mobileverificationtokens"): {"spec.token"},
+				}, nil, nil)
+			}
 
 			require.Equal(t, tc.expectedAllowed, s.shouldUseSearchForList(tc.req))
 		})
@@ -258,11 +378,16 @@ func TestFilterSelectors_Labels(t *testing.T) {
 func TestTokenFromOtherListPath(t *testing.T) {
 	searchToken := &ContinueToken{SearchAfter: []string{"s1"}, ResourceVersion: 100}
 	scanToken := &ContinueToken{Name: "a", ResourceVersion: 100}
+	// The SQL backend records a row offset under a key this type does not decode, so
+	// its token looks empty here and still has to count as a store token.
+	sqlScanToken := &ContinueToken{ResourceVersion: 100}
 
 	require.False(t, tokenFromOtherListPath(searchToken, true))
 	require.True(t, tokenFromOtherListPath(searchToken, false))
 	require.True(t, tokenFromOtherListPath(scanToken, true))
 	require.False(t, tokenFromOtherListPath(scanToken, false))
+	require.True(t, tokenFromOtherListPath(sqlScanToken, true))
+	require.False(t, tokenFromOtherListPath(sqlScanToken, false))
 }
 
 func TestDecodeListSearchRows(t *testing.T) {
@@ -387,6 +512,46 @@ func TestListWithSelectors(t *testing.T) {
 		require.Equal(t, "search failed", resp.Error.Message)
 	})
 
+	t.Run("asks for the store scan when the index lacks a requested field", func(t *testing.T) {
+		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+		searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
+			Error: NewSelectableFieldNotIndexedError([]string{SEARCH_SELECTABLE_FIELDS_PREFIX + "spec.foo"}),
+		}}
+		s := createTestServer(searchClient, 1024)
+		req := &resourcepb.ListRequest{
+			Limit: 10,
+			Options: &resourcepb.ListOptions{
+				Key:    &resourcepb.ResourceKey{Namespace: "nsx"},
+				Fields: []*resourcepb.Requirement{{Key: "spec.foo", Operator: "=", Values: []string{"bar"}}},
+			},
+		}
+
+		resp, err := s.listWithSelectors(ctx, req)
+		require.ErrorIs(t, err, errSearchCannotAnswerList)
+		require.Nil(t, resp)
+	})
+
+	t.Run("keeps the error mid-pagination, where the store scan cannot resume", func(t *testing.T) {
+		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+		searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
+			Error: NewSelectableFieldNotIndexedError([]string{SEARCH_SELECTABLE_FIELDS_PREFIX + "spec.foo"}),
+		}}
+		s := createTestServer(searchClient, 1024)
+		req := &resourcepb.ListRequest{
+			Limit:         10,
+			NextPageToken: ContinueToken{SearchAfter: []string{"s1"}, ResourceVersion: searchServerRv}.String(),
+			Options: &resourcepb.ListOptions{
+				Key:    &resourcepb.ResourceKey{Namespace: "nsx"},
+				Fields: []*resourcepb.Requirement{{Key: "spec.foo", Operator: "=", Values: []string{"bar"}}},
+			},
+		}
+
+		resp, err := s.listWithSelectors(ctx, req)
+		require.NoError(t, err)
+		require.NotNil(t, resp.Error)
+		require.True(t, IsSelectableFieldNotIndexed(resp.Error))
+	})
+
 	t.Run("returns transport errors directly", func(t *testing.T) {
 		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
 		searchErr := errors.New("search unavailable")
@@ -422,11 +587,104 @@ func TestListWithSelectors(t *testing.T) {
 		require.Equal(t, int32(http.StatusBadRequest), resp.Error.Code)
 	})
 
+	for _, tc := range []struct {
+		name           string
+		limit          int64
+		forbidden      map[string]struct{}
+		lastSortFields []string
+		batched        bool
+		emptyResults   bool
+		inexactTotal   bool
+		previousRV     int64
+		wantItems      int
+		wantToken      bool
+	}{
+		{name: "full page with a forbidden last row continues", limit: 2, forbidden: map[string]struct{}{"b": {}}, lastSortFields: []string{"s2"}, wantItems: 1, wantToken: true},
+		{name: "full page with all rows forbidden continues", limit: 2, forbidden: map[string]struct{}{"a": {}, "b": {}}, lastSortFields: []string{"s2"}, wantToken: true},
+		{name: "full batched page with a forbidden last row continues", limit: 2, forbidden: map[string]struct{}{"b": {}}, lastSortFields: []string{"s2"}, batched: true, wantItems: 1, wantToken: true},
+		{name: "full batched page with all rows forbidden continues", limit: 2, forbidden: map[string]struct{}{"a": {}, "b": {}}, lastSortFields: []string{"s2"}, batched: true, wantToken: true},
+		{name: "filtered continuation preserves original list rv", limit: 2, forbidden: map[string]struct{}{"b": {}}, lastSortFields: []string{"s2"}, previousRV: 50, wantItems: 1, wantToken: true},
+		{name: "filtered full page without final sort fields has no token", limit: 2, forbidden: map[string]struct{}{"b": {}}, wantItems: 1},
+		{name: "filtered unlimited page has no token", forbidden: map[string]struct{}{"b": {}}, lastSortFields: []string{"s2"}, wantItems: 1},
+		{name: "empty search results have no token", limit: 2, emptyResults: true},
+		{name: "short page with an inexact total continues", limit: 10, lastSortFields: []string{"s2"}, inexactTotal: true, wantItems: 2, wantToken: true},
+		{name: "short page with an exact total ends", limit: 10, lastSortFields: []string{"s2"}, wantItems: 2},
+		{name: "short filtered page with an inexact total continues", limit: 10, forbidden: map[string]struct{}{"a": {}, "b": {}}, lastSortFields: []string{"s2"}, batched: true, inexactTotal: true, wantToken: true},
+		{name: "short page with an inexact total without sort fields ends", limit: 10, inexactTotal: true, wantItems: 2},
+		{name: "empty search results with an inexact total end", limit: 10, emptyResults: true, inexactTotal: true},
+		{name: "unlimited page with an inexact total ends", lastSortFields: []string{"s2"}, inexactTotal: true, wantItems: 2},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+			rows := []*resourcepb.ResourceTableRow{
+				{Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"}, ResourceVersion: 1, SortFields: []string{"s1"}},
+				{Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "b"}, ResourceVersion: 2, SortFields: tc.lastSortFields},
+			}
+			if tc.emptyResults {
+				rows = nil
+			}
+			searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
+				ResourceVersion: searchServerRv,
+				TotalHitsExact:  !tc.inexactTotal,
+				Results:         &resourcepb.ResourceTable{Rows: rows},
+			}}
+			s := createTestServer(searchClient, 1024)
+			s.backend = &fakeBackend{forbidden: tc.forbidden}
+			if tc.batched {
+				s.backend = &batchFakeBackend{fakeBackend: &fakeBackend{}}
+				s.access = denyByNameAccess{deny: tc.forbidden}
+			}
+			req := &resourcepb.ListRequest{
+				Limit: tc.limit,
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx"},
+					Labels: []*resourcepb.Requirement{{Key: "has-rules", Operator: "=", Values: []string{"true"}}},
+				},
+			}
+			wantRV := searchServerRv
+			if tc.previousRV > 0 {
+				var err error
+				req.NextPageToken, err = NewSearchContinueToken([]string{"s0"}, tc.previousRV)
+				require.NoError(t, err)
+				wantRV = tc.previousRV
+			}
+
+			resp, err := s.listWithSelectors(ctx, req)
+			require.NoError(t, err)
+			require.Nil(t, resp.Error)
+			require.Len(t, resp.Items, tc.wantItems)
+			if tc.wantItems > 0 {
+				require.Equal(t, int64(1), resp.Items[0].ResourceVersion)
+			}
+			require.Equal(t, wantRV, resp.ResourceVersion)
+			if tc.wantToken {
+				require.NotEmpty(t, resp.NextPageToken)
+				token, err := GetContinueToken(resp.NextPageToken)
+				require.NoError(t, err)
+				require.Equal(t, []string{"s2"}, token.SearchAfter)
+				require.Equal(t, wantRV, token.ResourceVersion)
+
+				searchClient.resp = &resourcepb.ResourceSearchResponse{ResourceVersion: searchServerRv + 1}
+				req.NextPageToken = resp.NextPageToken
+				lastPage, err := s.listWithSelectors(ctx, req)
+				require.NoError(t, err)
+				require.Nil(t, lastPage.Error)
+				require.Empty(t, lastPage.Items)
+				require.Empty(t, lastPage.NextPageToken)
+				require.Equal(t, []string{"s2"}, searchClient.last.SearchAfter)
+				require.Equal(t, wantRV, lastPage.ResourceVersion)
+			} else {
+				require.Empty(t, resp.NextPageToken)
+			}
+		})
+	}
+
 	t.Run("a page left empty by authorization returns no items and no token", func(t *testing.T) {
 		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
 		searchClient := &stubSearchClient{
 			resp: &resourcepb.ResourceSearchResponse{
 				ResourceVersion: searchServerRv,
+				TotalHitsExact:  true,
 				Results: &resourcepb.ResourceTable{
 					Rows: []*resourcepb.ResourceTableRow{
 						{Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"}, ResourceVersion: 1, SortFields: []string{"s1"}},
@@ -458,6 +716,7 @@ func TestListWithSelectors(t *testing.T) {
 		searchClient := &stubSearchClient{
 			resp: &resourcepb.ResourceSearchResponse{
 				ResourceVersion: searchServerRv,
+				TotalHitsExact:  true,
 				ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,
 				Rows: []*resourcepb.ResourceSearchRow{
 					{
@@ -694,6 +953,38 @@ func TestListWithSelectors(t *testing.T) {
 	})
 }
 
+// countingListBackend records how often the store scan was used.
+type countingListBackend struct {
+	*fakeBackend
+	listCalls int
+}
+
+func (b *countingListBackend) ListIterator(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error) {
+	b.listCalls++
+	return 1, nil
+}
+
+func TestListFallsBackToStoreWhenIndexLacksField(t *testing.T) {
+	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+	backend := &countingListBackend{fakeBackend: &fakeBackend{}}
+	s := createTestServer(&stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
+		Error: NewSelectableFieldNotIndexedError([]string{SEARCH_SELECTABLE_FIELDS_PREFIX + "spec.foo"}),
+	}}, 1024)
+	s.backend = backend
+
+	resp, err := s.List(ctx, &resourcepb.ListRequest{
+		Source: resourcepb.ListRequest_STORE,
+		Limit:  10,
+		Options: &resourcepb.ListOptions{
+			Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+			Fields: []*resourcepb.Requirement{{Key: "spec.foo", Operator: "=", Values: []string{"bar"}}},
+		},
+	})
+	require.NoError(t, err)
+	require.Nil(t, resp.Error)
+	require.Equal(t, 1, backend.listCalls, "the store scan must serve the request the index refused")
+}
+
 func TestListWithSelectorsUsesBatchReadsAndAuthorization(t *testing.T) {
 	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
 	searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
@@ -703,8 +994,8 @@ func TestListWithSelectorsUsesBatchReadsAndAuthorization(t *testing.T) {
 			{Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "b"}, ResourceVersion: 2},
 		}},
 	}}
-	backend := &batchFakeBackend{fakeBackend: &fakeBackend{forbidden: map[string]struct{}{"b": {}}}}
-	access := claims.FixedAccessClient(true)
+	backend := &batchFakeBackend{fakeBackend: &fakeBackend{}}
+	access := denyByNameAccess{deny: map[string]struct{}{"b": {}}}
 	s := createTestServer(searchClient, 1024)
 	s.backend = backend
 	s.access = access
@@ -750,8 +1041,7 @@ func TestListUsesSearchForAnAllowlistedResourceWithoutSelectors(t *testing.T) {
 func TestListWithSelectorsStopsReadingAtPageCutoff(t *testing.T) {
 	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
 
-	// A full search page of hits, far more than one read chunk.
-	rows := make([]*resourcepb.ResourceTableRow, 0, searchReadChunkSize*3)
+	rows := make([]*resourcepb.ResourceTableRow, 0, 30)
 	for i := 0; i < cap(rows); i++ {
 		rows = append(rows, &resourcepb.ResourceTableRow{
 			Key:        &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: fmt.Sprintf("item-%d", i)},
@@ -764,9 +1054,8 @@ func TestListWithSelectorsStopsReadingAtPageCutoff(t *testing.T) {
 	}}
 	backend := &batchFakeBackend{fakeBackend: &fakeBackend{}}
 
-	// maxPageSizeBytes = 1 forces the byte cutoff after the first item, well
-	// before the item-count limit.
-	s := createTestServer(searchClient, 1)
+	// Each response is five bytes, so the byte cutoff is crossed by the third item.
+	s := createTestServer(searchClient, 11)
 	s.backend = backend
 
 	resp, err := s.listWithSelectors(ctx, &resourcepb.ListRequest{
@@ -778,11 +1067,11 @@ func TestListWithSelectorsStopsReadingAtPageCutoff(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.Len(t, resp.Items, 1)
+	require.Len(t, resp.Items, 3)
 	require.NotEmpty(t, resp.NextPageToken, "a cut-off page must still page forward")
-	// Only the first chunk is read; the rest of the page is never fetched.
 	require.Equal(t, 1, backend.batchCalls)
 	require.Equal(t, searchReadChunkSize, backend.batchReqs)
+	require.Equal(t, []string{"item-0", "item-1", "item-2"}, backend.pulledNames)
 }
 
 // denyByNameAccess allows everything except names in deny.
@@ -853,15 +1142,20 @@ func TestListWithSelectorsAuthorizesErroredRows(t *testing.T) {
 		}
 	}
 
-	t.Run("unauthorized errored row is skipped, not surfaced", func(t *testing.T) {
+	t.Run("runtime error on unauthorized row is logged and redacted", func(t *testing.T) {
+		logger := &logtest.Fake{}
 		s := createTestServer(newSearch(), 1024)
 		s.backend = &batchFakeBackend{fakeBackend: &fakeBackend{}, errored: map[string]struct{}{"b": {}}}
 		s.access = denyByNameAccess{deny: map[string]struct{}{"b": {}}}
+		s.log = logger
 
 		resp, err := s.listWithSelectors(ctx, req())
 		require.NoError(t, err)
-		require.Nil(t, resp.Error)
-		require.Len(t, resp.Items, 1) // only "a"; "b" errored but is unauthorized, so hidden
+		require.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
+		require.Equal(t, "failed to read resource", resp.Error.Message)
+		require.Empty(t, resp.Items)
+		require.Equal(t, 1, logger.ErrorLogs.Calls)
+		require.Equal(t, "Failed to read unauthorized search result", logger.ErrorLogs.Message)
 	})
 
 	t.Run("authorized errored row aborts the list", func(t *testing.T) {
@@ -875,6 +1169,32 @@ func TestListWithSelectorsAuthorizesErroredRows(t *testing.T) {
 		require.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
 	})
 
+	t.Run("bad request aborts the list without returning partial items", func(t *testing.T) {
+		s := createTestServer(newSearch(), 1024)
+		s.backend = &batchFakeBackend{
+			fakeBackend: &fakeBackend{},
+			errors:      map[string]*resourcepb.ErrorResult{"b": NewBadRequestError("invalid request")},
+		}
+
+		resp, err := s.listWithSelectors(ctx, req())
+		require.NoError(t, err)
+		require.Equal(t, int32(http.StatusBadRequest), resp.Error.Code)
+		require.Empty(t, resp.Items)
+	})
+
+	t.Run("unrecognized error aborts the list without returning partial items", func(t *testing.T) {
+		s := createTestServer(newSearch(), 1024)
+		s.backend = &batchFakeBackend{
+			fakeBackend: &fakeBackend{},
+			errors:      map[string]*resourcepb.ErrorResult{"b": {Code: http.StatusConflict, Message: "conflict"}},
+		}
+
+		resp, err := s.listWithSelectors(ctx, req())
+		require.NoError(t, err)
+		require.Equal(t, int32(http.StatusConflict), resp.Error.Code)
+		require.Empty(t, resp.Items)
+	})
+
 	t.Run("not-found row surfaces without authorizing (not dropped on empty folder)", func(t *testing.T) {
 		s := createTestServer(newSearch(), 1024)
 		s.backend = &batchFakeBackend{fakeBackend: &fakeBackend{}, notFound: map[string]struct{}{"b": {}}}
@@ -886,6 +1206,113 @@ func TestListWithSelectorsAuthorizesErroredRows(t *testing.T) {
 		require.NotNil(t, resp.Error)
 		require.Equal(t, int32(http.StatusNotFound), resp.Error.Code)
 	})
+}
+
+func TestListWithSelectorsSurfacesKVRuntimeFailuresBeforeAuthorization(t *testing.T) {
+	tests := []struct {
+		name string
+		wrap func(KV) KV
+	}{
+		{
+			name: "batch get",
+			wrap: func(store KV) KV {
+				return &failingBatchGetKV{KV: store, err: errors.New("storage is down")}
+			},
+		},
+		{
+			name: "body read",
+			wrap: func(store KV) KV {
+				return &unreadableValueKV{KV: store, nameMatch: "failed", err: errors.New("value is corrupt")}
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+				opts.KvStore = tc.wrap(opts.KvStore)
+			})
+			rv := seedResource(t, backend, t.Context(), "failed", "folder-a")
+			newServer := func() *server {
+				search := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
+					ResourceVersion: rv,
+					Results: &resourcepb.ResourceTable{Rows: []*resourcepb.ResourceTableRow{{
+						Key:             appsKey("failed"),
+						ResourceVersion: rv,
+						SortFields:      []string{"failed"},
+					}}},
+				}}
+				s := createTestServer(search, 1024)
+				s.backend = backend
+				return s
+			}
+			req := &resourcepb.ListRequest{
+				Limit: 1,
+				Options: &resourcepb.ListOptions{
+					Key:    appsKey(""),
+					Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+				},
+			}
+			ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+
+			unauthorized := newServer()
+			unauthorized.access = denyByNameAccess{deny: map[string]struct{}{"failed": {}}}
+			resp, err := unauthorized.listWithSelectors(ctx, req)
+			require.NoError(t, err)
+			require.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
+			require.Equal(t, "failed to read resource", resp.Error.Message)
+			require.Empty(t, resp.Items)
+
+			authorized := newServer()
+			resp, err = authorized.listWithSelectors(ctx, req)
+			require.NoError(t, err)
+			require.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
+		})
+	}
+}
+
+func TestListWithSelectorsStopsAfterRuntimeFailure(t *testing.T) {
+	var kvWrapper *failSecondBatchGetKV
+	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+		kvWrapper = &failSecondBatchGetKV{KV: opts.KvStore, err: errors.New("transient storage failure")}
+		opts.KvStore = kvWrapper
+	})
+
+	rows := make([]*resourcepb.ResourceTableRow, 0, searchReadChunkSize+1)
+	denied := make(map[string]struct{}, searchReadChunkSize)
+	var listRV int64
+	for i := range searchReadChunkSize + 1 {
+		name := fmt.Sprintf("cross-batch-%02d", i)
+		listRV = seedResource(t, backend, t.Context(), name, fmt.Sprintf("folder-%02d", i))
+		rows = append(rows, &resourcepb.ResourceTableRow{
+			Key:             appsKey(name),
+			ResourceVersion: listRV,
+			SortFields:      []string{name},
+		})
+		if i < searchReadChunkSize {
+			denied[name] = struct{}{}
+		}
+	}
+
+	s := createTestServer(&stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
+		ResourceVersion: listRV,
+		Results:         &resourcepb.ResourceTable{Rows: rows},
+	}}, 1024)
+	s.backend = backend
+	s.access = denyByNameAccess{deny: denied}
+	resp, err := s.listWithSelectors(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.ListRequest{
+		Limit: 1,
+		Options: &resourcepb.ListOptions{
+			Key:    appsKey(""),
+			Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+		},
+	})
+
+	require.NoError(t, err)
+	require.Empty(t, resp.Items)
+	require.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
+	require.Equal(t, "transient storage failure", resp.Error.Message)
+	require.Equal(t, 2, kvWrapper.dataCalls)
 }
 
 func createTestServer(searchClient resourcepb.ResourceIndexClient, maxPageSizeBytes int) *server {
@@ -972,11 +1399,13 @@ func (*fakeBackend) GetResourceLastImportTime(context.Context, NamespacedResourc
 
 type batchFakeBackend struct {
 	*fakeBackend
-	errored    map[string]struct{}
-	notFound   map[string]struct{}
-	batchCalls int
-	batchReqs  int
-	readCalls  int
+	errored     map[string]struct{}
+	errors      map[string]*resourcepb.ErrorResult
+	notFound    map[string]struct{}
+	batchCalls  int
+	batchReqs   int
+	readCalls   int
+	pulledNames []string
 }
 
 func (b *batchFakeBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *BackendReadResponse {
@@ -984,34 +1413,37 @@ func (b *batchFakeBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	return b.fakeBackend.ReadResource(ctx, req)
 }
 
-func (b *batchFakeBackend) BatchReadResource(_ context.Context, requests []*resourcepb.ReadRequest) ([]*BackendReadResponse, error) {
+func (b *batchFakeBackend) BatchReadResource(_ context.Context, requests []*resourcepb.ReadRequest) (iter.Seq[*BackendReadResponse], error) {
 	b.batchCalls++
 	b.batchReqs += len(requests)
-	responses := make([]*BackendReadResponse, len(requests))
-	for i, req := range requests {
-		if _, forbidden := b.forbidden[req.Key.Name]; forbidden {
-			responses[i] = &BackendReadResponse{
-				Key:   req.Key,
-				Error: &resourcepb.ErrorResult{Code: http.StatusForbidden},
+	return func(yield func(*BackendReadResponse) bool) {
+		for _, req := range requests {
+			b.pulledNames = append(b.pulledNames, req.Key.Name)
+			var response *BackendReadResponse
+			if _, forbidden := b.forbidden[req.Key.Name]; forbidden {
+				response = &BackendReadResponse{
+					Key:   req.Key,
+					Error: &resourcepb.ErrorResult{Code: http.StatusForbidden},
+				}
+			} else if errRes, exists := b.errors[req.Key.Name]; exists {
+				response = &BackendReadResponse{Key: req.Key, Error: errRes}
+			} else if _, errored := b.errored[req.Key.Name]; errored {
+				response = &BackendReadResponse{
+					Key:   req.Key,
+					Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "boom"},
+				}
+			} else if _, nf := b.notFound[req.Key.Name]; nf {
+				response = &BackendReadResponse{Key: req.Key, Error: NewNotFoundError(req.Key)}
+			} else {
+				response = &BackendReadResponse{
+					Key:             req.Key,
+					ResourceVersion: req.ResourceVersion,
+					Value:           []byte("value"),
+				}
 			}
-			continue
-		}
-		if _, errored := b.errored[req.Key.Name]; errored {
-			responses[i] = &BackendReadResponse{
-				Key:   req.Key,
-				Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "boom"},
+			if !yield(response) {
+				return
 			}
-			continue
 		}
-		if _, nf := b.notFound[req.Key.Name]; nf {
-			responses[i] = &BackendReadResponse{Key: req.Key, Error: NewNotFoundError(req.Key)}
-			continue
-		}
-		responses[i] = &BackendReadResponse{
-			Key:             req.Key,
-			ResourceVersion: req.ResourceVersion,
-			Value:           []byte("value"),
-		}
-	}
-	return responses, nil
+	}, nil
 }

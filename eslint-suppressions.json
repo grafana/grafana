@@ -634,6 +634,9 @@
   "packages/grafana-ui/src/components/uPlot/Plot.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
+    },
+    "react-prefer-function-component/react-prefer-function-component": {
+      "count": 1
     }
   },
   "packages/grafana-ui/src/components/uPlot/config/UPlotAxisBuilder.ts": {
@@ -969,11 +972,6 @@
       "count": 5
     }
   },
-  "public/app/features/admin/utils.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/routes.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 5
@@ -1227,11 +1225,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/rule-editor/alert-rule-form/formValuesToAppPlatform.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/rule-editor/alert-rule-form/simplifiedRouting/route-settings/ActiveTimingFields.tsx": {
     "@grafana/require-no-margin": {
       "count": 1
@@ -1240,11 +1233,6 @@
   "public/app/features/alerting/unified/components/rule-editor/alert-rule-form/simplifiedRouting/route-settings/RouteTimings.tsx": {
     "@grafana/require-no-margin": {
       "count": 3
-    }
-  },
-  "public/app/features/alerting/unified/components/rule-editor/notificaton-preview/PolicyTreeSelector.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
     }
   },
   "public/app/features/alerting/unified/components/rule-editor/notificaton-preview/useAlertmanagerNotificationRoutingPreview.ts": {
@@ -1259,7 +1247,7 @@
   },
   "public/app/features/alerting/unified/components/rule-editor/query-and-alert-condition/QueryAndExpressionsStep.tsx": {
     "@grafana/no-config-feature-toggles": {
-      "count": 2
+      "count": 1
     },
     "@grafana/no-get-data-source-srv": {
       "count": 1
@@ -1268,11 +1256,6 @@
   "public/app/features/alerting/unified/components/rule-viewer/AlertRuleMenu.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/components/rule-viewer/Details.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 2
     }
   },
   "public/app/features/alerting/unified/components/rule-viewer/RuleViewer.tsx": {
@@ -1458,7 +1441,7 @@
   },
   "public/app/features/alerting/unified/rule-list/RuleList.v2.tsx": {
     "@grafana/no-config-feature-toggles": {
-      "count": 3
+      "count": 2
     }
   },
   "public/app/features/alerting/unified/rule-list/RuleListPageTitle.tsx": {
@@ -1561,9 +1544,6 @@
     }
   },
   "public/app/features/alerting/unified/utils/rule-form.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 3
-    },
     "@grafana/no-get-data-source-srv": {
       "count": 1
     }
@@ -1773,6 +1753,11 @@
       "count": 1
     }
   },
+  "public/app/features/dashboard-scene/scene/DashboardSceneRenderer.tsx": {
+    "@grafana/no-config-feature-toggles": {
+      "count": 1
+    }
+  },
   "public/app/features/dashboard-scene/scene/LibraryPanelBehavior.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 2
@@ -1911,7 +1896,7 @@
       "count": 1
     },
     "@grafana/no-config-feature-toggles": {
-      "count": 2
+      "count": 1
     }
   },
   "public/app/features/dashboard-scene/serialization/sceneVariablesSetToVariables.ts": {
@@ -1929,7 +1914,7 @@
   },
   "public/app/features/dashboard-scene/serialization/transformSaveModelToScene.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 4
+      "count": 3
     }
   },
   "public/app/features/dashboard-scene/serialization/transformSceneToSaveModel.test.ts": {
@@ -2129,7 +2114,7 @@
   },
   "public/app/features/dashboard-scene/utils/utils.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 3
+      "count": 2
     }
   },
   "public/app/features/dashboard-scene/utils/variables.ts": {
@@ -2387,9 +2372,6 @@
     }
   },
   "public/app/features/datasources/state/navModel.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    },
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
     },
@@ -2708,11 +2690,6 @@
       "count": 1
     }
   },
-  "public/app/features/plugins/admin/components/GetStartedWithPlugin/GetStartedWithDataSource.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "public/app/features/plugins/admin/components/PluginDetailsBody.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 2
@@ -2808,9 +2785,6 @@
     }
   },
   "public/app/features/query/components/QueryEditorRow.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    },
     "@grafana/no-gf-form": {
       "count": 1
     },
@@ -2824,26 +2798,13 @@
       "count": 1
     }
   },
-  "public/app/features/query/components/QueryEditorRows.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
   "public/app/features/query/components/QueryGroup.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    },
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
   "public/app/features/query/state/DashboardQueryRunner/AnnotationsQueryRunner.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/query/state/DashboardQueryRunner/AnnotationsWorker.ts": {
-    "@grafana/no-get-data-source-srv": {
       "count": 1
     }
   },
@@ -2926,16 +2887,6 @@
     }
   },
   "public/app/features/table/hooks.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
-  "public/app/features/teams/TeamPages.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
-  "public/app/features/teams/state/navModel.ts": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
     }
@@ -3790,11 +3741,6 @@
   "public/swagger/SwaggerPage.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
-    }
-  },
-  "public/swagger/index.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
     }
   },
   "public/swagger/plugins.tsx": {

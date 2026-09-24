@@ -11,7 +11,6 @@ import {
   formattedValueToString,
   type GrafanaTheme2,
   type DisplayValue,
-  type LinkModel,
   type DisplayValueAlignmentFactors,
   type DataFrame,
   type DisplayProcessor,
@@ -36,6 +35,7 @@ import { type OpenLayersContextValue, isGeometry } from '../geo';
 import { type TableCellOptions } from '../types';
 
 import { AutoCellRenderer, getAutoRendererDisplayMode, getCellRenderer } from './Cells/renderers';
+import { getCellLinks } from './cellLinks';
 import {
   CELL_HORIZONTAL_CHROME,
   COLUMN,
@@ -45,6 +45,8 @@ import {
   HEADER_MENU_SPACE,
   HEADER_TOOLTIP_SPACE,
   LAST_COLUMN_CLASS,
+  NESTED_ROW_CLASS,
+  STRIPED_ROW_CLASS,
   TABLE,
 } from './constants';
 import type { TextAlign } from './styles';
@@ -517,9 +519,8 @@ export function buildCellHeightMeasurers(
         setupMeasurerForIdx(TableCellDisplayMode.DataLinks, fieldIdx);
       } else if (cellType === TableCellDisplayMode.Pill) {
         setupMeasurerForIdx(TableCellDisplayMode.Pill, fieldIdx);
-      } else if (getCellRenderer(field, getCellOptions(field)) === AutoCellRenderer) {
-        // Any field rendered by AutoCellRenderer (string, time, number, boolean, etc.) can
-        // produce a multi-line formatted string, so we include it in height measurement.
+      } else if (rendersAsJson(field) || getCellRenderer(field, getCellOptions(field)) === AutoCellRenderer) {
+        // JSON and Auto cells can produce multiline formatted strings, so both need measurement.
         setupMeasurerForIdx(TableCellDisplayMode.Auto, fieldIdx);
       } else {
         // no measurer was configured for this cell type
@@ -795,41 +796,7 @@ export const extractPixelValue = (spacing: string | number): number => {
   return typeof spacing === 'number' ? spacing : parseFloat(spacing) || 0;
 };
 
-/* ------------------------------- Data links ------------------------------- */
-/**
- * @internal
- */
-export const getCellLinks = (field: Field, rowIdx: number) => {
-  let links: Array<LinkModel<unknown>> | undefined;
-  if (field.getLinks) {
-    links = field.getLinks({
-      valueRowIndex: rowIdx,
-    });
-  }
-
-  if (!links) {
-    return;
-  }
-
-  for (let i = 0; i < links?.length; i++) {
-    if (links[i].onClick) {
-      const origOnClick = links[i].onClick;
-
-      links[i].onClick = (event: MouseEvent) => {
-        // Allow opening in new tab
-        if (!(event.ctrlKey || event.metaKey || event.shiftKey)) {
-          event.preventDefault();
-          origOnClick!(event, {
-            field,
-            rowIndex: rowIdx,
-          });
-        }
-      };
-    }
-  }
-
-  return links.filter((link) => link.href || link.onClick != null);
-};
+export { getCellLinks } from './cellLinks';
 
 /**
  * @internal
@@ -1998,7 +1965,12 @@ export const displayJsonValue: (field: Field) => DisplayProcessor = (field: Fiel
         jsonText = formattedValue; // Keep original if not valid JSON
       }
     } else {
-      jsonText = JSON.stringify(value, null, ' ');
+      try {
+        jsonText = JSON.stringify(value, null, ' ');
+      } catch {
+        // Frame references can be circular; retain the field formatter's representation.
+        jsonText = formattedValueToString(displayValue);
+      }
     }
 
     return { ...displayValue, text: jsonText };
@@ -2123,3 +2095,31 @@ export const getStableRowKey = (rowIndex: number, frame?: DataFrame): string => 
   const key = frame?.meta?.custom?.stableRowKey;
   return key != null ? String(key) : String(rowIndex);
 };
+
+/**
+ * Builds a `rowClass` that stripes every other row of data.
+ *
+ * react-data-grid's `rdg-row-odd` counts nested container rows, making parent-row parity depend on
+ * which rows have nested data. Count only depth-0 data rows to keep the stripe pattern stable.
+ * Containers get a separate class so hover styles can exclude them.
+ */
+export function makeStripedRowClass(rows: TableRow[]): (row: TableRow) => string | undefined {
+  const striped = new WeakSet<TableRow>();
+  let ordinal = 0;
+  for (const row of rows) {
+    if (row.__depth !== 0) {
+      continue;
+    }
+    if (ordinal % 2 === 1) {
+      striped.add(row);
+    }
+    ordinal++;
+  }
+
+  return (row) => {
+    if (row.__depth !== 0) {
+      return NESTED_ROW_CLASS;
+    }
+    return striped.has(row) ? STRIPED_ROW_CLASS : undefined;
+  };
+}

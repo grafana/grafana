@@ -64,7 +64,10 @@ export const ThemeRichColorInputSchema = z.object({
   borderEmphasis: z.string().optional(),
   /** Text color for text ontop of main */
   contrastText: z.string().optional(),
-
+  /** A more subtle alternative to `background`, for surfaces that shouldn't match a solid-fill button */
+  subtleBackground: z.string().optional(),
+  /** A more subtle alternative to `border`, for surfaces that shouldn't match a solid-fill button */
+  subtleBorder: z.string().optional(),
   /**
    * Used for hover
    * @deprecated use `mainEmphasis` instead

@@ -237,7 +237,7 @@ Connectivity issues are one of the common causes of noisy or misleading alerts. 
 
 - **Query execution errors**, where the alert rule can't reach its data source (e.g., due to timeouts, invalid queries, or data source outages).
 
-These problems come from different parts of your stack, and require its own techniques. Prometheus and Grafana allow you to detect them, and combining distinct techniques can make your alerts more resilient.
+These problems come from different parts of your stack, and require their own techniques. Prometheus and Grafana allow you to detect them, and combining distinct techniques can make your alerts more resilient.
 
 With Prometheus, avoid relying solely on `up == 0`. Smooth queries to account for intermittent failures, and use synthetic monitoring to detect reachability issues from outside your network.
 

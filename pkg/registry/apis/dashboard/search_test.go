@@ -3,6 +3,7 @@ package dashboard
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -14,6 +15,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -67,6 +69,31 @@ func TestSearch(t *testing.T) {
 
 		assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, client.LastSearchRequest.ResultFormat)
 	})
+}
+
+func TestSearchErrorStatus(t *testing.T) {
+	failure := &resourcepb.ErrorResult{
+		Code: http.StatusTooManyRequests, Reason: string(metav1.StatusReasonTooManyRequests), Message: "search is busy",
+		Details: &resourcepb.ErrorDetails{Name: "dashboard", Group: "dashboard.grafana.app", Kind: "dashboards", Uid: "uid", RetryAfterSeconds: 12},
+	}
+	st, err := status.New(codes.ResourceExhausted, "search is busy").WithDetails(failure)
+	require.NoError(t, err)
+	for name, client := range map[string]*MockClient{
+		"embedded":  {MockResponses: []*resourcepb.ResourceSearchResponse{{Error: failure}}},
+		"transport": {MockError: fmt.Errorf("search: %w", st.Err())},
+	} {
+		t.Run(name, func(t *testing.T) {
+			handler := NewSearchHandler(tracing.NewNoopTracerService(), client, nil)
+			req := httptest.NewRequest("GET", "/search", nil)
+			req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+			recorder := httptest.NewRecorder()
+			handler.DoSearch(recorder, req)
+			require.Equal(t, http.StatusTooManyRequests, recorder.Code)
+			var got metav1.Status
+			require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &got))
+			require.Equal(t, resource.GetError(failure).(apierrors.APIStatus).Status(), got)
+		})
+	}
 }
 
 func TestVectorSearch(t *testing.T) {
@@ -973,6 +1000,41 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 	})
 }
 
+func TestParseSortParam(t *testing.T) {
+	tests := []struct {
+		name       string
+		sort       string
+		wantField  string
+		wantIsDesc bool
+	}{
+		{name: "index field name ascending", sort: "title", wantField: "title"},
+		{name: "index field name descending", sort: "-title", wantField: "title", wantIsDesc: true},
+		{name: "dashboard index field name", sort: "-views_last_30_days", wantField: "views_last_30_days", wantIsDesc: true},
+		{name: "UI name for the title field", sort: "name_sort", wantField: "title"},
+		{name: "UI name for the title field, descending", sort: "-name_sort", wantField: "title", wantIsDesc: true},
+		{name: "legacy views 30 days descending", sort: "viewed-recently-desc", wantField: "views_last_30_days", wantIsDesc: true},
+		{name: "legacy views 30 days ascending", sort: "viewed-recently-asc", wantField: "views_last_30_days"},
+		{name: "legacy views total descending", sort: "viewed-desc", wantField: "views_total", wantIsDesc: true},
+		{name: "legacy errors 30 days descending", sort: "errors-recently-desc", wantField: "errors_last_30_days", wantIsDesc: true},
+		{name: "legacy errors 30 days ascending", sort: "errors-recently-asc", wantField: "errors_last_30_days"},
+		{name: "legacy errors total ascending", sort: "errors-asc", wantField: "errors_total"},
+		{name: "legacy alphabetical ascending", sort: "alpha-asc", wantField: "title"},
+		{name: "legacy alphabetical descending", sort: "alpha-desc", wantField: "title", wantIsDesc: true},
+		{name: "legacy name without a direction suffix defaults to descending", sort: "viewed", wantField: "views_total", wantIsDesc: true},
+		{name: "unknown field is left to the backend to reject", sort: "-nonsense", wantField: "nonsense", wantIsDesc: true},
+		{name: "empty sort", sort: ""},
+		{name: "direction marker without a field", sort: "-"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			field, isDesc := parseSortParam(tt.sort)
+			assert.Equal(t, tt.wantField, field)
+			assert.Equal(t, tt.wantIsDesc, isDesc)
+		})
+	}
+}
+
 func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 	testUser := &user.SignedInUser{
 		Namespace:        "test-namespace",
@@ -1196,6 +1258,47 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Explain:   false,
 				Fields:    defaultFields,
 				SortBy:    []*resourcepb.ResourceSearchRequest_Sort{{Field: "views_total", Desc: true}},
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"sort using the UI name for the title field": {
+			queryString: "sort=-name_sort",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:   &resourcepb.ListOptions{Key: dashboardKey},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				SortBy:    []*resourcepb.ResourceSearchRequest_Sort{{Field: "title", Desc: true}},
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"sort using a legacy /api/search sort name": {
+			queryString: "sort=viewed-recently-desc",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:   &resourcepb.ListOptions{Key: dashboardKey},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				SortBy:    []*resourcepb.ResourceSearchRequest_Sort{{Field: "views_last_30_days", Desc: true}},
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"empty sort is dropped": {
+			queryString: "sort=",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:   &resourcepb.ListOptions{Key: dashboardKey},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},
 		},
@@ -1582,6 +1685,7 @@ type MockClient struct {
 	LastSearchRequest *resourcepb.ResourceSearchRequest
 
 	MockResponses []*resourcepb.ResourceSearchResponse
+	MockError     error
 	MockCalls     []*resourcepb.ResourceSearchRequest
 	CallCount     int
 
@@ -1638,6 +1742,9 @@ var mockResults = []MockResult{
 }
 
 func (m *MockClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	if m.MockError != nil {
+		return nil, m.MockError
+	}
 	m.LastSearchRequest = in
 	m.MockCalls = append(m.MockCalls, in)
 

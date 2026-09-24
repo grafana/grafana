@@ -299,13 +299,14 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 	// First we encrypt the secure settings.
 	// This is done to ensure that any secure settings incorrectly stored in Settings are encrypted and moved to
 	// SecureSettings. This can happen if an integration definition is updated to make a field secure.
-	if err := EncryptReceiverConfigSettings(cfg.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
+	receivers := cfg.GetReceivers()
+	if err := EncryptReceiverConfigSettings(receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
 		return moa.Crypto.Encrypt(ctx, payload, secrets.WithoutScope())
 	}); err != nil {
 		return definitions.GettableUserConfig{}, fmt.Errorf("failed to encrypt receivers: %w", err)
 	}
 
-	for _, recv := range cfg.Receivers {
+	for _, recv := range receivers {
 		receivers := make([]*definitions.GettableGrafanaReceiver, 0, len(recv.GrafanaManagedReceivers))
 		for _, pr := range recv.GrafanaManagedReceivers {
 			secureFields := make(map[string]bool, len(pr.SecureSettings))
@@ -605,13 +606,13 @@ func (moa *MultiOrgAlertmanager) cleanPermissions(ctx context.Context, orgID int
 
 	var errs []error
 	for receiverName := range previousReceiverNames.Difference(newReceiverNames) { // Deleted receivers.
-		if err := moa.receiverResourcePermissions.DeleteResourcePermissions(ctx, orgID, legacy_storage.NameToUid(receiverName)); err != nil {
+		if err := moa.receiverResourcePermissions.DeleteResourcePermissions(ctx, orgID, string(v1.ReceiverUID(receiverName))); err != nil { // TODO: This won't work with static UIDs.
 			errs = append(errs, fmt.Errorf("failed to delete permissions for receiver %s: %w", receiverName, err))
 		}
 	}
 
 	for receiverName := range newReceiverNames.Difference(previousReceiverNames) { // Added receivers.
-		moa.receiverResourcePermissions.SetDefaultPermissions(ctx, orgID, nil, legacy_storage.NameToUid(receiverName))
+		moa.receiverResourcePermissions.SetDefaultPermissions(ctx, orgID, nil, string(v1.ReceiverUID(receiverName))) // TODO: This won't work with static UIDs.
 	}
 
 	return errors.Join(errs...)
