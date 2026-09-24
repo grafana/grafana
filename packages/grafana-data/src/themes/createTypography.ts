@@ -141,33 +141,13 @@ export function createTypography(colors: ThemeColors, typographyInput: ThemeTypo
   };
 
   // All our fonts/line heights should be integer multiples of 2 to prevent issues with alignment
-<<<<<<< HEAD
-  const variants = {
-    xxl: buildVariant(fontFamily, fontWeightRegular, 28, 32, -0.25),
-    xl: buildVariant(fontFamily, fontWeightRegular, 24, 28, 0),
-    lg: buildVariant(fontFamily, fontWeightRegular, 22, 24, 0),
-    md: buildVariant(fontFamily, fontWeightRegular, 18, 22, 0.25),
-    base: buildVariant(fontFamily, fontWeightRegular, fontSize, 22, 0.15),
-    sm: buildVariant(fontFamily, fontWeightRegular, 12, 18, 0.15),
-    code: buildVariant(fontFamilyMonospace, fontWeightRegular, 14, 16, 0.15),
-
-    // Deprecated variants
-    h1: buildVariant(fontFamily, fontWeightRegular, 28, 32, -0.25),
-    h2: buildVariant(fontFamily, fontWeightRegular, 24, 28, 0),
-    h3: buildVariant(fontFamily, fontWeightRegular, 22, 24, 0),
-    h4: buildVariant(fontFamily, fontWeightRegular, 18, 22, 0.25),
-    h5: buildVariant(fontFamily, fontWeightRegular, 16, 22, 0),
-    h6: buildVariant(fontFamily, fontWeightMedium, 14, 22, 0.15),
-    body: buildVariant(fontFamily, fontWeightRegular, fontSize, 22, 0.15),
-    bodySmall: buildVariant(fontFamily, fontWeightRegular, 12, 18, 0.15),
-=======
   const variants: ThemeTypographyVariantTypes = {
-    xxl: buildVariant(typographyInput.xxl, fontFamily, fontWeightBold, 24, 34, 0.3),
-    xl: buildVariant(typographyInput.xl, fontFamily, fontWeightBold, 22, 30, -0.2),
-    lg: buildVariant(typographyInput.lg, fontFamily, fontWeightMedium, 20, 26, 0),
-    md: buildVariant(typographyInput.md, fontFamily, fontWeightMedium, 16, 22, 0),
-    base: buildVariant(typographyInput.base, fontFamily, fontWeightRegular, fontSize, 22, 0),
-    sm: buildVariant(typographyInput.sm, fontFamily, fontWeightMedium, 12, 18, 0.2),
+    xxl: buildVariant(typographyInput.xxl, fontFamily, fontWeightRegular, 28, 32, -0.25),
+    xl: buildVariant(typographyInput.xl, fontFamily, fontWeightRegular, 24, 28, 0),
+    lg: buildVariant(typographyInput.lg, fontFamily, fontWeightRegular, 22, 24, 0),
+    md: buildVariant(typographyInput.md, fontFamily, fontWeightRegular, 18, 22, 0.25),
+    base: buildVariant(typographyInput.base, fontFamily, fontWeightRegular, fontSize, 22, 0.15),
+    sm: buildVariant(typographyInput.sm, fontFamily, fontWeightRegular, 12, 18, 0.15),
     code: buildVariant(typographyInput.code, fontFamilyMonospace, fontWeightRegular, 14, 16, 0.15),
 
     // Deprecated variants
@@ -179,7 +159,6 @@ export function createTypography(colors: ThemeColors, typographyInput: ThemeTypo
     h6: buildVariant(typographyInput.h6, fontFamily, fontWeightMedium, 14, 22, 0.15),
     body: buildVariant(typographyInput.body, fontFamily, fontWeightRegular, fontSize, 22, 0.15),
     bodySmall: buildVariant(typographyInput.bodySmall, fontFamily, fontWeightRegular, 12, 18, 0.15),
->>>>>>> f88c3b30edf (override typography variants in visual_refresh themes)
   };
 
   const size = {
