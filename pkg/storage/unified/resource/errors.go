@@ -123,7 +123,8 @@ func ErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
 // (wrapped or not), an error already carrying an [apierrors.APIStatus], or a context error.
 // Anything else is returned unchanged, so response writers apply their own
 // sanitization and logging instead of exposing internal error text.
-// Different to [AsErrorResult] the [claims.ErrNamespaceMismatch] error is returned unchanged.
+// Unlike [AsErrorResult], [claims.ErrNamespaceMismatch] is not mapped to 403 — it passes through,
+// since that mapping only ever applied in-process.
 func StatusErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
 	if err == nil {
 		return GetError(respErr)
