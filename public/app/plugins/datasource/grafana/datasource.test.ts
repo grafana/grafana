@@ -77,6 +77,45 @@ describe('grafana data source', () => {
       ds = new GrafanaDatasource({} as DataSourceInstanceSettings);
     });
 
+    describe('when fetching annotations for screenshots', () => {
+      afterEach(() => {
+        delete window.__grafanaImageRendererMessageChannel;
+      });
+
+      it.each([
+        { rendering: true, annotationType: GrafanaAnnotationType.Dashboard },
+        { rendering: false, annotationType: GrafanaAnnotationType.Dashboard },
+        { rendering: true, annotationType: GrafanaAnnotationType.Tags },
+        { rendering: false, annotationType: GrafanaAnnotationType.Tags },
+      ])(
+        'filters alert events only when rendering=$rendering for $annotationType queries',
+        async ({ rendering, annotationType }) => {
+          if (rendering) {
+            window.__grafanaImageRendererMessageChannel = jest.fn();
+          }
+          const options = setupAnnotationQueryOptions({ type: annotationType, tags: ['tag1'] }, { uid: 'DSNdW0gVk' });
+
+          await ds.getAnnotations(options);
+
+          expect(getMock).toHaveBeenCalledWith(
+            '/api/annotations',
+            {
+              from: 1432288354,
+              to: 1432288401,
+              limit: undefined,
+              matchAny: undefined,
+              scopes: undefined,
+              ...(annotationType === GrafanaAnnotationType.Dashboard
+                ? { dashboardUID: 'DSNdW0gVk' }
+                : { tags: ['tag1'] }),
+              ...(rendering ? { type: 'annotation' } : {}),
+            },
+            'grafana-data-source-annotations-undefined-DSNdW0gVk'
+          );
+        }
+      );
+    });
+
     describe('with tags that have template variables', () => {
       const options = setupAnnotationQueryOptions({ tags: ['tag1:$var'] });
 
