@@ -373,6 +373,18 @@ abstract class DataSourceApi<
   getGroupByKeys?(options?: DataSourceGetTagKeysOptions<TQuery>): Promise<GetTagResponse> | Promise<MetricFindValue[]>;
 
   /**
+   * @alpha
+   * Classifies how a template variable is used within a single query, to help detect
+   * variables that duplicate what an ad hoc filter / group-by ("drilldown") control could
+   * do instead. Implementing this opts a datasource into the "migrate variables to
+   * filters" assistant suggestion. Called once per (variable, query) pair that uses this
+   * datasource; the caller aggregates classifications across all of a variable's usages.
+   */
+  getDrilldownMigrationUsage?(
+    options: DataSourceGetDrilldownMigrationUsageOptions<TQuery>
+  ): DrilldownMigrationUsage | undefined;
+
+  /**
    * Get tag values for adhoc filters
    */
   getTagValues?(options: DataSourceGetTagValuesOptions<TQuery>): Promise<GetTagResponse> | Promise<MetricFindValue[]>;
@@ -751,6 +763,22 @@ export interface DrilldownsApplicability {
   // but different origin
   origin?: string;
 }
+
+/**
+ * @alpha
+ */
+export interface DataSourceGetDrilldownMigrationUsageOptions<TQuery extends DataQuery = DataQuery> {
+  variableName: string;
+  query: TQuery;
+}
+
+/**
+ * @alpha
+ */
+export type DrilldownMigrationUsage =
+  | { kind: 'filter'; key: string; operator: string }
+  | { kind: 'groupBy' }
+  | { kind: 'unsafe'; reason?: string };
 
 export interface DataSourceJsonData {
   authType?: string;
