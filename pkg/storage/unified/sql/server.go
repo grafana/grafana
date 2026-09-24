@@ -88,6 +88,7 @@ func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer
 		withSearchBackedListConfig,
 		withStorageMetrics,
 		withUsageStats,
+		withNatsWatchMaxAge,
 	)
 	if err != nil {
 		return nil, err
@@ -206,6 +207,14 @@ func withMaxPageSizeBytes(opts *ServerOptions, resourceOpts *resource.ResourceSe
 func withUsageStats(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	unifiedStorageCfg := opts.Cfg.SectionWithEnvOverrides("unified_storage")
 	resourceOpts.UsageStatsEnabled = unifiedStorageCfg.Key("usage_stats_enabled").MustBool(false)
+	return nil
+}
+
+func withNatsWatchMaxAge(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	if opts.Cfg == nil || !opts.Cfg.NATS.Enabled || !opts.Cfg.NATS.Notifier {
+		return nil
+	}
+	resourceOpts.NatsWatchMaxAge = opts.Cfg.NATS.NotifierWatchMaxAge
 	return nil
 }
 

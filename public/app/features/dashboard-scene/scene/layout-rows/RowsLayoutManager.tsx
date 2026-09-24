@@ -18,7 +18,6 @@ import { addElement } from '../../actions/element/addElement';
 import { removeElement } from '../../actions/element/removeElement';
 import { edit } from '../../actions/utils/edit';
 import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
-import { ObjectsReorderedOnCanvasEvent } from '../../sidebar/events';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
@@ -512,14 +511,6 @@ export class RowsLayoutManager
         undo,
       });
     }
-  }
-
-  public moveRow(_rowKey: string, fromIndex: number, toIndex: number) {
-    const rows = [...this.state.rows];
-    const [removed] = rows.splice(fromIndex, 1);
-    rows.splice(toIndex, 0, removed);
-    this.setState({ rows });
-    this.publishEvent(new ObjectsReorderedOnCanvasEvent(this), true);
   }
 
   public forceSelectRow(rowKey: string) {
