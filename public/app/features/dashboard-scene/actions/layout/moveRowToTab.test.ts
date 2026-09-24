@@ -14,6 +14,7 @@ import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutMa
 import { activateFullSceneTree } from '../../utils/test-utils';
 
 import { moveRowToTab } from './moveRowToTab';
+import { reorderRows } from './reorderRows';
 
 setPluginImportUtils({
   importPanelPlugin: () => Promise.resolve(getPanelPlugin({})),
@@ -188,6 +189,57 @@ describe('moveRowToTab', () => {
     expect(source.state.rows).toEqual([before, row, after]);
     expect(target.state.rows).toEqual([existing]);
     expect(row.state.title).toBe('Row');
+  });
+
+  it('undoes and redoes a reorder followed by moving the reordered row to another tab', () => {
+    const row = new RowItem({ title: 'A' });
+    const second = new RowItem({ title: 'B' });
+    const third = new RowItem({ title: 'C' });
+    const source = new RowsLayoutManager({ rows: [row, second, third] });
+    const existing = new RowItem({ title: 'Existing' });
+    const target = new RowsLayoutManager({ rows: [existing] });
+    const destination = new TabItem({ layout: target });
+    const dashboard = new DashboardScene({
+      isEditing: true,
+      body: new TabsLayoutManager({ tabs: [new TabItem({ layout: source }), destination] }),
+    });
+    deactivate = activateFullSceneTree(dashboard);
+    const sidebar = dashboard.state.sidebar;
+
+    reorderRows(source, 0, 2);
+    expect(source.state.rows).toEqual([second, third, row]);
+
+    moveRowToTab({ row, source, destination });
+    expect(source.state.rows).toEqual([second, third]);
+    expect(target.state.rows).toEqual([existing, row]);
+    expect(row.parent).toBe(target);
+    expect(sidebar.state.undoStack).toHaveLength(2);
+
+    sidebar.undoAction();
+    expect(source.state.rows).toEqual([second, third, row]);
+    expect(target.state.rows).toEqual([existing]);
+    expect(row.parent).toBe(source);
+    expect(sidebar.state.undoStack).toHaveLength(1);
+
+    sidebar.undoAction();
+    expect(source.state.rows).toEqual([row, second, third]);
+    expect(target.state.rows).toEqual([existing]);
+    expect(row.parent).toBe(source);
+    expect(sidebar.state.undoStack).toHaveLength(0);
+    expect(sidebar.state.redoStack).toHaveLength(2);
+
+    sidebar.redoAction();
+    expect(source.state.rows).toEqual([second, third, row]);
+    expect(target.state.rows).toEqual([existing]);
+    expect(row.parent).toBe(source);
+    expect(sidebar.state.undoStack).toHaveLength(1);
+
+    sidebar.redoAction();
+    expect(source.state.rows).toEqual([second, third]);
+    expect(target.state.rows).toEqual([existing, row]);
+    expect(row.parent).toBe(target);
+    expect(sidebar.state.undoStack).toHaveLength(2);
+    expect(sidebar.state.redoStack).toHaveLength(0);
   });
 
   function setup(previousDestination: DashboardLayoutManager) {
