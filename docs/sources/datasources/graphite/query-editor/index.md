@@ -126,7 +126,7 @@ The following examples show common query patterns. Each one combines a metric pa
 
 ### Rename series for readable legends
 
-Wildcard queries return series whose names are full metric paths. Use `aliasByNode()` to display a specific path segment instead. The following query labels each series with the third path node, for example the host name:
+Wildcard queries return series whose names are full metric paths. Use `aliasByNode()` to display a specific path segment instead. The following query labels each series with the second path node, for example the host name:
 
 ```text
 aliasByNode(servers.*.cpu.percent.user, 1)
