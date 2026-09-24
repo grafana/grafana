@@ -221,7 +221,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-31,alertEnrichmentConditional,experimental,@grafana/alerting-squad,false,false,false
 2026-09-16,alertEnrichmentPreview,experimental,@grafana/alerting-squad,false,false,false
 2025-06-10,alertingImportAlertmanagerAPI,preview,@grafana/alerting-squad,false,false,false
-2026-09-16,alertingDisableDMAinUI,experimental,@grafana/alerting-squad,false,false,false
 2025-06-17,preferLibraryPanelTitle,privatePreview,@grafana/dashboards-squad,false,false,false
 2025-06-25,newInfluxDSConfigPageDesign,privatePreview,@grafana/data-sources-plugins,false,false,false
 2025-06-30,enableAppChromeExtensions,experimental,@grafana/grafana-catalog,false,false,true
@@ -266,7 +265,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,grafana.dashboardGlobalVariables,experimental,@grafana/dashboards-squad,false,false,false
 2026-01-05,smoothingTransformation,experimental,@grafana/datapro,false,false,true
 2026-01-06,secretsManagementAppPlatformAwsKeeper,preview,@grafana/grafana-operator-experience-squad,false,false,false
-2026-01-07,profilesExemplars,GA,@grafana/observability-traces-and-profiling,false,false,false
 2026-09-16,pyroscopeUTF8LabelNames,preview,@grafana/observability-traces-and-profiling,false,false,false
 2026-01-14,alertingSyncDispatchTimer,experimental,@grafana/alerting-squad,false,true,false
 2026-09-16,queryWithAssistant,experimental,@grafana/data-sources-plugins,false,false,true
@@ -299,7 +297,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,dashboard.recentlyDeletedViaTrash,experimental,@grafana/search-and-storage,false,false,true
 2026-09-16,deletedFolderResourceCleanup,experimental,@grafana/search-and-storage,false,true,false
 2026-09-16,libraryElementFolderUIDRepair,experimental,@grafana/search-and-storage,false,true,false
-2026-09-16,react19,GA,@grafana/grafana-frontend-platform,false,false,false
 2026-09-16,managedPluginsV2,experimental,@grafana/grafana-catalog,false,false,false
 2026-09-16,rememberUserOrgForSso,GA,@grafana/identity-access-team,false,false,false
 2026-09-16,datasourcesApiServerEnableHealthEndpoint,experimental,@grafana/grafana-datasources-core-services,false,false,false
@@ -335,7 +332,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,grafana.meticulousAIMode,experimental,@grafana/dataviz-squad,false,false,false
 2026-09-16,datasources.useNewStackInfoToSettingsCache,GA,@grafana/grafana-datasources-core-services,false,false,false
 2026-09-16,plugins.marketplaceLicensing,experimental,@grafana/grafana-catalog,false,true,false
-2026-09-16,alerting.syncExternalAlertmanager,experimental,@grafana/alerting-squad,false,true,false
+2026-09-16,alerting.syncExternalAlertmanager,privatePreview,@grafana/alerting-squad,false,true,false
 2026-09-16,grafana.enableScopesFirstMode,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2026-09-16,grafana.useDefaultScopesEndpoint,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2026-09-16,grafana.logLevelInference,deprecated,@grafana/observability-logs,false,false,true

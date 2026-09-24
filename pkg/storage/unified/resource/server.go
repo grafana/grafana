@@ -78,6 +78,39 @@ func (s *server) logIfServerError(ctx context.Context, op string, key *resourcep
 // to Watch clients that have AllowWatchBookmarks enabled.
 const defaultBookmarkFrequency = 10 * time.Second
 
+const natsWatchMaxAgeJitterFraction = 0.2
+
+func jitteredWatchMaxAge(ctx context.Context, base time.Duration) time.Duration {
+	bo := backoff.New(ctx, backoff.Config{
+		MinBackoff: time.Duration(float64(base) * (1 - natsWatchMaxAgeJitterFraction)),
+		MaxBackoff: time.Duration(float64(base) * (1 + natsWatchMaxAgeJitterFraction)),
+		MaxRetries: 1,
+	})
+	return bo.NextDelay()
+}
+
+type watchExpiry struct {
+	mu         sync.Mutex
+	generation chan struct{}
+}
+
+func newWatchExpiry() *watchExpiry {
+	return &watchExpiry{generation: make(chan struct{})}
+}
+
+func (e *watchExpiry) current() <-chan struct{} {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return e.generation
+}
+
+func (e *watchExpiry) expire() {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	close(e.generation)
+	e.generation = make(chan struct{})
+}
+
 // filteredBookmarkDelay leaves a recovery window for late writes without
 // delaying progress from objects already sent to the client.
 const filteredBookmarkDelay = time.Minute
@@ -182,9 +215,11 @@ type StorageBackend interface {
 	// Read a resource from storage optionally at an explicit version
 	ReadResource(context.Context, *resourcepb.ReadRequest) *BackendReadResponse
 
-	// BatchReadResource reads several resources at once, one response per request
-	// in order, or returns ErrBatchReadUnsupported.
-	BatchReadResource(context.Context, []*resourcepb.ReadRequest) ([]*BackendReadResponse, error)
+	// BatchReadResource lazily reads several resources, yielding one response per
+	// request in order. Body reads stop when the consumer stops. The up-front error
+	// reports failures that happen before iteration; per-request failures are set
+	// on BackendReadResponse.Error.
+	BatchReadResource(context.Context, []*resourcepb.ReadRequest) (iter.Seq[*BackendReadResponse], error)
 
 	// When the ResourceServer executes a List request, this iterator will
 	// query the backend for potential results.  All results will be
@@ -441,6 +476,10 @@ type ResourceServerOptions struct {
 	// Watch clients that set AllowWatchBookmarks. Zero defaults to defaultBookmarkFrequency.
 	BookmarkFrequency time.Duration
 
+	// NatsWatchMaxAge forces NATS-backed watch clients to re-list periodically.
+	// Zero disables expiry.
+	NatsWatchMaxAge time.Duration
+
 	// VectorBackend is the optional pgvector-backed store for semantic search.
 	// nil when the [unified_storage] vector_backend flag is off. When present,
 	// the resource and search servers hold a reference for use by future
@@ -618,8 +657,12 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		manifestSearchFields:           opts.Search.SearchFields,
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 		bookmarkFrequency:              opts.BookmarkFrequency,
+		natsWatchMaxAge:                opts.NatsWatchMaxAge,
 		vectorWriteReconciler:          opts.VectorReconciler,
 		embeddingBuilders:              opts.Search.EmbeddingBuilders,
+	}
+	if s.natsWatchMaxAge > 0 {
+		s.natsWatchExpiry = newWatchExpiry()
 	}
 
 	if opts.Search.Resources != nil {
@@ -749,6 +792,9 @@ type server struct {
 
 	bookmarkFrequency time.Duration
 
+	natsWatchMaxAge time.Duration
+	natsWatchExpiry *watchExpiry
+
 	// Vector reconciler (which owns the backfiller). Started in Init,
 	// joined in Stop via indexersWG.
 	vectorWriteReconciler BroadcasterConsumer
@@ -794,11 +840,28 @@ func (s *server) Init(ctx context.Context) error {
 			s.initErr = services.StartAndAwaitRunning(s.ctx, s.statsIngester)
 		}
 
+		if s.initErr == nil && s.natsWatchExpiry != nil {
+			go s.runNatsWatchExpiry()
+		}
+
 		if s.initErr != nil {
 			s.log.Error("error running resource server init", "error", s.initErr)
 		}
 	})
 	return s.initErr
+}
+
+func (s *server) runNatsWatchExpiry() {
+	for {
+		timer := time.NewTimer(jitteredWatchMaxAge(s.ctx, s.natsWatchMaxAge))
+		select {
+		case <-s.ctx.Done():
+			timer.Stop()
+			return
+		case <-timer.C:
+			s.natsWatchExpiry.expire()
+		}
+	}
 }
 
 // startVectorIndexers launches the vector reconciler (which owns and runs
@@ -2176,10 +2239,23 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		bookmarkC = ticker.C
 	}
 
+	// The server-level generation survives transport reconnects, so GOAWAY does
+	// not restart the expiry interval.
+	var watchExpiryC <-chan struct{}
+	if s.natsWatchExpiry != nil {
+		watchExpiryC = s.natsWatchExpiry.current()
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
+
+		case <-watchExpiryC:
+			// Unlike EOF, Expired forces clients to re-list.
+			s.log.Debug("watch: expiring stream to bound stale-state duration",
+				"group", key.Group, "resource", key.Resource, "namespace", key.Namespace, "since", since)
+			return NewResourceVersionExpiredError(since)
 
 		case <-bookmarkC:
 			cutoff := time.Now().Add(-filteredBookmarkDelay)
@@ -2240,18 +2316,24 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 					}
 				}
 				s.log.Debug("Server Broadcasting", "type", event.Type, "rv", event.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "resource", event.Key.Resource, "name", event.Key.Name)
+				sendStartedAt := time.Now()
 				if err := srv.Send(resp); err != nil {
 					return watchSendError(err)
 				}
+				sentAt := time.Now()
 				lastObjectRV = max(lastObjectRV, event.ResourceVersion)
 
 				if s.storageMetrics != nil && event.ResourceVersion > mostRecentRV {
-					// record latency - resource version can be either a unix microsecond timestamp (SQL backend)
-					// or a snowflake ID (KV backend), so we use ResourceVersionTime to handle both formats.
-					latencySeconds := time.Since(ResourceVersionTime(event.ResourceVersion)).Seconds()
-					if latencySeconds > 0 {
-						s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Group, event.Key.Resource).Observe(latencySeconds)
-					}
+					// Resource versions can be either Unix microsecond timestamps (SQL backend)
+					// or snowflake IDs (KV backend). Split the total at Send so upstream
+					// delivery and gRPC transport flow-control wait can be diagnosed separately.
+					s.storageMetrics.observeWatchEvent(
+						event.Key.Group,
+						event.Key.Resource,
+						ResourceVersionTime(event.ResourceVersion),
+						sendStartedAt,
+						sentAt,
+					)
 				}
 			}
 			// Progress is not a delivery cutoff: keep using the fixed starting since.

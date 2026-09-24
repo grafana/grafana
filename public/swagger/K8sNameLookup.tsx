@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 
 import { type SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
@@ -16,101 +16,87 @@ type Props = {
 
 export function K8sNameLookup(props: Props) {
   const [focused, setFocus] = useState(false);
-  const [group, setGroup] = useState<string>();
-  const [version, setVersion] = useState<string>();
-  const [resource, setResource] = useState<string>();
-  const [namespace, setNamespace] = useState<string>();
-  const [namespaced, setNamespaced] = useState<boolean>();
+  const namespace = useContext(NamespaceContext);
+  const info = useContext(ResourceContext);
+  const { group, version, resource, namespaced } = info ?? {};
   const [loading, setLoading] = useState(false);
   const [options, setOptions] = useState<Array<SelectableValue<string>>>();
   const [placeholder, setPlaceholder] = useState<string>('Enter kubernetes name');
 
   useEffect(() => {
-    if (focused && group && version && resource) {
-      setLoading(true);
-      setPlaceholder('Enter kubernetes name');
-      const fn = async () => {
-        const url = namespaced
-          ? `apis/${group}/${version}/namespaces/${namespace}/${resource}`
-          : `apis/${group}/${version}/${resource}`;
+    setOptions(undefined);
+    setLoading(false);
+    setPlaceholder('Enter kubernetes name');
+    if (!focused || !group || !version || !resource || (namespaced && !namespace)) {
+      return;
+    }
 
+    const controller = new AbortController();
+    const loadNames = async () => {
+      setLoading(true);
+      const url = namespaced
+        ? `apis/${group}/${version}/namespaces/${namespace}/${resource}`
+        : `apis/${group}/${version}/${resource}`;
+
+      try {
         const response = await fetch(url + '?limit=100', {
+          signal: controller.signal,
           headers: {
             Accept:
-              'application/json;as=Table;v=v1;g=meta.k8s.io,application/json;as=Table;v=v1beta1;g=meta.k8s.io,application/jso',
+              'application/json;as=Table;v=v1;g=meta.k8s.io,application/json;as=Table;v=v1beta1;g=meta.k8s.io,application/json',
           },
         });
         if (!response.ok) {
-          console.warn('error loading names');
-          setLoading(false);
-          return;
+          throw new Error('Error loading names');
         }
         const table = await response.json();
-        console.log('LIST', url, table);
+        if (controller.signal.aborted) {
+          return;
+        }
         const options: Array<SelectableValue<string>> = [];
-        if (table.rows?.length) {
-          for (const row of table.rows) {
-            const n = row.object?.metadata?.name;
-            if (n) {
-              options.push({ label: n, value: n });
-            }
+        for (const row of table.rows ?? []) {
+          const name = row.object?.metadata?.name;
+          if (name) {
+            options.push({ label: name, value: name });
           }
-        } else {
+        }
+        setOptions(options);
+        if (!options.length) {
           setPlaceholder('No items found');
         }
-        setLoading(false);
-        setOptions(options);
-      };
-      fn();
-    }
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          console.warn('Error loading names', error);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
+    };
+    loadNames();
+    return () => controller.abort();
   }, [focused, namespace, group, version, resource, namespaced]);
 
+  if (!info) {
+    return <props.Original {...props.props} />;
+  }
+
   return (
-    <NamespaceContext.Consumer>
-      {(namespace) => {
-        return (
-          <ResourceContext.Consumer>
-            {(info) => {
-              // delay avoids Cannot update a component
-              setTimeout(() => {
-                setNamespace(namespace);
-                setGroup(info?.group);
-                setVersion(info?.version);
-                setResource(info?.resource);
-                setNamespaced(info?.namespaced);
-              }, 200);
-              if (info) {
-                const value = props.value ? { label: props.value, value: props.value } : undefined;
-                return (
-                  <Select
-                    allowCreateWhileLoading={true}
-                    allowCustomValue={true}
-                    placeholder={placeholder}
-                    loadingMessage="Loading kubernetes names..."
-                    formatCreateLabel={(v) => `Use: ${v}`}
-                    onFocus={() => {
-                      // Delay loading until we click on the name
-                      setFocus(true);
-                    }}
-                    options={options}
-                    isLoading={loading}
-                    isClearable={true}
-                    defaultOptions
-                    value={value}
-                    onChange={(v: SelectableValue<string>) => {
-                      props.onChange(v?.value ?? '');
-                    }}
-                    onCreateOption={(v) => {
-                      props.onChange(v);
-                    }}
-                  />
-                );
-              }
-              return <props.Original {...props.props} />;
-            }}
-          </ResourceContext.Consumer>
-        );
-      }}
-    </NamespaceContext.Consumer>
+    <Select
+      allowCreateWhileLoading={true}
+      allowCustomValue={true}
+      placeholder={placeholder}
+      loadingMessage="Loading kubernetes names..."
+      formatCreateLabel={(v) => `Use: ${v}`}
+      onFocus={() => setFocus(true)}
+      options={options}
+      isLoading={loading}
+      isClearable={true}
+      defaultOptions
+      value={props.value ? { label: props.value, value: props.value } : undefined}
+      onChange={(v: SelectableValue<string>) => props.onChange(v?.value ?? '')}
+      onCreateOption={props.onChange}
+    />
   );
 }
