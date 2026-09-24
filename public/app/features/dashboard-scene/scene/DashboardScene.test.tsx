@@ -2096,52 +2096,33 @@ describe('DashboardScene', () => {
       expect(scene.state.overlay).toBe(newer);
     });
 
-    it.each<{
-      name: string;
-      run: (scene: DashboardScene, deactivate: () => void) => void | (() => void);
-    }>([
-      { name: 'close', run: (scene) => scene.closeModal() },
-      {
-        name: 'overlay replacement',
-        run: (scene) => {
+    it.each(
+      Object.entries<(scene: DashboardScene, deactivate: () => void) => void | (() => void)>({
+        close: (scene) => scene.closeModal(),
+        'overlay replacement': (scene) => {
           scene.showModal(new SceneGridLayout({ children: [] }));
           scene.closeModal();
         },
-      },
-      {
-        name: 'navigation away and back',
-        run: () => {
+        'navigation away and back': () => {
           locationService.push('/dashboards');
           locationService.push('/d/dash-1/test');
         },
-      },
-      { name: 'editor URL change', run: () => locationService.partial({ inspect: 'panel-1' }) },
-      {
-        name: 'edit mode change',
-        run: (scene) => {
+        'editor URL change': () => locationService.partial({ inspect: 'panel-1' }),
+        'edit mode change': (scene) => {
           scene.onEnterEditMode();
           scene.exitEditMode({ skipConfirm: true });
         },
-      },
-      {
-        name: 'layout replacement',
-        run: (scene) => scene.switchLayout(DefaultGridLayoutManager.createEmpty(), true),
-      },
-      {
-        name: 'save drawer close',
-        run: (scene) => new SaveDashboardDrawer({ dashboardRef: scene.getRef() }).onClose(),
-      },
-      { name: 'panel view URL sync', run: (scene) => scene.urlSync?.updateFromUrl({ viewPanel: 'panel-1' }) },
-      { name: 'share state replacement', run: (scene) => scene.setState({ shareView: 'snapshot' }) },
-      { name: 'inspect state replacement', run: (scene) => scene.setState({ inspectPanelKey: 'panel-1' }) },
-      {
-        name: 'deactivation and reactivation',
-        run: (scene, deactivate) => {
+        'layout replacement': (scene) => scene.switchLayout(DefaultGridLayoutManager.createEmpty(), true),
+        'save drawer close': (scene) => new SaveDashboardDrawer({ dashboardRef: scene.getRef() }).onClose(),
+        'panel view URL sync': (scene) => scene.urlSync?.updateFromUrl({ viewPanel: 'panel-1' }),
+        'share state replacement': (scene) => scene.setState({ shareView: 'snapshot' }),
+        'inspect state replacement': (scene) => scene.setState({ inspectPanelKey: 'panel-1' }),
+        'deactivation and reactivation': (scene, deactivate) => {
           deactivate();
           return scene.activate();
         },
-      },
-    ])('discards a pending overlay after $name', async ({ run }) => {
+      })
+    )('discards a pending overlay after %s', async (_name, run) => {
       const scene = buildTestScene();
       const deactivate = scene.activate();
       const modal = new SceneGridLayout({ children: [] });
@@ -2300,22 +2281,18 @@ describe('DashboardScene', () => {
       locationService.push('/d/dash-1/test?editPanel=panel-1');
     });
 
-    it.each<{
-      name: string;
-      run: (scene: DashboardScene, deactivate: () => void) => void;
-    }>([
-      { name: 'close', run: (scene) => scene.cancelPendingViews() },
-      { name: 'editor URL removal', run: () => locationService.partial({ editPanel: null }) },
-      {
-        name: 'navigation away and back',
-        run: () => {
+    it.each(
+      Object.entries<(scene: DashboardScene, deactivate: () => void) => void>({
+        close: (scene) => scene.cancelPendingViews(),
+        'editor URL removal': () => locationService.partial({ editPanel: null }),
+        'navigation away and back': () => {
           locationService.push('/dashboards');
           locationService.push('/d/dash-1/test?editPanel=panel-1');
         },
-      },
-      { name: 'rebuild', run: (scene) => scene.switchLayout(DefaultGridLayoutManager.createEmpty(), true) },
-      { name: 'deactivation', run: (_scene, deactivate) => deactivate() },
-    ])('does not reopen the editor after $name while its chunk loads', async ({ run }) => {
+        rebuild: (scene) => scene.switchLayout(DefaultGridLayoutManager.createEmpty(), true),
+        deactivation: (_scene, deactivate) => deactivate(),
+      })
+    )('does not reopen the editor after %s while its chunk loads', async (_name, run) => {
       const scene = buildTestScene({ isEditing: true });
       const deactivate = scene.activate();
       const panel = findVizPanelByKey(scene, 'panel-1')!;
