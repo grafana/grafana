@@ -1,10 +1,8 @@
 import { locationUtil, type TimeRange, urlUtil, rangeUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { createShortLink } from 'app/core/utils/shortLinks';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { contextSrv } from '../../../../core/services/context_srv';
-import { type PanelModel } from '../../state/PanelModel';
 
 export interface BuildParamsArgs {
   useCurrentTimeRange: boolean;
@@ -70,26 +68,6 @@ export function buildBaseUrl() {
   }
 
   return baseUrl;
-}
-
-export async function buildShareUrl(
-  useCurrentTimeRange: boolean,
-  selectedTheme?: string,
-  panel?: PanelModel,
-  shortenUrl?: boolean
-) {
-  const baseUrl = buildBaseUrl();
-  const params = buildParams({
-    useCurrentTimeRange,
-    selectedTheme,
-    panelId: panel?.id ? String(panel.id) : undefined,
-    timeFrom: panel?.timeFrom,
-  });
-  const shareUrl = urlUtil.appendQueryToUrl(baseUrl, params.toString());
-  if (shortenUrl) {
-    return await createShortLink(shareUrl);
-  }
-  return shareUrl;
 }
 
 function buildSoloUrl(
