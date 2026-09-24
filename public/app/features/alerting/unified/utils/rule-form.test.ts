@@ -30,6 +30,7 @@ import {
   getInstantFromDataQuery,
   getNotificationSettingsForDTO,
   grafanaRuleDtoToFormValues,
+  normalizeContactPoints,
   rulerRuleToFormValues,
 } from './rule-form';
 
@@ -341,6 +342,48 @@ describe('getContactPointsFromDTO', () => {
         groupIntervalValue: 'group_interval',
         repeatIntervalValue: 'repeat_interval',
       },
+    });
+  });
+});
+
+describe('normalizeContactPoints', () => {
+  it('should return undefined when there are no contact points', () => {
+    expect(normalizeContactPoints(undefined)).toBeUndefined();
+  });
+
+  it('should fill defaults when selectedContactPoint is empty', () => {
+    const partial = { grafana: { selectedContactPoint: '' } } as unknown as AlertManagerManualRouting;
+
+    expect(normalizeContactPoints(partial)).toEqual({
+      grafana: {
+        selectedContactPoint: '',
+        overrideGrouping: false,
+        groupBy: [],
+        overrideTimings: false,
+        groupWaitValue: '',
+        groupIntervalValue: '',
+        repeatIntervalValue: '',
+        muteTimeIntervals: [],
+        activeTimeIntervals: [],
+      },
+    });
+  });
+
+  it('should keep provided values while filling missing ones', () => {
+    const partial = {
+      grafana: { selectedContactPoint: 'email', overrideGrouping: true, groupBy: ['alertname'] },
+    } as unknown as AlertManagerManualRouting;
+
+    expect(normalizeContactPoints(partial)?.grafana).toEqual({
+      selectedContactPoint: 'email',
+      overrideGrouping: true,
+      groupBy: ['alertname'],
+      overrideTimings: false,
+      groupWaitValue: '',
+      groupIntervalValue: '',
+      repeatIntervalValue: '',
+      muteTimeIntervals: [],
+      activeTimeIntervals: [],
     });
   });
 });

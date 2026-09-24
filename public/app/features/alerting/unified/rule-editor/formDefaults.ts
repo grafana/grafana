@@ -17,6 +17,7 @@ import {
   MANUAL_ROUTING_KEY,
   SIMPLIFIED_QUERY_EDITOR_KEY,
   getDefaultQueries,
+  normalizeContactPoints,
   rulerRuleToFormValues,
 } from '../utils/rule-form';
 import { isGrafanaRecordingRuleByType } from '../utils/rules';
@@ -248,7 +249,11 @@ export function formValuesFromPrefill(rule: Partial<RuleFormValues>): RuleFormVa
   } else {
     // grafana prefill
     // coerce prefill params to a valid RuleFormValues interface
-    parsedRule = alertingAlertRuleFormSchema.parse(rule);
+    // prefill URLs may carry partial contact point entries that the strict schema would reject
+    parsedRule = alertingAlertRuleFormSchema.parse({
+      ...rule,
+      contactPoints: normalizeContactPoints(rule.contactPoints),
+    });
   }
 
   return setQueryEditorSettings(

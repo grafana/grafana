@@ -321,22 +321,20 @@ export function normalizeContactPoints(
   const normalized: AlertManagerManualRouting = {};
 
   for (const [alertManager, contactPoint] of Object.entries(contactPoints)) {
-    if (contactPoint.selectedContactPoint) {
-      const defaultContactPoint: ContactPoint = {
-        selectedContactPoint: contactPoint.selectedContactPoint,
-        overrideGrouping: contactPoint.overrideGrouping ?? false,
-        groupBy: contactPoint.groupBy ?? [],
-        overrideTimings: contactPoint.overrideTimings ?? false,
-        groupWaitValue: contactPoint.groupWaitValue ?? '',
-        groupIntervalValue: contactPoint.groupIntervalValue ?? '',
-        repeatIntervalValue: contactPoint.repeatIntervalValue ?? '',
-        muteTimeIntervals: contactPoint.muteTimeIntervals ?? [],
-        activeTimeIntervals: contactPoint.activeTimeIntervals ?? [],
-      };
-      normalized[alertManager] = defaultContactPoint;
-    } else {
-      normalized[alertManager] = contactPoint;
-    }
+    // Entries may be partial (e.g. an empty selectedContactPoint from the panel drawer), and the
+    // prefill schema requires every field, so defaults are applied regardless of the selection.
+    const partial: Partial<ContactPoint> = contactPoint ?? {};
+    normalized[alertManager] = {
+      selectedContactPoint: partial.selectedContactPoint ?? '',
+      overrideGrouping: partial.overrideGrouping ?? false,
+      groupBy: partial.groupBy ?? [],
+      overrideTimings: partial.overrideTimings ?? false,
+      groupWaitValue: partial.groupWaitValue ?? '',
+      groupIntervalValue: partial.groupIntervalValue ?? '',
+      repeatIntervalValue: partial.repeatIntervalValue ?? '',
+      muteTimeIntervals: partial.muteTimeIntervals ?? [],
+      activeTimeIntervals: partial.activeTimeIntervals ?? [],
+    };
   }
 
   return normalized;

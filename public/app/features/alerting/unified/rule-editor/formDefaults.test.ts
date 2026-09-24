@@ -1,7 +1,7 @@
 import { config, getDataSourceSrv } from '@grafana/runtime';
 
 import { mockAlertQuery, mockDataSource, mockReduceExpression, mockThresholdExpression } from '../mocks';
-import { RuleFormType } from '../types/rule-form';
+import { RuleFormType, type RuleFormValues } from '../types/rule-form';
 import { Annotation } from '../utils/constants';
 import { DataSourceType, getDefaultOrFirstCompatibleDataSource } from '../utils/datasource';
 import { MANUAL_ROUTING_KEY, getDefaultQueries } from '../utils/rule-form';
@@ -586,5 +586,38 @@ describe('formValuesFromPrefill', () => {
     const result = formValuesFromPrefill(prefillData);
 
     expect(result.missingSeriesEvalsToResolve).toBe(5);
+  });
+
+  it('should fill contact point defaults when selectedContactPoint is empty', () => {
+    // Shape produced by the panel drawer "Continue in Alerting" flow when no contact point is chosen
+    const prefillData = {
+      type: RuleFormType.grafana,
+      contactPoints: { grafana: { selectedContactPoint: '' } },
+    } as unknown as Partial<RuleFormValues>;
+
+    const result = formValuesFromPrefill(prefillData);
+
+    expect(result.contactPoints).toEqual({
+      grafana: {
+        selectedContactPoint: '',
+        overrideGrouping: false,
+        groupBy: [],
+        overrideTimings: false,
+        groupWaitValue: '',
+        groupIntervalValue: '',
+        repeatIntervalValue: '',
+        muteTimeIntervals: [],
+        activeTimeIntervals: [],
+      },
+    });
+  });
+
+  it('should accept query param defaults with an empty selectedContactPoint', () => {
+    const ruleDefinition = JSON.stringify({ contactPoints: { grafana: { selectedContactPoint: '' } } });
+    const defaults = formValuesFromQueryParams(ruleDefinition, RuleFormType.grafana);
+
+    const result = formValuesFromPrefill(defaults);
+
+    expect(result.contactPoints?.grafana).toMatchObject({ selectedContactPoint: '', groupBy: [] });
   });
 });

@@ -85,10 +85,10 @@ const parseK8sReceiver = (item: K8sReceiver): GrafanaManagedContactPoint => {
   const provenance = metadataProvenance === KnownProvenance.None ? undefined : metadataProvenance;
 
   return {
-    id: item.metadata.name || item.metadata.uid || item.spec.title,
-    name: item.spec.title,
+    id: item.metadata.name || item.metadata.uid || item.spec?.title || '',
+    name: item.spec?.title ?? '',
     provenance: provenance,
-    grafana_managed_receiver_configs: item.spec.integrations,
+    grafana_managed_receiver_configs: item.spec?.integrations ?? [],
     metadata: item.metadata,
   };
 };
@@ -97,7 +97,7 @@ const useK8sContactPoints = (...[hookParams, queryOptions]: Parameters<typeof us
   return useListReceiverQuery(hookParams, {
     ...queryOptions,
     selectFromResult: (result) => {
-      const data = result.data?.items.map((item) => parseK8sReceiver(item));
+      const data = result.data ? (result.data.items ?? []).map((item) => parseK8sReceiver(item)) : undefined;
 
       return {
         ...result,
