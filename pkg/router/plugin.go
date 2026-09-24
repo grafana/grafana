@@ -284,5 +284,9 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 	if b.deps.PluginSettings != nil {
 		opts.Runner.LegacyStore = appplugin.NewLegacySettingsStore(b.group.Name, b.plugin.JSONData.ID, b.deps.PluginSettings)
 	}
-	return pluginroute.NewHandler(b.plugin, opts)
+	handler, err := pluginroute.NewHandler(b.plugin, opts)
+	if err != nil {
+		return nil, err
+	}
+	return &tracedPluginHandler{Handler: handler, pluginID: b.plugin.JSONData.ID, group: b.group.Name}, nil
 }
