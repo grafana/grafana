@@ -120,9 +120,8 @@ export function summaryChartQuery(filter: string): SceneDataQuery {
  * Range table query (A) for tree rows + deduplicated instant query (B) for badge counts.
  *
  * Query A wraps each selector in `last_over_time(...[$__interval])` for the same reason
- * `alertRuleInstancesQuery` does: without it, a rule whose only instance is short-lived can
- * lose its entire row (not just a nested instance) once the step exceeds Prometheus's
- * default 5m staleness window.
+ * `alertRuleInstancesQuery` does — see its docstring — otherwise a rule whose only instance
+ * is short-lived can lose its entire row, not just a nested instance.
  */
 export function getWorkbenchQueries(countBy: string, filter: string): [SceneDataQuery, SceneDataQuery] {
   const lookbackSelectors = buildMetricSelectors(filter).map((selector) => `last_over_time(${selector}[$__interval])`);
