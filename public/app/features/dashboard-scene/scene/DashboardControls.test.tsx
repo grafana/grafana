@@ -5,7 +5,7 @@ import React from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import {
   CustomVariable,
   LocalValueVariable,
@@ -167,6 +167,7 @@ describe('DashboardControls', () => {
     });
 
     it('should render with hidden controls', async () => {
+      setTestFlags({ dashboardNewLayouts: false });
       const scene = buildTestScene({
         hideTimeControls: true,
         hideVariableControls: true,
@@ -179,46 +180,34 @@ describe('DashboardControls', () => {
     });
 
     it('should not render an empty controls container in kiosk mode when controls are hidden', () => {
-      const originalFeatureToggles = { ...config.featureToggles };
-      try {
-        config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
+      const scene = buildTestScene({
+        hideTimeControls: true,
+        hideVariableControls: true,
+        hideLinksControls: true,
+        hideDashboardControls: true,
+      });
 
-        const scene = buildTestScene({
-          hideTimeControls: true,
-          hideVariableControls: true,
-          hideLinksControls: true,
-          hideDashboardControls: true,
-        });
+      renderInGrafanaContext(<scene.Component model={scene} />, KioskMode.Full);
 
-        renderInGrafanaContext(<scene.Component model={scene} />, KioskMode.Full);
-
-        expect(screen.queryByTestId(selectors.pages.Dashboard.Controls)).not.toBeInTheDocument();
-      } finally {
-        config.featureToggles = originalFeatureToggles;
-      }
+      expect(screen.queryByTestId(selectors.pages.Dashboard.Controls)).not.toBeInTheDocument();
     });
 
     it('in edit mode, should render the "Add variable" button when hasControls returns false and time controls are hidden', async () => {
-      const originalFeatureToggles = { ...config.featureToggles };
-      try {
-        config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
+      const controls = buildTestSceneWithEditable({
+        editable: true,
+        canEdit: true,
+        isEditing: true,
+      });
+      controls.setState({ hideTimeControls: true });
 
-        const controls = buildTestSceneWithEditable({
-          editable: true,
-          canEdit: true,
-          isEditing: true,
-        });
-        controls.setState({ hideTimeControls: true });
+      const renderer = renderInGrafanaContext(<controls.Component model={controls} />);
 
-        const renderer = renderInGrafanaContext(<controls.Component model={controls} />);
-
-        expect(renderer.getByTestId(selectors.pages.Dashboard.Controls)).toBeInTheDocument();
-        expect(renderer.queryByTestId(selectors.components.TimePicker.openButton)).not.toBeInTheDocument();
-        expect(renderer.queryByTestId(selectors.components.RefreshPicker.runButtonV2)).not.toBeInTheDocument();
-        expect(renderer.getByTestId(selectors.components.ControlsAddButton.triggerButton)).toBeInTheDocument();
-      } finally {
-        config.featureToggles = originalFeatureToggles;
-      }
+      expect(renderer.getByTestId(selectors.pages.Dashboard.Controls)).toBeInTheDocument();
+      expect(renderer.queryByTestId(selectors.components.TimePicker.openButton)).not.toBeInTheDocument();
+      expect(renderer.queryByTestId(selectors.components.RefreshPicker.runButtonV2)).not.toBeInTheDocument();
+      expect(renderer.getByTestId(selectors.components.ControlsAddButton.triggerButton)).toBeInTheDocument();
     });
 
     it('should render Table view toggle in panel edit mode even when all other controls are hidden', () => {
@@ -452,16 +441,13 @@ describe('DashboardControls', () => {
   });
 
   describe('DashboardControlActions editable flag', () => {
-    const originalFeatureToggles = { ...config.featureToggles };
-
     beforeEach(() => {
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
       jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: false });
     });
 
     afterEach(() => {
-      config.featureToggles = originalFeatureToggles;
-      jest.resetAllMocks();
+      jest.clearAllMocks();
     });
 
     it('should show EditDashboardSwitch when editable is true', async () => {
@@ -538,16 +524,13 @@ describe('DashboardControls', () => {
   });
 
   describe('DashboardControlActions kiosk mode', () => {
-    const originalFeatureToggles = { ...config.featureToggles };
-
     beforeEach(() => {
       jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: false });
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
     });
 
     afterEach(() => {
-      config.featureToggles = originalFeatureToggles;
-      jest.resetAllMocks();
+      jest.clearAllMocks();
     });
 
     it('should hide Edit and Share buttons in kiosk mode', async () => {
@@ -567,17 +550,15 @@ describe('DashboardControls', () => {
   });
 
   describe('DashboardControlActions save button visibility', () => {
-    const originalFeatureToggles = { ...config.featureToggles };
     const mockedContextSrv = jest.mocked(contextSrv);
 
     beforeEach(() => {
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
       jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: false });
       mockedContextSrv.hasEditPermissionInFolders = false;
     });
 
     afterEach(() => {
-      config.featureToggles = originalFeatureToggles;
       jest.clearAllMocks();
     });
 
@@ -607,17 +588,13 @@ describe('DashboardControls', () => {
   });
 
   describe('Panel edit buttons', () => {
-    const originalFeatureToggles = { ...config.featureToggles };
-
     beforeEach(() => {
       // Default most tests to new layouts on; the flag-off case overrides this explicitly.
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
       jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: false });
     });
 
     afterEach(() => {
-      // Restore to a fresh copy so beforeEach mutations don't pollute the original snapshot.
-      config.featureToggles = { ...originalFeatureToggles };
       jest.clearAllMocks();
     });
 
@@ -804,7 +781,7 @@ describe('DashboardControls', () => {
     });
 
     it('renders the panel edit actions even when new layouts is off', () => {
-      config.featureToggles.dashboardNewLayouts = false;
+      setTestFlags({ dashboardNewLayouts: false });
       const { controls } = buildPanelEditControlsScene({
         uid: 'panel-edit-flag-off',
         editedPanelKey: 'edited-panel',

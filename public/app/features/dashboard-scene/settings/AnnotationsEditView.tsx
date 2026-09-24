@@ -6,12 +6,13 @@ import {
   PageLayoutType,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { useFlagGrafanaDashboardSettingsRedesign } from '@grafana/runtime/internal';
 import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type SceneComponentProps, SceneObjectBase, type VizPanel, dataLayers } from '@grafana/scenes';
 import { Alert, Button } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import {
   HIGHLIGHT_CATEGORY_PARAM_NAME,
   CATEGORY_PARAM_NAME,
@@ -154,7 +155,7 @@ function AnnotationsSettingsView({ model }: SceneComponentProps<AnnotationsEditV
 
   const annotations: AnnotationQuery[] = dataLayersToAnnotations(annotationLayers);
 
-  const isDynamicDashboardsEnabled = config.featureToggles.dashboardNewLayouts;
+  const isDynamicDashboardsEnabled = isDashboardNewLayoutsEnabled();
   const isSettingsPageRedesignEnabled = useFlagGrafanaDashboardSettingsRedesign();
 
   const goToSidebar = () => {

@@ -21,6 +21,7 @@ import {
 import { type Dashboard, type Panel, type RowPanel } from '@grafana/schema';
 import { createLogger } from '@grafana/ui';
 import kbn from 'app/core/utils/kbn';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { type RowItem } from 'app/features/dashboard-scene/scene/layout-rows/RowItem';
 import { type TabItem } from 'app/features/dashboard-scene/scene/layout-tabs/TabItem';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
@@ -204,7 +205,7 @@ export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
 }
 
 export function getDefaultPluginId(): string {
-  return config.featureToggles.dashboardNewLayouts ? UNCONFIGURED_PANEL_PLUGIN_ID : 'timeseries';
+  return isDashboardNewLayoutsEnabled() ? UNCONFIGURED_PANEL_PLUGIN_ID : 'timeseries';
 }
 
 export async function getDefaultVizPanel(): Promise<VizPanel> {

@@ -1,5 +1,6 @@
 import { type VariableType } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 
 import { type GroupConditionConditionType } from '../conditional-rendering/group/types';
 import {
@@ -422,7 +423,7 @@ const reportDashboardInteraction = (
   interactionPrefix = 'dashboards'
 ) => {
   const meta = isScenesContextSet ? { scenesView: true } : {};
-  const isDynamicDashboard = config.featureToggles?.dashboardNewLayouts ?? false;
+  const isDynamicDashboard = isDashboardNewLayoutsEnabled();
 
   if (properties) {
     reportInteraction(`${interactionPrefix}_${name}`, { ...properties, ...meta, isDynamicDashboard });

@@ -3,6 +3,7 @@ import path from 'path';
 
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { type DashboardDataDTO } from 'app/types/dashboard';
 
@@ -73,6 +74,8 @@ jest.mock('@grafana/runtime', () => {
     config: mockConfig,
   };
 });
+
+setTestFlags({ dashboardNewLayouts: true });
 
 /*
  * V2 to V1 Dashboard Transformation Comparison Test

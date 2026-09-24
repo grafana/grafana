@@ -4,6 +4,7 @@ import { type Props } from 'react-virtualized-auto-sizer';
 import { render } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import DashboardPageProxy, { type DashboardPageProxyProps } from './DashboardPageProxy';
@@ -60,6 +61,9 @@ function setup(props: Partial<DashboardPageProxyProps> & { uid?: string }) {
 describe('DashboardPageProxy', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // The backend mock is a v1beta1 resource. The page state manager is a singleton
+    // created on first render, so the flag has to be off before either test mounts.
+    setTestFlags({ dashboardNewLayouts: false });
   });
 
   it('should render DashboardScenePage for home route', async () => {

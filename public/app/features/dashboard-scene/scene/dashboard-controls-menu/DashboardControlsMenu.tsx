@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { type SceneDataLayerProvider, type SceneVariable } from '@grafana/scenes';
 import { type DashboardLink } from '@grafana/schema';
 import { Menu, ScrollContainer, useStyles2 } from '@grafana/ui';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 
 import { sortDefaultLinksFirst, sortDefaultVarsFirst } from '../../utils/dashboardControls';
 import { DataLayerControlEditWrapper } from '../DashboardDataLayerControls';
@@ -29,7 +29,8 @@ export function DashboardControlsMenu({
   isEditing,
   dashboard,
 }: DashboardControlsMenuProps) {
-  const isEditingNewLayouts = isEditing && config.featureToggles.dashboardNewLayouts;
+  const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
+  const isEditingNewLayouts = isEditing && dashboardNewLayoutsEnabled;
   const fullLinks = dashboard.state.links ?? [];
   const styles = useStyles2(getStyles);
 

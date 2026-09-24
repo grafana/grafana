@@ -5,7 +5,6 @@ import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { type SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -13,7 +12,7 @@ import { Button, ClipboardButton, CodeEditor, Modal } from '@grafana/ui';
 import { AnnoKeyFolder, AnnoKeyFolderTitle, AnnoKeyFolderUrl, type ObjectMeta } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { ExportFormat } from 'app/features/dashboard/api/types';
-import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
+import { isDashboardNewLayoutsEnabled, isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { type DashboardJson } from 'app/features/manage-dashboards/types';
@@ -49,7 +48,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
       ...state,
       isSharingExternally: false,
       isViewingJSON: false,
-      exportFormat: config.featureToggles.dashboardNewLayouts ? ExportFormat.V2Resource : ExportFormat.Classic,
+      exportFormat: isDashboardNewLayoutsEnabled() ? ExportFormat.V2Resource : ExportFormat.Classic,
     });
   }
 
@@ -335,8 +334,7 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
             dashboardJson={dashboardJson}
             isSharingExternally={isSharingExternally ?? false}
             exportFormat={
-              exportFormat ??
-              (config.featureToggles.dashboardNewLayouts ? ExportFormat.V2Resource : ExportFormat.Classic)
+              exportFormat ?? (isDashboardNewLayoutsEnabled() ? ExportFormat.V2Resource : ExportFormat.Classic)
             }
             isViewingYAML={isViewingYAML ?? false}
             onExportFormatChange={model.onExportFormatChange}

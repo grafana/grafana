@@ -4,8 +4,9 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { config, LocationServiceProvider, locationService } from '@grafana/runtime';
+import { LocationServiceProvider, locationService } from '@grafana/runtime';
 import { SceneQueryRunner, SceneTimeRange, UrlSyncContextProvider, VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { mockLocalStorage } from 'app/features/alerting/unified/mocks';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import {
@@ -320,6 +321,14 @@ function setup(meta?: DashboardMeta, editable?: boolean) {
 }
 
 describe('when previewing an unbuilt dashboard plan', () => {
+  beforeEach(() => {
+    setTestFlags({ dashboardNewLayouts: true });
+  });
+
+  afterEach(() => {
+    setTestFlags({});
+  });
+
   // Render through the shared wrapper to cover planning behavior in both toolbar variants.
   function setupPlanning() {
     const onBuild = jest.fn();
@@ -362,7 +371,6 @@ describe('when previewing an unbuilt dashboard plan', () => {
   }
 
   it.each([true, false])('offers only Build and Dismiss (dashboardNewLayouts=%s)', async (newLayouts) => {
-    config.featureToggles.dashboardNewLayouts = newLayouts;
     setupPlanning();
 
     expect(await screen.findByText('Kafka overview')).toBeInTheDocument();

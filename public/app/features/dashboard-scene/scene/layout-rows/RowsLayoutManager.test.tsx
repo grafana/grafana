@@ -1,5 +1,6 @@
 import { VariableHide } from '@grafana/data';
 import { ConstantVariable, LocalValueVariable, SceneGridLayout, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent, ShowModalReactEvent } from 'app/types/events';
 
@@ -162,37 +163,43 @@ describe('RowsLayoutManager', () => {
     });
 
     it('should sync edit mode to a new row inner layout when the dashboard is already editing', () => {
-      // New rows use getDefaultLayout() (clone of preferences.defaultLayoutTemplate). Without a template,
-      // RowItem falls back to AutoGridLayoutManager.createEmpty(), which already has isDraggable true, so a
-      // missing edit-mode sync would not fail the test. A template with interaction disabled forces the sync.
-      const defaultLayoutTemplate = new DefaultGridLayoutManager({
-        grid: new SceneGridLayout({
-          children: [],
-          isDraggable: false,
-          isResizable: false,
-        }),
-      });
+      // addNewRow's editModeChanged runs inside an edit action the sidebar performs. This test never activates it.
+      setTestFlags({ dashboardNewLayouts: false });
+      try {
+        // New rows use getDefaultLayout() (clone of preferences.defaultLayoutTemplate). Without a template,
+        // RowItem falls back to AutoGridLayoutManager.createEmpty(), which already has isDraggable true, so a
+        // missing edit-mode sync would not fail the test. A template with interaction disabled forces the sync.
+        const defaultLayoutTemplate = new DefaultGridLayoutManager({
+          grid: new SceneGridLayout({
+            children: [],
+            isDraggable: false,
+            isResizable: false,
+          }),
+        });
 
-      const rowsLayoutManager = new RowsLayoutManager({
-        key: 'test-RowsLayoutManager',
-        rows: [new RowItem({ title: 'First' })],
-      });
-      new DashboardScene({
-        body: rowsLayoutManager,
-        isEditing: true,
-        editable: true,
-        preferences: { defaultLayoutTemplate },
-      });
+        const rowsLayoutManager = new RowsLayoutManager({
+          key: 'test-RowsLayoutManager',
+          rows: [new RowItem({ title: 'First' })],
+        });
+        new DashboardScene({
+          body: rowsLayoutManager,
+          isEditing: true,
+          editable: true,
+          preferences: { defaultLayoutTemplate },
+        });
 
-      rowsLayoutManager.editModeChanged(true);
+        rowsLayoutManager.editModeChanged(true);
 
-      const newRow = rowsLayoutManager.addNewRow();
-      const layout = newRow.getLayout();
-      expect(layout).toBeInstanceOf(DefaultGridLayoutManager);
+        const newRow = rowsLayoutManager.addNewRow();
+        const layout = newRow.getLayout();
+        expect(layout).toBeInstanceOf(DefaultGridLayoutManager);
 
-      const grid = (layout as DefaultGridLayoutManager).state.grid;
-      expect(grid.state.isDraggable).toBe(true);
-      expect(grid.state.isResizable).toBe(true);
+        const grid = (layout as DefaultGridLayoutManager).state.grid;
+        expect(grid.state.isDraggable).toBe(true);
+        expect(grid.state.isResizable).toBe(true);
+      } finally {
+        setTestFlags({});
+      }
     });
   });
 

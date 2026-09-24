@@ -1,8 +1,9 @@
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { useDashboardGenerationAvailable } from 'app/features/dashboard-prompt/useDashboardGenerationAvailable';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { AutoGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManager';
@@ -79,6 +80,9 @@ function setup(options?: Partial<Props>) {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  // The legacy empty-dashboard clicks expect isDynamicDashboard: false. The new-layouts
+  // describe below sets the flag true after this.
+  setTestFlags({ dashboardNewLayouts: false });
   // Reset the mock to default state
   mockUseGetResourceRepositoryView.mockReturnValue({
     isReadOnlyRepo: false,
@@ -179,15 +183,16 @@ it('renders with buttons disabled when repository is read-only', () => {
 });
 
 describe('new layouts empty state', () => {
-  const originalDashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
+  beforeEach(() => {
+    setTestFlags({ dashboardNewLayouts: true });
+  });
 
   afterEach(() => {
-    config.featureToggles.dashboardNewLayouts = originalDashboardNewLayouts;
+    setTestFlags({});
     mockUseDashboardGenerationAvailable.mockReturnValue({ isAvailable: false, isLoading: false });
   });
 
   function setupScene(args: Partial<DashboardSceneState> = {}) {
-    config.featureToggles.dashboardNewLayouts = true;
     const dashboard = new DashboardScene({
       isEditing: true,
       body: AutoGridLayoutManager.createEmpty(),

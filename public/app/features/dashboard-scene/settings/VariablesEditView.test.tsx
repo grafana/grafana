@@ -1,5 +1,5 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { render as RTLRender } from '@testing-library/react';
+import { act, render as RTLRender } from '@testing-library/react';
 import * as React from 'react';
 import { of } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
@@ -229,8 +229,16 @@ describe('VariablesEditView', () => {
     let variableView: VariablesEditView;
 
     beforeEach(async () => {
+      // New layouts plus the settings redesign replace this list with a sidebar redirect.
+      setTestFlags({ dashboardNewLayouts: false });
       const result = await buildTestScene();
       variableView = result.variableView;
+    });
+
+    afterEach(() => {
+      act(() => {
+        setTestFlags({});
+      });
     });
 
     it('should not show Provisioned by data source section when no variables have origin', () => {

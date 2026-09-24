@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { config } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { type DashboardSceneState } from '../../scene/types/dashboard';
@@ -113,7 +113,7 @@ function setup(overrides?: Partial<DashboardSceneState>) {
   // Clear any data layers
   dashboard.setState({ $data: undefined });
 
-  config.featureToggles.dashboardNewLayouts = true;
+  setTestFlags({ dashboardNewLayouts: true });
   activateFullSceneTree(dashboard);
 
   dashboard.onEnterEditMode();

@@ -1,6 +1,7 @@
 import { getPanelPlugin } from '@grafana/data/test';
-import { config, setPluginImportUtils } from '@grafana/runtime';
+import { setPluginImportUtils } from '@grafana/runtime';
 import { type CustomVariable, VizPanel, sceneGraph } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
@@ -173,6 +174,16 @@ describe('RENDER_PLAN', () => {
   });
 
   describe('the rendered grid cannot actually be dragged or resized', () => {
+    beforeEach(() => {
+      // With the flag on, editModeChanged applies isDraggable/isResizable inside a 10ms timeout.
+      // The deferred case is covered separately below.
+      setTestFlags({ dashboardNewLayouts: false });
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
     // DefaultGridLayoutManager hardcodes isDraggable/isResizable true; only editModeChanged (an
     // edit-mode transition) ever sets them false. Assert behaviour, not the raw flag, so a
     // future change that re-enables dragging some other way still fails this.
@@ -208,8 +219,7 @@ describe('RENDER_PLAN', () => {
     it('lands even when dashboardNewLayouts defers the correction behind a 10ms timeout', async () => {
       // With dashboardNewLayouts on, the correction lands inside a setTimeout(..., 10), not
       // synchronously -- assert it after that delay, not the same tick.
-      const originalToggle = config.featureToggles.dashboardNewLayouts;
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
       try {
         const { scene, client } = setup();
 
@@ -221,7 +231,7 @@ describe('RENDER_PLAN', () => {
         expect(grid.getDragHooks()).toEqual({});
         expect(grid.state.isResizable).toBe(false);
       } finally {
-        config.featureToggles.dashboardNewLayouts = originalToggle;
+        setTestFlags({});
       }
     });
   });

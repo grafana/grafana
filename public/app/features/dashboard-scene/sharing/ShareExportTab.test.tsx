@@ -1,12 +1,12 @@
 import saveAs from 'file-saver';
 
-import { config } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
 import {
   type Spec as DashboardV2Spec,
   defaultQueryGroupKind,
   defaultVizConfigSpec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import {
   AnnoKeyFolder,
   AnnoKeyFolderTitle,
@@ -157,7 +157,7 @@ describe('ShareExportTab', () => {
   let makeExportableV2Spy: jest.SpyInstance;
 
   beforeEach(() => {
-    config.featureToggles.dashboardNewLayouts = false;
+    setTestFlags({ dashboardNewLayouts: false });
 
     makeExportableV1Spy = jest.spyOn(exporters, 'makeExportableV1').mockImplementation(async (dashboard) => dashboard);
     makeExportableV2Spy = jest.spyOn(exporters, 'makeExportableV2').mockImplementation(async (spec) => spec);
@@ -171,7 +171,7 @@ describe('ShareExportTab', () => {
 
   describe('V2Resource export mode', () => {
     beforeEach(() => {
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
     });
 
     it('should default to V2Resource when dashboardNewLayouts is enabled', async () => {
@@ -404,7 +404,7 @@ describe('ShareExportTab', () => {
     });
 
     it('should use dashboard title from spec for v2 resource export filename', async () => {
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
       const tab = buildV2DashboardScenario();
       tab.setState({ exportFormat: ExportFormat.V2Resource });
 

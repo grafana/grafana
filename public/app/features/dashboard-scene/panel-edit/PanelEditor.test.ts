@@ -2,7 +2,6 @@ import { of } from 'rxjs';
 
 import { type DataQueryRequest, type DataSourceApi, LoadingState, type PanelPlugin, store } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { config } from '@grafana/runtime';
 import {
   type CancelActivationHandler,
   CustomVariable,
@@ -220,11 +219,11 @@ describe('PanelEditor', () => {
 
   describe('When the scene is rebuilt underneath the editor', () => {
     beforeAll(() => {
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
     });
 
     afterAll(() => {
-      config.featureToggles.dashboardNewLayouts = false;
+      setTestFlags({});
     });
 
     /** Replace the layout tree wholesale, as APPLY_SPEC and the json/code editors do. */

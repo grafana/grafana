@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 
 import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { useFlagGrafanaDashboardSettingsRedesign } from '@grafana/runtime/internal';
 import { type SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, sceneUtils } from '@grafana/scenes';
 import { type Dashboard } from '@grafana/schema';
@@ -12,7 +12,7 @@ import { Alert, Box, Button, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { Page } from 'app/core/components/Page/Page';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
+import { isDashboardNewLayoutsEnabled, isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 import { useDashboardRepositoryView } from 'app/features/provisioning/hooks/useDashboardRepositoryView';
 import { RepoViewStatus } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
@@ -176,7 +176,7 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
   const canSave = dashboard.useState().meta.canSave;
   const { jsonText } = model.useState();
 
-  const isDynamicDashboardsEnabled = config.featureToggles.dashboardNewLayouts;
+  const isDynamicDashboardsEnabled = isDashboardNewLayoutsEnabled();
   const isSettingsPageRedesignEnabled = useFlagGrafanaDashboardSettingsRedesign();
 
   const handleValidationChange = useCallback((hasErrors: boolean) => {

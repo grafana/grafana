@@ -384,8 +384,7 @@ describe('DashboardScene', () => {
       });
 
       it('Should exit edit mode after saving from unsaved changes modal when dashboardNewLayouts is enabled', async () => {
-        const originalFeatureToggle = config.featureToggles.dashboardNewLayouts;
-        config.featureToggles.dashboardNewLayouts = true;
+        setTestFlags({ dashboardNewLayouts: true });
 
         scene.setState({ meta: { ...scene.state.meta, canSave: true } });
 
@@ -415,13 +414,12 @@ describe('DashboardScene', () => {
         } finally {
           publishSpy.mockRestore();
           hasActualSaveChangesSpy.mockRestore();
-          config.featureToggles.dashboardNewLayouts = originalFeatureToggle;
+          setTestFlags({});
         }
       });
 
       it('Should not show Save option in unsaved changes modal when user cannot save', () => {
-        const originalFeatureToggle = config.featureToggles.dashboardNewLayouts;
-        config.featureToggles.dashboardNewLayouts = true;
+        setTestFlags({ dashboardNewLayouts: true });
 
         scene.setState({ meta: { ...scene.state.meta, canSave: false } });
 
@@ -441,7 +439,7 @@ describe('DashboardScene', () => {
 
         publishSpy.mockRestore();
         hasActualSaveChangesSpy.mockRestore();
-        config.featureToggles.dashboardNewLayouts = originalFeatureToggle;
+        setTestFlags({});
       });
 
       it('Should start the detect changes worker', () => {
@@ -759,14 +757,20 @@ describe('DashboardScene', () => {
       });
 
       it('Should create and add a new panel to the dashboard', async () => {
-        scene.exitEditMode({ skipConfirm: true });
-        expect(scene.state.isEditing).toBe(false);
+        // addPanel parents the panel through the edit-action bus when new layouts are on, and this scene never activates the sidebar.
+        setTestFlags({ dashboardNewLayouts: false });
+        try {
+          scene.exitEditMode({ skipConfirm: true });
+          expect(scene.state.isEditing).toBe(false);
 
-        const panel = await scene.onCreateNewPanel();
+          const panel = await scene.onCreateNewPanel();
 
-        expect(scene.state.isEditing).toBe(true);
-        expect(scene.state.body.getVizPanels().length).toBe(7);
-        expect(panel.state.key).toBe('panel-7');
+          expect(scene.state.isEditing).toBe(true);
+          expect(scene.state.body.getVizPanels().length).toBe(7);
+          expect(panel.state.key).toBe('panel-7');
+        } finally {
+          setTestFlags({});
+        }
       });
 
       it('Should select new row', () => {
@@ -777,28 +781,40 @@ describe('DashboardScene', () => {
       });
 
       it('Should fail to copy a panel if it does not have a grid item parent', () => {
-        const vizPanel = new VizPanel({
-          title: 'Panel Title',
-          key: 'panel-5',
-          pluginId: 'timeseries',
-        });
+        // With new layouts on, a panel with no grid parent throws instead of returning.
+        setTestFlags({ dashboardNewLayouts: false });
+        try {
+          const vizPanel = new VizPanel({
+            title: 'Panel Title',
+            key: 'panel-5',
+            pluginId: 'timeseries',
+          });
 
-        scene.copyPanel(vizPanel);
+          scene.copyPanel(vizPanel);
 
-        expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
+          expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
+        } finally {
+          setTestFlags({});
+        }
       });
 
       it('Should fail to copy a library panel if it does not have a grid item parent', () => {
-        const libVizPanel = new VizPanel({
-          title: 'Library Panel',
-          pluginId: 'table',
-          key: 'panel-4',
-          $behaviors: [new LibraryPanelBehavior({ name: 'libraryPanel', uid: 'uid' })],
-        });
+        // With new layouts on, a panel with no grid parent throws instead of returning.
+        setTestFlags({ dashboardNewLayouts: false });
+        try {
+          const libVizPanel = new VizPanel({
+            title: 'Library Panel',
+            pluginId: 'table',
+            key: 'panel-4',
+            $behaviors: [new LibraryPanelBehavior({ name: 'libraryPanel', uid: 'uid' })],
+          });
 
-        scene.copyPanel(libVizPanel);
+          scene.copyPanel(libVizPanel);
 
-        expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
+          expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
+        } finally {
+          setTestFlags({});
+        }
       });
 
       it('Should copy a panel', () => {
@@ -841,26 +857,32 @@ describe('DashboardScene', () => {
       });
 
       it('Should paste a library viz panel', () => {
-        store.set(LS_PANEL_COPY_KEY, JSON.stringify({ key: 'panel-7' }));
-        jest.mocked(buildGridItemForPanel).mockReturnValue(
-          new DashboardGridItem({
-            body: new VizPanel({
-              title: 'Library Panel',
-              pluginId: 'table',
-              key: 'panel-4',
-              $behaviors: [new LibraryPanelBehavior({ name: 'libraryPanel', uid: 'uid' })],
-            }),
-          })
-        );
+        // New layouts paste through the layout manager, which does not use the buildGridItemForPanel mock.
+        setTestFlags({ dashboardNewLayouts: false });
+        try {
+          store.set(LS_PANEL_COPY_KEY, JSON.stringify({ key: 'panel-7' }));
+          jest.mocked(buildGridItemForPanel).mockReturnValue(
+            new DashboardGridItem({
+              body: new VizPanel({
+                title: 'Library Panel',
+                pluginId: 'table',
+                key: 'panel-4',
+                $behaviors: [new LibraryPanelBehavior({ name: 'libraryPanel', uid: 'uid' })],
+              }),
+            })
+          );
 
-        scene.pastePanel();
+          scene.pastePanel();
 
-        expect(buildGridItemForPanel).toHaveBeenCalledTimes(1);
+          expect(buildGridItemForPanel).toHaveBeenCalledTimes(1);
 
-        const addedPanel = findVizPanelByKey(scene, 'panel-7')!;
-        expect(addedPanel).toBeDefined();
-        expect(addedPanel.state.key).toBe('panel-7');
-        expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
+          const addedPanel = findVizPanelByKey(scene, 'panel-7')!;
+          expect(addedPanel).toBeDefined();
+          expect(addedPanel.state.key).toBe('panel-7');
+          expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
+        } finally {
+          setTestFlags({});
+        }
       });
 
       it('Should do nothing when pasting with an empty clipboard', () => {

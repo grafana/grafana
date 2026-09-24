@@ -863,12 +863,9 @@ describe('transformSaveModelToScene', () => {
 
   describe('Convert to new rows', () => {
     beforeEach(() => {
-      // set feature flag to true
-      config.featureToggles.dashboardNewLayouts = true;
-      setTestFlags({ 'grafana.dashboardAutoGridDefault': false });
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardAutoGridDefault': false });
     });
     afterEach(() => {
-      config.featureToggles.dashboardNewLayouts = false;
       setTestFlags({});
     });
 
