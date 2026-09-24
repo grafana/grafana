@@ -1,5 +1,11 @@
 import { prometheusExpressionBuilder } from './expressionBuilder';
-import { alertRuleInstancesQuery, getWorkbenchQueries, summaryChartQuery, uniqueAlertInstancesQuery } from './queries';
+import {
+  alertRuleInstancesQuery,
+  getWorkbenchQueries,
+  summaryChartQuery,
+  summaryInstanceCountQuery,
+  uniqueAlertInstancesQuery,
+} from './queries';
 
 describe('triage queries service combined filter', () => {
   it('expands service key to service OR service_name in summary chart query', () => {
@@ -216,5 +222,29 @@ describe('triage queries combined filter exclusions', () => {
 
     expect(query).toContain('alertstate="firing",cluster!="prod-me-central-1",cluster_name!="prod-me-central-1"');
     expect(query).toContain('alertstate="pending",cluster!="prod-me-central-1",cluster_name!="prod-me-central-1"');
+  });
+});
+
+describe('alertRuleInstancesQuery vs badge-count query resolution', () => {
+  // Without last_over_time, alertRuleInstancesQuery's resolution (step) scales with the
+  // selected time range. Once that step exceeds Prometheus's default 5m lookback, a
+  // short-lived instance can fall between evaluated points and disappear from the row
+  // list entirely, while summaryInstanceCountQuery (badge counts) stays correct because
+  // last_over_time explicitly looks back over the whole $__range regardless of step.
+  // This mismatch is what causes "Firing 4" with only 3 rows shown.
+  it('wraps each selector in last_over_time so short-lived instances survive a coarse step', () => {
+    const query = alertRuleInstancesQuery('rule-1', '');
+
+    expect(query.instant).not.toBe(true);
+    expect(query.expr).toContain('last_over_time');
+    expect(query.expr).toContain('$__interval');
+  });
+
+  it('produces a step-independent deduplicated instant query for badge counts', () => {
+    const query = summaryInstanceCountQuery('');
+
+    expect(query.instant).toBe(true);
+    expect(query.expr).toContain('last_over_time');
+    expect(query.expr).toContain('$__range');
   });
 });
