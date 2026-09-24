@@ -1,3 +1,4 @@
+import tinycolor from 'tinycolor2';
 import * as z from 'zod';
 
 import { FALLBACK_COLOR } from '../types/fieldColor';
@@ -131,6 +132,14 @@ export function createVisualizationColors(
     if (nativeColor) {
       byNameIndex[colorName] = nativeColor;
       return nativeColor;
+    }
+
+    // Resolve named colors that tinycolor recognizes but nativeColorNames lacks (e.g. "grey")
+    const parsed = tinycolor(colorName);
+    if (parsed.isValid() && parsed.getFormat() === 'name') {
+      const hex = parsed.toHexString();
+      byNameIndex[colorName] = hex;
+      return hex;
     }
 
     return colorName;

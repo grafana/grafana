@@ -1,3 +1,4 @@
+import * as colorManipulator from './colorManipulator';
 import { createColors } from './createColors';
 import { createVisualizationColors } from './createVisualizationColors';
 
@@ -28,5 +29,30 @@ describe('createVizColors', () => {
 
   it('returns hex for named color that is not a part of named colors palette', () => {
     expect(vizColors.getColorByName('lime')).toBe('#00ff00');
+  });
+
+  it.each([
+    ['grey', '#808080'],
+    ['gray', '#808080'],
+    ['darkgrey', '#a9a9a9'],
+    ['darkslategrey', '#2f4f4f'],
+    ['dimgrey', '#696969'],
+    ['lightgray', '#d3d3d3'],
+    ['lightgrey', '#d3d3d3'],
+    ['lightslategrey', '#778899'],
+    ['slategrey', '#708090'],
+    ['indianred', '#cd5c5c'],
+    ['Grey', '#808080'],
+  ])('resolves CSS color name %s to hex', (name, hex) => {
+    expect(vizColors.getColorByName(name)).toBe(hex);
+  });
+
+  it('resolves CSS named colors to a value colorManipulator can parse', () => {
+    expect(() => colorManipulator.alpha(vizColors.getColorByName('grey'), 0.1)).not.toThrow();
+  });
+
+  it('returns non-name color formats and unknown names unchanged', () => {
+    expect(vizColors.getColorByName('hsl(0, 100%, 50%)')).toBe('hsl(0, 100%, 50%)');
+    expect(vizColors.getColorByName('not-a-color')).toBe('not-a-color');
   });
 });
