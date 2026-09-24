@@ -2,6 +2,7 @@ package controller
 
 import (
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -9,78 +10,108 @@ import (
 )
 
 func TestQueueLagTracker(t *testing.T) {
-	base := time.Date(2026, 9, 24, 12, 0, 0, 0, time.UTC)
-
 	t.Run("empty tracker reports no lag", func(t *testing.T) {
-		var q queueLagTracker
-		assert.Equal(t, time.Duration(0), q.lag(base))
+		synctest.Test(t, func(t *testing.T) {
+			var q queueLagTracker
+			assert.Equal(t, time.Duration(0), q.lag())
+		})
 	})
 
-	t.Run("single waiting key reports time since its enqueue", func(t *testing.T) {
-		var q queueLagTracker
-		q.mark("a", base)
-		assert.Equal(t, 30*time.Second, q.lag(base.Add(30*time.Second)))
+	t.Run("waiting key reports time since its enqueue", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			var q queueLagTracker
+			q.add("a")
+			time.Sleep(30 * time.Second)
+			assert.Equal(t, 30*time.Second, q.lag())
+		})
 	})
 
 	t.Run("reports the earliest enqueue regardless of insertion order", func(t *testing.T) {
-		var q queueLagTracker
-		q.mark("newer", base.Add(10*time.Second))
-		q.mark("older", base)
-		assert.Equal(t, time.Minute, q.lag(base.Add(time.Minute)))
+		synctest.Test(t, func(t *testing.T) {
+			var q queueLagTracker
+			q.add("older")
+			time.Sleep(10 * time.Second)
+			q.add("newer")
+			time.Sleep(50 * time.Second)
+			assert.Equal(t, time.Minute, q.lag()) // older has waited 60s
+		})
 	})
 
-	t.Run("re-mark of a waiting key keeps the first timestamp", func(t *testing.T) {
-		var q queueLagTracker
-		q.mark("a", base)
-		q.mark("a", base.Add(time.Minute)) // coalesced re-add must not reset the clock
-		assert.Equal(t, 90*time.Second, q.lag(base.Add(90*time.Second)))
+	t.Run("coalesced re-add keeps the first timestamp", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			var q queueLagTracker
+			q.add("a")
+			time.Sleep(time.Minute)
+			q.add("a") // must not reset the clock
+			time.Sleep(30 * time.Second)
+			assert.Equal(t, 90*time.Second, q.lag())
+		})
 	})
 
-	t.Run("in-flight key still counts toward lag, measured from first enqueue", func(t *testing.T) {
-		var q queueLagTracker
-		q.mark("a", base)
-
-		enqueuedAt, ok := q.startProcessing("a")
-		require.True(t, ok)
-		assert.Equal(t, base, enqueuedAt)
-
-		// Queue is now drained (nothing waiting) but "a" is still being processed;
-		// lag must keep climbing from the original enqueue, not read 0.
-		assert.Equal(t, 2*time.Minute, q.lag(base.Add(2*time.Minute)))
-
-		q.finishProcessing("a")
-		assert.Equal(t, time.Duration(0), q.lag(base.Add(2*time.Minute)))
+	t.Run("get returns the enqueue time for the wait log", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			var q queueLagTracker
+			q.add("a")
+			time.Sleep(15 * time.Second)
+			enqueuedAt, ok := q.get("a")
+			require.True(t, ok)
+			assert.Equal(t, 15*time.Second, time.Since(enqueuedAt))
+		})
 	})
 
-	t.Run("startProcessing on an untracked key reports no wait and no inflight", func(t *testing.T) {
-		var q queueLagTracker
-		_, ok := q.startProcessing("ghost")
-		assert.False(t, ok)
-		assert.Equal(t, time.Duration(0), q.lag(base))
+	t.Run("in-flight key still counts toward lag from first enqueue", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			var q queueLagTracker
+			q.add("a")
+			_, ok := q.get("a")
+			require.True(t, ok)
+			// Queue is now drained (nothing waiting) but "a" is still processing;
+			// lag must keep climbing from the original enqueue, not read 0.
+			time.Sleep(2 * time.Minute)
+			assert.Equal(t, 2*time.Minute, q.lag())
+
+			q.done("a")
+			assert.Equal(t, time.Duration(0), q.lag())
+		})
 	})
 
-	t.Run("finishProcessing is idempotent", func(t *testing.T) {
-		var q queueLagTracker
-		q.mark("a", base)
-		_, ok := q.startProcessing("a")
-		require.True(t, ok)
-		q.finishProcessing("a")
-		q.finishProcessing("a") // second call must not panic or resurrect state
-		assert.Equal(t, time.Duration(0), q.lag(base.Add(time.Minute)))
+	t.Run("get on an untracked key reports no wait and no inflight", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			var q queueLagTracker
+			_, ok := q.get("ghost")
+			assert.False(t, ok)
+			assert.Equal(t, time.Duration(0), q.lag())
+		})
+	})
+
+	t.Run("done is idempotent", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			var q queueLagTracker
+			q.add("a")
+			_, ok := q.get("a")
+			require.True(t, ok)
+			q.done("a")
+			q.done("a") // second call must not panic or resurrect state
+			assert.Equal(t, time.Duration(0), q.lag())
+		})
 	})
 
 	t.Run("oldest across waiting and inflight wins", func(t *testing.T) {
-		var q queueLagTracker
-		q.mark("inflight-old", base)
-		_, ok := q.startProcessing("inflight-old")
-		require.True(t, ok)
-		q.mark("waiting-new", base.Add(20*time.Second))
+		synctest.Test(t, func(t *testing.T) {
+			var q queueLagTracker
+			q.add("inflight-old")
+			_, ok := q.get("inflight-old")
+			require.True(t, ok)
+			time.Sleep(20 * time.Second)
+			q.add("waiting-new")
+			time.Sleep(40 * time.Second)
 
-		// inflight-old (base) is older than waiting-new (base+20s).
-		assert.Equal(t, time.Minute, q.lag(base.Add(time.Minute)))
+			// inflight-old has waited 60s, waiting-new 40s.
+			assert.Equal(t, time.Minute, q.lag())
 
-		// Once the old in-flight key finishes, the waiting key drives lag.
-		q.finishProcessing("inflight-old")
-		assert.Equal(t, 40*time.Second, q.lag(base.Add(time.Minute)))
+			// Once the old in-flight key finishes, the waiting key drives lag.
+			q.done("inflight-old")
+			assert.Equal(t, 40*time.Second, q.lag())
+		})
 	})
 }
