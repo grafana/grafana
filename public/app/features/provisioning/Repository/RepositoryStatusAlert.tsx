@@ -31,7 +31,7 @@ export function RepositoryStatusAlert({ repository }: { repository: Repository }
   // finalizer cannot be swapped anymore. Instead, a releaseResources job (allowed
   // for terminating repositories) releases what is left; the finalizer then
   // finds nothing to remove and the deletion completes.
-  const canReleaseInstead = blockingFinalizer === REMOVE_RESOURCES_FINALIZER;
+  const canRelease = blockingFinalizer === REMOVE_RESOURCES_FINALIZER;
   const { submitRelease, isSubmitting: isReleasing } = useOrphanedResourceActions({
     repositoryName: repository.metadata?.name ?? '',
   });
@@ -85,7 +85,7 @@ export function RepositoryStatusAlert({ repository }: { repository: Repository }
     );
   }, [replaceRepository, repository, blockingFinalizer, navigate]);
 
-  const releaseInstead = useCallback(() => {
+  const releaseAll = useCallback(() => {
     appEvents.publish(
       new ShowConfirmModalEvent({
         title: t('provisioning.repository-status-alert.release-title', 'Release all resources'),
@@ -124,7 +124,7 @@ export function RepositoryStatusAlert({ repository }: { repository: Repository }
             {error}
           </div>
         ))}
-        {canReleaseInstead && releaseRequested && (
+        {canRelease && releaseRequested && (
           <Stack alignItems="center" gap={1}>
             <Spinner />
             <Trans i18nKey="provisioning.repository-status-alert.release-in-progress">
@@ -132,14 +132,14 @@ export function RepositoryStatusAlert({ repository }: { repository: Repository }
             </Trans>
           </Stack>
         )}
-        {canReleaseInstead && !releaseRequested && (
+        {canRelease && !releaseRequested && (
           <div>
-            <Button variant="primary" size="sm" onClick={releaseInstead} disabled={isReleasing}>
+            <Button variant="primary" size="sm" onClick={releaseAll} disabled={isReleasing}>
               <Trans i18nKey="provisioning.repository-status-alert.release-button">Release all resources</Trans>
             </Button>
           </div>
         )}
-        {blockingFinalizer && !canReleaseInstead && (
+        {blockingFinalizer && !canRelease && (
           <div>
             <Button variant="destructive" size="sm" onClick={forceDelete} disabled={replaceRequest.isLoading}>
               <Trans i18nKey="provisioning.repository-status-alert.force-delete-button">Delete anyway</Trans>
