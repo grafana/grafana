@@ -740,11 +740,9 @@ describe('QueryEditorRows', () => {
         .mockImplementation((...args: unknown[]) => dsSrvMock.get(...(args as Parameters<DataSourceSrv['get']>)));
     });
 
-    // Known bug: since the conversion to a function component, onChange closes over the `queries` of the render
-    // that created it. The class read `this.props.queries` when called, so an editor calling an onChange it got
-    // earlier still merged into the latest queries. Now it reverts edits made to other rows since then.
-    // Change to `it` once fixed.
-    it.failing('merges an edit from an onChange received on an earlier render into the latest queries', async () => {
+    // An editor calling an onChange it got on an earlier render must still merge into the latest queries,
+    // rather than reverting edits made to other rows since then.
+    it('merges an edit from an onChange received on an earlier render into the latest queries', async () => {
       const onQueriesChange = jest.fn();
       const rowsProps = { ...props, onQueriesChange, queries: [queryA, queryB] };
       const { rerender } = render(<QueryEditorRows {...rowsProps} />);

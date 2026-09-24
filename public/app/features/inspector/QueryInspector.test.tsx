@@ -53,10 +53,7 @@ describe('QueryInspector', () => {
     expect(screen.queryByText('fromOtherPane:')).not.toBeInTheDocument();
   });
 
-  // Known bug: `onDidRender` is an inline arrow, so every QueryInspector render gets past JSONFormatter's
-  // memo and rebuilds the tree at the default depth. Any re-render (a streaming panel's data emission, an
-  // Explore state change) collapses nodes the user expanded. Change to `it` once fixed.
-  it.failing('keeps nodes the user expanded when it re-renders with new data', async () => {
+  it('keeps nodes the user expanded when it re-renders with new data', async () => {
     const onRefreshQuery = jest.fn();
     const { rerender } = render(<QueryInspector data={doneData()} onRefreshQuery={onRefreshQuery} />);
     act(() => {
