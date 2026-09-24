@@ -7,12 +7,15 @@ import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { t } from '@grafana/i18n';
 
 import { fuzzyFind, itemToString } from './filter';
-import { type ComboboxOption } from './types';
+import { type ComboboxAsyncOptionsContext, type ComboboxOption } from './types';
 import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
 
-type AsyncOptions<T extends string | number> =
+export type AsyncOptions<T extends string | number> =
   | Array<ComboboxOption<T>>
-  | ((inputValue: string) => Promise<Array<ComboboxOption<T>>>);
+  | ((
+      inputValue: string,
+      context: ComboboxAsyncOptionsContext<T>
+    ) => Promise<Array<ComboboxOption<T>> | void>);
 
 const asyncNoop = () => Promise.resolve([]);
 
@@ -39,10 +42,29 @@ export function useOptions<T extends string | number>(
   // TODO: switch to useEffectEvent once React stabilises it.
   const rawOptionsRef = useRef(rawOptions);
   rawOptionsRef.current = rawOptions;
+  const requestIdRef = useRef(0);
+  const abortRef = useRef<AbortController | null>(null);
 
   const stableRawOptions = useCallback((searchTerm: string) => {
     const currentRawOptions = rawOptionsRef.current;
-    return typeof currentRawOptions === 'function' ? currentRawOptions(searchTerm) : asyncNoop();
+    if (typeof currentRawOptions !== 'function') {
+      return asyncNoop();
+    }
+
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    const requestId = ++requestIdRef.current;
+
+    return currentRawOptions(searchTerm, {
+      signal: controller.signal,
+      publish: (options) => {
+        if (requestId !== requestIdRef.current) {
+          return;
+        }
+        setAsyncOptions(options);
+      },
+    });
   }, []);
 
   const loadOptions = useLatestAsyncCall(stableRawOptions);
@@ -52,18 +74,25 @@ export function useOptions<T extends string | number>(
       debounce((searchTerm: string) => {
         return loadOptions(searchTerm)
           .then((options) => {
-            setAsyncOptions(options);
+            if (Array.isArray(options)) {
+              setAsyncOptions(options);
+            }
             setAsyncLoading(false);
             setAsyncError(false);
           })
           .catch((error) => {
-            if (!(error instanceof StaleResultError)) {
-              setAsyncError(true);
-              setAsyncLoading(false);
-
-              if (error) {
-                console.error('Error loading async options for Combobox', error);
+            if (error instanceof StaleResultError || isAbortError(error)) {
+              if (isAbortError(error)) {
+                setAsyncLoading(false);
               }
+              return;
+            }
+
+            setAsyncError(true);
+            setAsyncLoading(false);
+
+            if (error) {
+              console.error('Error loading async options for Combobox', error);
             }
           });
       }, DEBOUNCE_TIME_MS),
@@ -72,7 +101,13 @@ export function useOptions<T extends string | number>(
 
   // Runs only on unmount (debouncedLoadOptions is stable): cancels a pending debounce timer
   // so it can't fire after unmount. In-flight requests are handled by useLatestAsyncCall.
-  useEffect(() => () => debouncedLoadOptions.cancel(), [debouncedLoadOptions]);
+  useEffect(
+    () => () => {
+      debouncedLoadOptions.cancel();
+      abortRef.current?.abort();
+    },
+    [debouncedLoadOptions]
+  );
 
   const [asyncOptions, setAsyncOptions] = useState<Array<ComboboxOption<T>>>([]);
   const [asyncLoading, setAsyncLoading] = useState(false);
@@ -137,9 +172,17 @@ export function useOptions<T extends string | number>(
 
   const resetSearch = useCallback(() => {
     setUserTypedSearch('');
-  }, []);
+    requestIdRef.current += 1;
+    abortRef.current?.abort();
+    abortRef.current = null;
+    debouncedLoadOptions.cancel();
+  }, [debouncedLoadOptions]);
 
   return { options: finalOptions, groupStartIndices, updateOptions, asyncLoading, asyncError, resetSearch };
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof Error && error.name === 'AbortError';
 }
 
 /**
