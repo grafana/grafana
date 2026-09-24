@@ -634,6 +634,9 @@
   "packages/grafana-ui/src/components/uPlot/Plot.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
+    },
+    "react-prefer-function-component/react-prefer-function-component": {
+      "count": 1
     }
   },
   "packages/grafana-ui/src/components/uPlot/config/UPlotAxisBuilder.ts": {
@@ -2061,7 +2064,7 @@
   },
   "public/app/features/dashboard-scene/sidebar/DashboardSidebarRenderer.tsx": {
     "@grafana/no-config-feature-toggles": {
-      "count": 3
+      "count": 2
     }
   },
   "public/app/features/dashboard-scene/sidebar/DashboardSidebarSplitter.tsx": {

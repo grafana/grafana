@@ -5850,6 +5850,7 @@
     "edit-actions": {
       "add": "Přidat {{typeName}}",
       "add-conditional-rule": "Přidat pravidlo {{ruleDescription}}",
+      "collapse-all-rows": "",
       "dashboard-description": "Změnit popis nástěnky",
       "dashboard-title": "Změnit název nástěnky",
       "duplicate": "Duplikovat {{typeName}}",
@@ -5857,6 +5858,7 @@
       "edit-query-result-rule": "Změnit pravidlo výsledku dotazu",
       "edit-template-variable-rule": "Změnit pravidlo proměnné šablony",
       "edit-time-range-rule": "Změnit pravidlo časového rozsahu",
+      "expand-all-rows": "",
       "group-into-row": "Seskupit do řádku",
       "group-into-tab": "Seskupit do záložky",
       "move": "Přesunout {{typeName}}",
@@ -5889,9 +5891,7 @@
       "add-library-panel-header": "Importovat panel",
       "add-visualization-body": "Vyberte zdroj dat a poté se dotazujte a vizualizujte data pomocí grafů, statistik a tabulek nebo vytvářejte seznamy, přehledy a další widgety.",
       "add-visualization-button": "Přidat vizualizaci",
-      "add-visualization-description": "",
       "add-visualization-header": "Začněte novou nástěnku přidáním vizualizace",
-      "add-visualization-heading": "",
       "assistant-placeholder": "",
       "auto-grid": "Automatická mřížka",
       "auto-grid-description": "Panely mění velikost tak, aby odpovídaly jednotným mřížkám",
@@ -5899,9 +5899,6 @@
       "custom-grid": "Vlastní mřížka",
       "custom-grid-description": "Umístěte a upravte velikost každého panelu jednotlivě",
       "description": "Přidejte panel pro vizualizaci dat",
-      "grid-auto": "",
-      "grid-custom": "",
-      "grid-label": "",
       "import-a-dashboard-body": "Importujte nástěnky ze souborů nebo z <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importovat nástěnku",
       "import-dashboard-button": "Importovat nástěnku",
@@ -6231,11 +6228,7 @@
     "planning-banner": {
       "build": "",
       "dismiss": "",
-      "plan-label": "",
-      "panel-count_one": "",
-      "panel-count_few": "",
-      "panel-count_many": "",
-      "panel-count_other": ""
+      "preview-label": ""
     },
     "public-dashboard-not-available": {
       "does-not-exist": "Nástěnka, ke které se pokoušíte získat přístup, neexistuje",
@@ -9544,6 +9537,7 @@
     "flag-value": "Hodnota příznaku",
     "menu": "Otevřít nabídku",
     "new-flag": "new-flag-override",
+    "ofrep-evaluation": "",
     "save-flag": "Uložit",
     "title": "Ovládání funkcí"
   },
@@ -10811,6 +10805,7 @@
       "aria-label-sort-column": "Seřadit sloupec {{columnName}}",
       "expand-row-header": "Rozšiřovač řádků",
       "expand-row-tooltip": "Řádek přepnutí rozbalen",
+      "loading": "",
       "tooltip-collapse-all": "Sbalit všechny řádky",
       "tooltip-expand-all": "Rozbalit všechny řádky"
     },
@@ -10905,6 +10900,9 @@
     "password-field": {
       "tooltip-hide": "Skrýt heslo",
       "tooltip-show": "Zobrazit heslo"
+    },
+    "query-field": {
+      "loading": ""
     },
     "query-input": {
       "loading": "Načítání editoru"
@@ -11015,6 +11013,7 @@
         }
       },
       "inspect-drawer-title": "Zkontrolovat hodnotu",
+      "loading": "",
       "nested-table": {
         "expander-column-name": "Rozbalit vnořené řádky",
         "no-data": "Žádná data"
@@ -13875,10 +13874,15 @@
   },
   "playlist-page": {
     "card": {
-      "delete": "Odstranit playlist",
-      "edit": "Upravit playlist",
-      "start": "Spustit playlist",
-      "tooltip": "Sdílet playlist"
+      "delete": "",
+      "delete-label": "",
+      "edit": "",
+      "edit-label": "",
+      "share": "",
+      "share-label": "",
+      "start": "",
+      "start-label": "",
+      "tooltip": ""
     },
     "create-button": {
       "title": "Nový playlist"
@@ -15067,6 +15071,15 @@
     },
     "repository-status": {
       "error": "Úložiště se nepodařilo načíst"
+    },
+    "repository-status-alert": {
+      "deletion-title": "",
+      "error-title": "",
+      "force-delete-button": "",
+      "force-delete-cancel": "",
+      "force-delete-confirm": "",
+      "force-delete-title": "",
+      "force-delete-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "Zpět na úložiště",
@@ -16768,7 +16781,9 @@
     }
   },
   "swagger": {
-    "login": "Přihlášení"
+    "login": "Přihlášení",
+    "namespace-unavailable": "",
+    "namespace-unavailable-title": ""
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -17991,6 +18006,7 @@
     },
     "series-to-fields-transformer-editor": {
       "label-field": "Pole",
+      "label-keep-unjoined": "",
       "label-mode": "Režim",
       "modes": {
         "description": {
@@ -18003,7 +18019,8 @@
           "outer-tabular": "Vnější (tabulkové)",
           "outer-time-series": "Vnější (časové řady)"
         }
-      }
+      },
+      "tooltip-keep-unjoined": ""
     },
     "series-to-rows-transformer-editor": {
       "description": {

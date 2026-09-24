@@ -6,6 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
+  useFlagDashboardUndoRedo,
   useFlagGrafanaDashboardGlobalVariables,
   useFlagGrafanaViewPanelPane,
   useFlagFeedbackButton,
@@ -50,6 +51,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
   const viewPanelPane = useFlagGrafanaViewPanelPane();
   const globalDashboardVariablesEnabled = useFlagGrafanaDashboardGlobalVariables();
   const feedbackButton = useFlagFeedbackButton();
+  const dashboardUndoRedo = useFlagDashboardUndoRedo();
   const onOpenAddPane = useCallback(async () => {
     await sidebar.runPaneRequest(async (signal) => {
       const { AddNewPane } = await import(/* webpackChunkName: "dashboard-add-new-pane" */ './add-new/AddNewPane');
@@ -150,7 +152,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
                 active={openPane instanceof DashboardCrossDashboardVariablesPane}
               />
             )}
-            {config.featureToggles.dashboardUndoRedo && (
+            {dashboardUndoRedo && (
               <>
                 <Sidebar.Divider />
                 <UndoButton dashboard={dashboard} />
