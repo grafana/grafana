@@ -600,6 +600,53 @@ func TestInformer_DoesNotSyncUntilInitialListSucceeds(t *testing.T) {
 	})
 }
 
+// With AllowSyncOnSubscribe, HasSynced releases as soon as the live
+// subscription opens, even while the initial list keeps failing — so live
+// events already flowing are not held behind cache.WaitForCacheSync. The
+// initial list keeps retrying in the background and its objects arrive once
+// it eventually succeeds.
+func TestInformer_SyncOnSubscribeReleasesBeforeInitialListSucceeds(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber()
+		handler := &recordingHandler{}
+
+		var calls atomic.Int64
+		list := func(context.Context) ([]runtime.Object, int64, error) {
+			if calls.Add(1) < 3 {
+				return nil, 0, fmt.Errorf("api unavailable")
+			}
+			return []runtime.Object{obj("a")}, 0, nil
+		}
+		n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list)
+		n.AllowSyncOnSubscribe()
+		_, err := n.AddEventHandler(handler)
+		require.NoError(t, err)
+
+		stopCh := make(chan struct{})
+		defer func() { close(stopCh); synctest.Wait() }()
+		go n.Run(stopCh)
+
+		// The subscription opens and HasSynced releases immediately, even though
+		// the first list attempt has already failed in the background.
+		synctest.Wait()
+		require.True(t, sub.subscribed(subject()))
+		require.True(t, n.HasSynced(), "must sync as soon as the subscription opens")
+		assert.Empty(t, handler.addedNames(), "the still-failing initial list must not have delivered anything yet")
+
+		// Live events flow immediately, without waiting on the initial list.
+		sub.publish(t, subject(), event(resourcepb.WatchNotification_ADDED, "fresh"))
+		synctest.Wait()
+		assert.Equal(t, []string{"fresh"}, handler.addedNames())
+
+		// The background retry eventually succeeds and delivers the initial list's object too.
+		for i := 0; i < 5 && calls.Load() < 3; i++ {
+			time.Sleep(defaultSubscribeRetry)
+			synctest.Wait()
+		}
+		assert.ElementsMatch(t, []string{"fresh", "a"}, handler.addedNames())
+	})
+}
+
 // signalReconnect never blocks: a pending signal coalesces additional reconnects
 // so a burst of reconnects while the run loop is busy cannot deadlock the client's
 // reconnect goroutine.
