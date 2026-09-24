@@ -66,7 +66,7 @@ type ConnectionController struct {
 	processFn func(ctx context.Context, key string) error
 
 	queue          workqueue.TypedRateLimitingInterface[string]
-	queueWait      queueWaitTracker
+	queueLag       queueLagTracker
 	resyncInterval time.Duration
 	drainTimeout   time.Duration
 }
@@ -128,7 +128,7 @@ func NewConnectionController(
 			Name: "grafana_provisioning_connection_worker_queue_lag_seconds",
 			Help: "Current queue lag in seconds: how long the oldest connection key that has not finished processing has been in this replica's pipeline, measured from when it first entered (coalesced re-adds keep the earliest time). Spans both the queue wait and the in-progress reconcile, sampled live, so a backlog that is not draining fast enough shows up even when the queue has drained but every worker is busy. This is not a configured or rate-limiter delay.",
 		},
-		func() float64 { return cc.queueWait.lag(time.Now()).Seconds() },
+		func() float64 { return cc.queueLag.lag(time.Now()).Seconds() },
 	))
 
 	return cc
@@ -155,14 +155,14 @@ func (cc *ConnectionController) enqueue(obj interface{}, trigger usinformer.Proc
 	}
 	// Store the attribution before a worker can pick up the key.
 	cc.setTrigger(key, trigger)
-	cc.queueWait.mark(key, time.Now())
+	cc.queueLag.mark(key, time.Now())
 	cc.queue.Add(key)
 	namespace, name, _ := cache.SplitMetaNamespaceKey(key)
 	// queue_lag is the age of the oldest not-yet-finished key (this add included),
 	// so the backlog's worst-case lag is visible at enqueue, not only at pickup.
 	cc.logger.Info("ConnectionController enqueued key",
 		"work_key", key, "namespace", namespace, "connection", name,
-		"queue_len", cc.queue.Len(), "queue_lag", cc.queueWait.lag(time.Now()))
+		"queue_len", cc.queue.Len(), "queue_lag", cc.queueLag.lag(time.Now()))
 }
 
 // The first enqueue owns the attribution when subsequent events coalesce onto
@@ -262,7 +262,7 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 	defer cc.queue.Done(key)
 	// Crash-safety net: ensure the key leaves the inflight set even if the
 	// reconcile panics. Idempotent with the eager call below.
-	defer cc.queueWait.finishProcessing(key)
+	defer cc.queueLag.finishProcessing(key)
 
 	namespace, name, _ := cache.SplitMetaNamespaceKey(key)
 	// queue_len is the backlog still waiting after this pickup (Get removed the
@@ -270,7 +270,7 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 	logger := logging.FromContext(ctx).With("work_key", key, "namespace", namespace, "connection", name, "queue_len", cc.queue.Len())
 	// Move the key from waiting to inflight and report how long it waited between
 	// enqueue and pickup, complementing the queue-wait histogram in the logs.
-	if enqueuedAt, ok := cc.queueWait.startProcessing(key); ok {
+	if enqueuedAt, ok := cc.queueLag.startProcessing(key); ok {
 		logger = logger.With("queue_wait", time.Since(enqueuedAt))
 	}
 	logger.Info("ConnectionController processing key")
@@ -288,10 +288,10 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 	err := cc.processFn(ctx, key)
 	// Drop this key from inflight before reading lag so queue_lag reflects the
 	// remaining backlog, not the key we just finished. A retry re-marks it below.
-	cc.queueWait.finishProcessing(key)
+	cc.queueLag.finishProcessing(key)
 	// queue_lag is the age of the oldest not-yet-finished key after this pickup, so
 	// a backlog that is not draining is visible on completion, not only at scrape.
-	logger = logger.With("duration", time.Since(start), "queue_lag", cc.queueWait.lag(time.Now()))
+	logger = logger.With("duration", time.Since(start), "queue_lag", cc.queueLag.lag(time.Now()))
 	if err == nil {
 		cc.queue.Forget(key)
 		logger.Info("ConnectionController finished processing key")
@@ -319,7 +319,7 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 	if ok {
 		cc.setTrigger(key, trigger)
 	}
-	cc.queueWait.mark(key, time.Now())
+	cc.queueLag.mark(key, time.Now())
 	cc.queue.AddRateLimited(key)
 	logger.Info("ConnectionController will retry as service is unavailable", "queue_len", cc.queue.Len())
 
@@ -399,7 +399,7 @@ func (cc *ConnectionController) process(ctx context.Context, key string) (err er
 			// be readable from the store yet. Wait for it rather than regenerating, which
 			// would delete it and can loop under secret-store read-after-write lag.
 			if tokenRecentlyCreated(time.UnixMilli(conn.Status.Token.LastUpdated)) {
-				cc.queueWait.mark(key, time.Now())
+				cc.queueLag.mark(key, time.Now())
 				cc.queue.AddAfter(key, tokenWriteRetryDelay)
 				logger.Info("connection token secret not yet readable after recent write; will retry",
 					"error", err, "retry_after", tokenWriteRetryDelay, "queue_len", cc.queue.Len())

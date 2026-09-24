@@ -8,36 +8,36 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestQueueWaitTrackerLag(t *testing.T) {
+func TestQueueLagTracker(t *testing.T) {
 	base := time.Date(2026, 9, 24, 12, 0, 0, 0, time.UTC)
 
 	t.Run("empty tracker reports no lag", func(t *testing.T) {
-		var q queueWaitTracker
+		var q queueLagTracker
 		assert.Equal(t, time.Duration(0), q.lag(base))
 	})
 
 	t.Run("single waiting key reports time since its enqueue", func(t *testing.T) {
-		var q queueWaitTracker
+		var q queueLagTracker
 		q.mark("a", base)
 		assert.Equal(t, 30*time.Second, q.lag(base.Add(30*time.Second)))
 	})
 
 	t.Run("reports the earliest enqueue regardless of insertion order", func(t *testing.T) {
-		var q queueWaitTracker
+		var q queueLagTracker
 		q.mark("newer", base.Add(10*time.Second))
 		q.mark("older", base)
 		assert.Equal(t, time.Minute, q.lag(base.Add(time.Minute)))
 	})
 
 	t.Run("re-mark of a waiting key keeps the first timestamp", func(t *testing.T) {
-		var q queueWaitTracker
+		var q queueLagTracker
 		q.mark("a", base)
 		q.mark("a", base.Add(time.Minute)) // coalesced re-add must not reset the clock
 		assert.Equal(t, 90*time.Second, q.lag(base.Add(90*time.Second)))
 	})
 
 	t.Run("in-flight key still counts toward lag, measured from first enqueue", func(t *testing.T) {
-		var q queueWaitTracker
+		var q queueLagTracker
 		q.mark("a", base)
 
 		enqueuedAt, ok := q.startProcessing("a")
@@ -53,14 +53,14 @@ func TestQueueWaitTrackerLag(t *testing.T) {
 	})
 
 	t.Run("startProcessing on an untracked key reports no wait and no inflight", func(t *testing.T) {
-		var q queueWaitTracker
+		var q queueLagTracker
 		_, ok := q.startProcessing("ghost")
 		assert.False(t, ok)
 		assert.Equal(t, time.Duration(0), q.lag(base))
 	})
 
 	t.Run("finishProcessing is idempotent", func(t *testing.T) {
-		var q queueWaitTracker
+		var q queueLagTracker
 		q.mark("a", base)
 		_, ok := q.startProcessing("a")
 		require.True(t, ok)
@@ -70,7 +70,7 @@ func TestQueueWaitTrackerLag(t *testing.T) {
 	})
 
 	t.Run("oldest across waiting and inflight wins", func(t *testing.T) {
-		var q queueWaitTracker
+		var q queueLagTracker
 		q.mark("inflight-old", base)
 		_, ok := q.startProcessing("inflight-old")
 		require.True(t, ok)
