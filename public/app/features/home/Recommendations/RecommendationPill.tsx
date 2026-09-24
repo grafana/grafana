@@ -44,13 +44,13 @@ export function RecommendationPill({ recommendation, startingState, solution }: 
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, color: RecommendationItem['color']) => ({
+const getStyles = (theme: GrafanaTheme2, color: string) => ({
   pill: css({
     borderRadius: theme.shape.radius.pill,
     border: `1px solid ${theme.colors.border.medium}`,
 
     '& > svg': {
-      color: typeof color === 'function' ? color(theme) : color,
+      color: theme.visualization.getColorByName(color),
     },
   }),
 });

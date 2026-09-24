@@ -1,10 +1,11 @@
-import { type GrafanaTheme2, type IconName } from '@grafana/data';
+import { type IconName } from '@grafana/data';
 
 export interface RecommendationItem {
   id: string; // stable telemetry id (recommendation_id)
   title: string;
   icon: IconName;
-  color: string | ((theme: GrafanaTheme2) => string);
+  /** Palette name for `theme.visualization.getColorByName`, resolved where rendered so theme switches apply. */
+  color: string;
   context: string; // short "why you are seeing this" line under the title
   description: string;
   action: string; // CTA label, e.g. "Enable Hosted Traces"

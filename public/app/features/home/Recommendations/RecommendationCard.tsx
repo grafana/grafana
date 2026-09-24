@@ -69,8 +69,8 @@ export function RecommendationCard({ recommendation, startingState, solution }: 
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, color: RecommendationItem['color']) => ({
+const getStyles = (theme: GrafanaTheme2, color: string) => ({
   icon: css({
-    color: typeof color === 'function' ? color(theme) : color,
+    color: theme.visualization.getColorByName(color),
   }),
 });
