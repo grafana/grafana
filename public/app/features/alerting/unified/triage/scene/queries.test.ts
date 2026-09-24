@@ -226,12 +226,8 @@ describe('triage queries combined filter exclusions', () => {
 });
 
 describe('alertRuleInstancesQuery vs badge-count query resolution', () => {
-  // Without last_over_time, alertRuleInstancesQuery's resolution (step) scales with the
-  // selected time range. Once that step exceeds Prometheus's default 5m lookback, a
-  // short-lived instance can fall between evaluated points and disappear from the row
-  // list entirely, while summaryInstanceCountQuery (badge counts) stays correct because
-  // last_over_time explicitly looks back over the whole $__range regardless of step.
-  // This mismatch is what causes "Firing 4" with only 3 rows shown.
+  // Without last_over_time, a short-lived instance can fall between grid points and
+  // vanish once the step exceeds Prometheus's 5m lookback — see queries.ts docstrings.
   it('wraps each selector in last_over_time so short-lived instances survive a coarse step', () => {
     const query = alertRuleInstancesQuery('rule-1', '');
 
@@ -250,11 +246,7 @@ describe('alertRuleInstancesQuery vs badge-count query resolution', () => {
 });
 
 describe('getWorkbenchQueries Query A (tree rows) step-robustness', () => {
-  // Query A determines which rule/group rows exist in the tree. It has the same bare
-  // range-selector shape alertRuleInstancesQuery had before its fix, so a rule whose only
-  // instance is short-lived can lose its entire row (not just a nested instance row) once
-  // the step exceeds Prometheus's default 5m lookback. Confirmed via direct Prometheus
-  // queries against seeded data (see Task 3 / Task 4 verification), not just this test.
+  // Same mechanism as alertRuleInstancesQuery above, but losing a whole rule row.
   it('wraps each selector in last_over_time so a rule with only short-lived instances keeps its row', () => {
     const [rangeQuery] = getWorkbenchQueries('alertname, grafana_folder, grafana_rule_uid, alertstate', '');
 

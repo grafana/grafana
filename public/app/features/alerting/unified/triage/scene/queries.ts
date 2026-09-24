@@ -118,10 +118,7 @@ export function summaryChartQuery(filter: string): SceneDataQuery {
 
 /**
  * Range table query (A) for tree rows + deduplicated instant query (B) for badge counts.
- *
- * Query A wraps each selector in `last_over_time(...[$__interval])` for the same reason
- * `alertRuleInstancesQuery` does — see its docstring — otherwise a rule whose only instance
- * is short-lived can lose its entire row, not just a nested instance.
+ * Query A's last_over_time wrapping matches alertRuleInstancesQuery — see its docstring.
  */
 export function getWorkbenchQueries(countBy: string, filter: string): [SceneDataQuery, SceneDataQuery] {
   const lookbackSelectors = buildMetricSelectors(filter).map((selector) => `last_over_time(${selector}[$__interval])`);
@@ -147,14 +144,8 @@ export function summaryInstanceCountQuery(filter: string): SceneDataQuery {
 
 /**
  * Instance timeseries for a specific alert rule, optionally scoped to parent group labels.
- *
- * Wraps each selector in `last_over_time(...[$__interval])` for the same reason
- * `uniqueAlertInstancesExpr` below wraps its selectors in `last_over_time(...[$__range])`:
- * a bare range-query selector only returns a point at a grid point if a raw sample falls
- * within Prometheus's default 5m staleness window, so a short-lived instance can fall
- * between grid points and vanish once the step exceeds ~5m. Using `$__interval` (one step
- * width) rather than `$__range` closes that gap without widening a brief firing period
- * beyond how it already renders at that resolution.
+ * Wraps selectors in last_over_time(...[$__interval]) so a short-lived instance can't fall
+ * between grid points and vanish once the step exceeds Prometheus's 5m staleness window.
  */
 export function alertRuleInstancesQuery(
   ruleUID: string,
