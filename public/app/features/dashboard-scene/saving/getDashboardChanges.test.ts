@@ -108,43 +108,11 @@ describe('getDashboardChanges', () => {
       diffCount: 0,
       hasChanges: false,
       hasTimeChanges: false,
-      isNew: false,
       hasVariableValueChanges: false,
       hasRefreshChange: false,
     };
 
     const result = getRawDashboardChanges(initial, changed, false, false, false);
-
-    expect(result).toEqual(expectedChanges);
-  });
-
-  it('should return the correct result when is new', () => {
-    const newDashInitial = {
-      ...initial,
-      version: 0,
-    };
-    const changed = {
-      ...newDashInitial,
-      version: 0,
-    };
-
-    const expectedChanges = {
-      changedSaveModel: {
-        ...newDashInitial,
-      },
-      initialSaveModel: {
-        ...changed,
-      },
-      diffs: {},
-      diffCount: 0,
-      hasChanges: false,
-      hasTimeChanges: false,
-      isNew: true,
-      hasVariableValueChanges: false,
-      hasRefreshChange: false,
-    };
-
-    const result = getRawDashboardChanges(newDashInitial, changed, false, false, false);
 
     expect(result).toEqual(expectedChanges);
   });
@@ -169,7 +137,6 @@ describe('getDashboardChanges', () => {
       diffCount: 0,
       hasChanges: false,
       hasTimeChanges: true,
-      isNew: false,
       hasVariableValueChanges: false,
       hasRefreshChange: false,
     };
@@ -210,7 +177,6 @@ describe('getDashboardChanges', () => {
       diffCount: 1,
       hasChanges: true,
       hasTimeChanges: true,
-      isNew: false,
       hasVariableValueChanges: false,
       hasRefreshChange: false,
     };
@@ -237,7 +203,6 @@ describe('getDashboardChanges', () => {
       diffCount: 0,
       hasChanges: false,
       hasTimeChanges: false,
-      isNew: false,
       hasVariableValueChanges: false,
       hasRefreshChange: true,
     };
@@ -275,7 +240,6 @@ describe('getDashboardChanges', () => {
       diffCount: 1,
       hasChanges: true,
       hasTimeChanges: false,
-      isNew: false,
       hasVariableValueChanges: false,
       hasRefreshChange: true,
     };
@@ -315,7 +279,6 @@ describe('getDashboardChanges', () => {
       diffCount: 0,
       hasChanges: false,
       hasTimeChanges: false,
-      isNew: false,
       hasVariableValueChanges: true,
       hasRefreshChange: false,
     };
@@ -373,7 +336,6 @@ describe('getDashboardChanges', () => {
       diffCount: 0,
       hasChanges: false,
       hasTimeChanges: false,
-      isNew: false,
       hasVariableValueChanges: false,
       hasRefreshChange: false,
     };
@@ -424,7 +386,6 @@ describe('getDashboardChanges', () => {
       diffCount: 1,
       hasChanges: true,
       hasTimeChanges: false,
-      isNew: false,
       hasVariableValueChanges: true,
       hasRefreshChange: false,
     };

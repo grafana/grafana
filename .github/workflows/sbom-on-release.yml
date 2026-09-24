@@ -1,9 +1,31 @@
 name: "SBOM on Release"
 
+# Not triggered by `on: release: published`: the release is created by github-release.yml
+# using secrets.GITHUB_TOKEN, and GitHub does not fire new workflow runs for events produced
+# by the default GITHUB_TOKEN. That native trigger silently never fired for releases created
+# by the automated pipeline, so release-comms.yml calls this explicitly once its
+# create_github_release job has completed.
 on:
-  release:
-    types:
-      - published
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        description: The version being released, with or without a leading `v` (e.g. 11.2.3 or v11.2.3)
+        type: string
+      dry_run:
+        required: false
+        default: false
+        type: boolean
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        description: The version being released, with or without a leading `v` (e.g. 11.2.3 or v11.2.3)
+        type: string
+      dry_run:
+        required: false
+        default: false
+        type: boolean
 
 permissions: {}
 
@@ -15,6 +37,28 @@ jobs:
       contents: write # to upload the SBOM as a release asset
       id-token: write # to authenticate to Vault
     steps:
+      # inputs.version may or may not carry a leading `v` depending on the caller (e.g.
+      # release-comms.yml passes it v-prefixed) -- strip it once here so tag/release_branch are
+      # unambiguous for every step below, matching the same `${VERSION#v}` idiom release-comms.yml
+      # already uses.
+      - name: "Resolve tag and release branch"
+        id: version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          bare="${VERSION#v}"
+          {
+            echo "tag=v${bare}"
+            echo "release_branch=release-${bare}"
+          } >> "$GITHUB_OUTPUT"
+
+      # Socket scans the dependency manifests (package.json/yarn.lock, go.mod/go.sum, etc.) in the
+      # checkout, so it needs the release branch's tree at release time, not the runner's default ref.
+      - name: "Checkout release branch"
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ steps.version.outputs.release_branch }}
+
       - name: "Get Socket API token from Vault"
         id: vault-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@e46fe1e9a2bf9e618bcf8d8d32f3a7381b45c06d # get-vault-secrets/v2.0.0
@@ -24,16 +68,18 @@ jobs:
 
       - name: "Export SPDX SBOM from Socket"
         id: export-sbom
-        uses: grafana/shared-workflows/actions/socket-export-sbom@ff9aaa53f25716fcd6dde39f6d4e41c4e16fb5e1 # socket-export-sbom/v0.1.2
+        uses: grafana/shared-workflows/actions/socket-export-sbom@73f73d35ceadf46221741d45faefec0c5a990e6b # socket-export-sbom/v1.0.0
         with:
           socket_api_token: ${{ fromJSON(steps.vault-secrets.outputs.secrets).SOCKET_API_TOKEN }}
           socket_org: grafana
-          output_file: ${{ github.event.repository.name }}-${{ github.event.release.tag_name }}.spdx.json
+          branch: ${{ steps.version.outputs.release_branch }}
+          output_file: ${{ github.event.repository.name }}-${{ steps.version.outputs.tag }}.spdx.json
 
       - name: "Upload SBOM to release"
+        if: ${{ !inputs.dry_run }}
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          TAG: ${{ github.event.release.tag_name }}
+          TAG: ${{ steps.version.outputs.tag }}
           SBOM_PATH: ${{ steps.export-sbom.outputs.path }}
         run: gh release upload "$TAG" "$SBOM_PATH" --clobber

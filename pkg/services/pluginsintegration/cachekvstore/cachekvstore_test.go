@@ -115,7 +115,7 @@ func TestNamespacedStore(t *testing.T) {
 
 			t.Run("returns the keys", func(t *testing.T) {
 				expectedKeys := make([]string, 0, 10)
-				for i := 0; i < 10; i++ {
+				for i := range 10 {
 					k := fmt.Sprintf("key-%d", i)
 					err := store.Set(context.Background(), k, fmt.Sprintf("value-%d", i))
 					expectedKeys = append(expectedKeys, k)

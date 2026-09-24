@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -19,11 +20,12 @@ import (
 // fakeDualWriter is a hand-written fake for the DualWriter interface.
 type fakeDualWriter struct {
 	readFromUnified bool
+	readErr         error
 	status          dualwrite.StorageStatus
 }
 
 func (f *fakeDualWriter) ReadFromUnified(_ context.Context, _ schema.GroupResource) (bool, error) {
-	return f.readFromUnified, nil
+	return f.readFromUnified, f.readErr
 }
 
 func (f *fakeDualWriter) Status(_ context.Context, _ schema.GroupResource) (dualwrite.StorageStatus, error) {
@@ -114,13 +116,9 @@ func setupTestSearchClient(t *testing.T) (schema.GroupResource, *fakeResourceInd
 
 func setupTestSearchWrapper(t *testing.T, dual *fakeDualWriter, unifiedClient, legacyClient *fakeResourceIndexClient, gr schema.GroupResource) *searchWrapper {
 	t.Helper()
-	return &searchWrapper{
-		dual:          dual,
-		groupResource: gr,
-		unifiedClient: unifiedClient,
-		legacyClient:  legacyClient,
-		logger:        log.NewNopLogger(),
-	}
+	wrapper := NewSearchClient(dual, gr, unifiedClient, legacyClient).(*searchWrapper)
+	wrapper.logger = log.NewNopLogger()
+	return wrapper
 }
 
 func TestSearchClient_NewSearchClient(t *testing.T) {
@@ -199,125 +197,65 @@ func TestSearchWrapper_Search(t *testing.T) {
 		// Do not expect background call to unified client
 		assert.Empty(t, unifiedClient.searchCalled, "unified Search should not have been called")
 	})
+}
 
-	t.Run("makes background call to unified when dual writing with legacy primary", func(t *testing.T) {
-		gr, unifiedClient, legacyClient := setupTestSearchClient(t)
+func TestSearchWrapper_SearchModeChanges(t *testing.T) {
+	gr, unifiedClient, legacyClient := setupTestSearchClient(t)
+	dual := &fakeDualWriter{}
+	wrapper := NewSearchClient(dual, gr, unifiedClient, legacyClient)
+	legacyClient.searchResponse = &resourcepb.ResourceSearchResponse{TotalHits: 1}
+	unifiedClient.searchResponse = &resourcepb.ResourceSearchResponse{TotalHits: 2}
 
-		ctx := testutil.NewDefaultTestContext(t)
-		dual := &fakeDualWriter{readFromUnified: false, status: dualwrite.StorageStatus{ReadUnified: false, WriteUnified: true}}
+	for _, unified := range []bool{false, true, false} {
+		dual.readFromUnified = unified
+		selected, other := legacyClient, unifiedClient
+		if unified {
+			selected, other = unifiedClient, legacyClient
+		}
 
-		legacyClient.searchResponse = expectedResponse
-
-		// Configure background call to unified client
-		unifiedClient.searchResponse = &resourcepb.ResourceSearchResponse{TotalHits: 0}
-
-		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, gr)
-
-		resp, err := wrapper.Search(ctx, req)
+		resp, err := wrapper.Search(t.Context(), &resourcepb.ResourceSearchRequest{})
 
 		require.NoError(t, err)
-		assert.Equal(t, expectedResponse, resp)
+		require.Same(t, selected.searchResponse, resp)
+		require.Len(t, selected.searchCalled, 1)
+		require.Empty(t, other.searchCalled)
+		<-selected.searchCalled
+	}
+}
 
-		// Wait for background goroutine to complete
-		select {
-		case <-unifiedClient.searchCalled:
-			// Background call was made
-		case <-time.After(100 * time.Millisecond):
-			t.Fatal("Background unified client call was not made within timeout")
-		}
-	})
+func TestSearchWrapper_SearchModeError(t *testing.T) {
+	gr, unifiedClient, legacyClient := setupTestSearchClient(t)
+	wantErr := errors.New("mode unavailable")
+	dual := &fakeDualWriter{readErr: wantErr}
+	wrapper := NewSearchClient(dual, gr, unifiedClient, legacyClient)
 
-	t.Run("handles background call error gracefully", func(t *testing.T) {
+	resp, err := wrapper.Search(t.Context(), &resourcepb.ResourceSearchRequest{})
+
+	require.ErrorIs(t, err, wantErr)
+	require.Nil(t, resp)
+	require.Empty(t, legacyClient.searchCalled)
+	require.Empty(t, unifiedClient.searchCalled)
+}
+
+func TestSearchWrapper_SearchDoesNotFallback(t *testing.T) {
+	for _, unified := range []bool{false, true} {
 		gr, unifiedClient, legacyClient := setupTestSearchClient(t)
-
-		ctx := testutil.NewDefaultTestContext(t)
-		dual := &fakeDualWriter{readFromUnified: false, status: dualwrite.StorageStatus{ReadUnified: false, WriteUnified: true}}
-
-		legacyClient.searchResponse = expectedResponse
-
-		// Background call returns error - should be handled gracefully
-		unifiedClient.searchErr = assert.AnError
-
-		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, gr)
-
-		resp, err := wrapper.Search(ctx, req)
-
-		// Main request should still succeed despite background error
-		require.NoError(t, err)
-		assert.Equal(t, expectedResponse, resp)
-
-		// Wait for background goroutine to complete
-		select {
-		case <-unifiedClient.searchCalled:
-			// Background call was made (even though it failed)
-		case <-time.After(100 * time.Millisecond):
-			t.Fatal("Background unified client call was not made within timeout")
+		dual := &fakeDualWriter{readFromUnified: unified}
+		wrapper := NewSearchClient(dual, gr, unifiedClient, legacyClient)
+		selected, other := legacyClient, unifiedClient
+		if unified {
+			selected, other = unifiedClient, legacyClient
 		}
-	})
+		wantErr := errors.New("search failed")
+		selected.searchErr = wantErr
 
-	t.Run("background request times out after 500ms", func(t *testing.T) {
-		gr, unifiedClient, legacyClient := setupTestSearchClient(t)
+		resp, err := wrapper.Search(t.Context(), &resourcepb.ResourceSearchRequest{})
 
-		ctx := testutil.NewDefaultTestContext(t)
-		dual := &fakeDualWriter{readFromUnified: false, status: dualwrite.StorageStatus{ReadUnified: false, WriteUnified: true}}
-
-		legacyClient.searchResponse = expectedResponse
-
-		// Configure unified client to take longer than the 500ms timeout
-		unifiedClient.searchDelay = 600 * time.Millisecond // Longer than 500ms timeout
-
-		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, gr)
-
-		start := time.Now()
-		resp, err := wrapper.Search(ctx, req)
-		mainRequestDuration := time.Since(start)
-
-		// Main request should succeed quickly despite background timeout
-		require.NoError(t, err)
-		assert.Equal(t, expectedResponse, resp)
-		assert.Less(t, mainRequestDuration, 50*time.Millisecond, "Main request should not be blocked by background timeout")
-
-		// Wait for background context to be canceled
-		select {
-		case canceledCtx := <-unifiedClient.contextCanceled:
-			assert.Error(t, canceledCtx.Err(), "Background context should be canceled")
-			assert.Equal(t, context.DeadlineExceeded, canceledCtx.Err())
-		case <-time.After(700 * time.Millisecond):
-			t.Fatal("Background request should have been canceled due to timeout")
-		}
-	})
-
-	t.Run("background request completes successfully when within timeout", func(t *testing.T) {
-		gr, unifiedClient, legacyClient := setupTestSearchClient(t)
-
-		ctx := testutil.NewDefaultTestContext(t)
-		dual := &fakeDualWriter{readFromUnified: false, status: dualwrite.StorageStatus{ReadUnified: false, WriteUnified: true}}
-
-		legacyClient.searchResponse = expectedResponse
-
-		// Configure unified client to respond within the 500ms timeout
-		unifiedClient.searchDelay = 100 * time.Millisecond // Well within 500ms timeout
-		unifiedClient.searchResponse = &resourcepb.ResourceSearchResponse{TotalHits: 0}
-
-		wrapper := setupTestSearchWrapper(t, dual, unifiedClient, legacyClient, gr)
-
-		start := time.Now()
-		resp, err := wrapper.Search(ctx, req)
-		mainRequestDuration := time.Since(start)
-
-		// Main request should succeed quickly
-		require.NoError(t, err)
-		assert.Equal(t, expectedResponse, resp)
-		assert.Less(t, mainRequestDuration, 50*time.Millisecond, "Main request should not be blocked")
-
-		// Wait for successful background call
-		select {
-		case <-unifiedClient.searchCalled:
-			// Background call completed successfully
-		case <-time.After(200 * time.Millisecond):
-			t.Fatal("Expected successful background call")
-		}
-	})
+		require.ErrorIs(t, err, wantErr)
+		require.Nil(t, resp)
+		require.Len(t, selected.searchCalled, 1)
+		require.Empty(t, other.searchCalled)
+	}
 }
 
 func TestSearchWrapper_GetStats(t *testing.T) {
@@ -422,128 +360,4 @@ func TestSearchWrapper_GetStats(t *testing.T) {
 			t.Fatal("Background request should have been canceled due to timeout")
 		}
 	})
-}
-
-func TestExtractUIDs(t *testing.T) {
-	tests := []struct {
-		name     string
-		response *resourcepb.ResourceSearchResponse
-		expected map[string]struct{}
-	}{
-		{
-			name:     "nil response",
-			response: nil,
-			expected: map[string]struct{}{},
-		},
-		{
-			name: "empty results",
-			response: &resourcepb.ResourceSearchResponse{
-				Results: &resourcepb.ResourceTable{
-					Rows: []*resourcepb.ResourceTableRow{},
-				},
-			},
-			expected: map[string]struct{}{},
-		},
-		{
-			name: "single result",
-			response: &resourcepb.ResourceSearchResponse{
-				Results: &resourcepb.ResourceTable{
-					Rows: []*resourcepb.ResourceTableRow{
-						{
-							Key: &resourcepb.ResourceKey{
-								Name: "test-uid-1",
-							},
-						},
-					},
-				},
-			},
-			expected: map[string]struct{}{"test-uid-1": {}},
-		},
-		{
-			name: "multiple results",
-			response: &resourcepb.ResourceSearchResponse{
-				Results: &resourcepb.ResourceTable{
-					Rows: []*resourcepb.ResourceTableRow{
-						{
-							Key: &resourcepb.ResourceKey{
-								Name: "test-uid-1",
-							},
-						},
-						{
-							Key: &resourcepb.ResourceKey{
-								Name: "test-uid-2",
-							},
-						},
-					},
-				},
-			},
-			expected: map[string]struct{}{"test-uid-1": {}, "test-uid-2": {}},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := extractUIDs(tt.response)
-			assert.Equal(t, tt.expected, result)
-		})
-	}
-}
-
-func TestCalculateMatchPercentage(t *testing.T) {
-	tests := []struct {
-		name        string
-		legacyUIDs  map[string]struct{}
-		unifiedUIDs map[string]struct{}
-		expected    float64
-	}{
-		{
-			name:        "both empty",
-			legacyUIDs:  map[string]struct{}{},
-			unifiedUIDs: map[string]struct{}{},
-			expected:    100.0,
-		},
-		{
-			name:        "legacy empty, unified has results",
-			legacyUIDs:  map[string]struct{}{},
-			unifiedUIDs: map[string]struct{}{"uid1": {}},
-			expected:    0.0,
-		},
-		{
-			name:        "legacy has results, unified empty",
-			legacyUIDs:  map[string]struct{}{"uid1": {}},
-			unifiedUIDs: map[string]struct{}{},
-			expected:    0.0,
-		},
-		{
-			name:        "perfect match",
-			legacyUIDs:  map[string]struct{}{"uid1": {}, "uid2": {}},
-			unifiedUIDs: map[string]struct{}{"uid1": {}, "uid2": {}},
-			expected:    100.0,
-		},
-		{
-			name:        "partial match",
-			legacyUIDs:  map[string]struct{}{"uid1": {}, "uid2": {}},
-			unifiedUIDs: map[string]struct{}{"uid1": {}, "uid3": {}},
-			expected:    50.0, // 1 match out of 2 legacy UIDs (recall)
-		},
-		{
-			name:        "no match",
-			legacyUIDs:  map[string]struct{}{"uid1": {}, "uid2": {}},
-			unifiedUIDs: map[string]struct{}{"uid3": {}, "uid4": {}},
-			expected:    0.0,
-		},
-		{
-			name:        "legacy subset of unified",
-			legacyUIDs:  map[string]struct{}{"uid1": {}},
-			unifiedUIDs: map[string]struct{}{"uid1": {}, "uid2": {}},
-			expected:    100.0, // 1 match out of 1 legacy UID (perfect recall)
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := calculateMatchPercentage(tt.legacyUIDs, tt.unifiedUIDs)
-			assert.InDelta(t, tt.expected, result, 0.001)
-		})
-	}
 }

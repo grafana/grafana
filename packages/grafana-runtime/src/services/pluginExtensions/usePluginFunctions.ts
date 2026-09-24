@@ -10,11 +10,11 @@ export type UsePluginFunctionsResult<Signature> = {
   functions: Array<PluginExtensionFunction<Signature>>;
 };
 
-type UsePluginFunctions<T> = (options: UsePluginFunctionsOptions) => UsePluginFunctionsResult<T>;
+type UsePluginFunctions = <T>(options: UsePluginFunctionsOptions) => UsePluginFunctionsResult<T>;
 
-let singleton: UsePluginFunctions<unknown> | undefined;
+let singleton: UsePluginFunctions | undefined;
 
-export function setPluginFunctionsHook(hook: UsePluginFunctions<unknown>): void {
+export function setPluginFunctionsHook(hook: UsePluginFunctions): void {
   // We allow overriding the registry in tests
   if (singleton && process.env.NODE_ENV !== 'test') {
     throw new Error('setUsePluginFunctionsHook() function should only be called once, when Grafana is starting.');
@@ -26,5 +26,5 @@ export function usePluginFunctions<T>(options: UsePluginFunctionsOptions): UsePl
   if (!singleton) {
     throw new Error('usePluginFunctions(options) can only be used after the Grafana instance has started.');
   }
-  return singleton(options) as UsePluginFunctionsResult<T>;
+  return singleton<T>(options);
 }

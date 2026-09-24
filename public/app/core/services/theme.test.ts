@@ -26,6 +26,7 @@ describe('changeTheme', () => {
   afterEach(() => {
     contextSrv.isSignedIn = originalSignedIn;
     contextSrv.user.uid = originalUid;
+    document.head.querySelectorAll('link[rel="stylesheet"]').forEach((link) => link.remove());
     setTestFlags({});
     jest.restoreAllMocks();
   });
@@ -59,5 +60,27 @@ describe('changeTheme', () => {
       name: 'user',
       patch: { spec: { theme: 'light' } },
     });
+  });
+
+  // The build directory name differs per bundler, so the old stylesheet has to be matched by
+  // the URL the backend published rather than by a hardcoded path fragment.
+  it.each([
+    ['webpack', 'public/build/grafana.dark.abc123.css', 'public/build/grafana.light.def456.css'],
+    ['rspack', 'public/build/rspack/grafana.dark.abc123.css', 'public/build/rspack/grafana.light.def456.css'],
+  ])('removes the previous theme stylesheet under %s', async (_bundler, darkHref, lightHref) => {
+    config.bootData.assets = { ...config.bootData.assets, dark: darkHref, light: lightHref };
+    const oldLink = document.createElement('link');
+    oldLink.rel = 'stylesheet';
+    oldLink.href = darkHref;
+    document.head.appendChild(oldLink);
+
+    await changeTheme('light', true);
+
+    const newLink = document.head.querySelector<HTMLLinkElement>(`link[href="${lightHref}"]`);
+    expect(newLink).not.toBeNull();
+    newLink!.onload!(new Event('load'));
+
+    expect(document.head.querySelector(`link[href="${darkHref}"]`)).toBeNull();
+    expect(document.head.querySelector(`link[href="${lightHref}"]`)).not.toBeNull();
   });
 });

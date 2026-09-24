@@ -3,7 +3,7 @@ import { groupBy, isArray, pick, reduce, uniqueId } from 'lodash';
 import { type RoutingTree, type RoutingTreeRoute } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 
 import { type Label } from '../matchers/types';
-import { type LabelMatchDetails, matchLabels } from '../matchers/utils';
+import { type IndexedLabels, type LabelMatchDetails, indexLabels, matchIndexedLabels } from '../matchers/utils';
 
 import { type Route, type RouteWithID } from './types';
 
@@ -36,10 +36,20 @@ export function findMatchingRoutes<T extends Route>(
   labels: Label[],
   matchingJourney: Array<RouteMatchInfo<T>> = []
 ): Array<RouteMatchResult<T>> {
+  // Build the label lookups once here rather than per route, since every route in the tree is
+  // checked against this same label set.
+  return findMatchingRoutesForLabels(route, indexLabels(labels), matchingJourney);
+}
+
+function findMatchingRoutesForLabels<T extends Route>(
+  route: T,
+  indexedLabels: IndexedLabels,
+  matchingJourney: Array<RouteMatchInfo<T>>
+): Array<RouteMatchResult<T>> {
   let childMatches: Array<RouteMatchResult<T>> = [];
 
   // Check if the current node matches
-  const matchResult = matchLabels(route.matchers ?? [], labels);
+  const matchResult = matchIndexedLabels(route.matchers ?? [], indexedLabels);
 
   // Create matching info for this route
   const currentMatchInfo: RouteMatchInfo<T> = {
@@ -59,7 +69,7 @@ export function findMatchingRoutes<T extends Route>(
   // If the current node matches, recurse through child nodes
   if (route.routes) {
     for (const child of route.routes) {
-      const matchingChildren = findMatchingRoutes(child, labels, currentMatchingJourney);
+      const matchingChildren = findMatchingRoutesForLabels(child, indexedLabels, currentMatchingJourney);
       // TODO how do I solve this typescript thingy? It looks correct to me /shrug
       // @ts-ignore
       childMatches = childMatches.concat(matchingChildren);
@@ -74,7 +84,7 @@ export function findMatchingRoutes<T extends Route>(
   if (childMatches.length === 0) {
     childMatches.push({
       route,
-      labels,
+      labels: indexedLabels.labels,
       matchingJourney: currentMatchingJourney,
     });
   }

@@ -1,20 +1,22 @@
 package iam
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"reflect"
 	"testing"
 
 	badger "github.com/dgraph-io/badger/v4"
-	"github.com/open-feature/go-sdk/openfeature"
-	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/registry/rest"
+	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 
 	authlib "github.com/grafana/authlib/types"
@@ -22,11 +24,191 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/display"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/userpermissions"
+	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
+
+type noopUserPermissionsClient struct{}
+
+func (noopUserPermissionsClient) GetUserPermissions(context.Context, authlib.AuthInfo, authlib.GetUserPermissionsRequest) (authlib.GetUserPermissionsResponse, error) {
+	return authlib.GetUserPermissionsResponse{}, nil
+}
+
+func (noopUserPermissionsClient) InvalidateUserPermissions(context.Context, authlib.AuthInfo, authlib.GetUserPermissionsRequest) error {
+	return nil
+}
+
+func TestGetAPIRoutes_UserPermissionsGate(t *testing.T) {
+	for _, tt := range []struct {
+		name    string
+		enabled bool
+		want    bool
+	}{
+		{name: "route absent when disabled", enabled: false, want: false},
+		{name: "route registered when enabled", enabled: true, want: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			b := &IdentityAccessManagementAPIBuilder{
+				features:        Features{UserPermissionsAPI: tt.enabled},
+				display:         display.NewDisplayHandler(),
+				userPermissions: userpermissions.NewHandler(noopUserPermissionsClient{}, false),
+			}
+			routes := b.GetAPIRoutes(legacyiamv0.SchemeGroupVersion)
+			found := false
+			for _, route := range routes.Namespace {
+				if route.Path == "users/~/permissions" {
+					found = true
+				}
+			}
+			require.Equal(t, tt.want, found)
+		})
+	}
+}
+
+func TestNewAPIService_WiresLegacyTeamStore(t *testing.T) {
+	features := Features{TeamsAPI: true, UsersAPI: true}
+	b := NewAPIService(
+		nil,
+		nil,
+		legacysql.NewDatabaseProvider(nil),
+		&NoopApiInstaller[*iamv0.RoleBinding]{ResourceInfo: iamv0.RoleBindingInfo},
+		&NoopApiInstaller[*iamv0.Role]{ResourceInfo: iamv0.RoleInfo},
+		&NoopApiInstaller[*iamv0.GlobalRole]{ResourceInfo: iamv0.GlobalRoleInfo},
+		&NoopApiInstaller[*iamv0.TeamLBACRule]{ResourceInfo: iamv0.TeamLBACRuleInfo},
+		nil,
+		prometheus.NewRegistry(),
+		nil,
+		nil,
+		tracing.InitializeTracerForTest(),
+		resourcepermission.NewMappersRegistry(),
+		nil,
+		features,
+	)
+
+	require.NotNil(t, b.legacyTeamStore)
+	require.Equal(t, features, b.features)
+}
+
+func TestNewAPIService_WiresSSOStore(t *testing.T) {
+	b := NewAPIService(
+		nil,
+		nil,
+		legacysql.NewDatabaseProvider(nil),
+		&NoopApiInstaller[*iamv0.RoleBinding]{ResourceInfo: iamv0.RoleBindingInfo},
+		&NoopApiInstaller[*iamv0.Role]{ResourceInfo: iamv0.RoleInfo},
+		&NoopApiInstaller[*iamv0.GlobalRole]{ResourceInfo: iamv0.GlobalRoleInfo},
+		&NoopApiInstaller[*iamv0.TeamLBACRule]{ResourceInfo: iamv0.TeamLBACRuleInfo},
+		nil,
+		prometheus.NewRegistry(),
+		nil,
+		nil,
+		tracing.InitializeTracerForTest(),
+		resourcepermission.NewMappersRegistry(),
+		nil,
+		Features{},
+	)
+
+	// Standalone must wire the read-only SSO store so the SSOSetting kind is served
+	// once kubernetesSsoSettingsApi is enabled.
+	require.NotNil(t, b.ssoLegacyStore)
+}
+
+func TestNewAPIService_AuthorizesSSOSettings(t *testing.T) {
+	b := NewAPIService(
+		nil,
+		nil,
+		legacysql.NewDatabaseProvider(nil),
+		&NoopApiInstaller[*iamv0.RoleBinding]{ResourceInfo: iamv0.RoleBindingInfo},
+		&NoopApiInstaller[*iamv0.Role]{ResourceInfo: iamv0.RoleInfo},
+		&NoopApiInstaller[*iamv0.GlobalRole]{ResourceInfo: iamv0.GlobalRoleInfo},
+		&NoopApiInstaller[*iamv0.TeamLBACRule]{ResourceInfo: iamv0.TeamLBACRuleInfo},
+		nil,
+		prometheus.NewRegistry(),
+		nil,
+		nil,
+		tracing.InitializeTracerForTest(),
+		resourcepermission.NewMappersRegistry(),
+		nil,
+		Features{},
+	)
+
+	// Serving the kind is moot unless the standalone authorizer allows it; the
+	// flat fall-through would otherwise deny every ssosettings request.
+	attrs := authorizer.AttributesRecord{
+		Resource:        legacyiamv0.SSOSettingResourceInfo.GetName(),
+		ResourceRequest: true,
+		Verb:            "get",
+	}
+
+	t.Run("allows an authenticated identity", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: authlib.TypeAccessPolicy})
+		decision, _, err := b.authorizer.Authorize(ctx, attrs)
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionAllow, decision)
+	})
+
+	t.Run("denies an anonymous identity", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: authlib.TypeAnonymous})
+		decision, _, err := b.authorizer.Authorize(ctx, attrs)
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+	})
+}
+
+func TestUpdateTeamLBACRulesAPIGroupWithNoopInstaller(t *testing.T) {
+	b := &IdentityAccessManagementAPIBuilder{
+		teamLBACApiInstaller: ProvideNoopTeamLBACApiInstaller(),
+		tracing:              tracing.InitializeTracerForTest(),
+	}
+	storage := map[string]rest.Storage{
+		iamv0.TeamResourceInfo.StoragePath(): &noopstorage.NoopREST{ResourceInfo: iamv0.TeamResourceInfo},
+	}
+
+	err := b.UpdateTeamLBACRulesAPIGroup(&genericapiserver.APIGroupInfo{}, builder.APIGroupOptions{}, storage)
+	require.NoError(t, err)
+	require.NotNil(t, storage[iamv0.TeamLBACRuleInfo.StoragePath("for-subject")])
+}
+
+func TestUpdateUsersAPIGroup_TeamsSubresourceRequiresTeamsAPI(t *testing.T) {
+	for _, tt := range []struct {
+		name            string
+		teamsAPIEnabled bool
+		wantRegistered  bool
+	}{
+		{name: "not registered when Teams API is disabled"},
+		{name: "registered when Teams API is enabled", teamsAPIEnabled: true, wantRegistered: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			scheme := runtime.NewScheme()
+			require.NoError(t, iamv0.AddToScheme(scheme))
+
+			b := &IdentityAccessManagementAPIBuilder{
+				dual:    dualwrite.NewMockService(t),
+				unified: resource.NewMockResourceClient(t),
+				tracing: tracing.InitializeTracerForTest(),
+			}
+			storage := map[string]rest.Storage{}
+			err := b.UpdateUsersAPIGroup(builder.APIGroupOptions{
+				Scheme:     scheme,
+				OptsGetter: appinstaller.NewNoopRESTOptionsGetter(),
+			}, storage, false, tt.teamsAPIEnabled)
+			require.NoError(t, err)
+
+			_, registered := storage[iamv0.UserResourceInfo.StoragePath("teams")]
+			require.Equal(t, tt.wantRegistered, registered)
+		})
+	}
+}
 
 func TestInstallSchema_ResourcePermissionsGate(t *testing.T) {
 	gvk := iamv0.ResourcePermissionInfo.GroupVersionKind()
@@ -50,23 +232,23 @@ func TestInstallSchema_ResourcePermissionsGate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			provider := memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
-				featuremgmt.FlagKubernetesAuthzResourcePermissionApis: {
-					Key:            featuremgmt.FlagKubernetesAuthzResourcePermissionApis,
-					DefaultVariant: "default",
-					Variants:       map[string]any{"default": tt.flagEnabled},
-				},
-			})
-			require.NoError(t, openfeature.SetProviderAndWait(provider))
-
-			b := &IdentityAccessManagementAPIBuilder{ofClient: openfeature.NewDefaultClient()}
+			b := &IdentityAccessManagementAPIBuilder{features: Features{ResourcePermissionsAPI: tt.flagEnabled}}
 
 			scheme := runtime.NewScheme()
 			require.NoError(t, b.InstallSchema(scheme))
-			require.Equal(t, tt.wantRegistered, scheme.Recognizes(gvk),
-				"ResourcePermission kind registration should match %s=%v", featuremgmt.FlagKubernetesAuthzResourcePermissionApis, tt.flagEnabled)
+			require.Equal(t, tt.wantRegistered, scheme.Recognizes(gvk))
 		})
 	}
+}
+
+func TestInstallSchema_UsesResolvedFeatures(t *testing.T) {
+	b := &IdentityAccessManagementAPIBuilder{
+		features: Features{ResourcePermissionsAPI: true},
+	}
+	scheme := runtime.NewScheme()
+
+	require.NoError(t, b.InstallSchema(scheme))
+	require.True(t, scheme.Recognizes(iamv0.ResourcePermissionInfo.GroupVersionKind()))
 }
 
 // TestCodecPathResourcesRegisterOneVersionPerType guards apimachinery's LegacyCodec version-order
@@ -75,20 +257,11 @@ func TestInstallSchema_ResourcePermissionsGate(t *testing.T) {
 // so any resource - not just a hardcoded list - fails here if it starts sharing a Go struct across
 // versions. See the dashboard package's test of the same name for the other codec-path group.
 func TestCodecPathResourcesRegisterOneVersionPerType(t *testing.T) {
-	allOn := map[string]memprovider.InMemoryFlag{}
-	for _, flag := range []string{
-		featuremgmt.FlagKubernetesAuthzRolesApi,
-		featuremgmt.FlagKubernetesAuthzRoleBindingsApi,
-		featuremgmt.FlagKubernetesAuthzGlobalRolesApi,
-		featuremgmt.FlagKubernetesAuthzTeamLBACRuleApi,
-		featuremgmt.FlagKubernetesAuthzResourcePermissionApis,
-	} {
-		allOn[flag] = memprovider.InMemoryFlag{Key: flag, DefaultVariant: "default", Variants: map[string]any{"default": true}}
-	}
-	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(allOn)))
-
 	scheme := runtime.NewScheme()
-	b := &IdentityAccessManagementAPIBuilder{ofClient: openfeature.NewDefaultClient()}
+	b := &IdentityAccessManagementAPIBuilder{features: Features{
+		RolesAPI: true, RoleBindingsAPI: true, GlobalRolesAPI: true,
+		TeamLBACRulesAPI: true, ResourcePermissionsAPI: true,
+	}}
 	require.NoError(t, b.InstallSchema(scheme))
 
 	assertNoTypeSpansMultipleGVKs(t, scheme)
@@ -131,7 +304,7 @@ func assertNoTypeSpansMultipleGVKs(t *testing.T, scheme *runtime.Scheme) {
 		if commonMultiVersionTypes[typ] {
 			continue
 		}
-		obj, ok := reflect.New(typ).Interface().(runtime.Object)
+		obj, ok := reflect.TypeAssert[runtime.Object](reflect.New(typ))
 		if !ok {
 			continue
 		}

@@ -24,6 +24,8 @@ export type DashboardViewItemCollection = {
 
 export interface BrowseDashboardsState {
   rootItems: DashboardViewItemCollection | undefined;
+  // Keyed by parent folder UID. UIDs are unique per kind only (a dashboard may share a UID with a folder),
+  // so only ever index this and openFolders with a folder's UID.
   childrenByParentUID: Record<string, DashboardViewItemCollection | undefined>;
   selectedItems: DashboardTreeSelection;
 

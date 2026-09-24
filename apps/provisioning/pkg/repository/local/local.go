@@ -17,6 +17,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync/atomic"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -85,16 +86,18 @@ var (
 type localRepository struct {
 	config   *provisioning.Repository
 	resolver *LocalFolderResolver
+	metrics  *repository.OperationRecorder
 
 	// validated path that can be read if not empty
 	path     string
 	maxBytes atomic.Int64
 }
 
-func NewRepository(config *provisioning.Repository, resolver *LocalFolderResolver) *localRepository {
+func NewRepository(config *provisioning.Repository, resolver *LocalFolderResolver, metrics *repository.OperationMetrics) *localRepository {
 	r := &localRepository{
 		config:   config,
 		resolver: resolver,
+		metrics:  metrics.Recorder(config.Spec.Type),
 	}
 
 	if config.Spec.Local != nil {
@@ -170,7 +173,10 @@ func (r *localRepository) resolvePath(p string) (string, error) {
 }
 
 // ReadResource implements provisioning.Repository.
-func (r *localRepository) Read(ctx context.Context, filePath string, ref string) (*repository.FileInfo, error) {
+func (r *localRepository) Read(ctx context.Context, filePath string, ref string) (out *repository.FileInfo, err error) {
+	start := time.Now()
+	defer func() { r.metrics.Read(start, out, err) }()
+
 	if err := r.validateRequest(ref); err != nil {
 		return nil, err
 	}
@@ -224,13 +230,16 @@ func (r *localRepository) WithMaxFileSize(maxBytes int64) {
 }
 
 // ReadResource implements provisioning.Repository.
-func (r *localRepository) ReadTree(ctx context.Context, ref string) ([]repository.FileTreeEntry, error) {
+func (r *localRepository) ReadTree(ctx context.Context, ref string) (tree []repository.FileTreeEntry, err error) {
+	start := time.Now()
+	defer func() { r.metrics.List(start, err) }()
+
 	if err := r.validateRequest(ref); err != nil {
 		return nil, err
 	}
 
 	// Return an empty list when folder does not exist
-	_, err := os.Stat(r.path)
+	_, err = os.Stat(r.path)
 	if errors.Is(err, fs.ErrNotExist) {
 		return []repository.FileTreeEntry{}, nil
 	}
@@ -290,7 +299,10 @@ func (r *localRepository) calculateFileHash(path string) (string, int64, error) 
 	return hex.EncodeToString(hasher.Sum(nil)), size, nil
 }
 
-func (r *localRepository) Create(ctx context.Context, filepath string, ref string, data []byte, comment string) error {
+func (r *localRepository) Create(ctx context.Context, filepath string, ref string, data []byte, comment string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Write(start, len(data), err) }()
+
 	if err := r.validateRequest(ref); err != nil {
 		return err
 	}
@@ -326,12 +338,15 @@ func (r *localRepository) Create(ctx context.Context, filepath string, ref strin
 	return os.WriteFile(fpath, data, 0600)
 }
 
-func (r *localRepository) Update(ctx context.Context, path string, ref string, data []byte, comment string) error {
+func (r *localRepository) Update(ctx context.Context, path string, ref string, data []byte, comment string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Write(start, len(data), err) }()
+
 	if err := r.validateRequest(ref); err != nil {
 		return err
 	}
 
-	path, err := r.resolvePath(path)
+	path, err = r.resolvePath(path)
 	if err != nil {
 		return err
 	}
@@ -350,12 +365,15 @@ func (r *localRepository) Update(ctx context.Context, path string, ref string, d
 	return os.WriteFile(path, data, 0600)
 }
 
-func (r *localRepository) Write(ctx context.Context, fpath, ref string, data []byte, comment string) error {
+func (r *localRepository) Write(ctx context.Context, fpath, ref string, data []byte, comment string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Write(start, len(data), err) }()
+
 	if err := r.validateRequest(ref); err != nil {
 		return err
 	}
 
-	fpath, err := r.resolvePath(fpath)
+	fpath, err = r.resolvePath(fpath)
 	if err != nil {
 		return err
 	}
@@ -370,7 +388,10 @@ func (r *localRepository) Write(ctx context.Context, fpath, ref string, data []b
 	return os.WriteFile(fpath, data, 0600)
 }
 
-func (r *localRepository) Delete(ctx context.Context, path string, ref string, comment string) error {
+func (r *localRepository) Delete(ctx context.Context, path string, ref string, comment string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Delete(start, err) }()
+
 	if err := r.validateRequest(ref); err != nil {
 		return err
 	}
@@ -396,7 +417,10 @@ func (r *localRepository) Delete(ctx context.Context, path string, ref string, c
 	return nil
 }
 
-func (r *localRepository) Move(ctx context.Context, oldPath, newPath, ref, comment string) error {
+func (r *localRepository) Move(ctx context.Context, oldPath, newPath, ref, comment string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Move(start, err) }()
+
 	if err := r.validateRequest(ref); err != nil {
 		return err
 	}

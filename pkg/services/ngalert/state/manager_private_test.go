@@ -5689,6 +5689,30 @@ func (f *fakePersister) Sync(_ context.Context, _ trace.Span, _ ngmodels.AlertRu
 
 var _ StatePersister = (*fakePersister)(nil)
 
+func TestNewManager_MaxLabelValueSize(t *testing.T) {
+	testCases := []struct {
+		name     string
+		cfgValue int
+		expected int
+	}{
+		{name: "zero uses the default", cfgValue: 0, expected: DefaultMaxLabelValueSize},
+		{name: "positive value is kept as-is", cfgValue: 100, expected: 100},
+		{name: "negative value disables the clamp", cfgValue: -1, expected: 0},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mgr := NewManager(ManagerCfg{
+				Clock:             clock.NewMock(),
+				Log:               log.NewNopLogger(),
+				MaxLabelValueSize: tc.cfgValue,
+			}, &fakePersister{name: "test"})
+
+			require.Equal(t, tc.expected, mgr.maxLabelValueSize)
+		})
+	}
+}
+
 func TestDatasourceErrorInfo(t *testing.T) {
 	rule := &ngmodels.AlertRule{
 		Data: []ngmodels.AlertQuery{

@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
 
 import { type GrafanaTheme2, type ThemeRegistryItem } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
-import { Drawer, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
+import { Drawer, useStyles2, useTheme2 } from '@grafana/ui';
 import { changeTheme } from 'app/core/services/theme';
+
+import { VisualRefreshInfo } from '../../../features/visual-refresh/components/VisualRefreshInfo/VisualRefreshInfo';
 
 import { ThemeCard } from './ThemeCard';
 import { getSelectableThemes } from './getSelectableThemes';
@@ -26,25 +28,12 @@ export function ThemeSelectorDrawer({ onClose }: Props) {
     changeTheme(theme.id, false);
   };
 
-  const subTitle = (
-    <Trans i18nKey="shared-preferences.fields.theme-description">
-      Enjoying the experimental themes? Tell us what you&apos;d like to see{' '}
-      <TextLink
-        variant="bodySmall"
-        external
-        href="https://docs.google.com/forms/d/e/1FAIpQLSeRKAY8nUMEVIKSYJ99uOO-dimF6Y69_If1Q1jTLOZRWqK1cw/viewform?usp=dialog"
-      >
-        here.
-      </TextLink>
-    </Trans>
-  );
-
   return (
     <Drawer
       title={t('profile.change-theme', 'Change theme')}
       onClose={onClose}
       size="md"
-      subtitle={config.feedbackLinksEnabled ? subTitle : undefined}
+      subtitle={<VisualRefreshInfo />}
     >
       <div className={styles.grid} role="radiogroup">
         {themes.map((themeOption) => (

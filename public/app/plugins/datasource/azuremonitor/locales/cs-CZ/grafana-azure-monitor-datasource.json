@@ -53,6 +53,11 @@
       "placeholder-symbol-client-secret": "nastaveno",
       "reset-symbol-client-secret": "Obnovit"
     },
+    "auxiliary-logs-toggle": {
+      "aria-label-enable-auxiliary-logs": "",
+      "description-auxiliary-logs": "",
+      "label-enable-auxiliary-logs": ""
+    },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "Nezpracovaný dotaz: {{queryDisplayName}}",
       "aria-label-use-query": "Použít toto tlačítko dotazu",
@@ -79,9 +84,9 @@
       "label-enable-basic-logs": "Povolit základní protokoly"
     },
     "batch-api-toggle": {
-      "aria-label-enable-batch-api": "",
-      "description-batch-api": "",
-      "label-enable-batch-api": ""
+      "aria-label-enable-batch-api": "Dávkové API",
+      "description-batch-api": "Odesílá dotazy na více zdrojů v jednom požadavku, což zlepšuje výkon u velkých nástěnek. Vyžaduje roli <2>Monitoring čtenářů</2> v rozsahu předplatného na <6>metrics.monitor.azure.com</6>. Mimo bezplatnou úroveň <9>mohou být účtovány další náklady</9>.",
+      "label-enable-batch-api": "Povolit dávkové API"
     },
     "config-editor": {
       "description-additional-settings": "Další nastavení jsou volitelná nastavení, která lze nakonfigurovat pro větší kontrolu nad zdrojem dat. Patří sem zabezpečený proxy server Socks, časový limit požadavku a přeposlané soubory cookie.",
@@ -105,11 +110,11 @@
       "load-subscriptions": "Načíst předplatné"
     },
     "dimension-fields": {
-      "aria-label-field": "",
-      "aria-label-operator": "",
-      "aria-label-remove": "",
-      "aria-label-value": "",
-      "aria-label-values": "",
+      "aria-label-field": "Pole dimenze {{position}}",
+      "aria-label-operator": "Operátor dimenze {{position}}",
+      "aria-label-remove": "Odebrat dimenzi {{position}}",
+      "aria-label-value": "Hodnota dimenze {{position}}",
+      "aria-label-values": "Hodnoty dimenze {{position}}",
       "label-dimensions": "Rozměry",
       "placeholder-field": "Pole",
       "placeholder-operation": "Činnost",
@@ -182,19 +187,47 @@
       "tooltip-limit": "Omezte počet vrácených řádků (výchozí hodnota je 1 000)."
     },
     "logs-management": {
+      "body-auxiliary-logs-queries": "",
       "body-basic-logs-queries": "Opravdu chcete přepnout na Základní protokoly?",
       "confirmText-confirm": "Potvrdit",
+      "description-auxiliary-logs-queries": "",
       "description-basic-logs-queries": "Dotazy na základní protokoly jsou zpoplatněny na základě množství naskenovaných dat.",
+      "label-analytics": "",
+      "label-auxiliary": "",
+      "label-basic": "",
       "label-logs": "Protokoly",
+      "title-auxiliary-logs-queries": "",
       "title-basic-logs-queries": "Dotazy na základní protokoly",
-      "tooltip-logs": "Určuje, zda se má spustit dotaz Základní protokoly nebo Analytické protokoly."
+      "tooltip-logs": "Určuje, zda se má spustit dotaz Základní protokoly nebo Analytické protokoly.",
+      "tooltip-logs-all": "",
+      "tooltip-logs-aux": ""
     },
     "logs-query-builder": {
       "title-no-tables": "Zdroj byl úspěšně načten, ale bez tabulek"
     },
     "logs-query-editor": {
       "learn-more": "Další informace",
-      "view-query": "Zobrazit dotaz na Azure Portal"
+      "notice-auxiliary-single-resource": "",
+      "notice-basic-single-resource": "",
+      "notice-same-resource-type": "",
+      "tier-switch-body-analytics": "",
+      "tier-switch-body-auxiliary": "",
+      "tier-switch-body-basic": "",
+      "tier-switch-revert": "",
+      "tier-switch-title": "",
+      "view-query": "Zobrazit dotaz na Azure Portal",
+      "warning-auxiliary-data-ingested": "",
+      "warning-auxiliary-raw": "",
+      "warning-basic-raw": "",
+      "warning-data-ingested": ""
+    },
+    "logs-table-section": {
+      "description-auxiliary-disabled": "",
+      "description-auxiliary-enabled": "",
+      "description-basic-disabled": "",
+      "description-basic-enabled": "",
+      "description-plan-unavailable": "",
+      "label-all-columns": ""
     },
     "metric-name-field": {
       "label-metric": "Metrika"
@@ -203,11 +236,11 @@
       "label-metric-namespace": "Metrický jmenný prostor"
     },
     "metrics-query-editor": {
-      "selection-notice-batch": "",
-      "selection-notice-standard": ""
+      "selection-notice-batch": "Můžete vybrat položky stejného typu zdroje napříč předplatnými a regiony. Zdroje v různých předplatných nebo regionech jsou dotazovány v samostatných požadavcích a mohou selhat nezávisle na sobě. Chcete-li vybrat zdroje jiného typu, nejprve zrušte zaškrtnutí aktuálního výběru.",
+      "selection-notice-standard": "Můžete vybrat položky stejného typu zdroje a umístění. Chcete-li vybrat zdroje jiného typu nebo umístění, nejprve zrušte zaškrtnutí aktuálního výběru."
     },
     "monitor-config": {
-      "title-features": ""
+      "title-features": "Funkce"
     },
     "nested-row": {
       "text-loading": "Načítání…"
@@ -222,8 +255,8 @@
       "tooltip-order-by": "Seřadit výsledky podle jednoho nebo více sloupců ve vzestupném nebo sestupném pořadí."
     },
     "pagination": {
-      "results-truncated-message": "",
-      "results-truncated-title": ""
+      "results-truncated-message": "Načítání bylo zastaveno po {{maxPages}} stránkách; některé výsledky mohou být vynechány.",
+      "results-truncated-title": "Azure Monitor"
     },
     "query-editor": {
       "alert-error-occurred": "Při požadování metadat ze služby Azure Monitor došlo k chybě"

@@ -8,9 +8,8 @@ import { createBridgeURL } from 'app/features/alerting/unified/components/Plugin
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 
 import { ctaClicked } from '../analytics/main';
-
-import { SYNTHETIC_MONITORING_APP_ID } from './appPluginIds';
-import { KUBERNETES_APP_ID } from './kubernetesData';
+import { SYNTHETIC_MONITORING_APP_ID } from '../solutions/appPluginIds';
+import { KUBERNETES_APP_ID } from '../solutions/kubernetesData';
 
 interface PopularSolution {
   id: string; // stable telemetry id (solution_id), aligned with pluginRecommendations ids
@@ -63,11 +62,8 @@ function getSolutionHref(solution: PopularSolution, appAvailable: boolean): stri
 }
 
 interface NoDataCardProps {
-  /**
-   * 'partial': at least one signal is confirmed active but nothing is renderable.
-   * 'unknown': detection was inconclusive — no signal confirmed active, some unsettled.
-   */
-  variant?: 'empty' | 'partial' | 'unknown';
+  /** 'unknown': detection was inconclusive — no signal confirmed active, some unsettled. */
+  variant?: 'empty' | 'unknown';
 }
 
 /** Left recommendations card for instances where no solution is reporting data yet. */
@@ -90,24 +86,19 @@ export function NoDataCard({ variant = 'empty' }: NoDataCardProps) {
         <Text element="h3" variant="h3" color="primary">
           {variant === 'empty'
             ? t('home.recommendations.no-data.title', 'No data flowing yet')
-            : t('home.recommendations.no-data.title-partial', 'Add more telemetry')}
+            : t('home.recommendations.no-data.title-unknown', "We couldn't confirm your data")}
         </Text>
 
         <Text variant="body">
-          {variant === 'partial'
+          {variant === 'unknown'
             ? t(
-                'home.recommendations.no-data.description-partial',
-                'Some signals are already flowing. Connect more data sources or pick a solution to see live stats here.'
+                'home.recommendations.no-data.description-unknown',
+                "We couldn't confirm live data yet. Connect more data sources or pick a solution to see live stats here."
               )
-            : variant === 'unknown'
-              ? t(
-                  'home.recommendations.no-data.description-unknown',
-                  "We couldn't confirm live data yet. Connect more data sources or pick a solution to see live stats here."
-                )
-              : t(
-                  'home.recommendations.no-data.description',
-                  'Connect a data source to light up your dashboards and alerts, pick from available solutions, or follow a getting started guide.'
-                )}
+            : t(
+                'home.recommendations.no-data.description',
+                'Connect a data source to light up your dashboards and alerts, pick from available solutions, or follow a getting started guide.'
+              )}
         </Text>
 
         <Stack direction="column" gap={1}>

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { type DataLink, VariableOrigin, VariableSuggestionsScope } from '@grafana/data';
@@ -11,20 +11,32 @@ const editorItem = { settings: {} } as EditorItem;
 const makeLink = (title: string): DataLink => ({ title, url: 'https://grafana.com' });
 
 describe('DataLinksValueEditor', () => {
-  it('renders the links editor container and add button', () => {
-    render(<DataLinksValueEditor value={[]} onChange={jest.fn()} context={{ data: [] }} item={editorItem} />);
+  it('renders the links editor container and add button', async () => {
+    const { container } = render(
+      <DataLinksValueEditor value={[]} onChange={jest.fn()} context={{ data: [] }} item={editorItem} />
+    );
+
+    await waitFor(() => {
+      expect(container.querySelector('[data-rfd-droppable-id="sortable-links"]')).toBeInTheDocument();
+    });
 
     expect(screen.getByTestId('links-inline')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /add link/i })).toBeInTheDocument();
   });
 
-  it('displays existing link titles in the list', () => {
+  it('displays existing link titles in the list', async () => {
     const links: DataLink[] = [
       { title: 'Grafana Homepage', url: 'https://grafana.com' },
       { title: 'Docs', url: 'https://grafana.com/docs' },
     ];
 
-    render(<DataLinksValueEditor value={links} onChange={jest.fn()} context={{ data: [] }} item={editorItem} />);
+    const { container } = render(
+      <DataLinksValueEditor value={links} onChange={jest.fn()} context={{ data: [] }} item={editorItem} />
+    );
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(2);
+    });
 
     expect(screen.getByText('Grafana Homepage')).toBeInTheDocument();
     expect(screen.getByText('Docs')).toBeInTheDocument();

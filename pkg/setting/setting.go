@@ -163,6 +163,10 @@ type Cfg struct {
 	EnforceDomain     bool
 	MinTLSVersion     string
 
+	// FrontendDevServerURL is the origin of the frontend bundler's dev server. Empty unless
+	// Env is Dev. See readFrontendDevSettings.
+	FrontendDevServerURL string
+
 	// Security settings
 	SecretKey             string
 	EmailCodeValidMinutes int
@@ -196,6 +200,7 @@ type Cfg struct {
 	ProvisioningAllowInsecure                 bool // allow http:// repository URLs together with a token (cleartext credentials); local/dev only
 	ProvisioningMinSyncInterval               time.Duration
 	ProvisioningRepositoryTypes               []string
+	ProvisioningConnectionTypes               []string
 	ProvisioningLokiURL                       string
 	ProvisioningLokiUser                      string
 	ProvisioningLokiPassword                  string
@@ -254,6 +259,7 @@ type Cfg struct {
 	AllowEmbedding                       bool
 	XSSProtectionHeader                  bool
 	ContentTypeProtectionHeader          bool
+	AssetSriChecksEnabled                bool
 	StrictTransportSecurity              bool
 	StrictTransportSecurityMaxAge        int
 	StrictTransportSecurityPreload       bool
@@ -497,11 +503,12 @@ type Cfg struct {
 	RudderstackV3SDKURL                 string
 	RudderstackConfigURL                string
 	RudderstackIntegrationsURL          string
-	IntercomSecret                      string
+	RudderstackBatchInterval            int
 	PostHogToken                        string
 	PostHogHost                         string
 	FrontendAnalyticsConsoleReporting   bool
 	MeticulousAIRecordingToken          string
+	PluginImportTelemetryPackages       []string
 
 	// LDAP
 	LDAPAuthEnabled       bool
@@ -729,12 +736,11 @@ type Cfg struct {
 	IndexCacheTTL                              time.Duration
 	IndexMinUpdateInterval                     time.Duration // Don't update index if it was updated less than this interval ago.
 	IndexModificationCacheTTL                  time.Duration // TTL for dedup cache used in ListModifiedSince. 0 disables the cache.
-	IndexDeletedDocuments                      bool          // Keep deleted objects in the search index, so trash searches can find them.
 	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will be rebuilt asynchronously.
 	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will be rebuilt asynchronously.
 	IndexSnapshotEnabled                       bool          // Enable remote index snapshots
 	IndexSnapshotBucketURL                     string        // Go CDK bucket URL for snapshot storage (s3://, gs://, azblob://, mem://, file:///)
-	IndexSnapshotStorageKV                     bool          // Store snapshots in the same KV used by the storage backend instead of an object-storage bucket. Mutually exclusive with index_snapshot_bucket_url; requires enable_kv_leases.
+	IndexSnapshotStorageKV                     bool          // Store snapshots in the same KV used by the storage backend instead of an object-storage bucket. Mutually exclusive with index_snapshot_bucket_url.
 	IndexSnapshotKVChunkConcurrency            int           // Per-file chunk I/O fan-out for KV-backed snapshots. 0 / 1 = serial. Used only when index_snapshot_storage_kv is true.
 	IndexSnapshotKVChunkSizeMiB                int           // Size in MiB of a single KV value used to store snapshot file data. Files larger than this are split into chunks. 0 = use built-in default. Valid range: 1..1024 MiB. Used only when index_snapshot_storage_kv is true.
 	IndexSnapshotThreshold                     int           // Min doc count to use remote snapshots (must be >= IndexFileThreshold, default: 5000)
@@ -799,7 +805,8 @@ type Cfg struct {
 	VectorDBUser                 string
 	VectorDBPassword             string
 	VectorDBSSLMode              string
-	VectorIndexingEnabled        bool          // run the embedding backfiller and reconciler
+	VectorIndexingEnabled        bool // run the embedding backfiller and reconciler
+	VectorBackfillPageSize       int
 	VectorReconcilerInterval     time.Duration // reconciler tick interval; default 60s
 	VectorEmbeddingCountInterval time.Duration // stored-embedding gauge sample interval; 0 disables
 	VectorPromotionThreshold     int           // row count per tenant to trigger promotion
@@ -846,6 +853,7 @@ type Cfg struct {
 	OverridesFilePath             string
 	OverridesReloadInterval       time.Duration
 	EnforcedQuotaResources        []string
+	SearchBackedListResources     []string
 	QuotasErrorMessageSupportInfo string
 
 	EnableSQLKVBackend           bool
@@ -856,9 +864,7 @@ type Cfg struct {
 	// removing the sqlkv backwards-compatibility layer.
 	// TODO: remove this when sql/backend backwards compatibility is no longer needed.
 	LogSQLBackendCalls                bool
-	EnableKVLeases                    bool
 	KVLeaseTTL                        time.Duration
-	KVLeaseAutoRenew                  bool
 	EnableGarbageCollection           bool
 	GarbageCollectionDryRun           bool
 	GarbageCollectionInterval         time.Duration
@@ -1606,6 +1612,9 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 		return err
 	}
 
+	// After readSecuritySettings: the dev server origin depends on whether a CSP is enforced.
+	cfg.readFrontendDevSettings(iniFile)
+
 	if err := readSnapshotsSettings(cfg, iniFile); err != nil {
 		return err
 	}
@@ -1675,11 +1684,12 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.RudderstackV3SDKURL = analytics.Key("rudderstack_v3_sdk_url").String()
 	cfg.RudderstackConfigURL = analytics.Key("rudderstack_config_url").String()
 	cfg.RudderstackIntegrationsURL = analytics.Key("rudderstack_integrations_url").String()
-	cfg.IntercomSecret = analytics.Key("intercom_secret").String()
+	cfg.RudderstackBatchInterval = analytics.Key("rudderstack_batch_interval").MustInt(0)
 	cfg.PostHogToken = analytics.Key("posthog_token").String()
 	cfg.PostHogHost = analytics.Key("posthog_host").String()
 	cfg.FrontendAnalyticsConsoleReporting = analytics.Key("browser_console_reporter").MustBool(false)
 	cfg.MeticulousAIRecordingToken = analytics.Key("meticulous_ai_recording_token").String()
+	cfg.PluginImportTelemetryPackages = util.SplitString(analytics.Key("plugin_import_telemetry_packages").MustString(""))
 
 	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	cfg.ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")
@@ -1695,7 +1705,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	// parse reporting static context string of key=value, key=value pairs into an object
 	cfg.ReportingStaticContext = make(map[string]string)
-	for _, pair := range strings.Split(analytics.Key("reporting_static_context").String(), ",") {
+	for pair := range strings.SplitSeq(analytics.Key("reporting_static_context").String(), ",") {
 		kv := strings.Split(pair, "=")
 		if len(kv) == 2 {
 			cfg.ReportingStaticContext[strings.TrimSpace("_static_context_"+kv[0])] = strings.TrimSpace(kv[1])
@@ -1815,8 +1825,8 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	enterprise := iniFile.Section("enterprise")
 	cfg.EnterpriseLicensePath = valueAsString(enterprise, "license_path", filepath.Join(cfg.DataPath, "license.jwt"))
-	marketplace := iniFile.Section("marketplace")
-	cfg.MarketplaceLicenseDirectory = valueAsString(marketplace, "license_directory", cfg.DataPath)
+	pluginsMarketplace := iniFile.Section("plugins_marketplace")
+	cfg.MarketplaceLicenseDirectory = valueAsString(pluginsMarketplace, "license_directory", cfg.DataPath)
 
 	geomapSection := iniFile.Section("geomap")
 	basemapJSON := valueAsString(geomapSection, "default_baselayer_config", "")
@@ -1895,7 +1905,7 @@ func (cfg *Cfg) handleAWSConfig() {
 	cfg.AWSAssumeRoleEnabled = awsPluginSec.Key("assume_role_enabled").MustBool(true)
 	cfg.AWSPerDatasourceHTTPProxyEnabled = awsPluginSec.Key("per_datasource_http_proxy_enabled").MustBool(false)
 	allowedAuthProviders := awsPluginSec.Key("allowed_auth_providers").MustString("default,keys,credentials")
-	for _, authProvider := range strings.Split(allowedAuthProviders, ",") {
+	for authProvider := range strings.SplitSeq(allowedAuthProviders, ",") {
 		authProvider = strings.TrimSpace(authProvider)
 		if authProvider != "" {
 			cfg.AWSAllowedAuthProviders = append(cfg.AWSAllowedAuthProviders, authProvider)
@@ -2058,9 +2068,15 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	copyCookieSecuritySettingsToGlobals(cfg)
 
 	cfg.AllowEmbedding = security.Key("allow_embedding").MustBool(false)
+	cfg.AssetSriChecksEnabled = security.Key("asset_sri_checks_enabled").MustBool(false)
 
 	cfg.ContentTypeProtectionHeader = security.Key("x_content_type_options").MustBool(true)
+
 	cfg.XSSProtectionHeader = security.Key("x_xss_protection").MustBool(true)
+	if cfg.XSSProtectionHeader {
+		cfg.Logger.Warn("Deprecation Notice: The [security]x_xss_protection setting is enabled, but it will be removed in a future major version. Support for it has been removed by browsers. Consider disabling it in the meantime and using [security]content_security_policy instead.")
+	}
+
 	cfg.ActionsAllowPostURL = security.Key("actions_allow_post_url").MustString("")
 	cfg.StrictTransportSecurity = security.Key("strict_transport_security").MustBool(false)
 	cfg.StrictTransportSecurityMaxAge = security.Key("strict_transport_security_max_age_seconds").MustInt(86400)
@@ -2073,7 +2089,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.FormActionAdditionalHosts = security.Key("form_action_additional_hosts").Strings(" ")
 
 	enableFrontendSandboxForPlugins := security.Key("enable_frontend_sandbox_for_plugins").MustString("")
-	for _, plug := range strings.Split(enableFrontendSandboxForPlugins, ",") {
+	for plug := range strings.SplitSeq(enableFrontendSandboxForPlugins, ",") {
 		plug = strings.TrimSpace(plug)
 		cfg.EnableFrontendSandboxForPlugins = append(cfg.EnableFrontendSandboxForPlugins, plug)
 	}
@@ -2249,7 +2265,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 
 	cfg.HiddenUsers = make(map[string]struct{})
 	hiddenUsers := users.Key("hidden_users").MustString("")
-	for _, user := range strings.Split(hiddenUsers, ",") {
+	for user := range strings.SplitSeq(hiddenUsers, ",") {
 		user = strings.TrimSpace(user)
 		if user != "" {
 			cfg.HiddenUsers[user] = struct{}{}
@@ -2404,6 +2420,47 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	return nil
 }
 
+// readFrontendDevSettings resolves the frontend bundler's dev server origin. It stays empty
+// outside a development app_mode so a deployed Grafana can never be pointed at a bundler,
+// however the ini file is set up.
+func (cfg *Cfg) readFrontendDevSettings(iniFile *ini.File) {
+	// Assigned up front so re-parsing an existing Cfg cannot leave a stale origin behind when
+	// one of the gates below now rejects it.
+	cfg.FrontendDevServerURL = ""
+
+	if cfg.Env != Dev {
+		return
+	}
+
+	// defaults.ini ships a server_url and a config file cannot take it back: the custom-config
+	// merge skips empty values, as does the env override. Only `cfg:frontend_dev.server_url=`
+	// blanks it, so the gates below are what keep it out of the way.
+	raw := valueAsString(iniFile.Section("frontend_dev"), "server_url", "")
+	if raw == "" {
+		return
+	}
+
+	// No `'self'` policy admits the dev server's own origin, so the browser would block every
+	// bundle. Warn rather than fail, because defaults.ini ships a server_url: refusing to start
+	// would strand anyone who enables a policy and never touched this setting.
+	if cfg.CSPEnabled {
+		cfg.Logger.Warn("Ignoring frontend_dev.server_url, a content security policy is enforced", "url", raw)
+		return
+	}
+
+	// The scheme is restricted because this value is rendered into index.html as the origin
+	// every bundle is loaded from; only the two the browser can fetch bundles over belong here.
+	parsed, err := url.Parse(raw)
+	if err != nil || parsed.Host == "" || (parsed.Scheme != "http" && parsed.Scheme != "https") {
+		cfg.Logger.Warn("Ignoring invalid frontend_dev.server_url", "url", raw, "error", err)
+		return
+	}
+
+	// Only the origin is ever used. Host excludes any userinfo, so credentials in the
+	// configured URL are dropped rather than rendered into the page.
+	cfg.FrontendDevServerURL = parsed.Scheme + "://" + parsed.Host
+}
+
 // GetContentDeliveryURL returns full content delivery URL with /<edition>/<version> added to URL
 func (cfg *Cfg) GetContentDeliveryURL(prefix string) (string, error) {
 	if cfg.CDNRootURL == nil {
@@ -2543,6 +2600,19 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 			}
 
 			cfg.ProvisioningRepositoryTypes[i] = s
+		}
+	}
+
+	connectionTypes := strings.TrimSpace(valueAsString(iniFile.Section("provisioning"), "connection_types", ""))
+	if connectionTypes != "|" && connectionTypes != "" {
+		cfg.ProvisioningConnectionTypes = strings.Split(connectionTypes, "|")
+		for i, s := range cfg.ProvisioningConnectionTypes {
+			s = strings.TrimSpace(s)
+			if s == "" {
+				return fmt.Errorf("a provisioning connection type is empty in '%s' (at index %d)", connectionTypes, i)
+			}
+
+			cfg.ProvisioningConnectionTypes[i] = s
 		}
 	}
 

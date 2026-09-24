@@ -34,7 +34,7 @@ function mockCache(table: TableResponse) {
   mockGetAsTable.mockResolvedValue(table);
 }
 
-const atLimitAlert = { name: /deleted dashboards limit reached/i };
+const atLimitAlert = { name: /showing at most 1000 deleted dashboards/i };
 
 describe('DeletedDashboardsLimitBanner', () => {
   beforeEach(() => {
@@ -78,29 +78,29 @@ describe('DeletedDashboardsLimitBanner', () => {
       mockCache(buildTable(1000));
       render(<DeletedDashboardsLimitBanner resultToken={1} />);
 
-      const alert = await screen.findByRole('alert', atLimitAlert);
-      expect(alert).toHaveTextContent(/Grafana retains up to 1000 recently deleted dashboards/i);
+      const alert = await screen.findByRole('status', atLimitAlert);
+      expect(alert).toHaveTextContent(/This list is limited to 1000 dashboards/i);
     });
 
     it("renders when count === 1000 and continue is set (today's overage path)", async () => {
       mockCache(buildTable(1000, { continue: 'next-page-token' }));
       render(<DeletedDashboardsLimitBanner resultToken={1} />);
 
-      expect(await screen.findByRole('alert', atLimitAlert)).toBeInTheDocument();
+      expect(await screen.findByRole('status', atLimitAlert)).toBeInTheDocument();
     });
 
     it('renders when count === 999 and continue is set (backend chunked below the limit)', async () => {
       mockCache(buildTable(999, { continue: 'next-page-token' }));
       render(<DeletedDashboardsLimitBanner resultToken={1} />);
 
-      expect(await screen.findByRole('alert', atLimitAlert)).toBeInTheDocument();
+      expect(await screen.findByRole('status', atLimitAlert)).toBeInTheDocument();
     });
 
     it('renders when remainingItemCount > 0 and continue is absent', async () => {
       mockCache(buildTable(500, { remainingItemCount: 600 }));
       render(<DeletedDashboardsLimitBanner resultToken={1} />);
 
-      expect(await screen.findByRole('alert', atLimitAlert)).toBeInTheDocument();
+      expect(await screen.findByRole('status', atLimitAlert)).toBeInTheDocument();
     });
   });
 
@@ -109,7 +109,7 @@ describe('DeletedDashboardsLimitBanner', () => {
       mockCache(buildTable(1000));
       const { user } = render(<DeletedDashboardsLimitBanner resultToken={1} />);
 
-      expect(await screen.findByRole('alert', atLimitAlert)).toBeInTheDocument();
+      expect(await screen.findByRole('status', atLimitAlert)).toBeInTheDocument();
 
       await user.click(screen.getByRole('button', { name: /close alert/i }));
 
@@ -142,7 +142,7 @@ describe('DeletedDashboardsLimitBanner', () => {
       mockCache(buildTable(1000));
       rerender(<DeletedDashboardsLimitBanner resultToken={2} />);
 
-      expect(await screen.findByRole('alert', atLimitAlert)).toBeInTheDocument();
+      expect(await screen.findByRole('status', atLimitAlert)).toBeInTheDocument();
       expect(mockGetAsTable).toHaveBeenCalledTimes(2);
     });
   });

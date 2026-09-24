@@ -118,12 +118,23 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     return this._addedFunctionConfigs;
   }
 
+  /**
+   * Adds a link to an extension point. The actual registration is done during the plugin import inside grafana.
+   * This means that if the link isn't added at the time the import, later calls to addLink won't register the link.
+   * @param linkConfig
+   */
   addLink<Context extends object>(linkConfig: PluginExtensionAddedLinkConfig<Context>) {
     this._addedLinkConfigs.push(linkConfig as PluginExtensionAddedLinkConfig);
 
     return this;
   }
 
+  /**
+   * Adds a component to an extension point. The actual registration is done during the plugin import inside grafana.
+   * This means that if the component isn't added at the time the import, later calls to addComponent won't
+   * register the component.
+   * @param linkConfig
+   */
   addComponent<Props = {}>(addedComponentConfig: PluginExtensionAddedComponentConfig<Props>) {
     this._addedComponentConfigs.push(addedComponentConfig as PluginExtensionAddedComponentConfig);
 

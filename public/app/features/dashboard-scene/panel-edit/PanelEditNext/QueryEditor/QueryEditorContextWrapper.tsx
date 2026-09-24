@@ -7,7 +7,7 @@ import { useTheme2 } from '@grafana/ui';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { type ExpressionQuery } from 'app/features/expressions/types';
 
-import { getQueryRunnerFor } from '../../../utils/utils';
+import { getQueryRunnerFor } from '../../../utils/getQueryRunnerFor';
 import { type PanelDataPaneNext } from '../PanelDataPaneNext';
 import { getQueryEditorTypeConfig } from '../constants';
 
@@ -449,6 +449,7 @@ export function QueryEditorContextWrapper({
       duplicateQuery: dataPane.duplicateQuery,
       toggleQueryHide: dataPane.toggleQueryHide,
       runQueries: dataPane.runQueries,
+      startQueryPreview: dataPane.startQueryPreview,
       changeDataSource: (settings: DataSourceInstanceSettings, queryRefId: string) => {
         dataPane.changeDataSource(getDataSourceRef(settings), queryRefId);
       },

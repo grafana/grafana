@@ -11,7 +11,7 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { previewAlertRule } from '../../api/preview';
-import { useAlertQueriesStatus } from '../../hooks/useAlertQueriesStatus';
+import { getAlertQueriesStatus, useAlertQueryDataSources } from '../../hooks/alertQueriesStatus';
 import { type PreviewRuleRequest, type PreviewRuleResponse } from '../../types/preview';
 import { RuleFormType, type RuleFormValues } from '../../types/rule-form';
 import { isDataSourceManagedRuleByType } from '../../utils/rules';
@@ -25,7 +25,8 @@ export function PreviewRule(): React.ReactElement | null {
   const [preview, onPreview] = usePreview();
   const { watch } = useFormContext<RuleFormValues>();
   const [type, condition, queries] = watch(['type', 'condition', 'queries']);
-  const { allDataSourcesAvailable, isLoading: isDsLoading } = useAlertQueriesStatus(queries);
+  const { dataSourcesByUid, isLoading: isDsLoading } = useAlertQueryDataSources(queries);
+  const { allDataSourcesAvailable } = getAlertQueriesStatus(queries, dataSourcesByUid);
 
   if (!type || isDataSourceManagedRuleByType(type)) {
     return null;

@@ -3,12 +3,14 @@ package resources
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -32,14 +34,14 @@ type RepositoryResources interface {
 	RemoveFolder(ctx context.Context, folderName string) error
 	RenameFolderPath(ctx context.Context, previousPath, previousRef, newPath, newRef string, opts ...EnsurePathOption) (string, error)
 	// File from Resource
-	WriteResourceFileFromObject(ctx context.Context, obj *unstructured.Unstructured, options WriteOptions) (string, error)
+	WriteResourceFileFromObject(ctx context.Context, obj *unstructured.Unstructured, options WriteOptions) (string, int, error)
 	// Resource from file
-	WriteResourceFromFile(ctx context.Context, path, ref string, opts ...WriteResourceOption) (string, schema.GroupVersionKind, error)
-	ReplaceResourceFromFile(ctx context.Context, path, ref string, oldName string, oldGVR schema.GroupVersionResource, opts ...WriteResourceOption) (string, schema.GroupVersionKind, error)
-	ReplaceResourceFromFileByRef(ctx context.Context, path, ref, previousRef string, opts ...WriteResourceOption) (string, schema.GroupVersionKind, error)
-	RemoveResourceFromFile(ctx context.Context, path, ref string) (string, string, schema.GroupVersionKind, error)
+	WriteResourceFromFile(ctx context.Context, path, ref string, opts ...WriteResourceOption) (string, schema.GroupVersionKind, int, error)
+	ReplaceResourceFromFile(ctx context.Context, path, ref string, oldName string, oldGVR schema.GroupVersionResource, opts ...WriteResourceOption) (string, schema.GroupVersionKind, int, error)
+	ReplaceResourceFromFileByRef(ctx context.Context, path, ref, previousRef string, opts ...WriteResourceOption) (string, schema.GroupVersionKind, int, error)
+	RemoveResourceFromFile(ctx context.Context, path, ref string) (string, string, schema.GroupVersionKind, int, error)
 	FindResourcePath(ctx context.Context, name string, gvk schema.GroupVersionKind) (string, error)
-	RenameResourceFile(ctx context.Context, path, previousRef, newPath, newRef string, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, error)
+	RenameResourceFile(ctx context.Context, path, previousRef, newPath, newRef string, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, int, error)
 	// Stats
 	Stats(ctx context.Context) (*provisioning.ResourceStats, error)
 	List(ctx context.Context) (*provisioning.ResourceList, error)
@@ -97,14 +99,20 @@ func (r *repositoryResources) FindResourcePath(ctx context.Context, name string,
 		return "", fmt.Errorf("failed to get resource %s/%s/%s: %w", gvr.Group, gvr.Resource, name, err)
 	}
 
-	// Extract the source path from annotations
-	annotations := obj.GetAnnotations()
-	if annotations == nil {
-		return "", fmt.Errorf("resource %s/%s/%s has no annotations", gvr.Group, gvr.Resource, name)
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return "", fmt.Errorf("create meta accessor for resource %s/%s/%s: %w", gvr.Group, gvr.Resource, name, err)
 	}
 
-	sourcePath, exists := annotations[utils.AnnoKeySourcePath]
-	if !exists || sourcePath == "" {
+	source, _ := meta.GetSourceProperties()
+	sourcePath := source.Path
+	if sourcePath == "" {
+		logging.FromContext(ctx).Error("resource has no source path annotation",
+			"group", gvr.Group,
+			"resource", gvr.Resource,
+			"name", name,
+			"annotation_keys", provisioningAnnotationKeys(obj.GetAnnotations()),
+		)
 		return "", fmt.Errorf("resource %s/%s/%s has no source path annotation", gvr.Group, gvr.Resource, name)
 	}
 
@@ -114,6 +122,31 @@ func (r *repositoryResources) FindResourcePath(ctx context.Context, name string,
 	}
 
 	return sourcePath, nil
+}
+
+func provisioningAnnotationKeys(annotations map[string]string) []string {
+	// Include legacy repository annotations in diagnostics because the shared metadata
+	// accessor still supports them, but their constants in apimachinery/utils are private.
+	const (
+		legacyAnnoKeyRepoName      = "grafana.app/repoName"
+		legacyAnnoKeyRepoPath      = "grafana.app/repoPath"
+		legacyAnnoKeyRepoHash      = "grafana.app/repoHash"
+		legacyAnnoKeyRepoTimestamp = "grafana.app/repoTimestamp"
+	)
+
+	annotationKeys := make([]string, 0, len(annotations))
+	// Custom annotation names can contain user data, so only log known provisioning keys.
+	for key := range annotations {
+		switch key {
+		case utils.AnnoKeyManagerKind, utils.AnnoKeyManagerIdentity,
+			utils.AnnoKeyManagerAllowsEdits, utils.AnnoKeyManagerSuspended,
+			utils.AnnoKeySourcePath, utils.AnnoKeySourceChecksum, utils.AnnoKeySourceTimestamp,
+			legacyAnnoKeyRepoName, legacyAnnoKeyRepoPath, legacyAnnoKeyRepoHash, legacyAnnoKeyRepoTimestamp:
+			annotationKeys = append(annotationKeys, key)
+		}
+	}
+	slices.Sort(annotationKeys)
+	return annotationKeys
 }
 
 func NewRepositoryResourcesFactory(parsers ParserFactory, clients ClientFactory, lister ResourceLister, folderMetadataEnabled bool) RepositoryResourcesFactory {

@@ -342,3 +342,53 @@ func TestSmtpSend(t *testing.T) {
 		}
 	})
 }
+
+func TestSmtpSendPartialFailure(t *testing.T) {
+	srv := smtpmock.New(smtpmock.ConfigurationAttr{
+		HostAddress:               "127.0.0.1",
+		BlacklistedRcpttoEmails:   []string{"rejected@example.com"},
+		MsgRcpttoBlacklistedEmail: "550 5.1.1 User unknown",
+	})
+	require.NoError(t, srv.Start())
+	defer func() { _ = srv.Stop() }()
+
+	cfg := createSmtpConfig()
+	cfg.Smtp.Host = fmt.Sprintf("127.0.0.1:%d", srv.PortNumber())
+
+	client, err := NewSmtpClient(cfg.Smtp)
+	require.NoError(t, err)
+
+	ctx := context.Background()
+
+	t.Run("rejected recipient does not block the remaining messages", func(t *testing.T) {
+		msgs := []*Message{
+			{From: "from@example.com", To: []string{"rcpt1@example.com"},
+				Subject: "subject", Body: map[string]string{"text/plain": "hello world"}},
+			{From: "from@example.com", To: []string{"rejected@example.com"},
+				Subject: "subject", Body: map[string]string{"text/plain": "hello world"}},
+			{From: "from@example.com", To: []string{"rcpt3@example.com"},
+				Subject: "subject", Body: map[string]string{"text/plain": "hello world"}},
+		}
+
+		count, err := client.Send(ctx, msgs...)
+		require.Equal(t, 2, count)
+		require.ErrorContains(t, err, "5.1.1 User unknown")
+
+		// every SMTP session is recorded, but only the two accepted
+		// recipients have consistent (fully delivered) messages
+		messages, err := srv.WaitForMessagesAndPurge(3, 5*time.Second)
+		require.NoError(t, err)
+
+		var delivered []string
+		for _, sentMsg := range messages {
+			if sentMsg.IsConsistent() {
+				delivered = append(delivered, sentMsg.RcpttoRequestResponse()[0][0])
+			}
+		}
+		sort.Strings(delivered)
+		require.Equal(t, []string{
+			"RCPT TO:<rcpt1@example.com>",
+			"RCPT TO:<rcpt3@example.com>",
+		}, delivered)
+	})
+}

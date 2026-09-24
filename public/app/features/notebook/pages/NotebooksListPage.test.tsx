@@ -1,65 +1,212 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import userEvent from '@testing-library/user-event';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
+import { act, render, screen, waitFor, within } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type Notebook, useListNotebookQuery } from 'app/api/clients/dashboard/v2beta1';
 import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
-import { defaultSpec as defaultNotebookSpec } from 'app/features/notebook/types';
 import { AccessControlAction } from 'app/types/accessControl';
+
+import { NotebookAnalytics } from '../analytics/main';
+import { ROWS_PER_PAGE } from '../list/NotebooksTable';
+import {
+  useLazyNotebookFieldFacetQuery,
+  type NotebookSearchQuery,
+  type ResultItem,
+  type WhereNode,
+  useSearchNotebooksInfiniteQuery,
+} from '../list/notebookSearchApi';
+import { __resetSearchAvailabilityForTests, NOTEBOOKS_PAGE_LIMIT } from '../list/useNotebooksList';
 
 import { NotebooksListPage } from './NotebooksListPage';
 
 // The route is registered unconditionally, so the page itself enforces this OpenFeature flag.
 const NOTEBOOKS_FLAG = 'dashboard.notebooks';
 
-const mockCreateNotebook = jest.fn();
-
 jest.mock('app/api/clients/iam/v0alpha1', () => ({
   useGetDisplayMappingQuery: jest.fn(),
 }));
 
 jest.mock('app/api/clients/dashboard/v2beta1', () => ({
-  useListNotebookQuery: jest.fn(),
-  useCreateNotebookMutation: () => [mockCreateNotebook],
+  useListNotebookQuery: jest.fn(() => ({ data: undefined, isLoading: false, error: undefined })),
   // The row menu fetches a spec on demand for export; nothing here exercises the fetch itself.
   useLazyGetNotebookQuery: () => [jest.fn()],
+  // The table mounts the delete hook for every row menu; deleting is covered in NotebooksTable's own tests.
+  useDeleteNotebookMutation: () => [jest.fn(), { isLoading: false }],
 }));
 
+jest.mock('../list/notebookSearchApi', () => ({
+  useSearchNotebooksInfiniteQuery: jest.fn(),
+  // The tag filter loads its options from a facet on this module when it is focused. Left empty by
+  // default, so the picker is present but offers nothing for the cases that are not about tags.
+  useLazyNotebookFieldFacetQuery: jest.fn(),
+}));
+
+// Partial mock: this spies on listFiltered only. Any other real call this page makes keeps working.
+jest.mock('../analytics/main', () => ({
+  NotebookAnalytics: { ...jest.requireActual('../analytics/main').NotebookAnalytics, listFiltered: jest.fn() },
+}));
+
+const mockUseSearchNotebooksQuery = jest.mocked(useSearchNotebooksInfiniteQuery);
+const mockUseLazyNotebookFieldFacetQuery = jest.mocked(useLazyNotebookFieldFacetQuery);
 const mockUseListNotebookQuery = jest.mocked(useListNotebookQuery);
 const mockUseGetDisplayMappingQuery = jest.mocked(useGetDisplayMappingQuery);
+const mockListFiltered = jest.mocked(NotebookAnalytics.listFiltered);
 
-function makeNotebook(name: string, title: string, tags: string[] = []): Notebook {
+function makeHit(name: string, title: string, tags: string[] = [], createdBy = 'user:abc'): ResultItem {
   return {
-    metadata: {
-      name,
-      creationTimestamp: '2026-01-01T00:00:00Z',
-      annotations: { 'grafana.app/createdBy': 'user:abc' },
-    },
-    spec: {
-      ...defaultNotebookSpec(),
-      // The schema and generated-client element unions are nominally distinct; these fixtures
-      // have no elements, so state that rather than casting the spec across the seam.
-      elements: {},
-      title,
-      tags,
-    },
+    resource: { group: 'dashboard.grafana.app', resource: 'notebooks', kind: 'Notebook', name },
+    fields: { title, tags, createdBy, created: Date.UTC(2026, 0, 1), updated: Date.UTC(2026, 1, 1) },
   };
 }
 
-function setList(items: Notebook[], extra: { isLoading?: boolean; error?: unknown; continueToken?: string } = {}) {
+/** Flattens a where tree into its leaves; v1 is a single leaf or one `and` of leaves. */
+function leavesOf(where: WhereNode | undefined): WhereNode[] {
+  if (!where) {
+    return [];
+  }
+  return where.and ?? [where];
+}
+
+/** A notebook as LIST returns it, for the cases that exercise the fallback path. */
+function makeNotebook(name: string, title: string): Notebook {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- minimal fixture standing in for a full k8s resource
+  return {
+    metadata: { name, creationTimestamp: '2026-01-01T00:00:00Z', annotations: { 'grafana.app/createdBy': 'user:abc' } },
+    spec: { title, tags: [] },
+  } as unknown as Notebook;
+}
+
+function setListNotebooks(items: Notebook[], extra: { continueToken?: string } = {}) {
+  const data = { items, metadata: { continue: extra.continueToken } };
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the page reads
   mockUseListNotebookQuery.mockReturnValue({
-    data: { items, metadata: { continue: extra.continueToken } },
-    isLoading: extra.isLoading ?? false,
-    error: extra.error,
+    data,
+    currentData: data,
+    isLoading: false,
+    error: undefined,
   } as unknown as ReturnType<typeof useListNotebookQuery>);
+}
+
+/** A page the server filled to the limit, which is what truncation looks like on the wire. */
+function makeFullPage(): ResultItem[] {
+  return Array.from({ length: NOTEBOOKS_PAGE_LIMIT }, (_, i) => makeHit(`nb${i}`, `Notebook ${i}`));
+}
+
+/**
+ * Stands in for the endpoint, applying the predicates the page sent. Filtering is server-side
+ * now, so a fake that ignored the request body would let a wrong query pass unnoticed.
+ */
+function setNotebooks(
+  items: ResultItem[],
+  extra: {
+    isLoading?: boolean;
+    error?: unknown;
+    continueToken?: string;
+    totalHits?: number;
+    totalHitsRelation?: 'eq' | 'lte';
+    /** A token with no next page on offer is what the accumulation ceiling looks like. */
+    hasNextPage?: boolean;
+    /**
+     * A request for new filters is in flight and nothing is held for them yet: RTK Query still
+     * reports the previous answer as `data`, but not as `currentData`.
+     */
+    isReloading?: boolean;
+    /**
+     * Fails only the requests that carry a predicate, leaving the unfiltered one to succeed. That
+     * is the case where the reader has a filter to clear.
+     */
+    errorWhenFiltered?: unknown;
+  } = {}
+) {
+  mockUseSearchNotebooksQuery.mockImplementation((arg) => {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the hook only ever passes a body or skipToken
+    const query = arg === skipToken ? undefined : (arg as NotebookSearchQuery);
+    const failure = extra.error ?? (query?.where ? extra.errorWhenFiltered : undefined);
+
+    if (!query || failure) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the page reads
+      return {
+        data: undefined,
+        currentData: undefined,
+        isLoading: extra.isLoading ?? false,
+        isFetching: false,
+        isError: Boolean(failure),
+        hasNextPage: false,
+        fetchNextPage: jest.fn(),
+        error: failure,
+      } as unknown as ReturnType<typeof useSearchNotebooksInfiniteQuery>;
+    }
+
+    const leaves = leavesOf(query.where);
+    const needle = leaves.find((leaf) => leaf.text)?.text?.value.toLowerCase();
+    const authors = leaves.find((leaf) => leaf.filter?.field === 'createdBy')?.filter?.values;
+    // A leaf per tag, so every one of them has to match — the same narrowing the endpoint does.
+    const tags = leaves.filter((leaf) => leaf.filter?.field === 'tags').flatMap((leaf) => leaf.filter?.values ?? []);
+
+    const matched = items.filter((item) => {
+      const title = String(item.fields?.title ?? '').toLowerCase();
+      const createdBy = String(item.fields?.createdBy ?? '');
+      const itemTags = Array.isArray(item.fields?.tags) ? item.fields.tags : [];
+      return (
+        (!needle || title.includes(needle)) &&
+        (!authors || authors.includes(createdBy)) &&
+        tags.every((tag) => itemTags.includes(tag))
+      );
+    });
+
+    // One page: what the walk looks like once it has finished, which is every case here bar the
+    // ones that set hasNextPage.
+    const data = {
+      pages: [
+        {
+          items: matched,
+          metadata: {
+            continue: extra.continueToken,
+            totalHits: extra.totalHits ?? matched.length,
+            totalHitsRelation: extra.totalHitsRelation ?? 'eq',
+          },
+        },
+      ],
+      pageParams: [undefined],
+    };
+
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the page reads
+    return {
+      data,
+      currentData: extra.isReloading ? undefined : data,
+      isLoading: extra.isLoading ?? false,
+      isFetching: extra.isReloading ?? false,
+      isFetchingNextPage: false,
+      isError: false,
+      hasNextPage: extra.hasNextPage ?? false,
+      fetchNextPage: jest.fn(),
+      error: undefined,
+    } as unknown as ReturnType<typeof useSearchNotebooksInfiniteQuery>;
+  });
+}
+
+/**
+ * The tags the facet offers the filter's dropdown. The facet is aggregated over the whole library
+ * rather than over the rows returned, so it is set independently of them.
+ */
+function setTags(tags: string[]) {
+  const trigger = jest.fn().mockResolvedValue({
+    data: { items: [], facets: { tags: tags.map((value) => ({ value, count: 1 })) } },
+  });
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the picker reads only the trigger
+  mockUseLazyNotebookFieldFacetQuery.mockReturnValue([trigger] as unknown as ReturnType<
+    typeof useLazyNotebookFieldFacetQuery
+  >);
 }
 
 describe('NotebooksListPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    __resetSearchAvailabilityForTests();
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the page reads
     mockUseGetDisplayMappingQuery.mockReturnValue({
@@ -68,7 +215,8 @@ describe('NotebooksListPage', () => {
         display: [{ identity: { type: 'user', name: 'abc' }, displayName: 'Marcus Chen' }],
       },
     } as unknown as ReturnType<typeof useGetDisplayMappingQuery>);
-    setList([]);
+    setTags([]);
+    setNotebooks([]);
   });
 
   afterEach(async () => {
@@ -87,9 +235,20 @@ describe('NotebooksListPage', () => {
     expect(await screen.findByText('Page not found')).toBeInTheDocument();
   });
 
+  it('marks the page as a preview feature', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setNotebooks([makeHit('nb1', 'Checkout error spike')]);
+
+    render(<NotebooksListPage />);
+
+    // The badge, not the heading: the nav index is not seeded here, so the title string the
+    // header renders is the fallback one rather than "Notebooks".
+    expect(await screen.findByText('Preview')).toBeInTheDocument();
+  });
+
   it('renders a row per notebook, linking the title to the notebook', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
-    setList([makeNotebook('nb1', 'Checkout error spike', ['errors'])]);
+    setNotebooks([makeHit('nb1', 'Checkout error spike', ['errors'])]);
 
     render(<NotebooksListPage />);
 
@@ -102,19 +261,19 @@ describe('NotebooksListPage', () => {
 
   it('points the Edit action at the notebook in edit mode', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
-    setList([makeNotebook('nb1', 'Checkout error spike')]);
+    setNotebooks([makeHit('nb1', 'Checkout error spike')]);
 
     render(<NotebooksListPage />);
 
     expect(await screen.findByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/notebooks/nb1?edit=true');
   });
 
-  it('hides the Edit action from a user who cannot edit dashboards', async () => {
+  it('hides the Edit action from a user who cannot edit notebooks', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
     jest
       .spyOn(contextSrv, 'hasPermission')
-      .mockImplementation((action) => action !== AccessControlAction.DashboardsWrite);
-    setList([makeNotebook('nb1', 'Checkout error spike')]);
+      .mockImplementation((action) => action !== AccessControlAction.NotebooksWrite);
+    setNotebooks([makeHit('nb1', 'Checkout error spike')]);
 
     render(<NotebooksListPage />);
 
@@ -125,7 +284,7 @@ describe('NotebooksListPage', () => {
 
   it('opens a row menu offering export, replacing the old disabled placeholder', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
-    setList([makeNotebook('nb1', 'Checkout error spike')]);
+    setNotebooks([makeHit('nb1', 'Checkout error spike')]);
 
     render(<NotebooksListPage />);
 
@@ -137,29 +296,142 @@ describe('NotebooksListPage', () => {
     expect(await screen.findByRole('menuitem', { name: 'Export' })).toBeInTheDocument();
   });
 
-  it('filters the list by title', async () => {
+  it('filters the list by title through the endpoint', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
-    setList([makeNotebook('nb1', 'Checkout error spike'), makeNotebook('nb2', 'Q2 latency regression')]);
+    setNotebooks([makeHit('nb1', 'Checkout error spike'), makeHit('nb2', 'Q2 latency regression')]);
 
     render(<NotebooksListPage />);
 
     await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
 
+    await screen.findByText('Q2 latency regression');
+    await waitFor(() => {
+      expect(screen.queryByText('Checkout error spike')).not.toBeInTheDocument();
+    });
+    expect(screen.getByText('Q2 latency regression')).toBeInTheDocument();
+    // The narrowing came from the request, not from re-filtering what was already on screen.
+    expect(mockUseSearchNotebooksQuery).toHaveBeenLastCalledWith(
+      expect.objectContaining({ where: { text: { value: 'latency' } } })
+    );
+  });
+
+  it('filters to the current user with the created-by-me checkbox', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    const originalUser = contextSrv.user;
+    contextSrv.user = { ...originalUser, uid: 'me' };
+    setNotebooks([makeHit('nb1', 'Mine', [], 'user:me'), makeHit('nb2', 'Theirs', [], 'user:other')]);
+
+    try {
+      render(<NotebooksListPage />);
+
+      await userEvent.click(await screen.findByLabelText('Created by me'));
+
+      await screen.findByText('Mine');
+      await waitFor(() => {
+        expect(screen.queryByText('Theirs')).not.toBeInTheDocument();
+      });
+      expect(screen.getByText('Mine')).toBeInTheDocument();
+    } finally {
+      contextSrv.user = originalUser;
+    }
+  });
+
+  it('filters the list by tag through the endpoint', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setTags(['errors', 'latency']);
+    setNotebooks([
+      makeHit('nb1', 'Checkout error spike', ['errors']),
+      makeHit('nb2', 'Q2 latency regression', ['latency']),
+    ]);
+
+    render(<NotebooksListPage />);
+
+    // The options are loaded when the picker is focused, so they are awaited before being picked.
+    // Scoped to the menu because the rows carry tag pills of their own with the same text.
+    await userEvent.click(await screen.findByLabelText('Tag filter'));
+    await within(await screen.findByRole('listbox')).findByText('latency');
+    await selectOptionInTest(screen.getByLabelText('Tag filter'), /^latency/);
+
+    await screen.findByText('Q2 latency regression');
+    await waitFor(() => {
+      expect(screen.queryByText('Checkout error spike')).not.toBeInTheDocument();
+    });
+    expect(screen.getByText('Q2 latency regression')).toBeInTheDocument();
+    // The narrowing came from the request rather than from filtering the rows on screen.
+    expect(mockUseSearchNotebooksQuery).toHaveBeenLastCalledWith(
+      expect.objectContaining({ where: { filter: { field: 'tags', operator: 'In', values: ['latency'] } } })
+    );
+  });
+
+  // The other route to the same filter: the rows' tags are clickable, as dashboard search's are.
+  it('filters by a tag clicked in a row', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setNotebooks([
+      makeHit('nb1', 'Checkout error spike', ['errors']),
+      makeHit('nb2', 'Q2 latency regression', ['latency']),
+    ]);
+
+    render(<NotebooksListPage />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Filter by tag latency' }));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Checkout error spike')).not.toBeInTheDocument();
+    });
+    expect(screen.getByText('Q2 latency regression')).toBeInTheDocument();
+    expect(mockUseSearchNotebooksQuery).toHaveBeenLastCalledWith(
+      expect.objectContaining({ where: { filter: { field: 'tags', operator: 'In', values: ['latency'] } } })
+    );
+  });
+
+  // With no facet the picker had nothing to offer and no way to type into it, which on a deployment
+  // that does not serve the search route left the filter unusable. The rows carry their own tags.
+  it("offers the loaded notebooks' tags when the facet cannot answer", async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setTags([]);
+    setNotebooks([
+      makeHit('nb1', 'Checkout error spike', ['errors']),
+      makeHit('nb2', 'Q2 latency regression', ['latency']),
+    ]);
+
+    render(<NotebooksListPage />);
+
+    await userEvent.click(await screen.findByLabelText('Tag filter'));
+    const listbox = await screen.findByRole('listbox');
+    await userEvent.click(await within(listbox).findByText('latency'));
+
+    await screen.findByText('Q2 latency regression');
     await waitFor(() => {
       expect(screen.queryByText('Checkout error spike')).not.toBeInTheDocument();
     });
     expect(screen.getByText('Q2 latency regression')).toBeInTheDocument();
   });
 
-  it('shows the not-found empty state when filters match nothing', async () => {
+  // The tags are only known once the picker is opened, so the control is offered either way — an
+  // untagged library just has nothing in its dropdown.
+  it('offers the tag filter before any tags are known', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
-    setList([makeNotebook('nb1', 'Checkout error spike')]);
+    setNotebooks([makeHit('nb1', 'Checkout error spike')]);
 
     render(<NotebooksListPage />);
 
+    expect(await screen.findByText('Checkout error spike')).toBeInTheDocument();
+    expect(screen.getByLabelText('Tag filter')).toBeInTheDocument();
+  });
+
+  it('shows the not-found empty state when filters match nothing', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setNotebooks([makeHit('nb1', 'Checkout error spike')]);
+
+    render(<NotebooksListPage />);
+
+    expect(await screen.findByRole('link', { name: 'Checkout error spike' })).toBeInTheDocument();
+
     await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'zzz');
 
+    // Not the create call-to-action: notebooks exist, they just did not match.
     expect(await screen.findByText('No notebooks found')).toBeInTheDocument();
+    expect(screen.queryByText("You haven't created any notebooks yet")).not.toBeInTheDocument();
   });
 
   it('shows the call-to-action empty state when no notebooks exist', async () => {
@@ -171,9 +443,23 @@ describe('NotebooksListPage', () => {
     expect(screen.getByRole('button', { name: 'New notebook' })).toBeInTheDocument();
   });
 
+  // Create is its own action, so a writer who cannot create gets the read-only empty state rather
+  // than an invitation to make a notebook the backend would refuse.
+  it('offers no create affordance to a writer who cannot create', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    jest
+      .spyOn(contextSrv, 'hasPermission')
+      .mockImplementation((action) => action !== AccessControlAction.NotebooksCreate);
+
+    render(<NotebooksListPage />);
+
+    expect(await screen.findByText('No notebooks available to you')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'New notebook' })).not.toBeInTheDocument();
+  });
+
   it('shows only the error alert when the list fails to load', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
-    setList([], { error: { status: 500 } });
+    setNotebooks([], { error: { status: 500 } });
 
     render(<NotebooksListPage />);
 
@@ -182,9 +468,33 @@ describe('NotebooksListPage', () => {
     expect(screen.queryByText('No notebooks found')).not.toBeInTheDocument();
   });
 
+  // A failure must not take the filters with it. The query that provoked it is the one thing worth
+  // changing, and unmounting the input leaves a page reload as the only way to clear it.
+  it('keeps the filters usable when a filtered request fails', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setNotebooks([makeHit('nb1', 'Checkout error spike')], { errorWhenFiltered: { status: 500 } });
+
+    render(<NotebooksListPage />);
+
+    const input = await screen.findByPlaceholderText('Search notebooks by title...');
+    await userEvent.type(input, 'zzz');
+
+    expect(await screen.findByText('Failed to load notebooks')).toBeInTheDocument();
+    expect(input).toBeInTheDocument();
+    expect(input).toHaveValue('zzz');
+    // Not a no-results state: nothing answered, so nothing can be said about matches.
+    expect(screen.queryByText('No notebooks found')).not.toBeInTheDocument();
+
+    await userEvent.clear(input);
+
+    // Recovered without reloading the page, which is the point of keeping the input mounted.
+    expect(await screen.findByText('Checkout error spike')).toBeInTheDocument();
+    expect(screen.queryByText('Failed to load notebooks')).not.toBeInTheDocument();
+  });
+
   it('surfaces the error detail, so a permissions problem reads differently from an outage', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
-    setList([], { error: { status: 403, data: { message: 'notebooks feature is not enabled' } } });
+    setNotebooks([], { error: { status: 403, data: { message: 'notebooks feature is not enabled' } } });
 
     render(<NotebooksListPage />);
 
@@ -201,19 +511,158 @@ describe('NotebooksListPage', () => {
     expect(screen.queryByText("You haven't created any notebooks yet")).not.toBeInTheDocument();
   });
 
-  it('reports how many were loaded when the server had more to give', async () => {
+  it('reports the server-side total when the page holds only part of it', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
-    setList([makeNotebook('nb1', 'Checkout error spike')], { continueToken: 'next-page' });
+    setNotebooks(makeFullPage(), { continueToken: 'next-page', totalHits: 870 });
 
     render(<NotebooksListPage />);
 
-    expect(await screen.findByText('First 1 notebook loaded')).toBeInTheDocument();
-    expect(screen.getByText('1 notebook')).toBeInTheDocument();
+    expect(await screen.findByRole('table')).toBeInTheDocument();
+    expect(await screen.findByText(`Showing ${NOTEBOOKS_PAGE_LIMIT} of 870`)).toBeInTheDocument();
   });
 
-  it('keeps the loaded count and the match count separate while filtering a truncated list', async () => {
+  // The table renders every row it is handed, and each one carries a link, a tag list, two
+  // tooltipped timestamps and three buttons — so a full result set has to be paged, or every filter
+  // change rebuilds thousands of elements before the click feels answered.
+  it('renders one page of rows at a time, and still counts the whole set', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
-    setList([makeNotebook('nb1', 'Checkout error spike'), makeNotebook('nb2', 'Q2 latency regression')], {
+    setNotebooks(makeFullPage());
+
+    render(<NotebooksListPage />);
+
+    expect(await screen.findByText(`${NOTEBOOKS_PAGE_LIMIT} notebooks`)).toBeInTheDocument();
+    // One header row plus a page of notebooks.
+    expect(await screen.findAllByRole('row')).toHaveLength(ROWS_PER_PAGE + 1);
+  });
+
+  // Filtering replaces the table's data. A page index kept across that change lands past the end of
+  // the narrowed set, and the result is an empty table that no empty state covers — the count in the
+  // corner would say one thing and the rows another.
+  it('returns to the first page when a filter narrows the set', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    // Three pages, with only one match for "needle".
+    setNotebooks(
+      Array.from({ length: ROWS_PER_PAGE * 3 }, (_, i) => makeHit(`nb${i}`, i === 0 ? 'needle' : `Filler ${i}`))
+    );
+
+    render(<NotebooksListPage />);
+
+    expect(await screen.findByText(`${ROWS_PER_PAGE * 3} notebooks`)).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole('button', { name: '3' }));
+
+    await userEvent.type(screen.getByPlaceholderText('Search notebooks by title...'), 'needle');
+
+    expect(await screen.findByText('1 notebook')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'needle' })).toBeInTheDocument();
+  });
+
+  // Rows get a new array identity every time another cursor page lands or an author name resolves.
+  // Resetting on that would drag a reader back to page 1 while the list is still filling in.
+  it('stays on the page the reader chose while the rows keep arriving', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    const rows = Array.from({ length: ROWS_PER_PAGE * 2 }, (_, i) => makeHit(`nb${i}`, `Notebook ${i}`));
+    setNotebooks(rows);
+    const titlesOnScreen = () =>
+      within(screen.getByRole('table'))
+        .getAllByRole('link')
+        .map((link) => link.textContent);
+
+    const { rerender } = render(<NotebooksListPage />);
+
+    expect(await screen.findByRole('table')).toBeInTheDocument();
+    expect(await screen.findByText(`${ROWS_PER_PAGE * 2} notebooks`)).toBeInTheDocument();
+    const firstPage = titlesOnScreen();
+    await userEvent.click(screen.getByRole('button', { name: '2' }));
+    const secondPage = titlesOnScreen();
+    expect(secondPage).not.toEqual(firstPage);
+
+    // A fresh identity for the same filters, as another cursor page arriving produces.
+    setNotebooks(rows.map((row) => ({ ...row })));
+    rerender(<NotebooksListPage />);
+
+    await waitFor(() => expect(titlesOnScreen()).toEqual(secondPage));
+  });
+
+  // A later page can fail after earlier ones already landed. Replacing the whole body with the alert
+  // would throw away notebooks the reader can still use.
+  it('keeps the rows it loaded when a later page fails, and says some are missing', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    // Rows in hand and an error at the same time: what a mid-walk failure looks like.
+    setNotebooks([makeHit('nb1', 'Checkout error spike')]);
+    const withRows = mockUseSearchNotebooksQuery.getMockImplementation()!;
+    mockUseSearchNotebooksQuery.mockImplementation((arg) => ({
+      ...withRows(arg),
+      isError: true,
+      error: { status: 500, data: { message: 'page three exploded' } },
+    }));
+
+    render(<NotebooksListPage />);
+
+    expect(await screen.findByText('Some notebooks could not be loaded')).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Checkout error spike' })).toBeInTheDocument();
+    // The filters stay usable, and the fatal alert does not appear.
+    expect(screen.getByPlaceholderText('Search notebooks by title...')).toBeInTheDocument();
+    expect(screen.queryByText('Failed to load notebooks')).not.toBeInTheDocument();
+  });
+
+  // Rows are empty while a new set of filters loads, so "No notebooks found" would be a lie — and
+  // swapping the filters out for a page-wide spinner would take the caret with them, mid-typing.
+  it('shows a loading affordance, not a no-results state, while new filters load', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setNotebooks([makeHit('nb1', 'Checkout error spike')]);
+
+    const { rerender } = render(<NotebooksListPage />);
+    await screen.findByRole('link', { name: 'Checkout error spike' });
+
+    // A new set of filters in flight: the previous answer is still held, but not for these filters.
+    setNotebooks([makeHit('nb1', 'Checkout error spike')], { isReloading: true });
+    rerender(<NotebooksListPage />);
+
+    expect(await screen.findByRole('status', { name: 'Loading notebooks' })).toBeInTheDocument();
+    expect(screen.queryByText('No notebooks found')).not.toBeInTheDocument();
+    // The filters stay put, caret and all.
+    expect(screen.getByPlaceholderText('Search notebooks by title...')).toBeInTheDocument();
+  });
+
+  // The counts come from the same absent data as the rows, so leaving them rendered would claim
+  // "0 notebooks" next to a loading table on every filter change.
+  it('does not claim a count while new filters load', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setNotebooks([makeHit('nb1', 'Checkout error spike')]);
+
+    const { rerender } = render(<NotebooksListPage />);
+    expect(await screen.findByRole('link', { name: 'Checkout error spike' })).toBeInTheDocument();
+    expect(await screen.findByText('1 notebook')).toBeInTheDocument();
+
+    setNotebooks([makeHit('nb1', 'Checkout error spike')], { isReloading: true });
+    rerender(<NotebooksListPage />);
+
+    await screen.findByRole('status', { name: 'Loading notebooks' });
+    expect(screen.queryByText('0 notebooks')).not.toBeInTheDocument();
+    expect(screen.queryByText('1 notebook')).not.toBeInTheDocument();
+  });
+
+  it('does not serve the previous filter’s rows while the new ones load', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setNotebooks([makeHit('nb1', 'Checkout error spike')]);
+
+    const { rerender } = render(<NotebooksListPage />);
+    await screen.findByRole('link', { name: 'Checkout error spike' });
+
+    setNotebooks([makeHit('nb1', 'Checkout error spike')], { isReloading: true });
+    rerender(<NotebooksListPage />);
+
+    await screen.findByRole('status', { name: 'Loading notebooks' });
+    expect(screen.queryByRole('link', { name: 'Checkout error spike' })).not.toBeInTheDocument();
+  });
+
+  // On the fallback path the loaded window and the matches within it are different facts, and LIST
+  // reports no total at all — so folding them into "showing 1 of 2" would claim the library holds
+  // two matching notebooks when all that is known is that two were fetched.
+  it('keeps the loaded count and the match count apart when serving from LIST', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setNotebooks([], { error: { status: 404, data: { message: 'not found' }, config: { url: '' } } });
+    setListNotebooks([makeNotebook('nb1', 'Checkout error spike'), makeNotebook('nb2', 'Q2 latency regression')], {
       continueToken: 'next-page',
     });
 
@@ -221,17 +670,45 @@ describe('NotebooksListPage', () => {
 
     await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
 
-    // The match count moves with the filter; the loaded count keeps describing the page we hold.
-    await waitFor(() => {
-      expect(screen.getByText('1 notebook')).toBeInTheDocument();
-    });
+    expect(await screen.findByRole('link', { name: 'Q2 latency regression' })).toBeInTheDocument();
+
+    // The debounce has to elapse before the client-side filter narrows anything.
+    expect(await screen.findByText('1 notebook')).toBeInTheDocument();
     expect(screen.getByText('First 2 notebooks loaded')).toBeInTheDocument();
   });
 
-  it('hides the create button without dashboards:create', async () => {
+  // An inexact total is an upper bound, counted before per-item authorization — so the label has to
+  // read as a ceiling. "of 870+" would promise more than exists.
+  it('phrases an inexact total as a ceiling', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setNotebooks(makeFullPage(), { continueToken: 'next-page', totalHits: 870, totalHitsRelation: 'lte' });
+
+    render(<NotebooksListPage />);
+
+    expect(await screen.findByRole('table')).toBeInTheDocument();
+    expect(await screen.findByText(`Showing ${NOTEBOOKS_PAGE_LIMIT} of up to 870`)).toBeInTheDocument();
+  });
+
+  it('counts only the matches once a filter narrows a truncated list', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setNotebooks([makeHit('nb1', 'Checkout error spike'), makeHit('nb2', 'Q2 latency regression')]);
+
+    render(<NotebooksListPage />);
+
+    await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
+
+    expect(await screen.findByRole('link', { name: 'Q2 latency regression' })).toBeInTheDocument();
+
+    // The server counts the filtered set, so there is one number rather than two.
+    await waitFor(() => {
+      expect(screen.getByText('1 notebook')).toBeInTheDocument();
+    });
+  });
+
+  it('hides the create button without notebooks:create', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
-    setList([makeNotebook('nb1', 'Checkout error spike')]);
+    setNotebooks([makeHit('nb1', 'Checkout error spike')]);
 
     render(<NotebooksListPage />);
 
@@ -239,19 +716,254 @@ describe('NotebooksListPage', () => {
     expect(screen.queryByRole('button', { name: 'New notebook' })).not.toBeInTheDocument();
   });
 
-  it('creates a notebook and navigates to it', async () => {
+  // Writing a notebook on click left one behind in the library for every click somebody thought
+  // better of. The button now opens a blank page instead, and the notebook is created by its first
+  // save. Nothing in this suite mocks the create endpoint any more, so a click that still tried to
+  // create would fail rather than quietly pass.
+  it('opens a blank notebook in edit mode without creating one', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
-    setList([makeNotebook('nb1', 'Checkout error spike')]);
-    mockCreateNotebook.mockReturnValue({
-      unwrap: () => Promise.resolve({ metadata: { name: 'nb-new' } }),
-    });
+    setNotebooks([makeHit('nb1', 'Checkout error spike')]);
 
     render(<NotebooksListPage />);
 
+    expect(await screen.findByRole('link', { name: 'Checkout error spike' })).toBeInTheDocument();
+
     await userEvent.click(await screen.findByRole('button', { name: 'New notebook' }));
 
+    // Edit mode, because a blank notebook exists only to be written into.
     await waitFor(() => {
-      expect(locationService.getLocation().pathname).toBe('/notebooks/nb-new');
+      expect(locationService.getLocation().pathname).toBe('/notebooks/new');
+      expect(locationService.getLocation().search).toBe('?edit=true');
+    });
+  });
+
+  describe('list_filtered', () => {
+    function twoNotebooks() {
+      return [makeHit('nb1', 'Checkout error spike', ['errors']), makeHit('nb2', 'Q2 latency regression', ['latency'])];
+    }
+
+    // One event for a search somebody finished, not one per keystroke. Seven characters going out
+    // as seven events is the failure this guards.
+    it('reports a committed search once', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      setNotebooks(twoNotebooks());
+
+      render(<NotebooksListPage />);
+
+      await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
+
+      await waitFor(() =>
+        expect(mockListFiltered).toHaveBeenCalledWith('search', { queryLength: 7, tagCount: 0, createdByMe: false })
+      );
+      expect(mockListFiltered).toHaveBeenCalledTimes(1);
+    });
+
+    it('reports a tag chosen in the picker', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      setTags(['errors', 'latency']);
+      setNotebooks(twoNotebooks());
+
+      render(<NotebooksListPage />);
+
+      // The picker loads its options on focus, so this waits for them before picking one. Scoped
+      // to the menu because the rows show pills with the same text.
+      await userEvent.click(await screen.findByLabelText('Tag filter'));
+      await within(await screen.findByRole('listbox')).findByText('latency');
+      await selectOptionInTest(screen.getByLabelText('Tag filter'), /^latency/);
+
+      await waitFor(() =>
+        expect(mockListFiltered).toHaveBeenCalledWith('tag', { queryLength: 0, tagCount: 1, createdByMe: false })
+      );
+      expect(mockListFiltered).toHaveBeenCalledTimes(1);
+    });
+
+    it('reports a tag clicked in a row as a tag filter', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      setNotebooks(twoNotebooks());
+
+      render(<NotebooksListPage />);
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Filter by tag latency' }));
+
+      await waitFor(() =>
+        expect(mockListFiltered).toHaveBeenCalledWith('tag', { queryLength: 0, tagCount: 1, createdByMe: false })
+      );
+    });
+
+    // Clicking a tag already in the filter narrows nothing, so there is nothing to report. The hook
+    // hands the same array back for that click, which is what the identity check in the page reads.
+    it('reports nothing when a tag clicked in a row is already filtered', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      setNotebooks(twoNotebooks());
+
+      render(<NotebooksListPage />);
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Filter by tag latency' }));
+      await waitFor(() => expect(mockListFiltered).toHaveBeenCalledTimes(1));
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Filter by tag latency' }));
+
+      // A change that does report, so the silence above has something arriving to measure it
+      // against rather than a wait that was already over.
+      await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
+
+      await waitFor(() =>
+        expect(mockListFiltered).toHaveBeenCalledWith('search', {
+          queryLength: 7,
+          tagCount: 1,
+          createdByMe: false,
+        })
+      );
+      expect(mockListFiltered.mock.calls).toEqual([
+        ['tag', { queryLength: 0, tagCount: 1, createdByMe: false }],
+        // The tag is still on, which is the point of sending the whole set rather than the change.
+        ['search', { queryLength: 7, tagCount: 1, createdByMe: false }],
+      ]);
+    });
+
+    it('reports the created-by-me checkbox', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      const originalUser = contextSrv.user;
+      contextSrv.user = { ...originalUser, uid: 'me' };
+      setNotebooks([makeHit('nb1', 'Mine', [], 'user:me'), makeHit('nb2', 'Theirs', [], 'user:other')]);
+
+      try {
+        render(<NotebooksListPage />);
+
+        await userEvent.click(await screen.findByLabelText('Created by me'));
+
+        await waitFor(() =>
+          expect(mockListFiltered).toHaveBeenCalledWith('created_by_me', {
+            queryLength: 0,
+            tagCount: 0,
+            createdByMe: true,
+          })
+        );
+      } finally {
+        contextSrv.user = originalUser;
+      }
+    });
+
+    // Both directions report. The state is what separates them, so turning a filter on and then off
+    // again sends two events that read differently.
+    it('reports the box going off as well as going on', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      const originalUser = contextSrv.user;
+      contextSrv.user = { ...originalUser, uid: 'me' };
+      setNotebooks([makeHit('nb1', 'Mine', [], 'user:me'), makeHit('nb2', 'Also mine', [], 'user:me')]);
+
+      try {
+        render(<NotebooksListPage />);
+
+        const checkbox = await screen.findByLabelText('Created by me');
+        await userEvent.click(checkbox);
+        await waitFor(() =>
+          expect(mockListFiltered).toHaveBeenCalledWith('created_by_me', {
+            queryLength: 0,
+            tagCount: 0,
+            createdByMe: true,
+          })
+        );
+
+        await userEvent.click(checkbox);
+
+        await waitFor(() =>
+          expect(mockListFiltered).toHaveBeenCalledWith('created_by_me', {
+            queryLength: 0,
+            tagCount: 0,
+            createdByMe: false,
+          })
+        );
+        expect(mockListFiltered.mock.calls).toEqual([
+          ['created_by_me', { queryLength: 0, tagCount: 0, createdByMe: true }],
+          ['created_by_me', { queryLength: 0, tagCount: 0, createdByMe: false }],
+        ]);
+      } finally {
+        contextSrv.user = originalUser;
+      }
+    });
+
+    // Everything else reads the committed search trimmed, so a space on its own moves no filter.
+    it('reports nothing when only whitespace changes', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      setNotebooks(twoNotebooks());
+
+      render(<NotebooksListPage />);
+
+      const searchBox = await screen.findByPlaceholderText('Search notebooks by title...');
+      await userEvent.type(searchBox, 'latency');
+      await waitFor(() => expect(mockListFiltered).toHaveBeenCalledTimes(1));
+
+      await userEvent.type(searchBox, ' ');
+      // A space changes nothing the page shows, on purpose, so there is no state to wait for.
+      // Waiting out the 300ms debounce is what reaches the point where a raw comparison fires.
+      // Inside act() because the debounce sets state when it lands.
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 600));
+      });
+
+      expect(mockListFiltered).toHaveBeenCalledTimes(1);
+    });
+
+    it('reports an emptied search box as a zero-length query', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      setNotebooks(twoNotebooks());
+
+      render(<NotebooksListPage />);
+
+      const searchBox = await screen.findByPlaceholderText('Search notebooks by title...');
+      await userEvent.type(searchBox, 'latency');
+      await waitFor(() =>
+        expect(mockListFiltered).toHaveBeenCalledWith('search', { queryLength: 7, tagCount: 0, createdByMe: false })
+      );
+
+      await userEvent.clear(searchBox);
+
+      await waitFor(() =>
+        expect(mockListFiltered).toHaveBeenCalledWith('search', { queryLength: 0, tagCount: 0, createdByMe: false })
+      );
+    });
+
+    // The event says somebody searched, so it goes out with the search rather than waiting for the
+    // results. Holding it until the results land would lose any search the reader filters again on
+    // top of before that happens.
+    it('reports as the filter commits, without waiting for the results', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      setNotebooks(twoNotebooks());
+
+      render(<NotebooksListPage />);
+      expect(await screen.findByText('Checkout error spike')).toBeInTheDocument();
+
+      // Nothing lands for the new filters from here on.
+      setNotebooks(twoNotebooks(), { isReloading: true });
+      await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
+
+      // The request carrying the new text is what says the debounce committed. The skeleton alone
+      // would not: it appears on the first keystroke, before the debounce fires.
+      await waitFor(() =>
+        expect(mockUseSearchNotebooksQuery).toHaveBeenLastCalledWith(
+          expect.objectContaining({ where: { text: { value: 'latency' } } })
+        )
+      );
+
+      // Nothing has landed for that request, and the event has already gone out.
+      expect(await screen.findByRole('status', { name: 'Loading notebooks' })).toBeInTheDocument();
+      expect(mockListFiltered).toHaveBeenCalledWith('search', { queryLength: 7, tagCount: 0, createdByMe: false });
+      expect(mockListFiltered).toHaveBeenCalledTimes(1);
+    });
+
+    // The reader searched. A request that then failed does not make that less true, and the event
+    // carries nothing about the outcome that the failure could contradict.
+    it('reports a search whose request failed', async () => {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      setNotebooks(twoNotebooks(), { errorWhenFiltered: { status: 500, data: { message: 'search exploded' } } });
+
+      render(<NotebooksListPage />);
+
+      await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
+
+      expect(await screen.findByText('Failed to load notebooks')).toBeInTheDocument();
+      expect(mockListFiltered).toHaveBeenCalledWith('search', { queryLength: 7, tagCount: 0, createdByMe: false });
     });
   });
 });

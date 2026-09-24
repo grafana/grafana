@@ -4,8 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { DataLinksInlineEditor } from './DataLinksInlineEditor';
 
 describe('DataLinksInlineEditor', () => {
-  it('renders existing links and add button', () => {
-    render(
+  it('renders existing links and add button', async () => {
+    const { container } = render(
       <DataLinksInlineEditor
         links={[{ title: 'My Link', url: '/link' }]}
         onChange={jest.fn()}
@@ -13,6 +13,10 @@ describe('DataLinksInlineEditor', () => {
         getSuggestions={() => []}
       />
     );
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(1);
+    });
 
     expect(screen.getByText('My Link')).toBeInTheDocument();
     expect(screen.getByText('Add link')).toBeInTheDocument();

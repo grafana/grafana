@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
@@ -17,6 +18,7 @@ import (
 )
 
 var _ Store = (*Service)(nil)
+var _ v3.ClientV3Loader = (*Service)(nil)
 
 const ServiceName = "plugins.store"
 
@@ -177,6 +179,18 @@ func (s *Service) plugin(ctx context.Context, pluginID string) (*plugins.Plugin,
 	}
 
 	return p, true
+}
+
+func (s *Service) ClientV3(ctx context.Context, pluginID string) (v3.ClientV3, bool) {
+	if err := s.AwaitRunning(ctx); err != nil {
+		log.New(ServiceName).FromContext(ctx).Error("Failed to get plugin", "error", err)
+		return nil, false
+	}
+	p, exists := s.plugin(ctx, pluginID)
+	if !exists {
+		return nil, false
+	}
+	return p.ClientV3(ctx)
 }
 
 // availablePlugins returns all non-decommissioned plugins from the registry sorted by alphabetic order on `plugin.ID`

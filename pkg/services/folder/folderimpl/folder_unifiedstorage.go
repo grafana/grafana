@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/selection"
 
@@ -178,7 +179,9 @@ func (s *Service) SearchFolders(ctx context.Context, query folder.SearchFoldersQ
 			Fields: []*resourcepb.Requirement{},
 			Labels: []*resourcepb.Requirement{},
 		},
-		Limit: folderSearchLimit}
+		Limit:        folderSearchLimit,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	}
 
 	if len(query.UIDs) > 0 {
 		request.Options.Fields = []*resourcepb.Requirement{{
@@ -207,8 +210,9 @@ func (s *Service) SearchFolders(ctx context.Context, query folder.SearchFoldersQ
 			request.Query = query.Title
 		}
 
-		// if using query, you need to specify the fields you want
-		request.Fields = dashboardsearch.IncludeFields
+		// if using query, you need to specify the fields you want. This request asks for
+		// FIELD_VALUES results, which reject response fields with no typed definition.
+		request.Fields = dashboardsearch.FieldValueIncludeFields
 	}
 
 	if query.Limit > 0 {
@@ -265,7 +269,9 @@ func (s *Service) getFolderByID(ctx context.Context, id int64, orgID int64) (*fo
 				},
 			},
 		},
-		Limit: folderSearchLimit}
+		Limit:        folderSearchLimit,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	}
 
 	res, err := s.k8sclient.Search(ctx, orgID, request)
 	if err != nil {
@@ -325,7 +331,9 @@ func (s *Service) getFolderByTitle(ctx context.Context, orgID int64, title strin
 			},
 			Labels: []*resourcepb.Requirement{},
 		},
-		Limit: folderSearchLimit}
+		Limit:        folderSearchLimit,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	}
 
 	if parentUID != nil {
 		req := []*resourcepb.Requirement{{
@@ -508,6 +516,45 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 	return folder, nil
 }
 
+func (s *Service) deleteVariablesInFolders(ctx context.Context, orgID int64, folderUIDs []string) error {
+	ctx, span := s.tracer.Start(ctx, "folder.deleteVariablesInFolders")
+	defer span.End()
+
+	// Search is GET-scoped to the requester. Run as the service so leftover
+	// variables are found and deleted even when grafana.dashboardGlobalVariables
+	// is off (user-facing APIs deny) or the user cannot see every child.
+	ctx = identity.WithServiceIdentityContext(ctx, orgID)
+
+	request := &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Labels: []*resourcepb.Requirement{},
+			Fields: []*resourcepb.Requirement{
+				{
+					Key:      resource.SEARCH_FIELD_FOLDER,
+					Operator: string(selection.In),
+					Values:   folderUIDs,
+				},
+			},
+		},
+		Limit:        folderSearchLimit,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	}
+
+	hits, err := dashboardsearch.SearchAll(ctx, orgID, request, s.variableK8sClient.Search)
+	if err != nil {
+		return folder.ErrInternal.Errorf("failed to fetch variables: %w", err)
+	}
+
+	for _, hit := range hits.Hits {
+		variableUID := hit.Name
+		err = s.variableK8sClient.Delete(ctx, variableUID, orgID, metav1.DeleteOptions{})
+		if err != nil && !apierrors.IsNotFound(err) {
+			return folder.ErrInternal.Errorf("failed to delete variable %s: %w", variableUID, err)
+		}
+	}
+	return nil
+}
+
 func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
 	ctx, span := s.tracer.Start(ctx, "folder.Delete")
 	defer span.End()
@@ -582,7 +629,9 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 					},
 				},
 			},
-			Limit: folderSearchLimit}
+			Limit:        folderSearchLimit,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		}
 
 		hits, err := dashboardsearch.SearchAll(ctx, cmd.OrgID, request, s.dashboardK8sClient.Search)
 		if err != nil {
@@ -602,6 +651,10 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 		if err != nil {
 			return folder.ErrInternal.Errorf("failed to delete public dashboards: %w", err)
 		}
+	}
+
+	if err := s.deleteVariablesInFolders(ctx, cmd.OrgID, folders); err != nil {
+		return err
 	}
 
 	err = s.unifiedStore.Delete(ctx, folders, cmd.OrgID)

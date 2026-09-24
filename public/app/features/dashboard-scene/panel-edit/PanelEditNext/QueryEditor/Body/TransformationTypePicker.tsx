@@ -9,7 +9,7 @@ import { EmptyState, FilterPill, Grid, IconButton, Input, Stack, Switch, useStyl
 import config from 'app/core/config';
 import { TransformationCard } from 'app/features/dashboard/components/TransformationsEditor/TransformationCard';
 import { TransformationSearchStatus } from 'app/features/dashboard/components/TransformationsEditor/TransformationSearchStatus';
-import { hasBackendDatasource } from 'app/features/dashboard-scene/panel-edit/PanelDataPane/utils';
+import { useHasBackendDatasource } from 'app/features/dashboard-scene/panel-edit/PanelDataPane/utils';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
 import { trackTransformationFilterChanged, trackTransformationSearch } from '../../tracking';
@@ -39,8 +39,8 @@ export function TransformationTypePicker() {
     allTransformationsCount,
   } = useTransformationSearchAndFilter(finalizePendingTransformation);
 
-  const showSqlCTA =
-    config.featureToggles.sqlExpressions && hasBackendDatasource({ datasourceUid: dsSettings?.uid, queries });
+  const hasBackendDs = useHasBackendDatasource({ datasourceUid: dsSettings?.uid, queries });
+  const showSqlCTA = config.featureToggles.sqlExpressions && hasBackendDs;
 
   const handleAddSqlExpression = useCallback(() => {
     reportInteraction('dashboards_expression_interaction', {

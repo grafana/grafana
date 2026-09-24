@@ -1,6 +1,7 @@
 import { type ReactElement, useMemo } from 'react';
 
 import { LoadingState } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import {
   type CancelActivationHandler,
@@ -192,6 +193,7 @@ function ConditionalRenderingDataRenderer({ model }: SceneComponentProps<Conditi
       ruleId="data"
     >
       <Combobox
+        data-testid={selectors.pages.Dashboard.Sidebar.conditionalRendering.data.select}
         options={enableConditionOptions}
         value={enableConditionOption}
         onChange={({ value: newValue }) => {

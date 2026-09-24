@@ -12,6 +12,7 @@ import {
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
+import { useFlagGrafanaLogDetailsDisplayedFieldControls } from '@grafana/runtime/internal';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { Box, ControlledCollapse, InlineField, InlineSwitch, Stack, useStyles2 } from '@grafana/ui';
 
@@ -49,12 +50,21 @@ export const LogLineDetailsComponent = memo(
     timeRange,
     timeZone,
   }: LogLineDetailsComponentProps) => {
-    const { displayedFields, noInteractions, logOptionsStorageKey, setDisplayedFields, syntaxHighlighting } =
-      useLogListContext();
+    const {
+      displayedFields,
+      noInteractions,
+      logOptionsStorageKey,
+      setDisplayedFields,
+      syntaxHighlighting,
+      syntaxHighlightingUnavailable,
+    } = useLogListContext();
 
     const [ds, setDs] = useState<DataSourceApi | null | undefined>(undefined);
+    // Collapse the log line by default if heavy logs are present
     const [logLineOpen, setLogLineOpen] = useState(
-      logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.log-details.logLineOpen`, false) : false
+      !syntaxHighlightingUnavailable && logOptionsStorageKey
+        ? store.getBool(`${logOptionsStorageKey}.log-details.logLineOpen`, false)
+        : false
     );
     const styles = useStyles2(getStyles);
 
@@ -62,8 +72,8 @@ export const LogLineDetailsComponent = memo(
 
     const fieldsWithLinks = useMemo(() => {
       const fieldsWithLinks = log.fields.filter((f) => f.links?.length);
-      const displayedFieldsWithLinks = fieldsWithLinks.filter((f) => f.fieldIndex !== log.entryFieldIndex).sort();
-      const hiddenFieldsWithLinks = fieldsWithLinks.filter((f) => f.fieldIndex === log.entryFieldIndex).sort();
+      const displayedFieldsWithLinks = fieldsWithLinks.filter((f) => f.fieldIndex !== log.entryFieldIndex);
+      const hiddenFieldsWithLinks = fieldsWithLinks.filter((f) => f.fieldIndex === log.entryFieldIndex);
       const fieldsWithLinksFromVariableMap = createLogLineLinks(hiddenFieldsWithLinks);
       return {
         links: displayedFieldsWithLinks,
@@ -112,6 +122,13 @@ export const LogLineDetailsComponent = memo(
     }, [ds, labelsWithLinks, log]);
 
     const labelGroups = useMemo(() => Object.keys(groupedLabels), [groupedLabels]);
+
+    useEffect(() => {
+      // Disable prettify by default when highlighting has been disabled because of heavy logs
+      if (syntaxHighlightingUnavailable) {
+        setPrettifyDetailsJSON(false);
+      }
+    }, [setPrettifyDetailsJSON, syntaxHighlightingUnavailable]);
 
     const linksOpen = logOptionsStorageKey
       ? store.getBool(`${logOptionsStorageKey}.log-details.linksOpen`, true)
@@ -174,6 +191,8 @@ export const LogLineDetailsComponent = memo(
         .catch(() => setDs(null));
     }, [log.datasourceUid]);
 
+    const displayedFieldsControlEnabled = useFlagGrafanaLogDetailsDisplayedFieldControls();
+
     // Wait for ds to be resolved to DataSourceApi or null on error
     if (ds === undefined) {
       return null;
@@ -208,7 +227,7 @@ export const LogLineDetailsComponent = memo(
             prettifyJSON={prettifyDetailsJSON}
           />
         </ControlledCollapse>
-        {displayedFields.length > 0 && setDisplayedFields && (
+        {displayedFieldsControlEnabled && displayedFields.length > 0 && setDisplayedFields && (
           <ControlledCollapse
             label={t('logs.log-line-details.displayed-fields-section', 'Organize displayed fields')}
             isOpen={displayedFieldsOpen}

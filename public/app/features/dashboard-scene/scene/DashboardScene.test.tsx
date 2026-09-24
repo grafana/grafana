@@ -1,3 +1,5 @@
+import { waitFor } from '@testing-library/react';
+
 import {
   CoreApp,
   type GrafanaConfig,
@@ -12,6 +14,7 @@ import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import {
   sceneGraph,
   SceneGridLayout,
+  type SceneObject,
   SceneTimeRange,
   SceneQueryRunner,
   SceneVariableSet,
@@ -28,13 +31,7 @@ import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
-import {
-  AnnoKeyIgnorePredefinedVariables,
-  AnnoKeyManagerKind,
-  DENY_ALL_GLOBAL_PREDEFINED,
-  DENY_ALL_PREDEFINED,
-  ManagerKind,
-} from 'app/features/apiserver/types';
+import { AnnoKeyManagerKind, AnnoKeyUseCrossDashboardVariables, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
@@ -47,12 +44,13 @@ import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { createWorker } from '../saving/createDetectChangesWorker';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import * as DashboardTemplateExtensionModule from '../settings/enterprise-components/DashboardTemplateExtension';
+import { openShareDrawer } from '../sharing/ShareDrawer/openShareDrawer';
 import { getCloneKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { findVizPanelByKey } from '../utils/findVizPanel';
 import { DashboardInteractions } from '../utils/interactions';
-import { serializeIgnorePredefinedVariables } from '../utils/predefinedVariableDenyList';
 import { toControlSourceRef } from '../utils/predefinedVariables';
-import { findVizPanelByKey, getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
+import { getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 import * as utils from '../utils/utils';
 
 import { DashboardControls } from './DashboardControls';
@@ -65,6 +63,7 @@ import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowActions } from './layout-default/row-actions/RowActions';
 import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
+import { DashboardPlanningEvent } from './planningEvents';
 import { type DashboardSceneState } from './types/dashboard';
 
 const mockRestoreDashboardVersion = jest.fn();
@@ -93,6 +92,11 @@ jest.mock('@grafana/runtime', () => ({
       },
     },
   },
+}));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
 }));
 
 jest.mock('app/core/services/context_srv', () => ({
@@ -155,6 +159,28 @@ describe('DashboardScene', () => {
 
         // @ts-expect-error it is a private property
         expect(scene._changesWorker).toBeUndefined();
+      });
+    });
+
+    describe('Edit session history', () => {
+      it('clears history on entering edit mode and preserves it on repeated enters', () => {
+        const scene = buildTestScene();
+        const sidebar = scene.state.sidebar;
+        const action = { source: scene, perform: jest.fn(), undo: jest.fn() };
+        sidebar.setState({ undoStack: [action], redoStack: [action] });
+
+        scene.onEnterEditMode();
+
+        expect(sidebar.state.undoStack).toHaveLength(0);
+        expect(sidebar.state.redoStack).toHaveLength(0);
+
+        sidebar.setState({ undoStack: [action], redoStack: [action] });
+
+        scene.onEnterEditMode();
+        scene.onEnterEditMode();
+
+        expect(sidebar.state.undoStack).toEqual([action]);
+        expect(sidebar.state.redoStack).toEqual([action]);
       });
     });
 
@@ -226,6 +252,22 @@ describe('DashboardScene', () => {
 
         expect(spy).toHaveBeenCalledWith(expect.objectContaining({ source: 'user' }));
         expect(scene.getEditSessionSource()).toBe('user');
+      });
+
+      it('skips the auto-edit entirely when editSource marks a plan preview', () => {
+        // A plan preview opens /dashboard/new only so RENDER_PLAN can populate it and never
+        // intends to edit -- it must not flash into edit mode and back out again. Every other
+        // /dashboard/new caller (no param, editSource=user, editSource=assistant) is unaffected.
+        const scene = buildTestScene();
+        locationService.push('/dashboard/new?editSource=plan-preview');
+        const spy = jest.spyOn(DashboardInteractions, 'editSessionStarted');
+
+        scene.activate();
+
+        expect(spy).not.toHaveBeenCalled();
+        expect(scene.state.isEditing).toBeFalsy();
+        expect(scene.state.isDirty).toBeFalsy();
+        expect(scene.getEditSessionSource()).toBeUndefined();
       });
     });
 
@@ -341,7 +383,7 @@ describe('DashboardScene', () => {
         expect(scene.state.meta.version).toEqual(2);
       });
 
-      it('Should exit edit mode after saving from unsaved changes modal when dashboardNewLayouts is enabled', () => {
+      it('Should exit edit mode after saving from unsaved changes modal when dashboardNewLayouts is enabled', async () => {
         const originalFeatureToggle = config.featureToggles.dashboardNewLayouts;
         config.featureToggles.dashboardNewLayouts = true;
 
@@ -350,29 +392,31 @@ describe('DashboardScene', () => {
         const publishSpy = jest.spyOn(appEvents, 'publish');
         const hasActualSaveChangesSpy = jest.spyOn(utils, 'hasActualSaveChanges').mockReturnValue(true);
 
-        scene.setState({ title: 'Updated title' });
-        expect(scene.state.isDirty).toBe(true);
-        scene.exitEditMode({ skipConfirm: false });
+        try {
+          scene.setState({ title: 'Updated title' });
+          expect(scene.state.isDirty).toBe(true);
+          scene.exitEditMode({ skipConfirm: false });
 
-        const modalCall = publishSpy.mock.calls.find((call) => call[0] instanceof ShowConfirmModalEvent);
-        expect(modalCall).toBeDefined();
+          const modalCall = publishSpy.mock.calls.find((call) => call[0] instanceof ShowConfirmModalEvent);
+          expect(modalCall).toBeDefined();
 
-        const modalEvent = modalCall![0] as ShowConfirmModalEvent;
-        expect(modalEvent.payload.altActionText).toBeDefined();
+          const modalEvent = modalCall![0] as ShowConfirmModalEvent;
+          expect(modalEvent.payload.altActionText).toBeDefined();
 
-        modalEvent.payload.onAltAction?.();
+          modalEvent.payload.onAltAction?.();
 
-        expect(scene.state.overlay).toBeDefined();
+          await waitFor(() => expect(scene.state.overlay).toBeInstanceOf(SaveDashboardDrawer));
 
-        const overlay = scene.state.overlay as SaveDashboardDrawer;
-        expect(overlay.state.onSaveSuccess).toBeDefined();
+          const overlay = scene.state.overlay as SaveDashboardDrawer;
+          expect(overlay.state.onSaveSuccess).toBeDefined();
 
-        overlay.state.onSaveSuccess!();
-        expect(scene.state.isEditing).toBe(false);
-
-        publishSpy.mockRestore();
-        hasActualSaveChangesSpy.mockRestore();
-        config.featureToggles.dashboardNewLayouts = originalFeatureToggle;
+          overlay.state.onSaveSuccess!();
+          expect(scene.state.isEditing).toBe(false);
+        } finally {
+          publishSpy.mockRestore();
+          hasActualSaveChangesSpy.mockRestore();
+          config.featureToggles.dashboardNewLayouts = originalFeatureToggle;
+        }
       });
 
       it('Should not show Save option in unsaved changes modal when user cannot save', () => {
@@ -489,11 +533,11 @@ describe('DashboardScene', () => {
         expect(scene.state.meta).toEqual(prevMeta);
       });
 
-      it('A change to predefined variables denylist should set isDirty true', () => {
+      it('A change to cross-dashboard variables selection should set isDirty true', () => {
         const prevMeta = { ...scene.state.meta };
         mockResultsOfDetectChangesWorker({ hasChanges: false });
 
-        const annotation = serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED]);
+        const annotation = '{"global":"all","folder":"all"}';
         scene.setState({
           meta: {
             ...prevMeta,
@@ -501,7 +545,7 @@ describe('DashboardScene', () => {
               ...prevMeta.k8s,
               annotations: {
                 ...prevMeta.k8s?.annotations,
-                [AnnoKeyIgnorePredefinedVariables]: annotation,
+                [AnnoKeyUseCrossDashboardVariables]: annotation,
               },
             },
           },
@@ -714,11 +758,11 @@ describe('DashboardScene', () => {
         expect(scene.state.isDirty).toBeFalsy();
       });
 
-      it('Should create and add a new panel to the dashboard', () => {
+      it('Should create and add a new panel to the dashboard', async () => {
         scene.exitEditMode({ skipConfirm: true });
         expect(scene.state.isEditing).toBe(false);
 
-        const panel = scene.onCreateNewPanel();
+        const panel = await scene.onCreateNewPanel();
 
         expect(scene.state.isEditing).toBe(true);
         expect(scene.state.body.getVizPanels().length).toBe(7);
@@ -1982,12 +2026,132 @@ describe('DashboardScene', () => {
     });
   });
 
+  describe('lazy overlays', () => {
+    beforeEach(() => {
+      locationService.push('/d/dash-1/test');
+    });
+
+    it.each(['older first', 'newer first'])('only opens the latest request when loads finish %s', async (order) => {
+      const scene = buildTestScene();
+      const older = new SceneGridLayout({ children: [] });
+      const newer = new SceneGridLayout({ children: [] });
+      let resolveOlder!: (modal: SceneObject) => void;
+      let resolveNewer!: (modal: SceneObject) => void;
+      const first = scene.showModalAsync(() => new Promise((resolve) => (resolveOlder = resolve)));
+      const second = scene.showModalAsync(() => new Promise((resolve) => (resolveNewer = resolve)));
+
+      if (order === 'older first') {
+        resolveOlder(older);
+        await first;
+        expect(scene.state.overlay).toBeUndefined();
+        resolveNewer(newer);
+      } else {
+        resolveNewer(newer);
+        await second;
+        resolveOlder(older);
+      }
+
+      await Promise.all([first, second]);
+      expect(scene.state.overlay).toBe(newer);
+    });
+
+    it.each([
+      'close',
+      'direct overlay replacement',
+      'navigation away and back',
+      'editor URL change',
+      'edit mode change',
+      'deactivation and reactivation',
+    ])('discards a pending overlay after %s', async (action) => {
+      const scene = buildTestScene();
+      const deactivate = scene.activate();
+      const modal = new SceneGridLayout({ children: [] });
+      let resolveLoad!: (modal: SceneObject) => void;
+      const opening = scene.showModalAsync(() => new Promise((resolve) => (resolveLoad = resolve)));
+      let cleanup = deactivate;
+
+      switch (action) {
+        case 'close':
+          scene.closeModal();
+          break;
+        case 'direct overlay replacement':
+          scene.setState({ overlay: new SceneGridLayout({ children: [] }) });
+          scene.setState({ overlay: undefined });
+          break;
+        case 'navigation away and back':
+          locationService.push('/dashboards');
+          locationService.push('/d/dash-1/test');
+          break;
+        case 'editor URL change':
+          locationService.partial({ inspect: 'panel-1' });
+          break;
+        case 'edit mode change':
+          scene.setState({ isEditing: true });
+          scene.setState({ isEditing: false });
+          break;
+        case 'deactivation and reactivation':
+          deactivate();
+          cleanup = scene.activate();
+          break;
+      }
+
+      resolveLoad(modal);
+      await opening;
+      expect(scene.state.overlay).toBeUndefined();
+
+      await scene.showModalAsync(async () => modal);
+      expect(scene.state.overlay).toBe(modal);
+      cleanup();
+    });
+
+    it.each(['time and variables', 'identical URL'])('allows %s URL updates while loading', async (update) => {
+      const scene = buildTestScene();
+      const modal = new SceneGridLayout({ children: [] });
+      let resolveLoad!: (modal: SceneObject) => void;
+      const opening = scene.showModalAsync(() => new Promise((resolve) => (resolveLoad = resolve)));
+
+      if (update === 'time and variables') {
+        locationService.partial({ from: 'now-1h', 'var-server': 'server-2' });
+      } else {
+        locationService.replace('/d/dash-1/test');
+      }
+
+      resolveLoad(modal);
+      await opening;
+      expect(scene.state.overlay).toBe(modal);
+    });
+
+    it('propagates a load failure and allows a later request', async () => {
+      const scene = buildTestScene();
+      await expect(
+        scene.showModalAsync(async () => {
+          throw new Error('Chunk load failed');
+        })
+      ).rejects.toThrow('Chunk load failed');
+
+      const modal = new SceneGridLayout({ children: [] });
+      await scene.showModalAsync(async () => modal);
+      expect(scene.state.overlay).toBe(modal);
+    });
+
+    it.each(['save', 'share'])('does not let a pending %s drawer overwrite a newer modal', async (drawer) => {
+      const scene = buildTestScene();
+      scene.onEnterEditMode();
+      const opening = drawer === 'save' ? scene.openSaveDrawer({}) : openShareDrawer(scene, { shareView: 'link' });
+      const modal = new SceneGridLayout({ children: [] });
+      scene.showModal(modal);
+
+      await opening;
+      expect(scene.state.overlay).toBe(modal);
+    });
+  });
+
   describe('openSaveDrawer with template flags', () => {
-    it('opens the drawer in saveAsDashboardTemplate mode', () => {
+    it('opens the drawer in saveAsDashboardTemplate mode', async () => {
       const scene = buildTestScene();
       scene.onEnterEditMode();
 
-      scene.openSaveDrawer({ saveAsDashboardTemplate: true });
+      await scene.openSaveDrawer({ saveAsDashboardTemplate: true });
 
       const overlay = scene.state.overlay;
       expect(overlay).toBeInstanceOf(SaveDashboardDrawer);
@@ -1995,11 +2159,11 @@ describe('DashboardScene', () => {
       expect((overlay as SaveDashboardDrawer).state.saveDashboardTemplate).toBeUndefined();
     });
 
-    it('opens the drawer in saveDashboardTemplate mode', () => {
+    it('opens the drawer in saveDashboardTemplate mode', async () => {
       const scene = buildTestScene();
       scene.onEnterEditMode();
 
-      scene.openSaveDrawer({ saveDashboardTemplate: true });
+      await scene.openSaveDrawer({ saveDashboardTemplate: true });
 
       const overlay = scene.state.overlay;
       expect(overlay).toBeInstanceOf(SaveDashboardDrawer);
@@ -2007,10 +2171,10 @@ describe('DashboardScene', () => {
       expect((overlay as SaveDashboardDrawer).state.saveAsDashboardTemplate).toBeUndefined();
     });
 
-    it('does nothing when the scene is not in edit mode', () => {
+    it('does nothing when the scene is not in edit mode', async () => {
       const scene = buildTestScene();
       // Not entering edit mode
-      scene.openSaveDrawer({ saveAsDashboardTemplate: true });
+      await scene.openSaveDrawer({ saveAsDashboardTemplate: true });
       expect(scene.state.overlay).toBeUndefined();
     });
   });
@@ -2730,23 +2894,21 @@ describe('DashboardScene', () => {
           folderUid: 'folder-1',
           k8s: {
             annotations: {
-              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([]),
+              [AnnoKeyUseCrossDashboardVariables]: '{"global":"all","folder":"all"}',
             },
           },
         },
       });
 
-      // First refresh: inject all (explicit empty denylist). Fetch stays pending.
+      // First refresh: inject all. Fetch stays pending.
       const staleRefresh = scene.refreshPredefinedVariables();
 
-      // Second refresh: deny all — applies immediately and invalidates the in-flight fetch.
+      // Second refresh: inject none — applies immediately and invalidates the in-flight fetch.
       scene.setState({
         meta: {
           ...scene.state.meta,
           k8s: {
-            annotations: {
-              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED]),
-            },
+            annotations: {},
           },
         },
       });
@@ -2797,22 +2959,22 @@ describe('DashboardScene', () => {
           folderUid: 'folder-1',
           k8s: {
             annotations: {
-              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([]),
+              [AnnoKeyUseCrossDashboardVariables]: '{"global":"all","folder":"all"}',
             },
           },
         },
       });
 
-      // First: All (explicit empty denylist)
+      // First: All
       const firstRefresh = scene.refreshPredefinedVariables();
 
-      // Second: Folder only (deny globals) — starts while first fetch is still pending.
+      // Second: Folder only — starts while first fetch is still pending.
       scene.setState({
         meta: {
           ...scene.state.meta,
           k8s: {
             annotations: {
-              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([DENY_ALL_GLOBAL_PREDEFINED]),
+              [AnnoKeyUseCrossDashboardVariables]: '{"global":"none","folder":"all"}',
             },
           },
         },
@@ -2849,7 +3011,7 @@ describe('DashboardScene', () => {
           folderUid: 'folder-1',
           k8s: {
             annotations: {
-              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([]),
+              [AnnoKeyUseCrossDashboardVariables]: '{"global":"all","folder":"all"}',
             },
           },
         },
@@ -2862,7 +3024,7 @@ describe('DashboardScene', () => {
       expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).toContain('globalVar');
     });
 
-    it('should ignore in-flight refresh results after discard restores the denylist', async () => {
+    it('should ignore in-flight refresh results after discard restores the selection', async () => {
       const globalVar = {
         kind: 'CustomVariable' as const,
         spec: {
@@ -2883,11 +3045,9 @@ describe('DashboardScene', () => {
         $variables: new SceneVariableSet({ variables: [] }),
         meta: {
           folderUid: 'folder-1',
-          // Baseline: deny all predefined variables.
+          // Baseline: not opted in (annotation absent).
           k8s: {
-            annotations: {
-              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED]),
-            },
+            annotations: {},
           },
         },
       });
@@ -2901,18 +3061,16 @@ describe('DashboardScene', () => {
           ...scene.state.meta,
           k8s: {
             annotations: {
-              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([]),
+              [AnnoKeyUseCrossDashboardVariables]: '{"global":"all","folder":"all"}',
             },
           },
         },
       });
       const staleRefresh = scene.refreshPredefinedVariables();
 
-      // Discard restores the deny-all baseline (and serializer annotations).
+      // Discard restores the not-opted-in baseline (and serializer annotations).
       scene.exitEditMode({ skipConfirm: true });
-      expect(scene.state.meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables]).toBe(
-        serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED])
-      );
+      expect(scene.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables]).toBeUndefined();
       expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).not.toContain('globalVar');
 
       // Stale All fetch must not re-inject after discard.
@@ -3267,6 +3425,74 @@ describe('DashboardScene', () => {
 
       expect(pageNav.text).toBe('Edit panel');
       expect(pageNav.parentItem?.url).toBe('/subUrl/d/dash-1/dash-1-slug');
+    });
+  });
+
+  describe('getDefaultLayout', () => {
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('returns a clone of the persisted layout preference regardless of the auto grid flag', () => {
+      setTestFlags({ 'grafana.dashboardAutoGridDefault': true });
+      const defaultLayoutTemplate = DefaultGridLayoutManager.createEmpty();
+      const scene = buildTestScene({ preferences: { defaultLayoutTemplate } });
+
+      const layout = scene.getDefaultLayout();
+
+      expect(layout).toBeInstanceOf(DefaultGridLayoutManager);
+      expect(layout).not.toBe(defaultLayoutTemplate);
+      expect(scene.getDefaultLayoutType()).toBe(DefaultGridLayoutManager.descriptor.id);
+    });
+
+    it('falls back to auto grid when no preference is persisted and the auto grid flag is enabled', () => {
+      setTestFlags({ 'grafana.dashboardAutoGridDefault': true });
+      const scene = buildTestScene();
+
+      expect(scene.getDefaultLayout()).toBeInstanceOf(AutoGridLayoutManager);
+      expect(scene.getDefaultLayoutType()).toBe(AutoGridLayoutManager.descriptor.id);
+    });
+
+    it('falls back to custom grid when no preference is persisted and the auto grid flag is disabled', () => {
+      setTestFlags({ 'grafana.dashboardAutoGridDefault': false });
+      const scene = buildTestScene();
+
+      expect(scene.getDefaultLayout()).toBeInstanceOf(DefaultGridLayoutManager);
+      expect(scene.getDefaultLayoutType()).toBe(DefaultGridLayoutManager.descriptor.id);
+    });
+  });
+
+  describe('deactivating a scene that is still previewing a plan', () => {
+    it('reports the plan as closed and clears planning state, without a Build/Dismiss decision', () => {
+      const scene = buildTestScene();
+      const deactivate = scene.activate();
+      const onBuild = jest.fn();
+      const onDismiss = jest.fn();
+      scene.setState({
+        planning: { planId: 'plan-1', planTitle: 'Kafka overview', onBuild, onDismiss },
+      });
+      const events: unknown[] = [];
+      const sub = appEvents.subscribe(DashboardPlanningEvent, (event) => events.push(event.payload));
+
+      deactivate();
+
+      expect(events).toEqual([{ planId: 'plan-1', action: 'closed' }]);
+      expect(scene.state.planning).toBeUndefined();
+      expect(onBuild).not.toHaveBeenCalled();
+      expect(onDismiss).not.toHaveBeenCalled();
+      sub.unsubscribe();
+    });
+
+    it('does nothing when no plan is being previewed', () => {
+      const scene = buildTestScene();
+      const deactivate = scene.activate();
+      const events: unknown[] = [];
+      const sub = appEvents.subscribe(DashboardPlanningEvent, (event) => events.push(event.payload));
+
+      deactivate();
+
+      expect(events).toEqual([]);
+      sub.unsubscribe();
     });
   });
 });

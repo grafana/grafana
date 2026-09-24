@@ -10,27 +10,33 @@ import { DashboardInteractions } from '../../utils/interactions';
 
 import { AddButton } from './AddButton';
 
-export function openAddFilterForm(dashboard: DashboardSceneLike, sectionOwner: SceneObject) {
+export async function openAddFilterForm(
+  dashboard: DashboardSceneLike,
+  sectionOwner: SceneObject,
+  signal: AbortSignal = dashboard.state.sidebar.beginPaneRequest()
+) {
   const existing = sectionOwner.state.$variables;
   const variablesSet = existing instanceof SceneVariableSet ? existing : new SceneVariableSet({ variables: [] });
 
-  if (!existing) {
-    sectionOwner.setState({ $variables: variablesSet });
-  }
-
   const type = 'adhoc';
   const name = getVariableNamePrefix(type);
-  const newVar = getVariableScene(type, {
+  const newVar = await getVariableScene(type, {
     name: getNextAvailableId(name, variablesSet.state.variables ?? []),
   });
 
+  if (signal.aborted) {
+    return;
+  }
+  if (!existing) {
+    sectionOwner.setState({ $variables: variablesSet });
+  }
   addVariable({ source: variablesSet, addedObject: newVar });
   dashboard.state.sidebar.selectObject(newVar, { force: true, multi: false });
 }
 
 export function AddFilters({ dashboardScene }: { dashboardScene: DashboardSceneLike }) {
   const onAddFiltersClick = useCallback(() => {
-    openAddFilterForm(dashboardScene, dashboardScene);
+    void openAddFilterForm(dashboardScene, dashboardScene);
     DashboardInteractions.addFilterButtonClicked({ source: 'edit_pane' });
   }, [dashboardScene]);
 

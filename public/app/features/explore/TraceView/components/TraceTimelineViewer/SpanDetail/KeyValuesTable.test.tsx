@@ -15,13 +15,16 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { reportInteraction } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 
 import KeyValuesTable, { LinkValue, type KeyValuesTableProps } from './KeyValuesTable';
+
+const mockSetReturnToPrevious = jest.fn();
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
+  useReturnToPrevious: jest.fn(() => mockSetReturnToPrevious),
   config: {
     buildInfo: {
       version: '11.0.0',
@@ -47,6 +50,7 @@ const setup = (propOverrides?: Partial<KeyValuesTableProps>) => {
 describe('LinkValue', () => {
   beforeEach(() => {
     (reportInteraction as jest.Mock).mockClear();
+    mockSetReturnToPrevious.mockClear();
   });
 
   it('renders as expected', () => {
@@ -102,12 +106,79 @@ describe('LinkValue', () => {
       location: 'value',
     });
     expect(onClick).toHaveBeenCalled();
+    expect(onClick.mock.calls[0][0].defaultPrevented).toBe(true);
+  });
+
+  it('navigates in the same tab even when the plugin also supplies onClick', async () => {
+    const user = userEvent.setup();
+    const onClick = jest.fn();
+    const pushSpy = jest.spyOn(locationService, 'push').mockImplementation(() => {});
+    render(
+      <LinkValue link={{ title: 'Related traces', path: '/explore?left=abc', onClick }} openLinksInSameTab>
+        value
+      </LinkValue>
+    );
+
+    await user.click(screen.getByRole('link', { name: 'Related traces' }));
+
+    expect(pushSpy).toHaveBeenCalledWith('/explore?left=abc');
+    expect(mockSetReturnToPrevious).toHaveBeenCalledWith('Trace');
+    expect(onClick).not.toHaveBeenCalled();
+    pushSpy.mockRestore();
+  });
+
+  it('keeps a new tab when the plugin sets openInNewTab', async () => {
+    const user = userEvent.setup();
+    const pushSpy = jest.spyOn(locationService, 'push').mockImplementation(() => {});
+    render(
+      <LinkValue link={{ title: 'Related traces', path: '/explore?left=abc', openInNewTab: true }} openLinksInSameTab>
+        value
+      </LinkValue>
+    );
+
+    const linkEl = screen.getByRole('link', { name: 'Related traces' });
+    expect(linkEl).toHaveAttribute('target', '_blank');
+    await user.click(linkEl);
+
+    expect(pushSpy).not.toHaveBeenCalled();
+    pushSpy.mockRestore();
+  });
+
+  it('navigates in the same tab when openLinksInSameTab is set', async () => {
+    const user = userEvent.setup();
+    const pushSpy = jest.spyOn(locationService, 'push').mockImplementation(() => {});
+    render(
+      <LinkValue link={{ title: 'Related traces', path: '/explore?left=abc' }} openLinksInSameTab>
+        value
+      </LinkValue>
+    );
+
+    await user.click(screen.getByRole('link', { name: 'Related traces' }));
+
+    expect(pushSpy).toHaveBeenCalledWith('/explore?left=abc');
+    expect(mockSetReturnToPrevious).toHaveBeenCalledWith('Trace');
+    pushSpy.mockRestore();
+  });
+
+  it('does not push when openLinksInSameTab is unset', async () => {
+    const user = userEvent.setup();
+    const pushSpy = jest.spyOn(locationService, 'push').mockImplementation(() => {});
+    render(<LinkValue link={{ title: 'Related traces', path: '/explore?left=abc' }}>value</LinkValue>);
+
+    const linkEl = screen.getByRole('link', { name: 'Related traces' });
+    expect(linkEl).toHaveAttribute('target', '_blank');
+    await user.click(linkEl);
+
+    expect(pushSpy).not.toHaveBeenCalled();
+    expect(mockSetReturnToPrevious).not.toHaveBeenCalled();
+    pushSpy.mockRestore();
   });
 });
 
 describe('KeyValuesTable tests', () => {
   beforeEach(() => {
     (reportInteraction as jest.Mock).mockClear();
+    mockSetReturnToPrevious.mockClear();
   });
 
   it('renders without exploding', () => {
@@ -126,7 +197,7 @@ describe('KeyValuesTable tests', () => {
     expect(screen.getByRole('table')).toBeInTheDocument();
     expect(screen.getAllByRole('cell')).toHaveLength(12);
     expect(screen.getAllByTestId('KeyValueTable--keyColumn')).toHaveLength(4);
-    expect(screen.getByRole('row', { name: 'span.kind "client"' })).toBeInTheDocument();
+    expect(screen.getByRole('row', { name: 'span.kind client' })).toBeInTheDocument();
     expect(screen.getByRole('row', { name: 'jsonkey { "hello": "world" }' })).toBeInTheDocument();
   });
 
@@ -205,10 +276,10 @@ describe('KeyValuesTable tests', () => {
     });
 
     expect(screen.queryByRole('link', { name: 'Documentation' })).not.toBeInTheDocument();
-    expect(screen.getByRole('row', { name: /span\.kind.*"client"/ })).toBeInTheDocument();
+    expect(screen.getByRole('row', { name: 'span.kind client' })).toBeInTheDocument();
 
     // Accessible name comes from the associated value label, not a generic aria-label
-    await user.click(screen.getByRole('button', { name: /"client"/ }));
+    await user.click(screen.getByRole('button', { name: 'client' }));
 
     expect(await screen.findByText('OPEN VALUE IN')).toBeInTheDocument();
     expect(await screen.findByRole('menuitem', { name: 'Documentation' })).toBeInTheDocument();
@@ -244,7 +315,7 @@ describe('KeyValuesTable tests', () => {
           : [],
     });
 
-    await user.click(screen.getByRole('button', { name: /"client"/ }));
+    await user.click(screen.getByRole('button', { name: 'client' }));
     await user.click(await screen.findByRole('menuitem', { name: 'Documentation' }));
 
     expect(reportInteraction).toHaveBeenCalledWith('grafana_traces_trace_view_resource_link_clicked', {
@@ -278,7 +349,7 @@ describe('KeyValuesTable tests', () => {
           : [],
     });
 
-    await user.click(screen.getByText(/"client"/));
+    await user.click(screen.getByText('client'));
 
     expect(await screen.findByRole('menuitem', { name: 'Documentation' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Service dashboard' })).toBeInTheDocument();
@@ -333,7 +404,7 @@ describe('KeyValuesTable tests', () => {
           : undefined,
     });
 
-    expect(screen.getByText('"postgresql"')).toBeInTheDocument();
+    expect(screen.getByText('postgresql')).toBeInTheDocument();
     expect(screen.getByTestId('attribute-plugin-promo-trigger')).toBeInTheDocument();
     expect(screen.queryByText('Find slow queries faster')).not.toBeInTheDocument();
 

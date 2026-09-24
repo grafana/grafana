@@ -1,23 +1,81 @@
 import { css, cx } from '@emotion/css';
 import DangerouslySetHtmlContent from 'dangerously-set-html-content';
+import { lazy, Suspense } from 'react';
 
 import { type GrafanaTheme2, renderTextPanelMarkdown } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { type CellContentKind } from 'app/features/notebook/types';
 
-// Mirrors the text panel: renderTextPanelMarkdown sanitizes its output (XSS-safe) and the
-// result is rendered via DangerouslySetHtmlContent with the shared `markdown-html` class.
-// The global `.markdown-html` styles cover lists/tables/links but not headings, blockquotes
-// or code — which notebook cells rely on — so we add those here to read like a document.
-export function MarkdownCell({ content }: { content: CellContentKind }) {
+import { useFocusExtension } from './focusExtension';
+import { headingStyles } from './markdownHeadingStyles';
+
+const MarkdownCellEditor = lazy(() =>
+  import(/* webpackChunkName: "notebook-markdown-editor" */ './MarkdownCellEditor').then((m) => ({
+    default: m.MarkdownCellEditor,
+  }))
+);
+
+export interface MarkdownCellProps {
+  content: CellContentKind;
+  isEditing: boolean;
+  autoFocus?: boolean;
+  focusRequestId?: number;
+  caretOffset?: number;
+  /** Which edge of the cell to reveal on that same grant — see useFocusExtension's own doc comment. */
+  scrollAlign?: ScrollLogicalPosition;
+  onChange: (content: CellContentKind) => void;
+  placeholder?: string;
+  onSubmit?: (remainder: string, marker?: string) => void;
+  /** ArrowUp/ArrowDown once the caret has nowhere further to go inside this cell. See navigationKeymap. */
+  onNavigate?: (direction: 'up' | 'down') => void;
+}
+
+export function MarkdownCell({
+  content,
+  isEditing,
+  autoFocus,
+  focusRequestId,
+  caretOffset,
+  scrollAlign,
+  onChange,
+  placeholder,
+  onSubmit,
+  onNavigate,
+}: MarkdownCellProps) {
   const styles = useStyles2(getStyles);
+  const focusExtension = useFocusExtension({
+    autoFocus,
+    isEditing,
+    focusRequestId,
+    caretOnFocus: caretOffset,
+    scrollAlign,
+  });
 
   if (content.kind !== 'Markdown') {
     return null;
   }
 
-  const html = renderTextPanelMarkdown(content.spec.text);
-  return <DangerouslySetHtmlContent html={html} className={cx('markdown-html', styles.markdown)} />;
+  if (!isEditing) {
+    const html = renderTextPanelMarkdown(content.spec.text);
+    if (!html) {
+      return null;
+    }
+    return <DangerouslySetHtmlContent html={html} className={cx('markdown-html', styles.markdown)} />;
+  }
+
+  return (
+    <Suspense fallback={<LoadingPlaceholder text={t('notebook.cell.markdown.loading-editor', 'Loading editor')} />}>
+      <MarkdownCellEditor
+        content={content}
+        onChange={onChange}
+        placeholder={placeholder}
+        onSubmit={onSubmit}
+        onNavigate={onNavigate}
+        focusExtension={focusExtension}
+      />
+    </Suspense>
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -25,21 +83,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
     'h1, h2, h3, h4, h5, h6': {
       marginTop: theme.spacing(2),
       marginBottom: theme.spacing(1),
-      fontWeight: theme.typography.fontWeightMedium,
     },
     '& > :first-child': {
       marginTop: 0,
     },
-    h1: { fontSize: theme.typography.h1.fontSize, lineHeight: theme.typography.h1.lineHeight },
-    // Section headers get an underline rule, matching the notebook document look.
+    h1: headingStyles(theme.typography.h1),
     h2: {
-      fontSize: theme.typography.h2.fontSize,
-      lineHeight: theme.typography.h2.lineHeight,
+      ...headingStyles(theme.typography.h2),
       paddingBottom: theme.spacing(1),
       borderBottom: `1px solid ${theme.colors.border.weak}`,
     },
-    h3: { fontSize: theme.typography.h3.fontSize, lineHeight: theme.typography.h3.lineHeight },
-    h4: { fontSize: theme.typography.h4.fontSize },
+    h3: headingStyles(theme.typography.h3),
+    h4: headingStyles(theme.typography.h4),
     p: { marginBottom: theme.spacing(1) },
     blockquote: {
       margin: theme.spacing(1, 0),

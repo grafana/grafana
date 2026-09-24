@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"slices"
 )
 
 //go:generate mockery --name FeatureToggles --structname MockFeatureToggles --inpackage --filename feature_toggles_mock.go --with-expecter
@@ -32,12 +33,7 @@ type FeatureToggles interface {
 }
 
 func AnyEnabled(f FeatureToggles, flags ...string) bool {
-	for _, flag := range flags {
-		if f.IsEnabledGlobally(flag) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(flags, f.IsEnabledGlobally)
 }
 
 // FeatureFlagStage indicates the quality level

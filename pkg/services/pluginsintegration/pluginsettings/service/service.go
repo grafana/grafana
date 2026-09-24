@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"maps"
 	"sync"
 	"time"
 
@@ -204,9 +205,7 @@ func (s *Service) updatePluginSetting(ctx context.Context, cmd *pluginsettings.U
 			return err
 		}
 
-		for key, encryptedData := range cmd.EncryptedSecureJsonData {
-			pluginSetting.SecureJsonData[key] = encryptedData
-		}
+		maps.Copy(pluginSetting.SecureJsonData, cmd.EncryptedSecureJsonData)
 
 		// add state change event on commit success
 		if pluginSetting.Enabled != cmd.Enabled {

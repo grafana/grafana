@@ -3,6 +3,7 @@ package folders
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"regexp"
 	"testing"
 
@@ -22,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -1108,11 +1110,13 @@ func TestValidateDelete(t *testing.T) {
 		searcher: &mockSearchClient{
 			stats: &resourcepb.ResourceStatsResponse{
 				Error: &resourcepb.ErrorResult{
-					Reason: "error",
+					Reason:  string(metav1.StatusReasonInternalError),
+					Code:    http.StatusInternalServerError,
+					Message: "stats unavailable",
 				},
 			},
 		},
-		expectedErr: "could not verify if folder is empty",
+		expectedErr: "stats unavailable",
 	}, {
 		name: "folder not empty with gracePeriodSeconds=0 is allowed",
 		folder: &folders.Folder{
@@ -1168,6 +1172,25 @@ func TestValidateDelete(t *testing.T) {
 						Group:    "dashboard.grafana.app",
 						Resource: "dashboards",
 						Count:    10, // not empty
+					},
+				},
+			},
+		},
+		expectedErr: "[folder.not-empty]",
+	}, {
+		name: "folder not empty - contains variables",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "dashboard.grafana.app",
+						Resource: "variables",
+						Count:    4, // not empty
 					},
 				},
 			},
@@ -1438,7 +1461,7 @@ func TestGetChildrenBatchPagination(t *testing.T) {
 
 	makeFolders := func(n int) []folders.Folder {
 		out := make([]folders.Folder, 0, n)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			out = append(out, folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:        fmt.Sprintf("c%d", i),
@@ -1455,6 +1478,8 @@ func TestGetChildrenBatchPagination(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, children, 2)
 		require.True(t, hasMore)
+		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, searcher.lastSearchRequest.ResultFormat)
+		require.Equal(t, []string{resource.SEARCH_FIELD_NAME}, searcher.lastSearchRequest.Fields)
 	})
 
 	t.Run("hasMore false on the final page", func(t *testing.T) {
@@ -1495,7 +1520,7 @@ func TestCheckSubtreeDepthIteratesAllPages(t *testing.T) {
 	const childCount = 1001
 
 	all := make([]folders.Folder, 0, childCount)
-	for i := 0; i < childCount; i++ {
+	for i := range childCount {
 		all = append(all, folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:        fmt.Sprintf("c%d", i),
@@ -1529,7 +1554,8 @@ type mockSearchClient struct {
 	useNextPageToken bool
 	dropTotalHits    bool
 
-	searchCalls int
+	searchCalls       int
+	lastSearchRequest *resourcepb.ResourceSearchRequest
 }
 
 // GetStats implements resourcepb.ResourceIndexClient.
@@ -1540,6 +1566,7 @@ func (m *mockSearchClient) GetStats(ctx context.Context, in *resourcepb.Resource
 // Search implements resourcepb.ResourceIndexClient.
 func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	m.searchCalls++
+	m.lastSearchRequest = req
 
 	// get the list of parents from the search request
 	parentSet := make(map[string]bool)
@@ -1575,13 +1602,7 @@ func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceS
 	}
 
 	total := int64(len(rows))
-	offset := req.Offset
-	if offset < 0 {
-		offset = 0
-	}
-	if offset > total {
-		offset = total
-	}
+	offset := min(max(req.Offset, 0), total)
 	end := total
 	if req.Limit > 0 && offset+req.Limit < end {
 		end = offset + req.Limit

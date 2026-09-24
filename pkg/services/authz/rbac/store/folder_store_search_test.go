@@ -14,17 +14,20 @@ import (
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type fakeSearcher struct {
-	resp  *resourcepb.ResourceSearchResponse
-	err   error
-	calls int
+	resp    *resourcepb.ResourceSearchResponse
+	err     error
+	calls   int
+	request *resourcepb.ResourceSearchRequest
 }
 
 func (f *fakeSearcher) Search(ctx context.Context, in *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	f.calls++
+	f.request = in
 	return f.resp, f.err
 }
 
@@ -53,6 +56,9 @@ func TestAPIFolderStore_ListFoldersViaSearch(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, folders, 3)
 	assert.Equal(t, 1, searcher.calls, "all folders fetched in a single search call")
+	require.NotNil(t, searcher.request)
+	assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, searcher.request.ResultFormat)
+	assert.Equal(t, []string{resource.SEARCH_FIELD_FOLDER}, searcher.request.Fields)
 
 	parents := make(map[string]*string, len(folders))
 	for _, f := range folders {
@@ -64,6 +70,36 @@ func TestAPIFolderStore_ListFoldersViaSearch(t *testing.T) {
 		assert.Equal(t, "root-1", *parents["child-1"], "nested folder keeps its parent")
 	}
 	assert.Nil(t, parents["top-2"], "general/root parent is treated as no parent")
+}
+
+func TestAPIFolderStore_ListFoldersViaSearchFieldValues(t *testing.T) {
+	searcher := &fakeSearcher{resp: &resourcepb.ResourceSearchResponse{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		TotalHits:    2,
+		Fields: []*resourcepb.ResourceSearchField{{
+			Name: resource.SEARCH_FIELD_FOLDER,
+			Type: resourcepb.ResourceSearchField_STRING,
+		}},
+		Rows: []*resourcepb.ResourceSearchRow{
+			{
+				Key:    &resourcepb.ResourceKey{Name: "root", Resource: "folders"},
+				Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{""}}},
+			},
+			{
+				Key:    &resourcepb.ResourceKey{Name: "child", Resource: "folders"},
+				Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{"root"}}},
+			},
+		},
+	}}
+	s := NewAPIFolderStore(tracing.InitializeTracerForTest(), prometheus.NewRegistry(), nil).WithSearcher(searcher)
+
+	folders, err := s.ListFolders(t.Context(), types.NamespaceInfo{Value: "default", OrgID: 1})
+	require.NoError(t, err)
+	require.Len(t, folders, 2)
+	assert.Nil(t, folders[0].ParentUID)
+	if assert.NotNil(t, folders[1].ParentUID) {
+		assert.Equal(t, "root", *folders[1].ParentUID)
+	}
 }
 
 // TestAPIFolderStore_ListFolders_FallsBackToListPath ensures that during a

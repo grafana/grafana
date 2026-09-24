@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -12,7 +12,7 @@ export interface RadioButtonDotProps<T>
   checked?: boolean;
   value?: T;
   disabled?: boolean;
-  label: React.ReactNode;
+  label?: React.ReactNode;
   description?: string;
   onChange?: (id: string) => void;
 }
@@ -31,7 +31,7 @@ export const RadioButtonDot = <T extends string | number | readonly string[]>({
   const styles = useStyles2(getStyles);
 
   return (
-    <label title={description} className={styles.label}>
+    <label title={description} className={cx(styles.label, { [styles.labelWithoutContent]: !label && !description })}>
       <input
         {...props}
         id={id}
@@ -43,10 +43,12 @@ export const RadioButtonDot = <T extends string | number | readonly string[]>({
         className={styles.input}
         onChange={() => onChange && onChange(id)}
       />
-      <div>
-        {label}
-        {description && <div className={styles.description}>{description}</div>}
-      </div>
+      {(label || description) && (
+        <div>
+          {label}
+          {description && <div className={styles.description}>{description}</div>}
+        </div>
+      )}
     </label>
   );
 };
@@ -102,6 +104,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gridTemplateColumns: `${theme.spacing(2)} auto`,
     gap: theme.spacing(1),
     cursor: 'pointer',
+  }),
+  labelWithoutContent: css({
+    gridTemplateColumns: theme.spacing(2),
+    gap: 0,
   }),
   description: css({
     fontSize: theme.typography.size.sm,

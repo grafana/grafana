@@ -90,7 +90,7 @@ describe('BuildDashboardButton', () => {
 
       const link = screen.getByRole('link', { name: /Build a dashboard/i });
       expect(link).toBeInTheDocument();
-      expect(link).toHaveAttribute('href', 'dashboard/new-with-ds/test-uid');
+      expect(link).toHaveAttribute('href', '/dashboard/new-with-ds/test-uid');
     });
 
     it('should not render the dropdown menu items', () => {

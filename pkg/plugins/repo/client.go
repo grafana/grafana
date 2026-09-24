@@ -158,8 +158,7 @@ func (c *Client) downloadFile(ctx context.Context, tmpFile *os.File, pluginURL, 
 	// Note: This is also used as part of the grafana plugin install CLI operation
 	bodyReader, err := c.sendReqNoTimeout(ctx, u, compatOpts)
 	if err != nil {
-		var errResp ErrResponse4xx
-		if errors.As(err, &errResp) {
+		if errResp, ok := errors.AsType[ErrResponse4xx](err); ok {
 			if errResp.StatusCode() == 401 {
 				c.log.Error("Unauthorized download plugin", "error", err)
 				return err

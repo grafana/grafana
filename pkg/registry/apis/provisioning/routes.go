@@ -183,6 +183,7 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		Items:                    make([]provisioning.RepositoryView, len(all)),
 		AllowedTargets:           b.allowedTargets,
 		AvailableRepositoryTypes: b.repoFactory.Types(),
+		AvailableConnectionTypes: b.connectionFactory.Types(),
 		AvailableResources:       availableResources,
 		AllowImageRendering:      b.allowImageRendering,
 		MaxRepositories:          quotaStatus.MaxRepositories,

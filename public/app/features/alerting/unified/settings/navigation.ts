@@ -34,7 +34,7 @@ export function useSettingsPageNav() {
   const allTabs: NavModelItem[] = [
     {
       id: 'alertmanager',
-      text: t('alerting.settings.tabs.alert-managers', 'Alert managers'),
+      text: t('alerting.settings.tabs.alert-managers', 'Alertmanagers'),
       url: ALERTING_SETTINGS_URL,
       active: location.pathname === ALERTING_SETTINGS_URL,
       icon: 'cloud',

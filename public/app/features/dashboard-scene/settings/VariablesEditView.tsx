@@ -173,17 +173,17 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     this.setState({ editIndex: variableIndex });
   };
 
-  public onAdd = () => {
+  public onAdd = async () => {
     const variables = this.getVariables();
     const variableIndex = variables.length;
     //add the new variable to the end of the array
-    const defaultNewVariable = getVariableDefault(variables);
+    const defaultNewVariable = await getVariableDefault(variables);
 
     this.getVariableSet().setState({ variables: [...this.getVariables(), defaultNewVariable] });
     this.setState({ editIndex: variableIndex });
   };
 
-  public onTypeChange = (type: EditableVariableType) => {
+  public onTypeChange = async (type: EditableVariableType) => {
     // Find the index of the variable to be deleted
     const variableIndex = this.state.editIndex ?? -1;
     const { variables } = this.getVariableSet().state;
@@ -196,7 +196,7 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     }
 
     const { name, label } = variable.state;
-    const newVariable = getVariableScene(type, { name, label });
+    const newVariable = await getVariableScene(type, { name, label });
     this.replaceEditVariable(newVariable);
   };
 

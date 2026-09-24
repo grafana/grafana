@@ -52,8 +52,8 @@ func TestJobCleanupController_Run_StopsOnContextCancel(t *testing.T) {
 // running, Run waits for it to finish before returning.
 //
 // This mirrors the behavior tested for ConnectionController and RepositoryController
-// in controller/shutdown_test.go: in-progress work completes before the shutdown
-// is acknowledged.
+// in their respective controller test files: in-progress work completes before
+// the shutdown is acknowledged.
 func TestJobCleanupController_Run_CompletesInitialCleanupBeforeExiting(t *testing.T) {
 	cleanupStarted := make(chan struct{})
 	cleanupRelease := make(chan struct{})

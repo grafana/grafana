@@ -12,6 +12,7 @@ import (
 
 	authnv1 "github.com/grafana/authlib/authn/proto/v1"
 
+	"github.com/grafana/grafana/pkg/infra/features"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
@@ -67,6 +68,7 @@ func (s *Service) Authenticate(ctx context.Context, req *authnv1.AuthenticateReq
 
 	ctx = request.WithNamespace(ctx, req.Namespace)
 	ctx = log.WithContextualAttributes(ctx, []any{"namespace", req.Namespace})
+	ctx = features.WithTransactionContextFromBaggage(ctx)
 	span.SetAttributes(attribute.String("authn.namespace", req.Namespace))
 
 	grpclog.AddFields(ctx, grpclog.Fields{"authn.headers", headerNames(req.GetHttpHeaders())})

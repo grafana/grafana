@@ -1,31 +1,38 @@
 import { css } from '@emotion/css';
-import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef } from 'react';
 
-import { PageLayoutType, PluginExtensionPoints } from '@grafana/data';
+import { OrgRole, PageLayoutType, PluginExtensionPoints } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
 import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
-import { Grid, Stack, useStyles2 } from '@grafana/ui';
+import { Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { ASSISTANT_PLUGIN_ID, SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
+import { useStoredString } from 'app/core/hooks/useStored';
+import { contextSrv } from 'app/core/services/context_srv';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 
 import { AlertIncidentTabs, type AlertIncidentSwitchHandle } from './AlertsIncidents/AlertIncidentTabs';
 import { FiringAlertsCard } from './AlertsIncidents/FiringAlertsCard';
 import { IncidentsCard } from './AlertsIncidents/IncidentsCard';
 import { NewsCard } from './AlertsIncidents/NewsCard';
+import { INCIDENTS_FILTER_STORAGE_KEY } from './AlertsIncidents/incidentFilter';
+import { ALERTS_TEAM_FILTER_STORAGE_KEY } from './AlertsIncidents/teamFilter';
 import { useFiringAlerts } from './AlertsIncidents/useFiringAlerts';
 import { useIncidents } from './AlertsIncidents/useIncidents';
 import { DashboardTabs } from './DashboardTabs/DashboardTabs';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import { HeaderActions } from './HeaderActions';
+import { HomeGrid } from './HomeGrid';
 import { HomePageSkeleton } from './HomePageSkeleton';
 import { HomeSection } from './HomeSection';
 import { Overview } from './Overview/Overview';
+import { resolveOverviewCard } from './Overview/solutionGroups';
 import { Recommendations } from './Recommendations/Recommendations';
 import { homepageViewed } from './analytics/main';
 import useHomeGreeting from './useHomeGreeting';
+import { useHomepageSolutions } from './useHomepageSolutions';
 
 const getEdition = () => {
   if (!isOnPrem()) {
@@ -56,6 +63,20 @@ export default function HomePage() {
   const greeting = useHomeGreeting();
 
   const redesignEnabled = useFlagGrafanaGrowthHomepage();
+  const solutions = useHomepageSolutions();
+  // Recommendations and the stack overview are onboarding for org members; anonymous or
+  // no-org users can't act on any of it, so skip the sections and their placement probes.
+  const showSolutions = contextSrv.isSignedIn && contextSrv.user.orgRole !== OrgRole.None;
+  // Placement is the slow part of the page and needs nothing from the extensions gating the
+  // sections: start it at mount so it runs under the skeleton. Its facts are memoized on the
+  // solution or TTL-cached, so the overview's own placement re-reads settled promises when it mounts.
+  useEffect(() => {
+    if (redesignEnabled && showSolutions) {
+      for (const solution of solutions.solutions) {
+        void resolveOverviewCard(solution);
+      }
+    }
+  }, [redesignEnabled, showSolutions, solutions]);
 
   const { components: assistantComponents, isLoading: isLoadingAssistant } = usePluginComponents({
     extensionPointId: PluginExtensionPoints.HomepageAssistant,
@@ -69,9 +90,11 @@ export default function HomePage() {
     extensionPointId: PluginExtensionPoints.HomepageTabs,
   });
 
-  const [team, setTeam] = useState<string>();
-  const alertsData = useFiringAlerts(team);
-  const incidentsData = useIncidents();
+  // Persisted filter scopes, one per view; each also drives that view's header pill.
+  const [alertsTeam, setAlertsTeam] = useStoredString(ALERTS_TEAM_FILTER_STORAGE_KEY, '');
+  const [incidentsFilter, setIncidentsFilter] = useStoredString(INCIDENTS_FILTER_STORAGE_KEY, '');
+  const alertsData = useFiringAlerts(alertsTeam);
+  const incidentsData = useIncidents(incidentsFilter);
   const alertIncidentRef = useRef<AlertIncidentSwitchHandle | null>(null);
 
   const isWaitingForTabs = !redesignEnabled && isLoadingTabs;
@@ -114,6 +137,7 @@ export default function HomePage() {
       showAlertsCard={showAlertsCard}
       showIRMNewsCard={showIRMNewsCard}
       showExtra={showExtra}
+      showSolutions={showSolutions}
       redesignEnabled={redesignEnabled}
     />
   );
@@ -154,20 +178,26 @@ export default function HomePage() {
                     ),
                   })}
 
-                  <Recommendations />
-                  <Overview />
-
-                  <Grid gap={2} columns={{ xs: 1, md: 2 }}>
+                  <HomeGrid columns={2} gap={2}>
                     {/* Skip the HomepageTabs extension point for the redesign UI */}
                     <DashboardTabs extensionComponents={[]} />
                     <AlertIncidentTabs
                       alertsData={alertsData}
                       incidentsData={incidentsData}
-                      team={team}
-                      setTeam={setTeam}
+                      alertsTeam={alertsTeam}
+                      onAlertsTeamChange={setAlertsTeam}
+                      incidentsFilter={incidentsFilter}
+                      onIncidentsFilterChange={setIncidentsFilter}
                       switchRef={alertIncidentRef}
                     />
-                  </Grid>
+                  </HomeGrid>
+
+                  {showSolutions && (
+                    <>
+                      <Recommendations solutions={solutions} />
+                      <Overview solutions={solutions.solutions} />
+                    </>
+                  )}
                 </>
               ) : (
                 <>
@@ -182,14 +212,14 @@ export default function HomePage() {
                     <DashboardTabs extensionComponents={tabComponents} />
                   </HomeSection>
 
-                  <Grid gap={2} columns={{ xs: 1, md: 2 }}>
+                  <HomeGrid columns={2} gap={2}>
                     {alertsData.enabled && <FiringAlertsCard data={alertsData} />}
                     {incidentsData.enabled ? (
                       <IncidentsCard data={incidentsData} />
                     ) : (
                       config.newsFeedEnabled && <NewsCard />
                     )}
-                  </Grid>
+                  </HomeGrid>
                 </>
               )}
               {extraContent}

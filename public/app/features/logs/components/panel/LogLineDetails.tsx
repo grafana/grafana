@@ -358,7 +358,7 @@ const getStyles = (
     borderBottomRightRadius: showControls ? undefined : theme.shape.radius.default,
     borderRight: mode === 'sidebar' && showControls ? 'none' : undefined,
     borderTopRightRadius: showControls ? undefined : theme.shape.radius.default,
-    boxShadow: theme.shadows.z3,
+    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
     height: '100%',
     fontSize: fontSize === 'small' ? theme.typography.bodySmall.fontSize : undefined,
     lineHeight: fontSize === 'small' ? theme.typography.bodySmall.lineHeight : undefined,

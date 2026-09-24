@@ -30,13 +30,20 @@ import { DeleteRepositoryButton } from '../Repository/DeleteRepositoryButton';
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
 import { getGitProviderFields, getLocalProviderFields } from '../Wizard/fields';
 import { PROVISIONING_URL } from '../constants';
+import { useConnectionList } from '../hooks/useConnectionList';
 import { useConnectionOptions } from '../hooks/useConnectionOptions';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { type RepositoryFormData } from '../types';
+import { connectionTypesForProvider } from '../utils/connectionData';
 import { dataToSpec, deriveSigningKeySecret } from '../utils/data';
 import { extractFormErrors, getConfigFormErrors } from '../utils/getFormErrors';
-import { getHasTokenInstructions } from '../utils/git';
-import { getRepositoryTypeConfig, isGitHubBased, isGitProvider, supportsWebhooks } from '../utils/repositoryTypes';
+import { getHasTokenInstructions, getRemoteConfig } from '../utils/git';
+import {
+  getRepositoryTypeConfig,
+  isGitProvider,
+  supportsConnections,
+  supportsWebhooks,
+} from '../utils/repositoryTypes';
 
 import { BranchOptionsSection } from './BranchOptionsSection';
 import { CommitOptionsSection } from './CommitOptionsSection';
@@ -89,21 +96,36 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const targetOptions = useMemo(() => getTargetOptions(settings.data?.allowedTargets || ['folder']), [settings.data]);
   const isGitBased = isGitProvider(type);
 
-  // Detect if repository uses GitHub App authentication
-  // Repositories using GitHub App have a connection reference in their spec,
-  // whereas PAT-based repositories store credentials directly
+  // Repositories that authenticate through a provisioning connection (GitHub App
+  // or OAuth app) have a connection reference in their spec; PAT-based
+  // repositories store credentials directly.
   const connectionName = data?.spec?.connection?.name;
-  const usesGitHubApp = Boolean(connectionName && isGitHubBased(type));
+  const usesConnection = Boolean(connectionName && supportsConnections(type));
+
+  // Offer connections of the same type as the referenced one, mirroring the
+  // wizard where the kind (app vs OAuth) is fixed before picking a connection.
+  // Reuses the same RTK Query cache entry as useConnectionOptions.
+  const [allConnections, allConnectionsLoading, allConnectionsError] = useConnectionList(
+    usesConnection ? {} : skipToken
+  );
+  const referencedConnectionType = allConnections?.find((c) => c.metadata?.name === connectionName)?.spec?.type;
+  // The referenced connection may have been deleted; fall back to every connection kind
+  // for this provider so a replacement can be picked.
+  const connectionTypes = referencedConnectionType
+    ? [referencedConnectionType]
+    : supportsConnections(type)
+      ? connectionTypesForProvider(type)
+      : [];
 
   const {
     options: connectionOptions,
     isLoading: connectionsLoading,
     connections,
-  } = useConnectionOptions(usesGitHubApp, isGitHubBased(type) ? type : undefined);
+  } = useConnectionOptions(usesConnection, connectionTypes);
 
   const selectedConnection = connections.find((c) => c.metadata?.name === watchedConnectionName);
   const connectionWebhookDisabled = Boolean(selectedConnection?.spec?.webhook?.disabled);
-  const emailWebhookDisabled = type === 'bitbucket' && !watch('email')?.trim();
+  const emailWebhookDisabled = type === 'bitbucket' && !usesConnection && !watch('email')?.trim();
 
   useEffect(() => {
     if (connectionWebhookDisabled) {
@@ -153,8 +175,19 @@ export function ConfigForm({ data }: ConfigFormProps) {
     setSubmitError(undefined);
     try {
       const spec = dataToSpec(form);
-      const signingKeySecret = deriveSigningKeySecret(form, Boolean(data?.secure?.commitSigningKey?.name));
-      await submitData(spec, form.token, signingKeySecret);
+      // A token copied from a connection is bound to the old connection/repository;
+      // removing it satisfies the backend's new-token-on-URL-change rule and makes
+      // the controller mint a fresh token from the (possibly new) connection.
+      const originalConnectionName = data?.spec?.connection?.name;
+      const originalUrl = getRemoteConfig(data?.spec)?.url;
+      const connectionChanged = Boolean(
+        originalConnectionName && form.connectionName && form.connectionName !== originalConnectionName
+      );
+      const urlChanged = Boolean(usesConnection && originalUrl && form.url !== originalUrl);
+      await submitData(spec, {
+        token: connectionChanged || urlChanged ? { remove: true } : form.token ? { create: form.token } : undefined,
+        commitSigningKey: deriveSigningKeySecret(form, Boolean(data?.secure?.commitSigningKey?.name)),
+      });
     } catch (err) {
       if (isFetchError(err)) {
         const fieldErrors = getConfigFormErrors(err.data);
@@ -213,14 +246,11 @@ export function ConfigForm({ data }: ConfigFormProps) {
         </Field>
         {gitFields && (
           <>
-            {usesGitHubApp ? (
+            {usesConnection ? (
               <Field
                 noMargin
-                label={t('provisioning.config-form.label-connection', 'GitHub App connection')}
-                description={t(
-                  'provisioning.config-form.description-connection',
-                  'Select the GitHub App connection to use'
-                )}
+                label={t('provisioning.config-form.label-connection', 'Connection')}
+                description={t('provisioning.config-form.description-connection', 'Select the connection to use')}
                 error={errors?.connectionName?.message}
                 invalid={!!errors.connectionName}
               >
@@ -229,6 +259,20 @@ export function ConfigForm({ data }: ConfigFormProps) {
                   control={control}
                   rules={{
                     required: t('provisioning.config-form.error-connection-required', 'Connection is required'),
+                    validate: (value) => {
+                      // Membership is unknowable while the list loads (Save is disabled then) or
+                      // after a load failure — fall back to server-side validation in those cases.
+                      if (!value || allConnectionsLoading || allConnectionsError) {
+                        return true;
+                      }
+                      return (
+                        connections.some((c) => c.metadata?.name === value) ||
+                        t(
+                          'provisioning.config-form.error-connection-missing',
+                          'This connection no longer exists. Select a replacement.'
+                        )
+                      );
+                    },
                   }}
                   render={({ field: { ref, onChange, ...field } }) => (
                     <Combobox
@@ -276,7 +320,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 />
               </Field>
             )}
-            {gitFields.tokenUserConfig && (
+            {gitFields.tokenUserConfig && !usesConnection && (
               <Field
                 noMargin
                 label={gitFields.tokenUserConfig.label}
@@ -293,7 +337,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 />
               </Field>
             )}
-            {gitFields.emailConfig && (
+            {gitFields.emailConfig && !usesConnection && (
               <Field
                 noMargin
                 label={gitFields.emailConfig.label}
@@ -312,7 +356,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 />
               </Field>
             )}
-            {hasTokenInstructions && <TokenPermissionsInfo type={type} url={watch('url')} />}
+            {hasTokenInstructions && !usesConnection && <TokenPermissionsInfo type={type} url={watch('url')} />}
             <Field
               noMargin
               label={gitFields.urlConfig.label}
@@ -527,7 +571,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
         )}
 
         <Stack gap={2}>
-          <Button type={'submit'} disabled={isLoading}>
+          <Button type={'submit'} disabled={isLoading || (usesConnection && allConnectionsLoading)}>
             {isLoading
               ? t('provisioning.config-form.button-saving', 'Saving...')
               : t('provisioning.config-form.button-save', 'Save')}

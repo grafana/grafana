@@ -287,11 +287,12 @@ func exportItem(ctx context.Context,
 
 	if err == nil {
 		var path string
-		path, err = repositoryResources.WriteResourceFileFromObject(ctx, item, resources.WriteOptions{
+		var size int
+		path, size, err = repositoryResources.WriteResourceFileFromObject(ctx, item, resources.WriteOptions{
 			Path: options.Path,
 			Ref:  options.Branch,
 		})
-		resultBuilder.WithPath(path)
+		resultBuilder.WithPath(path).WithBytes(size)
 	}
 
 	if errors.Is(err, resources.ErrAlreadyInRepository) {

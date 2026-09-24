@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -22,6 +23,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+func setCloudRBACRolesFlag(t *testing.T, enabled bool) {
+	t.Helper()
+	provider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagCloudRBACRoles: {
+			Key:            featuremgmt.FlagCloudRBACRoles,
+			Variants:       map[string]any{"on": enabled},
+			DefaultVariant: "on",
+		},
+	})
+}
 
 func TestRBACSync_SyncPermission(t *testing.T) {
 	type testCase struct {
@@ -230,6 +242,21 @@ func TestRBACSync_FetchPermissions(t *testing.T) {
 				"dashboards:create": {"dashboards:uid:*", "folders:uid:*"},
 			},
 		},
+		{
+			name: "access policy with K8s token permissions translates correctly",
+			identity: &authn.Identity{
+				ID: "ap-uid", Type: claims.TypeAccessPolicy, OrgID: 1,
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{
+						K8s: []string{"dashboard.grafana.app/dashboards:get"},
+					},
+				},
+			},
+			expectedPermissions: map[string][]string{
+				"dashboards:read": {"dashboards:uid:*", "folders:uid:*"},
+			},
+		},
 	}
 
 	for _, tt := range testCases {
@@ -245,6 +272,34 @@ func TestRBACSync_FetchPermissions(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRBACSync_FetchPermissions_AccessPolicyNoTokenPermissions(t *testing.T) {
+	acMock := &acmock.Mock{
+		GetUserPermissionsFunc: func(ctx context.Context, siu identity.Requester, o accesscontrol.Options) ([]accesscontrol.Permission, error) {
+			t.Fatal("GetUserPermissions should not be called for access policy subjects")
+			return nil, nil
+		},
+	}
+
+	s := &RBACSync{
+		ac:           acMock,
+		log:          log.NewNopLogger(),
+		tracer:       tracing.InitializeTracerForTest(),
+		permRegistry: permreg.ProvidePermissionRegistry(t),
+		mapper:       rbac.NewMapperRegistry(),
+	}
+
+	ident := &authn.Identity{
+		ID: "ap-uid", Type: claims.TypeAccessPolicy, OrgID: 1,
+		ClientParams: authn.ClientParams{
+			SyncPermissions: true,
+		},
+	}
+
+	err := s.SyncPermissionsHook(context.Background(), ident, &authn.Request{})
+	require.NoError(t, err)
+	require.Empty(t, ident.Permissions[ident.OrgID])
 }
 
 func TestRBACSync_SyncCloudRoles(t *testing.T) {
@@ -368,6 +423,7 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
+			setCloudRBACRolesFlag(t, true)
 			var called bool
 			s := &RBACSync{
 				ac: &acmock.Mock{
@@ -376,10 +432,9 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 						return tt.syncErr
 					},
 				},
-				log:      log.NewNopLogger(),
-				tracer:   tracing.InitializeTracerForTest(),
-				features: featuremgmt.WithFeatures(featuremgmt.FlagCloudRBACRoles),
-				cfg:      &setting.Cfg{StackID: tt.stackID},
+				log:    log.NewNopLogger(),
+				tracer: tracing.InitializeTracerForTest(),
+				cfg:    &setting.Cfg{StackID: tt.stackID},
 			}
 
 			req := &authn.Request{}
@@ -554,15 +609,10 @@ func TestRBACSync_cloudRolesToAddAndRemove(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			var features featuremgmt.FeatureToggles
-			if tt.includeSupportTicketRoles {
-				features = featuremgmt.WithFeatures(featuremgmt.FlagCloudRBACRoles)
-			} else {
-				features = featuremgmt.WithFeatures()
-			}
-			s := &RBACSync{features: features}
+			setCloudRBACRolesFlag(t, tt.includeSupportTicketRoles)
+			s := &RBACSync{}
 
-			rolesToAdd, rolesToRemove, err := s.cloudRolesToAddAndRemove(tt.identity)
+			rolesToAdd, rolesToRemove, err := s.cloudRolesToAddAndRemove(context.Background(), tt.identity)
 			assert.ErrorIs(t, tt.expectedErr, err)
 			assert.ElementsMatch(t, tt.expectedRolesToAdd, rolesToAdd)
 			assert.ElementsMatch(t, tt.expectedRolesToRemove, rolesToRemove)
@@ -623,6 +673,24 @@ func TestRBACSync_ClearUserPermissionCacheHook(t *testing.T) {
 			assert.Equal(t, tt.expectedCalled, called)
 		})
 	}
+}
+
+func TestRBACSync_ClearUserPermissionCacheHook_NilIdentity(t *testing.T) {
+	var called bool
+	s := &RBACSync{
+		ac: &acmock.Mock{
+			ClearUserPermissionCacheFunc: func(_ identity.Requester) {
+				called = true
+			},
+		},
+		log:    log.NewNopLogger(),
+		tracer: tracing.InitializeTracerForTest(),
+	}
+
+	require.NotPanics(t, func() {
+		s.ClearUserPermissionCacheHook(context.Background(), nil, &authn.Request{}, nil)
+	})
+	assert.False(t, called)
 }
 
 func TestRBACSync_translateK8sPermissions(t *testing.T) {

@@ -225,7 +225,7 @@ func (db *SQLite3) UpsertMultipleSQL(tableName string, keyCols, updateCols []str
 	valuesStr := strings.Builder{}
 	separatorVar = separator
 	colPlaceHolders := colPlaceHoldersStr.String()
-	for i := 0; i < count; i++ {
+	for i := range count {
 		if i == count-1 {
 			separatorVar = ""
 		}

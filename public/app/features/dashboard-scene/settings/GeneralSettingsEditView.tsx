@@ -2,7 +2,6 @@ import { type ChangeEvent } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { type SceneComponentProps, SceneObjectBase, behaviors, sceneGraph } from '@grafana/scenes';
 import { type TimeZone } from '@grafana/schema';
 import {
@@ -19,8 +18,10 @@ import {
   type WeekStart,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { GenAIDashDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIDashDescriptionButton';
-import { GenAIDashTitleButton } from 'app/features/dashboard/components/GenAI/GenAIDashTitleButton';
+import {
+  LazyGenAIDashDescriptionButton,
+  LazyGenAIDashTitleButton,
+} from 'app/features/dashboard/components/GenAI/LazyGenAIButtons';
 import { MoveProvisionedDashboardDrawer } from 'app/features/provisioning/components/Dashboards/MoveProvisionedDashboardDrawer';
 import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
 
@@ -272,7 +273,7 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
                 <Label htmlFor="title-input">
                   <Trans i18nKey="dashboard-settings.general.title-label">Title</Trans>
                 </Label>
-                <GenAIDashTitleButton onGenerate={(title) => model.onTitleChange(title)} />
+                <LazyGenAIDashTitleButton onGenerate={(title) => model.onTitleChange(title)} />
               </Stack>
             }
           >
@@ -290,7 +291,7 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
                 <Label htmlFor="description-input">
                   {t('dashboard-settings.general.description-label', 'Description')}
                 </Label>
-                <GenAIDashDescriptionButton onGenerate={(description) => model.onDescriptionChange(description)} />
+                <LazyGenAIDashDescriptionButton onGenerate={(description) => model.onDescriptionChange(description)} />
               </Stack>
             }
           >
@@ -388,8 +389,7 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
             >
               <Switch
                 id="preload-panels-dashboards-toggle"
-                // Reflect the effective value: when the dashboard has no explicit preload, show the instance default.
-                value={dashboard.state.preload ?? config.dashboardDefaultPreload}
+                value={dashboard.state.preload ?? false}
                 onChange={(e) => model.onPreloadChange(e.currentTarget.checked)}
               />
             </Field>

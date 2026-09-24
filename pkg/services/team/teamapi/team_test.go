@@ -12,15 +12,18 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
+	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	pref "github.com/grafana/grafana/pkg/services/preference"
-	"github.com/grafana/grafana/pkg/services/preference/preftest"
+	"github.com/grafana/grafana/pkg/services/preference/prefapi"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -257,7 +260,7 @@ func TestTeamAPIEndpoint_DeleteTeam(t *testing.T) {
 	})
 
 	t.Run("Prevents deleting a team that owns folders when only the teams redirect is enabled", func(t *testing.T) {
-		setTeamRedirectFlags(t, true, false)
+		setTeamRedirectFlag(t, true)
 		server := SetupAPITestServer(t, &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}}, func(tapi *TeamAPI) {
 			tapi.folderSearcher = &teamFolderSearchClient{response: &resourcepb.ResourceSearchResponse{TotalHits: 1}}
 		})
@@ -274,7 +277,7 @@ func TestTeamAPIEndpoint_DeleteTeam(t *testing.T) {
 	})
 
 	t.Run("Returns conflict when the Kubernetes admission check prevents deletion", func(t *testing.T) {
-		setTeamRedirectFlags(t, true, true)
+		setTeamRedirectFlag(t, true)
 		searcher := &teamFolderSearchClient{response: &resourcepb.ResourceSearchResponse{}}
 		server := SetupAPITestServer(t, &deleteTeamService{
 			FakeService: &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}},
@@ -285,6 +288,7 @@ func TestTeamAPIEndpoint_DeleteTeam(t *testing.T) {
 			),
 		}, func(tapi *TeamAPI) {
 			tapi.folderSearcher = searcher
+			tapi.iamFeatures = iamapi.Features{UsersAPI: true}
 		})
 		req := server.NewRequest(http.MethodDelete, fmt.Sprintf(detailTeamURL, 1), http.NoBody)
 		req = webtest.RequestWithSignedInUser(req, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
@@ -342,18 +346,13 @@ func (s *teamFolderSearchClient) Search(_ context.Context, request *resourcepb.R
 	return s.response, s.err
 }
 
-func setTeamRedirectFlags(t *testing.T, teamsRedirect, usersAPI bool) {
+func setTeamRedirectFlag(t *testing.T, teamsRedirect bool) {
 	t.Helper()
 	provider := memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
 		featuremgmt.FlagKubernetesTeamsRedirect: {
 			Key:            featuremgmt.FlagKubernetesTeamsRedirect,
 			DefaultVariant: "default",
 			Variants:       map[string]any{"default": teamsRedirect},
-		},
-		featuremgmt.FlagKubernetesUsersApi: {
-			Key:            featuremgmt.FlagKubernetesUsersApi,
-			DefaultVariant: "default",
-			Variants:       map[string]any{"default": usersAPI},
 		},
 	})
 	require.NoError(t, openfeature.SetProviderAndWait(provider))
@@ -366,8 +365,11 @@ func setTeamRedirectFlags(t *testing.T, teamsRedirect, usersAPI bool) {
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsRead with teams:id:1 scope
 // else return 403
 func TestTeamAPIEndpoint_GetTeamPreferences(t *testing.T) {
+	client := prefapi.NewMockK8sClient(t)
+	client.EXPECT().Get(mock.Anything, mock.Anything).Return(&preferences.PreferencesSpec{}, nil)
+
 	server := SetupAPITestServer(t, &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}}, func(hs *TeamAPI) {
-		hs.preferenceService = &preftest.FakePreferenceService{ExpectedPreference: &pref.Preference{}}
+		hs.preferenceK8sHandler = prefapi.NewK8sHandler(client, dashboards.NewFakeDashboardService(t), preferences.PreferencesSpec{})
 	})
 
 	request := func(teamID any, user *user.SignedInUser) (*http.Response, error) {
@@ -408,8 +410,11 @@ func TestTeamAPIEndpoint_GetTeamPreferences(t *testing.T) {
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsWrite with teams:id:1 scope
 // else return 403
 func TestTeamAPIEndpoint_UpdateTeamPreferences(t *testing.T) {
-	server := SetupAPITestServer(t, nil, func(hs *TeamAPI) {
-		hs.preferenceService = &preftest.FakePreferenceService{ExpectedPreference: &pref.Preference{}}
+	client := prefapi.NewMockK8sClient(t)
+	client.EXPECT().Update(mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	server := SetupAPITestServer(t, &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}}, func(hs *TeamAPI) {
+		hs.preferenceK8sHandler = prefapi.NewK8sHandler(client, dashboards.NewFakeDashboardService(t), preferences.PreferencesSpec{})
 	})
 
 	request := func(teamID int64, user *user.SignedInUser) (*http.Response, error) {

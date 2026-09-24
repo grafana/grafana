@@ -262,13 +262,13 @@ func (s *SocialGoogle) extractFromToken(ctx context.Context, _ *http.Client, tok
 
 	idToken := token.Extra("id_token")
 	if idToken == nil {
-		logger.Debug("No id_token found, defaulting to API access", "token", token)
+		logger.Debug("No id_token found, defaulting to API access")
 		return nil, nil
 	}
 
 	idTokenString, ok := idToken.(string)
 	if !ok {
-		logger.Warn("ID token is not a string", "token", fmt.Sprintf("%+v", idToken))
+		logger.Warn("ID token is not a string")
 		return nil, nil
 	}
 
@@ -286,7 +286,7 @@ func (s *SocialGoogle) extractFromToken(ctx context.Context, _ *http.Client, tok
 		// Otherwise, just extract the payload without signature validation
 		rawJSON, err = s.retrieveRawJWTPayload(idTokenString)
 		if err != nil {
-			logger.Warn("Error retrieving id_token", "error", err, "token", fmt.Sprintf("%+v", idToken))
+			logger.Warn("Error retrieving id_token", "error", err)
 			return nil, nil
 		}
 	}
@@ -372,10 +372,8 @@ func (s *SocialGoogle) isHDAllowed(hd string) error {
 		return nil
 	}
 
-	for _, allowedDomain := range s.info.AllowedDomains {
-		if hd == allowedDomain {
-			return nil
-		}
+	if slices.Contains(s.info.AllowedDomains, hd) {
+		return nil
 	}
 
 	return errutil.Forbidden("the hd claim found in the ID token is not present in the allowed domains", errutil.WithPublicMessage("Invalid domain"))

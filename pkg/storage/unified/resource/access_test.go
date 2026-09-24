@@ -104,6 +104,7 @@ func TestAuthzLimitedClient_Check(t *testing.T) {
 		expected bool
 	}{
 		{"dashboard.grafana.app", "dashboards", false},
+		{"dashboard.grafana.app", "variables", false},
 		{"folder.grafana.app", "folders", false},
 		{"unknown.group", "unknown.resource", true},
 	}
@@ -131,6 +132,7 @@ func TestAuthzLimitedClient_Compile(t *testing.T) {
 		expected bool
 	}{
 		{"dashboard.grafana.app", "dashboards", false},
+		{"dashboard.grafana.app", "variables", false},
 		{"folder.grafana.app", "folders", false},
 		{"unknown.group", "unknown.resource", true},
 	}
@@ -252,6 +254,7 @@ func TestValidateAuthzOptions(t *testing.T) {
 
 	for _, value := range []string{
 		"dashboard.grafana.app/dashboards",
+		"dashboard.grafana.app/variables",
 		"folder.grafana.app/folders",
 		"iam.grafana.app/users",
 		"iam.grafana.app/teams",
@@ -316,5 +319,28 @@ func TestAuthzLimitedClientExemptionGate(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, !tt.isEnforced, check.Allowed)
 		})
+	}
+}
+
+func TestBatchSizeBucket(t *testing.T) {
+	// Ranges below assume this chunk size; revisit them before changing it.
+	require.Equal(t, 50, batchCheckChunkSize)
+
+	for _, tt := range []struct {
+		size int
+		want string
+	}{
+		{0, "1"},
+		{1, "1"},
+		{2, "2-10"},
+		{10, "2-10"},
+		{11, "11-25"},
+		{25, "11-25"},
+		{26, "26-50"},
+		{50, "26-50"},
+		{51, "51+"},
+		{500, "51+"},
+	} {
+		require.Equal(t, tt.want, batchSizeBucket(tt.size), "size %d", tt.size)
 	}
 }

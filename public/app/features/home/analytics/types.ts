@@ -25,6 +25,19 @@ export interface ClearHistoryClicked extends EventProperty {
   dashboard_count: number;
 }
 
+export interface SolutionFilterChanged extends EventProperty {
+  /** Stable id of the solution whose card scope changed. */
+  solution: string;
+  /** Whether the user saved a scope or cleared it. */
+  change: 'saved' | 'cleared';
+  /**
+   * Comma-separated names of the scope dimensions set after the change, in the solution's own terms
+   * (Kubernetes: cluster, namespaces, nodes); empty when cleared. Names only: the values are
+   * customer data and are never reported.
+   */
+  customized: string;
+}
+
 interface CtaClickedBase extends EventProperty {
   /** Which homepage widget fired the CTA. */
   surface: string;
@@ -89,7 +102,7 @@ export type CtaClicked = EventVariants<
     }
   | {
       surface: 'recommendations';
-      action: 'enable' | 'setup';
+      action: 'enable' | 'setup' | 'learn_more';
       placement: 'card' | 'pill';
       /** Stable id of the recommendation whose Enable CTA was clicked. */
       recommendation_id: string;
@@ -129,6 +142,16 @@ export type CtaClicked = EventVariants<
         }
       | {
           action: 'open_guide';
+          placement: 'card';
+          solution: string;
+        }
+      | {
+          action: 'open_solution_filter';
+          placement: 'card';
+          solution: string;
+        }
+      | {
+          action: 'open_solution' | 'view_alerts' | 'enable' | 'setup' | 'learn_more';
           placement: 'card';
           solution: string;
         }

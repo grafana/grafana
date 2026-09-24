@@ -26,6 +26,7 @@ export interface DashboardSidebarState extends SceneObjectState {
  * create circular dependencies through DashboardScene).
  */
 export interface DashboardSidebarLike extends SceneObject<DashboardSidebarState> {
+  beginPaneRequest(): AbortSignal;
   enableSelection(): void;
   disableSelection(): void;
   clearSelection(noEvent?: boolean): void;
@@ -37,7 +38,7 @@ export interface DashboardSidebarLike extends SceneObject<DashboardSidebarState>
   redoAction(): void;
   goBackToPrevious(): void;
   fixSelectionOfRemovedObject(): void;
-  addNewPanel(target: SceneObject | undefined): void;
+  addNewPanel(target: SceneObject | undefined): void | Promise<void>;
   pastePanel(target: SceneObject | undefined): void;
   setPanelEditAction(editAction: DashboardEditActionEvent): void;
 }

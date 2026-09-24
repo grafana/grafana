@@ -188,6 +188,127 @@
     },
     {
       "type": "stat",
+      "title": "Panel with multiple new-format value maps to consolidate",
+      "id": 10,
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "range",
+              "options": {
+                "from": 0,
+                "to": 10,
+                "result": {
+                  "text": "Low"
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "a": {
+                  "text": "Alpha"
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "b": {
+                  "text": "Beta"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Panel with legacy value mapping whose value is null",
+      "id": 11,
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "id": 0,
+              "type": 1,
+              "value": null,
+              "text": "Skipped null value"
+            },
+            {
+              "id": 1,
+              "type": 1,
+              "value": "7",
+              "text": "Seven"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Panel with negative threshold step and value below the first step",
+      "id": 12,
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": -1
+              },
+              {
+                "color": "blue",
+                "value": 10
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "id": 0,
+              "type": 1,
+              "value": "above",
+              "text": "5"
+            },
+            {
+              "id": 1,
+              "type": 1,
+              "value": "below",
+              "text": "-5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Panel with empty threshold steps uses the fallback color",
+      "id": 13,
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": []
+          },
+          "mappings": [
+            {
+              "id": 0,
+              "type": 1,
+              "value": "x",
+              "text": "5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "stat",
       "title": "Panel with empty mappings array - should return null",
       "id": 9,
       "fieldConfig": {

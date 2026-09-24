@@ -57,8 +57,9 @@ func TestDocumentMapping(t *testing.T) {
 	fmt.Printf("DOC: fields %d\n", len(doc.Fields))
 	fmt.Printf("DOC: size %d\n", doc.Size())
 	// created and updated are int64 standard fields mapped as numbers, so they
-	// are indexed alongside the string standard fields.
-	require.Equal(t, 21, len(doc.Fields))
+	// are indexed alongside the string standard fields. _rv is stored rather than
+	// indexed, but still counts as a field on the document.
+	require.Equal(t, 22, len(doc.Fields))
 	require.False(t, doc.HasComposite(), "_all composite field should be disabled")
 }
 

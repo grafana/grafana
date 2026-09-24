@@ -2,7 +2,6 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 const ALERTMANAGER_IMPORTS_DELETE = 'notifications.alerting.grafana.app/alertmanagerimports:delete';
-const INHIBITION_RULES_WRITE = 'alert.notifications.inhibition-rules:write';
 
 // Promoting authorizes create/write on every resource type the import contains, which isn't known until
 // the dry-run has parsed it. Any one of them opens the modal; the dry-run reports what's actually missing.
@@ -11,7 +10,7 @@ const PROMOTE_ACTIONS = [
   AccessControlAction.ActionAlertingManagedRoutesCreate,
   AccessControlAction.AlertingTemplatesWrite,
   AccessControlAction.AlertingTimeIntervalsWrite,
-  INHIBITION_RULES_WRITE,
+  AccessControlAction.AlertingInhibitionRulesWrite,
 ];
 
 export interface StagedConfigPermissions {

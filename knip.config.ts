@@ -33,6 +33,9 @@ const config: KnipConfig = {
     // vendored temporarily
     'packages/grafana-data/src/datetime/easytz.js',
     'packages/grafana-data/src/datetime/luxon_moment_compat/luxon.js',
+    // TODO: Remove once Rspack replaces Webpack.
+    'public/app/core/utils/CorsWorker.rspack.ts',
+    'public/app/core/utils/CorsSharedWorker.rspack.ts',
   ],
   ignoreBinaries: ['jq', 'make', 'shellcheck'],
   tags: ['-lintignore'],
@@ -95,6 +98,9 @@ const config: KnipConfig = {
       webpack: {
         config: ['scripts/webpack/webpack.dev.ts', 'scripts/webpack/webpack.prod.ts'],
       },
+      rspack: {
+        config: ['scripts/rspack/rspack.dev.ts', 'scripts/rspack/rspack.prod.ts'],
+      },
       postcss: {
         config: 'scripts/webpack/postcss.config.js',
       },
@@ -128,12 +134,7 @@ const config: KnipConfig = {
     // TODO `grafana-alerting` should probably have its own storybook (like `grafana-flamegraph`)
     'packages/grafana-alerting': {
       entry: defaultEntries,
-      ignoreDependencies: [
-        ...packageIgnoreDeps,
-        '@storybook/addon-docs',
-        '@storybook/react-webpack5',
-        '@storybook/react',
-      ],
+      ignoreDependencies: [...packageIgnoreDeps, '@storybook/addon-docs', '@storybook/react'],
       storybook: true,
     },
     'packages/grafana-api-clients': {
@@ -143,6 +144,9 @@ const config: KnipConfig = {
       // this package contains shared code that isn't immediately used by the package
       webpack: false,
       ignoreDependencies: ['.*'],
+    },
+    'packages/grafana-plugin-compat': {
+      ignoreDependencies: packageIgnoreDeps,
     },
   },
 };

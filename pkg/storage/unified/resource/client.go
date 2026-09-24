@@ -17,10 +17,14 @@ import (
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/grpcutils"
@@ -177,6 +181,15 @@ type RemoteResourceClientConfig struct {
 	IsDev            bool
 	// TokenExchanger overrides the default exchange client when non-nil.
 	TokenExchanger authnlib.TokenExchanger
+
+	// RequireCallerIdentity decides, per request, whether to fail a user request the client
+	// cannot carry an identity for rather than calling storage as the service. Nil defers to
+	// the unifiedStorageClient.requireCallerIdentity feature flag.
+	RequireCallerIdentity func(context.Context) bool
+
+	// CarriesCallerIdentity marks a client whose TokenExchanger already puts the caller in
+	// the access token, so a missing ID token is not an identity drop.
+	CarriesCallerIdentity bool
 }
 
 func NewRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface, indexConn grpc.ClientConnInterface, cfg RemoteResourceClientConfig) (ResourceClient, error) {
@@ -221,38 +234,103 @@ func NewAuthnGrpcClientInterceptor(tracer trace.Tracer, cfg RemoteResourceClient
 		authnlib.WithClientInterceptorTracer(tracer),
 		authnlib.WithClientInterceptorNamespace(cfg.Namespace),
 		authnlib.WithClientInterceptorAudience(cfg.Audiences),
-		authnlib.WithClientInterceptorIDTokenExtractor(IDTokenExtractor),
+		authnlib.WithClientInterceptorIDTokenExtractor(newIDTokenExtractor(cfg)),
 	), nil
 }
 
 var authLogger = log.New("resource-client-auth-interceptor")
 
-func IDTokenExtractor(ctx context.Context) (string, error) {
-	if identity.IsServiceIdentity(ctx) {
+// How the caller was represented on an outgoing storage call.
+const (
+	identityModeService         = "service"          // internal service identity, or an access policy calling on its own behalf
+	identityModeIDToken         = "id_token"         // user, ID token forwarded alongside the service token
+	identityModeOnBehalfOf      = "obo"              // user, carried inside the exchanged access token
+	identityModeFallbackService = "fallback_service" // user identity dropped; storage authorizes the service instead
+	identityModeDenied          = "denied"           // user identity dropped and the fallback is switched off
+)
+
+// Package level so the store and index clients sharing an interceptor do not register twice.
+var clientIdentityTotal = promauto.NewCounterVec(prometheus.CounterOpts{
+	Name: "grafana_unified_storage_client_identity_total",
+	Help: "Outgoing unified storage calls by how the caller's identity was carried.",
+}, []string{"mode"})
+
+// IDTokenExtractor keeps the service-identity fallback unconditionally. Used by the in-process
+// client, whose token never leaves the process and whose on-prem users have no ID token.
+var IDTokenExtractor = newIDTokenExtractor(RemoteResourceClientConfig{
+	RequireCallerIdentity: func(context.Context) bool { return false },
+})
+
+// requireCallerIdentityFlag reads the deny policy from OpenFeature per request: the provider is
+// only reachable after the client is built, and targeting is per namespace.
+func requireCallerIdentityFlag(ctx context.Context) bool {
+	return openfeature.NewDefaultClient().Boolean(ctx,
+		featuremgmt.FlagUnifiedStorageClientRequireCallerIdentity, false,
+		openfeature.TransactionContext(ctx))
+}
+
+func newIDTokenExtractor(cfg RemoteResourceClientConfig) func(context.Context) (string, error) {
+	requireCallerIdentity := cfg.RequireCallerIdentity
+	if requireCallerIdentity == nil {
+		requireCallerIdentity = requireCallerIdentityFlag
+	}
+
+	return func(ctx context.Context) (string, error) {
+		if identity.IsServiceIdentity(ctx) {
+			clientIdentityTotal.WithLabelValues(identityModeService).Inc()
+			return "", nil
+		}
+
+		info, ok := types.AuthInfoFrom(ctx)
+		if !ok {
+			return "", fmt.Errorf("no claims found")
+		}
+
+		switch {
+		// If the identity is the service identity, we don't need to extract the ID token
+		case info.GetIdentityType() == types.TypeAccessPolicy:
+			clientIdentityTotal.WithLabelValues(identityModeService).Inc()
+			return "", nil
+		case len(info.GetIDToken()) != 0:
+			clientIdentityTotal.WithLabelValues(identityModeIDToken).Inc()
+			return info.GetIDToken(), nil
+		case cfg.CarriesCallerIdentity:
+			clientIdentityTotal.WithLabelValues(identityModeOnBehalfOf).Inc()
+			return "", nil
+		}
+
+		// A user request with nothing to forward. The exchanged service token is all storage
+		// sees, so it authorizes the service across every namespace rather than the user.
+		logger := authLogger.FromContext(ctx).New(
+			"subject", info.GetSubject(),
+			"uid", info.GetUID(),
+			"namespace", info.GetNamespace(),
+			"callerService", extraClaim(info, authnlib.ServiceIdentityKey),
+			"originService", extraClaim(info, authnlib.InnermostServiceIdentityKey),
+		)
+
+		if requireCallerIdentity(ctx) {
+			clientIdentityTotal.WithLabelValues(identityModeDenied).Inc()
+			logger.Error("refusing to call resource store as the service for a user request without an id token")
+			return "", status.Error(codes.PermissionDenied, "caller identity is required to call unified storage")
+		}
+
+		clientIdentityTotal.WithLabelValues(identityModeFallbackService).Inc()
+		logger.Warn("calling resource store as the service without id token or marking it as the service identity")
+
 		return "", nil
 	}
+}
 
-	info, ok := types.AuthInfoFrom(ctx)
-	if !ok {
-		return "", fmt.Errorf("no claims found")
+// extraClaim reads a single-valued claim the authenticator attached to the request. Used to
+// name the services if possible in the caller's actor chain, so a dropped identity can be traced back to
+// both the service that sent it and the one that started the chain.
+// Can be removed after the rollout and cleanup of the ID token extractor.
+func extraClaim(info types.AuthInfo, key string) string {
+	if v := info.GetExtra()[key]; len(v) > 0 {
+		return v[0]
 	}
-
-	// If the identity is the service identity, we don't need to extract the ID token
-	if info.GetIdentityType() == types.TypeAccessPolicy {
-		return "", nil
-	}
-
-	if token := info.GetIDToken(); len(token) != 0 {
-		return token, nil
-	}
-
-	authLogger.FromContext(ctx).Warn(
-		"calling resource store as the service without id token or marking it as the service identity",
-		"subject", info.GetSubject(),
-		"uid", info.GetUID(),
-	)
-
-	return "", nil
+	return ""
 }
 
 func ProvideInProcExchanger() authnlib.StaticTokenExchanger {

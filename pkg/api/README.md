@@ -82,5 +82,14 @@ They can observe its output into the `public/api-merged.json` and `public/openap
 
 Finally, they can browser and try out both the OpenAPI v2 and v3 via the Swagger UI editor (served by the grafana server) by navigating to `/swagger`.
 
-If there are any issues generating the specifications (e.g., diff containing unrelated changes to your PR or unusually large diff), please run the following command to ensure your Swagger version is up to date, then re-run the make commands.
-- `go tool github.com/go-swagger/go-swagger/cmd/swagger@v0.30.6`
+The `go-swagger` version is pinned in `.citools/src/swagger/go.mod` and the `make` targets build it from there, so there is nothing to install manually. If there are any issues generating the specifications (e.g., diff containing unrelated changes to your PR or unusually large diff), check that you are running the pinned version:
+
+```bash
+GOWORK=off go tool -modfile=.citools/src/swagger/go.mod github.com/go-swagger/go-swagger/cmd/swagger version
+```
+
+To upgrade the pinned version, run the following from the repository root and commit the resulting changes under `.citools/`:
+
+```bash
+.citools/install.sh github.com/go-swagger/go-swagger/cmd/swagger@<version>
+```

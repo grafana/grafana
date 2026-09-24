@@ -13,12 +13,6 @@ export enum SampleUnit {
   Nanoseconds = 'ns',
 }
 
-export enum SelectedView {
-  TopTable = 'topTable',
-  FlameGraph = 'flameGraph',
-  Both = 'both',
-}
-
 export enum ViewMode {
   Single = 'single',
   Split = 'split',

@@ -42,12 +42,7 @@ func ProvideService(
 }
 
 func (s *Service) isManaged(ctx context.Context, pluginID string) bool {
-	for _, managedPlugin := range s.managedPluginsManager.ManagedPlugins(ctx) {
-		if managedPlugin == pluginID {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(s.managedPluginsManager.ManagedPlugins(ctx), pluginID)
 }
 
 func (s *Service) isProvisioned(ctx context.Context, pluginID string) bool {

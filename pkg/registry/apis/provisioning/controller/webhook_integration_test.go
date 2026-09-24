@@ -80,12 +80,12 @@ func TestIntegrationWebhookController_ReconcileLifecycle(t *testing.T) {
 
 				nextID++
 				created := &github.Hook{
-					ID:     github.Ptr(nextID),
+					ID:     new(nextID),
 					Events: in.Events,
-					Active: github.Ptr(in.GetActive()),
+					Active: new(in.GetActive()),
 					Config: &github.HookConfig{
-						URL:         github.Ptr(url),
-						ContentType: github.Ptr(in.GetConfig().GetContentType()),
+						URL:         new(url),
+						ContentType: new(in.GetConfig().GetContentType()),
 					},
 				}
 				hooks = append(hooks, created)
@@ -119,10 +119,10 @@ func TestIntegrationWebhookController_ReconcileLifecycle(t *testing.T) {
 				for _, h := range hooks {
 					if h.GetID() == id {
 						h.Events = edit.Events
-						h.Active = github.Ptr(edit.GetActive())
+						h.Active = new(edit.GetActive())
 						h.Config = &github.HookConfig{
-							URL:         github.Ptr(edit.GetConfig().GetURL()),
-							ContentType: github.Ptr("json"),
+							URL:         new(edit.GetConfig().GetURL()),
+							ContentType: new("json"),
 						}
 						matched = h
 						break
@@ -157,7 +157,7 @@ func TestIntegrationWebhookController_ReconcileLifecycle(t *testing.T) {
 	// paths match mockhub's matchers). It satisfies repository.WebhookClient.
 	factory := githubrepo.ProvideFactory()
 	factory.Client = mockHandler
-	ghClient, err := factory.New(context.Background(), owner, repoName, "")
+	ghClient, err := factory.New(owner, repoName, "")
 	require.NoError(t, err)
 
 	// A repo whose spec enables a workflow so the hooks actually register a webhook.

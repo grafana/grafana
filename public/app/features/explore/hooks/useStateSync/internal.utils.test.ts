@@ -6,7 +6,7 @@ import {
   type ExploreUrlState,
 } from '@grafana/data';
 import { setDataSourceSrv, setTemplateSrv, type DataSourceSrv, type TemplateSrv } from '@grafana/runtime';
-import { initDataSourceInstanceSettings, setDataSourcePluginImporter } from '@grafana/runtime/internal';
+import { setDataSourceInstanceSettings, setDataSourcePluginImporter } from '@grafana/runtime/internal';
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { setLastUsedDatasourceUID } from 'app/core/utils/explore';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -100,7 +100,7 @@ const ORG_ID = 1;
 // cached for the lifetime of the module, so re-seeding a different class for a uid that an earlier
 // test already loaded would have no effect.
 function seed({ defaultName = DEFAULT_DS_NAME } = {}) {
-  initDataSourceInstanceSettings(dsSettings, defaultName);
+  setDataSourceInstanceSettings(dsSettings, defaultName);
   setDataSourcePluginImporter(
     jest.fn().mockImplementation((meta: DataSourcePluginMeta) =>
       Promise.resolve({

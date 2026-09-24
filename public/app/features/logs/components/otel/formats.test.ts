@@ -278,7 +278,7 @@ describe('getSuggestedFieldsForLogs', () => {
     expect(result).toEqual([]);
   });
 
-  test('matches suggested fields against labels case-insensitively', () => {
+  test('matches suggested fields against labels without changing them', () => {
     const logs = [
       createLogLine({
         labels: { Service_Name: 'svc', MSG: 'hello', APP: 'web', TraceID: 'abc' },
@@ -286,9 +286,9 @@ describe('getSuggestedFieldsForLogs', () => {
       }),
     ];
     const result = getSuggestedFieldsForLogs(logs);
-    expect(result).toContain('service_name');
-    expect(result).toContain('msg');
-    expect(result).toContain('app');
-    expect(result).toContain('traceid');
+    expect(result).toContain('Service_Name');
+    expect(result).toContain('MSG');
+    expect(result).toContain('APP');
+    expect(result).toContain('TraceID');
   });
 });

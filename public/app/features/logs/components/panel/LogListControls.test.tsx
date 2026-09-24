@@ -27,6 +27,8 @@ const WRAP_JSON_TOOLTIP_COPY = 'Enable line wrapping and prettify JSON';
 const WRAP_JSON_LABEL_COPY = 'Wrap JSON';
 const WRAP_DISABLE_LABEL_COPY = 'Disable line wrapping';
 const ENABLE_HIGHLIGHTING_LABEL_COPY = 'Enable highlighting';
+const HIGHLIGHTING_UNAVAILABLE_TOOLTIP_COPY =
+  'Highlighting is disabled because these logs are too large and could impact performance';
 const EXPANDED_LABEL_COPY = 'Expanded';
 const COLLAPSED_LABEL_COPY = 'Collapsed';
 const SHOW_UNIQUE_LABELS_LABEL_COPY = 'Show unique labels';
@@ -435,6 +437,17 @@ describe('LogListControls', () => {
     await userEvent.click(screen.getByLabelText(ENABLE_HIGHLIGHTING_LABEL_COPY));
     expect(onLogOptionsChange).toHaveBeenCalledTimes(1);
     expect(onLogOptionsChange).toHaveBeenCalledWith('syntaxHighlighting', true);
+  });
+
+  test('Disables the highlighting control when logs are too large', () => {
+    const oversizedLog = createLogRow({ entry: 'e'.repeat(20001), labels: { app: 'api' } });
+    render(
+      <LogListContextProvider {...contextProps} logs={[oversizedLog]} syntaxHighlighting>
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+    expect(screen.getByLabelText(HIGHLIGHTING_UNAVAILABLE_TOOLTIP_COPY)).toBeDisabled();
+    expect(screen.queryByLabelText(ENABLE_HIGHLIGHTING_LABEL_COPY)).not.toBeInTheDocument();
   });
 
   test('Controls unique labels', async () => {

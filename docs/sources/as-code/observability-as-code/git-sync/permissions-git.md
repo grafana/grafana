@@ -123,7 +123,7 @@ When the repository allows writes and branch protection is not enabled, Git Sync
 
 ### Pull request mode
 
-When branch protection is enabled at your Git provider, Git Sync creates pull requests instead of committing directly. Changes require review and approval before merging to the main branch.
+When branch protection is enabled at your Git provider, Git Sync prompts you to go create pull requests in your Git repository instead of committing directly. Changes require review and approval before merging to the main branch.
 
 **Use when**: Changes require review and approval, such as in production environments or when multiple teams collaborate on dashboards.
 

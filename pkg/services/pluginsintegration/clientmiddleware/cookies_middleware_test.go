@@ -126,6 +126,18 @@ func TestCookiesMiddleware(t *testing.T) {
 			require.EqualValues(t, "cookie2=", cdt.QueryDataReq.Headers[cookieHeaderName])
 		})
 
+		t.Run("Should forward cookies when calling QueryChunkedData", func(t *testing.T) {
+			err = cdt.MiddlewareHandler.QueryChunkedData(req.Context(), &backend.QueryChunkedDataRequest{
+				PluginContext: pluginCtx,
+				Headers:       map[string]string{otherHeader: "test"},
+			}, nopChunkedWriter{})
+			require.NoError(t, err)
+			require.NotNil(t, cdt.QueryChunkedDataReq)
+			require.Len(t, cdt.QueryChunkedDataReq.Headers, 2)
+			require.Equal(t, "test", cdt.QueryChunkedDataReq.Headers[otherHeader])
+			require.EqualValues(t, "cookie2=", cdt.QueryChunkedDataReq.Headers[cookieHeaderName])
+		})
+
 		t.Run("Should forward cookies when calling CallResource", func(t *testing.T) {
 			err = cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
 				PluginContext: pluginCtx,

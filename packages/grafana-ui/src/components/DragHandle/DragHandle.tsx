@@ -7,10 +7,10 @@ export type DragHandlePosition = 'middle' | 'start' | 'end';
 export const getDragStyles = (theme: GrafanaTheme2, handlePosition?: DragHandlePosition) => {
   const position = handlePosition || 'middle';
   const baseColor = theme.colors.emphasize(theme.colors.background.secondary, 0.15);
-  const hoverColor = theme.colors.accent.background;
+  const hoverColor = theme.colors.accent.subtleBackground;
   const clickTargetSize = theme.spacing(1);
   const handlebarThickness = 2;
-  const handlebarWidth = theme.spacing(4);
+  const handlebarWidth = theme.spacing(6);
   let verticalOffset = '50%';
   let horizontalOffset = '50%';
 

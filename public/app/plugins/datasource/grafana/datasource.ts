@@ -208,7 +208,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
 
     const annotation = options.annotation as unknown as AnnotationQuery<GrafanaAnnotationQuery>;
     const target = annotation.target!;
-    const params: any = {
+    const params: Record<string, unknown> = {
       from: options.range.from.valueOf(),
       to: options.range.to.valueOf(),
       limit: target.limit,
@@ -234,7 +234,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
       const templateSrv = getTemplateSrv();
       const delimiter = '__delimiter__';
       const tags = [];
-      for (const t of params.tags) {
+      for (const t of target.tags) {
         const renderedValues = templateSrv.replace(t, {}, (value: string | string[]) => {
           if (typeof value === 'string') {
             return value;

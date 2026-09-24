@@ -1,6 +1,20 @@
 name: Create Release Tag
 
 on:
+  workflow_call:
+    inputs:
+      tag:
+        description: 'Tag name (e.g. v10.0.0)'
+        required: true
+        type: string
+      message:
+        description: 'Tag message (defaults to tag name if not provided)'
+        required: false
+        type: string
+      commit:
+        description: 'Commit SHA to tag'
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
       tag:

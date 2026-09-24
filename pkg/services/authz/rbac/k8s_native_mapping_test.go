@@ -172,3 +172,56 @@ func TestK8sNativeMapping_DifferentGroups(t *testing.T) {
 	assert.Equal(t, "app1.ext.grafana.app/widgets:get", action1)
 	assert.Equal(t, "app2.ext.grafana.app/widgets:get", action2)
 }
+
+func TestActionVerb(t *testing.T) {
+	for verb, want := range map[string]string{
+		utils.VerbGet:              "get",
+		utils.VerbList:             "get",
+		utils.VerbWatch:            "get",
+		utils.VerbCreate:           "create",
+		utils.VerbUpdate:           "update",
+		utils.VerbPatch:            "update",
+		utils.VerbDelete:           "delete",
+		utils.VerbDeleteCollection: "delete",
+		utils.VerbGetPermissions:   "get_permissions",
+		utils.VerbSetPermissions:   "set_permissions",
+	} {
+		got, ok := ActionVerb(verb)
+		assert.True(t, ok, "verb %q names no action", verb)
+		assert.Equal(t, want, got, "verb %q", verb)
+	}
+
+	for _, verb := range []string{"", "read", "GET", "unknown"} {
+		_, ok := ActionVerb(verb)
+		assert.False(t, ok, "verb %q should name no action", verb)
+	}
+}
+
+// Every request verb Grafana recognizes needs an action name. A verb missing
+// here is not an error anywhere: a permission declared for it simply grants
+// nothing, and the access check that would have used it silently denies.
+func TestActionVerbCoversEveryValidVerb(t *testing.T) {
+	for _, verb := range []string{
+		utils.VerbGet, utils.VerbList, utils.VerbWatch, utils.VerbCreate, utils.VerbUpdate,
+		utils.VerbPatch, utils.VerbDelete, utils.VerbDeleteCollection,
+		utils.VerbGetPermissions, utils.VerbSetPermissions,
+	} {
+		require.True(t, utils.IsValidVerb(verb), "test list is stale: %q is not a valid verb", verb)
+		_, ok := ActionVerb(verb)
+		assert.True(t, ok, "valid verb %q names no RBAC action", verb)
+	}
+
+	for verb := range rbacVerbs {
+		assert.True(t, utils.IsValidVerb(verb),
+			"verb %q names an RBAC action but is not a valid request verb", verb)
+	}
+}
+
+func TestActionVerbs(t *testing.T) {
+	want := []string{"create", "delete", "get", "get_permissions", "set_permissions", "update"}
+	assert.Equal(t, want, ActionVerbs(), "sorted and deduplicated")
+
+	// The caller must not be able to edit the shared table.
+	ActionVerbs()[0] = "mutated"
+	assert.Equal(t, want, ActionVerbs())
+}

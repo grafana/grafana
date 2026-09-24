@@ -30,7 +30,7 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 
 	t.Run("committed write round-trips through NATS with every field intact", func(t *testing.T) {
 		ctx, pub, sub := startNatsRoundTrip(t)
-		backend := &kvStorageBackend{log: log.NewNopLogger(), eventPublisher: pub}
+		backend := newTestKVStorageBackend(pub)
 		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, nil, log.NewNopLogger())
 		out := notifier.Watch(ctx, WatchOptions{})
 
@@ -42,6 +42,9 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 			ResourceVersion: 42,
 			Action:          DataActionUpdated,
 			Folder:          "folder-1",
+			PreviousRV:      41,
+			PreviousAction:  DataActionCreated,
+			PreviousFolder:  "old-folder",
 		}
 
 		// Interest propagates asynchronously; core NATS drops messages with no
@@ -57,20 +60,12 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 			}
 		}, 5*time.Second, time.Millisecond)
 
-		assert.Equal(t, event.Group, got.Group)
-		assert.Equal(t, event.Resource, got.Resource)
-		assert.Equal(t, event.Namespace, got.Namespace)
-		assert.Equal(t, event.Name, got.Name)
-		assert.Equal(t, event.ResourceVersion, got.ResourceVersion)
-		assert.Equal(t, event.Folder, got.Folder)
-		assert.Equal(t, DataActionUpdated, got.Action)
-		// WatchNotification carries no previous RV.
-		assert.Equal(t, int64(0), got.PreviousRV)
+		assert.Equal(t, event, got)
 	})
 
 	t.Run("every action type survives the marshal/transport/unmarshal round trip", func(t *testing.T) {
 		ctx, pub, sub := startNatsRoundTrip(t)
-		backend := &kvStorageBackend{log: log.NewNopLogger(), eventPublisher: pub}
+		backend := newTestKVStorageBackend(pub)
 		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, nil, log.NewNopLogger())
 		out := notifier.Watch(ctx, WatchOptions{})
 
@@ -85,6 +80,8 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 				Name:            "p-1",
 				ResourceVersion: 1,
 				Action:          action,
+				PreviousRV:      1,
+				PreviousAction:  action,
 			})
 			// Watch subscribes to the whole change stream, so a late warm-up
 			// duplicate (establishInterest publishes many and drains only on a
@@ -98,12 +95,14 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 				}
 			}
 			assert.Equal(t, action, got.Action, "action %q must survive the round trip", action)
+			assert.Equal(t, action, got.PreviousAction)
+			assert.Empty(t, got.PreviousFolder)
 		}
 	})
 
 	t.Run("publisher targets the resource-specific subject a per-resource consumer subscribes to", func(t *testing.T) {
 		ctx, pub, sub := startNatsRoundTrip(t)
-		backend := &kvStorageBackend{log: log.NewNopLogger(), eventPublisher: pub}
+		backend := newTestKVStorageBackend(pub)
 
 		const namespace = "default"
 		gvr := schema.GroupVersionResource{Group: "provisioning.grafana.app", Resource: "repositories"}
@@ -142,7 +141,7 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 
 	t.Run("malformed and unknown-type notifications are dropped, not delivered", func(t *testing.T) {
 		ctx, pub, sub := startNatsRoundTrip(t)
-		backend := &kvStorageBackend{log: log.NewNopLogger(), eventPublisher: pub}
+		backend := newTestKVStorageBackend(pub)
 		dropped := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "nats_notifier_dropped_total"}, []string{"reason"})
 		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, dropped, log.NewNopLogger())
 		out := notifier.Watch(ctx, WatchOptions{})
