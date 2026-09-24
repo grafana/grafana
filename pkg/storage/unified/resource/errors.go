@@ -118,16 +118,11 @@ func ErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
 	return GetError(respErr)
 }
 
-// StatusErrorFromResponse converts embedded results, gRPC errors and errors
-// implementing [apierrors.APIStatus] to a Kubernetes [apierrors.StatusError] for
-// API-facing callers. The transport error takes precedence over respErr; if both
-// are nil, it returns nil. Context cancellation and deadline errors map to HTTP
-// 499 and 504, respectively. Wrapped APIStatus and gRPC errors are recognized.
-//
-// Unrecognized errors are returned unchanged so response writers can apply their
-// own sanitization and logging rather than exposing internal error messages.
-// Unlike [ErrorFromResponse], recognized errors are replaced. Callers that need
-// the original error chain or gRPC retry classification must use that helper instead.
+// StatusErrorFromResponse derives a Kubernetes [apierrors.StatusError] from a
+// unified storage failure when it can: an embedded [resourcepb.ErrorResult], a gRPC status
+// (wrapped or not), an error already carrying an [apierrors.APIStatus], or a context error.
+// Anything else is returned unchanged, so response writers apply their own
+// sanitization and logging instead of exposing internal error text.
 // Different to [AsErrorResult] the [claims.ErrNamespaceMismatch] error is returned unchanged.
 func StatusErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
 	if err == nil {
