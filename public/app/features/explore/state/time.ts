@@ -250,6 +250,7 @@ export const timeReducer = (state: ExploreItemState, action: AnyAction): Explore
         ...state.queryResponse,
         state: live ? LoadingState.Streaming : leavingLive ? LoadingState.Loading : LoadingState.Done,
         // Drop the streaming frames so the logs visualizations does not render them when live mode ends.
+        series: leavingLive ? [] : state.queryResponse.series,
         logsFrames: leavingLive ? [] : state.queryResponse.logsFrames,
       },
       isLive: live,

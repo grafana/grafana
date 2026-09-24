@@ -45,6 +45,7 @@ describe('Explore item reducer', () => {
           querySubscription: undefined,
           queryResponse: {
             state: LoadingState.Streaming,
+            series: [{ refId: 'A', meta: { preferredVisualisationType: 'logs' } }],
             logsFrames: [{ refId: 'A' }],
           },
           logsResult: { rows: [{ uid: '1' }], hasUniqueLabels: false },
@@ -56,6 +57,7 @@ describe('Explore item reducer', () => {
           (resultingState) =>
             resultingState.isLive === false &&
             resultingState.queryResponse.state === LoadingState.Loading &&
+            resultingState.queryResponse.series.length === 0 &&
             resultingState.queryResponse.logsFrames.length === 0 &&
             resultingState.logsResult?.rows.length === 0
         );
