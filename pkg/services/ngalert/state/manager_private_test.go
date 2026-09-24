@@ -5456,7 +5456,7 @@ func TestProcessEvalResults_Screenshots(t *testing.T) {
 		res := State{
 			AlertRuleUID:      baseRule.UID,
 			OrgID:             baseRule.OrgID,
-			Image:             image,
+			Image:             newImageAttempt(image, nil),
 			Labels:            labels,
 			ResultFingerprint: labels.Fingerprint(),
 			State:             s,
@@ -5578,7 +5578,7 @@ func TestProcessEvalResults_Screenshots(t *testing.T) {
 				transitions, _ := mgr.ProcessEvalResults(ctx, t1, &baseRule, results, nil, nil)
 
 				for _, transition := range transitions {
-					assert.Equalf(t, tc.imageService.Image, transition.Image, "Transition %s does not have image but should", transition.Labels.String())
+					assert.Equalf(t, newImageAttempt(tc.imageService.Image, nil), transition.Image, "Transition %s does not have image but should", transition.Labels.String())
 				}
 			}
 

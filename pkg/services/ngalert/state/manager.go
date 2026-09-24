@@ -23,7 +23,7 @@ var (
 	ResendDelay = 30 * time.Second
 )
 
-type takeImageFn func(reason string) *ngModels.Image
+type takeImageFn func(reason string) *ImageAttempt
 
 // AlertInstanceManager defines the interface for querying the current alert instances.
 type AlertInstanceManager interface {
@@ -396,9 +396,9 @@ func (st *Manager) ProcessEvalResults(
 	// lazy evaluation of takeImage only once and only if it is requested.
 	var fn takeImageFn
 	{
-		var image *ngModels.Image
+		var image *ImageAttempt
 		var imageTaken bool
-		fn = func(reason string) *ngModels.Image {
+		fn = func(reason string) *ImageAttempt {
 			if imageTaken {
 				return image
 			}
@@ -412,7 +412,7 @@ func (st *Manager) ProcessEvalResults(
 					"error", err)
 				return nil
 			}
-			image = img
+			image = newImageAttempt(img, nil)
 			return image
 		}
 	}

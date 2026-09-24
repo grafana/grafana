@@ -50,7 +50,7 @@ type State struct {
 
 	// Image contains an optional image for the state. It tends to be included in notifications
 	// as a visualization to show why the alert fired.
-	Image *models.Image
+	Image *ImageAttempt
 
 	// Annotations contains the annotations from the alert rule. If an annotation is templated
 	// then the template is first evaluated to derive the final annotation.
@@ -708,7 +708,7 @@ func (a *State) ShouldBeResolved(oldState eval.State) bool {
 
 // shouldTakeImage determines whether a new image should be taken for a given transition. This should return true when
 // newly transitioning to an alerting state, when no valid image exists, or when the alert has been resolved.
-func shouldTakeImage(state, previousState eval.State, previousImage *models.Image, resolved bool) string {
+func shouldTakeImage(state, previousState eval.State, previousImage *ImageAttempt, resolved bool) string {
 	if resolved {
 		return "resolved"
 	}

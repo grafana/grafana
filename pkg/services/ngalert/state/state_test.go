@@ -522,7 +522,7 @@ func TestNeedsSending(t *testing.T) {
 func TestTransitionSetsResolvedAt(t *testing.T) {
 	evaluatedAt := time.Now()
 	logger := log.NewNopLogger()
-	noImage := func(string) *ngmodels.Image { return nil }
+	noImage := func(string) *ImageAttempt { return nil }
 
 	baseRule := &ngmodels.AlertRule{
 		IntervalSeconds: 60,
@@ -705,7 +705,7 @@ func TestShouldTakeImage(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.expected, shouldTakeImage(test.state, test.previousState, test.previousImage, test.resolved) != "")
+			assert.Equal(t, test.expected, shouldTakeImage(test.state, test.previousState, newImageAttempt(test.previousImage, nil), test.resolved) != "")
 		})
 	}
 }
