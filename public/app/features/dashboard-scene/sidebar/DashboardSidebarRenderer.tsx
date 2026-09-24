@@ -5,7 +5,11 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { useFlagGrafanaViewPanelPane, useFlagFeedbackButton } from '@grafana/runtime/internal';
+import {
+  useFlagDashboardUndoRedo,
+  useFlagGrafanaViewPanelPane,
+  useFlagFeedbackButton,
+} from '@grafana/runtime/internal';
 import { sceneGraph, type SceneVariable, useSceneObjectState } from '@grafana/scenes';
 import { Sidebar, useStyles2, useSidebarContext } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -43,6 +47,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
   const sidebarContext = useSidebarContext();
   const viewPanelPane = useFlagGrafanaViewPanelPane();
   const feedbackButton = useFlagFeedbackButton();
+  const dashboardUndoRedo = useFlagDashboardUndoRedo();
   const onOpenAddPane = useCallback(async () => {
     const signal = sidebar.beginPaneRequest();
     const { AddNewPane } = await import(/* webpackChunkName: "dashboard-add-new-pane" */ './add-new/AddNewPane');
@@ -127,7 +132,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
               data-testid={selectors.pages.Dashboard.Sidebar.codeButton}
               active={openPane?.getId() === 'code'}
             />
-            {config.featureToggles.dashboardUndoRedo && (
+            {dashboardUndoRedo && (
               <>
                 <Sidebar.Divider />
                 <UndoButton dashboard={dashboard} />

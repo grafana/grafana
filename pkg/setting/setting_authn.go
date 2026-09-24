@@ -32,6 +32,7 @@ func (cfg *Cfg) ApplyAuthnSettings(iniFile *ini.File) error {
 
 	cfg.Raw = iniFile
 	readSecretKey(iniFile, cfg)
+	readAdminSettings(iniFile, cfg)
 	if err := readSessionAuthSettings(iniFile, cfg); err != nil {
 		return err
 	}
@@ -48,6 +49,17 @@ func (cfg *Cfg) ApplyAuthnSettings(iniFile *ini.File) error {
 
 func readSecretKey(iniFile *ini.File, cfg *Cfg) {
 	cfg.SecretKey = valueAsString(iniFile.Section("security"), "secret_key", "")
+}
+
+func readAdminSettings(iniFile *ini.File, cfg *Cfg) {
+	security := iniFile.Section("security")
+	cfg.AdminUser = valueAsString(security, "admin_user", "")
+	cfg.AdminPassword = valueAsString(security, "admin_password", "")
+	cfg.AdminEmail = valueAsString(security, "admin_email", "")
+	if cfg.AdminEmail == "" && cfg.AdminUser != "" {
+		cfg.AdminEmail = cfg.AdminUser + "@localhost"
+	}
+	cfg.DisableInitAdminCreation = security.Key("disable_initial_admin_creation").MustBool(false)
 }
 
 func readSessionAuthSettings(iniFile *ini.File, cfg *Cfg) error {
