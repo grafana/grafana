@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
-import { FloatingFocusManager, useFloating } from '@floating-ui/react';
+import { FloatingFocusManager, type FloatingFocusManagerProps, useFloating } from '@floating-ui/react';
 import RcDrawer from '@rc-component/drawer';
-import { type ReactNode, useCallback, useEffect, useId, useState } from 'react';
+import { type ReactNode, useCallback, useContext, useEffect, useId, useState } from 'react';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -15,6 +15,8 @@ import { Stack } from '../Layout/Stack/Stack';
 import { getPortalContainer } from '../Portal/Portal';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import { Text } from '../Text/Text';
+
+import { DrawerReturnFocusContext } from './DrawerFocusScope';
 
 export interface Props {
   children: ReactNode;
@@ -51,6 +53,8 @@ export interface Props {
   scrollableContent?: boolean;
   /** Callback for closing the drawer */
   onClose: () => void;
+  /** Restore focus on close, optionally to an explicit element ref. Defaults to the opener. */
+  returnFocus?: FloatingFocusManagerProps['returnFocus'];
 }
 
 const drawerSizes = {
@@ -74,7 +78,9 @@ export function Drawer({
   width,
   size = 'md',
   tabs,
+  returnFocus,
 }: Props) {
+  const scopedReturnFocus = useContext(DrawerReturnFocusContext);
   const [drawerWidth, onMouseDown, onTouchStart] = useResizebleDrawer();
 
   const styles = useStyles2(getStyles);
@@ -131,7 +137,12 @@ export function Drawer({
       // this is handled by floating-ui
       autoFocus={false}
     >
-      <FloatingFocusManager context={context} modal getInsideElements={() => [getPortalContainer()]}>
+      <FloatingFocusManager
+        context={context}
+        modal
+        returnFocus={returnFocus ?? scopedReturnFocus}
+        getInsideElements={() => [getPortalContainer()]}
+      >
         <div className={styles.container} ref={refs.setFloating}>
           {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
           <div
@@ -166,15 +177,18 @@ export function Drawer({
             )}
             {tabs && <div className={styles.tabsWrapper}>{tabs}</div>}
           </div>
-          {!scrollableContent ? (
-            content
-          ) : (
-            <div className={styles.scrollWrapper}>
-              <ScrollContainer borderRadius="lg" showScrollIndicators>
-                {content}
-              </ScrollContainer>
-            </div>
-          )}
+          {/* Nested drawers return to their own opener, not the outer drawer's loading scope. */}
+          <DrawerReturnFocusContext.Provider value={undefined}>
+            {!scrollableContent ? (
+              content
+            ) : (
+              <div className={styles.scrollWrapper}>
+                <ScrollContainer borderRadius="lg" showScrollIndicators>
+                  {content}
+                </ScrollContainer>
+              </div>
+            )}
+          </DrawerReturnFocusContext.Provider>
         </div>
       </FloatingFocusManager>
     </RcDrawer>
