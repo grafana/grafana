@@ -94,7 +94,7 @@ func featuresFromConfig(cfg *setting.Cfg) (*Features, error) {
 		return nil, nil
 	}
 
-	section := cfg.Raw.Section("iam")
+	section := cfg.SectionWithEnvOverrides("iam")
 	apiValue := strings.TrimSpace(section.Key("api").String())
 	zanzanaSync, err := parseOptionalBool(section.Key("zanzana_sync_enabled").String())
 	if err != nil {

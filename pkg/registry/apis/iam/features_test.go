@@ -183,6 +183,21 @@ func TestProvideFeatures(t *testing.T) {
 	}
 }
 
+func TestProvideFeaturesUsesEnvironmentOverrides(t *testing.T) {
+	t.Setenv("GF_IAM_API", "users,resourcepermissions")
+	t.Setenv("GF_IAM_ZANZANA_SYNC_ENABLED", "true")
+	t.Setenv("GF_IAM_SERVICE_ACCOUNT_RESOURCE_PERMISSIONS_ENABLED", "true")
+
+	got, err := ProvideFeatures(setting.NewCfg())
+	require.NoError(t, err)
+	require.Equal(t, Features{
+		UsersAPI:                          true,
+		ResourcePermissionsAPI:            true,
+		ServiceAccountResourcePermissions: true,
+		ZanzanaSync:                       true,
+	}, got)
+}
+
 func TestFeaturesFromFlags(t *testing.T) {
 	tests := []struct {
 		name string
