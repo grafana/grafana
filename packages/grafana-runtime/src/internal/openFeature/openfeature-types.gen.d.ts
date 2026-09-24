@@ -26,6 +26,7 @@ declare module "@openfeature/core" {
     | "libraryelements.kubernetesLibraryPanels"
     | "grafana.kubernetesAnnotationsClient"
     | "grafana.newPanelQueryErrorsUI"
+    | "useKubernetesShortURLsAPI"
     | "dashboard.notebooks"
     | "dashboardUndoRedo"
     | "perPanelNonApplicableDrilldowns"

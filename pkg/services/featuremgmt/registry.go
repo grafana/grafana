@@ -435,6 +435,15 @@ var (
 		},
 
 		{
+			Name:        "useKubernetesShortURLsAPI",
+			Description: "Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaSharingSquad,
+			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
+			Expression:  "true",
+		},
+
+		{
 			Name:            "kubernetesCorrelations",
 			Description:     "Adds support for Kubernetes correlations",
 			Stage:           FeatureStageExperimental,
