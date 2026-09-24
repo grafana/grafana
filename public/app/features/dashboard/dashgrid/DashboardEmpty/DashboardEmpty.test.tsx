@@ -80,6 +80,9 @@ function setup(options?: Partial<Props>) {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  // The legacy empty-dashboard clicks expect isDynamicDashboard: false. The new-layouts
+  // describe below sets the flag true after this.
+  setTestFlags({ dashboardNewLayouts: false });
   // Reset the mock to default state
   mockUseGetResourceRepositoryView.mockReturnValue({
     isReadOnlyRepo: false,

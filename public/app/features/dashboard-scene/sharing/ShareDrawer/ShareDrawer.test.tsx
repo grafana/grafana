@@ -5,6 +5,7 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, setPluginImportUtils } from '@grafana/runtime';
 import { SceneTimeRange, UrlSyncContextProvider } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { render } from '../../../../../test/test-utils';
 import { shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
@@ -24,6 +25,17 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('ShareDrawer', () => {
+  beforeEach(() => {
+    // New layouts mount the sidebar extension point, which calls usePluginLinks. This test renders the scene without starting that hook.
+    setTestFlags({ dashboardNewLayouts: false });
+  });
+
+  afterEach(() => {
+    act(() => {
+      setTestFlags({});
+    });
+  });
+
   it('removes shareView query param from url when it is closed', async () => {
     const { dashboard } = await buildAndRenderScenario();
 

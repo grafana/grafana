@@ -174,6 +174,16 @@ describe('RENDER_PLAN', () => {
   });
 
   describe('the rendered grid cannot actually be dragged or resized', () => {
+    beforeEach(() => {
+      // With the flag on, editModeChanged applies isDraggable/isResizable inside a 10ms timeout.
+      // The deferred case is covered separately below.
+      setTestFlags({ dashboardNewLayouts: false });
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
     // DefaultGridLayoutManager hardcodes isDraggable/isResizable true; only editModeChanged (an
     // edit-mode transition) ever sets them false. Assert behaviour, not the raw flag, so a
     // future change that re-enables dragging some other way still fails this.

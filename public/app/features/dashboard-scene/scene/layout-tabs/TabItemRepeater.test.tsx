@@ -15,6 +15,7 @@ import {
   type VariableValueOption,
   PanelBuilders,
 } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { TextMode } from 'app/plugins/panel/text/panelcfg.gen';
 
@@ -44,6 +45,17 @@ describe('TabItemRepeater', () => {
   });
 
   describe('Given scene with variable with 3 values', () => {
+    beforeEach(() => {
+      // Rendering the scene with new layouts mounts the sidebar extension point, which calls usePluginLinks.
+      setTestFlags({ dashboardNewLayouts: false });
+    });
+
+    afterEach(() => {
+      act(() => {
+        setTestFlags({});
+      });
+    });
+
     it('Should repeat tab', async () => {
       const { tabToRepeat } = renderScene({ variableQueryTime: 0 });
 

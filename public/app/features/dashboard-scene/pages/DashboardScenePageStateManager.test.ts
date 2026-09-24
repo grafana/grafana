@@ -56,7 +56,6 @@ jest.mock('@grafana/runtime', () => {
       ...original.config,
       featureToggles: {
         ...original.config.featureToggles,
-        dashboardNewLayouts: false,
         reloadDashboardsOnParamsChange: false,
       },
       datasources: {
@@ -2151,7 +2150,8 @@ describe('UnifiedDashboardScenePageStateManager', () => {
   });
 
   describe('when fetching/loading a dashboard', () => {
-    it('should use v1 manager by default and handle v1 dashboards', async () => {
+    it('should use v1 manager and handle v1 dashboards when dashboardNewLayouts is disabled', async () => {
+      setTestFlags({ dashboardNewLayouts: false });
       const loadDashboardMock = setupLoadDashboardMock({ dashboard: { uid: 'fake-dash', editable: true }, meta: {} });
 
       const manager = new UnifiedDashboardScenePageStateManager({});
@@ -2162,6 +2162,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
     });
 
     it('should switch to v2 manager when loading v2 dashboard', async () => {
+      setTestFlags({ dashboardNewLayouts: false });
       const getDashSpy = setupV1FailureV2Success();
 
       const manager = new UnifiedDashboardScenePageStateManager({});
@@ -2207,6 +2208,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
     });
 
     it('should not sync state back to v1 manager after loadDashboard', async () => {
+      setTestFlags({ dashboardNewLayouts: false });
       setupLoadDashboardMock({ dashboard: { uid: 'fake-dash', editable: true }, meta: {} });
 
       const manager = new UnifiedDashboardScenePageStateManager({});
@@ -2289,6 +2291,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
     });
 
     it('should transform responses correctly based on dashboard version', async () => {
+      setTestFlags({ dashboardNewLayouts: false });
       const manager = new UnifiedDashboardScenePageStateManager({});
 
       // V1 dashboard response
@@ -2320,6 +2323,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
     });
 
     it('should switch to v2 manager when AssistantPreview contains v2 dashboard', async () => {
+      setTestFlags({ dashboardNewLayouts: false });
       mockUserStorageGetItem.mockResolvedValue(JSON.stringify(defaultDashboardV2Spec()));
 
       const manager = new UnifiedDashboardScenePageStateManager({});
@@ -2332,6 +2336,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
 
   describe('reloadDashboard', () => {
     it('should reload v1 dashboard with v1 manager', async () => {
+      setTestFlags({ dashboardNewLayouts: false });
       const loadDashboardMock = setupLoadDashboardMock({ dashboard: { uid: 'fake-dash', editable: true }, meta: {} });
 
       const manager = new UnifiedDashboardScenePageStateManager({});
@@ -2412,6 +2417,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
     });
 
     it('should not use cache if cache version and current dashboard state version differ in v1', async () => {
+      setTestFlags({ dashboardNewLayouts: false });
       const loadDashboardMock = setupLoadDashboardMock({
         dashboard: { uid: 'fake-dash', editable: true, version: 0 },
         meta: {},
@@ -2447,6 +2453,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
     });
 
     it('should use v1 reloadDashboard implementation and update unified state', async () => {
+      setTestFlags({ dashboardNewLayouts: false });
       const loadDashboardMock = setupLoadDashboardMock({
         dashboard: { uid: 'fake-dash', editable: true, version: 1 },
         meta: {},

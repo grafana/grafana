@@ -19,7 +19,7 @@ import {
 import { setGetObservablePluginLinks, setPanelPluginMetas } from '@grafana/runtime/internal';
 import { VizPanel } from '@grafana/scenes';
 import { type Dashboard } from '@grafana/schema';
-import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
 import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { type DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
@@ -166,6 +166,9 @@ setDashboardLoaderSrv({
 
 describe('DashboardScenePage', () => {
   beforeEach(() => {
+    // getBackendSrv is stubbed with a v1 DTO, and the page manager singleton is created on first use.
+    // New layouts load through the v2 client, which reads metadata.annotations on that body.
+    setTestFlags({ dashboardNewLayouts: false });
     setPublicDashboardConfigFn({
       footerHide: false,
       footerText: 'Powered by',

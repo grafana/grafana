@@ -41,6 +41,15 @@ afterAll(() => {
 });
 
 describe('DashboardApi', () => {
+  beforeEach(() => {
+    // No-arg getDashboardAPI() follows the flag. Default-on selects the v2 client.
+    setTestFlags({ dashboardNewLayouts: false });
+  });
+
+  afterEach(() => {
+    setTestFlags({});
+  });
+
   it('should use unified api by default', async () => {
     expect(await getDashboardAPI()).toBeInstanceOf(UnifiedDashboardAPI);
   });
