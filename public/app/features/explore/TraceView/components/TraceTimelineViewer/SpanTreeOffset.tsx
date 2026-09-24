@@ -20,14 +20,13 @@ import * as React from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Icon, stylesFactory, withTheme2 } from '@grafana/ui';
 
-import { autoColor } from '../Theme';
 import { type TraceSpan } from '../types/trace';
 import spanAncestorIds from '../utils/span-ancestor-ids';
 
 export const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   SpanTreeOffset: css({
     label: 'SpanTreeOffset',
-    color: autoColor(theme, '#000'),
+    color: theme.colors.text.primary,
     position: 'relative',
     display: 'inline-flex',
     alignSelf: 'stretch',
@@ -51,13 +50,13 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
     '&::before': {
       content: '""',
       paddingLeft: '1px',
-      backgroundColor: autoColor(theme, 'lightgrey'),
+      backgroundColor: theme.colors.border.weak,
     },
   }),
   indentGuideActive: css({
     label: 'indentGuideActive',
     '&::before': {
-      backgroundColor: autoColor(theme, '#777'),
+      backgroundColor: theme.colors.border.strong,
     },
   }),
   indentGuideThin: css({

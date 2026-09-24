@@ -23,7 +23,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { Tooltip, useStyles2 } from '@grafana/ui';
 
-import { autoColor } from '../Theme';
 import { Popover } from '../common/Popover';
 import type TNil from '../types/TNil';
 import { type TraceSpan, type CriticalPathSection } from '../types/trace';
@@ -75,24 +74,24 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     label: css({
       label: 'label',
-      color: '#aaa',
-      fontSize: '12px',
-      fontFamily: "'Helvetica Neue', Helvetica, Arial, sans - serif",
-      lineHeight: '1em',
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontFamily: theme.typography.fontFamily,
+      lineHeight: theme.typography.bodySmall.lineHeight,
       whiteSpace: 'nowrap',
       padding: '0 0.5em',
       position: 'absolute',
     }),
     logMarker: css({
       label: 'logMarker',
-      backgroundColor: autoColor(theme, '#2c3235'),
+      backgroundColor: theme.colors.text.primary,
       cursor: 'pointer',
       height: '60%',
       minWidth: '1px',
       position: 'absolute',
       top: '20%',
       '&:hover': {
-        backgroundColor: autoColor(theme, '#464c54'),
+        backgroundColor: theme.colors.text.secondary,
       },
       '&::before, &::after': {
         content: "''",
@@ -112,9 +111,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '11%',
       zIndex: 2,
       overflow: 'hidden',
-      background: autoColor(theme, '#f1f1f1'),
-      borderLeft: `1px solid ${autoColor(theme, '#2c3235')}`,
-      borderRight: `1px solid ${autoColor(theme, '#2c3235')}`,
+      background: theme.colors.text.secondary,
+      borderLeft: `1px solid ${theme.colors.text.primary}`,
+      borderRight: `1px solid ${theme.colors.text.primary}`,
     }),
   };
 };

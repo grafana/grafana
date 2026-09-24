@@ -244,7 +244,8 @@ const DropDownMenu = ({ links }: { links: SpanLinkModel[] }) => {
   return (
     <Dropdown overlay={menu} placement="bottom-start" onVisibleChange={setIsOpen}>
       <Button
-        variant="primary"
+        variant="secondary"
+        fill="outline"
         icon="link"
         size="sm"
         className={styles}
