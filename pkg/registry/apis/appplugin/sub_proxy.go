@@ -127,10 +127,13 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			return
 		}
 
+		// The derive-id-token fallback is only wired for the datasource group today (see
+		// pkg/extensions/apiserver/factory.go); app plugin proxying doesn't need it in ST,
+		// where the edge still mints an id token for every requester.
 		p, err := pluginproxy.NewPluginProxy(ps, r.routes,
 			proxyReq, w, user,
 			proxyPath, r.DataProxyLogging, r.SendUserHeader,
-			secure, r.tracer, r.pluginProxyTransport, r.accessControl, r.features)
+			secure, r.tracer, r.pluginProxyTransport, r.accessControl, r.features, nil)
 		if err != nil {
 			responder.Error(fmt.Errorf("failed to create plugin proxy: %w", err))
 			return

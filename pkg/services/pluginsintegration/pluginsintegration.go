@@ -205,7 +205,9 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 		clientmiddleware.NewOAuthTokenMiddleware(oAuthTokenService),
 		clientmiddleware.NewCookiesMiddleware(skipCookiesNames),
 		clientmiddleware.NewCachingMiddleware(cachingServiceClient),
-		clientmiddleware.NewForwardIDMiddleware(),
+		// Single-tenant Grafana mints its own id token at the edge (see idimpl), so requester
+		// always carries one and the derive fallback is never needed here.
+		clientmiddleware.NewForwardIDMiddleware(nil),
 		clientmiddleware.NewUseAlertHeadersMiddleware(),
 	)
 
