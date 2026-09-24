@@ -78,13 +78,7 @@ describe('Node', () => {
   it('strokes the hover ring with the accent colour', () => {
     render(
       <svg>
-        <Node
-          node={nodeDatum}
-          onMouseEnter={() => {}}
-          onMouseLeave={() => {}}
-          onClick={() => {}}
-          hovering={'active'}
-        />
+        <Node node={nodeDatum} onMouseEnter={() => {}} onMouseLeave={() => {}} onClick={() => {}} hovering={'active'} />
       </svg>
     );
 
