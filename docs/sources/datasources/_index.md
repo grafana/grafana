@@ -183,14 +183,18 @@ Grafana includes three special data sources:
 
 This built-in data source generates random walk data and can poll the [TestData](testdata/) data source. It can also list files and retrieve other data from a Grafana installation, making it useful for testing visualizations and running experiments.
 
-The Grafana data source supports several query types, which you select in the query editor:
+In a panel query, the Grafana data source supports the following query types, which you select in the query editor:
 
 - **Random walk:** Generate a random time series signal within the selected time range, which is useful for testing panels and visualizations.
 - **Live measurements:** Stream real-time measurements from Grafana Live channels.
 - **List public files:** Show directory listings for public resources served by the Grafana installation.
+
+When you add an annotation query in a dashboard's settings, the Grafana data source supports the following additional query types:
+
 - **Annotations and alerts:** Return annotations or alerts managed by Grafana, filtered either by the current dashboard or by tags.
 - **Time regions:** Highlight a repeating time region, such as business hours or weekends.
-- **Snapshot:** Display the data captured in a dashboard snapshot.
+
+You don't select the **Snapshot** query type manually. Grafana uses it automatically to display the data captured in a dashboard snapshot.
 
 ### Mixed
 
@@ -208,6 +212,8 @@ Note the following behavior:
 ### Dashboard
 
 This data source reuses the result set from another panel in the same dashboard. Instead of running its own query against a backend, a panel using the **Dashboard** data source points to a _source panel_ and works with the data that panel already returned.
+
+Because it depends on another panel in the same dashboard, the **Dashboard** data source is only available when you edit a panel within a dashboard. It doesn't appear in Explore.
 
 The Dashboard data source references the complete output of another panel. It doesn't chain one query into another within a single panel, so you can't feed the results of one query into a second query as an input. To reshape or narrow the referenced data, apply [transformations](ref:query-transform-data) in the panel that uses the Dashboard data source.
 
