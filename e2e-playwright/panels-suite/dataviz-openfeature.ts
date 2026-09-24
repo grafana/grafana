@@ -40,15 +40,21 @@ export function datavizOpenFeatureTests(enabled: boolean) {
     await page.getByRole('button', { name: 'Duplicate', exact: true }).click();
     const elements = page.getByRole('button', { name: 'Double click to set field' });
     await expect(elements).toHaveCount(2);
-    const duplicate = await elements.last().boundingBox();
-    expect(duplicate).not.toBeNull();
-    await page.mouse.move(duplicate!.x + duplicate!.width / 2, duplicate!.y + duplicate!.height / 2);
+    await expect(page.getByRole('treeitem', { selected: true })).toHaveCount(0);
+    const first = await elements.first().boundingBox();
+    const last = await elements.last().boundingBox();
+    expect(first).not.toBeNull();
+    expect(last).not.toBeNull();
+    // A marquee selects both overlapping elements without a separate drag and Shift-click sequence.
+    await page.mouse.move(Math.min(first!.x, last!.x) - 10, Math.min(first!.y, last!.y) - 10);
     await page.mouse.down();
-    await page.mouse.move(duplicate!.x + duplicate!.width / 2, duplicate!.y + duplicate!.height * 3, { steps: 10 });
+    await page.mouse.move(
+      Math.max(first!.x + first!.width, last!.x + last!.width) + 10,
+      Math.max(first!.y + first!.height, last!.y + last!.height) + 10,
+      { steps: 10 }
+    );
     await page.mouse.up();
-    await elements.first().click();
-    await elements.last().click({ modifiers: ['Shift'] });
-    await expect(page.getByRole('button', { name: 'Clear selection', exact: true })).toBeVisible();
+    await expect(page.getByRole('treeitem', { selected: true })).toHaveCount(2);
     await expect(page.getByRole('button', { name: 'Frame selection', exact: true })).toHaveCount(enabled ? 1 : 0);
   });
 
