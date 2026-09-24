@@ -1,4 +1,5 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { useLayoutEffect } from 'react';
 
 import { type DataFrame, FieldType, toDataFrame } from '@grafana/data';
@@ -15,9 +16,7 @@ const frameWithFields = (...names: string[]): DataFrame[] => [
 ];
 
 const pillStates = () =>
-  Array.from(document.querySelectorAll('button[aria-pressed]')).map(
-    (pill) => `${pill.textContent}:${pill.getAttribute('aria-pressed')}`
-  );
+  screen.getAllByRole('button').map((pill) => `${pill.textContent}:${pill.getAttribute('aria-pressed')}`);
 
 describe('FilterByNameTransformerEditor', () => {
   it('selects every field when no names are configured', () => {
@@ -44,7 +43,16 @@ describe('FilterByNameTransformerEditor', () => {
     const { rerender } = render(editor(frameWithFields('x', 'y')));
     rerender(editor(frameWithFields('z')));
 
-    expect(pillStates()).toEqual(['z:true']);
-    expect(committed).not.toContainEqual(['z:false']);
+    expect(committed).toEqual([['x:true', 'y:true'], ['z:true']]);
+  });
+
+  it('keeps an in-progress regex when options change but field names do not', async () => {
+    const input = frameWithFields('x', 'y');
+    const { rerender } = render(<FilterByNameTransformerEditor input={input} options={{}} onChange={jest.fn()} />);
+
+    await userEvent.type(screen.getByRole('textbox'), 'x|');
+    rerender(<FilterByNameTransformerEditor input={input} options={{ byVariable: false }} onChange={jest.fn()} />);
+
+    expect(screen.getByRole('textbox')).toHaveValue('x|');
   });
 });
