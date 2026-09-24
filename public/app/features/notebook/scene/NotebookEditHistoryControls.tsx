@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import { useEffect } from 'react';
 
 import { t } from '@grafana/i18n';
@@ -41,8 +40,7 @@ export function NotebookEditHistoryControls({ history }: { history: NotebookEdit
   return (
     <Stack gap={0.5}>
       <IconButton
-        name="redo"
-        className={undoClass}
+        name="corner-up-left"
         tooltip={
           undoLabel
             ? t('notebooks.history.undo-action', 'Undo: {{action}}', { action: undoLabel })
@@ -52,7 +50,7 @@ export function NotebookEditHistoryControls({ history }: { history: NotebookEdit
         onClick={() => history.undo()}
       />
       <IconButton
-        name="redo"
+        name="corner-up-right"
         tooltip={
           redoLabel
             ? t('notebooks.history.redo-action', 'Redo: {{action}}', { action: redoLabel })
@@ -79,9 +77,3 @@ function browserOwnsUndo(target: EventTarget | null): boolean {
 
   return Boolean(target.closest('input, textarea, select, [contenteditable="true"]'));
 }
-
-const undoClass = css({
-  svg: {
-    transform: 'scaleX(-1)',
-  },
-});

@@ -14,9 +14,13 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -37,14 +41,16 @@ var (
 // NewLegacyStore builds a LegacyStore that maps AuthInfo objects onto the
 // legacy user_auth table, one row per (user, authModule) pair. Reads and
 // writes go through login.Store rather than new SQL.
-func NewLegacyStore(identities legacy.LegacyIdentityStore, authInfoStore login.Store, tracer trace.Tracer) *LegacyStore {
-	return &LegacyStore{identities, authInfoStore, tracer}
+func NewLegacyStore(identities legacy.LegacyIdentityStore, authInfoStore login.Store, tracer trace.Tracer, remoteCache remotecache.CacheStorage) *LegacyStore {
+	return &LegacyStore{identities, authInfoStore, tracer, remoteCache, log.New("authinfo.legacystore")}
 }
 
 type LegacyStore struct {
 	identities    legacy.LegacyIdentityStore
 	authInfoStore login.Store
 	tracer        trace.Tracer
+	remoteCache   remotecache.CacheStorage
+	logger        log.Logger
 }
 
 // Destroy implements rest.Storage.
@@ -266,6 +272,12 @@ func (l *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 		return nil, err
 	}
 
+	authinfoimpl.InvalidateAuthInfoCache(ctx, l.remoteCache, l.logger.FromContext(ctx), &login.GetAuthInfoQuery{
+		UserId:     userRes.ID,
+		AuthModule: authModule,
+		AuthId:     authInfoObj.Spec.AuthID,
+	})
+
 	created, err := l.authInfoStore.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: userRes.ID, AuthModule: authModule})
 	if err != nil {
 		return nil, err
@@ -334,6 +346,19 @@ func (l *LegacyStore) Update(ctx context.Context, name string, objInfo rest.Upda
 		return oldObj, false, err
 	}
 
+	authinfoimpl.InvalidateAuthInfoCache(ctx, l.remoteCache, l.logger.FromContext(ctx), &login.GetAuthInfoQuery{
+		UserId:     userRes.ID,
+		AuthModule: newAuthInfo.Spec.AuthModule,
+		AuthId:     newAuthInfo.Spec.AuthID,
+	})
+	if oldAuthInfo.Spec.AuthID != newAuthInfo.Spec.AuthID {
+		authinfoimpl.InvalidateAuthInfoCache(ctx, l.remoteCache, l.logger.FromContext(ctx), &login.GetAuthInfoQuery{
+			UserId:     userRes.ID,
+			AuthModule: oldAuthInfo.Spec.AuthModule,
+			AuthId:     oldAuthInfo.Spec.AuthID,
+		})
+	}
+
 	updated, err := l.authInfoStore.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: userRes.ID, AuthModule: newAuthInfo.Spec.AuthModule})
 	if err != nil {
 		return oldObj, false, err
@@ -369,11 +394,22 @@ func (l *LegacyStore) Delete(ctx context.Context, name string, deleteValidation 
 		return nil, false, err
 	}
 
+	oldAuthInfo, ok := oldObj.(*iamv0alpha1.AuthInfo)
+	if !ok {
+		return nil, false, fmt.Errorf("expected AuthInfo object, got %T", oldObj)
+	}
+
 	if err := l.authInfoStore.DeleteAuthInfo(ctx, &login.DeleteAuthInfoCommand{
 		UserAuth: &login.UserAuth{UserId: userID, AuthModule: authModule},
 	}); err != nil {
 		return nil, false, err
 	}
+
+	authinfoimpl.InvalidateAuthInfoCache(ctx, l.remoteCache, l.logger.FromContext(ctx), &login.GetAuthInfoQuery{
+		UserId:     userID,
+		AuthModule: authModule,
+		AuthId:     oldAuthInfo.Spec.AuthID,
+	})
 
 	return oldObj, true, nil
 }
@@ -408,6 +444,10 @@ func mapToAuthInfoObject(ns claims.NamespaceInfo, userUID string, ua *login.User
 	if !ua.Created.IsZero() {
 		created := ua.Created.UnixMilli()
 		result.Spec.Created = &created
+	}
+
+	if meta, err := utils.MetaAccessor(&result); err == nil {
+		meta.SetDeprecatedInternalID(ua.Id) // nolint:staticcheck
 	}
 
 	return result
