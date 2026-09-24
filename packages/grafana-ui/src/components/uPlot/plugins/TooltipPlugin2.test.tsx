@@ -496,6 +496,40 @@ describe('TooltipPlugin2', () => {
       view.unmount();
     });
 
+    it('ignores window scroll before plot init and dismisses on scroll after init', async () => {
+      const addSpy = jest.spyOn(window, 'addEventListener');
+      const scrollContainer = document.createElement('div');
+      const { view, setSeriesCallback, initCallback, mockUPlot, setLegendCallback } = setUp();
+      const onscroll = addSpy.mock.calls.find((call) => call[0] === 'scroll')![1] as (e: Event) => void;
+      addSpy.mockRestore();
+
+      scrollContainer.appendChild(mockUPlot.root);
+      document.body.appendChild(scrollContainer);
+
+      const scrollEvent = new Event('scroll');
+      Object.defineProperty(scrollEvent, 'target', { value: scrollContainer });
+
+      expect(() => onscroll(scrollEvent)).not.toThrow();
+
+      await act(async () => {
+        initCallback(mockUPlot);
+        setSeriesCallback(mockUPlot, 1);
+        setLegendCallback(mockUPlot);
+      });
+
+      expect(screen.getByText('Tooltip content')).toBeInTheDocument();
+      jest.mocked(mockUPlot.setCursor).mockClear();
+
+      await act(async () => {
+        onscroll(scrollEvent);
+      });
+
+      expect(mockUPlot.setCursor).toHaveBeenCalledWith({ left: -10, top: -10 });
+
+      document.body.removeChild(scrollContainer);
+      view.unmount();
+    });
+
     it('should clean up mouseup listener (onUp)', () => {
       const docAddSpy = jest.spyOn(document, 'addEventListener');
       const docRemoveSpy = jest.spyOn(document, 'removeEventListener');
