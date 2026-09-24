@@ -35,7 +35,7 @@ export function mockIncidents(
 interface MockIncidentField {
   slug: string;
   name: string;
-  type: string;
+  domainName: 'labels' | 'incident';
   selectoptions?: Array<{ value: string }>;
 }
 
@@ -44,14 +44,14 @@ export function mockIncidentFields(fields: MockIncidentField[]) {
   server.use(http.post(GET_FIELDS_PATH, () => HttpResponse.json({ fields })));
 }
 
-/** Org custom fields with a single `team` select field offering the given values. */
+/** Org custom fields with a single `team` label field offering the given values. */
 export function mockIncidentTeamField(values: string[]) {
   mockIncidentFields([
-    { slug: 'team', name: 'Team', type: 'single-select', selectoptions: values.map((value) => ({ value })) },
+    { slug: 'team', name: 'Team', domainName: 'labels', selectoptions: values.map((value) => ({ value })) },
   ]);
 }
 
-/** Org with no custom fields at all, so the incidents team dropdown stays hidden. */
+/** Org with no custom fields at all, so the incidents filter dropdown stays hidden. */
 export function mockNoIncidentFields() {
   server.use(http.post(GET_FIELDS_PATH, () => HttpResponse.json({ fields: [] })));
 }

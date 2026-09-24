@@ -1,17 +1,17 @@
-import { getIncidentFilterOptions } from './incidentsApi';
+import { toIncidentFilterOptions } from './incidentsApi';
 
-const teamField = { slug: 'team', name: 'Team', type: 'single-select', selectoptions: [{ value: 'Platform' }] };
+const teamField = { slug: 'team', name: 'Team', domainName: 'labels', selectoptions: [{ value: 'Platform' }] };
 
-describe('getIncidentFilterOptions', () => {
-  it('offers every value of every select field, naming the field it belongs to', () => {
+describe('toIncidentFilterOptions', () => {
+  it('offers every value of every label field, naming the field it belongs to', () => {
     const squadField = {
       slug: 'squad',
       name: 'Squad',
-      type: 'multi-select',
+      domainName: 'labels',
       selectoptions: [{ value: 'Frontend' }, { value: 'Backend' }],
     };
 
-    expect(getIncidentFilterOptions({ fields: [teamField, squadField] })).toEqual([
+    expect(toIncidentFilterOptions({ fields: [teamField, squadField] })).toEqual([
       { slug: 'team', fieldName: 'Team', value: 'Platform' },
       { slug: 'squad', fieldName: 'Squad', value: 'Frontend' },
       { slug: 'squad', fieldName: 'Squad', value: 'Backend' },
@@ -30,13 +30,14 @@ describe('getIncidentFilterOptions', () => {
     {
       case: 'the free-form tags field, whatever its casing',
       fields: [
-        { ...teamField, slug: 'tags', type: 'multi-select', selectoptions: [{ value: 'outage' }] },
-        { ...teamField, slug: 'Tags', type: 'multi-select', selectoptions: [{ value: 'outage' }] },
+        { ...teamField, slug: 'tags', selectoptions: [{ value: 'outage' }] },
+        { ...teamField, slug: 'Tags', selectoptions: [{ value: 'outage' }] },
       ],
     },
     {
-      case: 'a non-select field',
-      fields: [{ slug: 'region', name: 'Region', type: 'string' }],
+      // Custom fields outside the labels domain aren't labels, even when they're selects.
+      case: 'a custom field outside the labels domain',
+      fields: [{ slug: 'region', name: 'Region', domainName: 'incident', selectoptions: [{ value: 'EU' }] }],
     },
     {
       case: 'a blank value',
@@ -48,18 +49,18 @@ describe('getIncidentFilterOptions', () => {
       fields: [{ ...teamField, selectoptions: [{ value: `Ops "A" 'B'` }] }],
     },
   ])('offers nothing for $case', ({ fields }) => {
-    expect(getIncidentFilterOptions({ fields })).toEqual([]);
+    expect(toIncidentFilterOptions({ fields })).toEqual([]);
   });
 
   it('hides values the org archived as label pairs, matching on the field slug', () => {
     const squadField = {
       slug: 'squad',
       name: 'Squad',
-      type: 'multi-select',
+      domainName: 'labels',
       selectoptions: [{ value: 'Frontend' }, { value: 'Backend' }],
     };
 
-    const options = getIncidentFilterOptions({
+    const options = toIncidentFilterOptions({
       fields: [squadField],
       archived: [{ key: 'squad', value: 'Backend' }],
     });
@@ -68,6 +69,6 @@ describe('getIncidentFilterOptions', () => {
   });
 
   it('returns nothing for an org with no fields', () => {
-    expect(getIncidentFilterOptions({})).toEqual([]);
+    expect(toIncidentFilterOptions({})).toEqual([]);
   });
 });

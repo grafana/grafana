@@ -7,13 +7,6 @@ import { ALL_TEAMS, resolveTeamScope } from './teamFilter';
 
 const collator = new Intl.Collator();
 
-/** A pickable value; `group` renders as a header above the options sharing it. */
-export interface TeamFilterOption {
-  label: string;
-  value: string;
-  group?: string;
-}
-
 // '' is the default scope of every selection, so the option value is the selection itself.
 const getYourTeamsOption = (): ComboboxOption<string> => ({
   label: t('home.alerts-incidents.team-filter-your-teams', 'Your teams'),
@@ -22,10 +15,22 @@ const getYourTeamsOption = (): ComboboxOption<string> => ({
 
 const getAllOption = (label: string, value: string): ComboboxOption<string> => ({ label, value });
 
+// A lone header is noise: most orgs only have `team`, so headers only appear with several groups.
+function sortOptions(options: Array<ComboboxOption<string>>): Array<ComboboxOption<string>> {
+  const sorted = [...options].sort(
+    (a, b) => collator.compare(a.group ?? '', b.group ?? '') || collator.compare(a.label ?? '', b.label ?? '')
+  );
+  const singleGroup = new Set(sorted.map((option) => option.group)).size <= 1;
+  return singleGroup ? sorted.map(({ group, ...option }) => option) : sorted;
+}
+
 interface Props {
-  /** Options to offer; the caller hides the dropdown when there are none. */
-  options: TeamFilterOption[];
-  /** Opaque to this component: '' is the default scope, ALL_TEAMS the org-wide pick, anything else an option value. */
+  /**
+   * Options to offer, each with `group` set to render a header above the options sharing it.
+   * The caller hides the dropdown when there are none.
+   */
+  options: Array<ComboboxOption<string>>;
+  /** '' is the default scope, ALL_TEAMS the org-wide pick, anything else an option value. */
   selected: string;
   onChange: (selection: string) => void;
   /**
@@ -60,11 +65,7 @@ export function TeamFilterCombobox({
 }: Props) {
   // Single sort site for both tabs, so neither data hook has to. Grouped options stay
   // together under their header; ungrouped ones sort ahead of them.
-  const sortedOptions = useMemo(
-    () =>
-      [...options].sort((a, b) => collator.compare(a.group ?? '', b.group ?? '') || collator.compare(a.label, b.label)),
-    [options]
-  );
+  const sortedOptions = useMemo(() => sortOptions(options), [options]);
 
   // Only a "your teams" default needs a distinct sentinel for org-wide; otherwise '' already means all.
   const allValue = offersYourTeams ? ALL_TEAMS : '';
@@ -96,7 +97,7 @@ export function TeamFilterCombobox({
       const query = inputValue.toLowerCase();
       // Typing a field name (the group header) lists everything under it.
       const matching = sortedOptions.filter(
-        (option) => option.label.toLowerCase().includes(query) || option.group?.toLowerCase().includes(query)
+        (option) => option.label?.toLowerCase().includes(query) || option.group?.toLowerCase().includes(query)
       );
       // The scope options only belong on the unfiltered default list.
       const scopeOptions = offersYourTeams

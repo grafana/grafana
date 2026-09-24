@@ -33,7 +33,8 @@ export interface ActiveIncidents {
 interface IncidentFieldDto {
   slug: string;
   name: string;
-  type: string;
+  // 'labels' for the fields the Incident app shows as labels; other custom fields are 'incident'.
+  domainName: string;
   archived?: boolean;
   selectoptions?: Array<{ value: string; archived?: boolean }>;
 }
@@ -44,17 +45,15 @@ interface GetFieldsResponse {
   archived?: Array<{ key: string; value: string }>;
 }
 
-/** One value of a select-type incident custom field, offered as a filter option. */
-export interface IncidentFilterOption {
-  slug: string;
-  fieldName: string;
-  value: string;
-}
-
 /** A custom-field clause to narrow the active-incidents query to. */
 export interface IncidentFieldFilter {
   slug: string;
   value: string;
+}
+
+/** One value of an incident label field, offered as a filter option. */
+export interface IncidentFilterOption extends IncidentFieldFilter {
+  fieldName: string;
 }
 
 const ACTIVE_INCIDENTS_QUERY = 'isdrill:false status:active';
@@ -70,10 +69,10 @@ function isFilterableValue(value: string) {
   return value.trim() !== '' && !(value.includes('"') && value.includes("'"));
 }
 
-function isSelectField(field: IncidentFieldDto) {
-  // The free-form `tags` field isn't curated like the other labels, so its values aren't offered.
-  const isTags = field.slug.toLowerCase() === 'tags';
-  return !field.archived && !isTags && (field.type === 'single-select' || field.type === 'multi-select');
+// Same rule the Incident app uses to decide what counts as a label. The free-form `tags`
+// field (either casing on the wire) isn't curated like the others, so its values aren't offered.
+function isLabelField(field: IncidentFieldDto) {
+  return !field.archived && field.domainName === 'labels' && field.slug.toLowerCase() !== 'tags';
 }
 
 function buildActiveIncidentsQuery(filter?: IncidentFieldFilter) {
@@ -86,24 +85,21 @@ const labelPairKey = (slug: string, value: string) => `${slug}:${value}`;
 
 // Options that can be offered for one field: live, quotable, and not archived org-wide.
 function getFieldFilterOptions(field: IncidentFieldDto, archivedPairs: Set<string>): IncidentFilterOption[] {
-  const options: IncidentFilterOption[] = [];
-  for (const option of field.selectoptions ?? []) {
-    if (option.archived || !isFilterableValue(option.value)) {
-      continue;
-    }
-    if (archivedPairs.has(labelPairKey(field.slug, option.value))) {
-      continue;
-    }
-    options.push({ slug: field.slug, fieldName: field.name, value: option.value });
-  }
-  return options;
+  return (field.selectoptions ?? [])
+    .filter(
+      (option) =>
+        !option.archived &&
+        isFilterableValue(option.value) &&
+        !archivedPairs.has(labelPairKey(field.slug, option.value))
+    )
+    .map((option) => ({ slug: field.slug, fieldName: field.name, value: option.value }));
 }
 
 /** Exported for unit tests; consumers go through the `getIncidentFilterOptions` query. */
-export function getIncidentFilterOptions(response: GetFieldsResponse): IncidentFilterOption[] {
+export function toIncidentFilterOptions(response: GetFieldsResponse): IncidentFilterOption[] {
   const archivedPairs = new Set((response.archived ?? []).map(({ key, value }) => labelPairKey(key, value)));
-  const selectFields = (response.fields ?? []).filter(isSelectField);
-  return selectFields.flatMap((field) => getFieldFilterOptions(field, archivedPairs));
+  const labelFields = (response.fields ?? []).filter(isLabelField);
+  return labelFields.flatMap((field) => getFieldFilterOptions(field, archivedPairs));
 }
 
 const getProxyApiUrl = (path: string, pluginId: string) => `/api/plugins/${pluginId}/resources${path}`;
@@ -137,7 +133,7 @@ export const incidentsApi = alertingApi.injectEndpoints({
         hasMore: response.cursor?.hasMore ?? false,
       }),
     }),
-    // Values of every select-type custom field in the org; empty when there are none.
+    // Values of every label field in the org; empty when there are none.
     getIncidentFilterOptions: build.query<IncidentFilterOption[], { pluginId: string }>({
       query: ({ pluginId }) => ({
         url: getProxyApiUrl('/api/v1/FieldsService.GetFields', pluginId),
@@ -145,7 +141,7 @@ export const incidentsApi = alertingApi.injectEndpoints({
         method: 'POST',
         showErrorAlert: false,
       }),
-      transformResponse: getIncidentFilterOptions,
+      transformResponse: toIncidentFilterOptions,
     }),
   }),
 });

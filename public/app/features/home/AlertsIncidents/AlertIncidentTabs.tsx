@@ -1,4 +1,4 @@
-import { useImperativeHandle, useMemo, useRef, useState, type Ref } from 'react';
+import { useImperativeHandle, useRef, useState, type Ref } from 'react';
 
 import { t } from '@grafana/i18n';
 import { Box, ScrollContainer, Stack, Tab, TabContent, TabsBar, Text } from '@grafana/ui';
@@ -12,8 +12,8 @@ import { CreateAndViewAlertsButtons } from './CreateAndViewAlertsButtons';
 import { DeclareAndViewIncidentsButtons } from './DeclareAndViewIncidentsButtons';
 import { FiringAlertsCard } from './FiringAlertsCard';
 import { IncidentsCard } from './IncidentsCard';
-import { TeamFilterCombobox, type TeamFilterOption } from './TeamFilterCombobox';
-import { type IncidentFilterSelection, decodeIncidentFilter, encodeIncidentFilter } from './incidentFilter';
+import { TeamFilterCombobox } from './TeamFilterCombobox';
+import { type IncidentFilterSelection, incidentFilterLabel } from './incidentFilter';
 import { type TeamSelection } from './teamFilter';
 import { useAlertTeamLabelValues } from './useAlertTeamLabelValues';
 import { type FiringAlertsData } from './useFiringAlerts';
@@ -29,10 +29,6 @@ type TabId = typeof ALERTS_TAB_ID | typeof INCIDENTS_TAB_ID;
 // generic enough to collide with plugin content on the same page.
 const PANEL_ID = 'alerts-incidents-panel';
 const tabElementId = (id: TabId) => `alerts-incidents-tab-${id}`;
-
-// Module-level so the combobox's memoized value option doesn't churn on every render.
-const staleIncidentFilterLabel = (selection: IncidentFilterSelection) =>
-  decodeIncidentFilter(selection)?.value ?? selection;
 
 export type AlertIncidentSwitchHandle = {
   switch: (tab: TabId, scroll?: boolean) => void;
@@ -70,24 +66,9 @@ export function AlertIncidentTabs({
     canDeclare: incidentsCanDeclare,
     canAccess: incidentsCanAccess,
   } = incidentsData;
-  // Fetched here rather than in the dropdown so the values survive tab switches.
-  const alertTeamValues = useAlertTeamLabelValues(canViewAlerts);
-  const incidentFilterOptions = useIncidentFilterOptions(canViewIncidents);
-
-  const alertTeamOptions = useMemo<TeamFilterOption[]>(
-    () => alertTeamValues.map((value) => ({ label: value, value })),
-    [alertTeamValues]
-  );
-  // Grouped by field so a value shared across fields (e.g. "Frontend" as both team and squad) reads
-  // unambiguously. A single field needs no header: most orgs only have `team`, and a lone header is noise.
-  const incidentOptions = useMemo<TeamFilterOption[]>(() => {
-    const fieldCount = new Set(incidentFilterOptions.map((option) => option.slug)).size;
-    return incidentFilterOptions.map((option) => ({
-      label: option.value,
-      value: encodeIncidentFilter(option),
-      group: fieldCount > 1 ? option.fieldName : undefined,
-    }));
-  }, [incidentFilterOptions]);
+  // Fetched here rather than in the dropdown so the options survive tab switches.
+  const alertTeamOptions = useAlertTeamLabelValues(canViewAlerts);
+  const incidentOptions = useIncidentFilterOptions(canViewIncidents);
 
   const isAlertActionsVisible = canViewAlerts && !loading && !error && activeTab === ALERTS_TAB_ID;
   const isIncidentsActionsVisible =
@@ -157,8 +138,7 @@ export function AlertIncidentTabs({
               // Incidents have no "your teams" scope: the unfiltered default is every active incident.
               offersYourTeams: false,
               allOptionLabel: t('home.alerts-incidents.incident-filter-all', 'All incidents'),
-              // Show a stale pick by its value, not the raw `slug:value` encoding.
-              formatStaleSelection: staleIncidentFilterLabel,
+              formatStaleSelection: incidentFilterLabel,
               ariaLabel: t('home.alerts-incidents.incident-filter-label', 'Filter incidents by label'),
             },
           },

@@ -24,3 +24,8 @@ export function decodeIncidentFilter(selection: IncidentFilterSelection): Incide
   }
   return { slug: selection.slice(0, separatorIndex), value: selection.slice(separatorIndex + 1) };
 }
+
+/** What to show for a selection: the picked value, never the raw `slug:value` encoding. */
+export function incidentFilterLabel(selection: IncidentFilterSelection): string {
+  return decodeIncidentFilter(selection)?.value ?? selection;
+}

@@ -800,18 +800,23 @@ describe('AlertIncidentTabs', () => {
       expect(combobox).toHaveDisplayValue('Team B');
     });
 
-    it('groups values by field and filters by a non-team field when one of its values is picked', async () => {
-      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
-      mockIrmPlugin();
+    // Two label fields, so the dropdown shows values under a header per field.
+    function mockTeamAndSquadFields() {
       mockIncidentFields([
-        { slug: 'team', name: 'Team', type: 'single-select', selectoptions: [{ value: 'Platform' }] },
+        { slug: 'team', name: 'Team', domainName: 'labels', selectoptions: [{ value: 'Platform' }] },
         {
           slug: 'squad',
           name: 'Squad',
-          type: 'multi-select',
+          domainName: 'labels',
           selectoptions: [{ value: 'Frontend' }, { value: 'Backend' }],
         },
       ]);
+    }
+
+    it('groups values by field and filters by a non-team field when one of its values is picked', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      mockIrmPlugin();
+      mockTeamAndSquadFields();
       const queries = mockIncidents([activeIncident]);
 
       const { user } = render(<AlertIncidentTabsWithData />);
@@ -820,7 +825,7 @@ describe('AlertIncidentTabs', () => {
       const combobox = await screen.findByRole('combobox', { name: /filter incidents by label/i });
       await user.click(combobox);
 
-      // One dropdown for every select field: values sit under a header naming their field,
+      // One dropdown for every label field: values sit under a header naming their field,
       // fields sorted by name, values sorted within each.
       const options = await screen.findAllByRole('option');
       expect(options.map((option) => option.textContent)).toEqual(['All incidents', 'Backend', 'Frontend', 'Platform']);
@@ -834,11 +839,23 @@ describe('AlertIncidentTabs', () => {
       await waitFor(() => expect(queries).toHaveLength(2));
       expect(queries[1]).toBe(`${ACTIVE_INCIDENTS_QUERY} field:squad:"Frontend"`);
       expect(combobox).toHaveDisplayValue('Frontend');
+    });
 
-      // Typing a field name lists everything under it: "squ" matches no value, only the Squad field.
-      // keyboard() rather than type(): type() re-clicks the input, which toggles the menu closed.
+    it('lists every value of a field when its name is typed', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      mockIrmPlugin();
+      mockTeamAndSquadFields();
+      mockIncidents([activeIncident]);
+
+      const { user } = render(<AlertIncidentTabsWithData />);
+
+      expect(await screen.findByText('Database outage')).toBeInTheDocument();
+      const combobox = await screen.findByRole('combobox', { name: /filter incidents by label/i });
       await user.click(combobox);
       expect(await screen.findByRole('option', { name: 'Platform' })).toBeInTheDocument();
+
+      // "squ" matches no value, only the Squad header, so both squads stay and Platform goes.
+      // keyboard() rather than type(): type() re-clicks the input, which toggles the menu closed.
       await user.keyboard('squ');
       await waitFor(() => expect(screen.queryByRole('option', { name: 'Platform' })).not.toBeInTheDocument());
       expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual(['Backend', 'Frontend']);
@@ -910,11 +927,13 @@ describe('AlertIncidentTabs', () => {
       expect(screen.queryByText('Database outage')).not.toBeInTheDocument();
     });
 
-    it('hides the dropdown when the org has no select custom fields', async () => {
+    it('hides the dropdown when the org has no label fields', async () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
       mockIrmPlugin();
-      // Only non-select fields; the default handler's empty list is the other shape of "nothing to pick".
-      mockIncidentFields([{ slug: 'region', name: 'Region', type: 'string' }]);
+      // Only a non-label custom field; the default handler's empty list is the other shape of "nothing to pick".
+      mockIncidentFields([
+        { slug: 'region', name: 'Region', domainName: 'incident', selectoptions: [{ value: 'EU' }] },
+      ]);
       mockIncidents([activeIncident]);
 
       render(<AlertIncidentTabsWithData />);
