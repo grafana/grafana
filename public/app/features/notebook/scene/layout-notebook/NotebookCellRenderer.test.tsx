@@ -1,24 +1,49 @@
+import { act } from '@testing-library/react';
 import { fireEvent, render, screen, within } from 'test/test-utils';
 
+import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
+import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneDataTransformer, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { contextSrv } from 'app/core/services/context_srv';
 import { LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
+import { getVizSuggestionForQuery } from 'app/features/dashboard-scene/utils/getVizSuggestionForQuery';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 
 import { NotebookCellItem } from './NotebookCellItem';
 import { isEditableQueryPanel, NotebookCellRenderer } from './NotebookCellRenderer';
 import { NotebookLayoutManager } from './NotebookLayoutManager';
 
+// Converting a cell into a real panel activates its VizPanel, which loads its plugin — this satisfies
+// that outside of a running Grafana instance, the same way NotebookAutosave.test.ts does.
+setPluginImportUtils({
+  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({ id }).useFieldConfig()),
+  getPanelPluginFromCache: () => undefined,
+});
+
 jest.mock('app/features/explore/QueryLibrary/QueryLibraryContext', () => ({
   useQueryLibraryContext: jest.fn(),
 }));
 
+// The suggestion pipeline itself has its own dedicated coverage — see getVizSuggestionForQuery's tests.
+jest.mock('app/features/dashboard-scene/utils/getVizSuggestionForQuery', () => ({
+  getVizSuggestionForQuery: jest.fn(),
+}));
+
+// PanelQueryEditor pulls in datasource-picker/query-editor machinery with its own dedicated coverage
+// in PanelQueryEditor.test.tsx — this file only cares whether converting a cell into a panel lands
+// the right VizPanel and query, not whether the inline editor itself renders.
+jest.mock('./PanelQueryEditor', () => ({
+  PanelQueryEditor: () => <div data-testid="panel-query-editor-stub" />,
+}));
+
 const mockUseQueryLibraryContext = useQueryLibraryContext as jest.Mock;
+const mockGetVizSuggestionForQuery = getVizSuggestionForQuery as jest.Mock;
 
 beforeEach(() => {
   mockUseQueryLibraryContext.mockReturnValue({ openDrawer: jest.fn(), queryLibraryEnabled: false });
   contextSrv.isSignedIn = false;
+  mockGetVizSuggestionForQuery.mockReset().mockResolvedValue(undefined);
 });
 
 // See CodeCell.test.tsx — the real editor does not run in jsdom.
@@ -227,6 +252,31 @@ describe('NotebookCellRenderer', () => {
 
         const submenu = within(await screen.findByTestId(selectors.components.Menu.SubMenu.container));
         expect(submenu.getByRole('menuitem', { name: 'New from Saved Queries' })).toBeInTheDocument();
+      });
+
+      it('opens the drawer with notebook-cell context and converts the cell once a query is selected', async () => {
+        const openDrawer = jest.fn();
+        mockUseQueryLibraryContext.mockReturnValue({ openDrawer, queryLibraryEnabled: true });
+        contextSrv.isSignedIn = true;
+        const cell = buildMarkdownCellInLayout();
+        const onFocusRequest = jest.fn();
+        const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} onFocusRequest={onFocusRequest} />);
+
+        await user.type(await screen.findByLabelText('Markdown'), '/');
+        fireEvent.keyDown(screen.getByRole('menuitem', { name: 'Visualization' }), { key: 'ArrowRight' });
+        const submenu = within(await screen.findByTestId(selectors.components.Menu.SubMenu.container));
+        fireEvent.click(submenu.getByRole('menuitem', { name: 'New from Saved Queries' }));
+
+        expect(openDrawer).toHaveBeenCalledWith(expect.objectContaining({ options: { context: 'notebook-cell' } }));
+
+        const query = { refId: 'A', datasource: { uid: 'test-ds' } };
+        await act(async () => {
+          await openDrawer.mock.calls[0][0].onSelectQuery(query, 'My query title');
+        });
+
+        expect(cell.state.content).toBeUndefined();
+        expect(cell.state.body?.state.title).toBe('My query title');
+        expect(onFocusRequest).toHaveBeenCalledTimes(1);
       });
     });
   });

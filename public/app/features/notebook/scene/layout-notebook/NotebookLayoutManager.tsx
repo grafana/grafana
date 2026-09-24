@@ -585,23 +585,27 @@ export class NotebookLayoutManager
   }
 
   /**
+   * An insert past the trailing empty slot offers `index === cells.length`. Inserting *after* that
+   * slot would leave it stranded mid-document once the invariant appends a replacement after the new
+   * block, so this clamps to just before it instead — shared by addCell and addCellFromSavedQuery.
+   */
+  private clampBeforeTrailingSlot(index: number): number {
+    const trailing = this.state.cells.at(-1);
+    if (index >= this.state.cells.length && trailing && isEmptyMarkdown(trailing.state.content)) {
+      return this.state.cells.length - 1;
+    }
+    return index;
+  }
+
+  /**
    * Inserts a new cell at `index`, the position the add-block button was offering.
-   *
-   * Visualization stays inert rather than inserting a cell with no content kind behind it, which the
-   * renderer would draw as a blank gap — the menu's "Coming soon" submenu is the only thing it offers.
    *
    * Returns the new cell so the caller can hand it the caret; undefined when nothing was inserted.
    */
   public addCell = (type: NotebookBlockType, index: number): NotebookCellItem | undefined => {
-    // An insert past the trailing empty slot offers index === cells.length. Inserting *after*
-    // that slot would leave it stranded mid-document once the invariant appends a replacement after
-    // the new block. Inserting *before* it keeps the empty cell at the tail, and still goes through
-    // executeEdit as "Add block" — convertCell would skip the undo stack for Paragraph (identical
-    // empty markdown, so only appendSystemCell ran) and record Heading/Code as "Edit block".
-    const trailing = this.state.cells.at(-1);
-    if (index >= this.state.cells.length && trailing && isEmptyMarkdown(trailing.state.content)) {
-      index = this.state.cells.length - 1;
-    }
+    // convertCell would skip the undo stack for Paragraph (identical empty markdown, so only
+    // appendSystemCell ran) and record Heading/Code as "Edit block".
+    index = this.clampBeforeTrailingSlot(index);
 
     const built = this.buildCellFor(type, index);
     if (!built) {
@@ -628,6 +632,7 @@ export class NotebookLayoutManager
     query: DataQuery,
     title?: string
   ): Promise<NotebookCellItem | undefined> => {
+    index = this.clampBeforeTrailingSlot(index);
     const built = this.buildCellFor('visualization', index);
     if (!built) {
       return undefined;
@@ -680,11 +685,13 @@ export class NotebookLayoutManager
         ]);
       }
     } catch {
+      // Covers both the suggestion lookup above and panel.changePluginType, so the wording can't name
+      // either one specifically — matches the equivalent failure in Dashboards' UnconfiguredPanel.
       appEvents.emit(AppEvents.alertError, [
-        t('notebook.add-block.saved-query-apply-error', 'Failed to get a visualization suggestion'),
+        t('notebook.add-block.saved-query-apply-error', 'Failed to apply saved query'),
         t(
           'notebook.add-block.saved-query-apply-error-detail',
-          'An error occurred while suggesting a visualization for the saved query.'
+          'An error occurred while applying the saved query. Please try again.'
         ),
       ]);
     }

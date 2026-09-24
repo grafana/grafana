@@ -48,18 +48,29 @@ export function NotebookBlockTypeMenu({ onPick, onPickSavedQuery }: Props) {
 
         // A plain array, not a component that could render null: Menu.Item opens a submenu based on
         // childItems.length alone, which would still be > 0 for a null child.
+        //
+        // Each child stops propagation itself: a leaf Menu.Item's own onClick wrapper only calls
+        // stopPropagation while ITS submenu is still closed (it has none), so without this the click
+        // bubbles to the parent Visualization item's own onClick — whose guard is also a no-op once
+        // its submenu is open — firing the plain insert on top of whichever sub-option was picked.
         const childItems = [
           <Menu.Item
             key="new-visualization"
             icon="plus"
             label={t('notebook.add-block.new-visualization', 'New Visualization')}
-            onClick={() => onPick?.(option.type)}
+            onClick={(event) => {
+              event.stopPropagation();
+              onPick?.(option.type);
+            }}
           />,
           <Menu.Item
             key="new-from-saved-queries"
             icon="book-open"
             label={t('notebook.add-block.new-from-saved-queries', 'New from Saved Queries')}
-            onClick={() => onPickSavedQuery()}
+            onClick={(event) => {
+              event.stopPropagation();
+              onPickSavedQuery();
+            }}
           />,
         ];
 

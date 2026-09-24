@@ -1,11 +1,16 @@
 import { act, fireEvent, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
+import { getPanelPlugin } from '@grafana/data/test';
+import { selectors } from '@grafana/e2e-selectors';
+import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
+import { contextSrv } from 'app/core/services/context_srv';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { getVizSuggestionForQuery } from 'app/features/dashboard-scene/utils/getVizSuggestionForQuery';
+import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { defaultVisualizationPanelKind, type NotebookLayoutKind } from 'app/features/notebook/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
@@ -14,7 +19,24 @@ jest.mock('app/features/dashboard-scene/utils/getVizSuggestionForQuery', () => (
   getVizSuggestionForQuery: jest.fn(),
 }));
 
+jest.mock('app/features/explore/QueryLibrary/QueryLibraryContext', () => ({
+  useQueryLibraryContext: jest.fn(),
+}));
+
 const mockGetVizSuggestionForQuery = getVizSuggestionForQuery as jest.Mock;
+const mockUseQueryLibraryContext = useQueryLibraryContext as jest.Mock;
+
+// Rendering a picked visualization block activates its real VizPanel, which loads its plugin — this
+// satisfies that outside of a running Grafana instance, the same way NotebookAutosave.test.ts does.
+setPluginImportUtils({
+  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({ id }).useFieldConfig()),
+  getPanelPluginFromCache: () => undefined,
+});
+
+beforeEach(() => {
+  mockUseQueryLibraryContext.mockReturnValue({ openDrawer: jest.fn(), queryLibraryEnabled: false });
+  contextSrv.isSignedIn = false;
+});
 
 import { type NotebookEditHistory } from '../NotebookEditHistory';
 import { NotebookScene } from '../NotebookScene';
@@ -246,6 +268,39 @@ describe('NotebookLayoutManager', () => {
       expect(screen.getByRole('menuitem', { name: 'Paragraph' })).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: 'Code' })).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: 'Visualization' })).toBeInTheDocument();
+    });
+
+    it('opens the saved-queries drawer with notebook-cell context and inserts the selected query on selection', async () => {
+      const openDrawer = jest.fn();
+      mockUseQueryLibraryContext.mockReturnValue({ openDrawer, queryLibraryEnabled: true });
+      contextSrv.isSignedIn = true;
+      const suggestion = {
+        pluginId: 'barchart',
+        name: 'barchart',
+        description: '',
+        options: {},
+        fieldConfig: { defaults: {}, overrides: [] },
+        hash: '0',
+        score: 100,
+      };
+      mockGetVizSuggestionForQuery.mockResolvedValue(suggestion);
+      const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
+
+      await user.click(screen.getAllByRole('button', { name: 'Click to add below' })[0]);
+      fireEvent.keyDown(screen.getByRole('menuitem', { name: 'Visualization' }), { key: 'ArrowRight' });
+      const submenu = within(await screen.findByTestId(selectors.components.Menu.SubMenu.container));
+      fireEvent.click(submenu.getByRole('menuitem', { name: 'New from Saved Queries' }));
+
+      expect(openDrawer).toHaveBeenCalledWith(expect.objectContaining({ options: { context: 'notebook-cell' } }));
+
+      const query: DataQuery = { refId: 'A', datasource: { uid: 'test-ds' } };
+      await act(async () => {
+        await openDrawer.mock.calls[0][0].onSelectQuery(query, 'My query title');
+      });
+
+      expect(cellNames(manager)).toEqual(['a', 'visualization-1', 'b', 'paragraph-1']);
+      expect(manager.state.cells[1].state.body?.state.pluginId).toBe('barchart');
+      expect(manager.state.cells[1].state.body?.state.title).toBe('My query title');
     });
   });
 
@@ -831,6 +886,23 @@ describe('NotebookLayoutManager', () => {
       const cell = await manager.addCellFromSavedQuery(1, query);
 
       expect(getQueryRunnerFor(cell?.state.body)?.state.queries).toEqual([query]);
+    });
+
+    // Same clamp addCell applies: the trailing cell's own add button offers index === cells.length,
+    // which would otherwise land the new panel after that slot and strand it mid-document once the
+    // invariant appends a replacement.
+    it('inserts before the trailing empty slot when the position offered is past it', async () => {
+      mockGetVizSuggestionForQuery.mockResolvedValue(suggestion);
+      const trailing = new NotebookCellItem({
+        elementName: 'paragraph-1',
+        source: 'user',
+        content: { kind: 'Markdown', spec: { text: '' } },
+      });
+      const manager = buildManager([...buildNarrativeCells(['a', 'b']), trailing]);
+
+      await manager.addCellFromSavedQuery(manager.state.cells.length, query);
+
+      expect(cellNames(manager)).toEqual(['a', 'b', 'visualization-1', 'paragraph-1']);
     });
   });
 
