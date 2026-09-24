@@ -2981,6 +2981,14 @@ var (
 			Generate:    Generate{Go: true, React: true},
 		},
 		{
+			Name:        "alerting.hybridSearch",
+			Description: "Enables hybrid (lexical and semantic) search for alert rules in unified storage",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
+		},
+		{
 			Name:        "grafana.vectorSearchCmdk",
 			Description: "Enables semantic (vector) dashboard search in the command palette",
 			Stage:       FeatureStageExperimental,
