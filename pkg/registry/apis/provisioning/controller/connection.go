@@ -66,6 +66,7 @@ type ConnectionController struct {
 	processFn func(ctx context.Context, key string) error
 
 	queue          workqueue.TypedRateLimitingInterface[string]
+	queueWait      queueWaitTracker
 	resyncInterval time.Duration
 	drainTimeout   time.Duration
 }
@@ -141,7 +142,9 @@ func (cc *ConnectionController) enqueue(obj interface{}, trigger usinformer.Proc
 	}
 	// Store the attribution before a worker can pick up the key.
 	cc.setTrigger(key, trigger)
+	cc.queueWait.mark(key, time.Now())
 	cc.queue.Add(key)
+	cc.logger.Debug("enqueued connection key", "work_key", key, "queue_len", cc.queue.Len())
 }
 
 // The first enqueue owns the attribution when subsequent events coalesce onto
@@ -241,7 +244,14 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 	defer cc.queue.Done(key)
 
 	namespace, name, _ := cache.SplitMetaNamespaceKey(key)
-	logger := logging.FromContext(ctx).With("work_key", key, "namespace", namespace, "connection", name)
+	// queue_len is the backlog still waiting after this pickup (Get removed the
+	// current key), so a growing queue is visible per reconcile in the logs.
+	logger := logging.FromContext(ctx).With("work_key", key, "namespace", namespace, "connection", name, "queue_len", cc.queue.Len())
+	// Report how long the key waited between enqueue and pickup, complementing
+	// the queue-wait histogram with a per-key value in the logs.
+	if enqueuedAt, ok := cc.queueWait.pop(key); ok {
+		logger = logger.With("queue_wait", time.Since(enqueuedAt))
+	}
 	logger.Info("ConnectionController processing key")
 
 	trigger, ok := cc.popTrigger(key)
@@ -253,9 +263,12 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 		cc.processed.RecordProcessed(trigger)
 	}
 
+	start := time.Now()
 	err := cc.processFn(ctx, key)
+	logger = logger.With("duration", time.Since(start))
 	if err == nil {
 		cc.queue.Forget(key)
+		logger.Info("ConnectionController finished processing key")
 		return true
 	}
 
@@ -274,14 +287,15 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 		return true
 	}
 
-	logger.Info("ConnectionController will retry as service is unavailable")
 	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", key, err))
 	// Keep retry attribution without overwriting an event received in flight or
 	// inventing attribution for an internal reschedule.
 	if ok {
 		cc.setTrigger(key, trigger)
 	}
+	cc.queueWait.mark(key, time.Now())
 	cc.queue.AddRateLimited(key)
+	logger.Info("ConnectionController will retry as service is unavailable", "queue_len", cc.queue.Len())
 
 	return true
 }
@@ -359,8 +373,10 @@ func (cc *ConnectionController) process(ctx context.Context, key string) (err er
 			// be readable from the store yet. Wait for it rather than regenerating, which
 			// would delete it and can loop under secret-store read-after-write lag.
 			if tokenRecentlyCreated(time.UnixMilli(conn.Status.Token.LastUpdated)) {
-				logger.Info("connection token secret not yet readable after recent write; will retry", "error", err)
+				cc.queueWait.mark(key, time.Now())
 				cc.queue.AddAfter(key, tokenWriteRetryDelay)
+				logger.Info("connection token secret not yet readable after recent write; will retry",
+					"error", err, "retry_after", tokenWriteRetryDelay, "queue_len", cc.queue.Len())
 				return nil
 			}
 			logger.Warn("connection token secret could not be decrypted, regenerating", "error", err)

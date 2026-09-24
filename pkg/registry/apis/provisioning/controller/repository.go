@@ -74,6 +74,7 @@ type RepositoryController struct {
 	keyFunc           func(obj any) (string, error)
 
 	queue           workqueue.TypedRateLimitingInterface[string]
+	queueWait       queueWaitTracker
 	resyncInterval  time.Duration
 	minSyncInterval time.Duration
 	drainTimeout    time.Duration
@@ -281,7 +282,9 @@ func (rc *RepositoryController) enqueue(obj interface{}, trigger usinformer.Proc
 	// Attribute the key before the enqueue so a worker that dequeues immediately
 	// sees it.
 	rc.setTrigger(key, trigger)
+	rc.queueWait.mark(key, time.Now())
 	rc.queue.Add(key)
+	rc.logger.Debug("enqueued repository key", "work_key", key, "queue_len", rc.queue.Len())
 }
 
 // setTrigger records what enqueued key, first-wins: the enqueue that first
@@ -338,7 +341,14 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	defer rc.queue.Done(key)
 
 	namespace, name, _ := cache.SplitMetaNamespaceKey(key)
-	logger := logging.FromContext(ctx).With("work_key", key, "namespace", namespace, "repository", name)
+	// queue_len is the backlog still waiting after this pickup (Get removed the
+	// current key), so a growing queue is visible per reconcile in the logs.
+	logger := logging.FromContext(ctx).With("work_key", key, "namespace", namespace, "repository", name, "queue_len", rc.queue.Len())
+	// Report how long the key waited between enqueue and pickup, complementing
+	// the queue-wait histogram with a per-key value in the logs.
+	if enqueuedAt, ok := rc.queueWait.pop(key); ok {
+		logger = logger.With("queue_wait", time.Since(enqueuedAt))
+	}
 	logger.Info("RepositoryController processing key")
 
 	// Pop this pickup's attribution up front so the entry is cleared however the
@@ -359,9 +369,12 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 		rc.processed.RecordProcessed(trigger)
 	}
 
+	start := time.Now()
 	repoType, err := rc.processFn(key)
+	logger = logger.With("duration", time.Since(start))
 	if err == nil {
 		rc.queue.Forget(key)
+		logger.With("repositoryType", repoType).Info("RepositoryController finished processing key")
 		return true
 	}
 
@@ -381,8 +394,6 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 		logger.Info("RepositoryController will not retry")
 		rc.queue.Forget(key)
 		return true
-	} else {
-		logger.Info("RepositoryController will retry as the failure is transient")
 	}
 
 	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", key, err))
@@ -392,7 +403,9 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	if ok {
 		rc.setTrigger(key, trigger)
 	}
+	rc.queueWait.mark(key, time.Now())
 	rc.queue.AddRateLimited(key)
+	logger.Info("RepositoryController will retry as the failure is transient", "queue_len", rc.queue.Len())
 
 	return true
 }
@@ -1138,8 +1151,10 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			// readable from the store yet. Wait for it rather than regenerating, which would
 			// delete it and can loop under secret-store read-after-write lag.
 			if tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated)) {
-				logger.Info("repository token secret not yet readable after recent write; will retry", "error", err)
+				rc.queueWait.mark(key, time.Now())
 				rc.queue.AddAfter(key, tokenWriteRetryDelay)
+				logger.Info("repository token secret not yet readable after recent write; will retry",
+					"error", err, "retry_after", tokenWriteRetryDelay, "queue_len", rc.queue.Len())
 				return repoType, nil
 			}
 
