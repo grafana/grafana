@@ -5721,6 +5721,7 @@
     "edit-actions": {
       "add": "{{typeName}}を追加",
       "add-conditional-rule": "{{ruleDescription}}ルールを追加",
+      "collapse-all-rows": "",
       "dashboard-description": "ダッシュボードの説明を変更",
       "dashboard-title": "ダッシュボードのタイトルを変更",
       "duplicate": "{{typeName}}を複製",
@@ -5728,6 +5729,7 @@
       "edit-query-result-rule": "クエリ結果ルールを変更",
       "edit-template-variable-rule": "テンプレート変数ルールを変更",
       "edit-time-range-rule": "時間範囲ルールを変更",
+      "expand-all-rows": "",
       "group-into-row": "行にグループ化",
       "group-into-tab": "タブにグループ化",
       "move": "{{typeName}}を移動",
@@ -5760,9 +5762,7 @@
       "add-library-panel-header": "パネルをインポート",
       "add-visualization-body": "データソースを選択し、グラフ、統計、テーブルを使用してデータをクエリおよび視覚化するか、リスト、マークダウン、その他のウィジェットを作成します。",
       "add-visualization-button": "視覚化を追加",
-      "add-visualization-description": "",
       "add-visualization-header": "視覚化を追加して新しいダッシュボードを開始します",
-      "add-visualization-heading": "",
       "assistant-placeholder": "",
       "auto-grid": "自動グリッド",
       "auto-grid-description": "パネルはサイズ変更され、均一なグリッドになります",
@@ -5770,9 +5770,6 @@
       "custom-grid": "カスタムグリッド",
       "custom-grid-description": "各パネルを個別に配置してサイズを変更する",
       "description": "パネルを追加してデータを視覚化します",
-      "grid-auto": "",
-      "grid-custom": "",
-      "grid-label": "",
       "import-a-dashboard-body": "ファイルまたは<2>grafana.com</2>からダッシュボードをインポートします。",
       "import-a-dashboard-header": "ダッシュボードをインポートする",
       "import-dashboard-button": "ダッシュボードをインポート",
@@ -6099,8 +6096,7 @@
     "planning-banner": {
       "build": "",
       "dismiss": "",
-      "plan-label": "",
-      "panel-count_other": ""
+      "preview-label": ""
     },
     "public-dashboard-not-available": {
       "does-not-exist": "アクセスしようとしているダッシュボードは存在しません",
@@ -9379,6 +9375,7 @@
     "flag-value": "フラグ値",
     "menu": "メニューを開く",
     "new-flag": "new-flag-override",
+    "ofrep-evaluation": "",
     "save-flag": "保存",
     "title": "機能コントロール"
   },
@@ -10616,6 +10613,7 @@
       "aria-label-sort-column": "{{columnName}}列を並べ替え",
       "expand-row-header": "行展開ボタン",
       "expand-row-tooltip": "行の展開を切り替える",
+      "loading": "",
       "tooltip-collapse-all": "すべての行を折りたたむ",
       "tooltip-expand-all": "すべての行を広げる"
     },
@@ -10710,6 +10708,9 @@
     "password-field": {
       "tooltip-hide": "パスワードを非表示",
       "tooltip-show": "パスワードを表示"
+    },
+    "query-field": {
+      "loading": ""
     },
     "query-input": {
       "loading": "エディタを読み込んでいます"
@@ -10820,6 +10821,7 @@
         }
       },
       "inspect-drawer-title": "値を検査",
+      "loading": "",
       "nested-table": {
         "expander-column-name": "ネストされた行を展開",
         "no-data": "データなし"
@@ -13593,10 +13595,15 @@
   },
   "playlist-page": {
     "card": {
-      "delete": "プレイリストの削除",
-      "edit": "再生リストを編集する",
-      "start": "プレイリストを開始",
-      "tooltip": "プレイリストを共有する"
+      "delete": "",
+      "delete-label": "",
+      "edit": "",
+      "edit-label": "",
+      "share": "",
+      "share-label": "",
+      "start": "",
+      "start-label": "",
+      "tooltip": ""
     },
     "create-button": {
       "title": "新しいプレイリスト"
@@ -14731,6 +14738,15 @@
     },
     "repository-status": {
       "error": "リポジトリの読み込みに失敗しました"
+    },
+    "repository-status-alert": {
+      "deletion-title": "",
+      "error-title": "",
+      "force-delete-button": "",
+      "force-delete-cancel": "",
+      "force-delete-confirm": "",
+      "force-delete-title": "",
+      "force-delete-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "リポジトリに戻る",
@@ -16396,7 +16412,9 @@
     }
   },
   "swagger": {
-    "login": "ログイン"
+    "login": "ログイン",
+    "namespace-unavailable": "",
+    "namespace-unavailable-title": ""
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -17619,6 +17637,7 @@
     },
     "series-to-fields-transformer-editor": {
       "label-field": "フィールド",
+      "label-keep-unjoined": "",
       "label-mode": "モード",
       "modes": {
         "description": {
@@ -17631,7 +17650,8 @@
           "outer-tabular": "外部 (表形式)",
           "outer-time-series": "外部 (時系列)"
         }
-      }
+      },
+      "tooltip-keep-unjoined": ""
     },
     "series-to-rows-transformer-editor": {
       "description": {

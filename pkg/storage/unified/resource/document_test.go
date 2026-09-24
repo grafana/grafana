@@ -38,6 +38,7 @@ func TestStandardDocumentBuilder(t *testing.T) {
 			"resource": "playlists",
 			"name": "test1"
 		},
+		"groupResource": "playlists.grafana.app/playlists",
 		"name": "test1",
 		"rv": 10,
 		"_rv": "10",
