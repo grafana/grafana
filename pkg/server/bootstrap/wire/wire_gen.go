@@ -593,7 +593,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	datasourcePermissionsService := ossaccesscontrol.ProvideDatasourcePermissionsService(cfg, featureToggles, sqlStore)
 	orgRoleMapper := connectors.ProvideOrgRoleMapper(configProvider, orgService)
 	socialService := socialimpl.ProvideService(ctx, configProvider, featureToggles, usageStats, bundleregistryService, remoteCache, orgRoleMapper, ssosettingsimplService)
-	loginStore, err := authinfoimpl.ProvideStore(ctx, legacyDatabaseProvider, secretsService)
+	loginStore, err := authinfoimpl.ProvideStore(ctx, legacyDatabaseProvider, secretsService, cfg, eventualRestConfigProvider, tracingService)
 	if err != nil {
 		return nil, err
 	}
@@ -1459,7 +1459,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	orgRoleMapper := connectors.ProvideOrgRoleMapper(configProvider, orgService)
 	socialService := socialimpl.ProvideService(ctx, configProvider, featureToggles, usageStats, bundleregistryService, remoteCache, orgRoleMapper, ssosettingsimplService)
-	loginStore, err := authinfoimpl.ProvideStore(ctx, legacyDatabaseProvider, secretsService)
+	loginStore, err := authinfoimpl.ProvideStore(ctx, legacyDatabaseProvider, secretsService, cfg, eventualRestConfigProvider, tracingService)
 	if err != nil {
 		return nil, err
 	}
@@ -2020,7 +2020,8 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	ossLicensingService := licensing.ProvideService(cfg, hooksService)
 	ssosettingsimplService := ssosettingsimpl.ProvideService(cfg, configProvider, legacyDatabaseProvider, accessControl, routeRegisterImpl, featureToggles, secretsService, usageStats, registerer, ossImpl, ossLicensingService)
 	socialService := socialimpl.ProvideService(contextContext, configProvider, featureToggles, usageStats, bundleregistryService, remoteCache, orgRoleMapper, ssosettingsimplService)
-	loginStore, err := authinfoimpl.ProvideStore(contextContext, legacyDatabaseProvider, secretsService)
+	eventualRestConfigProvider := apiserver.ProvideEventualRestConfigProvider()
+	loginStore, err := authinfoimpl.ProvideStore(contextContext, legacyDatabaseProvider, secretsService, cfg, eventualRestConfigProvider, tracingService)
 	if err != nil {
 		return nil, err
 	}
@@ -2079,7 +2080,6 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, cloudwatchService, graphiteService, testdatasourceService, grafanadsService)
 	backendFactoryProvider := coreplugin.ProvideCoreProvider(corepluginRegistry)
 	processService := process.ProvideService()
-	eventualRestConfigProvider := apiserver.ProvideEventualRestConfigProvider()
 	teamimplService, err := teamimpl.ProvideService(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider)
 	if err != nil {
 		return nil, err
