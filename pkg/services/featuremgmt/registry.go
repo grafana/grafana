@@ -958,6 +958,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.drilldownMigrationAssistantSuggestion",
+			Description: "Shows a dashboard banner suggesting that query variables be migrated to filters/group by via the Grafana Assistant",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "cloudWatchNewLabelParsing",
 			Description: "Updates CloudWatch label parsing to be more accurate",
 			Stage:       FeatureStageGeneralAvailability,

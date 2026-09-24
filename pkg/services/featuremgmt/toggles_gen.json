@@ -2471,6 +2471,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.drilldownMigrationAssistantSuggestion",
+        "resourceVersion": "1790243012749",
+        "creationTimestamp": "2026-09-24T09:43:32Z"
+      },
+      "spec": {
+        "description": "Shows a dashboard banner suggesting that query variables be migrated to filters/group by via the Grafana Assistant",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.dynamicTraceToLogs",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"

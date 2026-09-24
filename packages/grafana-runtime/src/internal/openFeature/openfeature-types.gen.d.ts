@@ -35,6 +35,7 @@ declare module "@openfeature/core" {
     | "sqlExpressionsColumnAutoComplete"
     | "sqlExpressionsCodeMirror"
     | "grafana.filterablePanels"
+    | "grafana.drilldownMigrationAssistantSuggestion"
     | "grafana.savedQueriesPage"
     | "playlistsRBAC"
     | "newSavedQueriesExperience"

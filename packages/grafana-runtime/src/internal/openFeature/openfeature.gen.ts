@@ -82,6 +82,8 @@ export const FlagKeys = {
   GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
   /** Enables the auto-height feature for dashboard panels */
   GrafanaDashboardsAutoHeightPanels: "grafana.dashboardsAutoHeightPanels",
+  /** Shows a dashboard banner suggesting that query variables be migrated to filters/group by via the Grafana Assistant */
+  GrafanaDrilldownMigrationAssistantSuggestion: "grafana.drilldownMigrationAssistantSuggestion",
   /** Check for the existence of logs when linking from the Trace View */
   GrafanaDynamicTraceToLogs: "grafana.dynamicTraceToLogs",
   /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
@@ -596,6 +598,17 @@ export const useFlagGrafanaDashboardSettingsRedesign = (options?: ReactFlagEvalu
  */
 export const useFlagGrafanaDashboardsAutoHeightPanels = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.dashboardsAutoHeightPanels", false, options).value;
+};
+
+/**
+ * Shows a dashboard banner suggesting that query variables be migrated to filters/group by via the Grafana Assistant
+ *
+ * **Details:**
+ * - flag key: `grafana.drilldownMigrationAssistantSuggestion`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDrilldownMigrationAssistantSuggestion = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.drilldownMigrationAssistantSuggestion", false, options).value;
 };
 
 /**

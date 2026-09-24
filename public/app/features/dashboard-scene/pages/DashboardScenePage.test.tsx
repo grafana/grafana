@@ -61,6 +61,16 @@ jest.mock('react-router-dom-v5-compat', () => ({
   useParams: jest.fn().mockReturnValue({ uid: 'my-dash-uid' }),
 }));
 
+// isAssistantAvailable() resolves through plugin extension registries this test never sets up -
+// stub it so <DrilldownMigrationSuggestionBanner> (rendered unconditionally in the banner stack)
+// doesn't throw on mount; it's otherwise irrelevant here (its own gating/tests live under
+// dashboard-scene/variable-migration-suggestion/).
+jest.mock('@grafana/assistant', () => ({
+  isAssistantAvailable: () => of(false),
+  openAssistant: jest.fn(),
+  createAssistantContextItem: jest.fn(),
+}));
+
 const getObservablePluginLinks = jest.fn().mockReturnValue(of([]));
 setGetObservablePluginLinks(getObservablePluginLinks);
 
