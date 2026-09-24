@@ -366,6 +366,30 @@ module.exports = [
   },
 
   {
+    // Package tests seed the runtime data source cache, and that seeder only exists in /internal.
+    // Test and mock files are never bundled, so the published package still has no /internal import.
+    name: 'grafana/alerting-package-test-internal-imports',
+    files: [
+      'packages/grafana-alerting/**/*.test.{ts,tsx}',
+      'packages/grafana-alerting/tests/**/*.{ts,tsx}',
+      'packages/grafana-alerting/**/mocks/**/*.{ts,tsx}',
+    ],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        withBaseRestrictedImportsConfig({
+          patterns: [
+            {
+              group: ['@grafana/*/internal', '!@grafana/runtime/internal'],
+              message: "'internal' exports are not available in NPM packages because they are not published to NPM",
+            },
+          ],
+        }),
+      ],
+    },
+  },
+
+  {
     // @grafana/runtime shouldn't be imported from our 'library' NPM packages
     name: 'grafana/packages-that-cant-import-runtime',
     files: [
