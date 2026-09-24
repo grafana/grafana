@@ -68,6 +68,10 @@ type dataImportBatchWriter interface {
 }
 
 func newDataStore(kv KV, metrics *kvBackendMetrics) *dataStore {
+	// Recording sites should not have to check for nil.
+	if metrics == nil {
+		metrics = newKVBackendMetrics(nil)
+	}
 	ds := &dataStore{
 		kv:      kv,
 		cache:   gocache.New(time.Hour, 10*time.Minute), // 1 hour expiration, 10 minute cleanup
@@ -225,11 +229,11 @@ func (d *dataStore) Keys(ctx context.Context, key ListRequestKey, sort SortOrder
 	prefix := key.Prefix()
 	return func(yield func(DataKey, error) bool) {
 		defer span.End()
-		for k, err := range d.kv.Keys(ctx, dataSection, ListOptions{
+		for k, err := range pagedKeys(ctx, d.kv, dataSection, ListOptions{
 			StartKey: prefix,
 			EndKey:   PrefixRangeEnd(prefix),
 			Sort:     sort,
-		}) {
+		}, keyPageSize) {
 			if err != nil {
 				yield(DataKey{}, err)
 				return
@@ -337,7 +341,8 @@ func (d *dataStore) ListLatestResourceKeys(ctx context.Context, key ListRequestK
 // pagedKeys scans keys in the given range one bounded page at a time. Each page
 // is read fully into memory (which lets the underlying KV close its cursor)
 // before its keys are yielded, so no cursor is held open while the consumer
-// reads. It yields the same lexical key sequence as a single unbounded scan.
+// reads. Bounds and ordering are preserved, but pages are separate reads, not
+// a transactional snapshot. Callers use an unlimited overall scan (base.Limit = 0).
 func pagedKeys(ctx context.Context, kv KV, section string, base ListOptions, pageSize int) iter.Seq2[string, error] {
 	return func(yield func(string, error) bool) {
 		opts := base
@@ -370,8 +375,13 @@ func pagedKeys(ctx context.Context, kv KV, section string, base ListOptions, pag
 				return
 			}
 
-			// StartKey is inclusive, so advance past the last key we saw.
-			opts.StartKey = PrefixRangeEnd(page[len(page)-1])
+			if opts.Sort == SortOrderDesc {
+				// EndKey is exclusive; keep the original inclusive lower bound.
+				opts.EndKey = page[len(page)-1]
+			} else {
+				// StartKey is inclusive, so advance past the last key we saw.
+				opts.StartKey = PrefixRangeEnd(page[len(page)-1])
+			}
 		}
 	}
 }

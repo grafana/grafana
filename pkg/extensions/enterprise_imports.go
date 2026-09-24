@@ -578,7 +578,6 @@ import (
 	_ "github.com/m3db/prometheus_remote_client_golang/promremote"
 	_ "github.com/mattermost/xml-roundtrip-validator"
 	_ "github.com/mostynb/go-grpc-compression/nonclobbering/snappy"
-	_ "github.com/mostynb/go-grpc-compression/nonclobbering/zstd"
 	_ "github.com/open-feature/go-sdk/openfeature"
 	_ "github.com/open-feature/go-sdk/openfeature/memprovider"
 	_ "github.com/openfga/api/proto/openfga/v1"

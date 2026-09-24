@@ -51,11 +51,15 @@ interface TempoTagValuesResponse {
   tagValues?: Array<{ value?: string }>;
 }
 
-// Failures are expected (endpoint disabled, 403s) and handled by the caller; never toast.
-function getResource<T>(instance: DataSourceWithBackend, path: string, params: Record<string, unknown>): Promise<T> {
+// Failures are expected (endpoint disabled, 403s): they resolve to null and never toast.
+function getResource<T>(
+  instance: DataSourceWithBackend,
+  path: string,
+  params: Record<string, unknown>
+): Promise<T | null> {
   return withDeadline(DETAIL_QUERY_TIMEOUT_MS, undefined, (signal) =>
     instance.getResource<T>(path, params, { showErrorAlert: false, abortSignal: signal })
-  );
+  ).catch(() => null);
 }
 
 // Points are [unix ms, value]; a real trend needs at least two of them.
@@ -91,11 +95,9 @@ export async function fetchLogsActivity(ds: Pick<DataSourceInstanceListItem, 'ui
   const labels = await getResource<{ data?: unknown }>(instance, 'labels', {
     start: end - DATA_LOOKBACK_HOURS * 3600 * NS_IN_S,
     end,
-  })
-    .then((res) =>
-      Array.isArray(res?.data) ? res.data.filter((label): label is string => typeof label === 'string') : null
-    )
-    .catch(() => null);
+  }).then((res) =>
+    Array.isArray(res?.data) ? res.data.filter((label): label is string => typeof label === 'string') : null
+  );
   const label = pickLogsLabel(labels);
   if (!label) {
     return empty;
@@ -105,16 +107,14 @@ export async function fetchLogsActivity(ds: Pick<DataSourceInstanceListItem, 'ui
   // aggregateBy=labels totals by label NAME, not value — one series; Loki's series limit cannot truncate it.
   const aggregate = { aggregateBy: 'labels', targetLabels: label };
   const [volume, volumeRange] = await Promise.all([
-    getResource<LokiVolumeResponse>(instance, 'index/volume', { query, start: statsStart, end, ...aggregate }).catch(
-      () => null
-    ),
+    getResource<LokiVolumeResponse>(instance, 'index/volume', { query, start: statsStart, end, ...aggregate }),
     getResource<LokiVolumeRangeResponse>(instance, 'index/volume_range', {
       query,
       start: end - DATA_LOOKBACK_HOURS * 3600 * NS_IN_S,
       end,
       step: '30m',
       ...aggregate,
-    }).catch(() => null),
+    }),
   ]);
   const volumes = volume?.data?.result;
   // Sum the (single-series) matrix into ingest buckets (timestamps are unix seconds).
@@ -265,22 +265,20 @@ async function fetchActiveSeries(instance: DataSourceWithBackend): Promise<numbe
     'label_names[]': '__name__',
     // Mimir defaults count_method to inmemory, which also counts stale series held in open TSDB heads.
     count_method: 'active',
-  })
-    .then((res) => positive(Number(res?.series_count_total)))
-    .catch(() => null);
+  }).then((res) => positive(Number(res?.series_count_total)));
   if (cardinality != null) {
     return cardinality;
   }
-  return getResource<{ data?: { headStats?: { numSeries?: unknown } } }>(instance, 'api/v1/status/tsdb', {})
-    .then((res) => positive(Number(res?.data?.headStats?.numSeries)))
-    .catch(() => null);
+  return getResource<{ data?: { headStats?: { numSeries?: unknown } } }>(instance, 'api/v1/status/tsdb', {}).then(
+    (res) => positive(Number(res?.data?.headStats?.numSeries))
+  );
 }
 
 // Fallback primary only: the 7d name list runs to megabytes on large tenants.
 function fetchMetricNameCount(instance: DataSourceWithBackend, start: number, end: number): Promise<number | null> {
-  return getResource<{ data?: unknown }>(instance, 'api/v1/label/__name__/values', { start, end })
-    .then((res) => (Array.isArray(res?.data) ? res.data.length : null))
-    .catch(() => null);
+  return getResource<{ data?: unknown }>(instance, 'api/v1/label/__name__/values', { start, end }).then((res) =>
+    Array.isArray(res?.data) ? res.data.length : null
+  );
 }
 
 // Linear ETA until the shown (fullest) filesystem fills. Growing/steady filesystems drop

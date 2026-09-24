@@ -621,6 +621,11 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		opts.BookmarkFrequency = defaultBookmarkFrequency
 	}
 
+	// Recording sites should not have to check for nil.
+	if opts.StorageMetrics == nil {
+		opts.StorageMetrics = ProvideStorageMetrics(nil)
+	}
+
 	// Initialize the blob storage
 	blobstore, err := initializeBlobStorage(opts)
 	if err != nil {
@@ -1749,10 +1754,8 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		// search instead, since we index both, and fetch resulting documents one by one.
 		rsp, err := s.listWithSelectors(ctx, req)
 		if !errors.Is(err, errSearchCannotAnswerList) {
-			if s.storageMetrics != nil {
-				gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
-				s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "search").Inc()
-			}
+			gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
+			s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "search").Inc()
 			return rsp, err
 		}
 		// The store scan reads the objects themselves, so it answers what the index
@@ -2013,9 +2016,7 @@ func (s *server) finalizeListResponse(ctx context.Context, rsp *resourcepb.ListR
 	rsp.ResourceVersion = rv
 	rsp.NextPageToken = nextToken
 	gr := key.Group + "/" + key.Resource
-	if s.storageMetrics != nil {
-		s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "storage").Inc()
-	}
+	s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "storage").Inc()
 	return rsp, nil
 }
 
@@ -2058,11 +2059,7 @@ func (s *server) initWatcher() error {
 		}
 	}()
 
-	var broadcasterMetrics *BroadcasterMetrics
-	if s.storageMetrics != nil {
-		broadcasterMetrics = s.storageMetrics.Broadcaster
-	}
-	s.broadcaster = NewBroadcaster(s.ctx, out, broadcasterMetrics, func(e *WrittenEvent) string {
+	s.broadcaster = NewBroadcaster(s.ctx, out, s.storageMetrics.Broadcaster, func(e *WrittenEvent) string {
 		if e == nil || e.Key == nil {
 			return ""
 		}
@@ -2323,7 +2320,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 				sentAt := time.Now()
 				lastObjectRV = max(lastObjectRV, event.ResourceVersion)
 
-				if s.storageMetrics != nil && event.ResourceVersion > mostRecentRV {
+				if event.ResourceVersion > mostRecentRV {
 					// Resource versions can be either Unix microsecond timestamps (SQL backend)
 					// or snowflake IDs (KV backend). Split the total at Send so upstream
 					// delivery and gRPC transport flow-control wait can be diagnosed separately.
@@ -2753,10 +2750,8 @@ func (s *server) degraded(ctx context.Context, operation, reason string, nsr Nam
 		"operation", operation, "reason", reason,
 		"namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource,
 		"error", err)
-	if s.storageMetrics != nil {
-		s.storageMetrics.DegradedOperations.
-			WithLabelValues(operation, reason, nsr.Group, nsr.Resource).Inc()
-	}
+	s.storageMetrics.DegradedOperations.
+		WithLabelValues(operation, reason, nsr.Group, nsr.Resource).Inc()
 	if span := trace.SpanFromContext(ctx); span != nil {
 		span.AddEvent("degraded_operation", trace.WithAttributes(
 			attribute.String("operation", operation),

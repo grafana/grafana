@@ -847,11 +847,6 @@
       "count": 1
     }
   },
-  "public/app/core/navtree/sections/admin.navEntry.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/core/services/ResponseQueue.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -974,7 +969,7 @@
   },
   "public/app/features/alerting/routes.tsx": {
     "@grafana/no-config-feature-toggles": {
-      "count": 5
+      "count": 4
     }
   },
   "public/app/features/alerting/state/alertDef.ts": {
@@ -1333,7 +1328,7 @@
   },
   "public/app/features/alerting/unified/featureToggles.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 8
+      "count": 6
     }
   },
   "public/app/features/alerting/unified/group-details/GroupEditPage.tsx": {
@@ -1520,11 +1515,6 @@
   "public/app/features/alerting/unified/utils/misc.test.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 3
-    }
-  },
-  "public/app/features/alerting/unified/utils/pageAccess.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 4
     }
   },
   "public/app/features/alerting/unified/utils/receiver-form.ts": {
@@ -3694,7 +3684,7 @@
   },
   "public/app/routes/routes.tsx": {
     "@grafana/no-config-feature-toggles": {
-      "count": 4
+      "count": 3
     }
   },
   "public/app/store/configureStore.ts": {
