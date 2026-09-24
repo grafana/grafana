@@ -1,4 +1,5 @@
 import { type SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { RadioButtonGroup } from '@grafana/ui';
 
@@ -28,6 +29,7 @@ export function NotebookEditToggle({ notebook }: { notebook: NotebookScene }) {
   return (
     <RadioButtonGroup
       id="notebook-edit-mode"
+      data-testid={selectors.pages.Notebooks.Item.editModeToggle}
       options={options}
       value={Boolean(isEditing)}
       onChange={(value) => (value ? notebook.onEnterEditMode() : notebook.onExitEditMode())}
