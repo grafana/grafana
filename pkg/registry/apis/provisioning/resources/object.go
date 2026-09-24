@@ -197,7 +197,7 @@ func (o *ResourceListerFromSearch) Search(ctx context.Context, namespace, reposi
 			},
 			Limit:        100,
 			SortBy:       []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_NAME}},
-			ResultFormat: resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}
 		var rowsRead int64
 		for {
@@ -211,19 +211,34 @@ func (o *ResourceListerFromSearch) Search(ctx context.Context, namespace, reposi
 			if response.Error != nil {
 				return nil, fmt.Errorf("search managed %s: %w", resourceType, resource.GetError(response.Error))
 			}
-			if response.ResultFormat != resourcepb.ResourceSearchRequest_UNSPECIFIED && response.ResultFormat != resourcepb.ResourceSearchRequest_RESOURCE_TABLE {
+			var items []provisioning.ResourceListItem
+			var cursor []string
+			var rowCount int
+			switch response.ResultFormat {
+			case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
+				if response.Results == nil {
+					return nil, fmt.Errorf("search managed %s: missing result table", resourceType)
+				}
+				rowCount = len(response.Results.Rows)
+				if rowCount > 0 {
+					items, err = decodeResourceListTable(response.Results, req.Options.Key, req.Fields)
+					cursor = response.Results.Rows[rowCount-1].GetSortFields()
+				}
+			case resourcepb.ResourceSearchRequest_FIELD_VALUES:
+				rowCount = len(response.Rows)
+				if rowCount > 0 {
+					items, err = decodeResourceListFieldValues(response, req.Options.Key, req.Fields)
+					cursor = response.Rows[rowCount-1].GetSortFields()
+				}
+			default:
 				return nil, fmt.Errorf("search managed %s: unsupported result format %s", resourceType, response.ResultFormat)
 			}
-			if response.Results == nil {
-				return nil, fmt.Errorf("search managed %s: missing result table", resourceType)
-			}
-			// Authorization can shorten a page and leave the total hit count approximate.
-			if len(response.Results.Rows) == 0 {
-				break
-			}
-			items, err := decodeResourceListTable(response.Results, req.Options.Key, req.Fields)
 			if err != nil {
 				return nil, fmt.Errorf("search managed %s: %w", resourceType, err)
+			}
+			// Authorization can shorten a page and leave the total hit count approximate.
+			if rowCount == 0 {
+				break
 			}
 			for _, item := range items {
 				identity := item.Group + "/" + item.Resource + "/" + item.Name
@@ -232,9 +247,9 @@ func (o *ResourceListerFromSearch) Search(ctx context.Context, namespace, reposi
 					list.Items = append(list.Items, item)
 				}
 			}
-			rowsRead += int64(len(response.Results.Rows))
+			rowsRead += int64(rowCount)
 			// Cursors avoid reauthorizing preceding hits on every page.
-			if cursor := response.Results.Rows[len(response.Results.Rows)-1].SortFields; len(cursor) > 0 {
+			if len(cursor) > 0 {
 				req.SearchAfter = slices.Clone(cursor)
 				req.Offset = 0
 			} else {
@@ -244,6 +259,57 @@ func (o *ResourceListerFromSearch) Search(ctx context.Context, namespace, reposi
 		}
 	}
 	return list, nil
+}
+
+func decodeResourceListFieldValues(response *resourcepb.ResourceSearchResponse, scope *resourcepb.ResourceKey, fields []string) ([]provisioning.ResourceListItem, error) {
+	definitions := make(map[string]bool, len(response.Fields))
+	for i, field := range response.Fields {
+		if field == nil {
+			return nil, fmt.Errorf("missing field definition at index %d", i)
+		}
+		if definitions[field.Name] {
+			return nil, fmt.Errorf("duplicate field %q", field.Name)
+		}
+		definitions[field.Name] = true
+	}
+	for _, field := range fields {
+		if !definitions[field] {
+			return nil, fmt.Errorf("missing field %q", field)
+		}
+	}
+
+	items := make([]provisioning.ResourceListItem, 0, len(response.Rows))
+	for _, row := range response.Rows {
+		if row == nil || row.Key == nil || row.Key.Name == "" {
+			return nil, fmt.Errorf("missing resource key")
+		}
+		if row.Key.Namespace != scope.Namespace || row.Key.Group != scope.Group || row.Key.Resource != scope.Resource {
+			return nil, fmt.Errorf("resource key does not match the requested namespace and resource type")
+		}
+		values, err := resource.DecodeSearchValues(response.Fields, row)
+		if err != nil {
+			return nil, fmt.Errorf("decoding field values: %w", err)
+		}
+		item := provisioning.ResourceListItem{Group: row.Key.Group, Resource: row.Key.Resource, Name: row.Key.Name}
+		for _, field := range fields {
+			value := values[field]
+			if value == nil {
+				continue
+			}
+			text, ok := value.(string)
+			if !ok {
+				return nil, fmt.Errorf("expected string in field %q", field)
+			}
+			switch field {
+			case resource.SEARCH_FIELD_FOLDER:
+				item.Folder = text
+			case resource.SEARCH_FIELD_SOURCE_PATH:
+				item.Path = text
+			}
+		}
+		items = append(items, item)
+	}
+	return items, nil
 }
 
 func decodeResourceListTable(table *resourcepb.ResourceTable, scope *resourcepb.ResourceKey, fields []string) ([]provisioning.ResourceListItem, error) {

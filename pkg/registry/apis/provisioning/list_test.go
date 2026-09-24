@@ -301,57 +301,86 @@ func TestResourceListSearchContinuesAfterDeniedPage(t *testing.T) {
 	pages := [][]provisioning.ResourceListItem{items[:2], items[2:], nil}
 	offsets := []int64{0, 2, 3}
 	cursors := [][]string{nil, {"denied-b", "doc-denied-b"}, {"readable", "doc-readable"}}
-	for _, withCursor := range []bool{false, true} {
-		t.Run(fmt.Sprintf("cursor=%t", withCursor), func(t *testing.T) {
-			ctx := resourceListContext(t, identity.RoleViewer)
-			factory, clients := resourceListClients(t, ctx, []resources.SupportedResource{{GroupKind: kind}})
-			clients.EXPECT().ForKind(ctx, kind.WithVersion("")).Return(nil, gvr, nil).Once()
-			admin := auth.NewMockAccessChecker(t)
-			admin.EXPECT().Check(ctx, resourceListWriteRequest(), "").Return(mockForbidden()).Once()
-			access := auth.NewMockAccessChecker(t)
-			access.EXPECT().Check(ctx, resourceListReadRequest(items[0]), items[0].Folder).Return(mockForbidden()).Once()
-			access.EXPECT().Check(ctx, resourceListReadRequest(items[1]), items[1].Folder).Return(mockForbidden()).Once()
-			access.EXPECT().Check(ctx, resourceListReadRequest(items[2]), items[2].Folder).Return(nil).Once()
-			count := 0
-			store := resourceListSearchStore{search: func(actualCtx context.Context, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
-				require.Same(t, ctx, actualCtx)
-				require.Less(t, count, len(pages))
-				if withCursor {
-					require.Zero(t, req.Offset)
-					require.Equal(t, cursors[count], req.SearchAfter)
-				} else {
-					require.Equal(t, offsets[count], req.Offset)
-					require.Empty(t, req.SearchAfter)
-				}
-				page := pages[count]
-				count++
-				columns := make([]*resourcepb.ResourceTableColumnDefinition, 0, len(req.Fields))
-				for _, field := range req.Fields {
-					columns = append(columns, resource.StandardSearchFields().Field(field))
-				}
-				table, err := resource.NewTableBuilder(columns)
-				require.NoError(t, err)
-				for _, item := range page {
-					err := table.AddRow(&resourcepb.ResourceKey{
-						Namespace: "default", Group: item.Group, Resource: item.Resource, Name: item.Name,
-					}, 1, map[string]any{
-						resource.SEARCH_FIELD_SOURCE_PATH: item.Path,
-						resource.SEARCH_FIELD_FOLDER:      item.Folder,
-					})
-					require.NoError(t, err)
-				}
-				if withCursor {
-					for _, row := range table.Rows {
-						row.SortFields = []string{row.Key.Name, "doc-" + row.Key.Name}
+	for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
+		resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+		resourcepb.ResourceSearchRequest_UNSPECIFIED,
+	} {
+		for _, withCursor := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/cursor=%t", format, withCursor), func(t *testing.T) {
+				ctx := resourceListContext(t, identity.RoleViewer)
+				factory, clients := resourceListClients(t, ctx, []resources.SupportedResource{{GroupKind: kind}})
+				clients.EXPECT().ForKind(ctx, kind.WithVersion("")).Return(nil, gvr, nil).Once()
+				admin := auth.NewMockAccessChecker(t)
+				admin.EXPECT().Check(ctx, resourceListWriteRequest(), "").Return(mockForbidden()).Once()
+				access := auth.NewMockAccessChecker(t)
+				access.EXPECT().Check(ctx, resourceListReadRequest(items[0]), items[0].Folder).Return(mockForbidden()).Once()
+				access.EXPECT().Check(ctx, resourceListReadRequest(items[1]), items[1].Folder).Return(mockForbidden()).Once()
+				access.EXPECT().Check(ctx, resourceListReadRequest(items[2]), items[2].Folder).Return(nil).Once()
+				count := 0
+				store := resourceListSearchStore{search: func(actualCtx context.Context, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+					require.Same(t, ctx, actualCtx)
+					require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, req.ResultFormat)
+					require.Less(t, count, len(pages))
+					if withCursor {
+						require.Zero(t, req.Offset)
+						require.Equal(t, cursors[count], req.SearchAfter)
+					} else {
+						require.Equal(t, offsets[count], req.Offset)
+						require.Empty(t, req.SearchAfter)
 					}
-				}
-				return &resourcepb.ResourceSearchResponse{Results: &table.ResourceTable, TotalHits: 10, TotalHitsExact: false}, nil
-			}}
+					page := pages[count]
+					count++
+					response := &resourcepb.ResourceSearchResponse{ResultFormat: format, TotalHits: 10}
+					if format == resourcepb.ResourceSearchRequest_FIELD_VALUES {
+						response.Fields = []*resourcepb.ResourceSearchField{
+							{Name: resource.SEARCH_FIELD_SOURCE_PATH, Type: resourcepb.ResourceSearchField_STRING},
+							{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceSearchField_STRING},
+						}
+						for _, item := range page {
+							row := &resourcepb.ResourceSearchRow{
+								Key: &resourcepb.ResourceKey{Namespace: "default", Group: item.Group, Resource: item.Resource, Name: item.Name},
+								Values: []*resourcepb.ResourceSearchValue{
+									{FieldIndex: 0, StringValues: []string{item.Path}},
+									{FieldIndex: 1, StringValues: []string{item.Folder}},
+								},
+							}
+							if withCursor {
+								row.SortFields = []string{row.Key.Name, "doc-" + row.Key.Name}
+							}
+							response.Rows = append(response.Rows, row)
+						}
+						return response, nil
+					}
+					columns := make([]*resourcepb.ResourceTableColumnDefinition, 0, len(req.Fields))
+					for _, field := range req.Fields {
+						columns = append(columns, resource.StandardSearchFields().Field(field))
+					}
+					table, err := resource.NewTableBuilder(columns)
+					require.NoError(t, err)
+					for _, item := range page {
+						err := table.AddRow(&resourcepb.ResourceKey{
+							Namespace: "default", Group: item.Group, Resource: item.Resource, Name: item.Name,
+						}, 1, map[string]any{
+							resource.SEARCH_FIELD_SOURCE_PATH: item.Path,
+							resource.SEARCH_FIELD_FOLDER:      item.Folder,
+						})
+						require.NoError(t, err)
+					}
+					if withCursor {
+						for _, row := range table.Rows {
+							row.SortFields = []string{row.Key.Name, "doc-" + row.Key.Name}
+						}
+					}
+					response.Results = &table.ResourceTable
+					return response, nil
+				}}
 
-			result, err := NewListConnector(resources.NewResourceLister(store), factory, access, admin).list(ctx, "default", "repo")
-			require.NoError(t, err)
-			require.Equal(t, len(pages), count)
-			require.Equal(t, []provisioning.ResourceListItem{items[2]}, result.Items)
-		})
+				result, err := NewListConnector(resources.NewResourceLister(store), factory, access, admin).list(ctx, "default", "repo")
+				require.NoError(t, err)
+				require.Equal(t, len(pages), count)
+				require.Equal(t, []provisioning.ResourceListItem{items[2]}, result.Items)
+			})
+		}
 	}
 }
