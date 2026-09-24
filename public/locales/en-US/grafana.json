@@ -6372,15 +6372,16 @@
       "cross-dashboard-variables": {
         "description": "Choose which global and folder-scoped variables this dashboard receives.",
         "empty-folder": "No folder variables in this folder.",
+        "empty-folder-filters": "No folder filters in this folder.",
         "empty-global": "No global variables in this organization.",
+        "empty-global-filters": "No global filters in this organization.",
+        "filters-description": "Choose which global and folder-scoped filters this dashboard receives.",
         "folder-section": "Folder",
         "global-section": "Global",
         "load-error": "Could not load global and folder variables.",
-        "pane-header": "Cross-dashboard variables",
+        "pane-header": "Global or folder variable",
         "select-all-folder": "All folder",
-        "select-all-global": "All global",
-        "title": "Cross-dashboard",
-        "tooltip": "Choose global and folder variables"
+        "select-all-global": "All global"
       },
       "dashboard-options": {
         "annotations": "Annotations",
@@ -6420,7 +6421,8 @@
         "copy-tooltip": "Copy",
         "delete": "Delete",
         "duplicate": "Duplicate",
-        "paste": "Paste"
+        "paste": "Paste",
+        "remove": "Remove"
       },
       "elements": {
         "annotation": "Annotation",
@@ -6453,7 +6455,9 @@
       "feedback-title": "Give feedback on the new dashboard editing experience",
       "filters": {
         "add-filter": "Add filter",
+        "global-or-folder-title": "Global or folder filter variable",
         "reorder-description": "Reorder filters list",
+        "select-type": "Choose filter type",
         "title": "Filters",
         "title-above-dashboard": "Above dashboard",
         "title-controls-menu": "Controls menu",
@@ -6519,6 +6523,10 @@
           "type": "Type",
           "type-placeholder": "Choose data source type"
         },
+        "defined-globally": "This variable is defined globally",
+        "defined-on-folder": "This variable is defined on this folder",
+        "defined-on-folder-level": "This variable is defined on the folder level",
+        "defined-on-global-level": "This variable is defined on the global level",
         "description": "Description",
         "description-placeholder": "Descriptive text",
         "display": "Display",
@@ -6540,6 +6548,7 @@
           "old-modal-title": "Query Variable",
           "preview": "Preview"
         },
+        "remove": "Remove",
         "selection-options": {
           "allow-custom-values": "Allow custom values",
           "allow-custom-values-description": "Enables users to enter values",
@@ -6555,6 +6564,8 @@
       "variables": {
         "add-variable": "Add variable",
         "change-type": "Change variable type",
+        "global-or-folder-description": "Use a variable defined for the organization or this folder",
+        "global-or-folder-title": "Global or folder variable",
         "reorder-description": "Reorder variables list",
         "select-type": "Choose variable type",
         "select-type-card-tooltip": "Click to select type",
@@ -7085,7 +7096,9 @@
       "delete-tooltip-disabled": "Repeated panels can't be deleted individually",
       "duplicate-tooltip": "Duplicate",
       "duplicate-tooltip-disabled": "Repeated panels can't be duplicated individually",
-      "settings": "Settings"
+      "remove-tooltip": "Remove",
+      "settings": "Settings",
+      "view": "View"
     },
     "conversion-warning-banner": {
       "detail-conditional": "Show/hide rules will not work",
@@ -7943,7 +7956,10 @@
     "variable-editable-element": {
       "delete-confirm": "Delete variable",
       "delete-text": "Are you sure you want to delete: {{name}}?",
-      "delete-title": "Delete variable"
+      "delete-title": "Delete variable",
+      "remove-confirm": "Remove",
+      "remove-text": "Are you sure you want to remove: {{name}}?",
+      "remove-title": "Remove variable"
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Variable editor form",
@@ -12773,7 +12789,7 @@
     },
     "global-variables": {
       "subtitle": "Template variables shared across dashboards, globally or per folder",
-      "title": "Cross-dashboard variables"
+      "title": "Variables"
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"

@@ -1,4 +1,5 @@
 import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { act, render } from 'test/test-utils';
 
 import { FlagKeys } from '@grafana/runtime/internal';
@@ -59,15 +60,19 @@ function createDashboard(annotations: Record<string, string> = {}): CrossDashboa
   } as unknown as CrossDashboardVariablesDashboard;
 }
 
-function makeCandidate(name: string, origin: 'global' | 'folder'): VariableKind {
+function makeCandidate(
+  name: string,
+  origin: 'global' | 'folder',
+  kind: VariableKind['kind'] = 'CustomVariable'
+): VariableKind {
   return {
-    kind: 'CustomVariable',
+    kind,
     spec: {
       ...defaultCustomVariableSpec(),
       name,
       origin: toControlSourceRef(origin === 'global' ? { type: 'global' } : { type: 'folder', folderUid: 'folder-1' }),
     },
-  };
+  } as VariableKind;
 }
 
 function deferred<T>() {
@@ -238,5 +243,57 @@ describe('DashboardCrossDashboardVariablesOptions', () => {
     expect(screen.queryByText('No global variables in this organization.')).not.toBeInTheDocument();
     expect(screen.queryByText('No folder variables in this folder.')).not.toBeInTheDocument();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+  });
+
+  it('lists only ad hoc and group-by variables when opened from add filter', async () => {
+    mockFetchPredefinedVariables.mockResolvedValue([
+      makeCandidate('env', 'global'),
+      makeCandidate('service', 'global', 'AdhocVariable'),
+      makeCandidate('cluster', 'folder', 'GroupByVariable'),
+      makeCandidate('region', 'folder'),
+    ]);
+
+    render(<DashboardCrossDashboardVariablesOptions dashboard={createDashboard()} filtersOnly />);
+
+    expect(await screen.findByRole('checkbox', { name: 'service' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'cluster' })).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: 'env' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: 'region' })).not.toBeInTheDocument();
+  });
+
+  it('keeps a stored all when unchecking All filters that are only part of the scope', async () => {
+    const dashboard = createDashboard({
+      [AnnoKeyUseCrossDashboardVariables]: '{"global":"all","folder":"none"}',
+    });
+    mockFetchPredefinedVariables.mockResolvedValue([
+      makeCandidate('env', 'global'),
+      makeCandidate('service', 'global', 'AdhocVariable'),
+    ]);
+
+    render(<DashboardCrossDashboardVariablesOptions dashboard={dashboard} filtersOnly />);
+
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('checkbox', { name: 'All global' }));
+
+    expect(dashboard.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables]).toBe(
+      '{"global":"all","folder":"none"}'
+    );
+  });
+
+  it('drops a same-named filter from the other scope when All filters is cleared', async () => {
+    const dashboard = createDashboard({
+      [AnnoKeyUseCrossDashboardVariables]: '{"global":["service"],"folder":["service"]}',
+    });
+    mockFetchPredefinedVariables.mockResolvedValue([
+      makeCandidate('service', 'global', 'AdhocVariable'),
+      makeCandidate('service', 'folder', 'AdhocVariable'),
+    ]);
+
+    render(<DashboardCrossDashboardVariablesOptions dashboard={dashboard} filtersOnly />);
+
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('checkbox', { name: 'All global' }));
+
+    expect(dashboard.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables]).toBeUndefined();
   });
 });

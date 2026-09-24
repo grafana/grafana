@@ -4,6 +4,7 @@ import { type FormEvent, type PropsWithChildren, type ReactElement, type ReactNo
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Field, TextArea, useStyles2 } from '@grafana/ui';
+import { useOptionsPaneReadOnly } from 'app/features/dashboard/components/PanelEditor/OptionsPaneReadOnlyContext';
 
 interface VariableTextAreaFieldProps {
   name: string;
@@ -36,9 +37,16 @@ export function VariableTextAreaField({
 }: PropsWithChildren<VariableTextAreaFieldProps>): ReactElement {
   const styles = useStyles2(getStyles);
   const id = useId();
+  const readOnly = useOptionsPaneReadOnly();
 
   return (
-    <Field label={name} description={description} htmlFor={id} noMargin={noMargin}>
+    <Field
+      label={name}
+      description={description}
+      htmlFor={id}
+      noMargin={noMargin}
+      disabled={readOnly ? true : undefined}
+    >
       <TextArea
         id={id}
         rows={2}

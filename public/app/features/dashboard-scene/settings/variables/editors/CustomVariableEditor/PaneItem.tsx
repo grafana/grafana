@@ -4,6 +4,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { type CustomVariable } from '@grafana/scenes';
 import { Box, Button } from '@grafana/ui';
+import { useOptionsPaneReadOnly } from 'app/features/dashboard/components/PanelEditor/OptionsPaneReadOnlyContext';
 
 import { ModalEditor } from './ModalEditor';
 
@@ -14,6 +15,7 @@ interface PaneItemProps {
 
 export function PaneItem({ variable }: PaneItemProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const readOnly = useOptionsPaneReadOnly();
 
   return (
     <>
@@ -27,6 +29,7 @@ export function PaneItem({ variable }: PaneItemProps) {
           size="sm"
           fullWidth
           data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.optionsOpenButton}
+          disabled={readOnly}
         >
           <Trans i18nKey="dashboard.sidebar.variable.open-editor">Open variable editor</Trans>
         </Button>

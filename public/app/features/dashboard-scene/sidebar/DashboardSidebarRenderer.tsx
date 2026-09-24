@@ -7,7 +7,6 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
   useFlagDashboardUndoRedo,
-  useFlagGrafanaDashboardGlobalVariables,
   useFlagGrafanaViewPanelPane,
   useFlagFeedbackButton,
 } from '@grafana/runtime/internal';
@@ -24,7 +23,6 @@ import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardSidebarExtensionPoint } from './DashboardSidebarExtensionPoint';
-import { DashboardCrossDashboardVariablesPane } from './dashboard/DashboardCrossDashboardVariablesPane';
 import { ToggleViewPanePaneEvent } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
 import { type DashboardSidebarLike, type DashboardSidebarPane } from './types';
@@ -48,7 +46,6 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
   const selectedObject = sidebar.getSelectedObject();
   const sidebarContext = useSidebarContext();
   const viewPanelPane = useFlagGrafanaViewPanelPane();
-  const globalDashboardVariablesEnabled = useFlagGrafanaDashboardGlobalVariables();
   const feedbackButton = useFlagFeedbackButton();
   const dashboardUndoRedo = useFlagDashboardUndoRedo();
   const onOpenAddPane = useCallback(async () => {
@@ -135,15 +132,6 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
               data-testid={selectors.pages.Dashboard.Sidebar.codeButton}
               active={openPane?.getId() === 'code'}
             />
-            {globalDashboardVariablesEnabled && (
-              <Sidebar.Button
-                icon="gf-variable"
-                onClick={() => sidebar.openPane(new DashboardCrossDashboardVariablesPane({}))}
-                title={t('dashboard.sidebar.cross-dashboard-variables.title', 'Cross-dashboard')}
-                tooltip={t('dashboard.sidebar.cross-dashboard-variables.tooltip', 'Choose global and folder variables')}
-                active={openPane instanceof DashboardCrossDashboardVariablesPane}
-              />
-            )}
             {dashboardUndoRedo && (
               <>
                 <Sidebar.Divider />

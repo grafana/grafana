@@ -1778,11 +1778,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/scene/VariableControls.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/scene/dashboard-controls-menu/DashboardControlsMenu.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
@@ -1968,11 +1963,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/settings/variables/VariableEditableElement.tsx": {
-    "react-hooks/rules-of-hooks": {
-      "count": 4
-    }
-  },
   "public/app/features/dashboard-scene/settings/variables/VariableSetEditableElement.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
@@ -2152,9 +2142,6 @@
   },
   "public/app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor.tsx": {
     "@grafana/require-no-margin": {
-      "count": 1
-    },
-    "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
   },
