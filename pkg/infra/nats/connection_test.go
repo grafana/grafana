@@ -195,6 +195,46 @@ func TestConnection(t *testing.T) {
 			})
 		})
 
+		t.Run("waits for the closed callback after draining", func(t *testing.T) {
+			c := newTestConnection(t, startTestServer(t))
+			require.NoError(t, c.starting(t.Context()))
+			nc, err := c.get(t.Context())
+			require.NoError(t, err)
+
+			entered, release := make(chan struct{}), make(chan struct{})
+			unblock := sync.OnceFunc(func() { close(release) })
+			t.Cleanup(unblock)
+			onClosed := nc.ClosedHandler()
+			nc.SetClosedHandler(func(nc *natsclient.Conn) {
+				close(entered)
+				<-release
+				onClosed(nc)
+			})
+			stopped := make(chan struct{})
+			go func() {
+				c.close()
+				close(stopped)
+			}()
+			select {
+			case <-entered:
+			case <-time.After(time.Second):
+				t.Fatal("drain did not invoke the closed callback")
+			}
+			// NATS marks the connection closed before dispatching its callback.
+			require.True(t, nc.IsClosed())
+			select {
+			case <-stopped:
+				t.Fatal("shutdown returned before the closed callback")
+			case <-time.After(50 * time.Millisecond):
+			}
+			unblock()
+			select {
+			case <-stopped:
+			case <-time.After(time.Second):
+				t.Fatal("shutdown did not finish after the closed callback")
+			}
+		})
+
 		t.Run("is safe and terminal without a connection", func(t *testing.T) {
 			c := newTestConnection(t, startTestServer(t))
 			require.NotPanics(t, c.close)

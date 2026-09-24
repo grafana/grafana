@@ -37,6 +37,7 @@ type connection struct {
 	role        connRole
 	config      *Config
 	credentials func() string
+	closeDone   chan struct{}
 
 	// disconnectedAt holds the unix-nano timestamp of the last disconnect so the
 	// reconnect handler can record how long the connection was down. Accessed only
@@ -62,6 +63,7 @@ func newConnection(role connRole, logger log.Logger, m connectionMetrics, config
 		role:        role,
 		config:      config,
 		credentials: credentials,
+		closeDone:   make(chan struct{}),
 	}
 }
 
@@ -263,6 +265,7 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 		natsclient.ClosedHandler(func(nc *natsclient.Conn) {
 			c.metrics.connectionStatus.Set(0)
 			c.log.Info("nats connection closed", "role", roleStr, "last_err", nc.LastError())
+			close(c.closeDone)
 		}),
 		natsclient.ErrorHandler(func(_ *natsclient.Conn, sub *natsclient.Subscription, err error) {
 			c.log.Warn("nats async error", "role", roleStr, "subject", asyncErrorSubject(sub, err), "reason", asyncErrorReason(err), "err", err)
@@ -373,15 +376,14 @@ func (c *connection) close() {
 		return
 	}
 
-	// A broker that has gone away never closes, so force it at the deadline.
-	deadline := time.Now().Add(drainTimeout + time.Second)
-	for !nc.IsClosed() {
-		if time.Now().After(deadline) {
-			c.log.Warn("nats connection did not close within drain timeout; forcing close", "role", c.role)
-			nc.Close()
-			return
-		}
-		time.Sleep(10 * time.Millisecond)
+	// Bound shutdown even if the asynchronous closed callback is delayed.
+	timer := time.NewTimer(drainTimeout + time.Second)
+	defer timer.Stop()
+	select {
+	case <-c.closeDone:
+	case <-timer.C:
+		c.log.Warn("nats connection did not close within drain timeout; forcing close", "role", c.role)
+		nc.Close()
 	}
 }
 
