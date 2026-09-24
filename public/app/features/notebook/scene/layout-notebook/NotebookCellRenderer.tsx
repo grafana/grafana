@@ -8,6 +8,7 @@ import { SceneDataTransformer, type VizPanel } from '@grafana/scenes';
 import { floatingUtils, Portal, Stack, useStyles2 } from '@grafana/ui';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
+import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import { type NotebookCellItem } from './NotebookCellItem';
@@ -219,6 +220,7 @@ function SpecialMarkdownCell({
 } & NarrativeCellFocusProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { openDrawer } = useQueryLibraryContext();
 
   const { refs, floatingStyles, context } = useFloating({
     open: menuOpen,
@@ -278,6 +280,19 @@ function SpecialMarkdownCell({
     onFocusRequest?.();
   };
 
+  // Unlike handlePick, this cell isn't converted until a query is actually selected — cancelling the
+  // drawer leaves the "/" markdown cell exactly as it was.
+  const handlePickSavedQuery = () => {
+    setMenuOpen(false);
+    openDrawer({
+      onSelectQuery: async (query, title) => {
+        await cell.getParentLayout().convertCellFromSavedQuery(cell, query, title);
+        onFocusRequest?.();
+      },
+      options: { context: 'notebook-cell' },
+    });
+  };
+
   return (
     <div ref={containerRef}>
       <MarkdownCell
@@ -298,7 +313,7 @@ function SpecialMarkdownCell({
       {menuOpen && (
         <Portal>
           <div ref={refs.setFloating} style={floatingStyles} {...getFloatingProps()}>
-            <NotebookBlockTypeMenu onPick={handlePick} />
+            <NotebookBlockTypeMenu onPick={handlePick} onPickSavedQuery={handlePickSavedQuery} />
           </div>
         </Portal>
       )}

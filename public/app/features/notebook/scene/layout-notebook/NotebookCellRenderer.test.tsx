@@ -1,11 +1,25 @@
-import { render, screen } from 'test/test-utils';
+import { fireEvent, render, screen, within } from 'test/test-utils';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { SceneDataTransformer, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { contextSrv } from 'app/core/services/context_srv';
 import { LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
+import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 
 import { NotebookCellItem } from './NotebookCellItem';
 import { isEditableQueryPanel, NotebookCellRenderer } from './NotebookCellRenderer';
 import { NotebookLayoutManager } from './NotebookLayoutManager';
+
+jest.mock('app/features/explore/QueryLibrary/QueryLibraryContext', () => ({
+  useQueryLibraryContext: jest.fn(),
+}));
+
+const mockUseQueryLibraryContext = useQueryLibraryContext as jest.Mock;
+
+beforeEach(() => {
+  mockUseQueryLibraryContext.mockReturnValue({ openDrawer: jest.fn(), queryLibraryEnabled: false });
+  contextSrv.isSignedIn = false;
+});
 
 // See CodeCell.test.tsx — the real editor does not run in jsdom.
 jest.mock('@grafana/ui/unstable', () => ({
@@ -189,6 +203,31 @@ describe('NotebookCellRenderer', () => {
       await user.click(screen.getByRole('menuitem', { name: 'Heading' }));
 
       expect(onFocusRequest).toHaveBeenCalledTimes(1);
+    });
+
+    describe('New from Saved Queries', () => {
+      it('is not offered when saved queries are unavailable', async () => {
+        const cell = buildMarkdownCellInLayout();
+        const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} />);
+
+        await user.type(await screen.findByLabelText('Markdown'), '/');
+
+        expect(screen.getByRole('menuitem', { name: 'Visualization' })).not.toHaveAttribute('aria-haspopup');
+      });
+
+      // keyDown rather than user.type: a click here actually converts the cell via onConvert.
+      it('is offered under Visualization once saved queries are available', async () => {
+        mockUseQueryLibraryContext.mockReturnValue({ openDrawer: jest.fn(), queryLibraryEnabled: true });
+        contextSrv.isSignedIn = true;
+        const cell = buildMarkdownCellInLayout();
+        const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} />);
+
+        await user.type(await screen.findByLabelText('Markdown'), '/');
+        fireEvent.keyDown(screen.getByRole('menuitem', { name: 'Visualization' }), { key: 'ArrowRight' });
+
+        const submenu = within(await screen.findByTestId(selectors.components.Menu.SubMenu.container));
+        expect(submenu.getByRole('menuitem', { name: 'New from Saved Queries' })).toBeInTheDocument();
+      });
     });
   });
 

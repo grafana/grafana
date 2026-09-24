@@ -13175,8 +13175,14 @@
       "code": "Code",
       "heading": "Heading",
       "label": "Click to add below",
+      "new-from-saved-queries": "New from Saved Queries",
+      "new-visualization": "New Visualization",
       "paragraph": "Paragraph",
       "prompt": "Type to start writing — press / for blocks",
+      "saved-query-apply-error": "Failed to get a visualization suggestion",
+      "saved-query-apply-error-detail": "An error occurred while suggesting a visualization for the saved query.",
+      "saved-query-no-suggestion": "No visualization found",
+      "saved-query-no-suggestion-detail": "The query did not return enough data to suggest a visualization type.",
       "visualization": "Visualization"
     },
     "cell": {

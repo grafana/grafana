@@ -3,7 +3,7 @@ import { DragDropContext, Droppable, type DragStart, type DragUpdate, type DropR
 import { isEqual } from 'lodash';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { AppEvents, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   sceneGraph,
@@ -22,7 +22,9 @@ import { type LayoutRegistryItem } from 'app/features/dashboard-scene/scene/type
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { dashboardSceneGraph, type PanelIdGenerator } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
+import { getVizSuggestionForQuery } from 'app/features/dashboard-scene/utils/getVizSuggestionForQuery';
 import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils-panels';
+import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import {
@@ -38,6 +40,7 @@ import { isNotebookScene } from '../isNotebookScene';
 
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookDocumentHeader } from './NotebookDocumentHeader';
+import { applyQueries } from './applyQueries';
 import { type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
 import { getCellDropIndicator, NotebookCellFrame, type NotebookDragState } from './edit/NotebookCellFrame';
 import { NotebookFooterAddCell } from './edit/NotebookFooterAddCell';
@@ -616,6 +619,93 @@ export class NotebookLayoutManager
   };
 
   /**
+   * Inserts a query-configured visualization block at `index` — the "+" button's "New from Saved
+   * Queries" option. Unlike addCell, the caller only invokes this once a query is actually picked,
+   * so cancelling the picker leaves nothing to build or undo.
+   */
+  public addCellFromSavedQuery = async (
+    index: number,
+    query: DataQuery,
+    title?: string
+  ): Promise<NotebookCellItem | undefined> => {
+    const built = this.buildCellFor('visualization', index);
+    if (!built) {
+      return undefined;
+    }
+
+    this.executeEdit({
+      label: t('notebooks.history.add-block', 'Add block'),
+      kind: NOTEBOOK_EDIT_KIND.ADD_CELL,
+      perform: () => this.insertCell(built.cell, built.index),
+      undo: () => this.removeCellInstance(built.cell),
+    });
+
+    await this.applySavedQueryToCell(built.cell, query, title);
+    return built.cell;
+  };
+
+  /** The "/" menu's analogue of addCellFromSavedQuery: converts `cell` in place instead of inserting a fresh one. */
+  public convertCellFromSavedQuery = async (
+    cell: NotebookCellItem,
+    query: DataQuery,
+    title?: string
+  ): Promise<void> => {
+    this.convertCellToPanel(cell);
+    await this.applySavedQueryToCell(cell, query, title);
+  };
+
+  /**
+   * Applies `query`'s top viz suggestion to `cell`'s panel and sets the query on its runner —
+   * mirrors Dashboards' Unconfigured Panel "Use saved query" flow, minus its DashboardScene coupling.
+   * Still applies the query when no suggestion comes back, falling back to the panel's default viz.
+   */
+  private async applySavedQueryToCell(cell: NotebookCellItem, query: DataQuery, title?: string): Promise<void> {
+    const panel = cell.state.body;
+    if (!panel) {
+      return;
+    }
+
+    try {
+      const timeRange = sceneGraph.getTimeRange(this).state.value;
+      const suggestion = await getVizSuggestionForQuery(query, timeRange);
+      if (suggestion) {
+        await panel.changePluginType(suggestion.pluginId, suggestion.options ?? {}, suggestion.fieldConfig);
+      } else {
+        appEvents.emit(AppEvents.alertWarning, [
+          t('notebook.add-block.saved-query-no-suggestion', 'No visualization found'),
+          t(
+            'notebook.add-block.saved-query-no-suggestion-detail',
+            'The query did not return enough data to suggest a visualization type.'
+          ),
+        ]);
+      }
+    } catch {
+      appEvents.emit(AppEvents.alertError, [
+        t('notebook.add-block.saved-query-apply-error', 'Failed to get a visualization suggestion'),
+        t(
+          'notebook.add-block.saved-query-apply-error-detail',
+          'An error occurred while suggesting a visualization for the saved query.'
+        ),
+      ]);
+    }
+
+    if (title) {
+      panel.setState({ title });
+    }
+
+    const runner = this.getQueryRunnerForCell(cell);
+    if (runner) {
+      applyQueries(
+        cell,
+        runner,
+        [{ ...query, refId: query.refId || 'A' }],
+        t('notebooks.history.add-block', 'Add block')
+      );
+      runner.runQueries();
+    }
+  }
+
+  /**
    * The "always one more empty block ready" invariant's own way of appending a cell (see
    * setCellContent and the renderer's own bootstrap effect) — bypasses addCell's undo/redo recording
    * entirely, on purpose: this never runs from a reader-initiated action, so it must not show up as
@@ -808,6 +898,7 @@ export class NotebookLayoutManager
 function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLayoutManager>) {
   const styles = useStyles2(getStyles);
   const { cells, title, tags, isEditing, key } = model.useState();
+  const { openDrawer } = useQueryLibraryContext();
 
   const timeRange = sceneGraph.getTimeRange(model).useState();
 
@@ -859,6 +950,20 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
       requestFocus(model.addCell(type, index)?.state.key);
     },
     [model, requestFocus]
+  );
+
+  // Nothing is inserted until onSelectQuery fires — cancelling the drawer leaves the notebook untouched.
+  const onAddSavedQuery = useCallback(
+    (index: number) => {
+      openDrawer({
+        onSelectQuery: async (query, title) => {
+          const cell = await model.addCellFromSavedQuery(index, query, title);
+          requestFocus(cell?.state.key);
+        },
+        options: { context: 'notebook-cell' },
+      });
+    },
+    [model, openDrawer, requestFocus]
   );
 
   // ArrowUp/ArrowDown once the caret (or, for a Panel/Collapsed cell, the frame itself — see
@@ -937,6 +1042,7 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                     isDragActive={drag !== null}
                     dropIndicator={getCellDropIndicator(drag, index)}
                     onAdd={onAdd}
+                    onAddSavedQuery={onAddSavedQuery}
                     onDuplicate={() => model.duplicateCell(cell)}
                     onDelete={() => confirmRemoveCell(model, cell)}
                     onAdvance={(remainder, marker) => {

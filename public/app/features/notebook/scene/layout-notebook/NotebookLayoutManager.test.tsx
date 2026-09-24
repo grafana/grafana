@@ -5,8 +5,16 @@ import { type DataQuery } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
+import { getVizSuggestionForQuery } from 'app/features/dashboard-scene/utils/getVizSuggestionForQuery';
 import { defaultVisualizationPanelKind, type NotebookLayoutKind } from 'app/features/notebook/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
+
+// The suggestion pipeline itself has its own dedicated coverage — see getVizSuggestionForQuery's tests.
+jest.mock('app/features/dashboard-scene/utils/getVizSuggestionForQuery', () => ({
+  getVizSuggestionForQuery: jest.fn(),
+}));
+
+const mockGetVizSuggestionForQuery = getVizSuggestionForQuery as jest.Mock;
 
 import { type NotebookEditHistory } from '../NotebookEditHistory';
 import { NotebookScene } from '../NotebookScene';
@@ -772,6 +780,92 @@ describe('NotebookLayoutManager', () => {
       const manager = buildManager(buildNarrativeCells(['a']));
 
       expect(manager.addCell('code', 0)).toBe(manager.state.cells[0]);
+    });
+  });
+
+  describe('addCellFromSavedQuery', () => {
+    const query: DataQuery = { refId: 'A', datasource: { uid: 'test-ds' } };
+    const suggestion = {
+      pluginId: 'barchart',
+      name: 'barchart',
+      description: '',
+      options: { showValue: 'always' },
+      fieldConfig: { defaults: {}, overrides: [] },
+      hash: '0',
+      score: 100,
+    };
+
+    beforeEach(() => {
+      mockGetVizSuggestionForQuery.mockReset();
+    });
+
+    it('inserts a visualization cell at the given index and applies the suggested viz type and the query', async () => {
+      mockGetVizSuggestionForQuery.mockResolvedValue(suggestion);
+      const manager = buildManager(buildNarrativeCells(['a', 'b']));
+      const changePluginType = jest.spyOn(VizPanel.prototype, 'changePluginType').mockResolvedValue(undefined);
+
+      const cell = await manager.addCellFromSavedQuery(1, query, 'My query title');
+
+      expect(cellNames(manager)).toEqual(['a', 'visualization-1', 'b']);
+      expect(changePluginType).toHaveBeenCalledWith(suggestion.pluginId, suggestion.options, suggestion.fieldConfig);
+      expect(cell?.state.body?.state.title).toBe('My query title');
+      expect(getQueryRunnerFor(cell?.state.body)?.state.queries).toEqual([query]);
+    });
+
+    it('still applies the query when no suggestion is found, falling back to the default viz', async () => {
+      mockGetVizSuggestionForQuery.mockResolvedValue(undefined);
+      const manager = buildManager(buildNarrativeCells(['a']));
+      const changePluginType = jest.spyOn(VizPanel.prototype, 'changePluginType');
+
+      const cell = await manager.addCellFromSavedQuery(1, query);
+
+      expect(changePluginType).not.toHaveBeenCalled();
+      expect(cell?.state.body?.state.pluginId).toBe('timeseries');
+      expect(getQueryRunnerFor(cell?.state.body)?.state.queries).toEqual([query]);
+    });
+
+    it('still applies the query when the suggestion lookup fails', async () => {
+      mockGetVizSuggestionForQuery.mockRejectedValue(new Error('datasource unreachable'));
+      const manager = buildManager(buildNarrativeCells(['a']));
+
+      const cell = await manager.addCellFromSavedQuery(1, query);
+
+      expect(getQueryRunnerFor(cell?.state.body)?.state.queries).toEqual([query]);
+    });
+  });
+
+  describe('convertCellFromSavedQuery', () => {
+    const query: DataQuery = { refId: 'A', datasource: { uid: 'test-ds' } };
+    const suggestion = {
+      pluginId: 'barchart',
+      name: 'barchart',
+      description: '',
+      options: {},
+      fieldConfig: { defaults: {}, overrides: [] },
+      hash: '0',
+      score: 100,
+    };
+
+    beforeEach(() => {
+      mockGetVizSuggestionForQuery.mockReset();
+    });
+
+    it('converts the cell into a panel with the suggested viz type and the query', async () => {
+      mockGetVizSuggestionForQuery.mockResolvedValue(suggestion);
+      const trailing = new NotebookCellItem({
+        elementName: 'paragraph-1',
+        source: 'user',
+        content: { kind: 'Markdown', spec: { text: '' } },
+      });
+      const manager = buildManager([...buildNarrativeCells(['a', 'b']), trailing]);
+      const changePluginType = jest.spyOn(VizPanel.prototype, 'changePluginType').mockResolvedValue(undefined);
+
+      await manager.convertCellFromSavedQuery(trailing, query);
+
+      expect(cellNames(manager)).toEqual(['a', 'b', 'paragraph-1']);
+      expect(trailing.state.content).toBeUndefined();
+      expect(changePluginType).toHaveBeenCalledWith(suggestion.pluginId, suggestion.options, suggestion.fieldConfig);
+      expect(getQueryRunnerFor(trailing.state.body)?.state.queries).toEqual([query]);
     });
   });
 
