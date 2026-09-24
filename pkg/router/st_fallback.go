@@ -303,8 +303,6 @@ func newGComURLResolver(gcomBaseURL string, gcomToken string) func(context.Conte
 	type instance struct {
 		ID   int    `json:"id"`
 		Slug string `json:"slug"`
-		Name string `json:"name"`
-		URL  string `json:"url"`
 	}
 
 	return func(ctx context.Context, stackID int64) (string, error) {
@@ -337,6 +335,6 @@ func newGComURLResolver(gcomBaseURL string, gcomToken string) func(context.Conte
 		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 			return "", fmt.Errorf("decoding gcom instance: %w", err)
 		}
-		return result.URL, nil
+		return fmt.Sprintf("http://%s-grafana-http.%s.svc.cluster.local.:80", result.Slug, "hosted-grafana"), nil
 	}
 }
