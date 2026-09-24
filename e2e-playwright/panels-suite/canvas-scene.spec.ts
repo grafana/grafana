@@ -3,8 +3,8 @@ import { type Locator } from '@playwright/test';
 import { test, expect } from '@grafana/plugin-e2e';
 
 test.use({
-  featureToggles: {
-    canvasPanelPanZoom: true,
+  openFeature: {
+    flags: { canvasPanelPanZoom: true },
   },
 });
 test.describe('Canvas Panel - Scene Tests', () => {

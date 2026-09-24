@@ -1,19 +1,15 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { type JSX } from 'react';
+import { cleanup, screen } from '@testing-library/react';
+import { render } from 'test/test-utils';
 
 import { FieldColorModeId } from '@grafana/data';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { FieldColorEditor } from './fieldColor';
 
 // ---------------------------------------------------------------------------
 // Stubs
 // ---------------------------------------------------------------------------
-
-// Enable the feature flag so the Gradient option is not filtered out by the flag guard.
-jest.mock('@grafana/runtime', () => ({
-  config: { featureToggles: { pieChartGradientColorScheme: true } },
-}));
 
 // Replace ColorValueEditor with a lightweight stub so we can assert on the
 // number of color pickers rendered and the value each one receives.
@@ -55,13 +51,6 @@ jest.mock('@grafana/data', () => {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function setup(jsx: JSX.Element) {
-  return {
-    user: userEvent.setup(),
-    ...render(jsx),
-  };
-}
-
 // gradientSupport must be true so the Gradient option is not filtered out of the picker.
 // Tests in this file specifically cover gradient mode behaviour so this flag is always needed.
 const noopItem = { settings: { gradientSupport: true } } as Parameters<typeof FieldColorEditor>[0]['item'];
@@ -71,6 +60,15 @@ const noopItem = { settings: { gradientSupport: true } } as Parameters<typeof Fi
 // ---------------------------------------------------------------------------
 
 describe('FieldColorEditor — gradient mode', () => {
+  beforeEach(() => {
+    setTestFlags({ [FlagKeys.PieChartGradientColorScheme]: true });
+  });
+
+  afterEach(() => {
+    cleanup();
+    setTestFlags({});
+  });
+
   describe('rendering', () => {
     it('renders two color pickers when mode is gradient', () => {
       render(
@@ -165,7 +163,7 @@ describe('FieldColorEditor — gradient mode', () => {
   describe('onChange behaviour when switching to gradient', () => {
     it('seeds fixedColor and gradientColorTo defaults when switching to gradient', async () => {
       const onChange = jest.fn();
-      const { user } = setup(
+      const { user } = render(
         <FieldColorEditor
           value={{ mode: FieldColorModeId.Fixed }}
           onChange={onChange}
@@ -189,7 +187,7 @@ describe('FieldColorEditor — gradient mode', () => {
 
     it('preserves existing fixedColor when switching to gradient', async () => {
       const onChange = jest.fn();
-      const { user } = setup(
+      const { user } = render(
         <FieldColorEditor
           value={{ mode: FieldColorModeId.Fixed, fixedColor: '#custom1' }}
           onChange={onChange}
@@ -212,7 +210,7 @@ describe('FieldColorEditor — gradient mode', () => {
 
     it('preserves existing gradientColorTo when switching back to gradient', async () => {
       const onChange = jest.fn();
-      const { user } = setup(
+      const { user } = render(
         <FieldColorEditor
           value={{ mode: FieldColorModeId.Fixed, gradientColorTo: '#custom2' }}
           onChange={onChange}
@@ -234,7 +232,7 @@ describe('FieldColorEditor — gradient mode', () => {
 
     it('only gradient mode triggers default seeding — switching to Fixed does not add extra fields', async () => {
       const onChange = jest.fn();
-      const { user } = setup(
+      const { user } = render(
         <FieldColorEditor
           value={{ mode: FieldColorModeId.Gradient, fixedColor: '#73BF69', gradientColorTo: '#F2495C' }}
           onChange={onChange}
