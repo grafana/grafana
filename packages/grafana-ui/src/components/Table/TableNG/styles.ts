@@ -396,7 +396,8 @@ export const getCellActionStyles = memoize((theme: GrafanaTheme2, textAlign: Tex
         opacity: 0,
         pointerEvents: 'none',
         // Limit hover to the owning cell, including its optional height wrapper, not an outer nested grid.
-        '.rdg-cell:hover > &, .rdg-cell:hover > div > &, &:focus-within, &:has([aria-expanded="true"])': {
+        // Mouse focus remains on the trigger after dismissal; only keyboard focus should keep actions visible.
+        '.rdg-cell:hover > &, .rdg-cell:hover > div > &, &:has(:focus-visible), &:has([aria-expanded="true"])': {
           opacity: 1,
           pointerEvents: 'auto',
         },
