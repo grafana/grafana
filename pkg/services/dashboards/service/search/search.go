@@ -79,8 +79,7 @@ type SearchFunc func(ctx context.Context, orgID int64, request *resourcepb.Resou
 
 // SearchAll executes a search request and paginates through all results by incrementing the offset until the offset is greater than total hits
 // or it hits an empty page.
-// Errors attached to the search response (res.Error being an ErrorResult) are handled by [ParseResults]. A call without a subsequent call to
-// [ParseResults] will swallow any returned error.
+// Callers that use searchFn directly must call ParseResults, or embedded errors are silently dropped
 func SearchAll(ctx context.Context, orgID int64, request *resourcepb.ResourceSearchRequest, searchFn SearchFunc) (v0alpha1.SearchResults, error) {
 	if request.Limit == 0 {
 		request.Limit = 100000
