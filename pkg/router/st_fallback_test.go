@@ -40,11 +40,18 @@ func testFallbackURL(t *testing.T, raw string) *url.URL {
 	return u
 }
 
+func targetURL(target *singleTenantTarget) *url.URL {
+	if target == nil {
+		return nil
+	}
+	return target.url
+}
+
 func newTestSingleTenantFallback(t *testing.T) *singleTenantFallback {
 	t.Helper()
-	st, err := newSingleTenantFallback(singleTenantFallbackOptions{cacheSize: 500, resolveHost: func(context.Context, int64) (string, error) {
+	st, err := newSingleTenantFallback(singleTenantFallbackOptions{cacheSize: 500, resolveHost: func(context.Context, int64) (singleTenantStack, error) {
 		t.Error("unexpected lookup: test must provide a resolver")
-		return "", errors.New("unexpected lookup")
+		return singleTenantStack{}, errors.New("unexpected lookup")
 	}})
 	require.NoError(t, err)
 	return st
@@ -61,11 +68,11 @@ func TestNewSingleTenantFallbackInvalidCacheSize(t *testing.T) {
 func TestSingleTenantFallbackLookupRechecksCache(t *testing.T) {
 	st := newTestSingleTenantFallback(t)
 	st.cache.Add(123, singleTenantHost{
-		host: testFallbackURL(t, "https://cached.example.com/"), expiresAt: time.Now().Add(singleTenantCacheTTL),
+		host: &singleTenantTarget{url: testFallbackURL(t, "https://cached.example.com/")}, expiresAt: time.Now().Add(singleTenantCacheTTL),
 	})
 	host, err := st.lookupHost(t.Context(), 123)
 	require.NoError(t, err)
-	require.Equal(t, testFallbackURL(t, "https://cached.example.com/"), host)
+	require.Equal(t, testFallbackURL(t, "https://cached.example.com/"), targetURL(host))
 }
 
 func TestSingleTenantFallbackHostForNamespace(t *testing.T) {
@@ -85,18 +92,18 @@ func TestSingleTenantFallbackHostForNamespace(t *testing.T) {
 	} {
 		t.Run(tc.namespace, func(t *testing.T) {
 			st := newTestSingleTenantFallback(t)
-			st.resolveHost = func(_ context.Context, stackID int64) (string, error) {
-				return map[int64]string{
-					123: "https://first.example.com/",
-					456: "https://second.example.com/",
+			st.resolveHost = func(_ context.Context, stackID int64) (singleTenantStack, error) {
+				return map[int64]singleTenantStack{
+					123: {URL: "https://first.example.com/"},
+					456: {URL: "https://second.example.com/"},
 				}[stackID], nil
 			}
 			host, err := st.hostForNamespace(t.Context(), tc.namespace)
 			require.NoError(t, err)
-			require.Equal(t, testFallbackURL(t, tc.host), host)
+			require.Equal(t, testFallbackURL(t, tc.host), targetURL(host))
 			host, err = st.hostForNamespace(t.Context(), tc.namespace)
 			require.NoError(t, err)
-			require.Equal(t, testFallbackURL(t, tc.host), host)
+			require.Equal(t, testFallbackURL(t, tc.host), targetURL(host))
 			if tc.host == "" && tc.namespace != "stacks-234" {
 				require.Zero(t, st.cache.Len())
 			} else {
@@ -133,11 +140,11 @@ func TestSingleTenantFallbackServeHTTP(t *testing.T) {
 	} {
 		t.Run(tc.path, func(t *testing.T) {
 			st := newTestSingleTenantFallback(t)
-			st.resolveHost = func(_ context.Context, stackID int64) (string, error) {
+			st.resolveHost = func(_ context.Context, stackID int64) (singleTenantStack, error) {
 				if stackID == 123 {
-					return "https://first.example.com/", nil
+					return singleTenantStack{URL: "https://first.example.com/"}, nil
 				}
-				return "", nil
+				return singleTenantStack{}, nil
 			}
 			var forwarded int
 			st.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {
@@ -173,18 +180,18 @@ func TestSingleTenantFallbackConcurrentLookups(t *testing.T) {
 		st := newTestSingleTenantFallback(t)
 		var calls atomic.Int32
 		release := make(chan struct{})
-		st.resolveHost = func(ctx context.Context, stackID int64) (string, error) {
+		st.resolveHost = func(ctx context.Context, stackID int64) (singleTenantStack, error) {
 			calls.Add(1)
 			if stackID == 123 {
 				select {
 				case <-release:
 				case <-ctx.Done():
-					return "", ctx.Err()
+					return singleTenantStack{}, ctx.Err()
 				}
 			}
-			return "http://resolved.grafana.net/", nil
+			return singleTenantStack{URL: "http://resolved.grafana.net/"}, nil
 		}
-		st.cache.Add(789, singleTenantHost{host: testFallbackURL(t, "https://cached.example.com/"), expiresAt: time.Now().Add(singleTenantCacheTTL)})
+		st.cache.Add(789, singleTenantHost{host: &singleTenantTarget{url: testFallbackURL(t, "https://cached.example.com/")}, expiresAt: time.Now().Add(singleTenantCacheTTL)})
 		ctx, cancel := context.WithCancel(t.Context())
 		first := make(chan error, 1)
 		go func() {
@@ -198,7 +205,7 @@ func TestSingleTenantFallbackConcurrentLookups(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			}
-			second <- host
+			second <- targetURL(host)
 		}()
 		synctest.Wait()
 		require.EqualValues(t, 1, calls.Load())
@@ -208,17 +215,17 @@ func TestSingleTenantFallbackConcurrentLookups(t *testing.T) {
 
 		host, err := st.hostForNamespace(t.Context(), "stacks-789")
 		require.NoError(t, err)
-		require.Equal(t, testFallbackURL(t, "https://cached.example.com/"), host)
+		require.Equal(t, testFallbackURL(t, "https://cached.example.com/"), targetURL(host))
 		host, err = st.hostForNamespace(t.Context(), "stacks-456")
 		require.NoError(t, err)
-		require.Equal(t, testFallbackURL(t, "http://resolved.grafana.net/"), host)
+		require.Equal(t, testFallbackURL(t, "http://resolved.grafana.net/"), targetURL(host))
 		require.EqualValues(t, 2, calls.Load())
 
 		close(release)
 		require.Equal(t, testFallbackURL(t, "http://resolved.grafana.net/"), <-second)
 		host, err = st.hostForNamespace(t.Context(), "stacks-123")
 		require.NoError(t, err)
-		require.Equal(t, testFallbackURL(t, "http://resolved.grafana.net/"), host)
+		require.Equal(t, testFallbackURL(t, "http://resolved.grafana.net/"), targetURL(host))
 		require.EqualValues(t, 2, calls.Load())
 	})
 }
@@ -227,23 +234,23 @@ func TestSingleTenantFallbackCacheExpiry(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		st := newTestSingleTenantFallback(t)
 		var calls atomic.Int32
-		st.resolveHost = func(context.Context, int64) (string, error) {
+		st.resolveHost = func(context.Context, int64) (singleTenantStack, error) {
 			if calls.Add(1) == 1 {
-				return "http://old.grafana.net/", nil
+				return singleTenantStack{URL: "http://old.grafana.net/"}, nil
 			}
-			return "http://new.grafana.net/", nil
+			return singleTenantStack{URL: "http://new.grafana.net/"}, nil
 		}
 		host, err := st.hostForNamespace(t.Context(), "stacks-123")
 		require.NoError(t, err)
-		require.Equal(t, testFallbackURL(t, "http://old.grafana.net/"), host)
+		require.Equal(t, testFallbackURL(t, "http://old.grafana.net/"), targetURL(host))
 		host, err = st.hostForNamespace(t.Context(), "stacks-123")
 		require.NoError(t, err)
-		require.Equal(t, testFallbackURL(t, "http://old.grafana.net/"), host)
+		require.Equal(t, testFallbackURL(t, "http://old.grafana.net/"), targetURL(host))
 		require.EqualValues(t, 1, calls.Load())
 		time.Sleep(singleTenantCacheTTL)
 		host, err = st.hostForNamespace(t.Context(), "stacks-123")
 		require.NoError(t, err)
-		require.Equal(t, testFallbackURL(t, "http://new.grafana.net/"), host)
+		require.Equal(t, testFallbackURL(t, "http://new.grafana.net/"), targetURL(host))
 		require.EqualValues(t, 2, calls.Load())
 	})
 }
@@ -252,11 +259,11 @@ func TestSingleTenantFallbackCachesNotFound(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		st := newTestSingleTenantFallback(t)
 		var calls atomic.Int32
-		st.resolveHost = func(context.Context, int64) (string, error) {
+		st.resolveHost = func(context.Context, int64) (singleTenantStack, error) {
 			if calls.Add(1) == 1 {
-				return "", nil
+				return singleTenantStack{}, nil
 			}
-			return "https://found.example.com/", nil
+			return singleTenantStack{URL: "https://found.example.com/"}, nil
 		}
 		for range 2 {
 			recorder := httptest.NewRecorder()
@@ -266,12 +273,12 @@ func TestSingleTenantFallbackCachesNotFound(t *testing.T) {
 		require.EqualValues(t, 1, calls.Load())
 		cached, ok := st.cache.Peek(123)
 		require.True(t, ok)
-		require.Empty(t, cached.host)
+		require.Nil(t, cached.host)
 		require.Equal(t, singleTenantNotFoundTTL, time.Until(cached.expiresAt))
 		time.Sleep(singleTenantNotFoundTTL)
 		host, err := st.hostForNamespace(t.Context(), "stacks-123")
 		require.NoError(t, err)
-		require.Equal(t, testFallbackURL(t, "https://found.example.com/"), host)
+		require.Equal(t, testFallbackURL(t, "https://found.example.com/"), targetURL(host))
 		require.EqualValues(t, 2, calls.Load())
 	})
 }
@@ -279,23 +286,25 @@ func TestSingleTenantFallbackCachesNotFound(t *testing.T) {
 func TestSingleTenantFallbackDoesNotCacheLookupErrors(t *testing.T) {
 	st := newTestSingleTenantFallback(t)
 	lookupErr := errors.New("lookup failed")
-	st.resolveHost = func(context.Context, int64) (string, error) { return "", lookupErr }
+	st.resolveHost = func(context.Context, int64) (singleTenantStack, error) { return singleTenantStack{}, lookupErr }
 	recorder := httptest.NewRecorder()
 	st.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/apis/example/v1/namespaces/stacks-123/widgets", nil))
 	require.Equal(t, http.StatusServiceUnavailable, recorder.Code)
 	require.Zero(t, st.cache.Len())
-	st.resolveHost = func(context.Context, int64) (string, error) { return "https://recovered.example.com/", nil }
+	st.resolveHost = func(context.Context, int64) (singleTenantStack, error) {
+		return singleTenantStack{URL: "https://recovered.example.com/"}, nil
+	}
 	host, err := st.hostForNamespace(t.Context(), "stacks-123")
 	require.NoError(t, err)
-	require.Equal(t, testFallbackURL(t, "https://recovered.example.com/"), host)
+	require.Equal(t, testFallbackURL(t, "https://recovered.example.com/"), targetURL(host))
 }
 
 func TestSingleTenantFallbackLookupTimeout(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		st := newTestSingleTenantFallback(t)
-		st.resolveHost = func(ctx context.Context, _ int64) (string, error) {
+		st.resolveHost = func(ctx context.Context, _ int64) (singleTenantStack, error) {
 			<-ctx.Done()
-			return "", ctx.Err()
+			return singleTenantStack{}, ctx.Err()
 		}
 		start := time.Now()
 		_, err := st.hostForNamespace(t.Context(), "stacks-123")
@@ -307,9 +316,9 @@ func TestSingleTenantFallbackLookupTimeout(t *testing.T) {
 
 func TestSingleTenantFallbackAlreadyCanceled(t *testing.T) {
 	st := newTestSingleTenantFallback(t)
-	st.resolveHost = func(context.Context, int64) (string, error) {
+	st.resolveHost = func(context.Context, int64) (singleTenantStack, error) {
 		t.Error("canceled request must not start a lookup")
-		return "", nil
+		return singleTenantStack{}, nil
 	}
 	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
@@ -324,7 +333,7 @@ func TestSingleTenantFallbackInvalidHost(t *testing.T) {
 	for _, raw := range []string{"http://%", "/relative", "http:///missing-host", "ftp://example.com"} {
 		t.Run(raw, func(t *testing.T) {
 			st := newTestSingleTenantFallback(t)
-			st.resolveHost = func(context.Context, int64) (string, error) { return raw, nil }
+			st.resolveHost = func(context.Context, int64) (singleTenantStack, error) { return singleTenantStack{URL: raw}, nil }
 			host, err := st.hostForNamespace(t.Context(), "stacks-123")
 			require.Error(t, err)
 			require.Nil(t, host)
@@ -333,9 +342,22 @@ func TestSingleTenantFallbackInvalidHost(t *testing.T) {
 	}
 }
 
+func TestSingleTenantFallbackInvalidPublicURL(t *testing.T) {
+	st := newTestSingleTenantFallback(t)
+	st.resolveHost = func(context.Context, int64) (singleTenantStack, error) {
+		return singleTenantStack{URL: "https://tenant.example.com", PublicURL: "http://%"}, nil
+	}
+	host, err := st.hostForNamespace(t.Context(), "stacks-123")
+	require.ErrorContains(t, err, "invalid stack public URL")
+	require.Nil(t, host)
+	require.Zero(t, st.cache.Len())
+}
+
 func TestSingleTenantFallbackForwardRequest(t *testing.T) {
 	st := newTestSingleTenantFallback(t)
-	st.resolveHost = func(context.Context, int64) (string, error) { return "https://tenant.example.com/base?target=1", nil }
+	st.resolveHost = func(context.Context, int64) (singleTenantStack, error) {
+		return singleTenantStack{URL: "https://tenant.example.com/base?target=1"}, nil
+	}
 	st.discoveryHost = testFallbackURL(t, "https://discovery.example.com")
 	var calls int
 	st.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {
@@ -362,6 +384,41 @@ func TestSingleTenantFallbackForwardRequest(t *testing.T) {
 	require.JSONEq(t, `{"created":true}`, recorder.Body.String())
 }
 
+func TestSingleTenantFallbackStackHostAndOrigin(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		origin     string
+		wantStatus int
+	}{
+		{name: "matching origin", origin: "stack", wantStatus: http.StatusOK},
+		{name: "missing origin", wantStatus: http.StatusOK},
+		{name: "mismatched origin", origin: "other", wantStatus: http.StatusBadGateway},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			st := newTestSingleTenantFallback(t)
+			st.resolveHost = func(context.Context, int64) (singleTenantStack, error) {
+				return singleTenantStack{URL: "http://stack-grafana-http.hosted-grafana.svc.cluster.local.:80", PublicURL: "https://stack.grafana.net", Slug: "stack"}, nil
+			}
+			var calls int
+			st.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {
+				calls++
+				require.Equal(t, "stack-grafana-http.hosted-grafana.svc.cluster.local.:80", req.URL.Host)
+				require.Equal(t, "stack.grafana.net", req.Host)
+				header := make(http.Header)
+				if tc.origin != "" {
+					header.Set("grafana-stack", tc.origin)
+				}
+				return &http.Response{StatusCode: http.StatusOK, Header: header, Body: io.NopCloser(strings.NewReader("ok"))}, nil
+			})
+			recorder := httptest.NewRecorder()
+			st.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/apis/example/v1/namespaces/stacks-123/widgets", nil))
+			require.Equal(t, 1, calls)
+			require.Equal(t, tc.wantStatus, recorder.Code)
+			require.Empty(t, recorder.Header().Get("grafana-stack"))
+		})
+	}
+}
+
 func TestSingleTenantFallbackDiscovery(t *testing.T) {
 	for _, path := range []string{"/apis", "/apis/", "/apis/example", "/apis/example/v1", "/apis/example/v1/", "/openapi/v3", "/openapi/v3/apis/example/v1"} {
 		t.Run(path, func(t *testing.T) {
@@ -386,7 +443,9 @@ func TestSingleTenantFallbackDiscovery(t *testing.T) {
 func TestSingleTenantFallbackProxyFailure(t *testing.T) {
 	for _, redirect := range []bool{false, true} {
 		st := newTestSingleTenantFallback(t)
-		st.resolveHost = func(context.Context, int64) (string, error) { return "https://tenant.example.com", nil }
+		st.resolveHost = func(context.Context, int64) (singleTenantStack, error) {
+			return singleTenantStack{URL: "https://tenant.example.com"}, nil
+		}
 		st.transport = testFallbackTransport(func(*http.Request) (*http.Response, error) {
 			if redirect {
 				return &http.Response{StatusCode: http.StatusFound, Header: http.Header{"Location": {"https://other.example.com"}}, Body: io.NopCloser(strings.NewReader("redirect"))}, nil
@@ -465,11 +524,11 @@ func TestSingleTenantFallbackRefreshAfterStackChanges(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
 				st := newTestSingleTenantFallback(t)
 				var calls atomic.Int32
-				st.resolveHost = func(context.Context, int64) (string, error) {
+				st.resolveHost = func(context.Context, int64) (singleTenantStack, error) {
 					if calls.Add(1) == 1 {
-						return "https://old.example.com", nil
+						return singleTenantStack{URL: "https://old.example.com"}, nil
 					}
-					return tc.host, tc.err
+					return singleTenantStack{URL: tc.host}, tc.err
 				}
 				var destinations []string
 				st.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {
@@ -512,28 +571,33 @@ func TestNewGComURLResolver(t *testing.T) {
 		wantPath string
 		status   int
 		body     string
-		wantURL  string
+		want     singleTenantStack
 		wantErr  string
 	}{
 		{
 			name: "base URL without trailing slash", wantPath: "/instances/123",
-			status: http.StatusOK, body: `{"id":123,"slug":"stack"}`,
-			wantURL: "http://stack-grafana-http.hosted-grafana.svc.cluster.local.:80",
+			status: http.StatusOK, body: `{"id":123,"slug":"stack","url":"https://stack.grafana.net"}`,
+			want: singleTenantStack{URL: "http://stack-grafana-http.hosted-grafana.svc.cluster.local.:80", PublicURL: "https://stack.grafana.net", Slug: "stack"},
 		},
 		{
 			name: "base URL with trailing slash", basePath: "/", wantPath: "/instances/123",
-			status: http.StatusOK, body: `{"id":123,"slug":"stack"}`,
-			wantURL: "http://stack-grafana-http.hosted-grafana.svc.cluster.local.:80",
+			status: http.StatusOK, body: `{"id":123,"slug":"stack","url":"https://stack.grafana.net"}`,
+			want: singleTenantStack{URL: "http://stack-grafana-http.hosted-grafana.svc.cluster.local.:80", PublicURL: "https://stack.grafana.net", Slug: "stack"},
 		},
 		{
 			name: "base path without trailing slash", basePath: "/api", wantPath: "/api/instances/123",
-			status: http.StatusOK, body: `{"id":123,"slug":"stack"}`,
-			wantURL: "http://stack-grafana-http.hosted-grafana.svc.cluster.local.:80",
+			status: http.StatusOK, body: `{"id":123,"slug":"stack","url":"https://stack.grafana.net"}`,
+			want: singleTenantStack{URL: "http://stack-grafana-http.hosted-grafana.svc.cluster.local.:80", PublicURL: "https://stack.grafana.net", Slug: "stack"},
 		},
 		{
 			name: "base path with trailing slash", basePath: "/api/", wantPath: "/api/instances/123",
+			status: http.StatusOK, body: `{"id":123,"slug":"stack","url":"https://stack.grafana.net"}`,
+			want: singleTenantStack{URL: "http://stack-grafana-http.hosted-grafana.svc.cluster.local.:80", PublicURL: "https://stack.grafana.net", Slug: "stack"},
+		},
+		{
+			name: "without public URL", wantPath: "/instances/123",
 			status: http.StatusOK, body: `{"id":123,"slug":"stack"}`,
-			wantURL: "http://stack-grafana-http.hosted-grafana.svc.cluster.local.:80",
+			want: singleTenantStack{URL: "http://stack-grafana-http.hosted-grafana.svc.cluster.local.:80", Slug: "stack"},
 		},
 		{
 			name: "not found", wantPath: "/instances/123",
@@ -562,13 +626,13 @@ func TestNewGComURLResolver(t *testing.T) {
 			t.Cleanup(server.Close)
 
 			resolve := newGComURLResolver(server.URL+tc.basePath, "test-token")
-			host, err := resolve(t.Context(), 123)
+			stack, err := resolve(t.Context(), 123)
 			if tc.wantErr != "" {
 				require.ErrorContains(t, err, tc.wantErr)
 			} else {
 				require.NoError(t, err)
 			}
-			require.Equal(t, tc.wantURL, host)
+			require.Equal(t, tc.want, stack)
 		})
 	}
 }

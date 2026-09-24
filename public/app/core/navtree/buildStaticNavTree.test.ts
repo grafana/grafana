@@ -213,6 +213,8 @@ describe('buildStaticNavTree', () => {
           AccessControlAction.AlertingNotificationsRead,
           AccessControlAction.AlertingInstanceRead,
         ],
+        // The toggle is on by default, so the legacy shape has to be asked for
+        openFeatureFlags: { alertingNavigationV2: false },
       });
 
       expect(ids(findById(buildStaticNavTree(), NavID.alerting)?.children ?? [])).toEqual([
@@ -231,7 +233,7 @@ describe('buildStaticNavTree', () => {
           AccessControlAction.AlertingNotificationsRead,
           AccessControlAction.AlertingInstanceRead,
         ],
-        featureToggles: { alertingNavigationV2: true },
+        openFeatureFlags: { alertingNavigationV2: true },
       });
 
       expect(ids(findById(buildStaticNavTree(), NavID.alerting)?.children ?? [])).toEqual([
@@ -245,7 +247,7 @@ describe('buildStaticNavTree', () => {
     it('hides alert groups under V2 with triage but keeps alert activity', () => {
       setup({
         permissions: [AccessControlAction.AlertingInstanceRead],
-        featureToggles: { alertingNavigationV2: true, alertingTriage: true },
+        openFeatureFlags: { alertingNavigationV2: true, alertingTriage: true },
       });
 
       const children = ids(findById(buildStaticNavTree(), NavID.alerting)?.children ?? []);
@@ -376,6 +378,23 @@ describe('buildStaticNavTree', () => {
 
       const plugins = findById(findById(buildStaticNavTree(), NavID.cfg)?.children ?? [], NavID.cfgPlugins);
       expect(ids(plugins?.children ?? [])).toContain('extensions');
+    });
+
+    it('shows the extensions page outside dev only with the toggle and plugin write access', () => {
+      const pluginsPageChildren = () =>
+        ids(findById(findById(buildStaticNavTree(), NavID.cfg)?.children ?? [], NavID.cfgPlugins)?.children ?? []);
+
+      setup({ permissions: [AccessControlAction.PluginsWrite] });
+      expect(pluginsPageChildren()).not.toContain('extensions');
+
+      setup({ openFeatureFlags: { enableExtensionsAdminPage: true } });
+      expect(pluginsPageChildren()).not.toContain('extensions');
+
+      setup({
+        permissions: [AccessControlAction.PluginsWrite],
+        openFeatureFlags: { enableExtensionsAdminPage: true },
+      });
+      expect(pluginsPageChildren()).toContain('extensions');
     });
   });
 
