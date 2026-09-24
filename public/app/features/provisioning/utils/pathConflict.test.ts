@@ -1,6 +1,6 @@
 import { type Condition } from 'app/api/clients/provisioning/v0alpha1';
 
-import { getPathConflictCondition, getPathConflictWarningTitle } from './pathConflict';
+import { getPathConflictCondition } from './pathConflict';
 
 function makeCondition(overrides: Partial<Condition> = {}): Condition {
   return {
@@ -51,15 +51,5 @@ describe('getPathConflictCondition', () => {
       makeCondition({ type: 'Ready', reason: 'Available', status: 'True' }),
     ];
     expect(getPathConflictCondition(conditions)).toEqual(condition);
-  });
-});
-
-describe('getPathConflictWarningTitle', () => {
-  it('returns a non-empty title', () => {
-    expect(getPathConflictWarningTitle().length).toBeGreaterThan(0);
-  });
-
-  it('returns the same title on every call, so the wizard and overview never diverge', () => {
-    expect(getPathConflictWarningTitle()).toEqual(getPathConflictWarningTitle());
   });
 });

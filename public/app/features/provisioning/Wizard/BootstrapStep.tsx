@@ -10,9 +10,9 @@ import { type RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 import { generateRepositoryTitle } from 'app/features/provisioning/utils/data';
 
+import { PathConflictBanner } from '../Shared/PathConflictBanner';
 import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
 import { CONFIGURE_GRAFANA_DOCS_URL, UPGRADE_URL } from '../constants';
-import { getPathConflictCondition, getPathConflictWarningTitle } from '../utils/pathConflict';
 
 import { BootstrapStepCardIcons } from './BootstrapStepCardIcons';
 import { BootstrapStepResourceCounting } from './BootstrapStepResourceCounting';
@@ -54,8 +54,6 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     quota,
     conditions,
   } = useRepositoryStatus(repoName);
-
-  const pathConflict = getPathConflictCondition(conditions);
 
   const {
     resourceCountString,
@@ -100,14 +98,6 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
           onClick: retryRepositoryStatus,
         },
       });
-    } else if (!isLoading && pathConflict) {
-      setStepStatusInfo({
-        status: 'warning',
-        warning: {
-          title: getPathConflictWarningTitle(),
-          message: pathConflict.message,
-        },
-      });
     } else if (isQuotaWarning) {
       const onPrem = isOnPrem();
       setStepStatusInfo({
@@ -150,7 +140,6 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     isQuotaWarning,
     fileCount,
     isUnhealthy,
-    pathConflict,
   ]);
 
   useEffect(() => {
@@ -175,6 +164,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
 
   return (
     <Stack direction="column" gap={2}>
+      <PathConflictBanner conditions={conditions} />
       <Stack direction="column" gap={2}>
         <Controller
           name="repository.sync.target"
