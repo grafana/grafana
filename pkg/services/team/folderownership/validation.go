@@ -51,7 +51,7 @@ func ValidateNoOwnedFolders(ctx context.Context, searcher resourcepb.ResourceInd
 		return fmt.Errorf("search for folders owned by team %q returned no response", teamUID)
 	}
 	if resp.Error != nil {
-		return resource.GetError(resp.Error)
+		return resource.StatusError(resp.Error)
 	}
 
 	hasRows := false

@@ -123,7 +123,7 @@ func (h *Handler) search(ctx context.Context, w app.CustomRouteResponseWriter, r
 	}
 	// The backend reports failures in the payload, not as a transport error.
 	if resp.GetError() != nil {
-		err = resource.GetError(resp.GetError())
+		err = resource.StatusError(resp.GetError())
 		h.logger.FromContext(ctx).Error("rule search backend returned an error",
 			"namespace", namespace, "group", k.groupResource().Group,
 			"resource", k.groupResource().Resource, "client", fmt.Sprintf("%T", k.client), "error", err)

@@ -99,7 +99,7 @@ func IsConflict(err error) bool {
 	if apierrors.IsConflict(err) {
 		return true
 	}
-	return apierrors.IsConflict(GetError(errorResultFromGRPCDetails(err)))
+	return apierrors.IsConflict(StatusError(errorResultFromGRPCDetails(err)))
 }
 
 // ErrorFromResponse resolves the outcome of a unified storage call — which
@@ -115,7 +115,7 @@ func ErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
 	if err != nil {
 		return err
 	}
-	return GetError(respErr)
+	return StatusError(respErr)
 }
 
 // StatusErrorFromResponse converts a unified storage failure to a Kubernetes
@@ -130,13 +130,13 @@ func ErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
 // their chain through this.
 func StatusErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
 	if err == nil {
-		return GetError(respErr)
+		return StatusError(respErr)
 	}
 	// In-process calls can return context errors instead of gRPC statuses.
 	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 		err = grpcstatus.FromContextError(err).Err()
 	}
-	return GetError(AsErrorResult(err))
+	return StatusError(AsErrorResult(err))
 }
 
 func errorResultFromGRPCDetails(err error) *resourcepb.ErrorResult {
@@ -317,7 +317,8 @@ func AsErrorResult(err error) *resourcepb.ErrorResult {
 	}
 }
 
-func GetError(res *resourcepb.ErrorResult) error {
+// StatusError returns a [apierrors.StatusError] from a given [*resourcepb.ErrorResult]
+func StatusError(res *resourcepb.ErrorResult) error {
 	if res == nil {
 		return nil
 	}

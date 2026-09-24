@@ -49,7 +49,7 @@ func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, reposito
 		return nil, err
 	}
 	if objects.Error != nil {
-		return nil, resource.GetError(objects.Error)
+		return nil, resource.StatusError(objects.Error)
 	}
 
 	items := make([]provisioning.ResourceListItem, 0, len(objects.Items))
@@ -83,7 +83,7 @@ func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, reposit
 		return nil, err
 	}
 	if counts.Error != nil {
-		return nil, resource.GetError(counts.Error)
+		return nil, resource.StatusError(counts.Error)
 	}
 
 	lookup := make(map[string]*provisioning.ManagerStats)
