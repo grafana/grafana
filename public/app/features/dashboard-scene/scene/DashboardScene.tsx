@@ -1200,6 +1200,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     super.setState(isModalLoading ? { isModalLoading, overlay: undefined } : { isModalLoading });
   }
 
+  public async openFiltersOverview() {
+    await this.loadView(dashboardViews.overlay.filters());
+  }
+
   public async showModalAsync(load: () => Promise<SceneObject | undefined>) {
     await this.loadView({ key: 'overlay', load });
   }

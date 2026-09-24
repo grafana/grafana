@@ -58,6 +58,7 @@ import * as utils from '../utils/utils';
 import { DashboardControls } from './DashboardControls';
 import { DashboardScene } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { DashboardFiltersOverviewDrawer } from './dashboard-filters-overview/DashboardFiltersOverviewDrawer';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from './layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
@@ -2031,6 +2032,29 @@ describe('DashboardScene', () => {
   describe('lazy overlays', () => {
     beforeEach(() => {
       locationService.push('/d/dash-1/test');
+    });
+
+    it('opens the filters overview through modal loading', async () => {
+      const scene = buildTestScene();
+      const opening = scene.openFiltersOverview();
+      expect(scene.state.isModalLoading).toBe(true);
+
+      await opening;
+
+      expect(scene.state.overlay).toBeInstanceOf(DashboardFiltersOverviewDrawer);
+      expect(scene.state.isModalLoading).toBe(false);
+    });
+
+    it('does not open the filters overview after closing its loading drawer', async () => {
+      const scene = buildTestScene();
+      const opening = scene.openFiltersOverview();
+      expect(scene.state.isModalLoading).toBe(true);
+
+      scene.closeModal();
+      await opening;
+
+      expect(scene.state.isModalLoading).toBe(false);
+      expect(scene.state.overlay).toBeUndefined();
     });
 
     it('does not restore an old loading indicator when discarding an edit session', async () => {

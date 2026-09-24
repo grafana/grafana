@@ -3,7 +3,6 @@ import { sceneGraph, sceneUtils } from '@grafana/scenes';
 import { ToolbarButton } from '@grafana/ui';
 
 import { type DashboardScene } from '../DashboardScene';
-import { dashboardViews } from '../dashboardViewRegistry';
 
 import { reportFiltersOverviewInteraction } from './interactions';
 
@@ -17,7 +16,7 @@ export function DashboardFiltersOverviewPaneToggle({ dashboard }: Props) {
 
   const onClick = async () => {
     reportFiltersOverviewInteraction('opened');
-    await dashboard.loadView(dashboardViews.overlay.filters());
+    await dashboard.openFiltersOverview();
   };
 
   const adHocVar = variables.find((v) => sceneUtils.isAdHocVariable(v));
