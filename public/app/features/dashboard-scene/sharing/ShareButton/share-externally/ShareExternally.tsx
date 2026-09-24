@@ -12,7 +12,6 @@ import {
   useGetPublicDashboardQuery,
   usePauseOrResumePublicDashboardMutation,
 } from 'app/features/dashboard/api/publicDashboardApi';
-import { Loader } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboard';
 import {
   generatePublicDashboardUrl,
   isEmailSharingEnabled,
@@ -21,6 +20,7 @@ import {
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
+import { HorizontalGroup } from 'app/features/plugins/admin/components/HorizontalGroup';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { ShareDrawerConfirmAction } from '../../ShareDrawer/ShareDrawerConfirmAction';
@@ -96,6 +96,19 @@ function ShareExternallyRenderer({ model }: SceneComponentProps<ShareExternally>
     <div className={styles.container}>
       <ShareExternallyBase publicDashboard={publicDashboard} onRevokeClick={onRevokeClick} />
     </div>
+  );
+}
+
+function Loader() {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <HorizontalGroup className={styles.loadingContainer}>
+      <>
+        <Trans i18nKey="dashboard.share-public-dashboard-loader.loading-configuration">Loading configuration</Trans>
+        <Spinner size="lg" className={styles.spinner} />
+      </>
+    </HorizontalGroup>
   );
 }
 
@@ -223,5 +236,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   actionsContainer: css({
     width: '100%',
+  }),
+  loadingContainer: css({
+    height: '280px',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing(1),
+  }),
+  spinner: css({
+    marginBottom: theme.spacing(0),
   }),
 });

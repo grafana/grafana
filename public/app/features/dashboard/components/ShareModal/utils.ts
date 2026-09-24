@@ -1,4 +1,4 @@
-import { dateTime, locationUtil, type TimeRange, urlUtil, rangeUtil } from '@grafana/data';
+import { locationUtil, type TimeRange, urlUtil, rangeUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { createShortLink } from 'app/core/utils/shortLinks';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -126,31 +126,6 @@ function buildSoloUrl(
   return urlUtil.appendQueryToUrl(soloUrl, params.toString());
 }
 
-export function buildImageUrl(
-  useCurrentTimeRange: boolean,
-  dashboardUid: string,
-  selectedTheme?: string,
-  panel?: PanelModel
-) {
-  let soloUrl = buildSoloUrl(
-    useCurrentTimeRange,
-    dashboardUid,
-    selectedTheme,
-    panel?.id ? String(panel.id) : undefined,
-    panel?.timeFrom
-  );
-  let imageUrl = soloUrl.replace(config.appSubUrl + '/dashboard-solo/', config.appSubUrl + '/render/dashboard-solo/');
-  imageUrl = imageUrl.replace(config.appSubUrl + '/d-solo/', config.appSubUrl + '/render/d-solo/');
-  imageUrl +=
-    `&hideLogo=true` +
-    `&width=${config.rendererDefaultImageWidth}` +
-    `&height=${config.rendererDefaultImageHeight}` +
-    `&scale=${config.rendererDefaultImageScale}` +
-    getLocalTimeZone();
-
-  return imageUrl;
-}
-
 export function buildIframeHtml(
   useCurrentTimeRange: boolean,
   dashboardUid: string,
@@ -161,27 +136,6 @@ export function buildIframeHtml(
 ) {
   let soloUrl = buildSoloUrl(useCurrentTimeRange, dashboardUid, selectedTheme, panelId, timeFrom, range);
   return `<iframe src="${soloUrl}" width="450" height="200" frameborder="0"></iframe>`;
-}
-
-function getLocalTimeZone() {
-  const utcOffset = '&tz=UTC' + encodeURIComponent(dateTime().format('Z'));
-
-  // Older browser does not the internationalization API
-  if (!window.Intl) {
-    return utcOffset;
-  }
-
-  const dateFormat = window.Intl.DateTimeFormat();
-  if (!dateFormat.resolvedOptions) {
-    return utcOffset;
-  }
-
-  const options = dateFormat.resolvedOptions();
-  if (!options.timeZone) {
-    return utcOffset;
-  }
-
-  return '&tz=' + encodeURIComponent(options.timeZone);
 }
 
 export const getTrackingSource = (panel?: Object | undefined) => {
