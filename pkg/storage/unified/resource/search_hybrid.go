@@ -50,12 +50,10 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		}
 	}
 	defer func() {
-		if s.vectorMetrics != nil {
-			metricutil.ObserveWithExemplar(ctx,
-				s.vectorMetrics.HybridSearchDuration.WithLabelValues(group, resource, status.Code(retErr).String()),
-				time.Since(start).Seconds(),
-			)
-		}
+		metricutil.ObserveWithExemplar(ctx,
+			s.vectorMetrics.HybridSearchDuration.WithLabelValues(group, resource, status.Code(retErr).String()),
+			time.Since(start).Seconds(),
+		)
 	}()
 
 	if s.embedder == nil || s.vectorBackend == nil {
@@ -461,10 +459,8 @@ func (s *searchServer) rerankHybridResults(ctx context.Context, query string, re
 			fmt.Errorf("%d scores for %d results", len(scores), len(results))), nil
 	}
 
-	if s.vectorMetrics != nil {
-		s.vectorMetrics.RerankCandidatesTotal.
-			WithLabelValues(s.reranker.Model).Add(float64(len(results)))
-	}
+	s.vectorMetrics.RerankCandidatesTotal.
+		WithLabelValues(s.reranker.Model).Add(float64(len(results)))
 	for i, r := range results {
 		r.Score = scores[i]
 	}
@@ -482,7 +478,7 @@ func (s *searchServer) rerankHybridResults(ctx context.Context, query string, re
 				kept = append(kept, r)
 			}
 		}
-		if dropped := len(results) - len(kept); dropped > 0 && s.vectorMetrics != nil {
+		if dropped := len(results) - len(kept); dropped > 0 {
 			s.vectorMetrics.RerankDroppedResultsTotal.
 				WithLabelValues(s.reranker.Model, minRelevance).Add(float64(dropped))
 		}

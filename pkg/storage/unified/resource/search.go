@@ -470,6 +470,9 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 	if indexMetrics == nil {
 		indexMetrics = ProvideIndexMetrics(nil)
 	}
+	if vectorMetrics == nil {
+		vectorMetrics = ProvideVectorMetrics(nil)
+	}
 
 	s := &searchServer{
 		access:         access,
@@ -837,12 +840,10 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		} else if resp != nil {
 			code = grpcCodeFromErrorResult(resp.Error)
 		}
-		if s.vectorMetrics != nil {
-			metricutil.ObserveWithExemplar(ctx,
-				s.vectorMetrics.SearchDuration.WithLabelValues(group, resource, code.String()),
-				time.Since(start).Seconds(),
-			)
-		}
+		metricutil.ObserveWithExemplar(ctx,
+			s.vectorMetrics.SearchDuration.WithLabelValues(group, resource, code.String()),
+			time.Since(start).Seconds(),
+		)
 	}()
 
 	if s.embedder == nil || s.vectorBackend == nil {
@@ -974,15 +975,11 @@ func (s *searchServer) checkVectorSearchRateLimit(ctx context.Context, namespace
 	allowed, count, err := s.rateLimiter.Allow(ctx, namespace, s.rateLimitWindow, s.rateLimitPerTenant)
 	if err != nil {
 		s.log.Error("vector search: rate-limit check failed, fail-closed", "err", err, "namespace", namespace)
-		if s.vectorMetrics != nil {
-			s.vectorMetrics.RateLimiterErrorsTotal.Inc()
-		}
+		s.vectorMetrics.RateLimiterErrorsTotal.Inc()
 		return status.Error(codes.Unavailable, "rate limiter unavailable")
 	}
 	if !allowed {
-		if s.vectorMetrics != nil {
-			s.vectorMetrics.RateLimitedRequestsTotal.Inc()
-		}
+		s.vectorMetrics.RateLimitedRequestsTotal.Inc()
 		return status.Errorf(codes.ResourceExhausted, "tenant rate limit exceeded: %d requests in window", count)
 	}
 	return nil
@@ -1019,9 +1016,7 @@ func (s *searchServer) embedVectorSearchQuery(ctx context.Context, namespace, qu
 		return nil, status.Error(codes.Internal, "embed query: empty result")
 	}
 	dense := out.Embeddings[0].Dense
-	if s.vectorMetrics != nil {
-		s.vectorMetrics.QueryCacheMissesTotal.WithLabelValues(s.embedder.Model).Inc()
-	}
+	s.vectorMetrics.QueryCacheMissesTotal.WithLabelValues(s.embedder.Model).Inc()
 	s.storeCachedQueryEmbedding(ctx, namespace, queryHash, dense)
 	return dense, nil
 }
@@ -1040,9 +1035,7 @@ func (s *searchServer) lookupCachedQueryEmbedding(ctx context.Context, namespace
 	if !hit {
 		return nil, false
 	}
-	if s.vectorMetrics != nil {
-		s.vectorMetrics.QueryCacheHitsTotal.WithLabelValues(s.embedder.Model).Inc()
-	}
+	s.vectorMetrics.QueryCacheHitsTotal.WithLabelValues(s.embedder.Model).Inc()
 	return emb, true
 }
 
@@ -1063,7 +1056,7 @@ func (s *searchServer) storeCachedQueryEmbedding(ctx context.Context, namespace,
 		evictN := int(n) - target
 		if deleted, err := s.queryCache.EvictOldest(ctx, namespace, evictN); err != nil {
 			s.log.Warn("vector search: cache evict failed", "err", err)
-		} else if deleted > 0 && s.vectorMetrics != nil {
+		} else if deleted > 0 {
 			s.vectorMetrics.QueryCacheEvictionsTotal.Add(float64(deleted))
 		}
 	}
@@ -1982,7 +1975,7 @@ func (b *bulkIndexBatcher) flush() error {
 		return nil
 	}
 	b.span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(b.items))))
-	if err := b.index.BulkIndex(&BulkIndexRequest{Items: b.items, Path: b.phases.pathLabel()}); err != nil {
+	if err := b.index.BulkIndex(&BulkIndexRequest{Items: b.items, Path: b.phases.path}); err != nil {
 		return err
 	}
 	b.total += len(b.items)
