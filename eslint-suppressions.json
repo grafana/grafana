@@ -1333,7 +1333,7 @@
   },
   "public/app/features/alerting/unified/featureToggles.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 8
+      "count": 9
     }
   },
   "public/app/features/alerting/unified/group-details/GroupEditPage.tsx": {
@@ -1446,7 +1446,7 @@
   },
   "public/app/features/alerting/unified/rule-list/RuleListPageTitle.tsx": {
     "@grafana/no-config-feature-toggles": {
-      "count": 2
+      "count": 1
     }
   },
   "public/app/features/alerting/unified/settings/import/ImportSettingsPage.tsx": {
