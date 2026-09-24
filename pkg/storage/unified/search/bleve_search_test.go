@@ -1451,9 +1451,8 @@ func newTestDashboardsIndexWithMetrics(t testing.TB, threshold int64, size int64
 		Resource:  "dashboards",
 	}
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:                  t.TempDir(),
-		FileThreshold:         threshold, // use in-memory for tests
-		IndexDeletedDocuments: true,
+		Root:          t.TempDir(),
+		FileThreshold: threshold, // use in-memory for tests
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
 		}),
@@ -1795,11 +1794,10 @@ func newTestDashboardsIndexPostRankWithConfig(t testing.TB, size int64, cfg sear
 		Resource:  "dashboards",
 	}
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:                  t.TempDir(),
-		FileThreshold:         threshold, // use in-memory for tests
-		IndexDeletedDocuments: true,
-		PostRankAuthzEnabled:  true,
-		PostRankAuthz:         cfg,
+		Root:                 t.TempDir(),
+		FileThreshold:        threshold, // use in-memory for tests
+		PostRankAuthzEnabled: true,
+		PostRankAuthz:        cfg,
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
 		}),
@@ -4243,10 +4241,9 @@ func newResourceVersionIndex(t testing.TB, key resource.NamespacedResource, post
 	t.Helper()
 
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:                  t.TempDir(),
-		FileThreshold:         threshold,
-		IndexDeletedDocuments: true,
-		PostRankAuthzEnabled:  postRankAuthz,
+		Root:                 t.TempDir(),
+		FileThreshold:        threshold,
+		PostRankAuthzEnabled: postRankAuthz,
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource(key.Group, key.Resource): search.DashboardSearchFieldsProviderForTest(),
 		}),

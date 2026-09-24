@@ -80,12 +80,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
           alignItems="stretch"
           boxShadow={elevated ? 'z3' : undefined}
         >
-          <Box
-            display="flex"
-            paddingTop={visualRefreshEnabled ? 0.5 : 1}
-            paddingBottom={visualRefreshEnabled ? 0.5 : 0}
-            paddingRight={2}
-          >
+          <Box display="flex" paddingY={0.5} paddingRight={2}>
             <div className={styles.iconBox}>
               <Icon
                 size={visualRefreshEnabled ? 'lg' : 'xl'}
@@ -96,7 +91,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
           </Box>
 
           <Stack alignItems="center" flex={1} wrap="wrap" columnGap={1} rowGap={0}>
-            <Box paddingY={1} flex={1} minWidth="50%">
+            <Box flex={1} minWidth="50%">
               <Text weight="medium">
                 <span className={styles.title}>{title}</span>
               </Text>
@@ -205,7 +200,6 @@ const getStyles = (
     }),
     content: css({
       color: textColor,
-      paddingTop: hasTitle ? theme.spacing(0.5) : 0,
       maxHeight: '50vh',
       overflowY: 'auto',
     }),

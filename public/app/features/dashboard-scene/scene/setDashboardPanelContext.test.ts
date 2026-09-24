@@ -27,8 +27,8 @@ import { isAnnotationApiAvailable } from '../../annotations/isAnnotationApiAvail
 import { openPanelInspector } from '../inspect/panelInspectorOpener';
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { findVizPanelByKey } from '../utils/findVizPanel';
 import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
-import { findVizPanelByKey } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
