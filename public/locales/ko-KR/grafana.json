@@ -5721,6 +5721,7 @@
     "edit-actions": {
       "add": "{{typeName}} 추가",
       "add-conditional-rule": "{{ruleDescription}} 규칙 추가",
+      "collapse-all-rows": "",
       "dashboard-description": "대시보드 설명 변경",
       "dashboard-title": "대시보드 제목 변경",
       "duplicate": "{{typeName}} 복제",
@@ -5728,6 +5729,7 @@
       "edit-query-result-rule": "쿼리 결과 규칙 변경",
       "edit-template-variable-rule": "템플릿 변수 규칙 변경",
       "edit-time-range-rule": "시간 범위 규칙 변경",
+      "expand-all-rows": "",
       "group-into-row": "행으로 그룹화",
       "group-into-tab": "탭으로 그룹화",
       "move": "{{typeName}} 이동",
@@ -5760,9 +5762,7 @@
       "add-library-panel-header": "패널 가져오기",
       "add-visualization-body": "데이터 소스를 선택한 다음 차트, 통계, 표를 사용하여 데이터를 쿼리하고 시각화하거나 목록, 마크다운 및 기타 위젯을 생성합니다.",
       "add-visualization-button": "시각화 추가",
-      "add-visualization-description": "",
       "add-visualization-header": "시각화 추가하여 새 대시보드 시작하기",
-      "add-visualization-heading": "",
       "assistant-placeholder": "",
       "auto-grid": "자동 그리드",
       "auto-grid-description": "패널은 크기에 맞게 조정되어 균일한 그리드를 형성합니다.",
@@ -5770,9 +5770,6 @@
       "custom-grid": "사용자 지정 그리드",
       "custom-grid-description": "각 패널의 위치와 크기를 개별적으로 지정하세요.",
       "description": "패널을 추가하여 데이터 시각화",
-      "grid-auto": "",
-      "grid-custom": "",
-      "grid-label": "",
       "import-a-dashboard-body": "파일 또는 <2>grafana.com</2>에서 대시보드 가져오기",
       "import-a-dashboard-header": "대시보드 가져오기",
       "import-dashboard-button": "대시보드 가져오기",
@@ -6099,8 +6096,7 @@
     "planning-banner": {
       "build": "",
       "dismiss": "",
-      "plan-label": "",
-      "panel-count_other": ""
+      "preview-label": ""
     },
     "public-dashboard-not-available": {
       "does-not-exist": "액세스하려는 대시보드가 존재하지 않습니다",
@@ -9379,6 +9375,7 @@
     "flag-value": "플래그 값",
     "menu": "메뉴 열기",
     "new-flag": "new-flag-override",
+    "ofrep-evaluation": "",
     "save-flag": "저장",
     "title": "기능 제어"
   },
@@ -10616,6 +10613,7 @@
       "aria-label-sort-column": "{{columnName}}열 정렬",
       "expand-row-header": "행 확장기",
       "expand-row-tooltip": "토글하여 펼쳐진 행으로 전환",
+      "loading": "",
       "tooltip-collapse-all": "모든 행 접기",
       "tooltip-expand-all": "모든 행 펼치기"
     },
@@ -10710,6 +10708,9 @@
     "password-field": {
       "tooltip-hide": "비밀번호 숨기기",
       "tooltip-show": "비밀번호"
+    },
+    "query-field": {
+      "loading": ""
     },
     "query-input": {
       "loading": "편집기 로딩 중"
@@ -10820,6 +10821,7 @@
         }
       },
       "inspect-drawer-title": "값 검사",
+      "loading": "",
       "nested-table": {
         "expander-column-name": "중첩된 행 펼치기",
         "no-data": "데이터 없음"
@@ -13593,10 +13595,15 @@
   },
   "playlist-page": {
     "card": {
-      "delete": "플레이리스트 삭제",
-      "edit": "플레이리스트 편집",
-      "start": "플레이리스트 시작",
-      "tooltip": "플레이리스트 공유"
+      "delete": "",
+      "delete-label": "",
+      "edit": "",
+      "edit-label": "",
+      "share": "",
+      "share-label": "",
+      "start": "",
+      "start-label": "",
+      "tooltip": ""
     },
     "create-button": {
       "title": "새 플레이리스트"
@@ -14731,6 +14738,15 @@
     },
     "repository-status": {
       "error": "리포지토리 로딩 실패"
+    },
+    "repository-status-alert": {
+      "deletion-title": "",
+      "error-title": "",
+      "force-delete-button": "",
+      "force-delete-cancel": "",
+      "force-delete-confirm": "",
+      "force-delete-title": "",
+      "force-delete-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "리포지토리로 돌아가기",
@@ -16396,7 +16412,9 @@
     }
   },
   "swagger": {
-    "login": "로그인"
+    "login": "로그인",
+    "namespace-unavailable": "",
+    "namespace-unavailable-title": ""
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -17619,6 +17637,7 @@
     },
     "series-to-fields-transformer-editor": {
       "label-field": "필드",
+      "label-keep-unjoined": "",
       "label-mode": "모드",
       "modes": {
         "description": {
@@ -17631,7 +17650,8 @@
           "outer-tabular": "아우터 조인(테이블형)",
           "outer-time-series": "아우터 조인(시계열)"
         }
-      }
+      },
+      "tooltip-keep-unjoined": ""
     },
     "series-to-rows-transformer-editor": {
       "description": {
