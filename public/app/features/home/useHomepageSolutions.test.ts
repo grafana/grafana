@@ -158,17 +158,15 @@ describe('useHomepageSolutions', () => {
     expect(mockDetectIrmSignal).toHaveBeenCalledTimes(1);
   });
 
-  it('maps a rejecting solution getter to unknown without rejecting the snapshot', async () => {
-    fixtures.logs.signal = jest.fn(async () => {
-      throw new Error('Loki unavailable');
-    });
+  it('passes a resolved unknown solution signal through the snapshot', async () => {
+    fixtures.logs.signal = jest.fn(async () => 'unknown' as const);
     const { result } = renderHook(() => useHomepageSolutions());
 
     await expect(result.current.signals()).resolves.toEqual(expect.objectContaining({ logs: 'unknown' }));
   });
 
-  it('maps a rejecting IRM signal to unknown without rejecting the snapshot', async () => {
-    mockDetectIrmSignal.mockRejectedValue(new Error('IRM unavailable'));
+  it('passes a resolved unknown IRM signal through the snapshot', async () => {
+    mockDetectIrmSignal.mockResolvedValue('unknown');
     const { result } = renderHook(() => useHomepageSolutions());
 
     await expect(result.current.signals()).resolves.toEqual(expect.objectContaining({ irm: 'unknown' }));

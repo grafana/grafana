@@ -54,6 +54,7 @@ export interface SolutionOffer {
  * requests only what it needs, derives its own presentation, and decides how rejected facts degrade.
  */
 export type Solution = SolutionIdentity & {
+  /** Never rejects; failures resolve to 'unknown'. */
   signal: () => Promise<SignalStatus>;
   /** The datasource carrying the data; null when the solution has none to render from. */
   datasource: () => Promise<DataSourceInstanceListItem | null>;

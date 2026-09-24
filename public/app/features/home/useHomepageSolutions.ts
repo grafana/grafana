@@ -48,17 +48,13 @@ export function useHomepageSolutions(): HomepageSolutions {
     // share, so a filter change never re-probes and never restarts recommendation selection.
     const signals = async (): Promise<SolutionState> => {
       const [metrics, logs, traces, kubernetes, spanMetrics, synthetics, irm] = await Promise.all([
-        solutions.metrics.signal().catch(() => 'unknown' as const),
-        solutions.logs.signal().catch(() => 'unknown' as const),
-        solutions.traces.signal().catch(() => 'unknown' as const),
-        detectKubernetes()
-          .then(({ status }) => status)
-          .catch(() => 'unknown' as const),
-        spanMetricsSignal()
-          .then(({ status }) => status)
-          .catch(() => 'unknown' as const),
-        solutions.synthetics.signal().catch(() => 'unknown' as const),
-        irmSignal().catch(() => 'unknown' as const),
+        solutions.metrics.signal(),
+        solutions.logs.signal(),
+        solutions.traces.signal(),
+        detectKubernetes().then(({ status }) => status),
+        spanMetricsSignal().then(({ status }) => status),
+        solutions.synthetics.signal(),
+        irmSignal(),
       ]);
       return { metrics, logs, traces, kubernetes, spanMetrics, synthetics, irm };
     };
