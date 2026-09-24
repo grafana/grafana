@@ -681,7 +681,7 @@ var (
 			Name:        "dashboardUndoRedo",
 			Description: "Enables undo/redo in dynamic dashboards",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
 		},
@@ -1915,15 +1915,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "alertingDisableDMAinUI",
-			Description:  "Disables the DMA feature in the UI",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "preferLibraryPanelTitle",
 			Description: "Prefer library panel title over viz panel title.",
 			Stage:       FeatureStagePrivatePreview,
@@ -2297,14 +2288,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:        "profilesExemplars",
-			Description: "Enables profiles exemplars support in profiles drilldown",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaObservabilityTracesAndProfilingSquad,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:        "pyroscopeUTF8LabelNames",
 			Description: "Enables support for UTF-8 label names in Pyroscope label selectors",
 			Stage:       FeatureStagePublicPreview,
@@ -2588,14 +2571,6 @@ var (
 			RequiresRestart: true,
 			Expression:      "false",
 			Generate:        Generate{LegacyGo: true},
-		},
-		{
-			Name:        "react19",
-			Description: "Whether to use the new React 19 runtime",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "true",
 		},
 		{
 			Name:         "managedPluginsV2",
@@ -2895,11 +2870,10 @@ var (
 		},
 		{
 			Name:            "alerting.syncExternalAlertmanager",
-			Description:     "Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana",
-			Stage:           FeatureStageExperimental,
+			Description:     "Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source",
+			Stage:           FeatureStagePrivatePreview,
 			Generate:        Generate{Go: true, React: true, LegacyFrontend: true},
 			Owner:           grafanaAlertingSquad,
-			HideFromDocs:    true,
 			RequiresRestart: true,
 			Expression:      "false",
 		},

@@ -868,6 +868,45 @@ describe('Panel mutation commands', () => {
       }
     });
 
+    it('carries a user-set transformation refId into scene state', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+
+      const elementName = await addPanel(client, 'RefId Transform Panel');
+
+      const result = await client.execute({
+        type: 'UPDATE_PANEL',
+        payload: {
+          element: { name: elementName },
+          panel: {
+            kind: 'Panel',
+            spec: {
+              data: {
+                kind: 'QueryGroup',
+                spec: {
+                  transformations: [
+                    {
+                      kind: 'Transformation',
+                      group: 'limit',
+                      spec: { refId: 'T1', options: { limitField: 10 } },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as DefaultGridLayoutManager;
+      const dataProvider = body.getVizPanels()[0].state.$data;
+      if (!(dataProvider instanceof SceneDataTransformer)) {
+        throw new Error('expected the panel to be backed by a SceneDataTransformer');
+      }
+      expect(dataProvider.state.transformations[0]).toMatchObject({ id: 'limit', refId: 'T1' });
+    });
+
     it('updates panel description', async () => {
       const scene = buildPanelScene();
       const client = new DashboardMutationClient(scene);

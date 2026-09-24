@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/authinfo"
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
@@ -101,6 +102,7 @@ func RegisterAPIService(
 	restConfig apiserver.RestConfigProvider,
 	mappers *resourcepermission.MappersRegistry,
 	authInfoStore login.Store,
+	remoteCache remotecache.CacheStorage,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	dbProvider := legacysql.NewDatabaseProvider(sql)
 	store := legacy.NewLegacySQLStores(dbProvider)
@@ -156,7 +158,7 @@ func RegisterAPIService(
 		legacyTeamStore:                   team.NewLegacyStore(store, accessClient, tracing, externalGroupReconciler),
 		externalGroupReconciler:           externalGroupReconciler,
 		teamBindingLegacyStore:            teambinding.NewLegacyBindingStore(store, tracing),
-		authInfoLegacyStore:               authinfo.NewLegacyStore(store, authInfoStore, tracing),
+		authInfoLegacyStore:               authinfo.NewLegacyStore(store, authInfoStore, tracing, remoteCache),
 		ssoLegacyStore:                    sso.NewLegacyStore(ssoService, tracing),
 		ssoSettingsClient:                 ssoSettingsClient,
 		roleApiInstaller:                  roleApiInstaller,
@@ -179,8 +181,8 @@ func RegisterAPIService(
 		logger:                            log.New("iam.apis"),
 		dual:                              dual,
 		unified:                           unified,
-		userSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(),
-			unified, user.NewUserLegacySearchClient(orgService, tracing, cfg)),
+		userSearchClient: dualwrite.NewSelector[user.SearchBackend](dual, iamv0.UserResourceInfo.GroupResource(),
+			user.NewUserLegacySearchClient(orgService, tracing, cfg), user.NewUnifiedSearchClient(unified, cfg)),
 		teamSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.TeamResourceInfo.GroupResource(),
 			unified, team.NewLegacyTeamSearchClient(legacyTeamSearchService(teamService), tracing)),
 		resourcePermissionsSearchHandler: newResourcePermissionsSearchHandler(resourcePermsSearchBackend, resourcePermsSearchAuthorizer),
@@ -197,7 +199,7 @@ func RegisterAPIService(
 		userPermissions: userpermissions.NewHandler(userPermissionsClient, cfg.IDUseExternalGroupsForGroupsClaim),
 		ofClient:        openfeature.NewDefaultClient(),
 	}
-	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, cfg, accessClient)
+	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, accessClient)
 	builder.teamSearchHandler = team.NewSearchHandler(tracing, builder.teamSearchClient, accessClient)
 
 	apiregistration.RegisterAPI(builder)
@@ -442,6 +444,10 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		DeprecatedInternalID: apistore.DeprecatedID_Required,
 	})
 	opts.StorageOptsRegister(iamv0.ServiceAccountResourceInfo.GroupResource(), apistore.StorageOptions{
+		Index:                b.unified,
+		DeprecatedInternalID: apistore.DeprecatedID_Required,
+	})
+	opts.StorageOptsRegister(iamv0.AuthInfoResourceInfo.GroupResource(), apistore.StorageOptions{
 		Index:                b.unified,
 		DeprecatedInternalID: apistore.DeprecatedID_Required,
 	})

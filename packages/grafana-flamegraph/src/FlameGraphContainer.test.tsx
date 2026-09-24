@@ -152,6 +152,7 @@ describe('FlameGraphContainer', () => {
 
   it('should render without error', async () => {
     expect(() => render(<FlameGraphContainerWithProps />)).not.toThrow();
+    expect(await screen.findByRole('columnheader', { name: 'Symbol' })).toBeInTheDocument();
   });
 
   it('should update search when row selected in top table', async () => {
@@ -171,6 +172,7 @@ describe('FlameGraphContainer', () => {
   it('should render pane view options in multi mode', async () => {
     // Default is Multi mode with Split view, showing two pane selectors
     render(<FlameGraphContainerWithProps />);
+    await screen.findByRole('columnheader', { name: 'Symbol' });
     // In split mode, there are 2 pane selectors, each with Top Table, Flame Graph, Call Tree
     expect(screen.getAllByText(/Top Table/).length).toBeGreaterThanOrEqual(2);
     expect(screen.getAllByText(/Flame Graph/).length).toBeGreaterThanOrEqual(2);
@@ -181,6 +183,7 @@ describe('FlameGraphContainer', () => {
 
   it('should switch to single view mode', async () => {
     render(<FlameGraphContainerWithProps />);
+    await screen.findByRole('columnheader', { name: 'Symbol' });
 
     // Start in Multi + Split mode - both views visible
     expect(screen.getByTestId('flameGraph')).toBeDefined();
@@ -197,6 +200,7 @@ describe('FlameGraphContainer', () => {
     global.innerWidth = MIN_WIDTH_FOR_SPLIT_VIEW;
     global.dispatchEvent(new Event('resize'));
     render(<FlameGraphContainerWithProps />);
+    await screen.findByRole('columnheader', { name: 'Symbol' });
 
     // Multi mode is default, view mode options should be visible
     expect(screen.getByText(/Split/)).toBeDefined();
@@ -204,6 +208,7 @@ describe('FlameGraphContainer', () => {
 
   it('should filter table items based on search input', async () => {
     render(<FlameGraphContainerWithProps />);
+    await screen.findByRole('columnheader', { name: 'Symbol' });
 
     const matchingText1 = 'net/http.HandlerFunc.ServeHTTP';
     const matchingText2 = 'runtime.gcBgMarkWorker';

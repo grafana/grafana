@@ -27,6 +27,8 @@ message AlertInstance {
     int64 evaluation_duration_ns = 13;
     string last_error = 14;
     LastResult last_result = 15;
+    google.protobuf.Timestamp image_capture_next_attempt_at = 16;
+    int32 image_capture_consecutive_timeouts = 17;
 }
 
 message AlertInstances {

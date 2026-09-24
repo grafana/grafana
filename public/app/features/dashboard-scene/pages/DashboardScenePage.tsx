@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { lazy, Suspense, useEffect, useRef } from 'react';
 import { type Params, useParams } from 'react-router-dom-v5-compat';
 import { usePrevious } from 'react-use';
 
@@ -18,7 +18,6 @@ import {
   type DashboardPageRouteParams,
   type DashboardPageRouteSearchParams,
 } from 'app/features/dashboard/containers/types';
-import { TemplateDashboardModal } from 'app/features/dashboard/dashgrid/DashboardLibrary/TemplateDashboardModal';
 import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
 import { SCRIPTED_DASHBOARDS_DISABLED_MESSAGE_ID } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
@@ -39,6 +38,21 @@ import { useScenesFlickeringFix } from '../utils/utils';
 
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
 import { shouldHideDashboardKioskFooter } from './utils';
+
+// Loaded on demand so the dashboard-library UI stays out of the dashboard page chunk.
+const LazyTemplateDashboardModal = lazy(() =>
+  import(
+    /* webpackChunkName: "dashboard-library" */ 'app/features/dashboard/dashgrid/DashboardLibrary/TemplateDashboardModal'
+  ).then((m) => ({ default: m.TemplateDashboardModal }))
+);
+
+function TemplateDashboardModal() {
+  return (
+    <Suspense fallback={null}>
+      <LazyTemplateDashboardModal />
+    </Suspense>
+  );
+}
 
 export interface Props
   extends Omit<GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams>, 'match'> {}
