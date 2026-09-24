@@ -169,7 +169,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 
 	// Set indexer config for unified storage
 	section := cfg.Raw.Section("unified_storage")
-	cfg.UnifiedStorageClusterName = strings.TrimSpace(section.Key("cluster_name").String())
+	cfg.UnifiedStorageClusterSlug = strings.TrimSpace(section.Key("cluster_slug").String())
 	cfg.MigrationCacheSizeKB = section.Key("migration_cache_size_kb").MustInt(1000000)
 	cfg.MigrationParquetBuffer = section.Key("migration_parquet_buffer").MustBool(false)
 	cfg.MigrationChunkedWrites = section.Key("migration_chunked_writes").MustBool(false)

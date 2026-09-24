@@ -704,7 +704,7 @@ type Cfg struct {
 
 	// Unified Storage
 	UnifiedStorage                      map[string]UnifiedStorageConfig
-	UnifiedStorageClusterName           string
+	UnifiedStorageClusterSlug           string
 	UnifiedStorageAuthzExemptionEnabled bool
 	UnifiedStorageAuthzExemptResources  []string
 	// DisableLegacyTableRename will skip renaming legacy tables (e.g., playlist → playlist_legacy) after migration
