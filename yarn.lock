@@ -20323,7 +20323,7 @@ __metadata:
     redux-mock-store: "npm:1.5.5"
     redux-thunk: "npm:3.1.0"
     regenerator-runtime: "npm:0.14.1"
-    reselect: "npm:5.1.1"
+    reselect: "npm:5.3.0"
     rimraf: "npm:6.0.1"
     rspack-manifest-plugin: "npm:5.2.2"
     rxjs: "npm:7.8.2"
@@ -30481,10 +30481,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"reselect@npm:5.1.1, reselect@npm:^5.1.0, reselect@npm:^5.1.1":
-  version: 5.1.1
-  resolution: "reselect@npm:5.1.1"
-  checksum: 10/1fdae11a39ed9c8d85a24df19517c8372ee24fefea9cce3fae9eaad8e9cefbba5a3d4940c6fe31296b6addf76e035588c55798f7e6e147e1b7c0855f119e7fa5
+"reselect@npm:5.3.0, reselect@npm:^5.1.0, reselect@npm:^5.1.1":
+  version: 5.3.0
+  resolution: "reselect@npm:5.3.0"
+  checksum: 10/743d82c7012133d035e13343cb33e6b45c26cd0b0f95868d692ac9736973b1b8050f28938c1d36f51105926a1a947a0f56c4f52d6c66a61db4995535efb3837b
   languageName: node
   linkType: hard
 
