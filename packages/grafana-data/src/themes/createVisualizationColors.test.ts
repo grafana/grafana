@@ -51,6 +51,13 @@ describe('createVizColors', () => {
     expect(() => colorManipulator.alpha(vizColors.getColorByName('grey'), 0.1)).not.toThrow();
   });
 
+  it.each(['transparent', 'Transparent', 'TRANSPARENT'])('resolves %s to the theme transparent color', (name) => {
+    const lightVizColors = createVisualizationColors(createColors({ mode: 'light' }));
+
+    expect(vizColors.getColorByName(name)).toBe('rgba(0,0,0,0)');
+    expect(lightVizColors.getColorByName(name)).toBe('rgba(255, 255, 255, 0)');
+  });
+
   it('returns non-name color formats and unknown names unchanged', () => {
     expect(vizColors.getColorByName('hsl(0, 100%, 50%)')).toBe('hsl(0, 100%, 50%)');
     expect(vizColors.getColorByName('not-a-color')).toBe('not-a-color');

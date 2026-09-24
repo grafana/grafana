@@ -134,6 +134,11 @@ export function createVisualizationColors(
       return nativeColor;
     }
 
+    // CSS color names are case-insensitive, so every casing of "transparent" must get the theme-specific value
+    if (colorName.toLowerCase() === 'transparent') {
+      return byNameIndex['transparent'];
+    }
+
     // Resolve named colors that tinycolor recognizes but nativeColorNames lacks (e.g. "grey")
     const parsed = tinycolor(colorName);
     if (parsed.isValid() && parsed.getFormat() === 'name') {
