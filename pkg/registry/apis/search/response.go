@@ -3,6 +3,8 @@ package search
 import (
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -12,6 +14,12 @@ import (
 type decodedResults struct {
 	items          []searchv0.ResultItem
 	lastSortFields []string
+}
+
+// ToSearchResults lets custom endpoints reuse result decoding and row-based
+// continuation before applying their own response metadata policy.
+func ToSearchResults(res *resourcepb.ResourceSearchResponse, gvr schema.GroupVersionResource, kind string, limit int64) (*searchv0.SearchResults, error) {
+	return searchResults(res, kindRef{group: gvr.Group, version: gvr.Version, resource: gvr.Resource, kind: kind}, limit)
 }
 
 // searchResults maps a backend search response into the public envelope.
