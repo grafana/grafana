@@ -71,7 +71,7 @@ type SubscriberService struct {
 func newSubscriber(logger log.Logger, m *subscriberMetrics, config *Config) *SubscriberService {
 	conn := newConnection(roleSubscriber, logger, m.connectionMetrics, config, config.SubscriberCredentials)
 	s := &SubscriberService{connection: conn, metrics: m}
-	s.NamedService = services.NewBasicService(nil, s.running, s.stopping).WithName(subscriberName)
+	s.NamedService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(subscriberName)
 	return s
 }
 

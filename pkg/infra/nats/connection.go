@@ -30,7 +30,7 @@ const (
 // broker that has gone away cannot stall shutdown for the nats.go default of 30s.
 const drainTimeout = 10 * time.Second
 
-// connection lazily establishes and reuses a single NATS connection per role for least-privilege credentials.
+// connection establishes and reuses a single NATS connection per role for least-privilege credentials.
 type connection struct {
 	log         log.Logger
 	metrics     connectionMetrics
@@ -42,9 +42,7 @@ type connection struct {
 	// reconnect handler can record how long the connection was down. Accessed only
 	// from the NATS callback goroutine, but kept atomic to stay race-free.
 	disconnectedAt atomic.Int64
-	// everConnected records whether the current connection has connected at least
-	// once. connect() resets it per dial so a replacement connection cannot
-	// inherit permission to buffer from a previously authenticated connection.
+	// everConnected records whether the connection has connected at least once.
 	everConnected atomic.Bool
 
 	mu       sync.Mutex
@@ -103,11 +101,43 @@ func (c *connection) fireReconnect() {
 	}
 }
 
+func (c *connection) starting(ctx context.Context) error {
+	if !c.Enabled() {
+		return nil
+	}
+	// Embedded server and client services start concurrently. Wait until the
+	// server has published its in-process URL before making the initial dial.
+	if c.config.server != nil && !c.config.server.IsDisabled() {
+		ticker := time.NewTicker(10 * time.Millisecond)
+		defer ticker.Stop()
+		for c.config.server.clientURL() == "" {
+			select {
+			case <-ctx.Done():
+				return nil
+			case <-ticker.C:
+			}
+		}
+	}
+
+	// Keep retrying initial broker/authentication failures without failing Grafana
+	// startup. Publish rejects messages until this connection first succeeds.
+	nc, err := c.connect(ctx)
+	if err != nil {
+		if ctx.Err() != nil {
+			return nil
+		}
+		return err
+	}
+	c.mu.Lock()
+	c.conn = nc
+	c.mu.Unlock()
+	return nil
+}
+
 func (c *connection) get(ctx context.Context) (*natsclient.Conn, error) {
 	if !c.Enabled() {
 		return nil, ErrDisabled
 	}
-	// Honour cancellation even on the warm path, where no dial happens.
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
@@ -116,15 +146,10 @@ func (c *connection) get(ctx context.Context) (*natsclient.Conn, error) {
 	if c.closed {
 		return nil, ErrClosed
 	}
-	if c.conn != nil && !c.conn.IsClosed() {
-		return c.conn, nil
+	if c.conn == nil || c.conn.IsClosed() {
+		return nil, fmt.Errorf("nats %s connection is not established: %w", c.role, natsclient.ErrConnectionClosed)
 	}
-	nc, err := c.connect(ctx)
-	if err != nil {
-		return nil, err
-	}
-	c.conn = nc
-	return nc, nil
+	return c.conn, nil
 }
 
 func (c *connection) connect(ctx context.Context) (*natsclient.Conn, error) {
@@ -206,6 +231,8 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 		natsclient.Timeout(5 * time.Second),
 		natsclient.RetryOnFailedConnect(true),
 		natsclient.MaxReconnects(-1),
+		// Repeated auth rejection otherwise aborts even unlimited reconnects.
+		natsclient.IgnoreAuthErrorAbort(),
 		natsclient.ReconnectWait(2 * time.Second),
 		natsclient.ReconnectJitter(100*time.Millisecond, time.Second),
 		natsclient.PingInterval(20 * time.Second),
@@ -252,10 +279,6 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 		}),
 	}
 
-	if c.role == rolePublisher && c.config.AuthMode() == setting.NATSAuthModeTokenExchange {
-		options = append(options, natsclient.IgnoreAuthErrorAbort())
-	}
-
 	if tls := c.config.TLS(); tls.Enabled {
 		tc, err := buildTLSConfig(tls)
 		if err != nil {
@@ -296,9 +319,8 @@ func (c *connection) tokenHandler() string {
 	return token
 }
 
-// healthy reports whether the connection is usable. It tolerates the lazy state
-// before first use (conn == nil): an idle service that has never published is
-// not a failure. Once a connection exists, it must actually be connected.
+// healthy reports whether the connection is usable. It must be initialized and
+// actually connected, independently of service startup readiness.
 func (c *connection) healthy() error {
 	if !c.Enabled() {
 		return ErrDisabled
@@ -309,7 +331,7 @@ func (c *connection) healthy() error {
 		return ErrClosed
 	}
 	if c.conn == nil {
-		return nil
+		return fmt.Errorf("nats %s connection is not initialized", c.role)
 	}
 	if !c.conn.IsConnected() {
 		return fmt.Errorf("nats %s connection is not connected (status=%s)", c.role, c.conn.Status())

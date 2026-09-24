@@ -115,7 +115,6 @@ func testPublisherBufferOverflowRecovers(t *testing.T) {
 
 	srv = start(port)
 	recoverySub := newTestSubscriber(t, srv)
-	startService(t, ctx, recoverySub)
 	recovery, err := recoverySub.Subscribe(ctx, subject, func(_ string, data []byte) {
 		received <- string(data)
 	})
