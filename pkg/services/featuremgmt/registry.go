@@ -681,7 +681,7 @@ var (
 			Name:        "dashboardUndoRedo",
 			Description: "Enables undo/redo in dynamic dashboards",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
 		},
@@ -2288,14 +2288,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:        "profilesExemplars",
-			Description: "Enables profiles exemplars support in profiles drilldown",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaObservabilityTracesAndProfilingSquad,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:        "pyroscopeUTF8LabelNames",
 			Description: "Enables support for UTF-8 label names in Pyroscope label selectors",
 			Stage:       FeatureStagePublicPreview,
@@ -2878,11 +2870,10 @@ var (
 		},
 		{
 			Name:            "alerting.syncExternalAlertmanager",
-			Description:     "Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana",
-			Stage:           FeatureStageExperimental,
+			Description:     "Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source",
+			Stage:           FeatureStagePrivatePreview,
 			Generate:        Generate{Go: true, React: true, LegacyFrontend: true},
 			Owner:           grafanaAlertingSquad,
-			HideFromDocs:    true,
 			RequiresRestart: true,
 			Expression:      "false",
 		},
