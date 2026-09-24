@@ -1,11 +1,14 @@
-import { type IconName } from '@grafana/data';
+import { type IconName, type ThemeVizHue } from '@grafana/data';
+
+/** Named shade of a theme visualization hue, e.g. `green` or `dark-green`. */
+export type VizColorName = ThemeVizHue['shades'][number]['name'];
 
 export interface RecommendationItem {
   id: string; // stable telemetry id (recommendation_id)
   title: string;
   icon: IconName;
-  /** Palette name for `theme.visualization.getColorByName`, resolved where rendered so theme switches apply. */
-  color: string;
+  /** Resolved with `theme.visualization.getColorByName` where rendered so theme switches apply. */
+  color: VizColorName;
   context: string; // short "why you are seeing this" line under the title
   description: string;
   action: string; // CTA label, e.g. "Enable Hosted Traces"

@@ -5,7 +5,7 @@ import { LinkButton, useStyles2 } from '@grafana/ui';
 
 import { ctaClicked } from '../analytics/main';
 
-import { isExternal, type RecommendationItem } from './types';
+import { isExternal, type RecommendationItem, type VizColorName } from './types';
 
 interface RecommendationPillProps {
   recommendation: RecommendationItem;
@@ -44,7 +44,7 @@ export function RecommendationPill({ recommendation, startingState, solution }: 
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, color: string) => ({
+const getStyles = (theme: GrafanaTheme2, color: VizColorName) => ({
   pill: css({
     borderRadius: theme.shape.radius.pill,
     border: `1px solid ${theme.colors.border.medium}`,
