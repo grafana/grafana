@@ -796,6 +796,17 @@ func (a *State) recordImageCaptureOutcome(now time.Time, err error) {
 	a.ImageCaptureNextAttemptAt = now.Add(imageCaptureBackoffDuration(a.ImageCaptureConsecutiveTimeouts))
 }
 
+// ImageCaptureNextAttemptAtPtr returns nil if there is no backoff in effect (the zero time),
+// otherwise a pointer to it -- the form the persisted AlertInstance model expects, so a state
+// that has never entered backoff round-trips as nil, not epoch zero.
+func (a *State) ImageCaptureNextAttemptAtPtr() *time.Time {
+	if a.ImageCaptureNextAttemptAt.IsZero() {
+		return nil
+	}
+	t := a.ImageCaptureNextAttemptAt
+	return &t
+}
+
 // takeImage takes an image for the alert rule. It returns nil if screenshots are disabled or
 // the rule is not associated with a dashboard panel.
 func takeImage(ctx context.Context, s ImageCapturer, r *models.AlertRule) (*models.Image, error) {
