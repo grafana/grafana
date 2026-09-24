@@ -190,6 +190,18 @@ func NewRepositoryController(
 		func() float64 { return float64(rc.queue.Len()) },
 	))
 
+	// Expose the current worst-case queue delay: how long the oldest key still
+	// waiting has been in the queue. Unlike the wait histogram (observed only at
+	// pickup), this climbs live while a key is stuck, so it surfaces a stalled
+	// queue that never dequeues.
+	registry.MustRegister(prometheus.NewGaugeFunc(
+		prometheus.GaugeOpts{
+			Name: "grafana_provisioning_repository_worker_queue_delay_seconds",
+			Help: "Age in seconds of the oldest repository key still waiting in this replica's local work queue, measured from when it first entered (coalesced re-adds keep the earliest time). This is the current worst-case queue delay, sampled live, so a backlog that is not draining fast enough shows up even when no key has been picked up yet. It reflects only keys still queued, not keys being processed, and is not a configured or rate-limiter delay.",
+		},
+		func() float64 { return rc.queueWait.oldestAge(time.Now()).Seconds() },
+	))
+
 	return rc
 }
 
@@ -284,7 +296,12 @@ func (rc *RepositoryController) enqueue(obj interface{}, trigger usinformer.Proc
 	rc.setTrigger(key, trigger)
 	rc.queueWait.mark(key, time.Now())
 	rc.queue.Add(key)
-	rc.logger.Debug("enqueued repository key", "work_key", key, "queue_len", rc.queue.Len())
+	namespace, name, _ := cache.SplitMetaNamespaceKey(key)
+	// queue_delay is the age of the oldest key still waiting (this add included),
+	// so the backlog's worst-case wait is visible at enqueue, not only at pickup.
+	rc.logger.Info("RepositoryController enqueued key",
+		"work_key", key, "namespace", namespace, "repository", name,
+		"queue_len", rc.queue.Len(), "queue_delay", rc.queueWait.oldestAge(time.Now()))
 }
 
 // setTrigger records what enqueued key, first-wins: the enqueue that first
@@ -371,7 +388,9 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 
 	start := time.Now()
 	repoType, err := rc.processFn(key)
-	logger = logger.With("duration", time.Since(start))
+	// queue_delay is the age of the oldest key still waiting after this pickup, so
+	// a backlog that is not draining is visible on completion, not only at scrape.
+	logger = logger.With("duration", time.Since(start), "queue_delay", rc.queueWait.oldestAge(time.Now()))
 	if err == nil {
 		rc.queue.Forget(key)
 		logger.With("repositoryType", repoType).Info("RepositoryController finished processing key")

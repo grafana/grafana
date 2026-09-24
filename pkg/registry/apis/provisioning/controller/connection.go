@@ -118,6 +118,18 @@ func NewConnectionController(
 		func() float64 { return float64(cc.queue.Len()) },
 	))
 
+	// Expose the current worst-case queue delay: how long the oldest key still
+	// waiting has been in the queue. Unlike the wait histogram (observed only at
+	// pickup), this climbs live while a key is stuck, so it surfaces a stalled
+	// queue that never dequeues.
+	registry.MustRegister(prometheus.NewGaugeFunc(
+		prometheus.GaugeOpts{
+			Name: "grafana_provisioning_connection_worker_queue_delay_seconds",
+			Help: "Age in seconds of the oldest connection key still waiting in this replica's local work queue, measured from when it first entered (coalesced re-adds keep the earliest time). This is the current worst-case queue delay, sampled live, so a backlog that is not draining fast enough shows up even when no key has been picked up yet. It reflects only keys still queued, not keys being processed, and is not a configured or rate-limiter delay.",
+		},
+		func() float64 { return cc.queueWait.oldestAge(time.Now()).Seconds() },
+	))
+
 	return cc
 }
 
@@ -144,7 +156,12 @@ func (cc *ConnectionController) enqueue(obj interface{}, trigger usinformer.Proc
 	cc.setTrigger(key, trigger)
 	cc.queueWait.mark(key, time.Now())
 	cc.queue.Add(key)
-	cc.logger.Debug("enqueued connection key", "work_key", key, "queue_len", cc.queue.Len())
+	namespace, name, _ := cache.SplitMetaNamespaceKey(key)
+	// queue_delay is the age of the oldest key still waiting (this add included),
+	// so the backlog's worst-case wait is visible at enqueue, not only at pickup.
+	cc.logger.Info("ConnectionController enqueued key",
+		"work_key", key, "namespace", namespace, "connection", name,
+		"queue_len", cc.queue.Len(), "queue_delay", cc.queueWait.oldestAge(time.Now()))
 }
 
 // The first enqueue owns the attribution when subsequent events coalesce onto
@@ -265,7 +282,9 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 
 	start := time.Now()
 	err := cc.processFn(ctx, key)
-	logger = logger.With("duration", time.Since(start))
+	// queue_delay is the age of the oldest key still waiting after this pickup, so
+	// a backlog that is not draining is visible on completion, not only at scrape.
+	logger = logger.With("duration", time.Since(start), "queue_delay", cc.queueWait.oldestAge(time.Now()))
 	if err == nil {
 		cc.queue.Forget(key)
 		logger.Info("ConnectionController finished processing key")

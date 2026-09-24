@@ -42,3 +42,22 @@ func (q *queueWaitTracker) pop(key string) (time.Time, bool) {
 	}
 	return t, ok
 }
+
+// oldestAge reports how long the key that has waited longest has been in the
+// queue, measured from its first enqueue. It returns 0 when nothing is pending.
+// Because entries are cleared at pickup (pop), this reflects only keys still
+// waiting, not keys currently being processed.
+func (q *queueWaitTracker) oldestAge(now time.Time) time.Duration {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	var oldest time.Time
+	for _, t := range q.at {
+		if oldest.IsZero() || t.Before(oldest) {
+			oldest = t
+		}
+	}
+	if oldest.IsZero() {
+		return 0
+	}
+	return now.Sub(oldest)
+}
