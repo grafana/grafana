@@ -20,6 +20,7 @@ import {
   buildEntries,
   isClientNavTreeEnabled,
   type NavEntryBuilder,
+  pruneEmptyNavSections,
   sortNavTree,
 } from './utils';
 
@@ -35,9 +36,11 @@ export function getInitialNavTree(): NavModelItem[] {
     return cloneDeep(config.bootData?.navTree ?? []);
   }
 
-  // The empty connections and cfg shells stay: the plugin merge attaches to
-  // them, and prunes whatever is still empty once it completes.
-  return applyAppSubUrl(buildStaticNavTree());
+  // Pruned here as well as at the end of the plugin merge. The merge is gated
+  // on plugins.useMTPlugins on top of the client-build flag, so with that off it
+  // never runs and these shells would be the tree the user gets. The merge is
+  // unaffected: useNavTree hands it a freshly built tree, not this one.
+  return pruneEmptyNavSections(applyAppSubUrl(buildStaticNavTree()));
 }
 
 /**

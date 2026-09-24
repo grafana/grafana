@@ -3,7 +3,7 @@ import { GrafanaEdition } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { buildStaticNavTree } from './buildStaticNavTree';
+import { buildStaticNavTree, getInitialNavTree } from './buildStaticNavTree';
 import { NavID } from './constants';
 import { addNavEntries, clearRegisteredNavEntries } from './registry';
 import { navIds as ids, setupNavTestState as setup } from './test-utils';
@@ -527,5 +527,39 @@ describe('registered nav entries', () => {
     expect(findById(tree, NavID.home)).toBeDefined();
     expect(error).toHaveBeenCalledWith('[navtree] nav entry failed to build', expect.any(Error));
     error.mockRestore();
+  });
+});
+
+describe('getInitialNavTree', () => {
+  // The plugin merge is the other place that prunes, and it needs
+  // plugins.useMTPlugins on top of the client-build flag. With that off it never
+  // runs, so the tree this returns is the one the user gets.
+  const clientBuildOnly = { 'grafana.multiTenantNavTree': true, 'plugins.useMTPlugins': false };
+
+  it('prunes the connections and administration shells when the plugin merge is disabled', () => {
+    setup({ openFeatureFlags: clientBuildOnly });
+
+    const tree = getInitialNavTree();
+
+    expect(findById(tree, NavID.connections)).toBeUndefined();
+    expect(findById(tree, NavID.cfg)).toBeUndefined();
+  });
+
+  // Drilldown is filled only by drilldown app plugins, so with the merge off it
+  // is always empty — and it takes the same permission that makes Explore (and
+  // Correlations, which keeps Administration alive) visible
+  it('prunes the drilldown shell when the plugin merge is disabled', () => {
+    setup({ permissions: [AccessControlAction.DataSourcesExplore], openFeatureFlags: clientBuildOnly });
+
+    const tree = getInitialNavTree();
+
+    expect(findById(tree, NavID.drilldown)).toBeUndefined();
+    expect(findById(tree, NavID.explore)).toBeDefined();
+  });
+
+  it('returns the bootdata tree when the client build is off', () => {
+    setup({ config: { bootData: { navTree: [{ id: 'server-built', text: 'Server built' }] } } });
+
+    expect(ids(getInitialNavTree())).toEqual(['server-built']);
   });
 });
