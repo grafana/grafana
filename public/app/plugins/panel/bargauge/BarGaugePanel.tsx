@@ -3,7 +3,6 @@ import { type JSX } from 'react';
 
 import {
   type DisplayProcessor,
-  type DisplayValue,
   type DisplayValueAlignmentFactors,
   type FieldConfig,
   type FieldDisplay,
@@ -50,7 +49,9 @@ export function BarGaugePanel(props: BarGaugePanelProps) {
 
     return (
       <BarGauge
-        value={clearNameForSingleSeries(count, options, fieldConfig.defaults, display)}
+        value={
+          shouldShowName(options.textMode, count, fieldConfig.defaults) ? display : { ...display, title: undefined }
+        }
         width={width}
         height={height}
         orientation={orientation}
@@ -172,32 +173,18 @@ export function getLegend(options: Options, data: BarGaugePanelProps['data']) {
 }
 
 // BarGauge sizes the shared name column/row from alignmentFactors.title, so it must reflect the
-// same per-bar suppression as renderComponent's clearNameForSingleSeries call, or hidden names
-// still reserve layout space even though nothing is drawn there.
+// same per-bar suppression as renderComponent's name-clearing, or hidden names still reserve
+// layout space even though nothing is drawn there.
 export function getBarGaugeAlignmentFactors(values: FieldDisplay[], options: Options): DisplayValueAlignmentFactors {
   const count = values.length;
   return getDisplayValueAlignmentFactors(
     values.map((value) => ({
       ...value,
-      display: clearNameForSingleSeries(count, options, value.field, value.display),
+      display: shouldShowName(options.textMode, count, value.field)
+        ? value.display
+        : { ...value.display, title: undefined },
     }))
   );
-}
-
-function clearNameForSingleSeries(
-  count: number,
-  options: Options,
-  field: FieldConfig,
-  display: DisplayValue
-): DisplayValue {
-  if (!shouldShowName(options.textMode, count, field)) {
-    return {
-      ...display,
-      title: undefined,
-    };
-  }
-
-  return display;
 }
 
 // Auto keeps the historical single-bar heuristic; any other explicit choice decides
