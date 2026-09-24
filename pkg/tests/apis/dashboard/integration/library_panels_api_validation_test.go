@@ -554,6 +554,11 @@ func TestIntegrationLibraryPanelStorageModesEnforceWritePermissions(t *testing.T
 				},
 			}}
 
+			_, err := viewerClient.Resource.Create(context.Background(), panel.DeepCopy(), v1.CreateOptions{})
+			require.True(t, apierrors.IsForbidden(err), "Viewer create must be forbidden, got %v", err)
+			_, err = adminClient.Resource.Get(context.Background(), panel.GetName(), v1.GetOptions{})
+			require.True(t, apierrors.IsNotFound(err), "Denied Viewer create unexpectedly persisted: %v", err)
+
 			created, err := adminClient.Resource.Create(context.Background(), panel, v1.CreateOptions{})
 			require.NoError(t, err)
 			t.Cleanup(func() {
@@ -604,6 +609,18 @@ func TestIntegrationLibraryPanelStorageModesEnforceWritePermissions(t *testing.T
 			require.NoError(t, editorClient.Resource.Delete(context.Background(), panel.GetName(), v1.DeleteOptions{}))
 			_, err = adminClient.Resource.Get(context.Background(), panel.GetName(), v1.GetOptions{})
 			require.True(t, apierrors.IsNotFound(err), "Editor delete did not remove the panel: %v", err)
+
+			if tt.mode == grafanarest.Mode5 {
+				_, err = viewerClient.Resource.Update(context.Background(), panel.DeepCopy(), v1.UpdateOptions{})
+				require.True(t, apierrors.IsForbidden(err), "Viewer create-on-update must be forbidden, got %v", err)
+				_, err = adminClient.Resource.Get(context.Background(), panel.GetName(), v1.GetOptions{})
+				require.True(t, apierrors.IsNotFound(err), "Denied Viewer create-on-update unexpectedly persisted: %v", err)
+
+				_, err = adminClient.Resource.Update(context.Background(), panel.DeepCopy(), v1.UpdateOptions{})
+				require.NoError(t, err, "Unified PUT should create a missing panel")
+				_, err = adminClient.Resource.Get(context.Background(), panel.GetName(), v1.GetOptions{})
+				require.NoError(t, err)
+			}
 		})
 	}
 }

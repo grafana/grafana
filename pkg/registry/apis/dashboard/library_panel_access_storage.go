@@ -2,8 +2,10 @@ package dashboard
 
 import (
 	"context"
+	"errors"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -38,7 +40,6 @@ type libraryPanelStorage interface {
 type libraryPanelAccessStorage struct {
 	store           libraryPanelStorage
 	table           rest.TableConvertor
-	resource        schema.GroupResource
 	authorize       libraryPanelAuthorizer
 	authorizeUpdate libraryPanelUpdateAuthorizer
 	validateDelete  libraryPanelDeleteValidator
@@ -46,23 +47,13 @@ type libraryPanelAccessStorage struct {
 }
 
 var (
-	_ libraryPanelStorage    = (*libraryPanelAccessStorage)(nil)
-	_ rest.TableConvertor    = (*libraryPanelAccessStorage)(nil)
-	_ rest.Watcher           = (*libraryPanelAccessStorageWithWatch)(nil)
-	_ rest.CollectionDeleter = (*libraryPanelAccessStorageWithDeleteCollection)(nil)
+	_ libraryPanelStorage = (*libraryPanelAccessStorage)(nil)
+	_ rest.TableConvertor = (*libraryPanelAccessStorage)(nil)
+	_ rest.Watcher        = (*libraryPanelAccessStorageWithWatch)(nil)
 )
 
 type libraryPanelAccessStorageWithWatch struct {
 	*libraryPanelAccessStorage
-	watcher rest.Watcher
-}
-
-type libraryPanelAccessStorageWithDeleteCollection struct {
-	*libraryPanelAccessStorage
-}
-
-type libraryPanelAccessStorageWithWatchAndDeleteCollection struct {
-	*libraryPanelAccessStorageWithDeleteCollection
 	watcher rest.Watcher
 }
 
@@ -77,29 +68,17 @@ func newLibraryPanelAccessStorage(
 	storage := &libraryPanelAccessStorage{
 		store:           store,
 		table:           table,
-		resource:        schema.GroupResource{Group: "dashboard.grafana.app", Resource: "librarypanels"},
 		authorize:       authorize,
 		authorizeUpdate: authorizeUpdate,
 		validateDelete:  validateDelete,
 		validateFolder:  validateFolder,
 	}
 	watcher, canWatch := store.(rest.Watcher)
-	_, canDeleteCollection := store.(rest.CollectionDeleter)
-	switch {
-	case canWatch && canDeleteCollection:
-		return &libraryPanelAccessStorageWithWatchAndDeleteCollection{
-			libraryPanelAccessStorageWithDeleteCollection: &libraryPanelAccessStorageWithDeleteCollection{
-				libraryPanelAccessStorage: storage,
-			},
-			watcher: watcher,
-		}
-	case canWatch:
+	if canWatch {
 		return &libraryPanelAccessStorageWithWatch{
 			libraryPanelAccessStorage: storage,
 			watcher:                   watcher,
 		}
-	case canDeleteCollection:
-		return &libraryPanelAccessStorageWithDeleteCollection{libraryPanelAccessStorage: storage}
 	}
 	return storage
 }
@@ -131,10 +110,6 @@ func (s *libraryPanelAccessStorageWithWatch) Watch(ctx context.Context, options 
 	return s.watcher.Watch(ctx, options)
 }
 
-func (s *libraryPanelAccessStorageWithWatchAndDeleteCollection) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
-	return s.watcher.Watch(ctx, options)
-}
-
 func (s *libraryPanelAccessStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	if err := s.authorize(ctx, obj, utils.VerbCreate, requestcontext.NamespaceValue(ctx)); err != nil {
 		return nil, err
@@ -146,9 +121,40 @@ func (s *libraryPanelAccessStorage) Create(ctx context.Context, obj runtime.Obje
 }
 
 func (s *libraryPanelAccessStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	oldObj, err := s.store.Get(ctx, name, &metav1.GetOptions{})
+	namespace := requestcontext.NamespaceValue(ctx)
+	// Resolve existence independently of the caller's read permission. A 404
+	// caused by a hidden existing panel must never turn an update into a create.
+	lookupCtx := identity.WithServiceIdentityForSingleNamespaceContext(ctx, namespace)
+	oldObj, err := s.store.Get(lookupCtx, name, &metav1.GetOptions{})
 	if err != nil {
-		return nil, false, err
+		if !apierrors.IsNotFound(err) {
+			return nil, false, err
+		}
+		// Complete unified storage allows PUT to create a missing object. Authorize
+		// that path as a create, including its destination folder, before delegating.
+		newObj, updateErr := objInfo.UpdatedObject(ctx, s.store.New())
+		if updateErr != nil {
+			return nil, false, updateErr
+		}
+		if updateErr = s.authorize(ctx, newObj, utils.VerbCreate, namespace); updateErr != nil {
+			return nil, false, updateErr
+		}
+		if updateErr = s.validateFolder(ctx, newObj); updateErr != nil {
+			return nil, false, updateErr
+		}
+		// If another request creates the panel after our lookup, make the caller
+		// retry so the next attempt uses update authorization for that object.
+		createInfo := rest.DefaultUpdatedObjectInfo(newObj, func(_ context.Context, obj, actualOld runtime.Object) (runtime.Object, error) {
+			accessor, accessErr := meta.Accessor(actualOld)
+			if accessErr != nil {
+				return nil, accessErr
+			}
+			if accessor.GetResourceVersion() != "" {
+				return nil, apierrors.NewConflict(schema.GroupResource{Group: "dashboard.grafana.app", Resource: "librarypanels"}, name, errors.New("library panel appeared during create-on-update; retry"))
+			}
+			return obj, nil
+		})
+		return s.store.Update(ctx, name, createInfo, createValidation, updateValidation, forceAllowCreate, options)
 	}
 	// Keep the fetched object immutable so a patch transformer that mutates its
 	// input cannot erase the source folder before move authorization runs.
@@ -156,7 +162,7 @@ func (s *libraryPanelAccessStorage) Update(ctx context.Context, name string, obj
 	if err != nil {
 		return nil, false, err
 	}
-	if err := s.authorizeUpdate(ctx, oldObj, newObj, requestcontext.NamespaceValue(ctx)); err != nil {
+	if err := s.authorizeUpdate(ctx, oldObj, newObj, namespace); err != nil {
 		return nil, false, err
 	}
 	oldName, oldFolder, err := libraryPanelAuthorizationTarget(oldObj)
@@ -202,8 +208,4 @@ func (s *libraryPanelAccessStorage) Delete(ctx context.Context, name string, del
 		return nil, false, err
 	}
 	return s.store.Delete(ctx, name, deleteValidation, options)
-}
-
-func (s *libraryPanelAccessStorageWithDeleteCollection) DeleteCollection(context.Context, rest.ValidateObjectFunc, *metav1.DeleteOptions, *metainternalversion.ListOptions) (runtime.Object, error) {
-	return nil, apierrors.NewMethodNotSupported(s.resource, "deletecollection")
 }

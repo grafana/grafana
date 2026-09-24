@@ -388,10 +388,6 @@ func TestDashboardAPIBuilder_EmbeddedLibraryPanelFinalStorageKeepsAccessBoundary
 				wrapper = typed
 			case *libraryPanelAccessStorageWithWatch:
 				wrapper = typed.libraryPanelAccessStorage
-			case *libraryPanelAccessStorageWithDeleteCollection:
-				wrapper = typed.libraryPanelAccessStorage
-			case *libraryPanelAccessStorageWithWatchAndDeleteCollection:
-				wrapper = typed.libraryPanelAccessStorage
 			}
 			ok := wrapper != nil
 			require.True(t, ok)

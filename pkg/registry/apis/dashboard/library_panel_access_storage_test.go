@@ -52,6 +52,7 @@ func TestLibraryPanelAccessStorageMaterializesAndAuthorizesUpdate(t *testing.T) 
 	require.NoError(t, err)
 	require.False(t, created)
 	require.True(t, backend.updateCalled)
+	require.True(t, backend.lookupUsedServiceIdentity, "update lookup must not mistake a hidden panel for a missing panel")
 	require.Same(t, oldPanel, authorizedOld)
 	require.Equal(t, "source", authorizedOld.(*unstructured.Unstructured).GetAnnotations()[utils.AnnoKeyFolder])
 	require.Equal(t, "destination", authorizedNew.(*unstructured.Unstructured).GetAnnotations()[utils.AnnoKeyFolder])
@@ -221,7 +222,7 @@ func TestLibraryPanelAccessStorageDoesNotAdvertiseWatchWhenSelectedStorageCannot
 	require.False(t, ok)
 }
 
-func TestLibraryPanelAccessStoragePreservesDeleteCollectionCapability(t *testing.T) {
+func TestLibraryPanelAccessStorageDoesNotAdvertiseUnprotectedDeleteCollection(t *testing.T) {
 	storage := newLibraryPanelAccessStorage(
 		&collectionDeletingLibraryPanelStorage{nonWatchableLibraryPanelStorage: &nonWatchableLibraryPanelStorage{}},
 		func(context.Context, runtime.Object, string, string) error { return nil },
@@ -230,17 +231,91 @@ func TestLibraryPanelAccessStoragePreservesDeleteCollectionCapability(t *testing
 		func(context.Context, runtime.Object) error { return nil },
 	)
 
-	deleter, ok := storage.(rest.CollectionDeleter)
-	require.True(t, ok)
-	_, err := deleter.DeleteCollection(context.Background(), nil, &metav1.DeleteOptions{}, &metainternalversion.ListOptions{})
-	require.True(t, apierrors.IsMethodNotSupported(err))
+	_, ok := storage.(rest.CollectionDeleter)
+	require.False(t, ok)
+}
+
+func TestLibraryPanelAccessStorageAuthorizesCreateOnUpdate(t *testing.T) {
+	panel := testLibraryPanel("new-panel", "destination")
+	backend := &createOnUpdateLibraryPanelStorage{recordingLibraryPanelStorage: &recordingLibraryPanelStorage{}}
+	var authorizedVerb, authorizedNamespace string
+	validated := false
+	storage := newLibraryPanelAccessStorage(
+		backend,
+		func(_ context.Context, _ runtime.Object, verb, namespace string) error {
+			authorizedVerb, authorizedNamespace = verb, namespace
+			return nil
+		},
+		func(context.Context, runtime.Object, runtime.Object, string) error {
+			t.Fatal("missing-object update must not use update authorization")
+			return nil
+		},
+		func(context.Context, string, string) error { return nil },
+		func(_ context.Context, obj runtime.Object) error {
+			validated = true
+			_, folder, err := libraryPanelAuthorizationTarget(obj)
+			require.NoError(t, err)
+			require.Equal(t, "destination", folder)
+			return nil
+		},
+	)
+
+	ctx := requestcontext.WithNamespace(context.Background(), "stacks-1")
+	_, created, err := storage.Update(ctx, panel.GetName(), rest.DefaultUpdatedObjectInfo(panel), nil, nil, false, &metav1.UpdateOptions{})
+	require.NoError(t, err)
+	require.True(t, created)
+	require.True(t, backend.updateCalled)
+	require.True(t, validated)
+	require.Equal(t, utils.VerbCreate, authorizedVerb)
+	require.Equal(t, "stacks-1", authorizedNamespace)
+}
+
+func TestLibraryPanelAccessStorageRejectsDeniedCreateOnUpdate(t *testing.T) {
+	panel := testLibraryPanel("new-panel", "general")
+	backend := &createOnUpdateLibraryPanelStorage{recordingLibraryPanelStorage: &recordingLibraryPanelStorage{}}
+	denied := apierrors.NewForbidden(schema.GroupResource{Group: "dashboard.grafana.app", Resource: "librarypanels"}, panel.GetName(), errors.New("access denied"))
+	storage := newLibraryPanelAccessStorage(
+		backend,
+		func(_ context.Context, _ runtime.Object, verb, _ string) error {
+			require.Equal(t, utils.VerbCreate, verb)
+			return denied
+		},
+		func(context.Context, runtime.Object, runtime.Object, string) error { return nil },
+		func(context.Context, string, string) error { return nil },
+		func(context.Context, runtime.Object) error { return nil },
+	)
+
+	_, _, err := storage.Update(context.Background(), panel.GetName(), rest.DefaultUpdatedObjectInfo(panel), nil, nil, false, &metav1.UpdateOptions{})
+	require.ErrorIs(t, err, denied)
+	require.False(t, backend.updateCalled)
+}
+
+func TestLibraryPanelAccessStorageCreateOnUpdateRetriesWhenPanelAppears(t *testing.T) {
+	panel := testLibraryPanel("new-panel", "general")
+	backend := &racingCreateOnUpdateLibraryPanelStorage{
+		createOnUpdateLibraryPanelStorage: &createOnUpdateLibraryPanelStorage{recordingLibraryPanelStorage: &recordingLibraryPanelStorage{}},
+	}
+	storage := newLibraryPanelAccessStorage(
+		backend,
+		func(context.Context, runtime.Object, string, string) error { return nil },
+		func(context.Context, runtime.Object, runtime.Object, string) error {
+			t.Fatal("a racing update must be retried before update authorization")
+			return nil
+		},
+		func(context.Context, string, string) error { return nil },
+		func(context.Context, runtime.Object) error { return nil },
+	)
+
+	_, _, err := storage.Update(context.Background(), panel.GetName(), rest.DefaultUpdatedObjectInfo(panel), nil, nil, false, &metav1.UpdateOptions{})
+	require.True(t, apierrors.IsConflict(err), "a racing create must not become an unauthorized update: %v", err)
 }
 
 type recordingLibraryPanelStorage struct {
 	rest.StandardStorage
-	object       runtime.Object
-	updateCalled bool
-	deleteCalled bool
+	object                    runtime.Object
+	updateCalled              bool
+	deleteCalled              bool
+	lookupUsedServiceIdentity bool
 }
 
 type nonWatchableLibraryPanelStorage struct {
@@ -254,6 +329,35 @@ type watchableLibraryPanelStorage struct {
 
 type collectionDeletingLibraryPanelStorage struct {
 	*nonWatchableLibraryPanelStorage
+}
+
+type createOnUpdateLibraryPanelStorage struct {
+	*recordingLibraryPanelStorage
+}
+
+type racingCreateOnUpdateLibraryPanelStorage struct {
+	*createOnUpdateLibraryPanelStorage
+}
+
+func (s *createOnUpdateLibraryPanelStorage) New() runtime.Object {
+	return &unstructured.Unstructured{}
+}
+
+func (s *createOnUpdateLibraryPanelStorage) Get(context.Context, string, *metav1.GetOptions) (runtime.Object, error) {
+	return nil, apierrors.NewNotFound(schema.GroupResource{Group: "dashboard.grafana.app", Resource: "librarypanels"}, "new-panel")
+}
+
+func (s *createOnUpdateLibraryPanelStorage) Update(ctx context.Context, _ string, objInfo rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, _ rest.ValidateObjectUpdateFunc, _ bool, _ *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	s.updateCalled = true
+	obj, err := objInfo.UpdatedObject(ctx, s.New())
+	return obj, true, err
+}
+
+func (s *racingCreateOnUpdateLibraryPanelStorage) Update(ctx context.Context, _ string, objInfo rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, _ rest.ValidateObjectUpdateFunc, _ bool, _ *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	existing := testLibraryPanel("new-panel", "general")
+	existing.SetResourceVersion("2")
+	obj, err := objInfo.UpdatedObject(ctx, existing)
+	return obj, false, err
 }
 
 type deleteOnlyLibraryPanelStorage struct {
@@ -277,7 +381,8 @@ func (s *deleteOnlyLibraryPanelStorage) Get(ctx context.Context, _ string, _ *me
 	return s.object, nil
 }
 
-func (s *recordingLibraryPanelStorage) Get(context.Context, string, *metav1.GetOptions) (runtime.Object, error) {
+func (s *recordingLibraryPanelStorage) Get(ctx context.Context, _ string, _ *metav1.GetOptions) (runtime.Object, error) {
+	s.lookupUsedServiceIdentity = identity.IsServiceIdentity(ctx)
 	return s.object, nil
 }
 
