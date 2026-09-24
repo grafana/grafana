@@ -89,6 +89,28 @@ func jitteredWatchMaxAge(ctx context.Context, base time.Duration) time.Duration 
 	return bo.NextDelay()
 }
 
+type watchExpiry struct {
+	mu         sync.Mutex
+	generation chan struct{}
+}
+
+func newWatchExpiry() *watchExpiry {
+	return &watchExpiry{generation: make(chan struct{})}
+}
+
+func (e *watchExpiry) current() <-chan struct{} {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return e.generation
+}
+
+func (e *watchExpiry) expire() {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	close(e.generation)
+	e.generation = make(chan struct{})
+}
+
 // filteredBookmarkDelay leaves a recovery window for late writes without
 // delaying progress from objects already sent to the client.
 const filteredBookmarkDelay = time.Minute
@@ -639,6 +661,9 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		vectorWriteReconciler:          opts.VectorReconciler,
 		embeddingBuilders:              opts.Search.EmbeddingBuilders,
 	}
+	if s.natsWatchMaxAge > 0 {
+		s.natsWatchExpiry = newWatchExpiry()
+	}
 
 	if opts.Search.Resources != nil {
 		var err error
@@ -768,6 +793,7 @@ type server struct {
 	bookmarkFrequency time.Duration
 
 	natsWatchMaxAge time.Duration
+	natsWatchExpiry *watchExpiry
 
 	// Vector reconciler (which owns the backfiller). Started in Init,
 	// joined in Stop via indexersWG.
@@ -814,11 +840,28 @@ func (s *server) Init(ctx context.Context) error {
 			s.initErr = services.StartAndAwaitRunning(s.ctx, s.statsIngester)
 		}
 
+		if s.initErr == nil && s.natsWatchExpiry != nil {
+			go s.runNatsWatchExpiry()
+		}
+
 		if s.initErr != nil {
 			s.log.Error("error running resource server init", "error", s.initErr)
 		}
 	})
 	return s.initErr
+}
+
+func (s *server) runNatsWatchExpiry() {
+	for {
+		timer := time.NewTimer(jitteredWatchMaxAge(s.ctx, s.natsWatchMaxAge))
+		select {
+		case <-s.ctx.Done():
+			timer.Stop()
+			return
+		case <-timer.C:
+			s.natsWatchExpiry.expire()
+		}
+	}
 }
 
 // startVectorIndexers launches the vector reconciler (which owns and runs
@@ -2196,13 +2239,11 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		bookmarkC = ticker.C
 	}
 
-	// Expiry forces a fresh LIST after a missed NATS loss signal. Jitter spreads
-	// the resulting LIST load.
-	var watchMaxAgeC <-chan time.Time
-	if s.natsWatchMaxAge > 0 {
-		timer := time.NewTimer(jitteredWatchMaxAge(ctx, s.natsWatchMaxAge))
-		defer timer.Stop()
-		watchMaxAgeC = timer.C
+	// The server-level generation survives transport reconnects, so GOAWAY does
+	// not restart the expiry interval.
+	var watchExpiryC <-chan struct{}
+	if s.natsWatchExpiry != nil {
+		watchExpiryC = s.natsWatchExpiry.current()
 	}
 
 	for {
@@ -2210,7 +2251,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		case <-ctx.Done():
 			return nil
 
-		case <-watchMaxAgeC:
+		case <-watchExpiryC:
 			// Unlike EOF, Expired forces clients to re-list.
 			s.log.Debug("watch: expiring stream to bound stale-state duration",
 				"group", key.Group, "resource", key.Resource, "namespace", key.Namespace, "since", since)

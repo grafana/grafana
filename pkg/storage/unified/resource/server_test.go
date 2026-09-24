@@ -2175,6 +2175,28 @@ func TestWatchTerminationErrors(t *testing.T) {
 	})
 }
 
+func TestWatchExpiryGeneration(t *testing.T) {
+	expiry := newWatchExpiry()
+	first := expiry.current()
+	second := expiry.current()
+	require.Equal(t, first, second)
+
+	expiry.expire()
+
+	for _, generation := range []<-chan struct{}{first, second} {
+		select {
+		case <-generation:
+		default:
+			t.Fatal("old generation is still active")
+		}
+	}
+	select {
+	case <-expiry.current():
+		t.Fatal("new generation is already expired")
+	default:
+	}
+}
+
 func TestWatchMaxAgeExpiry(t *testing.T) {
 	testUser := newWatchTestUser()
 
