@@ -212,7 +212,7 @@ func runManagerKindSync(t *testing.T, ctx context.Context, syncType string, chan
 			fullChanges[i] = ResourceFileChange{Path: change.Path, Action: change.Action}
 		}
 		compare := NewMockCompareFn(t)
-		compare.On("Execute", mock.Anything, repo, repoResources, "new-ref", false).Return(fullChanges, nil, nil, nil)
+		compare.On("Execute", mock.Anything, repo, repoResources, "new-ref", false).Return(fullChanges, nil, nil, nil, nil)
 		return FullSync(ctx, repo, compare.Execute, resources.NewMockResourceClients(t), "new-ref", repoResources, progress, tracer, 10, metrics, tracker, false, 0)
 	}
 	repo := repository.NewMockVersioned(t)
