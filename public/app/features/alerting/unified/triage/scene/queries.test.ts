@@ -248,3 +248,17 @@ describe('alertRuleInstancesQuery vs badge-count query resolution', () => {
     expect(query.expr).toContain('$__range');
   });
 });
+
+describe('getWorkbenchQueries Query A (tree rows) step-robustness', () => {
+  // Query A determines which rule/group rows exist in the tree. It has the same bare
+  // range-selector shape alertRuleInstancesQuery had before its fix, so a rule whose only
+  // instance is short-lived can lose its entire row (not just a nested instance row) once
+  // the step exceeds Prometheus's default 5m lookback. Confirmed via direct Prometheus
+  // queries against seeded data (see Task 3 / Task 4 verification), not just this test.
+  it('wraps each selector in last_over_time so a rule with only short-lived instances keeps its row', () => {
+    const [rangeQuery] = getWorkbenchQueries('alertname, grafana_folder, grafana_rule_uid, alertstate', '');
+
+    expect(rangeQuery.expr).toContain('last_over_time');
+    expect(rangeQuery.expr).toContain('$__interval');
+  });
+});
