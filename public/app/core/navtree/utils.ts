@@ -99,7 +99,7 @@ export function findNavById(nodes: NavModelItem[], id: string): NavModelItem | u
 }
 
 /** Returns a new tree with the matching node (at any depth) replaced by update(node) */
-function updateNavById(
+export function updateNavById(
   nodes: NavModelItem[],
   id: string,
   update: (node: NavModelItem) => NavModelItem
@@ -110,6 +110,13 @@ function updateNavById(
     }
     return node.children ? { ...node, children: updateNavById(node.children, id, update) } : node;
   });
+}
+
+/** Returns a new tree without the matching node (at any depth) */
+export function removeNavById(nodes: NavModelItem[], id: string): NavModelItem[] {
+  return nodes
+    .filter((node) => node.id !== id)
+    .map((node) => (node.children ? { ...node, children: removeNavById(node.children, id) } : node));
 }
 
 /**
@@ -199,3 +206,20 @@ export function pruneEmptyNavSections(tree: NavModelItem[]): NavModelItem[] {
 
 /** Nav id of an app plugin's own entry/section (matches the Go builder's ids) */
 export const pluginPageId = (pluginId: string) => `plugin-page-${pluginId}`;
+
+/** Nav id of a plugin page rendered standalone inside a core section */
+export const standalonePluginPageId = (key: string) => `standalone-plugin-page-${key}`;
+
+/**
+ * Standalone nav id derived from a page title, e.g. 'Service Overview' →
+ * 'standalone-plugin-page-service-overview'. Deriving an id from display text
+ * is fragile, but it is what the Go builder does (applinks.go, where the same
+ * lowercase-and-hyphenate runs), and the ids have to match: translations,
+ * bookmarks and pins are all keyed by nav id.
+ *
+ * Text-derived ids lack the leading slash that path-derived ones carry, which
+ * is what keeps the page on the regular /a/<pluginId> routing rather than a
+ * core URL (see isStandalonePluginPage in app/features/plugins/routes.tsx).
+ */
+export const standalonePluginPageIdFromText = (text: string) =>
+  standalonePluginPageId(text.toLowerCase().replaceAll(' ', '-'));
