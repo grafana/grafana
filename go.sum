@@ -1637,8 +1637,6 @@ github.com/grafana/regexp v0.0.0-20250905093917-f7b3be9d1853 h1:cLN4IBkmkYZNnk7E
 github.com/grafana/regexp v0.0.0-20250905093917-f7b3be9d1853/go.mod h1:+JKpmjMGhpgPL+rXZ5nsZieVzvarn86asRlBg4uNGnk=
 github.com/grafana/saml v0.4.15-0.20260916103902-393394c6d16c h1:N9JWcpVDNx12jPjOa0U+0IqLqf1fqmony3dMwh5QH2c=
 github.com/grafana/saml v0.4.15-0.20260916103902-393394c6d16c/go.mod h1:Nux9mP+d+Kcxwe5r8OeF08Idgoy8p2k3X/eCjwGXHbE=
-github.com/grafana/schemads v0.2.2 h1:3vXluclcfHpisR5bF9jjLwtfAUgfSGT4iI5ba/wii1I=
-github.com/grafana/schemads v0.2.2/go.mod h1:TX0YfoMxJ8dl1ONXTa+rFk1y3sw1khGwQjB8dKKfzds=
 github.com/grafana/schemads v0.2.3 h1:cfneDXyPK5OHqBr2RZlaxjHQNWcSUOX2UKhXLe4MaiE=
 github.com/grafana/schemads v0.2.3/go.mod h1:TX0YfoMxJ8dl1ONXTa+rFk1y3sw1khGwQjB8dKKfzds=
 github.com/grafana/sqlds/v5 v5.3.1 h1:TEp3IKq3rcjz1LPDS1jkM8cFzXwvW3s0pA20EYOxGeM=
