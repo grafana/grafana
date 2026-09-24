@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"fmt"
 	"slices"
 	"testing"
 	"time"
@@ -70,6 +71,124 @@ func TestSearchRingReadOpReplicaSetExtension(t *testing.T) {
 	})
 }
 
+func TestDistributorCheckHealth(t *testing.T) {
+	now := time.Now()
+	tests := []struct {
+		name        string
+		desc        *ring.Desc
+		startRing   bool
+		wantHealthy bool
+		wantError   string
+	}{
+		{
+			name:        "ring service not started",
+			desc:        searchRingDescForTest(now, ring.ACTIVE),
+			wantHealthy: false,
+			wantError:   "ring is not running: state=New",
+		},
+		{
+			name:        "empty descriptor",
+			desc:        ring.NewDesc(),
+			startRing:   true,
+			wantHealthy: false,
+			wantError:   "search server ring has no instances",
+		},
+		{
+			name:        "active instances",
+			desc:        searchRingDescForTest(now, ring.ACTIVE, ring.ACTIVE, ring.ACTIVE),
+			startRing:   true,
+			wantHealthy: true,
+		},
+		{
+			name:        "joining instances",
+			desc:        searchRingDescForTest(now, ring.JOINING, ring.JOINING, ring.JOINING),
+			startRing:   true,
+			wantHealthy: true,
+		},
+		{
+			name:        "stale active instances",
+			desc:        searchRingDescForTest(now.Add(-2*RingHeartbeatTimeout), ring.ACTIVE, ring.ACTIVE, ring.ACTIVE),
+			startRing:   true,
+			wantHealthy: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testRing, _ := newSearchRingWithDescForTest(t, 1, tt.desc, tt.startRing)
+			ds := &distributorServer{ring: testRing}
+
+			assertHealth := func(c *assert.CollectT) {
+				healthy, err := ds.CheckHealth(t.Context())
+				assert.Equal(c, tt.wantHealthy, healthy)
+				if tt.wantError == "" {
+					assert.NoError(c, err)
+				} else {
+					assert.ErrorContains(c, err, tt.wantError)
+				}
+
+				response, responseErr := ds.IsHealthy(t.Context(), &resourcepb.HealthCheckRequest{})
+				assert.NoError(c, responseErr)
+				if tt.wantHealthy {
+					assert.Equal(c, resourcepb.HealthCheckResponse_SERVING, response.Status)
+				} else {
+					assert.Equal(c, resourcepb.HealthCheckResponse_NOT_SERVING, response.Status)
+				}
+			}
+
+			require.EventuallyWithT(t, assertHealth, time.Second, 10*time.Millisecond)
+		})
+	}
+}
+
+func TestDistributorStartingWaitsForRing(t *testing.T) {
+	t.Run("ring already populated", func(t *testing.T) {
+		testRing, _ := newSearchRingForTest(t, 1, ring.ACTIVE)
+		ds := newDistributorServiceForTest(testRing, time.Second)
+
+		require.NoError(t, services.StartAndAwaitRunning(t.Context(), ds))
+		stopServiceForTest(t, ds)
+	})
+
+	t.Run("empty ring times out", func(t *testing.T) {
+		testRing, _ := newSearchRingWithDescForTest(t, 1, ring.NewDesc(), true)
+		ds := newDistributorServiceForTest(testRing, 20*time.Millisecond)
+
+		require.NoError(t, ds.StartAsync(t.Context()))
+		err := ds.AwaitRunning(t.Context())
+		require.ErrorContains(t, err, "timed out waiting for search server ring after 20ms")
+		require.Equal(t, services.Failed, ds.State())
+	})
+
+	t.Run("ring becomes populated", func(t *testing.T) {
+		testRing, store := newSearchRingWithDescForTest(t, 1, ring.NewDesc(), true)
+		ds := newDistributorServiceForTest(testRing, 5*time.Second)
+		desc := searchRingDescForTest(time.Now(), ring.JOINING)
+		updated := make(chan error, 1)
+
+		require.NoError(t, ds.StartAsync(t.Context()))
+		go func() {
+			time.Sleep(20 * time.Millisecond)
+			updated <- store.CAS(context.Background(), RingKey, func(interface{}) (interface{}, bool, error) {
+				return desc, false, nil
+			})
+		}()
+		require.NoError(t, ds.AwaitRunning(t.Context()))
+		require.NoError(t, <-updated)
+		stopServiceForTest(t, ds)
+	})
+
+	t.Run("zero timeout waits indefinitely", func(t *testing.T) {
+		testRing, _ := newSearchRingWithDescForTest(t, 1, ring.NewDesc(), true)
+		ds := newDistributorServiceForTest(testRing, 0)
+
+		require.NoError(t, ds.StartAsync(t.Context()))
+		require.Eventually(t, func() bool { return ds.State() == services.Starting }, time.Second, 10*time.Millisecond)
+		require.Never(t, func() bool { return ds.State() != services.Starting }, 100*time.Millisecond, 10*time.Millisecond)
+		stopServiceForTest(t, ds)
+	})
+}
+
 // VectorSearch must forward the incoming gRPC metadata (which carries the access
 // token) when distributing to a search instance. Dropping it makes the downstream
 // authenticator reject the call with "missing required token".
@@ -126,6 +245,11 @@ func searchReplicaSetIDs(testRing *ring.Ring, extendReplicaSet bool) ([]string, 
 
 func newSearchRingForTest(t *testing.T, replicationFactor int, firstInstanceState ring.InstanceState) (*ring.Ring, kv.Client) {
 	t.Helper()
+	return newSearchRingWithDescForTest(t, replicationFactor, searchRingDescForTest(time.Now(), firstInstanceState, ring.ACTIVE, ring.ACTIVE), true)
+}
+
+func newSearchRingWithDescForTest(t *testing.T, replicationFactor int, desc *ring.Desc, start bool) (*ring.Ring, kv.Client) {
+	t.Helper()
 
 	logger := gokitlog.NewNopLogger()
 	store, closer := consul.NewInMemoryClient(ring.GetCodec(), logger, prometheus.NewRegistry())
@@ -133,7 +257,7 @@ func newSearchRingForTest(t *testing.T, replicationFactor int, firstInstanceStat
 		require.NoError(t, closer.Close())
 	})
 
-	updateSearchRingForTest(t, store, firstInstanceState)
+	setSearchRingForTest(t, store, desc)
 
 	testRing, err := ring.NewWithStoreClientAndStrategy(ring.Config{
 		HeartbeatTimeout:  time.Minute,
@@ -141,27 +265,56 @@ func newSearchRingForTest(t *testing.T, replicationFactor int, firstInstanceStat
 	}, RingName, RingKey, store, ring.NewIgnoreUnhealthyInstancesReplicationStrategy(), prometheus.NewRegistry(), logger)
 	require.NoError(t, err)
 
-	require.NoError(t, services.StartAndAwaitRunning(t.Context(), testRing))
-	t.Cleanup(func() {
-		ctx, cancel := context.WithTimeout(context.WithoutCancel(t.Context()), time.Second)
-		defer cancel()
-		require.NoError(t, services.StopAndAwaitTerminated(ctx, testRing))
-	})
+	if start {
+		require.NoError(t, services.StartAndAwaitRunning(t.Context(), testRing))
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.WithoutCancel(t.Context()), time.Second)
+			defer cancel()
+			require.NoError(t, services.StopAndAwaitTerminated(ctx, testRing))
+		})
+	}
 
 	return testRing, store
 }
 
 func updateSearchRingForTest(t *testing.T, store kv.Client, firstInstanceState ring.InstanceState) {
 	t.Helper()
+	setSearchRingForTest(t, store, searchRingDescForTest(time.Now(), firstInstanceState, ring.ACTIVE, ring.ACTIVE))
+}
 
-	desc := ring.NewDesc()
-	now := time.Now()
-	desc.AddIngester("instance-a", "instance-a", "", []uint32{100}, firstInstanceState, now, false, time.Time{}, nil)
-	desc.AddIngester("instance-b", "instance-b", "", []uint32{200}, ring.ACTIVE, now, false, time.Time{}, nil)
-	desc.AddIngester("instance-c", "instance-c", "", []uint32{300}, ring.ACTIVE, now, false, time.Time{}, nil)
+func setSearchRingForTest(t *testing.T, store kv.Client, desc *ring.Desc) {
+	t.Helper()
 
 	err := store.CAS(t.Context(), RingKey, func(interface{}) (interface{}, bool, error) {
 		return desc, false, nil
 	})
 	require.NoError(t, err)
+}
+
+func searchRingDescForTest(heartbeat time.Time, states ...ring.InstanceState) *ring.Desc {
+	desc := ring.NewDesc()
+	for i, state := range states {
+		id := fmt.Sprintf("instance-%c", 'a'+rune(i))
+		desc.AddIngester(id, id, "", []uint32{uint32((i + 1) * 100)}, state, heartbeat, false, time.Time{}, nil)
+	}
+	return desc
+}
+
+func newDistributorServiceForTest(testRing *ring.Ring, timeout time.Duration) *distributorServer {
+	ds := &distributorServer{
+		ring:            testRing,
+		ringWaitTimeout: timeout,
+	}
+	ds.BasicService = services.NewBasicService(ds.starting, func(ctx context.Context) error {
+		<-ctx.Done()
+		return nil
+	}, nil)
+	return ds
+}
+
+func stopServiceForTest(t *testing.T, service services.Service) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(t.Context()), time.Second)
+	defer cancel()
+	require.NoError(t, services.StopAndAwaitTerminated(ctx, service))
 }

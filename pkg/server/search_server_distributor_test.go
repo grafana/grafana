@@ -78,11 +78,14 @@ func TestIntegrationDistributor(t *testing.T) {
 	testServers = append(testServers, createStorageServerApi(t, 1, dbType, db.ConnStr, memberlistPort))
 	testServers = append(testServers, createStorageServerApi(t, 2, dbType, db.ConnStr, memberlistPort))
 
-	startAndWaitHealthy(t, distributorServer)
-
 	for _, testServer := range testServers {
-		startAndWaitHealthy(t, testServer)
+		startServer(t, testServer)
+		waitHealthy(t, testServer)
 	}
+
+	// Distributor readiness requires at least one search server ring entry.
+	startServer(t, distributorServer)
+	waitHealthy(t, distributorServer)
 
 	t.Run("should expose ring endpoint", func(t *testing.T) {
 		client := http.Client{}
@@ -245,7 +248,7 @@ func getDistributorResponse[Req any, Resp any](t *testing.T, req *Req, fn func(c
 	return res
 }
 
-func startAndWaitHealthy(t *testing.T, testServer testModuleServer) {
+func startServer(t *testing.T, testServer testModuleServer) {
 	go func() {
 		// this next line is to avoid double registration, as both InitializeSearchSupport as well as ProvideUnifiedStorageGrpcService
 		// are hard-coded to use prometheus.DefaultRegisterer
@@ -257,7 +260,9 @@ func startAndWaitHealthy(t *testing.T, testServer testModuleServer) {
 			require.NoError(t, err)
 		}
 	}()
+}
 
+func waitHealthy(t *testing.T, testServer testModuleServer) {
 	deadline := time.Now().Add(20 * time.Second)
 	for {
 		res, err := testServer.healthClient.Check(context.Background(), &grpc_health_v1.HealthCheckRequest{})
@@ -299,6 +304,7 @@ func initDistributorServerForTest(t *testing.T, memberlistPort int) testModuleSe
 	cfg.MemberlistAdvertiseAddr = "127.0.0.1"
 	cfg.MemberlistAdvertisePort = memberlistPort
 	cfg.SearchRingReplicationFactor = 1
+	cfg.SearchDistributorRingWaitTimeout = 300 * time.Second
 	cfg.Target = []string{modules.SearchServerDistributor}
 	cfg.InstanceID = "distributor" // does nothing for the distributor but may be useful to debug tests
 	cfg.EnableSearch = true
