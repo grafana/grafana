@@ -9,6 +9,7 @@ import {
 } from '@grafana/test-utils/unstable';
 
 import { carryOverRuntimeChildren, mergePluginNavIntoTree } from './buildPluginNav';
+import { buildStaticNavTree } from './buildStaticNavTree';
 import { NavID } from './constants';
 import { navIds as ids, setupNavTestState, type NavTestState } from './test-utils';
 import { findNavById as findById } from './utils';
@@ -47,7 +48,8 @@ async function fetchApps(metas: MockPluginMeta[]) {
   return getAppPluginMetas();
 }
 
-const mergeFromMetas = async (metas: MockPluginMeta[]) => mergePluginNavIntoTree(await fetchApps(metas));
+const mergeFromMetas = async (metas: MockPluginMeta[]) =>
+  mergePluginNavIntoTree(await fetchApps(metas), buildStaticNavTree());
 
 describe('mergePluginNavIntoTree', () => {
   beforeEach(() => {
@@ -76,8 +78,8 @@ describe('mergePluginNavIntoTree', () => {
   it('is idempotent when merged repeatedly (e.g. a refetch after a remount)', async () => {
     const apps = await fetchApps([appMeta('some-app', 'Some app', [page('Page', '/a/some-app/page')])]);
 
-    const once = mergePluginNavIntoTree(apps);
-    const twice = mergePluginNavIntoTree(apps);
+    const once = mergePluginNavIntoTree(apps, buildStaticNavTree());
+    const twice = mergePluginNavIntoTree(apps, buildStaticNavTree());
 
     expect(twice).toEqual(once);
     expect(ids(findById(twice, NavID.apps)?.children ?? [])).toEqual(['plugin-page-some-app']);

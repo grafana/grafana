@@ -6,8 +6,9 @@ import { getAppPluginMetas } from '@grafana/runtime/internal';
 import { useDispatch, useSelector, type StoreState } from 'app/types/store';
 
 import { carryOverRuntimeChildren, mergePluginNavIntoTree } from './buildPluginNav';
+import { buildStaticNavTree } from './buildStaticNavTree';
 import { pluginNavLoaded } from './state';
-import { arePluginNavItemsEnabled } from './utils';
+import { applyAppSubUrl, arePluginNavItemsEnabled } from './utils';
 
 export interface UseNavTreeResult {
   /** The nav tree: static items plus, once loaded, the merged plugin nav items */
@@ -45,7 +46,10 @@ export function useNavTree(): UseNavTreeResult {
       if (cancelled || store.getState().pluginNavStatus === 'loaded') {
         return;
       }
-      const merged = carryOverRuntimeChildren(mergePluginNavIntoTree(apps), store.getState().navBarTree);
+      // The sub-url prefix goes on before the runtime children are carried
+      // over, because those come from the store already prefixed
+      const withPlugins = applyAppSubUrl(mergePluginNavIntoTree(apps, buildStaticNavTree()));
+      const merged = carryOverRuntimeChildren(withPlugins, store.getState().navBarTree);
       dispatch(pluginNavLoaded({ tree: merged }));
     });
     return () => {

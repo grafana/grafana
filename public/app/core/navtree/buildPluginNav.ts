@@ -10,27 +10,28 @@ import {
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { buildStaticNavTree } from './buildStaticNavTree';
 import { MORE_APPS_SHELL, NavID, NavWeight } from './constants';
-import { appendIntoSection, applyAppSubUrl, pluginPageId, pruneEmptyNavSections, sortNavTree } from './utils';
+import { appendIntoSection, pluginPageId, pruneEmptyNavSections, sortNavTree } from './utils';
 
 /**
- * Merges app-plugin nav items into the client-built tree and returns a new
- * tree. The Go equivalent is addAppLinks in
+ * Merges app-plugin nav items into a static nav tree and returns a new tree.
+ * The Go equivalent is addAppLinks in
  * pkg/services/navtree/navtreeimpl/applinks.go.
  *
  * Every app lands in "More apps" under its own plugin.json name.
+ *
+ * `staticTree` must come straight from buildStaticNavTree: a tree that already
+ * holds plugin items gains them a second time, and the urls must still be
+ * app-sub-url relative, because the caller applies that prefix once after this
+ * returns.
  *
  * Permanent divergences from the Go builder: per-org plugin enablement and the
  * assistant's jsonData gating are not readable client-side; includes are
  * appended flat rather than nested under their path ancestor; and page includes
  * with no path have no URL to link to.
  */
-export function mergePluginNavIntoTree(apps: AppPluginConfig[]): NavModelItem[] {
-  // Build a fresh static tree rather than merging into the current slice
-  // state, so a re-merge cannot duplicate plugin items. Runtime-filled
-  // containers are carried over separately by carryOverRuntimeChildren.
-  let tree = buildStaticNavTree();
+export function mergePluginNavIntoTree(apps: AppPluginConfig[], staticTree: NavModelItem[]): NavModelItem[] {
+  let tree = staticTree;
 
   if (contextSrv.hasPermission(AccessControlAction.PluginsAppAccess)) {
     for (const app of apps) {
@@ -42,7 +43,7 @@ export function mergePluginNavIntoTree(apps: AppPluginConfig[]): NavModelItem[] 
     }
   }
 
-  return applyAppSubUrl(sortNavTree(pruneEmptyNavSections(tree)));
+  return sortNavTree(pruneEmptyNavSections(tree));
 }
 
 /**
