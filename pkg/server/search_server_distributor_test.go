@@ -304,7 +304,6 @@ func initDistributorServerForTest(t *testing.T, memberlistPort int) testModuleSe
 	cfg.MemberlistAdvertiseAddr = "127.0.0.1"
 	cfg.MemberlistAdvertisePort = memberlistPort
 	cfg.SearchRingReplicationFactor = 1
-	cfg.SearchDistributorRingWaitTimeout = 300 * time.Second
 	cfg.Target = []string{modules.SearchServerDistributor}
 	cfg.InstanceID = "distributor" // does nothing for the distributor but may be useful to debug tests
 	cfg.EnableSearch = true

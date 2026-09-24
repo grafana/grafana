@@ -38,19 +38,18 @@ var (
 
 func ProvideSearchDistributorServer(tracer trace.Tracer, cfg *setting.Cfg, ring *ring.Ring, ringClientPool *ringclient.Pool, provider grpcserver.Provider) (UnifiedStorageGrpcService, error) {
 	s := &distributorServer{
-		log:             log.New("index-server-distributor"),
-		ring:            ring,
-		ringWaitTimeout: cfg.SearchDistributorRingWaitTimeout,
-		searchRingRead:  newSearchRingReadOp(cfg.SearchRingExtendReplicaSet),
-		clientPool:      ringClientPool,
-		tracing:         tracer,
+		log:            log.New("index-server-distributor"),
+		ring:           ring,
+		searchRingRead: newSearchRingReadOp(cfg.SearchRingExtendReplicaSet),
+		clientPool:     ringClientPool,
+		tracing:        tracer,
 	}
 
 	srv := provider.GetServer()
 	resourcepb.RegisterResourceIndexServer(srv, s)
 	resourcepb.RegisterManagedObjectIndexServer(srv, s)
 	_, _ = grpcserver.ProvideReflectionService(cfg, provider)
-	s.BasicService = services.NewBasicService(s.starting, func(ctx context.Context) error {
+	s.BasicService = services.NewBasicService(nil, func(ctx context.Context) error {
 		ringWatcher := services.NewFailureWatcher()
 		ringWatcher.WatchService(s.ring)
 		defer ringWatcher.Close()
@@ -93,55 +92,16 @@ const RingNumTokens = 128
 
 type distributorServer struct {
 	*services.BasicService
-	clientPool      *ringclient.Pool
-	ring            *ring.Ring
-	ringWaitTimeout time.Duration
-	searchRingRead  ring.Operation
-	log             log.Logger
-	tracing         trace.Tracer
+	clientPool     *ringclient.Pool
+	ring           *ring.Ring
+	searchRingRead ring.Operation
+	log            log.Logger
+	tracing        trace.Tracer
 }
 
-func (ds *distributorServer) starting(ctx context.Context) error {
-	ringWatcher := services.NewFailureWatcher()
-	ringWatcher.WatchService(ds.ring)
-	defer ringWatcher.Close()
-
-	if err := ds.ringPopulated(); err == nil {
-		return nil
-	}
-
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
-
-	var timeout <-chan time.Time
-	if ds.ringWaitTimeout > 0 {
-		timer := time.NewTimer(ds.ringWaitTimeout)
-		defer timer.Stop()
-		timeout = timer.C
-	}
-
-	for {
-		select {
-		case err := <-ringWatcher.Chan():
-			return fmt.Errorf("ring failure while waiting for instances: %w", err)
-		case <-ticker.C:
-			if err := ds.ringPopulated(); err == nil {
-				return nil
-			}
-		case <-timeout:
-			if err := ds.ringPopulated(); err != nil {
-				return fmt.Errorf("timed out waiting for search server ring after %s: %w", ds.ringWaitTimeout, err)
-			}
-			return nil
-		case <-ctx.Done():
-			return nil
-		}
-	}
-}
-
-// Any ring entry proves that this distributor can read the shared ring state.
-// Requiring a healthy ACTIVE entry would keep distributors unready while search
-// servers build their indexes during normal startup and rollout.
+// Search servers register as JOINING and become ACTIVE only after building
+// their indexes. Requiring an ACTIVE entry would keep distributors unready
+// during a cold start or full search-server rollout.
 func (ds *distributorServer) ringPopulated() error {
 	if state := ds.ring.State(); state != services.Running {
 		return fmt.Errorf("ring is not running: state=%s", state)

@@ -235,7 +235,6 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.CACertPath = section.Key("ca_cert_path").String()
 	cfg.HttpsSkipVerify = section.Key("https_skip_verify").MustBool(false)
 	cfg.ResourceServerJoinRingTimeout = section.Key("resource_server_join_ring_timeout").MustDuration(10 * time.Second)
-	cfg.SearchDistributorRingWaitTimeout = section.Key("search_distributor_ring_wait_timeout").MustDuration(2 * time.Minute)
 
 	// quotas/limits config
 	cfg.OverridesFilePath = section.Key("overrides_path").String()

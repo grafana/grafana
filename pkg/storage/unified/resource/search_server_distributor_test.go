@@ -141,54 +141,6 @@ func TestDistributorCheckHealth(t *testing.T) {
 	}
 }
 
-func TestDistributorStartingWaitsForRing(t *testing.T) {
-	t.Run("ring already populated", func(t *testing.T) {
-		testRing, _ := newSearchRingForTest(t, 1, ring.ACTIVE)
-		ds := newDistributorServiceForTest(testRing, time.Second)
-
-		require.NoError(t, services.StartAndAwaitRunning(t.Context(), ds))
-		stopServiceForTest(t, ds)
-	})
-
-	t.Run("empty ring times out", func(t *testing.T) {
-		testRing, _ := newSearchRingWithDescForTest(t, 1, ring.NewDesc(), true)
-		ds := newDistributorServiceForTest(testRing, 20*time.Millisecond)
-
-		require.NoError(t, ds.StartAsync(t.Context()))
-		err := ds.AwaitRunning(t.Context())
-		require.ErrorContains(t, err, "timed out waiting for search server ring after 20ms")
-		require.Equal(t, services.Failed, ds.State())
-	})
-
-	t.Run("ring becomes populated", func(t *testing.T) {
-		testRing, store := newSearchRingWithDescForTest(t, 1, ring.NewDesc(), true)
-		ds := newDistributorServiceForTest(testRing, 5*time.Second)
-		desc := searchRingDescForTest(time.Now(), ring.JOINING)
-		updated := make(chan error, 1)
-
-		require.NoError(t, ds.StartAsync(t.Context()))
-		go func() {
-			time.Sleep(20 * time.Millisecond)
-			updated <- store.CAS(context.Background(), RingKey, func(interface{}) (interface{}, bool, error) {
-				return desc, false, nil
-			})
-		}()
-		require.NoError(t, ds.AwaitRunning(t.Context()))
-		require.NoError(t, <-updated)
-		stopServiceForTest(t, ds)
-	})
-
-	t.Run("zero timeout waits indefinitely", func(t *testing.T) {
-		testRing, _ := newSearchRingWithDescForTest(t, 1, ring.NewDesc(), true)
-		ds := newDistributorServiceForTest(testRing, 0)
-
-		require.NoError(t, ds.StartAsync(t.Context()))
-		require.Eventually(t, func() bool { return ds.State() == services.Starting }, time.Second, 10*time.Millisecond)
-		require.Never(t, func() bool { return ds.State() != services.Starting }, 100*time.Millisecond, 10*time.Millisecond)
-		stopServiceForTest(t, ds)
-	})
-}
-
 // VectorSearch must forward the incoming gRPC metadata (which carries the access
 // token) when distributing to a search instance. Dropping it makes the downstream
 // authenticator reject the call with "missing required token".
@@ -298,23 +250,4 @@ func searchRingDescForTest(heartbeat time.Time, states ...ring.InstanceState) *r
 		desc.AddIngester(id, id, "", []uint32{uint32((i + 1) * 100)}, state, heartbeat, false, time.Time{}, nil)
 	}
 	return desc
-}
-
-func newDistributorServiceForTest(testRing *ring.Ring, timeout time.Duration) *distributorServer {
-	ds := &distributorServer{
-		ring:            testRing,
-		ringWaitTimeout: timeout,
-	}
-	ds.BasicService = services.NewBasicService(ds.starting, func(ctx context.Context) error {
-		<-ctx.Done()
-		return nil
-	}, nil)
-	return ds
-}
-
-func stopServiceForTest(t *testing.T, service services.Service) {
-	t.Helper()
-	ctx, cancel := context.WithTimeout(context.WithoutCancel(t.Context()), time.Second)
-	defer cancel()
-	require.NoError(t, services.StopAndAwaitTerminated(ctx, service))
 }
