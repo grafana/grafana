@@ -5764,6 +5764,7 @@
     "edit-actions": {
       "add": "Lägg till {{typeName}}",
       "add-conditional-rule": "Lägg till regeln {{ruleDescription}}",
+      "collapse-all-rows": "",
       "dashboard-description": "Ändra instrumentpanelbeskrivning",
       "dashboard-title": "Ändra instrumentpaneltitel",
       "duplicate": "Dubblett av {{typeName}}",
@@ -5771,6 +5772,7 @@
       "edit-query-result-rule": "Ändra regel för frågeresultat",
       "edit-template-variable-rule": "Ändra regel för mallvariabel",
       "edit-time-range-rule": "Ändra regel för tidsintervall",
+      "expand-all-rows": "",
       "group-into-row": "Gruppera i rad",
       "group-into-tab": "Gruppera i flik",
       "move": "Flytta {{typeName}}",
@@ -5803,9 +5805,7 @@
       "add-library-panel-header": "Importera panel",
       "add-visualization-body": "Välj en datakälla och sedan en fråga och visualisera dina data med diagram, statistik och tabeller eller skapa listor, markdown-dokument och andra widgetar.",
       "add-visualization-button": "Lägg till visualisering",
-      "add-visualization-description": "",
       "add-visualization-header": "Starta din nya instrumentpanel genom att lägga till en visualisering",
-      "add-visualization-heading": "",
       "assistant-placeholder": "",
       "auto-grid": "Automatiskt rutnät",
       "auto-grid-description": "Paneler ändrar storlek för att passa ihop och bilda enhetliga rutnät",
@@ -5813,9 +5813,6 @@
       "custom-grid": "Anpassat rutnät",
       "custom-grid-description": "Placera och storleksanpassa varje panel var för sig",
       "description": "Lägg till en panel för att visualisera dina data",
-      "grid-auto": "",
-      "grid-custom": "",
-      "grid-label": "",
       "import-a-dashboard-body": "Importera instrumentpaneler från filer eller från <2>grafana.com</2>.",
       "import-a-dashboard-header": "Importera en instrumentpanel",
       "import-dashboard-button": "Importera instrumentpanel",
@@ -6143,9 +6140,7 @@
     "planning-banner": {
       "build": "",
       "dismiss": "",
-      "plan-label": "",
-      "panel-count_one": "",
-      "panel-count_other": ""
+      "preview-label": ""
     },
     "public-dashboard-not-available": {
       "does-not-exist": "Instrumentpanelen du försöker komma åt finns inte",
@@ -9434,6 +9429,7 @@
     "flag-value": "Flaggvärde",
     "menu": "Öppna meny",
     "new-flag": "new-flag-override",
+    "ofrep-evaluation": "",
     "save-flag": "Spara",
     "title": "Funktionskontroll"
   },
@@ -10681,6 +10677,7 @@
       "aria-label-sort-column": "Sortera kolumnen {{columnName}}",
       "expand-row-header": "Radutvidgare",
       "expand-row-tooltip": "Växla rad utökad",
+      "loading": "",
       "tooltip-collapse-all": "Dölj alla rader",
       "tooltip-expand-all": "Expandera alla rader"
     },
@@ -10775,6 +10772,9 @@
     "password-field": {
       "tooltip-hide": "Dölj lösenord",
       "tooltip-show": "Visa lösenord"
+    },
+    "query-field": {
+      "loading": ""
     },
     "query-input": {
       "loading": "Laddar redigerare"
@@ -10885,6 +10885,7 @@
         }
       },
       "inspect-drawer-title": "Inspektera värde",
+      "loading": "",
       "nested-table": {
         "expander-column-name": "Expandera kapslade rader",
         "no-data": "Inga data"
@@ -13687,10 +13688,15 @@
   },
   "playlist-page": {
     "card": {
-      "delete": "Radera spellista",
-      "edit": "Redigera spellista",
-      "start": "Starta spellista",
-      "tooltip": "Dela spellista"
+      "delete": "",
+      "delete-label": "",
+      "edit": "",
+      "edit-label": "",
+      "share": "",
+      "share-label": "",
+      "start": "",
+      "start-label": "",
+      "tooltip": ""
     },
     "create-button": {
       "title": "Ny spellista"
@@ -14843,6 +14849,15 @@
     },
     "repository-status": {
       "error": "Det gick inte att ladda lagringsplatsen"
+    },
+    "repository-status-alert": {
+      "deletion-title": "",
+      "error-title": "",
+      "force-delete-button": "",
+      "force-delete-cancel": "",
+      "force-delete-confirm": "",
+      "force-delete-title": "",
+      "force-delete-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "Tillbaka till lagringsplatserna",
@@ -16520,7 +16535,9 @@
     }
   },
   "swagger": {
-    "login": "Logga in"
+    "login": "Logga in",
+    "namespace-unavailable": "",
+    "namespace-unavailable-title": ""
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -17743,6 +17760,7 @@
     },
     "series-to-fields-transformer-editor": {
       "label-field": "Fält",
+      "label-keep-unjoined": "",
       "label-mode": "Läge",
       "modes": {
         "description": {
@@ -17755,7 +17773,8 @@
           "outer-tabular": "Yttre (tabell)",
           "outer-time-series": "Yttre (tidsserie)"
         }
-      }
+      },
+      "tooltip-keep-unjoined": ""
     },
     "series-to-rows-transformer-editor": {
       "description": {

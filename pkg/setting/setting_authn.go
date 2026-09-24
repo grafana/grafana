@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"gopkg.in/ini.v1"
 )
 
@@ -60,6 +61,17 @@ func readAdminSettings(iniFile *ini.File, cfg *Cfg) {
 		cfg.AdminEmail = cfg.AdminUser + "@localhost"
 	}
 	cfg.DisableInitAdminCreation = security.Key("disable_initial_admin_creation").MustBool(false)
+
+	users := iniFile.Section("users")
+	cfg.AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
+	cfg.AutoAssignOrgId = users.Key("auto_assign_org_id").MustInt(1)
+	cfg.AutoAssignOrgRole = users.Key("auto_assign_org_role").In(
+		string(identity.RoleViewer), []string{
+			string(identity.RoleNone),
+			string(identity.RoleViewer),
+			string(identity.RoleEditor),
+			string(identity.RoleAdmin),
+		})
 }
 
 func readSessionAuthSettings(iniFile *ini.File, cfg *Cfg) error {

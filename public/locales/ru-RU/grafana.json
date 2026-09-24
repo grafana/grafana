@@ -5850,6 +5850,7 @@
     "edit-actions": {
       "add": "Добавить {{typeName}}",
       "add-conditional-rule": "Добавить {{ruleDescription}} правило",
+      "collapse-all-rows": "",
       "dashboard-description": "Изменить описание дашборда",
       "dashboard-title": "Изменить заголовок дашборда",
       "duplicate": "Дублировать {{typeName}}",
@@ -5857,6 +5858,7 @@
       "edit-query-result-rule": "Изменить правило результата запроса",
       "edit-template-variable-rule": "Изменить правило переменной шаблона",
       "edit-time-range-rule": "Изменить правило временного диапазона",
+      "expand-all-rows": "",
       "group-into-row": "Группировать в строку",
       "group-into-tab": "Группировать во вкладку",
       "move": "Переместить {{typeName}}",
@@ -5889,9 +5891,7 @@
       "add-library-panel-header": "Импорт панели",
       "add-visualization-body": "Выберите источник данных, а затем запрашивайте и визуализируйте свои данные с помощью диаграмм, статистики и таблиц или создавайте списки, разметки и другие виджеты.",
       "add-visualization-button": "Добавить визуализацию",
-      "add-visualization-description": "",
       "add-visualization-header": "Создание нового дашборда с добавлением визуализации",
-      "add-visualization-heading": "",
       "assistant-placeholder": "",
       "auto-grid": "Автоматическая сетка",
       "auto-grid-description": "Размер панелей изменяется для создания однородной сетки",
@@ -5899,9 +5899,6 @@
       "custom-grid": "Пользовательская сетка",
       "custom-grid-description": "Задайте расположение и размер каждой отдельной панели",
       "description": "Добавьте панель для визуализации данных",
-      "grid-auto": "",
-      "grid-custom": "",
-      "grid-label": "",
       "import-a-dashboard-body": "Импортируйте дашборды из файлов или с <2>grafana.com</2>.",
       "import-a-dashboard-header": "Импорт дашборда",
       "import-dashboard-button": "Импорт дашборда",
@@ -6231,11 +6228,7 @@
     "planning-banner": {
       "build": "",
       "dismiss": "",
-      "plan-label": "",
-      "panel-count_one": "",
-      "panel-count_few": "",
-      "panel-count_many": "",
-      "panel-count_other": ""
+      "preview-label": ""
     },
     "public-dashboard-not-available": {
       "does-not-exist": "Страница, которую вы пытаетесь открыть, не существует",
@@ -9544,6 +9537,7 @@
     "flag-value": "Значение флага",
     "menu": "Открыть меню",
     "new-flag": "new-flag-override",
+    "ofrep-evaluation": "",
     "save-flag": "Сохранить",
     "title": "Управление функциями"
   },
@@ -10811,6 +10805,7 @@
       "aria-label-sort-column": "Сортировать столбец {{columnName}}",
       "expand-row-header": "Расширитель строк",
       "expand-row-tooltip": "Развернута строка переключения",
+      "loading": "",
       "tooltip-collapse-all": "Свернуть все строки",
       "tooltip-expand-all": "Развернуть все строки"
     },
@@ -10905,6 +10900,9 @@
     "password-field": {
       "tooltip-hide": "Скрыть пароль",
       "tooltip-show": "Показать пароль"
+    },
+    "query-field": {
+      "loading": ""
     },
     "query-input": {
       "loading": "Загрузка редактора"
@@ -11015,6 +11013,7 @@
         }
       },
       "inspect-drawer-title": "Проверить значение",
+      "loading": "",
       "nested-table": {
         "expander-column-name": "Развернуть вложенные строки",
         "no-data": "Нет данных"
@@ -13875,10 +13874,15 @@
   },
   "playlist-page": {
     "card": {
-      "delete": "Удалить плейлист",
-      "edit": "Редактировать плейлист",
-      "start": "Запустить плейлист",
-      "tooltip": "Общий доступ к плейлисту"
+      "delete": "",
+      "delete-label": "",
+      "edit": "",
+      "edit-label": "",
+      "share": "",
+      "share-label": "",
+      "start": "",
+      "start-label": "",
+      "tooltip": ""
     },
     "create-button": {
       "title": "Новый плейлист"
@@ -15067,6 +15071,15 @@
     },
     "repository-status": {
       "error": "Не удалось загрузить репозиторий"
+    },
+    "repository-status-alert": {
+      "deletion-title": "",
+      "error-title": "",
+      "force-delete-button": "",
+      "force-delete-cancel": "",
+      "force-delete-confirm": "",
+      "force-delete-title": "",
+      "force-delete-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "Назад к репозиториям",
@@ -16768,7 +16781,9 @@
     }
   },
   "swagger": {
-    "login": "Вход"
+    "login": "Вход",
+    "namespace-unavailable": "",
+    "namespace-unavailable-title": ""
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -17991,6 +18006,7 @@
     },
     "series-to-fields-transformer-editor": {
       "label-field": "Поле",
+      "label-keep-unjoined": "",
       "label-mode": "Режим",
       "modes": {
         "description": {
@@ -18003,7 +18019,8 @@
           "outer-tabular": "Внешнее (табличные данные)",
           "outer-time-series": "Внешнее (временные ряды)"
         }
-      }
+      },
+      "tooltip-keep-unjoined": ""
     },
     "series-to-rows-transformer-editor": {
       "description": {

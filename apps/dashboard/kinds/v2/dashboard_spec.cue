@@ -149,6 +149,8 @@ DataTopic: "series" | "annotations" | "alertStates" @cog(kind="enum",memberNames
 // Using transformations you can: rename fields, join time series data, perform mathematical operations across queries,
 // use the output of one transformation as the input to another transformation, etc.
 TransformationSpec: {
+	// Unique identifier of the instance of the transformer
+	refId?: string
 	// Disabled transformations are skipped
 	disabled?: bool
 	// Optional frame matcher. When missing it will be applied to all results

@@ -487,6 +487,7 @@ func (s *service) start(ctx context.Context) error {
 			Scheme:                s.scheme,
 			RESTOptionsGetter:     serverConfig.RESTOptionsGetter,
 			StorageClient:         s.unified,
+			SearchAPIEnabled:      searchAPIEnabled,
 			AccessClient:          s.accessClient,
 			AuthorizerRegistry:    s.authorizer,
 			BuildHandlerChainFunc: s.buildHandlerChainFuncFromBuilders(s.builders, builder.ServerRegisterer(s.metrics, builder.ServerAPIExtensions)),

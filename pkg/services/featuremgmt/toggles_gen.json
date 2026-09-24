@@ -4327,7 +4327,8 @@
       "metadata": {
         "name": "profilesExemplars",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-01-07T12:25:42Z"
+        "creationTimestamp": "2026-01-07T12:25:42Z",
+        "deletionTimestamp": "2026-09-16T07:06:39Z"
       },
       "spec": {
         "description": "Enables profiles exemplars support in profiles drilldown",

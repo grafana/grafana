@@ -1,9 +1,9 @@
-name: "Update Go Workspace for Dependabot PRs"
+name: "Update Go Workspace for Bot PRs"
 on:
   pull_request:
     branches: [main]
     paths:
-      - .github/workflows/pr-dependabot-update-go-workspace.yml
+      - .github/workflows/pr-bot-update-go-workspace.yml
       - go.mod
       - go.sum
       - go.work
@@ -19,7 +19,7 @@ jobs:
       # Pushes use the app token explicitly in the git push URL; GITHUB_TOKEN needs only OIDC for Vault.
       contents: read
       id-token: write
-    if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' && github.event.pull_request.head.repo.full_name == github.repository }}
+    if: ${{ github.event.pull_request.user.login == 'renovate-sh-app[bot]' && github.event.pull_request.head.repo.full_name == github.repository }}
     continue-on-error: true
     steps:
     - name: Get GitHub App token
