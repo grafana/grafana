@@ -19,12 +19,8 @@ import { RepoViewStatus } from 'app/features/provisioning/hooks/useGetResourceRe
 import { type DashboardDataDTO, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
-import {
-  NameAlreadyExistsError,
-  isNameExistsError,
-  isPluginDashboardError,
-  isVersionMismatchError,
-} from '../saving/shared';
+import { getSaveDashboardErrorInfo } from '../saving/saveErrors';
+import { SaveDashboardErrorAlert } from '../saving/shared';
 import { useSaveDashboard } from '../saving/useSaveDashboard';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
@@ -274,8 +270,10 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
   const styles = useStyles2(getStyles);
 
   function renderSaveButtonAndError(error?: Error, disabled = false) {
-    if (error && isSaving) {
-      if (isVersionMismatchError(error)) {
+    const errorInfo = isSaving ? getSaveDashboardErrorInfo(error) : undefined;
+
+    if (errorInfo) {
+      if (errorInfo.kind === 'version-mismatch') {
         return (
           <Alert
             title={t(
@@ -299,11 +297,7 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
         );
       }
 
-      if (isNameExistsError(error)) {
-        return <NameAlreadyExistsError />;
-      }
-
-      if (isPluginDashboardError(error)) {
+      if (errorInfo.kind === 'plugin-dashboard') {
         return (
           <Alert
             title={t(
@@ -326,19 +320,12 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
       }
     }
 
+    // Everything else, `already-exists` included, keeps the save button. The identifier can't be
+    // changed from this editor, so the "pick a different name or folder" alert would be
+    // unactionable advice that also removed the only way to retry.
     return (
       <>
-        {error && isSaving && (
-          <Alert
-            title={t(
-              'dashboard-scene.json-model-edit-view.render-save-button-and-error.title-failed-to-save-dashboard',
-              'Failed to save dashboard'
-            )}
-            severity="error"
-          >
-            <p>{error.message}</p>
-          </Alert>
-        )}
+        {errorInfo && <SaveDashboardErrorAlert info={errorInfo} />}
         <Stack alignItems="center">{saveButton(false, disabled)}</Stack>
       </>
     );
