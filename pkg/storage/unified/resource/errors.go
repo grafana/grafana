@@ -128,6 +128,7 @@ func ErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
 // own sanitization and logging rather than exposing internal error messages.
 // Unlike [ErrorFromResponse], recognized errors are replaced. Callers that need
 // the original error chain or gRPC retry classification must use that helper instead.
+// Different to [AsErrorResult] the [claims.ErrNamespaceMismatch] error is returned unchanged.
 func StatusErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
 	if err == nil {
 		return GetError(respErr)

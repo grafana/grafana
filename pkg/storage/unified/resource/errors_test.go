@@ -417,9 +417,27 @@ func TestStatusErrorFromResponse_MapsContextErrors(t *testing.T) {
 	}
 }
 
-func TestStatusErrorFromResponse_UnknownErrorIsPassedThrough(t *testing.T) {
-	baseErr := errors.New("unexpected failure")
-	err := StatusErrorFromResponse(nil, baseErr)
-
-	require.Equal(t, baseErr.Error(), err.Error())
+func TestStatusErrorFromResponse_Passthroughs(t *testing.T) {
+	cases := []struct {
+		name string
+		err  error
+	}{
+		{
+			name: "error",
+			err:  errors.New("error"),
+		},
+		{
+			name: "ErrNamespaceMismatch",
+			err:  claims.ErrNamespaceMismatch,
+		},
+		{
+			name: "wrapped",
+			err:  fmt.Errorf("wrapped: %w", errors.New("wrapped")),
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			require.ErrorIs(t, tc.err, StatusErrorFromResponse(nil, tc.err))
+		})
+	}
 }
