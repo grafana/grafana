@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc"
 
 	"github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -21,7 +20,7 @@ func TestValidateOnCreate(t *testing.T) {
 		name          string
 		user          *iamv0alpha1.User
 		requester     *identity.StaticRequester
-		searchClient  resourcepb.ResourceIndexClient
+		searchClient  SearchBackend
 		expectError   bool
 		errorContains string
 	}{
@@ -37,7 +36,7 @@ func TestValidateOnCreate(t *testing.T) {
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: true,
 			},
-			searchClient: &FakeUserLegacySearchClient{},
+			searchClient: &fakeSearchBackend{},
 			expectError:  false,
 		},
 		{
@@ -53,7 +52,7 @@ func TestValidateOnCreate(t *testing.T) {
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: true,
 			},
-			searchClient: &FakeUserLegacySearchClient{},
+			searchClient: &fakeSearchBackend{},
 			expectError:  false,
 		},
 		{
@@ -69,7 +68,7 @@ func TestValidateOnCreate(t *testing.T) {
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: false,
 			},
-			searchClient:  &FakeUserLegacySearchClient{},
+			searchClient:  &fakeSearchBackend{},
 			expectError:   true,
 			errorContains: "only grafana admins can create grafana admins",
 		},
@@ -84,7 +83,7 @@ func TestValidateOnCreate(t *testing.T) {
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: false,
 			},
-			searchClient:  &FakeUserLegacySearchClient{},
+			searchClient:  &fakeSearchBackend{},
 			expectError:   true,
 			errorContains: "user must have either login or email",
 		},
@@ -101,7 +100,7 @@ func TestValidateOnCreate(t *testing.T) {
 				IsGrafanaAdmin: false,
 				OrgRole:        "Viewer",
 			},
-			searchClient: &FakeUserLegacySearchClient{},
+			searchClient: &fakeSearchBackend{},
 			expectError:  false,
 		},
 		{
@@ -117,7 +116,7 @@ func TestValidateOnCreate(t *testing.T) {
 				IsGrafanaAdmin: false,
 				OrgRole:        "Viewer",
 			},
-			searchClient: &FakeUserLegacySearchClient{},
+			searchClient: &fakeSearchBackend{},
 			expectError:  false,
 		},
 		{
@@ -131,7 +130,7 @@ func TestValidateOnCreate(t *testing.T) {
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: false,
 			},
-			searchClient:  &FakeUserLegacySearchClient{},
+			searchClient:  &fakeSearchBackend{},
 			expectError:   true,
 			errorContains: "role is required",
 		},
@@ -147,7 +146,7 @@ func TestValidateOnCreate(t *testing.T) {
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: false,
 			},
-			searchClient:  &FakeUserLegacySearchClient{},
+			searchClient:  &fakeSearchBackend{},
 			expectError:   true,
 			errorContains: "invalid role 'InvalidRole'",
 		},
@@ -163,7 +162,7 @@ func TestValidateOnCreate(t *testing.T) {
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: true,
 			},
-			searchClient: &FakeUserLegacySearchClient{},
+			searchClient: &fakeSearchBackend{},
 			expectError:  false,
 		},
 		{
@@ -179,7 +178,7 @@ func TestValidateOnCreate(t *testing.T) {
 				IsGrafanaAdmin: false,
 				OrgRole:        "Editor",
 			},
-			searchClient:  &FakeUserLegacySearchClient{},
+			searchClient:  &fakeSearchBackend{},
 			expectError:   true,
 			errorContains: "cannot assign a role higher than user's role",
 		},
@@ -196,7 +195,7 @@ func TestValidateOnCreate(t *testing.T) {
 				IsGrafanaAdmin: false,
 				OrgRole:        "Editor",
 			},
-			searchClient: &FakeUserLegacySearchClient{},
+			searchClient: &fakeSearchBackend{},
 			expectError:  false,
 		},
 		{
@@ -215,7 +214,7 @@ func TestValidateOnCreate(t *testing.T) {
 				IsGrafanaAdmin: false,
 				OrgRole:        "Viewer",
 			},
-			searchClient: &FakeUserLegacySearchClient{
+			searchClient: &fakeSearchBackend{
 				Users: []*org.OrgUserDTO{
 					{Email: "existing@example"},
 				},
@@ -240,7 +239,7 @@ func TestValidateOnCreate(t *testing.T) {
 				IsGrafanaAdmin: false,
 				OrgRole:        "Viewer",
 			},
-			searchClient: &FakeUserLegacySearchClient{
+			searchClient: &fakeSearchBackend{
 				Users: []*org.OrgUserDTO{
 					{Login: "existinguser"},
 				},
@@ -257,7 +256,7 @@ func TestValidateOnCreate(t *testing.T) {
 				tt.requester,
 			)
 
-			err := ValidateOnCreate(ctx, tt.searchClient, tt.user)
+			err := ValidateOnCreate(ctx, selectorForBackend(tt.searchClient), tt.user)
 
 			if tt.expectError {
 				require.Error(t, err)
@@ -272,34 +271,31 @@ func TestValidateOnCreate(t *testing.T) {
 }
 
 func TestValidateEmailFieldValueResults(t *testing.T) {
-	var request *resourcepb.ResourceSearchRequest
-	client := &FakeUserLegacySearchClient{SearchFunc: func(_ context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
-		request = req
-		return &resourcepb.ResourceSearchResponse{
-			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
-			TotalHits:    1,
-			Rows: []*resourcepb.ResourceSearchRow{{
-				Key: &resourcepb.ResourceKey{Name: "user-1"},
-			}},
-		}, nil
-	}}
+	index := &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		TotalHits:    1,
+		Rows: []*resourcepb.ResourceSearchRow{{
+			Key: &resourcepb.ResourceKey{Name: "user-1"},
+		}},
+	}}}
+	client := NewUnifiedSearchClient(index, nil)
 
 	require.NoError(t, validateEmail(t.Context(), client, "stacks-1", "user-1", "user@example.com"))
+	request := index.LastSearchRequest
 	require.NotNil(t, request)
 	require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, request.ResultFormat)
 	require.Equal(t, []string{resource.SEARCH_FIELD_NAME}, request.Fields)
 }
 
 func TestValidateLoginFieldValueResults(t *testing.T) {
-	client := &FakeUserLegacySearchClient{SearchFunc: func(_ context.Context, _ *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
-		return &resourcepb.ResourceSearchResponse{
-			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
-			TotalHits:    1,
-			Rows: []*resourcepb.ResourceSearchRow{{
-				Key: &resourcepb.ResourceKey{Name: "another-user"},
-			}},
-		}, nil
-	}}
+	index := &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		TotalHits:    1,
+		Rows: []*resourcepb.ResourceSearchRow{{
+			Key: &resourcepb.ResourceKey{Name: "another-user"},
+		}},
+	}}}
+	client := NewUnifiedSearchClient(index, nil)
 
 	err := validateLogin(t.Context(), client, "stacks-1", "user-1", "taken")
 	require.ErrorContains(t, err, "login 'taken' is already taken")
@@ -311,7 +307,7 @@ func TestValidateOnUpdate(t *testing.T) {
 		oldUser       *iamv0alpha1.User
 		newUser       *iamv0alpha1.User
 		requester     *identity.StaticRequester
-		searchClient  resourcepb.ResourceIndexClient
+		searchClient  SearchBackend
 		expectError   bool
 		errorContains string
 	}{
@@ -396,7 +392,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			requester: &identity.StaticRequester{
 				Type: types.TypeAccessPolicy,
 			},
-			searchClient: &FakeUserLegacySearchClient{},
+			searchClient: &fakeSearchBackend{},
 			expectError:  false,
 		},
 		{
@@ -410,7 +406,7 @@ func TestValidateOnUpdate(t *testing.T) {
 			requester: &identity.StaticRequester{
 				Type: types.TypeAccessPolicy,
 			},
-			searchClient: &FakeUserLegacySearchClient{},
+			searchClient: &fakeSearchBackend{},
 			expectError:  false,
 		},
 		{
@@ -635,7 +631,7 @@ func TestValidateOnUpdate(t *testing.T) {
 				Type:           types.TypeAccessPolicy,
 				IsGrafanaAdmin: true,
 			},
-			searchClient: &FakeUserLegacySearchClient{
+			searchClient: &fakeSearchBackend{
 				Users: []*org.OrgUserDTO{
 					{Email: "two@example"},
 				},
@@ -661,7 +657,7 @@ func TestValidateOnUpdate(t *testing.T) {
 				Type:           types.TypeAccessPolicy,
 				IsGrafanaAdmin: true,
 			},
-			searchClient: &FakeUserLegacySearchClient{
+			searchClient: &fakeSearchBackend{
 				Users: []*org.OrgUserDTO{
 					{Name: "other", UID: "uid456", Login: "two"},
 				},
@@ -681,7 +677,7 @@ func TestValidateOnUpdate(t *testing.T) {
 				Type:           types.TypeUser,
 				IsGrafanaAdmin: true,
 			},
-			searchClient: &FakeUserLegacySearchClient{
+			searchClient: &fakeSearchBackend{
 				Users: []*org.OrgUserDTO{
 					{Login: "testuser", Email: "test@example"},
 				},
@@ -697,7 +693,7 @@ func TestValidateOnUpdate(t *testing.T) {
 				tt.requester,
 			)
 
-			err := ValidateOnUpdate(ctx, tt.searchClient, tt.oldUser, tt.newUser)
+			err := ValidateOnUpdate(ctx, selectorForBackend(tt.searchClient), tt.oldUser, tt.newUser)
 
 			if tt.expectError {
 				require.Error(t, err)

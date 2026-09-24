@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -169,7 +170,7 @@ func setupDB(b testing.TB) benchScenario {
 
 	quotaService := quotatest.New(false, nil)
 
-	teamSvc, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(db), cfg, tracing.InitializeTracerForTest(), nil)
+	teamSvc, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(db), cfg, tracing.InitializeTracerForTest(), nil, iam.Features{})
 	require.NoError(b, err)
 	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(db), cfg, quotaService)
 	require.NoError(b, err)

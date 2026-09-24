@@ -12,13 +12,17 @@ import {
   Combobox,
   type ComboboxOption,
   Field,
+  Icon,
   Input,
   RadioButtonGroup,
   Stack,
   Text,
+  Tooltip,
   useStyles2,
 } from '@grafana/ui';
 import { CodeMirrorEditor } from '@grafana/ui/unstable';
+
+type OFREPEvaluationResult = ReturnType<typeof getOFREPWebProvider>['flagCache'][string];
 
 const compare = new Intl.Collator('en', { sensitivity: 'base', numeric: true }).compare;
 
@@ -78,6 +82,18 @@ const getBadgeColor = (value: string): BadgeColor => {
   }
 };
 
+const getEvaluationValueText = (value: unknown): string => {
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (typeof value === 'object' && value !== null) {
+    return JSON.stringify(value);
+  }
+
+  return String(value);
+};
+
 const FeatureControlKey = ({ value, onChange }: { value: string; onChange: (value: string) => void }) => {
   const [keys, setKeys] = useState<Array<ComboboxOption<string>>>([]);
   const id = useId();
@@ -116,6 +132,59 @@ const FeatureControlKey = ({ value, onChange }: { value: string; onChange: (valu
         createCustomValue
       />
     </Field>
+  );
+};
+
+const FeatureControlOFREP = ({ value }: { value: string }) => {
+  const styles = useStyles2(getStyles);
+  const [result, setResult] = useState<OFREPEvaluationResult>();
+
+  useEffect(() => {
+    const loadResult = () => {
+      setResult(getOFREPWebProvider().flagCache[value]);
+    };
+    loadResult();
+
+    getOFREPWebProvider().events.addHandler(ClientProviderEvents.ConfigurationChanged, loadResult);
+    return () => {
+      getOFREPWebProvider().events.removeHandler(ClientProviderEvents.ConfigurationChanged, loadResult);
+    };
+  }, [value]);
+
+  if (!result) {
+    return null;
+  }
+
+  const hasError = 'errorCode' in result;
+  const badgeText = hasError ? (result.errorCode ?? 'Error') : getEvaluationValueText(result.value);
+  const badgeColor = hasError ? 'red' : getBadgeColor(badgeText);
+  const reason = hasError ? result.errorDetails : result.reason;
+
+  return (
+    <Stack direction="row" gap={1} alignItems="center">
+      <Text color="secondary" variant="bodySmall">
+        <Stack direction="row" gap={0.5} alignItems="center">
+          <Trans i18nKey="feature-control.ofrep-evaluation">OFREP evaluation</Trans>
+          {reason && (
+            <Tooltip content={reason}>
+              <Icon name="info-circle" size="sm" />
+            </Tooltip>
+          )}
+        </Stack>
+      </Text>
+
+      <div className={styles.line} />
+
+      <Badge
+        color={badgeColor}
+        text={
+          <Text variant="code" truncate>
+            {getBadgeText(badgeText)}
+          </Text>
+        }
+        tooltip={getBadgeText(badgeText) === badgeText ? undefined : <Text variant="code">{badgeText}</Text>}
+      />
+    </Stack>
   );
 };
 
@@ -185,12 +254,13 @@ export const FeatureControlFlag = ({ flag }: FeatureControlFlagProps) => {
   return (
     <details ref={ref} className={styles.details}>
       <summary onClick={reset}>
-        <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
+        <Stack direction="row" gap={1} alignItems="center">
           {flag ? (
             <>
               <Text variant="code" truncate>
                 {flag.key}
               </Text>
+              <div className={styles.line} />
               <Badge
                 color={getBadgeColor(flag.value)}
                 text={
@@ -205,6 +275,7 @@ export const FeatureControlFlag = ({ flag }: FeatureControlFlagProps) => {
               <Text variant="code" color="secondary" truncate>
                 <Trans i18nKey="feature-control.new-flag">new-flag-override</Trans>
               </Text>
+              <div className={styles.line} />
               <Badge icon="plus" color="darkgrey" />
             </>
           )}
@@ -212,17 +283,8 @@ export const FeatureControlFlag = ({ flag }: FeatureControlFlagProps) => {
       </summary>
 
       <div className={styles.fields}>
-        {flag ? (
-          <Field noMargin disabled>
-            <Input
-              value={key}
-              aria-label={t('feature-control.flag-key', 'Flag key')}
-              placeholder={t('feature-control.flag-key-placeholder', 'my-component.my-flag')}
-            />
-          </Field>
-        ) : (
-          <FeatureControlKey value={key} onChange={setKey} />
-        )}
+        {!flag && <FeatureControlKey value={key} onChange={setKey} />}
+        {key && <FeatureControlOFREP value={key} />}
 
         <Stack direction="row" gap={1} alignItems="center">
           <Field
@@ -363,5 +425,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
       fontFamily: theme.typography.code.fontFamily,
       fontSize: theme.typography.code.fontSize,
     },
+  }),
+  line: css({
+    flex: 1,
+    height: '1px',
+    backgroundColor: theme.colors.border.medium,
   }),
 });

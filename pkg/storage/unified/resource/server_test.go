@@ -1345,8 +1345,9 @@ func TestGracefulShutdown(t *testing.T) {
 // mockWatchServer implements resourcepb.ResourceStore_WatchServer for testing.
 type mockWatchServer struct {
 	grpc.ServerStream
-	ctx    context.Context
-	events chan *resourcepb.WatchEvent
+	ctx       context.Context
+	events    chan *resourcepb.WatchEvent
+	sendDelay time.Duration
 }
 
 func newMockWatchServer(ctx context.Context) *mockWatchServer {
@@ -1357,6 +1358,13 @@ func newMockWatchServer(ctx context.Context) *mockWatchServer {
 }
 
 func (m *mockWatchServer) Send(evt *resourcepb.WatchEvent) error {
+	if m.sendDelay > 0 {
+		select {
+		case <-m.ctx.Done():
+			return m.ctx.Err()
+		case <-time.After(m.sendDelay):
+		}
+	}
 	select {
 	case <-m.ctx.Done():
 		return m.ctx.Err()
@@ -1417,6 +1425,7 @@ type watchTestServerOpts struct {
 	BookmarkFrequency time.Duration
 	StorageMetrics    *StorageMetrics
 	AccessClient      authlib.AccessClient
+	NatsWatchMaxAge   time.Duration
 }
 
 func newWatchTestServer(t *testing.T, opts watchTestServerOpts) *server {
@@ -1438,6 +1447,7 @@ func newWatchTestServer(t *testing.T, opts watchTestServerOpts) *server {
 		BookmarkFrequency: opts.BookmarkFrequency,
 		StorageMetrics:    opts.StorageMetrics,
 		AccessClient:      opts.AccessClient,
+		NatsWatchMaxAge:   opts.NatsWatchMaxAge,
 	})
 	require.NoError(t, err)
 	t.Cleanup(func() {
@@ -2165,6 +2175,87 @@ func TestWatchTerminationErrors(t *testing.T) {
 	})
 }
 
+func TestWatchExpiryGeneration(t *testing.T) {
+	expiry := newWatchExpiry()
+	first := expiry.current()
+	second := expiry.current()
+	require.Equal(t, first, second)
+
+	expiry.expire()
+
+	for _, generation := range []<-chan struct{}{first, second} {
+		select {
+		case <-generation:
+		default:
+			t.Fatal("old generation is still active")
+		}
+	}
+	select {
+	case <-expiry.current():
+		t.Fatal("new generation is already expired")
+	default:
+	}
+}
+
+func TestWatchMaxAgeExpiry(t *testing.T) {
+	testUser := newWatchTestUser()
+
+	watchReq := &resourcepb.WatchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Group:    watchTestGroup,
+				Resource: watchTestResource,
+			},
+		},
+	}
+
+	t.Run("expires the stream with a typed 410/Expired status", func(t *testing.T) {
+		srv := newWatchTestServer(t, watchTestServerOpts{NatsWatchMaxAge: 20 * time.Millisecond})
+		ctx := authlib.WithAuthInfo(t.Context(), testUser)
+		mock := newMockWatchServer(ctx)
+
+		errCh := make(chan error, 1)
+		go func() { errCh <- srv.Watch(watchReq, mock) }()
+
+		select {
+		case err := <-errCh:
+			require.Error(t, err)
+			require.True(t, IsResourceVersionExpired(err), "expected a 410/Expired error, got: %v", err)
+		case <-time.After(5 * time.Second):
+			t.Fatal("watch did not expire within the max age")
+		}
+	})
+
+	t.Run("does not expire when max age is unset", func(t *testing.T) {
+		srv := newWatchTestServer(t, watchTestServerOpts{})
+		ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), testUser))
+		defer cancel()
+		mock := newMockWatchServer(ctx)
+
+		errCh := make(chan error, 1)
+		go func() { errCh <- srv.Watch(watchReq, mock) }()
+
+		select {
+		case err := <-errCh:
+			t.Fatalf("watch returned unexpectedly: %v", err)
+		case <-time.After(200 * time.Millisecond):
+		}
+		cancel()
+		require.NoError(t, <-errCh)
+	})
+}
+
+func TestJitteredWatchMaxAge(t *testing.T) {
+	base := 5 * time.Minute
+	lower := time.Duration(float64(base) * (1 - natsWatchMaxAgeJitterFraction))
+	upper := time.Duration(float64(base) * (1 + natsWatchMaxAgeJitterFraction))
+	for i := 0; i < 1000; i++ {
+		got := jitteredWatchMaxAge(t.Context(), base)
+		require.GreaterOrEqual(t, got, lower)
+		require.LessOrEqual(t, got, upper)
+	}
+}
+
 // TestWatchEventMetricsWithSinceRV makes sure that we don't emit watch delay metrics when replaying
 // cached events for clients that start watching from old RVs. The metric should only be reporting
 // data for events emitted after the Watch is setup.
@@ -2187,8 +2278,11 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 	// populated by the time we subscribe.
 	requireMetricEventually(t, metrics.Broadcaster.EventsReceivedTotal.WithLabelValues(watchTestResource), 2)
 
-	// Start a watch with a tiny Since RV.
+	// Start a watch with a tiny Since RV. Delay each Send so the component
+	// metrics can prove that transport scheduling time is separated from the
+	// upstream commit-to-send-start latency.
 	mock := newMockWatchServer(ctx)
+	mock.sendDelay = 20 * time.Millisecond
 	var eg errgroup.Group
 	eg.Go(func() error {
 		return srv.Watch(&resourcepb.WatchRequest{
@@ -2228,12 +2322,58 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 	// observing them inflates the histogram with the time elapsed since they
 	// were originally written, not the actual reaction time of this watcher.
 	// Only the post-subscription event should be counted.
-	obs, err := metrics.WatchEventLatency.GetMetricWithLabelValues(watchTestGroup, watchTestResource)
+	readHistogram := func(observer prometheus.Observer) *dto.Histogram {
+		t.Helper()
+		m := &dto.Metric{}
+		require.NoError(t, observer.(prometheus.Metric).Write(m))
+		return m.Histogram
+	}
+	watchLatency, err := metrics.WatchEventLatency.GetMetricWithLabelValues(watchTestGroup, watchTestResource)
 	require.NoError(t, err)
-	m := &dto.Metric{}
-	require.NoError(t, obs.(prometheus.Metric).Write(m))
-	require.Equal(t, uint64(1), m.Histogram.GetSampleCount(),
-		"WatchEventLatency should only observe events that arrived after the subscription started")
+	readyLatency, err := metrics.WatchEventReadyLatency.GetMetricWithLabelValues(watchTestGroup, watchTestResource)
+	require.NoError(t, err)
+	sendDuration, err := metrics.WatchEventSendDuration.GetMetricWithLabelValues(watchTestGroup, watchTestResource)
+	require.NoError(t, err)
+
+	total := readHistogram(watchLatency)
+	ready := readHistogram(readyLatency)
+	send := readHistogram(sendDuration)
+	for name, histogram := range map[string]*dto.Histogram{"total": total, "ready": ready, "send": send} {
+		require.Equal(t, uint64(1), histogram.GetSampleCount(),
+			"%s metric should only observe events that arrived after the subscription started", name)
+	}
+	assert.GreaterOrEqual(t, send.GetSampleSum(), 15*time.Millisecond.Seconds(),
+		"send duration must capture transport scheduling time")
+	assert.InDelta(t, total.GetSampleSum(), ready.GetSampleSum()+send.GetSampleSum(), 0.01,
+		"total watch latency should comprise upstream ready latency plus send duration")
+}
+
+func TestWatchEventMetricsDropClockSkewedSample(t *testing.T) {
+	metrics := ProvideStorageMetrics(prometheus.NewPedanticRegistry())
+	sendStartedAt := time.Now()
+
+	// The resource version timestamp is ahead of send start, but the delayed send
+	// ends after it. Recording total and send while dropping ready would give the three
+	// histograms different event populations.
+	metrics.observeWatchEvent(
+		watchTestGroup,
+		watchTestResource,
+		sendStartedAt.Add(5*time.Millisecond),
+		sendStartedAt,
+		sendStartedAt.Add(10*time.Millisecond),
+	)
+
+	for name, collector := range map[string]*prometheus.HistogramVec{
+		"total": metrics.WatchEventLatency,
+		"ready": metrics.WatchEventReadyLatency,
+		"send":  metrics.WatchEventSendDuration,
+	} {
+		observer, err := collector.GetMetricWithLabelValues(watchTestGroup, watchTestResource)
+		require.NoError(t, err)
+		metric := &dto.Metric{}
+		require.NoError(t, observer.(prometheus.Metric).Write(metric))
+		assert.Zero(t, metric.GetHistogram().GetSampleCount(), "%s must drop the clock-skewed event", name)
+	}
 }
 
 // TestWatchInitialEventsRespectsItemChecker tests that checker is used for

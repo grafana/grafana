@@ -23,8 +23,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
-var ofClient = openfeature.NewDefaultClient()
-
 // swagger:route POST /teams teams createTeam
 //
 // Add Team.
@@ -62,7 +60,7 @@ func (tapi *TeamAPI) createTeam(c *contextmodel.ReqContext) response.Response {
 		userID, _ := c.GetInternalID()
 		ctx := c.Req.Context()
 		// K8s-stored teams have t.ID=0, so route the write by UID.
-		if ofClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, openfeature.TransactionContext(ctx)) {
+		if tapi.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, openfeature.TransactionContext(ctx)) {
 			if err := tapi.addCreatorAsAdminViaK8s(c, t.UID, userID); err != nil {
 				c.Logger.Error("Could not add creator to team", "error", err)
 			}
@@ -149,9 +147,8 @@ func (tapi *TeamAPI) deleteTeamByID(c *contextmodel.ReqContext) response.Respons
 	}
 
 	ctx := c.Req.Context()
-	txCtx := openfeature.TransactionContext(ctx)
-	redirectsToK8s := ofClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, txCtx) &&
-		ofClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersApi, false, txCtx)
+	redirectsToK8s := tapi.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, openfeature.TransactionContext(ctx)) &&
+		tapi.usersAPIEnabled()
 	if !redirectsToK8s {
 		teamUID, errResp := tapi.resolveTeamUID(c, teamID)
 		if errResp != nil {

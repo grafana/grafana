@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useMemo, useRef, useState, type FocusEvent, type FormEvent } from 'react';
+import { useMemo, useState, type FocusEvent, type FormEvent } from 'react';
 
 import {
   type DataFrame,
@@ -86,47 +86,42 @@ export function FilterByNameTransformerEditor({ input, options, onChange }: Filt
     []
   );
 
+  // Key on the names, not the input: upstream transformations send a new input array on every
+  // options change. Sorted so a reorder alone does not count as new names.
+  const fieldNamesKey = JSON.stringify(fieldNames.map((n) => n.name).sort());
+  const optionsKey = JSON.stringify(options);
+
   // The options this editor last sent. When they come back, local state already matches them, and
-  // re-seeding would turn "no fields selected" (saved as an empty include) back into "all fields selected".
-  const sentOptionsKey = useRef<string | undefined>(undefined);
+  // resetting would turn "no fields selected" (saved as an empty include) back into "all fields selected".
+  const [sentOptionsKey, setSentOptionsKey] = useState<string>();
   const sendOptions = (nextOptions: FilterFieldsByNameTransformerOptions) => {
-    sentOptionsKey.current = JSON.stringify(nextOptions);
+    setSentOptionsKey(JSON.stringify(nextOptions));
     onChange(nextOptions);
   };
 
-  // Read at the point the effects below run rather than subscribing to it: re-seeding on every render
-  // would discard in-progress edits, such as a regex that is not yet valid.
-  const reseed = useEffectEvent(() => {
-    setSelected(getSelectedNames(fieldNames, options));
-    setByVariable(options.byVariable || false);
-    setVariable(options.include?.variable);
-    setRegex(options.include?.pattern);
-  });
+  // New field names reset the state. So do options this editor did not send, such as another
+  // transformation's after the list is reordered: the panel editor keys rows by position, so this
+  // instance stays mounted. The regex only resets when its saved pattern changes, so an unrelated
+  // options change keeps an in-progress regex that is not yet valid.
+  const [prev, setPrev] = useState({ fieldNamesKey, optionsKey, pattern: options.include?.pattern });
+  if (prev.fieldNamesKey !== fieldNamesKey || prev.optionsKey !== optionsKey) {
+    const isNewFieldNames = prev.fieldNamesKey !== fieldNamesKey;
+    const isNewOptions = prev.optionsKey !== optionsKey && optionsKey !== sentOptionsKey;
 
-  // New field names mean the selection has to be derived again. Key on the names, not the input:
-  // upstream transformations send a new input array on every options change. Sorted so a reorder
-  // alone does not count as new names.
-  const fieldNamesKey = JSON.stringify(fieldNames.map((n) => n.name).sort());
-
-  useEffect(() => {
-    reseed();
-    // eslint-plugin-react-hooks only recognises effect events from 7.1.1
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fieldNamesKey]);
-
-  // Options this editor did not send, such as another transformation's after the list is reordered,
-  // replace the local state. The panel editor keys rows by position, so this instance stays mounted.
-  const optionsKey = JSON.stringify(options);
-
-  useEffect(() => {
-    const isEcho = optionsKey === sentOptionsKey.current;
-    sentOptionsKey.current = undefined;
-
-    if (!isEcho) {
-      reseed();
+    setPrev({ fieldNamesKey, optionsKey, pattern: options.include?.pattern });
+    if (prev.optionsKey !== optionsKey) {
+      setSentOptionsKey(undefined);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [optionsKey]);
+
+    if (isNewFieldNames || isNewOptions) {
+      setSelected(getSelectedNames(fieldNames, options));
+      setByVariable(options.byVariable || false);
+      setVariable(options.include?.variable);
+    }
+    if (isNewFieldNames || (isNewOptions && prev.pattern !== options.include?.pattern)) {
+      setRegex(options.include?.pattern);
+    }
+  }
 
   const onSelectionChange = (nextSelected: string[]) => {
     const nextOptions: FilterFieldsByNameTransformerOptions = {

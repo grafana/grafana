@@ -681,7 +681,7 @@ var (
 			Name:        "dashboardUndoRedo",
 			Description: "Enables undo/redo in dynamic dashboards",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
 		},
@@ -809,7 +809,7 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 		},
 		{
 			Name:        "secretsKeeperUI",
@@ -988,8 +988,8 @@ var (
 			Description: "Enables Saved queries (query library) feature",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Expression:  "true", // enabled by default
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
+			Expression:  "true",                                                      // enabled by default
 		},
 		{
 			Name:        "grafana.savedQueriesPage",
@@ -1012,8 +1012,8 @@ var (
 			Description: "Enables Saved queries (query library) RBAC permissions",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Expression:  "true", // enabled by default
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
+			Expression:  "true",                                                      // enabled by default
 		},
 		{
 			Name:        "newSavedQueriesExperience",
@@ -1100,7 +1100,7 @@ var (
 			Description: "Enables the new Alerting navigation structure with improved menu grouping",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaAlertingSquad,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Expression:  "true",
 		},
 
@@ -1334,7 +1334,7 @@ var (
 			Owner:           grafanaCatalogSquad,
 			RequiresRestart: true,
 			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:        Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 		},
 		{
 			Name:        "enableSCIM",
@@ -1627,8 +1627,8 @@ var (
 			Description: "Enables the alert rule restore feature",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaAlertingSquad,
-			Expression:  "true", // enabled by default
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Expression:  "true",                                                      // enabled by default
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 		},
 		{
 			Name:        "infinityRunQueriesInParallel",
@@ -1690,7 +1690,7 @@ var (
 		{
 			Name:         "alertingRuleRecoverDeleted",
 			Description:  "Enables the UI functionality to recover and view deleted alert rules",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true}, // changes navtree from the backend
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // changes navtree from the backend
 			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
@@ -1915,15 +1915,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "alertingDisableDMAinUI",
-			Description:  "Disables the DMA feature in the UI",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "preferLibraryPanelTitle",
 			Description: "Prefer library panel title over viz panel title.",
 			Stage:       FeatureStagePrivatePreview,
@@ -2061,7 +2052,7 @@ var (
 			Name:         "alertingTriage",
 			Description:  "Enables the alerting triage feature",
 			Stage:        FeatureStageExperimental,
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true}, // changes navtree in backend
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // changes navtree in backend
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
 			Expression:   "false",
@@ -2295,14 +2286,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:        grafanaOperatorExperienceSquad,
 			Expression:   "false",
-		},
-		{
-			Name:        "profilesExemplars",
-			Description: "Enables profiles exemplars support in profiles drilldown",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaObservabilityTracesAndProfilingSquad,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "pyroscopeUTF8LabelNames",
@@ -2588,14 +2571,6 @@ var (
 			RequiresRestart: true,
 			Expression:      "false",
 			Generate:        Generate{LegacyGo: true},
-		},
-		{
-			Name:        "react19",
-			Description: "Whether to use the new React 19 runtime",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "true",
 		},
 		{
 			Name:         "managedPluginsV2",
@@ -2895,11 +2870,10 @@ var (
 		},
 		{
 			Name:            "alerting.syncExternalAlertmanager",
-			Description:     "Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana",
-			Stage:           FeatureStageExperimental,
+			Description:     "Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source",
+			Stage:           FeatureStagePrivatePreview,
 			Generate:        Generate{Go: true, React: true, LegacyFrontend: true},
 			Owner:           grafanaAlertingSquad,
-			HideFromDocs:    true,
 			RequiresRestart: true,
 			Expression:      "false",
 		},

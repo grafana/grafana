@@ -2159,7 +2159,7 @@ func TestApiGetSnapshots(t *testing.T) {
 	cfg := policy_exports.Config()
 
 	// Route
-	cfg.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(cfg.AlertmanagerConfig.Route, cfg.ManagedRoutes)
+	cfg.AlertmanagerConfig.Route = v1.RouteToModel(legacy_storage.WithManagedRoutes(cfg))
 
 	// Templates
 	t1 := v1.NewTemplateGroup("", "templateA", "{{ define \"templateA\" }}A{{ end }}", v1.TemplateKindGrafana, models.ProvenanceAPI)
