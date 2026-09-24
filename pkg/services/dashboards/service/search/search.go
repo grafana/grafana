@@ -87,7 +87,7 @@ func SearchAll(ctx context.Context, orgID int64, request *resourcepb.ResourceSea
 	request.Offset = int64(0)
 
 	res, err := searchFn(ctx, orgID, request)
-	if err := resource.ErrorFromResponse(res.GetError(), err); err != nil {
+	if err != nil {
 		return v0alpha1.SearchResults{}, err
 	}
 	results, err := ParseResults(res, 0)

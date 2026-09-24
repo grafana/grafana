@@ -2146,7 +2146,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	}
 
 	res, err := dr.k8sclient.Search(ctx, query.OrgId, request)
-	if err := resource.ErrorFromResponse(res.GetError(), err); err != nil {
+	if err != nil {
 		return dashboardv0.SearchResults{}, err
 	}
 
