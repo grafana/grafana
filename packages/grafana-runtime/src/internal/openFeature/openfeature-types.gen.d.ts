@@ -27,6 +27,7 @@ declare module "@openfeature/core" {
     | "grafana.kubernetesAnnotationsClient"
     | "grafana.newPanelQueryErrorsUI"
     | "dashboard.notebooks"
+    | "dashboardUndoRedo"
     | "perPanelNonApplicableDrilldowns"
     | "feedbackButton"
     | "stateTimeline.nameAboveBars"

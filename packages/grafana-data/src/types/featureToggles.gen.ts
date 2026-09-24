@@ -1132,11 +1132,6 @@ export interface FeatureToggles {
   */
   secretsManagementAppPlatformAwsKeeper?: boolean;
   /**
-  * Enables profiles exemplars support in profiles drilldown
-  * @default true
-  */
-  profilesExemplars?: boolean;
-  /**
   * Use synchronized dispatch timer to minimize duplicate notifications across alertmanager HA pods
   * @default false
   */
