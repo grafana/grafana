@@ -18,12 +18,10 @@ export function isSupportedExternalPrometheusFlavoredRulesSourceType(
   return SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES.find((t) => t === type) !== undefined;
 }
 
-export type RecordingTargetCandidate = Pick<DataSourceInstanceSettings, 'type' | 'jsonData'>;
-
-export function isDataSourceAllowedAsRecordingRulesTarget(ds: Pick<RecordingTargetCandidate, 'jsonData'>): boolean {
+export function isDataSourceAllowedAsRecordingRulesTarget(ds: DataSourceInstanceSettings): boolean {
   return ds.jsonData.allowAsRecordingRulesTarget !== false; // if this prop is undefined it defaults to true
 }
 
-export function isValidRecordingRulesTarget(ds: RecordingTargetCandidate): boolean {
+export function isValidRecordingRulesTarget(ds: DataSourceInstanceSettings): boolean {
   return isSupportedExternalPrometheusFlavoredRulesSourceType(ds.type) && isDataSourceAllowedAsRecordingRulesTarget(ds);
 }
