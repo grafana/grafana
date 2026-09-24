@@ -2288,14 +2288,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:        "profilesExemplars",
-			Description: "Enables profiles exemplars support in profiles drilldown",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaObservabilityTracesAndProfilingSquad,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:        "pyroscopeUTF8LabelNames",
 			Description: "Enables support for UTF-8 label names in Pyroscope label selectors",
 			Stage:       FeatureStagePublicPreview,
