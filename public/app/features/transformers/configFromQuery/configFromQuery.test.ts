@@ -150,6 +150,9 @@ describe('config from data', () => {
     ['non-color name', 'notacolor'],
     ['hex without a hash', 'ff0000'],
     ['rgb without parentheses', 'rgb 255 0 0'],
+    ['rgb with non-numeric channels', 'rgb(foo)'],
+    ['rgb with no channels', 'rgb()'],
+    ['hex with non-hex digits', '#zz'],
   ])('Skips a color mapping with a %s value', (_name, value) => {
     expect(extractColorConfig(value)).toBeUndefined();
   });

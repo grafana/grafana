@@ -304,14 +304,21 @@ function toDecimalsOrUndefined(value: unknown) {
 // which throws on anything it cannot parse (such as -3) and blanks the panel.
 // Run the value through the same two steps and skip it if they throw. A looser
 // check such as tinycolor accepts formats like 'ff0000' that still crash.
+// decomposeColor only checks the prefix, so 'rgb(foo)' parses to NaN channels
+// without throwing; skip those too.
 function toFixedColorOrUndefined(value: unknown) {
   if (typeof value !== 'string') {
     return;
   }
 
+  let channels: number[];
   try {
-    colorManipulator.decomposeColor(grafanaConfig.theme2.visualization.getColorByName(value));
+    channels = colorManipulator.decomposeColor(grafanaConfig.theme2.visualization.getColorByName(value)).values;
   } catch {
+    return;
+  }
+
+  if (channels.length < 3 || !channels.every(Number.isFinite)) {
     return;
   }
 
