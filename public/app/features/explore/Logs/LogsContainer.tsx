@@ -62,6 +62,8 @@ type DataSourceInstance =
   | (DataSourceApi<DataQuery> & DataSourceWithLogsContextSupport<DataQuery>)
   | (DataSourceApi<DataQuery> & DataSourceWithQueryModificationSupport<DataQuery>);
 
+const EMPTY_LOG_ROWS: LogRowModel[] = [];
+
 const LogsContainer = memo(function LogsContainer({
   loading,
   loadingState,
@@ -144,13 +146,19 @@ const LogsContainer = memo(function LogsContainer({
     updateDataSourceInstances();
   }, [updateDataSourceInstances]);
 
-  function onChangeTime(absoluteRange: AbsoluteTimeRange) {
-    updateTimeRange({ exploreId, absoluteRange });
-  }
+  const onChangeTime = useCallback(
+    (absoluteRange: AbsoluteTimeRange) => {
+      updateTimeRange({ exploreId, absoluteRange });
+    },
+    [exploreId, updateTimeRange]
+  );
 
-  function handleLoadMoreLogs(absoluteRange: AbsoluteTimeRange) {
-    loadMoreLogs({ exploreId, absoluteRange });
-  }
+  const handleLoadMoreLogs = useCallback(
+    (absoluteRange: AbsoluteTimeRange) => {
+      loadMoreLogs({ exploreId, absoluteRange });
+    },
+    [exploreId, loadMoreLogs]
+  );
 
   function getQuery(
     queries: DataQuery[] | undefined,
@@ -162,100 +170,116 @@ const LogsContainer = memo(function LogsContainer({
     );
   }
 
-  async function getLogRowContext(
-    row: LogRowModel,
-    origRow: LogRowModel,
-    options: LogRowContextOptions
-  ): Promise<DataQueryResponse> {
-    if (!origRow.dataFrame.refId || !dsInstances[origRow.dataFrame.refId]) {
-      return { data: [] };
-    }
+  const getLogRowContext = useCallback(
+    async (
+      row: LogRowModel,
+      origRow: LogRowModel,
+      options: LogRowContextOptions
+    ): Promise<DataQueryResponse> => {
+      if (!origRow.dataFrame.refId || !dsInstances[origRow.dataFrame.refId]) {
+        return { data: [] };
+      }
 
-    const ds = dsInstances[origRow.dataFrame.refId];
-    if (!hasLogsContextSupport(ds)) {
-      return { data: [] };
-    }
+      const ds = dsInstances[origRow.dataFrame.refId];
+      if (!hasLogsContextSupport(ds)) {
+        return { data: [] };
+      }
 
-    const query = getQuery(logsQueries, origRow, ds);
-    return query ? ds.getLogRowContext(row, options, query) : { data: [] };
-  }
+      const query = getQuery(logsQueries, origRow, ds);
+      return query ? ds.getLogRowContext(row, options, query) : { data: [] };
+    },
+    [dsInstances, logsQueries]
+  );
 
-  async function getLogRowContextQuery(
-    row: LogRowModel,
-    options?: LogRowContextOptions,
-    cacheFilters = true
-  ): Promise<DataQuery | null> {
-    if (!row.dataFrame.refId || !dsInstances[row.dataFrame.refId]) {
-      return null;
-    }
+  const getLogRowContextQuery = useCallback(
+    async (
+      row: LogRowModel,
+      options?: LogRowContextOptions,
+      cacheFilters = true
+    ): Promise<DataQuery | null> => {
+      if (!row.dataFrame.refId || !dsInstances[row.dataFrame.refId]) {
+        return null;
+      }
 
-    const ds = dsInstances[row.dataFrame.refId];
-    if (!hasLogsContextSupport(ds)) {
-      return null;
-    }
+      const ds = dsInstances[row.dataFrame.refId];
+      if (!hasLogsContextSupport(ds)) {
+        return null;
+      }
 
-    const query = getQuery(logsQueries, row, ds);
-    return query && ds.getLogRowContextQuery ? ds.getLogRowContextQuery(row, options, query, cacheFilters) : null;
-  }
+      const query = getQuery(logsQueries, row, ds);
+      return query && ds.getLogRowContextQuery ? ds.getLogRowContextQuery(row, options, query, cacheFilters) : null;
+    },
+    [dsInstances, logsQueries]
+  );
 
-  function getLogRowContextUi(row: LogRowModel, runContextQuery?: () => void): ReactNode {
-    if (!row.dataFrame.refId || !dsInstances[row.dataFrame.refId]) {
-      return <></>;
-    }
+  const getLogRowContextUi = useCallback(
+    (row: LogRowModel, runContextQuery?: () => void): ReactNode => {
+      if (!row.dataFrame.refId || !dsInstances[row.dataFrame.refId]) {
+        return <></>;
+      }
 
-    const ds = dsInstances[row.dataFrame.refId];
-    if (!hasLogsContextSupport(ds)) {
-      return <></>;
-    }
+      const ds = dsInstances[row.dataFrame.refId];
+      if (!hasLogsContextSupport(ds)) {
+        return <></>;
+      }
 
-    const query = getQuery(logsQueries, row, ds);
-    return query && hasLogsContextUiSupport(ds) && ds.getLogRowContextUi ? (
-      ds.getLogRowContextUi(row, runContextQuery, query)
-    ) : (
-      <></>
-    );
-  }
+      const query = getQuery(logsQueries, row, ds);
+      return query && hasLogsContextUiSupport(ds) && ds.getLogRowContextUi ? (
+        ds.getLogRowContextUi(row, runContextQuery, query)
+      ) : (
+        <></>
+      );
+    },
+    [dsInstances, logsQueries]
+  );
 
-  function showContextToggle(row?: LogRowModel): boolean {
-    if (!row?.dataFrame.refId || !dsInstances[row.dataFrame.refId]) {
-      return false;
-    }
-    return hasLogsContextSupport(dsInstances[row.dataFrame.refId]);
-  }
+  const showContextToggle = useCallback(
+    (row?: LogRowModel): boolean => {
+      if (!row?.dataFrame.refId || !dsInstances[row.dataFrame.refId]) {
+        return false;
+      }
+      return hasLogsContextSupport(dsInstances[row.dataFrame.refId]);
+    },
+    [dsInstances]
+  );
 
-  const getFieldLinks: GetFieldLinksFn = (field, rowIndex, dataFrame, vars) => {
-    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn, range, dataFrame, vars });
-  };
+  const getFieldLinks: GetFieldLinksFn = useCallback(
+    (field, rowIndex, dataFrame, vars) => {
+      return getFieldLinksForExplore({ field, rowIndex, splitOpenFn, range, dataFrame, vars });
+    },
+    [splitOpenFn, range]
+  );
 
-  function logDetailsFilterAvailable() {
+  const logDetailsFilterAvailable = useCallback(() => {
     return Object.values(dsInstances).some(
       (ds) => ds?.modifyQuery || hasQueryModificationSupport(ds) || hasToggleableQueryFiltersSupport(ds)
     );
-  }
+  }, [dsInstances]);
 
-  function filterValueAvailable() {
+  const filterValueAvailable = useCallback(() => {
     return Object.values(dsInstances).some(
       (ds) => hasQueryModificationSupport(ds) && ds?.getSupportedQueryModifications().includes('ADD_STRING_FILTER')
     );
-  }
+  }, [dsInstances]);
 
-  function filterOutValueAvailable() {
+  const filterOutValueAvailable = useCallback(() => {
     return Object.values(dsInstances).some(
       (ds) => hasQueryModificationSupport(ds) && ds?.getSupportedQueryModifications().includes('ADD_STRING_FILTER_OUT')
     );
-  }
+  }, [dsInstances]);
 
-  function loadLogsVolumeData() {
+  const loadLogsVolumeData = useCallback(() => {
     loadSupplementaryQueryData(exploreId, SupplementaryQueryType.LogsVolume);
-  }
+  }, [exploreId, loadSupplementaryQueryData]);
 
-  function onSetLogsVolumeEnabled(enabled: boolean) {
-    setSupplementaryQueryEnabled(exploreId, enabled, SupplementaryQueryType.LogsVolume);
-  }
+  const onSetLogsVolumeEnabled = useCallback(
+    (enabled: boolean) => {
+      setSupplementaryQueryEnabled(exploreId, enabled, SupplementaryQueryType.LogsVolume);
+    },
+    [exploreId, setSupplementaryQueryEnabled]
+  );
 
-  if (!logRows) {
-    return null;
-  }
+  const effectiveLogRows = logRows ?? EMPTY_LOG_ROWS;
 
   return (
     <>
@@ -264,7 +288,7 @@ const LogsContainer = memo(function LogsContainer({
           <LiveTailControls exploreId={exploreId}>
             {(controls) => (
               <LiveLogsWithTheme
-                logRows={logRows}
+                logRows={effectiveLogRows}
                 timeZone={timeZone}
                 stopLive={controls.stop}
                 isPaused={isPaused}
@@ -281,7 +305,7 @@ const LogsContainer = memo(function LogsContainer({
         <Logs
           exploreId={exploreId}
           datasourceType={datasourceInstance?.type}
-          logRows={logRows}
+          logRows={effectiveLogRows}
           logsMeta={logsMeta}
           logsSeries={logsSeries}
           logsVolumeEnabled={logsVolume.enabled}

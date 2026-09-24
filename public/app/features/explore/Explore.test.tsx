@@ -108,10 +108,6 @@ const dummyProps: Props = {
   setSupplementaryQueryEnabled: jest.fn(),
   correlationEditorDetails: undefined,
   correlationEditorHelperData: undefined,
-  exploreActiveDS: {
-    exploreToDS: [],
-    dsToExplore: [],
-  },
   changeDatasource: jest.fn(),
   compact: false,
   changeCompactMode: jest.fn(),
