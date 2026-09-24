@@ -1,8 +1,17 @@
 package iam
 
 import (
+	"context"
 	"fmt"
 	"slices"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/open-feature/go-sdk/openfeature"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type API string
@@ -53,6 +62,108 @@ type Features struct {
 	UserPermissionsAPI                bool
 	ServiceAccountResourcePermissions bool
 	ZanzanaSync                       bool
+}
+
+// ProvideFeatures resolves the IAM startup feature set before any consumers
+// are constructed. Explicit [iam] configuration takes precedence; when it is
+// absent, legacy OpenFeature flags are evaluated once for staged migration.
+func ProvideFeatures(cfg *setting.Cfg) (Features, error) {
+	configured, err := featuresFromConfig(cfg)
+	if err != nil {
+		return Features{}, err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	return ResolveFeatures(ctx, configured, openfeature.NewDefaultClient()), nil
+}
+
+// ResolveFeatures returns explicit startup configuration when supplied, or a
+// one-time snapshot of the legacy flags otherwise. The optional value is kept
+// at the initialization boundary and is never passed to consumers.
+func ResolveFeatures(ctx context.Context, configured *Features, client openfeature.IClient) Features {
+	if configured != nil {
+		return *configured
+	}
+	return FeaturesFromFlags(ctx, client)
+}
+
+func featuresFromConfig(cfg *setting.Cfg) (*Features, error) {
+	if cfg == nil || cfg.Raw == nil {
+		return nil, nil
+	}
+
+	section := cfg.SectionWithEnvOverrides("iam")
+	apiValue := strings.TrimSpace(section.Key("api").String())
+	zanzanaSync, err := parseOptionalBool(section.Key("zanzana_sync_enabled").String())
+	if err != nil {
+		return nil, fmt.Errorf("invalid iam.zanzana_sync_enabled: %w", err)
+	}
+	serviceAccountResourcePermissions, err := parseOptionalBool(section.Key("service_account_resource_permissions_enabled").String())
+	if err != nil {
+		return nil, fmt.Errorf("invalid iam.service_account_resource_permissions_enabled: %w", err)
+	}
+
+	if apiValue == "" {
+		if zanzanaSync || serviceAccountResourcePermissions {
+			return nil, fmt.Errorf("iam.api must be configured when IAM behavior settings are enabled")
+		}
+		return nil, nil
+	}
+
+	values := strings.Split(apiValue, ",")
+	for i := range values {
+		values[i] = strings.TrimSpace(values[i])
+	}
+
+	apis, err := ParseAPIs(values)
+	if err != nil {
+		return nil, err
+	}
+
+	features := Features{
+		ZanzanaSync:                       zanzanaSync,
+		ServiceAccountResourcePermissions: serviceAccountResourcePermissions,
+	}
+	features.SetAPIs(apis)
+	if err := features.Validate(); err != nil {
+		return nil, err
+	}
+
+	return &features, nil
+}
+
+func parseOptionalBool(value string) (bool, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return false, nil
+	}
+	return strconv.ParseBool(value)
+}
+
+// FeaturesFromFlags evaluates the legacy IAM startup flags into one resolved startup value.
+func FeaturesFromFlags(ctx context.Context, client openfeature.IClient) Features {
+	flag := func(key string) bool {
+		return client.Boolean(ctx, key, false, openfeature.TransactionContext(ctx))
+	}
+
+	return Features{
+		RolesAPI:                          flag(featuremgmt.FlagKubernetesAuthzRolesApi),
+		RoleBindingsAPI:                   flag(featuremgmt.FlagKubernetesAuthzRoleBindingsApi),
+		GlobalRolesAPI:                    flag(featuremgmt.FlagKubernetesAuthzGlobalRolesApi),
+		ResourcePermissionsAPI:            flag(featuremgmt.FlagKubernetesAuthzResourcePermissionApis),
+		TeamLBACRulesAPI:                  flag(featuremgmt.FlagKubernetesAuthzTeamLBACRuleApi),
+		TeamsAPI:                          flag(featuremgmt.FlagKubernetesTeamsApi),
+		UsersAPI:                          flag(featuremgmt.FlagKubernetesUsersApi),
+		ServiceAccountsAPI:                flag(featuremgmt.FlagKubernetesServiceAccountsApi),
+		ServiceAccountTokensAPI:           flag(featuremgmt.FlagKubernetesServiceAccountTokensApi),
+		SSOSettingsAPI:                    flag(featuremgmt.FlagKubernetesSsoSettingsApi),
+		AuthInfoAPI:                       flag(featuremgmt.FlagKubernetesAuthInfoApi),
+		UserPermissionsAPI:                flag(featuremgmt.FlagAuthzUserPermissions),
+		ServiceAccountResourcePermissions: flag(featuremgmt.FlagKubernetesAuthzServiceAccountResourcePermissions),
+		ZanzanaSync:                       flag(featuremgmt.FlagKubernetesAuthzZanzanaSync),
+	}
 }
 
 func ParseAPIs(values []string) ([]API, error) {
