@@ -155,7 +155,7 @@ func TestUpdateRecordsPhaseMetrics(t *testing.T) {
 	search.mu.Unlock()
 	require.NotNil(t, updater)
 
-	index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: IndexFeaturesForNewIndex(true)}}
+	index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: CurrentIndexFeatures()}}
 	_, docs, err := updater(t.Context(), index, 1)
 	require.NoError(t, err)
 	require.Equal(t, 2, docs)
@@ -221,7 +221,7 @@ func TestUpdateCountsDeduplicatedEventsAsConverted(t *testing.T) {
 	updater := search.lastUpdater
 	search.mu.Unlock()
 
-	index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: IndexFeaturesForNewIndex(true)}}
+	index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: CurrentIndexFeatures()}}
 
 	_, docs, err := updater(t.Context(), index, 1)
 	require.NoError(t, err)
@@ -279,7 +279,7 @@ func TestUpdateCountsDeletesAsConverted(t *testing.T) {
 			updater := search.lastUpdater
 			search.mu.Unlock()
 
-			index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: IndexFeaturesForNewIndex(keepDeleted)}}
+			index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: featuresForTestIndex(keepDeleted)}}
 			_, _, err = updater(t.Context(), index, 1)
 			require.NoError(t, err)
 
