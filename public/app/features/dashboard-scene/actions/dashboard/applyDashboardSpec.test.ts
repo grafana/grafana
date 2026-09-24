@@ -15,7 +15,7 @@ import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
 import { AddNewPane } from '../../sidebar/add-new/AddNewPane';
-import { findVizPanelByKey } from '../../utils/utils';
+import { findVizPanelByKey } from '../../utils/findVizPanel';
 import { getEditableElementFor } from '../utils/getEditableElementFor';
 
 import { applyDashboardSpec } from './applyDashboardSpec';

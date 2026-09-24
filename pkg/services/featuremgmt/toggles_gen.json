@@ -190,15 +190,17 @@
     {
       "metadata": {
         "name": "alerting.syncExternalAlertmanager",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T10:24:28Z"
+        "resourceVersion": "1790102317847",
+        "creationTimestamp": "2026-09-16T10:24:28Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-09-22 18:38:37.847569524 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana",
-        "stage": "experimental",
+        "description": "Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source",
+        "stage": "privatePreview",
         "codeowner": "@grafana/alerting-squad",
         "requiresRestart": true,
-        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -318,7 +320,8 @@
       "metadata": {
         "name": "alertingDisableDMAinUI",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T10:24:28Z"
+        "creationTimestamp": "2026-09-16T10:24:28Z",
+        "deletionTimestamp": "2026-09-18T11:14:23Z"
       },
       "spec": {
         "description": "Disables the DMA feature in the UI",
@@ -4324,7 +4327,8 @@
       "metadata": {
         "name": "profilesExemplars",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-01-07T12:25:42Z"
+        "creationTimestamp": "2026-01-07T12:25:42Z",
+        "deletionTimestamp": "2026-09-16T07:06:39Z"
       },
       "spec": {
         "description": "Enables profiles exemplars support in profiles drilldown",
@@ -4710,7 +4714,8 @@
       "metadata": {
         "name": "react19",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T10:24:28Z"
+        "creationTimestamp": "2026-09-16T10:24:28Z",
+        "deletionTimestamp": "2026-09-23T12:09:24Z"
       },
       "spec": {
         "description": "Whether to use the new React 19 runtime",

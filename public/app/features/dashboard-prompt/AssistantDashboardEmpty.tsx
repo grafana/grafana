@@ -1,15 +1,13 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useId, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { type ChatContextItem } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
+import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Box, Button, Combobox, type ComboboxOption, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Stack, useStyles2 } from '@grafana/ui';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-import { AutoGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManager';
-import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager';
 
 import { DashboardLandingPrompt } from './DashboardLandingPrompt';
 import { getPromptDatasources } from './datasources';
@@ -19,35 +17,13 @@ interface Props {
   dashboard: DashboardScene;
 }
 
-type LayoutValue = 'auto' | 'custom';
-
 export function AssistantDashboardEmpty({ dashboard }: Props) {
   const styles = useStyles2(getStyles);
-  const gridLabelId = useId();
-  const { sidebar, body } = dashboard.useState();
-  const isAutoGrid = body instanceof AutoGridLayoutManager;
+  const { sidebar } = dashboard.useState();
   // Set at scene activation when the URL has editSource=assistant
   // (create_dashboard), or on submit from this landing so the same session
   // tag applies without a remount.
   const [assistantDriven, setAssistantDriven] = useState(() => dashboard.getEditSessionSource() === 'assistant');
-
-  const onSelectAutoGrid = () => {
-    dashboard.switchLayout(AutoGridLayoutManager.createEmpty());
-    dashboard.updateDefaultLayoutTemplate(AutoGridLayoutManager.createEmpty());
-  };
-
-  const onSelectCustomGrid = () => {
-    dashboard.switchLayout(DefaultGridLayoutManager.createEmpty());
-    dashboard.updateDefaultLayoutTemplate(DefaultGridLayoutManager.createEmpty());
-  };
-
-  const onLayoutChange = (option: ComboboxOption<LayoutValue>) => {
-    if (option.value === 'auto') {
-      onSelectAutoGrid();
-      return;
-    }
-    onSelectCustomGrid();
-  };
 
   const onAddVisualization = () => {
     sidebar.addNewPanel(sidebar.getSelectedObject());
@@ -101,69 +77,37 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
     }
   }, [assistantDriven, sidebar]);
 
-  const layoutOptions: Array<ComboboxOption<LayoutValue>> = [
-    { label: t('dashboard.empty.grid-auto', 'Auto'), value: 'auto' },
-    { label: t('dashboard.empty.grid-custom', 'Custom'), value: 'custom' },
-  ];
-
   return (
     <div className={styles.root}>
-      <Stack alignItems="stretch" justifyContent="center" direction="column" gap={4} width="100%">
+      <div className={styles.content}>
         <Stack alignItems="center" direction="column" gap={2}>
-          <div className={styles.appsIconWrap}>
-            <Icon name="apps" size="xxl" className={styles.appsIcon} />
-          </div>
-          <Text element="h2" variant="h5" weight="medium">
+          <Icon name="apps" size="xxl" className={styles.appsIcon} />
+          <h2 className={styles.title}>
             <Trans i18nKey="dashboard.empty.build-assistant">Build your dashboard with Assistant</Trans>
-          </Text>
+          </h2>
           <div className={styles.prompt}>
             <DashboardLandingPrompt onSubmit={onSubmitPrompt} />
           </div>
         </Stack>
 
-        <Stack alignItems="center" height={4}>
+        <div className={styles.divider}>
           <div className={styles.orLine} />
-          <Text color="secondary">
+          <span className={styles.orText}>
             <Trans i18nKey="dashboard.empty.or-start-blank">Or build it yourself</Trans>
-          </Text>
+          </span>
           <div className={styles.orLine} />
-        </Stack>
-
-        <div>
-          <Text element="h2" variant="h5" weight="medium">
-            <Trans i18nKey="dashboard.empty.add-visualization-heading">Add a visualization</Trans>
-          </Text>
-          <Box marginTop={0.5} marginBottom={2}>
-            <Text element="p" variant="bodySmall" color="secondary">
-              <Trans i18nKey="dashboard.empty.add-visualization-description">
-                Visualizations are panels for your data. Organize them with Auto grid or Custom grid.
-              </Trans>
-            </Text>
-          </Box>
-          <Stack alignItems="center" gap={1}>
-            <Button
-              size="sm"
-              icon="plus"
-              variant="secondary"
-              data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
-              onClick={onAddVisualization}
-            >
-              <Trans i18nKey="dashboard.empty.add-visualization-button">Add visualization</Trans>
-            </Button>
-            <Text element="span" variant="bodySmall" color="secondary" id={gridLabelId}>
-              <Trans i18nKey="dashboard.empty.grid-label">Grid:</Trans>
-            </Text>
-            <Combobox
-              options={layoutOptions}
-              value={isAutoGrid ? 'auto' : 'custom'}
-              onChange={onLayoutChange}
-              width="auto"
-              minWidth={12}
-              aria-labelledby={gridLabelId}
-            />
-          </Stack>
         </div>
-      </Stack>
+
+        <Button
+          icon="plus"
+          variant="secondary"
+          className={styles.addButton}
+          data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
+          onClick={onAddVisualization}
+        >
+          <Trans i18nKey="dashboard.empty.add-visualization-button">Add visualization</Trans>
+        </Button>
+      </div>
     </div>
   );
 }
@@ -172,25 +116,52 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     root: css({
       position: 'relative',
+      display: 'flex',
+      justifyContent: 'center',
       width: '100%',
       height: '100%',
       minHeight: '100%',
     }),
-    appsIconWrap: css({
+    content: css({
       display: 'flex',
-      justifyContent: 'center',
+      flexDirection: 'column',
+      gap: theme.spacing(4),
       width: '100%',
+      maxWidth: 660,
+      padding: theme.spacing(6, 4),
     }),
     appsIcon: css({
       fill: theme.v1.palette.orange,
     }),
+    title: css({
+      margin: 0,
+      fontSize: theme.typography.h2.fontSize,
+      fontWeight: theme.typography.fontWeightBold,
+      letterSpacing: '-0.01em',
+      textAlign: 'center',
+    }),
     prompt: css({
       width: '100%',
+    }),
+    divider: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(2),
     }),
     orLine: css({
       flex: 1,
       height: 1,
       background: theme.colors.border.weak,
+    }),
+    orText: css({
+      color: theme.colors.text.disabled,
+      fontSize: theme.typography.bodySmall.fontSize,
+      textTransform: 'uppercase',
+      letterSpacing: '0.04em',
+    }),
+    addButton: css({
+      width: '100%',
+      justifyContent: 'center',
     }),
   };
 }
