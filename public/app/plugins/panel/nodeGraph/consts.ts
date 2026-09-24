@@ -1,0 +1,1 @@
+export const MAX_MISSING_ENDPOINT_EXAMPLES = 5;
