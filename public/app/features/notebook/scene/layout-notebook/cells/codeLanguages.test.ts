@@ -4,6 +4,7 @@ import {
   canonicalLanguage,
   codeLanguageLabel,
   getCodeLanguageOptions,
+  isExecutableLanguage,
   normalizeLanguage,
   PLAIN_TEXT_LANGUAGE,
   toCodeMirrorLanguage,
@@ -13,10 +14,13 @@ import {
 // leaves this list short, so the exhaustiveness assertion below is what actually keeps them in step.
 const HIGHLIGHTED: CodeMirrorEditorLanguage[] = ['go', 'html', 'json', 'markdown', 'sql', 'typescript', 'xml', 'yaml'];
 
+/** Offered by the picker and executable in the browser (see executeCode), highlighted via TS. */
+const EXECUTABLE = ['javascript'];
+
 /** Offered by the picker, but deliberately not highlighted. */
 const UNHIGHLIGHTED = ['promql', 'logql'];
 
-const OFFERED = [PLAIN_TEXT_LANGUAGE, ...HIGHLIGHTED, ...UNHIGHLIGHTED];
+const OFFERED = [PLAIN_TEXT_LANGUAGE, ...HIGHLIGHTED, ...EXECUTABLE, ...UNHIGHLIGHTED];
 
 describe('toCodeMirrorLanguage', () => {
   it.each(HIGHLIGHTED)('passes %s through to the editor', (language) => {
@@ -54,6 +58,13 @@ describe('toCodeMirrorLanguage', () => {
   it('treats the empty language as no highlighting', () => {
     expect(toCodeMirrorLanguage(PLAIN_TEXT_LANGUAGE)).toBeUndefined();
   });
+
+  // JavaScript keeps its own identity in the spec and picker but has no CodeMirror grammar of its
+  // own, so it borrows TypeScript's — a superset — to render with highlighting rather than as plain
+  // text.
+  it.each(['javascript', 'js', 'JavaScript'])('highlights %s with the TypeScript grammar', (language) => {
+    expect(toCodeMirrorLanguage(language)).toBe('typescript');
+  });
 });
 
 describe('normalizeLanguage', () => {
@@ -74,6 +85,22 @@ describe('canonicalLanguage', () => {
   ])('canonicalises %s to %s', (stored, expected) => {
     expect(canonicalLanguage(stored)).toBe(expected);
   });
+
+  // A highlight-only alias must not collapse into the grammar it borrows: a JavaScript cell stays
+  // JavaScript in the spec and in the picker, rather than being relabelled TypeScript.
+  it.each(['javascript', 'JavaScript', '  javascript '])('keeps %s as its own language', (stored) => {
+    expect(canonicalLanguage(stored)).toBe('javascript');
+  });
+});
+
+describe('isExecutableLanguage', () => {
+  it.each(['javascript', 'js', 'typescript', 'ts', 'JavaScript', '  TS  '])('runs %s', (language) => {
+    expect(isExecutableLanguage(language)).toBe(true);
+  });
+
+  it.each(['sql', 'promql', 'python', 'go', PLAIN_TEXT_LANGUAGE])('does not run %s', (language) => {
+    expect(isExecutableLanguage(language)).toBe(false);
+  });
 });
 
 describe('codeLanguageLabel', () => {
@@ -85,6 +112,10 @@ describe('codeLanguageLabel', () => {
   it('uses a display name for an offered language that is not highlighted', () => {
     expect(codeLanguageLabel('promql')).toBe('PromQL');
     expect(codeLanguageLabel('logql')).toBe('LogQL');
+  });
+
+  it('uses a display name for an executable language', () => {
+    expect(codeLanguageLabel('javascript')).toBe('JavaScript');
   });
 
   it('names the empty language', () => {
@@ -116,6 +147,12 @@ describe('getCodeLanguageOptions', () => {
     const options = getCodeLanguageOptions(PLAIN_TEXT_LANGUAGE);
 
     expect(options).toEqual(expect.arrayContaining([{ value: 'promql', label: 'PromQL' }]));
+  });
+
+  it('offers JavaScript so a runnable cell can be authored', () => {
+    const options = getCodeLanguageOptions(PLAIN_TEXT_LANGUAGE);
+
+    expect(options).toEqual(expect.arrayContaining([{ value: 'javascript', label: 'JavaScript' }]));
   });
 
   // The guard tests membership of what is offered, not whether the language can be highlighted:

@@ -243,4 +243,74 @@ describe('CodeCell', () => {
 
     expect(screen.getByRole('combobox', { name: 'Code language' })).toHaveDisplayValue('YAML');
   });
+
+  describe('running the cell', () => {
+    const js = (code: string): CellContentKind => ({ kind: 'Code', spec: { code, language: 'javascript' } });
+
+    it('offers a Run button for an executable language', () => {
+      render(<CodeCell content={js('1 + 1')} isEditing={false} onChange={jest.fn()} />);
+
+      expect(screen.getByRole('button', { name: 'Run code' })).toBeInTheDocument();
+    });
+
+    // A reader should be able to run a cell without entering edit mode, the same as reading a
+    // notebook anywhere else.
+    it('offers Run while the notebook is only being read', () => {
+      render(<CodeCell content={js('1 + 1')} isEditing={false} onChange={jest.fn()} />);
+
+      expect(screen.getByRole('button', { name: 'Run code' })).toBeEnabled();
+    });
+
+    it('does not offer Run for a language the browser cannot execute', () => {
+      render(<CodeCell content={content} isEditing={false} onChange={jest.fn()} />);
+
+      expect(screen.queryByRole('button', { name: 'Run code' })).not.toBeInTheDocument();
+    });
+
+    it('will not run an empty cell', () => {
+      render(<CodeCell content={js('   ')} isEditing={true} onChange={jest.fn()} />);
+
+      expect(screen.getByRole('button', { name: 'Run code' })).toBeDisabled();
+    });
+
+    it('shows the value of the last expression under the cell', async () => {
+      const { user } = render(<CodeCell content={js('21 * 2')} isEditing={false} onChange={jest.fn()} />);
+
+      await user.click(screen.getByRole('button', { name: 'Run code' }));
+
+      expect(await screen.findByText('42')).toBeInTheDocument();
+    });
+
+    it('shows captured console output', async () => {
+      const { user } = render(
+        <CodeCell content={js("console.log('hello from a cell')")} isEditing={false} onChange={jest.fn()} />
+      );
+
+      await user.click(screen.getByRole('button', { name: 'Run code' }));
+
+      expect(await screen.findByText('hello from a cell')).toBeInTheDocument();
+    });
+
+    it('shows the error a failing cell throws', async () => {
+      const { user } = render(
+        <CodeCell content={js("throw new Error('boom')")} isEditing={false} onChange={jest.fn()} />
+      );
+
+      await user.click(screen.getByRole('button', { name: 'Run code' }));
+
+      expect(await screen.findByText(/Error: boom/)).toBeInTheDocument();
+    });
+
+    // Output belongs to the reader's session, not the document — it must never render as markup, so a
+    // cell that returns a string of HTML shows that string verbatim.
+    it('renders returned markup as text rather than injecting it', async () => {
+      const { user } = render(
+        <CodeCell content={js("'<img src=x onerror=alert(1)>'")} isEditing={false} onChange={jest.fn()} />
+      );
+
+      await user.click(screen.getByRole('button', { name: 'Run code' }));
+
+      expect(await screen.findByText('<img src=x onerror=alert(1)>')).toBeInTheDocument();
+    });
+  });
 });
