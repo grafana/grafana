@@ -260,6 +260,22 @@ describe('v2 dashboard API', () => {
       );
     });
 
+    it('should suppress the global error toast when the caller sets showErrorAlert false', async () => {
+      const api = new K8sDashboardV2API();
+
+      await api.saveDashboard({ ...defaultSaveCommand, showErrorAlert: false });
+
+      expect(mockPut.mock.calls[0][2]).toEqual({ params: undefined, showErrorAlert: false });
+    });
+
+    it('should suppress the global error toast on create when the caller sets showErrorAlert false', async () => {
+      const api = new K8sDashboardV2API();
+
+      await api.saveDashboard({ ...defaultSaveCommand, k8s: undefined, showErrorAlert: false });
+
+      expect(mockPost.mock.calls[0][2]).toEqual({ params: undefined, showErrorAlert: false });
+    });
+
     it('should handle empty string folderUid for root folder', async () => {
       const api = new K8sDashboardV2API();
       const saveCommand = {
@@ -319,6 +335,18 @@ describe('v2 dashboard API', () => {
       const requestBody = callArgs[1];
       expect(requestBody.metadata.annotations).not.toHaveProperty(AnnoKeyFolder);
       expect(requestBody.metadata.annotations[AnnoKeyMessage]).toBe('Save without folder');
+    });
+
+    it('does not send resourceVersion when creating a dashboard', async () => {
+      const api = new K8sDashboardV2API();
+      await api.saveDashboard({
+        dashboard: defaultDashboardV2Spec(),
+        k8s: { resourceVersion: '0' },
+      });
+
+      expect(mockPut).not.toHaveBeenCalled();
+      expect(mockPost).toHaveBeenCalledTimes(1);
+      expect(mockPost.mock.calls[0][1].metadata).not.toHaveProperty('resourceVersion');
     });
 
     it.each([

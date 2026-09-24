@@ -52,9 +52,8 @@ export {
   isTimeSeriesField,
   getRowUniqueId,
   addRow,
-  alignTimeRangeCompareData,
-  shouldAlignTimeCompare,
 } from './dataframe/utils';
+export { alignTimeRangeCompareData, shouldAlignTimeCompare } from './dataframe/timeCompare';
 export {
   StreamingDataFrame,
   StreamingFrameAction,
@@ -285,6 +284,7 @@ export { generateUUID, isUUID } from './utils/uuid';
 
 // Transformations
 export { standardTransformers } from './transformations/transformers';
+export { getTransformationDynamicRefId, applyStaticRefId } from './transformations/transformers/utils';
 export {
   fieldMatchers,
   frameMatchers,
@@ -311,6 +311,7 @@ export {
   type TransformerUIProps,
   TransformerCategory,
   standardTransformersRegistry,
+  transformerUsesDynamicRefId,
 } from './transformations/standardTransformersRegistry';
 export {
   type RegexpOrNamesMatcherOptions,
@@ -616,6 +617,7 @@ export {
   type DataSourceConfigErrorStatusContext,
   type PluginExtensionPanelContext,
   type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
+  type PluginExtensionQueryEditorRowActionsV1Context,
   type PluginExtensionDataSourceConfigContext,
   type PluginExtensionDataSourceConfigActionsContext,
   type PluginExtensionDataSourceConfigStatusContext,
@@ -942,6 +944,7 @@ export {
   isTruthy,
   isObject,
 } from './types/data';
+export { type TimeCompareMeta } from './types/timeCompare';
 export { GAUGE_DEFAULT_MINIMUM, GAUGE_DEFAULT_MAXIMUM, DEFAULT_SAML_NAME } from './types/constants';
 
 // deprecated

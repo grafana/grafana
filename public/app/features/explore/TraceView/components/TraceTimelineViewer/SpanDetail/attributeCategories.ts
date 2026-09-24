@@ -263,6 +263,11 @@ export function isKnowledgeGraphAttribute(key: string): boolean {
   return isServiceAttribute(key);
 }
 
+/** Returns true when an attribute key matches Cloud Provider (AWS / Azure / GCP) resource namespaces. */
+export function isCloudProviderAttribute(key: string): boolean {
+  return matchesPrefixes(key, ['cloud', 'aws', 'gcp', 'azure', 'google']);
+}
+
 export function groupAttributesByCategory(
   attributes: TraceKeyValuePair[],
   sectionType: AttributeSectionType

@@ -69,10 +69,7 @@ func (s *Service) GetSQLSchemas(ctx context.Context, req Request) (queryV0.SQLSc
 
 		// Cap at 3 rows.
 		const maxRows = 3
-		n := frame.Rows()
-		if n > maxRows {
-			n = maxRows
-		}
+		n := min(frame.Rows(), maxRows)
 		sampleRows := make([][]any, 0, n)
 		for i := range n {
 			sampleRows = append(sampleRows, frame.RowCopy(i))

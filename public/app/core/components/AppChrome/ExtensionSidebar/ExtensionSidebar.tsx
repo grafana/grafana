@@ -5,11 +5,8 @@ import { type GrafanaTheme2, PluginExtensionPoints } from '@grafana/data';
 import { usePluginComponents } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
 
-import { getComponentMetaFromComponentId, useExtensionSidebarContext } from './ExtensionSidebarProvider';
-
-export const MIN_EXTENSION_SIDEBAR_WIDTH = 460;
-export const MAX_EXTENSION_SIDEBAR_WIDTH = Math.floor(window.innerWidth * (2 / 3));
-export const DEFAULT_EXTENSION_SIDEBAR_WIDTH = MIN_EXTENSION_SIDEBAR_WIDTH;
+import { useExtensionSidebarContext } from './ExtensionSidebarProvider';
+import { getComponentMetaFromComponentId } from './extensionSidebarUtils';
 
 type ExtensionSidebarComponentProps = {
   props?: Record<string, unknown>;

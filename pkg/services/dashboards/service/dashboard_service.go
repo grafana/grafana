@@ -77,7 +77,6 @@ var (
 const (
 	k8sDashboardKvNamespace              = "dashboard-cleanup"
 	k8sDashboardKvLastResourceVersionKey = "last-resource-version"
-	provisioningConcurrencyLimit         = 10
 	listAllDashboardsLimit               = 100000
 )
 
@@ -512,6 +511,13 @@ func (dr *DashboardServiceImpl) GetDashboardsByLibraryPanelUID(ctx context.Conte
 			},
 		},
 		Limit: listAllDashboardsLimit,
+		Fields: []string{
+			resource.SEARCH_FIELD_FOLDER,
+			resource.SEARCH_FIELD_LEGACY_ID,
+			// Per-label fields are requestable; this one is needed to derive the numeric legacy ID.
+			resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
+		},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
 
 	results, err := dashboardsearch.SearchAll(ctx, orgID, request, dr.k8sclient.Search)
@@ -532,7 +538,7 @@ func (dr *DashboardServiceImpl) GetDashboardsByLibraryPanelUID(ctx context.Conte
 
 func (dr *DashboardServiceImpl) CountDashboardsInOrg(ctx context.Context, orgID int64) (int64, error) {
 	resp, err := dr.k8sclient.GetStats(ctx, orgID)
-	if err != nil {
+	if err := resource.ErrorFromResponse(resp.GetError(), err); err != nil {
 		return 0, err
 	}
 
@@ -1661,8 +1667,10 @@ func (dr *DashboardServiceImpl) GetDashboardTags(ctx context.Context, query *das
 				Limit: 100000,
 			},
 		},
-		Limit: 100000})
-	if err != nil {
+		Limit:        100000,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	})
+	if err := resource.ErrorFromResponse(res.GetError(), err); err != nil {
 		return nil, err
 	}
 	facet, ok := res.Facet["tags"]
@@ -1872,7 +1880,36 @@ func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd
 }
 
 func (dr *DashboardServiceImpl) deleteAllDashboardThroughK8s(ctx context.Context, orgID int64) error {
-	return dr.k8sclient.DeleteCollection(ctx, orgID, v1.ListOptions{})
+	err := dr.k8sclient.DeleteCollection(ctx, orgID, v1.ListOptions{})
+	if err == nil || !apierrors.IsMethodNotSupported(err) {
+		return err
+	}
+
+	// Unified storage does not implement DeleteCollection. Fall back to
+	// forced individual deletes so organization deletion also removes provisioned dashboards.
+	zeroGracePeriod := int64(0)
+	deleteOptions := v1.DeleteOptions{GracePeriodSeconds: &zeroGracePeriod}
+	for continueToken := ""; ; {
+		list, err := dr.k8sclient.List(ctx, orgID, v1.ListOptions{
+			Limit:    listAllDashboardsLimit,
+			Continue: continueToken,
+		})
+		if err != nil {
+			return err
+		}
+
+		for _, item := range list.Items {
+			err := dr.k8sclient.Delete(ctx, item.GetName(), orgID, deleteOptions)
+			if err != nil && !apierrors.IsNotFound(err) {
+				return err
+			}
+		}
+
+		continueToken = list.GetContinue()
+		if continueToken == "" {
+			return nil
+		}
+	}
 }
 
 func (dr *DashboardServiceImpl) deleteDashboardThroughK8s(ctx context.Context, cmd *dashboards.DeleteDashboardCommand, validateProvisionedDashboard bool) error {
@@ -2124,6 +2161,11 @@ func (dr *DashboardServiceImpl) searchAllDashboardsThroughK8sRaw(ctx context.Con
 	if err != nil {
 		return dashboardv0.SearchResults{}, err
 	}
+	request.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
+	// Internal callers do not use these table-only fields, which have no typed definitions.
+	request.Fields = slices.DeleteFunc(slices.Clone(request.Fields), func(field string) bool {
+		return field == resource.SEARCH_FIELD_LABELS || field == resource.SEARCH_FIELD_UPDATED_BY
+	})
 
 	return dashboardsearch.SearchAll(ctx, query.OrgId, request, dr.k8sclient.Search)
 }

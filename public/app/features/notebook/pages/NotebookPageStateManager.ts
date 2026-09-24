@@ -10,6 +10,7 @@ import { dispatch } from 'app/store/store';
 import { NotebookAnalytics } from '../analytics/main';
 import { notebookResourceFor } from '../api/notebookResource';
 import { type NotebookScene } from '../scene/NotebookScene';
+import { NotebookDeletedEvent } from '../scene/events';
 import { transformNotebookToScene } from '../serialization/transformNotebookToScene';
 import { type Spec as NotebookSpec, defaultSpec as defaultNotebookSpec } from '../types';
 
@@ -46,8 +47,22 @@ export interface NotebookPageState {
  * dashboard analytics (DashboardView meta-analytics, dashboardInitialized, the dashboard_view
  * query profile) and forced the notebook through the dashboard envelope/transform.
  */
+/**
+ * Scenes by uid, shared across every manager instance rather than held per instance.
+ *
+ * A notebook can be on screen more than once — the route plus an embed of the same notebook in a
+ * host that is not the route. Each consumer gets its own manager, so its own loading and error
+ * state, but they must resolve the SAME scene: a scene owns its autosave, and two scenes for one
+ * notebook means two autosaves writing the whole spec over each other, the later one silently
+ * undoing edits made through the other. Scene activation is reference counted, so one scene safely
+ * serves several consumers and tears down when the last releases it.
+ */
+const sceneCache = new Map<string, { generation?: number; scene: NotebookScene }>();
+
 export class NotebookPageStateManager extends StateManagerBase<NotebookPageState> {
-  private cache = new Map<string, { generation?: number; scene: NotebookScene }>();
+  private get cache() {
+    return sceneCache;
+  }
 
   // Identifies the load the page currently wants. `await` does not cancel, so a load started for an
   // earlier request still resumes and would write over a newer one — the page renders whatever is in
@@ -114,7 +129,7 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
 
       // Cache even when superseded: the work is already paid for, so a later visit to this uid can
       // reuse it. Only the state write has to be suppressed.
-      this.cache.set(uid, { generation: notebook.metadata.generation, scene });
+      this.cacheScene(uid, notebook.metadata.generation, scene);
 
       if (this.isSuperseded(seq)) {
         return;
@@ -178,7 +193,7 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
     this.unsavedScene = undefined;
     // Into the keyed cache, so coming back to this notebook later reuses it too rather than rebuilding
     // it from a fetch. The generation is the one its create returned.
-    this.cache.set(uid, { generation: scene.autosave.state.savedGeneration, scene });
+    this.cacheScene(uid, scene.autosave.state.savedGeneration, scene);
     this.setState({ scene, isLoading: false, loadError: undefined });
 
     return true;
@@ -189,11 +204,33 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
     return seq !== this.requestSeq;
   }
 
+  /** Caches a scene by uid and wires it to evict itself once deleted. */
+  private cacheScene(uid: string, generation: number | undefined, scene: NotebookScene): void {
+    this.cache.set(uid, { generation, scene });
+    scene.subscribeToEvent(NotebookDeletedEvent, () => this.removeSceneCache(uid));
+  }
+
   public clearState(): void {
     // Bumping the counter discards anything in flight: without it a load that resolves after the page
     // is gone repopulates the singleton, and the next notebook opened flashes the previous one first.
     this.requestSeq++;
     this.setState({ scene: undefined, isLoading: false, loadError: undefined });
+  }
+
+  /**
+   * @internal -- test seam.
+   *
+   * Deliberately goes through `this.cache`, the same accessor `loadNotebook` reads, rather than the
+   * module map directly: reaching for the module map would make the sharing test pass even if the
+   * cache went back to being per instance, which is the regression it exists to catch.
+   */
+  public setSceneCacheForTests(uid: string, scene: NotebookScene): void {
+    this.cacheScene(uid, undefined, scene);
+  }
+
+  /** @internal -- test seam, as above. */
+  public getCachedSceneForTests(uid: string): NotebookScene | undefined {
+    return this.cache.get(uid)?.scene;
   }
 
   public removeSceneCache(uid: string): void {

@@ -31,7 +31,6 @@ import {
   PERMISSIONS_TIME_INTERVALS,
   notificationsPermissions,
 } from './alertmanagerPermissions';
-import { getAllDataSources } from './config';
 import { GRAFANA_DATASOURCE_NAME, GRAFANA_RULES_SOURCE_NAME } from './constants';
 import { isGrafanaRuleIdentifier } from './rules';
 
@@ -41,6 +40,10 @@ import { isGrafanaRuleIdentifier } from './rules';
 export { GRAFANA_DATASOURCE_NAME, GRAFANA_RULES_SOURCE_NAME };
 
 const collator = new Intl.Collator();
+
+function getAllDataSources(): Array<DataSourceInstanceSettings<DataSourceJsonData>> {
+  return Object.values(config.datasources);
+}
 
 export const GrafanaRulesSource: GrafanaRulesSourceIdentifier = {
   uid: GrafanaRulesSourceSymbol,

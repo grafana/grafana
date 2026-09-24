@@ -6,8 +6,9 @@
     "emitDeclarationOnly": true,
     "isolatedModules": true,
     "rootDirs": ["."],
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx"
   },
   "exclude": ["dist/**/*"],
-  "include": ["src/**/*.ts"]
+  "include": ["../../public/app/types/*.d.ts", "../grafana-ui/src/types/*.d.ts", "src/**/*.ts"]
 }

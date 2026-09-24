@@ -212,6 +212,8 @@ export const defaultTransformationKind = (): TransformationKind => ({
  * use the output of one transformation as the input to another transformation, etc.
  */
 export interface TransformationSpec {
+	// Unique identifier of the instance of the transformer
+	refId?: string;
 	// Disabled transformations are skipped
 	disabled?: boolean;
 	// Optional frame matcher. When missing it will be applied to all results

@@ -70,6 +70,12 @@ export class Controls extends PageObject {
     });
   }
 
+  async refresh() {
+    await test.step('Refresh', async () => {
+      await this.getByGrafanaSelector(this.selectors.components.RefreshPicker.runButtonV2).click();
+    });
+  }
+
   readonly timeRange = {
     /** Sets an absolute time range through the timepicker's from/to fields */
     set: async (from: string, to: string) => {

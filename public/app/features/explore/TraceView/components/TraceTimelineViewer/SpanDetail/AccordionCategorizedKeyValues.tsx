@@ -25,6 +25,7 @@ export type AccordionCategorizedKeyValuesProps = {
   onToggle?: null | (() => void);
   promoGetter?: AttributePluginPromoGetter;
   datasourceType?: string;
+  openLinksInSameTab?: boolean;
 };
 
 export default function AccordionCategorizedKeyValues({
@@ -36,6 +37,7 @@ export default function AccordionCategorizedKeyValues({
   onToggle = null,
   promoGetter,
   datasourceType,
+  openLinksInSameTab,
 }: AccordionCategorizedKeyValuesProps) {
   const styles = useStyles2(getStyles);
   const isEmpty = !Array.isArray(data) || !data.length;
@@ -106,6 +108,7 @@ export default function AccordionCategorizedKeyValues({
             linksGetter={linksGetter}
             promoGetter={promoGetter}
             datasourceType={datasourceType}
+            openLinksInSameTab={openLinksInSameTab}
           />
         ) : (
           <div className={styles.categories} data-testid="AccordionCategorizedKeyValues--categories">
@@ -140,6 +143,7 @@ export default function AccordionCategorizedKeyValues({
                         linksGetter={linksGetter}
                         promoGetter={promoGetter}
                         datasourceType={datasourceType}
+                        openLinksInSameTab={openLinksInSameTab}
                       />
                     </div>
                   )}

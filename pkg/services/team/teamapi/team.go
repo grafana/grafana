@@ -199,10 +199,7 @@ func (tapi *TeamAPI) searchTeams(c *contextmodel.ReqContext) response.Response {
 	if perPage <= 0 {
 		perPage = 1000
 	}
-	page := c.QueryInt("page")
-	if page < 1 {
-		page = 1
-	}
+	page := max(c.QueryInt("page"), 1)
 
 	sortOpts, err := sortopts.ParseSortQueryParam(c.Query("sort"))
 	if err != nil {

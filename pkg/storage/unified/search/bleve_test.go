@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -955,42 +956,23 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 	})
 }
 
+// An index built before deleted documents were kept cannot tell an empty trash
+// from one it never indexed, so the search fails instead of returning nothing.
 func TestBleveTrashSearchFailsWhenDeletedDocumentsAreNotIndexed(t *testing.T) {
-	tests := []struct {
-		name                  string
-		wantsDeletedDocuments bool
-		message               string
-	}{
-		{
-			name:    "indexing is disabled",
-			message: "trash is not available for this resource because indexing deleted documents is disabled",
-		},
-		{
-			name:                  "index is awaiting rebuild",
-			wantsDeletedDocuments: true,
-			message:               "trash is not available for this resource until its search index has been rebuilt",
-		},
+	idx := &bleveIndex{
+		fields:       resource.StandardSearchFields(),
+		searchFields: newKindSearchFields(nil, "", "", nil),
 	}
+	searchReq, errResult := idx.toBleveSearchRequest(t.Context(), &resourcepb.ResourceSearchRequest{
+		Options:   &resourcepb.ListOptions{},
+		Limit:     10,
+		IsDeleted: true,
+	}, nil, false, nil)
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			idx := &bleveIndex{
-				fields:                resource.StandardSearchFields(),
-				searchFields:          newKindSearchFields(nil, "", "", nil),
-				wantsDeletedDocuments: tc.wantsDeletedDocuments,
-			}
-			searchReq, errResult := idx.toBleveSearchRequest(t.Context(), &resourcepb.ResourceSearchRequest{
-				Options:   &resourcepb.ListOptions{},
-				Limit:     10,
-				IsDeleted: true,
-			}, nil, false, nil)
-
-			require.Nil(t, searchReq)
-			require.NotNil(t, errResult)
-			assert.Equal(t, int32(http.StatusServiceUnavailable), errResult.Code)
-			assert.Equal(t, tc.message, errResult.Message)
-		})
-	}
+	require.Nil(t, searchReq)
+	require.NotNil(t, errResult)
+	assert.Equal(t, int32(http.StatusServiceUnavailable), errResult.Code)
+	assert.Equal(t, "trash is not available for this resource until its search index has been rebuilt", errResult.Message)
 }
 
 // TestBleveSortCapabilityCheck covers both the counting and the rejecting mode.
@@ -1027,6 +1009,7 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 			searchFields:          newKindSearchFields(provider, group, kindResource, []string{"spec.slug"}),
 			enforceSortCapability: enforce,
 			logger:                log.NewNopLogger(),
+			indexMetrics:          resource.ProvideIndexMetrics(nil),
 		}
 	}
 
@@ -1097,7 +1080,6 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 	t.Run("accepts a trash field when searching deleted resources", func(t *testing.T) {
 		idx := newIndex(true)
 		idx.keepsDeletedDocuments = true
-		idx.wantsDeletedDocuments = true
 		req := sortBy(resource.SEARCH_FIELD_DELETION_TIME)
 		req.IsDeleted = true
 		_, errResult := idx.toBleveSearchRequest(t.Context(), req, nil, false, nil)
@@ -1109,6 +1091,7 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 			fields:                resource.StandardSearchFields(),
 			enforceSortCapability: true,
 			logger:                log.NewNopLogger(),
+			indexMetrics:          resource.ProvideIndexMetrics(nil),
 		}
 		_, errResult := idx.toBleveSearchRequest(t.Context(), sortBy(resource.SEARCH_FIELD_TITLE), nil, false, nil)
 		require.Nil(t, errResult)
@@ -1400,7 +1383,7 @@ func TestBuildIndexReuseChecksRequiredFeatures(t *testing.T) {
 func TestValidateDownloadedIndexChecksRequiredFeatures(t *testing.T) {
 	newIndexWithoutFeatures := func(t *testing.T) bleve.Index {
 		t.Helper()
-		idx, err := newBleveIndex("", bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "", false)
+		idx, err := newBleveIndex("", bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "")
 		require.NoError(t, err)
 		t.Cleanup(func() { _ = idx.Close() })
 		require.NoError(t, setRV(idx, 42))
@@ -1423,26 +1406,18 @@ func TestValidateDownloadedIndexChecksRequiredFeatures(t *testing.T) {
 	})
 }
 
-// The setting is read once, when the index is created, so later changes cannot
-// leave trash missing whatever was deleted while it was off.
+// Every index built now holds deleted documents, and says so, so a reader that
+// cannot filter them refuses it rather than serving them as live.
 func TestNewBleveIndexRecordsKeepsDeletedDocuments(t *testing.T) {
-	for _, keep := range []bool{true, false} {
-		idx, err := newBleveIndex("", bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "", keep)
-		require.NoError(t, err)
-		t.Cleanup(func() { _ = idx.Close() })
+	idx, err := newBleveIndex("", bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = idx.Close() })
 
-		bi, err := getBuildInfo(idx)
-		require.NoError(t, err)
-		require.Equal(t, keep, slices.Contains(bi.Features, resource.IndexFeatureHoldsDeletedDocuments))
-		require.Equal(t, keep, slices.Contains(bi.resourceBuildInfo().Features, resource.IndexFeatureHoldsDeletedDocuments))
-
-		// Only an index holding deleted documents needs a reader that filters them.
-		if keep {
-			require.Equal(t, []resource.IndexFeature{resource.IndexFeatureHoldsDeletedDocuments}, bi.ReaderRequirements)
-		} else {
-			require.Empty(t, bi.ReaderRequirements)
-		}
-	}
+	bi, err := getBuildInfo(idx)
+	require.NoError(t, err)
+	require.Contains(t, bi.Features, resource.IndexFeatureHoldsDeletedDocuments)
+	require.Contains(t, bi.resourceBuildInfo().Features, resource.IndexFeatureHoldsDeletedDocuments)
+	require.Equal(t, []resource.IndexFeature{resource.IndexFeatureHoldsDeletedDocuments}, bi.ReaderRequirements)
 }
 
 // A local index whose build info cannot be read is discarded: there is no way to
@@ -1451,7 +1426,7 @@ func TestReuseFileIndexRejectsUnreadableBuildInfo(t *testing.T) {
 	newIndexOnDisk := func(t *testing.T, rawBuildInfo []byte) string {
 		t.Helper()
 		resourceDir := t.TempDir()
-		idx, err := newBleveIndex(filepath.Join(resourceDir, "index-dir"), bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "", false)
+		idx, err := newBleveIndex(filepath.Join(resourceDir, "index-dir"), bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "")
 		require.NoError(t, err)
 		require.NoError(t, setRV(idx, 42))
 		if rawBuildInfo != nil {
@@ -1483,7 +1458,7 @@ func TestReuseFileIndexRejectsUnreadableBuildInfo(t *testing.T) {
 // Stands in for an index written by a newer binary.
 func newIndexDeclaringRequirements(t *testing.T, requirements ...resource.IndexFeature) bleve.Index {
 	t.Helper()
-	idx, err := newBleveIndex("", bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "", false)
+	idx, err := newBleveIndex("", bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "")
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = idx.Close() })
 	require.NoError(t, setRV(idx, 42))
@@ -1525,7 +1500,7 @@ func TestMemoryBleveIndexCanBeCopiedToFilesystem(t *testing.T) {
 
 	buildTime := time.Date(2026, 5, 18, 10, 0, 0, 0, time.UTC)
 	selectableFields := []string{"team"}
-	source, err := newBleveIndex("", mapper, buildTime, buildVersion, selectableFields, "", false)
+	source, err := newBleveIndex("", mapper, buildTime, buildVersion, selectableFields, "")
 	require.NoError(t, err)
 	defer func() { require.NoError(t, source.Close()) }()
 
@@ -1778,7 +1753,7 @@ func TestBuildIndexDoesNotReuseFileIndexWithoutResourceVersion(t *testing.T) {
 	require.NoError(t, err)
 	resourceDir := backend.getResourceDir(ns)
 	require.NoError(t, os.MkdirAll(resourceDir, 0o750))
-	unfinished, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), mapper, time.Now(), buildVersion, nil, "", false)
+	unfinished, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), mapper, time.Now(), buildVersion, nil, "")
 	require.NoError(t, err)
 	rv, err := getRV(unfinished)
 	require.NoError(t, err)
@@ -2360,8 +2335,7 @@ func TestConcurrentIndexUpdateAndBuildIndex(t *testing.T) {
 	idx, err := be.BuildIndex(t.Context(), ns, 10 /* file based */, "test", indexTestDocs(ns, 10, 100), updaterFn, false, time.Time{}, 0)
 	require.NoError(t, err)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	_, err = idx.UpdateIndex(ctx)
 	require.NoError(t, err)
 
@@ -2907,7 +2881,7 @@ func TestIsDeletedMarkerIndexing(t *testing.T) {
 func TestBulkIndexRemovesMarkedDocumentsWhenTrashFieldsAreNotMapped(t *testing.T) {
 	mapper, err := GetBleveMappings(nil, "", "", nil)
 	require.NoError(t, err)
-	raw, err := newBleveIndex("", mapper, time.Now(), buildVersion, nil, "", false)
+	raw, err := newBleveIndex("", mapper, time.Now(), buildVersion, nil, "")
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = raw.Close() })
 
@@ -3067,4 +3041,46 @@ func TestScopeQueryKeepsScores(t *testing.T) {
 		id("trashed-1"): unscoped[id("trashed-1")],
 		id("trashed-2"): unscoped[id("trashed-2")],
 	}, scores(scopeQuery(textQuery, true, 0)))
+}
+
+func TestBatchAuthzSearcherLogsWhenNothingIsAuthorized(t *testing.T) {
+	searcher := func(candidates, authorized int64) (*batchAuthzSearcher, *logtest.Fake) {
+		fake := &logtest.Fake{}
+		s := &batchAuthzSearcher{
+			namespace: "stacks-1",
+			group:     "dashboard.grafana.app",
+			resources: map[string]string{"dashboards": utils.VerbGet},
+			log:       fake,
+		}
+		s.candidates.Store(candidates)
+		s.authorized.Store(authorized)
+		return s, fake
+	}
+
+	t.Run("candidates found and none authorized", func(t *testing.T) {
+		s, fake := searcher(3, 0)
+		s.logIfNothingAuthorized()
+
+		require.Equal(t, 1, fake.WarnLogs.Calls)
+		require.Equal(t, "Search matched documents but none passed the permission check", fake.WarnLogs.Message)
+		require.Equal(t, []any{
+			"namespace", "stacks-1",
+			"group", "dashboard.grafana.app",
+			"resources", "dashboards",
+			"candidates", int64(3),
+			"authorized", int64(0),
+		}, fake.WarnLogs.Ctx)
+	})
+
+	t.Run("nothing matched", func(t *testing.T) {
+		s, fake := searcher(0, 0)
+		s.logIfNothingAuthorized()
+		require.Equal(t, 0, fake.WarnLogs.Calls)
+	})
+
+	t.Run("some results authorized", func(t *testing.T) {
+		s, fake := searcher(3, 1)
+		s.logIfNothingAuthorized()
+		require.Equal(t, 0, fake.WarnLogs.Calls)
+	})
 }

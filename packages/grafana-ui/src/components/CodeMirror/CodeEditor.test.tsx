@@ -192,6 +192,28 @@ describe('CodeMirror CodeEditor', () => {
     expect(capturedProps?.onBlur).toBeUndefined();
   });
 
+  it('saves the current document with the latest callback and removes the binding when onSave is removed', () => {
+    const onChange = jest.fn();
+    const onSave = jest.fn();
+    const { rerender } = render(<CodeEditor value="initial" onChange={onChange} onSave={onSave} />);
+    const binding = getKeyBindings().find((binding) => binding.key === 'Mod-s');
+    expect(binding?.preventDefault).toBe(true);
+
+    const nextOnSave = jest.fn();
+    rerender(<CodeEditor value="initial" onChange={onChange} onSave={nextOnSave} />);
+    const view = new EditorView({ state: EditorState.create({ doc: 'SELECT 1' }) });
+    try {
+      expect(binding?.run?.(view)).toBe(true);
+      expect(nextOnSave).toHaveBeenCalledWith('SELECT 1');
+      expect(onSave).not.toHaveBeenCalled();
+    } finally {
+      view.destroy();
+    }
+
+    rerender(<CodeEditor value="initial" onChange={onChange} />);
+    expect(getKeyBindings().find((binding) => binding.key === 'Mod-s')).toBeUndefined();
+  });
+
   it('defaults to the Grafana CodeEditor theme when no theme prop is provided', () => {
     render(<CodeEditor value="" onChange={jest.fn()} />);
 

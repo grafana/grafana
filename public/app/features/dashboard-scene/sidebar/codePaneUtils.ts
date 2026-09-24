@@ -1,22 +1,18 @@
 import yaml from 'js-yaml';
 
 import { t } from '@grafana/i18n';
-import { sceneUtils } from '@grafana/scenes';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { type DashboardDataDTO } from 'app/types/dashboard';
 
 import { ensureV2Response } from '../../dashboard/api/ResponseTransformers';
-import { type DashboardWithAccessInfo } from '../../dashboard/api/types';
 import { isDashboardV2Spec } from '../../dashboard/api/utils';
 import { getK8sV2DashboardApiConfig } from '../../dashboard/api/v2';
+import { applyDashboardSpec } from '../actions/dashboard/applyDashboardSpec';
 import { type DashboardScene } from '../scene/DashboardScene';
-import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 import { type SchemaEditorFormat } from '../v2schema/DashboardSchemaEditor';
-
-import { DashboardEditActionEvent, DashboardStateChangedEvent } from './events';
 
 const NEW_DASHBOARD_NAME_PLACEHOLDER = '<dashboard-uid>';
 
@@ -111,7 +107,8 @@ export function validateDashboardResourceEnvelope(
     metadata?: Record<string, unknown>;
   }
 ): { success: boolean; error?: string } {
-  const expectedAPIVersion = `dashboard.grafana.app/${getK8sV2DashboardApiConfig().version}`;
+  const { group, version } = getK8sV2DashboardApiConfig();
+  const expectedAPIVersion = `${group}/${version}`;
   const { apiVersion, kind, spec, metadata } = resource;
 
   if (!spec) {
@@ -166,7 +163,6 @@ export function applyJsonToDashboard(
   jsonText: string
 ): { success: boolean; error?: string } {
   try {
-    const expectedAPIVersion = `dashboard.grafana.app/${getK8sV2DashboardApiConfig().version}`;
     const resource = JSON.parse(jsonText);
     const { spec } = resource;
 
@@ -175,53 +171,15 @@ export function applyJsonToDashboard(
       return validation;
     }
 
-    const { meta } = dashboard.state;
-    const dto: DashboardWithAccessInfo<DashboardV2Spec> = {
-      apiVersion: expectedAPIVersion,
-      kind: 'DashboardWithAccessInfo',
-      metadata: {
-        name: dashboard.state.uid ?? '',
-        resourceVersion: '',
-        creationTimestamp: '',
-        ...dashboard.serializer.metadata,
-      },
-      spec,
-      access: {
-        canSave: meta.canSave,
-        canEdit: meta.canEdit,
-        canAdmin: meta.canAdmin,
-        canStar: meta.canStar,
-        canDelete: meta.canDelete,
-        canShare: meta.canShare,
-        annotationsPermissions: meta.annotationsPermissions,
-        url: meta.url,
-        slug: meta.slug,
-      },
-    };
-
-    const previousState = sceneUtils.cloneSceneObjectState(dashboard.state);
-    const newDashboardScene = transformSaveModelSchemaV2ToScene(dto);
-    const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state, { key: dashboard.state.key });
-
     if (!dashboard.state.isEditing) {
       dashboard.onEnterEditMode();
     }
 
-    dashboard.setState({ ...newState, isDirty: true });
-    // Dashboard state is replaced in place losing all edit-only properties.
-    // Calling editModeChange rehydrates the panel's edit state (for example isDraggable state)
-    dashboard.state.body.editModeChanged?.(true);
-
-    dashboard.publishEvent(
-      new DashboardEditActionEvent({
-        source: dashboard,
-        description: t('dashboard.sidebar.edit-schema.undo-title', 'Schema edit'),
-        perform: () => dashboard.setState(newState),
-        undo: () => dashboard.setState(previousState),
-      }),
-      true
-    );
-    dashboard.publishEvent(new DashboardStateChangedEvent({ source: dashboard }), true);
+    applyDashboardSpec({
+      scene: dashboard,
+      spec,
+      description: t('dashboard.sidebar.edit-schema.undo-title', 'Schema edit'),
+    });
 
     return { success: true };
   } catch (error) {

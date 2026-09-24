@@ -354,6 +354,11 @@ export function vizPanelToSchemaV2(
       ? sceneGraph.interpolate(vizPanel, vizPanel.state.description)
       : (vizPanel.state.description ?? '');
 
+  const subtitle =
+    bakeRepeatValues && vizPanel.state.subtitle
+      ? sceneGraph.interpolate(vizPanel, vizPanel.state.subtitle, undefined, 'text')
+      : undefined;
+
   const elementSpec: PanelKind = {
     kind: 'Panel',
     spec: {
@@ -362,6 +367,7 @@ export function vizPanelToSchemaV2(
         : getPanelIdForVizPanel(vizPanel),
       title,
       description,
+      subtitle,
       links: getPanelLinks(vizPanel),
       transparent: vizPanel.state.displayMode === 'transparent' ? true : undefined,
       data: {
@@ -577,6 +583,7 @@ function getVizPanelTransformations(vizPanel: VizPanel, bakeRepeatValues = false
 
       if ('id' in transformation) {
         const transformationSpec: TransformationSpec = {
+          ...(transformation.refId !== undefined && { refId: transformation.refId }),
           disabled: transformation.disabled,
           filter: transformation.filter,
           ...(transformation.topic && { topic: transformation.topic }),

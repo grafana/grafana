@@ -248,12 +248,12 @@ func (b *bleveBackend) downloadSelectedSnapshot(
 	choices, err := selectFn(ctx)
 	if err != nil {
 		outcome = snapshotStatusDownloadError
-		b.recordSnapshotDownloadOutcome(policy, outcome)
+		b.indexMetrics.IndexSnapshotDownloadAttempts.WithLabelValues(policy, outcome).Inc()
 		return nil, "", 0, err
 	}
 	if len(choices) == 0 {
 		outcome = snapshotStatusEmpty
-		b.recordSnapshotDownloadOutcome(policy, outcome)
+		b.indexMetrics.IndexSnapshotDownloadAttempts.WithLabelValues(policy, outcome).Inc()
 		return nil, "", 0, nil
 	}
 
@@ -284,7 +284,7 @@ func (b *bleveBackend) downloadSelectedSnapshot(
 
 		idx, name, rv, attemptOutcome, err := b.downloadSnapshotCandidate(ctx, key, resourceDir, snapKey, meta, attemptLogger)
 		outcome = attemptOutcome
-		b.recordSnapshotDownloadOutcome(policy, outcome)
+		b.indexMetrics.IndexSnapshotDownloadAttempts.WithLabelValues(policy, outcome).Inc()
 		if err == nil {
 			logger = attemptLogger
 			return idx, name, rv, nil
@@ -346,9 +346,7 @@ func (b *bleveBackend) downloadSnapshotCandidate(
 		return nil, "", 0, snapshotStatusValidateError, fmt.Errorf("validating downloaded snapshot: %w", err)
 	}
 
-	if b.indexMetrics != nil {
-		b.indexMetrics.IndexSnapshotDownloadDuration.Observe(time.Since(downloadStart).Seconds())
-	}
+	b.indexMetrics.IndexSnapshotDownloadDuration.Observe(time.Since(downloadStart).Seconds())
 
 	uploadedAt := meta.UploadTimestamp
 	if downloadedMeta != nil && !downloadedMeta.UploadTimestamp.IsZero() {
@@ -530,13 +528,6 @@ func (b *bleveBackend) validateDownloadedIndex(idx bleve.Index) (int64, error) {
 		return 0, fmt.Errorf("snapshot is missing required index features %v", missing)
 	}
 	return rv, nil
-}
-
-func (b *bleveBackend) recordSnapshotDownloadOutcome(policy, status string) {
-	if b.indexMetrics == nil {
-		return
-	}
-	b.indexMetrics.IndexSnapshotDownloadAttempts.WithLabelValues(policy, status).Inc()
 }
 
 // findFreshSnapshotByUploadTime walks namespace snapshots newest-first and
@@ -838,7 +829,7 @@ func (b *bleveBackend) coordinateColdStartBuild(
 			return b.tryDownloadColdStartSnapshot(ctx, key, resourceDir, lastImportTime, probeMaxAge, logger)
 		},
 		recordOutcome: func(outcome string) {
-			b.recordBuildCoordinationOutcome(snapshotBuildFlowColdStart, outcome)
+			b.indexMetrics.IndexSnapshotBuildCoordinations.WithLabelValues(snapshotBuildFlowColdStart, outcome).Inc()
 		},
 	}, logger)
 }
@@ -903,7 +894,7 @@ func (b *bleveBackend) coordinateRebuild(
 			return b.tryDownloadRebuildSnapshot(ctx, key, resourceDir, lastImportTime, maxFreshSnapshotAge, logger)
 		},
 		recordOutcome: func(outcome string) {
-			b.recordBuildCoordinationOutcome(snapshotBuildFlowRebuild, outcome)
+			b.indexMetrics.IndexSnapshotBuildCoordinations.WithLabelValues(snapshotBuildFlowRebuild, outcome).Inc()
 		},
 	}, logger)
 }
@@ -933,11 +924,4 @@ func (b *bleveBackend) tryDownloadRebuildSnapshot(
 		return nil, "", 0, nil
 	}
 	return idx, name, rv, nil
-}
-
-func (b *bleveBackend) recordBuildCoordinationOutcome(flow, outcome string) {
-	if b.indexMetrics == nil {
-		return
-	}
-	b.indexMetrics.IndexSnapshotBuildCoordinations.WithLabelValues(flow, outcome).Inc()
 }

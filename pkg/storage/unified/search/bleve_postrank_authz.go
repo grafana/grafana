@@ -71,10 +71,7 @@ func (c PostRankAuthzConfig) effective() PostRankAuthzConfig {
 // limit * OverFetchFactor clamped to MaxWindow. Ranking is unaffected: bleve
 // ranks the full match set and returns the top-N regardless of Size.
 func (c PostRankAuthzConfig) windowSize(limit int) int {
-	w := limit * c.OverFetchFactor
-	if w > c.MaxWindow {
-		w = c.MaxWindow
-	}
+	w := min(limit*c.OverFetchFactor, c.MaxWindow)
 	return w
 }
 
@@ -87,10 +84,7 @@ func (c PostRankAuthzConfig) windowSize(limit int) int {
 // defaults (FacetSampleSize == MaxWindow == 10000) the whole sample is one
 // window.
 func (c PostRankAuthzConfig) facetWindowSize() int {
-	w := c.FacetSampleSize
-	if w > c.MaxWindow {
-		w = c.MaxWindow
-	}
+	w := min(c.FacetSampleSize, c.MaxWindow)
 	return w
 }
 
@@ -101,10 +95,7 @@ func (c PostRankAuthzConfig) facetWindowSize() int {
 // MaxWindow) until it exhausts the match set — giving an exact authorized
 // total — or reaches MaxCandidates.
 func (c PostRankAuthzConfig) countWindowSize() int {
-	w := c.MaxCandidates
-	if w > c.MaxWindow {
-		w = c.MaxWindow
-	}
+	w := min(c.MaxCandidates, c.MaxWindow)
 	return w
 }
 
@@ -132,6 +123,11 @@ func (c PostRankAuthzConfig) growWindow(base, nextWindow int) int {
 // ensureSearchFields makes bleve load every stored field when the caller did not
 // request an explicit field set. The SEARCH_FIELD_ALL_FIELDS sentinel tells
 // hitsToTable to use the curated allFields column list.
+//
+// It also adds the resource version, which every result carries regardless of the
+// requested fields. Both happen here rather than in toBleveSearchRequest because
+// Search snapshots the response field list before calling this, so what is added
+// is loaded without becoming a response column.
 func (b *bleveIndex) ensureSearchFields(searchrequest *bleve.SearchRequest, req *resourcepb.ResourceSearchRequest) error {
 	if len(req.Fields) < 1 && req.Limit > 0 {
 		f, err := b.index.Fields()
@@ -139,6 +135,10 @@ func (b *bleveIndex) ensureSearchFields(searchrequest *bleve.SearchRequest, req 
 			return err
 		}
 		searchrequest.Fields = append(f, resource.SEARCH_FIELD_ALL_FIELDS)
+		return nil
+	}
+	if !slices.Contains(searchrequest.Fields, resource.SEARCH_FIELD_RV_STRING) {
+		searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_RV_STRING)
 	}
 	return nil
 }
@@ -170,13 +170,22 @@ func authzLoadFields(trash bool) []string {
 // authzResources builds the resource-type -> verb map used to authorize hits.
 // The primary resource uses the verb implied by req.Permission; federated
 // resources are read-only.
+//
+// A hit whose resource type is absent from the map is dropped, so a
+// namespace-wide index has to list every type it covers. Each hit is still
+// authorized against its own type and group, read from its document id.
 func (b *bleveIndex) authzResources(req *resourcepb.ResourceSearchRequest) map[string]string {
 	verb := utils.VerbGet
 	if req.Permission == int64(dashboardaccess.PERMISSION_EDIT) {
 		verb = utils.VerbUpdate
 	}
-	resources := map[string]string{
-		b.key.Resource: verb,
+	resources := map[string]string{}
+	if b.key.IsGlobal() {
+		for _, gr := range resource.GlobalSearchResourceTypes() {
+			resources[gr.Resource] = verb
+		}
+	} else {
+		resources[b.key.Resource] = verb
 	}
 	for _, federated := range req.Federated {
 		resources[federated.Resource] = utils.VerbGet
@@ -319,7 +328,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 
 	windowReq := firstReq
 	for window := 0; ; window++ {
-		res, err := index.SearchInContext(ctx, windowReq)
+		res, err := searchInContext(ctx, index, windowReq)
 		if err != nil {
 			return nil, err
 		}
@@ -505,7 +514,7 @@ func (b *bleveIndex) aggregateFacetsFromTop(
 
 	var firstRes *bleve.SearchResult
 	for {
-		res, err := index.SearchInContext(ctx, windowReq)
+		res, err := searchInContext(ctx, index, windowReq)
 		if err != nil {
 			return nil, 0, false, err
 		}

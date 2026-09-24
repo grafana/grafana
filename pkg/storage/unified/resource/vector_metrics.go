@@ -13,6 +13,7 @@ type VectorMetrics struct {
 	HybridSearchDuration         *prometheus.HistogramVec
 	EmbedDuration                *prometheus.HistogramVec
 	EmbedTokensTotal             *prometheus.CounterVec
+	EmbedSkippedVersionsTotal    *prometheus.CounterVec
 	RerankDuration               *prometheus.HistogramVec
 	RerankCandidatesTotal        *prometheus.CounterVec
 	RerankDroppedResultsTotal    *prometheus.CounterVec
@@ -66,6 +67,10 @@ func ProvideVectorMetrics(reg prometheus.Registerer) *VectorMetrics {
 			Name: "vector_storage_embed_tokens_total",
 			Help: "Total input tokens sent to the embedding provider, as reported by the provider. Multiply by the model's per-token price for spend.",
 		}, []string{"model", "task"}),
+		EmbedSkippedVersionsTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "vector_storage_embed_skipped_versions_total",
+			Help: "Embedding extraction attempts skipped without a matching API version declaration, labeled by group, resource, and version. Missing, invalid, and unsupported API versions use placeholder labels.",
+		}, []string{"group", "resource", "version"}),
 		RerankDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "vector_storage_rerank_duration_seconds",
 			Help:                            "Time (in seconds) spent in a single rerank Scorer call to the provider (Vertex/Bedrock), labeled by model and status (ok|error|timeout).",

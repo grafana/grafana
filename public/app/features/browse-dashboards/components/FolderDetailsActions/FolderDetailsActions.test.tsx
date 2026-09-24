@@ -1,4 +1,4 @@
-import { render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { setBackendSrv } from '@grafana/runtime';
@@ -31,15 +31,15 @@ const StarredFoldersList = () => {
 };
 
 describe('FolderDetailsActions', () => {
-  // starredFoldersEnabled() gates the star button on this feature toggle plus the OpenFeature flag
-  testWithFeatureToggles({ enable: ['foldersAppPlatformAPI'] });
-
+  // starredFoldersEnabled() gates the star button on both of these flags
   beforeEach(() => {
-    setTestFlags({ 'grafana.starredFolders': true });
+    setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: true });
   });
 
-  afterEach(() => {
-    setTestFlags({});
+  afterEach(async () => {
+    await act(async () => {
+      setTestFlags({});
+    });
   });
 
   it('refetches the starred folders list when a folder is starred', async () => {

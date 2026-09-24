@@ -2,14 +2,33 @@ import { defineFeatureEvents } from '@grafana/runtime/unstable';
 
 import { canEditNotebooks } from '../permissions';
 import { type NotebookScene } from '../scene/NotebookScene';
+import { type PanelElement } from '../types';
 import { isNotebookEditUrl } from '../urls';
 
-import { readNotebookShape } from './shape';
+import { readAddedPanelShape, readNotebookShape } from './shape';
 import {
+  type NotebookAddFailedProperties,
+  type NotebookAddFailedReason,
+  type NotebookAddTarget,
+  type NotebookAutosaveFailedProperties,
+  type NotebookAutosaveFailedReason,
+  type NotebookCellAddedFromAddToNotebookProperties,
   type NotebookCreatedProperties,
   type NotebookDeletedProperties,
   type NotebookDeleteSource,
+  type NotebookEditSessionEndReason,
+  type NotebookEditSessionEndedProperties,
+  type NotebookEditSessionSource,
+  type NotebookEditSessionStartedProperties,
   type NotebookEntryPoint,
+  type NotebookExportedProperties,
+  type NotebookExportDestination,
+  type NotebookExportSource,
+  type NotebookLinkCopiedProperties,
+  type NotebookLinkCopySource,
+  type NotebookListFilteredProperties,
+  type NotebookListFilterState,
+  type NotebookListFilterType,
   type NotebookLoadedProperties,
   type NotebookNewStartedProperties,
 } from './types';
@@ -23,11 +42,63 @@ const createLoadedEvent = createNotebookEvent<NotebookLoadedProperties>('loaded'
 /** Fired when the blank notebook route opens, so nothing exists yet: pairs with `created` to give the abandonment rate. */
 const createNewStartedEvent = createNotebookEvent<NotebookNewStartedProperties>('new_started');
 
+/** Fired when edit mode begins. Pairs with `edit_session_ended` for the length and the totals. */
+const createEditSessionStartedEvent = createNotebookEvent<NotebookEditSessionStartedProperties>('edit_session_started');
+
+/**
+ * Fired when edit mode ends. Carries how long the session ran, how much was edited, and the shape
+ * the notebook was left in. Save outcomes are not here: they are reported by `autosave_failed` at
+ * the moment they happen, which this event cannot do because it fires while a save is still open.
+ */
+const createEditSessionEndedEvent = createNotebookEvent<NotebookEditSessionEndedProperties>('edit_session_ended');
+
 /** Fired the moment a notebook first exists: autosave's first write, or the add-panel modal's create route. */
 const createCreatedEvent = createNotebookEvent<NotebookCreatedProperties>('created');
 
 /** Fired once a delete has actually landed, from either the list row menu or the notebook's own toolbar. */
 const createDeletedEvent = createNotebookEvent<NotebookDeletedProperties>('deleted');
+
+/**
+ * Fired when a panel is added through "Add to notebook", from Explore or a dashboard. A cell added
+ * inside an editing session is counted on `edit_session_ended` instead.
+ */
+const createCellAddedFromAddToNotebookEvent = createNotebookEvent<NotebookCellAddedFromAddToNotebookProperties>(
+  'cell_added_from_add_to_notebook'
+);
+
+/** Fired on each autosave error, never on success. A save still in flight has no outcome to report. */
+const createAutosaveFailedEvent = createNotebookEvent<NotebookAutosaveFailedProperties>('autosave_failed');
+
+/** Fired once an export action actually completed: a copy that landed, or a download. */
+const createExportedEvent = createNotebookEvent<NotebookExportedProperties>('exported');
+
+/** Fired once a copy-link click actually put the link on the clipboard. */
+const createLinkCopiedEvent = createNotebookEvent<NotebookLinkCopiedProperties>('link_copied');
+
+/** Fired once per committed filter change on the notebooks list, as the change commits. */
+const createListFilteredEvent = createNotebookEvent<NotebookListFilteredProperties>('list_filtered');
+
+/**
+ * Fired when an "Add to notebook" submit fails. Nothing was added and nothing was created.
+ *
+ * The successes are `cell_added_from_add_to_notebook` and `created`. `target` says which of the two
+ * this attempt was aiming for.
+ */
+const createAddFailedEvent = createNotebookEvent<NotebookAddFailedProperties>('add_to_notebook_failed');
+
+/** The one panel an add or a create came with, so both events describe it the same way. */
+interface AddedPanel {
+  panel: PanelElement;
+  /**
+   * The caller passes this in. The dashboard inlines a loaded library panel on the way here, so the
+   * element no longer says that it came from the library.
+   */
+  isLibraryPanel: boolean;
+}
+
+function addedPanelProperties({ panel, isLibraryPanel }: AddedPanel) {
+  return { isLibraryPanel, ...readAddedPanelShape(panel) };
+}
 
 /**
  * Every notebook event, so a call site reads as analytics rather than as a stray helper. The wrappers
@@ -52,11 +123,71 @@ export const NotebookAnalytics = {
     createNewStartedEvent({ source });
   },
 
-  created(notebookUid: string, source: NotebookEntryPoint, cellCount: number): void {
-    createCreatedEvent({ notebookUid, source, cellCount });
+  editSessionStarted(notebookUid: string, source: NotebookEditSessionSource): void {
+    createEditSessionStartedEvent({ notebookUid, source });
+  },
+
+  editSessionEnded(scene: NotebookScene, endReason: NotebookEditSessionEndReason): void {
+    createEditSessionEndedEvent({
+      notebookUid: scene.state.uid ?? '',
+      // Reading the totals also resets them, so the next session starts from nothing.
+      ...scene.editSession.end(),
+      endReason,
+      ...readNotebookShape(scene),
+    });
+  },
+
+  created(notebookUid: string, source: NotebookEntryPoint, cellCount: number, addedPanel?: AddedPanel): void {
+    createCreatedEvent({
+      notebookUid,
+      source,
+      cellCount,
+      // The blank notebook route sends none of these. It creates from whatever cells exist by its
+      // first save, not around one panel.
+      ...(addedPanel && addedPanelProperties(addedPanel)),
+    });
   },
 
   deleted(notebookUid: string, source: NotebookDeleteSource): void {
     createDeletedEvent({ notebookUid, source });
+  },
+
+  autosaveFailed(notebookUid: string, reason: NotebookAutosaveFailedReason, attempt: number): void {
+    createAutosaveFailedEvent({ notebookUid, reason, attempt });
+  },
+
+  exported(notebookUid: string, destination: NotebookExportDestination, source: NotebookExportSource): void {
+    createExportedEvent({ notebookUid, destination, source });
+  },
+
+  linkCopied(notebookUid: string, source: NotebookLinkCopySource): void {
+    createLinkCopiedEvent({ notebookUid, source });
+  },
+
+  listFiltered(filterType: NotebookListFilterType, filters: NotebookListFilterState): void {
+    createListFilteredEvent({ filterType, ...filters });
+  },
+
+  cellAddedFromAddToNotebook(
+    notebookUid: string,
+    source: NotebookEntryPoint,
+    position: number,
+    addedPanel: AddedPanel
+  ): void {
+    createCellAddedFromAddToNotebookEvent({
+      notebookUid,
+      source,
+      position,
+      ...addedPanelProperties(addedPanel),
+    });
+  },
+
+  addToNotebookFailed(
+    notebookUid: string,
+    source: NotebookEntryPoint,
+    target: NotebookAddTarget,
+    reason: NotebookAddFailedReason
+  ): void {
+    createAddFailedEvent({ notebookUid, source, target, reason });
   },
 };
