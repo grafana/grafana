@@ -11213,10 +11213,11 @@
   "home": {
     "alerts-incidents": {
       "alert-tab-label": "Firing alerts",
+      "incident-filter-all": "All incidents",
+      "incident-filter-label": "Filter incidents by label",
       "incident-tab-label": "Incidents",
       "team-filter-all": "All teams",
       "team-filter-label": "Filter alerts by team",
-      "team-filter-label-incidents": "Filter incidents by team",
       "team-filter-your-teams": "Your teams",
       "title": "Alerts & incidents",
       "title-alerts": "Alerts",
