@@ -246,7 +246,7 @@ func TestBuildLogQuery(t *testing.T) {
 				OrgID:   123,
 				RuleUID: "rule-uid",
 			},
-			exp: []string{`{orgID="123",from="state-history"} | json | ruleUID="rule-uid"`},
+			exp: []string{`{orgID="123",from="state-history"} |= "rule-uid" | json | ruleUID="rule-uid"`},
 		},
 		{
 			name: "filters dashboardUID in log line",
@@ -254,7 +254,16 @@ func TestBuildLogQuery(t *testing.T) {
 				OrgID:        123,
 				DashboardUID: "dash-uid",
 			},
-			exp: []string{`{orgID="123",from="state-history"} | json | dashboardUID="dash-uid"`},
+			exp: []string{`{orgID="123",from="state-history"} |= "dash-uid" | json | dashboardUID="dash-uid"`},
+		},
+		{
+			name: "escapes UIDs for JSON line filters and LogQL field filters",
+			query: models.HistoryQuery{
+				RuleUID:      "rule\"\\\n",
+				DashboardUID: "<dash>&\t",
+			},
+			maxQuerySize: 300,
+			exp:          []string{`{orgID="0",from="state-history"} |= "rule\\\"\\\\\\n" |= "\\u003cdash\\u003e\\u0026\\t" | json | ruleUID="rule\"\\\n" | dashboardUID="<dash>&\t"`},
 		},
 		{
 			name: "filters panelID in log line",
@@ -284,7 +293,8 @@ func TestBuildLogQuery(t *testing.T) {
 					mustNewMatcher(t, labels.MatchEqual, "customlabel", "customvalue"),
 				},
 			},
-			exp: []string{`{orgID="123",from="state-history"} | json | ruleUID="rule-uid" | labels_customlabel="customvalue"`},
+			maxQuerySize: 200,
+			exp:          []string{`{orgID="123",from="state-history"} |= "rule-uid" | json | ruleUID="rule-uid" | labels_customlabel="customvalue"`},
 		},
 		{
 			name: "should return if query does not exceed max limit",
@@ -295,7 +305,8 @@ func TestBuildLogQuery(t *testing.T) {
 					mustNewMatcher(t, labels.MatchEqual, "customlabel", strings.Repeat("!", 24)),
 				},
 			},
-			exp: []string{`{orgID="123",from="state-history"} | json | ruleUID="rule-uid" | labels_customlabel="!!!!!!!!!!!!!!!!!!!!!!!!"`},
+			maxQuerySize: 124,
+			exp:          []string{`{orgID="123",from="state-history"} |= "rule-uid" | json | ruleUID="rule-uid" | labels_customlabel="!!!!!!!!!!!!!!!!!!!!!!!!"`},
 		},
 		{
 			name: "should return error if query is too long",
@@ -306,7 +317,8 @@ func TestBuildLogQuery(t *testing.T) {
 					mustNewMatcher(t, labels.MatchEqual, "customlabel", strings.Repeat("!", 25)),
 				},
 			},
-			expErr: ErrLokiQueryTooLong,
+			maxQuerySize: 124,
+			expErr:       ErrLokiQueryTooLong,
 		},
 		{
 			name: "filters instance labels with not-equal operator",
@@ -409,7 +421,7 @@ func TestBuildLogQuery(t *testing.T) {
 				},
 			},
 			maxQuerySize: 200,
-			exp:          []string{`{orgID="123",from="state-history"} | json | ruleUID="rule-uid" | previous=~"^Pending.*" | current=~"^Alerting.*" | labels_instance="localhost:9090"`},
+			exp:          []string{`{orgID="123",from="state-history"} |= "rule-uid" | json | ruleUID="rule-uid" | previous=~"^Pending.*" | current=~"^Alerting.*" | labels_instance="localhost:9090"`},
 		},
 	}
 
