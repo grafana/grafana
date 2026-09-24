@@ -69,32 +69,32 @@ func Compare(
 	repositoryResources resources.RepositoryResources,
 	ref string,
 	folderMetadataEnabled bool,
-) ([]ResourceFileChange, []string, []*resources.InvalidFolderMetadata, error) {
+) ([]ResourceFileChange, []string, []*resources.InvalidFolderMetadata, []resources.UnsupportedPath, error) {
 	target, err := repositoryResources.List(ctx)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("error listing current: %w", err)
+		return nil, nil, nil, nil, fmt.Errorf("error listing current: %w", err)
 	}
 
 	source, err := repo.ReadTree(ctx, ref)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("error reading tree: %w", err)
+		return nil, nil, nil, nil, fmt.Errorf("error reading tree: %w", err)
 	}
 
-	changes, err := Changes(ctx, source, target, folderMetadataEnabled)
+	changes, unsupported, err := Changes(ctx, source, target, folderMetadataEnabled)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("calculate changes: %w", err)
+		return nil, nil, nil, nil, fmt.Errorf("calculate changes: %w", err)
 	}
 
 	var invalidFolderMetadata []*resources.InvalidFolderMetadata
 	if folderMetadataEnabled {
 		changes, invalidFolderMetadata, err = augmentChangesForFolderMetadata(ctx, repo, ref, source, target, changes)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("augment changes for folder metadata: %w", err)
+			return nil, nil, nil, nil, fmt.Errorf("augment changes for folder metadata: %w", err)
 		}
 
 		changes, err = augmentChangesForFolderMoves(ctx, repo, ref, changes)
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("augment changes for folder moves: %w", err)
+			return nil, nil, nil, nil, fmt.Errorf("augment changes for folder moves: %w", err)
 		}
 	}
 
@@ -106,7 +106,7 @@ func Compare(
 
 	missingMetadata := resources.FindFoldersMissingMetadata(source)
 
-	return changes, missingMetadata, invalidFolderMetadata, nil
+	return changes, missingMetadata, invalidFolderMetadata, unsupported, nil
 }
 
 // Changes computes the diff between a repository source tree and the current Grafana state (target).
@@ -117,14 +117,14 @@ func Changes(
 	source []repository.FileTreeEntry,
 	target *provisioning.ResourceList,
 	folderMetadataEnabled bool,
-) ([]ResourceFileChange, error) {
+) ([]ResourceFileChange, []resources.UnsupportedPath, error) {
 	logger := logging.FromContext(ctx)
 	lookup := make(map[string][]*provisioning.ResourceListItem, len(target.Items))
 	for i := range target.Items {
 		item := &target.Items[i]
 		if item.Path == "" {
 			if item.Group != resources.FolderResource.Group {
-				return nil, fmt.Errorf("empty path on a non folder")
+				return nil, nil, fmt.Errorf("empty path on a non folder")
 			}
 			continue
 		}
@@ -189,7 +189,7 @@ func Changes(
 			}
 
 			if err := keep.Add(file.Path); err != nil {
-				return nil, fmt.Errorf("failed to add path to keep trie: %w", err)
+				return nil, nil, fmt.Errorf("failed to add path to keep trie: %w", err)
 			}
 
 			if primary.Resource != resources.FolderResource.Resource {
@@ -209,6 +209,18 @@ func Changes(
 		if pathErr := resources.IsPathSupported(file.Path); pathErr != nil &&
 			!safepath.IsHidden(file.Path) && resources.HasResourceExtension(file.Path) {
 			unsupported = append(unsupported, resources.UnsupportedPath{Path: file.Path, Err: pathErr})
+
+			// Preserve the containing folder: an unsyncable file must not make an
+			// already-synced parent folder look orphaned and get deleted.
+			if safeSegment := safepath.SafeSegment(file.Path); safeSegment != "" {
+				if !safepath.IsDir(safeSegment) {
+					safeSegment = safepath.Dir(safeSegment)
+				}
+				if err := keep.Add(safeSegment); err != nil {
+					return nil, nil, fmt.Errorf("failed to add path to keep trie: %w", err)
+				}
+			}
+			continue
 		}
 
 		if resources.IsPathSupported(file.Path) == nil {
@@ -219,14 +231,14 @@ func Changes(
 				if !folderMetadataEnabled {
 					logger.Debug("skipping folder metadata file as feature flag is off", "path", file.Path)
 					if err := keep.Add(file.Path); err != nil {
-						return nil, fmt.Errorf("failed to add path to keep folder metadata file: %w", err)
+						return nil, nil, fmt.Errorf("failed to add path to keep folder metadata file: %w", err)
 					}
 					continue
 				}
 
 				logger.Debug("processing folder metadata file", "path", file.Path)
 				if err := keep.Add(file.Path); err != nil {
-					return nil, fmt.Errorf("failed to add path to keep folder metadata file: %w", err)
+					return nil, nil, fmt.Errorf("failed to add path to keep folder metadata file: %w", err)
 				}
 				// If the parent directory already exists in Grafana and the hash changed,
 				// record an update to reconcile metadata (e.g. folder title).
@@ -280,7 +292,7 @@ func Changes(
 			})
 
 			if err := keep.Add(file.Path); err != nil {
-				return nil, fmt.Errorf("failed to add path to keep trie: %w", err)
+				return nil, nil, fmt.Errorf("failed to add path to keep trie: %w", err)
 			}
 
 			continue
@@ -294,7 +306,7 @@ func Changes(
 
 		if safeSegment != "" && resources.IsPathSupported(safeSegment) == nil {
 			if err := keep.Add(safeSegment); err != nil {
-				return nil, fmt.Errorf("failed to add path to keep trie: %w", err)
+				return nil, nil, fmt.Errorf("failed to add path to keep trie: %w", err)
 			}
 
 			if _, ok := lookup[safeSegment]; ok {
@@ -329,14 +341,10 @@ func Changes(
 		}
 	}
 
-	if len(unsupported) > 0 {
-		return nil, &resources.UnsupportedPathError{Paths: unsupported}
-	}
-
 	// Deepest first (stable sort order)
 	safepath.SortByDepth(changes, func(c ResourceFileChange) string { return c.Path }, false)
 
-	return changes, nil
+	return changes, unsupported, nil
 }
 
 // augmentChangesForFolderMetadata detects two categories of folder metadata changes:

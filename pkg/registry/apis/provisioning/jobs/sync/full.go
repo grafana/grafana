@@ -85,14 +85,25 @@ func FullSync(
 	var changes []ResourceFileChange
 	var missingFolderMetadata []string
 	var invalidFolderMetadata []*resources.InvalidFolderMetadata
+	var unsupportedPaths []resources.UnsupportedPath
 	err := instrumentedFullSyncPhase(jobs.FullSyncPhaseCompare, func() (err error) {
-		changes, missingFolderMetadata, invalidFolderMetadata, err = compare(compareCtx, repo, repositoryResources, currentRef, folderMetadataEnabled)
+		changes, missingFolderMetadata, invalidFolderMetadata, unsupportedPaths, err = compare(compareCtx, repo, repositoryResources, currentRef, folderMetadataEnabled)
 		return
 	}, metrics)
 	compareSpan.End()
 
 	if err != nil {
 		return tracing.Error(span, fmt.Errorf("compare changes: %w", err))
+	}
+
+	if len(unsupportedPaths) > 0 {
+		logging.FromContext(ctx).Info("unsupported paths detected", "count", len(unsupportedPaths))
+		for _, up := range unsupportedPaths {
+			progress.Record(ctx, jobs.NewPathOnlyResult(up.Path).
+				WithAction(repository.FileActionIgnored).
+				WithError(&resources.UnsupportedPathError{Paths: []resources.UnsupportedPath{up}}).
+				Build())
+		}
 	}
 
 	if folderMetadataEnabled && len(missingFolderMetadata) > 0 {
