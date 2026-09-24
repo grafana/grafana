@@ -589,7 +589,7 @@ func TestTransitionSetsResolvedAt(t *testing.T) {
 				EvaluatedAt: evaluatedAt,
 			}
 
-			transition := state.transition(baseRule, result, nil, logger, noImage, false)
+			transition := state.transition(baseRule, result, nil, logger, noImage, func() time.Time { return evaluatedAt }, false)
 
 			if tc.expectResolved {
 				require.NotNil(t, state.ResolvedAt, "ResolvedAt should be set for %s -> %s", tc.initialState, tc.resultState)
@@ -616,6 +616,8 @@ func TestTransitionImageCaptureBackoff(t *testing.T) {
 
 	t.Run("a render timeout on one cycle skips the retry on the very next cycle", func(t *testing.T) {
 		start := time.Now()
+		mock := clock.NewMock()
+		mock.Set(start)
 		attempts := 0
 		timeoutOnce := func(string) (*ngmodels.Image, error) {
 			attempts++
@@ -623,21 +625,23 @@ func TestTransitionImageCaptureBackoff(t *testing.T) {
 		}
 
 		s := &State{State: eval.Alerting, Annotations: make(data.Labels)}
-		s.transition(baseRule, newAlertingResult(start), nil, logger, timeoutOnce, false)
+		s.transition(baseRule, newAlertingResult(start), nil, logger, timeoutOnce, mock.Now, false)
 		require.Equal(t, 1, attempts, "first cycle should attempt the capture")
 		require.Equal(t, 1, s.ImageCaptureConsecutiveTimeouts)
 
 		// Same alert, still Alerting, still no image, well within the backoff window opened by
 		// the timeout above: without backoff this would fire again on every cycle and re-run
 		// the same expensive render/query indefinitely.
-		nextCycle := start.Add(time.Duration(baseRule.IntervalSeconds) * time.Second)
-		require.True(t, nextCycle.Before(s.ImageCaptureNextAttemptAt), "test setup: the next cycle must land inside the backoff window")
-		s.transition(baseRule, newAlertingResult(nextCycle), nil, logger, timeoutOnce, false)
+		mock.Add(time.Duration(baseRule.IntervalSeconds) * time.Second)
+		require.True(t, mock.Now().Before(s.ImageCaptureNextAttemptAt), "test setup: the next cycle must land inside the backoff window")
+		s.transition(baseRule, newAlertingResult(mock.Now()), nil, logger, timeoutOnce, mock.Now, false)
 		assert.Equal(t, 1, attempts, "the next cycle should be skipped while backing off")
 	})
 
 	t.Run("a retry is attempted again once the backoff window elapses", func(t *testing.T) {
 		start := time.Now()
+		mock := clock.NewMock()
+		mock.Set(start)
 		attempts := 0
 		timeoutThenSucceed := func(string) (*ngmodels.Image, error) {
 			attempts++
@@ -648,11 +652,11 @@ func TestTransitionImageCaptureBackoff(t *testing.T) {
 		}
 
 		s := &State{State: eval.Alerting, Annotations: make(data.Labels)}
-		s.transition(baseRule, newAlertingResult(start), nil, logger, timeoutThenSucceed, false)
+		s.transition(baseRule, newAlertingResult(start), nil, logger, timeoutThenSucceed, mock.Now, false)
 		require.Equal(t, 1, attempts)
 
-		afterBackoff := start.Add(imageCaptureBackoffDuration(1) + time.Second)
-		s.transition(baseRule, newAlertingResult(afterBackoff), nil, logger, timeoutThenSucceed, false)
+		mock.Add(imageCaptureBackoffDuration(1) + time.Second)
+		s.transition(baseRule, newAlertingResult(mock.Now()), nil, logger, timeoutThenSucceed, mock.Now, false)
 		assert.Equal(t, 2, attempts, "the retry should run again once the backoff window has elapsed")
 		require.NotNil(t, s.Image)
 		assert.Equal(t, 0, s.ImageCaptureConsecutiveTimeouts, "a successful capture resets the backoff")
@@ -660,6 +664,8 @@ func TestTransitionImageCaptureBackoff(t *testing.T) {
 
 	t.Run("a non-timeout failure is retried on the very next cycle, unlike a timeout", func(t *testing.T) {
 		start := time.Now()
+		mock := clock.NewMock()
+		mock.Set(start)
 		attempts := 0
 		nonTimeoutFailure := func(string) (*ngmodels.Image, error) {
 			attempts++
@@ -667,11 +673,41 @@ func TestTransitionImageCaptureBackoff(t *testing.T) {
 		}
 
 		s := &State{State: eval.Alerting, Annotations: make(data.Labels)}
-		s.transition(baseRule, newAlertingResult(start), nil, logger, nonTimeoutFailure, false)
+		s.transition(baseRule, newAlertingResult(start), nil, logger, nonTimeoutFailure, mock.Now, false)
 		require.Equal(t, 1, attempts)
 
-		s.transition(baseRule, newAlertingResult(start.Add(time.Duration(baseRule.IntervalSeconds)*time.Second)), nil, logger, nonTimeoutFailure, false)
+		mock.Add(time.Duration(baseRule.IntervalSeconds) * time.Second)
+		s.transition(baseRule, newAlertingResult(mock.Now()), nil, logger, nonTimeoutFailure, mock.Now, false)
 		assert.Equal(t, 2, attempts, "a non-timeout failure type is not subject to the timeout backoff")
+	})
+
+	t.Run("the backoff window is measured from when a slow timeout actually completes, not the tick that started it", func(t *testing.T) {
+		// Regression test: the backoff must not be anchored to result.EvaluatedAt (the
+		// scheduled tick, fixed before the attempt starts). takeImageFn blocks synchronously
+		// for up to the render timeout, so anchoring to the tick time would let a slow
+		// attempt's own duration eat into (or, at the max configurable render timeout, exactly
+		// cancel out) the backoff window before it's even set.
+		tickTime := time.Now()
+		mock := clock.NewMock()
+		mock.Set(tickTime)
+
+		attempts := 0
+		slowTimeout := func(string) (*ngmodels.Image, error) {
+			attempts++
+			mock.Add(30 * time.Second) // the maximum configurable render timeout
+			return nil, rendering.ErrServerTimeout
+		}
+
+		s := &State{State: eval.Alerting, Annotations: make(data.Labels)}
+		s.transition(baseRule, eval.Result{State: eval.Alerting, EvaluatedAt: tickTime}, nil, logger, slowTimeout, mock.Now, false)
+		require.Equal(t, 1, attempts)
+
+		// One second after the slow attempt actually finished: anchoring to the tick time
+		// (tickTime + 30s base backoff) would already be due right when the attempt
+		// completed (also tickTime + 30s), letting this retry immediately.
+		mock.Add(time.Second)
+		s.transition(baseRule, eval.Result{State: eval.Alerting, EvaluatedAt: mock.Now()}, nil, logger, slowTimeout, mock.Now, false)
+		assert.Equal(t, 1, attempts, "backoff must be measured from when the attempt completed, not the tick that started it")
 	})
 }
 

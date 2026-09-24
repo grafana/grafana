@@ -519,7 +519,7 @@ func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.
 			patch(newState, curState, result)
 		}
 		start := st.clock.Now()
-		s := newState.transition(alertRule, result, nil, logger, takeImageFn, st.ignorePendingForNoDataAndError)
+		s := newState.transition(alertRule, result, nil, logger, takeImageFn, st.clock.Now, st.ignorePendingForNoDataAndError)
 		if st.metrics != nil {
 			st.metrics.StateUpdateDuration.Observe(st.clock.Now().Sub(start).Seconds())
 		}
@@ -538,7 +538,7 @@ func (st *Manager) setNextStateForAll(alertRule *ngModels.AlertRule, result eval
 	for _, currentState := range currentStates {
 		start := st.clock.Now()
 		newState := currentState.Copy()
-		t := newState.transition(alertRule, result, extraAnnotations, logger, takeImageFn, st.ignorePendingForNoDataAndError)
+		t := newState.transition(alertRule, result, extraAnnotations, logger, takeImageFn, st.clock.Now, st.ignorePendingForNoDataAndError)
 		if st.metrics != nil {
 			st.metrics.StateUpdateDuration.Observe(st.clock.Now().Sub(start).Seconds())
 		}

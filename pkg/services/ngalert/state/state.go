@@ -897,7 +897,7 @@ func patch(newState, existingState *State, result eval.Result) {
 	}
 }
 
-func (a *State) transition(alertRule *models.AlertRule, result eval.Result, extraAnnotations data.Labels, logger log.Logger, takeImageFn takeImageFn, ignorePendingForNoDataAndError bool) StateTransition {
+func (a *State) transition(alertRule *models.AlertRule, result eval.Result, extraAnnotations data.Labels, logger log.Logger, takeImageFn takeImageFn, now func() time.Time, ignorePendingForNoDataAndError bool) StateTransition {
 	a.LastEvaluationTime = result.EvaluatedAt
 	a.EvaluationDuration = result.EvaluationDuration
 	a.SetNextValues(result)
@@ -951,9 +951,14 @@ func (a *State) transition(alertRule *models.AlertRule, result eval.Result, extr
 		a.ResolvedAt = nil
 	}
 
-	if reason := shouldTakeImage(result.EvaluatedAt, a.State, oldState, a.Image, newlyResolved, a.ImageCaptureNextAttemptAt); reason != "" {
+	// now() (not result.EvaluatedAt, the scheduled tick) anchors the backoff, since takeImageFn
+	// blocks synchronously for up to the render timeout: using the tick time for the recorded
+	// deadline would let a slow attempt's own duration eat into (or exceed) the backoff window
+	// before it's even set. Called again after the attempt completes so the window is measured
+	// from when it actually finished, not from when it started.
+	if reason := shouldTakeImage(now(), a.State, oldState, a.Image, newlyResolved, a.ImageCaptureNextAttemptAt); reason != "" {
 		image, err := takeImageFn(reason)
-		a.recordImageCaptureOutcome(result.EvaluatedAt, err)
+		a.recordImageCaptureOutcome(now(), err)
 		if image != nil {
 			a.Image = image
 		}
