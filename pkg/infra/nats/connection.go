@@ -178,9 +178,6 @@ func (c *connection) connect(ctx context.Context) (*natsclient.Conn, error) {
 			c.metrics.connectionErrors.Inc()
 			return nil, fmt.Errorf("connect nats %s: %w", c.role, res.err)
 		}
-		if res.conn.IsConnected() {
-			everConnected.Store(true)
-		}
 		if !res.conn.IsConnected() {
 			c.metrics.connectionErrors.Inc()
 			c.log.Warn("nats initial connect did not complete; retrying in the background",

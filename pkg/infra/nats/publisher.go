@@ -3,7 +3,6 @@ package nats
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/grafana/dskit/services"
@@ -25,12 +24,7 @@ type Publisher interface {
 type PublisherService struct {
 	services.NamedService
 	*connection
-	metrics       *publisherMetrics
-	pendingMu     sync.Mutex
-	shuttingDown  bool
-	pendingConn   *natsclient.Conn
-	pendingBytes  int64
-	oldestPending int64
+	metrics *publisherMetrics
 }
 
 func newPublisher(logger log.Logger, m *publisherMetrics, config *Config) *PublisherService {
@@ -113,32 +107,9 @@ func (p *PublisherService) running(ctx context.Context) error {
 }
 
 func (p *PublisherService) stopping(_ error) error {
-	p.pendingMu.Lock()
-	if p.shuttingDown {
-		p.pendingMu.Unlock()
-		return nil
-	}
-	p.shuttingDown = true
-	p.discardClosedPending()
-	pending := p.pendingBytes
-	p.pendingConn = nil
-	p.pendingMu.Unlock()
-
-	// Freeze accounting before draining, but let concurrent publishes fail fast.
-	drained := p.closeWithResult()
-	if drained {
-		p.pendingMu.Lock()
-		defer p.pendingMu.Unlock()
-		p.pendingBytes = 0
-		p.oldestPending = 0
-		p.metrics.pendingBytes.Set(0)
-		p.metrics.oldestPending.Set(0)
-		return nil
-	}
-	if pending > 0 {
-		p.metrics.forcedDrainLoss.Inc()
-		p.log.Warn("nats publisher closed with locally accepted messages pending", "bytes", pending)
-	}
+	// close() marks the connection closed before draining, so concurrent Publish
+	// callers see ErrClosed immediately rather than blocking on the drain.
+	p.close()
 	return nil
 }
 
@@ -147,24 +118,19 @@ func (p *PublisherService) Health(_ context.Context) error {
 }
 
 func (p *PublisherService) Publish(ctx context.Context, subject string, data []byte) error {
-	// Serialize acceptance and accounting with replacement/closure observation.
-	p.pendingMu.Lock()
-	defer p.pendingMu.Unlock()
-	if p.shuttingDown {
-		return ErrClosed
-	}
-	p.discardClosedPending()
 	nc, err := p.get(ctx)
 	if err != nil {
 		return err
 	}
-	// The previous client may have closed during get's replacement dial.
-	p.discardClosedPending()
-	p.pendingConn = nc
+	// Reject until this connection has connected at least once: nats.go only
+	// buffers for replay after a first successful connect, so accepting earlier
+	// would silently drop the message.
 	if !p.canPublish(nc) {
 		p.metrics.publishErrors.Inc()
 		return fmt.Errorf("publish to %q: nats connection has not connected successfully: %w", subject, natsclient.ErrConnectionReconnecting)
 	}
+	// nats.go is safe for concurrent Publish and owns the bounded reconnect
+	// buffer; a full buffer surfaces here as ErrReconnectBufExceeded.
 	if err := nc.Publish(subject, data); err != nil {
 		p.metrics.publishErrors.Inc()
 		if isConnStateErr(err) {
@@ -173,86 +139,21 @@ func (p *PublisherService) Publish(ctx context.Context, subject string, data []b
 		return fmt.Errorf("publish to %q: %w", subject, err)
 	}
 	p.metrics.messagesAccepted.Inc()
-	// nats.go owns the bounded reconnect queue. Track only messages accepted
-	// while disconnected; a successful FlushWithContext clears that estimate.
-	if !nc.IsConnected() {
-		bytes := int64(len(subject) + len(data))
-		p.pendingBytes += bytes
-		if p.oldestPending == 0 {
-			p.oldestPending = time.Now().UnixNano()
-			p.metrics.oldestPending.Set(float64(time.Now().Unix()))
-		}
-		p.metrics.pendingBytes.Set(float64(p.pendingBytes))
-	}
 	p.log.Debug("accepted message for publish", "subject", subject, "bytes", len(data), "connected", nc.IsConnected())
 	return nil
 }
 
+// flush forces a server round-trip so buffered publishes are pushed out promptly
+// and a broken connection surfaces in the logs. Delivery is not acknowledged by
+// subscribers; this only confirms the server accepted the buffered data.
 func (p *PublisherService) flush(ctx context.Context) {
-	p.pendingMu.Lock()
-	if p.shuttingDown {
-		p.pendingMu.Unlock()
-		return
-	}
-	p.discardClosedPending()
 	p.mu.Lock()
 	nc := p.conn
 	p.mu.Unlock()
-	p.discardClosedPending()
 	if nc == nil || !nc.IsConnected() {
-		p.pendingMu.Unlock()
 		return
 	}
-	// Snapshot both owner and watermark: another Publish may replace a closed
-	// client or add more buffered bytes while this flush is in flight.
-	p.pendingConn = nc
-	watermark := p.pendingBytes
-	p.pendingMu.Unlock()
-
 	if err := nc.FlushWithContext(ctx); err != nil {
-		// A timeout is an observation, not a reason to replay messages: the
-		// server may already have accepted them.
 		p.log.Warn("nats publisher flush failed", "err", err)
-		return
 	}
-	if p.reconcilePending(nc, watermark) {
-		p.metrics.lastSuccessfulFlush.Set(float64(time.Now().Unix()))
-	}
-}
-
-// reconcilePending clears at most watermark bytes from the pending estimate,
-// preserving accounting for messages buffered after the watermark was snapshotted.
-func (p *PublisherService) reconcilePending(nc *natsclient.Conn, watermark int64) bool {
-	p.pendingMu.Lock()
-	defer p.pendingMu.Unlock()
-	if p.shuttingDown || p.pendingConn != nc {
-		return false
-	}
-	p.pendingBytes -= watermark
-	if p.pendingBytes < 0 {
-		p.pendingBytes = 0
-	}
-	if p.pendingBytes == 0 {
-		p.oldestPending = 0
-		p.metrics.oldestPending.Set(0)
-	}
-	p.metrics.pendingBytes.Set(float64(p.pendingBytes))
-	return true
-}
-
-// discardClosedPending requires pendingMu. A terminally closed client's buffer
-// cannot be flushed by its replacement; record unconfirmed work as loss first.
-func (p *PublisherService) discardClosedPending() {
-	if p.pendingConn == nil || !p.pendingConn.IsClosed() {
-		return
-	}
-	if p.pendingBytes > 0 {
-		p.metrics.connectionLoss.Inc()
-		p.log.Warn("nats publisher connection closed with locally accepted messages pending", "bytes", p.pendingBytes)
-	}
-	p.pendingConn = nil
-	p.pendingBytes = 0
-	p.oldestPending = 0
-	p.metrics.pendingBytes.Set(0)
-	p.metrics.oldestPending.Set(0)
 }

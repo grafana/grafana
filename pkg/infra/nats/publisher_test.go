@@ -48,21 +48,8 @@ func TestPublisher(t *testing.T) {
 			<-release
 		})
 		require.NoError(t, err)
-		var stopped chan error
-		t.Cleanup(func() {
-			close(release)
-			if stopped != nil {
-				select {
-				case err := <-stopped:
-					require.NoError(t, err)
-					require.Zero(t, promtestutil.ToFloat64(p.metrics.pendingBytes))
-					require.Zero(t, promtestutil.ToFloat64(p.metrics.connectionLoss))
-					require.Zero(t, promtestutil.ToFloat64(p.metrics.forcedDrainLoss))
-				case <-time.After(5 * time.Second):
-					t.Error("shutdown did not finish after releasing the drain")
-				}
-			}
-		})
+		// Hold a subscription callback open so Drain cannot complete, keeping the
+		// connection in the draining state while we probe Publish.
 		require.NoError(t, nc.Publish("hold.drain", nil))
 		require.NoError(t, nc.Flush())
 		select {
@@ -71,16 +58,11 @@ func TestPublisher(t *testing.T) {
 			t.Fatal("subscription callback did not start")
 		}
 
-		p.pendingConn = nc
-		p.pendingBytes = 100
-		p.metrics.pendingBytes.Set(100)
-		stopped = make(chan error, 1)
-		go func() {
-			stopped <- p.stopping(nil)
-			close(stopped)
-		}()
+		stopped := make(chan error, 1)
+		go func() { stopped <- p.stopping(nil) }()
 		require.Eventually(t, nc.IsDraining, time.Second, time.Millisecond)
 
+		// Publish must fail fast with ErrClosed rather than block on the drain.
 		published := make(chan error, 1)
 		go func() { published <- p.Publish(context.Background(), "test", nil) }()
 		select {
@@ -89,12 +71,19 @@ func TestPublisher(t *testing.T) {
 		case <-time.After(time.Second):
 			t.Fatal("Publish blocked behind shutdown drain")
 		}
-		require.False(t, p.reconcilePending(nc, 100))
-		require.Equal(t, float64(100), promtestutil.ToFloat64(p.metrics.pendingBytes))
+		// Confirm the drain was still in progress, i.e. we probed the racing window.
 		select {
 		case <-stopped:
 			t.Fatal("drain completed before the subscription was released")
 		default:
+		}
+
+		close(release)
+		select {
+		case err := <-stopped:
+			require.NoError(t, err)
+		case <-time.After(5 * time.Second):
+			t.Fatal("shutdown did not finish after releasing the drain")
 		}
 	})
 
@@ -110,7 +99,6 @@ func TestPublisher(t *testing.T) {
 		err := p.Publish(context.Background(), "grafana.test.a", []byte("hello"))
 		require.ErrorIs(t, err, natsclient.ErrConnectionReconnecting)
 		require.Zero(t, promtestutil.ToFloat64(p.metrics.messagesAccepted))
-		require.Zero(t, promtestutil.ToFloat64(p.metrics.pendingBytes))
 	})
 
 	t.Run("starting tolerates a broker outage at boot", func(t *testing.T) {
@@ -126,69 +114,6 @@ func TestPublisher(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
 		t.Cleanup(cancel)
 		require.NoError(t, p.starting(ctx))
-	})
-
-	t.Run("flush reconciliation clears only the flushed watermark", func(t *testing.T) {
-		p := newPublisher(log.NewNopLogger(), newPublisherMetrics(), newConfig(setting.NATSSettings{Enabled: true}, nil))
-
-		// 100 bytes were pending at snapshot; a concurrent Publish buffered 40 more.
-		p.pendingBytes = 140
-		p.oldestPending = time.Now().UnixNano()
-
-		p.reconcilePending(nil, 100)
-
-		require.Equal(t, int64(40), p.pendingBytes)
-		require.NotZero(t, p.oldestPending)
-		require.Equal(t, float64(40), promtestutil.ToFloat64(p.metrics.pendingBytes))
-
-		p.reconcilePending(nil, 40)
-		require.Zero(t, p.pendingBytes)
-		require.Zero(t, p.oldestPending)
-		require.Equal(t, float64(0), promtestutil.ToFloat64(p.metrics.pendingBytes))
-	})
-
-	for _, observe := range []string{"flush", "stopping"} {
-		t.Run("terminal loss is observed by "+observe+" without a replacement publish", func(t *testing.T) {
-			p := newTestPublisher(t, startTestServer(t))
-			nc, err := p.get(context.Background())
-			require.NoError(t, err)
-			p.pendingConn = nc
-			p.pendingBytes = 100
-			p.oldestPending = time.Now().UnixNano()
-			p.metrics.pendingBytes.Set(100)
-			nc.Close()
-
-			if observe == "flush" {
-				p.flush(context.Background())
-			} else {
-				require.NoError(t, p.stopping(nil))
-			}
-			require.Equal(t, float64(1), promtestutil.ToFloat64(p.metrics.connectionLoss))
-			require.Zero(t, promtestutil.ToFloat64(p.metrics.pendingBytes))
-			require.Zero(t, promtestutil.ToFloat64(p.metrics.oldestPending))
-			require.Zero(t, promtestutil.ToFloat64(p.metrics.lastSuccessfulFlush))
-			require.NoError(t, p.stopping(nil))
-			require.Equal(t, float64(1), promtestutil.ToFloat64(p.metrics.connectionLoss))
-			require.Zero(t, promtestutil.ToFloat64(p.metrics.forcedDrainLoss))
-		})
-	}
-
-	t.Run("stale flush cannot clear a replacement connection's pending estimate", func(t *testing.T) {
-		p := newTestPublisher(t, startTestServer(t))
-		old, err := p.get(context.Background())
-		require.NoError(t, err)
-		old.Close()
-		replacement, err := p.get(context.Background())
-		require.NoError(t, err)
-		p.pendingConn = replacement
-		p.pendingBytes = 140
-		p.oldestPending = time.Now().UnixNano()
-		p.metrics.pendingBytes.Set(140)
-
-		require.False(t, p.reconcilePending(old, 100))
-		require.Equal(t, int64(140), p.pendingBytes)
-		require.Equal(t, float64(140), promtestutil.ToFloat64(p.metrics.pendingBytes))
-		require.NotZero(t, p.oldestPending)
 	})
 
 	t.Run("publish honours a cancelled context", func(t *testing.T) {
