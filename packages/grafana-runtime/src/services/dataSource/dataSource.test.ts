@@ -662,7 +662,39 @@ describe('plugin', () => {
       expect(result).toBe(legacyInstance);
       expect(get).toHaveBeenCalledWith('unknown-uid', undefined);
       expect(logWarning).toHaveBeenCalledTimes(1);
-      expect(logWarning).toHaveBeenCalledWith(FALLBACK_TO_LEGACY_INSTANCE_WARNING, { ref: 'unknown-uid' });
+      expect(logWarning).toHaveBeenCalledWith(FALLBACK_TO_LEGACY_INSTANCE_WARNING, {
+        ref: 'unknown-uid',
+        originMessage: 'Datasource unknown-uid was not found',
+      });
+    });
+
+    it.each([
+      { kind: 'Error', error: new Error('module not found') },
+      { kind: 'string', error: 'module not found' },
+      { kind: 'message object', error: { message: 'module not found' } },
+    ])('records the original $kind rejection when legacy resolution succeeds', async ({ error }) => {
+      const settings = ds();
+      setDataSourceInstanceSettings({ [settings.name]: settings });
+      setDataSourcePluginImporter(jest.fn().mockRejectedValue(error));
+      const legacyInstance = Object.create(DataSourceApi.prototype) as DataSourceApi;
+      setDataSourceSrv({ get: jest.fn().mockResolvedValue(legacyInstance) } as unknown as DataSourceSrv);
+
+      await expect(getDataSourceInstance(settings.uid)).resolves.toBe(legacyInstance);
+      expect(logWarning).toHaveBeenCalledWith(FALLBACK_TO_LEGACY_INSTANCE_WARNING, {
+        ref: settings.uid,
+        originMessage: 'module not found',
+      });
+    });
+
+    it('preserves the import error when legacy resolution also fails', async () => {
+      const settings = ds();
+      setDataSourceInstanceSettings({ [settings.name]: settings });
+      const error = new Error('module not found');
+      setDataSourcePluginImporter(jest.fn().mockRejectedValue(error));
+      setDataSourceSrv({ get: jest.fn().mockRejectedValue(new Error('legacy failed')) } as unknown as DataSourceSrv);
+
+      await expect(getDataSourceInstance(settings.uid)).rejects.toBe(error);
+      expect(logWarning).not.toHaveBeenCalled();
     });
 
     it('rethrows the original error and does not log when the legacy srv also cannot resolve it', async () => {

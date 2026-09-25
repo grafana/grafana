@@ -1,6 +1,7 @@
 import { DataSourceApi, type DataSourceInstanceSettings, type DataSourceRef, type ScopedVars } from '@grafana/data';
 
 import { isExpressionReference } from '../../utils/expressionRef';
+import { getOriginMessage } from '../../utils/getCachedPromise';
 import { UserStorage } from '../../utils/userStorage';
 import { getDataSourceSrv, type RuntimeDataSourceRegistration } from '../dataSourceSrv';
 
@@ -192,7 +193,10 @@ async function getDataSourceInstanceFallback(
   if (srv) {
     const legacy = await srv.get(ref, scopedVars).catch(() => undefined);
     if (legacy) {
-      logDataSourceWarning(FALLBACK_TO_LEGACY_INSTANCE_WARNING, { ref: describeRef(ref) });
+      logDataSourceWarning(FALLBACK_TO_LEGACY_INSTANCE_WARNING, {
+        ref: describeRef(ref),
+        originMessage: getOriginMessage(originalError),
+      });
       return legacy;
     }
   }
