@@ -122,7 +122,7 @@ func TestTransitionImageCaptureBackoff(t *testing.T) {
 	rule := &models.AlertRule{IntervalSeconds: 60, ExecErrState: models.ErrorErrState, NoDataState: models.NoData}
 	s := &State{State: eval.Normal}
 	attempts := 0
-	captureErr := error(context.DeadlineExceeded)
+	captureErr := context.DeadlineExceeded
 	capture := func(string) *ImageAttempt {
 		attempts++
 		if captureErr != nil {
