@@ -4,10 +4,7 @@ import { type DataFrame, type SelectableValue, standardTransformersRegistry } fr
 import { t } from '@grafana/i18n';
 import { IconButton } from '@grafana/ui';
 import { TransformationPickerNg } from 'app/features/dashboard/components/TransformationsEditor/TransformationPickerNg';
-import {
-  type FilterCategory,
-  VIEW_ALL_VALUE,
-} from 'app/features/dashboard/components/TransformationsEditor/TransformationsEditor';
+import { type FilterCategory, VIEW_ALL_VALUE } from 'app/features/dashboard/components/TransformationsEditor/types';
 
 interface DrawerState {
   search: string;

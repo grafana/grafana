@@ -6157,9 +6157,6 @@
       "placeholder-search-options": "Search options",
       "visualization-button-tooltip": "Search options"
     },
-    "panel-not-supported": {
-      "go-back-to-queries": "Go back to Queries"
-    },
     "plan-placeholder-badge": {
       "text": "Sample data",
       "tooltip": "The numbers shown are sample data for illustration and do not come from real queries."
@@ -6819,19 +6816,6 @@
     "transformation-type-picker": {
       "sql-cta-button": "Add SQL expression",
       "sql-cta-description": "Prefer SQL? Add a SQL expression to your queries instead."
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "By deleting all transformations, you will go back to the main selection screen."
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "Add another transformation"
-      },
-      "confirmText-delete-all": "Delete all",
-      "delete-all-transformations": "Delete all transformations",
-      "title-delete-all-transformations": "Delete all transformations?",
-      "tooltip-clear-search": "Clear search",
-      "tooltip-close-picker": "Close picker"
     },
     "validation": {
       "invalid-dashboard-id": "Could not find a valid Grafana.com ID",
