@@ -383,6 +383,56 @@ func TestGlobalIndexStaysOffWhenSwitchedOff(t *testing.T) {
 	assert.Nil(t, search.GetIndex(GlobalSearchKey("ns")))
 }
 
+// The update skips a change it has already applied, but each resource type counts
+// its versions on its own, so a dashboard and a folder can share both a name and
+// a version. Both must be applied, and each skipped only when it repeats.
+func TestGlobalIndexUpdateTellsTypesApartWhenSkippingRepeats(t *testing.T) {
+	same := func(key NamespacedResource) *ModifiedResource {
+		return &ModifiedResource{
+			Action:          resourcepb.WatchEvent_MODIFIED,
+			Key:             resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "shared"},
+			ResourceVersion: 11,
+			Value:           testObjectJSON("shared", "shared"),
+		}
+	}
+	storage := &multiTypeStorage{
+		modified: map[NamespacedResource][]*ModifiedResource{
+			dashboardType("ns"): {same(dashboardType("ns"))},
+			folderType("ns"):    {same(folderType("ns"))},
+		},
+	}
+	search := &mockSearchBackend{}
+	server, err := newSearchServer(SearchOptions{
+		Backend: search,
+		Resources: &TestDocumentBuilderSupplier{GroupsResources: map[string]string{
+			"dashboard.grafana.app": "dashboards",
+			"folder.grafana.app":    "folders",
+		}},
+		GlobalIndexEnabled: true,
+		InitMinCount:       1,
+		// Switches on the cache that remembers applied changes.
+		IndexModificationCacheTTL: time.Minute,
+	}, storage, nil, nil, nil, nil, nil, ProvideIndexMetrics(nil), nil, nil)
+	require.NoError(t, err)
+
+	_, err = server.build(t.Context(), GlobalSearchKey("ns"), 0, "test", false, time.Time{})
+	require.NoError(t, err)
+
+	first := &MockResourceIndex{}
+	_, _, err = search.lastUpdater(t.Context(), first, 5)
+	require.NoError(t, err)
+	assert.Equal(t, map[NamespacedResource][]string{
+		dashboardType("ns"): {"shared"},
+		folderType("ns"):    {"shared"},
+	}, indexedNames(t, first), "both are applied, not one taken for the other")
+
+	// The same changes reported again are skipped for both.
+	again := &MockResourceIndex{}
+	_, _, err = search.lastUpdater(t.Context(), again, 5)
+	require.NoError(t, err)
+	assert.Empty(t, again.indexedItems())
+}
+
 // Identity is the whole key, so two resource types can hold the same name
 // without one replacing the other.
 func TestGlobalIndexKeepsNamesOfDifferentTypesApart(t *testing.T) {

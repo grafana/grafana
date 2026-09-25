@@ -2336,7 +2336,11 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 				// Skip events we've already processed when the dedupCache is enabled.
 				// The underlying ListModifiedSince implementation may return events
 				// prior to sinceRV, and the cache lets us skip the extra work.
-				cacheKey := fmt.Sprintf("%s~%d", res.Key.Name, res.ResourceVersion)
+				//
+				// Keyed by the whole object key: a global index shares one cache across
+				// resource types, and two types can hold the same name at the same
+				// version, because each type counts its versions on its own.
+				cacheKey := fmt.Sprintf("%s~%d", SearchID(&res.Key), res.ResourceVersion)
 				if dedupCache != nil {
 					if _, found := dedupCache.Get(cacheKey); found {
 						// Already processed, so there is nothing to convert and nothing lost.
@@ -2390,6 +2394,12 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		// has got is the oldest of their answers, so nothing newer than that is
 		// skipped next time; a type that was further ahead is asked again for a
 		// few changes it has already applied, which rewrites them unchanged.
+		//
+		// Each type counts its versions on its own and answers with its latest,
+		// however old, so a type nobody has written to for a while holds the whole
+		// index back and the other types are re-read from that point each time.
+		// Nothing is missed, but the cost grows. Progress has to be recorded per
+		// type before a global index is updated this way routinely.
 		listModifiedTime := time.Now()
 		newRV := int64(0)
 		totalDocs := 0
