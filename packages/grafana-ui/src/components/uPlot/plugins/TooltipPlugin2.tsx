@@ -306,7 +306,7 @@ export const TooltipPlugin2 = ({
       let prevIsPinned = _isPinned;
       _isPinned = false;
       _isHovering = false;
-      _plot!.setCursor({ left: -10, top: -10 });
+      _plot?.setCursor({ left: -10, top: -10 });
       dataLinks = [];
       adHocFilters = [];
 
@@ -608,8 +608,12 @@ export const TooltipPlugin2 = ({
     };
 
     const updatePlotVisible = () => {
+      if (_plot == null) {
+        return;
+      }
+
       plotVisible =
-        _plot!.rect.bottom <= winHgt && _plot!.rect.top >= 0 && _plot!.rect.left >= 0 && _plot!.rect.right <= winWid;
+        _plot.rect.bottom <= winHgt && _plot.rect.top >= 0 && _plot.rect.left >= 0 && _plot.rect.right <= winWid;
     };
 
     updateWinSize();
@@ -682,7 +686,7 @@ export const TooltipPlugin2 = ({
 
     const onscroll = (e: Event) => {
       updatePlotVisible();
-      _isHovering && e.target instanceof Node && e.target.contains(_plot!.root) && dismiss();
+      _isHovering && _plot != null && e.target instanceof Node && e.target.contains(_plot.root) && dismiss();
     };
 
     window.addEventListener('resize', updateWinSize);

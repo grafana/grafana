@@ -496,6 +496,26 @@ describe('TooltipPlugin2', () => {
       view.unmount();
     });
 
+    it('does not throw on window scroll or resize before uPlot init', () => {
+      const errors: unknown[] = [];
+      const onError = (e: ErrorEvent) => {
+        errors.push(e.error);
+        e.preventDefault();
+      };
+      window.addEventListener('error', onError);
+
+      const { view } = setUp();
+
+      document.body.dispatchEvent(new Event('scroll'));
+      window.dispatchEvent(new Event('scroll'));
+      window.dispatchEvent(new Event('resize'));
+
+      window.removeEventListener('error', onError);
+      expect(errors).toEqual([]);
+
+      view.unmount();
+    });
+
     it('should clean up mouseup listener (onUp)', () => {
       const docAddSpy = jest.spyOn(document, 'addEventListener');
       const docRemoveSpy = jest.spyOn(document, 'removeEventListener');
