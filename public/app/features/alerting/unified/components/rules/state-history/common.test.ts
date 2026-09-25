@@ -79,6 +79,7 @@ describe('historyDataFrameToLogRecords', () => {
               previous: 'Normal',
               current: 'Alerting',
               values: { B: 1 },
+              evalMatches: [{ refId: 'B0', metric: 'http_requests_total', labels: { pod: 'pod-1' }, value: 1 }],
               labels: { alertname: 'test-rule', grafana_folder: 'folder-one' },
             },
             {
@@ -108,6 +109,7 @@ describe('historyDataFrameToLogRecords', () => {
         previous: 'Normal',
         current: 'Alerting',
         values: { B: 1 },
+        evalMatches: [{ refId: 'B0', metric: 'http_requests_total', labels: { pod: 'pod-1' }, value: 1 }],
         labels: { alertname: 'test-rule', grafana_folder: 'folder-one' },
       },
     });
