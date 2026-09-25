@@ -4,6 +4,7 @@ import { Button, LoadingPlaceholder, Stack } from '@grafana/ui';
 
 import { buildAlertRuleSearchQuery } from '../search/searchQuery';
 import { type Criteria } from '../search/types';
+import { RuleRowList, RuleRowListItem } from '../shared/RuleRowList';
 import { useContinuationSearch } from '../shared/useContinuationSearch';
 
 import { AlertRuleActions } from './AlertRuleActions';
@@ -53,14 +54,13 @@ export function ListView({ criteria, resetKey }: ListViewProps) {
 
   return (
     <Stack direction="column" gap={0.5}>
-      {rows.map((hit) => (
-        <AlertRuleRow
-          key={hit.uid}
-          hit={hit}
-          showFolderPath
-          actions={<AlertRuleActions ruleUid={hit.uid} />}
-        />
-      ))}
+      <RuleRowList>
+        {rows.map((hit) => (
+          <RuleRowListItem key={hit.uid}>
+            <AlertRuleRow hit={hit} showFolderPath actions={<AlertRuleActions ruleUid={hit.uid} />} />
+          </RuleRowListItem>
+        ))}
+      </RuleRowList>
       {Boolean(loadMoreError) && (
         <Stack direction="row" gap={1} alignItems="center">
           <div role="alert">{t('alerting.gma-rule-list.alert-rules.load-more-error', 'Failed to load more rules')}</div>

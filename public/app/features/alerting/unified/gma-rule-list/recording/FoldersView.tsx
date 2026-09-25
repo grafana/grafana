@@ -8,6 +8,7 @@ import { Button, LoadingPlaceholder, Stack } from '@grafana/ui';
 import { buildRecordingRuleSearchQuery } from '../search/searchQuery';
 import { createEmptyCriteria } from '../search/types';
 import { FolderListRow } from '../shared/FolderListRow';
+import { RuleRowList, RuleRowListItem } from '../shared/RuleRowList';
 import { useFolderRecordingRuleCount } from '../shared/caches';
 import { buildFolderListSearchQuery } from '../shared/folderSearchQuery';
 import { type ContinuationPage, useContinuationSearch } from '../shared/useContinuationSearch';
@@ -68,15 +69,18 @@ export function FoldersView({ folderUids, resetKey }: FoldersViewProps) {
 
   return (
     <Stack direction="column" gap={1}>
-      {items.map((folder) => (
-        <ExpandableFolderRow
-          key={folder.uid}
-          folderUid={folder.uid}
-          expanded={expanded.has(folder.uid)}
-          onToggle={() => toggle(folder.uid)}
-          resetKey={resetKey}
-        />
-      ))}
+      <RuleRowList>
+        {items.map((folder) => (
+          <RuleRowListItem key={folder.uid}>
+            <ExpandableFolderRow
+              folderUid={folder.uid}
+              expanded={expanded.has(folder.uid)}
+              onToggle={() => toggle(folder.uid)}
+              resetKey={resetKey}
+            />
+          </RuleRowListItem>
+        ))}
+      </RuleRowList>
       <Stack direction="row" gap={1}>
         <Button variant="secondary" disabled={!hasPrevious} onClick={previous}>
           {t('alerting.gma-rule-list.recording-rules.previous', 'Previous')}
@@ -148,14 +152,17 @@ function ExpandedFolderRules({ folderUid, resetKey }: { folderUid: string; reset
 
   return (
     <Stack direction="column" gap={0.5}>
-      {rows.map((hit) => (
-        <RecordingRuleRow
-          key={hit.uid}
-          hit={hit}
-          showFolderPath={false}
-          actions={<RecordingRuleActions ruleUid={hit.uid} />}
-        />
-      ))}
+      <RuleRowList>
+        {rows.map((hit) => (
+          <RuleRowListItem key={hit.uid}>
+            <RecordingRuleRow
+              hit={hit}
+              showFolderPath={false}
+              actions={<RecordingRuleActions ruleUid={hit.uid} />}
+            />
+          </RuleRowListItem>
+        ))}
+      </RuleRowList>
       {Boolean(loadMoreError) && (
         <Stack direction="row" gap={1} alignItems="center">
           <div role="alert">

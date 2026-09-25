@@ -4,6 +4,7 @@ import { Button, LoadingPlaceholder, Stack } from '@grafana/ui';
 
 import { buildRecordingRuleSearchQuery } from '../search/searchQuery';
 import { type Criteria } from '../search/types';
+import { RuleRowList, RuleRowListItem } from '../shared/RuleRowList';
 import { useContinuationSearch } from '../shared/useContinuationSearch';
 
 import { RecordingRuleActions } from './RecordingRuleActions';
@@ -55,14 +56,13 @@ export function ListView({ criteria, resetKey }: ListViewProps) {
 
   return (
     <Stack direction="column" gap={0.5}>
-      {rows.map((hit) => (
-        <RecordingRuleRow
-          key={hit.uid}
-          hit={hit}
-          showFolderPath
-          actions={<RecordingRuleActions ruleUid={hit.uid} />}
-        />
-      ))}
+      <RuleRowList>
+        {rows.map((hit) => (
+          <RuleRowListItem key={hit.uid}>
+            <RecordingRuleRow hit={hit} showFolderPath actions={<RecordingRuleActions ruleUid={hit.uid} />} />
+          </RuleRowListItem>
+        ))}
+      </RuleRowList>
       {Boolean(loadMoreError) && (
         <Stack direction="row" gap={1} alignItems="center">
           <div role="alert">

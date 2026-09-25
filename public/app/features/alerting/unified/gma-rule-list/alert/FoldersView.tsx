@@ -8,6 +8,7 @@ import { Button, LoadingPlaceholder, Stack } from '@grafana/ui';
 import { buildAlertRuleSearchQuery } from '../search/searchQuery';
 import { createEmptyCriteria } from '../search/types';
 import { FolderListRow } from '../shared/FolderListRow';
+import { RuleRowList, RuleRowListItem } from '../shared/RuleRowList';
 import { useFolderAlertRuleCount } from '../shared/caches';
 import { buildFolderListSearchQuery } from '../shared/folderSearchQuery';
 import { type ContinuationPage, useContinuationSearch } from '../shared/useContinuationSearch';
@@ -70,15 +71,18 @@ export function FoldersView({ folderUids, resetKey }: FoldersViewProps) {
 
   return (
     <Stack direction="column" gap={1}>
-      {items.map((folder) => (
-        <ExpandableFolderRow
-          key={folder.uid}
-          folderUid={folder.uid}
-          expanded={expanded.has(folder.uid)}
-          onToggle={() => toggle(folder.uid)}
-          resetKey={resetKey}
-        />
-      ))}
+      <RuleRowList>
+        {items.map((folder) => (
+          <RuleRowListItem key={folder.uid}>
+            <ExpandableFolderRow
+              folderUid={folder.uid}
+              expanded={expanded.has(folder.uid)}
+              onToggle={() => toggle(folder.uid)}
+              resetKey={resetKey}
+            />
+          </RuleRowListItem>
+        ))}
+      </RuleRowList>
       <Stack direction="row" gap={1}>
         <Button variant="secondary" disabled={!hasPrevious} onClick={previous}>
           {t('alerting.gma-rule-list.alert-rules.previous', 'Previous')}
@@ -139,14 +143,13 @@ function ExpandedFolderRules({ folderUid, resetKey }: { folderUid: string; reset
 
   return (
     <Stack direction="column" gap={0.5}>
-      {rows.map((hit) => (
-        <AlertRuleRow
-          key={hit.uid}
-          hit={hit}
-          showFolderPath={false}
-          actions={<AlertRuleActions ruleUid={hit.uid} />}
-        />
-      ))}
+      <RuleRowList>
+        {rows.map((hit) => (
+          <RuleRowListItem key={hit.uid}>
+            <AlertRuleRow hit={hit} showFolderPath={false} actions={<AlertRuleActions ruleUid={hit.uid} />} />
+          </RuleRowListItem>
+        ))}
+      </RuleRowList>
       {Boolean(loadMoreError) && (
         <Stack direction="row" gap={1} alignItems="center">
           <div role="alert">{t('alerting.gma-rule-list.alert-rules.load-more-error', 'Failed to load more rules')}</div>
