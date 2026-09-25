@@ -574,7 +574,7 @@ describe('NotebookLayoutManager', () => {
 
     // The trailing empty cell's own add button offers its own position, so the new block lands
     // before that slot and the empty cell stays at the tail.
-    it('inserts before the trailing empty slot when that slot\'s own add button is used', async () => {
+    it("inserts before the trailing empty slot when that slot's own add button is used", async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
       const addButtons = screen.getAllByRole('button', { name: 'Click to add above' });
 
@@ -588,7 +588,7 @@ describe('NotebookLayoutManager', () => {
     // Same insert-before-trailing path as Code above — Paragraph's starter content is already
     // empty markdown, identical to the trailing slot, so a convert-in-place used to be a no-op
     // on the undo stack. A fresh cell still has to land before the slot.
-    it('inserts a paragraph before the trailing empty slot when that slot\'s own add button is used', async () => {
+    it("inserts a paragraph before the trailing empty slot when that slot's own add button is used", async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
       const addButtons = screen.getAllByRole('button', { name: 'Click to add above' });
 
