@@ -77,15 +77,21 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     const update: Partial<DashboardSceneState> = {};
     let panelToEdit: VizPanel | undefined;
 
-    // Runs in the SAME synchronous URL-sync pass as $timeRange's and every variable's own
-    // updateFromUrl, which are children of this scene and so run right after it (see the
-    // implementation spec, 4.6, for why this ordering — not a fetch here — is what makes a Saved
-    // View a default that an explicit var-*/from/to param still overrides. state.savedViews is
-    // guaranteed already populated by loadSavedViews before the scene ever reaches this point.
+    // update.viewFilter is applied synchronously below (a plain scalar on this scene, not a
+    // cross-object mutation, so it doesn't participate in the problem this comment describes).
+    // applySavedViewState is deferred with setTimeout for the same reason the editview branch
+    // above defers onEnterEditMode: $timeRange's and every variable's own updateFromUrl run right
+    // after this call, in the SAME synchronous pass, against the SAME already-captured URL
+    // snapshot. If we mutated them here, their own updateFromUrl would immediately see "current
+    // state (now the new value) differs from the stale snapshot (the old value)" and revert them
+    // right back — the sync pass doesn't re-read the URL mid-walk, so a synchronous mutation here
+    // is invisible to it and gets clobbered a few lines later in the very same call stack.
+    // Deferring to a new tick lets that pass finish first.
     if (typeof values.viewFilter === 'string' && values.viewFilter !== viewFilter) {
       const view = savedViews?.find((v) => v.metadata.name === values.viewFilter);
       if (view) {
-        applySavedViewState(this._scene, view.spec);
+        const scene = this._scene;
+        setTimeout(() => applySavedViewState(scene, view.spec));
         update.viewFilter = values.viewFilter;
       }
     } else if (viewFilter && values.viewFilter === null) {

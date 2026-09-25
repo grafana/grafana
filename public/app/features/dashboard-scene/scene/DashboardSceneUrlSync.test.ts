@@ -55,18 +55,37 @@ describe('DashboardSceneUrlSync', () => {
       return { scene, view };
     }
 
-    it('applies the matching saved view and records it in state', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('records the selection synchronously, but defers applying it', () => {
       const { scene } = buildSceneWithSavedViews();
       scene.urlSync?.updateFromUrl({ viewFilter: 'view-1' });
 
+      // state.viewFilter is a plain scalar on this scene, so it applies immediately.
+      expect(scene.state.viewFilter).toBe('view-1');
+      // The actual time range/variable apply is deferred to a later tick -- applying it here,
+      // synchronously, would get clobbered a few lines later in the SAME url-sync pass by
+      // $timeRange's own updateFromUrl, which still sees the pre-mutation URL snapshot. This is
+      // the regression this test guards against: reverting to a synchronous applySavedViewState
+      // call would make this assertion fail (from would already be 'now-24h').
+      expect(scene.state.$timeRange?.state.from).toBe('now-6h');
+
+      jest.runAllTimers();
+
       expect(scene.state.$timeRange?.state.from).toBe('now-24h');
       expect(scene.state.$timeRange?.state.to).toBe('now-1h');
-      expect(scene.state.viewFilter).toBe('view-1');
     });
 
     it('ignores a viewFilter that does not match any saved view', () => {
       const { scene } = buildSceneWithSavedViews();
       scene.urlSync?.updateFromUrl({ viewFilter: 'does-not-exist' });
+      jest.runAllTimers();
 
       expect(scene.state.viewFilter).toBeUndefined();
       expect(scene.state.$timeRange?.state.from).toBe('now-6h');

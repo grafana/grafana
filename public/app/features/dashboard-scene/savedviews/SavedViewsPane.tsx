@@ -239,7 +239,10 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
           <Stack direction="column" gap={1}>
             <Button variant="secondary" disabled={!selectedView || !isDirty || busy} onClick={handleOverwrite}>
               {selectedView
-                ? t('dashboard.sidebar.saved-views.overwrite', 'Overwrite "{{name}}"', { name: selectedView.spec.name })
+                ? t('dashboard.sidebar.saved-views.overwrite', 'Overwrite "%NAME%"').replace(
+                    '%NAME%',
+                    selectedView.spec.name
+                  )
                 : t('dashboard.sidebar.saved-views.overwrite-none', 'Overwrite selected view')}
             </Button>
 
@@ -261,9 +264,10 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
         <ConfirmModal
           isOpen
           title={t('dashboard.sidebar.saved-views.delete-confirm-title', 'Delete saved view')}
-          body={t('dashboard.sidebar.saved-views.delete-confirm-body', 'Delete "{{name}}"? This cannot be undone.', {
-            name: pendingDelete.spec.name,
-          })}
+          body={t(
+            'dashboard.sidebar.saved-views.delete-confirm-body',
+            'Delete "%NAME%"? This cannot be undone.'
+          ).replace('%NAME%', pendingDelete.spec.name)}
           confirmText={t('dashboard.sidebar.saved-views.delete-confirm-confirm', 'Delete')}
           onConfirm={() => handleDelete(pendingDelete)}
           onDismiss={() => setPendingDelete(undefined)}
