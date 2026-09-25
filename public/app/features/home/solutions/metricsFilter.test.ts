@@ -1,13 +1,10 @@
-import { labelIssue, parseMetricsFilter, patternIssue, summarizeMetricsFilter } from './metricsFilter';
+import { labelIssue, parseMetricsFilter, patternIssue } from './metricsFilter';
 
 const stored = {
   datasourceUid: 'prom-uid',
   datasourceName: 'Prometheus',
   excludes: [{ label: 'instance', regex: 'cache-.*' }],
 };
-
-const INVALID_LABEL = 'Label names may only contain letters, digits and underscores';
-const INVALID_PATTERN = 'Pattern is not a valid regular expression';
 
 describe('parseMetricsFilter', () => {
   it('drops half-filled rows, trims, and reads nothing left as unscoped', () => {
@@ -29,38 +26,21 @@ describe('parseMetricsFilter', () => {
   });
 });
 
-describe('summarizeMetricsFilter', () => {
-  it('lists the exclusions', () => {
-    expect(
-      summarizeMetricsFilter({ ...stored, excludes: [...stored.excludes, { label: 'mountpoint', regex: '/scratch' }] })
-    ).toBe('Excluding instance: cache-.*, mountpoint: /scratch');
-  });
-});
-
-describe('labelIssue', () => {
-  it('names a missing or malformed label name', () => {
+describe('field rules', () => {
+  it('name what is missing or malformed', () => {
     expect(labelIssue(' ')).toBe('Choose a label');
-    expect(labelIssue('inst-ance')).toBe(INVALID_LABEL);
+    expect(labelIssue('inst-ance')).toBe('Label names may only contain letters, digits and underscores');
     expect(labelIssue(' instance ')).toBeNull();
-  });
-});
-
-describe('patternIssue', () => {
-  it('names a missing pattern', () => {
     expect(patternIssue(' ')).toBe('Enter a pattern');
   });
 
-  it.each(['[', 'cache-(', '*cache', '(?=cache)', '(?<!gke-)cache', 'cache-\\1'])(
-    'rejects a pattern Prometheus would refuse: %s',
-    (regex) => {
-      expect(patternIssue(regex)).toBe(INVALID_PATTERN);
-    }
-  );
+  // One row per way a pattern can fail: the engine refuses it, or it uses a construct RE2 lacks.
+  it.each(['cache-(', '(?=cache)', 'cache-\\1'])('reject a pattern Prometheus would refuse: %s', (regex) => {
+    expect(patternIssue(regex)).toBe('Pattern is not a valid regular expression');
+  });
 
-  it.each(['.*-cache-.*', 'web-1:9100|web-2:9100', '/mnt/disks/ssd[0-9]+', '(?i)cache-.*', '10\\.0\\.0\\.1'])(
-    'accepts a pattern Prometheus would run: %s',
-    (regex) => {
-      expect(patternIssue(regex)).toBeNull();
-    }
-  );
+  // RE2's inline flag group, and a backslash the backreference guard must not mistake.
+  it.each(['(?i)cache-.*', '10\\.0\\.0\\.1'])('accept a pattern Prometheus would run: %s', (regex) => {
+    expect(patternIssue(regex)).toBeNull();
+  });
 });

@@ -182,69 +182,43 @@ describe('useHomepageSolutions', () => {
     });
   });
 
-  it('recreates only the Kubernetes solution when its filter changes', () => {
-    mockFactories.kubernetes.mockImplementation(() => solution('kubernetes', 'active'));
+  it.each([
+    {
+      solution: 'kubernetes' as const,
+      index: 0,
+      scope: { cluster: 'prod', namespaces: [], nodes: [] },
+      detect: detectKubernetes,
+    },
+    {
+      solution: 'metrics' as const,
+      index: 1,
+      scope: { excludes: [{ label: 'instance', regex: 'cache-.*' }] },
+      detect: detectMetrics,
+    },
+  ])('recreates only the $solution solution when its filter changes', ({ solution: id, index, scope, detect }) => {
+    mockFactories[id].mockImplementation(() => solution(id, 'active'));
     const { result } = renderHook(() => useHomepageSolutions());
     const first = result.current;
 
     act(() => {
       store.set(
-        solutionFilterStorageKey('kubernetes'),
-        JSON.stringify({
-          datasourceUid: 'prometheus',
-          datasourceName: 'Prometheus',
-          cluster: 'prod',
-          namespaces: [],
-          nodes: [],
-        })
+        solutionFilterStorageKey(id),
+        JSON.stringify({ datasourceUid: 'prometheus', datasourceName: 'Prometheus', ...scope })
       );
     });
 
-    expect(mockFactories.kubernetes).toHaveBeenCalledTimes(2);
-    expect(mockFactories.kubernetes).toHaveBeenLastCalledWith(
-      expect.objectContaining({ cluster: 'prod' }),
-      detectKubernetes
-    );
-    expect(result.current.solutions[0]).not.toBe(first.solutions[0]);
-    result.current.solutions.slice(1).forEach((current, index) => {
-      expect(current).toBe(first.solutions[index + 1]);
-    });
-    expect(result.current.signals).toBe(first.signals);
-    for (const id of ['traces', 'metrics', 'logs', 'synthetics'] as const) {
-      expect(mockFactories[id]).toHaveBeenCalledTimes(1);
-    }
-  });
-
-  it('recreates only the metrics solution when its filter changes', () => {
-    mockFactories.metrics.mockImplementation(() => solution('metrics', 'active'));
-    const { result } = renderHook(() => useHomepageSolutions());
-    const first = result.current;
-
-    act(() => {
-      store.set(
-        solutionFilterStorageKey('metrics'),
-        JSON.stringify({
-          datasourceUid: 'prometheus',
-          datasourceName: 'Prometheus',
-          excludes: [{ label: 'instance', regex: 'cache-.*' }],
-        })
-      );
-    });
-
-    expect(mockFactories.metrics).toHaveBeenCalledTimes(2);
-    expect(mockFactories.metrics).toHaveBeenLastCalledWith(
-      expect.objectContaining({ excludes: [{ label: 'instance', regex: 'cache-.*' }] }),
-      detectMetrics
-    );
-    expect(result.current.solutions[1]).not.toBe(first.solutions[1]);
-    result.current.solutions.forEach((current, index) => {
-      if (index !== 1) {
-        expect(current).toBe(first.solutions[index]);
+    expect(mockFactories[id]).toHaveBeenCalledTimes(2);
+    expect(mockFactories[id]).toHaveBeenLastCalledWith(expect.objectContaining(scope), detect);
+    result.current.solutions.forEach((current, i) => {
+      if (i === index) {
+        expect(current).not.toBe(first.solutions[i]);
+      } else {
+        expect(current).toBe(first.solutions[i]);
       }
     });
     expect(result.current.signals).toBe(first.signals);
-    for (const id of ['kubernetes', 'traces', 'logs', 'synthetics'] as const) {
-      expect(mockFactories[id]).toHaveBeenCalledTimes(1);
+    for (const other of Object.keys(mockFactories) as SolutionId[]) {
+      expect(mockFactories[other]).toHaveBeenCalledTimes(other === id ? 2 : 1);
     }
   });
 });

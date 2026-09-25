@@ -521,17 +521,15 @@ describe('metrics telemetry', () => {
       );
       expect(diskRatioExpr({ excludes: [{ label: 'device', regex: 'a"b\\c' }] })).toContain('device!~"a\\"b\\\\c"');
       expect(diskPressureQuery(scope)).toBe(`max by (instance) (${diskRatioExpr(scope)}) > 0.9`);
-    });
-
-    it('trims rows and leaves half-filled ones out of the query, as a drafted scope carries them', () => {
-      const draft = {
-        excludes: [
-          { label: ' instance ', regex: ' cache-.* ' },
-          { label: 'job', regex: '' },
-        ],
-      };
-
-      expect(diskRatioExpr(draft)).toBe(diskRatioExpr({ excludes: [{ label: 'instance', regex: 'cache-.*' }] }));
+      // A drafted scope carries untrimmed and half-filled rows; only complete ones become matchers.
+      expect(
+        diskRatioExpr({
+          excludes: [
+            { label: ' instance ', regex: ' cache-.* ' },
+            { label: 'job', regex: '' },
+          ],
+        })
+      ).toBe(diskRatioExpr({ excludes: [{ label: 'instance', regex: 'cache-.*' }] }));
     });
 
     it('builds the disk pressure and host queries on the scoped ratio', async () => {
@@ -543,6 +541,7 @@ describe('metrics telemetry', () => {
         { timeoutMs: 30_000, partial: true }
       );
 
+      // The `{}` resource stub also walks the null arms of the series-count and name-count readers.
       mockResolveBackendInstance.mockResolvedValue(backendInstance(jest.fn(async () => ({}))));
       await fetchMetricsActivity(prom, scope);
 
@@ -554,23 +553,12 @@ describe('metrics telemetry', () => {
     });
   });
 
-  it('reads the ETA for the filesystem selected by disk pressure', async () => {
+  it('reads the ETA for the filesystem selected by disk pressure, inside the scope', async () => {
     mockRunInstantQueries.mockResolvedValue([scalarFrame('eta', 6.4)]);
-
-    await expect(fetchMetricsDiskHoursToFull('web-03:9100', '/data', prom, null)).resolves.toBe(6.4);
-
-    expect(mockRunInstantQueries).toHaveBeenCalledWith(
-      { eta: expect.stringContaining('instance="web-03:9100",mountpoint="/data"') },
-      prom,
-      { timeoutMs: 30_000 }
-    );
-  });
-
-  it('keeps the ETA inside the scope, since an excluded cluster can carry the same instance label', async () => {
-    mockRunInstantQueries.mockResolvedValue([scalarFrame('eta', 6.4)]);
+    // Instance labels repeat across clusters, so an excluded cluster must not supply the ETA.
     const scope = { excludes: [{ label: 'cluster', regex: 'prod-eu-.*' }] };
 
-    await fetchMetricsDiskHoursToFull('web-03:9100', '/data', prom, scope);
+    await expect(fetchMetricsDiskHoursToFull('web-03:9100', '/data', prom, scope)).resolves.toBe(6.4);
 
     expect(mockRunInstantQueries).toHaveBeenCalledWith(
       {
