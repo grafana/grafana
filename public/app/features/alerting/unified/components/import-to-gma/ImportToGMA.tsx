@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { skipToken } from '@reduxjs/toolkit/query/react';
 import { isEmpty } from 'lodash';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { FormProvider, useForm, useFormContext } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 import { useDebounce } from 'react-use';
 
 import { type GrafanaTheme2, OrgRole } from '@grafana/data';
@@ -58,7 +58,7 @@ import { CancelButton } from './Wizard/CancelButton';
 import { StepperStateProvider, useStepperState } from './Wizard/StepperState';
 import { WizardLayout } from './Wizard/WizardLayout';
 import { WizardStep } from './Wizard/WizardStep';
-import { getPauseRulesLabel, isAutoSyncCommitted, isAutoSyncSelected } from './Wizard/steps';
+import { getPauseRulesLabel, isAutoSyncCommitted } from './Wizard/steps';
 import { StepKey } from './Wizard/types';
 import { Step1Content, useStep1Validation } from './steps/Step1AlertmanagerResources';
 import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
@@ -278,18 +278,29 @@ function ImportWizardContent() {
     autoSyncNotificationsEnabled: autoSyncNotificationsEnabled ?? false,
   });
 
-  const liveDryRunArgs: ValidateAlertmanagerConfigImportArgs | typeof skipToken = canRunDryRunNow
-    ? {
-        source: notificationsSource,
-        yamlFile: notificationsYamlFile,
-        templateFiles: notificationsTemplateFiles,
-        datasourceName: notificationsDatasourceName ?? undefined,
-        configIdentifier: policyTreeName,
-      }
-    : skipToken;
+  const liveDryRunArgs: ValidateAlertmanagerConfigImportArgs | typeof skipToken = useMemo(
+    () =>
+      canRunDryRunNow
+        ? {
+            source: notificationsSource,
+            yamlFile: notificationsYamlFile,
+            templateFiles: notificationsTemplateFiles,
+            datasourceName: notificationsDatasourceName ?? undefined,
+            configIdentifier: policyTreeName,
+          }
+        : skipToken,
+    [
+      canRunDryRunNow,
+      notificationsSource,
+      notificationsYamlFile,
+      notificationsTemplateFiles,
+      notificationsDatasourceName,
+      policyTreeName,
+    ]
+  );
 
-  // Debounces which args reach the query hook — RTK Query's own cache-key isolation (not this
-  // debounce) is what prevents stale/superseded results and reset-on-remount issues.
+  // Debounces args into the query hook to avoid a call per keystroke. Early feedback only — it
+  // never gates Next (handleStep1Next runs its own fresh check), so lagging live inputs is fine.
   const [dryRunArgs, setDryRunArgs] = useState<ValidateAlertmanagerConfigImportArgs | typeof skipToken>(skipToken);
   useDebounce(() => setDryRunArgs(liveDryRunArgs), 500, [
     canRunDryRunNow,
@@ -299,18 +310,6 @@ function ImportWizardContent() {
     notificationsDatasourceName,
     policyTreeName,
   ]);
-
-  // True while the query's args haven't caught up to the live inputs yet (debounce in flight) —
-  // its result belongs to the previous input and must not be trusted.
-  const isDryRunArgsStale =
-    dryRunArgs === skipToken
-      ? liveDryRunArgs !== skipToken
-      : liveDryRunArgs === skipToken ||
-        dryRunArgs.source !== liveDryRunArgs.source ||
-        dryRunArgs.yamlFile !== liveDryRunArgs.yamlFile ||
-        dryRunArgs.templateFiles !== liveDryRunArgs.templateFiles ||
-        dryRunArgs.datasourceName !== liveDryRunArgs.datasourceName ||
-        dryRunArgs.configIdentifier !== liveDryRunArgs.configIdentifier;
 
   const {
     currentData: dryRunRawData,
@@ -323,16 +322,16 @@ function ImportWizardContent() {
     [dryRunRawData]
   );
   const dryRunErrorMessage = dryRunRawError ? stringifyErrorLike(dryRunRawError) : undefined;
-  const dryRunResultRaw = useMemo(
+  const dryRunResult = useMemo(
     () => deriveDryRunResult(dryRunParsedResult, dryRunErrorMessage),
     [dryRunParsedResult, dryRunErrorMessage]
   );
-  const dryRunStateRaw = useMemo(
-    () => deriveDryRunState(isDryRunFetching, dryRunResultRaw, dryRunErrorMessage),
-    [isDryRunFetching, dryRunResultRaw, dryRunErrorMessage]
+  const dryRunState = useMemo(
+    () => deriveDryRunState(isDryRunFetching, dryRunResult, dryRunErrorMessage),
+    [isDryRunFetching, dryRunResult, dryRunErrorMessage]
   );
-  const dryRunResult = isDryRunArgsStale ? undefined : dryRunResultRaw;
-  const dryRunState = isDryRunArgsStale ? 'idle' : dryRunStateRaw;
+
+  const [triggerDryRunCheck] = convertToGMAApi.useLazyValidateAlertmanagerConfigImportQuery();
 
   // Sync step errors with dry-run state
   useEffect(() => {
@@ -366,9 +365,17 @@ function ImportWizardContent() {
   // Step 1 handlers
   // Note: WizardStep and NextButton handle stepper state (completed, skipped, visited, navigation)
   // These handlers only need to update form values and control whether to proceed
-  const handleStep1Next = useCallback((): boolean => {
-    if (dryRunState === 'error') {
-      return false;
+  // Runs its own fresh, awaited check rather than trusting the debounced preview above, which
+  // can lag the live inputs by design.
+  const handleStep1Next = useCallback(async (): Promise<boolean> => {
+    if (liveDryRunArgs !== skipToken) {
+      // Keep the preview in sync with what we're about to check, instead of waiting on the debounce.
+      setDryRunArgs(liveDryRunArgs);
+      try {
+        await triggerDryRunCheck(liveDryRunArgs).unwrap();
+      } catch {
+        return false;
+      }
     }
     setValue('step1Completed', true);
     setValue('step1Skipped', false);
@@ -378,7 +385,7 @@ function ImportWizardContent() {
       setValue('selectedRoutingTree', currentPolicyTreeName);
     }
     return true;
-  }, [dryRunState, setValue, getValues]);
+  }, [liveDryRunArgs, triggerDryRunCheck, setValue, getValues]);
 
   const handleStep1Skip = useCallback(() => {
     setValue('step1Completed', false);
@@ -637,7 +644,7 @@ function ImportWizardContent() {
  */
 interface Step1WrapperProps {
   canImport: boolean;
-  onNext: () => boolean;
+  onNext: () => boolean | Promise<boolean>;
   onSkip: () => void;
   onCancel: () => void;
   dryRunState: DryRunState;
@@ -646,15 +653,6 @@ interface Step1WrapperProps {
 
 function Step1Wrapper({ canImport, onNext, onSkip, onCancel, dryRunState, dryRunResult }: Step1WrapperProps) {
   const isStep1Valid = useStep1Validation(canImport);
-  const { watch } = useFormContext<ImportFormValues>();
-  const [autoSyncNotificationsEnabled, notificationsSource] = watch([
-    'autoSyncNotificationsEnabled',
-    'notificationsSource',
-  ]);
-  const autoSyncActive = isAutoSyncSelected(autoSyncNotificationsEnabled ?? false, notificationsSource);
-  // Advance only once dry-run passes; Auto-sync skips it entirely and relies on validity alone.
-  const dryRunPassed = dryRunState === 'success' || dryRunState === 'warning';
-  const canProceed = autoSyncActive ? isStep1Valid : isStep1Valid && dryRunPassed;
 
   return (
     <WizardStep
@@ -670,10 +668,10 @@ function Step1Wrapper({ canImport, onNext, onSkip, onCancel, dryRunState, dryRun
       onCancel={onCancel}
       canSkip
       skipLabel={t('alerting.import-to-gma.step1.skip', 'Skip this step')}
-      disableNext={!canProceed}
+      disableNext={!isStep1Valid}
       disabledNextTooltip={t(
         'alerting.import-to-gma.step1.next-disabled-tooltip',
-        'Complete the required fields and wait for validation to pass before continuing.'
+        'Complete the required fields before continuing.'
       )}
     >
       <Step1Content canImport={canImport} dryRunState={dryRunState} dryRunResult={dryRunResult} />

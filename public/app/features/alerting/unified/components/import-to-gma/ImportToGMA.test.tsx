@@ -197,8 +197,8 @@ describe('ImportToGMA wizard — stage analytics', () => {
 });
 
 describe('ImportToGMA wizard — step 1 dry-run gating & review', () => {
-  it('keeps the notifications-step Next disabled when the dry-run fails', async () => {
-    // Fail the dry-run itself, so the step never reaches a passing validation state.
+  it('runs a fresh dry-run when Next is clicked and blocks navigation when it fails', async () => {
+    // Fail the dry-run itself, so the click-time check never passes.
     server.use(
       http.post(CONVERT_URL, ({ request }) =>
         request.headers.get('X-Grafana-Alerting-Dry-Run') === 'true'
@@ -209,17 +209,21 @@ describe('ImportToGMA wizard — step 1 dry-run gating & review', () => {
     const { user } = render(<ImportWizardGate />);
 
     await screen.findByRole('group', { name: /import notification resources/i });
+    // Next is available immediately — the check happens on click, not while typing.
+    const nextButton = screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton);
+    expect(nextButton).toHaveAttribute('aria-disabled', 'false');
 
-    // The dry-run runs and fails; Next stays disabled (aria-disabled keeps the tooltip reachable).
+    await user.click(nextButton);
+
     await waitFor(() =>
       expect(mockReportInteraction).toHaveBeenCalledWith('grafana_alerting_import_to_gma_dryrun_error')
     );
-    const nextButton = screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton);
-    expect(nextButton).toHaveAttribute('aria-disabled', 'true');
-
-    // Clicking a blocked Next must not advance to the rules step.
-    await user.click(nextButton);
     expect(screen.queryByRole('group', { name: /import alert rules/i })).not.toBeInTheDocument();
+    // The failed check doesn't permanently lock the step — Next stays clickable for a retry.
+    expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
+      'aria-disabled',
+      'false'
+    );
   });
 
   it('lists the uploaded template files in the review step', async () => {
@@ -454,33 +458,31 @@ describe('dry-run wiring (wizard-level)', () => {
     mockScenario = 'yaml';
   });
 
-  it('keeps Next disabled while re-validating an edited but still-valid name, then re-enables it', async () => {
-    server.use(http.post(CONVERT_URL, () => HttpResponse.json({ status: 'success' })));
+  it('keeps Next enabled while editing, and checks the latest value when clicked', async () => {
+    const identifiersSeen: Array<string | null> = [];
+    server.use(
+      http.post(CONVERT_URL, ({ request }) => {
+        identifiersSeen.push(request.headers.get('X-Grafana-Alerting-Config-Identifier'));
+        return HttpResponse.json({ status: 'success' });
+      })
+    );
     const { user } = render(<ImportWizardGate />);
 
     await screen.findByRole('group', { name: /import notification resources/i });
-    await waitFor(
-      () =>
-        expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
-          'aria-disabled',
-          'false'
-        ),
-      { timeout: 3000 }
-    );
 
     const input = screen.getByPlaceholderText(/prometheus-prod/i);
     await user.type(input, '2');
 
+    // Editing the (still-valid) name never disables Next — there's nothing to "wait out" anymore.
     const nextButton = screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton);
-    expect(nextButton).toHaveAttribute('aria-disabled', 'true');
-    await waitFor(
-      () =>
-        expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
-          'aria-disabled',
-          'false'
-        ),
-      { timeout: 3000 }
-    );
+    expect(nextButton).toHaveAttribute('aria-disabled', 'false');
+
+    await user.click(nextButton);
+    await screen.findByRole('group', { name: /import alert rules/i });
+
+    // Whatever the debounced preview checked along the way, the click-time check used the
+    // current, fully-edited value.
+    expect(identifiersSeen.at(-1)).toBe('prometheus-prod2');
   });
 
   it('does not disable Next when navigating back to a Step 1 that is already valid', async () => {
@@ -488,13 +490,9 @@ describe('dry-run wiring (wizard-level)', () => {
     const { user } = render(<ImportWizardGate />);
 
     await screen.findByRole('group', { name: /import notification resources/i });
-    await waitFor(
-      () =>
-        expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
-          'aria-disabled',
-          'false'
-        ),
-      { timeout: 3000 }
+    expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
+      'aria-disabled',
+      'false'
     );
     await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
 
@@ -502,7 +500,8 @@ describe('dry-run wiring (wizard-level)', () => {
     // PreviousButton has no e2e-selector entry; it renders a plain data-testid.
     await user.click(screen.getByTestId('wizard-prev-button'));
 
-    // No waitFor: this must already be enabled on the very next render, with no re-validation flash.
+    // No waitFor: Next's enablement depends only on form validity, which persists across
+    // navigation — there's no cached dry-run state that could be reset or re-triggered on remount.
     await screen.findByRole('group', { name: /import notification resources/i });
     expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
       'aria-disabled',
@@ -510,45 +509,37 @@ describe('dry-run wiring (wizard-level)', () => {
     );
   });
 
-  it('never re-enables Next from a slow response to an input that has since changed', async () => {
-    let resolveFirstAttempt: (() => void) | undefined;
+  it('validates the current value on click, unaffected by a slow, superseded preview request', async () => {
+    let resolveStalePreview: (() => void) | undefined;
     let requestCount = 0;
     server.use(
-      http.post(CONVERT_URL, async ({ request }) => {
+      http.post(CONVERT_URL, async () => {
         requestCount += 1;
-        const body = await request.clone().json();
-        if (body.alertmanager_config.includes('receiver: default') && requestCount === 1) {
+        if (requestCount === 1) {
+          // The initial (pre-edit) debounced preview — never resolves until told to.
           await new Promise<void>((resolve) => {
-            resolveFirstAttempt = resolve;
+            resolveStalePreview = resolve;
           });
-          return HttpResponse.json({ status: 'success' });
         }
-        return HttpResponse.json({ status: 'error', error: 'still invalid' }, { status: 400 });
+        return HttpResponse.json({ status: 'success' });
       })
     );
 
     const { user } = render(<ImportWizardGate />);
 
     await screen.findByRole('group', { name: /import notification resources/i });
-    // Wait for the first (slow) attempt to actually start before editing away from it.
+    // Wait for the initial preview request to actually start before editing away from it.
     await waitFor(() => expect(requestCount).toBe(1));
 
     const input = screen.getByPlaceholderText(/prometheus-prod/i);
     await user.type(input, '-changed');
-    expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
-      'aria-disabled',
-      'true'
-    );
 
-    // Let the slow first attempt's response land now that the input has moved on.
-    resolveFirstAttempt?.();
+    // Click Next while the stale preview for the old value is still hanging.
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+    resolveStalePreview?.();
 
-    // The second attempt (for the edited value) will resolve as an error per the handler above —
-    // Next must reflect that, never the first attempt's stale success.
-    await waitFor(() => expect(requestCount).toBeGreaterThanOrEqual(2));
-    expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
-      'aria-disabled',
-      'true'
-    );
+    // Next's own click-time check (for the edited value) isn't blocked by the still-pending,
+    // now-irrelevant preview request for the old one.
+    await screen.findByRole('group', { name: /import alert rules/i });
   });
 });

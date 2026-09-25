@@ -18,8 +18,8 @@ function fileSignature(file: File): string {
 }
 
 /**
- * Built from stable fields, not the raw args — `File` objects have no own enumerable properties,
- * so JSON.stringify-ing them directly would collapse every upload to the same key.
+ * Built from stable fields, not the raw args, since `File` has no own enumerable properties to
+ * key on. Prefixed with the endpoint's own name since the cache-key namespace is shared across `alertingApi`.
  */
 function serializeValidateAlertmanagerConfigImportArgs(queryArgs: ValidateAlertmanagerConfigImportArgs): string {
   const { source, yamlFile, templateFiles = [], datasourceName, configIdentifier } = queryArgs;
@@ -32,7 +32,7 @@ function serializeValidateAlertmanagerConfigImportArgs(queryArgs: ValidateAlertm
           configIdentifier,
         }
       : { source, datasourceName, configIdentifier };
-  return JSON.stringify(signature);
+  return `validateAlertmanagerConfigImport(${JSON.stringify(signature)})`;
 }
 
 export const convertToGMAApi = alertingApi.injectEndpoints({
@@ -144,8 +144,7 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
      * its own isolated cache entry. Reuses `dryRunAlertmanagerConfig`'s request via `.initiate()`.
      */
     validateAlertmanagerConfigImport: build.query<ConvertAlertmanagerResponse, ValidateAlertmanagerConfigImportArgs>({
-      serializeQueryArgs: ({ queryArgs, endpointName }) =>
-        `${endpointName}(${serializeValidateAlertmanagerConfigImportArgs(queryArgs)})`,
+      serializeQueryArgs: ({ queryArgs }) => serializeValidateAlertmanagerConfigImportArgs(queryArgs),
       // Explicit return type breaks a circular reference: this queryFn dispatches convertToGMAApi's
       // own dryRunAlertmanagerConfig endpoint, which TypeScript can't infer while still defining it.
       queryFn: async (

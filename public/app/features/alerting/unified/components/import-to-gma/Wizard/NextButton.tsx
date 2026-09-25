@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
@@ -28,11 +30,17 @@ export const NextButton = ({ onNext, canSkip, skipLabel, onSkip, disabled, disab
   const { activeStep, setActiveStep } = useStepperState();
   const nextStep = getNextStep(activeStep);
   const isLast = isLastStep(activeStep);
+  const [isPending, setIsPending] = useState(false);
 
   const handleClick = async () => {
-    const shouldProceed = await onNext();
-    if (shouldProceed && nextStep) {
-      setActiveStep(nextStep.id);
+    setIsPending(true);
+    try {
+      const shouldProceed = await onNext();
+      if (shouldProceed && nextStep) {
+        setActiveStep(nextStep.id);
+      }
+    } finally {
+      setIsPending(false);
     }
   };
 
@@ -59,9 +67,9 @@ export const NextButton = ({ onNext, canSkip, skipLabel, onSkip, disabled, disab
       )}
       <Button
         variant="primary"
-        icon="arrow-right"
+        icon={isPending ? 'spinner' : 'arrow-right'}
         onClick={handleClick}
-        disabled={disabled}
+        disabled={disabled || isPending}
         tooltip={disabled && disabledTooltip ? disabledTooltip : undefined}
         data-testid={selectors.pages.Alerting.ImportToGMA.nextButton}
       >
