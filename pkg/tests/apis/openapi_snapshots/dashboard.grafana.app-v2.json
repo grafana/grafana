@@ -3275,6 +3275,12 @@
           "layout"
         ],
         "properties": {
+          "annotations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardAnnotationQueryKind"
+            }
+          },
           "collapse": {
             "type": "boolean"
           },
@@ -3621,6 +3627,12 @@
           "layout"
         ],
         "properties": {
+          "annotations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardAnnotationQueryKind"
+            }
+          },
           "conditionalRendering": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardConditionalRenderingGroupKind"
           },
