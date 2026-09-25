@@ -518,6 +518,9 @@ describe('buildVizPanel', () => {
   });
 
   describe('withoutQueries (plan placeholders)', () => {
+    // A 'timeseries' sample always sets legend.showLegend: false and infers a unit from the
+    // title (see planningSampleData.ts). Picking planned values that disagree with both makes
+    // any leak from the sample into the panel state visible in the assertions below.
     function buildPlannedPanel(
       options: Record<string, unknown>,
       fieldConfig: FieldConfigSource,
@@ -538,7 +541,7 @@ describe('buildVizPanel', () => {
       };
     }
 
-    it('keeps the planned spec options and fieldConfig', () => {
+    it('keeps the planned spec options/fieldConfig instead of the sample defaults', () => {
       const panel = buildPlannedPanel(
         { legend: { showLegend: true } },
         { ...defaultFieldConfigSource(), defaults: { ...defaultFieldConfigSource().defaults, unit: 'bytes' } }
@@ -551,7 +554,10 @@ describe('buildVizPanel', () => {
     });
 
     it.each([false, true])('adds the placeholder badge without a data provider (has queries: %s)', (hasQueries) => {
-      const panel = buildPlannedPanel({}, defaultFieldConfigSource());
+      const panel = buildPlannedPanel(
+        { legend: { showLegend: true } },
+        { ...defaultFieldConfigSource(), defaults: { ...defaultFieldConfigSource().defaults, unit: 'bytes' } }
+      );
       panel.spec.data.spec.queries = hasQueries ? [defaultPanelQueryKind()] : [];
 
       const viz = buildVizPanel(panel, undefined, { withoutQueries: true });
@@ -564,7 +570,11 @@ describe('buildVizPanel', () => {
       expect(viz.state.$data).toBeUndefined();
     });
 
-    it('keeps planned text-panel content', () => {
+    it('keeps planned text-panel content instead of the sample placeholder note', () => {
+      // getPlanningPanelData's 'text' branch (planningSampleData.ts) returns { mode: 'markdown',
+      // content: '_Notes for this section._' } as its sample options. buildVizPanelState must
+      // preserve the spec's own options/fieldConfig, or this sample would clobber a planned
+      // text panel's real markdown. Samples now belong to RENDER_PLAN, not the shared serializer.
       const panel = buildPlannedPanel(
         { mode: 'markdown', content: 'Real planned note' },
         defaultFieldConfigSource(),

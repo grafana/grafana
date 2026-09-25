@@ -125,6 +125,9 @@ export function buildVizPanelState(
     titleItems,
     $behaviors: [],
     _UNSAFE_clearPreviousFieldValues: true,
+    // The spec's own options/fieldConfig are the assistant's planned visualization settings
+    // and must win, not be clobbered by the sample's. RENDER_PLAN supplies synthetic $data
+    // for query-less previews; keeping samples there also avoids loading them for real dashboards.
     options,
     fieldConfig: transformMappingsToV1(panel.spec.vizConfig.spec.fieldConfig),
   };

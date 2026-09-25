@@ -45,7 +45,10 @@ function buildPlanPanel(title: string, vizType: string, id: number): VizPanel {
   // buildVizPanel attaches a dropdown menu unconditionally. A preview panel must have none: a
   // plugin's View pane can mutate and persist panel options (e.g. timeseries legend toggles)
   // with no isPlanning() gate. Clearing menu removes PanelChrome's button entirely.
-  // This payload has no visualization settings, so use the sample's options and field config.
+  // buildVizPanel preserves a real spec's options/fieldConfig, but this payload never has real
+  // ones: its synthetic empty spec would clobber the sample's visualization settings. Apply the
+  // sample here rather than change that behavior for every other caller. Its synthetic $data
+  // also stays in this lazy command instead of loading with the shared serializer.
   vizPanel.setState({ ...getPlanningPanelData(title, vizType), key: getVizPanelKeyForPanelId(id), menu: undefined });
 
   return vizPanel;

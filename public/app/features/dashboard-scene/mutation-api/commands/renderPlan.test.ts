@@ -61,6 +61,16 @@ describe('RENDER_PLAN', () => {
     expect(scene.state.planning).toMatchObject({ planId: 'plan-1', planTitle: 'Kafka overview' });
   });
 
+  it('builds query-less placeholder panels with sample data, not a live query runner', async () => {
+    const { scene, client } = setup();
+
+    await client.execute({ type: 'RENDER_PLAN', payload: plan });
+
+    const panel = scene.state.body.getVizPanels()[0];
+    expect(getQueryRunnerFor(panel)).toBeUndefined();
+    expect(sceneGraph.getData(panel).state.data?.series[0]).toBeDefined();
+  });
+
   it('generates sample data once per placeholder, with preview settings and no live query runner', async () => {
     const { scene, client } = setup();
     const generateSample = jest.spyOn(planningSampleData, 'getPlanningPanelData');

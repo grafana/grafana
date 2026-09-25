@@ -59,7 +59,8 @@ export function validateDashboardResourceEnvelope(
       ),
     };
   }
-  // Resources for unsaved dashboards use a placeholder name, which must also pass validation.
+  // buildDashboardResource() emits NEW_DASHBOARD_NAME_PLACEHOLDER when the dashboard has no uid yet,
+  // so the editor's own initial JSON must be accepted.
   const expectedName = dashboard.state.uid ?? NEW_DASHBOARD_NAME_PLACEHOLDER;
   if (metadata?.name && metadata.name !== expectedName) {
     return {

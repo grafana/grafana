@@ -387,7 +387,7 @@ describe('ShareExportTab', () => {
     });
   });
 
-  describe('onSaveAsFile', () => {
+  describe('onSaveAsFile filename', () => {
     afterEach(() => {
       jest.mocked(saveAs).mockClear();
     });
