@@ -1568,6 +1568,14 @@ export type AlertRuleOperatorState = {
 };
 export type AlertRuleAlertRuleState = 'Inactive' | 'Healthy' | 'Firing' | 'Pending' | 'Recovering';
 export type AlertRuleAlertRuleStateReason = 'Evaluated' | 'KeepLast';
+export type AlertRuleAlertRuleInstanceTotals = {
+  error: number;
+  firing: number;
+  healthy: number;
+  nodata: number;
+  pending: number;
+  recovering: number;
+};
 export type AlertRuleStatus = {
   /** additionalFields is reserved for future use */
   additionalFields?: {
@@ -1585,6 +1593,7 @@ export type AlertRuleStatus = {
   };
   state?: AlertRuleAlertRuleState;
   stateReason?: AlertRuleAlertRuleStateReason;
+  totals?: AlertRuleAlertRuleInstanceTotals;
 };
 export type AlertRule = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */

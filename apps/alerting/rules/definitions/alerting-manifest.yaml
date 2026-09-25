@@ -39,6 +39,32 @@ spec:
           - Error
           - NoData
           type: string
+        AlertRuleInstanceTotals:
+          additionalProperties: false
+          description: |-
+            Count of alert instances per state. error also counts instances whose evaluation
+            errored but were mapped to another state via execErrState, so it can overlap.
+          properties:
+            error:
+              type: integer
+            firing:
+              type: integer
+            healthy:
+              type: integer
+            nodata:
+              type: integer
+            pending:
+              type: integer
+            recovering:
+              type: integer
+          required:
+          - healthy
+          - firing
+          - pending
+          - recovering
+          - nodata
+          - error
+          type: object
         AlertRuleState:
           enum:
           - Inactive
@@ -295,6 +321,8 @@ spec:
               $ref: '#/components/schemas/AlertRuleState'
             stateReason:
               $ref: '#/components/schemas/AlertRuleStateReason'
+            totals:
+              $ref: '#/components/schemas/AlertRuleInstanceTotals'
           type: object
       scope: Namespaced
       searchFields:

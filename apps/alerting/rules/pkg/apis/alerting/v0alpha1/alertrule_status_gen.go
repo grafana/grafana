@@ -74,6 +74,28 @@ func (AlertRulestatusOperatorState) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRulestatusOperatorState"
 }
 
+// Count of alert instances per state. error also counts instances whose evaluation
+// errored but were mapped to another state via execErrState, so it can overlap.
+// +k8s:openapi-gen=true
+type AlertRuleAlertRuleInstanceTotals struct {
+	Healthy    int64 `json:"healthy"`
+	Firing     int64 `json:"firing"`
+	Pending    int64 `json:"pending"`
+	Recovering int64 `json:"recovering"`
+	Nodata     int64 `json:"nodata"`
+	Error      int64 `json:"error"`
+}
+
+// NewAlertRuleAlertRuleInstanceTotals creates a new AlertRuleAlertRuleInstanceTotals object.
+func NewAlertRuleAlertRuleInstanceTotals() *AlertRuleAlertRuleInstanceTotals {
+	return &AlertRuleAlertRuleInstanceTotals{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for AlertRuleAlertRuleInstanceTotals.
+func (AlertRuleAlertRuleInstanceTotals) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleAlertRuleInstanceTotals"
+}
+
 // +k8s:openapi-gen=true
 type AlertRuleStatus struct {
 	Health             *AlertRuleAlertRuleHealth      `json:"health,omitempty"`
@@ -82,10 +104,11 @@ type AlertRuleStatus struct {
 	LastEvaluationTime *time.Time                     `json:"lastEvaluationTime,omitempty"`
 	// duration of the last evaluation in seconds
 	EvaluationDuration *float64 `json:"evaluationDuration,omitempty"`
+	LastError          *string  `json:"lastError,omitempty"`
 	// operatorStates is a map of operator ID to operator state evaluations.
 	// Any operator which consumes this kind SHOULD add its state evaluation information to this field.
 	OperatorStates map[string]AlertRulestatusOperatorState `json:"operatorStates,omitempty"`
-	LastError      *string                                 `json:"lastError,omitempty"`
+	Totals         *AlertRuleAlertRuleInstanceTotals       `json:"totals,omitempty"`
 	// additionalFields is reserved for future use
 	AdditionalFields map[string]interface{} `json:"additionalFields,omitempty"`
 }

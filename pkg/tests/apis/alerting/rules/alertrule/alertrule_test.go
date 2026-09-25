@@ -1694,6 +1694,7 @@ func TestIntegrationAlertRuleStatusSubresource(t *testing.T) {
 		StateReason:        new(v0alpha1.AlertRuleAlertRuleStateReasonEvaluated),
 		LastEvaluationTime: &evalTime,
 		EvaluationDuration: new(0.25),
+		Totals:             &v0alpha1.AlertRuleAlertRuleInstanceTotals{Firing: 2, Healthy: 1},
 	}
 	updated := writeStatus(firing)
 	require.Equal(t, v0alpha1.AlertRuleAlertRuleStateFiring, *updated.Status.State)
@@ -1709,6 +1710,7 @@ func TestIntegrationAlertRuleStatusSubresource(t *testing.T) {
 	require.True(t, got.Status.LastEvaluationTime.Equal(evalTime))
 	require.NotNil(t, got.Status.EvaluationDuration)
 	require.InDelta(t, 0.25, *got.Status.EvaluationDuration, 0.001)
+	require.Equal(t, &v0alpha1.AlertRuleAlertRuleInstanceTotals{Firing: 2, Healthy: 1}, got.Status.Totals)
 	require.Equal(t, created.Spec.Title, got.Spec.Title)
 
 	// 2) A second status write overwrites the stored status.
