@@ -403,12 +403,9 @@ func (st *Manager) ProcessEvalResults(
 				return image
 			}
 			l := logger.New("dashboard", alertRule.GetDashboardUID(), "panel", alertRule.GetPanelID(), "reason", reason)
-			img, err := takeImage(ctx, st.images, alertRule, l)
+			img := takeImage(ctx, st.images, alertRule, l)
 			imageTaken = true
-			if err != nil {
-				return nil
-			}
-			image = newImageAttempt(img, nil)
+			image = img
 			return image
 		}
 	}
@@ -599,7 +596,7 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 			// By setting 'ResolvedAt' we trigger the scheduler to send a 'resolved' alert to the Alertmanager.
 			if s.ShouldBeResolved(oldState) {
 				s.ResolvedAt = &evaluatedAt
-				s.Image = takeImageFn("stale state") // Potentially nil
+				s.Image = takeImageFn("stale state").withPrevious(s.Image) // Potentially nil
 			}
 
 			staleStates[s.CacheID] = struct{}{}

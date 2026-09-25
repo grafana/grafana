@@ -720,8 +720,7 @@ func TestTakeImage(t *testing.T) {
 		s := NewMockImageCapturer(ctrl)
 
 		s.EXPECT().NewImage(ctx, &r).Return(nil, ngmodels.ErrNoDashboard)
-		image, err := takeImage(ctx, s, &r, log.NewNopLogger())
-		assert.NoError(t, err)
+		image := takeImage(ctx, s, &r, log.NewNopLogger())
 		assert.Nil(t, image)
 	})
 
@@ -734,8 +733,7 @@ func TestTakeImage(t *testing.T) {
 		s := NewMockImageCapturer(ctrl)
 
 		s.EXPECT().NewImage(ctx, &r).Return(nil, ngmodels.ErrNoPanel)
-		image, err := takeImage(ctx, s, &r, log.NewNopLogger())
-		assert.NoError(t, err)
+		image := takeImage(ctx, s, &r, log.NewNopLogger())
 		assert.Nil(t, image)
 	})
 
@@ -748,8 +746,7 @@ func TestTakeImage(t *testing.T) {
 		s := NewMockImageCapturer(ctrl)
 
 		s.EXPECT().NewImage(ctx, &r).Return(nil, screenshot.ErrScreenshotsUnavailable)
-		image, err := takeImage(ctx, s, &r, log.NewNopLogger())
-		assert.NoError(t, err)
+		image := takeImage(ctx, s, &r, log.NewNopLogger())
 		assert.Nil(t, image)
 	})
 
@@ -762,9 +759,9 @@ func TestTakeImage(t *testing.T) {
 		s := NewMockImageCapturer(ctrl)
 
 		s.EXPECT().NewImage(ctx, &r).Return(nil, errors.New("unknown error"))
-		image, err := takeImage(ctx, s, &r, log.NewNopLogger())
-		assert.EqualError(t, err, "unknown error")
-		assert.Nil(t, image)
+		image := takeImage(ctx, s, &r, log.NewNopLogger())
+		require.NotNil(t, image)
+		assert.EqualError(t, image.Error, "unknown error")
 	})
 
 	t.Run("image should be returned", func(t *testing.T) {
@@ -776,10 +773,10 @@ func TestTakeImage(t *testing.T) {
 		s := NewMockImageCapturer(ctrl)
 
 		s.EXPECT().NewImage(ctx, &r).Return(&ngmodels.Image{Path: "foo.png"}, nil)
-		image, err := takeImage(ctx, s, &r, log.NewNopLogger())
-		assert.NoError(t, err)
+		image := takeImage(ctx, s, &r, log.NewNopLogger())
 		require.NotNil(t, image)
-		assert.Equal(t, ngmodels.Image{Path: "foo.png"}, *image)
+		assert.NoError(t, image.Error)
+		assert.Equal(t, ngmodels.Image{Path: "foo.png"}, image.Image)
 	})
 }
 

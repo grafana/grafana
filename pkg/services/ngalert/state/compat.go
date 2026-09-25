@@ -66,8 +66,8 @@ func StateToPostableAlert(transition StateTransition, appURL *url.URL) *models.P
 		nA[alertingModels.ValueStringAnnotation] = alertState.LastEvaluationString
 	}
 
-	if alertState.Image != nil {
-		attachImageAnnotations(&alertState.Image.Image, nA)
+	if image := alertState.Image.notificationImage(); image != nil {
+		attachImageAnnotations(image, nA)
 	}
 
 	if alertState.StateReason != "" {

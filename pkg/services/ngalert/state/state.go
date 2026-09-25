@@ -48,8 +48,8 @@ type State struct {
 	// can still contain the results of previous evaluations.
 	Error error
 
-	// Image contains an optional image for the state. It tends to be included in notifications
-	// as a visualization to show why the alert fired.
+	// Image contains the latest capture attempt. Successful images are included in
+	// notifications; failed attempts track the retry cooldown in memory.
 	Image *ImageAttempt
 
 	// Annotations contains the annotations from the alert rule. If an annotation is templated
@@ -708,7 +708,7 @@ func (a *State) ShouldBeResolved(oldState eval.State) bool {
 
 // shouldTakeImage determines whether a new image should be taken for a given transition. This should return true when
 // newly transitioning to an alerting state, when no valid image exists, or when the alert has been resolved.
-func shouldTakeImage(state, previousState eval.State, previousImage *ImageAttempt, resolved bool) string {
+func shouldTakeImage(state, previousState eval.State, previousAttempt *ImageAttempt, resolved bool) string {
 	if resolved {
 		return "resolved"
 	}
@@ -716,10 +716,13 @@ func shouldTakeImage(state, previousState eval.State, previousImage *ImageAttemp
 		if previousState != eval.Alerting {
 			return "transition to alerting"
 		}
-		if previousImage == nil {
+		if previousAttempt == nil {
 			return "no image"
 		}
-		if previousImage.HasExpired() {
+		if previousAttempt.HasExpired() {
+			if previousAttempt.Error != nil {
+				return "cooldown expired after error"
+			}
 			return "expired image"
 		}
 	}
@@ -728,7 +731,7 @@ func shouldTakeImage(state, previousState eval.State, previousImage *ImageAttemp
 
 // takeImage takes an image for the alert rule. It returns nil if screenshots are disabled or
 // the rule is not associated with a dashboard panel.
-func takeImage(ctx context.Context, s ImageCapturer, r *models.AlertRule, logger log.Logger) (*models.Image, error) {
+func takeImage(ctx context.Context, s ImageCapturer, r *models.AlertRule, logger log.Logger) *ImageAttempt {
 	logger.Debug("Taking image")
 
 	img, err := s.NewImage(ctx, r)
@@ -736,12 +739,12 @@ func takeImage(ctx context.Context, s ImageCapturer, r *models.AlertRule, logger
 		if errors.Is(err, screenshot.ErrScreenshotsUnavailable) ||
 			errors.Is(err, models.ErrNoDashboard) ||
 			errors.Is(err, models.ErrNoPanel) {
-			return nil, nil
+			return nil
 		}
 		logger.Warn("Failed to take an image", "error", err)
-		return nil, err
+		return newImageAttempt(nil, err)
 	}
-	return img, nil
+	return newImageAttempt(img, nil)
 }
 
 func FormatStateAndReason(state eval.State, reason string) string {
@@ -883,10 +886,7 @@ func (a *State) transition(alertRule *models.AlertRule, result eval.Result, extr
 	}
 
 	if reason := shouldTakeImage(a.State, oldState, a.Image, newlyResolved); reason != "" {
-		image := takeImageFn(reason)
-		if image != nil {
-			a.Image = image
-		}
+		a.Image = takeImageFn(reason).withPrevious(a.Image)
 	}
 
 	maps.Copy(a.Annotations, extraAnnotations)
