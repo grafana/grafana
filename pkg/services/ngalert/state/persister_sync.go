@@ -98,23 +98,21 @@ func (a *SyncStatePersister) saveAlertStates(ctx context.Context, states ...Stat
 			}
 		}
 		instance := ngModels.AlertInstance{
-			AlertInstanceKey:                key,
-			Labels:                          ngModels.InstanceLabels(s.Labels),
-			Annotations:                     s.Annotations,
-			CurrentState:                    ngModels.InstanceStateType(s.State.State.String()),
-			CurrentReason:                   s.StateReason,
-			LastEvalTime:                    s.LastEvaluationTime,
-			CurrentStateSince:               s.StartsAt,
-			CurrentStateEnd:                 s.EndsAt,
-			FiredAt:                         s.FiredAt,
-			ResolvedAt:                      s.ResolvedAt,
-			LastSentAt:                      s.LastSentAt,
-			ResultFingerprint:               s.ResultFingerprint.String(),
-			EvaluationDuration:              s.EvaluationDuration,
-			LastError:                       lastError,
-			LastResult:                      lastResult,
-			ImageCaptureNextAttemptAt:       s.ImageCaptureNextAttemptAtPtr(),
-			ImageCaptureConsecutiveTimeouts: int32(s.ImageCaptureConsecutiveTimeouts),
+			AlertInstanceKey:   key,
+			Labels:             ngModels.InstanceLabels(s.Labels),
+			Annotations:        s.Annotations,
+			CurrentState:       ngModels.InstanceStateType(s.State.State.String()),
+			CurrentReason:      s.StateReason,
+			LastEvalTime:       s.LastEvaluationTime,
+			CurrentStateSince:  s.StartsAt,
+			CurrentStateEnd:    s.EndsAt,
+			FiredAt:            s.FiredAt,
+			ResolvedAt:         s.ResolvedAt,
+			LastSentAt:         s.LastSentAt,
+			ResultFingerprint:  s.ResultFingerprint.String(),
+			EvaluationDuration: s.EvaluationDuration,
+			LastError:          lastError,
+			LastResult:         lastResult,
 		}
 
 		err = a.store.SaveAlertInstance(ctx, instance)

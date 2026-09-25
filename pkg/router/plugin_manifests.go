@@ -62,10 +62,7 @@ func newPluginManifestsTarget(
 	if err != nil {
 		return nil, fmt.Errorf("router: parsing plugins_url %q: %w", rawURL, err)
 	}
-	// Same rationale as newAggregateTarget's check: url.Parse alone accepts
-	// empty/relative values without error, which would otherwise build a
-	// target that polls a URL it can never reach and only ever surfaces as a
-	// recurring background WARN.
+	// url.Parse accepts empty and relative URLs; see newAggregateTarget.
 	if parsed.Scheme == "" || parsed.Host == "" {
 		return nil, fmt.Errorf("router: plugins_url must be absolute (scheme and host required): url=%q", rawURL)
 	}
@@ -225,12 +222,8 @@ func (t *pluginManifestsTarget) closeConnections() {
 	t.connections = nil
 }
 
-// fetchPluginManifests fetches and decodes the plugin-manifests operator's
-// GET /plugins response into definition.PluginDeployments -- the
-// {"key","plugins":[{"definition":{"jsonData","manifest"},"host"}]} envelope
-// that type describes, confirmed against a live operator instance. Unlike
-// the k8s-style APIGroupList discoverGroups fetches for the aggregate
-// targets, this is a bespoke, cloud-router-specific format.
+// fetchPluginManifests fetches the plugin-manifests operator's GET /plugins
+// response, decoded as definition.PluginDeployments.
 func fetchPluginManifests(ctx context.Context, client *http.Client, rawURL string) (*definition.PluginDeployments, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
 	if err != nil {

@@ -74,7 +74,7 @@ const PANEL_CONTEXT_ITEM = Symbol('panel context item');
 
 const mockGetAssistantChatIdToContinue = jest.fn();
 
-jest.mock('app/core/components/AssistantTooltip/assistantSidebarState', () => ({
+jest.mock('app/core/assistant/assistantSidebarState', () => ({
   getAssistantChatIdToContinue: () => mockGetAssistantChatIdToContinue(),
 }));
 

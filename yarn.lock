@@ -916,12 +916,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/state@npm:6.7.5, @codemirror/state@npm:^6.0.0, @codemirror/state@npm:^6.1.1, @codemirror/state@npm:^6.6.0, @codemirror/state@npm:^6.7.0":
-  version: 6.7.5
-  resolution: "@codemirror/state@npm:6.7.5"
+"@codemirror/state@npm:6.7.6, @codemirror/state@npm:^6.0.0, @codemirror/state@npm:^6.1.1, @codemirror/state@npm:^6.6.0, @codemirror/state@npm:^6.7.0":
+  version: 6.7.6
+  resolution: "@codemirror/state@npm:6.7.6"
   dependencies:
     "@marijn/find-cluster-break": "npm:^1.0.0"
-  checksum: 10/8d5068be237a200b9e389a8f180481a77689680703039f0072749a65f77e38d3c4a1d2d2127477717df2a21383ae4cd378ffd96d60ebabecac623e278819f21b
+  checksum: 10/700b582d4dae6ee71b1fef99eae39025192bbfcd73e3ae65000b1b471ecf0f0d34e1d28c0983af7c374df527a9302ba6e0b63cb45a6d71bda4beec1abb4ca170
   languageName: node
   linkType: hard
 
@@ -938,14 +938,14 @@ __metadata:
   linkType: hard
 
 "@codemirror/view@npm:^6.0.0, @codemirror/view@npm:^6.17.0, @codemirror/view@npm:^6.23.0, @codemirror/view@npm:^6.27.0, @codemirror/view@npm:^6.35.0, @codemirror/view@npm:^6.37.0, @codemirror/view@npm:^6.41.0":
-  version: 6.43.12
-  resolution: "@codemirror/view@npm:6.43.12"
+  version: 6.43.13
+  resolution: "@codemirror/view@npm:6.43.13"
   dependencies:
     "@codemirror/state": "npm:^6.7.0"
     crelt: "npm:^1.0.6"
     style-mod: "npm:^4.1.0"
     w3c-keyname: "npm:^2.2.4"
-  checksum: 10/5f7cdc6b44a3d5d4267aab4fe6db695d2bb29453e1599b34b1da333286b7d6b11a8f51ccd0f39c613f87b979fef32af164d8840500e94c1e46c59be5ec55cfe9
+  checksum: 10/fb40f226570b98edf83bc4da1be6f6187415e34197f82aac911307aae8bdff2cdc538c8835e0a7e81c8214a1026404642d50356f99c99d2740b943fcb4a4a6a6
   languageName: node
   linkType: hard
 
@@ -2319,7 +2319,7 @@ __metadata:
     "@types/node": "npm:24.10.1"
     "@types/react": "npm:19.2.18"
     "@types/react-dom": "npm:19.2.4"
-    "@types/semver": "npm:7.7.1"
+    "@types/semver": "npm:7.8.0"
     jest: "npm:29.7.0"
     lodash: "npm:^4.17.23"
     react: "npm:19.2.8"
@@ -2327,7 +2327,7 @@ __metadata:
     react-use: "npm:17.6.1"
     redux: "npm:5.0.1"
     rxjs: "npm:7.8.2"
-    semver: "npm:7.7.3"
+    semver: "npm:7.8.5"
     typescript: "npm:6.0.2"
     webpack: "npm:^5.105.0"
   peerDependencies:
@@ -2494,7 +2494,7 @@ __metadata:
   dependencies:
     "@rollup/plugin-node-resolve": "npm:16.0.1"
     "@types/node": "npm:24.10.1"
-    "@types/semver": "npm:7.7.1"
+    "@types/semver": "npm:7.8.0"
     "@typescript/native": "npm:typescript@^7.0.2"
     acorn: "npm:8.15.0"
     esbuild: "npm:0.28.1"
@@ -11591,10 +11591,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/semver@npm:7.7.1, @types/semver@npm:^7.3.12":
-  version: 7.7.1
-  resolution: "@types/semver@npm:7.7.1"
-  checksum: 10/8f09e7e6ca3ded67d78ba7a8f7535c8d9cf8ced83c52e7f3ac3c281fe8c689c3fe475d199d94390dc04fc681d51f2358b430bb7b2e21c62de24f2bee2c719068
+"@types/semver@npm:7.8.0, @types/semver@npm:^7.3.12":
+  version: 7.8.0
+  resolution: "@types/semver@npm:7.8.0"
+  checksum: 10/bbb33a88cdbc72759cf6b2750f1a28468f4470a61a1543061f494c21a53ad53bb85976e5282d79c811579e7073db0ecb6643ee0bcbf0466e8b5b3cb57ea97de0
   languageName: node
   linkType: hard
 
@@ -20016,7 +20016,7 @@ __metadata:
     "@codemirror/lang-markdown": "npm:6.5.2"
     "@codemirror/lang-sql": "npm:6.10.0"
     "@codemirror/language": "npm:6.12.4"
-    "@codemirror/state": "npm:6.7.5"
+    "@codemirror/state": "npm:6.7.6"
     "@codemirror/view": "npm:^6.41.0"
     "@emotion/css": "npm:11.13.5"
     "@emotion/eslint-plugin": "npm:11.12.0"
@@ -20129,7 +20129,7 @@ __metadata:
     "@types/react-window": "npm:1.8.8"
     "@types/react-window-infinite-loader": "npm:^1"
     "@types/redux-mock-store": "npm:1.5.0"
-    "@types/semver": "npm:7.7.1"
+    "@types/semver": "npm:7.8.0"
     "@types/slate": "npm:0.47.11"
     "@types/slate-plain-serializer": "npm:0.7.5"
     "@types/slate-react": "npm:0.22.9"
@@ -20306,7 +20306,7 @@ __metadata:
     sass: "npm:1.89.2"
     sass-loader: "npm:16.0.5"
     selecto: "npm:1.26.3"
-    semver: "npm:7.7.3"
+    semver: "npm:7.8.5"
     slate: "npm:0.47.9"
     slate-plain-serializer: "npm:0.7.13"
     slate-react: "npm:0.22.10"
@@ -29454,8 +29454,8 @@ __metadata:
   linkType: hard
 
 "react-i18next@npm:^17.0.7, react-i18next@npm:^17.0.9":
-  version: 17.0.14
-  resolution: "react-i18next@npm:17.0.14"
+  version: 17.0.15
+  resolution: "react-i18next@npm:17.0.15"
   dependencies:
     "@babel/runtime": "npm:^7.29.7"
     html-parse-stringify: "npm:^4.0.1"
@@ -29471,7 +29471,7 @@ __metadata:
       optional: true
     typescript:
       optional: true
-  checksum: 10/b45f81d6e8064c0ee19969fdb6d7534ab755497f7a9be80e124cf0833c7fba4d485575a847bd1d2cb00b4a159f78a42b9a32f7505c1d6f82d8c9cd8607ca5b53
+  checksum: 10/c600fd89b3421f75c8cf57cfc2afa8613479da21709ee354f2263a6ee8c04e7be29b43f183bdd2b06ffc461625c658a46f9d36fd082f736f4a28baabf61f5976
   languageName: node
   linkType: hard
 
@@ -31207,15 +31207,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"semver@npm:7.7.3":
-  version: 7.7.3
-  resolution: "semver@npm:7.7.3"
-  bin:
-    semver: bin/semver.js
-  checksum: 10/8dbc3168e057a38fc322af909c7f5617483c50caddba135439ff09a754b20bdd6482a5123ff543dad4affa488ecf46ec5fb56d61312ad20bb140199b88dfaea9
-  languageName: node
-  linkType: hard
-
 "semver@npm:7.7.4":
   version: 7.7.4
   resolution: "semver@npm:7.7.4"
@@ -31225,21 +31216,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"semver@npm:7.8.5, semver@npm:^7.0.0, semver@npm:^7.1.1, semver@npm:^7.3.4, semver@npm:^7.3.5, semver@npm:^7.3.7, semver@npm:^7.5.3, semver@npm:^7.5.4, semver@npm:^7.6.3, semver@npm:^7.7.0, semver@npm:^7.7.2, semver@npm:^7.7.3, semver@npm:^7.8.5":
+  version: 7.8.5
+  resolution: "semver@npm:7.8.5"
+  bin:
+    semver: bin/semver.js
+  checksum: 10/9b01d2ff11e6e4a4539b7ca3c5f280c8704cb397a28504469f2ed4f00ad2194748d756647362a9712fff30984d15772ab7f083108c2fb508e2096ae9e708f22c
+  languageName: node
+  linkType: hard
+
 "semver@npm:^6.0.0, semver@npm:^6.3.0, semver@npm:^6.3.1":
   version: 6.3.1
   resolution: "semver@npm:6.3.1"
   bin:
     semver: bin/semver.js
   checksum: 10/1ef3a85bd02a760c6ef76a45b8c1ce18226de40831e02a00bad78485390b98b6ccaa31046245fc63bba4a47a6a592b6c7eedc65cc47126e60489f9cc1ce3ed7e
-  languageName: node
-  linkType: hard
-
-"semver@npm:^7.0.0, semver@npm:^7.1.1, semver@npm:^7.3.4, semver@npm:^7.3.5, semver@npm:^7.3.7, semver@npm:^7.5.3, semver@npm:^7.5.4, semver@npm:^7.6.3, semver@npm:^7.7.0, semver@npm:^7.7.2, semver@npm:^7.7.3, semver@npm:^7.8.5":
-  version: 7.8.5
-  resolution: "semver@npm:7.8.5"
-  bin:
-    semver: bin/semver.js
-  checksum: 10/9b01d2ff11e6e4a4539b7ca3c5f280c8704cb397a28504469f2ed4f00ad2194748d756647362a9712fff30984d15772ab7f083108c2fb508e2096ae9e708f22c
   languageName: node
   linkType: hard
 

@@ -14,6 +14,8 @@ import {
 
 // Flag key constants for programmatic access
 export const FlagKeys = {
+  /** Enables the alert rule restore feature */
+  AlertRuleRestore: "alertRuleRestore",
   /** Hand data source managed alerting URLs over to the grafana-prometheusalerting-app plugin */
   AlertingDataSourceManagedRouteProxy: "alerting.dataSourceManagedRouteProxy",
   /** Enable manually starting an Assistant investigation from the alert instance drawer. */
@@ -22,6 +24,12 @@ export const FlagKeys = {
   AlertingRuleQuality: "alerting.ruleQuality",
   /** Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source */
   AlertingSyncExternalAlertmanager: "alerting.syncExternalAlertmanager",
+  /** Enables the new Alerting navigation structure with improved menu grouping */
+  AlertingNavigationV2: "alertingNavigationV2",
+  /** Enables the UI functionality to recover and view deleted alert rules */
+  AlertingRuleRecoverDeleted: "alertingRuleRecoverDeleted",
+  /** Enables the alerting triage feature */
+  AlertingTriage: "alertingTriage",
   /** Enables new analytics framework */
   AnalyticsFramework: "analyticsFramework",
   /** Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built */
@@ -32,6 +40,10 @@ export const FlagKeys = {
   AssistantFullscreenWorkspace: "assistant.fullscreenWorkspace",
   /** Generate a per-datasource external ID for Grafana Assume Role (jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID. */
   AwsAssumeRolePerDatasourceExternalId: "awsAssumeRolePerDatasourceExternalId",
+  /** Allow elements nesting */
+  CanvasPanelNesting: "canvasPanelNesting",
+  /** Allow pan and zoom in canvas panel */
+  CanvasPanelPanZoom: "canvasPanelPanZoom",
   /** Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels */
   DashboardNotebooks: "dashboard.notebooks",
   /** Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser */
@@ -58,6 +70,10 @@ export const FlagKeys = {
   DatasourcesApiServerEnableHealthEndpointFrontend: "datasourcesApiServerEnableHealthEndpointFrontend",
   /** Enables additional experimental color schemes for visualizations. */
   DatavizExperimentalColorSchemes: "dataviz.experimentalColorSchemes",
+  /** Enables new colorblind safe palette and line fill patterns for panels */
+  EnableColorblindSafePanelOptions: "enableColorblindSafePanelOptions",
+  /** Enables the extension admin page regardless of development mode */
+  EnableExtensionsAdminPage: "enableExtensionsAdminPage",
   /** A/A test for recently viewed dashboards feature */
   ExperimentRecentlyViewedDashboards: "experimentRecentlyViewedDashboards",
   /** Enable Faro session replay for Grafana */
@@ -162,6 +178,8 @@ export const FlagKeys = {
   PaneleditButtonLabels: "paneledit.buttonLabels",
   /** Enables viewing non-applicable drilldowns on a panel level */
   PerPanelNonApplicableDrilldowns: "perPanelNonApplicableDrilldowns",
+  /** Enable gradient color scheme option for the pie chart panel */
+  PieChartGradientColorScheme: "pieChartGradientColorScheme",
   /** Enables RBAC for playlists */
   PlaylistsRBAC: "playlistsRBAC",
   /** Initializes data source instance settings asynchronously from the API instead of synchronously from boot data */
@@ -186,6 +204,8 @@ export const FlagKeys = {
   QueryHistoryLocalOnly: "queryHistory.localOnly",
   /** Replace the Query History drawer with a new Recent Queries modal UI */
   QueryHistoryRecentQueriesUI: "queryHistory.recentQueriesUI",
+  /** Enables Saved queries (query library) feature */
+  QueryLibrary: "queryLibrary",
   /** Enables AI-assisted coauthoring in code query editors */
   QueryeditorCoauthoringUi: "queryeditor.coauthoringUi",
   /** Renders the raw Prometheus query results table using TableNG instead of the legacy Table */
@@ -198,6 +218,10 @@ export const FlagKeys = {
   ReportingFooterSettings: "reportingFooterSettings",
   /** Enables configuration of PDF report settings */
   ReportingHeaderSettings: "reportingHeaderSettings",
+  /** Enables Saved queries (query library) RBAC permissions */
+  SavedQueriesRBAC: "savedQueriesRBAC",
+  /** Enable the secrets management app platform UI */
+  SecretsManagementAppPlatformUI: "secretsManagementAppPlatformUI",
   /** Routes snapshot requests from /api to the /apis endpoint */
   SnapshotsKubernetesSnapshots: "snapshots.kubernetesSnapshots",
   /** Enables the splash screen modal for introducing new Grafana features on first session */
@@ -220,11 +244,26 @@ export const FlagKeys = {
   TableRefresh: "table.refresh",
   /** Catch-all toggle for new features developed as part of the Q3 table panel refresh */
   TableRefreshNewFeatures: "table.refreshNewFeatures",
+  /** Enables shared crosshair in table panel */
+  TableSharedCrosshair: "tableSharedCrosshair",
   /** Enables the new features in text panel */
   TextNewFeatures: "text.newFeatures",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
+  /** Allows authenticated API calls in actions */
+  VizActionsAuth: "vizActionsAuth",
 } as const;
+
+/**
+ * Enables the alert rule restore feature
+ *
+ * **Details:**
+ * - flag key: `alertRuleRestore`
+ * - default value: `true`
+ */
+export const useFlagAlertRuleRestore = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertRuleRestore", true, options).value;
+};
 
 /**
  * Hand data source managed alerting URLs over to the grafana-prometheusalerting-app plugin
@@ -268,6 +307,39 @@ export const useFlagAlertingRuleQuality = (options?: ReactFlagEvaluationOptions)
  */
 export const useFlagAlertingSyncExternalAlertmanager = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alerting.syncExternalAlertmanager", false, options).value;
+};
+
+/**
+ * Enables the new Alerting navigation structure with improved menu grouping
+ *
+ * **Details:**
+ * - flag key: `alertingNavigationV2`
+ * - default value: `true`
+ */
+export const useFlagAlertingNavigationV2 = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingNavigationV2", true, options).value;
+};
+
+/**
+ * Enables the UI functionality to recover and view deleted alert rules
+ *
+ * **Details:**
+ * - flag key: `alertingRuleRecoverDeleted`
+ * - default value: `true`
+ */
+export const useFlagAlertingRuleRecoverDeleted = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingRuleRecoverDeleted", true, options).value;
+};
+
+/**
+ * Enables the alerting triage feature
+ *
+ * **Details:**
+ * - flag key: `alertingTriage`
+ * - default value: `false`
+ */
+export const useFlagAlertingTriage = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingTriage", false, options).value;
 };
 
 /**
@@ -323,6 +395,28 @@ export const useFlagAssistantFullscreenWorkspace = (options?: ReactFlagEvaluatio
  */
 export const useFlagAwsAssumeRolePerDatasourceExternalId = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("awsAssumeRolePerDatasourceExternalId", false, options).value;
+};
+
+/**
+ * Allow elements nesting
+ *
+ * **Details:**
+ * - flag key: `canvasPanelNesting`
+ * - default value: `false`
+ */
+export const useFlagCanvasPanelNesting = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("canvasPanelNesting", false, options).value;
+};
+
+/**
+ * Allow pan and zoom in canvas panel
+ *
+ * **Details:**
+ * - flag key: `canvasPanelPanZoom`
+ * - default value: `false`
+ */
+export const useFlagCanvasPanelPanZoom = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("canvasPanelPanZoom", false, options).value;
 };
 
 /**
@@ -466,6 +560,28 @@ export const useFlagDatasourcesApiServerEnableHealthEndpointFrontend = (options?
  */
 export const useFlagDatavizExperimentalColorSchemes = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dataviz.experimentalColorSchemes", false, options).value;
+};
+
+/**
+ * Enables new colorblind safe palette and line fill patterns for panels
+ *
+ * **Details:**
+ * - flag key: `enableColorblindSafePanelOptions`
+ * - default value: `false`
+ */
+export const useFlagEnableColorblindSafePanelOptions = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("enableColorblindSafePanelOptions", false, options).value;
+};
+
+/**
+ * Enables the extension admin page regardless of development mode
+ *
+ * **Details:**
+ * - flag key: `enableExtensionsAdminPage`
+ * - default value: `false`
+ */
+export const useFlagEnableExtensionsAdminPage = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("enableExtensionsAdminPage", false, options).value;
 };
 
 /**
@@ -1041,6 +1157,17 @@ export const useFlagPerPanelNonApplicableDrilldowns = (options?: ReactFlagEvalua
 };
 
 /**
+ * Enable gradient color scheme option for the pie chart panel
+ *
+ * **Details:**
+ * - flag key: `pieChartGradientColorScheme`
+ * - default value: `false`
+ */
+export const useFlagPieChartGradientColorScheme = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("pieChartGradientColorScheme", false, options).value;
+};
+
+/**
  * Enables RBAC for playlists
  *
  * **Details:**
@@ -1173,6 +1300,17 @@ export const useFlagQueryHistoryRecentQueriesUI = (options?: ReactFlagEvaluation
 };
 
 /**
+ * Enables Saved queries (query library) feature
+ *
+ * **Details:**
+ * - flag key: `queryLibrary`
+ * - default value: `true`
+ */
+export const useFlagQueryLibrary = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("queryLibrary", true, options).value;
+};
+
+/**
  * Enables AI-assisted coauthoring in code query editors
  *
  * **Details:**
@@ -1236,6 +1374,28 @@ export const useFlagReportingFooterSettings = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagReportingHeaderSettings = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("reportingHeaderSettings", false, options).value;
+};
+
+/**
+ * Enables Saved queries (query library) RBAC permissions
+ *
+ * **Details:**
+ * - flag key: `savedQueriesRBAC`
+ * - default value: `true`
+ */
+export const useFlagSavedQueriesRBAC = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("savedQueriesRBAC", true, options).value;
+};
+
+/**
+ * Enable the secrets management app platform UI
+ *
+ * **Details:**
+ * - flag key: `secretsManagementAppPlatformUI`
+ * - default value: `false`
+ */
+export const useFlagSecretsManagementAppPlatformUI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("secretsManagementAppPlatformUI", false, options).value;
 };
 
 /**
@@ -1360,6 +1520,17 @@ export const useFlagTableRefreshNewFeatures = (options?: ReactFlagEvaluationOpti
 };
 
 /**
+ * Enables shared crosshair in table panel
+ *
+ * **Details:**
+ * - flag key: `tableSharedCrosshair`
+ * - default value: `false`
+ */
+export const useFlagTableSharedCrosshair = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("tableSharedCrosshair", false, options).value;
+};
+
+/**
  * Enables the new features in text panel
  *
  * **Details:**
@@ -1379,5 +1550,16 @@ export const useFlagTextNewFeatures = (options?: ReactFlagEvaluationOptions): bo
  */
 export const useFlagUseKubernetesShortURLsAPI = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("useKubernetesShortURLsAPI", true, options).value;
+};
+
+/**
+ * Allows authenticated API calls in actions
+ *
+ * **Details:**
+ * - flag key: `vizActionsAuth`
+ * - default value: `false`
+ */
+export const useFlagVizActionsAuth = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("vizActionsAuth", false, options).value;
 };
 

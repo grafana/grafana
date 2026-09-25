@@ -1009,13 +1009,6 @@ func (a AlertInstanceMutators) WithLastResult(lastResult LastResult) AlertInstan
 	}
 }
 
-func (a AlertInstanceMutators) WithImageCaptureBackoff(nextAttemptAt *time.Time, consecutiveTimeouts int32) AlertInstanceMutator {
-	return func(i *AlertInstance) {
-		i.ImageCaptureNextAttemptAt = nextAttemptAt
-		i.ImageCaptureConsecutiveTimeouts = consecutiveTimeouts
-	}
-}
-
 type Mutator[T any] func(*T)
 
 // CopyContactPointRouting creates a deep copy of ContactPointRouting.
