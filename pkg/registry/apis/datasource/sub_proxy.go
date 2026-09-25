@@ -17,17 +17,22 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // ProxyDependencies bundles the proxy-only services the datasource frontend
 // proxy needs. It is wired as a single dependency so RegisterAPIService doesn't
-// have to thread each one through its signature. The request validator is not
-// here because it is shared with the health endpoint (see DataSourceAPIBuilder).
+// have to thread each one through its signature. MT resolves the configuration
+// and request validator for the current tenant before constructing the proxy.
 type ProxyDependencies struct {
+	RequestValidator validations.DataSourceRequestValidator
+	// Resolve supplies tenant- and request-specific dependencies in MT.
+	Resolve            func(context.Context, *http.Request) (*ProxyDependencies, error)
+	RouteAccessChecker pluginproxy.RouteAccessChecker
 	ProxyCfg           *pluginproxy.DataSourceProxySettings
 	HTTPClientProvider httpclient.Provider
-	OAuthTokenService  *oauthtoken.Service
+	OAuthTokenService  pluginproxy.OAuthTokenProvider
 	Tracer             tracing.Tracer
 	Features           featuremgmt.FeatureToggles
 }
@@ -99,6 +104,16 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		// The apiserver request context carries the authenticated identity that
 		// NewDataSourceProxy reads via identity.GetRequester.
 		req = req.WithContext(ctx)
+		deps := deps
+		if deps.Resolve != nil {
+			var err error
+			deps, err = deps.Resolve(ctx, req)
+			if err != nil {
+				m.SetError()
+				responder.Error(err)
+				return
+			}
+		}
 
 		ds, err := loader.DataSource(req.Context())
 		if err != nil {
@@ -112,7 +127,11 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			return
 		}
 		jsonData, _ := ds.Spec.JSONData().(map[string]any)
-		if err := r.builder.validateDataSourceRequest(ds.Spec.URL(), jsonData, req); err != nil {
+		validate := r.builder.validateDataSourceRequest
+		if deps.RequestValidator != nil {
+			validate = deps.RequestValidator.Validate
+		}
+		if err := validate(ds.Spec.URL(), jsonData, req); err != nil {
 			m.SetError()
 			responder.Error(apierrors.NewForbidden(r.builder.datasourceResourceInfo.GroupResource(), name, err))
 			return
@@ -128,6 +147,7 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			deps.OAuthTokenService,
 			deps.Tracer,
 			deps.Features,
+			pluginproxy.WithRouteAccessChecker(deps.RouteAccessChecker),
 		)
 		if err != nil {
 			m.SetError()

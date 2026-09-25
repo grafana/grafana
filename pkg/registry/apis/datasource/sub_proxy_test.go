@@ -2,6 +2,7 @@ package datasource
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -138,5 +139,65 @@ func TestProxyPathFromRequest(t *testing.T) {
 	for _, tc := range tests {
 		req := httptest.NewRequest(http.MethodGet, tc.path, nil)
 		require.Equal(t, tc.want, proxyPathFromRequest(req, tc.name), "path %q", tc.path)
+	}
+}
+
+func TestSubProxyREST_RemoteRouteAuthorization(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		allowed bool
+		err     error
+		status  int
+	}{
+		{"allowed with no legacy permissions", true, nil, 200},
+		{"denied despite legacy admin permissions", false, nil, 403},
+		{"authz error fails closed", false, errors.New("unavailable"), 403},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			forwarded := 0
+			backendServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+				forwarded++
+				require.Equal(t, "/api/v1/query", req.URL.Path)
+				w.WriteHeader(200)
+			}))
+			defer backendServer.Close()
+			ds := &datasourceV0.DataSource{}
+			ds.Name = "ds-1"
+			ds.Spec.SetURL(backendServer.URL)
+			provider := &proxyMockDatasourceProvider{ds: ds}
+			provider.instanceSettings = &backend.DataSourceInstanceSettings{UID: "ds-1", Type: "prometheus", URL: backendServer.URL, JSONData: []byte("{}")}
+			b := newProxyTestBuilder(provider)
+			b.pluginJSON = plugins.JSONData{ID: "prometheus", Routes: []*plugins.Route{{Method: "POST", Path: "api/v1/query", ReqAction: "datasources:query"}}}
+			checks := 0
+			b.proxyDeps.RouteAccessChecker = func(ctx context.Context, who identity.Requester, uid, action string) (bool, error) {
+				checks++
+				require.Equal(t, "ds-1", uid)
+				require.Equal(t, "datasources:query", action)
+				return tc.allowed, tc.err
+			}
+			resolved := 0
+			resolvedDeps := b.proxyDeps
+			b.proxyDeps = &ProxyDependencies{Resolve: func(ctx context.Context, req *http.Request) (*ProxyDependencies, error) {
+				resolved++
+				return resolvedDeps, nil
+			}}
+			who := &user.SignedInUser{OrgID: 1}
+			if !tc.allowed {
+				who.Permissions = map[int64]map[string][]string{1: {"datasources:query": {"datasources:*"}}}
+			}
+			ctx := identity.WithRequester(t.Context(), who)
+			handler, err := (&subProxyREST{builder: b}).Connect(ctx, "ds-1", nil, &resourceMockResponder{})
+			require.NoError(t, err)
+			rec := httptest.NewRecorder()
+			handler.ServeHTTP(rec, httptest.NewRequestWithContext(t.Context(), "POST", "/namespaces/stacks-11/datasources/ds-1/proxy/api/v1/query", nil))
+			require.Equal(t, tc.status, rec.Code)
+			require.Equal(t, 1, checks)
+			require.Equal(t, 1, resolved)
+			if tc.allowed {
+				require.Equal(t, 1, forwarded)
+			} else {
+				require.Zero(t, forwarded)
+			}
+		})
 	}
 }
