@@ -13,7 +13,7 @@ function RecordingRulesPage() {
   return (
     <RulesPageShell
       navId="recording-rules"
-      title={t('alerting.gma-rule-list.recording-rules.title', 'Recording rules')}
+      pageLabel={t('alerting.gma-rule-list.recording-rules.title', 'Recording rules')}
       activeTab="active"
       activeHref="/alerting/rules/recording"
       deletedHref="/alerting/rules/recording/deleted"

@@ -18,7 +18,7 @@ describe('RulesPageShell', () => {
     return render(
       <RulesPageShell
         navId="alert-rules"
-        title="Alert rules"
+        pageLabel="Alert rules"
         activeTab={activeTab}
         activeHref="/alerting/rules/alert"
         deletedHref="/alerting/rules/alert/deleted"
@@ -44,12 +44,12 @@ describe('RulesPageShell', () => {
     expect(screen.queryByRole('tab', { name: 'Recently deleted' })).not.toBeInTheDocument();
   });
 
-  it('marks the Active tab as selected on the active page', () => {
+  it('marks the first (page-name) tab as selected on the active page', () => {
     contextSrv.user.orgRole = OrgRole.Admin;
 
     renderShell('active');
 
-    expect(screen.getByRole('tab', { name: 'Active' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Alert rules' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('tab', { name: 'Recently deleted' })).toHaveAttribute('aria-selected', 'false');
   });
 
@@ -58,7 +58,7 @@ describe('RulesPageShell', () => {
 
     renderShell('deleted');
 
-    expect(screen.getByRole('tab', { name: 'Active' })).toHaveAttribute('aria-selected', 'false');
+    expect(screen.getByRole('tab', { name: 'Alert rules' })).toHaveAttribute('aria-selected', 'false');
     expect(screen.getByRole('tab', { name: 'Recently deleted' })).toHaveAttribute('aria-selected', 'true');
   });
 

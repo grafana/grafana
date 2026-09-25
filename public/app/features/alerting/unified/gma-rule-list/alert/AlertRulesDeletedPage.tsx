@@ -8,7 +8,7 @@ function AlertRulesDeletedPage() {
   return (
     <RulesPageShell
       navId="alert-rules"
-      title={t('alerting.gma-rule-list.alert-rules.title', 'Alert rules')}
+      pageLabel={t('alerting.gma-rule-list.alert-rules.title', 'Alert rules')}
       activeTab="deleted"
       activeHref="/alerting/rules/alert"
       deletedHref="/alerting/rules/alert/deleted"

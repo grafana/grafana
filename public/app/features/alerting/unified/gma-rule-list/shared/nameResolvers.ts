@@ -1,4 +1,4 @@
-import { generatedAPI as folderSearchAPI, type ResultItem } from '@grafana/api-clients/rtkq/folder/v1beta1';
+import { type ResultItem, generatedAPI as folderSearchAPI } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { dispatch } from 'app/store/store';
 
