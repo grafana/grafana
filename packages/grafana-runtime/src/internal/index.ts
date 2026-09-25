@@ -85,7 +85,7 @@ export {
   setDataSourceInstanceSettings,
   syncDataSourceInstanceSettings,
 } from '../services/dataSource/settings';
-export { setDataSourcePluginImporter } from '../services/dataSource/dataSource';
+export { setDataSourcePluginImporter, syncRuntimeDataSourceInstance } from '../services/dataSource/dataSource';
 // Exported so test helpers can assert a suite never resolved through the legacy fallback.
 // Delete along with the fallbacks themselves once `DataSourceSrv` is gone.
 export {

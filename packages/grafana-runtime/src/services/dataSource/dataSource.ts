@@ -6,11 +6,16 @@ import { UserStorage } from '../../utils/userStorage';
 import { getDataSourceSrv, type RuntimeDataSourceRegistration } from '../dataSourceSrv';
 
 import { notifyDataSourceCacheChanged } from './cacheGeneration';
-import { FALLBACK_TO_LEGACY_INSTANCE_WARNING } from './constants';
+import { FALLBACK_TO_LEGACY_INSTANCE_WARNING, RUNTIME_DATASOURCE_SYNC_CONFLICT_WARNING } from './constants';
 import { getExpressionDataSourceInstance } from './expressionDs';
 import { describeRef, logDataSourceInstanceError, logDataSourceWarning } from './logging';
 import { getCachedPlugin, setCachedPlugin, setRuntimePlugin } from './pluginCache';
-import { getDataSourceInstanceSettings, upsertRuntimeDataSourceInstanceSettings } from './settings';
+import {
+  getDataSourceInstanceSettings,
+  lookupByUid,
+  syncRuntimeDataSourceInstanceSettings,
+  upsertRuntimeDataSourceInstanceSettings,
+} from './settings';
 import { type ImportDataSourcePluginFn } from './types';
 
 let importDataSourcePlugin: ImportDataSourcePluginFn | undefined;
@@ -176,6 +181,25 @@ export function registerRuntimeDataSourceInstance(entry: RuntimeDataSourceRegist
   upsertRuntimeDataSourceInstanceSettings(dataSource.instanceSettings);
   setRuntimePlugin(dataSource.uid, dataSource);
   notifyDataSourceCacheChanged();
+}
+
+/**
+ * Mirror an accepted legacy registration without adding new rejection conditions to that API.
+ * The legacy service must check its own duplicate UIDs before calling this helper.
+ *
+ * @internal
+ */
+export function syncRuntimeDataSourceInstance({ dataSource }: RuntimeDataSourceRegistration): void {
+  const cached = getCachedPlugin(dataSource.uid);
+  const settings = lookupByUid(dataSource.uid);
+  const conflict = (cached && cached !== dataSource) || (settings && settings !== dataSource.instanceSettings);
+
+  syncRuntimeDataSourceInstanceSettings(dataSource.instanceSettings);
+  setRuntimePlugin(dataSource.uid, dataSource);
+
+  if (conflict) {
+    logDataSourceWarning(RUNTIME_DATASOURCE_SYNC_CONFLICT_WARNING, { uid: dataSource.uid });
+  }
 }
 
 /**
