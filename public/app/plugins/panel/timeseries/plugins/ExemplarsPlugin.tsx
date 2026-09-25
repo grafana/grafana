@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type uPlot from 'uplot';
 
 import {
@@ -10,7 +10,7 @@ import {
 } from '@grafana/data';
 import { FIXED_UNIT, EventsCanvas, type UPlotConfigBuilder } from '@grafana/ui';
 
-import { ExemplarMarker } from './ExemplarMarker';
+import { ExemplarMarker, type ExemplarSelection } from './ExemplarMarker';
 
 interface ExemplarsPluginProps {
   config: UPlotConfigBuilder;
@@ -31,7 +31,27 @@ export const ExemplarsPlugin = ({
 }: ExemplarsPluginProps) => {
   const plotInstance = useRef<uPlot | undefined>(undefined);
 
-  const [lockedExemplarRowIndex, setLockedExemplarRowIndex] = useState<number | undefined>();
+  const [lockedExemplar, setLockedExemplar] = useState<ExemplarSelection | undefined>();
+  const consumedRequests = useRef(new Set<string>());
+
+  useEffect(() => {
+    for (const dataFrame of exemplars) {
+      const request = dataFrame.meta?.custom?.experimentalOpenExemplar;
+      if (
+        typeof request?.requestId !== 'string' ||
+        !Number.isInteger(request.rowIndex) ||
+        request.rowIndex < 0 ||
+        request.rowIndex >= dataFrame.length ||
+        consumedRequests.current.has(request.requestId) ||
+        (visibleSeries !== undefined && !showExemplarMarker(visibleSeries, dataFrame, request.rowIndex))
+      ) {
+        continue;
+      }
+      consumedRequests.current.add(request.requestId);
+      setLockedExemplar({ dataFrame, rowIndex: request.rowIndex });
+      return;
+    }
+  }, [exemplars, visibleSeries]);
 
   useLayoutEffect(() => {
     config.addHook('init', (u) => {
@@ -83,8 +103,8 @@ export const ExemplarsPlugin = ({
 
       return (
         <ExemplarMarker
-          setClickedRowIndex={setLockedExemplarRowIndex}
-          clickedRowIndex={lockedExemplarRowIndex}
+          setLockedExemplar={setLockedExemplar}
+          lockedExemplar={lockedExemplar && exemplars.includes(lockedExemplar.dataFrame) ? lockedExemplar : undefined}
           timeZone={timeZone}
           dataFrame={dataFrame}
           frameIndex={0}
@@ -96,7 +116,7 @@ export const ExemplarsPlugin = ({
         />
       );
     },
-    [visibleSeries, lockedExemplarRowIndex, timeZone, config, maxHeight, maxWidth]
+    [visibleSeries, lockedExemplar, exemplars, timeZone, config, maxHeight, maxWidth]
   );
 
   return (
