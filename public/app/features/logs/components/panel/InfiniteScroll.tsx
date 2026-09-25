@@ -2,7 +2,7 @@ import { type ReactNode, useCallback, useEffect, useRef, useState, type MouseEve
 import { usePrevious } from 'react-use';
 import { type ListChildComponentProps, type ListOnItemsRenderedProps } from 'react-window';
 
-import { type AbsoluteTimeRange, LoadingState, LogsSortOrder, type TimeRange } from '@grafana/data';
+import { LoadingState, LogsSortOrder, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Spinner, useStyles2 } from '@grafana/ui';
@@ -11,6 +11,8 @@ import {
   canScrollBottom,
   canScrollTop,
   getVisibleRange,
+  type LoadMoreLogsRange,
+  loadMoreRangeFromVisible,
   ScrollDirection,
   shouldLoadMore,
 } from '../infiniteScrollUtils';
@@ -49,8 +51,8 @@ export interface Props {
 type InfiniteLoaderState = 'idle' | 'out-of-bounds' | 'pre-scroll-top' | 'pre-scroll-bottom' | 'loading';
 export type InfiniteScrollMode = 'interval' | 'unlimited';
 export type LoadMoreLogsType =
-  | ((range: AbsoluteTimeRange) => void)
-  | ((range: AbsoluteTimeRange, scrollDirection: ScrollDirection) => void);
+  | ((range: LoadMoreLogsRange) => void)
+  | ((range: LoadMoreLogsRange, scrollDirection: ScrollDirection) => void);
 
 export const InfiniteScroll = ({
   children,
@@ -143,10 +145,11 @@ export const InfiniteScroll = ({
 
   const onLoadMore = useCallback(
     (scrollDirection: ScrollDirection) => {
+      const visibleRange = getVisibleRange(logs);
       const newRange =
         scrollDirection === ScrollDirection.Bottom
-          ? canScrollBottom(getVisibleRange(logs), timeRange, timeZone, sortOrder)
-          : canScrollTop(getVisibleRange(logs), timeRange, timeZone, sortOrder);
+          ? canScrollBottom(visibleRange, timeRange, timeZone, sortOrder)
+          : canScrollTop(visibleRange, timeRange, timeZone, sortOrder);
       if (!newRange && infiniteScrollMode === 'interval') {
         setInfiniteLoaderState('out-of-bounds');
         return;
@@ -160,7 +163,7 @@ export const InfiniteScroll = ({
       // Snapshot the row count so the completion effect can tell whether new rows arrived.
       loadMoreCountRef.current = logs.length;
       setInfiniteLoaderState('loading');
-      loadMore?.(newRange ?? getVisibleRange(logs), scrollDirection);
+      loadMore?.(newRange ?? loadMoreRangeFromVisible(visibleRange, scrollDirection, sortOrder), scrollDirection);
 
       reportInteraction('grafana_logs_infinite_scrolling', {
         direction: scrollDirection,

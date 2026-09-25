@@ -63,6 +63,7 @@ import { type ExploreItemState } from 'app/types/explore';
 import { useDispatch } from 'app/types/store';
 
 import { getDefaultFieldSelectorWidth } from '../../logs/components/fieldSelector/FieldSelector';
+import { type LoadMoreLogsRange } from '../../logs/components/infiniteScrollUtils';
 import { isLokiQuery } from '../../loki-helpers/queryUtils';
 import { LokiQueryDirection } from '../../loki-helpers/types';
 import {
@@ -130,7 +131,7 @@ interface Props extends Themeable2 {
   range: TimeRange;
   onClickFilterString?: (value: string, refId?: string) => void;
   onClickFilterOutString?: (value: string, refId?: string) => void;
-  loadMoreLogs?(range: AbsoluteTimeRange): void;
+  loadMoreLogs?(range: LoadMoreLogsRange): void;
   onPinLineCallback?: () => void;
 }
 
