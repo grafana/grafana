@@ -215,4 +215,32 @@ export class ResourcesAPI extends CloudWatchRequest {
       logGroupNamePrefix: logGroupNamePrefix || '',
     });
   }
+
+  getPromQLLabelKeys(region: string, match?: string, start?: number, end?: number, limit?: number): Promise<string[]> {
+    return this.memoizedGetRequest<string[]>('promql-label-keys', {
+      region: this.templateSrv.replace(this.getActualRegion(region)),
+      ...(match !== undefined && { match }),
+      ...(start !== undefined && { start }),
+      ...(end !== undefined && { end }),
+      ...(limit !== undefined && { limit }),
+    });
+  }
+
+  getPromQLLabelValues(
+    region: string,
+    labelKey: string,
+    match?: string,
+    start?: number,
+    end?: number,
+    limit?: number
+  ): Promise<string[]> {
+    return this.memoizedGetRequest<string[]>('promql-label-values', {
+      region: this.templateSrv.replace(this.getActualRegion(region)),
+      labelKey,
+      ...(match !== undefined && { match }),
+      ...(start !== undefined && { start }),
+      ...(end !== undefined && { end }),
+      ...(limit !== undefined && { limit }),
+    });
+  }
 }
