@@ -194,6 +194,14 @@ describe('textMarker', () => {
     const style = textMarker({ color: '#ff0000', opacity: 1 });
     expect(style.getText()).toBeNull();
   });
+
+  it('sets overflow so OL does not cull the label when it does not fit the geometry', () => {
+    // OL's TextBuilder culls a Polygon's label when it's wider than the polygon's interior
+    // width at its anchor point, unless `overflow` is set -- easy to hit for thin geometry
+    // like buffered lines.
+    const style = textMarker({ color: '#ff0000', opacity: 1, text: 'hello' });
+    expect(style.getText()?.getOverflow()).toBe(true);
+  });
 });
 
 describe('polyStyle', () => {

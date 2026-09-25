@@ -254,6 +254,19 @@ describe('getLocationMatchers manual modes', () => {
     const byType = await getLocationMatchers({ mode: FrameGeometrySourceMode.Lookup });
     expect(byType.lookup(lookupFrame)?.name).toBe('country');
   });
+
+  it.each([FrameGeometrySourceMode.Wkt, FrameGeometrySourceMode.Wkb, FrameGeometrySourceMode.GeoJson])(
+    '%s mode uses the named geometry field, or finds nothing when unset',
+    async (mode) => {
+      const geometryFrame = toDataFrame({ fields: [{ name: 'geom', type: FieldType.string, values: ['POINT(0 0)'] }] });
+
+      const named = await getLocationMatchers({ mode, geometry: 'geom' });
+      expect(named.geometry(geometryFrame)?.name).toBe('geom');
+
+      const unset = await getLocationMatchers({ mode });
+      expect(unset.geometry(geometryFrame)).toBeUndefined();
+    }
+  );
 });
 
 describe('getLocationFields explicit modes', () => {
@@ -279,6 +292,24 @@ describe('getLocationFields explicit modes', () => {
     expect(fields.latitude).toBeUndefined();
     expect(fields.geohash).toBeUndefined();
     expect(fields.lookup).toBeUndefined();
+  });
+
+  it.each([FrameGeometrySourceMode.Wkt, FrameGeometrySourceMode.Wkb, FrameGeometrySourceMode.GeoJson])(
+    'resolves fields for explicit %s mode',
+    (mode) => {
+      const frame = toDataFrame({ fields: [{ name: 'geometry', type: FieldType.string, values: ['POINT(0 0)'] }] });
+      const matchers: LocationFieldMatchers = { ...getDefaultLocationMatchers(), mode };
+      const fields = getLocationFields(frame, matchers);
+      expect(fields.mode).toBe(mode);
+      expect(fields.geometry?.name).toBe('geometry');
+    }
+  );
+
+  it('does not pick up a wkt-named field as Wkt mode when Auto mode is active', () => {
+    const frame = toDataFrame({ fields: [{ name: 'wkt', type: FieldType.string, values: ['POINT(0 0)'] }] });
+    const fields = getLocationFields(frame, getDefaultLocationMatchers());
+    expect(fields.mode).toBe(FrameGeometrySourceMode.Auto);
+    expect(fields.geometry).toBeUndefined();
   });
 });
 
@@ -336,5 +367,33 @@ describe('getGeometryField warnings', () => {
     const result = getGeometryField(emptyFrame, matchers);
     expect(result.field).toBeUndefined();
     expect(result.warning).toBe('Select lookup field');
+  });
+
+  it.each([
+    [FrameGeometrySourceMode.Wkt, 'Select WKT field'],
+    [FrameGeometrySourceMode.Wkb, 'Select WKB field'],
+    [FrameGeometrySourceMode.GeoJson, 'Select GeoJSON field'],
+  ])('warns when %s mode is missing a geometry field', (mode, expectedWarning) => {
+    const matchers: LocationFieldMatchers = {
+      ...getDefaultLocationMatchers(),
+      mode,
+      geometry: () => undefined,
+    };
+    const result = getGeometryField(emptyFrame, matchers);
+    expect(result.field).toBeUndefined();
+    expect(result.warning).toBe(expectedWarning);
+  });
+
+  it.each([
+    [FrameGeometrySourceMode.Wkt, 'POINT(0 0)'],
+    [FrameGeometrySourceMode.Wkb, '0101000020E610000000000000000000000000000000000000'],
+    [FrameGeometrySourceMode.GeoJson, '{"type":"Point","coordinates":[0,0]}'],
+  ])('resolves a derived geo field for %s mode when a geometry field is present', (mode, value) => {
+    const geometryFrame = toDataFrame({ fields: [{ name: 'geometry', type: FieldType.string, values: [value] }] });
+    const matchers: LocationFieldMatchers = { ...getDefaultLocationMatchers(), mode };
+    const result = getGeometryField(geometryFrame, matchers);
+    expect(result.field?.type).toBe(FieldType.geo);
+    expect(result.derived).toBe(true);
+    expect(result.field?.values[0]).toBeDefined();
   });
 });

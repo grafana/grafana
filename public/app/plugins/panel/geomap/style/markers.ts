@@ -70,6 +70,9 @@ const textLabel = (cfg: StyleConfigValues) => {
     text: cfg.text,
     fill: new Fill({ color: cfg.color ?? defaultStyleConfig.color.fixed }),
     font: `normal ${textConfig.fontSize}px ${fontFamily}`,
+    // Without this, OL silently drops a Polygon's label when it's wider than the polygon's
+    // interior width at its anchor point -- easy to hit with thin buffer-style polygons.
+    overflow: true,
     ...textConfig,
   });
 };

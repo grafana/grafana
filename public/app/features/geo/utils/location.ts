@@ -12,7 +12,14 @@ import {
 import { t } from '@grafana/i18n';
 import { type FrameGeometrySource, FrameGeometrySourceMode } from '@grafana/schema';
 
-import { getGeoFieldFromGazetteer, pointFieldFromGeohash, pointFieldFromLonLat } from '../format/utils';
+import {
+  getGeoFieldFromGazetteer,
+  getGeoFieldFromGeoJson,
+  getGeoFieldFromWkb,
+  getGeoFieldFromWkt,
+  pointFieldFromGeohash,
+  pointFieldFromLonLat,
+} from '../format/utils';
 import { getGazetteer, type Gazetteer } from '../gazetteer/gazetteer';
 
 type FieldFinder = (frame: DataFrame) => Field | undefined;
@@ -51,7 +58,8 @@ export interface LocationFieldMatchers {
   latitude: FieldFinder;
   longitude: FieldFinder;
   h3: FieldFinder;
-  wkt: FieldFinder;
+  // Field name holding the geometry text, shared by the Wkt/Wkb/GeoJson modes
+  geometry: FieldFinder;
   lookup: FieldFinder;
   geo: FieldFinder;
   gazetteer?: Gazetteer;
@@ -63,7 +71,10 @@ const defaultMatchers: LocationFieldMatchers = {
   latitude: matchLowerNames(new Set(['latitude', 'lat'])),
   longitude: matchLowerNames(new Set(['longitude', 'lon', 'lng'])),
   h3: matchLowerNames(new Set(['h3'])),
-  wkt: matchLowerNames(new Set(['wkt'])),
+  // Not part of the Auto-mode detection chain in getLocationFields (Wkt/Wkb/GeoJson are
+  // explicit-mode-only), but still a real name-based default -- getLocationMatchers' switch
+  // overwrites this with a byName/unset matcher once one of those modes is actually selected.
+  geometry: matchLowerNames(new Set(['wkt', 'wkb', 'geojson', 'geometry'])),
   lookup: matchLowerNames(new Set(['lookup'])),
   geo: (frame: DataFrame) => frame.fields.find((f) => f.type === FieldType.geo),
 };
@@ -110,6 +121,15 @@ export async function getLocationMatchers(src?: FrameGeometrySource): Promise<Lo
         info.longitude = () => undefined; // In manual mode, don't automatically find field
       }
       break;
+    case FrameGeometrySourceMode.Wkt:
+    case FrameGeometrySourceMode.Wkb:
+    case FrameGeometrySourceMode.GeoJson:
+      if (src?.geometry) {
+        info.geometry = getFieldFinder(getFieldMatcher({ id: FieldMatcherID.byName, options: src.geometry }));
+      } else {
+        info.geometry = () => undefined; // In manual mode, don't automatically find field
+      }
+      break;
   }
   return info;
 }
@@ -121,7 +141,7 @@ export interface LocationFields {
   latitude?: Field;
   longitude?: Field;
   h3?: Field;
-  wkt?: Field;
+  geometry?: Field;
   lookup?: Field;
   geo?: Field<Geometry | undefined>;
 }
@@ -166,6 +186,11 @@ export function getLocationFields(frame: DataFrame, location: LocationFieldMatch
       break;
     case FrameGeometrySourceMode.Lookup:
       fields.lookup = location.lookup(frame);
+      break;
+    case FrameGeometrySourceMode.Wkt:
+    case FrameGeometrySourceMode.Wkb:
+    case FrameGeometrySourceMode.GeoJson:
+      fields.geometry = location.geometry(frame);
       break;
   }
 
@@ -231,6 +256,42 @@ export function getGeometryField(frame: DataFrame, location: LocationFieldMatche
       }
       return {
         warning: t('geo.get-geometry-field.warning-select-lookup', 'Select lookup field'),
+      };
+
+    case FrameGeometrySourceMode.Wkt:
+      if (fields.geometry) {
+        return {
+          field: getGeoFieldFromWkt(fields.geometry),
+          derived: true,
+          description: `${fields.mode}: ${fields.geometry.name}`,
+        };
+      }
+      return {
+        warning: t('geo.get-geometry-field.warning-select-wkt', 'Select WKT field'),
+      };
+
+    case FrameGeometrySourceMode.Wkb:
+      if (fields.geometry) {
+        return {
+          field: getGeoFieldFromWkb(fields.geometry),
+          derived: true,
+          description: `${fields.mode}: ${fields.geometry.name}`,
+        };
+      }
+      return {
+        warning: t('geo.get-geometry-field.warning-select-wkb', 'Select WKB field'),
+      };
+
+    case FrameGeometrySourceMode.GeoJson:
+      if (fields.geometry) {
+        return {
+          field: getGeoFieldFromGeoJson(fields.geometry),
+          derived: true,
+          description: `${fields.mode}: ${fields.geometry.name}`,
+        };
+      }
+      return {
+        warning: t('geo.get-geometry-field.warning-select-geojson', 'Select GeoJSON field'),
       };
   }
 
