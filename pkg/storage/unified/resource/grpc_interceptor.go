@@ -35,6 +35,25 @@ func UnaryErrorResultInterceptor() grpc.UnaryServerInterceptor {
 	}
 }
 
+const listPathNotApplicable = "not_applicable"
+
+type requestMetricsState struct {
+	listPath string
+}
+
+type requestMetricsStateKey struct{}
+
+func withRequestMetricsState(ctx context.Context) (context.Context, *requestMetricsState) {
+	state := &requestMetricsState{listPath: listPathNotApplicable}
+	return context.WithValue(ctx, requestMetricsStateKey{}, state), state
+}
+
+func setListRequestPath(ctx context.Context, path string) {
+	if state, ok := ctx.Value(requestMetricsStateKey{}).(*requestMetricsState); ok {
+		state.listPath = path
+	}
+}
+
 // UnaryRequestDurationInterceptor records storage_server_grpc_request_duration_seconds
 // for unified-storage RPCs. A nil metrics records to unregistered collectors,
 // so it is safe to apply unconditionally.
@@ -44,6 +63,7 @@ func UnaryRequestDurationInterceptor(metrics *StorageMetrics) grpc.UnaryServerIn
 	}
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 		start := time.Now()
+		ctx, state := withRequestMetricsState(ctx)
 		resp, err := handler(ctx, req)
 		group, resource := requestKeyLabels(req)
 		code := status.Code(err)
@@ -55,7 +75,7 @@ func UnaryRequestDurationInterceptor(metrics *StorageMetrics) grpc.UnaryServerIn
 			}
 		}
 		metrics.RequestDuration.
-			WithLabelValues(path.Base(info.FullMethod), group, resource, code.String()).
+			WithLabelValues(path.Base(info.FullMethod), group, resource, code.String(), state.listPath).
 			Observe(time.Since(start).Seconds())
 		return resp, err
 	}
