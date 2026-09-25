@@ -15,6 +15,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
@@ -309,12 +310,20 @@ func (s *Service) ListConnections(ctx context.Context, query queryV0.DataSourceC
 }
 
 func (s *Service) asConnection(ds *datasources.DataSource) (*queryV0.DataSourceConnection, error) {
+	var labels map[string]string
+	if ds.IsDefault {
+		labels = map[string]string{
+			"default": "true",
+		}
+	}
+
 	return &queryV0.DataSourceConnection{
 		Title:      ds.Name,
 		APIGroup:   fmt.Sprintf("%s.datasource.grafana.app", ds.Type),
 		APIVersion: "v0alpha1", // TODO, get this from the plugin
 		Name:       ds.UID,
 		Plugin:     ds.Type,
+		Labels:     labels,
 	}, nil
 }
 

@@ -1683,10 +1683,11 @@ func TestIntegrationService_getConnections(t *testing.T) {
 	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "default")
 	require.NoError(t, err)
 	_, err = dsService.AddDataSource(ctx, &datasources.AddDataSourceCommand{
-		OrgID: 1,
-		Name:  "AAA",
-		UID:   "aaa",
-		Type:  "graphite",
+		OrgID:     1,
+		Name:      "AAA",
+		UID:       "aaa",
+		Type:      "graphite",
+		IsDefault: true,
 	})
 	require.NoError(t, err)
 	_, err = dsService.AddDataSource(ctx, &datasources.AddDataSourceCommand{
@@ -1730,7 +1731,8 @@ func TestIntegrationService_getConnections(t *testing.T) {
 					"name": "aaa",
 					"group": "graphite.datasource.grafana.app",
 					"version": "v0alpha1",
-					"plugin": "graphite"
+					"plugin": "graphite",
+					"labels": {"default": "true"}
 				},
 				{
 					"title": "BBB",
