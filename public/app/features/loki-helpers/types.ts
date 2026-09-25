@@ -69,6 +69,16 @@ export interface LokiQuery extends LokiQueryFromSchema {
   direction?: LokiQueryDirection;
   /** Used only to identify supporting queries, e.g. logs volume, logs sample and data sample */
   supportingQueryType?: SupportingQueryType;
+  /**
+   * Inclusive nanosecond lower bound for an infinite-scroll page.
+   * Set when loading newer logs; omitted so the other edge stays the dashboard bound.
+   */
+  startNs?: string;
+  /**
+   * Exclusive nanosecond upper bound for an infinite-scroll page.
+   * Set when loading older logs; omitted so the other edge stays the dashboard bound.
+   */
+  endNs?: string;
   // CUE autogenerates `queryType` as `?string`, as that's how it is defined
   // in the parent-interface (in DataQuery).
   // the temporary fix (until this gets improved in the codegen), is to

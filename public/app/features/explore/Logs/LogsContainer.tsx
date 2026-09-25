@@ -29,6 +29,7 @@ import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 import { type ExploreItemState } from 'app/types/explore';
 import { type StoreState } from 'app/types/store';
 
+import { type LoadMoreLogsRange } from '../../logs/components/infiniteScrollUtils';
 import { getTimeZone } from '../../profile/state/selectors';
 import { loadSupplementaryQueryData, selectIsWaitingForData, setSupplementaryQueryEnabled } from '../state/query';
 import { updateTimeRange, loadMoreLogs } from '../state/time';
@@ -148,7 +149,7 @@ const LogsContainer = memo(function LogsContainer({
     updateTimeRange({ exploreId, absoluteRange });
   }
 
-  function handleLoadMoreLogs(absoluteRange: AbsoluteTimeRange) {
+  function handleLoadMoreLogs(absoluteRange: LoadMoreLogsRange) {
     loadMoreLogs({ exploreId, absoluteRange });
   }
 
