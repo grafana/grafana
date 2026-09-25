@@ -132,6 +132,22 @@ func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoute
 								Schema:      spec.StringProperty(),
 							},
 						},
+						{
+							ParameterProps: spec3.ParameterProps{
+								Name:        "limit",
+								In:          "query",
+								Description: "Maximum number of connections to return; zero means no limit",
+								Schema:      spec.Int64Property(),
+							},
+						},
+						{
+							ParameterProps: spec3.ParameterProps{
+								Name:        "continue",
+								In:          "query",
+								Description: "Opaque continuation token from the previous page",
+								Schema:      spec.StringProperty(),
+							},
+						},
 					},
 					Responses: &spec3.Responses{
 						ResponsesProps: spec3.ResponsesProps{
