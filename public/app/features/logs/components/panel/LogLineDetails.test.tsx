@@ -1203,9 +1203,45 @@ describe('LogLineDetails', () => {
 
     await setup(undefined, { labels: { label: 'value' } });
 
+    const link = screen.getByRole('link', { name: 'Open service overview for label' });
+    expect(link).toHaveAttribute('href', 'https://example.com');
+    expect(link).toHaveTextContent('value');
     expect(screen.getByText('label')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'value' })).not.toBeInTheDocument();
+  });
+
+  test('shows a dropdown when a label has multiple extension links', async () => {
+    const usePluginLinksMock = jest.fn().mockReturnValue({
+      links: [
+        {
+          type: 'link',
+          title: 'APM',
+          path: 'https://example.com/apm',
+          category: 'label',
+          icon: 'compass',
+        },
+        {
+          type: 'link',
+          title: 'Kubernetes',
+          path: 'https://example.com/k8s',
+          category: 'label',
+          icon: 'apps',
+        },
+      ],
+    });
+    setPluginLinksHook(usePluginLinksMock);
+    jest.requireMock('@grafana/runtime').usePluginLinks = usePluginLinksMock;
+
+    await setup(undefined, { labels: { label: 'value' } });
+
+    expect(screen.queryByRole('link', { name: 'APM' })).not.toBeInTheDocument();
     expect(screen.getByText('value')).toBeInTheDocument();
-    expect(screen.getByText('Open service overview for label')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'value' }));
+
+    expect(await screen.findByText('OPEN VALUE IN')).toBeInTheDocument();
+    expect(await screen.findByRole('menuitem', { name: 'APM' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Kubernetes' })).toBeInTheDocument();
   });
 
   test('OTel details wrap a single attribute extension link around the value', async () => {

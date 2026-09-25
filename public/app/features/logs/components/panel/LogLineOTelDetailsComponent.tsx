@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { type JSX, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { DataFrameType, store, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
