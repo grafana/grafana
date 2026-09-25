@@ -167,7 +167,7 @@ func newNATSLifecycleBroker(t *testing.T) *natsLifecycleBroker {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				defer conn.Close()
+				defer func() { _ = conn.Close() }()
 				// Bound even a failed handshake so cleanup cannot leave a reader behind.
 				_ = conn.SetDeadline(time.Now().Add(15 * time.Second))
 				_, _ = fmt.Fprint(conn, "INFO {}\r\n")
