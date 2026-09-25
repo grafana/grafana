@@ -53,7 +53,7 @@ func TestBuildAPIGroupList(t *testing.T) {
 		}},
 	}
 
-	doc := buildAPIGroupList(backends)
+	doc := buildAPIGroupList(t.Context(), backends)
 
 	var list metav1.APIGroupList
 	if err := json.Unmarshal(doc.body, &list); err != nil {
@@ -89,8 +89,8 @@ func TestBuildAPIGroupListETagChangesWithKey(t *testing.T) {
 			Versions: []metav1.GroupVersionForDiscovery{{GroupVersion: "dashboard.grafana.app/v1alpha1", Version: "v1alpha1"}},
 		}}}
 	}
-	a := buildAPIGroupList(mk("1"))
-	b := buildAPIGroupList(mk("2"))
+	a := buildAPIGroupList(t.Context(), mk("1"))
+	b := buildAPIGroupList(t.Context(), mk("2"))
 	if a.etag == b.etag {
 		t.Errorf("etag did not change when key changed: both %q", a.etag)
 	}
@@ -106,7 +106,7 @@ func TestBuildOpenAPIV3Index(t *testing.T) {
 		}},
 	}
 
-	doc := buildOpenAPIV3Index(backends)
+	doc := buildOpenAPIV3Index(t.Context(), backends)
 
 	var idx handler3.OpenAPIV3Discovery
 	if err := json.Unmarshal(doc.body, &idx); err != nil {

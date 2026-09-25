@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -31,6 +30,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/util/errhttp"
+
+	"github.com/grafana/grafana-app-sdk/logging"
 )
 
 // pluginManifestsTarget discovers remote plugin deployments and builds their API handlers.
@@ -116,7 +117,7 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 	deployment, err := fetchPluginManifests(ctx, t.client, t.url)
 	if err != nil {
 		t.cooldown.OnFailure(now)
-		slog.Warn("router: plugin manifests poll failed, backing off", "url", t.url, "err", err)
+		logging.FromContext(ctx).Warn("router: plugin manifests poll failed, backing off", "url", t.url, "err", err)
 		return
 	}
 	t.cooldown.OnSuccess(now)
@@ -148,13 +149,13 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 		backend, err := NewPluginBackend(entry.Definition, clients, deps)
 
 		if err != nil {
-			slog.Warn("router: skipping plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", err)
+			logging.FromContext(ctx).Warn("router: skipping plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", err)
 			continue
 		}
 		// The host is outside PluginDefinition, but changing it must reload the backend.
 		key, keyErr := pluginDeploymentKey(entry)
 		if keyErr != nil {
-			slog.Warn("router: skipping unfingerprintable plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", keyErr)
+			logging.FromContext(ctx).Warn("router: skipping unfingerprintable plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", keyErr)
 			continue
 		}
 		deploymentBackend := &pluginDeploymentBackend{Backend: backend, key: key, authn: t.authn}

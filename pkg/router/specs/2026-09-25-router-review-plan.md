@@ -1,6 +1,6 @@
 # Router: Pre-rollout review and improvement plan
 
-Status: in progress (C1–C4 in #133537, P4 in #133547, A3 in progress)
+Status: in progress (C1–C4 in #133537, P4 in #133547, A3 in #133551, O3 in progress)
 Package: `pkg/router`
 
 ## Context
@@ -193,7 +193,7 @@ Each item has a stable ID. Tick it here when it lands, and note the PR number.
 - [ ] **O2. Read-only debug endpoint.** A JSON view of the current snapshot showing, for each group:
   source, key, target host and breaker state.
 
-- [ ] **O3. One logger.** The package mixes global `slog`, Grafana's `infra/log`
+- [x] **O3. One logger.** The package mixes global `slog`, Grafana's `infra/log`
   (`obo_exchanger.go`) and the app-sdk logger (`plugin.go`). Inject a single
   `log.New("router")`-style logger.
 
