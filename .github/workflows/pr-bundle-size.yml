@@ -91,7 +91,7 @@ jobs:
         run: |
           {
             echo "${OUTPUT_NAME}<<EOF"
-            node scripts/cli/reportBundleSizeStats.mts
+            yarn bundle-size:stats
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
