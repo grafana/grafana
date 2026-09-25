@@ -118,7 +118,10 @@ jest.mock('./steps/Step1AlertmanagerResources', () => {
 });
 // Most flows skip Rules, so this rarely matters. When a test completes the step instead,
 // handleConfirmImport needs rulesDatasourceUID set to fire the import — seeding it here is
-// harmless for the skip flows.
+// harmless for the skip flows. The 'yaml' scenario seeds a rules YAML upload instead, for tests
+// that exercise the rules preview.
+let mockRulesScenario: 'datasource' | 'yaml' = 'datasource';
+
 jest.mock('./steps/Step2AlertRules', () => {
   const { useEffect } = require('react');
   const { useFormContext } = require('react-hook-form');
@@ -126,6 +129,20 @@ jest.mock('./steps/Step2AlertRules', () => {
     Step2Content: function Step2Content() {
       const { setValue } = useFormContext();
       useEffect(() => {
+        if (mockRulesScenario === 'yaml') {
+          setValue('rulesSource', 'yaml');
+          setValue(
+            'rulesYamlFile',
+            new File(
+              [
+                'groups:\n  - name: g\n    rules:\n      - alert: HighErrorRate\n        expr: up == 0\n        annotations:\n          runbook_url: https://runbooks.example.com/incident/AbCdEfGh12345678\n',
+              ],
+              'rules.yaml',
+              { type: 'application/yaml' }
+            )
+          );
+          return;
+        }
         setValue('rulesDatasourceUID', 'prometheus-uid');
       }, [setValue]);
       return null;
@@ -528,6 +545,60 @@ describe('ImportToGMA wizard — preview redaction with schema-derived secrets',
     } finally {
       mockScenario = 'yaml';
     }
+  });
+});
+
+describe('ImportToGMA wizard — rules preview (no redaction)', () => {
+  /**
+   * Drives the wizard from notifications through to Review, completing (not skipping) the Rules
+   * step so its card renders a Preview control.
+   */
+  async function navigateToReviewWithRulesCompleted(user: ReturnType<typeof render>['user']) {
+    await screen.findByRole('group', { name: /import notification resources/i });
+    await waitFor(
+      () =>
+        expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
+          'aria-disabled',
+          'false'
+        ),
+      { timeout: 3000 }
+    );
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+    await screen.findByRole('group', { name: /import alert rules/i });
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+    await screen.findByText(/review import/i);
+  }
+
+  beforeEach(() => {
+    mockRulesScenario = 'yaml';
+  });
+
+  afterEach(() => {
+    mockRulesScenario = 'datasource';
+  });
+
+  it('shows raw rules content without redaction, even when it looks like a secret', async () => {
+    const { user } = render(<ImportWizardGate />);
+
+    await navigateToReviewWithRulesCompleted(user);
+    await user.click(await screen.findByRole('button', { name: /preview alert rules/i }));
+
+    const editor = await screen.findByTestId<HTMLTextAreaElement>('code-editor');
+    // A high-entropy-shaped URL segment like this would be redacted under the notifications
+    // preview's schema+heuristic pipeline; the rules preview shows it unredacted since rule
+    // content (expr/labels/annotations) has no secret-bearing fields.
+    expect(editor.value).toContain('AbCdEfGh12345678');
+  });
+
+  it('does not disable the rules Preview button while notification schemas are still loading', async () => {
+    // Delay the notifications schema fetch indefinitely — rules preview no longer depends on it.
+    server.use(http.get('/api/alert-notifiers', () => new Promise(() => {})));
+    const { user } = render(<ImportWizardGate />);
+
+    await navigateToReviewWithRulesCompleted(user);
+
+    expect(await screen.findByRole('button', { name: /preview alert rules/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /preview configuration/i })).toBeDisabled();
   });
 });
 
