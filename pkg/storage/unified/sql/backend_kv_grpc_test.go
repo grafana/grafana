@@ -93,7 +93,7 @@ type fakeEventSubscriber struct{}
 
 func (*fakeEventSubscriber) Enabled() bool { return true }
 
-func (*fakeEventSubscriber) Subscribe(_ context.Context, _ string, _ func(string, []byte)) (resource.Subscription, error) {
+func (*fakeEventSubscriber) Subscribe(_ context.Context, _ string, _ func(string, []byte), _ func()) (resource.Subscription, error) {
 	return nil, nil
 }
 

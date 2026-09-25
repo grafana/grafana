@@ -2470,6 +2470,11 @@ func (i *kvHistoryIterator) Value() []byte {
 	return i.value
 }
 
+// WatchInvalidation exposes delivery gaps only for the active notifier.
+func (k *kvStorageBackend) WatchInvalidation() <-chan struct{} {
+	return k.notifier.WatchInvalidation()
+}
+
 // WatchWriteEvents returns a channel that receives write events.
 //
 // Notifications carry metadata only, so values are read back — everything that

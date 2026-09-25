@@ -233,6 +233,7 @@ type ResourceLastImportTime struct {
 // the underlying raw storage medium.  This interface is never exposed directly,
 // it is provided by concrete instances that actually write values.
 type StorageBackend interface {
+	WatchInvalidator
 	// Write a Create/Update/Delete,
 	// NOTE: the contents of WriteEvent have been validated
 	// Return the revisionVersion for this event or error
@@ -2324,6 +2325,10 @@ func (s *server) initWatcher() error {
 func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStore_WatchServer) (retErr error) {
 	ctx := srv.Context()
 
+	// Capture before setup: reconnects during subscription or snapshot reads must
+	// expire this watch too, even if it has not entered the live loop yet.
+	reconnectC := s.backend.WatchInvalidation()
+
 	// Treat a closed client transport and cancellation of this watch's context
 	// as clean shutdowns. Errors from setup, storage, authorization, or another
 	// context are still propagated.
@@ -2496,10 +2501,23 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	}
 
 	for {
+		// Prioritize known delivery gaps over buffered live events.
+		select {
+		case <-reconnectC:
+			if ctx.Err() != nil {
+				return nil
+			}
+			return NewResourceVersionExpiredError(since)
+		default:
+		}
 		select {
 		case <-ctx.Done():
 			return nil
-
+		case <-reconnectC:
+			if ctx.Err() != nil {
+				return nil
+			}
+			return NewResourceVersionExpiredError(since)
 		case <-watchExpiryC:
 			// Unlike EOF, Expired forces clients to re-list.
 			s.log.Debug("watch: expiring stream to bound stale-state duration",

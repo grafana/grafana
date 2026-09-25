@@ -24,7 +24,7 @@ type countingSubscriber struct {
 
 func (c *countingSubscriber) Enabled() bool { return true }
 
-func (c *countingSubscriber) Subscribe(_ context.Context, _ string, handler func(subject string, data []byte)) (Subscription, error) {
+func (c *countingSubscriber) Subscribe(_ context.Context, _ string, handler func(subject string, data []byte), _ func()) (Subscription, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.calls++

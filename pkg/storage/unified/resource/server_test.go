@@ -1422,6 +1422,8 @@ func newWatchTestUser() *identity.StaticRequester {
 }
 
 type watchTestServerOpts struct {
+	EventSubscriber   EventSubscriber
+	EventPublisher    EventPublisher
 	BookmarkFrequency time.Duration
 	StorageMetrics    *StorageMetrics
 	AccessClient      authlib.AccessClient
@@ -1437,8 +1439,11 @@ func newWatchTestServer(t *testing.T, opts watchTestServerOpts) *server {
 	t.Cleanup(func() { require.NoError(t, db.Close()) })
 
 	store, err := NewKVStorageBackend(KVBackendOptions{
-		KvStore:      NewBadgerKV(db),
-		WatchOptions: WatchOptions{SettleDelay: 1 * time.Millisecond},
+		KvStore:            NewBadgerKV(db),
+		EventSubscriber:    opts.EventSubscriber,
+		EventPublisher:     opts.EventPublisher,
+		EnableNatsNotifier: opts.EventSubscriber != nil,
+		WatchOptions:       WatchOptions{SettleDelay: 1 * time.Millisecond},
 	})
 	require.NoError(t, err)
 
@@ -1792,7 +1797,7 @@ func TestIncrementalBookmarksProgressLag(t *testing.T) {
 				req.Since = rvAt(now.Add(-30 * time.Second))
 				events, stream, _ := startBookmarkWatch(t, req, func(srv *server, _ *bookmarkWatchServer) {
 					if backend == "kv" {
-						srv.backend = &kvStorageBackend{}
+						srv.backend = &kvStorageBackend{notifier: &pollingNotifier{}}
 					}
 					srv.bookmarkFrequency = 10 * time.Second
 				})
@@ -1837,7 +1842,7 @@ func TestIncrementalBookmarksLagDoesNotDelayObjects(t *testing.T) {
 		req := bookmarkWatchRequest()
 		req.Since = snowflakeFromTime(now.Add(-2 * time.Minute))
 		events, stream, _ := startBookmarkWatch(t, req, func(srv *server, _ *bookmarkWatchServer) {
-			srv.backend = &kvStorageBackend{}
+			srv.backend = &kvStorageBackend{notifier: &pollingNotifier{}}
 			srv.bookmarkFrequency = 10 * time.Second
 		})
 
@@ -1868,7 +1873,7 @@ func TestIncrementalBookmarksLaggedResume(t *testing.T) {
 		req := bookmarkWatchRequest()
 		req.Since = snowflakeFromTime(now.Add(-2 * time.Minute))
 		configure := func(srv *server, _ *bookmarkWatchServer) {
-			srv.backend = &kvStorageBackend{}
+			srv.backend = &kvStorageBackend{notifier: &pollingNotifier{}}
 			srv.bookmarkFrequency = 10 * time.Second
 		}
 		events, stream, done := startBookmarkWatch(t, req, configure)
@@ -1931,7 +1936,7 @@ func TestIncrementalBookmarksFilteredProgress(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
 				events, stream, _ := startBookmarkWatch(t, bookmarkWatchRequest(), func(srv *server, _ *bookmarkWatchServer) {
 					if tt.kv {
-						srv.backend = &kvStorageBackend{}
+						srv.backend = &kvStorageBackend{notifier: &pollingNotifier{}}
 					}
 					if tt.configure != nil {
 						tt.configure(srv)
@@ -1986,7 +1991,7 @@ func TestIncrementalBookmarksWaitForSuccessfulSend(t *testing.T) {
 				entered, release := make(chan struct{}), make(chan struct{})
 				sendErr := errors.New("send failed")
 				events, stream, done := startBookmarkWatch(t, bookmarkWatchRequest(), func(srv *server, stream *bookmarkWatchServer) {
-					srv.backend = &kvStorageBackend{}
+					srv.backend = &kvStorageBackend{notifier: &pollingNotifier{}}
 					stream.beforeSend = func(event *resourcepb.WatchEvent) error {
 						if event.Type == resourcepb.WatchEvent_ADDED {
 							close(entered)
@@ -2044,6 +2049,8 @@ type bookmarkKVListBackend struct {
 	KVBackend
 	list func(func(ListIterator) error) (int64, error)
 }
+
+func (*bookmarkKVListBackend) WatchInvalidation() <-chan struct{} { return nil }
 
 func (b *bookmarkKVListBackend) ListIterator(_ context.Context, _ *resourcepb.ListRequest, callback func(ListIterator) error) (int64, error) {
 	return b.list(callback)
