@@ -2976,12 +2976,15 @@
     {
       "metadata": {
         "name": "grafana.visualDesignRefresh",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T10:24:28Z"
+        "resourceVersion": "1790165282594",
+        "creationTimestamp": "2026-09-16T10:24:28Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-09-23 12:08:02.594434 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the new visual design refresh for the Grafana UI",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
         "hideFromDocs": true,

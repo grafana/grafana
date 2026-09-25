@@ -475,6 +475,7 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Alertmanagers externes",
+      "external-alertmanagers-group-plugin": "",
       "noOptionsMessage-no-datasources-found": "Aucune source de données trouvée"
     },
     "alert-menu": {
@@ -2673,6 +2674,8 @@
       }
     },
     "proxied-alerting-route": {
+      "redirected-body": "",
+      "redirected-title": "",
       "text-redirecting": ""
     },
     "query-and-expressions-step": {
@@ -2978,6 +2981,15 @@
     },
     "rule-list": {
       "configure-datasource": "Configurer",
+      "datasource-managed-notice": {
+        "action": "",
+        "body": "",
+        "inline-action": "",
+        "inline_one": "",
+        "inline_other": "",
+        "title_one": "",
+        "title_other": ""
+      },
       "ds-error": {
         "title": "Impossible de charger les règles pour cette source de données"
       },
@@ -2998,7 +3010,8 @@
         "no-more-results": "Plus aucun résultat : {{numberOfRules}} règles trouvées",
         "no-rules-found": "Aucune règle d'alerte ou d'enregistrement ne correspond à votre ensemble actuel de filtres.",
         "results-loading": "Recherche : {{numberOfRules}} règles trouvées",
-        "results-with-cancellation": "Recherche annulée : {{numberOfRules}} règles trouvées"
+        "results-with-cancellation": "Recherche annulée : {{numberOfRules}} règles trouvées",
+        "search-in-plugin": ""
       },
       "import-disabled-tooltip": {
         "auto-sync": "Les importations ne sont pas disponibles tant que la synchronisation automatique de Mimir Alertmanager est active"
@@ -4392,6 +4405,7 @@
       "label-top": "Haut"
     },
     "name-show-unfilled-area": "Afficher la zone non remplie",
+    "name-text-mode": "",
     "name-value-display": "Affichage de la valeur",
     "presets": {
       "basic": "Basique",
@@ -4410,6 +4424,13 @@
     "suggestions": {
       "basic": "Jauge à barres",
       "lcd": "Jauge à barres – LCD"
+    },
+    "text-mode-options": {
+      "label-auto": "",
+      "label-name": "",
+      "label-none": "",
+      "label-value": "",
+      "label-value-and-name": ""
     },
     "value-display-options": {
       "label-hidden": "Masqué",
@@ -6041,6 +6062,12 @@
       "ungroup-repeat-loss": "Les options de répétition configurées sur les groupes dissociés seront perdues.",
       "ungroup-repeat-loss-title": "Dissocier ?"
     },
+    "loading": {
+      "drawer": "",
+      "drawer-title": "",
+      "sidebar": "",
+      "sidebar-title": ""
+    },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} sur {{numberOfPages}}",
       "tooltip-next": "Suivant",
@@ -6759,7 +6786,14 @@
         "title-remove": "Supprimer",
         "title-show-transform-help": "Afficher l’aide sur la transformation"
       },
-      "title-delete": "Supprimer {{name}} ?"
+      "title-delete": "Supprimer {{name}} ?",
+      "transformation-editor-row-header": {
+        "edit-refId": "",
+        "edit-refId-placeholder": "",
+        "refId-exists-error": "",
+        "refId-reserved-error": "",
+        "refId-variable-error": ""
+      }
     },
     "transformation-operation-rows": {
       "remove-transformation": "",
@@ -7424,7 +7458,6 @@
       },
       "render-save-button-and-error": {
         "body-plugin-dashboard": "Vos modifications seront perdues lors de la mise à jour du plugin. Utilisez la fonction <strong>Enregistrer sous</strong> pour créer une version personnalisée.",
-        "title-failed-to-save-dashboard": "Échec de l’enregistrement du tableau de bord",
         "title-plugin-dashboard": "Tableau de bord du plugin",
         "title-someone-else-has-updated-this-dashboard": "Quelqu’un d’autre a mis à jour ce tableau de bord",
         "would-still-dashboard": "Voulez-vous toujours enregistrer ce tableau de bord ?"
@@ -7692,9 +7725,6 @@
       },
       "label-copy-tags": "Copier les balises",
       "label-folder": "Dossier",
-      "render-footer": {
-        "title-failed-to-save-dashboard": "Échec de l’enregistrement du tableau de bord"
-      },
       "required": "Champ requis"
     },
     "save-dashboard-drawer": {
@@ -7741,6 +7771,9 @@
       "save-variables-label-update-default-variable-values": "Mettre à jour les valeurs des variables par défaut",
       "show-variables-warning-alert-body": "",
       "show-variables-warning-alert-title": ""
+    },
+    "save-errors": {
+      "unexpected": ""
     },
     "save-library-viz-panel-modal": {
       "cancel": "Annuler",
@@ -10552,7 +10585,7 @@
     "data-source-settings": {
       "alerting-settings-heading": "Alerte",
       "alerting-settings-label": "Gérer les règles d'alerte dans l'interface utilisateur d'alerte",
-      "alerting-settings-tooltip": "Gérez les règles d'alerte pour cette source de données. Pour gérer d'autres ressources d'alerte, ajoutez une source de données Alertmanager.",
+      "alerting-settings-tooltip": "",
       "cert-key-reset": "Réinitialiser",
       "custom-headers-add": "Ajouter un en-tête",
       "custom-headers-header": "En-tête",
@@ -10840,6 +10873,7 @@
       "placeholder": "Choisir"
     },
     "table": {
+      "cell-actions": "",
       "cell-filter-on": "Filtrer par valeur",
       "cell-filter-out": "Filtrer la valeur",
       "cell-inspect": "Inspecter la valeur",
@@ -11200,10 +11234,11 @@
   "home": {
     "alerts-incidents": {
       "alert-tab-label": "Alertes en cours",
+      "incident-filter-all": "",
+      "incident-filter-label": "",
       "incident-tab-label": "Incidents",
       "team-filter-all": "Toutes les équipes",
       "team-filter-label": "Filtrer les alertes par équipe",
-      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Vos équipes",
       "title": "Alertes et incidents",
       "title-alerts": "Alertes",
@@ -15605,6 +15640,10 @@
       "label": "Appliquer la transformation vers",
       "series": "Résultats de la requête et de la transformation"
     },
+    "transformation-name": {
+      "auto-placeholder": "",
+      "edit": ""
+    },
     "validation": {
       "duplicate-name": "Le nom de la requête existe déjà",
       "empty-name": "Le nom de la requête ne peut pas être vide"
@@ -15784,6 +15823,12 @@
     "title": "Impossible de trouver le fichier d'application"
   },
   "save-dashboards": {
+    "forbidden": {
+      "title": ""
+    },
+    "invalid": {
+      "title": ""
+    },
     "message-length": {
       "info": "Le message comporte {{messageLength}} caractères, ce qui dépasse la longueur maximale de 500 caractères. Veuillez le raccourcir avant de l'enregistrer.",
       "title": "Messages trop longs"
