@@ -1,18 +1,49 @@
-// Due to the grafana/ui Icon component making fetch requests to
-// `/public/img/icon/<icon_name>.svg` we need to mock react-inlinesvg to prevent
-// the failed fetch requests from displaying errors in console.
+// Stands in for both `react-inlinesvg` and `react-inlinesvg/provider` (the moduleNameMapper entry
+// matches both), so that grafana/ui's Icon and any SVG a plugin renders directly never make fetch
+// requests for `/public/img/icons/<icon_name>.svg` in tests.
 
 import { type Ref } from 'react';
 
-type Callback = (...args: unknown[]) => void;
-
 export interface StorageItem {
   content: string;
-  queue: Callback[];
-  status: string;
+  error?: Error;
+  status: 'idle' | 'loading' | 'loaded' | 'failed' | 'ready' | 'unsupported';
 }
 
-export const cacheStore: { [key: string]: StorageItem } = Object.create(null);
+const contents = new Map<string, StorageItem>();
+
+// Unlike the real cache store, a url nobody has registered still counts as cached, so icons render
+// synchronously in tests that don't care about their markup. Tests that do care can seed content
+// through the regular `cacheStore.set` API, and use a `loading` or `failed` status to exercise the
+// asynchronous paths.
+function defaultContent() {
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"></svg>';
+}
+
+export const cacheStore = {
+  isCached: (url: string) => (contents.get(url)?.status ?? 'loaded') === 'loaded',
+  getContent: (url: string) => contents.get(url)?.content || defaultContent(),
+  get: async (url: string) => {
+    const item = contents.get(url);
+
+    if (item?.status === 'failed') {
+      throw item.error ?? new Error(`Failed to fetch ${url}`);
+    }
+
+    const content = item?.content || defaultContent();
+    contents.set(url, { content, status: 'loaded' });
+
+    return content;
+  },
+  set: (url: string, data: StorageItem) => contents.set(url, data),
+  delete: async (url: string) => contents.delete(url),
+  clear: async () => contents.clear(),
+  keys: () => [...contents.keys()],
+};
+
+export function useCacheStore() {
+  return null;
+}
 
 const SVG_FILE_NAME_REGEX = /(.+)\/(.+)\.svg$/;
 
