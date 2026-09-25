@@ -18,14 +18,19 @@
   },
   "main": "./dist/cjs/index.cjs",
   "module": "./dist/esm/index.mjs",
-  "types": "./dist/types/index.d.ts",
+  "types": "./dist/cjs/index.d.cts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
       "@grafana-app/source": "./src/index.ts",
-      "types": "./dist/types/index.d.ts",
-      "import": "./dist/esm/index.mjs",
-      "require": "./dist/cjs/index.cjs"
+      "import": {
+        "types": "./dist/esm/index.d.mts",
+        "default": "./dist/esm/index.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.cts",
+        "default": "./dist/cjs/index.cjs"
+      }
     }
   },
   "publishConfig": {
@@ -38,8 +43,7 @@
     "./LICENSE_APACHE2"
   ],
   "scripts": {
-    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
-    "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
+    "build": "rolldown -c rolldown.config.ts",
     "clean": "rimraf ./dist ./compiled ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
@@ -64,7 +68,6 @@
   },
   "devDependencies": {
     "@grafana/test-utils": "workspace:*",
-    "@rollup/plugin-node-resolve": "16.0.1",
     "@rsbuild/core": "^2.1.9",
     "@rsbuild/plugin-react": "^2.1.0",
     "@storybook/react": "10.3.6",
@@ -86,9 +89,8 @@
     "fs-extra": "^11.3.2",
     "jest": "^29.6.4",
     "jest-canvas-mock": "2.5.2",
-    "rollup": "^4.60.1",
-    "rollup-plugin-esbuild": "6.2.1",
-    "rollup-plugin-node-externals": "^8.0.0",
+    "rolldown": "1.2.9",
+    "rolldown-plugin-dts": "0.28.6",
     "sass": "1.89.2",
     "sass-loader": "16.0.5",
     "storybook": "10.3.6",
