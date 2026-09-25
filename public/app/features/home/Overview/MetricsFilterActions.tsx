@@ -55,7 +55,7 @@ function MetricsFilterFields({ draft, onChange }: MetricsFilterFieldsProps) {
       label={t('home.solutions.metrics.filter.excludes', 'Exclude')}
       description={t(
         'home.solutions.metrics.filter.excludes-description',
-        'Filesystems whose label matches the pattern are left out of the alert and the host count.'
+        'Matching filesystems are left out of the alert and the host count'
       )}
       noMargin
     >

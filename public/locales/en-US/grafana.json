@@ -11549,7 +11549,7 @@
           "exclude-pattern-placeholder": "cache-.*",
           "exclude-remove": "Remove exclusion",
           "excludes": "Exclude",
-          "excludes-description": "Filesystems whose label matches the pattern are left out of the alert and the host count.",
+          "excludes-description": "Matching filesystems are left out of the alert and the host count",
           "invalid-label": "Label names may only contain letters, digits and underscores.",
           "open": "Exclude hosts or filesystems from the disk alert",
           "summary-excludes": "Excluding {{matchers}}",
