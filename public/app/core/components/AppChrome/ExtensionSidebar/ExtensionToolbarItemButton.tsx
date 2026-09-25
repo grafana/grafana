@@ -12,6 +12,8 @@ interface ToolbarItemButtonProps {
 
 function getPluginIcon(pluginId?: string): IconName {
   switch (pluginId) {
+    case 'grafana':
+      return 'book';
     // The docs plugin ID is transitioning from grafana-grafanadocsplugin-app to grafana-pathfinder-app.
     // Support both until that migration is complete.
     case 'grafana-grafanadocsplugin-app':
