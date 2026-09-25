@@ -18,7 +18,7 @@ import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { isK8sEntityProvisioned } from '../../utils/k8s/utils';
 
 import { DeleteRuleConfirmModal } from './DeleteRuleConfirmModal';
-import { DuplicateRuleAction } from './DuplicateRuleAction';
+import { useDuplicateRuleAction } from './DuplicateRuleAction';
 import { copyRuleLink } from './copyRuleLink';
 import { ruleShareUrl } from './ruleLinks';
 import { type OnMutated, type RuleResourceState } from './types';
@@ -62,6 +62,12 @@ export function AlertRuleActionsMenu({ ruleUid, resourceState, onMutated, button
   // eslint-disable-next-line @grafana/no-config-feature-toggles
   const canManageEnrichments = Boolean(config.featureToggles.alertingEnrichmentPerRule) && canReadEnrichments;
 
+  const { menuItem: duplicateMenuItem, confirmModal: duplicateConfirmModal } = useDuplicateRuleAction({
+    kind: 'alert',
+    uid: ruleUid,
+    isProvisioned,
+  });
+
   const menuItems = (
     <>
       {abilities.pause.available && rule && (
@@ -84,9 +90,7 @@ export function AlertRuleActionsMenu({ ruleUid, resourceState, onMutated, button
         />
       )}
       {rule && <AnalyzeK8sRuleButton kind="alert" rule={rule} />}
-      {abilities.duplicate.available && (
-        <DuplicateRuleAction kind="alert" uid={ruleUid} isProvisioned={isProvisioned} />
-      )}
+      {abilities.duplicate.available && duplicateMenuItem}
       <Menu.Divider />
       <Menu.Item
         label={t('alerting.gma-rule-list.actions.copy-link', 'Copy link')}
@@ -130,6 +134,7 @@ export function AlertRuleActionsMenu({ ruleUid, resourceState, onMutated, button
       {showEnrichmentDrawer && (
         <EnrichmentDrawerExtension ruleUid={ruleUid} onClose={() => setShowEnrichmentDrawer(false)} />
       )}
+      {duplicateConfirmModal}
       <DeleteRuleConfirmModal
         isOpen={showDeleteModal}
         ruleTitle={ruleTitle}

@@ -122,4 +122,77 @@ describe('RecordingRulesRecentlyDeleted', () => {
     expect(await screen.findByText(/unable to load recently deleted rules/i)).toBeInTheDocument();
     expect(screen.queryByText(/no recently deleted rules found/i)).not.toBeInTheDocument();
   });
+
+  it('RDEL-4: shows the empty state only after a successful empty response', async () => {
+    mockRecordingRulesResponse({ items: [], metadata: {} });
+
+    render(<RecordingRulesRecentlyDeleted />);
+
+    expect(await screen.findByText(/no recently deleted rules found/i)).toBeInTheDocument();
+  });
+
+  it('RDEL-4: a later Load more failure keeps the loaded rows visible and offers retry', async () => {
+    // An exact 40-item first page with a continue token empties the local buffer, so the next
+    // Load more click must hit the network (unlike an oversized first response) - that's the
+    // request this test makes fail.
+    const rules = Array.from({ length: 40 }, (_, i) =>
+      buildRecordingRule({
+        metadata: { name: `rule-${i}`, annotations: { 'grafana.app/folder': 'folder-uid-1' } },
+        spec: { ...buildRecordingRule().spec, title: `Rule ${i}` },
+      })
+    );
+    server.use(
+      http.get(RECORDING_RULES_URL, ({ request }) => {
+        const continueToken = new URL(request.url).searchParams.get('continue');
+        if (!continueToken) {
+          return HttpResponse.json({ items: rules, metadata: { continue: 'next-page-token' } });
+        }
+        return HttpResponse.json({ message: 'boom' }, { status: 500 });
+      })
+    );
+
+    const { user } = render(<RecordingRulesRecentlyDeleted />);
+
+    await screen.findByText('Rule 0');
+    await user.click(screen.getByRole('button', { name: /load more/i }));
+
+    expect(await screen.findByText(/unable to load more recently deleted rules/i)).toBeInTheDocument();
+    expect(screen.getByText('Rule 0')).toBeInTheDocument();
+    expect(screen.getByText('Rule 39')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /load more/i })).toBeInTheDocument();
+  });
+
+  it('RDEL-4: falls back to the folder UID when the folder lookup fails, without disabling Review', async () => {
+    mockRecordingRulesResponse({ items: [buildRecordingRule()], metadata: {} });
+    server.use(http.get(FOLDER_PARENTS_URL, () => HttpResponse.json({ message: 'not found' }, { status: 404 })));
+
+    render(<RecordingRulesRecentlyDeleted />);
+
+    const row = (await screen.findByText('CPU usage average')).closest('tr');
+    await waitFor(() => expect(within(row!).getByText('folder-uid-1')).toBeInTheDocument());
+    expect(within(row!).getByRole('button', { name: /review/i })).toBeEnabled();
+  });
+
+  it('RDEL-4: falls back to the target data source UID when it does not resolve to a known data source', async () => {
+    mockRecordingRulesResponse({
+      items: [buildRecordingRule({ spec: { ...buildRecordingRule().spec, targetDatasourceUID: 'unknown-ds-uid' } })],
+      metadata: {},
+    });
+
+    render(<RecordingRulesRecentlyDeleted />);
+
+    const row = (await screen.findByText('CPU usage average')).closest('tr');
+    expect(within(row!).getByText('unknown-ds-uid')).toBeInTheDocument();
+  });
+
+  it('RDEL-4: falls back to the updatedBy UID when the user-display lookup fails, without disabling the row', async () => {
+    mockRecordingRulesResponse({ items: [buildRecordingRule()], metadata: {} });
+    server.use(http.get(DISPLAY_MAPPING_URL, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
+
+    render(<RecordingRulesRecentlyDeleted />);
+
+    const row = (await screen.findByText('CPU usage average')).closest('tr');
+    await waitFor(() => expect(within(row!).getByText('user:1')).toBeInTheDocument());
+    expect(within(row!).getByRole('button', { name: /review/i })).toBeEnabled();
+  });
 });

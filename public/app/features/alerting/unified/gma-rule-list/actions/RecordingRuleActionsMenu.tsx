@@ -9,7 +9,7 @@ import { AnalyzeK8sRuleButton } from '../../components/assistant/AnalyzeK8sRuleB
 import { isK8sEntityProvisioned } from '../../utils/k8s/utils';
 
 import { DeleteRuleConfirmModal } from './DeleteRuleConfirmModal';
-import { DuplicateRuleAction } from './DuplicateRuleAction';
+import { useDuplicateRuleAction } from './DuplicateRuleAction';
 import { copyRuleLink } from './copyRuleLink';
 import { ruleShareUrl } from './ruleLinks';
 import { type OnMutated, type RuleResourceState } from './types';
@@ -40,6 +40,12 @@ export function RecordingRuleActionsMenu({ ruleUid, resourceState, onMutated, bu
   const isPaused = Boolean(rule?.spec.paused);
   const isProvisioned = rule ? isK8sEntityProvisioned(rule) : false;
 
+  const { menuItem: duplicateMenuItem, confirmModal: duplicateConfirmModal } = useDuplicateRuleAction({
+    kind: 'recording',
+    uid: ruleUid,
+    isProvisioned,
+  });
+
   const menuItems = (
     <>
       {abilities.pause.available && rule && (
@@ -55,9 +61,7 @@ export function RecordingRuleActionsMenu({ ruleUid, resourceState, onMutated, bu
         />
       )}
       {rule && <AnalyzeK8sRuleButton kind="recording" rule={rule} />}
-      {abilities.duplicate.available && (
-        <DuplicateRuleAction kind="recording" uid={ruleUid} isProvisioned={isProvisioned} />
-      )}
+      {abilities.duplicate.available && duplicateMenuItem}
       <Menu.Divider />
       <Menu.Item
         label={t('alerting.gma-rule-list.actions.copy-link', 'Copy link')}
@@ -83,6 +87,7 @@ export function RecordingRuleActionsMenu({ ruleUid, resourceState, onMutated, bu
       <Dropdown overlay={<Menu>{menuItems}</Menu>} placement="bottom-end">
         <MoreButton size={buttonSize} />
       </Dropdown>
+      {duplicateConfirmModal}
       <DeleteRuleConfirmModal
         isOpen={showDeleteModal}
         ruleTitle={ruleTitle}
