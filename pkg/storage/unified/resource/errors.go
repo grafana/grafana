@@ -136,14 +136,18 @@ func StatusErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
 		err = grpcstatus.FromContextError(err).Err()
 	}
 	var apiStatus apierrors.APIStatus
-	_, isGRPC := grpcstatus.FromError(err)
+	grpcStatus, isGRPC := grpcstatus.FromError(err)
 	if !isGRPC && !errors.As(err, &apiStatus) {
 		return err
 	}
 	result := AsErrorResult(err)
 	if isGRPC && result.Code >= http.StatusInternalServerError && errorResultFromGRPCDetails(err) == nil {
 		if !localContextErr {
-			errorMappingLog.Error("Unstructured gRPC server error", "error", err)
+			if grpcStatus.Code() == grpccodes.DeadlineExceeded {
+				errorMappingLog.Warn("Unstructured gRPC deadline exceeded", "error", err)
+			} else {
+				errorMappingLog.Error("Unstructured gRPC server error", "error", err)
+			}
 		}
 		result.Message = http.StatusText(int(result.Code))
 	}
