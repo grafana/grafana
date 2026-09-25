@@ -797,6 +797,14 @@ export const versionedComponents = {
         '11.1.0': 'Save dashboard title field',
       },
     },
+    NewLibraryPanelDrawer: {
+      nameInput: {
+        '13.3.0': 'data-testid New library panel name field',
+      },
+      createButton: {
+        '13.3.0': 'data-testid New library panel create button',
+      },
+    },
   },
   ProvisionedResourceForm: {
     commentInput: {
