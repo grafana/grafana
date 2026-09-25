@@ -49,8 +49,8 @@ type Options struct {
 	BuilderProvider embed.BuilderProvider
 	// DashboardStats is optional; nil disables the views filter.
 	DashboardStats builders.DashboardStats
-	// Metrics is optional; when nil the backfiller runs without
-	// observability instrumentation (handy for unit tests).
+	// Metrics are always recorded. Nil means unregistered metrics, for
+	// callers without a registry.
 	Metrics *resource.VectorMetrics
 	// Interval is how often Run re-scans for incomplete jobs (jobs are
 	// created lazily by the reconciler's write path). Defaults to 1m.
@@ -108,6 +108,11 @@ func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
 	if pageSize <= 0 {
 		pageSize = defaultBackfillPageSize
 	}
+	// Recording sites should not have to check for nil.
+	metrics := opts.Metrics
+	if metrics == nil {
+		metrics = resource.ProvideVectorMetrics(nil)
+	}
 
 	return &VectorBackfiller{
 		storage:             opts.Storage,
@@ -117,7 +122,7 @@ func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
 		builderProvider:     opts.BuilderProvider,
 		dashboardStats:      opts.DashboardStats,
 		log:                 log.New("backfill"),
-		metrics:             opts.Metrics,
+		metrics:             metrics,
 		interval:            interval,
 		pageSize:            pageSize,
 		folderTitleResolver: foldertitle.NewResolver(opts.Storage),
@@ -603,12 +608,10 @@ func (b *VectorBackfiller) observeBackfillItem(item *preparedBackfillItem) {
 		item.span.RecordError(item.err)
 		item.span.SetStatus(codes.Error, item.err.Error())
 	}
-	if b.metrics != nil {
-		metricutil.ObserveWithExemplar(item.ctx,
-			b.metrics.BackfillItemDuration.WithLabelValues(item.key.Group, item.key.Resource, item.status),
-			time.Since(item.start).Seconds(),
-		)
-	}
+	metricutil.ObserveWithExemplar(item.ctx,
+		b.metrics.BackfillItemDuration.WithLabelValues(item.key.Group, item.key.Resource, item.status),
+		time.Since(item.start).Seconds(),
+	)
 }
 
 func (b *VectorBackfiller) writeBackfillItem(job vector.BackfillJob, builder collectionBuilder, item *preparedBackfillItem, vectors []vector.Vector) error {

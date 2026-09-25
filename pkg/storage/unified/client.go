@@ -219,6 +219,18 @@ func newClient(opts options.StorageOptions,
 		if err != nil {
 			return nil, err
 		}
+		if cfg.EnableEmbeddedAPIExtensions {
+			if cfg.ManifestApiServerAddress != "" {
+				cfg.Logger.Warn("manifest_api_server_address is ignored by in-process storage; embedded search reads startup-provisioned AppManifest files")
+			}
+			manifests, err := loadEmbeddedAppManifests(cfg.ProvisioningPath)
+			if err != nil {
+				cfg.Logger.Error("failed to load embedded app manifests for search", "error", err)
+			}
+			if err := searchOptions.ReloadManifests(resource.AppManifests(), manifests); err != nil {
+				cfg.Logger.Error("failed to load embedded search fields", "error", err)
+			}
+		}
 
 		storageOpts := append([]sql.StorageBackendOption{sql.WithVectorBackend(vectorBackend)},
 			NatsStorageBackendOptions(cfg, eventPublisher, eventSubscriber)...)

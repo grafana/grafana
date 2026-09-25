@@ -475,6 +475,7 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Externa Alertmanager",
+      "external-alertmanagers-group-plugin": "",
       "noOptionsMessage-no-datasources-found": "Inga datakällor hittades"
     },
     "alert-menu": {
@@ -2673,6 +2674,8 @@
       }
     },
     "proxied-alerting-route": {
+      "redirected-body": "",
+      "redirected-title": "",
       "text-redirecting": ""
     },
     "query-and-expressions-step": {
@@ -2978,6 +2981,15 @@
     },
     "rule-list": {
       "configure-datasource": "Konfigurera",
+      "datasource-managed-notice": {
+        "action": "",
+        "body": "",
+        "inline-action": "",
+        "inline_one": "",
+        "inline_other": "",
+        "title_one": "",
+        "title_other": ""
+      },
       "ds-error": {
         "title": "Kan inte ladda regler för denna datakälla"
       },
@@ -2998,7 +3010,8 @@
         "no-more-results": "Inga fler resultat – hittade {{numberOfRules}} regler",
         "no-rules-found": "Inga varnings- eller registreringsregler matchade din nuvarande uppsättning filter.",
         "results-loading": "Söker – hittade {{numberOfRules}} regler",
-        "results-with-cancellation": "Sökning avbruten – hittade {{numberOfRules}} regler"
+        "results-with-cancellation": "Sökning avbruten – hittade {{numberOfRules}} regler",
+        "search-in-plugin": ""
       },
       "import-disabled-tooltip": {
         "auto-sync": "Importer är inte tillgängliga när automatisk synkronisering av Mimir Alertmanager har aktiverats"
@@ -4392,6 +4405,7 @@
       "label-top": "Överst"
     },
     "name-show-unfilled-area": "Visa ofyllt område",
+    "name-text-mode": "",
     "name-value-display": "Värdevisning",
     "presets": {
       "basic": "Grundläggande",
@@ -4410,6 +4424,13 @@
     "suggestions": {
       "basic": "Stapelmätare",
       "lcd": "Stapelmätare – LCD"
+    },
+    "text-mode-options": {
+      "label-auto": "",
+      "label-name": "",
+      "label-none": "",
+      "label-value": "",
+      "label-value-and-name": ""
     },
     "value-display-options": {
       "label-hidden": "Dolt",
@@ -6041,6 +6062,12 @@
       "ungroup-repeat-loss": "Upprepningsalternativ som konfigurerats för de ogrupperade grupperna kommer att gå förlorade.",
       "ungroup-repeat-loss-title": "Ta bort gruppering?"
     },
+    "loading": {
+      "drawer": "",
+      "drawer-title": "",
+      "sidebar": "",
+      "sidebar-title": ""
+    },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} av {{numberOfPages}}",
       "tooltip-next": "Nästa",
@@ -6759,7 +6786,14 @@
         "title-remove": "Ta bort",
         "title-show-transform-help": "Visa transformeringshjälp"
       },
-      "title-delete": "Radera {{name}}?"
+      "title-delete": "Radera {{name}}?",
+      "transformation-editor-row-header": {
+        "edit-refId": "",
+        "edit-refId-placeholder": "",
+        "refId-exists-error": "",
+        "refId-reserved-error": "",
+        "refId-variable-error": ""
+      }
     },
     "transformation-operation-rows": {
       "remove-transformation": "",
@@ -7424,7 +7458,6 @@
       },
       "render-save-button-and-error": {
         "body-plugin-dashboard": "Dina ändringar kommer förloras när du uppdaterar tillägget. Använd <strong>Spara som</strong> för att skapa en anpassad version.",
-        "title-failed-to-save-dashboard": "Det gick inte att spara instrumentpanel",
         "title-plugin-dashboard": "Tilläggsinstrumentpanel",
         "title-someone-else-has-updated-this-dashboard": "Någon annan har uppdaterat denna instrumentpanel",
         "would-still-dashboard": "Vill du fortfarande spara denna instrumentpanel?"
@@ -7692,9 +7725,6 @@
       },
       "label-copy-tags": "Kopiera taggar",
       "label-folder": "Mapp",
-      "render-footer": {
-        "title-failed-to-save-dashboard": "Det gick inte att spara instrumentpanel"
-      },
       "required": "Krävs"
     },
     "save-dashboard-drawer": {
@@ -7741,6 +7771,9 @@
       "save-variables-label-update-default-variable-values": "Uppdatera standardvariabelvärden",
       "show-variables-warning-alert-body": "",
       "show-variables-warning-alert-title": ""
+    },
+    "save-errors": {
+      "unexpected": ""
     },
     "save-library-viz-panel-modal": {
       "cancel": "Avbryt",
@@ -10552,7 +10585,7 @@
     "data-source-settings": {
       "alerting-settings-heading": "Varnar",
       "alerting-settings-label": "Hantera varningsregler i varningsgränssnittet",
-      "alerting-settings-tooltip": "Hantera varningsregler för den här datakällan. Om du vill hantera andra varningsresurser ska du lägga till en Alertmanager-datakälla.",
+      "alerting-settings-tooltip": "",
       "cert-key-reset": "Återställ",
       "custom-headers-add": "Lägg till rubrik",
       "custom-headers-header": "Rubrik",
@@ -10840,6 +10873,7 @@
       "placeholder": "Välj"
     },
     "table": {
+      "cell-actions": "",
       "cell-filter-on": "Filtrera för värde",
       "cell-filter-out": "Filtrera bort värde",
       "cell-inspect": "Inspektera värde",
@@ -11200,10 +11234,11 @@
   "home": {
     "alerts-incidents": {
       "alert-tab-label": "Utlösningslarm",
+      "incident-filter-all": "",
+      "incident-filter-label": "",
       "incident-tab-label": "Incidenter",
       "team-filter-all": "Alla team",
       "team-filter-label": "Filtrera larm efter team",
-      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Dina team",
       "title": "Larm och incidenter",
       "title-alerts": "Larm",
@@ -15605,6 +15640,10 @@
       "label": "Tillämpa transformering på",
       "series": "Resultat av fråga och omvandling"
     },
+    "transformation-name": {
+      "auto-placeholder": "",
+      "edit": ""
+    },
     "validation": {
       "duplicate-name": "Frågans namn finns redan",
       "empty-name": "Ett tomt frågenamn är inte tillåtet"
@@ -15784,6 +15823,12 @@
     "title": "Det gick inte att hitta applikationsfilen"
   },
   "save-dashboards": {
+    "forbidden": {
+      "title": ""
+    },
+    "invalid": {
+      "title": ""
+    },
     "message-length": {
       "info": "Meddelandet är {{messageLength}} tecken, vilket överstiger den maximala längden på 500 tecken. Förkorta det innan du sparar.",
       "title": "För långt meddelande"

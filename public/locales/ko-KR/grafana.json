@@ -470,6 +470,7 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "외부 경고 관리자",
+      "external-alertmanagers-group-plugin": "",
       "noOptionsMessage-no-datasources-found": "데이터 소스를 찾을 수 없습니다"
     },
     "alert-menu": {
@@ -2652,6 +2653,8 @@
       }
     },
     "proxied-alerting-route": {
+      "redirected-body": "",
+      "redirected-title": "",
       "text-redirecting": ""
     },
     "query-and-expressions-step": {
@@ -2957,6 +2960,13 @@
     },
     "rule-list": {
       "configure-datasource": "구성",
+      "datasource-managed-notice": {
+        "action": "",
+        "body": "",
+        "inline-action": "",
+        "inline_other": "",
+        "title_other": ""
+      },
       "ds-error": {
         "title": "이 데이터 소스의 규칙을 불러올 수 없습니다"
       },
@@ -2977,7 +2987,8 @@
         "no-more-results": "더 이상 결과 없음 – {{numberOfRules}}개의 규칙 찾음",
         "no-rules-found": "현재 필터 조건과 일치하는 경고 또는 기록 규칙이 없습니다.",
         "results-loading": "검색 중 – {{numberOfRules}}개의 규칙 찾음",
-        "results-with-cancellation": "검색 취소됨 – {{numberOfRules}}개의 규칙 찾음"
+        "results-with-cancellation": "검색 취소됨 – {{numberOfRules}}개의 규칙 찾음",
+        "search-in-plugin": ""
       },
       "import-disabled-tooltip": {
         "auto-sync": "Mimir Alertmanager 자동 동기화가 활성화되어 있는 동안에는 가져오기를 사용할 수 없습니다"
@@ -4360,6 +4371,7 @@
       "label-top": "상단"
     },
     "name-show-unfilled-area": "미채움 영역 표시",
+    "name-text-mode": "",
     "name-value-display": "값 표시",
     "presets": {
       "basic": "베이직",
@@ -4378,6 +4390,13 @@
     "suggestions": {
       "basic": "막대 게이지",
       "lcd": "막대 게이지 - LCD"
+    },
+    "text-mode-options": {
+      "label-auto": "",
+      "label-name": "",
+      "label-none": "",
+      "label-value": "",
+      "label-value-and-name": ""
     },
     "value-display-options": {
       "label-hidden": "숨김",
@@ -5998,6 +6017,12 @@
       "ungroup-repeat-loss": "그룹을 해제하면 해당 그룹에 구성된 반복 옵션이 손실됩니다.",
       "ungroup-repeat-loss-title": "그룹을 해제하시겠어요?"
     },
+    "loading": {
+      "drawer": "",
+      "drawer-title": "",
+      "sidebar": "",
+      "sidebar-title": ""
+    },
     "minimalistic-pagination": {
       "page-count": "{{numberOfPages}} 중 {{currentPage}}",
       "tooltip-next": "다음",
@@ -6715,7 +6740,14 @@
         "title-remove": "제거",
         "title-show-transform-help": "변환 도움말 표시"
       },
-      "title-delete": "{{name}}을(를) 삭제하시겠어요?"
+      "title-delete": "{{name}}을(를) 삭제하시겠어요?",
+      "transformation-editor-row-header": {
+        "edit-refId": "",
+        "edit-refId-placeholder": "",
+        "refId-exists-error": "",
+        "refId-reserved-error": "",
+        "refId-variable-error": ""
+      }
     },
     "transformation-operation-rows": {
       "remove-transformation": "",
@@ -7378,7 +7410,6 @@
       },
       "render-save-button-and-error": {
         "body-plugin-dashboard": "플러그인을 업데이트하면 변경 사항이 손실됩니다. 사용자 정의 버전을 생성하려면 <strong>다른 이름으로 저장</strong>을 사용하세요.",
-        "title-failed-to-save-dashboard": "대시보드 저장 실패",
         "title-plugin-dashboard": "플러그인 대시보드",
         "title-someone-else-has-updated-this-dashboard": "다른 사람이 이 대시보드를 업데이트했습니다",
         "would-still-dashboard": "그래도 이 대시보드를 저장하시겠어요?"
@@ -7645,9 +7676,6 @@
       },
       "label-copy-tags": "태그 복사",
       "label-folder": "폴더",
-      "render-footer": {
-        "title-failed-to-save-dashboard": "대시보드 저장 실패"
-      },
       "required": "필수 항목"
     },
     "save-dashboard-drawer": {
@@ -7694,6 +7722,9 @@
       "save-variables-label-update-default-variable-values": "기본 변수 값 업데이트",
       "show-variables-warning-alert-body": "일부 변수를 불러오지 못했습니다. **'기본 변수 값 업데이트'**를 선택한 상태로 유지하면 현재(로드에 실패한) 값이 대시보드의 기본값으로 설정됩니다. 그대로 저장하거나, 해당(로드에 실패한) 값을 저장하지 않으려면 이 옵션을 선택 해제할 수 있습니다.",
       "show-variables-warning-alert-title": "변수 쿼리에 실패했습니다."
+    },
+    "save-errors": {
+      "unexpected": ""
     },
     "save-library-viz-panel-modal": {
       "cancel": "취소",
@@ -10488,7 +10519,7 @@
     "data-source-settings": {
       "alerting-settings-heading": "경고",
       "alerting-settings-label": "경고 UI에서 경고 규칙 관리",
-      "alerting-settings-tooltip": "이 데이터 소스에 대한 경고 규칙을 관리합니다. 다른 Alerting 리소스를 관리하려면 Alertmanager 데이터 소스를 추가하세요.",
+      "alerting-settings-tooltip": "",
       "cert-key-reset": "재설정",
       "custom-headers-add": "헤더 추가",
       "custom-headers-header": "헤더",
@@ -10776,6 +10807,7 @@
       "placeholder": "선택"
     },
     "table": {
+      "cell-actions": "",
       "cell-filter-on": "값 필터링하여 포함",
       "cell-filter-out": "값 필터링하여 제외",
       "cell-inspect": "값 검사",
@@ -11136,10 +11168,11 @@
   "home": {
     "alerts-incidents": {
       "alert-tab-label": "발생 중인 경보",
+      "incident-filter-all": "",
+      "incident-filter-label": "",
       "incident-tab-label": "인시던트",
       "team-filter-all": "모든 팀",
       "team-filter-label": "팀으로 경보 필터링",
-      "team-filter-label-incidents": "",
       "team-filter-your-teams": "내 팀",
       "title": "경보 및 인시던트",
       "title-alerts": "경보",
@@ -15487,6 +15520,10 @@
       "label": "변환 적용 대상",
       "series": "쿼리 및 변환 결과"
     },
+    "transformation-name": {
+      "auto-placeholder": "",
+      "edit": ""
+    },
     "validation": {
       "duplicate-name": "쿼리 이름이 이미 존재합니다",
       "empty-name": "쿼리 이름은 비워둘 수 없습니다"
@@ -15663,6 +15700,12 @@
     "title": "애플리케이션 파일을 찾을 수 없음"
   },
   "save-dashboards": {
+    "forbidden": {
+      "title": ""
+    },
+    "invalid": {
+      "title": ""
+    },
     "message-length": {
       "info": "메시지의 글자 수({{messageLength}}자)가 최대 제한(500자)를 초과합니다. 글자 수를 줄인 후에 저장하세요.",
       "title": "메시지 길이 초과"
