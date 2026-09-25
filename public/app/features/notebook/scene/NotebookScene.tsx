@@ -477,6 +477,9 @@ const getStyles = (theme: GrafanaTheme2, headerHeight: number, visualRefreshEnab
     display: 'flex',
     flexDirection: 'column',
     flexGrow: 1,
+    'button > svg[aria-hidden="true"], a > svg[aria-hidden="true"]': {
+      pointerEvents: 'none',
+    },
   }),
   controls: css({
     display: 'flex',
