@@ -74,6 +74,7 @@ func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer
 		withBlobConfig,
 		withAccessClient,
 		withMaxPageSizeBytes,
+		withAuthorizeBeforeFetch,
 		withBackend,
 		withVectorBackend,
 		withEmbedder,
@@ -201,6 +202,11 @@ func withMaxPageSizeBytes(opts *ServerOptions, resourceOpts *resource.ResourceSe
 	unifiedStorageCfg := opts.Cfg.SectionWithEnvOverrides("unified_storage")
 	maxPageSizeBytes := unifiedStorageCfg.Key("max_page_size_bytes")
 	resourceOpts.MaxPageSizeBytes = maxPageSizeBytes.MustInt(0)
+	return nil
+}
+
+func withAuthorizeBeforeFetch(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.AuthorizeBeforeFetchEnabled = opts.Cfg.AuthorizeBeforeFetchEnabled
 	return nil
 }
 
