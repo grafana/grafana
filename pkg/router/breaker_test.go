@@ -1,6 +1,7 @@
 package router
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"net/http"
@@ -10,8 +11,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sony/gobreaker/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 )
 
 func TestIsBackendFailure(t *testing.T) {
@@ -446,6 +449,56 @@ func TestStatusRecorderUnwrapsForFlush(t *testing.T) {
 	}
 	if !rw.Flushed {
 		t.Errorf("underlying recorder Flushed = false, want true")
+	}
+}
+
+// watchLikeDecorator stands in for the apiserver's own ResponseWriter wrappers
+// (filters.watchResponseWriter, metrics.ResponseWriterDelegator), which are
+// applied with responsewriter.WrapForHTTP1Or2.
+type watchLikeDecorator struct{ http.ResponseWriter }
+
+func (d *watchLikeDecorator) Unwrap() http.ResponseWriter { return d.ResponseWriter }
+
+// TestRouterPreservesFlusherForWatches pins that a handler served through the
+// router can start a watch. In-process plugin apiservers wrap the writer with
+// responsewriter.WrapForHTTP1Or2 and the watch handler then type-asserts
+// http.Flusher; if a router wrapper hides Flush or CloseNotify, every watch
+// fails with "unable to start watch - can't get http.Flusher" and a 500.
+func TestRouterPreservesFlusherForWatches(t *testing.T) {
+	const group = "watch.example.com"
+	release := make(chan struct{})
+	backend := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w = responsewriter.WrapForHTTP1Or2(&watchLikeDecorator{ResponseWriter: w})
+		flusher, ok := w.(http.Flusher)
+		if !ok {
+			http.Error(w, "can't get http.Flusher", http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("event\n"))
+		flusher.Flush()
+		<-release
+	})
+	gr := withGroupHandler(group, backend)
+	m := newRouterMetrics(prometheus.NewRegistry())
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		m.instrument(gr, w, req, http.NotFoundHandler())
+	}))
+	defer srv.Close()
+	defer close(release)
+
+	resp, err := srv.Client().Get(srv.URL + "/apis/" + group + "/v1/things?watch=1")
+	if err != nil {
+		t.Fatalf("GET: %v", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status = %d, want %d (the backend could not get an http.Flusher)", resp.StatusCode, http.StatusOK)
+	}
+	// The handler is still blocked, so this line only arrives if Flush reached the connection.
+	line, err := bufio.NewReader(resp.Body).ReadString('\n')
+	if err != nil || line != "event\n" {
+		t.Fatalf("first streamed line = %q, %v; want %q before the handler returns", line, err, "event\n")
 	}
 }
 
