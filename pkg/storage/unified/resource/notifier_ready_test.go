@@ -56,6 +56,7 @@ func TestNATSCaptureReadinessAcknowledgment(t *testing.T) {
 		ctx, cancel := context.WithCancel(t.Context())
 		defer cancel()
 		ready := make(chan error, 1)
+		generation := n.WatchInvalidation()
 		returned := make(chan struct{})
 		go func() {
 			n.Watch(ctx, WatchOptions{SettleDelay: time.Millisecond, captureReady: ready})
@@ -66,7 +67,77 @@ func TestNATSCaptureReadinessAcknowledgment(t *testing.T) {
 		close(subscriber.established)
 		<-returned
 		require.NoError(t, <-ready)
+		require.Equal(t, generation, n.WatchInvalidation(), "healthy initial capture must not invalidate watches")
 	})
+}
+
+func TestNATSInitialCaptureRecoveryInvalidatesWatches(t *testing.T) {
+	for _, failure := range []string{"subscribe error", "readiness timeout"} {
+		for _, canceled := range []bool{false, true} {
+			name := failure
+			if canceled {
+				name += "/canceled"
+			}
+			t.Run(name, func(t *testing.T) {
+				synctest.Test(t, func(t *testing.T) {
+					var subscriber EventSubscriber
+					var restore func()
+					if failure == "subscribe error" {
+						sub := &fakeEventSubscriber{enabled: true, subErr: errors.New("unavailable")}
+						subscriber = sub
+						restore = func() { sub.setSubErr(nil) }
+					} else {
+						sub := &acknowledgedEventSubscriber{established: make(chan struct{})}
+						subscriber = sub
+						restore = func() { close(sub.established) }
+					}
+					n := newNatsNotifier(subscriber, nil, log.NewNopLogger())
+					ctx, cancel := context.WithCancel(t.Context())
+					defer cancel()
+					ready := make(chan error, 1)
+					beforeStartup := n.WatchInvalidation()
+					events := n.Watch(ctx, WatchOptions{captureReady: ready})
+					duringOutage := n.WatchInvalidation()
+					require.Equal(t, beforeStartup, duringOutage)
+					require.Empty(t, ready)
+					if canceled {
+						cancel()
+					}
+					restore()
+					if canceled {
+						synctest.Wait()
+						require.Empty(t, ready)
+						require.Equal(t, duringOutage, n.WatchInvalidation())
+						select {
+						case <-duringOutage:
+							t.Fatal("canceled startup expired watches")
+						default:
+						}
+					} else {
+						require.NoError(t, <-ready)
+						// Recovery is an initial connection: no reconnect callback is invoked.
+						for _, generation := range []<-chan struct{}{beforeStartup, duringOutage} {
+							select {
+							case <-generation:
+							default:
+								t.Fatal("watch survived a startup capture gap")
+							}
+						}
+						afterRecovery := n.WatchInvalidation()
+						require.NotEqual(t, duringOutage, afterRecovery)
+						select {
+						case <-afterRecovery:
+							t.Fatal("watch opened after recovery is expired")
+						default:
+						}
+						cancel()
+					}
+					_, ok := <-events
+					require.False(t, ok)
+				})
+			})
+		}
+	}
 }
 
 func TestNATSReconnectWaitsForRestoredCapture(t *testing.T) {
