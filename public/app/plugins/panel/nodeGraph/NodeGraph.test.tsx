@@ -335,6 +335,24 @@ describe('NodeGraph', () => {
     console.error = origError;
   });
 
+  it('keeps the graph fitted when switching from grid through the node context menu', async () => {
+    const nodes = makeFixedNodesDataFrame(
+      [
+        { x: 1000, y: -500 },
+        { x: 1200, y: -300 },
+      ],
+      [40, 40]
+    );
+
+    render(<NodeGraph dataFrames={[nodes]} fitToView={true} getLinks={() => []} />);
+
+    await userEvent.click(await screen.findByText('Grid'));
+    await userEvent.click(await screen.findByTestId('node-click-rect-0'));
+    await userEvent.click(await screen.findByText('Show in Graph layout'));
+
+    await waitFor(() => expect(getTranslate()).toEqual({ x: -1100, y: 400 }));
+  });
+
   it('lays out 3 nodes in single line', async () => {
     render(
       <NodeGraph

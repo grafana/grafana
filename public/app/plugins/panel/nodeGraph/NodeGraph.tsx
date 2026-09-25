@@ -209,7 +209,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
   const graphContentPadding = useMemo(() => getGraphContentPadding(nodes), [nodes]);
   const { panRef, zoomRef, onStepUp, onStepDown, isPanning, position, scale, isMaxZoom, isMinZoom } = usePanAndZoom(
     bounds,
-    focusPosition,
+    fitViewport ? undefined : focusPosition,
     zoomMode,
     fitViewport,
     graphContentPadding
