@@ -119,6 +119,18 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 		assert.Equal(t, []string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"}, cfg.SearchBackedListResources)
 	})
 
+	t.Run("authorize_before_fetch_enabled", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+		cfg.setUnifiedStorageConfig()
+		assert.False(t, cfg.AuthorizeBeforeFetchEnabled)
+
+		cfg.Raw.Section("unified_storage").Key("authorize_before_fetch_enabled").SetValue("true")
+		cfg.setUnifiedStorageConfig()
+		assert.True(t, cfg.AuthorizeBeforeFetchEnabled)
+	})
+
 	t.Run("search_ring_extend_replica_set", func(t *testing.T) {
 		setSectionKey := func(cfg *Cfg, value string) {
 			section := cfg.Raw.Section("unified_storage")

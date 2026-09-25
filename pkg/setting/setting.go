@@ -724,8 +724,9 @@ type Cfg struct {
 	MigrationChunkMaxBytes int64
 	// RenameWaitDeadline is the maximum time to wait for MySQL RENAME TABLE
 	// statements to appear in the processlist. Default: 1 minute.
-	RenameWaitDeadline time.Duration
-	MaxPageSizeBytes   int
+	RenameWaitDeadline          time.Duration
+	MaxPageSizeBytes            int
+	AuthorizeBeforeFetchEnabled bool
 	// IndexPath the directory where index files are stored.
 	// Note: Bleve locks index files, so mounts cannot be shared between multiple instances.
 	IndexPath                                  string
