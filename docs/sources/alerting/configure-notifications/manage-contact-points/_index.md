@@ -249,7 +249,7 @@ Testing a contact point is only available for Grafana Alertmanager. Complete the
 After creating a contact point, you can enable it to receive alert notifications using one of the following methods:
 
 - **Assign it to alert rules** – Select the contact point in the [notifications options for Grafana-managed alert rules](ref:configure-grafana-alerts) to directly associate it with specific alerts.
-- **Assign it to notification policies** – Add the contact point to one or more [notification policies](ref:configure-contact-points), which manage the alert notifications you want the contact point to receive.
+- **Assign it to notification policies** – Add the contact point to one or more [notification policies](ref:create-notification-policy), which manage the alert notifications you want the contact point to receive.
 
 ## Troubleshoot notification delivery
 
