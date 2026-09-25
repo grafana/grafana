@@ -11,29 +11,19 @@ export interface Props {
 }
 
 export function RowExpander({ row, tableStyles }: Props) {
-  const isExpanded = row.getIsExpanded();
-  const toggleExpanded = row.getToggleExpandedHandler();
-
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      aria-expanded={isExpanded}
-      aria-label={
-        isExpanded
-          ? t('grafana-ui.row-expander.collapse', 'Collapse row')
-          : t('grafana-ui.row-expander.expand', 'Expand row')
-      }
-      className={tableStyles.expanderCell}
-      onClick={toggleExpanded}
-      onKeyDown={(event) => {
-        if (event.key === ' ' || event.key === 'Enter') {
-          event.preventDefault();
-          toggleExpanded();
+    // react-table v7 spread only a click handler here, keyboard support is a separate change
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+    <div className={tableStyles.expanderCell} onClick={row.getToggleExpandedHandler()}>
+      <Icon
+        aria-label={
+          row.getIsExpanded()
+            ? t('grafana-ui.row-expander.collapse', 'Collapse row')
+            : t('grafana-ui.row-expander.expand', 'Expand row')
         }
-      }}
-    >
-      <Icon name={isExpanded ? 'angle-down' : 'angle-right'} size="lg" aria-hidden="true" />
+        name={row.getIsExpanded() ? 'angle-down' : 'angle-right'}
+        size="lg"
+      />
     </div>
   );
 }
