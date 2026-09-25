@@ -6,7 +6,8 @@ import { ToolbarExtensionPointMenu } from './ToolbarExtensionPointMenu';
 
 describe('ToolbarExtensionPointMenu', () => {
   it('shows the full notebook title in the menu option', () => {
-    const title = 'Add to "A long notebook title for investigating failures"';
+    const title =
+      'Add to "Incident investigation: intermittent checkout latency across us-east, eu-west, and ap-south clusters"';
 
     render(
       <ToolbarExtensionPointMenu
