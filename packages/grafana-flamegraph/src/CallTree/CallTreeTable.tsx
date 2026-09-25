@@ -103,7 +103,7 @@ export function CallTreeTable({
       >
         <table className={styles.table}>
           <tbody className={styles.tbody}>
-            {rows.map((row) => {
+            {rows.map((row, rowIndex) => {
               const isFocusedRow = row.original.id === focusedNodeId;
               const isCallersTargetRow = callersNodeLabel && row.original.label === callersNodeLabel;
               const isSearchMatchRow = currentSearchMatchId && row.original.id === currentSearchMatchId;
@@ -140,7 +140,7 @@ export function CallTreeTable({
                           }),
                         }}
                       >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        {flexRender(cell.column.columnDef.cell, { ...cell.getContext(), rowIndex })}
                       </td>
                     );
                   })}

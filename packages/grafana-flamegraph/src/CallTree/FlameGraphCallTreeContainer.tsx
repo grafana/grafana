@@ -8,7 +8,7 @@ import {
   type Row,
   useReactTable,
 } from '@tanstack/react-table';
-import { memo, useMemo, useState, useRef, useEffect, useCallback } from 'react';
+import { memo, type ReactNode, useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -411,12 +411,12 @@ const FlameGraphCallTreeContainer = memo(
       return Math.max(availableWidth - fixedWidth, FUNCTION_MIN_WIDTH);
     };
 
-    const commonColumns = useMemo<Array<ColumnDef<CallTreeNode>>>(() => {
+    const commonColumns = useMemo<CallTreeColumn[]>(() => {
       return [
         {
-          header: '',
+          Header: '',
           id: 'actions',
-          cell: ({ row }) => (
+          Cell: ({ row }: { row: Row<CallTreeNode> }) => (
             <ActionsCell
               nodeId={row.original.id}
               label={row.original.label}
@@ -439,27 +439,27 @@ const FlameGraphCallTreeContainer = memo(
               search={search}
             />
           ),
-          size: ACTIONS_WIDTH,
-          minSize: ACTIONS_WIDTH,
-          enableSorting: false,
+          width: ACTIONS_WIDTH,
+          minWidth: ACTIONS_WIDTH,
+          disableSortBy: true,
         },
         {
-          header: 'Function',
-          accessorKey: 'label',
-          cell: ({ row, getValue }) => (
+          Header: 'Function',
+          accessor: 'label',
+          Cell: ({ row, value, rowIndex }: { row: Row<CallTreeNode>; value: string; rowIndex?: number }) => (
             <FunctionCellWithExpander
               row={row}
-              value={getValue<string>()}
+              value={value}
               depth={row.original.depth - depthOffset}
               hasChildren={Boolean(row.original.children?.length)}
-              rowIndex={tableInstanceRef.current.rows.findIndex((visibleRow) => visibleRow.id === row.id)}
+              rowIndex={rowIndex}
               rows={tableInstanceRef.current.rows}
               onSymbolClick={onSymbolClick}
               compact={isCompact}
               toggleRowExpanded={tableInstanceRef.current.toggleRowExpanded}
             />
           ),
-          minSize: FUNCTION_MIN_WIDTH,
+          minWidth: FUNCTION_MIN_WIDTH,
         },
       ];
     }, [
@@ -480,15 +480,15 @@ const FlameGraphCallTreeContainer = memo(
       viewMode,
     ]);
 
-    const columns = useMemo<Array<ColumnDef<CallTreeNode>>>(() => {
+    const columns = useMemo<CallTreeColumn[]>(() => {
       if (data.isDiffFlamegraph()) {
-        const cols: Array<ColumnDef<CallTreeNode>> = [...commonColumns];
+        const cols: CallTreeColumn[] = [...commonColumns];
 
         if (!isCompact) {
           cols.push({
-            header: '',
+            Header: '',
             id: 'colorBar',
-            cell: ({ row }) => (
+            Cell: ({ row }: { row: Row<CallTreeNode> }) => (
               <ColorBarCell
                 node={row.original}
                 data={data}
@@ -497,52 +497,49 @@ const FlameGraphCallTreeContainer = memo(
                 focusedNode={focusedNode}
               />
             ),
-            minSize: COLOR_BAR_WIDTH,
-            size: COLOR_BAR_WIDTH,
-            enableSorting: false,
+            minWidth: COLOR_BAR_WIDTH,
+            width: COLOR_BAR_WIDTH,
+            disableSortBy: true,
           });
         }
 
         cols.push(
           {
-            header: 'Baseline',
-            accessorKey: 'totalPercent',
-            cell: ({ getValue }) => `${getValue<number>().toFixed(2)}%`,
-            sortingFn: 'basic',
-            size: BASELINE_WIDTH,
-            minSize: BASELINE_WIDTH,
+            Header: 'Baseline',
+            accessor: 'totalPercent',
+            Cell: ({ value }: { value: number }) => `${value.toFixed(2)}%`,
+            sortType: 'basic',
+            width: BASELINE_WIDTH,
+            minWidth: BASELINE_WIDTH,
           },
           {
-            header: 'Comparison',
-            accessorKey: 'totalPercentRight',
-            cell: ({ getValue }) => {
-              const value = getValue<number | undefined>();
-              return value !== undefined ? `${value.toFixed(2)}%` : '-';
-            },
-            sortingFn: 'basic',
-            size: COMPARISON_WIDTH,
-            minSize: COMPARISON_WIDTH,
+            Header: 'Comparison',
+            accessor: 'totalPercentRight',
+            Cell: ({ value }: { value: number | undefined }) => (value !== undefined ? `${value.toFixed(2)}%` : '-'),
+            sortType: 'basic',
+            width: COMPARISON_WIDTH,
+            minWidth: COMPARISON_WIDTH,
           },
           {
-            header: 'Diff %',
-            accessorKey: 'diffPercent',
-            cell: ({ getValue }) => <DiffCell value={getValue<number | undefined>()} theme={theme} />,
-            sortingFn: 'basic',
-            size: DIFF_WIDTH,
-            minSize: DIFF_WIDTH,
+            Header: 'Diff %',
+            accessor: 'diffPercent',
+            Cell: ({ value }: { value: number | undefined }) => <DiffCell value={value} theme={theme} />,
+            sortType: 'basic',
+            width: DIFF_WIDTH,
+            minWidth: DIFF_WIDTH,
           }
         );
 
         return cols;
       } else {
-        const cols: Array<ColumnDef<CallTreeNode>> = [...commonColumns];
+        const cols: CallTreeColumn[] = [...commonColumns];
 
         if (!isCompact) {
           cols.push(
             {
-              header: '',
+              Header: '',
               id: 'colorBar',
-              cell: ({ row }) => (
+              Cell: ({ row }: { row: Row<CallTreeNode> }) => (
                 <ColorBarCell
                   node={row.original}
                   data={data}
@@ -551,14 +548,14 @@ const FlameGraphCallTreeContainer = memo(
                   focusedNode={focusedNode}
                 />
               ),
-              minSize: COLOR_BAR_WIDTH,
-              size: COLOR_BAR_WIDTH,
-              enableSorting: false,
+              minWidth: COLOR_BAR_WIDTH,
+              width: COLOR_BAR_WIDTH,
+              disableSortBy: true,
             },
             {
-              header: 'Self',
-              accessorKey: 'self',
-              cell: ({ row }) => {
+              Header: 'Self',
+              accessor: 'self',
+              Cell: ({ row }: { row: Row<CallTreeNode> }) => {
                 const displaySelf = data.valueDisplayProcessor(row.original.self);
                 const formattedValue = displaySelf.suffix ? displaySelf.text + displaySelf.suffix : displaySelf.text;
                 return (
@@ -568,17 +565,17 @@ const FlameGraphCallTreeContainer = memo(
                   </div>
                 );
               },
-              sortingFn: 'basic',
-              minSize: SELF_WIDTH,
-              size: SELF_WIDTH,
+              sortType: 'basic',
+              minWidth: SELF_WIDTH,
+              width: SELF_WIDTH,
             }
           );
         }
 
         cols.push({
-          header: 'Total',
-          accessorKey: 'total',
-          cell: ({ row }) => {
+          Header: 'Total',
+          accessor: 'total',
+          Cell: ({ row }: { row: Row<CallTreeNode> }) => {
             const displayValue = data.valueDisplayProcessor(row.original.total);
             const formattedValue = displayValue.suffix ? displayValue.text + displayValue.suffix : displayValue.text;
             return (
@@ -588,14 +585,16 @@ const FlameGraphCallTreeContainer = memo(
               </div>
             );
           },
-          sortingFn: 'basic',
-          minSize: TOTAL_WIDTH,
-          size: TOTAL_WIDTH,
+          sortType: 'basic',
+          minWidth: TOTAL_WIDTH,
+          width: TOTAL_WIDTH,
         });
 
         return cols;
       }
     }, [commonColumns, data, isCompact, theme, styles, focusedNode]);
+
+    const tableColumns = useMemo(() => columns.map(toCallTreeColumn), [columns]);
 
     const [expanded, setExpanded] = useState<ExpandedState>(expandedState);
     useEffect(() => {
@@ -603,7 +602,7 @@ const FlameGraphCallTreeContainer = memo(
     }, [expandedState]);
 
     const tableInstance = useReactTable<CallTreeNode>({
-      columns,
+      columns: tableColumns,
       data: nodes,
       getSubRows: (row) => row.children || [],
       getRowId: (row) => row.id,
@@ -855,6 +854,44 @@ function getStyles(theme: GrafanaTheme2) {
     modePillCloseButton: css({
       verticalAlign: 'text-bottom',
       margin: theme.spacing(0, 0.5),
+    }),
+  };
+}
+
+interface CallTreeColumn {
+  id?: string;
+  Header: string;
+  accessor?: keyof CallTreeNode;
+  // Cells keep the react-table v7 arguments. `any` lets each column type its own value.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Cell?: (props: any) => ReactNode;
+  width?: number;
+  minWidth?: number;
+  disableSortBy?: boolean;
+  sortType?: 'basic';
+}
+
+function rowIndexFromContext(context: object): number | undefined {
+  return 'rowIndex' in context && typeof context.rowIndex === 'number' ? context.rowIndex : undefined;
+}
+
+function toCallTreeColumn(column: CallTreeColumn): ColumnDef<CallTreeNode> {
+  const { Cell } = column;
+  return {
+    ...(column.id && { id: column.id }),
+    header: column.Header,
+    ...(column.accessor && { accessorKey: column.accessor }),
+    ...(column.width !== undefined && { size: column.width }),
+    ...(column.minWidth !== undefined && { minSize: column.minWidth }),
+    enableSorting: !column.disableSortBy,
+    ...(column.sortType && { sortingFn: column.sortType }),
+    ...(Cell && {
+      cell: (context) =>
+        Cell({
+          row: context.row,
+          value: context.getValue(),
+          rowIndex: rowIndexFromContext(context),
+        }),
     }),
   };
 }
