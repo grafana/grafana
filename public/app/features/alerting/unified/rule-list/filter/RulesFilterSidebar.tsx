@@ -6,10 +6,12 @@ import { ContactPointSelector, RoutingTreeSelector } from '@grafana/alerting/uns
 import type { RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { locationService, useReturnToPrevious } from '@grafana/runtime';
 import { Button, Combobox, Icon, Input, Label, MultiCombobox, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { trackAlertRuleFilterEvent } from '../../Analytics';
+import { createBridgeURL } from '../../components/PluginBridge';
 import {
   useAlertingDataSourceOptions,
   useLabelOptions,
@@ -19,7 +21,9 @@ import { isGranted } from '../../hooks/abilities/abilityUtils';
 import { useGlobalContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
 import { ContactPointAction } from '../../hooks/abilities/types';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
+import { useRouteProxyActive } from '../../plugin-proxy/withRouteProxy';
 import { RuleHealth, RuleSource, type RulesFilter } from '../../search/rulesSearchParser';
+import { SupportedPlugin } from '../../types/pluginBridges';
 
 import { type AdvancedFilters } from './types';
 import { advancedFiltersToRulesFilter, searchQueryToDefaultValues, usePluginsFilterStatus } from './utils';
@@ -57,8 +61,10 @@ interface FilterSidebarFormProps {
 function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
   const styles = useStyles2(getStyles);
 
-  const { updateFilters } = useRulesFilter();
+  const { updateFilters, searchQuery } = useRulesFilter();
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
+  const routeProxyActive = useRouteProxyActive();
+  const returnToPrevious = useReturnToPrevious();
   const canRenderContactPointSelector = isGranted(useGlobalContactPointAbility(ContactPointAction.View));
 
   const defaults = searchQueryToDefaultValues(filterState);
@@ -249,13 +255,24 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
               render={({ field }) => (
                 <ToggleButtonGroup<AdvancedFilters['ruleSource']>
                   aria-labelledby="filter-label-rule-source"
-                  value={field.value}
+                  value={routeProxyActive ? (field.value ?? RuleSource.Grafana) : field.value}
                   onChange={(value) => {
+                    if (routeProxyActive && value === RuleSource.DataSource) {
+                      returnToPrevious(t('alerting.rule-list.return-button.title', 'Alert rules'));
+                      locationService.push(
+                        createBridgeURL(
+                          SupportedPlugin.PrometheusAlerting,
+                          '/rules',
+                          searchQuery ? { search: searchQuery } : {}
+                        )
+                      );
+                      return;
+                    }
                     field.onChange(value);
                     applyFormValues({ ruleSource: value });
                   }}
                   options={[
-                    { label: t('common.all', 'All'), value: null },
+                    ...(!routeProxyActive ? [{ label: t('common.all', 'All'), value: null }] : []),
                     {
                       label: t('alerting.rules-filter.rule-source.grafana', 'Grafana managed'),
                       value: RuleSource.Grafana,

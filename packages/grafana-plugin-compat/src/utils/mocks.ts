@@ -1,3 +1,4 @@
+import { type DataSourceInstanceListItem, type DataSourcePluginMeta } from '@grafana/data';
 import { type BackendSrv, type DataSourceSrv } from '@grafana/runtime';
 
 export function getMockedDatasourceSrv() {
@@ -22,4 +23,21 @@ export function getMockedBackendSrv() {
     datasourceRequest: jest.fn(),
     request: jest.fn(),
   } satisfies BackendSrv;
+}
+
+// `meta` is partial so a case can set just the one flag it cares about.
+export function getMockedListItem({
+  meta,
+  ...rest
+}: Partial<Omit<DataSourceInstanceListItem, 'meta'>> & {
+  meta?: Partial<DataSourcePluginMeta>;
+} = {}): DataSourceInstanceListItem {
+  return {
+    uid: 'uid',
+    type: 'loki',
+    name: 'name',
+    isDefault: false,
+    ...rest,
+    meta: { ...meta },
+  } as DataSourceInstanceListItem;
 }

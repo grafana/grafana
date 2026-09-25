@@ -8,7 +8,7 @@ import { Button, useStyles2 } from '@grafana/ui';
 import { formatDuration } from '../../utils/date';
 import { getServiceDisplayName } from '../../utils/service-name';
 
-import { type TraceBannerHighlight, getSpanTracePercent, getTraceBannerOperationLabel } from './findTraceBanner';
+import { type TraceBannerHighlight, getSpanTracePercentLabel, getTraceBannerOperationLabel } from './findTraceBanner';
 
 type TraceBannerProps = {
   highlight: TraceBannerHighlight;
@@ -21,10 +21,12 @@ export function TraceBanner({ highlight, traceDuration, onGoToSpan }: TraceBanne
   const { span, severity } = highlight;
   const serviceName = getServiceDisplayName(span.process);
   const operationLabel = getTraceBannerOperationLabel(span);
-  const percent = getSpanTracePercent(span.duration, traceDuration);
+  const percent = getSpanTracePercentLabel(span.duration, traceDuration);
   const metrics = t('explore.trace-page-header.trace-banner-metrics', '{{duration}} · {{percent}}% of trace', {
     duration: formatDuration(span.duration),
     percent,
+    // i18next escapes this on render; without opting out here the "<" of a "<0.1" share reads as "&lt;".
+    interpolation: { escapeValue: false },
   });
   const bannerLabel =
     severity === 'error'
@@ -61,7 +63,7 @@ export function TraceBanner({ highlight, traceDuration, onGoToSpan }: TraceBanne
         <div className={styles.actions}>
           <span className={styles.metrics}>{metrics}</span>
           <Button
-            variant="primary"
+            variant="secondary"
             fill="outline"
             size="sm"
             onClick={() => onGoToSpan(span.spanID)}

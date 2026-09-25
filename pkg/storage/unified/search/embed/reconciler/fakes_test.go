@@ -10,6 +10,8 @@ import (
 	"sync"
 	"time"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
@@ -215,15 +217,16 @@ func (f *fakeStorage) ListModifiedSince(_ context.Context, key resource.Namespac
 type fakeVector struct {
 	mu sync.Mutex
 
-	latestRV     int64
-	upserts      [][]vector.Vector
-	deletes      []deleteCall
-	delsubs      []deleteSubsCall
-	storedSubs   map[string]map[string]string // ns|model|res|uid -> sub -> content
-	storedFolder map[string]string            // ns|model|res|uid -> folder
-	upsertErr    error
-	upsertErrFn  func(vs []vector.Vector) error // dynamic error decision
-	deleteErr    error
+	latestRV        int64
+	upserts         [][]vector.Vector
+	deletes         []deleteCall
+	delsubs         []deleteSubsCall
+	storedSubs      map[string]map[string]string // ns|model|res|uid -> sub -> content
+	storedFolder    map[string]string            // ns|model|res|uid -> folder
+	upsertErr       error
+	upsertErrFn     func(vs []vector.Vector) error // dynamic error decision
+	deleteErr       error
+	updateFolderErr error
 
 	// onUpsert, if set, fires at the start of each upsert. Paired with
 	// fakeStorage.onYield to snapshot iterator progress at each flush.
@@ -237,6 +240,8 @@ type fakeVector struct {
 	setLatestRVErr   error
 	getLatestRVErr   error
 
+	collections        map[schema.GroupResource]vector.Collection
+	ensuredCollections []schema.GroupResource
 	ensuredPartitions  []string
 	ensurePartitionErr error
 
@@ -270,15 +275,32 @@ func newFakeVector() *fakeVector {
 func subsKey(ns, model, res, uid string) string { return ns + "|" + model + "|" + res + "|" + uid }
 
 func (f *fakeVector) ResolveCollection(_ context.Context, group, resource string) (vector.Collection, bool, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if collection, ok := f.collections[schema.GroupResource{Group: group, Resource: resource}]; ok {
+		return collection, true, nil
+	}
 	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource}, true, nil
 }
 
 func (f *fakeVector) EnsureCollection(_ context.Context, group, resource string, isExternal bool) (vector.Collection, error) {
-	key := resource
-	if isExternal {
-		key += "_external"
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.ensurePartitionErr != nil {
+		return vector.Collection{}, f.ensurePartitionErr
 	}
-	return vector.Collection{Group: group, Resource: resource, PartitionKey: key, IsExternal: isExternal}, nil
+	gr := schema.GroupResource{Group: group, Resource: resource}
+	collection, ok := f.collections[gr]
+	if !ok {
+		key := resource
+		if isExternal {
+			key += "_external"
+		}
+		collection = vector.Collection{Group: group, Resource: resource, PartitionKey: key, IsExternal: isExternal}
+	}
+	f.ensuredCollections = append(f.ensuredCollections, gr)
+	f.ensuredPartitions = append(f.ensuredPartitions, collection.PartitionKey)
+	return collection, nil
 }
 
 func (f *fakeVector) Search(context.Context, string, string, string, []float32, int, ...vector.SearchFilter) ([]vector.VectorSearchResult, error) {
@@ -398,6 +420,19 @@ func (f *fakeVector) ContentVersion(context.Context, string, string, string, str
 	return 0, false, nil
 }
 func (f *fakeVector) UpdateContentVersion(context.Context, string, string, string, string, int) error {
+	return nil
+}
+
+func (f *fakeVector) UpdateFolder(_ context.Context, ns, model, res, uid, folder string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.updateFolderErr != nil {
+		return f.updateFolderErr
+	}
+	key := subsKey(ns, model, res, uid)
+	if len(f.storedSubs[key]) > 0 {
+		f.storedFolder[key] = folder
+	}
 	return nil
 }
 func (f *fakeVector) CountStoredEmbeddings(context.Context) ([]vector.EmbeddingCount, error) {

@@ -682,6 +682,9 @@ export const versionedComponents = {
           '12.4.0': 'data-testid tableng row expander',
         },
         cellActions: {
+          triggerButton: {
+            '13.3.0': 'data-testid tableng cell-actions trigger-button',
+          },
           inspectButton: {
             '13.2.0': 'data-testid tableng cell-actions inspect-button',
           },
@@ -1655,6 +1658,14 @@ export const versionedComponents = {
       },
       row: {
         '13.3.0': (spanId: string) => `data-testid TraceViewer trace-banner row ${spanId}`,
+      },
+    },
+    spanException: {
+      container: {
+        '13.3.0': 'data-testid TraceViewer span-exception',
+      },
+      stacktraceButton: {
+        '13.3.0': 'data-testid TraceViewer span-exception stacktrace-button',
       },
     },
   },
