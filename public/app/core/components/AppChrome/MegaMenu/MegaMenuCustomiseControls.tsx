@@ -10,33 +10,38 @@ interface Props {
   onCancelEdit?: () => void;
   /** Save the staged customisation and leave customise mode */
   onSaveEdit?: () => void;
-  /** The save is in flight — show a spinner on Done and lock the controls */
-  saving?: boolean;
+  /** Copy a URL reproducing the current customisation, so it can be shared */
+  onCopyShareLink?: () => void;
 }
 
-/** The mega menu header controls shown while customising: Reset / Cancel / Done. */
-export function MegaMenuCustomiseControls({ canReset, onResetToDefault, onCancelEdit, onSaveEdit, saving }: Props) {
+/** The mega menu footer controls shown while customising: Reset / Copy link / Cancel / Done. */
+export function MegaMenuCustomiseControls({
+  canReset,
+  onResetToDefault,
+  onCancelEdit,
+  onSaveEdit,
+  onCopyShareLink,
+}: Props) {
   return (
     <Stack alignItems="center" gap={1}>
       {canReset && (
         <IconButton
           name="history"
-          tooltip={t(
-            'navigation.megamenu.customise-reset',
-            'Reset navigation - show all items, unpin all and reset order'
-          )}
+          tooltip={t('navigation.megamenu.customise-reset', 'Reset navigation - show all items and reset order')}
           onClick={onResetToDefault}
           variant="destructive"
-          disabled={saving}
         />
       )}
-      <Button size="sm" variant="secondary" fill="text" onClick={onCancelEdit} disabled={saving}>
+      <IconButton
+        name="share-alt"
+        tooltip={t('navigation.megamenu.customise-share', 'Copy a shareable link to this navigation customisation')}
+        onClick={onCopyShareLink}
+      />
+      <Button size="sm" variant="secondary" fill="text" onClick={onCancelEdit}>
         {t('navigation.megamenu.customise-cancel', 'Cancel')}
       </Button>
-      <Button size="sm" variant="primary" onClick={onSaveEdit} icon={saving ? 'spinner' : undefined} disabled={saving}>
-        {saving
-          ? t('navigation.megamenu.customise-saving', 'Saving…')
-          : t('navigation.megamenu.customise-done', 'Done')}
+      <Button size="sm" variant="primary" onClick={onSaveEdit}>
+        {t('navigation.megamenu.customise-done', 'Done')}
       </Button>
     </Stack>
   );

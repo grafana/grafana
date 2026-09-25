@@ -12,7 +12,6 @@ import { appEvents } from '../../../app_events';
 import { getFooterLinks } from '../../Footer/Footer';
 
 import { DOCK_MENU_BUTTON_ID, MEGA_MENU_HEADER_TOGGLE_ID } from './MegaMenuHeader';
-import { getNavExperimentPayload } from './navExperiment';
 
 const emitOpenShortcutsModal = async () => {
   const { HelpModal } = await import(/* webpackChunkName: "help-modal" */ '../../help/HelpModal');
@@ -68,7 +67,6 @@ export const enrichWithInteractionTracking = (
       itemIsStarred,
       itemKind: itemIsStarred ? (newItem.url?.includes('/dashboards/f/') ? 'folder' : 'dashboard') : undefined,
       isNew,
-      ...getNavExperimentPayload(),
     });
     onClick?.();
   };
@@ -164,18 +162,6 @@ function getEditionAndUpdateLinks(): NavModelItem[] {
   return links;
 }
 
-/**
- * Whether an item can be pinned. "Create" actions are shortcuts, Home is excluded, and individual
- * starred dashboards (the `starred/` id prefix) aren't pinnable — only the Starred section is.
- * This also makes Starred a pinning "leaf" (no pinnable children), so it pins/unpins as a whole
- * regardless of its dynamic children.
- */
-const isPinnable = (item: NavModelItem): boolean =>
-  Boolean(item.url) && !item.isCreateAction && item.id !== 'home' && !item.id?.startsWith(ID_PREFIX);
-
-// Children that participate in pinning.
-const pinnableChildren = (item: NavModelItem): NavModelItem[] => (item.children ?? []).filter(isPinnable);
-
 /** The chain of nodes from a root item down to (and including) the first item matching `match`. */
 function findPath(items: NavModelItem[], match: (item: NavModelItem) => boolean): NavModelItem[] | null {
   for (const item of items) {
@@ -188,58 +174,6 @@ function findPath(items: NavModelItem[], match: (item: NavModelItem) => boolean)
     }
   }
   return null;
-}
-
-/** One breadcrumb line in the pinned box: the nav item it links to, its ancestor text labels, and
- * the icon of its top-level parent section (shown as the row's leading icon). */
-export interface PinnedLine {
-  item: NavModelItem;
-  ancestors: string[];
-  icon?: string;
-}
-
-/**
- * A pinned entry (one pinned url). Either a normal pin — rendered as a single breadcrumb `line` — or a
- * whole-section pin (Starred), which carries the `section` node and renders as a collapsible section
- * listing the section's own children.
- */
-export type PinnedEntry =
-  | { url: string; line: PinnedLine; section?: undefined }
-  | { url: string; section: NavModelItem; line?: undefined };
-
-/**
- * Resolve the pinned urls (in their stored order) into entries for the pinned box. A normal url
- * becomes one entry with a single breadcrumb line (its ancestor path + itself). A whole-section pin
- * whose children aren't individually pinnable — i.e. Starred — is flagged with `section` (its node)
- * so the box renders it as a collapsible section listing its children. Urls matching no nav item are
- * skipped.
- */
-export function getPinnedEntries(items: NavModelItem[], pinnedUrls: string[]): PinnedEntry[] {
-  const entries: PinnedEntry[] = [];
-  for (const url of pinnedUrls) {
-    const path = findPath(items, (item) => item.url === url);
-    if (!path) {
-      continue;
-    }
-    const node = path[path.length - 1];
-    const children = (node.children ?? []).filter((child) => !child.isCreateAction);
-    // Starred is always a whole-section pin (its children are dynamic and none are individually
-    // pinnable) even before its children have loaded — so it keeps the collapsible section layout and
-    // its own empty/loading/error state instead of briefly rendering as a plain breadcrumb and then
-    // reflowing once children arrive. Any other node is a section only when it currently has children,
-    // none of which are individually pinnable.
-    const isSection = node.id === 'starred' || (children.length > 0 && pinnableChildren(node).length === 0);
-    if (isSection) {
-      entries.push({ url, section: node });
-    } else {
-      const ancestors = path.slice(0, -1).map((item) => item.text);
-      // The leading icon comes from the top-level parent section (path[0]) — its own icon for a
-      // top-level pin, or the ancestor section's icon for a nested one.
-      const icon = path[0].icon;
-      entries.push({ url, line: { item: node, ancestors, icon } });
-    }
-  }
-  return entries;
 }
 
 /** Move the element at `from` to `to`, returning a new array (no-op for out-of-range indices). */
@@ -256,11 +190,10 @@ export function moveItem<T>(arr: T[], from: number, to: number): T[] {
 // ----- Hiding -----
 
 /**
- * Top-level items that can never be hidden, so users can't customise their way out of the home
- * page or the bookmarks section (itself a customisation surface). Starred is pinnable instead of
- * hideable, so it's protected here too.
+ * Items that can never be hidden/renamed/reordered, so users can't customise their way out of the
+ * home page (reached via the logo, not a menu row anyway — this is just belt-and-suspenders).
  */
-const PROTECTED_NAV_IDS = new Set(['home', 'bookmarks', 'starred']);
+const PROTECTED_NAV_IDS = new Set(['home']);
 
 /**
  * Items the mega menu never lists directly (surfaced elsewhere in the chrome). Home is reached via
@@ -275,8 +208,9 @@ export const NON_MENU_NAV_IDS = new Set(['profile', 'help', HOME_NAV_ID]);
 export const hiddenKey = (item: NavModelItem): string => item.id ?? item.url ?? '';
 
 /**
- * Whether an item can be hidden (any depth). Needs an id or url; excludes Home/Bookmarks/Starred,
- * create actions and the dynamic starred sub-items (the `starred/` id prefix).
+ * Whether an item can be customised (hidden, renamed or reordered) at any depth. Needs an id or
+ * url; excludes Home, create actions and the dynamic starred sub-items (the `starred/` id prefix).
+ * Gates the hide/rename/move controls uniformly — one predicate for all three actions.
  */
 export const isHideable = (item: NavModelItem): boolean =>
   Boolean(hiddenKey(item)) &&
@@ -346,15 +280,32 @@ export function revealItem(hidden: string[], items: NavModelItem[], key: string)
   return [...next];
 }
 
-// ----- Top-level ordering -----
+// ----- Renaming, hiding and reordering (any depth) -----
 
 /**
- * Order the top-level sections by the user's stored order (`orderedIds`): sections appear in that
- * order; any not in the list (e.g. a newly-added section) keep their nav-tree position and sort after.
+ * The mega menu customisation, staged/applied as one blob: renamed labels, hidden keys, and the
+ * child order per parent (keyed by the parent's own `hiddenKey`, or `ROOT_ORDER_KEY` for the
+ * top-level list). Hacky by design — a single localStorage-backed blob for testing nav naming and
+ * ordering, not a production preferences feature.
  */
-export function orderTopLevelSections(items: NavModelItem[], orderedIds: string[]): NavModelItem[] {
+export interface NavCustomizationState {
+  renamed: Record<string, string>;
+  hidden: string[];
+  order: Record<string, string[]>;
+}
+
+export const EMPTY_NAV_CUSTOMIZATION: NavCustomizationState = { renamed: {}, hidden: [], order: {} };
+
+/** The `order` key for the top-level nav list (nested lists are keyed by their parent's `hiddenKey`). */
+export const ROOT_ORDER_KEY = '__root__';
+
+/**
+ * Order `items` by the user's stored key order (`orderedKeys`): items appear in that order; any not
+ * in the list (e.g. a newly-added item) keep their nav-tree position and sort after.
+ */
+export function applyOrder(items: NavModelItem[], orderedKeys: string[]): NavModelItem[] {
   const rank = (item: NavModelItem) => {
-    const index = orderedIds.indexOf(item.id ?? '');
+    const index = orderedKeys.indexOf(hiddenKey(item));
     return index === -1 ? Infinity : index;
   };
   return items
@@ -364,21 +315,97 @@ export function orderTopLevelSections(items: NavModelItem[], orderedIds: string[
 }
 
 /**
- * Move the top-level section at `fromIndex` to `toIndex`. Operates on the full ordered id list
- * (via `orderTopLevelSections`) so newly-added sections keep their appended position, and returns
- * the new stored order — or `currentOrder` unchanged for out-of-range indices.
+ * Apply renames and ordering (any depth) to a nav tree. Hiding is deliberately not applied here —
+ * callers compose with `removeHiddenItems` separately so hidden items can still be shown (greyed)
+ * while editing.
  */
-export function reorderSections(
+export function applyNavCustomization(
   items: NavModelItem[],
-  currentOrder: string[],
-  fromIndex: number,
-  toIndex: number
-): string[] {
-  const ordered = orderTopLevelSections(items, currentOrder).map((item) => item.id ?? '');
-  const next = moveItem(ordered, fromIndex, toIndex);
-  // moveItem returns the same array for out-of-range indices; keep the stored order untouched then
-  // rather than persisting the fully-expanded `ordered` list.
-  return next === ordered ? currentOrder : next;
+  customization: NavCustomizationState,
+  parentKey: string = ROOT_ORDER_KEY
+): NavModelItem[] {
+  const ordered = applyOrder(items, customization.order[parentKey] ?? []);
+  return ordered.map((item) => {
+    const key = hiddenKey(item);
+    const renamedText = customization.renamed[key];
+    return {
+      ...item,
+      text: renamedText ?? item.text,
+      children: item.children ? applyNavCustomization(item.children, customization, key) : item.children,
+    };
+  });
+}
+
+/** Stage (or clear, for an empty string) a rename of the item keyed by `key`. */
+export function renameNavItem(customization: NavCustomizationState, key: string, text: string): NavCustomizationState {
+  const trimmed = text.trim();
+  const renamed = { ...customization.renamed };
+  if (trimmed) {
+    renamed[key] = trimmed;
+  } else {
+    delete renamed[key];
+  }
+  return { ...customization, renamed };
+}
+
+/** Stage a hide/reveal toggle of the item keyed by `key` (delegates to hideItem/revealItem above). */
+export function toggleNavItemHidden(
+  baseItems: NavModelItem[],
+  customization: NavCustomizationState,
+  key: string,
+  currentlyHidden: boolean
+): NavCustomizationState {
+  const hidden = currentlyHidden
+    ? revealItem(customization.hidden, baseItems, key)
+    : hideItem(customization.hidden, baseItems, key);
+  return { ...customization, hidden };
+}
+
+/** The array an item (keyed by `key`) currently lives in, and the `order` key that array is stored
+ * under (the parent's `hiddenKey`, or `ROOT_ORDER_KEY` at the top level). */
+function findSiblingsContext(
+  items: NavModelItem[],
+  key: string,
+  parentKey: string
+): { siblings: NavModelItem[]; parentKey: string } | null {
+  for (const item of items) {
+    if (hiddenKey(item) === key) {
+      return { siblings: items, parentKey };
+    }
+    if (item.children) {
+      const found = findSiblingsContext(item.children, key, hiddenKey(item));
+      if (found) {
+        return found;
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Move the item keyed by `key` one step up/down among its current siblings (any depth), staging
+ * the new order for that item's parent. A no-op (returns `customization` unchanged) if the item
+ * isn't found or is already at the boundary in that direction.
+ */
+export function moveNavItem(
+  baseItems: NavModelItem[],
+  customization: NavCustomizationState,
+  key: string,
+  direction: -1 | 1
+): NavCustomizationState {
+  // Move within the currently displayed order, not the raw nav-tree order.
+  const displayed = applyNavCustomization(baseItems, customization);
+  const context = findSiblingsContext(displayed, key, ROOT_ORDER_KEY);
+  if (!context) {
+    return customization;
+  }
+  const ids = context.siblings.map(hiddenKey);
+  const fromIndex = ids.indexOf(key);
+  const nextIds = moveItem(ids, fromIndex, fromIndex + direction);
+  if (nextIds === ids) {
+    return customization;
+  }
+  return { ...customization, order: { ...customization.order, [context.parentKey]: nextIds } };
 }
 
 export function findByUrl(nodes: NavModelItem[], url: string): NavModelItem | null {

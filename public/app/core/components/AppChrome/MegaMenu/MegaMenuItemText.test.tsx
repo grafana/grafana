@@ -1,61 +1,43 @@
 import { render, screen } from 'test/test-utils';
 
-import { contextSrv } from 'app/core/services/context_srv';
-
 import { MegaMenuItemText, type Props } from './MegaMenuItemText';
 
 const renderItemText = (props: Partial<Props> = {}) => {
   return render(
-    <MegaMenuItemText
-      url="/explore"
-      itemName="Explore"
-      onPin={() => {}}
-      isPinned={false}
-      canCustomise={false}
-      editMode={false}
-      isHideable={false}
-      isHidden={false}
-      onToggleHidden={() => {}}
-      {...props}
-    >
+    <MegaMenuItemText url="/explore" itemName="Explore" editMode={false} isCustomizable={false} isHidden={false} {...props}>
       <span>Explore & Test</span>
     </MegaMenuItemText>
   );
 };
 
 describe('MegaMenuItemText', () => {
-  beforeEach(() => {
-    contextSrv.isSignedIn = true;
+  it('does not show customisation controls outside edit mode', () => {
+    renderItemText({ isCustomizable: true, editMode: false });
+    expect(screen.queryByLabelText(/Hide|Show|Rename|Move/)).not.toBeInTheDocument();
   });
 
-  afterEach(() => {
-    contextSrv.isSignedIn = false;
+  it('does not show customisation controls for non-customisable items even while editing', () => {
+    renderItemText({ isCustomizable: false, editMode: true });
+    expect(screen.queryByLabelText(/Hide|Show|Rename|Move/)).not.toBeInTheDocument();
   });
 
-  it('keeps ampersands unescaped in the legacy bookmark tooltip', async () => {
-    const { user } = renderItemText({ itemName: 'Explore & Test', canCustomise: false });
-
-    await user.hover(screen.getByLabelText('Bookmark Explore & Test'));
-    const tooltip = await screen.findByRole('tooltip');
-
-    expect(tooltip).toHaveTextContent('Bookmark Explore & Test');
-    expect(tooltip).not.toHaveTextContent('Bookmark Explore &amp; Test');
-  });
-
-  it('keeps ampersands unescaped in pin and hide tooltips when customising an unpinned visible item', async () => {
+  it('keeps ampersands unescaped in the move/rename/hide tooltips while editing a customisable item', async () => {
     const { user } = renderItemText({
       itemName: 'Explore & Test',
-      canCustomise: true,
       editMode: true,
-      isPinned: false,
-      isHideable: true,
+      isCustomizable: true,
       isHidden: false,
+      canMoveUp: true,
+      canMoveDown: true,
     });
 
-    await user.hover(screen.getByLabelText('Pin Explore & Test'));
-    const pinTooltip = await screen.findByRole('tooltip');
-    expect(pinTooltip).toHaveTextContent('Pin Explore & Test');
-    expect(pinTooltip).not.toHaveTextContent('Pin Explore &amp; Test');
+    await user.hover(screen.getByLabelText('Move Explore & Test up'));
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Move Explore & Test up');
+
+    await user.hover(screen.getByLabelText('Rename Explore & Test'));
+    const renameTooltip = await screen.findByRole('tooltip');
+    expect(renameTooltip).toHaveTextContent('Rename Explore & Test');
+    expect(renameTooltip).not.toHaveTextContent('Rename Explore &amp; Test');
 
     await user.hover(screen.getByLabelText('Hide Explore & Test'));
     const hideTooltip = await screen.findByRole('tooltip');
@@ -63,24 +45,76 @@ describe('MegaMenuItemText', () => {
     expect(hideTooltip).not.toHaveTextContent('Hide Explore &amp; Test');
   });
 
-  it('keeps ampersands unescaped in unpin and show tooltips when customising a pinned hidden item', async () => {
+  it('shows a Show tooltip and disables move controls at the boundary when hidden and clamped', async () => {
     const { user } = renderItemText({
       itemName: 'Explore & Test',
-      canCustomise: true,
       editMode: true,
-      isPinned: true,
-      isHideable: true,
+      isCustomizable: true,
       isHidden: true,
+      canMoveUp: false,
+      canMoveDown: false,
     });
 
-    await user.hover(screen.getByLabelText('Unpin Explore & Test'));
-    const unpinTooltip = await screen.findByRole('tooltip');
-    expect(unpinTooltip).toHaveTextContent('Unpin Explore & Test');
-    expect(unpinTooltip).not.toHaveTextContent('Unpin Explore &amp; Test');
-
     await user.hover(screen.getByLabelText('Show Explore & Test'));
-    const showTooltip = await screen.findByRole('tooltip');
-    expect(showTooltip).toHaveTextContent('Show Explore & Test');
-    expect(showTooltip).not.toHaveTextContent('Show Explore &amp; Test');
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Show Explore & Test');
+    expect(screen.getByLabelText('Move Explore & Test up')).toBeDisabled();
+    expect(screen.getByLabelText('Move Explore & Test down')).toBeDisabled();
+  });
+
+  it('calls onToggleHidden, onMoveUp, onMoveDown and onRename', async () => {
+    const onToggleHidden = jest.fn();
+    const onMoveUp = jest.fn();
+    const onMoveDown = jest.fn();
+    const { user } = renderItemText({
+      itemName: 'Explore',
+      editMode: true,
+      isCustomizable: true,
+      canMoveUp: true,
+      canMoveDown: true,
+      onToggleHidden,
+      onMoveUp,
+      onMoveDown,
+    });
+
+    await user.click(screen.getByLabelText('Hide Explore'));
+    expect(onToggleHidden).toHaveBeenCalledTimes(1);
+
+    await user.click(screen.getByLabelText('Move Explore up'));
+    expect(onMoveUp).toHaveBeenCalledTimes(1);
+
+    await user.click(screen.getByLabelText('Move Explore down'));
+    expect(onMoveDown).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onRename with the prompt result', async () => {
+    const onRename = jest.fn();
+    jest.spyOn(window, 'prompt').mockReturnValue('New name');
+    const { user } = renderItemText({
+      itemName: 'Explore',
+      editMode: true,
+      isCustomizable: true,
+      onRename,
+    });
+
+    await user.click(screen.getByLabelText('Rename Explore'));
+    expect(onRename).toHaveBeenCalledWith('New name');
+
+    jest.restoreAllMocks();
+  });
+
+  it('does not call onRename when the prompt is dismissed', async () => {
+    const onRename = jest.fn();
+    jest.spyOn(window, 'prompt').mockReturnValue(null);
+    const { user } = renderItemText({
+      itemName: 'Explore',
+      editMode: true,
+      isCustomizable: true,
+      onRename,
+    });
+
+    await user.click(screen.getByLabelText('Rename Explore'));
+    expect(onRename).not.toHaveBeenCalled();
+
+    jest.restoreAllMocks();
   });
 });

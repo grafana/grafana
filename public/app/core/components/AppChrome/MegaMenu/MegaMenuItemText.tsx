@@ -1,13 +1,12 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
-import { type GrafanaTheme2, type IconName } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
-import { Icon, IconButton, Link, Stack, useTheme2 } from '@grafana/ui';
+import { Icon, IconButton, Link, useTheme2 } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
-import { contextSrv } from 'app/core/services/context_srv';
 
 export interface Props {
   children: React.ReactNode;
@@ -15,20 +14,18 @@ export interface Props {
   onClick?: () => void;
   target?: HTMLAnchorElement['target'];
   url: string;
-  onPin: (id?: string) => void;
-  isPinned?: boolean;
-  /** Whether to render the bookmark/pin control at all (default true) */
-  showPin?: boolean;
-  /** Customisation is enabled — switches the control to the pin icon and "Pin"/"Unpin" wording; off keeps the legacy bookmark icon and wording */
-  canCustomise?: boolean;
   itemName: string;
   editMode?: boolean;
-  isHideable?: boolean;
+  /** Whether this item can be renamed, hidden or reordered (excludes Home, create actions, etc). */
+  isCustomizable?: boolean;
   isHidden?: boolean;
   onToggleHidden?: () => void;
-  /** Drop empty pin/hide control columns instead of reserving them (so a lone pin sits flush right). */
-  collapseEmptyControls?: boolean;
-  /** Disable the pin/hide controls (e.g. while a save is in flight) so edits can't be made and lost. */
+  onRename?: (text: string) => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
+  /** Disable the customisation controls (e.g. while a save is in flight) so edits can't be lost. */
   disabled?: boolean;
 }
 
@@ -38,46 +35,24 @@ export function MegaMenuItemText({
   onClick,
   target,
   url,
-  onPin,
-  isPinned,
-  showPin = true,
-  canCustomise,
   itemName,
   editMode,
-  isHideable,
+  isCustomizable,
   isHidden,
   onToggleHidden,
-  collapseEmptyControls,
+  onRename,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp,
+  canMoveDown,
   disabled,
 }: Props) {
   const theme = useTheme2();
-
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const styles = getStyles(theme, isActive, visualRefreshEnabled);
   const LinkComponent = !target && url.startsWith('/') ? Link : 'a';
 
-  // Flag on: pin/unpin wording. Flag off: the legacy "Bookmark" wording.
-  let pinTooltip = t('navigation.item.bookmark.tooltip', 'Bookmark {{itemName}}', {
-    itemName,
-    interpolation: { escapeValue: false },
-  });
-  if (canCustomise) {
-    pinTooltip = isPinned
-      ? t('navigation.item.unpin.tooltip', 'Unpin {{itemName}}', {
-          itemName,
-          interpolation: { escapeValue: false },
-        })
-      : t('navigation.item.pin.tooltip', 'Pin {{itemName}}', {
-          itemName,
-          interpolation: { escapeValue: false },
-        });
-  }
-
-  // Pinning is a customisation action, so with customisation on the pin control only appears while
-  // editing. The legacy (flag-off) bookmark control keeps its always-on-hover behaviour.
-  const showPinControl =
-    showPin && contextSrv.isSignedIn && Boolean(url) && url !== '/bookmarks' && (!canCustomise || Boolean(editMode));
-  const showHideControl = Boolean(editMode && isHideable);
+  const showControls = Boolean(editMode && isCustomizable);
 
   const linkContent = (
     <div className={styles.linkContent}>
@@ -90,46 +65,20 @@ export function MegaMenuItemText({
     </div>
   );
 
-  // When customising, a filled pin marks a pinned item and an outline pin an unpinned one; with
-  // customisation off it's the legacy bookmark glyph.
-  let pinIcon: IconName = 'bookmark';
-  if (canCustomise) {
-    pinIcon = isPinned ? 'gf-pin-filled' : 'gf-pin-unfilled';
-  }
-
-  const pinButton = (
-    <IconButton
-      name={pinIcon}
-      // Always-visible in edit mode; hover-only (the `pin-icon` treatment) for the legacy control.
-      className={canCustomise ? 'customise-icon' : 'pin-icon'}
-      iconType={isPinned ? 'solid' : 'default'}
-      onClick={() => onPin(url)}
-      aria-pressed={isPinned}
-      disabled={disabled}
-      tooltip={pinTooltip}
-    />
-  );
-
-  const hideButton = (
-    <IconButton
-      name={isHidden ? 'eye-slash' : 'eye'}
-      className={'visibility-icon'}
-      onClick={onToggleHidden}
-      aria-pressed={isHidden}
-      disabled={disabled}
-      tooltip={
-        isHidden
-          ? t('navigation.item.show.tooltip', 'Show {{itemName}}', {
-              itemName,
-              interpolation: { escapeValue: false },
-            })
-          : t('navigation.item.hide.tooltip', 'Hide {{itemName}}', {
-              itemName,
-              interpolation: { escapeValue: false },
-            })
-      }
-    />
-  );
+  const handleRename = () => {
+    // window.prompt is a deliberately hacky way to collect the new label — this whole feature is a
+    // testing surface for trying out nav names/ordering, not a production rename UI.
+    const next = window.prompt(
+      t('navigation.item.rename.prompt', 'Rename "{{itemName}}" to:', {
+        itemName,
+        interpolation: { escapeValue: false },
+      }),
+      itemName
+    );
+    if (next !== null) {
+      onRename?.(next);
+    }
+  };
 
   return (
     <div
@@ -151,25 +100,54 @@ export function MegaMenuItemText({
       >
         {linkContent}
       </LinkComponent>
-      {canCustomise
-        ? (showPinControl || showHideControl) && (
-            // Fixed-width slots so the pin and hide controls line up in columns across every row (a
-            // pin-only row keeps the pin in the pin column, leaving the hide column empty). When
-            // collapseEmptyControls is set, empty columns are dropped so a lone control sits flush right.
-            <div className={styles.controls}>
-              {(showPinControl || !collapseEmptyControls) && (
-                <span className={styles.controlSlot}>{showPinControl && pinButton}</span>
-              )}
-              {(showHideControl || !collapseEmptyControls) && (
-                <span className={styles.controlSlot}>{showHideControl && hideButton}</span>
-              )}
-            </div>
-          )
-        : showPinControl && (
-            <Stack alignItems="center" gap={0} shrink={0}>
-              {pinButton}
-            </Stack>
-          )}
+      {showControls && (
+        <div className={styles.controls}>
+          <IconButton
+            name="arrow-up"
+            onClick={onMoveUp}
+            disabled={disabled || !canMoveUp}
+            tooltip={t('navigation.item.move-up.tooltip', 'Move {{itemName}} up', {
+              itemName,
+              interpolation: { escapeValue: false },
+            })}
+          />
+          <IconButton
+            name="arrow-down"
+            onClick={onMoveDown}
+            disabled={disabled || !canMoveDown}
+            tooltip={t('navigation.item.move-down.tooltip', 'Move {{itemName}} down', {
+              itemName,
+              interpolation: { escapeValue: false },
+            })}
+          />
+          <IconButton
+            name="edit"
+            onClick={handleRename}
+            disabled={disabled}
+            tooltip={t('navigation.item.rename.tooltip', 'Rename {{itemName}}', {
+              itemName,
+              interpolation: { escapeValue: false },
+            })}
+          />
+          <IconButton
+            name={isHidden ? 'eye-slash' : 'eye'}
+            onClick={onToggleHidden}
+            aria-pressed={isHidden}
+            disabled={disabled}
+            tooltip={
+              isHidden
+                ? t('navigation.item.show.tooltip', 'Show {{itemName}}', {
+                    itemName,
+                    interpolation: { escapeValue: false },
+                  })
+                : t('navigation.item.hide.tooltip', 'Hide {{itemName}}', {
+                    itemName,
+                    interpolation: { escapeValue: false },
+                  })
+            }
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -214,19 +192,6 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], visualRefr
       color: isActive ? theme.colors.text.primary : theme.colors.text.secondary,
       width: '100%',
       height: '100%',
-      // The pin control shows on hover/focus (both the legacy bookmark and, outside edit mode, the
-      // customisation pin); the edit-mode pin and hide controls are always shown.
-      '.pin-icon': {
-        visibility: 'hidden',
-      },
-      '.customise-icon, .visibility-icon': {
-        visibility: 'visible',
-      },
-      '&:hover, &:focus-within': {
-        '.pin-icon': {
-          visibility: 'visible',
-        },
-      },
     }),
     // Subtle hover/focus highlight for normal browsing (not while customising).
     hoverable: css({
@@ -236,19 +201,11 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], visualRefr
         color: theme.colors.text.primary,
       },
     }),
-    // Fixed control columns (pin, hide) so each control type lines up vertically across rows.
+    // The rename/move/hide controls, always visible while editing.
     controls: css({
       display: 'flex',
       flexShrink: 0,
-    }),
-    // One fixed-width, centred column per control (pin, hide) so each control type lines up vertically
-    // across rows regardless of which controls a given row shows.
-    controlSlot: css({
-      alignItems: 'center',
-      display: 'flex',
-      flexShrink: 0,
-      justifyContent: 'center',
-      width: theme.spacing(3),
+      gap: theme.spacing(0.25),
     }),
     hiddenInEdit: css({
       opacity: 0.5,

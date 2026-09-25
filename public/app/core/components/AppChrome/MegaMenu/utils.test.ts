@@ -8,15 +8,19 @@ import {
   getEnrichedHelpItem,
   getActiveItem,
   findByUrl,
-  getPinnedEntries,
   moveItem,
-  reorderSections,
-  orderTopLevelSections,
+  applyOrder,
+  applyNavCustomization,
+  renameNavItem,
+  toggleNavItemHidden,
+  moveNavItem,
   isHideable,
   removeHiddenItems,
   hideItem,
   revealItem,
   enrichWithInteractionTracking,
+  EMPTY_NAV_CUSTOMIZATION,
+  ROOT_ORDER_KEY,
 } from './utils';
 
 const starredDashboardUid = 'foo';
@@ -264,7 +268,17 @@ describe('findByUrl', () => {
   });
 });
 
-describe('pinning helpers', () => {
+describe('moveItem', () => {
+  it('moves an element to a new index', () => {
+    expect(moveItem(['/explore', '/dashboards', '/admin'], 2, 0)).toEqual(['/admin', '/explore', '/dashboards']);
+  });
+
+  it('is a no-op for out-of-range indices', () => {
+    expect(moveItem(['/explore', '/dashboards'], 0, 5)).toEqual(['/explore', '/dashboards']);
+  });
+});
+
+describe('nav customisation (rename/hide/reorder, any depth)', () => {
   const tree: NavModelItem[] = [
     { text: 'Home', id: 'home', url: '/' },
     { text: 'Explore', id: 'explore', url: '/explore' },
@@ -286,122 +300,104 @@ describe('pinning helpers', () => {
     },
   ];
 
-  describe('getPinnedEntries (the pinned box breadcrumbs)', () => {
-    const withStarred: NavModelItem[] = [
-      ...tree,
-      {
-        text: 'Starred',
-        id: 'starred',
-        url: '/dashboards?starred',
-        children: [
-          { text: 'First', id: 'starred/a', url: '/d/a' },
-          { text: 'Second', id: 'starred/b', url: '/d/b' },
-        ],
-      },
-    ];
-
-    it('is empty when nothing is pinned', () => {
-      expect(getPinnedEntries(tree, [])).toHaveLength(0);
+  describe('applyOrder', () => {
+    it('orders items by the stored key list', () => {
+      expect(applyOrder(tree, ['cfg', 'explore']).map((i) => i.id)).toEqual(['cfg', 'explore', 'home', 'dashboards']);
     });
 
-    it('resolves a leaf to one line with no ancestors', () => {
-      const entries = getPinnedEntries(tree, ['/explore']);
-      expect(entries).toHaveLength(1);
-      expect(entries[0].url).toBe('/explore');
-      expect(entries[0].section).toBeUndefined();
-      expect(entries[0].line?.item.text).toBe('Explore');
-      expect(entries[0].line?.ancestors).toEqual([]);
-    });
-
-    it('resolves a nested child to a single line carrying its ancestor path', () => {
-      const entries = getPinnedEntries(tree, ['/playlists']);
-      expect(entries[0].line?.item.text).toBe('Playlists');
-      expect(entries[0].line?.ancestors).toEqual(['Dashboards']);
-    });
-
-    it('resolves a top-level parent section to a quick-link breadcrumb, not an expandable section', () => {
-      // A parent's children are individually pinnable, so pinning the parent is a plain quick-link
-      // (only Starred, whose children aren't pinnable, renders as an expandable section).
-      const entries = getPinnedEntries(tree, ['/dashboards']);
-      expect(entries).toHaveLength(1);
-      expect(entries[0].section).toBeUndefined();
-      expect(entries[0].line?.item.text).toBe('Dashboards');
-      expect(entries[0].line?.ancestors).toEqual([]);
-    });
-
-    it('keeps the stored order and skips urls that match no nav item', () => {
-      const entries = getPinnedEntries(tree, ['/admin/settings', '/nope', '/explore']);
-      expect(entries.map((e) => e.url)).toEqual(['/admin/settings', '/explore']);
-    });
-
-    it('flags a whole-section pin (Starred) with its section node and no breadcrumb line', () => {
-      const entries = getPinnedEntries(withStarred, ['/dashboards?starred']);
-      expect(entries).toHaveLength(1);
-      expect(entries[0].url).toBe('/dashboards?starred');
-      // The section node is carried (its children render the list); there's no single breadcrumb line.
-      expect(entries[0].line).toBeUndefined();
-      expect(entries[0].section?.text).toBe('Starred');
-      expect(entries[0].section?.children?.map((c) => c.text)).toEqual(['First', 'Second']);
-    });
-
-    it('treats an empty Starred section as a section, not a breadcrumb', () => {
-      // The backend serves Starred with no children until the stars have loaded. It must still be a
-      // section so it keeps its layout + empty/loading state instead of flipping from breadcrumb to
-      // section once children arrive.
-      const emptyStarred: NavModelItem[] = [
-        ...tree,
-        { text: 'Starred', id: 'starred', url: '/dashboards?starred', children: [] },
-      ];
-      const entries = getPinnedEntries(emptyStarred, ['/dashboards?starred']);
-      expect(entries).toHaveLength(1);
-      expect(entries[0].section?.text).toBe('Starred');
-      expect(entries[0].line).toBeUndefined();
+    it('appends items not in the stored order, keeping their nav-tree order', () => {
+      expect(applyOrder(tree, ['dashboards']).map((i) => i.id)).toEqual(['dashboards', 'home', 'explore', 'cfg']);
     });
   });
 
-  describe('moveItem', () => {
-    it('moves an element to a new index', () => {
-      expect(moveItem(['/explore', '/dashboards', '/admin'], 2, 0)).toEqual(['/admin', '/explore', '/dashboards']);
+  describe('applyNavCustomization', () => {
+    it('renames a top-level item', () => {
+      const customization = { ...EMPTY_NAV_CUSTOMIZATION, renamed: { explore: 'My Explore' } };
+      const result = applyNavCustomization(tree, customization);
+      expect(result.find((i) => i.id === 'explore')?.text).toBe('My Explore');
     });
 
-    it('is a no-op for out-of-range indices', () => {
-      expect(moveItem(['/explore', '/dashboards'], 0, 5)).toEqual(['/explore', '/dashboards']);
-    });
-  });
-
-  describe('orderTopLevelSections', () => {
-    it('orders sections by the stored id list', () => {
-      expect(orderTopLevelSections(tree, ['cfg', 'explore']).map((i) => i.id)).toEqual([
-        'cfg',
-        'explore',
-        'home',
-        'dashboards',
-      ]);
+    it('renames a nested item without touching its siblings', () => {
+      const customization = { ...EMPTY_NAV_CUSTOMIZATION, renamed: { 'dashboards/playlists': 'My Playlists' } };
+      const result = applyNavCustomization(tree, customization);
+      const dashboards = result.find((i) => i.id === 'dashboards');
+      expect(dashboards?.children?.find((c) => c.id === 'dashboards/playlists')?.text).toBe('My Playlists');
+      expect(dashboards?.children?.find((c) => c.id === 'dashboards/snapshots')?.text).toBe('Snapshots');
     });
 
-    it('appends sections not in the stored order, keeping their nav-tree order', () => {
-      expect(orderTopLevelSections(tree, ['dashboards']).map((i) => i.id)).toEqual([
-        'dashboards',
-        'home',
-        'explore',
-        'cfg',
+    it('orders nested children by the stored order under the parent key', () => {
+      const customization = {
+        ...EMPTY_NAV_CUSTOMIZATION,
+        order: { dashboards: ['dashboards/snapshots', 'dashboards/playlists'] },
+      };
+      const result = applyNavCustomization(tree, customization);
+      const dashboards = result.find((i) => i.id === 'dashboards');
+      expect(dashboards?.children?.map((c) => c.id)).toEqual([
+        'dashboards/snapshots',
+        'dashboards/playlists',
+        'dashboards/new',
       ]);
     });
   });
 
-  describe('reorderSections', () => {
-    it('moves a section to a new index, returning the full id order', () => {
-      // From the default nav order [home, explore, dashboards, cfg], move dashboards (2) to the front.
-      expect(reorderSections(tree, [], 2, 0)).toEqual(['dashboards', 'home', 'explore', 'cfg']);
+  describe('renameNavItem', () => {
+    it('stages a rename', () => {
+      const result = renameNavItem(EMPTY_NAV_CUSTOMIZATION, 'explore', 'My Explore');
+      expect(result.renamed).toEqual({ explore: 'My Explore' });
     });
 
-    it('reorders relative to an existing stored order', () => {
-      // Stored order puts cfg first: [cfg, home, explore, dashboards]; move cfg (0) to the end.
-      expect(reorderSections(tree, ['cfg'], 0, 3)).toEqual(['home', 'explore', 'dashboards', 'cfg']);
+    it('trims whitespace', () => {
+      const result = renameNavItem(EMPTY_NAV_CUSTOMIZATION, 'explore', '  My Explore  ');
+      expect(result.renamed).toEqual({ explore: 'My Explore' });
     });
 
-    it('is a no-op for out-of-range indices, keeping the current order', () => {
-      expect(reorderSections(tree, ['cfg', 'explore'], 0, 9)).toEqual(['cfg', 'explore']);
+    it('clears the rename when given an empty string', () => {
+      const customization = { ...EMPTY_NAV_CUSTOMIZATION, renamed: { explore: 'My Explore' } };
+      const result = renameNavItem(customization, 'explore', '   ');
+      expect(result.renamed).toEqual({});
+    });
+  });
+
+  describe('toggleNavItemHidden', () => {
+    it('hides an item', () => {
+      const result = toggleNavItemHidden(tree, EMPTY_NAV_CUSTOMIZATION, 'explore', false);
+      expect(result.hidden).toEqual(['explore']);
+    });
+
+    it('reveals an item', () => {
+      const customization = { ...EMPTY_NAV_CUSTOMIZATION, hidden: ['explore'] };
+      const result = toggleNavItemHidden(tree, customization, 'explore', true);
+      expect(result.hidden).toEqual([]);
+    });
+  });
+
+  describe('moveNavItem', () => {
+    it('moves a top-level item up, recording the new order at the root key', () => {
+      // Default order [home, explore, dashboards, cfg]; move dashboards (index 2) up one.
+      const result = moveNavItem(tree, EMPTY_NAV_CUSTOMIZATION, 'dashboards', -1);
+      expect(result.order[ROOT_ORDER_KEY]).toEqual(['home', 'dashboards', 'explore', 'cfg']);
+    });
+
+    it('moves a top-level item down', () => {
+      const result = moveNavItem(tree, EMPTY_NAV_CUSTOMIZATION, 'explore', 1);
+      expect(result.order[ROOT_ORDER_KEY]).toEqual(['home', 'dashboards', 'explore', 'cfg']);
+    });
+
+    it('moves a nested item among its siblings, recording the order under the parent key', () => {
+      const result = moveNavItem(tree, EMPTY_NAV_CUSTOMIZATION, 'dashboards/snapshots', -1);
+      expect(result.order['dashboards']).toEqual(['dashboards/new', 'dashboards/snapshots', 'dashboards/playlists']);
+    });
+
+    it('is a no-op at the boundary', () => {
+      const result = moveNavItem(tree, EMPTY_NAV_CUSTOMIZATION, 'home', -1);
+      expect(result).toBe(EMPTY_NAV_CUSTOMIZATION);
+    });
+
+    it('moves relative to an already-staged order', () => {
+      const staged = { ...EMPTY_NAV_CUSTOMIZATION, order: { [ROOT_ORDER_KEY]: ['cfg'] } };
+      // Staged order is [cfg, home, explore, dashboards]; move cfg (0) down one.
+      const result = moveNavItem(tree, staged, 'cfg', 1);
+      expect(result.order[ROOT_ORDER_KEY]).toEqual(['home', 'cfg', 'explore', 'dashboards']);
     });
   });
 });
@@ -440,15 +436,15 @@ describe('hiding helpers', () => {
   ];
 
   describe('isHideable', () => {
-    it('is true for sections and children, but false for Home/Bookmarks/Starred, create actions and starred sub-items', () => {
+    it('is true for sections and children, but false for Home, create actions and starred sub-items', () => {
       expect(isHideable(tree[1])).toBe(true); // Explore (top-level)
       expect(isHideable({ text: 'Users', id: 'cfg/access/users', url: '/admin/users' })).toBe(true); // nested child
       // A plugin nav item with only a url (no id) is still hideable — keyed by its url.
       expect(isHideable({ text: 'Workspace', url: '/a/assistant/workspace' })).toBe(true);
+      expect(isHideable({ text: 'Bookmarks', id: 'bookmarks', url: '/bookmarks' })).toBe(true);
+      expect(isHideable({ text: 'Starred', id: 'starred', url: '/dashboards?starred' })).toBe(true);
       expect(isHideable({ text: 'No key' })).toBe(false); // neither id nor url
       expect(isHideable(tree[0])).toBe(false); // Home
-      expect(isHideable({ text: 'Bookmarks', id: 'bookmarks', url: '/bookmarks' })).toBe(false);
-      expect(isHideable({ text: 'Starred', id: 'starred', url: '/dashboards?starred' })).toBe(false);
       expect(isHideable({ text: 'New', id: 'dashboards/new', url: '/dashboard/new', isCreateAction: true })).toBe(
         false
       );
