@@ -4444,6 +4444,12 @@
         "type": "object",
         "required": ["layout"],
         "properties": {
+          "annotations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardAnnotationQueryKind"
+            }
+          },
           "collapse": {
             "type": "boolean"
           },
@@ -4759,6 +4765,12 @@
         "type": "object",
         "required": ["layout"],
         "properties": {
+          "annotations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardAnnotationQueryKind"
+            }
+          },
           "conditionalRendering": {
             "$ref": "#/components/schemas/DashboardConditionalRenderingGroupKind"
           },
