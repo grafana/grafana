@@ -277,7 +277,7 @@ const LogsContainer = memo(function LogsContainer({
           </LiveTailControls>
         </PanelChrome>
       </LogsCrossFadeTransition>
-      <LogsCrossFadeTransition visible={!isLive}>
+      {!isLive && (
         <Logs
           exploreId={exploreId}
           datasourceType={datasourceInstance?.type}
@@ -318,7 +318,7 @@ const LogsContainer = memo(function LogsContainer({
           onClickFilterString={filterValueAvailable() ? onClickFilterString : undefined}
           onClickFilterOutString={filterOutValueAvailable() ? onClickFilterOutString : undefined}
         />
-      </LogsCrossFadeTransition>
+      )}
     </>
   );
 });

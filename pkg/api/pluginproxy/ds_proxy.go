@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -296,7 +297,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 
 			idToken, ok := token.Extra("id_token").(string)
 			if ok && idToken != "" {
-				req.Header.Set("X-ID-Token", idToken)
+				req.Header.Set(backend.OAuthIdentityIDTokenHeaderName, idToken)
 			}
 		}
 	}

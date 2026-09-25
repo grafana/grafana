@@ -252,7 +252,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				s := mocks.NewStatusPatcher(t)
 
 				s.
-					On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.AnythingOfType("map[string]interface {}")).
+					On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.AnythingOfType("map[string]interface {}"), mock.AnythingOfType("map[string]interface {}")).
 					Once().
 					Return(nil) // Return nil error for the status patch
 
@@ -299,7 +299,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				// patcher must be present.
 				s := mocks.NewStatusPatcher(t)
 				s.
-					On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.AnythingOfType("map[string]interface {}")).
+					On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.AnythingOfType("map[string]interface {}"), mock.AnythingOfType("map[string]interface {}")).
 					Once().
 					Return(nil)
 				return s
@@ -400,10 +400,13 @@ func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *t
 	}
 
 	// The removal-patch failure is a blind spot for the finalizer SLO, so it must
-	// be metered and recorded on status.deleteError instead.
+	// be metered and recorded on status (deleteError + the structured deletion)
+	// instead.
 	statusPatcher := mocks.NewStatusPatcher(t)
 	statusPatcher.
-		On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.AnythingOfType("map[string]interface {}")).
+		On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"),
+			mock.AnythingOfType("map[string]interface {}"),
+			mock.AnythingOfType("map[string]interface {}")).
 		Once().
 		Return(nil)
 
@@ -496,27 +499,76 @@ func TestRepositoryController_handleDelete_EmptyFinalizersDoesNotCount(t *testin
 }
 
 // TestRepositoryController_updateDeleteStatus_SkipsWhenUnchanged guards against a
-// hot-loop: re-writing the same deleteError bumps the resourceVersion, which the
-// informer turns back into a re-enqueue, so an unchanged error must not be
-// patched. A patcher with no expectations fails the test if Patch is called.
+// hot-loop: re-writing the same status bumps the resourceVersion, which the
+// informer turns back into a re-enqueue, so an unchanged status must not be
+// patched. Both the legacy string and the structured status already match here,
+// so nothing is written. A patcher with no expectations fails the test if Patch
+// is called.
 func TestRepositoryController_updateDeleteStatus_SkipsWhenUnchanged(t *testing.T) {
 	c := &RepositoryController{statusPatcher: mocks.NewStatusPatcher(t)}
 	repo := &provisioning.Repository{
-		Status: provisioning.RepositoryStatus{DeleteError: "boom"},
+		Status: provisioning.RepositoryStatus{
+			DeleteError: "boom",
+			Deletion: &provisioning.DeletionStatus{
+				State:   provisioning.DeletionStateBlocked,
+				Message: "boom",
+			},
+		},
 	}
 	err := c.updateDeleteStatus(context.Background(), repo, errors.New("boom"))
 	require.NoError(t, err)
 }
 
+// TestRepositoryController_updateDeleteStatus_BackfillsMissingStructuredStatus
+// verifies a repository wedged before status.deletion existed - the legacy
+// deleteError already matches but the structured status is absent - is still
+// patched so the blocking finalizer gets backfilled rather than skipped forever.
+func TestRepositoryController_updateDeleteStatus_BackfillsMissingStructuredStatus(t *testing.T) {
+	patcher := mocks.NewStatusPatcher(t)
+	patcher.
+		On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"),
+			mock.MatchedBy(func(op map[string]interface{}) bool {
+				return op["path"] == "/status/deleteError"
+			}),
+			mock.MatchedBy(func(op map[string]interface{}) bool {
+				ds, ok := op["value"].(*provisioning.DeletionStatus)
+				return ok && ds.Finalizer == repository.CleanFinalizer
+			}),
+		).
+		Once().
+		Return(nil)
+	c := &RepositoryController{statusPatcher: patcher}
+	wrapped := fmt.Errorf("remove finalizers: %w", &finalizerError{
+		finalizer: repository.CleanFinalizer,
+		err:       errors.New("boom"),
+	})
+	// deleteError already equals the error, but status.deletion is nil (pre-upgrade).
+	repo := &provisioning.Repository{
+		Status: provisioning.RepositoryStatus{DeleteError: wrapped.Error()},
+	}
+	err := c.updateDeleteStatus(context.Background(), repo, wrapped)
+	require.NoError(t, err)
+}
+
 // TestRepositoryController_updateDeleteStatus_UsesAddOp verifies the patch uses
-// "add" (not "replace") so it creates the omitempty deleteError field on the
-// first failure, and only patches when the error actually changed.
+// "add" (not "replace") so it creates the omitempty deleteError/deletion fields
+// on the first failure, and only patches when the error actually changed. It
+// writes both the legacy deleteError string and the structured deletion field.
 func TestRepositoryController_updateDeleteStatus_UsesAddOp(t *testing.T) {
 	patcher := mocks.NewStatusPatcher(t)
 	patcher.
-		On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.MatchedBy(func(op map[string]interface{}) bool {
-			return op["op"] == "add" && op["path"] == "/status/deleteError" && op["value"] == "new"
-		})).
+		On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"),
+			mock.MatchedBy(func(op map[string]interface{}) bool {
+				return op["op"] == "add" && op["path"] == "/status/deleteError" && op["value"] == "new"
+			}),
+			mock.MatchedBy(func(op map[string]interface{}) bool {
+				if op["op"] != "add" || op["path"] != "/status/deletion" {
+					return false
+				}
+				ds, ok := op["value"].(*provisioning.DeletionStatus)
+				return ok && ds.State == provisioning.DeletionStateBlocked && ds.Message == "new"
+			}),
+		).
 		Once().
 		Return(nil)
 	c := &RepositoryController{statusPatcher: patcher}
@@ -524,6 +576,58 @@ func TestRepositoryController_updateDeleteStatus_UsesAddOp(t *testing.T) {
 		Status: provisioning.RepositoryStatus{DeleteError: "old"},
 	}
 	err := c.updateDeleteStatus(context.Background(), repo, errors.New("new"))
+	require.NoError(t, err)
+}
+
+// TestRepositoryController_updateDeleteStatus_NamesBlockingFinalizer verifies a
+// finalizerError is unwrapped so status.deletion names the blocking finalizer,
+// even when the error is wrapped by the caller.
+func TestRepositoryController_updateDeleteStatus_NamesBlockingFinalizer(t *testing.T) {
+	patcher := mocks.NewStatusPatcher(t)
+	patcher.
+		On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"),
+			mock.MatchedBy(func(op map[string]interface{}) bool {
+				return op["path"] == "/status/deleteError"
+			}),
+			mock.MatchedBy(func(op map[string]interface{}) bool {
+				ds, ok := op["value"].(*provisioning.DeletionStatus)
+				return ok && ds.State == provisioning.DeletionStateBlocked &&
+					ds.Finalizer == repository.CleanFinalizer
+			}),
+		).
+		Once().
+		Return(nil)
+	c := &RepositoryController{statusPatcher: patcher}
+	repo := &provisioning.Repository{}
+	wrapped := fmt.Errorf("remove finalizers: %w", &finalizerError{
+		finalizer: repository.CleanFinalizer,
+		err:       errors.New("boom"),
+	})
+	err := c.updateDeleteStatus(context.Background(), repo, wrapped)
+	require.NoError(t, err)
+}
+
+func TestRepositoryController_updateDeleteStatus_UsesNonEmptyFolderError(t *testing.T) {
+	folderErr := &nonEmptyFolderError{
+		folder: &provisioning.ResourceListItem{Name: "folder-1", Title: "Folder one"},
+	}
+	patcher := mocks.NewStatusPatcher(t)
+	patcher.
+		On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"),
+			mock.MatchedBy(func(op map[string]interface{}) bool {
+				return op["path"] == "/status/deleteError" && op["value"] == folderErr.Error()
+			}),
+			mock.MatchedBy(func(op map[string]interface{}) bool {
+				ds, ok := op["value"].(*provisioning.DeletionStatus)
+				return ok && ds.Finalizer == repository.RemoveOrphanResourcesFinalizer && ds.Message == folderErr.Error()
+			}),
+		).
+		Once().
+		Return(nil)
+
+	c := &RepositoryController{statusPatcher: patcher}
+	wrapped := fmt.Errorf("remove finalizers: %w", &finalizerError{finalizer: repository.RemoveOrphanResourcesFinalizer, err: folderErr})
+	err := c.updateDeleteStatus(context.Background(), &provisioning.Repository{}, wrapped)
 	require.NoError(t, err)
 }
 
@@ -1519,9 +1623,7 @@ func TestRepositoryController_process_UserCausedDeleteFailure(t *testing.T) {
 	health, ok := healthPatch["value"].(provisioning.HealthStatus)
 	require.True(t, ok)
 	assert.False(t, health.Healthy)
-	require.Len(t, health.Message, 1)
-	assert.Contains(t, health.Message[0], "unable to delete repository")
-	assert.Contains(t, health.Message[0], "permission denied")
+	assert.Equal(t, []string{"Repository deletion error"}, health.Message)
 
 	condOp, ok := patcher.findPatchOp("/status/conditions")
 	require.True(t, ok, "Ready must be patched too, or a previously-ready repo would keep reporting Ready=True while stuck deleting")
@@ -1591,8 +1693,7 @@ func TestRepositoryController_process_NonUserCausedDeleteFailureSurfacedOnStatus
 	health, ok := healthPatch["value"].(provisioning.HealthStatus)
 	require.True(t, ok)
 	assert.False(t, health.Healthy)
-	require.Len(t, health.Message, 1)
-	assert.Contains(t, health.Message[0], "unable to delete repository")
+	assert.Equal(t, []string{"Repository deletion error"}, health.Message)
 
 	condOp, ok := patcher.findPatchOp("/status/conditions")
 	require.True(t, ok, "Ready must be patched too, or a previously-ready repo would keep reporting Ready=True while stuck deleting")

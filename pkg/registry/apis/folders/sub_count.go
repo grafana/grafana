@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -78,12 +79,9 @@ func (r *subCountREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			Kinds:     countedKinds,
 			Folder:    []string{name},
 		})
-		if err != nil {
+		if err := resource.StatusErrorFromResponse(stats.GetError(), err); err != nil {
+			logging.FromContext(ctx).Error("Failed to get folder descendant counts", "namespace", ns.Value, "folder", name, "error", err)
 			responder.Error(err)
-			return
-		}
-		if stats.Error != nil {
-			responder.Error(resource.GetError(stats.Error))
 			return
 		}
 		rsp := &folders.DescendantCounts{

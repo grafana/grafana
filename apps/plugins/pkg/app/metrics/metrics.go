@@ -82,9 +82,9 @@ var (
 		prometheus.CounterOpts{
 			Namespace: namespace,
 			Name:      "meta_requests_total",
-			Help:      "Total number of metadata requests by plugin ID and version (useful for cache warming analysis)",
+			Help:      "Total number of metadata requests by plugin ID, version and calling service identity",
 		},
-		[]string{"plugin_id", "version"},
+		[]string{"plugin_id", "version", "caller"},
 	)
 )
 

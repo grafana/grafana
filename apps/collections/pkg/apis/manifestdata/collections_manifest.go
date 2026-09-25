@@ -40,6 +40,9 @@ var appManifestData = app.ManifestData{
 					Plural:     "Stars",
 					Scope:      "Namespaced",
 					Conversion: false,
+					Search: &app.ManifestVersionKindSearch{
+						Endpoint: func(b bool) *bool { return &b }(false),
+					},
 					Admission: &app.AdmissionCapabilities{
 						Validation: &app.ValidationCapability{
 							Operations: []app.AdmissionOperation{

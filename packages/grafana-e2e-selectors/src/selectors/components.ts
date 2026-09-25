@@ -682,6 +682,9 @@ export const versionedComponents = {
           '12.4.0': 'data-testid tableng row expander',
         },
         cellActions: {
+          triggerButton: {
+            '13.3.0': 'data-testid tableng cell-actions trigger-button',
+          },
           inspectButton: {
             '13.2.0': 'data-testid tableng cell-actions inspect-button',
           },
@@ -792,6 +795,14 @@ export const versionedComponents = {
       saveAsTitleInput: {
         '13.2.0': 'data-testid Save dashboard title field',
         '11.1.0': 'Save dashboard title field',
+      },
+    },
+    NewLibraryPanelDrawer: {
+      nameInput: {
+        '13.3.0': 'data-testid New library panel name field',
+      },
+      createButton: {
+        '13.3.0': 'data-testid New library panel create button',
       },
     },
   },

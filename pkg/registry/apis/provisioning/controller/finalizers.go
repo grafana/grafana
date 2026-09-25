@@ -38,6 +38,20 @@ type finalizer struct {
 	maxWorkers    int
 }
 
+// finalizerError names the finalizer whose teardown failed so handleDelete can
+// surface it on status.deletion. It implements error and unwraps to the
+// underlying cause, so existing callers that only inspect the error string keep
+// working; a caller wanting the finalizer name uses errors.As.
+type finalizerError struct {
+	// finalizer is the name of the finalizer whose teardown failed.
+	finalizer string
+	// err is the underlying cause.
+	err error
+}
+
+func (e *finalizerError) Error() string { return e.err.Error() }
+func (e *finalizerError) Unwrap() error { return e.err }
+
 // process runs the repository's finalizers in a fixed order. cfg is the
 // repository configuration. The cleanup finalizer builds the repository (the
 // only finalizer that needs one) to remove the provider-side webhook; the
@@ -118,7 +132,7 @@ func (f *finalizer) process(ctx context.Context,
 		f.metrics.RecordFinalizer(finalizer, outcome, count, time.Since(start).Seconds())
 
 		if err != nil {
-			return err
+			return &finalizerError{finalizer: finalizer, err: err}
 		}
 	}
 	return nil
@@ -198,6 +212,21 @@ func (f *finalizer) processResourceItems(ctx context.Context, items []*provision
 // preserving the order within each group.
 var splitItems = resources.SplitItems
 
+type nonEmptyFolderError struct {
+	folder *provisioning.ResourceListItem
+}
+
+func (e *nonEmptyFolderError) Error() string {
+	label := e.folder.Name
+	if e.folder.Title != "" && e.folder.Title != e.folder.Name {
+		label = fmt.Sprintf("%q (UID: %s)", e.folder.Title, e.folder.Name)
+	}
+	return fmt.Sprintf(
+		"Repository deletion is blocked by unmanaged resources in folder %s. Move or remove them, or release the repository's remaining resources. Grafana will retry automatically.",
+		label,
+	)
+}
+
 // deleteExistingItems removes all resources managed by the repository.
 // Non-folder resources are deleted concurrently first, then folders are
 // deleted sequentially deepest-first so they are empty before removal.
@@ -226,10 +255,22 @@ func (f *finalizer) deleteExistingItems(
 		return count, err
 	}
 
-	n, err := f.processFolderItems(ctx, folderItems, process)
-	count += n
-	if err != nil {
-		return count, err
+	var blocked *nonEmptyFolderError
+	for _, folder := range folderItems {
+		err := process(ctx, folder)
+		if resources.IsFolderNotEmptyAPIError(err) {
+			if blocked == nil {
+				blocked = &nonEmptyFolderError{folder: folder}
+			}
+			continue
+		}
+		if err != nil {
+			return count, err
+		}
+		count++
+	}
+	if blocked != nil {
+		return count, blocked
 	}
 
 	logger.Info("deleted items", "items", count)
