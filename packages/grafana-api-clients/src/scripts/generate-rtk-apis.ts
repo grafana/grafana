@@ -28,12 +28,18 @@ const defaultHooksOptions = {
 // `/search` is a different, older endpoint and stays.
 const perResourceSearch = /^\/[^/]+\/(search|trash)$/;
 
+// The GMA-only rule list pages need server-side search/pagination for alert rules, recording
+// rules, and folders. These are the only per-resource /search operations with a frontend caller
+// today, so they are allowlisted past the exclusion above rather than lifting it entirely.
+const allowedPerResourceSearchPaths = ['/alertrules/search', '/recordingrules/search', '/folders/search'];
+
 export const withoutPerResourceSearch = (filterEndpoints?: EndpointMatcher): EndpointMatcher => {
   if (Array.isArray(filterEndpoints)) {
     return filterEndpoints;
   }
   return (name, operation) =>
-    !perResourceSearch.test(operation.path) && (filterEndpoints ? filterEndpoints(name, operation) : true);
+    (!perResourceSearch.test(operation.path) || allowedPerResourceSearchPaths.includes(operation.path)) &&
+    (filterEndpoints ? filterEndpoints(name, operation) : true);
 };
 
 /**
