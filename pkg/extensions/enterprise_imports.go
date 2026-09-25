@@ -566,6 +566,7 @@ import (
 	_ "github.com/grafana/tempo/pkg/traceql"
 	_ "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
 	_ "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
+	_ "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	_ "github.com/hashicorp/go-hclog"
 	_ "github.com/hashicorp/go-multierror"
 	_ "github.com/hashicorp/go-plugin"
