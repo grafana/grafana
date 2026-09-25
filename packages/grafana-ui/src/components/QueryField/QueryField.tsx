@@ -1,14 +1,15 @@
 import { css, cx } from '@emotion/css';
 import classnames from 'clsx';
 import { debounce } from 'lodash';
-import { PureComponent } from 'react';
+import { lazy, PureComponent, Suspense } from 'react';
 import * as React from 'react';
 import { type Value } from 'slate';
 import Plain from 'slate-plain-serializer';
-import { Editor, type EventHook, type Plugin } from 'slate-react';
+import { type Editor, type EventHook, type Plugin } from 'slate-react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 
 import { ClearPlugin } from '../../slate-plugins/clear';
 import { ClipboardPlugin } from '../../slate-plugins/clipboard';
@@ -27,6 +28,9 @@ import {
 } from '../../types/completion';
 import { type Themeable2 } from '../../types/theme';
 import { makeValue, SCHEMA } from '../../utils/slate';
+import { LoadingPlaceholder } from '../LoadingPlaceholder/LoadingPlaceholder';
+
+const LazyEditor = lazy(() => import('slate-react').then((module) => ({ default: module.Editor })));
 
 export interface QueryFieldProps extends Themeable2 {
   additionalPlugins?: Plugin[];
@@ -216,24 +220,26 @@ export class UnThemedQueryField extends PureComponent<QueryFieldProps, QueryFiel
     return (
       <div className={cx(wrapperClassName, styles.wrapper)}>
         <div className="slate-query-field" data-testid={selectors.components.QueryField.container}>
-          <Editor
-            ref={(editor) => {
-              this.editor = editor;
-            }}
-            aria-labelledby={ariaLabelledby}
-            schema={SCHEMA}
-            autoCorrect={false}
-            readOnly={this.props.disabled}
-            onBlur={this.handleBlur}
-            onClick={this.props.onClick}
-            onChange={(change: { value: Value }) => {
-              this.onChange(change.value, false);
-            }}
-            placeholder={this.props.placeholder}
-            plugins={this.plugins}
-            spellCheck={false}
-            value={this.state.value}
-          />
+          <Suspense fallback={<LoadingPlaceholder text={t('grafana-ui.query-field.loading', 'Loading editor')} />}>
+            <LazyEditor
+              ref={(editor) => {
+                this.editor = editor;
+              }}
+              aria-labelledby={ariaLabelledby}
+              schema={SCHEMA}
+              autoCorrect={false}
+              readOnly={this.props.disabled}
+              onBlur={this.handleBlur}
+              onClick={this.props.onClick}
+              onChange={(change: { value: Value }) => {
+                this.onChange(change.value, false);
+              }}
+              placeholder={this.props.placeholder}
+              plugins={this.plugins}
+              spellCheck={false}
+              value={this.state.value}
+            />
+          </Suspense>
         </div>
       </div>
     );

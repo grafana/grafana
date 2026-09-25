@@ -700,6 +700,7 @@ function getPanelTransformations(transformations: DataTransformerConfig[]): Tran
       kind: 'Transformation' as const,
       group: t.id,
       spec: {
+        ...(t.refId !== undefined && { refId: t.refId }),
         disabled: t.disabled,
         filter: t.filter,
         ...(t.topic !== undefined && { topic: transformDataTopic(t.topic) }),

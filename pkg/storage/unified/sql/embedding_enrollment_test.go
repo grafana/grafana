@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/generic"
@@ -20,13 +21,19 @@ func TestEmbeddingEnrollmentUsesInitialAndReloadedManifests(t *testing.T) {
 	opts := &ServerOptions{
 		Cfg: &setting.Cfg{
 			EnableSearch:                     true,
+			VectorIndexingEnabled:            true,
+			EmbeddingProvider:                "test",
 			VectorAllowedInternalCollections: []string{"notes.example.test/notes"},
 		},
+		Backend:       struct{ resource.StorageBackend }{},
 		VectorBackend: struct{ vector.VectorBackend }{},
+		Embedder:      &embedder.Embedder{},
 		SearchOptions: resource.SearchOptions{EmbeddingConfig: configs},
 	}
-	var serverOpts resource.ResourceServerOptions
+	serverOpts := resource.ResourceServerOptions{VectorMetrics: resource.ProvideVectorMetrics(nil)}
 	require.NoError(t, withSearch(opts, &serverOpts), "live declarations are not required during construction")
+	require.NoError(t, withVectorIndexers(opts, &serverOpts))
+	require.NotNil(t, serverOpts.VectorReconciler)
 	provider := serverOpts.Search.EmbeddingBuilders
 	require.NotNil(t, provider)
 	require.Error(t, provider.Validate())
@@ -66,7 +73,7 @@ func TestEmbeddingEnrollmentUsesBuiltinDeclarations(t *testing.T) {
 		},
 		VectorBackend: struct{ vector.VectorBackend }{},
 	}
-	var serverOpts resource.ResourceServerOptions
+	serverOpts := resource.ResourceServerOptions{VectorMetrics: resource.ProvideVectorMetrics(nil)}
 	require.NoError(t, withSearch(opts, &serverOpts))
 	provider := serverOpts.Search.EmbeddingBuilders
 	require.NoError(t, provider.Validate())
@@ -92,7 +99,7 @@ func TestEmbeddingEnrollmentDisabledWithoutSearchOrIndexing(t *testing.T) {
 		},
 		VectorBackend: struct{ vector.VectorBackend }{},
 	}
-	var serverOpts resource.ResourceServerOptions
+	serverOpts := resource.ResourceServerOptions{VectorMetrics: resource.ProvideVectorMetrics(nil)}
 	require.NoError(t, withSearch(opts, &serverOpts))
 	require.Nil(t, serverOpts.Search.EmbeddingBuilders, "disabled consumers must not validate unavailable live declarations at startup")
 	require.Nil(t, serverOpts.Search.EmbeddingConfig)
@@ -109,7 +116,8 @@ func TestVectorIndexersRespectSharedAllowlistAndGlobalControls(t *testing.T) {
 	}{
 		{name: "dashboard enabled", allowed: []string{"dashboard.grafana.app/dashboards"}, provider: "test", active: true},
 		{name: "empty enrollment", provider: "test"},
-		{name: "dashboard excluded", allowed: []string{"folder.grafana.app/folders"}, provider: "test"},
+		{name: "folders without dashboards", allowed: []string{"folder.grafana.app/folders"}, provider: "test", active: true},
+		{name: "dashboards and folders", allowed: []string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"}, provider: "test", active: true},
 		{name: "indexing disabled", allowed: []string{"dashboard.grafana.app/dashboards"}, provider: "test", disabled: true},
 		{name: "provider disabled", allowed: []string{"dashboard.grafana.app/dashboards"}},
 	} {
@@ -124,7 +132,8 @@ func TestVectorIndexersRespectSharedAllowlistAndGlobalControls(t *testing.T) {
 				VectorBackend: struct{ vector.VectorBackend }{},
 				Embedder:      &embedder.Embedder{},
 			}
-			var serverOpts resource.ResourceServerOptions
+			serverOpts := resource.ResourceServerOptions{VectorMetrics: resource.ProvideVectorMetrics(nil)}
+			require.NoError(t, withSearch(opts, &serverOpts))
 			require.NoError(t, withVectorIndexers(opts, &serverOpts))
 			if tc.active {
 				require.NotNil(t, serverOpts.VectorReconciler)
@@ -133,4 +142,21 @@ func TestVectorIndexersRespectSharedAllowlistAndGlobalControls(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestVectorIndexersDeferBuilderSelectionUntilAfterConstruction(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.VectorIndexingEnabled = true
+	cfg.EmbeddingProvider = "test"
+	cfg.VectorAllowedInternalCollections = []string{"notes.example.test/notes"}
+	// Any provider call would panic: the initial live manifests are not ready yet.
+	provider := struct{ embed.BuilderProvider }{}
+	_, err := NewUninitializedResourceServer(ServerOptions{
+		Cfg:           cfg,
+		Backend:       struct{ resource.StorageBackend }{},
+		VectorBackend: struct{ vector.VectorBackend }{},
+		Embedder:      &embedder.Embedder{},
+		SearchOptions: resource.SearchOptions{EmbeddingBuilders: provider},
+	})
+	require.NoError(t, err)
 }

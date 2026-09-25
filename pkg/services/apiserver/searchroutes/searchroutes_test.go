@@ -355,7 +355,7 @@ func allBuilders(t *testing.T) []builder.APIGroupBuilder {
 // Listing the set makes that a failing test rather than a silent change.
 //
 // Kinds that opt out in their own manifest are absent: secure values, keepers,
-// channels, plugins, plugin metas, checks and check types.
+// channels, plugins, plugin metas, checks, check types, preferences and stars.
 func TestBuild_MountedKindsAreListedHere(t *testing.T) {
 	got := paths(Build(true, true, nil, fakeClient{}, allBuilders(t), nil))
 
@@ -392,7 +392,6 @@ func TestBuild_MountedKindsAreListedHere(t *testing.T) {
 		"logsdrilldowns",
 		"notebooks",
 		"playlists",
-		"preferences",
 		"receivers",
 		"recordingrules",
 		"repositories",
@@ -404,7 +403,6 @@ func TestBuild_MountedKindsAreListedHere(t *testing.T) {
 		"serviceaccounts",
 		"shorturls",
 		"snapshots",
-		"stars",
 		"teambindings",
 		"teamlbacrules",
 		"teams",
@@ -413,6 +411,22 @@ func TestBuild_MountedKindsAreListedHere(t *testing.T) {
 		"users",
 		"variables",
 	}, names)
+}
+
+func TestBuild_PrivateResourceManifestsDisableSearch(t *testing.T) {
+	b := &fakeBuilder{gvs: []schema.GroupVersion{
+		{Group: "preferences.grafana.app", Version: "v1"},
+		{Group: "preferences.grafana.app", Version: "v1alpha1"},
+		{Group: "collections.grafana.app", Version: "v1alpha1"},
+		{Group: "dashboard.grafana.app", Version: "v1"},
+	}}
+
+	got := paths(Build(true, false, nil, fakeClient{}, []builder.APIGroupBuilder{b}, nil))
+
+	assert.NotContains(t, got, "preferences.grafana.app/v1")
+	assert.NotContains(t, got, "preferences.grafana.app/v1alpha1")
+	assert.NotContains(t, got, "collections.grafana.app/v1alpha1")
+	assert.Contains(t, got["dashboard.grafana.app/v1"], "dashboards/search")
 }
 
 // A kind gaining /trash should fail this test rather than ship unnoticed.

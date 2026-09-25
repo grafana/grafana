@@ -98,11 +98,11 @@ func TestSingleTenantBreakersIsolateDestinations(t *testing.T) {
 		t.Run(discoveryPath, func(t *testing.T) {
 			st := newTestSingleTenantFallback(t)
 			st.discoveryHost = testFallbackURL(t, "https://discovery.example.com")
-			st.resolveHost = func(_ context.Context, stackID int64) (string, error) {
+			st.resolveHost = func(_ context.Context, stackID int64) (singleTenantStack, error) {
 				if stackID == 1 {
-					return "https://first.example.com", nil
+					return singleTenantStack{URL: "https://first.example.com"}, nil
 				}
-				return "https://second.example.com", nil
+				return singleTenantStack{URL: "https://second.example.com"}, nil
 			}
 			discoveryFailed := false
 			tenantFailed := false

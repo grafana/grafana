@@ -379,7 +379,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 		if openfeature.NewDefaultClient().Boolean(c.Req.Context(), featuremgmt.FlagGrafanaDashboardGlobalVariables, false, openfeature.TransactionContext(c.Req.Context())) &&
 			hasAccess(ac.EvalPermission(ac.ActionVariablesRead)) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-				Text:     "Variables",
+				Text:     "Cross-dashboard variables",
 				SubTitle: "Template variables shared across dashboards, globally or per folder",
 				Id:       "dashboards/variables",
 				Url:      s.cfg.AppSubURL + "/dashboards/variables",
