@@ -54,7 +54,7 @@ func (cfg *Cfg) readAuthExtJWTSettings() {
 	jwtSettings.JWKSUrl = authExtendedJWT.Key("jwks_url").MustString("")
 	// for Grafana, this defaults to hard coded value, but we leave it as a configurable param for other use-cases
 	audiences := extJWTAccessTokenExpectAudience
-	if authExtendedJWT.section.HasKey("audiences") {
+	if authExtendedJWT.HasKey("audiences") {
 		audiences = authExtendedJWT.Key("audiences").String()
 	}
 	jwtSettings.Audiences = util.SplitString(audiences)
