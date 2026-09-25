@@ -15,7 +15,7 @@ export function ToolbarExtensionPointMenu({ extensions, onSelect }: Props): Reac
   const showDivider = uncategorised.length > 0 && Object.keys(categorised).length > 0;
 
   return (
-    <Menu>
+    <Menu style={{ maxWidth: 'min(480px, calc(100vw - 32px))' }}>
       <>
         {Object.keys(categorised).map((category) => (
           <Menu.Group key={category} label={truncateTitle(category, 25)}>
@@ -32,14 +32,13 @@ export function ToolbarExtensionPointMenu({ extensions, onSelect }: Props): Reac
 function renderItems(extensions: PluginExtensionLink[], onSelect: (link: PluginExtensionLink) => void): JSX.Element[] {
   return extensions.map((extension) => {
     const dataTestId = selectors.pages.Explore.toolbar.add(extension.title);
-
     return (
       <Menu.Item
         testId={dataTestId}
         ariaLabel={extension.title}
         icon={extension?.icon || 'plug'}
         key={extension.id}
-        label={truncateTitle(extension.title, 25)}
+        label={extension.title}
         onClick={(event) => {
           if (extension.path) {
             return onSelect(extension);
