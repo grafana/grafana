@@ -28,8 +28,18 @@ jest.mock('@grafana/runtime/internal', () => ({
 
 jest.mock('@grafana/ui/unstable', () => ({
   ...jest.requireActual('@grafana/ui/unstable'),
-  CodeMirrorEditor: ({ value, onChange, 'aria-label': ariaLabel }: CodeMirrorEditorProps) => (
-    <textarea aria-label={ariaLabel} value={value} onChange={(e) => onChange(e.target.value)} />
+  CodeMirrorEditor: ({
+    value,
+    onChange,
+    'aria-label': ariaLabel,
+    'aria-labelledby': ariaLabelledBy,
+  }: CodeMirrorEditorProps) => (
+    <textarea
+      aria-label={ariaLabel}
+      aria-labelledby={ariaLabelledBy}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    />
   ),
 }));
 
@@ -71,6 +81,18 @@ describe('FeatureControlFlag', () => {
     jest.clearAllMocks();
     window.localStorage.clear();
     getLocalStorageProvider().clearFlags();
+  });
+
+  it.each([
+    { type: 'boolean', value: 'true' },
+    { type: 'number', value: '42' },
+    { type: 'string', value: 'hello' },
+    { type: 'object', value: '{"enabled":true}' },
+  ])('labels the $type value control with a screen-reader-only label', async ({ value }) => {
+    renderComponent({ key: 'alpha', value });
+    await expandFlag('alpha');
+
+    expect(screen.getByLabelText('Flag value')).toHaveAccessibleName('Flag value');
   });
 
   [

@@ -11,6 +11,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestBuildResourceServerOptionsGRPCErrorResultToStatus(t *testing.T) {
+	cfg := setting.NewCfg()
+	for _, enabled := range []bool{false, true} {
+		cfg.UnifiedStorageGRPCErrorResultToStatus = enabled
+		opts, err := buildResourceServerOptions(&ServerOptions{Cfg: cfg})
+		require.NoError(t, err)
+		require.Equal(t, enabled, opts.GRPCErrorResultToStatus)
+	}
+}
+
 func TestIsHighAvailabilityEnabled(t *testing.T) {
 	tests := []struct {
 		name string
@@ -173,6 +183,14 @@ func TestWithAccessClientValidatesAuthzConfig(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
+}
+
+func TestWithAuthorizeBeforeFetch(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.AuthorizeBeforeFetchEnabled = true
+	resourceOpts := &resource.ResourceServerOptions{}
+	require.NoError(t, withAuthorizeBeforeFetch(&ServerOptions{Cfg: cfg}, resourceOpts))
+	require.True(t, resourceOpts.AuthorizeBeforeFetchEnabled)
 }
 
 func TestWithNatsWatchMaxAge(t *testing.T) {
