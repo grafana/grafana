@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -37,7 +38,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -69,7 +69,6 @@ func TestDashboardServiceValidation(t *testing.T) {
 		log:                    log.New("test.logger"),
 		folderService:          foldertest.NewFakeService(),
 		ac:                     actest.FakeAccessControl{ExpectedEvaluate: true},
-		features:               featuremgmt.WithFeatures(),
 		publicDashboardService: fakePublicDashboardService,
 	}
 
@@ -786,12 +785,54 @@ func TestSetDefaultPermissionsWhenSavingFolderForProvisionedDashboards(t *testin
 		OrgID: 1,
 	}
 
-	service.features = featuremgmt.WithFeatures()
 	folder, err := service.SaveFolderForProvisionedDashboards(context.Background(), cmd, "")
 	require.NoError(t, err)
 	require.NotNil(t, folder)
 
 	folderPermService.AssertNumberOfCalls(t, "SetPermissions", 0)
+}
+
+func TestSetDefaultPermissionsUsesIAMStartupResourcePermissionsAPI(t *testing.T) {
+	f := ini.Empty()
+	f.Section("rbac").Key("resources_with_managed_permissions_on_creation").SetValue("dashboard")
+	cfg, err := setting.NewCfgFromINIFile(f)
+	require.NoError(t, err)
+
+	for _, tt := range []struct {
+		name       string
+		apiEnabled bool
+		wantLegacy bool
+	}{
+		{name: "legacy permissions when API is unavailable", wantLegacy: true},
+		{name: "App Platform permissions when API is available", apiEnabled: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			permissions := acmock.NewMockedPermissionsService()
+			permissions.On("SetPermissions", mock.Anything, int64(1), "dashboard-uid", mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil).Maybe()
+
+			service := &DashboardServiceImpl{
+				cfg:                       cfg,
+				log:                       log.NewNopLogger(),
+				iamFeatures:               iamapi.Features{ResourcePermissionsAPI: tt.apiEnabled},
+				dashboardPermissionsReady: make(chan struct{}),
+				acService:                 &actest.FakeService{},
+			}
+			service.RegisterDashboardPermissions(permissions)
+
+			service.SetDefaultPermissions(
+				context.Background(),
+				&dashboards.SaveDashboardDTO{OrgID: 1, User: &user.SignedInUser{IsAnonymous: true}},
+				&dashboards.Dashboard{UID: "dashboard-uid"},
+				false,
+			)
+
+			if tt.wantLegacy {
+				permissions.AssertCalled(t, "SetPermissions", mock.Anything, int64(1), "dashboard-uid", mock.Anything)
+			} else {
+				permissions.AssertNotCalled(t, "SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+			}
+		})
+	}
 }
 
 func TestSaveProvisionedDashboard(t *testing.T) {
@@ -803,9 +844,8 @@ func TestSaveProvisionedDashboard(t *testing.T) {
 				UID: "general",
 			},
 		},
-		ac:       actest.FakeAccessControl{ExpectedEvaluate: true},
-		log:      log.NewNopLogger(),
-		features: featuremgmt.WithFeatures(),
+		ac:  actest.FakeAccessControl{ExpectedEvaluate: true},
+		log: log.NewNopLogger(),
 	}
 
 	query := &dashboards.SaveDashboardDTO{
@@ -850,8 +890,7 @@ func TestSaveDashboard(t *testing.T) {
 		folderService: &foldertest.FakeService{
 			ExpectedFolder: &folder.Folder{},
 		},
-		ac:       actest.FakeAccessControl{ExpectedEvaluate: true},
-		features: featuremgmt.WithFeatures(),
+		ac: actest.FakeAccessControl{ExpectedEvaluate: true},
 	}
 
 	query := &dashboards.SaveDashboardDTO{
@@ -1063,7 +1102,6 @@ func TestSearchDashboards(t *testing.T) {
 	fakeFolders.ExpectedFolders = []*folder.Folder{fakeFolders.ExpectedFolder}
 	service := &DashboardServiceImpl{
 		cfg:           setting.NewCfg(),
-		features:      featuremgmt.WithFeatures(),
 		folderService: fakeFolders,
 		metrics:       newDashboardsMetrics(prometheus.NewRegistry()),
 	}
@@ -2076,15 +2114,12 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 				ctx = identity.WithRequester(ctx, user)
 
 				// Setup mocks and service
-				features := featuremgmt.WithFeatures()
-
 				permService := acmock.NewMockedPermissionsService()
 				permService.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 
 				service := &DashboardServiceImpl{
 					cfg:                       setting.NewCfg(),
 					log:                       log.New("test-logger"),
-					features:                  features,
 					dashboardPermissions:      permService,
 					folderPermissions:         permService,
 					dashboardPermissionsReady: make(chan struct{}),
@@ -2365,8 +2400,6 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 
 			fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 			fakeOrgService := orgtest.NewOrgServiceFake()
-			features := featuremgmt.WithFeatures()
-
 			service := &DashboardServiceImpl{
 				cfg:                    setting.NewCfg(),
 				log:                    log.New("test.logger"),
@@ -2375,7 +2408,6 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 				orgService:             fakeOrgService,
 				serverLockService:      lockService,
 				kvstore:                kv,
-				features:               features,
 			}
 
 			ctx, k8sCliMock := setupK8sDashboardTests(service)
@@ -2409,7 +2441,6 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 		service := &DashboardServiceImpl{
 			cfg:               cfg,
 			log:               log.New("test.logger"),
-			features:          featuremgmt.WithFeatures(),
 			serverLockService: lockService,
 		}
 
@@ -2463,7 +2494,6 @@ func TestGetDashboardsByLibraryPanelUID(t *testing.T) {
 		log:                    log.New("test.logger"),
 		folderService:          folderSvc,
 		ac:                     actest.FakeAccessControl{ExpectedEvaluate: true},
-		features:               featuremgmt.WithFeatures(),
 		publicDashboardService: fakePublicDashboardService,
 		k8sclient:              k8sCliMock,
 	}

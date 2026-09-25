@@ -18,6 +18,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -39,12 +40,12 @@ type api struct {
 	router             routing.RouteRegister
 	service            *Service
 	permissions        []string
-	features           featuremgmt.FeatureToggles
+	iamFeatures        iamapi.Features
 	restConfigProvider apiserver.DirectRestConfigProvider
 	logger             log.Logger
 }
 
-func newApi(cfg *setting.Cfg, ac accesscontrol.AccessControl, router routing.RouteRegister, manager *Service, features featuremgmt.FeatureToggles, restConfigProvider apiserver.DirectRestConfigProvider) *api {
+func newApi(cfg *setting.Cfg, ac accesscontrol.AccessControl, router routing.RouteRegister, manager *Service, restConfigProvider apiserver.DirectRestConfigProvider, iamFeatures iamapi.Features) *api {
 	permissions := make([]string, 0, len(manager.permissions))
 	// reverse the permissions order for display
 	for _, v := range slices.Backward(manager.permissions) {
@@ -56,29 +57,25 @@ func newApi(cfg *setting.Cfg, ac accesscontrol.AccessControl, router routing.Rou
 		router:             router,
 		service:            manager,
 		permissions:        permissions,
-		features:           features,
+		iamFeatures:        iamFeatures,
 		restConfigProvider: restConfigProvider,
 		logger:             log.New("resource-permissions-api"),
 	}
 }
 
-// shouldUseK8sAPIs returns true if both feature flags for K8s API redirect are enabled
+// shouldUseK8sAPIs returns true if both gates for K8s API redirect are enabled.
 func (a *api) shouldUseK8sAPIs(ctx context.Context) bool {
-	return k8sResourcePermissionRedirectEnabled(ctx)
+	return k8sResourcePermissionRedirectEnabled(ctx, a.iamFeatures.ResourcePermissionsAPI)
 }
 
-// k8sResourcePermissionRedirectEnabled reports whether both feature flags that
-// gate the K8s resource-permission adapter are enabled for ctx. Both must be on:
-//   - ...ResourcePermissionApis registers the K8s ResourcePermission /apis
-//     endpoints (the destination must exist), and
+// k8sResourcePermissionRedirectEnabled reports whether both gates for the K8s
+// resource-permission adapter are enabled for ctx. Both must be on:
+//   - resourcePermissionsAPIEnabled means the K8s ResourcePermission /apis
+//     endpoints were registered at startup (the destination must exist), and
 //   - ...ResourcePermissionsRedirect redirects legacy permission traffic to them.
-//
-// It is the single source of truth for the redirect gate, shared by the runtime
-// path (shouldUseK8sAPIs) and the startup validation (requiresAPIGroup in
-// service.go) so the two cannot drift.
-func k8sResourcePermissionRedirectEnabled(ctx context.Context) bool {
-	return ofClient.Boolean(ctx, featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect, false, openfeature.TransactionContext(ctx)) &&
-		ofClient.Boolean(ctx, featuremgmt.FlagKubernetesAuthzResourcePermissionApis, false, openfeature.TransactionContext(ctx))
+func k8sResourcePermissionRedirectEnabled(ctx context.Context, resourcePermissionsAPIEnabled bool) bool {
+	return resourcePermissionsAPIEnabled &&
+		ofClient.Boolean(ctx, featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect, false, openfeature.TransactionContext(ctx))
 }
 
 // getFallbackStatus returns "fallback" if K8s redirect is enabled, "success" otherwise
