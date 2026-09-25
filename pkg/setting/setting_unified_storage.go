@@ -177,6 +177,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.RenameWaitDeadline = section.Key("rename_wait_deadline").MustDuration(time.Minute)
 	cfg.UnifiedStorageAuthzExemptionEnabled = section.Key("authz_exemption_enabled").MustBool(false)
 	cfg.UnifiedStorageAuthzExemptResources = parseCommaSeparatedList(section.Key("authz_exempt_resources").String())
+	cfg.UnifiedStorageGRPCErrorResultToStatus = section.Key("grpc_error_result_to_status").MustBool(false)
 	cfg.SearchInjectFailuresPercent = section.Key("search_inject_failures_percent").MustInt(0)
 	if cfg.SearchInjectFailuresPercent < 0 {
 		cfg.SearchInjectFailuresPercent = 0
@@ -200,12 +201,14 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.VectorAllowedExternalCollections = section.Key("vector_allowed_external_collections").Strings(",")
 	cfg.VectorAllowedWriteServices = section.Key("vector_allowed_write_services").Strings(",")
 	cfg.VectorIndexingEnabled = section.Key("vector_indexing_enabled").MustBool(false)
+	cfg.VectorBackfillPageSize = section.Key("vector_backfill_page_size").MustInt(0)
 	cfg.VectorReconcilerInterval = section.Key("vector_reconciler_interval").MustDuration(time.Minute)
 	// Full aggregate scan of the embeddings table; hourly by default, zero disables.
 	cfg.VectorEmbeddingCountInterval = section.Key("vector_embedding_count_interval").MustDuration(time.Hour)
 	cfg.applyMigrationEnforcements()
 	cfg.EnableSearchClient = section.Key("enable_search_client").MustBool(false)
 	cfg.MaxPageSizeBytes = section.Key("max_page_size_bytes").MustInt(0)
+	cfg.AuthorizeBeforeFetchEnabled = section.Key("authorize_before_fetch_enabled").MustBool(false)
 	cfg.IndexPath = section.Key("index_path").String()
 	cfg.IndexWorkers = section.Key("index_workers").MustInt(10)
 	cfg.IndexRebuildWorkers = section.Key("index_rebuild_workers").MustInt(5)

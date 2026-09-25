@@ -32,7 +32,7 @@ func withGroups(groups ...string) *GrafanaRouter {
 			breaker: newGroupBreaker(g),
 		}
 	}
-	s.publish()
+	s.publish(context.Background())
 	return s
 }
 
@@ -291,7 +291,7 @@ func (erroringLoader) Notify(context.Context) (<-chan struct{}, error) {
 // clients an empty discovery document instead of waiting for a real load.
 func TestReadyFailsAfterTotallyFailedInitialReconcile(t *testing.T) {
 	r := NewGrafanaRouter(erroringLoader{})
-	r.storeServing(r.reconcile(context.Background()))
+	r.storeServing(context.Background(), r.reconcile(context.Background()))
 
 	if err := r.Ready(context.Background()); err == nil {
 		t.Error("Ready() = nil after totally failed initial reconcile, want error (nothing has ever been served)")
@@ -319,7 +319,7 @@ func TestReadyOKWithPartialLoadFailureGivenAtLeastOneServedGroup(t *testing.T) {
 		failingBackend{group: "bad.grafana.app", key: "1"},
 	}}
 	r := NewGrafanaRouter(loader)
-	r.storeServing(r.reconcile(context.Background()))
+	r.storeServing(context.Background(), r.reconcile(context.Background()))
 
 	if err := r.Ready(context.Background()); err != nil {
 		t.Errorf("Ready() = %v, want nil (one group succeeded, so last-known-good exists)", err)
@@ -351,7 +351,7 @@ func TestRouterFallbackOnlyForUnregisteredGroups(t *testing.T) {
 		t.Run(tc.path, func(t *testing.T) {
 			router := withGroups("known")
 			router.served["known"].handler = http.NotFoundHandler()
-			router.publish()
+			router.publish(t.Context())
 			called := false
 			router.unregisteredGroupHandler = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				called = true

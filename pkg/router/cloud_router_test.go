@@ -21,6 +21,7 @@ import (
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/time/rate"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -508,7 +509,7 @@ func TestCloudLoaderSingleTenantFallback(t *testing.T) {
 			switch r.URL.Path {
 			case "/api/instances/35611":
 				w.Header().Set("Content-Type", "application/json")
-				_, _ = w.Write([]byte(`{"url":"https://play.grafana.org/"}`))
+				_, _ = w.Write([]byte(`{"slug":"play"}`))
 			case "/api/instances/123":
 				w.WriteHeader(http.StatusNotFound)
 			default:
@@ -527,7 +528,7 @@ func TestCloudLoaderSingleTenantFallback(t *testing.T) {
 		require.Same(t, cloud.singleTenantFallback, cloud.SingleTenantFallback())
 		host, err := cloud.singleTenantFallback.hostForNamespace(t.Context(), "stacks-35611")
 		require.NoError(t, err)
-		require.Equal(t, "https://play.grafana.org/", host.String())
+		require.Equal(t, "http://play-grafana-http.hosted-grafana.svc.cluster.local.:80", host.url.String())
 		host, err = cloud.singleTenantFallback.hostForNamespace(t.Context(), "stacks-123")
 		require.NoError(t, err)
 		require.Nil(t, host)
@@ -536,6 +537,46 @@ func TestCloudLoaderSingleTenantFallback(t *testing.T) {
 		t.Run(raw, func(t *testing.T) {
 			cfg := cfgWithCloudRouterSection(t, map[string]string{"st_discovery_url": raw})
 			_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+			require.Error(t, err)
+		})
+	}
+}
+
+func TestCloudLoaderSingleTenantLookupLimits(t *testing.T) {
+	stLimiter := func(t *testing.T, keys map[string]string) (*rate.Limiter, error) {
+		keys["st_discovery_url"] = "https://play.grafana.org/"
+		loader, err := ProvideCloudRoutesLoaderFactory(cfgWithCloudRouterSection(t, keys), PluginDependencies{})
+		if err != nil {
+			return nil, err
+		}
+		return loader.(*cloudLoader).singleTenantFallback.lookupLimiter, nil
+	}
+
+	t.Run("defaults", func(t *testing.T) {
+		limiter, err := stLimiter(t, map[string]string{})
+		require.NoError(t, err)
+		require.Equal(t, rate.Limit(defaultSingleTenantLookupRate), limiter.Limit())
+		require.Equal(t, defaultSingleTenantLookupBurst, limiter.Burst())
+	})
+	t.Run("configured", func(t *testing.T) {
+		limiter, err := stLimiter(t, map[string]string{"st_lookup_rate": "5", "st_lookup_burst": "7"})
+		require.NoError(t, err)
+		require.Equal(t, rate.Limit(5), limiter.Limit())
+		require.Equal(t, 7, limiter.Burst())
+	})
+	t.Run("zero rate disables the limit", func(t *testing.T) {
+		limiter, err := stLimiter(t, map[string]string{"st_lookup_rate": "0"})
+		require.NoError(t, err)
+		require.Nil(t, limiter)
+	})
+	for key, value := range map[string]string{
+		"st_cache_size":         "0",
+		"st_breaker_cache_size": "-1",
+		"st_lookup_rate":        "-1",
+		"st_lookup_burst":       "0",
+	} {
+		t.Run("invalid "+key, func(t *testing.T) {
+			_, err := stLimiter(t, map[string]string{key: value})
 			require.Error(t, err)
 		})
 	}

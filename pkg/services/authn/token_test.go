@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -95,6 +96,7 @@ func TestGrafanaTokenAuthenticator(t *testing.T) {
 			require.Equal(t, validClaims().Rest.Permissions, requester.GetTokenPermissions())
 			require.Equal(t, token, requester.GetAccessToken())
 			require.False(t, requester.GetIsGrafanaAdmin())
+			require.Equal(t, org.RoleNone, requester.GetOrgRole())
 			require.Equal(t, map[string][]string{
 				authnlib.ServiceIdentityKey:          {"edge"},
 				authnlib.InnermostServiceIdentityKey: {"edge"},
@@ -128,12 +130,53 @@ func TestGrafanaTokenAuthenticator(t *testing.T) {
 			require.Equal(t, "alice@example.com", requester.GetEmail())
 			require.True(t, requester.GetEmailVerified())
 			require.Equal(t, []string{"team-1"}, requester.GetGroups())
+			require.Equal(t, org.RoleNone, requester.GetOrgRole())
 			require.Empty(t, requester.GetTokenPermissions())
 			require.Equal(t, claims.Rest.DelegatedPermissions, requester.GetTokenDelegatedPermissions())
 			require.Equal(t, map[string][]string{
 				authnlib.ServiceIdentityKey:          {"edge"},
 				authnlib.InnermostServiceIdentityKey: {"origin"},
 			}, requester.GetExtra())
+		})
+	}
+	for _, tc := range []struct {
+		name     string
+		typ      types.IdentityType
+		role     org.RoleType
+		nested   bool
+		wantRole org.RoleType
+	}{
+		{name: "user viewer", typ: types.TypeUser, role: org.RoleViewer, wantRole: org.RoleViewer},
+		{name: "service account editor", typ: types.TypeServiceAccount, role: org.RoleEditor, wantRole: org.RoleEditor},
+		{name: "nested user admin", typ: types.TypeUser, role: org.RoleAdmin, nested: true, wantRole: org.RoleAdmin},
+		{name: "nested service account viewer", typ: types.TypeServiceAccount, role: org.RoleViewer, nested: true, wantRole: org.RoleViewer},
+		{name: "missing innermost role", typ: types.TypeUser, nested: true, wantRole: org.RoleNone},
+		{name: "explicit none", typ: types.TypeUser, role: org.RoleNone, wantRole: org.RoleNone},
+		{name: "access policy role ignored", typ: types.TypeAccessPolicy, role: org.RoleAdmin, wantRole: org.RoleNone},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			claims := validClaims()
+			claims.Rest.Namespace = "org-12"
+			claims.Rest.Actor = &authnlib.ActorClaims{
+				Subject:       types.NewTypeID(tc.typ, "42"),
+				IDTokenClaims: authnlib.IDTokenClaims{Type: tc.typ, Identifier: "actor-uid", Role: string(tc.role)},
+			}
+			if tc.nested {
+				claims.Rest.Actor = &authnlib.ActorClaims{
+					Subject:       "access-policy:intermediate",
+					IDTokenClaims: authnlib.IDTokenClaims{Role: string(org.RoleEditor)},
+					Actor:         claims.Rest.Actor,
+				}
+			}
+			requester, err := authenticator.AuthenticateToken(t.Context(), sign(claims, key, authnlib.TokenTypeAccess))
+			require.NoError(t, err)
+			require.Equal(t, tc.wantRole, requester.GetOrgRole())
+			if tc.role != "" && tc.typ != types.TypeAccessPolicy {
+				require.Equal(t, map[int64]org.RoleType{12: tc.role}, requester.(*grafanaTokenRequester).OrgRoles)
+				require.True(t, requester.HasRole(tc.role))
+			} else {
+				require.Nil(t, requester.(*grafanaTokenRequester).OrgRoles)
+			}
 		})
 	}
 	for _, tc := range []struct {

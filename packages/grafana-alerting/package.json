@@ -67,7 +67,7 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
-    "@types/lodash": "^4",
+    "@types/lodash": "^4.17.25",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
     "@types/tinycolor2": "^1",

@@ -210,7 +210,7 @@ func (n *eventStore) ListKeysSince(ctx context.Context, sinceRV int64, sortOrder
 	}
 	return func(yield func(string, error) bool) {
 		defer span.End()
-		for evtKey, err := range n.kv.Keys(ctx, eventsSection, opts) {
+		for evtKey, err := range pagedKeys(ctx, n.kv, eventsSection, opts, keyPageSize) {
 			if err != nil {
 				yield("", err)
 				return

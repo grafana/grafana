@@ -335,6 +335,10 @@ const (
 	// Enables Saved queries (query library) feature
 	FlagQueryLibrary = "queryLibrary"
 
+	// FlagGrafanaSavedQueriesSearch
+	// Enables unified search for saved queries
+	FlagGrafanaSavedQueriesSearch = "grafana.savedQueriesSearch"
+
 	// FlagGrafanaSavedQueriesPage
 	// Enables the dedicated Saved queries page and its navigation entry
 	FlagGrafanaSavedQueriesPage = "grafana.savedQueriesPage"
@@ -741,10 +745,6 @@ const (
 	// FlagSecretsManagementAppPlatformAwsKeeper
 	// Enables the creation of keepers that manage secrets stored on AWS secrets manager
 	FlagSecretsManagementAppPlatformAwsKeeper = "secretsManagementAppPlatformAwsKeeper"
-
-	// FlagProfilesExemplars
-	// Enables profiles exemplars support in profiles drilldown
-	FlagProfilesExemplars = "profilesExemplars"
 
 	// FlagPyroscopeUTF8LabelNames
 	// Enables support for UTF-8 label names in Pyroscope label selectors

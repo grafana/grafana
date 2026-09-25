@@ -2063,6 +2063,77 @@ func collectListItems(t *testing.T, backend *kvStorageBackend, ctx context.Conte
 	return items, rv
 }
 
+func TestKvStorageBackend_ListKeysAndFetchValues(t *testing.T) {
+	kvStore := &countingKV{KV: setupBadgerKV(t)}
+	backend := setupTestStorageBackend(t, withKV(kvStore))
+	ctx := t.Context()
+
+	for _, res := range []struct{ name, folder string }{
+		{"resource-1", "folder-a"},
+		{"resource-2", ""},
+		{"resource-3", "folder-b"},
+	} {
+		seedResource(t, backend, ctx, res.name, res.folder)
+	}
+
+	tripsBefore, readsBefore := kvStore.stats()
+	var listed []BackendListKey
+	rv, err := backend.ListKeys(ctx, appsCollectionRequest(false), func(iter ListKeyIterator) error {
+		for iter.Next() {
+			listed = append(listed, iter.Item())
+		}
+		return iter.Error()
+	})
+	require.NoError(t, err)
+	require.Greater(t, rv, int64(0))
+	require.Len(t, listed, 3)
+	tripsAfter, readsAfter := kvStore.stats()
+	require.Equal(t, 0, tripsAfter-tripsBefore)
+	require.Equal(t, 0, readsAfter-readsBefore)
+	require.Equal(t, []string{"resource-1", "resource-2", "resource-3"}, []string{
+		listed[0].Key.Name, listed[1].Key.Name, listed[2].Key.Name,
+	})
+	require.Equal(t, []string{"folder-a", "", "folder-b"}, []string{
+		listed[0].Folder, listed[1].Folder, listed[2].Folder,
+	})
+
+	updated, err := createTestObjectWithName("resource-1", appsNamespace, "updated-data")
+	require.NoError(t, err)
+	updatedMeta, err := utils.MetaAccessor(updated)
+	require.NoError(t, err)
+	updatedMeta.SetFolder("folder-new")
+	_, err = backend.WriteEvent(ctx, WriteEvent{
+		Type:       resourcepb.WatchEvent_MODIFIED,
+		Key:        appsKey("resource-1"),
+		Value:      objectToJSONBytes(t, updated),
+		Object:     updatedMeta,
+		PreviousRV: listed[0].ResourceVersion,
+	})
+	require.NoError(t, err)
+	require.NoError(t, backend.dataStore.BatchDelete(ctx, []DataKey{listed[1].dataKey}))
+
+	fetchTripsBefore, fetchReadsBefore := kvStore.stats()
+	values, err := backend.FetchValues(ctx, listed)
+	require.NoError(t, err)
+	var fetched []*BackendReadResponse
+	for value, valueErr := range values {
+		require.NoError(t, valueErr)
+		fetched = append(fetched, value)
+	}
+	require.Len(t, fetched, 2, "a value removed after listing is skipped")
+	for i, listedIndex := range []int{0, 2} {
+		require.Equal(t, listed[listedIndex].Key, fetched[i].Key)
+		require.Equal(t, listed[listedIndex].ResourceVersion, fetched[i].ResourceVersion)
+		require.NotEmpty(t, fetched[i].Value)
+	}
+	require.Contains(t, string(fetched[0].Value), "data-resource-1", "fetch must use the exact listed revision")
+	require.NotContains(t, string(fetched[0].Value), "updated-data")
+	require.Equal(t, "folder-a", fetched[0].Folder)
+	fetchTrips, fetchReads := kvStore.stats()
+	require.Equal(t, 1, fetchTrips-fetchTripsBefore)
+	require.Equal(t, len(listed), fetchReads-fetchReadsBefore)
+}
+
 // A keys-only list must report the same identities as a normal list, and read no
 // values doing it. The value-read assertion is the load-bearing one: a nil Value()
 // would also hold if the iterator fetched every object and discarded it.
@@ -4677,4 +4748,67 @@ func TestKVStorageBackendDisableStorageServices(t *testing.T) {
 		})
 		require.IsType(t, &NoopPruner{}, backend.historyPruner)
 	})
+}
+
+// Concurrent ListModifiedSince requests must release their key cursors before
+// fetching values, even when the SQL pool has only one connection available.
+func TestListModifiedSinceSingleConnection(t *testing.T) {
+	for _, age := range []time.Duration{time.Minute, 2 * time.Hour} {
+		t.Run(age.String(), func(t *testing.T) {
+			store, pool := setupSqlKVWithDB(t)
+			backend := &kvStorageBackend{
+				dataStore:  newDataStore(store, nil),
+				eventStore: newEventStore(store),
+				log:        log.NewNopLogger(),
+			}
+			since := snowflakeFromTime(time.Now().Add(-age))
+			// Cross a page boundary to exercise continuation in both scan directions.
+			const count = keyPageSize + 1
+			expected := make(map[string]string, count)
+			for i := range count {
+				key := DataKey{Namespace: "default", Group: "apps", Resource: "resource", Name: fmt.Sprintf("item-%03d", i), ResourceVersion: since + int64(i) + 1, Action: DataActionCreated}
+				expected[key.Name] = key.Name
+				require.NoError(t, backend.dataStore.Save(t.Context(), key, strings.NewReader(key.Name)))
+				require.NoError(t, backend.eventStore.Save(t.Context(), Event{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: key.Name, ResourceVersion: key.ResourceVersion, Action: key.Action}))
+			}
+			maxOpenConns := pool.Stats().MaxOpenConnections
+			t.Cleanup(func() { pool.SetMaxOpenConns(maxOpenConns) })
+			pool.SetMaxOpenConns(1)
+
+			ctx, cancel := context.WithTimeout(t.Context(), 3*time.Second)
+			defer cancel()
+			var requests [2]struct {
+				rv        int64
+				resources []*ModifiedResource
+				err       error
+			}
+			var wg sync.WaitGroup
+			for i := range requests {
+				wg.Go(func() {
+					rv, results := backend.ListModifiedSince(ctx, appsNamespace, since, nil)
+					requests[i].rv = rv
+					for result, err := range results {
+						if err != nil {
+							requests[i].err = err
+							return
+						}
+						requests[i].resources = append(requests[i].resources, result)
+					}
+				})
+			}
+			wg.Wait()
+			for i, request := range requests {
+				require.NoError(t, request.err, "age %s, request %d", age, i)
+				require.Equal(t, since+count, request.rv)
+				actual := make(map[string]string, count)
+				for _, result := range request.resources {
+					require.NotContains(t, actual, result.Key.Name)
+					actual[result.Key.Name] = string(result.Value)
+				}
+				require.Equal(t, expected, actual)
+			}
+			require.Zero(t, pool.Stats().InUse)
+			require.NoError(t, pool.PingContext(ctx))
+		})
+	}
 }

@@ -475,6 +475,7 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Externe Alertmanagers",
+      "external-alertmanagers-group-plugin": "",
       "noOptionsMessage-no-datasources-found": "Geen gegevensbronnen gevonden"
     },
     "alert-menu": {
@@ -2673,6 +2674,8 @@
       }
     },
     "proxied-alerting-route": {
+      "redirected-body": "",
+      "redirected-title": "",
       "text-redirecting": ""
     },
     "query-and-expressions-step": {
@@ -2978,6 +2981,15 @@
     },
     "rule-list": {
       "configure-datasource": "Configureren",
+      "datasource-managed-notice": {
+        "action": "",
+        "body": "",
+        "inline-action": "",
+        "inline_one": "",
+        "inline_other": "",
+        "title_one": "",
+        "title_other": ""
+      },
       "ds-error": {
         "title": "Kan geen regels laden voor deze gegevensbron"
       },
@@ -2998,7 +3010,8 @@
         "no-more-results": "Geen resultaten - {{numberOfRules}} regels gevonden",
         "no-rules-found": "Er kwamen geen waarschuwings- of opnameregels overeen met je huidige filterset.",
         "results-loading": "Zoeken: {{numberOfRules}} regels gevonden",
-        "results-with-cancellation": "Zoekopdracht geannuleerd - {{numberOfRules}} regels gevonden"
+        "results-with-cancellation": "Zoekopdracht geannuleerd - {{numberOfRules}} regels gevonden",
+        "search-in-plugin": ""
       },
       "import-disabled-tooltip": {
         "auto-sync": "Importeren is niet beschikbaar terwijl de automatische synchronisatie van Mimir Alertmanager actief is"
@@ -4392,6 +4405,7 @@
       "label-top": "Boven"
     },
     "name-show-unfilled-area": "Niet-gevuld gebied weergeven",
+    "name-text-mode": "",
     "name-value-display": "Weergave van waarden",
     "presets": {
       "basic": "Basic",
@@ -4410,6 +4424,13 @@
     "suggestions": {
       "basic": "Balkmeter",
       "lcd": "Staafmeter - LCD"
+    },
+    "text-mode-options": {
+      "label-auto": "",
+      "label-name": "",
+      "label-none": "",
+      "label-value": "",
+      "label-value-and-name": ""
     },
     "value-display-options": {
       "label-hidden": "Verborgen",
@@ -5764,6 +5785,7 @@
     "edit-actions": {
       "add": "{{typeName}} toevoegen",
       "add-conditional-rule": "Regel {{ruleDescription}} toevoegen",
+      "collapse-all-rows": "",
       "dashboard-description": "Dashboardbeschrijving wijzigen",
       "dashboard-title": "Dashboardtitel wijzigen",
       "duplicate": "Dupliceer {{typeName}}",
@@ -5771,6 +5793,7 @@
       "edit-query-result-rule": "Regel voor queryresultaat wijzigen",
       "edit-template-variable-rule": "Regel voor sjabloonvariabele wijzigen",
       "edit-time-range-rule": "Regel voor tijdsbereik wijzigen",
+      "expand-all-rows": "",
       "group-into-row": "Groeperen in rij",
       "group-into-tab": "Groeperen in tabblad",
       "move": "{{typeName}} verplaatsen ",
@@ -5803,9 +5826,7 @@
       "add-library-panel-header": "Paneel importeren",
       "add-visualization-body": "Selecteer een gegevensbron en zoek en visualiseer je gegevens met grafieken, statistieken en tabellen of maak lijsten, prijsverlagingen en andere widgets.",
       "add-visualization-button": "Visualisatie toevoegen",
-      "add-visualization-description": "",
       "add-visualization-header": "Begin je nieuwe dashboard door een visualisatie toe te voegen",
-      "add-visualization-heading": "",
       "assistant-placeholder": "",
       "auto-grid": "Automatisch raster",
       "auto-grid-description": "Panelen verkleinen zodat ze passen en uniforme rasters vormen",
@@ -5813,9 +5834,6 @@
       "custom-grid": "Aangepast raster",
       "custom-grid-description": "Plaats en formatteer elk paneel afzonderlijk",
       "description": "Voeg een paneel toe om je gegevens te visualiseren",
-      "grid-auto": "",
-      "grid-custom": "",
-      "grid-label": "",
       "import-a-dashboard-body": "Importeer dashboards uit bestanden of <2>grafana.com</2>.",
       "import-a-dashboard-header": "Dashboard importeren",
       "import-dashboard-button": "Dashboard importeren",
@@ -6044,6 +6062,12 @@
       "ungroup-repeat-loss": "Herhalingsopties die voor de opgeheven groepen zijn geconfigureerd, gaan verloren.",
       "ungroup-repeat-loss-title": "Groepering opheffen?"
     },
+    "loading": {
+      "drawer": "",
+      "drawer-title": "",
+      "sidebar": "",
+      "sidebar-title": ""
+    },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} van {{numberOfPages}}",
       "tooltip-next": "Volgende",
@@ -6143,9 +6167,7 @@
     "planning-banner": {
       "build": "",
       "dismiss": "",
-      "plan-label": "",
-      "panel-count_one": "",
-      "panel-count_other": ""
+      "preview-label": ""
     },
     "public-dashboard-not-available": {
       "does-not-exist": "Het dashboard dat je probeert te openen bestaat niet",
@@ -6764,7 +6786,14 @@
         "title-remove": "Verwijderen",
         "title-show-transform-help": "Hulp bij transformatie weergeven"
       },
-      "title-delete": "{{name}} verwijderen?"
+      "title-delete": "{{name}} verwijderen?",
+      "transformation-editor-row-header": {
+        "edit-refId": "",
+        "edit-refId-placeholder": "",
+        "refId-exists-error": "",
+        "refId-reserved-error": "",
+        "refId-variable-error": ""
+      }
     },
     "transformation-operation-rows": {
       "remove-transformation": "",
@@ -7429,7 +7458,6 @@
       },
       "render-save-button-and-error": {
         "body-plugin-dashboard": "Je wijzigingen zullen verloren gaan wanneer je de plugin bijwerkt. Gebruik <strong>Opslaan als</strong> om een aangepaste versie te maken.",
-        "title-failed-to-save-dashboard": "Kan dashboard niet opslaan",
         "title-plugin-dashboard": "Plug-indashboard",
         "title-someone-else-has-updated-this-dashboard": "Iemand anders heeft dit dashboard bijgewerkt",
         "would-still-dashboard": "Wil je dit dashboard nog steeds opslaan?"
@@ -7697,9 +7725,6 @@
       },
       "label-copy-tags": "Labels kopiëren",
       "label-folder": "Map",
-      "render-footer": {
-        "title-failed-to-save-dashboard": "Kan dashboard niet opslaan"
-      },
       "required": "Vereist"
     },
     "save-dashboard-drawer": {
@@ -7746,6 +7771,9 @@
       "save-variables-label-update-default-variable-values": "Standaard variabelewaarden bijwerken",
       "show-variables-warning-alert-body": "",
       "show-variables-warning-alert-title": ""
+    },
+    "save-errors": {
+      "unexpected": ""
     },
     "save-library-viz-panel-modal": {
       "cancel": "Annuleren",
@@ -9434,6 +9462,7 @@
     "flag-value": "Vlagwaarde",
     "menu": "Menu openen",
     "new-flag": "new-flag-override",
+    "ofrep-evaluation": "",
     "save-flag": "Opslaan",
     "title": "Functiebeheer"
   },
@@ -10556,7 +10585,7 @@
     "data-source-settings": {
       "alerting-settings-heading": "Alerting",
       "alerting-settings-label": "Waarschuwingsregels beheren in waarschuwingsinterface",
-      "alerting-settings-tooltip": "Waarschuwingsregels voor deze gegevensbron beheren. Om andere waarschuwingsbronnen te beheren, voeg je een Alertmanager-gegevensbron toe.",
+      "alerting-settings-tooltip": "",
       "cert-key-reset": "Resetten",
       "custom-headers-add": "Koptekst toevoegen",
       "custom-headers-header": "Koptekst",
@@ -10681,6 +10710,7 @@
       "aria-label-sort-column": "Kolom {{columnName}} sorteren",
       "expand-row-header": "Rij-uitklapper",
       "expand-row-tooltip": "Rij in-/uitschakelen uitgevouwen",
+      "loading": "",
       "tooltip-collapse-all": "Alle rijen samenvouwen",
       "tooltip-expand-all": "Alle rijen uitvouwen"
     },
@@ -10776,6 +10806,9 @@
       "tooltip-hide": "Wachtwoord verbergen",
       "tooltip-show": "Wachtwoord weergeven"
     },
+    "query-field": {
+      "loading": ""
+    },
     "query-input": {
       "loading": "Editor word geladen"
     },
@@ -10840,6 +10873,7 @@
       "placeholder": "Kies"
     },
     "table": {
+      "cell-actions": "",
       "cell-filter-on": "Filter op waarde",
       "cell-filter-out": "Waarde uitfilteren",
       "cell-inspect": "Waarde inspecteren",
@@ -10885,6 +10919,7 @@
         }
       },
       "inspect-drawer-title": "Waarde inspecteren",
+      "loading": "",
       "nested-table": {
         "expander-column-name": "Geneste rijen uitvouwen",
         "no-data": "Geen data"
@@ -11199,10 +11234,11 @@
   "home": {
     "alerts-incidents": {
       "alert-tab-label": "Actieve waarschuwingen",
+      "incident-filter-all": "",
+      "incident-filter-label": "",
       "incident-tab-label": "Incidenten",
       "team-filter-all": "Alle teams",
       "team-filter-label": "Waarschuwingen filteren op team",
-      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Je teams",
       "title": "Waarschuwingen en incidenten",
       "title-alerts": "Waarschuwingen",
@@ -13687,10 +13723,15 @@
   },
   "playlist-page": {
     "card": {
-      "delete": "Afspeellijst verwijderen",
-      "edit": "Afspeellijst bewerken",
-      "start": "Afspeellijst starten",
-      "tooltip": "Afspeellijst delen"
+      "delete": "",
+      "delete-label": "",
+      "edit": "",
+      "edit-label": "",
+      "share": "",
+      "share-label": "",
+      "start": "",
+      "start-label": "",
+      "tooltip": ""
     },
     "create-button": {
       "title": "Nieuwe afspeellijst"
@@ -14844,6 +14885,15 @@
     "repository-status": {
       "error": "Kan repository niet laden"
     },
+    "repository-status-alert": {
+      "deletion-title": "",
+      "error-title": "",
+      "force-delete-button": "",
+      "force-delete-cancel": "",
+      "force-delete-confirm": "",
+      "force-delete-title": "",
+      "force-delete-warning": ""
+    },
     "repository-status-page": {
       "back-to-repositories": "Terug naar repositories",
       "cleaning-up-resources": "Bronnen van repository opschonen",
@@ -15590,6 +15640,10 @@
       "label": "Transformatie toepassen op",
       "series": "Resultaten van query en transformatie"
     },
+    "transformation-name": {
+      "auto-placeholder": "",
+      "edit": ""
+    },
     "validation": {
       "duplicate-name": "Querynaam bestaat al",
       "empty-name": "Een lege querynaam is niet toegestaan"
@@ -15769,6 +15823,12 @@
     "title": "Kan toepassingsbestand niet vinden"
   },
   "save-dashboards": {
+    "forbidden": {
+      "title": ""
+    },
+    "invalid": {
+      "title": ""
+    },
     "message-length": {
       "info": "Het bericht bestaat uit {{messageLength}} tekens. Dit overschrijdt de maximale lengte van 500 tekens. Verkort het voordat je het opslaat.",
       "title": "Bericht is te lang"
@@ -16520,7 +16580,9 @@
     }
   },
   "swagger": {
-    "login": "Inloggen"
+    "login": "Inloggen",
+    "namespace-unavailable": "",
+    "namespace-unavailable-title": ""
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -17743,6 +17805,7 @@
     },
     "series-to-fields-transformer-editor": {
       "label-field": "Veld",
+      "label-keep-unjoined": "",
       "label-mode": "Modus",
       "modes": {
         "description": {
@@ -17755,7 +17818,8 @@
           "outer-tabular": "Buitenste (tabelvormig)",
           "outer-time-series": "Buitenste (tijdreeks)"
         }
-      }
+      },
+      "tooltip-keep-unjoined": ""
     },
     "series-to-rows-transformer-editor": {
       "description": {
