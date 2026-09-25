@@ -67,6 +67,14 @@ interface NotebookLayoutManagerState extends SceneObjectState {
 // Keep typing useful to undo without storing every keystroke as a separate action.
 const CONTENT_EDIT_COALESCE_MS = 800;
 
+/**
+ * Stable class on the document column, alongside its generated one. Hand-written so the PDF export
+ * can reach it from a global rule (see NotebookScene): the column's reading-width padding is there
+ * to keep prose comfortable on a wide screen, and on a page it only double-counts the page's own
+ * margin, leaving the document needlessly narrow.
+ */
+export const NOTEBOOK_DOCUMENT_CLASS = 'notebook-document';
+
 interface PendingContentEdit {
   elementName: string;
   before: CellContentKind;
@@ -898,7 +906,7 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
   );
 
   return (
-    <div className={styles.document}>
+    <div className={cx(NOTEBOOK_DOCUMENT_CLASS, styles.document)}>
       <header className={styles.header}>
         <NotebookDocumentHeader
           title={title}

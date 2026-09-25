@@ -13284,7 +13284,9 @@
       "copy-markdown": "Copy as Markdown",
       "download-markdown": "Download as .md",
       "error": "Failed to export notebook",
-      "label": "Export"
+      "label": "Export",
+      "pdf": "Export as PDF",
+      "pdf-popup-blocked": "Your browser blocked the PDF export tab"
     },
     "history": {
       "add-block": "Add block",

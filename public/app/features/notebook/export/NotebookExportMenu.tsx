@@ -9,6 +9,7 @@ import { notebookShareUrl } from '../urls';
 
 import { downloadMarkdown } from './downloadMarkdown';
 import { notebookToMarkdown } from './notebookToMarkdown';
+import { canExportNotebookPdf, navigateToNotebookPdf, openBlankNotebookPdfTab } from './openNotebookPdf';
 
 interface Props {
   uid: string;
@@ -18,12 +19,23 @@ interface Props {
    * a list row fetches — and a list of fifty notebooks must not fetch fifty specs to render.
    */
   getSpec: () => Promise<NotebookSpec | undefined>;
+  /**
+   * Makes the server's copy of the notebook match what is on screen, awaited by the PDF export
+   * alone — it is the only export that goes back through the server, so it is the only one an edit
+   * still sitting on autosave's debounce could be missing from. The markdown exports serialize the
+   * spec in the browser and already hold every unsaved edit, and making them wait on a save would
+   * let one that failed break a copy that never needed the server at all.
+   *
+   * Optional because a list row has nothing to flush: it holds no scene, and the notebook as the
+   * server has it is the only copy it could export in the first place.
+   */
+  flushPendingChanges?: () => Promise<void>;
   /** Which surface holds this menu, for the exported event. */
   source: NotebookExportSource;
 }
 
 /** The export actions, shared by the notebook page toolbar and the list page's row menu. */
-export function NotebookExportMenu({ uid, getSpec, source }: Props) {
+export function NotebookExportMenu({ uid, getSpec, flushPendingChanges, source }: Props) {
   const notifyApp = useAppNotification();
 
   // Throws rather than reporting, so each action owns its own outcome: the copy cannot know whether
@@ -70,6 +82,34 @@ export function NotebookExportMenu({ uid, getSpec, source }: Props) {
     }
   };
 
+  // Opens a new tab rather than downloading, matching dashboards' PDF export. The tab has to open
+  // before the awaits below, not after: both the flush and the row menu's getSpec go over the
+  // network, and a window.open past either can easily outlast the click's transient user activation
+  // and get treated as an unrequested popup. The spec itself is still needed — not for its content, but
+  // because transformNotebookSceneToSaveModel captures whatever time range is currently on screen,
+  // including one a reader picked that was never saved — without it the render would fall back to
+  // the notebook's last-saved range instead.
+  const onExportPdf = async () => {
+    const tab = openBlankNotebookPdfTab();
+    if (!tab) {
+      notifyApp.error(t('notebooks.export.pdf-popup-blocked', 'Your browser blocked the PDF export tab'));
+      return;
+    }
+
+    try {
+      // Before the spec, because this is what makes the notebook the render will load the notebook
+      // that is on screen. A failure here aborts the export rather than producing a PDF that is
+      // quietly a few seconds out of date.
+      await flushPendingChanges?.();
+      const spec = await loadSpec();
+      navigateToNotebookPdf(tab, uid, spec.timeSettings);
+    } catch (error) {
+      // Otherwise the reader is left staring at a tab that never goes anywhere.
+      tab.close();
+      reportFailure();
+    }
+  };
+
   return (
     <>
       <Menu.Item label={t('notebooks.export.copy-markdown', 'Copy as Markdown')} icon="copy" onClick={onCopy} />
@@ -78,6 +118,11 @@ export function NotebookExportMenu({ uid, getSpec, source }: Props) {
         icon="download-alt"
         onClick={onDownload}
       />
+      {/* Hidden rather than disabled: PDF export needs a headless renderer able to produce one, and
+          a plain dropdown item has no room for the explanatory alert a disabled state would need. */}
+      {canExportNotebookPdf() && (
+        <Menu.Item label={t('notebooks.export.pdf', 'Export as PDF')} icon="file-alt" onClick={onExportPdf} />
+      )}
     </>
   );
 }

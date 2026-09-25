@@ -14,7 +14,7 @@ import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants
 import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/routes';
 import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
-import { NOTEBOOK_NEW_URL, NOTEBOOKS_BASE_URL } from 'app/features/notebook/urls';
+import { NOTEBOOK_NEW_URL, NOTEBOOKS_BASE_URL, notebookRenderUrl } from 'app/features/notebook/urls';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
 import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
@@ -90,6 +90,23 @@ export function getAppRoutes(): RouteDescriptor[] {
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Notebook,
       component: NotebookPageComponent,
+    },
+    {
+      // A notebook drawn to be captured rather than read — what the PDF export points the headless
+      // browser at. `chromeless`, so the app shell is never rendered above it; the page itself
+      // leaves out the toolbar and controls row. Same read permission as the route above: the
+      // renderer loads this as the user who asked for the export.
+      //
+      // Sits below the view route for readability, not for precedence: `render` is a static segment,
+      // which the v6 `<Routes>` ranks above that route's `:slug?`, so this wins wherever it is in
+      // the list — the same reason `/notebooks/new` is safe above.
+      path: notebookRenderUrl(':uid'),
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.NotebooksRead]),
+      routeName: DashboardRoutes.Notebook,
+      chromeless: true,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "NotebookRenderPage" */ '../features/notebook/pages/NotebookRenderPage')
+      ),
     },
     {
       // notebooks:read to read one, notebooks:create for the blank route above. The feature flag is

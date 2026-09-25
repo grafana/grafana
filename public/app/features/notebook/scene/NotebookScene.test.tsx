@@ -110,12 +110,12 @@ describe('NotebookScene', () => {
     deactivators.splice(0).forEach((deactivate) => deactivate());
   });
 
-  // activate() only propagates to $timeRange/$variables/$data/$behaviors; the pickers are plain
-  // state and are otherwise activated by their renderers. With the controls row hidden nothing
-  // renders the refresh picker, so without an explicit activation its interval never starts and the
-  // spec's autoRefresh silently does nothing.
-  it('activates the refresh picker when the time controls are hidden', () => {
-    const scene = buildScene(true);
+  // The pickers are plain scene state, so they are otherwise activated by their renderers — and
+  // whether anything renders the controls row is now the surface's choice. Activating here
+  // unconditionally is what stops the spec's autoRefresh being silently dead on a surface that
+  // leaves the row out.
+  it.each([true, false])('activates the refresh picker regardless of hideTimeControls (%s)', (hideTimeControls) => {
+    const scene = buildScene(hideTimeControls);
 
     const deactivate = scene.activate();
 
@@ -125,12 +125,19 @@ describe('NotebookScene', () => {
     expect(scene.state.refreshPicker.isActive).toBe(false);
   });
 
-  it('leaves the refresh picker to its renderer when the time controls are shown', () => {
+  // `scene.Component` is the document and nothing else: the controls row is composed by whichever
+  // surface wants it (see NotebookSceneControls), so a surface that does not — the PDF capture
+  // route — simply leaves it out rather than the scene having to ask who is drawing it.
+  it('renders the document only, with no controls row', () => {
     const scene = buildScene(false);
-
     activate(scene);
 
-    expect(scene.state.refreshPicker.isActive).toBe(false);
+    render(<scene.Component model={scene} />);
+
+    expect(screen.getByText('Hello')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Time range selected/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /refresh time interval/i })).not.toBeInTheDocument();
+    expect(screen.queryByText('Edit')).not.toBeInTheDocument();
   });
 
   describe('edit mode', () => {
@@ -470,39 +477,6 @@ describe('NotebookScene', () => {
       expect(scene.editHistory.state.canUndo).toBe(false);
       replacement.addCell('code', 0);
       expect(scene.editHistory.state.canUndo).toBe(true);
-    });
-
-    // Awaited because entering edit mode also mounts the header's tag picker, whose dropdown measures
-    // itself once mounted. That lands after the act above, so a synchronous assertion here leaves an
-    // unwrapped update behind and the console guard fails the test.
-    it('offers the history controls only in edit mode', async () => {
-      const scene = buildScene(false);
-      activate(scene);
-      render(<scene.Component model={scene} />);
-
-      expect(screen.queryByRole('button', { name: /Undo/ })).not.toBeInTheDocument();
-
-      act(() => scene.onEnterEditMode());
-
-      expect(await screen.findByRole('button', { name: 'Undo' })).toBeInTheDocument();
-    });
-
-    // The assistant writes without entering edit mode, so gating the status on `isEditing` would hide a
-    // failed save from the only person who could retry it.
-    it('reports a save outside edit mode, where the assistant writes', () => {
-      const scene = buildScene(false);
-      activate(scene);
-      render(<scene.Component model={scene} />);
-
-      expect(screen.queryByText('Save failed')).not.toBeInTheDocument();
-
-      act(() =>
-        scene.autosave.setState({ status: 'error', errorMessage: 'The notebook was changed by someone else.' })
-      );
-
-      expect(scene.state.isEditing).toBeUndefined();
-      expect(screen.getByText('Save failed')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
     });
 
     it('records history for a body replaced before activation', () => {

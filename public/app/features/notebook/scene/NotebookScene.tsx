@@ -1,10 +1,9 @@
 import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
 
-import { CoreApp, type DataQueryRequest, type GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, type DataQueryRequest } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, locationService, useChromeHeaderHeight } from '@grafana/runtime';
-import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import { config, locationService } from '@grafana/runtime';
 import {
   behaviors,
   type CancelActivationHandler,
@@ -36,14 +35,11 @@ import {
   type NotebookEditSessionSource,
 } from '../analytics/types';
 import { canEditNotebooks } from '../permissions';
-import { NotebookToolbar } from '../toolbar/NotebookToolbar';
 import { NOTEBOOK_EDIT_PARAM } from '../urls';
 
 import { changesTimeSettings, NotebookAutosave } from './NotebookAutosave';
 import { NOTEBOOK_EDIT_KIND, NotebookEditHistory } from './NotebookEditHistory';
-import { NotebookEditHistoryControls } from './NotebookEditHistoryControls';
-import { useIsNotebookEmbedded } from './NotebookEmbeddedContext';
-import { NotebookSaveStatus } from './NotebookSaveStatus';
+import { PDF_PAGE_WIDTH_MM } from './NotebookPdfLayout';
 import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
 import { type NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
 
@@ -152,13 +148,18 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       claimSceneContext(this);
 
       // activate() only propagates to $timeRange/$variables/$data/$behaviors — the pickers are
-      // plain state, so they are activated by their renderers. With the controls row hidden nothing
-      // renders the refresh picker, so activate it here or the spec's autoRefresh interval never
-      // starts. Same workaround as DashboardControls.
+      // plain state, so they are otherwise activated by their renderers, and the spec's autoRefresh
+      // interval only starts once the refresh picker is active.
+      //
+      // Done unconditionally rather than only when the controls row is hidden: whether anything
+      // renders that row is now the surface's choice (see NotebookSceneControls), so keying this off
+      // `hideTimeControls` would leave autoRefresh silently dead on any surface that leaves the row
+      // out. Activation is reference counted, so the picker's own renderer activating it as well is
+      // harmless — the activation handlers still run once.
       let refreshPickerDeactivation: CancelActivationHandler | undefined;
       const syncRefreshPickerActivation = (state: NotebookSceneState) => {
         refreshPickerDeactivation?.();
-        refreshPickerDeactivation = state.hideTimeControls ? state.refreshPicker.activate() : undefined;
+        refreshPickerDeactivation = state.refreshPicker.activate();
       };
       syncRefreshPickerActivation(this.state);
 
@@ -166,10 +167,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       // rebuilds the scene from a spec) hands us a new SceneRefreshPicker that nothing has activated,
       // so a one-shot activation above would leave auto-refresh silently stopped after an edit.
       const stateSub = this.subscribeToState((newState, prevState) => {
-        if (
-          newState.refreshPicker !== prevState.refreshPicker ||
-          newState.hideTimeControls !== prevState.hideTimeControls
-        ) {
+        if (newState.refreshPicker !== prevState.refreshPicker) {
           syncRefreshPickerActivation(newState);
         }
         // Edit mode is held in two places: here, where the header reads it, and on the layout manager,
@@ -409,38 +407,18 @@ function buildNotebookVariables(): SceneVariableSet | undefined {
   return new SceneVariableSet({ variables: [new ScopesVariable({ enable: true })] });
 }
 
+/**
+ * The notebook document: the cells, and the hidden variables they depend on. What `scene.Component`
+ * resolves to, so every surface that renders the scene gets exactly this and composes whatever else
+ * it wants around it — see NotebookSceneControls for the row the route and the embed add on top.
+ */
 function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
-  // The app header is fixed and its height varies (single vs docked mega menu), so the sticky offset has
-  // to come from the chrome rather than a constant.
-  const headerHeight = useChromeHeaderHeight();
-  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
-  const { body, timePicker, refreshPicker, hideTimeControls, overlay, isEditing, uid } = model.useState();
-  /**
-   * From the tree, not the scene. The same notebook can be rendered on the route and in a host with
-   * no app header at the same time, and those two share one scene object — so the answer has to come
-   * from where it is being drawn rather than from what is being drawn.
-   */
-  const embedded = useIsNotebookEmbedded();
-  // `headerHeight` is read unconditionally above so the hook order never varies, then discarded when
-  // there is no app header for it to describe.
-  const styles = useStyles2(getStyles, embedded ? 0 : (headerHeight ?? 0), visualRefreshEnabled);
+  const styles = useStyles2(getStyles);
+  const { body, overlay } = model.useState();
 
   return (
     <div className={styles.container}>
       <NotebookHiddenVariables model={model} />
-      <div className={styles.controls}>
-        {/* Not gated on edit mode: the assistant writes without entering it, and a failed save has to
-            be visible and retryable there too. This renders nothing until there is something to say. */}
-        <NotebookSaveStatus autosave={model.autosave} />
-        {isEditing && <NotebookEditHistoryControls history={model.editHistory} />}
-        {!hideTimeControls && (
-          <>
-            <timePicker.Component model={timePicker} />
-            <refreshPicker.Component model={refreshPicker} />
-          </>
-        )}
-        <NotebookToolbar uid={uid} scene={model} />
-      </div>
       <body.Component model={body} />
       {overlay && <overlay.Component model={overlay} />}
     </div>
@@ -472,32 +450,18 @@ function NotebookHiddenVariables({ model }: SceneComponentProps<NotebookScene>) 
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, headerHeight: number, visualRefreshEnabled: boolean) => ({
+const getStyles = () => ({
   container: css({
     display: 'flex',
     flexDirection: 'column',
     flexGrow: 1,
-  }),
-  controls: css({
-    display: 'flex',
-    alignItems: 'center',
-    // `safe`, because a plain flex-end row overflows to the left, over the docked nav.
-    justifyContent: 'safe flex-end',
-    flexWrap: 'wrap',
-    gap: theme.spacing(1),
-    padding: theme.spacing(1, 2),
-    // A sticky row is transparent by default, so the notebook would scroll visibly through it. These two
-    // tokens are the page's own background (PageLayoutType.Custom, see getDefaultBackgroundForLayout), so
-    // the row reads as chrome rather than as a tinted band — same pairing DashboardControlsChrome uses.
-    background: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.canvas,
-    // Only from md up: on a narrow viewport the row is a large share of the screen, so the dashboard lets
-    // it scroll away rather than eat the reading area, and this follows suit.
-    [theme.breakpoints.up('md')]: {
-      position: 'sticky',
-      top: headerHeight,
-      // Above the docked sidebar, or the time picker's popover opens behind it. Same reasoning and same
-      // token the dashboard's controls chrome uses.
-      zIndex: theme.zIndex.sidemenu,
+    // For a person printing this page from their own browser. Only the width, deliberately: the
+    // PDF export's headless render never triggers print media and brings its own, far more
+    // thorough, layout (see NotebookPdfLayout). Sharing the page width is what stops the two
+    // disagreeing about how wide a sheet is.
+    '@media print': {
+      maxWidth: `${PDF_PAGE_WIDTH_MM}mm`,
+      margin: '0 auto',
     },
   }),
 });

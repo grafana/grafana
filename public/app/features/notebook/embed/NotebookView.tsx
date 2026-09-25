@@ -1,9 +1,10 @@
+import { css } from '@emotion/css';
 import { type ReactNode, useEffect, useMemo, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
 import { SceneObjectStateChangedEvent } from '@grafana/scenes';
-import { Alert, Box } from '@grafana/ui';
+import { Alert, Box, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 
@@ -11,6 +12,7 @@ import { notebookResourceFor } from '../api/notebookResource';
 import { NotebookPageStateManager, type NotebookLoadError } from '../pages/NotebookPageStateManager';
 import { NotebookEmbeddedHost } from '../scene/NotebookEmbeddedContext';
 import { type NotebookScene } from '../scene/NotebookScene';
+import { NotebookSceneControls } from '../scene/NotebookSceneControls';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 import { transformNotebookToScene } from '../serialization/transformNotebookToScene';
 import { type Spec as NotebookSpec } from '../types';
@@ -252,6 +254,7 @@ function useNotebookDraftChanges(
 }
 
 function NotebookDocument({ scene, onTitleChange }: { scene: NotebookScene; onTitleChange?: (title: string) => void }) {
+  const styles = useStyles2(getStyles);
   const { title } = scene.useState();
 
   useEffect(() => scene.activate(), [scene]);
@@ -261,13 +264,26 @@ function NotebookDocument({ scene, onTitleChange }: { scene: NotebookScene; onTi
   }, [onTitleChange, title]);
 
   /**
-   * Wrapped rather than flagged on the scene: this tree has no app header, but the same scene may
-   * also be mounted on /notebooks, which does, and the two share one object so they share one
-   * autosave. Only the tree can answer per mount.
+   * Two answers this tree owes the notebook, both per-mount, because the same scene object may also
+   * be mounted on /notebooks at the same time and the two share it.
+   *
+   * `stickyOffset={0}`: there is no app header here for the sticky row to stop beneath.
+   *
+   * `NotebookEmbeddedHost`: the toolbar asks it whether the destructive actions are safe, and in a
+   * host like the assistant's canvas they are not — Delete would navigate the whole host away. That
+   * is a question about the tree rather than about layout, which is why it stays a context rather
+   * than becoming another prop.
+   *
+   * The column is explicit because this renders into a host we do not control, and the controls row
+   * and the document are two siblings that need a flex column above them for the sticky row to
+   * behave.
    */
   return (
     <NotebookEmbeddedHost>
-      <scene.Component model={scene} />
+      <div className={styles.host}>
+        <NotebookSceneControls model={scene} stickyOffset={0} />
+        <scene.Component model={scene} />
+      </div>
     </NotebookEmbeddedHost>
   );
 }
@@ -302,3 +318,13 @@ function Centered({ children }: { children: ReactNode }) {
     </Box>
   );
 }
+
+const getStyles = () => ({
+  // Matches what the scene's own container does on the /notebooks route, where Page supplies the
+  // column. Nothing here can assume the host does.
+  host: css({
+    display: 'flex',
+    flexDirection: 'column',
+    flexGrow: 1,
+  }),
+});

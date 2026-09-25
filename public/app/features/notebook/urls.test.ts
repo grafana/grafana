@@ -4,6 +4,7 @@ import { HistoryWrapper, config, locationService, setLocationService } from '@gr
 
 import {
   isNotebookEditUrl,
+  notebookRenderUrl,
   notebookEditHref,
   notebookEditUrl,
   notebookShareUrl,
@@ -78,6 +79,16 @@ describe('notebook urls', () => {
     locationService.push(`/notebooks/nb1${search}`);
 
     expect(isNotebookEditUrl()).toBe(expected);
+  });
+
+  // Nested under the notebook, with `render` as a static segment: a v6 `<Routes>` ranks that above
+  // the view route's `:slug?`, so it resolves to the render route rather than being read as a slug —
+  // the same ranking `/notebooks/new` relies on. Nothing generates a notebook slug today anyway.
+  it('nests the render route under the notebook it renders', () => {
+    setHistory(1);
+
+    expect(notebookRenderUrl('nb1')).toBe('/notebooks/nb1/render');
+    expect(notebookRenderUrl('nb1').startsWith(`${notebookViewUrl('nb1')}/`)).toBe(true);
   });
 
   it('builds an absolute share url', () => {

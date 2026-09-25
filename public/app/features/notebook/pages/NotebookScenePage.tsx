@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useMatch, useParams } from 'react-router-dom-v5-compat';
 
 import { PageLayoutType } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
 import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Box } from '@grafana/ui';
@@ -13,6 +13,7 @@ import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import { NotebookAnalytics } from '../analytics/main';
 import { NOTEBOOK_ENTRY_POINT } from '../analytics/types';
 import { type NotebookScene } from '../scene/NotebookScene';
+import { NotebookSceneControls } from '../scene/NotebookSceneControls';
 import { NOTEBOOK_NEW_URL, notebookViewUrl } from '../urls';
 
 import { NotebookPageError } from './NotebookPageError';
@@ -82,6 +83,10 @@ function NotebookDocument({ scene, isNew }: { scene: NotebookScene; isNew: boole
   // uid comes off the scene rather than the route param: it is the notebook's identity
   // (metadata.name), and the scene already carries it for the same reason it carries the title.
   const { title, uid } = scene.useState();
+  // The app header is fixed and its height varies (single vs docked mega menu), so the sticky
+  // offset for the controls row has to come from the chrome rather than a constant. Read here
+  // rather than inside the scene: this page is what knows there is an app header above it.
+  const headerHeight = useChromeHeaderHeight();
 
   useEffect(() => scene.activate(), [scene]);
 
@@ -100,6 +105,10 @@ function NotebookDocument({ scene, isNew }: { scene: NotebookScene; isNew: boole
 
   return (
     <Page navId="notebooks" pageNav={pageNav} layout={PageLayoutType.Custom}>
+      {/* Composed here rather than by the scene: whether a surface shows the controls row is a
+          property of the surface. Page's own wrapper is already a flex column, so this and the
+          document below sit in it as siblings. The toolbar rides inside the row. */}
+      <NotebookSceneControls model={scene} stickyOffset={headerHeight ?? 0} />
       <scene.Component model={scene} />
     </Page>
   );
