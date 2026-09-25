@@ -39,11 +39,6 @@ if [ "$1" = cli ] || [ "$1" = server ]; then
     "--config=${CONF_FILE}"
     "--configOverrides=cfg:default.paths.provisioning=${PROVISIONING_CFG_DIR} cfg:default.paths.data=${DATA_DIR} cfg:default.paths.logs=${LOG_DIR} cfg:default.paths.plugins=${PLUGINS_DIR} cfg:default.paths.bundled_plugins=${DATA_DIR}/plugins-bundled"
   )
-  # special handling to pass --pluginsDir to cli
-  # can remove once it fully supports cfg:default.paths.plugins
-  if [ "$CMD" = cli ]; then
-    OPTS+=("--pluginsDir=${PLUGINS_DIR}")
-  fi
   exec "$EXECUTABLE" "$CMD" "${OPTS[@]}" "$@"
 fi
 
