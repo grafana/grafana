@@ -1720,6 +1720,7 @@ func requireListIdentity(ctx context.Context, req *resourcepb.ListRequest) *reso
 	return nil
 }
 
+//nolint:gocyclo // Temporary list-path instrumentation
 func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (rsp *resourcepb.ListResponse, err error) {
 	ctx, span := tracer.Start(ctx, "resource.server.List")
 	path := listPathUnknown
