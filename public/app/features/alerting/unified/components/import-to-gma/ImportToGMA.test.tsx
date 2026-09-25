@@ -37,7 +37,13 @@ jest.mock('@grafana/ui', () => ({
 
 // Selects which fixture the mocked Step1Content below seeds. Prefixed `mock` per Jest's rule for
 // variables referenced from inside a jest.mock factory. Each describe block resets it in its own setup.
-let mockScenario: 'yaml' | 'auto-sync' | 'datasource' | 'schema-derived-secrets' | 'no-secrets' = 'yaml';
+let mockScenario:
+  | 'yaml'
+  | 'auto-sync'
+  | 'datasource'
+  | 'schema-derived-secrets'
+  | 'no-secrets'
+  | 'flush-indented-yaml' = 'yaml';
 
 // Seeds one of three notifications sources: YAML upload, a plain external datasource, or an
 // Auto-sync-checked datasource. Next is gated on a passing dry-run except under Auto-sync (which
@@ -98,6 +104,26 @@ jest.mock('./steps/Step1AlertmanagerResources', () => {
             new File(['route:\n  receiver: default\nreceivers:\n  - name: default\n'], 'alertmanager.yaml', {
               type: 'application/yaml',
             })
+          );
+          setValue('notificationsTemplateFiles', []);
+          queueMicrotask(() => onTriggerDryRun?.());
+          return;
+        }
+        if (mockScenario === 'flush-indented-yaml') {
+          setValue('notificationsSource', 'yaml');
+          setValue('policyTreeName', 'prometheus-prod');
+          // Sequence dashes flush with their parent key — a valid YAML style that differs from
+          // js-yaml dump()'s own default (extra-indented dashes), to prove reveal/hide doesn't
+          // reflow the document's structure.
+          setValue(
+            'notificationsYamlFile',
+            new File(
+              [
+                'route:\n  receiver: default-email\n  routes:\n  - matchers:\n    - severity=critical\n    receiver: escalate-pagerduty\nreceivers:\n  - name: default-email\n  - name: escalate-pagerduty\n    slack_configs:\n      - api_url: https://hooks.slack.com/services/9f3kLm2QpXz7Tr5Vb8Nc1Wd4Yh6Ag0Ee\n',
+              ],
+              'alertmanager.yaml',
+              { type: 'application/yaml' }
+            )
           );
           setValue('notificationsTemplateFiles', []);
           queueMicrotask(() => onTriggerDryRun?.());
@@ -686,6 +712,25 @@ describe('ImportToGMA wizard — reveal/hide secrets toggle', () => {
     editor = await screen.findByTestId<HTMLTextAreaElement>('code-editor');
     expect(editor.value).toContain('<redacted>');
     expect(editor.value).not.toContain('hunter2wayTooSimpleButStillAKey123');
+  });
+
+  it('does not reflow the document structure when toggling reveal, even with flush-indented sequences', async () => {
+    mockScenario = 'flush-indented-yaml';
+    const { user } = render(<ImportWizardGate />);
+
+    await navigateToReview(user);
+    await user.click(await screen.findByRole('button', { name: /preview configuration/i }));
+
+    const editor = await screen.findByTestId<HTMLTextAreaElement>('code-editor');
+    // Redacted: the uploaded file's flush-indented "- severity=critical" line normalizes to
+    // js-yaml dump()'s own (extra-indented) style.
+    expect(editor.value).toContain('- matchers:\n        - severity=critical\n');
+
+    await user.click(screen.getByRole('button', { name: /reveal secrets/i }));
+    // Revealed: same structural indentation as the redacted view — only the secret value
+    // changed, proving the raw view was reformatted rather than shown verbatim.
+    expect(editor.value).toContain('- matchers:\n        - severity=critical\n');
+    expect(editor.value).toContain('https://hooks.slack.com/services/9f3kLm2QpXz7Tr5Vb8Nc1Wd4Yh6Ag0Ee');
   });
 });
 

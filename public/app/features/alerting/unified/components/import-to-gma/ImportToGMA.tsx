@@ -64,6 +64,7 @@ import {
   buildSecretFieldMap,
   containsRedactedValue,
   redactPreviewSecrets,
+  reformatPreviewContent,
 } from './redactPreviewSecrets';
 import { Step1Content, useStep1Validation } from './steps/Step1AlertmanagerResources';
 import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
@@ -950,6 +951,9 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
   const notificationsPreview = usePreviewContent();
   const rulesPreview = usePreviewContent();
   const [notificationsRevealed, setNotificationsRevealed] = useState(false);
+  // Reformatted via reformatPreviewContent, not the literal uploaded/fetched text — otherwise
+  // toggling reveal/hide could visibly reflow the document (e.g. flush- vs extra-indented YAML
+  // sequences) since the redacted view always goes through the same reformatting.
   const [notificationsRawContent, setNotificationsRawContent] = useState<string | null>(null);
 
   // Fetch integration type schemas to build the secret field map used to redact the notifications
@@ -990,13 +994,13 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
         if (hasYamlUpload(formData.notificationsSource, formData.notificationsYamlFile)) {
           const rawContent = await formData.notificationsYamlFile.text();
           const redacted = redactPreviewSecrets(rawContent, 'yaml', secretFieldMap);
-          setNotificationsRawContent(rawContent);
+          setNotificationsRawContent(reformatPreviewContent(rawContent, 'yaml'));
           return redacted;
         } else if (formData.notificationsSource === 'datasource' && formData.notificationsDatasourceName) {
           const config = await fetchAlertManagerConfig(formData.notificationsDatasourceName);
           const rawContent = JSON.stringify(config.alertmanager_config, null, 2);
           const redacted = redactPreviewSecrets(rawContent, 'json', secretFieldMap);
-          setNotificationsRawContent(rawContent);
+          setNotificationsRawContent(reformatPreviewContent(rawContent, 'json'));
           return redacted;
         }
         return '';

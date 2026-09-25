@@ -44,6 +44,23 @@ export function redactPreviewSecrets(
   return format === 'json' ? JSON.stringify(redacted, null, 2) : dump(redacted);
 }
 
+// Parses and re-serializes content the same way redactPreviewSecrets does, but without
+// redacting anything. Used to render the "revealed" counterpart of a redacted preview: the
+// uploaded/fetched raw text can use a different YAML style (e.g. flush-indented sequences) than
+// js-yaml's dump() produces, so showing it verbatim would visibly reflow the whole document when
+// toggling between redacted and revealed. Re-serializing both through the same pipeline keeps
+// the formatting identical between the two views — only the redacted values differ.
+export function reformatPreviewContent(rawContent: string, format: 'yaml' | 'json'): string {
+  let parsed: unknown;
+  try {
+    parsed = load(rawContent);
+  } catch (e) {
+    throw new PreviewRedactionError(e instanceof Error ? e.message : String(e));
+  }
+
+  return format === 'json' ? JSON.stringify(parsed, null, 2) : dump(parsed);
+}
+
 export function containsRedactedValue(content: string): boolean {
   return content.includes(REDACTED_VALUE);
 }

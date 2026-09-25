@@ -10,6 +10,7 @@ import {
   buildSecretFieldMap,
   containsRedactedValue,
   redactPreviewSecrets,
+  reformatPreviewContent,
 } from './redactPreviewSecrets';
 
 describe('redactPreviewSecrets', () => {
@@ -677,5 +678,51 @@ describe('containsRedactedValue', () => {
   it('is an exact match, not a loose one', () => {
     expect(containsRedactedValue('api_url: <REDACTED>')).toBe(false);
     expect(containsRedactedValue('api_url: < redacted >')).toBe(false);
+  });
+});
+
+describe('reformatPreviewContent', () => {
+  it('normalizes flush-indented sequences to the same style redactPreviewSecrets produces', () => {
+    // Sequence dashes aligned with their parent key (flush style) — a valid, common YAML
+    // convention that differs from js-yaml dump()'s own default (extra-indented dashes).
+    const flushStyleYaml = `route:
+  receiver: default-email
+  routes:
+  - matchers:
+    - severity=critical
+    receiver: escalate-pagerduty
+`;
+    const secretFieldMap = {};
+
+    const reformatted = reformatPreviewContent(flushStyleYaml, 'yaml');
+    const redacted = redactPreviewSecrets(flushStyleYaml, 'yaml', secretFieldMap);
+
+    // Both go through the same parse+dump pipeline, so structure/indentation matches exactly —
+    // toggling reveal/hide must not reflow the document even though nothing here is a secret.
+    expect(reformatted).toBe(redacted);
+    expect(reformatted).toContain('  routes:\n    - matchers:\n        - severity=critical\n');
+  });
+
+  it('does not redact anything, unlike redactPreviewSecrets', () => {
+    const yaml = `
+global:
+  smtp_auth_password: hunter2wayTooSimpleButStillAKey123
+`;
+    const result = reformatPreviewContent(yaml, 'yaml');
+
+    expect(result).toContain('hunter2wayTooSimpleButStillAKey123');
+    expect(result).not.toContain('<redacted>');
+  });
+
+  it('fails closed on malformed input, matching redactPreviewSecrets', () => {
+    const malformedYaml = 'root:\n\tchild: value';
+
+    expect(() => reformatPreviewContent(malformedYaml, 'yaml')).toThrow(PreviewRedactionError);
+  });
+
+  it('round-trips JSON content with the same formatting redactPreviewSecrets produces', () => {
+    const json = JSON.stringify({ route: { receiver: 'default' } }, null, 2);
+
+    expect(reformatPreviewContent(json, 'json')).toBe(redactPreviewSecrets(json, 'json', {}));
   });
 });
