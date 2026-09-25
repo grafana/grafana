@@ -896,8 +896,7 @@ func (b *bleveBackend) BuildIndex(
 		attribute.String("reason", indexBuildReason),
 	)
 
-	sfKey := resource.NewLowerGroupResource(key.Group, key.Resource)
-	selectableFields, searchFieldsHash, searchFieldsProvider := b.fields.For(sfKey)
+	selectableFields, searchFieldsHash, searchFieldsProvider := b.fields.ForKey(key)
 
 	mapper, err := GetBleveMappings(searchFieldsProvider, key.Group, key.Resource, selectableFields)
 	if err != nil {
@@ -2745,7 +2744,9 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		})
 	}
 
-	if postRankAuthz {
+	// A namespace-wide index holds several resource types, and two of them can
+	// share a name, so the name is no longer a total order there either.
+	if postRankAuthz || b.key.IsGlobal() {
 		// Total-order tie-breaker for stable SearchAfter/SearchBefore cursors.
 		// The doc ID {namespace}/{group}/{resource}/{name} is globally unique
 		// across a federated alias (dashboards + folders differ by the resource

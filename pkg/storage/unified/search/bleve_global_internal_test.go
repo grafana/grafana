@@ -215,3 +215,59 @@ func TestGlobalSearchKeyIsDistinct(t *testing.T) {
 	// storage, because both derive their path from the key.
 	assert.NotEqual(t, resourceSubPath(global), resourceSubPath(dashboards))
 }
+
+// Two resource types can hold the same name, so on a namespace-wide index the
+// name alone does not order results. Paging one at a time has to return each
+// document exactly once.
+func TestGlobalIndexPagesThroughSameNamedDocuments(t *testing.T) {
+	backend, _ := setupBleveBackend(t)
+	ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "default"})
+	key := resource.GlobalSearchKey("default")
+
+	doc := func(group, res, name string) *resource.BulkIndexItem {
+		return &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				RV:    1,
+				Name:  name,
+				Title: name,
+				Key:   &resourcepb.ResourceKey{Namespace: key.Namespace, Group: group, Resource: res, Name: name},
+			},
+		}
+	}
+	index, err := backend.BuildIndex(ctx, key, 3, "test", func(index resource.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+			doc("dashboard.grafana.app", "dashboards", "shared"),
+			doc("folder.grafana.app", "folders", "shared"),
+			doc("dashboard.grafana.app", "dashboards", "zzz"),
+		}})
+	}, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	access := NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true})
+	var seen []string
+	var after []string
+	for range 5 {
+		rsp, err := index.Search(ctx, access, &resourcepb.ResourceSearchRequest{
+			Options:     &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: key.Namespace}},
+			SortBy:      []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_NAME}},
+			Limit:       1,
+			SearchAfter: after,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		if len(rsp.Results.Rows) == 0 {
+			break
+		}
+		row := rsp.Results.Rows[0]
+		seen = append(seen, row.Key.Group+"/"+row.Key.Resource+"/"+row.Key.Name)
+		after = row.SortFields
+	}
+
+	assert.ElementsMatch(t, []string{
+		"dashboard.grafana.app/dashboards/shared",
+		"folder.grafana.app/folders/shared",
+		"dashboard.grafana.app/dashboards/zzz",
+	}, seen)
+	assert.Len(t, seen, 3, "no document is repeated")
+}

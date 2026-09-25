@@ -388,6 +388,10 @@ type SearchOptions struct {
 	// that predates them is rebuilt before that path serves a query.
 	PostRankAuthzEnabled bool
 
+	// GlobalIndexEnabled builds one index per namespace covering several resource
+	// types, alongside the per-resource indexes.
+	GlobalIndexEnabled bool
+
 	// SearchFields holds the per-kind search-field wiring shared with the index
 	// backend. The search server reads the selectable fields and the definition
 	// hash from it and triggers a rebuild when either differs from the values
