@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
+	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -521,7 +522,7 @@ func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaSe
 	dashService, err := dashService.ProvideDashboardServiceImpl(
 		cfg,
 		sqlStore,
-		featuremgmt.WithFeatures(),
+		iamapi.Features{},
 		acmock.NewMockedPermissionsService(),
 		ac,
 		actest.FakeService{},

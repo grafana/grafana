@@ -39,13 +39,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
+	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	dashboardclient "github.com/grafana/grafana/pkg/services/dashboards/service/client"
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -86,7 +86,7 @@ type DashboardServiceImpl struct {
 	sqlStore               db.DB // solely used to cleanup associated resources after dashboard deletion
 	folderService          folder.Service
 	orgService             org.Service
-	features               featuremgmt.FeatureToggles
+	iamFeatures            iamapi.Features
 	folderPermissions      accesscontrol.FolderPermissionsService
 	dashboardPermissions   accesscontrol.DashboardPermissionsService
 	ac                     accesscontrol.AccessControl
@@ -398,7 +398,7 @@ var _ registry.BackgroundService = (*DashboardServiceImpl)(nil)
 func ProvideDashboardServiceImpl(
 	cfg *setting.Cfg,
 	sqlStore db.DB,
-	features featuremgmt.FeatureToggles,
+	iamFeatures iamapi.Features,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	ac accesscontrol.AccessControl,
 	acService accesscontrol.Service,
@@ -416,7 +416,7 @@ func ProvideDashboardServiceImpl(
 		cfg:                       cfg,
 		log:                       log.New("dashboard-service"),
 		sqlStore:                  sqlStore,
-		features:                  features,
+		iamFeatures:               iamFeatures,
 		folderPermissions:         folderPermissionsService,
 		ac:                        ac,
 		acService:                 acService,
@@ -1277,7 +1277,7 @@ func (dr *DashboardServiceImpl) SetDefaultPermissions(ctx context.Context, dto *
 
 	// With the flag on, dashboard default permissions are set via the App Platform path, so skip the
 	// legacy SQL path here. Folders keep their own handling.
-	if !dash.IsFolder && dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) { //nolint:staticcheck
+	if !dash.IsFolder && dr.iamFeatures.ResourcePermissionsAPI {
 		return
 	}
 
@@ -1853,7 +1853,7 @@ func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd
 	// API server's permission setter acts on this annotation. Root-only (nested inherit from the
 	// parent), dashboards only (folders have their own setter), and ignored on update, so it's safe
 	// before the create-or-update below.
-	if !cmd.IsFolder && cmd.FolderUID == "" && dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) { //nolint:staticcheck
+	if !cmd.IsFolder && cmd.FolderUID == "" && dr.iamFeatures.ResourcePermissionsAPI {
 		meta, err := utils.MetaAccessor(obj)
 		if err != nil {
 			return nil, err

@@ -254,7 +254,6 @@ func TestDashboardAPIBuilder_StandaloneLibraryPanelAdmissionEnforcesAccess(t *te
 			dashboardBuilder := NewAPIService(
 				accessClient,
 				nil,
-				nil,
 				testutil.NewDataSourceProvider(testutil.StandardTestConfig),
 				testutil.NewLibraryElementProvider(),
 				nil,
@@ -341,7 +340,6 @@ func TestDashboardAPIBuilder_StandaloneLibraryPanelMoveRequiresSourceAndDestinat
 	}
 	dashboardBuilder := NewAPIService(
 		accessClient,
-		nil,
 		nil,
 		testutil.NewDataSourceProvider(testutil.StandardTestConfig),
 		testutil.NewLibraryElementProvider(),
