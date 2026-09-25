@@ -137,6 +137,34 @@ describe('WizardStep', () => {
     await waitFor(() => expect(nextButton).toBeEnabled());
   });
 
+  it('should disable Skip while an async onNext is pending, so it cannot fire mid-check', async () => {
+    let resolveOnNext: (value: boolean) => void = () => {};
+    const onNext = jest.fn().mockImplementation(
+      () =>
+        new Promise<boolean>((resolve) => {
+          resolveOnNext = resolve;
+        })
+    );
+    const onSkip = jest.fn();
+
+    renderWithProvider(
+      <WizardStep stepId={StepKey.Notifications} label="Test Step" canSkip={true} onNext={onNext} onSkip={onSkip}>
+        <div>Step content</div>
+      </WizardStep>,
+      StepKey.Notifications
+    );
+
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+
+    const skipButton = screen.getByTestId(selectors.pages.Alerting.ImportToGMA.skipButton);
+    expect(skipButton).toBeDisabled();
+    await user.click(skipButton);
+    expect(onSkip).not.toHaveBeenCalled();
+
+    resolveOnNext(true);
+    await waitFor(() => expect(skipButton).toBeEnabled());
+  });
+
   it('should render Skip button when canSkip is true', () => {
     renderWithProvider(
       <WizardStep stepId={StepKey.Notifications} label="Test Step" canSkip={true}>

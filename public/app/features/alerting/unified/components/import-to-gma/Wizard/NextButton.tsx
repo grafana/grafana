@@ -61,7 +61,12 @@ export const NextButton = ({ onNext, canSkip, skipLabel, onSkip, disabled, disab
   return (
     <Stack direction="row" gap={1}>
       {canSkip && (
-        <Button variant="secondary" onClick={handleSkip} data-testid={selectors.pages.Alerting.ImportToGMA.skipButton}>
+        <Button
+          variant="secondary"
+          onClick={handleSkip}
+          disabled={isPending}
+          data-testid={selectors.pages.Alerting.ImportToGMA.skipButton}
+        >
           {skipLabel || t('alerting.import-to-gma.wizard.skip', 'Skip')}
         </Button>
       )}
