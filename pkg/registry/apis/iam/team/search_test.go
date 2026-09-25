@@ -45,6 +45,7 @@ func TestSearchErrorStatus(t *testing.T) {
 		"embedded":  {MockResponses: []*resourcepb.ResourceSearchResponse{{Error: failure}}},
 		"transport": {MockError: fmt.Errorf("search: %w", st.Err())},
 		"plain":     {MockError: fmt.Errorf("private database failure")},
+		"internal":  {MockError: status.Error(codes.Internal, "private database failure")},
 	} {
 		t.Run(name, func(t *testing.T) {
 			handler := NewSearchHandler(tracing.NewNoopTracerService(), client, nil)
@@ -52,9 +53,9 @@ func TestSearchErrorStatus(t *testing.T) {
 			req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
 			recorder := httptest.NewRecorder()
 			handler.DoTeamSearch(recorder, req)
-			if name == "plain" {
+			if name == "plain" || name == "internal" {
 				require.Equal(t, http.StatusInternalServerError, recorder.Code)
-				require.NotContains(t, recorder.Body.String(), client.MockError.Error())
+				require.NotContains(t, recorder.Body.String(), "private database failure")
 				return
 			}
 			require.Equal(t, http.StatusTooManyRequests, recorder.Code)

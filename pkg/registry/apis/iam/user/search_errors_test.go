@@ -32,6 +32,7 @@ func TestUnifiedSearchErrorStatus(t *testing.T) {
 		}}}},
 		"transport": {MockError: fmt.Errorf("search: %w", status.Error(codes.ResourceExhausted, "search is busy"))},
 		"plain":     {MockError: plainErr},
+		"internal":  {MockError: status.Error(codes.Internal, "private database failure")},
 	} {
 		t.Run(name, func(t *testing.T) {
 			for operation, validate := range map[string]func(context.Context, SearchBackend, string, string, string) error{
@@ -43,6 +44,11 @@ func TestUnifiedSearchErrorStatus(t *testing.T) {
 					err := validate(t.Context(), backend, "stacks-1", "user-1", "taken")
 					if name == "plain" {
 						require.ErrorIs(t, err, plainErr)
+					} else if name == "internal" {
+						var statusErr apierrors.APIStatus
+						require.ErrorAs(t, err, &statusErr)
+						require.Equal(t, http.StatusInternalServerError, int(statusErr.Status().Code))
+						require.NotContains(t, statusErr.Status().Message, "private database failure")
 					} else {
 						require.True(t, apierrors.IsTooManyRequests(err), "got %v", err)
 					}
@@ -55,7 +61,7 @@ func TestUnifiedSearchErrorStatus(t *testing.T) {
 			req = req.WithContext(identity.WithRequester(req.Context(), &legacyuser.SignedInUser{Namespace: "stacks-1"}))
 			w := httptest.NewRecorder()
 			handler.DoSearch(w, req)
-			if name == "plain" {
+			if name == "plain" || name == "internal" {
 				require.Equal(t, http.StatusInternalServerError, w.Code)
 				require.NotContains(t, w.Body.String(), plainErr.Error())
 			} else {

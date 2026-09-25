@@ -390,7 +390,7 @@ func (s *SearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, err := s.client.Search(ctx, searchRequest)
-	if err := resource.StatusErrorFromResponse(result.GetError(), err); err != nil {
+	if err := common.SearchStatusError(result.GetError(), err); err != nil {
 		errhttp.Write(ctx, err, w)
 		return
 	}

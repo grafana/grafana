@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/team/folderownership"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -137,7 +138,7 @@ func validateTitleUnique(ctx context.Context, searchClient resourcepb.ResourceIn
 	}
 
 	resp, err := searchClient.Search(ctx, req)
-	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+	if err := common.SearchStatusError(resp.GetError(), err); err != nil {
 		return err
 	}
 

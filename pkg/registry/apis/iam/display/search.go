@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -61,7 +62,7 @@ func (r *SearchDisplayProvider) GetDisplayList(ctx context.Context, ns authlib.N
 		for i, j := range jobs {
 			g.Go(func() error {
 				srsp, err := r.client.Search(gctx, j.req)
-				if err := resource.StatusErrorFromResponse(srsp.GetError(), err); err != nil {
+				if err := common.SearchStatusError(srsp.GetError(), err); err != nil {
 					return err
 				}
 				responses[i] = srsp
