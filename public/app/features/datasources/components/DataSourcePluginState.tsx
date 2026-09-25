@@ -1,5 +1,6 @@
 import { type PluginState } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
+import { InlineLabel, Stack } from '@grafana/ui';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
 export type Props = {
@@ -8,13 +9,11 @@ export type Props = {
 
 export function DataSourcePluginState({ state }: Props) {
   return (
-    <div className="gf-form">
-      <div className="gf-form-label width-10">
+    <Stack alignItems="center" gap={0.5}>
+      <InlineLabel width={20}>
         <Trans i18nKey="datasources.data-source-plugin-state.plugin-state">Plugin state</Trans>
-      </div>
-      <div className="gf-form-label gf-form-label--transparent">
-        <PluginStateInfo state={state} />
-      </div>
-    </div>
+      </InlineLabel>
+      <PluginStateInfo state={state} />
+    </Stack>
   );
 }
