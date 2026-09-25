@@ -8,6 +8,8 @@ import { type GrafanaAlertingRule, type GrafanaRecordingRule, type GrafanaRule }
 
 import { prometheusRuleType } from '../../utils/rules';
 
+import { formatLabelsForPrompt } from './analyzeRulePromptUtils';
+
 interface AnalyzeRuleButtonProps {
   /** Alert rule to analyze */
   rule: GrafanaRule;
@@ -108,11 +110,7 @@ function buildAnalyzeAlertingRulePrompt(rule: GrafanaAlertingRule): string {
     prompt += ` ${description}`;
   }
 
-  const labelsStr = rule.labels
-    ? Object.entries(rule.labels)
-        .map(([k, v]) => `${k}="${v}"`)
-        .join(', ')
-    : '';
+  const labelsStr = formatLabelsForPrompt(rule.labels);
   if (labelsStr) {
     prompt += ` Labels: ${labelsStr}.`;
   }
@@ -125,11 +123,7 @@ function buildAnalyzeAlertingRulePrompt(rule: GrafanaAlertingRule): string {
  * Includes name, query, and labels (no state or activeAt).
  */
 function buildAnalyzeRecordingRulePrompt(rule: GrafanaRecordingRule): string {
-  const labelsStr = rule.labels
-    ? Object.entries(rule.labels)
-        .map(([k, v]) => `${k}="${v}"`)
-        .join(', ')
-    : '';
+  const labelsStr = formatLabelsForPrompt(rule.labels);
 
   let prompt = `Analyze the recording rule "${rule.name}".`;
 
