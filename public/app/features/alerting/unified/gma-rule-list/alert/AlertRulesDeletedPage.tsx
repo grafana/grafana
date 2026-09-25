@@ -1,7 +1,7 @@
 import { t } from '@grafana/i18n';
 
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
-import { RulesPagePlaceholder } from '../shared/RulesPagePlaceholder';
+import { AlertRulesRecentlyDeleted } from '../deleted/AlertRulesRecentlyDeleted';
 import { RulesPageShell } from '../shared/RulesPageShell';
 
 function AlertRulesDeletedPage() {
@@ -13,7 +13,7 @@ function AlertRulesDeletedPage() {
       activeHref="/alerting/rules/alert"
       deletedHref="/alerting/rules/alert/deleted"
     >
-      <RulesPagePlaceholder />
+      <AlertRulesRecentlyDeleted />
     </RulesPageShell>
   );
 }
