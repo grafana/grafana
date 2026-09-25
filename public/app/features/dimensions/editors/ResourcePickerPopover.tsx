@@ -7,7 +7,7 @@ import { useRef, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button, useStyles2, getPortalContainer } from '@grafana/ui';
 
 import { type MediaType, PickerTabType, type ResourceFolderName } from '../types';
 
@@ -38,7 +38,18 @@ export const ResourcePickerPopover = (props: Props) => {
 
   const ref = useRef<HTMLElement>(null);
   const { dialogProps } = useDialog({}, ref);
-  const { overlayProps } = useOverlay({ onClose, isDismissable: true, isOpen: true }, ref);
+  const { overlayProps } = useOverlay(
+    {
+      onClose,
+      isDismissable: true,
+      isOpen: true,
+      shouldCloseOnInteractOutside: (elem) => {
+        const portalCont = getPortalContainer();
+        return !portalCont.contains(elem);
+      },
+    },
+    ref
+  );
 
   const isURL = value && value.includes('://');
   const [newValue, setNewValue] = useState<string>(value ?? '');
