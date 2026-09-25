@@ -20,7 +20,8 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { activateFullSceneTree } from '../utils/test-utils';
 
-import { AnnotationsEditView, MoveDirection } from './AnnotationsEditView';
+import { AnnotationsEditView } from './AnnotationsEditView';
+import { MoveDirection } from './annotations/MoveDirection';
 
 const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request: DataQueryRequest) => {
   const result: PanelData = {

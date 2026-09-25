@@ -20,7 +20,7 @@ func parseResults(result *resourcepb.ResourceSearchResponse) (*iamv0.GetSearchUs
 		return iamv0.NewGetSearchUsersResponse(), nil
 	}
 	if result.Error != nil {
-		return iamv0.NewGetSearchUsersResponse(), fmt.Errorf("%d error searching: %s: %s", result.Error.Code, result.Error.Message, result.Error.Details)
+		return iamv0.NewGetSearchUsersResponse(), resource.GetError(result.Error)
 	}
 
 	switch result.GetResultFormat() {

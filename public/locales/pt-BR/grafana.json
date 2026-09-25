@@ -475,6 +475,7 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Alertmanagers externos",
+      "external-alertmanagers-group-plugin": "",
       "noOptionsMessage-no-datasources-found": "Nenhuma fonte de dados encontrada"
     },
     "alert-menu": {
@@ -2673,6 +2674,8 @@
       }
     },
     "proxied-alerting-route": {
+      "redirected-body": "",
+      "redirected-title": "",
       "text-redirecting": ""
     },
     "query-and-expressions-step": {
@@ -2978,6 +2981,15 @@
     },
     "rule-list": {
       "configure-datasource": "Configuração",
+      "datasource-managed-notice": {
+        "action": "",
+        "body": "",
+        "inline-action": "",
+        "inline_one": "",
+        "inline_other": "",
+        "title_one": "",
+        "title_other": ""
+      },
       "ds-error": {
         "title": "Não é possível carregar regras para esta fonte de dados"
       },
@@ -2998,7 +3010,8 @@
         "no-more-results": "Não há mais resultados. Foram encontradas {{numberOfRules}} regras",
         "no-rules-found": "Nenhuma regra de alerta ou registro corresponde ao conjunto atual de filtros.",
         "results-loading": "Pesquisando. Foram encontradas {{numberOfRules}} regras",
-        "results-with-cancellation": "Pesquisa cancelada. Foram encontradas {{numberOfRules}} regras"
+        "results-with-cancellation": "Pesquisa cancelada. Foram encontradas {{numberOfRules}} regras",
+        "search-in-plugin": ""
       },
       "import-disabled-tooltip": {
         "auto-sync": "As importações não estão disponíveis enquanto a sincronização automática do Alertmanager do Mimir estiver ativa"
@@ -4392,6 +4405,7 @@
       "label-top": "Superior"
     },
     "name-show-unfilled-area": "Mostrar área não preenchida",
+    "name-text-mode": "",
     "name-value-display": "Exibição de valor",
     "presets": {
       "basic": "Básico",
@@ -4410,6 +4424,13 @@
     "suggestions": {
       "basic": "Medidor de barra",
       "lcd": "Medidor de barra: LCD"
+    },
+    "text-mode-options": {
+      "label-auto": "",
+      "label-name": "",
+      "label-none": "",
+      "label-value": "",
+      "label-value-and-name": ""
     },
     "value-display-options": {
       "label-hidden": "Oculto",
@@ -6041,6 +6062,12 @@
       "ungroup-repeat-loss": "As opções de repetição configuradas nos grupos desfeitos serão perdidas.",
       "ungroup-repeat-loss-title": "Desagrupar?"
     },
+    "loading": {
+      "drawer": "",
+      "drawer-title": "",
+      "sidebar": "",
+      "sidebar-title": ""
+    },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} de {{numberOfPages}}",
       "tooltip-next": "Avançar",
@@ -6759,7 +6786,14 @@
         "title-remove": "Remover",
         "title-show-transform-help": "Exibir ajuda de transformação"
       },
-      "title-delete": "Excluir {{name}}?"
+      "title-delete": "Excluir {{name}}?",
+      "transformation-editor-row-header": {
+        "edit-refId": "",
+        "edit-refId-placeholder": "",
+        "refId-exists-error": "",
+        "refId-reserved-error": "",
+        "refId-variable-error": ""
+      }
     },
     "transformation-operation-rows": {
       "remove-transformation": "",
@@ -7424,7 +7458,6 @@
       },
       "render-save-button-and-error": {
         "body-plugin-dashboard": "Suas alterações serão perdidas quando você atualizar o plug-in. Use <strong>Salvar como</strong> para criar uma versão personalizada.",
-        "title-failed-to-save-dashboard": "Falha ao salvar o painel",
         "title-plugin-dashboard": "Painel de plug-ins",
         "title-someone-else-has-updated-this-dashboard": "Outra pessoa atualizou este painel",
         "would-still-dashboard": "Deseja salvar este painel mesmo assim?"
@@ -7692,9 +7725,6 @@
       },
       "label-copy-tags": "Copiar tags",
       "label-folder": "Pasta",
-      "render-footer": {
-        "title-failed-to-save-dashboard": "Falha ao salvar o painel"
-      },
       "required": "Obrigatório"
     },
     "save-dashboard-drawer": {
@@ -7741,6 +7771,9 @@
       "save-variables-label-update-default-variable-values": "Atualizar valores de variáveis padrão",
       "show-variables-warning-alert-body": "Falha ao carregar algumas variáveis. Se você mantiver marcada a opção \"Atualizar valores de variáveis padrão\", os valores atuais (com falha) se tornarão os padrões do painel. Você pode salvar mesmo assim ou desmarcar a opção para evitar armazenar esses valores (com falha).",
       "show-variables-warning-alert-title": "Falha nas consultas de variáveis"
+    },
+    "save-errors": {
+      "unexpected": ""
     },
     "save-library-viz-panel-modal": {
       "cancel": "Cancelar",
@@ -10552,7 +10585,7 @@
     "data-source-settings": {
       "alerting-settings-heading": "Alertas",
       "alerting-settings-label": "Gerenciar regras de alerta na interface de alertas",
-      "alerting-settings-tooltip": "Gerenciar regras de alerta para esta fonte de dados. Para gerenciar outros recursos do alerting, adicione uma fonte de dados do Alertmanager.",
+      "alerting-settings-tooltip": "",
       "cert-key-reset": "Redefinir",
       "custom-headers-add": "Adicionar cabeçalho",
       "custom-headers-header": "Cabeçalho",
@@ -10840,6 +10873,7 @@
       "placeholder": "Escolher"
     },
     "table": {
+      "cell-actions": "",
       "cell-filter-on": "Filtrar por valor",
       "cell-filter-out": "Filtrar fora do valor",
       "cell-inspect": "Inspecionar valor",
@@ -11200,10 +11234,11 @@
   "home": {
     "alerts-incidents": {
       "alert-tab-label": "Alertas ativos",
+      "incident-filter-all": "",
+      "incident-filter-label": "",
       "incident-tab-label": "Incidentes",
       "team-filter-all": "Todas as equipes",
       "team-filter-label": "Filtrar alertas por equipe",
-      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Suas equipes",
       "title": "Alertas e incidentes",
       "title-alerts": "Alertas",
@@ -15605,6 +15640,10 @@
       "label": "Aplicar transformação a",
       "series": "Resultados da consulta e da transformação"
     },
+    "transformation-name": {
+      "auto-placeholder": "",
+      "edit": ""
+    },
     "validation": {
       "duplicate-name": "O nome da consulta já existe",
       "empty-name": "Um nome de consulta vazio não é permitido"
@@ -15784,6 +15823,12 @@
     "title": "Não foi possível encontrar o arquivo do aplicativo"
   },
   "save-dashboards": {
+    "forbidden": {
+      "title": ""
+    },
+    "invalid": {
+      "title": ""
+    },
     "message-length": {
       "info": "A mensagem tem {{messageLength}} caracteres e excede o tamanho máximo de 500 caracteres. Reduza o tamanho da mensagem antes de salvar.",
       "title": "A mensagem é muito longa"

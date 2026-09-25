@@ -40,6 +40,13 @@ func (b *resourceBuilder) GetResourceInfos(schema.GroupVersion) []utils.Resource
 	return b.infos
 }
 
+type manifestBuilder struct {
+	*resourceBuilder
+	manifest *app.ManifestData
+}
+
+func (b *manifestBuilder) ManifestData() *app.ManifestData { return b.manifest }
+
 func (b *fakeBuilder) InstallSchema(*runtime.Scheme) error { return nil }
 func (b *fakeBuilder) UpdateAPIGroupInfo(*genericapiserver.APIGroupInfo, builder.APIGroupOptions) error {
 	return nil
@@ -153,6 +160,34 @@ func TestBuild_MountsBuilderAdvertisedKinds(t *testing.T) {
 	got := paths(BuildFromManifests(nil, true, true, nil, fakeClient{}, builders, nil))
 
 	assert.Equal(t, []string{"widgets/search"}, got[gv.String()])
+}
+
+func TestBuildWithOptions_UsesFullBuilderManifest(t *testing.T) {
+	gv := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
+	info := utils.NewResourceInfo(gv.Group, gv.Version, "widgets", "widget", "Widget", nil, nil, utils.TableColumns{})
+	searchDisabled := false
+	manifest := &app.ManifestData{
+		Group: gv.Group,
+		Versions: []app.ManifestVersion{{
+			Name:   gv.Version,
+			Served: true,
+			Kinds: []app.ManifestVersionKind{{
+				Kind: "Widget", Plural: "widgets", Scope: namespacedScope,
+				Search: &app.ManifestVersionKindSearch{Endpoint: &searchDisabled},
+			}},
+		}},
+	}
+	builders := []builder.APIGroupBuilder{&manifestBuilder{
+		resourceBuilder: &resourceBuilder{
+			fakeBuilder: &fakeBuilder{gvs: []schema.GroupVersion{gv}},
+			infos:       []utils.ResourceInfo{info},
+		},
+		manifest: manifest,
+	}}
+
+	got := paths(BuildWithOptions(true, false, nil, fakeClient{}, builders, nil, BuildOptions{}))
+
+	assert.Empty(t, got, "the full manifest opt-out must win over synthesized resource declarations")
 }
 
 func TestBuild_SkipsBuilderAdvertisedClusterScopedKinds(t *testing.T) {

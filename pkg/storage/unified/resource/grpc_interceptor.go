@@ -6,10 +6,34 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+// UnaryErrorResultInterceptor converts response-embedded errors into gRPC status
+// errors while retaining the full ErrorResult as a status detail.
+func UnaryErrorResultInterceptor() grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req any, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+		resp, err := handler(ctx, req)
+		if err != nil {
+			return resp, err
+		}
+		result, ok := resp.(interface {
+			GetError() *resourcepb.ErrorResult
+		})
+		if !ok || result.GetError() == nil {
+			return resp, nil
+		}
+		failure := result.GetError()
+		st, err := status.New(grpcCodeFromErrorResult(failure), failure.Message).WithDetails(failure)
+		if err != nil {
+			return nil, status.Error(codes.Internal, "failed to encode error details")
+		}
+		return nil, st.Err()
+	}
+}
 
 // UnaryRequestDurationInterceptor records storage_server_grpc_request_duration_seconds
 // for unified-storage RPCs. A nil metrics records to unregistered collectors,

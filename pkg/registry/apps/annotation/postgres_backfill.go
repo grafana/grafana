@@ -134,11 +134,15 @@ func annotationArgs(rec migrator.BackfillRecord) pgx.NamedArgs {
 	if rec.LegacyID > 0 {
 		legacyID = &rec.LegacyID
 	}
+	timeEnd := rec.Time
+	if rec.TimeEnd != nil {
+		timeEnd = *rec.TimeEnd
+	}
 	return pgx.NamedArgs{
 		"namespace":     rec.Namespace,
 		"name":          rec.Name,
 		"time":          rec.Time,
-		"time_end":      rec.TimeEnd,
+		"time_end":      timeEnd,
 		"dashboard_uid": rec.DashboardUID,
 		"panel_id":      rec.PanelID,
 		"text":          rec.Text,
