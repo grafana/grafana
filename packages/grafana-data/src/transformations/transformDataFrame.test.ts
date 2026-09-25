@@ -364,5 +364,42 @@ describe('transformDataFrame', () => {
 
       expect(interpolate).not.toHaveBeenCalled();
     });
+
+    it('leaves the static refId untouched by interpolation', async () => {
+      delete window.__grafanaSceneContext;
+
+      const interpolate = jest.fn(() => 'interpolated');
+      const cfg = [{ id: DataTransformerID.reduce, refId: '$transformName', options: { reducers: [ReducerID.first] } }];
+
+      await expect(transformDataFrame(cfg, [getSeriesAWithSingleField()], { interpolate })).toEmitValuesWith(
+        (received) => {
+          expect(received[0][0].refId).toEqual('$transformName');
+        }
+      );
+    });
+  });
+
+  describe('blank static refId', () => {
+    const seriesA = () => ({ ...getSeriesAWithSingleField(), refId: 'A' });
+
+    // The UI clears to undefined, but dashboard JSON and API callers can still supply these.
+    it.each([
+      ['an empty string', ''],
+      ['whitespace only', '   '],
+    ])('falls back to the generated refId for %s', async (_label, refId) => {
+      const cfg = [{ id: DataTransformerID.reduce, refId, options: { reducers: [ReducerID.first] } }];
+
+      await expect(transformDataFrame(cfg, [seriesA()])).toEmitValuesWith((received) => {
+        expect(received[0][0].refId).toBe('reduce-A');
+      });
+    });
+
+    it('trims a padded static refId rather than rejecting it', async () => {
+      const cfg = [{ id: DataTransformerID.reduce, refId: '  T-A  ', options: { reducers: [ReducerID.first] } }];
+
+      await expect(transformDataFrame(cfg, [seriesA()])).toEmitValuesWith((received) => {
+        expect(received[0][0].refId).toBe('T-A');
+      });
+    });
   });
 });

@@ -151,6 +151,25 @@ func TestStore_GetAuthInfo(t *testing.T) {
 			want: &login.UserAuth{UserId: 42, UserUID: "user-uid", AuthModule: "oauth_github", AuthId: "github-42", Created: created},
 		},
 		{
+			name:  "with module, reads UserAuth.Id from the DeprecatedInternalID label",
+			query: &login.GetAuthInfoQuery{UserId: 42, AuthModule: "oauth_github"},
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				switch {
+				case strings.Contains(r.URL.Path, "/users"):
+					usersResponse(t, w, "user-uid")
+				case strings.Contains(r.URL.Path, "/authinfos/"):
+					item := authInfoItem("user-uid.oauth-github", "user-uid", "oauth_github", "github-42", created)
+					item.Labels = map[string]string{utils.LabelKeyDeprecatedInternalID: "123"}
+					writeJSON(t, w, item)
+				default:
+					t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+				}
+			},
+			check: func(t *testing.T, result *login.UserAuth) {
+				assert.Equal(t, int64(123), result.Id)
+			},
+		},
+		{
 			name:  "without module, picks the most recently linked one",
 			query: &login.GetAuthInfoQuery{UserId: 42},
 			handler: func(w http.ResponseWriter, r *http.Request) {

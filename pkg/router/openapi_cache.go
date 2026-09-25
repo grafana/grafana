@@ -51,29 +51,17 @@ func openAPICacheHeaders(header http.Header) http.Header {
 	return result
 }
 
-// stripConditionalHeaders removes conditional-GET headers from a request
-// before proxying it upstream on a cache miss. Without this, a client's
-// If-None-Match that didn't match our key-based ETag (so we decided to proxy)
-// could still coincidentally match the backend's own unrelated ETag scheme,
-// producing a bodyless 304 we'd have no way to distinguish from "unchanged"
-// — a phantom empty response with nothing to cache or serve. Stripping
-// guarantees the backend always gives us a real, judgeable status code.
+// stripConditionalHeaders removes conditional-GET headers before a cache-miss
+// proxy. Otherwise the client's ETag could match the backend's unrelated one
+// and produce a bodyless 304 with nothing to cache.
 func stripConditionalHeaders(req *http.Request) {
 	req.Header.Del("If-None-Match")
 	req.Header.Del("If-Modified-Since")
 }
 
-// stripHashQueryParam removes the "hash" query parameter before proxying a
-// request upstream. Our discovery doc (buildOpenAPIV3Index) hash-busts each
-// group-version's serverRelativeURL with our own key, an opaque cache token
-// with no relation to the backend's content. But kube-openapi's own
-// handler3 treats a client-supplied "hash" as a claim about ITS content
-// hash and 301-redirects to the correct one on mismatch -- a redirect
-// rejectBackendRedirects then turns into a 502. Since our key essentially
-// never matches the backend's real hash, forwarding it verbatim breaks
-// every cold-cache request. Stripping it here keeps the key-based
-// busting meaningful for our own cache/ETag while never surfacing our
-// token to a protocol that expects its own.
+// stripHashQueryParam removes our "hash" cache-busting parameter before
+// proxying. kube-openapi treats "hash" as a claim about its own content and
+// redirects on a mismatch, which rejectBackendRedirects turns into a 502.
 func stripHashQueryParam(req *http.Request) {
 	q := req.URL.Query()
 	if !q.Has("hash") {
@@ -100,10 +88,6 @@ func (c *captureWriter) Header() http.Header         { return c.header }
 func (c *captureWriter) Write(p []byte) (int, error) { return c.body.Write(p) }
 func (c *captureWriter) WriteHeader(code int)        { c.statusCode = code }
 
-// Flush is a no-op: captureWriter owns its own in-memory buffer (there is no
-// underlying real ResponseWriter to unwrap to yet -- the buffered body is
-// copied to the real ResponseWriter only after ServeHTTP returns), but it
-// must still satisfy http.Flusher so ReverseProxy's flush machinery (used
-// for chunked/SSE/any response with no Content-Length) doesn't treat this
-// writer as unsupported.
+// Flush is a no-op: the body is buffered and copied out after ServeHTTP
+// returns, but ReverseProxy still expects a Flusher.
 func (c *captureWriter) Flush() {}

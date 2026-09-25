@@ -245,5 +245,8 @@
         "border": "palette.ink800"
       }
     }
+  },
+  "typography": {
+    "fontWeightBold": 600
   }
 }
