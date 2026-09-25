@@ -42,6 +42,15 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   - On an OpenAPI cache miss, strip conditional headers and the `hash` query parameter before
     proxying.
   - Any 304 must carry an `ETag`.
+- **In middleware mode the router serves only app plugin groups** (`isPluginAPIGroup`: a
+  `*.ext.grafana.app` manifest group, or a plugin ID with a hyphen and no dots). It runs ahead of
+  the embedded API server, so it must never shadow a group that server owns. `NewPluginBackend`
+  enforces the same rule in every mode. One bad backend or plugin fails only its own group; it
+  must never stop the reconcile loop.
+- **Outbound credentials (`rewriteOutbound`):** every proxy uses it. When the request carries a
+  requester (middleware mode), Grafana has already consumed the caller's credentials: `Cookie`,
+  `Authorization`, `X-Access-Token` and `X-Grafana-Id` are replaced by the requester's own tokens.
+  Without a requester (standalone), they pass through. `X-Forwarded-*` is always set.
 - **Log through the app-sdk logger from the context:** `logging.FromContext(ctx)` from
   `github.com/grafana/grafana-app-sdk/logging`. Don't use `log/slog` or `pkg/infra/log`. If a
   function that logs has no context, pass one in from its caller (a request's `Context()`, or the
