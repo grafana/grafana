@@ -17,6 +17,7 @@ import (
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/sony/gobreaker/v2"
 	"golang.org/x/sync/singleflight"
+	"golang.org/x/time/rate"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -31,6 +32,15 @@ const (
 	// Retry unknown stacks sooner so newly created stacks can become reachable.
 	singleTenantNotFoundTTL   = 30 * time.Second
 	singleTenantLookupTimeout = 5 * time.Second
+
+	// Entries are small, and a cache smaller than the number of active stacks
+	// sends most requests to grafana.com.
+	defaultSingleTenantCacheSize        = 10000
+	defaultSingleTenantBreakerCacheSize = 10000
+	// Bounds grafana.com lookups for stacks that are not cached, however many
+	// distinct namespaces callers send.
+	defaultSingleTenantLookupRate  = 20
+	defaultSingleTenantLookupBurst = 40
 )
 
 // singleTenantStack is what a resolver reports for a stack; the zero value means not found.
@@ -54,6 +64,9 @@ type singleTenantHost struct {
 // errStackOriginMismatch means the response came from a different stack than the one resolved.
 var errStackOriginMismatch = errors.New("router: response came from an unexpected stack")
 
+// errStackLookupThrottled means the lookup rate limit was reached. It is never cached.
+var errStackLookupThrottled = errors.New("router: stack lookup throttled")
+
 // singleTenantFallback forwards requests without a matching multi-tenant route to
 // the single-tenant stack identified by the request namespace. Although this is
 // not an ideal routing path, it gives clients a single entry point that will
@@ -63,13 +76,20 @@ type singleTenantFallback struct {
 	breakerMu     sync.Mutex
 	breakers      *lru.Cache[string, *gobreaker.CircuitBreaker[struct{}]]
 	lookups       singleflight.Group
+	lookupLimiter *rate.Limiter // nil means lookups are not rate limited
 	resolveHost   func(context.Context, int64) (singleTenantStack, error)
 	discoveryHost *url.URL
 	transport     *http.Transport
 }
 
 type singleTenantFallbackOptions struct {
-	cacheSize     int
+	cacheSize int
+	// breakerCacheSize defaults to cacheSize. Breakers are keyed by stack and
+	// group, so it may need to be larger than the host cache.
+	breakerCacheSize int
+	// lookupRate is the sustained grafana.com lookups per second; zero disables the limit.
+	lookupRate    float64
+	lookupBurst   int
 	resolveHost   func(context.Context, int64) (singleTenantStack, error)
 	discoveryHost *url.URL
 	transport     *http.Transport
@@ -79,6 +99,25 @@ func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFal
 	cache, err := lru.New[int64, singleTenantHost](opts.cacheSize)
 	if err != nil {
 		return nil, err
+	}
+
+	if opts.breakerCacheSize == 0 {
+		opts.breakerCacheSize = opts.cacheSize
+	}
+	breakers, err := lru.New[string, *gobreaker.CircuitBreaker[struct{}]](opts.breakerCacheSize)
+	if err != nil {
+		return nil, fmt.Errorf("single-tenant breaker cache: %w", err)
+	}
+
+	var limiter *rate.Limiter
+	switch {
+	case opts.lookupRate < 0:
+		return nil, fmt.Errorf("single-tenant lookup rate must not be negative")
+	case opts.lookupRate > 0:
+		if opts.lookupBurst < 1 {
+			return nil, fmt.Errorf("single-tenant lookup burst must be at least 1")
+		}
+		limiter = rate.NewLimiter(rate.Limit(opts.lookupRate), opts.lookupBurst)
 	}
 
 	if opts.resolveHost == nil {
@@ -92,11 +131,10 @@ func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFal
 		opts.transport = http.DefaultTransport.(*http.Transport).Clone()
 	}
 
-	// The host cache above has already validated the capacity.
-	breakers, _ := lru.New[string, *gobreaker.CircuitBreaker[struct{}]](opts.cacheSize)
 	return &singleTenantFallback{
 		breakers:      breakers,
 		cache:         cache,
+		lookupLimiter: limiter,
 		resolveHost:   opts.resolveHost,
 		discoveryHost: opts.discoveryHost,
 		transport:     opts.transport,
@@ -138,6 +176,10 @@ func (st *singleTenantFallback) lookupHost(ctx context.Context, stackID int64) (
 	if host, ok := st.cachedHost(stackID); ok {
 		return host, nil
 	}
+	// Fail fast rather than queue: waiting would hold requests open under a flood.
+	if st.lookupLimiter != nil && !st.lookupLimiter.Allow() {
+		return nil, errStackLookupThrottled
+	}
 	// One caller cancelling must not cancel the lookup shared by other callers.
 	lookupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), singleTenantLookupTimeout)
 	defer cancel()
@@ -176,6 +218,11 @@ func (st *singleTenantFallback) ServeHTTP(w http.ResponseWriter, req *http.Reque
 	parts := strings.Split(strings.TrimPrefix(req.URL.Path, "/"), "/")
 	if len(parts) > 4 && parts[0] == "apis" && parts[1] != "" && parts[2] != "" && parts[3] == "namespaces" && parts[4] != "" {
 		host, err := st.hostForNamespace(req.Context(), parts[4])
+		if errors.Is(err, errStackLookupThrottled) {
+			w.Header().Set("Retry-After", "1")
+			http.Error(w, "stack lookup throttled", http.StatusServiceUnavailable)
+			return
+		}
 		if err != nil {
 			http.Error(w, "stack lookup unavailable", http.StatusServiceUnavailable)
 			return
