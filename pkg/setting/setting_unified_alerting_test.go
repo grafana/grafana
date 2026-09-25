@@ -84,23 +84,16 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 	testCases := []struct {
 		desc                   string
 		unifiedAlertingOptions map[string]string
-		alertingOptions        map[string]string
 		verifyCfg              func(*testing.T, Cfg)
 	}{
 		{
-			desc: "when the unified options do not equal the defaults, it should not apply the legacy ones",
+			desc: "when the unified options are set, it should read them",
 			unifiedAlertingOptions: map[string]string{
 				"admin_config_poll_interval": "120s",
 				"max_attempts":               "6",
 				"min_interval":               "60s",
 				"execute_alerts":             "false",
 				"evaluation_timeout":         "90s",
-			},
-			alertingOptions: map[string]string{
-				"max_attempts":               strconv.FormatInt(schedulerDefaultMaxAttempts, 10),
-				"min_interval_seconds":       strconv.FormatInt(schedulerDefaultLegacyMinInterval, 10),
-				"execute_alerts":             strconv.FormatBool(schedulerDefaultExecuteAlerts),
-				"evaluation_timeout_seconds": strconv.FormatInt(int64(evaluatorDefaultEvaluationTimeout.Seconds()), 10),
 			},
 			verifyCfg: func(t *testing.T, cfg Cfg) {
 				require.Equal(t, 120*time.Second, cfg.UnifiedAlerting.AdminConfigPollInterval)
@@ -113,45 +106,12 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 			},
 		},
 		{
-			desc: "when the unified options equal the defaults, it should apply the legacy ones",
+			desc: "when the unified options are not set, apply the defaults",
 			unifiedAlertingOptions: map[string]string{
 				"admin_config_poll_interval": "120s",
-				"min_interval":               SchedulerBaseInterval.String(),
-				"execute_alerts":             strconv.FormatBool(schedulerDefaultExecuteAlerts),
-				"evaluation_timeout":         evaluatorDefaultEvaluationTimeout.String(),
-			},
-			alertingOptions: map[string]string{
-				"max_attempts":               "1", // Note: Ignored, setting does not exist.
-				"min_interval_seconds":       "120",
-				"execute_alerts":             "true",
-				"evaluation_timeout_seconds": "160",
 			},
 			verifyCfg: func(t *testing.T, cfg Cfg) {
 				require.Equal(t, 120*time.Second, cfg.UnifiedAlerting.AdminConfigPollInterval)
-				require.Equal(t, int64(3), cfg.UnifiedAlerting.MaxAttempts)
-				require.Equal(t, 120*time.Second, cfg.UnifiedAlerting.MinInterval)
-				require.Equal(t, true, cfg.UnifiedAlerting.ExecuteAlerts)
-				require.Equal(t, 160*time.Second, cfg.UnifiedAlerting.EvaluationTimeout)
-				require.Equal(t, SchedulerBaseInterval, cfg.UnifiedAlerting.BaseInterval)
-				require.Equal(t, 120*time.Second, cfg.UnifiedAlerting.DefaultRuleEvaluationInterval)
-			},
-		},
-		{
-			desc: "when both unified and legacy options are invalid, apply the defaults",
-			unifiedAlertingOptions: map[string]string{
-				"max_attempts":        "invalid",
-				"min_interval":        "invalid",
-				"execute_alerts":      "invalid",
-				"evaluation_timeouts": "invalid",
-			},
-			alertingOptions: map[string]string{
-				"max_attempts":               "invalid",
-				"min_interval_seconds":       "invalid",
-				"execute_alerts":             "invalid",
-				"evaluation_timeout_seconds": "invalid",
-			},
-			verifyCfg: func(t *testing.T, cfg Cfg) {
-				require.Equal(t, alertmanagerDefaultConfigPollInterval, cfg.UnifiedAlerting.AdminConfigPollInterval)
 				require.Equal(t, int64(schedulerDefaultMaxAttempts), cfg.UnifiedAlerting.MaxAttempts)
 				require.Equal(t, SchedulerBaseInterval, cfg.UnifiedAlerting.MinInterval)
 				require.Equal(t, schedulerDefaultExecuteAlerts, cfg.UnifiedAlerting.ExecuteAlerts)
@@ -161,27 +121,21 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 			},
 		},
 		{
-			desc: "when unified alerting options are invalid, apply legacy options",
+			desc: "when the unified options are invalid, apply the defaults",
 			unifiedAlertingOptions: map[string]string{
 				"max_attempts":       "invalid",
 				"min_interval":       "invalid",
 				"execute_alerts":     "invalid",
 				"evaluation_timeout": "invalid",
 			},
-			alertingOptions: map[string]string{
-				"max_attempts":               "1", // Note: Ignored, setting does not exist.
-				"min_interval_seconds":       "120",
-				"execute_alerts":             "false",
-				"evaluation_timeout_seconds": "160",
-			},
 			verifyCfg: func(t *testing.T, cfg Cfg) {
 				require.Equal(t, alertmanagerDefaultConfigPollInterval, cfg.UnifiedAlerting.AdminConfigPollInterval)
-				require.Equal(t, int64(3), cfg.UnifiedAlerting.MaxAttempts)
-				require.Equal(t, 120*time.Second, cfg.UnifiedAlerting.MinInterval)
-				require.Equal(t, false, cfg.UnifiedAlerting.ExecuteAlerts)
-				require.Equal(t, 160*time.Second, cfg.UnifiedAlerting.EvaluationTimeout)
+				require.Equal(t, int64(schedulerDefaultMaxAttempts), cfg.UnifiedAlerting.MaxAttempts)
+				require.Equal(t, SchedulerBaseInterval, cfg.UnifiedAlerting.MinInterval)
+				require.Equal(t, schedulerDefaultExecuteAlerts, cfg.UnifiedAlerting.ExecuteAlerts)
+				require.Equal(t, evaluatorDefaultEvaluationTimeout, cfg.UnifiedAlerting.EvaluationTimeout)
 				require.Equal(t, SchedulerBaseInterval, cfg.UnifiedAlerting.BaseInterval)
-				require.Equal(t, 120*time.Second, cfg.UnifiedAlerting.DefaultRuleEvaluationInterval)
+				require.Equal(t, DefaultRuleEvaluationInterval, cfg.UnifiedAlerting.DefaultRuleEvaluationInterval)
 			},
 		},
 	}
@@ -195,12 +149,6 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 			require.NoError(t, err)
 			for k, v := range tc.unifiedAlertingOptions {
 				_, err = unifiedAlertingSec.NewKey(k, v)
-				require.NoError(t, err)
-			}
-			alertingSec, err := f.NewSection("alerting")
-			require.NoError(t, err)
-			for k, v := range tc.alertingOptions {
-				_, err = alertingSec.NewKey(k, v)
 				require.NoError(t, err)
 			}
 			err = cfg.ReadUnifiedAlertingSettings(f)
@@ -221,10 +169,9 @@ func TestMinInterval(t *testing.T) {
 	}
 
 	testCases := []struct {
-		desc              string
-		minInterval       *time.Duration
-		legacyMinInterval *time.Duration
-		verifyCfg         func(*testing.T, *Cfg, error)
+		desc        string
+		minInterval *time.Duration
+		verifyCfg   func(*testing.T, *Cfg, error)
 	}{
 		{
 			desc:        "should fail if min interval is less than base interval",
@@ -250,34 +197,12 @@ func TestMinInterval(t *testing.T) {
 			},
 		},
 		{
-			desc:              "should fail if fallback to legacy min interval and it is not multiple of base interval",
-			legacyMinInterval: randPredicate(func(dur time.Duration) bool { return dur > SchedulerBaseInterval && dur%SchedulerBaseInterval != 0 }),
-			verifyCfg: func(t *testing.T, cfg *Cfg, err error) {
-				require.Error(t, err)
-				require.Contains(t, err.Error(), "min_interval")
-			},
-		},
-		{
-			desc:              "should not fail if fallback to legacy min interval it is multiple of base interval",
-			legacyMinInterval: randPredicate(func(dur time.Duration) bool { return dur >= SchedulerBaseInterval && dur%SchedulerBaseInterval == 0 }),
-			verifyCfg: func(t *testing.T, cfg *Cfg, err error) {
-				require.NoError(t, err)
-			},
-		},
-		{
 			desc: "should adjust DefaultRuleEvaluationInterval to min interval if it is greater",
 			minInterval: randPredicate(func(dur time.Duration) bool {
 				return dur%SchedulerBaseInterval == 0 && dur > DefaultRuleEvaluationInterval
 			}),
 			verifyCfg: func(t *testing.T, cfg *Cfg, err error) {
 				require.Equal(t, cfg.UnifiedAlerting.MinInterval, cfg.UnifiedAlerting.DefaultRuleEvaluationInterval)
-			},
-		},
-		{
-			desc:              "should fallback to the default if legacy interval is less than base",
-			legacyMinInterval: randPredicate(func(dur time.Duration) bool { return dur < SchedulerBaseInterval }),
-			verifyCfg: func(t *testing.T, cfg *Cfg, err error) {
-				require.Equal(t, SchedulerBaseInterval, cfg.UnifiedAlerting.MinInterval)
 			},
 		},
 	}
@@ -289,12 +214,6 @@ func TestMinInterval(t *testing.T) {
 				section, err := f.NewSection("unified_alerting")
 				require.NoError(t, err)
 				_, err = section.NewKey("min_interval", testCase.minInterval.String())
-				require.NoError(t, err)
-			}
-			if testCase.legacyMinInterval != nil {
-				alertingSec, err := f.NewSection("alerting")
-				require.NoError(t, err)
-				_, err = alertingSec.NewKey("min_interval_seconds", strconv.Itoa(int(testCase.legacyMinInterval.Seconds())))
 				require.NoError(t, err)
 			}
 			cfg := NewCfg()
