@@ -3,11 +3,13 @@ import { type DashboardLink } from '@grafana/schema';
 import { type ScopeMeta } from 'app/features/dashboard/state/DashboardModel';
 import { type DashboardMeta } from 'app/types/dashboard';
 
+import { type DashboardCodeSession } from '../../code/DashboardCodeSession';
 import { type PanelEditor } from '../../panel-edit/PanelEditor';
 import { type DashboardEditView } from '../../settings/utils';
 import { type DashboardSidebarLike } from '../../sidebar/types';
 import { type DashboardControls } from '../DashboardControls';
 import { type DashboardLayoutOrchestrator } from '../DashboardLayoutOrchestrator';
+import { dashboardModesEnabled, getDashboardMode, type DashboardMode } from '../dashboardModes';
 
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './DashboardLayoutManager';
 import { type LayoutParent } from './LayoutParent';
@@ -43,6 +45,8 @@ export interface DashboardSceneState extends SceneObjectState {
   controls?: DashboardControls;
   /** True when editing */
   isEditing?: boolean;
+  mode?: DashboardMode;
+  codeSession?: DashboardCodeSession;
   /** Omitted means default editing; explicit full editing opts out of automatic Assistant preview. */
   editPresentation?: 'preview' | 'full';
   /** True when user made a change */
@@ -82,12 +86,21 @@ export interface DashboardSceneState extends SceneObjectState {
   planning?: DashboardPlanningState;
 }
 
-export function isFullDashboardEditing(state: Pick<DashboardSceneState, 'isEditing' | 'editPresentation'>): boolean {
-  return Boolean(state.isEditing && state.editPresentation !== 'preview');
+export function isFullDashboardEditing(
+  state: Pick<DashboardSceneState, 'mode' | 'isEditing' | 'editPresentation'>
+): boolean {
+  return Boolean(
+    state.isEditing &&
+      (dashboardModesEnabled() ? getDashboardMode(state) === 'edit' : state.editPresentation !== 'preview')
+  );
 }
 
-export function isDashboardReviewing(state: Pick<DashboardSceneState, 'isEditing' | 'editPresentation'>): boolean {
-  return Boolean(state.isEditing && state.editPresentation === 'preview');
+export function isDashboardReviewing(
+  state: Pick<DashboardSceneState, 'mode' | 'isEditing' | 'editPresentation'>
+): boolean {
+  return dashboardModesEnabled()
+    ? getDashboardMode(state) !== 'edit'
+    : Boolean(state.isEditing && state.editPresentation === 'preview');
 }
 
 export interface DashboardPlanningState {

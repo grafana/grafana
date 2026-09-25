@@ -47,6 +47,7 @@ import { getPanelIdForVizPanel } from '../utils/utils-panels';
 import { DashboardScene } from './DashboardScene';
 import { VizPanelLinks, type VizPanelLinksMenu } from './PanelLinks';
 import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
+import { canManuallyEditDashboard, dashboardModesEnabled, getDashboardMode } from './dashboardModes';
 import { PanelTimeRangeDrawer } from './panel-timerange/PanelTimeRangeDrawer';
 
 /**
@@ -90,7 +91,13 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (dashboard.canEditDashboard() && dashboard.state.editable && !isReadOnlyRepeat && !isEditingPanel) {
+    if (
+      (canManuallyEditDashboard(dashboard.state) || getDashboardMode(dashboard.state) === 'view') &&
+      dashboard.canEditDashboard() &&
+      dashboard.state.editable &&
+      !isReadOnlyRepeat &&
+      !isEditingPanel
+    ) {
       // We could check isEditing here but I kind of think this should always be in the menu,
       // and going into panel edit should make the dashboard go into edit mode is it's not already
       items.push({
@@ -242,7 +249,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (hasLegendOptions(panel.state.options) && !isEditingPanel) {
+    if (canManuallyEditDashboard(dashboard.state) && hasLegendOptions(panel.state.options) && !isEditingPanel) {
       moreSubMenu.push({
         text: panel.state.options.legend.showLegend
           ? t('panel.header-menu.hide-legend', 'Hide legend')
@@ -294,7 +301,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
 
     items.push(getInspectMenuItem(plugin, panel, dashboard));
 
-    if (config.featureToggles.panelTimeSettings) {
+    if (config.featureToggles.panelTimeSettings && canManuallyEditDashboard(dashboard.state)) {
       items.push({
         text: t('panel.header-menu.time-settings', 'Time settings'),
         iconClassName: 'clock-nine',
@@ -635,6 +642,9 @@ const onCreateAlert = async (panel: VizPanel, dashboard: DashboardScene) => {
 };
 
 export function toggleVizPanelLegend(vizPanel: VizPanel): void {
+  if (dashboardModesEnabled() && !canManuallyEditDashboard(getDashboardSceneFor(vizPanel).state)) {
+    return;
+  }
   const options = vizPanel.state.options;
   if (hasLegendOptions(options) && typeof options.legend.showLegend === 'boolean') {
     vizPanel.onOptionsChange({

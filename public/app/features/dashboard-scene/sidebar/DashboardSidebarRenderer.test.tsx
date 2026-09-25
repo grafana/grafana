@@ -122,6 +122,7 @@ describe('DashboardSidebarRenderer', () => {
 
     it('restores the docked dashboard options pane after toggling Preview off', async () => {
       const scene = buildTestScene();
+      scene.setState({ meta: { canEdit: true, canSave: true } });
       act(() => activateFullSceneTree(scene));
       function SidebarWithPresentation() {
         const state = scene.useState();

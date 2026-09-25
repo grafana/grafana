@@ -2723,11 +2723,6 @@
       "count": 1
     }
   },
-  "public/app/features/plugins/components/restrictedGrafanaApis/RestrictedGrafanaApisProvider.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/plugins/datasource_srv.ts": {
     "@grafana/no-get-data-source-srv": {
       "count": 1

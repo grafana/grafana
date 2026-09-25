@@ -14,6 +14,7 @@ import { type ElementSelectionContextItem, type ElementSelectionOnSelectOptions 
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 import { isFullDashboardEditing, isDashboardReviewing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
+import { dashboardModesEnabled, getDashboardMode } from '../scene/dashboardModes';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { getRepeatCloneSourceKey } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
@@ -97,6 +98,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       dashboard.subscribeToState((state, previous) => {
         if (
           state.isEditing !== previous.isEditing ||
+          state.mode !== previous.mode ||
           state.editview !== previous.editview ||
           state.editPanel !== previous.editPanel ||
           state.viewPanel !== previous.viewPanel
@@ -223,6 +225,9 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
    * Adds to undo history and selects new object
    */
   private handleEditAction(action: DashboardEditActionEventPayload, skipPerform = false) {
+    if (!getDashboardSceneFor(this).canApplyEditAction()) {
+      return;
+    }
     if (this._activeBatch) {
       this._activeBatch.actions.push(action);
       if (!skipPerform) {
@@ -267,6 +272,9 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
    * Removes last action from undo stack and adds it to redo stack.
    */
   public undoAction() {
+    if (dashboardModesEnabled() && getDashboardMode(getDashboardSceneFor(this).state) !== 'edit') {
+      return;
+    }
     const undoStack = this.state.undoStack.slice();
     const action = undoStack.pop();
     if (!action) {
@@ -324,6 +332,9 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
    * Removes last action from redo stack and adds it to undo stack.
    */
   public redoAction() {
+    if (dashboardModesEnabled() && getDashboardMode(getDashboardSceneFor(this).state) !== 'edit') {
+      return;
+    }
     const redoStack = this.state.redoStack.slice();
     const action = redoStack.pop();
     if (!action) {

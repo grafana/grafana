@@ -26,6 +26,7 @@ import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { DashboardScene } from './DashboardScene';
 import { onRemovePanel, toggleVizPanelLegend } from './PanelMenuBehavior';
+import { canManuallyEditDashboard, dashboardModesEnabled, getDashboardMode } from './dashboardModes';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
@@ -225,6 +226,9 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   keybindings.addBinding({
     key: 'mod+o',
     onTrigger: () => {
+      if (!canManuallyEditDashboard(scene.state)) {
+        return;
+      }
       const cursorSync = scene.state.$behaviors?.find((b) => b instanceof behaviors.CursorSync);
       if (cursorSync instanceof behaviors.CursorSync) {
         const currentSync = cursorSync.state.sync;
@@ -240,6 +244,10 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     keybindings.addBinding({
       key: 'd p',
       onTrigger: () => {
+        if (dashboardModesEnabled()) {
+          scene.setDashboardMode(getDashboardMode(scene.state) === 'view' ? 'edit' : 'view');
+          return;
+        }
         const { isEditing, editPanel, editview, viewPanel, overlay } = scene.state;
         if (!isEditing || editPanel || editview || viewPanel || overlay) {
           return;
@@ -252,6 +260,11 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     keybindings.addBinding({
       key: 'e',
       onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+        if (!canManuallyEditDashboard(scene.state)) {
+          if (getDashboardMode(scene.state) !== 'view' || !scene.setDashboardMode('edit')) {
+            return;
+          }
+        }
         const panelId = getPanelIdForVizPanel(vizPanel);
         DashboardInteractions.panelActionClicked('edit', panelId, 'keyboard', vizPanel.state.pluginId);
         const sceneRoot = vizPanel.getRoot();

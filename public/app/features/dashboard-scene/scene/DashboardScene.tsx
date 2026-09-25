@@ -67,6 +67,7 @@ import {
   type ResourceForCreate,
 } from '../../apiserver/types';
 import { edit } from '../actions/utils/edit';
+import { DashboardCodeSession } from '../code/DashboardCodeSession';
 import { createMutationClient } from '../mutation-api/clientBridge';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { type DashboardChangeInfo } from '../saving/shared';
@@ -118,6 +119,12 @@ import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import {
+  dashboardModesEnabled,
+  getDashboardMode,
+  canManuallyEditDashboard,
+  type DashboardMode,
+} from './dashboardModes';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
@@ -198,6 +205,20 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   private _sidebarActivation?: CancelActivationHandler;
   private _modalRequestId = 0;
+  private _assistantWrites = 0;
+
+  public async withAssistantWrite<T>(write: () => Promise<T>): Promise<T> {
+    this._assistantWrites++;
+    try {
+      return await write();
+    } finally {
+      this._assistantWrites--;
+    }
+  }
+
+  public canApplyEditAction() {
+    return !dashboardModesEnabled() || getDashboardMode(this.state) !== 'view' || this._assistantWrites > 0;
+  }
   private _sidebarBeforePreview?: Pick<DashboardSidebarState, 'openPane' | 'selectionContext'>;
 
   /**
@@ -469,6 +490,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onEnterEditMode = (source: 'user' | 'assistant' = 'user') => {
+    const mode = this.state.mode ?? (source === 'assistant' ? 'view' : 'edit');
     if (!this.state.isEditing) {
       this._editSessionSource = source;
       this._sidebarBeforePreview = undefined;
@@ -479,11 +501,21 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this._initialState = sceneUtils.cloneSceneObjectState(this.state, { isDirty: false });
       this._initialUrlState = locationService.getLocation();
 
-      this.setState({ isEditing: true, editable: true, editPresentation: undefined });
+      this.setState({
+        isEditing: true,
+        editable: true,
+        editPresentation: undefined,
+        ...(dashboardModesEnabled() ? { mode } : {}),
+      });
       this.state.body.editModeChanged?.(true);
       this._changeTracker.startTrackingChanges();
 
       DashboardInteractions.editSessionStarted({ dashboard_uid: this.state.uid, source });
+    }
+
+    if (dashboardModesEnabled()) {
+      this.applyEditPresentation();
+      return;
     }
 
     // Full is an explicit user choice; undefined is the default manual edit presentation.
@@ -493,6 +525,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   };
 
   public setEditPresentation(presentation: 'preview' | 'full') {
+    if (dashboardModesEnabled()) {
+      this.setDashboardMode(presentation === 'full' ? 'edit' : 'view');
+      return;
+    }
     if (!this.state.isEditing || this.state.editPanel || this.state.editview) {
       return;
     }
@@ -525,6 +561,58 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this.restoreSidebarAfterPreview();
     }
     reportInteraction('dashboards_edit_presentation_changed', { presentation });
+  }
+
+  public setDashboardMode(mode: DashboardMode): boolean {
+    if (
+      !dashboardModesEnabled() ||
+      !this.canEditDashboard() ||
+      this.managedResourceCannotBeEdited() ||
+      this.state.planning ||
+      this.state.editPanel ||
+      this.state.editview ||
+      this.state.viewPanel ||
+      this.state.layoutOrchestrator.isDragging()
+    ) {
+      return false;
+    }
+    if (mode !== 'view' && !this.state.editable) {
+      return false;
+    }
+    const previous = getDashboardMode(this.state);
+    if (previous === mode) {
+      return true;
+    }
+    if (previous === 'code' && !this.state.codeSession?.apply(this)) {
+      return false;
+    }
+    if (!this.state.isEditing && mode !== 'view') {
+      this.onEnterEditMode();
+    }
+    if (previous === 'edit') {
+      this._sidebarBeforePreview = {
+        openPane: this.state.sidebar.state.openPane,
+        selectionContext: this.state.sidebar.state.selectionContext,
+      };
+    }
+    this.state.sidebar.closePane();
+    this.setState({ mode });
+    this.applyEditPresentation();
+    if (mode === 'edit') {
+      this.restoreSidebarAfterPreview();
+    }
+    if (mode === 'code') {
+      if (!this.state.codeSession) {
+        this.setState({ codeSession: new DashboardCodeSession() });
+      }
+      this.state.codeSession?.reset(this);
+    }
+    reportInteraction('dashboards_mode_changed', { mode });
+    return true;
+  }
+
+  public hasPendingCodeChanges() {
+    return dashboardModesEnabled() && Boolean(this.state.codeSession?.hasChanges());
   }
 
   private restoreSidebarAfterPreview() {
@@ -766,7 +854,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const hadProgrammaticSidebar = this._sidebarActivation !== undefined;
     this.deactivateSidebar();
 
-    const editPresentation = this.state.editPresentation;
+    const { editPresentation, mode, codeSession } = this.state;
     const restoredState = sceneUtils.cloneSceneObjectState(this._initialState!, { isDirty: false });
 
     // Ensure the restored layout stays editable.
@@ -775,6 +863,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.setState({
       ...restoredState,
       editPresentation,
+      mode,
+      codeSession,
       isEditing: true,
       editable: true,
       isDirty: false,
@@ -782,6 +872,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       editview: undefined,
       overlay: undefined,
     });
+
+    this.state.codeSession?.reset(this);
+    this.applyEditPresentation();
 
     // We stay in edit mode, so re-activate the swapped-in pane to keep programmatic mutations working.
     if (hadProgrammaticSidebar) {
@@ -885,6 +978,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     showDiff?: boolean;
   }) {
     if (!this.state.isEditing) {
+      return;
+    }
+    if (getDashboardMode(this.state) === 'code' && this.hasPendingCodeChanges()) {
       return;
     }
 
@@ -1359,6 +1455,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onOpenSettings = () => {
+    if (!canManuallyEditDashboard(this.state)) {
+      return;
+    }
     const editview = this.state.meta.isDashboardTemplate ? 'template' : 'settings';
     locationService.partial({ editview });
   };

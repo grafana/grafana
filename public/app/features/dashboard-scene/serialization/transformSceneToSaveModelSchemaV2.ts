@@ -58,6 +58,7 @@ import {
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { type DashboardScene } from '../scene/DashboardScene';
+import { dashboardModesEnabled } from '../scene/dashboardModes';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { type DashboardSceneState } from '../scene/types/dashboard';
 import { isLinkEditable } from '../settings/links/utils';
@@ -106,7 +107,8 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     //dashboard settings
     title: sceneDash.title,
     preferences,
-    description: sceneDash.description || undefined,
+    // Keep an explicitly empty description stable after Save as copy and Code round trips.
+    description: dashboardModesEnabled() ? sceneDash.description : sceneDash.description || undefined,
     cursorSync: getCursorSync(sceneDash),
     liveNow: getLiveNow(sceneDash),
     preload: sceneDash.preload ?? defaultDashboardV2Spec().preload,
