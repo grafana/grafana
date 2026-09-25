@@ -6,7 +6,7 @@ import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
 
-import { fuzzyFind, itemToString } from './filter';
+import { fuzzyFind, hoistExactMatch, itemToString } from './filter';
 import { type ComboboxOption } from './types';
 import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
 
@@ -122,11 +122,9 @@ export function useOptions<T extends string | number>(
   // Create a list of options filtered by the current search.
   // If async, just returns the async options.
   const filteredOptions = useMemo(() => {
-    if (isAsync) {
-      return asyncOptions;
-    }
+    const matchingOptions = isAsync ? asyncOptions : fuzzyFind(rawOptions, stringifiedOptions, userTypedSearch);
 
-    return fuzzyFind(rawOptions, stringifiedOptions, userTypedSearch);
+    return hoistExactMatch(matchingOptions, userTypedSearch);
   }, [asyncOptions, isAsync, rawOptions, stringifiedOptions, userTypedSearch]);
 
   const [finalOptions, groupStartIndices] = useMemo(() => {
