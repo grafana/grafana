@@ -1208,7 +1208,7 @@ describe('panelMenuBehavior', () => {
       setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
       mocks.contextSrv.hasPermission.mockReturnValue(true);
 
-      const { menu } = await buildTestScene({});
+      const { scene, menu, panel } = await buildTestScene({});
       menu.activate();
       await new Promise((resolve) => setTimeout(resolve, 1));
       await menu.state.items?.find((item) => item.text === 'Add to "Investigation"')?.onClick?.({} as never);
@@ -1217,7 +1217,8 @@ describe('panelMenuBehavior', () => {
         expect.any(Function),
         'dashboard_panel',
         false,
-        expect.any(Function)
+        expect.any(Function),
+        `${scene.state.uid}:${panel.getPathId()}`
       );
     });
 

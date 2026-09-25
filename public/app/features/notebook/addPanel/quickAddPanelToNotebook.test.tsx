@@ -33,7 +33,7 @@ describe('quickAddPanelToNotebook', () => {
     getRecent.mockReturnValue(undefined);
     const buildPanel = jest.fn(async () => panel);
 
-    await quickAddPanelToNotebook(buildPanel, 'explore', false, openPicker);
+    await quickAddPanelToNotebook(buildPanel, 'explore', false, openPicker, 'left');
 
     expect(openPicker).toHaveBeenCalledTimes(1);
     expect(buildPanel).not.toHaveBeenCalled();
@@ -43,7 +43,7 @@ describe('quickAddPanelToNotebook', () => {
   it('adds directly and refreshes the destination after the write succeeds', async () => {
     const buildPanel = jest.fn(async () => panel);
 
-    await quickAddPanelToNotebook(buildPanel, 'dashboard_panel', true, openPicker);
+    await quickAddPanelToNotebook(buildPanel, 'dashboard_panel', true, openPicker, 'panel-1');
 
     expect(addToExisting).toHaveBeenCalledWith('nb1', panel, 'dashboard_panel', true);
     expect(setRecentNotebook).toHaveBeenCalledWith('nb1', 'Renamed investigation');
@@ -59,9 +59,9 @@ describe('quickAddPanelToNotebook', () => {
         })
     );
 
-    const first = quickAddPanelToNotebook(async () => panel, 'dashboard_panel', false, openPicker);
+    const first = quickAddPanelToNotebook(async () => panel, 'dashboard_panel', false, openPicker, 'panel-1');
     await Promise.resolve();
-    const second = quickAddPanelToNotebook(async () => panel, 'dashboard_panel', false, openPicker);
+    const second = quickAddPanelToNotebook(async () => panel, 'dashboard_panel', false, openPicker, 'panel-1');
     await second;
     finishWrite({ uid: 'nb1', title: 'Investigation' });
     await first;
@@ -69,10 +69,30 @@ describe('quickAddPanelToNotebook', () => {
     expect(addToExisting).toHaveBeenCalledTimes(1);
   });
 
+  it('allows another panel to be added while the first write is in flight', async () => {
+    const finishWrites: Array<(value: { uid: string; title: string }) => void> = [];
+    addToExisting.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finishWrites.push(resolve);
+        })
+    );
+
+    const first = quickAddPanelToNotebook(async () => panel, 'dashboard_panel', false, openPicker, 'panel-1');
+    const second = quickAddPanelToNotebook(async () => panel, 'dashboard_panel', false, openPicker, 'panel-2');
+    await Promise.resolve();
+
+    expect(addToExisting).toHaveBeenCalledTimes(2);
+    for (const finishWrite of finishWrites) {
+      finishWrite({ uid: 'nb1', title: 'Investigation' });
+    }
+    await Promise.all([first, second]);
+  });
+
   it('forgets an unavailable destination and opens the picker', async () => {
     addToExisting.mockRejectedValue(new NotebookUnavailableError('Forbidden'));
 
-    await quickAddPanelToNotebook(async () => panel, 'explore', false, openPicker);
+    await quickAddPanelToNotebook(async () => panel, 'explore', false, openPicker, 'left');
 
     expect(clearRecentNotebook).toHaveBeenCalledTimes(1);
     expect(openPicker).toHaveBeenCalledTimes(1);
@@ -82,7 +102,7 @@ describe('quickAddPanelToNotebook', () => {
   it('does not forget a destination or reopen the picker on a transient write failure', async () => {
     addToExisting.mockRejectedValue(new Error('Temporary failure'));
 
-    await quickAddPanelToNotebook(async () => panel, 'explore', false, openPicker);
+    await quickAddPanelToNotebook(async () => panel, 'explore', false, openPicker, 'left');
 
     expect(clearRecentNotebook).not.toHaveBeenCalled();
     expect(openPicker).not.toHaveBeenCalled();

@@ -13,15 +13,17 @@ import { notebookViewHref } from '../urls';
 import { addPanelErrorMessage, addPanelFailureReason, addPanelToExistingNotebook } from './addPanelToNotebook';
 import { clearRecentNotebook, getRecentNotebook, setRecentNotebook } from './recentNotebook';
 
-let isAdding = false;
+const inFlightAdds = new Set<string>();
 
 export async function quickAddPanelToNotebook(
   buildPanel: () => Promise<PanelElement>,
   entryPoint: NotebookEntryPoint,
   isLibraryPanel: boolean,
-  openPicker: () => void
+  openPicker: () => void,
+  sourceKey: string
 ): Promise<void> {
-  if (isAdding) {
+  const inFlightKey = `${entryPoint}:${sourceKey}`;
+  if (inFlightAdds.has(inFlightKey)) {
     return;
   }
 
@@ -31,7 +33,7 @@ export async function quickAddPanelToNotebook(
     return;
   }
 
-  isAdding = true;
+  inFlightAdds.add(inFlightKey);
   let panelWasBuilt = false;
 
   try {
@@ -66,6 +68,6 @@ export async function quickAddPanelToNotebook(
       dispatch(notifyApp(createErrorNotification(addPanelErrorMessage(error))));
     }
   } finally {
-    isAdding = false;
+    inFlightAdds.delete(inFlightKey);
   }
 }

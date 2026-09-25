@@ -20,6 +20,7 @@ export async function quickAddFromExplore(exploreId: string, openPicker: () => v
       }),
     NOTEBOOK_ENTRY_POINT.EXPLORE,
     false,
-    openPicker
+    openPicker,
+    exploreId
   );
 }
