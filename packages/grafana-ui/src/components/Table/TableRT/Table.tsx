@@ -6,8 +6,6 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  type ColumnSizingInfoState,
-  type ColumnSizingState,
   type ExpandedState,
   type SortingState,
   useReactTable,
@@ -137,21 +135,12 @@ export const Table = memo((props: Props) => {
   const [expanded, setExpanded] = useState<ExpandedState>({});
   const previousExpanded = useRef(expanded);
   const [lastExpandedOrCollapsedIndex, setLastExpandedOrCollapsedIndex] = useState<number>();
-  const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
-  const [columnSizingInfo, setColumnSizingInfo] = useState<ColumnSizingInfoState>({
-    startOffset: null,
-    startSize: null,
-    deltaOffset: null,
-    deltaPercentage: null,
-    isResizingColumn: false,
-    columnSizingStart: [],
-  });
   const resizingColumnRef = useRef<string | false>(false);
 
   const tableInstance = useReactTable<unknown>({
     columns: memoizedColumns,
     data: memoizedData,
-    state: { sorting: tableSorting, expanded, columnSizing, columnSizingInfo },
+    state: { sorting: tableSorting, expanded },
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -174,8 +163,6 @@ export const Table = memo((props: Props) => {
         return functionalUpdate(updater, liveSorting);
       }),
     onExpandedChange: (updater) => setExpanded((current) => functionalUpdate(updater, current)),
-    onColumnSizingChange: setColumnSizing,
-    onColumnSizingInfoChange: setColumnSizingInfo,
   });
 
   const headerGroups = tableInstance.getHeaderGroups();
@@ -217,6 +204,8 @@ export const Table = memo((props: Props) => {
       setLastExpandedOrCollapsedIndex(parseInt(changedId, 10));
     }
   }, [expanded]);
+
+  const { columnSizing, columnSizingInfo } = state;
 
   useEffect(() => {
     const previousColumn = resizingColumnRef.current;
