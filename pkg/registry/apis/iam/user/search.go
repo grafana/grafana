@@ -287,7 +287,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		attribute.String("query", query.Query))
 
 	backend, err := s.client.Resolve(ctx)
-	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "user search failed")
 		errhttp.Write(ctx, err, w)

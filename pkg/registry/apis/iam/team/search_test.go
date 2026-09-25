@@ -44,6 +44,7 @@ func TestSearchErrorStatus(t *testing.T) {
 	for name, client := range map[string]*MockClient{
 		"embedded":  {MockResponses: []*resourcepb.ResourceSearchResponse{{Error: failure}}},
 		"transport": {MockError: fmt.Errorf("search: %w", st.Err())},
+		"plain":     {MockError: fmt.Errorf("private database failure")},
 	} {
 		t.Run(name, func(t *testing.T) {
 			handler := NewSearchHandler(tracing.NewNoopTracerService(), client, nil)
@@ -51,6 +52,11 @@ func TestSearchErrorStatus(t *testing.T) {
 			req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
 			recorder := httptest.NewRecorder()
 			handler.DoTeamSearch(recorder, req)
+			if name == "plain" {
+				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+				require.NotContains(t, recorder.Body.String(), client.MockError.Error())
+				return
+			}
 			require.Equal(t, http.StatusTooManyRequests, recorder.Code)
 			var got metav1.Status
 			require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &got))

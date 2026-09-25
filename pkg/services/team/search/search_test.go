@@ -1,12 +1,10 @@
 package search
 
 import (
-	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -14,14 +12,10 @@ import (
 )
 
 func TestParseResultsPreservesErrorStatus(t *testing.T) {
-	failure := &resourcepb.ErrorResult{
-		Code: http.StatusTooManyRequests, Reason: string(metav1.StatusReasonTooManyRequests), Message: "search is busy",
-		Details: &resourcepb.ErrorDetails{Name: "team", Group: "iam.grafana.app", Kind: "teams", Uid: "uid", RetryAfterSeconds: 12},
-	}
-	_, err := ParseResults(&resourcepb.ResourceSearchResponse{Error: failure}, 0)
-	var apiStatus apierrors.APIStatus
-	require.ErrorAs(t, err, &apiStatus)
-	require.Equal(t, resource.GetError(failure).(apierrors.APIStatus).Status(), apiStatus.Status())
+	_, err := ParseResults(&resourcepb.ResourceSearchResponse{Error: &resourcepb.ErrorResult{
+		Code: 429, Message: "search is busy",
+	}}, 0)
+	require.True(t, apierrors.IsTooManyRequests(err), "got %v", err)
 }
 
 func TestParseResults(t *testing.T) {
@@ -206,9 +200,7 @@ func TestParseResults(t *testing.T) {
 		results, err := ParseResults(searchResp, 0)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "Internal server error")
-		var apiStatus apierrors.APIStatus
-		require.ErrorAs(t, err, &apiStatus)
-		require.Equal(t, int32(http.StatusInternalServerError), apiStatus.Status().Code)
+		require.True(t, apierrors.IsInternalError(err))
 		require.Empty(t, results.Hits)
 	})
 

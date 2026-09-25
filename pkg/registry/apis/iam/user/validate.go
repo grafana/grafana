@@ -182,7 +182,7 @@ func validateRole(requester identity.Requester, obj *iamv0alpha1.User) error {
 
 func validateEmail(ctx context.Context, searchClient SearchBackend, namespace, name, email string) error {
 	resp, err := searchClient.Search(ctx, SearchQuery{Namespace: namespace, Email: &email})
-	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+	if err != nil {
 		return err
 	}
 
@@ -204,7 +204,7 @@ func validateEmail(ctx context.Context, searchClient SearchBackend, namespace, n
 
 func validateLogin(ctx context.Context, searchClient SearchBackend, namespace, name, login string) error {
 	resp, err := searchClient.Search(ctx, SearchQuery{Namespace: namespace, Login: &login})
-	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+	if err != nil {
 		return err
 	}
 

@@ -166,7 +166,7 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, _ runtime.Objec
 
 		items, err := s.buildItems(common.WithSubresourceNamespace(ctx), rows, name)
 		if err != nil {
-			responder.Error(apierrors.NewInternalError(err))
+			responder.Error(err)
 			return
 		}
 

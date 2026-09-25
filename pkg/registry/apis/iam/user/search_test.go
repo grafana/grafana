@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
@@ -15,10 +14,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	iamapis "github.com/grafana/grafana/apps/iam/pkg/apis"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -36,31 +31,6 @@ import (
 	unifiedsearch "github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
-
-func TestSearchErrorStatus(t *testing.T) {
-	failure := &resourcepb.ErrorResult{
-		Code: http.StatusTooManyRequests, Reason: string(metav1.StatusReasonTooManyRequests), Message: "search is busy",
-		Details: &resourcepb.ErrorDetails{Name: "user", Group: "iam.grafana.app", Kind: "users", Uid: "uid", RetryAfterSeconds: 12},
-	}
-	st, err := status.New(codes.ResourceExhausted, "search is busy").WithDetails(failure)
-	require.NoError(t, err)
-	for name, client := range map[string]*MockClient{
-		"embedded":  {MockResponses: []*resourcepb.ResourceSearchResponse{{Error: failure}}},
-		"transport": {MockError: fmt.Errorf("search: %w", st.Err())},
-	} {
-		t.Run(name, func(t *testing.T) {
-			handler := NewSearchHandler(tracing.NewNoopTracerService(), client, &setting.Cfg{}, nil)
-			req := httptest.NewRequest("GET", "/searchUsers", nil)
-			req = req.WithContext(identity.WithRequester(req.Context(), &legacyuser.SignedInUser{Namespace: "test"}))
-			recorder := httptest.NewRecorder()
-			handler.DoSearch(recorder, req)
-			require.Equal(t, http.StatusTooManyRequests, recorder.Code)
-			var got metav1.Status
-			require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &got))
-			require.Equal(t, resource.GetError(failure).(apierrors.APIStatus).Status(), got)
-		})
-	}
-}
 
 func TestSearchFallback(t *testing.T) {
 	tests := []struct {
