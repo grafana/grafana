@@ -345,6 +345,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,dashboard.apiSearchFieldValueResults,experimental,@grafana/search-and-storage,false,false,false
 2026-09-16,search.apiFieldValueResults,experimental,@grafana/search-and-storage,false,false,false
 2026-09-16,dashboard.vectorSearch,experimental,@grafana/search-and-storage,false,false,false
+2026-09-24,alerting.hybridSearch,experimental,@grafana/search-and-storage,false,false,false
 2026-09-16,grafana.vectorSearchCmdk,experimental,@grafana/search-and-storage,false,false,true
 2026-09-16,grafana.cmdkHybridSearch,experimental,@grafana/search-and-storage,false,false,true
 2026-09-16,assistant.fullscreenWorkspace,experimental,@grafana/grafana-frontend-platform,false,false,true

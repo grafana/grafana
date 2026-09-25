@@ -13,12 +13,14 @@ import (
 // seen by the apiserver authorizer. It must match the route path.
 const RouteResource = "searchRules"
 
+const HybridRouteResource = "search"
+
 // Authorize gates the rule search route on rule-read access, consistent with
 // listing rules. Per-folder/per-rule access is still enforced by each backend
 // (the provisioning service for legacy, the access client for unified), so this
 // is the coarse route-level check.
 func Authorize(ctx context.Context, ac accesscontrol.AccessControl, attr authorizer.Attributes) (authorizer.Decision, string, error) {
-	if attr.GetResource() != RouteResource {
+	if attr.GetResource() != RouteResource && attr.GetResource() != HybridRouteResource {
 		return authorizer.DecisionNoOpinion, "", nil
 	}
 	user, err := identity.GetRequester(ctx)

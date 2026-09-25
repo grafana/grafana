@@ -5,12 +5,17 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
+
+	"github.com/emicklei/go-restful/v3"
 
 	restclient "k8s.io/client-go/rest"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	apirequest "k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -57,8 +62,9 @@ var (
 
 type AppInstaller struct {
 	appsdkapiserver.AppInstaller
-	cfg *setting.Cfg
-	ng  *ngalert.AlertNG
+	cfg          *setting.Cfg
+	ng           *ngalert.AlertNG
+	hybridSearch http.HandlerFunc
 }
 
 func RegisterAppInstaller(
@@ -74,8 +80,9 @@ func RegisterAppInstaller(
 	}
 
 	installer := &AppInstaller{
-		cfg: cfg,
-		ng:  ng,
+		cfg:          cfg,
+		ng:           ng,
+		hybridSearch: search.NewHybridHandler(unifiedClient).Search,
 	}
 
 	membershipIndex := rulesequence_app.NewMembershipIndex()
@@ -117,6 +124,27 @@ func RegisterAppInstaller(
 	}
 	installer.AppInstaller = i
 	return installer, nil
+}
+
+func (a *AppInstaller) InstallAPIs(server appsdkapiserver.GenericAPIServer, opts generic.RESTOptionsGetter) error {
+	if err := a.AppInstaller.InstallAPIs(server, opts); err != nil {
+		return err
+	}
+	// Keep this temporary endpoint out of the generated app API contract.
+	for _, ws := range server.RegisteredWebServices() {
+		if ws.RootPath() == "/apis/"+alertingv0alpha1.GroupVersion.String() {
+			ws.Route(ws.GET("/namespaces/{namespace}/search/hybrid").
+				Operation("getHybridSearchAlertRules").
+				Doc("Experimental hybrid search for alert rules").
+				Produces("application/json").
+				Param(ws.PathParameter("namespace", "namespace")).
+				To(func(req *restful.Request, res *restful.Response) {
+					ctx := apirequest.WithNamespace(req.Request.Context(), req.PathParameter("namespace"))
+					a.hybridSearch(res, req.Request.WithContext(ctx))
+				}))
+		}
+	}
+	return nil
 }
 
 // Rejects writes while the operator ini override is set, then verifies both
@@ -290,7 +318,7 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 				return alertrule.Authorize(ctx, authz, attr)
 			case rulesequence.ResourceInfo.GroupResource().Resource:
 				return rulesequence.Authorize(ctx, authz, attr)
-			case search.RouteResource:
+			case search.RouteResource, search.HybridRouteResource:
 				return search.Authorize(ctx, authz, attr)
 			case config.ResourceInfo.GroupResource().Resource:
 				return config.Authorize(ctx, authz, attr)

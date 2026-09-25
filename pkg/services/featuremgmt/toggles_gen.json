@@ -105,6 +105,19 @@
     },
     {
       "metadata": {
+        "name": "alerting.hybridSearch",
+        "resourceVersion": "1790261991235",
+        "creationTimestamp": "2026-09-24T14:59:51Z"
+      },
+      "spec": {
+        "description": "Enables hybrid (lexical and semantic) search for alert rules in unified storage",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.manualAssistantInvestigation",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"
