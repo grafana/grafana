@@ -1,23 +1,21 @@
 import { css, cx } from '@emotion/css';
-import { useEffect } from 'react';
 import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Divider, Field, IconButton, Input, Select, useStyles2 } from '@grafana/ui';
-import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
 
-import { type SilenceFormFields } from '../../types/silence-form';
+import { type RuleReference, type SilenceFormFields } from '../../types/silence-form';
 import { matcherFieldOptions } from '../../utils/alertmanager';
 
 interface Props {
   className?: string;
   required: boolean;
-  ruleUid?: string;
+  rule?: RuleReference;
 }
 
-const MatchersField = ({ className, required, ruleUid }: Props) => {
+const MatchersField = ({ className, required, rule }: Props) => {
   const styles = useStyles2(getStyles);
   const formApi = useFormContext<SilenceFormFields>();
   const {
@@ -28,13 +26,10 @@ const MatchersField = ({ className, required, ruleUid }: Props) => {
 
   const { fields: matchers = [], append, remove } = useFieldArray<SilenceFormFields>({ name: 'matchers' });
 
-  const [getAlertRule, { data: alertRule }] = alertRuleApi.endpoints.getAlertRule.useLazyQuery();
-  useEffect(() => {
-    // If we have a UID, fetch the alert rule details so we can display the rule name
-    if (ruleUid) {
-      getAlertRule({ uid: ruleUid });
-    }
-  }, [getAlertRule, ruleUid]);
+  // The caller already has this rule loaded (or only ever had its UID); we never fetch it ourselves,
+  // so a deleted/unreadable/absent title just falls back to a clear placeholder.
+  const alertRuleTitle =
+    rule?.title ?? (rule?.uid ? t('alerting.matchers-field.text-unknown-alert-rule', 'Unknown alert rule') : undefined);
 
   return (
     <div className={className}>
@@ -44,10 +39,10 @@ const MatchersField = ({ className, required, ruleUid }: Props) => {
       >
         <div>
           <div className={cx(styles.matchers, styles.indent)}>
-            {alertRule && (
+            {alertRuleTitle && (
               <div>
                 <Field label={t('alerting.matchers-field.label-alert-rule', 'Alert rule')} disabled>
-                  <Input id="alert-rule-name" defaultValue={alertRule.grafana_alert.title} disabled />
+                  <Input id="alert-rule-name" defaultValue={alertRuleTitle} disabled />
                 </Field>
                 <Divider />
               </div>

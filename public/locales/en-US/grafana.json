@@ -2126,6 +2126,7 @@
       "placeholder-label": "label",
       "placeholder-value": "value",
       "remove": "Remove",
+      "text-unknown-alert-rule": "Unknown alert rule",
       "tooltip-refine-which-alert-instances-silenced-selecting": "Refine which alert instances are silenced by selecting label matchers"
     },
     "math-expression-viewer": {

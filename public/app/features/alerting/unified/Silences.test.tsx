@@ -8,7 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';
-import { waitForServerRequest } from 'app/features/alerting/unified/mocks/server/events';
+import { captureRequests, waitForServerRequest } from 'app/features/alerting/unified/mocks/server/events';
 import {
   MOCK_DATASOURCE_NAME_BROKEN_ALERTMANAGER,
   MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER,
@@ -25,6 +25,7 @@ import NewSilencePage from './NewSilencePage';
 import ExistingSilenceEditorPage from './components/silences/SilencesEditor';
 import SilencesTablePage from './components/silences/SilencesTable';
 import {
+  MOCK_SILENCE_ID_DANGLING_ALERT_RULE,
   MOCK_SILENCE_ID_EXISTING,
   MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID,
   MOCK_SILENCE_ID_LACKING_PERMISSIONS,
@@ -393,10 +394,24 @@ describe('Silence create/edit', () => {
     expect(ui.editor.comment.get()).toHaveValue('Happy path silence');
   });
 
-  it('populates form with existing silence information that has __alert_rule_uid__', async () => {
-    mockAlertRuleApi(server).getAlertRule(MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID, grafanaRulerRule);
-    renderSilences(`/alerting/silence/${MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID}/edit`);
-    expect(await screen.findByLabelText(/alert rule/i)).toHaveValue(grafanaRulerRule.grafana_alert.title);
+  it(
+    'populates form with existing silence information that has __alert_rule_uid__, using the rule title from silence metadata',
+    async () => {
+      const requests = await captureRequests((request) => request.url.includes('/api/ruler/grafana/api/v1/rule/'));
+
+      renderSilences(`/alerting/silence/${MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID}/edit`);
+      expect(await screen.findByLabelText(/alert rule/i)).toHaveValue(MOCK_GRAFANA_ALERT_RULE_TITLE);
+
+      // The rule title comes from the silence's own `ruleMetadata`, so the editor never needs to
+      // fetch the rule itself to display it.
+      expect(await requests).toHaveLength(0);
+    },
+    TEST_TIMEOUT
+  );
+
+  it('shows a fallback instead of a title for a silence whose rule metadata has no title (e.g. a deleted rule)', async () => {
+    renderSilences(`/alerting/silence/${MOCK_SILENCE_ID_DANGLING_ALERT_RULE}/edit`);
+    expect(await screen.findByLabelText(/alert rule/i)).toHaveValue('Unknown alert rule');
   });
 
   it('populates form with information when specifying alert rule UID in matchers', async () => {

@@ -336,7 +336,11 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
           onClose={handleDrawerClose}
           width={drawerWidth}
         >
-          <InstanceSilenceForm ruleUid={ruleUID} instanceLabels={instanceLabels} onClose={animateCloseSilenceDrawer} />
+          <InstanceSilenceForm
+            rule={{ uid: ruleUID, title: rule?.grafana_alert.title, folderUid: rule?.grafana_alert.namespace_uid }}
+            instanceLabels={instanceLabels}
+            onClose={animateCloseSilenceDrawer}
+          />
         </Drawer>
       </>
     );

@@ -100,7 +100,15 @@ const SilencesEditorComponent = () => {
       <SilencesEditor
         formValues={formValues}
         alertManagerSourceName={selectedAlertmanager}
-        ruleUid={potentialRuleUid}
+        rule={
+          potentialRuleUid
+            ? {
+                uid: potentialRuleUid,
+                title: silencedRule?.grafana_alert.title,
+                folderUid: silencedRule?.grafana_alert.namespace_uid,
+              }
+            : undefined
+        }
       />
     </>
   );

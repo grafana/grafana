@@ -143,7 +143,10 @@ export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource 
       />
       {deleteModal}
       {silenceableRule && showSilenceDrawer && (
-        <SilenceGrafanaRuleDrawer ruleUid={ruleUid} onClose={() => setShowSilenceDrawer(false)} />
+        <SilenceGrafanaRuleDrawer
+          rule={{ uid: ruleUid, title: rule.name, folderUid: rule.namespace.uid }}
+          onClose={() => setShowSilenceDrawer(false)}
+        />
       )}
       {ruleUid && showEnrichmentDrawer && (
         <EnrichmentDrawerExtension ruleUid={ruleUid} onClose={() => setShowEnrichmentDrawer(false)} />

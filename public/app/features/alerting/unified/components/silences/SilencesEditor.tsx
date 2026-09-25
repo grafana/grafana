@@ -36,7 +36,7 @@ import { contextSrv } from '../../../../../core/services/context_srv';
 import { useSilenceAbility } from '../../hooks/abilities/alertmanager/useSilenceAbility';
 import { SilenceAction } from '../../hooks/abilities/types';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
-import { type SilenceFormFields } from '../../types/silence-form';
+import { type RuleReference, type SilenceFormFields } from '../../types/silence-form';
 import { matcherFieldToMatcher } from '../../utils/alertmanager';
 import { makeAMLink } from '../../utils/misc';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
@@ -67,6 +67,9 @@ const ExistingSilenceEditor = () => {
     accessControl: true,
   });
   const ruleUid = silence?.matchers?.find((m) => m.name === MATCHER_ALERT_RULE_UID)?.value;
+  const rule: RuleReference | undefined = ruleUid
+    ? { uid: ruleUid, title: silence?.metadata?.rule_title, folderUid: silence?.metadata?.folder_uid }
+    : undefined;
   const isGrafanaAlertManager = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
 
   const defaultValues = useMemo(() => {
@@ -121,7 +124,7 @@ const ExistingSilenceEditor = () => {
   return (
     <>
       <GrafanaAlertmanagerWarning currentAlertmanager={alertManagerSourceName} />
-      <SilencesEditor ruleUid={ruleUid} formValues={defaultValues} alertManagerSourceName={alertManagerSourceName} />
+      <SilencesEditor rule={rule} formValues={defaultValues} alertManagerSourceName={alertManagerSourceName} />
     </>
   );
 };
@@ -131,7 +134,7 @@ type SilencesEditorProps = {
   alertManagerSourceName: string;
   onSilenceCreated?: (response: SilenceCreatedResponse) => void;
   onCancel?: () => void;
-  ruleUid?: string;
+  rule?: RuleReference;
 };
 
 /**
@@ -143,8 +146,9 @@ export const SilencesEditor = ({
   alertManagerSourceName,
   onSilenceCreated,
   onCancel,
-  ruleUid,
+  rule,
 }: SilencesEditorProps) => {
+  const ruleUid = rule?.uid;
   const { granted: canPreview } = useSilenceAbility({ action: SilenceAction.Preview });
 
   const [createSilence, { isLoading }] = alertSilencesApi.endpoints.createSilence.useMutation();
@@ -243,7 +247,7 @@ export const SilencesEditor = ({
             </Field>
           </div>
 
-          <MatchersField required={Boolean(!ruleUid)} ruleUid={ruleUid} />
+          <MatchersField required={Boolean(!ruleUid)} rule={rule} />
 
           <Field
             label={t('alerting.silences-editor.label-comment', 'Comment')}
