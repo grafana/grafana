@@ -16,20 +16,30 @@
   },
   "main": "./dist/cjs/index.cjs",
   "module": "./dist/esm/index.mjs",
-  "types": "./dist/types/index.d.ts",
+  "types": "./dist/cjs/index.d.cts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
       "@grafana-app/source": "./src/index.ts",
-      "types": "./dist/types/index.d.ts",
-      "import": "./dist/esm/index.mjs",
-      "require": "./dist/cjs/index.cjs"
+      "import": {
+        "types": "./dist/esm/index.d.mts",
+        "default": "./dist/esm/index.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.cts",
+        "default": "./dist/cjs/index.cjs"
+      }
     },
     "./unstable": {
       "@grafana-app/source": "./src/unstable.ts",
-      "types": "./dist/types/unstable.d.ts",
-      "import": "./dist/esm/unstable.mjs",
-      "require": "./dist/cjs/unstable.cjs"
+      "import": {
+        "types": "./dist/esm/unstable.d.mts",
+        "default": "./dist/esm/unstable.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/unstable.d.cts",
+        "default": "./dist/cjs/unstable.cjs"
+      }
     },
     "./internal": {
       "@grafana-app/source": "./src/internal/index.ts"
@@ -45,8 +55,7 @@
     "LICENSE_APACHE2"
   ],
   "scripts": {
-    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
-    "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
+    "build": "rolldown -c rolldown.config.ts",
     "clean": "rimraf ./dist ./compiled ./unstable ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
@@ -73,7 +82,6 @@
     "rxjs": "^7.8.2"
   },
   "devDependencies": {
-    "@rollup/plugin-node-resolve": "16.0.1",
     "@testing-library/dom": "10.4.1",
     "@testing-library/react": "16.3.0",
     "@testing-library/user-event": "14.6.1",
@@ -87,9 +95,8 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "rimraf": "6.0.1",
-    "rollup": "^4.60.1",
-    "rollup-plugin-esbuild": "6.2.1",
-    "rollup-plugin-node-externals": "^8.0.0",
+    "rolldown": "1.2.9",
+    "rolldown-plugin-dts": "0.28.6",
     "typescript": "npm:@typescript/typescript6@^6.0.2"
   },
   "peerDependencies": {

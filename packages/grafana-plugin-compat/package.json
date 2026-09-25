@@ -23,15 +23,25 @@
     "./package.json": "./package.json",
     "./datasources": {
       "@grafana-app/source": "./src/datasources.ts",
-      "types": "./dist/types/datasources.d.ts",
-      "import": "./dist/esm/datasources.mjs",
-      "require": "./dist/cjs/datasources.cjs"
+      "import": {
+        "types": "./dist/esm/datasources.d.mts",
+        "default": "./dist/esm/datasources.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/datasources.d.cts",
+        "default": "./dist/cjs/datasources.cjs"
+      }
     },
     "./apps": {
       "@grafana-app/source": "./src/apps.ts",
-      "types": "./dist/types/apps.d.ts",
-      "import": "./dist/esm/apps.mjs",
-      "require": "./dist/cjs/apps.cjs"
+      "import": {
+        "types": "./dist/esm/apps.d.mts",
+        "default": "./dist/esm/apps.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/apps.d.cts",
+        "default": "./dist/cjs/apps.cjs"
+      }
     }
   },
   "publishConfig": {
@@ -44,8 +54,7 @@
     "./LICENSE_APACHE2"
   ],
   "scripts": {
-    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
-    "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
+    "build": "rolldown -c rolldown.config.ts",
     "clean": "rimraf ./dist ./compiled ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
@@ -62,9 +71,8 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "rimraf": "^6.0.1",
-    "rollup": "^4.60.1",
-    "rollup-plugin-esbuild": "6.2.1",
-    "rollup-plugin-node-externals": "^8.0.0",
+    "rolldown": "1.2.9",
+    "rolldown-plugin-dts": "0.28.6",
     "typescript": "npm:@typescript/typescript6@^6.0.2"
   },
   "peerDependencies": {
