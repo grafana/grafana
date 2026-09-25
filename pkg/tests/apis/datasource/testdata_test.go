@@ -141,6 +141,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 
 		require.Equal(t, "http://fake.url", ds.Spec.URL())
 		require.Equal(t, "testdb", ds.Spec.Database())
+		require.Equal(t, "true", ds.Labels["default"])
 
 		keys := slices.Collect(maps.Keys(ds.Secure))
 		require.ElementsMatch(t, []string{"bbb", "ccc"}, keys) // removed A and added C
@@ -152,6 +153,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		require.Equal(t, expectedAPIVersion, list.GetAPIVersion())
 		require.Len(t, list.Items, 1, "expected a single datasource")
 		require.Equal(t, "test", list.Items[0].GetName(), "with the test uid")
+		require.Equal(t, "true", list.Items[0].GetLabels()["default"])
 
 		spec, _, _ := unstructured.NestedMap(list.Items[0].Object, "spec")
 		jj, _ := json.MarshalIndent(spec, "", "  ")
@@ -159,7 +161,6 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		require.JSONEq(t, `{
 					"access": "proxy",
 					"database": "testdb",
-					"isDefault": true,
 					"jsonData": {
 						"hello": "world"
 					},
