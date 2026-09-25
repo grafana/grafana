@@ -70,7 +70,7 @@ func BuildWithOptions(
 ) []builder.GroupVersionRoutes {
 	// Search fields come from the compiled-in app manifests, the same
 	// declarations the index mapping is built from.
-	manifests := slices.Concat(resource.AppManifests(), searchManifestsFromBuilders(builders))
+	manifests := slices.Concat(resource.AppManifests(), builder.ManifestsFromBuilders(builders))
 	routes, err := BuildForServedGroupVersionsWithOptions(
 		manifests, builder.ServedGroupVersions(builders, installers),
 		searchEnabled, trashEnabled, tracer, index, options,
@@ -79,20 +79,6 @@ func BuildWithOptions(
 		panic(err.Error())
 	}
 	return routes
-}
-
-func searchManifestsFromBuilders(builders []builder.APIGroupBuilder) []*app.ManifestData {
-	var manifests []*app.ManifestData
-	for _, apiBuilder := range builders {
-		if provider, ok := apiBuilder.(builder.APIGroupManifestProvider); ok {
-			if manifest := provider.ManifestData(); manifest != nil {
-				manifests = append(manifests, manifest)
-				continue
-			}
-		}
-		manifests = append(manifests, builder.ManifestsFromBuilders([]builder.APIGroupBuilder{apiBuilder})...)
-	}
-	return manifests
 }
 
 // BuildFromManifests is Build with the kind declarations supplied by the caller.
@@ -114,7 +100,7 @@ func BuildFromManifests(
 	builders []builder.APIGroupBuilder,
 	installers []appsdkapiserver.AppInstaller,
 ) []builder.GroupVersionRoutes {
-	manifests = slices.Concat(manifests, searchManifestsFromBuilders(builders))
+	manifests = slices.Concat(manifests, builder.ManifestsFromBuilders(builders))
 	routes, err := BuildForServedGroupVersions(
 		manifests,
 		builder.ServedGroupVersions(builders, installers),
