@@ -6,10 +6,12 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"encoding/json"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -21,6 +23,8 @@ import (
 	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
+	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -29,9 +33,18 @@ import (
 	k8srest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
+	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
+	"github.com/grafana/grafana-app-sdk/plugin/httpadapter"
+	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/secret"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/clock"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/secret/database"
+	"github.com/grafana/grafana/pkg/storage/secret/metadata"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -42,7 +55,7 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 
 	const (
 		group     = "router-test.ext.grafana.app"
-		namespace = "stacks-1234"
+		namespace = apis.DefaultNamespace
 		audience  = "router-integration"
 	)
 	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
@@ -70,21 +83,45 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 		return token
 	}
 	token := sign(claims)
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	pluginServer := grpc.NewServer()
+	var routeCalls atomic.Int32
+	var receivedSecureValues atomic.Value
+	pluginv3.RegisterRouteServiceServer(pluginServer, httpadapter.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		parent := httpadapter.ParentFromContext(r.Context())
+		receivedSecureValues.Store(parent.GetDecryptedSecureValues())
+		routeCalls.Add(1)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write(parent.GetRaw())
+	})))
+	go func() { _ = pluginServer.Serve(listener) }()
+	t.Cleanup(pluginServer.Stop)
+	var decryptCalls atomic.Int32
+	decrypter := routerTestDecrypter(func(ctx context.Context, serviceName, ns string, names ...string) (map[string]decrypt.DecryptResult, error) {
+		decryptCalls.Add(1)
+		assert.Equal(t, group, serviceName)
+		assert.Equal(t, namespace, ns)
+		assert.Equal(t, []string{"router-api-key"}, names)
+		value := secretv1beta1.ExposedSecureValue("decrypted-api-key")
+		return map[string]decrypt.DecryptResult{"router-api-key": decrypt.NewDecryptResultValue(&value)}, nil
+	})
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /plugins", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"plugins":[{"definition":{
+		_, _ = w.Write([]byte(strings.ReplaceAll(`{"plugins":[{"host":"PLUGIN_HOST","definition":{
    "jsonData":{"id":"router-test-app","type":"app"},
    "manifest":{
     "appName":"router-test-app","group":"router-test.ext.grafana.app","preferredVersion":"v1",
     "versions":[{"name":"v1","served":true,"kinds":[
      {"kind":"Thing","plural":"things","scope":"Namespaced","folderScoped":false,
-      "schemas":{"Thing":{"type":"object","properties":{"spec":{"type":"object","properties":{"value":{"type":"string"}}}}}}},
+      "routes":{"reload":{"get":{"responses":{"200":{"description":"OK"}}}}},
+      "schemas":{"Thing":{"type":"object","properties":{"secure":{"type":"object","additionalProperties":{"type":"object","properties":{"name":{"type":"string"}}}},"spec":{"type":"object","properties":{"value":{"type":"string"}}}}}}},
      {"kind":"Widget","plural":"widgets","scope":"Namespaced","folderScoped":true,
       "schemas":{"Widget":{"type":"object","properties":{"spec":{"type":"object","properties":{"value":{"type":"string"}}}}}}}
     ]}]
    }
-  }}]}`))
+  }}]}`, "PLUGIN_HOST", listener.Addr().String())))
 	})
 	mux.HandleFunc("GET /jwks", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -95,9 +132,22 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 	manifests := httptest.NewServer(mux)
 	t.Cleanup(manifests.Close)
 
-	t.Setenv("GF_ENVIRONMENT_STACK_ID", "1234")
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{DisableAnonymous: true})
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{DisableAnonymous: true, SecretsManagerEnableDBMigrations: true})
 	t.Cleanup(helper.Shutdown)
+	// Unified storage validates ownership of secure references before saving the parent.
+	tracer := noop.NewTracerProvider().Tracer("router-test")
+	secretStore, err := metadata.ProvideSecureValueMetadataStorage(clock.ProvideClock(), database.ProvideDatabase(helper.GetEnv().SQLStore, tracer), tracer, nil)
+	require.NoError(t, err)
+	secureValue, err := secretStore.Create(t.Context(), "system", &secretv1beta1.SecureValue{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "router-api-key", Namespace: namespace,
+			OwnerReferences: []metav1.OwnerReference{{APIVersion: group + "/v1", Kind: "Thing", Name: "route-with-secure"}},
+		},
+		Spec: secretv1beta1.SecureValueSpec{Description: "Router integration test"},
+	}, "router-test-user")
+	require.NoError(t, err)
+	require.NoError(t, secretStore.SetVersionToActive(t.Context(), xkube.Namespace(namespace), secureValue.Name, secureValue.Status.Version))
+
 	const folderUID = "router-widgets"
 	createFolder(t, t.Context(), helper, folderUID, "Router widgets")
 	// The backing test server uses basic auth; the router-facing endpoint uses
@@ -132,7 +182,8 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 	cfg.SectionWithEnvOverrides("cloud_router").Key("plugins_url").SetValue(manifests.URL + "/plugins")
 	loader, err := router.ProvideRoutesLoader(cfg, router.PluginLoaderDependencies{
 		PluginDependencies: router.PluginDependencies{Cfg: cfg, Unified: helper.GetEnv().ResourceClient,
-			RESTConfigProvider: router.NewLoopbackRestConfigProvider(routerHandler)},
+			RESTConfigProvider: router.NewLoopbackRestConfigProvider(routerHandler),
+			SecureValues:       secret.NewMockInlineSecureValueSupport(t), Decrypter: decrypter},
 	})
 	require.NoError(t, err)
 	lifecycle, ok := loader.(services.Service)
@@ -228,6 +279,43 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 		})
 	}
 
+	t.Run("kind route decrypts parent secure values", func(t *testing.T) {
+		resource := client.Resource(schema.GroupVersionResource{Group: group, Version: "v1", Resource: "things"}).Namespace(namespace)
+		for _, withSecure := range []bool{false, true} {
+			name := "route-without-secure"
+			if withSecure {
+				name = "route-with-secure"
+			}
+			t.Run(name, func(t *testing.T) {
+				object := &unstructured.Unstructured{Object: map[string]any{
+					"apiVersion": group + "/v1", "kind": "Thing",
+					"metadata": map[string]any{"name": name},
+					"spec":     map[string]any{"value": "route-parent"},
+				}}
+				if withSecure {
+					object.Object["secure"] = map[string]any{"apiKey": map[string]any{"name": "router-api-key"}}
+				}
+				created, err := resource.Create(t.Context(), object, metav1.CreateOptions{})
+				require.NoError(t, err)
+				before := decryptCalls.Load()
+				callsBefore := routeCalls.Load()
+				got, err := resource.Get(t.Context(), name, metav1.GetOptions{}, "reload")
+				require.NoError(t, err)
+				require.Equal(t, created.GetUID(), got.GetUID())
+				require.Equal(t, "route-parent", got.Object["spec"].(map[string]any)["value"])
+				require.Equal(t, callsBefore+1, routeCalls.Load())
+				if withSecure {
+					require.Equal(t, before+1, decryptCalls.Load())
+					require.Equal(t, map[string]string{"apiKey": "decrypted-api-key"}, receivedSecureValues.Load())
+					require.Equal(t, object.Object["secure"], got.Object["secure"])
+				} else {
+					require.Equal(t, before, decryptCalls.Load())
+					require.Empty(t, receivedSecureValues.Load())
+				}
+			})
+		}
+	})
+
 	t.Run("rejects invalid access tokens", func(t *testing.T) {
 		expired := claims
 		expired.Expiry = jwt.NewNumericDate(time.Now().Add(-time.Hour))
@@ -281,4 +369,10 @@ func (l folderRoutesLoader) Load(ctx context.Context) ([]router.Backend, error) 
 		return nil, err
 	}
 	return append(backends, l.folder), nil
+}
+
+type routerTestDecrypter func(context.Context, string, string, ...string) (map[string]decrypt.DecryptResult, error)
+
+func (f routerTestDecrypter) Decrypt(ctx context.Context, serviceName, namespace string, names ...string) (map[string]decrypt.DecryptResult, error) {
+	return f(ctx, serviceName, namespace, names...)
 }
