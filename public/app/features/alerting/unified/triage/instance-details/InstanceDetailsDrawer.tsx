@@ -199,7 +199,7 @@ function formatTimestamp(timestamp: number) {
   return dateFormatter.format(new Date(timestamp));
 }
 
-function InstanceStateTransitions({ records }: { records: LogRecord[] }) {
+export function InstanceStateTransitions({ records }: { records: LogRecord[] }) {
   const styles = useStyles2(stateTransitionStyles);
   const sortedRecords = orderBy(records, (r) => r.timestamp, 'desc');
 
@@ -213,7 +213,11 @@ function InstanceStateTransitions({ records }: { records: LogRecord[] }) {
           <EventState state={record.line.previous} showLabel addFilter={() => {}} type="from" />
           <Icon name="arrow-right" size="sm" />
           <EventState state={record.line.current} showLabel addFilter={() => {}} type="to" />
-          {record.line.evalMatches && <EvaluationMatches matches={record.line.evalMatches} />}
+          {record.line.evalMatches && (
+            <div className={styles.evaluationMatches} data-testid="state-transition-evaluation-matches">
+              <EvaluationMatches matches={record.line.evalMatches} />
+            </div>
+          )}
         </Fragment>
       ))}
     </div>
@@ -227,6 +231,9 @@ const stateTransitionStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(1, 2),
     alignItems: 'center',
     padding: theme.spacing(1, 0),
+  }),
+  evaluationMatches: css({
+    gridColumn: '1 / -1',
   }),
 });
 

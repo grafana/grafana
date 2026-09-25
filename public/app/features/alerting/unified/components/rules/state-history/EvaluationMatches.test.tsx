@@ -29,4 +29,10 @@ describe('EvaluationMatches', () => {
     expect(screen.getByText('host=server-1')).toBeInTheDocument();
     expect(screen.getByText('value: 1')).toBeInTheDocument();
   });
+
+  it('does not render an empty match row', () => {
+    render(<EvaluationMatches matches={[]} />);
+
+    expect(screen.queryByText(/value:/)).not.toBeInTheDocument();
+  });
 });
