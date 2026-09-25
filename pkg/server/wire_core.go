@@ -45,6 +45,7 @@ import (
 	dashboardmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/migrator"
 	snapshotmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot/migrator"
 	dsmigrator "github.com/grafana/grafana/pkg/registry/apis/datasource/migrator"
+	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	iamsso "github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	legacypreferences "github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
 	secretclock "github.com/grafana/grafana/pkg/registry/apis/secret/clock"
@@ -202,6 +203,7 @@ var withOTelSet = wire.NewSet(
 )
 
 var wireBasicSet = wire.NewSet(
+	iam.ProvideFeatures,
 	annotationsimpl.ProvideService,
 	wire.Bind(new(annotations.Repository), new(*annotationsimpl.RepositoryImpl)),
 	New,

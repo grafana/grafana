@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -69,6 +70,16 @@ func (t *GrafanaTokenAuthenticator) AuthenticateToken(ctx context.Context, token
 	if ns.Value == "*" {
 		orgID = GlobalOrgID
 	}
+	var orgRoles map[int64]org.RoleType
+	if claims.Rest.IsOnBehalfOfUser() {
+		actor := claims.Rest.Actor
+		for actor.Actor != nil {
+			actor = actor.Actor
+		}
+		if actor.Role != "" {
+			orgRoles = map[int64]org.RoleType{orgID: org.RoleType(actor.Role)}
+		}
+	}
 	return &grafanaTokenRequester{
 		Identity: Identity{
 			ID:                id,
@@ -80,6 +91,7 @@ func (t *GrafanaTokenAuthenticator) AuthenticateToken(ctx context.Context, token
 			EmailVerified:     info.GetEmailVerified(),
 			Groups:            info.GetGroups(),
 			OrgID:             orgID,
+			OrgRoles:          orgRoles,
 			Namespace:         ns.Value,
 			AuthID:            claims.Subject,
 			AuthenticatedBy:   login.ExtendedJWTModule,
