@@ -87,10 +87,6 @@ var (
 		[]string{"plugin_id", "version", "caller"},
 	)
 
-	// MetaResolutionFailuresTotal counts per-plugin metadata resolution failures, i.e. calls
-	// to ProviderManager.GetMeta that failed across all providers. Labeled by plugin_id
-	// (bounded by the plugin catalog size, unlike version) so it stays cheap to scrape
-	// even if every plugin starts failing at once.
 	MetaResolutionFailuresTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: namespace,
