@@ -103,6 +103,7 @@ export function AlertRulesFilterSidebar({ criteria, onChange, onClear, hasActive
           <SidebarSection>
             <SidebarField label={<Trans i18nKey="alerting.gma-rule-list.search.property.dashboard">Dashboard</Trans>}>
               <DashboardPicker
+                aria-label={t('alerting.gma-rule-list.search.property.dashboard', 'Dashboard')}
                 value={criteria.dashboardUid}
                 onChange={(dashboard) =>
                   onChange({

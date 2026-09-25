@@ -17,22 +17,17 @@ function listModeUrl(kind: 'alert' | 'recording', folderUid: string): string {
 }
 
 // axe's exclude only takes CSS selector strings (this @axe-core/playwright version pushes them
-// straight through - it doesn't resolve Playwright Locators), so both exclusions below are
-// plain attribute selectors rather than Locators.
+// straight through - it doesn't resolve Playwright Locators), so the exclusion below is a
+// plain attribute selector rather than a Locator.
 
-// NestedFolderPicker (search/AlertRulesFilterSidebar.tsx, search/RecordingRulesFilterSidebar.tsx)
-// wraps a button around its own combobox input, which axe reports as `nested-interactive`.
-// That file is outside this spec's ownership - reported to the coordinator instead of fixed
-// here - so it is excluded from the scan rather than silently failing every run.
+// NestedFolderPicker's own closed-state trigger (app/core/components/NestedFolderPicker/
+// Trigger.tsx) nests a clear-selection icon with role="button" inside the trigger's own
+// <button>, which axe reports as `nested-interactive`. That's inside the core component
+// itself, not how search/AlertRulesFilterSidebar.tsx or search/RecordingRulesFilterSidebar.tsx
+// use it - confirmed by reading Trigger.tsx - so it's an upstream component issue, not fixable
+// from this spec's or the sidebars' ownership, and is excluded from the scan rather than
+// silently failing every run.
 const FOLDER_PICKER_EXCLUDE = '[aria-label^="Select folder:"]';
-
-// DashboardPicker (search/AlertRulesFilterSidebar.tsx) renders a react-select combobox with no
-// accessible name of its own, which axe reports as `label`. Same as above: out of this spec's
-// ownership, reported rather than fixed. Scoped to Select's generic container testid plus
-// "missing an aria-label" so it only ever matches that specific violation, never a labelled
-// combobox, and never something added later in this spec's own directories (none of which
-// render a Select).
-const DASHBOARD_PICKER_EXCLUDE = '[data-testid*="Select container"] input[role="combobox"]:not([aria-label])';
 
 async function runA11yScan(
   page: Page,
@@ -74,7 +69,7 @@ test.describe(
       await page.getByRole('button', { name: folder.title, expanded: false }).click();
       await expect(page.getByRole('link', { name: title })).toBeVisible({ timeout: 40_000 });
 
-      await runA11yScan(page, scanForA11yViolations, [FOLDER_PICKER_EXCLUDE, DASHBOARD_PICKER_EXCLUDE]);
+      await runA11yScan(page, scanForA11yViolations, [FOLDER_PICKER_EXCLUDE]);
     });
 
     test('Alert rules: List mode has no violations', async ({ page, folder, alertRules, scanForA11yViolations }) => {
@@ -84,7 +79,7 @@ test.describe(
       await gotoResilient(page, listModeUrl('alert', folder.uid));
       await expect(page.getByRole('link', { name: title })).toBeVisible({ timeout: 40_000 });
 
-      await runA11yScan(page, scanForA11yViolations, [FOLDER_PICKER_EXCLUDE, DASHBOARD_PICKER_EXCLUDE]);
+      await runA11yScan(page, scanForA11yViolations, [FOLDER_PICKER_EXCLUDE]);
     });
 
     test('Recording rules: Folders mode with one folder expanded has no violations', async ({
