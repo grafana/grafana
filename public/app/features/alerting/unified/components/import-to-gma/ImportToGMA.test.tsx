@@ -412,6 +412,64 @@ describe('ImportToGMA wizard — datasource-fetch preview redaction', () => {
     expect(editor.value).not.toContain('hunter2wayTooSimpleButStillAKey123');
     expect(editor.value).toContain('"receiver": "default"');
   });
+
+  it('does not reopen the notifications preview after it is dismissed while still loading', async () => {
+    // The step 1 dry-run also fetches this same endpoint — let that first call resolve
+    // immediately; only the later, preview-triggered call (installed below) is gated.
+    server.use(
+      http.get('/api/alertmanager/mimir-uid/config/api/v1/alerts', () =>
+        HttpResponse.json({
+          template_files: {},
+          alertmanager_config: { route: { receiver: 'default' }, receivers: [{ name: 'default' }] },
+        })
+      )
+    );
+
+    const { user } = render(<ImportWizardGate />);
+
+    await screen.findByRole('group', { name: /import notification resources/i });
+    await waitFor(
+      () =>
+        expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
+          'aria-disabled',
+          'false'
+        ),
+      { timeout: 3000 }
+    );
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+    await screen.findByRole('group', { name: /import alert rules/i });
+    await user.click(await screen.findByTestId(selectors.pages.Alerting.ImportToGMA.skipButton));
+    await screen.findByText(/review import/i);
+
+    let handlerResolved = false;
+    let resolveFetch: () => void = () => {};
+    const fetchGate = new Promise<void>((resolve) => {
+      resolveFetch = resolve;
+    });
+    server.use(
+      http.get('/api/alertmanager/mimir-uid/config/api/v1/alerts', async () => {
+        await fetchGate;
+        handlerResolved = true;
+        return HttpResponse.json({
+          template_files: {},
+          alertmanager_config: { route: { receiver: 'default' }, receivers: [{ name: 'default' }] },
+        });
+      })
+    );
+
+    await user.click(await screen.findByRole('button', { name: /preview configuration/i }));
+    const dialog = await screen.findByRole('dialog', { name: /notifications config preview/i });
+
+    // The fetch above is still pending (gated on fetchGate) — dismiss now, while still loading.
+    const closeButtons = within(dialog).getAllByRole('button', { name: /close/i });
+    await user.click(closeButtons[closeButtons.length - 1]);
+    expect(screen.queryByRole('dialog', { name: /notifications config preview/i })).not.toBeInTheDocument();
+
+    // Let the in-flight fetch resolve now that the modal has been dismissed — it must stay closed.
+    resolveFetch();
+    await waitFor(() => expect(handlerResolved).toBe(true));
+    expect(screen.queryByRole('dialog', { name: /notifications config preview/i })).not.toBeInTheDocument();
+  });
 });
 
 describe('ImportToGMA wizard — preview redaction with schema-derived secrets', () => {

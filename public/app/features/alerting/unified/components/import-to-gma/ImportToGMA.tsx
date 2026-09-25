@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { isEmpty } from 'lodash';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 
 import { type GrafanaTheme2, OrgRole } from '@grafana/data';
@@ -902,8 +902,12 @@ interface PreviewContentState {
 // differ between them (redaction, in particular) stay local to each caller.
 function usePreviewContent() {
   const [state, setState] = useState<PreviewContentState>({ isOpen: false, isLoading: false, content: '' });
+  // Bumped on every show()/hide() so a show() whose content resolves after the modal was
+  // dismissed (or after a newer show() call) can tell its result is stale and skip reopening it.
+  const requestIdRef = useRef(0);
 
   const show = useCallback(async (loadContent: () => Promise<string>, formatError: (err: unknown) => string) => {
+    const requestId = ++requestIdRef.current;
     setState({ isOpen: true, isLoading: true, content: '' });
     let content: string;
     try {
@@ -911,10 +915,16 @@ function usePreviewContent() {
     } catch (err) {
       content = formatError(err);
     }
+    if (requestIdRef.current !== requestId) {
+      return;
+    }
     setState({ isOpen: true, isLoading: false, content });
   }, []);
 
-  const hide = useCallback(() => setState((prev) => ({ ...prev, isOpen: false })), []);
+  const hide = useCallback(() => {
+    requestIdRef.current++;
+    setState((prev) => ({ ...prev, isOpen: false }));
+  }, []);
 
   // Memoized so callers' own useCallback deps (e.g. handlePreviewNotifications) stay stable
   // across renders that don't touch this preview's state.
