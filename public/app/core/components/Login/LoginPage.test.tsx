@@ -16,6 +16,7 @@ setupMockServer();
 
 const originalOauth = config.oauth;
 const originalLoginError = config.loginError;
+const originalDisableForgotPassword = config.auth.disableForgotPassword;
 
 const mockLocationAssign = jest.fn();
 const originalLocation = window.location;
@@ -32,6 +33,7 @@ afterEach(() => {
   mockLocationAssign.mockClear();
   config.oauth = originalOauth;
   config.loginError = originalLoginError;
+  config.auth.disableForgotPassword = originalDisableForgotPassword;
 });
 
 describe('Login Page', () => {
@@ -51,6 +53,15 @@ describe('Login Page', () => {
 
     expect(screen.getByRole('link', { name: 'Sign up' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Sign up' })).toHaveAttribute('href', '/signup');
+  });
+
+  it('hides the forgot password link when disableForgotPassword is set', () => {
+    config.auth.disableForgotPassword = true;
+
+    render(<LoginPage />);
+
+    expect(screen.queryByRole('link', { name: 'Forgot your password?' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Log in' })).toBeInTheDocument();
   });
 
   it('should pass validation checks for username field', async () => {
