@@ -72,6 +72,23 @@ describe('DashboardMutationClient', () => {
     expect(result.error).toContain('GET_SPEC');
   });
 
+  it.each(['START_BATCH', 'END_BATCH', 'UNDO'])('requires edit permission for %s', async (type) => {
+    const scene = dashboardScene();
+    scene.setState({ meta: { canEdit: false } });
+    const client = new DashboardMutationClient(scene);
+    const result = await client.execute({ type, payload: { description: 'Turn' } });
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('insufficient permissions');
+    expect(scene.state.sidebar.state.undoStack).toHaveLength(0);
+  });
+
+  it('allows inspecting empty history without edit permission', async () => {
+    const scene = dashboardScene();
+    scene.setState({ meta: { canEdit: false } });
+    const result = await new DashboardMutationClient(scene).execute({ type: 'GET_LAST_ACTION', payload: {} });
+    expect(result).toEqual({ success: true, changes: [], data: { action: null } });
+  });
+
   describe('while a plan preview is active', () => {
     const plan = {
       planId: 'plan-1',
@@ -104,6 +121,15 @@ describe('DashboardMutationClient', () => {
       expect(result.success).toBe(false);
       expect(result.error).toContain('read-only');
       expect(scene.state.isEditing).toBeFalsy();
+    });
+
+    it.each(['START_BATCH', 'END_BATCH', 'UNDO'])('refuses %s on a plan preview', async (type) => {
+      const scene = activeScene();
+      const client = new DashboardMutationClient(scene);
+      await client.execute({ type: 'RENDER_PLAN', payload: plan });
+      const result = await client.execute({ type, payload: { description: 'Turn' } });
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('read-only');
     });
 
     it('still allows a read-only command', async () => {

@@ -94,6 +94,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
   /** Set while a batch of edit actions is being collected, see startBatchAction/endBatchAction. */
   private _activeBatch?: {
+    actor?: string;
     source: SceneObject;
     description?: string;
     actions: DashboardEditActionEventPayload[];
@@ -201,12 +202,12 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     action.payload.source.publishEvent(action, true);
   }
 
-  private startBatchAction({ source, description }: DashboardBatchEditActionEventPayload) {
+  private startBatchAction({ source, description, actor }: DashboardBatchEditActionEventPayload) {
     if (this.state.redoStack.length > 0) {
       this.setState({ redoStack: [] });
     }
 
-    this._activeBatch = { source, description, actions: [] };
+    this._activeBatch = { source, description, actor, actions: [] };
   }
 
   private endBatchAction() {
@@ -219,6 +220,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
     const action: DashboardEditActionEventPayload = {
       source: batch.source,
+      actor: batch.actor,
       description: batch.description,
       perform: () => {
         batch.actions.forEach((childAction) => this.performAction(childAction));

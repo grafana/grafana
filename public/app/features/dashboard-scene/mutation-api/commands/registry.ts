@@ -17,6 +17,7 @@ import { getDashboardInfoCommand } from './getDashboardInfo';
 import { getLayoutCommand } from './getLayout';
 import { getMetadataAnnotationsCommand } from './getMetadataAnnotations';
 import { getSpecCommand } from './getSpec';
+import { startBatchCommand, endBatchCommand, getLastActionCommand, undoCommand } from './history';
 import { listAnnotationsCommand } from './listAnnotations';
 import { listPanelsCommand } from './listPanels';
 import { listVariablesCommand } from './listVariables';
@@ -71,6 +72,10 @@ export const DASHBOARD_COMMANDS: Array<MutationCommand<any>> = [
   updateDashboardSettingsCommand,
   getSpecCommand,
   applySpecCommand,
+  startBatchCommand,
+  endBatchCommand,
+  getLastActionCommand,
+  undoCommand,
   renderPlanCommand,
   endPlanningCommand,
 ];
