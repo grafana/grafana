@@ -1,6 +1,7 @@
 package nats
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"net"
@@ -465,13 +466,133 @@ func TestConnectionLifecycle(t *testing.T) {
 			require.Equal(t, 1, srv.NumClients())
 
 			first.Close()
+			stoppedCtx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+			defer cancel()
+			require.Error(t, svc.AwaitTerminated(stoppedCtx))
+			require.Equal(t, services.Failed, svc.State())
+			require.ErrorIs(t, svc.FailureCase(), natsclient.ErrConnectionClosed)
+			require.ErrorContains(t, svc.FailureCase(), string(role))
 			require.Error(t, c.healthy())
-			require.ErrorIs(t, operation(), natsclient.ErrConnectionClosed)
-			require.Error(t, svc.StartAsync(t.Context()))
-			require.Same(t, first, c.conn)
-			require.ErrorIs(t, operation(), natsclient.ErrConnectionClosed)
-			c.close()
 			require.ErrorIs(t, operation(), ErrClosed)
+			require.Error(t, svc.StartAsync(t.Context()))
+			require.Nil(t, c.conn)
+			stats, err := srv.Varz(nil)
+			require.NoError(t, err)
+			require.EqualValues(t, 1, stats.TotalConnections)
+		})
+	}
+}
+
+func TestConnectionRunning(t *testing.T) {
+	for _, role := range []connRole{rolePublisher, roleSubscriber} {
+		t.Run(string(role), func(t *testing.T) {
+			t.Run("closed before running", func(t *testing.T) {
+				srv := startTestServer(t)
+				c, _, _ := newTestClient(t, role, newTestConfig(srv, setting.NATSSettings{Enabled: true}))
+				require.NoError(t, c.starting(t.Context()))
+				nc, err := c.get(t.Context())
+				require.NoError(t, err)
+				nc.Close()
+				ctx, cancel := context.WithTimeout(t.Context(), time.Second)
+				defer cancel()
+				require.ErrorIs(t, c.running(ctx), natsclient.ErrConnectionClosed)
+			})
+
+			t.Run("disabled", func(t *testing.T) {
+				_, svc, _ := newTestClient(t, role, newConfig(setting.NATSSettings{}, nil))
+				startService(t, t.Context(), svc)
+				require.Equal(t, services.Running, svc.State())
+				require.NoError(t, services.StopAndAwaitTerminated(context.Background(), svc))
+				require.Equal(t, services.Terminated, svc.State())
+			})
+
+			for _, stop := range []string{"service stop", "owner close", "canceled before closed callback"} {
+				t.Run(stop, func(t *testing.T) {
+					srv := startTestServer(t)
+					c, svc, _ := newTestClient(t, role, newTestConfig(srv, setting.NATSSettings{Enabled: true}))
+					ctx, cancel := context.WithCancel(t.Context())
+					defer cancel()
+					startService(t, ctx, svc)
+					switch stop {
+					case "service stop":
+						svc.StopAsync()
+					case "owner close":
+						c.close()
+					case "canceled before closed callback":
+						nc, err := c.get(t.Context())
+						require.NoError(t, err)
+						entered, release := make(chan struct{}), make(chan struct{})
+						unblock := sync.OnceFunc(func() { close(release) })
+						t.Cleanup(unblock)
+						closed := nc.ClosedHandler()
+						nc.SetClosedHandler(func(nc *natsclient.Conn) {
+							close(entered)
+							<-release
+							closed(nc)
+						})
+						nc.Close()
+						select {
+						case <-entered:
+						case <-time.After(time.Second):
+							t.Fatal("closed callback did not start")
+						}
+						cancel()
+						unblock()
+					}
+					stoppedCtx, stopCancel := context.WithTimeout(t.Context(), 5*time.Second)
+					defer stopCancel()
+					require.NoError(t, svc.AwaitTerminated(stoppedCtx))
+					require.Equal(t, services.Terminated, svc.State())
+					require.Nil(t, svc.FailureCase())
+				})
+			}
+
+			t.Run("reports last connection error", func(t *testing.T) {
+				listener, err := net.Listen("tcp", "127.0.0.1:0")
+				require.NoError(t, err)
+				t.Cleanup(func() { _ = listener.Close() })
+				peer := make(chan net.Conn, 1)
+				serverDone := make(chan struct{})
+				go func() {
+					defer close(serverDone)
+					conn, err := listener.Accept()
+					if err != nil {
+						return
+					}
+					t.Cleanup(func() { _ = conn.Close() })
+					_, _ = fmt.Fprint(conn, "INFO {}\r\n")
+					scanner := bufio.NewScanner(conn)
+					for scanner.Scan() {
+						if scanner.Text() == "PING" {
+							_, _ = fmt.Fprint(conn, "PONG\r\n")
+							peer <- conn
+							return
+						}
+					}
+				}()
+				cfg := newConfig(setting.NATSSettings{
+					Enabled: true, Mode: setting.NATSModeExternal,
+					ClientURLs: []string{"nats://" + listener.Addr().String()},
+				}, nil)
+				c, svc, _ := newTestClient(t, role, cfg)
+				startService(t, t.Context(), svc)
+				nc, err := c.get(t.Context())
+				require.NoError(t, err)
+				select {
+				case conn := <-peer:
+					_, err = fmt.Fprint(conn, "-ERR 'test terminal error'\r\n")
+					require.NoError(t, err)
+				case <-time.After(time.Second):
+					t.Fatal("NATS handshake did not complete")
+				}
+				<-serverDone
+				stoppedCtx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+				defer cancel()
+				require.Error(t, svc.AwaitTerminated(stoppedCtx))
+				require.Equal(t, services.Failed, svc.State())
+				require.ErrorContains(t, nc.LastError(), "test terminal error")
+				require.ErrorIs(t, svc.FailureCase(), nc.LastError())
+			})
 		})
 	}
 }
@@ -507,6 +628,8 @@ func TestNATSStartupRecovery(t *testing.T) {
 			require.NoError(t, err)
 			require.Error(t, pub.Health(t.Context()))
 			require.Error(t, sub.Health(t.Context()))
+			require.Equal(t, services.Running, pub.State())
+			require.Equal(t, services.Running, sub.State())
 			require.ErrorIs(t, pub.Publish(t.Context(), "test", nil), natsclient.ErrConnectionReconnecting)
 			received := make(chan string, 4)
 			var reconnects atomic.Int64
@@ -546,6 +669,8 @@ func TestNATSStartupRecovery(t *testing.T) {
 			require.Eventually(t, func() bool { return pubConn.IsReconnecting() && subConn.IsReconnecting() }, 5*time.Second, 10*time.Millisecond)
 			require.Error(t, pub.Health(t.Context()))
 			require.Error(t, sub.Health(t.Context()))
+			require.Equal(t, services.Running, pub.State())
+			require.Equal(t, services.Running, sub.State())
 			startLifecycleServer(t, port, "right-token")
 			assertDelivery("subscription restored")
 			require.Eventually(t, func() bool { return reconnects.Load() > 0 }, time.Second, time.Millisecond)

@@ -2,6 +2,7 @@ package folder
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -11,6 +12,7 @@ import (
 	natsserver "github.com/nats-io/nats-server/v2/server"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
@@ -47,16 +49,15 @@ func TestFolderControllerOwnsNATSSubscriber(t *testing.T) {
 			Config: cfg, Registerer: prometheus.NewRegistry(), HealthNotifier: health,
 		})
 	}()
-	require.Eventually(t, func() bool {
+	require.NoError(t, wait.PollUntilContextTimeout(ctx, 10*time.Millisecond, 5*time.Second, true, func(context.Context) (bool, error) {
 		select {
 		case err := <-done:
-			require.NoError(t, err)
-			t.Fatal("folder controller stopped before becoming ready")
+			return false, fmt.Errorf("folder controller stopped before becoming ready (error: %v)", err)
 		default:
 		}
 		stats, err := srv.Varz(nil)
-		return health.IsReady() && err == nil && stats.TotalConnections == 1 && stats.Connections == 1 && stats.Subscriptions > 0
-	}, 5*time.Second, 10*time.Millisecond)
+		return health.IsReady() && err == nil && stats.TotalConnections == 1 && stats.Connections == 1 && stats.Subscriptions > 0, err
+	}))
 	cancel()
 	select {
 	case err := <-done:

@@ -98,11 +98,6 @@ func (s *SubscriberService) Run(ctx context.Context) error {
 	return s.AwaitTerminated(ctx)
 }
 
-func (s *SubscriberService) running(ctx context.Context) error {
-	<-ctx.Done()
-	return nil
-}
-
 // stopping drains the connection, which auto-unsubscribes any active
 // subscriptions and flushes in-flight handler deliveries.
 func (s *SubscriberService) stopping(_ error) error {

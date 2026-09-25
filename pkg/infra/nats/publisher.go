@@ -56,15 +56,6 @@ func (p *PublisherService) Run(ctx context.Context) error {
 	return p.AwaitTerminated(ctx)
 }
 
-func (p *PublisherService) running(ctx context.Context) error {
-	// Publish is fire-and-forget: nats.go's flusher pushes each message to the
-	// server, PingInterval detects a dead link, and the reconnect buffer replays
-	// automatically after a reconnect. Nothing for the loop to do but stay alive
-	// until shutdown.
-	<-ctx.Done()
-	return nil
-}
-
 func (p *PublisherService) stopping(_ error) error {
 	// close() marks the connection closed before draining, so concurrent Publish
 	// callers see ErrClosed immediately rather than blocking on the drain.

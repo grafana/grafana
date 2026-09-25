@@ -353,7 +353,7 @@ func (s *ModuleServer) initRouterModule() (services.Service, error) {
 // that needs more than one background lifecycle can still register as a
 // single services.Service. A failure in any of them fails the composite;
 // starting awaits all healthy, stopping awaits all stopped.
-func newCompositeService(svcs ...services.Service) (services.Service, error) {
+func newCompositeService(svcs ...services.Service) (*services.BasicService, error) {
 	manager, err := services.NewManager(svcs...)
 	if err != nil {
 		return nil, fmt.Errorf("composing services: %w", err)
@@ -406,15 +406,11 @@ func (s *ModuleServer) initNATSModule() (services.Service, error) {
 	}
 	subscriber := nats.ProvideSubscriber(natsCfg, s.registerer)
 	s.natsSubscriber = subscriber
-	group, err := services.NewManager(publisher, subscriber)
+	group, err := newCompositeService(publisher, subscriber)
 	if err != nil {
 		return nil, err
 	}
-	return services.NewBasicService(
-		func(ctx context.Context) error { return services.StartManagerAndAwaitHealthy(ctx, group) },
-		func(ctx context.Context) error { <-ctx.Done(); return nil },
-		func(_ error) error { return services.StopManagerAndAwaitStopped(context.Background(), group) },
-	).WithName(modules.NATS), nil
+	return group.WithName(modules.NATS), nil
 }
 
 func (s *ModuleServer) initUnifiedBackendModule(storageServicesEnabled bool) func() (services.Service, error) {

@@ -13,6 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
 
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -161,16 +162,15 @@ func TestControllersOwnNATSSubscriber(t *testing.T) {
 			go func() {
 				done <- controller.run(ctx, server.OperatorDependencies{Config: cfg, Registerer: prometheus.NewRegistry(), HealthNotifier: health})
 			}()
-			require.Eventually(t, func() bool {
+			require.NoError(t, wait.PollUntilContextTimeout(ctx, 10*time.Millisecond, 10*time.Second, true, func(context.Context) (bool, error) {
 				select {
 				case err := <-done:
-					require.NoError(t, err)
-					t.Fatal("controller stopped before becoming ready")
+					return false, fmt.Errorf("controller stopped before becoming ready (error: %v)", err)
 				default:
 				}
 				stats, err := srv.Varz(nil)
-				return health.IsReady() && err == nil && stats.TotalConnections == 1 && stats.Connections == 1 && stats.Subscriptions > 0
-			}, 10*time.Second, 10*time.Millisecond, "controller must own an active subscriber before becoming ready")
+				return health.IsReady() && err == nil && stats.TotalConnections == 1 && stats.Connections == 1 && stats.Subscriptions > 0, err
+			}), "controller must own an active subscriber before becoming ready")
 			cancel()
 			select {
 			case err := <-done:

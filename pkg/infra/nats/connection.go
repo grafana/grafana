@@ -136,6 +136,28 @@ func (c *connection) starting(ctx context.Context) error {
 	return nil
 }
 
+func (c *connection) running(ctx context.Context) error {
+	select {
+	case <-ctx.Done():
+		return nil
+	case <-c.closeDone:
+		c.mu.Lock()
+		nc, closed := c.conn, c.closed
+		c.mu.Unlock()
+		// Owner shutdown and cancellation can race with the closed callback.
+		if ctx.Err() != nil || closed {
+			return nil
+		}
+		err := natsclient.ErrConnectionClosed
+		if nc != nil {
+			if lastErr := nc.LastError(); lastErr != nil {
+				err = lastErr
+			}
+		}
+		return fmt.Errorf("nats %s connection closed unexpectedly: %w", c.role, err)
+	}
+}
+
 func (c *connection) get(ctx context.Context) (*natsclient.Conn, error) {
 	if !c.Enabled() {
 		return nil, ErrDisabled

@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/operators/internal/supervision"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/server"
@@ -25,7 +27,7 @@ import (
 // re-run by another worker.
 const jobClaimExpiry = 60 * time.Second
 
-func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies) error {
+func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies) (runErr error) {
 	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	})).With("logger", "provisioning-jobqueue-controller")
@@ -36,10 +38,10 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 		return fmt.Errorf("failed to setup operator: %w", err)
 	}
 
+	ctx, stopSubscriber := supervision.Watch(ctx, controllerCfg.natsSubscriber)
 	defer func() {
-		if err := services.StopAndAwaitTerminated(context.Background(), controllerCfg.natsSubscriber); err != nil {
-			logger.Error("failed to stop NATS subscriber", "error", err)
-		}
+		deps.HealthNotifier.SetNotReady()
+		runErr = errors.Join(runErr, stopSubscriber())
 	}()
 	if err := services.StartAndAwaitRunning(ctx, controllerCfg.natsSubscriber); err != nil {
 		return fmt.Errorf("failed to start NATS subscriber: %w", err)
