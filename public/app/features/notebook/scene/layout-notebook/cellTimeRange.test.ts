@@ -40,7 +40,7 @@ describe('buildCellSceneTimeRange', () => {
     jest.useRealTimers();
   });
 
-  // The bug this guards against: a plain SceneTimeRange with no explicit timeZone of its own
+  // A plain SceneTimeRange with no explicit timeZone of its own
   // resolves `value` via the browser's default zone, not the ancestor's, even though getTimeZone()
   // itself correctly walks up to it — so a day-rounded preset would land on the wrong calendar day
   // whenever the notebook's configured zone differs from the test/browser default (UTC here).

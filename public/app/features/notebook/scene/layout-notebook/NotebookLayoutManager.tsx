@@ -459,12 +459,21 @@ export class NotebookLayoutManager
   }
 
   public setCellTimeRange(cell: NotebookCellItem, spec: CellTimeRangeSpec | undefined): void {
-    const before = { $timeRange: cell.state.$timeRange };
-    const after = { $timeRange: spec ? buildCellSceneTimeRange(spec.from, spec.to) : undefined };
+    const panel = cell.state.body;
+    const before = { $timeRange: cell.state.$timeRange, panelTimeRange: panel?.state.$timeRange };
+    const after = {
+      $timeRange: spec ? buildCellSceneTimeRange(spec.from, spec.to) : undefined,
+      panelTimeRange: undefined,
+    };
+
+    const apply = (state: typeof before) => {
+      cell.setState({ $timeRange: state.$timeRange });
+      panel?.setState({ $timeRange: state.panelTimeRange });
+      getQueryRunnerFor(panel)?.runQueries();
+    };
 
     if (!this.state.isEditing) {
-      cell.setState(after);
-      getQueryRunnerFor(cell.state.body)?.runQueries();
+      apply(after);
       return;
     }
 
@@ -473,14 +482,8 @@ export class NotebookLayoutManager
         ? t('notebooks.history.set-cell-time-range', 'Set panel time range')
         : t('notebooks.history.reset-cell-time-range', 'Use notebook time range'),
       kind: NOTEBOOK_EDIT_KIND.EDIT,
-      perform: () => {
-        cell.setState(after);
-        getQueryRunnerFor(cell.state.body)?.runQueries();
-      },
-      undo: () => {
-        cell.setState(before);
-        getQueryRunnerFor(cell.state.body)?.runQueries();
-      },
+      perform: () => apply(after),
+      undo: () => apply(before),
     });
   }
 

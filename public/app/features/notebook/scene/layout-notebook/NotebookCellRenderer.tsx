@@ -4,7 +4,7 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { SceneDataTransformer, type VizPanel } from '@grafana/scenes';
+import { SceneDataTransformer, useSceneObjectState, type VizPanel } from '@grafana/scenes';
 import { Box, floatingUtils, Portal, Stack, useStyles2 } from '@grafana/ui';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
@@ -97,7 +97,9 @@ function PanelCell({
   autoFocus?: boolean;
 }) {
   const styles = useStyles2(getStyles);
-  const { $timeRange } = cell.useState();
+  // NotebookCellItem has no static Component and is never otherwise activated, so a $timeRange
+  // assigned to it would never get its own activate() call without this.
+  const { $timeRange } = useSceneObjectState(cell, { shouldActivateOrKeepAlive: true });
 
   // PanelQueryEditor already mounts its own copy of this control inline, so this one only needs to fill in for the
   // two cases isEditableQueryPanel excludes (a library panel, or one with transformations),

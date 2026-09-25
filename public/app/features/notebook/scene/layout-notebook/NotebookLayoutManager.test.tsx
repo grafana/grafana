@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
-import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { sceneGraph, SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
@@ -159,6 +159,26 @@ function panelCell(elementName: string, queries?: DataQuery[]) {
     setQueryRunnerQueries(runner, queries);
   }
   return { cell: new NotebookCellItem({ elementName, source: 'user', body: panel }), runner };
+}
+
+function panelCellWithOwnTimeOverride(elementName: string, timeFrom: string) {
+  const panelKind = defaultVisualizationPanelKind();
+  const panel = new VizPanel(
+    buildVizPanelState(
+      {
+        ...panelKind,
+        spec: {
+          ...panelKind.spec,
+          data: {
+            ...panelKind.spec.data,
+            spec: { ...panelKind.spec.data.spec, queryOptions: { ...panelKind.spec.data.spec.queryOptions, timeFrom } },
+          },
+        },
+      },
+      1
+    )
+  );
+  return { cell: new NotebookCellItem({ elementName, source: 'user', body: panel }), panel };
 }
 
 function withExpr(query: DataQuery, expr: string): DataQuery {
@@ -1316,6 +1336,40 @@ describe('NotebookLayoutManager', () => {
 
       act(() => history.undo());
       expect(cell.state.$timeRange?.state.from).toBe('now-24h');
+    });
+
+    it("clears a panel's own carried-over override so the new cell range is not shadowed", () => {
+      const { cell, panel } = panelCellWithOwnTimeOverride('latency', '2h');
+      const manager = new NotebookLayoutManager({ cells: [cell], isEditing: false });
+      attachHistory(manager);
+      expect(sceneGraph.getTimeRange(panel)).toBe(panel.state.$timeRange);
+
+      manager.setCellTimeRange(cell, { from: 'now-24h', to: 'now' });
+
+      expect(panel.state.$timeRange).toBeUndefined();
+      expect(sceneGraph.getTimeRange(panel).state.from).toBe('now-24h');
+    });
+
+    it("restores a panel's own carried-over override on undo", () => {
+      const { cell, panel } = panelCellWithOwnTimeOverride('latency', '2h');
+      const manager = new NotebookLayoutManager({ cells: [cell], isEditing: true });
+      const history = attachHistory(manager);
+      const originalPanelTimeRange = panel.state.$timeRange;
+
+      manager.setCellTimeRange(cell, { from: 'now-24h', to: 'now' });
+      act(() => history.undo());
+
+      expect(panel.state.$timeRange).toBe(originalPanelTimeRange);
+    });
+
+    it("also clears a panel's own carried-over override when resetting to the notebook time", () => {
+      const { cell, panel } = panelCellWithOwnTimeOverride('latency', '2h');
+      const manager = new NotebookLayoutManager({ cells: [cell], isEditing: false });
+      attachHistory(manager);
+
+      manager.setCellTimeRange(cell, undefined);
+
+      expect(panel.state.$timeRange).toBeUndefined();
     });
   });
 

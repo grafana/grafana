@@ -1,4 +1,4 @@
-import { render, screen } from 'test/test-utils';
+import { act, render, screen } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
@@ -288,6 +288,23 @@ describe('NotebookCellRenderer', () => {
       render(<NotebookCellRenderer cell={cell} isEditing={false} />);
 
       expect(await screen.findByRole('button', { name: /locked/i })).toBeInTheDocument();
+    });
+
+    it('resolves a cell time range set while mounted, instead of leaving it at its placeholder default', async () => {
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2024-01-01T12:00:00Z'));
+
+      const panel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries' });
+      const cell = buildPanelCellInLayout(panel);
+
+      render(<NotebookCellRenderer cell={cell} isEditing={false} />);
+      await screen.findByTestId('loading-plugin-panel-1');
+
+      act(() => cell.getParentLayout().setCellTimeRange(cell, { from: 'now-1h', to: 'now' }));
+
+      expect(cell.state.$timeRange?.state.value.from.toISOString()).toBe('2024-01-01T11:00:00.000Z');
+
+      jest.useRealTimers();
     });
   });
 

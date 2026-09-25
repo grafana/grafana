@@ -71,8 +71,6 @@ function NotebookCellTimeRangePopoverContent({ cell, onClose }: { cell: Notebook
   };
 
   const onApply = () => {
-    // setCellTimeRange (called via onTimeRangeChange) already runs the query itself, in both the
-    // editing and non-editing branches — an extra call here would run it twice.
     cell.onTimeRangeChange(useNotebookTime ? undefined : buildCellTimeRangeSpec(host.state.$timeRange));
     onClose();
   };
@@ -93,8 +91,6 @@ function NotebookCellTimeRangePopoverContent({ cell, onClose }: { cell: Notebook
         <Switch value={useNotebookTime} onChange={(e) => onToggle(e.currentTarget.checked)} />
       </Box>
       <div className={cx(styles.picker, useNotebookTime && styles.pickerDisabled)} aria-disabled={useNotebookTime}>
-        {/* hideTimeSettings (set in buildDraftTimeRangeHost) hides the timezone/fiscal-year footer,
-            so neither is ever editable per cell — timezone always follows the notebook. */}
         <host.state.timePicker.Component model={host.state.timePicker} />
       </div>
       <Box marginTop={1}>

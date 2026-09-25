@@ -13,7 +13,6 @@ import { NotebookCellTimeRangeControl } from './NotebookCellTimeRangeControl';
 
 // A cell needs a notebook scene above it for sceneGraph.getTimeRange to resolve an ambient range
 // (the "use notebook time" preview) — no activation required, only the parent chain that
-// SceneObjectBase wires synchronously on construction, same setup as PanelQueryEditor.test.tsx.
 function buildCell(timeRange?: SceneTimeRange) {
   const panel = new VizPanel(buildVizPanelState(defaultVisualizationPanelKind(), 1));
   const cell = new NotebookCellItem({ elementName: 'panel-1', source: 'user', body: panel, $timeRange: timeRange });
@@ -33,8 +32,6 @@ describe('NotebookCellTimeRangeControl', () => {
     const { user } = render(<NotebookCellTimeRangeControl cell={cell} />);
 
     await user.click(screen.getByRole('button'));
-    // Testid, not accessible name: SceneTimePicker always computes a duration-specific tooltip
-    // ("Move 12h backward"), unlike TimeRangePicker's own static default text.
     await user.click(screen.getByTestId(selectors.components.TimePicker.moveBackwardButton));
 
     await user.click(screen.getByRole('button', { name: 'Reset' }));
