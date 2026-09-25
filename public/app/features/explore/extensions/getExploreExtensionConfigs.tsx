@@ -1,11 +1,13 @@
 import { lazy, Suspense } from 'react';
 
 import { type PluginExtensionAddedLinkConfig, PluginExtensionPoints } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { Spinner } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ADD_PANEL_MODAL_WIDTH, addPanelToNotebookTitle } from 'app/features/notebook/addPanel/addPanelModal';
-import { canAddPanelToNotebook } from 'app/features/notebook/permissions';
+import { getRecentNotebook } from 'app/features/notebook/addPanel/recentNotebook';
+import { canAddPanelToNotebook, canEditNotebooks } from 'app/features/notebook/permissions';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -75,7 +77,7 @@ export function getExploreExtensionConfigs(): PluginExtensionAddedLinkConfig[] {
       createAddedLinkConfig<PluginExtensionExploreContext>({
         // This is called at the top level, so will break if we add a translation here 😱
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        title: 'Add to notebook',
+        title: 'Add to notebook…',
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         description: 'Add the query and panel from explore to a notebook',
         targets: [PluginExtensionPoints.ExploreToolbarAction],
@@ -102,6 +104,38 @@ export function getExploreExtensionConfigs(): PluginExtensionAddedLinkConfig[] {
               </Suspense>
             ),
           });
+        },
+      }),
+      createAddedLinkConfig<PluginExtensionExploreContext>({
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+        title: 'Add to recent notebook',
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+        description: 'Add the query and panel from explore to the last notebook you added to',
+        targets: [PluginExtensionPoints.ExploreToolbarAction],
+        icon: 'book',
+        category: 'Dashboards',
+        configure: () => {
+          if (!getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNotebooks, false) || !canEditNotebooks()) {
+            return undefined;
+          }
+          const recent = getRecentNotebook();
+          return recent
+            ? { title: t('notebooks.add-panel.quick-add', 'Add to "{{title}}"', { title: recent.title }) }
+            : undefined;
+        },
+        onClick: async (_, { context, openModal }) => {
+          const openPicker = () =>
+            openModal({
+              title: addPanelToNotebookTitle(),
+              width: ADD_PANEL_MODAL_WIDTH,
+              body: ({ onDismiss }) => (
+                <Suspense fallback={<Spinner />}>
+                  <ExploreToNotebookPanel onClose={onDismiss!} exploreId={context?.exploreId!} />
+                </Suspense>
+              ),
+            });
+          const { quickAddFromExplore } = await import('./AddToNotebook/quickAddFromExplore');
+          await quickAddFromExplore(context?.exploreId!, openPicker);
         },
       }),
     ];

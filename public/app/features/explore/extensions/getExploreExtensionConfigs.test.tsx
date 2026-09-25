@@ -5,10 +5,14 @@ import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ADD_PANEL_MODAL_WIDTH, addPanelToNotebookTitle } from 'app/features/notebook/addPanel/addPanelModal';
+import { getRecentNotebook } from 'app/features/notebook/addPanel/recentNotebook';
 
+import { quickAddFromExplore } from './AddToNotebook/quickAddFromExplore';
 import { getExploreExtensionConfigs } from './getExploreExtensionConfigs';
 
 jest.mock('app/core/services/context_srv');
+jest.mock('app/features/notebook/addPanel/recentNotebook', () => ({ getRecentNotebook: jest.fn() }));
+jest.mock('./AddToNotebook/quickAddFromExplore', () => ({ quickAddFromExplore: jest.fn() }));
 
 // Stood in for so the lazy import resolves without dragging the notebook picker and its API into
 // this suite. What matters here is that the modal mounts it, pointed at the right pane.
@@ -42,7 +46,7 @@ describe('getExploreExtensionConfigs', () => {
           onClick: expect.any(Function),
         },
         {
-          title: 'Add to notebook',
+          title: 'Add to notebook…',
           description: 'Add the query and panel from explore to a notebook',
           targets: [PluginExtensionPoints.ExploreToolbarAction],
           icon: 'book',
@@ -50,7 +54,61 @@ describe('getExploreExtensionConfigs', () => {
           onClick: expect.any(Function),
           category: 'Dashboards',
         },
+        {
+          title: 'Add to recent notebook',
+          description: 'Add the query and panel from explore to the last notebook you added to',
+          targets: [PluginExtensionPoints.ExploreToolbarAction],
+          icon: 'book',
+          configure: expect.any(Function),
+          onClick: expect.any(Function),
+          category: 'Dashboards',
+        },
       ]);
+    });
+  });
+
+  describe('quick add to recent notebook extension', () => {
+    afterEach(() => {
+      setTestFlags({});
+      jest.mocked(getRecentNotebook).mockReset();
+      contextSrvMock.hasPermission.mockReset();
+    });
+
+    it('names the destination only when notebooks are enabled, writable, and recent', () => {
+      const quickAdd = getExploreExtensionConfigs().find((extension) => extension.title === 'Add to recent notebook');
+      jest.mocked(getRecentNotebook).mockReturnValue({ uid: 'nb1', title: 'Investigation', at: 100 });
+      contextSrvMock.hasPermission.mockReturnValue(true);
+
+      setTestFlags({ [FlagKeys.DashboardNotebooks]: false });
+      expect(quickAdd?.configure?.(undefined)).toBeUndefined();
+
+      setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
+      expect(quickAdd?.configure?.(undefined)).toEqual({ title: 'Add to "Investigation"' });
+
+      contextSrvMock.hasPermission.mockReturnValue(false);
+      expect(quickAdd?.configure?.(undefined)).toBeUndefined();
+
+      contextSrvMock.hasPermission.mockReturnValue(true);
+      jest.mocked(getRecentNotebook).mockReturnValue(undefined);
+      expect(quickAdd?.configure?.(undefined)).toBeUndefined();
+    });
+
+    it('adds from the selected Explore pane and can fall back to the picker', async () => {
+      const quickAdd = getExploreExtensionConfigs().find((extension) => extension.title === 'Add to recent notebook');
+      const openModal = jest.fn();
+      jest.mocked(quickAddFromExplore).mockImplementation(async (_exploreId, openPicker) => openPicker());
+
+      await quickAdd?.onClick?.(undefined, {
+        context: { exploreId: 'right' },
+        extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
+        openModal,
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the handler reads only these fields
+      } as unknown as PluginExtensionEventHelpers<{ exploreId: string }>);
+
+      expect(quickAddFromExplore).toHaveBeenCalledWith('right', expect.any(Function));
+      expect(openModal).toHaveBeenCalledWith(
+        expect.objectContaining({ title: addPanelToNotebookTitle(), width: ADD_PANEL_MODAL_WIDTH })
+      );
     });
   });
 
@@ -64,7 +122,7 @@ describe('getExploreExtensionConfigs', () => {
     });
 
     function notebookExtension() {
-      return getExploreExtensionConfigs().find((extension) => extension.title === 'Add to notebook');
+      return getExploreExtensionConfigs().find((extension) => extension.title === 'Add to notebook…');
     }
 
     function setNotebooksEnabled(enabled: boolean) {

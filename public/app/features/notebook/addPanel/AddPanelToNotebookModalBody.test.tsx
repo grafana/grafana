@@ -13,6 +13,7 @@ import { defaultPanelKind, type PanelKind } from '../types';
 
 import { AddPanelToNotebookModalBody } from './AddPanelToNotebookModalBody';
 import { addPanelToExistingNotebook, createNotebookWithPanel } from './addPanelToNotebook';
+import { setRecentNotebook } from './recentNotebook';
 import { useNotebookPicker } from './useNotebookPicker';
 
 jest.mock('./useNotebookPicker', () => ({
@@ -25,6 +26,8 @@ jest.mock('./addPanelToNotebook', () => ({
   addPanelToExistingNotebook: jest.fn(),
   createNotebookWithPanel: jest.fn(),
 }));
+
+jest.mock('./recentNotebook', () => ({ setRecentNotebook: jest.fn() }));
 
 jest.mock('app/core/services/context_srv');
 
@@ -208,11 +211,14 @@ describe('AddPanelToNotebookModalBody', () => {
     });
 
     it('adds the panel to the chosen notebook and closes', async () => {
+      addToExisting.mockResolvedValue({ uid: 'nb2', title: 'Checkout error spike' });
       const { user, buildPanel, onDismiss } = renderModal();
       await chooseExisting(user);
 
       await user.click(selectNotebook('Checkout error spike'));
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+      await waitFor(() => expect(setRecentNotebook).toHaveBeenCalledWith('nb2', 'Checkout error spike'));
 
       await waitFor(() => expect(addToExisting).toHaveBeenCalledWith('nb2', panel(), 'dashboard_panel', false));
       // Built on submit, so a panel edited while the modal was open is the one that lands.
