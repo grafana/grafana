@@ -682,6 +682,9 @@ export const versionedComponents = {
           '12.4.0': 'data-testid tableng row expander',
         },
         cellActions: {
+          triggerButton: {
+            '13.3.0': 'data-testid tableng cell-actions trigger-button',
+          },
           inspectButton: {
             '13.2.0': 'data-testid tableng cell-actions inspect-button',
           },
