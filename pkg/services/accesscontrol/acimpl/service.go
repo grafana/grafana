@@ -11,7 +11,6 @@ import (
 	"time"
 
 	claims "github.com/grafana/authlib/types"
-	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/sync/singleflight"
@@ -44,6 +43,10 @@ import (
 
 var _ pluginaccesscontrol.RoleRegistry = &Service{}
 
+type IAMFeatures interface {
+	UserPermissionsAPIEnabled() bool
+}
+
 const (
 	cacheTTL = 60 * time.Second
 )
@@ -61,6 +64,7 @@ func ProvideService(
 	features featuremgmt.FeatureToggles, tracer tracing.Tracer, permRegistry permreg.PermissionRegistry,
 	lock *serverlock.ServerLockService, zanzanaClient zanzana.Client,
 	restConfigProvider restcfg.RestConfigProvider,
+	iamFeatures IAMFeatures,
 ) (*Service, error) {
 	service := ProvideOSSService(
 		cfg,
@@ -72,6 +76,7 @@ func ProvideService(
 		db,
 		permRegistry,
 		lock,
+		iamFeatures,
 	)
 
 	api.NewAccessControlAPI(routeRegister, accessControl, service, userService).RegisterAPIEndpoints()
@@ -103,18 +108,20 @@ func ProvideOSSService(
 	cfg *setting.Cfg, store accesscontrol.Store, actionResolver accesscontrol.ActionResolver,
 	cache *localcache.CacheService, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
 	db db.DB, permRegistry permreg.PermissionRegistry, lock *serverlock.ServerLockService,
+	iamFeatures IAMFeatures,
 ) *Service {
 	s := &Service{
-		actionResolver: actionResolver,
-		cache:          cache,
-		cfg:            cfg,
-		features:       features,
-		log:            log.New("accesscontrol.service"),
-		roles:          accesscontrol.BuildBasicRoleDefinitions(),
-		store:          store,
-		permRegistry:   permRegistry,
-		sql:            db,
-		serverLock:     lock,
+		actionResolver:            actionResolver,
+		cache:                     cache,
+		cfg:                       cfg,
+		features:                  features,
+		userPermissionsAPIEnabled: iamFeatures.UserPermissionsAPIEnabled(),
+		log:                       log.New("accesscontrol.service"),
+		roles:                     accesscontrol.BuildBasicRoleDefinitions(),
+		store:                     store,
+		permRegistry:              permRegistry,
+		sql:                       db,
+		serverLock:                lock,
 	}
 
 	if backend, ok := store.(*database.AccessControlStore); ok {
@@ -126,23 +133,24 @@ func ProvideOSSService(
 
 // Service is the service implementing role based access control.
 type Service struct {
-	actionResolver        accesscontrol.ActionResolver
-	cache                 *localcache.CacheService
-	cfg                   *setting.Cfg
-	features              featuremgmt.FeatureToggles
-	log                   log.Logger
-	registrations         accesscontrol.RegistrationList
-	rolesMu               sync.RWMutex
-	roles                 map[string]*accesscontrol.RoleDTO
-	store                 accesscontrol.Store
-	seeder                *seeding.Seeder
-	permRegistry          permreg.PermissionRegistry
-	isInitialized         bool
-	sql                   db.DB
-	serverLock            *serverlock.ServerLockService
-	singleFlight          singleflight.Group
-	userPermissionsClient accesscontrol.UserPermissionsClient
-	zanzanaResolver       *ZanzanaPermissionResolver
+	actionResolver            accesscontrol.ActionResolver
+	cache                     *localcache.CacheService
+	cfg                       *setting.Cfg
+	features                  featuremgmt.FeatureToggles
+	userPermissionsAPIEnabled bool
+	log                       log.Logger
+	registrations             accesscontrol.RegistrationList
+	rolesMu                   sync.RWMutex
+	roles                     map[string]*accesscontrol.RoleDTO
+	store                     accesscontrol.Store
+	seeder                    *seeding.Seeder
+	permRegistry              permreg.PermissionRegistry
+	isInitialized             bool
+	sql                       db.DB
+	serverLock                *serverlock.ServerLockService
+	singleFlight              singleflight.Group
+	userPermissionsClient     accesscontrol.UserPermissionsClient
+	zanzanaResolver           *ZanzanaPermissionResolver
 }
 
 func (s *Service) SetUserPermissionsClient(client accesscontrol.UserPermissionsClient) {
@@ -163,7 +171,7 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
-	if s.cfg.RBAC.SingleOrganization && user.GetOrgID() != accesscontrol.GlobalOrgID && openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagAuthzUserPermissions, false, openfeature.TransactionContext(ctx)) {
+	if s.cfg.RBAC.SingleOrganization && user.GetOrgID() != accesscontrol.GlobalOrgID && s.userPermissionsAPIEnabled {
 		if s.userPermissionsClient == nil {
 			return nil, fmt.Errorf("AuthZ user permissions client is not configured")
 		}

@@ -37,7 +37,7 @@ func textAt(t *testing.T, store *PostgreSQLStore, ns, name string, at int64) str
 	t.Helper()
 	var text string
 	require.NoError(t, store.pool.QueryRow(t.Context(),
-		`SELECT text FROM annotations WHERE namespace = $1 AND name = $2 AND time = $3`,
+		`SELECT text FROM annotations WHERE namespace = $1 AND name = $2 AND time_end = $3`,
 		ns, name, at).Scan(&text))
 	return text
 }
@@ -105,6 +105,18 @@ func TestIntegrationBackfill(t *testing.T) {
 		require.ElementsMatch(t, []string{"team:ops", "prod"}, got.Spec.Tags)
 	})
 
+	t.Run("a range spanning weeks lands in the partition of its end", func(t *testing.T) {
+		ctx, ns := t.Context(), "stacks-itest-range-partition"
+		at, end := week(0), week(2)
+
+		_, err := store.InsertBatch(ctx, []migrator.BackfillRecord{{
+			Namespace: ns, Name: "legacy-1", Time: at, TimeEnd: &end,
+			Text: "outage", CreatedAt: time.UnixMilli(at).UTC(), LegacyID: 1,
+		}})
+		require.NoError(t, err)
+		require.Equal(t, getPartitionName(end), partitionOf(t, store.pool, ns, "legacy-1"))
+	})
+
 	// A native write can carry a legacy_id inside the legacy autoincrement range,
 	// so provenance has to key on legacy_migrated.
 	t.Run("migrated count keys on provenance, not legacy id", func(t *testing.T) {
@@ -120,7 +132,7 @@ func TestIntegrationBackfill(t *testing.T) {
 		require.Equal(t, int64(1), migrated, "native row must not inflate the migrated count")
 	})
 
-	// Time is in the primary key, so an edit that moves it moves the row between
+	// time_end is in the primary key, so an edit that moves it moves the row between
 	// weekly partitions.
 	t.Run("resync moves a row across partitions in place", func(t *testing.T) {
 		ctx, ns := t.Context(), "stacks-itest-move"
@@ -148,7 +160,7 @@ func TestIntegrationBackfill(t *testing.T) {
 	})
 
 	// One name, one row is an invariant the primary key cannot enforce, since it
-	// carries time. This pins what happens if it is ever broken.
+	// carries time_end. This pins what happens if it is ever broken.
 	t.Run("a name holding two rows breaks the resync loudly", func(t *testing.T) {
 		ctx, ns := t.Context(), "stacks-itest-duplicate"
 		stale, current := week(0), week(0)+5_000

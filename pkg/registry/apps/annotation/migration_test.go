@@ -76,4 +76,65 @@ func TestIntegrationMigrations(t *testing.T) {
 		// Validate that the remaining migrations apply cleanly on top of the backfilled data
 		runMigrationsUpTo(t, ctx, pool, goose.MaxVersion)
 	})
+
+	t.Run("00011_partition_by_time_end", func(t *testing.T) {
+		pool := newMigrationTestPool(t)
+		ctx := t.Context()
+
+		runMigrationsUpTo(t, ctx, pool, 10)
+
+		const namespace = "stacks-migration-test"
+		base := time.Date(2026, 9, 2, 12, 0, 0, 0, time.UTC)
+		seed := map[string][2]int64{
+			"point":             {base.UnixMilli(), base.UnixMilli()},
+			"range-cross-week":  {base.UnixMilli(), base.AddDate(0, 0, 7).UnixMilli()},
+			"range-cross-weeks": {base.AddDate(0, 0, -21).UnixMilli(), base.AddDate(0, 0, 14).UnixMilli()},
+			"epoch":             {0, 0},
+		}
+		for name, times := range seed {
+			require.NoError(t, ensurePartition(ctx, pool, times[0]))
+			_, err := pool.Exec(ctx,
+				`INSERT INTO annotations (namespace, name, time, time_end, text, created_at)
+				 VALUES ($1, $2, $3, $4, 'seed', now())`,
+				namespace, name, times[0], times[1])
+			require.NoError(t, err, "seed row %q", name)
+		}
+
+		assertPartitionedBy := func(column string, key func(times [2]int64) int64) {
+			t.Helper()
+			var partKey string
+			require.NoError(t, pool.QueryRow(ctx,
+				`SELECT pg_get_partkeydef('annotations'::regclass)`).Scan(&partKey))
+			require.Equal(t, "RANGE ("+column+")", partKey)
+
+			var pkey string
+			require.NoError(t, pool.QueryRow(ctx,
+				`SELECT pg_get_constraintdef(oid) FROM pg_constraint
+				 WHERE conrelid = 'annotations'::regclass AND contype = 'p'`).Scan(&pkey))
+			require.Equal(t, "PRIMARY KEY (namespace, name, "+column+")", pkey)
+
+			var rows int
+			require.NoError(t, pool.QueryRow(ctx, `SELECT count(*) FROM annotations`).Scan(&rows))
+			require.Equal(t, len(seed), rows, "repartitioning must not drop or duplicate rows")
+
+			for name, times := range seed {
+				require.Equal(t, getPartitionName(key(times)), partitionOf(t, pool, namespace, name),
+					"%q must sit in the partition of its %s", name, column)
+			}
+		}
+
+		runMigrationsUpTo(t, ctx, pool, 11)
+		assertPartitionedBy("time_end", func(times [2]int64) int64 { return times[1] })
+
+		// The store's on-demand partitions must abut the migrated ones exactly, or Postgres rejects them as overlapping.
+		require.NoError(t, ensurePartition(ctx, pool, base.AddDate(0, 0, -7).UnixMilli()))
+		require.NoError(t, ensurePartition(ctx, pool, base.AddDate(0, 0, 21).UnixMilli()))
+
+		provider, db, err := newMigrationProvider(pool)
+		require.NoError(t, err)
+		defer func() { require.NoError(t, db.Close()) }()
+		_, err = provider.DownTo(ctx, 10)
+		require.NoError(t, err)
+		assertPartitionedBy(`"time"`, func(times [2]int64) int64 { return times[0] })
+	})
 }

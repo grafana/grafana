@@ -116,6 +116,7 @@ import (
 	_ "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	_ "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	_ "github.com/grafana/grafana/apps/plugins/pkg/app"
+	_ "github.com/grafana/grafana/apps/plugins/pkg/app/install"
 	_ "github.com/grafana/grafana/apps/plugins/pkg/app/meta"
 	_ "github.com/grafana/grafana/apps/plugins/pkg/app/metrics"
 	_ "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"

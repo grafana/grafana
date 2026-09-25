@@ -23,6 +23,10 @@ var _ TokenAuthenticator = (*GrafanaTokenAuthenticator)(nil)
 
 type GrafanaTokenAuthenticator struct {
 	verifier authnlib.Verifier[authnlib.AccessTokenClaims]
+	// wildcardOrgID is the OrgID a "*" namespace token resolves to. Defaults to
+	// GlobalOrgID; cloud overrides it via cfg.ExtJWTAuth.WildcardOrgID since it
+	// runs against org 1 rather than the global org.
+	wildcardOrgID int64
 }
 
 func NewGrafanaTokenAuthenticator(cfg *setting.Cfg) (*GrafanaTokenAuthenticator, error) {
@@ -38,6 +42,7 @@ func NewGrafanaTokenAuthenticator(cfg *setting.Cfg) (*GrafanaTokenAuthenticator,
 		verifier: authnlib.NewAccessTokenVerifier(authnlib.VerifierConfig{
 			AllowedAudiences: cfg.ExtJWTAuth.Audiences,
 		}, keys),
+		wildcardOrgID: cfg.ExtJWTAuth.WildcardOrgID,
 	}, nil
 }
 
@@ -68,7 +73,7 @@ func (t *GrafanaTokenAuthenticator) AuthenticateToken(ctx context.Context, token
 	}
 	orgID := ns.OrgID
 	if ns.Value == "*" {
-		orgID = GlobalOrgID
+		orgID = t.wildcardOrgID
 	}
 	var orgRoles map[int64]org.RoleType
 	if claims.Rest.IsOnBehalfOfUser() {
