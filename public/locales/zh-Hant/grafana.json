@@ -470,6 +470,7 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "外部 Alertmanager",
+      "external-alertmanagers-group-plugin": "",
       "noOptionsMessage-no-datasources-found": "未找到資料來源"
     },
     "alert-menu": {
@@ -2652,6 +2653,8 @@
       }
     },
     "proxied-alerting-route": {
+      "redirected-body": "",
+      "redirected-title": "",
       "text-redirecting": ""
     },
     "query-and-expressions-step": {
@@ -2957,6 +2960,13 @@
     },
     "rule-list": {
       "configure-datasource": "設定",
+      "datasource-managed-notice": {
+        "action": "",
+        "body": "",
+        "inline-action": "",
+        "inline_other": "",
+        "title_other": ""
+      },
       "ds-error": {
         "title": "無法載入此資料來源的規則"
       },
@@ -2977,7 +2987,8 @@
         "no-more-results": "沒有更多結果 – 找到 {{numberOfRules}} 個規則",
         "no-rules-found": "沒有符合您目前篩選條件的警報或記錄規則。",
         "results-loading": "正在搜尋 – 找到 {{numberOfRules}} 個規則",
-        "results-with-cancellation": "搜尋已取消 – 找到 {{numberOfRules}} 個規則"
+        "results-with-cancellation": "搜尋已取消 – 找到 {{numberOfRules}} 個規則",
+        "search-in-plugin": ""
       },
       "import-disabled-tooltip": {
         "auto-sync": "Mimir Alertmanager 自動同步處於啟用狀態時，無法匯入"
@@ -4360,6 +4371,7 @@
       "label-top": "頂端"
     },
     "name-show-unfilled-area": "顯示未填充區域",
+    "name-text-mode": "",
     "name-value-display": "數值顯示",
     "presets": {
       "basic": "基本",
@@ -4378,6 +4390,13 @@
     "suggestions": {
       "basic": "長條儀表",
       "lcd": "長條儀表 - LCD"
+    },
+    "text-mode-options": {
+      "label-auto": "",
+      "label-name": "",
+      "label-none": "",
+      "label-value": "",
+      "label-value-and-name": ""
     },
     "value-display-options": {
       "label-hidden": "隱藏",
@@ -5998,6 +6017,12 @@
       "ungroup-repeat-loss": "在取消群組的群組上設定的重複選項將會遺失。",
       "ungroup-repeat-loss-title": "要取消群組嗎？"
     },
+    "loading": {
+      "drawer": "",
+      "drawer-title": "",
+      "sidebar": "",
+      "sidebar-title": ""
+    },
     "minimalistic-pagination": {
       "page-count": "第 {{currentPage}} 頁，共 {{numberOfPages}} 頁",
       "tooltip-next": "繼續",
@@ -6715,7 +6740,14 @@
         "title-remove": "移除",
         "title-show-transform-help": "顯示轉換說明"
       },
-      "title-delete": "要刪除「{{name}}」嗎？"
+      "title-delete": "要刪除「{{name}}」嗎？",
+      "transformation-editor-row-header": {
+        "edit-refId": "",
+        "edit-refId-placeholder": "",
+        "refId-exists-error": "",
+        "refId-reserved-error": "",
+        "refId-variable-error": ""
+      }
     },
     "transformation-operation-rows": {
       "remove-transformation": "",
@@ -7378,7 +7410,6 @@
       },
       "render-save-button-and-error": {
         "body-plugin-dashboard": "更新外掛程式時，您的變更將會遺失。使用「另存新檔」<strong></strong>來建立自訂版本。",
-        "title-failed-to-save-dashboard": "無法儲存儀表板",
         "title-plugin-dashboard": "外掛程式儀表板",
         "title-someone-else-has-updated-this-dashboard": "其他人已更新此儀表板",
         "would-still-dashboard": "仍要儲存此儀表板嗎？"
@@ -7645,9 +7676,6 @@
       },
       "label-copy-tags": "複製標記",
       "label-folder": "資料夾",
-      "render-footer": {
-        "title-failed-to-save-dashboard": "無法儲存儀表板"
-      },
       "required": "必填"
     },
     "save-dashboard-drawer": {
@@ -7694,6 +7722,9 @@
       "save-variables-label-update-default-variable-values": "更新預設變數值",
       "show-variables-warning-alert-body": "部分變數無法載入。若保持勾選「更新預設變數值」，目前（載入失敗）的值將成為儀表板預設值。您仍可儲存，或取消勾選該選項以避免儲存這些（失敗）值。",
       "show-variables-warning-alert-title": ""
+    },
+    "save-errors": {
+      "unexpected": ""
     },
     "save-library-viz-panel-modal": {
       "cancel": "取消",
@@ -10488,7 +10519,7 @@
     "data-source-settings": {
       "alerting-settings-heading": "警報",
       "alerting-settings-label": "在警報 UI 中管理警報規則",
-      "alerting-settings-tooltip": "管理此資料來源的警報規則。若要管理其他警報資源，請新增 Alertmanager 資料來源。",
+      "alerting-settings-tooltip": "",
       "cert-key-reset": "重設",
       "custom-headers-add": "新增標題",
       "custom-headers-header": "標題",
@@ -10776,6 +10807,7 @@
       "placeholder": "選擇"
     },
     "table": {
+      "cell-actions": "",
       "cell-filter-on": "篩選值",
       "cell-filter-out": "篩選出值",
       "cell-inspect": "檢查值",
@@ -11136,10 +11168,11 @@
   "home": {
     "alerts-incidents": {
       "alert-tab-label": "觸發警報",
+      "incident-filter-all": "",
+      "incident-filter-label": "",
       "incident-tab-label": "事件",
       "team-filter-all": "所有團隊",
       "team-filter-label": "按團隊篩選警報",
-      "team-filter-label-incidents": "",
       "team-filter-your-teams": "您的團隊",
       "title": "警報與事件",
       "title-alerts": "警報",
@@ -15487,6 +15520,10 @@
       "label": "套用轉換至",
       "series": "查詢和轉換結果"
     },
+    "transformation-name": {
+      "auto-placeholder": "",
+      "edit": ""
+    },
     "validation": {
       "duplicate-name": "查詢名稱已存在",
       "empty-name": "查詢名稱不能為空"
@@ -15663,6 +15700,12 @@
     "title": "無法找到應用程式檔案"
   },
   "save-dashboards": {
+    "forbidden": {
+      "title": ""
+    },
+    "invalid": {
+      "title": ""
+    },
     "message-length": {
       "info": "訊息為 {{messageLength}} 個字元，超過 500 個字元的最大長度。請在儲存前縮短。",
       "title": "訊息過長。"

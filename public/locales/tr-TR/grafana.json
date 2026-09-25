@@ -475,6 +475,7 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Haricî Alertmanager'lar",
+      "external-alertmanagers-group-plugin": "",
       "noOptionsMessage-no-datasources-found": "Veri kaynağı bulunamadı"
     },
     "alert-menu": {
@@ -2673,6 +2674,8 @@
       }
     },
     "proxied-alerting-route": {
+      "redirected-body": "",
+      "redirected-title": "",
       "text-redirecting": ""
     },
     "query-and-expressions-step": {
@@ -2978,6 +2981,15 @@
     },
     "rule-list": {
       "configure-datasource": "Yapılandır",
+      "datasource-managed-notice": {
+        "action": "",
+        "body": "",
+        "inline-action": "",
+        "inline_one": "",
+        "inline_other": "",
+        "title_one": "",
+        "title_other": ""
+      },
       "ds-error": {
         "title": "Bu veri kaynağı için kurallar yüklenemiyor"
       },
@@ -2998,7 +3010,8 @@
         "no-more-results": "Başka sonuç yok - {{numberOfRules}} kural bulundu",
         "no-rules-found": "Mevcut filtre grubunuzla eşleşen uyarı veya kayıt kuralı yok.",
         "results-loading": "Aranıyor - {{numberOfRules}} kural bulundu",
-        "results-with-cancellation": "Arama iptal edildi - {{numberOfRules}} kural bulundu"
+        "results-with-cancellation": "Arama iptal edildi - {{numberOfRules}} kural bulundu",
+        "search-in-plugin": ""
       },
       "import-disabled-tooltip": {
         "auto-sync": "Mimir Alertmanager otomatik eşitlemesi etkinken içe aktarma kullanılamaz."
@@ -4392,6 +4405,7 @@
       "label-top": "Üst"
     },
     "name-show-unfilled-area": "Doldurulmamış alanı göster",
+    "name-text-mode": "",
     "name-value-display": "Değer görüntüleme",
     "presets": {
       "basic": "Temel",
@@ -4410,6 +4424,13 @@
     "suggestions": {
       "basic": "Çubuk gösterge",
       "lcd": "Çubuk gösterge - LCD"
+    },
+    "text-mode-options": {
+      "label-auto": "",
+      "label-name": "",
+      "label-none": "",
+      "label-value": "",
+      "label-value-and-name": ""
     },
     "value-display-options": {
       "label-hidden": "Gizli",
@@ -6041,6 +6062,12 @@
       "ungroup-repeat-loss": "Çözülmüş gruplarda yapılandırılan yineleme seçenekleri kaybolacaktır.",
       "ungroup-repeat-loss-title": "Grup çözülsün mü?"
     },
+    "loading": {
+      "drawer": "",
+      "drawer-title": "",
+      "sidebar": "",
+      "sidebar-title": ""
+    },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}}/{{numberOfPages}}",
       "tooltip-next": "İleri",
@@ -6759,7 +6786,14 @@
         "title-remove": "Kaldır",
         "title-show-transform-help": "Dönüştürme yardımını göster"
       },
-      "title-delete": "{{name}} silinsin mi?"
+      "title-delete": "{{name}} silinsin mi?",
+      "transformation-editor-row-header": {
+        "edit-refId": "",
+        "edit-refId-placeholder": "",
+        "refId-exists-error": "",
+        "refId-reserved-error": "",
+        "refId-variable-error": ""
+      }
     },
     "transformation-operation-rows": {
       "remove-transformation": "",
@@ -7424,7 +7458,6 @@
       },
       "render-save-button-and-error": {
         "body-plugin-dashboard": "Eklentiyi güncellediğinizde değişiklikleriniz kaybolacaktır. Özel bir sürüm oluşturmak için <strong>Farklı kaydet</strong> seçeneğini kullanın.",
-        "title-failed-to-save-dashboard": "Pano kaydedilemedi",
         "title-plugin-dashboard": "Eklenti panosu",
         "title-someone-else-has-updated-this-dashboard": "Başka biri bu panoyu güncelledi",
         "would-still-dashboard": "Yine de bu panoyu kaydetmek istiyor musunuz?"
@@ -7692,9 +7725,6 @@
       },
       "label-copy-tags": "Etiketleri kopyala",
       "label-folder": "Klasör",
-      "render-footer": {
-        "title-failed-to-save-dashboard": "Pano kaydedilemedi"
-      },
       "required": "Gerekli"
     },
     "save-dashboard-drawer": {
@@ -7741,6 +7771,9 @@
       "save-variables-label-update-default-variable-values": "Varsayılan değişken değerlerini güncelle",
       "show-variables-warning-alert-body": "Bazı değişkenler yüklenemedi. \"Varsayılan değişken değerlerini güncelle\" seçeneğini işaretli bırakırsanız mevcut (başarısız) değerler panonun varsayılanları olarak ayarlanacaktır. Bu (başarısız) değerlerin kaydedilmesini önlemek için seçeneğin işaretini kaldırabilir veya bu şekilde devam edip bu değerleri kaydedebilirsiniz.",
       "show-variables-warning-alert-title": "Değişken sorguları başarısız oldu"
+    },
+    "save-errors": {
+      "unexpected": ""
     },
     "save-library-viz-panel-modal": {
       "cancel": "İptal",
@@ -10552,7 +10585,7 @@
     "data-source-settings": {
       "alerting-settings-heading": "Uyarı sistemi",
       "alerting-settings-label": "Uyarı kurallarını Uyarı Sistemi Arayüzünde yönetin",
-      "alerting-settings-tooltip": "Bu veri kaynağı için uyarı kurallarını yönetin. Diğer Alerting kaynaklarını yönetmek için bir Alertmanager veri kaynağı ekleyin.",
+      "alerting-settings-tooltip": "",
       "cert-key-reset": "Sıfırla",
       "custom-headers-add": "Üst bilgi ekle",
       "custom-headers-header": "Başlık",
@@ -10840,6 +10873,7 @@
       "placeholder": "Seçin"
     },
     "table": {
+      "cell-actions": "",
       "cell-filter-on": "Değere göre filtrele",
       "cell-filter-out": "Değeri filtre dışı bırak",
       "cell-inspect": "Değeri incele",
@@ -11200,10 +11234,11 @@
   "home": {
     "alerts-incidents": {
       "alert-tab-label": "Tetiklenen uyarılar",
+      "incident-filter-all": "",
+      "incident-filter-label": "",
       "incident-tab-label": "Olaylar",
       "team-filter-all": "Tüm ekipler",
       "team-filter-label": "Uyarıları ekibe göre filtrele",
-      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Ekipleriniz",
       "title": "Uyarılar ve olaylar",
       "title-alerts": "Uyarılar",
@@ -15605,6 +15640,10 @@
       "label": "Dönüşümü şuraya uygula:",
       "series": "Sorgu ve Dönüştürme sonuçları"
     },
+    "transformation-name": {
+      "auto-placeholder": "",
+      "edit": ""
+    },
     "validation": {
       "duplicate-name": "Sorgu adı zaten var",
       "empty-name": "Boş bir sorgu adına izin verilmez"
@@ -15784,6 +15823,12 @@
     "title": "Uygulama dosyası bulunamıyor"
   },
   "save-dashboards": {
+    "forbidden": {
+      "title": ""
+    },
+    "invalid": {
+      "title": ""
+    },
     "message-length": {
       "info": "Mesaj {{messageLength}} karakter içerdiğinden maksimum 500 karakter sınırını aşıyor. Lütfen kaydetmeden önce kısaltın.",
       "title": "Mesaj çok uzun"

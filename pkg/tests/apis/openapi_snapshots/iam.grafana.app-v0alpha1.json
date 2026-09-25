@@ -3519,7 +3519,8 @@
         "tags": [
           "User"
         ],
-        "description": "Get effective permissions for the currently authenticated identity",
+        "description": "Get effective permissions for the currently authenticated identity. Deprecated: do not use for new integrations.",
+        "deprecated": true,
         "operationId": "getCurrentUserPermissions",
         "parameters": [
           {

@@ -475,6 +475,7 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Externe Alertmanagers",
+      "external-alertmanagers-group-plugin": "",
       "noOptionsMessage-no-datasources-found": "Geen gegevensbronnen gevonden"
     },
     "alert-menu": {
@@ -2673,6 +2674,8 @@
       }
     },
     "proxied-alerting-route": {
+      "redirected-body": "",
+      "redirected-title": "",
       "text-redirecting": ""
     },
     "query-and-expressions-step": {
@@ -2978,6 +2981,15 @@
     },
     "rule-list": {
       "configure-datasource": "Configureren",
+      "datasource-managed-notice": {
+        "action": "",
+        "body": "",
+        "inline-action": "",
+        "inline_one": "",
+        "inline_other": "",
+        "title_one": "",
+        "title_other": ""
+      },
       "ds-error": {
         "title": "Kan geen regels laden voor deze gegevensbron"
       },
@@ -2998,7 +3010,8 @@
         "no-more-results": "Geen resultaten - {{numberOfRules}} regels gevonden",
         "no-rules-found": "Er kwamen geen waarschuwings- of opnameregels overeen met je huidige filterset.",
         "results-loading": "Zoeken: {{numberOfRules}} regels gevonden",
-        "results-with-cancellation": "Zoekopdracht geannuleerd - {{numberOfRules}} regels gevonden"
+        "results-with-cancellation": "Zoekopdracht geannuleerd - {{numberOfRules}} regels gevonden",
+        "search-in-plugin": ""
       },
       "import-disabled-tooltip": {
         "auto-sync": "Importeren is niet beschikbaar terwijl de automatische synchronisatie van Mimir Alertmanager actief is"
@@ -4392,6 +4405,7 @@
       "label-top": "Boven"
     },
     "name-show-unfilled-area": "Niet-gevuld gebied weergeven",
+    "name-text-mode": "",
     "name-value-display": "Weergave van waarden",
     "presets": {
       "basic": "Basic",
@@ -4410,6 +4424,13 @@
     "suggestions": {
       "basic": "Balkmeter",
       "lcd": "Staafmeter - LCD"
+    },
+    "text-mode-options": {
+      "label-auto": "",
+      "label-name": "",
+      "label-none": "",
+      "label-value": "",
+      "label-value-and-name": ""
     },
     "value-display-options": {
       "label-hidden": "Verborgen",
@@ -6041,6 +6062,12 @@
       "ungroup-repeat-loss": "Herhalingsopties die voor de opgeheven groepen zijn geconfigureerd, gaan verloren.",
       "ungroup-repeat-loss-title": "Groepering opheffen?"
     },
+    "loading": {
+      "drawer": "",
+      "drawer-title": "",
+      "sidebar": "",
+      "sidebar-title": ""
+    },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} van {{numberOfPages}}",
       "tooltip-next": "Volgende",
@@ -6759,7 +6786,14 @@
         "title-remove": "Verwijderen",
         "title-show-transform-help": "Hulp bij transformatie weergeven"
       },
-      "title-delete": "{{name}} verwijderen?"
+      "title-delete": "{{name}} verwijderen?",
+      "transformation-editor-row-header": {
+        "edit-refId": "",
+        "edit-refId-placeholder": "",
+        "refId-exists-error": "",
+        "refId-reserved-error": "",
+        "refId-variable-error": ""
+      }
     },
     "transformation-operation-rows": {
       "remove-transformation": "",
@@ -7424,7 +7458,6 @@
       },
       "render-save-button-and-error": {
         "body-plugin-dashboard": "Je wijzigingen zullen verloren gaan wanneer je de plugin bijwerkt. Gebruik <strong>Opslaan als</strong> om een aangepaste versie te maken.",
-        "title-failed-to-save-dashboard": "Kan dashboard niet opslaan",
         "title-plugin-dashboard": "Plug-indashboard",
         "title-someone-else-has-updated-this-dashboard": "Iemand anders heeft dit dashboard bijgewerkt",
         "would-still-dashboard": "Wil je dit dashboard nog steeds opslaan?"
@@ -7692,9 +7725,6 @@
       },
       "label-copy-tags": "Labels kopiëren",
       "label-folder": "Map",
-      "render-footer": {
-        "title-failed-to-save-dashboard": "Kan dashboard niet opslaan"
-      },
       "required": "Vereist"
     },
     "save-dashboard-drawer": {
@@ -7741,6 +7771,9 @@
       "save-variables-label-update-default-variable-values": "Standaard variabelewaarden bijwerken",
       "show-variables-warning-alert-body": "",
       "show-variables-warning-alert-title": ""
+    },
+    "save-errors": {
+      "unexpected": ""
     },
     "save-library-viz-panel-modal": {
       "cancel": "Annuleren",
@@ -10552,7 +10585,7 @@
     "data-source-settings": {
       "alerting-settings-heading": "Alerting",
       "alerting-settings-label": "Waarschuwingsregels beheren in waarschuwingsinterface",
-      "alerting-settings-tooltip": "Waarschuwingsregels voor deze gegevensbron beheren. Om andere waarschuwingsbronnen te beheren, voeg je een Alertmanager-gegevensbron toe.",
+      "alerting-settings-tooltip": "",
       "cert-key-reset": "Resetten",
       "custom-headers-add": "Koptekst toevoegen",
       "custom-headers-header": "Koptekst",
@@ -10840,6 +10873,7 @@
       "placeholder": "Kies"
     },
     "table": {
+      "cell-actions": "",
       "cell-filter-on": "Filter op waarde",
       "cell-filter-out": "Waarde uitfilteren",
       "cell-inspect": "Waarde inspecteren",
@@ -11200,10 +11234,11 @@
   "home": {
     "alerts-incidents": {
       "alert-tab-label": "Actieve waarschuwingen",
+      "incident-filter-all": "",
+      "incident-filter-label": "",
       "incident-tab-label": "Incidenten",
       "team-filter-all": "Alle teams",
       "team-filter-label": "Waarschuwingen filteren op team",
-      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Je teams",
       "title": "Waarschuwingen en incidenten",
       "title-alerts": "Waarschuwingen",
@@ -15605,6 +15640,10 @@
       "label": "Transformatie toepassen op",
       "series": "Resultaten van query en transformatie"
     },
+    "transformation-name": {
+      "auto-placeholder": "",
+      "edit": ""
+    },
     "validation": {
       "duplicate-name": "Querynaam bestaat al",
       "empty-name": "Een lege querynaam is niet toegestaan"
@@ -15784,6 +15823,12 @@
     "title": "Kan toepassingsbestand niet vinden"
   },
   "save-dashboards": {
+    "forbidden": {
+      "title": ""
+    },
+    "invalid": {
+      "title": ""
+    },
     "message-length": {
       "info": "Het bericht bestaat uit {{messageLength}} tekens. Dit overschrijdt de maximale lengte van 500 tekens. Verkort het voordat je het opslaat.",
       "title": "Bericht is te lang"

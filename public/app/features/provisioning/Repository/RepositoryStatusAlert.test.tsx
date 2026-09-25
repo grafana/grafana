@@ -115,4 +115,43 @@ describe('RepositoryStatusAlert', () => {
     // deletion still releases/removes resources.
     expect(replaceFinalizers).toEqual(['remove-orphan-resources', 'remove-pending-jobs']);
   });
+
+  it('offers to release resources instead when removing managed resources is blocked', async () => {
+    let jobAction: string | undefined;
+    server.use(
+      http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
+        const body = (await request.json()) as { action?: string };
+        jobAction = body.action;
+        return HttpResponse.json({ metadata: { name: 'job-1' }, spec: body }, { status: 202 });
+      })
+    );
+
+    const publishSpy = jest.spyOn(appEvents, 'publish');
+    const { user } = render(
+      <RepositoryStatusAlert
+        repository={{
+          ...repository,
+          metadata: { ...repository.metadata, deletionTimestamp: '2026-09-11T00:00:00Z' },
+          status: {
+            ...repository.status!,
+            deletion: { state: 'Blocked', finalizer: 'remove-orphan-resources', message: 'folder not empty' },
+          },
+        }}
+      />
+    );
+
+    // Force-removing this finalizer would leave folders annotated as managed by a
+    // deleted repository, so releasing is offered instead.
+    expect(screen.queryByRole('button', { name: /delete anyway/i })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /release all resources/i }));
+
+    const event = publishSpy.mock.calls.at(-1)![0] as ShowConfirmModalEvent;
+    await act(async () => {
+      await event.payload.onConfirm?.();
+    });
+
+    expect(jobAction).toBe('releaseResources');
+    expect(screen.getByText(/releasing resources/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /release all resources/i })).not.toBeInTheDocument();
+  });
 });
