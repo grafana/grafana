@@ -8,6 +8,7 @@ import { FlagKeys, getLocalStorageProvider, getOFREPWebProvider } from '@grafana
 import {
   Badge,
   type BadgeColor,
+  Box,
   Button,
   Combobox,
   type ComboboxOption,
@@ -353,38 +354,40 @@ export const FeatureControlFlag = ({ flag }: FeatureControlFlagProps) => {
           </Field>
         )}
 
-        <div className={styles.actions}>
-          <Button
-            className={styles.actionButton}
-            fullWidth
-            icon="save"
-            onClick={() => {
-              getLocalStorageProvider().setFlags({ [key]: value });
-              if (!flag) {
-                reset();
-                if (ref.current) {
-                  ref.current.open = false;
+        <Box marginTop={2}>
+          <Stack direction="row" gap={1} alignItems="center">
+            <Button
+              className={styles.actionButton}
+              fullWidth
+              icon="save"
+              onClick={() => {
+                getLocalStorageProvider().setFlags({ [key]: value });
+                if (!flag) {
+                  reset();
+                  if (ref.current) {
+                    ref.current.open = false;
+                  }
                 }
-              }
-            }}
-            disabled={flag?.value === value || !key.trim()}
-          >
-            <Trans i18nKey="feature-control.save-flag">Save</Trans>
-          </Button>
+              }}
+              disabled={flag?.value === value || !key.trim()}
+            >
+              <Trans i18nKey="feature-control.save-flag">Save</Trans>
+            </Button>
 
-          <Button
-            className={styles.actionButton}
-            fullWidth
-            icon="trash-alt"
-            variant="destructive"
-            onClick={() => {
-              getLocalStorageProvider().setFlags({ [key]: undefined });
-            }}
-            disabled={!flag}
-          >
-            <Trans i18nKey="feature-control.delete-flag">Delete</Trans>
-          </Button>
-        </div>
+            <Button
+              className={styles.actionButton}
+              fullWidth
+              icon="trash-alt"
+              variant="destructive"
+              onClick={() => {
+                getLocalStorageProvider().setFlags({ [key]: undefined });
+              }}
+              disabled={!flag}
+            >
+              <Trans i18nKey="feature-control.delete-flag">Delete</Trans>
+            </Button>
+          </Stack>
+        </Box>
       </div>
     </details>
   );
@@ -394,12 +397,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   valueField: css({
     flex: '1 1 0',
     minWidth: 0,
-  }),
-  actions: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
-    marginTop: theme.spacing(2),
   }),
   actionButton: css({
     flex: '1 1 0',
