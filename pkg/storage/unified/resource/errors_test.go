@@ -417,11 +417,27 @@ func TestStatusErrorFromResponse_MapsContextErrors(t *testing.T) {
 	}
 }
 
-func TestStatusErrorFromResponse_UnknownErrorBecomesInternalServerError(t *testing.T) {
-	err := StatusErrorFromResponse(nil, errors.New("unexpected failure"))
-
-	var apiStatus apierrors.APIStatus
-	require.ErrorAs(t, err, &apiStatus)
-	require.Equal(t, int32(http.StatusInternalServerError), apiStatus.Status().Code)
-	require.Equal(t, "unexpected failure", apiStatus.Status().Message)
+func TestStatusErrorFromResponse_Passthroughs(t *testing.T) {
+	cases := []struct {
+		name string
+		err  error
+	}{
+		{
+			name: "error",
+			err:  errors.New("error"),
+		},
+		{
+			name: "ErrNamespaceMismatch",
+			err:  claims.ErrNamespaceMismatch,
+		},
+		{
+			name: "wrapped",
+			err:  fmt.Errorf("wrapped: %w", errors.New("wrapped")),
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			require.ErrorIs(t, StatusErrorFromResponse(nil, tc.err), tc.err)
+		})
+	}
 }
