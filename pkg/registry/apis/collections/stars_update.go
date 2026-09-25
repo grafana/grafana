@@ -98,6 +98,9 @@ func (r *starsREST) Connect(ctx context.Context, name string, _ runtime.Object, 
 						Namespace: namespace,
 					},
 				}
+			} else {
+				responder.Error(err)
+				return
 			}
 		}
 
