@@ -20,6 +20,7 @@ import {
   type K8sAPIGroupList,
   AnnoKeySavedFromUI,
   type ResourceEvent,
+  type ResourceClientRequestOptions,
   type ResourceClientWriteParams,
   type GroupVersionResource,
   type TableResponse,
@@ -136,7 +137,11 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
     });
   }
 
-  public async create(obj: ResourceForCreate<T, K>, params?: ResourceClientWriteParams): Promise<Resource<T, S, K>> {
+  public async create(
+    obj: ResourceForCreate<T, K>,
+    params?: ResourceClientWriteParams,
+    requestOptions?: ResourceClientRequestOptions
+  ): Promise<Resource<T, S, K>> {
     if (!obj.metadata.name && !obj.metadata.generateName) {
       const login = contextSrv.user.login;
       // GenerateName lets the apiserver create a unique name by appending random characters to the prefix.
@@ -147,16 +152,21 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
     setSavedFromUIAnnotation(obj.metadata);
     return getBackendSrv().post(this.url, obj, {
       params,
+      ...requestOptions,
     });
   }
 
-  public async update(obj: Resource<T, S, K>, params?: ResourceClientWriteParams): Promise<Resource<T, S, K>> {
+  public async update(
+    obj: Resource<T, S, K>,
+    params?: ResourceClientWriteParams,
+    requestOptions?: ResourceClientRequestOptions
+  ): Promise<Resource<T, S, K>> {
     const { name } = obj.metadata;
     if (!name) {
       return Promise.reject(new Error('update requires metadata.name'));
     }
     setSavedFromUIAnnotation(obj.metadata);
-    return getBackendSrv().put<Resource<T, S, K>>(`${this.url}/${name}`, obj, { params });
+    return getBackendSrv().put<Resource<T, S, K>>(`${this.url}/${name}`, obj, { params, ...requestOptions });
   }
 
   public async delete(name: string, showSuccessAlert: boolean): Promise<MetaStatus> {

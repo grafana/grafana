@@ -20,31 +20,23 @@ const (
 	openapiV3Prefix = "/openapi/v3"
 )
 
-// handlerEntry is the router's persistent, reconcile-only record for one group:
-// the live Backend (kept so discovery synthesis reflects whatever is actually
-// being served — see publish — even when a later reload fails and the old
-// handler stays live), the built handler, and lastKey, the route
-// fingerprint last applied. lastKey lets reconcile skip rebuilding a group
-// whose config has not changed. Touched only by reconcile (single goroutine),
-// so it needs no lock.
+// handlerEntry is reconcile's record for one served group. backend is the one
+// actually serving (not the latest Load result), so discovery stays consistent
+// when a reload fails. lastKey lets reconcile skip unchanged groups. Owned by
+// the reconcile goroutine, so it needs no lock.
 type handlerEntry struct {
 	backend Backend
 	handler http.Handler
 	lastKey string
 
-	// breaker is a passive, per-group circuit breaker: it observes real
-	// proxied request outcomes (transport errors, 502/503/504) rather than
-	// running any active probe of its own -- see AGENTS.md "Passive circuit
-	// breaking". Reset to a fresh instance whenever this group is rebuilt for
-	// a changed key (the target may have moved), but left untouched across an
-	// unchanged-key reconcile, same as backend/handler above.
+	// breaker is replaced when the key changes, since the target may have
+	// moved and its old trip state no longer applies.
 	breaker *gobreaker.CircuitBreaker[struct{}]
 }
 
-// servingEntry is the immutable per-group record published into snapshot: the
-// proxy handler plus the key. The key is needed at serve time to validate/label the
-// per-group-version openapi cache; served (reconcile-goroutine-owned) isn't
-// safe to read from serving goroutines, so it is duplicated here.
+// servingEntry is the immutable per-group record published into snapshot. It
+// copies what the serving path needs from handlerEntry, which only the
+// reconcile goroutine may read.
 type servingEntry struct {
 	group   metav1.APIGroup
 	handler http.Handler
@@ -65,17 +57,13 @@ type routerState struct {
 	phase phase
 	err   error // last reconcile error while serving, or the panic on crash
 
-	// served is true if r.served was non-empty at the moment this state was
-	// recorded -- i.e. at least one group has ever loaded successfully, so
-	// there is real last-known-good to serve even if err is set. Computed in
-	// storeServing (which runs on the reconcile goroutine, the sole owner of
-	// r.served) and stored here so Ready can read it lock-free from any
-	// goroutine without touching r.served directly.
+	// served records whether any group was being served when this state was
+	// stored, so Ready can read it without touching r.served.
 	served bool
 }
 
-// there won't be a cloud apps router in enterprise
-// can be in OSS right now, RoutesLoader stays in enterprise in cloud
+// GrafanaRouter reconciles the routes from a RoutesLoader and serves them by
+// API group.
 type GrafanaRouter struct {
 	state atomic.Pointer[routerState]
 
@@ -90,22 +78,16 @@ type GrafanaRouter struct {
 	// requests. reconcile rebuilds and atomically stores it; serving loads it.
 	snapshot atomic.Pointer[map[string]servingEntry]
 
-	// apiGroupList and openapiIndex are the router-synthesized root documents
-	// for /apis and /openapi/v3, rebuilt from served's Backend.Group() on
-	// every reconcile and stored atomically alongside snapshot — never from the
-	// raw Load() result, so a group that failed to (re)load or a duplicate in a
-	// single Load never gets advertised inconsistently with what's actually
-	// served. Never a cross-group OpenAPI schema merge — see AGENTS.md / the
-	// design spec.
+	// apiGroupList and openapiIndex are the synthesized /apis and /openapi/v3
+	// root documents, rebuilt from served (not the raw Load result) on every
+	// reconcile so discovery only advertises what is actually served.
 	apiGroupList atomic.Pointer[cachedDoc]
 	openapiIndex atomic.Pointer[cachedDoc]
 
-	// openapiDocs caches per-group-version OpenAPI v3 documents fetched from
-	// the owning backend, keyed by "group/version". Written by many
-	// concurrent serving goroutines on cache-miss (unlike snapshot/
-	// apiGroupList/openapiIndex, which have exactly one writer, reconcile),
-	// so it's a sync.Map rather than an atomic.Pointer swap. A stale key is
-	// simply overwritten on next fetch, not actively evicted.
+	// openapiDocs caches per-group-version OpenAPI v3 documents, keyed by
+	// "group/version". Serving goroutines write it on cache misses, so it is a
+	// sync.Map rather than an atomic swap. Stale entries are overwritten on the
+	// next fetch, not evicted.
 	openapiDocs sync.Map
 
 	// Set before serving by the standalone target; middleware keeps its delegate.
@@ -126,17 +108,14 @@ func NewGrafanaRouter(loader RoutesLoader) *GrafanaRouter {
 	return r
 }
 
-// HandleFunc is the single serving entry point: it serves both the reverse-proxy
-// tree (/apis, by group) and the OpenAPI v3 discovery/documents (/openapi/v3),
-// and falls through to next for anything the router does not own. There is no
-// separate exported OpenAPI handler — a caller wraps this as
-// http.HandlerFunc(func(w, r) { router.HandleFunc(w, r, next) }).
-func (cr *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, next http.Handler) {
+// HandleFunc is the single serving entry point for /apis and /openapi/v3.
+// Anything the router does not own falls through to next.
+func (r *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, next http.Handler) {
 	path := req.URL.Path
 
-	// Merged OpenAPI v3 document, served router-side.
+	// OpenAPI v3 discovery index and per-group-version documents.
 	if path == openapiV3Prefix || strings.HasPrefix(path, openapiV3Prefix+"/") {
-		cr.serveOpenAPIV3(w, req, next)
+		r.serveOpenAPIV3(w, req, next)
 		return
 	}
 
@@ -149,15 +128,15 @@ func (cr *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, ne
 	// Root discovery (APIGroupList) is the only path that needs a union
 	// across every group; synthesize it router-side.
 	if path == apisPrefix || path == apisPrefix+"/" {
-		cr.serveAPIGroupList(w, req, next)
+		r.serveAPIGroupList(w, req, next)
 		return
 	}
 
 	group := groupFromPath(path)
-	handlers := *cr.snapshot.Load()
+	handlers := *r.snapshot.Load()
 	entry, ok := handlers[group]
 	if !ok {
-		cr.serveUnregisteredGroup(w, req, next, group)
+		r.serveUnregisteredGroup(w, req, next, group)
 		return
 	}
 	// /apis/<group> group discovery and /apis/<group>/... both proxy to the
@@ -165,9 +144,9 @@ func (cr *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, ne
 	serveThroughBreaker(entry.breaker, group, entry.handler, w, req)
 }
 
-func (cr *GrafanaRouter) serveUnregisteredGroup(w http.ResponseWriter, req *http.Request, next http.Handler, group string) {
-	if group != "" && cr.unregisteredGroupHandler != nil {
-		cr.unregisteredGroupHandler.ServeHTTP(w, req)
+func (r *GrafanaRouter) serveUnregisteredGroup(w http.ResponseWriter, req *http.Request, next http.Handler, group string) {
+	if group != "" && r.unregisteredGroupHandler != nil {
+		r.unregisteredGroupHandler.ServeHTTP(w, req)
 		return
 	}
 	next.ServeHTTP(w, req)
@@ -183,10 +162,8 @@ func groupFromPath(path string) string {
 	return rest
 }
 
-// GroupFromPath is the exported form of groupFromPath.
-// Returns "" for anything not under /apis/<group>,
-// including the bare /apis root -- there is no single group to attribute a
-// root-discovery or non-/apis request to.
+// GroupFromPath returns the group of an /apis/<group>[/...] path, or "" for
+// any other path, including the /apis root.
 func GroupFromPath(path string) string {
 	if path == apisPrefix || path == apisPrefix+"/" || (path != apisPrefix && !strings.HasPrefix(path, apisPrefix+"/")) {
 		return ""
@@ -195,12 +172,10 @@ func GroupFromPath(path string) string {
 }
 
 // KnownGroup reports whether group has a live backend in the current
-// snapshot. group is otherwise an arbitrary, client-controlled path segment
-// (see GroupFromPath) -- callers that turn it into metric label values must
-// check this first, or an attacker/typo/scan against /apis/<anything> mints a
-// new label (and, for native histograms, a new series) per unique string.
-func (cr *GrafanaRouter) KnownGroup(group string) bool {
-	handlers := *cr.snapshot.Load()
+// snapshot. Check it before using a client-supplied group as a metric label,
+// or every unique path segment creates a new series.
+func (r *GrafanaRouter) KnownGroup(group string) bool {
+	handlers := *r.snapshot.Load()
 	_, ok := handlers[group]
 	return ok
 }
@@ -219,12 +194,10 @@ func serveCachedDoc(w http.ResponseWriter, req *http.Request, doc *cachedDoc) {
 	_, _ = w.Write(doc.body)
 }
 
-// serveOpenAPIV3 serves the merged OpenAPI v3 document. Reached only via
-// HandleFunc; not exported, so /openapi/v3 always flows through the one serving
-// entry point.
-func (cr *GrafanaRouter) serveOpenAPIV3(w http.ResponseWriter, req *http.Request, next http.Handler) {
+// serveOpenAPIV3 serves the /openapi/v3 index and per-group-version documents.
+func (r *GrafanaRouter) serveOpenAPIV3(w http.ResponseWriter, req *http.Request, next http.Handler) {
 	if req.URL.Path == openapiV3Prefix || req.URL.Path == openapiV3Prefix+"/" {
-		cr.serveOpenAPIIndex(w, req, next)
+		r.serveOpenAPIIndex(w, req, next)
 		return
 	}
 	group, version, ok := parseOpenAPIGroupVersionPath(req.URL.Path)
@@ -232,24 +205,22 @@ func (cr *GrafanaRouter) serveOpenAPIV3(w http.ResponseWriter, req *http.Request
 		next.ServeHTTP(w, req)
 		return
 	}
-	cr.serveOpenAPIGroupVersion(w, req, next, group, version)
+	r.serveOpenAPIGroupVersion(w, req, next, group, version)
 }
 
-// serveOpenAPIGroupVersion serves one group's OpenAPI v3 document: a
-// conditional-GET-aware cache keyed by the backend fingerprint in front of a plain proxy to the
-// owning backend. Never merges across groups — this is one backend's
-// document, verbatim.
-func (cr *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *http.Request, next http.Handler, group, version string) {
-	handlers := *cr.snapshot.Load()
+// serveOpenAPIGroupVersion proxies one group-version's OpenAPI v3 document
+// from its owning backend, cached and validated against the backend key.
+func (r *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *http.Request, next http.Handler, group, version string) {
+	handlers := *r.snapshot.Load()
 	entry, ok := handlers[group]
 	if !ok {
-		cr.serveUnregisteredGroup(w, req, next, group)
+		r.serveUnregisteredGroup(w, req, next, group)
 		return
 	}
 
 	cacheKey := group + "/" + version
 	cacheableRequest := req.Method == http.MethodGet && req.Header.Get("Range") == ""
-	if cached, ok := cr.openapiDocs.Load(cacheKey); ok && cacheableRequest {
+	if cached, ok := r.openapiDocs.Load(cacheKey); ok && cacheableRequest {
 		c := cached.(openapiCacheEntry)
 		if c.key == entry.key && c.accept == req.Header.Get("Accept") && c.encoding == req.Header.Get("Accept-Encoding") {
 			maps.Copy(w.Header(), c.header.Clone())
@@ -264,11 +235,8 @@ func (cr *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *ht
 		}
 	}
 
-	// Cache miss or stale key: proxy through, capturing the response so it can
-	// be cached on success. Strip conditional headers first — see
-	// stripConditionalHeaders' doc comment for why. Gated by the same
-	// breaker selection as the main dispatch — this is still a real proxy
-	// call to the backend, so an outage must fail fast here too.
+	// Cache miss or stale key: proxy through the breaker and capture the
+	// response so it can be cached.
 	proxyReq := req.Clone(req.Context())
 	stripConditionalHeaders(proxyReq)
 	stripHashQueryParam(proxyReq)
@@ -280,7 +248,7 @@ func (cr *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *ht
 	// private/no-cache responses instead of bypassing that check on a cache hit.
 	if rec.statusCode == http.StatusOK && cacheableRequest && cacheableOpenAPIResponse(rec.header) {
 		etag := quoteETag(hashHex(entry.key + "\x00" + rec.body.String()))
-		cr.openapiDocs.Store(cacheKey, openapiCacheEntry{
+		r.openapiDocs.Store(cacheKey, openapiCacheEntry{
 			key: entry.key, etag: etag, body: rec.body.Bytes(), header: openAPICacheHeaders(rec.header),
 			accept: req.Header.Get("Accept"), encoding: req.Header.Get("Accept-Encoding"),
 		})
@@ -336,12 +304,8 @@ func (r *GrafanaRouter) Run(ctx context.Context) error {
 				return
 			case _, ok := <-dirty:
 				if !ok {
-					// Notify's channel closed: it will never signal again. A
-					// closed channel is always immediately ready, so leaving
-					// this case armed would busy-loop reconcile forever. Park
-					// it by nilling the local var -- a nil channel blocks
-					// forever, so this case is never selected again and only
-					// ctx.Done() can still fire.
+					// A closed channel is always ready and would busy-loop
+					// reconcile; a nil channel is never selected.
 					dirty = nil
 					continue
 				}
@@ -352,11 +316,8 @@ func (r *GrafanaRouter) Run(ctx context.Context) error {
 	return nil
 }
 
-// storeServing records a completed reconcile's outcome. A non-nil err (a
-// partial Backend.Load failure -- see reconcile's doc comment) does not stop
-// the router serving last-known-good as long as at least one group is
-// actually served, so it's logged here rather than unconditionally surfaced
-// as a readiness failure -- see Ready's doc comment for why.
+// storeServing records a completed reconcile's outcome. Errors are logged
+// here; Ready decides whether they affect readiness.
 func (r *GrafanaRouter) storeServing(err error) {
 	if err != nil {
 		slog.Error("router: reconcile completed with errors, serving last-known-good", "err", err)
@@ -364,23 +325,11 @@ func (r *GrafanaRouter) storeServing(err error) {
 	r.state.Store(&routerState{phase: serving, err: err, served: len(r.served) > 0})
 }
 
-// Ready reports the router is initialized and serving. The snapshot is
-// populated on the first reconcile in Run.
-//
-// A non-nil s.err while serving means the last reconcile had some failure
-// (e.g. one group's Backend.Load errored, or loader.Load itself failed).
-// Whether that should fail readiness depends on s.served: if at least one
-// group is currently served, that's real last-known-good -- reconcile
-// deliberately keeps serving every other group in that case (see its doc
-// comment), so failing readiness here would drain the whole router over one
-// misbehaving group while it's still able to proxy everything else. But if
-// nothing has ever been served (e.g. the very first reconcile's loader.Load
-// call failed outright, or every backend failed to load), there is no
-// last-known-good to fall back on -- the router owns /apis and /openapi/v3,
-// so reporting ready with an empty snapshot would send clients an empty
-// discovery document instead of waiting for a real load. The enterprise
-// command wires this to /readyz. The error is still worth surfacing (see
-// storeServing's slog.Error) even when it doesn't fail readiness.
+// Ready reports whether the router can serve traffic. A reconcile error does
+// not fail readiness while some group is served: the router keeps serving
+// last-known-good, and draining it over one bad group would drop every other
+// group too. With nothing ever served it must fail, since the router owns
+// /apis and would otherwise return empty discovery.
 func (r *GrafanaRouter) Ready(context.Context) error {
 	s := r.state.Load()
 	switch {
@@ -421,11 +370,8 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 	for _, b := range rawBackends {
 		group := b.Group().Name
 		if _, dup := seen[group]; dup {
-			// One backend owns all versions of a group; a duplicate group in a
-			// single load is a config error. Last-wins, warn — do not crash the
-			// router on bad GitOps config. r.served is keyed by group, so the
-			// later duplicate simply overwrites the earlier one here too —
-			// discovery (sourced from r.served in publish) never sees both.
+			// One backend owns all versions of a group. A duplicate is a config
+			// error; the last one wins rather than crashing the router.
 			slog.Warn("router: duplicate group in route set, overwriting", "group", group)
 		}
 		seen[group] = struct{}{}
@@ -437,12 +383,8 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 
 		handler, err := b.Load(ctx)
 		if err != nil {
-			// Load failed: keep last-known-good for this group (leave the
-			// existing entry, if any, untouched) and don't publish a nil
-			// handler. lastKey is not advanced, so a later wake retries. Because
-			// the old entry (old backend, old API group) is left untouched,
-			// publish's discovery synthesis stays consistent with what's
-			// actually being served, not with this failed reload's API group.
+			// Keep last-known-good for this group. lastKey is not advanced, so
+			// a later wake retries.
 			errs = append(errs, fmt.Errorf("router: backend load failed for group %q, keeping current route: %w", group, err))
 			continue
 		}
@@ -452,12 +394,8 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 			r.served[group] = &handlerEntry{backend: b, handler: handler, lastKey: b.Key(), breaker: newGroupBreaker(group)}
 			continue
 		}
-		// Changed: swap the backend/handler in place. The transport (and its
-		// pool) is reused from the shared cache when the TLS key is unchanged,
-		// so the pool survives. The breaker is reset to a fresh instance,
-		// though: a key change can mean the target itself moved, so any prior
-		// trip state would be stale -- see AGENTS.md "Passive circuit
-		// breaking".
+		// Changed: swap in place. Connection pools survive through the
+		// loader's shared transports; the breaker is reset (see handlerEntry).
 		e.backend = b
 		e.handler = handler
 		e.lastKey = b.Key()
@@ -474,13 +412,8 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 	return errors.Join(errs...)
 }
 
-// publish builds fresh immutable artifacts from r.served and stores them
-// atomically for the serving path: the per-group handler snapshot, the
-// synthesized APIGroupList, and the synthesized OpenAPI v3 discovery index.
-// Deliberately sourced from r.served (what reconcile actually installed), not
-// the raw Load() result — a group whose reload failed or a duplicate group in
-// a single Load must not be advertised in discovery when it isn't (or isn't
-// consistently) being served.
+// publish atomically stores the serving snapshot and the synthesized root
+// discovery documents, all built from r.served.
 func (r *GrafanaRouter) publish() {
 	snap := make(map[string]servingEntry, len(r.served))
 	backends := make([]Backend, 0, len(r.served))
@@ -501,13 +434,9 @@ func (r *GrafanaRouter) publish() {
 	r.openapiIndex.Store(&index)
 }
 
-// rejectBackendRedirects is a ReverseProxy ModifyResponse hook: a redirect
-// from the backend must never reach the client verbatim (an attacker-
-// influenced backend could redirect a caller anywhere), so it must become a
-// 502 instead. Returning a non-nil error is what does that — ReverseProxy
-// closes resp.Body itself and calls its ErrorHandler (whose default writes
-// 502) rather than copying the response through; returning nil here would
-// forward the 3xx/Location as-is.
+// rejectBackendRedirects is a ReverseProxy ModifyResponse hook that turns a
+// backend redirect into a 502, so a backend can never redirect a caller
+// elsewhere.
 func rejectBackendRedirects(resp *http.Response) error {
 	if resp.StatusCode >= 300 && resp.StatusCode <= 399 && resp.Header.Get("Location") != "" {
 		return fmt.Errorf("router: rejecting redirect from backend (status %d, location %q)", resp.StatusCode, resp.Header.Get("Location"))

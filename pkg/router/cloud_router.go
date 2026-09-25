@@ -12,7 +12,6 @@ import (
 	"net/url"
 	"os"
 	"slices"
-	"sync/atomic"
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/dskit/services"
@@ -38,29 +37,20 @@ import (
 // unified-storage/authz settings.
 const cloudRouterSection = "cloud_router"
 
-// ProvideCloudRoutesLoaderFactory builds the cloud-router RoutesLoader from
-// grafana.ini settings when [cloud_router].appmanifest_apiserver_url is set,
-// any aggregate target (baas_apiserver, cloud_app_platform_apiserver) has
-// its .url configured, or plugins_url or st_discovery_url is set, so the router module (not a
-// separate process) owns its lifecycle. Returns (nil, nil) when none of
-// those are set -- an ini section is never truly absent
-// (SectionWithEnvOverrides always returns a valid, empty section), so it's
-// the presence of at least one configured source that actually gates
-// whether this loader activates; callers fall back to the dummy loader when
-// it doesn't.
+// ProvideCloudRoutesLoaderFactory builds the cloud RoutesLoader from the
+// [cloud_router] section. It returns (nil, nil) when no source is configured
+// (appmanifest_apiserver_url, an aggregate target url, plugins_url or
+// st_discovery_url), and the caller falls back to another loader.
 //
-// Auth is a CAP token exchanged for a signed access token on every request
-// to the remote apiserver, carried on X-Access-Token rather than a static
-// Authorization bearer -- see clientauth.NewStaticTokenExchangeTransportWrapper.
+// The remote apiservers are called with a CAP token exchanged for a signed
+// access token on every request.
 func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) (RoutesLoader, error) {
 	section := cfg.SectionWithEnvOverrides(cloudRouterSection)
 
 	appManifestApiserverURL := section.Key("appmanifest_apiserver_url").MustString("")
 
-	// apiserver_url was renamed to appmanifest_apiserver_url. Left unchecked, a
-	// deployment still on the old key would look like "nothing configured" and
-	// silently fall through to the dummy loader -- the router would come up
-	// ready and serve an empty route set. Fail loudly instead.
+	// apiserver_url was renamed. Fail loudly, or an old config would silently
+	// fall back to the dummy loader and serve no routes.
 	if legacyApiserverURL := section.Key("apiserver_url").MustString(""); legacyApiserverURL != "" && appManifestApiserverURL == "" {
 		return nil, fmt.Errorf("%s: apiserver_url was renamed to appmanifest_apiserver_url -- update your config", cloudRouterSection)
 	}
@@ -70,12 +60,8 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 		return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
 	}
 
-	// plugins_url is a third, independently-gated source: the plugin-manifests
-	// operator it points at needs no CAP token (it's an unauthenticated
-	// in-cluster HTTP endpoint, unlike the two aggregate targets and the
-	// appmanifest apiserver), so it must not be folded into the
-	// aggregateTargetConfigs loop below or the cap_token/token_exchange_url
-	// gate that follows.
+	// plugins_url needs no CAP token (it is an unauthenticated in-cluster
+	// endpoint), so it stays out of the cap_token gate below.
 	var pluginsTarget *pluginManifestsTarget
 	if pluginsURL := section.Key("plugins_url").MustString(""); pluginsURL != "" {
 		patterns, err := compileGroupPatterns(splitGroupPatterns(section.Key("plugins_group_regex").MustString("")))
@@ -127,31 +113,15 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 		if err != nil {
 			return nil, fmt.Errorf("%s: %s: %w", cloudRouterSection, targetCfg.Name, err)
 		}
-		// proxyTransport carries real caller traffic proxied to this target's
-		// discovered groups (handed straight to aggregateBackend's
-		// ReverseProxy by newAggregateTarget/poll) -- it must forward the
-		// caller's own credentials transparently, same as the forward path's
-		// transportFor, so it is deliberately plain: no WrapTransport, no
-		// CAP-token exchange. The CAP token is for the router's own identity
-		// when it polls this target's /apis for discovery, not for requests
-		// made on a caller's behalf.
+		// proxyTransport forwards the caller's own credentials unchanged. The CAP
+		// token is only for the router's own discovery poll (restCfg below).
 		proxyTransport := newAggregateBaseTransport(tlsCfg)
 		restCfg := &rest.Config{
 			Host: targetCfg.URL,
-			// A fresh clone per target, not the process-global
-			// http.DefaultTransport that client-go's transport cache would
-			// otherwise wrap: this client is used only for the router's own
-			// discovery poll, so it must own its connection pool. Same intent
-			// as transportFor's per-tlsCacheKey clone on the forward path.
-			// rest.Config.Transport is the base RoundTripper and
-			// WrapTransport layers on top of it (rest.TransportFor ->
-			// transport.New -> HTTPWrappersForConfig), so the CAP-token
-			// exchange below still applies -- to this discovery client only.
-			//
-			// TLS is set directly on this transport (not via
-			// rest.Config.TLSClientConfig) because client-go's transport.New
-			// rejects a config with both a custom Transport and any
-			// TLSClientConfig field set.
+			// A per-target clone, so this discovery client owns its pool;
+			// WrapTransport still applies the CAP token exchange on top of it.
+			// TLS is set on the transport because client-go rejects a custom
+			// Transport combined with TLSClientConfig.
 			Transport:     newAggregateBaseTransport(tlsCfg),
 			WrapTransport: aggregateTokenWrapper(targetCfg.Name, tokenExchanger, targetCfg.Audience),
 			Timeout:       defaultAggregateDiscoveryTimeout,
@@ -192,9 +162,12 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 		}
 
 		singleTenantFallback, err = newSingleTenantFallback(singleTenantFallbackOptions{
-			cacheSize:     100,
-			resolveHost:   newGComURLResolver(cfg.GrafanaComAPIURL, cfg.GrafanaComSSOAPIToken),
-			discoveryHost: discoURL,
+			cacheSize:        section.Key("st_cache_size").MustInt(defaultSingleTenantCacheSize),
+			breakerCacheSize: section.Key("st_breaker_cache_size").MustInt(defaultSingleTenantBreakerCacheSize),
+			lookupRate:       section.Key("st_lookup_rate").MustFloat64(defaultSingleTenantLookupRate),
+			lookupBurst:      section.Key("st_lookup_burst").MustInt(defaultSingleTenantLookupBurst),
+			resolveHost:      newGComURLResolver(cfg.GrafanaComAPIURL, cfg.GrafanaComSSOAPIToken),
+			discoveryHost:    discoURL,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("%s: st_discovery_url: %w", cloudRouterSection, err)
@@ -210,8 +183,8 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 // on redeploy" for the fingerprint in combineByName.
 const embeddedManifestKey = "embedded"
 
-// cloudLoader implements LifecycleRoutesLoader against a remote apiserver's
-// RouteBackend/AppManifest custom resources (v1alpha2).
+// cloudLoader is a RoutesLoader and a dskit service. It merges the configured
+// cloud sources (see Load for their priority).
 type cloudLoader struct {
 	*services.BasicService
 
@@ -222,15 +195,12 @@ type cloudLoader struct {
 	dialer                     *transport.DialHolder
 	coreGroupsWithoutManifests map[string]metav1.APIGroup
 
-	// clients builds the informers that feed Watcher() -- started in
-	// starting/running so this loader satisfies LifecycleRoutesLoader and
-	// gets run by the router module alongside GrafanaRouter, instead of a
-	// separate process wiring the informers itself. nil if
-	// appmanifest_apiserver_url is unset, in which case the CRD/informer
-	// side is skipped entirely and this loader serves aggregate targets only.
+	// The informers wake the router through Watcher(), and once synced their
+	// caches replace listing from the remote apiserver on every Load. nil when
+	// appmanifest_apiserver_url is unset.
 	clients    *k8s.ClientRegistry
-	rbInformer operator.Informer
-	amInformer operator.Informer
+	rbInformer *operator.KubernetesBasedInformer
+	amInformer *operator.KubernetesBasedInformer
 
 	// aggregateTargets are the fixed upstream apiservers (baas_apiserver,
 	// cloud_app_platform_apiserver) this loader actively polls for API
@@ -243,8 +213,7 @@ type cloudLoader struct {
 	pluginsTarget *pluginManifestsTarget
 
 	// Until all requests are moved to MT, we can fallback to ST instances
-	singleTenantFallback     *singleTenantFallback
-	lastSingleTenantBackends atomic.Pointer[[]Backend]
+	singleTenantFallback *singleTenantFallback
 }
 
 type tlsCacheKey struct {
@@ -281,44 +250,27 @@ func newCloudLoader(clients *k8s.ClientRegistry, aggregateTargets []*aggregateTa
 
 		l.routeBackendClient = routeBackendCli
 		l.appManifestClient = appManifestCli
+
+		// Built here, not when the service starts, because Load reads these
+		// fields from the reconcile goroutine. Construction makes no requests.
+		watcher := l.Watcher()
+		l.rbInformer, err = newInformer(v1alpha2.RouteBackendKind(), clients, watcher)
+		if err != nil {
+			return nil, fmt.Errorf("route backend informer: %w", err)
+		}
+		l.amInformer, err = newInformer(v1alpha2.AppManifestKind(), clients, watcher)
+		if err != nil {
+			return nil, fmt.Errorf("app manifest informer: %w", err)
+		}
 	}
 
-	l.BasicService = services.NewBasicService(l.starting, l.running, nil).WithName("cloud-apps-routes-loader")
+	l.BasicService = services.NewBasicService(nil, l.running, nil).WithName("cloud-apps-routes-loader")
 	return l, nil
 }
 
-// starting builds the RouteBackend/AppManifest informers, both wired to the
-// same Watcher() so either kind wakes the router (see AGENTS.md). Building
-// them here rather than in newCloudLoader keeps client construction (which
-// can happen well before the router module actually starts) separate from
-// the informers' own lifecycle. Skipped entirely when l.clients is nil, i.e.
-// appmanifest_apiserver_url wasn't configured -- this loader may still be
-// active for aggregate targets alone.
-func (l *cloudLoader) starting(context.Context) error {
-	if l.clients == nil {
-		return nil
-	}
-
-	watcher := l.Watcher()
-
-	rb, err := newInformer(v1alpha2.RouteBackendKind(), l.clients, watcher)
-	if err != nil {
-		return fmt.Errorf("route backend informer: %w", err)
-	}
-	am, err := newInformer(v1alpha2.AppManifestKind(), l.clients, watcher)
-	if err != nil {
-		return fmt.Errorf("app manifest informer: %w", err)
-	}
-	l.rbInformer, l.amInformer = rb, am
-	return nil
-}
-
-// running drives the RouteBackend/AppManifest informers (if configured) and
-// every aggregate target's poll loop until ctx is cancelled; any one failing
-// stops the rest and fails the loader's service, so the router module (which
-// runs this alongside GrafanaRouter, see newCompositeService in pkg/server)
-// can react instead of serving from a routing table that silently stopped
-// updating.
+// running drives the informers and poll loops until ctx is cancelled. If any
+// fails, the service fails, rather than serving a routing table that has
+// silently stopped updating.
 func (l *cloudLoader) running(ctx context.Context) error {
 	g, gctx := errgroup.WithContext(ctx)
 	if l.clients != nil {
@@ -339,7 +291,7 @@ func (l *cloudLoader) running(ctx context.Context) error {
 	}
 	if l.singleTenantFallback != nil {
 		g.Go(func() error {
-			l.singleTenantFallback.notifyDiscoveryChanges(gctx, l.dirty)
+			l.singleTenantFallback.run(gctx, l.dirty)
 			return nil
 		})
 	}
@@ -351,10 +303,9 @@ func (l *cloudLoader) running(ctx context.Context) error {
 	return nil
 }
 
-// newInformer builds a kind's informer against clients and attaches watcher
-// as its sole event handler -- the informers exist only as change-detectors
-// (see Watcher()), so no other handler is needed.
-func newInformer(kind resource.Kind, clients *k8s.ClientRegistry, watcher operator.ResourceWatcher) (operator.Informer, error) {
+// newInformer builds a kind's informer against clients, with watcher as its
+// only event handler.
+func newInformer(kind resource.Kind, clients *k8s.ClientRegistry, watcher operator.ResourceWatcher) (*operator.KubernetesBasedInformer, error) {
 	client, err := clients.ClientFor(kind)
 	if err != nil {
 		return nil, err
@@ -369,14 +320,9 @@ func newInformer(kind resource.Kind, clients *k8s.ClientRegistry, watcher operat
 	return inf, nil
 }
 
-// getAPIGroupsForCoreGroupsWithoutManifests indexes every ManifestData
-// packaged into this binary (pkg/storage/unified/resource.AppManifests, the
-// same embedded set the apiserver uses) by AppName. combineByName consults
-// this as a fallback when a RouteBackend's group has no correlating
-// AppManifest CR — e.g. folder, dashboard, secret, and other core groups that
-// aren't registered as AppManifest resources in the apiserver. Apps that do
-// have a real AppManifest CR are unaffected: the CR-sourced manifestMap is
-// always tried first.
+// getAPIGroupsForCoreGroupsWithoutManifests indexes the manifests embedded in
+// this binary by AppName. combineByName falls back to it for core groups
+// (folder, dashboard, ...) that have a RouteBackend but no AppManifest CR.
 func getAPIGroupsForCoreGroupsWithoutManifests() map[string]metav1.APIGroup {
 	manifests := unifiedresource.AppManifests()
 	byAppName := make(map[string]metav1.APIGroup, len(manifests))
@@ -454,7 +400,7 @@ func (l *cloudLoader) Watcher() operator.ResourceWatcher {
 
 func (l *cloudLoader) Notify(ctx context.Context) (<-chan struct{}, error) {
 	// TODO: don't apply the change until we have verified that the config passes checks
-	return l.dirty, nil // simple.App's informer drives this internal channel
+	return l.dirty, nil // the informers and poll loops push to this channel
 }
 
 func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
@@ -463,15 +409,9 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 
 	// Lowest priority first -- the MT backends will replace the ST flavors
 	if l.singleTenantFallback != nil {
-		backends, err := l.singleTenantFallback.Load(ctx)
+		backends, err := l.singleTenantFallback.Backends()
 		if err != nil {
 			discoveryErr = fmt.Errorf("single-tenant discovery: %w", err)
-			slog.Warn("router: single-tenant discovery failed, keeping last-known-good routes", "err", err)
-			if previous := l.lastSingleTenantBackends.Load(); previous != nil {
-				backends = *previous
-			}
-		} else {
-			l.lastSingleTenantBackends.Store(&backends)
 		}
 		for _, b := range backends {
 			lookup[b.Group().Name] = b
@@ -487,16 +427,11 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 
 	// Explicitly configured routes from manifest API server
 	if l.routeBackendClient != nil {
-		backends, err := l.routeBackendClient.ListAll(ctx, "", resource.ListOptions{})
+		manifests, backends, err := l.routeResources(ctx)
 		if err != nil {
 			return nil, err
 		}
-
-		manifests, err := l.appManifestClient.ListAll(ctx, "", resource.ListOptions{})
-		if err != nil {
-			return nil, err
-		}
-		for _, b := range l.combineByName(manifests.Items, backends.Items) {
+		for _, b := range l.combineByName(manifests, backends) {
 			lookup[b.Group().Name] = b
 		}
 	}
@@ -520,6 +455,80 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 	return backends, nil
 }
 
+// routeResources returns the AppManifests and RouteBackends from the informer
+// caches once both have synced. Before then it lists them from the remote
+// apiserver, so the first reconciles are correct without waiting for a sync.
+func (l *cloudLoader) routeResources(ctx context.Context) ([]v1alpha2.AppManifest, []v1alpha2.RouteBackend, error) {
+	if l.rbInformer != nil && l.amInformer != nil &&
+		l.rbInformer.SharedIndexInformer.HasSynced() && l.amInformer.SharedIndexInformer.HasSynced() {
+		manifests, err := cachedItems[v1alpha2.AppManifest](l.amInformer, v1alpha2.AppManifestKind())
+		if err != nil {
+			return nil, nil, err
+		}
+		backends, err := cachedItems[v1alpha2.RouteBackend](l.rbInformer, v1alpha2.RouteBackendKind())
+		if err != nil {
+			return nil, nil, err
+		}
+		return manifests, backends, nil
+	}
+
+	backends, err := l.routeBackendClient.ListAll(ctx, "", resource.ListOptions{})
+	if err != nil {
+		return nil, nil, err
+	}
+	manifests, err := l.appManifestClient.ListAll(ctx, "", resource.ListOptions{})
+	if err != nil {
+		return nil, nil, err
+	}
+	return manifests.Items, backends.Items, nil
+}
+
+// cachedItems copies an informer's cached objects, sorted by name so that
+// combineByName resolves duplicates the same way a List would. Objects from
+// the initial list are typed, but those from the watch are untyped wrappers,
+// so they are decoded the same way the SDK decodes informer events.
+func cachedItems[T any, PT interface {
+	*T
+	resource.Object
+}](inf *operator.KubernetesBasedInformer, kind resource.Kind) ([]T, error) {
+	objs := inf.SharedIndexInformer.GetStore().List()
+	items := make([]PT, 0, len(objs))
+	for _, obj := range objs {
+		item, err := typedObject[PT](obj, kind)
+		if err != nil {
+			return nil, fmt.Errorf("%s informer cache: %w", kind.Kind(), err)
+		}
+		items = append(items, item)
+	}
+	slices.SortFunc(items, func(a, b PT) int {
+		return cmp.Or(cmp.Compare(a.GetNamespace(), b.GetNamespace()), cmp.Compare(a.GetName(), b.GetName()))
+	})
+	out := make([]T, len(items))
+	for i, item := range items {
+		out[i] = *item
+	}
+	return out, nil
+}
+
+func typedObject[PT resource.Object](obj any, kind resource.Kind) (PT, error) {
+	var zero PT
+	if w, ok := obj.(operator.ResourceObjectWrapper); ok {
+		obj = w.ResourceObject()
+	}
+	if c, ok := obj.(operator.ConvertableIntoResourceObject); ok {
+		into := kind.ZeroValue()
+		if err := c.Into(into, kind.Codec(resource.KindEncodingJSON)); err != nil {
+			return zero, err
+		}
+		obj = into
+	}
+	typed, ok := obj.(PT)
+	if !ok {
+		return zero, fmt.Errorf("unexpected %T", obj)
+	}
+	return typed, nil
+}
+
 func (l *cloudLoader) SingleTenantFallback() http.Handler {
 	if l.singleTenantFallback == nil {
 		return nil
@@ -527,12 +536,9 @@ func (l *cloudLoader) SingleTenantFallback() http.Handler {
 	return l.singleTenantFallback
 }
 
-// transportFor returns a transport for the given TLS settings, building and
-// caching one on first use. Called only from reconcile (single goroutine), so
-// the transports map needs no lock. Backends sharing a tlsCacheKey share a
-// transport, so their connection pools are shared too. This shared cache is
-// what preserves connection pools across a config change: rebuilding a group's
-// Backend reuses the cached transport, so its pool survives untouched.
+// transportFor returns the cached transport for the given TLS settings. The
+// cache is what keeps connection pools alive when a group is rebuilt. Only
+// reconcile calls it, so the map needs no lock.
 func (l *cloudLoader) transportFor(key tlsCacheKey) (*http.Transport, error) {
 	if t, ok := l.transports[key]; ok {
 		return t, nil
@@ -571,12 +577,9 @@ func (l *cloudLoader) transportFor(key tlsCacheKey) (*http.Transport, error) {
 // far too few to keep keepalive useful under concurrent proxied traffic.
 const aggregateMaxIdleConnsPerHost = 100
 
-// aggregateTokenWrapper picks the header the exchanged CAP token is sent on
-// for one aggregate target. cloud_app_platform_apiserver is an app-platform
-// apiserver (same family as manifestAuthWrapper's target in
-// pkg/storage/unified/resource/manifest_watcher.go), which authenticates a
-// standard bearer token from Authorization rather than the authlib
-// X-Access-Token header -- baas_apiserver is not, so it keeps the default.
+// aggregateTokenWrapper picks the header for the exchanged CAP token:
+// cloud_app_platform_apiserver expects a standard Authorization bearer token,
+// while baas_apiserver expects X-Access-Token.
 func aggregateTokenWrapper(name string, tokenExchanger authnlib.TokenExchanger, audience string) transport.WrapperFunc {
 	if name == "cloud_app_platform_apiserver" {
 		return clientauth.NewStaticTokenExchangeAuthorizationTransportWrapper(tokenExchanger, audience, clientauth.WildcardNamespace)
