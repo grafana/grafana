@@ -79,6 +79,24 @@ const datasources: DataSourceApi[] = [
       return { type: 'mysql', uid: 'ds2' };
     },
   } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
+  {
+    name: 'promA',
+    type: 'prometheus',
+    uid: 'prom-a',
+    meta: { id: 'prometheus' } as DataSourcePluginMeta,
+    getRef: () => {
+      return { type: 'prometheus', uid: 'prom-a' };
+    },
+  } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
+  {
+    name: 'promB',
+    type: 'prometheus',
+    uid: 'prom-b',
+    meta: { id: 'prometheus' } as DataSourcePluginMeta,
+    getRef: () => {
+      return { type: 'prometheus', uid: 'prom-b' };
+    },
+  } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
 ];
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
@@ -470,6 +488,37 @@ describe('changeQueries', () => {
       expect(actions.changeQueriesAction).toHaveBeenCalled();
       expect(actions.importQueries).not.toHaveBeenCalled();
     });
+
+    it('should not import queries when datasource UID changes within the same plugin type', async () => {
+      jest.spyOn(actions, 'importQueries');
+      jest.spyOn(actions, 'changeQueriesAction');
+
+      const { dispatch } = configureStore({
+        ...defaultInitialState,
+        explore: {
+          panes: {
+            left: {
+              ...defaultInitialState.explore.panes.left,
+              datasourceInstance: datasources[2],
+              queries: [{ refId: 'A', datasource: datasources[2].getRef() }],
+            },
+          },
+        },
+      } as unknown as Partial<StoreState>);
+
+      await dispatch(
+        changeQueries({
+          queries: [{ refId: 'A', datasource: datasources[3].getRef() }],
+          exploreId: 'left',
+        })
+      );
+
+      expect(actions.changeQueriesAction).toHaveBeenCalledWith({
+        exploreId: 'left',
+        queries: [{ refId: 'A', datasource: datasources[3].getRef() }],
+      });
+      expect(actions.importQueries).not.toHaveBeenCalled();
+    });
   });
 
   describe('correctly modifies the state', () => {
@@ -528,6 +577,31 @@ describe('changeQueries', () => {
         datasource: datasources[0].getRef(),
         queryType: 'someValue',
       });
+    });
+
+    it('should update query datasource ref when datasource UID changes within the same plugin type', async () => {
+      const { dispatch, getState } = configureStore({
+        ...defaultInitialState,
+        explore: {
+          panes: {
+            left: {
+              ...defaultInitialState.explore.panes.left,
+              datasourceInstance: datasources[2],
+              queries: [{ refId: 'A', datasource: datasources[2].getRef() }],
+            },
+          },
+        },
+      } as unknown as Partial<StoreState>);
+
+      await dispatch(
+        changeQueries({
+          queries: [{ refId: 'A', datasource: { uid: 'prom-b' } }],
+          exploreId: 'left',
+        })
+      );
+
+      expect(getState().explore.panes.left!.queries[0]).toHaveProperty('refId', 'A');
+      expect(getState().explore.panes.left!.queries[0]).toHaveProperty('datasource', datasources[3].getRef());
     });
   });
 
@@ -594,6 +668,47 @@ describe('importing queries', () => {
       expect(getState().explore.panes.left!.queries[1]).toHaveProperty('refId', 'refId_B');
       expect(getState().explore.panes.left!.queries[0]).toHaveProperty('datasource.uid', 'ds2');
       expect(getState().explore.panes.left!.queries[1]).toHaveProperty('datasource.uid', 'ds2');
+    });
+  });
+
+  describe('when importing queries from mixed data source', () => {
+    it('should convert mixed queries to target datasource when switching to a single datasource', async () => {
+      const mixedDS = {
+        name: '-- Mixed --',
+        type: 'mixed',
+        uid: '-- Mixed --',
+        meta: { id: 'mixed', mixed: true },
+        getRef: () => ({ type: 'mixed', uid: '-- Mixed --' }),
+      } as unknown as DataSourceApi;
+
+      const targetDS = datasources[2]; // prom-a
+
+      const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
+        ...defaultInitialState,
+        explore: {
+          panes: {
+            left: {
+              ...defaultInitialState.explore.panes.left,
+              datasourceInstance: mixedDS,
+            },
+          },
+        },
+      } as unknown as Partial<StoreState>);
+
+      const initialQueries = [
+        { refId: 'A', datasource: { uid: 'prom-a', type: 'prometheus' }, expr: 'up' },
+        { refId: 'B', datasource: { uid: 'ds1', type: 'postgres' }, rawSql: 'SELECT 1' },
+      ];
+
+      await dispatch(importQueries('left', initialQueries, mixedDS, targetDS));
+
+      const resultQueries = getState().explore.panes.left!.queries;
+      expect(resultQueries).toHaveLength(1);
+      expect(resultQueries[0]).toMatchObject({
+        refId: 'A',
+        datasource: targetDS.getRef(),
+        expr: 'up',
+      });
     });
   });
 });
