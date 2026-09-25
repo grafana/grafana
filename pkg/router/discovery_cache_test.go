@@ -247,3 +247,22 @@ func TestAggregateBackendKeepsPolledResources(t *testing.T) {
 	_, ok = classic.(DiscoveryProvider).Discovery()
 	require.False(t, ok)
 }
+
+func TestAggregatedDiscoveryDoesNotCacheFailedFetchWithoutVersions(t *testing.T) {
+	handler := &countingDiscoveryBackend{group: cachedGroup}
+	handler.refuse.Store(true)
+	router := NewGrafanaRouter(staticLoader{backends: []Backend{
+		&fakeBackend{group: metav1.APIGroup{Name: cachedGroup}, key: "1", handler: handler},
+	}})
+	require.NoError(t, router.reconcile(t.Context()))
+
+	aggregatedDiscovery(t, router)
+	aggregatedDiscovery(t, router)
+	require.EqualValues(t, 2, handler.calls.Load(), "a refused fetch must not be cached")
+
+	handler.refuse.Store(false)
+	group := aggregatedDiscovery(t, router)[cachedGroup]
+	require.Equal(t, "things", group.Versions[0].Resources[0].Resource)
+	aggregatedDiscovery(t, router)
+	require.EqualValues(t, 3, handler.calls.Load())
+}

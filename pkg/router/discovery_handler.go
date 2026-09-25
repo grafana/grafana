@@ -116,7 +116,10 @@ func backendDiscovery(req *http.Request, name string, entry servingEntry) (_ api
 	}
 
 	group := apidiscoveryv2.APIGroupDiscovery{ObjectMeta: metav1.ObjectMeta{Name: name}}
-	complete = true
+	// Only a real answer from /apis can be complete: a decoded document, or a
+	// 404 from an older backend. Otherwise a group with no versions would be
+	// cached empty after a failed or refused fetch.
+	complete = err == nil || status == http.StatusNotFound
 	for _, gv := range entry.group.Versions {
 		version := apidiscoveryv2.APIVersionDiscovery{Version: gv.Version, Freshness: apidiscoveryv2.DiscoveryFreshnessStale}
 		// Older backends may only support per-version resource discovery. An
