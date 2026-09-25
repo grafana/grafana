@@ -5,13 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/grafana/alerting/definition"
 	"github.com/grafana/alerting/definition/compat"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
-	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/prometheus/common/model"
 	"go.yaml.in/yaml/v3"
 
@@ -23,11 +23,26 @@ type AMConfigDB = definitions.PostableUserConfig // TODO: Define type explicitly
 
 // AMConfigV1 is an exact structural copy of PostableUserConfig without json tags.
 type AMConfigV1 struct {
-	Templates          map[ResourceUID]TemplateGroup
-	InhibitionRules    map[ResourceUID]InhibitionRule
+	Templates       map[ResourceUID]TemplateGroup
+	InhibitionRules map[ResourceUID]InhibitionRule
+	TimeIntervals   map[ResourceUID]TimeInterval
+	Receivers       map[ResourceUID]PostableApiReceiver
+
 	AlertmanagerConfig PostableApiAlertingConfig
 	ExtraConfigs       []ExtraConfiguration
-	ManagedRoutes      ManagedRoutes
+	ManagedRoutes      map[string]*Route
+}
+
+// GetReceivers returns the receivers sorted by name, for deterministic iteration and serialization.
+func (c *AMConfigV1) GetReceivers() []*PostableApiReceiver {
+	res := make([]*PostableApiReceiver, 0, len(c.Receivers))
+	for _, r := range c.Receivers {
+		res = append(res, &r)
+	}
+	slices.SortFunc(res, func(a, b *PostableApiReceiver) int {
+		return strings.Compare(a.Name, b.Name)
+	})
+	return res
 }
 
 // SortedTemplates returns templates ordered by kind and title.
@@ -48,7 +63,7 @@ func (c *AMConfigV1) SortedTemplates() []TemplateGroup {
 // GetGrafanaReceiverMap returns a map that associates UUIDs to grafana receivers
 func (c *AMConfigV1) GetGrafanaReceiverMap() map[string]*PostableGrafanaReceiver {
 	UIDs := make(map[string]*PostableGrafanaReceiver)
-	for _, r := range c.AlertmanagerConfig.Receivers {
+	for _, r := range c.Receivers {
 		for _, gr := range r.GrafanaManagedReceivers {
 			UIDs[gr.UID] = gr
 		}
@@ -67,6 +82,11 @@ func (c *AMConfigV1) Validate() error {
 			return err
 		}
 	}
+	for _, r := range c.TimeIntervals {
+		if err := r.Validate(); err != nil {
+			return err
+		}
+	}
 	for _, r := range c.ExtraConfigs {
 		if err := r.Validate(); err != nil {
 			return err
@@ -77,10 +97,16 @@ func (c *AMConfigV1) Validate() error {
 			return err
 		}
 	}
-	return c.AlertmanagerConfig.Validate()
-}
+	if err := c.AlertmanagerConfig.Validate(); err != nil {
+		return err
+	}
 
-type ManagedRoutes map[string]*Route
+	receivers := make(map[string]struct{}, len(c.Receivers))
+	for _, r := range c.Receivers {
+		receivers[r.Name] = struct{}{}
+	}
+	return c.AlertmanagerConfig.Route.ValidateReceivers(receivers)
+}
 
 // ExtraAlertmanagerConfig is a parsed imported Prometheus/Mimir Alertmanager configuration.
 // It preserves the upstream config types; conversion to Grafana's wire format is left to
@@ -120,7 +146,14 @@ func (c *ExtraAlertmanagerConfig) ToGrafanaRoute() *Route {
 
 // ToGrafanaTimeIntervals converts the imported time intervals to Grafana's type.
 func (c *ExtraAlertmanagerConfig) ToGrafanaTimeIntervals() []TimeInterval {
-	return TimeIntervalsToModel(c.MuteTimeIntervals, c.TimeIntervals)
+	out := make([]TimeInterval, 0, len(c.MuteTimeIntervals)+len(c.TimeIntervals))
+	for _, interval := range c.MuteTimeIntervals {
+		out = append(out, NewTimeInterval(interval.Name, interval.TimeIntervals, models.ProvenanceNone))
+	}
+	for _, interval := range c.TimeIntervals {
+		out = append(out, NewTimeInterval(interval.Name, interval.TimeIntervals, models.ProvenanceNone))
+	}
+	return out
 }
 
 // ReceiverNameStubs returns the imported receivers as Grafana receivers populated with only
@@ -267,27 +300,14 @@ func (c ExtraConfiguration) Validate() error {
 
 type PostableApiAlertingConfig struct {
 	Config
-	Receivers []*PostableApiReceiver
 }
-
-func (c *PostableApiAlertingConfig) GetReceivers() []*PostableApiReceiver {
-	return c.Receivers
-}
-
-func (c *PostableApiAlertingConfig) GetTimeIntervals() []TimeInterval { return c.TimeIntervals }
 
 func (c *PostableApiAlertingConfig) GetRoute() *Route {
 	return c.Route
 }
 
-// Validate ensures that the two routing trees use the correct receiver types.
+// Validate ensures the root route is well-formed.
 func (c *PostableApiAlertingConfig) Validate() error {
-	receivers := make(map[string]struct{}, len(c.Receivers))
-
-	for _, r := range c.Receivers {
-		receivers[r.Name] = struct{}{}
-	}
-
 	// Taken from https://github.com/prometheus/alertmanager/blob/14cbe6301c732658d6fe877ec55ad5b738abcf06/config/config.go#L171-L192
 	// Check if we have a root route. We cannot check for it in the
 	// UnmarshalYAML method because it won't be called if the input is empty
@@ -299,10 +319,6 @@ func (c *PostableApiAlertingConfig) Validate() error {
 	// Check if continue in root route.
 	if c.Route.Continue {
 		return fmt.Errorf("cannot have continue in root route")
-	}
-
-	if err := c.Route.ValidateReceivers(receivers); err != nil {
-		return err
 	}
 
 	return nil
@@ -329,12 +345,7 @@ type Config struct {
 	Global       *config.GlobalConfig
 	Route        *Route
 	InhibitRules []config.InhibitRule
-
-	// TimeIntervals holds both the deprecated mute_time_intervals and time_intervals stored in the
-	// database, folded into one list with the mute intervals first. The split is not preserved: on
-	// save everything is written back as time_intervals.
-	TimeIntervals []TimeInterval
-	Templates     []string
+	Templates    []string
 }
 
 type ObjectMatchers labels.Matchers
@@ -499,20 +510,9 @@ func (r *Route) ResourceID() string {
 
 type Provenance string
 
-type TimeInterval struct {
-	Name          string
-	TimeIntervals []timeinterval.TimeInterval
-}
-
-func (mt *TimeInterval) ResourceType() string {
-	return "muteTimeInterval" // Intentionally kept as-is for backwards compatibility.
-}
-
-func (mt *TimeInterval) ResourceID() string {
-	return mt.Name
-}
-
 type PostableApiReceiver struct {
+	ResourceMetadata
+
 	Name                    string
 	GrafanaManagedReceivers []*PostableGrafanaReceiver
 }

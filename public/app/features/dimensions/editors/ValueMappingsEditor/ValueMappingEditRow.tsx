@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { Draggable } from '@hello-pangea/dnd';
 import { useCallback, useEffect, useRef } from 'react';
 import * as React from 'react';
 
@@ -12,14 +11,15 @@ import {
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useStyles2, Icon, Select, ColorPicker, IconButton, Input, Button, Stack } from '@grafana/ui';
+import { useDragAndDrop } from '@grafana/ui/internal';
 
 import { ResourcePickerSize, ResourceFolderName, MediaType } from '../../types';
 import { ResourcePicker } from '../ResourcePicker';
 
 export interface ValueMappingEditRowModel {
   type: MappingType;
-  from?: number | null;
-  to?: number | null;
+  from?: number | string | null;
+  to?: number | string | null;
   pattern?: string;
   key?: string;
   isNew?: boolean;
@@ -38,6 +38,7 @@ interface Props {
 }
 
 export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDuplicate, showIconPicker }: Props) {
+  const { Draggable } = useDragAndDrop();
   const { key, result, id } = mapping;
   const styles = useStyles2(getStyles);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -103,13 +104,13 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
 
   const onChangeFrom = (event: React.FormEvent<HTMLInputElement>) => {
     update((mapping) => {
-      mapping.from = parseFloat(event.currentTarget.value);
+      mapping.from = event.currentTarget.value;
     });
   };
 
   const onChangeTo = (event: React.FormEvent<HTMLInputElement>) => {
     update((mapping) => {
-      mapping.to = parseFloat(event.currentTarget.value);
+      mapping.to = event.currentTarget.value;
     });
   };
 
@@ -211,13 +212,15 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
             {mapping.type === MappingType.RangeToText && (
               <div className={styles.rangeInputWrapper}>
                 <Input
-                  type="number"
+                  type="text"
+                  inputMode="decimal"
                   value={mapping.from ?? ''}
                   placeholder={t('dimensions.value-mapping-edit-row.placeholder-from', 'From')}
                   onChange={onChangeFrom}
                 />
                 <Input
-                  type="number"
+                  type="text"
+                  inputMode="decimal"
                   value={mapping.to ?? ''}
                   placeholder={t('dimensions.value-mapping-edit-row.placeholder-to', 'To')}
                   onChange={onChangeTo}

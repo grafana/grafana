@@ -97,6 +97,9 @@ export function ContentOutline({
   // effect keyed on the ref object itself — so the container has to arrive as a new ref, or the
   // listener never attaches and the active item stays wherever it started.
   const scrollerRef = useMemo(() => ({ current: scroller ?? null }), [scroller]);
+  // TODO remove when react-use is fixed
+  // see https://github.com/streamich/react-use/issues/2612
+  // @ts-expect-error
   const { y: verticalScroll } = useScroll(scrollerRef);
   const { outlineItems } = useContentOutlineContext() ?? { outlineItems: [] };
   const [activeSectionId, setActiveSectionId] = useState(outlineItems[0]?.id);
@@ -315,6 +318,9 @@ export function ContentOutline({
   );
 }
 
+/** What the Datasource explorer keeps for itself before the outline below it starts scrolling. */
+const EXPLORER_MIN_HEIGHT_UNITS = 25;
+
 const getStyles = (theme: GrafanaTheme2, expanded: boolean, signalExplorerVisible: boolean) => {
   const expandedWidth = signalExplorerVisible ? '300px' : '160px';
 
@@ -338,10 +344,13 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean, signalExplorerVisibl
       minHeight: 0,
       ...(signalExplorerVisible
         ? {
-            // Shrinkable so a tall outline scrolls (via ScrollContainer) instead of
-            // clipping against the wrapper, while still sizing to content and sitting
-            // at the bottom.
-            flex: '0 1 auto',
+            // Not shrinkable: flexbox spreads a deficit across every shrinkable item, so expanding a
+            // card in the explorer above would take height from these rows too.
+            flex: '0 0 auto',
+            // Capped so a tall outline scrolls inside `ScrollContainer` rather than clipping against
+            // the wrapper's `overflow: hidden`, and floored at half so a short sidebar — where the
+            // subtraction goes negative — cannot hide the rows altogether.
+            maxHeight: `max(50%, calc(100% - ${theme.spacing(EXPLORER_MIN_HEIGHT_UNITS)}))`,
             marginTop: 'auto',
             borderTop: `1px solid ${theme.colors.border.weak}`,
           }

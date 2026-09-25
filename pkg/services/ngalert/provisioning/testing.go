@@ -75,7 +75,7 @@ func (m *MockProvisioningStore_Expecter) GetReturns(p models.Provenance) *MockPr
 	m.GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(p, nil)
 	m.GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 	m.GetManagerProperties(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceToManagerProperties(p), nil)
-	m.GetManagerPropertiesByUIDs(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
+	m.GetAllManagerProperties(mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 	return m
 }
 

@@ -18,7 +18,7 @@ import {
 import { Box, Combobox, type ComboboxOption, Field, Input, Stack } from '@grafana/ui';
 import { ALL_VARIABLE_TEXT } from 'app/features/variables/constants';
 
-import { dashboardEditActions } from '../../sidebar/shared';
+import { edit } from '../../actions/utils/edit';
 import { useUserDefinedVariables } from '../../utils/variables';
 import { getLowerTranslatedObjectType } from '../object';
 
@@ -304,7 +304,7 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
                 const newVariable = option.value;
 
                 if (newVariable !== variable) {
-                  dashboardEditActions.edit({
+                  edit({
                     description: undoText,
                     source: model,
                     perform: () => model.changeVariable(newVariable),
@@ -325,7 +325,7 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
               const newOperator = option.value;
 
               if (newOperator !== operator) {
-                dashboardEditActions.edit({
+                edit({
                   description: undoText,
                   source: model,
                   perform: () => model.changeOperator(newOperator),
@@ -348,7 +348,7 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
             }}
             onBlur={() => {
               if (newValue !== value) {
-                dashboardEditActions.edit({
+                edit({
                   description: undoText,
                   source: model,
                   perform: () => model.changeValue(newValue),

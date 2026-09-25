@@ -7,10 +7,8 @@ import { Icon, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 
-import {
-  getComponentIdFromComponentMeta,
-  useExtensionSidebarContext,
-} from '../ExtensionSidebar/ExtensionSidebarProvider';
+import { useExtensionSidebarContext } from '../ExtensionSidebar/ExtensionSidebarProvider';
+import { getComponentIdFromComponentMeta } from '../ExtensionSidebar/extensionSidebarUtils';
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
 const ASSISTANT_PLUGIN_ID = 'grafana-assistant-app';
@@ -102,7 +100,7 @@ export function AssistantToolbarButtons() {
               <Icon name="message-sparkles" size="lg" />
             </span>
           }
-          onClick={() => chrome.setFullscreenWorkspace(true)}
+          onClick={() => chrome.setFullscreenWorkspace({ fullscreenWorkspace: true })}
           aria-label={t('navigation.fullscreen-workspace.workspace', 'Workspace')}
           tooltip={t('navigation.fullscreen-workspace.enter', 'Enter Workspace')}
         >

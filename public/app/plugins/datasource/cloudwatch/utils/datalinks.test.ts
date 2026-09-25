@@ -1,9 +1,21 @@
-import { type DataQueryRequest, type DataQueryResponse, dateMath, FieldType } from '@grafana/data';
-import { config, setDataSourceSrv, type DataSourceSrv } from '@grafana/runtime';
+import {
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
+  dateMath,
+  FieldType,
+} from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 
 import { type CloudWatchQuery } from '../types';
 
 import { addDataLinksToLogsResponse } from './datalinks';
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstanceSettings: jest.fn(),
+}));
 
 describe('addDataLinksToLogsResponse', () => {
   // @ts-ignore ignore feature toggle type error
@@ -55,13 +67,9 @@ describe('addDataLinksToLogsResponse', () => {
       range: { ...time, raw: time },
     } as DataQueryRequest<CloudWatchQuery>;
 
-    setDataSourceSrv({
-      async get() {
-        return {
-          name: 'Xray',
-        };
-      },
-    } as DataSourceSrv);
+    jest
+      .mocked(getDataSourceInstanceSettings)
+      .mockResolvedValue({ name: 'Xray' } as unknown as DataSourceInstanceSettings);
 
     await addDataLinksToLogsResponse(
       mockResponse,
@@ -245,6 +253,55 @@ describe('addDataLinksToLogsResponse', () => {
         },
       ],
     });
+  });
+
+  it('should not add xray data link when the linked data source is missing', async () => {
+    // @ts-ignore ignore feature toggle type error
+    config.featureToggles.cloudWatchLogsInsightsDataLinks = false;
+
+    const mockResponse: DataQueryResponse = {
+      data: [
+        {
+          fields: [
+            {
+              name: '@xrayTraceId',
+              config: {},
+              values: ['id1', 'id2'],
+            },
+          ],
+          refId: 'A',
+        },
+      ],
+    };
+
+    const mockOptions = {
+      targets: [
+        {
+          refId: 'A',
+          expression: 'stats count(@message) by bin(1h)',
+          logGroupNames: ['fake-log-group-one'],
+          logGroups: [{}],
+          region: 'us-east-1',
+        },
+      ],
+      range: { ...time, raw: time },
+    } as DataQueryRequest<CloudWatchQuery>;
+
+    jest.mocked(getDataSourceInstanceSettings).mockResolvedValue(undefined);
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+    await addDataLinksToLogsResponse(
+      mockResponse,
+      mockOptions,
+      (s) => s ?? '',
+      (v) => [v],
+      (r) => r,
+      'xrayUid'
+    );
+
+    expect(mockResponse.data[0].fields[0].config.links).toBeUndefined();
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
   });
 
   it('should not add CloudWatch console link when feature toggle is disabled', async () => {

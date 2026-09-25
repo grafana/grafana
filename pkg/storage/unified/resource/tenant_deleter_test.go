@@ -717,6 +717,46 @@ func TestRunDeletionPass_AllowsWhenGcomReturnsDeletedStatus(t *testing.T) {
 	assert.NotEmpty(t, record.DeletedAt, "DeletedAt should be set after successful deletion")
 }
 
+// TestRunDeletionPass_AllowsWhenGcomReturns404 verifies local deletion proceeds when
+// GCOM no longer knows the instance (404).
+func TestRunDeletionPass_AllowsWhenGcomReturns404(t *testing.T) {
+	kv := setupBadgerKV(t)
+	ds := newDataStore(kv, nil)
+	pds := newPendingDeleteStore(kv)
+	td := NewTenantDeleter(ds, pds, TenantDeleterConfig{
+		DryRun:   false,
+		Interval: time.Hour,
+		Log:      log.NewNopLogger(),
+		Gcom: &testGcomVerifier{
+			getInstance: func(_ context.Context, _, instanceID string) (gcom.Instance, error) {
+				require.Equal(t, "1", instanceID)
+				return gcom.Instance{}, fmt.Errorf("instance id=%s: %w", instanceID, gcom.ErrInstanceNotFound)
+			},
+		},
+	}, nil)
+
+	saveTestResource(t, ds, testStacksNS1, "apps", "dashboards", "dash1", 100, nil)
+	require.NoError(t, pds.Upsert(t.Context(), testStacksNS1, PendingDeleteRecord{DeleteAfter: pastTime()}))
+
+	td.runDeletionPass(t.Context())
+
+	listKey := ListRequestKey{Group: "apps", Resource: "dashboards", Namespace: testStacksNS1}
+	prefix := listKey.Prefix()
+	var count int
+	for _, err := range ds.kv.Keys(t.Context(), dataSection, ListOptions{
+		StartKey: prefix,
+		EndKey:   PrefixRangeEnd(prefix),
+	}) {
+		require.NoError(t, err)
+		count++
+	}
+	assert.Equal(t, 0, count, "resources should be deleted when GCOM returns 404")
+
+	record, err := pds.Get(t.Context(), testStacksNS1)
+	require.NoError(t, err)
+	assert.NotEmpty(t, record.DeletedAt, "DeletedAt should be set after successful deletion")
+}
+
 // TestRunDeletionPass_SkipsWhenGcomInstanceStillExists verifies that local data is
 // not removed while GCOM still returns the stack instance.
 func TestRunDeletionPass_SkipsWhenGcomInstanceStillExists(t *testing.T) {

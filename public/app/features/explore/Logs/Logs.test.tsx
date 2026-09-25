@@ -33,7 +33,27 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: (interactionName: string, properties?: Record<string, unknown> | undefined) =>
     reportInteraction(interactionName, properties),
+  getAppEvents: jest.fn(() => ({
+    publish: jest.fn(),
+  })),
+  getDataSourceSrv: jest.fn(() => ({
+    get: () => Promise.resolve(null),
+  })),
+  usePluginLinks: jest.fn().mockReturnValue({
+    links: [],
+    isLoading: false,
+  }),
 }));
+
+// Mock TableNG to disable virtualization, otherwise the lack of viewport in our testing env will cause the table to only render a single column
+jest.mock('@grafana/ui/unstable', () => {
+  const actual = jest.requireActual('@grafana/ui/unstable');
+  const MockTableNG = actual.TableNG;
+  return {
+    ...actual,
+    TableNG: (props: ComponentProps<typeof MockTableNG>) => <MockTableNG {...props} enableVirtualization={false} />,
+  };
+});
 
 const createAndCopyShortLink = jest.fn();
 jest.mock('app/core/utils/shortLinks', () => ({
@@ -509,15 +529,15 @@ describe('Logs', () => {
       const logsSection = screen.getByRole('radio', { name: 'Table' });
       await userEvent.click(logsSection);
 
-      const table = screen.getByTestId('logRowsTable');
-      expect(table).toBeInTheDocument();
+      expect(await screen.findByText('Selected fields')).toBeInTheDocument();
+      expect(screen.queryByTestId('logRowsTable')).not.toBeInTheDocument();
     });
 
     it('should use default state from localstorage - table', async () => {
       localStorage.setItem(visualisationTypeKey, 'table');
       setup({});
-      const table = await screen.findByTestId('logRowsTable');
-      expect(table).toBeInTheDocument();
+      expect(await screen.findByText('Selected fields')).toBeInTheDocument();
+      expect(screen.queryByTestId('logRowsTable')).not.toBeInTheDocument();
     });
 
     it('should use default state from localstorage - logs', async () => {
@@ -532,8 +552,8 @@ describe('Logs', () => {
       const logsSection = screen.getByRole('radio', { name: 'Table' });
       await userEvent.click(logsSection);
 
-      const table = screen.getByTestId('logRowsTable');
-      expect(table).toBeInTheDocument();
+      expect(await screen.findByText('Selected fields')).toBeInTheDocument();
+      expect(screen.queryByTestId('logRowsTable')).not.toBeInTheDocument();
     });
   });
   describe('with table panel visualisation', () => {
@@ -561,7 +581,6 @@ describe('Logs', () => {
 
       setBooleanFlags({
         logsPanelControls: true,
-        logsTablePanelNG: false,
       });
     });
 
@@ -577,31 +596,11 @@ describe('Logs', () => {
           },
         },
       });
-      await waitFor(() => expect(screen.getByRole('button', { name: /download/i })).toBeInTheDocument());
-      expect(screen.getByTestId('logRowsTable')).toBeInTheDocument();
+      expect(await screen.findByText('Selected fields')).toBeInTheDocument();
+      expect(screen.queryByTestId('logRowsTable')).not.toBeInTheDocument();
     });
 
     it('should show logs', async () => {
-      setup({
-        panelState: {
-          logs: {
-            visualisationType: 'logs',
-          },
-        },
-      });
-
-      await waitFor(() => expect(screen.getByRole('button', { name: /download/i })).toBeInTheDocument());
-      const logs = await screen.findByTestId('logRows');
-      expect(logs).toBeInTheDocument();
-      expect(screen.getByText('log message 3')).toBeVisible();
-    });
-
-    it('should show logs when logsPanelControls is enabled and logsTablePanelNG is true', async () => {
-      setBooleanFlags({
-        logsPanelControls: true,
-        logsTablePanelNG: true,
-      });
-
       setup({
         panelState: {
           logs: {

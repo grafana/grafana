@@ -1,9 +1,6 @@
 package api
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -60,17 +57,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	userID, _ := identity.UserIdentifier(c.GetID())
 
 	c, prefsSpan := hs.injectSpan(c, "api.setIndexViewData.preferences")
-	var prefs *pref.Preference
-	if ofClient.Boolean(c.Req.Context(), featuremgmt.FlagPreferencesRerouteLegacyAPIs, false, openfeature.TransactionContext(c.Req.Context())) {
-		prefs, err = hs.preferenceK8sHandler.GetPreferencesWithDefaults(c)
-	} else {
-		prefsQuery := pref.GetPreferenceWithDefaultsQuery{
-			UserID: userID,
-			OrgID:  c.GetOrgID(),
-			Teams:  c.TeamIDs, // nolint:staticcheck
-		}
-		prefs, err = hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
-	}
+	prefs, err := hs.preferenceK8sHandler.GetPreferencesWithDefaults(c)
 	prefsSpan.End()
 	if err != nil {
 		return nil, err
@@ -111,9 +98,9 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	}
 	ctx := c.Req.Context()
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
-	grafanaAssetSriChecks, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaAssetSriChecks, false, openfeature.TransactionContext(ctx))
-	newPreferencesPage, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaNewPreferencesPage, false, openfeature.TransactionContext(ctx))
+	useLuxon, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagDatetimeUseLuxon, false, openfeature.TransactionContext(ctx))
 	ofrepRootUrlEnabled := ofClient.Boolean(ctx, featuremgmt.FlagGrafanaOfrepRootUrl, false, openfeature.TransactionContext(ctx))
+	legacyFeatureToggleMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaFrontendLegacyFeatureToggleHandling, "off", openfeature.TransactionContext(ctx))
 
 	// With the client-built nav tree the frontend only needs the items it cannot
 	// know about (enterprise index-data hooks add theirs to the empty root below,
@@ -142,9 +129,15 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	}
 
 	theme := hs.getThemeForIndexData(prefs.Theme, urlPrefs.Theme)
-	assets, err := webassets.GetWebAssets(c.Req.Context(), "build", hs.Cfg, hs.License)
+	assets, err := webassets.GetWebAssets(ctx, webassets.ResolveBuildDir(ctx), hs.Cfg, hs.License)
 	if err != nil {
 		return nil, err
+	}
+
+	// The bundlers copy public/img into whichever build directory they write, so these
+	// have to follow the build directory resolved above rather than a fixed path.
+	buildImage := func(name string) template.URL {
+		return template.URL(assets.ContentDeliveryURL + assets.PublicPath + "img/" + name) // #nosec G203 nosemgrep: go.lang.security.audit.net.unescaped-data-in-url.unescaped-data-in-url
 	}
 
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
@@ -189,18 +182,20 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		NewGrafanaVersionExists:             hs.grafanaUpdateChecker.UpdateAvailable(),
 		AppName:                             setting.ApplicationName,
 		AppNameBodyClass:                    "app-grafana",
-		FavIcon:                             template.URL(assets.ContentDeliveryURL + "public/build/img/fav32.png"),            // #nosec G203
-		AppleTouchIcon:                      template.URL(assets.ContentDeliveryURL + "public/build/img/apple-touch-icon.png"), // #nosec G203
+		FavIcon:                             buildImage("fav32.png"),
+		AppleTouchIcon:                      buildImage("apple-touch-icon.png"),
 		AppTitle:                            "Grafana",
 		NavTree:                             navTree,
 		Nonce:                               c.RequestNonce,
-		LoadingLogo:                         template.URL(assets.ContentDeliveryURL + "public/build/img/grafana_icon.svg"), // #nosec G203
+		LoadingLogo:                         buildImage("grafana_icon.svg"),
 		IsDevelopmentEnv:                    hs.Cfg.Env == setting.Dev,
 		Assets:                              assets,
 		RenderBindingSupported:              renderBindingSupported,
-		AssetSriChecksEnabled:               grafanaAssetSriChecks,
-		NewPreferencesPage:                  newPreferencesPage,
+		UseLuxon:                            useLuxon,
+		AssetSriChecksEnabled:               hs.Cfg.AssetSriChecksEnabled,
 		OFREPRootUrlEnabled:                 ofrepRootUrlEnabled,
+		LegacyFeatureToggleMode:             legacyFeatureToggleMode,
+		ESModuleAssetsEnabled:               assets.ESModule,
 	}
 
 	if hs.Cfg.CSPEnabled {
@@ -227,6 +222,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 	data.NavTree.RemoveEmptyAdminSections()
 	data.NavTree.RemoveEmptyConnectionsSection()
+	data.NavTree.RemoveEmptyDrilldownSection()
 	data.NavTree.Sort()
 
 	return &data, nil
@@ -249,8 +245,7 @@ func (hs *HTTPServer) buildUserAnalyticsSettings(c *contextmodel.ReqContext) dto
 	}
 
 	return dtos.AnalyticsSettings{
-		Identifier:         identifier,
-		IntercomIdentifier: hashUserIdentifier(identifier, hs.Cfg.IntercomSecret),
+		Identifier: identifier,
 	}
 }
 
@@ -269,17 +264,6 @@ func (hs *HTTPServer) getUserOrgCount(c *contextmodel.ReqContext, userID int64) 
 	}
 
 	return len(userOrgs)
-}
-
-func hashUserIdentifier(identifier string, secret string) string {
-	if secret == "" {
-		return ""
-	}
-
-	key := []byte(secret)
-	h := hmac.New(sha256.New, key)
-	h.Write([]byte(identifier))
-	return hex.EncodeToString(h.Sum(nil))
 }
 
 func (hs *HTTPServer) Index(c *contextmodel.ReqContext) {

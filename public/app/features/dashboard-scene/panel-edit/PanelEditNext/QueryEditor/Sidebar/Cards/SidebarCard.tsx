@@ -153,7 +153,7 @@ export const SidebarCard = ({
         <div
           aria-hidden={!multiSelectMode}
           className={cx(styles.checkboxWrapper, multiSelectMode && styles.checkboxWrapperOpen)}
-          {...(!multiSelectMode && { inert: '' })}
+          inert={!multiSelectMode}
         >
           {onToggleMultiSelect && (
             <div className={styles.checkboxClickArea} onMouseDownCapture={handleBulkCheckboxMouseDownCapture}>
@@ -499,7 +499,7 @@ function getStyles(
     }),
 
     ghostCardLabel: css({
-      fontFamily: theme.typography.fontFamilyMonospace,
+      ...theme.typography.body,
       fontStyle: 'italic',
       color: theme.colors.text.secondary,
       overflow: 'hidden',

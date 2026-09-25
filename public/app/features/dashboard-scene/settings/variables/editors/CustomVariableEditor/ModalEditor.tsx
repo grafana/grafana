@@ -6,7 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { CustomVariable } from '@grafana/scenes';
 import { Button, FieldValidationMessage, Modal, Stack, TextArea } from '@grafana/ui';
-import { dashboardEditActions } from 'app/features/dashboard-scene/sidebar/shared';
+import { edit } from 'app/features/dashboard-scene/actions/utils/edit';
 
 import { ValuesFormatSelector } from '../../components/CustomVariableForm';
 import { VariableValuesPreview } from '../../components/VariableValuesPreview';
@@ -18,6 +18,7 @@ interface ModalEditorProps {
 
 export function ModalEditor(props: ModalEditorProps) {
   const {
+    draftVariable,
     previewOptions,
     valuesFormat,
     query,
@@ -30,7 +31,9 @@ export function ModalEditor(props: ModalEditorProps) {
 
   return (
     <Modal
-      title={t('dashboard.sidebar.variable.custom-options.modal-title', 'Custom options')}
+      title={t('dashboard.sidebar.variable.custom-options.modal-title', 'Custom variable: {{name}}', {
+        name: draftVariable.state.name,
+      })}
       isOpen={true}
       onDismiss={onCloseModal}
       closeOnBackdropClick={false}
@@ -84,7 +87,7 @@ export function ModalEditor(props: ModalEditorProps) {
 }
 
 function useDraftVariable(variable: CustomVariable) {
-  const draftVariableRef = useRef<CustomVariable>(undefined);
+  const draftVariableRef = useRef<CustomVariable | undefined>(undefined);
   if (!draftVariableRef.current) {
     draftVariableRef.current = new CustomVariable(variable.state);
   }
@@ -109,6 +112,7 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
   };
 
   return {
+    draftVariable,
     previewOptions: options,
     valuesFormat,
     query,
@@ -126,7 +130,7 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
       await updateDraftState({ query: event.currentTarget.value });
     },
     onSaveOptions() {
-      dashboardEditActions.edit({
+      edit({
         source: variable,
         description: t('dashboard-scene.use-modal-editor.description.change-variable-query', 'Change variable query'),
         perform: async () => {

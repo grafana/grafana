@@ -999,6 +999,14 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 		require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
 		require.ErrorContains(t, err, "folder does not exist")
 	})
+	t.Run("returns error when folder is the root folder", func(t *testing.T) {
+		rule := gen.With(gen.WithOrgID(orgID), gen.WithNamespaceUID(folder.GeneralFolderUID)).Generate()
+		service, _, _, _ := initServiceWithData(t)
+
+		_, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(models.ProvenanceFile))
+		require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+		require.ErrorContains(t, err, "folderUID cannot be the root folder")
+	})
 	t.Run("when user cannot write all rules", func(t *testing.T) {
 		t.Run("and it creates a new group", func(t *testing.T) {
 			rule := gen.With(gen.WithOrgID(orgID)).Generate()
@@ -3301,7 +3309,7 @@ func getDeletedRules(t *testing.T, ruleStore *fakes.RuleStore) []deleteRuleOpera
 
 func createAlertRuleService(t *testing.T, folderService folder.Service) AlertRuleService {
 	t.Helper()
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	store := store.DBstore{
 		SQLStore: sqlStore,
 		Cfg: setting.UnifiedAlertingSettings{

@@ -25,8 +25,11 @@ type ConnectionSpecApplyConfiguration struct {
 	// GitHub Enterprise Server connection configuration
 	// Only applicable when provider is "githubEnterprise"
 	GitHubEnterprise *GitHubEnterpriseConnectionConfigApplyConfiguration `json:"githubEnterprise,omitempty"`
+	// GitHub Enterprise Server OAuth app connection configuration
+	// Only applicable when provider is "githubEnterpriseOAuth"
+	GitHubEnterpriseOAuth *GitHubEnterpriseOAuthConnectionConfigApplyConfiguration `json:"githubEnterpriseOAuth,omitempty"`
 	// Bitbucket connection configuration
-	// Only applicable when provider is "bitbucket"
+	// Only applicable when provider is "bitbucketOAuth"
 	Bitbucket *BitbucketConnectionConfigApplyConfiguration `json:"bitbucket,omitempty"`
 	// OAuth app configuration shared by all OAuth app providers
 	OAuth *ConnectionOAuthConfigApplyConfiguration `json:"oauth,omitempty"`
@@ -85,6 +88,14 @@ func (b *ConnectionSpecApplyConfiguration) WithGitHub(value *GitHubConnectionCon
 // If called multiple times, the GitHubEnterprise field is set to the value of the last call.
 func (b *ConnectionSpecApplyConfiguration) WithGitHubEnterprise(value *GitHubEnterpriseConnectionConfigApplyConfiguration) *ConnectionSpecApplyConfiguration {
 	b.GitHubEnterprise = value
+	return b
+}
+
+// WithGitHubEnterpriseOAuth sets the GitHubEnterpriseOAuth field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the GitHubEnterpriseOAuth field is set to the value of the last call.
+func (b *ConnectionSpecApplyConfiguration) WithGitHubEnterpriseOAuth(value *GitHubEnterpriseOAuthConnectionConfigApplyConfiguration) *ConnectionSpecApplyConfiguration {
+	b.GitHubEnterpriseOAuth = value
 	return b
 }
 

@@ -25,6 +25,37 @@ that edit `${...}` variable expressions.
 />
 ```
 
+### Suggesting variables
+
+Build the source with `createVariableCompletionSource` rather than by hand. It
+owns the `$` trigger, the filtering and — importantly — the range an option
+replaces, so accepting a suggestion next to a closing brace cannot leave a stray
+`}` behind.
+
+```tsx
+const completionSources = useMemo(() => [createVariableCompletionSource(suggestions)], [suggestions]);
+```
+
+Inside a URL, where `=` also opens the popup and variables need query encoding:
+
+```tsx
+createVariableCompletionSource(suggestions, {
+  separators: ['='],
+  getInsertText: (suggestion) => `\${${suggestion.value}:queryparam}`,
+});
+```
+
+If a source has to offer variables alongside other kinds of completion, the
+factory does not fit — a range on the result would apply to every option. Build
+the options yourself and reach for `applyVariableReference` on the variable ones:
+
+```tsx
+options: [
+  ...variables.map((name) => ({ label: name, apply: applyVariableReference(`\${${name}}`), type: 'variable' })),
+  ...fields.map((name) => ({ label: name, type: 'property' })),
+];
+```
+
 ### Accessibility
 
 The editable element is a `contenteditable`, so it cannot be associated with a

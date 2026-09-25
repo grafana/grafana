@@ -19,14 +19,14 @@ labels:
 title: InfluxDB query editor
 menuTitle: Query editor
 weight: 400
-review_date: 2026-05-01
+review_date: 2026-08-04
 ---
 
 # InfluxDB query editor
 
 The InfluxDB query editor helps you build and run queries against your InfluxDB data source. You can access it from the [Explore page](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) or from any dashboard panel by clicking the ellipsis in the upper right of the panel and selecting **Edit**.
 
-The editor supports three query languages — SQL, InfluxQL, and Flux — each with its own editing experience and macro system. SQL and InfluxQL provide both a visual builder mode and a code editing mode, while Flux provides a code editor only. You can also use the query editor to retrieve [log data](#query-logs).
+The editor supports three query languages: SQL, InfluxQL, and Flux. Each has its own editing experience and macro system. SQL and InfluxQL provide both a visual builder mode and a code editing mode, while Flux provides a code editor only. You can also use the query editor to retrieve [log data](#query-logs).
 
 For general information about Grafana query editors, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
 
@@ -277,7 +277,7 @@ To view the interpolated version of a query with the Query inspector, refer to [
 
 You can query and display log data from InfluxDB in [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) and in the dashboard [Logs panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/logs/).
 
-**InfluxQL:** Select an InfluxDB data source in the query editor. Under the **Select measurement field** next to the **FROM** section, choose a measurement containing your log data, then choose the appropriate fields that will display the log message. Add any additional filters by clicking the **+ sign** next to the **WHERE** field. Set **FORMAT AS** to **Logs**.
+**InfluxQL:** Select an InfluxDB data source in the query editor. Under the **Select measurement field** next to the **FROM** section, choose a measurement containing your log data, then choose the appropriate fields that display the log message. Add any additional filters by clicking the **+ sign** next to the **WHERE** field. Set **FORMAT AS** to **Logs**.
 
 **SQL:** Write a SQL query that returns a timestamp column and a text column containing the log message. Set the **Format** to **Table**. For example:
 

@@ -1,5 +1,5 @@
-import { act, render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { act, render, screen, within } from '@testing-library/react';
+import userEvent, { type UserEvent } from '@testing-library/user-event';
 
 import {
   type DataSourceApi,
@@ -7,16 +7,29 @@ import {
   type DataSourcePluginMeta,
   type TimeRange,
 } from '@grafana/data';
-import { initDataSourceInstanceSettings, setDatasourcePluginMetas } from '@grafana/runtime/internal';
+import { reportInteraction } from '@grafana/runtime';
+import { setDataSourceInstanceSettings, setDatasourcePluginMetas } from '@grafana/runtime/internal';
 import { type DataQuery } from '@grafana/schema';
 
 import { type ContentOutlineItemContextProps } from '../ContentOutline/ContentOutlineContext';
 
 import { SignalExplorer } from './SignalExplorer';
+import { useMetricCatalog } from './data/useMetricCatalog';
 
 jest.mock('../ContentOutline/ContentOutlineContext', () => ({
   useContentOutlineContext: jest.fn(),
 }));
+
+// Mocked so an expanded card's metric list needs no Prometheus behind it.
+jest.mock('./data/useMetricCatalog');
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
+
+const useMetricCatalogMock = jest.mocked(useMetricCatalog);
+const reportInteractionMock = jest.mocked(reportInteraction);
 
 const makeMeta = (id: string) =>
   ({
@@ -51,19 +64,20 @@ const promQuery = (refId: string, expr = ''): DataQuery =>
   ({ refId, datasource: { uid: 'prom-uid', type: 'prometheus' }, expr }) as DataQuery;
 
 const timeRange = { raw: { from: 'now-1h', to: 'now' }, from: {}, to: {} } as unknown as TimeRange;
+const otherTimeRange = { raw: { from: 'now-6h', to: 'now' }, from: {}, to: {} } as unknown as TimeRange;
 
-const explorer = (queries: DataQuery[], paneDatasource?: DataSourceApi) => (
+const explorer = (queries: DataQuery[], paneDatasource?: DataSourceApi, range: TimeRange = timeRange) => (
   <SignalExplorer
     queries={queries}
     paneDatasource={paneDatasource}
-    timeRange={timeRange}
+    timeRange={range}
     scroller={scrollerMock}
     toggleButton={<button type="button">Collapse outline</button>}
   />
 );
 
 const seedDataSources = () => {
-  initDataSourceInstanceSettings(datasources, 'gdev-prometheus');
+  setDataSourceInstanceSettings(datasources, 'gdev-prometheus');
   setDatasourcePluginMetas(pluginMetas);
 };
 
@@ -115,6 +129,11 @@ const setup = async (queries: DataQuery[], paneDatasource?: DataSourceApi) => {
 };
 
 describe('<SignalExplorer />', () => {
+  beforeEach(() => {
+    useMetricCatalogMock.mockReset().mockReturnValue({ metrics: [], loading: false });
+    reportInteractionMock.mockReset();
+  });
+
   it('renders the header with the injected toggle button', async () => {
     await setup([]);
 
@@ -312,5 +331,206 @@ describe('<SignalExplorer />', () => {
     await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
 
     expect(scrollerMock.scroll).not.toHaveBeenCalled();
+  });
+
+  // One panel for the whole sidebar, so one metric at a time across every card.
+  describe('metric detail panel', () => {
+    const catalog = [{ name: 'up', type: 'gauge' as const, help: 'Whether the target is reachable.' }];
+
+    const openCard = async (refId: string) => {
+      useMetricCatalogMock.mockReturnValue({ metrics: catalog, loading: false });
+      const rendered = await setup([promQuery('A'), promQuery('B')]);
+      await rendered.user.click(screen.getByRole('button', { name: `Expand datasource explorer for query ${refId}` }));
+      return rendered;
+    };
+
+    // Scoped to the card: both offer `up` once open, with the same accessible name.
+    const selectUpIn = (user: UserEvent, refId: string) =>
+      user.click(
+        within(screen.getByTestId(`signal-card-${refId}`)).getByRole('button', { name: 'Show details for up' })
+      );
+
+    it('stays out of the sidebar until a metric is selected', async () => {
+      const { user } = await openCard('A');
+      expect(screen.queryByTestId('metric-detail-panel')).not.toBeInTheDocument();
+
+      await selectUpIn(user, 'A');
+
+      const panel = screen.getByTestId('metric-detail-panel');
+      expect(panel).toHaveTextContent('up');
+      expect(panel).toHaveTextContent('Whether the target is reachable.');
+      expect(panel).toHaveTextContent('GAUGE');
+    });
+
+    // Two cards can point at different instances, where one name carries different metadata.
+    it('names the query the metric was selected from', async () => {
+      const { user } = await openCard('B');
+
+      await selectUpIn(user, 'B');
+
+      expect(screen.getByTestId('metric-detail-panel')).toHaveTextContent('Query B');
+    });
+
+    it('closes when the same metric is selected again', async () => {
+      const { user } = await openCard('A');
+      await selectUpIn(user, 'A');
+
+      await selectUpIn(user, 'A');
+
+      expect(screen.queryByTestId('metric-detail-panel')).not.toBeInTheDocument();
+    });
+
+    it('closes on request', async () => {
+      const { user } = await openCard('A');
+      await selectUpIn(user, 'A');
+
+      await user.click(screen.getByRole('button', { name: 'Close metric details' }));
+
+      expect(screen.queryByTestId('metric-detail-panel')).not.toBeInTheDocument();
+    });
+
+    it('closes when the card the metric was selected from collapses', async () => {
+      const { user } = await openCard('A');
+      await selectUpIn(user, 'A');
+
+      await user.click(screen.getByRole('button', { name: 'Collapse datasource explorer for query A' }));
+
+      expect(screen.queryByTestId('metric-detail-panel')).not.toBeInTheDocument();
+    });
+
+    it('stays open when another card collapses', async () => {
+      const { user } = await openCard('A');
+      await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query B' }));
+      await selectUpIn(user, 'A');
+
+      await user.click(screen.getByRole('button', { name: 'Collapse datasource explorer for query B' }));
+
+      expect(screen.getByTestId('metric-detail-panel')).toBeInTheDocument();
+    });
+
+    it('closes when the query the metric was selected from is deleted', async () => {
+      const { user, rerender } = await openCard('A');
+      await selectUpIn(user, 'A');
+
+      rerender(explorer([promQuery('B')]));
+
+      expect(screen.queryByTestId('metric-detail-panel')).not.toBeInTheDocument();
+    });
+
+    // The refId survives here; only the catalog underneath changes.
+    it('closes when the query the metric was selected from moves to another datasource', async () => {
+      const { user, rerender } = await openCard('A');
+      await selectUpIn(user, 'A');
+
+      const ampQuery = {
+        refId: 'A',
+        datasource: { uid: 'amp-uid', type: 'grafana-amazonprometheus-datasource' },
+      } as DataQuery;
+      rerender(explorer([ampQuery, promQuery('B')]));
+
+      expect(screen.queryByTestId('metric-detail-panel')).not.toBeInTheDocument();
+    });
+
+    // Neither ref carries a uid, so only the type tells the two catalogs apart.
+    it('closes when a query with a type-only datasource ref moves to another Prometheus flavor', async () => {
+      useMetricCatalogMock.mockReturnValue({ metrics: catalog, loading: false });
+      const typeOnlyQuery = (type: string) => ({ refId: 'A', datasource: { type } }) as DataQuery;
+
+      const { user, rerender } = await setup([typeOnlyQuery('prometheus')]);
+      await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
+      await selectUpIn(user, 'A');
+      expect(screen.getByTestId('metric-detail-panel')).toBeInTheDocument();
+
+      rerender(explorer([typeOnlyQuery('grafana-amazonprometheus-datasource')]));
+
+      // Still expanded, so the panel closed on the catalog behind it rather than on the card.
+      expect(screen.getByPlaceholderText('Search metrics')).toBeInTheDocument();
+      expect(screen.queryByTestId('metric-detail-panel')).not.toBeInTheDocument();
+    });
+
+    // A new range fetches a new catalog, which need not still hold the metric.
+    it('closes when the time range changes', async () => {
+      const { user, rerender } = await openCard('A');
+      await selectUpIn(user, 'A');
+
+      rerender(explorer([promQuery('A'), promQuery('B')], undefined, otherTimeRange));
+
+      expect(screen.queryByTestId('metric-detail-panel')).not.toBeInTheDocument();
+    });
+
+    // Explore rebuilds the range object every refresh tick, and the catalog does not refetch for it.
+    it('stays open across a refresh that re-resolves the same relative range', async () => {
+      const { user, rerender } = await openCard('A');
+      await selectUpIn(user, 'A');
+
+      const refreshed = { raw: { from: 'now-1h', to: 'now' }, from: {}, to: {} } as unknown as TimeRange;
+      rerender(explorer([promQuery('A'), promQuery('B')], undefined, refreshed));
+
+      expect(screen.getByTestId('metric-detail-panel')).toBeInTheDocument();
+    });
+  });
+
+  describe('analytics', () => {
+    const promPane = { uid: 'prom-uid', type: 'prometheus', meta: makeMeta('prometheus') } as unknown as DataSourceApi;
+    const mixedPane = {
+      uid: '-- Mixed --',
+      type: 'datasource',
+      meta: { ...makeMeta('mixed'), mixed: true },
+    } as unknown as DataSourceApi;
+
+    it('reports the panel opening once, with the queries stacked in it', async () => {
+      await setup([promQuery('A'), promQuery('B')], promPane);
+
+      expect(reportInteractionMock).toHaveBeenCalledTimes(1);
+      expect(reportInteractionMock).toHaveBeenCalledWith('signal_explorer_panel_opened', {
+        data_source_type: 'prometheus',
+        stacked_queries_count: 2,
+      });
+    });
+
+    // A Mixed pane's own type is the unhelpful `datasource`, and no one card speaks for the pane.
+    it('reports a Mixed pane as mixed rather than by its own type', async () => {
+      await setup([promQuery('A'), { refId: 'B', datasource: { uid: 'loki-uid', type: 'loki' } }], mixedPane);
+
+      expect(reportInteractionMock).toHaveBeenCalledWith(
+        'signal_explorer_panel_opened',
+        expect.objectContaining({ data_source_type: 'mixed' })
+      );
+    });
+
+    // The count reaching a card's own events is this component's to supply, and the two kinds of
+    // event deliberately disagree about the datasource: the card names its query's, the panel names
+    // the pane's.
+    it('reports the card’s own datasource on a card event, and the stacked query count with it', async () => {
+      useMetricCatalogMock.mockReturnValue({ metrics: [{ name: 'up', type: 'gauge' }], loading: false });
+      const { user } = await setup(
+        [promQuery('A'), { refId: 'B', datasource: { uid: 'loki-uid', type: 'loki' } }],
+        mixedPane
+      );
+
+      await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
+      await user.click(within(screen.getByTestId('signal-card-A')).getByRole('button', { name: 'Expand up' }));
+
+      expect(reportInteractionMock).toHaveBeenCalledWith('signal_explorer_metric_expanded', {
+        data_source_type: 'prometheus',
+        stacked_queries_count: 2,
+      });
+      expect(reportInteractionMock).toHaveBeenCalledWith(
+        'signal_explorer_panel_opened',
+        expect.objectContaining({ data_source_type: 'mixed' })
+      );
+    });
+
+    // Explore hands over a fresh queries array on every keystroke in a query editor, and the sidebar
+    // was opened once regardless.
+    it('does not report the panel opening again while a query is being edited', async () => {
+      const { rerender } = await setup([promQuery('A')], promPane);
+      reportInteractionMock.mockClear();
+
+      rerender(explorer([promQuery('A', 'u')], promPane));
+      rerender(explorer([promQuery('A', 'up'), promQuery('B')], promPane));
+
+      expect(reportInteractionMock).not.toHaveBeenCalled();
+    });
   });
 });

@@ -2,6 +2,7 @@ import { HttpResponse, http } from 'msw';
 import { render, screen, userEvent } from 'test/test-utils';
 
 import server from '@grafana/test-utils/server';
+import { type MultiSelectCommonProps } from '@grafana/ui';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions, mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setTimeIntervalsList } from 'app/features/alerting/unified/mocks/server/configure';
@@ -17,18 +18,18 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import MuteTimingsSelector from './MuteTimingsSelector';
 
-const renderWithProvider = (alertManagerSource = GRAFANA_RULES_SOURCE_NAME) => {
+const renderWithProvider = (
+  alertManagerSource = GRAFANA_RULES_SOURCE_NAME,
+  onChange: MultiSelectCommonProps<string>['onChange'] = () => {}
+) => {
   return render(
     <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={alertManagerSource}>
-      <MuteTimingsSelector
-        alertmanager={alertManagerSource}
-        selectProps={{
-          onChange: () => {},
-        }}
-      />
+      <MuteTimingsSelector alertmanager={alertManagerSource} selectProps={{ onChange }} />
     </AlertmanagerProvider>
   );
 };
+
+const NOT_USABLE_DESCRIPTION = /imported from an external alertmanager/i;
 
 setupMswServer();
 
@@ -60,15 +61,16 @@ describe('MuteTimingsSelector', () => {
     expect(screen.getByText('another-regular')).toBeInTheDocument();
   });
 
-  it('should filter out time intervals with canUse: false', async () => {
+  it('should list time intervals with canUse: false as unselectable', async () => {
     const user = userEvent.setup();
+    const onChange = jest.fn();
     setTimeIntervalsList([
       { name: 'regular-interval', provenance: 'none' },
       { name: 'imported-interval', canUse: false },
       { name: 'file-provisioned', provenance: 'file' },
     ]);
 
-    renderWithProvider();
+    renderWithProvider(GRAFANA_RULES_SOURCE_NAME, onChange);
 
     // Click to open the dropdown
     const selector = await screen.findByRole('combobox', { name: /time intervals/i });
@@ -78,34 +80,33 @@ describe('MuteTimingsSelector', () => {
     expect(await screen.findByText('regular-interval')).toBeInTheDocument();
     expect(screen.getByText('file-provisioned')).toBeInTheDocument();
 
-    // Non-usable interval should NOT be in the list
-    expect(screen.queryByText('imported-interval')).not.toBeInTheDocument();
+    expect(screen.getByText('imported-interval')).toBeInTheDocument();
+    expect(screen.getByText(NOT_USABLE_DESCRIPTION)).toBeInTheDocument();
+
+    await user.click(screen.getByText('imported-interval'));
+    expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('should show only usable intervals when all types are present', async () => {
+  it('should still allow selecting a usable interval alongside unselectable ones', async () => {
     const user = userEvent.setup();
+    const onChange = jest.fn();
     setTimeIntervalsList([
       { name: 'normal-1', provenance: 'none' },
       { name: 'imported-1', canUse: false },
-      { name: 'normal-2', provenance: 'none' },
-      { name: 'imported-2', canUse: false },
       { name: 'file-1', provenance: 'file' },
     ]);
 
-    renderWithProvider();
+    renderWithProvider(GRAFANA_RULES_SOURCE_NAME, onChange);
 
-    // Click to open the dropdown
     const selector = await screen.findByRole('combobox', { name: /time intervals/i });
     await user.click(selector);
 
-    // Usable intervals should be visible
-    expect(await screen.findByText('normal-1')).toBeInTheDocument();
-    expect(screen.getByText('normal-2')).toBeInTheDocument();
-    expect(screen.getByText('file-1')).toBeInTheDocument();
+    await user.click(await screen.findByText('normal-1'));
 
-    // Non-usable intervals should NOT be visible
-    expect(screen.queryByText('imported-1')).not.toBeInTheDocument();
-    expect(screen.queryByText('imported-2')).not.toBeInTheDocument();
+    expect(onChange).toHaveBeenCalledWith(
+      expect.arrayContaining([expect.objectContaining({ value: 'normal-1' })]),
+      expect.anything()
+    );
   });
 
   it('should handle empty list', async () => {
@@ -120,24 +121,28 @@ describe('MuteTimingsSelector', () => {
 
   it('should handle list with only non-usable intervals', async () => {
     const user = userEvent.setup();
+    const onChange = jest.fn();
     setTimeIntervalsList([
       { name: 'imported-1', canUse: false },
       { name: 'imported-2', canUse: false },
     ]);
 
-    renderWithProvider();
+    renderWithProvider(GRAFANA_RULES_SOURCE_NAME, onChange);
 
     // Click to open the dropdown
     const selector = await screen.findByRole('combobox', { name: /time intervals/i });
     await user.click(selector);
 
-    // No intervals should be visible
-    expect(screen.queryByText('imported-1')).not.toBeInTheDocument();
-    expect(screen.queryByText('imported-2')).not.toBeInTheDocument();
+    expect(await screen.findByText('imported-1')).toBeInTheDocument();
+    expect(screen.getByText('imported-2')).toBeInTheDocument();
+
+    await user.click(screen.getByText('imported-1'));
+    expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('should filter out intervals with missing canUse annotation', async () => {
+  it('should treat a k8s interval with no canUse annotation as unselectable', async () => {
     const user = userEvent.setup();
+    const onChange = jest.fn();
     // Manually create intervals without canUse annotation
     const listMuteTimingsPath = listNamespacedTimeIntervalHandler().info.path;
 
@@ -175,15 +180,16 @@ describe('MuteTimingsSelector', () => {
       })
     );
 
-    renderWithProvider();
+    renderWithProvider(GRAFANA_RULES_SOURCE_NAME, onChange);
 
     // Click to open the dropdown
     const selector = await screen.findByRole('combobox', { name: /time intervals/i });
     await user.click(selector);
 
-    // Only interval with canUse: 'true' should be visible
     expect(await screen.findByText('interval-with-canuse')).toBeInTheDocument();
-    expect(screen.queryByText('interval-without-canuse')).not.toBeInTheDocument();
+
+    await user.click(screen.getByText('interval-without-canuse'));
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   describe('external alertmanager', () => {

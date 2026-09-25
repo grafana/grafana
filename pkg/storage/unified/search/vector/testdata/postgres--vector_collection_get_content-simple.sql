@@ -1,7 +1,7 @@
 SELECT
     "subresource",
     "content",
-    "folder"
+    COALESCE("folder", '') AS "folder"
     FROM embeddings
     WHERE "resource"  = 'dashboards'
     AND "namespace" = 'stacks-123'

@@ -24,6 +24,8 @@ function Wrapper({ defaultSigningKeyConfigured, defaultValues, onSubmit = () => 
         messageTemplateName="commit.singleResourceMessageTemplate"
         enforceTemplateName="commit.enforceTemplate"
         type="github"
+        authorNameName="commit.authorName"
+        authorEmailName="commit.authorEmail"
         signingMethodName="signingMethod"
         signingKeyName="commitSigningKey"
         smimeCertificateName="smimeCertificate"
@@ -108,6 +110,44 @@ describe('CommitOptionsSection', () => {
     expect(screen.getByText('Commit message template')).toBeInTheDocument();
     expect(screen.queryByText('Enforce commit message template')).not.toBeInTheDocument();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+  });
+
+  describe('commit author', () => {
+    it('shows the author fields when no signing method is selected', async () => {
+      const { user } = render(<Wrapper />);
+
+      await user.click(screen.getByText('Commit options'));
+
+      expect(screen.getByLabelText(/Author name/)).toHaveAttribute('name', 'commit.authorName');
+      expect(screen.getByLabelText(/Author email/)).toHaveAttribute('name', 'commit.authorEmail');
+    });
+
+    it('hides the author fields when a signing method is selected', async () => {
+      const { user } = render(<Wrapper />);
+
+      await user.click(screen.getByText('Commit options'));
+      await user.click(screen.getByLabelText('GPG'));
+
+      expect(screen.queryByLabelText(/Author name/)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/Author email/)).not.toBeInTheDocument();
+    });
+
+    it('clears the author fields when a signing method is selected', async () => {
+      const onSubmit = jest.fn();
+      const { user } = render(
+        <Wrapper
+          defaultValues={{ commit: { authorName: 'Sync Bot', authorEmail: 'bot@example.com' } }}
+          onSubmit={onSubmit}
+        />
+      );
+
+      await user.click(screen.getByText('Commit options'));
+      await user.click(screen.getByLabelText('GPG'));
+      await user.click(screen.getByLabelText('None'));
+
+      expect(screen.getByLabelText(/Author name/)).toHaveValue('');
+      expect(screen.getByLabelText(/Author email/)).toHaveValue('');
+    });
   });
 
   describe('commit signing', () => {

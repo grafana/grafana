@@ -128,17 +128,13 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		callCtx := config.WithGrafanaConfig(reqCtx, pluginCtx.GrafanaConfig)
 		callCtx = contextualMiddlewares(callCtx)
 
-		queryCtx, querySpan := tracing.Start(callCtx, "datasource.query.pluginClient.QueryData",
-			attribute.Int("queries_count", len(queries)),
-		)
-
 		if chunked.IsRequestingChunkedResponse(req.Header.Get("accept")) {
 			if !r.builder.cfg.EnableChunkedQueryStreaming {
 				responder.Error(fmt.Errorf("chunked query streaming is not enabled"))
 				return
 			}
 
-			if err = r.builder.client.QueryChunkedData(ctx, &backend.QueryChunkedDataRequest{
+			if err = r.builder.client.QueryChunkedData(callCtx, &backend.QueryChunkedDataRequest{
 				Queries:       queries,
 				PluginContext: pluginCtx,
 				Headers:       map[string]string{},
@@ -148,6 +144,10 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			}
 			return
 		}
+
+		queryCtx, querySpan := tracing.Start(callCtx, "datasource.query.pluginClient.QueryData",
+			attribute.Int("queries_count", len(queries)),
+		)
 
 		rsp, err := r.builder.client.QueryData(queryCtx, &backend.QueryDataRequest{
 			Queries:       queries,

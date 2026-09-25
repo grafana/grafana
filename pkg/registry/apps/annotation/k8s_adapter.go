@@ -20,6 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/apiserver/pkg/util/dryrun"
 	"k8s.io/utils/ptr"
 
 	authtypes "github.com/grafana/authlib/types"
@@ -89,6 +90,7 @@ var (
 // and delegates actual storage operations to the Store interface.
 type k8sRESTAdapter struct {
 	store          Store
+	tracer         trace.Tracer
 	tableConverter rest.TableConvertor
 	accessClient   authtypes.AccessClient
 	folderResolver DashboardFolderResolver
@@ -106,7 +108,6 @@ type k8sRESTAdapter struct {
 	// immediately purged. A zero TTL disables this bound.
 	retentionTTL time.Duration
 
-	tracer  trace.Tracer
 	metrics *Metrics
 	logger  log.Logger
 }
@@ -191,7 +192,7 @@ func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.List
 	}
 
 	// TODO: post-fetch filtering breaks pagination - cursor advances by opts.Limit regardless of authz results.
-	allowed, err := canAccessAnnotations(ctx, s.accessClient, s.folderResolver, namespace, result.Items, utils.VerbList)
+	allowed, err := canAccessAnnotations(ctx, s.tracer, s.accessClient, s.folderResolver, namespace, result.Items, utils.VerbList)
 	if err != nil {
 		return nil, err
 	}
@@ -223,7 +224,7 @@ func (s *k8sRESTAdapter) Get(ctx context.Context, name string, options *metav1.G
 		return nil, toAPIError(err, name)
 	}
 
-	allowed, err := canAccessAnnotation(ctx, s.accessClient, s.folderResolver, namespace, annotation, utils.VerbGet)
+	allowed, err := canAccessAnnotation(ctx, s.tracer, s.accessClient, s.folderResolver, namespace, annotation, utils.VerbGet)
 	if err != nil {
 		return nil, err
 	}
@@ -253,6 +254,10 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 	start := time.Now()
 	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "create", start, err) }()
 
+	if options != nil && dryrun.IsDryRun(options.DryRun) {
+		return nil, apierrors.NewBadRequest("annotations do not support dry-run")
+	}
+
 	annotation, ok := obj.(*annotationV0.Annotation)
 	if !ok {
 		return nil, apierrors.NewInternalError(fmt.Errorf("expected *Annotation, got %T", obj))
@@ -263,11 +268,15 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 		return nil, err
 	}
 
+	if annotation.Spec.TimeEnd == nil {
+		annotation.Spec.TimeEnd = new(annotation.Spec.Time)
+	}
+
 	if annotation.Name == "" && annotation.GenerateName != "" {
 		annotation.Name = annotation.GenerateName + util.GenerateShortUID()
 	}
 
-	allowed, err := canAccessAnnotation(ctx, s.accessClient, s.folderResolver, namespace, annotation, utils.VerbCreate)
+	allowed, err := canAccessAnnotation(ctx, s.tracer, s.accessClient, s.folderResolver, namespace, annotation, utils.VerbCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -312,6 +321,10 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 	start := time.Now()
 	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "update", start, err) }()
 
+	if options != nil && dryrun.IsDryRun(options.DryRun) {
+		return nil, false, apierrors.NewBadRequest("annotations do not support dry-run")
+	}
+
 	// Fetch the existing annotation for patch merging and to verify authz on the pre-update resource.
 	existing, err := s.store.Get(ctx, namespace, name)
 	if err != nil {
@@ -341,14 +354,14 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 	}
 
 	// Check authz on both existing and new body: prevents privilege escalation via scope changes.
-	allowed, err := canAccessAnnotation(ctx, s.accessClient, s.folderResolver, namespace, existing, utils.VerbUpdate)
+	allowed, err := canAccessAnnotation(ctx, s.tracer, s.accessClient, s.folderResolver, namespace, existing, utils.VerbUpdate)
 	if err != nil {
 		return nil, false, err
 	}
 	if !allowed {
 		return nil, false, apierrors.NewForbidden(annotationGR, existing.Name, fmt.Errorf("insufficient permissions"))
 	}
-	allowed, err = canAccessAnnotation(ctx, s.accessClient, s.folderResolver, namespace, resource, utils.VerbUpdate)
+	allowed, err = canAccessAnnotation(ctx, s.tracer, s.accessClient, s.folderResolver, namespace, resource, utils.VerbUpdate)
 	if err != nil {
 		return nil, false, err
 	}
@@ -390,18 +403,22 @@ func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidati
 	start := time.Now()
 	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "delete", start, err) }()
 
+	if options != nil && dryrun.IsDryRun(options.DryRun) {
+		return nil, false, apierrors.NewBadRequest("annotations do not support dry-run")
+	}
+
 	annotation, err := s.store.Get(ctx, namespace, name)
 	if err != nil {
 		return nil, false, toAPIError(err, name)
 	}
 
-	allowedDelete, err := canAccessAnnotation(ctx, s.accessClient, s.folderResolver, namespace, annotation, utils.VerbDelete)
+	allowedDelete, err := canAccessAnnotation(ctx, s.tracer, s.accessClient, s.folderResolver, namespace, annotation, utils.VerbDelete)
 	if err != nil {
 		return nil, false, err
 	}
 	if !allowedDelete {
 		// Return 404 if caller can't read (don't leak existence), 403 if readable but not deletable.
-		allowedRead, rerr := canAccessAnnotation(ctx, s.accessClient, s.folderResolver, namespace, annotation, utils.VerbGet)
+		allowedRead, rerr := canAccessAnnotation(ctx, s.tracer, s.accessClient, s.folderResolver, namespace, annotation, utils.VerbGet)
 		if rerr != nil {
 			return nil, false, rerr
 		}
@@ -540,6 +557,10 @@ func validateUpdate(existing, updated *annotationV0.Annotation) error {
 }
 
 func (s *k8sRESTAdapter) validateTimes(anno *annotationV0.Annotation) error {
+	if anno.Spec.Time <= 0 {
+		return apierrors.NewBadRequest(fmt.Sprintf("%v: time is required and must be positive", ErrInvalidInput))
+	}
+
 	now := time.Now().UTC()
 	maxFuture := now.Add(maxFutureWindow).UnixMilli()
 

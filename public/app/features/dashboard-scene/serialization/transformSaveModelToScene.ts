@@ -34,7 +34,6 @@ import { type DashboardDTO, type DashboardDataDTO } from 'app/types/dashboard';
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
 import { DefaultControlsBehavior } from '../behaviors/DefaultControlsBehavior';
-import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { setPanelInspectorOpener } from '../inspect/panelInspectorOpener';
 import { type LoadDashboardOptions } from '../pages/DashboardScenePageStateManager';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
@@ -50,6 +49,7 @@ import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavio
 import { PanelNotices } from '../scene/PanelNotices';
 import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
+import { dashboardViews } from '../scene/dashboardViewRegistry';
 import { DashboardGridItem, type RepeatDirection } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
@@ -59,10 +59,12 @@ import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { getIsLazy } from '../scene/layouts-shared/utils';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
+import { pluginTransformationsEnabled } from '../scene/systemTransformations';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { DashboardInteractions } from '../utils/interactions';
-import { getDashboardSceneFor, getVizPanelKeyForPanelId, isNewPanelQueryErrorsUIEnabled } from '../utils/utils';
+import { getDashboardSceneFor, isNewPanelQueryErrorsUIEnabled } from '../utils/utils';
+import { getVizPanelKeyForPanelId } from '../utils/utils-panels';
 import { createVariablesForDashboard, createVariablesForSnapshot } from '../utils/variables';
 
 import { getAngularPanelMigrationHandler } from './angularMigration';
@@ -408,9 +410,9 @@ export function createDashboardSceneFromDashboardModel(
       uid,
       description: oldModel.description,
       editable: oldModel.editable,
-      // Keep preload undefined when the dashboard JSON omits it, so getIsLazy can fall back to
-      // the instance-wide default. Baking in `false` here would ignore [dashboards] default_preload
-      // and would persist an explicit `false` on the next save.
+      // Keep preload undefined when the dashboard JSON omits it. Baking in `false` here would
+      // persist an explicit `false` on the next save, pinning a dashboard that never expressed a
+      // preference. New dashboards get a concrete value seeded at creation instead.
       preload: dto.preload,
       isDirty: false,
       links: [...(options?.defaultLinks ?? []), ...(oldModel.links ?? [])],
@@ -420,6 +422,11 @@ export function createDashboardSceneFromDashboardModel(
       version: oldModel.version,
       scopeMeta,
       body,
+      // Dashboards migrated from the old schema get the classic grid persisted as their default
+      // layout for new containers, regardless of the auto grid feature flag. The backend v1-to-v2
+      // conversion writes the same preference; both conversions must produce identical output.
+      preferences:
+        targetVersion === 'v2' ? { defaultLayoutTemplate: DefaultGridLayoutManager.createEmpty() } : undefined,
       $timeRange: new SceneTimeRange({
         from: oldModel.time.from,
         to: oldModel.time.to,
@@ -479,6 +486,8 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
   const timeOverrideShown = (panel.timeFrom || panel.timeShift || panel.timeCompare) && !panel.hideTimeOverride;
 
   const vizPanelState: VizPanelState = {
+    // Runtime only, from the rollout flag - it is deliberately not part of the save model.
+    applyPluginTransformations: pluginTransformationsEnabled(),
     key: getVizPanelKeyForPanelId(panel.id),
     title: panel.title?.substring(0, 5000),
     description: panel.description,
@@ -496,9 +505,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     headerActions: new VizPanelHeaderActions({
       hideGroupByAction: !config.featureToggles.dashboardUnifiedDrilldownControls,
     }),
-    subHeader: new VizPanelSubHeader({
-      hideNonApplicableDrilldowns: !config.featureToggles.perPanelNonApplicableDrilldowns,
-    }),
+    subHeader: new VizPanelSubHeader({}),
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
@@ -561,8 +568,9 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
 // Register how the panel status popover opens the inspector. Done here (rather than in
 // setDashboardPanelContext) so the heavy PanelInspectDrawer isn't imported by low-level panel
 // setup, which would introduce a circular dependency.
-setPanelInspectorOpener((panel, tab) => {
-  getDashboardSceneFor(panel).showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: tab }));
+setPanelInspectorOpener(async (panel, tab) => {
+  const dashboard = getDashboardSceneFor(panel);
+  await dashboard.loadView(dashboardViews.overlay.inspect(panel, tab));
 });
 
 export function registerPanelInteractionsReporter(scene: DashboardScene) {

@@ -33,7 +33,7 @@ func TestIntegrationShortURLService(t *testing.T) {
 	t.Skip("shorturls is migrated to unified storage; the legacy sqlStore is superseded and its short_url table is renamed by the migration")
 
 	user := &user.SignedInUser{UserID: 1}
-	store := db.InitTestDB(t)
+	store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	t.Run("User can create and read short URLs", func(t *testing.T) {
 		cmd := &dtos.CreateShortURLCmd{

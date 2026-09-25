@@ -16,6 +16,9 @@ import { configureStore } from 'app/store/configureStore';
 import { ctaClicked } from '../analytics/main';
 
 import { IncidentsCard } from './IncidentsCard';
+import { type IncidentFilterSelection } from './incidentFilter';
+import { ACTIVE_INCIDENTS_QUERY, QUERY_PREVIEWS_PATH, mockIncidents } from './mockIncidentsApi';
+import { useIncidents } from './useIncidents';
 
 jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
   ...jest.requireActual('app/features/alerting/unified/hooks/usePluginBridge'),
@@ -33,8 +36,6 @@ setupMockServer();
 
 const mockUsePluginBridge = jest.mocked(usePluginBridge);
 
-const QUERY_PREVIEWS_PATH = '/api/plugins/:pluginId/resources/api/v1/IncidentsService.QueryIncidentPreviews';
-
 const activeIncidents: IncidentPreview[] = [
   {
     incidentID: '101',
@@ -50,14 +51,6 @@ const activeIncidents: IncidentPreview[] = [
   },
 ];
 
-function mockIncidents(incidents: IncidentPreview[], { hasMore = false } = {}) {
-  server.use(
-    http.post(QUERY_PREVIEWS_PATH, () =>
-      HttpResponse.json({ incidentPreviews: incidents, cursor: { hasMore, nextValue: hasMore ? 'next' : '' } })
-    )
-  );
-}
-
 beforeEach(() => {
   setPluginComponentsHook(() => ({ components: [], isLoading: false }));
   // Default: plugin installed. Individual tests override availability as needed.
@@ -72,11 +65,16 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+function IncidentsCardWithData({ filter }: { filter?: IncidentFilterSelection } = {}) {
+  const data = useIncidents(filter);
+  return <IncidentsCard data={data} />;
+}
+
 describe('IncidentsCard', () => {
   it('lists active incidents with severity, count badge, and detail links', async () => {
     mockIncidents(activeIncidents);
 
-    render(<IncidentsCard />);
+    render(<IncidentsCardWithData />);
 
     expect(await screen.findByText('Database outage')).toBeInTheDocument();
     expect(screen.getByText('Elevated latency')).toBeInTheDocument();
@@ -102,16 +100,26 @@ describe('IncidentsCard', () => {
   it('shows the declare CTA in the empty state', async () => {
     mockIncidents([]);
 
-    render(<IncidentsCard />);
+    render(<IncidentsCardWithData />);
 
     expect(await screen.findByRole('link', { name: /declare an incident/i })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Database outage' })).not.toBeInTheDocument();
   });
 
+  it('names only the selected value in the empty message and scopes the request to its field', async () => {
+    const queries = mockIncidents([]);
+
+    render(<IncidentsCardWithData filter="squad:Frontend" />);
+
+    expect(await screen.findByText('No active incidents for Frontend.')).toBeInTheDocument();
+    expect(screen.queryByText('No active incidents.')).not.toBeInTheDocument();
+    expect(queries).toEqual([`${ACTIVE_INCIDENTS_QUERY} field:squad:"Frontend"`]);
+  });
+
   it('treats a 404 (org not onboarded) as the empty state, not an error', async () => {
     server.use(http.post(QUERY_PREVIEWS_PATH, () => new HttpResponse(null, { status: 404 })));
 
-    render(<IncidentsCard />);
+    render(<IncidentsCardWithData />);
 
     expect(await screen.findByRole('link', { name: /declare an incident/i })).toBeInTheDocument();
     expect(screen.queryByText('Could not load active incidents')).not.toBeInTheDocument();
@@ -120,7 +128,7 @@ describe('IncidentsCard', () => {
   it('shows a retryable error for genuine failures (5xx)', async () => {
     server.use(http.post(QUERY_PREVIEWS_PATH, () => new HttpResponse(null, { status: 500 })));
 
-    render(<IncidentsCard />);
+    render(<IncidentsCardWithData />);
 
     expect(await screen.findByText('Could not load active incidents')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
@@ -146,7 +154,7 @@ describe('IncidentsCard', () => {
     });
     mockIncidents(activeIncidents);
 
-    render(<IncidentsCard />);
+    render(<IncidentsCardWithData />);
 
     expect(await screen.findByText('Database outage')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Database outage' })).not.toBeInTheDocument();
@@ -162,7 +170,7 @@ describe('IncidentsCard', () => {
     }));
     mockIncidents(many, { hasMore: true });
 
-    render(<IncidentsCard />);
+    render(<IncidentsCardWithData />);
 
     expect(await screen.findByText(`${ACTIVE_INCIDENTS_QUERY_LIMIT}+`)).toBeInTheDocument();
   });
@@ -176,7 +184,7 @@ describe('IncidentsCard', () => {
     }));
     mockIncidents(many, { hasMore: false });
 
-    render(<IncidentsCard />);
+    render(<IncidentsCardWithData />);
 
     expect(await screen.findByText(String(ACTIVE_INCIDENTS_QUERY_LIMIT))).toBeInTheDocument();
     expect(screen.queryByText(`${ACTIVE_INCIDENTS_QUERY_LIMIT}+`)).not.toBeInTheDocument();
@@ -191,7 +199,7 @@ describe('IncidentsCard', () => {
     }));
     mockIncidents(many);
 
-    render(<IncidentsCard />);
+    render(<IncidentsCardWithData />);
 
     expect(await screen.findByText('Incident 0')).toBeInTheDocument();
     expect(screen.getAllByRole('listitem')).toHaveLength(8);
@@ -200,7 +208,7 @@ describe('IncidentsCard', () => {
   it('shows a Declare CTA in the empty state when the user can declare', async () => {
     mockIncidents([]);
 
-    render(<IncidentsCard />);
+    render(<IncidentsCardWithData />);
 
     expect(await screen.findByRole('link', { name: /declare an incident/i })).toHaveAttribute(
       'href',
@@ -228,7 +236,7 @@ describe('IncidentsCard', () => {
     });
     mockIncidents([]);
 
-    render(<IncidentsCard />);
+    render(<IncidentsCardWithData />);
 
     expect(await screen.findByText('No active incidents.')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /declare an incident/i })).not.toBeInTheDocument();
@@ -250,7 +258,7 @@ describe('IncidentsCard', () => {
       },
     ]);
 
-    render(<IncidentsCard />);
+    render(<IncidentsCardWithData />);
 
     expect(await screen.findByText('Warning but newer')).toBeInTheDocument();
 
@@ -263,7 +271,7 @@ describe('IncidentsCard', () => {
     const store = configureStore();
     mockIncidents([]);
 
-    const { unmount } = render(<IncidentsCard />, { store });
+    const { unmount } = render(<IncidentsCardWithData />, { store });
     // The declare CTA only renders once the first query resolves as empty (not while loading).
     expect(await screen.findByRole('link', { name: /declare an incident/i })).toBeInTheDocument();
 
@@ -271,8 +279,10 @@ describe('IncidentsCard', () => {
 
     // Incident declared out-of-band in the IRM plugin; user returns to Home (card remounts).
     mockIncidents([activeIncidents[0]]);
-    render(<IncidentsCard />, { store });
+    render(<IncidentsCardWithData />, { store });
 
+    // The cached list shows straight away while the refetch runs, not a skeleton.
+    expect(screen.getByRole('link', { name: /declare an incident/i })).toBeInTheDocument();
     // refetchOnMountOrArgChange forces a refetch on remount; without it the stale empty
     // cache would persist and this assertion would time out.
     expect(await screen.findByText('Database outage')).toBeInTheDocument();
@@ -293,7 +303,7 @@ describe('IncidentsCard', () => {
     it('tracks incident_detail when an incident title link is clicked', async () => {
       mockIncidents(activeIncidents);
 
-      const { user } = render(<IncidentsCard />);
+      const { user } = render(<IncidentsCardWithData />);
 
       await user.click(await screen.findByRole('link', { name: 'Database outage' }));
 
@@ -307,7 +317,7 @@ describe('IncidentsCard', () => {
     it('tracks declare_incident from the empty-state CTA', async () => {
       mockIncidents([]);
 
-      const { user } = render(<IncidentsCard />);
+      const { user } = render(<IncidentsCardWithData />);
 
       await user.click(await screen.findByRole('link', { name: /declare an incident/i }));
 
@@ -321,7 +331,7 @@ describe('IncidentsCard', () => {
     it('tracks declare_incident from the footer when incidents exist', async () => {
       mockIncidents(activeIncidents);
 
-      const { user } = render(<IncidentsCard />);
+      const { user } = render(<IncidentsCardWithData />);
 
       await user.click(await screen.findByRole('link', { name: /declare an incident/i }));
 
@@ -335,7 +345,7 @@ describe('IncidentsCard', () => {
     it('tracks view_all_incidents from the footer', async () => {
       mockIncidents(activeIncidents);
 
-      const { user } = render(<IncidentsCard />);
+      const { user } = render(<IncidentsCardWithData />);
 
       await user.click(await screen.findByRole('link', { name: /view all incidents/i }));
 

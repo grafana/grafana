@@ -8,25 +8,32 @@
 import type * as z from 'zod';
 
 import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
 import type { MutationResult } from '../types';
 
-export interface MutationContext {
-  scene: DashboardScene;
+/** The scene a command operates on. Defaults to DashboardScene so a dashboard command names no type parameter. */
+export interface MutationContext<TScene = DashboardScene> {
+  scene: TScene;
 }
 
 export type PermissionCheckResult = { allowed: true } | { allowed: false; error: string };
 
-type PermissionCheck = (scene: DashboardScene) => PermissionCheckResult;
+type PermissionCheck<TScene = DashboardScene> = (scene: TScene) => PermissionCheckResult;
 
 /**
  * A complete mutation command: schema, handler, permission, and metadata.
  *
- * Each command file exports a single MutationCommand. The registry collects
- * them and the DashboardMutationClient iterates over them generically.
+ * Each command file exports a single MutationCommand. A registry collects the commands for one
+ * resource and SceneMutationClient iterates over them generically.
+ *
+ * `TScene` is what lets one client serve two document types: a command is only ever dispatched by a
+ * client holding the scene it was typed for, so a dashboard handler cannot be handed a notebook. A
+ * command that reads nothing off the scene (CREATE_NOTEBOOK_SPEC) types it `unknown`, which, parameters
+ * being contravariant, makes it assignable to both registries.
  */
-export interface MutationCommand<T = unknown> {
+export interface MutationCommand<T = unknown, TScene = DashboardScene> {
   /** Command name -- must be UPPER_CASE. Used as the MutationType value. */
   name: string;
   /** Human-readable description. */
@@ -34,11 +41,27 @@ export interface MutationCommand<T = unknown> {
   /** Zod schema for runtime payload validation. Single source of truth. */
   payloadSchema: z.ZodType<T>;
   /** Permission check run before execution. Must be a pure predicate (no side effects). */
-  permission: PermissionCheck;
-  /** When true, the command only reads state and will not trigger a forceRender. */
+  permission: PermissionCheck<TScene>;
+  /**
+   * When true, the command only reads state: the payload is passed through as-is and no forceRender
+   * follows.
+   *
+   * Two effects on one flag, deliberately: a write payload is deep-cloned (Zod hands back frozen or
+   * shared default objects that downstream code mutates in place) and a write is followed by a
+   * re-render. They coincide for every command that changes the open scene. CREATE_NOTEBOOK_SPEC is the
+   * one that does not, needing the clone but changing nothing here, and pays a spare forceRender for it.
+   */
   readOnly?: boolean;
   /** The handler function. */
-  handler: (payload: T, context: MutationContext) => Promise<MutationResult>;
+  handler: (payload: T, context: MutationContext<TScene>) => Promise<MutationResult>;
+}
+
+export interface LazyMutationCommand<TScene = DashboardScene> {
+  name: string;
+  /** Mirrors the loaded command so guards can inspect it without loading its implementation. */
+  readOnly?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- payload types vary by lazily loaded command
+  load: () => Promise<MutationCommand<any, TScene>>;
 }
 
 /**
@@ -98,5 +121,38 @@ export function enterEditModeIfNeeded(scene: DashboardScene): void {
     scene.onEnterEditMode('assistant');
   }
   // New-layout mutations only run while the sidebar is active, and it may not be mounted here.
+  // Independent of edit mode: addElement-based undo/redo tracking needs this regardless.
   scene.activateSidebar();
+}
+
+const GLOBAL_DASHBOARD_VARIABLES_DISABLED =
+  'Cross-dashboard variables require the grafana.dashboardGlobalVariables feature toggle to be enabled.';
+
+function isGlobalDashboardVariablesEnabled(): boolean {
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDashboardGlobalVariables, false);
+}
+
+/** Requires the global-dashboard-variables feature toggle (read-only). */
+export function requiresGlobalDashboardVariablesReadOnly(_scene: DashboardScene): PermissionCheckResult {
+  if (!isGlobalDashboardVariablesEnabled()) {
+    return { allowed: false, error: GLOBAL_DASHBOARD_VARIABLES_DISABLED };
+  }
+  return { allowed: true };
+}
+
+/**
+ * Requires the global-dashboard-variables feature toggle, edit permissions, and
+ * a dashboard that is not a locked managed resource.
+ */
+export function requiresGlobalDashboardVariables(scene: DashboardScene): PermissionCheckResult {
+  if (!isGlobalDashboardVariablesEnabled()) {
+    return { allowed: false, error: GLOBAL_DASHBOARD_VARIABLES_DISABLED };
+  }
+  if (scene.managedResourceCannotBeEdited()) {
+    return {
+      allowed: false,
+      error: 'Cannot edit cross-dashboard variables: dashboard is a managed resource',
+    };
+  }
+  return requiresEdit(scene);
 }

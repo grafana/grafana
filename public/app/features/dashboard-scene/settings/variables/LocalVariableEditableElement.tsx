@@ -55,7 +55,7 @@ export class LocalVariableEditableElement implements EditableDashboardElement {
   public getEditableElementInfo(): EditableDashboardElementInfo {
     return {
       typeName: t('dashboard.sidebar.elements.local-variable', 'Local variable'),
-      icon: 'dollar-alt',
+      icon: 'gf-variable',
       instanceName: ` $${this.variable.state.name} = ${this.variable.getValueText!()}`,
       isHidden: true,
     };

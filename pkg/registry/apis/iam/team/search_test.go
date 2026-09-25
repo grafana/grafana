@@ -13,6 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -31,6 +33,38 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
+
+func TestSearchErrorStatus(t *testing.T) {
+	failure := &resourcepb.ErrorResult{
+		Code: http.StatusTooManyRequests, Reason: string(metav1.StatusReasonTooManyRequests), Message: "search is busy",
+		Details: &resourcepb.ErrorDetails{Name: "team", Group: "iam.grafana.app", Kind: "teams", Uid: "uid", RetryAfterSeconds: 12},
+	}
+	st, err := status.New(codes.ResourceExhausted, "search is busy").WithDetails(failure)
+	require.NoError(t, err)
+	for name, client := range map[string]*MockClient{
+		"embedded":  {MockResponses: []*resourcepb.ResourceSearchResponse{{Error: failure}}},
+		"transport": {MockError: fmt.Errorf("search: %w", st.Err())},
+		"plain":     {MockError: fmt.Errorf("private database failure")},
+		"internal":  {MockError: status.Error(codes.Internal, "private database failure")},
+	} {
+		t.Run(name, func(t *testing.T) {
+			handler := NewSearchHandler(tracing.NewNoopTracerService(), client, nil)
+			req := httptest.NewRequest("GET", "/searchTeams", nil)
+			req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+			recorder := httptest.NewRecorder()
+			handler.DoTeamSearch(recorder, req)
+			if name == "plain" || name == "internal" {
+				require.Equal(t, http.StatusInternalServerError, recorder.Code)
+				require.NotContains(t, recorder.Body.String(), "private database failure")
+				return
+			}
+			require.Equal(t, http.StatusTooManyRequests, recorder.Code)
+			var got metav1.Status
+			require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &got))
+			require.Equal(t, resource.GetError(failure).(apierrors.APIStatus).Status(), got)
+		})
+	}
+}
 
 func TestTeamSearchFallback(t *testing.T) {
 	t.Skip("Skipping team search fallback test: https://github.com/grafana/identity-access-team/issues/2048")
@@ -80,7 +114,7 @@ func TestTeamSearchFallback(t *testing.T) {
 }
 
 func TestSearchHandler(t *testing.T) {
-	t.Run("search using default team search fields", func(t *testing.T) {
+	t.Run("search using default team search fields without explain", func(t *testing.T) {
 		mockClient := &MockClient{}
 
 		searchHandler := SearchHandler{
@@ -90,7 +124,7 @@ func TestSearchHandler(t *testing.T) {
 		}
 
 		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/teams/search", nil)
+		req := httptest.NewRequest("GET", "/teams/search?explain=true", nil)
 		req.Header.Add("content-type", "application/json")
 		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
 
@@ -99,16 +133,18 @@ func TestSearchHandler(t *testing.T) {
 		if mockClient.LastSearchRequest == nil {
 			t.Fatalf("expected Search to be called, but it was not")
 		}
+		require.False(t, mockClient.LastSearchRequest.Explain)
 		expectedFields := []string{
 			resource.SEARCH_FIELD_TITLE,
-			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_EMAIL,
-			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_PROVISIONED,
-			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_EXTERNAL_UID,
+			builders.TEAM_SEARCH_EMAIL,
+			builders.TEAM_SEARCH_PROVISIONED,
+			builders.TEAM_SEARCH_EXTERNAL_UID,
 			teamsearch.LegacyIDField,
 		}
 		if fmt.Sprintf("%v", mockClient.LastSearchRequest.Fields) != fmt.Sprintf("%v", expectedFields) {
 			t.Errorf("expected fields %v, got %v", expectedFields, mockClient.LastSearchRequest.Fields)
 		}
+		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, mockClient.LastSearchRequest.ResultFormat)
 	})
 
 	t.Run("returns error if search fails", func(t *testing.T) {

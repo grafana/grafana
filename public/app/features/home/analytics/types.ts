@@ -1,13 +1,41 @@
-import { type EventProperty } from '@grafana/runtime/unstable';
+import { type EventProperty, type EventVariants } from '@grafana/runtime/unstable';
 
 export interface TabChanged extends EventProperty {
   /** Tab the user switched to. */
   tab: string;
 }
 
+export interface RecommendationsShown extends EventProperty {
+  /** Stable ids of the recommendations shown to the user. */
+  recommendation_ids: string[];
+  /**
+   * Matrix base-row id driving the current card selection;
+   * values are the BaseRow union in solutionsMatrix.ts.
+   */
+  starting_state: string;
+  /**
+   * Stable id of the solution that was selected when the recommendations were shown;
+   * absent when no solution is selected.
+   */
+  solution?: string;
+}
+
 export interface ClearHistoryClicked extends EventProperty {
   /** Number of dashboards in history before clearing. */
   dashboard_count: number;
+}
+
+export interface SolutionFilterChanged extends EventProperty {
+  /** Stable id of the solution whose card scope changed. */
+  solution: string;
+  /** Whether the user saved a scope or cleared it. */
+  change: 'saved' | 'cleared';
+  /**
+   * Comma-separated names of the scope dimensions set after the change, in the solution's own terms
+   * (Kubernetes: cluster, namespaces, nodes); empty when cleared. Names only: the values are
+   * customer data and are never reported.
+   */
+  customized: string;
 }
 
 interface CtaClickedBase extends EventProperty {
@@ -21,9 +49,7 @@ interface CtaClickedBase extends EventProperty {
   solution?: string;
 }
 
-type Satisfies<Constraint, Target extends Constraint> = Target;
-
-export type CtaClicked = Satisfies<
+export type CtaClicked = EventVariants<
   CtaClickedBase,
   | ({
       surface: 'alerts_card';
@@ -76,7 +102,7 @@ export type CtaClicked = Satisfies<
     }
   | {
       surface: 'recommendations';
-      action: 'enable' | 'setup';
+      action: 'enable' | 'setup' | 'learn_more';
       placement: 'card' | 'pill';
       /** Stable id of the recommendation whose Enable CTA was clicked. */
       recommendation_id: string;
@@ -119,5 +145,21 @@ export type CtaClicked = Satisfies<
           placement: 'card';
           solution: string;
         }
+      | {
+          action: 'open_solution_filter';
+          placement: 'card';
+          solution: string;
+        }
+      | {
+          action: 'open_solution' | 'view_alerts' | 'enable' | 'setup' | 'learn_more';
+          placement: 'card';
+          solution: string;
+        }
     ))
+  | ({
+      surface: 'header';
+    } & {
+      action: 'view_alerts' | 'view_incidents';
+      placement: 'pill';
+    })
 >;

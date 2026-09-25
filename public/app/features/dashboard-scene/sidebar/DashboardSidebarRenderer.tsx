@@ -6,6 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
+  useFlagDashboardUndoRedo,
   useFlagGrafanaDashboardGlobalVariables,
   useFlagGrafanaViewPanelPane,
   useFlagFeedbackButton,
@@ -14,19 +15,17 @@ import { sceneGraph, type SceneVariable, useSceneObjectState } from '@grafana/sc
 import { Sidebar, useStyles2, useSidebarContext } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
+import { DashboardLoadingBar } from '../scene/DashboardLoadingBar';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { onOpenSnapshotOriginalDashboard } from '../scene/GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from '../scene/ManagedDashboardNavBarBadge';
-import { DashboardFiltersOverviewPane } from '../scene/dashboard-filters-overview/DashboardFiltersOverviewPane';
 import { type ToolbarActionProps } from '../scene/new-toolbar/types';
 import { DashboardInteractions } from '../utils/interactions';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
-import { DashboardCodePane } from './DashboardCodePane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardSidebarExtensionPoint } from './DashboardSidebarExtensionPoint';
-import { AddNewPane } from './add-new/AddNewPane';
-import { DashboardPredefinedVariablesPane } from './dashboard/DashboardPredefinedVariablesPane';
+import { DashboardCrossDashboardVariablesPane } from './dashboard/DashboardCrossDashboardVariablesPane';
 import { ToggleViewPanePaneEvent } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
 import { type DashboardSidebarLike, type DashboardSidebarPane } from './types';
@@ -40,7 +39,7 @@ export interface Props {
  */
 export function DashboardSidebarRenderer({ dashboard }: Props) {
   const sidebar = dashboard.state.sidebar;
-  const { openPane, selectionContext, outlinePane } = useSceneObjectState(sidebar, {
+  const { openPane, selectionContext, outlinePane, isLoading } = useSceneObjectState(sidebar, {
     shouldActivateOrKeepAlive: true,
   });
   const { isEditing, meta, uid, viewPanel } = dashboard.useState();
@@ -52,6 +51,24 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
   const viewPanelPane = useFlagGrafanaViewPanelPane();
   const globalDashboardVariablesEnabled = useFlagGrafanaDashboardGlobalVariables();
   const feedbackButton = useFlagFeedbackButton();
+  const dashboardUndoRedo = useFlagDashboardUndoRedo();
+  const onOpenAddPane = useCallback(async () => {
+    await sidebar.runPaneRequest(async (signal) => {
+      const { AddNewPane } = await import(/* webpackChunkName: "dashboard-add-new-pane" */ './add-new/AddNewPane');
+      if (!signal.aborted) {
+        sidebar.openPane(new AddNewPane({}));
+      }
+    });
+  }, [sidebar]);
+
+  const onOpenCodePane = useCallback(async () => {
+    await sidebar.runPaneRequest(async (signal) => {
+      const { DashboardCodePane } = await import(/* webpackChunkName: "dashboard-code-pane" */ './DashboardCodePane');
+      if (!signal.aborted) {
+        sidebar.openPane(new DashboardCodePane({}));
+      }
+    });
+  }, [sidebar]);
 
   const onClickHideSidebar: React.MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
@@ -74,9 +91,14 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
 
   return (
     <>
-      {openPane && (
+      {(openPane || isLoading) && (
         <Sidebar.OpenPane>
-          <openPane.Component key={openPane.state.key} model={openPane} />
+          {isLoading && <DashboardLoadingBar label={t('dashboard.loading.sidebar', 'Loading sidebar')} />}
+          {openPane ? (
+            <openPane.Component key={openPane.state.key} model={openPane} />
+          ) : (
+            <Sidebar.PaneHeader title={t('dashboard.loading.sidebar-title', 'Loading…')} />
+          )}
         </Sidebar.OpenPane>
       )}
       <Sidebar.Toolbar>
@@ -85,11 +107,11 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
             <Sidebar.Button
               icon="plus"
               variant="primary"
-              onClick={() => sidebar.openPane(new AddNewPane({}))}
+              onClick={onOpenAddPane}
               title={t('dashboard.sidebar.add.title', 'Add')}
               tooltip={t('dashboard.sidebar.add.tooltip', 'Add new element')}
               data-testid={selectors.pages.Dashboard.Sidebar.addButton}
-              active={openPane instanceof AddNewPane}
+              active={openPane?.getId() === 'add'}
             />
             <Sidebar.Button
               icon="cog"
@@ -117,23 +139,20 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
               tooltip={t('dashboard.sidebar.edit-schema.tooltip', 'Edit as code')}
               title={t('dashboard.sidebar.edit-schema.title', 'Code')}
               icon="brackets-curly"
-              onClick={() => sidebar.openPane(new DashboardCodePane({}))}
+              onClick={onOpenCodePane}
               data-testid={selectors.pages.Dashboard.Sidebar.codeButton}
-              active={openPane instanceof DashboardCodePane}
+              active={openPane?.getId() === 'code'}
             />
             {globalDashboardVariablesEnabled && (
               <Sidebar.Button
-                icon="dollar-alt"
-                onClick={() => sidebar.openPane(new DashboardPredefinedVariablesPane({}))}
-                title={t('dashboard.sidebar.predefined-variables.title', 'Predefined variables')}
-                tooltip={t(
-                  'dashboard.sidebar.predefined-variables.tooltip',
-                  'Choose which global and folder variables this dashboard receives'
-                )}
-                active={openPane?.getId() === 'predefined-variables'}
+                icon="gf-variable"
+                onClick={() => sidebar.openPane(new DashboardCrossDashboardVariablesPane({}))}
+                title={t('dashboard.sidebar.cross-dashboard-variables.title', 'Cross-dashboard')}
+                tooltip={t('dashboard.sidebar.cross-dashboard-variables.tooltip', 'Choose global and folder variables')}
+                active={openPane instanceof DashboardCrossDashboardVariablesPane}
               />
             )}
-            {config.featureToggles.dashboardUndoRedo && (
+            {dashboardUndoRedo && (
               <>
                 <Sidebar.Divider />
                 <UndoButton dashboard={dashboard} />
@@ -202,6 +221,17 @@ function FiltersOverviewButton({
   const variables: SceneVariable[] = sceneGraph.getVariables(sidebar)?.useState().variables ?? [];
   const hasFilters = variables.some((v) => v.state.type === 'adhoc');
 
+  const onClick = useCallback(async () => {
+    await sidebar.runPaneRequest(async (signal) => {
+      const { DashboardFiltersOverviewPane } = await import(
+        /* webpackChunkName: "dashboard-filters-overview" */ '../scene/dashboard-filters-overview/DashboardFiltersOverviewPane'
+      );
+      if (!signal.aborted) {
+        sidebar.openPane(new DashboardFiltersOverviewPane({}));
+      }
+    });
+  }, [sidebar]);
+
   if (!hasFilters) {
     return null;
   }
@@ -209,10 +239,10 @@ function FiltersOverviewButton({
   return (
     <Sidebar.Button
       icon="filter"
-      onClick={() => sidebar.openPane(new DashboardFiltersOverviewPane({}))}
+      onClick={onClick}
       title={t('dashboard.sidebar.filters.title', 'Filters')}
       tooltip={t('dashboard.sidebar.filters.tooltip', 'Filters overview')}
-      active={openPane instanceof DashboardFiltersOverviewPane}
+      active={openPane?.getId() === 'filters'}
     />
   );
 }

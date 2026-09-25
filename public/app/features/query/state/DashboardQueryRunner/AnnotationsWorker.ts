@@ -3,7 +3,8 @@ import { from, merge, type Observable, of } from 'rxjs';
 import { catchError, filter, finalize, map, mergeAll, mergeMap, reduce, takeUntil } from 'rxjs/operators';
 
 import { type AnnotationQuery, type DataSourceApi } from '@grafana/data';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { PublicAnnotationsDataSource } from 'app/features/query/state/DashboardQueryRunner/PublicAnnotationsDataSource';
 
 import { AnnotationQueryFinished, AnnotationQueryStarted } from '../../../../types/events';
@@ -53,7 +54,7 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
         const pubdashDatasource = new PublicAnnotationsDataSource();
         datasourceObservable = of(pubdashDatasource).pipe(catchError(handleDatasourceSrvError));
       } else {
-        datasourceObservable = from(getDataSourceSrv().get(annotation.datasource)).pipe(
+        datasourceObservable = from(getDataSourceInstance(annotation.datasource)).pipe(
           catchError(handleDatasourceSrvError) // because of the reduce all observables need to be completed, so an erroneous observable wont do
         );
       }

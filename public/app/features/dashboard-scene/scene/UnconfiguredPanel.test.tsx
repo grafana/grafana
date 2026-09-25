@@ -70,11 +70,14 @@ jest.mock('../utils/interactions', () => ({
   DashboardInteractions: { panelActionClicked: jest.fn(), editSessionStarted: jest.fn() },
 }));
 
-// Only mock the two functions this component imports from utils — avoid spreading
+// Only mock the functions this component imports. Avoid spreading
 // jest.requireActual which can pull in complex scene dependencies.
-jest.mock('../utils/utils', () => ({
-  getVizPanelKeyForPanelId: (id: number) => `panel-${id}`,
+jest.mock('../utils/findVizPanel', () => ({
   findVizPanelByKey: jest.fn(),
+}));
+
+jest.mock('../utils/utils-panels', () => ({
+  getVizPanelKeyForPanelId: (id: number) => `panel-${id}`,
 }));
 
 // ─── typed mock references ────────────────────────────────────────────────────
@@ -90,7 +93,7 @@ const mockLocationServicePartial = locationService.partial as jest.Mock;
 const mockSceneGraphGetTimeRange = sceneGraph.getTimeRange as jest.Mock;
 // findVizPanelByKey is imported inside tests to keep the reference in sync with the mock
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const mockFindVizPanelByKey: jest.Mock = require('../utils/utils').findVizPanelByKey;
+const mockFindVizPanelByKey: jest.Mock = require('../utils/findVizPanel').findVizPanelByKey;
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 

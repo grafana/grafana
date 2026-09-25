@@ -12,18 +12,18 @@ import {
   HIGHLIGHT_CATEGORY_PARAM_NAME,
 } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 
+import { getEditableElementFor } from '../../actions/utils/getEditableElementFor';
 import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { DashboardLinksSet } from '../../settings/links/DashboardLinksSet';
-import { LinkEdit } from '../../settings/links/LinkAddEditableElement';
+import { LinkEdit } from '../../settings/links/LinkEdit';
 import { DashboardFiltersSet } from '../../settings/variables/DashboardFiltersSet';
 import { SectionFiltersSet } from '../../settings/variables/SectionFiltersSet';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
-import { getEditableElementFor } from '../shared';
 import { SidebarCategoryType, type DashboardSidebarLike } from '../types';
 import { useOutlineRename } from '../useOutlineRename';
 

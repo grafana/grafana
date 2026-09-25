@@ -1,14 +1,17 @@
 package expr
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -155,8 +158,22 @@ func UnmarshalThresholdCommand(rn *rawNode) (Command, error) {
 		}
 		unloading.Invert = true
 		var d Fingerprints
-		if firstCondition.LoadedDimensions != nil {
-			d, err = FingerprintsFromFrame(firstCondition.LoadedDimensions)
+		if firstCondition.LoadedFingerprints != nil {
+			d = make(Fingerprints, len(firstCondition.LoadedFingerprints))
+			for _, value := range firstCondition.LoadedFingerprints {
+				fp, err := strconv.ParseUint(value, 10, 64)
+				if err != nil {
+					return nil, fmt.Errorf("failed to parse loaded fingerprint %q: %w", value, err)
+				}
+				d[data.Fingerprint(fp)] = struct{}{}
+			}
+		} else if len(firstCondition.LoadedDimensions) > 0 && string(firstCondition.LoadedDimensions) != "null" {
+			// TODO yuri: This is a temporary workaround. Delete it once everything is switched to loadedFingerprints field
+			frame, err := decodeLoadedDimensionsFrame(firstCondition.LoadedDimensions)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse loaded dimensions: %w", err)
+			}
+			d, err = fingerprintsFromFrame(frame)
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse loaded dimensions: %w", err)
 			}
@@ -235,9 +252,15 @@ type ThresholdCommandConfig struct {
 }
 
 type ThresholdConditionJSON struct {
-	Evaluator        ConditionEvalJSON  `json:"evaluator"`
-	UnloadEvaluator  *ConditionEvalJSON `json:"unloadEvaluator,omitempty"`
-	LoadedDimensions *data.Frame        `json:"loadedDimensions,omitempty"`
+	Evaluator       ConditionEvalJSON  `json:"evaluator"`
+	UnloadEvaluator *ConditionEvalJSON `json:"unloadEvaluator,omitempty"`
+
+	// Fingerprints of the series that are already firing, encoded as decimal strings to preserve their full uint64 precision through untyped JSON decoding. Supersedes LoadedDimensions
+	LoadedFingerprints []string `json:"loadedFingerprints,omitempty"`
+
+	// Deprecated: use LoadedFingerprints. Kept raw and decoded only when LoadedFingerprints is
+	// absent, so an optional frame parsing error would not break everything
+	LoadedDimensions json.RawMessage `json:"loadedDimensions,omitempty"`
 }
 
 // IsHysteresisExpression returns true if the raw model describes a hysteresis command:
@@ -252,7 +275,8 @@ func IsHysteresisExpression(query map[string]any) bool {
 	return c != nil
 }
 
-// SetLoadedDimensionsToHysteresisCommand mutates the input map and sets field "conditions[0].loadedMetrics" with the data frame created from the provided fingerprints.
+// SetLoadedDimensionsToHysteresisCommand mutates the input map and sets field
+// "conditions[0].loadedFingerprints" to the provided fingerprints.
 func SetLoadedDimensionsToHysteresisCommand(query map[string]any, fingerprints Fingerprints) error {
 	condition, err := getConditionForHysteresisCommand(query)
 	if err != nil {
@@ -261,8 +285,62 @@ func SetLoadedDimensionsToHysteresisCommand(query map[string]any, fingerprints F
 	if condition == nil {
 		return errors.New("not a hysteresis command")
 	}
-	fr := FingerprintsToFrame(fingerprints)
-	condition["loadedDimensions"] = fr
+	fp := make([]string, 0, len(fingerprints))
+	for fingerprint := range fingerprints {
+		fp = append(fp, strconv.FormatUint(uint64(fingerprint), 10))
+	}
+	condition["loadedFingerprints"] = fp
+	return nil
+}
+
+func decodeLoadedDimensionsFrame(raw json.RawMessage) (*data.Frame, error) {
+	schemaIndex := bytes.Index(raw, []byte(`"schema"`))
+	dataIndex := bytes.Index(raw, []byte(`"data"`))
+	if schemaIndex >= 0 && dataIndex >= 0 && dataIndex < schemaIndex {
+		// this is the last resort of fixing the frame. It's a temporary dirty hack to workaround shuffling of json keys
+		// by the querier pipeline until it's switched to loadedFingerprints array
+		reordered, ok := schemaBeforeData(raw)
+		if ok {
+			raw = reordered
+		}
+	}
+	frame := &data.Frame{}
+	if err := frame.UnmarshalJSON(raw); err != nil {
+		return nil, err
+	}
+	return frame, nil
+}
+
+func schemaBeforeData(frame json.RawMessage) (json.RawMessage, bool) {
+	var parts struct {
+		Schema json.RawMessage `json:"schema"`
+		Data   json.RawMessage `json:"data"`
+	}
+	if err := json.Unmarshal(frame, &parts); err != nil || parts.Schema == nil || parts.Data == nil {
+		return nil, false
+	}
+	out := make([]byte, 0, len(frame))
+	out = append(out, `{"schema":`...)
+	out = append(out, parts.Schema...)
+	out = append(out, `,"data":`...)
+	out = append(out, parts.Data...)
+	return append(out, '}'), true
+}
+
+// SetLoadedDimensionsToHysteresisCommandAsFrame mutates the input map and sets field
+// "conditions[0].loadedDimensions" with the data frame created from the provided fingerprints.
+//
+// Deprecated: use SetLoadedDimensionsToHysteresisCommand. Only for writing alongside it, so that a
+// reader that predates loadedFingerprints still finds something it understands.
+func SetLoadedDimensionsToHysteresisCommandAsFrame(query map[string]any, fingerprints Fingerprints) error {
+	condition, err := getConditionForHysteresisCommand(query)
+	if err != nil {
+		return err
+	}
+	if condition == nil {
+		return errors.New("not a hysteresis command")
+	}
+	condition["loadedDimensions"] = fingerprintsToFrame(fingerprints)
 	return nil
 }
 
@@ -294,8 +372,10 @@ func getConditionForHysteresisCommand(query map[string]any) (map[string]any, err
 	default:
 		return nil, errors.New("invalid threshold command: field \"condition\" expected to be an array of objects")
 	}
-	_, ok = condition["unloadEvaluator"]
-	if !ok {
+	// A null unloadEvaluator must be treated as absent: UnmarshalThresholdCommand decodes it to a nil
+	// pointer and builds a plain threshold, so detection here has to agree or we patch a command that
+	// never reads the loaded dimensions.
+	if u, ok := condition["unloadEvaluator"]; !ok || u == nil {
 		return nil, nil
 	}
 	return condition, nil

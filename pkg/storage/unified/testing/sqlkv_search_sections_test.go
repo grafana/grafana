@@ -86,7 +86,7 @@ func TestIntegrationSQLKVSearchSnapshotSections(t *testing.T) {
 func newSQLKVForTest(t *testing.T) resource.KV {
 	t.Helper()
 	ctx := context.Background()
-	dbstore := db.InitTestDB(t)
+	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 	require.NoError(t, err)
 	dbConn, err := eDB.Init(ctx)

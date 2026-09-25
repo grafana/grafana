@@ -1,6 +1,7 @@
 package provisioning
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/google/go-github/v82/github"
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -272,6 +274,93 @@ func TestIntegrationHealth(t *testing.T) {
 		// Timestamp should have changed again due to the health check
 		require.NotEqual(t, afterTest.Status.Health.Checked, finalRepo.Status.Health.Checked, "timestamp should change when repository becomes healthy again")
 	})
+}
+
+// TestIntegrationProvisioning_UnhealthyRepositorySkipsJobs verifies the driver's
+// job-skip gate: once a repository's health check reports an authentication
+// failure, work jobs are completed with a warning instead of running the worker
+// against the known-bad credential (which would fail deterministically and count
+// against the job success-rate SLI).
+func TestIntegrationProvisioning_UnhealthyRepositorySkipsJobs(t *testing.T) {
+	helper := sharedHelper(t)
+
+	const repo = "test-authz-skip-jobs"
+	repoConfig := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "provisioning.grafana.app/v0alpha1",
+		"kind":       "Repository",
+		"metadata": map[string]any{
+			"name":      repo,
+			"namespace": "default",
+			"finalizers": []string{
+				"remove-orphan-resources",
+				"cleanup",
+			},
+		},
+		"spec": map[string]any{
+			"title": "Authz-failed repo skips jobs",
+			"type":  "git",
+			"git": map[string]any{
+				"url":    "https://github.com/grafana/grafana-git-sync-demo.git",
+				"branch": "integration-test",
+			},
+			"workflows": []string{"write"},
+			"sync": map[string]any{
+				"enabled":         false,
+				"target":          "folder",
+				"intervalSeconds": 10,
+			},
+		},
+		"secure": map[string]any{
+			"token": map[string]any{
+				// A garbage token fails the authorization probe (401) before any
+				// write-permission check, so the health check records an
+				// AuthenticationFailed Ready condition -- the exact state the gate
+				// keys off (a valid read-only token would instead be a reachable
+				// InvalidSpec, which must NOT skip).
+				"create": base64.StdEncoding.EncodeToString([]byte("ghp_invalid_authentication_will_fail")),
+			},
+		},
+	}}
+
+	_, err := helper.Repositories.Resource.Create(t.Context(), repoConfig, metav1.CreateOptions{})
+	require.NoError(t, err, "repository creation should succeed")
+	t.Cleanup(func() {
+		_ = helper.Repositories.Resource.Delete(context.Background(), repo, metav1.DeleteOptions{})
+	})
+
+	// Wait until the health check has run and settled on AuthenticationFailed for
+	// the current generation -- asserting the reason explicitly so a wrong
+	// classification fails here rather than silently letting the job run.
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		obj, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
+		if !assert.NoError(c, err) {
+			return
+		}
+		r := common.MustFromUnstructured[provisioning.Repository](t, obj)
+		assert.Greater(c, r.Status.Health.Checked, int64(0), "health check has not run yet")
+		assert.False(c, r.Status.Health.Healthy, "repository should be unhealthy")
+		assert.Equal(c, provisioning.HealthFailureHealth, r.Status.Health.Error)
+		ready := common.FindCondition(r.Status.Conditions, provisioning.ConditionTypeReady)
+		if assert.NotNil(c, ready, "Ready condition should exist") {
+			assert.Equal(c, metav1.ConditionFalse, ready.Status)
+			assert.Equal(c, provisioning.ReasonAuthenticationFailed, ready.Reason)
+			assert.Equal(c, r.Generation, ready.ObservedGeneration,
+				"controller should have observed the current generation")
+		}
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
+		"repository should become unhealthy with an AuthenticationFailed Ready condition")
+
+	// Create the job directly, bypassing the jobs subresource connector (which
+	// already rejects unhealthy repos with 424), so the driver's in-flight skip
+	// gate is what's exercised. It must complete as a warning without running the
+	// worker against the broken credential.
+	job := helper.CreatePullJob(t, repo+"-job", repo)
+	completed := helper.AwaitJob(t, job)
+	common.RequireJobWarning(t, completed)
+	// Assert the exact skip message so this proves the auth-failure gate fired,
+	// not some other warning that happens to leave the job in a warning state.
+	completedJob := common.MustFromUnstructured[provisioning.Job](t, completed)
+	common.RequireJobWarningContains(t, completedJob, "repository authentication failed - job skipped")
 }
 
 // parseTestResults extracts TestResults from the API response

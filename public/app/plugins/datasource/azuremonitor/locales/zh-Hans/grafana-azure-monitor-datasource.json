@@ -53,6 +53,11 @@
       "placeholder-symbol-client-secret": "已配置",
       "reset-symbol-client-secret": "重置"
     },
+    "auxiliary-logs-toggle": {
+      "aria-label-enable-auxiliary-logs": "",
+      "description-auxiliary-logs": "",
+      "label-enable-auxiliary-logs": ""
+    },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "{{queryDisplayName}}原始查询",
       "aria-label-use-query": "使用此查询按钮",
@@ -79,9 +84,9 @@
       "label-enable-basic-logs": "启用基本日志"
     },
     "batch-api-toggle": {
-      "aria-label-enable-batch-api": "",
-      "description-batch-api": "",
-      "label-enable-batch-api": ""
+      "aria-label-enable-batch-api": "批量 API",
+      "description-batch-api": "在单个请求中查询多个资源，从而提高大型数据面板的性能。需要 <6>metrics.monitor.azure.com</6> 上订阅范围内的 <2>Monitoring Reader</2> 角色。超出免费套餐范围<9>可能产生额外费用</9>。",
+      "label-enable-batch-api": "启用批量 API"
     },
     "config-editor": {
       "description-additional-settings": "附加设置是可选设置，通过配置，可对数据源进行更精细的控制。这包括安全 Socks 代理、请求超时和转发的 Cookie。",
@@ -105,7 +110,11 @@
       "load-subscriptions": "加载订阅"
     },
     "dimension-fields": {
-      "aria-label-remove": "删除",
+      "aria-label-field": "维度 {{position}} 字段",
+      "aria-label-operator": "维度 {{position}} 运算符",
+      "aria-label-remove": "移除维度 {{position}}",
+      "aria-label-value": "维度 {{position}} 值",
+      "aria-label-values": "维度 {{position}} 值",
       "label-dimensions": "维度",
       "placeholder-field": "字段",
       "placeholder-operation": "运算",
@@ -178,19 +187,47 @@
       "tooltip-limit": "限制返回的行数（默认为 1000）。"
     },
     "logs-management": {
+      "body-auxiliary-logs-queries": "",
       "body-basic-logs-queries": "您确定要切换到基本日志吗？",
       "confirmText-confirm": "确认",
+      "description-auxiliary-logs-queries": "",
       "description-basic-logs-queries": "基本日志查询根据扫描的数据量产生费用。",
+      "label-analytics": "",
+      "label-auxiliary": "",
+      "label-basic": "",
       "label-logs": "日志",
+      "title-auxiliary-logs-queries": "",
       "title-basic-logs-queries": "基本日志查询",
-      "tooltip-logs": "指定运行基本日志还是分析日志查询。"
+      "tooltip-logs": "指定运行基本日志还是分析日志查询。",
+      "tooltip-logs-all": "",
+      "tooltip-logs-aux": ""
     },
     "logs-query-builder": {
       "title-no-tables": "资源加载成功，但没有任何表格"
     },
     "logs-query-editor": {
       "learn-more": "了解更多",
-      "view-query": "在 Azure 门户中查看查询"
+      "notice-auxiliary-single-resource": "",
+      "notice-basic-single-resource": "",
+      "notice-same-resource-type": "",
+      "tier-switch-body-analytics": "",
+      "tier-switch-body-auxiliary": "",
+      "tier-switch-body-basic": "",
+      "tier-switch-revert": "",
+      "tier-switch-title": "",
+      "view-query": "在 Azure 门户中查看查询",
+      "warning-auxiliary-data-ingested": "",
+      "warning-auxiliary-raw": "",
+      "warning-basic-raw": "",
+      "warning-data-ingested": ""
+    },
+    "logs-table-section": {
+      "description-auxiliary-disabled": "",
+      "description-auxiliary-enabled": "",
+      "description-basic-disabled": "",
+      "description-basic-enabled": "",
+      "description-plan-unavailable": "",
+      "label-all-columns": ""
     },
     "metric-name-field": {
       "label-metric": "指标"
@@ -199,11 +236,11 @@
       "label-metric-namespace": "指标命名空间"
     },
     "metrics-query-editor": {
-      "selection-notice-batch": "",
-      "selection-notice-standard": ""
+      "selection-notice-batch": "您可以跨订阅和区域选择相同资源类型的项目。不同订阅或区域中的资源在单独的请求中查询，并且可能会单独失败。要选择其他资源类型的资源，请先取消选中当前选择。",
+      "selection-notice-standard": "您可以选择资源类型和位置相同的项目。要选择其他资源类型或位置的资源，请先取消选中当前选择。"
     },
     "monitor-config": {
-      "title-features": ""
+      "title-features": "特色"
     },
     "nested-row": {
       "text-loading": "加载中..."
@@ -218,8 +255,8 @@
       "tooltip-order-by": "根据一列或多列以升序或降序对结果进行排序。"
     },
     "pagination": {
-      "results-truncated-message": "",
-      "results-truncated-title": ""
+      "results-truncated-message": "在 {{maxPages}} 页后停止加载；某些结果可能会被省略。",
+      "results-truncated-title": "Azure Monitor"
     },
     "query-editor": {
       "alert-error-occurred": "从 Azure Monitor 请求元数据时发生错误"

@@ -68,7 +68,8 @@ export type QueryHistoryPreference = {
   homeTab?: string;
 };
 export type UpdatePrefsCmd = {
-  /** The numerical :id of a favorited dashboard */
+  /** The numerical :id of a favorited dashboard
+    Deprecated: Use HomeDashboardUID instead */
   homeDashboardId?: number;
   homeDashboardUID?: string;
   language?: string;

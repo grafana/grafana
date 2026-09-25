@@ -16,7 +16,7 @@ labels:
 menuTitle: Annotations
 title: InfluxDB annotations
 weight: 500
-review_date: 2026-05-01
+review_date: 2026-08-04
 ---
 
 # InfluxDB annotations

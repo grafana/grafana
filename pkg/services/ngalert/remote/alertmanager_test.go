@@ -151,7 +151,7 @@ func TestNewAlertmanager(t *testing.T) {
 func TestGetRemoteState(t *testing.T) {
 	const tenantID = "test"
 	ctx := context.Background()
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	// getOkHandler allows us to specify a full state the test server is going to respond with.
 	getOkHandler := func(state string) http.HandlerFunc {
@@ -293,7 +293,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 	// Encrypt receivers to save secrets in the database.
 	var c v1.AMConfigDB
 	require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithSecret), &c))
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	encryptedReceivers, err := encryptedGrafanaReceivers(c.AlertmanagerConfig.Receivers, notifier.EncryptIntegrationSettings(context.Background(), secretsService))
 	c.AlertmanagerConfig.Receivers = encryptedReceivers
 	require.NoError(t, err)
@@ -430,7 +430,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 
 func TestCompareAndSendConfiguration(t *testing.T) {
 	const tenantID = "test"
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	var got string
 	var gotCnt int
@@ -625,8 +625,12 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 				GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
 					AlertmanagerConfig: func() definition.PostableApiAlertingConfig {
 						c := policy_exports.Config()
-						c.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(c.AlertmanagerConfig.Route, c.ManagedRoutes)
-						return notifier.PostableApiAlertingConfigToAPI(c.AlertmanagerConfig)
+						apiCfg := notifier.PostableApiAlertingConfigToAPI(c.AlertmanagerConfig, c.SortedTimeIntervals())
+						apiCfg.Route = legacy_storage.WithManagedRoutes(c)
+						return definition.PostableApiAlertingConfig{
+							Config:    apiCfg,
+							Receivers: v1.ReceiversToDB(c.GetReceivers()),
+						}
 					}(),
 				},
 			},
@@ -698,7 +702,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 // managed receivers before being sent to the remote Alertmanager.
 func TestCompareAndSendConfigurationConvertsMimirReceivers(t *testing.T) {
 	const tenantID = "test"
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	var got string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -939,7 +943,7 @@ func Test_isDefaultConfiguration(t *testing.T) {
 			}))
 			defer server.Close()
 
-			secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+			secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			c := AlertmanagerConfig{
 				OrgID:         1,
 				TenantID:      tenantID,
@@ -1008,7 +1012,7 @@ receivers:
 		},
 	}
 
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	c := AlertmanagerConfig{
 		OrgID:         1,
@@ -1078,19 +1082,19 @@ func TestCompareAndSendConfigurationWithExtraConfigs(t *testing.T) {
 					Receiver: "grafana-default-email",
 				},
 			},
-			Receivers: []*v1.PostableApiReceiver{
-				{
-					Name: "grafana-default-email",
-					GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-						{
-							Name:     "email receiver",
-							Type:     "email",
-							Settings: apimodels.RawMessage(`{"addresses":"<example@example.com>"}`),
-						},
+		},
+		Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
+			{
+				Name: "grafana-default-email",
+				GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+					{
+						Name:     "email receiver",
+						Type:     "email",
+						Settings: apimodels.RawMessage(`{"addresses":"<example@example.com>"}`),
 					},
 				},
 			},
-		},
+		}),
 		ExtraConfigs: []v1.ExtraConfiguration{
 			{
 				Identifier: "test-external",
@@ -1107,7 +1111,7 @@ receivers:
 		},
 	}
 
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	tc := notifier.NewCrypto(secretsService, nil, log.NewNopLogger())
 	ctx := context.Background()
 
@@ -1169,7 +1173,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 	var testConfigCreatedAt int64
 
 	store := ngfakes.NewFakeKVStore(t)
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	moa, am := newRemoteMOA(t, cfg, nil, featuremgmt.WithFeatures(), secretsService)
 	am.state = notifier.NewFileStore(1, store)
@@ -1718,7 +1722,7 @@ func verifyAutogenExistsAndRemove(t *testing.T, cfg *client.UserGrafanaConfig) {
 }
 
 func isAutogenRoute(route *apimodels.Route) bool {
-	return notifier.IsAutogeneratedRoot(v1.RouteToModel(route))
+	return notifier.IsAutogeneratedRoot(route)
 }
 
 func removeAutogenConfigIfExists(route *apimodels.Route) {

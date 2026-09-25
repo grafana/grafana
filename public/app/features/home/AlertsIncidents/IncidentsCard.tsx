@@ -1,7 +1,7 @@
 import { t, Trans } from '@grafana/i18n';
 import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
 import { Badge, LinkButton, Tooltip } from '@grafana/ui';
-import { ACTIVE_INCIDENTS_QUERY_LIMIT } from 'app/features/alerting/unified/api/incidentsApi';
+import { ACTIVE_INCIDENTS_QUERY_LIMIT, type IncidentFieldFilter } from 'app/features/alerting/unified/api/incidentsApi';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { SeverityBars } from 'app/features/alerting/unified/triage/scene/filters/SeverityBars';
 import { canonicalSeverity } from 'app/features/alerting/unified/triage/scene/filters/severity';
@@ -12,15 +12,22 @@ import { ctaClicked } from '../analytics/main';
 import { DeclareAndViewIncidentsButtons } from './DeclareAndViewIncidentsButtons';
 import { SummaryCard, SummaryCardAge, SummaryCardPrefix } from './SummaryCard';
 import { severityLevelColor } from './severity';
-import { useIncidents, type IncidentsData } from './useIncidents';
+import { type IncidentsData } from './useIncidents';
 
-export function IncidentsCard() {
-  const data = useIncidents();
-  return <IncidentsCardView data={data} />;
+/** Empty-state copy names the filtered value; the unfiltered scope uses the generic line. */
+function emptyMessage(filter: IncidentFieldFilter | undefined): string {
+  if (filter) {
+    // Key and param predate the widening past `team`; the copy fits any field value, so they stay.
+    return t('home.incidents-card.empty-selected-team', 'No active incidents for {{team}}.', {
+      team: filter.value,
+      interpolation: { escapeValue: false },
+    });
+  }
+  return t('home.incidents-card.empty', 'No active incidents.');
 }
 
 /** Render-only card body; data comes from useIncidents so callers control where the hook runs. */
-export function IncidentsCardView({
+export function IncidentsCard({
   data,
   hideFooterActions = false,
 }: {
@@ -28,7 +35,7 @@ export function IncidentsCardView({
   hideFooterActions?: boolean;
 }) {
   const redesignEnabled = useFlagGrafanaGrowthHomepage();
-  const { pluginId, canAccess, canDeclare, displayed, count, hasMore, loading, error, refetch } = data;
+  const { pluginId, canAccess, canDeclare, displayed, count, hasMore, filter, loading, error, refetch } = data;
 
   return (
     <SummaryCard
@@ -43,7 +50,7 @@ export function IncidentsCardView({
           ? { title: t('home.incidents-card.error-title', 'Could not load active incidents'), onRetry: () => refetch() }
           : undefined
       }
-      emptyMessage={t('home.incidents-card.empty', 'No active incidents.')}
+      emptyMessage={emptyMessage(filter)}
       items={displayed}
       getItemKey={(incident) => incident.incidentID}
       renderItem={(incident) => (

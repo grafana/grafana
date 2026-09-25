@@ -82,7 +82,7 @@ function setMetas(metas: PluginMetasResponse | null) {
   if (!metas?.items.length) {
     // null means plugin meta failed to load, empty items means the API had nothing
     const message = metas ? FALLBACK_TO_BOOTDATA_WARNING : FALLBACK_TO_BOOTDATA_ERROR_WARNING;
-    // eslint-disable-next-line no-restricted-syntax
+    // eslint-disable-next-line @grafana/no-config-datasources
     setDatasourcesAndAliases(extractFromConfig(config.datasources));
     logPluginMetaWarning(message, { pluginType: PluginType.datasource, requestUrl: getPluginMetasUrl() });
     return;
@@ -95,7 +95,7 @@ function setMetas(metas: PluginMetasResponse | null) {
 
 async function initDatasourcePluginMetas(): Promise<void> {
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
-    // eslint-disable-next-line no-restricted-syntax
+    // eslint-disable-next-line @grafana/no-config-datasources
     setDatasourcesAndAliases(extractFromConfig(config.datasources));
     logPluginMetaDebug('PluginMeta: initializing datasource plugins cache with bootdata values', {});
     return;

@@ -2,6 +2,7 @@ import { type FormEvent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { FieldSet } from '@grafana/ui';
 
 import { VariableLegend } from './VariableLegend';
 import { VariableTextField } from './VariableTextField';
@@ -13,7 +14,7 @@ interface ConstantVariableFormProps {
 
 export function ConstantVariableForm({ onChange, constantValue }: ConstantVariableFormProps) {
   return (
-    <>
+    <FieldSet>
       <VariableLegend>
         <Trans i18nKey="dashboard-scene.constant-variable-form.constant-options">Constant options</Trans>
       </VariableLegend>
@@ -25,6 +26,6 @@ export function ConstantVariableForm({ onChange, constantValue }: ConstantVariab
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.ConstantVariable.constantOptionsQueryInputV2}
         width={30}
       />
-    </>
+    </FieldSet>
   );
 }

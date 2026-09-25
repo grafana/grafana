@@ -89,6 +89,11 @@ export const versionedComponents = {
       '13.2.0': 'data-testid BuildDashboardButton from suggestions button',
     },
   },
+  ControlsAddButton: {
+    triggerButton: {
+      '13.3.0': 'data-testid ControlsAddButton trigger button',
+    },
+  },
   /**
    * @deprecated use DashboardSidebarSplitter instead
    */
@@ -563,6 +568,9 @@ export const versionedComponents = {
       title: {
         [MIN_GRAFANA_VERSION]: (title: string) => `data-testid Panel header ${title}`,
       },
+      subtitle: {
+        '13.2.0': `data-testid Panel subtitle`,
+      },
       content: {
         '11.1.0': 'data-testid panel content',
       },
@@ -583,6 +591,9 @@ export const versionedComponents = {
       },
       headerCornerInfo: {
         [MIN_GRAFANA_VERSION]: (mode: string) => `Panel header ${mode}`,
+      },
+      headerNotice: {
+        '13.3.0': (severity: string) => `data-testid Panel header notice ${severity}`,
       },
       status: {
         '10.2.0': (status: string) => `data-testid Panel status ${status}`,
@@ -671,6 +682,9 @@ export const versionedComponents = {
           '12.4.0': 'data-testid tableng row expander',
         },
         cellActions: {
+          triggerButton: {
+            '13.3.0': 'data-testid tableng cell-actions trigger-button',
+          },
           inspectButton: {
             '13.2.0': 'data-testid tableng cell-actions inspect-button',
           },
@@ -679,6 +693,17 @@ export const versionedComponents = {
           },
           filterOutButton: {
             '13.2.0': 'data-testid tableng cell-actions filter-out-button',
+          },
+        },
+        headerColumnMenu: {
+          button: {
+            '13.3.0': 'data-testid tableng header column-menu-button',
+          },
+          filterItem: {
+            '13.3.0': 'data-testid tableng header column-menu-filter-item',
+          },
+          activeFilterButton: {
+            '13.3.0': 'data-testid tableng header active-filter-button',
           },
         },
         Filters: {
@@ -755,6 +780,11 @@ export const versionedComponents = {
         '10.4.0': 'data-testid drawer subtitle',
       },
     },
+    PanelTimeRangeDrawer: {
+      timeComparisonSelect: {
+        '13.3.0': 'data-testid Panel time range drawer time comparison select',
+      },
+    },
     DashboardSaveDrawer: {
       saveButton: {
         '11.1.0': 'data-testid Save dashboard drawer button',
@@ -765,6 +795,14 @@ export const versionedComponents = {
       saveAsTitleInput: {
         '13.2.0': 'data-testid Save dashboard title field',
         '11.1.0': 'Save dashboard title field',
+      },
+    },
+    NewLibraryPanelDrawer: {
+      nameInput: {
+        '13.3.0': 'data-testid New library panel name field',
+      },
+      createButton: {
+        '13.3.0': 'data-testid New library panel create button',
       },
     },
   },
@@ -891,6 +929,19 @@ export const versionedComponents = {
       },
     },
     ElementEditPane: {
+      List: {
+        ListItem: {
+          editButton: {
+            '13.1.0': (itemKey: string) => `data-testid element-edit edit button ${itemKey}`,
+          },
+          duplicateButton: {
+            '13.1.0': (itemKey: string) => `data-testid element-edit duplicate button ${itemKey}`,
+          },
+          deleteButton: {
+            '13.1.0': (itemKey: string) => `data-testid element-edit delete button ${itemKey}`,
+          },
+        },
+      },
       variableType: {
         '12.0.0': (type?: string) => `data-testid variable type ${type}`,
       },
@@ -1048,6 +1099,14 @@ export const versionedComponents = {
     rows: {
       '13.1.0': 'data-testid Query editor row',
       [MIN_GRAFANA_VERSION]: 'Query editor row',
+    },
+  },
+  QueryEditorCoauthoring: {
+    selectionToolbar: {
+      '13.3.0': 'data-testid query-coauthoring-selection-toolbar',
+    },
+    container: {
+      '13.3.0': 'data-testid query-coauthoring-scroll-body',
     },
   },
   QueryEditorRow: {
@@ -1349,6 +1408,12 @@ export const versionedComponents = {
       pastePanelButton: {
         '11.1.0': 'data-testid Paste panel button',
       },
+      planningBuildButton: {
+        '13.3.0': 'data-testid Build dashboard plan button',
+      },
+      planningDismissButton: {
+        '13.3.0': 'data-testid Dismiss dashboard plan button',
+      },
       discardChangesButton: {
         '11.1.0': 'data-testid Discard changes button',
       },
@@ -1577,6 +1642,39 @@ export const versionedComponents = {
     },
     filtersRow: {
       '13.2.0': 'data-testid trace-page-header-adhoc-filters-row',
+    },
+    shareMenu: {
+      triggerButton: {
+        '13.3.0': 'data-testid TraceViewer share trigger-button',
+      },
+      copyLinkButton: {
+        '13.3.0': 'data-testid TraceViewer share copy-link-button',
+      },
+      exportJsonButton: {
+        '13.3.0': 'data-testid TraceViewer share export-json-button',
+      },
+      feedbackLink: {
+        '13.3.0': 'data-testid TraceViewer share feedback-link',
+      },
+    },
+    traceBanner: {
+      container: {
+        '13.3.0': 'data-testid TraceViewer trace-banner',
+      },
+      goToSpanButton: {
+        '13.3.0': 'data-testid TraceViewer trace-banner go-to-span-button',
+      },
+      row: {
+        '13.3.0': (spanId: string) => `data-testid TraceViewer trace-banner row ${spanId}`,
+      },
+    },
+    spanException: {
+      container: {
+        '13.3.0': 'data-testid TraceViewer span-exception',
+      },
+      stacktraceButton: {
+        '13.3.0': 'data-testid TraceViewer span-exception stacktrace-button',
+      },
     },
   },
   QueryField: {

@@ -215,7 +215,7 @@ describe('DashboardControls', () => {
         expect(renderer.getByTestId(selectors.pages.Dashboard.Controls)).toBeInTheDocument();
         expect(renderer.queryByTestId(selectors.components.TimePicker.openButton)).not.toBeInTheDocument();
         expect(renderer.queryByTestId(selectors.components.RefreshPicker.runButtonV2)).not.toBeInTheDocument();
-        expect(renderer.getByRole('button', { name: /add variable/i })).toBeInTheDocument();
+        expect(renderer.getByTestId(selectors.components.ControlsAddButton.triggerButton)).toBeInTheDocument();
       } finally {
         config.featureToggles = originalFeatureToggles;
       }

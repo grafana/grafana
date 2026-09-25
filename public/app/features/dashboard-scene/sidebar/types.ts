@@ -11,6 +11,7 @@ export interface DashboardSidebarState extends SceneObjectState {
   redoStack: DashboardEditActionEventPayload[];
   outlinePane?: DashboardOutline;
   openPane?: DashboardSidebarPane;
+  isLoading?: boolean;
   /** Temp hack for Link and LinkSet that are not part of the scene but need to be selected for now  */
   selectedDisconnectedObject?: SceneObject;
   /** Previous state */
@@ -26,6 +27,9 @@ export interface DashboardSidebarState extends SceneObjectState {
  * create circular dependencies through DashboardScene).
  */
 export interface DashboardSidebarLike extends SceneObject<DashboardSidebarState> {
+  beginPaneRequest(): AbortSignal;
+  cancelPaneRequest(): void;
+  runPaneRequest(load: (signal: AbortSignal) => Promise<void>): Promise<void>;
   enableSelection(): void;
   disableSelection(): void;
   clearSelection(noEvent?: boolean): void;
@@ -37,7 +41,7 @@ export interface DashboardSidebarLike extends SceneObject<DashboardSidebarState>
   redoAction(): void;
   goBackToPrevious(): void;
   fixSelectionOfRemovedObject(): void;
-  addNewPanel(target: SceneObject | undefined): void;
+  addNewPanel(target: SceneObject | undefined): void | Promise<void>;
   pastePanel(target: SceneObject | undefined): void;
   setPanelEditAction(editAction: DashboardEditActionEvent): void;
 }

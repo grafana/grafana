@@ -72,7 +72,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     modal: css({
       zIndex: theme.zIndex.modal,
-      boxShadow: theme.shadows.z3,
+      boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
       backgroundColor: theme.colors.background.primary,
       border: `1px solid ${theme.colors.border.weak}`,
       borderTopLeftRadius: theme.shape.radius.default,

@@ -675,6 +675,10 @@ func (m *mockLegacyStore) CreateServiceAccount(ctx context.Context, ns claims.Na
 	return nil, nil
 }
 
+func (m *mockLegacyStore) UpdateServiceAccount(ctx context.Context, ns claims.NamespaceInfo, cmd legacy.UpdateServiceAccountCommand) (*legacy.UpdateServiceAccountResult, error) {
+	return nil, nil
+}
+
 func (m *mockLegacyStore) DeleteServiceAccount(ctx context.Context, ns claims.NamespaceInfo, cmd legacy.DeleteUserCommand) error {
 	return nil
 }

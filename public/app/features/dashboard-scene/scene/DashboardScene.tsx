@@ -1,4 +1,5 @@
 import type * as H from 'history';
+import { type Unsubscribable } from 'rxjs';
 
 import {
   CoreApp,
@@ -28,6 +29,7 @@ import {
   type SceneVariable,
   type SceneVariableDependencyConfigLike,
   MultiValueVariable,
+  NewSceneObjectAddedEvent,
   type VizPanel,
 } from '@grafana/scenes';
 import { type Dashboard, type DashboardLink, type LibraryPanel } from '@grafana/schema';
@@ -44,12 +46,13 @@ import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { type SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
+import { scrollToRow } from 'app/features/dashboard-scene/scene/layout-rows/scrollToRow';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { type DashboardJson } from 'app/features/manage-dashboards/types';
 import { PROVISIONING_PREVIEW_URL } from 'app/features/provisioning/constants';
+import { type RecoverToNewBranch } from 'app/features/provisioning/types';
 import { VariablesChanged } from 'app/features/variables/types';
 import { type DashboardDTO, type DashboardMeta, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 import { DashboardDiscardedEvent, ShowConfirmModalEvent } from 'app/types/events';
@@ -59,12 +62,13 @@ import {
   AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
   AnnoKeySourcePath,
-  AnnoKeyIgnorePredefinedVariables,
+  AnnoKeyUseCrossDashboardVariables,
   ManagerKind,
   type ResourceForCreate,
 } from '../../apiserver/types';
+import { edit } from '../actions/utils/edit';
+import { createMutationClient } from '../mutation-api/clientBridge';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
-import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { type DashboardChangeInfo } from '../saving/shared';
 import {
   type DashboardSceneSerializerLike,
@@ -81,45 +85,47 @@ import {
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { normalizeTransformation } from '../serialization/transformationCompat';
-import { JsonModelEditView } from '../settings/JsonModelEditView';
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
 import { DashboardSidebar } from '../sidebar/DashboardSidebar';
-import { dashboardEditActions } from '../sidebar/shared';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
-import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { djb2Hash } from '../utils/djb2Hash';
-import { getDashboardUrl } from '../utils/getDashboardUrl';
-import { DashboardInteractions } from '../utils/interactions';
-import { getPanelStyleConfig, type PanelStyleConfig } from '../utils/panelStyleConfigs';
 import {
   mayInjectAnyPredefinedVariables,
   resolvePredefinedVariablesForDashboard,
-} from '../utils/predefinedVariableDenyList';
+  type UseCrossDashboardVariables,
+} from '../utils/crossDashboardVariablesSelection';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { djb2Hash } from '../utils/djb2Hash';
+import { getDashboardUrl } from '../utils/getDashboardUrl';
+import { getLayoutManagerFor } from '../utils/getLayoutManagerFor';
+import { DashboardInteractions } from '../utils/interactions';
+import { getPanelStyleConfig, type PanelStyleConfig } from '../utils/panelStyleConfigs';
+import { persistUseCrossDashboardVariables } from '../utils/persistUseCrossDashboardVariables';
 import { fetchPredefinedVariables, isPredefinedOrigin } from '../utils/predefinedVariables';
 import {
   getClosestVizPanel,
   getDashboardSceneFor,
   getDefaultVizPanel,
   getLayoutForObject,
-  getLayoutManagerFor,
-  getPanelIdForVizPanel,
   hasActualSaveChanges,
 } from '../utils/utils';
+import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
 import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
-import { createMutationClient } from './DashboardMutationClientSetter';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { dashboardViews, dashboardViewChanged, type DashboardViewRequest } from './dashboardViewRegistry';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
+import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { addNewRowTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
 import { getUpdatedHoverHeader } from './panel-timerange/utils';
+import { DashboardPlanningEvent } from './planningEvents';
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './types/DashboardLayoutManager';
 import { type DashboardSceneLike, type DashboardSceneState } from './types/dashboard';
 
@@ -185,12 +191,17 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   private _changeTracker: DashboardSceneChangeTracker;
 
   private _sidebarActivation?: CancelActivationHandler;
+  private _viewRequest?: AbortController;
 
   /**
    * Remember scroll position when going into panel edit
    */
   private _scrollRef?: ScrollRefElement;
   private _prevScrollPos?: number;
+
+  /** Row slug path from the url that did not match any row yet (e.g. a repeated row not created yet) */
+  private _pendingRowScroll?: string;
+  private _pendingRowScrollSub?: Unsubscribable;
 
   /**
    * What initiated the current edit session, e.g. the assistant building a dashboard for the user
@@ -248,16 +259,25 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     if (isNew) {
-      // Silent CUJ signal so the dashboard_edit journey starts on /dashboard/new
-      // (the regular `dashboards_edit_button_clicked` doesn't fire here — auto-edit
-      // mode bypasses the button).
-      reportInteraction('dashboards_new_dashboard_init', {}, { silent: true });
       // New dashboards enter edit mode on activation, before any caller can tag the
       // session, so the initiator is carried in the url (set by the assistant when it
       // opens the editor to build a dashboard itself)
       const editSource = locationService.getSearchObject().editSource;
-      this.onEnterEditMode(editSource === 'assistant' ? 'assistant' : 'user');
-      this.setState({ isDirty: true });
+
+      // A plan preview opens /dashboard/new only so RENDER_PLAN can populate it, and never
+      // intends to edit -- entering edit mode here and exiting again a moment later would still
+      // show a real edit toolbar for the round trip in between. Skip the auto-edit entirely
+      // instead. This is a withhold-from-URL check (a missing/forged marker just degrades to
+      // the normal edit-mode behaviour below), unlike a grant-from-URL check such as ?editview=,
+      // which is why this is safe where that one was not.
+      if (editSource !== 'plan-preview') {
+        // Silent CUJ signal so the dashboard_edit journey starts on /dashboard/new
+        // (the regular `dashboards_edit_button_clicked` doesn't fire here — auto-edit
+        // mode bypasses the button).
+        reportInteraction('dashboards_new_dashboard_init', {}, { silent: true });
+        this.onEnterEditMode(editSource === 'assistant' ? 'assistant' : 'user');
+        this.setState({ isDirty: true });
+      }
     }
 
     if (!this.state.meta.isEmbedded && this.state.uid) {
@@ -273,9 +293,19 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // @ts-expect-error
     getDashboardSrv().setCurrent(oldDashboardWrapper);
 
-    const destroyMutationClient = createMutationClient(this);
+    const destroyMutationClient = createMutationClient(this, 'dashboard');
 
     return () => {
+      this.cancelPendingViews();
+      // A plan preview that's still showing when the scene deactivates (navigated away, tab
+      // closed) never got a Build or Dismiss decision — report that honestly as 'closed' rather
+      // than leaving the caller holding a stale reference to a preview nothing is showing.
+      if (this.state.planning) {
+        appEvents.publish(new DashboardPlanningEvent({ planId: this.state.planning.planId, action: 'closed' }));
+        // Lifecycle hygiene, not a cache fix: a fresh /dashboard/new always builds an uncached
+        // scene with no planning state, so this only matters if that ever changes.
+        this.setState({ planning: undefined });
+      }
       destroyMutationClient();
       window.__grafanaSceneContext = prevSceneContext;
       clearKeyBindings();
@@ -283,6 +313,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this.deactivateSidebar();
       oldDashboardWrapper.destroy();
       dashboardWatcher.leave();
+      this._pendingRowScrollSub?.unsubscribe();
+      this._pendingRowScrollSub = undefined;
+      this._pendingRowScroll = undefined;
     };
   }
 
@@ -361,7 +394,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   /**
-   * Re-resolve global/folder variables from the current denylist annotation and apply them
+   * Re-resolve global/folder variables from the current selection annotation and apply them
    * to the live scene (e.g. after save) so a full page reload is not required.
    */
   public async refreshPredefinedVariables(): Promise<void> {
@@ -399,6 +432,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.setPredefinedVariables(resolvePredefinedVariablesForDashboard(candidates, resolutionInput));
   }
 
+  /** Persist the cross-dashboard variable selection annotation and re-inject. */
+  public setUseCrossDashboardVariables(selection: UseCrossDashboardVariables): Promise<void> {
+    return persistUseCrossDashboardVariables(this, selection);
+  }
+
   public setDefaultLinks(defaultLinks: DashboardLink[]) {
     const userLinks = this.state.links.filter((l) => !l.origin);
     this.setState({ links: [...defaultLinks, ...userLinks] });
@@ -416,6 +454,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public onEnterEditMode = (source: 'user' | 'assistant' = 'user') => {
     const wasEditing = this.state.isEditing;
+
+    if (!wasEditing) {
+      this.state.sidebar.setState({ undoStack: [], redoStack: [] });
+    }
 
     this._editSessionSource = source;
 
@@ -587,7 +629,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     if (restoreInitialState) {
       // Restore initial state and disable editing
-      this.setState({ ...this._initialState, isEditing: false });
+      const { isOverlayLoading, ...initialState } = this._initialState ?? {};
+      this.setState({ ...initialState, isEditing: false });
       this.restoreSerializerAnnotationsFromInitialState();
       appEvents.publish(new DashboardDiscardedEvent());
       DashboardInteractions.dashboardEditDiscarded();
@@ -629,7 +672,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const hadProgrammaticSidebar = this._sidebarActivation !== undefined;
     this.deactivateSidebar();
 
-    const restoredState = sceneUtils.cloneSceneObjectState(this._initialState!, { isDirty: false });
+    const { isOverlayLoading, ...restoredState } = sceneUtils.cloneSceneObjectState(this._initialState!, {
+      isDirty: false,
+    });
 
     // Ensure the restored layout stays editable.
     restoredState.body.editModeChanged?.(true);
@@ -654,7 +699,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   /**
-   * Serializer annotations are mutated outside scene state when editing the denylist.
+   * Serializer annotations are mutated outside scene state when editing the selection.
    * Restore them from the edit-session baseline when discarding.
    */
   private restoreSerializerAnnotationsFromInitialState() {
@@ -671,11 +716,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         annotations[key] = value;
       }
     }
-    const initialValue = this._initialState?.meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables];
+    const initialValue = this._initialState?.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables];
     if (typeof initialValue === 'string') {
-      annotations[AnnoKeyIgnorePredefinedVariables] = initialValue;
+      annotations[AnnoKeyUseCrossDashboardVariables] = initialValue;
     } else {
-      delete annotations[AnnoKeyIgnorePredefinedVariables];
+      delete annotations[AnnoKeyUseCrossDashboardVariables];
     }
     this.serializer.setK8SAnnotations(annotations);
   }
@@ -709,6 +754,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       const dto = await api.getDashboardDTO(version.uid);
       dashScene = transformSaveModelSchemaV2ToScene(dto);
     } else {
+      const { DashboardModel } = await import(
+        /* webpackChunkName: "dashboard-legacy-model" */ 'app/features/dashboard/state/DashboardModel'
+      );
       const dashboardDTO: DashboardDTO = {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- v1 restore path requires Dashboard type
         dashboard: new DashboardModel(version.data as Dashboard),
@@ -718,7 +766,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       dashScene = transformSaveModelToScene(dashboardDTO);
     }
 
-    const newState = sceneUtils.cloneSceneObjectState(dashScene.state);
+    const { isOverlayLoading, ...newState } = sceneUtils.cloneSceneObjectState(dashScene.state);
     newState.version = versionRsp.version;
 
     this.setState(newState);
@@ -727,31 +775,36 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return true;
   };
 
-  public openSaveDrawer({
+  public async openSaveDrawer({
     saveAsCopy,
     saveDashboardTemplate,
     saveAsDashboardTemplate,
     onSaveSuccess,
+    recoverToNewBranch,
   }: {
     saveAsCopy?: boolean;
     saveDashboardTemplate?: boolean;
     saveAsDashboardTemplate?: boolean;
     onSaveSuccess?: () => void;
+    recoverToNewBranch?: RecoverToNewBranch;
   }) {
     if (!this.state.isEditing) {
       return;
     }
 
-    this.setState({
-      overlay: new SaveDashboardDrawer({
-        dashboardRef: this.getRef(),
-        saveAsCopy,
-        saveAsDashboardTemplate,
-        saveDashboardTemplate,
-        onSaveSuccess,
-        showVariablesWarning: this.hasVariableErrors(),
-      }),
-    });
+    await this.loadView(
+      dashboardViews.overlay.save(
+        this,
+        {
+          saveAsCopy,
+          saveAsDashboardTemplate,
+          saveDashboardTemplate,
+          onSaveSuccess,
+          recoverToNewBranch,
+        },
+        () => this.hasVariableErrors()
+      )
+    );
   }
 
   public getPageNav(location: H.Location, navIndex: NavIndex) {
@@ -1136,12 +1189,86 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     console.error('Trying to unlink a lib panel in a layout that is not DashboardGridItem or AutoGridItem');
   }
 
+  /** Cancel pending views and sidebar panes before a view transition starts. */
+  public cancelPendingViews() {
+    this._viewRequest?.abort();
+    this.state.sidebar.cancelPaneRequest();
+  }
+
+  private setOverlayLoading(isOverlayLoading: boolean) {
+    // Loading bookkeeping must not recursively cancel the request it belongs to.
+    super.setState(isOverlayLoading ? { isOverlayLoading, overlay: undefined } : { isOverlayLoading });
+  }
+
+  public async openFiltersOverview() {
+    await this.loadView(dashboardViews.overlay.filters());
+  }
+
+  public async showModalAsync(load: () => Promise<SceneObject | undefined>) {
+    await this.loadView({ key: 'overlay', load });
+  }
+
+  /** Apply a lazy view only if no newer transition superseded it while loading. */
+  public async loadView(view: DashboardViewRequest) {
+    this.cancelPendingViews();
+    const request = new AbortController();
+    this._viewRequest = request;
+    request.signal.addEventListener('abort', () => this.setOverlayLoading(false), { once: true });
+    if (view.key === 'overlay') {
+      this.setOverlayLoading(true);
+    }
+    // Some overlays and editor transitions are applied directly through setState.
+    const subscription = this.subscribeToState((state, previous) => {
+      if (dashboardViewChanged(state, previous)) {
+        request.abort();
+      }
+    });
+    const location = locationService.getLocation();
+    const search = new URLSearchParams(location.search);
+    // Time range and variable URL updates do not supersede a view request.
+    const unlisten = locationService.getHistory().listen((nextLocation) => {
+      const nextSearch = new URLSearchParams(nextLocation.search);
+      if (
+        nextLocation.pathname !== location.pathname ||
+        ['orgId', 'editPanel', 'viewPanel', 'editview', 'inspect', 'shareView'].some(
+          (key) => nextSearch.get(key) !== search.get(key)
+        )
+      ) {
+        request.abort();
+      }
+    });
+    try {
+      const value = await view.load();
+      if (value !== undefined && !request.signal.aborted) {
+        this.setState({ [view.key]: value });
+      }
+    } finally {
+      subscription.unsubscribe();
+      unlisten();
+      if (this._viewRequest === request) {
+        request.abort();
+        this._viewRequest = undefined;
+      }
+    }
+  }
+
   public showModal(modal: SceneObject) {
+    this.cancelPendingViews();
     this.setState({ overlay: modal });
   }
 
   public closeModal() {
+    this.cancelPendingViews();
     this.setState({ overlay: undefined });
+  }
+
+  /**
+   * True while an unbuilt dashboard plan is being previewed on this scene. The preview is a
+   * static, view-mode surface: it never enters edit mode, so there is no exit-edit-mode dance and
+   * no `_initialState` snapshot to restore later.
+   */
+  public isPlanning(): boolean {
+    return this.state.planning !== undefined;
   }
 
   public onOpenSettings = () => {
@@ -1150,18 +1277,16 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   };
 
   public onShowAddLibraryPanelDrawer(panelToReplaceRef?: SceneObjectRef<VizPanel>) {
-    this.setState({
-      overlay: new AddLibraryPanelDrawer({ panelToReplaceRef }),
-    });
+    this.showModal(new AddLibraryPanelDrawer({ panelToReplaceRef }));
   }
 
   public onCreateNewRow() {
     return addNewRowTo(this.state.body);
   }
 
-  public onCreateNewPanel(): VizPanel {
+  public async onCreateNewPanel(): Promise<VizPanel> {
     const profiler = getDashboardSceneProfiler();
-    const vizPanel = getDefaultVizPanel();
+    const vizPanel = await getDefaultVizPanel();
     profiler.attachProfilerToPanel(vizPanel);
 
     this.addPanel(vizPanel);
@@ -1175,7 +1300,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (skipUndo) {
       perform();
     } else {
-      dashboardEditActions.edit({
+      edit({
         description: t('dashboard.edit-actions.switch-layout', 'Switch layout'),
         source: this,
         perform,
@@ -1413,6 +1538,26 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
   }
 
+  public scrollToRow(drow: string) {
+    locationService.partial({ drow: null }, true);
+
+    if (scrollToRow(drow, this.state.body)) {
+      this._pendingRowScroll = undefined;
+      return;
+    }
+
+    // The target row may not exist yet: repeated rows/tabs are only created (and their
+    // repeat-local slugs only interpolate correctly) once the repeat variable resolves and
+    // the repeater runs, which happens after url sync. The repeaters publish
+    // NewSceneObjectAddedEvent when done, so keep the slug pending and retry on that event.
+    this._pendingRowScroll = drow;
+    this._pendingRowScrollSub ??= this.subscribeToEvent(NewSceneObjectAddedEvent, () => {
+      if (this._pendingRowScroll && scrollToRow(this._pendingRowScroll, this.state.body)) {
+        this._pendingRowScroll = undefined;
+      }
+    });
+  }
+
   getSaveModel(): Dashboard | DashboardV2Spec {
     return this.serializer.getSaveModel(this);
   }
@@ -1451,9 +1596,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   // Get raw JSON from JSON model editor if currently active
   // Returns undefined if not in JSON editor mode or if JSON is invalid
   getRawJsonFromEditor(): Dashboard | DashboardV2Spec | undefined {
-    if (this.state.editview instanceof JsonModelEditView) {
+    if (this.state.editview?.getEditedSaveModel) {
       try {
-        return JSON.parse(this.state.editview.state.jsonText);
+        // The v2 editor holds a full resource envelope; getEditedSaveModel unwraps it back to the bare spec.
+        return this.state.editview.getEditedSaveModel();
       } catch {
         return undefined;
       }
@@ -1505,18 +1651,32 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   /**
-   * Default layout used for new Tab and Row containers
-   * Undefined if default layout is not set in preferences
+   * Default layout used for new Tab and Row containers.
+   * Dashboards without a persisted layout preference follow the instance default:
+   * auto grid when the auto grid feature flag is enabled, classic grid otherwise.
    */
-  getDefaultLayout() {
+  getDefaultLayout(): DashboardLayoutManager {
     if (this.state.preferences?.defaultLayoutTemplate) {
       return this.state.preferences.defaultLayoutTemplate.clone();
     }
-    return undefined;
+
+    return this.isAutoGridInstanceDefault()
+      ? AutoGridLayoutManager.createEmpty()
+      : DefaultGridLayoutManager.createEmpty();
   }
 
   getDefaultLayoutType() {
-    return this.state.preferences?.defaultLayoutTemplate?.descriptor?.id;
+    if (this.state.preferences?.defaultLayoutTemplate) {
+      return this.state.preferences.defaultLayoutTemplate.descriptor.id;
+    }
+
+    return this.isAutoGridInstanceDefault()
+      ? AutoGridLayoutManager.descriptor.id
+      : DefaultGridLayoutManager.descriptor.id;
+  }
+
+  private isAutoGridInstanceDefault(): boolean {
+    return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDashboardAutoGridDefault, true);
   }
 
   updateDefaultLayoutTemplate(template: DashboardLayoutManager) {

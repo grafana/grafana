@@ -3,6 +3,7 @@ package schemaversion
 import (
 	"context"
 	"math"
+	"slices"
 )
 
 const (
@@ -233,13 +234,13 @@ func (r *rowArea) getPanelPosition(panelHeight int, panelWidth int, callOnce boo
 	found := false
 
 	// Find available space from right to left
-	for i := len(r.area) - 1; i >= 0; i-- {
-		if r.height-r.area[i] > 0 {
+	for i, v := range slices.Backward(r.area) {
+		if r.height-v > 0 {
 			if !found {
 				endPlace = i
 				found = true
 			} else {
-				if i < len(r.area)-1 && r.area[i] <= r.area[i+1] {
+				if i < len(r.area)-1 && v <= r.area[i+1] {
 					startPlace = i
 				} else {
 					break

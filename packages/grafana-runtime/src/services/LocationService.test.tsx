@@ -209,6 +209,43 @@ describe('LocationService', () => {
     });
   });
 
+  describe('setSingleHistoryEntryMode', () => {
+    it('collapses push into replace so navigation stays on one history entry', () => {
+      const service = new HistoryWrapper();
+      service.push('/before');
+      const lengthOnEnter = service.length;
+
+      service.setSingleHistoryEntryMode(true);
+      service.push('/inside-one');
+      service.push('/inside-two');
+
+      expect(service.length).toBe(lengthOnEnter);
+      expect(service.getLocation().pathname).toBe('/inside-two');
+    });
+
+    it('restores normal push behaviour when disabled', () => {
+      const service = new HistoryWrapper();
+      service.setSingleHistoryEntryMode(true);
+      service.push('/inside');
+      const lengthWhileActive = service.length;
+
+      service.setSingleHistoryEntryMode(false);
+      service.push('/after');
+
+      expect(service.length).toBe(lengthWhileActive + 1);
+    });
+
+    it('still injects orgId while collapsing', () => {
+      const service = new HistoryWrapper();
+      service.setOrgIdGetter(() => 7);
+      service.setSingleHistoryEntryMode(true);
+
+      service.push('/test?foo=1');
+
+      expect(service.getLocation().search).toBe('?foo=1&orgId=7');
+    });
+  });
+
   describe('hook access', () => {
     it('can set and access service from a context', () => {
       const locationServiceLocal = new HistoryWrapper();

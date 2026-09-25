@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
@@ -113,6 +114,47 @@ func TestIntegrationTruncateDatabase(t *testing.T) {
 	require.NoError(t, err, "could not find truncateBeans")
 
 	require.Empty(t, beans, "database should have no truncateBeans")
+}
+
+func columnValues(t *testing.T, store *sqlstore.SQLStore, table string, column string, orderBy string) []string {
+	t.Helper()
+	var rows []string
+	require.NoError(t, store.GetEngine().Table(table).Cols(column).OrderBy(orderBy).Find(&rows))
+	return rows
+}
+
+func TestIntegrationDefaultNoSeeding(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("by default nothing is seeded: no orgs, no users", func(t *testing.T) {
+		store := sqlstore.NewTestStore(t)
+		assert.Empty(t, columnValues(t, store, "org", "name", "id"))
+		assert.Empty(t, columnValues(t, store, "user", "login", "id"))
+	})
+}
+
+func TestIntegrationSeedDefaultOrgAndUser(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("bare config", func(t *testing.T) {
+		store := sqlstore.NewTestStore(t)
+		sqlstore.SeedDefaultOrgAndUser(t, store)
+
+		// defaults should seed one named org, one "admin" user
+		assert.Equal(t, []string{"Main Org."}, columnValues(t, store, "org", "name", "id"))
+		assert.Equal(t, []string{"admin"}, columnValues(t, store, "user", "login", "id"))
+	})
+
+	t.Run("config with AutoAssignOrg set but no AutoAssignOrgId", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.AutoAssignOrg = true
+
+		store := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
+		sqlstore.SeedDefaultOrgAndUser(t, store)
+
+		assert.Equal(t, []string{"Main Org."}, columnValues(t, store, "org", "name", "id"))
+		assert.Equal(t, []string{"admin"}, columnValues(t, store, "user", "login", "id"))
+	})
 }
 
 var (

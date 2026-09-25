@@ -27,13 +27,13 @@ const (
 
 // WhereNode is a single node of the where tree. Exactly one field must be set;
 // the set field names the node's type. Combinators (and/or/not) compose other
-// nodes, leaves (text/filter/range/exists) are terminal predicates.
+// nodes, leaves (text/filter/range/regex/exists) are terminal predicates.
 //
 // All node types are modelled so the schema is future-proof, but v1 only
 // accepts a narrow subset (top-level single leaf or a single and of leaves;
-// text and filter leaves; In/NotIn filter operators). Everything else is
-// rejected with 400 BadRequest by the validation layer. range and exists are
-// sketched for future versions and always rejected today.
+// text, filter, range and regex leaves; In/NotIn/All filter operators). Everything
+// else is rejected with 422 Unprocessable Entity by the validation layer. exists is
+// sketched for a future version and always rejected today.
 //
 // +k8s:deepcopy-gen=true
 type WhereNode struct {
@@ -45,7 +45,8 @@ type WhereNode struct {
 	// Leaves.
 	Text   *TextPredicate   `json:"text,omitempty"`
 	Filter *FilterPredicate `json:"filter,omitempty"`
-	Range  *RangePredicate  `json:"range,omitempty"`  // future, rejected in v1
+	Range  *RangePredicate  `json:"range,omitempty"`
+	Regex  *RegexPredicate  `json:"regex,omitempty"`
 	Exists *ExistsPredicate `json:"exists,omitempty"` // future, rejected in v1
 }
 
@@ -62,17 +63,31 @@ type TextPredicate struct {
 }
 
 // FilterPredicate is an exact / set-based predicate against a single field.
+// Values are strings whatever the field's declared type, so a boolean field
+// takes "true" or "false" and a numeric field takes the number written out.
+//
+// Numbers are held as float64, so only integers up to 2^53 are compared exactly.
+// Past that, values a whole number apart share one representation, and a filter
+// can both match a neighbour and miss the value asked for.
 //
 // +k8s:deepcopy-gen=true
 type FilterPredicate struct {
 	Field string `json:"field"`
-	// Operator is "In" or "NotIn" in v1.
+	// Operator is "In", "NotIn" or "All" in v1. "In" matches any of the values,
+	// "NotIn" excludes all of them, and "All" requires the field to hold every
+	// value, which only a field holding a list of values can do.
 	Operator string   `json:"operator"`
 	Values   []string `json:"values"`
 }
 
-// RangePredicate is a future numeric/date range predicate. Modelled for schema
-// stability; always rejected in v1.
+// RangePredicate compares a numeric field against one or two bounds. At least
+// one bound is required, gt cannot be combined with gte, and lt cannot be
+// combined with lte. Boolean and string fields are rejected: only numbers have
+// the order a range asks about. On an integer field a bound must be whole.
+//
+// Bounds are held as float64, so only integers up to 2^53 are compared exactly.
+// Past that, values a whole number apart share one representation, and a bound
+// can both admit a neighbour and exclude the value asked for.
 //
 // +k8s:deepcopy-gen=true
 type RangePredicate struct {
@@ -81,6 +96,25 @@ type RangePredicate struct {
 	GTE   *float64 `json:"gte,omitempty"`
 	LT    *float64 `json:"lt,omitempty"`
 	LTE   *float64 `json:"lte,omitempty"`
+}
+
+// RegexPredicate matches a single field against a regular expression, one
+// pattern per leaf the way a single Prometheus matcher works. Negate turns the
+// leaf from =~ into !~.
+//
+// Matching is against the whole indexed term and is case-sensitive, so it is
+// restricted to filterable keyword string fields that keep their original case.
+// The pattern is a portable RE2 subset: literals, character classes, grouping,
+// alternation, and greedy repetition. The backend is the source of truth for
+// what the subset admits; it rejects unsupported syntax, fields that do not
+// preserve case, and patterns that expand to too many terms with a 400.
+//
+// +k8s:deepcopy-gen=true
+type RegexPredicate struct {
+	Field   string `json:"field"`
+	Pattern string `json:"pattern"`
+	// Negate inverts the match: the field must not match the pattern.
+	Negate bool `json:"negate,omitempty"`
 }
 
 // ExistsPredicate is a future field-existence predicate. Modelled for schema

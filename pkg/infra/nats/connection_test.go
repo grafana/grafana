@@ -119,16 +119,14 @@ func TestConnection(t *testing.T) {
 			mu    sync.Mutex
 			conns = map[*natsclient.Conn]struct{}{}
 		)
-		for i := 0; i < 50; i++ {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+		for range 50 {
+			wg.Go(func() {
 				nc, err := c.get(context.Background())
 				require.NoError(t, err)
 				mu.Lock()
 				conns[nc] = struct{}{}
 				mu.Unlock()
-			}()
+			})
 		}
 		wg.Wait()
 
@@ -180,6 +178,31 @@ func TestConnection(t *testing.T) {
 		})
 	})
 
+	t.Run("redactURL", func(t *testing.T) {
+		for _, tc := range []struct {
+			name string
+			raw  string
+			want string
+		}{
+			{"empty", "", ""},
+			{"no userinfo", "nats://us-nats.us-nats.svc.cluster.local:4222", "nats://us-nats.us-nats.svc.cluster.local:4222"},
+			{"user and password", "nats://user:s3cret@host:4222", "nats://host:4222"},
+			{"token only", "nats://s3cret@host:4222", "nats://host:4222"},
+			{"unparseable", "nats://host:4222/\x7f", "<invalid url>"},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				got := redactURL(tc.raw)
+				require.Equal(t, tc.want, got)
+				require.NotContains(t, got, "s3cret")
+			})
+		}
+	})
+
+	t.Run("redactURLs joins every url with credentials stripped", func(t *testing.T) {
+		got := redactURLs([]string{"nats://user:s3cret@a:4222", "nats://b:4222"})
+		require.Equal(t, "nats://a:4222,nats://b:4222", got)
+	})
+
 	t.Run("connectOptions", func(t *testing.T) {
 		t.Run("builds base options without auth", func(t *testing.T) {
 			cfg := setting.NATSSettings{Enabled: true}
@@ -226,6 +249,21 @@ func TestConnection(t *testing.T) {
 			// token is left unset even though one is present.
 			require.NotNil(t, o.TokenHandler)
 			require.Empty(t, o.Token)
+			require.True(t, o.IgnoreAuthErrorAbort)
+		})
+
+		t.Run("subscriber does not ignore auth error aborts in token_exchange mode", func(t *testing.T) {
+			cfg := setting.NATSSettings{Enabled: true, Auth: setting.NATSAuthSettings{
+				Mode:                   setting.NATSAuthModeTokenExchange,
+				TokenExchangeAudiences: []string{"us-nats"},
+				TokenExchangeURL:       "http://signer/sign",
+				TokenExchangeToken:     "boot-token",
+			}}
+			c := newConnection(roleSubscriber, log.NewNopLogger(), newConnectionMetrics(roleSubscriber), newConfig(cfg, nil), func() string { return "" })
+
+			opts, err := c.connectOptions()
+			require.NoError(t, err)
+			require.False(t, applyOptions(t, opts).IgnoreAuthErrorAbort)
 		})
 
 		t.Run("credentials mode uses the creds file", func(t *testing.T) {

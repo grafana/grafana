@@ -86,6 +86,7 @@ var (
 	_ builder.APIGroupMutation              = (*APIBuilder)(nil)
 	_ builder.APIGroupValidation            = (*APIBuilder)(nil)
 	_ builder.APIGroupRouteProvider         = (*APIBuilder)(nil)
+	_ builder.APIGroupResourceProvider      = (*APIBuilder)(nil)
 	_ builder.APIGroupPostStartHookProvider = (*APIBuilder)(nil)
 	_ builder.OpenAPIPostProcessor          = (*APIBuilder)(nil)
 )
@@ -699,6 +700,16 @@ func (b *APIBuilder) authorizeConnectionSubresource(ctx context.Context, a autho
 			Namespace: a.GetNamespace(),
 		}, ""))
 
+	// Authorize mutates the connection secrets, so it requires write access
+	case "authorize":
+		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
+			Verb:      apiutils.VerbUpdate,
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.ConnectionResourceInfo.GetName(),
+			Name:      a.GetName(),
+			Namespace: a.GetNamespace(),
+		}, ""))
+
 	default:
 		id, err := identity.GetRequester(ctx)
 		if err != nil {
@@ -738,6 +749,18 @@ func (b *APIBuilder) authorizeDefault(ctx context.Context) (authorizer.Decision,
 
 func (b *APIBuilder) GetGroupVersion() schema.GroupVersion {
 	return b.gv
+}
+
+func (b *APIBuilder) GetResourceInfos(schema.GroupVersion) []apiutils.ResourceInfo {
+	infos := []apiutils.ResourceInfo{
+		provisioning.RepositoryResourceInfo,
+		provisioning.ConnectionResourceInfo,
+		provisioning.JobResourceInfo,
+	}
+	if b.jobHistoryConfig == nil || b.jobHistoryConfig.Loki == nil {
+		infos = append(infos, provisioning.HistoricJobResourceInfo)
+	}
+	return infos
 }
 
 func (b *APIBuilder) GetClient() client.ProvisioningV0alpha1Interface {
@@ -900,6 +923,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	storage[provisioning.ConnectionResourceInfo.StoragePath("status")] = connectionStatusStorage
 	storage[provisioning.ConnectionResourceInfo.StoragePath("repositories")] = WithTimeout(NewConnectionRepositoriesConnector(b), 30*time.Second)
+	storage[provisioning.ConnectionResourceInfo.StoragePath("authorize")] = WithTimeout(NewConnectionAuthorizeConnector(b), 30*time.Second)
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
 	testTester := repository.NewTester(b.repoValidator, existingReposValidator)
@@ -1014,14 +1038,12 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			if nats.Enabled(b.natsSubscriber) {
 				logging.DefaultLogger.Info("provisioning controllers using NATS-backed informer")
 			}
-			usageMetricCollector := usage.MetricCollector(b.tracer, b.usageNamespaceLister, b.repoLister.List, b.unified)
+			usageMetricCollector := usage.MetricCollector(b.tracer, b.usageNamespaceLister, b.repoLister.List, connection.NewStorageLister(b.connectionStore).List, b.unified)
 			b.usageStats.RegisterMetricsFunc(usageMetricCollector)
 
 			metrics := jobs.RegisterJobMetrics(b.registry)
 
 			stageIfPossible := repository.WrapWithStageAndPushIfPossible
-
-			exportEnabled := b.features.IsEnabled(postStartHookCtx.Context, featuremgmt.FlagProvisioningExport) //nolint:staticcheck
 
 			// Standalone export generates new UIDs so exported files don't
 			// reference existing resource identifiers.
@@ -1032,7 +1054,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				export.ExportAllWithNewUIDs,
 				stageIfPossible,
 				metrics,
-				exportEnabled,
 			)
 
 			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics, b.folderMetadataEnabled, b.syncResourceTimeout) //nolint:staticcheck
@@ -1056,7 +1077,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				export.ExportAll,
 				stageIfPossible,
 				metrics,
-				exportEnabled,
 			)
 			cleaner := migrate.NewNamespaceCleaner(b.clients)
 			unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
@@ -1066,7 +1086,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			)
 			migrationWorker := migrate.NewMigrationWorker(
 				unifiedStorageMigrator,
-				b.features.IsEnabled(postStartHookCtx.Context, featuremgmt.FlagProvisioningExport), //nolint:staticcheck
 			)
 
 			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
@@ -1228,6 +1247,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				informerFactoryResyncInterval,
 				30*time.Second,
 				b.registry,
+				b.tracer,
 				nats.Enabled(b.natsSubscriber),
 			)
 			connReg, err := connSource.AddEventHandler(connController.EventHandler())
@@ -1290,13 +1310,7 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 
 	root := "/apis/" + b.GetGroupVersion().String() + "/"
 
-	// Hide the internal historic jobs endpoint from the OpenAPI spec.
-	historicjobs := root + "namespaces/{namespace}/historicjobs"
-	for path := range oas.Paths.Paths {
-		if strings.HasPrefix(path, historicjobs) {
-			delete(oas.Paths.Paths, path)
-		}
-	}
+	hideHistoricJobPaths(oas.Paths.Paths, root)
 
 	repoprefix := root + "namespaces/{namespace}/repositories/{name}"
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
@@ -1582,8 +1596,28 @@ spec:
 		oas.Paths.Paths[repoprefix+"/jobs/{uid}"] = sub
 	}
 
-	// Document connection repositories endpoint
+	// Document connection authorize endpoint
 	connectionprefix := root + "namespaces/{namespace}/connections/{name}"
+	sub = oas.Paths.Paths[connectionprefix+"/authorize"]
+	if sub != nil {
+		authorizeSchema := defs[compBase+"ConnectionAuthorizeRequest"].Schema
+		sub.Post.Description = "Complete the OAuth authorization of this connection by exchanging an authorization code"
+		sub.Post.RequestBody = &spec3.RequestBody{
+			RequestBodyProps: spec3.RequestBodyProps{
+				Required: true,
+				Content: map[string]*spec3.MediaType{
+					"application/json": {
+						MediaTypeProps: spec3.MediaTypeProps{
+							Schema: &authorizeSchema,
+						},
+					},
+				},
+			},
+		}
+		sub.Post.Responses = getJSONResponse("#/components/schemas/" + refsBase + "ConnectionAuthorizeRequest")
+	}
+
+	// Document connection repositories endpoint
 	sub = oas.Paths.Paths[connectionprefix+"/repositories"]
 	if sub != nil {
 		sub.Get.Description = "List repositories available from the external git provider through this connection"
@@ -1738,6 +1772,23 @@ spec:
 	}
 
 	return oas, nil
+}
+
+// Historic jobs are internal. Keep both resource routes and any cross-namespace
+// subresource routes out of the public API description.
+func hideHistoricJobPaths(paths map[string]*spec3.Path, root string) {
+	prefixes := []string{
+		root + "historicjobs",
+		root + "namespaces/{namespace}/historicjobs",
+	}
+	for path := range paths {
+		for _, prefix := range prefixes {
+			if strings.HasPrefix(path, prefix) {
+				delete(paths, path)
+				break
+			}
+		}
+	}
 }
 
 // Helpers for fetching valid Repository objects

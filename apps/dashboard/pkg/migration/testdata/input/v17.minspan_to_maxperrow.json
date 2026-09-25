@@ -120,6 +120,18 @@
         "x": 6,
         "y": 22
       }
+    },
+    {
+      "id": 11,
+      "type": "graph",
+      "title": "Panel with minSpan wider than the grid",
+      "minSpan": 25,
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 22
+      }
     }
   ]
 }

@@ -3,13 +3,11 @@ package resource
 import (
 	"time"
 
-	"github.com/grafana/dskit/instrument"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 type BleveIndexMetrics struct {
-	IndexLatency         *prometheus.HistogramVec
 	IndexSize            prometheus.Gauge
 	IndexedKinds         *prometheus.GaugeVec
 	IndexCreationTime    *prometheus.HistogramVec
@@ -18,11 +16,11 @@ type BleveIndexMetrics struct {
 	IndexBuildFailures   prometheus.Counter
 	IndexBuildSkipped    prometheus.Counter
 	UpdateLatency        prometheus.Histogram
-	UpdatedDocuments     prometheus.Summary
+	UpdatedDocuments     prometheus.Histogram
 	SearchUpdateWaitTime *prometheus.HistogramVec
 	RebuildQueueLength   prometheus.Gauge
 
-	IndexSnapshotDownloads                *prometheus.CounterVec
+	IndexSnapshotDownloadAttempts         *prometheus.CounterVec
 	IndexSnapshotDownloadDuration         prometheus.Histogram
 	IndexSnapshotUploads                  *prometheus.CounterVec
 	IndexSnapshotUploadDuration           prometheus.Histogram
@@ -33,28 +31,61 @@ type BleveIndexMetrics struct {
 
 	IndexDiskCleanupRuns        *prometheus.CounterVec
 	IndexDiskCleanupDirsDeleted *prometheus.CounterVec
+
+	SearchCapabilityViolations *prometheus.CounterVec
+	SearchResultFormats        *prometheus.CounterVec
+
+	BuildPhaseSeconds *prometheus.CounterVec
+	BuildDocuments    *prometheus.CounterVec
+	BuildSourceBytes  *prometheus.CounterVec
+	BuildIndexedBytes *prometheus.CounterVec
 }
+
+// Phases of getting a document into an index.
+const (
+	// IndexPhaseFetch reads the stored object.
+	IndexPhaseFetch = "fetch"
+	// IndexPhaseConvert turns it into a search document.
+	IndexPhaseConvert = "convert"
+	// IndexPhaseMap adds it to a batch, which maps it onto the index schema.
+	IndexPhaseMap = "map"
+	// IndexPhaseCommit writes the batch, which is where a file-backed index pays
+	// for disk. Documents in this phase are the ones the write accepted.
+	IndexPhaseCommit = "commit"
+	// IndexPhasePromote copies an index that has outgrown memory onto disk, which
+	// happens once during a build and costs more the later it happens.
+	IndexPhasePromote = "promote"
+)
+
+// State of the documents counted by the indexed kinds metric. Deleted documents
+// are the ones an index keeps so they can be found in trash.
+const (
+	IndexedDocumentsLive    = "live"
+	IndexedDocumentsDeleted = "deleted"
+)
+
+// What was being done to the index, used as the path label. Trash is the pass
+// over deleted objects that a build makes when the index keeps them.
+const (
+	IndexPathBuild  = "build"
+	IndexPathUpdate = "update"
+	IndexPathTrash  = "trash"
+)
 
 var IndexCreationBuckets = []float64{1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000}
 
+// ProvideIndexMetrics builds the index metrics. A nil reg leaves them
+// unregistered, so callers without a registry never have to check for nil.
 func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 	m := &BleveIndexMetrics{
-		IndexLatency: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-			Name:                            "index_server_index_latency_seconds",
-			Help:                            "Time (in seconds) until index is updated with new event",
-			Buckets:                         instrument.DefBuckets,
-			NativeHistogramBucketFactor:     1.1, // enable native histograms
-			NativeHistogramMaxBucketNumber:  160,
-			NativeHistogramMinResetDuration: time.Hour,
-		}, []string{"resource"}),
 		IndexSize: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
-			Name: "index_server_index_size",
+			Name: "index_server_index_size_bytes",
 			Help: "Size of the index in bytes - only for file-based indices",
 		}),
 		IndexedKinds: promauto.With(reg).NewGaugeVec(prometheus.GaugeOpts{
 			Name: "index_server_indexed_kinds",
-			Help: "Number of indexed documents by kind",
-		}, []string{"kind"}),
+			Help: "Number of indexed documents by kind. Live documents and deleted ones the index keeps so they can be found in trash are reported separately.",
+		}, []string{"kind", "state"}), // state is either "live" or "deleted"
 		IndexCreationTime: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "index_server_index_build_time_seconds",
 			Help:                            "Time it takes to successfully build an index. Failed or skipped builds are not counted.",
@@ -86,9 +117,12 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}),
-		UpdatedDocuments: promauto.With(reg).NewSummary(prometheus.SummaryOpts{
-			Name: "index_server_update_documents",
-			Help: "Number of documents indexed during index update",
+		UpdatedDocuments: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
+			Name:                            "index_server_update_documents",
+			Help:                            "Number of documents indexed during index update",
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}),
 		SearchUpdateWaitTime: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "index_server_search_update_wait_time_seconds",
@@ -101,8 +135,8 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			Name: "index_server_rebuild_queue_length",
 			Help: "Number of indexes waiting for rebuild",
 		}),
-		IndexSnapshotDownloads: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "index_server_snapshot_downloads_total",
+		IndexSnapshotDownloadAttempts: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "index_server_snapshot_download_attempts_total",
 			Help: "Number of remote index snapshot download attempts at index build time, by selection policy and outcome.",
 		}, []string{"policy", "status"}), // policy: tiered, same_version. status: success, empty, download_error, validate_error
 		IndexSnapshotDownloadDuration: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
@@ -149,6 +183,30 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			Name: "index_server_disk_cleanup_dirs_deleted_total",
 			Help: "Number of on-disk directories the disk cleanup pass attempted to delete, by kind and outcome.",
 		}, []string{"kind", "outcome"}), // kind: index, snapshot_staging. outcome: success, error
+		BuildPhaseSeconds: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "index_server_build_phase_seconds_total",
+			Help: "Seconds spent building or updating an index, by phase: fetch reads the stored object, convert turns it into a search document, map adds it to an index batch, commit writes the batch, promote moves an index that outgrew memory onto disk.",
+		}, []string{"phase", "path", "group", "resource"}),
+		BuildDocuments: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "index_server_build_documents_total",
+			Help: "Documents reaching each phase of building or updating an index. Fetched minus converted is how many produced nothing to give the index, and fetched minus committed is how many did not reach it.",
+		}, []string{"phase", "path", "group", "resource"}),
+		BuildSourceBytes: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "index_server_build_source_bytes_total",
+			Help: "Bytes of stored objects read while building or updating an index.",
+		}, []string{"path", "group", "resource"}),
+		BuildIndexedBytes: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "index_server_build_indexed_bytes_total",
+			Help: "Bytes the index reports for the documents it was given. Compare with source bytes to see how much bigger or smaller search documents are.",
+		}, []string{"path", "group", "resource"}),
+		SearchCapabilityViolations: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "index_server_search_capability_violations_total",
+			Help: "Number of search requests that used a field in a way its declaration does not allow. Counted whether or not the request was rejected.",
+		}, []string{"resource", "capability"}),
+		SearchResultFormats: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "index_server_search_result_format_total",
+			Help: "Number of search responses by result format.",
+		}, []string{"format"}),
 	}
 
 	// Always-on label series. Snapshot-specific series are initialised separately
@@ -156,6 +214,8 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 	// is disabled — see InitSnapshotMetrics for rationale.
 	m.OpenIndexes.WithLabelValues("file").Set(0)
 	m.OpenIndexes.WithLabelValues("memory").Set(0)
+	m.SearchResultFormats.WithLabelValues("resource_table").Add(0)
+	m.SearchResultFormats.WithLabelValues("field_values").Add(0)
 	return m
 }
 
@@ -165,14 +225,11 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 // emit permanently-zero `index_server_snapshot_*` series. Registration of
 // the CounterVecs themselves stays unconditional in ProvideIndexMetrics.
 func (m *BleveIndexMetrics) InitSnapshotMetrics() {
-	if m == nil {
-		return
-	}
 	for _, policy := range []string{"tiered", "same_version", "cold_start"} {
-		m.IndexSnapshotDownloads.WithLabelValues(policy, "success").Add(0)
-		m.IndexSnapshotDownloads.WithLabelValues(policy, "empty").Add(0)
-		m.IndexSnapshotDownloads.WithLabelValues(policy, "download_error").Add(0)
-		m.IndexSnapshotDownloads.WithLabelValues(policy, "validate_error").Add(0)
+		m.IndexSnapshotDownloadAttempts.WithLabelValues(policy, "success").Add(0)
+		m.IndexSnapshotDownloadAttempts.WithLabelValues(policy, "empty").Add(0)
+		m.IndexSnapshotDownloadAttempts.WithLabelValues(policy, "download_error").Add(0)
+		m.IndexSnapshotDownloadAttempts.WithLabelValues(policy, "validate_error").Add(0)
 	}
 	m.IndexSnapshotUploads.WithLabelValues("success").Add(0)
 	m.IndexSnapshotUploads.WithLabelValues("skip_no_changes").Add(0)
@@ -202,9 +259,6 @@ func (m *BleveIndexMetrics) InitSnapshotMetrics() {
 // configured to run on this instance, so disabled instances don't emit
 // permanently-zero `index_server_disk_cleanup_*` series.
 func (m *BleveIndexMetrics) InitDiskCleanupMetrics() {
-	if m == nil {
-		return
-	}
 	m.IndexDiskCleanupRuns.WithLabelValues("success").Add(0)
 	m.IndexDiskCleanupRuns.WithLabelValues("error").Add(0)
 	for _, kind := range []string{"index", "snapshot_staging"} {

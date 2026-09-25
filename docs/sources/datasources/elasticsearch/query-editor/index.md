@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../data-sources/elasticsearch/query-editor/
-  - ../../data-sources/elasticsearch/template-variables/
 description: Guide for using the Elasticsearch data source's query editor
 keywords:
   - grafana
@@ -17,10 +16,10 @@ labels:
     - cloud
     - enterprise
     - oss
-    - data source
 menuTitle: Query editor
 title: Elasticsearch query editor
 weight: 300
+review_date: 2026-08-10
 ---
 
 # Elasticsearch query editor
@@ -50,6 +49,8 @@ Elasticsearch groups aggregations into three categories:
 
 There are two types of queries you can create with the Elasticsearch query builder. Each type is explained in detail below.
 
+Use the **Preserve query** toggle to keep your Lucene query when you switch between **Metrics**, **Logs**, **Raw Data**, and **Raw Document**. When the toggle is off (the default for new queries), switching query types clears the Lucene query. Grafana remembers your last Preserve query choice in the browser for new queries.
+
 ### Metrics query type
 
 Metrics queries aggregate data and produce calculations such as count, min, max, and more. Click the metric box to view options in the drop-down menu. The default is `count`.
@@ -68,6 +69,12 @@ Metrics queries aggregate data and produce calculations such as count, min, max,
   - top metrics - refer to [Top metrics aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-top-metrics.html)
   - rate - refer to [Rate aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-rate-aggregation.html)
 
+- **Sibling bucket aggregations** - These metrics compute an outer statistic over a per-group inner statistic within each time bucket. For example, **Sum Bucket** with an inner **Max** produces a sum of maxima across hosts. The following options are available:
+  - Sum Bucket - refer to [Sum bucket aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-sum-bucket-aggregation.html)
+  - Max Bucket - refer to [Max bucket aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-max-bucket-aggregation.html)
+  - Min Bucket - refer to [Min bucket aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-min-bucket-aggregation.html)
+  - Average Bucket - refer to [Avg bucket aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-avg-bucket-aggregation.html)
+
 - **Pipeline aggregations** - Pipeline aggregations work on the output of other aggregations rather than on documents. The following pipeline aggregations are available:
   - moving function - Calculates a value based on a sliding window of aggregated values. Refer to [Moving function aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-movfn-aggregation.html).
   - derivative - Calculates the derivative of a metric. Refer to [Derivative aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-derivative-aggregation.html).
@@ -82,12 +89,12 @@ Use the **+ sign** to the right to add multiple metrics to your query. Click on 
 - **Group by options** - Create multiple group by options when constructing your Elasticsearch query. Date histogram is the default option. The following options are available in the drop-down menu:
   - terms - refer to [Terms aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-terms-aggregation.html).
   - filter - refer to [Filter aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-filter-aggregation.html).
-  - geo hash grid - refer to [Geohash grid aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-geohashgrid-aggregation.html).
+  - `geo hash grid` - refer to the [`geohash_grid` aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-geohashgrid-aggregation.html).
   - date histogram - for time series queries. Refer to [Date histogram aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-datehistogram-aggregation.html).
   - histogram - Depicts frequency distributions. Refer to [Histogram aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-histogram-aggregation.html).
   - nested (experimental) - Refer to [Nested aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-nested-aggregation.html).
 
-Each group by option will have a different subset of options to further narrow your query.
+Each group by option has a different subset of options to further narrow your query.
 
 The following options are specific to the **date histogram** bucket aggregation option.
 
@@ -101,7 +108,7 @@ The following options are specific to the **date histogram** bucket aggregation 
 Configure the following options for the **terms** bucket aggregation option:
 
 - **Order** - Sets the order of data. Options are `top` or `bottom.`
-- **Size** - Limits the number of documents, or size of the data set. You can set a custom number or `no limit`.
+- **Size** - Limits the number of documents, or size of the dataset. You can set a custom number or `no limit`.
 - **Min doc count** - The minimum amount of data to include in your query. The default is `0`.
 - **Order by** - Order terms by `term value`, `doc count` or `count`.
 - **Missing** - Defines how documents missing a value should be treated. Missing values are ignored by default, but they can be treated as if they had a value. Refer to [Missing value](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-terms-aggregation.html#_missing_value_5) in the Elasticsearch documentation for more information.
@@ -111,9 +118,9 @@ Configure the following options for the **filters** bucket aggregation option:
 - **Query** - Specify the query to create a bucket of documents (data). Examples are `hostname:"hostname1"`, `product:"widget5"`. Use the \* wildcard to match any number of characters.
 - **Label** - Add a label or name to the bucket.
 
-Configure the following options for the **geo hash grid** bucket aggregation option:
+Configure the following options for the **`geo hash grid`** bucket aggregation option:
 
-- **Precision** - Specifies the number of characters of the geo hash.
+- **Precision** - Specifies the number of characters of the `geo hash`.
 
 Configure the following options for the **histogram** bucket aggregation option:
 
@@ -122,7 +129,7 @@ Configure the following options for the **histogram** bucket aggregation option:
 
 The **nested** group by option is currently experimental, you can select a field and then settings specific to that field.
 
-Click the **+ sign** to add multiple group by options. The data will grouped in order (first by, then by).
+Click the **+ sign** to add multiple group by options. The data is grouped in order (first by, then by).
 
 {{< figure src="/static/img/docs/elasticsearch/group-by-then-by-10.2.png" max-width="850px" class="docs-image--no-shadow" caption="Group by options" >}}
 
@@ -132,11 +139,16 @@ Logs queries analyze Elasticsearch log data. You can configure the following opt
 
 - **Logs Options/Limit** - Limits the number of logs to analyze. The default is `500`.
 
+## Query options
+
+Open the **Options** section in the query editor to configure query-level settings:
+
+- **Limit** or **Size** - For Logs and Raw Data queries, sets the maximum number of documents to return. The default is `500`.
+- **Include runtime fields** - When enabled, runtime fields defined in the index mapping are included in the response. This option is available in Builder mode.
+
 ## Raw query editor
 
-{{< docs/experimental product="The raw query editor" featureFlag="elasticsearchRawDSLQuery" >}}
-
-The raw query editor allows you to write Elasticsearch queries using the native [Elasticsearch Query DSL](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html).
+The raw query editor lets you write Elasticsearch queries using the native [Elasticsearch Query DSL](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html).
 
 ### Switch between Builder and Code modes
 
@@ -152,7 +164,7 @@ When in Code mode, you can write complete Elasticsearch query DSL in JSON format
 - **Syntax highlighting** for JSON
 - **Auto-formatting** - Click the **Format** button or press `Shift+Alt+F` to format your query
 - **Keyboard shortcuts** - Press `Ctrl+Enter` (or `Cmd+Enter` on Mac) to run the query
-- **Real-time validation** - Invalid JSON will be highlighted with error messages
+- **Real-time validation** - Invalid JSON is highlighted with error messages
 
 ### Time range handling
 
@@ -184,16 +196,16 @@ An example query applying dashboard time range using the `@timestamp` field:
 
 The raw query editor supports all query types:
 
-- **Metrics queries** are used to query time series data with aggregations. The query parser will automatically extract bucket and metric aggregations from your DSL and use them for response processing.
+- **Metrics queries** are used to query time series data with aggregations. The query parser automatically extracts bucket and metric aggregations from your DSL and uses them for response processing.
 - **Logs queries** are used to query log data.
 
 ## ES|QL query editor
 
-{{< docs/experimental product="The ES|QL query editor" featureFlag="elasticsearchESQLQuery" >}}
-
-Introduced in Grafana v13.0, the ES|QL query editor lets you query Elasticsearch using [ES|QL (Elasticsearch Query Language)](https://www.elastic.co/docs/reference/query-languages/esql), a pipe-based query language. Unlike Lucene queries that rely on aggregation configuration in the builder UI, ES|QL lets you express filtering, aggregation, and transformation in a single query string.
+The ES|QL query editor lets you query Elasticsearch using [ES|QL (Elasticsearch Query Language)](https://www.elastic.co/docs/reference/query-languages/esql), a pipe-based query language. Unlike Lucene queries that rely on aggregation configuration in the builder UI, ES|QL lets you express filtering, aggregation, and transformation in a single query string.
 
 For an introduction to ES|QL syntax and concepts, refer to [Get started with ES|QL queries](https://www.elastic.co/docs/reference/query-languages/esql/esql-getting-started) in the Elasticsearch documentation.
+
+When an ES|QL query does not include a time filter, Grafana automatically adds a time range filter based on the dashboard or Explore time picker.
 
 ### Index selection
 
@@ -206,9 +218,9 @@ How the editor handles index selection depends on your data source configuration
 
 The ES|QL code editor provides:
 
-- **Code suggestions** -- Auto-complete for ES|QL commands and functions
-- **Error highlighting** -- Syntax errors are highlighted in the editor and error messages from Elasticsearch are displayed directly
-- **Syntax highlighting** -- ES|QL keywords, operators, and values are color-coded for readability
+- **Code suggestions** - Auto-complete for ES|QL commands and functions
+- **Error highlighting** - Syntax errors are highlighted in the editor and error messages from Elasticsearch are displayed directly
+- **Syntax highlighting** - ES|QL keywords, operators, and values are color-coded for readability
 
 ### Example queries
 
@@ -248,14 +260,22 @@ FROM logs-*
 | LIMIT 100
 ```
 
+#### PromQL metrics queries
+
+When you select the **Metrics** query type, ES|QL also accepts the `PROMQL` source command. Grafana processes the response as time series frames, the same way it does for ES|QL `STATS` queries. `PROMQL` must be the first command in the query (leading comments are allowed):
+
+```esql
+PROMQL index=metrics-* step=1m avg(metrics.system.cpu.logical.count)
+```
+
 ### Learn more about ES|QL
 
 For more information about ES|QL syntax, commands, and functions, refer to the following Elasticsearch documentation:
 
-- [ES|QL reference](https://www.elastic.co/docs/reference/query-languages/esql) -- Overview of the ES|QL query language
-- [ES|QL commands](https://www.elastic.co/docs/reference/query-languages/esql/commands) -- Source and processing commands (`FROM`, `WHERE`, `STATS`, `EVAL`, `KEEP`, `SORT`, `LIMIT`, and more)
-- [ES|QL functions and operators](https://www.elastic.co/docs/reference/query-languages/esql/functions-operators) -- Aggregation, math, string, date, and other functions
-- [ES|QL syntax](https://www.elastic.co/docs/reference/query-languages/esql/esql-syntax) -- Identifiers, literals, operators, and special characters
+- [ES|QL reference](https://www.elastic.co/docs/reference/query-languages/esql) - Overview of the ES|QL query language
+- [ES|QL commands](https://www.elastic.co/docs/reference/query-languages/esql/commands) - Source and processing commands (`FROM`, `WHERE`, `STATS`, `EVAL`, `KEEP`, `SORT`, `LIMIT`, and more)
+- [ES|QL functions and operators](https://www.elastic.co/docs/reference/query-languages/esql/functions-operators) - Aggregation, math, string, date, and other functions
+- [ES|QL syntax](https://www.elastic.co/docs/reference/query-languages/esql/esql-syntax) - Identifiers, literals, operators, and special characters
 
 ## Use template variables
 

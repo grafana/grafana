@@ -2,18 +2,46 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
+import { type InterpolateFunction, toDataFrame } from '@grafana/data';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import config from 'app/core/config';
 
-import { CodeLanguage, TextMode } from '../../panelcfg.gen';
+import { CodeLanguage, RenderMode, TextMode } from '../../panelcfg.gen';
+import { FOOTER_TEST_ID } from '../TextNGFooter';
 
 import { PREVIEW_TEST_ID, TextNGEditor, type TextNGEditorChange } from './TextNGEditor';
-import { FOOTER_TEST_ID } from './TextNGEditorFooter';
 import { FORMAT_TOOLBAR_TEST_ID } from './TextNGFormatToolbar';
+import { type ViewMode } from './viewMode';
+
+beforeAll(() => {
+  setTestFlags({ [FlagKeys.TextNewFeatures]: true });
+});
+
+afterAll(() => {
+  setTestFlags({});
+});
+
+const mermaidRender = jest
+  .fn()
+  .mockResolvedValue({ svg: '<svg xmlns="http://www.w3.org/2000/svg"><text>A</text></svg>' });
+
+jest.mock('mermaid', () => ({
+  __esModule: true,
+  default: {
+    initialize: jest.fn(),
+    parse: jest.fn().mockResolvedValue(true),
+    render: (...args: unknown[]) => mermaidRender(...args),
+  },
+}));
 
 // The real CodeMirrorEditor pulls in a heavy, lazily-loaded CodeMirror bundle;
 // stub it with a plain textarea so these tests stay fast and deterministic.
 jest.mock('@grafana/ui/unstable', () => ({
   __esModule: true,
+  // The stubbed editor never runs completions; the source itself is covered by
+  // variableCompletion.test.ts.
+  createVariableCompletionSource: () => () => null,
   CodeMirrorEditor: ({
     value,
     onChange,
@@ -53,6 +81,8 @@ function ControlledEditor({
   const [mode, setMode] = useState(initialMode);
   const [codeLanguage, setCodeLanguage] = useState(initialLanguage);
   const [showLineNumbers, setShowLineNumbers] = useState(initialShowLineNumbers);
+  // The panel owns the default in production; these cases select the view they need.
+  const [view, setView] = useState<ViewMode>('preview');
   return (
     <TextNGEditor
       content={value}
@@ -60,6 +90,8 @@ function ControlledEditor({
       showLineNumbers={showLineNumbers}
       codeLanguage={codeLanguage}
       replaceVariables={replaceVariables}
+      view={view}
+      onViewChange={setView}
       onChange={(change) => {
         setValue(change.content);
         if (change.mode !== undefined) {
@@ -99,6 +131,8 @@ const setup = (
 };
 
 const enterWriteMode = () => userEvent.click(screen.getByRole('radio', { name: 'Write' }));
+const enterSplitMode = () => userEvent.click(screen.getByRole('radio', { name: 'Split' }));
+const enterPreviewMode = () => userEvent.click(screen.getByRole('radio', { name: 'Preview' }));
 
 const openModeMenu = () => userEvent.click(screen.getByRole('button', { name: /^Text mode/ }));
 
@@ -114,31 +148,6 @@ const selectLanguage = async (name: string) => {
 };
 
 describe('TextNGEditor', () => {
-  describe('default (view-first) state', () => {
-    it('lands on the rendered preview, not the editor', () => {
-      setup('# Hello', TextMode.Markdown);
-
-      expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML).toContain('<h1');
-      expect(screen.getByRole('radio', { name: 'Preview' })).toBeChecked();
-      expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
-    });
-
-    it('opens straight into the editor when content is empty', () => {
-      setup('', TextMode.Markdown);
-
-      expect(screen.getByRole('textbox')).toBeInTheDocument();
-      expect(screen.getByRole('radio', { name: 'Write' })).toBeChecked();
-    });
-
-    it('reveals the editor after selecting Write', async () => {
-      setup('# Hello', TextMode.Markdown);
-
-      await enterWriteMode();
-      expect(screen.getByRole('textbox')).toHaveValue('# Hello');
-      expect(screen.queryByTestId(PREVIEW_TEST_ID)).not.toBeInTheDocument();
-    });
-  });
-
   describe('views', () => {
     it('shows only the rendered preview in Preview view', () => {
       setup('# Hello', TextMode.Markdown);
@@ -147,10 +156,19 @@ describe('TextNGEditor', () => {
       expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML).toContain('<h1');
     });
 
+    it('shows only the editor in Write view', async () => {
+      setup('# Hello', TextMode.Markdown);
+
+      await enterWriteMode();
+
+      expect(screen.getByRole('textbox')).toHaveValue('# Hello');
+      expect(screen.queryByTestId(PREVIEW_TEST_ID)).not.toBeInTheDocument();
+    });
+
     it('shows editor and preview side by side in Split view', async () => {
       setup('# Hello', TextMode.Markdown);
 
-      await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
+      await enterSplitMode();
 
       expect(screen.getByRole('textbox')).toBeInTheDocument();
       expect(screen.getByTestId(PREVIEW_TEST_ID)).toBeInTheDocument();
@@ -199,7 +217,7 @@ describe('TextNGEditor', () => {
 
       expect(screen.getByTestId(PREVIEW_TEST_ID)).toHaveTextContent('Data center = A, B, C');
 
-      await userEvent.click(screen.getByRole('radio', { name: 'Write' }));
+      await enterWriteMode();
       expect(screen.getByRole('textbox')).toHaveValue('# Data center = $datacenter');
     });
 
@@ -261,13 +279,16 @@ describe('TextNGEditor', () => {
       expect(onChange).not.toHaveBeenCalledWith({ content: 'updated' });
     });
 
-    it('interpolates with the json format when code language is json, regardless of mode', () => {
+    // Must match the panel, which keys the format off the mode rather than code.language alone.
+    it.each([
+      [TextMode.Code, CodeLanguage.Yaml, 'raw'],
+      [TextMode.Code, CodeLanguage.Json, 'json'],
+      [TextMode.Markdown, CodeLanguage.Json, 'html'],
+    ] as const)('interpolates %s mode with the %s language using the %s format', (mode, language, format) => {
       const replaceVariables = jest.fn((value: string) => value);
-      setup('# Hello', TextMode.Markdown, jest.fn(), false, CodeLanguage.Json, replaceVariables);
+      setup('a: ${var}', mode, jest.fn(), false, language, replaceVariables);
 
-      // Matches the panel render path, which keys the interpolation format off
-      // code.language alone.
-      expect(replaceVariables).toHaveBeenCalledWith('# Hello', {}, 'json');
+      expect(replaceVariables).toHaveBeenCalledWith('a: ${var}', {}, format);
     });
   });
 
@@ -279,7 +300,7 @@ describe('TextNGEditor', () => {
       'renders the empty space fallback in the preview for %j',
       async (content) => {
         setup('# Hello', TextMode.Markdown);
-        await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
+        await enterSplitMode();
 
         // fireEvent, because userEvent.type() does not reproduce a value that is
         // only whitespace. A throw here fails the test.
@@ -294,7 +315,7 @@ describe('TextNGEditor', () => {
   describe('preview updates', () => {
     it('re-renders the preview once typing settles', async () => {
       setup('# Hello', TextMode.Markdown);
-      await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
+      await enterSplitMode();
 
       fireEvent.change(screen.getByRole('textbox'), { target: { value: '## Updated' } });
 
@@ -308,7 +329,7 @@ describe('TextNGEditor', () => {
       await enterWriteMode();
 
       fireEvent.change(screen.getByRole('textbox'), { target: { value: '## Updated' } });
-      await userEvent.click(screen.getByRole('radio', { name: 'Preview' }));
+      await enterPreviewMode();
 
       expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML).toContain('<h2');
     });
@@ -321,6 +342,8 @@ describe('TextNGEditor', () => {
           showLineNumbers={false}
           replaceVariables={(value: string) => value}
           onChange={jest.fn()}
+          view="preview"
+          onViewChange={jest.fn()}
         />
       );
 
@@ -331,6 +354,8 @@ describe('TextNGEditor', () => {
           showLineNumbers={false}
           replaceVariables={(value: string) => value}
           onChange={jest.fn()}
+          view="preview"
+          onViewChange={jest.fn()}
         />
       );
 
@@ -349,7 +374,7 @@ describe('TextNGEditor', () => {
     it('renders in Split view', async () => {
       setup('hello', TextMode.Markdown);
 
-      await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
+      await enterSplitMode();
 
       expect(screen.getByTestId(FORMAT_TOOLBAR_TEST_ID)).toBeInTheDocument();
     });
@@ -374,7 +399,7 @@ describe('TextNGEditor', () => {
 
       expect(screen.getByRole('button', { name: 'Text mode: HTML' })).toBeInTheDocument();
 
-      await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
+      await enterSplitMode();
       expect(screen.getByRole('button', { name: 'Text mode: HTML' })).toBeInTheDocument();
 
       await enterWriteMode();
@@ -519,5 +544,105 @@ describe('TextNGEditor', () => {
       expect(onChange).toHaveBeenLastCalledWith({ showLineNumbers: true, content: 'const b = 2;' });
       expect(screen.getByRole('textbox')).toHaveValue('const b = 2;');
     });
+  });
+});
+
+describe('TextNGEditor render mode preview', () => {
+  const series = [
+    toDataFrame({
+      fields: [{ name: 'host', values: ['web-1', 'web-2'] }],
+    }),
+  ];
+
+  // Reports the row context it was handed, so these assert the preview wiring
+  // rather than re-testing macro resolution (covered in renderContent.test.ts).
+  const reportRowContext: InterpolateFunction = (target, scopedVars) => {
+    const rowIndex = scopedVars?.__dataContext?.value.rowIndex;
+    return rowIndex === undefined ? target : `row-${rowIndex}`;
+  };
+
+  const previewFor = (renderMode?: RenderMode) => (
+    <TextNGEditor
+      content="no row context"
+      mode={TextMode.Markdown}
+      showLineNumbers={false}
+      renderMode={renderMode}
+      series={series}
+      replaceVariables={reportRowContext}
+      onChange={jest.fn()}
+      view="preview"
+      onViewChange={jest.fn()}
+    />
+  );
+
+  const previewHtml = () => screen.getByTestId(PREVIEW_TEST_ID).innerHTML;
+
+  it('previews one block per row in every row mode, matching the panel', () => {
+    render(previewFor(RenderMode.PerRow));
+
+    expect(previewHtml()).toContain('row-0');
+    expect(previewHtml()).toContain('row-1');
+  });
+
+  it.each([
+    ['once mode', RenderMode.Once],
+    ['an unset render mode', undefined],
+  ])('previews a single render with no row context in %s', (_name, renderMode) => {
+    render(previewFor(renderMode));
+
+    expect(previewHtml()).toContain('no row context');
+  });
+
+  it('updates the preview when the pane changes the render mode', () => {
+    const { rerender } = render(previewFor(RenderMode.Once));
+    expect(previewHtml()).toContain('no row context');
+
+    rerender(previewFor(RenderMode.PerRow));
+
+    expect(previewHtml()).toContain('row-0');
+    expect(previewHtml()).toContain('row-1');
+  });
+});
+
+describe('TextNGEditor handlebars preview', () => {
+  const series = [
+    toDataFrame({
+      fields: [{ name: 'host', values: ['web-1', 'web-2'] }],
+    }),
+  ];
+
+  it('evaluates expressions in the preview', () => {
+    render(
+      <TextNGEditor
+        content="{{#each data}}- {{host}}\n{{/each}}"
+        mode={TextMode.Markdown}
+        showLineNumbers={false}
+        series={series}
+        replaceVariables={(target) => target}
+        onChange={jest.fn()}
+        view="preview"
+        onViewChange={jest.fn()}
+      />
+    );
+
+    expect(screen.getByTestId(PREVIEW_TEST_ID)).toHaveTextContent('web-1');
+    expect(screen.getByTestId(PREVIEW_TEST_ID)).toHaveTextContent('web-2');
+  });
+
+  it('shows an alert in the preview when the template is broken', () => {
+    render(
+      <TextNGEditor
+        content="{{#each data}}"
+        mode={TextMode.Markdown}
+        showLineNumbers={false}
+        series={series}
+        replaceVariables={(target) => target}
+        onChange={jest.fn()}
+        view="preview"
+        onViewChange={jest.fn()}
+      />
+    );
+
+    expect(screen.getByTestId(PREVIEW_TEST_ID)).toHaveTextContent('Handlebars error:');
   });
 });

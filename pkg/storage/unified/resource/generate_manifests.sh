@@ -36,6 +36,9 @@ find apps -name '*.go' 2>/dev/null | \
 cat > "$OUTPUT_FILE" << 'HEADER'
 package resource
 
+// Generated: edits are overwritten. To add a manifest that is compiled into a
+// distribution but lives outside apps/, see RegisterAppManifest.
+
 //go:generate sh -c "cd ../../../.. && bash pkg/storage/unified/resource/generate_manifests.sh"
 
 import (
@@ -73,9 +76,9 @@ echo "$EXTERNAL_MANIFESTS" | $AWK 'NF { print "\t" $1 " \"" $2 "\"" }' >> "$OUTP
 cat >> "$OUTPUT_FILE" << 'MIDDLE'
 )
 
-func AppManifests() []app.Manifest {
+func generatedAppManifests() []*app.ManifestData {
 	// TODO: don't use hardcoded list of manifests when possible.
-	return []app.Manifest{
+	return []*app.ManifestData{
 MIDDLE
 
 # Generate manifest calls with same duplicate handling
@@ -95,11 +98,11 @@ $AWK '{
       seen[pkg] = 1
     }
 
-    print "\t\t" pkg ".LocalManifest(),"
+    print "\t\t" pkg ".LocalManifest().ManifestData,"
   }
 }' "$TEMP_FILE" >> "$OUTPUT_FILE"
 
-echo "$EXTERNAL_MANIFESTS" | $AWK 'NF { print "\t\t" $1 ".LocalManifest()," }' >> "$OUTPUT_FILE"
+echo "$EXTERNAL_MANIFESTS" | $AWK 'NF { print "\t\t" $1 ".LocalManifest().ManifestData," }' >> "$OUTPUT_FILE"
 
 # Close function
 cat >> "$OUTPUT_FILE" << 'FOOTER'

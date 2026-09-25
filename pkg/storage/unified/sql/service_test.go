@@ -2,7 +2,9 @@ package sql
 
 import (
 	"context"
+	"fmt"
 	"net"
+	"net/http"
 	"sync/atomic"
 	"testing"
 
@@ -17,6 +19,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
@@ -54,6 +58,58 @@ type mockResourceServer struct {
 }
 
 var _ resource.ResourceServer = (*mockResourceServer)(nil)
+
+type embeddedErrorServer struct {
+	mockResourceServer
+	failure *resourcepb.ErrorResult
+}
+
+func (s *embeddedErrorServer) Read(context.Context, *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
+	return &resourcepb.ReadResponse{Error: s.failure}, nil
+}
+
+func (s *embeddedErrorServer) Search(context.Context, *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+	return &resourcepb.ResourceSearchResponse{Error: s.failure}, nil
+}
+
+func TestEmbeddedErrorConversionOnRemoteServers(t *testing.T) {
+	failure := &resourcepb.ErrorResult{Code: http.StatusNotFound, Reason: string(metav1.StatusReasonNotFound), Message: "missing", Details: &resourcepb.ErrorDetails{Name: "item"}}
+	for _, enabled := range []bool{false, true} {
+		for _, standalone := range []bool{false, true} {
+			t.Run(fmt.Sprintf("enabled=%t/standalone=%t", enabled, standalone), func(t *testing.T) {
+				s := &service{
+					cfg:           &setting.Cfg{UnifiedStorageGRPCErrorResultToStatus: enabled},
+					authenticator: func(ctx context.Context) (context.Context, error) { return ctx, nil },
+				}
+				provider := newDenyAllProvider(t)
+				server := &embeddedErrorServer{failure: failure}
+				if standalone {
+					require.NoError(t, s.registerSearchServer(provider, server))
+				} else {
+					s.registerUnifiedResourceServer(provider, server, nil)
+				}
+				conn := startAndConnect(t, provider.GetServer())
+				check := func(respError *resourcepb.ErrorResult, err error) {
+					if !enabled {
+						require.NoError(t, err)
+						require.True(t, proto.Equal(failure, respError))
+						return
+					}
+					require.Equal(t, codes.NotFound, status.Code(err))
+					details := status.Convert(err).Details()
+					require.Len(t, details, 1)
+					require.True(t, proto.Equal(failure, details[0].(*resourcepb.ErrorResult)))
+				}
+				searchResp, err := resourcepb.NewResourceIndexClient(conn).Search(t.Context(), &resourcepb.ResourceSearchRequest{})
+				check(searchResp.GetError(), err)
+				if !standalone {
+					readResp, err := resourcepb.NewResourceStoreClient(conn).Read(t.Context(), &resourcepb.ReadRequest{})
+					check(readResp.GetError(), err)
+				}
+			})
+		}
+	}
+}
 
 // requireAuthPassed asserts the error is NOT codes.Unauthenticated, meaning
 // the request got past the auth interceptor and reached the (unimplemented) handler.
@@ -152,7 +208,7 @@ func TestRegisterSearchServerWithAuth(t *testing.T) {
 
 // TestRegisterUnifiedResourceServerWithAuth verifies that registerUnifiedResourceServer
 // wraps all registered services (ResourceStore, ResourceStats, BulkStore, BlobStore,
-// Quotas, ResourceIndex, ManagedObjectIndex, Diagnostics) with per-service auth.
+// Quotas, ResourceIndex, ManagedObjectIndex, Diagnostics, VectorStore) with per-service auth.
 func TestRegisterUnifiedResourceServerWithAuth(t *testing.T) {
 	var authCalled atomic.Int32
 	testAuth := interceptors.AuthenticatorFunc(func(ctx context.Context) (context.Context, error) {
@@ -163,7 +219,8 @@ func TestRegisterUnifiedResourceServerWithAuth(t *testing.T) {
 	s := &service{authenticator: testAuth}
 	provider := newDenyAllProvider(t)
 
-	s.registerUnifiedResourceServer(provider, &mockResourceServer{})
+	vs := resource.NewVectorStoreServer(nil, nil, nil, nil, nil)
+	s.registerUnifiedResourceServer(provider, &mockResourceServer{}, vs)
 
 	conn := startAndConnect(t, provider.GetServer())
 	ctx := context.Background()
@@ -214,6 +271,18 @@ func TestRegisterUnifiedResourceServerWithAuth(t *testing.T) {
 		resp, err := client.IsHealthy(ctx, &resourcepb.HealthCheckRequest{}) //nolint:staticcheck
 		require.NoError(t, err, "IsHealthy should pass per-service auth")
 		require.Equal(t, resourcepb.HealthCheckResponse_SERVING, resp.Status)
+		require.Greater(t, authCalled.Load(), int32(0))
+	})
+
+	t.Run("VectorStore/Upsert", func(t *testing.T) {
+		authCalled.Store(0)
+		client := resourcepb.NewVectorStoreClient(conn)
+		// Empty request: the real handler fails request validation (InvalidArgument)
+		// before touching identity or storage, which is enough to prove the call
+		// reached the handler instead of being blocked by the global deny-all auth.
+		_, err := client.Upsert(ctx, &resourcepb.VectorUpsertRequest{})
+		require.Error(t, err)
+		assert.Equal(t, codes.InvalidArgument, status.Code(err), "Upsert should pass per-service auth and reach handler validation")
 		require.Greater(t, authCalled.Load(), int32(0))
 	})
 }
@@ -292,39 +361,23 @@ func TestBuildKVSnapshotStore(t *testing.T) {
 	t.Run("rejects when index_snapshot_bucket_url is also set", func(t *testing.T) {
 		cfg := &setting.Cfg{
 			IndexSnapshotBucketURL: "file:///tmp/snapshot",
-			EnableKVLeases:         true,
 		}
 		_, err := BuildKVSnapshotStore(cfg, &stubKVBackend{}, logger)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "mutually exclusive")
 	})
 
-	t.Run("rejects when enable_kv_leases is off", func(t *testing.T) {
-		cfg := &setting.Cfg{}
-		_, err := BuildKVSnapshotStore(cfg, &stubKVBackend{}, logger)
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "requires enable_kv_leases")
-	})
-
 	t.Run("rejects when backend is not a KVBackend", func(t *testing.T) {
-		cfg := &setting.Cfg{EnableKVLeases: true}
+		cfg := &setting.Cfg{}
 		_, err := BuildKVSnapshotStore(cfg, &nonKVBackend{}, logger)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "requires a KV-backed storage backend")
 	})
 
-	t.Run("rejects when backend has no lease manager", func(t *testing.T) {
-		cfg := &setting.Cfg{EnableKVLeases: true}
-		backend := &stubKVBackend{kv: newTestKV(t)}
-		_, err := BuildKVSnapshotStore(cfg, backend, logger)
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "no lease manager")
-	})
-
 	t.Run("constructs store when everything is wired", func(t *testing.T) {
-		cfg := &setting.Cfg{EnableKVLeases: true}
+		cfg := &setting.Cfg{}
 		store := newTestKV(t)
-		mgr := lease.NewManager(store, "test-holder", nil)
+		mgr := lease.NewManager(store, "test-holder", "test", nil)
 		t.Cleanup(mgr.Stop)
 		backend := &stubKVBackend{kv: store, mgr: mgr}
 

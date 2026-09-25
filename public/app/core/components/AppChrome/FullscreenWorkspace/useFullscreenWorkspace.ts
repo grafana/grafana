@@ -5,6 +5,8 @@ import { locationSearchToObject, locationService } from '@grafana/runtime';
 import { useFlagAssistantFullscreenWorkspace } from '@grafana/runtime/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
+import { setFullscreenWorkspaceActive } from './fullscreenWorkspaceState';
+
 export interface FullscreenWorkspaceState {
   fullscreenWorkspaceFeatureFlagEnabled: boolean;
   /** Whether fullscreen workspace is currently active (flag enabled AND the chrome state is on). */
@@ -20,13 +22,14 @@ export function useFullscreenWorkspace(): FullscreenWorkspaceState {
   // location subscription when the flag is off, so it doesn't re-render on every SPA navigation.
   useEffect(() => {
     if (!fullscreenWorkspaceFeatureFlagEnabled) {
+      chrome.setFullscreenWorkspace({ fullscreenWorkspace: false });
       return;
     }
     const consume = (location: Location) => {
       const queryParams = locationSearchToObject(location.search);
       if (queryParams.fullscreenWorkspace === '1' || queryParams.fullscreenWorkspace === true) {
-        chrome.setFullscreenWorkspace(true);
-        locationService.partial({ fullscreenWorkspace: null });
+        locationService.partial({ fullscreenWorkspace: null }, true);
+        chrome.setFullscreenWorkspace({ fullscreenWorkspace: true, pushHistoryEntry: false });
       }
     };
     consume(locationService.getLocation());
@@ -34,8 +37,15 @@ export function useFullscreenWorkspace(): FullscreenWorkspaceState {
     return () => sub.unsubscribe();
   }, [chrome, fullscreenWorkspaceFeatureFlagEnabled]);
 
+  const fullscreenWorkspaceActive = fullscreenWorkspaceFeatureFlagEnabled && Boolean(state.fullscreenWorkspace);
+
+  // Mirror it for imperative callers that can't use this hook.
+  useEffect(() => {
+    setFullscreenWorkspaceActive(fullscreenWorkspaceActive);
+  }, [fullscreenWorkspaceActive]);
+
   return {
     fullscreenWorkspaceFeatureFlagEnabled,
-    fullscreenWorkspaceActive: fullscreenWorkspaceFeatureFlagEnabled && Boolean(state.fullscreenWorkspace),
+    fullscreenWorkspaceActive,
   };
 }

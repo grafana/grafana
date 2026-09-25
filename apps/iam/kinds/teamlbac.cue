@@ -15,6 +15,20 @@ teamlbacruleKind: {
 
 teamlbacrulev0alpha1: teamlbacruleKind & {
 	schema: {
-		spec: v0alpha1.TeamLBACRuleSpec
+		spec:   v0alpha1.TeamLBACRuleSpec
+		status: v0alpha1.TeamLBACRuleStatus
+	}
+	routes: {
+		"/for-subject/{type}/{uid}": {
+			"GET": {
+				// App SDK client generation does not yet interpolate path parameters.
+				// A hand-written client method exposes this route with typed arguments.
+				name: "getTeamLBACRulesForSubjectRoute"
+				response: {
+					team_filters: [string]: [...string]
+				}
+				responseMetadata: objectMeta: false
+			}
+		}
 	}
 }

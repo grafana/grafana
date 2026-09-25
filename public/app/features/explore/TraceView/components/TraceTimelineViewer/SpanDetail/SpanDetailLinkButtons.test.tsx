@@ -17,6 +17,7 @@ jest.mock('@grafana/runtime', () => ({
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
   useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
+  useDataSourceInstanceList: jest.fn().mockReturnValue({ isLoading: false, items: [] }),
   // LogsLinkButton resolves the query datasource to check for logs; the links used
   // here have no interpolated query, so this is only a safety net against real calls.
   getDataSourceInstance: jest.fn().mockResolvedValue({ query: jest.fn() }),
@@ -272,7 +273,7 @@ describe('getProfileLinkButtonsContext', () => {
     expect(context).toEqual({
       serviceName: 'test-service',
       profileTypeId: 'test-type',
-      spanSelector: 'test-profile',
+      spanSelector: ['test-profile'],
       explorationType: 'flame-graph',
       timeRange: {
         from: new Date(0).toISOString(),
@@ -290,7 +291,7 @@ describe('getProfileLinkButtonsContext', () => {
     expect(context).toEqual({
       serviceName: 'test-service',
       profileTypeId: '',
-      spanSelector: 'test-profile',
+      spanSelector: ['test-profile'],
       explorationType: 'flame-graph',
       timeRange: {
         from: new Date(0).toISOString(),
@@ -321,6 +322,6 @@ describe('getProfileLinkButtonsContext', () => {
 
     const context = getProfileLinkButtonsContext(spanWithoutProfileId, traceToProfilesOptions, timeRange);
 
-    expect(context.spanSelector).toBe('');
+    expect(context.spanSelector).toEqual([]);
   });
 });

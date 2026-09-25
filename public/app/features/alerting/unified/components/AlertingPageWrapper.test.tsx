@@ -1,13 +1,16 @@
+import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
-import { type NavModelItem, OrgRole } from '@grafana/data';
+import { type NavModelItem, OrgRole, store } from '@grafana/data';
+import { config, locationService } from '@grafana/runtime';
 import { type AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions, grantUserRole, mockDataSource } from '../mocks';
 import { setupAutoSyncConfig } from '../mocks/server/handlers/k8s/config.k8s';
+import { getOrgAlertmanagerLocalStorageKey } from '../state/AlertmanagerContext';
 import { setupDataSources } from '../testSetup/datasources';
 import { ALERTMANAGER_NAME_QUERY_KEY } from '../utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
@@ -89,7 +92,7 @@ describe('AlertmanagerPageWrapper', () => {
       expect(screen.queryByTestId('alertmanager-picker')).not.toBeInTheDocument();
     });
 
-    it('should show AlertManagerPicker when an Alertmanager-type datasource exists', () => {
+    it('should show AlertManagerPicker when an Alertmanager-type datasource exists', async () => {
       const alertmanagerDataSource = mockDataSource<AlertManagerDataSourceJsonData>({
         name: 'external-alertmanager',
         uid: 'external-alertmanager-uid',
@@ -104,10 +107,10 @@ describe('AlertmanagerPageWrapper', () => {
 
       renderTestComponent();
 
-      expect(screen.getByTestId('alertmanager-picker')).toBeInTheDocument();
+      expect(await screen.findByTestId('alertmanager-picker')).toBeInTheDocument();
     });
 
-    it('should show AlertManagerPicker when both Prometheus and Alertmanager datasources exist', () => {
+    it('should show AlertManagerPicker when both Prometheus and Alertmanager datasources exist', async () => {
       const prometheusDs = mockDataSource({
         name: 'prometheus-1',
         uid: 'prometheus-1-uid',
@@ -131,7 +134,7 @@ describe('AlertmanagerPageWrapper', () => {
 
       renderTestComponent();
 
-      expect(screen.getByTestId('alertmanager-picker')).toBeInTheDocument();
+      expect(await screen.findByTestId('alertmanager-picker')).toBeInTheDocument();
     });
 
     it('should hide AlertManagerPicker when user lacks external notifications permission even if Alertmanager datasources exist', () => {
@@ -164,6 +167,50 @@ describe('AlertmanagerPageWrapper', () => {
       );
 
       expect(screen.queryByTestId('alertmanager-picker')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('AlertManagerPicker selection', () => {
+    const setup = (initialEntry: string) => {
+      const alertmanagerDataSource = mockDataSource<AlertManagerDataSourceJsonData>({
+        name: 'external-alertmanager',
+        uid: 'external-alertmanager-uid',
+        type: DataSourceType.Alertmanager,
+      });
+      setupDataSources(alertmanagerDataSource);
+      grantUserPermissions([
+        AccessControlAction.AlertingNotificationsRead,
+        AccessControlAction.AlertingNotificationsExternalRead,
+      ]);
+
+      return render(
+        <AlertmanagerPageWrapper accessType="notification" pageNav={testPageNav}>
+          <div>Test content</div>
+        </AlertmanagerPageWrapper>,
+        { historyOptions: { initialEntries: [initialEntry] } }
+      );
+    };
+
+    // The provider mirrors the selection into localStorage, so without this a previous test's
+    // selection decides which option is already active here.
+    beforeEach(() => {
+      store.delete(getOrgAlertmanagerLocalStorageKey(config.bootData.user.orgId));
+    });
+
+    it('selecting an external Alertmanager puts it in the url', async () => {
+      setup('/alerting/notifications');
+
+      await clickSelectOption(await screen.findByTestId('alertmanager-picker'), 'external-alertmanager');
+
+      expect(locationService.getSearch().get(ALERTMANAGER_NAME_QUERY_KEY)).toBe('external-alertmanager');
+    });
+
+    it('selecting the Grafana Alertmanager clears it from the url', async () => {
+      setup(`/alerting/notifications?${ALERTMANAGER_NAME_QUERY_KEY}=external-alertmanager`);
+
+      await clickSelectOption(await screen.findByTestId('alertmanager-picker'), 'Grafana');
+
+      expect(locationService.getSearch().get(ALERTMANAGER_NAME_QUERY_KEY)).toBeNull();
     });
   });
 

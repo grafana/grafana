@@ -117,8 +117,17 @@ describe('buildNavModel', () => {
       const variablesTab = navModel.children?.find((child) => child.id === getVariablesTabID(mockFolder.uid));
 
       expect(variablesTab).toBeDefined();
-      expect(variablesTab?.icon).toBe('brackets-curly');
+      expect(variablesTab?.icon).toBe('gf-variable');
       expect(variablesTab?.url).toBe(`${mockFolder.url}/variables`);
+    });
+
+    it('should show the variables count on the Variables tab', () => {
+      setTestFlags({ [GLOBAL_DASHBOARD_VARIABLES_FLAG]: true });
+
+      const navModel = buildNavModel(mockFolder, undefined, { panels: 2, rules: 3, variables: 4 });
+      const variablesTab = navModel.children?.find((child) => child.id === getVariablesTabID(mockFolder.uid));
+
+      expect(variablesTab?.tabCounter).toBe(4);
     });
 
     it('should hide Variables tab for Git-synced folders even when the toggle is on', () => {

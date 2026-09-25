@@ -29,7 +29,7 @@ func TestMain(m *testing.M) {
 func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlstore := db.InitTestDB(t)
+	sqlstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	cfg := setting.NewCfg()
 	dashStore := ProvideStore(sqlstore, cfg)
 
@@ -162,7 +162,7 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 func TestIntegrationDashboardSnapshotDuplicateKey(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlstore := db.InitTestDB(t)
+	sqlstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	dashStore := NewStore(sqlstore)
 
 	t.Run("inserting a snapshot with a duplicate key returns ErrDashboardSnapshotAlreadyExists", func(t *testing.T) {
@@ -212,7 +212,7 @@ func TestIntegrationDashboardSnapshotDuplicateKey(t *testing.T) {
 func TestIntegrationDeleteExpiredSnapshots(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlstore := db.InitTestDB(t)
+	sqlstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	dashStore := NewStore(sqlstore)
 
 	t.Run("Testing dashboard snapshots clean up", func(t *testing.T) {

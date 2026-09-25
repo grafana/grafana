@@ -284,7 +284,7 @@ func TestExtra_Mutate(t *testing.T) {
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GitlabConnectionType,
+					Type: provisioning.GitlabOAuthConnectionType,
 					OAuth: &provisioning.ConnectionOAuthConfig{
 						ClientID: "clientID",
 					},

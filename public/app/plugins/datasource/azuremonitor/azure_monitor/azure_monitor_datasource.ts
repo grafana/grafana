@@ -2,16 +2,11 @@ import { find } from 'lodash';
 
 import { type AzureCredentials } from '@grafana/azure-sdk';
 import { type ScopedVars } from '@grafana/data';
-import {
-  config,
-  DataSourceWithBackend,
-  getTemplateSrv,
-  type TemplateSrv,
-  type VariableInterpolation,
-} from '@grafana/runtime';
+import { DataSourceWithBackend, getTemplateSrv, type TemplateSrv, type VariableInterpolation } from '@grafana/runtime';
 
 import { getCredentials } from '../credentials';
 import { type AzureMetricQuery, AzureQueryType } from '../dataquery.gen';
+import { isBatchAPIFlagEnabled } from '../featureFlags';
 import TimegrainConverter from '../time_grain_converter';
 import { type AzureMonitorQuery } from '../types/query';
 import {
@@ -57,6 +52,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
   locationsApiVersion = '2020-01-01';
   defaultSubscriptionId?: string;
   basicLogsEnabled?: boolean;
+  auxiliaryLogsEnabled?: boolean;
   batchAPIEnabled?: boolean;
   resourcePath: string;
   declare resourceGroup: string;
@@ -71,8 +67,10 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<
 
     this.defaultSubscriptionId = instanceSettings.jsonData.subscriptionId;
     this.basicLogsEnabled = instanceSettings.jsonData.basicLogsEnabled;
-    // Gate on the feature toggle so batchAPIEnabled is the single source of truth (callers needn't re-check it).
-    this.batchAPIEnabled = !!config.featureToggles.azureMonitorBatchAPI && instanceSettings.jsonData.batchAPIEnabled;
+    this.auxiliaryLogsEnabled = instanceSettings.jsonData.auxiliaryLogsEnabled;
+    // Gate on the feature flag so batchAPIEnabled is the single source of truth (callers needn't re-check it).
+    // The flag proxy resolves against Grafana's provider, which is initialized before plugins load.
+    this.batchAPIEnabled = instanceSettings.jsonData.batchAPIEnabled && isBatchAPIFlagEnabled();
 
     this.resourcePath = routeNames.azureMonitor;
   }

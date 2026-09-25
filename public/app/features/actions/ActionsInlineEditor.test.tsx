@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
@@ -45,17 +45,25 @@ describe('ActionsInlineEditor', () => {
     mockOnChange.mockClear();
   });
 
-  it('renders the add-action button with no actions', () => {
-    render(<ActionsInlineEditor {...defaultProps} />);
+  it('renders the add-action button with no actions', async () => {
+    const { container } = render(<ActionsInlineEditor {...defaultProps} />);
+
+    await waitFor(() => {
+      expect(container.querySelector('[data-rfd-droppable-id="sortable-links"]')).toBeInTheDocument();
+    });
 
     expect(screen.getByRole('button', { name: /Add action/i })).toBeInTheDocument();
     expect(screen.getByTestId('actions-inline')).toBeInTheDocument();
   });
 
-  it('renders existing actions', () => {
+  it('renders existing actions', async () => {
     const actions = [buildFetchAction({ title: 'First action' }), buildFetchAction({ title: 'Second action' })];
 
-    render(<ActionsInlineEditor {...defaultProps} actions={actions} />);
+    const { container } = render(<ActionsInlineEditor {...defaultProps} actions={actions} />);
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(2);
+    });
 
     expect(screen.getByText('First action')).toBeInTheDocument();
     expect(screen.getByText('Second action')).toBeInTheDocument();
@@ -69,16 +77,20 @@ describe('ActionsInlineEditor', () => {
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Add action/i })).toBeInTheDocument();
+    expect(await screen.findByPlaceholderText('Action title')).toHaveValue('');
+    expect(screen.getByRole('button', { name: /^Save$/i })).toBeDisabled();
   });
 
   it('opens the modal with the Edit action heading when an existing action is edited', async () => {
     const user = userEvent.setup();
     render(<ActionsInlineEditor {...defaultProps} actions={[buildFetchAction()]} />);
 
-    await user.click(screen.getByRole('button', { name: /edit/i }));
+    await user.click(await screen.findByRole('button', { name: /edit/i }));
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Edit action/i })).toBeInTheDocument();
+    expect(await screen.findByDisplayValue('Sample Action')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('https://api.example.com')).toBeInTheDocument();
   });
 
   it('removes an action when its remove button is clicked', async () => {
@@ -98,17 +110,18 @@ describe('ActionsInlineEditor', () => {
     const user = userEvent.setup();
     render(<ActionsInlineEditor {...defaultProps} actions={[buildFetchAction()]} showOneClick={true} />);
 
-    await user.click(screen.getByRole('button', { name: /edit/i }));
+    await user.click(await screen.findByRole('button', { name: /edit/i }));
 
-    expect(screen.getByRole('switch')).toBeInTheDocument();
+    expect(await screen.findByRole('switch')).toBeInTheDocument();
   });
 
   it('hides the one-click switch when showOneClick is false', async () => {
     const user = userEvent.setup();
     render(<ActionsInlineEditor {...defaultProps} actions={[buildFetchAction()]} showOneClick={false} />);
 
-    await user.click(screen.getByRole('button', { name: /edit/i }));
+    await user.click(await screen.findByRole('button', { name: /edit/i }));
 
+    expect(await screen.findByRole('radio', { name: 'POST' })).toBeChecked();
     expect(screen.queryByRole('switch')).not.toBeInTheDocument();
   });
 
@@ -118,17 +131,44 @@ describe('ActionsInlineEditor', () => {
 
     render(<ActionsInlineEditor {...defaultProps} actions={actions} />);
 
-    await user.click(screen.getByRole('button', { name: /edit/i }));
+    await user.click(await screen.findByRole('button', { name: /edit/i }));
     // Toggle method to GET inside the editor and save.
-    await user.click(screen.getByRole('radio', { name: 'GET' }));
+    await user.click(await screen.findByRole('radio', { name: 'GET' }));
     await user.click(screen.getByRole('button', { name: /^Save$/i }));
 
     expect(mockOnChange).toHaveBeenCalledTimes(1);
     expect(mockOnChange).toHaveBeenCalledWith([
-      expect.objectContaining({
-        title: 'Editable',
-        [ActionType.Fetch]: expect.objectContaining({ method: HttpRequestMethod.GET }),
-      }),
+      {
+        ...actions[0],
+        [ActionType.Fetch]: {
+          method: HttpRequestMethod.GET,
+          url: 'https://api.example.com',
+          body: '{}',
+          queryParams: [],
+          headers: [['Content-Type', 'application/json']],
+        },
+      },
     ]);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Add action/i })).toBeInTheDocument();
+  });
+
+  it('discards edits on cancel and reopens with the saved action', async () => {
+    const user = userEvent.setup();
+    render(<ActionsInlineEditor {...defaultProps} actions={[buildFetchAction()]} />);
+
+    await user.click(await screen.findByRole('button', { name: /edit/i }));
+    expect(await screen.findByRole('radio', { name: 'POST' })).toBeChecked();
+    await user.click(screen.getByRole('radio', { name: 'GET' }));
+    expect(screen.getByRole('radio', { name: 'GET' })).toBeChecked();
+    await user.click(screen.getByRole('button', { name: /^Cancel$/i }));
+
+    expect(screen.getByText('Sample Action')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Add action/i })).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(mockOnChange).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: /edit/i }));
+    expect(await screen.findByRole('radio', { name: 'POST' })).toBeChecked();
   });
 });

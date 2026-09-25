@@ -124,7 +124,7 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	return nil, clientErr
 }
 
-func (c *Proxy) IsEnabled() bool {
+func (c *Proxy) IsEnabled(context.Context) bool {
 	return c.cfg.AuthProxy.Enabled
 }
 
@@ -168,6 +168,11 @@ func (c *Proxy) Priority() uint {
 func (c *Proxy) Hook(ctx context.Context, id *authn.Identity, r *authn.Request) error {
 	ctx, span := c.tracer.Start(ctx, "authn.proxy.Hook")
 	defer span.End()
+
+	if c.cfg.AuthProxy.SyncTTL == 0 {
+		return nil
+	}
+
 	if id.ClientParams.CacheAuthProxyKey == "" {
 		return nil
 	}
@@ -303,17 +308,21 @@ func (c *Proxy) logProxyHeaders(ctx context.Context, additional map[string]strin
 }
 
 func getProxyCacheKey(username string, additional map[string]string) (string, bool) {
-	key := strings.Builder{}
-	key.WriteString(username)
-	for _, k := range proxyFields {
-		if v, ok := additional[k]; ok {
-			key.WriteString(v)
-		}
+	hash := fnv.New128a()
+
+	// Length-prefix each field so concatenation can't produce ambiguous field boundaries.
+	writeField := func(v string) bool {
+		_, err := fmt.Fprintf(hash, "%d:%s", len(v), v)
+		return err == nil
 	}
 
-	hash := fnv.New128a()
-	if _, err := hash.Write([]byte(key.String())); err != nil {
+	if !writeField(username) {
 		return "", false
+	}
+	for _, k := range proxyFields {
+		if !writeField(additional[k]) {
+			return "", false
+		}
 	}
 
 	return strings.Join([]string{proxyCachePrefix, hex.EncodeToString(hash.Sum(nil))}, ":"), true

@@ -279,3 +279,28 @@ func TestTracingConfig(t *testing.T) {
 		})
 	}
 }
+
+func TestTracingConfig_FilterOperationalEndpoints(t *testing.T) {
+	parse := func(t *testing.T, ini string) *TracingConfig {
+		t.Helper()
+		cfg := setting.NewCfg()
+		require.NoError(t, cfg.Raw.Append([]byte(ini)))
+		cfgProvider, err := configprovider.ProvideService(cfg)
+		require.NoError(t, err)
+		tc, err := ProvideTracingConfig(cfgProvider)
+		require.NoError(t, err)
+		return tc
+	}
+
+	t.Run("defaults to false when unset (backwards compatible)", func(t *testing.T) {
+		assert.False(t, parse(t, "").FilterOperationalEndpoints)
+	})
+
+	t.Run("can be enabled", func(t *testing.T) {
+		tc := parse(t, `
+		[tracing.opentelemetry]
+		filter_operational_endpoints = true
+		`)
+		assert.True(t, tc.FilterOperationalEndpoints)
+	})
+}

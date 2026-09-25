@@ -173,6 +173,18 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
     );
   });
 
+  // Faro treats trackResources as tri-state, so undefined must stay undefined rather
+  // than collapsing to false, which would disable resource timings entirely.
+  it.each([
+    ['unset', undefined],
+    ['true', true],
+    ['false', false],
+  ])('passes trackResources=%s through to Faro unchanged', (_name, trackResources) => {
+    new GrafanaJavascriptAgentBackend({ ...options, trackResources });
+
+    expect(initializeFaroMock.mock.calls[0][0].trackResources).toBe(trackResources);
+  });
+
   it('should use a beforeSend handler', () => {
     new GrafanaJavascriptAgentBackend(options);
 

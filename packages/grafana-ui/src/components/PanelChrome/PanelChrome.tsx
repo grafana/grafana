@@ -56,7 +56,9 @@ interface BaseProps {
    */
   statusItems?: PanelStatusItem[];
   /**
-   * Handle opening error details view (like inspect / error tab)
+   * Fired when the user clicks the status message/popover, alongside PanelContext's
+   * `onOpenInspector` which actually opens the error details view. Use for host-side side
+   * effects (e.g. telemetry).
    */
   statusMessageOnClick?: (e: React.SyntheticEvent) => void;
   /**
@@ -88,6 +90,11 @@ interface BaseProps {
    * Can contain text, pills, links, buttons, or any other React elements.
    */
   subHeaderContent?: ReactNode;
+  /**
+   * Minimum height (px) for the panel container. Used by content-fit layouts so
+   * the chrome still fills a floor when its content is shorter.
+   */
+  minHeight?: number;
 }
 
 interface FixedDimensions extends BaseProps {
@@ -167,8 +174,10 @@ export function PanelChrome({
   showMenuAlways = false,
   subHeaderContent,
   subtitle,
+  minHeight,
 }: PanelChromeProps) {
   const theme = useTheme2();
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   const styles = useStyles2(getStyles);
   const panelContentId = useId();
   const panelTitleId = useId().replace(/:/g, '_');
@@ -219,7 +228,7 @@ export function PanelChrome({
     paddingBottom: subHeaderHeight ? 0 : theme.spacing.gridSize,
   };
 
-  const containerStyles: CSSProperties = { width, height: collapsed ? undefined : height };
+  const containerStyles: CSSProperties = { width, height: collapsed ? undefined : height, minHeight };
   const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
 
   /** Old property name now maps to actions */
@@ -289,7 +298,7 @@ export function PanelChrome({
         <div className={styles.title}>
           <Text
             element="h2"
-            variant="h6"
+            variant={visualRefreshEnabled ? 'base' : 'h6'}
             truncate
             title={typeof title === 'string' ? title : undefined}
             id={panelTitleId}
@@ -302,7 +311,7 @@ export function PanelChrome({
       {/* Collapsible title */}
       {collapsible && (
         <div className={styles.title}>
-          <Text element="h2" variant="h6">
+          <Text element="h2" variant={visualRefreshEnabled ? 'base' : 'h6'}>
             <button
               type="button"
               className={styles.clearButtonStyles}
@@ -322,7 +331,7 @@ export function PanelChrome({
                   !title ? t('grafana-ui.panel-chrome.aria-label-toggle-collapse', 'toggle collapse panel') : undefined
                 }
               />
-              <Text variant="h6" truncate id={panelTitleId}>
+              <Text variant={visualRefreshEnabled ? 'base' : 'h6'} truncate id={panelTitleId}>
                 {title}
               </Text>
             </button>

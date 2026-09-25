@@ -54,6 +54,27 @@ export function validateNoUserInfoInUrl(value: string | undefined): string | tru
   return true;
 }
 
+/**
+ * react-hook-form `validate` function.
+ * Requires a parseable absolute http(s) URL. Empty values pass (pair with `required`).
+ */
+export function validateHttpUrl(value: string | undefined): string | true {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    return true;
+  }
+  const message = t(
+    'provisioning.validation.invalid-url',
+    'Enter a valid URL including the scheme, e.g. https://ghe.example.com'
+  );
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? true : message;
+  } catch {
+    return message;
+  }
+}
+
 const notEmpty = (value: string | undefined): boolean => typeof value === 'string' && value.trim().length > 0;
 
 /**

@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourcesService "github.com/grafana/grafana/pkg/services/datasources/service"
@@ -84,8 +85,8 @@ func setupResourceBenchmark(b *testing.B, dsNum, usersNum int) (*store, []int64)
 }
 
 func GenerateDatasourcePermissions(b *testing.B, db db.DB, cfg *setting.Cfg, ac *store, dsNum, usersNum, permissionsPerDs int) []int64 {
-	dataSources := make([]int64, 0)
-	for i := 0; i < dsNum; i++ {
+	dataSources := make([]int64, 0, dsNum)
+	for i := range dsNum {
 		addDSCommand := &datasources.AddDataSourceCommand{
 			OrgID:  0,
 			Name:   fmt.Sprintf("ds_%d", i),
@@ -145,20 +146,20 @@ func generateTeamsAndUsers(b *testing.B, store db.DB, cfg *setting.Cfg, users in
 	dbHelper, err := legacysql.NewDatabaseProvider(store)(context.Background())
 	require.NoError(b, err)
 
-	teamSvc, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil)
+	teamSvc, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil, iam.Features{})
 	require.NoError(b, err)
 	numberOfTeams := int(math.Ceil(float64(users) / UsersPerTeam))
 	globalUserId := 0
 	qs := quotatest.New(false, nil)
-	orgSvc, err := orgimpl.ProvideService(store, cfg, qs)
+	orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(store), cfg, qs)
 	require.NoError(b, err)
 	usrSvc, err := userimpl.ProvideService(
-		store, orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		legacysql.NewDatabaseProvider(store), orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		qs, supportbundlestest.NewFakeBundleService(), nil)
 	require.NoError(b, err)
-	userIds := make([]int64, 0)
-	teamIds := make([]int64, 0)
-	for i := 0; i < numberOfTeams; i++ {
+	userIds := make([]int64, 0, UsersPerTeam*numberOfTeams)
+	teamIds := make([]int64, 0, numberOfTeams)
+	for i := range numberOfTeams {
 		// Create team
 		teamCmd := team.CreateTeamCommand{
 			Name:  fmt.Sprintf("%s%v", "team", i),
@@ -171,7 +172,7 @@ func generateTeamsAndUsers(b *testing.B, store db.DB, cfg *setting.Cfg, users in
 		teamIds = append(teamIds, teamId)
 
 		// Create team users
-		for u := 0; u < UsersPerTeam; u++ {
+		for range UsersPerTeam {
 			userName := fmt.Sprintf("%s%v", "user", globalUserId)
 			userEmail := fmt.Sprintf("%s@example.org", userName)
 			createUserCmd := user.CreateUserCommand{Email: userEmail, Name: userName, Login: userName, OrgID: 1}

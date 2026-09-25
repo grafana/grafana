@@ -19,7 +19,7 @@ func TestExponentialBackoffRetryProvider_New(t *testing.T) {
 	retry := newExponentialBackoffRetryer(maxRetries, initialDelay, maxDelay, 0, testClock)
 	require.NotNil(t, retry, "Retry instance should not be nil")
 
-	for i := int64(0); i < maxRetries; i++ {
+	for range maxRetries {
 		delay := retry.NextAttemptIn()
 		require.GreaterOrEqual(t, delay, initialDelay, "Delay should be at least the initial delay")
 		require.LessOrEqual(t, delay, maxDelay, "Delay should not exceed the max delay")
@@ -44,7 +44,7 @@ func TestExponentialBackoffRetryProvider_MaxRetries(t *testing.T) {
 	t.Run("max retries is not zero", func(t *testing.T) {
 		maxRetries := int64(10)
 		retry := newExponentialBackoffRetryer(maxRetries, 10*time.Millisecond, 1*time.Second, 0, testClock)
-		for i := int64(0); i < maxRetries; i++ {
+		for range maxRetries {
 			delay := retry.NextAttemptIn()
 			require.NotEqual(t, backoff.Stop, delay, "Should not stop before reaching max retries")
 			testClock.Add(delay)
@@ -64,7 +64,7 @@ func TestExponentialBackoffRetryProvider_DelaysWithinBounds(t *testing.T) {
 
 	retry := newExponentialBackoffRetryer(maxRetries, initialDelay, maxDelay, 0, testClock)
 
-	for i := int64(0); i < maxRetries; i++ {
+	for range maxRetries {
 		delay := retry.NextAttemptIn()
 		require.GreaterOrEqual(t, delay, initialDelay, "Delay should not be less than initial delay")
 		require.LessOrEqual(t, delay, maxDelay, "Delay should not exceed max delay")

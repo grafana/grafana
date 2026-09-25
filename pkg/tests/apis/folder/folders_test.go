@@ -905,7 +905,7 @@ func TestIntegrationFolderCreatePermissionsK8S(t *testing.T) {
 					User:   helper.Org1.Admin,
 					Method: http.MethodPost,
 					Path:   "/api/folders",
-					Body:   []byte(fmt.Sprintf(`{"uid":%q,"title":"Parent folder %d"}`, parentUID, i)),
+					Body:   fmt.Appendf(nil, `{"uid":%q,"title":"Parent folder %d"}`, parentUID, i),
 				}, &folder.Folder{})
 				require.Equal(t, http.StatusOK, parentCreate.Response.StatusCode)
 			}
@@ -2028,7 +2028,7 @@ func setupProvisioningDir(t *testing.T, opts *testinfra.GrafanaOpts) {
 	// Create provisioning directories
 	provDashboardsDir := fmt.Sprintf("%s/conf/provisioning/dashboards", opts.Dir)
 	provDashboardsCfg := fmt.Sprintf("%s/dev.yaml", provDashboardsDir)
-	blob := []byte(fmt.Sprintf(`
+	blob := fmt.Appendf(nil, `
 apiVersion: 1
 
 providers:
@@ -2037,7 +2037,7 @@ providers:
   orgId: 1
   folder: 'GrafanaCloud'
   options:
-   path: %s`, provDashboardsDir))
+   path: %s`, provDashboardsDir)
 	err := os.WriteFile(provDashboardsCfg, blob, 0o644)
 	require.NoError(t, err)
 	input, err := os.ReadFile(filepath.Join("testdata/dashboard.json"))

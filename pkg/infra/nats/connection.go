@@ -3,6 +3,7 @@ package nats
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -37,13 +38,14 @@ type connection struct {
 	config      *Config
 	credentials func() string
 
-	// onAsyncError, when set, is invoked from the NATS async error handler after logging.
-	onAsyncError func(error)
-
 	// disconnectedAt holds the unix-nano timestamp of the last disconnect so the
 	// reconnect handler can record how long the connection was down. Accessed only
 	// from the NATS callback goroutine, but kept atomic to stay race-free.
 	disconnectedAt atomic.Int64
+	// everConnected records whether the current connection has connected at least
+	// once. connect() resets it per dial so a replacement connection cannot
+	// inherit permission to buffer from a previously authenticated connection.
+	everConnected atomic.Bool
 
 	mu       sync.Mutex
 	conn     *natsclient.Conn
@@ -135,6 +137,16 @@ func (c *connection) connect(ctx context.Context) (*natsclient.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
+	options = append(options, func(opts *natsclient.Options) error {
+		onConnect := opts.ConnectedCB
+		opts.ConnectedCB = func(nc *natsclient.Conn) {
+			c.everConnected.Store(true)
+			if onConnect != nil {
+				onConnect(nc)
+			}
+		}
+		return nil
+	})
 	options = append(options, c.config.DialOptions()...)
 
 	// nats.Connect blocks on the initial dial; honour ctx cancellation.
@@ -164,12 +176,27 @@ func (c *connection) connect(ctx context.Context) (*natsclient.Conn, error) {
 			c.metrics.connectionErrors.Inc()
 			return nil, fmt.Errorf("connect nats %s: %w", c.role, res.err)
 		}
-		// connectionStatus is driven solely by the connect/reconnect/disconnect
-		// handlers: with RetryOnFailedConnect the conn returned here may still be
-		// dialing in the background, so setting it to 1 now would report a healthy
-		// connection that is not yet established.
+		if res.conn.IsConnected() {
+			c.everConnected.Store(true)
+		} else {
+			c.metrics.connectionErrors.Inc()
+			c.log.Warn("nats initial connect did not complete; retrying in the background",
+				"role", c.role,
+				"urls", redactURLs(urls),
+				"status", res.conn.Status(),
+				"err", res.conn.LastError())
+		}
 		return res.conn, nil
 	}
+}
+
+const publisherReconnectBufferSize = 8 * 1024 * 1024
+
+func reconnectBufferSize(role connRole) int {
+	if role != rolePublisher {
+		return -1
+	}
+	return publisherReconnectBufferSize
 }
 
 func (c *connection) connectOptions() ([]natsclient.Option, error) {
@@ -184,12 +211,12 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 		natsclient.PingInterval(20 * time.Second),
 		natsclient.MaxPingsOutstanding(3),
 		natsclient.DrainTimeout(drainTimeout),
-		// Disable the reconnect buffer: rather than silently buffering up to the
-		// 8MB default during an outage fail publishes fast.
-		natsclient.ReconnectBufSize(-1),
+		// Publishers use a bounded 8 MiB client-side buffer; subscribers remain
+		// fail-fast. The buffer is not durable and cannot recover a process crash.
+		natsclient.ReconnectBufSize(reconnectBufferSize(c.role)),
 		natsclient.ConnectHandler(func(nc *natsclient.Conn) {
 			c.metrics.connectionStatus.Set(1)
-			c.log.Info("nats connected", "role", roleStr, "url", nc.ConnectedUrl())
+			c.log.Info("nats connected", "role", roleStr, "url", redactURL(nc.ConnectedUrl()))
 		}),
 		natsclient.DisconnectErrHandler(func(_ *natsclient.Conn, err error) {
 			c.metrics.connectionStatus.Set(0)
@@ -205,23 +232,28 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 			if down := c.disconnectedAt.Swap(0); down != 0 {
 				c.metrics.disconnectedSeconds.Observe(time.Since(time.Unix(0, down)).Seconds())
 			}
-			c.log.Info("nats reconnected", "role", roleStr, "url", nc.ConnectedUrl())
+			c.log.Info("nats reconnected", "role", roleStr, "url", redactURL(nc.ConnectedUrl()))
 			c.fireReconnect()
+		}),
+		natsclient.ReconnectErrHandler(func(_ *natsclient.Conn, err error) {
+			if err == nil {
+				return
+			}
+			c.metrics.connectionErrors.Inc()
+			c.log.Warn("nats (re)connect attempt failed", "role", roleStr, "err", err)
 		}),
 		natsclient.ClosedHandler(func(nc *natsclient.Conn) {
 			c.metrics.connectionStatus.Set(0)
 			c.log.Info("nats connection closed", "role", roleStr, "last_err", nc.LastError())
 		}),
 		natsclient.ErrorHandler(func(_ *natsclient.Conn, sub *natsclient.Subscription, err error) {
-			subject := ""
-			if sub != nil {
-				subject = sub.Subject
-			}
-			c.log.Warn("nats async error", "role", roleStr, "subject", subject, "err", err)
-			if c.onAsyncError != nil {
-				c.onAsyncError(err)
-			}
+			c.log.Warn("nats async error", "role", roleStr, "subject", asyncErrorSubject(sub, err), "reason", asyncErrorReason(err), "err", err)
+			c.metrics.recordAsyncError(sub, err)
 		}),
+	}
+
+	if c.role == rolePublisher && c.config.AuthMode() == setting.NATSAuthModeTokenExchange {
+		options = append(options, natsclient.IgnoreAuthErrorAbort())
 	}
 
 	if tls := c.config.TLS(); tls.Enabled {
@@ -285,8 +317,28 @@ func (c *connection) healthy() error {
 	return nil
 }
 
+func (c *connection) publishConn() (*natsclient.Conn, error) {
+	if !c.Enabled() {
+		return nil, ErrDisabled
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.closed {
+		return nil, ErrClosed
+	}
+	if c.conn == nil || c.conn.IsClosed() {
+		return nil, fmt.Errorf("nats %s connection is not established: %w", c.role, natsclient.ErrConnectionClosed)
+	}
+	if !c.everConnected.Load() {
+		return nil, fmt.Errorf("nats %s connection has not connected successfully (status=%s): %w", c.role, c.conn.Status(), natsclient.ErrConnectionReconnecting)
+	}
+	return c.conn, nil
+}
+
 // close drains the connection and waits for the drain to complete so it does not
-// outlive the caller. Terminal: once closed, get() refuses to reopen.
+// outlive the caller. Terminal: once closed, get() refuses to reopen. The
+// connection is marked closed before draining, so a concurrent get()/Publish
+// observes ErrClosed immediately rather than blocking for the drain.
 func (c *connection) close() {
 	// Drain outside the lock: waiting for it can take up to drainTimeout, and
 	// holding c.mu that long would stall a concurrent Health().
@@ -297,6 +349,14 @@ func (c *connection) close() {
 	c.mu.Unlock()
 
 	if nc == nil || nc.IsClosed() {
+		return
+	}
+
+	// A reconnecting client has nothing to flush: Drain would return
+	// ErrConnectionReconnecting and discard the reconnect queue anyway, so close
+	// directly and skip the misleading drain-failure warning below.
+	if !nc.IsConnected() {
+		nc.Close()
 		return
 	}
 
@@ -317,4 +377,27 @@ func (c *connection) close() {
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
+}
+
+func redactURL(raw string) string {
+	if raw == "" {
+		return ""
+	}
+	u, err := url.Parse(raw)
+	if err != nil {
+		return "<invalid url>"
+	}
+	if u.User == nil {
+		return raw
+	}
+	u.User = nil
+	return u.String()
+}
+
+func redactURLs(urls []string) string {
+	redacted := make([]string, 0, len(urls))
+	for _, raw := range urls {
+		redacted = append(redacted, redactURL(raw))
+	}
+	return strings.Join(redacted, ",")
 }

@@ -38,25 +38,25 @@ var Config = func() *v1.AMConfigV1 {
 		AlertmanagerConfig: v1.PostableApiAlertingConfig{
 			Config: v1.Config{
 				Route: Legacy(),
-				// Add time interval references to help tests avoid validation errors.
-				TimeIntervals: []v1.TimeInterval{
-					{Name: "interval"},
-					{Name: "active"},
-					{Name: "Some interval"},
-					{Name: "A provisioned interval"},
-					{Name: "Some interval override"},
-					{Name: "A provisioned interval override"},
-				},
 			},
-			// Add receiver references to help tests avoid validation errors.
-			Receivers: []*v1.PostableApiReceiver{
-				{Name: "default-receiver"},
-				{Name: "lotsa-emails"},
-				{Name: "lotsa-emails-override"},
-				{Name: "slack-multi-channel"},
-				{Name: "provisioned-contact-point"},
-				{Name: "nested-receiver"},
-			},
+		},
+		// Add receiver references to help tests avoid validation errors.
+		Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
+			{Name: "default-receiver"},
+			{Name: "lotsa-emails"},
+			{Name: "lotsa-emails-override"},
+			{Name: "slack-multi-channel"},
+			{Name: "provisioned-contact-point"},
+			{Name: "nested-receiver"},
+		}),
+		// Add time interval references to help tests avoid validation errors.
+		TimeIntervals: map[v1.ResourceUID]v1.TimeInterval{
+			v1.TimeIntervalUID("interval"):                        {Title: "interval"},
+			v1.TimeIntervalUID("active"):                          {Title: "active"},
+			v1.TimeIntervalUID("Some interval"):                   {Title: "Some interval"},
+			v1.TimeIntervalUID("A provisioned interval"):          {Title: "A provisioned interval"},
+			v1.TimeIntervalUID("Some interval override"):          {Title: "Some interval override"},
+			v1.TimeIntervalUID("A provisioned interval override"): {Title: "A provisioned interval override"},
 		},
 		ManagedRoutes: map[string]*v1.Route{
 			"empty":            Empty(),

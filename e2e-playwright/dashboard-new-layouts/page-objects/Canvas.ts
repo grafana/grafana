@@ -2,22 +2,30 @@ import { type Locator, test } from '@playwright/test';
 
 import { PageObject } from './PageObject';
 
-// The dashboard edit canvas (the area left of the sidebar) — hosts the grid
-// add actions: add panel/tab/row and group panels into a row or tab
+/**
+ * The dashboard edit canvas (the area left of the sidebar) — hosts the grid
+ * add actions: add panel/tab/row, paste tab/row, group panels into a row
+ * or tab, and ungroup them
+ */
 export class Canvas extends PageObject {
-  getContainer() {
-    return this.dashboardPage.getByGrafanaSelector(this.selectors.components.DashboardSidebarSplitter.primaryBody);
+  /** Returns the edit canvas body (the area left of the sidebar) */
+  getContainer(): Locator {
+    return this.getByGrafanaSelector(this.selectors.components.DashboardSidebarSplitter.primaryBody);
   }
 
-  // Each nested grid (per row/tab) renders its own "Add panel" button —
-  // pass the grid's container (e.g. rows.getContent(...)) to target a specific one
-  getAddPanelButton(panelsContainer?: Locator): Locator {
-    return (panelsContainer ?? this.getContainer()).getByTestId(
-      this.selectors.components.CanvasGridAddActions.addPanel
-    );
+  /**
+   * Returns the "Add panel" button
+   * @param scope container to search within (e.g. `rows.getContent(...)`), defaults to the whole edit canvas
+   */
+  getAddPanelButton(scope?: Locator): Locator {
+    return (scope ?? this.getContainer()).getByTestId(this.selectors.components.CanvasGridAddActions.addPanel);
   }
 
-  async addPanel(panelsContainer?: Locator) {
+  /**
+   * Adds a panel by clicking the "Add panel" button, scrolling to the bottom of the canvas first
+   * @param scope container to search within (e.g. `rows.getContent(...)`), defaults to the whole edit canvas
+   */
+  async addPanel(scope?: Locator) {
     await test.step('Add panel from canvas', async () => {
       // The edit canvas scrolls via the first child of primaryBody — neither
       // primaryBody nor a row/tab content wrapper is scrollable, so scrolling
@@ -26,49 +34,34 @@ export class Canvas extends PageObject {
       const scrollContainer = this.getContainer().locator('> div').first();
       await scrollContainer.evaluate((el) => el.scrollTo(0, el.scrollHeight));
 
-      await this.getAddPanelButton(panelsContainer).click();
+      await this.getAddPanelButton(scope).click();
     });
   }
 
-  // Scoped to the canvas container: the "Group into tab" menu item reuses the
-  // same testid in a portalled menu, which a page-wide lookup could match
-  getAddTabButton(panelsContainer?: Locator): Locator {
-    return (panelsContainer ?? this.getContainer()).getByTestId(this.selectors.components.CanvasGridAddActions.addTab);
+  /**
+   * Returns the "Group panels" button
+   * @param scope container to search within (e.g. `rows.getContent(...)`), defaults to the whole edit canvas
+   */
+  getGroupPanelsButton(scope?: Locator): Locator {
+    return (scope ?? this.getContainer()).getByTestId(this.selectors.components.CanvasGridAddActions.groupPanels);
   }
 
-  async addTab() {
-    await test.step('Add tab from canvas', async () => {
-      await this.getAddTabButton().click();
-    });
-  }
-
-  // Scoped to the canvas container: the "Group into row" menu item reuses the
-  // same testid in a portalled menu, which a page-wide lookup could match
-  getAddRowButton(panelsContainer?: Locator): Locator {
-    return (panelsContainer ?? this.getContainer()).getByTestId(this.selectors.components.CanvasGridAddActions.addRow);
-  }
-
-  async addRow() {
-    await test.step('Add row from canvas', async () => {
-      await this.getAddRowButton().click();
-    });
-  }
-
-  async groupPanels(targetLayout: 'row' | 'tab', panelsContainer?: Locator) {
+  /**
+   * Groups the grid's panels into a row or tab via the "Group panels" menu
+   * @param scope container to search within (e.g. `rows.getContent(...)`), defaults to the whole edit canvas
+   */
+  async groupPanels(targetLayout: 'row' | 'tab', scope?: Locator) {
     await test.step(`Group panels into ${targetLayout}`, async () => {
       // The add actions are revealed by hovering the layout container that hosts them
-      // (opacity 0 otherwise). Pass `panelsContainer` when grouping inside a nested
+      // (opacity 0 otherwise). Pass `scope` when grouping inside a nested
       // layout (tab/row); by default the whole edit canvas body is hovered.
-      const container = panelsContainer ?? this.getContainer();
+      const container = scope ?? this.getContainer();
 
       // Hover the top-left pixel instead of the default center, which could land on
       // a panel and trigger unrelated hover states (header actions, tooltips)
       await container.hover({ position: { x: 0, y: 0 } });
 
-      // Each nested grid (per row/tab) renders its own add actions strip, so a
-      // page-level lookup can match several "Group panels" buttons — scope the
-      // click to the hovered container to target the one that was just revealed.
-      await container.getByTestId(this.selectors.components.CanvasGridAddActions.groupPanels).click();
+      await this.getGroupPanelsButton(scope).click();
 
       await this.page
         .getByRole('menu')
@@ -77,6 +70,84 @@ export class Canvas extends PageObject {
             ? this.selectors.components.CanvasGridAddActions.addRow
             : this.selectors.components.CanvasGridAddActions.addTab
         )
+        .click();
+    });
+  }
+
+  /**
+   * Returns the "Add tab" button
+   * @param scope container to search within (e.g. `rows.getContent(...)`), defaults to the whole edit canvas
+   */
+  getAddTabButton(scope?: Locator): Locator {
+    return (scope ?? this.getContainer()).getByTestId(this.selectors.components.CanvasGridAddActions.addTab);
+  }
+
+  /**
+   * Adds a tab by clicking the "Add tab" button
+   * @param scope container to search within (e.g. `rows.getContent(...)`), defaults to the whole edit canvas
+   */
+  async addTab(scope?: Locator) {
+    await test.step('Add tab from canvas', async () => {
+      await this.getAddTabButton(scope).click();
+    });
+  }
+
+  /**
+   * Pastes a copied tab via the "Paste tab" add action
+   * @param scope container to search within (e.g. `rows.getContent(...)`), defaults to the whole edit canvas
+   */
+  async pasteTab(scope?: Locator) {
+    await test.step('Paste tab from canvas', async () => {
+      await (scope ?? this.getContainer()).getByTestId(this.selectors.components.CanvasGridAddActions.pasteTab).click();
+    });
+  }
+
+  /**
+   * Ungroups a tabs layout via the "Ungroup" add action
+   * @param scope container to search within (e.g. `rows.getContent(...)`), defaults to the whole edit canvas
+   */
+  async ungroupTabs(scope?: Locator) {
+    await test.step('Ungroup tabs', async () => {
+      await (scope ?? this.getContainer()).getByTestId(this.selectors.components.CanvasGridAddActions.ungroup).click();
+    });
+  }
+
+  /**
+   * Returns the "Add row" button
+   * @param scope container to search within (e.g. `rows.getContent(...)`), defaults to the whole edit canvas
+   */
+  getAddRowButton(scope?: Locator): Locator {
+    return (scope ?? this.getContainer()).getByTestId(this.selectors.components.CanvasGridAddActions.addRow);
+  }
+
+  /**
+   * Adds a row by clicking the "Add row" button
+   * @param scope container to search within (e.g. `rows.getContent(...)`), defaults to the whole edit canvas
+   */
+  async addRow(scope?: Locator) {
+    await test.step('Add row from canvas', async () => {
+      await this.getAddRowButton(scope).click();
+    });
+  }
+
+  /**
+   * Pastes a copied row via the "Paste row" add action
+   * @param scope container to search within (e.g. `rows.getContent(...)`), defaults to the whole edit canvas
+   */
+  async pasteRow(scope?: Locator) {
+    await test.step('Paste row from canvas', async () => {
+      await (scope ?? this.getContainer()).getByTestId(this.selectors.components.CanvasGridAddActions.pasteRow).click();
+    });
+  }
+
+  /**
+   * Ungroups a rows layout via the "Ungroup rows" add action
+   * @param scope container to search within (e.g. `rows.getContent(...)`), defaults to the whole edit canvas
+   */
+  async ungroupRows(scope?: Locator) {
+    await test.step('Ungroup rows', async () => {
+      await (scope ?? this.getContainer())
+        .getByTestId(this.selectors.components.CanvasGridAddActions.ungroupRows)
         .click();
     });
   }

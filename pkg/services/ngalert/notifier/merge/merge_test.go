@@ -19,9 +19,7 @@ import (
 
 func TestReceivers(t *testing.T) {
 	r := func(name string) *v1.PostableApiReceiver {
-		return &v1.PostableApiReceiver{
-			Name: name,
-		}
+		return new(v1.NewReceiver(name, nil, models.ProvenanceNone))
 	}
 
 	identifier := "dupe"
@@ -36,9 +34,9 @@ func TestReceivers(t *testing.T) {
 		name            string
 		existing        []*v1.PostableApiReceiver
 		incoming        []*v1.PostableApiReceiver
-		expected        []*v1.PostableApiReceiver
+		expected        map[v1.ResourceUID]v1.PostableApiReceiver
 		expectedRenames map[string]string
-		expectedAdded   []string
+		expectedAdded   []v1.ResourceUID
 	}{
 		{
 			name: "should append copies of incoming to existing",
@@ -49,13 +47,13 @@ func TestReceivers(t *testing.T) {
 				r1,
 				r3,
 			},
-			expected: []*v1.PostableApiReceiver{
+			expected: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 				r2,
 				r1,
 				r3,
-			},
+			}),
 			expectedRenames: map[string]string{},
-			expectedAdded:   []string{"r1", "r3"},
+			expectedAdded:   []v1.ResourceUID{v1.ReceiverUID("r1"), v1.ReceiverUID("r3")},
 		},
 		{
 			name: "should rename incoming if there is existing",
@@ -65,14 +63,14 @@ func TestReceivers(t *testing.T) {
 			incoming: []*v1.PostableApiReceiver{
 				r("r2"),
 			},
-			expected: []*v1.PostableApiReceiver{
+			expected: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 				r2,
 				r("r2" + suffix),
-			},
+			}),
 			expectedRenames: map[string]string{
 				"r2": "r2" + suffix,
 			},
-			expectedAdded: []string{"r2" + suffix},
+			expectedAdded: []v1.ResourceUID{v1.ReceiverUID("r2" + suffix)},
 		},
 		{
 			name: "should rename incoming if there is existing after dedup",
@@ -83,15 +81,15 @@ func TestReceivers(t *testing.T) {
 			incoming: []*v1.PostableApiReceiver{
 				r("r2"),
 			},
-			expected: []*v1.PostableApiReceiver{
+			expected: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 				r2,
 				r2s,
 				r("r2" + suffix + "_01"),
-			},
+			}),
 			expectedRenames: map[string]string{
 				"r2": "r2" + suffix + "_01",
 			},
-			expectedAdded: []string{"r2" + suffix + "_01"},
+			expectedAdded: []v1.ResourceUID{v1.ReceiverUID("r2" + suffix + "_01")},
 		},
 		{
 			name: "should keep names unique across both sets",
@@ -103,16 +101,16 @@ func TestReceivers(t *testing.T) {
 				r("r2"),
 				r("r2" + suffix + "_01"),
 			},
-			expected: []*v1.PostableApiReceiver{
+			expected: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 				r2,
 				r2s,
 				r("r2" + suffix + "_02"),
 				r("r2" + suffix + "_01"),
-			},
+			}),
 			expectedRenames: map[string]string{
 				"r2": "r2" + suffix + "_02",
 			},
-			expectedAdded: []string{"r2" + suffix + "_02", "r2" + suffix + "_01"},
+			expectedAdded: []v1.ResourceUID{v1.ReceiverUID("r2" + suffix + "_02"), v1.ReceiverUID("r2" + suffix + "_01")},
 		},
 	}
 	for _, tc := range testCases {
@@ -125,19 +123,10 @@ func TestReceivers(t *testing.T) {
 				incomingNames = append(incomingNames, r.Name)
 			}
 
-			actual, actualRenames, actualAdded := Receivers(tc.existing, tc.incoming, identifier)
-			require.Len(t, actual, len(tc.expected))
+			actual, actualRenames, actualAdded := Receivers(v1.ReceiversFromSlice(tc.existing), tc.incoming, identifier)
+			assert.Equal(t, tc.expected, actual)
 			assert.EqualValues(t, tc.expectedRenames, actualRenames)
 			assert.Equal(t, tc.expectedAdded, actualAdded)
-			for i := range tc.expected {
-				assert.EqualValues(t, tc.expected[i], actual[i])
-				if i < len(tc.existing) {
-					assert.Same(t, tc.existing[i], actual[i])
-				} else {
-					idx := i - len(tc.existing)
-					assert.NotSame(t, tc.incoming[idx], actual[i])
-				}
-			}
 
 			t.Run("items of the lists should not be changed", func(t *testing.T) {
 				var names []string
@@ -157,9 +146,14 @@ func TestReceivers(t *testing.T) {
 
 func TestTimeIntervals(t *testing.T) {
 	ti := func(name string) v1.TimeInterval {
-		return v1.TimeInterval{
-			Name: name,
+		return v1.NewTimeInterval(name, nil, models.ProvenanceNone)
+	}
+	toMap := func(intervals ...v1.TimeInterval) map[v1.ResourceUID]v1.TimeInterval {
+		m := make(map[v1.ResourceUID]v1.TimeInterval, len(intervals))
+		for _, interval := range intervals {
+			m[interval.UID] = interval
 		}
+		return m
 	}
 
 	identifier := "dupe"
@@ -171,9 +165,9 @@ func TestTimeIntervals(t *testing.T) {
 		name            string
 		existing        []v1.TimeInterval
 		incoming        []v1.TimeInterval
-		expected        []v1.TimeInterval
+		expected        map[v1.ResourceUID]v1.TimeInterval
 		expectedRenames map[string]string
-		expectedAdded   []string
+		expectedAdded   []v1.ResourceUID
 	}{
 		{
 			name: "should append copies of incoming to existing time intervals",
@@ -185,14 +179,17 @@ func TestTimeIntervals(t *testing.T) {
 				ti("mti3"),
 				ti("ti4"),
 			},
-			expected: []v1.TimeInterval{
+			expected: toMap(
 				ti("mti1"),
 				ti("ti2"),
 				ti("mti3"),
 				ti("ti4"),
-			},
+			),
 			expectedRenames: map[string]string{},
-			expectedAdded:   []string{"mti3", "ti4"},
+			expectedAdded: []v1.ResourceUID{
+				v1.TimeIntervalUID("mti3"),
+				v1.TimeIntervalUID("ti4"),
+			},
 		},
 		{
 			name: "should rename incoming if there is existing",
@@ -204,17 +201,20 @@ func TestTimeIntervals(t *testing.T) {
 				ti("ti2"),
 				ti("mti1"),
 			},
-			expected: []v1.TimeInterval{
+			expected: toMap(
 				ti("mti1"),
 				ti("ti2"),
-				ti("ti2" + suffix),
-				ti("mti1" + suffix),
-			},
+				ti("ti2"+suffix),
+				ti("mti1"+suffix),
+			),
 			expectedRenames: map[string]string{
 				"ti2":  "ti2" + suffix,
 				"mti1": "mti1" + suffix,
 			},
-			expectedAdded: []string{"ti2" + suffix, "mti1" + suffix},
+			expectedAdded: []v1.ResourceUID{
+				v1.TimeIntervalUID("ti2" + suffix),
+				v1.TimeIntervalUID("mti1" + suffix),
+			},
 		},
 		{
 			name: "should rename incoming if there is existing after dedup",
@@ -226,17 +226,20 @@ func TestTimeIntervals(t *testing.T) {
 				ti("ti1"),
 				ti("ti1" + suffix),
 			},
-			expected: []v1.TimeInterval{
+			expected: toMap(
 				ti("ti1"),
-				ti("ti1" + suffix),
-				ti("ti1" + suffix + "_01"),
-				ti("ti1" + suffix + suffix),
-			},
+				ti("ti1"+suffix),
+				ti("ti1"+suffix+"_01"),
+				ti("ti1"+suffix+suffix),
+			),
 			expectedRenames: map[string]string{
 				"ti1" + suffix: "ti1" + suffix + suffix,
 				"ti1":          "ti1" + suffix + "_01",
 			},
-			expectedAdded: []string{"ti1" + suffix + "_01", "ti1" + suffix + suffix},
+			expectedAdded: []v1.ResourceUID{
+				v1.TimeIntervalUID("ti1" + suffix + "_01"),
+				v1.TimeIntervalUID("ti1" + suffix + suffix),
+			},
 		},
 		{
 			name: "should rename dupe among incoming",
@@ -247,15 +250,18 @@ func TestTimeIntervals(t *testing.T) {
 				ti("ti2"),
 				ti("ti2"),
 			},
-			expected: []v1.TimeInterval{
+			expected: toMap(
 				ti("ti2"),
-				ti("ti2" + suffix),
-				ti("ti2" + suffix + "_01"),
-			},
+				ti("ti2"+suffix),
+				ti("ti2"+suffix+"_01"),
+			),
 			expectedRenames: map[string]string{
 				"ti2": "ti2" + suffix + "_01",
 			},
-			expectedAdded: []string{"ti2" + suffix, "ti2" + suffix + "_01"},
+			expectedAdded: []v1.ResourceUID{
+				v1.TimeIntervalUID("ti2" + suffix),
+				v1.TimeIntervalUID("ti2" + suffix + "_01"),
+			},
 		},
 		{
 			name: "should ensure uniqueness across existing and incoming",
@@ -268,30 +274,34 @@ func TestTimeIntervals(t *testing.T) {
 				ti("ti1"),
 				ti("ti2"),
 			},
-			expected: []v1.TimeInterval{
+			expected: toMap(
 				ti("ti1"),
-				ti("ti1" + suffix),
-				ti("ti1" + suffix + "_01"),
-				ti("ti1" + suffix + "_02"),
+				ti("ti1"+suffix),
+				ti("ti1"+suffix+"_01"),
+				ti("ti1"+suffix+"_02"),
 				ti("ti2"),
-			},
+			),
 			expectedRenames: map[string]string{
 				"ti1": "ti1" + suffix + "_02",
 			},
-			expectedAdded: []string{"ti1" + suffix + "_01", "ti1" + suffix + "_02", "ti2"},
+			expectedAdded: []v1.ResourceUID{
+				v1.TimeIntervalUID("ti1" + suffix + "_01"),
+				v1.TimeIntervalUID("ti1" + suffix + "_02"),
+				v1.TimeIntervalUID("ti2"),
+			},
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			var existingNames, incomingNames []string
 			for _, r := range tc.existing {
-				existingNames = append(existingNames, r.Name)
+				existingNames = append(existingNames, r.Title)
 			}
 			for _, r := range tc.incoming {
-				incomingNames = append(incomingNames, r.Name)
+				incomingNames = append(incomingNames, r.Title)
 			}
 
-			actualTimeIntervals, actualRenames, actualAdded := TimeIntervals(tc.existing, tc.incoming, identifier)
+			actualTimeIntervals, actualRenames, actualAdded := TimeIntervals(toMap(tc.existing...), tc.incoming, identifier)
 			assert.Equal(t, tc.expected, actualTimeIntervals)
 			assert.EqualValues(t, tc.expectedRenames, actualRenames)
 			assert.Equal(t, tc.expectedAdded, actualAdded)
@@ -299,12 +309,12 @@ func TestTimeIntervals(t *testing.T) {
 			// check that existing and incoming lists are not changed
 			var names []string
 			for _, r := range tc.existing {
-				names = append(names, r.Name)
+				names = append(names, r.Title)
 			}
 			assert.Equal(t, existingNames, names)
 			names = nil
 			for _, r := range tc.incoming {
-				names = append(names, r.Name)
+				names = append(names, r.Title)
 			}
 			assert.Equal(t, incomingNames, names)
 		})
@@ -323,7 +333,7 @@ var fullMimirWithOnlyExtraReceiver string
 //go:embed testdata/mimir_swapped_intervals.yaml
 var fullMimirSwappedIntervals string
 
-func load(t *testing.T, yaml string, mutate ...func(p *v1.PostableApiAlertingConfig)) *v1.AMConfigV1 {
+func load(t *testing.T, yaml string, mutate ...func(cfg *v1.AMConfigV1)) *v1.AMConfigV1 {
 	t.Helper()
 	orig, err := definition.LoadCompat([]byte(yaml))
 	require.NoError(t, err)
@@ -331,7 +341,7 @@ func load(t *testing.T, yaml string, mutate ...func(p *v1.PostableApiAlertingCon
 		AlertmanagerConfig: *orig,
 	})
 	for _, m := range mutate {
-		m(&cfg.AlertmanagerConfig)
+		m(cfg)
 	}
 	return cfg
 }
@@ -412,10 +422,13 @@ func TestMergeExtraConfig(t *testing.T) {
 	})
 
 	t.Run("should append index suffix if rename still collides", func(t *testing.T) {
-		grafana := load(t, fullGrafanaConfig, func(p *v1.PostableApiAlertingConfig) {
-			p.Receivers = append(p.Receivers, &v1.PostableApiReceiver{
-				Name: "grafana-default-email" + getDedupSuffix(identifier),
-			})
+		grafana := load(t, fullGrafanaConfig, func(cfg *v1.AMConfigV1) {
+			name := "grafana-default-email" + getDedupSuffix(identifier)
+			if cfg.Receivers == nil {
+				cfg.Receivers = make(map[v1.ResourceUID]v1.PostableApiReceiver, 1)
+			}
+			r := v1.NewReceiver(name, nil, models.ProvenanceNone)
+			cfg.Receivers[r.UID] = r
 		})
 		input := withExtra(t, grafana, fullMimirWithOnlyExtraReceiver)
 		config, _, err := MergeExtraConfig(context.Background(), &input)
@@ -459,7 +472,7 @@ func TestMergeExtraConfig(t *testing.T) {
 
 	t.Run("should fail if identifier conflicts with existing managed route", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig)
-		input.ManagedRoutes = v1.ManagedRoutes{identifier: nil}
+		input.ManagedRoutes = map[string]*v1.Route{identifier: nil}
 		_, _, err := MergeExtraConfig(context.Background(), &input)
 		require.ErrorContains(t, err, identifier)
 	})
@@ -531,7 +544,7 @@ func TestMergeExtraConfig(t *testing.T) {
 
 	t.Run("should preserve existing managed routes in result", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig)
-		input.ManagedRoutes = v1.ManagedRoutes{"existing-managed": {Receiver: "existing"}}
+		input.ManagedRoutes = map[string]*v1.Route{"existing-managed": {Receiver: "existing"}}
 		config, _, err := MergeExtraConfig(context.Background(), &input)
 		require.NoError(t, err)
 

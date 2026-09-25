@@ -1,11 +1,50 @@
 package setting
 
 import (
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func TestKVLeaseTTLBounds(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		configured time.Duration
+		expected   time.Duration
+	}{
+		{name: "backend default", configured: 0, expected: 0},
+		{name: "below minimum", configured: 9 * time.Second, expected: 10 * time.Second},
+		{name: "at minimum", configured: 10 * time.Second, expected: 10 * time.Second},
+		{name: "above minimum", configured: 11 * time.Second, expected: 11 * time.Second},
+		{name: "at maximum", configured: 10 * time.Minute, expected: 10 * time.Minute},
+		{name: "above maximum", configured: 11 * time.Minute, expected: 10 * time.Minute},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			cfg.Raw.Section("unified_storage").Key("kv_lease_ttl").SetValue(tc.configured.String())
+
+			cfg.setUnifiedStorageConfig()
+
+			assert.Equal(t, tc.expected, cfg.KVLeaseTTL)
+		})
+	}
+}
+
+func TestUnifiedStorageGRPCErrorResultToStatusDefaultsOff(t *testing.T) {
+	cfg := NewCfg()
+	cfg.setUnifiedStorageConfig()
+	require.False(t, cfg.UnifiedStorageGRPCErrorResultToStatus)
+
+	cfg.Raw.Section("unified_storage").Key("grpc_error_result_to_status").SetValue("true")
+	cfg.setUnifiedStorageConfig()
+	require.True(t, cfg.UnifiedStorageGRPCErrorResultToStatus)
+}
 
 func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 	t.Run("read unified_storage configs", func(t *testing.T) {
@@ -55,6 +94,7 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 
 		// Add unified_storage section for index settings
 		setSectionKey("unified_storage", "index_min_count", "5")
+		cfg.Raw.Section("unified_storage").Key("search_backed_list_resources").SetValue("dashboard.grafana.app/dashboards, folder.grafana.app/folders")
 
 		cfg.setUnifiedStorageConfig()
 
@@ -76,6 +116,19 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 
 		// Test that index settings are correctly parsed
 		assert.Equal(t, 5, cfg.IndexMinCount)
+		assert.Equal(t, []string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"}, cfg.SearchBackedListResources)
+	})
+
+	t.Run("authorize_before_fetch_enabled", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+		cfg.setUnifiedStorageConfig()
+		assert.False(t, cfg.AuthorizeBeforeFetchEnabled)
+
+		cfg.Raw.Section("unified_storage").Key("authorize_before_fetch_enabled").SetValue("true")
+		cfg.setUnifiedStorageConfig()
+		assert.True(t, cfg.AuthorizeBeforeFetchEnabled)
 	})
 
 	t.Run("search_ring_extend_replica_set", func(t *testing.T) {
@@ -532,4 +585,25 @@ func TestVectorAllowedCollections(t *testing.T) {
 		assert.Equal(t, []string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"}, cfg.VectorAllowedInternalCollections)
 		assert.Equal(t, []string{"ext.example.com/my-things"}, cfg.VectorAllowedExternalCollections)
 	})
+}
+
+func TestStorageServicesEnabled(t *testing.T) {
+	for _, tc := range []struct {
+		target []string
+		want   bool
+	}{
+		{target: nil, want: true},
+		{target: []string{"all"}, want: true},
+		{target: []string{"storage-server"}, want: true},
+		{target: []string{"core", "storage-server"}, want: true},
+		{target: []string{"core"}, want: false},
+		{target: []string{"search-server"}, want: false},
+	} {
+		t.Run(strings.Join(tc.target, ","), func(t *testing.T) {
+			cfg := NewCfg()
+			cfg.Target = tc.target
+
+			assert.Equal(t, tc.want, cfg.StorageServicesEnabled())
+		})
+	}
 }

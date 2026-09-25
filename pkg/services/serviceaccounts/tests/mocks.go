@@ -221,6 +221,34 @@ func (_m *MockServiceAccountService) RetrieveServiceAccount(ctx context.Context,
 	return r0, r1
 }
 
+// RetrieveServiceAccountsByUIDs provides a mock function with given fields: ctx, orgID, uids
+func (_m *MockServiceAccountService) RetrieveServiceAccountsByUIDs(ctx context.Context, orgID int64, uids []string) ([]*serviceaccounts.ServiceAccountProfileDTO, error) {
+	ret := _m.Called(ctx, orgID, uids)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RetrieveServiceAccountsByUIDs")
+	}
+
+	var r0 []*serviceaccounts.ServiceAccountProfileDTO
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64, []string) ([]*serviceaccounts.ServiceAccountProfileDTO, error)); ok {
+		return rf(ctx, orgID, uids)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int64, []string) []*serviceaccounts.ServiceAccountProfileDTO); ok {
+		r0 = rf(ctx, orgID, uids)
+	} else if ret.Get(0) != nil {
+		r0 = ret.Get(0).([]*serviceaccounts.ServiceAccountProfileDTO)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int64, []string) error); ok {
+		r1 = rf(ctx, orgID, uids)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // RetrieveServiceAccountIdByName provides a mock function with given fields: ctx, orgID, name
 func (_m *MockServiceAccountService) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {
 	ret := _m.Called(ctx, orgID, name)

@@ -4,7 +4,7 @@ import { lastValueFrom } from 'rxjs';
 import { getBackendSrv } from '@grafana/runtime';
 import { logInfo } from 'app/features/alerting/unified/Analytics';
 import { type Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { type RuleGroup, type RuleIdentifier, type RuleNamespace } from 'app/types/unified-alerting';
+import { type RuleIdentifier, type RuleNamespace } from 'app/types/unified-alerting';
 import {
   PromAlertingRuleState,
   type PromRuleGroupDTO,
@@ -127,20 +127,6 @@ export const groupRulesByFileName = (groups: PromRuleGroupDTO[], dataSourceName:
   return Object.values(nsMap);
 };
 
-export const ungroupRulesByFileName = (namespaces: RuleNamespace[] = []): PromRuleGroupDTO[] => {
-  return namespaces?.flatMap((namespace) =>
-    namespace.groups.flatMap((group) => ruleGroupToPromRuleGroupDTO(group, namespace.name))
-  );
-};
-
-function ruleGroupToPromRuleGroupDTO(group: RuleGroup, namespace: string): PromRuleGroupDTO {
-  return {
-    name: group.name,
-    file: namespace,
-    rules: group.rules,
-    interval: group.interval,
-  };
-}
 export async function fetchRules(
   dataSourceName: string,
   filter?: FetchPromRulesFilter,

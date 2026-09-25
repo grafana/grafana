@@ -29,6 +29,18 @@
           }
         ]
       },
+      "_rv": {
+        "enabled": true,
+        "dynamic": true,
+        "fields": [
+          {
+            "type": "text",
+            "analyzer": "keyword",
+            "store": true,
+            "skip_freq_norm": true
+          }
+        ]
+      },
       "created": {
         "enabled": true,
         "dynamic": true,
@@ -376,7 +388,8 @@
       },
       "labels": {
         "enabled": true,
-        "dynamic": true
+        "dynamic": true,
+        "default_analyzer": "keyword"
       },
       "managedBy": {
         "enabled": true,

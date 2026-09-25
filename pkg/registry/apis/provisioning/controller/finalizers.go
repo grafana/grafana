@@ -32,17 +32,37 @@ type jobQueueCleaner interface {
 type finalizer struct {
 	lister        resources.ResourceLister
 	clientFactory resources.ClientFactory
+	repoFactory   repository.Factory
 	jobs          jobQueueCleaner
 	metrics       *finalizerMetrics
 	maxWorkers    int
 }
 
+// finalizerError names the finalizer whose teardown failed so handleDelete can
+// surface it on status.deletion. It implements error and unwraps to the
+// underlying cause, so existing callers that only inspect the error string keep
+// working; a caller wanting the finalizer name uses errors.As.
+type finalizerError struct {
+	// finalizer is the name of the finalizer whose teardown failed.
+	finalizer string
+	// err is the underlying cause.
+	err error
+}
+
+func (e *finalizerError) Error() string { return e.err.Error() }
+func (e *finalizerError) Unwrap() error { return e.err }
+
+// process runs the repository's finalizers in a fixed order. cfg is the
+// repository configuration. The cleanup finalizer builds the repository (the
+// only finalizer that needs one) to remove the provider-side webhook; the
+// others operate on Grafana-side state from the configuration alone. A client
+// forcing deletion of an unhealthy repository removes the cleanup finalizer, so
+// the build never happens and expired credentials can't block deletion.
 func (f *finalizer) process(ctx context.Context,
-	repo repository.Repository,
-	finalizers []string,
+	cfg *provisioning.Repository,
 ) error {
 	logger := logging.FromContext(ctx)
-	logger.Info("process finalizers", "finalizers", finalizers)
+	logger.Info("process finalizers", "finalizers", cfg.Finalizers)
 
 	// Clear the job queue first so no pending job gets picked up and starts
 	// running against the repository while the rest of the teardown proceeds.
@@ -53,7 +73,7 @@ func (f *finalizer) process(ctx context.Context,
 		repository.RemoveOrphanResourcesFinalizer}
 
 	for _, finalizer := range orderedFinalizers {
-		if !slices.Contains(finalizers, finalizer) {
+		if !slices.Contains(cfg.Finalizers, finalizer) {
 			continue
 		}
 		logger.Info("running finalizer", "finalizer", finalizer)
@@ -65,7 +85,6 @@ func (f *finalizer) process(ctx context.Context,
 		switch finalizer {
 		case repository.RemovePendingJobsFinalizer:
 			logger.Info("clearing repository job queue")
-			cfg := repo.Config()
 			count, err = f.jobs.CleanupQueue(ctx, cfg.Namespace, cfg.Name)
 			if err != nil {
 				err = fmt.Errorf("clear job queue: %w", err)
@@ -73,10 +92,16 @@ func (f *finalizer) process(ctx context.Context,
 			}
 
 		case repository.CleanFinalizer:
-			// NOTE: the controller loop will never get run unless a finalizer is set
 			logger.Info("running cleanup finalizer")
-			webhookRepo, ok := repo.(repository.WebhookRepository)
-			if ok {
+			// Building decrypts secrets and constructs the provider client, so it
+			// fails when credentials have expired. That failure blocks deletion —
+			// forcing it is done by removing this finalizer, not by tolerating the
+			// error.
+			repo, buildErr := f.repoFactory.Build(ctx, cfg)
+			if buildErr != nil {
+				err = fmt.Errorf("create repository from configuration: %w", buildErr)
+				outcome = metricutils.ErrorOutcome
+			} else if webhookRepo, ok := repo.(repository.WebhookRepository); ok {
 				if err = webhookOnDelete(ctx, webhookRepo); err != nil {
 					err = fmt.Errorf("execute deletion hooks: %w", err)
 					outcome = metricutils.ErrorOutcome
@@ -85,7 +110,7 @@ func (f *finalizer) process(ctx context.Context,
 
 		case repository.ReleaseOrphanResourcesFinalizer:
 			logger.Info("releasing orphan resources")
-			count, err = f.releaseExistingItems(ctx, repo.Config())
+			count, err = f.releaseExistingItems(ctx, cfg)
 			if err != nil {
 				err = fmt.Errorf("release resources: %w", err)
 				outcome = metricutils.ErrorOutcome
@@ -93,7 +118,7 @@ func (f *finalizer) process(ctx context.Context,
 
 		case repository.RemoveOrphanResourcesFinalizer:
 			logger.Info("removing orphan resources")
-			count, err = f.deleteExistingItems(ctx, repo.Config())
+			count, err = f.deleteExistingItems(ctx, cfg)
 			if err != nil {
 				err = fmt.Errorf("remove resources: %w", err)
 				outcome = metricutils.ErrorOutcome
@@ -107,7 +132,7 @@ func (f *finalizer) process(ctx context.Context,
 		f.metrics.RecordFinalizer(finalizer, outcome, count, time.Since(start).Seconds())
 
 		if err != nil {
-			return err
+			return &finalizerError{finalizer: finalizer, err: err}
 		}
 	}
 	return nil
@@ -187,6 +212,21 @@ func (f *finalizer) processResourceItems(ctx context.Context, items []*provision
 // preserving the order within each group.
 var splitItems = resources.SplitItems
 
+type nonEmptyFolderError struct {
+	folder *provisioning.ResourceListItem
+}
+
+func (e *nonEmptyFolderError) Error() string {
+	label := e.folder.Name
+	if e.folder.Title != "" && e.folder.Title != e.folder.Name {
+		label = fmt.Sprintf("%q (UID: %s)", e.folder.Title, e.folder.Name)
+	}
+	return fmt.Sprintf(
+		"Repository deletion is blocked by unmanaged resources in folder %s. Move or remove them, or release the repository's remaining resources. Grafana will retry automatically.",
+		label,
+	)
+}
+
 // deleteExistingItems removes all resources managed by the repository.
 // Non-folder resources are deleted concurrently first, then folders are
 // deleted sequentially deepest-first so they are empty before removal.
@@ -215,10 +255,22 @@ func (f *finalizer) deleteExistingItems(
 		return count, err
 	}
 
-	n, err := f.processFolderItems(ctx, folderItems, process)
-	count += n
-	if err != nil {
-		return count, err
+	var blocked *nonEmptyFolderError
+	for _, folder := range folderItems {
+		err := process(ctx, folder)
+		if resources.IsFolderNotEmptyAPIError(err) {
+			if blocked == nil {
+				blocked = &nonEmptyFolderError{folder: folder}
+			}
+			continue
+		}
+		if err != nil {
+			return count, err
+		}
+		count++
+	}
+	if blocked != nil {
+		return count, blocked
 	}
 
 	logger.Info("deleted items", "items", count)

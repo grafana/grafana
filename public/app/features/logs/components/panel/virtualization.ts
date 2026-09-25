@@ -280,7 +280,7 @@ export function getLogLineSize(
     return virtualization.getLineHeight() + virtualization.getPaddingBottom();
   }
 
-  const storedSize = virtualization.retrieveLogLineSize(logs[index].uid, container);
+  const storedSize = virtualization.retrieveLogLineSize(logs[index].uniqueKey, container);
   if (storedSize) {
     return storedSize;
   }

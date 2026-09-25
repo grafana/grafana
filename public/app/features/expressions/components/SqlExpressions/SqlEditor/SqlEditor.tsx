@@ -78,6 +78,7 @@ export const SqlEditor = ({
           height={typeof height === 'number' ? `${height}px` : height}
           aria-label={ariaLabel}
           completionSources={completionSources}
+          completeOnSpace
           extensions={extensions}
         />
       </div>
@@ -92,5 +93,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderTopLeftRadius: theme.shape.radius.default,
     borderTopRightRadius: theme.shape.radius.default,
     overflow: 'hidden',
+    '.cm-scroller': {
+      overscrollBehaviorX: 'contain',
+    },
   }),
 });

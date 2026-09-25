@@ -12,7 +12,7 @@ import {
   serializeStateToUrlParam,
 } from '@grafana/data';
 import { setDataSourceSrv, setTemplateSrv, type DataSourceSrv, type TemplateSrv } from '@grafana/runtime';
-import { initDataSourceInstanceSettings, setDataSourcePluginImporter } from '@grafana/runtime/internal';
+import { setDataSourceInstanceSettings, setDataSourcePluginImporter } from '@grafana/runtime/internal';
 import { type DataQuery } from '@grafana/schema';
 import { RefreshPicker } from '@grafana/ui';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -108,7 +108,7 @@ class TestDataSource extends DataSourceApi<DataQuery> {
 const pluginImporter = jest.fn().mockResolvedValue({ DataSourceClass: TestDataSource, components: {} });
 
 beforeEach(() => {
-  initDataSourceInstanceSettings(dsSettings, DEFAULT_DS_NAME);
+  setDataSourceInstanceSettings(dsSettings, DEFAULT_DS_NAME);
   setDataSourcePluginImporter(pluginImporter);
   // Resolve the datasource template variable to a concrete uid, mirroring dashboard interpolation.
   setTemplateSrv({

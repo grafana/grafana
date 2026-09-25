@@ -36,6 +36,8 @@ interface Props<T extends FieldValues> {
   messageTemplateName: Path<T>;
   enforceTemplateName: Path<T>;
   type: RepoType;
+  authorNameName: Path<T>;
+  authorEmailName: Path<T>;
   signingMethodName: Path<T>;
   signingKeyName: Path<T>;
   smimeCertificateName: Path<T>;
@@ -58,6 +60,8 @@ export function CommitOptionsSection<T extends FieldValues>({
   messageTemplateName,
   enforceTemplateName,
   type,
+  authorNameName,
+  authorEmailName,
   signingMethodName,
   signingKeyName,
   smimeCertificateName,
@@ -79,6 +83,8 @@ export function CommitOptionsSection<T extends FieldValues>({
     const empty = '' as PathValue<T, Path<T>>;
     setValue(signingKeyName, empty);
     setValue(smimeCertificateName, empty);
+    setValue(authorNameName, empty);
+    setValue(authorEmailName, empty);
     setValue(signerNameName, empty);
     setValue(signerEmailName, empty);
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -130,6 +136,36 @@ export function CommitOptionsSection<T extends FieldValues>({
                 'provisioning.commit-options.description-enforce-template',
                 'Pre-fill the commit message in save dialogs from the template above and make it read-only.'
               )}
+            />
+          </Field>
+        )}
+
+        {!signingEnabled && gitFields?.commitAuthorNameConfig && (
+          <Field
+            noMargin
+            htmlFor="commit-author-name"
+            label={gitFields.commitAuthorNameConfig.label}
+            description={gitFields.commitAuthorNameConfig.description}
+          >
+            <Input
+              {...register(authorNameName)}
+              id="commit-author-name"
+              placeholder={gitFields.commitAuthorNameConfig.placeholder}
+            />
+          </Field>
+        )}
+        {!signingEnabled && gitFields?.commitAuthorEmailConfig && (
+          <Field
+            noMargin
+            htmlFor="commit-author-email"
+            label={gitFields.commitAuthorEmailConfig.label}
+            description={gitFields.commitAuthorEmailConfig.description}
+          >
+            <Input
+              {...register(authorEmailName)}
+              id="commit-author-email"
+              type="email"
+              placeholder={gitFields.commitAuthorEmailConfig.placeholder}
             />
           </Field>
         )}

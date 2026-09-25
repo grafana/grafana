@@ -7,6 +7,8 @@ import {
   type DynamicDashboardsTrackingInformation,
 } from '../serialization/DashboardSceneSerializer';
 
+import { type GlobalVariablesMode, type PredefinedVariableScope } from './crossDashboardVariablesSelection';
+
 let isScenesContextSet = false;
 
 type DashboardLibraryTrackingInfo = {
@@ -30,6 +32,16 @@ export const DashboardInteractions = {
       Partial<{ version_before_migration: number | undefined }>
   ) => {
     reportDashboardInteraction('init_dashboard_completed', properties);
+  },
+
+  textPanelUsage: (properties: {
+    mermaid_count: number;
+    handlebars_count: number;
+    data_macro_count: number;
+    per_row_count: number;
+    dashboard_uid?: string;
+  }) => {
+    reportDashboardInteraction('text_panel_usage', properties);
   },
 
   dashboardCopied: (properties: { name: string; url: string; diff_count?: number }) => {
@@ -106,11 +118,11 @@ export const DashboardInteractions = {
     reportDashboardInteraction('add_variable_button_clicked', properties);
   },
 
-  addLinkButtonClicked: (properties: { source: 'edit_pane' }) => {
+  addLinkButtonClicked: (properties: { source: 'edit_pane' | 'variable_controls' }) => {
     reportDashboardInteraction('add_link_button_clicked', properties);
   },
 
-  addFilterButtonClicked: (properties: { source: 'edit_pane' }) => {
+  addFilterButtonClicked: (properties: { source: 'edit_pane' | 'variable_controls' }) => {
     reportDashboardInteraction('add_filter_button_clicked', properties);
   },
 
@@ -152,9 +164,27 @@ export const DashboardInteractions = {
     reportDashboardInteraction('variable_value_changed', properties);
   },
 
+  // dashboards_global_variables_loaded
+  // after global/folder variables are resolved for a V2 dashboard load
+  globalVariablesLoaded: (properties: {
+    global_count: number;
+    folder_count: number;
+    total_count: number;
+    mode?: GlobalVariablesMode;
+  }) => {
+    reportDashboardInteraction('global_variables_loaded', properties);
+  },
+
+  // dashboards_predefined_variable_toggled
+  // when a user checks or unchecks a global or folder variable on the dashboard.
+  // Do not send variable names — they are customer-authored (cardinality + leak).
+  predefinedVariableToggled: (properties: { scope: PredefinedVariableScope; checked: boolean }) => {
+    reportDashboardInteraction('predefined_variable_toggled', properties);
+  },
+
   // dashboards_add_annotation_button_clicked
   // when a user clicks on 'Add annotation'
-  addAnnotationButtonClicked: (properties: { source: 'edit_pane' }) => {
+  addAnnotationButtonClicked: (properties: { source: 'edit_pane' | 'variable_controls' }) => {
     reportDashboardInteraction('add_annotation_button_clicked', properties);
   },
   // dashboards_annotations_reordered
@@ -166,7 +196,7 @@ export const DashboardInteractions = {
   panelActionClicked(
     item: 'configure' | 'configure_dropdown' | 'edit' | 'copy' | 'duplicate' | 'delete' | 'view' | 'use_library_panel',
     id: number,
-    source: 'panel' | 'edit_pane' | 'keyboard',
+    source: 'panel' | 'edit_pane' | 'edit_popover' | 'keyboard',
     panelType?: string
   ) {
     reportDashboardInteraction('panel_action_clicked', { item, id, source, panelType });
@@ -272,12 +302,6 @@ export const DashboardInteractions = {
   },
   exportCopyJsonClicked: (properties?: Record<string, unknown>) => {
     reportSharingInteraction('sharing_export_copy_json_clicked', properties);
-  },
-  exportSaveJsonClicked: (properties?: Record<string, unknown>) => {
-    reportSharingInteraction('sharing_export_save_json_clicked', properties);
-  },
-  exportViewJsonClicked: (properties?: Record<string, unknown>) => {
-    reportSharingInteraction('sharing_export_view_json_clicked', properties);
   },
   generatePublicDashboardUrlClicked: (properties?: Record<string, unknown>) => {
     reportSharingInteraction('sharing_public_generate_url_clicked', properties);

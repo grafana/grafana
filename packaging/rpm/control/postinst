@@ -36,11 +36,16 @@ if [ "$1" -eq 1 ] ; then
 
   # Set user permissions on /var/log/grafana, /var/lib/grafana
   mkdir -p /var/log/grafana /var/lib/grafana
-  # Move plugins-bundled into place - see https://github.com/grafana/grafana/issues/123110
-  if [ -d "$GRAFANA_HOME/data/plugins-bundled" ]; then
+  # Bundled plugins must live under $DATA_DIR (writable by grafana) so the
+  # plugin auto-updater can replace them; the service points
+  # paths.bundled_plugins there. Copy instead of move so the packaged files
+  # stay in place and `rpm -V` stays clean. Only replace the existing
+  # bundled plugins when the package actually contains plugin definitions.
+  if [ -d "$GRAFANA_HOME/data/plugins-bundled" ] && \
+     find "$GRAFANA_HOME/data/plugins-bundled" -type f -name plugin.json -print | grep -q .; then
     mkdir -p "$DATA_DIR"
     rm -rf "${DATA_DIR:?}/plugins-bundled"
-    mv "$GRAFANA_HOME/data/plugins-bundled" "$DATA_DIR"
+    cp -a "$GRAFANA_HOME/data/plugins-bundled" "$DATA_DIR"
     chown -R "$GRAFANA_USER":"$GRAFANA_GROUP" "$DATA_DIR/plugins-bundled"
   fi
   chown -R "$GRAFANA_USER":"$GRAFANA_GROUP" /var/log/grafana /var/lib/grafana
@@ -95,11 +100,15 @@ elif [ "$1" -ge 2 ] ; then
     stopGrafana
   fi
 
-  # Replace bundled plugins with the new version - see https://github.com/grafana/grafana/issues/123110
-  if [ -d "$GRAFANA_HOME/data/plugins-bundled" ]; then
+  # Replace the bundled plugins with the ones shipped in the new package.
+  # See the matching copy in the fresh-install branch above.
+  # Do not remove an existing bundled plugin tree when the package only
+  # contains an empty placeholder left by an earlier package version.
+  if [ -d "$GRAFANA_HOME/data/plugins-bundled" ] && \
+     find "$GRAFANA_HOME/data/plugins-bundled" -type f -name plugin.json -print | grep -q .; then
     mkdir -p "$DATA_DIR"
     rm -rf "${DATA_DIR:?}/plugins-bundled"
-    mv "$GRAFANA_HOME/data/plugins-bundled" "$DATA_DIR"
+    cp -a "$GRAFANA_HOME/data/plugins-bundled" "$DATA_DIR"
     chown -R "$GRAFANA_USER":"$GRAFANA_GROUP" "$DATA_DIR/plugins-bundled"
   fi
 

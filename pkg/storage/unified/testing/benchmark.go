@@ -245,7 +245,7 @@ func runListBenchmark(t *testing.T, backend resource.StorageBackend, opts *Bench
 		listResource = "bench-list-resource"
 	)
 
-	// --- Seed phase (sequential to avoid Optimistic locking conflicts) ---
+	// --- Seed phase (sequential to avoid write conflicts) ---
 	t.Log("List benchmark: seeding resources with history...")
 	seedStart := time.Now()
 

@@ -3,12 +3,18 @@ package api
 import (
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/api/webassets"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func TestHTTPServer_MetricsBasicAuth(t *testing.T) {
@@ -388,4 +394,60 @@ func TestHTTPServer_getListeners(t *testing.T) {
 		assert.Len(t, listeners, 1)
 		_ = listeners[0].Close()
 	})
+}
+
+func TestHTTPServer_mapStaticBuildDir(t *testing.T) {
+	staticRoot := t.TempDir()
+	for dir, body := range map[string]string{
+		webassets.BuildDir:       "webpack",
+		webassets.RspackBuildDir: "rspack",
+	} {
+		require.NoError(t, os.MkdirAll(filepath.Join(staticRoot, dir), 0o750))
+		require.NoError(t, os.WriteFile(filepath.Join(staticRoot, dir, "app.js"), []byte(body), 0o644))
+	}
+
+	assets := []struct {
+		desc         string
+		url          string
+		expectedBody string
+	}{
+		{desc: "webpack assets", url: "/public/build/app.js", expectedBody: "webpack"},
+		{desc: "rspack assets", url: "/public/build/rspack/app.js", expectedBody: "rspack"},
+	}
+
+	flagStates := []struct {
+		desc         string
+		enabledFlags []string
+	}{
+		{desc: "flag off"},
+		{desc: "flag on", enabledFlags: []string{featuremgmt.FlagGrafanaRspackBuild}},
+	}
+
+	for _, flagState := range flagStates {
+		t.Run(flagState.desc, func(t *testing.T) {
+			if len(flagState.enabledFlags) > 0 {
+				featuremgmt.WithEnabledFlags(t, flagState.enabledFlags...)
+			}
+
+			cfg := setting.NewCfg()
+			cfg.Env = setting.Prod
+			cfg.StaticRootPath = staticRoot
+
+			hs := &HTTPServer{Cfg: cfg}
+
+			m := web.New()
+			hs.mapStatic(m, cfg.StaticRootPath, webassets.BuildDir, "public/build")
+
+			for _, asset := range assets {
+				t.Run(asset.desc, func(t *testing.T) {
+					recorder := httptest.NewRecorder()
+					m.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, asset.url, nil))
+
+					require.Equal(t, http.StatusOK, recorder.Code)
+					require.Equal(t, asset.expectedBody, recorder.Body.String())
+					require.Equal(t, "public, max-age=31536000", recorder.Header().Get("Cache-Control"))
+				})
+			}
+		})
+	}
 }

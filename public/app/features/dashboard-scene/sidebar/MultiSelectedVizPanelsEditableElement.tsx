@@ -1,9 +1,13 @@
 import { generateUUID } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { VizPanel } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
 import { type OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { endBatch, startBatch } from '../actions/utils/batch';
+import { type DashboardScene } from '../scene/DashboardScene';
+import { getGroupSelectedCategory } from '../scene/layouts-shared/GroupSelectedActions';
 import { type BulkActionElement } from '../scene/types/BulkActionElement';
 import {
   type EditableDashboardElement,
@@ -14,7 +18,10 @@ export class MultiSelectedVizPanelsEditableElement implements EditableDashboardE
   public readonly isEditableDashboardElement = true;
   public readonly key: string;
 
-  constructor(private _panels: BulkActionElement[]) {
+  constructor(
+    private _panels: BulkActionElement[],
+    private _dashboard: DashboardScene
+  ) {
     this.key = generateUUID();
   }
 
@@ -23,7 +30,13 @@ export class MultiSelectedVizPanelsEditableElement implements EditableDashboardE
   }
 
   public useSidebarOptions(): OptionsPaneCategoryDescriptor[] {
-    return [];
+    return [getGroupSelectedCategory(this.getPanels())];
+  }
+
+  public getPanels(): VizPanel[] {
+    return this._panels
+      .map((panel) => ('panel' in panel ? panel.panel : undefined))
+      .filter((panel): panel is VizPanel => panel instanceof VizPanel);
   }
 
   public onConfirmDelete() {
@@ -40,8 +53,20 @@ export class MultiSelectedVizPanelsEditableElement implements EditableDashboardE
   }
 
   public onDelete() {
+    const panels = this.getPanels();
+
+    startBatch(
+      this._dashboard,
+      t('dashboard.edit-actions.remove-multiple', 'Remove {{typeName}} ({{num}})', {
+        num: panels.length,
+        typeName: this.getEditableElementInfo().typeName.toLowerCase(),
+      })
+    );
+
     this._panels.forEach((panel) => {
       panel.onDelete();
     });
+
+    endBatch(this._dashboard);
   }
 }

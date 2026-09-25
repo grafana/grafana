@@ -303,6 +303,9 @@ export const versionedPages = {
         '13.0.0': 'data-testid Dashboard Sidebar view panel controls',
       },
       conditionalRendering: {
+        rule: {
+          '13.3.0': (ruleId: string) => `data-testid Dashboard Conditional Rendering rule ${ruleId}`,
+        },
         variable: {
           valueInput: {
             '12.4.0': 'data-testid Dashboard Conditional Rendering Variable value input',
@@ -317,6 +320,11 @@ export const versionedPages = {
         timeRange: {
           select: {
             '12.4.0': 'data-testid Dashboard Conditional Rendering Time range select',
+          },
+        },
+        data: {
+          select: {
+            '13.3.0': 'data-testid Dashboard Conditional Rendering Query result select',
           },
         },
       },
@@ -1339,6 +1347,14 @@ export const versionedPages = {
       },
       jobsCard: {
         '13.2.0': 'data-testid Provisioning repository overview jobs card',
+      },
+    },
+    PreviewBanner: {
+      sourceBranchLink: {
+        '13.3.0': 'data-testid Provisioning preview banner source branch link',
+      },
+      targetBranchLink: {
+        '13.3.0': 'data-testid Provisioning preview banner target branch link',
       },
     },
   },

@@ -26,6 +26,10 @@ func (session *Session) Update(bean any, condiBean ...any) (int64, error) {
 		defer session.Close()
 	}
 
+	// Sessions are shared between callers, so the statement must be cleared even when
+	// we return before running the query, otherwise the next query reuses this table and columns.
+	defer session.resetStatement()
+
 	if session.statement.lastError != nil {
 		return 0, session.statement.lastError
 	}

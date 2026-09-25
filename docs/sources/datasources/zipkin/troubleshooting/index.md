@@ -14,7 +14,7 @@ labels:
 menuTitle: Troubleshooting
 title: Troubleshoot Zipkin data source issues
 weight: 400
-review_date: 2026-04-08
+review_date: 2026-08-11
 ---
 
 # Troubleshoot Zipkin data source issues

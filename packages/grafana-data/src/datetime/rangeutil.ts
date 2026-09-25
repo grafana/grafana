@@ -11,7 +11,7 @@ import {
 
 import * as dateMath from './datemath';
 import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo } from './formatter';
-import { isDateTime, type DateTime, dateTime } from './moment_wrapper';
+import { isDateTime, type DateTime, dateTime, dateTimeForTimeZone } from './moment_wrapper';
 import { dateTimeParse } from './parser';
 
 // `fQ` and `fy` are synthesized lookup keys matching the regex group `f[Qy]`
@@ -444,6 +444,7 @@ export function describeTextRange(expr: string): TimeOption {
 export function describeTimeRange(range: RawTimeRange, timeZone?: TimeZone, quickRanges?: TimeOption[]): string {
   const rangeOptions = quickRanges ? quickRanges.concat(getStandardRangeOptions()) : getStandardRangeOptions();
   const option = findRangeInOptions(range, rangeOptions);
+  const now = dateTimeForTimeZone(timeZone);
 
   if (option) {
     return option.display;
@@ -458,13 +459,13 @@ export function describeTimeRange(range: RawTimeRange, timeZone?: TimeZone, quic
   // TODO: We could update these to all use Intl APIs.
   // Could we use formatRangeToParts and replace the 'other side' with the ago formatting?
   if (isDateTime(range.from)) {
-    const parsed = dateMath.parse(range.to, true, 'utc');
-    return parsed ? dateTimeFormat(range.from, options) + ' to ' + dateTimeFormatTimeAgo(parsed, options) : '';
+    const parsed = dateMath.toDateTime(range.to, { roundUp: true, timezone: 'utc', now });
+    return parsed ? dateTimeFormat(range.from, options) + ' to ' + describeTimeAgo(parsed, { ...options, now }) : '';
   }
 
   if (isDateTime(range.to)) {
-    const parsed = dateMath.parse(range.from, false, 'utc');
-    return parsed ? dateTimeFormatTimeAgo(parsed, options) + ' to ' + dateTimeFormat(range.to, options) : '';
+    const parsed = dateMath.toDateTime(range.from, { roundUp: false, timezone: 'utc', now });
+    return parsed ? describeTimeAgo(parsed, { ...options, now }) + ' to ' + dateTimeFormat(range.to, options) : '';
   }
 
   if (range.to.toString() === 'now') {
@@ -474,6 +475,17 @@ export function describeTimeRange(range: RawTimeRange, timeZone?: TimeZone, quic
 
   return range.from.toString() + ' to ' + range.to.toString();
 }
+
+const describeTimeAgo = (parsed: DateTime, options: { timeZone?: TimeZone; now?: DateTime }) => {
+  const base = dateTimeForTimeZone(options.timeZone, options.now);
+  const diff = parsed.diff(base, 'seconds');
+  if (parsed.isValid() && Math.round(Math.abs(diff)) <= 44) {
+    return diff > 0
+      ? t('grafana-data.datetime.rangeutils.fewSecondsFuture', 'in a few seconds')
+      : t('grafana-data.datetime.rangeutils.fewSecondsPast', 'a few seconds ago');
+  }
+  return dateTimeFormatTimeAgo(parsed, options);
+};
 
 export const isValidTimeSpan = (value: string) => {
   if (value.indexOf('$') === 0 || value.indexOf('+$') === 0) {

@@ -4,6 +4,7 @@ import { locationService } from '@grafana/runtime';
 import { useFlagAssistantFullscreenWorkspace } from '@grafana/runtime/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
+import { isFullscreenWorkspaceActive } from './fullscreenWorkspaceState';
 import { useFullscreenWorkspace } from './useFullscreenWorkspace';
 
 jest.mock('@grafana/runtime', () => {
@@ -66,7 +67,20 @@ describe('useFullscreenWorkspace', () => {
     expect(result.current.fullscreenWorkspaceActive).toBe(false);
     // No location subscription is created while the flag is off.
     expect(getLocationObservableMock).not.toHaveBeenCalled();
-    expect(setFullscreenWorkspace).not.toHaveBeenCalled();
+  });
+
+  it('clears workspace state when the flag is revoked while the workspace is active', () => {
+    // Otherwise the app stays in single-entry history mode with a POP listener attached, so every
+    // navigation in Grafana silently replaces instead of pushing.
+    useFlagMock.mockReturnValue(true);
+    mockChrome(true);
+    const { rerender } = renderHook(() => useFullscreenWorkspace());
+    expect(setFullscreenWorkspace).not.toHaveBeenCalledWith({ fullscreenWorkspace: false });
+
+    useFlagMock.mockReturnValue(false);
+    rerender();
+
+    expect(setFullscreenWorkspace).toHaveBeenCalledWith({ fullscreenWorkspace: false });
   });
 
   it('is active when the flag is on and chrome state has fullscreen workspace enabled', () => {
@@ -80,6 +94,22 @@ describe('useFullscreenWorkspace', () => {
     expect(getLocationObservableMock).toHaveBeenCalled();
   });
 
+  it('mirrors the active state for imperative callers that cannot use this hook', () => {
+    // The assistant entry points read this to decide whether to continue the open chat, and they
+    // run outside React.
+    useFlagMock.mockReturnValue(true);
+    mockChrome(true);
+    const { unmount } = renderHook(() => useFullscreenWorkspace());
+
+    expect(isFullscreenWorkspaceActive()).toBe(true);
+
+    unmount();
+    mockChrome(false);
+    renderHook(() => useFullscreenWorkspace());
+
+    expect(isFullscreenWorkspaceActive()).toBe(false);
+  });
+
   it('enters fullscreen workspace and clears the query param when the flag is on and ?fullscreenWorkspace=1 is present', () => {
     useFlagMock.mockReturnValue(true);
     mockChrome(false);
@@ -87,8 +117,11 @@ describe('useFullscreenWorkspace', () => {
 
     renderHook(() => useFullscreenWorkspace());
 
-    expect(setFullscreenWorkspace).toHaveBeenCalledWith(true);
-    expect(partialMock).toHaveBeenCalledWith({ fullscreenWorkspace: null });
+    // The navigation that landed here is already the workspace's history entry.
+    expect(setFullscreenWorkspace).toHaveBeenCalledWith({ fullscreenWorkspace: true, pushHistoryEntry: false });
+    // Replaced, not pushed: a pushed strip would leave `?fullscreenWorkspace=1` as the
+    // entry behind the workspace, so Back would re-enter instead of closing.
+    expect(partialMock).toHaveBeenCalledWith({ fullscreenWorkspace: null }, true);
   });
 
   it('does not enter fullscreen workspace when the query param is absent', () => {

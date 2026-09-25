@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"strings"
 	"sync"
 	"time"
@@ -71,7 +72,10 @@ func (r *ZanzanaPermissionResolver) teamsForCurrentUser(usr identity.Requester) 
 // ResolveCurrentUserPermissions lists Zanzana-supported permissions for the signed-in identity.
 func (r *ZanzanaPermissionResolver) ResolveCurrentUserPermissions(ctx context.Context, usr identity.Requester) ([]ac.Permission, error) {
 	subject := usr.GetUID()
-	namespace := types.OrgNamespaceFormatter(usr.GetOrgID())
+	namespace := usr.GetNamespace()
+	if namespace == "" {
+		namespace = types.OrgNamespaceFormatter(usr.GetOrgID())
+	}
 	return r.listAllWithPrefix(ctx, namespace, subject, r.teamsForCurrentUser(usr), "", "")
 }
 
@@ -175,7 +179,6 @@ func (r *ZanzanaPermissionResolver) searchAllUsers(ctx context.Context, signedIn
 		g, gctx := errgroup.WithContext(ctx)
 		g.SetLimit(maxConcurrentRequests)
 		for _, userHit := range searchResult.Users {
-			userHit := userHit
 			g.Go(func() error {
 				var userPerms map[int64][]ac.Permission
 				var err error
@@ -476,9 +479,7 @@ func MergePermissions(a, b map[int64][]ac.Permission) map[int64][]ac.Permission 
 
 	result := make(map[int64][]ac.Permission, len(a)+len(b))
 	// Users only in a: alias the slice. No copy until we know we'll mutate it.
-	for userID, perms := range a {
-		result[userID] = perms
-	}
+	maps.Copy(result, a)
 
 	for userID, perms := range b {
 		existing, ok := result[userID]

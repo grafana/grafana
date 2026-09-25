@@ -8,7 +8,7 @@ import {
   type SelectableValue,
   getDataSourceRef,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { GroupByVariable, type SceneVariable } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -25,7 +25,7 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
   const { datasource: datasourceRef, defaultOptions, allowCustomValue = true, defaultValue } = variable.useState();
 
   const { value: datasource } = useAsync(async () => {
-    return await getDataSourceSrv().get(datasourceRef);
+    return await getDataSourceInstance(datasourceRef);
   }, [variable.state]);
 
   const { value: groupByKeys = [] } = useAsync(async () => {

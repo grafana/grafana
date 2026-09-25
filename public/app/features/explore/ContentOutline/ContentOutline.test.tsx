@@ -2,7 +2,7 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { type DataSourceInstanceSettings, type DataSourcePluginMeta, type TimeRange, store } from '@grafana/data';
-import { initDataSourceInstanceSettings, setDatasourcePluginMetas } from '@grafana/runtime/internal';
+import { setDataSourceInstanceSettings, setDatasourcePluginMetas } from '@grafana/runtime/internal';
 import { type DataQuery } from '@grafana/schema';
 
 import { CONTENT_OUTLINE_LOCAL_STORAGE_KEYS, ContentOutline, shouldBeActive } from './ContentOutline';
@@ -66,7 +66,7 @@ const setup = async (
 
   // SignalExplorer resolves a card's datasource and logo through the async datasource APIs, so
   // both of the caches behind them are seeded rather than the legacy `DataSourceSrv`.
-  initDataSourceInstanceSettings({ 'gdev-prometheus': promSettings }, 'gdev-prometheus');
+  setDataSourceInstanceSettings({ 'gdev-prometheus': promSettings }, 'gdev-prometheus');
   setDatasourcePluginMetas({ prometheus: promMeta });
 
   // Mock useContentOutlineContext with custom outlineItems

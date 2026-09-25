@@ -17,6 +17,8 @@ const grafanaConfig = require('@grafana/eslint-config/flat');
 const grafanaPlugin = require('@grafana/eslint-plugin');
 const grafanaI18nPlugin = require('@grafana/i18n/eslint-plugin');
 
+const jsTsFiles = '*.{js,jsx,ts,tsx,mjs,cjs,mts,cts}';
+
 const pluginsToTranslate = ['public/app/plugins/panel', 'public/app/plugins/datasource/azuremonitor'];
 
 const commonTestIgnores = [
@@ -62,6 +64,10 @@ const baseImportConfig = {
       group: ['@grafana/ui/src/*', '@grafana/runtime/src/*', '@grafana/data/src/*'],
       message: 'Import from the public export instead.',
     },
+    {
+      group: ['react-router', 'react-router-dom'],
+      message: 'Import from react-router-dom-v5-compat instead until the react-router v6 migration is complete.',
+    },
   ],
   paths: [
     {
@@ -73,6 +79,11 @@ const baseImportConfig = {
       name: 'react-use',
       importNames: ['useObservable'],
       message: 'react-use is being phased out. Import useObservable from @grafana/data/unstable instead.',
+    },
+    {
+      name: 'react-use',
+      importNames: ['useCopyToClipboard'],
+      message: 'Please import copyTextToClipboard from @grafana/ui instead.',
     },
   ],
 };
@@ -147,7 +158,7 @@ module.exports = [
       // it also conflicts with the betterer eslint rules so disabled
       reportUnusedDisableDirectives: false,
     },
-    files: ['**/*.{ts,tsx,js}'],
+    files: [`**/${jsTsFiles}`],
     ignores: ['packages/grafana-ui/src/components/Forms/Legacy/**'],
     plugins: {
       '@emotion': emotionPlugin,
@@ -178,6 +189,7 @@ module.exports = [
       '@grafana/zod-import-namespace': 'error',
       '@grafana/no-direct-date-fns': 'error',
       '@grafana/no-direct-create-monitoring-logger': 'error',
+      '@grafana/no-get-data-source-srv': 'error',
       'react-prefer-function-component/react-prefer-function-component': ['error', { allowJsxUtilityClass: true }],
       'react/prop-types': 'off',
       // need to ignore emotion's `css` prop, see https://github.com/jsx-eslint/eslint-plugin-react/blob/master/docs/rules/no-unknown-property.md#rule-options
@@ -380,6 +392,17 @@ module.exports = [
           ],
         }),
       ],
+    },
+  },
+
+  {
+    name: 'grafana/e2e-selectors-serializable',
+    files: ['packages/grafana-e2e-selectors/src/selectors/**/*.ts'],
+    plugins: {
+      '@grafana': grafanaPlugin,
+    },
+    rules: {
+      '@grafana/serializable-e2e-selectors': 'error',
     },
   },
 
@@ -596,7 +619,7 @@ module.exports = [
 
   // Old betterer rules config:
   {
-    files: ['**/*.{js,jsx,ts,tsx}'],
+    files: [`**/${jsTsFiles}`],
     ignores: [
       // FIXME: Remove once all enterprise issues are fixed -
       // we don't have a suppressions file/approach for enterprise code yet
@@ -609,7 +632,7 @@ module.exports = [
     },
   },
   {
-    files: ['**/*.{js,jsx,ts,tsx}'],
+    files: [`**/${jsTsFiles}`],
     ignores: [
       ...commonTestIgnores,
       // FIXME: Remove once all enterprise issues are fixed -
@@ -625,6 +648,8 @@ module.exports = [
       '@grafana/no-gf-form': 'error',
       '@grafana/no-config-apps': 'error',
       '@grafana/no-config-panels': 'error',
+      '@grafana/no-config-datasources': 'error',
+      '@grafana/no-config-feature-toggles': 'error',
     },
   },
   {
@@ -637,6 +662,7 @@ module.exports = [
     rules: {
       '@grafana/no-config-apps': 'error',
       '@grafana/no-config-panels': 'error',
+      '@grafana/no-config-datasources': 'error',
     },
     plugins: {
       '@grafana': grafanaPlugin,
@@ -647,6 +673,7 @@ module.exports = [
     rules: {
       '@grafana/no-config-apps': 'error',
       '@grafana/no-config-panels': 'error',
+      '@grafana/no-config-datasources': 'error',
     },
   },
   {

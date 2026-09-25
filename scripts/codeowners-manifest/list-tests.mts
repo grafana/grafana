@@ -6,10 +6,10 @@
 // bodies are executed.
 //
 // Usage: node ./scripts/codeowners-manifest/list-tests.mts '@grafana/dataviz-squad'
-import cp from 'node:child_process';
-import path from 'node:path';
 
 import { parse } from 'jest-editor-support';
+import cp from 'node:child_process';
+import path from 'node:path';
 
 const JEST_BIN_PATH = 'node_modules/jest/bin/jest.js';
 const JEST_CONFIG_PATH = 'jest.config.codeowner.js';
@@ -69,6 +69,7 @@ let failed = 0;
 for (const file of files) {
   let root: ParsedNode;
   try {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- untyped return from parse()
     ({ root } = parse(file) as { root: ParsedNode });
   } catch (err) {
     failed++;

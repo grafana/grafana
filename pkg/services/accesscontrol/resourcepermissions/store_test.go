@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -468,7 +469,7 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			store, sql, cfg := setupTestEnv(t)
-			orgService, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
+			orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sql), cfg, quotatest.New(false, nil))
 			require.NoError(t, err)
 
 			err = sql.WithDbSession(context.Background(), func(sess *db.Session) error {
@@ -526,7 +527,7 @@ func seedResourcePermissions(
 	require.NoError(t, err)
 
 	usrSvc, err := userimpl.ProvideService(
-		sql, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		legacysql.NewDatabaseProvider(sql), orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
@@ -549,17 +550,96 @@ func seedResourcePermissions(
 		require.NoError(t, err)
 	}
 
-	for i := 0; i < numUsers; i++ {
+	for i := range numUsers {
 		create(fmt.Sprintf("user:%s:%d", resourceID, i), false)
 	}
 
-	for i := 0; i < numServiceAccounts; i++ {
+	for i := range numServiceAccounts {
 		create(fmt.Sprintf("sa:%s:%d", resourceID, i), true)
 	}
 }
 
+func TestIntegrationStore_GetPermissionIDsByRoleNames(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	const orgID int64 = 1
+	ctx := context.Background()
+	store, sql, _ := setupTestEnv(t)
+	scope := accesscontrol.Scope("folders", "uid", "folder-1")
+
+	cmd := func(resourceID string) SetResourcePermissionCommand {
+		return SetResourcePermissionCommand{
+			Actions:           []string{"folders:read", "folders:write"},
+			Resource:          "folders",
+			ResourceID:        resourceID,
+			ResourceAttribute: "uid",
+		}
+	}
+
+	_, err := store.SetUserResourcePermission(ctx, orgID, accesscontrol.User{ID: 1}, cmd("folder-1"), nil)
+	require.NoError(t, err)
+	_, err = store.SetUserResourcePermission(ctx, orgID, accesscontrol.User{ID: 1}, cmd("folder-2"), nil)
+	require.NoError(t, err)
+	_, err = store.SetTeamResourcePermission(ctx, orgID, 3, cmd("folder-1"), nil)
+	require.NoError(t, err)
+	_, err = store.SetBuiltInResourcePermission(ctx, orgID, string(org.RoleEditor), cmd("folder-1"), nil)
+	require.NoError(t, err)
+
+	seeded := []string{
+		userManagedRoleName(1),
+		teamManagedRoleName(3),
+		basicRoleManagedRoleName(string(org.RoleEditor)),
+	}
+	const unknownRole = "managed:users:999:permissions"
+
+	t.Run("resolves every seeded role and skips unknown and duplicate names", func(t *testing.T) {
+		query := append(append([]string{}, seeded...), unknownRole, seeded[0])
+
+		ids, err := store.GetPermissionIDsByRoleNames(ctx, orgID, scope, query)
+		require.NoError(t, err)
+		require.Len(t, ids, len(seeded))
+
+		for _, name := range seeded {
+			var permission accesscontrol.Permission
+			var lowestPermissionID int64
+			var found bool
+			err := sql.WithDbSession(ctx, func(sess *db.Session) error {
+				var err error
+				found, err = sess.ID(ids[name]).Get(&permission)
+				if err != nil {
+					return err
+				}
+				_, err = sess.SQL(`
+					SELECT MIN(p.id)
+					FROM permission p
+					INNER JOIN role r ON r.id = p.role_id
+					WHERE r.org_id = ? AND r.name = ? AND p.scope = ?
+				`, orgID, name, scope).Get(&lowestPermissionID)
+				return err
+			})
+			require.NoError(t, err)
+			require.True(t, found)
+			assert.Equal(t, scope, permission.Scope, "permission ID must belong to the requested scope for %s", name)
+			assert.Equal(t, lowestPermissionID, ids[name], "lowest permission ID must be selected for %s", name)
+		}
+		assert.NotContains(t, ids, unknownRole)
+	})
+
+	t.Run("returns an empty result for no names", func(t *testing.T) {
+		ids, err := store.GetPermissionIDsByRoleNames(ctx, orgID, scope, nil)
+		require.NoError(t, err)
+		assert.Empty(t, ids)
+	})
+
+	t.Run("does not leak roles across orgs", func(t *testing.T) {
+		ids, err := store.GetPermissionIDsByRoleNames(ctx, orgID+1, scope, seeded)
+		require.NoError(t, err)
+		assert.Empty(t, ids)
+	})
+}
+
 func setupTestEnv(t testing.TB) (*store, db.DB, *setting.Cfg) {
-	sql, cfg := db.InitTestDBWithCfg(t)
+	sql, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	return NewStore(cfg, sql, featuremgmt.WithFeatures()), sql, cfg
 }
 

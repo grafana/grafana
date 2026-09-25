@@ -11,10 +11,52 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
+
+func TestNewSearchOptionsEmbeddingConfig(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		search   bool
+		indexing bool
+	}{
+		{name: "search", search: true},
+		{name: "vector indexing without lexical search", indexing: true},
+		{name: "disabled"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := snapshotOptionsTestCfg(t)
+			cfg.EnableSearch = tc.search
+			cfg.VectorIndexingEnabled = tc.indexing
+			opts, err := NewSearchOptions(cfg, nil, resource.ProvideIndexMetrics(prometheus.NewRegistry()), nil, nil)
+			require.NoError(t, err)
+			if opts.Backend != nil {
+				t.Cleanup(opts.Backend.(*bleveBackend).Stop)
+			}
+			if !tc.search && !tc.indexing {
+				require.Nil(t, opts.EmbeddingConfig)
+				return
+			}
+			require.NotNil(t, opts.EmbeddingConfig)
+			for _, manifest := range resource.AppManifests() {
+				for _, version := range manifest.Versions {
+					for _, kind := range version.Kinds {
+						gvr := schema.GroupVersionResource{Group: manifest.Group, Version: version.Name, Resource: resource.ManifestResourceName(kind)}
+						config, ok := opts.EmbeddingConfig.For(gvr)
+						require.Equal(t, kind.Embed != nil, ok, "%s", gvr)
+						if kind.Embed != nil {
+							require.Equal(t, kind.Embed.Fields, config.Fields)
+							require.Equal(t, manifest.Embed[gvr.Resource].ReembedVersion, config.ReembedVersion)
+						}
+					}
+				}
+			}
+		})
+	}
+}
 
 // Anchors what semver.NewVersion accepts for the strings we feed it from
 // cfg.BuildVersion / cfg.MinFileIndexBuildVersion (options.go) and from snapshot
@@ -216,4 +258,39 @@ func fileBucketURL(t *testing.T, dir string) string {
 	t.Helper()
 	u := url.URL{Scheme: "file", Path: dir}
 	return u.String()
+}
+
+// Dry run counts what the collector would remove and deletes nothing, so trash of
+// any age is still restorable and must stay searchable.
+func TestNewSearchOptionsTrashRetentionFollowsGarbageCollection(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		enabled     bool
+		dryRun      bool
+		wantEnabled bool
+	}{
+		{name: "collection off", enabled: false, wantEnabled: false},
+		{name: "collection on", enabled: true, wantEnabled: true},
+		{name: "collection on, dry run", enabled: true, dryRun: true, wantEnabled: false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := snapshotOptionsTestCfg(t)
+			cfg.EnableSearch = true
+			cfg.BuildVersion = "11.0.0"
+			cfg.IndexPath = filepath.Join(t.TempDir(), "bleve")
+			cfg.EnableGarbageCollection = tc.enabled
+			cfg.GarbageCollectionDryRun = tc.dryRun
+			cfg.GarbageCollectionMaxAge = time.Hour
+
+			opts, err := NewSearchOptions(cfg, nil, resource.ProvideIndexMetrics(prometheus.NewRegistry()), nil, nil)
+			require.NoError(t, err)
+
+			backend, ok := opts.Backend.(*bleveBackend)
+			require.True(t, ok)
+			t.Cleanup(backend.Stop)
+
+			assert.Equal(t, tc.wantEnabled, backend.opts.TrashRetention.Enabled)
+			assert.Equal(t, time.Hour, backend.opts.TrashRetention.MaxAge)
+		})
+	}
 }

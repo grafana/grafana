@@ -72,6 +72,7 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
     showUniqueLabels,
     sortOrder,
     syntaxHighlighting,
+    syntaxHighlightingUnavailable,
     unwrappedColumns,
     wrapLogMessage,
   } = useLogListContext();
@@ -280,7 +281,7 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
         <>
           <LogListControlsOption
             expanded={controlsExpanded}
-            name={sortOrder === LogsSortOrder.Descending ? 'sort-amount-up' : 'sort-amount-down'}
+            name={sortOrder === LogsSortOrder.Descending ? 'sort-amount-down' : 'sort-amount-up'}
             className={styles.controlButton}
             onClick={onSortOrderClick}
             label={
@@ -386,19 +387,27 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
               {syntaxHighlighting !== undefined && (
                 <LogListControlsOption
                   expanded={controlsExpanded}
+                  disabled={syntaxHighlightingUnavailable}
                   name="brackets-curly"
                   className={syntaxHighlighting ? styles.controlButtonActive : styles.controlButton}
                   aria-pressed={syntaxHighlighting}
                   onClick={onSyntaxHightlightingClick}
                   label={
-                    syntaxHighlighting
-                      ? t('logs.logs-controls.label.disable-highlighting', 'Highlight text')
-                      : t('logs.logs-controls.label.enable-highlighting', 'Plain text')
+                    syntaxHighlightingUnavailable
+                      ? t('logs.logs-controls.label.highlighting-unavailable', 'Highlighting unavailable')
+                      : syntaxHighlighting
+                        ? t('logs.logs-controls.label.disable-highlighting', 'Highlight text')
+                        : t('logs.logs-controls.label.enable-highlighting', 'Plain text')
                   }
                   tooltip={
-                    syntaxHighlighting
-                      ? t('logs.logs-controls.tooltip.disable-highlighting', 'Disable highlighting')
-                      : t('logs.logs-controls.tooltip.enable-highlighting', 'Enable highlighting')
+                    syntaxHighlightingUnavailable
+                      ? t(
+                          'logs.logs-controls.tooltip.highlighting-unavailable',
+                          'Highlighting is disabled because these logs are too large and could impact performance'
+                        )
+                      : syntaxHighlighting
+                        ? t('logs.logs-controls.tooltip.disable-highlighting', 'Disable highlighting')
+                        : t('logs.logs-controls.tooltip.enable-highlighting', 'Enable highlighting')
                   }
                   size="lg"
                 />

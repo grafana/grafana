@@ -102,7 +102,7 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 func TestIntegrationPluginSettings(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	store := db.InitTestDB(t)
+	store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	psService := ProvideService(store, secretsService)
 

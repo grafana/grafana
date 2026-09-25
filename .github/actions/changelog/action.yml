@@ -4,6 +4,12 @@ inputs:
   target:
     description: Target tag, branch or commit hash for the changelog
     required: true
+  version:
+    description: >-
+      Semver version being released (e.g. v10.0.0), used to look up the previous release tag when
+      `previous` isn't given. Falls back to `target`, so only needed when target isn't itself a
+      semver-parseable tag.
+    required: false
   previous:
     description: Previous tag, branch or commit hash to start changelog from
     required: false

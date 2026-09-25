@@ -1,9 +1,12 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { type ComponentProps } from 'react';
 import type AutoSizer from 'react-virtualized-auto-sizer';
 import { Observable } from 'rxjs';
 
 import { LoadingState, InternalTimeZones, getDefaultTimeRange } from '@grafana/data';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { type InspectorStream } from 'app/core/services/backend_srv';
 
 import { ExploreQueryInspector } from './ExploreQueryInspector';
@@ -72,10 +75,26 @@ const setup = (propOverrides = {}) => {
     ...propOverrides,
   };
 
-  return render(<ExploreQueryInspector {...props} />);
+  return render(
+    <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+      <ExploreQueryInspector {...props} />
+    </OpenFeatureProvider>
+  );
 };
 
 describe('ExploreQueryInspector', () => {
+  beforeEach(async () => {
+    await act(async () => {
+      setTestFlags({ [FlagKeys.TableInspectDataTableNG]: false });
+    });
+  });
+
+  afterEach(async () => {
+    await act(async () => {
+      setTestFlags({});
+    });
+  });
+
   it('should render closable drawer component', () => {
     setup();
     expect(screen.getByLabelText(/close query inspector/i)).toBeInTheDocument();
@@ -94,7 +113,7 @@ describe('ExploreQueryInspector', () => {
     fireEvent.click(screen.getByText(/expand all/i));
     expect(screen.getByText(/very unique test value/i)).toBeInTheDocument();
   });
-  it('should display formatted data', () => {
+  it('should display formatted data', async () => {
     setup({
       queryResponse: {
         state: LoadingState.Done,
@@ -136,11 +155,11 @@ describe('ExploreQueryInspector', () => {
 
     fireEvent.click(screen.getByRole('tab', { name: /data/i }));
     // assert series values are formatted to 3 digits (xx.x or x.xx)
-    expect(screen.getByText(/71.2/i)).toBeInTheDocument();
-    expect(screen.getByText(/72.3/i)).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText(/71.2/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/72.3/i)).toBeInTheDocument());
     // assert timestamps are formatted
-    expect(screen.getByText(/2024-01-03 12:32:04.682/i)).toBeInTheDocument();
-    expect(screen.getByText(/2024-01-03 12:32:34.682/i)).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText(/2024-01-03 12:32:04.682/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/2024-01-03 12:32:34.682/i)).toBeInTheDocument());
   });
 });
 

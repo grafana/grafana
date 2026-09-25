@@ -87,6 +87,7 @@ To authenticate to your webhook endpoint, use the authorization fields in the [o
 | Max Alerts                        | Maximum number of alerts to include in a notification. Any alerts exceeding this limit are ignored. `0` means no limit.                                                                   |
 | TLS                               | TLS configuration options, including CA certificate, client certificate, and client key.                                                                                                  |
 | HMAC Signature                    | HMAC signature configuration options.                                                                                                                                                     |
+| OAuth2                            | OAuth2 configuration options for authenticating the webhook request. Refer to [OAuth2 authentication](#oauth2-authentication) for details.                                                |
 
 {{< admonition type="note" >}}
 
@@ -124,6 +125,26 @@ To validate incoming webhook requests from Grafana, follow these steps:
    - Hash the raw request body
    - Convert the result to a hexadecimal string
 4. Compare the calculated signature with the one in the request header.
+
+#### OAuth2 authentication
+
+You can authenticate webhook requests using OAuth2 client credentials. When configured, Grafana requests an access token from the token URL using the client ID and secret, then includes the token as a bearer token in the `Authorization` header of the webhook request.
+
+{{< admonition type="note" >}}
+
+If you configure OAuth2 authentication, it takes precedence over HTTP Basic Authentication and the Authorization request header for the webhook request.
+
+{{< /admonition >}}
+
+| Option              | Description                                                                                                                                                              |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Token URL           | The URL of the OAuth2 token endpoint. This field is [protected](ref:configure-contact-points) from modification in Grafana Cloud.                                        |
+| Client ID           | The OAuth2 client ID.                                                                                                                                                    |
+| Client Secret       | The OAuth2 client secret.                                                                                                                                                |
+| Scopes              | Optional list of OAuth2 scopes to request when obtaining an access token.                                                                                                |
+| Endpoint Parameters | Optional key-value pairs to include in the access token request.                                                                                                         |
+| TLS                 | Optional TLS configuration used only for the OAuth2 token request, including CA certificate, client certificate, and client key.                                         |
+| Proxy               | Optional HTTP proxy configuration used only for the OAuth2 token request. The proxy URL is [protected](ref:configure-contact-points) from modification in Grafana Cloud. |
 
 #### Optional settings using templates
 

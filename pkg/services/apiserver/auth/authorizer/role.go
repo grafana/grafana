@@ -68,6 +68,16 @@ func (auth roleAuthorizer) Authorize(ctx context.Context, a authorizer.Attribute
 	return authorizer.DecisionDeny, "", nil
 }
 
+// ConditionsAwareAuthorize implements authorizer.Authorizer.
+func (auth roleAuthorizer) ConditionsAwareAuthorize(ctx context.Context, a authorizer.Attributes) authorizer.ConditionsAwareDecision {
+	return authorizer.ConditionsAwareDecisionFromParts(auth.Authorize(ctx, a))
+}
+
+// EvaluateConditions implements authorizer.Authorizer.
+func (auth roleAuthorizer) EvaluateConditions(_ context.Context, _ authorizer.ConditionsAwareDecision, _ authorizer.ConditionsData) (authorizer.Decision, string, error) {
+	return authorizer.DecisionDeny, "", authorizer.ErrorConditionEvaluationNotSupported
+}
+
 func errorMessageForGrafanaOrgRole(orgRole identity.RoleType, a authorizer.Attributes) string {
 	return fmt.Sprintf("Grafana org role (%s) didn't allow %s access on requested resource=%s, path=%s", orgRole, a.GetVerb(), a.GetResource(), a.GetPath())
 }

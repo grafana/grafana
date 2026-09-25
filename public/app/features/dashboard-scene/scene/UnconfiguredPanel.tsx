@@ -22,6 +22,7 @@ import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryL
 import { hasSavedQueryReadPermissions } from 'app/features/explore/QueryLibrary/utils/identity';
 import emptyPanelSvg from 'img/dashboards/empty-panel.svg';
 
+import { findVizPanelByKey } from '../utils/findVizPanel';
 import { applyQueryToPanel, getVizSuggestionForQuery } from '../utils/getVizSuggestionForQuery';
 import { DashboardInteractions } from '../utils/interactions';
 import {
@@ -36,7 +37,7 @@ import {
   textFrames,
   useViewPhase,
 } from '../utils/unconfiguredPanelUtils';
-import { findVizPanelByKey, getVizPanelKeyForPanelId } from '../utils/utils';
+import { getVizPanelKeyForPanelId } from '../utils/utils-panels';
 
 import { DashboardScene } from './DashboardScene';
 
@@ -233,7 +234,7 @@ export function UnconfiguredPanelComp(props: PanelProps) {
           <div
             className={cx(styles.buttonList, isCompact && styles.buttonListCompact, !isButtonsVisible && styles.hidden)}
             aria-hidden={!isButtonsVisible}
-            {...(!isButtonsVisible ? { inert: '' } : {})}
+            inert={!isButtonsVisible}
           >
             {buttons.map((button, i) => (
               <div
