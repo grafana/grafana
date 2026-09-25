@@ -65,9 +65,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
         transition: 'max-height 180ms ease-out',
       },
     },
-    '&:is(:hover, :focus-visible) > div': {
-      alignItems: 'flex-start',
-    },
     '&:is(:hover, :focus-visible) > div > span': {
       maxHeight: '10em',
       overflowWrap: 'anywhere',

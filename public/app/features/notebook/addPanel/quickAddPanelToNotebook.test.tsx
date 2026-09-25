@@ -1,3 +1,5 @@
+import { waitFor } from '@testing-library/react';
+
 import { NotebookUnavailableError } from '../api/notebookResource';
 import { defaultPanelKind, type PanelElement } from '../types';
 
@@ -69,7 +71,7 @@ describe('quickAddPanelToNotebook', () => {
     expect(addToExisting).toHaveBeenCalledTimes(1);
   });
 
-  it('allows another panel to be added while the first write is in flight', async () => {
+  it('queues another panel for the same notebook until the first write finishes', async () => {
     const finishWrites: Array<(value: { uid: string; title: string }) => void> = [];
     addToExisting.mockImplementation(
       () =>
@@ -80,13 +82,26 @@ describe('quickAddPanelToNotebook', () => {
 
     const first = quickAddPanelToNotebook(async () => panel, 'dashboard_panel', false, openPicker, 'panel-1');
     const second = quickAddPanelToNotebook(async () => panel, 'dashboard_panel', false, openPicker, 'panel-2');
-    await Promise.resolve();
+    await waitFor(() => expect(addToExisting).toHaveBeenCalledTimes(1));
+
+    finishWrites[0]({ uid: 'nb1', title: 'Investigation' });
+    await first;
+    await waitFor(() => expect(addToExisting).toHaveBeenCalledTimes(2));
+    finishWrites[1]({ uid: 'nb1', title: 'Investigation' });
+    await second;
+
+    expect(setRecentNotebook).toHaveBeenCalledTimes(2);
+  });
+
+  it('continues queued adds after a write fails', async () => {
+    addToExisting.mockRejectedValueOnce(new Error('Temporary failure'));
+
+    const first = quickAddPanelToNotebook(async () => panel, 'dashboard_panel', false, openPicker, 'panel-1');
+    const second = quickAddPanelToNotebook(async () => panel, 'dashboard_panel', false, openPicker, 'panel-2');
+    await Promise.all([first, second]);
 
     expect(addToExisting).toHaveBeenCalledTimes(2);
-    for (const finishWrite of finishWrites) {
-      finishWrite({ uid: 'nb1', title: 'Investigation' });
-    }
-    await Promise.all([first, second]);
+    expect(setRecentNotebook).toHaveBeenCalledTimes(1);
   });
 
   it('forgets an unavailable destination and opens the picker', async () => {

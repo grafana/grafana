@@ -14,6 +14,22 @@ import { addPanelErrorMessage, addPanelFailureReason, addPanelToExistingNotebook
 import { clearRecentNotebook, getRecentNotebook, setRecentNotebook } from './recentNotebook';
 
 const inFlightAdds = new Set<string>();
+const pendingWrites = new Map<string, Promise<void>>();
+
+function enqueueNotebookWrite<T>(uid: string, write: () => Promise<T>): Promise<T> {
+  const result = (pendingWrites.get(uid) ?? Promise.resolve()).then(write);
+  const settled = result.then(
+    () => {},
+    () => {}
+  );
+  pendingWrites.set(uid, settled);
+  void settled.then(() => {
+    if (pendingWrites.get(uid) === settled) {
+      pendingWrites.delete(uid);
+    }
+  });
+  return result;
+}
 
 export async function quickAddPanelToNotebook(
   buildPanel: () => Promise<PanelElement>,
@@ -39,7 +55,9 @@ export async function quickAddPanelToNotebook(
   try {
     const panel = await buildPanel();
     panelWasBuilt = true;
-    const added = await addPanelToExistingNotebook(recent.uid, panel, entryPoint, isLibraryPanel);
+    const added = await enqueueNotebookWrite(recent.uid, () =>
+      addPanelToExistingNotebook(recent.uid, panel, entryPoint, isLibraryPanel)
+    );
     setRecentNotebook(added.uid, added.title);
     dispatch(
       notifyApp(
