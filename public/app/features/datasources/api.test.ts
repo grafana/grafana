@@ -3,7 +3,7 @@ import { of } from 'rxjs';
 import { type DataSourceInstanceSettings, type DataSourceSettings } from '@grafana/data';
 import { config, type BackendSrvRequest, type FetchResponse } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient, setDataSourceInstanceSettings } from '@grafana/runtime/internal';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { type BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 
 import {
   getDataSourceByUid,
@@ -256,7 +256,7 @@ describe('Datasources / API', () => {
       { isDefault: undefined, metadata: { generateName: 'g' } },
     ])('writes default status $isDefault to labels only', async ({ isDefault, metadata }) => {
       const post = jest.fn().mockResolvedValue({});
-      jest.mocked(getBackendSrv).mockReturnValueOnce({ ...getBackendSrv(), post });
+      jest.mocked(getBackendSrv).mockReturnValueOnce({ post } as unknown as BackendSrv);
 
       await createDataSourceWithK8sAPI({ type: 'marvin', name: 'Marvin', isDefault });
 
