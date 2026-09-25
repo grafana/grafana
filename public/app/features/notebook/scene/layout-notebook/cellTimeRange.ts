@@ -12,15 +12,6 @@ import {
 
 import { type PanelKind } from '../../types';
 
-/**
- * The committed range on a real, attached cell. Extends SceneTimeRangeTransformerBase (the same
- * base PanelTimeRange uses), not plain SceneTimeRange: a plain SceneTimeRange with no explicit
- * timeZone of its own falls back to the browser's default zone when resolving its own `value`
- * (see evaluateTimeRange/refreshRange in SceneTimeRange), even though `getTimeZone()` itself
- * correctly walks up to the notebook's — so a timezone-rounded relative preset like "Today" would
- * evaluate its actual bounds in the wrong zone. This class fixes that by deriving `value` from
- * `getTimeZone()` (always ancestor-resolved) instead.
- */
 class NotebookCellTimeRange extends SceneTimeRangeTransformerBase<SceneTimeRangeState> implements SceneTimeRangeLike {
   public constructor(state: { from: string; to: string }) {
     // Not valid until activation, same as PanelTimeRange — refreshValue() needs a real ancestor.
