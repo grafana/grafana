@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { type ReactNode, useMemo, useState } from 'react';
-import { type FieldValues, useForm, type UseFormReturn } from 'react-hook-form';
+import { type DefaultValues, type FieldValues, useForm, type UseFormReturn } from 'react-hook-form';
 
 import { type DataSourceInstanceListItem, type GrafanaTheme2, store } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -18,8 +18,12 @@ export interface SolutionFilterSpec<TScope extends FieldValues> {
   parse: (raw: string | undefined) => (DatasourceBoundFilter & TScope) | null;
   /** Summary of an applied filter for the gear tooltip. */
   summarize: (filter: DatasourceBoundFilter & TScope) => string;
-  /** Values the dialog starts from when nothing is stored. */
-  emptyScope: TScope;
+  /**
+   * Values the dialog starts from: the stored filter's scope, even one saved for another datasource
+   * so it can be re-saved or cleared, else the solution's empty scope. The datasource binding stays
+   * out of the form; this card's is added on save.
+   */
+  defaultValues: (filter: (DatasourceBoundFilter & TScope) | null) => DefaultValues<TScope>;
   /** Whether the values narrow anything; Save stays disabled until they do. */
   hasSelection: (scope: TScope) => boolean;
   /** Names of the dimensions a scope sets, for analytics; the values are customer data and never leave the browser. */
@@ -123,10 +127,8 @@ function SolutionFilterModal<TScope extends FieldValues>({
   onClose,
   children,
 }: SolutionFilterModalProps<TScope>) {
-  // The form starts from the stored filter even when it was saved for another datasource, so the
-  // user can re-save it for this one or clear it. Fields validate as they change, so a mistake
-  // shows where it is made.
-  const form = useForm<TScope>({ values: filter ?? spec.emptyScope, mode: 'onChange' });
+  // Fields validate as they change, so a mistake shows where it is made.
+  const form = useForm<TScope>({ defaultValues: spec.defaultValues(filter), mode: 'onChange' });
   const values = form.watch();
   const [error, setError] = useState<string | null>(null);
 
@@ -146,7 +148,6 @@ function SolutionFilterModal<TScope extends FieldValues>({
   const save = form.handleSubmit((scope) =>
     persist(
       () => {
-        // A filter re-saved from another datasource carries that one's binding; this card's wins.
         const next: DatasourceBoundFilter & TScope = {
           ...scope,
           datasourceUid: datasource.uid,

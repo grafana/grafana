@@ -511,32 +511,22 @@ describe('metrics telemetry', () => {
     };
     const fsExclude = 'fstype!~"tmpfs|overlay|squashfs|iso9660|ramfs"';
     const selector = `{${fsExclude},instance!~"cache-.*",mountpoint!~"/scratch"}`;
+    const ratio = `(1 - node_filesystem_avail_bytes${selector} / node_filesystem_size_bytes${selector})`;
 
     it('appends the exclusions to both sides of the fill ratio as quoted matchers', () => {
       expect(diskRatioExpr(null)).toBe(
         `(1 - node_filesystem_avail_bytes{${fsExclude}} / node_filesystem_size_bytes{${fsExclude}})`
       );
-      expect(diskRatioExpr(scope)).toBe(
-        `(1 - node_filesystem_avail_bytes${selector} / node_filesystem_size_bytes${selector})`
-      );
+      expect(diskRatioExpr(scope)).toBe(ratio);
       expect(diskRatioExpr({ excludes: [{ label: 'device', regex: 'a"b\\c' }] })).toContain('device!~"a\\"b\\\\c"');
-      expect(diskPressureQuery(scope)).toBe(`max by (instance) (${diskRatioExpr(scope)}) > 0.9`);
-      // A drafted scope carries untrimmed and half-filled rows; only complete ones become matchers.
-      expect(
-        diskRatioExpr({
-          excludes: [
-            { label: ' instance ', regex: ' cache-.* ' },
-            { label: 'job', regex: '' },
-          ],
-        })
-      ).toBe(diskRatioExpr({ excludes: [{ label: 'instance', regex: 'cache-.*' }] }));
+      expect(diskPressureQuery(scope)).toBe(`max by (instance) (${ratio}) > 0.9`);
     });
 
-    it('builds the disk pressure and host queries on the scoped ratio', async () => {
+    it('narrows the disk pressure queries and the host count to the scope', async () => {
       await fetchMetricsDiskPressure(prom, scope);
 
       expect(mockRunInstantQueries).toHaveBeenCalledWith(
-        { diskHosts: `count(${diskPressureQuery(scope)})`, diskWorst: `topk(1, ${diskRatioExpr(scope)})` },
+        { diskHosts: `count(max by (instance) (${ratio}) > 0.9)`, diskWorst: `topk(1, ${ratio})` },
         prom,
         { timeoutMs: 30_000, partial: true }
       );
@@ -545,8 +535,9 @@ describe('metrics telemetry', () => {
       mockResolveBackendInstance.mockResolvedValue(backendInstance(jest.fn(async () => ({}))));
       await fetchMetricsActivity(prom, scope);
 
+      // Hosts keep the one-series-per-host metric; the same matchers apply to it.
       expect(mockRunInstantQueries).toHaveBeenLastCalledWith(
-        expect.objectContaining({ hosts: `count(count by (instance) (${diskRatioExpr(scope)}))` }),
+        expect.objectContaining({ hosts: 'count(node_uname_info{instance!~"cache-.*",mountpoint!~"/scratch"})' }),
         prom,
         { partial: true }
       );
@@ -762,7 +753,7 @@ describe('metrics telemetry', () => {
     );
     expect(mockRunInstantQueries).toHaveBeenCalledTimes(1);
     expect(mockRunInstantQueries).toHaveBeenCalledWith(
-      expect.objectContaining({ hosts: `count(count by (instance) (${diskRatioExpr(null)}))` }),
+      expect.objectContaining({ hosts: 'count(node_uname_info)' }),
       prom,
       { partial: true }
     );

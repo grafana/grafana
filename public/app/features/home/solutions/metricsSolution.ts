@@ -12,7 +12,7 @@ import { t } from '@grafana/i18n';
 
 import { METRICS_DRILLDOWN_APP_ID } from './appPluginIds';
 import { resolveKubernetesDatasource } from './kubernetesData';
-import { type MetricsFilter } from './metricsFilter';
+import { type MetricsDiskScope, type MetricsFilter } from './metricsFilter';
 import { drilldownActiveCta } from './pluginPages';
 import { datasourceFact } from './probeUtils';
 import { CLOUD_UTILITY_PROM_DATASOURCE_UIDS, probeFound, prometheusHasRecentMetrics } from './solutionDataProbes';
@@ -24,7 +24,6 @@ import {
   fetchMetricsActivity,
   fetchMetricsDiskHoursToFull,
   fetchMetricsDiskPressure,
-  type MetricsDiskScope,
 } from './telemetryData';
 import { getTelemetrySetupCta, getTelemetrySetupLearnMore } from './telemetrySetup';
 import { type Solution } from './types';

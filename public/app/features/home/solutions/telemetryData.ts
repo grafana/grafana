@@ -10,6 +10,7 @@ import { type DataSourceWithBackend, isFetchError } from '@grafana/runtime';
 import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { PromApplication } from 'app/types/unified-alerting-dto';
 
+import { type MetricsDiskScope } from './metricsFilter';
 import { probeProxyGet, resolveBackendInstance, withDeadline } from './probeUtils';
 import {
   quotePromString,
@@ -244,27 +245,10 @@ export interface MetricsActivity {
   count: MetricsCount | null;
   /** Ingest rate (stack-scoped usage metrics, else Prometheus self-monitoring). */
   dataPointsPerMinute: number | null;
-  /** Hosts reporting filesystem metrics under the disk scope, so the count matches the alert's population. */
+  /** node_exporter host count, less the disk scope's excluded hosts. */
   hosts: number | null;
   /** Active-series trend over the last 24h. */
   seriesSparkline: FieldSparkline | null;
-}
-
-/** Label matchers narrowing the disk alert. An empty list does not narrow. */
-export interface MetricsDiskScope {
-  /** Filesystems whose `label` matches `regex` (anchored, RE2) are left out of the fill ratio. */
-  excludes: Array<{ label: string; regex: string }>;
-}
-
-/** The rows that select something, trimmed; the dialog keeps half-filled rows around while the user types. */
-export function activeExcludes(scope: MetricsDiskScope): MetricsDiskScope['excludes'] {
-  return scope.excludes
-    .map((row) => ({ label: row.label.trim(), regex: row.regex.trim() }))
-    .filter((row) => row.label !== '' && row.regex !== '');
-}
-
-export function hasDiskSelection(scope: MetricsDiskScope): boolean {
-  return activeExcludes(scope).length > 0;
 }
 
 // Threshold and ETA clamp for the disk-pressure alert row (design/judgment constants).
@@ -274,15 +258,17 @@ const DISK_ETA_MAX_HOURS = 48;
 // Pseudo filesystems are always excluded; they read as full without being a problem.
 const FS_EXCLUDE = 'fstype!~"tmpfs|overlay|squashfs|iso9660|ramfs"';
 
-// The one place the scope becomes matchers, so every disk query narrows to the same filesystems.
-function filesystemSelector(scope: MetricsDiskScope | null, fixed: string[] = []): string {
-  const excluded = (scope ? activeExcludes(scope) : []).map(
-    ({ label, regex }) => `${label}!~${quotePromString(regex)}`
-  );
-  return `{${[...fixed, FS_EXCLUDE, ...excluded].join(',')}}`;
+// The one place the scope becomes matchers; a parsed filter is already trimmed and validated.
+function exclusionMatchers(scope: MetricsDiskScope | null): string[] {
+  return (scope?.excludes ?? []).map(({ label, regex }) => `${label}!~${quotePromString(regex)}`);
 }
 
-/** Per-filesystem fill ratio (0..1) that the disk alert and the host count are built on. */
+// `{fixed…, pseudo-filesystem exclusion, scope exclusions…}`, so every disk query narrows alike.
+function filesystemSelector(scope: MetricsDiskScope | null, fixed: string[] = []): string {
+  return `{${[...fixed, FS_EXCLUDE, ...exclusionMatchers(scope)].join(',')}}`;
+}
+
+/** Per-filesystem fill ratio (0..1) that the disk alert is built on. */
 export function diskRatioExpr(scope: MetricsDiskScope | null): string {
   const selector = filesystemSelector(scope);
   return `(1 - node_filesystem_avail_bytes${selector} / node_filesystem_size_bytes${selector})`;
@@ -483,10 +469,14 @@ export async function fetchMetricsActivity(
       const names = await fetchMetricNameCount(instance, start, end);
       return names != null ? { kind: 'names', value: names } : null;
     });
-  // Hosts are the distinct instances behind the disk alert's own ratio, so an excluded host or a
-  // custom formula moves both figures together.
+  // One series per host keeps this cheap. The scope's matchers apply so an excluded host leaves
+  // both figures; filesystem-only labels are absent here, so those matchers change nothing.
+  const matchers = exclusionMatchers(scope);
   const fleet = runInstantQueries(
-    { ...(mimir ? {} : { dpm: PROM_DPM_QUERY }), hosts: `count(count by (instance) (${diskRatioExpr(scope)}))` },
+    {
+      ...(mimir ? {} : { dpm: PROM_DPM_QUERY }),
+      hosts: `count(node_uname_info${matchers.length > 0 ? `{${matchers.join(',')}}` : ''})`,
+    },
     ds,
     // partial: readers are null-safe; one failed query keeps the rest.
     { partial: true }

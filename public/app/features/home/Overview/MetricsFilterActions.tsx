@@ -4,14 +4,20 @@ import { Controller, useFieldArray, type UseFormReturn } from 'react-hook-form';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Combobox, Field, IconButton, Input, Stack, useStyles2 } from '@grafana/ui';
 
-import { labelIssue, parseMetricsFilter, patternIssue, summarizeMetricsFilter } from '../solutions/metricsFilter';
-import { hasDiskSelection, type MetricsDiskScope } from '../solutions/telemetryData';
+import {
+  hasDiskSelection,
+  labelIssue,
+  type MetricsDiskScope,
+  parseMetricsFilter,
+  patternIssue,
+  summarizeMetricsFilter,
+} from '../solutions/metricsFilter';
 
 import { type CardFilterActionsProps, SolutionFilterActions, type SolutionFilterSpec } from './SolutionFilterActions';
 
 const EMPTY_ROW = { label: 'instance', regex: '' };
-// One row to fill in; it selects nothing until it has a pattern.
-const NO_SCOPE: MetricsDiskScope = { excludes: [EMPTY_ROW] };
+// A new filter opens with one row to fill in.
+const BLANK_FORM: MetricsDiskScope = { excludes: [EMPTY_ROW] };
 
 // node_exporter's own filesystem labels; relabeled ones (cluster, env, …) are typed in.
 const FILESYSTEM_LABELS = ['instance', 'job', 'mountpoint', 'device', 'fstype'].map((value) => ({
@@ -23,10 +29,10 @@ const spec: SolutionFilterSpec<MetricsDiskScope> = {
   solution: 'metrics',
   parse: parseMetricsFilter,
   summarize: summarizeMetricsFilter,
-  emptyScope: NO_SCOPE,
+  defaultValues: (filter) => (filter ? { excludes: filter.excludes } : BLANK_FORM),
   hasSelection: hasDiskSelection,
   // Dimension name only; label names and patterns are customer data and never leave the browser.
-  customized: (scope) => (hasDiskSelection(scope) ? 'excludes' : ''),
+  customized: () => 'excludes',
 };
 
 export function MetricsFilterActions({ datasource }: CardFilterActionsProps) {

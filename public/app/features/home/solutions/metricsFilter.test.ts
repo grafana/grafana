@@ -7,22 +7,19 @@ const stored = {
 };
 
 describe('parseMetricsFilter', () => {
-  it('drops half-filled rows, trims, and reads nothing left as unscoped', () => {
-    const rows = [
-      { label: ' instance ', regex: ' cache-.* ' },
-      { label: 'job', regex: '' },
-      { label: '', regex: 'x' },
-    ];
-
-    expect(parseMetricsFilter(JSON.stringify({ ...stored, excludes: rows }))).toEqual(stored);
-    expect(parseMetricsFilter(JSON.stringify({ ...stored, excludes: rows.slice(1) }))).toBeNull();
+  it('trims the rows and reads an empty list as unscoped', () => {
+    expect(
+      parseMetricsFilter(JSON.stringify({ ...stored, excludes: [{ label: ' instance ', regex: ' cache-.* ' }] }))
+    ).toEqual(stored);
+    expect(parseMetricsFilter(JSON.stringify({ ...stored, excludes: [] }))).toBeNull();
   });
 
-  it('refuses a filter whose label name or pattern would break the query', () => {
-    expect(
-      parseMetricsFilter(JSON.stringify({ ...stored, excludes: [{ label: 'inst-ance', regex: 'x' }] }))
-    ).toBeNull();
-    expect(parseMetricsFilter(JSON.stringify({ ...stored, excludes: [{ label: 'instance', regex: '[' }] }))).toBeNull();
+  it.each([
+    ['a half-filled row', { label: 'job', regex: '' }],
+    ['a malformed label name', { label: 'inst-ance', regex: 'x' }],
+    ['a pattern Prometheus would refuse', { label: 'instance', regex: '[' }],
+  ])('refuses a stored filter with %s', (_case, row) => {
+    expect(parseMetricsFilter(JSON.stringify({ ...stored, excludes: [row] }))).toBeNull();
   });
 });
 
@@ -32,15 +29,8 @@ describe('field rules', () => {
     expect(labelIssue('inst-ance')).toBe('Label names may only contain letters, digits and underscores');
     expect(labelIssue(' instance ')).toBeNull();
     expect(patternIssue(' ')).toBe('Enter a pattern');
-  });
-
-  // One row per way a pattern can fail: the engine refuses it, or it uses a construct RE2 lacks.
-  it.each(['cache-(', '(?=cache)', 'cache-\\1'])('reject a pattern Prometheus would refuse: %s', (regex) => {
-    expect(patternIssue(regex)).toBe('Pattern is not a valid regular expression');
-  });
-
-  // RE2's inline flag group, and a backslash the backreference guard must not mistake.
-  it.each(['(?i)cache-.*', '10\\.0\\.0\\.1'])('accept a pattern Prometheus would run: %s', (regex) => {
-    expect(patternIssue(regex)).toBeNull();
+    expect(patternIssue('cache-(')).toBe('Pattern is not a valid regular expression');
+    // RE2's inline flag group is not JS syntax; the shared check translates it before compiling.
+    expect(patternIssue('(?i)cache-.*')).toBeNull();
   });
 });
