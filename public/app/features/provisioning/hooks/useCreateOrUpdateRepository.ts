@@ -11,21 +11,39 @@ import {
 
 export type RepositorySecureChanges = Pick<SecureValues, 'token' | 'commitSigningKey'>;
 
+function toSecureValues(secureChanges?: RepositorySecureChanges): SecureValues | undefined {
+  const secureEntries: SecureValues = {};
+  if (secureChanges?.token) {
+    secureEntries.token = secureChanges.token;
+  }
+  if (secureChanges?.commitSigningKey) {
+    secureEntries.commitSigningKey = secureChanges.commitSigningKey;
+  }
+  return Object.keys(secureEntries).length ? secureEntries : undefined;
+}
+
 export function useCreateOrUpdateRepository(name?: string) {
   const [create, createRequest] = useCreateRepositoryMutation();
   const [update, updateRequest] = useReplaceRepositoryMutation();
   const [testConfig, testRequest] = useCreateRepositoryTestMutation();
 
+  // Validates a config against the same admission checks a real create/update would run,
+  // without persisting anything - see the /test subresource. Used while the wizard hasn't
+  // decided a repository is worth creating yet (see AuthTypeStep).
+  const testOnly = useCallback(
+    async (data: RepositorySpec, secureChanges?: RepositorySecureChanges) => {
+      await testConfig({
+        // HACK: we need to provide a name to the test configuration
+        name: name || 'new',
+        body: { spec: data, secure: toSecureValues(secureChanges) },
+      }).unwrap();
+    },
+    [name, testConfig]
+  );
+
   const updateOrCreate = useCallback(
     async (data: RepositorySpec, secureChanges?: RepositorySecureChanges) => {
-      const secureEntries: SecureValues = {};
-      if (secureChanges?.token) {
-        secureEntries.token = secureChanges.token;
-      }
-      if (secureChanges?.commitSigningKey) {
-        secureEntries.commitSigningKey = secureChanges.commitSigningKey;
-      }
-      const secure = Object.keys(secureEntries).length ? secureEntries : undefined;
+      const secure = toSecureValues(secureChanges);
 
       // First test the config and wait for the result
       // unwrap will throw an error if the test fails
@@ -38,7 +56,9 @@ export function useCreateOrUpdateRepository(name?: string) {
         },
       }).unwrap();
 
-      // If test passes, proceed with create/update
+      // If test passes, proceed with create/update. update() is a PUT, and the storage
+      // layer allows create-on-update, so this also handles "no repository at this name
+      // exists yet" - see AllowCreateOnUpdate in pkg/apiserver/registry/generic/strategy.go.
       if (name) {
         return update({
           name,
@@ -59,7 +79,7 @@ export function useCreateOrUpdateRepository(name?: string) {
     [create, name, update, testConfig]
   );
 
-  return [updateOrCreate, name ? updateRequest : createRequest, testRequest] as const;
+  return [updateOrCreate, name ? updateRequest : createRequest, testRequest, testOnly] as const;
 }
 
 const generateRepositoryMetadata = (data: RepositorySpec) => {

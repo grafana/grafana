@@ -5,11 +5,11 @@ import { Combobox, Field, Input, Stack } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
-import { useGetRepositoryFolders } from '../hooks/useGetRepositoryFolders';
-import { useGetRepositoryRefs } from '../hooks/useGetRepositoryRefs';
 import { isGitProvider } from '../utils/repositoryTypes';
 
 import { getGitProviderFields, getLocalProviderFields } from './fields';
+import { useGetEphemeralRepositoryFolders } from './hooks/useGetEphemeralRepositoryFolders';
+import { useGetEphemeralRepositoryRefs } from './hooks/useGetEphemeralRepositoryRefs';
 import { type WizardFormData } from './types';
 
 export const ConnectStep = memo(function ConnectStep() {
@@ -25,7 +25,17 @@ export const ConnectStep = memo(function ConnectStep() {
   const { data: frontendSettings } = useGetFrontendSettingsQuery();
   // We don't need to dynamically react on repo type changes, so we use getValues for it
   const type = getValues('repository.type');
-  const [repositoryName = '', branch = ''] = watch(['repositoryName', 'repository.branch']);
+  const [repositoryData, branch = '', githubAuthType, githubAppConnectionName] = watch([
+    'repository',
+    'repository.branch',
+    'githubAuthType',
+    'githubApp.connectionName',
+  ]);
+  const connectionName = githubAuthType !== 'pat' ? githubAppConnectionName : undefined;
+  // Only meaningful for PAT auth - App-based auth authenticates via connectionName instead,
+  // and a leftover value here from switching auth types is harmless (buildEphemeralRepository
+  // overwrites it with the connection-generated token whenever connectionName is set).
+  const token = githubAuthType === 'pat' ? repositoryData.token : undefined;
   const isGitBased = isGitProvider(type);
 
   const {
@@ -33,18 +43,20 @@ export const ConnectStep = memo(function ConnectStep() {
     loading: isRefsLoading,
     error: refsError,
     defaultBranch,
-  } = useGetRepositoryRefs({
-    repositoryType: type,
-    repositoryName: repositoryName,
+  } = useGetEphemeralRepositoryRefs({
+    data: repositoryData,
+    connectionName,
+    token,
   });
 
   const {
     options: folderOptions,
     loading: isFoldersLoading,
     error: foldersError,
-    hint: foldersHint,
-  } = useGetRepositoryFolders({
-    repositoryName: repositoryName || undefined,
+  } = useGetEphemeralRepositoryFolders({
+    data: repositoryData,
+    connectionName,
+    token,
     ref: branch || undefined,
   });
 
@@ -108,7 +120,7 @@ export const ConnectStep = memo(function ConnectStep() {
           <Field
             noMargin
             label={gitFields.pathConfig.label}
-            description={foldersHint || gitFields.pathConfig.description}
+            description={gitFields.pathConfig.description}
             error={errors?.repository?.path?.message || foldersError}
             invalid={Boolean(errors?.repository?.path?.message || foldersError)}
             required={gitFields.pathConfig.required}

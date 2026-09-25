@@ -139,6 +139,7 @@ async function fillConnectionForm(
 
 function setupMockSubmitData() {
   const mockSubmitData = jest.fn();
+  const mockTestOnly = jest.fn().mockResolvedValue(undefined);
   const mockMutationState = {
     status: QueryStatus.uninitialized,
     isLoading: false,
@@ -153,6 +154,7 @@ function setupMockSubmitData() {
     mockSubmitData,
     mockMutationState,
     mockMutationState,
+    mockTestOnly,
   ]);
 
   mockSubmitData.mockResolvedValue({
@@ -339,10 +341,9 @@ describe('ProvisioningWizard', () => {
         status: 400,
       };
 
-      // First submit (authType) succeeds, second (connection step) fails
-      mockSubmitData
-        .mockResolvedValueOnce({ data: { metadata: { name: 'test-repo-abc123' } } })
-        .mockRejectedValueOnce(testResultsError);
+      // authType only validates (testOnly, not submitData - see useCreateOrUpdateRepository);
+      // connection is submitData's first and only call here, and it fails.
+      mockSubmitData.mockRejectedValueOnce(testResultsError);
 
       const { user } = setup(<ProvisioningWizard type="github" />);
 
@@ -384,9 +385,9 @@ describe('ProvisioningWizard', () => {
         status: 400,
       };
 
-      // authType succeeds → connection fails with URL error → retry succeeds
+      // authType only validates (testOnly, not submitData); connection's first attempt
+      // fails with a URL error, retry succeeds.
       mockSubmitData
-        .mockResolvedValueOnce({ data: { metadata: { name: 'test-repo-abc123' } } })
         .mockRejectedValueOnce(urlError)
         .mockResolvedValueOnce({ data: { metadata: { name: 'test-repo-abc123' } } });
 
@@ -413,8 +414,8 @@ describe('ProvisioningWizard', () => {
       // Retry — should not be silently blocked
       await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
 
-      // Submit was called 3 times: 1 authType + 2 connection attempts
-      expect(mockSubmitData).toHaveBeenCalledTimes(3);
+      // Submit was called twice: 2 connection attempts (authType only validates)
+      expect(mockSubmitData).toHaveBeenCalledTimes(2);
 
       // Wizard advances to next step — proves no silent block
       expect(await screen.findByRole('heading', { name: /3\. Choose what to synchronize/i })).toBeInTheDocument();
@@ -904,8 +905,9 @@ describe('ProvisioningWizard', () => {
 
     await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
 
-    await waitFor(() => expect(mockSubmitData).toHaveBeenCalledTimes(2));
-    const connectionSubmitSpec = mockSubmitData.mock.calls[1][0];
+    // authType only validates (testOnly); connection is submitData's sole caller.
+    await waitFor(() => expect(mockSubmitData).toHaveBeenCalledTimes(1));
+    const connectionSubmitSpec = mockSubmitData.mock.calls[0][0];
     expect(connectionSubmitSpec.github).toMatchObject({ path: 'docs/dashboards' });
   });
 });
