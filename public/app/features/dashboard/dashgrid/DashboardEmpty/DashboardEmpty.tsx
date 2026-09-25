@@ -10,6 +10,7 @@ import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel
 import { AssistantDashboardEmpty } from 'app/features/dashboard-prompt/AssistantDashboardEmpty';
 import { useDashboardGenerationAvailable } from 'app/features/dashboard-prompt/useDashboardGenerationAvailable';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { canManuallyEditDashboard } from 'app/features/dashboard-scene/scene/dashboardModes';
 import { AutoGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager';
 
@@ -65,8 +66,10 @@ interface NewLayoutEmptyProps {
 }
 
 const NewLayoutEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
-  const { uid, isEditing, sidebar } = dashboard.useState();
-  const isEditingNewDashboard = isEditing && !uid;
+  const state = dashboard.useState();
+  const { uid, isEditing, sidebar } = state;
+  const canEdit = canManuallyEditDashboard(state);
+  const isEditingNewDashboard = isEditing && !uid && canEdit;
   const { isAvailable: generationAvailable, isLoading: generationLoading } = useDashboardGenerationAvailable();
 
   // Open the add pane only for the classic layout-picker empty state. Wait until
@@ -96,6 +99,16 @@ const NewLayoutEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
       cancelled = true;
     };
   }, [isEditingNewDashboard, dashboard, sidebar, generationLoading, generationAvailable]);
+
+  if (!canEdit) {
+    return (
+      <Box padding={4}>
+        <Text element="p" textAlignment="center" color="secondary">
+          <Trans i18nKey="dashboard.modes.empty">This dashboard has no panels.</Trans>
+        </Text>
+      </Box>
+    );
+  }
 
   if (generationLoading) {
     return (

@@ -51,7 +51,13 @@ export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardS
         urlSync?.retainEditPanelAcrossRebuild(editPanelKey);
       }
 
-      scene.setState({ ...newState, editPanel: undefined, isDirty: true });
+      scene.setState({
+        ...newState,
+        mode: scene.state.mode,
+        codeSession: scene.state.codeSession,
+        editPanel: undefined,
+        isDirty: true,
+      });
       // Dashboard state is replaced in place losing all edit-only properties.
       // Calling editModeChange rehydrates the panel's edit state (for example isDraggable state)
       scene.applyEditPresentation();
@@ -71,7 +77,8 @@ export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardS
       }
     },
     undo: () => {
-      scene.setState(previousState);
+      scene.setState({ ...previousState, mode: scene.state.mode, codeSession: scene.state.codeSession });
+      scene.applyEditPresentation();
       scene.state.sidebar.closePane();
       scene.forEachChild((child) => scene.publishEvent(new NewSceneObjectAddedEvent(child), true));
     },
