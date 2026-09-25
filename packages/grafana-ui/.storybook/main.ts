@@ -97,12 +97,12 @@ const mainConfig: StorybookConfig = {
                 exposes: ['$', 'jQuery'],
               },
             },
-            // Rsbuild's own CSS pipeline has no `lazyStyleTag` equivalent, so the theme
-            // stylesheets get their own chain. `url: false` keeps relative url() refs
+            // Rsbuild's own CSS pipeline has no `lazyStyleTag` equivalent, so the generated
+            // theme stylesheets get their own chain. `url: false` keeps relative url() refs
             // (fonts, checkbox sprites) unresolved so they resolve at runtime against the
             // assets copyAssets.ts puts in staticDirs.
             {
-              test: /\.scss$/,
+              test: /grafana\.(dark|light)\.css$/,
               type: 'javascript/auto',
               use: [
                 {
@@ -116,16 +116,6 @@ const mainConfig: StorybookConfig = {
                   loader: require.resolve('css-loader'),
                   options: {
                     url: false,
-                    importLoaders: 2,
-                  },
-                },
-                {
-                  loader: require.resolve('sass-loader'),
-                  options: {
-                    sassOptions: {
-                      // silencing these warnings since we're planning to remove sass when angular is gone
-                      silenceDeprecations: ['import', 'global-builtin'],
-                    },
                   },
                 },
               ],
