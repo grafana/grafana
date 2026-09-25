@@ -8,7 +8,7 @@ import { getBackendSrv } from '../backendSrv';
 import { FALLBACK_TO_BOOTDATA_ERROR_WARNING, FALLBACK_TO_BOOTDATA_WARNING } from './constants';
 import { logPluginMetaDebug, logPluginMetaWarning } from './logging';
 import { getDatasourcePluginMapper } from './mappers/mappers';
-import { logMetasDisagreementsWithBootData, logUnloadableModules, PluginMetaSource } from './moduleChecks';
+import { logUnloadableModules, PluginMetaSource } from './moduleChecks';
 import { getPluginMetasUrl, initPluginMetas, refetchPluginMetas } from './plugins';
 import type { DatasourcePluginMetas, FrontendSettings, PluginMetasResponse } from './types';
 
@@ -47,17 +47,6 @@ function setDatasourcesAndAliases(input: DatasourcePluginMetas, source: PluginMe
   datasources = input;
   datasourcesByAliasIDs = resolveAliasIDs(input);
   logUnloadableModules(datasources, source, PluginType.datasource, getDatasourceModule);
-  if (source === PluginMetaSource.metas) {
-    // eslint-disable-next-line @grafana/no-config-datasources
-    const bootDataDatasources = extractFromConfig(config.datasources);
-    logMetasDisagreementsWithBootData(
-      datasources,
-      bootDataDatasources,
-      PluginType.datasource,
-      getDatasourceModule,
-      getDatasourceModule
-    );
-  }
 }
 
 export function getPluginIdFromDatasourceInstanceType(type: string, name: string) {

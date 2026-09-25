@@ -8,7 +8,8 @@ import { getBackendSrv } from '../backendSrv';
 import { FALLBACK_TO_BOOTDATA_ERROR_WARNING, FALLBACK_TO_BOOTDATA_WARNING } from './constants';
 import { logPluginMetaDebug, logPluginMetaWarning } from './logging';
 import { getPanelPluginMapper } from './mappers/mappers';
-import { logMetasDisagreementsWithBootData, logUnloadableModules, PluginMetaSource } from './moduleChecks';
+import { logUnloadableModules, PluginMetaSource } from './moduleChecks';
+import { logPanelMetasDisagreementsWithBootData } from './panelModuleChecks';
 import { getPluginMetasUrl, initPluginMetas, refetchPluginMetas } from './plugins';
 import type { PanelPluginMetas, PluginMetasResponse } from './types';
 
@@ -54,7 +55,7 @@ function setPanelsAndAliases(input: PanelPluginMetas, source: PluginMetaSource) 
   logUnloadableModules(panels, source, PluginType.panel, getPanelModule);
   if (source === PluginMetaSource.metas) {
     // eslint-disable-next-line @grafana/no-config-panels
-    logMetasDisagreementsWithBootData(panels, config.panels, PluginType.panel, getPanelModule, getPanelModule);
+    logPanelMetasDisagreementsWithBootData(panels, config.panels);
   }
 }
 
