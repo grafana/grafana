@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"sync"
 
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
 	apidiscoveryv2beta1 "k8s.io/api/apidiscovery/v2beta1"
@@ -65,11 +66,25 @@ func (r *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *htt
 			groups[group.Name] = group
 		}
 	}
+	// A backend owns the entire group, including which versions are served.
+	// Never keep fallback versions of a group the router has taken over.
+	var mu sync.Mutex
+	var wg sync.WaitGroup
 	for name, entry := range *r.snapshot.Load() {
-		// A backend owns the entire group, including which versions are served.
-		// Never keep fallback versions of a group the router has taken over.
-		groups[name] = backendDiscovery(req, name, entry)
+		if entry.discovery != nil {
+			groups[name] = *entry.discovery
+			continue
+		}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			d := r.groupDiscovery(req, name, entry)
+			mu.Lock()
+			groups[name] = d
+			mu.Unlock()
+		}()
 	}
+	wg.Wait()
 	items := make([]apidiscoveryv2.APIGroupDiscovery, 0, len(groups))
 	for _, group := range groups {
 		items = append(items, group)
@@ -84,7 +99,9 @@ func (r *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *htt
 	manager.ServeHTTP(w, req)
 }
 
-func backendDiscovery(req *http.Request, name string, entry servingEntry) apidiscoveryv2.APIGroupDiscovery {
+// backendDiscovery asks a backend for its group's aggregated discovery.
+// complete is false when any version could not be read and is marked stale.
+func backendDiscovery(req *http.Request, name string, entry servingEntry) (_ apidiscoveryv2.APIGroupDiscovery, complete bool) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		serveThroughBreaker(entry.breaker, name, entry.handler, w, r)
 	})
@@ -93,12 +110,13 @@ func backendDiscovery(req *http.Request, name string, entry servingEntry) apidis
 	if err == nil && list.Kind == "APIGroupDiscoveryList" {
 		for _, group := range list.Items {
 			if group.Name == name {
-				return group
+				return group, true
 			}
 		}
 	}
 
 	group := apidiscoveryv2.APIGroupDiscovery{ObjectMeta: metav1.ObjectMeta{Name: name}}
+	complete = true
 	for _, gv := range entry.group.Versions {
 		version := apidiscoveryv2.APIVersionDiscovery{Version: gv.Version, Freshness: apidiscoveryv2.DiscoveryFreshnessStale}
 		// Older backends may only support per-version resource discovery. An
@@ -112,9 +130,10 @@ func backendDiscovery(req *http.Request, name string, entry servingEntry) apidis
 				}
 			}
 		}
+		complete = complete && version.Freshness == apidiscoveryv2.DiscoveryFreshnessCurrent
 		group.Versions = append(group.Versions, version)
 	}
-	return group
+	return group, complete
 }
 
 func (r *GrafanaRouter) serveOpenAPIIndex(w http.ResponseWriter, req *http.Request, next http.Handler) {
