@@ -150,7 +150,7 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, _ runtime.Objec
 		}
 
 		result, err := s.client.Search(ctx, searchRequest)
-		if err := common.SearchStatusError(result.GetError(), err); err != nil {
+		if err := resource.StatusErrorFromResponse(result.GetError(), err); err != nil {
 			responder.Error(err)
 			return
 		}

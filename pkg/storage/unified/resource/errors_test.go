@@ -335,7 +335,7 @@ func TestStatusErrorFromResponse_TransportErrorTakesPrecedenceOverResponseError(
 	var apiStatus apierrors.APIStatus
 	require.ErrorAs(t, err, &apiStatus)
 	require.Equal(t, int32(http.StatusServiceUnavailable), apiStatus.Status().Code)
-	require.Contains(t, apiStatus.Status().Message, "storage unavailable")
+	require.Equal(t, http.StatusText(http.StatusServiceUnavailable), apiStatus.Status().Message)
 }
 
 func TestStatusErrorFromResponse_UnwrapsKubernetesStatusErrors(t *testing.T) {
@@ -352,6 +352,41 @@ func TestStatusErrorFromResponse_UnwrapsKubernetesStatusErrors(t *testing.T) {
 	var apiStatus apierrors.APIStatus
 	require.ErrorAs(t, err, &apiStatus)
 	require.Equal(t, want, apiStatus.Status())
+}
+
+func TestStatusErrorFromResponse_PreservesKubernetesServerError(t *testing.T) {
+	original := apierrors.NewServiceUnavailable("index unavailable")
+	got := StatusErrorFromResponse(nil, fmt.Errorf("search: %w", original))
+
+	var apiStatus apierrors.APIStatus
+	require.ErrorAs(t, got, &apiStatus)
+	require.Equal(t, original.Status(), apiStatus.Status())
+}
+
+func TestStatusErrorFromResponse_HidesUnstructuredGRPCServerErrors(t *testing.T) {
+	for _, grpcCode := range []codes.Code{codes.Internal, codes.Unavailable, codes.DeadlineExceeded} {
+		t.Run(grpcCode.String(), func(t *testing.T) {
+			transportErr := status.Error(grpcCode, "private database failure")
+			err := StatusErrorFromResponse(nil, fmt.Errorf("search: %w", transportErr))
+
+			var apiStatus apierrors.APIStatus
+			require.ErrorAs(t, err, &apiStatus)
+			got := apiStatus.Status()
+			require.Equal(t, http.StatusText(int(got.Code)), got.Message)
+			require.NotContains(t, err.Error(), "private database failure")
+		})
+	}
+}
+
+func TestStatusErrorFromResponse_PreservesStructuredGRPCServerError(t *testing.T) {
+	failure := &resourcepb.ErrorResult{Code: http.StatusServiceUnavailable, Message: "index unavailable"}
+	st, err := status.New(codes.Unavailable, "transport message").WithDetails(failure)
+	require.NoError(t, err)
+
+	got := StatusErrorFromResponse(nil, st.Err())
+	var apiStatus apierrors.APIStatus
+	require.ErrorAs(t, got, &apiStatus)
+	require.Equal(t, failure.Message, apiStatus.Status().Message)
 }
 
 func TestStatusErrorFromResponse_MapsGRPCCodesWithoutDetails(t *testing.T) {

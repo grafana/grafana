@@ -121,8 +121,9 @@ func ErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
 // StatusErrorFromResponse derives a Kubernetes [apierrors.StatusError] from a
 // unified storage failure when it can: an embedded [resourcepb.ErrorResult], a gRPC status
 // (wrapped or not), an error already carrying an [apierrors.APIStatus], or a context error.
-// Anything else is returned unchanged, so response writers apply their own
-// sanitization and logging instead of exposing internal error text.
+// Unstructured gRPC server errors are logged and given a generic public message;
+// attached ErrorResult details retain their message. Anything else is returned
+// unchanged, so response writers apply their own sanitization and logging.
 // Unlike [AsErrorResult], [claims.ErrNamespaceMismatch] is not mapped to 403 — it passes through,
 // since that mapping only ever applied in-process.
 func StatusErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
@@ -134,10 +135,16 @@ func StatusErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
 		err = grpcstatus.FromContextError(err).Err()
 	}
 	var apiStatus apierrors.APIStatus
-	if _, ok := grpcstatus.FromError(err); !ok && !errors.As(err, &apiStatus) {
+	_, isGRPC := grpcstatus.FromError(err)
+	if !isGRPC && !errors.As(err, &apiStatus) {
 		return err
 	}
-	return GetError(AsErrorResult(err))
+	result := AsErrorResult(err)
+	if isGRPC && result.Code >= http.StatusInternalServerError && errorResultFromGRPCDetails(err) == nil {
+		errorMappingLog.Error("Unstructured gRPC server error", "error", err)
+		result.Message = http.StatusText(int(result.Code))
+	}
+	return GetError(result)
 }
 
 func errorResultFromGRPCDetails(err error) *resourcepb.ErrorResult {

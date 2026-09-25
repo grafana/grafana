@@ -9,7 +9,6 @@ import (
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -101,7 +100,7 @@ func (c *unifiedSearchClient) Search(ctx context.Context, query SearchQuery) (*i
 	}
 
 	resp, err := c.client.Search(ctx, req)
-	if err := common.SearchStatusError(resp.GetError(), err); err != nil {
+	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
 		return nil, err
 	}
 	return parseResults(resp)

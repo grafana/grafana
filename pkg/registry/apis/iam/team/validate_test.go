@@ -14,6 +14,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 
 	"github.com/grafana/authlib/types"
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -416,6 +417,16 @@ func TestValidateOnDelete(t *testing.T) {
 
 		require.Error(t, err)
 		assert.ErrorContains(t, err, "search unavailable")
+	})
+
+	t.Run("does not expose unstructured search failures", func(t *testing.T) {
+		searcher := &deleteValidationSearchClient{err: status.Error(codes.Internal, "private database failure")}
+
+		err := ValidateOnDelete(t.Context(), searcher, team)
+
+		apiStatus := responsewriters.ErrorToAPIStatus(err)
+		require.Equal(t, int32(http.StatusInternalServerError), apiStatus.Code)
+		require.Equal(t, http.StatusText(http.StatusInternalServerError), apiStatus.Message)
 	})
 
 	t.Run("allows deletion when folder search is not configured", func(t *testing.T) {
