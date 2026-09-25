@@ -58,8 +58,8 @@ func xminOf(t *testing.T, store *PostgreSQLStore, ns, name string) int64 {
 func insertNativeRow(t *testing.T, store *PostgreSQLStore, ns, name string, at int64, text string, legacyID int64) {
 	t.Helper()
 	_, err := store.pool.Exec(t.Context(),
-		`INSERT INTO annotations (namespace, name, time, text, created_at, legacy_id)
-		 VALUES ($1, $2, $3, $4, $5, $6)`,
+		`INSERT INTO annotations (namespace, name, time, time_end, text, created_at, legacy_id)
+		 VALUES ($1, $2, $3, $3, $4, $5, $6)`,
 		ns, name, at, text, time.UnixMilli(week(0)).UTC(), legacyID)
 	require.NoError(t, err)
 }
@@ -142,7 +142,8 @@ func TestIntegrationBackfill(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, moved, got.Spec.Time, "time moved to the edited value")
 		require.Equal(t, "deploy-edited", got.Spec.Text)
-		require.Nil(t, got.Spec.TimeEnd, "edit cleared the region end")
+		require.NotNil(t, got.Spec.TimeEnd)
+		require.Equal(t, moved, *got.Spec.TimeEnd, "edit cleared the region end, back to a point (time_end = time)")
 		require.Equal(t, int64(1), rowsNamed(t, store, ns, "legacy-1"), "the move must not leave a copy")
 	})
 
@@ -163,7 +164,7 @@ func TestIntegrationBackfill(t *testing.T) {
 		for range 5 {
 			got, err := store.Get(ctx, ns, "legacy-1")
 			require.NoError(t, err)
-			require.Equal(t, stale, got.Spec.Time, "Get must be deterministic under a duplicate")
+			require.Equal(t, current, got.Spec.Time, "Get must be deterministic under a duplicate")
 		}
 
 		// The resync would have to collapse both onto one time. It fails instead.

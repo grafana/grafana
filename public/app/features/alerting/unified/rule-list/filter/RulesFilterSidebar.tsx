@@ -280,6 +280,8 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
                     {
                       label: t('alerting.rules-filter.rule-source.datasource', 'Data source managed'),
                       value: RuleSource.DataSource,
+                      // Picking this opens the Prometheus Alerting plugin instead of filtering in place
+                      suffixIcon: routeProxyActive ? 'external-link-alt' : undefined,
                     },
                   ]}
                 />
@@ -588,6 +590,7 @@ interface ToggleOption<T> {
   value: T;
   icon?: PropsOf<typeof Icon>['name'];
   color?: PropsOf<typeof Text>['color'];
+  suffixIcon?: PropsOf<typeof Icon>['name'];
 }
 
 interface ToggleButtonGroupProps<T> {
@@ -619,6 +622,9 @@ function ToggleButtonGroup<T>({ options, value, onChange, 'aria-labelledby': lab
                 </Text>
               )}
               <span className={styles.toggleButtonLabel}>{opt.label}</span>
+              {opt.suffixIcon && (
+                <Icon name={opt.suffixIcon} size="sm" className={styles.toggleButtonIcon} aria-hidden="true" />
+              )}
             </button>
           );
         })}

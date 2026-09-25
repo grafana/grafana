@@ -137,7 +137,7 @@ func validateTitleUnique(ctx context.Context, searchClient resourcepb.ResourceIn
 	}
 
 	resp, err := searchClient.Search(ctx, req)
-	if err != nil {
+	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
 		return err
 	}
 
