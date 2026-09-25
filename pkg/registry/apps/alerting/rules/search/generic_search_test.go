@@ -270,6 +270,60 @@ func TestGenericSearchAgainstTranslator(t *testing.T) {
 	})
 }
 
+// TestGenericSearchFieldsProjection proves the legacy path returns only the
+// requested fields, matching the unified path's projection behavior: a
+// client asking for title/folder/state/health must not also get every other
+// declared field back.
+func TestGenericSearchFieldsProjection(t *testing.T) {
+	folders := []*folder.Folder{{OrgID: 1, UID: "f1", Title: "Folder 1"}}
+	authz := &fakeRuleAuthz{canReadAll: true}
+	client, dbstore := testLegacyClient(t, folders, authz)
+	ctx := requesterCtx(1)
+
+	base := ngmodels.RuleGen.With(ngmodels.RuleMuts.WithOrgID(1), ngmodels.RuleMuts.WithUniqueUID(), ngmodels.RuleMuts.WithIntervalSeconds(10))
+	rule := base.With(ngmodels.RuleMuts.WithTitle("projected-rule"), ngmodels.RuleMuts.WithNamespaceUID("f1"),
+		ngmodels.RuleMuts.WithLabel("team", "a")).GenerateRef()
+	seedRules(t, dbstore, []ngmodels.AlertRule{*rule})
+
+	q := &searchv0.SearchQuery{TypeMeta: searchQueryMeta(), Fields: []string{fieldTitle, fieldFolder, fieldState, fieldHealth}, Limit: 40}
+	req := translateGeneric(t, q, "default")
+	resp, err := client.Search(ctx, req)
+	require.NoError(t, err)
+
+	require.Len(t, resp.GetResults().GetRows(), 1)
+	var gotCols []string
+	for _, col := range resp.GetResults().GetColumns() {
+		gotCols = append(gotCols, col.GetName())
+	}
+	assert.ElementsMatch(t, []string{fieldTitle, fieldFolder, fieldState, fieldHealth}, gotCols,
+		"only the requested fields should come back, not every declared field (e.g. labels, datasourceUIDs)")
+}
+
+// TestGenericSearchFieldsProjection_DefaultsToTitleAndFolder proves an empty
+// fields list still defaults to title+folder, matching both translators'
+// default projection, rather than returning nothing or every field.
+func TestGenericSearchFieldsProjection_DefaultsToTitleAndFolder(t *testing.T) {
+	folders := []*folder.Folder{{OrgID: 1, UID: "f1", Title: "Folder 1"}}
+	authz := &fakeRuleAuthz{canReadAll: true}
+	client, dbstore := testLegacyClient(t, folders, authz)
+	ctx := requesterCtx(1)
+
+	base := ngmodels.RuleGen.With(ngmodels.RuleMuts.WithOrgID(1), ngmodels.RuleMuts.WithUniqueUID(), ngmodels.RuleMuts.WithIntervalSeconds(10))
+	rule := base.With(ngmodels.RuleMuts.WithTitle("default-fields-rule"), ngmodels.RuleMuts.WithNamespaceUID("f1")).GenerateRef()
+	seedRules(t, dbstore, []ngmodels.AlertRule{*rule})
+
+	q := &searchv0.SearchQuery{TypeMeta: searchQueryMeta(), Limit: 40}
+	req := translateGeneric(t, q, "default")
+	resp, err := client.Search(ctx, req)
+	require.NoError(t, err)
+
+	var gotCols []string
+	for _, col := range resp.GetResults().GetColumns() {
+		gotCols = append(gotCols, col.GetName())
+	}
+	assert.ElementsMatch(t, []string{fieldTitle, fieldFolder}, gotCols)
+}
+
 // TestGenericSearchParity_NotInAndRegex covers the filter parity the generic
 // route needs beyond what /searchRules ever exercised: NotIn on folder/paused/
 // notificationType, and regex(+negate) on labels.

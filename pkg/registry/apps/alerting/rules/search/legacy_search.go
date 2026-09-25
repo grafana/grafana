@@ -115,13 +115,17 @@ func (c *legacyClient) Search(ctx context.Context, req *resourcepb.ResourceSearc
 	}
 	page := applyOffset(filtered, start, req.Limit)
 
-	table := &resourcepb.ResourceTable{Columns: resultColumnDefinitions()}
+	// Only the requested fields are returned, matching the unified path's
+	// projection: it never returns undeclared columns, so a client asking for
+	// "state" and "health" must not also get every other field back.
+	wantedDefs := resultColumnDefinitionsFor(req.Fields)
+	table := &resourcepb.ResourceTable{Columns: wantedDefs}
 	for _, r := range page {
 		values := ruleColumnValues(r)
 		if singleKind {
 			c.addStatusValues(r, values)
 		}
-		cells, err := ruleCells(values)
+		cells, err := ruleCells(values, wantedDefs)
 		if err != nil {
 			return nil, err
 		}
@@ -225,28 +229,59 @@ func ruleColumnValues(r *ngmodels.AlertRule) map[string]any {
 	return vals
 }
 
-// ruleCells encodes a rule into the result table's cells. Positions come from
-// the column index rather than the literal order of this function, so adding a
-// column cannot silently misalign the rest of the row.
-func ruleCells(values map[string]any) ([][]byte, error) {
+// ruleCells encodes a rule into the result table's cells, one per column in
+// defs, in the same order. Positions come from defs rather than the literal
+// order values was built in, so a caller-chosen projection cannot misalign the
+// row against the columns table.Columns declares for it.
+func ruleCells(values map[string]any, defs []*resourcepb.ResourceTableColumnDefinition) ([][]byte, error) {
 	if results.err != nil {
 		return nil, results.err
 	}
-	cells := make([][]byte, len(results.defs))
-	for name, v := range values {
-		i, ok := results.index[name]
+	cells := make([][]byte, len(defs))
+	for i, def := range defs {
+		v, ok := values[def.Name]
+		if !ok {
+			continue
+		}
+		encoderIndex, ok := results.index[def.Name]
 		if !ok {
 			// skip undefined columns instead of failing
 			// This should never happnen in practice
 			continue
 		}
-		cell, err := results.encoders[i](v)
+		cell, err := results.encoders[encoderIndex](v)
 		if err != nil {
-			return nil, fmt.Errorf("encoding rule search column %q: %w", name, err)
+			return nil, fmt.Errorf("encoding rule search column %q: %w", def.Name, err)
 		}
 		cells[i] = cell
 	}
 	return cells, nil
+}
+
+// resultColumnDefinitionsFor returns the column definitions for the requested
+// fields, defaulting to title and folder when none are requested (mirroring
+// both translators' default projection). An unrecognized name is dropped
+// rather than failing the search: both translators already validate field
+// names against the kind's declared capabilities before a request reaches
+// here.
+func resultColumnDefinitionsFor(fields []string) []*resourcepb.ResourceTableColumnDefinition {
+	if len(fields) == 0 {
+		fields = perKindDefaultReturnFields
+	}
+	defs := make([]*resourcepb.ResourceTableColumnDefinition, 0, len(fields))
+	seen := make(map[string]bool, len(fields))
+	for _, name := range fields {
+		if seen[name] {
+			continue
+		}
+		seen[name] = true
+		i, ok := results.index[name]
+		if !ok {
+			continue
+		}
+		defs = append(defs, results.defs[i])
+	}
+	return defs
 }
 
 func promDuration(d time.Duration) string {

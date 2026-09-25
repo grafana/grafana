@@ -553,7 +553,16 @@ func extractFilters(req *resourcepb.ResourceSearchRequest) (filters, error) {
 			case fieldDashboardUID:
 				f.dashboardUID = firstValue(r.Values)
 			case fieldPanelID:
-				f.panelID = firstValue(r.Values)
+				// Both translators validate the value parses as an integer but only
+				// the per-kind one reformats it (see per_kind_query.go's
+				// checkAndNormalizeFilterLeaf); normalize here too so a generic
+				// request spelled "+10" or "010" still matches a panel ID stored
+				// (and compared) as its canonical decimal string "10".
+				v := firstValue(r.Values)
+				if n, err := strconv.ParseInt(v, 10, 64); err == nil {
+					v = strconv.FormatInt(n, 10)
+				}
+				f.panelID = v
 			case fieldReceiver:
 				f.receiver = firstValue(r.Values)
 			case fieldNotificationType:

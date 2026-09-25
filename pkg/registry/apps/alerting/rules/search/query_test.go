@@ -136,6 +136,20 @@ func TestBuildSearchRequestExtractRoundTrip(t *testing.T) {
 	assert.Empty(t, f.groupsExclude)
 }
 
+// TestExtractFilters_NormalizesPanelID mirrors per_kind_query.go's
+// checkAndNormalizeFilterLeaf: the generic translator validates a panelID
+// filter value parses as an integer but does not reformat it, so a request
+// spelled "+10" would otherwise fail to match a panel ID stored (and compared)
+// as its canonical decimal string.
+func TestExtractFilters_NormalizesPanelID(t *testing.T) {
+	req := &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{Fields: []*resourcepb.Requirement{
+		{Key: fieldPanelID, Operator: "in", Values: []string{"+10"}},
+	}}}
+	f, err := extractFilters(req)
+	require.NoError(t, err)
+	assert.Equal(t, "10", f.panelID)
+}
+
 // TestBuildSearchRequest_labelSelector covers the labelSelector lowering onto
 // metadata label requirements: it targets metadata.labels (not the rules' spec
 // labels), only controlled keys are selectable, and a Kubernetes "in (a, b)" is
@@ -422,7 +436,7 @@ func TestBuildSearchRequest_filterLeafValidation(t *testing.T) {
 // a single rule.
 func legacyResponse(t *testing.T, rule *ngmodels.AlertRule) *resourcepb.ResourceSearchResponse {
 	t.Helper()
-	cells, err := ruleCells(ruleColumnValues(rule))
+	cells, err := ruleCells(ruleColumnValues(rule), resultColumnDefinitions())
 	require.NoError(t, err)
 	return &resourcepb.ResourceSearchResponse{
 		TotalHits: 1,
