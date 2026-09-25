@@ -1,8 +1,17 @@
 import path, { basename } from 'node:path';
 import { inflateSync } from 'node:zlib';
 
+import { type ChunkGraph, getChunkMetrics } from './chunks.mts';
 import { readOptionalJson, readOptionalFile } from './fs.mts';
-import { type ChunkGraph, type ModuleGraph, countInitialModules } from './initialModules.mts';
+import { type ModuleGraph, getModuleMetrics, getDependencyMetrics } from './modules.mts';
+import {
+  type Summary,
+  type LoaderResource,
+  type Diagnostic,
+  getCompileMetrics,
+  getLoaderMetrics,
+  getWarningMetrics,
+} from './profiling.mts';
 
 interface Manifest {
   data?: Record<string, unknown>;
@@ -17,19 +26,42 @@ export async function readRsdoctorMetrics(profileDirectory: string): Promise<Rec
     throw new Error('Invalid Rsdoctor manifest data');
   }
 
-  const chunkGraph = await readGraph<ChunkGraph>(profileDirectory, manifest.data, 'chunkGraph');
-  const moduleGraph = await readGraph<ModuleGraph>(profileDirectory, manifest.data, 'moduleGraph');
-  if (chunkGraph === undefined || moduleGraph === undefined) {
-    return {};
+  const metrics: Record<string, number> = {};
+  const chunkGraph = await readReportField<ChunkGraph>(profileDirectory, manifest.data, 'chunkGraph');
+  if (chunkGraph !== undefined) {
+    Object.assign(metrics, getChunkMetrics(chunkGraph));
   }
 
-  return { initialModules: countInitialModules(chunkGraph, moduleGraph) };
+  const moduleGraph = await readReportField<ModuleGraph>(profileDirectory, manifest.data, 'moduleGraph');
+  if (moduleGraph !== undefined) {
+    Object.assign(metrics, getDependencyMetrics(moduleGraph));
+    if (chunkGraph !== undefined) {
+      Object.assign(metrics, getModuleMetrics(chunkGraph, moduleGraph));
+    }
+  }
+
+  const summary = await readReportField<Summary>(profileDirectory, manifest.data, 'summary');
+  if (summary !== undefined) {
+    Object.assign(metrics, getCompileMetrics(summary));
+  }
+
+  const loader = await readReportField<LoaderResource[]>(profileDirectory, manifest.data, 'loader');
+  if (loader !== undefined) {
+    Object.assign(metrics, getLoaderMetrics(loader));
+  }
+
+  const errors = await readReportField<Diagnostic[]>(profileDirectory, manifest.data, 'errors');
+  if (errors !== undefined) {
+    Object.assign(metrics, getWarningMetrics(errors));
+  }
+
+  return metrics;
 }
 
-async function readGraph<T>(
+async function readReportField<T>(
   profileDirectory: string,
   data: Record<string, unknown>,
-  field: 'chunkGraph' | 'moduleGraph'
+  field: 'chunkGraph' | 'moduleGraph' | 'summary' | 'loader' | 'errors'
 ): Promise<T | undefined> {
   const shards = data[field];
   if (shards === undefined) {

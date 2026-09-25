@@ -11,7 +11,7 @@ async function main() {
   const sizesOnly = firstArgument === '--sizes-only';
   const buildDirectory = path.resolve(REPO_ROOT, (sizesOnly ? secondArgument : firstArgument) || 'public/build');
 
-  const sizeMetrics = await readBundleSizes(buildDirectory);
+  const sizeMetrics = await readBundleSizes(buildDirectory, { includeRspack: !sizesOnly });
   for (const [name, value] of Object.entries(sizeMetrics)) {
     console.log(`${sizesOnly ? '' : 'bundleSize.'}${name} ${value}`);
   }
