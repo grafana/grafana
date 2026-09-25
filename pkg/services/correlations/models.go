@@ -45,6 +45,17 @@ type Transformation struct {
 	MapValue   string `json:"mapValue,omitempty"`
 }
 
+// the ints represent time in seconds from the time read from Field
+type CorrelationRelativeTimeRange struct {
+	From int `json:"from"`
+	To   int `json:"to"`
+}
+
+type CorrelationTimeRange struct {
+	Field *string                       `json:"field,omitempty"`
+	Range *CorrelationRelativeTimeRange `json:"range,omitempty"`
+}
+
 func (t CorrelationType) Validate() error {
 	if t != query && t != external {
 		return fmt.Errorf("%s: \"%s\"", ErrInvalidType, t)
@@ -83,6 +94,10 @@ type CorrelationConfig struct {
 	// required:false
 	// example: [{"type":"logfmt"}]
 	Transformations Transformations `json:"transformations,omitempty"`
+	// Target time range
+	// required:false
+	// example: {"field":"time","range":{"from":300,"to":-300}}
+	TimeRange CorrelationTimeRange `json:"timeRange,omitempty"`
 }
 
 func (c CorrelationConfig) MarshalJSON() ([]byte, error) {
@@ -92,13 +107,15 @@ func (c CorrelationConfig) MarshalJSON() ([]byte, error) {
 		target = map[string]any{}
 	}
 	return json.Marshal(struct {
-		Field           string          `json:"field"`
-		Target          map[string]any  `json:"target"`
-		Transformations Transformations `json:"transformations,omitempty"`
+		Field           string                `json:"field"`
+		Target          map[string]any        `json:"target"`
+		Transformations Transformations       `json:"transformations,omitempty"`
+		TimeRange       *CorrelationTimeRange `json:"timeRange,omitempty"`
 	}{
 		Field:           c.Field,
 		Target:          target,
 		Transformations: transformations,
+		TimeRange:       &c.TimeRange,
 	})
 }
 
@@ -219,7 +236,8 @@ type CorrelationConfigUpdateDTO struct {
 	Target *map[string]any `json:"target"`
 	// Source data transformations
 	// example: [{"type": "logfmt"},{"type":"regex","expression":"(Superman|Batman)", "variable":"name"}]
-	Transformations []Transformation `json:"transformations"`
+	Transformations []Transformation      `json:"transformations"`
+	TimeRange       *CorrelationTimeRange `json:"timeRange"`
 }
 
 // UpdateCorrelationCommand is the command for updating a correlation
@@ -243,7 +261,7 @@ type UpdateCorrelationCommand struct {
 }
 
 func (c UpdateCorrelationCommand) Validate() error {
-	if c.Label == nil && c.Description == nil && c.Type == nil && (c.Config == nil || (c.Config.Field == nil && c.Config.Target == nil)) {
+	if c.Label == nil && c.Description == nil && c.Type == nil && (c.Config == nil || (c.Config.Field == nil && c.Config.Target == nil && c.Config.Transformations == nil && (c.Config.TimeRange == nil || (c.Config.TimeRange.Field == nil && c.Config.TimeRange.Range == nil)))) {
 		return ErrUpdateCorrelationEmptyParams
 	}
 
