@@ -113,6 +113,14 @@ function withLastOverTime(selectors: string[], lookback: string): string[] {
   return selectors.map((selector) => `last_over_time(${selector}[${lookback}])`);
 }
 
+/**
+ * Same as withLastOverTime, but ORs the bare selector back in, so a step shorter than the
+ * sampling cadence still gets the bare selector's 5m default lookback instead of a narrower one.
+ */
+function withLastOverTimeFallback(selectors: string[], lookback: string): string[] {
+  return selectors.map((selector) => `(last_over_time(${selector}[${lookback}]) or ${selector})`);
+}
+
 /** Time series for the summary bar chart: count by alertstate */
 export function summaryChartQuery(filter: string): SceneDataQuery {
   return getDataQuery(`count by (alertstate) (${orSelectors(buildMetricSelectors(filter))})`, {
@@ -122,10 +130,10 @@ export function summaryChartQuery(filter: string): SceneDataQuery {
 
 /**
  * Range table query (A) for tree rows + deduplicated instant query (B) for badge counts.
- * Query A's last_over_time wrapping matches alertRuleInstancesQuery — see its docstring.
+ * Query A's step-robust wrapping matches alertRuleInstancesQuery — see its docstring.
  */
 export function getWorkbenchQueries(countBy: string, filter: string): [SceneDataQuery, SceneDataQuery] {
-  const lookbackSelectors = withLastOverTime(buildMetricSelectors(filter), '$__interval');
+  const lookbackSelectors = withLastOverTimeFallback(buildMetricSelectors(filter), '$__interval');
 
   return [
     getDataQuery(`count by (${countBy}) (${orSelectors(lookbackSelectors)})`, {
@@ -148,8 +156,8 @@ export function summaryInstanceCountQuery(filter: string): SceneDataQuery {
 
 /**
  * Instance timeseries for a specific alert rule, optionally scoped to parent group labels.
- * Wraps selectors in last_over_time(...[$__interval]) so a short-lived instance can't fall
- * between grid points and vanish once the step exceeds Prometheus's 5m staleness window.
+ * Uses withLastOverTimeFallback so a short-lived instance can't fall between grid points and
+ * vanish once the step exceeds Prometheus's 5m lookback delta — see its docstring.
  */
 export function alertRuleInstancesQuery(
   ruleUID: string,
@@ -166,7 +174,7 @@ export function alertRuleInstancesQuery(
     { name: 'grafana_rule_uid', operator: '=', value: ruleUID },
     ...groupMatchers,
   ]);
-  const lookbackSelectors = withLastOverTime(selectors, '$__interval');
+  const lookbackSelectors = withLastOverTimeFallback(selectors, '$__interval');
 
   return getDataQuery(
     `count without (alertname, grafana_alertstate, grafana_folder, grafana_rule_uid) (${orSelectors(lookbackSelectors)})`,

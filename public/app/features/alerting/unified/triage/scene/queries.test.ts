@@ -60,6 +60,19 @@ describe('triage queries service combined filter', () => {
     expect(query).toContain(' or ');
   });
 
+  it('cross-multiplies branches when two combined keys are filtered together', () => {
+    const query = summaryChartQuery('service="payments",cluster="prod-a"').expr;
+
+    expect(query).toBe(
+      'count by (alertstate) ((' +
+        'GRAFANA_ALERTS{service="payments",cluster="prod-a"}' +
+        ' or GRAFANA_ALERTS{service="payments",cluster_name="prod-a"}' +
+        ' or GRAFANA_ALERTS{service_name="payments",cluster="prod-a"}' +
+        ' or GRAFANA_ALERTS{service_name="payments",cluster_name="prod-a"}' +
+        '))'
+    );
+  });
+
   it('expands namespace key to namespace OR exported_namespace OR namespace_extracted', () => {
     const query = uniqueAlertInstancesQuery('namespace="payments"').expr;
 
@@ -225,15 +238,46 @@ describe('triage queries combined filter exclusions', () => {
   });
 });
 
+describe('uniqueAlertInstancesExpr firing/pending dedup', () => {
+  // Verified against a real Prometheus: an instance with both a pending and a firing sample
+  // in range collapses to firing-only; one that never fired keeps its single pending sample.
+  it('collapses a pending instance into its firing state instead of double-counting it', () => {
+    const query = uniqueAlertInstancesQuery('').expr;
+
+    expect(query).toBe(
+      'last_over_time(GRAFANA_ALERTS{alertstate="firing"}[$__range]) or ' +
+        '(last_over_time(GRAFANA_ALERTS{alertstate="pending"}[$__range]) ' +
+        'unless ignoring(alertstate, grafana_alertstate) ' +
+        'last_over_time(GRAFANA_ALERTS{alertstate="firing"}[$__range]))'
+    );
+  });
+});
+
 describe('alertRuleInstancesQuery vs badge-count query resolution', () => {
-  // Without last_over_time, a short-lived instance can fall between grid points and
-  // vanish once the step exceeds Prometheus's 5m lookback — see queries.ts docstrings.
-  it('wraps each selector in last_over_time so short-lived instances survive a coarse step', () => {
+  // A bare selector's fixed 5m lookback misses coarse steps; last_over_time(...[$__interval])
+  // alone then misses fine steps shorter than the sampling cadence — the OR-fallback covers both.
+  it('wraps each selector in (last_over_time(...) or selector) so it works at both coarse and fine steps', () => {
     const query = alertRuleInstancesQuery('rule-1', '');
 
     expect(query.instant).not.toBe(true);
-    expect(query.expr).toContain('last_over_time');
-    expect(query.expr).toContain('$__interval');
+    expect(query.expr).toBe(
+      'count without (alertname, grafana_alertstate, grafana_folder, grafana_rule_uid) ' +
+        '((last_over_time(GRAFANA_ALERTS{grafana_rule_uid="rule-1"}[$__interval]) or GRAFANA_ALERTS{grafana_rule_uid="rule-1"}))'
+    );
+  });
+
+  it('wraps every branch of a combined filter, not just the outer or', () => {
+    const query = alertRuleInstancesQuery('rule-1', 'service="payments"');
+
+    expect(query.expr).toBe(
+      'count without (alertname, grafana_alertstate, grafana_folder, grafana_rule_uid) ((' +
+        '(last_over_time(GRAFANA_ALERTS{grafana_rule_uid="rule-1",service="payments"}[$__interval])' +
+        ' or GRAFANA_ALERTS{grafana_rule_uid="rule-1",service="payments"})' +
+        ' or ' +
+        '(last_over_time(GRAFANA_ALERTS{grafana_rule_uid="rule-1",service_name="payments"}[$__interval])' +
+        ' or GRAFANA_ALERTS{grafana_rule_uid="rule-1",service_name="payments"})' +
+        '))'
+    );
   });
 
   it('produces a step-independent deduplicated instant query for badge counts', () => {
@@ -242,15 +286,35 @@ describe('alertRuleInstancesQuery vs badge-count query resolution', () => {
     expect(query.instant).toBe(true);
     expect(query.expr).toContain('last_over_time');
     expect(query.expr).toContain('$__range');
+    // Badge counts must stay on plain last_over_time — the OR-fallback is only for
+    // per-step range queries and would double-count series if applied here too.
+    expect(query.expr).not.toContain('$__range]) or GRAFANA_ALERTS');
   });
 });
 
 describe('getWorkbenchQueries Query A (tree rows) step-robustness', () => {
   // Same mechanism as alertRuleInstancesQuery above, but losing a whole rule row.
-  it('wraps each selector in last_over_time so a rule with only short-lived instances keeps its row', () => {
+  it('wraps each selector in (last_over_time(...) or selector) so it works at both coarse and fine steps', () => {
     const [rangeQuery] = getWorkbenchQueries('alertname, grafana_folder, grafana_rule_uid, alertstate', '');
 
-    expect(rangeQuery.expr).toContain('last_over_time');
-    expect(rangeQuery.expr).toContain('$__interval');
+    expect(rangeQuery.expr).toBe(
+      'count by (alertname, grafana_folder, grafana_rule_uid, alertstate) ' +
+        '((last_over_time(GRAFANA_ALERTS{}[$__interval]) or GRAFANA_ALERTS{}))'
+    );
+  });
+
+  it('wraps every branch of a combined filter, not just the outer or', () => {
+    const [rangeQuery] = getWorkbenchQueries(
+      'alertname, grafana_folder, grafana_rule_uid, alertstate',
+      'service="payments"'
+    );
+
+    expect(rangeQuery.expr).toBe(
+      'count by (alertname, grafana_folder, grafana_rule_uid, alertstate) ((' +
+        '(last_over_time(GRAFANA_ALERTS{service="payments"}[$__interval]) or GRAFANA_ALERTS{service="payments"})' +
+        ' or ' +
+        '(last_over_time(GRAFANA_ALERTS{service_name="payments"}[$__interval]) or GRAFANA_ALERTS{service_name="payments"})' +
+        '))'
+    );
   });
 });
