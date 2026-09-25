@@ -126,6 +126,9 @@ decode:
 		}
 
 		obj, err := d.toObject(evt.Resource)
+		if errors.Is(err, errSharedMismatch) {
+			continue decode
+		}
 		if err != nil {
 			klog.Errorf("error decoding entity: %s", err)
 			return watch.Error, nil, err
@@ -160,6 +163,9 @@ decode:
 			var prevObj runtime.Object
 			if evt.Previous != nil {
 				prevObj, err = d.toObject(evt.Previous)
+				if errors.Is(err, errSharedMismatch) {
+					continue decode
+				}
 				if err != nil {
 					klog.Errorf("error decoding entity: %s", err)
 					return watch.Error, nil, err
@@ -201,6 +207,9 @@ decode:
 			// if we have a previous object, return that in the deleted event
 			if evt.Previous != nil {
 				obj, err = d.toObject(evt.Previous)
+				if errors.Is(err, errSharedMismatch) {
+					continue decode
+				}
 				if err != nil {
 					klog.Errorf("error decoding entity: %s", err)
 					return watch.Error, nil, err

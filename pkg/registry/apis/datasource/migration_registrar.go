@@ -9,8 +9,8 @@ import (
 )
 
 // DataSourceMigration returns the MigrationDefinition for datasource config migration.
-// A single "primary" GroupResource is used for config/registration, while the actual
-// MigratorFunc streams each datasource with its per-plugin GroupResource key.
+// Every datasource type is stored in the datasource.grafana.app collection, labeled with
+// its per-plugin group (see apistore.SharedStorage).
 func DataSourceMigration(dsMigrator migrator.DataSourceMigrator) migrations.MigrationDefinition {
 	gr := schema.GroupResource{Group: "datasource.grafana.app", Resource: "datasources"}
 

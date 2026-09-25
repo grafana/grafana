@@ -297,10 +297,17 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			// Keep them for now, but we should get rid of them when possible
 			DeprecatedInternalID: apistore.DeprecatedID_Required,
 
+			// Every datasource type shares one collection, so a UID is unique across types
+			// and permissions are checked against a single group
+			SharedStorage: &apistore.SharedStorage{
+				Group:      datasourceV0.GROUP,
+				LabelKey:   datasourceV0.LabelKeyGroup,
+				LabelValue: datasourceV0.GroupLabelValue(ds.GroupResource().Group),
+			},
+
 			// Avoid using the codec serializer -- we have multiple GVKs registered to the same go type
 			Serializer: apistore.JSONSerializer(),
 		})
-		// NOTE! there is currently NO PATH that is using unified storage to read!
 		unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, ds, optsGetter)
 		if err != nil {
 			return err

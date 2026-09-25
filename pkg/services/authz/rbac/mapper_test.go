@@ -44,6 +44,29 @@ func TestMapperRegistry_DatasourceWildcard(t *testing.T) {
 	assert.False(t, ok, "Get(datasource group, \"dashboards\") must not return a mapping")
 }
 
+// Unified storage stores every datasource type under datasource.grafana.app, so
+// storage checks must resolve to the same permissions as the per-plugin groups.
+func TestMapperRegistry_DatasourceSharedGroup(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	shared, ok := reg.Get("datasource.grafana.app", "datasources", "")
+	require.True(t, ok)
+	plugin, ok := reg.Get("loki.datasource.grafana.app", "datasources", "")
+	require.True(t, ok)
+
+	assert.Equal(t, plugin.Prefix(), shared.Prefix())
+	for _, verb := range []string{
+		utils.VerbGet, utils.VerbList, utils.VerbCreate, utils.VerbUpdate,
+		utils.VerbPatch, utils.VerbDelete, utils.VerbDeleteCollection,
+	} {
+		sharedAction, sharedOK := shared.Action(verb)
+		pluginAction, pluginOK := plugin.Action(verb)
+		assert.Equal(t, pluginOK, sharedOK, "verb %q", verb)
+		assert.Equal(t, pluginAction, sharedAction, "verb %q", verb)
+		assert.Equal(t, plugin.ActionSets(verb), shared.ActionSets(verb), "verb %q", verb)
+	}
+}
+
 func TestMapperRegistry_DatasourceCachingSubresource(t *testing.T) {
 	reg := NewMapperRegistry()
 

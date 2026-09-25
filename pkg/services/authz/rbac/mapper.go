@@ -708,7 +708,10 @@ func NewMapperRegistry() MapperRegistry {
 				skipScopeOnVerb: nil,
 			},
 		},
-		"datasource.grafana.app": { // duplicate the query group here
+		"datasource.grafana.app": {
+			// Unified storage keeps every datasource type under this group
+			"datasources": newDatasourceQueryTranslation(),
+			// duplicate the query group here
 			"query": translation{
 				resource:  "datasources",
 				attribute: "uid",

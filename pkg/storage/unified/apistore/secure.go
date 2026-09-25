@@ -26,8 +26,10 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 		return err
 	}
 
-	// Owner reference for inline values
-	v.ref = utils.ToObjectReference(obj)
+	// Owner reference for inline values, unless storage already chose one (see [Storage.ownerReference])
+	if v.ref.APIGroup == "" {
+		v.ref = utils.ToObjectReference(obj)
+	}
 
 	var previous common.InlineSecureValues
 	if previousObject == nil {
