@@ -238,7 +238,8 @@ export const timeReducer = (state: ExploreItemState, action: AnyAction): Explore
     const sortOrder = refreshIntervalToSortOrder(refreshInterval);
     const logsResult = sortLogsResult(state.logsResult, sortOrder);
 
-    if (RefreshPicker.isLive(state.refreshInterval) && !live) {
+    const leavingLive = RefreshPicker.isLive(state.refreshInterval) && !live;
+    if (leavingLive) {
       stopQueryState(state.querySubscription);
     }
 
@@ -247,11 +248,14 @@ export const timeReducer = (state: ExploreItemState, action: AnyAction): Explore
       refreshInterval,
       queryResponse: {
         ...state.queryResponse,
-        state: live ? LoadingState.Streaming : LoadingState.Done,
+        state: live ? LoadingState.Streaming : leavingLive ? LoadingState.Loading : LoadingState.Done,
+        // Drop the streaming frames so the logs visualizations does not render them when live mode ends.
+        series: leavingLive ? [] : state.queryResponse.series,
+        logsFrames: leavingLive ? [] : state.queryResponse.logsFrames,
       },
       isLive: live,
       isPaused: live ? false : state.isPaused,
-      logsResult,
+      logsResult: leavingLive ? { ...logsResult, rows: [] } : logsResult,
     };
   }
 

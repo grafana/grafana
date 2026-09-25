@@ -57,12 +57,71 @@ func newTestSingleTenantFallback(t *testing.T) *singleTenantFallback {
 	return st
 }
 
+// pollDiscovery runs one discovery poll, as the loader's poll loop would.
+func pollDiscovery(t *testing.T, st *singleTenantFallback) {
+	t.Helper()
+	st.poll(t.Context(), make(chan struct{}, 1))
+}
+
 func TestNewSingleTenantFallbackInvalidCacheSize(t *testing.T) {
 	for _, size := range []int{0, -1} {
 		st, err := newSingleTenantFallback(singleTenantFallbackOptions{cacheSize: size})
 		require.Error(t, err)
 		require.Nil(t, st)
 	}
+}
+
+func TestNewSingleTenantFallbackInvalidLimits(t *testing.T) {
+	resolve := func(context.Context, int64) (singleTenantStack, error) { return singleTenantStack{}, nil }
+	for name, opts := range map[string]singleTenantFallbackOptions{
+		"negative breaker cache size": {cacheSize: 1, breakerCacheSize: -1, resolveHost: resolve},
+		"negative lookup rate":        {cacheSize: 1, lookupRate: -1, resolveHost: resolve},
+		"rate without burst":          {cacheSize: 1, lookupRate: 1, resolveHost: resolve},
+	} {
+		t.Run(name, func(t *testing.T) {
+			st, err := newSingleTenantFallback(opts)
+			require.Error(t, err)
+			require.Nil(t, st)
+		})
+	}
+}
+
+func TestSingleTenantFallbackLookupRateLimit(t *testing.T) {
+	var lookups atomic.Int32
+	st, err := newSingleTenantFallback(singleTenantFallbackOptions{
+		cacheSize: 10,
+		// One token, and effectively no refill during the test.
+		lookupRate:  0.001,
+		lookupBurst: 1,
+		resolveHost: func(_ context.Context, stackID int64) (singleTenantStack, error) {
+			lookups.Add(1)
+			return singleTenantStack{URL: "https://tenant.example.com"}, nil
+		},
+		transport: testFallbackTransport(func(*http.Request) (*http.Response, error) {
+			return &http.Response{StatusCode: http.StatusNoContent, Header: make(http.Header), Body: http.NoBody}, nil
+		}),
+	})
+	require.NoError(t, err)
+	serve := func(namespace string) *httptest.ResponseRecorder {
+		recorder := httptest.NewRecorder()
+		st.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/apis/example/v1/namespaces/"+namespace+"/widgets", nil))
+		return recorder
+	}
+
+	require.Equal(t, http.StatusNoContent, serve("stacks-1").Code)
+
+	throttled := serve("stacks-2")
+	require.Equal(t, http.StatusServiceUnavailable, throttled.Code)
+	require.Equal(t, "1", throttled.Header().Get("Retry-After"))
+
+	// A cached stack needs no lookup, so the limit does not apply.
+	require.Equal(t, http.StatusNoContent, serve("stacks-1").Code)
+	require.EqualValues(t, 1, lookups.Load())
+
+	// A throttled lookup must not be cached as "not found".
+	st.lookupLimiter = nil
+	require.Equal(t, http.StatusNoContent, serve("stacks-2").Code)
+	require.EqualValues(t, 2, lookups.Load())
 }
 
 func TestSingleTenantFallbackLookupRechecksCache(t *testing.T) {
@@ -472,6 +531,9 @@ func TestSingleTenantFallbackLoadError(t *testing.T) {
 	st.transport = testFallbackTransport(func(*http.Request) (*http.Response, error) {
 		return nil, errors.New("discovery unavailable")
 	})
+	_, err := st.Load(t.Context())
+	require.ErrorIs(t, err, errSingleTenantDiscoveryPending)
+	pollDiscovery(t, st)
 	backends, err := st.Load(t.Context())
 	require.ErrorContains(t, err, "discovery unavailable")
 	require.Empty(t, backends)
@@ -491,6 +553,7 @@ func TestSingleTenantFallbackDiscoveryVersionsChangeKey(t *testing.T) {
 		body := `{"groups":[{"name":"example","versions":[{"version":"` + version + `","groupVersion":"example/` + version + `"}]}]}`
 		return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(body))}, nil
 	})
+	pollDiscovery(t, st)
 	first, err := st.Load(t.Context())
 	require.NoError(t, err)
 	require.Len(t, first, 1)
@@ -499,10 +562,12 @@ func TestSingleTenantFallbackDiscoveryVersionsChangeKey(t *testing.T) {
 	require.NoError(t, err)
 	require.Same(t, st, handler)
 	require.Same(t, st, st.SingleTenantFallback())
+	pollDiscovery(t, st)
 	unchanged, err := st.Load(t.Context())
 	require.NoError(t, err)
 	require.Equal(t, first[0].Key(), unchanged[0].Key())
 	version = "v2"
+	pollDiscovery(t, st)
 	second, err := st.Load(t.Context())
 	require.NoError(t, err)
 	require.NotEqual(t, first[0].Key(), second[0].Key())

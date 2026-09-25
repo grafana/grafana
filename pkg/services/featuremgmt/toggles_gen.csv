@@ -340,7 +340,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,frontendService.reducedBootDataAPI,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-09-16,paneledit.buttonLabels,experimental,@grafana/datapro,false,false,true
 2026-09-16,grafana.panelEditNextFeedbackEvent,experimental,@grafana/datapro,false,false,true
-2026-09-16,grafana.visualDesignRefresh,experimental,@grafana/grafana-frontend-platform,false,false,true
+2026-09-16,grafana.visualDesignRefresh,preview,@grafana/grafana-frontend-platform,false,false,true
 2026-09-16,dashboard.searchFieldValueResults,experimental,@grafana/search-and-storage,false,false,false
 2026-09-16,dashboard.apiSearchFieldValueResults,experimental,@grafana/search-and-storage,false,false,false
 2026-09-16,search.apiFieldValueResults,experimental,@grafana/search-and-storage,false,false,false

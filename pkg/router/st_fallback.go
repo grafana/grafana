@@ -11,13 +11,17 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/grafana/authlib/types"
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/sony/gobreaker/v2"
 	"golang.org/x/sync/singleflight"
+	"golang.org/x/time/rate"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/grafana/grafana-app-sdk/logging"
 )
 
 // LoaderWithSingleTenantFallback supplies the standalone router's handler for unregistered API groups.
@@ -31,6 +35,19 @@ const (
 	// Retry unknown stacks sooner so newly created stacks can become reachable.
 	singleTenantNotFoundTTL   = 30 * time.Second
 	singleTenantLookupTimeout = 5 * time.Second
+
+	// Entries are small, and a cache smaller than the number of active stacks
+	// sends most requests to grafana.com.
+	defaultSingleTenantCacheSize        = 10000
+	defaultSingleTenantBreakerCacheSize = 10000
+	// Bounds grafana.com lookups for stacks that are not cached, however many
+	// distinct namespaces callers send.
+	defaultSingleTenantLookupRate  = 20
+	defaultSingleTenantLookupBurst = 40
+
+	// ST discovery changes very rarely, so poll it far less often than the
+	// aggregate targets. Failures still retry on the shorter backoff.
+	singleTenantDiscoveryInterval = 10 * time.Minute
 )
 
 // singleTenantStack is what a resolver reports for a stack; the zero value means not found.
@@ -54,6 +71,19 @@ type singleTenantHost struct {
 // errStackOriginMismatch means the response came from a different stack than the one resolved.
 var errStackOriginMismatch = errors.New("router: response came from an unexpected stack")
 
+// errStackLookupThrottled means the lookup rate limit was reached. It is never cached.
+var errStackLookupThrottled = errors.New("router: stack lookup throttled")
+
+// errSingleTenantDiscoveryPending keeps the router unready until the first discovery attempt.
+var errSingleTenantDiscoveryPending = errors.New("router: single-tenant discovery has not run yet")
+
+// singleTenantDiscovery is the result of the latest discovery poll: the
+// last-known-good backends, and the error if that poll failed.
+type singleTenantDiscovery struct {
+	backends []Backend
+	err      error
+}
+
 // singleTenantFallback forwards requests without a matching multi-tenant route to
 // the single-tenant stack identified by the request namespace. Although this is
 // not an ideal routing path, it gives clients a single entry point that will
@@ -63,13 +93,24 @@ type singleTenantFallback struct {
 	breakerMu     sync.Mutex
 	breakers      *lru.Cache[string, *gobreaker.CircuitBreaker[struct{}]]
 	lookups       singleflight.Group
+	lookupLimiter *rate.Limiter // nil means lookups are not rate limited
 	resolveHost   func(context.Context, int64) (singleTenantStack, error)
 	discoveryHost *url.URL
 	transport     *http.Transport
+
+	// discovery is written only by run's goroutine; nil until the first poll.
+	discovery atomic.Pointer[singleTenantDiscovery]
+	cooldown  *cooldown
 }
 
 type singleTenantFallbackOptions struct {
-	cacheSize     int
+	cacheSize int
+	// breakerCacheSize defaults to cacheSize. Breakers are keyed by stack and
+	// group, so it may need to be larger than the host cache.
+	breakerCacheSize int
+	// lookupRate is the sustained grafana.com lookups per second; zero disables the limit.
+	lookupRate    float64
+	lookupBurst   int
 	resolveHost   func(context.Context, int64) (singleTenantStack, error)
 	discoveryHost *url.URL
 	transport     *http.Transport
@@ -79,6 +120,25 @@ func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFal
 	cache, err := lru.New[int64, singleTenantHost](opts.cacheSize)
 	if err != nil {
 		return nil, err
+	}
+
+	if opts.breakerCacheSize == 0 {
+		opts.breakerCacheSize = opts.cacheSize
+	}
+	breakers, err := lru.New[string, *gobreaker.CircuitBreaker[struct{}]](opts.breakerCacheSize)
+	if err != nil {
+		return nil, fmt.Errorf("single-tenant breaker cache: %w", err)
+	}
+
+	var limiter *rate.Limiter
+	switch {
+	case opts.lookupRate < 0:
+		return nil, fmt.Errorf("single-tenant lookup rate must not be negative")
+	case opts.lookupRate > 0:
+		if opts.lookupBurst < 1 {
+			return nil, fmt.Errorf("single-tenant lookup burst must be at least 1")
+		}
+		limiter = rate.NewLimiter(rate.Limit(opts.lookupRate), opts.lookupBurst)
 	}
 
 	if opts.resolveHost == nil {
@@ -92,14 +152,14 @@ func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFal
 		opts.transport = http.DefaultTransport.(*http.Transport).Clone()
 	}
 
-	// The host cache above has already validated the capacity.
-	breakers, _ := lru.New[string, *gobreaker.CircuitBreaker[struct{}]](opts.cacheSize)
 	return &singleTenantFallback{
 		breakers:      breakers,
 		cache:         cache,
+		lookupLimiter: limiter,
 		resolveHost:   opts.resolveHost,
 		discoveryHost: opts.discoveryHost,
 		transport:     opts.transport,
+		cooldown:      newCooldown(singleTenantDiscoveryInterval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff),
 	}, nil
 }
 
@@ -137,6 +197,10 @@ func (st *singleTenantFallback) hostForNamespace(ctx context.Context, namespace 
 func (st *singleTenantFallback) lookupHost(ctx context.Context, stackID int64) (*singleTenantTarget, error) {
 	if host, ok := st.cachedHost(stackID); ok {
 		return host, nil
+	}
+	// Fail fast rather than queue: waiting would hold requests open under a flood.
+	if st.lookupLimiter != nil && !st.lookupLimiter.Allow() {
+		return nil, errStackLookupThrottled
 	}
 	// One caller cancelling must not cancel the lookup shared by other callers.
 	lookupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), singleTenantLookupTimeout)
@@ -176,6 +240,11 @@ func (st *singleTenantFallback) ServeHTTP(w http.ResponseWriter, req *http.Reque
 	parts := strings.Split(strings.TrimPrefix(req.URL.Path, "/"), "/")
 	if len(parts) > 4 && parts[0] == "apis" && parts[1] != "" && parts[2] != "" && parts[3] == "namespaces" && parts[4] != "" {
 		host, err := st.hostForNamespace(req.Context(), parts[4])
+		if errors.Is(err, errStackLookupThrottled) {
+			w.Header().Set("Retry-After", "1")
+			http.Error(w, "stack lookup throttled", http.StatusServiceUnavailable)
+			return
+		}
 		if err != nil {
 			http.Error(w, "stack lookup unavailable", http.StatusServiceUnavailable)
 			return
@@ -261,11 +330,26 @@ func (st *singleTenantFallback) SingleTenantFallback() http.Handler {
 	return st
 }
 
-// Load implements [RoutesLoader].
-func (st *singleTenantFallback) Load(ctx context.Context) ([]Backend, error) {
+// Load implements [RoutesLoader]. It returns the latest discovery snapshot and
+// makes no requests.
+func (st *singleTenantFallback) Load(context.Context) ([]Backend, error) {
+	return st.Backends()
+}
+
+// Backends returns the last-known-good discovered backends, and the error from
+// the latest poll if it failed.
+func (st *singleTenantFallback) Backends() ([]Backend, error) {
 	if st.discoveryHost == nil {
 		return nil, nil
 	}
+	d := st.discovery.Load()
+	if d == nil {
+		return nil, errSingleTenantDiscoveryPending
+	}
+	return d.backends, d.err
+}
+
+func (st *singleTenantFallback) discover(ctx context.Context) ([]Backend, error) {
 	client := &http.Client{Transport: st.transport, Timeout: singleTenantLookupTimeout}
 
 	groups, err := discoverGroups(ctx, client, st.discoveryHost.String())
@@ -292,30 +376,67 @@ func (st *singleTenantFallback) Notify(ctx context.Context) (<-chan struct{}, er
 	dirty := make(chan struct{}, 1)
 	go func() {
 		defer close(dirty)
-		st.notifyDiscoveryChanges(ctx, dirty)
+		st.run(ctx, dirty)
 	}()
 	return dirty, nil
 }
 
-func (st *singleTenantFallback) notifyDiscoveryChanges(ctx context.Context, dirty chan<- struct{}) {
+// run polls discovery until ctx is done, paced only by st.cooldown, the same
+// way as aggregateTarget.run.
+func (st *singleTenantFallback) run(ctx context.Context, dirty chan<- struct{}) {
 	if st.discoveryHost == nil {
 		<-ctx.Done()
 		return
 	}
-	// Run performs the initial load; periodic signals retry failures and refresh group membership.
-	ticker := time.NewTicker(defaultAggregatePollInterval)
-	defer ticker.Stop()
+	timer := time.NewTimer(0)
+	defer timer.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case <-ticker.C:
-			select {
-			case dirty <- struct{}{}:
-			default:
-			}
+		case <-timer.C:
+			st.poll(ctx, dirty)
+			timer.Reset(st.cooldown.Until(time.Now()))
 		}
 	}
+}
+
+// poll runs one discovery attempt. It wakes the router only when the result
+// can change what Load returns: the first success, a success after a
+// failure, or a change in the discovered groups.
+func (st *singleTenantFallback) poll(ctx context.Context, dirty chan<- struct{}) {
+	now := time.Now()
+	prev := st.discovery.Load()
+
+	backends, err := st.discover(ctx)
+	if err != nil {
+		st.cooldown.OnFailure(now)
+		logging.FromContext(ctx).Warn("router: single-tenant discovery failed, keeping last-known-good routes", "err", err)
+		next := &singleTenantDiscovery{err: err}
+		if prev != nil {
+			next.backends = prev.backends
+		}
+		st.discovery.Store(next)
+		return
+	}
+	st.cooldown.OnSuccess(now)
+	st.discovery.Store(&singleTenantDiscovery{backends: backends})
+
+	if prev != nil && prev.err == nil && sameKeySet(backendKeys(prev.backends), backendKeys(backends)) {
+		return
+	}
+	select {
+	case dirty <- struct{}{}:
+	default: // already pending; coalesce
+	}
+}
+
+func backendKeys(backends []Backend) map[string]struct{} {
+	keys := make(map[string]struct{}, len(backends))
+	for _, b := range backends {
+		keys[b.Key()] = struct{}{}
+	}
+	return keys
 }
 
 var (

@@ -15,25 +15,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// discoverGroups fetches and decodes the discovery document a target apiserver
-// exposes at /apis. Aggregate targets have no RouteBackend CR to define what
-// they serve, so this active discovery call is unavoidable; forward backends
-// avoid it by learning their group from their CR instead.
-//
-// The request asks for the aggregated discovery format (aggregatedDiscoveryJSON)
-// ahead of the classic one. This matters for a target running the standalone
-// apiextensions apiserver (baas_apiserver): its plain, no-Accept-header /apis
-// response is served from a static map only ever populated for
-// apiextensions.k8s.io itself at startup, never updated as CRDs come and go --
-// CRD-backed groups are only ever pushed into the aggregated-discovery manager.
-// Without requesting that format explicitly, this poll would silently never see
-// any CRD group on that target. A target that doesn't support the aggregated
-// format (older or non-k8s-style servers) still negotiates down to the classic
-// one, which decodeDiscoveryResponse falls back to.
+// discoverGroups fetches a target's /apis discovery document. It asks for the
+// aggregated format first: the standalone apiextensions apiserver lists
+// CRD-backed groups only there, never in its plain /apis response. Servers
+// without it fall back to the classic APIGroupList.
 func discoverGroups(ctx context.Context, client *http.Client, baseURL string) ([]metav1.APIGroup, error) {
-	// Trim a trailing slash before joining: a configured "https://host/" would
-	// otherwise produce "//apis", which most servers route differently than
-	// "/apis" -- silently breaking discovery for that target.
+	// A trailing slash would produce "//apis", which servers route differently.
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, strings.TrimSuffix(baseURL, "/")+apisPrefix, nil)
 	if err != nil {
 		return nil, fmt.Errorf("router: building discovery request: %w", err)
@@ -117,13 +104,8 @@ func newAggregateBackend(targetName string, group metav1.APIGroup, base *url.URL
 	sum := sha256.Sum256(body)
 	key := "aggregate:" + targetName + ":" + hex.EncodeToString(sum[:])[:16]
 
-	// Normalize a trailing slash out of the base path, on a copy so the caller
-	// keeps ownership of base (aggregateTarget.base is shared by every group on
-	// that target). ProxyRequest.SetURL's joiner happens to collapse "/" + "/x"
-	// today, so this is belt-and-braces rather than a live bug -- but it makes
-	// the "base path has no trailing slash" invariant local and explicit here
-	// instead of resting on a stdlib join detail, the same invariant
-	// discoverGroups relies on for the discovery URL.
+	// Copy base, since every group on the target shares it, and drop any
+	// trailing slash.
 	target := *base
 	target.Path = strings.TrimRight(target.Path, "/")
 

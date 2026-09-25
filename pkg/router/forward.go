@@ -13,9 +13,7 @@ import (
 )
 
 // forwardBackend serves one API group in Forward mode: a reverse proxy to a
-// single target service. It implements Backend. buildBackend captures any
-// construction failure in buildErr so a bad config serves a 500 rather than
-// failing the whole reconcile; Handler and Ready both surface it.
+// single target service.
 type forwardBackend struct {
 	group        metav1.APIGroup
 	key          string
@@ -40,11 +38,8 @@ func NewForwardBackend(group metav1.APIGroup, routeBackend v1alpha2.RouteBackend
 	if err != nil {
 		return nil, fmt.Errorf("error parsing backend url: group=%s, err=%w", group.Name, err)
 	}
-	// url.Parse alone accepts empty and relative values without error (e.g.
-	// "" or "/just/a/path" parse fine with no scheme/host). Reject those here,
-	// at route-build time -- otherwise a misconfigured group gets published
-	// and fails every request at proxy time instead (502, tripping the
-	// per-group breaker) rather than being caught when the route is built.
+	// url.Parse accepts empty and relative URLs; reject them when the route is
+	// built instead of failing every request later.
 	if u.Scheme == "" || u.Host == "" {
 		return nil, fmt.Errorf("backend url must be absolute (scheme and host required): group=%s, url=%q", group.Name, routeBackend.Forward.Url)
 	}
@@ -69,7 +64,6 @@ func (b *forwardBackend) Key() string {
 	return b.key
 }
 
-// if backend does CAP token auth when BaaS comes in, will
 func (b *forwardBackend) Load(ctx context.Context) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		b.proxy.ServeHTTP(w, req)
