@@ -94,7 +94,11 @@ describe('RENDER_PLAN', () => {
           showPoints: 'never',
           spanNulls: true,
         });
-        expect(panel.state.titleItems?.filter((item) => item instanceof PlanPlaceholderBadge)).toHaveLength(1);
+        const titleItems = panel.state.titleItems;
+        if (!Array.isArray(titleItems)) {
+          throw new Error('Expected panel title items to be an array');
+        }
+        expect(titleItems.filter((item) => item instanceof PlanPlaceholderBadge)).toHaveLength(1);
         expect(getQueryRunnerFor(panel)).toBeUndefined();
       }
     } finally {

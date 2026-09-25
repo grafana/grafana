@@ -556,7 +556,11 @@ describe('buildVizPanel', () => {
 
       const viz = buildVizPanel(panel, undefined, { withoutQueries: true });
 
-      expect(viz.state.titleItems?.filter((item) => item instanceof PlanPlaceholderBadge)).toHaveLength(1);
+      const titleItems = viz.state.titleItems;
+      if (!Array.isArray(titleItems)) {
+        throw new Error('Expected panel title items to be an array');
+      }
+      expect(titleItems.filter((item) => item instanceof PlanPlaceholderBadge)).toHaveLength(1);
       expect(viz.state.$data).toBeUndefined();
     });
 
