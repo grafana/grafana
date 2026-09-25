@@ -13,7 +13,7 @@ import { type DashboardScene } from '../scene/DashboardScene';
 import { type DashboardSceneState } from '../scene/types/dashboard';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
-import { getDashboardResourceText, validateDashboardResourceEnvelope } from '../sidebar/codePaneUtils';
+import { buildDashboardResource, validateDashboardResourceEnvelope } from '../sidebar/dashboardResource';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { type DashboardEditView, type DashboardEditViewState } from './utils';
@@ -60,7 +60,7 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
     // v2 dashboards are edited as the full resource envelope (apiVersion, kind, metadata, spec)
     // so the editor validates against the same resource schema used elsewhere.
     if (isDashboardV2Spec(jsonData)) {
-      return getDashboardResourceText(this.getDashboard());
+      return JSON.stringify(buildDashboardResource(this.getDashboard()), null, 2);
     }
     return getPrettyJSON(jsonData);
   }

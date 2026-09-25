@@ -1,11 +1,14 @@
+import { FieldType, LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { config, setPluginImportUtils } from '@grafana/runtime';
 import { type CustomVariable, VizPanel, sceneGraph } from '@grafana/scenes';
 
 import { DashboardScene } from '../../scene/DashboardScene';
+import { PlanPlaceholderBadge } from '../../scene/PlanPlaceholderBadge';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
+import * as planningSampleData from '../../scene/planningSampleData';
 import { type DashboardSceneState } from '../../scene/types/dashboard';
 import { AddNewPane } from '../../sidebar/add-new/AddNewPane';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
@@ -58,14 +61,65 @@ describe('RENDER_PLAN', () => {
     expect(scene.state.planning).toMatchObject({ planId: 'plan-1', planTitle: 'Kafka overview' });
   });
 
-  it('builds query-less placeholder panels with sample data, not a live query runner', async () => {
+  it('generates sample data once per placeholder, with preview settings and no live query runner', async () => {
+    const { scene, client } = setup();
+    const generateSample = jest.spyOn(planningSampleData, 'getPlanningPanelData');
+
+    try {
+      const result = await client.execute({ type: 'RENDER_PLAN', payload: plan });
+
+      expect(result.success).toBe(true);
+      expect(generateSample.mock.calls).toEqual([
+        ['Requests', 'timeseries'],
+        ['Error rate', 'timeseries'],
+      ]);
+      const panels = scene.state.body.getVizPanels();
+      expect(panels.map((panel) => panel.state.fieldConfig.defaults.unit)).toEqual(['reqps', 'short']);
+      for (const panel of panels) {
+        const data = sceneGraph.getData(panel).state.data;
+        expect(data?.state).toBe(LoadingState.Done);
+        expect(data?.series).toHaveLength(1);
+        expect(data?.series[0].length).toBe(60);
+        expect(data?.series[0].fields.map(({ name, type }) => ({ name, type }))).toEqual([
+          { name: 'time', type: FieldType.time },
+          { name: 'pod-a1b2', type: FieldType.number },
+          { name: 'pod-c3d4', type: FieldType.number },
+          { name: 'pod-e5f6', type: FieldType.number },
+        ]);
+        expect(panel.state.options).toEqual({ legend: { showLegend: false }, tooltip: { mode: 'none' } });
+        expect(panel.state.fieldConfig.defaults.custom).toEqual({
+          drawStyle: 'line',
+          lineWidth: 1,
+          fillOpacity: 12,
+          showPoints: 'never',
+          spanNulls: true,
+        });
+        expect(panel.state.titleItems?.filter((item) => item instanceof PlanPlaceholderBadge)).toHaveLength(1);
+        expect(getQueryRunnerFor(panel)).toBeUndefined();
+      }
+    } finally {
+      generateSample.mockRestore();
+    }
+  });
+
+  it('uses sample markdown for text placeholders without generating a data series', async () => {
     const { scene, client } = setup();
 
-    await client.execute({ type: 'RENDER_PLAN', payload: plan });
+    const result = await client.execute({
+      type: 'RENDER_PLAN',
+      payload: {
+        ...plan,
+        sections: [{ title: 'Notes', panels: [{ title: 'p99 latency', vizType: 'text' }] }],
+      },
+    });
 
+    expect(result.success).toBe(true);
     const panel = scene.state.body.getVizPanels()[0];
+    expect(panel.state.options).toEqual({ mode: 'markdown', content: '_Notes for this section._' });
+    expect(panel.state.fieldConfig.defaults.unit).toBe('ms');
+    expect(sceneGraph.getData(panel).state.data).toMatchObject({ state: LoadingState.Done, series: [] });
     expect(getQueryRunnerFor(panel)).toBeUndefined();
-    expect(sceneGraph.getData(panel).state.data?.series[0]).toBeDefined();
+    expect(panel.state.menu).toBeUndefined();
   });
 
   it('builds panels with no dropdown menu at all -- View is not read-only in practice', async () => {

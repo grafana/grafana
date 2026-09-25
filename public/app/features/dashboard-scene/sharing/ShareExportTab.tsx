@@ -1,5 +1,5 @@
 import saveAs from 'file-saver';
-import yaml from 'js-yaml';
+
 import { cloneDeep } from 'lodash';
 import { lazy, Suspense } from 'react';
 
@@ -234,7 +234,13 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
     const dashboardJsonPretty = JSON.stringify(dashboard.json, null, 2);
     const { isSharingExternally, isViewingYAML } = this.state;
 
-    const blob = new Blob([isViewingYAML ? yaml.dump(dashboard.json) : dashboardJsonPretty], {
+    let content = dashboardJsonPretty;
+    if (isViewingYAML) {
+      const { dump } = await import('js-yaml');
+      content = dump(dashboard.json);
+    }
+
+    const blob = new Blob([content], {
       type: 'application/json;charset=utf-8',
     });
 

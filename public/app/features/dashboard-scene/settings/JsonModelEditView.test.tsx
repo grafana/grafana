@@ -22,6 +22,34 @@ jest.mock('../v2schema/DashboardSchemaEditor', () => ({
   DashboardSchemaEditor: () => null,
 }));
 
+describe('JsonModelEditView.getJsonText', () => {
+  it.each([
+    { uid: 'my-uid', expectedName: 'my-uid' },
+    { uid: undefined, expectedName: '<dashboard-uid>' },
+  ])('builds and validates a JSON resource with name $expectedName synchronously', ({ uid, expectedName }) => {
+    const dashboard = transformSaveModelSchemaV2ToScene({
+      apiVersion: 'dashboard.grafana.app/v2',
+      kind: 'DashboardWithAccessInfo',
+      metadata: { name: 'my-uid', resourceVersion: '1', creationTimestamp: '2026-01-01T00:00:00Z' },
+      spec: { ...defaultSpec(), title: 'JSON dashboard' },
+      access: { canSave: true },
+    });
+    const view = new JsonModelEditView({});
+    dashboard.setState({ uid, editview: view });
+    const jsonText = view.getJsonText();
+
+    expect(JSON.parse(jsonText)).toEqual(
+      expect.objectContaining({
+        kind: 'Dashboard',
+        metadata: { name: expectedName },
+        spec: expect.objectContaining({ title: 'JSON dashboard', elements: {} }),
+      })
+    );
+    view.setState({ jsonText });
+    expect(view.validateEditedResource()).toEqual({ success: true });
+  });
+});
+
 describe('JsonModelEditView.getEditedSaveModel', () => {
   it('unwraps the v2 resource envelope back to the bare spec', () => {
     const view = new JsonModelEditView({});

@@ -2,6 +2,7 @@ import { VizPanel } from '@grafana/scenes';
 import {
   defaultDataQueryKind,
   defaultFieldConfigSource,
+  defaultPanelQueryKind,
   defaultPanelSpec,
   type FieldConfigSource,
   type PanelKind,
@@ -11,6 +12,7 @@ import {
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
+import { PlanPlaceholderBadge } from '../../scene/PlanPlaceholderBadge';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { vizPanelToSchemaV2 } from '../transformSceneToSaveModelSchemaV2';
 
@@ -516,9 +518,6 @@ describe('buildVizPanel', () => {
   });
 
   describe('withoutQueries (plan placeholders)', () => {
-    // A 'timeseries' sample always sets legend.showLegend: false and infers a unit from the
-    // title (see planningSampleData.ts). Picking planned values that disagree with both makes
-    // any leak from the sample into the panel state visible in the assertions below.
     function buildPlannedPanel(
       options: Record<string, unknown>,
       fieldConfig: FieldConfigSource,
@@ -539,7 +538,7 @@ describe('buildVizPanel', () => {
       };
     }
 
-    it('keeps the planned spec options/fieldConfig instead of the sample defaults', () => {
+    it('keeps the planned spec options and fieldConfig', () => {
       const panel = buildPlannedPanel(
         { legend: { showLegend: true } },
         { ...defaultFieldConfigSource(), defaults: { ...defaultFieldConfigSource().defaults, unit: 'bytes' } }
@@ -551,22 +550,17 @@ describe('buildVizPanel', () => {
       expect(viz.state.fieldConfig.defaults.unit).toBe('bytes');
     });
 
-    it('still attaches a sample $data series so the query-less placeholder renders something', () => {
-      const panel = buildPlannedPanel(
-        { legend: { showLegend: true } },
-        { ...defaultFieldConfigSource(), defaults: { ...defaultFieldConfigSource().defaults, unit: 'bytes' } }
-      );
+    it.each([false, true])('adds the placeholder badge without a data provider (has queries: %s)', (hasQueries) => {
+      const panel = buildPlannedPanel({}, defaultFieldConfigSource());
+      panel.spec.data.spec.queries = hasQueries ? [defaultPanelQueryKind()] : [];
 
       const viz = buildVizPanel(panel, undefined, { withoutQueries: true });
 
-      expect(viz.state.$data).toBeDefined();
+      expect(viz.state.titleItems?.filter((item) => item instanceof PlanPlaceholderBadge)).toHaveLength(1);
+      expect(viz.state.$data).toBeUndefined();
     });
 
-    it('keeps planned text-panel content instead of the sample placeholder note', () => {
-      // getPlanningPanelData's 'text' branch (planningSampleData.ts) returns { mode: 'markdown',
-      // content: '_Notes for this section._' } as its sample options — the spread order in
-      // buildVizPanelState has to put that before the spec's own options/fieldConfig, or this
-      // sample would clobber a planned text panel's real markdown.
+    it('keeps planned text-panel content', () => {
       const panel = buildPlannedPanel(
         { mode: 'markdown', content: 'Real planned note' },
         defaultFieldConfigSource(),
