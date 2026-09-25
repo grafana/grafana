@@ -14,14 +14,22 @@ import {
 
 // Flag key constants for programmatic access
 export const FlagKeys = {
+  /** Enables the alert rule restore feature */
+  AlertRuleRestore: "alertRuleRestore",
   /** Hand data source managed alerting URLs over to the grafana-prometheusalerting-app plugin */
   AlertingDataSourceManagedRouteProxy: "alerting.dataSourceManagedRouteProxy",
   /** Enable manually starting an Assistant investigation from the alert instance drawer. */
   AlertingManualAssistantInvestigation: "alerting.manualAssistantInvestigation",
   /** Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them. */
   AlertingRuleQuality: "alerting.ruleQuality",
-  /** Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana */
+  /** Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source */
   AlertingSyncExternalAlertmanager: "alerting.syncExternalAlertmanager",
+  /** Enables the new Alerting navigation structure with improved menu grouping */
+  AlertingNavigationV2: "alertingNavigationV2",
+  /** Enables the UI functionality to recover and view deleted alert rules */
+  AlertingRuleRecoverDeleted: "alertingRuleRecoverDeleted",
+  /** Enables the alerting triage feature */
+  AlertingTriage: "alertingTriage",
   /** Enables new analytics framework */
   AnalyticsFramework: "analyticsFramework",
   /** Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built */
@@ -40,6 +48,8 @@ export const FlagKeys = {
   DashboardVectorSearch: "dashboard.vectorSearch",
   /** Enables the Assistant button in the dashboard templates card */
   DashboardTemplatesAssistantButton: "dashboardTemplatesAssistantButton",
+  /** Enables undo/redo in dynamic dashboards */
+  DashboardUndoRedo: "dashboardUndoRedo",
   /** Use the new datasource API groups for datasource resource requests, frontend flag */
   DatasourcesApiserverUseNewAPIsForDatasourceResources: "datasources.apiserver.useNewAPIsForDatasourceResources",
   /** Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request */
@@ -56,6 +66,8 @@ export const FlagKeys = {
   DatasourcesApiServerEnableHealthEndpointFrontend: "datasourcesApiServerEnableHealthEndpointFrontend",
   /** Enables additional experimental color schemes for visualizations. */
   DatavizExperimentalColorSchemes: "dataviz.experimentalColorSchemes",
+  /** Enables the extension admin page regardless of development mode */
+  EnableExtensionsAdminPage: "enableExtensionsAdminPage",
   /** A/A test for recently viewed dashboards feature */
   ExperimentRecentlyViewedDashboards: "experimentRecentlyViewedDashboards",
   /** Enable Faro session replay for Grafana */
@@ -184,6 +196,8 @@ export const FlagKeys = {
   QueryHistoryLocalOnly: "queryHistory.localOnly",
   /** Replace the Query History drawer with a new Recent Queries modal UI */
   QueryHistoryRecentQueriesUI: "queryHistory.recentQueriesUI",
+  /** Enables Saved queries (query library) feature */
+  QueryLibrary: "queryLibrary",
   /** Enables AI-assisted coauthoring in code query editors */
   QueryeditorCoauthoringUi: "queryeditor.coauthoringUi",
   /** Renders the raw Prometheus query results table using TableNG instead of the legacy Table */
@@ -196,6 +210,10 @@ export const FlagKeys = {
   ReportingFooterSettings: "reportingFooterSettings",
   /** Enables configuration of PDF report settings */
   ReportingHeaderSettings: "reportingHeaderSettings",
+  /** Enables Saved queries (query library) RBAC permissions */
+  SavedQueriesRBAC: "savedQueriesRBAC",
+  /** Enable the secrets management app platform UI */
+  SecretsManagementAppPlatformUI: "secretsManagementAppPlatformUI",
   /** Routes snapshot requests from /api to the /apis endpoint */
   SnapshotsKubernetesSnapshots: "snapshots.kubernetesSnapshots",
   /** Enables the splash screen modal for introducing new Grafana features on first session */
@@ -223,6 +241,17 @@ export const FlagKeys = {
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
 } as const;
+
+/**
+ * Enables the alert rule restore feature
+ *
+ * **Details:**
+ * - flag key: `alertRuleRestore`
+ * - default value: `true`
+ */
+export const useFlagAlertRuleRestore = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertRuleRestore", true, options).value;
+};
 
 /**
  * Hand data source managed alerting URLs over to the grafana-prometheusalerting-app plugin
@@ -258,7 +287,7 @@ export const useFlagAlertingRuleQuality = (options?: ReactFlagEvaluationOptions)
 };
 
 /**
- * Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana
+ * Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source
  *
  * **Details:**
  * - flag key: `alerting.syncExternalAlertmanager`
@@ -266,6 +295,39 @@ export const useFlagAlertingRuleQuality = (options?: ReactFlagEvaluationOptions)
  */
 export const useFlagAlertingSyncExternalAlertmanager = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alerting.syncExternalAlertmanager", false, options).value;
+};
+
+/**
+ * Enables the new Alerting navigation structure with improved menu grouping
+ *
+ * **Details:**
+ * - flag key: `alertingNavigationV2`
+ * - default value: `true`
+ */
+export const useFlagAlertingNavigationV2 = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingNavigationV2", true, options).value;
+};
+
+/**
+ * Enables the UI functionality to recover and view deleted alert rules
+ *
+ * **Details:**
+ * - flag key: `alertingRuleRecoverDeleted`
+ * - default value: `true`
+ */
+export const useFlagAlertingRuleRecoverDeleted = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingRuleRecoverDeleted", true, options).value;
+};
+
+/**
+ * Enables the alerting triage feature
+ *
+ * **Details:**
+ * - flag key: `alertingTriage`
+ * - default value: `false`
+ */
+export const useFlagAlertingTriage = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingTriage", false, options).value;
 };
 
 /**
@@ -368,6 +430,17 @@ export const useFlagDashboardTemplatesAssistantButton = (options?: ReactFlagEval
 };
 
 /**
+ * Enables undo/redo in dynamic dashboards
+ *
+ * **Details:**
+ * - flag key: `dashboardUndoRedo`
+ * - default value: `false`
+ */
+export const useFlagDashboardUndoRedo = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboardUndoRedo", false, options).value;
+};
+
+/**
  * Use the new datasource API groups for datasource resource requests, frontend flag
  *
  * **Details:**
@@ -453,6 +526,17 @@ export const useFlagDatasourcesApiServerEnableHealthEndpointFrontend = (options?
  */
 export const useFlagDatavizExperimentalColorSchemes = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dataviz.experimentalColorSchemes", false, options).value;
+};
+
+/**
+ * Enables the extension admin page regardless of development mode
+ *
+ * **Details:**
+ * - flag key: `enableExtensionsAdminPage`
+ * - default value: `false`
+ */
+export const useFlagEnableExtensionsAdminPage = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("enableExtensionsAdminPage", false, options).value;
 };
 
 /**
@@ -1160,6 +1244,17 @@ export const useFlagQueryHistoryRecentQueriesUI = (options?: ReactFlagEvaluation
 };
 
 /**
+ * Enables Saved queries (query library) feature
+ *
+ * **Details:**
+ * - flag key: `queryLibrary`
+ * - default value: `true`
+ */
+export const useFlagQueryLibrary = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("queryLibrary", true, options).value;
+};
+
+/**
  * Enables AI-assisted coauthoring in code query editors
  *
  * **Details:**
@@ -1223,6 +1318,28 @@ export const useFlagReportingFooterSettings = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagReportingHeaderSettings = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("reportingHeaderSettings", false, options).value;
+};
+
+/**
+ * Enables Saved queries (query library) RBAC permissions
+ *
+ * **Details:**
+ * - flag key: `savedQueriesRBAC`
+ * - default value: `true`
+ */
+export const useFlagSavedQueriesRBAC = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("savedQueriesRBAC", true, options).value;
+};
+
+/**
+ * Enable the secrets management app platform UI
+ *
+ * **Details:**
+ * - flag key: `secretsManagementAppPlatformUI`
+ * - default value: `false`
+ */
+export const useFlagSecretsManagementAppPlatformUI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("secretsManagementAppPlatformUI", false, options).value;
 };
 
 /**
