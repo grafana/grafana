@@ -1,8 +1,5 @@
-import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { render as RTLRender } from '@testing-library/react';
-import * as React from 'react';
 import { of } from 'rxjs';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { render } from 'test/test-utils';
 
 import {
   FieldType,
@@ -25,14 +22,6 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { VariablesEditView } from './VariablesEditView';
-
-function render(component: React.ReactNode) {
-  return RTLRender(
-    <TestProvider>
-      <OpenFeatureProvider>{component}</OpenFeatureProvider>
-    </TestProvider>
-  );
-}
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
