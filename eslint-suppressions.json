@@ -2176,29 +2176,8 @@
       "count": 2
     }
   },
-  "public/app/features/dashboard/components/ShareModal/ShareExport.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 1
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/components/ShareModal/ShareLink.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 3
-    }
-  },
   "public/app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 4
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
