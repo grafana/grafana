@@ -294,15 +294,15 @@ it.each(['label', 'caret'])('opens the mode picker from the %s and switches the 
   );
   const user = userEvent.setup();
   const buttonName = (mode: string) => (trigger === 'label' ? `Dashboard mode: ${mode}` : 'Change dashboard mode');
-  await user.click(screen.getByRole('button', { name: buttonName('View') }));
+  await user.click(screen.getByRole('button', { name: buttonName('Viewing') }));
   expect(screen.getByRole('menuitemradio', { name: /View/ })).toBeChecked();
   expect(screen.getByText('View and explore the dashboard.')).toBeInTheDocument();
   await user.click(screen.getByRole('menuitemradio', { name: /Manually edit panels/ }));
-  expect(screen.getByRole('button', { name: buttonName('Edit') })).toHaveAttribute('aria-expanded', 'false');
-  await user.click(screen.getByRole('button', { name: buttonName('Edit') }));
+  expect(screen.getByRole('button', { name: buttonName('Editing') })).toHaveAttribute('aria-expanded', 'false');
+  await user.click(screen.getByRole('button', { name: buttonName('Editing') }));
   expect(screen.getByRole('menuitemradio', { name: /Manually edit panels/ })).toBeChecked();
   await user.keyboard('{Escape}');
-  expect(screen.getByRole('button', { name: buttonName('Edit') })).toHaveFocus();
+  expect(screen.getByRole('button', { name: buttonName('Editing') })).toHaveFocus();
   expect(isFullDashboardEditing(scene.state)).toBe(true);
 });
 

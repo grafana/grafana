@@ -30,13 +30,13 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
   const options: Array<{ value: DashboardMode; label: string; description: string; icon: IconName }> = [
     {
       value: 'view',
-      label: t('dashboard.modes.view', 'View'),
+      label: t('dashboard.modes.view', 'Viewing'),
       description: t('dashboard.modes.view-description', 'View and explore the dashboard.'),
       icon: 'eye',
     },
     {
       value: 'edit',
-      label: t('dashboard.modes.edit', 'Edit'),
+      label: t('dashboard.modes.edit', 'Editing'),
       description: t('dashboard.modes.edit-description', 'Manually edit panels, layout, and settings.'),
       icon: 'pen',
     },
