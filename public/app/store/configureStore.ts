@@ -1,4 +1,8 @@
-import { configureStore as reduxConfigureStore, createListenerMiddleware, type ReducersMapObject } from '@reduxjs/toolkit';
+import {
+  configureStore as reduxConfigureStore,
+  createListenerMiddleware,
+  type ReducersMapObject,
+} from '@reduxjs/toolkit';
 import { setupListeners } from '@reduxjs/toolkit/query';
 import { type Middleware } from 'redux';
 
