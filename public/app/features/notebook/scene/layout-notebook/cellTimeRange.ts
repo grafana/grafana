@@ -1,22 +1,57 @@
-import { type TimeOption } from '@grafana/data';
+import { getDefaultTimeRange, rangeUtil, type TimeOption, type TimeRange } from '@grafana/data';
 import {
   SceneObjectBase,
   SceneTimePicker,
   SceneTimeRange,
+  SceneTimeRangeTransformerBase,
   type SceneObjectState,
   type SceneObjectUrlSyncHandler,
+  type SceneTimeRangeLike,
+  type SceneTimeRangeState,
 } from '@grafana/scenes';
 
 import { type PanelKind } from '../../types';
 
-class NotebookCellTimeRange extends SceneTimeRange {
-  public get urlSync(): SceneObjectUrlSyncHandler | undefined {
-    return undefined;
+/**
+ * The committed range on a real, attached cell. Extends SceneTimeRangeTransformerBase (the same
+ * base PanelTimeRange uses), not plain SceneTimeRange: a plain SceneTimeRange with no explicit
+ * timeZone of its own falls back to the browser's default zone when resolving its own `value`
+ * (see evaluateTimeRange/refreshRange in SceneTimeRange), even though `getTimeZone()` itself
+ * correctly walks up to the notebook's — so a timezone-rounded relative preset like "Today" would
+ * evaluate its actual bounds in the wrong zone. This class fixes that by deriving `value` from
+ * `getTimeZone()` (always ancestor-resolved) instead.
+ */
+class NotebookCellTimeRange extends SceneTimeRangeTransformerBase<SceneTimeRangeState> implements SceneTimeRangeLike {
+  public constructor(state: { from: string; to: string }) {
+    // Not valid until activation, same as PanelTimeRange — refreshValue() needs a real ancestor.
+    super({ ...state, value: getDefaultTimeRange() });
+    this.addActivationHandler(() => this.refreshValue());
+  }
+
+  protected ancestorTimeRangeChanged(): void {
+    this.refreshValue();
+  }
+
+  public onTimeRangeChange(timeRange: TimeRange): void {
+    this.setState({
+      from: typeof timeRange.raw.from === 'string' ? timeRange.raw.from : timeRange.raw.from.toISOString(),
+      to: typeof timeRange.raw.to === 'string' ? timeRange.raw.to : timeRange.raw.to.toISOString(),
+      value: timeRange,
+    });
+  }
+
+  private refreshValue(): void {
+    const value = rangeUtil.convertRawToRange(
+      { from: this.state.from, to: this.state.to },
+      this.getTimeZone(),
+      this.getAncestorTimeRange().state.fiscalYearStartMonth
+    );
+    this.setState({ value });
   }
 }
 
-export function buildCellSceneTimeRange(from: string, to: string, timeZone?: string): SceneTimeRange {
-  return new NotebookCellTimeRange({ from, to, timeZone });
+export function buildCellSceneTimeRange(from: string, to: string): SceneTimeRangeLike {
+  return new NotebookCellTimeRange({ from, to });
 }
 
 export interface CellTimeRangeSpec {
@@ -24,9 +59,20 @@ export interface CellTimeRangeSpec {
   to: string;
 }
 
-export function buildCellTimeRangeSpec(timeRange: SceneTimeRange): CellTimeRangeSpec {
+export function buildCellTimeRangeSpec(timeRange: SceneTimeRangeLike): CellTimeRangeSpec {
   const { from, to } = timeRange.state;
   return { from, to };
+}
+
+/**
+ * Only for the popover's own draft: a scratch SceneTimeRange detached from the notebook's scene
+ * tree, so it has no real ancestor to delegate timezone to — unlike the committed
+ * NotebookCellTimeRange above, it needs its own explicit, one-time-snapshotted zone.
+ */
+class DraftCellTimeRange extends SceneTimeRange {
+  public get urlSync(): SceneObjectUrlSyncHandler | undefined {
+    return undefined;
+  }
 }
 
 export function withQueryOptionsTimeRange(element: PanelKind, range: CellTimeRangeSpec | undefined): PanelKind {
@@ -69,7 +115,7 @@ export function buildDraftTimeRangeHost(
   quickRanges?: TimeOption[]
 ): DraftTimeRangeHost {
   return new DraftTimeRangeHost({
-    $timeRange: buildCellSceneTimeRange(from, to, timeZone),
+    $timeRange: new DraftCellTimeRange({ from, to, timeZone }),
     timePicker: new SceneTimePicker({ hideTimeSettings: true, quickRanges }),
   });
 }

@@ -1,4 +1,4 @@
-import { type SceneObjectState, SceneObjectBase, type SceneTimeRange, type VizPanel } from '@grafana/scenes';
+import { type SceneObjectState, SceneObjectBase, type SceneTimeRangeLike, type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { type DashboardLayoutItem } from 'app/features/dashboard-scene/scene/types/DashboardLayoutItem';
 
@@ -22,7 +22,7 @@ export interface NotebookCellItemState extends SceneObjectState {
   content?: CellContentKind;
   // Absent means sceneGraph.getTimeRange() resolves up to the notebook's own range, same as no
   // override at all.
-  $timeRange?: SceneTimeRange;
+  $timeRange?: SceneTimeRangeLike;
 }
 
 export class NotebookCellItem extends SceneObjectBase<NotebookCellItemState> implements DashboardLayoutItem {
