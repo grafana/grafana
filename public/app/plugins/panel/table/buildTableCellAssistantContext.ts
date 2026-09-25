@@ -23,7 +23,7 @@ export function buildTableCellAssistantContext({
 }: BuildArgs): ChatContextItem[] {
   const value = field.values[rowIndex];
   const displayValue = field.display ? formattedValueToString(field.display(value)) : String(value ?? '');
-  const displayName = getFieldDisplayName(field, frame);
+  const displayName = field.state?.displayName ?? getFieldDisplayName(field, frame);
 
   return [
     createAssistantContextItem('structured', {

@@ -1,5 +1,5 @@
 import { createAssistantContextItem } from '@grafana/assistant';
-import { createDataFrame, dateTime, FieldType } from '@grafana/data';
+import { cacheFieldDisplayNames, createDataFrame, dateTime, FieldType } from '@grafana/data';
 
 import { buildTableCellAssistantContext } from './buildTableCellAssistantContext';
 
@@ -8,6 +8,40 @@ jest.mock('@grafana/assistant', () => ({
 }));
 
 beforeEach(() => jest.clearAllMocks());
+
+it('preserves the cached multi-frame display name when attaching a cell', () => {
+  const frames = ['Query A', 'Query B'].map((name) =>
+    createDataFrame({
+      name,
+      fields: [{ name: 'requests', type: FieldType.number, values: [42] }],
+    })
+  );
+  cacheFieldDisplayNames(frames);
+  const frame = frames[0];
+  const field = frame.fields[0];
+  const originalState = { ...field.state };
+
+  buildTableCellAssistantContext({
+    frame,
+    field,
+    rowIndex: 0,
+    panelId: 7,
+    panelTitle: 'Requests',
+    timeRange: { from: dateTime(0), to: dateTime(10000), raw: { from: 'now-1h', to: 'now' } },
+    replaceVariables: (s) => s,
+  });
+
+  expect(createAssistantContextItem).toHaveBeenCalledWith(
+    'structured',
+    expect.objectContaining({
+      title: '42 › Query A requests › Requests',
+      data: expect.objectContaining({
+        field: expect.objectContaining({ displayName: 'Query A requests' }),
+      }),
+    })
+  );
+  expect(field.state).toEqual(originalState);
+});
 
 it.each([42, 'text', null, { status: 'ok' }])(
   'attaches the targeted raw value %j with field, query, and panel context',
