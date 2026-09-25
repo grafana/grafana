@@ -522,14 +522,16 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     let pageNav: NavModelItem = {
       text: title,
-      url: getDashboardUrl({
-        uid,
-        slug: meta.slug,
-        currentQueryParams: location.search,
-        updateQuery: { viewPanel: null, inspect: null, editview: null, editPanel: null, tab: null, shareView: null },
-        isHomeDashboard: !meta.url && !meta.slug && !isNew && !meta.isSnapshot,
-        isSnapshot: meta.isSnapshot,
-      }),
+      url: locationUtil.assureBaseUrl(
+        getDashboardUrl({
+          uid,
+          slug: meta.slug,
+          currentQueryParams: location.search,
+          updateQuery: { viewPanel: null, inspect: null, editview: null, editPanel: null, tab: null, shareView: null },
+          isHomeDashboard: !meta.url && !meta.slug && !isNew && !meta.isSnapshot,
+          isSnapshot: meta.isSnapshot,
+        })
+      ),
     };
 
     const { folderUid } = meta;
