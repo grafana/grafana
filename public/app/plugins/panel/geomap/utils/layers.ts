@@ -180,11 +180,23 @@ export async function initLayer(
   return state;
 }
 
+const pendingRebuilds = new WeakMap<GeomapPanel, Promise<void>>();
+
 /**
  * Layers resolve the theme when they are created, so a theme switch needs fresh instances.
  * The map and its view are kept, otherwise switching would move what the user is looking at.
  */
-export async function reinitLayers(panel: GeomapPanel): Promise<void> {
+export function reinitLayers(panel: GeomapPanel): Promise<void> {
+  // Rebuilds work off the same layer list and layer group, so two of them must never interleave
+  const pending = (pendingRebuilds.get(panel) ?? Promise.resolve()).then(() => rebuildLayers(panel));
+  pendingRebuilds.set(
+    panel,
+    pending.catch(() => undefined)
+  );
+  return pending;
+}
+
+async function rebuildLayers(panel: GeomapPanel): Promise<void> {
   const map = panel.map;
   if (!map) {
     return;

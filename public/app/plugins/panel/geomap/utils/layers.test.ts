@@ -397,19 +397,52 @@ describe('reinitLayers', () => {
     expect(panel.setState).toHaveBeenCalledWith({ legends: ['legend'] });
   });
 
-  it('leaves layers the panel does not own where they are', async () => {
+  it('rebuilds a layer at its position in the map, not its position in the panel list', async () => {
     const { panel, mapLayers } = createPanel(dark);
     await addLayer(panel, mapLayers, { type: 'carto', name: 'Basemap' }, true);
-    // The measure layer is added straight to the map, in between the layers the panel tracks
+    // Turning on measure appends a layer the panel does not track, and a layer added after that
+    // lands behind it, so Markers is second in panel.layers but third in the map
     const measureLayer = {} as BaseLayer;
-    mapLayers.splice(1, 0, measureLayer);
-    await addLayer(panel, mapLayers, { type: 'markers', name: 'Markers' }, false);
+    mapLayers.push(measureLayer);
+    const markers = await addLayer(panel, mapLayers, { type: 'markers', name: 'Markers' }, false);
 
     await reinitLayers(panel);
 
-    expect(mapLayers[0]).toBe(panel.layers[0].layer);
+    // Going by the panel index would have put the new Markers layer over the measure layer
     expect(mapLayers[1]).toBe(measureLayer);
     expect(mapLayers[2]).toBe(panel.layers[1].layer);
+    expect(mapLayers[2]).not.toBe(markers.layer);
+  });
+
+  it('runs one rebuild at a time when the theme changes twice in a row', async () => {
+    // Tag every handler, so a layer disposed by two rebuilds at once can be told apart
+    let created = 0;
+    getIfExists.mockImplementation((type) => ({
+      id: type ?? '',
+      name: type ?? '',
+      create: async (_map, options, _eventBus, theme) => {
+        const tag = `${options.name}#${++created}`;
+        themesSeen.push(theme);
+        return {
+          init: () => ({ setOpacity: jest.fn() }) as unknown as BaseLayer,
+          dispose: () => disposed.push(tag),
+        };
+      },
+    }));
+    const { panel, mapLayers } = createPanel(dark);
+    await addLayer(panel, mapLayers, { type: 'carto', name: 'Basemap' }, true);
+    await addLayer(panel, mapLayers, { type: 'markers', name: 'Markers' }, false);
+
+    Object.assign(panel.props, { theme: light });
+    const first = reinitLayers(panel);
+    Object.assign(panel.props, { theme: dark });
+    const second = reinitLayers(panel);
+    await Promise.all([first, second]);
+
+    // The second rebuild replaces what the first one built, rather than both replacing the originals
+    expect(disposed).toEqual(['Basemap#1', 'Markers#2', 'Basemap#3', 'Markers#4']);
+    expect(panel.layers.map((l) => l.getName())).toEqual(['Basemap', 'Markers']);
+    expect(mapLayers).toEqual([panel.layers[0].layer, panel.layers[1].layer]);
   });
 
   it('does nothing before the map exists', async () => {
