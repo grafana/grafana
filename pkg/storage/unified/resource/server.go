@@ -78,6 +78,39 @@ func (s *server) logIfServerError(ctx context.Context, op string, key *resourcep
 // to Watch clients that have AllowWatchBookmarks enabled.
 const defaultBookmarkFrequency = 10 * time.Second
 
+const natsWatchMaxAgeJitterFraction = 0.2
+
+func jitteredWatchMaxAge(ctx context.Context, base time.Duration) time.Duration {
+	bo := backoff.New(ctx, backoff.Config{
+		MinBackoff: time.Duration(float64(base) * (1 - natsWatchMaxAgeJitterFraction)),
+		MaxBackoff: time.Duration(float64(base) * (1 + natsWatchMaxAgeJitterFraction)),
+		MaxRetries: 1,
+	})
+	return bo.NextDelay()
+}
+
+type watchExpiry struct {
+	mu         sync.Mutex
+	generation chan struct{}
+}
+
+func newWatchExpiry() *watchExpiry {
+	return &watchExpiry{generation: make(chan struct{})}
+}
+
+func (e *watchExpiry) current() <-chan struct{} {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return e.generation
+}
+
+func (e *watchExpiry) expire() {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	close(e.generation)
+	e.generation = make(chan struct{})
+}
+
 // filteredBookmarkDelay leaves a recovery window for late writes without
 // delaying progress from objects already sent to the client.
 const filteredBookmarkDelay = time.Minute
@@ -443,6 +476,10 @@ type ResourceServerOptions struct {
 	// Watch clients that set AllowWatchBookmarks. Zero defaults to defaultBookmarkFrequency.
 	BookmarkFrequency time.Duration
 
+	// NatsWatchMaxAge forces NATS-backed watch clients to re-list periodically.
+	// Zero disables expiry.
+	NatsWatchMaxAge time.Duration
+
 	// VectorBackend is the optional pgvector-backed store for semantic search.
 	// nil when the [unified_storage] vector_backend flag is off. When present,
 	// the resource and search servers hold a reference for use by future
@@ -584,6 +621,11 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		opts.BookmarkFrequency = defaultBookmarkFrequency
 	}
 
+	// Recording sites should not have to check for nil.
+	if opts.StorageMetrics == nil {
+		opts.StorageMetrics = ProvideStorageMetrics(nil)
+	}
+
 	// Initialize the blob storage
 	blobstore, err := initializeBlobStorage(opts)
 	if err != nil {
@@ -620,8 +662,12 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		manifestSearchFields:           opts.Search.SearchFields,
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 		bookmarkFrequency:              opts.BookmarkFrequency,
+		natsWatchMaxAge:                opts.NatsWatchMaxAge,
 		vectorWriteReconciler:          opts.VectorReconciler,
 		embeddingBuilders:              opts.Search.EmbeddingBuilders,
+	}
+	if s.natsWatchMaxAge > 0 {
+		s.natsWatchExpiry = newWatchExpiry()
 	}
 
 	if opts.Search.Resources != nil {
@@ -751,6 +797,9 @@ type server struct {
 
 	bookmarkFrequency time.Duration
 
+	natsWatchMaxAge time.Duration
+	natsWatchExpiry *watchExpiry
+
 	// Vector reconciler (which owns the backfiller). Started in Init,
 	// joined in Stop via indexersWG.
 	vectorWriteReconciler BroadcasterConsumer
@@ -796,11 +845,28 @@ func (s *server) Init(ctx context.Context) error {
 			s.initErr = services.StartAndAwaitRunning(s.ctx, s.statsIngester)
 		}
 
+		if s.initErr == nil && s.natsWatchExpiry != nil {
+			go s.runNatsWatchExpiry()
+		}
+
 		if s.initErr != nil {
 			s.log.Error("error running resource server init", "error", s.initErr)
 		}
 	})
 	return s.initErr
+}
+
+func (s *server) runNatsWatchExpiry() {
+	for {
+		timer := time.NewTimer(jitteredWatchMaxAge(s.ctx, s.natsWatchMaxAge))
+		select {
+		case <-s.ctx.Done():
+			timer.Stop()
+			return
+		case <-timer.C:
+			s.natsWatchExpiry.expire()
+		}
+	}
 }
 
 // startVectorIndexers launches the vector reconciler (which owns and runs
@@ -1688,10 +1754,8 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		// search instead, since we index both, and fetch resulting documents one by one.
 		rsp, err := s.listWithSelectors(ctx, req)
 		if !errors.Is(err, errSearchCannotAnswerList) {
-			if s.storageMetrics != nil {
-				gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
-				s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "search").Inc()
-			}
+			gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
+			s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "search").Inc()
 			return rsp, err
 		}
 		// The store scan reads the objects themselves, so it answers what the index
@@ -1952,9 +2016,7 @@ func (s *server) finalizeListResponse(ctx context.Context, rsp *resourcepb.ListR
 	rsp.ResourceVersion = rv
 	rsp.NextPageToken = nextToken
 	gr := key.Group + "/" + key.Resource
-	if s.storageMetrics != nil {
-		s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "storage").Inc()
-	}
+	s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "storage").Inc()
 	return rsp, nil
 }
 
@@ -1997,11 +2059,7 @@ func (s *server) initWatcher() error {
 		}
 	}()
 
-	var broadcasterMetrics *BroadcasterMetrics
-	if s.storageMetrics != nil {
-		broadcasterMetrics = s.storageMetrics.Broadcaster
-	}
-	s.broadcaster = NewBroadcaster(s.ctx, out, broadcasterMetrics, func(e *WrittenEvent) string {
+	s.broadcaster = NewBroadcaster(s.ctx, out, s.storageMetrics.Broadcaster, func(e *WrittenEvent) string {
 		if e == nil || e.Key == nil {
 			return ""
 		}
@@ -2178,10 +2236,23 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		bookmarkC = ticker.C
 	}
 
+	// The server-level generation survives transport reconnects, so GOAWAY does
+	// not restart the expiry interval.
+	var watchExpiryC <-chan struct{}
+	if s.natsWatchExpiry != nil {
+		watchExpiryC = s.natsWatchExpiry.current()
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
+
+		case <-watchExpiryC:
+			// Unlike EOF, Expired forces clients to re-list.
+			s.log.Debug("watch: expiring stream to bound stale-state duration",
+				"group", key.Group, "resource", key.Resource, "namespace", key.Namespace, "since", since)
+			return NewResourceVersionExpiredError(since)
 
 		case <-bookmarkC:
 			cutoff := time.Now().Add(-filteredBookmarkDelay)
@@ -2249,7 +2320,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 				sentAt := time.Now()
 				lastObjectRV = max(lastObjectRV, event.ResourceVersion)
 
-				if s.storageMetrics != nil && event.ResourceVersion > mostRecentRV {
+				if event.ResourceVersion > mostRecentRV {
 					// Resource versions can be either Unix microsecond timestamps (SQL backend)
 					// or snowflake IDs (KV backend). Split the total at Send so upstream
 					// delivery and gRPC transport flow-control wait can be diagnosed separately.
@@ -2679,10 +2750,8 @@ func (s *server) degraded(ctx context.Context, operation, reason string, nsr Nam
 		"operation", operation, "reason", reason,
 		"namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource,
 		"error", err)
-	if s.storageMetrics != nil {
-		s.storageMetrics.DegradedOperations.
-			WithLabelValues(operation, reason, nsr.Group, nsr.Resource).Inc()
-	}
+	s.storageMetrics.DegradedOperations.
+		WithLabelValues(operation, reason, nsr.Group, nsr.Resource).Inc()
 	if span := trace.SpanFromContext(ctx); span != nil {
 		span.AddEvent("degraded_operation", trace.WithAttributes(
 			attribute.String("operation", operation),

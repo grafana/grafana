@@ -1425,6 +1425,7 @@ type watchTestServerOpts struct {
 	BookmarkFrequency time.Duration
 	StorageMetrics    *StorageMetrics
 	AccessClient      authlib.AccessClient
+	NatsWatchMaxAge   time.Duration
 }
 
 func newWatchTestServer(t *testing.T, opts watchTestServerOpts) *server {
@@ -1446,6 +1447,7 @@ func newWatchTestServer(t *testing.T, opts watchTestServerOpts) *server {
 		BookmarkFrequency: opts.BookmarkFrequency,
 		StorageMetrics:    opts.StorageMetrics,
 		AccessClient:      opts.AccessClient,
+		NatsWatchMaxAge:   opts.NatsWatchMaxAge,
 	})
 	require.NoError(t, err)
 	t.Cleanup(func() {
@@ -2171,6 +2173,87 @@ func TestWatchTerminationErrors(t *testing.T) {
 		err := srv.Watch(watchReq, stub)
 		require.ErrorIs(t, err, context.Canceled)
 	})
+}
+
+func TestWatchExpiryGeneration(t *testing.T) {
+	expiry := newWatchExpiry()
+	first := expiry.current()
+	second := expiry.current()
+	require.Equal(t, first, second)
+
+	expiry.expire()
+
+	for _, generation := range []<-chan struct{}{first, second} {
+		select {
+		case <-generation:
+		default:
+			t.Fatal("old generation is still active")
+		}
+	}
+	select {
+	case <-expiry.current():
+		t.Fatal("new generation is already expired")
+	default:
+	}
+}
+
+func TestWatchMaxAgeExpiry(t *testing.T) {
+	testUser := newWatchTestUser()
+
+	watchReq := &resourcepb.WatchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Group:    watchTestGroup,
+				Resource: watchTestResource,
+			},
+		},
+	}
+
+	t.Run("expires the stream with a typed 410/Expired status", func(t *testing.T) {
+		srv := newWatchTestServer(t, watchTestServerOpts{NatsWatchMaxAge: 20 * time.Millisecond})
+		ctx := authlib.WithAuthInfo(t.Context(), testUser)
+		mock := newMockWatchServer(ctx)
+
+		errCh := make(chan error, 1)
+		go func() { errCh <- srv.Watch(watchReq, mock) }()
+
+		select {
+		case err := <-errCh:
+			require.Error(t, err)
+			require.True(t, IsResourceVersionExpired(err), "expected a 410/Expired error, got: %v", err)
+		case <-time.After(5 * time.Second):
+			t.Fatal("watch did not expire within the max age")
+		}
+	})
+
+	t.Run("does not expire when max age is unset", func(t *testing.T) {
+		srv := newWatchTestServer(t, watchTestServerOpts{})
+		ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), testUser))
+		defer cancel()
+		mock := newMockWatchServer(ctx)
+
+		errCh := make(chan error, 1)
+		go func() { errCh <- srv.Watch(watchReq, mock) }()
+
+		select {
+		case err := <-errCh:
+			t.Fatalf("watch returned unexpectedly: %v", err)
+		case <-time.After(200 * time.Millisecond):
+		}
+		cancel()
+		require.NoError(t, <-errCh)
+	})
+}
+
+func TestJitteredWatchMaxAge(t *testing.T) {
+	base := 5 * time.Minute
+	lower := time.Duration(float64(base) * (1 - natsWatchMaxAgeJitterFraction))
+	upper := time.Duration(float64(base) * (1 + natsWatchMaxAgeJitterFraction))
+	for i := 0; i < 1000; i++ {
+		got := jitteredWatchMaxAge(t.Context(), base)
+		require.GreaterOrEqual(t, got, lower)
+		require.LessOrEqual(t, got, upper)
+	}
 }
 
 // TestWatchEventMetricsWithSinceRV makes sure that we don't emit watch delay metrics when replaying

@@ -29,6 +29,7 @@ import (
 
 type UnifiedStorageGrpcService interface {
 	services.NamedService
+	grpcserver.HealthProbe
 }
 
 var (
@@ -96,6 +97,24 @@ type distributorServer struct {
 	searchRingRead ring.Operation
 	log            log.Logger
 	tracing        trace.Tracer
+}
+
+// Search servers register as JOINING and become ACTIVE only after building
+// their indexes. Requiring an ACTIVE entry would keep distributors unready
+// during a cold start or full search-server rollout.
+func (ds *distributorServer) ringPopulated() error {
+	if state := ds.ring.State(); state != services.Running {
+		return fmt.Errorf("ring is not running: state=%s", state)
+	}
+	if ds.ring.InstancesCount() == 0 {
+		return errors.New("search server ring has no instances")
+	}
+	return nil
+}
+
+func (ds *distributorServer) CheckHealth(_ context.Context) (bool, error) {
+	err := ds.ringPopulated()
+	return err == nil, err
 }
 
 func newSearchRingReadOp(extendReplicaSet bool) ring.Operation {
@@ -349,7 +368,7 @@ func (ds *distributorServer) getClientToDistributeRequest(ctx context.Context, n
 }
 
 func (ds *distributorServer) IsHealthy(ctx context.Context, r *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {
-	if ds.ring.State() == services.Running {
+	if err := ds.ringPopulated(); err == nil {
 		return &resourcepb.HealthCheckResponse{Status: resourcepb.HealthCheckResponse_SERVING}, nil
 	}
 
