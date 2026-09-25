@@ -95,6 +95,8 @@ export async function createNotebook(spec: NotebookSpec): Promise<CreatedNoteboo
  */
 export class NotebookConflictError extends Error {}
 
+export class NotebookUnavailableError extends Error {}
+
 /**
  * Read-modify-write of a notebook's spec.
  *
@@ -114,6 +116,9 @@ export async function updateNotebookSpec(
   );
 
   if ('error' in read && read.error) {
+    if (isUnavailable(read.error)) {
+      throw new NotebookUnavailableError(extractErrorMessage(read.error, 'The notebook is no longer available.'));
+    }
     throw new Error(extractErrorMessage(read.error, 'Failed to read the notebook.'));
   }
 
@@ -142,6 +147,9 @@ export async function updateNotebookSpec(
   );
 
   if ('error' in result && result.error) {
+    if (isUnavailable(result.error)) {
+      throw new NotebookUnavailableError(extractErrorMessage(result.error, 'The notebook is no longer available.'));
+    }
     if (isConflict(result.error)) {
       throw new NotebookConflictError(
         extractErrorMessage(result.error, 'The notebook changed while you were editing.')
@@ -203,4 +211,10 @@ export async function updateNotebook(
 
 function isConflict(error: unknown): boolean {
   return typeof error === 'object' && error !== null && 'status' in error && error.status === 409;
+}
+
+function isUnavailable(error: unknown): boolean {
+  return (
+    typeof error === 'object' && error !== null && 'status' in error && (error.status === 403 || error.status === 404)
+  );
 }
