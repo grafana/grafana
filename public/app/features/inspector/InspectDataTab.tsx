@@ -1,5 +1,5 @@
 import { cloneDeep } from 'lodash';
-import { memo, useLayoutEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
 import {
@@ -68,23 +68,24 @@ export const InspectDataTab = memo(function InspectDataTab({
   const [dataFrameIndex, setDataFrameIndex] = useState(0);
   const [transformId, setTransformId] = useState(DataTransformerID.noop);
   const [transformationOptions] = useState(buildTransformationOptions);
-  const [joinedData, setJoinedData] = useState<DataFrame[]>();
+  const [joined, setJoined] = useState<{ input: DataFrame[]; frames: DataFrame[] }>();
   const [excelCompatibilityMode, setExcelCompatibilityMode] = useState(false);
   const styles = useStyles2(getPanelInspectorStyles2);
 
   const shouldJoin = !!data && !options.withTransforms && transformId === DataTransformerID.joinByField;
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!data || !shouldJoin) {
       return;
     }
     const subscription = transformDataFrame([joinByFieldTransformer], moveFirstNonEmptyFrameToFront(data)).subscribe(
-      setJoinedData
+      (frames) => setJoined({ input: data, frames })
     );
     return () => subscription.unsubscribe();
   }, [data, shouldJoin]);
 
-  const transformedData = !data ? [] : shouldJoin ? (joinedData ?? data) : data;
+  // The join resolves asynchronously, so only use a result computed from the current data
+  const transformedData = !data ? [] : shouldJoin && joined?.input === data ? joined.frames : data;
 
   const exportCsv = (dataFrames: DataFrame[]) => {
     const dataFrame = dataFrames[dataFrameIndex];
