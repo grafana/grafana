@@ -3,7 +3,11 @@ import { type RefObject } from 'react';
 type Ref = RefObject<HTMLElement | null>;
 
 /**
- * Copies text to the clipboard using the Clipboard API or a fallback method.
+ * Copy text to the clipboard. Uses the modern Clipboard API in secure contexts and falls back
+ * to a hidden `<textarea>` + `document.execCommand('copy')` otherwise.
+ *  If `appendTo` is provided, the fallback textarea is appended to that element rather than
+ * `document.body`, useful when copying from inside a focus-managed region (e.g. react-aria's
+ * `FocusScope`) where elements outside the managed subtree can't receive focus.
  *
  * @param text The text to copy, or a promise of it. A pending promise is passed on unresolved so the
  * write is issued inside the click's user activation — Safari refuses one made after an `await`.

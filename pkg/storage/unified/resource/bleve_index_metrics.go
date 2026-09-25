@@ -225,9 +225,6 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 // emit permanently-zero `index_server_snapshot_*` series. Registration of
 // the CounterVecs themselves stays unconditional in ProvideIndexMetrics.
 func (m *BleveIndexMetrics) InitSnapshotMetrics() {
-	if m == nil {
-		return
-	}
 	for _, policy := range []string{"tiered", "same_version", "cold_start"} {
 		m.IndexSnapshotDownloadAttempts.WithLabelValues(policy, "success").Add(0)
 		m.IndexSnapshotDownloadAttempts.WithLabelValues(policy, "empty").Add(0)
@@ -262,9 +259,6 @@ func (m *BleveIndexMetrics) InitSnapshotMetrics() {
 // configured to run on this instance, so disabled instances don't emit
 // permanently-zero `index_server_disk_cleanup_*` series.
 func (m *BleveIndexMetrics) InitDiskCleanupMetrics() {
-	if m == nil {
-		return
-	}
 	m.IndexDiskCleanupRuns.WithLabelValues("success").Add(0)
 	m.IndexDiskCleanupRuns.WithLabelValues("error").Add(0)
 	for _, kind := range []string{"index", "snapshot_staging"} {

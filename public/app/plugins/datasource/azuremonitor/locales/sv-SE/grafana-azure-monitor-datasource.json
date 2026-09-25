@@ -53,6 +53,11 @@
       "placeholder-symbol-client-secret": "konfigurerad",
       "reset-symbol-client-secret": "Återställ"
     },
+    "auxiliary-logs-toggle": {
+      "aria-label-enable-auxiliary-logs": "",
+      "description-auxiliary-logs": "",
+      "label-enable-auxiliary-logs": ""
+    },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "{{queryDisplayName}} rå fråga",
       "aria-label-use-query": "Använd denna frågeknapp",
@@ -105,11 +110,11 @@
       "load-subscriptions": "Ladda prenumerationer"
     },
     "dimension-fields": {
-      "aria-label-field": "",
-      "aria-label-operator": "",
-      "aria-label-remove": "",
-      "aria-label-value": "",
-      "aria-label-values": "",
+      "aria-label-field": "Dimensionsfält {{position}}",
+      "aria-label-operator": "Dimensionsoperatör {{position}}",
+      "aria-label-remove": "Ta bort dimension {{position}}",
+      "aria-label-value": "Dimensionsvärde {{position}}",
+      "aria-label-values": "Dimensionsvärden {{position}}",
       "label-dimensions": "Mått",
       "placeholder-field": "Fält",
       "placeholder-operation": "Drift",
@@ -182,19 +187,47 @@
       "tooltip-limit": "Begränsa antalet rader som returneras (standard är 1 000)."
     },
     "logs-management": {
+      "body-auxiliary-logs-queries": "",
       "body-basic-logs-queries": "Är du säker på att du vill byta till grundläggande loggar?",
       "confirmText-confirm": "Bekräfta",
+      "description-auxiliary-logs-queries": "",
       "description-basic-logs-queries": "Grundläggande loggfrågor medför kostnader baserat på mängden data som skannas.",
+      "label-analytics": "",
+      "label-auxiliary": "",
+      "label-basic": "",
       "label-logs": "Loggar",
+      "title-auxiliary-logs-queries": "",
       "title-basic-logs-queries": "Grundläggande loggfrågor",
-      "tooltip-logs": "Anger om en grundläggande eller analytisk loggfråga ska köras."
+      "tooltip-logs": "Anger om en grundläggande eller analytisk loggfråga ska köras.",
+      "tooltip-logs-all": "",
+      "tooltip-logs-aux": ""
     },
     "logs-query-builder": {
       "title-no-tables": "Resursen laddades utan några tabeller"
     },
     "logs-query-editor": {
       "learn-more": "Läs mer",
-      "view-query": "Visa fråga i Azure Portal"
+      "notice-auxiliary-single-resource": "",
+      "notice-basic-single-resource": "",
+      "notice-same-resource-type": "",
+      "tier-switch-body-analytics": "",
+      "tier-switch-body-auxiliary": "",
+      "tier-switch-body-basic": "",
+      "tier-switch-revert": "",
+      "tier-switch-title": "",
+      "view-query": "Visa fråga i Azure Portal",
+      "warning-auxiliary-data-ingested": "",
+      "warning-auxiliary-raw": "",
+      "warning-basic-raw": "",
+      "warning-data-ingested": ""
+    },
+    "logs-table-section": {
+      "description-auxiliary-disabled": "",
+      "description-auxiliary-enabled": "",
+      "description-basic-disabled": "",
+      "description-basic-enabled": "",
+      "description-plan-unavailable": "",
+      "label-all-columns": ""
     },
     "metric-name-field": {
       "label-metric": "Mått"

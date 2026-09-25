@@ -34,6 +34,16 @@ export const DashboardInteractions = {
     reportDashboardInteraction('init_dashboard_completed', properties);
   },
 
+  textPanelUsage: (properties: {
+    mermaid_count: number;
+    handlebars_count: number;
+    data_macro_count: number;
+    per_row_count: number;
+    dashboard_uid?: string;
+  }) => {
+    reportDashboardInteraction('text_panel_usage', properties);
+  },
+
   dashboardCopied: (properties: { name: string; url: string; diff_count?: number }) => {
     reportInteraction('grafana_dashboard_copied', properties);
   },

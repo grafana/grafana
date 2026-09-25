@@ -16,7 +16,9 @@ func TestSingleTenantBreakersIsolateGroupsOnSameHost(t *testing.T) {
 		for _, status := range []int{http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusGatewayTimeout} {
 			t.Run(fmt.Sprintf("registered=%t/status=%d", registered, status), func(t *testing.T) {
 				st := newTestSingleTenantFallback(t)
-				st.resolveHost = func(context.Context, int64) (string, error) { return "https://tenant.example.com", nil }
+				st.resolveHost = func(context.Context, int64) (singleTenantStack, error) {
+					return singleTenantStack{URL: "https://tenant.example.com"}, nil
+				}
 				calls := map[string]int{}
 				st.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {
 					require.Equal(t, "tenant.example.com", req.URL.Host)
@@ -61,7 +63,9 @@ func TestSingleTenantBreakersIsolateGroupsOnSameHost(t *testing.T) {
 func TestSingleTenantDiscoveryBreakerIsSeparateOnSameHost(t *testing.T) {
 	st := newTestSingleTenantFallback(t)
 	st.discoveryHost = testFallbackURL(t, "https://tenant.example.com")
-	st.resolveHost = func(context.Context, int64) (string, error) { return st.discoveryHost.String(), nil }
+	st.resolveHost = func(context.Context, int64) (singleTenantStack, error) {
+		return singleTenantStack{URL: st.discoveryHost.String()}, nil
+	}
 	discoveryCalls := 0
 	tenantCalls := 0
 	st.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {

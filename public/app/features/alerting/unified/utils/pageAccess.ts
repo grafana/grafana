@@ -1,4 +1,5 @@
 import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { hasAny } from 'app/core/navtree/utils';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -16,12 +17,8 @@ import {
 // a leaf module: the nav tree builder calls these during redux store creation,
 // before the ability system is safe to touch.
 
-// TODO: migrate these to OpenFeature flags. They are legacy-only toggles, so
-// they live solely in the config.featureToggles map, which the multi-tenant
-// frontend service ships empty — both read false there and the section falls
-// back to its legacy shape. OpenFeature flags resolve over OFREP instead.
-const isAlertingV2 = () => Boolean(config.featureToggles.alertingNavigationV2);
-const isAlertingTriage = () => Boolean(config.featureToggles.alertingTriage);
+const isAlertingV2 = () => getFeatureFlagClient().getBooleanValue(FlagKeys.AlertingNavigationV2, true);
+const isAlertingTriage = () => getFeatureFlagClient().getBooleanValue(FlagKeys.AlertingTriage, false);
 
 // The history page is only available when state-history queries are served by
 // Loki: either as the only backend, or as the primary of the "multiple"
@@ -85,13 +82,10 @@ export const activeNotificationsAccess = () => alertInstanceAccess() && !(isAler
 export const historyAccess = () =>
   stateHistoryServedByLoki() && contextSrv.hasPermission(AccessControlAction.AlertingRuleRead);
 
-// TODO: migrate these two to OpenFeature flags as well — being legacy-only they
-// read false in the multi-tenant frontend service, so this page never appears
-// there.
 export const recentlyDeletedAccess = () =>
   contextSrv.hasRole('Admin') &&
-  Boolean(config.featureToggles.alertRuleRestore) &&
-  Boolean(config.featureToggles.alertingRuleRecoverDeleted) &&
+  getFeatureFlagClient().getBooleanValue(FlagKeys.AlertRuleRestore, true) &&
+  getFeatureFlagClient().getBooleanValue(FlagKeys.AlertingRuleRecoverDeleted, true) &&
   !isAlertingV2();
 
 export const alertingAdminAccess = () => contextSrv.hasRole('Admin');

@@ -434,6 +434,7 @@ const transformationKindSchema = z.object({
   kind: z.literal('Transformation'),
   group: z.string(),
   spec: z.object({
+    refId: z.string().optional(),
     disabled: z.boolean().optional(),
     filter: matcherConfigSchema.optional(),
     topic: z.enum(['series', 'annotations', 'alertStates']).optional(),
