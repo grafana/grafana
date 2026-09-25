@@ -11,6 +11,8 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
@@ -130,6 +132,81 @@ func TestSharedStorage(t *testing.T) {
 	})
 }
 
+// Each served group holds a single "instance", stored under its own name
+func TestSharedStorageWithName(t *testing.T) {
+	ctx := storagetesting.NewContext()
+	client := newSharedTestClient(t)
+	instanceStore := func(prefix string) storage.Interface {
+		return newSharedTestStorageWith(t, client, prefix, &apistore.SharedStorage{
+			Group: sharedGroup,
+			Name:  &apistore.SharedName{Served: "instance", Stored: prefix + "-id"},
+		})
+	}
+	storeA := instanceStore("a")
+	storeB := instanceStore("b")
+
+	require.Empty(t, sharedListNames(t, storeA, "a"))
+
+	out := &unstructured.Unstructured{}
+	require.NoError(t, storeA.Create(ctx, sharedKey("a", "instance"), sharedThing("a", "instance"), out, 0))
+	require.Equal(t, "instance", out.GetName())
+	require.Equal(t, "a."+sharedGroup+"/v1", out.GetAPIVersion())
+
+	t.Run("persists the stored name", func(t *testing.T) {
+		rsp, err := client.Read(ctx, &resourcepb.ReadRequest{Key: &resourcepb.ResourceKey{
+			Namespace: sharedNS, Group: sharedGroup, Resource: sharedResource, Name: "a-id",
+		}})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		stored := &unstructured.Unstructured{}
+		require.NoError(t, json.Unmarshal(rsp.Value, stored))
+		require.Equal(t, "a-id", stored.GetName())
+		require.Equal(t, sharedGroup+"/v1", stored.GetAPIVersion())
+	})
+
+	t.Run("get restores the served name", func(t *testing.T) {
+		got := &unstructured.Unstructured{}
+		require.NoError(t, storeA.Get(ctx, sharedKey("a", "instance"), storage.GetOptions{}, got))
+		require.Equal(t, "instance", got.GetName())
+		require.Equal(t, "a."+sharedGroup+"/v1", got.GetAPIVersion())
+	})
+
+	t.Run("other names are rejected", func(t *testing.T) {
+		err := storeA.Get(ctx, sharedKey("a", "a-id"), storage.GetOptions{}, &unstructured.Unstructured{})
+		require.True(t, storage.IsNotFound(err), "got %v", err)
+
+		err = storeA.Create(ctx, sharedKey("a", "other"), sharedThing("a", "other"), &unstructured.Unstructured{}, 0)
+		require.True(t, apierrors.IsBadRequest(err), "got %v", err)
+
+		// The served name never reaches another group's object
+		err = storeB.Get(ctx, sharedKey("b", "instance"), storage.GetOptions{}, &unstructured.Unstructured{})
+		require.True(t, storage.IsNotFound(err), "got %v", err)
+	})
+
+	require.NoError(t, storeB.Create(ctx, sharedKey("b", "instance"), sharedThing("b", "instance"), &unstructured.Unstructured{}, 0))
+
+	t.Run("list only returns the served instance", func(t *testing.T) {
+		require.Equal(t, []string{"instance"}, sharedListNames(t, storeA, "a"))
+		require.Equal(t, []string{"instance"}, sharedListNames(t, storeB, "b"))
+
+		list := &unstructured.UnstructuredList{}
+		opts := storage.ListOptions{Recursive: true, Predicate: storage.SelectionPredicate{
+			Label:    labels.Everything(),
+			Field:    fields.OneTermEqualSelector("metadata.name", "instance"),
+			GetAttrs: storage.DefaultNamespaceScopedAttr,
+		}}
+		require.NoError(t, storeB.GetList(ctx, sharedKey("b", ""), opts, list))
+		require.Len(t, list.Items, 1)
+		require.Equal(t, "b."+sharedGroup+"/v1", list.Items[0].GetAPIVersion())
+	})
+
+	t.Run("delete removes only the served instance", func(t *testing.T) {
+		require.NoError(t, storeA.Delete(ctx, sharedKey("a", "instance"), &unstructured.Unstructured{}, nil, nil, nil, storage.DeleteOptions{}))
+		require.Empty(t, sharedListNames(t, storeA, "a"))
+		require.Equal(t, []string{"instance"}, sharedListNames(t, storeB, "b"))
+	})
+}
+
 func newSharedTestClient(t *testing.T) resource.ResourceClient {
 	t.Helper()
 	db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
@@ -147,6 +224,14 @@ func newSharedTestClient(t *testing.T) resource.ResourceClient {
 }
 
 func newSharedTestStorage(t *testing.T, client resource.ResourceClient, prefix string) storage.Interface {
+	return newSharedTestStorageWith(t, client, prefix, &apistore.SharedStorage{
+		Group:      sharedGroup,
+		LabelKey:   sharedLabelKey,
+		LabelValue: prefix,
+	})
+}
+
+func newSharedTestStorageWith(t *testing.T, client resource.ResourceClient, prefix string, shared *apistore.SharedStorage) storage.Interface {
 	t.Helper()
 	gr := schema.GroupResource{Group: prefix + "." + sharedGroup, Resource: sharedResource}
 	config := storagebackend.NewDefaultConfig("", apitesting.TestCodec(codecs, examplev1.SchemeGroupVersion))
@@ -166,14 +251,7 @@ func newSharedTestStorage(t *testing.T, client resource.ResourceClient, prefix s
 		storage.DefaultNamespaceScopedAttr,
 		make(map[string]storage.IndexerFunc),
 		nil, nil,
-		apistore.StorageOptions{
-			Serializer: apistore.JSONSerializer(),
-			SharedStorage: &apistore.SharedStorage{
-				Group:      sharedGroup,
-				LabelKey:   sharedLabelKey,
-				LabelValue: prefix,
-			},
-		},
+		apistore.StorageOptions{SharedStorage: shared},
 	)
 	require.NoError(t, err)
 	t.Cleanup(destroy)

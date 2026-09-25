@@ -12,7 +12,6 @@ import (
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource/converter"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -24,8 +23,6 @@ import (
 type DataSourceMigrator interface {
 	MigrateDataSources(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error
 }
-
-var logger = log.New("storage.unified.datasource.migrator")
 
 type dataSourceMigrator struct {
 	getter      func(ctx context.Context, namespace string) ([]*datasourceV0.DataSource, error)

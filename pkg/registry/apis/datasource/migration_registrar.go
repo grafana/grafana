@@ -12,7 +12,7 @@ import (
 // Every datasource type is stored in the datasource.grafana.app collection, labeled with
 // its per-plugin group (see apistore.SharedStorage).
 func DataSourceMigration(dsMigrator migrator.DataSourceMigrator) migrations.MigrationDefinition {
-	gr := schema.GroupResource{Group: "datasource.grafana.app", Resource: "datasources"}
+	gr := schema.GroupResource{Group: datasourceV0.GROUP, Resource: "datasources"}
 
 	return migrations.MigrationDefinition{
 		ID:          "datasource",

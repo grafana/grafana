@@ -304,9 +304,6 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 				LabelKey:   datasourceV0.LabelKeyGroup,
 				LabelValue: datasourceV0.GroupLabelValue(ds.GroupResource().Group),
 			},
-
-			// Avoid using the codec serializer -- we have multiple GVKs registered to the same go type
-			Serializer: apistore.JSONSerializer(),
 		})
 		unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, ds, optsGetter)
 		if err != nil {

@@ -213,8 +213,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	obj.SetCreatedBy(createdBy)
 	obj.SetGeneration(1) // the first time we write
 
-	v.ref = s.ownerReference(obj)
-	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, nil, &v)
+	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, nil, s.ownerReference(obj), &v)
 	if err != nil {
 		return v, err
 	}
@@ -326,8 +325,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	// Make sure the deprecated internalID does not change
 	obj.SetDeprecatedInternalID(previous.GetDeprecatedInternalID()) // nolint:staticcheck
 
-	v.ref = s.ownerReference(obj)
-	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, previous, &v)
+	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, previous, s.ownerReference(obj), &v)
 	if err != nil {
 		return v, err
 	}

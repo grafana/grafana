@@ -67,6 +67,27 @@ func TestMapperRegistry_DatasourceSharedGroup(t *testing.T) {
 	}
 }
 
+// App plugin settings are stored as plugins.grafana.app/app/{pluginID}, so the
+// name resolves to the legacy plugins:id:{pluginID} scope.
+func TestMapperRegistry_AppSettings(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	mapping, ok := reg.Get("plugins.grafana.app", "app", "")
+	require.True(t, ok)
+	assert.Equal(t, "plugins:id:grafana-lokiexplore-app", mapping.Scope("grafana-lokiexplore-app"))
+
+	for verb, expected := range map[string]string{
+		utils.VerbGet:    "plugins.app:access",
+		utils.VerbList:   "plugins.app:access",
+		utils.VerbUpdate: "plugins:write",
+		utils.VerbDelete: "plugins:write",
+	} {
+		action, ok := mapping.Action(verb)
+		require.True(t, ok, "verb %q", verb)
+		assert.Equal(t, expected, action, "verb %q", verb)
+	}
+}
+
 func TestMapperRegistry_DatasourceCachingSubresource(t *testing.T) {
 	reg := NewMapperRegistry()
 

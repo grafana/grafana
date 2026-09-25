@@ -94,6 +94,7 @@ type StorageOptions struct {
 
 	// SharedStorage persists this resource in a collection shared with other API groups,
 	// for example every datasource type is stored under datasource.grafana.app.
+	// Unless Serializer is set, shared storage uses [JSONSerializer].
 	SharedStorage *SharedStorage
 
 	// Required to force unique constraints
@@ -280,10 +281,16 @@ func NewStorage(
 				return nil, err
 			}
 			k.Group = shared.Group
-			return k, nil
+			k.Name, err = shared.storedName(k.Name)
+			return k, err
+		}
+		// The codec cannot decode the shared group, which the scheme does not register
+		inner := opts.Serializer
+		if inner == nil {
+			inner = JSONSerializer()
 		}
 		s.serializer = &sharedSerializer{
-			inner:  s.serializer,
+			inner:  inner,
 			shared: *shared,
 			served: s.gr.Group,
 		}
@@ -496,7 +503,7 @@ func (s *Storage) Delete(
 			return err
 		}
 
-		if err = handleSecureValuesDelete(ctx, s.opts.SecureValues, meta); err != nil {
+		if err = handleSecureValuesDelete(ctx, s.opts.SecureValues, meta, s.ownerReference(meta)); err != nil {
 			logging.FromContext(ctx).Warn("failed to delete inline secure values", "err", err)
 		}
 
@@ -519,7 +526,9 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 	if err != nil {
 		return watch.NewEmptyWatch(), nil
 	}
-	s.addSharedLabel(req)
+	if err := s.restrictSharedList(req); err != nil {
+		return nil, err
+	}
 
 	cmd := &resourcepb.WatchRequest{
 		Since:               req.ResourceVersion,
@@ -616,7 +625,9 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	if err != nil {
 		return err
 	}
-	s.addSharedLabel(req)
+	if err := s.restrictSharedList(req); err != nil {
+		return err
+	}
 
 	rsp, err := s.store.List(ctx, req)
 	if err != nil {
