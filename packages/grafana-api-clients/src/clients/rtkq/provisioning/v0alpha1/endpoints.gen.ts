@@ -451,6 +451,17 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Repository'],
       }),
+      createRepositoryFiletree: build.mutation<CreateRepositoryFiletreeApiResponse, CreateRepositoryFiletreeApiArg>({
+        query: (queryArg) => ({
+          url: `/repositories/${queryArg.name}/filetree`,
+          method: 'POST',
+          body: queryArg.body,
+          params: {
+            ref: queryArg.ref,
+          },
+        }),
+        invalidatesTags: ['Repository'],
+      }),
       getRepositoryHistory: build.query<GetRepositoryHistoryApiResponse, GetRepositoryHistoryApiArg>({
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}/history`,
@@ -487,6 +498,10 @@ const injectedRtkApi = api
       getRepositoryRefs: build.query<GetRepositoryRefsApiResponse, GetRepositoryRefsApiArg>({
         query: (queryArg) => ({ url: `/repositories/${queryArg.name}/refs` }),
         providesTags: ['Repository'],
+      }),
+      createRepositoryReftree: build.mutation<CreateRepositoryReftreeApiResponse, CreateRepositoryReftreeApiArg>({
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/reftree`, method: 'POST', body: queryArg.body }),
+        invalidatesTags: ['Repository'],
       }),
       getRepositoryRenderWithPath: build.query<
         GetRepositoryRenderWithPathApiResponse,
@@ -1200,6 +1215,23 @@ export type DeleteRepositoryFilesWithPathApiArg = {
   /** path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -> 'c/d.json') or folder-to-folder (e.g., 'some/' -> 'new/') */
   originalPath?: string;
 };
+export type CreateRepositoryFiletreeApiResponse = /** status 200 OK */ FileList;
+export type CreateRepositoryFiletreeApiArg = {
+  /** name of the FileList */
+  name: string;
+  /** branch or commit hash */
+  ref?: string;
+  body: {
+    /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+    apiVersion?: string;
+    /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+    kind?: string;
+    metadata?: any;
+    secure?: any;
+    spec?: any;
+    status?: any;
+  };
+};
 export type GetRepositoryHistoryApiResponse = /** status 200 OK */ string;
 export type GetRepositoryHistoryApiArg = {
   /** name of the HistoryList */
@@ -1245,6 +1277,21 @@ export type GetRepositoryRefsApiResponse = /** status 200 OK */ {
 export type GetRepositoryRefsApiArg = {
   /** name of the RefList */
   name: string;
+};
+export type CreateRepositoryReftreeApiResponse = /** status 200 OK */ RefList;
+export type CreateRepositoryReftreeApiArg = {
+  /** name of the RefList */
+  name: string;
+  body: {
+    /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+    apiVersion?: string;
+    /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+    kind?: string;
+    metadata?: any;
+    secure?: any;
+    spec?: any;
+    status?: any;
+  };
 };
 export type GetRepositoryRenderWithPathApiResponse = unknown;
 export type GetRepositoryRenderWithPathApiArg = {
@@ -2224,6 +2271,39 @@ export type ResourceWrapper = {
   /** Typed links for this file (only supported by external systems, github etc) */
   urls?: RepositoryUrLs;
 };
+export type FileItem = {
+  author?: string;
+  hash?: string;
+  modified?: number;
+  path: string;
+  size?: number;
+};
+export type FileList = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  items: FileItem[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata?: ListMeta;
+};
+export type RefItem = {
+  /** The SHA hash of the commit this ref points to */
+  hash?: string;
+  /** The name of the reference (branch or tag) */
+  name: string;
+  /** Whether this ref is protected (e.g. branch protection rules) */
+  protected?: boolean;
+  /** The URL to the reference (branch or tag) */
+  refURL?: string;
+};
+export type RefList = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  items: RefItem[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata?: ListMeta;
+};
 export type ResourceListItem = {
   folder?: string;
   group: string;
@@ -2403,6 +2483,7 @@ export const {
   useReplaceRepositoryFilesWithPathMutation,
   useCreateRepositoryFilesWithPathMutation,
   useDeleteRepositoryFilesWithPathMutation,
+  useCreateRepositoryFiletreeMutation,
   useGetRepositoryHistoryQuery,
   useLazyGetRepositoryHistoryQuery,
   useGetRepositoryHistoryWithPathQuery,
@@ -2414,6 +2495,7 @@ export const {
   useLazyGetRepositoryJobsWithPathQuery,
   useGetRepositoryRefsQuery,
   useLazyGetRepositoryRefsQuery,
+  useCreateRepositoryReftreeMutation,
   useGetRepositoryRenderWithPathQuery,
   useLazyGetRepositoryRenderWithPathQuery,
   useGetRepositoryResourcesQuery,

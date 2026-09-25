@@ -626,7 +626,11 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 			Namespace: a.GetNamespace(),
 		}, ""))
 
-	// Read-only subresources: resources, history, status (admin only).
+	// Read-only subresources: resources, history, status, filetree, reftree (admin only).
+	// filetree/reftree list a not-yet-created repository's files/refs from a POST body
+	// (see buildEphemeralRepository) - same admin-only rationale as the others, scoped by
+	// name even though the name is a placeholder ("new") until the repository actually
+	// exists.
 	//
 	// These expose repository management/inspection views and must be admin-only. We gate
 	// on repositories:write (VerbUpdate) - an admin-only action - rather than
@@ -636,7 +640,7 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 	// can manage it"). We keep the repositories resource with the repository Name rather
 	// than proxying through an unrelated resource (e.g. stats), so this remains correct if
 	// access is later scoped to individual repositories.
-	case "resources", "history", "status":
+	case "resources", "history", "status", "filetree", "reftree":
 		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
 			Verb:      apiutils.VerbUpdate,
 			Group:     provisioning.GROUP,
@@ -942,6 +946,8 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	filesAccess := auth.NewVerbAwareAccessChecker(b.accessWithViewer, b.accessWithEditor)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = WithTimeout(NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.folderMetadataEnabled, b.maxFileSize), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = WithTimeout(NewRefsConnector(b), 30*time.Second)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("filetree")] = WithTimeout(NewFiletreeConnector(b), 30*time.Second)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("reftree")] = WithTimeout(NewReftreeConnector(b), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = WithTimeout(NewListConnector(b, b.resourceLister), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = WithTimeout(NewHistorySubresource(b), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = WithTimeout(NewJobsConnector(b, b, b, jobHistory, b.access, b.clients, b.folderMetadataEnabled, performanceEnabled), 30*time.Second)
@@ -1343,6 +1349,30 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 		}
 	}
 
+	// filetree/reftree take the same ephemeral Repository body as /test (see
+	// buildEphemeralRepository) - a connect-style subresource's request body isn't
+	// otherwise inferred from the Go handler, so it must be declared here explicitly,
+	// same as /test above. Unlike /test, the body is required: buildEphemeralRepository
+	// always reads and unmarshals it (there's no existing repository to fall back to).
+	for _, path := range []string{"/filetree", "/reftree"} {
+		sub = oas.Paths.Paths[repoprefix+path]
+		if sub != nil {
+			repoSchema := defs[compBase+"Repository"].Schema
+			sub.Post.RequestBody = &spec3.RequestBody{
+				RequestBodyProps: spec3.RequestBodyProps{
+					Required: true,
+					Content: map[string]*spec3.MediaType{
+						"application/json": {
+							MediaTypeProps: spec3.MediaTypeProps{
+								Schema: &repoSchema,
+							},
+						},
+					},
+				},
+			}
+		}
+	}
+
 	ref := &spec3.Parameter{
 		ParameterProps: spec3.ParameterProps{
 			Name:    "ref",
@@ -1383,6 +1413,13 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 	if sub != nil {
 		sub.Get.Description = "Get the history of a path"
 		sub.Get.Parameters = []*spec3.Parameter{ref}
+	}
+
+	// filetree reads the tree at a specific ref (see filetreeConnector.Connect), same
+	// query parameter reftree does not need since it always lists every ref.
+	sub = oas.Paths.Paths[repoprefix+"/filetree"]
+	if sub != nil {
+		sub.Post.Parameters = []*spec3.Parameter{ref}
 	}
 
 	// Show refs endpoint documentation
@@ -1824,6 +1861,10 @@ func (b *APIBuilder) GetConnectionSpec(ctx context.Context, name string) (*provi
 
 func (b *APIBuilder) GetRepoFactory() repository.Factory {
 	return b.repoFactory
+}
+
+func (b *APIBuilder) GetRepoValidator() repository.Validator {
+	return b.repoValidator
 }
 
 func (b *APIBuilder) GetHealthyRepository(ctx context.Context, name string) (repository.Repository, error) {

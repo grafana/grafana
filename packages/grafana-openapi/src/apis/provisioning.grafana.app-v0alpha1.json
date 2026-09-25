@@ -3060,6 +3060,99 @@
         }
       ]
     },
+    "/repositories/{name}/filetree": {
+      "post": {
+        "tags": ["Repository"],
+        "description": "connect POST requests to filetree of Repository",
+        "operationId": "createRepositoryFiletree",
+        "parameters": [
+          {
+            "name": "ref",
+            "in": "query",
+            "description": "branch or commit hash",
+            "schema": {
+              "type": "string"
+            },
+            "examples": {
+              "": {
+                "summary": "The default"
+              },
+              "branch": {
+                "summary": "Select branch",
+                "value": "my-branch"
+              },
+              "commit": {
+                "summary": "Commit hash (or prefix)",
+                "value": "7f7cc2153"
+              }
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "When this code is changed, make sure to update the code generation. As of writing, this can be done via the hack dir in the root of the repo: ./hack/update-codegen.sh provisioning If you've opened the generated files in this dir at some point in VSCode, you may also have to re-open them to clear errors.",
+                "type": "object",
+                "properties": {
+                  "apiVersion": {
+                    "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+                    "type": "string"
+                  },
+                  "kind": {
+                    "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+                    "type": "string"
+                  },
+                  "metadata": {
+                    "default": {}
+                  },
+                  "secure": {
+                    "default": {}
+                  },
+                  "spec": {
+                    "default": {}
+                  },
+                  "status": {
+                    "default": {}
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileList"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v0alpha1",
+          "kind": "FileList"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the FileList",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
     "/repositories/{name}/history": {
       "get": {
         "tags": ["Repository"],
@@ -3360,6 +3453,76 @@
                       "default": {}
                     }
                   }
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v0alpha1",
+          "kind": "RefList"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the RefList",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/repositories/{name}/reftree": {
+      "post": {
+        "tags": ["Repository"],
+        "description": "connect POST requests to reftree of Repository",
+        "operationId": "createRepositoryReftree",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "When this code is changed, make sure to update the code generation. As of writing, this can be done via the hack dir in the root of the repo: ./hack/update-codegen.sh provisioning If you've opened the generated files in this dir at some point in VSCode, you may also have to re-open them to clear errors.",
+                "type": "object",
+                "properties": {
+                  "apiVersion": {
+                    "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+                    "type": "string"
+                  },
+                  "kind": {
+                    "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+                    "type": "string"
+                  },
+                  "metadata": {
+                    "default": {}
+                  },
+                  "secure": {
+                    "default": {}
+                  },
+                  "spec": {
+                    "default": {}
+                  },
+                  "status": {
+                    "default": {}
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefList"
                 }
               }
             }
@@ -4513,7 +4676,9 @@
           },
           "items": {
             "type": "array",
-            "items": {},
+            "items": {
+              "$ref": "#/components/schemas/FileItem"
+            },
             "x-kubernetes-list-type": "atomic"
           },
           "kind": {
@@ -4521,9 +4686,21 @@
             "type": "string"
           },
           "metadata": {
-            "default": {}
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ListMeta"
+              }
+            ]
           }
-        }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "FileList",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "FixFolderMetadataJobOptions": {
         "type": "object",
