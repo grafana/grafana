@@ -12,7 +12,6 @@ import (
 	"net/url"
 	"os"
 	"slices"
-	"sync/atomic"
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/dskit/services"
@@ -196,11 +195,12 @@ type cloudLoader struct {
 	dialer                     *transport.DialHolder
 	coreGroupsWithoutManifests map[string]metav1.APIGroup
 
-	// clients builds the RouteBackend/AppManifest informers that feed
-	// Watcher(). nil when appmanifest_apiserver_url is unset.
+	// The informers wake the router through Watcher(), and once synced their
+	// caches replace listing from the remote apiserver on every Load. nil when
+	// appmanifest_apiserver_url is unset.
 	clients    *k8s.ClientRegistry
-	rbInformer operator.Informer
-	amInformer operator.Informer
+	rbInformer *operator.KubernetesBasedInformer
+	amInformer *operator.KubernetesBasedInformer
 
 	// aggregateTargets are the fixed upstream apiservers (baas_apiserver,
 	// cloud_app_platform_apiserver) this loader actively polls for API
@@ -213,8 +213,7 @@ type cloudLoader struct {
 	pluginsTarget *pluginManifestsTarget
 
 	// Until all requests are moved to MT, we can fallback to ST instances
-	singleTenantFallback     *singleTenantFallback
-	lastSingleTenantBackends atomic.Pointer[[]Backend]
+	singleTenantFallback *singleTenantFallback
 }
 
 type tlsCacheKey struct {
@@ -251,31 +250,22 @@ func newCloudLoader(clients *k8s.ClientRegistry, aggregateTargets []*aggregateTa
 
 		l.routeBackendClient = routeBackendCli
 		l.appManifestClient = appManifestCli
+
+		// Built here, not when the service starts, because Load reads these
+		// fields from the reconcile goroutine. Construction makes no requests.
+		watcher := l.Watcher()
+		l.rbInformer, err = newInformer(v1alpha2.RouteBackendKind(), clients, watcher)
+		if err != nil {
+			return nil, fmt.Errorf("route backend informer: %w", err)
+		}
+		l.amInformer, err = newInformer(v1alpha2.AppManifestKind(), clients, watcher)
+		if err != nil {
+			return nil, fmt.Errorf("app manifest informer: %w", err)
+		}
 	}
 
-	l.BasicService = services.NewBasicService(l.starting, l.running, nil).WithName("cloud-apps-routes-loader")
+	l.BasicService = services.NewBasicService(nil, l.running, nil).WithName("cloud-apps-routes-loader")
 	return l, nil
-}
-
-// starting builds the RouteBackend and AppManifest informers, both feeding
-// Watcher() so either kind wakes the router. Skipped when l.clients is nil.
-func (l *cloudLoader) starting(context.Context) error {
-	if l.clients == nil {
-		return nil
-	}
-
-	watcher := l.Watcher()
-
-	rb, err := newInformer(v1alpha2.RouteBackendKind(), l.clients, watcher)
-	if err != nil {
-		return fmt.Errorf("route backend informer: %w", err)
-	}
-	am, err := newInformer(v1alpha2.AppManifestKind(), l.clients, watcher)
-	if err != nil {
-		return fmt.Errorf("app manifest informer: %w", err)
-	}
-	l.rbInformer, l.amInformer = rb, am
-	return nil
 }
 
 // running drives the informers and poll loops until ctx is cancelled. If any
@@ -301,7 +291,7 @@ func (l *cloudLoader) running(ctx context.Context) error {
 	}
 	if l.singleTenantFallback != nil {
 		g.Go(func() error {
-			l.singleTenantFallback.notifyDiscoveryChanges(gctx, l.dirty)
+			l.singleTenantFallback.run(gctx, l.dirty)
 			return nil
 		})
 	}
@@ -313,10 +303,9 @@ func (l *cloudLoader) running(ctx context.Context) error {
 	return nil
 }
 
-// newInformer builds a kind's informer against clients and attaches watcher
-// as its sole event handler -- the informers exist only as change-detectors
-// (see Watcher()), so no other handler is needed.
-func newInformer(kind resource.Kind, clients *k8s.ClientRegistry, watcher operator.ResourceWatcher) (operator.Informer, error) {
+// newInformer builds a kind's informer against clients, with watcher as its
+// only event handler.
+func newInformer(kind resource.Kind, clients *k8s.ClientRegistry, watcher operator.ResourceWatcher) (*operator.KubernetesBasedInformer, error) {
 	client, err := clients.ClientFor(kind)
 	if err != nil {
 		return nil, err
@@ -420,15 +409,9 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 
 	// Lowest priority first -- the MT backends will replace the ST flavors
 	if l.singleTenantFallback != nil {
-		backends, err := l.singleTenantFallback.Load(ctx)
+		backends, err := l.singleTenantFallback.Backends()
 		if err != nil {
 			discoveryErr = fmt.Errorf("single-tenant discovery: %w", err)
-			slog.Warn("router: single-tenant discovery failed, keeping last-known-good routes", "err", err)
-			if previous := l.lastSingleTenantBackends.Load(); previous != nil {
-				backends = *previous
-			}
-		} else {
-			l.lastSingleTenantBackends.Store(&backends)
 		}
 		for _, b := range backends {
 			lookup[b.Group().Name] = b
@@ -444,16 +427,11 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 
 	// Explicitly configured routes from manifest API server
 	if l.routeBackendClient != nil {
-		backends, err := l.routeBackendClient.ListAll(ctx, "", resource.ListOptions{})
+		manifests, backends, err := l.routeResources(ctx)
 		if err != nil {
 			return nil, err
 		}
-
-		manifests, err := l.appManifestClient.ListAll(ctx, "", resource.ListOptions{})
-		if err != nil {
-			return nil, err
-		}
-		for _, b := range l.combineByName(manifests.Items, backends.Items) {
+		for _, b := range l.combineByName(manifests, backends) {
 			lookup[b.Group().Name] = b
 		}
 	}
@@ -475,6 +453,80 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 	})
 
 	return backends, nil
+}
+
+// routeResources returns the AppManifests and RouteBackends from the informer
+// caches once both have synced. Before then it lists them from the remote
+// apiserver, so the first reconciles are correct without waiting for a sync.
+func (l *cloudLoader) routeResources(ctx context.Context) ([]v1alpha2.AppManifest, []v1alpha2.RouteBackend, error) {
+	if l.rbInformer != nil && l.amInformer != nil &&
+		l.rbInformer.SharedIndexInformer.HasSynced() && l.amInformer.SharedIndexInformer.HasSynced() {
+		manifests, err := cachedItems[v1alpha2.AppManifest](l.amInformer, v1alpha2.AppManifestKind())
+		if err != nil {
+			return nil, nil, err
+		}
+		backends, err := cachedItems[v1alpha2.RouteBackend](l.rbInformer, v1alpha2.RouteBackendKind())
+		if err != nil {
+			return nil, nil, err
+		}
+		return manifests, backends, nil
+	}
+
+	backends, err := l.routeBackendClient.ListAll(ctx, "", resource.ListOptions{})
+	if err != nil {
+		return nil, nil, err
+	}
+	manifests, err := l.appManifestClient.ListAll(ctx, "", resource.ListOptions{})
+	if err != nil {
+		return nil, nil, err
+	}
+	return manifests.Items, backends.Items, nil
+}
+
+// cachedItems copies an informer's cached objects, sorted by name so that
+// combineByName resolves duplicates the same way a List would. Objects from
+// the initial list are typed, but those from the watch are untyped wrappers,
+// so they are decoded the same way the SDK decodes informer events.
+func cachedItems[T any, PT interface {
+	*T
+	resource.Object
+}](inf *operator.KubernetesBasedInformer, kind resource.Kind) ([]T, error) {
+	objs := inf.SharedIndexInformer.GetStore().List()
+	items := make([]PT, 0, len(objs))
+	for _, obj := range objs {
+		item, err := typedObject[PT](obj, kind)
+		if err != nil {
+			return nil, fmt.Errorf("%s informer cache: %w", kind.Kind(), err)
+		}
+		items = append(items, item)
+	}
+	slices.SortFunc(items, func(a, b PT) int {
+		return cmp.Or(cmp.Compare(a.GetNamespace(), b.GetNamespace()), cmp.Compare(a.GetName(), b.GetName()))
+	})
+	out := make([]T, len(items))
+	for i, item := range items {
+		out[i] = *item
+	}
+	return out, nil
+}
+
+func typedObject[PT resource.Object](obj any, kind resource.Kind) (PT, error) {
+	var zero PT
+	if w, ok := obj.(operator.ResourceObjectWrapper); ok {
+		obj = w.ResourceObject()
+	}
+	if c, ok := obj.(operator.ConvertableIntoResourceObject); ok {
+		into := kind.ZeroValue()
+		if err := c.Into(into, kind.Codec(resource.KindEncodingJSON)); err != nil {
+			return zero, err
+		}
+		obj = into
+	}
+	typed, ok := obj.(PT)
+	if !ok {
+		return zero, fmt.Errorf("unexpected %T", obj)
+	}
+	return typed, nil
 }
 
 func (l *cloudLoader) SingleTenantFallback() http.Handler {

@@ -121,6 +121,7 @@ func TestSingleTenantBreakersIsolateDestinations(t *testing.T) {
 				return &http.Response{StatusCode: http.StatusNoContent, Header: make(http.Header), Body: http.NoBody}, nil
 			})
 			router := NewGrafanaRouter(st)
+			pollDiscovery(t, st)
 			require.NoError(t, router.reconcile(t.Context()))
 			discoveryFailed = true
 			request := func(path string) int {

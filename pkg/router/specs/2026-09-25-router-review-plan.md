@@ -1,6 +1,6 @@
 # Router: Pre-rollout review and improvement plan
 
-Status: in progress (C1–C4 done, not yet in a PR)
+Status: in progress (C1–C4 in #133537, P4 in #133547, A3 in progress)
 Package: `pkg/router`
 
 ## Context
@@ -73,7 +73,7 @@ Each item has a stable ID. Tick it here when it lands, and note the PR number.
     - sets the identity from the requester;
     - calls `pr.SetXForwarded()`, so backends keep the client IP for audit logs.
 
-- [ ] **P4. Harden the ST fallback against grafana.com lookup floods.**
+- [x] **P4. Harden the ST fallback against grafana.com lookup floods.**
   - **Problem:**
     - For any unrouted group, a path of the form `/apis/<g>/<v>/namespaces/stacks-N/...` triggers a
       grafana.com lookup of stack N. Nothing checks that the caller belongs to that namespace first.
@@ -158,7 +158,7 @@ Each item has a stable ID. Tick it here when it lands, and note the PR number.
   - This also removes the either/or in `ProvideRoutesLoader` (`loader_factory.go`), which today
     selects cloud *or* local plugins *or* dummy and can't combine them.
 
-- [ ] **A3. Stop the redundant load on the control-plane API server.**
+- [x] **A3. Stop the redundant load on the control-plane API server.**
   - **Problem:** the ST fallback's ticker wakes the router every 30s whether or not anything changed.
     Each wake runs `cloudLoader.Load`, which calls `ListAll` on both RouteBackends and AppManifests
     against the remote API server, even though informers for both kinds are already running.
