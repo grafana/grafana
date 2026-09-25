@@ -61,9 +61,17 @@ export function toDataQueryResponse(
   res:
     | { data: BackendDataSourceResponse | undefined }
     | FetchResponse<BackendDataSourceResponse | undefined>
-    | DataQueryError,
+    | DataQueryError
+    | Error,
   queries?: DataQuery[]
 ): DataQueryResponse {
+  // A thrown Error has no HTTP shape, so the checks below would let it fall through as an empty
+  // successful response and hide the failure behind "No data". This happens, for example, when the
+  // browser rejects response.json() because the body exceeds its maximum string length.
+  if (res instanceof Error) {
+    return { data: [], state: LoadingState.Error, error: toDataQueryError(res) };
+  }
+
   const rsp: DataQueryResponse = { data: [], state: LoadingState.Done };
 
   const traceId = 'traceId' in res ? res.traceId : undefined;
