@@ -233,9 +233,10 @@ describe('VariablesEditView', () => {
       variableView = result.variableView;
     });
 
-    it('should not show Provisioned by data source section when no variables have origin', () => {
-      const { queryByText } = render(<variableView.Component model={variableView} />);
+    it('should not show Provisioned by data source section when no variables have origin', async () => {
+      const { findByText, queryByText } = render(<variableView.Component model={variableView} />);
 
+      expect(await findByText('customVar')).toBeInTheDocument();
       expect(queryByText('Provisioned by data source')).not.toBeInTheDocument();
     });
 
@@ -251,9 +252,9 @@ describe('VariablesEditView', () => {
       });
       variableView.getVariableSet().setState({ variables: [...variables, originVariable] });
 
-      const { getByText } = render(<variableView.Component model={variableView} />);
+      const { findByText } = render(<variableView.Component model={variableView} />);
 
-      expect(getByText('Provisioned by data source')).toBeInTheDocument();
+      expect(await findByText('Provisioned by data source')).toBeInTheDocument();
     });
   });
 

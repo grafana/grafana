@@ -1,15 +1,14 @@
 import saveAs from 'file-saver';
 import yaml from 'js-yaml';
 import { cloneDeep } from 'lodash';
-import { useAsync } from 'react-use';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import { lazy, Suspense } from 'react';
 
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { Button, ClipboardButton, CodeEditor, Modal } from '@grafana/ui';
+import { Spinner } from '@grafana/ui';
 import { AnnoKeyFolder, AnnoKeyFolderTitle, AnnoKeyFolderUrl, type ObjectMeta } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { ExportFormat } from 'app/features/dashboard/api/types';
@@ -23,8 +22,19 @@ import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor, hasLibraryPanelsInV1Dashboard } from '../utils/utils';
 
-import { ResourceExport } from './ExportButton/ResourceExport';
 import { type SceneShareTabState, type ShareView } from './types';
+
+const ShareExportTabRenderer = lazy(() =>
+  import('./ShareRenderers').then((m) => ({ default: m.ShareExportTabRenderer }))
+);
+
+function LazyShareExportTabRenderer(props: SceneComponentProps<ShareExportTab>) {
+  return (
+    <Suspense fallback={<Spinner />}>
+      <ShareExportTabRenderer {...props} />
+    </Suspense>
+  );
+}
 
 export interface ExportableResource {
   apiVersion: string;
@@ -42,7 +52,7 @@ export interface ShareExportTabState extends SceneShareTabState {
 
 export class ShareExportTab extends SceneObjectBase<ShareExportTabState> implements ShareView {
   public tabId = shareDashboardType.export;
-  static Component = ShareExportTabRenderer;
+  static Component = LazyShareExportTabRenderer;
 
   constructor(state: Omit<ShareExportTabState, 'panelRef'>) {
     super({
@@ -309,115 +319,4 @@ function stripMetadataForExport(metadata: ObjectMeta, isSharingExternally: boole
   }
 
   return result;
-}
-
-function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) {
-  const { isSharingExternally, isViewingJSON, modalRef, exportFormat, isViewingYAML } = model.useState();
-
-  const dashboardJson = useAsync(async () => {
-    return model.getExportableDashboardJson();
-  }, [isViewingJSON, isSharingExternally, exportFormat]);
-
-  const stringifiedDashboardJson = JSON.stringify(dashboardJson.value?.json, null, 2);
-  const stringifiedDashboardYAML = yaml.dump(dashboardJson.value?.json, {
-    skipInvalid: true,
-  });
-  const stringifiedDashboard = isViewingYAML ? stringifiedDashboardYAML : stringifiedDashboardJson;
-
-  return (
-    <>
-      {!isViewingJSON && (
-        <>
-          <p>
-            <Trans i18nKey="share-modal.export.info-text">Export this dashboard.</Trans>
-          </p>
-          <ResourceExport
-            dashboardJson={dashboardJson}
-            isSharingExternally={isSharingExternally ?? false}
-            exportFormat={
-              exportFormat ??
-              (config.featureToggles.dashboardNewLayouts ? ExportFormat.V2Resource : ExportFormat.Classic)
-            }
-            isViewingYAML={isViewingYAML ?? false}
-            onExportFormatChange={model.onExportFormatChange}
-            onShareExternallyChange={model.onShareExternallyChange}
-            onViewYAML={model.onViewYAML}
-          />
-
-          <Modal.ButtonRow>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                modalRef?.resolve().onDismiss();
-              }}
-              fill="outline"
-            >
-              <Trans i18nKey="share-modal.export.cancel-button">Cancel</Trans>
-            </Button>
-            {isViewingYAML ? (
-              <Button variant="secondary" icon="brackets-curly" onClick={model.onViewJSON}>
-                <Trans i18nKey="share-modal.export.view-button-yaml">View YAML</Trans>
-              </Button>
-            ) : (
-              <Button variant="secondary" icon="brackets-curly" onClick={model.onViewJSON}>
-                <Trans i18nKey="share-modal.export.view-button">View JSON</Trans>
-              </Button>
-            )}
-            <Button variant="primary" icon="save" onClick={() => model.onSaveAsFile()}>
-              <Trans i18nKey="share-modal.export.save-button">Save to file</Trans>
-            </Button>
-          </Modal.ButtonRow>
-        </>
-      )}
-      {isViewingJSON && (
-        <>
-          <AutoSizer disableHeight>
-            {({ width }) => {
-              if (dashboardJson.value) {
-                return (
-                  <CodeEditor
-                    value={stringifiedDashboard}
-                    showLineNumbers={true}
-                    language={isViewingYAML ? 'yaml' : 'json'}
-                    showMiniMap={false}
-                    height="500px"
-                    width={width}
-                  />
-                );
-              }
-
-              if (dashboardJson.loading) {
-                return (
-                  <div>
-                    {' '}
-                    <Trans i18nKey="share-modal.export.loading">Loading...</Trans>
-                  </div>
-                );
-              }
-
-              return null;
-            }}
-          </AutoSizer>
-
-          <Modal.ButtonRow>
-            <Button variant="secondary" fill="outline" onClick={model.onViewJSON} icon="arrow-left">
-              <Trans i18nKey="share-modal.export.back-button">Back to export config</Trans>
-            </Button>
-            <ClipboardButton
-              variant="secondary"
-              icon="copy"
-              disabled={dashboardJson.loading}
-              getText={() => stringifiedDashboard ?? ''}
-              onClipboardCopy={model.onClipboardCopy}
-            >
-              <Trans i18nKey="share-modal.view-json.copy-button">Copy to Clipboard</Trans>
-            </ClipboardButton>
-            <Button variant="primary" icon="save" disabled={dashboardJson.loading} onClick={() => model.onSaveAsFile()}>
-              <Trans i18nKey="share-modal.export.save-button">Save to file</Trans>
-            </Button>
-          </Modal.ButtonRow>
-        </>
-      )}
-    </>
-  );
 }

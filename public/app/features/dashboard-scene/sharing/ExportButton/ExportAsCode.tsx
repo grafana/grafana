@@ -1,27 +1,25 @@
-import { css } from '@emotion/css';
-import yaml from 'js-yaml';
-import { useAsync } from 'react-use';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import { lazy, Suspense } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { type SceneComponentProps } from '@grafana/scenes';
-import { Button, ClipboardButton, Spinner, Stack, useStyles2 } from '@grafana/ui';
-import { CodeMirrorEditor } from '@grafana/ui/unstable';
-import { createSuccessNotification } from 'app/core/copy/appNotification';
-import { notifyApp } from 'app/core/reducers/appNotification';
-import { ExportFormat } from 'app/features/dashboard/api/types';
-import { dispatch } from 'app/store/store';
+import { Spinner } from '@grafana/ui';
 
 import { ShareExportTab } from '../ShareExportTab';
 
-import { ResourceExport } from './ResourceExport';
+const ExportAsCodeRenderer = lazy(() =>
+  import('../ShareRenderers').then((m) => ({ default: m.ExportAsCodeRenderer }))
+);
 
-const selector = e2eSelectors.pages.ExportDashboardDrawer.ExportAsJson;
+function LazyExportAsCodeRenderer(props: SceneComponentProps<ExportAsCode>) {
+  return (
+    <Suspense fallback={<Spinner />}>
+      <ExportAsCodeRenderer {...props} />
+    </Suspense>
+  );
+}
 
 export class ExportAsCode extends ShareExportTab {
-  static Component = ExportAsCodeRenderer;
+  static Component = LazyExportAsCodeRenderer;
 
   public getTabLabel(): string {
     return t('export.json.title', 'Export dashboard');
@@ -30,107 +28,4 @@ export class ExportAsCode extends ShareExportTab {
   public getSubtitle(): string | undefined {
     return t('export.json.info-text', 'Copy or download a file containing the definition of your dashboard');
   }
-}
-
-function ExportAsCodeRenderer({ model }: SceneComponentProps<ExportAsCode>) {
-  const styles = useStyles2(getStyles);
-  const { isSharingExternally, isViewingYAML, exportFormat } = model.useState();
-
-  const dashboardJson = useAsync(async () => {
-    const json = await model.getExportableDashboardJson();
-
-    return json;
-  }, [isSharingExternally, exportFormat]);
-
-  const stringifiedDashboardJson = JSON.stringify(dashboardJson.value?.json, null, 2);
-  const stringifiedDashboardYAML = yaml.dump(dashboardJson.value?.json, {
-    skipInvalid: true,
-  });
-  const stringifiedDashboard = isViewingYAML ? stringifiedDashboardYAML : stringifiedDashboardJson;
-
-  const onClickDownload = async () => {
-    await model.onSaveAsFile();
-    const message = t('export.json.download-successful_toast_message', 'Your JSON has been downloaded');
-    dispatch(notifyApp(createSuccessNotification(message)));
-  };
-
-  return (
-    <div data-testid={selector.container} className={styles.container}>
-      <ResourceExport
-        dashboardJson={dashboardJson}
-        isSharingExternally={isSharingExternally ?? false}
-        exportFormat={exportFormat ?? ExportFormat.Classic}
-        isViewingYAML={isViewingYAML ?? false}
-        onExportFormatChange={model.onExportFormatChange}
-        onShareExternallyChange={model.onShareExternallyChange}
-        onViewYAML={model.onViewYAML}
-      />
-
-      <div className={styles.codeEditorBox}>
-        <AutoSizer data-testid={selector.codeEditor} disableWidth>
-          {({ height }) => {
-            if (stringifiedDashboard) {
-              return (
-                <CodeMirrorEditor
-                  value={stringifiedDashboard}
-                  language={isViewingYAML ? 'yaml' : 'json'}
-                  height={`${height}px`}
-                  aria-label={t('export.json.dashboard-definition', 'Dashboard definition')}
-                  onChange={() => {}}
-                  readOnly
-                />
-              );
-            }
-
-            return dashboardJson.loading && <Spinner />;
-          }}
-        </AutoSizer>
-      </div>
-      <div className={styles.buttonsContainer}>
-        <Stack gap={1} flex={1} direction={{ xs: 'column', sm: 'row' }}>
-          <Button
-            data-testid={selector.saveToFileButton}
-            variant="primary"
-            icon="download-alt"
-            onClick={onClickDownload}
-          >
-            <Trans i18nKey="export.json.download-button">Download file</Trans>
-          </Button>
-          <ClipboardButton
-            data-testid={selector.copyToClipboardButton}
-            variant="secondary"
-            icon="copy"
-            disabled={dashboardJson.loading}
-            getText={() => stringifiedDashboard ?? ''}
-            onClipboardCopy={model.onClipboardCopy}
-          >
-            <Trans i18nKey="export.json.copy-button">Copy to clipboard</Trans>
-          </ClipboardButton>
-          <Button
-            data-testid={selector.cancelButton}
-            variant="secondary"
-            onClick={model.useState().onDismiss}
-            fill="outline"
-          >
-            <Trans i18nKey="export.json.cancel-button">Cancel</Trans>
-          </Button>
-        </Stack>
-      </div>
-    </div>
-  );
-}
-
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    container: css({
-      height: '100%',
-    }),
-    codeEditorBox: css({
-      margin: `${theme.spacing(2, 0)}`,
-      height: '75%',
-    }),
-    buttonsContainer: css({
-      paddingBottom: theme.spacing(2),
-    }),
-  };
 }

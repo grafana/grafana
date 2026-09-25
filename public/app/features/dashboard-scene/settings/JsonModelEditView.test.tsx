@@ -182,7 +182,7 @@ describe('JsonModelEditView save failures', () => {
       view.setState({ jsonText: view.getJsonText() });
       const { user } = render(<view.Component model={view} />);
 
-      await user.click(screen.getByRole('button', { name: 'Save changes' }));
+      await user.click(await screen.findByRole('button', { name: 'Save changes' }));
 
       expect(await screen.findByText(expectedTitle)).toBeInTheDocument();
       expect(await screen.findByText(expectedMessage)).toBeInTheDocument();

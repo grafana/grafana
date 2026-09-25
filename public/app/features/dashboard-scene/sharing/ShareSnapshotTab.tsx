@@ -1,8 +1,7 @@
-import useAsyncFn from 'react-use/lib/useAsyncFn';
+import { lazy, Suspense } from 'react';
 
 import { formattedValueToString, getValueFormat, store, type SelectableValue } from '@grafana/data';
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import {
   type SceneComponentProps,
   sceneGraph,
@@ -11,7 +10,7 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type Dashboard } from '@grafana/schema';
-import { Button, ClipboardButton, Field, Input, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
+import { Spinner } from '@grafana/ui';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
@@ -29,7 +28,17 @@ import { DashboardInteractions } from '../utils/interactions';
 
 import { type SceneShareTabState, type ShareView } from './types';
 
-const selectors = e2eSelectors.pages.ShareDashboardModal.SnapshotScene;
+const ShareSnapshotTabRenderer = lazy(() =>
+  import('./ShareRenderers').then((m) => ({ default: m.ShareSnapshotTabRenderer }))
+);
+
+function LazyShareSnapshotTabRenderer(props: SceneComponentProps<ShareSnapshotTab>) {
+  return (
+    <Suspense fallback={<Spinner />}>
+      <ShareSnapshotTabRenderer {...props} />
+    </Suspense>
+  );
+}
 
 export const getExpireOptions = () => {
   const DEFAULT_EXPIRE_OPTION: SelectableValue<number> = {
@@ -128,7 +137,7 @@ interface DashboardV2SpecWithUid extends DashboardV2Spec {
 
 export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> implements ShareView {
   public tabId = shareDashboardType.snapshot;
-  static Component = ShareSnapshotTabRenderer;
+  static Component = LazyShareSnapshotTabRenderer;
 
   // Overridable so the size guard can be exercised without building a payload this large
   protected maxPayloadSizeBytes = MAX_SNAPSHOT_PAYLOAD_BYTES;
@@ -264,133 +273,4 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> imp
     );
     return response;
   };
-}
-
-function ShareSnapshotTabRenderer({ model }: SceneComponentProps<ShareSnapshotTab>) {
-  const { snapshotName, selectedExpireOption, modalRef, snapshotSharingOptions } = model.useState();
-
-  const [snapshotResult, createSnapshot] = useAsyncFn(async (external = false) => {
-    return model.onSnapshotCreate(external);
-  });
-
-  const [deleteSnapshotResult, deleteSnapshot] = useAsyncFn(async (key: string) => {
-    return await getDashboardSnapshotSrv().deleteSnapshot(key);
-  });
-
-  // If snapshot has been deleted - show message and allow to close modal
-  if (deleteSnapshotResult.value) {
-    return (
-      <Trans i18nKey="share-modal.snapshot.deleted-message">
-        The snapshot has been deleted. If you have already accessed it once, then it might take up to an hour before
-        before it is removed from browser caches or CDN caches.
-      </Trans>
-    );
-  }
-
-  return (
-    <>
-      {/* Before snapshot has been created show configuration  */}
-      {!Boolean(snapshotResult.value) && (
-        <>
-          <div>
-            <p>
-              <Trans i18nKey="share-modal.snapshot.info-text-1">
-                A snapshot is an instant way to share an interactive dashboard publicly. When created, we strip
-                sensitive data like queries (metric, template, and annotation) and panel links, leaving only the visible
-                metric data and series names embedded in your dashboard.
-              </Trans>
-            </p>
-            <p>
-              <Trans i18nKey="share-modal.snapshot.info-text-2">
-                Keep in mind, your snapshot <em>can be viewed by anyone</em> that has the link and can access the URL.
-                Share wisely.
-              </Trans>
-            </p>
-          </div>
-
-          <Field label={t('share-modal.snapshot.name', `Snapshot name`)}>
-            <Input
-              id="snapshot-name-input"
-              width={30}
-              defaultValue={snapshotName}
-              onBlur={(e) => model.onSnasphotNameChange(e.target.value)}
-            />
-          </Field>
-
-          <Field label={t('share-modal.snapshot.expire', `Expire`)}>
-            <RadioButtonGroup<number>
-              id="expire-select-input"
-              options={getExpireOptions()}
-              value={selectedExpireOption?.value}
-              onChange={model.onExpireChange}
-            />
-          </Field>
-
-          <Modal.ButtonRow>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                modalRef?.resolve().onDismiss();
-              }}
-              fill="outline"
-            >
-              <Trans i18nKey="share-modal.snapshot.cancel-button">Cancel</Trans>
-            </Button>
-
-            {snapshotSharingOptions?.externalEnabled && (
-              <Button variant="secondary" disabled={snapshotResult.loading} onClick={() => createSnapshot(true)}>
-                {snapshotSharingOptions?.externalSnapshotName}
-              </Button>
-            )}
-            <Button
-              variant="primary"
-              disabled={snapshotResult.loading}
-              onClick={() => createSnapshot()}
-              data-testid={selectors.PublishSnapshot}
-            >
-              <Trans i18nKey="share-modal.snapshot.local-button">Publish Snapshot</Trans>
-            </Button>
-          </Modal.ButtonRow>
-        </>
-      )}
-
-      {/* When snapshot has been created - show link and allow copy/deletion */}
-      {snapshotResult.value && (
-        <Stack direction="column" gap={0}>
-          <Field label={t('share-modal.snapshot.url-label', 'Snapshot URL')}>
-            <Input
-              data-testid={selectors.CopyUrlInput}
-              id="snapshot-url-input"
-              value={snapshotResult.value.url}
-              readOnly
-              addonAfter={
-                <ClipboardButton
-                  data-testid={selectors.CopyUrlButton}
-                  icon="copy"
-                  variant="primary"
-                  getText={() => snapshotResult.value!.url}
-                >
-                  <Trans i18nKey="share-modal.snapshot.copy-link-button">Copy</Trans>
-                </ClipboardButton>
-              }
-            />
-          </Field>
-
-          <div style={{ alignSelf: 'flex-end', padding: '5px' }}>
-            <Trans i18nKey="share-modal.snapshot.mistake-message">Did you make a mistake? </Trans>&nbsp;
-            <Button
-              fill="outline"
-              size="md"
-              variant="destructive"
-              onClick={() => {
-                deleteSnapshot(snapshotResult.value!.key);
-              }}
-            >
-              <Trans i18nKey="share-modal.snapshot.delete-button">Delete snapshot.</Trans>
-            </Button>
-          </div>
-        </Stack>
-      )}
-    </>
-  );
 }
