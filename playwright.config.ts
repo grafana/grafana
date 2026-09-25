@@ -76,6 +76,21 @@ export default defineConfig<PluginOptions>({
         },
       },
     },
+    // Login to Grafana with new user with editor role and store the cookie on disk for use in
+    // other tests — the alerting suite's own Editor journeys, distinct from the Viewer project
+    // above (owned by plugin API tests) and from the org-wide `viewer`/`admin` projects.
+    {
+      name: 'createEditorAndAuthenticate',
+      testDir: `${dirname(require.resolve('@grafana/plugin-e2e'))}/auth`,
+      testMatch: [/.*\.js/],
+      use: {
+        user: {
+          user: 'editor',
+          password: 'password',
+          role: 'Editor',
+        },
+      },
+    },
     // Run all tests in parallel using user with admin role
     withAuth({
       name: 'admin',
@@ -167,6 +182,43 @@ export default defineConfig<PluginOptions>({
     withAuth({
       name: 'alerting',
       testDir: path.join(testDirRoot, '/alerting-suite'),
+    }),
+    // Dedicated Viewer/Editor role journeys for the alerting suite — the org-wide `viewer`
+    // project belongs to plugin API tests, not alerting, so RBAC-V/RBAC-E use their own.
+    {
+      name: 'alerting-viewer',
+      testDir: path.join(testDirRoot, '/alerting-suite'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/viewer.json',
+      },
+      dependencies: ['createUserAndAuthenticate'],
+    },
+    {
+      name: 'alerting-editor',
+      testDir: path.join(testDirRoot, '/alerting-suite'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/editor.json',
+      },
+      dependencies: ['createEditorAndAuthenticate'],
+    },
+    // Once-per-run shared Alert/Recording rule corpus (see alerting-suite/corpus/), run as a
+    // setup-project dependency rather than `beforeAll` in a fully-parallel spec. Not wired as a
+    // dependency of the `alerting` project above — only specs that actually browse the corpus
+    // should pay its setup cost; add `alerting-corpus-setup` to such a spec's own dependencies.
+    withAuth({
+      name: 'alerting-corpus-setup',
+      testDir: path.join(testDirRoot, '/alerting-suite/corpus'),
+      testMatch: ['corpus-setup.spec.ts'],
+      timeout: 180_000,
+    }),
+    withAuth({
+      name: 'alerting-corpus-teardown',
+      testDir: path.join(testDirRoot, '/alerting-suite/corpus'),
+      testMatch: ['corpus-teardown.spec.ts'],
+      dependencies: ['alerting-corpus-setup'],
+      timeout: 180_000,
     }),
     withAuth({
       name: 'dashboard-new-layouts',

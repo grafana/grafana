@@ -11,7 +11,7 @@ export const dataSource = 'gdev-testdata';
 // e2e server's small SQLite connection pool and return a transient 403/500. Default timeout is bounded
 // so a genuine failure still surfaces quickly with its status/body; the folder-create call below passes
 // a longer one since a single attempt can itself take as long as the server's `busy_timeout` (7.5s).
-async function postWithRetry(
+export async function postWithRetry(
   request: APIRequestContext,
   url: string,
   data: unknown,
@@ -38,6 +38,40 @@ type Folder = {
   uid: string;
   title: string;
 };
+
+type RuleSearchKind = 'alertrules' | 'recordingrules';
+
+// A write is durable as soon as the POST resolves, but the generic /search endpoint reads a
+// search index that updates asynchronously — the same visibility gap `workerFolder` already
+// works around for the folders list. Poll rule-search filtered to one folder until the
+// expected count appears, instead of a fixed sleep or trusting the write response alone.
+export async function waitForRuleSearchVisible(
+  request: APIRequestContext,
+  namespace: string,
+  kind: RuleSearchKind,
+  folderUid: string,
+  expectedCount: number,
+  timeout = 20_000
+): Promise<void> {
+  await expect(async () => {
+    const res = await request.post(`/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${namespace}/${kind}/search`, {
+      data: {
+        apiVersion: 'search.grafana.app/v0alpha1',
+        kind: 'SearchQuery',
+        where: { filter: { field: 'folder', operator: 'In', values: [folderUid] } },
+        sort: [{ field: 'title', direction: 'asc' }],
+        fields: ['title'],
+        limit: 1,
+      },
+    });
+    expect(res.ok(), `POST ${kind}/search -> ${res.status()} ${await res.text()}`).toBeTruthy();
+    const body = await res.json();
+    expect(
+      body.metadata?.totalHits,
+      `expected ${expectedCount} ${kind} visible in folder ${folderUid}, search reports ${body.metadata?.totalHits}`
+    ).toBe(expectedCount);
+  }).toPass({ intervals: [200, 500, 1000, 2000], timeout });
+}
 
 // Disposable rule fixture: every group/rule a test creates is tracked and deleted (LIFO) at test end.
 class AlertRulesFixture {
@@ -144,8 +178,77 @@ class AlertRulesFixture {
   }
 }
 
+// The datasource this dev instance provisions the recorded metric's write target against.
+// Recording rules require a real datasource UID here even though the paused math expression
+// below never actually queries or writes anything.
+export const recordingTargetDataSource = 'prometheus';
+
+// Disposable Recording rule fixture, mirroring AlertRulesFixture — no Ruler/group API exists
+// for Recording rules, so every rule is created and torn down directly through the k8s API.
+class RecordingRulesFixture {
+  private readonly disposers: Array<() => Promise<void>> = [];
+
+  constructor(
+    private readonly request: APIRequestContext,
+    private readonly api: WorkerApi,
+    private readonly folder: Folder
+  ) {}
+
+  // Seed a single Recording rule via the k8s recordingrule API. Paused constant math
+  // expression, same reasoning as AlertRulesFixture.seedRule: no datasource/scheduler work.
+  async seedRule({ title, interval, metric }: { title: string; interval: string; metric: string }): Promise<string> {
+    const response = await postWithRetry(
+      this.request,
+      `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${this.api.namespace}/recordingrules`,
+      {
+        apiVersion: 'rules.alerting.grafana.app/v0alpha1',
+        kind: 'RecordingRule',
+        metadata: { annotations: { 'grafana.app/folder': this.folder.uid } },
+        spec: {
+          title,
+          trigger: { interval },
+          paused: true,
+          metric,
+          targetDatasourceUID: recordingTargetDataSource,
+          expressions: {
+            A: {
+              model: { refId: 'A', type: 'math', expression: '1 == 1' },
+              datasourceUID: '__expr__',
+              queryType: '',
+              source: true,
+            },
+          },
+        },
+      }
+    );
+    const uid = (await response.json()).metadata.name;
+    this.trackRule(uid);
+    return uid;
+  }
+
+  // Register a rule for deletion on teardown. Used by seedRule and by tests for UI-created rules.
+  trackRule(uid: string): void {
+    this.disposers.push(async () => {
+      await this.request.delete(
+        `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${this.api.namespace}/recordingrules/${encodeURIComponent(uid)}`
+      );
+    });
+  }
+
+  // LIFO, best-effort: a resource may already be gone, and the worker folder delete is the backstop.
+  async dispose(): Promise<void> {
+    for (const disposer of this.disposers.reverse()) {
+      try {
+        await disposer();
+      } catch {
+        // best-effort cleanup
+      }
+    }
+  }
+}
+
 export const test = base.extend<
-  { folder: Folder; alertRules: AlertRulesFixture },
+  { folder: Folder; alertRules: AlertRulesFixture; recordingRules: RecordingRulesFixture },
   { workerApi: WorkerApi; workerFolder: Folder }
 >({
   // Worker-scoped authenticated API context + namespace lookup, built from the project's saved auth
@@ -227,6 +330,15 @@ export const test = base.extend<
   alertRules: [
     async ({ request, workerApi, folder }, use) => {
       const fixture = new AlertRulesFixture(request, workerApi, folder);
+      await use(fixture);
+      await fixture.dispose();
+    },
+    { scope: 'test' },
+  ],
+
+  recordingRules: [
+    async ({ request, workerApi, folder }, use) => {
+      const fixture = new RecordingRulesFixture(request, workerApi, folder);
       await use(fixture);
       await fixture.dispose();
     },
