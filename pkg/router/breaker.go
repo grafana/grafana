@@ -9,12 +9,8 @@ import (
 	"github.com/sony/gobreaker/v2"
 )
 
-// statusRecorder is a thin passthrough http.ResponseWriter that remembers the
-// status code written, without buffering the body -- unlike captureWriter
-// (openapi_cache.go), which buffers the whole response and is only
-// appropriate for small cached documents. CRUD+List responses proxied
-// through the main dispatch can be large; the circuit breaker only needs the
-// status code, so Write/Header pass straight through to preserve streaming.
+// statusRecorder is a passthrough http.ResponseWriter that records the status
+// code without buffering the body, so proxied responses still stream.
 type statusRecorder struct {
 	http.ResponseWriter
 	status      int
@@ -50,38 +46,23 @@ func (r *statusRecorder) FlushError() error {
 	return http.NewResponseController(r.ResponseWriter).Flush()
 }
 
-// Unwrap exposes the real ResponseWriter to http.ResponseController, so
-// ReverseProxy's Flush (used for chunked/SSE/any response with no
-// Content-Length) reaches the real connection instead of silently
-// no-opping against this wrapper. Per net/http's documented pattern for
-// wrapping ResponseWriter without hiding optional interfaces (Flusher,
-// Hijacker, etc).
+// Unwrap lets http.ResponseController reach the real writer, so
+// ReverseProxy's flushes are not silently dropped by this wrapper.
 func (r *statusRecorder) Unwrap() http.ResponseWriter {
 	return r.ResponseWriter
 }
 
-// isBackendFailure reports whether a response status counts as a passive
-// circuit-breaker failure: transport-level errors (surfaced by
-// httputil.ReverseProxy's default ErrorHandler as 502) and the backend's own
-// unavailability responses. Plain 500 is deliberately excluded -- that is
-// usually an application bug or validation error, not evidence the backend
-// is unreachable, and tripping the breaker on it would fail-fast unrelated
-// future requests for no good reason. See AGENTS.md "Passive circuit
-// breaking".
+// isBackendFailure reports whether a status counts as a breaker failure:
+// ReverseProxy's 502 for transport errors, plus 503 and 504. A plain 500 is
+// usually an application error, not an unreachable backend, so it is excluded.
 func isBackendFailure(status int) bool {
 	return status == http.StatusBadGateway || status == http.StatusServiceUnavailable || status == http.StatusGatewayTimeout
 }
 
-// newGroupBreaker returns a fresh passive circuit breaker for one group,
-// using gobreaker's own defaults (trip after more than 5 consecutive
-// failures, 60s open cooldown, 1 half-open trial request) rather than
-// inventing thresholds -- see AGENTS.md "Passive circuit breaking". Context
-// cancellation/deadline errors are excluded from success/failure accounting
-// entirely (gobreaker calls this "excluded", not counted either way): a
-// client disconnecting mid-request surfaces through ReverseProxy as a 502
-// like any other transport failure, but it says nothing about the backend's
-// health, and a handful of abandoned requests must not trip the breaker for
-// every other caller.
+// newGroupBreaker returns a circuit breaker with gobreaker's defaults (trips
+// after more than 5 consecutive failures, stays open 60s). Context errors are
+// excluded: a client disconnect surfaces as a 502 but says nothing about the
+// backend's health.
 func newGroupBreaker(group string) *gobreaker.CircuitBreaker[struct{}] {
 	return gobreaker.NewCircuitBreaker[struct{}](gobreaker.Settings{
 		Name: group,

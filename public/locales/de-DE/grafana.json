@@ -475,6 +475,7 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Externe Alertmanager",
+      "external-alertmanagers-group-plugin": "",
       "noOptionsMessage-no-datasources-found": "Keine Datenquellen gefunden"
     },
     "alert-menu": {
@@ -2673,6 +2674,8 @@
       }
     },
     "proxied-alerting-route": {
+      "redirected-body": "",
+      "redirected-title": "",
       "text-redirecting": ""
     },
     "query-and-expressions-step": {
@@ -2978,6 +2981,15 @@
     },
     "rule-list": {
       "configure-datasource": "Konfigurieren",
+      "datasource-managed-notice": {
+        "action": "",
+        "body": "",
+        "inline-action": "",
+        "inline_one": "",
+        "inline_other": "",
+        "title_one": "",
+        "title_other": ""
+      },
       "ds-error": {
         "title": "Regeln für diese Datenquelle können nicht geladen werden"
       },
@@ -2998,7 +3010,8 @@
         "no-more-results": "Keine weiteren Ergebnisse – {{numberOfRules}} Regeln gefunden",
         "no-rules-found": "Es gibt keine Warn- oder Aufnahmeregeln, die Ihren aktuellen Filtereinstellungen entsprechen.",
         "results-loading": "Suche – {{numberOfRules}} Regeln gefunden",
-        "results-with-cancellation": "Suche abgebrochen – {{numberOfRules}} Regeln gefunden"
+        "results-with-cancellation": "Suche abgebrochen – {{numberOfRules}} Regeln gefunden",
+        "search-in-plugin": ""
       },
       "import-disabled-tooltip": {
         "auto-sync": "Solange die automatische Synchronisierung von Mimir Alertmanager aktiv ist, sind Importe nicht verfügbar"
@@ -4392,6 +4405,7 @@
       "label-top": "Oben"
     },
     "name-show-unfilled-area": "Ungefüllten Bereich anzeigen",
+    "name-text-mode": "",
     "name-value-display": "Wertanzeige",
     "presets": {
       "basic": "Einfach",
@@ -4410,6 +4424,13 @@
     "suggestions": {
       "basic": "Balkenanzeige",
       "lcd": "Balkenanzeige – LCD"
+    },
+    "text-mode-options": {
+      "label-auto": "",
+      "label-name": "",
+      "label-none": "",
+      "label-value": "",
+      "label-value-and-name": ""
     },
     "value-display-options": {
       "label-hidden": "Ausgeblendet",
@@ -5764,6 +5785,7 @@
     "edit-actions": {
       "add": "{{typeName}} hinzufügen",
       "add-conditional-rule": "Hinzufügen von {{ruleDescription}}-Regel",
+      "collapse-all-rows": "",
       "dashboard-description": "Dashboard-Beschreibung ändern",
       "dashboard-title": "Dashboard-Titel ändern",
       "duplicate": "{{typeName}} duplizieren",
@@ -5771,6 +5793,7 @@
       "edit-query-result-rule": "Regel für Abfrageergebnis ändern",
       "edit-template-variable-rule": "Regel für Vorlagenvariable ändern",
       "edit-time-range-rule": "Regel für Zeitbereich ändern",
+      "expand-all-rows": "",
       "group-into-row": "In Zeile gruppieren",
       "group-into-tab": "In Registerkarte gruppieren",
       "move": "Verschieben von {{typeName}}",
@@ -5803,9 +5826,7 @@
       "add-library-panel-header": "Panel importieren",
       "add-visualization-body": "Wählen Sie eine Datenquelle aus und visualisieren und fragen Sie dann Ihre Daten mit Diagrammen, Statistiken und Tabellen ab oder erstellen Sie Listen, Markierungen und andere Widgets.",
       "add-visualization-button": "Visualisierung hinzufügen",
-      "add-visualization-description": "",
       "add-visualization-header": "Starten Sie Ihr neues Dashboard, indem Sie eine Visualisierung hinzufügen",
-      "add-visualization-heading": "",
       "assistant-placeholder": "",
       "auto-grid": "Automatisches Raster",
       "auto-grid-description": "Die Größe der Panels wird zur Bildung einheitlicher Raster angepasst",
@@ -5813,9 +5834,6 @@
       "custom-grid": "Benutzerdefiniertes Raster",
       "custom-grid-description": "Positionieren und ändern Sie die Größe jedes Panels einzeln",
       "description": "Fügen Sie zur Visualisierung Ihrer Daten ein Panel hinzu",
-      "grid-auto": "",
-      "grid-custom": "",
-      "grid-label": "",
       "import-a-dashboard-body": "Importieren Sie Dashboards aus Dateien oder von <2>grafana.com</2>.",
       "import-a-dashboard-header": "Dashboard importieren",
       "import-dashboard-button": "Dashboard importieren",
@@ -6044,6 +6062,12 @@
       "ungroup-repeat-loss": "Die für die nicht gruppierten Gruppen konfigurierten Optionen zum Wiederholen gehen verloren.",
       "ungroup-repeat-loss-title": "Gruppierung aufheben?"
     },
+    "loading": {
+      "drawer": "",
+      "drawer-title": "",
+      "sidebar": "",
+      "sidebar-title": ""
+    },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} von {{numberOfPages}}",
       "tooltip-next": "Weiter",
@@ -6143,9 +6167,7 @@
     "planning-banner": {
       "build": "",
       "dismiss": "",
-      "plan-label": "",
-      "panel-count_one": "",
-      "panel-count_other": ""
+      "preview-label": ""
     },
     "public-dashboard-not-available": {
       "does-not-exist": "Das Dashboard, auf das Sie zugreifen möchten, existiert nicht",
@@ -6764,7 +6786,14 @@
         "title-remove": "Entfernen",
         "title-show-transform-help": "Hilfe zur Transformation anzeigen"
       },
-      "title-delete": "Möchten Sie {{name}} löschen?"
+      "title-delete": "Möchten Sie {{name}} löschen?",
+      "transformation-editor-row-header": {
+        "edit-refId": "",
+        "edit-refId-placeholder": "",
+        "refId-exists-error": "",
+        "refId-reserved-error": "",
+        "refId-variable-error": ""
+      }
     },
     "transformation-operation-rows": {
       "remove-transformation": "",
@@ -7429,7 +7458,6 @@
       },
       "render-save-button-and-error": {
         "body-plugin-dashboard": "Ihre Änderungen gehen verloren, wenn Sie das Plugin aktualisieren. Nutzen Sie <strong>Speichern unter</strong> zur Erstellung einer benutzerdefinierten Version.",
-        "title-failed-to-save-dashboard": "Dashboard konnte nicht gespeichert werden",
         "title-plugin-dashboard": "Plugin-Dashboard",
         "title-someone-else-has-updated-this-dashboard": "Eine andere Person hat dieses Dashboard aktualisiert",
         "would-still-dashboard": "Möchten Sie dieses Dashboard trotzdem speichern?"
@@ -7697,9 +7725,6 @@
       },
       "label-copy-tags": "Tags kopieren",
       "label-folder": "Ordner",
-      "render-footer": {
-        "title-failed-to-save-dashboard": "Dashboard konnte nicht gespeichert werden"
-      },
       "required": "Erforderlich"
     },
     "save-dashboard-drawer": {
@@ -7746,6 +7771,9 @@
       "save-variables-label-update-default-variable-values": "Standard-Variablenwerte aktualisieren",
       "show-variables-warning-alert-body": "",
       "show-variables-warning-alert-title": ""
+    },
+    "save-errors": {
+      "unexpected": ""
     },
     "save-library-viz-panel-modal": {
       "cancel": "Abbrechen",
@@ -9434,6 +9462,7 @@
     "flag-value": "Flag-Wert",
     "menu": "Menü öffnen",
     "new-flag": "new-flag-override",
+    "ofrep-evaluation": "",
     "save-flag": "Speichern",
     "title": "Funktionssteuerung"
   },
@@ -10556,7 +10585,7 @@
     "data-source-settings": {
       "alerting-settings-heading": "Meldungen",
       "alerting-settings-label": "Warnregeln in der Warn-Benutzeroberfläche verwalten",
-      "alerting-settings-tooltip": "Verwalten Sie Warnregeln für diese Datenquelle. Fügen Sie eine Altermanager-Datenquelle hinzu, um andere Warnressourcen zu verwalten.",
+      "alerting-settings-tooltip": "",
       "cert-key-reset": "Zurücksetzen",
       "custom-headers-add": "Header hinzufügen",
       "custom-headers-header": "Header",
@@ -10681,6 +10710,7 @@
       "aria-label-sort-column": "Spalte {{columnName}} sortieren",
       "expand-row-header": "Zeilenerweiterung",
       "expand-row-tooltip": "Zeile umschalten erweitert",
+      "loading": "",
       "tooltip-collapse-all": "Alle Zeilen einklappen",
       "tooltip-expand-all": "Alle Zeilen erweitern"
     },
@@ -10776,6 +10806,9 @@
       "tooltip-hide": "Passwort verbergen",
       "tooltip-show": "Passwort anzeigen"
     },
+    "query-field": {
+      "loading": ""
+    },
     "query-input": {
       "loading": "Editor wird geladen"
     },
@@ -10840,6 +10873,7 @@
       "placeholder": "Auswahl von"
     },
     "table": {
+      "cell-actions": "",
       "cell-filter-on": "Nach Wert filtern",
       "cell-filter-out": "Wert herausfiltern",
       "cell-inspect": "Wert prüfen",
@@ -10885,6 +10919,7 @@
         }
       },
       "inspect-drawer-title": "Wert prüfen",
+      "loading": "",
       "nested-table": {
         "expander-column-name": "Verschachtelte Zeilen ausklappen",
         "no-data": "Keine Daten"
@@ -11199,10 +11234,11 @@
   "home": {
     "alerts-incidents": {
       "alert-tab-label": "Auslösen von Warnungen",
+      "incident-filter-all": "",
+      "incident-filter-label": "",
       "incident-tab-label": "Vorfälle",
       "team-filter-all": "Alle Teams",
       "team-filter-label": "Warnungen nach Team filtern",
-      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Ihre Teams",
       "title": "Warnungen und Vorfälle",
       "title-alerts": "Warnungen",
@@ -13687,10 +13723,15 @@
   },
   "playlist-page": {
     "card": {
-      "delete": "Playlist löschen",
-      "edit": "Playlist bearbeiten",
-      "start": "Playlist starten",
-      "tooltip": "Playlist teilen"
+      "delete": "",
+      "delete-label": "",
+      "edit": "",
+      "edit-label": "",
+      "share": "",
+      "share-label": "",
+      "start": "",
+      "start-label": "",
+      "tooltip": ""
     },
     "create-button": {
       "title": "Neue Playlist"
@@ -14844,6 +14885,15 @@
     "repository-status": {
       "error": "Das Repository konnte nicht geladen werden"
     },
+    "repository-status-alert": {
+      "deletion-title": "",
+      "error-title": "",
+      "force-delete-button": "",
+      "force-delete-cancel": "",
+      "force-delete-confirm": "",
+      "force-delete-title": "",
+      "force-delete-warning": ""
+    },
     "repository-status-page": {
       "back-to-repositories": "Zurück zu den Repositorys",
       "cleaning-up-resources": "Bereinigen von Repository-Ressourcen",
@@ -15590,6 +15640,10 @@
       "label": "Transformation anwenden auf",
       "series": "Abfrage- und Transformationsergebnisse"
     },
+    "transformation-name": {
+      "auto-placeholder": "",
+      "edit": ""
+    },
     "validation": {
       "duplicate-name": "Der Abfragename existiert bereits",
       "empty-name": "Ein leerer Abfragename ist nicht zulässig"
@@ -15769,6 +15823,12 @@
     "title": "Die Anwendungsdatei konnte nicht gefunden werden"
   },
   "save-dashboards": {
+    "forbidden": {
+      "title": ""
+    },
+    "invalid": {
+      "title": ""
+    },
     "message-length": {
       "info": "Die Nachricht ist {{messageLength}} Zeichen lang und überschreitet die maximale Länge von 500 Zeichen. Bitte kürzen Sie sie vor dem Speichern.",
       "title": "Die Nachricht ist zu lang"
@@ -16520,7 +16580,9 @@
     }
   },
   "swagger": {
-    "login": "Anmelden"
+    "login": "Anmelden",
+    "namespace-unavailable": "",
+    "namespace-unavailable-title": ""
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -17743,6 +17805,7 @@
     },
     "series-to-fields-transformer-editor": {
       "label-field": "Feld",
+      "label-keep-unjoined": "",
       "label-mode": "Modus",
       "modes": {
         "description": {
@@ -17755,7 +17818,8 @@
           "outer-tabular": "Außen (tabellarisch)",
           "outer-time-series": "Außen (Zeitreihen)"
         }
-      }
+      },
+      "tooltip-keep-unjoined": ""
     },
     "series-to-rows-transformer-editor": {
       "description": {
