@@ -114,6 +114,19 @@ describe('quickAddPanelToNotebook', () => {
     expect(setRecentNotebook).not.toHaveBeenCalled();
   });
 
+  it('does not retry an unavailable destination for queued panels', async () => {
+    addToExisting.mockRejectedValueOnce(new NotebookUnavailableError('Forbidden'));
+
+    const first = quickAddPanelToNotebook(async () => panel, 'dashboard_panel', false, openPicker, 'panel-1');
+    const second = quickAddPanelToNotebook(async () => panel, 'dashboard_panel', false, openPicker, 'panel-2');
+    await Promise.all([first, second]);
+
+    expect(addToExisting).toHaveBeenCalledTimes(1);
+    expect(clearRecentNotebook).toHaveBeenCalledTimes(1);
+    expect(openPicker).toHaveBeenCalledTimes(1);
+    expect(setRecentNotebook).not.toHaveBeenCalled();
+  });
+
   it('does not forget a destination or reopen the picker on a transient write failure', async () => {
     addToExisting.mockRejectedValue(new Error('Temporary failure'));
 
