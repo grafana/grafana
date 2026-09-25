@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
@@ -684,4 +685,55 @@ func TestPluginInstaller_Removal(t *testing.T) {
 		_, err = os.Stat(pluginDir)
 		require.True(t, os.IsNotExist(err))
 	})
+}
+
+func TestPluginInstaller_RemoveUnloadsNestedChildrenBeforeParent(t *testing.T) {
+	parentRemoved := 0
+	childRemoved := 0
+	parent := createPlugin(t, "parent-app", plugins.ClassExternal, true, false, func(plugin *plugins.Plugin) {
+		plugin.Info.Version = "1.0.0"
+		plugin.FS = &pluginfakes.FakePluginFS{RemoveFunc: func() error {
+			parentRemoved++
+			return nil
+		}}
+	})
+	child := createPlugin(t, "child-panel", plugins.ClassExternal, true, false, func(plugin *plugins.Plugin) {
+		plugin.Info.Version = "1.0.0"
+		plugin.Parent = parent
+		plugin.FS = &pluginfakes.FakePluginFS{RemoveFunc: func() error {
+			childRemoved++
+			return nil
+		}}
+	})
+	unrelated := createPlugin(t, "child-panel", plugins.ClassExternal, true, false, func(plugin *plugins.Plugin) {
+		plugin.Info.Version = "9.9.9"
+	})
+	parent.Children = []*plugins.Plugin{nil, child, unrelated}
+
+	var unloaded []string
+	var cleaned []string
+	auth := &pluginfakes.FakeAuthService{Result: &auth.ExternalService{}}
+	inst := New(&config.PluginManagementCfg{}, &pluginfakes.FakePluginRegistry{
+		Store: map[string]*plugins.Plugin{
+			"parent-app":  parent,
+			"child-panel": child,
+		},
+	}, &pluginfakes.FakeLoader{
+		UnloadFunc: func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+			unloaded = append(unloaded, p.ID)
+			return p, nil
+		},
+	}, &pluginfakes.FakePluginRepo{}, &pluginfakes.FakePluginStorage{}, storage.SimpleDirNameGeneratorFunc, auth, &pluginfakes.FakeRBACCleaner{
+		CleanupFunc: func(_ context.Context, pluginIDs []string) error {
+			cleaned = append(cleaned, pluginIDs...)
+			return nil
+		},
+	})
+
+	require.NoError(t, inst.Remove(context.Background(), "parent-app", "1.0.0"))
+	require.Equal(t, []string{"child-panel", "parent-app"}, unloaded)
+	require.Equal(t, 1, parentRemoved)
+	require.Equal(t, 0, childRemoved)
+	require.Equal(t, []string{"parent-app", "child-panel"}, cleaned)
+	require.Equal(t, []string{"child-panel", "parent-app"}, auth.Removed)
 }

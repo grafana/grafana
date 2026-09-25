@@ -8,20 +8,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// unknownGroupLabel is substituted for the group label whenever the raw path
-// segment (see GroupFromPath) doesn't match a backend the router actually
-// serves. Without this, a client hitting /apis/<anything-it-likes> -- typos,
-// scans, or a deliberate attack -- would mint a new label value, and for a
-// native histogram a new series, per unique string.
+// unknownGroupLabel replaces groups the router does not serve, so arbitrary
+// client paths cannot create new series.
 const unknownGroupLabel = "unknown"
 
-// routerMetrics is the router's request-serving instrumentation: a duration
-// histogram labeled by /apis/<group> (see GroupFromPath -- the one thing that
-// varies meaningfully request to request in a proxy that only serves /apis
-// and /openapi/v3) and status code, plus an in-flight gauge. Registered on
-// the caller's own registerer (the module server's shared one, or a test's),
-// not a private registry -- unlike the old standalone `grafana router`
-// process, this runs inside a process that already owns /metrics.
+// routerMetrics is the router's request instrumentation: a duration histogram
+// by group and status code, plus an in-flight gauge.
 type routerMetrics struct {
 	inFlight prometheus.Gauge
 	duration *prometheus.HistogramVec
