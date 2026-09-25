@@ -182,12 +182,18 @@ export default defineConfig<PluginOptions>({
     withAuth({
       name: 'alerting',
       testDir: path.join(testDirRoot, '/alerting-suite'),
+      // Role-specific journeys (RBAC-V/RBAC-E) run only under their own project below — the
+      // `*.viewer.spec.ts`/`*.editor.spec.ts` filename convention. Without this, the default
+      // Admin project also ran the Viewer/Editor specs (and failed, since it's Admin), and the
+      // role projects ran every alerting spec, not just their own.
+      testIgnore: [/\.viewer\.spec\.ts$/, /\.editor\.spec\.ts$/],
     }),
     // Dedicated Viewer/Editor role journeys for the alerting suite — the org-wide `viewer`
     // project belongs to plugin API tests, not alerting, so RBAC-V/RBAC-E use their own.
     {
       name: 'alerting-viewer',
       testDir: path.join(testDirRoot, '/alerting-suite'),
+      testMatch: [/\.viewer\.spec\.ts$/],
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/viewer.json',
@@ -197,6 +203,7 @@ export default defineConfig<PluginOptions>({
     {
       name: 'alerting-editor',
       testDir: path.join(testDirRoot, '/alerting-suite'),
+      testMatch: [/\.editor\.spec\.ts$/],
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/editor.json',
