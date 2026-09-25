@@ -348,11 +348,6 @@ func checkMoveAccess(
 	}
 
 	folderGVR := folders.FolderResourceInfo.GroupVersionResource()
-	// Parents pass through as-is: RBAC maps empty->general only for create, not
-	// for get/update/delete/setpermissions. Normalizing here would pull in
-	// general-scoped grants RBAC wouldn't apply, inflating the old-parent tier
-	// and masking a real escalation on a move out of root. The destination-create
-	// check relies on RBAC's own create-time empty->general mapping.
 
 	// Separators must keep correlation IDs within OpenFGA's regex pattern ^[\w\d-]{1,36}$
 	const (
