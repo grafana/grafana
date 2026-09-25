@@ -101,6 +101,29 @@ func TestIntegrationFolderAPIParity(t *testing.T) {
 			t.Skip("validateOnUpdate misses the escalation check; un-skip when fix lands")
 			assertMoveParity(t, f, f.rbacEditorOnA, "parityA1", "parityB", http.StatusForbidden)
 		})
+		t.Run("editor cannot gain admin by moving a folder under an administered parent", func(t *testing.T) {
+			target := FolderDefinition{
+				Name:    "parity-move-target",
+				Creator: f.helper.Org1.Admin,
+				Permissions: []FolderPermission{{
+					Permission: "Edit",
+					User:       f.helper.Org1.Editor,
+				}},
+			}
+			target.CreateWithLegacyAPI(t, f.helper, "")
+			attacker := FolderDefinition{
+				Name:    "parity-move-attacker",
+				Creator: f.helper.Org1.Editor,
+			}
+			attacker.CreateWithLegacyAPI(t, f.helper, "")
+
+			targetPermissionsStatus, _ := f.legacyGet(t, f.helper.Org1.Editor, "/api/folders/parity-move-target/permissions", nil)
+			require.Equal(t, http.StatusForbidden, targetPermissionsStatus)
+			attackerPermissionsStatus, body := f.legacyGet(t, f.helper.Org1.Editor, "/api/folders/parity-move-attacker/permissions", nil)
+			require.Equal(t, http.StatusOK, attackerPermissionsStatus, string(body))
+
+			assertMoveParity(t, f, f.helper.Org1.Editor, "parity-move-target", "parity-move-attacker", http.StatusForbidden)
+		})
 		t.Run("k6 source folder is rejected", func(t *testing.T) {
 			assertK6SourceMoveParity(t, f, "parityA", http.StatusBadRequest)
 		})
