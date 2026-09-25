@@ -44,6 +44,9 @@ export interface PluginImportInfo {
   version?: string;
   hasUpdate?: boolean;
   moduleHash?: string;
+  // Content-addressed build identifier used to pin filesystem asset URLs to the
+  // build-addressed route /public/plugins/:id/:buildHash/* (FR-001, FR-002).
+  buildHash?: string;
   translations?: Record<string, string>;
 }
 

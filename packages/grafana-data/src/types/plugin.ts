@@ -102,6 +102,10 @@ export interface PluginMeta<T extends KeyValue = {}> {
   loadingStrategy?: PluginLoadingStrategy;
   extensions?: PluginExtensions;
   moduleHash?: string;
+  // Content-addressed build identity of the build this replica serves. When present,
+  // the loader pins filesystem asset URLs to /public/plugins/:id/:buildHash/* so a
+  // no-affinity client loads one coherent build across a session (FR-001).
+  buildHash?: string;
 
   // Paths to the translations for the plugin
   translations?: Record<string, string>;
