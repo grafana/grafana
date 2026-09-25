@@ -279,7 +279,6 @@ export function InteractiveTable<TableData extends object>({
                 return (
                   <th
                     key={header.id}
-                    role="columnheader"
                     colSpan={header.colSpan}
                     className={cx(styles.header, header.column.columnDef.meta?.widthClass, {
                       [styles.disableGrow]: header.column.columnDef.size === 0,
