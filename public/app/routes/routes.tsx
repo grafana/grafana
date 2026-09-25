@@ -651,6 +651,12 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "ThemePlayground"*/ 'app/features/theme-playground/ThemePlayground')
       ),
     },
+    isDevEnv && {
+      path: '/grot-game',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "GrotLoadingGamePage"*/ 'app/features/grot-loading-game/GrotLoadingGamePage')
+      ),
+    },
     {
       path: '/dashboard/recently-deleted',
       component: SafeDynamicImport(
