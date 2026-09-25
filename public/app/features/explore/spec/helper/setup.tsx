@@ -254,7 +254,7 @@ export function makeDatasourceSetup({
   pluginId,
 }: { name?: string; id?: number; uid?: string; pluginId?: string } = {}): DatasourceSetup {
   const uid = uidOverride || `${name}-uid`;
-  const type = 'logs';
+  const type = pluginId ?? id.toString();
 
   const meta: DataSourcePluginMeta = {
     info: {
@@ -271,7 +271,7 @@ export function makeDatasourceSetup({
         large: '',
       },
     },
-    id: pluginId ?? id.toString(),
+    id: type,
     module: 'loki',
     name,
     type: PluginType.datasource,

@@ -4,6 +4,7 @@ import { isExpressionReference } from '../../utils/expressionRef';
 import { getOriginMessage } from '../../utils/getCachedPromise';
 import { UserStorage } from '../../utils/userStorage';
 import { getDataSourceSrv, type RuntimeDataSourceRegistration } from '../dataSourceSrv';
+import { getDatasourcePluginMeta, getPluginIdFromDatasourceInstanceType } from '../pluginMeta/datasources';
 
 import { notifyDataSourceCacheChanged } from './cacheGeneration';
 import { FALLBACK_TO_LEGACY_INSTANCE_WARNING, RUNTIME_DATASOURCE_SYNC_CONFLICT_WARNING } from './constants';
@@ -124,11 +125,14 @@ async function loadDataSourceInstance(cacheUid: string, settings: DataSourceInst
   }
 
   let dsPlugin;
+  const pluginId = getPluginIdFromDatasourceInstanceType(settings.type, settings.name);
+  // Initializing the metadata cache can fetch plugin metadata when pluginsUseMTPlugins is enabled.
+  const meta = (await getDatasourcePluginMeta(pluginId)) ?? settings.meta;
   try {
-    dsPlugin = await importDataSourcePlugin(settings.meta);
+    dsPlugin = await importDataSourcePlugin(meta);
   } catch (error) {
     logDataSourceInstanceError(`Failed to import datasource plugin ${settings.name} (${settings.uid})`, error, {
-      pluginId: settings.meta.id,
+      pluginId: meta.id,
       uid: settings.uid,
       name: settings.name,
     });
@@ -151,8 +155,8 @@ async function loadDataSourceInstance(cacheUid: string, settings: DataSourceInst
     const anyInstance: { [key: string]: unknown } = instance;
     anyInstance.name = settings.name;
     anyInstance.id = settings.id;
-    anyInstance.type = settings.type;
-    anyInstance.meta = settings.meta;
+    anyInstance.type = pluginId;
+    anyInstance.meta = meta;
     anyInstance.uid = settings.uid;
     anyInstance.getRef = DataSourceApi.prototype.getRef;
   }

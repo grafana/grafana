@@ -3,13 +3,14 @@ import { type DataSourceApi, type DataSourceInstanceSettings, type DataSourcePlu
 // so reading it back is the only way to assert that half. Delete with the legacySrv option.
 // eslint-disable-next-line @grafana/no-get-data-source-srv
 import { getDataSourceSrv, setDataSourceSrv, type DataSourceSrv } from '@grafana/runtime';
+import { getDatasourcePluginMeta } from '@grafana/runtime/internal';
 import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 
 import { seedDataSources, watchDataSourceFallbacks } from './seedDataSources';
 
 function makeFixture(name: string, uid: string, api?: Partial<DataSourceApi>) {
   const meta = { id: name, name, type: 'datasource', module: '', baseUrl: '', logs: true } as DataSourcePluginMeta;
-  const settings = { uid, name, type: 'logs', meta, access: 'proxy', jsonData: {}, readOnly: false };
+  const settings = { uid, name, type: name, meta, access: 'proxy', jsonData: {}, readOnly: false };
 
   return {
     settings: settings as DataSourceInstanceSettings,
@@ -18,6 +19,58 @@ function makeFixture(name: string, uid: string, api?: Partial<DataSourceApi>) {
 }
 
 describe('seedDataSources', () => {
+  it('resolves distinct instances and components for two datasources sharing a plugin', async () => {
+    const first = makeFixture('First', 'first-uid', { components: { QueryEditor: () => null } });
+    const second = makeFixture('Second', 'second-uid', { components: { QueryEditor: () => null } });
+    first.settings.meta = { ...first.settings.meta, id: 'loki' };
+    second.settings.meta = { ...first.settings.meta };
+    first.settings.type = 'loki';
+    second.settings.type = 'loki';
+    const firstComponents = first.api.components;
+    const secondComponents = second.api.components;
+    seedDataSources([first, second], { legacySrv: 'none' });
+    const fallbacks = watchDataSourceFallbacks();
+
+    const [firstResult, secondResult] = await Promise.all([
+      getDataSourceInstance('first-uid'),
+      getDataSourceInstance('second-uid'),
+    ]);
+
+    expect(firstResult).toBe(first.api);
+    expect(secondResult).toBe(second.api);
+    expect(firstResult.uid).toBe('first-uid');
+    expect(secondResult.uid).toBe('second-uid');
+    expect(firstResult.components).toBe(firstComponents);
+    expect(secondResult.components).toBe(secondComponents);
+    fallbacks.expectNoFallbacks(['instance', 'settings']);
+  });
+
+  it('seeds built-in plugin metadata and alias mappings', async () => {
+    const grafana = makeFixture('-- Grafana --', 'grafana-uid');
+    grafana.settings.type = 'datasource';
+    grafana.settings.meta.id = 'grafana';
+    const loki = makeFixture('Loki', 'loki-uid');
+    loki.settings.type = 'loki';
+    loki.settings.meta.id = 'loki';
+    loki.settings.meta.aliasIDs = ['loki-alias'];
+    seedDataSources([grafana, loki], { legacySrv: 'none' });
+
+    expect(await getDatasourcePluginMeta('grafana')).toEqual(grafana.settings.meta);
+    expect(await getDatasourcePluginMeta('loki-alias')).toEqual(loki.settings.meta);
+    expect(await getDataSourceInstance('grafana-uid')).toBe(grafana.api);
+    expect(await getDataSourceInstance('loki-uid')).toBe(loki.api);
+  });
+
+  it('reports the missing instance fixture even when another instance shares its plugin', async () => {
+    const first = makeFixture('First', 'first-uid');
+    const missing = { ...first.settings, uid: 'missing-uid', name: 'Missing' };
+    seedDataSources([first, missing], { legacySrv: 'none' });
+
+    await expect(getDataSourceInstance('missing-uid')).rejects.toThrow(
+      'seedDataSources: no api fixture for data source "missing-uid" (plugin "First"). Seed it as { settings, api }.'
+    );
+  });
+
   it('resolves an instance through the async API rather than the legacy fallback', async () => {
     const loki = makeFixture('loki', 'loki-uid', { query: jest.fn() });
     seedDataSources([loki], { legacySrv: 'mock' });

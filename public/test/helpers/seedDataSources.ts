@@ -11,7 +11,9 @@ import {
   FALLBACK_TO_LEGACY_INSTANCE_WARNING,
   FALLBACK_TO_LEGACY_LIST_WARNING,
   FALLBACK_TO_LEGACY_SETTINGS_WARNING,
+  getPluginIdFromDatasourceInstanceType,
   setDataSourcePluginImporter,
+  setDatasourcePluginMetas,
   syncDataSourceInstanceSettings,
 } from '@grafana/runtime/internal';
 import { mockLogger } from '@grafana/test-utils/unstable';
@@ -69,6 +71,12 @@ export function seedDataSources(dataSources: SeedableDataSource[], options: Seed
   // constructed-instance cache. Suites re-seed per test, and a cached instance built from the
   // previous test's fixtures would otherwise be handed back for a uid this call just rebuilt.
   syncDataSourceInstanceSettings({ datasources: settings, defaultDatasource: defaultDataSourceName });
+  const metas: Record<string, DataSourcePluginMeta> = {};
+  for (const { settings } of fixtures) {
+    const pluginId = getPluginIdFromDatasourceInstanceType(settings.type, settings.name);
+    metas[pluginId] ??= settings.meta;
+  }
+  setDatasourcePluginMetas(metas);
   setDataSourcePluginImporter(
     // The importer type is internal to @grafana/runtime; fixtures only need to supply what the
     // loader reads off the plugin.
@@ -87,35 +95,25 @@ function toFixture(dataSource: SeedableDataSource): DataSourceFixture {
 }
 
 function createFixtureImporter(fixtures: DataSourceFixture[]) {
-  // Keyed on the meta object rather than meta.id: fixtures routinely share a plugin id, and the
-  // loader passes back the very meta object the settings carry, so identity is both unique and
-  // available. meta.id is the fallback for settings whose meta was cloned.
-  const byMeta = new Map<DataSourcePluginMeta, DataSourceFixture>();
-  const byPluginId = new Map<string, DataSourceFixture>();
-
-  for (const fixture of fixtures) {
-    byMeta.set(fixture.settings.meta, fixture);
-    if (!byPluginId.has(fixture.settings.meta.id)) {
-      byPluginId.set(fixture.settings.meta.id, fixture);
-    }
-  }
+  const byUid = keyBy(fixtures, (fixture) => fixture.settings.uid);
 
   return async (meta: DataSourcePluginMeta): Promise<TestDataSourcePlugin> => {
-    const api = (byMeta.get(meta) ?? byPluginId.get(meta.id))?.api;
-    if (!api) {
-      throw new Error(
-        `seedDataSources: no api fixture for data source plugin "${meta.id}". Seed it as { settings, api }.`
-      );
-    }
-    // `new` on a function returning an object yields that object, so the instance is the fixture
-    // api itself and the handles a test holds (e.g. query mocks) stay live. components is returned
-    // because the loader overwrites instance.components with whatever the plugin supplies.
-    return {
-      DataSourceClass: function () {
+    // Metadata is shared by plugin; only the constructor settings identify the instance fixture.
+    const plugin: TestDataSourcePlugin = {
+      DataSourceClass: function (settings: DataSourceInstanceSettings) {
+        const api = byUid[settings.uid]?.api;
+        if (!api) {
+          throw new Error(
+            `seedDataSources: no api fixture for data source "${settings.uid}" (plugin "${meta.id}"). Seed it as { settings, api }.`
+          );
+        }
+        // The loader assigns components after construction, so retain the selected fixture's copy.
+        plugin.components = api.components ?? {};
         return api;
       } as unknown as TestDataSourcePlugin['DataSourceClass'],
-      components: api.components ?? {},
+      components: {},
     };
+    return plugin;
   };
 }
 
