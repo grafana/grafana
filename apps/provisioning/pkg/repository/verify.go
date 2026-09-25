@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
-	"path/filepath"
+	"path"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -31,6 +31,18 @@ func NewVerifyAgainstExistingRepositoriesValidator(lister RepositoryLister, quot
 		lister:      lister,
 		quotaGetter: quotaGetter,
 	}
+}
+
+// pathsOverlap reports whether a and b are the same directory tree, or one is nested inside the
+// other, checked in both directions - either the new or the existing repository could be the
+// ancestor. An empty path is the repository root, which contains every other path.
+func pathsOverlap(a, b string) bool {
+	if a == "" || b == "" {
+		return true
+	}
+	a = strings.Trim(path.Clean(a), "/")
+	b = strings.Trim(path.Clean(b), "/")
+	return a == b || strings.HasPrefix(a, b+"/") || strings.HasPrefix(b, a+"/")
 }
 
 // VerifyAgainstExistingRepositoriesValidator verifies repository configurations for conflicts within a namespace.
@@ -70,34 +82,29 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 		}
 	}
 
-	// If repo is git and sync is enabled, ensure no other repository is defined with a conflicting path.
-	// Path checks are skipped when sync is disabled to allow the onboarding wizard to create repositories
-	// in multiple steps (first with empty path, then configure path, then enable sync).
-	if cfg.Spec.Type.IsGit() && cfg.Spec.Sync.Enabled {
+	// Git repositories must not have duplicate or overlapping paths with existing repositories,
+	// regardless of Sync.Enabled: a disabled repository can still be synced on demand (an
+	// explicit pull job, or a PR/branch webhook), so it isn't inert with respect to this conflict.
+	if cfg.Spec.Type.IsGit() {
 		for _, v := range all {
 			// skip itself
 			if cfg.Name == v.Name {
 				continue
 			}
-			if v.URL() == cfg.URL() && v.Branch() == cfg.Branch() {
-				if v.Path() == cfg.Path() {
-					return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"),
-						cfg.Path(),
-						fmt.Sprintf("%s: %s", ErrRepositoryDuplicatePath.Error(), v.Name))}
-				}
+			if v.URL() != cfg.URL() || v.Branch() != cfg.Branch() {
+				continue
+			}
+			if v.Path() == cfg.Path() {
+				return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"),
+					cfg.Path(),
+					fmt.Sprintf("%s: %s", ErrRepositoryDuplicatePath.Error(), v.Name))}
+			}
 
-				// Skip parent/child conflict check when both paths are empty (both at repository root)
-				if v.Path() != "" || cfg.Path() != "" {
-					relPath, err := filepath.Rel(v.Path(), cfg.Path())
-					if err != nil {
-						return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"), cfg.Path(), "failed to evaluate path: "+err.Error())}
-					}
-					// https://pkg.go.dev/path/filepath#Rel
-					// Rel will return "../" if the relative paths are not related
-					if !strings.HasPrefix(relPath, "../") {
-						return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"), cfg.Path(),
-							fmt.Sprintf("%s: %s", ErrRepositoryParentFolderConflict.Error(), v.Name))}
-					}
+			// Skip parent/child conflict check when both paths are empty (both at repository root)
+			if v.Path() != "" || cfg.Path() != "" {
+				if pathsOverlap(v.Path(), cfg.Path()) {
+					return field.ErrorList{field.Invalid(field.NewPath("spec", string(cfg.Spec.Type), "path"), cfg.Path(),
+						fmt.Sprintf("%s: %s", ErrRepositoryParentFolderConflict.Error(), v.Name))}
 				}
 			}
 		}
