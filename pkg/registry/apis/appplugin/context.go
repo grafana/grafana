@@ -41,7 +41,7 @@ func (b *AppPluginAPIBuilder) getSettings(ctx context.Context) (*apppluginV0.Set
 		return nil, nil, err
 	}
 
-	loader, err := pluginsettings.GetDecryptedSecureJSONLoader(ctx, obj, b.decrypter)
+	loader, err := b.decrypter.loader(ctx, obj)
 	return settings, loader, err
 }
 

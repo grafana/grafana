@@ -1037,8 +1037,12 @@ github.com/grafana/alerting v0.0.0-20260923145145-361f525b0497/go.mod h1:FdYYE42
 github.com/grafana/dskit v0.0.0-20250818234656-8ff9c6532e85/go.mod h1:kImsvJ1xnmeT9Z6StK+RdEKLzlpzBsKwJbEQfmBJdFs=
 github.com/grafana/dskit v0.0.0-20260814134254-4a836a70f745/go.mod h1:dLUEt5k1Zv21//kvSk8ZR4kXjCq5oALBLu2LupLhj5k=
 github.com/grafana/grafana-app-sdk v0.60.0/go.mod h1:fbA8qt86WsvXrUpwCsInvOZzArnDMbpfrl4a21g0BQA=
+github.com/grafana/grafana-app-sdk v0.60.3/go.mod h1:sI7/5QkOrkd5sYVl03UcOQAC76zBTO1cdFF7b20TF1M=
+github.com/grafana/grafana-app-sdk v0.60.4-0.20260925051815-d646a4dc00dd/go.mod h1:sI7/5QkOrkd5sYVl03UcOQAC76zBTO1cdFF7b20TF1M=
 github.com/grafana/grafana-app-sdk/logging v0.59.0/go.mod h1:YL+dFVw92Us2TNoeJbqUOhEEyl1DLdCGaTSwMXMMnJs=
 github.com/grafana/grafana-app-sdk/logging v0.60.0/go.mod h1:uOj20cIKXKJccxLN/ahBK+VJ1p59Bxzf4Gyasrq+aSc=
+github.com/grafana/grafana-app-sdk/plugin v0.17.3-0.20260925052455-f5890a15bfa3 h1:WLJ4uuxskVu1XjUIQ+PQnycw27jXIo0iyJfaDXmBPUM=
+github.com/grafana/grafana-app-sdk/plugin v0.17.3-0.20260925052455-f5890a15bfa3/go.mod h1:pz2SDW+6GxureV3DN4lPc4dYk/ZOXe4dKVeiPlPKBX4=
 github.com/grafana/grafana-app-sdk/plugin v0.60.0/go.mod h1:mk+b9l1/cQrJYCc1oLIp+duAP2R0NoljfYmJOkDSwvI=
 github.com/grafana/grafana-aws-sdk v1.5.5 h1:wtmRoQmG0DAEfeWFI1kjDY3HK13kcc15xG/8AeaR164=
 github.com/grafana/grafana-aws-sdk v1.5.5/go.mod h1:KQ4I5Y3mECh4RxTf1fe68YWEry1djBam9mcq6mvrzK4=

@@ -93,7 +93,7 @@ type AppPluginAPIBuilder struct {
 	clientV3        v3.ClientV3
 	contextProvider PluginContextWrapper
 	schemas         map[string]*pluginschema.PluginSchema
-	decrypter       decrypt.DecryptService // Used with unified storage
+	decrypter       *secureValueLookup
 	accessChecker   PluginAccessChecker
 	features        featuremgmt.FeatureToggles
 	search          resourcepb.ResourceIndexClient
@@ -140,7 +140,7 @@ func NewAppPluginAPIBuilder(
 		clientV3:        clientV3,
 		contextProvider: contextProvider,
 		schemas:         plugin.Schemas,
-		decrypter:       decrypter,
+		decrypter:       newSecureValueLookup(decrypter),
 		accessChecker:   accessChecker,
 		search:          search,
 		store:           store,
