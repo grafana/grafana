@@ -1723,10 +1723,15 @@ func requireListIdentity(ctx context.Context, req *resourcepb.ListRequest) *reso
 func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (rsp *resourcepb.ListResponse, err error) {
 	ctx, span := tracer.Start(ctx, "resource.server.List")
 	path := listPathUnknown
+	selectorType := listSelectorType(req)
+	requestedLimit := int64(0)
+	if req != nil {
+		requestedLimit = req.GetLimit()
+	}
 	searchFallback := false
 	defer func() {
 		setListRequestPath(ctx, path)
-		annotateListRequest(span, path, req, rsp)
+		annotateListRequest(span, path, selectorType, requestedLimit, req, rsp)
 		span.End()
 	}()
 

@@ -19,7 +19,7 @@ const (
 	listPathTrash                        = "trash"
 )
 
-func annotateListRequest(span trace.Span, path string, req *resourcepb.ListRequest, rsp *resourcepb.ListResponse) {
+func annotateListRequest(span trace.Span, path, selectorType string, requestedLimit int64, req *resourcepb.ListRequest, rsp *resourcepb.ListResponse) {
 	responseItems := 0
 	hasMore := false
 	if rsp != nil {
@@ -41,9 +41,9 @@ func annotateListRequest(span trace.Span, path string, req *resourcepb.ListReque
 		attrs = append(attrs,
 			attribute.String("list.source", req.GetSource().String()),
 			attribute.String("list.scope", scope),
-			attribute.String("list.selectors", listSelectorType(req)),
+			attribute.String("list.selectors", selectorType),
 			attribute.Bool("list.keys_only", req.GetKeysOnly()),
-			attribute.Int64("list.limit", req.GetLimit()),
+			attribute.Int64("list.limit", requestedLimit),
 			attribute.Bool("list.continue", req.GetNextPageToken() != ""),
 		)
 	}
@@ -51,6 +51,9 @@ func annotateListRequest(span trace.Span, path string, req *resourcepb.ListReque
 }
 
 func listSelectorType(req *resourcepb.ListRequest) string {
+	if req == nil {
+		return "none"
+	}
 	opts := req.GetOptions()
 	if opts == nil {
 		return "none"
