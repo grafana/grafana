@@ -1424,10 +1424,15 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 		}
 	}
 
-	// FIXME: record is nullable but we don't save it as null when it's nil
+	// record is nullable: normal writes always save it as '' rather than NULL for
+	// an Alert rule, but a NULL is possible (e.g. a row written outside the usual
+	// insert/update path), and must still count as an Alert rule rather than
+	// silently falling out of both filters. NULL never equals '' or anything else
+	// in SQL, so "record != ''" already excludes it from Recording rules on its
+	// own; only the Alerting-type filter needs the explicit IS NULL branch.
 	switch query.RuleType {
 	case ngmodels.RuleTypeFilterAlerting:
-		q = q.Where("record = ''")
+		q = q.Where("record IS NULL OR record = ''")
 	case ngmodels.RuleTypeFilterRecording:
 		q = q.Where("record != ''")
 	case ngmodels.RuleTypeFilterAll:

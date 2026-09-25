@@ -3233,6 +3233,58 @@ func TestIntegration_ListAlertRulesPaginated(t *testing.T) {
 	})
 }
 
+// TestIntegration_ListAlertRulesPaginated_NullRecordIsAlertType is a
+// regression test for the Alert-rule type filter treating a NULL `record`
+// column as a Recording rule (falling out of both RuleTypeFilterAlerting and
+// RuleTypeFilterRecording, since "record != ”" is also false for NULL in
+// SQL). Normal writes always store ” rather than NULL for an Alert rule, so
+// this seeds a NULL directly, bypassing the usual insert path, to prove the
+// filter is still correct for a row that got there some other way.
+func TestIntegration_ListAlertRulesPaginated_NullRecordIsAlertType(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
+		BaseInterval: time.Duration(rand.Int64N(100)) * time.Second,
+	}
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	b := &fakeBus{}
+	orgID := int64(1)
+	ruleGen := models.RuleGen.With(
+		models.RuleGen.WithIntervalMatching(cfg.UnifiedAlerting.BaseInterval),
+		models.RuleGen.WithOrgID(orgID),
+	)
+	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
+	alertRule := createRule(t, store, ruleGen)
+
+	err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+		_, err := sess.Exec("UPDATE alert_rule SET record = NULL WHERE uid = ?", alertRule.UID)
+		return err
+	})
+	require.NoError(t, err)
+
+	t.Run("counted as an Alert rule", func(t *testing.T) {
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID, RuleUIDs: []string{alertRule.UID}},
+			RuleType:            models.RuleTypeFilterAlerting,
+		})
+		require.NoError(t, err)
+		require.Len(t, result, 1)
+		require.Equal(t, alertRule.UID, result[0].UID)
+	})
+
+	t.Run("excluded from Recording rules", func(t *testing.T) {
+		result, _, err := store.ListAlertRulesPaginated(context.Background(), &models.ListAlertRulesExtendedQuery{
+			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID, RuleUIDs: []string{alertRule.UID}},
+			RuleType:            models.RuleTypeFilterRecording,
+		})
+		require.NoError(t, err)
+		require.Empty(t, result)
+	})
+}
+
 func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
