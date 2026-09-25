@@ -34,24 +34,9 @@ const meta: Meta<typeof Table> = {
     },
     a11y: {
       config: {
-        // TODO comment out rules that are currently failing in the story and fix them one by one
-        // see https://github.com/grafana/grafana/issues/117606
         rules: [
           {
-            id: 'aria-required-children',
-            enabled: false,
-          },
-          {
-            id: 'aria-required-parent',
-            enabled: false,
-          },
-          {
-            id: 'empty-table-header',
-            enabled: false,
-          },
-          {
             // This does not need to be fixed! It is already specified in the storybook root preview.
-            // Once the other a11y issues are fixed, it can be removed.
             // Unfortunately we have to duplicate it here because you can't inherit *and* append additional config rules...
             id: 'scrollable-region-focusable',
             selector: 'body',

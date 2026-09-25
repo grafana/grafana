@@ -55,7 +55,14 @@ export function ExpandedRow({ tableStyles, nestedData, rowIndex, width, cellHeig
     );
   });
 
-  return <div className={styles.subTables}>{subTables}</div>;
+  // This wrapper is rendered as a sibling of the row's cells, inside the row's `role="row"` div.
+  // A `row` can only own `cell`/`gridcell`/`columnheader`/`rowheader` children, so this needs a
+  // `cell` role of its own to legally contain the nested sub-table(s).
+  return (
+    <div className={styles.subTables} role="cell">
+      {subTables}
+    </div>
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
