@@ -137,5 +137,9 @@ For detailed instructions, refer to:
 
 On the Settings page, you can also manage your Alertmanager configurations.
 
-- Manage version snapshots for the built-in Alertmanager, which allows administrators to roll back unintentional changes or mistakes in the Alertmanager configuration.
-- Compare the historical snapshot with the latest configuration to see which changes were made.
+- Manage version snapshots for the built-in Alertmanager, which allows administrators to roll back unintentional changes or mistakes in the Alertmanager configuration, by accessing `https://<slug>.grafana.net/alerting/admin/alertmanager` page -> `View configuration` -> `Versions`:
+  <img width="1003" height="270" alt="image" src="https://github.com/user-attachments/assets/993ca124-e657-4da2-9e96-73c5879bcd7a" />  
+  <img width="1003" height="318" alt="image" src="https://github.com/user-attachments/assets/fe1d8f12-785b-48d2-ad1e-516ae97a1a67" />
+
+- Compare the historical snapshot with the latest configuration to see which changes were made:
+  <img width="1003" height="318" alt="image" src="https://github.com/user-attachments/assets/3555a017-4d73-437e-b0c2-ee52cf4638bc" />
