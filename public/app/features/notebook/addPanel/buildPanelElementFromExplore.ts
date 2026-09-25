@@ -43,7 +43,9 @@ export function buildPanelElementFromExplore(pane: ExplorePaneSnapshot): PanelEl
 
   const vizPanel = new VizPanel({
     key: getVizPanelKeyForPanelId(panel.id),
-    title: panel.title,
+    // Explore's builder titles its panel "New Panel" for the dashboard flow; a notebook panel starts
+    // untitled, like one added in the notebook itself.
+    title: '',
     pluginId: panel.type,
     options: panel.options ?? {},
     fieldConfig: panel.fieldConfig,

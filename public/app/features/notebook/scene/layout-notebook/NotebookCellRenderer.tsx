@@ -11,6 +11,7 @@ import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import { type NotebookCellItem } from './NotebookCellItem';
+import { OpenInExploreButton } from './OpenInExploreButton';
 import { PanelQueryEditor } from './PanelQueryEditor';
 import { MarkdownCell } from './cells/MarkdownCell';
 import { cellTypeRegistry } from './cells/cellTypeRegistry';
@@ -96,6 +97,15 @@ function PanelCell({
   autoFocus?: boolean;
 }) {
   const styles = useStyles2(getStyles);
+
+  // Set once per panel rather than at construction: buildVizPanelState is shared with real dashboard
+  // panels, so this notebook-only chrome is layered on here instead.
+  //
+  // hoverHeader: false keeps the icon always visible rather than fading in only on hover — otherwise
+  // PanelChrome wraps header content in a floating, boxed HoverWidget instead of rendering it inline.
+  useEffect(() => {
+    panel.setState({ headerActions: <OpenInExploreButton panel={panel} />, hoverHeader: false });
+  }, [panel]);
 
   return (
     <Stack direction="column" gap={1}>
