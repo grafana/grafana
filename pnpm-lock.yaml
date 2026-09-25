@@ -1894,9 +1894,12 @@ importers:
       '@typescript/native':
         specifier: npm:typescript@^7.0.2
         version: typescript@7.0.2
-      rollup:
-        specifier: ^4.60.1
-        version: 4.60.1
+      rolldown:
+        specifier: 1.2.9
+        version: 1.2.9
+      rolldown-plugin-dts:
+        specifier: 0.28.6
+        version: 0.28.6(@typescript/typescript6@6.0.2)(oxc-resolver@11.21.2)(rolldown@1.2.9)
       typescript:
         specifier: npm:@typescript/typescript6@^6.0.2
         version: '@typescript/typescript6@6.0.2'
