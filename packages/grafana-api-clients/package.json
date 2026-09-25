@@ -301,11 +301,11 @@
     "./rtkq/rules.alerting/v1beta1": {
       "@grafana-app/source": "./src/clients/rtkq/rules.alerting/v1beta1/index.ts",
       "import": {
-        "types": "./dist/types/clients/rtkq/rules.alerting/v1beta1/index.d.ts",
+        "types": "./dist/esm/clients/rtkq/rules.alerting/v1beta1/index.d.mts",
         "default": "./dist/esm/clients/rtkq/rules.alerting/v1beta1/index.mjs"
       },
       "require": {
-        "types": "./dist/types/clients/rtkq/rules.alerting/v1beta1/index.d.ts",
+        "types": "./dist/cjs/clients/rtkq/rules.alerting/v1beta1/index.d.cts",
         "default": "./dist/cjs/clients/rtkq/rules.alerting/v1beta1/index.cjs"
       }
     }
