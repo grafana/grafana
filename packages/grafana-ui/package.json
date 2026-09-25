@@ -18,20 +18,30 @@
   },
   "main": "./dist/cjs/index.cjs",
   "module": "./dist/esm/index.mjs",
-  "types": "./dist/types/index.d.ts",
+  "types": "./dist/cjs/index.d.cts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
       "@grafana-app/source": "./src/index.ts",
-      "types": "./dist/types/index.d.ts",
-      "import": "./dist/esm/index.mjs",
-      "require": "./dist/cjs/index.cjs"
+      "import": {
+        "types": "./dist/esm/index.d.mts",
+        "default": "./dist/esm/index.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.cts",
+        "default": "./dist/cjs/index.cjs"
+      }
     },
     "./unstable": {
       "@grafana-app/source": "./src/unstable.ts",
-      "types": "./dist/types/unstable.d.ts",
-      "import": "./dist/esm/unstable.mjs",
-      "require": "./dist/cjs/unstable.cjs"
+      "import": {
+        "types": "./dist/esm/unstable.d.mts",
+        "default": "./dist/esm/unstable.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/unstable.d.cts",
+        "default": "./dist/cjs/unstable.cjs"
+      }
     },
     "./internal": {
       "@grafana-app/source": "./src/internal/index.ts"
@@ -48,8 +58,7 @@
     "./LICENSE_APACHE2"
   ],
   "scripts": {
-    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
-    "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
+    "build": "rolldown -c rolldown.config.ts",
     "clean": "rimraf ./dist ./compiled ./unstable ./package.tgz",
     "storybook": "storybook dev -p 9001 -c .storybook --no-open",
     "storybook:build": "storybook build -o ./dist/storybook -c .storybook",
@@ -141,7 +150,6 @@
   "devDependencies": {
     "@faker-js/faker": "^10.6.0",
     "@grafana/test-utils": "workspace:*",
-    "@rollup/plugin-node-resolve": "16.0.1",
     "@rsbuild/core": "^2.1.9",
     "@rsbuild/plugin-react": "^2.1.0",
     "@storybook/addon-a11y": "10.3.6",
@@ -183,11 +191,9 @@
     "react-select-event": "^5.1.0",
     "remark-gfm": "^4.0.1",
     "rimraf": "6.0.1",
-    "rollup": "^4.60.1",
+    "rolldown": "1.2.9",
+    "rolldown-plugin-dts": "0.28.6",
     "rollup-plugin-copy": "3.5.0",
-    "rollup-plugin-esbuild": "6.2.1",
-    "rollup-plugin-node-externals": "^8.0.0",
-    "rollup-plugin-svg-import": "3.0.0",
     "sass-loader": "16.0.5",
     "storybook": "10.3.6",
     "storybook-react-rsbuild": "3.3.4",
