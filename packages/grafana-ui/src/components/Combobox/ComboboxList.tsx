@@ -161,7 +161,8 @@ export const ComboboxList = <T extends string | number>({
                         indeterminate={item.value === ALL_OPTION_VALUE && selectedItems.length > 0 && !allItemsSelected}
                         aria-labelledby={itemId}
                         onClick={(e) => {
-                          e.stopPropagation();
+                          // Let event propagate to parent option row
+                          // so Downshift handles selection and keeps menu open
                         }}
                         data-testid={`${itemId}-checkbox`}
                       />
