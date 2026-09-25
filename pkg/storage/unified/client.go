@@ -174,7 +174,8 @@ func newClient(opts options.StorageOptions,
 		}
 
 		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-			Backend: backend,
+			Backend:                 backend,
+			GRPCErrorResultToStatus: cfg.UnifiedStorageGRPCErrorResultToStatus,
 			Blob: resource.BlobConfig{
 				URL: opts.BlobStoreURL,
 			},
@@ -480,10 +481,10 @@ func GrpcConn(address string, reg prometheus.Registerer) (*grpc.ClientConn, erro
 // and middleware.StreamClientUserHeaderInterceptor as we don't need them.
 func instrument(requestDuration *prometheus.HistogramVec, instrumentationLabelOptions ...middleware.InstrumentationOption) ([]grpc.UnaryClientInterceptor, []grpc.StreamClientInterceptor) {
 	return []grpc.UnaryClientInterceptor{
-			middleware.UnaryClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
-		}, []grpc.StreamClientInterceptor{
-			middleware.StreamClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
-		}
+		middleware.UnaryClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
+	}, []grpc.StreamClientInterceptor{
+		middleware.StreamClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
+	}
 }
 
 func newClientMetrics(reg prometheus.Registerer) *clientMetrics {
