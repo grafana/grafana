@@ -247,6 +247,36 @@ func TestIntegrationAnnotations(t *testing.T) {
 			assert.Len(t, inserted, count)
 		})
 
+		t.Run("Batch-inserted annotations with tags are linked to their tags", func(t *testing.T) {
+			items := []annotations.Item{
+				{OrgID: 102, Type: "batch", Epoch: 12, Tags: []string{"batch:a"}},
+				{OrgID: 102, Type: "batch", Epoch: 12, Tags: []string{"batch:a"}},
+				{OrgID: 102, Type: "batch", Epoch: 12, Tags: []string{"batch:b"}},
+			}
+
+			err := store.AddMany(context.Background(), items)
+			require.NoError(t, err)
+
+			var orphaned int64
+			err = sql.WithDbSession(context.Background(), func(sess *db.Session) error {
+				orphaned, err = sess.Table("annotation_tag").Where("annotation_id = 0").Count()
+				return err
+			})
+			require.NoError(t, err)
+			assert.Zero(t, orphaned)
+
+			accRes := &annotation_ac.AccessResources{CanAccessOrgAnnotations: true}
+			for tagName, expected := range map[string]int{"batch:a": 2, "batch:b": 1} {
+				found, err := store.Get(context.Background(), annotations.ItemQuery{
+					OrgID:        102,
+					Tags:         []string{tagName},
+					SignedInUser: testUser,
+				}, accRes)
+				require.NoError(t, err)
+				assert.Len(t, found, expected, "tag %s", tagName)
+			}
+		})
+
 		t.Run("Can query for annotation by id", func(t *testing.T) {
 			items, err := store.Get(context.Background(), annotations.ItemQuery{
 				OrgID:        1,
