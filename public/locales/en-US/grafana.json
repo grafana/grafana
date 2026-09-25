@@ -13182,6 +13182,7 @@
       "list-truncated": "Not every notebook is shown. Narrow the search to find others.",
       "lock-time-range": "Lock to {{range}}",
       "lock-time-range-description": "Keep this visualization on the window it was captured in. Unlocked, it follows the notebook time range.",
+      "quick-add": "Add to \"{{title}}\"",
       "search-placeholder": "Search by title",
       "sort-alphabetical": "Alphabetically (A–Z)",
       "sort-label": "Sort notebooks",
@@ -13474,7 +13475,8 @@
       }
     },
     "header-menu": {
-      "add-to-notebook": "Add to notebook",
+      "add-to-notebook": "Add to notebook…",
+      "add-to-recent-notebook": "Add to \"{{title}}\"",
       "copy": "Copy",
       "copy-styles": "Copy styles",
       "download-diagnostics": "Download diagnostics",
