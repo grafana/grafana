@@ -376,29 +376,50 @@ export const importQueries = (
   exploreId: string,
   queries: DataQuery[],
   sourceDataSource: DataSourceApi | undefined | null,
-  targetDataSource: DataSourceApi,
+  targetDataSource?: DataSourceApi,
   singleQueryChangeRef?: string // when changing one query DS to another in a mixed environment, we do not want to change all queries, just the one being changed
 ): ThunkResult<Promise<DataQuery[] | void>> => {
   return async (dispatch) => {
-    if (!sourceDataSource) {
-      // explore not initialized
+    if (!sourceDataSource || !targetDataSource) {
+      // explore not initialized or target datasource not provided
       dispatch(queriesImportedAction({ exploreId, queries }));
       return;
     }
 
     let importedQueries = queries;
     // If going to mixed, keep queries with source datasource
-    if (targetDataSource.uid === MIXED_DATASOURCE_NAME) {
+    if (
+      targetDataSource.uid === MIXED_DATASOURCE_NAME ||
+      targetDataSource.meta?.mixed ||
+      targetDataSource.type === 'mixed'
+    ) {
       importedQueries = queries.map((query) => {
-        return { ...query, datasource: sourceDataSource.getRef() };
+        return {
+          ...query,
+          datasource: sourceDataSource.getRef
+            ? sourceDataSource.getRef()
+            : { uid: sourceDataSource.uid, type: sourceDataSource.type },
+        };
       });
     }
     // If going from mixed, see what queries you keep by their individual datasources
-    else if (sourceDataSource.uid === MIXED_DATASOURCE_NAME) {
-      const groupedQueries = groupBy(queries, (query) => query.datasource?.uid);
+    else if (
+      sourceDataSource.uid === MIXED_DATASOURCE_NAME ||
+      sourceDataSource.meta?.mixed ||
+      sourceDataSource.type === 'mixed'
+    ) {
+      const groupedQueries = groupBy(queries, (query) =>
+        typeof query.datasource === 'string' ? query.datasource : query.datasource?.uid
+      );
       const groupedImportableQueries = await Promise.all(
         Object.keys(groupedQueries).map(async (key: string) => {
-          const queryDatasource = await getDataSourceInstance({ uid: key });
+          let queryDatasource: DataSourceApi | undefined;
+          if (key && key !== 'undefined') {
+            queryDatasource = await getDataSourceInstance({ uid: key });
+          }
+          if (!queryDatasource) {
+            return [];
+          }
           return await getImportableQueries(targetDataSource, queryDatasource, groupedQueries[key]);
         })
       );
@@ -415,7 +436,10 @@ export const importQueries = (
     }
 
     // this will be the entire imported set, or the single imported query in an array
-    let nextQueries = await ensureQueries(importedQueries, targetDataSource.getRef());
+    let nextQueries = await ensureQueries(
+      importedQueries,
+      targetDataSource.getRef ? targetDataSource.getRef() : { uid: targetDataSource.uid, type: targetDataSource.type }
+    );
 
     if (singleQueryChangeRef !== undefined) {
       // if the query import didn't return a result, there was no ability to import between datasources. Create an empty query for the datasource
