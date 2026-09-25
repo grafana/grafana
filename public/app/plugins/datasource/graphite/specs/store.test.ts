@@ -1,3 +1,6 @@
+import { type AnyAction } from '@reduxjs/toolkit';
+
+import { getDefaultTimeRange } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { GraphiteDatasource } from '../datasource';
@@ -9,7 +12,7 @@ import {
   getTagsSelectables,
   getTagValuesSelectables,
 } from '../state/providers';
-import { createStore } from '../state/store';
+import { createStore, type GraphiteQueryEditorState } from '../state/store';
 import { type GraphiteSegment } from '../types';
 
 const mockPublish = jest.fn();
@@ -518,5 +521,59 @@ describe('Graphite actions', () => {
       const segments = await getAltSegmentsSelectables(ctx.state, 1, '');
       expect(segments).toHaveLength(5000);
     });
+  });
+});
+
+type StoreDispatch = (action: AnyAction) => Promise<void>;
+
+describe('Graphite store dispatch ordering', () => {
+  let datasource: GraphiteDatasource;
+
+  beforeEach(() => {
+    datasource = new GraphiteDatasource({
+      url: '/api/datasources/proxy/1',
+      name: 'graphiteProd',
+      jsonData: {},
+    });
+    datasource.metricFindQuery = jest.fn(() => Promise.resolve([]));
+    datasource.getFuncDef = gfunc.getFuncDef;
+    datasource.createFuncInstance = gfunc.createFuncInstance;
+    datasource.funcDefs = gfunc.getFuncDefs('1.0');
+  });
+
+  it('applies actions in call order when init waits for function definitions', async () => {
+    datasource.waitForFuncDefsLoaded = jest.fn(
+      () => new Promise((resolve) => setTimeout(() => resolve(gfunc.getFuncDefs('1.0')), 20))
+    );
+
+    let state: GraphiteQueryEditorState | undefined;
+    const dispatch = createStore((newState) => {
+      state = newState;
+    }) as unknown as StoreDispatch;
+    const range = getDefaultTimeRange();
+
+    const init = dispatch(
+      actions.init({
+        datasource,
+        target: { refId: 'A', target: 'test.prod.*' },
+        refresh: jest.fn(),
+        queries: [],
+        templateSrv: getTemplateSrv(),
+      })
+    );
+    const timeRangeChanged = dispatch(actions.timeRangeChanged(range));
+    const queryChanged = dispatch(actions.queryChanged({ refId: 'A', target: 'test.dev.*' }));
+
+    await expect(Promise.all([init, timeRangeChanged, queryChanged])).resolves.toBeDefined();
+    expect(state?.target.target).toBe('test.dev.*');
+    expect(state?.range).toBe(range);
+  });
+
+  it('ignores query changes before the store is initialized', async () => {
+    const onChange = jest.fn();
+    const dispatch = createStore(onChange) as unknown as StoreDispatch;
+
+    await expect(dispatch(actions.queryChanged({ refId: 'A', target: 'test.dev.*' }))).resolves.toBeUndefined();
+    expect(onChange).toHaveBeenCalledWith(expect.not.objectContaining({ target: expect.anything() }));
   });
 });

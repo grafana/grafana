@@ -71,9 +71,11 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
   }
   if (actions.queriesChanged.match(action)) {
     state.queries = action.payload;
-    handleTargetChanged(state);
+    if (state.queryModel) {
+      handleTargetChanged(state);
+    }
   }
-  if (actions.queryChanged.match(action)) {
+  if (actions.queryChanged.match(action) && state.target && state.queryModel) {
     state.target.target = action.payload.target || '';
     await parseTarget(state);
     handleTargetChanged(state);
@@ -172,14 +174,14 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
     func.updateParam(value, index);
     handleTargetChanged(state);
   }
-  if (actions.updateQuery.match(action)) {
+  if (actions.updateQuery.match(action) && state.target && state.queryModel) {
     state.target.target = action.payload.query;
     handleTargetChanged(state);
   }
   if (actions.runQuery.match(action)) {
     state.refresh();
   }
-  if (actions.toggleEditorMode.match(action)) {
+  if (actions.toggleEditorMode.match(action) && state.target && state.queryModel) {
     state.target.textEditor = !state.target.textEditor;
     await parseTarget(state);
   }
@@ -189,10 +191,15 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
 
 export const createStore = (onChange: (state: GraphiteQueryEditorState) => void): Dispatch<AnyAction> => {
   let state = {} as GraphiteQueryEditorState;
+  let queue: Promise<void> = Promise.resolve();
 
-  const dispatch = async (action: AnyAction) => {
-    state = await reducer(action, state);
-    onChange(state);
+  const dispatch = (action: AnyAction) => {
+    const result = queue.then(async () => {
+      state = await reducer(action, state);
+      onChange(state);
+    });
+    queue = result.catch(() => {});
+    return result;
   };
 
   return dispatch as Dispatch<AnyAction>;
