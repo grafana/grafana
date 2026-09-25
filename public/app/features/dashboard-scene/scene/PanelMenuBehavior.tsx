@@ -412,7 +412,8 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
               modal.buildPanel,
               NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL,
               modal.isLibraryPanel(),
-              () => dashboard.showModal(modal)
+              () => dashboard.showModal(modal),
+              `${dashboard.state.uid}:${panel.getPathId()}`
             );
           },
         });
