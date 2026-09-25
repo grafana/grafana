@@ -21,6 +21,7 @@ import {
   toUtcDateTimeIfIsoString,
 } from 'app/core/utils/timePicker';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { type LoadMoreLogsRange } from 'app/features/logs/components/infiniteScrollUtils';
 import { sortLogsResult } from 'app/features/logs/utils';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { type ExploreItemState } from 'app/types/explore';
@@ -70,7 +71,7 @@ export const updateTimeRange = (options: {
   };
 };
 
-export const loadMoreLogs = (options: { exploreId: string; absoluteRange: AbsoluteTimeRange }): ThunkResult<void> => {
+export const loadMoreLogs = (options: { exploreId: string; absoluteRange: LoadMoreLogsRange }): ThunkResult<void> => {
   return (dispatch) => {
     dispatch(runLoadMoreLogsQueries({ ...options }));
   };

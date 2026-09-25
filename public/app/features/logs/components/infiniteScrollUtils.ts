@@ -1,7 +1,7 @@
 import { type MutableRefObject } from 'react';
 
 import { type AbsoluteTimeRange, type LogRowModel, type TimeRange, rangeUtil } from '@grafana/data';
-import { LogsSortOrder, type TimeZone } from '@grafana/schema';
+import { type DataQuery, LogsSortOrder, type TimeZone } from '@grafana/schema';
 
 export enum ScrollDirection {
   Top = -1,
@@ -67,33 +67,67 @@ function shouldIgnoreChainOfEvents(
   return true;
 }
 
-export function getVisibleRange(rows: LogRowModel[]) {
+/** Millisecond window plus the oldest and newest rows by nanosecond timestamp. */
+export interface VisibleLogsRange extends AbsoluteTimeRange {
+  oldestNs: string;
+  newestNs: string;
+}
+
+/**
+ * Millisecond range infinite scroll already sends, plus one Loki nanosecond bound.
+ * The unused side is omitted so that edge stays the dashboard range.
+ */
+export interface LoadMoreLogsRange extends AbsoluteTimeRange {
+  startNs?: string;
+  endNs?: string;
+}
+
+export function getVisibleRange(rows: LogRowModel[]): VisibleLogsRange {
   const firstTimeStamp = rows[0].timeEpochMs;
   const lastTimeStamp = rows[rows.length - 1].timeEpochMs;
 
+  let oldestNs = rows[0].timeEpochNs;
+  let newestNs = rows[0].timeEpochNs;
+  for (let i = 1; i < rows.length; i++) {
+    const ns = rows[i].timeEpochNs;
+    // Several rows can share a millisecond, and timeEpochMs does not order those.
+    if (BigInt(ns) < BigInt(oldestNs)) {
+      oldestNs = ns;
+    }
+    if (BigInt(ns) > BigInt(newestNs)) {
+      newestNs = ns;
+    }
+  }
+
   const visibleRange =
     lastTimeStamp < firstTimeStamp
-      ? { from: lastTimeStamp, to: firstTimeStamp }
-      : { from: firstTimeStamp, to: lastTimeStamp };
+      ? { from: lastTimeStamp, to: firstTimeStamp, oldestNs, newestNs }
+      : { from: firstTimeStamp, to: lastTimeStamp, oldestNs, newestNs };
 
   return visibleRange;
 }
 
-function getPrevRange(visibleRange: AbsoluteTimeRange, currentRange: TimeRange) {
-  return { from: currentRange.from.valueOf(), to: visibleRange.from };
+function getPrevRange(visibleRange: VisibleLogsRange, currentRange: TimeRange): LoadMoreLogsRange {
+  // Loki's end is exclusive, so this line is not returned again and older lines in the same millisecond are.
+  return { from: currentRange.from.valueOf(), to: visibleRange.from, endNs: visibleRange.oldestNs };
 }
 
-function getNextRange(visibleRange: AbsoluteTimeRange, currentRange: TimeRange, timeZone: TimeZone) {
+function getNextRange(visibleRange: VisibleLogsRange, currentRange: TimeRange, timeZone: TimeZone): LoadMoreLogsRange {
   currentRange = updateCurrentRange(currentRange, timeZone);
-  return { from: visibleRange.to, to: currentRange.to.valueOf() };
+  // Loki's start is inclusive, so begin one nanosecond after the newest visible line.
+  return {
+    from: visibleRange.to,
+    to: currentRange.to.valueOf(),
+    startNs: (BigInt(visibleRange.newestNs) + 1n).toString(),
+  };
 }
 
 export function canScrollTop(
-  visibleRange: AbsoluteTimeRange,
+  visibleRange: VisibleLogsRange,
   currentRange: TimeRange,
   timeZone: TimeZone,
   sortOrder: LogsSortOrder
-): AbsoluteTimeRange | undefined {
+): LoadMoreLogsRange | undefined {
   if (sortOrder === LogsSortOrder.Descending) {
     currentRange = updateCurrentRange(currentRange, timeZone);
     const canScroll = currentRange.to.valueOf() - visibleRange.to > SCROLLING_THRESHOLD;
@@ -105,11 +139,11 @@ export function canScrollTop(
 }
 
 export function canScrollBottom(
-  visibleRange: AbsoluteTimeRange,
+  visibleRange: VisibleLogsRange,
   currentRange: TimeRange,
   timeZone: TimeZone,
   sortOrder: LogsSortOrder
-): AbsoluteTimeRange | undefined {
+): LoadMoreLogsRange | undefined {
   if (sortOrder === LogsSortOrder.Descending) {
     const canScroll = Math.abs(currentRange.from.valueOf() - visibleRange.from) > SCROLLING_THRESHOLD;
     return canScroll ? getPrevRange(visibleRange, currentRange) : undefined;
@@ -119,8 +153,49 @@ export function canScrollBottom(
   return canScroll ? getNextRange(visibleRange, currentRange, timeZone) : undefined;
 }
 
+/** Used when unlimited scrolling continues past the dashboard interval. Keeps the visible millisecond window and one bound. */
+export function loadMoreRangeFromVisible(
+  visibleRange: VisibleLogsRange,
+  scrollDirection: ScrollDirection,
+  sortOrder: LogsSortOrder
+): LoadMoreLogsRange {
+  const loadingOlder =
+    sortOrder === LogsSortOrder.Descending
+      ? scrollDirection === ScrollDirection.Bottom
+      : scrollDirection === ScrollDirection.Top;
+  if (loadingOlder) {
+    return { from: visibleRange.from, to: visibleRange.to, endNs: visibleRange.oldestNs };
+  }
+  return {
+    from: visibleRange.from,
+    to: visibleRange.to,
+    startNs: (BigInt(visibleRange.newestNs) + 1n).toString(),
+  };
+}
+
 function updateCurrentRange(timeRange: TimeRange, timeZone: TimeZone) {
   return rangeUtil.isRelativeTimeRange(timeRange.raw)
     ? rangeUtil.convertRawToRange(timeRange.raw, timeZone)
     : timeRange;
+}
+
+/** Copies the single nanosecond bound onto a Loki query. Other datasources are unchanged. */
+export function withLokiInfiniteScrollBound<T extends DataQuery & { supportingQueryType?: string }>(
+  query: T,
+  range: LoadMoreLogsRange,
+  datasourceType?: string
+): T & { startNs?: string; endNs?: string } {
+  const configured = query.datasource;
+  const configuredType =
+    configured && typeof configured === 'object' && 'type' in configured ? configured.type : undefined;
+  if ((typeof configuredType === 'string' ? configuredType : datasourceType) !== 'loki') {
+    return query;
+  }
+  if (range.endNs !== undefined) {
+    return { ...query, endNs: range.endNs };
+  }
+  if (range.startNs !== undefined) {
+    return { ...query, startNs: range.startNs };
+  }
+  return query;
 }
