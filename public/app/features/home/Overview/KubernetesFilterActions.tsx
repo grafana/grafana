@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Controller, type UseFormReturn } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
@@ -40,28 +41,25 @@ export function KubernetesFilterActions({ datasource }: CardFilterActionsProps) 
       openLabel={t('home.solutions.kubernetes.filter.open', 'Filter by cluster, namespace, or node')}
       title={t('home.solutions.kubernetes.filter.title', 'Filter Kubernetes Monitoring')}
     >
-      {(draft, onChange) => <KubernetesFilterFields datasource={datasource} draft={draft} onChange={onChange} />}
+      {(form) => <KubernetesFilterFields datasource={datasource} form={form} />}
     </SolutionFilterActions>
   );
 }
 
 interface KubernetesFilterFieldsProps {
   datasource: DataSourceInstanceListItem;
-  draft: KubernetesScope;
-  onChange: (scope: KubernetesScope) => void;
+  form: UseFormReturn<KubernetesScope>;
 }
 
-function KubernetesFilterFields({ datasource, draft, onChange }: KubernetesFilterFieldsProps) {
+function KubernetesFilterFields({ datasource, form: { control, watch } }: KubernetesFilterFieldsProps) {
+  const cluster = watch('cluster');
   const clusters = useAsync(() => fetchKubernetesLabelValues(datasource.uid, 'cluster', ''), [datasource.uid]);
-  // Namespace and node lists follow the drafted cluster ('' = every cluster).
+  // Namespace and node lists follow the chosen cluster ('' = every cluster).
   const namespaces = useAsync(
-    () => fetchKubernetesLabelValues(datasource.uid, 'namespace', draft.cluster),
-    [datasource.uid, draft.cluster]
+    () => fetchKubernetesLabelValues(datasource.uid, 'namespace', cluster),
+    [datasource.uid, cluster]
   );
-  const nodes = useAsync(
-    () => fetchKubernetesLabelValues(datasource.uid, 'node', draft.cluster),
-    [datasource.uid, draft.cluster]
-  );
+  const nodes = useAsync(() => fetchKubernetesLabelValues(datasource.uid, 'node', cluster), [datasource.uid, cluster]);
   // A rejected lookup leaves the value undefined: an empty list, with custom entry still allowed.
   const clusterOptions = useMemo(() => toOptions(clusters.value), [clusters.value]);
   const namespaceOptions = useMemo(() => toOptions(namespaces.value), [namespaces.value]);
@@ -70,43 +68,69 @@ function KubernetesFilterFields({ datasource, draft, onChange }: KubernetesFilte
   return (
     <>
       {/* Each select is locked until its own values arrive; the namespace and node lists reload per cluster. */}
-      <Field label={t('home.solutions.kubernetes.filter.cluster', 'Cluster')} noMargin>
-        <Combobox<string>
-          id="kubernetes-filter-cluster"
-          options={clusterOptions}
-          value={draft.cluster || null}
-          isClearable
-          createCustomValue
-          loading={clusters.loading}
-          disabled={clusters.loading}
-          placeholder={t('home.solutions.kubernetes.filter.all-clusters', 'All clusters')}
-          onChange={(option) => onChange({ ...draft, cluster: option?.value ?? '' })}
+      <Field
+        label={t('home.solutions.kubernetes.filter.cluster', 'Cluster')}
+        htmlFor="kubernetes-filter-cluster"
+        noMargin
+      >
+        <Controller
+          control={control}
+          name="cluster"
+          render={({ field }) => (
+            <Combobox<string>
+              id="kubernetes-filter-cluster"
+              options={clusterOptions}
+              value={field.value || null}
+              isClearable
+              createCustomValue
+              loading={clusters.loading}
+              disabled={clusters.loading}
+              placeholder={t('home.solutions.kubernetes.filter.all-clusters', 'All clusters')}
+              onChange={(option) => field.onChange(option?.value ?? '')}
+            />
+          )}
         />
       </Field>
-      <Field label={t('home.solutions.kubernetes.filter.namespaces', 'Namespaces')} noMargin>
-        <MultiCombobox<string>
-          id="kubernetes-filter-namespaces"
-          options={namespaceOptions}
-          value={draft.namespaces}
-          isClearable
-          createCustomValue
-          loading={namespaces.loading}
-          disabled={namespaces.loading}
-          placeholder={t('home.solutions.kubernetes.filter.all-namespaces', 'All namespaces')}
-          onChange={(options) => onChange({ ...draft, namespaces: options.map((o) => o.value) })}
+      <Field
+        label={t('home.solutions.kubernetes.filter.namespaces', 'Namespaces')}
+        htmlFor="kubernetes-filter-namespaces"
+        noMargin
+      >
+        <Controller
+          control={control}
+          name="namespaces"
+          render={({ field }) => (
+            <MultiCombobox<string>
+              id="kubernetes-filter-namespaces"
+              options={namespaceOptions}
+              value={field.value}
+              isClearable
+              createCustomValue
+              loading={namespaces.loading}
+              disabled={namespaces.loading}
+              placeholder={t('home.solutions.kubernetes.filter.all-namespaces', 'All namespaces')}
+              onChange={(options) => field.onChange(options.map((o) => o.value))}
+            />
+          )}
         />
       </Field>
-      <Field label={t('home.solutions.kubernetes.filter.nodes', 'Nodes')} noMargin>
-        <MultiCombobox<string>
-          id="kubernetes-filter-nodes"
-          options={nodeOptions}
-          value={draft.nodes}
-          isClearable
-          createCustomValue
-          loading={nodes.loading}
-          disabled={nodes.loading}
-          placeholder={t('home.solutions.kubernetes.filter.all-nodes', 'All nodes')}
-          onChange={(options) => onChange({ ...draft, nodes: options.map((o) => o.value) })}
+      <Field label={t('home.solutions.kubernetes.filter.nodes', 'Nodes')} htmlFor="kubernetes-filter-nodes" noMargin>
+        <Controller
+          control={control}
+          name="nodes"
+          render={({ field }) => (
+            <MultiCombobox<string>
+              id="kubernetes-filter-nodes"
+              options={nodeOptions}
+              value={field.value}
+              isClearable
+              createCustomValue
+              loading={nodes.loading}
+              disabled={nodes.loading}
+              placeholder={t('home.solutions.kubernetes.filter.all-nodes', 'All nodes')}
+              onChange={(options) => field.onChange(options.map((o) => o.value))}
+            />
+          )}
         />
       </Field>
     </>

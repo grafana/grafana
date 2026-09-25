@@ -1,13 +1,17 @@
-import { Trans, t } from '@grafana/i18n';
-import { Button, Combobox, Field, IconButton, Input, Stack } from '@grafana/ui';
+import { css } from '@emotion/css';
+import { Controller, useFieldArray, type UseFormReturn } from 'react-hook-form';
 
-import { parseMetricsFilter, summarizeMetricsFilter, validateMetricsScope } from '../solutions/metricsFilter';
+import { Trans, t } from '@grafana/i18n';
+import { Button, Combobox, Field, IconButton, Input, Stack, useStyles2 } from '@grafana/ui';
+
+import { labelIssue, parseMetricsFilter, patternIssue, summarizeMetricsFilter } from '../solutions/metricsFilter';
 import { hasDiskSelection, type MetricsDiskScope } from '../solutions/telemetryData';
 
 import { type CardFilterActionsProps, SolutionFilterActions, type SolutionFilterSpec } from './SolutionFilterActions';
 
-const NO_SCOPE: MetricsDiskScope = { excludes: [] };
 const EMPTY_ROW = { label: 'instance', regex: '' };
+// One row to fill in; it selects nothing until it has a pattern.
+const NO_SCOPE: MetricsDiskScope = { excludes: [EMPTY_ROW] };
 
 // node_exporter's own filesystem labels; relabeled ones (cluster, env, …) are typed in.
 const FILESYSTEM_LABELS = ['instance', 'job', 'mountpoint', 'device', 'fstype'].map((value) => ({
@@ -23,7 +27,6 @@ const spec: SolutionFilterSpec<MetricsDiskScope> = {
   hasSelection: hasDiskSelection,
   // Dimension name only; label names and patterns are customer data and never leave the browser.
   customized: (scope) => (hasDiskSelection(scope) ? 'excludes' : ''),
-  validate: validateMetricsScope,
 };
 
 export function MetricsFilterActions({ datasource }: CardFilterActionsProps) {
@@ -34,21 +37,14 @@ export function MetricsFilterActions({ datasource }: CardFilterActionsProps) {
       openLabel={t('home.solutions.metrics.filter.open', 'Exclude hosts or filesystems from the disk alert')}
       title={t('home.solutions.metrics.filter.title', 'Customize the disk alert')}
     >
-      {(draft, onChange) => <MetricsFilterFields draft={draft} onChange={onChange} />}
+      {(form) => <MetricsFilterFields form={form} />}
     </SolutionFilterActions>
   );
 }
 
-interface MetricsFilterFieldsProps {
-  draft: MetricsDiskScope;
-  onChange: (scope: MetricsDiskScope) => void;
-}
-
-function MetricsFilterFields({ draft, onChange }: MetricsFilterFieldsProps) {
-  // Always one row to fill in; a lone row cannot be removed, only emptied.
-  const rows = draft.excludes.length > 0 ? draft.excludes : [EMPTY_ROW];
-  const setRow = (index: number, row: MetricsDiskScope['excludes'][number]) =>
-    onChange({ excludes: rows.map((current, i) => (i === index ? row : current)) });
+function MetricsFilterFields({ form: { control, register, formState } }: { form: UseFormReturn<MetricsDiskScope> }) {
+  const styles = useStyles2(getStyles);
+  const { fields, append, remove } = useFieldArray({ control, name: 'excludes' });
 
   return (
     <Field
@@ -60,39 +56,47 @@ function MetricsFilterFields({ draft, onChange }: MetricsFilterFieldsProps) {
       noMargin
     >
       <Stack direction="column" gap={1}>
-        {rows.map((row, index) => (
-          <Stack key={index} direction="row" gap={1}>
-            <Combobox<string>
-              aria-label={t('home.solutions.metrics.filter.exclude-label', 'Label')}
-              options={FILESYSTEM_LABELS}
-              value={row.label || null}
-              createCustomValue
-              width={20}
-              onChange={(option) => setRow(index, { ...row, label: option?.value ?? '' })}
-            />
-            <Input
-              aria-label={t('home.solutions.metrics.filter.exclude-pattern', 'Pattern')}
-              placeholder={t('home.solutions.metrics.filter.exclude-pattern-placeholder', 'cache-.*')}
-              value={row.regex}
-              onChange={(event) => setRow(index, { ...row, regex: event.currentTarget.value })}
-            />
-            {rows.length > 1 && (
-              <IconButton
-                name="trash-alt"
-                tooltip={t('home.solutions.metrics.filter.exclude-remove', 'Remove exclusion')}
-                onClick={() => onChange({ excludes: rows.filter((_, i) => i !== index) })}
-              />
-            )}
-          </Stack>
-        ))}
+        {fields.map((row, index) => {
+          const errors = formState.errors.excludes?.[index];
+          return (
+            <Stack key={row.id} direction="row" gap={1} alignItems="flex-start">
+              <Field noMargin invalid={!!errors?.label} error={errors?.label?.message}>
+                <Controller
+                  control={control}
+                  name={`excludes.${index}.label`}
+                  rules={{ validate: (value) => labelIssue(value) ?? true }}
+                  render={({ field }) => (
+                    <Combobox<string>
+                      aria-label={t('home.solutions.metrics.filter.exclude-label', 'Label')}
+                      options={FILESYSTEM_LABELS}
+                      value={field.value || null}
+                      createCustomValue
+                      invalid={!!errors?.label}
+                      width={20}
+                      onChange={(option) => field.onChange(option?.value ?? '')}
+                    />
+                  )}
+                />
+              </Field>
+              <Field noMargin invalid={!!errors?.regex} error={errors?.regex?.message} className={styles.pattern}>
+                <Input
+                  aria-label={t('home.solutions.metrics.filter.exclude-pattern', 'Pattern')}
+                  placeholder={t('home.solutions.metrics.filter.exclude-pattern-placeholder', 'cache-.*')}
+                  {...register(`excludes.${index}.regex`, { validate: (value) => patternIssue(value) ?? true })}
+                />
+              </Field>
+              {fields.length > 1 && (
+                <IconButton
+                  name="trash-alt"
+                  tooltip={t('home.solutions.metrics.filter.exclude-remove', 'Remove exclusion')}
+                  onClick={() => remove(index)}
+                />
+              )}
+            </Stack>
+          );
+        })}
         <div>
-          <Button
-            variant="secondary"
-            fill="outline"
-            size="sm"
-            icon="plus"
-            onClick={() => onChange({ excludes: [...rows, EMPTY_ROW] })}
-          >
+          <Button variant="secondary" fill="outline" size="sm" icon="plus" onClick={() => append(EMPTY_ROW)}>
             <Trans i18nKey="home.solutions.metrics.filter.exclude-add">Add exclusion</Trans>
           </Button>
         </div>
@@ -100,3 +104,9 @@ function MetricsFilterFields({ draft, onChange }: MetricsFilterFieldsProps) {
     </Field>
   );
 }
+
+const getStyles = () => ({
+  pattern: css({
+    flex: 1,
+  }),
+});

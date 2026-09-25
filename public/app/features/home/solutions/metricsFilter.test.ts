@@ -1,4 +1,4 @@
-import { parseMetricsFilter, summarizeMetricsFilter, validateMetricsScope } from './metricsFilter';
+import { labelIssue, parseMetricsFilter, patternIssue, summarizeMetricsFilter } from './metricsFilter';
 
 const stored = {
   datasourceUid: 'prom-uid',
@@ -6,8 +6,8 @@ const stored = {
   excludes: [{ label: 'instance', regex: 'cache-.*' }],
 };
 
-const INVALID_LABEL = 'Label names may only contain letters, digits and underscores.';
-const INVALID_PATTERN = 'Pattern is not a valid regular expression.';
+const INVALID_LABEL = 'Label names may only contain letters, digits and underscores';
+const INVALID_PATTERN = 'Pattern is not a valid regular expression';
 
 describe('parseMetricsFilter', () => {
   it('drops half-filled rows, trims, and reads nothing left as unscoped', () => {
@@ -37,23 +37,30 @@ describe('summarizeMetricsFilter', () => {
   });
 });
 
-describe('validateMetricsScope', () => {
-  it('rejects a malformed label name and lets a half-filled row through', () => {
-    expect(validateMetricsScope({ excludes: [{ label: 'inst-ance', regex: 'x' }] })).toBe(INVALID_LABEL);
-    expect(validateMetricsScope({ excludes: [...stored.excludes, { label: '', regex: 'x' }] })).toBeNull();
+describe('labelIssue', () => {
+  it('names a missing or malformed label name', () => {
+    expect(labelIssue(' ')).toBe('Choose a label');
+    expect(labelIssue('inst-ance')).toBe(INVALID_LABEL);
+    expect(labelIssue(' instance ')).toBeNull();
+  });
+});
+
+describe('patternIssue', () => {
+  it('names a missing pattern', () => {
+    expect(patternIssue(' ')).toBe('Enter a pattern');
   });
 
   it.each(['[', 'cache-(', '*cache', '(?=cache)', '(?<!gke-)cache', 'cache-\\1'])(
     'rejects a pattern Prometheus would refuse: %s',
     (regex) => {
-      expect(validateMetricsScope({ excludes: [{ label: 'instance', regex }] })).toBe(INVALID_PATTERN);
+      expect(patternIssue(regex)).toBe(INVALID_PATTERN);
     }
   );
 
   it.each(['.*-cache-.*', 'web-1:9100|web-2:9100', '/mnt/disks/ssd[0-9]+', '(?i)cache-.*', '10\\.0\\.0\\.1'])(
     'accepts a pattern Prometheus would run: %s',
     (regex) => {
-      expect(validateMetricsScope({ excludes: [{ label: 'instance', regex }] })).toBeNull();
+      expect(patternIssue(regex)).toBeNull();
     }
   );
 });

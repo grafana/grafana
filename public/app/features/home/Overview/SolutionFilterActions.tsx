@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { type ReactNode, useMemo, useState } from 'react';
+import { type FieldValues, useForm, type UseFormReturn } from 'react-hook-form';
 
 import { type DataSourceInstanceListItem, type GrafanaTheme2, store } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -12,18 +13,17 @@ import { type DatasourceBoundFilter, scopeFor, solutionFilterStorageKey } from '
 import { type SolutionId } from '../solutions/types';
 
 /** What a solution contributes to the shared filter dialog. The scope is its stored filter minus the datasource binding. */
-export interface SolutionFilterSpec<TScope extends object> {
+export interface SolutionFilterSpec<TScope extends FieldValues> {
   solution: SolutionId;
   parse: (raw: string | undefined) => (DatasourceBoundFilter & TScope) | null;
   /** Summary of an applied filter for the gear tooltip. */
   summarize: (filter: DatasourceBoundFilter & TScope) => string;
-  /** Draft the dialog starts from when nothing is stored. */
+  /** Values the dialog starts from when nothing is stored. */
   emptyScope: TScope;
+  /** Whether the values narrow anything; Save stays disabled until they do. */
   hasSelection: (scope: TScope) => boolean;
   /** Names of the dimensions a scope sets, for analytics; the values are customer data and never leave the browser. */
   customized: (scope: TScope) => string;
-  /** Runs before a save; a message keeps the dialog open and shows it instead of saving. */
-  validate?: (scope: TScope) => string | null;
 }
 
 /** Props every card filter control takes; the card renders it once the solution's datasource resolved. */
@@ -32,16 +32,16 @@ export interface CardFilterActionsProps {
   datasource: DataSourceInstanceListItem;
 }
 
-interface SolutionFilterActionsProps<TScope extends object> extends CardFilterActionsProps {
+interface SolutionFilterActionsProps<TScope extends FieldValues> extends CardFilterActionsProps {
   spec: SolutionFilterSpec<TScope>;
   /** Gear tooltip while no filter is applied. */
   openLabel: string;
   title: string;
-  /** The dialog's fields, editing the drafted scope. */
-  children: (scope: TScope, onChange: (scope: TScope) => void) => ReactNode;
+  /** The dialog's fields, registered on the form; each field carries its own validation rule. */
+  children: (form: UseFormReturn<TScope>) => ReactNode;
 }
 
-export function SolutionFilterActions<TScope extends object>({
+export function SolutionFilterActions<TScope extends FieldValues>({
   spec,
   datasource,
   openLabel,
@@ -105,17 +105,17 @@ export function SolutionFilterActions<TScope extends object>({
   );
 }
 
-interface SolutionFilterModalProps<TScope extends object> {
+interface SolutionFilterModalProps<TScope extends FieldValues> {
   spec: SolutionFilterSpec<TScope>;
   datasource: DataSourceInstanceListItem;
   filter: (DatasourceBoundFilter & TScope) | null;
   title: string;
   onClose: () => void;
-  children: (scope: TScope, onChange: (scope: TScope) => void) => ReactNode;
+  children: (form: UseFormReturn<TScope>) => ReactNode;
 }
 
-// Mounted only while open, so the draft starts from the stored filter each time.
-function SolutionFilterModal<TScope extends object>({
+// Mounted only while open, so the form starts from the stored filter each time.
+function SolutionFilterModal<TScope extends FieldValues>({
   spec,
   datasource,
   filter,
@@ -123,67 +123,67 @@ function SolutionFilterModal<TScope extends object>({
   onClose,
   children,
 }: SolutionFilterModalProps<TScope>) {
-  // The draft starts from the stored filter even when it was saved for another datasource, so the
-  // user can re-save it for this one or clear it. Its old binding rides along and is overwritten on save.
-  const [draft, setDraft] = useState<TScope>(() => filter ?? spec.emptyScope);
+  // The form starts from the stored filter even when it was saved for another datasource, so the
+  // user can re-save it for this one or clear it. Fields validate as they change, so a mistake
+  // shows where it is made.
+  const form = useForm<TScope>({ values: filter ?? spec.emptyScope, mode: 'onChange' });
+  const values = form.watch();
   const [error, setError] = useState<string | null>(null);
 
   const storageKey = solutionFilterStorageKey(spec.solution);
-  // Persist, report, then close; a quota or access failure keeps the dialog and draft so the user
+  // Persist, report, then close; a quota or access failure keeps the dialog and values so the user
   // can retry, and reports nothing.
-  const persist = (write: () => void, change: SolutionFilterChanged['change'], scope: TScope) => {
+  const persist = (write: () => void, change: SolutionFilterChanged['change'], customized: string) => {
     try {
       write();
     } catch {
       setError(t('home.solutions.filter.save-failed', 'Could not save to browser storage. Try again.'));
       return;
     }
-    solutionFilterChanged({ solution: spec.solution, change, customized: spec.customized(scope) });
+    solutionFilterChanged({ solution: spec.solution, change, customized });
     onClose();
   };
-  const save = () => {
-    const message = spec.validate?.(draft) ?? null;
-    if (message) {
-      setError(message);
-      return;
-    }
+  const save = form.handleSubmit((scope) =>
     persist(
       () => {
+        // A filter re-saved from another datasource carries that one's binding; this card's wins.
         const next: DatasourceBoundFilter & TScope = {
-          ...draft,
+          ...scope,
           datasourceUid: datasource.uid,
           datasourceName: datasource.name,
         };
         store.setObject(storageKey, next);
       },
       'saved',
-      draft
-    );
-  };
-  const clear = () => persist(() => store.delete(storageKey), 'cleared', spec.emptyScope);
+      spec.customized(scope)
+    )
+  );
+  const clear = () => persist(() => store.delete(storageKey), 'cleared', '');
 
   return (
     <Modal isOpen title={title} onDismiss={onClose}>
-      <Stack direction="column" gap={2}>
-        {children(draft, setDraft)}
-        {error && <Alert severity="error" title={error} />}
-      </Stack>
-      <Modal.ButtonRow
-        leftItems={
-          filter && (
-            <Button variant="secondary" fill="outline" onClick={clear}>
-              <Trans i18nKey="home.solutions.filter.clear">Clear filters</Trans>
-            </Button>
-          )
-        }
-      >
-        <Button variant="secondary" onClick={onClose}>
-          <Trans i18nKey="home.solutions.filter.cancel">Cancel</Trans>
-        </Button>
-        <Button onClick={save} disabled={!spec.hasSelection(draft)}>
-          <Trans i18nKey="home.solutions.filter.save">Save</Trans>
-        </Button>
-      </Modal.ButtonRow>
+      <form onSubmit={save}>
+        <Stack direction="column" gap={2}>
+          {children(form)}
+          {error && <Alert severity="error" title={error} />}
+        </Stack>
+        <Modal.ButtonRow
+          leftItems={
+            filter && (
+              <Button variant="secondary" fill="outline" onClick={clear}>
+                <Trans i18nKey="home.solutions.filter.clear">Clear filters</Trans>
+              </Button>
+            )
+          }
+        >
+          <Button variant="secondary" onClick={onClose}>
+            <Trans i18nKey="home.solutions.filter.cancel">Cancel</Trans>
+          </Button>
+          <Button type="submit" disabled={!form.formState.isValid || !spec.hasSelection(values)}>
+            <Trans i18nKey="home.solutions.filter.save">Save</Trans>
+          </Button>
+        </Modal.ButtonRow>
+      </form>
     </Modal>
   );
 }

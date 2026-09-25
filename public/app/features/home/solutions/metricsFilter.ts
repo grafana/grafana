@@ -4,7 +4,7 @@ import { t } from '@grafana/i18n';
 import { isValidRE2Regex } from 'app/features/alerting/unified/utils/matchers';
 
 import { DatasourceBoundFilterSchema, parseStoredFilter } from './solutionFilter';
-import { activeExcludes, hasDiskSelection, type MetricsDiskScope } from './telemetryData';
+import { activeExcludes, hasDiskSelection } from './telemetryData';
 
 // Anything else would break every query the label is spliced into.
 const LABEL_NAME = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
@@ -15,16 +15,32 @@ const LABEL_NAME = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
 const RE2_UNSUPPORTED = /\(\?<?[=!]|\\[1-9]/;
 const isRE2 = (pattern: string) => !RE2_UNSUPPORTED.test(pattern) && isValidRE2Regex(pattern);
 
+/** Why an exclusion's label cannot be saved, or null. The dialog's field rule and the stored filter's schema share it. */
+export function labelIssue(label: string): string | null {
+  const value = label.trim();
+  if (value === '') {
+    return t('home.solutions.metrics.filter.label-required', 'Choose a label');
+  }
+  return LABEL_NAME.test(value)
+    ? null
+    : t('home.solutions.metrics.filter.invalid-label', 'Label names may only contain letters, digits and underscores');
+}
+
+/** Why an exclusion's pattern cannot be saved, or null. */
+export function patternIssue(regex: string): string | null {
+  const value = regex.trim();
+  if (value === '') {
+    return t('home.solutions.metrics.filter.pattern-required', 'Enter a pattern');
+  }
+  return isRE2(value)
+    ? null
+    : t('home.solutions.metrics.filter.invalid-pattern', 'Pattern is not a valid regular expression');
+}
+
 const ExcludesSchema = z
   .array(z.object({ label: z.string(), regex: z.string() }))
   .transform((rows) => activeExcludes({ excludes: rows }))
-  .refine((rows) => rows.every((row) => LABEL_NAME.test(row.label)), {
-    error: () =>
-      t('home.solutions.metrics.filter.invalid-label', 'Label names may only contain letters, digits and underscores.'),
-  })
-  .refine((rows) => rows.every((row) => isRE2(row.regex)), {
-    error: () => t('home.solutions.metrics.filter.invalid-pattern', 'Pattern is not a valid regular expression.'),
-  });
+  .refine((rows) => rows.every((row) => !labelIssue(row.label) && !patternIssue(row.regex)));
 
 const MetricsFilterSchema = DatasourceBoundFilterSchema.extend({ excludes: ExcludesSchema });
 
@@ -41,10 +57,4 @@ export function summarizeMetricsFilter(filter: MetricsFilter): string {
     matchers: filter.excludes.map((row) => `${row.label}: ${row.regex}`).join(', '),
     interpolation: { escapeValue: false },
   });
-}
-
-/** Message that blocks saving the scope, or null when it is usable. The schema owns the rules. */
-export function validateMetricsScope(scope: MetricsDiskScope): string | null {
-  const result = ExcludesSchema.safeParse(scope.excludes);
-  return result.success ? null : result.error.issues[0].message;
 }

@@ -34,6 +34,7 @@ describe('MetricsFilterActions', () => {
     expect(within(dialog).getByRole('button', { name: 'Save' })).toBeDisabled();
 
     await user.type(within(dialog).getByRole('textbox', { name: 'Pattern' }), 'cache-.*');
+    await waitFor(() => expect(within(dialog).getByRole('button', { name: 'Save' })).toBeEnabled());
     await user.click(within(dialog).getByRole('button', { name: 'Save' }));
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
@@ -53,19 +54,23 @@ describe('MetricsFilterActions', () => {
     expect(mockFilterChanged).toHaveBeenCalledWith({ solution: 'metrics', change: 'saved', customized: 'excludes' });
   });
 
-  it('keeps the dialog open and stores nothing when a typed-in label name is malformed', async () => {
+  it('flags a malformed label or pattern at the field as it is typed and keeps Save disabled', async () => {
     const { user } = render(<MetricsFilterActions datasource={stubDatasource} />);
 
     await user.click(screen.getByRole('button', OPEN_GEAR));
     const dialog = await screen.findByRole('dialog');
     await user.type(within(dialog).getByRole('combobox', { name: 'Label' }), 'inst-ance');
     await user.click(await screen.findByRole('option', { name: /inst-ance/ }));
-    await user.type(within(dialog).getByRole('textbox', { name: 'Pattern' }), 'cache-.*');
-    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
 
     expect(
-      await within(dialog).findByText('Label names may only contain letters, digits and underscores.')
+      await within(dialog).findByText('Label names may only contain letters, digits and underscores')
     ).toBeInTheDocument();
+
+    // user-event reads `[` as a key descriptor; `[[` types the literal bracket.
+    await user.type(within(dialog).getByRole('textbox', { name: 'Pattern' }), '[[');
+
+    expect(await within(dialog).findByText('Pattern is not a valid regular expression')).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'Save' })).toBeDisabled();
     expect(window.localStorage.getItem(storageKey())).toBeNull();
     expect(mockFilterChanged).not.toHaveBeenCalled();
   });
