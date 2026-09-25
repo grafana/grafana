@@ -3935,6 +3935,10 @@
             "type": "integer",
             "format": "int64",
             "default": 0
+          },
+          "token": {
+            "description": "Token holds metadata about the last generated connection token, used to avoid regenerating a token whose secret was written recently but is not yet readable.",
+            "default": {}
           }
         }
       },
