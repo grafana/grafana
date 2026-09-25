@@ -527,4 +527,13 @@ describe('LogListControls', () => {
     );
     await userEvent.click(screen.getByLabelText(REMOVE_ESCAPE_NEWLINES_LABEL_COPY));
   });
+
+  test('Renders controls navigation container', () => {
+    const { container } = render(
+      <LogListContextProvider {...contextProps}>
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+    expect(container.firstChild).toBeInTheDocument();
+  });
 });

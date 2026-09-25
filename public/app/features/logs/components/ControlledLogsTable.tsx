@@ -103,6 +103,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     logRowsContainer: css({
       display: 'flex',
       flexDirection: 'row-reverse',
+      minHeight: 0,
     }),
   };
 };

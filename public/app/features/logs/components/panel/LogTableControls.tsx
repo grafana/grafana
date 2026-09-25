@@ -167,8 +167,13 @@ const getStyles = (theme: GrafanaTheme2, controlsExpanded: boolean) => {
   return {
     navContainer: css({
       height: '100%',
+      maxHeight: '100%',
+      // Lets the column shrink below its content height so the options scroll instead of overflowing.
+      minHeight: 0,
+      overflowY: 'auto',
+      overflowX: 'hidden',
       display: 'flex',
-      flex: '1 0 auto',
+      flex: '0 1 auto',
       gap: theme.spacing(3),
       flexDirection: 'column',
       justifyContent: 'flex-start',

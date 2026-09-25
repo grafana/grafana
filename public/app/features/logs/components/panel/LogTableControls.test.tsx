@@ -206,4 +206,20 @@ describe('LogTableControls', () => {
     );
     expect(screen.queryByLabelText(DOWNLOAD_LOGS_LABEL_COPY)).not.toBeInTheDocument();
   });
+
+  it('renders controls navigation container', () => {
+    const { container } = render(
+      <LogTableControls
+        logOptionsStorageKey={''}
+        controlsExpanded={false}
+        setControlsExpanded={jest.fn()}
+        sortOrder={LogsSortOrder.Ascending}
+        setSortOrder={jest.fn()}
+        downloadLogs={jest.fn()}
+        wrapText={false}
+        onWrapTextClick={jest.fn()}
+      />
+    );
+    expect(container.firstChild).toBeInTheDocument();
+  });
 });
