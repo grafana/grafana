@@ -47,13 +47,7 @@ func perKindSortedKeys(m map[string]struct{}) []string {
 
 var perKindDefaultReturnFields = []string{fieldTitle, fieldFolder}
 
-type perKindSearchRequest struct {
-	req    *Query
-	offset int64
-	fields []string
-}
-
-func buildPerKindSearchRequest(q *searchv0.SearchQuery, leaves []searchv0.WhereNode, namespace string, k perKind) perKindSearchRequest {
+func buildPerKindSearchRequest(q *searchv0.SearchQuery, leaves []searchv0.WhereNode, namespace string, k perKind) *Query {
 	offset, _ := decodeCursor(q.Continue)
 	fields := resolvePerKindReturnFields(q.Fields)
 	req := &Query{
@@ -69,7 +63,7 @@ func buildPerKindSearchRequest(q *searchv0.SearchQuery, leaves []searchv0.WhereN
 	applyPerKindLabelSelector(req, q.LabelSelector)
 	applyPerKindSort(req, q.Sort)
 
-	return perKindSearchRequest{req: req, offset: offset, fields: fields}
+	return req
 }
 
 func resolvePerKindLimit(limit int64) int64 {

@@ -135,7 +135,7 @@ func TestLegacyBackendKindSelection(t *testing.T) {
 
 	store.query = nil
 	filter := perKindFilterLeaf(fieldType, "In", ruleTypeRecording)
-	query = translate(t, whereQuery(&filter)).req
+	query = translate(t, whereQuery(&filter))
 	result, err := backend.Search(ctx, query)
 	require.NoError(t, err)
 	require.Empty(t, result.Hits)

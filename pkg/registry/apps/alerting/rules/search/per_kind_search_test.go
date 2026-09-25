@@ -416,12 +416,12 @@ func TestPerKindSearch_fieldValuesFromRealIndex(t *testing.T) {
 			kind := tc.kind(t)
 			translated := buildPerKindSearchRequest(&searchv0.SearchQuery{Fields: tc.fields}, nil, tc.key.Namespace, kind)
 
-			resp, err := index.Search(t.Context(), nil, buildUnifiedRequest(translated.req), nil, nil)
+			resp, err := index.Search(t.Context(), nil, buildUnifiedRequest(translated), nil, nil)
 			require.NoError(t, err)
 			require.Nil(t, resp.Error)
 			require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, resp.ResultFormat)
 
-			hits, err := NewUnifiedClient(nil).decodeHits(t.Context(), translated.req, resp)
+			hits, err := NewUnifiedClient(nil).decodeHits(t.Context(), translated, resp)
 			require.NoError(t, err)
 			items := resultItems(&Result{Hits: hits}, tc.fields, kind)
 			require.Len(t, items, 1)

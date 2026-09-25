@@ -86,12 +86,12 @@ func (h *Handler) search(ctx context.Context, w app.CustomRouteResponseWriter, r
 		return invalidQuery(ferrs)
 	}
 
-	t := buildPerKindSearchRequest(query, leaves, namespace, k)
+	searchQuery := buildPerKindSearchRequest(query, leaves, namespace, k)
 	backend, err := k.client.Resolve(ctx)
 	if err != nil {
 		return err
 	}
-	resp, err := backend.Search(ctx, t.req)
+	resp, err := backend.Search(ctx, searchQuery)
 	if err != nil {
 		h.logger.FromContext(ctx).Error("rule search backend request failed",
 			"namespace", namespace, "group", k.groupResource().Group,
@@ -101,11 +101,11 @@ func (h *Handler) search(ctx context.Context, w app.CustomRouteResponseWriter, r
 	out := &searchv0.SearchResults{
 		TypeMeta: metaForKind(searchv0.KindSearchResults),
 		Metadata: searchv0.ResultsMetadata{
-			Continue:          nextPageToken(resp, t.offset),
+			Continue:          nextPageToken(resp, searchQuery.Offset),
 			TotalHits:         resp.TotalHits,
 			TotalHitsRelation: totalHitsRelation(resp.TotalHitsExact),
 		},
-		Items: resultItems(resp, t.fields, k),
+		Items: resultItems(resp, searchQuery.Fields, k),
 	}
 	return writePerKindJSON(w, out)
 }
