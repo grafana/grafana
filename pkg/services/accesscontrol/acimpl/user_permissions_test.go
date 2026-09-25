@@ -9,14 +9,13 @@ import (
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
 func TestServiceGetUserPermissionsDelegatesToAuthZ(t *testing.T) {
 	service := setupTestEnv(t, false)
 	service.cfg.RBAC.SingleOrganization = true
-	service.iamFeatures = iam.Features{UserPermissionsAPI: true}
+	service.userPermissionsAPIEnabled = true
 	expected := []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:*"}}
 	client := &fakeUserPermissionsClient{permissions: expected}
 	service.SetUserPermissionsClient(client)
@@ -48,7 +47,7 @@ func TestServiceGetUserPermissionsUsesLocalRBACWhenStartupAPIIsDisabled(t *testi
 func TestServiceGetUserPermissionsUsesLocalRBACForMultiOrg(t *testing.T) {
 	service := setupTestEnv(t, false)
 	service.cfg.RBAC.SingleOrganization = false
-	service.iamFeatures = iam.Features{UserPermissionsAPI: true}
+	service.userPermissionsAPIEnabled = true
 	client := &fakeUserPermissionsClient{}
 	service.SetUserPermissionsClient(client)
 	user := &identity.StaticRequester{Type: types.TypeUser, UserID: 1, UserUID: "user-uid", OrgID: 2}
@@ -61,7 +60,7 @@ func TestServiceGetUserPermissionsUsesLocalRBACForMultiOrg(t *testing.T) {
 
 func TestServiceGetUserPermissionsUsesLocalRBACForGlobalOrg(t *testing.T) {
 	service := setupTestEnv(t, false)
-	service.iamFeatures = iam.Features{UserPermissionsAPI: true}
+	service.userPermissionsAPIEnabled = true
 	client := &fakeUserPermissionsClient{}
 	service.SetUserPermissionsClient(client)
 	user := &identity.StaticRequester{Type: types.TypeUser, UserID: 1, UserUID: "user-uid", OrgID: accesscontrol.GlobalOrgID}
