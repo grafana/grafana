@@ -457,6 +457,72 @@ describe('NotebookLayoutManager', () => {
       expect(cellNames(manager)).toEqual(['a', 'c', 'paragraph-1']);
     });
 
+    // A block starts out empty, so empty-and-just-added is precisely the state it is in when the
+    // reader notices they picked the wrong type and reaches for delete. Nothing is lost, so there is
+    // nothing to confirm — see isCellEmpty.
+    it.each([
+      ['an untouched paragraph', { kind: 'Markdown' as const, spec: { text: '' } }],
+      ['a heading holding only its marker', { kind: 'Markdown' as const, spec: { text: '# ' } }],
+      ['a list item holding only its marker', { kind: 'Markdown' as const, spec: { text: '- ' } }],
+      ['a code block with no code', { kind: 'Code' as const, spec: { language: 'sql', code: '' } }],
+    ])('deletes %s outright, without asking', async (_label, content) => {
+      const publish = jest.spyOn(appEvents, 'publish');
+      const { manager } = renderManager(
+        buildManager(
+          [
+            ...buildNarrativeCells(['a']),
+            new NotebookCellItem({ elementName: 'blank', source: 'user', content }),
+            ...buildNarrativeCells(['b']),
+          ],
+          true
+        )
+      );
+
+      await reachActions().click(screen.getAllByRole('button', { name: 'Delete block' })[1]);
+
+      expect(publish).not.toHaveBeenCalled();
+      // Plus the trailing-invariant cell appended after 'b'.
+      expect(cellNames(manager)).toEqual(['a', 'b', 'paragraph-1']);
+    });
+
+    // The Code branch of isCellEmpty looks at the code, not at whether a language was picked.
+    it('asks before deleting a code block that holds code', async () => {
+      const publish = jest.spyOn(appEvents, 'publish');
+      const { manager } = renderManager(
+        buildManager(
+          [
+            new NotebookCellItem({
+              elementName: 'query',
+              source: 'user',
+              content: { kind: 'Code', spec: { language: 'sql', code: 'select 1' } },
+            }),
+          ],
+          true
+        )
+      );
+
+      await reachActions().click(screen.getAllByRole('button', { name: 'Delete block' })[0]);
+
+      expect(publish.mock.calls[0][0]).toBeInstanceOf(ShowConfirmModalEvent);
+      expect(cellNames(manager)).toEqual(['query', 'paragraph-1']);
+    });
+
+    // A panel carries a visualization someone chose, so it is never treated as empty even before any
+    // query has been set on it.
+    it('asks before deleting a query-less panel', async () => {
+      const publish = jest.spyOn(appEvents, 'publish');
+      const { cell } = panelCell('latency');
+      // Collapsed so the cell renders as just its name: loading a live panel's plugin has its own
+      // coverage, and what the frame renders is beside the point here.
+      cell.setState({ collapsed: true });
+      const { manager } = renderManager(buildManager([cell], true));
+
+      await reachActions().click(screen.getAllByRole('button', { name: 'Delete block' })[0]);
+
+      expect(publish.mock.calls[0][0]).toBeInstanceOf(ShowConfirmModalEvent);
+      expect(cellNames(manager)).toEqual(['latency', 'paragraph-1']);
+    });
+
     it('duplicates the cell directly below itself', async () => {
       const { manager } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
 
