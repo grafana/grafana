@@ -303,7 +303,7 @@ describe('NotebookPageStateManager', () => {
       serveNotebooks();
       const manager = new NotebookPageStateManager({ isLoading: false });
 
-      manager.newNotebook();
+      await manager.newNotebook();
       const blank = manager.state.scene!;
       blank.setState({ uid: 'nb-new' });
 
@@ -329,11 +329,11 @@ describe('NotebookPageStateManager', () => {
     /** Nobody is asked for a name, so the notebook arrives with one it made up. */
     const TITLE_PATTERN = /^Notebook #[a-z0-9]{12}$/;
 
-    it('builds an empty notebook with no resource behind it and nothing fetched', () => {
+    it('builds an empty notebook with no resource behind it and nothing fetched', async () => {
       serveNotebooks();
       const manager = new NotebookPageStateManager({ isLoading: false });
 
-      manager.newNotebook();
+      await manager.newNotebook();
 
       expect(manager.state.scene?.state.uid).toBeUndefined();
       expect(manager.state.scene?.state.title).toMatch(TITLE_PATTERN);
@@ -345,13 +345,13 @@ describe('NotebookPageStateManager', () => {
 
     // The reason for the token at all: autosave creates these without asking for a name, so two
     // notebooks made one after the other have to be tellable apart in the list.
-    it('gives each new notebook a title of its own', () => {
+    it('gives each new notebook a title of its own', async () => {
       serveNotebooks();
       const manager = new NotebookPageStateManager({ isLoading: false });
 
-      manager.newNotebook();
+      await manager.newNotebook();
       const first = manager.state.scene?.state.title;
-      manager.newNotebook();
+      await manager.newNotebook();
       const second = manager.state.scene?.state.title;
 
       expect(first).toMatch(TITLE_PATTERN);
@@ -361,13 +361,13 @@ describe('NotebookPageStateManager', () => {
 
     // The scene cache is keyed by uid and a blank notebook has none, so caching it would mean every
     // blank page after the first reopened whatever the previous one was left holding.
-    it('does not keep the blank notebook, so a second one starts empty again', () => {
+    it('does not keep the blank notebook, so a second one starts empty again', async () => {
       serveNotebooks();
       const manager = new NotebookPageStateManager({ isLoading: false });
 
-      manager.newNotebook();
+      await manager.newNotebook();
       const first = manager.state.scene;
-      manager.newNotebook();
+      await manager.newNotebook();
 
       expect(manager.state.scene).not.toBe(first);
     });
@@ -379,11 +379,33 @@ describe('NotebookPageStateManager', () => {
       const manager = new NotebookPageStateManager({ isLoading: false });
 
       const slow = manager.loadNotebook('nb-slow');
-      manager.newNotebook();
+      await manager.newNotebook();
       await slow;
 
       expect(manager.state.scene?.state.uid).toBeUndefined();
       expect(manager.state.loadError).toBeUndefined();
+    });
+
+    // Leaving /notebooks/new before the panel metas resolve. The page's cleanup clears the state, and
+    // without the sequence check the blank notebook lands on whatever the page moved on to.
+    it('does not put the blank notebook back after the page has moved on', async () => {
+      serveNotebooks();
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      const blank = manager.newNotebook();
+      manager.clearState();
+      await blank;
+
+      expect(manager.state.scene).toBeUndefined();
+    });
+
+    it('reports the page as loading while the panel metas are still in flight', () => {
+      serveNotebooks();
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      manager.newNotebook();
+
+      expect(manager.state.isLoading).toBe(true);
     });
   });
 
@@ -396,7 +418,7 @@ describe('NotebookPageStateManager', () => {
       serveNotebooks();
       const manager = new NotebookPageStateManager({ isLoading: false });
 
-      manager.newNotebook();
+      await manager.newNotebook();
       const blank = manager.state.scene!;
       // What autosave does when the create comes back.
       blank.setState({ uid: 'nb-new' });
@@ -413,7 +435,7 @@ describe('NotebookPageStateManager', () => {
       serveNotebooks();
       const manager = new NotebookPageStateManager({ isLoading: false });
 
-      manager.newNotebook();
+      await manager.newNotebook();
       const blank = manager.state.scene!;
       blank.setState({ uid: 'nb-new' });
       // Both of these are what a real create produces: the uid on the scene, and the generation the
@@ -432,7 +454,7 @@ describe('NotebookPageStateManager', () => {
       serveNotebooks();
       const manager = new NotebookPageStateManager({ isLoading: false });
 
-      manager.newNotebook();
+      await manager.newNotebook();
       const blank = manager.state.scene!;
 
       await manager.loadNotebook('nb-other');

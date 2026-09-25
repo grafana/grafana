@@ -1,5 +1,6 @@
 import * as z from 'zod';
 
+import { getPanelPluginMetasMap } from '@grafana/runtime/internal';
 import { sceneUtils } from '@grafana/scenes';
 import { type MutationCommand } from 'app/features/dashboard-scene/mutation-api/commands/types';
 
@@ -82,6 +83,9 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
       const { transformNotebookToScene } = await import(
         /* webpackChunkName: "notebook-serialization" */ '../../serialization/transformNotebookToScene'
       );
+
+      // Panel cells in the incoming spec are built synchronously by the transform below.
+      await getPanelPluginMetasMap();
 
       const rebuilt = transformNotebookToScene(notebookResourceFor(scene.state.uid, notebookSpec));
 
