@@ -928,7 +928,11 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	)
 
 	phase = reconcilePhaseIdentity
-	ctx, _, err = identity.WithProvisioningIdentity(ctx, namespace)
+	// WithServiceIdentityName scopes the identity to this repository, so
+	// enforceManagerProperties can compare it against a resource's manager identity on
+	// delete/create instead of failing open (see managed.go) - this matters most for the
+	// finalizer below, which deletes every resource this repository owns.
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, namespace, identity.WithServiceIdentityName(name))
 	if err != nil {
 		return repoType, err
 	}

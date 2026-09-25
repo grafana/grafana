@@ -311,7 +311,7 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 					Identity: cfg.GetName(),
 				})
 			}
-			ctx, _, err = identity.WithProvisioningIdentity(ctx, cfg.GetNamespace())
+			ctx, _, err = identity.WithProvisioningIdentity(ctx, cfg.GetNamespace(), identity.WithServiceIdentityName(cfg.GetName()))
 			if err != nil {
 				return fmt.Errorf("unable to use provisioning identity %w", err)
 			}
@@ -331,7 +331,7 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 	}
 
 	// Always use the provisioning identity when writing
-	ctx, _, err = identity.WithProvisioningIdentity(ctx, cfg.GetNamespace())
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, cfg.GetNamespace(), identity.WithServiceIdentityName(cfg.GetName()))
 	if err != nil {
 		return fmt.Errorf("unable to use provisioning identity %w", err)
 	}
@@ -463,7 +463,7 @@ func (fm *FolderManager) claimUnmanagedFolder(ctx context.Context, obj *unstruct
 		Identity: cfg.GetName(),
 	})
 
-	ctx, _, err = identity.WithProvisioningIdentity(ctx, cfg.GetNamespace())
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, cfg.GetNamespace(), identity.WithServiceIdentityName(cfg.GetName()))
 	if err != nil {
 		return fmt.Errorf("unable to use provisioning identity %w", err)
 	}

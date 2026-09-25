@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/authlib/authn"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -40,6 +41,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 type mockProvisioningV0alpha1Interface struct {
@@ -2316,6 +2318,80 @@ func TestRepositoryController_process_ConditionsNotOverwritten(t *testing.T) {
 	assert.True(t, hasQuotaCondition, "expected quota condition in final /status/conditions patch")
 	assert.True(t, hasReadyCondition, "expected ready condition in final /status/conditions patch")
 	assert.Len(t, conditions, 2, "expected exactly 2 conditions (quota + ready)")
+}
+
+// TestRepositoryController_process_ScopesIdentityToRepository verifies the reconcile loop
+// grants a provisioning identity scoped to the repository being reconciled (via
+// WithServiceIdentityName), not just the generic provisioning service identity. Without
+// this, a Delete/Create against a managed resource - notably the finalizer that deletes
+// every resource this repository owns - is checked against no repository identity at all,
+// so apistore.enforceManagerProperties fails open instead of comparing it against the
+// resource's manager identity.
+func TestRepositoryController_process_ScopesIdentityToRepository(t *testing.T) {
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "test-repo",
+			Namespace:  "default",
+			Generation: 2,
+		},
+		Spec: provisioning.RepositorySpec{
+			Type: provisioning.LocalRepositoryType,
+			Sync: provisioning.SyncOptions{
+				Enabled: false,
+			},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 1,
+		},
+	}
+
+	mockNamespaceLister := &MockRepositoryNamespaceLister{}
+	mockNamespaceLister.On("List", mock.Anything).Return([]*provisioning.Repository{repo}, nil)
+	mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
+	mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
+
+	mockMetrics := NewMockHealthMetricsRecorder(t)
+	mockMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).Return()
+
+	tester := repository.NewTester()
+	healthChecker := NewRepositoryHealthChecker(nil, tester, mockMetrics)
+
+	var capturedCtx context.Context
+	mockConfigRepo := repository.NewMockConfigRepository(t)
+	mockConfigRepo.EXPECT().Config().Return(repo)
+	mockConfigRepo.EXPECT().Test(mock.Anything).
+		RunAndReturn(func(ctx context.Context) (*provisioning.TestResults, error) {
+			capturedCtx = ctx
+			return &provisioning.TestResults{Success: true, Code: http.StatusOK}, nil
+		})
+
+	mockFactory := repository.NewMockFactory(t)
+	mockFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConfigRepo, nil)
+
+	patcher := &capturePatcher{}
+
+	repoGetter := informer.NewCachedRepositoryGetter(mockLister)
+	rc := &RepositoryController{
+		repos:         repoGetter,
+		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
+		healthChecker: healthChecker,
+		repoFactory:   mockFactory,
+		statusPatcher: patcher,
+		logger:        logging.DefaultLogger,
+		tracer:        tracing.InitializeTracerForTest(),
+	}
+
+	_, err := rc.process("default/test-repo")
+	require.NoError(t, err)
+
+	require.NotNil(t, capturedCtx)
+	requester, err := identity.GetRequester(capturedCtx)
+	require.NoError(t, err)
+	require.True(t, identity.IsProvisioningServiceIdentity(requester))
+	require.NotEmpty(t, requester.GetExtra()[string(authn.ServiceIdentityKey)],
+		"the reconcile ctx should carry a repository-scoped identity, not just the generic provisioning identity")
+	require.Equal(t, "test-repo", requester.GetExtra()[string(authn.ServiceIdentityKey)][0])
 }
 
 // TestRepositoryController_shouldGenerateTokenFromConnection_ExpiredCounter verifies

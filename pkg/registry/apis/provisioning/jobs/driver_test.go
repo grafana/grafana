@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/authlib/authn"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -17,6 +19,7 @@ import (
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 func newConflictError() error {
@@ -675,6 +678,58 @@ func TestProcessJob_HealthyRepo_CallsWorker(t *testing.T) {
 	require.NoError(t, err)
 
 	worker.AssertCalled(t, "Process", mock.Anything, mockRepo, mock.Anything, recorder)
+}
+
+// TestProcessKey_ScopesIdentityToJobRepository verifies that claiming and processing a job
+// grants the worker a provisioning identity scoped to the job's own repository (via
+// WithServiceIdentityName), not just the generic provisioning service identity. Without
+// this, a Delete/Create against a managed resource is checked against no repository
+// identity at all, so apistore.enforceManagerProperties fails open instead of comparing it
+// against the resource's manager identity - the identity is set on claim in processKey, so
+// processJob alone (as called directly by the other tests above) never sees it.
+func TestProcessKey_ScopesIdentityToJobRepository(t *testing.T) {
+	job := makeTestJob("1")
+	store := NewMockStore(t)
+	store.EXPECT().Claim(mock.Anything, job.Namespace, job.Name, "0").Return(job, func() {}, nil).Once()
+	store.EXPECT().Update(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, job *provisioning.Job) (*provisioning.Job, error) {
+			return job.DeepCopy(), nil
+		})
+	store.EXPECT().Complete(mock.Anything, mock.Anything).Return(nil).Once()
+	history := NewMockHistoryWriter(t)
+	history.EXPECT().WriteJob(mock.Anything, mock.Anything).Return(nil).Once()
+
+	repo := repository.NewMockRepository(t)
+	repo.On("Config").Return(makeRepoConfig("test-repo", nil, nil))
+	repoGetter := NewMockRepoGetter(t)
+	repoGetter.EXPECT().GetRepository(mock.Anything, job.Namespace, "test-repo").Return(repo, nil)
+
+	var capturedCtx context.Context
+	worker := NewMockWorker(t)
+	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
+	worker.EXPECT().Process(mock.Anything, repo, mock.Anything, mock.Anything).
+		RunAndReturn(func(ctx context.Context, _ repository.Repository, _ provisioning.Job, _ JobProgressRecorder) error {
+			capturedCtx = ctx
+			return nil
+		})
+
+	metrics := &JobMetrics{
+		processedTotal: prometheus.NewCounterVec(prometheus.CounterOpts{Name: "test_jobs_processed_total"}, []string{"action", "outcome"}),
+		durationHist: prometheus.NewHistogramVec(prometheus.HistogramOpts{Name: "test_jobs_duration_seconds"},
+			[]string{"action", "resources_changed_bucket", "outcome"}),
+		resourceOpsTotal: prometheus.NewCounterVec(prometheus.CounterOpts{Name: "test_resource_operations_total"},
+			[]string{"action", "operation", "outcome", "reason", "group", "kind"}),
+	}
+	processor := newJobProcessor(time.Minute, time.Minute, store, repoGetter, history, "0", metrics, nil, worker)
+	require.NoError(t, processor.processKey(context.Background(), job.Namespace, job.Name, triggerLive, time.Time{}))
+
+	require.NotNil(t, capturedCtx)
+	requester, err := identity.GetRequester(capturedCtx)
+	require.NoError(t, err)
+	require.True(t, identity.IsProvisioningServiceIdentity(requester))
+	require.NotEmpty(t, requester.GetExtra()[string(authn.ServiceIdentityKey)],
+		"the worker's ctx should carry a repository-scoped identity, not just the generic provisioning identity")
+	require.Equal(t, "test-repo", requester.GetExtra()[string(authn.ServiceIdentityKey)][0])
 }
 
 func TestProcessJob_HealthyRepo_WorkerError_PropagatesError(t *testing.T) {
