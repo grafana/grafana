@@ -2547,6 +2547,11 @@ func (b *bleveIndex) verifyKey(key *resourcepb.ResourceKey) *resourcepb.ErrorRes
 	if key.Namespace != b.key.Namespace {
 		return resource.NewBadRequestError("namespace mismatch (expected " + b.key.Namespace + ")")
 	}
+	// A namespace-wide index holds documents of several resource types, so a request
+	// to it names only the namespace. Type selection happens through query fields.
+	if b.key.IsGlobal() {
+		return nil
+	}
 	if key.Group != b.key.Group {
 		return resource.NewBadRequestError("group mismatch (expected " + b.key.Group + ")")
 	}

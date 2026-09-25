@@ -66,8 +66,7 @@ type declaredField struct {
 //
 // Use this to build a map that is looked up by index field name.
 func declaredFields(provider resource.SearchFieldsProvider, group, kindResource string) []declaredField {
-	standard := resource.StandardSearchFieldDefinitions()
-	trash := resource.TrashSearchFieldDefinitions()
+	standard, trash := resource.IndexFieldDefinitions(group, kindResource)
 	perKind := fieldDefinitionsForMapping(provider, group, kindResource)
 
 	out := make([]declaredField, 0, len(standard)+len(trash)+len(perKind))
@@ -593,9 +592,11 @@ func GetBleveMappings(provider resource.SearchFieldsProvider, group, kindResourc
 func getBleveDocMappings(provider resource.SearchFieldsProvider, group, kindResource string, selectableFields []string) *mapping.DocumentMapping {
 	mapper := bleve.NewDocumentStaticMapping()
 
+	standard, trash := resource.IndexFieldDefinitions(group, kindResource)
+
 	// Standard top-level search fields are declared as SearchFieldDefinitions
 	// and emitted through the capability helper.
-	for _, def := range resource.StandardSearchFieldDefinitions() {
+	for _, def := range standard {
 		addCapabilityFieldMappings(mapper, def)
 	}
 
@@ -605,7 +606,7 @@ func getBleveDocMappings(provider resource.SearchFieldsProvider, group, kindReso
 
 	// Trash fields sit at the top level next to the standard ones, so /trash reads
 	// them by the names the API layer already uses.
-	for _, def := range resource.TrashSearchFieldDefinitions() {
+	for _, def := range trash {
 		addCapabilityFieldMappings(mapper, def)
 	}
 

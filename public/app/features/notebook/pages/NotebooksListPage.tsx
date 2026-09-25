@@ -2,9 +2,10 @@ import { useEffect, useRef } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
+import { FeatureState } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
-import { Alert, Box, Button, Checkbox, EmptyState, FilterInput, Stack, Text } from '@grafana/ui';
+import { Alert, Box, Button, Checkbox, EmptyState, FeatureBadge, FilterInput, Stack, Text } from '@grafana/ui';
 import { extractErrorMessage } from 'app/api/utils';
 import { Page } from 'app/core/components/Page/Page';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
@@ -115,7 +116,12 @@ export function NotebooksListPage() {
     // When nothing exists the empty state carries the create button, so drop it from the header.
     <Page
       navId="notebooks"
-      renderTitle={(title) => <Text element="h1">{title}</Text>}
+      renderTitle={(title) => (
+        <Stack alignItems="center">
+          <Text element="h1">{title}</Text>
+          <FeatureBadge featureState={FeatureState.preview} />
+        </Stack>
+      )}
       actions={hasNoNotebooks ? undefined : createButton}
     >
       <Page.Contents isLoading={isLoading}>
