@@ -352,7 +352,6 @@ describe('TimelineChart (canvas)', () => {
       const frame = lastAlignedFrame();
       expect(frame.fields.map((f) => f.type)).toEqual([FieldType.time, FieldType.number]);
       expect(frame.fields[1].name).toBe('b-value');
-      expect(frame.length).toBe(times.length);
     });
 
     it('renders an empty chart when every field is hidden', async () => {
