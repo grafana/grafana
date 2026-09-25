@@ -455,6 +455,9 @@ type ResourceServerOptions struct {
 
 	StorageMetrics *StorageMetrics
 
+	// GRPCErrorResultToStatus enables conversion of embedded ErrorResults on in-process calls.
+	GRPCErrorResultToStatus bool
+
 	IndexMetrics *BleveIndexMetrics
 
 	VectorMetrics *VectorMetrics
@@ -650,6 +653,7 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		ctx:                            ctx,
 		cancel:                         cancel,
 		storageMetrics:                 opts.StorageMetrics,
+		grpcErrorResultToStatus:        opts.GRPCErrorResultToStatus,
 		maxPageSizeBytes:               opts.MaxPageSizeBytes,
 		reg:                            opts.Reg,
 		queue:                          opts.QOSQueue,
@@ -759,6 +763,7 @@ type server struct {
 	now                       func() int64
 	mostRecentRV              atomic.Int64 // The most recent resource version seen by the server
 	storageMetrics            *StorageMetrics
+	grpcErrorResultToStatus   bool
 	overridesService          *OverridesService
 	quotasConfig              QuotasConfig
 	searchBackedListResources SearchBackedListConfig

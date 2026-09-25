@@ -11,6 +11,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestBuildResourceServerOptionsGRPCErrorResultToStatus(t *testing.T) {
+	cfg := setting.NewCfg()
+	for _, enabled := range []bool{false, true} {
+		cfg.UnifiedStorageGRPCErrorResultToStatus = enabled
+		opts, err := buildResourceServerOptions(&ServerOptions{Cfg: cfg})
+		require.NoError(t, err)
+		require.Equal(t, enabled, opts.GRPCErrorResultToStatus)
+	}
+}
+
 func TestIsHighAvailabilityEnabled(t *testing.T) {
 	tests := []struct {
 		name string
