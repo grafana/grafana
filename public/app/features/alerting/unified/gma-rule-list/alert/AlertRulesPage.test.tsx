@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
+import { render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -17,6 +17,7 @@ const ALERT_SEARCH_URL = '/apis/rules.alerting.grafana.app/v0alpha1/namespaces/:
 const FOLDER_SEARCH_URL = '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/search';
 const FOLDER_PARENTS_URL = '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:name/parents';
 const FOLDER_COUNTS_URL = '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:name/counts';
+const ALERT_RULE_GET_URL = '/apis/rules.alerting.grafana.app/v0alpha1/namespaces/:namespace/alertrules/:name';
 
 setDataSourceSrv({
   getList: () => [],
@@ -87,6 +88,18 @@ describe('AlertRulesPage', () => {
     contextSrv.user.permissions = { [AccessControlAction.AlertingRuleRead]: true };
     mockFolderParents({ 'folder-1': 'Team Alerts', 'folder-2': 'Infra' });
     mockFolderCounts({ 'folder-1': 3, 'folder-2': 0 });
+    // Every visible row's action menu loads the full rule for provenance/abilities - a row
+    // component detail these page-level tests don't otherwise care about.
+    server.use(
+      http.get(ALERT_RULE_GET_URL, ({ params }) =>
+        HttpResponse.json({
+          apiVersion: 'v0alpha1',
+          kind: 'AlertRule',
+          metadata: { name: params.name },
+          spec: { title: 'rule', paused: false },
+        })
+      )
+    );
   });
 
   afterEach(() => {
@@ -107,6 +120,24 @@ describe('AlertRulesPage', () => {
     await waitFor(() => expect(screen.getAllByText('3')).not.toHaveLength(0));
     // Collapsed: no rule rows or per-folder rule requests have happened yet.
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
+  });
+
+  // SEARCH-7: the folder filter is the one filter Folders mode supports, and it scopes the
+  // folder listing itself (not just what's shown once a folder is expanded).
+  it('a folder criterion in Folders mode scopes the folder listing to just that folder', async () => {
+    let lastWhere: unknown;
+    server.use(
+      http.post(FOLDER_SEARCH_URL, async ({ request }) => {
+        const body = (await request.json()) as { where?: unknown };
+        lastWhere = body.where;
+        return HttpResponse.json({ items: [folderItem('folder-1', 'Team Alerts')], metadata: {} });
+      })
+    );
+
+    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?search=namespace%3Afolder-1'] } });
+
+    expect(await screen.findByText('Team Alerts')).toBeInTheDocument();
+    expect(lastWhere).toEqual({ filter: { field: 'name', operator: 'In', values: ['folder-1'] } });
   });
 
   // ALERT-2
@@ -130,9 +161,7 @@ describe('AlertRulesPage', () => {
 
     expect(ruleSearchCalls).toBe(0);
 
-    const expandButtons = screen.getAllByRole('button', { expanded: false });
-    await within(document.body).findByText('Team Alerts');
-    await userEvent.click(expandButtons[0]);
+    await userEvent.click(screen.getByRole('button', { name: 'Team Alerts', expanded: false }));
 
     await screen.findByText('CPU high');
     expect(ruleSearchCalls).toBe(1);

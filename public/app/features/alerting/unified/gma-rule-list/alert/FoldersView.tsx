@@ -13,21 +13,27 @@ import { buildFolderListSearchQuery } from '../shared/folderSearchQuery';
 import { type ContinuationPage, useContinuationSearch } from '../shared/useContinuationSearch';
 import { useFolderPages } from '../shared/useFolderPages';
 
+import { AlertRuleActions } from './AlertRuleActions';
 import { AlertRuleRow } from './AlertRuleRow';
 import { toAlertRuleSearchHit } from './searchHit';
 
 interface FoldersViewProps {
+  /** Folder UIDs from the active criterion - the only filter Folders mode supports. Scopes
+   * the folder listing itself, not just what's shown once expanded. */
+  folderUids: string[];
   /** Changes whenever a refresh/mutation should restart every open chain, including every
    * expanded folder's - folded into each chain's resetKey. */
   resetKey: unknown;
 }
 
-export function FoldersView({ resetKey }: FoldersViewProps) {
+export function FoldersView({ folderUids, resetKey }: FoldersViewProps) {
   const [triggerFolderSearch] = useListFolderSearchV1Beta1Mutation();
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const fetchPage = async (continueToken: string | undefined): Promise<ContinuationPage<{ uid: string }>> => {
-    const result = await triggerFolderSearch({ searchQuery: buildFolderListSearchQuery(continueToken) }).unwrap();
+    const result = await triggerFolderSearch({
+      searchQuery: buildFolderListSearchQuery(continueToken, folderUids),
+    }).unwrap();
     return {
       items: result.items.map((item: FolderResultItem) => ({ uid: item.resource.name })),
       continueToken: result.metadata.continue,
@@ -134,7 +140,12 @@ function ExpandedFolderRules({ folderUid, resetKey }: { folderUid: string; reset
   return (
     <Stack direction="column" gap={0.5}>
       {rows.map((hit) => (
-        <AlertRuleRow key={hit.uid} hit={hit} showFolderPath={false} />
+        <AlertRuleRow
+          key={hit.uid}
+          hit={hit}
+          showFolderPath={false}
+          actions={<AlertRuleActions ruleUid={hit.uid} />}
+        />
       ))}
       {Boolean(loadMoreError) && (
         <Stack direction="row" gap={1} alignItems="center">

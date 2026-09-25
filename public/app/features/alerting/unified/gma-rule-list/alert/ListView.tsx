@@ -6,6 +6,7 @@ import { buildAlertRuleSearchQuery } from '../search/searchQuery';
 import { type Criteria } from '../search/types';
 import { useContinuationSearch } from '../shared/useContinuationSearch';
 
+import { AlertRuleActions } from './AlertRuleActions';
 import { AlertRuleRow } from './AlertRuleRow';
 import { toAlertRuleSearchHit } from './searchHit';
 
@@ -53,7 +54,12 @@ export function ListView({ criteria, resetKey }: ListViewProps) {
   return (
     <Stack direction="column" gap={0.5}>
       {rows.map((hit) => (
-        <AlertRuleRow key={hit.uid} hit={hit} showFolderPath />
+        <AlertRuleRow
+          key={hit.uid}
+          hit={hit}
+          showFolderPath
+          actions={<AlertRuleActions ruleUid={hit.uid} />}
+        />
       ))}
       {Boolean(loadMoreError) && (
         <Stack direction="row" gap={1} alignItems="center">
