@@ -4,7 +4,10 @@ import type uPlot from 'uplot';
 
 import {
   applyFieldOverrides,
+  type ConfigOverrideRule,
+  createFieldConfigRegistry,
   createTheme,
+  FieldMatcherID,
   type DataFrame,
   dateTime,
   FieldColorModeId,
@@ -15,7 +18,7 @@ import {
 } from '@grafana/data';
 import { LegendDisplayMode, MappingType, VisibilityMode } from '@grafana/schema';
 import { applyDefaultUPlotAxisMeasureTextMock, removeCanvasTransforms } from '@grafana/test-utils/canvas';
-import { measureText as uPlotAxisMeasureText, type UPlotConfigBuilder } from '@grafana/ui';
+import { commonOptionsBuilder, measureText as uPlotAxisMeasureText, type UPlotConfigBuilder } from '@grafana/ui';
 
 import { TimelineChart } from './TimelineChart';
 import * as timelineChartUtils from './utils';
@@ -44,17 +47,25 @@ const timeRange: TimeRange = {
   raw: { from: dateTime(times[0]), to: dateTime(times[times.length - 1]) },
 };
 
+// Registers the same `custom.hideFrom` property the state-timeline panel does, so
+// `custom.hideFrom` overrides are applied like they are at runtime.
+const fieldConfigRegistry = createFieldConfigRegistry(
+  { useCustomConfig: (builder) => commonOptionsBuilder.addHideFrom(builder) },
+  'TimelineChart test'
+);
+
 /**
  * Runs raw series through the same two steps the state-timeline / status-history panels use before
  * handing frames to TimelineChart: field overrides (to attach `display` + color resolution) followed
  * by `prepareTimelineFields` (null insertion, sorting, span-null config).
  */
-function prepareFrames(raw: DataFrame[], mergeValues = true): DataFrame[] {
+function prepareFrames(raw: DataFrame[], mergeValues = true, overrides: ConfigOverrideRule[] = []): DataFrame[] {
   const withDisplay = applyFieldOverrides({
     data: raw,
     // Panels supply custom field-config defaults; the timeline core reads `field.config.custom`
     // directly when picking fill opacity, so every field (incl. the time field) needs it defined.
-    fieldConfig: { defaults: { custom: { fillOpacity: 80, lineWidth: 0 } }, overrides: [] },
+    fieldConfig: { defaults: { custom: { fillOpacity: 80, lineWidth: 0 } }, overrides },
+    fieldConfigRegistry,
     replaceVariables: (v) => v,
     theme,
     timeZone: 'utc',
@@ -157,6 +168,26 @@ function thresholdFrame(): DataFrame[] {
     ],
   });
   return prepareFrames([raw]);
+}
+
+function hideFromVizOverride(matcher: ConfigOverrideRule['matcher']): ConfigOverrideRule {
+  return {
+    matcher,
+    properties: [{ id: 'custom.hideFrom', value: { viz: true, legend: false, tooltip: false } }],
+  };
+}
+
+/** One frame per query (refId A and B), each with its own time field, as TestData returns them. */
+function twoQueryFrames(overrides: ConfigOverrideRule[]): DataFrame[] {
+  const query = (refId: string, name: string) =>
+    toDataFrame({
+      refId,
+      fields: [
+        { name: 'time', type: FieldType.time, values: times, config: { custom: {} } },
+        { name, type: FieldType.number, values: [10, 55, 85, 95, 40], config: {} },
+      ],
+    });
+  return prepareFrames([query('A', 'a-value'), query('B', 'b-value')], true, overrides);
 }
 
 type Overrides = Partial<React.ComponentProps<typeof TimelineChart>>;
@@ -306,6 +337,52 @@ describe('TimelineChart (canvas)', () => {
     it('honors colWidth for sample bar sizing', async () => {
       renderTimeline(stateFrame(), { mode: TimelineMode.Samples, colWidth: 0.5 });
       await assertCanvasOutput();
+    });
+  });
+
+  describe('fields hidden from viz', () => {
+    const lastAlignedFrame = (): DataFrame => prepConfigSpy.mock.calls.at(-1)[0].frame;
+
+    it('keeps the joined time field when the query that owns it is hidden', async () => {
+      // The outer join reuses the first frame's time field, so hiding query A also marks the
+      // joined time field as hidden.
+      renderTimeline(twoQueryFrames([hideFromVizOverride({ id: FieldMatcherID.byFrameRefID, options: 'A' })]));
+      await assertUPlotReady();
+
+      const frame = lastAlignedFrame();
+      expect(frame.fields.map((f) => f.type)).toEqual([FieldType.time, FieldType.number]);
+      expect(frame.fields[1].name).toBe('b-value');
+      expect(frame.length).toBe(times.length);
+    });
+
+    it('renders an empty chart when every field is hidden', async () => {
+      renderTimeline(
+        twoQueryFrames([
+          hideFromVizOverride({ id: FieldMatcherID.byFrameRefID, options: 'A' }),
+          hideFromVizOverride({ id: FieldMatcherID.byFrameRefID, options: 'B' }),
+        ])
+      );
+      await assertUPlotReady();
+
+      const frame = lastAlignedFrame();
+      expect(frame.fields.map((f) => f.type)).toEqual([FieldType.time]);
+      expect(uPlotInstance!.series).toHaveLength(1);
+    });
+
+    it('keeps the time field when an override targets only time fields', async () => {
+      const raw = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: times, config: { custom: {} } },
+          { name: 'load', type: FieldType.number, values: [10, 55, 85, 95, 40], config: {} },
+        ],
+      });
+      renderTimeline(
+        prepareFrames([raw], true, [hideFromVizOverride({ id: FieldMatcherID.byType, options: FieldType.time })])
+      );
+      await assertUPlotReady();
+
+      const frame = lastAlignedFrame();
+      expect(frame.fields.map((f) => f.name)).toEqual(['time', 'load']);
     });
   });
 
