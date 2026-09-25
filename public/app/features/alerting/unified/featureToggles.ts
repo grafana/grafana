@@ -1,4 +1,5 @@
 import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { getPreviewToggle } from './previewToggles';
 import { isAdmin } from './utils/environment';
@@ -19,7 +20,9 @@ export const shouldUseAlertingListViewV2 = () => {
 };
 
 export const shouldAllowRecoveringDeletedRules = () =>
-  (isAdmin() && config.featureToggles.alertingRuleRecoverDeleted && config.featureToggles.alertRuleRestore) ?? false;
+  isAdmin() &&
+  getFeatureFlagClient().getBooleanValue(FlagKeys.AlertingRuleRecoverDeleted, true) &&
+  getFeatureFlagClient().getBooleanValue(FlagKeys.AlertRuleRestore, true);
 
 export const shouldAllowPermanentlyDeletingRules = () =>
   (shouldAllowRecoveringDeletedRules() && config.featureToggles.alertingRulePermanentlyDelete) ?? false;

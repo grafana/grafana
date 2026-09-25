@@ -3,7 +3,6 @@ import { type JSX } from 'react';
 
 import {
   type DisplayProcessor,
-  type DisplayValue,
   type DisplayValueAlignmentFactors,
   type FieldConfig,
   type FieldDisplay,
@@ -12,7 +11,7 @@ import {
   type PanelProps,
   VizOrientation,
 } from '@grafana/data';
-import { BarGaugeSizing } from '@grafana/schema';
+import { BarGaugeSizing, BarGaugeValueMode, BigValueTextMode } from '@grafana/schema';
 import {
   BarGauge,
   DataLinksContextMenu,
@@ -50,7 +49,9 @@ export function BarGaugePanel(props: BarGaugePanelProps) {
 
     return (
       <BarGauge
-        value={clearNameForSingleSeries(count, fieldConfig.defaults, display)}
+        value={
+          shouldShowName(options.textMode, count, fieldConfig.defaults) ? display : { ...display, title: undefined }
+        }
         width={width}
         height={height}
         orientation={orientation}
@@ -64,7 +65,7 @@ export function BarGaugePanel(props: BarGaugePanelProps) {
         className={targetClassName}
         alignmentFactors={count > 1 ? alignmentFactors : undefined}
         showUnfilled={options.showUnfilled}
-        valueDisplayMode={options.valueMode}
+        valueDisplayMode={shouldShowValue(options.textMode) ? options.valueMode : BarGaugeValueMode.Hidden}
         namePlacement={options.namePlacement}
         isOverflow={isOverflow}
       />
@@ -112,7 +113,7 @@ export function BarGaugePanel(props: BarGaugePanelProps) {
         return (
           <VizRepeater
             source={data}
-            getAlignmentFactors={getDisplayValueAlignmentFactors}
+            getAlignmentFactors={(values) => getBarGaugeAlignmentFactors(values, options)}
             getValues={getValues}
             renderValue={renderValue}
             renderCounter={renderCounter}
@@ -171,13 +172,32 @@ export function getLegend(options: Options, data: BarGaugePanelProps['data']) {
   return null;
 }
 
-function clearNameForSingleSeries(count: number, field: FieldConfig, display: DisplayValue): DisplayValue {
-  if (count === 1 && !field.displayName) {
-    return {
-      ...display,
-      title: undefined,
-    };
+// BarGauge sizes the shared name column/row from alignmentFactors.title, so it must reflect the
+// same per-bar suppression as renderComponent's name-clearing, or hidden names still reserve
+// layout space even though nothing is drawn there.
+export function getBarGaugeAlignmentFactors(values: FieldDisplay[], options: Options): DisplayValueAlignmentFactors {
+  const count = values.length;
+  return getDisplayValueAlignmentFactors(
+    values.map((value) => ({
+      ...value,
+      display: shouldShowName(options.textMode, count, value.field)
+        ? value.display
+        : { ...value.display, title: undefined },
+    }))
+  );
+}
+
+// Auto keeps the historical single-bar heuristic; any other explicit choice decides
+// name visibility outright, independent of bar count, so it must override that heuristic.
+function shouldShowName(textMode: BigValueTextMode, count: number, field: FieldConfig): boolean {
+  if (textMode === BigValueTextMode.Auto) {
+    return count !== 1 || Boolean(field.displayName);
   }
 
-  return display;
+  return textMode === BigValueTextMode.Name || textMode === BigValueTextMode.ValueAndName;
+}
+
+// Matches Gauge/Stat: Name and None hide the value, independent of the "Value display" setting.
+function shouldShowValue(textMode: BigValueTextMode): boolean {
+  return textMode !== BigValueTextMode.Name && textMode !== BigValueTextMode.None;
 }
