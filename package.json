@@ -397,7 +397,7 @@
     "re-resizable": "6.11.2",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "react-draggable": "4.5.0",
+    "react-draggable": "4.7.2",
     "react-highlight-words": "0.21.0",
     "react-hook-form": "^7.49.2",
     "react-i18next": "^17.0.9",

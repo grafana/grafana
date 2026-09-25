@@ -20260,7 +20260,7 @@ __metadata:
     re-resizable: "npm:6.11.2"
     react: "npm:19.2.8"
     react-dom: "npm:19.2.8"
-    react-draggable: "npm:4.5.0"
+    react-draggable: "npm:4.7.2"
     react-highlight-words: "npm:0.21.0"
     react-hook-form: "npm:^7.49.2"
     react-i18next: "npm:^17.0.9"
@@ -29331,16 +29331,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-draggable@npm:4.5.0, react-draggable@npm:^4.0.3, react-draggable@npm:^4.4.5":
-  version: 4.5.0
-  resolution: "react-draggable@npm:4.5.0"
+"react-draggable@npm:4.7.2, react-draggable@npm:^4.0.3, react-draggable@npm:^4.4.5":
+  version: 4.7.2
+  resolution: "react-draggable@npm:4.7.2"
   dependencies:
     clsx: "npm:^2.1.1"
     prop-types: "npm:^15.8.1"
   peerDependencies:
     react: ">= 16.3.0"
     react-dom: ">= 16.3.0"
-  checksum: 10/fd4080a082fad199103c6978c8a78c80154a0205dbd14ca2c7bb75634132a6afd83a3e4669f2d8fe54efe68569ef24a992439183289d83e71030b0a1791d3476
+  checksum: 10/d0913851384f840dc1cd8d447653ac73d0d6e29046368f7ff72ef34b08f0af7a6988cad6ab5c774abb428dcec8d73283754e53ce99d289914d783ad00ff85caa
   languageName: node
   linkType: hard
 
