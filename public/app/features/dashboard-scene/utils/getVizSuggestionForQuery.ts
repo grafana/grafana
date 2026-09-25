@@ -23,7 +23,7 @@ const SUGGESTION_TIMEOUT_MS = 5_000;
 /** How many best-first suggestions a user is offered to choose between, e.g. in NotebookVizSuggestionsPicker. */
 export const TOP_VIZ_SUGGESTION_COUNT = 3;
 
-/** Executes a saved query against its datasource and returns the resulting suggestions, best-first. */
+/** Executes a query against its datasource and returns the resulting suggestions, best-first. */
 async function getVizSuggestionsForQuery(
   query: DataQuery,
   timeRange: TimeRange
@@ -57,7 +57,7 @@ async function getVizSuggestionsForQuery(
 }
 
 /**
- * Executes a saved query against its datasource and returns the top visualization suggestion
+ * Executes a query against its datasource and returns the top visualization suggestion
  * based on the resulting data shape.
  */
 export async function getVizSuggestionForQuery(
