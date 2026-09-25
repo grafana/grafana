@@ -307,9 +307,18 @@ export const FeatureControlFlag = ({ flag }: FeatureControlFlagProps) => {
           </Field>
 
           {type === 'boolean' && (
-            <Field className={styles.valueField} useFieldset={false} noMargin>
+            <Field
+              className={styles.valueField}
+              label={
+                <span id={`${id}-value-label`} className="sr-only">
+                  <Trans i18nKey="feature-control.flag-value">Flag value</Trans>
+                </span>
+              }
+              useFieldset={false}
+              noMargin
+            >
               <RadioButtonGroup
-                aria-label={t('feature-control.flag-value', 'Flag value')}
+                aria-labelledby={`${id}-value-label`}
                 options={[
                   { label: 'true', value: 'true' },
                   { label: 'false', value: 'false' },
@@ -335,7 +344,6 @@ export const FeatureControlFlag = ({ flag }: FeatureControlFlagProps) => {
                 id={`${id}-value`}
                 type={type === 'number' ? 'number' : 'text'}
                 value={value}
-                aria-label={t('feature-control.flag-value', 'Flag value')}
                 onChange={(e) => setValue(e.currentTarget.value)}
               />
             </Field>
@@ -343,13 +351,22 @@ export const FeatureControlFlag = ({ flag }: FeatureControlFlagProps) => {
         </Stack>
 
         {type === 'object' && (
-          <Field noMargin error={error} invalid={!!error}>
+          <Field
+            label={
+              <span id={`${id}-value-label`} className="sr-only">
+                <Trans i18nKey="feature-control.flag-value">Flag value</Trans>
+              </span>
+            }
+            noMargin
+            error={error}
+            invalid={!!error}
+          >
             <CodeMirrorEditor
               value={json}
               onChange={changeJson}
               language="json"
               height="80px"
-              aria-label={t('feature-control.flag-value', 'Flag value')}
+              aria-labelledby={`${id}-value-label`}
             />
           </Field>
         )}
