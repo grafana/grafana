@@ -58,9 +58,9 @@ function gridVarsFor(theme: GrafanaTheme2, props: Partial<React.ComponentProps<t
     // Emotion's injected rules accumulate across cases in a file, so anything read back out of the
     // stylesheet has to be scoped to the class this render actually produced.
     gridClass: Array.from(grid.classList).find((c) => c.startsWith('css-')) ?? '',
-    frozenBackgrounds: Array.from(container.querySelectorAll('.rdg-row:not(.rdg-summary-row) .rdg-cell-frozen')).map(
-      (cell) => window.getComputedStyle(cell).backgroundColor
-    ),
+    frozenBackgrounds: Array.from(
+      container.querySelectorAll('.rdg-row:not(.rdg-summary-row) .rdg-cell-frozen-start')
+    ).map((cell) => window.getComputedStyle(cell).backgroundColor),
     /** Background each body row resolves to, in document order. */
     rowBackgrounds: Array.from(container.querySelectorAll('.rdg-row:not(.rdg-summary-row)')).map(
       (row) => window.getComputedStyle(row).backgroundColor
