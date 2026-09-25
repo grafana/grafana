@@ -1,10 +1,8 @@
 import type { KnipConfig } from 'knip';
 
 const packageIgnoreDeps = [
-  // These are used by the base rollup config located outside of the packages
-  '@rollup/plugin-node-resolve',
-  'rollup-plugin-esbuild',
-  'rollup-plugin-node-externals',
+  // Used by the shared rolldown config located outside of the packages
+  'rolldown-plugin-dts',
 ];
 
 const defaultEntries = ['i18next.config.ts'];
@@ -169,6 +167,7 @@ const config: KnipConfig = {
     'packages/grafana-api-clients': {
       entry: [...defaultEntries, 'src/scripts/generate-rtk-apis.ts', 'src/generator/generate.ts'],
       project: [...defaultProject, '!src/generator/**!'],
+      ignoreDependencies: packageIgnoreDeps,
     },
     'packages/grafana-sql': {
       // resolved via the `moment$` webpack alias in grafana-plugin-configs, which knip can't follow
