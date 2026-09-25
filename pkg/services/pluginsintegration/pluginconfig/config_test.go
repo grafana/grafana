@@ -1,7 +1,9 @@
 package pluginconfig
 
 import (
+	"net/url"
 	"testing"
+	"time"
 
 	"gopkg.in/ini.v1"
 
@@ -47,4 +49,25 @@ func TestProvidePluginInstanceConfigMarketplaceLicenseDirectory(t *testing.T) {
 	pluginCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 	require.NoError(t, err)
 	require.Equal(t, cfg.MarketplaceLicenseDirectory, pluginCfg.MarketplaceLicenseDirectory)
+}
+
+func TestProvidePluginInstanceConfigOpenFeature(t *testing.T) {
+	u, err := url.Parse("http://features.example.com:1031")
+	require.NoError(t, err)
+
+	openFeature := setting.OpenFeatureSettings{
+		ProviderType: setting.OFREPProviderType,
+		URL:          u,
+		TargetingKey: "stacks-123",
+		ContextAttrs: map[string]string{"namespace": "stacks-123"},
+		CacheTTL:     time.Minute,
+	}
+	cfg := &setting.Cfg{
+		Raw:         ini.Empty(),
+		OpenFeature: openFeature,
+	}
+
+	pluginCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+	require.NoError(t, err)
+	require.Equal(t, openFeature, pluginCfg.OpenFeature)
 }

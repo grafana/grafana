@@ -2,6 +2,7 @@ package pluginconfig
 
 import (
 	"context"
+	"encoding/json"
 	"slices"
 	"sort"
 	"strconv"
@@ -59,6 +60,21 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 		}
 		sort.Strings(features)
 		m[featuretoggles.EnabledFeatures] = strings.Join(features, ",")
+	}
+
+	if providerURL := s.cfg.openFeatureProviderURL(); s.cfg.OpenFeature.ProviderType != "" && providerURL != "" {
+		m[openFeatureProviderURLKey] = providerURL
+		m[openFeatureProviderTypeKey] = string(s.cfg.OpenFeature.ProviderType)
+		m[openFeatureCacheTTLKey] = s.cfg.openFeatureCacheTTLSeconds()
+
+		if len(s.cfg.OpenFeature.ContextAttrs) > 0 {
+			attrs, err := json.Marshal(s.cfg.OpenFeature.ContextAttrs)
+			if err != nil {
+				s.logger.Error("Failed to marshal OpenFeature context attributes", "error", err)
+			} else {
+				m[openFeatureContextKey] = string(attrs)
+			}
+		}
 	}
 
 	if slices.Contains[[]string, string](s.cfg.AWSForwardSettingsPlugins, pluginID) {
