@@ -475,6 +475,7 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "External Alertmanagers",
+      "external-alertmanagers-group-plugin": "External Alertmanagers (opens in Prometheus Alerting)",
       "noOptionsMessage-no-datasources-found": "No datasources found"
     },
     "alert-menu": {
@@ -2673,6 +2674,8 @@
       }
     },
     "proxied-alerting-route": {
+      "redirected-body": "Data source managed alerting is handled by the Prometheus Alerting plugin.",
+      "redirected-title": "Opened in the Prometheus Alerting plugin",
       "text-redirecting": "Redirecting…"
     },
     "query-and-expressions-step": {
@@ -2978,6 +2981,15 @@
     },
     "rule-list": {
       "configure-datasource": "Configure",
+      "datasource-managed-notice": {
+        "action": "View rules in Prometheus Alerting",
+        "body": "Their alert and recording rules are no longer shown here.",
+        "inline_one": "{{count}} data source is managed by the Prometheus Alerting plugin",
+        "inline_other": "{{count}} data sources are managed by the Prometheus Alerting plugin",
+        "inline-action": "View",
+        "title_one": "{{count}} data source is managed by the Prometheus Alerting plugin",
+        "title_other": "{{count}} data sources are managed by the Prometheus Alerting plugin"
+      },
       "ds-error": {
         "title": "Cannot load rules for this datasource"
       },
@@ -2998,7 +3010,8 @@
         "no-more-results": "No more results – found {{numberOfRules}} rules",
         "no-rules-found": "No alert or recording rules matched your current set of filters.",
         "results-loading": "Searching – found {{numberOfRules}} rules",
-        "results-with-cancellation": "Search cancelled – found {{numberOfRules}} rules"
+        "results-with-cancellation": "Search cancelled – found {{numberOfRules}} rules",
+        "search-in-plugin": "Search data source managed rules in Prometheus Alerting"
       },
       "import-disabled-tooltip": {
         "auto-sync": "Imports are unavailable while Mimir Alertmanager auto-sync is active"
@@ -4392,6 +4405,7 @@
       "label-top": "Top"
     },
     "name-show-unfilled-area": "Show unfilled area",
+    "name-text-mode": "Text mode",
     "name-value-display": "Value display",
     "presets": {
       "basic": "Basic",
@@ -4410,6 +4424,13 @@
     "suggestions": {
       "basic": "Bar gauge",
       "lcd": "Bar gauge - LCD"
+    },
+    "text-mode-options": {
+      "label-auto": "Auto",
+      "label-name": "Name",
+      "label-none": "None",
+      "label-value": "Value",
+      "label-value-and-name": "Value and name"
     },
     "value-display-options": {
       "label-hidden": "Hidden",
@@ -5764,6 +5785,7 @@
     "edit-actions": {
       "add": "Add {{typeName}}",
       "add-conditional-rule": "Add {{ruleDescription}} rule",
+      "collapse-all-rows": "Collapse all rows",
       "dashboard-description": "Change dashboard description",
       "dashboard-title": "Change dashboard title",
       "duplicate": "Duplicate {{typeName}}",
@@ -5771,6 +5793,7 @@
       "edit-query-result-rule": "Change query result rule",
       "edit-template-variable-rule": "Change template variable rule",
       "edit-time-range-rule": "Change time range rule",
+      "expand-all-rows": "Expand all rows",
       "group-into-row": "Group into row",
       "group-into-tab": "Group into tab",
       "move": "Move {{typeName}}",
@@ -5803,9 +5826,7 @@
       "add-library-panel-header": "Import panel",
       "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "add-visualization-button": "Add visualization",
-      "add-visualization-description": "Visualizations are panels for your data. Organize them with Auto grid or Custom grid.",
       "add-visualization-header": "Start your new dashboard by adding a visualization",
-      "add-visualization-heading": "Add a visualization",
       "assistant-placeholder": "Describe your dashboard. This will open the assistant chat and start a conversation.",
       "auto-grid": "Auto grid",
       "auto-grid-description": "Panels resize to fit and form uniform grids",
@@ -5813,9 +5834,6 @@
       "custom-grid": "Custom grid",
       "custom-grid-description": "Position and size each panel individually",
       "description": "Add a panel to visualize your data",
-      "grid-auto": "Auto",
-      "grid-custom": "Custom",
-      "grid-label": "Grid:",
       "import-a-dashboard-body": "Import dashboards from files or <2>grafana.com</2>.",
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard",
@@ -6044,6 +6062,12 @@
       "ungroup-repeat-loss": "Repeat options configured on the ungrouped groups will be lost.",
       "ungroup-repeat-loss-title": "Ungroup?"
     },
+    "loading": {
+      "drawer": "Loading drawer",
+      "drawer-title": "Loading…",
+      "sidebar": "Loading sidebar",
+      "sidebar-title": "Loading…"
+    },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} of {{numberOfPages}}",
       "tooltip-next": "Next",
@@ -6143,9 +6167,7 @@
     "planning-banner": {
       "build": "Build",
       "dismiss": "Dismiss",
-      "panel-count_one": "{{count}} panel",
-      "panel-count_other": "{{count}} panels",
-      "plan-label": "Plan"
+      "preview-label": "Preview"
     },
     "public-dashboard-not-available": {
       "does-not-exist": "The dashboard you are trying to access does not exist",
@@ -6764,7 +6786,14 @@
         "title-remove": "Remove",
         "title-show-transform-help": "Show transform help"
       },
-      "title-delete": "Delete {{name}}?"
+      "title-delete": "Delete {{name}}?",
+      "transformation-editor-row-header": {
+        "edit-refId": "Edit transformation name",
+        "edit-refId-placeholder": "(Auto)",
+        "refId-exists-error": "Transformation name already exists",
+        "refId-reserved-error": "Transformation name is already used by a query or an earlier transformation",
+        "refId-variable-error": "Transformation name cannot contain a variable"
+      }
     },
     "transformation-operation-rows": {
       "remove-transformation": "Remove",
@@ -7429,7 +7458,6 @@
       },
       "render-save-button-and-error": {
         "body-plugin-dashboard": "Your changes will be lost when you update the plugin. Use <strong>Save as</strong> to create custom version.",
-        "title-failed-to-save-dashboard": "Failed to save dashboard",
         "title-plugin-dashboard": "Plugin dashboard",
         "title-someone-else-has-updated-this-dashboard": "Someone else has updated this dashboard",
         "would-still-dashboard": "Would you still like to save this dashboard?"
@@ -7697,9 +7725,6 @@
       },
       "label-copy-tags": "Copy tags",
       "label-folder": "Folder",
-      "render-footer": {
-        "title-failed-to-save-dashboard": "Failed to save dashboard"
-      },
       "required": "Required"
     },
     "save-dashboard-drawer": {
@@ -7746,6 +7771,9 @@
       "save-variables-label-update-default-variable-values": "Update default variable values",
       "show-variables-warning-alert-body": "Some variables failed to load. If you keep “Update default variable values” checked, the current (failed) values will become the dashboard defaults. You can save anyway or uncheck the option to avoid storing those (failed) values.",
       "show-variables-warning-alert-title": "Variable queries failed"
+    },
+    "save-errors": {
+      "unexpected": "An unexpected error occurred while saving."
     },
     "save-library-viz-panel-modal": {
       "affected-dashboards_one": "This update will affect <1>{{count}} dashboards.</1> The following dashboards using the panel will be affected:",
@@ -9434,6 +9462,7 @@
     "flag-value": "Flag value",
     "menu": "Open menu",
     "new-flag": "new-flag-override",
+    "ofrep-evaluation": "OFREP evaluation",
     "save-flag": "Save",
     "title": "Feature control"
   },
@@ -10556,7 +10585,7 @@
     "data-source-settings": {
       "alerting-settings-heading": "Alerting",
       "alerting-settings-label": "Manage alert rules in Alerting UI",
-      "alerting-settings-tooltip": "Manage alert rules for this data source. To manage other alerting resources, add an Alertmanager data source.",
+      "alerting-settings-tooltip": "Manage alert rules for this data source. They're shown in Grafana Alerting, or in the Prometheus Alerting app when that's in use. To manage other alerting resources, add an Alertmanager data source.",
       "cert-key-reset": "Reset",
       "custom-headers-add": "Add header",
       "custom-headers-header": "Header",
@@ -10681,6 +10710,7 @@
       "aria-label-sort-column": "Sort column {{columnName}}",
       "expand-row-header": "Row expander",
       "expand-row-tooltip": "Toggle row expanded",
+      "loading": "Loading table",
       "tooltip-collapse-all": "Collapse all rows",
       "tooltip-expand-all": "Expand all rows"
     },
@@ -10776,6 +10806,9 @@
       "tooltip-hide": "Hide password",
       "tooltip-show": "Show password"
     },
+    "query-field": {
+      "loading": "Loading editor"
+    },
     "query-input": {
       "loading": "Loading editor"
     },
@@ -10840,6 +10873,7 @@
       "placeholder": "Choose"
     },
     "table": {
+      "cell-actions": "Cell actions",
       "cell-filter-on": "Filter for value",
       "cell-filter-out": "Filter out value",
       "cell-inspect": "Inspect value",
@@ -10885,6 +10919,7 @@
         }
       },
       "inspect-drawer-title": "Inspect value",
+      "loading": "Loading table",
       "nested-table": {
         "expander-column-name": "Expand nested rows",
         "no-data": "No data"
@@ -11199,10 +11234,11 @@
   "home": {
     "alerts-incidents": {
       "alert-tab-label": "Firing alerts",
+      "incident-filter-all": "All incidents",
+      "incident-filter-label": "Filter incidents by label",
       "incident-tab-label": "Incidents",
       "team-filter-all": "All teams",
       "team-filter-label": "Filter alerts by team",
-      "team-filter-label-incidents": "Filter incidents by team",
       "team-filter-your-teams": "Your teams",
       "title": "Alerts & incidents",
       "title-alerts": "Alerts",
@@ -13687,10 +13723,15 @@
   },
   "playlist-page": {
     "card": {
-      "delete": "Delete playlist",
-      "edit": "Edit playlist",
-      "start": "Start playlist",
-      "tooltip": "Share playlist"
+      "delete": "Delete",
+      "delete-label": "Delete playlist {{ name }} ",
+      "edit": "Edit",
+      "edit-label": "Edit playlist {{ name }} ",
+      "share": "Share",
+      "share-label": "Share playlist {{ name }} ",
+      "start": "Start",
+      "start-label": "Start playlist {{ name }} ",
+      "tooltip": "Share"
     },
     "create-button": {
       "title": "New playlist"
@@ -14844,6 +14885,15 @@
     "repository-status": {
       "error": "Failed to load repository"
     },
+    "repository-status-alert": {
+      "deletion-title": "Repository deletion error",
+      "error-title": "Repository error",
+      "force-delete-button": "Delete anyway",
+      "force-delete-cancel": "Cancel",
+      "force-delete-confirm": "Delete anyway",
+      "force-delete-title": "Delete repository anyway",
+      "force-delete-warning": "This removes the repository without completing the blocking step, so anything it manages on the provider side (for example a webhook) is left in place. Only do this if the repository can no longer be reached — for example its credentials have expired or been revoked."
+    },
     "repository-status-page": {
       "back-to-repositories": "Back to repositories",
       "cleaning-up-resources": "Cleaning up repository resources",
@@ -15590,6 +15640,10 @@
       "label": "Apply transformation to",
       "series": "Query and Transformation results"
     },
+    "transformation-name": {
+      "auto-placeholder": "(Auto)",
+      "edit": "Edit transformation name"
+    },
     "validation": {
       "duplicate-name": "Query name already exists",
       "empty-name": "An empty query name is not allowed"
@@ -15769,6 +15823,12 @@
     "title": "Unable to find application file"
   },
   "save-dashboards": {
+    "forbidden": {
+      "title": "You do not have permission to save this dashboard"
+    },
+    "invalid": {
+      "title": "This dashboard is not valid"
+    },
     "message-length": {
       "info": "The message is {{messageLength}} characters, which exceeds the maximum length of 500 characters. Please shorten it before saving.",
       "title": "Message too long"
@@ -16520,7 +16580,9 @@
     }
   },
   "swagger": {
-    "login": "Login"
+    "login": "Login",
+    "namespace-unavailable": "Check the namespace before sending requests, or reload the page to try again.",
+    "namespace-unavailable-title": "Unable to load namespace"
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -17743,6 +17805,7 @@
     },
     "series-to-fields-transformer-editor": {
       "label-field": "Field",
+      "label-keep-unjoined": "Keep unjoined",
       "label-mode": "Mode",
       "modes": {
         "description": {
@@ -17755,7 +17818,8 @@
           "outer-tabular": "Outer (tabular)",
           "outer-time-series": "Outer (time series)"
         }
-      }
+      },
+      "tooltip-keep-unjoined": "Pass queries that do not have the selected field through untouched instead of dropping them, so a later Join by field transformation can join them on a different field. Requires a field to be selected."
     },
     "series-to-rows-transformer-editor": {
       "description": {

@@ -274,6 +274,47 @@ describe('TextNGPanel', () => {
       expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML).toContain('<h1');
     });
 
+    describe('view mode', () => {
+      const switchToWrite = async (props: Props) => {
+        replaceVariablesMock.mockImplementation((str: string) => str);
+        const { unmount } = renderPanel(props, CoreApp.PanelEditor);
+        await userEvent.click(await screen.findByRole('radio', { name: 'Write' }));
+        expect(screen.getByRole('radio', { name: 'Write' })).toBeChecked();
+        unmount();
+      };
+
+      // Table view swaps in a different VizPanel, which unmounts and remounts this
+      // component even though the user never actually left panel edit.
+      it('keeps the view mode across a remount that happens while still editing (e.g. table view)', async () => {
+        const props = createProps(replaceVariablesMock, { options: { content: 'hello', mode: TextMode.Markdown } });
+
+        await switchToWrite(props);
+
+        renderPanel(props, CoreApp.PanelEditor);
+        expect(await screen.findByRole('radio', { name: 'Write' })).toBeChecked();
+      });
+
+      it('resets to the split view once the panel is actually shown outside edit mode', async () => {
+        const props = createProps(replaceVariablesMock, { options: { content: 'hello', mode: TextMode.Markdown } });
+
+        await switchToWrite(props);
+        renderPanel(props, CoreApp.Dashboard).unmount();
+
+        renderPanel(props, CoreApp.PanelEditor);
+        expect(await screen.findByRole('radio', { name: 'Split' })).toBeChecked();
+      });
+
+      // Both panels carry the same id, as ids only ever have to be unique within a dashboard.
+      it('does not carry the view mode over to another panel', async () => {
+        const options = { content: 'hello', mode: TextMode.Markdown };
+
+        await switchToWrite(createProps(replaceVariablesMock, { options }));
+
+        renderPanel(createProps(replaceVariablesMock, { options }), CoreApp.PanelEditor);
+        expect(await screen.findByRole('radio', { name: 'Split' })).toBeChecked();
+      });
+    });
+
     it('merges a language change made in the editor into the existing code options', async () => {
       replaceVariablesMock.mockImplementation((str: string) => str);
       const onOptionsChange = jest.fn();

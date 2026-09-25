@@ -4,6 +4,7 @@ import { isExpressionReference } from '../../utils/expressionRef';
 import { UserStorage } from '../../utils/userStorage';
 import { getDataSourceSrv, type RuntimeDataSourceRegistration } from '../dataSourceSrv';
 
+import { notifyDataSourceCacheChanged } from './cacheGeneration';
 import { FALLBACK_TO_LEGACY_INSTANCE_WARNING } from './constants';
 import { getExpressionDataSourceInstance } from './expressionDs';
 import { describeRef, logDataSourceInstanceError, logDataSourceWarning } from './logging';
@@ -173,6 +174,7 @@ export function registerRuntimeDataSourceInstance(entry: RuntimeDataSourceRegist
 
   upsertRuntimeDataSourceInstanceSettings(dataSource.instanceSettings);
   setRuntimePlugin(dataSource.uid, dataSource);
+  notifyDataSourceCacheChanged();
 }
 
 /**
