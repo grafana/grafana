@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -33,6 +34,15 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 	controllerCfg, err := setupJobQueueControllerFromConfig(deps.Config, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("failed to setup operator: %w", err)
+	}
+
+	defer func() {
+		if err := services.StopAndAwaitTerminated(context.Background(), controllerCfg.natsSubscriber); err != nil {
+			logger.Error("failed to stop NATS subscriber", "error", err)
+		}
+	}()
+	if err := services.StartAndAwaitRunning(ctx, controllerCfg.natsSubscriber); err != nil {
+		return fmt.Errorf("failed to start NATS subscriber: %w", err)
 	}
 
 	tracer, err := controllerCfg.Tracer()

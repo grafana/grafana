@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/dskit/services"
 	natsserver "github.com/nats-io/nats-server/v2/server"
 	natsclient "github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus/testutil"
@@ -501,6 +502,11 @@ func TestNATSStartupRecovery(t *testing.T) {
 			sub := newSubscriber(log.NewNopLogger(), newSubscriberMetrics(), cfg)
 			startService(t, t.Context(), pub)
 			startService(t, t.Context(), sub)
+			// Recovery servers register later cleanups, so stop clients before those servers.
+			defer func() {
+				require.NoError(t, services.StopAndAwaitTerminated(context.Background(), sub))
+				require.NoError(t, services.StopAndAwaitTerminated(context.Background(), pub))
+			}()
 			pubConn, err := pub.get(t.Context())
 			require.NoError(t, err)
 			subConn, err := sub.get(t.Context())
@@ -567,6 +573,7 @@ func TestConnectionEmbeddedStartup(t *testing.T) {
 			case <-time.After(30 * time.Millisecond):
 			}
 			srv := startTestServer(t)
+			t.Cleanup(c.close)
 			server.mu.Lock()
 			server.server = srv
 			server.mu.Unlock()

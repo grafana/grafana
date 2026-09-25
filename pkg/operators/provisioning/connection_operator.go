@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"k8s.io/client-go/tools/cache"
 
@@ -27,6 +28,15 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 	controllerCfg, err := setupFromConfig(deps.Config, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("failed to setup config: %w", err)
+	}
+
+	defer func() {
+		if err := services.StopAndAwaitTerminated(context.Background(), controllerCfg.natsSubscriber); err != nil {
+			logger.Error("failed to stop NATS subscriber", "error", err)
+		}
+	}()
+	if err := services.StartAndAwaitRunning(ctx, controllerCfg.natsSubscriber); err != nil {
+		return fmt.Errorf("failed to start NATS subscriber: %w", err)
 	}
 
 	provisioningClient, err := controllerCfg.ProvisioningClient()

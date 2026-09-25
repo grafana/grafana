@@ -2,10 +2,12 @@ package folder
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
 	"time"
 
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/logging"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -65,6 +67,15 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 
 	var reg cache.ResourceEventHandlerRegistration
 	if nats.Enabled(subscriber) {
+		defer func() {
+			if err := services.StopAndAwaitTerminated(context.Background(), subscriber); err != nil {
+				logger.Error("failed to stop NATS subscriber", "error", err)
+			}
+		}()
+		if err := services.StartAndAwaitRunning(ctx, subscriber); err != nil {
+			return fmt.Errorf("failed to start NATS subscriber: %w", err)
+		}
+
 		newObject := func(ns, name string) runtime.Object {
 			return &folderv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
 		}

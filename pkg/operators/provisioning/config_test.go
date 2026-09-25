@@ -1,16 +1,27 @@
 package provisioning
 
 import (
+	"context"
+	"fmt"
 	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
+	"time"
 
+	natsserver "github.com/nats-io/nats-server/v2/server"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"k8s.io/client-go/rest"
 
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
+	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -92,4 +103,82 @@ func TestWrapWithTracing(t *testing.T) {
 		require.True(t, ok, "otelhttp must remain the outermost transport")
 		require.True(t, innerCalled, "the pre-existing transport wrapper must still be invoked")
 	})
+}
+
+func TestControllersOwnNATSSubscriber(t *testing.T) {
+	originalOptions := registeredConfigOptions
+	t.Cleanup(func() { registeredConfigOptions = originalOptions })
+
+	for _, controller := range []struct {
+		name string
+		run  func(context.Context, server.OperatorDependencies) error
+	}{
+		{"repository", RunRepoController},
+		{"connection", RunConnectionController},
+		{"job queue", RunJobQueueController},
+	} {
+		t.Run(controller.name, func(t *testing.T) {
+			srv, err := natsserver.NewServer(&natsserver.Options{Host: "127.0.0.1", Port: natsserver.RANDOM_PORT, NoLog: true, NoSigs: true})
+			require.NoError(t, err)
+			go srv.Start()
+			t.Cleanup(func() { srv.Shutdown(); srv.WaitForShutdown() })
+			require.True(t, srv.ReadyForConnections(5*time.Second))
+
+			cfg := setting.NewCfg()
+			cfg.NATS = setting.NATSSettings{Enabled: true, Mode: setting.NATSModeExternal, ClientURLs: []string{srv.ClientURL()}}
+
+			api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				kinds := map[string]string{"repositories": "RepositoryList", "connections": "ConnectionList", "jobs": "JobList"}
+				kind := kinds[r.URL.Path[strings.LastIndex(r.URL.Path, "/")+1:]]
+				if kind == "" {
+					t.Errorf("unexpected API request: %s", r.URL)
+					http.NotFound(w, r)
+					return
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = fmt.Fprintf(w, `{"apiVersion":"provisioning.grafana.app/v0alpha1","kind":%q,"metadata":{"resourceVersion":"1"},"items":[]}`, kind)
+			}))
+			t.Cleanup(api.Close)
+			provisioningClient, err := client.NewForConfig(&rest.Config{Host: api.URL})
+			require.NoError(t, err)
+			registeredConfigOptions = []ConfigOption{func(_ context.Context, cfg *ControllerConfig) error {
+				cfg.tracer = tracing.NewNoopTracerService()
+				cfg.provisioningClient = provisioningClient
+				cfg.clients = resources.NewMockClientFactory(t)
+				// Empty resource lists must not access unified storage.
+				cfg.unified = &struct{ resources.ResourceStore }{}
+				cfg.repositoryFactory, err = repository.ProvideFactory(nil, nil, cfg.tracer)
+				if err != nil {
+					return err
+				}
+				cfg.connectionFactory, err = connection.ProvideFactory(nil, nil, cfg.tracer)
+				return err
+			}}
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+			health := server.NewHealthNotifier()
+			done := make(chan error, 1)
+			go func() {
+				done <- controller.run(ctx, server.OperatorDependencies{Config: cfg, Registerer: prometheus.NewRegistry(), HealthNotifier: health})
+			}()
+			require.Eventually(t, func() bool {
+				select {
+				case err := <-done:
+					require.NoError(t, err)
+					t.Fatal("controller stopped before becoming ready")
+				default:
+				}
+				stats, err := srv.Varz(nil)
+				return health.IsReady() && err == nil && stats.TotalConnections == 1 && stats.Connections == 1 && stats.Subscriptions > 0
+			}, 10*time.Second, 10*time.Millisecond, "controller must own an active subscriber before becoming ready")
+			cancel()
+			select {
+			case err := <-done:
+				require.NoError(t, err)
+			case <-time.After(5 * time.Second):
+				t.Fatal("controller did not stop")
+			}
+			require.Eventually(t, func() bool { return srv.NumClients() == 0 }, time.Second, time.Millisecond, "controller must close its subscriber on shutdown")
+		})
+	}
 }

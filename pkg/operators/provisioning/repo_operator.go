@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/logging"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -29,6 +30,15 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) er
 	controllerCfg, err := setupFromConfig(deps.Config, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("failed to setup provisioning controller: %w", err)
+	}
+
+	defer func() {
+		if err := services.StopAndAwaitTerminated(context.Background(), controllerCfg.natsSubscriber); err != nil {
+			logger.Error("failed to stop NATS subscriber", "error", err)
+		}
+	}()
+	if err := services.StartAndAwaitRunning(ctx, controllerCfg.natsSubscriber); err != nil {
+		return fmt.Errorf("failed to start NATS subscriber: %w", err)
 	}
 
 	provisioningClient, err := controllerCfg.ProvisioningClient()

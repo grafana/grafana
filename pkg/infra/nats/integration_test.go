@@ -55,7 +55,7 @@ func testPublisherBufferOverflowRecovers(t *testing.T) {
 
 	srv := start(natsserver.RANDOM_PORT)
 	port := srv.Addr().(*net.TCPAddr).Port
-	defer func() { srv.Shutdown() }()
+	t.Cleanup(func() { srv.Shutdown(); srv.WaitForShutdown() })
 	cfg := setting.NATSSettings{Enabled: true, Mode: setting.NATSModeExternal, ClientURLs: []string{fmt.Sprintf("nats://127.0.0.1:%d", port)}}
 	natsCfg := newConfig(cfg, nil)
 	pub := newPublisher(log.NewNopLogger(), newPublisherMetrics(), natsCfg)
