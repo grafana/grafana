@@ -115,6 +115,12 @@ export const versionedPages = {
       historyFilterRadioGroup: {
         '13.2.0': 'data-testid triage history-filter',
       },
+      ruleNameButton: {
+        '13.3.0': 'data-testid triage rule-name-button',
+      },
+      ruleActionsButton: {
+        '13.3.0': 'data-testid triage rule-actions-button',
+      },
     },
   },
   Login: {
