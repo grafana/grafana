@@ -45,6 +45,10 @@ type ExtJWTSettings struct {
 	ExpectIssuer string
 	JWKSUrl      string
 	Audiences    []string
+	// WildcardOrgID is the OrgID a "*" namespace token resolves to. Undocumented:
+	// OSS/single-org deployments default to 0, but cloud's NewGrafanaTokenAuthenticator
+	// caller (cloud_router.go) runs against org 1, so it needs this overridable.
+	WildcardOrgID int64
 }
 
 func (cfg *Cfg) readAuthExtJWTSettings() {
@@ -54,6 +58,7 @@ func (cfg *Cfg) readAuthExtJWTSettings() {
 	jwtSettings.JWKSUrl = authExtendedJWT.Key("jwks_url").MustString("")
 	// for Grafana, this is hard coded, but we leave it as a configurable param for other use-cases
 	jwtSettings.Audiences = []string{extJWTAccessTokenExpectAudience}
+	jwtSettings.WildcardOrgID = authExtendedJWT.Key("wildcard_org_id").MustInt64(0)
 
 	cfg.ExtJWTAuth = jwtSettings
 }
