@@ -131,7 +131,8 @@ func StatusErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
 		return GetError(respErr)
 	}
 	// In-process calls can return context errors instead of gRPC statuses.
-	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+	localContextErr := errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)
+	if localContextErr {
 		err = grpcstatus.FromContextError(err).Err()
 	}
 	var apiStatus apierrors.APIStatus
@@ -141,7 +142,9 @@ func StatusErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
 	}
 	result := AsErrorResult(err)
 	if isGRPC && result.Code >= http.StatusInternalServerError && errorResultFromGRPCDetails(err) == nil {
-		errorMappingLog.Error("Unstructured gRPC server error", "error", err)
+		if !localContextErr {
+			errorMappingLog.Error("Unstructured gRPC server error", "error", err)
+		}
 		result.Message = http.StatusText(int(result.Code))
 	}
 	return GetError(result)

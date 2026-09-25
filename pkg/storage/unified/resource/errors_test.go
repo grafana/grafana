@@ -364,7 +364,7 @@ func TestStatusErrorFromResponse_PreservesKubernetesServerError(t *testing.T) {
 }
 
 func TestStatusErrorFromResponse_HidesUnstructuredGRPCServerErrors(t *testing.T) {
-	for _, grpcCode := range []codes.Code{codes.Internal, codes.Unavailable, codes.DeadlineExceeded} {
+	for _, grpcCode := range []codes.Code{codes.Unknown, codes.Internal, codes.Unavailable, codes.DeadlineExceeded} {
 		t.Run(grpcCode.String(), func(t *testing.T) {
 			transportErr := status.Error(grpcCode, "private database failure")
 			err := StatusErrorFromResponse(nil, fmt.Errorf("search: %w", transportErr))
@@ -448,6 +448,9 @@ func TestStatusErrorFromResponse_MapsContextErrors(t *testing.T) {
 			var apiStatus apierrors.APIStatus
 			require.ErrorAs(t, err, &apiStatus)
 			require.Equal(t, tc.httpCode, apiStatus.Status().Code)
+			if tc.httpCode >= http.StatusInternalServerError {
+				require.Equal(t, http.StatusText(int(tc.httpCode)), apiStatus.Status().Message)
+			}
 		})
 	}
 }
