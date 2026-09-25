@@ -538,7 +538,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 
 # Packages
 /packages/README.md @grafana/grafana-frontend-platform
-/packages/rollup.config.parts.ts @grafana/grafana-frontend-platform
+/packages/rolldown.config.parts.ts @grafana/grafana-frontend-platform
 
 # Vendored
 /packages/get-document/ @grafana/grafana-frontend-platform
@@ -553,7 +553,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/README.md @grafana/grafana-frontend-platform
 /packages/grafana-data/package.json @grafana/grafana-frontend-platform
 /packages/grafana-data/project.json @grafana/grafana-frontend-platform
-/packages/grafana-data/rollup.config.ts @grafana/grafana-frontend-platform
+/packages/grafana-data/rolldown.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/index.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/internal/index.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/unstable.ts @grafana/grafana-frontend-platform
@@ -654,7 +654,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/README.md @grafana/grafana-frontend-platform
 /packages/grafana-runtime/package.json @grafana/grafana-frontend-platform
 /packages/grafana-runtime/project.json @grafana/grafana-frontend-platform
-/packages/grafana-runtime/rollup.config.ts @grafana/grafana-frontend-platform
+/packages/grafana-runtime/rolldown.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/index.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/internal/index.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/internal/openFeature @grafana/grafana-frontend-platform

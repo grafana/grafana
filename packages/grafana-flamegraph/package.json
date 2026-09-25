@@ -85,7 +85,6 @@
     "@types/tinycolor2": "1.4.6",
     "@typescript/native": "npm:typescript@^7.0.2",
     "css-loader": "7.1.2",
-    "esbuild": "0.28.1",
     "fs-extra": "^11.3.2",
     "jest": "^29.6.4",
     "jest-canvas-mock": "2.5.2",
