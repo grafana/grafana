@@ -2832,6 +2832,19 @@
     },
     {
       "metadata": {
+        "name": "grafana.savedQueriesSearch",
+        "resourceVersion": "1789728622393",
+        "creationTimestamp": "2026-09-18T10:50:22Z"
+      },
+      "spec": {
+        "description": "Enables unified search for saved queries",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.scenesFlickeringFix",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"

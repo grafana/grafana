@@ -18,6 +18,7 @@ import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
 import { moveElement } from '../actions/element/moveElement';
 import { moveGridItem } from '../actions/layout/moveGridItem';
+import { moveRowToTab } from '../actions/layout/moveRowToTab';
 import { reorderAutoGridItems } from '../actions/layout/reorderAutoGridItems';
 import { ObjectsReorderedOnCanvasEvent, DashboardStateChangedEvent } from '../sidebar/events';
 import { DashboardInteractions } from '../utils/interactions';
@@ -84,8 +85,8 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   private _lastDropTarget: DashboardDropTarget | null = null;
   private _tabActivationTimer: ReturnType<typeof setTimeout> | null = null;
   private _lastHoveredTabKey: string | null = null;
-  /** Track if item was detached from source during cross-tab drag */
-  private _itemDetachedFromSource = false;
+  /** Keep cross-tab row dragging alive when the source tab unmounts */
+  private _crossTabRowDrag = false;
   /** Cached label for the preview */
   private _previewLabel = '';
   /** Cached type for the preview */
@@ -99,7 +100,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   /** Offset from cursor to item's top-left corner (captured on drag start) */
   private _dragOffsetX = 0;
   private _dragOffsetY = 0;
-  /** Source layout manager for row drag (for removal before tab switch) */
+  /** Source layout manager for row drag */
   private _sourceRowsLayout: RowsLayoutManager | null = null;
   /** Flag to track if row drag offset has been captured */
   private _rowOffsetCaptured = false;
@@ -246,7 +247,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     this._lastHoveredAutoGridItemKey = null;
     this._lastDropTarget = null;
     this._sourceDropTarget = null;
-    this._itemDetachedFromSource = false;
+    this._crossTabRowDrag = false;
     this._sourceOriginalIndex = null;
     this.setState({ draggingGridItem: undefined, sourceTabKey: undefined, hoverTabKey: undefined });
   }
@@ -284,7 +285,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   public startRowDrag(row: RowItem): void {
     const sourceTabKey = this._findParentTabKey(row);
 
-    // Store source layout info for removal before tab switch
+    // Store the source layout until the drop commits the move
     const parent = row.parent;
     if (parent instanceof RowsLayoutManager) {
       this._sourceRowsLayout = parent;
@@ -505,18 +506,18 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     this._clearTabActivationTimer();
 
     // Handle drop after cross-tab row drag
-    if (this._itemDetachedFromSource) {
+    if (this._crossTabRowDrag) {
       const row = this.state.draggingRow?.resolve();
       if (row) {
         // Find the drop target under cursor and add row to it
         const dropTarget = this._lastDropTarget ?? this._getDropTargetUnderMouse(_evt);
-        if (dropTarget instanceof TabItem) {
-          dropTarget.acceptDroppedRow?.(row);
+        if (dropTarget instanceof TabItem && this._sourceRowsLayout) {
+          moveRowToTab({ row, source: this._sourceRowsLayout, destination: dropTarget });
         }
       }
       this._finalizeRowDrag();
     }
-    // If not detached, stopRowDrag from hello-pangea/dnd will handle cleanup
+    // Same-layout drags are finalized by hello-pangea/dnd.
   };
 
   private _cleanupDragState() {
@@ -574,12 +575,11 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   /**
    * Called when a row drag ends (from RowsLayoutManagerRenderer)
    * This is called by hello-pangea/dnd when drag ends normally (within same layout)
-   * For cross-tab drags, the row is already detached and _onRowDragPointerUp handles the drop
+   * For cross-tab drags, _onRowDragPointerUp commits the move.
    */
   public stopRowDrag(): void {
-    // If the row was detached (cross-tab drag), don't clean up yet
-    // The pointerup handler will handle cleanup after drop
-    if (this._itemDetachedFromSource) {
+    // Switching tabs unmounts the source drag context; pointerup still owns the drop.
+    if (this._crossTabRowDrag) {
       return;
     }
 
@@ -594,7 +594,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     this._lastDropTarget?.setIsDropTarget?.(false);
     this._lastDropTarget = null;
     this._sourceDropTarget = null;
-    this._itemDetachedFromSource = false;
+    this._crossTabRowDrag = false;
     this._sourceRowsLayout = null;
     this._rowOffsetCaptured = false;
     this.setState({
@@ -792,16 +792,14 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
           this._captureItemDimensions(gridItem);
         }
 
-        // For rows: remove from source layout and show preview
+        // Keep the row in its source until drop, while the preview follows the pointer.
         const row = this.state.draggingRow?.resolve();
-        if (row && !this._itemDetachedFromSource && this._sourceRowsLayout) {
+        if (row && !this._crossTabRowDrag && this._sourceRowsLayout) {
           // Get label for preview (dimensions already captured in startRowDrag)
           this._previewLabel = row.state.title || 'Row';
           this._previewType = 'row';
 
-          // Remove row from source layout (skip undo as this is part of drag operation)
-          this._sourceRowsLayout.removeRow(row, true);
-          this._itemDetachedFromSource = true;
+          this._crossTabRowDrag = true;
 
           // Show preview immediately
           this._showDragPreview();

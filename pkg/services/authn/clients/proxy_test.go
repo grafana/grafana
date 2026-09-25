@@ -304,6 +304,7 @@ func (f fakeCache) Delete(ctx context.Context, key string) error {
 func TestProxy_Hook(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.AuthProxy.HeaderName = "X-Username"
+	cfg.AuthProxy.SyncTTL = 15
 	cfg.AuthProxy.Headers = map[string]string{
 		proxyFieldRole: "X-Role",
 	}
@@ -343,4 +344,33 @@ func TestProxy_Hook(t *testing.T) {
 	t.Run("step 1: new user with role Admin", withRole("Admin"))
 	t.Run("step 2: cached user with new Role Viewer", withRole("Viewer"))
 	t.Run("step 3: cached user get changed back to Admin", withRole("Admin"))
+}
+
+func TestProxy_Hook_SyncTTLDisabled(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.AuthProxy.HeaderName = "X-Username"
+	cfg.AuthProxy.SyncTTL = 0
+	cache := &fakeCache{data: make(map[string][]byte)}
+
+	c, err := ProvideProxy(cfg, cache, tracing.InitializeTracerForTest(), authntest.MockProxyClient{})
+	require.NoError(t, err)
+
+	userIdentity := &authn.Identity{
+		ID:   "1",
+		Type: claims.TypeUser,
+		ClientParams: authn.ClientParams{
+			CacheAuthProxyKey: "users:johndoe-Admin",
+		},
+	}
+	userReq := &authn.Request{
+		HTTPRequest: &http.Request{
+			Header: map[string][]string{
+				"X-Username": {"johndoe"},
+			},
+		},
+	}
+
+	err = c.Hook(context.Background(), userIdentity, userReq)
+	assert.NoError(t, err)
+	assert.Empty(t, cache.data, "no cache entry should be written when sync_ttl is 0")
 }

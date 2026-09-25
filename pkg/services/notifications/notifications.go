@@ -3,7 +3,6 @@ package notifications
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"html/template"
 	"net/url"
@@ -13,6 +12,7 @@ import (
 	"github.com/Masterminds/sprig/v3"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/log"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
@@ -51,10 +51,11 @@ const (
 	tmplVerifyEmail     = "verify_email"
 )
 
-func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer, store TempUserStore) (*NotificationService, error) {
+func ProvideService(bus bus.Bus, cfg *setting.Cfg, cfgProvider configprovider.ConfigProvider, mailer Mailer, store TempUserStore) (*NotificationService, error) {
 	ns := &NotificationService{
 		Bus:          bus,
 		Cfg:          cfg,
+		cfgProvider:  cfgProvider,
 		log:          log.New("notifications"),
 		mailQueue:    make(chan *Message, 10),
 		webhookQueue: make(chan *Webhook, 10),
@@ -91,7 +92,7 @@ func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer, store TempUser
 	}
 
 	if !util.IsEmail(ns.Cfg.Smtp.FromAddress) {
-		return nil, errors.New("invalid email address for SMTP from_address config")
+		return nil, errInvalidFromAddress
 	}
 
 	if cfg.EmailCodeValidMinutes == 0 {
@@ -105,8 +106,9 @@ type TempUserStore interface {
 }
 
 type NotificationService struct {
-	Bus bus.Bus
-	Cfg *setting.Cfg
+	Bus         bus.Bus
+	Cfg         *setting.Cfg
+	cfgProvider configprovider.ConfigProvider
 
 	mailQueue    chan *Message
 	webhookQueue chan *Webhook
@@ -200,7 +202,7 @@ func __dangerouslyInjectHTML(s string) template.HTML {
 }
 
 func (ns *NotificationService) SendEmailCommandHandlerSync(ctx context.Context, cmd *SendEmailCommandSync) error {
-	message, err := ns.buildEmailMessage(&SendEmailCommand{
+	message, err := ns.buildEmailMessage(ctx, &SendEmailCommand{
 		Data:             cmd.Data,
 		Info:             cmd.Info,
 		Template:         cmd.Template,
@@ -221,7 +223,7 @@ func (ns *NotificationService) SendEmailCommandHandlerSync(ctx context.Context, 
 }
 
 func (ns *NotificationService) SendEmailCommandHandler(ctx context.Context, cmd *SendEmailCommand) error {
-	message, err := ns.buildEmailMessage(cmd)
+	message, err := ns.buildEmailMessage(ctx, cmd)
 	if err != nil {
 		return err
 	}
@@ -312,7 +314,17 @@ func (ns *NotificationService) signUpStartedHandler(ctx context.Context, evt *ev
 }
 
 func (ns *NotificationService) signUpCompletedHandler(ctx context.Context, evt *events.SignUpCompleted) error {
-	if evt.Email == "" || !ns.Cfg.Smtp.SendWelcomeEmailOnSignUp {
+	if evt.Email == "" {
+		return nil
+	}
+	smtp, err := readLiveSmtpSettings(ctx, ns.cfgProvider, ns.Cfg.InstanceName)
+	if err != nil {
+		// The welcome email is best effort. Returning the error would fail
+		// sign-up after the user has already been created.
+		ns.log.Warn("Skipping welcome email, could not read SMTP settings", "error", err)
+		return nil
+	}
+	if !smtp.SendWelcomeEmailOnSignUp {
 		return nil
 	}
 
