@@ -75,4 +75,21 @@ describe('useGetTeamFolders', () => {
     const searchRequests = await capture;
     expect(searchRequests).toHaveLength(0);
   });
+
+  it('returns no team folders and skips folder search when the teams response is not an array', async () => {
+    server.use(http.get('/api/user/teams', () => HttpResponse.json({ teams: [] })));
+    const capture = captureRequests((r) => r.url.includes('/search'));
+
+    const { result } = renderHook(() => useGetTeamFolders(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.foldersByTeam).toEqual([]);
+    expect(result.current.error).toBeUndefined();
+
+    const searchRequests = await capture;
+    expect(searchRequests).toHaveLength(0);
+  });
 });

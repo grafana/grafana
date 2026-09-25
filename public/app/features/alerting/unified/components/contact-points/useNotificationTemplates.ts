@@ -80,7 +80,8 @@ export function useNotificationTemplates({ alertmanager }: BaseAlertmanagerArgs)
 }
 
 function templateGroupsToTemplates(templateGroups: TemplateGroupList): NotificationTemplate[] {
-  return templateGroups.items.map((templateGroup) => templateGroupToTemplate(templateGroup));
+  const items = Array.isArray(templateGroups.items) ? templateGroups.items : [];
+  return items.map((templateGroup) => templateGroupToTemplate(templateGroup));
 }
 
 function templateGroupToTemplate(templateGroup: TemplateGroup): NotificationTemplate {

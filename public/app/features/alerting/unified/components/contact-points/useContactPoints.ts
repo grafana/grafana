@@ -81,14 +81,16 @@ const useOnCallIntegrations = ({ skip }: Skippable = {}) => {
 };
 
 const parseK8sReceiver = (item: K8sReceiver): GrafanaManagedContactPoint => {
-  const metadataProvenance = item.metadata.annotations?.[K8sAnnotations.Provenance];
+  const metadataProvenance = item.metadata?.annotations?.[K8sAnnotations.Provenance];
   const provenance = metadataProvenance === KnownProvenance.None ? undefined : metadataProvenance;
+  const title = item.spec?.title ?? '';
+  const integrations = item.spec?.integrations;
 
   return {
-    id: item.metadata.name || item.metadata.uid || item.spec.title,
-    name: item.spec.title,
+    id: item.metadata?.name || item.metadata?.uid || title,
+    name: title,
     provenance: provenance,
-    grafana_managed_receiver_configs: item.spec.integrations,
+    grafana_managed_receiver_configs: Array.isArray(integrations) ? integrations : [],
     metadata: item.metadata,
   };
 };
@@ -97,7 +99,8 @@ const useK8sContactPoints = (...[hookParams, queryOptions]: Parameters<typeof us
   return useListReceiverQuery(hookParams, {
     ...queryOptions,
     selectFromResult: (result) => {
-      const data = result.data?.items.map((item) => parseK8sReceiver(item));
+      const items = result.data?.items;
+      const data = result.data ? (Array.isArray(items) ? items : []).map((item) => parseK8sReceiver(item)) : undefined;
 
       return {
         ...result,

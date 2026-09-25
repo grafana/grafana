@@ -48,7 +48,7 @@ export function useGetTeamFolders(): UseGetTeamFoldersResult {
 }
 
 function mapTeamsToFolders(teams: TeamDto[] | undefined, folders: DashboardHit[] | undefined): FoldersByTeam[] {
-  if (!teams || !folders?.length) {
+  if (!Array.isArray(teams) || !Array.isArray(folders) || !folders.length) {
     return [];
   }
 
@@ -81,7 +81,7 @@ function mapTeamsToFolders(teams: TeamDto[] | undefined, folders: DashboardHit[]
 function useTeams() {
   const { data, error, isLoading } = useGetSignedInUserTeamListQuery();
   return {
-    data,
+    data: Array.isArray(data) ? data : undefined,
     isLoading,
     error: coercedError(error),
   };

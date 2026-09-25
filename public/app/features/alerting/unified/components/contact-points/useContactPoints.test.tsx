@@ -1,4 +1,5 @@
 import { renderHook, waitFor } from '@testing-library/react';
+import { HttpResponse, http } from 'msw';
 import { type ReactNode } from 'react';
 import { getWrapper } from 'test/test-utils';
 
@@ -12,6 +13,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
 import { setAlertmanagerConfig } from '../../mocks/server/entities/alertmanagers';
+import { ALERTING_API_SERVER_BASE_URL } from '../../mocks/server/utils';
 import { KnownProvenance } from '../../types/knownProvenance';
 
 import { useContactPointsWithStatus } from './useContactPoints';
@@ -21,7 +23,7 @@ const wrapper = ({ children }: { children: ReactNode }) => {
   return <ProviderWrapper>{children}</ProviderWrapper>;
 };
 
-setupMswServer();
+const server = setupMswServer();
 
 const getHookResponse = async () => {
   const { result } = renderHook(
@@ -301,6 +303,63 @@ describe('useContactPoints', () => {
       expect(contactPoint).toBeDefined();
       // When annotations are missing, the mock handler should set provenance to undefined
       expect(contactPoint?.provenance).toBeUndefined();
+    });
+  });
+
+  describe('Malformed k8s receiver responses', () => {
+    const renderContactPointsHook = async () => {
+      const { result } = renderHook(
+        () =>
+          useContactPointsWithStatus({
+            alertmanager: GRAFANA_RULES_SOURCE_NAME,
+            fetchPolicies: false,
+            fetchStatuses: false,
+          }),
+        { wrapper }
+      );
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      return result.current;
+    };
+
+    beforeEach(() => {
+      disablePlugin(SupportedPlugin.OnCall);
+    });
+
+    it('returns an empty contact point list when the receiver list has no items', async () => {
+      server.use(
+        http.get(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/receivers`, () =>
+          HttpResponse.json({ kind: 'ReceiverList', metadata: {} })
+        )
+      );
+
+      const { contactPoints, error } = await renderContactPointsHook();
+
+      expect(error).toBeUndefined();
+      expect(contactPoints).toEqual([]);
+    });
+
+    it('falls back to metadata uid and empty integrations when a receiver has no spec', async () => {
+      server.use(
+        http.get(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/receivers`, () =>
+          HttpResponse.json({
+            kind: 'ReceiverList',
+            metadata: {},
+            items: [{ metadata: { uid: 'receiver-without-spec' } }],
+          })
+        )
+      );
+
+      const { contactPoints, error } = await renderContactPointsHook();
+
+      expect(error).toBeUndefined();
+      expect(contactPoints).toHaveLength(1);
+      expect(contactPoints[0].id).toBe('receiver-without-spec');
+      expect(contactPoints[0].name).toBe('');
+      expect(contactPoints[0].grafana_managed_receiver_configs).toEqual([]);
     });
   });
 });
