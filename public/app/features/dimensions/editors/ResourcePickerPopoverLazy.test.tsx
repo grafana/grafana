@@ -55,7 +55,10 @@ describe('lazy resource picker popover', () => {
 
     await user.clear(input);
     await user.type(input, selectedURL);
-    expect(within(dialog).getByRole('img', { name: 'Preview of the selected URL' })).toHaveAttribute('src', selectedURL);
+    expect(within(dialog).getByRole('img', { name: 'Preview of the selected URL' })).toHaveAttribute(
+      'src',
+      selectedURL
+    );
     await user.click(within(dialog).getByRole('button', { name: 'Select' }));
 
     expect(onChange.mock.calls).toEqual([[selectedURL]]);

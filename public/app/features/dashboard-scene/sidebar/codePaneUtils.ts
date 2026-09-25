@@ -84,7 +84,6 @@ function convertInitialSaveModelToV2(dashboard: DashboardScene, initialSaveModel
   }
 }
 
-
 export function applyJsonToDashboard(
   dashboard: DashboardScene,
   jsonText: string

@@ -21,9 +21,7 @@ import { getDashboardSceneFor } from '../utils/utils';
 
 import { type SceneShareTabState, type ShareView } from './types';
 
-const ShareLinkTabRenderer = lazy(() =>
-  import('./ShareRenderers').then((m) => ({ default: m.ShareLinkTabRenderer }))
-);
+const ShareLinkTabRenderer = lazy(() => import('./ShareRenderers').then((m) => ({ default: m.ShareLinkTabRenderer })));
 
 function LazyShareLinkTabRenderer(props: SceneComponentProps<ShareLinkTab>) {
   return (

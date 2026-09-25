@@ -6,9 +6,7 @@ import { Spinner } from '@grafana/ui';
 
 import { ShareExportTab } from '../ShareExportTab';
 
-const ExportAsCodeRenderer = lazy(() =>
-  import('../ShareRenderers').then((m) => ({ default: m.ExportAsCodeRenderer }))
-);
+const ExportAsCodeRenderer = lazy(() => import('../ShareRenderers').then((m) => ({ default: m.ExportAsCodeRenderer })));
 
 function LazyExportAsCodeRenderer(props: SceneComponentProps<ExportAsCode>) {
   return (
