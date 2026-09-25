@@ -485,6 +485,7 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Внешние обработчики оповещений",
+      "external-alertmanagers-group-plugin": "",
       "noOptionsMessage-no-datasources-found": "Источники данных не найдены"
     },
     "alert-menu": {
@@ -2715,6 +2716,8 @@
       }
     },
     "proxied-alerting-route": {
+      "redirected-body": "",
+      "redirected-title": "",
       "text-redirecting": ""
     },
     "query-and-expressions-step": {
@@ -3020,6 +3023,19 @@
     },
     "rule-list": {
       "configure-datasource": "Настроить",
+      "datasource-managed-notice": {
+        "action": "",
+        "body": "",
+        "inline-action": "",
+        "inline_one": "",
+        "inline_few": "",
+        "inline_many": "",
+        "inline_other": "",
+        "title_one": "",
+        "title_few": "",
+        "title_many": "",
+        "title_other": ""
+      },
       "ds-error": {
         "title": "Невозможно загрузить правила для этого источника данных"
       },
@@ -3040,7 +3056,8 @@
         "no-more-results": "Больше нет результатов. Найдено правил: {{numberOfRules}}",
         "no-rules-found": "Ни одно правило оповещения или записи не соответствует текущему набору фильтров.",
         "results-loading": "Поиск — найдено правил: {{numberOfRules}}",
-        "results-with-cancellation": "Поиск отменен. Найдено правил: {{numberOfRules}}"
+        "results-with-cancellation": "Поиск отменен. Найдено правил: {{numberOfRules}}",
+        "search-in-plugin": ""
       },
       "import-disabled-tooltip": {
         "auto-sync": "Импорт недоступен, пока активна автоматическая синхронизация с Mimir Alertmanager"
@@ -4456,6 +4473,7 @@
       "label-top": "Сверху"
     },
     "name-show-unfilled-area": "Показывать незаполненную область",
+    "name-text-mode": "",
     "name-value-display": "Отображение значений",
     "presets": {
       "basic": "Базовый",
@@ -4474,6 +4492,13 @@
     "suggestions": {
       "basic": "Столбчатый индикатор",
       "lcd": "Столбчатый индикатор: LCD"
+    },
+    "text-mode-options": {
+      "label-auto": "",
+      "label-name": "",
+      "label-none": "",
+      "label-value": "",
+      "label-value-and-name": ""
     },
     "value-display-options": {
       "label-hidden": "Скрыты",
@@ -6127,6 +6152,12 @@
       "ungroup-repeat-loss": "Настройки повторения для разгруппируемых групп будут потеряны.",
       "ungroup-repeat-loss-title": "Разгруппировать?"
     },
+    "loading": {
+      "drawer": "",
+      "drawer-title": "",
+      "sidebar": "",
+      "sidebar-title": ""
+    },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} из {{numberOfPages}}",
       "tooltip-next": "Далее",
@@ -6847,7 +6878,14 @@
         "title-remove": "Удалить",
         "title-show-transform-help": "Отображение справки по преобразованию"
       },
-      "title-delete": "Удалить {{name}}?"
+      "title-delete": "Удалить {{name}}?",
+      "transformation-editor-row-header": {
+        "edit-refId": "",
+        "edit-refId-placeholder": "",
+        "refId-exists-error": "",
+        "refId-reserved-error": "",
+        "refId-variable-error": ""
+      }
     },
     "transformation-operation-rows": {
       "remove-transformation": "",
@@ -7516,7 +7554,6 @@
       },
       "render-save-button-and-error": {
         "body-plugin-dashboard": "При обновлении плагина изменения не сохранятся. Используйте команду <strong>Сохранить как</strong>, чтобы создать пользовательскую версию.",
-        "title-failed-to-save-dashboard": "Не удалось сохранить дашборд",
         "title-plugin-dashboard": "Дашборд плагинов",
         "title-someone-else-has-updated-this-dashboard": "Дашборд обновлен другим пользователем",
         "would-still-dashboard": "Все равно сохранить дашборд?"
@@ -7786,9 +7823,6 @@
       },
       "label-copy-tags": "Копировать теги",
       "label-folder": "Папка",
-      "render-footer": {
-        "title-failed-to-save-dashboard": "Не удалось сохранить дашборд"
-      },
       "required": "Обязательно"
     },
     "save-dashboard-drawer": {
@@ -7835,6 +7869,9 @@
       "save-variables-label-update-default-variable-values": "Изменить значения переменных по умолчанию",
       "show-variables-warning-alert-body": "Не удалось загрузить некоторые переменные. Если установлен флажок «Изменить значения переменных по умолчанию», текущие (неудачные) значения станут значениями по умолчанию для дашборда. Вы можете сохранить эту настройку или снять флажок, чтобы не сохранять эти (неудачные) значения.",
       "show-variables-warning-alert-title": "Не удалось выполнить запросы переменных"
+    },
+    "save-errors": {
+      "unexpected": ""
     },
     "save-library-viz-panel-modal": {
       "cancel": "Отмена",
@@ -10680,7 +10717,7 @@
     "data-source-settings": {
       "alerting-settings-heading": "Оповещение",
       "alerting-settings-label": "Управление правилами оповещения в пользовательском интерфейсе Alerting",
-      "alerting-settings-tooltip": "Управление правилами оповещения для этого источника данных. Чтобы управлять другими ресурсами Alerting, добавьте обработчик оповещений Alertmanager в качестве источника данных.",
+      "alerting-settings-tooltip": "",
       "cert-key-reset": "Сброс",
       "custom-headers-add": "Добавить заголовок",
       "custom-headers-header": "Заголовок",
@@ -10968,6 +11005,7 @@
       "placeholder": "Выбрать"
     },
     "table": {
+      "cell-actions": "",
       "cell-filter-on": "Фильтровать по значению",
       "cell-filter-out": "Отсеять значение",
       "cell-inspect": "Проверить значение",
@@ -11328,10 +11366,11 @@
   "home": {
     "alerts-incidents": {
       "alert-tab-label": "Активные оповещения",
+      "incident-filter-all": "",
+      "incident-filter-label": "",
       "incident-tab-label": "Инциденты",
       "team-filter-all": "Все команды",
       "team-filter-label": "Фильтр оповещений по команде",
-      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Ваши команды",
       "title": "Оповещения и инциденты",
       "title-alerts": "Оповещения",
@@ -15841,6 +15880,10 @@
       "label": "Применить преобразование к",
       "series": "Результаты запросов и преобразований"
     },
+    "transformation-name": {
+      "auto-placeholder": "",
+      "edit": ""
+    },
     "validation": {
       "duplicate-name": "Имя запроса уже существует",
       "empty-name": "Пустое имя запроса не допускается"
@@ -16026,6 +16069,12 @@
     "title": "Не удалось найти файл приложения"
   },
   "save-dashboards": {
+    "forbidden": {
+      "title": ""
+    },
+    "invalid": {
+      "title": ""
+    },
     "message-length": {
       "info": "Количество символов в сообщении: {{messageLength}}. Это значение превышает максимальную длину в 500 символов. Сократите сообщение, прежде чем сохранить.",
       "title": "Слишком длинное сообщение"
