@@ -8,6 +8,42 @@ export class PreviewRedactionError extends Error {}
 // relative to one integration's own config object (e.g. 'api_url', 'http_config.basic_auth.password').
 export type SecretFieldMap = Record<string, Set<string>>;
 
+export function buildSecretFieldMap(schemas: NotifierDTO[]): SecretFieldMap {
+  const map: SecretFieldMap = {};
+  for (const schema of schemas) {
+    if (!schema.versions) {
+      continue;
+    }
+    for (const version of schema.versions) {
+      const receiverKey = LEGACY_VERSION_TO_RECEIVER_KEY[`${schema.type}:${version.version}`];
+      if (!receiverKey) {
+        // not a legacy version, or an integration type GMA doesn't import via this path
+        continue;
+      }
+
+      map[receiverKey] = collectSecurePaths(version.options);
+    }
+  }
+  return map;
+}
+
+export function redactPreviewSecrets(
+  rawContent: string,
+  format: 'yaml' | 'json',
+  secretFieldMap: SecretFieldMap
+): string {
+  let parsed: unknown;
+  try {
+    parsed = load(rawContent);
+  } catch (e) {
+    throw new PreviewRedactionError(e instanceof Error ? e.message : String(e));
+  }
+
+  const redacted = redactNode(parsed, undefined, [], secretFieldMap);
+
+  return format === 'json' ? JSON.stringify(redacted, null, 2) : dump(redacted);
+}
+
 // Maps ${schema.type}:${version.version} to the legacy Alertmanager receiver YAML key.
 // Verified directly against the grafana/alerting module's integration schema and receiver
 // compatibility definitions. 'teams' has two legacy versions (v0mimir1/v0mimir2) mapping to two
@@ -30,8 +66,6 @@ const LEGACY_VERSION_TO_RECEIVER_KEY: Record<string, string> = {
   'jira:v0mimir1': 'jira_configs',
 };
 
-const REDACTED_VALUE = '<redacted>';
-
 function collectSecurePaths(options: NotificationChannelOption[], prefix = ''): Set<string> {
   const paths = new Set<string>();
   for (const field of options) {
@@ -49,24 +83,7 @@ function collectSecurePaths(options: NotificationChannelOption[], prefix = ''): 
   return paths;
 }
 
-export function buildSecretFieldMap(schemas: NotifierDTO[]): SecretFieldMap {
-  const map: SecretFieldMap = {};
-  for (const schema of schemas) {
-    if (!schema.versions) {
-      continue;
-    }
-    for (const version of schema.versions) {
-      const receiverKey = LEGACY_VERSION_TO_RECEIVER_KEY[`${schema.type}:${version.version}`];
-      if (!receiverKey) {
-        // not a legacy version, or an integration type GMA doesn't import via this path
-        continue;
-      }
-
-      map[receiverKey] = collectSecurePaths(version.options);
-    }
-  }
-  return map;
-}
+const REDACTED_VALUE = '<redacted>';
 
 // Everything below is a manual override for secret-ness the schema can't express — kept
 // deliberately small now that per-receiver-type fields are derived from buildSecretFieldMap
@@ -133,10 +150,14 @@ function isSecretField(keyName: string | undefined, path: readonly string[], sec
   if (parentKey === 'proxy_connect_header') {
     return true;
   }
-  // Find the nearest ancestor key that's a known Alertmanager receiver array (e.g. 'slack_configs'
-  // — a key present in secretFieldMap), then check the schema-derived secure paths for that
-  // integration, relative to entering it. path's last element is always keyName itself, so start
-  // the scan one position before it.
+  return isSecureUnderNearestReceiver(path, secretFieldMap);
+}
+
+// Finds the nearest ancestor key that's a known Alertmanager receiver array (e.g. 'slack_configs'
+// — a key present in secretFieldMap), then checks the schema-derived secure paths for that
+// integration, relative to entering it. Only reached once keyName is confirmed defined, so path's
+// last element is always keyName itself — the scan starts one position before it.
+function isSecureUnderNearestReceiver(path: readonly string[], secretFieldMap: SecretFieldMap): boolean {
   for (let i = path.length - 2; i >= 0; i--) {
     const securePaths = secretFieldMap[path[i]];
     if (securePaths) {
@@ -149,8 +170,8 @@ function isSecretField(keyName: string | undefined, path: readonly string[], sec
 // Below this length, and with whitespace allowed, we'd start flagging prose and template
 // placeholders instead of tokens; real secrets we've seen run well past it. False positives on a
 // plain value are the accepted cost here, not false negatives on a secret.
-const HIGH_ENTROPY_VALUE = /^[A-Za-z0-9_\-.]{20,}$/;
-const HIGH_ENTROPY_URL_SEGMENT = /^[A-Za-z0-9_-]{12,}$/;
+const RANDOM_TOKEN_PATTERN = /^[A-Za-z0-9_\-.]{20,}$/;
+const RANDOM_TOKEN_URL_SEGMENT_PATTERN = /^[A-Za-z0-9_-]{12,}$/;
 
 const DIGIT = /\d/;
 const LOWERCASE_LETTER = /[a-z]/;
@@ -158,21 +179,21 @@ const UPPERCASE_LETTER = /[A-Z]/;
 
 // 2-of-3 character classes, not 1, so a plain lowercase label like `normal-label-that-is-quite-
 // long-but-plain-english-words` still passes through unredacted.
-function hasEntropyVariety(value: string): boolean {
+function hasMixedCharacterClasses(value: string): boolean {
   const hasDigit = DIGIT.test(value);
   const hasLower = LOWERCASE_LETTER.test(value);
   const hasUpper = UPPERCASE_LETTER.test(value);
   return [hasDigit, hasLower, hasUpper].filter(Boolean).length >= 2;
 }
 
-function looksLikeHighEntropyToken(value: string): boolean {
-  return HIGH_ENTROPY_VALUE.test(value) && hasEntropyVariety(value);
+function looksLikeRandomToken(value: string): boolean {
+  return RANDOM_TOKEN_PATTERN.test(value) && hasMixedCharacterClasses(value);
 }
 
-const URL_PROTOCOL = /^https?:\/\//i;
+const HTTP_URL_PROTOCOL = /^https?:\/\//i;
 
 function looksLikeCredentialUrl(value: string): boolean {
-  if (!URL_PROTOCOL.test(value)) {
+  if (!HTTP_URL_PROTOCOL.test(value)) {
     return false;
   }
   let url: URL;
@@ -186,12 +207,18 @@ function looksLikeCredentialUrl(value: string): boolean {
   if (url.password) {
     return true;
   }
-  const candidates = [url.username, ...url.pathname.split('/').filter(Boolean), ...url.searchParams.values()];
-  return candidates.some((candidate) => HIGH_ENTROPY_URL_SEGMENT.test(candidate) && hasEntropyVariety(candidate));
+  const credentialCandidateSegments = [
+    url.username,
+    ...url.pathname.split('/').filter(Boolean),
+    ...url.searchParams.values(),
+  ];
+  return credentialCandidateSegments.some(
+    (segment) => RANDOM_TOKEN_URL_SEGMENT_PATTERN.test(segment) && hasMixedCharacterClasses(segment)
+  );
 }
 
 function looksLikeSecretValue(value: string): boolean {
-  return looksLikeCredentialUrl(value) || looksLikeHighEntropyToken(value);
+  return looksLikeCredentialUrl(value) || looksLikeRandomToken(value);
 }
 
 function redactNode(
@@ -215,21 +242,4 @@ function redactNode(
     return REDACTED_VALUE;
   }
   return node;
-}
-
-export function redactPreviewSecrets(
-  rawContent: string,
-  format: 'yaml' | 'json',
-  secretFieldMap: SecretFieldMap
-): string {
-  let parsed: unknown;
-  try {
-    parsed = load(rawContent);
-  } catch (e) {
-    throw new PreviewRedactionError(e instanceof Error ? e.message : String(e));
-  }
-
-  const redacted = redactNode(parsed, undefined, [], secretFieldMap);
-
-  return format === 'json' ? JSON.stringify(redacted, null, 2) : dump(redacted);
 }
