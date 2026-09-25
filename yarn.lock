@@ -2872,9 +2872,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/prometheus@npm:13.1.14":
-  version: 13.1.14
-  resolution: "@grafana/prometheus@npm:13.1.14"
+"@grafana/prometheus@npm:13.2.1":
+  version: 13.2.1
+  resolution: "@grafana/prometheus@npm:13.2.1"
   dependencies:
     "@emotion/css": "npm:^11.13.5"
     "@floating-ui/react": "npm:0.27.19"
@@ -2884,7 +2884,7 @@ __metadata:
     "@lezer/common": "npm:^1.5.2"
     "@lezer/highlight": "npm:^1.2.3"
     "@lezer/lr": "npm:1.4.8"
-    "@prometheus-io/lezer-promql": "npm:^0.307.3"
+    "@prometheus-io/lezer-promql": "npm:^0.313.3"
     debounce-promise: "npm:^3.1.2"
     lodash: "npm:^4.18.1"
     monaco-editor: "npm:^0.34.1"
@@ -2899,18 +2899,18 @@ __metadata:
     uuid: "npm:^14.0.0"
   peerDependencies:
     "@grafana/assistant": ">=0.1.0"
-    "@grafana/data": ">=11.5.0"
-    "@grafana/e2e-selectors": ">=11.5.0"
+    "@grafana/data": ">=12.3.0"
+    "@grafana/e2e-selectors": ">=12.3.0"
     "@grafana/i18n": ">=12.3.0"
-    "@grafana/runtime": ">=11.5.0"
-    "@grafana/schema": ">=11.5.0"
-    "@grafana/ui": ">=11.5.0"
+    "@grafana/runtime": ">=12.3.0"
+    "@grafana/schema": ">=12.3.0"
+    "@grafana/ui": ">=12.3.0"
     react: ^18.0.0
     react-dom: ^18.0.0
   peerDependenciesMeta:
     "@grafana/assistant":
       optional: true
-  checksum: 10/92639db8b5e99d00c0d2d2a5fd6d189f983243f25712c9504af72f6612eced10c5f9a122b46655f966fd75fc9bce49e1257b2095f6bc53e98e9b4821a47524f1
+  checksum: 10/401af948ec4a9b480c0c91885bf4e78cd3a5948cc248ee082204aa33b9cf196e017c32f5046a94145be2465d381ee5996d3cc01b06c0c5d20fae2601c4a6fad2
   languageName: node
   linkType: hard
 
@@ -7182,13 +7182,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@prometheus-io/lezer-promql@npm:^0.307.3":
-  version: 0.307.3
-  resolution: "@prometheus-io/lezer-promql@npm:0.307.3"
+"@prometheus-io/lezer-promql@npm:^0.313.3":
+  version: 0.313.3
+  resolution: "@prometheus-io/lezer-promql@npm:0.313.3"
   peerDependencies:
     "@lezer/highlight": ^1.1.2
     "@lezer/lr": ^1.2.3
-  checksum: 10/50e4cf89900071f298808c946f39a9662342c812f64fe118fd8f4afbaa018da032039402b765cdaf40701eed75b008f34f6e790e15b78c3d263e591699662a31
+  checksum: 10/6b0a4595c14fd80f34a89363a29a17fa895fb7899b6f08aed017a7c003b9b9128babad3c5c84e9e20543f9ddb8af76e9a3c41e222c2e325d9dbcb001b5533e79
   languageName: node
   linkType: hard
 
@@ -20034,7 +20034,7 @@ __metadata:
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-e2e": "npm:^3.12.0"
     "@grafana/plugin-ui": "npm:^0.17.3"
-    "@grafana/prometheus": "npm:13.1.14"
+    "@grafana/prometheus": "npm:13.2.1"
     "@grafana/runtime": "workspace:*"
     "@grafana/scenes": "npm:8.19.0"
     "@grafana/scenes-react": "npm:8.19.0"
