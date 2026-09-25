@@ -195,6 +195,12 @@ func (n *natsNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Even
 			for bo.Ongoing() {
 				bo.Wait()
 				if n.trySubscribe(ctx, handler) {
+					if ctx.Err() != nil {
+						return
+					}
+					// Watches may have opened while capture was unavailable. The first
+					// successful connection does not necessarily emit a reconnect callback.
+					n.expiry.expire()
 					opts.captured(nil)
 					return
 				}
