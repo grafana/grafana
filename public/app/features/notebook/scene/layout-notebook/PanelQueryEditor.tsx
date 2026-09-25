@@ -21,7 +21,7 @@ interface Props {
   cell?: NotebookCellItem;
   /** True right after this cell was inserted or converted — see NotebookCellRenderer's own doc comment. */
   autoFocus?: boolean;
-  /** Called with the top viz suggestions every time a run recomputes them, for NotebookVizSuggestionsPicker. */
+  /** For NotebookVizSuggestionsPicker's option list. */
   onSuggestionsChange?: (suggestions: PanelPluginVisualizationSuggestion[]) => void;
 }
 
@@ -36,13 +36,10 @@ export function PanelQueryEditor({ panel, cell, autoFocus, onSuggestionsChange }
   const { queries } = queryRunner?.useState() ?? { queries: [] };
   const { data } = sceneGraph.getData(panel).useState();
   const range = sceneGraph.getTimeRange(panel).useState().value;
-  // The query an explicit "Run query" click was for, so the effect below knows to auto-apply that
-  // run's top suggestion once its data arrives. Unset otherwise — a time-range tick or the query
-  // runner's own auto-run on activation populates NotebookVizSuggestionsPicker's options the same
-  // way, but must never silently swap the panel's type out from under the reader.
+  // Set only by an explicit Run click, so a passive auto-run (time-range tick, activation) never
+  // silently changes the panel's type.
   const pendingAutoApplyQuery = useRef<DataQuery | undefined>(undefined);
-  // The query we've already auto-applied a suggestion for, so clicking "Run query" again for the
-  // same query doesn't clobber a suggestion the reader picked manually in between.
+  // Prevents a repeat Run of the same query from clobbering a manually picked suggestion.
   const lastAutoAppliedQuery = useRef<DataQuery | undefined>(undefined);
 
   const runQuery = () => {
@@ -55,20 +52,14 @@ export function PanelQueryEditor({ panel, cell, autoFocus, onSuggestionsChange }
     queryRunner.runQueries();
   };
 
-  // The single source of both NotebookVizSuggestionsPicker's option list and (only right after an
-  // explicit Run, via pendingAutoApplyQuery) the panel's auto-applied type — computed from the same
-  // real data either way, so the two can never disagree the way two independent suggestion fetches
-  // (e.g. one probing the datasource on its own, hardcoded request params and all) once could.
+  // Single source for both the picker's options and (via pendingAutoApplyQuery) the auto-applied
+  // type, so the two can't disagree.
   useEffect(() => {
     if (!data || data.state === LoadingState.Loading || data.state === LoadingState.NotStarted) {
-      // Mid-flight — leave whatever's already showing alone rather than blank it out for a moment.
       return;
     }
     if (data.state === LoadingState.Error || !hasData(data)) {
-      // An empty result (e.g. a query nobody's filled in yet, or one that legitimately returns
-      // nothing) has no shape to suggest a visualization from — the picker must go back to
-      // disabled rather than keep showing suggestions computed for whatever ran before it, and this
-      // run's own pending auto-apply (if any) has nothing to apply either.
+      // Nothing to suggest from — disable the picker instead of showing a stale suggestion.
       pendingAutoApplyQuery.current = undefined;
       onSuggestionsChange?.([]);
       return;
@@ -83,8 +74,7 @@ export function PanelQueryEditor({ panel, cell, autoFocus, onSuggestionsChange }
         onSuggestionsChange?.(topSuggestions);
         const pendingQuery = pendingAutoApplyQuery.current;
         const topSuggestion = topSuggestions[0];
-        // Consumed either way — a query with no matching suggestion at all must not leave this
-        // marker armed for some later, unrelated data arrival (e.g. a time-range tick) to pick up.
+        // Clear even with no suggestion, so it can't apply to a later, unrelated data arrival.
         pendingAutoApplyQuery.current = undefined;
         if (pendingQuery && topSuggestion) {
           lastAutoAppliedQuery.current = pendingQuery;

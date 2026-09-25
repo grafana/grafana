@@ -109,8 +109,7 @@ jest.mock('app/features/datasources/components/picker/DataSourcePicker', () => (
   ),
 }));
 
-// The one suggestion source PanelQueryEditor reads: whatever the panel's own data resolves to.
-// Real plugin loading and scoring are entirely out of scope for this file.
+// The one suggestion source PanelQueryEditor reads — real plugin loading is out of scope here.
 const getAllSuggestions = jest.fn();
 jest.mock('app/features/panel/suggestions/getAllSuggestions', () => ({
   getAllSuggestions: (...args: unknown[]) => getAllSuggestions(...args),
@@ -187,10 +186,10 @@ beforeEach(() => {
   getDataSourceInstance.mockClear();
 });
 
-/** Simulates the query runner's own data resolving, exactly like a real run or activation would. */
-/** A minimal non-empty frame — hasData() requires at least one series with at least one row. */
+/** hasData() requires at least one series with at least one row. */
 const oneRowFrame = () => [toDataFrame({ fields: [{ name: 'value', values: [1] }] })];
 
+/** Simulates the query runner's own data resolving, like a real run or activation would. */
 function completeData(panel: VizPanel) {
   act(() => {
     sceneGraph
@@ -375,12 +374,7 @@ describe('PanelQueryEditor', () => {
     expect(runQueries).toHaveBeenCalled();
   });
 
-  // Real dashboards pick the panel's visualization from the query's own result shape (see
-  // UnconfiguredPanel's "Use saved query" button) rather than assuming a fixed viz type — a query
-  // returning tabular data (e.g. a CSV with no time field) would otherwise land on a timeseries panel
-  // that can only say "Data is missing a time field". Suggestions come from the panel's own real
-  // data (via getAllSuggestions), not a second, separate probe fetch — a prior version of this
-  // computed the auto-applied type from an independent request with its own hardcoded params, which
+  // Sourced from the panel's own real data, not a second probe fetch with its own params — those
   // could (and did) disagree with what NotebookVizSuggestionsPicker showed for the same query.
   it('applies the top suggestion for the run once its data arrives', async () => {
     const { panel, cell } = buildPanel();
@@ -412,10 +406,7 @@ describe('PanelQueryEditor', () => {
     await waitFor(() => expect(onSuggestionsChange).toHaveBeenCalledWith(suggestions));
   });
 
-  // Regression: the query runner auto-runs on activation and on a time-range change regardless of
-  // whether the reader ever clicks "Run query" (e.g. reopening a notebook) — that must still surface
-  // options in the picker, but without silently swapping the panel's already-saved type out from
-  // under the reader the way an explicit Run's own auto-apply does.
+  // The query runner auto-runs on activation and on time-range changes, not just an explicit Run.
   it('populates suggestions once data arrives even without an explicit Run click', async () => {
     const { panel, cell } = buildPanel();
     const changePluginType = jest.spyOn(panel, 'changePluginType').mockResolvedValue(undefined);
@@ -430,9 +421,6 @@ describe('PanelQueryEditor', () => {
     expect(changePluginType).not.toHaveBeenCalled();
   });
 
-  // Regression: an empty query (e.g. a fresh Prometheus panel nobody's typed into yet) resolves
-  // successfully with zero rows — there's no shape to suggest a visualization from, so the picker
-  // must go back to disabled rather than show a leftover or empty-data-heuristic suggestion.
   it('clears suggestions instead of computing them for an empty result', async () => {
     const { panel, cell } = buildPanel();
     const changePluginType = jest.spyOn(panel, 'changePluginType').mockResolvedValue(undefined);
@@ -461,10 +449,6 @@ describe('PanelQueryEditor', () => {
     await waitFor(() => expect(onSuggestionsChange).toHaveBeenLastCalledWith([]));
   });
 
-  // Regression: an explicit Run whose data has no matching suggestion at all used to leave
-  // pendingAutoApplyQuery armed, so a later *passive* data arrival for the same query (a time-range
-  // tick, not another Run click) would wrongly qualify as "this was an explicit Run" and silently
-  // change the panel's type the moment that data happened to score a real suggestion.
   it('does not let a run with no suggestions leave a stale marker for a later passive data arrival', async () => {
     const { panel, cell } = buildPanel();
     const changePluginType = jest.spyOn(panel, 'changePluginType').mockResolvedValue(undefined);
@@ -510,8 +494,7 @@ describe('PanelQueryEditor', () => {
     completeData(panel);
     await waitFor(() => expect(changePluginType).toHaveBeenCalledTimes(1));
 
-    // Same query, same suggestion available — a second run must not reapply it a second time, or it
-    // would clobber whatever viz type the reader may have since picked manually in between.
+    // Same query again — must not reapply and clobber a viz type picked manually in between.
     await user.click(runButton);
     completeData(panel);
     await waitFor(() => expect(getAllSuggestions).toHaveBeenCalledTimes(2));

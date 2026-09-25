@@ -11,20 +11,17 @@ interface Props {
 }
 
 /**
- * Lets the user override the visualization PanelQueryEditor auto-applied on "Run query" by picking
- * from the same top-N suggestion list instead of only ever getting the #1 pick. Keyed by `hash`
- * rather than `pluginId` — a single plugin can contribute more than one suggestion variant.
+ * Lets the user pick from the same top-N suggestions PanelQueryEditor auto-applies from, instead of
+ * only ever getting the #1 pick. Keyed by `hash`, not `pluginId` — a plugin can offer more than one
+ * suggestion variant.
  */
 export function NotebookVizSuggestionsPicker({ panel, suggestions }: Props) {
   const [selectedHash, setSelectedHash] = useState<string | undefined>(
     () => suggestions.find((s) => s.pluginId === panel.state.pluginId)?.hash ?? suggestions[0]?.hash
   );
 
-  // A fresh suggestion list means either a new run (which may or may not have auto-applied its top
-  // pick) or the panel's already-saved type surfacing for the first time — either way, default to
-  // whichever suggestion actually matches what the panel is showing right now, not just the top one.
-  // Reads panel.state directly rather than panel.useState() so picking an option below (which changes
-  // that same state) doesn't re-trigger this and fight a still-in-flight optimistic selection.
+  // Defaults to whichever suggestion matches the panel's actual current type, not just the top one.
+  // Reads panel.state directly (not panel.useState()) so picking an option below doesn't re-trigger this.
   useEffect(() => {
     setSelectedHash(suggestions.find((s) => s.pluginId === panel.state.pluginId)?.hash ?? suggestions[0]?.hash);
   }, [suggestions, panel]);
