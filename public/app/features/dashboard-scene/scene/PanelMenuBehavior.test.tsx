@@ -28,6 +28,8 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { type GetExploreUrlArguments } from 'app/core/utils/explore';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
+import { quickAddPanelToNotebook } from 'app/features/notebook/addPanel/quickAddPanelToNotebook';
+import { getRecentNotebook } from 'app/features/notebook/addPanel/recentNotebook';
 import * as storeModule from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -54,6 +56,8 @@ jest.mock('app/core/utils/explore', () => ({
 }));
 
 jest.mock('app/core/services/context_srv');
+jest.mock('app/features/notebook/addPanel/quickAddPanelToNotebook', () => ({ quickAddPanelToNotebook: jest.fn() }));
+jest.mock('app/features/notebook/addPanel/recentNotebook', () => ({ getRecentNotebook: jest.fn() }));
 
 jest.mock('app/store/store', () => ({
   dispatch: jest.fn(),
@@ -1131,6 +1135,7 @@ describe('panelMenuBehavior', () => {
     afterEach(() => {
       setTestFlags({});
       mocks.contextSrv.hasPermission.mockReset();
+      jest.mocked(getRecentNotebook).mockReset();
     });
 
     async function itemsWith({ notebooks, permission }: { notebooks: boolean; permission: boolean }) {
@@ -1149,13 +1154,13 @@ describe('panelMenuBehavior', () => {
     it('is hidden when notebooks are disabled', async () => {
       const items = await itemsWith({ notebooks: false, permission: true });
 
-      expect(items.find((item) => item.text === 'Add to notebook')).toBeUndefined();
+      expect(items.find((item) => item.text === 'Add to notebook…')).toBeUndefined();
     });
 
     it('is hidden without permission to write or create', async () => {
       const items = await itemsWith({ notebooks: true, permission: false });
 
-      expect(items.find((item) => item.text === 'Add to notebook')).toBeUndefined();
+      expect(items.find((item) => item.text === 'Add to notebook…')).toBeUndefined();
     });
 
     // Adding a panel to a notebook writes to the notebook, so it must not be gated on dashboard
@@ -1163,10 +1168,57 @@ describe('panelMenuBehavior', () => {
     it('is offered while reading the dashboard, not only while editing it', async () => {
       const items = await itemsWith({ notebooks: true, permission: true });
 
-      expect(items.find((item) => item.text === 'Add to notebook')).toEqual(
+      expect(items.find((item) => item.text === 'Add to notebook…')).toEqual(
         expect.objectContaining({ iconClassName: 'search' })
       );
       expect(items.find((item) => item.text === 'Remove')).toBeUndefined();
+    });
+
+    it('offers a named one-click add only while a writable destination is recent', async () => {
+      jest.mocked(getRecentNotebook).mockReturnValue({ uid: 'nb1', title: 'Investigation', at: 100 });
+      const items = await itemsWith({ notebooks: true, permission: true });
+
+      expect(items.find((item) => item.text === 'Add to "Investigation"')).toEqual(
+        expect.objectContaining({ iconClassName: 'book' })
+      );
+      expect(items.find((item) => item.text === 'Add to notebook…')).toBeDefined();
+
+      jest.mocked(getRecentNotebook).mockReturnValue(undefined);
+      const withoutRecent = await itemsWith({ notebooks: true, permission: true });
+      expect(withoutRecent.find((item) => item.text === 'Add to "Investigation"')).toBeUndefined();
+    });
+
+    it('does not offer quick add to someone who can create but not write notebooks', async () => {
+      jest.mocked(getRecentNotebook).mockReturnValue({ uid: 'nb1', title: 'Investigation', at: 100 });
+      setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
+      mocks.contextSrv.hasPermission.mockImplementation(
+        (permission) => permission === AccessControlAction.NotebooksCreate
+      );
+
+      const { menu } = await buildTestScene({});
+      menu.activate();
+      await new Promise((resolve) => setTimeout(resolve, 1));
+
+      expect(menu.state.items?.find((item) => item.text === 'Add to notebook…')).toBeDefined();
+      expect(menu.state.items?.find((item) => item.text === 'Add to "Investigation"')).toBeUndefined();
+    });
+
+    it('routes the quick-add action to the shared notebook writer', async () => {
+      jest.mocked(getRecentNotebook).mockReturnValue({ uid: 'nb1', title: 'Investigation', at: 100 });
+      setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
+      mocks.contextSrv.hasPermission.mockReturnValue(true);
+
+      const { menu } = await buildTestScene({});
+      menu.activate();
+      await new Promise((resolve) => setTimeout(resolve, 1));
+      await menu.state.items?.find((item) => item.text === 'Add to "Investigation"')?.onClick?.({} as never);
+
+      expect(quickAddPanelToNotebook).toHaveBeenCalledWith(
+        expect.any(Function),
+        'dashboard_panel',
+        false,
+        expect.any(Function)
+      );
     });
 
     it('sits in its own section immediately above Remove while editing', async () => {
@@ -1181,7 +1233,7 @@ describe('panelMenuBehavior', () => {
       await new Promise((r) => setTimeout(r, 1));
 
       const texts = (menu.state.items ?? []).map((item) => (item.type === 'divider' ? '---' : item.text));
-      expect(texts.slice(-4)).toEqual(['---', 'Add to notebook', '---', 'Remove']);
+      expect(texts.slice(-4)).toEqual(['---', 'Add to notebook…', '---', 'Remove']);
     });
   });
 });
