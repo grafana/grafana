@@ -24,6 +24,8 @@ func NewUnifiedClient(client resourcepb.ResourceIndexClient) *unifiedClient {
 }
 
 func buildUnifiedRequest(query *Query) *resourcepb.ResourceSearchRequest {
+	// Preserve table responses for the combined route; per-kind routes request FIELD_VALUES below.
+	// nosemgrep: direct-go-resource-search-requires-field-values
 	req := &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{Key: resourceKey(query.Namespace, query.Primary)},
 		Limit:   query.Limit,
