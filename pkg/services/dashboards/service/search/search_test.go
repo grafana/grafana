@@ -3,11 +3,16 @@ package dashboardsearch
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -185,8 +190,8 @@ func TestParseResults(t *testing.T) {
 
 		_, err := ParseResults(resSearchResp, 0)
 		require.Error(t, err)
-		// The 503 status must survive so retry classification can detect it.
 		require.True(t, apierrors.IsServiceUnavailable(err))
+		require.Equal(t, responsewriters.ErrorToAPIStatus(resource.GetError(resSearchResp.Error)), responsewriters.ErrorToAPIStatus(err))
 	})
 }
 
@@ -214,6 +219,88 @@ func makeResponse(names []string, totalHits int64) *resourcepb.ResourceSearchRes
 		},
 		TotalHits: totalHits,
 	}
+}
+
+func TestSearchAll_Errors(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		resp *resourcepb.ResourceSearchResponse
+		err  error
+	}{
+		{name: "embedded", resp: &resourcepb.ResourceSearchResponse{Error: dashboardSearchRateLimitResult()}},
+		{name: "grpc", err: wrappedDashboardSearchRateLimitGRPCError(t)},
+		{name: "canceled", err: context.Canceled},
+		{name: "wrapped canceled", err: fmt.Errorf("search: %w", context.Canceled)},
+		{name: "deadline exceeded", err: context.DeadlineExceeded},
+		{name: "other transport error", err: fmt.Errorf("connection refused")},
+	} {
+		for _, errorPage := range []int{1, 2} {
+			t.Run(fmt.Sprintf("%s/page %d", tc.name, errorPage), func(t *testing.T) {
+				calls := 0
+				searchFn := func(_ context.Context, _ int64, _ *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+					calls++
+					if calls < errorPage {
+						return makeResponse([]string{"dashboard-1"}, 2), nil
+					}
+					return tc.resp, tc.err
+				}
+				request := &resourcepb.ResourceSearchRequest{Limit: 1}
+
+				results, err := SearchAll(context.Background(), 1, request, searchFn)
+
+				if tc.err != nil {
+					require.ErrorIs(t, err, tc.err, "transport errors must retain their original chain and gRPC status")
+				} else {
+					requireDashboardSearchRateLimitStatus(t, err)
+				}
+				require.Empty(t, results.Hits, "partial results must not be returned as a complete result")
+				require.Equal(t, errorPage, calls)
+			})
+		}
+	}
+}
+
+func dashboardSearchRateLimitResult() *resourcepb.ErrorResult {
+	return &resourcepb.ErrorResult{
+		Code:    http.StatusTooManyRequests,
+		Reason:  string(metav1.StatusReasonTooManyRequests),
+		Message: "search is busy",
+		Details: &resourcepb.ErrorDetails{
+			Name:              "dashboard",
+			Group:             "dashboard.grafana.app",
+			Kind:              "dashboards",
+			Uid:               "uid",
+			RetryAfterSeconds: 12,
+		},
+	}
+}
+
+func wrappedDashboardSearchRateLimitGRPCError(t *testing.T) error {
+	t.Helper()
+
+	grpcStatus, err := status.New(codes.ResourceExhausted, "search is busy").WithDetails(dashboardSearchRateLimitResult())
+	require.NoError(t, err)
+	return fmt.Errorf("search: %w", grpcStatus.Err())
+}
+
+func requireDashboardSearchRateLimitStatus(t *testing.T, err error) {
+	t.Helper()
+
+	var apiStatus apierrors.APIStatus
+	require.ErrorAs(t, err, &apiStatus)
+	require.Equal(t, metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusTooManyRequests,
+		Reason:  metav1.StatusReasonTooManyRequests,
+		Message: "search is busy",
+		Details: &metav1.StatusDetails{
+			Name:              "dashboard",
+			Group:             "dashboard.grafana.app",
+			Kind:              "dashboards",
+			UID:               "uid",
+			RetryAfterSeconds: 12,
+		},
+	}, apiStatus.Status())
 }
 
 func TestSearchAll(t *testing.T) {

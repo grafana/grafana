@@ -11,7 +11,7 @@ import { logsSolution } from './solutions/logsSolution';
 import { parseMetricsFilter } from './solutions/metricsFilter';
 import { metricsDetection, metricsSolution } from './solutions/metricsSolution';
 import { solutionFilterStorageKey } from './solutions/solutionFilter';
-import { detectSignal, type SolutionState } from './solutions/solutionState';
+import { detectSignal, settleSignals, type SolutionState } from './solutions/solutionState';
 import { probeSpanMetrics } from './solutions/spanMetricsSignal';
 import { syntheticsSolution } from './solutions/syntheticsSolution';
 import { tracesSolution } from './solutions/tracesSolution';
@@ -49,22 +49,16 @@ export function useHomepageSolutions(): HomepageSolutions {
 
     // Core signals come from their solutions; the filtered ones from the detection their solutions
     // share, so a filter change never re-probes and never restarts recommendation selection.
-    const status = (detect: () => Promise<{ status: SolutionState[keyof SolutionState] }>) =>
-      detect()
-        .then(({ status }) => status)
-        .catch(() => 'unknown' as const);
-    const signals = async (): Promise<SolutionState> => {
-      const [metrics, logs, traces, kubernetes, spanMetrics, synthetics, irm] = await Promise.all([
-        status(detectMetrics),
-        solutions.logs.signal().catch(() => 'unknown' as const),
-        solutions.traces.signal().catch(() => 'unknown' as const),
-        status(detectKubernetes),
-        status(spanMetricsSignal),
-        solutions.synthetics.signal().catch(() => 'unknown' as const),
-        irmSignal().catch(() => 'unknown' as const),
-      ]);
-      return { metrics, logs, traces, kubernetes, spanMetrics, synthetics, irm };
-    };
+    const signals = (): Promise<SolutionState> =>
+      settleSignals({
+        metrics: detectMetrics().then(({ status }) => status),
+        logs: solutions.logs.signal(),
+        traces: solutions.traces.signal(),
+        kubernetes: detectKubernetes().then(({ status }) => status),
+        spanMetrics: spanMetricsSignal().then(({ status }) => status),
+        synthetics: solutions.synthetics.signal(),
+        irm: irmSignal(),
+      });
 
     return { detectKubernetes, detectMetrics, solutions, signals };
   }, []);

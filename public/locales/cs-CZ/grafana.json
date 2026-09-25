@@ -485,6 +485,7 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Externí správci výstrah",
+      "external-alertmanagers-group-plugin": "",
       "noOptionsMessage-no-datasources-found": "Nebyly nalezeny žádné zdroje dat"
     },
     "alert-menu": {
@@ -2715,6 +2716,8 @@
       }
     },
     "proxied-alerting-route": {
+      "redirected-body": "",
+      "redirected-title": "",
       "text-redirecting": ""
     },
     "query-and-expressions-step": {
@@ -3020,6 +3023,19 @@
     },
     "rule-list": {
       "configure-datasource": "Konfigurovat",
+      "datasource-managed-notice": {
+        "action": "",
+        "body": "",
+        "inline-action": "",
+        "inline_one": "",
+        "inline_few": "",
+        "inline_many": "",
+        "inline_other": "",
+        "title_one": "",
+        "title_few": "",
+        "title_many": "",
+        "title_other": ""
+      },
       "ds-error": {
         "title": "Nelze načíst pravidla pro tento zdroj dat"
       },
@@ -3040,7 +3056,8 @@
         "no-more-results": "Žádné další výsledky – nalezená pravidla: {{numberOfRules}}",
         "no-rules-found": "Vaší aktuální sadě filtrů neodpovídají žádná pravidla výstrah ani nahrávání.",
         "results-loading": "Vyhledávání – nalezená pravidla: {{numberOfRules}}",
-        "results-with-cancellation": "Vyhledávání zrušeno – nalezená pravidla: {{numberOfRules}}"
+        "results-with-cancellation": "Vyhledávání zrušeno – nalezená pravidla: {{numberOfRules}}",
+        "search-in-plugin": ""
       },
       "import-disabled-tooltip": {
         "auto-sync": "Importy nejsou k dispozici, dokud je aktivní automatická synchronizace správce výstrah Mimir"
@@ -4456,6 +4473,7 @@
       "label-top": "Horní"
     },
     "name-show-unfilled-area": "Zobrazit nevyplněnou oblast",
+    "name-text-mode": "",
     "name-value-display": "Zobrazení hodnoty",
     "presets": {
       "basic": "Základní",
@@ -4474,6 +4492,13 @@
     "suggestions": {
       "basic": "Sloupcové metriky",
       "lcd": "Sloupcové metriky – LCD"
+    },
+    "text-mode-options": {
+      "label-auto": "",
+      "label-name": "",
+      "label-none": "",
+      "label-value": "",
+      "label-value-and-name": ""
     },
     "value-display-options": {
       "label-hidden": "Skryté",
@@ -6127,6 +6152,12 @@
       "ungroup-repeat-loss": "Možnosti opakování nakonfigurované pro neseskupené skupiny budou ztraceny.",
       "ungroup-repeat-loss-title": "Zrušit seskupení?"
     },
+    "loading": {
+      "drawer": "",
+      "drawer-title": "",
+      "sidebar": "",
+      "sidebar-title": ""
+    },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} z {{numberOfPages}}",
       "tooltip-next": "Další",
@@ -6847,7 +6878,14 @@
         "title-remove": "Odebrat",
         "title-show-transform-help": "Zobrazit nápovědu pro transformaci"
       },
-      "title-delete": "Odstranit {{name}}?"
+      "title-delete": "Odstranit {{name}}?",
+      "transformation-editor-row-header": {
+        "edit-refId": "",
+        "edit-refId-placeholder": "",
+        "refId-exists-error": "",
+        "refId-reserved-error": "",
+        "refId-variable-error": ""
+      }
     },
     "transformation-operation-rows": {
       "remove-transformation": "",
@@ -7516,7 +7554,6 @@
       },
       "render-save-button-and-error": {
         "body-plugin-dashboard": "Aktualizací pluginu přijdete o změny. Použijte <strong>Uložit jako</strong> pro vytvoření vlastní verze.",
-        "title-failed-to-save-dashboard": "Nástěnku se nepodařilo uložit",
         "title-plugin-dashboard": "Plugin nástěnky",
         "title-someone-else-has-updated-this-dashboard": "Tuto nástěnku aktualizoval jiný uživatel",
         "would-still-dashboard": "Chcete přesto tuto nástěnku uložit?"
@@ -7786,9 +7823,6 @@
       },
       "label-copy-tags": "Kopírovat tagy",
       "label-folder": "Složka",
-      "render-footer": {
-        "title-failed-to-save-dashboard": "Nástěnku se nepodařilo uložit"
-      },
       "required": "Povinné"
     },
     "save-dashboard-drawer": {
@@ -7835,6 +7869,9 @@
       "save-variables-label-update-default-variable-values": "Aktualizovat výchozí hodnoty proměnných",
       "show-variables-warning-alert-body": "",
       "show-variables-warning-alert-title": ""
+    },
+    "save-errors": {
+      "unexpected": ""
     },
     "save-library-viz-panel-modal": {
       "cancel": "Zrušit",
@@ -10680,7 +10717,7 @@
     "data-source-settings": {
       "alerting-settings-heading": "Výstrahy",
       "alerting-settings-label": "Spravovat pravidla výstrah v uživatelském rozhraní výstrah",
-      "alerting-settings-tooltip": "Spravovat pravidla výstrah pro tento zdroj dat. Chcete-li spravovat další zdroje Alerting, přidejte zdroj dat Alertmanager.",
+      "alerting-settings-tooltip": "",
       "cert-key-reset": "Resetovat",
       "custom-headers-add": "Přidat záhlaví",
       "custom-headers-header": "Záhlaví",
@@ -10968,6 +11005,7 @@
       "placeholder": "Vybrat "
     },
     "table": {
+      "cell-actions": "",
       "cell-filter-on": "Filtrovat podle hodnoty",
       "cell-filter-out": "Odfiltrovat hodnotu",
       "cell-inspect": "Zkontrolovat hodnotu",
@@ -11328,10 +11366,11 @@
   "home": {
     "alerts-incidents": {
       "alert-tab-label": "Aktivní výstrahy",
+      "incident-filter-all": "",
+      "incident-filter-label": "",
       "incident-tab-label": "Incidenty",
       "team-filter-all": "Všechny týmy",
       "team-filter-label": "Filtrovat výstrahy podle týmu",
-      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Vaše týmy",
       "title": "Výstrahy a incidenty",
       "title-alerts": "Výstrahy",
@@ -15841,6 +15880,10 @@
       "label": "Použít transformaci na",
       "series": "Výsledky dotazu a transformace"
     },
+    "transformation-name": {
+      "auto-placeholder": "",
+      "edit": ""
+    },
     "validation": {
       "duplicate-name": "Název dotazu již existuje",
       "empty-name": "Prázdný název dotazu není povolen"
@@ -16026,6 +16069,12 @@
     "title": "Soubor aplikace nelze najít"
   },
   "save-dashboards": {
+    "forbidden": {
+      "title": ""
+    },
+    "invalid": {
+      "title": ""
+    },
     "message-length": {
       "info": "Zpráva obsahuje {{messageLength}} znaků, maximální délka je 500 znaků. Před uložením ji zkraťte.",
       "title": "Zpráva je příliš dlouhá"

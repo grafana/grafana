@@ -475,6 +475,7 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "Externe Alertmanager",
+      "external-alertmanagers-group-plugin": "",
       "noOptionsMessage-no-datasources-found": "Keine Datenquellen gefunden"
     },
     "alert-menu": {
@@ -2673,6 +2674,8 @@
       }
     },
     "proxied-alerting-route": {
+      "redirected-body": "",
+      "redirected-title": "",
       "text-redirecting": ""
     },
     "query-and-expressions-step": {
@@ -2978,6 +2981,15 @@
     },
     "rule-list": {
       "configure-datasource": "Konfigurieren",
+      "datasource-managed-notice": {
+        "action": "",
+        "body": "",
+        "inline-action": "",
+        "inline_one": "",
+        "inline_other": "",
+        "title_one": "",
+        "title_other": ""
+      },
       "ds-error": {
         "title": "Regeln für diese Datenquelle können nicht geladen werden"
       },
@@ -2998,7 +3010,8 @@
         "no-more-results": "Keine weiteren Ergebnisse – {{numberOfRules}} Regeln gefunden",
         "no-rules-found": "Es gibt keine Warn- oder Aufnahmeregeln, die Ihren aktuellen Filtereinstellungen entsprechen.",
         "results-loading": "Suche – {{numberOfRules}} Regeln gefunden",
-        "results-with-cancellation": "Suche abgebrochen – {{numberOfRules}} Regeln gefunden"
+        "results-with-cancellation": "Suche abgebrochen – {{numberOfRules}} Regeln gefunden",
+        "search-in-plugin": ""
       },
       "import-disabled-tooltip": {
         "auto-sync": "Solange die automatische Synchronisierung von Mimir Alertmanager aktiv ist, sind Importe nicht verfügbar"
@@ -4392,6 +4405,7 @@
       "label-top": "Oben"
     },
     "name-show-unfilled-area": "Ungefüllten Bereich anzeigen",
+    "name-text-mode": "",
     "name-value-display": "Wertanzeige",
     "presets": {
       "basic": "Einfach",
@@ -4410,6 +4424,13 @@
     "suggestions": {
       "basic": "Balkenanzeige",
       "lcd": "Balkenanzeige – LCD"
+    },
+    "text-mode-options": {
+      "label-auto": "",
+      "label-name": "",
+      "label-none": "",
+      "label-value": "",
+      "label-value-and-name": ""
     },
     "value-display-options": {
       "label-hidden": "Ausgeblendet",
@@ -6041,6 +6062,12 @@
       "ungroup-repeat-loss": "Die für die nicht gruppierten Gruppen konfigurierten Optionen zum Wiederholen gehen verloren.",
       "ungroup-repeat-loss-title": "Gruppierung aufheben?"
     },
+    "loading": {
+      "drawer": "",
+      "drawer-title": "",
+      "sidebar": "",
+      "sidebar-title": ""
+    },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} von {{numberOfPages}}",
       "tooltip-next": "Weiter",
@@ -6759,7 +6786,14 @@
         "title-remove": "Entfernen",
         "title-show-transform-help": "Hilfe zur Transformation anzeigen"
       },
-      "title-delete": "Möchten Sie {{name}} löschen?"
+      "title-delete": "Möchten Sie {{name}} löschen?",
+      "transformation-editor-row-header": {
+        "edit-refId": "",
+        "edit-refId-placeholder": "",
+        "refId-exists-error": "",
+        "refId-reserved-error": "",
+        "refId-variable-error": ""
+      }
     },
     "transformation-operation-rows": {
       "remove-transformation": "",
@@ -7424,7 +7458,6 @@
       },
       "render-save-button-and-error": {
         "body-plugin-dashboard": "Ihre Änderungen gehen verloren, wenn Sie das Plugin aktualisieren. Nutzen Sie <strong>Speichern unter</strong> zur Erstellung einer benutzerdefinierten Version.",
-        "title-failed-to-save-dashboard": "Dashboard konnte nicht gespeichert werden",
         "title-plugin-dashboard": "Plugin-Dashboard",
         "title-someone-else-has-updated-this-dashboard": "Eine andere Person hat dieses Dashboard aktualisiert",
         "would-still-dashboard": "Möchten Sie dieses Dashboard trotzdem speichern?"
@@ -7692,9 +7725,6 @@
       },
       "label-copy-tags": "Tags kopieren",
       "label-folder": "Ordner",
-      "render-footer": {
-        "title-failed-to-save-dashboard": "Dashboard konnte nicht gespeichert werden"
-      },
       "required": "Erforderlich"
     },
     "save-dashboard-drawer": {
@@ -7741,6 +7771,9 @@
       "save-variables-label-update-default-variable-values": "Standard-Variablenwerte aktualisieren",
       "show-variables-warning-alert-body": "",
       "show-variables-warning-alert-title": ""
+    },
+    "save-errors": {
+      "unexpected": ""
     },
     "save-library-viz-panel-modal": {
       "cancel": "Abbrechen",
@@ -10552,7 +10585,7 @@
     "data-source-settings": {
       "alerting-settings-heading": "Meldungen",
       "alerting-settings-label": "Warnregeln in der Warn-Benutzeroberfläche verwalten",
-      "alerting-settings-tooltip": "Verwalten Sie Warnregeln für diese Datenquelle. Fügen Sie eine Altermanager-Datenquelle hinzu, um andere Warnressourcen zu verwalten.",
+      "alerting-settings-tooltip": "",
       "cert-key-reset": "Zurücksetzen",
       "custom-headers-add": "Header hinzufügen",
       "custom-headers-header": "Header",
@@ -10840,6 +10873,7 @@
       "placeholder": "Auswahl von"
     },
     "table": {
+      "cell-actions": "",
       "cell-filter-on": "Nach Wert filtern",
       "cell-filter-out": "Wert herausfiltern",
       "cell-inspect": "Wert prüfen",
@@ -11200,10 +11234,11 @@
   "home": {
     "alerts-incidents": {
       "alert-tab-label": "Auslösen von Warnungen",
+      "incident-filter-all": "",
+      "incident-filter-label": "",
       "incident-tab-label": "Vorfälle",
       "team-filter-all": "Alle Teams",
       "team-filter-label": "Warnungen nach Team filtern",
-      "team-filter-label-incidents": "",
       "team-filter-your-teams": "Ihre Teams",
       "title": "Warnungen und Vorfälle",
       "title-alerts": "Warnungen",
@@ -15605,6 +15640,10 @@
       "label": "Transformation anwenden auf",
       "series": "Abfrage- und Transformationsergebnisse"
     },
+    "transformation-name": {
+      "auto-placeholder": "",
+      "edit": ""
+    },
     "validation": {
       "duplicate-name": "Der Abfragename existiert bereits",
       "empty-name": "Ein leerer Abfragename ist nicht zulässig"
@@ -15784,6 +15823,12 @@
     "title": "Die Anwendungsdatei konnte nicht gefunden werden"
   },
   "save-dashboards": {
+    "forbidden": {
+      "title": ""
+    },
+    "invalid": {
+      "title": ""
+    },
     "message-length": {
       "info": "Die Nachricht ist {{messageLength}} Zeichen lang und überschreitet die maximale Länge von 500 Zeichen. Bitte kürzen Sie sie vor dem Speichern.",
       "title": "Die Nachricht ist zu lang"
