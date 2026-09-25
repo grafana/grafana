@@ -26,8 +26,7 @@ jest.mock('app/features/explore/QueryLibrary/QueryLibraryContext', () => ({
 const mockGetVizSuggestionForQuery = getVizSuggestionForQuery as jest.Mock;
 const mockUseQueryLibraryContext = useQueryLibraryContext as jest.Mock;
 
-// Rendering a picked visualization block activates its real VizPanel, which loads its plugin — this
-// satisfies that outside of a running Grafana instance, the same way NotebookAutosave.test.ts does.
+// A picked visualization block activates its real VizPanel, which loads its plugin — see NotebookAutosave.test.ts.
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({ id }).useFieldConfig()),
   getPanelPluginFromCache: () => undefined,
@@ -888,9 +887,7 @@ describe('NotebookLayoutManager', () => {
       expect(getQueryRunnerFor(cell?.state.body)?.state.queries).toEqual([query]);
     });
 
-    // Same clamp addCell applies: the trailing cell's own add button offers index === cells.length,
-    // which would otherwise land the new panel after that slot and strand it mid-document once the
-    // invariant appends a replacement.
+    // Same clamp addCell applies, for the same trailing-slot reason.
     it('inserts before the trailing empty slot when the position offered is past it', async () => {
       mockGetVizSuggestionForQuery.mockResolvedValue(suggestion);
       const trailing = new NotebookCellItem({

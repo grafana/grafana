@@ -584,11 +584,7 @@ export class NotebookLayoutManager
     return { cell, index: clampedIndex };
   }
 
-  /**
-   * An insert past the trailing empty slot offers `index === cells.length`. Inserting *after* that
-   * slot would leave it stranded mid-document once the invariant appends a replacement after the new
-   * block, so this clamps to just before it instead — shared by addCell and addCellFromSavedQuery.
-   */
+  /** Clamps an insert past the trailing empty slot to just before it, so it isn't stranded once the invariant appends a replacement. Shared by addCell and addCellFromSavedQuery. */
   private clampBeforeTrailingSlot(index: number): number {
     const trailing = this.state.cells.at(-1);
     if (index >= this.state.cells.length && trailing && isEmptyMarkdown(trailing.state.content)) {
@@ -685,8 +681,7 @@ export class NotebookLayoutManager
         ]);
       }
     } catch {
-      // Covers both the suggestion lookup above and panel.changePluginType, so the wording can't name
-      // either one specifically — matches the equivalent failure in Dashboards' UnconfiguredPanel.
+      // Covers both the suggestion lookup and panel.changePluginType, so the wording can't name either.
       appEvents.emit(AppEvents.alertError, [
         t('notebook.add-block.saved-query-apply-error', 'Failed to apply saved query'),
         t(

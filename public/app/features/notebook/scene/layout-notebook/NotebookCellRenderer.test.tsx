@@ -14,8 +14,7 @@ import { NotebookCellItem } from './NotebookCellItem';
 import { isEditableQueryPanel, NotebookCellRenderer } from './NotebookCellRenderer';
 import { NotebookLayoutManager } from './NotebookLayoutManager';
 
-// Converting a cell into a real panel activates its VizPanel, which loads its plugin — this satisfies
-// that outside of a running Grafana instance, the same way NotebookAutosave.test.ts does.
+// Converting a cell activates its VizPanel, which loads its plugin — see NotebookAutosave.test.ts.
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({ id }).useFieldConfig()),
   getPanelPluginFromCache: () => undefined,
@@ -30,9 +29,7 @@ jest.mock('app/features/dashboard-scene/utils/getVizSuggestionForQuery', () => (
   getVizSuggestionForQuery: jest.fn(),
 }));
 
-// PanelQueryEditor pulls in datasource-picker/query-editor machinery with its own dedicated coverage
-// in PanelQueryEditor.test.tsx — this file only cares whether converting a cell into a panel lands
-// the right VizPanel and query, not whether the inline editor itself renders.
+// PanelQueryEditor has its own dedicated coverage in PanelQueryEditor.test.tsx.
 jest.mock('./PanelQueryEditor', () => ({
   PanelQueryEditor: () => <div data-testid="panel-query-editor-stub" />,
 }));
