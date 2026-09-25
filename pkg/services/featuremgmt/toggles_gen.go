@@ -335,6 +335,10 @@ const (
 	// Enables Saved queries (query library) feature
 	FlagQueryLibrary = "queryLibrary"
 
+	// FlagGrafanaSavedQueriesSearch
+	// Enables unified search for saved queries
+	FlagGrafanaSavedQueriesSearch = "grafana.savedQueriesSearch"
+
 	// FlagGrafanaSavedQueriesPage
 	// Enables the dedicated Saved queries page and its navigation entry
 	FlagGrafanaSavedQueriesPage = "grafana.savedQueriesPage"

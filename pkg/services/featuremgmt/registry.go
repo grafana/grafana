@@ -657,7 +657,7 @@ var (
 			Name:        "dashboardNewLayouts",
 			Description: "Enables new dashboard layouts",
 			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true",
 		},
@@ -990,6 +990,14 @@ var (
 			Owner:       grafanaSharingSquad,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Expression:  "true",                                                      // enabled by default
+		},
+		{
+			Name:        "grafana.savedQueriesSearch",
+			Description: "Enables unified search for saved queries",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSharingSquad,
+			Generate:    Generate{Go: true},
+			Expression:  "false",
 		},
 		{
 			Name:        "grafana.savedQueriesPage",
@@ -2942,7 +2950,7 @@ var (
 		{
 			Name:         "grafana.visualDesignRefresh",
 			Description:  "Enables the new visual design refresh for the Grafana UI",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
 			Expression:   "false",
