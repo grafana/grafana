@@ -4314,6 +4314,19 @@
     },
     {
       "metadata": {
+        "name": "pluginsStripAcceptEncoding",
+        "resourceVersion": "1789843295884",
+        "creationTimestamp": "2026-09-19T18:41:35Z"
+      },
+      "spec": {
+        "description": "Strip Accept-Encoding from CallResource request headers",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "preferLibraryPanelTitle",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2025-06-17T11:21:21Z"

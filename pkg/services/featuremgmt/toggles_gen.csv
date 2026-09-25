@@ -151,6 +151,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-09-23,useSessionStorageForRedirection,GA,@grafana/identity-access-team,false,false,false
 2024-09-26,rolePickerDrawer,experimental,@grafana/identity-access-team,false,false,false
 2024-10-04,pluginsSriChecks,GA,@grafana/grafana-catalog,false,false,false
+2026-09-19,pluginsStripAcceptEncoding,experimental,@grafana/data-sources-plugins,false,false,false
 2024-10-22,timeRangeProvider,experimental,@grafana/grafana-frontend-platform,false,false,false
 2024-10-24,azureMonitorDisableLogLimit,GA,@grafana/data-sources-plugins,false,false,false
 2024-12-18,prometheusSpecialCharsInLabelValues,experimental,@grafana/data-sources-plugins,false,false,true
