@@ -44,6 +44,10 @@ export function redactPreviewSecrets(
   return format === 'json' ? JSON.stringify(redacted, null, 2) : dump(redacted);
 }
 
+export function containsRedactedValue(content: string): boolean {
+  return content.includes(REDACTED_VALUE);
+}
+
 // Maps ${schema.type}:${version.version} to the legacy Alertmanager receiver YAML key.
 // Verified directly against the grafana/alerting module's integration schema and receiver
 // compatibility definitions. 'teams' has two legacy versions (v0mimir1/v0mimir2) mapping to two

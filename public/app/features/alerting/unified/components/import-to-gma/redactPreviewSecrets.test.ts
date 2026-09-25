@@ -5,7 +5,12 @@ import {
   type NotifierVersion,
 } from '../../types/alerting';
 
-import { PreviewRedactionError, buildSecretFieldMap, redactPreviewSecrets } from './redactPreviewSecrets';
+import {
+  PreviewRedactionError,
+  buildSecretFieldMap,
+  containsRedactedValue,
+  redactPreviewSecrets,
+} from './redactPreviewSecrets';
 
 describe('redactPreviewSecrets', () => {
   it('round-trips YAML content that contains no secret-shaped fields', () => {
@@ -657,5 +662,20 @@ describe('buildSecretFieldMap', () => {
     expect(result.pagerduty_configs.has('service_key')).toBe(true);
     expect(result.pagerduty_configs.has('description')).toBe(false);
     expect(result.pagerduty_configs.size).toBe(2);
+  });
+});
+
+describe('containsRedactedValue', () => {
+  it('returns true when the content contains the redaction marker', () => {
+    expect(containsRedactedValue('api_url: <redacted>\nchannel: "#alerts"')).toBe(true);
+  });
+
+  it('returns false for content with no redaction marker', () => {
+    expect(containsRedactedValue('api_url: https://example.com\nchannel: "#alerts"')).toBe(false);
+  });
+
+  it('is an exact match, not a loose one', () => {
+    expect(containsRedactedValue('api_url: <REDACTED>')).toBe(false);
+    expect(containsRedactedValue('api_url: < redacted >')).toBe(false);
   });
 });
