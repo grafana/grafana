@@ -348,6 +348,12 @@ func checkMoveAccess(
 	}
 
 	folderGVR := folders.FolderResourceInfo.GroupVersionResource()
+	if oldParentUID == folder.RootFolderUID {
+		oldParentUID = folder.GeneralFolderUID
+	}
+	if newParentUID == folder.RootFolderUID {
+		newParentUID = folder.GeneralFolderUID
+	}
 
 	// Separators must keep correlation IDs within OpenFGA's regex pattern ^[\w\d-]{1,36}$
 	const (

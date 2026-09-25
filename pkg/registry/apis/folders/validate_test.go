@@ -1696,6 +1696,34 @@ func TestCheckMoveAccess(t *testing.T) {
 			allows:    []allow{allowFolder(utils.VerbCreate, "", folder.GeneralFolderUID)},
 		},
 		{
+			name:      "move to empty root uses general for destination write",
+			newParent: folder.RootFolderUID,
+			oldParent: oldParentUID,
+			allows:    []allow{allowFolder(utils.VerbCreate, "", folder.GeneralFolderUID)},
+		},
+		{
+			name:      "move to empty root detects Editor to Admin escalation",
+			newParent: folder.RootFolderUID,
+			oldParent: oldParentUID,
+			allows: []allow{
+				allowFolder(utils.VerbCreate, "", folder.GeneralFolderUID),
+				canUpdateOnSourceUnderOld,
+				allowFolder(utils.VerbUpdate, sourceUID, folder.GeneralFolderUID),
+				allowFolder(utils.VerbSetPermissions, sourceUID, folder.GeneralFolderUID),
+			},
+			expectedErr: "folders.accessEscalation",
+		},
+		{
+			name:      "move from empty root does not mistake Admin for None",
+			newParent: newParentUID,
+			oldParent: folder.RootFolderUID,
+			allows: []allow{
+				canCreateFolderInNew,
+				allowFolder(utils.VerbSetPermissions, sourceUID, folder.GeneralFolderUID),
+				canUpdateOnSourceUnderNew,
+			},
+		},
+		{
 			name:        "move to root denied without create at root",
 			newParent:   folder.GeneralFolderUID,
 			oldParent:   oldParentUID,
