@@ -48,7 +48,10 @@ const AlertmanagerProvider = ({ children, accessType, alertmanagerSourceName }: 
   // would quietly open here instead. We also hold off while the plugin check is still out, so the
   // page doesn't start loading from an Alertmanager it's about to let go of.
   const routeProxy = useRouteProxyStatus();
-  const externalGoesToPlugin = routeProxy.active || routeProxy.loading;
+  const shouldRemember = React.useCallback(
+    (source?: string) => source === GRAFANA_RULES_SOURCE_NAME || (!routeProxy.active && !routeProxy.loading),
+    [routeProxy.active, routeProxy.loading]
+  );
 
   const availableAlertManagers = React.useMemo(() => {
     const regularAlertManagers = allAvailableAlertManagers.availableInternalDataSources.concat(
@@ -74,22 +77,19 @@ const AlertmanagerProvider = ({ children, accessType, alertmanagerSourceName }: 
         return;
       }
 
-      if (selectedAlertManager === GRAFANA_RULES_SOURCE_NAME) {
-        store.delete(localStorageKey);
-        updateQueryParams({ [ALERTMANAGER_NAME_QUERY_KEY]: undefined });
-      } else {
-        if (!externalGoesToPlugin) {
-          store.set(localStorageKey, selectedAlertManager);
-        }
-        updateQueryParams({ [ALERTMANAGER_NAME_QUERY_KEY]: selectedAlertManager });
+      if (shouldRemember(selectedAlertManager)) {
+        store.set(localStorageKey, selectedAlertManager);
       }
+      // Grafana is the default, so there's no need to spell it out in the URL
+      const isDefault = selectedAlertManager === GRAFANA_RULES_SOURCE_NAME;
+      updateQueryParams({ [ALERTMANAGER_NAME_QUERY_KEY]: isDefault ? undefined : selectedAlertManager });
     },
-    [availableAlertManagers, externalGoesToPlugin, localStorageKey, updateQueryParams]
+    [availableAlertManagers, shouldRemember, localStorageKey, updateQueryParams]
   );
 
   const sourceFromQuery = queryParams.get(ALERTMANAGER_NAME_QUERY_KEY);
   const storedSource: string | undefined = store.get(localStorageKey);
-  const sourceFromStore = externalGoesToPlugin && storedSource !== GRAFANA_RULES_SOURCE_NAME ? undefined : storedSource;
+  const sourceFromStore = shouldRemember(storedSource) ? storedSource : undefined;
   const defaultSource = GRAFANA_RULES_SOURCE_NAME;
 
   // This overrides AM in the store to be in sync with the one in the URL
@@ -99,11 +99,10 @@ const AlertmanagerProvider = ({ children, accessType, alertmanagerSourceName }: 
     if (!sourceFromQuery || sourceFromQuery === storedSource) {
       return;
     }
-    if (externalGoesToPlugin && sourceFromQuery !== GRAFANA_RULES_SOURCE_NAME) {
-      return;
+    if (shouldRemember(sourceFromQuery)) {
+      store.set(localStorageKey, sourceFromQuery);
     }
-    store.set(localStorageKey, sourceFromQuery);
-  }, [externalGoesToPlugin, localStorageKey, sourceFromQuery, storedSource]);
+  }, [shouldRemember, localStorageKey, sourceFromQuery, storedSource]);
 
   // queryParam > localStorage > default
   const desiredAlertmanager = alertmanagerSourceName ?? sourceFromQuery ?? sourceFromStore ?? defaultSource;
