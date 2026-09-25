@@ -520,3 +520,23 @@ describe('Graphite actions', () => {
     });
   });
 });
+
+describe('Graphite store before init', () => {
+  it('ignores queryChanged when target is not initialised yet', async () => {
+    const onChange = jest.fn();
+    const dispatch = createStore(onChange);
+
+    await dispatch(actions.queryChanged({ target: 'new.metrics.*', refId: 'A' }));
+
+    expect(onChange).toHaveBeenCalledWith({});
+  });
+
+  it('ignores updateQuery when target is not initialised yet', async () => {
+    const onChange = jest.fn();
+    const dispatch = createStore(onChange);
+
+    await dispatch(actions.updateQuery({ query: 'new.metrics.*' }));
+
+    expect(onChange).toHaveBeenCalledWith({});
+  });
+});

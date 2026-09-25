@@ -74,6 +74,9 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
     handleTargetChanged(state);
   }
   if (actions.queryChanged.match(action)) {
+    if (!state.target) {
+      return state;
+    }
     state.target.target = action.payload.target || '';
     await parseTarget(state);
     handleTargetChanged(state);
@@ -173,6 +176,9 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
     handleTargetChanged(state);
   }
   if (actions.updateQuery.match(action)) {
+    if (!state.target) {
+      return state;
+    }
     state.target.target = action.payload.query;
     handleTargetChanged(state);
   }
