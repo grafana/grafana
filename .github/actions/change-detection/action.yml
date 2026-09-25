@@ -259,6 +259,8 @@ runs:
             - '.github/actions/change-detection/**'
             - 'packages/**'
             - './scripts/validate-npm-packages.sh'
+            - './scripts/prepare-npm-package.js'
+            - './scripts/tsconfig.base.json'
             - '${{ inputs.self }}'
           e2e:
             - 'e2e/**'
