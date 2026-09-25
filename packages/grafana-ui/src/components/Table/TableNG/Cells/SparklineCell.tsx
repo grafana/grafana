@@ -97,7 +97,14 @@ export const SparklineCell = (props: SparklineCellProps) => {
   return (
     <MaybeWrapWithLink field={field} rowIdx={rowIdx}>
       {valueElement}
-      <Sparkline width={width - valueWidth} height={25} sparkline={sparkline} config={config} theme={theme} />
+      <Sparkline
+        width={width - valueWidth}
+        height={25}
+        sparkline={sparkline}
+        config={config}
+        theme={theme}
+        showTooltip={cellOptions.showTooltip}
+      />
     </MaybeWrapWithLink>
   );
 };

@@ -36,6 +36,17 @@ describe('SparklineCellOptionsEditor', () => {
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ lineWidth: 5, hideValue: true }));
   });
 
+  it('renders the "Show hover tooltip" control it adds on top of the graph config', () => {
+    setup();
+    expect(screen.getByLabelText('Show hover tooltip')).toBeInTheDocument();
+  });
+
+  it('forwards the show-tooltip toggle while preserving the existing cell options', async () => {
+    const { onChange } = setup({ lineWidth: 5 });
+    await userEvent.click(screen.getByLabelText('Show hover tooltip'));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ lineWidth: 5, showTooltip: true }));
+  });
+
   // barAlignment only applies to the Bars draw style. Query by the field's label
   // text (not getByLabelText): a wrapped radiogroup editor has no label association,
   // so getByLabelText would be null whether the option is shown or hidden.
