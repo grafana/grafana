@@ -5,6 +5,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { getAlertingRoutes } from './routes';
+import { LegacyRecentlyDeletedRedirect, LegacyRuleListRedirect } from './unified/gma-rule-list/shared/legacyRedirects';
 
 describe('alerting route guards', () => {
   const previousPermissions = contextSrv.user.permissions;
@@ -149,5 +150,102 @@ describe('data source managed route proxies', () => {
       expect(typeof matches).toBe('function');
       expect(typeof handler).toBe('function');
     }
+  });
+});
+
+// NAV-1, NAV-2: GMA-only rule list routes and redirects, gated by alerting.gmaOnlyListView.
+describe('GMA-only rule list routes', () => {
+  const gmaRoutePaths = [
+    '/alerting/rules/alert',
+    '/alerting/rules/alert/deleted',
+    '/alerting/rules/recording',
+    '/alerting/rules/recording/deleted',
+  ];
+
+  afterEach(() => {
+    setTestFlags();
+  });
+
+  it('does not register the new routes and keeps the legacy pages while the flag is off', () => {
+    setTestFlags({ [FlagKeys.AlertingGmaOnlyListView]: false });
+
+    const routes = getAlertingRoutes();
+    const paths = routes.map((route) => route.path);
+
+    for (const path of gmaRoutePaths) {
+      expect(paths).not.toContain(path);
+    }
+
+    const listRoute = routes.find((route) => route.path === '/alerting/list');
+    expect(listRoute?.component).not.toBe(LegacyRuleListRedirect);
+
+    const deletedRoute = routes.find((route) => route.path === '/alerting/recently-deleted/');
+    expect(deletedRoute?.component).not.toBe(LegacyRecentlyDeletedRedirect);
+  });
+
+  it('registers the new routes and redirects the legacy pages once the flag is on', () => {
+    setTestFlags({ [FlagKeys.AlertingGmaOnlyListView]: true });
+
+    const routes = getAlertingRoutes();
+    const paths = routes.map((route) => route.path);
+
+    for (const path of gmaRoutePaths) {
+      expect(paths).toContain(path);
+    }
+
+    const listRoute = routes.find((route) => route.path === '/alerting/list');
+    expect(listRoute?.component).toBe(LegacyRuleListRedirect);
+
+    const deletedRoute = routes.find((route) => route.path === '/alerting/recently-deleted/');
+    expect(deletedRoute?.component).toBe(LegacyRecentlyDeletedRedirect);
+  });
+
+  describe('access boundary once the flag is on', () => {
+    const previousPermissions = contextSrv.user.permissions;
+
+    beforeEach(() => {
+      setTestFlags({ [FlagKeys.AlertingGmaOnlyListView]: true });
+    });
+
+    afterEach(() => {
+      contextSrv.user.permissions = previousPermissions;
+    });
+
+    function getRouteRolesGuard(path: string) {
+      const route = getAlertingRoutes().find((r) => r.path === path);
+      if (!route?.roles) {
+        throw new Error(`Route not found or has no roles guard: ${path}`);
+      }
+      return route.roles;
+    }
+
+    it.each(['/alerting/rules/alert', '/alerting/rules/recording'])(
+      'denies a Viewer without alert.rules:read on %s',
+      (path) => {
+        contextSrv.user.permissions = {
+          [AccessControlAction.AlertingRuleExternalRead]: true,
+        };
+
+        expect(getRouteRolesGuard(path)()).toEqual(['Reject']);
+      }
+    );
+
+    it.each(['/alerting/rules/alert', '/alerting/rules/recording'])(
+      'allows a reader with Grafana-managed read on %s',
+      (path) => {
+        contextSrv.user.permissions = {
+          [AccessControlAction.AlertingRuleRead]: true,
+        };
+
+        expect(getRouteRolesGuard(path)()).toEqual([]);
+      }
+    );
+
+    it.each(['/alerting/rules/alert/deleted', '/alerting/rules/recording/deleted'])(
+      'requires the organization Admin role for %s',
+      (path) => {
+        expect(getRouteRolesGuard(path)()).toEqual(['Admin']);
+      }
+    );
   });
 });

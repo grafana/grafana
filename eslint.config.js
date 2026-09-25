@@ -426,6 +426,33 @@ module.exports = [
     },
   },
   {
+    name: 'grafana/gma-rule-list-overrides',
+    files: ['public/app/features/alerting/unified/gma-rule-list/**/*.{ts,tsx,js,jsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        withBaseRestrictedImportsConfig({
+          patterns: [
+            {
+              group: ['**/unified/rule-list/**', '**/unified/components/rules/**'],
+              message:
+                'The GMA-only rule list is a greenfield implementation; the legacy combined rule list is a behavioral reference only, not a source of reusable code.',
+            },
+            {
+              group: ['**/api/alertRuleApi', '**/api/prometheusApi'],
+              message: 'The GMA-only rule list must not depend on legacy rule APIs; use the generated rules.alerting client instead.',
+            },
+            {
+              group: ['@grafana/api-clients/rtkq/rules.alerting*'],
+              importNamePattern: '.*SearchRules.*',
+              message: '/searchRules is deprecated; use the generated /alertrules/search and /recordingrules/search operations instead.',
+            },
+          ],
+        }),
+      ],
+    },
+  },
+  {
     name: 'grafana/css-in-js-validation-unified',
     plugins: {
       '@grafana': grafanaPlugin,

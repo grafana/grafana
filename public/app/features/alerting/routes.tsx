@@ -7,7 +7,8 @@ import { type GrafanaRouteComponent, type RouteDescriptor } from 'app/core/navig
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { evaluateAccess, evaluateAccessAll } from './routePermissions';
-import { shouldAllowRecoveringDeletedRules } from './unified/featureToggles';
+import { shouldAllowRecoveringDeletedRules, shouldUseGmaOnlyListView } from './unified/featureToggles';
+import { LegacyRecentlyDeletedRedirect, LegacyRuleListRedirect } from './unified/gma-rule-list/shared/legacyRedirects';
 import { proxied } from './unified/plugin-proxy/withRouteProxy';
 import {
   PERMISSIONS_CONTACT_POINTS,
@@ -34,9 +35,11 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     {
       path: '/alerting/list',
       roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
-      component: importAlertingComponent(
-        () => import(/* webpackChunkName: "AlertRuleListIndex" */ 'app/features/alerting/unified/RuleList')
-      ),
+      component: shouldUseGmaOnlyListView()
+        ? LegacyRuleListRedirect
+        : importAlertingComponent(
+            () => import(/* webpackChunkName: "AlertRuleListIndex" */ 'app/features/alerting/unified/RuleList')
+          ),
     },
     proxied({
       path: '/alerting/routes',
@@ -283,14 +286,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     {
       path: '/alerting/recently-deleted/',
       roles: () => ['Admin'],
-      component: shouldAllowRecoveringDeletedRules()
-        ? importAlertingComponent(
-            () =>
-              import(
-                /* webpackChunkName: "RecentlyDeleted" */ 'app/features/alerting/unified/components/rules/deleted-rules/DeletedRulesPage'
-              )
-          )
-        : () => <Navigate replace to="/alerting/list" />,
+      component: getLegacyRecentlyDeletedComponent(),
     },
     {
       path: '/alerting/import-datasource-managed-rules',
@@ -438,6 +434,53 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     });
   }
 
+  if (shouldUseGmaOnlyListView()) {
+    // GMA-only rule lists: Alert rules and Recording rules are separate pages with their own
+    // canonical URLs and their own Recently deleted tabs. Active routes require Grafana-managed
+    // read only, not the legacy GMA-or-DMA combo; deleted routes match the existing
+    // organization-Admin boundary for trash.
+    routes.push(
+      {
+        path: '/alerting/rules/alert',
+        roles: evaluateAccess([AccessControlAction.AlertingRuleRead]),
+        component: importAlertingComponent(
+          () =>
+            import(/* webpackChunkName: "GmaAlertRulesPage" */ 'app/features/alerting/unified/gma-rule-list/alert/AlertRulesPage')
+        ),
+      },
+      {
+        path: '/alerting/rules/alert/deleted',
+        roles: () => ['Admin'],
+        component: importAlertingComponent(
+          () =>
+            import(
+              /* webpackChunkName: "GmaAlertRulesDeletedPage" */ 'app/features/alerting/unified/gma-rule-list/alert/AlertRulesDeletedPage'
+            )
+        ),
+      },
+      {
+        path: '/alerting/rules/recording',
+        roles: evaluateAccess([AccessControlAction.AlertingRuleRead]),
+        component: importAlertingComponent(
+          () =>
+            import(
+              /* webpackChunkName: "GmaRecordingRulesPage" */ 'app/features/alerting/unified/gma-rule-list/recording/RecordingRulesPage'
+            )
+        ),
+      },
+      {
+        path: '/alerting/rules/recording/deleted',
+        roles: () => ['Admin'],
+        component: importAlertingComponent(
+          () =>
+            import(
+              /* webpackChunkName: "GmaRecordingRulesDeletedPage" */ 'app/features/alerting/unified/gma-rule-list/recording/RecordingRulesDeletedPage'
+            )
+        ),
+      }
+    );
+  }
+
   return routes;
 }
 
@@ -446,4 +489,28 @@ function importAlertingComponent(loader: () => Promise<unknown>): GrafanaRouteCo
   const featureDisabledPageLoader = () =>
     import(/* webpackChunkName: "AlertingDisabled" */ 'app/features/alerting/unified/AlertingNotEnabled');
   return SafeDynamicImport(config.unifiedAlertingEnabled ? loader : featureDisabledPageLoader);
+}
+
+// Once gmaOnlyListView is on, the combined Recently deleted page always redirects to Alert
+// rules' Recently deleted tab; the legacy shouldAllowRecoveringDeletedRules gate only decides
+// the page's own behavior while the flag is off.
+function getLegacyRecentlyDeletedComponent(): GrafanaRouteComponent {
+  if (shouldUseGmaOnlyListView()) {
+    return LegacyRecentlyDeletedRedirect;
+  }
+
+  if (shouldAllowRecoveringDeletedRules()) {
+    return importAlertingComponent(
+      () =>
+        import(
+          /* webpackChunkName: "RecentlyDeleted" */ 'app/features/alerting/unified/components/rules/deleted-rules/DeletedRulesPage'
+        )
+    );
+  }
+
+  return RedirectToLegacyRuleList;
+}
+
+function RedirectToLegacyRuleList() {
+  return <Navigate replace to="/alerting/list" />;
 }
