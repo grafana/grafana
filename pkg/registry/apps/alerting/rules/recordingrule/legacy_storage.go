@@ -19,6 +19,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	ngalertaccesscontrol "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 )
@@ -62,6 +63,43 @@ type legacyStorage struct {
 	service        provisioning.AlertRuleService
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
+	// ruleAccess computes the grafana.com/access/canWrite and .../canDelete
+	// response annotations on GET and LIST. nil (e.g. in a test that does not
+	// need them) means neither is ever set.
+	ruleAccess *ngalertaccesscontrol.RuleService
+}
+
+// setAccessAnnotations sets the requester-specific canWrite/canDelete hint
+// annotations on obj for rule, using the same access-control service and
+// evaluators the rule mutation path (accesscontrol.RuleService,
+// AuthorizeRuleChanges) checks -- not a separate reimplementation. Only ever
+// called from Get/List: Create/Update/Delete never attach it, so a
+// client-supplied annotation is never echoed back or persisted.
+func (s *legacyStorage) setAccessAnnotations(ctx context.Context, user identity.Requester, rule ngmodels.Namespaced, obj accessAnnotatable) error {
+	if s.ruleAccess == nil {
+		return nil
+	}
+	canWrite, err := common.CanWriteRule(ctx, s.ruleAccess, user, rule)
+	if err != nil {
+		return err
+	}
+	if canWrite {
+		obj.SetAccessControl("canWrite")
+	}
+	canDelete, err := common.CanDeleteRule(ctx, s.ruleAccess, user, rule)
+	if err != nil {
+		return err
+	}
+	if canDelete {
+		obj.SetAccessControl("canDelete")
+	}
+	return nil
+}
+
+// accessAnnotatable is the SetAccessControl method model.AlertRule and
+// model.RecordingRule each generate (see alertrule_ext.go/recordingrule_ext.go).
+type accessAnnotatable interface {
+	SetAccessControl(action string)
 }
 
 func (s *legacyStorage) New() runtime.Object {
@@ -185,7 +223,16 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 	if err != nil {
 		return nil, err
 	}
-	return convertToK8sResources(info.OrgID, rules, managerPropsMap, s.namespacer, continueToken)
+	result, err := convertToK8sResources(info.OrgID, rules, managerPropsMap, s.namespacer, continueToken)
+	if err != nil {
+		return nil, err
+	}
+	for i, rule := range rules {
+		if err := s.setAccessAnnotations(ctx, user, rule, &result.Items[i]); err != nil {
+			return nil, err
+		}
+	}
+	return result, nil
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -208,10 +255,16 @@ func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptio
 	}
 
 	obj, err := convertToK8sResource(info.OrgID, &rule, managerProps, s.namespacer)
-	if err != nil && errors.Is(err, errInvalidRule) {
-		return nil, k8serrors.NewNotFound(ResourceInfo.GroupResource(), name)
+	if err != nil {
+		if errors.Is(err, errInvalidRule) {
+			return nil, k8serrors.NewNotFound(ResourceInfo.GroupResource(), name)
+		}
+		return nil, err
 	}
-	return obj, err
+	if err := s.setAccessAnnotations(ctx, user, &rule, obj); err != nil {
+		return nil, err
+	}
+	return obj, nil
 }
 
 func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {

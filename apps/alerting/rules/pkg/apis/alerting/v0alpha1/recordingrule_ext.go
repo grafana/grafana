@@ -28,6 +28,16 @@ func (o *RecordingRule) SetProvenanceStatus(status string) (err error) {
 	return
 }
 
+// SetAccessControl records a requester-specific capability hint, e.g.
+// SetAccessControl("canWrite"). Only ever set on a GET/LIST response, never
+// read back from a create/update body.
+func (o *RecordingRule) SetAccessControl(action string) {
+	if o.Annotations == nil {
+		o.Annotations = make(map[string]string, 1)
+	}
+	o.Annotations[AccessControlAnnotation(action)] = "true"
+}
+
 func (d *RecordingRulePromDuration) ToDuration() (time.Duration, error) {
 	return ToDuration(string(*d))
 }

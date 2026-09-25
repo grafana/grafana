@@ -29,6 +29,16 @@ func (o *AlertRule) SetProvenanceStatus(status string) (err error) {
 	return
 }
 
+// SetAccessControl records a requester-specific capability hint, e.g.
+// SetAccessControl("canWrite"). Only ever set on a GET/LIST response, never
+// read back from a create/update body.
+func (o *AlertRule) SetAccessControl(action string) {
+	if o.Annotations == nil {
+		o.Annotations = make(map[string]string, 1)
+	}
+	o.Annotations[AccessControlAnnotation(action)] = "true"
+}
+
 // HACK: these should be unnecessary based on the openapi schema generation
 const (
 	DefaultNoDataState  = "NoData"

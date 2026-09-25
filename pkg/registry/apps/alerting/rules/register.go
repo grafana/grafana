@@ -38,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert"
+	ngalertaccesscontrol "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/rulesync"
@@ -389,11 +390,15 @@ func (a *AppInstaller) GetStorageOptions(gr schema.GroupResource) *apistore.Stor
 
 func (a *AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanarest.Storage {
 	namespacer := reqns.GetNamespaceMapper(a.cfg)
+	// The same access-control service (and evaluators) the rule mutation path
+	// authorizes writes and deletes against, reused here to compute the
+	// canWrite/canDelete response annotations rather than re-deriving them.
+	ruleAccess := ngalertaccesscontrol.NewRuleService(a.ng.Api.AccessControl)
 	switch gvr {
 	case recordingrule.ResourceInfo.GroupVersionResource():
-		return recordingrule.NewStorage(*a.ng.Api.AlertRules, namespacer)
+		return recordingrule.NewStorage(*a.ng.Api.AlertRules, namespacer, ruleAccess)
 	case alertrule.ResourceInfo.GroupVersionResource():
-		return alertrule.NewStorage(*a.ng.Api.AlertRules, namespacer)
+		return alertrule.NewStorage(*a.ng.Api.AlertRules, namespacer, ruleAccess)
 	case rulesequence.ResourceInfo.GroupVersionResource():
 		return nil
 	case config.ResourceInfo.GroupVersionResource():

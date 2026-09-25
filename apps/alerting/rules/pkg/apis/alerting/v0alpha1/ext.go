@@ -12,6 +12,11 @@ const (
 	GroupLabelKey                 = InternalPrefix + "group"
 	GroupIndexLabelKey            = GroupLabelKey + "-index"
 	ProvenanceStatusAnnotationKey = InternalPrefix + "provenance"
+	// AccessControlAnnotationPrefix names a requester-specific capability hint
+	// annotation, e.g. AccessControlAnnotationPrefix + "canWrite". It is a
+	// response-only hint computed per request: never read back from a
+	// create/update body, and never persisted.
+	AccessControlAnnotationPrefix = InternalPrefix + "access/"
 	// Copy of the max title length used in legacy validation path
 	AlertRuleMaxTitleLength = 190
 	// Annotation key used to store the folder UID on resources
@@ -33,6 +38,14 @@ const (
 var (
 	AcceptedProvenanceStatuses = []string{ProvenanceStatusNone, ProvenanceStatusAPI, ProvenanceStatusFile, ProvenanceStatusConvertedPrometheus}
 )
+
+// AccessControlAnnotation returns the annotation key for a requester-specific
+// access capability, e.g. AccessControlAnnotation("canWrite") ==
+// "grafana.com/access/canWrite". Mirrors the convention used by other
+// Alerting k8s resources (see receiver_ext.go).
+func AccessControlAnnotation(action string) string {
+	return AccessControlAnnotationPrefix + action
+}
 
 func ToDuration(s string) (time.Duration, error) {
 	promDuration, err := prom_model.ParseDuration(s)
